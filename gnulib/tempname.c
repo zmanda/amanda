@@ -1,6 +1,6 @@
 /* tempname.c - generate the name of a temporary file.
 
-   Copyright (C) 1991-2003, 2005-2007, 2009-2010 Free Software Foundation, Inc.
+   Copyright (C) 1991-2003, 2005-2007, 2009-2012 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -67,9 +67,7 @@
 # define __gettimeofday gettimeofday
 # define __mkdir mkdir
 # define __open open
-# define __open64 open
 # define __lxstat64(version, file, buf) lstat (file, buf)
-# define __xstat64(version, file, buf) stat (file, buf)
 #endif
 
 #if ! (HAVE___SECURE_GETENV || _LIBC)

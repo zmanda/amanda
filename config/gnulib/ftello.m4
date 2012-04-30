@@ -1,5 +1,5 @@
-# ftello.m4 serial 8
-dnl Copyright (C) 2007-2010 Free Software Foundation, Inc.
+# ftello.m4 serial 11
+dnl Copyright (C) 2007-2012 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -9,9 +9,15 @@ AC_DEFUN([gl_FUNC_FTELLO],
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
   AC_REQUIRE([AC_PROG_CC])
   AC_REQUIRE([gl_STDIN_LARGE_OFFSET])
+  AC_REQUIRE([gl_SYS_TYPES_H])
 
   dnl Persuade glibc <stdio.h> to declare ftello().
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+
+  AC_CHECK_DECLS_ONCE([ftello])
+  if test $ac_cv_have_decl_ftello = no; then
+    HAVE_DECL_FTELLO=0
+  fi
 
   AC_CACHE_CHECK([for ftello], [gl_cv_func_ftello],
     [
@@ -25,9 +31,13 @@ AC_DEFUN([gl_FUNC_FTELLO],
   if test $gl_cv_func_ftello = no; then
     HAVE_FTELLO=0
   else
+    if test $WINDOWS_64_BIT_OFF_T = 1; then
+      REPLACE_FTELLO=1
+    fi
     if test $gl_cv_var_stdin_large_offset = no; then
       REPLACE_FTELLO=1
-    else
+    fi
+    if test $REPLACE_FTELLO = 0; then
       dnl Detect bug on Solaris.
       dnl ftell and ftello produce incorrect results after putc that followed a
       dnl getc call that reached EOF on Solaris. This is because the _IOREAD
@@ -119,12 +129,12 @@ main (void)
       esac
     fi
   fi
-  if test $HAVE_FTELLO = 0 || test $REPLACE_FTELLO = 1; then
-    gl_REPLACE_FTELLO
-  fi
 ])
 
-AC_DEFUN([gl_REPLACE_FTELLO],
+# Prerequisites of lib/ftello.c.
+AC_DEFUN([gl_PREREQ_FTELLO],
 [
-  AC_LIBOBJ([ftello])
+  dnl Native Windows has the function _ftelli64. mingw hides it, but mingw64
+  dnl makes it usable again.
+  AC_CHECK_FUNCS([_ftelli64])
 ])

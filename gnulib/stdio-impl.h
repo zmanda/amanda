@@ -1,5 +1,5 @@
 /* Implementation details of FILE streams.
-   Copyright (C) 2007-2008, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2007-2008, 2010-2012 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 /* Get __NetBSD_Version__.  */
 # include <sys/param.h>
 #endif
+
+#include <errno.h>                             /* For detecting Plan9.  */
 
 #if defined __sferror || defined __DragonFly__ /* FreeBSD, NetBSD, OpenBSD, DragonFly, MacOS X, Cygwin */
 
@@ -74,6 +76,17 @@
 
 
 /* SystemV derived implementations.  */
+
+#ifdef __TANDEM                     /* NonStop Kernel */
+# ifndef _IOERR
+/* These values were determined by the program 'stdioext-flags' at
+   <http://lists.gnu.org/archive/html/bug-gnulib/2010-12/msg00165.html>.  */
+#  define _IOERR   0x40
+#  define _IOREAD  0x80
+#  define _IOWRT    0x4
+#  define _IORW   0x100
+# endif
+#endif
 
 #if defined _IOERR
 

@@ -1,6 +1,5 @@
 /* base64.c -- Encode binary data using printable characters.
-   Copyright (C) 1999, 2000, 2001, 2004, 2005, 2006, 2009, 2010 Free Software
-   Foundation, Inc.
+   Copyright (C) 1999-2001, 2004-2006, 2009-2012 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,14 +12,13 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /* Written by Simon Josefsson.  Partially adapted from GNU MailUtils
  * (mailbox/filter_trans.c, as of 2004-11-28).  Improved by review
  * from Paul Eggert, Bruno Haible, and Stepan Kasal.
  *
- * See also RFC 3548 <http://www.ietf.org/rfc/rfc3548.txt>.
+ * See also RFC 4648 <http://www.ietf.org/rfc/rfc4648.txt>.
  *
  * Be careful with error checking.  Here is how you would typically
  * use these functions:
@@ -553,10 +551,10 @@ base64_decode_alloc_ctx (struct base64_decode_context *ctx,
 {
   /* This may allocate a few bytes too many, depending on input,
      but it's not worth the extra CPU time to compute the exact size.
-     The exact size is 3 * inlen / 4, minus 1 if the input ends
-     with "=" and minus another 1 if the input ends with "==".
+     The exact size is 3 * (inlen + (ctx ? ctx->i : 0)) / 4, minus 1 if the
+     input ends with "=" and minus another 1 if the input ends with "==".
      Dividing before multiplying avoids the possibility of overflow.  */
-  size_t needlen = 3 * (inlen / 4) + 2;
+  size_t needlen = 3 * (inlen / 4) + 3;
 
   *out = malloc (needlen);
   if (!*out)

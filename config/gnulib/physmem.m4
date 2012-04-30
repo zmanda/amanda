@@ -1,12 +1,12 @@
-# physmem.m4 serial 10
-dnl Copyright (C) 2002-2003, 2005-2006, 2008-2010 Free Software Foundation,
+# physmem.m4 serial 11
+dnl Copyright (C) 2002-2003, 2005-2006, 2008-2012 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 # Check for the external symbol, _system_configuration,
-# a struct with member `physmem'.
+# a struct with member 'physmem'.
 AC_DEFUN([gl_SYS__SYSTEM_CONFIGURATION],
   [AC_CACHE_CHECK([for external symbol _system_configuration],
                   gl_cv_var__system_configuration,
@@ -28,8 +28,6 @@ AC_DEFUN([gl_SYS__SYSTEM_CONFIGURATION],
 
 AC_DEFUN([gl_PHYSMEM],
 [
-  AC_LIBOBJ([physmem])
-
   # Prerequisites of lib/physmem.c.
   AC_CHECK_HEADERS([sys/pstat.h sys/sysmp.h sys/sysinfo.h \
     machine/hal_sysinfo.h sys/table.h sys/param.h sys/systemcfg.h],,,

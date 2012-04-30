@@ -1,72 +1,182 @@
-/* ftruncate emulations that work on some System V's.
-   This file is in the public domain.  */
+/* ftruncate emulations for native Windows.
+   Copyright (C) 1992-2012 Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
 /* Specification.  */
 #include <unistd.h>
 
-#include <sys/types.h>
-#include <fcntl.h>
+#if HAVE_CHSIZE
+/* A native Windows platform.  */
 
-#ifdef F_CHSIZE
+# include <errno.h>
 
-int
-ftruncate (int fd, off_t length)
+# if _GL_WINDOWS_64_BIT_OFF_T
+
+/* Large File Support: off_t is 64-bit, but chsize() takes only a 32-bit
+   argument.  So, define a 64-bit safe SetFileSize function ourselves.  */
+
+/* Ensure that <windows.h> declares GetFileSizeEx.  */
+#  undef _WIN32_WINNT
+#  define _WIN32_WINNT 0x500
+
+/* Get declarations of the native Windows API functions.  */
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+
+/* Get _get_osfhandle.  */
+#  include "msvc-nothrow.h"
+
+static BOOL
+SetFileSize (HANDLE h, LONGLONG size)
 {
-  return fcntl (fd, F_CHSIZE, length);
+  LARGE_INTEGER old_size;
+
+  if (!GetFileSizeEx (h, &old_size))
+    return FALSE;
+
+  if (size != old_size.QuadPart)
+    {
+      /* Duplicate the handle, so we are free to modify its file position.  */
+      HANDLE curr_process = GetCurrentProcess ();
+      HANDLE tmph;
+
+      if (!DuplicateHandle (curr_process,           /* SourceProcessHandle */
+                            h,                      /* SourceHandle */
+                            curr_process,           /* TargetProcessHandle */
+                            (PHANDLE) &tmph,        /* TargetHandle */
+                            (DWORD) 0,              /* DesiredAccess */
+                            FALSE,                  /* InheritHandle */
+                            DUPLICATE_SAME_ACCESS)) /* Options */
+        return FALSE;
+
+      if (size < old_size.QuadPart)
+        {
+          /* Reduce the size.  */
+          LONG size_hi = (LONG) (size >> 32);
+          if (SetFilePointer (tmph, (LONG) size, &size_hi, FILE_BEGIN)
+              == INVALID_SET_FILE_POINTER
+              && GetLastError() != NO_ERROR)
+            {
+              CloseHandle (tmph);
+              return FALSE;
+            }
+          if (!SetEndOfFile (tmph))
+            {
+              CloseHandle (tmph);
+              return FALSE;
+            }
+        }
+      else
+        {
+          /* Increase the size by adding zero bytes at the end.  */
+          static char zero_bytes[1024];
+          LONG pos_hi = 0;
+          LONG pos_lo = SetFilePointer (tmph, (LONG) 0, &pos_hi, FILE_END);
+          LONGLONG pos;
+          if (pos_lo == INVALID_SET_FILE_POINTER
+              && GetLastError() != NO_ERROR)
+            {
+              CloseHandle (tmph);
+              return FALSE;
+            }
+          pos = ((LONGLONG) pos_hi << 32) | (ULONGLONG) (ULONG) pos_lo;
+          while (pos < size)
+            {
+              DWORD written;
+              LONGLONG count = size - pos;
+              if (count > sizeof (zero_bytes))
+                count = sizeof (zero_bytes);
+              if (!WriteFile (tmph, zero_bytes, (DWORD) count, &written, NULL)
+                  || written == 0)
+                {
+                  CloseHandle (tmph);
+                  return FALSE;
+                }
+              pos += (ULONGLONG) (ULONG) written;
+            }
+        }
+      /* Close the handle.  */
+      CloseHandle (tmph);
+    }
+  return TRUE;
 }
 
-#else /* not F_CHSIZE */
-# ifdef F_FREESP
-
-/* By William Kucharski <kucharsk@netcom.com>.  */
-
-#  include <sys/stat.h>
-#  include <errno.h>
-
 int
 ftruncate (int fd, off_t length)
 {
-  struct flock fl;
-  struct stat filebuf;
+  HANDLE handle = (HANDLE) _get_osfhandle (fd);
 
-  if (fstat (fd, &filebuf) < 0)
-    return -1;
-
-  if (filebuf.st_size < length)
+  if (handle == INVALID_HANDLE_VALUE)
     {
-      /* Extend file length. */
-      if (lseek (fd, (length - 1), SEEK_SET) < 0)
-        return -1;
-
-      /* Write a "0" byte. */
-      if (write (fd, "", 1) != 1)
-        return -1;
+      errno = EBADF;
+      return -1;
     }
-  else
+  if (length < 0)
     {
-
-      /* Truncate length. */
-
-      fl.l_whence = 0;
-      fl.l_len = 0;
-      fl.l_start = length;
-      fl.l_type = F_WRLCK;      /* write lock on file space */
-
-      /* This relies on the *undocumented* F_FREESP argument to fcntl,
-         which truncates the file so that it ends at the position
-         indicated by fl.l_start.  Will minor miracles never cease?  */
-
-      if (fcntl (fd, F_FREESP, &fl) < 0)
-        return -1;
+      errno = EINVAL;
+      return -1;
     }
-
+  if (!SetFileSize (handle, length))
+    {
+      switch (GetLastError ())
+        {
+        case ERROR_ACCESS_DENIED:
+          errno = EACCES;
+          break;
+        case ERROR_HANDLE_DISK_FULL:
+        case ERROR_DISK_FULL:
+        case ERROR_DISK_TOO_FRAGMENTED:
+          errno = ENOSPC;
+          break;
+        default:
+          errno = EIO;
+          break;
+        }
+      return -1;
+    }
   return 0;
 }
 
-# else /* not F_CHSIZE nor F_FREESP */
-#  if HAVE_CHSIZE                      /* native Windows, e.g. mingw */
+# else
+
+#  include <io.h>
+
+#  if HAVE_MSVC_INVALID_PARAMETER_HANDLER
+#   include "msvc-inval.h"
+static inline int
+chsize_nothrow (int fd, long length)
+{
+  int result;
+
+  TRY_MSVC_INVAL
+    {
+      result = chsize (fd, length);
+    }
+  CATCH_MSVC_INVAL
+    {
+      result = -1;
+      errno = EBADF;
+    }
+  DONE_MSVC_INVAL;
+
+  return result;
+}
+#   define chsize chsize_nothrow
+#  endif
 
 int
 ftruncate (int fd, off_t length)
@@ -74,17 +184,5 @@ ftruncate (int fd, off_t length)
   return chsize (fd, length);
 }
 
-#  else /* not F_CHSIZE nor F_FREESP nor HAVE_CHSIZE */
-
-#   include <errno.h>
-
-int
-ftruncate (int fd, off_t length)
-{
-  errno = EIO;
-  return -1;
-}
-
-#  endif /* not HAVE_CHSIZE */
-# endif /* not F_FREESP */
-#endif /* not F_CHSIZE */
+# endif
+#endif

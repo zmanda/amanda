@@ -1,48 +1,41 @@
-# serial 15
+# serial 19
 
-# See if we need to emulate a missing ftruncate function using fcntl or chsize.
+# See if we need to emulate a missing ftruncate function using chsize.
 
-# Copyright (C) 2000-2001, 2003-2007, 2009-2010 Free Software Foundation, Inc.
+# Copyright (C) 2000-2001, 2003-2007, 2009-2012 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# FIXME: remove this macro, along with all uses of HAVE_FTRUNCATE in 2012,
-# if the check below provokes no more reports.  So far, the only report
-# arose from a test build of this gnulib module, cross-compiling to mingw:
-# <http://thread.gmane.org/gmane.comp.lib.gnulib.bugs/9203>
-# Now (in 2010), MSVC has been raised as a possible target:
-# <http://thread.gmane.org/gmane.comp.lib.gnulib.bugs/21394/focus=21396>
-
 AC_DEFUN([gl_FUNC_FTRUNCATE],
 [
   AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-  AC_REQUIRE([AC_CANONICAL_HOST])
   AC_CHECK_FUNCS_ONCE([ftruncate])
-  if test $ac_cv_func_ftruncate = no; then
+  if test $ac_cv_func_ftruncate = yes; then
+    m4_ifdef([gl_LARGEFILE], [
+      AC_REQUIRE([AC_CANONICAL_HOST])
+      case "$host_os" in
+        mingw*)
+          dnl Native Windows, and Large File Support is requested.
+          dnl The MSVCRT _chsize() function only accepts a 32-bit file size,
+          dnl and the mingw64 ftruncate64() function is unreliable (it may
+          dnl delete the file, see
+          dnl <http://mingw-w64.sourcearchive.com/documentation/2.0-1/ftruncate64_8c_source.html>).
+          dnl Use gnulib's ftruncate() implementation instead.
+          REPLACE_FTRUNCATE=1
+          ;;
+      esac
+    ], [
+      :
+    ])
+  else
     HAVE_FTRUNCATE=0
-    AC_LIBOBJ([ftruncate])
-    gl_PREREQ_FTRUNCATE
-    case "$host_os" in
-      mingw*)
-        # Yes, we know mingw lacks ftruncate.
-        ;;
-      *)
-        # If someone lacks ftruncate, make configure fail, and request
-        # a bug report to inform us about it.
-        if test x"$SKIP_FTRUNCATE_CHECK" != xyes; then
-          AC_MSG_FAILURE([Your system lacks the ftruncate function.
-              Please report this, along with the output of "uname -a", to the
-              bug-coreutils@gnu.org mailing list.  To continue past this point,
-              rerun configure with SKIP_FTRUNCATE_CHECK=yes.
-              E.g., ./configure SKIP_FTRUNCATE_CHECK=yes])
-        fi
-    esac
   fi
 ])
 
 # Prerequisites of lib/ftruncate.c.
 AC_DEFUN([gl_PREREQ_FTRUNCATE],
 [
+  AC_REQUIRE([AC_C_INLINE])
   AC_CHECK_FUNCS([chsize])
 ])

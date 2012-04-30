@@ -1,5 +1,5 @@
-# getopt.m4 serial 31
-dnl Copyright (C) 2002-2006, 2008-2010 Free Software Foundation, Inc.
+# getopt.m4 serial 39
+dnl Copyright (C) 2002-2006, 2008-2012 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -9,10 +9,23 @@ AC_DEFUN([gl_FUNC_GETOPT_POSIX],
 [
   m4_divert_text([DEFAULTS], [gl_getopt_required=POSIX])
   AC_REQUIRE([gl_UNISTD_H_DEFAULTS])
-  gl_GETOPT_IFELSE([
-    gl_REPLACE_GETOPT
-  ],
-  [])
+  dnl Other modules can request the gnulib implementation of the getopt
+  dnl functions unconditionally, by defining gl_REPLACE_GETOPT_ALWAYS.
+  dnl argp.m4 does this.
+  m4_ifdef([gl_REPLACE_GETOPT_ALWAYS], [
+    gl_GETOPT_IFELSE([], [])
+    REPLACE_GETOPT=1
+  ], [
+    REPLACE_GETOPT=0
+    gl_GETOPT_IFELSE([
+      REPLACE_GETOPT=1
+    ],
+    [])
+  ])
+  if test $REPLACE_GETOPT = 1; then
+    dnl Arrange for getopt.h to be created.
+    gl_GETOPT_SUBSTITUTE_HEADER
+  fi
 ])
 
 # Request a POSIX compliant getopt function with GNU extensions (such as
@@ -23,20 +36,6 @@ AC_DEFUN([gl_FUNC_GETOPT_GNU],
   m4_divert_text([INIT_PREPARE], [gl_getopt_required=GNU])
 
   AC_REQUIRE([gl_FUNC_GETOPT_POSIX])
-])
-
-# Request the gnulib implementation of the getopt functions unconditionally.
-# argp.m4 uses this.
-AC_DEFUN([gl_REPLACE_GETOPT],
-[
-  dnl Arrange for getopt.h to be created.
-  gl_GETOPT_SUBSTITUTE_HEADER
-  dnl Arrange for unistd.h to include getopt.h.
-  GNULIB_UNISTD_H_GETOPT=1
-  dnl Arrange to compile the getopt implementation.
-  AC_LIBOBJ([getopt])
-  AC_LIBOBJ([getopt1])
-  gl_PREREQ_GETOPT
 ])
 
 # emacs' configure.in uses this.
@@ -56,7 +55,6 @@ AC_DEFUN([gl_GETOPT_CHECK_HEADERS],
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
   gl_CHECK_NEXT_HEADERS([getopt.h])
-  AC_CHECK_HEADERS_ONCE([getopt.h])
   if test $ac_cv_header_getopt_h = yes; then
     HAVE_GETOPT_H=1
   else
@@ -76,20 +74,6 @@ AC_DEFUN([gl_GETOPT_CHECK_HEADERS],
     AC_CHECK_FUNCS([getopt_long_only], [], [gl_replace_getopt=yes])
   fi
 
-  dnl BSD getopt_long uses an incompatible method to reset option processing.
-  dnl Existence of the variable, in and of itself, is not a reason to replace
-  dnl getopt, but knowledge of the variable is needed to determine how to
-  dnl reset and whether a reset reparses the environment.
-  dnl Solaris supports neither optreset nor optind=0, but keeps no state that
-  dnl needs a reset beyond setting optind=1; detect Solaris by getopt_clip.
-  if test -z "$gl_replace_getopt"; then
-    AC_CHECK_DECLS([optreset], [],
-      [AC_CHECK_DECLS([getopt_clip], [], [],
-        [[#include <getopt.h>]])
-      ],
-      [[#include <getopt.h>]])
-  fi
-
   dnl mingw's getopt (in libmingwex.a) does weird things when the options
   dnl strings starts with '+' and it's not the first call.  Some internal state
   dnl is left over from earlier calls, and neither setting optind = 0 nor
@@ -103,38 +87,52 @@ AC_DEFUN([gl_GETOPT_CHECK_HEADERS],
     AC_CACHE_CHECK([whether getopt is POSIX compatible],
       [gl_cv_func_getopt_posix],
       [
+        dnl BSD getopt_long uses an incompatible method to reset option
+        dnl processing.  Existence of the optreset variable, in and of
+        dnl itself, is not a reason to replace getopt, but knowledge
+        dnl of the variable is needed to determine how to reset and
+        dnl whether a reset reparses the environment.  Solaris
+        dnl supports neither optreset nor optind=0, but keeps no state
+        dnl that needs a reset beyond setting optind=1; detect Solaris
+        dnl by getopt_clip.
+        AC_LINK_IFELSE(
+          [AC_LANG_PROGRAM(
+             [[#include <unistd.h>]],
+             [[int *p = &optreset; return optreset;]])],
+          [gl_optind_min=1],
+          [AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM(
+                [[#include <getopt.h>]],
+                [[return !getopt_clip;]])],
+             [gl_optind_min=1],
+             [gl_optind_min=0])])
+
         dnl This test fails on mingw and succeeds on many other platforms.
+        gl_save_CPPFLAGS=$CPPFLAGS
+        CPPFLAGS="$CPPFLAGS -DOPTIND_MIN=$gl_optind_min"
         AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if !HAVE_DECL_OPTRESET && !HAVE_DECL_GETOPT_CLIP
-# define OPTIND_MIN 0
-#else
-# define OPTIND_MIN 1
-#endif
-
 int
 main ()
 {
   {
-    int argc = 0;
-    char *argv[10];
+    static char program[] = "program";
+    static char a[] = "-a";
+    static char foo[] = "foo";
+    static char bar[] = "bar";
+    char *argv[] = { program, a, foo, bar, NULL };
     int c;
 
-    argv[argc++] = "program";
-    argv[argc++] = "-a";
-    argv[argc++] = "foo";
-    argv[argc++] = "bar";
-    argv[argc] = NULL;
     optind = OPTIND_MIN;
     opterr = 0;
 
-    c = getopt (argc, argv, "ab");
+    c = getopt (4, argv, "ab");
     if (!(c == 'a'))
       return 1;
-    c = getopt (argc, argv, "ab");
+    c = getopt (4, argv, "ab");
     if (!(c == -1))
       return 2;
     if (!(optind == 2))
@@ -142,22 +140,20 @@ main ()
   }
   /* Some internal state exists at this point.  */
   {
-    int argc = 0;
-    char *argv[10];
+    static char program[] = "program";
+    static char donald[] = "donald";
+    static char p[] = "-p";
+    static char billy[] = "billy";
+    static char duck[] = "duck";
+    static char a[] = "-a";
+    static char bar[] = "bar";
+    char *argv[] = { program, donald, p, billy, duck, a, bar, NULL };
     int c;
 
-    argv[argc++] = "program";
-    argv[argc++] = "donald";
-    argv[argc++] = "-p";
-    argv[argc++] = "billy";
-    argv[argc++] = "duck";
-    argv[argc++] = "-a";
-    argv[argc++] = "bar";
-    argv[argc] = NULL;
     optind = OPTIND_MIN;
     opterr = 0;
 
-    c = getopt (argc, argv, "+abp:q:");
+    c = getopt (7, argv, "+abp:q:");
     if (!(c == -1))
       return 4;
     if (!(strcmp (argv[0], "program") == 0))
@@ -179,7 +175,9 @@ main ()
   }
   /* Detect MacOS 10.5, AIX 7.1 bug.  */
   {
-    char *argv[3] = { "program", "-ab", NULL };
+    static char program[] = "program";
+    static char ab[] = "-ab";
+    char *argv[3] = { program, ab, NULL };
     optind = OPTIND_MIN;
     opterr = 0;
     if (getopt (2, argv, "ab:") != 'a')
@@ -202,6 +200,7 @@ main ()
              *)              gl_cv_func_getopt_posix="guessing yes";;
            esac
           ])
+        CPPFLAGS=$gl_save_CPPFLAGS
       ])
     case "$gl_cv_func_getopt_posix" in
       *no) gl_replace_getopt=yes ;;
@@ -230,54 +229,78 @@ dnl is ambiguous with environment values that contain newlines.
         [AC_LANG_PROGRAM([[#include <getopt.h>
                            #include <stddef.h>
                            #include <string.h>
+           ]GL_NOCRASH[
            ]], [[
+             int result = 0;
+
+             nocrash_init();
+
              /* This code succeeds on glibc 2.8, OpenBSD 4.0, Cygwin, mingw,
                 and fails on MacOS X 10.5, AIX 5.2, HP-UX 11, IRIX 6.5,
                 OSF/1 5.1, Solaris 10.  */
              {
-               char *myargv[3];
-               myargv[0] = "conftest";
-               myargv[1] = "-+";
-               myargv[2] = 0;
+               static char conftest[] = "conftest";
+               static char plus[] = "-+";
+               char *argv[3] = { conftest, plus, NULL };
                opterr = 0;
-               if (getopt (2, myargv, "+a") != '?')
-                 return 1;
+               if (getopt (2, argv, "+a") != '?')
+                 result |= 1;
              }
              /* This code succeeds on glibc 2.8, mingw,
                 and fails on MacOS X 10.5, OpenBSD 4.0, AIX 5.2, HP-UX 11,
                 IRIX 6.5, OSF/1 5.1, Solaris 10, Cygwin 1.5.x.  */
              {
-               char *argv[] = { "program", "-p", "foo", "bar", NULL };
+               static char program[] = "program";
+               static char p[] = "-p";
+               static char foo[] = "foo";
+               static char bar[] = "bar";
+               char *argv[] = { program, p, foo, bar, NULL };
 
                optind = 1;
                if (getopt (4, argv, "p::") != 'p')
-                 return 2;
-               if (optarg != NULL)
-                 return 3;
-               if (getopt (4, argv, "p::") != -1)
-                 return 4;
-               if (optind != 2)
-                 return 5;
+                 result |= 2;
+               else if (optarg != NULL)
+                 result |= 4;
+               else if (getopt (4, argv, "p::") != -1)
+                 result |= 6;
+               else if (optind != 2)
+                 result |= 8;
              }
              /* This code succeeds on glibc 2.8 and fails on Cygwin 1.7.0.  */
              {
-               char *argv[] = { "program", "foo", "-p", NULL };
+               static char program[] = "program";
+               static char foo[] = "foo";
+               static char p[] = "-p";
+               char *argv[] = { program, foo, p, NULL };
                optind = 0;
                if (getopt (3, argv, "-p") != 1)
-                 return 6;
-               if (getopt (3, argv, "-p") != 'p')
-                 return 7;
+                 result |= 16;
+               else if (getopt (3, argv, "-p") != 'p')
+                 result |= 32;
              }
              /* This code fails on glibc 2.11.  */
              {
-               char *argv[] = { "program", "-b", "-a", NULL };
+               static char program[] = "program";
+               static char b[] = "-b";
+               static char a[] = "-a";
+               char *argv[] = { program, b, a, NULL };
                optind = opterr = 0;
                if (getopt (3, argv, "+:a:b") != 'b')
-                 return 8;
-               if (getopt (3, argv, "+:a:b") != ':')
-                 return 9;
+                 result |= 64;
+               else if (getopt (3, argv, "+:a:b") != ':')
+                 result |= 64;
              }
-             return 0;
+             /* This code dumps core on glibc 2.14.  */
+             {
+               static char program[] = "program";
+               static char w[] = "-W";
+               static char dummy[] = "dummy";
+               char *argv[] = { program, w, dummy, NULL };
+               optind = opterr = 1;
+               if (getopt (3, argv, "W;") != 'W')
+                 result |= 128;
+             }
+             return result;
            ]])],
         [gl_cv_func_getopt_gnu=yes],
         [gl_cv_func_getopt_gnu=no],
