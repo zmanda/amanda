@@ -2098,3 +2098,6 @@ mostlyclean-local: mostlyclean-generic
 	  fi; \
 	done; \
 	:
+
+# Make sure regenerate/* are in the distribution tarball
+EXTRA_DIST += regenerate/no-error.patch regenerate/regenerate regenerate/regenerate.rej
