@@ -8,7 +8,7 @@ include $(top_srcdir)/config/automake/scripts.am
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
 # to trigger warnings.
-AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS)
+AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS) -include $(CONFIG_HEADER)
 
 # Appropriate INCLUDES depends on which components (server or client) are
 # being built

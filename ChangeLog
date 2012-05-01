@@ -1,3 +1,7 @@
+2012-05-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am, perl/Makefile.am: Add
+	  '-include $(CONFIG_HEADER)' to AM_CFLAGS.
+
 2012-04-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/Makefile.am: Fix EXTRA_DIST.
 
