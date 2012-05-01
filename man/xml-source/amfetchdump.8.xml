@@ -28,30 +28,35 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amfetchdump</command>
-    <arg choice='opt'>-c|-C|-L</arg>
-    <arg choice='opt'>-p|-n</arg>
+    <group choice='opt'>
+      <arg choice='plain'>-c</arg>
+      <arg choice='plain'>-C</arg>
+      <arg choice='plain'>-l</arg>
+    </group>
+    <group choice='opt'>
+      <arg choice='plain'>-p</arg>
+      <arg choice='plain'>-n</arg>
+    </group>
     <arg choice='opt'>-a</arg>
     <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
     <arg choice='opt'>-d <replaceable>device</replaceable></arg>
-    <arg choice='opt'>-h</arg>
-    <arg choice='opt'>--header-file <replaceable>filename</replaceable></arg>
-    <arg choice='opt'>--header-fd <replaceable>fd</replaceable></arg>
-    <arg choice='opt'>--decompress
-      <group choice='req'>
-	<arg choice='plain'>ALL</arg>
-	<arg choice='plain'>NONE</arg>
-	<arg choice='plain'>SERVER</arg>
-	<arg choice='plain'>CLIENT</arg>
-      </group>
-    </arg>
-    <arg choice='opt'>--decrypt
-      <group choice='req'>
-	<arg choice='plain'>ALL</arg>
-	<arg choice='plain'>NONE</arg>
-	<arg choice='plain'>SERVER</arg>
-	<arg choice='plain'>CLIENT</arg>
-      </group>
-    </arg>
+    <group choice='opt'>
+      <arg choice='plain'>-h</arg>
+      <arg choice='plain'>--header-file <replaceable>filename</replaceable></arg>
+      <arg choice='plain'>--header-fd <replaceable>fd</replaceable></arg>
+    </group>
+    <group choice='opt'>
+      <arg choice='plain'>--decompress</arg>
+      <arg choice='plain'>--no-decompress</arg>
+      <arg choice='plain'>--server-decompress</arg>
+      <arg choice='plain'>--client-decompress</arg>
+    </group>
+    <group choice='opt'>
+      <arg choice='plain'>--decrypt</arg>
+      <arg choice='plain'>--no-decrypt</arg>
+      <arg choice='plain'>--server-decrypt</arg>
+      <arg choice='plain'>--client-decrypt</arg>
+    </group>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -76,7 +81,8 @@
 <para><emphasis remap='B'>Amfetchdump</emphasis>
 pulls one or more matching dumps from tape or from the holding disk,
 handling the reassembly of multi-tape split dump files as well as any
-tape autochanger operations.</para>
+tape autochanger operations. The dump are by default decompressed and decrypted.
+</para>
 
 <para>It will automatically use the Amanda catalog
 to locate available dumps on tape, in the same way that the <emphasis
@@ -149,66 +155,47 @@ prompting for each volume.</para></listitem>
     available.</para></listitem>
   </varlistentry>
   <varlistentry>
-    <term><option>--decompress <replaceable>OPT</replaceable></option></term>
-<listitem><para>Where OPT is one of the following:
-<variablelist remap='TP'>
-<varlistentry>
-<term>ALL</term>
-<listitem>Always do the decompression
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>NONE</term>
-<listitem>Never do the decompression
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>SERVER</term>
-<listitem>Do the decompression only if the compression was done on the server
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>CLIENT</term>
-<listitem>Do the decompression only if the compression was done on the client
-</listitem>
-</varlistentry>
-</variablelist>
-</para></listitem>
+    <term><option>--decompress</option></term>
+    <listitem><para>Always do the decompression, this is the default.</para></listitem>
   </varlistentry>
   <varlistentry>
-    <term><option>--decrypt <replaceable>OPT</replaceable></option></term>
-<listitem><para>A backup must be decompressed before decrypted if it is both
-compressed and encrypted, amfetchdump must decompress.</para>
-<para>Where OPT is one of the following:
-<variablelist remap='TP'>
-<varlistentry>
-<term>ALL</term>
-<listitem>Always do the decryption
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>NONE</term>
-<listitem>Never do the decryption
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>SERVER</term>
-<listitem>Do the decryption only if the encryption was done on the server
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>CLIENT</term>
-<listitem>Do the decryption only if the encryption was done on the client
-</listitem>
-</varlistentry>
-</variablelist>
-</para></listitem>
+    <term><option>--no-decompress</option></term>
+    <listitem><para>Never do the decompression.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--server-decompress</option></term>
+    <listitem><para>Do the decompression only if the compression was done on
+the server.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--client-decompress</option></term>
+    <listitem><para>Do the decompression only if the compression was done on
+the client.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--decrypt</option></term>
+    <listitem><para>Always do the decryption, this is the default.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--no-decrypt</option></term>
+    <listitem><para>Never do the decryption.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--server-decrypt</option></term>
+    <listitem><para>Do the decryption only if the encryption was done on
+the server.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>--client-decrypt</option></term>
+    <listitem><para>Do the decryption only if the encryption was done on
+the client.</para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-l</option></term>
 <listitem><para>Leave dumps in the compressed/uncompressed and
-encrypted/unencrypted state in which they were found on tape. By default,
-<emphasis remap='B'>amfetchdump</emphasis> will automatically uncompress and/or unencrypt when restoring.</para></listitem>
+encrypted/unencrypted state in which they were found on tape.
+It is a synonym for <option>--no-decompression</option>
+<option>--no-decryption</option></para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-a</option></term>

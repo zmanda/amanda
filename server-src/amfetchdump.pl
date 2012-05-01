@@ -113,7 +113,10 @@ sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
 Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
-    [-h] [--header-file file] [--header-fd fd] [-o configoption]* config
+    [-h|--header-file file|--header-fd fd]i
+    [--decrypt|--no-decrypt|--server-decrypt|--client-decrypt]
+    [--decompress|--no-decompress|--server-decompress|--client-decompress]
+    [-o configoption]* config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
 EOF
     print STDERR "ERROR: $msg\n" if $msg;
@@ -130,7 +133,15 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pipe,
     $opt_assume, $opt_leave, $opt_blocksize, $opt_device, $opt_chdir, $opt_header,
     $opt_header_file, $opt_header_fd, @opt_dumpspecs,
-    $decrypt, $decompress);
+    $opt_decrypt, $opt_server_decrypt, $opt_client_decrypt,
+    $opt_decompress, $opt_server_decompress, $opt_client_decompress);
+
+my $NEVER = 0;
+my $ALWAYS = 1;
+my $ONLY_SERVER = 2;
+my $ONLY_CLIENT = 3;
+my $decrypt;
+my $decompress;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
@@ -146,36 +157,12 @@ GetOptions(
     'h' => \$opt_header,
     'header-file=s' => \$opt_header_file,
     'header-fd=i' => \$opt_header_fd,
-    'decrypt=s' => sub {
-			my $opt_decrypt = $_[1];
-			if ($opt_decrypt =~ /all/i) {
-			    $decrypt = "ALL";
-			} elsif ($opt_decrypt =~ /^no/i) {
-			    $decrypt = "NO";
-			} elsif ($opt_decrypt =~ /^server/i) {
-			    $decrypt = "SERVER";
-			} elsif ($opt_decrypt =~ /^client/i) {
-			    $decrypt = "CLIENT";
-			} else {
-			    print STDERR "Bad decrypt value\n";
-			    exit 1;
-			}
-		   },
-    'decompress=s' => sub {
-			my $opt_decompress = $_[1];
-			if ($opt_decompress =~ /all/i) {
-			    $decompress = "ALL";
-			} elsif ($opt_decompress =~ /^no/i) {
-			    $decompress = "NO";
-			} elsif ($opt_decompress =~ /^server/i) {
-			    $decompress = "SERVER";
-			} elsif ($opt_decompress =~ /^client/i) {
-			    $decompress = "CLIENT";
-			} else {
-			    print STDERR "Bad decompress value\n";
-			    exit 1;
-			}
-		      },
+    'decrypt!' => \$opt_decrypt,
+    'server-decrypt' => \$opt_server_decrypt,
+    'client-decrypt' => \$opt_client_decrypt,
+    'decompress!' => \$opt_decompress,
+    'server-decompress' => \$opt_server_decompress,
+    'client-decompress' => \$opt_client_decompress,
     'b=s' => \$opt_blocksize,
     'd=s' => \$opt_device,
     'O=s' => \$opt_chdir,
@@ -184,17 +171,10 @@ GetOptions(
 usage() unless (@ARGV);
 $opt_config = shift @ARGV;
 
-$opt_compress = 1 if $opt_compress_best;
-
-$decompress = "ALL" if !defined($decompress) and !defined($opt_compress) and !defined($opt_leave);
-$decrypt = "ALL" if !defined($decrypt) and !defined($opt_leave);
-
-$decompress = "NO" if !defined($decompress) and !defined($opt_compress) and defined($opt_leave);
-$decrypt = "NO" if !defined($decrypt) and defined($opt_leave);
-
-usage("must specify at least a hostname") unless @ARGV;
-@opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV],
-    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
+if (defined $opt_compress and defined $opt_compress_best) {
+    print STDERR "Can't use -c and -C\n";
+    usage();
+}
 
 usage("The -b option is no longer supported; set readblocksize in the tapetype section\n" .
       "of amanda.conf instead.")
@@ -204,8 +184,84 @@ usage("-l is not compatible with -c or -C")
 usage("-p is not compatible with -n")
     if ($opt_leave and $opt_no_reassembly);
 usage("-h, --header-file, and --header-fd are mutually incompatible")
-    if (($opt_header and $opt_header_file or $opt_header_fd)
+    if (($opt_header and ($opt_header_file or $opt_header_fd))
 	    or ($opt_header_file and $opt_header_fd));
+
+if (defined $opt_leave) {
+    if (defined $opt_decrypt and $opt_decrypt) {
+	print STDERR "-l is incompatible with --decrypt\n";
+	usage();
+    }
+    if (defined $opt_server_decrypt) {
+	print STDERR "-l is incompatible with --server-decrypt\n";
+	usage();
+    }
+    if (defined $opt_client_decrypt) {
+	print STDERR "-l is incompatible with --client-decrypt\n";
+	usage();
+    }
+    if (defined $opt_decompress and $opt_decompress) {
+	print STDERR "-l is incompatible with --decompress\n";
+	usage();
+    }
+    if (defined $opt_server_decompress) {
+	print STDERR "-l is incompatible with --server-decompress\n";
+	usage();
+    }
+    if (defined $opt_client_decompress) {
+	print STDERR "-l is incompatible with --client-decompress\n";
+	usage();
+    }
+}
+
+if (defined($opt_decrypt) +
+    defined($opt_server_decrypt) +
+    defined($opt_client_decrypt) > 1) {
+    print STDERR "Can't use only on of --decrypt, --no-decrypt, --server-decrypt or --client-decrypt\n";
+    usage();
+}
+if (defined($opt_decompress) +
+    defined($opt_server_decompress) +
+    defined($opt_client_decompress) > 1) {
+    print STDERR "Can't use only on of --decompress, --no-decompress, --server-decompress or --client-decompress\n";
+    usage();
+}
+
+if (defined($opt_compress) and
+    defined($opt_decompress) +
+    defined($opt_server_decompress) +
+    defined($opt_client_decompress) > 0) {
+    print STDERR "Can't specify -c with one of --decompress, --no-decompress, --server-decompress or --client-decompress\n";
+    usage();
+}
+if (defined($opt_compress_best) and
+    defined($opt_decompress) +
+    defined($opt_server_decompress) +
+    defined($opt_client_decompress) > 0) {
+    print STDERR "Can't specify -C with one of --decompress, --no-decompress, --server-decompress or --client-decompress\n";
+    usage();
+}
+
+$decompress = $ALWAYS;
+$decrypt = $ALWAYS;
+$decrypt = $NEVER  if defined $opt_leave;
+$decrypt = $NEVER  if defined $opt_decrypt and !$opt_decrypt;
+$decrypt = $ALWAYS if defined $opt_decrypt and $opt_decrypt;
+$decrypt = $ONLY_SERVER if defined $opt_server_decrypt;
+$decrypt = $ONLY_CLIENT if defined $opt_client_decrypt;
+
+$opt_compress = 1 if $opt_compress_best;
+
+$decompress = $NEVER  if defined $opt_compress;
+$decompress = $NEVER  if defined $opt_leave;
+$decompress = $NEVER  if defined $opt_decompress and !$opt_decompress;
+$decompress = $ALWAYS if defined $opt_decompress and $opt_decompress;
+$decompress = $ONLY_SERVER if defined $opt_server_decompress;
+$decompress = $ONLY_CLIENT if defined $opt_client_decompress;
+
+usage("must specify at least a hostname") unless @ARGV;
+@opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV],
+    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
 
 set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
@@ -427,9 +483,8 @@ sub main {
 	# set up any filters that need to be applied; decryption first
 	my @filters;
 	if ($hdr->{'encrypted'} and
-	    (($hdr->{'srv_encrypt'} and ($decrypt eq "ALL" || $decrypt eq "SERVER")) ||
-	     ($hdr->{'clnt_encrypt'} and ($decrypt eq "ALL" || $decrypt eq "CLIENT")) ||
-	     (!defined($decrypt and not $opt_leave)))) {
+	    (($hdr->{'srv_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_SERVER)) ||
+	     ($hdr->{'clnt_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_CLIENT)))) {
 	    if ($hdr->{'srv_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
@@ -452,13 +507,12 @@ sub main {
 	}
 
 	if ($hdr->{'compressed'} and not $opt_compress and
-	    (($hdr->{'srvcompprog'} and ($decompress eq "ALL" || $decompress eq "SERVER")) ||
-	     ($hdr->{'clntcompprog'} and ($decompress eq "ALL" || $decompress eq "CLIENT")) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST and ($decompress eq "ALL" || $decompress eq "SERVER")) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST and ($decompress eq "ALL" || $decompress eq "SERVER")) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_FAST and ($decompress eq "ALL" || $decompress eq "CLIENT")) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_BEST and ($decompress eq "ALL" || $decompress eq "CLIENT")) ||
-	     (!defined($decompress and not $opt_leave)))) {
+	    (($hdr->{'srvcompprog'} and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
+	     ($hdr->{'clntcompprog'} and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
+	     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
+	     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
+	     ($dle->{'compress'} == $Amanda::Config::COMP_FAST and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
+	     ($dle->{'compress'} == $Amanda::Config::COMP_BEST and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)))) {
 	    # need to uncompress this file
 	    if ($hdr->{'encrypted'}) {
 		print "Not decompressing because the backup image is not decrypted\n";

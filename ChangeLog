@@ -1,4 +1,10 @@
 2012-05-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amfetchdump.8.xml: Add --decrypt, --no-decrypt,
+	  --server-decrypt, --client-decrypt, --compress, --no-compress,
+	  --server-compress, --client-compress.
+	* server-src/amfetchdump.pl: Document new options.
+
+2012-05-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/s3-device.m4: Improve output.
 	* config/amanda/device.m4: Add AMANDA_CHECK_DEVICES and
 	  AMANDA_SHOW_DEVICES_SUMMARY
