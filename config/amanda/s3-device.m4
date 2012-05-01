@@ -26,13 +26,17 @@ AC_DEFUN([AMANDA_S3_DEVICE], [
 	    # then this is an error
 	    if test x"$WANT_S3_DEVICE" = x"yes"; then
 		AC_MSG_RESULT(no)
-		AC_MSG_ERROR([Cannot build the Amazon S3 device: one or more prerequisites are missing.])
+		AC_MSG_ERROR([Cannot build the Amazon S3 device: one or more prerequisites are missing: curl or hmac])
 	    else
 		WANT_S3_DEVICE=no
+		AMANDA_S3_DEVICE_WARN=yes
 	    fi
 	fi
     fi
     AC_MSG_RESULT($WANT_S3_DEVICE)
+    if test x"$AMANDA_S3_DEVICE_WARN" = x"yes"; then
+	AC_MSG_WARN([Cannot build the Amazon S3 device: one or more prerequisites are missing: curl or hmac.])
+    fi
 
     AM_CONDITIONAL([WANT_S3_DEVICE], [test x"$WANT_S3_DEVICE" = x"yes"])
 

@@ -361,10 +361,7 @@ ICE_CHECK_DECL(strcasecmp,string.h strings.h)
 #
 # Devices
 #
-AMANDA_S3_DEVICE
-AMANDA_TAPE_DEVICE
-AMANDA_DVDRW_DEVICE
-AMANDA_NDMP_DEVICE
+AMANDA_CHECK_DEVICES
 
 dnl -------------------------------------------------------------------------
 
