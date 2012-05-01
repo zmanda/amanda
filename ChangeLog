@@ -1,3 +1,9 @@
+2012-05-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amfetchdump.8.xml: Add --decrypt, --no-decrypt,
+	  --server-decrypt, --client-decrypt, --compress, --no-compress,
+	  --server-compress, --client-compress.
+	* server-src/amfetchdump.pl: Document new options.
+
 2012-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmos.h: Define NDMOS_MACRO_FREE
 	* ndmp-src/ndmos_glib.h: Define NDMOS_MACRO_FREE
