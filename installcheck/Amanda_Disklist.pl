@@ -20,7 +20,7 @@ use Test::More tests => 13;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::Config qw( :init :getconf );
 use Amanda::Disklist;
 use Installcheck::Config;

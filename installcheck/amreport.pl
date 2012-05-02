@@ -22,7 +22,7 @@ use strict;
 use warnings;
 use Errno;
 use Cwd qw(abs_path);
-use lib "@amperldir@";
+use lib '@amperldir@';
 
 use Installcheck;
 use Installcheck::Run qw( run run_get run_err );

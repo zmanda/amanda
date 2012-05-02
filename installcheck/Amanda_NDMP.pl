@@ -21,7 +21,7 @@ use IO::Socket;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Mock;
 use Amanda::NDMP qw( :constants );

@@ -18,7 +18,7 @@
 
 use Test::More tests => 10;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Cwd qw(abs_path getcwd);
 use Installcheck;
 use Installcheck::Dumpcache;

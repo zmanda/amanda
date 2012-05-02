@@ -20,7 +20,7 @@ use Test::More tests => 55;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::Header;
 use Amanda::Debug;
 use Installcheck;

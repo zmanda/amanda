@@ -18,7 +18,7 @@
 
 use Test::More tests => 33;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err $diskname);

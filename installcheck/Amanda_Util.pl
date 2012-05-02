@@ -18,7 +18,7 @@
 
 use Test::More tests => 130;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use warnings;
 use strict;
 use Data::Dumper;

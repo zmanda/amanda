@@ -22,7 +22,7 @@ use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS EINTR );
 use IO::Pipe;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::MainLoop qw( :GIOCondition make_cb define_steps step );
 use Amanda::Util;
 

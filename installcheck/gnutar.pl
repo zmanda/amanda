@@ -23,7 +23,7 @@ use POSIX qw( WIFEXITED );
 use warnings;
 use strict;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use IPC::Open3;
 use Amanda::Constants;

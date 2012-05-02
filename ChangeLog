@@ -1,3 +1,6 @@
+2012-05-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/*.pl: use lib '@amperldir@';
+
 2012-05-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Add --decrypt, --no-decrypt,
 	  --server-decrypt, --client-decrypt, --compress, --no-compress,

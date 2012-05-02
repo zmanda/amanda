@@ -20,7 +20,7 @@ use Test::More tests => 10;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run qw( run run_get );
 use Installcheck::Catalogs;

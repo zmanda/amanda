@@ -18,7 +18,7 @@
 
 use Test::More tests => 2;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use File::Path;
 use Installcheck;
 use Installcheck::Config;

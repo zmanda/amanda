@@ -20,7 +20,7 @@ use Test::More tests => 41;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use File::Find;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Device qw( :constants );

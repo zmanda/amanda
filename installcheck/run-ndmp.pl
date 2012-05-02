@@ -22,8 +22,8 @@
 # installchecks.  Note that you will need to run the =setupcache installcheck
 # first, to generate the cached NDMP dump.
 
-use lib "@top_srcdir@/installcheck";
-use lib "@amperldir@";
+use lib '@top_srcdir@/installcheck';
+use lib '@amperldir@';
 
 use Installcheck;
 use Installcheck::Mock;

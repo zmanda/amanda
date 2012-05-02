@@ -23,7 +23,7 @@ use warnings;
 # This test only puts the perl wrappers through their paces -- the underlying
 # library is well-covered by amar-test.
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Amanda::Archive;
 use Amanda::Paths;

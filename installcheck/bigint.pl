@@ -20,7 +20,7 @@ use Test::More tests => 74;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::Tests;
 use Math::BigInt;
 use Amanda::BigIntCompat;

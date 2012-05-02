@@ -21,7 +21,7 @@ use File::Path;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Data::Dumper;

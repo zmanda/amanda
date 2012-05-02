@@ -22,7 +22,7 @@ use warnings;
 
 use Data::Dumper;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::ClientService;
 use Amanda::Constants;
 use Amanda::Util;

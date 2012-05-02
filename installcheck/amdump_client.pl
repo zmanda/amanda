@@ -20,7 +20,7 @@ use Test::More tests => 3;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname amdump_diag);

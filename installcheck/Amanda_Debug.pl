@@ -21,7 +21,7 @@ use File::Path;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::Debug qw( :logging );
 use Amanda::Config;
 

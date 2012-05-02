@@ -18,7 +18,7 @@
 
 use Test::More tests => 15;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use strict;
 use warnings;
 use Installcheck;

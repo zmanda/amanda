@@ -20,7 +20,7 @@ use Test::More tests => 4;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Dumpcache;
 use Installcheck::Catalogs;

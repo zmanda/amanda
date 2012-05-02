@@ -22,7 +22,7 @@ use Data::Dumper;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run qw( load_vtape_res );
 use Installcheck::Mock;

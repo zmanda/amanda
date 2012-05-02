@@ -20,7 +20,7 @@ use Test::More tests => 43;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::Paths;
 use Amanda::Cmdline qw( header_matches_dumpspecs );
 use Amanda::Header;

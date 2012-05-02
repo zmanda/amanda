@@ -22,7 +22,7 @@ use Data::Dumper;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );;

@@ -20,7 +20,7 @@ use Test::More tests => 26;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );

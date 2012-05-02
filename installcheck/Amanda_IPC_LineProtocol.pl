@@ -20,7 +20,7 @@ use Test::More tests => 6;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Amanda::IPC::LineProtocol;
 use IO::Handle;

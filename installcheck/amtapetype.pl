@@ -20,7 +20,7 @@ use Test::More tests => 5;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Run qw(run run_get run_err vtape_dir);
 
 use File::Path qw(rmtree);

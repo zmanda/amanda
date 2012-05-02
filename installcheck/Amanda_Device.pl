@@ -23,7 +23,7 @@ use Carp;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Mock;
 use Installcheck::Config;

@@ -23,7 +23,7 @@ use warnings;
 use File::Path;
 use Data::Dumper;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 
 use Installcheck;
 use Amanda::Report;

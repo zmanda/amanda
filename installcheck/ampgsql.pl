@@ -18,7 +18,7 @@
 
 use Test::More tests => 74;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use strict;
 use warnings;
 use Amanda::Constants;

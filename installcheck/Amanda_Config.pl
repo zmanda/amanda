@@ -21,7 +21,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tests;

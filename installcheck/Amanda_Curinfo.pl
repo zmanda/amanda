@@ -23,7 +23,7 @@ use warnings;
 use File::Path qw(mkpath);
 use Data::Dumper;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( slurp burp sanitise_filename );

@@ -20,7 +20,7 @@ use Test::More tests => 22;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Amanda::Config::FoldingHash;
 use Data::Dumper;
 

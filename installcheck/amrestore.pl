@@ -20,7 +20,7 @@ use Test::More tests => 39;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Mock;

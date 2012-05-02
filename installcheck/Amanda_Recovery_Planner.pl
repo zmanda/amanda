@@ -22,7 +22,7 @@ use Data::Dumper;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Run;
 use Installcheck::Catalogs;
 use Amanda::Config qw( :init :getconf config_dir_relative );

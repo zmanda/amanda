@@ -21,7 +21,7 @@ use File::Path;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Changer;
 use Amanda::Paths;

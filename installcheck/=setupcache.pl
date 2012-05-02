@@ -18,7 +18,7 @@
 
 use Test::More qw( no_plan );
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Dumpcache;
 
 Installcheck::Dumpcache::create_all();

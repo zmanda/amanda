@@ -21,7 +21,7 @@ use File::Path;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Mock qw( setup_mock_mtx );
 use Installcheck::Run qw( run run_get run_err );

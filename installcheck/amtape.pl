@@ -20,7 +20,7 @@ use Test::More tests => 42;
 use strict;
 use warnings;
 
-use lib "@amperldir@";
+use lib '@amperldir@';
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err run_get load_vtape vtape_dir);
 use Amanda::Device qw( :constants );
