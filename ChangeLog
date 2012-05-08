@@ -1,4 +1,7 @@
 2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device.pl: Fix indirect tcp.
+
+2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Handle indirect tcp.
 	* device-src/ndmp-device.c: Add INDIRECT property.
 	* installcheck/Amanda_Device.pl: Test indirect tcp.

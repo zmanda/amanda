@@ -1555,7 +1555,7 @@ SKIP: {
     {
 	ok($dev->directtcp_supported(), "is a directtcp target");
 
-	$dev->property_set("_force_indirecttcp", 1);
+	$dev->property_set("indirect", 1);
 
 	my $addrs = $dev->listen(1);
 	ok($addrs, "listen returns successfully") or die($dev->error_or_status());
