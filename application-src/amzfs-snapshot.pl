@@ -193,7 +193,7 @@ my $pfexec = "NO";
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
-    'version'	       > \$opt_version,
+    'version'	       => \$opt_version,
     'execute-where=s'  => \$opt_execute_where,
     'config=s'         => \$opt_config,
     'host=s'           => \$opt_host,
