@@ -680,6 +680,11 @@ access the NDMP server.  The default for both is "ndmp".</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+<varlistentry><term>INDIRECT</term><listitem>
+(read-write) Set to "yes" if the ndmp server doesn't allow to set a window length to 0.
+The default is "no".
+</listitem></varlistentry>
+ <!-- ==== -->
 <varlistentry><term>NDMP_AUTH</term><listitem>
 (read-write) Authentication method to use to connect to the NDMP server.  One of
 "md5" (default), "text", "none" (for an empty authentication attempt) or "void" (for

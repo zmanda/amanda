@@ -2609,7 +2609,6 @@ int
 ndmp_4to9_data_get_env_free_reply (
   ndmp9_data_get_env_reply *reply9)
 {
-g_debug("ndmp_4to9_data_get_env_free_reply");
 	ndmp_4to9_pval_vec_free(reply9->env.env_val, reply9->env.env_len);
 }
 
