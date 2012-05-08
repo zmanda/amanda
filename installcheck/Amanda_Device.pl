@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 593;
+use Test::More tests => 609;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -1312,7 +1312,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "not built with ndmp and server", 78 unless
+    skip "not built with ndmp and server", 84 unless
 	Amanda::Util::built_with_component("ndmp") and
 	Amanda::Util::built_with_component("server");
 
@@ -1533,6 +1533,101 @@ SKIP: {
 	});
 
 	Amanda::MainLoop::call_later($finish_connection);
+	Amanda::MainLoop::run();
+	is_deeply([@messages], [
+		'WRITE-OK-491520-!eof-!eom',
+		'WRITE-OK-491520-!eof-!eom',
+		'WRITE-OK-131072-EOF-!eom',
+	    ],
+	    "a sequence of write_from_connection calls works correctly");
+
+	$dev->finish();
+
+	if (my $err = $conn->close()) {
+	    die $err;
+	}
+    }
+
+    #
+    # Test indirecttcp
+    # 
+
+    {
+	ok($dev->directtcp_supported(), "is a directtcp target");
+
+	$dev->property_set("_force_indirecttcp", 1);
+
+	my $addrs = $dev->listen(1);
+	ok($addrs, "listen returns successfully") or die($dev->error_or_status());
+
+	# fork off to evaluate the indirecttcp addresses and then set up an
+	# xfer to write to the device
+	if (POSIX::fork() == 0) {
+	    my $sockresult = `nc localhost $addrs->[0][1] < /dev/null`;
+
+	    my @sockresult = map { [ split(/:/, $_) ] } split(/ /, $sockresult);
+	    $addrs = [ map { $_->[1] = 0 + $_->[1]; $_ } @sockresult ];
+
+	    my $xfer = Amanda::Xfer->new([
+		    Amanda::Xfer::Source::Random->new(32768*34, 0xB00),
+		    Amanda::Xfer::Dest::DirectTCPConnect->new($addrs) ]);
+
+	    $xfer->start(make_cb(xmsg_cb => sub {
+		my ($src, $msg, $xfer) = @_;
+		if ($msg->{'type'} == $XMSG_ERROR) {
+		    die $msg->{'elt'} . " failed: " . $msg->{'message'};
+		} elsif ($msg->{'type'} == $XMSG_DONE) {
+		    Amanda::MainLoop::quit();
+		}
+	    }));
+
+	    Amanda::MainLoop::run();
+	    exit(0);
+	}
+
+	# write files from the connection until EOF
+	my @messages;
+	my $num_files;
+	my $conn;
+	my ($call_accept, $start_device, $write_file_cb);
+
+	$call_accept = make_cb(call_accept => sub {
+	    $conn = $dev->accept();
+	    Amanda::MainLoop::call_later($start_device);
+	});
+
+	$start_device = make_cb(start_device => sub {
+	    ok($dev->start($ACCESS_WRITE, "TEST2", "20090915000000"),
+		"start device in write mode")
+		or diag $dev->error_or_status();
+
+	    Amanda::MainLoop::call_later($write_file_cb);
+	});
+
+	$write_file_cb = make_cb(write_file_cb => sub {
+	    ++$num_files < 20 or die "I seem to be in a loop!";
+
+	    ok($dev->start_file($hdr), "start file $num_files for writing");
+	    is($dev->file, $num_files, "..file number is correct");
+
+	    my ($ok, $size) = $dev->write_from_connection(32768*15);
+	    push @messages, sprintf("WRITE-%s-%d-%s-%s",
+		$ok?"OK":"ERR", $size,
+		$dev->is_eof()? "EOF":"!eof",
+		$dev->is_eom()? "EOM":"!eom");
+	    ok($ok, "..write from connection succeeds");
+	    my $eof = $dev->is_eof();
+
+	    ok($dev->finish_file(), "..finish file after writing");
+
+	    if (!$eof) {
+		Amanda::MainLoop::call_later($write_file_cb);
+	    } else {
+		Amanda::MainLoop::quit();
+	    }
+	});
+
+	Amanda::MainLoop::call_later($call_accept);
 	Amanda::MainLoop::run();
 	is_deeply([@messages], [
 		'WRITE-OK-491520-!eof-!eom',

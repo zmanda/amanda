@@ -1,3 +1,10 @@
+2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Handle indirect tcp.
+	* device-src/ndmp-device.c: Add INDIRECT property.
+	* installcheck/Amanda_Device.pl: Test indirect tcp.
+	* man/xml-source/amanda-devices.7.xml: Document INDIRECT property.
+	* ndmp-src/ndmp4_translate.c: remove debugging statement.
+
 2012-05-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Add --decrypt, --no-decrypt,
 	  --server-decrypt, --client-decrypt, --compress, --no-compress,
