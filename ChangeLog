@@ -1,4 +1,8 @@
 2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c, common-src/match.c, common-src/util.c,
+	  device-src/s3.c: Fix for deprecated G_STATIC_MUTEX_INIT.
+
+2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Device.pl: Fix indirect tcp.
 
 2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
