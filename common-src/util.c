@@ -1146,7 +1146,14 @@ char * portable_readdir(DIR* handle) {
     struct dirent *entry_p;
 #endif
 
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+# pragma GCC diagnostic pop
+#else
+    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+#endif
 
     g_static_mutex_lock(&mutex);
 

@@ -36,7 +36,14 @@
  * New Implementation
  */
 
-static GStaticMutex lock_lock = G_STATIC_MUTEX_INIT;
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+  static GStaticMutex lock_lock = G_STATIC_MUTEX_INIT;
+# pragma GCC diagnostic pop
+#else
+  static GStaticMutex lock_lock = G_STATIC_MUTEX_INIT;
+#endif
 static GHashTable *locally_locked_files = NULL;
 static int lock_rw_rd(file_lock *lock, short l_type);
 
