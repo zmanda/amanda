@@ -1563,6 +1563,8 @@ SKIP: {
 	# fork off to evaluate the indirecttcp addresses and then set up an
 	# xfer to write to the device
 	if (POSIX::fork() == 0) {
+	    # allow other process to start listening.
+	    sleep 1;
 	    my $sockresult = `nc localhost $addrs->[0][1] < /dev/null`;
 
 	    my @sockresult = map { [ split(/:/, $_) ] } split(/ /, $sockresult);
