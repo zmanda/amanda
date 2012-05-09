@@ -1,3 +1,6 @@
+2012-05-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: print to debug the result of portable_readdir.
+
 2012-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amreport.pl: Comment a test that fail too often.
 

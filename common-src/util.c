@@ -1080,14 +1080,19 @@ int search_directory(DIR * handle, const char * regex,
         int result;
         read_name = portable_readdir(handle);
         if (read_name == NULL) {
+	    g_debug("portable_readdir returned NULL: %d", rval);
             regfree(&compiled_regex);
             return rval;
 	}
         result = regexec(&compiled_regex, read_name, 0, NULL, 0);
         if (result == 0) {
             rval ++;
+	    g_debug("regex '%s' matched '%s': %d", regex, read_name, rval);
             done = !functor(read_name, user_data);
-        }
+	    g_debug("done %d", done);
+        } else {
+	    g_debug("regex '%s' does not matched '%s'", regex, read_name);
+	}
         amfree(read_name);
     }
     regfree(&compiled_regex);
