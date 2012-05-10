@@ -1,3 +1,9 @@
+2012-05-10 Dan Locks <dwlocks@zmanda.com>
+	* configure.in: update AC_INIT usage, specify tar-ustar and minimum
+	  automake version.
+	* config/amanda/version.m4: create new AMANDA_INIT_VERSION macro to
+	  read FULL_VERSION or VERSION before AC_INIT.
+
 2012-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/progs.m4: Define AMANDA_PROG_NC, set NC, NC6 and
 	  NETCAT.
