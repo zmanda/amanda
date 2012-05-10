@@ -1,18 +1,35 @@
 # Amanda version handling macros
 
+# SYNOPSIS
+#
+#   AMANDA_INIT_VERSION
+#
+# DESCRIPTION
+#
+#   Create a macro, AMANDA_F_VERSION using only m4 which can expand
+#   legally before AC_INIT.  AC_INIT requires the version to be a
+#   string not a shell variable. Include FULL_VERSION if it exists, otherwise
+#   use VERSION.  -I dirs are searched for FULL_VERSION and VERSION.
+#
+AC_DEFUN([AMANDA_INIT_VERSION],
+[
+    m4_syscmd([test -f FULL_VERSION])
+    m4_if(m4_sysval, [0],
+    [
+        m4_define([AMANDA_F_VERSION], m4_chomp(m4_include([FULL_VERSION])))
+    ],
+    [
+        m4_define([AMANDA_F_VERSION], m4_chomp(m4_include([VERSION])))
+
+    ])
+    VERSION=AMANDA_F_VERSION
+])
+
 AC_DEFUN([AMANDA_VERSION],
 [
     AMANDA_GET_SVN_INFO
     AMANDA_GET_GIT_INFO
 
-    if test -f FULL_VERSION; then
-	VERSION=`cat FULL_VERSION`
-    else if test -f $srcdir/FULL_VERSION; then
-	VERSION=`cat $srcdir/FULL_VERSION`
-    else
-	VERSION=`cat $srcdir/VERSION`
-    fi
-    fi
     AC_MSG_NOTICE("version: $VERSION")
 ])
 
@@ -49,7 +66,7 @@ AC_DEFUN([AMANDA_SNAPSHOT_STAMP],
 # DESCRIPTION
 #
 #   Set the version number of this release of Amanda from the VERSION
-#   string, which is set in AM_INIT_AUTOMAKE.  Sets VERSION_MAJOR,
+#   string, which is set in AC_INIT.  Sets VERSION_MAJOR,
 #   VERSION_MINOR, VERSION_PATCH, and VERSION_COMMENT to the 
 #   corresponding components of VERSION.  These four variables are
 #   also AC_DEFINE'd
