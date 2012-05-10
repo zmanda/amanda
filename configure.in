@@ -1,4 +1,5 @@
-AC_INIT
+AMANDA_INIT_VERSION
+AC_INIT([amanda], [AMANDA_F_VERSION])
 AC_CONFIG_SRCDIR([common-src/amanda.h])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -8,7 +9,7 @@ PACKAGE=amanda
 AC_SUBST(PACKAGE)
 
 AMANDA_VERSION
-AM_INIT_AUTOMAKE(amanda, $VERSION)
+AM_INIT_AUTOMAKE(tar-ustar 1.10)
 AC_CONFIG_HEADERS([config/config.h])
 
 dnl Minimum Autoconf version required.
