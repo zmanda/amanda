@@ -144,6 +144,7 @@ AMANDA_PROG_PERL
 AMANDA_PROG_SWIG
 AMANDA_PS_ARGUMENT
 AMANDA_PROG_RPCGEN
+AMANDA_PROG_NC
 
 dnl -------------------------------------------------------------------------
 
