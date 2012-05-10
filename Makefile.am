@@ -1,5 +1,5 @@
 ## Process this file with automake to produce Makefile.in
-AUTOMAKE_OPTIONS = 1.4 foreign
+AUTOMAKE_OPTIONS = 1.10 foreign
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
