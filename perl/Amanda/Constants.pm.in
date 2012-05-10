@@ -106,6 +106,9 @@ $VXDUMP = "@VXDUMP@";
 $VXRESTORE = "@VXRESTORE@";
 $XFSDUMP = "@XFSDUMP@";
 $XFSRESTORE = "@XFSRESTORE@";
+$NC = "@NC@";
+$NC6 = "@NC6@";
+$NETCAT = "@NETCAT@";
 
 # non-AC_SUBST'd constants
 

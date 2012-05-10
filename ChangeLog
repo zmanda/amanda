@@ -1,3 +1,6 @@
+2012-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Constants.pm.in: Add NC, NC6 and NETCAT.
+
 2012-05-10 Dan Locks <dwlocks@zmanda.com>
 	* configure.in: update AC_INIT usage, specify tar-ustar and minimum
 	  automake version.
