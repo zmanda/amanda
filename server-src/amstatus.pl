@@ -259,8 +259,8 @@ while($lineX = <AMDUMP>) {
 			$dump_started{$hostpart}=-1;
 			$level{$hostpart}=$line[5];
 			$error{$hostpart}="planner: " . $line[6];
-   	} elsif($line[1] eq "time") {
-   		if($line[3] eq "got") {
+	} elsif($line[1] eq "time") {
+		if($line[3] eq "got") {
 				if($line[4] eq "result") {
 					$host = $line[7];
 					$partition = $line[9];
@@ -410,6 +410,7 @@ while($lineX = <AMDUMP>) {
 					}
 					$running_dumper{$dumper} = $hostpart;
 					$error{$hostpart}="";
+					$taper_error{$hostpart}="";
 					$size{$hostpart} = 0;
 					$dumpers_active++;
 					if(! defined($dumpers_active[$dumpers_active])) {
@@ -483,6 +484,7 @@ while($lineX = <AMDUMP>) {
 					$taper_started{$hostpart}=1;
 					$taper_finished{$hostpart}=0;
 					$taper_time{$hostpart}=$current_time;
+					$taper_error{$hostpart}="";
 					$ntchunk_size = 0;
 				}
 				elsif($line[6] eq "PORT-WRITE") {
@@ -498,6 +500,7 @@ while($lineX = <AMDUMP>) {
 					$taper_started{$hostpart}=1;
 					$taper_finished{$hostpart}=0;
 					$taper_time{$hostpart}=$current_time;
+					$taper_error{$hostpart}="";
 					$size{$hostpart} = 0;
 					$ntchunk_size = 0;
 				}
@@ -518,10 +521,12 @@ while($lineX = <AMDUMP>) {
 						$dump_finished{$hostpart}=-3;
 					}
 					$busy_time{$line[5]}+=($current_time-$dump_time{$hostpart});
-			      $running_dumper{$line[5]} = "0";
-			      $dump_time{$hostpart}=$current_time;
-			      $error{$hostpart}="dumper: $error";
-			      $dumpers_active--;
+					$running_dumper{$line[5]} = "0";
+					$dump_time{$hostpart}=$current_time;
+					if (!$taper_error{$hostpart}) {
+						$error{$hostpart}="dumper: $error";
+					}
+					$dumpers_active--;
 
 				}
 				elsif($line[6] eq "DONE") {
@@ -597,15 +602,16 @@ while($lineX = <AMDUMP>) {
 			}
 			elsif($line[5] eq "taper") {
 				if($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
-					#7:handle 8:label 9:filenum 10:errstr
+					#DONE:    7:handle 8:label 9:filenum 10:errstr
+					#PARTIAL: 7:handle 8:INPUT-* 9:TAPE-* 10:errstr 11:INPUT-MSG 12:TAPE-MSG
 					$serial=$line[7];
-					$label=$line[8];
+
 					$status_taper = "Idle";
 					$hostpart=$serial{$serial};
 					$line[10] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
 					if ($2 eq 'kb') {
 						$size=$3 / $unitdivisor;
-				   } else {
+					} else {
 						$size=$3 / ( $unitdivisor * 1024);
 					}
 					$taper_finished{$hostpart}=1;
@@ -624,6 +630,10 @@ while($lineX = <AMDUMP>) {
 					}
 					if ($line[6] eq "PARTIAL") {
 						$partial{$hostpart} = 1;
+						if ($line[9] eq "TAPE-ERROR") {
+							$error{$hostpart} = "taper: $line[12]";
+							$taper_error{$hostpart} = "taper: $line[12]";
+						}
 					}
 					else {
 						$partial{$hostpart} = 0;
@@ -933,7 +943,7 @@ foreach $host (sort @hosts) {
 						$taper_started{$hostpart}==1 &&
 						$dump_finished{$hostpart}!=-3) {
 					if(defined $dump_started{$hostpart} &&
-					   	$dump_started{$hostpart} == 1 &&
+						$dump_started{$hostpart} == 1 &&
 							$dump_finished{$hostpart} == -1) {
 						if(defined $opt_failed) {
 							printf "%8s ", $datestamp if defined $opt_date;
@@ -946,7 +956,7 @@ foreach $host (sort @hosts) {
 						$fpartition++;
 						$fsize+=$esize{$hostpart};
 					} elsif(defined $dump_started{$hostpart} &&
-					   	$dump_started{$hostpart} == 1 &&
+						$dump_started{$hostpart} == 1 &&
 							$dump_finished{$hostpart} == 0 &&
 							$taper_started{$hostpart} == 1) {
 						if( defined $opt_dumpingtape ||
@@ -1072,7 +1082,7 @@ foreach $host (sort @hosts) {
 								print " failed to flush";
 							}
 							print ": ",$error{$hostpart} if defined $error{$hostpart};
-						
+
 							print " (will retry)" unless $taper_finished{$hostpart} < -1;
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
