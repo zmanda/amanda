@@ -1,4 +1,8 @@
 2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm (FAILED): Ignore if dump is already
+	  cancelled.
+
+2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/event.c: Improve debugging.
 	* server-src/dumper.c: Close data output in stop_dump.
 
