@@ -33,6 +33,7 @@ use Amanda::Config qw( :getconf :init );
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::Paths;
+use Amanda::Constants;
 use Amanda::Util;
 use Amanda::MainLoop;
 use IO::Socket;
@@ -1565,7 +1566,10 @@ SKIP: {
 	if (POSIX::fork() == 0) {
 	    # allow other process to start listening.
 	    sleep 1;
-	    my $sockresult = `nc localhost $addrs->[0][1] < /dev/null`;
+	    my $nc = $Amanda::Constants::NC;
+	    $nc = $Amanda::Constants::NC6 if !$nc;
+	    $nc = $Amanda::Constants::NETCAT if !$nc;
+	    my $sockresult = `$nc localhost $addrs->[0][1] < /dev/null`;
 
 	    my @sockresult = map { [ split(/:/, $_) ] } split(/ /, $sockresult);
 	    $addrs = [ map { $_->[1] = 0 + $_->[1]; $_ } @sockresult ];

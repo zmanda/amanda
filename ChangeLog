@@ -1,3 +1,10 @@
+2012-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/progs.m4: Define AMANDA_PROG_NC, set NC, NC6 and
+	  NETCAT.
+	* configure.in: use AMANDA_PROG_NC.
+	* installcheck/Amanda_Device.pl: Use them.
+	* perl/Amanda/Constants.pm.in: Add NC, NC6 and NETCAT.
+
 2012-05-10 Dan Locks <dwlocks@zmanda.com>
 	* configure.in: update AC_INIT usage, specify tar-ustar and minimum
 	  automake version.
