@@ -1,4 +1,8 @@
 2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: g_thread_supported always return TRUE on
+	  newer version.
+
+2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: replaced deprecated functions g_strncasecmp
 	  and g_strcasecmp with g_ascii_strncasecmp and g_ascii_strcasecmp.
 
