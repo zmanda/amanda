@@ -428,7 +428,7 @@ s3_error_code_from_name(char *s3_error_name)
 
     /* do a brute-force search through the list, since it's not sorted */
     for (i = 0; i < S3_ERROR_END; i++) {
-        if (g_strcasecmp(s3_error_name, s3_error_code_names[i]) == 0)
+        if (g_ascii_strcasecmp(s3_error_name, s3_error_code_names[i]) == 0)
             return i;
     }
 
@@ -753,7 +753,7 @@ interpret_response(S3Handle *hdl,
 
     /* check ETag, if present */
     if (etag && content_md5 && 200 == response_code) {
-        if (etag && g_strcasecmp(etag, content_md5))
+        if (etag && g_ascii_strcasecmp(etag, content_md5))
             hdl->last_message = g_strdup("S3 Error: Possible data corruption (ETag returned by Amazon did not match the MD5 hash of the data sent)");
         else
             ret = FALSE;
@@ -1700,17 +1700,17 @@ list_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
     thunk->want_text = 0;
-    if (g_strcasecmp(element_name, "contents") == 0) {
+    if (g_ascii_strcasecmp(element_name, "contents") == 0) {
         thunk->in_contents = 1;
-    } else if (g_strcasecmp(element_name, "commonprefixes") == 0) {
+    } else if (g_ascii_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 1;
-    } else if (g_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
+    } else if (g_ascii_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->want_text = 1;
-    } else if (g_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
+    } else if (g_ascii_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
         thunk->want_text = 1;
-    } else if (g_strcasecmp(element_name, "istruncated")) {
+    } else if (g_ascii_strcasecmp(element_name, "istruncated")) {
         thunk->want_text = 1;
-    } else if (g_strcasecmp(element_name, "nextmarker")) {
+    } else if (g_ascii_strcasecmp(element_name, "nextmarker")) {
         thunk->want_text = 1;
     }
 }
@@ -1723,24 +1723,24 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 {
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
-    if (g_strcasecmp(element_name, "contents") == 0) {
+    if (g_ascii_strcasecmp(element_name, "contents") == 0) {
         thunk->in_contents = 0;
-    } else if (g_strcasecmp(element_name, "commonprefixes") == 0) {
+    } else if (g_ascii_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 0;
-    } else if (g_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
+    } else if (g_ascii_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
         thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
         thunk->text = NULL;
-    } else if (g_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
+    } else if (g_ascii_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
 	if (thunk->is_truncated) {
 	    if (thunk->next_marker) g_free(thunk->next_marker);
 	    thunk->next_marker = g_strdup(thunk->text);
 	}
         thunk->text = NULL;
-    } else if (g_strcasecmp(element_name, "istruncated") == 0) {
-        if (thunk->text && g_strncasecmp(thunk->text, "false", 5) != 0)
+    } else if (g_ascii_strcasecmp(element_name, "istruncated") == 0) {
+        if (thunk->text && g_ascii_strncasecmp(thunk->text, "false", 5) != 0)
             thunk->is_truncated = TRUE;
-    } else if (g_strcasecmp(element_name, "nextmarker") == 0) {
+    } else if (g_ascii_strcasecmp(element_name, "nextmarker") == 0) {
         if (thunk->next_marker) g_free(thunk->next_marker);
         thunk->next_marker = thunk->text;
         thunk->text = NULL;
