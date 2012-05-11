@@ -1,3 +1,7 @@
+2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c, common-src/util.c,
+	  device-src/s3.c: Fix for deprecated G_STATIC_MUTEX_INIT.
+
 2012-05-10 Dan Locks <dwlocks@zmanda.com>
 	* configure.in: update AC_INIT usage, specify tar-ustar and minimum
 	  automake version.
