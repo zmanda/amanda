@@ -1,4 +1,8 @@
-2012-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/event.c: Improve debugging.
+	* server-src/dumper.c: Close data output in stop_dump.
+
+2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/progs.m4: Define AMANDA_PROG_NC, set NC, NC6 and
 	  NETCAT.
 	* configure.in: use AMANDA_PROG_NC.

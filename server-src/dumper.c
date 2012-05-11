@@ -73,6 +73,8 @@ struct databuf {
     pid_t encryptpid;		/* valid if fd is pipe to encrypt */
 };
 
+struct databuf *g_databuf = NULL;
+
 typedef struct filter_s {
     int             fd;
     char           *name;
@@ -582,6 +584,7 @@ main(
 		break;
 	    }
 	    databuf_init(&db, outfd);
+	    g_databuf = &db;
 
 	    if (am_has_feature(their_features, fe_req_xml))
 		xml_check_options(options); /* note: modifies globals */
@@ -1895,6 +1898,7 @@ stop_dump(void)
 	}
     }
     aclose(indexout);
+    aclose(g_databuf->fd);
     timeout(0);
 }
 
