@@ -237,10 +237,10 @@ sub FAILED {
     my ($msgtype, %params) = @_;
 
     $self->{'dumper_status'} = "FAILED";
-    if (!defined $self->{'scribe'}->{'xdt'}) {
-	# ignore, the dump is already cancelled.
-    } elsif (defined $self->{'result'}) {
+    if (defined $self->{'result'}) {
 	$self->result_cb(undef);
+    } elsif (!defined $self->{'scribe'}->{'xdt'}) {
+	# ignore, the dump is already cancelled.
     } else { # Abort the dump
 	push @{$self->{'input_errors'}}, "dumper failed";
 	$self->{'scribe'}->cancel_dump(
