@@ -1,4 +1,7 @@
 2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Improve output on taper error.
+
+2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Worker.pm (FAILED): Ignore if dump is already
 	  cancelled.
 
