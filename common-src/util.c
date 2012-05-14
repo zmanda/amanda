@@ -1138,6 +1138,11 @@ add_history(
 # error No readdir() or readdir64() available!
 #endif
 
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
+
 char * portable_readdir(DIR* handle) {
 
 #ifdef USE_DIRENT64
@@ -1146,14 +1151,7 @@ char * portable_readdir(DIR* handle) {
     struct dirent *entry_p;
 #endif
 
-#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
-# pragma GCC diagnostic pop
-#else
-    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
-#endif
 
     g_static_mutex_lock(&mutex);
 
@@ -1174,6 +1172,9 @@ char * portable_readdir(DIR* handle) {
        sure what to do about that case. */
     return strdup(entry_p->d_name);
 }
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic pop
+#endif
 
 int search_directory(DIR * handle, const char * regex,
                      SearchDirectoryFunctor functor, gpointer user_data) {
