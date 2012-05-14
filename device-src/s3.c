@@ -1903,16 +1903,13 @@ compile_regexes(void)
  * Public function implementations
  */
 
-gboolean s3_init(void)
-{
 #if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
-# pragma GCC diagnostic pop
-#else
-    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
 #endif
+gboolean s3_init(void)
+{
+    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
     static gboolean init = FALSE, ret;
 
     /* n.b. curl_global_init is called in common-src/glib-util.c:glib_init() */
@@ -1925,6 +1922,9 @@ gboolean s3_init(void)
     g_static_mutex_unlock(&mutex);
     return ret;
 }
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic pop
+#endif
 
 gboolean
 s3_curl_location_compat(void)
