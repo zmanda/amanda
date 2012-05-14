@@ -1,3 +1,6 @@
+2012-05-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c, device-src/s3.c: Fix for pragma and gcc-4.5.2.
+
 2012-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: g_thread_supported always return TRUE on
 	  newer version.
