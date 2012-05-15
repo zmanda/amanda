@@ -1,4 +1,7 @@
 2012-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device.pl: Correctly count NDMP test.
+
+2012-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Abort if log file already exists.
 
 2012-05-15  Jean-Louis Martineau <martineau@zmanda.com>
