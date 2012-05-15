@@ -711,7 +711,8 @@ search_logfile(
     char *ck_label=NULL;
     int level = 0;
     off_t filenum;
-    char *ck_datestamp, *datestamp;
+    char *ck_datestamp=NULL;
+    char *datestamp;
     char *s;
     int ch;
     disk_t *dp;
@@ -745,6 +746,8 @@ search_logfile(
     filenum = (off_t)0;
     while(get_logline(logf)) {
 	if (curlog == L_START && curprog == P_TAPER) {
+	    amfree(ck_label);
+	    ck_datestamp = NULL;
 	    if(parse_taper_datestamp_log(curstr, &ck_datestamp,
                                          &ck_label) == 0) {
 		g_printf(_("strange log line in %s \"start taper %s\"\n"),
@@ -770,11 +773,14 @@ search_logfile(
 	    }
             amfree(current_label);
             current_label = ck_label;
+	    ck_label = NULL;
             if (datestamp == NULL) {
                 datestamp = g_strdup(ck_datestamp);
             }
 	    filenum = (off_t)0;
 	}
+	if (!datestamp)
+	    continue;
 	if (right_label &&
 	    (curlog == L_SUCCESS ||
 	     curlog == L_CHUNK || curlog == L_PART || curlog == L_PARTPARTIAL) &&

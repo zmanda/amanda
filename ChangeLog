@@ -1,4 +1,7 @@
 2012-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Fix crash when log are corrupted.
+
+2012-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Planner.pm (make_plan_from_filelist): Use the
 	  changer inventory to try to use an already available dump.
 	* server-src/amidxtaped.pl: Pass the changer to make_plan.
