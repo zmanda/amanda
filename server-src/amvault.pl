@@ -141,11 +141,53 @@ sub new {
 	exporting => 0, # is an export in progress?
 	call_after_export => undef, # call this when export complete
 	config_overrides_opts => $params{'config_overrides_opts'},
+	trace_log_filename => getconf($CNF_LOGDIR) . "/log",
 
 	# called when the operation is complete, with the exit
 	# status
 	exit_cb => undef,
     }, $class;
+}
+
+sub run_subprocess {
+    my ($proc, @args) = @_;
+
+    my $pid = POSIX::fork();
+    if ($pid == 0) {
+	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
+	POSIX::dup2($null, 0);
+	POSIX::dup2($null, 1);
+	POSIX::dup2($null, 2);
+	exec $proc, @args;
+	die "Could not exec $proc: $!";
+    }
+    waitpid($pid, 0);
+    my $s = $? >> 8;
+    debug("$proc exited with code $s: $!");
+}
+
+sub do_amcleanup {
+    my $self = shift;
+
+    return 1 unless -f $self->{'trace_log_filename'};
+
+    # logfiles are still around.  First, try an amcleanup -p to see if
+    # the actual processes are already dead
+    debug("runing amcleanup -p");
+    run_subprocess("$sbindir/amcleanup", '-p', $self->{'config_name'},
+		   $self->{'config_overrides_opts'});
+
+    return 1 unless -f $self->{'trace_log_filename'};
+
+    return 0;
+}
+
+sub bail_already_running() {
+    my $self = shift;
+    my $msg = "An Amanda process is already running - please run amcleanup manually";
+    print "$msg\n";
+    debug($msg);
+    $self->{'exit_cb'}->(1);
 }
 
 sub run {
@@ -163,7 +205,20 @@ sub run {
 
     # open up a trace log file and put our imprimatur on it, unless dry_runing
     if (!$self->{'opt_dry_run'}) {
+	if (!$self->do_amcleanup()) {
+	    return $self->bail_already_running();
+	}
 	log_add($L_INFO, "amvault pid $$");
+
+	# Check we own the log file
+	open(my $tl, "<", $self->{'trace_log_filename'})
+	    or die("could not open trace log file '$self->{'trace_log_filename'}': $!");
+	if (<$tl> !~ /^INFO amvault amvault pid $$/) {
+	    debug("another amdump raced with this one, and won");
+	    close($tl);
+	    return $self->bail_already_running();
+	}
+	close($tl);
 	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
 	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 	$self->{'cleanup'}{'roll_trace_log'} = 1;
