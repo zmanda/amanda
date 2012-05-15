@@ -1,3 +1,8 @@
+2012-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Planner.pm (make_plan_from_filelist): Use the
+	  changer inventory to try to use an already available dump.
+	* server-src/amidxtaped.pl: Pass the changer to make_plan.
+
 2012-05-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c, device-src/s3.c: Fix for pragma and gcc-4.5.2.
 
