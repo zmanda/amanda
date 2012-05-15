@@ -403,6 +403,7 @@ sub make_plan {
 
 	return Amanda::Recovery::Planner::make_plan(
 	    filelist => $filelist,
+	    chg => $chg,
 	    $spec? (dumpspec => $spec) : (),
 	    plan_cb => sub { $self->plan_cb(@_); });
     }

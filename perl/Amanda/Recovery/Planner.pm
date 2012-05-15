@@ -395,61 +395,121 @@ sub make_plan_from_filelist {
 	    unless exists $params{$rq_param};
     }
 
-    # This is similarly tricky - in this case, we search for dumps matching
-    # both the dumpspec and the labels, filter that down to just the parts we
-    # want, and then check that only one dump remains.  Then we look up that
-    # dump.
+    my $steps = define_steps
+	cb_ref => \$params{'plan_cb'};
 
-    my @labels;
-    my %files;
-    my @filelist = @{$params{'filelist'}};
-    while (@filelist) {
-	my $label = shift @filelist;
-	push @labels, $label;
-	$files{$label} = shift @filelist;
-    }
+    step get_inventory => sub {
+	if (defined $params{'chg'} and $params{'chg'}->have_inventory()) {
+	    return $params{'chg'}->inventory( inventory_cb => $steps->{'got_inventory'});
+	} else {
+	    return $steps->{'got_inventory'}->(undef, undef);
+	}
+    };
+    step got_inventory => sub {
+	my ($err, $inventory) = @_;
 
-    my @parts = Amanda::DB::Catalog::get_parts(
-	    $params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
-	    labels => [ @labels ]);
+	# This is similarly tricky - in this case, we search for dumps matching
+	# both the dumpspec and the labels, filter that down to just the parts we
+	# want, and then check that only one dump remains.  Then we look up that
+	# dump.
 
-    # filter down to the parts that match filelist (using %files)
-    @parts = grep {
-	my $filenum = $_->{'filenum'};
-	grep { $_ == $filenum } @{$files{$_->{'label'}}};
-    } @parts;
+	my @labels;
+	my %files;
+	my @filelist = @{$params{'filelist'}};
+	while (@filelist) {
+	    my $label = shift @filelist;
+	    push @labels, $label;
+	    $files{$label} = shift @filelist;
+	}
 
-    # extract the dumps, using a hash (on the perl identity of the dump) to
-    # ensure uniqueness
-    my %dumps = map { my $d = $_->{'dump'}; ($d, $d) } @parts;
-    my @dumps = values %dumps;
+	my @parts = Amanda::DB::Catalog::get_parts(
+		$params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
+		labels => [ @labels ]);
 
-    if (!@dumps) {
-	return $params{'plan_cb'}->(
+	# filter down to the parts that match filelist (using %files)
+	@parts = grep {
+	    my $filenum = $_->{'filenum'};
+	    grep { $_ == $filenum } @{$files{$_->{'label'}}};
+	} @parts;
+
+	# extract the dumps, using a hash (on the perl identity of the dump) to
+	# ensure uniqueness
+	my %dumps = map { my $d = $_->{'dump'}; ($d, $d) } @parts;
+	my @dumps = values %dumps;
+
+	if (!@dumps) {
+	    return $params{'plan_cb'}->(
 		"Specified file list does not match dumpspec");
-    } elsif (@dumps > 1) {
-	return $params{'plan_cb'}->(
-		"Specified file list matches multiple dumps; cannot continue recovery");
-    }
+	} elsif (@dumps > 1) {
+	    # Check if they are all for the same dump
+	    my $dump_timestamp = $dumps[0]->{'dump_timestamp'};
+	    my $hostname = $dumps[0]->{'hostname'};
+	    my $diskname = $dumps[0]->{'diskname'};
+	    my $level = $dumps[0]->{'level'};
+	    my $orig_kb = $dumps[0]->{'orig_kb'};
 
-    # now, because of the weak linking used by Amanda::DB::Catalog, we need to
-    # re-query for this dump.  If we don't do this, the parts will all be
-    # garbage-collected when we hand back the plan.  This is, chartiably, "less than
-    # ideal".  Note that this has the side-effect of filling in any parts of the
-    # dump that were missing from the filelist.
-    @dumps = Amanda::DB::Catalog::get_dumps(
-	hostname => $dumps[0]->{'hostname'},
-	diskname => $dumps[0]->{'diskname'},
-	level => $dumps[0]->{'level'},
-	dump_timestamp => $dumps[0]->{'dump_timestamp'},
-	write_timestamp => $dumps[0]->{'write_timestamp'},
-	dumpspecs => $params{'dumpspecs'});
+	    foreach my $dump (@dumps) {
+		if ($dump_timestamp != $dump->{'dump_timestamp'} ||
+		    $hostname ne $dump->{'hostname'} ||
+		    $diskname ne $dump->{'diskname'} ||
+		    $level != $dump->{'level'} ||
+		    $orig_kb != $dump->{'orig_kb'}) {
+		    return $params{'plan_cb'}->(
+			"Specified file list matches multiple dumps; cannot continue recovery");
+		}
+	    }
 
-    # sanity check
-    die unless @dumps;
-    $self->{'dumps'} = [ $dumps[0] ];
+	    # I would prefer the Planner to return alternate dump and the Clerk
+	    # choose which one to use
+	    if (defined $inventory) {
+		for my $dump (@dumps) {
+		    my $all_part_found = 0;
+		    my $part_found = 1;
+		    for my $part (@{$dump->{'parts'}}) {
+			next if !defined $part;
+		        my $found = 0;
+			foreach my $sl (@$inventory) {
+			    if (defined $sl->{'label'} and
+				$sl->{'label'} eq $part->{'label'}) {
+				$found = 1;
+				last;
+			    }
+			}
+			if ($found == 0) {
+			    $part_found = 0;
+			    last;
+			}
+		    }
+		    if ($part_found == 1) {
+			@dumps = $dumps[0];
+			last;
+		    }
+		}
+		# the first one will be used
+	    } else {
+		# will uses the first dump.
+	    }
+	}
 
-    Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
+	# now, because of the weak linking used by Amanda::DB::Catalog, we need to
+	# re-query for this dump.  If we don't do this, the parts will all be
+	# garbage-collected when we hand back the plan.  This is, chartiably, "less
+	# than ideal".  Note that this has the side-effect of filling in any parts of
+	# the dump that were missing from the filelist.
+	@dumps = Amanda::DB::Catalog::get_dumps(
+	    hostname => $dumps[0]->{'hostname'},
+	    diskname => $dumps[0]->{'diskname'},
+	    level => $dumps[0]->{'level'},
+	    dump_timestamp => $dumps[0]->{'dump_timestamp'},
+	    write_timestamp => $dumps[0]->{'write_timestamp'},
+	    dumpspecs => $params{'dumpspecs'});
+
+	# sanity check
+	die unless @dumps;
+	$self->{'dumps'} = [ $dumps[0] ];
+
+	Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
+    };
 }
 
 sub split_dumps_per_part {
