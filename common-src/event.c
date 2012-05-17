@@ -329,7 +329,7 @@ any_mainloop_events(void)
 
     for (iter = all_events; iter != NULL; iter = g_slist_next(iter)) {
 	event_handle_t *hdl = (event_handle_t *)iter->data;
-	event_debug(2, _("list %p: %s/%jd"), hdl, event_type2str((hdl)->type), (hdl)->data);
+	event_debug(2, _("list %p: %s/%jd\n"), hdl, event_type2str((hdl)->type), (hdl)->data);
 	if (hdl->type != EV_WAIT)
 	    return TRUE;
     }
