@@ -93,6 +93,7 @@ sub _set_mesgout {
     my $mesgout_fd;
     open ($mesgout_fd, '>&=3') || die("Can't open mesgout_fd: $!");
     $self->{mesgout} = $mesgout_fd;
+    $self->{mesgout}->autoflush(1);
 }
 
 %}
