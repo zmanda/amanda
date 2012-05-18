@@ -301,6 +301,7 @@ if [ "x${1}" = "xserver"  -o "x${1}" = "x" ]; then
     fi
     CONF="--with-amlibdir=/${amlibdir} \
 	--enable-s3-device \
+        --with-libcurl=/opt/csw \
 	CC=/usr/sfw/bin/gcc \
 	PERL=/opt/csw/bin/perl \
 	MTX=/opt/csw/sbin/mtx" ; export CONF

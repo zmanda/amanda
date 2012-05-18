@@ -1,3 +1,6 @@
+2012-05-17 Dan Locks <dwlocks@zmanda.com>
+	* packaging/sun-pkg/buildpkg: add missing --with-libcurl= for server
+
 2012-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/event.c: Add missing "\n" in debugging.
 	* perl/Amanda/Application.swg: Make mesgout autoflush.
