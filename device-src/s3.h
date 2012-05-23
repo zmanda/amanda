@@ -263,6 +263,16 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *client_secret,
 	const char *refresh_token);
 
+/* latest step of setting up the S3Handle.
+ *
+ * Must be done after all properties are set.
+ *
+ * @param hdl: the S3Handle to set up.
+ * @returns: false if an error occured
+ */
+gboolean
+s3_open2(S3Handle *hdl);
+
 /* Deallocate an S3Handle
  *
  * @param hdl: the S3Handle object

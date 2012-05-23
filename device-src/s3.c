@@ -2115,17 +2115,27 @@ s3_open(const char *access_key,
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;
 
-    /* get the X-Storage-Url and X-Auth-Token */
-    if (s3_api == S3_API_SWIFT_1) {
-	get_openstack_swift_api_v1_setting(hdl);
-    } else if (s3_api == S3_API_SWIFT_2) {
-	get_openstack_swift_api_v2_setting(hdl);
-    }
     return hdl;
 
 error:
     s3_free(hdl);
     return NULL;
+}
+
+gboolean
+s3_open2(
+    S3Handle *hdl)
+{
+    gboolean ret = TRUE;
+
+    /* get the X-Storage-Url and X-Auth-Token */
+    if (hdl->s3_api == S3_API_SWIFT_1) {
+	ret = get_openstack_swift_api_v1_setting(hdl);
+    } else if (hdl->s3_api == S3_API_SWIFT_2) {
+	ret = get_openstack_swift_api_v2_setting(hdl);
+    }
+
+    return ret;
 }
 
 void
