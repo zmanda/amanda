@@ -1,3 +1,8 @@
+2012-05-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Call s3_open2 after setting properties.
+	* device-src/s3.c (s3_open2): New function.
+	* device-src/s3.h (s3_open2): Prototype.
+
 2012-05-17 Dan Locks <dwlocks@zmanda.com>
 	* packaging/sun-pkg/buildpkg: add missing --with-libcurl= for server
 
@@ -54,7 +59,7 @@
 
 2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Device.pl: sleep to allow other process the time
-          to start listening.
+	  to start listening.
 
 2012-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c, common-src/match.c, common-src/util.c,

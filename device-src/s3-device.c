@@ -2154,18 +2154,6 @@ static gboolean setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		self->nb_threads = thread+1;
                 return FALSE;
-            } else if (self->s3_api == S3_API_SWIFT_1 ||
-		       self->s3_api == S3_API_SWIFT_2) {
-		s3_error(self->s3t[0].s3, NULL, &response_code,
-			&s3_error_code, NULL, &curl_code, NULL);
-		if (response_code != 200) {
-		    device_set_error(d_self,
-			g_strdup_printf(_("Internal error creating S3 handle: %s"),
-					s3_strerror(self->s3t[0].s3)),
-			DEVICE_STATUS_DEVICE_ERROR);
-		    self->nb_threads = thread+1;
-		    return FALSE;
-		}
 	    }
         }
 
@@ -2177,33 +2165,56 @@ static gboolean setup_handle(S3Device * self) {
 					      self->nb_threads, 0, NULL);
 	self->thread_pool_read = g_thread_pool_new(s3_thread_read_block, self,
 					      self->nb_threads, 0, NULL);
-    }
 
-    for (thread = 0; thread < self->nb_threads; thread++) {
-	s3_verbose(self->s3t[thread].s3, self->verbose);
+	for (thread = 0; thread < self->nb_threads; thread++) {
+	    s3_verbose(self->s3t[thread].s3, self->verbose);
 
-	if (!s3_use_ssl(self->s3t[thread].s3, self->use_ssl)) {
-	    device_set_error(d_self, g_strdup_printf(_(
-                "Error setting S3 SSL/TLS use "
-                "(tried to enable SSL/TLS for S3, but curl doesn't support it?)")),
-	        DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
+	    if (!s3_use_ssl(self->s3t[thread].s3, self->use_ssl)) {
+		device_set_error(d_self, g_strdup_printf(_(
+	                "Error setting S3 SSL/TLS use "
+	                "(tried to enable SSL/TLS for S3, but curl doesn't support it?)")),
+		        DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+
+	    if (self->max_send_speed &&
+		!s3_set_max_send_speed(self->s3t[thread].s3,
+				       self->max_send_speed)) {
+		device_set_error(d_self,
+			g_strdup("Could not set S3 maximum send speed"),
+			DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+
+	    if (self->max_recv_speed &&
+		!s3_set_max_recv_speed(self->s3t[thread].s3,
+				       self->max_recv_speed)) {
+		device_set_error(d_self,
+			g_strdup("Could not set S3 maximum recv speed"),
+			DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
 	}
 
-	if (self->max_send_speed &&
-	    !s3_set_max_send_speed(self->s3t[thread].s3, self->max_send_speed)) {
-	    device_set_error(d_self,
-		g_strdup("Could not set S3 maximum send speed"),
-		DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
-	}
-
-	if (self->max_recv_speed &&
-	    !s3_set_max_recv_speed(self->s3t[thread].s3, self->max_recv_speed)) {
-	    device_set_error(d_self,
-		g_strdup("Could not set S3 maximum recv speed"),
-		DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
+	for (thread = 0; thread < self->nb_threads; thread++) {
+	    if (!s3_open2(self->s3t[thread].s3)) {
+		if (self->s3_api == S3_API_SWIFT_1 ||
+		    self->s3_api == S3_API_SWIFT_2) {
+		    s3_error(self->s3t[0].s3, NULL, &response_code,
+			     &s3_error_code, NULL, &curl_code, NULL);
+		    device_set_error(d_self,
+			    g_strdup_printf(_("s3_open2 failed: %s"),
+					    s3_strerror(self->s3t[0].s3)),
+			    DEVICE_STATUS_DEVICE_ERROR);
+		    self->nb_threads = thread+1;
+		    return FALSE;
+		} else {
+		    device_set_error(d_self,
+				     g_strdup("s3_open2 failed"),
+				     DEVICE_STATUS_DEVICE_ERROR);
+		    return FALSE;
+		}
+	    }
 	}
     }
 
