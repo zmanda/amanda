@@ -473,6 +473,11 @@ default is "YES". If it fail, it revert to single delete.
 (read-write) The password (for swift v2).
 </listitem></varlistentry>
  <!-- ==== -->
+ <!-- ==== -->
+ <varlistentry><term>PROJECT-ID</term><listitem>
+(read-write) The projectid (for google).
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_ACCESS_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>

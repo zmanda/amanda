@@ -158,6 +158,8 @@ struct _S3Device {
     char        *client_id;
     char        *client_secret;
     char        *refresh_token;
+
+    char        *project_id;
 };
 
 /*
@@ -291,6 +293,10 @@ static DevicePropertyBase device_property_client_secret;
 /* The refresh token for OAUTH2 */
 static DevicePropertyBase device_property_refresh_token;
 #define PROPERTY_REFRESH_TOKEN (device_property_refresh_token.ID)
+
+/* The PROJECT ID */
+static DevicePropertyBase device_property_project_id;
+#define PROPERTY_PROJECT_ID (device_property_project_id.ID)
 
 /*
  * prototypes
@@ -525,6 +531,10 @@ static gboolean s3_device_set_client_secret_fn(Device *p_self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_refresh_token_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_project_id_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1074,6 +1084,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_refresh_token,
                                       G_TYPE_STRING, "refresh_token",
        "refresh_token for use with oauth2");
+    device_property_fill_and_register(&device_property_project_id,
+                                      G_TYPE_STRING, "project_id",
+       "project id for use with google");
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
@@ -1409,6 +1422,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
             PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
             device_simple_property_get_fn,
             s3_device_set_refresh_token_fn);
+
+    device_class_register_property(device_class, PROPERTY_PROJECT_ID,
+            PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+            device_simple_property_get_fn,
+            s3_device_set_project_id_fn);
 }
 
 static gboolean
@@ -1917,6 +1935,19 @@ s3_device_set_refresh_token_fn(Device *p_self,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+s3_device_set_project_id_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->project_id);
+    self->project_id = g_value_dup_string(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -2044,14 +2075,6 @@ static gboolean setup_handle(S3Device * self) {
     CURLcode curl_code;
 
     if (self->s3t == NULL) {
-	self->s3t = g_new(S3_by_thread, self->nb_threads);
-	if (self->s3t == NULL) {
-	    device_set_error(d_self,
-		stralloc(_("Can't allocate S3Handle array")),
-		DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
-	}
-
 	if (self->s3_api == S3_API_S3) {
 	    if (self->access_key == NULL || self->access_key[0] == '\0') {
 		device_set_error(d_self,
@@ -2113,6 +2136,21 @@ static gboolean setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
+	    if (self->project_id == NULL ||
+		self->project_id[0] == '\0') {
+		device_set_error(d_self,
+		    g_strdup(_("Missing project_id properties")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
+	}
+
+	self->s3t = g_new0(S3_by_thread, self->nb_threads);
+	if (self->s3t == NULL) {
+	    device_set_error(d_self,
+		g_strdup(_("Can't allocate S3Handle array")),
+		DEVICE_STATUS_DEVICE_ERROR);
+            return FALSE;
 	}
 
 	if (!self->use_ssl && self->ca_info) {
@@ -2230,7 +2268,7 @@ make_bucket(
     s3_error_code_t s3_error_code;
     CURLcode curl_code;
 
-    if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket)) {
+    if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket, self->project_id)) {
 	return TRUE;
     }
 
@@ -2246,7 +2284,7 @@ make_bucket(
 	return FALSE;
     }
 
-    if (!s3_make_bucket(self->s3t[0].s3, self->bucket)) {
+    if (!s3_make_bucket(self->s3t[0].s3, self->bucket, self->project_id)) {
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /* if it isn't an expected error (bucket already exists),
@@ -3096,16 +3134,18 @@ reset_thread(
     int thread;
     int nb_done = 0;
 
-    g_mutex_lock(self->thread_idle_mutex);
-    while(nb_done != self->nb_threads) {
-	nb_done = 0;
-	for (thread = 0; thread < self->nb_threads; thread++)  {
-	    if (self->s3t[thread].done == 1)
-		nb_done++;
+    if (self->thread_idle_mutex) {
+	g_mutex_lock(self->thread_idle_mutex);
+	while(nb_done != self->nb_threads) {
+	    nb_done = 0;
+	    for (thread = 0; thread < self->nb_threads; thread++)  {
+		if (self->s3t[thread].done == 1)
+		    nb_done++;
+	    }
+	    if (nb_done != self->nb_threads) {
+		g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
+	    }
 	}
-	if (nb_done != self->nb_threads) {
-	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
-	}
+	g_mutex_unlock(self->thread_idle_mutex);
     }
-    g_mutex_unlock(self->thread_idle_mutex);
 }

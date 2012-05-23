@@ -1,4 +1,12 @@
 2012-05-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Add project_id.
+	* device-src/s3.c: Add project_id. Add x-goog-project-id and
+	  x-goo-api-version to headers.
+	* device-src/s3.h (s3_make_bucket, s3_is_bucket_exists) Add project_id
+	  argument.
+	* man/xml-source/amanda-devices.7.xml: Document project-id property.
+
+2012-05-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Call s3_open2 after setting properties.
 	* device-src/s3.c (s3_open2): New function.
 	* device-src/s3.h (s3_open2): Prototype.

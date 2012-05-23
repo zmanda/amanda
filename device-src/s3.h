@@ -470,7 +470,8 @@ s3_multi_delete(S3Handle *hdl,
  */
 gboolean
 s3_make_bucket(S3Handle *hdl,
-               const char *bucket);
+               const char *bucket,
+	       const char *project_id);
 
 /* Check if a bucket exists.
  *
@@ -480,7 +481,8 @@ s3_make_bucket(S3Handle *hdl,
  */
 gboolean
 s3_is_bucket_exists(S3Handle *hdl,
-                    const char *bucket);
+                    const char *bucket,
+		    const char *project_id);
 
 /* Delete a bucket
  *
