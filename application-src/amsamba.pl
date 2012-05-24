@@ -751,7 +751,6 @@ sub command_backup {
 	    Amanda::MainLoop::quit() if $file_to_close == 0;
 	    return;
 	}
-	chomp $line;
 	if ($line =~ /^\.\//) {
 	    if(defined($indexout_fd)) {
 		if(defined($self->{index})) {
@@ -760,6 +759,7 @@ sub command_backup {
 		}
 	    }
 	} else {
+	    chomp $line;
 	    $self->print_to_server($line, $Amanda::Script_App::ERROR);
 	}
     });

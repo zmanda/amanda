@@ -1,4 +1,7 @@
 2012-05-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Do not send a chomped line to index.
+
+2012-05-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application.swg: Use IO::Handle to open mesgout.
 
 2012-05-23  Jean-Louis Martineau <martineau@zmanda.com>
