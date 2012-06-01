@@ -1,4 +1,7 @@
-2012-06-21  Jean-Louis Martineau <martineau@zmanda.com>
+2012-06-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amrestore.pl: Use the blocksize argument.
+
+2012-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Print to debug if bc2lb change the
 	  label for a barcode. Print to debug the mtx output.
 	* perl/Amanda/Taper/Scribe.pm: Do not use a tape if the barcode from
