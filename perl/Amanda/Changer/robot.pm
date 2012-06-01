@@ -644,7 +644,13 @@ sub load_unlocked {
 	    }
 	    $state->{'slots'}->{$slot}->{'label'} = $label;
 	    if ($state->{'slots'}->{$slot}->{'barcode'}) {
-		$state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}} = $label;
+		my $barcode = $state->{'slots'}->{$slot}->{'barcode'};
+		my $old_label = $state->{'bc2lb'}->{$barcode};
+		if ($label ne $old_label) {
+		    $self->_debug("make_res: slot $slot");
+		    $self->_debug("update label '$label' for barcode '$barcode', old label was '$old_label'");
+		}
+		$state->{'bc2lb'}->{$barcode} = $label;
 	    }
 
 	    return $self->make_error("failed", $params{'res_cb'},
@@ -689,11 +695,17 @@ sub load_unlocked {
 	$state->{'drives'}->{$drive}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'drives'}->{$drive}->{'barcode'} = $state->{'slots'}->{$slot}->{'barcode'};
 	$state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	if ($label and $state->{'slots'}->{$slot}->{'barcode'}) {
-	    $state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}} = $label;
+	my $barcode = $state->{'slots'}->{$slot}->{'barcode'};
+	if ($label and $barcode) {
+	    my $old_label = $state->{'bc2lb'}->{$barcode};
+	    if (defined $old_label and $old_label ne $label) {
+		$self->_debug("load drive $drive slot $slot");
+		$self->_debug("update label '$label' for barcode '$barcode', old label was '$old_label'");
+	    }
+	    $state->{'bc2lb'}->{$barcode} = $label;
 	}
 	if ($params{'set_current'}) {
-		$self->_debug("setting current slot to $slot");
+	    $self->_debug("setting current slot to $slot");
 	    $state->{'current_slot'} = $slot;
 	}
 
@@ -845,6 +857,11 @@ sub _set_label_unlocked {
 	$state->{'slots'}->{$slot}->{'label'} = $label;
     }
     if (defined $barcode) {
+	if (defined $state->{'bc2lb'}->{$barcode} and
+	    $state->{'bc2lb'}->{$barcode} ne $label) {
+	    my $old_label = $state->{'bc2lb'}->{$barcode};
+	    $self->_debug("update barcode '$barcode' to label '$label', old label was '$old_label'");
+	}
 	$state->{'bc2lb'}->{$barcode} = $label;
     }
 
@@ -1914,6 +1931,7 @@ sub status {
 	    } else {
 		my %status;
 		for my $line (split '\n', $output) {
+		    debug("mtx: $line");
 		    my ($slot, $ie, $slinfo);
 
 		    # drives (data transfer elements)

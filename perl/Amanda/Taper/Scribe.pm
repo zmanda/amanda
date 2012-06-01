@@ -1386,10 +1386,14 @@ sub _device_start {
 			       $reservation->{'barcode'});
 	    $tl->write();
 	    $self->dbg("generate new label '$new_label'");
-	} elsif (!defined $meta) {
+	} else {
 	    $tl->reload(0);
 	    my $tle = $tl->lookup_tapelabel($new_label);
-	    my $meta = $tle->{'meta'};
+	    $meta = $tle->{'meta'} if !defined $meta && $tle->{'meta'};
+	    my $barcode = $tle->{'barcode'};
+	    if (defined $barcode and $barcode ne $reservation->{'barcode'}) {
+		return $finished_cb->("tapelist for label '$new_label' have barcode '$barcode' but changer report '" . $reservation->{'barcode'} . "'");
+	    }
 	}
 
 	# write the label to the device
