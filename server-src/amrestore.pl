@@ -175,11 +175,11 @@ sub main {
 	$dev = $res->{'device'};
 
 	if ($opt_blocksize) {
-	    if ( !$device->property_set("BLOCK_SIZE", $opt_blocksize)) {
+	    if ( !$dev->property_set("BLOCK_SIZE", $opt_blocksize)) {
 		return failure($dev->error_or_status, $finished_cb);
 	    }
 
-	    /* re-read the label with the correct blocksize */
+	    # re-read the label with the correct blocksize
 	    $dev->read_label();
 	}
 
