@@ -1,3 +1,7 @@
+2012-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Parse message attribute in cloudena error reply.
+	  Parse details in HP error reply.
+
 2012-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrestore.pl: Typo.
 

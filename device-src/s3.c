@@ -894,6 +894,7 @@ struct failure_thunk {
     gboolean in_body;
     gboolean in_code;
     gboolean in_message;
+    gboolean in_details;
     gboolean in_access;
     gboolean in_token;
     gboolean in_serviceCatalog;
@@ -905,6 +906,7 @@ struct failure_thunk {
     gsize text_len;
 
     gchar *message;
+    gchar *details;
     gchar *error_name;
     gchar *token_id;
     gchar *service_type;
@@ -914,8 +916,8 @@ struct failure_thunk {
 static void
 failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
                    const gchar *element_name,
-                   const gchar **attribute_names G_GNUC_UNUSED,
-                   const gchar **attribute_values G_GNUC_UNUSED,
+                   const gchar **attribute_names,
+                   const gchar **attribute_values,
                    gpointer user_data,
                    GError **error G_GNUC_UNUSED)
 {
@@ -936,6 +938,10 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
         thunk->want_text = 1;
     } else if (g_ascii_strcasecmp(element_name, "message") == 0) {
         thunk->in_message = 1;
+	thunk->in_others = 0;
+        thunk->want_text = 1;
+    } else if (g_ascii_strcasecmp(element_name, "details") == 0) {
+        thunk->in_details = 1;
 	thunk->in_others = 0;
         thunk->want_text = 1;
     } else if (g_ascii_strcasecmp(element_name, "access") == 0) {
@@ -977,6 +983,14 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 		}
 	    }
 	}
+    } else if (g_ascii_strcasecmp(element_name, "error") == 0) {
+	for (att_name=attribute_names, att_value=attribute_values;
+	     *att_name != NULL;
+	     att_name++, att_value++) {
+	    if (g_str_equal(*att_name, "message")) {
+		thunk->message = g_strdup(*att_value);
+	    }
+	}
     } else {
 	thunk->in_others++;
     }
@@ -1014,6 +1028,10 @@ failure_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_message = 0;
+    } else if (g_ascii_strcasecmp(element_name, "details") == 0) {
+	thunk->details = thunk->text;
+	thunk->text = NULL;
+        thunk->in_details = 0;
     } else if (g_ascii_strcasecmp(element_name, "access") == 0) {
 	thunk->message = thunk->text;
 	thunk->text = NULL;
@@ -1137,6 +1155,7 @@ interpret_response(S3Handle *hdl,
     thunk.in_body = FALSE;
     thunk.in_code = FALSE;
     thunk.in_message = FALSE;
+    thunk.in_details = FALSE;
     thunk.in_access = FALSE;
     thunk.in_token = FALSE;
     thunk.in_serviceCatalog = FALSE;
@@ -1147,6 +1166,7 @@ interpret_response(S3Handle *hdl,
     thunk.want_text = FALSE;
     thunk.text_len = 0;
     thunk.message = NULL;
+    thunk.details = NULL;
     thunk.error_name = NULL;
     thunk.token_id = NULL;
     thunk.service_type = NULL;
@@ -1220,8 +1240,15 @@ parsing_done:
 
     if (thunk.message) {
 	g_free(hdl->last_message);
-        hdl->last_message = thunk.message;
-        thunk.message = NULL; /* steal the reference to the string */
+	if (thunk.details) {
+	    hdl->last_message = g_strdup_printf("%s: %s", thunk.message,
+							  thunk.details);
+	    amfree(thunk.message);
+	    amfree(thunk.details);
+	} else {
+            hdl->last_message = thunk.message;
+            thunk.message = NULL; /* steal the reference to the string */
+	}
     }
 
 cleanup:
@@ -1427,6 +1454,7 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
     char *lineprefix;
     char *message;
     char **lines, **line;
+    size_t i;
 
     switch (type) {
     case CURLINFO_TEXT:
@@ -1441,17 +1469,25 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
         lineprefix="Hdr Out: ";
         break;
 
-/*
     case CURLINFO_DATA_IN:
 	if (len > 3000) return 0;
+	for (i=0;i<len;i++) {
+	    if (!g_ascii_isprint(s[i])) {
+		return 0;
+	    }
+	}
         lineprefix="Data In: ";
         break;
 
     case CURLINFO_DATA_OUT:
 	if (len > 3000) return 0;
+	for (i=0;i<len;i++) {
+	    if (!g_ascii_isprint(s[i])) {
+		return 0;
+	    }
+	}
         lineprefix="Data Out: ";
         break;
-*/
 
     default:
         /* ignore data in/out -- nobody wants to see that in the
