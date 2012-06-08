@@ -233,7 +233,7 @@ sub get_xfer_src {
 	    unless exists $params{$rq_param};
     }
 
-    die "Clerk is already busy" if $self->{'xfer_state'};
+    confess "Clerk is already busy" if $self->{'xfer_state'};
 
     # set up a new xfer_state
     my $xfer_state = $self->{'xfer_state'} = {
@@ -267,8 +267,8 @@ sub start_recovery {
 	    unless exists $params{$rq_param};
     }
 
-    die "no xfer is in progress" unless $self->{'xfer_state'};
-    die "get_xfer_src has not finished"
+    confess "no xfer is in progress" unless $self->{'xfer_state'};
+    confess "get_xfer_src has not finished"
 	if defined $self->{'xfer_state'}->{'xfer_src_cb'};
 
     my $xfer_state = $self->{'xfer_state'};
@@ -302,7 +302,7 @@ sub quit {
     my %params = @_;
     my $finished_cb = $params{'finished_cb'};
 
-    die "Cannot quit a Clerk while a transfer is in progress"
+    confess "Cannot quit a Clerk while a transfer is in progress"
 	if $self->{'xfer_state'};
 
     my $steps = define_steps 
@@ -340,7 +340,7 @@ sub _xmsg_part_done {
     my $next_label = $xfer_state->{'next_part'}->{'label'};
     my $next_filenum = $xfer_state->{'next_part'}->{'filenum'};
 
-    die "read incorrect filenum"
+    confess "read incorrect filenum"
 	unless $next_filenum == $msg->{'fileno'};
     $self->dbg("done reading file $next_filenum on '$next_label'");
 
@@ -417,7 +417,7 @@ sub _maybe_start_part {
 	# first, see if anything remains to be done
 	if (!exists $xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}]) {
 	    # this should not happen until the xfer is started..
-	    die "xfer should be running already"
+	    confess "xfer should be running already"
 		unless $xfer_state->{'xfer'};
 
 	    # tell the source to generate EOF

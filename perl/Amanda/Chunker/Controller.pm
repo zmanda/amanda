@@ -33,6 +33,7 @@ The controller use an L<Amanda::Chunker::Scribe> object to execute the request.
 use lib '@amperldir@';
 use strict;
 use warnings;
+use Carp;
 
 package Amanda::Chunker::Controller;
 
@@ -239,7 +240,7 @@ sub msg_PORT_WRITE {
             or $hdr->{'name'} ne $params{'hostname'}
             or $hdr->{'disk'} ne $params{'diskname'}
             or $hdr->{'datestamp'} ne $params{'datestamp'}) {
-            die("Header of dumpfile does not match command from driver $hdr->{'dumplevel'}:$params{'level'}     $hdr->{'name'}:$params{'hostname'}     $hdr->{'disk'}:$params{'diskname'}     $hdr->{'datestamp'}:$params{'datestamp'}");
+            confess("Header of dumpfile does not match command from driver $hdr->{'dumplevel'}:$params{'level'}     $hdr->{'name'}:$params{'hostname'}     $hdr->{'disk'}:$params{'diskname'}     $hdr->{'datestamp'}:$params{'datestamp'}");
         }
 
         # and fix it up before writing it

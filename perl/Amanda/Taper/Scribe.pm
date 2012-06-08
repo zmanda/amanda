@@ -498,7 +498,7 @@ sub start {
 	    unless exists $params{$rq_param};
     }
 
-    die "scribe already started" if $self->{'started'};
+    confess "scribe already started" if $self->{'started'};
 
     $self->dbg("starting");
     $self->{'write_timestamp'} = $params{'write_timestamp'};
@@ -527,7 +527,7 @@ sub quit {
 	$self->dbg("quitting");
 
 	if ($self->{'xfer'}) {
-	    die "Scribe cannot quit while a transfer is active";
+	    confess "Scribe cannot quit while a transfer is active";
 	    # Supporting this would be complicated:
 	    # - cancel the xfer and wait for it to complete
 	    # - ensure that the taperscan not be started afterward
@@ -590,7 +590,7 @@ sub check_data_path {
     my $device = $self->get_device();
 
     if (!defined $device) {
-	die "no device is available to check the datapath";
+	confess "no device is available to check the datapath";
     }
 
     my $use_directtcp = $device->directtcp_supported();
@@ -622,11 +622,11 @@ sub get_xfer_dest {
 	    unless exists $params{$rq_param};
     }
 
-    die "not yet started"
+    confess "not yet started"
 	unless $self->{'write_timestamp'} and $self->{'started'};
-    die "xfer element already returned"
+    confess "xfer element already returned"
 	if ($self->{'xdt'});
-    die "xfer already running"
+    confess "xfer already running"
 	if ($self->{'xfer'});
 
     $self->{'xfer'} = undef;
@@ -656,7 +656,7 @@ sub get_xfer_dest {
 
     my $xdt_first_dev = $self->get_device();
     if (!defined $xdt_first_dev) {
-	die "no device is available to create an xfer_dest";
+	confess "no device is available to create an xfer_dest";
     }
     my $leom_supported = $xdt_first_dev->property_get("leom");
     my $use_directtcp = $xdt_first_dev->directtcp_supported();
@@ -747,7 +747,7 @@ sub start_dump {
     my $self = shift;
     my %params = @_;
 
-    die "no xfer dest set up; call get_xfer_dest first"
+    confess "no xfer dest set up; call get_xfer_dest first"
         unless defined $self->{'xdt'};
 
     # get the header ready for writing (totalparts was set by the caller)
@@ -767,7 +767,7 @@ sub cancel_dump {
     my $self = shift;
     my %params = @_;
 
-    die "no xfer dest set up; call get_xfer_dest first"
+    confess "no xfer dest set up; call get_xfer_dest first"
 	unless defined $self->{'xdt'};
 
     # set up the dump_cb for when this dump is done, and keep the xfer
@@ -886,7 +886,7 @@ sub _xmsg_part_done {
 	$self->dbg("not notifying for empty, successful part");
     } else {
 	# double-check partnum
-	die "Part numbers do not match!"
+	confess "Part numbers do not match!"
 	    unless ($self->{'dump_header'}->{'partnum'} == $msg->{'partnum'});
 
 	# notify
@@ -1067,7 +1067,7 @@ sub _operation_failed {
             # _dump_done constructs the dump_cb from $self parameters
             $self->_dump_done();
         } else {
-            die "error with no callback to handle it: $error_message";
+            confess "error with no callback to handle it: $error_message";
         }
     }
 }
@@ -1693,7 +1693,7 @@ sub get_volume {
     my $self = shift;
     my (%params) = @_;
 
-    die "already processing a volume request"
+    confess "already processing a volume request"
 	if ($self->{'volume_cb'});
 
     $self->{'volume_cb'} = $params{'volume_cb'};
@@ -1824,10 +1824,10 @@ sub _start_request {
 	    } elsif ($params{'cause'} eq 'error') {
 		$self->{'error_denial_message'} = $params{'message'};
 	    } else {
-		die "bad cause '" . $params{'cause'} . "'";
+		confess "bad cause '" . $params{'cause'} . "'";
 	    }
 	} elsif (!defined $params{'allow'}) {
-	    die "no allow or cause defined";
+	    confess "no allow or cause defined";
 	}
 
 	$self->_maybe_callback();

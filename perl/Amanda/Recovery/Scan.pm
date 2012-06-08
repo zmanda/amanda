@@ -522,7 +522,7 @@ sub find_volume {
 		    $scan_method = $self->{'scan_conf'}->{$err->{'reason'}};
 		}
 	    } else {
-		die("error not defined");
+		confess("error not defined");
 		$scan_method = SCAN_ASK_POLL;
 	    }
 	}
@@ -562,7 +562,7 @@ sub find_volume {
 	} elsif ($scan_method == SCAN_CONTINUE) {
 	    return $continue_cb->($err, undef);
 	} else {
-	    die("Invalid SCAN_* value:$err:$err->{'reason'}:$scan_method");
+	    confess("Invalid SCAN_* value:$err:$err->{'reason'}:$scan_method");
 	}
     };
 

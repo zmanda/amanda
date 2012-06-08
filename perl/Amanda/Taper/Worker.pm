@@ -38,6 +38,7 @@ use warnings;
 
 package Amanda::Taper::Worker;
 
+use Carp;
 use POSIX qw( :errno_h );
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
@@ -628,7 +629,7 @@ sub setup_and_start_dump {
 
 	my $device = $self->{'scribe'}->get_device();
 	if (!defined $device) {
-	    die "no device is available to create an xfer_dest";
+	    confess "no device is available to create an xfer_dest";
 	}
 	$splitting_args{'leom_supported'} = $device->property_get("leom");
 	# and convert those to get_xfer_dest args
@@ -700,7 +701,7 @@ sub setup_and_start_dump {
 	    $hdr->{'cont_filename'} = '';
 
 	    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
-		die("Could not read header from '$params{filename}'");
+		confess("Could not read header from '$params{filename}'");
 	    }
 	    $steps->{'start_dump'}->(undef);
 	} else {
@@ -731,7 +732,7 @@ sub setup_and_start_dump {
             or $hdr->{'name'} ne $params{'hostname'}
             or $hdr->{'disk'} ne $params{'diskname'}
 	    or $hdr->{'datestamp'} ne $params{'datestamp'}) {
-            die("Header of dumpfile does not match command from driver");
+            confess("Header of dumpfile does not match command from driver");
         }
 
 	# start producing status

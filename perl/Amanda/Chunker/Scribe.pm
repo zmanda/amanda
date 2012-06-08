@@ -294,7 +294,7 @@ sub start {
 	    unless exists $params{$rq_param};
     }
 
-    die "scribe already started" if $self->{'started'};
+    confess "scribe already started" if $self->{'started'};
 
     $self->dbg("starting");
     $self->{'write_timestamp'} = $params{'write_timestamp'};
@@ -342,11 +342,11 @@ sub get_xfer_dest {
 	    unless exists $params{$rq_param};
     }
 
-    die "not yet started"
+    confess "not yet started"
 	unless $self->{'write_timestamp'} and $self->{'started'};
-    die "xfer element already returned"
+    confess "xfer element already returned"
 	if ($self->{'xdh'});
-    die "xfer already running"
+    confess "xfer already running"
 	if ($self->{'xfer'});
 
     $self->{'xfer'} = undef;
@@ -379,7 +379,7 @@ sub start_dump {
     my $self = shift;
     my %params = @_;
 
-    die "no xfer dest set up; call get_xfer_dest first"
+    confess "no xfer dest set up; call get_xfer_dest first"
         unless defined $self->{'xdh'};
 
     # get the header ready for writing
@@ -404,7 +404,7 @@ sub cancel_dump {
     my $self = shift;
     my %params = @_;
 
-    die "no xfer dest set up; call get_xfer_dest first"
+    confess "no xfer dest set up; call get_xfer_dest first"
 	unless defined $self->{'xdh'};
 
     # set up the dump_cb for when this dump is done, and keep the xfer

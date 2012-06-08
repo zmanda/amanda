@@ -20,6 +20,7 @@ package Amanda::Changer::disk;
 
 use strict;
 use warnings;
+use Carp;
 use vars qw( @ISA );
 @ISA = qw( Amanda::Changer );
 
@@ -497,7 +498,7 @@ sub _get_slot_label {
 sub _load_drive {
     my ($self, $drive, $slot) = @_;
 
-    die "'$drive' does not exist" unless (-d $drive);
+    confess "'$drive' does not exist" unless (-d $drive);
     if (-e "$drive/data") {
 	unlink("$drive/data");
     }

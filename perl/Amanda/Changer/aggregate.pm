@@ -20,6 +20,7 @@ package Amanda::Changer::aggregate;
 
 use strict;
 use warnings;
+use Carp;
 use vars qw( @ISA );
 @ISA = qw( Amanda::Changer );
 
@@ -655,7 +656,7 @@ sub _for_each_child {
 	($params{'oksub'}, $params{'errsub'}, $params{'parent_cb'}, $params{'args'});
 
     if (defined($args)) {
-	die "number of args did not match number of children"
+	confess "number of args did not match number of children"
 	    unless (@$args == $self->{'num_children'});
     } else {
 	$args = [ ( undef ) x $self->{'num_children'} ];

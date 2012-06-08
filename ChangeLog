@@ -1,3 +1,13 @@
+2012-06-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/aggregate.pm, perl/Amanda/Changer/disk.pm,
+	  perl/Amanda/Changer/ndmp.pm perl/Amanda/Changer/rait.pm,
+	  perl/Amanda/Changer/robot.pm, perl/Amanda/Changer/single.pm,
+	  perl/Amanda/Chunker/Controller.pm, perl/Amanda/Chunker/Scribe.pm,
+	  perl/Amanda/Recovery/Clerk.pm, perl/Amanda/Recovery/Planner.pm,
+	  perl/Amanda/Recovery/Scan.pm, perl/Amanda/Report/human.pm,
+	  perl/Amanda/Taper/Scribe.pm,
+	  perl/Amanda/Taper/Worker.pm: Change many die by confess.
+
 2012-06-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Parse message attribute in cloudena error reply.
 	  Parse details in HP error reply.

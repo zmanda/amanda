@@ -110,6 +110,7 @@ sub get_device {
 
 package Amanda::Changer::ndmp::Interface;
 
+use Carp;
 use Amanda::NDMP qw( :constants );
 use Amanda::Debug qw( debug warning );
 use Amanda::MainLoop;
@@ -422,9 +423,9 @@ sub _parse_read_element_status {
 	my $all_descrips_len = ($all_descrips_len_msb << 16) + $all_descrips_len_lsw;
 	my $have_pvoltag = $flags & 0x80;
 	my $have_avoltag = $flags & 0x40;
-	die unless $all_descrips_len % $descrip_len == 0;
-	die unless $all_descrips_len >= $descrip_len;
-	die length($data) unless $all_descrips_len <= length($data);
+	confess unless $all_descrips_len % $descrip_len == 0;
+	confess unless $all_descrips_len >= $descrip_len;
+	confess (length($data)) unless $all_descrips_len <= length($data);
 	$data = substr($data, 8);
 
 	while ($all_descrips_len > 0) { # for each element status descriptor
