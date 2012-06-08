@@ -505,7 +505,7 @@ sub make_plan_from_filelist {
 	    dumpspecs => $params{'dumpspecs'});
 
 	# sanity check
-	die unless @dumps;
+	confess "no dumps" unless @dumps;
 	$self->{'dumps'} = [ $dumps[0] ];
 
 	Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);

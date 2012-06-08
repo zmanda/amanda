@@ -21,6 +21,7 @@ package Amanda::Report::human;
 
 use strict;
 use warnings;
+use Carp;
 
 use POSIX;
 use Data::Dumper;
@@ -313,7 +314,7 @@ sub print_human_amreport
     my ( $self, $fh ) = @_;
 
     $fh ||= $self->{fh}
-      || die "error: no file handle given to print_human_amreport\n";
+      || confess "error: no file handle given to print_human_amreport\n";
 
     ## collect statistics
     $self->calculate_stats();
@@ -1563,13 +1564,13 @@ sub read_col_spec_override
         $_ =~ m/^(\w+)           # field name
                 =([-:\d]+)       # field values
                 $/x
-          or die "error: malformed columnspec string:$col_spec_str";
+          or confess "error: malformed columnspec string:$col_spec_str";
 
         my $field = $1;
         my @field_values = split ':', $2;
 
         # too many values
-        die "error: malformed columnspec string:$col_spec_str"
+        confess "error: malformed columnspec string:$col_spec_str"
           if (@field_values > 3);
 
         # all values *should* be in the right place.  If not enough

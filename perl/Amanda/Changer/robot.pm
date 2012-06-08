@@ -471,7 +471,7 @@ sub load_unlocked {
 	    @check_order = (@{$self->{'driveorder'}});
 	} else {
 	    # the constructor should detect this circumstance
-	    die "invalid drive_choice";
+	    confess "invalid drive_choice";
 	}
 
 	my %checked;
@@ -587,7 +587,7 @@ sub load_unlocked {
 
     step check_device => sub {
 	my $device_name = $self->{'drive2device'}->{$drive};
-	die "drive $drive not found in drive2device" unless $device_name; # shouldn't happen
+	confess "drive $drive not found in drive2device" unless $device_name; # shouldn't happen
 
 	$self->_debug("polling '$device_name' to see if it's ready");
 
@@ -2043,12 +2043,12 @@ sub _run_system_command {
 
     my ($readfd, $writefd) = POSIX::pipe();
     if (!defined($writefd)) {
-	die("Error creating pipe: $!");
+	confess("Error creating pipe: $!");
     }
 
     my $pid = fork();
     if (!defined($pid) or $pid < 0) {
-        die("Can't fork to run changer script: $!");
+        confess("Can't fork to run changer script: $!");
     }
 
     if (!$pid) {
