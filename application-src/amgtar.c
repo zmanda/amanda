@@ -138,6 +138,7 @@ static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_include, char **file_include);
 static char *amgtar_get_incrname(application_argument_t *argument, int level,
 				 FILE *mesgstream, int command);
+static void check_no_check_device(void);
 static GPtrArray *amgtar_build_argv(application_argument_t *argument,
 				char *incrname, char **file_exclude,
 				char **file_include, int command);
@@ -1567,6 +1568,41 @@ amgtar_get_incrname(
     return incrname;
 }
 
+static void
+check_no_check_device(void)
+{
+    if (gnutar_checkdevice == 0) {
+	GPtrArray *argv_ptr = g_ptr_array_new();
+	int dumpin;
+	int dataf;
+	int outf;
+	int size;
+	char buf[32768];
+
+	g_ptr_array_add(argv_ptr, gnutar_path);
+	g_ptr_array_add(argv_ptr, "-x");
+	g_ptr_array_add(argv_ptr, "--no-check-device");
+	g_ptr_array_add(argv_ptr, "-f");
+	g_ptr_array_add(argv_ptr, "-");
+	g_ptr_array_add(argv_ptr, NULL);
+
+	pipespawnv(gnutar_path, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 0,
+			     &dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
+	aclose(dumpin);
+	aclose(dataf);
+	size = read(outf, buf, 32767);
+	if (size > 0) {
+	    buf[size] = '\0';
+	    if (strstr(buf, "--no-check-device")) {
+		g_debug("disabling --no-check-device since '%s' doesn't support it", gnutar_path);
+		gnutar_checkdevice = 1;
+	    }
+	}
+	aclose(outf);
+	g_ptr_array_free(argv_ptr, TRUE);
+    }
+}
+
 GPtrArray *amgtar_build_argv(
     application_argument_t *argument,
     char  *incrname,
@@ -1581,6 +1617,7 @@ GPtrArray *amgtar_build_argv(
     GPtrArray *argv_ptr = g_ptr_array_new();
     GSList    *copt;
 
+    check_no_check_device();
     amgtar_build_exinclude(&argument->dle, 1,
 			   &nb_exclude, file_exclude,
 			   &nb_include, file_include);
