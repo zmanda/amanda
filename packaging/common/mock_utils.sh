@@ -11,6 +11,8 @@
 MOCKDIR=$TMPDIR/mocks; export MOCKDIR
 [ -d $MOCKDIR ] || mkdir $MOCKDIR
 PATH=${MOCKDIR}:$PATH; export PATH
+# A list of flag files that must be present to avoid spurious output.
+# Each mock util gets one whether it is used or not.
 mock_flag_files=""
 
 mk_mock_util() {
@@ -61,22 +63,59 @@ EOF
 ###############
 # id replacemnt
 
+# Set vars for output of -Gn
+id_0="biff"
+id_1="biff foo"
+id_2="biff bar baz"
+id_3="biff zip bop whir"
+
 # Set defaults for deb_uid and amanda_group, if running outside test_sh_libs
 deb_uid=${deb_uid:=12345}
 amanda_group=${amanda_group:=disk}
 
 mk_mock_util "id"
 cat << EOF >> "${MOCKDIR}/id"
-echo "id args: \${1}" > $mock_id_flags
+echo "id args: \${@}" > $mock_id_flags
 [ -n "\${1}" ] || { echo "Missing a username to id!"; exit 1; }
 
 # We have to return the most basic form of id to be portable
 # group file is used for supplemental groups.
-if [ -f "${MOCKDIR}/is_member" ]; then
-    echo "uid=${deb_uid}(\${1}) gid=6(${amanda_group})"
+if [ -f "${MOCKDIR}/num_groups" ]; then
+    if [ "\${1}" = "-Gn" ]; then
+        # Called from add_group.
+        num_groups=\`cat ${MOCKDIR}/num_groups\`
+        case "\${num_groups}" in
+            0) echo "${id_0}";;
+            1) echo "${id_1}";;
+            2) echo "${id_2}";;
+            3) echo "${id_3}";;
+        esac
+    else
+        # Called from check_user.
+        echo "uid=${deb_uid}(\${1}) gid=6(${amanda_group})"
+    fi
 else
     echo "uid=123(\${1}) gid=123(foobar)"
 fi
+EOF
+
+###############
+# groupadd replacement
+mk_mock_util "groupadd"
+cat << EOF >> "${MOCKDIR}/groupadd"
+echo "groupadd args: \${@}" > $mock_groupadd_flags
+# We check for return codes of 0 (group added) or 9 (group existed) to continue in the function that uses groupadd
+groupadd_rc=\`cat ${MOCKDIR}/groupadd_rc\`
+exit \${groupadd_rc}
+EOF
+
+###############
+# usermod replacement
+mk_mock_util "usermod"
+cat << EOF >> "${MOCKDIR}/usermod"
+echo "usermod args: \${@}" > $mock_usermod_flags
+# Protect against passing a blank username.
+[ "x\${1}" = "x" ] && exit 2 || exit 0
 EOF
 
 ###############
@@ -96,7 +135,7 @@ EOF
 # xinetd init script replacement
 mk_mock_util xinetd
 cat << EOF >> "${MOCKDIR}/xinetd"
-echo "xinetd args: \${1}" > $mock_xinetd_flags
+echo "xinetd args: \${@}" > $mock_xinetd_flags
 [ -f ${MOCKDIR}/success ] && exit 0
 echo "xinetd did not \${1}"
 exit 1
@@ -106,7 +145,7 @@ EOF
 # inetd init script replacement
 mk_mock_util inetd
 cat << EOF >> "${MOCKDIR}/inetd"
-echo "inetd args: \${1}" > $mock_inetd_flags
+echo "inetd args: \${@}" > $mock_inetd_flags
 [ -f ${MOCKDIR}/success ] && exit 0
 echo "inetd did not \${1}"
 exit 1
@@ -116,7 +155,7 @@ EOF
 # install replacement
 mk_mock_util install
 cat << EOF >> "${MOCKDIR}/install"
-echo "install args: \$@" > $mock_install_flags
+echo "install args: \${@}" > $mock_install_flags
 [ -f ${MOCKDIR}/success ] && exit 0
 echo "Some funky install error, yo!"
 exit 1
