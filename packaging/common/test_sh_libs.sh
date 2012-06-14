@@ -84,7 +84,7 @@ oneTimeTearDown() {
 
 test_cleanup_files="$LOGFILE ${test_cleanup_files}"
 
-# errors before the tests are run.
+# shows syntax errors before the tests are run.
 . ${SHUNIT_INC}/common_functions.sh
 . ${SHUNIT_INC}/pre_inst_functions.sh
 . ${SHUNIT_INC}/post_inst_functions.sh
@@ -99,8 +99,6 @@ if [ "$tester_id" = "0" ]; then
 else
     IAmRoot=
 fi
-# A list of flag files that must be present to avoid spurious output.
-# Each mock util gets one whether it is used or not.
 
 # CAUTION: using real values if we are root.
 if [ "$IAmRoot" ]; then
@@ -111,6 +109,7 @@ fi
 
 # Source our mock utils.
 . ${SHUNIT_INC}/mock_utils.sh
+
 ######################################
 # Common functions
 
@@ -362,6 +361,60 @@ test_create_user() {
     assertEquals "create_user()" 0 $?
 }
 
+test_add_group_parameters_logs() {
+    rm -f ${MOCKDIR}/groupadd_rc ${MOCKDIR}/num_groups
+    echo 0 > ${MOCKDIR}/groupadd_rc
+    # Test that first parameter is required.
+    add_group
+    assertEquals "add_group without a group should fail." 1 $?
+    LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
+    assertEquals "add_group should write" \
+        "Error: first argument was not a group to add." \
+        "${LOG_TAIL}"
+}
+
+test_add_group_group_ok() {
+    # groupadd created group
+    echo 0 > ${MOCKDIR}/groupadd_rc
+    echo 0 > ${MOCKDIR}/num_groups
+    add_group twinkle
+    assertEquals "add_group group ok" 0 $?
+    LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
+    echo $LOG_TAIL
+    flags=`cat ${mock_id_flags}`
+    assertEquals "id_flags should contain:" \
+        "id args: -Gn ${amanda_user}" \
+        "${flags}"
+    flags=`cat ${mock_usermod_flags}`
+    assertEquals "usermod_flags" \
+        "usermod args: -G ${id_0} twinkle ${amanda_user}" \
+        "${flags}"
+
+    echo 1 > ${MOCKDIR}/num_groups
+    add_group twinkle
+    assertEquals "add_group group ok" 0 $?
+    flags=`cat ${mock_usermod_flags}`
+    assertEquals "usermod_flags should contain:" \
+        "usermod args: -G ${id_1} twinkle ${amanda_user}" \
+        "${flags}"
+
+    echo 2 > ${MOCKDIR}/num_groups
+    add_group twinkle
+    assertEquals "add_group group ok" 0 $?
+    flags=`cat ${mock_usermod_flags}`
+    assertEquals "usermod_flags should contain:" \
+        "usermod args: -G ${id_2} twinkle ${amanda_user}" \
+        "${flags}"
+
+    echo 3 > ${MOCKDIR}/num_groups
+    add_group twinkle
+    assertEquals "add_group group ok" 0 $?
+    flags=`cat ${mock_usermod_flags}`
+    assertEquals "usermod_flags should contain:" \
+        "usermod args: -G ${id_3} twinkle ${amanda_user}" \
+        "${flags}"
+}
+
 good_group_entry="${amanda_group}:x:100:${amanda_user}"
 export good_group_entry
 test_check_user_group() {
@@ -371,13 +424,13 @@ test_check_user_group() {
     [ ! "$IAmRoot" ] && echo $good_group_entry > ${SYSCONFDIR}/group
 
     # Case 1: Amanda_user is correct.
-    touch ${MOCKDIR}/is_member
+    touch ${MOCKDIR}/num_groups
     check_user "group" "${amanda_group}"
     assertEquals "'check_user group ${amanda_group}': id returns member" \
 	 0 $?
 
     # Case 2: Amanda_user is not a member of the the correct group.
-    rm ${MOCKDIR}/is_member
+    rm ${MOCKDIR}/num_groups
     check_user "group" "${amanda_group}"
     assertEquals "'check_user group ${amanda_group}' when not a member" 1 $?
 }

@@ -66,19 +66,25 @@ create_user() {
 }
 
 add_group() {
-    # Try to add the group, detect via return code if it already exists.
-    # This works on linux and solaris...
-    log_output_of groupadd ${1}
+    # First, try to add the group, detect via return code if it
+    # already exists. Then add ${amanda_user} to the group without
+    # checking if account is already a member.  (check_user should
+    # already have been called).
+    #
+    # Works on linux and solaris.  OSX has different tools.
+
+    [ "x${1}" = "x" ] && { logger "Error: first argument was not a group to add." ; return 1 ; }
+    group_to_add=${1}
+    log_output_of groupadd ${group_to_add}
     # return of 0 means group was added; 9 means group existed.
     if [ $? = "0" ] || [ $? = "9" ]; then
-        logger "Adding ${amanda_user} to ${1}"
-        case $os in
-            Linux) um_flags="-a -G";;
-            # Solaris does not have -a flag.
-            SunOS) um_flags="-G `groups ${amanda_user}`";;
-        esac
+        logger "Adding ${amanda_user} to ${group_to_add}"
+        # usermod append is -A on Suse, all other linux use -a, and
+        # -A means something else entirely on solaris. So we just use
+        # -G, and append a list of the current groups from id.
+        um_flags="-G `id -Gn ${amanda_user}`"
         # So far, all linux distros have usermod
-        log_output_of usermod -a -G ${1} ${amanda_user} || \
+        log_output_of usermod ${um_flags} ${group_to_add} ${amanda_user} || \
             { logger "${error_group_member}" ; return 1 ; }
     else
         logger "Error: groupadd failed in an unexpected way."
@@ -89,7 +95,8 @@ add_group() {
 check_user() {
     # Check parameters of ${amanda_user}'s account.
     # $1= user field $2= value to check
-    # group, shell, homedir, UID are valid for $1.
+    # Valid values for $1: group, shell, homedir, UID
+    #
     # group:  checks the system group file for ${amanda_user}'s
     #	 membership in the group named $2.
     # shell:  confirms the passwd file's shell field for
@@ -255,8 +262,8 @@ info_user_params="The Amanda backup software is configured to operate as the use
  Default group:  ${amanda_group}"
 
 error_group_member="!!!      Nonfatal ERROR.     Nonfatal ERROR.     !!!
-!!! user '${amanda_user}' is not part of the '${amanda_group}' group,  !!!
-!!! Amanda will not run until '${amanda_user}' is a member of '${amanda_group}'.  !!!
+!!! user '${amanda_user}' is not part of the '${group_to_add}' group,  !!!
+!!! Amanda will not run until '${amanda_user}' is a member of '${group_to_add}'.  !!!
 !!!    Nonfatal ERROR.    Nonfatal ERROR.    Nonfatal Error.    !!!"
 
 warning_user_shell="WARNING: The user '${amanda_user}' has a non-default shell.
