@@ -1,3 +1,7 @@
+2012-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Coorectly delay full dump if it doesn't fit in
+	  the schedule.
+
 2012-06-14 Dan Locks <dwlocks@zmanda.com>
 	* packaging/common/mock_utils.sh: update id mock to handle -Gn flags,
 	  add groupadd mock, add usermod mock, correct silent errors in inetd
