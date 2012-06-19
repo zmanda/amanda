@@ -995,7 +995,9 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
     }
 
     pself->block++;
+    g_mutex_lock(pself->device_mutex);
     pself->bytes_written += size;
+    g_mutex_unlock(pself->device_mutex);
 
     return TRUE;
 }
@@ -1026,7 +1028,9 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     case RESULT_SUCCESS:
         *size_req = size;
         pself->block++;
+	g_mutex_lock(pself->device_mutex);
 	pself->bytes_read += size;
+	g_mutex_unlock(pself->device_mutex);
         return size;
     case RESULT_SMALL_BUFFER: {
         gsize new_size;
@@ -1061,7 +1065,9 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     }
     case RESULT_NO_DATA:
         pself->is_eof = TRUE;
+	g_mutex_lock(pself->device_mutex);
 	pself->in_file = FALSE;
+	g_mutex_unlock(pself->device_mutex);
 	device_set_error(pself,
 	    g_strdup(_("EOF")),
 	    DEVICE_STATUS_SUCCESS);
@@ -1162,7 +1168,9 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
     }
 
     d_self->access_mode = mode;
+    g_mutex_lock(d_self->device_mutex);
     d_self->in_file = FALSE;
+    g_mutex_unlock(d_self->device_mutex);
 
     if (IS_WRITABLE_ACCESS_MODE(mode)) {
         if (self->write_open_errno != 0) {
@@ -1276,11 +1284,13 @@ static gboolean tape_device_start_file(Device * d_self,
     amfree(amanda_header);
 
     /* arrange the file numbers correctly */
-    d_self->in_file = TRUE;
     d_self->block = 0;
     if (d_self->file >= 0)
         d_self->file ++;
+    g_mutex_lock(d_self->device_mutex);
+    d_self->in_file = TRUE;
     d_self->bytes_written = 0;
+    g_mutex_unlock(d_self->device_mutex);
     return TRUE;
 }
 
@@ -1300,7 +1310,9 @@ tape_device_finish_file (Device * d_self) {
         return FALSE;
     }
 
+    g_mutex_lock(d_self->device_mutex);
     d_self->in_file = FALSE;
+    g_mutex_unlock(d_self->device_mutex);
     return TRUE;
 }
 
@@ -1328,10 +1340,12 @@ tape_device_seek_file (Device * d_self, guint file) {
         difference --;
     }
 
-    d_self->in_file = FALSE;
     d_self->is_eof = FALSE;
     d_self->block = 0;
+    g_mutex_lock(d_self->device_mutex);
+    d_self->in_file = FALSE;
     d_self->bytes_read = 0;
+    g_mutex_unlock(d_self->device_mutex);
 
 reseek:
     if (difference > 0) {
@@ -1458,7 +1472,9 @@ reseek:
         return NULL;
     }
 
+    g_mutex_lock(d_self->device_mutex);
     d_self->in_file = TRUE;
+    g_mutex_unlock(d_self->device_mutex);
     d_self->file = file;
 
     return rval;
@@ -1552,9 +1568,14 @@ tape_device_finish (Device * d_self) {
     }
 
     /* Polish off this file, if relevant. */
+    g_mutex_lock(d_self->device_mutex);
     if (d_self->in_file && IS_WRITABLE_ACCESS_MODE(d_self->access_mode)) {
-        if (!device_finish_file(d_self))
+	g_mutex_unlock(d_self->device_mutex);
+        if (!device_finish_file(d_self)) {
 	    goto finish_error;
+	}
+    } else {
+	g_mutex_unlock(d_self->device_mutex);
     }
 
     /* Straighten out the filemarks.  We already wrote one in finish_file, and

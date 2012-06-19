@@ -50,7 +50,6 @@ struct _NullDevice {
 typedef struct _NullDeviceClass NullDeviceClass;
 struct _NullDeviceClass {
     DeviceClass __parent__;
-    gboolean in_file;
 };
 
 void null_device_register(void);
@@ -237,7 +236,9 @@ null_device_start (Device * pself, DeviceAccessMode mode,
     if (device_in_error(self)) return FALSE;
 
     pself->access_mode = mode;
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
+    g_mutex_unlock(pself->device_mutex);
 
     if (mode == ACCESS_WRITE) {
         g_free(pself->volume_label);
@@ -268,7 +269,9 @@ static gboolean
 null_device_start_file(Device * d_self,
 		    dumpfile_t * jobInfo G_GNUC_UNUSED)
 {
+    g_mutex_lock(d_self->device_mutex);
     d_self->in_file = TRUE;
+    g_mutex_unlock(d_self->device_mutex);
     d_self->is_eom = FALSE;
     d_self->block = 0;
     if (d_self->file <= 0)
@@ -296,6 +299,8 @@ static gboolean
 null_device_finish_file(Device * pself) {
     if (device_in_error(pself)) return FALSE;
 
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
+    g_mutex_unlock(pself->device_mutex);
     return TRUE;
 }

@@ -560,7 +560,7 @@ amtext(
     }
     last_element_name = last_element->data;
 
-    tt = malloc(text_len + 1);
+    tt = malloc(text_len + 8 + 1);
     strncpy(tt,text,text_len);
     tt[text_len] = '\0';
 

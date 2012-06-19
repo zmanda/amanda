@@ -590,7 +590,9 @@ ndmp_device_start(
     }
 
     dself->access_mode = mode;
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
+    g_mutex_unlock(dself->device_mutex);
 
     if (!single_ndmp_mtio(self, NDMP9_MTIO_REW)) {
 	/* single_ndmp_mtio already set our error message */
@@ -726,7 +728,9 @@ ndmp_device_start_file(
 
     dself->is_eof = FALSE;
     dself->is_eom = FALSE;
+    g_mutex_lock(dself->device_mutex);
     dself->bytes_written = 0;
+    g_mutex_unlock(dself->device_mutex);
 
     /* set the blocksize in the header properly */
     header->blocksize = dself->block_size;
@@ -764,7 +768,9 @@ ndmp_device_start_file(
     amfree(header_buf);
 
     /* arrange the file numbers correctly */
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = TRUE;
+    g_mutex_unlock(dself->device_mutex);
     if (!ndmp_get_state(self)) {
 	/* error already set by ndmp_get_state */
 	return FALSE;
@@ -822,7 +828,9 @@ ndmp_device_write_block(
     }
 
     dself->block++;
+    g_mutex_lock(dself->device_mutex);
     dself->bytes_written += size;
+    g_mutex_unlock(dself->device_mutex);
 
     if (replacement_buffer) g_free(replacement_buffer);
     return TRUE;
@@ -837,7 +845,9 @@ ndmp_device_finish_file(
     if (device_in_error(dself)) return FALSE;
 
     /* we're not in a file anymore */
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
+    g_mutex_unlock(dself->device_mutex);
 
     if (!single_ndmp_mtio(self, NDMP9_MTIO_EOF)) {
 	/* error was set by single_ndmp_mtio */
@@ -925,10 +935,14 @@ incomplete_bsf:
     }
 
     /* fix up status */
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = TRUE;
+    g_mutex_unlock(dself->device_mutex);
     dself->file = file;
     dself->block = 0;
+    g_mutex_lock(dself->device_mutex);
     dself->bytes_read = 0;
+    g_mutex_unlock(dself->device_mutex);
 
     /* now read the header */
     read_block_size = ndmp_device_read_size(self);
@@ -1003,7 +1017,9 @@ ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
     }
 
     *size_req = (int)actual; /* cast is OK - requested size was < INT_MAX too */
+    g_mutex_lock(dself->device_mutex);
     dself->bytes_read += actual;
+    g_mutex_unlock(dself->device_mutex);
 
     return *size_req;
 }

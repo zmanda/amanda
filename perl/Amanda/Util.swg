@@ -315,8 +315,10 @@ sub safe_overwrite_file {
 
 	for (iter = $1; *iter; iter++) {
 	    $result = sv_2mortal(newSVpv(*iter, 0));
+	    g_free(*iter);
 	    argvi++;
 	}
+	g_free($1);
     }
 }
 
@@ -338,12 +340,16 @@ char *perl_hexdecode_string(const char *str) {
 %}
 amglue_export_tag(encoding, hexencode hexdecode);
 
+%newobject sanitise_filename;
 char *sanitise_filename(char *inp);
+%newobject quote_string;
 char *quote_string(char *);
+%newobject unquote_string;
 char *unquote_string(char *);
 GPtrArray *expand_braced_alternates(char *);
 %newobject collapse_braced_alternates;
 char *collapse_braced_alternates(GPtrArray *source);
+%newobject split_quoted_strings;
 gchar **split_quoted_strings(const gchar *string);
 amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string
 		sanitise_filename split_quoted_strings split_quoted_strings_friendly);
@@ -443,6 +449,7 @@ set_blocking(int fd, gboolean blocking)
 
 typedef struct file_lock {
     %extend {
+	%newobject file_lock;
 	file_lock(const char *filename) {
 	    return file_lock_new(filename);
 	}

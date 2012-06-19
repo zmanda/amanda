@@ -78,6 +78,7 @@ struct _S3_by_thread {
     char volatile * volatile     filename;
     DeviceStatusFlags volatile   errflags;	/* device_status */
     char volatile * volatile     errmsg;	/* device error message */
+    GMutex			*now_mutex;
     guint64			 dlnow, ulnow;
 };
 
@@ -2044,6 +2045,7 @@ static void s3_device_finalize(GObject * obj_self) {
     }
     if (self->s3t) {
 	for (thread = 0; thread < self->nb_threads; thread++) {
+	    g_mutex_free(self->s3t[thread].now_mutex);
             if(self->s3t[thread].s3) s3_free(self->s3t[thread].s3);
 	}
 	g_free(self->s3t);
@@ -2170,6 +2172,7 @@ static gboolean setup_handle(S3Device * self) {
 	    self->s3t[thread].filename = NULL;
 	    self->s3t[thread].curl_buffer.buffer = NULL;
 	    self->s3t[thread].curl_buffer.buffer_len = 0;
+	    self->s3t[thread].now_mutex = g_mutex_new();
             self->s3t[thread].s3 = s3_open(self->access_key, self->secret_key,
 					   self->swift_account_id,
 					   self->swift_access_key,
@@ -2311,8 +2314,10 @@ static int progress_func(
 {
     S3_by_thread *s3t = (S3_by_thread *)thread_data;
 
+    g_mutex_lock(s3t->now_mutex);
     s3t->dlnow = dlnow;
     s3t->ulnow = ulnow;
+    g_mutex_unlock(s3t->now_mutex);
 
     return 0;
 }
@@ -2419,7 +2424,9 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
 
     reset_thread(self);
     pself->access_mode = mode;
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
+    g_mutex_unlock(pself->device_mutex);
 
     /* try creating the bucket, in case it doesn't exist */
     if (!make_bucket(pself)) {
@@ -2504,14 +2511,19 @@ s3_device_get_bytes_read(
 {
     S3Device *self = S3_DEVICE(pself);
     int       thread;
-    guint64   dltotal = self->dltotal;
+    guint64   dltotal;
 
+    g_mutex_unlock(pself->device_mutex);
     /* Add per thread */
     g_mutex_lock(self->thread_idle_mutex);
+    dltotal = self->dltotal;
     for (thread = 0; thread < self->nb_threads_recovery; thread++) {
+	g_mutex_lock(self->s3t[thread].now_mutex);
 	dltotal += self->s3t[thread].dlnow;
+	g_mutex_unlock(self->s3t[thread].now_mutex);
     }
     g_mutex_unlock(self->thread_idle_mutex);
+    g_mutex_lock(pself->device_mutex);
 
     return dltotal;
 }
@@ -2523,14 +2535,19 @@ s3_device_get_bytes_written(
 {
     S3Device *self = S3_DEVICE(pself);
     int       thread;
-    guint64   ultotal = self->ultotal;
+    guint64   ultotal;
 
+    g_mutex_unlock(pself->device_mutex);
     /* Add per thread */
     g_mutex_lock(self->thread_idle_mutex);
+    ultotal = self->ultotal;
     for (thread = 0; thread < self->nb_threads_backup; thread++) {
+	g_mutex_lock(self->s3t[thread].now_mutex);
 	ultotal += self->s3t[thread].ulnow;
+	g_mutex_unlock(self->s3t[thread].now_mutex);
     }
     g_mutex_unlock(self->thread_idle_mutex);
+    g_mutex_lock(pself->device_mutex);
 
     return ultotal;
 }
@@ -2586,9 +2603,13 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     /* set the file and block numbers correctly */
     pself->file = (pself->file > 0)? pself->file+1 : 1;
     pself->block = 0;
-    pself->bytes_written = 0;
-    self->ultotal = 0;
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = TRUE;
+    pself->bytes_written = 0;
+    g_mutex_unlock(pself->device_mutex);
+    g_mutex_lock(self->thread_idle_mutex);
+    self->ultotal = 0;
+    g_mutex_unlock(self->thread_idle_mutex);
     /* write it out as a special block (not the 0th) */
     key = special_file_to_key(self, "filestart", pself->file);
     result = s3_upload(self->s3t[0].s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
@@ -2743,14 +2764,16 @@ s3_device_finish_file (Device * pself) {
 	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
 	}
     }
+    self->ultotal = 0;
     g_mutex_unlock(self->thread_idle_mutex);
 
     if (device_in_error(pself)) return FALSE;
 
     /* we're not in a file anymore */
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
     pself->bytes_written = 0;;
-    self->ultotal = 0;
+    g_mutex_unlock(pself->device_mutex);
 
     return TRUE;
 }
@@ -2839,11 +2862,15 @@ s3_device_seek_file(Device *pself, guint file) {
 
     pself->file = file;
     pself->is_eof = FALSE;
-    pself->in_file = FALSE;
     pself->block = 0;
+    g_mutex_lock(pself->device_mutex);
+    pself->in_file = FALSE;
     pself->bytes_read = 0;
+    g_mutex_unlock(pself->device_mutex);
     self->next_block_to_read = 0;
+    g_mutex_lock(self->thread_idle_mutex);
     self->dltotal = 0;
+    g_mutex_unlock(self->thread_idle_mutex);
 
     /* read it in */
     key = special_file_to_key(self, "filestart", pself->file);
@@ -2917,7 +2944,9 @@ s3_device_seek_file(Device *pself, guint file) {
 	self->s3t[thread].eof = FALSE;
 	self->s3t[thread].ulnow = 0;
     }
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = TRUE;
+    g_mutex_unlock(pself->device_mutex);
     return amanda_header;
 }
 
@@ -2989,7 +3018,9 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 		    /* return eof */
 		    g_free(key);
 		    pself->is_eof = TRUE;
+		    g_mutex_lock(pself->device_mutex);
 		    pself->in_file = FALSE;
+		    g_mutex_unlock(pself->device_mutex);
 		    device_set_error(pself, g_strdup(_("EOF")),
 				     DEVICE_STATUS_SUCCESS);
 		    g_mutex_unlock(self->thread_idle_mutex);

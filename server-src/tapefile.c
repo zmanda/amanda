@@ -50,7 +50,7 @@ read_tapelist(
     char *line = NULL;
     int status = 0;
 
-    tape_list = NULL;
+    clear_tapelist();
     if((tapef = fopen(tapefile,"r")) == NULL) {
 	if (errno == ENOENT) {
 	    /* no tapelist is equivalent to an empty tapelist */
@@ -134,6 +134,9 @@ clear_tapelist(void)
     for(tp = tape_list; tp; tp = next) {
 	amfree(tp->label);
 	amfree(tp->datestamp);
+	amfree(tp->barcode);
+	amfree(tp->meta);
+	amfree(tp->comment);
 	next = tp->next;
 	amfree(tp);
     }
@@ -277,6 +280,9 @@ remove_tapelabel(
 	}
 	amfree(tp->datestamp);
 	amfree(tp->label);
+	amfree(tp->meta);
+	amfree(tp->comment);
+	amfree(tp->barcode);
 	amfree(tp);
     }
 }
@@ -291,7 +297,7 @@ add_tapelabel(
 
     /* insert a new record to the front of the list */
 
-    new = (tape_t *) g_malloc(sizeof(tape_t));
+    new = g_new0(tape_t, 1);
 
     new->datestamp = g_strdup(datestamp);
     new->position = 0;
@@ -364,19 +370,17 @@ parse_tapeline(
     int ch;
 
     *status = 0;
-    tp = (tape_t *) g_malloc(sizeof(tape_t));
-
-    tp->prev = NULL;
-    tp->next = NULL;
 
     s = line;
     ch = *s++;
 
     skip_whitespace(s, ch);
     if(ch == '\0') {
-	amfree(tp);
 	return NULL;
     }
+
+    tp = g_new0(tape_t, 1);
+
     s1 = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
@@ -411,8 +415,6 @@ parse_tapeline(
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
 	tp->barcode = g_strdup(s1);
-    } else {
-	tp->barcode = NULL;
     }
 
     if (strncmp_const(s - 1, "META:") == 0) {
@@ -421,8 +423,6 @@ parse_tapeline(
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
 	tp->meta = g_strdup(s1);
-    } else {
-	tp->meta = NULL;
     }
 
     if (strncmp_const(s - 1, "BLOCKSIZE:") == 0) {
@@ -431,13 +431,9 @@ parse_tapeline(
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
 	tp->blocksize = atol(s1);
-    } else {
-	tp->blocksize = 0;
     }
     if (*(s - 1) == '#') {
 	tp->comment = g_strdup(s); /* skip leading '#' */
-    } else {
-	tp->comment = NULL;
     }
 
     return tp;

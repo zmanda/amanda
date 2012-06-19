@@ -936,5 +936,6 @@ sub string_to_boolean {
 
 amglue_export_ok(string_to_boolean);
 
+%newobject amandaify_property_name;
 gchar * amandaify_property_name(const gchar *name);
 amglue_export_ok(amandaify_property_name);
