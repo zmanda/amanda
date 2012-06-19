@@ -564,6 +564,7 @@ protocol_accept(
     char *service_path = NULL;
     GSList *errlist = NULL;
     int i;
+    char *peer_name;
 
     pkt_out.body = NULL;
 
@@ -600,7 +601,9 @@ protocol_accept(
 	return;
     }
 
-    g_debug("authenticated peer name is '%s'", security_get_authenticated_peer_name(handle));
+    peer_name = security_get_authenticated_peer_name(handle);
+    g_debug("authenticated peer name is '%s'", peer_name);
+    amfree(peer_name);
 
     /*
      * If pkt is NULL, then there was a problem with the new connection.

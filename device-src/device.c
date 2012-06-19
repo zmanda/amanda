@@ -526,6 +526,7 @@ device_open (char * device_name)
     device = factory(device_name, device_type, device_node);
     g_assert(device != NULL); /* factories must always return a device */
 
+    device->device_mutex = g_mutex_new();
     amfree(device_type);
     amfree(device_node);
 
@@ -1119,35 +1120,41 @@ device_finish (Device * self) {
 guint64
 device_get_bytes_read (Device * self) {
     DeviceClass *klass;
+    guint64 bytes = 0;
 
     g_assert(IS_DEVICE (self));
 
+    g_mutex_lock(self->device_mutex);
     if (self->in_file) {
 	klass = DEVICE_GET_CLASS(self);
 	if (klass->get_bytes_read) {
-	    return (klass->get_bytes_read)(self);
+	    bytes = (klass->get_bytes_read)(self);
 	} else {
-	    return self->bytes_read;
+	    bytes = self->bytes_read;
 	}
     }
-    return 0;
+    g_mutex_unlock(self->device_mutex);
+    return bytes;
 }
 
 guint64
 device_get_bytes_written (Device * self) {
     DeviceClass *klass;
+    guint64 bytes = 0;
 
     g_assert(IS_DEVICE (self));
 
+    g_mutex_lock(self->device_mutex);
     if (self->in_file) {
 	klass = DEVICE_GET_CLASS(self);
 	if (klass->get_bytes_written) {
-	    return (klass->get_bytes_written)(self);
+	    bytes = (klass->get_bytes_written)(self);
 	} else {
-	    return self->bytes_written;
+	    bytes = self->bytes_written;
 	}
     }
-    return 0;
+    g_mutex_unlock(self->device_mutex);
+    return bytes;
 }
 
 gboolean

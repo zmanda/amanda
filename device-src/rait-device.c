@@ -1222,7 +1222,9 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 	return FALSE;
 
     dself->access_mode = mode;
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
+    g_mutex_unlock(dself->device_mutex);
     amfree(dself->volume_label);
     amfree(dself->volume_time);
     dumpfile_free(dself->volume_header);
@@ -1404,10 +1406,12 @@ rait_device_start_file (Device * dself, dumpfile_t * info) {
         return FALSE;
     }
 
-    dself->in_file = TRUE;
     g_assert(actual_file >= 1);
     dself->file = actual_file;
+    g_mutex_lock(dself->device_mutex);
+    dself->in_file = TRUE;
     dself->bytes_written = 0;
+    g_mutex_unlock(dself->device_mutex);
 
     return TRUE;
 }
@@ -1585,7 +1589,9 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
         return FALSE;
     } else {
         dself->block ++;
+	g_mutex_lock(dself->device_mutex);
 	dself->bytes_written += size;
+	g_mutex_unlock(dself->device_mutex);
 
         return TRUE;
     }
@@ -1628,7 +1634,9 @@ rait_device_finish_file (Device * dself) {
         return FALSE;
     }
 
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
+    g_mutex_unlock(dself->device_mutex);
     return TRUE;
 }
 
@@ -1657,10 +1665,12 @@ rait_device_seek_file (Device * dself, guint file) {
 
     if (rait_device_in_error(self)) return NULL;
 
-    dself->in_file = FALSE;
     dself->is_eof = FALSE;
     dself->block = 0;
+    g_mutex_lock(dself->device_mutex);
+    dself->in_file = FALSE;
     dself->bytes_read = 0;
+    g_mutex_unlock(dself->device_mutex);
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -1725,7 +1735,9 @@ rait_device_seek_file (Device * dself, guint file) {
     }
 
     /* update our state */
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = in_file;
+    g_mutex_unlock(dself->device_mutex);
     dself->file = actual_file;
 
     return rval;
@@ -1993,7 +2005,9 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
 		stralloc(_("EOF")),
 		DEVICE_STATUS_SUCCESS);
             dself->is_eof = TRUE;
+	    g_mutex_lock(dself->device_mutex);
 	    dself->in_file = FALSE;
+	    g_mutex_unlock(dself->device_mutex);
         } else {
 	    device_set_error(dself,
 		stralloc(_("All child devices failed to read, but not all are at eof")),
@@ -2010,7 +2024,9 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     if (success) {
 	dself->block++;
 	*size = blocksize;
+	g_mutex_lock(dself->device_mutex);
 	dself->bytes_read += blocksize;
+	g_mutex_unlock(dself->device_mutex);
         return blocksize;
     } else {
         return -1;

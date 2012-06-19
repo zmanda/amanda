@@ -269,6 +269,7 @@ sub _update_positions {
 %}
 
 char *get_last_reusable_tape_label(int skip);
+%newobject list_new_tapes;
 char *list_new_tapes(int nb);
 
 /* C functions -- should be called *only* from within this module */

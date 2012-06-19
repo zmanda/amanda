@@ -812,7 +812,9 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
     self->volume_bytes += size;
     self->checked_bytes_used += size;
     pself->block ++;
+    g_mutex_lock(pself->device_mutex);
     pself->bytes_written += size;
+    g_mutex_unlock(pself->device_mutex);
 
     return TRUE;
 }
@@ -839,12 +841,16 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
     switch (result) {
     case RESULT_SUCCESS:
         *size_req = size;
+	g_mutex_lock(pself->device_mutex);
 	pself->bytes_read += size;
+	g_mutex_unlock(pself->device_mutex);
 	pself->block++;
         return size;
     case RESULT_NO_DATA:
         pself->is_eof = TRUE;
+	g_mutex_lock(pself->device_mutex);
         pself->in_file = FALSE;
+	g_mutex_unlock(pself->device_mutex);
 	device_set_error(pself,
 	    stralloc(_("EOF")),
 	    DEVICE_STATUS_SUCCESS);
@@ -870,7 +876,9 @@ vfs_device_start(Device * dself,
         return FALSE;
     }
 
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
+    g_mutex_unlock(dself->device_mutex);
 
     if (mode == ACCESS_WRITE) {
         promote_volume_lock(self);
@@ -910,7 +918,9 @@ vfs_device_finish (Device * pself) {
     release_file(self);
 
     pself->access_mode = ACCESS_NULL;
+    g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
+    g_mutex_unlock(pself->device_mutex);
 
     if (device_in_error(self)) return FALSE;
 
@@ -1106,9 +1116,11 @@ vfs_device_start_file (Device * dself, dumpfile_t * ji) {
     /* handle some accounting business */
     self->volume_bytes += VFS_DEVICE_LABEL_SIZE;
     self->checked_bytes_used += VFS_DEVICE_LABEL_SIZE;
-    dself->in_file = TRUE;
     dself->block = 0;
+    g_mutex_lock(dself->device_mutex);
+    dself->in_file = TRUE;
     dself->bytes_written = 0;
+    g_mutex_unlock(dself->device_mutex);
     /* make_new_file_name set pself->file for us */
 
     return TRUE;
@@ -1122,7 +1134,9 @@ vfs_device_finish_file(Device * dself) {
 
     release_file(self);
 
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
+    g_mutex_unlock(dself->device_mutex);
 
     return TRUE;
 }
@@ -1142,10 +1156,12 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
 
     if (device_in_error(self)) return NULL;
 
-    dself->in_file = FALSE;
     dself->is_eof = FALSE;
     dself->block = 0;
+    g_mutex_lock(dself->device_mutex);
+    dself->in_file = FALSE;
     dself->bytes_read = 0;
+    g_mutex_unlock(dself->device_mutex);
 
     release_file(self);
 
@@ -1238,7 +1254,9 @@ vfs_device_seek_file (Device * dself, guint requested_file) {
     if (requested_file == 0) {
 	dself->header_block_size = header_buffer_size;
     }
+    g_mutex_lock(dself->device_mutex);
     dself->in_file = TRUE;
+    g_mutex_unlock(dself->device_mutex);
     dself->file = file;
 
     return rval;

@@ -123,7 +123,6 @@ typedef struct {
     }
 } dumpfile_t;
 
-%newobject C_from_string;
 %inline %{
 static dumpfile_t *C_from_string(const char *string) {
     dumpfile_t *result = g_new(dumpfile_t, 1);

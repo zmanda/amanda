@@ -91,6 +91,11 @@ typedef struct Device {
     /* You can peek at the stuff below, but only subclasses should
        change these values.*/
 
+    /* A mutex to protect field accessed from another thread.
+     * Only get_bytes_read and get_bytes_written are allowed from another
+     * Only in_file, bytes_read and bytes_written are protected */
+    GMutex  *device_mutex;
+
     /* What file, block are we at? (and are we in the middle of a file?) */
     int file;
     guint64 block;

@@ -1,3 +1,21 @@
+2012-06-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, common-src/amxml.c,
+	  common-src/security-util.c, common-src/util.c,
+	  server-src/tapefile.c: Fix small memory leak.
+	* perl/Amanda/Config.swg: Mark amandaify_property_name as %newobject
+	* perl/Amanda/Header.swg: Mark C_from_string as %newobject
+	* perl/Amanda/Tapelist.swg: Mark list_new_tapes as %newobject
+	* perl/Amanda/Util.swg: Mark sanitise_filename, quote_string,
+	  unquote_string and split_quoted_strings as %newobject
+	* xfer-src/xfer-element.c: lock elt->xfer->status_mutex before looking
+	  at elt->xfer->status.
+	* device-src/device.h (Device): Add a GMutex device_mutex to protect
+	  method with concurent access.
+	* device-src/device.c, device-src/ndmp-device.c,
+	  device-src/null-device.c, device-src/rait-device.c,
+	  device-src/s3-device.c, device-src/tape-device.c,
+	  device-src/vfs-device.c: Use the mutex to protext some Device field.
+
 2012-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Coorectly delay full dump if it doesn't fit in
 	  the schedule.
