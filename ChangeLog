@@ -1,3 +1,6 @@
+2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix 32 bits overflow.
+
 2012-06-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, common-src/amxml.c,
 	  common-src/security-util.c, common-src/util.c,
