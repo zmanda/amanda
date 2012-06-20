@@ -1,4 +1,7 @@
 2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm: Fix update of the status file.
+
+2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix memory corruption.
 
 2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>

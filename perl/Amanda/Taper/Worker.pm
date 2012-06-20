@@ -501,7 +501,7 @@ sub create_status_file {
     $self->{timer}->set_callback(sub {
 	my $size = $self->{scribe}->get_bytes_written();
 	seek $self->{status_fh}, 0, 0;
-	print {$self->{status_fh}} $size;
+	print {$self->{status_fh}} $size, '     ';
 	$self->{status_fh}->flush();
     });
 }
