@@ -2583,7 +2583,7 @@ static void delay_dumps(void)
 
     nb_forced_level_0 = 0;
     preserve = NULL;
-    timestamps = 9999999999;
+    timestamps = 2147483647;
     priority = 0;
     for(dp = schedq.head; dp != NULL; dp = dp->next) {
 	if (est(dp)->dump_est->level == 0) {
