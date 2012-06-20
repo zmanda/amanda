@@ -1,4 +1,7 @@
 2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix memory corruption.
+
+2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Cancel call dump_cb.
 	* perl/Amanda/Taper/Worker.pm: Cancel the header xfer.
 
