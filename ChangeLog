@@ -1,4 +1,7 @@
 2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix memory corruption.
+
+2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Cancel call dump_cb.
 	* perl/Amanda/Taper/Worker.pm: Cancel the header xfer.
 
@@ -16,7 +19,7 @@
 	  unquote_string and split_quoted_strings as %newobject
 	* xfer-src/xfer-element.c: lock elt->xfer->status_mutex before looking
 	  at elt->xfer->status.
-	* device-src/device.h (Device): Add a GMutex device_mutex to protect 
+	* device-src/device.h (Device): Add a GMutex device_mutex to protect
 	  method with concurent access.
 	* device-src/device.c, device-src/ndmp-device.c,
 	  device-src/null-device.c, device-src/rait-device.c,
