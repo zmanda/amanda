@@ -774,22 +774,10 @@ sub cancel_dump {
     $self->{'dump_cb'} = $params{'dump_cb'};
     $self->{'xfer'} = $params{'xfer'};
 
-    # XXX The cancel should call dump_cb, but right now the xfer stays hung in
-    # accept.  So we leave the xfer to its hang, and dump_cb is called and xdt
-    # and xfer are set to undef.  This should be fixed in 3.2.
+    # The cancel will can dump_cb.
 
     $self->{'xfer'}->cancel();
 
-    $self->{'dump_cb'}->(
-	result => "FAILED",
-	device_errors => [],
-	config_denial_message => undef,
-	size => 0,
-	duration => 0.0,
-	total_duration => 0,
-	nparts => 0);
-    $self->{'xdt'} = undef;
-    $self->{'xfer'} = undef;
 }
 
 sub close_volume {

@@ -238,10 +238,14 @@ sub FAILED {
     my ($msgtype, %params) = @_;
 
     $self->{'dumper_status'} = "FAILED";
-    if (defined $self->{'result'}) {
+    if (defined $self->{'header_xfer'}) {
+	$self->{'header_xfer'}->cancel();
+    } elsif (defined $self->{'result'}) {
 	$self->result_cb(undef);
     } elsif (!defined $self->{'scribe'}->{'xdt'}) {
-	# ignore, the dump is already cancelled.
+	# ignore, the dump is already cancelled or not yet started.
+    } elsif (!defined $self->{'scribe'}->{'xfer'}) {
+	# ignore, the dump is already cancelled or not yet started.
     } else { # Abort the dump
 	push @{$self->{'input_errors'}}, "dumper failed";
 	$self->{'scribe'}->cancel_dump(
@@ -506,7 +510,6 @@ sub send_port_and_get_header {
     my $self = shift;
     my ($finished_cb) = @_;
 
-    my $header_xfer;
     my ($xsrc, $xdst);
     my $errmsg;
 
@@ -526,8 +529,8 @@ sub send_port_and_get_header {
 	($xsrc, $xdst) = (
 	    Amanda::Xfer::Source::DirectTCPListen->new(),
 	    Amanda::Xfer::Dest::Buffer->new(0));
-	$header_xfer = Amanda::Xfer->new([$xsrc, $xdst]);
-	$header_xfer->start($steps->{'header_xfer_xmsg_cb'});
+	$self->{'header_xfer'} = Amanda::Xfer->new([$xsrc, $xdst]);
+	$self->{'header_xfer'}->start($steps->{'header_xfer_xmsg_cb'});
 
 	my $header_addrs = $xsrc->get_addrs();
 	my $header_port = $header_addrs->[0][1];
@@ -559,7 +562,7 @@ sub send_port_and_get_header {
 	my $hdr_buf = $xdst->get();
 
 	# close stuff up
-	$header_xfer = $xsrc = $xdst = undef;
+	$self->{'header_xfer'} = $xsrc = $xdst = undef;
 
 	if (!defined $hdr_buf) {
 	    return $finished_cb->("Got empty header");
