@@ -2953,9 +2953,14 @@ s3_is_bucket_exists(S3Handle *hdl,
 	    return FALSE;
 	}
     }
+    if (hdl->s3_api == S3_API_SWIFT_1 ||
+	hdl->s3_api == S3_API_SWIFT_2) {
+	query = "limit=1";
+    } else {
+	query = "max-keys=1";
+    }
 
-    result = perform_request(hdl, "GET", bucket, NULL, NULL,
-			     hdl->s3_api != S3_API_S3?"limit=1":"max-keys=1",
+    result = perform_request(hdl, "GET", bucket, NULL, NULL, query,
 			     NULL, project_id,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
