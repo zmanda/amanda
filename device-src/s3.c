@@ -2952,6 +2952,7 @@ s3_is_bucket_exists(S3Handle *hdl,
 		    const char *project_id)
 {
     s3_result_t result = S3_RESULT_FAIL;
+    char *query;
     static result_handling_t result_handling[] = {
         { 200,  0,                    0, S3_RESULT_OK },
         { 204,  0,                    0, S3_RESULT_OK },
