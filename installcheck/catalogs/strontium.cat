@@ -105,13 +105,13 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                       DUMPER STATS                TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
--------------------------- ------------------------------------- ---------------
-strontium    /etc        1     270     270    --     0:00 1146.3   0:00 140918.6
-strontium    -me/elantra 1      10      10    --     0:00   65.6   0:00   9033.4
-strontium    /local      0      20      20    --     0:00  133.9   0:00  27624.3
-strontium    -ository_13 1    1350    1350    --     0:01 2568.5   0:00 175006.5
+                                                                          DUMPER STATS                TAPER STATS
+HOSTNAME                                                     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+--------------------------------------------------------------------------- ------------------------------------- ---------------
+strontium    /etc                                                         1     270     270    --     0:00 1146.3   0:00 140918.6
+strontium    /home/elantra                                                1      10      10    --     0:00   65.6   0:00   9033.4
+strontium    /local                                                       0      20      20    --     0:00  133.9   0:00  27624.3
+strontium    /zones/data/strontium.example.com/repositories/repository_13 1    1350    1350    --     0:01 2568.5   0:00 175006.5
 
 (brought to you by Amanda version x.y.z)
 

@@ -1159,7 +1159,7 @@ is the same as the <amkeyword>amrecover-changer</amkeyword> setting.</para>
   <varlistentry>
   <term><amkeyword>columnspec</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para> default: "HostName=0:12:12,Disk=1:11:11,Level=1:1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1"</para>
+<para> default: "HostName=0:-12:12,Disk=1:-11:11,Level=1:-1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1"</para>
 <para>Defines the width of columns <emphasis remap='B'>amreport</emphasis>
 should use.
 <emphasis remap='I'>String</emphasis>

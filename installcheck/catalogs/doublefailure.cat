@@ -108,9 +108,9 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
--------------------------- ------------------------------------- --------------
-ns-new.sliko /opt/var    0           54929    --      PARTIAL      0:04 15451.0 PARTIAL
+HOSTNAME            DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+--------------------------------- ------------------------------------- --------------
+ns-new.slikon.local /opt/var    0           54929    --      PARTIAL      0:04 15451.0 PARTIAL
 
 (brought to you by Amanda version x.y.z)
 

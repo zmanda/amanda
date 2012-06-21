@@ -87,9 +87,9 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS                 TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
--------------------------- -------------------------------------- ---------------
-euclid       -server-src 0   21830   21830    --     0:00 82641.8   0:00 244170.0
+HOSTNAME         DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+------------------------------ -------------------------------------- ---------------
+euclid       /A/b/server-src 0   21830   21830    --     0:00 82641.8   0:00 244170.0
 
 (brought to you by Amanda version x.y.z)
 

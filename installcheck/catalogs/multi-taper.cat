@@ -140,13 +140,13 @@ NOTES:
 
 DUMP SUMMARY:
                                       DUMPER STATS               TAPER STATS
- HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
- -------------------------- ------------------------------------- --------------
- localhost.lo /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
- localhost.lo /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
- localhost.lo /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
- localhost.lo /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
- localhost.lo /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
+ HOSTNAME              DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+ ----------------------------------- ------------------------------------- --------------
+ localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
+ localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
+ localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
+ localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
+ localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
 
 (brought to you by Amanda version 3.2.0alpha.git.8dca8d1f)
 

@@ -1511,9 +1511,9 @@ sub set_col_spec
     my $disp_unit = $self->{disp_unit};
 
     $self->{col_spec} = [
-        [ "HostName", 0, 12, 12, 0, "%-*.*s", "HOSTNAME" ],
-        [ "Disk",     1, 11, 11, 0, "%-*.*s", "DISK" ],
-        [ "Level",    1, 1,  1,  0, "%*.*d",  "L" ],
+        [ "HostName", 0, 12, 12, 1, "%-*.*s", "HOSTNAME" ],
+        [ "Disk",     1, 11, 11, 1, "%-*.*s", "DISK" ],
+        [ "Level",    1, 1,  1,  1, "%*.*d",  "L" ],
         [ "OrigKB",   1, 7,  0,  1, "%*.*f",  "ORIG-" . $disp_unit . "B" ],
         [ "OutKB",    1, 7,  0,  1, "%*.*f",  "OUT-" . $disp_unit . "B" ],
         [ "Compress", 1, 6,  1,  1, "%*.*f",  "COMP%" ],
@@ -1532,11 +1532,10 @@ sub apply_col_spec_override
     my ($self) = @_;
     my $col_spec = $self->{col_spec};
 
-    my %col_spec_override = read_col_spec_override();
+    my %col_spec_override = $self->read_col_spec_override();
 
     foreach my $col (@$col_spec) {
         if ( my $col_override = $col_spec_override{ $col->[COLSPEC_NAME] } ) {
-
             my $override_col_val_if_def = sub {
                 my ( $field, $or_num ) = @_;
                 if ( defined $col_override->[$or_num]
@@ -1555,9 +1554,11 @@ sub apply_col_spec_override
 
 sub read_col_spec_override
 {
-    ## takes no arguments
+    my ($self) = @_;
+
     my $col_spec_str = getconf($CNF_COLUMNSPEC) || return;
     my %col_spec_override = ();
+    my $col_spec = $self->{col_spec};
 
     foreach (split(",", $col_spec_str)) {
 
@@ -1567,6 +1568,18 @@ sub read_col_spec_override
           or confess "error: malformed columnspec string:$col_spec_str";
 
         my $field = $1;
+	my $found = 0;
+
+	foreach my $col (@$col_spec) {
+	    if (lc $field eq lc $col->[0]) {
+		$field = $col->[0];
+		$found = 1;
+	    }
+	}
+	if ($found == 0) {
+	    die("Invalid field name: $field");
+	}
+
         my @field_values = split ':', $2;
 
         # too many values

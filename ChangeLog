@@ -1,4 +1,23 @@
 2012-06-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Change the default columspec to: HostName=0:-12:12,Disk=1:-11:11,Level=1:-1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1
+	* man/xml-source/amanda.conf.5.xml: Document new default columnspec.
+	* installcheck/catalogs/bigestimate.cat,
+	  installcheck/catalogs/doublefailure.cat,
+	  installcheck/catalogs/filesystemstaped.cat,
+	  installcheck/catalogs/longstrange.cat,
+	  installcheck/catalogs/multi-taper.cat,
+	  installcheck/catalogs/normal.cat,
+	  installcheck/catalogs/plannerfail.cat,
+	  installcheck/catalogs/resultsmissing.cat,
+	  installcheck/catalogs/retried-nofinish.cat,
+	  installcheck/catalogs/retried-strange.cat,
+	  installcheck/catalogs/retried.cat,
+	  installcheck/catalogs/shortstrange.cat,
+	  installcheck/catalogs/skipped.cat,
+	  installcheck/catalogs/spanned.cat,
+	  installcheck/catalogs/strontium.cat: fix for new default columnspec.
+
+2012-06-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: OAUTH2 use 'max-keys'.
 
 2012-06-20  Jean-Louis Martineau <martineau@zmanda.com>

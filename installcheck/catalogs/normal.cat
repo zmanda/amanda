@@ -293,17 +293,17 @@ NOTES:
 
 DUMP SUMMARY:
                                           DUMPER STATS                    TAPER STATS
-HOSTNAME     DISK        L    ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
--------------------------- -------------------------------------------- ---------------
-localhost.lo /boot1      0         16         12   75.0    0:02 24748.4   0:00 156611.1
-localhost.lo /boot2      0        167        123   73.7    0:02 24748.4   0:00 156611.1
-localhost.lo /boot3      0       1678       1234   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot4      0      16789      12345   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot5      0     167890     123456   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot6      0    1678901    1234567   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot7      0   16789012   12345678   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot8      0  167890123  123456789   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot9      0 1678901234 1234567890   73.5    0:02 24748.4   0:00 156611.1
+HOSTNAME              DISK   L    ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+----------------------------------- -------------------------------------------- ---------------
+localhost.localdomain /boot1 0         16         12   75.0    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot2 0        167        123   73.7    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot3 0       1678       1234   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot4 0      16789      12345   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot5 0     167890     123456   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot6 0    1678901    1234567   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot7 0   16789012   12345678   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot8 0  167890123  123456789   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot9 0 1678901234 1234567890   73.5    0:02 24748.4   0:00 156611.1
 
 (brought to you by Amanda version x.y.z)
 %T rpt2
@@ -347,17 +347,17 @@ NOTES:
 
 DUMP SUMMARY:
                                             DUMPER STATS                     TAPER STATS
-HOSTNAME     DISK        L       ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
--------------------------- ----------------------------------------------- ---------------
-localhost.lo /boot1      0         16.00         12   75.0    0:02 24748.4   0:00 156611.1
-localhost.lo /boot2      0        167.00        123   73.7    0:02 24748.4   0:00 156611.1
-localhost.lo /boot3      0       1678.00       1234   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot4      0      16789.00      12345   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot5      0     167890.00     123456   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot6      0    1678901.00    1234567   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot7      0   16789012.00   12345678   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot8      0  167890123.00  123456789   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot9      0 1678901234.00 1234567890   73.5    0:02 24748.4   0:00 156611.1
+HOSTNAME              DISK        L       ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+----------------------------------- ----------------------------------------------- ---------------
+localhost.localdomain /boot1      0         16.00         12   75.0    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot2      0        167.00        123   73.7    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot3      0       1678.00       1234   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot4      0      16789.00      12345   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot5      0     167890.00     123456   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot6      0    1678901.00    1234567   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot7      0   16789012.00   12345678   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot8      0  167890123.00  123456789   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot9      0 1678901234.00 1234567890   73.5    0:02 24748.4   0:00 156611.1
 
 (brought to you by Amanda version x.y.z)
 %T rpt3
@@ -401,17 +401,17 @@ NOTES:
 
 DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
-HOSTNAME     DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
--------------------------- --------------------------------------- ---------------
-localhost.lo /boot1      0    16         12   75.0    0:02 24748.4   0:00 156611.1
-localhost.lo /boot2      0   167        123   73.7    0:02 24748.4   0:00 156611.1
-localhost.lo /boot3      0  1678       1234   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot4      0 16789      12345   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot5      0 167890     123456   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot6      0 1678901    1234567   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot7      0 16789012   12345678   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot8      0 167890123  123456789   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot9      0 1678901234 1234567890   73.5    0:02 24748.4   0:00 156611.1
+HOSTNAME              DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+----------------------------------- --------------------------------------- ---------------
+localhost.localdomain /boot1      0    16         12   75.0    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot2      0   167        123   73.7    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot3      0  1678       1234   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot4      0 16789      12345   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot5      0 167890     123456   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot6      0 1678901    1234567   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot7      0 16789012   12345678   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot8      0 167890123  123456789   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot9      0 1678901234 1234567890   73.5    0:02 24748.4   0:00 156611.1
 
 (brought to you by Amanda version x.y.z)
 %T rpt4
@@ -455,17 +455,17 @@ NOTES:
 
 DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
-HOSTNAME     DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
--------------------------- --------------------------------------- ---------------
-localhost.lo /boot1 0 16.000000 12 75.0 0:02 24748.4 0:00 156611.1
-localhost.lo /boot2 0 167.000000 123 73.7 0:02 24748.4 0:00 156611.1
-localhost.lo /boot3 0 1678.000000 1234 73.5 0:02 24748.4 0:00 156611.1
-localhost.lo /boot4 0 16789.000000 12345 73.5 0:02 24748.4 0:00 156611.1
-localhost.lo /boot5 0 167890.000000 123456 73.5 0:02 24748.4 0:00 156611.1
-localhost.lo /boot6 0 1678901.000000 1234567 73.5 0:02 24748.4 0:00 156611.1
-localhost.lo /boot7 0 16789012.000000 12345678 73.5 0:02 24748.4 0:00 156611.1
-localhost.lo /boot8 0 167890123.000000 123456789 73.5 0:02 24748.4 0:00 156611.1
-localhost.lo /boot9 0 1678901234.000000 1234567890 73.5 0:02 24748.4 0:00 156611.1
+HOSTNAME         DISK             L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+----------------------------------- --------------------------------------- ---------------
+localhost.localdomain /boot1      0 16.000000 12 75.0 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot2      0 167.000000 123 73.7 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot3      0 1678.000000 1234 73.5 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot4      0 16789.000000 12345 73.5 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot5      0 167890.000000 123456 73.5 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot6      0 1678901.000000 1234567 73.5 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot7      0 16789012.000000 12345678 73.5 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot8      0 167890123.000000 123456789 73.5 0:02 24748.4 0:00 156611.1
+localhost.localdomain /boot9      0 1678901234.000000 1234567890 73.5 0:02 24748.4 0:00 156611.1
 
 (brought to you by Amanda version x.y.z)
 %T rpt5
@@ -509,16 +509,16 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS                 TAPER STATS
-HOSTNAME     DISK        L ORIG-MB  OUT-MB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
--------------------------- -------------------------------------- ---------------
-localhost.lo /boot1      0       0       0   75.0    0:02 24748.4   0:00 156611.1
-localhost.lo /boot2      0       0       0   73.7    0:02 24748.4   0:00 156611.1
-localhost.lo /boot3      0       2       1   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot4      0      16      12   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot5      0     164     121   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot6      0    1640    1206   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot7      0   16396   12056   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot8      0  163955  120563   73.5    0:02 24748.4   0:00 156611.1
-localhost.lo /boot9      0 1639552 1205633   73.5    0:02 24748.4   0:00 156611.1
+HOSTNAME              DISK        L ORIG-MB  OUT-MB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+----------------------------------- -------------------------------------- ---------------
+localhost.localdomain /boot1      0       0       0   75.0    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot2      0       0       0   73.7    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot3      0       2       1   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot4      0      16      12   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot5      0     164     121   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot6      0    1640    1206   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot7      0   16396   12056   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot8      0  163955  120563   73.5    0:02 24748.4   0:00 156611.1
+localhost.localdomain /boot9      0 1639552 1205633   73.5    0:02 24748.4   0:00 156611.1
 
 (brought to you by Amanda version x.y.z)
