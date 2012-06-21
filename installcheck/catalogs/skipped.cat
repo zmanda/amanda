@@ -45,8 +45,8 @@ USAGE BY TAPE:
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
--------------------------- ------------------------------------- -------------
-ns-new.sliko /boot         SKIPPED -------------------------------------------
+HOSTNAME            DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+--------------------------------- ------------------------------------- -------------
+ns-new.slikon.local /boot         SKIPPED -------------------------------------------
 
 (brought to you by Amanda version x.y.z)

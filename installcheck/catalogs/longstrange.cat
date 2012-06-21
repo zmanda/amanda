@@ -1177,8 +1177,8 @@ sendbackup: info end
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
--------------------------- ------------------------------------- --------------
-bsdfw.slikon /           0 5401240 2293470   42.5   29:36 1305.4   2:37 14596.6
+HOSTNAME           DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+-------------------------------- ------------------------------------- --------------
+bsdfw.slikon.local /           0 5401240 2293470   42.5   29:36 1305.4   2:37 14596.6
 
 (brought to you by Amanda version x.y.z)

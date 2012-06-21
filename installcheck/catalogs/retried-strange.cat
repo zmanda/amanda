@@ -134,8 +134,8 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS                TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
--------------------------- ------------------------------------------ --------------
-lead.zmanda. -asurements 0 539140000 258237053 47.9 817:48 10987.7 57:16 75156.3
+HOSTNAME                  DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
+--------------------------------------- ------------------------------------------ --------------
+lead.zmanda.com /tensile-measurements 0 539140000 258237053 47.9 817:48 10987.7 57:16 75156.3
 
 (brought to you by Amanda version x.y.z)

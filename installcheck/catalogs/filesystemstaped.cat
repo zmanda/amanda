@@ -66,9 +66,9 @@ NOTES:
 
 DUMP SUMMARY:
                                       DUMPER STATS                TAPER STATS
- HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
- -------------------------- ------------------------------------- ---------------
- localhost.lo /boot       2   10240   10240    --      FLUSH        0:00 446100.0
- localhost.lo /boot       1   20480   20480    --      FLUSH        0:00 446100.0
+ HOSTNAME             DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+ ----------------------------------- ------------------------------------- ---------------
+ localhost.localdomain /boot       2   10240   10240    --      FLUSH        0:00 446100.0
+ localhost.localdomain /boot       1   20480   20480    --      FLUSH        0:00 446100.0
 
 (brought to you by Amanda version x.y.z)

@@ -64,11 +64,11 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
--------------------------- ------------------------------------- -------------
-1.2.3.4      "C:/"         FAILED
-1.2.3.4      "-/Scripts"   FAILED
-1.2.3.4      "G:/"         FAILED
-1.2.3.4      SystemState   FAILED
+HOSTNAME                  DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+--------------------------------------- ------------------------------------- -------------
+1.2.3.4      "C:/"                      FAILED
+1.2.3.4      "E:/Replication/Scripts"   FAILED
+1.2.3.4      "G:/"                      FAILED
+1.2.3.4      SystemState                FAILED
 
 (brought to you by Amanda version x.y.z)

@@ -54,9 +54,9 @@ NOTES:
 
 DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
-HOSTNAME     DISK        L  ORIG-kB   OUT-kB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
--------------------------- ---------------------------------------- --------------
-home.slikon. /opt/public 0 72987320 50917369   69.8   46:57 18078.1  31:06 27287.8
+HOSTNAME          DISK        L  ORIG-kB   OUT-kB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
+------------------------------- ---------------------------------------- --------------
+home.slikon.local /opt/public 0 72987320 50917369   69.8   46:57 18078.1  31:06 27287.8
 
 (brought to you by Amanda version x.y.z)
 
