@@ -1,4 +1,7 @@
 2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix crash when parsing an invalid config file.
+
+2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Cloudena do not have xml_version of html tag in
 	  their reply.
 
