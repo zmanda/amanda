@@ -1,4 +1,7 @@
 2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Remove bogus code.
+
+2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Renew swift v2 x-auth-token before it expires.
 
 2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>

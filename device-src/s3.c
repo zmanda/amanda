@@ -2107,9 +2107,6 @@ get_openstack_swift_api_v2_setting(
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling);
     hdl->getting_swift_2_token = 0;
-    if (hdl->endpoint) {
-	hdl->x_storage_url = g_strdup(hdl->endpoint);
-    }
 
     return result == S3_RESULT_OK;
 }
