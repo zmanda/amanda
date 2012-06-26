@@ -149,6 +149,7 @@ struct S3Handle {
     char *access_token;
     time_t expires;
     gboolean getting_oauth2_access_token;
+    gboolean getting_swift_2_token;
 
     /* attributes for new objects */
     char *bucket_location;
@@ -458,6 +459,9 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream);
 
 static gboolean
 compile_regexes(void);
+
+static gboolean get_openstack_swift_api_v1_setting(S3Handle *hdl);
+static gboolean get_openstack_swift_api_v2_setting(S3Handle *hdl);
 
 /*
  * Static function implementations
@@ -913,6 +917,7 @@ struct failure_thunk {
     gchar *token_id;
     gchar *service_type;
     gchar *service_public_url;
+    gint64 expires;
 };
 
 static void
@@ -957,6 +962,25 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	     att_name++, att_value++) {
 	    if (g_str_equal(*att_name, "id")) {
 		thunk->token_id = g_strdup(*att_value);
+	    }
+	    if (g_str_equal(*att_name, "expires") && strlen(*att_value) >= 20) {
+		GTimeZone *tz;
+		gint year, month, day, hour, minute, seconds;
+		GDateTime *dt, *dt_now;
+		GTimeSpan ts;
+
+		tz = g_time_zone_new(*att_value+19);
+		year = atoi(*att_value);
+		month = atoi(*att_value+5);
+		day = atoi(*att_value+8);
+		hour = atoi(*att_value+11);
+		minute = atoi(*att_value+14);
+		seconds = atoi(*att_value+17);
+
+		dt = g_date_time_new(tz, year, month, day, hour, minute, seconds);
+		dt_now = g_date_time_new_now_local();
+		ts = g_date_time_difference(dt, dt_now)/1000000;
+		thunk->expires = time(NULL) + ts - 600;
 	    }
 	}
     } else if (g_ascii_strcasecmp(element_name, "serviceCatalog") == 0) {
@@ -1142,11 +1166,6 @@ interpret_response(S3Handle *hdl,
 	}
     }
 
-    if (!hdl->content_type ||
-	!g_str_equal(hdl->content_type, "application/xml")) {
-	return FALSE;
-    }
-
     thunk.in_title = FALSE;
     thunk.in_body = FALSE;
     thunk.in_code = FALSE;
@@ -1167,12 +1186,13 @@ interpret_response(S3Handle *hdl,
     thunk.token_id = NULL;
     thunk.service_type = NULL;
     thunk.service_public_url = NULL;
+    thunk.expires = 0;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
-	 hdl->s3_api == S3_API_SWIFT_2) &&
-	!g_strstr_len(body, body_len, "xml version") &&
-	!g_strstr_len(body, body_len, "<html>") &&
-	(body_len < 20 || !g_str_has_prefix(body, "<access>"))) {
+         hdl->s3_api == S3_API_SWIFT_2) &&
+	hdl->content_type &&
+	g_str_equal(hdl->content_type, "text/plain")) {
+
 	char *body_copy = g_strndup(body, body_len);
 	char *b = body_copy;
 	char *p = strchr(b, '\n');
@@ -1198,6 +1218,9 @@ interpret_response(S3Handle *hdl,
 	    b = p;
 	}
 	goto parsing_done;
+    } else if(!hdl->content_type ||
+	      !g_str_equal(hdl->content_type, "application/xml")) {
+	return FALSE;
     }
 
     /* run the parser over it */
@@ -1228,6 +1251,9 @@ interpret_response(S3Handle *hdl,
 	}
     }
 
+    if (thunk.expires > 0) {
+	hdl->expires = thunk.expires;
+    }
 parsing_done:
     if (thunk.error_name) {
         hdl->last_s3_error_code = s3_error_code_from_name(thunk.error_name);
@@ -1553,6 +1579,13 @@ perform_request(S3Handle *hdl,
 	result = oauth2_get_access_token(hdl);
 	if (!result) {
 	    g_debug("oauth2_get_access_token returned %d", result);
+	    return result;
+	}
+    } else if (hdl->s3_api == S3_API_SWIFT_2 && !hdl->getting_swift_2_token &&
+	       (!hdl->x_auth_token || hdl->expires < time(NULL))) {
+	result = get_openstack_swift_api_v2_setting(hdl);
+	if (!result) {
+	    g_debug("get_openstack_swift_api_v2_setting returned %d", result);
 	    return result;
 	}
     }
@@ -2065,11 +2098,18 @@ get_openstack_swift_api_v2_setting(
     buf.buffer = g_string_free(body, FALSE);
     buf.buffer_len = strlen(buf.buffer);
     s3_verbose(hdl, 1);
+    hdl->getting_swift_2_token = 1;
+    g_free(hdl->x_storage_url);
+    hdl->x_storage_url = NULL;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
 			     "application/xml", NULL,
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling);
+    hdl->getting_swift_2_token = 0;
+    if (hdl->endpoint) {
+	hdl->x_storage_url = g_strdup(hdl->endpoint);
+    }
 
     return result == S3_RESULT_OK;
 }
