@@ -1921,6 +1921,20 @@ read_confline(
     case CONF_END:	/* end of file */
 	return 0;
 
+    /* These should never be at the begining of a line */
+    case CONF_LBRACE:
+    case CONF_RBRACE:
+    case CONF_IDENT:
+    case CONF_INT:
+    case CONF_INT64:
+    case CONF_BOOL:
+    case CONF_REAL:
+    case CONF_STRING:
+    case CONF_TIME:
+    case CONF_SIZE:
+	conf_parserror("error: not a keyword.");
+	break;
+
     /* if it's not a known punctuation mark, then check the parse table and use the
      * read_function we find there. */
     default:
