@@ -1,4 +1,8 @@
 2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Cloudena do not have xml_version of html tag in
+	  their reply.
+
+2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Renew OAUTH2 token.
 
 2012-06-21  Jean-Louis Martineau <martineau@zmanda.com>

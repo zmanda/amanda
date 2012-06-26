@@ -1178,7 +1178,8 @@ interpret_response(S3Handle *hdl,
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
 	 hdl->s3_api == S3_API_SWIFT_2) &&
 	!g_strstr_len(body, body_len, "xml version") &&
-	!g_strstr_len(body, body_len, "<html>")) {
+	!g_strstr_len(body, body_len, "<html>") &&
+	(body_len < 20 || !g_str_has_prefix(body, "<access>"))) {
 	char *body_copy = g_strndup(body, body_len);
 	char *b = body_copy;
 	char *p = strchr(b, '\n');
