@@ -148,6 +148,8 @@ struct S3Handle {
     char *client_secret;
     char *refresh_token;
     char *access_token;
+    time_t expires;
+    gboolean getting_oauth2_access_token;
 
     /* attributes for new objects */
     char *bucket_location;
@@ -293,7 +295,8 @@ lookup_result(const result_handling_t *result_handling,
  * Precompiled regular expressions */
 static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
-    x_storage_url_regex, access_token_regex, content_type_regex;
+    x_storage_url_regex, access_token_regex, expires_in_regex,
+    content_type_regex;
 
 
 /*
@@ -1551,6 +1554,15 @@ perform_request(S3Handle *hdl,
 
     g_assert(hdl != NULL && hdl->curl != NULL);
 
+    if (hdl->s3_api == S3_API_OAUTH2 && !hdl->getting_oauth2_access_token &&
+	(!hdl->access_token || hdl->expires < time(NULL))) {
+	result = oauth2_get_access_token(hdl);
+	if (!result) {
+	    g_debug("oauth2_get_access_token returned %d", result);
+	    return result;
+	}
+    }
+
     s3_reset(hdl);
 
     url = build_url(hdl, bucket, key, subresource, query);
@@ -1894,6 +1906,7 @@ compile_regexes(void)
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
         {"^Date:(.*)\r",REG_EXTENDED | REG_ICASE | REG_NEWLINE, &date_sync_regex},
         {"\"access_token\" : \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &access_token_regex},
+        {"\"expires_in\" : (.*)", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
         {NULL, 0, NULL}
     };
     char regmessage[1024];
@@ -1941,6 +1954,9 @@ compile_regexes(void)
         {"\"access_token\" : \"([^\"]*)\"",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &access_token_regex},
+        {"\"expires_n\" : (.*)",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &expires_in_regex},
         {NULL, 0, NULL}
   };
   int i;
@@ -2918,6 +2934,7 @@ oauth2_get_access_token(
     data.max_buffer_size = data.buffer_len;
 
     hdl->x_storage_url = "https://accounts.google.com/o/oauth2/token";
+    hdl->getting_oauth2_access_token = 1;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
 			     "application/x-www-form-urlencoded", NULL,
 			     s3_buffer_read_func, s3_buffer_reset_func,
@@ -2925,6 +2942,7 @@ oauth2_get_access_token(
                              &data, NULL, NULL, NULL, NULL, NULL,
 			     result_handling);
     hdl->x_storage_url = NULL;
+    hdl->getting_oauth2_access_token = 0;
 
     /* use strndup to get a null-terminated string */
     body = g_strndup(hdl->last_response_body, hdl->last_response_body_size);
@@ -2939,6 +2957,11 @@ oauth2_get_access_token(
     if (!s3_regexec_wrap(&access_token_regex, body, 2, pmatch, 0)) {
         hdl->access_token = find_regex_substring(body, pmatch[1]);
         hdl->x_auth_token = g_strdup(hdl->access_token);
+    }
+    if (!s3_regexec_wrap(&expires_in_regex, body, 2, pmatch, 0)) {
+        char *expires_in = find_regex_substring(body, pmatch[1]);
+	hdl->expires = time(NULL) + atoi(expires_in) - 600;
+	g_free(expires_in);
     }
 
 cleanup:
@@ -2960,11 +2983,6 @@ s3_is_bucket_exists(S3Handle *hdl,
         { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
         };
 
-    if (hdl->s3_api == S3_API_OAUTH2 && !hdl->access_token) {
-	if (oauth2_get_access_token(hdl)) {
-	    return FALSE;
-	}
-    }
     if (hdl->s3_api == S3_API_SWIFT_1 ||
 	hdl->s3_api == S3_API_SWIFT_2) {
 	query = "limit=1";
