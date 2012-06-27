@@ -1,4 +1,8 @@
 2012-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: remove code to Renew swift v2 x-auth-token, it
+	  require glib 2.26.
+
+2012-06-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: New CREATE-BUCKET property.
 	* device-src/s3.c: Improving error message parsing.
 	* man/xml-source/amanda-devices.7.xml: document new CREATE-BUCKET
