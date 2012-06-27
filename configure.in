@@ -13,7 +13,7 @@ AM_INIT_AUTOMAKE(tar-ustar 1.10)
 AC_CONFIG_HEADERS([config/config.h])
 
 dnl Minimum Autoconf version required.
-AC_PREREQ(2.59)
+AC_PREREQ(2.64)
 
 #
 # Take care of some early Amanda-specific setup
