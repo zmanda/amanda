@@ -126,6 +126,9 @@ struct _S3Device {
     /* Produce verbose output? */
     gboolean verbose;
 
+    /* create the bucket? */
+    gboolean create_bucket;
+
     /* Use SSL? */
     gboolean use_ssl;
     S3_api s3_api;
@@ -299,6 +302,10 @@ static DevicePropertyBase device_property_refresh_token;
 static DevicePropertyBase device_property_project_id;
 #define PROPERTY_PROJECT_ID (device_property_project_id.ID)
 
+/* The PROJECT ID */
+static DevicePropertyBase device_property_create_bucket;
+#define PROPERTY_CREATE_BUCKET (device_property_create_bucket.ID)
+
 /*
  * prototypes
  */
@@ -464,6 +471,10 @@ static gboolean s3_device_set_ca_info_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_verbose_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_create_bucket_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1092,6 +1103,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
+    device_property_fill_and_register(&device_property_create_bucket,
+                                      G_TYPE_BOOLEAN, "create_bucket",
+       "Whether to create/delete bucket");
     device_property_fill_and_register(&device_property_s3_subdomain,
                                       G_TYPE_BOOLEAN, "s3_subdomain",
        "Whether to use subdomain");
@@ -1342,6 +1356,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_verbose_fn);
+
+    device_class_register_property(device_class, PROPERTY_CREATE_BUCKET,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_create_bucket_fn);
 
     device_class_register_property(device_class, PROPERTY_STORAGE_API,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1686,6 +1705,26 @@ s3_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
 }
 
 static gboolean
+s3_device_set_create_bucket_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    int       thread;
+
+    self->create_bucket = g_value_get_boolean(val);
+    /* Our S3 handle may not yet have been instantiated; if so, it will
+     * get the proper verbose setting when it is created */
+    if (self->s3t) {
+	for (thread = 0; thread < self->nb_threads; thread++) {
+	    if (self->s3t[thread].s3)
+		s3_verbose(self->s3t[thread].s3, self->verbose);
+	}
+    }
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
     GValue *val, PropertySurety surety, PropertySource source)
 {
@@ -2011,6 +2050,14 @@ s3_device_open_device(Device *pself, char *device_name,
     device_set_simple_property(pself, device_property_s3_ssl.ID,
 	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
 
+    /* Set default create_bucket */
+    self->create_bucket = TRUE;
+    bzero(&tmp_value, sizeof(GValue));
+    g_value_init(&tmp_value, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&tmp_value, self->create_bucket);
+    device_set_simple_property(pself, device_property_create_bucket.ID,
+	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
+
     if (parent_class->open_device) {
         parent_class->open_device(pself, device_name, device_type, device_node);
     }
@@ -2283,6 +2330,14 @@ make_bucket(
 	 curl_code == CURLE_COULDNT_RESOLVE_HOST)) {
 	device_set_error(pself,
 	    g_strdup_printf(_("While connecting to S3 bucket: %s"),
+			    s3_strerror(self->s3t[0].s3)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
+    if (!self->create_bucket) {
+	device_set_error(pself,
+	    g_strdup_printf(_("Can't list bucket: %s"),
 			    s3_strerror(self->s3t[0].s3)),
 		DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
@@ -2823,7 +2878,8 @@ s3_device_erase(Device *pself) {
     device_set_error(pself, g_strdup("Unlabeled volume"),
 		     DEVICE_STATUS_VOLUME_UNLABELED);
 
-    if (!s3_delete_bucket(self->s3t[0].s3, self->bucket)) {
+    if (self->create_bucket &&
+	!s3_delete_bucket(self->s3t[0].s3, self->bucket)) {
         s3_error(self->s3t[0].s3, &errmsg, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /*

@@ -1,3 +1,9 @@
+2012-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: New CREATE-BUCKET property.
+	* device-src/s3.c: Improving error message parsing.
+	* man/xml-source/amanda-devices.7.xml: document new CREATE-BUCKET
+	  property.
+
 2012-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Remove bogus code.
 

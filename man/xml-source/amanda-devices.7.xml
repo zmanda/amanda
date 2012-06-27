@@ -432,6 +432,10 @@ device-property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
 (read-write) The client_secret for oauth2.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>CREATE-BUCKET</term><listitem>
+(read-write) Default: yes. If amanda create/delete the bucket.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>REFRESH_TOKEN</term><listitem>
 (read-write) The refresh-token for oauth2.
 </listitem></varlistentry>
