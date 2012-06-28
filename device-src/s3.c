@@ -640,7 +640,8 @@ rfc3339_date(
 	    time_t a;
 	    size_t size;
 
-	    pipe(fd);
+	    if (pipe(fd) == -1)
+		return 1073741824;
 	    pid = fork();
 	    switch (pid) {
 		case -1:
@@ -654,7 +655,7 @@ rfc3339_date(
 		    tzset();
 		    a = mktime(&tm);
 		    g_snprintf(buf, 100, "%d", (int)a);
-		    write(fd[1], buf, strlen(buf));
+		    size = write(fd[1], buf, strlen(buf));
 		    close(fd[1]);
 		    exit(0);
 		default:
