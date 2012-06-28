@@ -30,7 +30,6 @@
 
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
-#endif
 
 #ifdef LIBCURL_USE_OPENSSL
 #include <openssl/crypto.h>
@@ -63,7 +62,7 @@ init_ssl(void)
 
 }
 
-#else
+#else /* LIBCURL_USE_OPENSSL */
 #if defined LIBCURL_USE_GNUTLS
 
 #include <gcrypt.h>
@@ -76,15 +75,21 @@ init_ssl(void)
   gcry_control(GCRYCTL_SET_THREAD_CBS);
 }
 
-#else
+#else	/* LIBCURL_USE_GNUTLS  */
 
 static void
 init_ssl(void)
 {
 }
-#endif
-#endif
+#endif	/* LIBCURL_USE_GNUTLS  */
+#endif  /* LIBCURL_USE_OPENSSL */
 
+#else	/* HAVE_LIBCURL */
+static void
+init_ssl(void)
+{
+}
+#endif /* HAVE_LIBCURL */
 
 void
 glib_init(void) {

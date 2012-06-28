@@ -1,4 +1,8 @@
 2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Do not compile ssl initialization code if
+	  libcurl is not linked.
+
+2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Fix compiler warning.
 
 2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
