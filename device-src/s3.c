@@ -150,6 +150,7 @@ struct S3Handle {
     char *access_token;
     time_t expires;
     gboolean getting_oauth2_access_token;
+    gboolean getting_swift_2_token;
 
     /* attributes for new objects */
     char *bucket_location;
@@ -460,6 +461,9 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream);
 static gboolean
 compile_regexes(void);
 
+static gboolean get_openstack_swift_api_v1_setting(S3Handle *hdl);
+static gboolean get_openstack_swift_api_v2_setting(S3Handle *hdl);
+
 /*
  * Static function implementations
  */
@@ -544,6 +548,129 @@ lookup_result(const result_handling_t *result_handling,
     /* return the result for the terminator, as the default */
     return result_handling->result;
 }
+
+static time_t
+rfc3339_date(
+    const char *date)
+{
+    gint year, month, day, hour, minute, seconds;
+    const char *atz;
+
+    if (strlen(date) < 20)
+	return 1073741824;
+
+    year = atoi(date);
+    month = atoi(date+5);
+    day = atoi(date+8);
+    hour = atoi(date+11);
+    minute = atoi(date+14);
+    seconds = atoi(date+17);
+    atz = date+19;
+    if (*atz == '.') {   /* skip decimal seconds */
+	atz++;
+	while (*atz >= '0' && *atz <= '9') {
+	    atz++;
+	}
+    }
+
+#if GLIB_CHECK_VERSION(2,26,0)
+    if (!glib_check_version(2,26,0)) {
+	GTimeZone *tz;
+	GDateTime *dt;
+	time_t a;
+
+	tz = g_time_zone_new(atz);
+	dt = g_date_time_new(tz, year, month, day, hour, minute, seconds);
+	a = g_date_time_to_unix(dt);
+	g_time_zone_unref(tz);
+	g_date_time_unref(dt);
+	return a;
+    } else
+#endif
+    {
+	struct tm tm;
+	time_t t;
+
+	tm.tm_year = year - 1900;
+	tm.tm_mon = month - 1;
+	tm.tm_mday = day;
+	tm.tm_hour = hour;
+	tm.tm_min = minute;
+	tm.tm_sec = seconds;
+	tm.tm_wday = 0;
+	tm.tm_yday = 0;
+	tm.tm_isdst = -1;
+	t = time(NULL);
+
+	if (*atz == '-' || *atz == '+') {  /* numeric timezone */
+	    time_t lt, gt;
+	    time_t a;
+	    struct tm ltt, gtt;
+	    gint Hour = atoi(atz);
+	    gint Min  = atoi(atz+4);
+
+	    if (Hour < 0)
+		Min = -Min;
+	    tm.tm_hour -= Hour;
+	    tm.tm_min -= Min;
+	    tm.tm_isdst = 0;
+	    localtime_r(&t, &ltt);
+	    lt = mktime(&ltt);
+	    gmtime_r(&t, &gtt);
+	    gt = mktime(&gtt);
+	    tm.tm_sec += lt - gt;
+	    a = mktime(&tm);
+	    return a;
+	} else if (*atz == 'Z' && *(atz+1) == '\0') { /* Z timezone */
+	    time_t lt, gt;
+	    time_t a;
+	    struct tm ltt, gtt;
+
+	    tm.tm_isdst = 0;
+	    localtime_r(&t, &ltt);
+	    lt = mktime(&ltt);
+	    gmtime_r(&t, &gtt);
+	    gt = mktime(&gtt);
+	    tm.tm_sec += lt - gt;
+	    a = mktime(&tm);
+	    return a;
+	} else { /* named timezone */
+	    int pid;
+	    int fd[2];
+	    char buf[101];
+	    time_t a;
+	    size_t size;
+
+	    pipe(fd);
+	    pid = fork();
+	    switch (pid) {
+		case -1:
+		    close(fd[0]);
+		    close(fd[1]);
+		    return 1073741824;
+		    break;
+		case 0:
+		    close(fd[0]);
+		    setenv("TZ", atz, 1);
+		    tzset();
+		    a = mktime(&tm);
+		    g_snprintf(buf, 100, "%d", (int)a);
+		    write(fd[1], buf, strlen(buf));
+		    close(fd[1]);
+		    exit(0);
+		default:
+		    close(fd[1]);
+		    size = read(fd[0], buf, 100);
+		    close(fd[0]);
+		    buf[size] = '\0';
+		    waitpid(pid, NULL, 0);
+		    break;
+	    }
+	    return atoi(buf);
+	}
+    }
+}
+
 
 static gboolean
 is_non_empty_string(const char *str)
@@ -914,6 +1041,7 @@ struct failure_thunk {
     gchar *token_id;
     gchar *service_type;
     gchar *service_public_url;
+    gint64 expires;
 };
 
 static void
@@ -958,6 +1086,9 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	     att_name++, att_value++) {
 	    if (g_str_equal(*att_name, "id")) {
 		thunk->token_id = g_strdup(*att_value);
+	    }
+	    if (g_str_equal(*att_name, "expires") && strlen(*att_value) >= 20) {
+		thunk->expires = rfc3339_date(*att_value) - 600;
 	    }
 	}
     } else if (g_ascii_strcasecmp(element_name, "serviceCatalog") == 0) {
@@ -1169,6 +1300,7 @@ interpret_response(S3Handle *hdl,
     thunk.token_id = NULL;
     thunk.service_type = NULL;
     thunk.service_public_url = NULL;
+    thunk.expires = 0;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
          hdl->s3_api == S3_API_SWIFT_2) &&
@@ -1234,6 +1366,9 @@ interpret_response(S3Handle *hdl,
 	}
     }
 
+    if (thunk.expires > 0) {
+	hdl->expires = thunk.expires;
+    }
 parsing_done:
     if (thunk.error_name) {
         hdl->last_s3_error_code = s3_error_code_from_name(thunk.error_name);
@@ -1559,6 +1694,13 @@ perform_request(S3Handle *hdl,
 	result = oauth2_get_access_token(hdl);
 	if (!result) {
 	    g_debug("oauth2_get_access_token returned %d", result);
+	    return result;
+	}
+    } else if (hdl->s3_api == S3_API_SWIFT_2 && !hdl->getting_swift_2_token &&
+	       (!hdl->x_auth_token || hdl->expires < time(NULL))) {
+	result = get_openstack_swift_api_v2_setting(hdl);
+	if (!result) {
+	    g_debug("get_openstack_swift_api_v2_setting returned %d", result);
 	    return result;
 	}
     }
@@ -2071,11 +2213,15 @@ get_openstack_swift_api_v2_setting(
     buf.buffer = g_string_free(body, FALSE);
     buf.buffer_len = strlen(buf.buffer);
     s3_verbose(hdl, 1);
+    hdl->getting_swift_2_token = 1;
+    g_free(hdl->x_storage_url);
+    hdl->x_storage_url = NULL;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
 			     "application/xml", NULL,
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling);
+    hdl->getting_swift_2_token = 0;
 
     return result == S3_RESULT_OK;
 }
