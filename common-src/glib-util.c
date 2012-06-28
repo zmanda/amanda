@@ -33,6 +33,7 @@
 #endif
 
 #ifdef LIBCURL_USE_OPENSSL
+#include <openssl/crypto.h>
 static GMutex **openssl_mutex_array;
 static void openssl_lock_callback(int mode, int type, const char *file, int line)
 {
@@ -62,7 +63,8 @@ init_ssl(void)
 
 }
 
-#elsif defined LIBCURL_USE_GNUTLS
+#else
+#if defined LIBCURL_USE_GNUTLS
 
 #include <gcrypt.h>
 #include <errno.h>
@@ -80,6 +82,7 @@ static void
 init_ssl(void)
 {
 }
+#endif
 #endif
 
 

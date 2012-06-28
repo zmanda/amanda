@@ -1,4 +1,7 @@
 2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Fix for openssl and preprocessor.
+
+2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Add initialization code for openssl and
 	  gnutls.
 	* config/amanda/libs.m4: Detect ssl library used by libcurl.
