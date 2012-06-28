@@ -1,3 +1,7 @@
+2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Renew swift v2 x-auth-token before it expires, use
+	  glib if >= 2.26.
+
 2012-06-27 Dan Locks <dwlocks@zmanda.com>
 	* configure.in: update ac_prereq to 2.64
 
