@@ -1,4 +1,7 @@
 2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON.pm: Fix comment.
+
+2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm,
 	  perl/Amanda/Taper/Scribe.pm: Correctly report error.
 
