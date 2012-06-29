@@ -381,6 +381,41 @@ x=CURLOPT_VERBOSE;
         fi
      fi
 
+      LIBCURL_USE_NSS=no
+      LIBCURL_USE_GNUTLS=no
+      LIBCURL_USE_OPENSSL=yes
+     _libcurl_configures=`$_libcurl_config --configure`
+     for _libcurl_configure in $_libcurl_configures ; do
+	if [[[ $_libcurl_configure = \'--with-nss* ]]]; then
+	    LIBCURL_USE_NSS=yes
+	fi
+	if [[[ $_libcurl_configure = \'--without-nss* ]]]; then
+	    LIBCURL_USE_NSS=no
+	fi
+	if [[[ $_libcurl_configure = \'--with-gnutls* ]]]; then
+	    LIBCURL_USE_GNUTLS=yes
+	fi
+	if [[[ $_libcurl_configure = \'--without-gnutls* ]]]; then
+	    LIBCURL_USE_GNUTLS=no
+	fi
+	if [[[ $_libcurl_configure = \'--with-ssl* ]]]; then
+	    LIBCURL_USE_OPENSSL=yes
+	fi
+	if [[[ $_libcurl_configure = \'--without-ssl* ]]]; then
+	    LIBCURL_USE_OPENSSL=no
+	fi
+     done
+
+     if test "x$LIBCURL_USE_NSS" = "xyes"; then
+       AC_DEFINE(LIBCURL_USE_NSS, 1, [Defined if libcurl use NSS])
+     fi
+     if test "x$LIBCURL_USE_GNUTLS" = "xyes"; then
+       AC_DEFINE(LIBCURL_USE_GNUTLS, , [Defined if libcurl use GnuTLS])
+     fi
+     if test "x$LIBCURL_USE_OPENSSL" = "xyes"; then
+       AC_DEFINE(LIBCURL_USE_OPENSSL, 1, [Defined if libcurl use OpenSSL])
+     fi
+
      unset _libcurl_try_link
      unset _libcurl_version_parse
      unset _libcurl_config
@@ -390,6 +425,8 @@ x=CURLOPT_VERBOSE;
      unset _libcurl_protocols
      unset _libcurl_version
      unset _libcurl_ldflags
+     unset _libcurl_configure
+     unset _libcurl_configures
   fi
 
   if test x$_libcurl_with = xno || test x$libcurl_cv_lib_curl_usable != xyes ; then
