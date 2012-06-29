@@ -1734,6 +1734,21 @@ sub _start_scanning {
 		if ($params{'label'}) {
 		    $self->{'feedback'}->scribe_notif_log_info(
 			message => "Slot $params{'slot'} with label $params{'label'} is not labelable ");
+		} elsif ($params{'empty'}) {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "Slot $params{'slot'} is empty, autolabel not set");
+		} elsif ($params{'non_amanda'}) {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "Slot $params{'slot'} is a non-amanda volume, autolabel not set");
+		} elsif ($params{'volume_error'}) {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "Slot $params{'slot'} is a volume in error: $params{'err'}, autolabel not set");
+		} elsif ($params{'not_success'}) {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "Slot $params{'slot'} is a device in error: $params{'err'}, autolabel not set");
+		} elsif ($params{'err'}) {
+		    $self->{'feedback'}->scribe_notif_log_info(
+			message => "$params{'err'}");
 		} else {
 		    $self->{'feedback'}->scribe_notif_log_info(
 			message => "Slot $params{'slot'} without label is not labelable ");
