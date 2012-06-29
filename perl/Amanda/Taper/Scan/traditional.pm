@@ -390,10 +390,42 @@ sub stage_2 {
 
 	if (!defined $autolabel->{'template'} ||
 	    $autolabel->{'template'} eq "") {
-	    $self->_user_msg(slot_result  => 1,
-			     not_autolabel => 1,
-			     slot         => $slot,
-			     res          => $res);
+	    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+		$dev->volume_header and
+		$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+		$self->_user_msg(slot_result   => 1,
+			         not_autolabel => 1,
+				 empty         => 1,
+			         slot          => $slot,
+			         res           => $res);
+	    } elsif ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
+		$dev->volume_header and
+		$dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
+		$self->_user_msg(slot_result   => 1,
+			         not_autolabel => 1,
+				 non_amanda    => 1,
+			         slot          => $slot,
+			         res           => $res);
+	    } elsif ($status & $DEVICE_STATUS_VOLUME_ERROR) {
+		$self->_user_msg(slot_result   => 1,
+			         not_autolabel => 1,
+				 volume_error  => 1,
+				 err           => $dev->error_or_status(),
+			         slot          => $slot,
+			         res           => $res);
+	    } elsif ($status != $DEVICE_STATUS_SUCCESS) {
+		$self->_user_msg(slot_result   => 1,
+			         not_autolabel => 1,
+				 not_success   => 1,
+				 err           => $dev->error_or_status(),
+			         slot          => $slot,
+			         res           => $res);
+	    } else {
+		$self->_user_msg(slot_result   => 1,
+			         not_autolabel => 1,
+			         slot          => $slot,
+			         res           => $res);
+	    }
 	    return $steps->{'try_continue'}->();
 	}
 

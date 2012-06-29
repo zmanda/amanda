@@ -1,4 +1,8 @@
 2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm,
+          perl/Amanda/Taper/Scribe.pm: Correctly report error.
+
+2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Add initialization code for openssl and
 	  gnutls.
 	* config/amanda/libs.m4: Detect ssl library used by libcurl.
