@@ -1,3 +1,6 @@
+2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Remove debug statements.
+
 2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Do not compile ssl initialization code if
 	  libcurl is not linked.

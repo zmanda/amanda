@@ -39,11 +39,9 @@ static void openssl_lock_callback(int mode, int type, const char *file, int line
     (void)file;
     (void)line;
     if (mode & CRYPTO_LOCK) {
-g_debug("openssl_lock_callback lock");
 	g_mutex_lock(openssl_mutex_array[type]);
     }
     else {
-g_debug("openssl_lock_callback unlock");
 	g_mutex_unlock(openssl_mutex_array[type]);
     }
 }
