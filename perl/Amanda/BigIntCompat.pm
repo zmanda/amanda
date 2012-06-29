@@ -95,4 +95,10 @@ if (!$test_num->can("bstr")) {
 EVAL
     die $@ if $@;
 }
+
+eval <<'EVAL';
+	package Math::BigInt;
+	sub TO_JSON { "$_[0]"+0; }
+EVAL
+die $@ if $@;
 1;

@@ -126,6 +126,7 @@ sub add_tapelabel {
     my $self = shift;
     my ($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize) = @_;
     $reuse = 1 if !defined $reuse;
+    $datestamp = 0 if !defined $datestamp;
 
     # prepend this (presumably new) volume to the beginning of the list
     my $tle = {

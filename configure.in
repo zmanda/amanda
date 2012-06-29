@@ -369,18 +369,18 @@ dnl -------------------------------------------------------------------------
 
 dnl
 dnl Set up files for autoconf substitution.  All files are listed here, in
-dnl order by subdirectory, as a central location for this list.  
+dnl order by subdirectory, as a central location for this list.
 dnl
 AC_CONFIG_FILES([
     Makefile
     amandad-src/Makefile
     amar-src/Makefile
     amplot/Makefile
+    application-src/Makefile
     client-src/Makefile
     common-src/Makefile
     config/Makefile
     device-src/Makefile
-    application-src/Makefile
     example/Makefile
     gnulib/Makefile
     installcheck/Makefile

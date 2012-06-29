@@ -32,7 +32,8 @@ amlibexec_SCRIPTS_PERL = \
 	    amdumpd \
 	    chunker \
 	    taper \
-	    amcheck-device
+	    amcheck-device \
+	    amanda.psgi
 
 sbin_SCRIPTS_PERL = \
 	    amaddclient \

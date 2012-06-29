@@ -266,6 +266,47 @@ endif
 EXTRA_DIST += $(AmandaChanger_DATA)
 
 if WANT_SERVER
+# PACKAGE: Amanda::JSON
+Amanda_DATA += Amanda/JSON.pm
+endif
+EXTRA_DIST += Amanda/JSON.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::JSON::*
+AmandaJSONdir = $(amperldir)/Amanda/JSON
+AmandaJSON_DATA = \
+	Amanda/JSON/Changer.pm \
+	Amanda/JSON/Config.pm \
+	Amanda/JSON/Tapelist.pm
+endif
+EXTRA_DIST += $(AmandaJSON_DATA)
+
+if WANT_SERVER
+# PACKAGE: Amanda::JSON::DB::*
+Amanda_JSON_DBdir = $(Amandadir)/JSON/DB
+Amanda_JSON_DB_DATA = Amanda/JSON/DB/Catalog.pm
+PM_FILES += $(Amanda_JSON_DB_DATA)
+endif
+EXTRA_DIST += $(Amanda_JSON_DB_DATA)
+
+if WANT_SERVER
+# PACKAGE: Amanda::JSON::RPC::Dispatcher*
+Amanda_JSON_RPC_DISPATCHERdir = $(Amandadir)/JSON/RPC/Dispatcher
+Amanda_JSON_RPC_DISPATCHER_DATA = Amanda/JSON/RPC/Dispatcher/Procedure.pm \
+				  Amanda/JSON/RPC/Dispatcher/App.pm
+PM_FILES += $(Amanda_JSON_RPC_DISPATCHER_DATA)
+endif
+EXTRA_DIST += $(Amanda_JSON_RPC_DISPATCHER_DATA)
+
+if WANT_SERVER
+# PACKAGE: Amanda::JSON::RPC::*
+Amanda_JSON_RPCdir = $(Amandadir)/JSON/RPC
+Amanda_JSON_RPC_DATA = Amanda/JSON/RPC/Dispatcher.pm
+PM_FILES += $(Amanda_JSON_RPC_DATA)
+endif
+EXTRA_DIST += $(Amanda_JSON_RPC_DATA)
+
+if WANT_SERVER
 # PACKAGE: Amanda::Curinfo
 Amanda_DATA += Amanda/Curinfo.pm
 endif

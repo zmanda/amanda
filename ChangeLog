@@ -1,4 +1,20 @@
 2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Small fix.
+	* perl/Amanda/BigIntCompat.pm: Add TO_JSON to return anumber.
+	* perl/Amanda/JSON.pm: documention
+	* perl/Amanda/JSON/Changer.pm,
+	  perl/Amanda/JSON/Config.pm,
+	  perl/Amanda/JSON/DB/Catalog.pm,
+	  perl/Amanda/JSON/Tapelist.pm: amanda SON perl modules.
+	* perl/Amanda/JSON/RPC/Dispatcher.pm
+	  perl/Amanda/JSON/RPC/Dispatcher/App.pm
+	  perl/Amanda/JSON/RPC/Dispatcher/Procedure.pm: perl modules for JSON.
+	* perl/Amanda/Tapelist.swg: Set $datestamp to 0 if !defined.
+	* perl/Makefile.am: Compile new modules.
+	* server-src/Makefile.am: Compile amanda.psgi.
+	* server-src/amanda.psgi.pl: The amanda psgi.
+
+2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Remove debug statements.
 
 2012-06-28  Jean-Louis Martineau <martineau@zmanda.com>
