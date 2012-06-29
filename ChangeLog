@@ -1,3 +1,8 @@
+2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Add initialization code for openssl and
+	  gnutls.
+	* config/amanda/libs.m4: Detect ssl library used by libcurl.
+
 2012-05-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c, device-src/s3.c: Fix for pragma and gcc-4.5.2.
 
