@@ -1,4 +1,9 @@
 2012-07-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Correctly parse byte suffix.
+	* common-src/conffile.h: Add confunit_t.
+	* installcheck/amgetconf.pl: Fix for byte parsing.
+
+2012-07-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): Fix for flush_*.
 	  Change debug level.
 

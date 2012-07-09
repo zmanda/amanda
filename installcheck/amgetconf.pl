@@ -216,7 +216,7 @@ is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'device_property
 $testconf = Installcheck::Config->new();
 $testconf->add_tapetype("cassette", [ length => "32 k" ]);
 $testconf->add_tapetype("reel2reel", [ length => "1 M" ]);
-$testconf->add_tapetype("scotch", [ length => "500 bytes" ]); # (use a sharpie)
+$testconf->add_tapetype("scotch", [ length => "512000 bytes" ]);
 $testconf->add_dumptype("testdump", [ comment => '"testdump-dumptype"',
 				      auth => '"bsd"' ]);
 $testconf->add_dumptype("testdump1", [ inherit => 'testdump' ]);
