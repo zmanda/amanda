@@ -268,6 +268,11 @@ typedef enum {
     CONFTYPE_NO_YES_ALL,
 } conftype_t;
 
+typedef enum {
+    CONF_UNIT_NONE,
+    CONF_UNIT_K,
+} confunit_t;
+
 /* This should be considered an opaque type for any other modules.  The complete
  * struct is included here to allow quick access via macros. Access it *only* through
  * those macros. */
@@ -290,6 +295,7 @@ typedef struct val_s {
     } v;
     seen_t seen;
     conftype_t type;
+    confunit_t unit;
 } val_t;
 
 /* Functions to typecheck and extract a particular type of
