@@ -1,3 +1,7 @@
+2012-07-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (tape_action): Fix for flush_*.
+	  Change debug level.
+
 2012-06-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON.pm: Fix comment.
 
