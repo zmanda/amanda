@@ -695,7 +695,7 @@ typedef char **val_t_strs;
 val_t_strs getconf_byname_strs(char *key, int str_needs_quotes) {
     val_t *val = getconf_byname(key);
     if (!val) return NULL;
-    return val_t_display_strs(val, str_needs_quotes, FALSE);
+    return val_t_display_strs(val, str_needs_quotes, FALSE, FALSE);
 }
 %}
 

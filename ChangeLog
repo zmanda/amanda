@@ -1,9 +1,15 @@
-2012-07-05  Jean-Louis Martineau <martineau@zmanda.com>
+2012-07-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (val_t_display_strs): Add a print_unit argument.
+	* common-src/conffile.h (val_t_display_strs): Change prototype.
+	* perl/Amanda/Config.swg (getconf_byname_strs): Use val_t_display_strs
+	  with a FALSE print_unit.
+
+2012-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Correctly parse byte suffix.
 	* common-src/conffile.h: Add confunit_t.
 	* installcheck/amgetconf.pl: Fix for byte parsing.
 
-2012-07-05  Jean-Louis Martineau <martineau@zmanda.com>
+2012-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): Fix for flush_*.
 	  Change debug level.
 

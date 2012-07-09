@@ -7530,7 +7530,7 @@ val_t_print_token(
 	return;
     }
 
-    dispstrs = val_t_display_strs(val, 1, print_source);
+    dispstrs = val_t_display_strs(val, 1, print_source, TRUE);
 
     /* For most configuration types, this outputs
      *   PREFIX KEYWORD DISPSTR
@@ -7586,9 +7586,11 @@ char **
 val_t_display_strs(
     val_t *val,
     int    str_need_quote,
-    gboolean print_source)
+    gboolean print_source,
+    gboolean print_unit)
 {
     gboolean add_source = TRUE;
+    int    i;
     char **buf;
     buf = malloc(3*SIZEOF(char *));
     buf[0] = NULL;
@@ -7597,15 +7599,33 @@ val_t_display_strs(
 
     switch(val->type) {
     case CONFTYPE_INT:
-	buf[0] = vstrallocf("%d", val_t__int(val));
+	buf[0] = vstrallocf("%d ", val_t__int(val));
+	i = strlen(buf[0]) - 1;
+	if (print_unit && val->unit == CONF_UNIT_K) {
+	    buf[0][i] = 'K';
+	} else {
+	    buf[0][i] = '\0';
+	}
 	break;
 
     case CONFTYPE_SIZE:
-	buf[0] = vstrallocf("%zd", (ssize_t)val_t__size(val));
+	buf[0] = vstrallocf("%zd ", (ssize_t)val_t__size(val));
+	i = strlen(buf[0]) - 1;
+	if (print_unit && val->unit == CONF_UNIT_K) {
+	    buf[0][i] = 'K';
+	} else {
+	    buf[0][i] = '\0';
+	}
 	break;
 
     case CONFTYPE_INT64:
-	buf[0] = vstrallocf("%lld", (long long)val_t__int64(val));
+	buf[0] = vstrallocf("%lld ", (long long)val_t__int64(val));
+	i = strlen(buf[0]) - 1;
+	if (print_unit && val->unit == CONF_UNIT_K) {
+	    buf[0][i] = 'K';
+	} else {
+	    buf[0][i] = '\0';
+	}
 	break;
 
     case CONFTYPE_REAL:

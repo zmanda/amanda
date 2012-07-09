@@ -1514,7 +1514,8 @@ void dump_dumptype(dumptype_t *dp, char *prefix, gboolean print_default,
  * @param str_needs_quotes: add quotes to CONFTYPE_STR values?
  * @returns: NULL-terminated string vector
  */
-char **val_t_display_strs(val_t *val, int str_needs_quotes, gboolean  print_source);
+char **val_t_display_strs(val_t *val, int str_needs_quotes, gboolean  print_source,
+			  gboolean print_unit);
 
 /* Read a dumptype; this is used by this module as well as by diskfile.c to
  * read the disklist.  The two are carefully balanced in their parsing process.
