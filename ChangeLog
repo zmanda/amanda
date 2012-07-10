@@ -1,3 +1,6 @@
+2012-07-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Print 'dump done' if the dump succeeded.
+
 2012-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (val_t_display_strs): Add a print_unit argument.
 	* common-src/conffile.h (val_t_display_strs): Change prototype.
