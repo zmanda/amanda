@@ -1005,6 +1005,7 @@ foreach $host (sort @hosts) {
 								$exit_status |= $STATUS_FAILED;
 							}
 							if($in_flush == 0) {
+								print " dump done," if defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1;
 								print " writing to tape";
 							}
 							else {
@@ -1075,6 +1076,7 @@ foreach $host (sort @hosts) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $xsize;
+						    print " dump done," if defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1;
 							if($in_flush == 0) {
 								print " failed to tape";
 							}
