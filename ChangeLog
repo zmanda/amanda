@@ -1,3 +1,7 @@
+2012-07-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Do not free ca_info if use_ssl is not set.
+	* device-src/s3.c:: Set CURLOPT_CAINFO even if use_ssl is not set.
+
 2012-07-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Print 'dump done' if the dump succeeded.
 

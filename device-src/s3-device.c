@@ -2203,10 +2203,6 @@ static gboolean setup_handle(S3Device * self) {
             return FALSE;
 	}
 
-	if (!self->use_ssl && self->ca_info) {
-	    amfree(self->ca_info);
-	}
-
 	self->thread_idle_cond = g_cond_new();
 	self->thread_idle_mutex = g_mutex_new();
 

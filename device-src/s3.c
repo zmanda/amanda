@@ -1768,7 +1768,7 @@ perform_request(S3Handle *hdl,
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
             md5_hash_b64, content_type, request_body_size, project_id);
 
-        if (hdl->use_ssl && hdl->ca_info) {
+        if (hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
                 goto curl_error;
         }
