@@ -1,3 +1,10 @@
+2012-07-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Wait for all filters to terminate before
+	  going to next image.  Do not use '--ignore-zeros' for SMBCLIENT
+	  backup.  Pass the dump size to $xfer->start().
+	* server-src/amfetchdump.pl: Wait for all filters to terminate before
+	  going to next image.
+
 2012-07-16 Dan Locks <dwlocks@zmanda.com>
 	* packaging/sun-pkg/buildpkg:
 	* packaging/sun-pkg/client/postremove.src,
