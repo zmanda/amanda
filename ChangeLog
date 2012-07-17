@@ -1,4 +1,19 @@
 2012-07-16 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/rules: use FULL_VERSION file to fill AMVER var, use
+	* concatenation trick for postinst, rm trailing whitespace
+	* packaging/deb/buildpkg: process postinst.src postrm.src preinst.src with substitute.pl
+	* packaging/deb/postinst.src: refactor to use common functions.
+	* packaging/deb/amanda-backup-server.postrm,
+	  packaging/deb/amanda-backup-client.postrm,
+	  packaging/deb/amanda-backup-client.postinst,
+	  packaging/deb/amanda-backup-server.postinst: delete everything, add
+	  variables pkg_type and other_pkg_type.
+	* packaging/deb/preinst: moved to...
+	* packaging/deb/preinst.src: here. refactor using common functions
+	* packaging/deb/postrm: moved to...
+	* packaging/deb/postrm.src: here. refactor using common functions.
+
+2012-07-16 Dan Locks <dwlocks@zmanda.com>
 	* packaging/common/common_functions.sh: remove trailing whitespace,
 	  remove redundant usage of ${BASEDIR} in solaris functions, avoid
 	  potentially non-portable test invocations.

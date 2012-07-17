@@ -1,0 +1,75 @@
+# This is appended to packaging/deb/amanda-backup-*.postinst
+# vim: ft=sh
+
+# Note: this script needs to do the same things in all maintainer
+# script cases: configure, abort-remove, abort-upgrade.
+
+LOGFILE=`mktemp /tmp/amanda-postinst.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	echo "Unable to create log file!"
+	exit 1
+fi
+amanda_user=amandabackup
+amanda_group=disk
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+os=Linux
+dist=%%DISTRO%%
+LOGDIR=%%LOGDIR%%
+INSTALL_LOG="${LOGDIR}/install.log"
+SYSCONFDIR=/etc
+SBINDIR=/usr/sbin
+AMTMP="/tmp/amanda"
+
+AMANDATES=${SYSCONFDIR}/amandates
+
+# ---------- Common functions ------------
+%%COMMON_FUNCTIONS%%
+%%POST_INST_FUNCTIONS%%
+
+# -------- End Common functions ----------
+
+check_xinetd "amanda${pkg_type}"
+case $? in
+	0) backup_xinetd "amanda${pkg_type}"
+	   install_xinetd "amanda${pkg_type}"
+	;;
+	1) install_xinetd "amanda${pkg_type}" ;;
+	2) logger "Xinetd config not installed: either xinetd config is not present or xinetd.d is a file." ;;
+	*) logger "bad return from check_xinetd"
+	   cat ${LOGFILE} >> ${INSTALL_LOG}
+	   exit 1
+	;;
+esac
+
+# amanda${pkg_type} should not have the amanda${other_pkg_type} xinetd installed.
+check_xinetd "amanda${other_pkg_type}"
+case $? in
+	0) backup_xinetd "amanda${other_pkg_type}" ;;
+esac
+
+reload_xinetd
+create_amandates
+check_amandates
+create_gnupg
+check_gnupg
+create_amandahosts
+check_amandahosts_entry root amindexd amidxtaped
+check_amandahosts_entry ${amanda_user} amdump
+check_amandahosts_perms
+create_ssh_key ${pkg_type}
+if [ "${pkg_type}" = "server" ]; then
+    create_ssh_key ${other_pkg_type}
+fi
+create_profile
+check_profile
+install_client_conf
+create_ampassphrase
+create_amtmp
+
+logger "Amanda ${pkg_type} installation complete."
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE;
+    echo "Amanda installation log can be found in '${INSTALL_LOG}'.";
+} || \
+    echo "Amanda installation log can be found in '${LOGFILE}'.";
+

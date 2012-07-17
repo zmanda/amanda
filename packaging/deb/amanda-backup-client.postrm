@@ -1,0 +1,3 @@
+#!/bin/sh -e
+pkg_type=client
+other_pkg_type=server
