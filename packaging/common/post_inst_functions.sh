@@ -18,16 +18,16 @@ add_service() {
     # Only needed on Solaris!
     entry="amanda       10080/tcp    # amanda backup services"
     # make sure amanda is in /etc/services
-    if [ -z "`grep 'amanda' /${SYSCONFDIR}/services |grep '10080/tcp'`" ] ; then
-        logger "Adding amanda entry to /${SYSCONFDIR}/services."
-        echo "${entry}" >> /${SYSCONFDIR}/services
+    if [ -z "`grep 'amanda' ${SYSCONFDIR}/services |grep '10080/tcp'`" ] ; then
+        logger "Adding amanda entry to ${SYSCONFDIR}/services."
+        echo "${entry}" >> ${SYSCONFDIR}/services
     fi
 
     # make sure kamanda is in /etc/services
     entry_2="amanda       10081/tcp    famdc    # amanda backup services (kerberos)"
     if [ -z "`grep 'kamanda' /etc/services |grep '10081/tcp'`" ] ; then
-        logger "Adding kamanda entry to /${SYSCONFDIR}/services."
-        echo "${entry_2}" >> /${SYSCONFDIR}/services
+        logger "Adding kamanda entry to ${SYSCONFDIR}/services."
+        echo "${entry_2}" >> ${SYSCONFDIR}/services
     fi
 }
 

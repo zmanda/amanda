@@ -69,7 +69,7 @@ id_1="biff foo"
 id_2="biff bar baz"
 id_3="biff zip bop whir"
 
-# Set defaults for deb_uid and amanda_group, if running outside test_sh_libs
+# Set defaults for uid and amanda_group, if running outside test_sh_libs
 deb_uid=${deb_uid:=12345}
 amanda_group=${amanda_group:=disk}
 
@@ -78,24 +78,42 @@ cat << EOF >> "${MOCKDIR}/id"
 echo "id args: \${@}" > $mock_id_flags
 [ -n "\${1}" ] || { echo "Missing a username to id!"; exit 1; }
 
-# We have to return the most basic form of id to be portable
-# group file is used for supplemental groups.
-if [ -f "${MOCKDIR}/num_groups" ]; then
-    if [ "\${1}" = "-Gn" ]; then
-        # Called from add_group.
-        num_groups=\`cat ${MOCKDIR}/num_groups\`
-        case "\${num_groups}" in
-            0) echo "${id_0}";;
-            1) echo "${id_1}";;
-            2) echo "${id_2}";;
-            3) echo "${id_3}";;
-        esac
-    else
-        # Called from check_user.
-        echo "uid=${deb_uid}(\${1}) gid=6(${amanda_group})"
-    fi
+# We can only use id with no flags to have consistent results.  Solaris
+# /usr/bin/id does not provide any standard flags. Since /usr/xpg4/bin is
+# not part of a minimal install we can't depend on it. Any flags *at all*
+# should raise an error in the tests.
+# group file and /usr/bin/groups can be used (with some tweaks).
+for f in "\$@"; do
+    case \$f in
+        # -- is ok, surprisingly.
+        --) : ;;
+        -?*) echo "id: no options are portable! '\$f'"
+             # Solaris exits with 2, others with 1. ugh.
+             exit 2
+        ;;
+        *) : ;;
+    esac
+done
+
+# Use id_group to control primary group name.
+[ -f ${MOCKDIR}/id_group ] && group=\`cat ${MOCKDIR}/id_group\` || group=bar
+
+# Solaris, Linux and OSX differ in the exact format of the output from id,
+# so we provide sample output based on the contents of id_os.  We don't
+# parse it, but its presence can't break things.
+test_os=\`cat ${MOCKDIR}/id_os\`
+case \${test_os} in
+    linux) sup_groups=" groups=999(\${group}),1000(foo)" ;;
+    solaris) sup_groups="" ;;
+    osx) sup_groups=" groups=999(\${group}), 1000(foo)" ;;
+esac
+
+if [ -f ${MOCKDIR}/id_exists ]; then
+    # Note: uid is set when the mock is created.
+    echo "uid=${deb_uid}(\${1}) gid=6(\${group})\${sup_groups}"
 else
-    echo "uid=123(\${1}) gid=123(foobar)"
+    echo "id: \${1}: no such user" >&2
+    exit 1
 fi
 EOF
 
@@ -104,9 +122,18 @@ EOF
 mk_mock_util "groupadd"
 cat << EOF >> "${MOCKDIR}/groupadd"
 echo "groupadd args: \${@}" > $mock_groupadd_flags
-# We check for return codes of 0 (group added) or 9 (group existed) to continue in the function that uses groupadd
+# We check for return codes of 0 (group added) or 9 (group existed) to
+# continue in the function that uses groupadd
 groupadd_rc=\`cat ${MOCKDIR}/groupadd_rc\`
 exit \${groupadd_rc}
+EOF
+
+###############
+# groups replacement
+mk_mock_util "groups"
+cat << EOF >> "${MOCKDIR}/groups"
+echo "groups args: \${@}" > $mock_groups_flags
+cat ${MOCKDIR}/groups_output
 EOF
 
 ###############

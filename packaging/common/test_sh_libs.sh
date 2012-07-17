@@ -23,9 +23,11 @@ SHUNIT_INC="${srcdir=`pwd`}/packaging/common"; export SHUNIT_INC
 TMPDIR=`pwd`/shunit-test; export TMPDIR
 amanda_user=test_amandabackup; export amanda_user
 amanda_group=test_disk; export amanda_group
+sup_group="test_tape"; export sup_group
 AMANDAHOMEDIR=$TMPDIR/amanda; export AMANDAHOMEDIR
 AMANDATES=$AMANDAHOMEDIR/amandates; export AMANDATES
 os=`uname`; export os
+wanted_shell='/bin/false'; export wanted_shell
 dist=Fedora; export dist
 SYSCONFDIR=$TMPDIR/etc; export SYSCONFDIR
 SBINDIR=$TMPDIR/sbin; export SBINDIR
@@ -34,7 +36,7 @@ deb_uid=63000; export deb_uid
 
 
 # Append stuff to this when you make temp files if they are outside TMPDIR
-test_cleanup_files="$TMPDIR"; export sh_cleanup_files
+test_cleanup_files="$TMPDIR"; export test_cleanup_files
 
 # This can't be part of one-time setup, because TMPDIR must exist before
 # shunit2 is sourced.
@@ -63,6 +65,8 @@ oneTimeSetUp() {
         grep "${amanda_user}" ${SYSCONFDIR}/passwd &> /dev/null || { \
             echo "$msg_prefix ${amanda_user} still exists, or no ${SYSCONFDIR}/passwd.";
             exit 1; }
+        groupdel ${amanda_group} || exit 1
+        groupdel ${sup_group} || exit 1
     else
 	echo "Not root, cleanup skipped"
     fi
@@ -117,7 +121,7 @@ fi
 # to run first.
 test___logger() {
     # Write a line to the log, test that it got there.
-    TEST_MSG="Test01_logger message"
+    TEST_MSG="test___logger message"
     LOG_LINE="`date +'%b %e %Y %T'`: ${TEST_MSG}"
     # It's important for the log messages to be quoted, or funny stuff happens.
     logger "${TEST_MSG}"
@@ -135,7 +139,7 @@ test___logger() {
 
 test__log_output_of() {
     # Use log_output_of to append to the log
-    TEST_MSG="Test02_log_output_of message"
+    TEST_MSG="test__log_output_of message"
     log_output_of echo "${TEST_MSG}"
     assertEquals "log_output_of()" 0 $?
     COUNT=`grep -c "${TEST_MSG}" ${LOGFILE}`
@@ -284,11 +288,11 @@ test_reload_xinetd() {
     rm ${MOCKDIR}/success
     reload_xinetd "reload"
     assertEquals "reload_xinetd" 1 $?
-    tail -4 ${LOGFILE}|grep "\<xinetd.*Attempting restart"
+    tail -4 ${LOGFILE}|grep "\<xinetd.*Attempting restart" >/dev/null
     assertEquals "reload_xinetd should try to restart." 0 $?
     reload_xinetd "restart"
     assertEquals "restart should fail." 1 $?
-    tail -3 ${LOGFILE}|grep "Restarting xinetd"
+    tail -3 ${LOGFILE}|grep "Restarting xinetd" >/dev/null
     assertEquals "Should log attempt to restart" 0 $?
 }
 
@@ -312,11 +316,11 @@ test_reload_inetd() {
     rm ${MOCKDIR}/success
     reload_inetd "reload"
     assertEquals "reload_inetd" 1 $?
-    tail -4 ${LOGFILE}|grep "\<inetd.*Attempting restart"
+    tail -4 ${LOGFILE}|grep "\<inetd.*Attempting restart" >/dev/null
     assertEquals "reload_inetd should try to restart." 0 $?
     reload_inetd "restart"
     assertEquals "restart should fail." 1 $?
-    tail -3 ${LOGFILE}|grep "Restarting inetd"
+    tail -3 ${LOGFILE}|grep "Restarting inetd" >/dev/null
     assertEquals "Should log attempt to restart" 0 $?
 }
 
@@ -324,22 +328,124 @@ test_reload_inetd() {
 ######################################
 # pre_install_functions
 
-test_check_user_crazy_input() {
-    logger "test_check_user_crazy_input"
-    # Case 1: not enough params.
-    check_user "bar"
-    assertEquals "'check_user bar'" 2 $?
-    
-    # Case 2: bad first param.
-    check_user "bar" "bell" 
-    assertEquals "'check_user bar bell'" 2 $?
+test_check_user_group_missing() {
+    logger "test_check_user_group_missing no param"
+    check_user_group
+    assertNotEquals "'check_user_group' should fail" 0 $?
+    logger "test_check_user_group_missing missing group"
+    [ ! "$IAmRoot" ] && rm -f ${SYSCONFDIR}/group
+    touch ${SYSCONFDIR}/group
+    for os in linux osx solaris; do
+        echo $os > ${MOCKDIR}/id_os
+        check_user_group "abracadabra"
+        assertNotEquals "'check_user group abracadabra' should not be found:" 0 $?
+        LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
+        assertEquals "check_user_group should write" \
+            "User's primary group 'abracadabra' does not exist" \
+            "${LOG_TAIL}"
+    done
 }
 
-test_check_user_group_missing() {
-    logger "test_check_user_group_missing"
+good_group_entry="${amanda_group}:x:100:"
+export good_group_entry
+test_check_user_group_exists() {
+    logger "test_check_user_group user and group exist"
+    touch ${MOCKDIR}/id_exists
     touch ${SYSCONFDIR}/group
-    check_user "group" "abracadabra"
-    assertNotEquals "'check_user group abracadabra' should not be found:" 0 $?
+    # Non-root adds and entry to the mock group file
+    [ ! "$IAmRoot" ] && echo $good_group_entry > ${SYSCONFDIR}/group
+    for os in linux osx solaris; do
+        echo $os > ${MOCKDIR}/id_os
+
+        # Case 1: Amanda_user is correct.
+        echo ${amanda_group} > ${MOCKDIR}/id_group
+        check_user_group "${amanda_group}"
+        assertEquals "'check_user_group ${amanda_group}': id returns correct groupname" \
+            0 $?
+
+        # Case 2: Amanda_user is not a member of the the correct primary group.
+        rm ${MOCKDIR}/id_group
+        check_user_group "${amanda_group}"
+        assertEquals "'check_user_group ${amanda_group}' when not a member" 1 $?
+    done
+}
+
+test_check_user_supplemental_group_missing() {
+    logger "test_check_user_supplemental_group missing"
+    [ ! "$IAmRoot" ] && echo $good_group_entry > ${SYSCONFDIR}/group
+    for os in linux osx solaris; do
+        echo $os > ${MOCKDIR}/id_os
+        check_user_supplemental_group ${sup_group}
+        assertEquals "'check_user supplemental-group ${sup_group}' when group missing" \
+        1 $?
+    done
+}
+
+missing_group_member="${sup_group}:x:105:nobody"
+export missing_group_member
+good_sup_group_entry="${missing_group_member},${amanda_user}"
+export good_sup_group_entry
+
+test_check_user_supplemental_group_exists() {
+    logger "test_check_user_supplemental_group exists"
+    [ ! "$IAmRoot" ] && echo $missing_group_member > ${SYSCONFDIR}/group
+    check_user_supplemental_group ${sup_group}
+    assertEquals "'check_user_supplemental_group ${sup_group}' when amanda_user is not a member" \
+        1 $?
+
+    [ ! "$IAmRoot" ] && echo ${good_sup_group_entry} > ${SYSCONFDIR}/group
+    check_user_supplemental_group ${sup_group}
+    assertEquals "'check_user_supplemental_group ${sup_group}' with correct membership" \
+        0 $?
+}
+test_check_user_shell() {
+    logger "test_check_user_shell"
+    if [ ! "$IAmRoot" ]; then
+	echo "${good_passwd_entry}" > ${SYSCONFDIR}/passwd
+    fi
+    # Case 1: Provide a matching shell
+    check_user_shell "/bin/bash"
+    assertEquals "check_user_shell /bin/bash (matching)" 0 $?
+    # Case 2: Provide a non-matching shell. 
+    check_user_shell "/bin/ksh"
+    assertEquals "check_user_shell /bin/ksh (not matching)" 1 $?
+}
+
+test_check_user_homedir() {
+    logger 'test_check_user_homedir'
+    if [ ! "$IAmRoot" ]; then
+	echo "${good_passwd_entry}" > ${SYSCONFDIR}/passwd
+    fi
+    # Case 1: Assume amanda_user is correct.
+    check_user_homedir "${AMANDAHOMEDIR}"
+    assertEquals "check_user_homedir ${AMANDAHOMEDIR}" 0 $?
+    # Case 2: Provide an incorrect homedir
+    check_user_homedir "/tmp"
+    assertEquals "check_user_homedir /tmp" 1 $?
+}
+
+test_check_user_uid() {
+    echo "${amanda_group}" > ${MOCKDIR}/id_group
+    touch ${MOCKDIR}/id_exists
+    logger 'test_check_user_uid'
+    for os in linux osx solaris; do
+        echo $os > ${MOCKDIR}/id_os
+        check_user_uid
+        assertEquals "check_user_uid without a uid" 1 $?
+        logger 'test_check_user_uid wrong id'
+        check_user_uid 123
+        assertEquals "check_user_uid uids don't match" 1 $?
+        logger 'test_check_user_uid correct id'
+        check_user_uid ${deb_uid}
+    done
+
+}
+test_check_homedir_dir_missing() {
+    logger "test_check_homedir_dir_missing"
+    # First make sure the dir is missing
+    rm -rf ${AMANDAHOMEDIR}
+    check_homedir
+    assertNotEquals "check_homedir returned 0, but homedir did not exist" 0 $?
 }
 
 # passwd file entry for Linux systems, maybe others.  UID is correct
@@ -361,9 +467,10 @@ test_create_user() {
     assertEquals "create_user()" 0 $?
 }
 
-test_add_group_parameters_logs() {
+test_add_group_check_parameters_logs() {
     rm -f ${MOCKDIR}/groupadd_rc ${MOCKDIR}/num_groups
-    echo 0 > ${MOCKDIR}/groupadd_rc
+    # Return codes are integers.
+    printf '%i' 0 > ${MOCKDIR}/groupadd_rc
     # Test that first parameter is required.
     add_group
     assertEquals "add_group without a group should fail." 1 $?
@@ -375,98 +482,25 @@ test_add_group_parameters_logs() {
 
 test_add_group_group_ok() {
     # groupadd created group
-    echo 0 > ${MOCKDIR}/groupadd_rc
-    echo 0 > ${MOCKDIR}/num_groups
+    printf '%i' 0 > ${MOCKDIR}/groupadd_rc
+    echo '${amanda_user} : prev_grp1' > ${MOCKDIR}/groups_output
     add_group twinkle
     assertEquals "add_group group ok" 0 $?
-    LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
-    echo $LOG_TAIL
-    flags=`cat ${mock_id_flags}`
-    assertEquals "id_flags should contain:" \
-        "id args: -Gn ${amanda_user}" \
-        "${flags}"
     flags=`cat ${mock_usermod_flags}`
     assertEquals "usermod_flags" \
-        "usermod args: -G ${id_0} twinkle ${amanda_user}" \
+        "usermod args: -G prev_grp1,twinkle ${amanda_user}" \
         "${flags}"
 
-    echo 1 > ${MOCKDIR}/num_groups
+    # Make sure supplemental groups are preserved when adding groups to an
+    # existing account
+    echo '${amanda_user} : prev_grp1 prev_grp2' > ${MOCKDIR}/groups_output
+    printf '%i' 1 > ${MOCKDIR}/num_groups
     add_group twinkle
     assertEquals "add_group group ok" 0 $?
     flags=`cat ${mock_usermod_flags}`
     assertEquals "usermod_flags should contain:" \
-        "usermod args: -G ${id_1} twinkle ${amanda_user}" \
+        "usermod args: -G prev_grp1,prev_grp2,twinkle ${amanda_user}" \
         "${flags}"
-
-    echo 2 > ${MOCKDIR}/num_groups
-    add_group twinkle
-    assertEquals "add_group group ok" 0 $?
-    flags=`cat ${mock_usermod_flags}`
-    assertEquals "usermod_flags should contain:" \
-        "usermod args: -G ${id_2} twinkle ${amanda_user}" \
-        "${flags}"
-
-    echo 3 > ${MOCKDIR}/num_groups
-    add_group twinkle
-    assertEquals "add_group group ok" 0 $?
-    flags=`cat ${mock_usermod_flags}`
-    assertEquals "usermod_flags should contain:" \
-        "usermod args: -G ${id_3} twinkle ${amanda_user}" \
-        "${flags}"
-}
-
-good_group_entry="${amanda_group}:x:100:${amanda_user}"
-export good_group_entry
-test_check_user_group() {
-    logger "test_check_user_group"
-    touch ${SYSCONFDIR}/group
-    # Non-root adds and entry to the mock group file
-    [ ! "$IAmRoot" ] && echo $good_group_entry > ${SYSCONFDIR}/group
-
-    # Case 1: Amanda_user is correct.
-    touch ${MOCKDIR}/num_groups
-    check_user "group" "${amanda_group}"
-    assertEquals "'check_user group ${amanda_group}': id returns member" \
-	 0 $?
-
-    # Case 2: Amanda_user is not a member of the the correct group.
-    rm ${MOCKDIR}/num_groups
-    check_user "group" "${amanda_group}"
-    assertEquals "'check_user group ${amanda_group}' when not a member" 1 $?
-}
-
-test_check_user_shell() {
-    logger "test_check_user_shell"
-    if [ ! "$IAmRoot" ]; then
-	echo "$good_passwd_entry" > ${SYSCONFDIR}/passwd
-    fi
-    # Case 1: Provide a matching shell
-    check_user "shell" "/bin/bash"
-    assertEquals "check_user shell /bin/bash (matching)" 0 $?
-    # Case 2: Provid a non-matching shell. 
-    check_user "shell" "/bin/sh"
-    assertEquals "check_user shell /bin/ksh (not matching)" 1 $?
-}
-
-test_check_user_homedir() {
-    logger 'test_check_user_homedir'
-    if [ ! "$IAmRoot" ]; then
-	echo "$good_passwd_entry" > ${SYSCONFDIR}/passwd
-    fi
-    # Case 1: Assume amanda_user is correct.
-    check_user "homedir" "${AMANDAHOMEDIR}"
-    assertEquals "check_user homedir ${AMANDAHOMEDIR}" 0 $?
-    # Case 2: Provide an incorrect homedir
-    check_user "homedir" "/tmp"
-    assertEquals "check_user homedir /tmp" 1 $?
-}
-
-test_check_homedir_dir_missing() {
-    logger "test_check_homedir_dir_missing"
-    # First make sure the dir is missing
-    rm -rf ${AMANDAHOMEDIR}
-    check_homedir
-    assertNotEquals "check_homedir returned 0, but homedir did not exist" 0 $?
 }
 
 test_create_homedir() {
@@ -680,12 +714,11 @@ if [ $# -gt 0 ]; then
     echo $1
     SPECIFIC_TESTS="$*"
     suite() {
-	__shunit_suite="test___logger"
-	__shunit_suite="$__shunit_suite test__log_output_of"
-	__shunit_suite="$__shunit_suite $SPECIFIC_TESTS"
-	# Set the test total including the 3 base tests.
-	__shunit_testsTotal=`expr 2 + $#`
         suite_addTest test___logger
+        suite_addTest test__log_output_of
+        for t in $SPECIFIC_TESTS; do
+            suite_addTest $t
+        done
     }
 fi
 

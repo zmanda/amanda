@@ -1,3 +1,19 @@
+2012-07-16 Dan Locks <dwlocks@zmanda.com>
+	* packaging/common/common_functions.sh: remove trailing whitespace,
+	  remove redundant usage of ${BASEDIR} in solaris functions, avoid
+	  potentially non-portable test invocations.
+	* packaging/common/test_sh_libs.sh: fix some log messages, redirect
+	  some unused output, split check_user_* tests into shorter testsr,
+	  add tests for supplemental groups, fix running single test.
+	* packaging/common/mock_utils.sh: change id to error if any flags are
+	  given, add mock for groups.
+	* packaging/common/post_inst_functions.sh: remove redundant leading /
+	* packaging/common/post_rm_functions.sh: rm trailing whitespace.
+	* packaging/common/pre_inst_functions.sh: use variable for user
+	  shell, clarify log messages regarding user accounts, split
+	  check_user into separate functions, mostly to ease testing, add
+	  check_user_supplemental_group.
+
 2012-07-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Do not free ca_info if use_ssl is not set.
 	* device-src/s3.c:: Set CURLOPT_CAINFO even if use_ssl is not set.
