@@ -333,7 +333,8 @@ sub main {
     my $plan;
     my @xfer_errs;
     my %all_filter;
-    my $fetch_done;
+    my $recovery_done;
+    my %recovery_params;
     my $timer;
     my $is_tty;
     my $delay;
@@ -428,9 +429,13 @@ sub main {
 
     step start_dump => sub {
 	$current_dump = shift @{$plan->{'dumps'}};
+
 	if (!$current_dump) {
 	    return $steps->{'finished'}->();
 	}
+
+	$recovery_done = 0;
+	%recovery_params = ();
 
 	$clerk->get_xfer_src(
 	    dump => $current_dump,
@@ -586,8 +591,8 @@ sub main {
 		    delete $all_filter{$src};
 		    $src->remove();
 		    POSIX::close($fd);
-		    if (!%all_filter and $fetch_done) {
-			$finished_cb->();
+		    if (!%all_filter and $recovery_done) {
+			$steps->{'filter_done'}->();
 		    }
 		} else {
 		    $buffer .= $b;
@@ -621,19 +626,24 @@ sub main {
     };
 
     step recovery_cb => sub {
-	my %params = @_;
+	%recovery_params = @_;
+	$recovery_done = 1;
 
+	$steps->{'filter_done'}->() if !%all_filter;
+    };
+
+    step filter_done => sub {
 	if ($is_tty) {
-	    print STDERR "\r" . int($params{'bytes_read'}/1024) . " kb ";
+	    print STDERR "\r" . int($recovery_params{'bytes_read'}/1024) . " kb ";
 	} else {
-	    print STDERR "READ SIZE: " . int($params{'bytes_read'}/1024) . " kb\n";
+	    print STDERR "READ SIZE: " . int($recovery_params{'bytes_read'}/1024) . " kb\n";
 	}
-	@xfer_errs = (@xfer_errs, @{$params{'errors'}})
-	    if $params{'errors'};
+	@xfer_errs = (@xfer_errs, @{$recovery_params{'errors'}})
+	    if $recovery_params{'errors'};
 	return failure(join("; ", @xfer_errs), $finished_cb)
 	    if @xfer_errs;
 	return failure("recovery failed", $finished_cb)
-	    if $params{'result'} ne 'DONE';
+	    if $recovery_params{'result'} ne 'DONE';
 
 	$steps->{'start_dump'}->();
     };
@@ -656,11 +666,7 @@ sub main {
 	print STDERR "\n" if $is_tty;
 	return failure($err, $finished_cb) if $err;
 
-	#do all filter are done reading stderr
-	$fetch_done = 1;
-        if (!%all_filter) {
-	    $finished_cb->();
-	}
+	$finished_cb->();
     };
 }
 
