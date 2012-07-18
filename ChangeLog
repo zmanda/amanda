@@ -1,3 +1,7 @@
+2012-07-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_IPC_LineProtocol.pl: Add synchonization to fix
+	  race.
+
 2012-07-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Wait for all filters to terminate before
 	  going to next image.  Do not use '--ignore-zeros' for SMBCLIENT
@@ -5,7 +9,7 @@
 	* server-src/amfetchdump.pl: Wait for all filters to terminate before
 	  going to next image.
 
-2012-07-16 Dan Locks <dwlocks@zmanda.com>
+2012-07-16  Dan Locks <dwlocks@zmanda.com>
 	* packaging/sun-pkg/buildpkg:
 	* packaging/sun-pkg/client/postremove.src,
 	  packaging/sun-pkg/server/postremove.src: remove redundant usage of
@@ -17,12 +21,12 @@
 	  packaging/sun-pkg/client/preinstall.src: remove redundant basedir,
 	  use new check_user_* functions.
 
-2012-07-16 Dan Locks <dwlocks@zmanda.com>
+2012-07-16  Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec.src: refactor to use common functions
 	* packaging/rpm/buildpkg: check for ./configure, and exit if
 	  substitute.pl fails.
 
-2012-07-16 Dan Locks <dwlocks@zmanda.com>
+2012-07-16  Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/rules: use FULL_VERSION file to fill AMVER var, use
 	* concatenation trick for postinst, rm trailing whitespace
 	* packaging/deb/buildpkg: process postinst.src postrm.src preinst.src with substitute.pl
@@ -37,7 +41,7 @@
 	* packaging/deb/postrm: moved to...
 	* packaging/deb/postrm.src: here. refactor using common functions.
 
-2012-07-16 Dan Locks <dwlocks@zmanda.com>
+2012-07-16  Dan Locks <dwlocks@zmanda.com>
 	* packaging/common/common_functions.sh: remove trailing whitespace,
 	  remove redundant usage of ${BASEDIR} in solaris functions, avoid
 	  potentially non-portable test invocations.
