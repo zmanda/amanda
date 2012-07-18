@@ -1,4 +1,7 @@
 2012-07-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Parse application/json reply from cloudena.
+
+2012-07-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_IPC_LineProtocol.pl: Add synchonization to fix
 	  race.
 

@@ -296,7 +296,7 @@ lookup_result(const result_handling_t *result_handling,
 static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
     x_storage_url_regex, access_token_regex, expires_in_regex,
-    content_type_regex;
+    content_type_regex, details_regex, code_regex;
 
 
 /*
@@ -555,7 +555,7 @@ rfc3339_date(
     gint year, month, day, hour, minute, seconds;
     const char *atz;
 
-    if (strlen(date) < 20)
+    if (strlen(date) < 19)
 	return 1073741824;
 
     year = atoi(date);
@@ -1087,7 +1087,7 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	    if (g_str_equal(*att_name, "id")) {
 		thunk->token_id = g_strdup(*att_value);
 	    }
-	    if (g_str_equal(*att_name, "expires") && strlen(*att_value) >= 20) {
+	    if (g_str_equal(*att_name, "expires") && strlen(*att_value) >= 19) {
 		thunk->expires = rfc3339_date(*att_value) - 600;
 	    }
 	}
@@ -1327,8 +1327,36 @@ interpret_response(S3Handle *hdl,
 	    b = p;
 	}
 	goto parsing_done;
-    } else if(!hdl->content_type ||
-	      !g_str_equal(hdl->content_type, "application/xml")) {
+    } else if ((hdl->s3_api == S3_API_SWIFT_1 ||
+		hdl->s3_api == S3_API_SWIFT_2) &&
+	       hdl->content_type &&
+	       g_str_equal(hdl->content_type, "application/json")) {
+	char *body_copy = g_strndup(body, body_len);
+	char *code = NULL;
+	char *details = NULL;
+	regmatch_t pmatch[2];
+
+	if (!s3_regexec_wrap(&code_regex, body_copy, 2, pmatch, 0)) {
+            code = find_regex_substring(body_copy, pmatch[1]);
+	}
+	if (!s3_regexec_wrap(&details_regex, body_copy, 2, pmatch, 0)) {
+            details = find_regex_substring(body_copy, pmatch[1]);
+	}
+	if (code && details) {
+	    hdl->last_message = g_strdup_printf("%s (%s)", details, code);
+	} else if (code) {
+	    hdl->last_message = g_strdup_printf("(%s)", code);
+	} else if (details) {
+	    hdl->last_message = g_strdup_printf("%s", details);
+	} else {
+	    hdl->last_message = NULL;
+	}
+	g_free(code);
+	g_free(details);
+	g_free(body_copy);
+	return FALSE;
+    } else if (!hdl->content_type ||
+	       !g_str_equal(hdl->content_type, "application/xml")) {
 	return FALSE;
     }
 
@@ -2042,7 +2070,9 @@ compile_regexes(void)
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
         {"^Date:(.*)\r",REG_EXTENDED | REG_ICASE | REG_NEWLINE, &date_sync_regex},
         {"\"access_token\" : \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &access_token_regex},
-        {"\"expires_in\" : (.*)", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
+	{"\"expires_in\" : (.*)", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
+        {"\"details\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &details_regex},
+        {"\"code\": (.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &code_regex},
         {NULL, 0, NULL}
     };
     char regmessage[1024];
@@ -2093,6 +2123,12 @@ compile_regexes(void)
         {"\"expires_n\" : (.*)",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &expires_in_regex},
+        {"\"details\" : \"([^\"]*)\"",
+	 G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+	 &details_regex},
+        {"\"code\" : (.*)",
+	 G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+	 &code_regex},
         {NULL, 0, NULL}
   };
   int i;
