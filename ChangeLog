@@ -1,4 +1,8 @@
-2012-07-17 Dan Locks <dwlocks@zmanda.com>
+2012-07-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_IPC_LineProtocol.pl: Add synchonization to fix
+	  race.
+
+2012-07-17  Dan Locks <dwlocks@zmanda.com>
 	* packaging/sun-pkg/buildpkg:
 	* packaging/sun-pkg/client/postremove.src,
 	  packaging/sun-pkg/server/postremove.src: remove redundant usage of

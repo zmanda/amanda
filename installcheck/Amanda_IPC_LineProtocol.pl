@@ -305,6 +305,8 @@ my $NMSGS = 10000;
 	POSIX::exit(0);
     };
 
+    $wrh->write("SIMPLE\n");
+
     # and sleep forever, or until killed.
     while (1) { sleep(100); }
 });
@@ -313,6 +315,15 @@ $proto = TestProtocol->new(
     rx_fh => $rx_fh, tx_fh => $tx_fh,
     message_cb => $message_cb);
 $proto->set_message_cb(TestProtocol::QUIT, $quit_cb);
+$proto->set_message_cb(TestProtocol::SIMPLE, sub {
+	push @events, [ shift @_ ];
+	# send $NMSGS messages to the child, which isn't listening yet!
+	for (my $i = 0; $i < $NMSGS; $i++) {
+	    $proto->send(TestProtocol::SIMPLE);
+	}
+	# and then send it SIGUSR1, so it reads those
+	kill USR1 => $pid;
+    });
 $proto->set_message_cb(TestProtocol::BAR, sub {
 	push @events, [ shift @_, { @_ } ];
     });
@@ -320,19 +331,13 @@ $proto->set_message_cb(TestProtocol::BAR, sub {
 # die after 10 minutes
 alarm 600;
 
-# send $NMSGS messages to the child, which isn't listening yet!
-for (my $i = 0; $i < $NMSGS; $i++) {
-    $proto->send(TestProtocol::SIMPLE);
-}
-# and then send it SIGUSR1, so it reads those
-kill USR1 => $pid;
-
 Amanda::MainLoop::run();
 waitpid($pid, 0);
 alarm 0; # cancel the alarm
 
 is_deeply([ @events ],
     [
+	[ "SIMPLE" ],
 	[ "BAR", { mandatory => "got your inputs" } ],
 	[ "QUIT" ],
     ],
