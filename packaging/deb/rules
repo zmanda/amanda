@@ -1,13 +1,13 @@
 #!/usr/bin/make -f
-# debian/rules for amanda using debhelper. GNU copyright 2008 by Dan Locks, 
+# debian/rules for amanda using debhelper. GNU copyright 2008 by Dan Locks,
 # based on work by Bdale Garbee.
 
 #	Warning - do *not* use -j on an SMP machine, or the build gets
-#		confused... some sort of race condition in the makefiles?
+#	confused... some sort of race condition in the makefiles?
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
-AMVER=3.2alpha
+AMVER=`cat FULL_VERSION`
 
 # These are variables that the user can override.  They get used in various
 # places during configure, build, and install.
@@ -45,8 +45,8 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 WD=$(shell pwd)
 
-build: build-stamp 
-build-stamp: /sbin/dump /usr/bin/smbclient 
+build: build-stamp
+build-stamp: /sbin/dump /usr/bin/smbclient
 	dh_testdir
 	./configure \
 		MAKEFLAGS="-j1 " \
@@ -81,11 +81,14 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--enable-s3-device \
 		--disable-installperms
 	touch missing
-	# There's probably a better way to do this.  Preinst and postrm are the
-	# same for client and server, but we leave room for differences by just
-	# appending here.
+	# Preinst is the same for client and server, but we leave room for
+	# differences by just appending here.
 	cat $(WD)/debian/preinst >> $(WD)/debian/amanda-backup-client.preinst
 	cat $(WD)/debian/preinst >> $(WD)/debian/amanda-backup-server.preinst
+	# Postinst and postrm keep client/server differences to just variables;
+	# the postinst/postrm logic is otherwise the same.
+	cat $(WD)/debian/postinst >> $(WD)/debian/amanda-backup-client.postinst
+	cat $(WD)/debian/postinst >> $(WD)/debian/amanda-backup-server.postinst
 	cat $(WD)/debian/postrm >> $(WD)/debian/amanda-backup-client.postrm
 	cat $(WD)/debian/postrm >> $(WD)/debian/amanda-backup-server.postrm
 	make -s LIBTOOLFLAGS=--silent
@@ -177,8 +180,8 @@ binary-arch: build
 		$(server)$(AMLIBEXECDIR)/planner \
 		$(server)/usr/sbin/amcheck \
 		$(server)/usr/sbin/amservice
-	echo "Amanda version $(AMVER)" >  $(server)/$(AMANDAHOMEDIR)/amanda-release 
-	echo "Amanda version $(AMVER)" >  $(client)/$(AMANDAHOMEDIR)/amanda-release 
+	echo "Amanda version $(AMVER)" >  $(server)/$(AMANDAHOMEDIR)/amanda-release
+	echo "Amanda version $(AMVER)" >  $(client)/$(AMANDAHOMEDIR)/amanda-release
 	install -o root -g root -m 0644 debian/amanda-backup-client.lintian \
 		$(client)/usr/share/lintian/overrides/amanda-backup-client
 	install -o root -g root -m 0644 debian/amanda-backup-server.lintian \
@@ -191,7 +194,7 @@ binary-arch: build
 	dh_md5sums  >> $(log) 2>&1
 	dh_builddeb  >> $(log) 2>&1
 
-source diff:                                                                  
+source diff:
 	@echo >&2 'source and diff are obsolete - use dpkg-source -b'; false
 
 binary: binary-arch

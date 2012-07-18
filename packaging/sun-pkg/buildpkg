@@ -142,7 +142,7 @@ do_package() {
     cp ${src_dir}/${pkg_root}/${subpkg}/* ${PKG_DEST} || exit 1
     cd ${INSTALL_DEST} || exit 1
     
-    # amanda does not create /etc/amanda 
+    # amanda does not create /etc/amanda
     mkdir -p ${AMSTATEDIR} || exit 1
     mkdir -p ${ETCDIR}/amanda || exit 1
 
@@ -153,7 +153,7 @@ do_package() {
     # permissions and ownership per pkg settings if included.
     cat "${PKG_DEST}/pkgproto" \
 	>> ${PKG_DEST}/prototype || exit 1
-    pkgproto $PREFIX >> ${PKG_DEST}/prototype || exit 1
+    pkgproto $PREFIX ${AMSTATEDIR} ${ETCDIR}/amanda >> ${PKG_DEST}/prototype || exit 1
 
     # Using --disable-installperms creates installperms.sh, which this bit of
     # perl will merge into the prototype.  Note that this perl script is
@@ -241,7 +241,7 @@ AMSTATEDIR=${LOCALSTATEDIR}/lib/amanda; export AMSTATEDIR
 ETCDIR=etc; export ETCDIR
 DBGDIR=${LOCALSTATEDIR}/log; export DBGDIR
 # Each client and server and platform combination gets different compile options
-if [ "x${1}" = "xclient" -o "x${1}" = "x" ]; then
+if [ "x${1}" = "xclient" ] || [ "x${1}" = "x" ]; then
     CC=/usr/sfw/bin/gcc
     # Variables with spaces must be entered on the configure line separate from
     # CONF to maintain quoting.
@@ -274,7 +274,7 @@ if [ "x${1}" = "xclient" -o "x${1}" = "x" ]; then
     do_package "client"
 fi
 
-if [ "x${1}" = "xserver"  -o "x${1}" = "x" ]; then
+if [ "x${1}" = "xserver" ] || [ "x${1}" = "x" ]; then
     LDFLAGS="-L/usr/lib -R/usr/lib \
         -L/opt/csw/lib -R/opt/csw/lib \
         -L/usr/sfw/lib \

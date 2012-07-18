@@ -1,3 +1,45 @@
+2012-07-17 Dan Locks <dwlocks@zmanda.com>
+	* packaging/sun-pkg/buildpkg:
+	* packaging/sun-pkg/client/postremove.src,
+	  packaging/sun-pkg/server/postremove.src: remove redundant usage of
+	  basedir.
+	* packaging/sun-pkg/client/postinstall.src,
+	  packaging/sun-pkg/server/postinstall.src: same as above, plus fix
+	  case statement.
+	* packaging/sun-pkg/server/preinstall.src,
+	  packaging/sun-pkg/client/preinstall.src: remove redundant basedir,
+	  use new check_user_* functions.
+	* packaging/rpm/amanda.spec.src: refactor to use common functions
+	* packaging/rpm/buildpkg: check for ./configure, and exit if
+	  substitute.pl fails.
+	* packaging/deb/rules: use FULL_VERSION file to fill AMVER var, use
+	* concatenation trick for postinst, rm trailing whitespace
+	* packaging/deb/buildpkg: process postinst.src postrm.src preinst.src with substitute.pl
+	* packaging/deb/postinst.src: refactor to use common functions.
+	* packaging/deb/amanda-backup-server.postrm,
+	  packaging/deb/amanda-backup-client.postrm,
+	  packaging/deb/amanda-backup-client.postinst,
+	  packaging/deb/amanda-backup-server.postinst: delete everything, add
+	  variables pkg_type and other_pkg_type.
+	* packaging/deb/preinst: moved to...
+	* packaging/deb/preinst.src: here. refactor using common functions
+	* packaging/deb/postrm: moved to...
+	* packaging/deb/postrm.src: here. refactor using common functions.
+	* packaging/common/common_functions.sh: remove trailing whitespace,
+	  remove redundant usage of ${BASEDIR} in solaris functions, avoid
+	  potentially non-portable test invocations.
+	* packaging/common/test_sh_libs.sh: fix some log messages, redirect
+	  some unused output, split check_user_* tests into shorter testsr,
+	  add tests for supplemental groups, fix running single test.
+	* packaging/common/mock_utils.sh: change id to error if any flags are
+	  given, add mock for groups.
+	* packaging/common/post_inst_functions.sh: remove redundant leading /
+	* packaging/common/post_rm_functions.sh: rm trailing whitespace.
+	* packaging/common/pre_inst_functions.sh: use variable for user
+	  shell, clarify log messages regarding user accounts, split
+	  check_user into separate functions, mostly to ease testing, add
+	  check_user_supplemental_group.
+
 2012-07-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Wait for all filters to terminate before
 	  going to next image.  Do not use '--ignore-zeros' for SMBCLIENT

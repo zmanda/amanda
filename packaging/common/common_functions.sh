@@ -10,13 +10,13 @@ logger() {
 	# A non-annoying way to log stuff
 	# ${@} is all the parameters, also known as the message.  Quoting the input
 	# preserves whitespace.
-	msg="`date +'%b %e %Y %T'`: ${@}" 
+	msg="`date +'%b %e %Y %T'`: ${@}"
 	echo "${msg}" >> ${LOGFILE}
 }
 
 log_output_of() {
 	# A non-annoying way to log output of commands
-	# ${@} is all the parameters supplied to the function.  just execute it, 
+	# ${@} is all the parameters supplied to the function.  just execute it,
 	# and capture the output in a variable.  then log that.
 	output=`"${@}" 2>&1`
 	ret=$?
@@ -38,10 +38,10 @@ check_superserver() {
 
 check_xinetd() {
 	# Checks for an xinetd install and a config name passed as the first
-	# parameter.  
+	# parameter.
 	# Returns:
-	#	 0 if the file exists, 
-	#	 1 if it does not, 
+	#	 0 if the file exists,
+	#	 1 if it does not,
 	#	 2 if xinetd.d/ does not exist or is a file
 
 	if [ -d ${SYSCONFDIR}/xinetd.d ] ; then
@@ -59,7 +59,7 @@ check_xinetd() {
 
 check_inetd() {
     case $os in
-        SunOS) inetd_conf=${BASEDIR}/${SYSCONFDIR}/inet/inetd.conf ;;
+        SunOS) inetd_conf=${SYSCONFDIR}/inet/inetd.conf ;;
         *) inetd_conf=${SYSCONFDIR}/inetd.conf ;;
     esac
     if [ -e ${inetd_conf} ] ; then
@@ -129,7 +129,7 @@ backup_xinetd() {
 
 backup_inetd() {
     case $os in
-        SunOS) inetd_conf=${BASEDIR}/${SYSCONFDIR}/inet/inetd.conf ;;
+        SunOS) inetd_conf=${SYSCONFDIR}/inet/inetd.conf ;;
         *) inetd_conf=${SYSCONFDIR}/inetd.conf ;;
     esac
     # Backs up any amanda configuration it finds
@@ -148,7 +148,7 @@ backup_inetd() {
 
 backup_smf() {
     # Solaris only. I *think* this should be consistent across all smf installs
-    svccfg -s *amanda* > ${BASEDIR}/${AMANDAHOMEDIR}/example/amanda_smf.xml.orig || {\
+    svccfg -s *amanda* > ${AMANDAHOMEDIR}/example/amanda_smf.xml.orig || {\
         logger "Warning: export of existing amanda service failed.";
         return 1; }
 
@@ -169,7 +169,7 @@ install_xinetd() {
 
 install_inetd() {
     case $os in
-        SunOS) inetd_conf=${BASEDIR}/${SYSCONFDIR}/inet/inetd.conf ;;
+        SunOS) inetd_conf=${SYSCONFDIR}/inet/inetd.conf ;;
         *) inetd_conf=${SYSCONFDIR}/inetd.conf ;;
     esac
     # This one is hard to log because we're just appending.
@@ -184,13 +184,13 @@ install_smf() {
     case $ver in
       5.10)
         # Use inetadm and svcadm.
-        log_output_of ${BASEDIR}/usr/sbin/inetconv -f -i ${AMANDAHOMEDIR}/example/inetd.conf.${1} || { \
+        log_output_of ${basedir}/usr/sbin/inetconv -f -i ${AMANDAHOMEDIR}/example/inetd.conf.${1} || { \
             logger "Warning: Failed to create Amanda SMF manifest. Check the system log.";
             return 1; }
-        log_output_of ${BASEDIR}/usr/sbin/inetadm -e svc:/network/amanda/tcp || { \
+        log_output_of ${basedir}/usr/sbin/inetadm -e svc:/network/amanda/tcp || { \
             logger "Warning: Failed to enable Amanda service. See system log for more information.";
             return 1; }
-        log_output_of ${BASEDIR}/usr/sbin/svcadm restart network/amanda/tcp || { \
+        log_output_of ${basedir}/usr/sbin/svcadm restart network/amanda/tcp || { \
             logger "Warning: Failed to restart Amanda service.  See system log for details.";
             return 1; }
       ;;
@@ -212,7 +212,7 @@ reload_xinetd() {
     # Default action is to try reload.
     if [ "x$1" = "x" ]; then
 	action="reload"
-    elif [ "$1" = "reload" -o "$1" = "restart" ]; then
+    elif [ "$1" = "reload" ] || [ "$1" = "restart" ]; then
 	action="$1"
     else
 	logger "WARNING: bad argument to reload_xinetd: $1"
@@ -238,7 +238,7 @@ reload_inetd() {
     # Default action is to try reload.
     if [ "x$1" = "x" ]; then
 	action="reload"
-    elif [ "$1" = "reload" -o "$1" = "restart" ]; then
+    elif [ "$1" = "reload" ] || [ "$1" = "restart" ]; then
 	action="$1"
     else
 	logger "WARNING: bad argument to reload_inetd: $1"

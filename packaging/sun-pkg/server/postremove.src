@@ -7,13 +7,15 @@ if [ $? -ne 0 ]; then
 fi
 amanda_user=amandabackup
 amanda_group=disk
-AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+# BASEDIR is set by either in pkginfo, or if not set, by pkgadd at installtime.
+# Unfortunately, it messes things up to have basedir="/".
+[ "x${BASEDIR}" = "x/" ] && basedir="" || basedir=${BASEDIR}
+AMANDAHOMEDIR=${basedir}%%AMANDAHOMEDIR%%
 os=SunOS
 dist=%%DISTRO%%
 
-LOGDIR=%%LOGDIR%%
-REMOVE_LOG="/tmp/amanda-remove.log"
-SYSCONFDIR=/etc
+LOGDIR=${basedir}%%LOGDIR%%
+SYSCONFDIR=${basedir}/etc
 
 # ---------- Common functions ------------
 # see packaging/common/ in the source tree
@@ -28,7 +30,7 @@ case $rel in
     5.8|5.9)
 	if check_inetd "amanda"; then
 	    rm_inetd "amanda" || { \
-            logger "Warning: Did not successfully remove $net_svc_name from SMF.";
+            logger "Warning: Did not successfully remove amanda from SMF.";
                 exit 1; }
 	    reload_inetd
         fi
@@ -36,13 +38,10 @@ case $rel in
     5.10)
         if check_smf "amanda"; then
             rm_smf "amanda" || { \
-                logger "Warning: Did not successfully remove $net_svc_name from SMF.";
+                logger "Warning: Did not successfully remove amanda from SMF.";
                 exit 1; }
         fi
     ;;
 esac
 
 logger "Amanda Server removed."
-
-cat $LOGFILE >> $REMOVE_LOG
-rm $LOGFILE

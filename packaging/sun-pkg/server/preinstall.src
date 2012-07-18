@@ -11,11 +11,14 @@ export LOGFILE
 amanda_user=amandabackup; export amanda_user
 amanda_group=disk; export amanda_group
 # BASEDIR is set by either in pkginfo, or if not set, by pkgadd at installtime.
-AMANDAHOMEDIR="${BASEDIR}/%%AMANDAHOMEDIR%%"; export AMANDAHOMEDIR
+# Unfortunately, it messes things up to have basedir="/".
+[ "x${BASEDIR}" = "x/" ] && basedir="" || basedir=${BASEDIR}
+AMANDAHOMEDIR="${basedir}%%AMANDAHOMEDIR%%"; export AMANDAHOMEDIR
 os=`uname`; export os
-dist=%%DISTRO%%; export dist
-LOGDIR="${BASEDIR}/%%LOGDIR%%"; export LOGDIR
-SYSCONFDIR="${BASEDIR}/%%SYSCONFDIR%%"; export SYSCONFDIR
+wanted_shell=/usr/bin/bash; export wanted_shell
+LOGDIR="${basedir}%%LOGDIR%%"; export LOGDIR
+INSTALL_LOG=${LOGDIR}/install.log; export INSTALL_LOG
+SYSCONFDIR="${basedir}/etc"; export SYSCONFDIR
 
 # See packaging/common/ for shell function libraries.
 # ---------- Common functions ------------
@@ -25,17 +28,14 @@ SYSCONFDIR="${BASEDIR}/%%SYSCONFDIR%%"; export SYSCONFDIR
 # -------- End Common functions ----------
 logger "Preparing to install: Amanda Server %%VERSION%%"
 create_user
-if ! check_user "group" "${amanda_group}" ; then
-    add_group "${amanda_group}"
-fi
-if ! check_user "group" "tape" ; then
-    add_group "tape"
-fi
-check_user "shell" "/usr/bin/bash"
-check_user "homedir" "${AMANDAHOMEDIR}"
-if ! check_homedir ; then
-    create_homedir
-fi
+check_user_group "${amanda_group}" || add_group "${amanda_group}"
+check_user_supplemental_group "tape" || add_group "tape"
+check_user_shell "${wanted_shell}"
+check_user_homedir "${AMANDAHOMEDIR}"
+check_homedir || create_homedir
 create_logdir
 
 logger "Preinstall done."
+
+cat $LOGFILE > $INSTALL_LOG && rm $LOGFILE || \
+    echo "Amanda preinstall logs can be found in '$LOGFILE'."

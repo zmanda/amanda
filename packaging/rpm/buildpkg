@@ -30,9 +30,12 @@ fi
 # Until we get package revisioning in community.
 [ -f "PKG_REV" ] || echo "1" > PKG_REV
 
+[ -f "./configure" ] || \
+    { echo "./configure does not exist, please run ./autogen"; exit 1; }
+
 # Substitute amanda.spec.src
 /usr/bin/perl packaging/common/substitute.pl \
-    packaging/rpm/amanda.spec.src packaging/rpm/amanda.spec
+    packaging/rpm/amanda.spec.src packaging/rpm/amanda.spec || exit 1
 
 PKG_TARBALL=${AMVER}.tar.gz
 if [ ! -f "${PKG_TARBALL}" ]; then

@@ -1,0 +1,86 @@
+# This get appended to amanda-backup-*-.postrm
+# vim: ft=sh
+
+LOGFILE=`mktemp /tmp/amanda-remove.log.XXXXXXXXXXX`
+if [ $? -ne 0 ]; then
+	echo "Unable to create log file!"
+	exit 1
+fi
+amanda_user=amandabackup
+amanda_group=disk
+AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
+os=Linux
+dist=%%DISTRO%%
+
+LOGDIR=%%LOGDIR%%
+SYSCONFDIR=/etc
+
+# ---------- Common functions ------------
+# see packaging/common/ in the source tree
+%%COMMON_FUNCTIONS%%
+%%POST_RM_FUNCTIONS%%
+
+# -------- End Common functions ----------
+remove() {
+    if check_xinetd "amanda${pkg_type}"; then
+        rm_xinetd "amanda${pkg_type}" || { \
+        logger "Warning: Did not successfully remove amanda${pkg_type} from xinetd.";
+            exit 1; }
+        reload_xinetd
+    fi
+
+}
+
+purge() {
+    if [ -d ${SYSCONFDIR}/amanda ]; then
+        logger "Removing ${SYSCONFDIR}/amanda if empty..."
+        rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
+    fi
+    if [ -d ${LOGDIR} ]; then
+        logger "Removing ${LOGDIR}..."
+        rm -rf ${LOGDIR}
+    fi
+    if [ -d ${AMANDAHOMEDIR} ]; then
+        logger "Removing ${AMANDAHOMEDIR}..."
+        rm -rf ${AMANDAHOMEDIR}
+    fi
+    if [ -f ${SYSCONFDIR}/amandates ]; then
+        logger "Removing ${SYSCONFDIR}/amandates..."
+        rm -rf ${SYSCONFDIR}/amandates
+    fi
+    # Remove ${amanda_user} from sensitive groups.
+    if which deluser >/dev/null 2>&1 ; then
+        for group in tape; do
+            # only call deluser when amandabackup is in $group
+            if getent group "$group" |
+                awk -F: '{ print $4 }' |
+                awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
+                grep "^${amanda_user}$" > /dev/null; then
+                    deluser ${amanda_user} $group || true
+            fi
+        done
+    fi
+}
+
+case "$1" in
+  purge|abort-install)
+    remove
+    purge
+  ;;
+  remove|upgrade|deconfigure)
+    remove
+  ;;
+
+  failed-upgrade)
+    check_xinetd "amanda${pkg_type}"
+    if [ $? -eq 1 ] ; then
+	install_xinetd
+	reload_xinetd
+    fi
+  ;;
+
+  *)
+        echo "unknown argument --> $1" >&2
+        exit 0
+  ;;
+esac

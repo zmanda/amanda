@@ -28,7 +28,7 @@ remove_smf() {
 rm_user() {
     # Delete the user provided as first parameter ($1)
     logger "Deleting user: $1"
-    log_output_of userdel $1 
+    log_output_of userdel $1
 }
 
 # ------------- End Post Removal Functions -----------------

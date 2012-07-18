@@ -1,24 +1,25 @@
 #!/bin/sh
 
-LOGFILE=`mktemp /tmp/deb-log-amanda_enterprise-client.XXXXXXXXXXX`
+LOGFILE=`mktemp /tmp/amanda-server-postinstall.log.XXXXXXXXXXX`
 if [ $? -ne 0 ]; then
     echo "Unable to mktemp!" 1>&2
     exit 1
 fi
 amanda_user=amandabackup; export amanda_user
 amanda_group=disk; export amanda_group
-AMANDAHOMEDIR="${BASEDIR}/%%AMANDAHOMEDIR%%"; export AMANDAHOMEDIR
+# BASEDIR is set by either in pkginfo, or if not set, by pkgadd at installtime.
+# Unfortunately, it messes things up to have basedir="/".
+[ "x${BASEDIR}" = "x/" ] && basedir="" || basedir=${BASEDIR}
+AMANDAHOMEDIR="${basedir}%%AMANDAHOMEDIR%%"; export AMANDAHOMEDIR
 os=SunOS; export os
 arch=%%ARCH%%; export arch
-LOGDIR="${BASEDIR}/%%LOGDIR%%"; export LOGDIR
+LOGDIR="${basedir}%%LOGDIR%%"; export LOGDIR
 INSTALL_LOG="${LOGDIR}/install.log"; export INSTALL_LOG
-SYSCONFDIR="${BASEDIR}/etc"; export SYSCONFDIR
-SBINDIR="${BASEDIR}/usr/sbin"; export SBINDIR
+SYSCONFDIR="${basedir}/etc"; export SYSCONFDIR
+SBINDIR="${basedir}/usr/sbin"; export SBINDIR
 AMTMP="/tmp/amanda"
 
 AMANDATES=${SYSCONFDIR}/amandates; export AMANDATES
-
-exit_msg="Amanda installation log can be found in '${INSTALL_LOG}'."
 
 # ---------- Common functions ------------
 %%COMMON_FUNCTIONS%%
@@ -46,7 +47,8 @@ if [ "$rel" = "5.8" ]; then
 else
     # Solaris 10+ uses smf, but we can't differentiate server from client, all
     # entries end up named "amanda"
-    case check_smf "amanda"
+    check_smf "amanda"
+    case $? in
       0) backup_smf || logger "Warning: Backup of existing service failed. continuing..."
          install_smf "amandaserver" || \
             logger "Warning: Amanda service not installed."
@@ -69,7 +71,8 @@ install_client_conf
 create_amtmp
 
 logger "Amanda installation complete."
-cat $LOGFILE >> $INSTALL_LOG
-rm $LOGFILE
-
-echo "${exit_msg}"
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE
+    echo "Amanda installation log can be found in '${INSTALL_LOG}'."
+} || \
+    echo "Amanda postinstall log can be found in $LOGFILE"

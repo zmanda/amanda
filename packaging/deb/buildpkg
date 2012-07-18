@@ -51,7 +51,14 @@ do_substitute() {
     # dpkg assumes that packages will have the same name on all releases and
     # that apt will prevent users from downloading the wrong build.  We want
     # this information helpfully obvious since we can't rely on apt.
-    /usr/bin/perl packaging/common/substitute.pl packaging/deb/changelog.src packaging/deb/changelog
+    file_list="packaging/deb/changelog \
+        packaging/deb/postinst \
+        packaging/deb/postrm \
+        packaging/deb/preinst"
+    for file in ${file_list}; do
+        /usr/bin/perl packaging/common/substitute.pl \
+            ${file}.src ${file} || exit 1
+    done
 }
 
 do_resources() {
