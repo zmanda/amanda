@@ -526,7 +526,7 @@ EXTRA_DIST += Amanda/Application/Zfs.pm
 if WANT_CYGWIN_COPY_PERL_DLL
 amperldirauto="$(DESTDIR)$(amperldir)/auto/Amanda"
 install-data-hook:
-	@for cygdll in $(amperldirauto)/bin/cyg*.dll; do \
+	@for cygdll in $(wildcard $(amperldirauto)/bin/cyg*.dll); do \
 	    destfname=`echo $$cygdll|sed 's!/bin/cyg\([^.]*\).dll!/\1/\1.dll!'`; \
 	   cp "$$cygdll" "$$destfname"; \
 	done

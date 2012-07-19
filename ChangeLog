@@ -1,3 +1,7 @@
+2012-07-19  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by crocket
+	* perl/Makefile.am: Fix cygwin build.
+
 2012-07-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Parse application/json reply from cloudena.
 
