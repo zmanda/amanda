@@ -74,6 +74,12 @@ time_t get_time_from_timestamp(char *timestamp)
     struct tm tm;
     char t[5];
     time_t tt;
+    tm.tm_year = 0;
+    tm.tm_mon = 0;
+    tm.tm_mday = 1;
+    tm.tm_hour = 0;
+    tm.tm_min = 0;
+    tm.tm_sec = 0;
 
     if (strlen(timestamp) >= 4) {
 	memcpy(t, timestamp, 4);

@@ -1,3 +1,6 @@
+2012-07-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/timestamp.c (get_time_from_timestamp): Initialize to 0.
+
 2012-07-19  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by crocket.
 	* perl/Makefile.am: Fix cygwin build.
