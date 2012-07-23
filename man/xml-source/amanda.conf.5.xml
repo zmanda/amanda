@@ -3099,7 +3099,7 @@ A comment string describing this taperscan.</para>
   <varlistentry>
   <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>No default. Must be set to the name of the taperscan module.  See <man name="amanda-taperscan" vol="7" /> for a list of defined taperscan modules.</para>
+<para>No default. Must be set to the name of the taperscan module.  See <manref name="amanda-taperscan" vol="7" /> for a list of defined taperscan modules.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
