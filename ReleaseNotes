@@ -1,3 +1,36 @@
+                Release Notes for amanda-3.3.2
+
+* amgtar
+    o New IGNORE-ZEROS property.
+* amsamba
+    o Fix use of subdir for restore.
+* s3 device
+    o New PROXY property.
+    o New PASSWORD, USERNAME, TENANT_ID, TENANT_NAME properties.
+    o New STORAGE_API property.
+    o New S3_MULTI_DELETE property
+    o New CLIENT_ID, CLIENT_SECRET and REFRESH_TOKEN properties.
+    o New CREATE-BUCKET property.
+    o New PROJECT-ID property.
+    o Works with swift and google storage.
+* NDMP device
+    o Add INDIRECT property.
+* amanda.conf
+    o Add 'max-warnings', The maximum number of warning lines in the report.
+    o Default 'columspec' changed to: HostName=0:-12:12,Disk=1:-11:11,Level=1:-1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1
+* amadmin
+    o Add --no-default and --print-source arguments for config and
+      disklist command.
+* amfetchdump
+    o Print progress.
+    o Add --decrypt, --no-decrypt, --server-decrypt, --client-decrypt,
+      --compress, --no-compress, --server-compress and --client-compress
+      options.
+* fix for compilation with newer glib.
+* fix for compilation on cigwin.
+* Many bug fix.
+
+
                 Release Notes for amanda-3.3.1
 
 * amrecover
