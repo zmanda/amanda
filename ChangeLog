@@ -1,4 +1,7 @@
 2012-07-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Typo.
+
+2012-07-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* ReleaseNotes, NEWS: Add new features in 3.3.2.
 
 2012-07-20 Dan Locks <dwlocks@zmanda.com>
