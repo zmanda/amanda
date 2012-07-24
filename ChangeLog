@@ -1,4 +1,13 @@
 2012-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: New REUSE-CONNECTION property.
+	* device-src/s3.c: Do not reuse connection if REUSE-CONNECTION is
+	  FALSE.
+	* device-src/s3.h (s3_open): New reuse_connection argument.
+	* man/xml-source/amanda-devices.7.xml: Document REUSE-CONNECTION
+	  property.
+	* ReleaseNotes, NEWS: Add REUSE-CONNECTION.
+
+2012-07-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix a big memory leak.
 
 2012-07-23  Jean-Louis Martineau <martineau@zmanda.com>

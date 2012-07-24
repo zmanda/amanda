@@ -185,6 +185,8 @@ struct S3Handle {
     /* offset with s3 */
     time_t time_offset_with_s3;
     char *content_type;
+
+    gboolean reuse_connection;
 };
 
 typedef struct {
@@ -1902,6 +1904,15 @@ perform_request(S3Handle *hdl,
                 goto curl_error;
 	}
 
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_FRESH_CONNECT,
+		(long)(hdl->reuse_connection? 0 : 1)))) {
+	    goto curl_error;
+	}
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_FORBID_REUSE,
+		(long)(hdl->reuse_connection? 0 : 1)))) {
+	    goto curl_error;
+	}
+
         /* Perform the request */
         curl_code = curl_easy_perform(hdl->curl);
 
@@ -2284,7 +2295,8 @@ s3_open(const char *access_key,
         const char *tenant_name,
 	const char *client_id,
 	const char *client_secret,
-	const char *refresh_token)
+	const char *refresh_token,
+	const gboolean reuse_connection)
 {
     S3Handle *hdl;
 
@@ -2293,6 +2305,7 @@ s3_open(const char *access_key,
 
     hdl->verbose = TRUE;
     hdl->use_ssl = s3_curl_supports_ssl();
+    hdl->reuse_connection = reuse_connection;
 
     if (s3_api == S3_API_S3) {
 	g_assert(access_key);

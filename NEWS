@@ -17,6 +17,7 @@ Changes in release 3.3.2
        o New CLIENT_ID, CLIENT_SECRET and REFRESH_TOKEN properties.
        o New CREATE-BUCKET property.
        o New PROJECT-ID property.
+       o New REUSE-CONNECTION property.
        o Works with swift and google storage.
    * NDMP device
        o Add INDIRECT property.

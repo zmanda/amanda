@@ -162,8 +162,9 @@ struct _S3Device {
     char        *client_id;
     char        *client_secret;
     char        *refresh_token;
-
     char        *project_id;
+
+    gboolean	 reuse_connection;
 };
 
 /*
@@ -265,6 +266,10 @@ static DevicePropertyBase device_property_openstack_swift_api;
 /* Whether to use SSL with Amazon S3. */
 static DevicePropertyBase device_property_s3_ssl;
 #define PROPERTY_S3_SSL (device_property_s3_ssl.ID)
+
+/* Whether to re-use connection. */
+static DevicePropertyBase device_property_reuse_connection;
+#define PROPERTY_REUSE_CONNECTION (device_property_reuse_connection.ID)
 
 /* Speed limits for sending and receiving */
 static DevicePropertyBase device_property_max_send_speed;
@@ -491,6 +496,10 @@ static gboolean s3_device_set_s3_multi_delete_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_ssl_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_reuse_connection_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1103,6 +1112,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
+    device_property_fill_and_register(&device_property_reuse_connection,
+                                      G_TYPE_BOOLEAN, "reuse_connection",
+       "Whether to reuse connection");
     device_property_fill_and_register(&device_property_create_bucket,
                                       G_TYPE_BOOLEAN, "create_bucket",
        "Whether to create/delete bucket");
@@ -1381,6 +1393,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_ssl_fn);
+
+    device_class_register_property(device_class, PROPERTY_REUSE_CONNECTION,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_reuse_connection_fn);
 
     device_class_register_property(device_class, PROPERTY_MAX_SEND_SPEED,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1803,6 +1820,17 @@ s3_device_set_ssl_fn(Device *p_self, DevicePropertyBase *base,
 }
 
 static gboolean
+s3_device_set_reuse_connection_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->reuse_connection = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 s3_device_set_max_send_speed_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -2050,6 +2078,14 @@ s3_device_open_device(Device *pself, char *device_name,
     device_set_simple_property(pself, device_property_s3_ssl.ID,
 	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
 
+    /* reuse connection */
+    self->reuse_connection = TRUE;
+    bzero(&tmp_value, sizeof(GValue));
+    g_value_init(&tmp_value, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&tmp_value, self->reuse_connection);
+    device_set_simple_property(pself, device_property_reuse_connection.ID,
+	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
+
     /* Set default create_bucket */
     self->create_bucket = TRUE;
     bzero(&tmp_value, sizeof(GValue));
@@ -2233,7 +2269,8 @@ static gboolean setup_handle(S3Device * self) {
 					   self->tenant_name,
 					   self->client_id,
 					   self->client_secret,
-					   self->refresh_token);
+					   self->refresh_token,
+					   self->reuse_connection);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
 		    g_strdup(_("Internal error creating S3 handle")),
