@@ -2094,6 +2094,7 @@ static void s3_device_finalize(GObject * obj_self) {
 	for (thread = 0; thread < self->nb_threads; thread++) {
 	    g_mutex_free(self->s3t[thread].now_mutex);
             if(self->s3t[thread].s3) s3_free(self->s3t[thread].s3);
+	    g_free(self->s3t[thread].curl_buffer.buffer);
 	}
 	g_free(self->s3t);
     }
