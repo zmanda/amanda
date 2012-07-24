@@ -261,7 +261,8 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *tenant_name,
 	const char *client_id,
 	const char *client_secret,
-	const char *refresh_token);
+	const char *refresh_token,
+	const gboolean reuse_connection);
 
 /* latest step of setting up the S3Handle.
  *
