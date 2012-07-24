@@ -1,4 +1,7 @@
 2012-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.3.2
+
+2012-07-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix a big memory leak.
 
 2012-07-23  Jean-Louis Martineau <martineau@zmanda.com>
