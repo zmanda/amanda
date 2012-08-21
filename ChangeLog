@@ -1,3 +1,6 @@
+2012-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c (handle_result): Correctly log some error.
+
 2012-07-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: New REUSE-CONNECTION property.
 	* device-src/s3.c: Do not reuse connection if REUSE-CONNECTION is
