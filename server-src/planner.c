@@ -2218,6 +2218,19 @@ static void handle_result(
 	 * reported.
 	 */
 	log_add(L_ERROR, "%s", errbuf);
+	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	    if (dp->todo) {
+		qname = quote_string(dp->name);
+		est(dp)->state = DISK_DONE;
+		remove_disk(&waitq, dp);
+		enqueue_disk(&failq, dp);
+
+		est(dp)->errstr = g_strdup(errbuf);
+		g_fprintf(stderr, _("error result for host %s disk %s: %s\n"),
+			  dp->host->hostname, qname, errbuf);
+		amfree(qname);
+	    }
+	}
     }
     hostp->up = HOST_DONE;
     amfree(errbuf);
