@@ -23,6 +23,7 @@ use warnings;
 
 use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
+use File::Glob qw( :glob );
 
 use Amanda::Config qw( :init :getconf );
 use Amanda::Util qw( :constants );
@@ -87,7 +88,8 @@ my $timestamp = strftime "%Y%m%d%H%M%S", @now;
 my $datestamp = strftime "%Y%m%d", @now;
 my $starttime_locale_independent = strftime "%Y-%m-%d %H:%M:%S %Z", @now;
 my $trace_log_filename = "$logdir/log";
-my $amdump_log_filename = "$logdir/amdump";
+my $amdump_log_filename_default = "$logdir/amdump";
+my $amdump_log_filename = "$logdir/amdump.$timestamp";
 my $exit_code = 0;
 my $amdump_log = \*STDERR;
 
@@ -165,7 +167,7 @@ EOF
 }
 
 sub do_amcleanup {
-    return unless -f $amdump_log_filename || -f $trace_log_filename;
+    return unless -f $amdump_log_filename_default || -f $trace_log_filename;
 
     # logfiles are still around.  First, try an amcleanup -p to see if
     # the actual processes are already dead
@@ -173,7 +175,7 @@ sub do_amcleanup {
     run_subprocess("$sbindir/amcleanup", '-p', $config_name, @config_overrides_opts);
 
     # and check again
-    return unless -f $amdump_log_filename || -f $trace_log_filename;
+    return unless -f $amdump_log_filename_default || -f $trace_log_filename;
 
     bail_already_running();
 }
@@ -201,6 +203,8 @@ sub start_logfiles {
     # Must be opened in append so that all subprocess can write to it.
     open($amdump_log, ">>", $amdump_log_filename)
 	or die("could not open amdump log file '$amdump_log_filename': $!");
+    unlink $amdump_log_filename_default;
+    symlink $amdump_log_filename, $amdump_log_filename_default;
 }
 
 sub planner_driver_pipeline {
@@ -291,15 +295,19 @@ sub trim_indexes {
 sub roll_amdump_logs {
     debug("renaming amdump log and trimming old amdump logs (beyond tapecycle+2)");
 
-    # rename all the way along the tapecycle
+    unlink "$amdump_log_filename_default.1";
+    rename $amdump_log_filename_default, "$amdump_log_filename_default.1";
+
+    # keep the latest tapecycle files.
+    my @files = sort {-M $b <=> -M $a} grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;
     my $days = getconf($CNF_TAPECYCLE) + 2;
     for (my $i = $days-1; $i >= 1; $i--) {
-	next unless -f "$amdump_log_filename.$i";
-	rename("$amdump_log_filename.$i", "$amdump_log_filename.".($i+1));
+	my $a = pop @files;
     }
-
-    # now swap the current logfile in
-    rename("$amdump_log_filename", "$amdump_log_filename.1");
+    foreach my $name (@files) {
+	unlink $name;
+	amdump_log("unlink $name");
+    }
 }
 
 # now do the meat of the amdump work; these operations are ported directly
