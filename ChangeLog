@@ -1,3 +1,7 @@
+2012-08-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Create amdump.<timestamp>, amdump and amdump.1
+	  are maintained as symlink.
+
 2012-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c (handle_result): Correctly log some error.
 
