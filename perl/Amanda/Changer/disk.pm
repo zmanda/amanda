@@ -101,6 +101,10 @@ sub new {
 
     bless ($self, $class);
 
+    if ($config->{'changerfile'}) {
+	$self->{'state_filename'} = Amanda::Config::config_dir_relative($config->{'changerfile'});
+    }
+
     $self->{'num-slot'} = $config->get_property('num-slot');
     $self->{'auto-create-slot'} = $config->get_boolean_property(
 					'auto-create-slot', 0);

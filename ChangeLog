@@ -1,3 +1,6 @@
+2012-08-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: Use the changerfile for the statefile.
+
 2012-08-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Create amdump.<timestamp>, amdump and amdump.1
 	  are maintained as symlink.
