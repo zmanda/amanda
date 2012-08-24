@@ -219,6 +219,10 @@ sub {
 		return;
 	    } elsif ($err->volinuse and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
+	        print STDERR sprintf("slot %3s: in use\n", $last_slot);
+	    } elsif ($err->empty and defined $err->{'slot'}) {
+		$last_slot = $err->{'slot'};
+	        print STDERR sprintf("slot %3s: empty\n", $last_slot);
 	    } else {
 		return failure($err, $finished_cb) if $err;
 	    }
@@ -240,8 +244,6 @@ sub {
 	    } else {
 		print STDERR sprintf("slot %3s: %s\n", $last_slot, $dev->error_or_status());
 	    }
-	} else {
-	    print STDERR sprintf("slot %3s: in use\n", $last_slot);
 	}
 
 	if ($res) {

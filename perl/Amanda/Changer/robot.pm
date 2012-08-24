@@ -418,6 +418,7 @@ sub load_unlocked {
 	if ($state->{'slots'}->{$slot}->{'state'} eq Amanda::Changer::SLOT_EMPTY) {
 	    return $self->make_error("failed", $params{'res_cb'},
 		    reason => "empty",
+		    slot   => $slot,
 		    message => "slot $slot is empty");
 	}
 
@@ -636,9 +637,13 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
-	    if (defined $device->{'volume_header'}) {
-		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
+	    if ($device->status == $DEVICE_STATUS_SUCCESS) {
+	        $state->{'slots'}->{$slot}->{'device_error'} = undef;
+	    } else {
+	        $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
+	    }
+	    if (defined $device->volume_header) {
+		$state->{'slots'}->{$slot}->{'f_type'} = $device->volume_header->{type};
 	    } else {
 		$state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    }
@@ -665,9 +670,13 @@ sub load_unlocked {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
-	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
-	    if (defined $device->{'volume_header'}) {
-		$state->{'slots'}->{$slot}->{'f_type'} = $device->{'volume_header'}->{type};
+	    if ($device->status == $DEVICE_STATUS_SUCCESS) {
+		$state->{'slots'}->{$slot}->{'device_error'} = undef;
+	    } else {
+		$state->{'slots'}->{$slot}->{'device_error'} = $device->error;
+	    }
+	    if (defined $device->volume_header) {
+		$state->{'slots'}->{$slot}->{'f_type'} = $device->volume_header->{type};
 	    } else {
 		$state->{'slots'}->{$slot}->{'f_type'} = undef;
 	    }
@@ -695,6 +704,12 @@ sub load_unlocked {
 	$state->{'drives'}->{$drive}->{'state'} = Amanda::Changer::SLOT_FULL;
 	$state->{'drives'}->{$drive}->{'barcode'} = $state->{'slots'}->{$slot}->{'barcode'};
 	$state->{'slots'}->{$slot}->{'device_status'} = $device->status;
+	if ($device->status == $DEVICE_STATUS_SUCCESS) {
+	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
+	} else {
+	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
+	}
+	$state->{'slots'}->{$slot}->{'f_type'} = $device->volume_header->{type};
 	my $barcode = $state->{'slots'}->{$slot}->{'barcode'};
 	if ($label and $barcode) {
 	    my $old_label = $state->{'bc2lb'}->{$barcode};

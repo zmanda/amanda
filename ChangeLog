@@ -1,4 +1,18 @@
 2012-08-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Correctly set f_type and device_error
+	  in state.
+	* perl/Amanda/ScanInventory.pm (volume_is_labelable): Set labelstr for
+	  does_not_match_labelstr.
+	* perl/Amanda/Taper/Scan/lexical.pm,
+	  perl/Amanda/Taper/Scan/oldest.pm (analyze): Check label match
+	  labelstr.
+	* server-src/amcheck-device.pl (_user_msg_fn): print message when res
+	  is not set.
+	* server-src/amtape.pl: Fix for device returning empty error.
+	* installcheck/Amanda_Changer_ndmp.pl,
+	  installcheck/Amanda_Changer_robot.pl: Fix for f_type set.
+
+2012-08-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: fc17 gnutar is like fc15.
 
 2012-08-24  Jean-Louis Martineau <martineau@zmanda.com>

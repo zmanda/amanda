@@ -149,7 +149,7 @@ sub analyze {
 		push @reusable, $sl;
 	    } else {
 		my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($sl->{'label'});
-		if ($vol_tle) {
+		if ($vol_tle && $sl->{'label'} =~ /$self->{'labelstr'}/) {
 		    if ($vol_tle->{'datestamp'} eq '0') {
 			push @new_labeled, $sl;
 		    }
