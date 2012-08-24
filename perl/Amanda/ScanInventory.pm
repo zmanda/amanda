@@ -575,6 +575,7 @@ sub volume_is_labelable {
 	if (!$autolabel->{'other_config'}) {
 	    $self->_user_msg(slot_result  => 1,
 			     label        => $label,
+			     labelstr     => $self->{'labelstr'},
 			     does_not_match_labelstr => 1,
 			     slot         => $slot);
 	    return 0;
