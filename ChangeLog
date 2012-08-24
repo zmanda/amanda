@@ -1,3 +1,7 @@
+2012-08-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device.pl: Print error if nc, nc6 or netcat is
+	  not installed.
+
 2012-08-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: Use the changerfile for the statefile.
 

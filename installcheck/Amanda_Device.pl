@@ -1549,9 +1549,17 @@ SKIP: {
 	}
     }
 
+    my $nc = $Amanda::Constants::NC;
+    $nc = $Amanda::Constants::NC6 if !$nc;
+    $nc = $Amanda::Constants::NETCAT if !$nc;
+    if (!$nc) {
+	diag("nc, nc6 or netcat is not installed");
+	exit(1);
+    }
+
     #
     # Test indirecttcp
-    # 
+    #
 
     {
 	ok($dev->directtcp_supported(), "is a directtcp target");
@@ -1566,9 +1574,6 @@ SKIP: {
 	if (POSIX::fork() == 0) {
 	    # allow other process to start listening.
 	    sleep 1;
-	    my $nc = $Amanda::Constants::NC;
-	    $nc = $Amanda::Constants::NC6 if !$nc;
-	    $nc = $Amanda::Constants::NETCAT if !$nc;
 	    my $sockresult = `$nc localhost $addrs->[0][1] < /dev/null`;
 
 	    my @sockresult = map { [ split(/:/, $_) ] } split(/ /, $sockresult);
