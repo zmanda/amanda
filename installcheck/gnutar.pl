@@ -91,6 +91,9 @@ my ($fc14, $fc15);
     if ($uname =~ /\.fc16\./) { #like fc15
 	$fc15 = 1;
     }
+    if ($uname =~ /\.fc17\./) { #like fc15
+	$fc15 = 1;
+    }
 }
 
 # see if the default for --wildcards during inclusion has been changed
