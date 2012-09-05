@@ -518,7 +518,7 @@ sub main {
 	if ($all_success) {
 	    print "All images successfully validated\n";
 	} else {
-	    print "Some images failed to be correclty validated.\n";
+	    print "Some images failed to be correctly validated.\n";
 	    $exit_code = 1;
 	}
 
