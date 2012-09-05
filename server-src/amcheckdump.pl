@@ -646,8 +646,8 @@ if ($all_success) {
     Amanda::Debug::debug("All images successfully validated");
     print "All images successfully validated\n";
 } else {
-    Amanda::Debug::debug("Some images failed to be correclty validated");
-    print "Some images failed to be correclty validated.\n";
+    Amanda::Debug::debug("Some images failed to be correctly validated");
+    print "Some images failed to be correctly validated.\n";
 }
 
 Amanda::Util::finish_application();
