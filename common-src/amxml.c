@@ -259,6 +259,7 @@ amstart_element(
 	            g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &free_property_t);
 	data_user->script = NULL;
 	data_user->alevel = NULL;
+	data_user->dle->property = data_user->property;
 	amfree(data_user->encoding);
 	amfree(data_user->raw);
     } else if(g_str_equal(element_name, "disk") ||
