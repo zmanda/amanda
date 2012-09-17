@@ -186,6 +186,10 @@ struct S3Handle {
     char *content_type;
 
     gboolean reuse_connection;
+
+    /* CAStor */
+    char *reps;
+    char *reps_bucket;
 };
 
 typedef struct {
@@ -761,7 +765,7 @@ build_url(
     }
 
     /* query string */
-    if (subresource || query)
+    if (subresource || query || (hdl->s3_api == S3_API_CASTOR && hdl->tenant_name))
         g_string_append(url, "?");
 
     if (subresource)
@@ -772,6 +776,14 @@ build_url(
 
     if (query)
         g_string_append(url, query);
+
+    /* add CAStor tenant domain override query arg */
+    if (hdl->s3_api == S3_API_CASTOR && hdl->tenant_name) {
+        if (subresource || query) {
+            g_string_append(url, "&");
+        }
+        g_string_append_printf(url, "domain=%s", hdl->tenant_name);
+    }
 
 cleanup:
 
@@ -799,6 +811,7 @@ authenticate_request(S3Handle *hdl,
     struct curl_slist *headers = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
     GString *auth_string = NULL;
+    char *reps = NULL;
 
     /* From RFC 2616 */
     static const char *wkday[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -850,6 +863,23 @@ authenticate_request(S3Handle *hdl,
             headers = curl_slist_append(headers, buf);
             g_free(buf);
 	}
+    } else if (hdl->s3_api == S3_API_CASTOR) {
+        if (g_str_equal(verb, "PUT") || g_str_equal(verb, "POST")) {
+            if (key) {
+                buf = g_strdup("CAStor-Application: Amanda");
+                headers = curl_slist_append(headers, buf);
+                g_free(buf);
+                reps = g_strdup(hdl->reps); /* object replication level */
+            } else {
+                reps = g_strdup(hdl->reps_bucket); /* bucket replication level */
+            }
+
+            /* set object replicas in lifepoint */
+            buf = g_strdup_printf("lifepoint: [] reps=%s", reps);
+            headers = curl_slist_append(headers, buf);
+            g_free(buf);
+            g_free(reps);
+        }
     } else {
 	/* Build the string to sign, per the S3 spec.
 	 * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
@@ -1249,8 +1279,9 @@ interpret_response(S3Handle *hdl,
     curl_easy_getinfo(hdl->curl, CURLINFO_RESPONSE_CODE, &response_code);
     hdl->last_response_code = response_code;
 
-    /* check ETag, if present */
-    if (etag && content_md5 && 200 == response_code) {
+    /* check ETag, if present and not CAStor */
+    if (etag && content_md5 && 200 == response_code &&
+        hdl->s3_api != S3_API_CASTOR) {
         if (etag && g_ascii_strcasecmp(etag, content_md5))
             hdl->last_message = g_strdup("S3 Error: Possible data corruption (ETag returned by Amazon did not match the MD5 hash of the data sent)");
         else
@@ -1357,6 +1388,10 @@ interpret_response(S3Handle *hdl,
 	g_free(details);
 	g_free(body_copy);
 	return FALSE;
+    } else if (hdl->s3_api == S3_API_CASTOR) {
+	/* The error mesage is the body */
+        hdl->last_message = g_strndup(body, body_len);
+        return FALSE;
     } else if (!hdl->content_type ||
 	       !g_str_equal(hdl->content_type, "application/xml")) {
 	return FALSE;
@@ -2289,7 +2324,9 @@ s3_open(const char *access_key,
 	const char *client_id,
 	const char *client_secret,
 	const char *refresh_token,
-	const gboolean reuse_connection)
+	const gboolean reuse_connection,
+        const char *reps,
+        const char *reps_bucket)
 {
     S3Handle *hdl;
 
@@ -2323,6 +2360,12 @@ s3_open(const char *access_key,
 	hdl->client_id = g_strdup(client_id);
 	hdl->client_secret = g_strdup(client_secret);
 	hdl->refresh_token = g_strdup(refresh_token);
+    } else if (s3_api == S3_API_CASTOR) {
+	hdl->username = g_strdup(username);
+	hdl->password = g_strdup(password);
+	hdl->tenant_name = g_strdup(tenant_name);
+        hdl->reps = g_strdup(reps);
+        hdl->reps_bucket = g_strdup(reps_bucket);
     }
 
     /* NULL is okay */
@@ -2371,6 +2414,18 @@ s3_open(const char *access_key,
 
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;
+
+    /* Set HTTP handling options for CAStor */
+    if (s3_api == S3_API_CASTOR) {
+        curl_easy_setopt(hdl->curl, CURLOPT_FOLLOWLOCATION, 1);
+        curl_easy_setopt(hdl->curl, CURLOPT_UNRESTRICTED_AUTH, 1);
+        curl_easy_setopt(hdl->curl, CURLOPT_MAXREDIRS, 5);
+        curl_easy_setopt(hdl->curl, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+        curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        if (hdl->username) curl_easy_setopt(hdl->curl, CURLOPT_USERNAME, hdl->username);
+        if (hdl->password) curl_easy_setopt(hdl->curl, CURLOPT_PASSWORD, hdl->password);
+        curl_easy_setopt(hdl->curl, CURLOPT_HTTPAUTH, (CURLAUTH_BASIC | CURLAUTH_DIGEST));
+    }
 
     return hdl;
 
@@ -2585,10 +2640,17 @@ s3_upload(S3Handle *hdl,
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
         };
+    char *verb = "PUT";
+    char *content_type = NULL;
 
     g_assert(hdl != NULL);
 
-    result = perform_request(hdl, "PUT", bucket, key, NULL, NULL, NULL, NULL,
+    if (hdl->s3_api == S3_API_CASTOR) {
+        verb = "POST";
+	content_type = "application/x-amanda-backup-data";
+    }
+
+    result = perform_request(hdl, verb, bucket, key, NULL, NULL, content_type, NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
                  result_handling);
@@ -2749,12 +2811,17 @@ list_fetch(S3Handle *hdl,
 		 hdl->s3_api == S3_API_SWIFT_2) &&
 		strcmp(keyword, "max-keys") == 0) {
 		keyword = "limit";
-	    }
+	    } else if ((hdl->s3_api == S3_API_CASTOR) &&
+                strcmp(keyword, "max-keys") == 0) {
+                keyword = "size";
+            }
             g_string_append_printf(query, "%s=%s", keyword, esc_value);
             curl_free(esc_value);
 	}
     }
-    if (hdl->s3_api == S3_API_SWIFT_1 || hdl->s3_api == S3_API_SWIFT_2) {
+    if (hdl->s3_api == S3_API_SWIFT_1 ||
+        hdl->s3_api == S3_API_SWIFT_2 ||
+        hdl->s3_api == S3_API_CASTOR) {
 	if (have_prev_part)
 	    g_string_append(query, "&");
 	g_string_append(query, "format=xml");
@@ -2896,6 +2963,7 @@ s3_delete(S3Handle *hdl,
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
+        { 200,  0,                     0, S3_RESULT_OK },
         { 204,  0,                     0, S3_RESULT_OK },
         { 404,  0,                     0, S3_RESULT_OK },
         { 404,  S3_ERROR_NoSuchBucket, 0, S3_RESULT_OK },
@@ -2975,6 +3043,8 @@ s3_make_bucket(S3Handle *hdl,
 	       const char *project_id)
 {
     char *body = NULL;
+    char *verb = "PUT";
+    char *content_type = NULL;
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0,                    0, S3_RESULT_OK },
@@ -3019,7 +3089,12 @@ s3_make_bucket(S3Handle *hdl,
         }
     }
 
-    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL, NULL,
+    if (hdl->s3_api == S3_API_CASTOR) {
+        verb = "POST";
+        content_type = "application/castorcontext";
+    }
+
+    result = perform_request(hdl, verb, bucket, NULL, NULL, NULL, content_type,
 		 project_id,
                  read_func, reset_func, size_func, md5_func, ptr,
                  NULL, NULL, NULL, NULL, NULL, result_handling);
@@ -3171,6 +3246,8 @@ s3_is_bucket_exists(S3Handle *hdl,
     if (hdl->s3_api == S3_API_SWIFT_1 ||
 	hdl->s3_api == S3_API_SWIFT_2) {
 	query = "limit=1";
+    } else if (hdl->s3_api == S3_API_CASTOR) {
+        query = "format=xml&size=0";
     } else {
 	query = "max-keys=1";
     }

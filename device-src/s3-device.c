@@ -165,6 +165,10 @@ struct _S3Device {
     char        *project_id;
 
     gboolean	 reuse_connection;
+    
+    /* CAStor */
+    char        *reps;
+    char        *reps_bucket;
 };
 
 /*
@@ -310,6 +314,14 @@ static DevicePropertyBase device_property_project_id;
 /* The PROJECT ID */
 static DevicePropertyBase device_property_create_bucket;
 #define PROPERTY_CREATE_BUCKET (device_property_create_bucket.ID)
+
+/* CAStor replication values for objects and buckets */
+static DevicePropertyBase device_property_s3_reps;
+#define PROPERTY_S3_REPS (device_property_s3_reps.ID)
+#define S3_DEVICE_REPS_DEFAULT "2"
+static DevicePropertyBase device_property_s3_reps_bucket;
+#define PROPERTY_S3_REPS_BUCKET (device_property_s3_reps_bucket.ID)
+#define S3_DEVICE_REPS_BUCKET_DEFAULT "4"
 
 /*
  * prototypes
@@ -556,6 +568,14 @@ static gboolean s3_device_set_refresh_token_fn(Device *p_self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_project_id_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_reps_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_reps_bucket_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1135,6 +1155,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_multi_delete,
                                       G_TYPE_BOOLEAN, "s3_multi_delete",
        "Whether to use multi-delete");
+    device_property_fill_and_register(&device_property_s3_reps,
+                                      G_TYPE_STRING, "s3_reps",
+       "Number of replicas for data objects in CAStor");
+    device_property_fill_and_register(&device_property_s3_reps_bucket,
+                                      G_TYPE_STRING, "s3_reps_bucket",
+       "Number of replicas for automatically created buckets in CAStor");
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -1187,6 +1213,8 @@ s3_device_init(S3Device * self)
     self->thread_idle_cond = NULL;
     self->thread_idle_mutex = NULL;
     self->use_s3_multi_delete = 1;
+    self->reps = NULL;
+    self->reps_bucket = NULL;
 
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
@@ -1464,6 +1492,16 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
             PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
             device_simple_property_get_fn,
             s3_device_set_project_id_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_REPS,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_reps_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_REPS_BUCKET,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_reps_bucket_fn);
 }
 
 static gboolean
@@ -1755,6 +1793,8 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
 	self->s3_api = S3_API_SWIFT_2;
     } else if (g_str_equal(storage_api, "OAUTH2")) {
 	self->s3_api = S3_API_OAUTH2;
+    } else if (g_str_equal(storage_api, "CASTOR")) {
+	self->s3_api = S3_API_CASTOR;
     } else {
 	g_debug("Invalid STORAGE_API, using \"S3\".");
 	self->s3_api = S3_API_S3;
@@ -2016,6 +2056,32 @@ s3_device_set_project_id_fn(Device *p_self,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+s3_device_set_reps_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->reps);
+    self->reps = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_reps_bucket_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->reps_bucket);
+    self->reps_bucket = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -2061,6 +2127,14 @@ s3_device_open_device(Device *pself, char *device_name,
         amfree(self->bucket);
         amfree(self->prefix);
         return;
+    }
+
+    if (self->reps == NULL) {
+        self->reps = g_strdup(S3_DEVICE_REPS_DEFAULT);
+    }
+
+    if (self->reps_bucket == NULL) {
+        self->reps_bucket = g_strdup(S3_DEVICE_REPS_BUCKET_DEFAULT);
     }
 
     g_debug(_("S3 driver using bucket '%s', prefix '%s'"), self->bucket, self->prefix);
@@ -2151,6 +2225,8 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->server_side_encryption) g_free(self->server_side_encryption);
     if(self->proxy) g_free(self->proxy);
     if(self->ca_info) g_free(self->ca_info);
+    if(self->reps) g_free(self->reps);
+    if(self->reps_bucket) g_free(self->reps_bucket);
 }
 
 static gboolean setup_handle(S3Device * self) {
@@ -2229,7 +2305,14 @@ static gboolean setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
-	}
+	} else if (self->s3_api == S3_API_CASTOR) {
+            self->use_s3_multi_delete = 0;
+            self->use_subdomain = FALSE;
+            if(self->service_path) {
+                g_free(self->service_path);
+                self->service_path = NULL;
+	    }
+        }
 
 	self->s3t = g_new0(S3_by_thread, self->nb_threads);
 	if (self->s3t == NULL) {
@@ -2269,7 +2352,8 @@ static gboolean setup_handle(S3Device * self) {
 					   self->client_id,
 					   self->client_secret,
 					   self->refresh_token,
-					   self->reuse_connection);
+					   self->reuse_connection,
+                                           self->reps, self->reps_bucket);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
 		    stralloc(_("Internal error creating S3 handle")),

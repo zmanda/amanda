@@ -1,4 +1,10 @@
 2012-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c, device-src/s3.c
+	  device-src/s3.h: Add CASTOR S3_API.
+	* example/template.d/amanda-CAStor.conf: Example
+	  config for castor.
+
+2012-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Set gnutar_listdir after the config for
 	  the backup set is read.
 
