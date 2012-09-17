@@ -1,4 +1,8 @@
 2012-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Set gnutar_listdir after the config for
+	  the backup set is read.
+
+2012-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amxml.c (amstart_element): Set data_user->dle->property.
 
 2012-09-05  Jean-Louis Martineau <martineau@zmanda.com>
