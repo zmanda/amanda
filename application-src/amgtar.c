@@ -361,7 +361,6 @@ main(
     /* parse argument */
     command = argv[1];
 
-    gnutar_listdir = g_strdup(getconf_str(CNF_GNUTAR_LIST_DIR));
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -531,6 +530,10 @@ main(
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));
+    }
+
+    if (!gnutar_listdir) {
+	gnutar_listdir = g_strdup(getconf_str(CNF_GNUTAR_LIST_DIR));
     }
 
     re_table = build_re_table(init_re_table, normal_message, ignore_message,
