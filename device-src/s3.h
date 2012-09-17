@@ -31,7 +31,8 @@ typedef enum {
    S3_API_S3,
    S3_API_SWIFT_1,
    S3_API_SWIFT_2,
-   S3_API_OAUTH2
+   S3_API_OAUTH2,
+   S3_API_CASTOR
 } S3_api;
 
 /* An opaque handle.  S3Handles should only be accessed from a single
@@ -262,7 +263,9 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *client_id,
 	const char *client_secret,
 	const char *refresh_token,
-	const gboolean reuse_connection);
+	const gboolean reuse_connection,
+        const char *reps,
+        const char *reps_bucket);
 
 /* latest step of setting up the S3Handle.
  *
