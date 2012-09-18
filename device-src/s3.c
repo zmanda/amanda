@@ -2417,14 +2417,25 @@ s3_open(const char *access_key,
 
     /* Set HTTP handling options for CAStor */
     if (s3_api == S3_API_CASTOR) {
-        curl_easy_setopt(hdl->curl, CURLOPT_FOLLOWLOCATION, 1);
-        curl_easy_setopt(hdl->curl, CURLOPT_UNRESTRICTED_AUTH, 1);
-        curl_easy_setopt(hdl->curl, CURLOPT_MAXREDIRS, 5);
-        curl_easy_setopt(hdl->curl, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
-        curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-        if (hdl->username) curl_easy_setopt(hdl->curl, CURLOPT_USERNAME, hdl->username);
-        if (hdl->password) curl_easy_setopt(hdl->curl, CURLOPT_PASSWORD, hdl->password);
-        curl_easy_setopt(hdl->curl, CURLOPT_HTTPAUTH, (CURLAUTH_BASIC | CURLAUTH_DIGEST));
+#if LIBCURL_VERSION_NUM >= 0x071101
+	curl_version_info_data *info;
+	/* check the runtime version too */
+	info = curl_version_info(CURLVERSION_NOW);
+	if (info->version_num >= 0x071101) {
+            curl_easy_setopt(hdl->curl, CURLOPT_FOLLOWLOCATION, 1);
+            curl_easy_setopt(hdl->curl, CURLOPT_UNRESTRICTED_AUTH, 1);
+            curl_easy_setopt(hdl->curl, CURLOPT_MAXREDIRS, 5);
+            curl_easy_setopt(hdl->curl, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTP_VERSION,
+					CURL_HTTP_VERSION_1_1);
+            if (hdl->username)
+		 curl_easy_setopt(hdl->curl, CURLOPT_USERNAME, hdl->username);
+            if (hdl->password)
+		 curl_easy_setopt(hdl->curl, CURLOPT_PASSWORD, hdl->password);
+            curl_easy_setopt(hdl->curl, CURLOPT_HTTPAUTH,
+			     (CURLAUTH_BASIC | CURLAUTH_DIGEST));
+	}
+#endif
     }
 
     return hdl;
