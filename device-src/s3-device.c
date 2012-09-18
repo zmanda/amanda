@@ -1795,7 +1795,26 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
     } else if (g_str_equal(storage_api, "OAUTH2")) {
 	self->s3_api = S3_API_OAUTH2;
     } else if (g_str_equal(storage_api, "CASTOR")) {
-	self->s3_api = S3_API_CASTOR;
+#if LIBCURL_VERSION_NUM >= 0x071301
+        curl_version_info_data *info;
+        /* check the runtime version too */
+        info = curl_version_info(CURLVERSION_NOW);
+        if (info->version_num >= 0x071301) {
+	    self->s3_api = S3_API_CASTOR;
+	} else {
+	    device_set_error(p_self, g_strdup_printf(_(
+	                "Error setting STORAGE-API to castor "
+			"(You must install libcurl 7.19.1 or newer)")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
+#else
+	device_set_error(p_self, g_strdup_printf(_(
+	                "Error setting STORAGE-API to castor "
+			"This amanda is compiled with a too old libcurl, you must compile with libcurl 7.19.1 or newer")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+#endif
     } else {
 	g_debug("Invalid STORAGE_API, using \"S3\".");
 	self->s3_api = S3_API_S3;
