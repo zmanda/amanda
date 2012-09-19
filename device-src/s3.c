@@ -2417,11 +2417,11 @@ s3_open(const char *access_key,
 
     /* Set HTTP handling options for CAStor */
     if (s3_api == S3_API_CASTOR) {
-#if LIBCURL_VERSION_NUM >= 0x071101
+#if LIBCURL_VERSION_NUM >= 0x071301
 	curl_version_info_data *info;
 	/* check the runtime version too */
 	info = curl_version_info(CURLVERSION_NOW);
-	if (info->version_num >= 0x071101) {
+	if (info->version_num >= 0x071301) {
             curl_easy_setopt(hdl->curl, CURLOPT_FOLLOWLOCATION, 1);
             curl_easy_setopt(hdl->curl, CURLOPT_UNRESTRICTED_AUTH, 1);
             curl_easy_setopt(hdl->curl, CURLOPT_MAXREDIRS, 5);

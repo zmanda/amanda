@@ -1,3 +1,6 @@
+2012-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Castor require libcurl 7.19.1.
+
 2012-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c, device-src/s3.c: Castor require libcurl
 	  7.19.1.
