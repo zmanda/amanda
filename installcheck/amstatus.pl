@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 use strict;
 use warnings;
 
@@ -74,4 +74,15 @@ is($Installcheck::Run::exit_code, 4,
     "correct exit code for chunker partial");
 like($Installcheck::Run::stdout,
     qr{localhost:/etc 0 backup failed: dumper: \[/usr/sbin/tar returned error\] \(7:49:23\)},
+    "output is correct");
+
+## now test a taper-parallel-write > 1
+
+$cat = Installcheck::Catalogs::load('taper-parallel-write');
+$cat->install();
+
+ok(run('amstatus', 'TESTCONF'),
+    "amstatus with taper-parallel-write runs without error");
+like($Installcheck::Run::stdout,
+    qr{\s*tape 3\s*:\s*1\s*142336k\s*142336k \(  5.82\%\) amstatus_test_3-AA-003 \(1 chunks\)},
     "output is correct");
