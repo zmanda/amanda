@@ -466,6 +466,7 @@ while($lineX = <AMDUMP>) {
 				}
 				elsif($line[6] eq "FILE-WRITE") {
 					#7:name 8:handle 9:filename 10:host 11:disk 12:level 13:datestamp 14:splitsize
+					$name=$line[7];
 					$serial=$line[8];
 					$host=$line[10];
 					$partition=$line[11];
@@ -485,10 +486,11 @@ while($lineX = <AMDUMP>) {
 					$taper_finished{$hostpart}=0;
 					$taper_time{$hostpart}=$current_time;
 					$taper_error{$hostpart}="";
-					$ntchunk_size = 0;
+					$taper_name{$hostpart} = $name;
 				}
 				elsif($line[6] eq "PORT-WRITE") {
 					#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
+					$name=$line[7];
 					$serial=$line[8];
 					$host=$line[9];
 					$partition=$line[10];
@@ -501,8 +503,8 @@ while($lineX = <AMDUMP>) {
 					$taper_finished{$hostpart}=0;
 					$taper_time{$hostpart}=$current_time;
 					$taper_error{$hostpart}="";
+					$taper_name{$hostpart} = $name;
 					$size{$hostpart} = 0;
-					$ntchunk_size = 0;
 				}
 			}
 		}
@@ -620,14 +622,8 @@ while($lineX = <AMDUMP>) {
 					if(!defined $size{$hostpart}) {
 						$size{$hostpart}=$size;
 					}
-					$ntpartition{$nb_tape}++;
-					$ntsize{$nb_tape} += $size{$hostpart} - $ntchunk_size;
-					if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
-						$ntesize{$nb_tape} += $esize{$hostpart} - $ntchunk_size;
-					}
-					else {
-						$ntesize{$nb_tape} += $size{$hostpart} - $ntchunk_size;
-					}
+					$ntape = $taper_nb{$taper_name{$hostpart}};
+					$ntpartition{$ntape}++;
 					if ($line[6] eq "PARTIAL") {
 						$partial{$hostpart} = 1;
 						if ($line[9] eq "TAPE-ERROR") {
@@ -637,9 +633,6 @@ while($lineX = <AMDUMP>) {
 					}
 					else {
 						$partial{$hostpart} = 0;
-					}
-					if ($ntchunk_size > 0) {
-						$ntchunk{$nb_tape}++;
 					}
 					undef $taper_status_file;
 				}
@@ -651,10 +644,17 @@ while($lineX = <AMDUMP>) {
 					#$size=$1 / $unitdivisor;
 					$size=$line[10] / $unitdivisor;
 					$tapedsize{$hostpart} += $size;
-					$ntchunk{$nb_tape}++;
-					$ntsize{$nb_tape} += $size;
-					$ntesize{$nb_tape} += $size;
-					$ntchunk_size += $size;
+					$ntape = $taper_nb{$taper_name{$hostpart}};
+					$ntchunk{$ntape}++;
+					$ntsize{$ntape} += $size;
+					$ntesize{$ntape} += $size;
+				}
+				elsif($line[6] eq "TAKE-SCRIBE-FROM") {
+					#7:name1 #8:serial #9:name2
+					$name1=$line[7];
+					$name2=$line[8];
+					$taper_nb{$name2} = $taper_nb{$name1};
+					$taper_nb{$name1} = 0;
 				}
 				elsif($line[6] eq "REQUEST-NEW-TAPE") {
 					#7:serial
@@ -672,6 +672,13 @@ while($lineX = <AMDUMP>) {
 					$serial=$line[7];
 					$status_taper = $old_status_taper;
 					$hostpart=$serial{$serial};
+					$nb_tape++;
+					$taper_nb{$taper_name{$hostpart}} = $nb_tape;
+					$label = $line[8];
+					$ntlabel{$nb_tape} = $label;
+					$ntpartition{$nb_tape} = 0;
+					$ntsize{$nb_tape} = 0;
+					$ntesize{$nb_tape} = 0;
 					if (defined $hostpart) {
 						$error{$hostpart} = $olderror{$hostpart};
 					}
@@ -775,12 +782,12 @@ while($lineX = <AMDUMP>) {
 	elsif($line[0] eq "taper") {
 		if($line[1] eq "wrote") {
 			#1:"wrote" 2:"label" 3:label
-			$nb_tape++;
-			$label = $line[3];
-			$ntlabel{$nb_tape} = $label;
-			$ntpartition{$nb_tape} = 0;
-			$ntsize{$nb_tape} = 0;
-			$ntesize{$nb_tape} = 0;
+			#$nb_tape++;
+			#$label = $line[3];
+			#$ntlabel{$nb_tape} = $label;
+			#$ntpartition{$nb_tape} = 0;
+			#$ntsize{$nb_tape} = 0;
+			#$ntesize{$nb_tape} = 0;
 		}
 		elsif($line[1] eq "status" && $line[2] eq "file") {
 			#1:"status" #2:"file:" #3:hostname #4:diskname #5:filename
@@ -798,7 +805,6 @@ while($lineX = <AMDUMP>) {
 		$ntchunk{$nb_tape}++;
 		$ntsize{$nb_tape} += $size / $unitdivisor;
 		$ntesize{$nb_tape} += $size / $unitdivisor;
-		$ntchunk_size += $size / $unitdivisor;
 	}
 	else {
 		#print "Ignoring: $lineX\n";
