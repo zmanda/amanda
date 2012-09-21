@@ -1,8 +1,10 @@
+2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Fix date_sync_regex.
+
 2012-09-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix for taper-parallel-write > 1.
 	* installcheck/amstatus.pl: Checkit.
 	* installcheck/catalogs/taper-parallel-write.cat: New catalog.
-
 
 2012-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Castor require libcurl 7.19.1.
