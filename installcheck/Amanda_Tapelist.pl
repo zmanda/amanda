@@ -67,6 +67,9 @@ sub readtapelist {
     "20071110010002 TESTCONF003 reuse BARCODE:BAR-003 BLOCKSIZE:32\n",
     "20071109010002 TESTCONF002 reuse BARCODE:BAR-002 META:META2 BLOCKSIZE:64 #comment 2\n",
     "20071108010001 TESTCONF001 no-reuse #comment 1\n",
+    "20071107110002 TESTCONF015\n",
+    "20071107010002 TESTCONF006 no-reuse\n",
+    "20071106010002 TESTCONF005 reuse\n",
 );
 mktapelist($tapelist, @lines);
 
@@ -87,6 +90,15 @@ $tl_ok = is_deeply($tl,	{
   { 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
     'reuse' => '', 'position' => 4, 'blocksize' => undef,
     'barcode' => undef, 'meta' => undef, 'comment' => 'comment 1' },
+  { 'datestamp' => '20071107110002', 'label' => 'TESTCONF015',
+    'reuse' => 1, 'position' => 5, 'blocksize' => undef,
+    'barcode' => undef, 'meta' => undef, 'comment' => undef },
+  { 'datestamp' => '20071107010002', 'label' => 'TESTCONF006',
+    'reuse' => '', 'position' => 6, 'blocksize' => undef,
+    'barcode' => undef, 'meta' => undef, 'comment' => undef },
+  { 'datestamp' => '20071106010002', 'label' => 'TESTCONF005',
+    'reuse' => 1, 'position' => 7, 'blocksize' => undef,
+    'barcode' => undef, 'meta' => undef, 'comment' => undef },
 ] }, "A simple tapelist is parsed correctly");
 
 SKIP: {
@@ -96,6 +108,8 @@ SKIP: {
     # now try writing it out and check that the results are the same
     $tl->write("$tapelist-new");
     my @reread_lines = readtapelist("$tapelist-new");
+    chomp($lines[4]);
+    $lines[4] .= " reuse\n"; #'reuse' is automatically written
     is_deeply(\@reread_lines, \@lines, "Lines of freshly written tapelist match the original");
 
     is_deeply($tl->lookup_tapelabel('TESTCONF002'),
@@ -127,7 +141,7 @@ SKIP: {
 
     # try some edits
     $tl->add_tapelabel("20080112010203", "TESTCONF007", "seven", 1, 'META3', 'BAR-007');
-    is(scalar @{$tl->{'tles'}}, 5, "add_tapelabel adds a new element to the tapelist");
+    is(scalar @{$tl->{'tles'}}, 8, "add_tapelabel adds a new element to the tapelist");
 
     is_deeply($tl->lookup_tapepos(1),
 	{ 'datestamp' => '20080112010203', 'label' => 'TESTCONF007',
@@ -149,7 +163,7 @@ SKIP: {
 
     # try some edits
     $tl->add_tapelabel("20080112010204", "TESTCONF008", "eight", 0, undef, undef, 128);
-    is(scalar @{$tl->{'tles'}}, 6, "add_tapelabel adds a new element to the tapelist no-reuse");
+    is(scalar @{$tl->{'tles'}}, 9, "add_tapelabel adds a new element to the tapelist no-reuse");
 
     is_deeply($tl->lookup_tapelabel("TESTCONF008"),
 	{ 'datestamp' => '20080112010204', 'label' => 'TESTCONF008',
@@ -158,10 +172,10 @@ SKIP: {
 	".. lookup_tapelabel finds it no-reuse");
 
     $tl->remove_tapelabel("TESTCONF008");
-    is(scalar @{$tl->{'tles'}}, 5, "remove_tapelabel removes an element from the tapelist, no-reuse");
+    is(scalar @{$tl->{'tles'}}, 8, "remove_tapelabel removes an element from the tapelist, no-reuse");
 
     $tl->remove_tapelabel("TESTCONF002");
-    is(scalar @{$tl->{'tles'}}, 4, "remove_tapelabel removes an element from the tapelist");
+    is(scalar @{$tl->{'tles'}}, 7, "remove_tapelabel removes an element from the tapelist");
 
     is_deeply($tl->lookup_tapepos(4), # used to be in position 5
 	{ 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
@@ -199,20 +213,20 @@ SKIP: {
 	or die("config_init failed");
 
     is( Amanda::Tapelist::get_last_reusable_tape_label(0),
-        'TESTCONF002', ".. get_last_reusable_tape_labe for skip=0" );
+        'TESTCONF005', ".. get_last_reusable_tape_labe for skip=0" );
 
     is( Amanda::Tapelist::get_last_reusable_tape_label(2),
-        'TESTCONF004', ".. get_last_reusable_tape_labe for skip=2" );
+        'TESTCONF002', ".. get_last_reusable_tape_labe for skip=2" );
 }
 
 # try parsing various invalid lines
 @lines = (
     "2006123456 FOO reuse\n", # valid
-    "TESTCONF003 290385098 reuse\n", # invalid
-    "20071109010002 TESTCONF002 re-use\n", # invalid
-    "20071108010001 TESTCONF001\n", # invalid
-    "20071108010001 TESTCONF001 #comment\n", # invalid
-    "#comment\n", # invalid
+#    "TESTCONF003 290385098 reuse\n", # invalid
+#    "20071109010002 TESTCONF002 re-use\n", # invalid
+#    "20071108010001 TESTCONF001\n", # invalid
+#    "20071108010001 TESTCONF001 #comment\n", # invalid
+#    "#comment\n", # invalid
 );
 mktapelist($tapelist, @lines);
 

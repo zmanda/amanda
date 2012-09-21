@@ -1,4 +1,13 @@
 2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Tapelist.swg: die() if tapelist is not valid.
+	* server-src/tapefile.c: exit if tapelist is not valid.
+	* installcheck/Amanda_Tapelist.pl: Add more check.
+	* perl/Amanda/Changer.pm: Add $err->device
+	* perl/Amanda/Changer/robot.pm: Return error if barcode do not match
+	  with tapelist.
+	* server-src/amtape.pl (inventory): Print if barcode do not match.
+
+2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am (catalogs): Add
 	  catalogs/taper-parallel-write.cat.
 

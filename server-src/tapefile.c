@@ -368,6 +368,7 @@ parse_tapeline(
     tape_t *tp = NULL;
     char *s, *s1;
     int ch;
+    char *cline;
 
     *status = 0;
 
@@ -379,6 +380,7 @@ parse_tapeline(
 	return NULL;
     }
 
+    cline = g_strdup(line);
     tp = g_new0(tape_t, 1);
 
     s1 = s - 1;
@@ -434,7 +436,10 @@ parse_tapeline(
     }
     if (*(s - 1) == '#') {
 	tp->comment = g_strdup(s); /* skip leading '#' */
+    } else if (*(s-1)) {
+	g_critical("Bogus line in the tapelist file: %s", cline);
     }
+    amfree(cline);
 
     return tp;
 }
