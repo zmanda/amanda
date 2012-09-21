@@ -192,7 +192,8 @@ catalogs = \
 	catalogs/skipped.cat \
 	catalogs/spanned.cat \
 	catalogs/strontium.cat \
-	catalogs/taperr.cat
+	catalogs/taperr.cat \
+	catalogs/taper-parallel-write.cat
 EXTRA_DIST += $(catalogs)
 
 
@@ -216,12 +217,12 @@ clobber_my_config_is_ok:
 		echo "'make installcheck' is a dangerous tool.  It will overwrite your"; \
 		echo "amanda-client.conf and amandates, and (if it triggers an as-yet undetected"; \
 		echo "bug) may do other unexpected things.  You are strongly encouraged"; \
- 		echo "  - not to run installchecks on a production install"; \
- 		echo "  - not to run installchecks as root"; \
+		echo "  - not to run installchecks on a production install"; \
+		echo "  - not to run installchecks as root"; \
 		echo "See http://wiki.zmanda.com/index.php/Testing for instructions on setting up a"; \
 		echo "test environment in which potential damage is limited by your filesystem's"; \
 		echo "permissions.  To actually run the installchecks, invoke make as follows:"; \
-  		echo "  $(MAKE) CLOBBER_MY_CONFIG=OK installcheck"; \
+		echo "  $(MAKE) CLOBBER_MY_CONFIG=OK installcheck"; \
 		exit 1; \
 	fi
 
@@ -232,7 +233,7 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	$(mkdir_p) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
-	fi 
+	fi
 	for f in $(tests); do chmod a-x $$f; done
 	srcdir="$(srcdir)" $(PERL) -I$(srcdir) -I. -e 'use Test::Harness qw(&runtests); runtests(sort @ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
