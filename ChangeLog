@@ -1,4 +1,7 @@
 2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/tapelist.5.xml: Add BLOCKSIZE.
+
+2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg: die() if tapelist is not valid.
 	* server-src/tapefile.c: exit if tapelist is not valid.
 	* installcheck/Amanda_Tapelist.pl: Add more check.
