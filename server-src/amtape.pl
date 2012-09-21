@@ -301,6 +301,7 @@ sub {
 
 	for my $sl (@$inv) {
 	    my $line = "slot $sl->{slot}:";
+	    my $tle;
 	    if (!defined($sl->{device_status}) && !defined($sl->{label})) {
 		$line .= " unknown state";
 	    } elsif ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
@@ -308,9 +309,11 @@ sub {
 	    } else {
 		if (defined $sl->{label}) {
 		    $line .= " label $sl->{label}";
-		    my $tle = $tl->lookup_tapelabel($sl->{label});
-		    if ($tle->{'meta'}) {
-			$line .= " ($tle->{'meta'})";
+		    $tle = $tl->lookup_tapelabel($sl->{label});
+		    if (defined $tle) {
+			if ($tle->{'meta'}) {
+				$line .= " ($tle->{'meta'})";
+			}
 		    }
 		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		    $line .= " blank";
@@ -340,6 +343,13 @@ sub {
 	    }
 	    if ($sl->{'current'}) {
 		$line .= " (current)";
+	    }
+	    if (defined $tle) {
+		if (defined $sl->{'barcode'} and
+		    defined $tle->{'barcode'} and
+		    $sl->{'barcode'} ne $tle->{'barcode'}) {
+		$line .= " MISTMATCH barcode in tapelist: $tle->{'barcode'}";
+		}
 	    }
 
 	    # note that inventory goes to stdout
@@ -660,7 +670,11 @@ sub load_changer {
 
 sub failure {
     my ($msg, $finished_cb) = @_;
-    print STDERR "ERROR: $msg\n";
+    if ($msg->isa("Amanda::Changer::Error") {
+	print STDERR "ERROR: Slot: $msg->{'slot'}: $msg\n";
+    } else {
+	print STDERR "ERROR: $msg\n";
+    }
     $exit_status = 1;
     $finished_cb->();
 }

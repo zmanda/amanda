@@ -186,6 +186,7 @@ has one of the following values:
   driveinuse        All drives are in use
   unknown           Unknown reason
   empty             The slot is empty
+  device            Failed to set up the device
 
 Like types, checks for particular reasons should use the methods, to avoid
 undetected typos:
@@ -1509,6 +1510,7 @@ sub driveinuse { $_[0]->failed && $_[0]->{'reason'} eq 'driveinuse'; }
 sub volinuse { $_[0]->failed && $_[0]->{'reason'} eq 'volinuse'; }
 sub unknown { $_[0]->failed && $_[0]->{'reason'} eq 'unknown'; }
 sub empty { $_[0]->failed && $_[0]->{'reason'} eq 'empty'; }
+sub device { $_[0]->failed && $_[0]->{'reason'} eq 'device'; }
 
 # slot accessor
 sub slot { $_[0]->{'slot'}; }

@@ -228,12 +228,14 @@ sub _read_tapelist {
     open(my $fh, "<", $self->{'filename'}) or return $self;
     while (my $line = <$fh>) {
 	my ($datestamp, $label, $reuse, $barcode, $meta, $blocksize, $comment)
-	    = $line =~ m/^([0-9]*)\s([^\s]*)\s(reuse|no-reuse)\s*(?:BARCODE:([^\s]*))?\s*(?:META:([^\s]*))?\s*(?:BLOCKSIZE:([^\s]*))?\s*(?:\#(.*))?$/mx;
-	next if !defined $datestamp; # silently filter out bogus lines
+	    = $line =~ m/^([0-9]+)\s*([^\s]*)\s*(?:(reuse|no-reuse))?\s*(?:BARCODE:([^\s]*))?\s*(?:META:([^\s]*))?\s*(?:BLOCKSIZE:([^\s]*))?\s*(?:\#(.*))?$/mx;
+	if (!defined $datestamp) {
+	    Amanda::Debug::critical("Bogus line in the tapelist ($self->{'filename'}) file: $line");
+	}
 	push @tles, {
 	    'datestamp' => $datestamp,
 	    'label' => $label,
-	    'reuse' => ($reuse eq 'reuse'),
+	    'reuse' => (!defined $reuse || $reuse eq 'reuse'),
 	    'barcode' => $barcode,
 	    'meta' => $meta,
 	    'blocksize' => $blocksize,
