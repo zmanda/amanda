@@ -1,4 +1,8 @@
 2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Makefile.am (catalogs): Add
+	  catalogs/taper-parallel-write.cat.
+
+2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Fix date_sync_regex.
 
 2012-09-20  Jean-Louis Martineau <martineau@zmanda.com>
