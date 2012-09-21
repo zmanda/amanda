@@ -1,0 +1,266 @@
+# an amdump logfile to check amstatus's display of taper-parallel-write > 1
+
+%F log/amdump
+amdump: start at Wed Sep 19 14:35:30 PDT 2012
+amdump: datestamp 20120919
+amdump: starttime 20120919143530
+amdump: starttime-locale-independent 2012-09-19 14:35:30 PDT
+planner: pid 5286 executable /usr/lib/amanda/planner version 3.3.2
+planner: build: VERSION="Amanda-3.3.2"
+planner:        BUILT_DATE="Tue Jul 24 13:28:42 PDT 2012" BUILT_MACH=""
+planner:        BUILT_REV="4847" BUILT_BRANCH="zmanda_3_3_2"
+planner:        CC="i486-linux-gnu-gcc"
+planner: paths: bindir="/usr/bin" sbindir="/usr/sbin"
+planner:        libexecdir="/usr/lib" amlibexecdir="/usr/lib/amanda"
+planner:        mandir="/usr/share/man" AMANDA_TMPDIR="/tmp/amanda"
+planner:        AMANDA_DBGDIR="/var/log/amanda" CONFIG_DIR="/etc/amanda"
+planner:        DEV_PREFIX="/dev/" RDEV_PREFIX="/dev/" DUMP="/sbin/dump"
+planner:        RESTORE="/sbin/restore" VDUMP=UNDEF VRESTORE=UNDEF
+planner:        XFSDUMP="/sbin/xfsdump" XFSRESTORE="/sbin/xfsrestore"
+planner:        VXDUMP=UNDEF VXRESTORE=UNDEF
+planner:        SAMBA_CLIENT="/usr/bin/smbclient" GNUTAR="/bin/tar"
+planner:        COMPRESS_PATH="/bin/gzip" UNCOMPRESS_PATH="/bin/gzip"
+planner:         LPRCMD=UNDEF  MAILER=UNDEF
+planner:        listed_incr_dir="/var/lib/amanda/gnutar-lists"
+planner: defs:  DEFAULT_SERVER="localhost" DEFAULT_CONFIG="DailySet1"
+planner:        DEFAULT_TAPE_SERVER="localhost" DEFAULT_TAPE_DEVICE=""
+planner:        NEED_STRSTR AMFLOCK_POSIX AMFLOCK_FLOCK AMFLOCK_LOCKF
+planner:        AMFLOCK_LNLOCK SETPGRP_VOID ASSERTIONS AMANDA_DEBUG_DAYS=4
+planner:        BSD_SECURITY USE_AMANDAHOSTS CLIENT_LOGIN="amandabackup"
+planner:        CHECK_USERID HAVE_GZIP COMPRESS_SUFFIX=".gz"
+planner:        COMPRESS_FAST_OPT="--fast" COMPRESS_BEST_OPT="--best"
+planner:        UNCOMPRESS_OPT="-dc"
+READING CONF INFO...
+planner: timestamp 20120919143530
+planner: tape_length is set from tape length (2445312 KB) * runtapes (1000) == 2445312000 KB
+planner: time 0.000: startup took 0.000 secs
+
+SENDING FLUSHES...
+ENDFLUSH
+
+SETTING UP FOR ESTIMATES...
+planner: time 0.000: setting up estimates for localhost:/root/testfile/732mb
+localhost:/root/testfile/732mb overdue 15603 days for level 0
+setup_estimate: localhost:/root/testfile/732mb: command 0, options: none    last_level -1 next_level0 -15603 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.000: setting up estimates for centos6-43-client:/root/testfile/36mb
+centos6-43-client:/root/testfile/36mb overdue 15603 days for level 0
+setup_estimate: centos6-43-client:/root/testfile/36mb: command 0, options: none    last_level -1 next_level0 -15603 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.001: setting up estimates for qa-debian6-x64-anuj:/root/testfile/146mb
+qa-debian6-x64-anuj:/root/testfile/146mb overdue 15603 days for level 0
+setup_estimate: qa-debian6-x64-anuj:/root/testfile/146mb: command 0, options: none    last_level -1 next_level0 -15603 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.001: setting up estimates took 0.000 secs
+
+GETTING ESTIMATES...
+driver: pid 5287 executable /usr/lib/amanda/driver version 3.3.2
+driver: tape size 2445312
+reserving 0 out of 0 for degraded-mode dumps
+driver: started dumper0 pid 5290
+driver: send-cmd time 0.027 to dumper0: START 20120919143530
+driver: started dumper1 pid 5292
+driver: send-cmd time 0.048 to dumper1: START 20120919143530
+driver: send-cmd time 0.049 to taper: START-TAPER worker0 20120919143530
+driver: start time 0.049 inparallel 2 bandwidth 2000000 diskspace 0  dir OBSOLETE datestamp 20120919143530 driver: drain-ends tapeq LARGEST big-dumpers sS
+driver: state time 0.049 free kps: 2000000 space: 0 taper: idle idle-dumpers: 2 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 0.049 if default: free 2000000
+driver: hdisk-state time 0.049
+dumper: pid 5292 executable dumper1 version 3.3.2
+dumper: pid 5290 executable dumper0 version 3.3.2
+planner time 1.062: got result for host qa-debian6-x64-anuj disk /root/testfile/146mb: 0 -> 1000000K, -1 -> -3K, -1 -> -3K
+planner time 1.079: got result for host centos6-43-client disk /root/testfile/36mb: 0 -> 1000000K, -1 -> -3K, -1 -> -3K
+planner: time 1.143: got partial result for host qa-debian6-x64-anuj disk /root/testfile/146mb: 0 -> 1000000K, -1 -> -3K, -1 -> -3K
+planner: time 1.163: got partial result for host centos6-43-client disk /root/testfile/36mb: 0 -> 1000000K, -1 -> -3K, -1 -> -3K
+planner time 1.175: got result for host localhost disk /root/testfile/732mb: 0 -> 1000000K, -1 -> -3K, -1 -> -3K
+planner: time 1.228: got partial result for host localhost disk /root/testfile/732mb: 0 -> 1000000K, -1 -> -3K, -1 -> -3K
+planner: time 1.266: got partial result for host qa-debian6-x64-anuj disk /root/testfile/146mb: 0 -> 142298K, -1 -> -3K, -1 -> -3K
+driver: state time 1.292 free kps: 2000000 space: 0 taper: idle idle-dumpers: 2 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 1.292 if default: free 2000000
+driver: hdisk-state time 1.292
+driver: result time 1.292 from taper: TAPER-OK worker0
+planner: time 1.375: got partial result for host centos6-43-client disk /root/testfile/36mb: 0 -> 35576K, -1 -> -3K, -1 -> -3K
+planner: time 1.383: got partial result for host localhost disk /root/testfile/732mb: 0 -> 715055K, -1 -> -3K, -1 -> -3K
+planner: time 2.270: got result for host qa-debian6-x64-anuj disk /root/testfile/146mb: 0 -> 142298K, -1 -> -3K, -1 -> -3K
+planner: time 2.379: got result for host centos6-43-client disk /root/testfile/36mb: 0 -> 35576K, -1 -> -3K, -1 -> -3K
+planner: time 2.385: got result for host localhost disk /root/testfile/732mb: 0 -> 715055K, -1 -> -3K, -1 -> -3K
+planner: time 2.386: getting estimates took 2.384 secs
+FAILED QUEUE: empty
+DONE QUEUE:
+  0: qa-debian6-x64-anuj /root/testfile/146mb
+  1: centos6-43-client /root/testfile/36mb
+  2: localhost  /root/testfile/732mb
+
+ANALYZING ESTIMATES...
+pondering qa-debian6-x64-anuj:/root/testfile/146mb... next_level0 -15603 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 142298 csize 142298 total size 142397 total_lev0 142298 balanced-lev0size 28459
+pondering centos6-43-client:/root/testfile/36mb... next_level0 -15603 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 35576 csize 35576 total size 178006 total_lev0 177874 balanced-lev0size 35574
+pondering localhost:/root/testfile/732mb... next_level0 -15603 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 715055 csize 715055 total size 893094 total_lev0 892929 balanced-lev0size 178585
+INITIAL SCHEDULE (size 893094):
+  localhost /root/testfile/732mb pri 15604 lev 0 nsize 715055 csize 715055
+  qa-debian6-x64-anuj /root/testfile/146mb pri 15604 lev 0 nsize 142298 csize 142298
+  centos6-43-client /root/testfile/36mb pri 15604 lev 0 nsize 35576 csize 35576
+
+DELAYING DUMPS IF NEEDED, total_size 893094, tape length 2445312000 mark 1
+  delay: Total size now 893094.
+
+PROMOTING DUMPS IF NEEDED, total_lev0 892929, balanced_size 178585...
+planner: time 2.386: analysis took 0.000 secs
+
+GENERATING SCHEDULE:
+--------
+DUMP localhost ffffffff9efefbffffffffff1f /root/testfile/732mb 20120919143530 15604 0 1970:1:1:0:0:0 715055 715055 698 1024 "Skipping: new disk can't be dumped in degraded mode"
+DUMP qa-debian6-x64-anuj ffffffff9efefbffffffffff1f /root/testfile/146mb 20120919143530 15604 0 1970:1:1:0:0:0 142298 142298 138 1024 "Skipping: new disk can't be dumped in degraded mode"
+DUMP centos6-43-client ffffffff9efefbffffffffff1f /root/testfile/36mb 20120919143530 15604 0 1970:1:1:0:0:0 35576 35576 34 1024 "Skipping: new disk can't be dumped in degraded mode"
+--------
+driver: flush size 0
+find diskspace: not enough diskspace. Left with 715104 K
+find diskspace: not enough diskspace. Left with 142336 K
+find diskspace: not enough diskspace. Left with 35616 K
+driver: send-cmd time 2.399 to taper: PORT-WRITE worker0 00-00001 localhost /root/testfile/732mb 0 20120919143530 "" "" "" 0 "" "" "" "" AMANDA
+driver: state time 2.399 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 2.399 if default: free 1998976
+driver: hdisk-state time 2.399
+driver: state time 2.412 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 2.412 if default: free 1998976
+driver: hdisk-state time 2.412
+driver: result time 2.412 from taper: PORT worker0 00-00001 55940 "127.0.0.1:43682"
+driver: send-cmd time 2.413 to dumper1: PORT-DUMP 00-00001 55940 localhost ffffffff9efefbffffffffff1f /root/testfile/732mb /root/testfile/732mb 0 1970:1:1:0:0:0 amgtar "" "" "" "" bsdtcp AMANDA 127.0.0.1:43682 20 |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n    <property>\n      <name>zmc-show-advanced</name>\n      <value>off</value>\n    </property>\n    <property>\n      <name>zmc-amanda-app</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-version</name>\n      <value>3.3.2</value>\n    </property>\n    <property>\n      <name>zmc-disklist</name>\n      <value>amstatus_test_3</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-app</name>\n      <value>1.23</value>\n    </property>\n    <property>\n      <name>zmc-version</name>\n      <value>3</value>\n    </property>\n    <property>\n      <name>last-modified-time</name>\n      <value encoding=\"raw\" raw=\"MjAxMi0wOS0xOSAxNDoyODo0OA==\">2012-09-19_14:28:48</value>\n    </property>\n    <property>\n      <name>zmc-type</name>\n      <value>unix</value>\n    </property>\n    <property>\n      <name>last-modified-by</name>\n      <value>admin</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-platform</name>\n      <value>6.0.5</value>\n    </property>\n    <property>\n      <name>creation-time</name>\n      <value encoding=\"raw\" raw=\"MjAxMi0wOS0xOSAxNDoyODo0OA==\">2012-09-19_14:28:48</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-date</name>\n      <value>20120919142848</value>\n    </property>\n    <property>\n      <name>zmc-occ</name>\n      <value>80901283870</value>\n    </property>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>sparse</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>one-file-system</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>xattrs</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>acls</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>selinux</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n  </backup-program>\n"
+taper: status file localhost /root/testfile/732mb:/tmp/amanda/taper_status_file_T2sTK0
+driver: state time 2.577 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.577 if default: free 1998976
+driver: hdisk-state time 2.577
+driver: result time 2.577 from taper: REQUEST-NEW-TAPE 00-00001
+driver: send-cmd time 2.577 to taper: START-SCAN worker0 00-00001
+driver: send-cmd time 2.577 to taper: NEW-TAPE worker0 00-00001
+taper: wrote label 'amstatus_test_3-AA-001'
+driver: state time 2.605 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.605 if default: free 1998976
+driver: hdisk-state time 2.605
+driver: result time 2.605 from taper: NEW-TAPE 00-00001 amstatus_test_3-AA-001
+driver: send-cmd time 2.605 to taper: START-TAPER worker1 20120919143530
+driver: state time 2.638 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.638 if default: free 1998976
+driver: hdisk-state time 2.638
+driver: result time 2.638 from taper: TAPER-OK worker1
+driver: send-cmd time 2.638 to taper: PORT-WRITE worker1 01-00002 centos6-43-client /root/testfile/36mb 0 20120919143530 "" "" "" 0 "" "" "" "" AMANDA
+driver: state time 2.638 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.638 if default: free 1997952
+driver: hdisk-state time 2.638
+driver: state time 2.646 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.646 if default: free 1997952
+driver: hdisk-state time 2.646
+driver: result time 2.646 from taper: PORT worker1 01-00002 51317 "127.0.0.1:35712"
+driver: send-cmd time 2.646 to dumper0: PORT-DUMP 01-00002 51317 centos6-43-client ffffffff9efefbffffffffff1f /root/testfile/36mb /root/testfile/36mb 0 1970:1:1:0:0:0 amgtar "" "" "" "" bsdtcp AMANDA 127.0.0.1:35712 20 |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n    <property>\n      <name>zmc-show-advanced</name>\n      <value>off</value>\n    </property>\n    <property>\n      <name>zmc-amanda-app</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-version</name>\n      <value>3.3.2</value>\n    </property>\n    <property>\n      <name>zmc-disklist</name>\n      <value>amstatus_test_3</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-app</name>\n      <value>1.23</value>\n    </property>\n    <property>\n      <name>zmc-version</name>\n      <value>3</value>\n    </property>\n    <property>\n      <name>last-modified-time</name>\n      <value encoding=\"raw\" raw=\"MjAxMi0wOS0xOSAxNDoyOToyMQ==\">2012-09-19_14:29:21</value>\n    </property>\n    <property>\n      <name>zmc-type</name>\n      <value>unix</value>\n    </property>\n    <property>\n      <name>last-modified-by</name>\n      <value>admin</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-platform</name>\n      <value encoding=\"raw\" raw=\"Q2VudE9TICA2LjMgKEZpbmFsKQ==\">CentOS__6.3_(Final)</value>\n    </property>\n    <property>\n      <name>creation-time</name>\n      <value encoding=\"raw\" raw=\"MjAxMi0wOS0xOSAxNDoyOToyMQ==\">2012-09-19_14:29:21</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-date</name>\n      <value>20120919142922</value>\n    </property>\n    <property>\n      <name>zmc-occ</name>\n      <value>80901619884</value>\n    </property>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>sparse</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>one-file-system</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>xattrs</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>acls</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>selinux</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n  </backup-program>\n"
+taper: status file centos6-43-client /root/testfile/36mb:/tmp/amanda/taper_status_file_EIIMMc
+driver: state time 2.797 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.797 if default: free 1997952
+driver: hdisk-state time 2.797
+driver: result time 2.797 from taper: REQUEST-NEW-TAPE 01-00002
+driver: send-cmd time 2.797 to taper: START-SCAN worker1 01-00002
+driver: send-cmd time 2.797 to taper: NEW-TAPE worker1 01-00002
+taper: wrote label 'amstatus_test_3-AA-002'
+driver: state time 2.876 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 2.876 if default: free 1997952
+driver: hdisk-state time 2.876
+driver: result time 2.876 from taper: NEW-TAPE 01-00002 amstatus_test_3-AA-002
+driver: state time 6.224 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.224 if default: free 1997952
+driver: hdisk-state time 6.224
+driver: result time 6.224 from taper: PARTDONE 01-00002 amstatus_test_3-AA-002 1 35584 "[sec 3.338940 bytes 36438016 kps 10657.274046]"
+driver: state time 6.226 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.226 if default: free 1997952
+driver: hdisk-state time 6.226
+driver: result time 6.226 from dumper0: DONE 01-00002 35584 35584 4 "[sec 3.505 kb 35584 kps 10150.8 orig-kb 35584]"
+driver: finished-cmd time 6.226 dumper0 dumped centos6-43-client:/root/testfile/36mb
+driver: send-cmd time 6.226 to taper: DONE worker1 01-00002 35584
+driver: state time 6.240 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.240 if default: free 1997952
+driver: hdisk-state time 6.240
+driver: result time 6.240 from taper: DUMPER-STATUS 01-00002
+driver: send-cmd time 6.240 to taper: DONE worker1 01-00002 35584
+driver: state time 6.243 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.243 if default: free 1997952
+driver: hdisk-state time 6.243
+driver: result time 6.243 from taper: DONE 01-00002 INPUT-GOOD TAPE-GOOD "[sec 4.000000 bytes 36438016 kps 8896.000000 orig-kb 35584]" "" ""
+driver: finished-cmd time 6.243 taper wrote centos6-43-client:/root/testfile/36mb
+driver: send-cmd time 6.243 to taper: CLOSE-VOLUME worker1
+driver: send-cmd time 6.244 to taper: PORT-WRITE worker1 01-00003 qa-debian6-x64-anuj /root/testfile/146mb 0 20120919143530 "" "" "" 0 "" "" "" "" AMANDA
+driver: state time 6.244 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.244 if default: free 1997952
+driver: hdisk-state time 6.244
+driver: state time 6.263 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.263 if default: free 1997952
+driver: hdisk-state time 6.263
+driver: result time 6.263 from taper: PORT worker1 01-00003 35040 "127.0.0.1:54910"
+driver: send-cmd time 6.263 to dumper0: PORT-DUMP 01-00003 35040 qa-debian6-x64-anuj ffffffff9efefbffffffffff1f /root/testfile/146mb /root/testfile/146mb 0 1970:1:1:0:0:0 amgtar "" "" "" "" bsdtcp AMANDA 127.0.0.1:54910 20 |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n    <property>\n      <name>zmc-show-advanced</name>\n      <value>off</value>\n    </property>\n    <property>\n      <name>zmc-amanda-app</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-version</name>\n      <value>3.3.2</value>\n    </property>\n    <property>\n      <name>zmc-disklist</name>\n      <value>amstatus_test_3</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-app</name>\n      <value>1.23</value>\n    </property>\n    <property>\n      <name>zmc-version</name>\n      <value>3</value>\n    </property>\n    <property>\n      <name>last-modified-time</name>\n      <value encoding=\"raw\" raw=\"MjAxMi0wOS0xOSAxNDoyOTo1Mg==\">2012-09-19_14:29:52</value>\n    </property>\n    <property>\n      <name>zmc-type</name>\n      <value>unix</value>\n    </property>\n    <property>\n      <name>last-modified-by</name>\n      <value>admin</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-platform</name>\n      <value>6.0.5</value>\n    </property>\n    <property>\n      <name>creation-time</name>\n      <value encoding=\"raw\" raw=\"MjAxMi0wOS0xOSAxNDoyOTo1Mg==\">2012-09-19_14:29:52</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-date</name>\n      <value>20120919143206</value>\n    </property>\n    <property>\n      <name>zmc-occ</name>\n      <value>80901928569</value>\n    </property>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>sparse</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>one-file-system</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>xattrs</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>acls</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>selinux</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n  </backup-program>\n"
+taper: status file qa-debian6-x64-anuj /root/testfile/146mb:/tmp/amanda/taper_status_file_R4zzdU
+driver: state time 10.772 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 10.772 if default: free 1997952
+driver: hdisk-state time 10.772
+driver: result time 10.772 from taper: REQUEST-NEW-TAPE 01-00003
+driver: state time 42.899 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 42.899 if default: free 1997952
+driver: hdisk-state time 42.899
+driver: result time 42.900 from dumper1: DONE 00-00001 715072 715072 40 "[sec 40.387 kb 715072 kps 17705.5 orig-kb 715072]"
+driver: finished-cmd time 42.900 dumper1 dumped localhost:/root/testfile/732mb
+driver: send-cmd time 42.900 to taper: DONE worker0 00-00001 715072
+driver: state time 42.903 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 42.903 if default: free 1997952
+driver: hdisk-state time 42.903
+driver: result time 42.903 from taper: PARTDONE 00-00001 amstatus_test_3-AA-001 1 715072 "[sec 40.253966 bytes 732233728 kps 17764.013439]"
+driver: state time 42.928 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 42.928 if default: free 1997952
+driver: hdisk-state time 42.928
+driver: result time 42.928 from taper: DUMPER-STATUS 00-00001
+driver: send-cmd time 42.928 to taper: DONE worker0 00-00001 715072
+driver: state time 42.944 free kps: 1997952 space: 0 taper: writing idle-dumpers: 0 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 42.944 if default: free 1997952
+driver: hdisk-state time 42.944
+driver: result time 42.944 from taper: DONE 00-00001 INPUT-GOOD TAPE-GOOD "[sec 41.000000 bytes 732233728 kps 17440.780488 orig-kb 715072]" "" ""
+driver: finished-cmd time 42.944 taper wrote localhost:/root/testfile/732mb
+driver: send-cmd time 42.944 to taper: CLOSE-VOLUME worker0
+driver: send-cmd time 42.947 to taper: TAKE-SCRIBE-FROM worker1 01-00003 worker0
+driver: state time 42.947 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 42.947 if default: free 1998976
+driver: hdisk-state time 42.947
+driver: state time 42.966 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 42.966 if default: free 1998976
+driver: hdisk-state time 42.966
+driver: result time 42.966 from taper: REQUEST-NEW-TAPE 01-00003
+driver: send-cmd time 42.966 to taper: START-SCAN worker1 01-00003
+driver: send-cmd time 42.966 to taper: NEW-TAPE worker1 01-00003
+taper: wrote label 'amstatus_test_3-AA-003'
+driver: state time 43.011 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 43.011 if default: free 1998976
+driver: hdisk-state time 43.011
+driver: result time 43.011 from taper: NEW-TAPE 01-00003 amstatus_test_3-AA-003
+driver: send-cmd time 43.011 to taper: START-TAPER worker0 20120919143530
+driver: state time 43.064 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 43.064 if default: free 1998976
+driver: hdisk-state time 43.064
+driver: result time 43.064 from taper: TAPER-OK worker0
+driver: state time 82.686 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 82.686 if default: free 1998976
+driver: hdisk-state time 82.686
+driver: result time 82.686 from taper: PARTDONE 01-00003 amstatus_test_3-AA-003 1 142336 "[sec 39.671814 bytes 145752064 kps 3587.836922]"
+driver: state time 82.692 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 82.692 if default: free 1998976
+driver: hdisk-state time 82.692
+driver: result time 82.692 from dumper0: DONE 01-00003 142336 142336 73 "[sec 72.703 kb 142336 kps 1957.8 orig-kb 142336]"
+driver: finished-cmd time 82.692 dumper0 dumped qa-debian6-x64-anuj:/root/testfile/146mb
+driver: send-cmd time 82.692 to taper: DONE worker1 01-00003 142336
+driver: state time 82.694 free kps: 1998976 space: 0 taper: writing idle-dumpers: 1 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 82.694 if default: free 1998976
+driver: hdisk-state time 82.694
+driver: result time 82.694 from taper: DONE 01-00003 INPUT-GOOD TAPE-GOOD "[sec 72.000000 bytes 145752064 kps 1976.888889]" "" ""
+driver: finished-cmd time 82.694 taper wrote qa-debian6-x64-anuj:/root/testfile/146mb
+driver: send-cmd time 82.694 to taper: CLOSE-VOLUME worker1
+driver: state time 82.695 free kps: 2000000 space: 0 taper: idle idle-dumpers: 2 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 82.695 if default: free 2000000
+driver: hdisk-state time 82.695
+driver: QUITTING time 82.695 telling children to quit
+driver: send-cmd time 82.695 to dumper0: QUIT ""
+driver: send-cmd time 82.695 to dumper1: QUIT ""
+driver: send-cmd time 82.698 to taper: QUIT
+driver: FINISHED time 83.698
+amdump: end at Wed Sep 19 14:36:53 PDT 2012
