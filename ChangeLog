@@ -1,3 +1,7 @@
+2012-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm (device_started): Can get non-numeric
+	  result.
+
 2012-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/tapelist.5.xml: Add BLOCKSIZE.
 
