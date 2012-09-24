@@ -2506,13 +2506,10 @@ tape devices.
   <varlistentry>
   <term><amkeyword>part-size</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: none.  This is the size (in KB if no units are specified) of
-each split part written to the volume.  It is reduced to
-<amkeyword>part-cache-max-size</amkeyword> when part caching is required.
-If this is set to zero, then no splitting will take place; in this case,
-some devices can span dumps from volume to volume, while others will cause
-the entire dump to fail if they encounter end-of-medium before the dump is
-complete.  See "Dump Splitting Configuration" below.</para>
+<para>If this is set to zero (default), then no splitting will take place,
+and the entire dump will fail, if end-of-medium is encountered before
+the dump is complete, unless the device property LEOM is true, and the
+device can detect EOM.  See "Dump Splitting Configuration" below.</para>
   </listitem>
   </varlistentry>
 
