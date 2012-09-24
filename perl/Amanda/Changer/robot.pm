@@ -719,7 +719,11 @@ sub load_unlocked {
 	} else {
 	    $state->{'slots'}->{$slot}->{'device_error'} = $device->error;
 	}
-	$state->{'slots'}->{$slot}->{'f_type'} = $device->volume_header->{type};
+	if (defined $device->volume_header) {
+	    $state->{'slots'}->{$slot}->{'f_type'} = $device->volume_header->{type};
+	} else {
+	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
+	}
 	my $barcode = $state->{'slots'}->{$slot}->{'barcode'};
 	if ($label and $barcode) {
 	    my $old_label = $state->{'bc2lb'}->{$barcode};
