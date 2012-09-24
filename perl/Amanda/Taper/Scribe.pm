@@ -1249,7 +1249,13 @@ sub _volume_cb  {
     step device_started => sub {
 	my $result = shift;
 
-	if ($result == 0) {
+	if ($result =~ /\D/) {
+	    $self->{'feedback'}->scribe_notif_new_tape(
+		error => $result,
+		volume_label => undef);
+	    $self->_get_new_volume();
+	    return $cbX->();
+	} elsif ($result == 0) {
 	    # try reading the label to see whether we erased the tape
 	    my $erased = 0;
 	    CHECK_READ_LABEL: {
@@ -1291,12 +1297,6 @@ sub _volume_cb  {
 		error => "while labeling new volume: " . $device->error_or_status(),
 		volume_label => $erased? $new_label : undef);
 
-	    $self->_get_new_volume();
-	    return $cbX->();
-	} elsif ($result != 1) {
-	    $self->{'feedback'}->scribe_notif_new_tape(
-		error => $result,
-		volume_label => undef);
 	    $self->_get_new_volume();
 	    return $cbX->();
 	}
