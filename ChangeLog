@@ -1,4 +1,10 @@
 2012-09-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: Do not increase partnum if
+	  the size is 0.
+	* installcheck/Amanda_Xfer.pl: Fix partnum check.
+	* perl/Amanda/Taper/Scribe.pm: Improve debugging.
+
+2012-09-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c, common-src/util.c,
 	  perl/Amanda/Header.swg, perl/Amanda/Taper/Worker.pm,
 	  perl/Amanda/Util.swg,

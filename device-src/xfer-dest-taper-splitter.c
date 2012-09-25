@@ -563,7 +563,7 @@ part_done:
     /* time runs backward on some test boxes, so make sure this is positive */
     if (msg->duration < 0) msg->duration = 0;
 
-    if (msg->successful)
+    if (msg->successful && msg->size > 0)
 	self->partnum++;
     self->no_more_parts = msg->eof || (!msg->successful && !self->expect_cache_inform);
 

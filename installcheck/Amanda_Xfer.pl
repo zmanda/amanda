@@ -821,7 +821,7 @@ SKIP: {
 						     2368*1024, 0);
 	},
 	[ "PART-1-OK", "PART-2-OK", "EOM",
-	  "PART-3-OK",
+	  "PART-2-OK",
 	  "DONE" ],
 	"Amanda::Xfer::Dest::Taper::Splitter - LEOM hits in file 2 header");
     test_recovery_source(

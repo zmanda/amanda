@@ -874,7 +874,7 @@ sub _xmsg_part_done {
 	$self->dbg("not notifying for empty, successful part");
     } else {
 	# double-check partnum
-	confess "Part numbers do not match!"
+	confess "Part numbers do not match! $self->{'dump_header'}->{'partnum'} $msg->{'partnum'}"
 	    unless ($self->{'dump_header'}->{'partnum'} == $msg->{'partnum'});
 
 	# notify
