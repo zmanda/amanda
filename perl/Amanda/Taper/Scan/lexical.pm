@@ -154,12 +154,20 @@ sub analyze {
 			push @new_labeled, $sl;
 		    }
 		} elsif ($self->volume_is_labelable($sl)) {
+		    $sl->{'label'} = $self->{'chg'}->make_new_tape_label(
+					barcode => $sl->{'barcode'},
+					slot => $sl->{'slot'},
+					meta => $sl->{'meta'});
 		    $first_new_volume = $sl if !$first_new_volume;
 		    $new_volume = $sl if $current && !$new_volume;
 		    push @new_volume, $sl;
 		}
 	    }
 	} elsif ($self->volume_is_labelable($sl)) {
+	    $sl->{'label'} = $self->{'chg'}->make_new_tape_label(
+					barcode => $sl->{'barcode'},
+					slot => $sl->{'slot'},
+					meta => $sl->{'meta'});
 	    $first_new_volume = $sl if !$first_new_volume;
 	    $new_volume = $sl if $current && !$new_volume;
 	    push @new_volume, $sl;
@@ -203,10 +211,6 @@ sub analyze {
     }
 
     for my $sl (@new_volume) {
-	$sl->{'label'} = $self->{'chg'}->make_new_tape_label(
-					barcode => $sl->{'barcode'},
-					slot => $sl->{'slot'},
-					meta => $sl->{'meta'});
 	$new_volume = $sl if defined $last_label and
 			     $new_volume->{'label'} ne $sl->{'label'} and
 			     (($sl->{'label'} gt $last_label and
