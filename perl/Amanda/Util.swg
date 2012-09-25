@@ -290,7 +290,9 @@ sub safe_overwrite_file {
     if ($1) {
 	guint i;
 	for (i = 0; i < $1->len; i++) {
-	    $result = sv_2mortal(newSVpv(g_ptr_array_index($1, i), 0));
+	    char *str = g_ptr_array_index($1, i);
+	    $result = sv_2mortal(newSVpv(str, 0));
+	    g_free(str);
 	    argvi++;
 	}
 	g_ptr_array_free($1, TRUE);
@@ -452,6 +454,10 @@ typedef struct file_lock {
 	%newobject file_lock;
 	file_lock(const char *filename) {
 	    return file_lock_new(filename);
+	}
+
+	~file_lock() {
+	    file_lock_free(self);
 	}
 
 	~locked_data() {

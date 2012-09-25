@@ -77,6 +77,7 @@ file_lock_free(
 	close(lock->fd);
 
     g_static_mutex_unlock(&lock_lock);
+    g_free(lock);
 }
 
 int

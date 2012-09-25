@@ -882,6 +882,7 @@ expand_braced_sequence(GPtrArray *arr)
 	start++;
     }
 
+    g_free(elt);
     return arr;
 }
 

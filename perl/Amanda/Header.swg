@@ -87,6 +87,13 @@ typedef struct {
 	    return df;
 	}
 
+	/* constructor */
+	dumpfile_t(const char *string) {
+	    dumpfile_t *df = g_new(dumpfile_t, 1);
+	    parse_file_header(string, df, strlen(string));
+	    return df;
+	}
+
 	/* destructor */
 	~dumpfile_t(void) {
 	    dumpfile_free(self);
@@ -123,13 +130,6 @@ typedef struct {
     }
 } dumpfile_t;
 
-%inline %{
-static dumpfile_t *C_from_string(const char *string) {
-    dumpfile_t *result = g_new(dumpfile_t, 1);
-    parse_file_header(string, result, strlen(string));
-    return result;
-}
-%}
 
 %perlcode %{
 
@@ -144,7 +144,7 @@ sub new {
 
 sub from_string {
     shift; # ignore class
-    return C_from_string(@_);
+    return Amanda::Header::Header->new(@_);
 }
 
 sub get_dle {

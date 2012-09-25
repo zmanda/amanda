@@ -1,4 +1,10 @@
 2012-09-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c, common-src/util.c,
+	  perl/Amanda/Header.swg, perl/Amanda/Taper/Worker.pm,
+	  perl/Amanda/Util.swg,
+	  server-src/xfer-dest-holding.c: Fix small memory leak.
+
+2012-09-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/lexical.pm,
 	  perl/Amanda/Taper/Scan/oldest.pm: Fix perl warning.
 

@@ -362,7 +362,6 @@ sub result_cb {
     $self->{'xfer_source'} = undef;
     $self->{'xfer_dest'} = undef;
     $self->{'handle'} = undef;
-    $self->{'header'} = undef;
     $self->{'hostname'} = undef;
     $self->{'diskname'} = undef;
     $self->{'datestamp'} = undef;
@@ -700,7 +699,7 @@ sub setup_and_start_dump {
 	    # getting the header is easy for FILE-WRITE..
 	    my $hdr = $self->{'header'} = Amanda::Holding::get_header($params{'filename'});
 
-	    # stip out header fields we don't need
+	    # strip out header fields we don't need
 	    $hdr->{'cont_filename'} = '';
 
 	    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {

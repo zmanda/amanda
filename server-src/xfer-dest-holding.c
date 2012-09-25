@@ -326,6 +326,7 @@ holding_thread(
 		g_free(mesg);
 		mesg = g_strdup_printf("Failed to open '%s': %s",
 				       tmp_filename, strerror(errno));
+		g_free(tmp_filename);
 		goto no_room;
 	    }
 	    if (self->filename == NULL) {
@@ -345,6 +346,7 @@ holding_thread(
 		g_free(tmp_filename);
 		goto no_room;
 	    }
+	    g_free(tmp_filename);
 	    self->use_bytes -= HEADER_BLOCK_BYTES;
 
 	    /* rewrite old_header */
@@ -390,6 +392,7 @@ no_room:
 
     msg = xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0);
     msg->duration = g_timer_elapsed(timer, NULL);
+    g_timer_destroy(timer);
     /* tell the main thread we're done */
     xfer_queue_message(elt->xfer, msg);
 
