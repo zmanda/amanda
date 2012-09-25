@@ -1,3 +1,7 @@
+2012-09-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/lexical.pm,
+	  perl/Amanda/Taper/Scan/oldest.pm: Fix perl warning.
+
 2012-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix for header not read.
 
