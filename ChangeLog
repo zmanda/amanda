@@ -1,3 +1,6 @@
+2012-09-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (get_multiplier): Fix for for CONF_END.
+
 2012-09-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: Do not increase partnum if
 	  the size is 0.

@@ -4529,9 +4529,11 @@ get_multiplier(
     /* get multiplier, if any */
     get_conftoken(CONF_ANY);
 
-    if (tok == CONF_MULT1 && unit == CONF_UNIT_K) {
+    if (tok == CONF_NL || tok == CONF_END) { /* no multiplier */
+	val = val;
+    } else if (tok == CONF_MULT1 && unit == CONF_UNIT_K) {
 	val /= 1024;
-    } else if (tok == CONF_NL || tok == CONF_MULT1 ||
+    } else if (tok == CONF_MULT1 ||
 	(tok == CONF_MULT1K && unit == CONF_UNIT_K)) {
 	val *= 1;	/* multiply by one */
     } else if (tok == CONF_MULT7) {
