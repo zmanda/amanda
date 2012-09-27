@@ -1,3 +1,9 @@
+2012-09-27 Dan Locks <dwlocks@zmanda.com>
+	* Bug reported by Jon LaBadie for fedora 17: spurious requirement
+	  of libtermcap.so.2.
+	* packaging/rpm/amanda.spec.src: massage fedora detection to remove
+	  spurious requirement
+
 2012-09-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix reps and reps_bucket name.
 

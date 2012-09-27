@@ -37,50 +37,21 @@
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
-%if %{_vendor} == redhat 
+%if %{_vendor} == redhat
     # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
     # fc3-8.  So RHEL and Fedora look at the same file.  Different versions have
-    # different numbers of spaces; hence the use if $3 vs. $4..
-    %if %(awk '$1 == "Fedora" && $4 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    # different numbers of spaces; hence the use of $3 vs. $4..
+    %if %(awk '$1 == "Fedora" { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
-        %define distver 3
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "Fedora" && $4 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist fedora
-        %define disttag fc
-        %define distver 4
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "Fedora" && $4 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist fedora
-        %define disttag fc
-        %define distver 5
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "Fedora" && $4 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist fedora
-        %define disttag fc
-        %define distver 6
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
-    %endif
-    %if %(awk '$1 == "Fedora" && $3 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist fedora
-        %define disttag fc
-        %define distver 7
-	%define requires_libtermcap Requires: libtermcap.so.2
-	%define curl curl
+        %define distver %(awk '{print $4}' /etc/redhat-release)
     %endif
     # if macro cannot have an empty test and we're just testing the existance
     %if %{?fedora:yes}%{!?fedora:no} == yes
-        %define dist fedora
-        %define disttag fc
+        # In theory this should be more reliable than awking for distver.
         %define distver %{fedora}
+    %endif
+    %if "%dist" == "fedora"
 	%if %{distver} <= 8
 	    %define requires_libtermcap Requires: libtermcap.so.2
 	    %define curl curl
@@ -140,7 +111,7 @@
     # If dist is undefined, we didn't detect.
     %{!?dist:%define dist unknown}
 %endif
-# Detect Suse variants. 
+# Detect Suse variants.
 %if %{_vendor} == "suse"
     %define dist SuSE
     %if %(awk '$1 == "openSUSE" { exit 1; }' /etc/SuSE-release; echo $?)
