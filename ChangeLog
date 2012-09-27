@@ -1,3 +1,6 @@
+2012-09-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Fix reps and reps_bucket name.
+
 2012-09-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (get_multiplier): Fix for for CONF_END.
 

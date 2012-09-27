@@ -1157,10 +1157,10 @@ s3_device_register(void)
                                       G_TYPE_BOOLEAN, "s3_multi_delete",
        "Whether to use multi-delete");
     device_property_fill_and_register(&device_property_s3_reps,
-                                      G_TYPE_STRING, "s3_reps",
+                                      G_TYPE_STRING, "reps",
        "Number of replicas for data objects in CAStor");
     device_property_fill_and_register(&device_property_s3_reps_bucket,
-                                      G_TYPE_STRING, "s3_reps_bucket",
+                                      G_TYPE_STRING, "reps_bucket",
        "Number of replicas for automatically created buckets in CAStor");
 
     /* register the device itself */
