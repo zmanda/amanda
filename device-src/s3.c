@@ -3264,7 +3264,9 @@ s3_read_range(S3Handle *hdl,
     g_assert(hdl != NULL);
     g_assert(write_func != NULL);
 
-    buf = g_strdup_printf("Range: bytes=%lu-%lu", range_begin, range_end);
+    buf = g_strdup_printf("Range: bytes=%llu-%llu",
+			  (long long unsigned)range_begin,
+			  (long long unsigned) range_end);
     headers = curl_slist_append(headers, buf);
     g_free(buf);
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL, headers,
