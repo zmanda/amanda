@@ -621,7 +621,7 @@ while($lineX = <AMDUMP>) {
 			elsif($line[5] eq "taper") {
 				if($line[6] eq "(eof)") {
 					# all worker fail
-					foreach $worker (keys @worker_to_serial) {
+					foreach $worker (keys %worker_to_serial) {
 						$serial = $worker_to_serial{$worker};
 						$hostpart=$serial{$serial};
 						if(defined $hostpart) {
