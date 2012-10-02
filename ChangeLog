@@ -1,3 +1,6 @@
+2012-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix for (eof) from dumper/chunker or taper.
+
 2012-09-27 Dan Locks <dwlocks@zmanda.com>
 	* Bug reported by Jon LaBadie for fedora 17: spurious requirement
 	  of libtermcap.so.2.
