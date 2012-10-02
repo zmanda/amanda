@@ -1,3 +1,6 @@
+2012-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix for (eof) from dumper/chunker or taper.
+
 2012-09-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix reps and reps_bucket name.
 

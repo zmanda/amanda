@@ -397,6 +397,7 @@ while($lineX = <AMDUMP>) {
 					$partition = $line[11];
 					$hostpart=&make_hostpart($host,$partition,$gdatestamp);
 					$serial=$line[7];
+					$dumper_to_serial{$line[5]} = $serial;
 					$dump_started{$hostpart}=1;
 					$dump_time{$hostpart}=$current_time;
 					$dump_finished{$hostpart}=0;
@@ -427,6 +428,7 @@ while($lineX = <AMDUMP>) {
 					$partition=$line[11];
 					$hostpart=&make_hostpart($host,$partition,$gdatestamp);
 					$serial=$line[7];
+					$chunker_to_serial{$line[5]} = $serial;
 					$serial{$serial}=$hostpart;
 					$holding_file{$hostpart}=$line[8];
 					#$chunk_started{$hostpart}=1;
@@ -487,6 +489,8 @@ while($lineX = <AMDUMP>) {
 					$taper_time{$hostpart}=$current_time;
 					$taper_error{$hostpart}="";
 					$taper_name{$hostpart} = $name;
+					$worker_to_serial{$name} = $serial;
+				    $tapedsize{$hostpart} = 0;
 				}
 				elsif($line[6] eq "PORT-WRITE") {
 					#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
@@ -504,6 +508,8 @@ while($lineX = <AMDUMP>) {
 					$taper_time{$hostpart}=$current_time;
 					$taper_error{$hostpart}="";
 					$taper_name{$hostpart} = $name;
+					$worker_to_serial{$name} = $serial;
+				    $tapedsize{$hostpart} = 0;
 					$size{$hostpart} = 0;
 				}
 			}
@@ -512,6 +518,11 @@ while($lineX = <AMDUMP>) {
 			#print "result: " , $line[5] . " " . $line[6] . " " . $line[7] . "\n" if defined $line[5] && defined $line[6] && defined $line[7];
 			$current_time = $line[3];
 			if($line[5] =~ /dumper\d+/) {
+				if($line[6] eq "(eof)") {
+					$line[6] = "FAILED";
+					$line[7] = $dumper_to_serial{$line[5]};
+					$line[8] = "dumper CRASH";
+				}
 				if($line[6] eq "FAILED" || $line[6] eq "TRY-AGAIN") {
 					#7:handle 8:message
 					$serial = $line[7];
@@ -563,6 +574,11 @@ while($lineX = <AMDUMP>) {
 				}
 			}
 			elsif($line[5] =~ /chunker\d+/) {
+				if($line[6] eq "(eof)") {
+					$line[6] = "FAILED";
+					$line[7] = $chunker_to_serial{$line[5]};
+					$line[8] = "chunker CRASH";
+				}
 				if($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
 					#7:handle 8:size
 					$serial=$line[7];
@@ -603,7 +619,24 @@ while($lineX = <AMDUMP>) {
 				}
 			}
 			elsif($line[5] eq "taper") {
-				if($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
+				if($line[6] eq "(eof)") {
+					# all worker fail
+					foreach $worker (keys @worker_to_serial) {
+						$serial = $worker_to_serial{$worker};
+						$hostpart=$serial{$serial};
+						if(defined $hostpart) {
+							$error= "taper CRASH";
+							$taper_finished{$hostpart} = -2;
+							$status_taper = $error;
+							$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
+							$taper_time{$hostpart}=$current_time;
+							$error{$hostpart}="$error";
+							undef $worker_to_serial{$worker};
+						}
+						undef $taper_status_file;
+					}
+				}
+				elsif($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
 					#DONE:    7:handle 8:label 9:filenum 10:errstr
 					#PARTIAL: 7:handle 8:INPUT-* 9:TAPE-* 10:errstr 11:INPUT-MSG 12:TAPE-MSG
 					$serial=$line[7];
@@ -635,6 +668,7 @@ while($lineX = <AMDUMP>) {
 						$partial{$hostpart} = 0;
 					}
 					undef $taper_status_file;
+					undef $worker_to_serial{$taper_name{$hostpart}};
 				}
 				elsif($line[6] eq "PARTDONE") {
 					#7:handle 8:label 9:filenum 10:ksize 11:errstr
@@ -696,7 +730,7 @@ while($lineX = <AMDUMP>) {
 				}
 				elsif($line[6] eq "FAILED") {
 					#7:handle 8:INPUT- 9:TAPE- 10:input_message 11:tape_message
-				   $serial=$line[7];
+					$serial=$line[7];
 					$hostpart=$serial{$serial};
 					if(defined $hostpart) {
 						if($line[9] eq "TAPE-ERROR") {
@@ -714,6 +748,7 @@ while($lineX = <AMDUMP>) {
 						$error{$hostpart}="$error";
 					}
 					undef $taper_status_file;
+					undef $worker_to_serial{$taper_name{$hostpart}};
 				}
 			}
 		}
@@ -764,7 +799,7 @@ while($lineX = <AMDUMP>) {
 				}
 			}
 		}
-	   elsif($line[1] eq "FINISHED") {
+		elsif($line[1] eq "FINISHED") {
 			$driver_finished = 1;
 		}
 	}
