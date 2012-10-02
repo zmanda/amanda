@@ -1047,7 +1047,7 @@ s3_thread_delete_block(
 		}
 		g_mutex_unlock(self->thread_idle_mutex);
 	    } else {
-		g_slist_free_full(lobjects, free_s3_object);
+		slist_free_full(lobjects, free_s3_object);
 	    }
 	} else {
 	    object = self->objects->data;
@@ -3323,7 +3323,7 @@ s3_device_seek_file(Device *pself, guint file) {
     if (objects) { /* multi-part */
 	s3_object *part = (s3_object *)objects->data;
 	self->object_size = part->size;
-	g_slist_free_full(objects, free_s3_object);
+	slist_free_full(objects, free_s3_object);
     } else {
 	g_free(self->filename);
 	self->filename = NULL;

@@ -3200,7 +3200,7 @@ cleanup:
     if (buf.buffer) g_free(buf.buffer);
 
     if (result != S3_RESULT_OK) {
-        g_slist_free_full(thunk.object_list, free_s3_object);
+        slist_free_full(thunk.object_list, free_s3_object);
         return FALSE;
     } else {
         *list = thunk.object_list;
