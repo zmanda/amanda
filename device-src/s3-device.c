@@ -69,17 +69,21 @@ typedef struct _S3Device S3Device;
 
 typedef struct _S3_by_thread S3_by_thread;
 struct _S3_by_thread {
-    S3Handle * volatile          s3;
-    CurlBuffer volatile          curl_buffer;
-    guint volatile               buffer_len;
-    int volatile                 idle;
-    int volatile                 eof;
-    int volatile                 done;
-    char volatile * volatile     filename;
-    DeviceStatusFlags volatile   errflags;	/* device_status */
-    char volatile * volatile     errmsg;	/* device error message */
-    GMutex			*now_mutex;
-    guint64			 dlnow, ulnow;
+    S3Handle            *s3;
+    CurlBuffer           curl_buffer;
+    guint                buffer_len;
+    int                  idle;
+    int                  eof;
+    int                  done;
+    char                *filename;
+    char		*uploadId;
+    int			 partNumber;
+    guint64		 range_min;
+    guint64		 range_max;
+    DeviceStatusFlags    errflags;	/* device_status */
+    char                *errmsg;	/* device error message */
+    GMutex		*now_mutex;
+    guint64		 dlnow, ulnow;
 };
 
 struct _S3Device {
@@ -143,17 +147,25 @@ struct _S3Device {
     gboolean enforce_volume_limit;
     gboolean use_subdomain;
     gboolean use_s3_multi_delete;
+    char        *uploadId;
+    GTree       *part_etag;
+    char        *filename;
 
     int          nb_threads;
     int          nb_threads_backup;
     int          nb_threads_recovery;
+    gboolean     use_s3_multi_part_upload;
     GThreadPool *thread_pool_delete;
     GThreadPool *thread_pool_write;
     GThreadPool *thread_pool_read;
     GCond       *thread_idle_cond;
     GMutex      *thread_idle_mutex;
+    int		 last_byte_read;
     int          next_block_to_read;
-    GSList      *keys;
+    int		 next_byte_to_read;
+    GSList      *objects;
+    guint64	 object_size;
+    gboolean	 bucket_made;
 
     guint64      dltotal;
     guint64      ultotal;
@@ -165,7 +177,7 @@ struct _S3Device {
     char        *project_id;
 
     gboolean	 reuse_connection;
-    
+
     /* CAStor */
     char        *reps;
     char        *reps_bucket;
@@ -290,6 +302,8 @@ static DevicePropertyBase device_property_nb_threads_backup;
 #define PROPERTY_NB_THREADS_BACKUP (device_property_nb_threads_backup.ID)
 static DevicePropertyBase device_property_nb_threads_recovery;
 #define PROPERTY_NB_THREADS_RECOVERY (device_property_nb_threads_recovery.ID)
+static DevicePropertyBase device_property_s3_multi_part_upload;
+#define PROPERTY_S3_MULTI_PART_UPLOAD (device_property_s3_multi_part_upload.ID)
 
 /* If the s3 server have the multi-delete functionality */
 static DevicePropertyBase device_property_s3_multi_delete;
@@ -343,6 +357,16 @@ static char *
 file_and_block_to_key(S3Device *self,
                       int file,
                       guint64 block);
+
+/* Given file, return an S3 key.
+ *
+ * @param self: the S3Device object
+ * @param file: the file number
+ * @returns: a newly allocated string containing an S3 key.
+ */
+static char *
+file_to_multi_part_key(S3Device *self,
+                       int file);
 
 /* Given the name of a special file (such as 'tapestart'), generate
  * the S3 key to use for that file.
@@ -531,6 +555,10 @@ static gboolean s3_device_set_nb_threads_recovery(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
+static gboolean s3_device_set_s3_multi_part_upload(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
 static gboolean s3_device_set_max_volume_usage_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
@@ -669,6 +697,15 @@ file_and_block_to_key(S3Device *self,
 }
 
 static char *
+file_to_multi_part_key(S3Device *self,
+                       int file)
+{
+    char *s3_key = g_strdup_printf("%sf%08x-mp.data", self->prefix, file);
+    g_assert(strlen(s3_key) <= S3_MAX_KEY_LENGTH);
+    return s3_key;
+}
+
+static char *
 special_file_to_key(S3Device *self,
                     char *special_name,
                     int file)
@@ -798,6 +835,33 @@ static int key_to_file(guint prefix_len, const char * key) {
     return file;
 }
 
+static int
+abort_partial_upload(S3Device *self)
+{
+    Device *d_self = DEVICE(self);
+    gboolean result;
+    GSList *objects;
+    s3_object *part = NULL;
+
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, "uploads", NULL, NULL, &objects, NULL);
+
+    if (!result) {
+	device_set_error(d_self,
+	    g_strdup_printf(_("While listing partial upload: %s"), s3_strerror(self->s3t[0].s3)),
+	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+        return FALSE;
+    }
+
+    for (; objects; ) {
+	part = (s3_object *)objects->data;
+	objects = g_slist_remove(objects, objects->data);
+	g_debug("partial upload: %s : %s", part->key, part->uploadId);
+	s3_abort_multi_part_upload(self->s3t[0].s3, self->bucket, part->key, part->uploadId);
+	free_s3_object(part);
+    }
+    return TRUE;
+}
+
 /* Find the number of the last file that contains any data (even just a header).
  * Returns -1 in event of an error
  */
@@ -810,7 +874,7 @@ find_last_file(S3Device *self) {
     Device *d_self = DEVICE(self);
 
     /* list all keys matching C{PREFIX*-*}, stripping the C{-*} */
-    result = s3_list_keys(self->s3t[0].s3, self->bucket, self->prefix, "-", &keys, NULL);
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, self->prefix, "-", &keys, NULL);
     if (!result) {
 	device_set_error(d_self,
 	    g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
@@ -819,7 +883,8 @@ find_last_file(S3Device *self) {
     }
 
     for (; keys; keys = g_slist_remove(keys, keys->data)) {
-        int file = key_to_file(prefix_len, keys->data);
+	s3_object *object = keys->data;
+        int file = key_to_file(prefix_len, object->prefix);
 
         /* and if it's the last, keep it */
         if (file > last_file)
@@ -835,14 +900,14 @@ find_last_file(S3Device *self) {
 static int
 find_next_file(S3Device *self, int last_file) {
     gboolean result;
-    GSList *keys;
+    GSList *objects;
     unsigned int prefix_len = strlen(self->prefix);
     int next_file = 0;
     Device *d_self = DEVICE(self);
 
     /* list all keys matching C{PREFIX*-*}, stripping the C{-*} */
-    result = s3_list_keys(self->s3t[0].s3, self->bucket, self->prefix, "-",
-			  &keys, NULL);
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, self->prefix, "-",
+			  &objects, NULL);
     if (!result) {
 	device_set_error(d_self,
 	    g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
@@ -850,10 +915,11 @@ find_next_file(S3Device *self, int last_file) {
         return -1;
     }
 
-    for (; keys; keys = g_slist_remove(keys, keys->data)) {
+    for (; objects; objects = g_slist_remove(objects, objects->data)) {
         int file;
+	s3_object *object = objects->data;
 
-        file = key_to_file(prefix_len, (char*)keys->data);
+        file = key_to_file(prefix_len, object->prefix);
 
         if (file < 0) {
             /* Set this in case we don't find a next file; this is not a
@@ -877,7 +943,7 @@ delete_file(S3Device *self,
     int thread = -1;
 
     gboolean result;
-    GSList *keys;
+    GSList *objects;
     guint64 total_size = 0;
     Device *d_self = DEVICE(self);
     char *my_prefix;
@@ -888,21 +954,22 @@ delete_file(S3Device *self,
 	my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
     }
 
-    result = s3_list_keys(self->s3t[0].s3, self->bucket, my_prefix, NULL,
-			  &keys, &total_size);
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, my_prefix, NULL,
+			  &objects, &total_size);
+    g_free(my_prefix);
     if (!result) {
 	device_set_error(d_self,
-		g_strdup_printf(_("While listing S3 keys: %s"),
-		    s3_strerror(self->s3t[0].s3)),
-		    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-	return FALSE;
+	    g_strdup_printf(_("While listing S3 keys: %s"),
+		s3_strerror(self->s3t[0].s3)),
+		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+        return FALSE;
     }
 
     g_mutex_lock(self->thread_idle_mutex);
-    if (!self->keys) {
-	self->keys = keys;
+    if (!self->objects) {
+	self->objects = objects;
     } else {
-	self->keys = g_slist_concat(self->keys, keys);
+	self->objects = g_slist_concat(self->objects, objects);
     }
 
     // start the threads
@@ -946,25 +1013,23 @@ s3_thread_delete_block(
     S3Device *self = S3_DEVICE(pself);
     int result = 1;
     char *filename;
+    s3_object *object;
 
     g_mutex_lock(self->thread_idle_mutex);
-    while (result && self->keys) {
+    while (result && self->objects) {
 	if (self->use_s3_multi_delete) {
-	    char **filenames = g_new(char *, 1001);
-	    char **f = filenames;
+	    GSList *lobjects = NULL;
 	    int  n = 0;
-	    while (self->keys && n<1000) {
-		*f++ = self->keys->data;
-		self->keys = g_slist_remove(self->keys, self->keys->data);
+	    while (self->objects && n<1000) {
+		object = self->objects->data;
+		self->objects = g_slist_remove(self->objects, object);
+		lobjects = g_slist_prepend(lobjects, object);
 		n++;
 	    }
-	    *f++ = NULL;
 	    g_mutex_unlock(self->thread_idle_mutex);
 	    result = s3_multi_delete(s3t->s3, (const char *)self->bucket,
-					      (const char **)filenames);
+					      lobjects);
 	    if (result != 1) {
-		char **f;
-
 		if (result == 2) {
 		    g_debug("Deleting multiple keys not implemented");
 		} else { /* result == 0 */
@@ -972,27 +1037,22 @@ s3_thread_delete_block(
 			    s3_strerror(s3t->s3));
 		}
 
+		g_mutex_lock(self->thread_idle_mutex);
 		self->use_s3_multi_delete = 0;
 		/* re-add all filenames */
-		f = filenames;
-		g_mutex_lock(self->thread_idle_mutex);
-		while(*f) {
-		    self->keys = g_slist_prepend(self->keys, *f++);
+		while (lobjects) {
+		    object = lobjects->data;
+		    lobjects = g_slist_remove(lobjects, object);
+		    self->objects = g_slist_prepend(self->objects, object);
 		}
 		g_mutex_unlock(self->thread_idle_mutex);
-		g_free(filenames);
-		result = 1;
-		g_mutex_lock(self->thread_idle_mutex);
-		continue;
+	    } else {
+		g_slist_free_full(lobjects, free_s3_object);
 	    }
-	    f = filenames;
-	    while(*f) {
-		g_free(*f++);
-	    }
-	    g_free(filenames);
 	} else {
-	    filename = self->keys->data;
-	    self->keys = g_slist_remove(self->keys, self->keys->data);
+	    object = self->objects->data;
+	    self->objects = g_slist_remove(self->objects, object);
+	    filename = object->key;
 	    count++;
 	    if (count >= 1000) {
 		g_debug("Deleting %s ...", filename);
@@ -1004,6 +1064,7 @@ s3_thread_delete_block(
 	    if (!result) {
 		s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
 		s3t->errmsg = g_strdup_printf(_("While deleting key '%s': %s"),
+
 					  filename, s3_strerror(s3t->s3));
 	    }
 	    g_free(filename);
@@ -1162,6 +1223,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_reps_bucket,
                                       G_TYPE_STRING, "reps_bucket",
        "Number of replicas for automatically created buckets in CAStor");
+    device_property_fill_and_register(&device_property_s3_multi_part_upload,
+                                      G_TYPE_BOOLEAN, "s3_multi_part_upload",
+       "If multi part upload must be used");
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -1208,6 +1272,7 @@ s3_device_init(S3Device * self)
     self->nb_threads = 1;
     self->nb_threads_backup = 1;
     self->nb_threads_recovery = 1;
+    self->use_s3_multi_part_upload = FALSE;
     self->thread_pool_delete = NULL;
     self->thread_pool_write = NULL;
     self->thread_pool_read = NULL;
@@ -1446,6 +1511,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_nb_threads_recovery);
+
+    device_class_register_property(device_class, PROPERTY_S3_MULTI_PART_UPLOAD,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_s3_multi_part_upload);
 
     device_class_register_property(device_class, PROPERTY_COMPRESSION,
 	    PROPERTY_ACCESS_GET_MASK,
@@ -1975,6 +2045,18 @@ s3_device_set_nb_threads_recovery(Device *p_self,
 }
 
 static gboolean
+s3_device_set_s3_multi_part_upload(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->use_s3_multi_part_upload = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 s3_device_set_max_volume_usage_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -2456,7 +2538,13 @@ make_bucket(
     s3_error_code_t s3_error_code;
     CURLcode curl_code;
 
+    if (self->bucket_made) {
+	return TRUE;
+    }
+
     if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket, self->project_id)) {
+	self->bucket_made = 1;
+	abort_partial_upload(self);
 	return TRUE;
     }
 
@@ -2494,6 +2582,9 @@ make_bucket(
             return FALSE;
         }
     }
+
+    self->bucket_made = 1;
+    abort_partial_upload(self);
     return TRUE;
 }
 
@@ -2546,6 +2637,8 @@ s3_device_read_label(Device *pself) {
         guint response_code;
         s3_error_code_t s3_error_code;
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+	g_free(buf.buffer);
+	g_free(key);
 
         /* if it's an expected error (not found), just return FALSE */
         if (response_code == 404 &&
@@ -2569,10 +2662,12 @@ s3_device_read_label(Device *pself) {
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return pself->status;
     }
+    g_free(key);
 
     /* handle an empty file gracefully */
     if (buf.buffer_len == 0) {
 	device_set_error(pself, g_strdup(_("Empty header file")), DEVICE_STATUS_VOLUME_ERROR);
+	g_free(buf.buffer);
         return pself->status;
     }
 
@@ -2658,7 +2753,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
 		/* s3_device_read_label already set our error message */
 		return FALSE;
 	    } else {
-                result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, NULL, &keys, &total_size);
+                result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, NULL, NULL, &keys, &total_size);
                 if(!result) {
                     device_set_error(pself,
                                  g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),
@@ -2676,6 +2771,24 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
     }
 
     return TRUE;
+}
+
+gint gint_cmp(gconstpointer a, gconstpointer b, gpointer data);
+gint
+gint_cmp(
+    gconstpointer a,
+    gconstpointer b,
+    gpointer data G_GNUC_UNUSED)
+{
+    gint ai = GPOINTER_TO_INT(a);
+    gint bi = GPOINTER_TO_INT(b);
+
+    if (ai < bi)
+	return -1;
+    else if (ai > bi)
+	return 1;
+    else
+	return 0;
 }
 
 static gboolean
@@ -2817,6 +2930,13 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
 
     self->volume_bytes += header_size;
 
+    if (self->use_s3_multi_part_upload) {
+	self->filename = file_to_multi_part_key(self, pself->file);
+	self->uploadId = g_strdup(s3_initiate_multi_part_upload(self->s3t[0].s3,
+						self->bucket, self->filename));
+	self->part_etag = g_tree_new_full(gint_cmp, NULL, NULL, g_free);
+    }
+
     return TRUE;
 }
 
@@ -2843,7 +2963,11 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
         return FALSE;
     }
 
-    filename = file_and_block_to_key(self, pself->file, pself->block);
+    if (self->use_s3_multi_part_upload && self->uploadId) {
+	filename = g_strdup(self->filename);
+    } else {
+	filename = file_and_block_to_key(self, pself->file, pself->block);
+    }
 
     g_mutex_lock(self->thread_idle_mutex);
     while (!idle_thread) {
@@ -2891,8 +3015,10 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     self->s3t[thread].curl_buffer.buffer_len = size;
     self->s3t[thread].curl_buffer.max_buffer_size = 0;
     self->s3t[thread].filename = filename;
-    g_thread_pool_push(self->thread_pool_write, &self->s3t[thread], NULL);
+    self->s3t[thread].uploadId = g_strdup(self->uploadId);
+    self->s3t[thread].partNumber = pself->block + 1;
     g_mutex_unlock(self->thread_idle_mutex);
+    g_thread_pool_push(self->thread_pool_write, &self->s3t[thread], NULL);
 
     pself->block++;
     self->volume_bytes += size;
@@ -2908,17 +3034,33 @@ s3_thread_write_block(
     Device *pself = (Device *)data;
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
+    char *etag = NULL;
 
-    result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
-		       S3_BUFFER_READ_FUNCS, (CurlBuffer *)&s3t->curl_buffer,
-		       progress_func, s3t);
+    if (s3t->uploadId) {
+	result = s3_part_upload(s3t->s3, self->bucket, (char *)s3t->filename,
+				(char *)s3t->uploadId, s3t->partNumber, &etag,
+				S3_BUFFER_READ_FUNCS,
+				(CurlBuffer *)&s3t->curl_buffer,
+				progress_func, s3t);
+    } else {
+	result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
+			   S3_BUFFER_READ_FUNCS,
+			   (CurlBuffer *)&s3t->curl_buffer,
+			   progress_func, s3t);
+    }
     g_free((void *)s3t->filename);
+    g_free((void *)s3t->uploadId);
     s3t->filename = NULL;
     if (!result) {
 	s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
 	s3t->errmsg = g_strdup_printf(_("While writing data block to S3: %s"), s3_strerror(s3t->s3));
     }
     g_mutex_lock(self->thread_idle_mutex);
+    if (result && self->uploadId && etag) {
+	g_tree_insert(self->part_etag, GINT_TO_POINTER(s3t->partNumber), etag);
+    } else {
+	g_free(etag);
+    }
     s3t->idle = 1;
     s3t->done = 1;
     if (result)
@@ -2927,7 +3069,25 @@ s3_thread_write_block(
     s3t->ulnow = 0;
     g_cond_broadcast(self->thread_idle_cond);
     g_mutex_unlock(self->thread_idle_mutex);
+
 }
+
+gboolean add_part_etag(gpointer key, gpointer value, gpointer data);
+gboolean
+add_part_etag(
+    gpointer key,
+    gpointer value,
+    gpointer data)
+{
+    int partnum = GPOINTER_TO_INT(key);
+    char *etag = (char *)value;
+    GString *buf = (GString *)data;
+    g_string_append_printf(buf,
+               "  <Part>\n    <PartNumber>%d</PartNumber>\n    <ETag>%s</ETag>\n  </Part>\n",
+               partnum, etag);
+    return FALSE;
+ }
+
 
 static gboolean
 s3_device_finish_file (Device * pself) {
@@ -2958,6 +3118,26 @@ s3_device_finish_file (Device * pself) {
     }
     self->ultotal = 0;
     g_mutex_unlock(self->thread_idle_mutex);
+
+    if (self->use_s3_multi_part_upload && self->uploadId) {
+	CurlBuffer data;
+	GString *buf = g_string_new("<CompleteMultipartUpload>\n");
+	g_tree_foreach(self->part_etag, add_part_etag, buf);
+	g_string_append_printf(buf, "</CompleteMultipartUpload>\n");
+	data.buffer = buf->str;
+	data.buffer_len = strlen(buf->str);
+	data.buffer_pos = 0;
+	data.max_buffer_size = data.buffer_len;
+	s3_complete_multi_part_upload(self->s3t[0].s3,
+				self->bucket, self->filename, self->uploadId,
+				S3_BUFFER_READ_FUNCS, &data);
+
+	g_tree_destroy(self->part_etag);
+	self->part_etag = NULL;
+	g_free(self->filename);
+    }
+
+    amfree(self->uploadId);
 
     if (device_in_error(pself)) return FALSE;
 
@@ -3048,20 +3228,23 @@ s3_device_seek_file(Device *pself, guint file) {
     dumpfile_t *amanda_header;
     const char *errmsg = NULL;
     int thread;
+    GSList *objects;
 
     if (device_in_error(self)) return NULL;
 
     reset_thread(self);
 
+    g_mutex_lock(pself->device_mutex);
     pself->file = file;
     pself->is_eof = FALSE;
     pself->block = 0;
-    g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
     pself->bytes_read = 0;
     g_mutex_unlock(pself->device_mutex);
-    self->next_block_to_read = 0;
     g_mutex_lock(self->thread_idle_mutex);
+    self->last_byte_read = -1;
+    self->next_block_to_read = 0;
+    self->next_byte_to_read = 0;
     self->dltotal = 0;
     g_mutex_unlock(self->thread_idle_mutex);
 
@@ -3132,6 +3315,22 @@ s3_device_seek_file(Device *pself, guint file) {
             return NULL;
     }
 
+    g_free(self->filename);
+    self->filename = file_to_multi_part_key(self, pself->file);
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, self->filename,
+			  NULL, &objects, NULL);
+
+    if (objects) { /* multi-part */
+	s3_object *part = (s3_object *)objects->data;
+	self->object_size = part->size;
+	g_slist_free_full(objects, free_s3_object);
+    } else {
+	g_free(self->filename);
+	self->filename = NULL;
+	self->object_size = 0;
+    }
+
+    pself->in_file = TRUE;
     for (thread = 0; thread < self->nb_threads; thread++)  {
 	self->s3t[thread].idle = 1;
 	self->s3t[thread].eof = FALSE;
@@ -3150,8 +3349,70 @@ s3_device_seek_block(Device *pself, guint64 block) {
 
     reset_thread(self);
     pself->block = block;
+    self->last_byte_read = (block * pself->block_size) - 1;
     self->next_block_to_read = block;
+    self->next_byte_to_read = block * pself->block_size;
     return TRUE;
+}
+
+static void
+s3_start_read_ahead(
+    Device * pself,
+    int size_req)
+{
+    S3Device * self = S3_DEVICE(pself);
+    char *key;
+    int thread;
+    guint64 range_min = 0;
+    guint64 range_max = 0;
+
+    /* start a read ahead for each thread */
+    for (thread = 0; thread < self->nb_threads_recovery; thread++) {
+	S3_by_thread *s3t = &self->s3t[thread];
+	if (s3t->idle) {
+	    if (self->filename) {
+		range_min = self->next_byte_to_read;
+		if (range_min >= self->object_size) {
+		    break;
+		}
+		range_max = range_min + size_req - 1;
+		if (range_max >= self->object_size) {
+		    range_max = self->object_size;
+		}
+		key = g_strdup(self->filename);
+	    } else {
+		key = file_and_block_to_key(self, pself->file,
+		self->next_block_to_read);
+	    }
+
+	    s3t->filename = key;
+	    s3t->range_min = range_min;
+	    s3t->range_max = range_max;
+	    s3t->done = 0;
+	    s3t->idle = 0;
+	    s3t->eof = FALSE;
+	    s3t->dlnow = 0;
+	    s3t->ulnow = 0;
+	    s3t->errflags = DEVICE_STATUS_SUCCESS;
+	    if (self->s3t[thread].curl_buffer.buffer &&
+		(int)self->s3t[thread].curl_buffer.buffer_len < size_req) {
+		g_free(self->s3t[thread].curl_buffer.buffer);
+		self->s3t[thread].curl_buffer.buffer = NULL;
+		self->s3t[thread].curl_buffer.buffer_len = 0;
+		self->s3t[thread].buffer_len = 0;
+	    }
+	    if (!self->s3t[thread].curl_buffer.buffer) {
+		self->s3t[thread].curl_buffer.buffer = g_malloc(size_req);
+		self->s3t[thread].curl_buffer.buffer_len = size_req;
+		self->s3t[thread].buffer_len = size_req;
+	    }
+	    s3t->curl_buffer.buffer_pos = 0;
+	    s3t->curl_buffer.max_buffer_size = S3_DEVICE_MAX_BLOCK_SIZE;
+	    self->next_block_to_read++;
+	    self->next_byte_to_read += size_req;
+	    g_thread_pool_push(self->thread_pool_read, s3t, NULL);
+	}
+    }
 }
 
 static int
@@ -3160,118 +3421,93 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     char *key;
     int thread;
     int done = 0;
+    int found = 0;
+    guint64 range_min = 0;
+    S3_by_thread *s3t = NULL;
 
     g_assert (self != NULL);
     if (device_in_error(self)) return -1;
 
     g_mutex_lock(self->thread_idle_mutex);
+
     /* start a read ahead for each thread */
+    s3_start_read_ahead(pself, *size_req);
+
+    /* get the file*/
+    if (self->filename) {
+	key = g_strdup(self->filename);
+	range_min = self->last_byte_read + 1;
+    } else {
+	key = file_and_block_to_key(self, pself->file, pself->block);
+    }
+    g_assert(key != NULL);
+
+    found = 0;
+    /* find which thread read the key */
     for (thread = 0; thread < self->nb_threads_recovery; thread++) {
-	S3_by_thread *s3t = &self->s3t[thread];
-	if (s3t->idle) {
-	    key = file_and_block_to_key(self, pself->file, self->next_block_to_read);
-	    s3t->filename = key;
-	    s3t->done = 0;
-	    s3t->idle = 0;
-	    s3t->eof = FALSE;
-	    s3t->dlnow = 0;
-	    s3t->ulnow = 0;
-	    s3t->errflags = DEVICE_STATUS_SUCCESS;
-	    if (self->s3t[thread].curl_buffer.buffer &&
-		(int)self->s3t[thread].curl_buffer.buffer_len < *size_req) {
-		g_free(self->s3t[thread].curl_buffer.buffer);
-		self->s3t[thread].curl_buffer.buffer = NULL;
-		self->s3t[thread].curl_buffer.buffer_len = 0;
-		self->s3t[thread].buffer_len = 0;
-	    }
-	    if (!self->s3t[thread].curl_buffer.buffer) {
-		self->s3t[thread].curl_buffer.buffer = g_malloc(*size_req);
-		self->s3t[thread].curl_buffer.buffer_len = *size_req;
-		self->s3t[thread].buffer_len = *size_req;
-	    }
-	    s3t->curl_buffer.buffer_pos = 0;
-	    s3t->curl_buffer.max_buffer_size = S3_DEVICE_MAX_BLOCK_SIZE;
-	    self->next_block_to_read++;
-	    g_thread_pool_push(self->thread_pool_read, s3t, NULL);
+	s3t = &self->s3t[thread];
+	if (!s3t->idle &&
+	    g_str_equal(key, (char *)s3t->filename) &&
+	    range_min == s3t->range_min) {
+	    found = 1;
+	    break;
 	}
     }
 
-    /* get the file*/
-    key = file_and_block_to_key(self, pself->file, pself->block);
-    g_assert(key != NULL);
-    while (!done) {
-	/* find which thread read the key */
-	for (thread = 0; thread < self->nb_threads_recovery; thread++) {
-	    S3_by_thread *s3t;
-	    s3t = &self->s3t[thread];
-	    if (!s3t->idle &&
-		s3t->done &&
-		g_str_equal(key, (char *)s3t->filename)) {
-		if (s3t->eof) {
-		    /* return eof */
-		    g_free(key);
-		    pself->is_eof = TRUE;
-		    g_mutex_lock(pself->device_mutex);
-		    pself->in_file = FALSE;
-		    g_mutex_unlock(pself->device_mutex);
-		    device_set_error(pself, g_strdup(_("EOF")),
-				     DEVICE_STATUS_SUCCESS);
-		    g_mutex_unlock(self->thread_idle_mutex);
-		    return -1;
-		} else if (s3t->errflags != DEVICE_STATUS_SUCCESS) {
-		    /* return the error */
-		    device_set_error(pself, (char *)s3t->errmsg, s3t->errflags);
-		    g_free(key);
-		    g_mutex_unlock(self->thread_idle_mutex);
-		    return -1;
+   if (!found) {
+	/* return eof */
+	g_free(key);
+	pself->is_eof = TRUE;
+	pself->in_file = FALSE;
+	device_set_error(pself, g_strdup(_("EOF")), DEVICE_STATUS_SUCCESS);
+	g_mutex_unlock(self->thread_idle_mutex);
+	return -1;
+   }
 
-		} else if ((guint)*size_req >= s3t->curl_buffer.buffer_pos) {
-		    /* return the buffer */
-		    g_mutex_unlock(self->thread_idle_mutex);
-		    memcpy(data, s3t->curl_buffer.buffer,
-				 s3t->curl_buffer.buffer_pos);
-		    *size_req = s3t->curl_buffer.buffer_pos;
-		    g_free(key);
-		    s3t->idle = 1;
-		    g_free((char *)s3t->filename);
-		    pself->block++;
-		    done = 1;
-		    g_mutex_lock(self->thread_idle_mutex);
-		    break;
-		} else { /* buffer not enough large */
-		    *size_req = s3t->curl_buffer.buffer_len;
-		    g_free(key);
-		    g_mutex_unlock(self->thread_idle_mutex);
-		    return 0;
-		}
-	    }
+    while (!done) {
+	if (!s3t->done) {
+	} else if (s3t->eof) {
+	    /* return eof */
+	    g_free(key);
+	    pself->is_eof = TRUE;
+	    pself->in_file = FALSE;
+	    device_set_error(pself, g_strdup(_("EOF")), DEVICE_STATUS_SUCCESS);
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return -1;
+	} else if (s3t->errflags != DEVICE_STATUS_SUCCESS) {
+	    /* return the error */
+	    device_set_error(pself, (char *)s3t->errmsg, s3t->errflags);
+	    g_free(key);
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return -1;
+       } else if ((guint)*size_req >= s3t->curl_buffer.buffer_pos) {
+	    /* return the buffer */
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    memcpy(data, s3t->curl_buffer.buffer, s3t->curl_buffer.buffer_pos);
+	    *size_req = s3t->curl_buffer.buffer_pos;
+	    g_free(key);
+	    s3t->idle = 1;
+	    g_free((char *)s3t->filename);
+	    pself->block++;
+	    self->last_byte_read += *size_req;
+	    done = 1;
+	    g_mutex_lock(self->thread_idle_mutex);
+	    break;
+	} else { /* buffer not enough large */
+	    *size_req = s3t->curl_buffer.buffer_len;
+	    g_free(key);
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return 0;
 	}
+
 	if (!done) {
 	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
 	}
     }
 
-    /* start a read ahead for the thread */
-    for (thread = 0; thread < self->nb_threads_recovery; thread++) {
-	S3_by_thread *s3t = &self->s3t[thread];
-	if (s3t->idle) {
-	    key = file_and_block_to_key(self, pself->file, self->next_block_to_read);
-	    s3t->filename = key;
-	    s3t->done = 0;
-	    s3t->idle = 0;
-	    s3t->eof = FALSE;
-	    s3t->dlnow = 0;
-	    s3t->ulnow = 0;
-	    s3t->errflags = DEVICE_STATUS_SUCCESS;
-	    if (!self->s3t[thread].curl_buffer.buffer) {
-		self->s3t[thread].curl_buffer.buffer = g_malloc(*size_req);
-		self->s3t[thread].curl_buffer.buffer_len = *size_req;
-	    }
-	    s3t->curl_buffer.buffer_pos = 0;
-	    self->next_block_to_read++;
-	    g_thread_pool_push(self->thread_pool_read, s3t, NULL);
-	}
-    }
+    /* start a read ahead for each thread */
+    s3_start_read_ahead(pself, *size_req);
+
     g_mutex_unlock(self->thread_idle_mutex);
 
     return *size_req;
@@ -3288,9 +3524,18 @@ s3_thread_read_block(
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
 
-    result = s3_read(s3t->s3, self->bucket, (char *)s3t->filename,
-	S3_BUFFER_WRITE_FUNCS,
-	(CurlBuffer *)&s3t->curl_buffer, progress_func, s3t);
+    if (s3t->range_max > 0) {
+	result = s3_read_range(s3t->s3, self->bucket, (char *)s3t->filename,
+			       s3t->range_min, s3t->range_max,
+			       s3_buffer_write_func, s3_buffer_reset_func,
+			       (CurlBuffer *)&s3t->curl_buffer,
+			       progress_func, s3t);
+    } else {
+	result = s3_read(s3t->s3, self->bucket, (char *)s3t->filename,
+			 s3_buffer_write_func, s3_buffer_reset_func,
+			 (CurlBuffer *)&s3t->curl_buffer,
+			 progress_func, s3t);
+    }
 
     g_mutex_lock(self->thread_idle_mutex);
     if (!result) {
@@ -3298,11 +3543,13 @@ s3_thread_read_block(
 	s3_error_code_t s3_error_code;
 	s3_error(s3t->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 	/* if it's an expected error (not found), just return -1 */
-	if (response_code == 404 &&
-            (s3_error_code == S3_ERROR_None ||
-	     s3_error_code == S3_ERROR_Unknown ||
-	     s3_error_code == S3_ERROR_NoSuchKey ||
-	     s3_error_code == S3_ERROR_NoSuchEntity)) {
+	if ((response_code == 404 &&
+             (s3_error_code == S3_ERROR_None ||
+	      s3_error_code == S3_ERROR_Unknown ||
+	      s3_error_code == S3_ERROR_NoSuchKey ||
+	      s3_error_code == S3_ERROR_NoSuchEntity)) ||
+	    (response_code == 416 &&
+	     s3_error_code == S3_ERROR_InvalidRange)) {
 	    s3t->eof = TRUE;
 	} else {
 
@@ -3311,8 +3558,9 @@ s3_thread_read_block(
 	    s3t->errmsg = g_strdup_printf(_("While reading data block from S3: %s"),
 					  s3_strerror(s3t->s3));
 	}
+	s3t->eof = TRUE;
     } else {
-	self->dltotal += s3t->curl_buffer.buffer_len;
+	self->dltotal += s3t->curl_buffer.buffer_pos;
     }
     s3t->dlnow = 0;
     s3t->ulnow = 0;

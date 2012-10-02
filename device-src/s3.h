@@ -388,7 +388,7 @@ s3_strerror(S3Handle *hdl);
 gboolean
 s3_upload(S3Handle *hdl,
           const char *bucket,
-          const char *key, 
+          const char *key,
           s3_read_func read_func,
           s3_reset_func reset_func,
           s3_size_func size_func,
@@ -396,6 +396,92 @@ s3_upload(S3Handle *hdl,
           gpointer read_data,
           s3_progress_func progress_func,
           gpointer progress_data);
+
+/* Perform a part upload.
+ *
+ * When this function returns, KEY and BUFFER remain the
+ * responsibility of the caller.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to which the upload should be made
+ * @param key: the key to which the upload should be made
+ * @param uploadId: the UploadId
+ * @param partNumber: the part number
+ * @param etag: return the resulting etag.
+ * @param read_func: the callback for reading data
+ * @param reset_func: the callback for to reset reading data
+ * @param size_func: the callback to get the number of bytes to upload
+ * @param md5_func: the callback to get the MD5 hash of the data to upload
+ * @param read_data: pointer to pass to the above functions
+ * @param progress_func: the callback for progress information
+ * @param progress_data: pointer to pass to C{progress_func}
+ *
+ * @returns: false if an error ocurred
+ */
+gboolean
+s3_part_upload(S3Handle *hdl,
+          const char *bucket,
+          const char *key,
+	  const char *uploadID,
+	  int         partNumber,
+	  char      **etag,
+          s3_read_func read_func,
+          s3_reset_func reset_func,
+          s3_size_func size_func,
+          s3_md5_func md5_func,
+          gpointer read_data,
+          s3_progress_func progress_func,
+          gpointer progress_data);
+
+/* Initiate a multi part upload.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to which the upload should be made
+ * @param key: the key to which the upload should be made
+ *
+ * @returns: string, the uploadId or NULL on failure
+ */
+char *
+s3_initiate_multi_part_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key);
+
+/* Complete a multi part upload.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to which the upload should be made
+ * @param key: the key to which the upload should be made
+ * @param read_func: the callback for reading data
+ *
+ * @returns: false if an error ocurred
+ */
+gboolean
+s3_complete_multi_part_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
+    const char *uploadId,
+    s3_read_func read_func,
+    s3_reset_func reset_func,
+    s3_size_func size_func,
+    s3_md5_func md5_func,
+    gpointer read_data);
+
+gboolean
+s3_abort_multi_part_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
+    const char *uploadId);
+
+typedef struct {
+    char    *key;
+    char    *uploadId;
+    char    *prefix;
+    guint64  size;
+} s3_object;
+void free_s3_object(gpointer part);
 
 /* List all of the files matching the pseudo-glob C{PREFIX*DELIMITER*},
  * returning only that portion which matches C{PREFIX*DELIMITER}.  S3 supports
@@ -407,12 +493,13 @@ s3_upload(S3Handle *hdl,
  * @param prefix: the prefix
  * @param delimiter: delimiter (any length string)
  * @param list: (output) the list of files
- * @param total_size: (output) sum of size of files 
+ * @param total_size: (output) sum of size of files
  * @returns: FALSE if an error occurs
  */
 gboolean
 s3_list_keys(S3Handle *hdl,
               const char *bucket,
+              const char *subresource,
               const char *prefix,
               const char *delimiter,
               GSList **list,
@@ -435,6 +522,33 @@ gboolean
 s3_read(S3Handle *hdl,
         const char *bucket,
         const char *key,
+        s3_write_func write_func,
+        s3_reset_func reset_func,
+        gpointer write_data,
+        s3_progress_func progress_func,
+        gpointer progress_data);
+
+/* Read a range of bytes from a file, passing the contents to write_func buffer
+ * by buffer.
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to read from
+ * @param key: the key to read from
+ * @param range_begin:
+ * @param range_ned:
+ * @param write_func: the callback for writing data
+ * @param reset_func: the callback for to reset writing data
+ * @param write_data: pointer to pass to C{write_func}
+ * @param progress_func: the callback for progress information
+ * @param progress_data: pointer to pass to C{progress_func}
+ * @returns: FALSE if an error occurs
+ */
+gboolean
+s3_read_range(S3Handle *hdl,
+        const char *bucket,
+        const char *key,
+	const guint64 range_begin,
+	const guint64 range_end,
         s3_write_func write_func,
         s3_reset_func reset_func,
         gpointer write_data,
@@ -464,7 +578,7 @@ s3_delete(S3Handle *hdl,
 int
 s3_multi_delete(S3Handle *hdl,
                 const char *bucket,
-                const char **key);
+                GSList *objects);
 
 /* Create a bucket.
  *

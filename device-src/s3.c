@@ -181,12 +181,15 @@ struct S3Handle {
     guint last_num_retries;
     void *last_response_body;
     guint last_response_body_size;
+    char *uploadId;
+    char *etag;
 
     /* offset with s3 */
     time_t time_offset_with_s3;
     char *content_type;
 
     gboolean reuse_connection;
+    char *transfer_encoding;
 
     /* CAStor */
     char *reps;
@@ -303,7 +306,8 @@ lookup_result(const result_handling_t *result_handling,
 static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
     x_storage_url_regex, access_token_regex, expires_in_regex,
-    content_type_regex, details_regex, code_regex;
+    content_type_regex, details_regex, code_regex, uploadId_regex,
+    transfer_encoding_regex;
 
 
 /*
@@ -433,6 +437,7 @@ perform_request(S3Handle *hdl,
                 const char *query,
                 const char *content_type,
                 const char *project_id,
+		struct curl_slist *user_headers,
                 s3_read_func read_func,
                 s3_reset_func read_reset_func,
                 s3_size_func size_func,
@@ -922,7 +927,8 @@ authenticate_request(S3Handle *hdl,
 	    g_string_append(auth_string, "\n");
 	}
 
-	if (is_non_empty_string(hdl->storage_class)) {
+	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	    is_non_empty_string(hdl->storage_class)) {
 	    g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
 	    g_string_append(auth_string, ":");
 	    g_string_append(auth_string, hdl->storage_class);
@@ -989,15 +995,21 @@ authenticate_request(S3Handle *hdl,
 	    g_free(buf);
 	}
 
-	if (is_non_empty_string(hdl->storage_class)) {
+	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	    is_non_empty_string(hdl->storage_class)) {
 	    buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s",
 				  hdl->storage_class);
 	    headers = curl_slist_append(headers, buf);
 	    g_free(buf);
 	}
 
+	/* Remove Content-Type header */
+	buf = g_strdup("Content-Type:");
+	headers = curl_slist_append(headers, buf);
+	g_free(buf);
+
 	buf = g_strdup_printf("Authorization: AWS %s:%s",
-                          hdl->access_key, auth_base64);
+                              hdl->access_key, auth_base64);
 	headers = curl_slist_append(headers, buf);
 	g_free(buf);
     }
@@ -1063,6 +1075,7 @@ struct failure_thunk {
     gboolean in_serviceCatalog;
     gboolean in_service;
     gboolean in_endpoint;
+    gboolean in_uploadId;
     gint     in_others;
 
     gchar *text;
@@ -1075,6 +1088,7 @@ struct failure_thunk {
     gchar *service_type;
     gchar *service_public_url;
     gint64 expires;
+    gchar *uploadId;
 };
 
 static void
@@ -1158,6 +1172,10 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 		thunk->message = g_strdup(*att_value);
 	    }
 	}
+    } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0) {
+        thunk->in_uploadId = 1;
+	thunk->in_others = 0;
+        thunk->want_text = 1;
     } else {
 	thunk->in_others++;
     }
@@ -1183,46 +1201,62 @@ failure_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->text = NULL;
         thunk->in_title = 0;
     } else if (g_ascii_strcasecmp(element_name, "body") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	g_strstrip(thunk->message);
 	thunk->text = NULL;
         thunk->in_body = 0;
     } else if (g_ascii_strcasecmp(element_name, "code") == 0) {
+	g_free(thunk->error_name);
 	thunk->error_name = thunk->text;
 	thunk->text = NULL;
         thunk->in_code = 0;
     } else if (g_ascii_strcasecmp(element_name, "message") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_message = 0;
     } else if (g_ascii_strcasecmp(element_name, "details") == 0) {
+	g_free(thunk->details);
 	thunk->details = thunk->text;
 	thunk->text = NULL;
         thunk->in_details = 0;
     } else if (g_ascii_strcasecmp(element_name, "access") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_access = 0;
     } else if (g_ascii_strcasecmp(element_name, "token") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_token = 0;
     } else if (g_ascii_strcasecmp(element_name, "serviceCatalog") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_serviceCatalog = 0;
     } else if (g_ascii_strcasecmp(element_name, "service") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	thunk->text = NULL;
 	g_free(thunk->service_type);
 	thunk->service_type = NULL;
         thunk->in_service = 0;
     } else if (g_ascii_strcasecmp(element_name, "endpoint") == 0) {
+	g_free(thunk->message);
 	thunk->message = thunk->text;
 	thunk->text = NULL;
         thunk->in_endpoint = 0;
+    } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0) {
+	g_free(thunk->uploadId);
+	thunk->uploadId = thunk->text;
+	thunk->text = NULL;
+        thunk->in_uploadId = 0;
     } else {
 	thunk->in_others--;
+	g_free(thunk->text);
+	thunk->text = NULL;
     }
 }
 
@@ -1314,6 +1348,14 @@ interpret_response(S3Handle *hdl,
 	amfree(body_copy);
     }
 
+    if ((hdl->content_type &&
+	 !g_str_equal(hdl->content_type, "application/xml")) ||
+	(!hdl->content_type &&
+	 !g_str_equal(hdl->transfer_encoding, "chunked") &&
+	 !g_strstr_len(body, body_len, "xml version"))) {
+	return FALSE;
+    }
+
     thunk.in_title = FALSE;
     thunk.in_body = FALSE;
     thunk.in_code = FALSE;
@@ -1324,6 +1366,7 @@ interpret_response(S3Handle *hdl,
     thunk.in_serviceCatalog = FALSE;
     thunk.in_service = FALSE;
     thunk.in_endpoint = FALSE;
+    thunk.in_uploadId = FALSE;
     thunk.in_others = 0;
     thunk.text = NULL;
     thunk.want_text = FALSE;
@@ -1335,6 +1378,7 @@ interpret_response(S3Handle *hdl,
     thunk.service_type = NULL;
     thunk.service_public_url = NULL;
     thunk.expires = 0;
+    thunk.uploadId = NULL;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
          hdl->s3_api == S3_API_SWIFT_2) &&
@@ -1399,9 +1443,6 @@ interpret_response(S3Handle *hdl,
 	/* The error mesage is the body */
         hdl->last_message = g_strndup(body, body_len);
         return FALSE;
-    } else if (!hdl->content_type ||
-	       !g_str_equal(hdl->content_type, "application/xml")) {
-	return FALSE;
     }
 
     /* run the parser over it */
@@ -1453,15 +1494,26 @@ parsing_done:
             hdl->last_message = thunk.message;
             thunk.message = NULL; /* steal the reference to the string */
 	}
+    } else if (thunk.details) {
+	hdl->last_message = thunk.details;
+	thunk.details = NULL; /* steal the reference to the string */
+    }
+
+    if (thunk.uploadId) {
+	g_free(hdl->uploadId);
+        hdl->uploadId = thunk.uploadId;
+        thunk.uploadId = NULL; /* steal the reference to the string */
     }
 
 cleanup:
     g_free(thunk.text);
     g_free(thunk.message);
+    g_free(thunk.details);
     g_free(thunk.error_name);
     g_free(thunk.token_id);
-    g_free(thunk.service_public_url);
     g_free(thunk.service_type);
+    g_free(thunk.service_public_url);
+    g_free(thunk.uploadId);
     return FALSE;
 }
 
@@ -1722,6 +1774,7 @@ perform_request(S3Handle *hdl,
                 const char *query,
                 const char *content_type,
                 const char *project_id,
+		struct curl_slist *user_headers,
                 s3_read_func read_func,
                 s3_reset_func read_reset_func,
                 s3_size_func size_func,
@@ -1818,6 +1871,8 @@ perform_request(S3Handle *hdl,
     }
 
     while (1) {
+	struct curl_slist *header;
+
         /* reset things */
         if (headers) {
             curl_slist_free_all(headers);
@@ -1833,7 +1888,12 @@ perform_request(S3Handle *hdl,
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
             md5_hash_b64, content_type, request_body_size, project_id);
 
-        if (hdl->ca_info) {
+	/* add user header to headers */
+	for (header = user_headers; header != NULL; header = header->next) {
+	    headers = curl_slist_append(headers, header->data);
+	}
+
+        if (hdl->use_ssl && hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
                 goto curl_error;
         }
@@ -1884,6 +1944,7 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
             goto curl_error;
 #endif
+
 /* CURLOPT_POSTFIELDSIZE_LARGE added in 7.11.1 */
 #if LIBCURL_VERSION_NUM >= 0x070b01
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)request_body_size)))
@@ -2000,6 +2061,8 @@ cleanup:
     g_free(md5_hash_hex);
 
     /* we don't deallocate the response body -- we keep it for later */
+    g_free(hdl->etag);
+    hdl->etag = int_writedata.etag;
     hdl->last_response_body = int_writedata.resp_buf.buffer;
     hdl->last_response_body_size = int_writedata.resp_buf.buffer_pos;
     hdl->last_num_retries = retries;
@@ -2042,7 +2105,7 @@ s3_internal_reset_func(void * stream)
     s3_buffer_reset_func(&data->resp_buf);
     data->headers_done = FALSE;
     data->int_write_done = FALSE;
-    data->etag = NULL;
+    amfree(data->etag);
     if (data->reset_func) {
         data->reset_func(data->write_data);
     }
@@ -2063,16 +2126,29 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	header[strlen(header)-1] = '\0';
     if (header[strlen(header)-1] == '\r')
 	header[strlen(header)-1] = '\0';
-    if (!s3_regexec_wrap(&etag_regex, header, 2, pmatch, 0))
+    if (!s3_regexec_wrap(&etag_regex, header, 2, pmatch, 0)) {
+	g_free(data->etag);
         data->etag = find_regex_substring(header, pmatch[1]);
-    if (!s3_regexec_wrap(&x_auth_token_regex, header, 2, pmatch, 0))
-       data->hdl->x_auth_token = find_regex_substring(header, pmatch[1]);
+    }
+    if (!s3_regexec_wrap(&x_auth_token_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->x_auth_token);
+	data->hdl->x_auth_token = find_regex_substring(header, pmatch[1]);
+    }
 
-    if (!s3_regexec_wrap(&x_storage_url_regex, header, 2, pmatch, 0))
-       data->hdl->x_storage_url = find_regex_substring(header, pmatch[1]);
+    if (!s3_regexec_wrap(&x_storage_url_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->x_storage_url);
+	data->hdl->x_storage_url = find_regex_substring(header, pmatch[1]);
+    }
 
-    if (!s3_regexec_wrap(&content_type_regex, header, 2, pmatch, 0))
-       data->hdl->content_type = find_regex_substring(header, pmatch[1]);
+    if (!s3_regexec_wrap(&content_type_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->content_type);
+	data->hdl->content_type = find_regex_substring(header, pmatch[1]);
+    }
+
+    if (!s3_regexec_wrap(&transfer_encoding_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->transfer_encoding);
+	data->hdl->transfer_encoding = find_regex_substring(header, pmatch[1]);
+    }
 
     if (strlen(header) == 0)
 	data->headers_done = TRUE;
@@ -2118,6 +2194,7 @@ compile_regexes(void)
         {"^X-Auth-Token:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_auth_token_regex},
         {"^X-Storage-Url:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_storage_url_regex},
         {"^Content-Type:[[:space:]]*([^ ;]+).*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &content_type_regex},
+        {"^Transfer-Encoding:[[:space:]]*([^ ;]+).*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &transfer_encoding_regex},
         {"<Message>[[:space:]]*([^<]*)[[:space:]]*</Message>", REG_EXTENDED | REG_ICASE, &message_regex},
         {"^[a-z0-9](-*[a-z0-9]){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
@@ -2126,6 +2203,7 @@ compile_regexes(void)
 	{"\"expires_in\" : (.*)", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
         {"\"details\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &details_regex},
         {"\"code\": (.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &code_regex},
+	{"<UploadId>[[:space:]]*([^<]*)[[:space:]]*</UploadId>", REG_EXTENDED | REG_ICASE, &uploadId_regex},
         {NULL, 0, NULL}
     };
     char regmessage[1024];
@@ -2158,6 +2236,9 @@ compile_regexes(void)
         {"^Content-Type:\\s*([^ ]+)\\s*$",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &content_type_regex},
+        {"^Transfer-Encoding:\\s*([^ ]+)\\s*$",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &transfer_encoding_regex},
         {"<Message>\\s*([^<]*)\\s*</Message>",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &message_regex},
@@ -2182,6 +2263,9 @@ compile_regexes(void)
         {"\"code\" : (.*)",
 	 G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
 	 &code_regex},
+        {"(/>)|(>([^<]*)</UploadId>)",
+         G_REGEX_CASELESS,
+         &uploadId_regex},
         {NULL, 0, NULL}
   };
   int i;
@@ -2254,6 +2338,7 @@ get_openstack_swift_api_v1_setting(
 
     s3_verbose(hdl, 1);
     result = perform_request(hdl, "GET", NULL, NULL, NULL, NULL, NULL, NULL,
+			     NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
 
@@ -2300,7 +2385,7 @@ get_openstack_swift_api_v2_setting(
     g_free(hdl->x_storage_url);
     hdl->x_storage_url = NULL;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
-			     "application/xml", NULL,
+			     "application/xml", NULL, NULL,
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling);
@@ -2490,6 +2575,8 @@ s3_free(S3Handle *hdl)
         g_free(hdl->client_secret);
         g_free(hdl->refresh_token);
         g_free(hdl->access_token);
+        g_free(hdl->etag);
+        g_free(hdl->transfer_encoding);
         if (hdl->user_token) g_free(hdl->user_token);
         if (hdl->bucket_location) g_free(hdl->bucket_location);
         if (hdl->storage_class) g_free(hdl->storage_class);
@@ -2668,7 +2755,8 @@ s3_upload(S3Handle *hdl,
 	content_type = "application/x-amanda-backup-data";
     }
 
-    result = perform_request(hdl, verb, bucket, key, NULL, NULL, content_type, NULL,
+    result = perform_request(hdl, verb, bucket, key, NULL,
+		 NULL, content_type, NULL, NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
                  result_handling);
@@ -2677,10 +2765,169 @@ s3_upload(S3Handle *hdl,
 }
 
 
+/* Perform an upload. When this function returns, KEY and
+ * BUFFER remain the responsibility of the caller.
+ *
+ * @param self: the s3 device
+ * @param bucket: the bucket to which the upload should be made
+ * @param key: the key to which the upload should be made
+ * @param buffer: the data to be uploaded
+ * @param buffer_len: the length of the data to upload
+ * @returns: false if an error ocurred
+ */
+gboolean
+s3_part_upload(S3Handle *hdl,
+          const char *bucket,
+          const char *key,
+	  const char *uploadId,
+	  int         partNumber,
+	  char       **etag,
+          s3_read_func read_func,
+          s3_reset_func reset_func,
+          s3_size_func size_func,
+          s3_md5_func md5_func,
+          gpointer read_data,
+          s3_progress_func progress_func,
+          gpointer progress_data)
+{
+    char *subresource = NULL;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
+        };
+
+    g_assert(hdl != NULL);
+
+    if (uploadId) {
+	subresource = g_strdup_printf("partNumber=%d&uploadId=%s",
+				partNumber, uploadId);
+    }
+
+    result = perform_request(hdl, "PUT", bucket, key, subresource, NULL, NULL, NULL,
+		 NULL,
+                 read_func, reset_func, size_func, md5_func, read_data,
+                 NULL, NULL, NULL, progress_func, progress_data,
+                 result_handling);
+
+    g_free(subresource);
+    if (etag) {
+	*etag = hdl->etag;
+	hdl->etag = NULL;
+    }
+
+    return result == S3_RESULT_OK;
+}
+
+
+char *
+s3_initiate_multi_part_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key)
+{
+    char *subresource;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
+        };
+
+    subresource = g_strdup_printf("uploads");
+    result = perform_request(hdl, "POST", bucket, key, subresource, NULL,
+		 NULL, NULL, NULL,
+                 NULL, NULL, NULL, NULL, NULL,
+                 NULL, NULL, NULL, NULL, NULL,
+                 result_handling);
+
+    g_free(subresource);
+
+    if (result == S3_RESULT_OK) {
+	return hdl->uploadId;
+    } else {
+	return NULL;
+    }
+}
+
+gboolean
+s3_complete_multi_part_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
+    const char *uploadId,
+    s3_read_func read_func,
+    s3_reset_func reset_func,
+    s3_size_func size_func,
+    s3_md5_func md5_func,
+    gpointer read_data)
+{
+    char *subresource;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
+        };
+
+    subresource = g_strdup_printf("uploadId=%s", uploadId);
+    result = perform_request(hdl, "POST", bucket, key, subresource, NULL,
+		 NULL, NULL, NULL,
+                 read_func, reset_func, size_func, md5_func, read_data,
+                 NULL, NULL, NULL, NULL, NULL,
+                 result_handling);
+
+    g_free(subresource);
+
+    return (result == S3_RESULT_OK);
+}
+
+void
+free_s3_object(
+    gpointer data)
+{
+    s3_object *object = data;
+    g_free(object->key);
+    g_free(object->uploadId);
+    g_free(object->prefix);
+    g_free(object);
+}
+
+gboolean
+s3_abort_multi_part_upload(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key,
+    const char *uploadId)
+{
+    char *subresource;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200,  0, 0, S3_RESULT_OK },
+        { 204,  0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
+        };
+
+    subresource = g_strdup_printf("uploadId=%s", uploadId);
+    result = perform_request(hdl, "DELETE", bucket, key, subresource, NULL, NULL, NULL, NULL,
+                 NULL, NULL, NULL, NULL, NULL,
+                 NULL, NULL, NULL, NULL, NULL,
+                 result_handling);
+
+    g_free(subresource);
+
+    return (result == S3_RESULT_OK);
+
+
+}
+
 /* Private structure for our "thunk", which tracks where the user is in the list
  * of keys. */
 struct list_keys_thunk {
-    GSList *filename_list; /* all pending filenames */
+    GSList *object_list; /* all pending filenames */
+    s3_object *object;
 
     gboolean in_contents; /* look for "key" entities in here */
     gboolean in_common_prefixes; /* look for "prefix" entities in here */
@@ -2709,10 +2956,13 @@ list_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 
     thunk->want_text = 0;
     if (g_ascii_strcasecmp(element_name, "contents") == 0 ||
-	g_ascii_strcasecmp(element_name, "object") == 0) {
+	g_ascii_strcasecmp(element_name, "object") == 0 ||
+	g_ascii_strcasecmp(element_name, "upload") == 0) {
         thunk->in_contents = 1;
+	thunk->object = g_new0(s3_object, 1);
     } else if (g_ascii_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 1;
+	thunk->object = g_new0(s3_object, 1);
     } else if (g_ascii_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->want_text = 1;
     } else if ((g_ascii_strcasecmp(element_name, "key") == 0 ||
@@ -2722,6 +2972,8 @@ list_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
     } else if ((g_ascii_strcasecmp(element_name, "size") == 0 ||
 		g_ascii_strcasecmp(element_name, "bytes") == 0) &&
 	       thunk->in_contents) {
+        thunk->want_text = 1;
+    } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0 && thunk->in_contents) {
         thunk->want_text = 1;
     } else if (g_ascii_strcasecmp(element_name, "istruncated")) {
         thunk->want_text = 1;
@@ -2738,14 +2990,19 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 {
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
-    if (g_ascii_strcasecmp(element_name, "contents") == 0) {
+    if (g_ascii_strcasecmp(element_name, "contents") == 0 ||
+	g_ascii_strcasecmp(element_name, "upload") == 0) {
         thunk->in_contents = 0;
+	thunk->object_list = g_slist_prepend(thunk->object_list, thunk->object);
+	thunk->object = NULL;
     } else if (g_ascii_strcasecmp(element_name, "commonprefixes") == 0) {
+	thunk->object_list = g_slist_prepend(thunk->object_list, thunk->object);
+	thunk->object = NULL;
         thunk->in_common_prefixes = 0;
     } else if ((g_ascii_strcasecmp(element_name, "key") == 0 ||
 		g_ascii_strcasecmp(element_name, "name") == 0) &&
 	       thunk->in_contents) {
-        thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
+	thunk->object->key = thunk->text;
 	if (thunk->is_truncated) {
 	    if (thunk->next_marker) g_free(thunk->next_marker);
 	    thunk->next_marker = g_strdup(thunk->text);
@@ -2754,10 +3011,14 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
     } else if ((g_ascii_strcasecmp(element_name, "size") == 0 ||
 		g_ascii_strcasecmp(element_name, "bytes") == 0) &&
 	       thunk->in_contents) {
-        thunk->size += g_ascii_strtoull (thunk->text, NULL, 10);
+	thunk->object->size = g_ascii_strtoull (thunk->text, NULL, 10);
+        thunk->size += thunk->object->size;
+        thunk->text = NULL;
+    } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0 && thunk->in_contents) {
+	thunk->object->uploadId = thunk->text;
         thunk->text = NULL;
     } else if (g_ascii_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
-        thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
+	thunk->object->prefix = thunk->text;
         thunk->text = NULL;
     } else if (g_ascii_strcasecmp(element_name, "istruncated") == 0) {
         if (thunk->text && g_ascii_strncasecmp(thunk->text, "false", 5) != 0)
@@ -2789,6 +3050,7 @@ list_text(GMarkupParseContext *context G_GNUC_UNUSED,
 static s3_result_t
 list_fetch(S3Handle *hdl,
            const char *bucket,
+           const char *subresource,
            const char *prefix,
            const char *delimiter,
            const char *marker,
@@ -2846,9 +3108,8 @@ list_fetch(S3Handle *hdl,
     }
 
     /* and perform the request on that URI */
-    result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str, NULL,
-			     NULL,
-                             NULL, NULL, NULL, NULL, NULL,
+    result = perform_request(hdl, "GET", bucket, NULL, subresource, query->str, NULL,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              S3_BUFFER_WRITE_FUNCS, buf, NULL, NULL,
                              result_handling);
 
@@ -2857,9 +3118,11 @@ list_fetch(S3Handle *hdl,
     return result;
 }
 
+
 gboolean
 s3_list_keys(S3Handle *hdl,
               const char *bucket,
+              const char *subresource,
               const char *prefix,
               const char *delimiter,
               GSList **list,
@@ -2887,7 +3150,8 @@ s3_list_keys(S3Handle *hdl,
 
     g_assert(list);
     *list = NULL;
-    thunk.filename_list = NULL;
+    thunk.object_list = NULL;
+    thunk.object = NULL;
     thunk.text = NULL;
     thunk.next_marker = NULL;
     thunk.size = 0;
@@ -2896,7 +3160,7 @@ s3_list_keys(S3Handle *hdl,
     do {
         s3_buffer_reset_func(&buf);
         /* get some data from S3 */
-        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker, MAX_KEYS, &buf);
+        result = list_fetch(hdl, bucket, subresource, prefix, delimiter, thunk.next_marker, MAX_KEYS, &buf);
         if (result != S3_RESULT_OK) goto cleanup;
 	if (buf.buffer_pos == 0) goto cleanup; /* no body */
 
@@ -2936,10 +3200,10 @@ cleanup:
     if (buf.buffer) g_free(buf.buffer);
 
     if (result != S3_RESULT_OK) {
-        g_slist_free(thunk.filename_list);
+        g_slist_free_full(thunk.object_list, free_s3_object);
         return FALSE;
     } else {
-        *list = thunk.filename_list;
+        *list = thunk.object_list;
         if(total_size) {
             *total_size = thunk.size;
         }
@@ -2968,9 +3232,46 @@ s3_read(S3Handle *hdl,
     g_assert(write_func != NULL);
 
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL,
+	NULL,
         NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
         progress_func, progress_data, result_handling);
 
+    return result == S3_RESULT_OK;
+}
+
+gboolean
+s3_read_range(S3Handle *hdl,
+        const char *bucket,
+        const char *key,
+	const guint64 range_begin,
+	const guint64 range_end,
+        s3_write_func write_func,
+        s3_reset_func reset_func,
+        gpointer write_data,
+        s3_progress_func progress_func,
+        gpointer progress_data)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200, 0, 0, S3_RESULT_OK },
+        { 206, 0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
+        };
+    struct curl_slist *headers = NULL;
+    char *buf;
+
+    g_assert(hdl != NULL);
+    g_assert(write_func != NULL);
+
+    buf = g_strdup_printf("Range: bytes=%lu-%lu", range_begin, range_end);
+    headers = curl_slist_append(headers, buf);
+    g_free(buf);
+    result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL, headers,
+        NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
+        progress_func, progress_data, result_handling);
+
+    curl_slist_free_all(headers);
     return result == S3_RESULT_OK;
 }
 
@@ -2992,7 +3293,7 @@ s3_delete(S3Handle *hdl,
 
     g_assert(hdl != NULL);
 
-    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL, NULL, NULL,
+    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                  result_handling);
 
@@ -3002,7 +3303,7 @@ s3_delete(S3Handle *hdl,
 int
 s3_multi_delete(S3Handle *hdl,
 		const char *bucket,
-		const char **key)
+		GSList *objects)
 {
     GString *query;
     CurlBuffer data;
@@ -3024,13 +3325,14 @@ s3_multi_delete(S3Handle *hdl,
     if (!hdl->verbose) {
 	g_string_append(query, "  <Quiet>true</Quiet>\n");
     }
-    while (*key != NULL) {
+    while (objects != NULL) {
+	s3_object *object = objects->data;
 	g_string_append(query, "  <Object>\n");
 	g_string_append(query, "    <Key>");
-	g_string_append(query, *key);
+	g_string_append(query, object->key);
 	g_string_append(query, "</Key>\n");
 	g_string_append(query, "  </Object>\n");
-	key++;
+	objects = objects->next;
     }
     g_string_append(query, "</Delete>\n");
 
@@ -3040,7 +3342,7 @@ s3_multi_delete(S3Handle *hdl,
     data.max_buffer_size = data.buffer_len;
 
     result = perform_request(hdl, "POST", bucket, NULL, "delete", NULL,
-		 "application/xml", NULL,
+		 "application/xml", NULL, NULL,
 		 s3_buffer_read_func, s3_buffer_reset_func,
 		 s3_buffer_size_func, s3_buffer_md5_func,
 		 &data, NULL, NULL, NULL, NULL, NULL,
@@ -3112,8 +3414,8 @@ s3_make_bucket(S3Handle *hdl,
         content_type = "application/castorcontext";
     }
 
-    result = perform_request(hdl, verb, bucket, NULL, NULL, NULL, content_type,
-		 project_id,
+    result = perform_request(hdl, verb, bucket, NULL, NULL,
+		 NULL, content_type, project_id, NULL,
                  read_func, reset_func, size_func, md5_func, ptr,
                  NULL, NULL, NULL, NULL, NULL, result_handling);
 
@@ -3124,11 +3426,11 @@ s3_make_bucket(S3Handle *hdl,
          * the one that's configured.
          */
 	if (is_non_empty_string(hdl->bucket_location)) {
-            result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, NULL, NULL,
+            result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, NULL, NULL, NULL,
                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL, NULL, result_handling);
 	} else {
-            result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL, NULL, NULL,
+            result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL, NULL, result_handling);
 	}
@@ -3218,7 +3520,7 @@ oauth2_get_access_token(
     hdl->x_storage_url = "https://accounts.google.com/o/oauth2/token";
     hdl->getting_oauth2_access_token = 1;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
-			     "application/x-www-form-urlencoded", NULL,
+			     "application/x-www-form-urlencoded", NULL, NULL,
 			     s3_buffer_read_func, s3_buffer_reset_func,
 			     s3_buffer_size_func, s3_buffer_md5_func,
                              &data, NULL, NULL, NULL, NULL, NULL,
@@ -3275,7 +3577,7 @@ s3_is_bucket_exists(S3Handle *hdl,
     }
 
     result = perform_request(hdl, "GET", bucket, NULL, NULL, query,
-			     NULL, project_id,
+			     NULL, project_id, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling);
 
