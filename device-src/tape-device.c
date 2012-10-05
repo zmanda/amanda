@@ -1658,6 +1658,7 @@ tape_device_check_writable(Device * d_self)
     if (device_in_error(self))
 	return TRUE;
 
+#ifdef GMT_WR_PROT
     if (ioctl(self->fd, MTIOCGET, &get) == 0) {
 	if (GMT_WR_PROT(get.mt_gstat)) {
 	    device_set_error(d_self,
@@ -1671,6 +1672,7 @@ tape_device_check_writable(Device * d_self)
 	    DEVICE_STATUS_VOLUME_ERROR);
 	return FALSE;
     }
+#endif
 
     return TRUE;
 }
