@@ -2923,7 +2923,7 @@ static void delay_one_dump(disk_t *dp, int delete, ...)
     qtmp = quote_string(tmp);
     g_free(tmp);
 
-    g_string_append_printf(errbuf, "[%s]", qtmp);
+    g_string_append_printf(errbuf, " [%s]", qtmp);
     g_free(qtmp);
 
     bi->errstr = g_string_free(errbuf, FALSE);

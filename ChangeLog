@@ -1,4 +1,7 @@
 2012-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Missing space.
+
+2012-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c, device-src/s3-device.c: Typo.
 
 2012-10-02  Jean-Louis Martineau <martineau@zmanda.com>
