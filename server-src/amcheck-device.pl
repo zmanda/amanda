@@ -224,6 +224,15 @@ sub do_check {
 		print "WARNING: DEVICE-OUTPUT-BUFFER-SIZE is not at least twice the block size of the device, it should be increased for better throughput\n";
 	    }
 	}
+	$steps->{'check_writable'}->();
+    };
+
+    step check_writable => sub {
+
+	if($res->{'device'} and !$res->{'device'}->check_writable()) {
+	    print "ERROR: " . $res->{'device'}->error_or_status() . "\n";
+	    return $steps->{'release'}->();
+	}
 	$steps->{'check_overwrite'}->();
     };
 

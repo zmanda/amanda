@@ -413,6 +413,11 @@ typedef struct Device {
 	    return device_use_connection(self, conn);
 	}
 
+	gboolean
+	check_writable() {
+	    return device_check_writable(self);
+	}
+
 	%typemap(in,numinputs=0) guint64 *actual_size (guint64 sz) {
 	    sz = 0;
 	    $1 = &sz;

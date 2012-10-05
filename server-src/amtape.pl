@@ -236,14 +236,18 @@ sub {
 	    my $dev = $res->{'device'};
 	    my $st = $dev->read_label();
 	    if ($st == $DEVICE_STATUS_SUCCESS) {
-		print STDERR sprintf("slot %3s: date %-14s label %s\n",
+		print STDERR sprintf("slot %3s: date %-14s label %s",
 			$last_slot, $dev->volume_time(),
 			$dev->volume_label());
 	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
-		print STDERR sprintf("slot %3s: unlabeled volume\n", $last_slot);
+		print STDERR sprintf("slot %3s: unlabeled volume", $last_slot);
 	    } else {
-		print STDERR sprintf("slot %3s: %s\n", $last_slot, $dev->error_or_status());
+		print STDERR sprintf("slot %3s: %s", $last_slot, $dev->error_or_status());
 	    }
+	    if (!$dev->check_writable()) {
+		print STDERR " (Write protected)";
+	    }
+	    print STDERR "\n";
 	}
 
 	if ($res) {

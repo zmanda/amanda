@@ -1558,6 +1558,20 @@ device_use_connection(
     }
 }
 
+gboolean
+device_check_writable(
+    Device *self)
+{
+    DeviceClass *klass;
+
+    klass = DEVICE_GET_CLASS(self);
+    if (klass->check_writable) {
+	return (klass->check_writable)(self);
+    } else {
+	return TRUE;
+    }
+}
+
 /* Property handling */
 
 void

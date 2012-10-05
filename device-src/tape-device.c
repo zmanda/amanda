@@ -202,6 +202,7 @@ static dumpfile_t * tape_device_seek_file (Device * self, guint file);
 static gboolean tape_device_seek_block (Device * self, guint64 block);
 static gboolean tape_device_eject (Device * self);
 static gboolean tape_device_finish (Device * self);
+static gboolean tape_device_check_writable(Device *self);
 static IoResult tape_device_robust_read (TapeDevice * self, void * buf,
                                                int * count, char **errmsg);
 static IoResult tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errmsg);
@@ -383,6 +384,7 @@ tape_device_class_init (TapeDeviceClass * c)
     device_class->seek_block = tape_device_seek_block;
     device_class->eject = tape_device_eject;
     device_class->finish = tape_device_finish;
+    device_class->check_writable = tape_device_check_writable;
 
     g_object_class->finalize = tape_device_finalize;
 }
@@ -1180,11 +1182,16 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 			    self->private->device_filename, strerror(self->write_open_errno)),
 		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
             return FALSE;
-        } else if (!tape_rewind(self->fd)) {
-	    device_set_error(d_self,
-		g_strdup_printf(_("Error rewinding device to start: %s"), strerror(errno)),
-		DEVICE_STATUS_DEVICE_ERROR);
-	    return FALSE;
+        } else {
+	    if (!tape_device_check_writable(d_self)) {
+		return FALSE;
+	    }
+	    if (!tape_rewind(self->fd)) {
+		device_set_error(d_self,
+			g_strdup_printf(_("Error rewinding device to start: %s"), strerror(errno)),
+			DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
         }
     }
 
@@ -1638,6 +1645,34 @@ finish_error:
     self->fd = -1;
 
     return FALSE;
+}
+
+static gboolean
+tape_device_check_writable(Device * d_self)
+{
+    TapeDevice *self;
+    struct mtget get;
+
+    self = TAPE_DEVICE(d_self);
+
+    if (device_in_error(self))
+	return TRUE;
+
+    if (ioctl(self->fd, MTIOCGET, &get) == 0) {
+	if (GMT_WR_PROT(get.mt_gstat)) {
+	    device_set_error(d_self,
+		g_strdup_printf("Device '%s' is write protected", self->private->device_filename),
+		DEVICE_STATUS_VOLUME_ERROR);
+	    return FALSE;
+	}
+    } else {
+	device_set_error(d_self,
+	    g_strdup_printf("ioctl failed on device '%s'", self->private->device_filename),
+	    DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 /* Works just like read(), except for the following:
