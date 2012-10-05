@@ -1739,10 +1739,10 @@ stream_read_callback(
      * We remove it first because we don't want to get in their
      * way if they reschedule it.
      */
-    tcpm_stream_read_cancel(rs);
 
     if (rs->rc->pktlen <= 0) {
 	auth_debug(1, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
+	tcpm_stream_read_cancel(rs);
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
 	    sec_tcp_conn_put(rs->rc);

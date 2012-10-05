@@ -1481,9 +1481,7 @@ process_writenetfd(
 	dbprintf(_("process_writenetfd: dh->fd_write <= 0\n"));
     } else if (size > 0) {
 	full_write(dh->fd_write, buf, (size_t)size);
-	security_stream_read(dh->netfd, process_writenetfd, dh);
-    }
-    else {
+    } else {
 	aclose(dh->fd_write);
     }
 }

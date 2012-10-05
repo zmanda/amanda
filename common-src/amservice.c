@@ -321,18 +321,17 @@ read_in(
     void *cookie G_GNUC_UNUSED)
 {
     size_t nread;
-    char   buf[1024];
+    char   buf[1025];
 
-    event_release(event_in);
     nread = read(0, buf, 1024);
-    if (nread == 0) {
+    if (nread <= 0) {
+	event_release(event_in);
 	security_stream_close(fd);
 	return;
     }
 
     buf[nread] = '\0';
     security_stream_write(fd, buf, nread);
-    event_in = event_register((event_id_t)0, EV_READFD, read_in, NULL);
 }
 
 static void
@@ -351,7 +350,6 @@ read_server(
 	if (errno > 0) {
 	    g_debug("failed to write to stdout: %s", strerror(errno));
 	}
-	security_stream_read(fd, read_server, NULL);
 	break;
     }
 }

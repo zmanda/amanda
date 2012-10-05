@@ -1,4 +1,12 @@
 2012-10-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Change the security_stream_read callback
+	  to not release the event if the read succeed.
+	* amandad-src/amandad.c, common-src/amservice.c,
+	  recover-src/extract_list.c, server-src/dumper.c: Do not restart
+	  security_stream_read is the read succeeded.
+	* server-src/dumper.c: Handle timeout without starting too much event.
+
+2012-10-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): Fix handling of
 	  taper-parallel-write.
 	* server-src/driver.c: Go in degraded mode only after all taper failed.
