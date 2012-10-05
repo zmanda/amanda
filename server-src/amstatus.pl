@@ -191,7 +191,7 @@ else {
 open(AMDUMP,"<$errfile") || die("$errfile: $!");
 print "Using $errfile\n";
 
-my $taper_status_file;
+my %taper_status_file;
 
 $start_degraded_mode = 0;
 
@@ -512,6 +512,18 @@ while($lineX = <AMDUMP>) {
 				    $tapedsize{$hostpart} = 0;
 					$size{$hostpart} = 0;
 				}
+				elsif($line[6] eq "TAKE-SCRIBE-FROM") {
+					#7:name1 #8:handle #9:name2
+					$name1=$line[7];
+					$serial=$line[8];
+					$name2=$line[9];
+					$hostpart=$serial{$serial};
+					$taper_nb{$name1} = $taper_nb{$name2};
+					$taper_nb{$name2} = 0;
+					if (defined $hostpart) {
+						$error{$hostpart} = $olderror{$hostpart};
+					}
+				}
 			}
 		}
 		elsif($line[1] eq "result" && $line[2] eq "time") {
@@ -633,7 +645,7 @@ while($lineX = <AMDUMP>) {
 							$error{$hostpart}="$error";
 							undef $worker_to_serial{$worker};
 						}
-						undef $taper_status_file;
+						undef $taper_status_file{$hostpart};
 					}
 				}
 				elsif($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
@@ -667,7 +679,7 @@ while($lineX = <AMDUMP>) {
 					else {
 						$partial{$hostpart} = 0;
 					}
-					undef $taper_status_file;
+					undef $taper_status_file{$hostpart};
 					undef $worker_to_serial{$taper_name{$hostpart}};
 				}
 				elsif($line[6] eq "PARTDONE") {
@@ -683,20 +695,14 @@ while($lineX = <AMDUMP>) {
 					$ntsize{$ntape} += $size;
 					$ntesize{$ntape} += $size;
 				}
-				elsif($line[6] eq "TAKE-SCRIBE-FROM") {
-					#7:name1 #8:serial #9:name2
-					$name1=$line[7];
-					$name2=$line[8];
-					$taper_nb{$name2} = $taper_nb{$name1};
-					$taper_nb{$name1} = 0;
-				}
 				elsif($line[6] eq "REQUEST-NEW-TAPE") {
 					#7:serial
 					$serial=$line[7];
 					$old_status_taper = $status_taper;
 					$status_taper = "Asking for a new tape";
 					$hostpart=$serial{$serial};
-					if (defined $hostpart) {
+					if (defined $hostpart and
+						!defined($olderror{$hostpart})) {
 						$olderror{$hostpart} = $error{$hostpart};
 						$error{$hostpart} = "waiting for a new tape";
 					}
@@ -726,7 +732,7 @@ while($lineX = <AMDUMP>) {
 					$error=$line[8];
 					$status_taper = $error;
 					$exit_status |= $STATUS_TAPE;
-					undef $taper_status_file;
+					undef $taper_status_file{$hostpart};
 				}
 				elsif($line[6] eq "FAILED") {
 					#7:handle 8:INPUT- 9:TAPE- 10:input_message 11:tape_message
@@ -747,7 +753,7 @@ while($lineX = <AMDUMP>) {
 						$taper_time{$hostpart}=$current_time;
 						$error{$hostpart}="$error";
 					}
-					undef $taper_status_file;
+					undef $taper_status_file{$hostpart};
 					undef $worker_to_serial{$taper_name{$hostpart}};
 				}
 			}
@@ -826,7 +832,12 @@ while($lineX = <AMDUMP>) {
 		}
 		elsif($line[1] eq "status" && $line[2] eq "file") {
 			#1:"status" #2:"file:" #3:hostname #4:diskname #5:filename
-			$taper_status_file = $line[5];
+			#$host = $line[3];
+			#$partition = $line[4];
+			#Which datestamp to use?
+			#$hostpart=&make_hostpart($host,$partition,$datestamp);
+			#assume $hostpart is already set.
+			$taper_status_file{$hostpart} = $line[5];
 		}
 	}
 	elsif($line[0] eq "splitting" &&
@@ -1011,8 +1022,8 @@ foreach $host (sort @hosts) {
 							}
 							print " dumping to tape";
 							$size = $tapedsize{$hostpart};
-							if ($taper_status_file && -f $taper_status_file &&
-								open FF, "<$taper_status_file") {
+							if ($taper_status_file{$hostpart} && -f $taper_status_file{$hostpart} &&
+								open FF, "<$taper_status_file{$hostpart}") {
 								$line = <FF>;
 								if (defined $line) {
 									chomp $line;
@@ -1053,8 +1064,8 @@ foreach $host (sort @hosts) {
 								print " flushing to tape";
 							}
 							$size = $tapedsize{$hostpart};
-							if ($taper_status_file &&  -f $taper_status_file &&
-								open FF, "<$taper_status_file") {
+							if ($taper_status_file{$hostpart} &&  -f $taper_status_file{$hostpart} &&
+								open FF, "<$taper_status_file{$hostpart}") {
 								$line = <FF>;
 								if (defined $line) {
 									chomp $line;
@@ -1065,7 +1076,7 @@ foreach $host (sort @hosts) {
 								}
 								close FF;
 							}
-							if(defined($size)) {
+							if(defined($size) and defined($size{$hostpart}) and $size{$hostpart} > 0) {
 								printf " (%d$unit done (%0.2f%%))", $size, 100.0 * $size/$size{$hostpart};
 							}
 							if( defined $starttime ) {

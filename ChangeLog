@@ -1,3 +1,7 @@
+2012-10-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix for TAKE-SCRIBE-FROM command, handle
+	  multiple taper status files.
+
 2012-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix for (eof) from dumper/chunker or taper.
 
