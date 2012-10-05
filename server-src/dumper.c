@@ -1587,7 +1587,6 @@ read_mesgfd(
     default:
 	assert(buf != NULL);
 	add_msg_data(buf, (size_t)size);
-	security_stream_read(streams[MESGFD].fd, read_mesgfd, cookie);
 	break;
     }
 
@@ -1736,8 +1735,6 @@ read_datafd(
      * Reset the timeout for future reads
      */
     timeout(conf_dtimeout);
-
-    security_stream_read(streams[DATAFD].fd, read_datafd, cookie);
 }
 
 /*
@@ -1791,7 +1788,6 @@ read_indexfd(
 	    log_add(L_INFO, _("Index corrupted for %s:%s"), hostname, qdiskname);
 	}
     }
-    security_stream_read(streams[INDEXFD].fd, read_indexfd, cookie);
 }
 
 static void
@@ -1802,8 +1798,6 @@ handle_filter_stderr(
     ssize_t   nread;
     char     *b, *p;
     gint64    len;
-
-    event_release(filter->event);
 
     if (filter->buffer == NULL) {
 	/* allocate initial buffer */
@@ -1827,6 +1821,7 @@ handle_filter_stderr(
 			     filter->allocated_size - filter->first - filter->size - 2);
 
     if (nread <= 0) {
+	event_release(filter->event);
 	aclose(filter->fd);
 	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
 	    /* Add a '\n' at end of buffer */
@@ -1857,9 +1852,6 @@ handle_filter_stderr(
     if (nread <= 0) {
 	g_free(filter->buffer);
 	g_free(filter);
-    } else {
-	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
-				       handle_filter_stderr, filter);
     }
 }
 
@@ -1867,25 +1859,33 @@ handle_filter_stderr(
  * Startup a timeout in the event handler.  If the arg is 0,
  * then remove the timeout.
  */
+static event_handle_t *ev_timeout = NULL;
+static time_t timeout_time;
+
 static void
 timeout(
     time_t seconds)
 {
-    static event_handle_t *ev_timeout = NULL;
+    timeout_time = time(NULL) + seconds;
 
     /*
-     * First, remove a timeout if one is active.
+     * remove a timeout if seconds is 0
      */
-    if (ev_timeout != NULL) {
-	event_release(ev_timeout);
-	ev_timeout = NULL;
+    if (seconds == 0) {
+	if (ev_timeout != NULL) {
+	    event_release(ev_timeout);
+	    ev_timeout = NULL;
+	}
+	return;
     }
 
     /*
-     * Now, schedule a new one if 'seconds' is greater than 0
+     * schedule a timeout if it not already scheduled
      */
-    if (seconds > 0)
-	ev_timeout = event_register((event_id_t)seconds, EV_TIME, timeout_callback, NULL);
+    if (ev_timeout == NULL) {
+	ev_timeout = event_register((event_id_t)seconds, EV_TIME,
+				     timeout_callback, NULL);
+    }
 }
 
 /*
@@ -1896,7 +1896,19 @@ static void
 timeout_callback(
     void *	unused)
 {
+    time_t now = time(NULL);
     (void)unused;	/* Quiet unused parameter warning */
+
+    if (ev_timeout != NULL) {
+	event_release(ev_timeout);
+	ev_timeout = NULL;
+    }
+
+    if (timeout_time > now) { /* not a data timeout yet */
+	ev_timeout = event_register((event_id_t)(timeout_time-now), EV_TIME,
+				    timeout_callback, NULL);
+	return;
+    }
 
     assert(unused == NULL);
     g_free(errstr);

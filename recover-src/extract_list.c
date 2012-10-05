@@ -2759,13 +2759,13 @@ read_amidxtaped_data(
 
 	g_debug("read header %zd => %d", size, header_size);
 	if (header_size < 32768) {
-            security_stream_read(amidxtaped_streams[DATAFD].fd,
-				 read_amidxtaped_data, cookie);
+	    /* wait to read more data */
 	    return;
 	} else if (header_size > 32768) {
 	    error("header_size is %d\n", header_size);
 	}
 	assert (to_move == size);
+	security_stream_read_cancel(amidxtaped_streams[DATAFD].fd);
 	/* parse the file header */
 	fh_init(&ctl_data->file);
 	parse_file_header(header_buf, &ctl_data->file, (size_t)header_size);
@@ -2826,8 +2826,6 @@ read_amidxtaped_data(
 	 * We ignore errors while writing to the index file.
 	 */
 	(void)full_write(ctl_data->child_pipe[1], buf, (size_t)size);
-        security_stream_read(amidxtaped_streams[DATAFD].fd,
-			     read_amidxtaped_data, cookie);
     }
 }
 
