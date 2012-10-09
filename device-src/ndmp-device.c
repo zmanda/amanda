@@ -574,8 +574,6 @@ ndmp_device_start(
     dumpfile_t *header;
     char       *header_buf;
 
-    self = NDMP_DEVICE(dself);
-
     if (device_in_error(self)) return FALSE;
 
     if (!open_tape_agent(self)) {
@@ -1629,11 +1627,11 @@ indirecttcp_start_writing(
 	const char *addr;
 	char *addrspec;
 
-	addr = inet_ntop(AF_INET, &iter->sin.sin_addr.s_addr, inet, 40);
+	addr = inet_ntop(AF_INET, &iter->sin.sin_addr.s_addr, inet, INET_ADDRSTRLEN);
 
 	addrspec = g_strdup_printf("%s:%d%s", addr, SU_GET_PORT(iter),
 		SU_GET_FAMILY(iter+1) !=0? " ":"");
-    g_debug("indirecttcp_start_writing, send %s", addrspec);
+	g_debug("indirecttcp_start_writing, send %s", addrspec);
 	if (full_write(conn_sock, addrspec, strlen(addrspec)) < strlen(addrspec)) {
 	    device_set_error(DEVICE(self),
 		g_strdup_printf("writing to indirecttcp socket: %s", strerror(errno)),

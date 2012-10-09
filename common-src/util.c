@@ -1059,7 +1059,7 @@ int copy_file(
 {
     int     infd, outfd;
     int     save_errno;
-    size_t nb;
+    ssize_t nb;
     char    buf[32768];
     char   *quoted;
 
@@ -1678,12 +1678,16 @@ get_first_line(
     out = fdopen(outpipe[0],"r");
     err = fdopen(errpipe[0],"r");
 
-    output_string = agets(out);
-    if (!output_string)
-	output_string = agets(err);
+    if (out) {
+	output_string = agets(out);
+	fclose(out);
+    }
 
-    fclose(out);
-    fclose(err);
+    if (err) {
+	if (!output_string)
+	    output_string = agets(err);
+	fclose(err);
+    }
 
     waitpid(pid, NULL, 0);
 

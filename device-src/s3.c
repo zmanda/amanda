@@ -3130,7 +3130,6 @@ s3_make_bucket(S3Handle *hdl,
             /* return to the default state of failure */
             result = S3_RESULT_FAIL;
 
-            if (body) g_free(body);
             /* use strndup to get a null-terminated string */
             body = g_strndup(hdl->last_response_body, hdl->last_response_body_size);
             if (!body) {

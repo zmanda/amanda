@@ -605,11 +605,12 @@ tape_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GN
 
     if (read_block_size != 0 &&
 	    ((gsize)read_block_size < p_self->block_size ||
-	     (gsize)read_block_size > p_self->max_block_size))
+	     (gsize)read_block_size > p_self->max_block_size)) {
 	device_set_error(p_self,
 	    g_strdup_printf("Error setting READ-BLOCk-SIZE property to '%u', it must be between %zu and %zu", read_block_size, p_self->block_size, p_self->max_block_size),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
+    }
 
     self->private->read_block_size = read_block_size;
 

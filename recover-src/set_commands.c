@@ -540,14 +540,13 @@ cd_dir(
     int	  verbose)
 {
     char *dir = NULL;
-    char *s;
     int nb_found;
     int result;
     size_t i;
 
     DIR_ITEM *ditem;
 
-    if ((s = validate_regexp(tpath_on_disk)) != NULL) {
+    if (validate_regexp(tpath_on_disk) != NULL) {
 	result = set_directory(default_dir, verbose);
 	return result;
     }

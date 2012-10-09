@@ -1232,8 +1232,7 @@ print_platform(void)
 	FILE *release = fopen("/etc/lsb-release", "r");
 	distro = "Ubuntu";
 	if (release) {
-	    char *result;
-	    while ((result = fgets(line, 1024, release))) {
+	    while (fgets(line, 1024, release)) {
 		if (strstr(line, "DESCRIPTION")) {
 		    platform = strchr(line, '=');
 		    if (platform) platform++;
@@ -1280,8 +1279,8 @@ print_platform(void)
 		    if (result) {
 			platform = line;
 		    }
+		    fclose(release);
 		}
-		fclose(release);
 	    }
 	    amfree(uname);
 	}
