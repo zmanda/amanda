@@ -523,7 +523,9 @@ main(
     act.sa_handler = sigint_handler;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
+#ifdef SA_RESTORER
     act.sa_restorer = NULL;
+#endif
     if (sigaction(SIGINT, &act, &oact) != 0) {
 	error(_("error setting signal handler: %s"), strerror(errno));
 	/*NOTREACHED*/
@@ -532,7 +534,7 @@ main(
     service_name = stralloc2("amandaidx", SERVICE_SUFFIX);
 
     g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
-	   VERSION, server_name);  
+	   VERSION, server_name);
     if ((sp = getservbyname(service_name, "tcp")) == NULL) {
 	error(_("%s/tcp unknown protocol"), service_name);
 	/*NOTREACHED*/
