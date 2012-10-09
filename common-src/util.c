@@ -1083,7 +1083,7 @@ int copy_file(
     }
 
     while((nb=read(infd, &buf, SIZEOF(buf))) > 0) {
-	if(full_write(outfd,&buf,nb) < nb) {
+	if(full_write(outfd,&buf,nb) < (size_t)nb) {
 	    save_errno = errno;
 	    quoted = quote_string(dst);
 	    *errmsg = vstrallocf(_("Error writing to '%s': %s"),
