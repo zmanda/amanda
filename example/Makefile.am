@@ -14,7 +14,8 @@ template_in_FILE = \
 		template.d/amanda-harddisk.conf.in \
 		template.d/amanda-single-tape.conf.in \
 		template.d/amanda-tape-changer.conf.in \
-		template.d/amanda-S3.conf.in
+		template.d/amanda-S3.conf.in \
+		template.d/amanda-CAStor.conf.in
 template_FILE = \
 		template.d/dumptypes \
 		template.d/tapetypes \

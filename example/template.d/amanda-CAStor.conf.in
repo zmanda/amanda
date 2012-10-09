@@ -1,5 +1,5 @@
-org "DailySet1"	# your organization name for reports
-mailto "amanda"	# space separated list of operators at your site
+org "@DEFAULT_CONFIG@"	# your organization name for reports
+mailto "@CLIENT_LOGIN@"	# space separated list of operators at your site
 dumpcycle 1 week	# the number of days in the normal dump cycle
 runspercycle 5          # the number of amdump runs in dumpcycle days
 			# (1 week * 5 amdump runs per week -- just weekdays)
@@ -81,8 +81,8 @@ define tapetype CASTOR {
 tpchanger "my_castor"
 tapetype CASTOR
 
-autolabel "DailySet1-%%%%" empty
-labelstr "^DailySet1-[0-9][0-9]*$"	# label constraint regex: all tapes must match
+autolabel "@DEFAULT_CONFIG@-%%%%" empty
+labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"	# label constraint regex: all tapes must match
 
 dtimeout 1800		# number of idle seconds before a dump is aborted.
 ctimeout 30		# maximum number of seconds that amcheck waits
@@ -112,6 +112,6 @@ define dumptype gui-base {
 }
 
 includefile "./advanced.conf"
-includefile "/usr/local/etc/amanda/template.d/dumptypes"
-includefile "/usr/local/etc/amanda/template.d/tapetypes"
+includefile "@CONFIG_DIR@/template.d/dumptypes"
+includefile "@CONFIG_DIR@/template.d/tapetypes"
 

@@ -1,9 +1,15 @@
+2012-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* example/Makefile.am: Build amanda-CAStor.conf from
+	  amanda-CAStor.conf.in
+	* example/template.d/amanda-CAStor.conf: Remove
+	* example/template.d/amanda-CAStor.conf.in: New file.
+
 2012-10-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Change the security_stream_read callback
 	  to not release the event if the read succeed.
 	* amandad-src/amandad.c, common-src/amservice.c,
 	  recover-src/extract_list.c, server-src/dumper.c: Do not restart
-	  security_stream_read is the read succeeded.
+	  security_stream_read if the read succeeded.
 	* server-src/dumper.c: Handle timeout without starting too much event.
 
 2012-10-05  Jean-Louis Martineau <martineau@zmanda.com>
