@@ -605,8 +605,12 @@ stream_read_sync_callback(
         security_stream_seterror(&bs->secstr, "%s", strerror(errno));
     bs->len = n;
     sync_pktlen = bs->len;
-    sync_pkt = malloc(sync_pktlen);
-    memcpy(sync_pkt, bs->databuf, sync_pktlen);
+    if (sync_pktlen > 0) {
+	sync_pkt = malloc(sync_pktlen);
+	memcpy(sync_pkt, bs->databuf, sync_pktlen);
+    } else {
+	sync_pkt = NULL;
+    }
 }
 
 /*

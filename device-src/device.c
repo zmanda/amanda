@@ -645,8 +645,8 @@ dumpfile_t * make_tapestart_header(Device * self, char * label,
     } else {
         self->volume_time = g_strdup(timestamp);
     }
-    strncpy(rval->datestamp, self->volume_time, sizeof(rval->datestamp));
-    strncpy(rval->name, label, sizeof(rval->name));
+    g_strlcpy(rval->datestamp, self->volume_time, sizeof(rval->datestamp));
+    g_strlcpy(rval->name, label, sizeof(rval->name));
 
     return rval;
 }
@@ -658,7 +658,7 @@ dumpfile_t * make_tapeend_header(void) {
     rval = malloc(sizeof(*rval));
     rval->type = F_TAPEEND;
     timestamp = get_timestamp_from_time(time(NULL));
-    strncpy(rval->datestamp, timestamp, sizeof(rval->datestamp));
+    g_strlcpy(rval->datestamp, timestamp, sizeof(rval->datestamp));
     amfree(timestamp);
     return rval;
 }

@@ -532,6 +532,7 @@ main(
     act.sa_handler = sigint_handler;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
+    act.sa_restorer = NULL;
     if (sigaction(SIGINT, &act, &oact) != 0) {
 	error(_("error setting signal handler: %s"), strerror(errno));
 	/*NOTREACHED*/

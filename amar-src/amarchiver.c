@@ -37,6 +37,7 @@ usage(void)
 {
     printf("Usage: amarchiver [--version|--create|--list|--extract] [--verbose]* [--file file]\n");
     printf("            [filename]*\n");
+    exit(1);
 }
 
 static void
@@ -340,12 +341,6 @@ int main(
     if (opt_create + opt_extract + opt_list > 1) {
 	g_fprintf(stderr,"Only one of --create, --list or --extract must be provided\n");
 	usage();
-    }
-    if (opt_list > 1) {
-	if (argc) {
-	    g_fprintf(stderr, "--list does not take any additional filenames\n");
-	    usage();
-	}
     }
 
     if (opt_create > 0)

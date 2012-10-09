@@ -1,4 +1,14 @@
 2012-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, amar-src/amarchiver.c,
+	  client-src/selfcheck.c, common-src/bsd-security.c,
+	  common-src/util.c, device-src/device.c,
+	  device-src/ndmp-device.c, device-src/s3.c,
+	  device-src/tape-device.c, oldrecover-src/amrecover.c,
+	  recover-src/extract_list.c, recover-src/set_commands.c,
+	  server-src/diskfile.c, server-src/driver.c,
+	  server-src/planner.c: Fix bug found by Coverity.
+
+2012-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* example/Makefile.am: Build amanda-CAStor.conf from
 	  amanda-CAStor.conf.in
 	* example/template.d/amanda-CAStor.conf: Remove

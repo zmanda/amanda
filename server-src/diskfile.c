@@ -512,7 +512,7 @@ parse_diskline(
 	    amfree(hostname);
 	    return (-1);
 	}
-	if ((dtype = lookup_dumptype(dumptype)) == NULL) {
+	if (lookup_dumptype(dumptype) == NULL) {
 	    diskdevice = dumptype;
 	    skip_whitespace(s, ch);
 	    if(ch == '\0' || ch == '#') {

@@ -1317,7 +1317,6 @@ errfd_recv(
         case -1:
             g_snprintf(buf, NETWORK_BLOCK_BYTES + 1,
                 "error reading stderr or service: %s\n", strerror(errno));
-            buflen = strlen(buf) + 1;
             /* Fall through */
         case 0:
             event_release(as->ev_errfd);

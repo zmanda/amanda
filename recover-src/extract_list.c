@@ -1884,7 +1884,7 @@ extract_files_child(
 	/*NOTREACHED*/
     }
 
-    if (ctl_data->file.program != NULL) {
+    if (ctl_data->file.program[0] != '\0') {
 	if (g_str_equal(ctl_data->file.program, "APPLICATION"))
 	    dumptype = IS_APPLICATION_API;
 #ifdef GNUTAR

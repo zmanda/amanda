@@ -188,7 +188,6 @@ main(
     identlist_t    il;
     unsigned long reserve = 100;
     char *conf_diskfile;
-    char **result_argv = NULL;
     char *taper_program;
     char *conf_tapetype;
     tapetype_t *tape;
@@ -587,8 +586,6 @@ main(
 
     amfree(dumper_program);
     amfree(taper_program);
-    if (result_argv)
-	g_strfreev(result_argv);
 
     dbclose();
 

@@ -2904,8 +2904,6 @@ static void delay_one_dump(disk_t *dp, int delete, ...)
     bi->nsize = estimate->nsize;
     bi->csize = estimate->csize;
 
-    errbuf = g_string_new(NULL);
-
     tmp = quote_string(dp->name);
     g_string_append_printf(errbuf, "%s %s %s %d", dp->host->hostname, tmp,
         (planner_timestamp) ? planner_timestamp : "?", estimate->level);
