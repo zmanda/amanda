@@ -1,4 +1,7 @@
 2012-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/amrecover.c: Solaris do not have sa_restorer.
+
+2012-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, amar-src/amarchiver.c,
 	  client-src/selfcheck.c, common-src/bsd-security.c,
 	  common-src/util.c, device-src/device.c,
