@@ -89,6 +89,7 @@ startup_tape_process(
     int       fd[2];
     int       i;
     char    **config_options;
+    char    **env;
     taper_t  *taper;
 
     /* always allocate the tapetable */
@@ -151,7 +152,9 @@ startup_tape_process(
 	config_options[0] = "taper";
 	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
-	execve(taper_program, config_options, safe_env());
+	env = safe_env();
+	execve(taper_program, config_options, env);
+	free_env(env);
 	error("exec %s: %s", taper_program, strerror(errno));
 	/*NOTREACHED*/
 
@@ -169,6 +172,7 @@ startup_dump_process(
 {
     int    fd[2];
     char **config_options;
+    char **env;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error(_("%s pipe: %s"), dumper->name, strerror(errno));
@@ -188,7 +192,9 @@ startup_dump_process(
 	config_options[0] = dumper->name ? dumper->name : "dumper",
 	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
-	execve(dumper_program, config_options, safe_env());
+	env = safe_env();
+	execve(dumper_program, config_options, env);
+	free_env(env);
 	error(_("exec %s (%s): %s"), dumper_program,
 	      dumper->name, strerror(errno));
         /*NOTREACHED*/
@@ -235,6 +241,7 @@ startup_chunk_process(
 {
     int    fd[2];
     char **config_options;
+    char **env;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error(_("%s pipe: %s"), chunker->name, strerror(errno));
@@ -256,7 +263,9 @@ startup_chunk_process(
 	config_options[0] = chunker->name ? chunker->name : "chunker",
 	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
-	execve(chunker_program, config_options, safe_env());
+	env = safe_env();
+	execve(chunker_program, config_options, env);
+	free_env(env);
 	error(_("exec %s (%s): %s"), chunker_program,
 	      chunker->name, strerror(errno));
         /*NOTREACHED*/

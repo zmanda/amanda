@@ -160,7 +160,14 @@ stream_server(
     return -1;
 
 out:
-    listen(server_socket, 1);
+    if (listen(server_socket, 1) == -1) {
+	save_errno = errno;
+	g_debug(_("stream_server: listen() failed: %s"),
+		  strerror(save_errno));
+	aclose(server_socket);
+	errno = save_errno;
+	return -1;
+    }
 
     /* find out what port was actually used */
 
@@ -249,7 +256,7 @@ stream_client_internal(
 					  (in_port_t)portrange[1],
 					  "tcp", &svaddr, nonblock);
 	save_errno = errno;
-	if (client_socket > 0)
+	if (client_socket >= 0)
 	    break;
     }
 

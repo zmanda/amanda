@@ -82,10 +82,10 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
 	}
 	filesize = 0;
 	file = amar_new_file(archive, argv[i], strlen(argv[i]), NULL, &error);
-	if (error)
+	if (!file)
 	    error_exit("amar_new_file", error);
 	attribute = amar_new_attr(file, AMAR_ATTR_GENERIC_DATA, &error);
-	if (error)
+	if (!attribute)
 	    error_exit("amar_new_attr", error);
 
 	filesize += amar_attr_add_data_fd(attribute, fd_in, 1, &error);
@@ -182,6 +182,7 @@ extract_frag_cb(
 	if (fd < 0) {
 	    g_fprintf(stderr, _("Could not open '%s' for writing: %s"),
 		    filename, strerror(errno));
+	    return FALSE;
 	}
 	if (ud->verbose)
 	    g_fprintf(stderr, "%s\n", filename);

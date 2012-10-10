@@ -222,8 +222,24 @@ connect_port(
 	return -1;
     }
 
-    if (nonblock)
-	fcntl(s, F_SETFL, fcntl(s, F_GETFL, 0)|O_NONBLOCK);
+    if (nonblock) {
+	int r = fcntl(s, F_GETFL, 0);
+	if (r < 0) {
+	    save_errno = errno;
+	    g_debug("Can't fcntl(F_GETFL): %s", strerror(errno));
+	    aclose(s);
+	    errno = save_errno;
+	    return -1;
+	}
+	r = fcntl(s, F_SETFL, r|O_NONBLOCK);
+	if (r < 0) {
+	    save_errno = errno;
+	    g_debug("Can't fcntl(F_SETFL,O_NONBLOCK): %s", strerror(errno));
+	    errno = save_errno;
+	    aclose(s);
+	    return -1;
+	}
+    }
     if (connect(s, (struct sockaddr *)svaddr, SS_LEN(svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
 	dbprintf(_("connect_portrange: Connect from %s failed: %s\n"),

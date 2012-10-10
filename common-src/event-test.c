@@ -337,7 +337,7 @@ test_ev_readfd(void)
 
     /* set up a EV_READFD on the read end of the pipe */
     cb_fd = p[0];
-    fcntl(cb_fd, F_SETFL, O_NONBLOCK);
+    (void)fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     close(p[1]);
     global = TEST_EV_READFD_SIZE;
     hdl[0] = event_register(p[0], EV_READFD, test_ev_readfd_cb, NULL);
@@ -414,7 +414,7 @@ test_read_timeout(void)
 
     /* set up a EV_READFD on the read end of the pipe */
     cb_fd = p[0];
-    fcntl(cb_fd, F_SETFL, O_NONBLOCK);
+    (void)fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     close(p[1]);
     hdl[0] = event_register(p[0], EV_READFD, test_ev_readfd_cb, NULL);
 
@@ -521,7 +521,7 @@ test_ev_writefd(void)
 
     /* set up a EV_WRITEFD on the write end of the pipe */
     cb_fd = p[1];
-    fcntl(cb_fd, F_SETFL, O_NONBLOCK);
+    (void)fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     global = TEST_EV_WRITEFD_SIZE;
     close(p[0]);
     hdl[0] = event_register(p[1], EV_WRITEFD, test_ev_writefd_cb, NULL);

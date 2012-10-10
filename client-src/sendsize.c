@@ -1403,6 +1403,7 @@ getsize_dump(
     char *qdisk;
     char *qdevice;
     char *config;
+    char **env;
     amwait_t wait_status;
 #if defined(DUMP) || defined(VDUMP) || defined(VXDUMP) || defined(XFSDUMP)
     int is_rundump = 1;
@@ -1611,10 +1612,11 @@ getsize_dump(
 		else
 		    config = "NOCONFIG";
 		safe_fd(-1, 0);
-		execle(killpgrp_cmd, killpgrp_cmd, config, (char *)0,
-		       safe_env());
+		env = safe_env();
+		execle(killpgrp_cmd, killpgrp_cmd, config, (char *)0, env);
 		dbprintf(_("cannot execute %s: %s\n"),
 			  killpgrp_cmd, strerror(errno));
+		free_env(env);
 		exit(-1);
 	    }
 
@@ -1632,78 +1634,83 @@ getsize_dump(
 	if (killctl[1] != -1)
 	    aclose(killctl[1]);
 	safe_fd(-1, 0);
+	env = safe_env();
 
 #ifdef XFSDUMP
 #ifdef DUMP
-	if (g_str_equal(fstype, "xfs"))
+	if (g_str_equal(fstype, "xfs")) {
 #else
-	if (1)
+	if (1) {
 #endif
 	    if (is_rundump)
 		execle(cmd, "rundump", config, "xfsdump", "-F", "-J", "-l",
-		       level_str, "-", device, (char *)0, safe_env());
+		       level_str, "-", device, (char *)0, env);
 	    else
 		execle(cmd, "xfsdump", "-F", "-J", "-l",
-		       level_str, "-", device, (char *)0, safe_env());
-	else
+		       level_str, "-", device, (char *)0, env);
+	} else
 #endif
 #ifdef VXDUMP
 #ifdef DUMP
-	if (g_str_equal(fstype, "vxfs"))
+	if (g_str_equal(fstype, "vxfs")) {
 #else
-	if (1)
+	if (1) {
 #endif
 	    if (is_rundump)
 		execle(cmd, "rundump", config, "vxdump", dumpkeys, "1048576",
-		       "-", device, (char *)0, safe_env());
+		       "-", device, (char *)0, env);
 	    else
 		execle(cmd, "vxdump", dumpkeys, "1048576", "-",
-		       device, (char *)0, safe_env());
-	else
+		       device, (char *)0, env);
+	} else
 #endif
 #ifdef VDUMP
 #ifdef DUMP
-	if (g_str_equal(fstype, "advfs"))
+	if (g_str_equal(fstype, "advfs")) {
 #else
-	if (1)
+	if (1) {
 #endif
 	    if (is_rundump)
 		execle(cmd, "rundump", config, "vdump", dumpkeys, "60", "-",
-		       device, (char *)0, safe_env());
+		       device, (char *)0, env);
 	    else
 		execle(cmd, "vdump", dumpkeys, "60", "-",
-		       device, (char *)0, safe_env());
-	else
+		       device, (char *)0, env);
+	} else
 #endif
 #ifdef DUMP
+	if (1) {
 # ifdef AIX_BACKUP
 	    if (is_rundump)
 		execle(cmd, "rundump", config, "backup", dumpkeys, "-",
-		       device, (char *)0, safe_env());
+		       device, (char *)0, env);
 	    else
 		execle(cmd, "backup", dumpkeys, "-",
-		       device, (char *)0, safe_env());
+		       device, (char *)0, env);
 # else
 	    if (is_rundump) {
-		execle(cmd, "rundump", config, "dump", dumpkeys, 
+		execle(cmd, "rundump", config, "dump", dumpkeys,
 #ifdef HAVE_HONOR_NODUMP
 		       "0",
 #endif
-		       "1048576", "-", device, (char *)0, safe_env());
+		       "1048576", "-", device, (char *)0, env);
 	    } else {
-		execle(cmd, "dump", dumpkeys, 
+		execle(cmd, "dump", dumpkeys,
 #ifdef HAVE_HONOR_NODUMP
 		       "0",
 #endif
-		       "1048576", "-", device, (char *)0, safe_env());
+		       "1048576", "-", device, (char *)0, env);
 	    }
 # endif
+	} else
 #endif
 	{
+	    free_env(env);
 	    error(_("exec %s failed or no dump program available: %s"),
 		  cmd, strerror(errno));
 	    /*NOTREACHED*/
 	}
+	free_env(env);
     }
 
     amfree(dumpkeys);
@@ -2423,6 +2430,7 @@ getsize_application_api(
     char     *errmsg = NULL;
     estimate_t     estimate;
     estimatelist_t el;
+    char **env;
 
     cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
 
@@ -2524,8 +2532,10 @@ getsize_application_api(
       aclose(pipeerrfd[0]);
       safe_fd(-1, 0);
 
-      execve(cmd, args, safe_env());
+      env = safe_env();
+      execve(cmd, args, env);
       error(_("exec %s failed: %s"), cmd, strerror(errno));
+      free_env(env);
       /*NOTREACHED*/
     }
     amfree(newoptstr);

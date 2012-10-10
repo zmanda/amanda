@@ -706,7 +706,7 @@ int robust_open(const char * pathname, int flags, mode_t mode) {
 
 #ifdef F_SETFD
     if (result >= 0) {
-        fcntl(result, F_SETFD, 1); /* Throw away result. */
+        (void)fcntl(result, F_SETFD, 1); /* Throw away result. */
     }
 #endif
 

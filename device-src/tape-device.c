@@ -732,8 +732,21 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
     }
 #ifdef O_NONBLOCK
     /* Clear O_NONBLOCK for operations from now on. */
-    if (fd >= 0 && nonblocking)
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NONBLOCK);
+    if (fd >= 0 && nonblocking) {
+	int r = fcntl(fd, F_GETFL, 0);
+	if (r < 0) {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("Can't fcntl(F_GETFL) on %s: %s", self->private->device_filename, strerror(errno)),
+		DEVICE_STATUS_DEVICE_BUSY | DEVICE_STATUS_DEVICE_ERROR);
+	}
+
+	r = fcntl(fd, F_SETFL, r & ~O_NONBLOCK);
+	if (r < 0) {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("Can't fcntl(F_SETFL) on %s: %s", self->private->device_filename, strerror(errno)),
+		DEVICE_STATUS_DEVICE_BUSY | DEVICE_STATUS_DEVICE_ERROR);
+	}
+    }
     errno = save_errno;
     /* function continues after #endif */
 
@@ -914,6 +927,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
 	default:
 	    msg = g_strdup(_("unknown error"));
+	    // fallthrough
 	case RESULT_ERROR:
             new_status = (DEVICE_STATUS_DEVICE_ERROR |
 	                  DEVICE_STATUS_VOLUME_ERROR |
@@ -989,6 +1003,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 
 	default:
 	    msg = g_strdup(_("unknown error"));
+	    // fallthrough
 	case RESULT_ERROR:
 	    device_set_error(pself,
 		g_strdup_printf(_("Error writing block: %s"), msg),
@@ -1078,6 +1093,7 @@ static int tape_device_read_block (Device * pself, gpointer buf,
 
     default:
 	msg = g_strdup(_("unknown error"));
+	// fallthrough
     case RESULT_ERROR:
 	device_set_error(pself,
 	    g_strdup_printf(_("Error reading from tape device: %s"), msg),
@@ -1925,7 +1941,12 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
                     amfree(buffer);
                     return -1;
                 } else {
-                    buffer = realloc(buffer, buffer_size);
+                   char *new_buffer = realloc(buffer, buffer_size);
+		    if (new_buffer == NULL) {
+			amfree(buffer);
+			return -1;
+		    }
+		    buffer = new_buffer;
                     continue;
                 }
             }
@@ -2144,7 +2165,7 @@ gint tape_eod(int fd) {
 
     /* Ignored result. This is just to flush buffers. */
     mt.mt_op = MTNOP;
-    ioctl(fd, MTIOCTOP, &mt);
+    (void)ioctl(fd, MTIOCTOP, &mt);
 
     if (0 != ioctl(fd, MTIOCGET, &get))
         return TAPE_POSITION_UNKNOWN;

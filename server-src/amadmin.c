@@ -328,7 +328,7 @@ seqdatestr(
 	g_snprintf(str, sizeof(str),
 		 "%2d/%02d %3s", tm->tm_mon+1, tm->tm_mday, _(dow[tm->tm_wday]));
     else
-	strcpy(str, _("BAD DATE"));
+	strcpy(str, "BAD DATE");
 
     return str;
 }

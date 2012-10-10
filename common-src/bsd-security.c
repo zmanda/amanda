@@ -343,8 +343,9 @@ bsd_accept(
     netfd4.driver = &bsd_security_driver;
 
     /* check if in is a socket */
-    fstat(in, &sbuf);
-    if (S_ISSOCK(sbuf.st_mode)) {
+    if (fstat(in, &sbuf) == -1) {
+	g_warning("Can't fstat file descriptor; cannot use BSD auth");
+    } else if (S_ISSOCK(sbuf.st_mode)) {
 	udp_addref(&netfd4, &udp_netfd_read_callback);
     } else {
 	g_warning("input file descriptor is not a socket; cannot use BSD auth");

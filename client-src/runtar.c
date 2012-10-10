@@ -51,6 +51,7 @@ main(
     char *cmdline;
     GPtrArray *array = g_ptr_array_new();
     gchar **strings;
+    char **new_argv;
 #endif
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
@@ -141,9 +142,14 @@ main(
     argc--;
     argv++;
 
+    new_argv = g_new0(char *, argc+1);
+
+    new_argv[0] = g_strdup_printf("%s", argv[0]);
     g_ptr_array_add(array, g_strdup(GNUTAR));
-    for (i = 1; argv[i]; i++)
+    for (i = 1; argv[i]; i++) {
         g_ptr_array_add(array, quote_string(argv[i]));
+	new_argv[i] = g_strdup_printf("%s", argv[i]);
+    }
 
     g_ptr_array_add(array, NULL);
     strings = (gchar **)g_ptr_array_free(array, FALSE);
@@ -160,7 +166,7 @@ main(
     }
     dbclose();
 
-    execve(GNUTAR, argv, safe_env());
+    execve(GNUTAR, new_argv, safe_env());
 
     e = strerror(errno);
     dbreopen(dbf, "more");

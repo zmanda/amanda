@@ -1374,6 +1374,7 @@ amgtar_validate(
     e = strerror(errno);
     dbprintf("failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
     fprintf(stderr,"failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
+    free_env(env);
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }

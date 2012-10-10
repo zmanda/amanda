@@ -1814,6 +1814,7 @@ handle_taper_result(
 
 	    dp = serial2disk(result_argv[1]);
 	    taper = sched(dp)->taper;
+	    assert(dp == taper->disk);
 	    if (taper->state & TAPER_STATE_DONE) {
 		taper_cmd(NO_NEW_TAPE, taper->disk, "taper found no tape", 0, NULL);
 	    } else {
@@ -1836,6 +1837,7 @@ handle_taper_result(
 	    taper_nb_scan_volume--;
 	    dp = serial2disk(result_argv[1]);
 	    taper = sched(dp)->taper;
+	    assert(dp == taper->disk);
             /* Update our tape counter and reset taper->left */
 	    current_tape++;
 	    taper->nb_dle = 1;
@@ -1873,6 +1875,7 @@ handle_taper_result(
 	    taper_nb_scan_volume--;
 	    dp = serial2disk(result_argv[1]);
 	    taper = sched(dp)->taper;
+	    assert(dp == taper->disk);
 	    taper->state |= TAPER_STATE_DONE;
 	    last_started_taper = NULL;
 	    start_degraded_mode(&runq);
@@ -1886,6 +1889,7 @@ handle_taper_result(
             }
             dp = serial2disk(result_argv[1]);
 	    taper = sched(dp)->taper;
+	    assert(dp == taper->disk);
 	    if (taper->dumper->result == LAST_TOK) {
 		taper->sendresult = 1;
 	    } else {
@@ -1916,6 +1920,7 @@ handle_taper_result(
 
 		taper_nb_wait_reply--;
 		taper_nb_scan_volume--;
+		dp = taper->disk;
 	    }
 	    if (taper_nb_wait_reply == 0) {
 		need_degraded = 1;
@@ -1929,6 +1934,7 @@ handle_taper_result(
 	case PORT: /* PORT <name> <handle> <port> <dataport_list> */
             dp = serial2disk(result_argv[2]);
 	    taper = sched(dp)->taper;
+	    assert(dp == taper->disk);
 	    dumper = sched(dp)->dumper;
 	    dumper->output_port = atoi(result_argv[3]);
 	    amfree(dp->dataport_list);
@@ -2016,7 +2022,7 @@ handle_taper_result(
 
 	if (taper && taper->disk && taper->result != LAST_TOK) {
 	    if (taper->nb_dle >= conf_max_dle_by_volume) {
-		taper_cmd(CLOSE_VOLUME, dp, NULL, 0, NULL);
+		taper_cmd(CLOSE_VOLUME, taper->disk, NULL, 0, NULL);
 	    }
 	    if(taper->dumper) {
 		if (taper->dumper->result != LAST_TOK) {
@@ -2702,7 +2708,6 @@ handle_chunker_result(
                         sched(dp)->level);
             }
             amfree(qname);
-            dp = NULL;
 
 	    event_release(chunker->ev_read);
 
@@ -3657,21 +3662,22 @@ build_diskspace(
 	    amfree(result);
 	    return NULL;
 	}
-	if(stat(filename, &finfo) == -1) {
-	    g_fprintf(stderr, _("build_diskspace: can't stat %s: %s\n"),
-		      filename, strerror(errno));
-	    amfree(used);
-	    amfree(result);
-	    return NULL;
-	}
-	used[j] += ((off_t)finfo.st_size+(off_t)1023)/(off_t)1024;
-	if((fd = open(filename,O_RDONLY)) == -1) {
+	if ((fd = open(filename,O_RDONLY)) == -1) {
 	    g_fprintf(stderr,_("build_diskspace: open of %s failed: %s\n"),
 		    filename, strerror(errno));
 	    amfree(used);
 	    amfree(result);
 	    return NULL;
 	}
+	if (fstat(fd, &finfo) == -1) {
+	    g_fprintf(stderr, _("build_diskspace: can't stat %s: %s\n"),
+		      filename, strerror(errno));
+	    amfree(used);
+	    amfree(result);
+	    close(fd);
+	    return NULL;
+	}
+	used[j] += ((off_t)finfo.st_size+(off_t)1023)/(off_t)1024;
 	if ((buflen = read_fully(fd, buffer, sizeof(buffer), NULL)) > 0) {
 		parse_file_header(buffer, &file, buflen);
 	}

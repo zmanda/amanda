@@ -509,9 +509,10 @@ void
 run_amcleanup(
     char *config_name)
 {
-    pid_t amcleanup_pid;
-    char *amcleanup_program;
-    char *amcleanup_options[4];
+    pid_t  amcleanup_pid;
+    char  *amcleanup_program;
+    char  *amcleanup_options[4];
+    char **env;
 
     switch(amcleanup_pid = fork()) {
 	case -1:
@@ -523,7 +524,9 @@ run_amcleanup(
 	    amcleanup_options[1] = "-p";
 	    amcleanup_options[2] = config_name;
 	    amcleanup_options[3] = NULL;
-	    execve(amcleanup_program, amcleanup_options, safe_env());
+	    env = safe_env();
+	    execve(amcleanup_program, amcleanup_options, env);
+	    free_env(env);
 	    error("exec %s: %s", amcleanup_program, strerror(errno));
 	    /*NOTREACHED*/
 	default:

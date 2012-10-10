@@ -314,8 +314,11 @@ amar_new_file(
     } while (0);
 
     file = g_new0(amar_file_t, 1);
-    if (!file)
-	goto error_exit;
+    if (!file) {
+	g_set_error(error, amar_error_quark(), ENOSPC,
+		    "No more memory");
+	return NULL;
+    }
     file->archive = archive;
     file->filenum = archive->maxfilenum;
     file->attributes = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
@@ -358,7 +361,7 @@ foreach_attr_close(
 	return;
 
     if (!attr->wrote_eoa) {
-	amar_attr_close(attr, error);
+	(void)amar_attr_close(attr, error);
     }
 }
 
@@ -406,7 +409,11 @@ amar_new_attr(
     g_assert(g_hash_table_lookup(file->attributes, &attrid_gint) == NULL);
 
     attribute = malloc(sizeof(amar_attr_t));
-    assert(attribute != NULL);
+    if (attribute == NULL) {
+	g_set_error(error, amar_error_quark(), ENOSPC,
+		    "No more memory");
+	return NULL;
+    }
     attribute->file = file;
     attribute->attrid = attrid;
     attribute->wrote_eoa = FALSE;

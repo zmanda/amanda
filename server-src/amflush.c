@@ -531,7 +531,7 @@ get_letter_from_user(void)
     int r, ch;
 
     fflush(stdout); fflush(stderr);
-    while((ch = getchar()) != EOF && ch != '\n' && g_ascii_isspace(ch)) {
+    while((ch = getchar()) != EOF && ch != '\n' && ch >= 0 && ch <= 255 && g_ascii_isspace(ch)) {
 	(void)ch; /* Quite lint */
     }
     if(ch == '\n') {
@@ -539,7 +539,7 @@ get_letter_from_user(void)
     } else if (ch != EOF) {
 	r = ch;
 	if(islower(r)) r = toupper(r);
-	while((ch = getchar()) != EOF && ch != '\n') { 
+	while((ch = getchar()) != EOF && ch != '\n') {
 	    (void)ch; /* Quite lint */
 	}
     } else {
@@ -550,7 +550,7 @@ get_letter_from_user(void)
 }
 
 /* Allow the user to select a set of datestamps from those in
- * holding disks.  The result can be passed to 
+ * holding disks.  The result can be passed to
  * holding_get_files_for_flush.  If less than two dates are
  * available, then no user interaction takes place.
  *

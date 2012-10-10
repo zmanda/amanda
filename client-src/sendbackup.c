@@ -342,7 +342,6 @@ main(
 	error(_("Missing OPTIONS line in sendbackup input\n"));
 	/*NOTREACHED*/
     }
-
     if (am_has_feature(g_options->features, fe_req_xml)) {
 	char *errmsg = NULL;
 
@@ -365,6 +364,10 @@ main(
 	qamdevice = quote_string(dle->device);
 	dumpdate = g_strdup("NODATE");
 	stroptions = g_strdup("");
+    } else if (dle == NULL) {
+	g_printf(_("ERROR [Missing DLE line in sendbackup input]\n"));
+	error(_("Missing DLE line in sendbackup input\n"));
+	/*NOTREACHED*/
     } else {
 	parse_options(stroptions, dle, g_options->features, 0);
     }

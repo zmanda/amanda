@@ -423,6 +423,7 @@ typedef union sockaddr_union {
 
 /* like safe_env, but optionally add additional environment variables */
 char **	safe_env_full(char **add);
+void free_env(char **env);
 
 time_t	unctime(char *timestr);
 

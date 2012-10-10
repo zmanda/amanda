@@ -1585,6 +1585,7 @@ service_new(
     int newfd;
     char *peer_name;
     char *amanda_remote_host_env[2];
+    char **env;
 
     assert(security_handle != NULL);
     assert(cmd != NULL);
@@ -1796,9 +1797,10 @@ service_new(
         aclose(data_write[STDERR_PIPE][0]);
         aclose(data_write[STDERR_PIPE][1]);
 	safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
-
-	execle(cmd, cmd, "amandad", auth, (char *)NULL, safe_env_full(amanda_remote_host_env));
+	env = safe_env_full(amanda_remote_host_env);
+	execle(cmd, cmd, "amandad", auth, (char *)NULL, env);
 	error(_("could not exec service %s: %s\n"), cmd, strerror(errno));
+	free_env(env);
 	/*NOTREACHED*/
     }
     return NULL;

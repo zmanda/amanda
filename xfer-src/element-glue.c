@@ -269,8 +269,7 @@ static int neighboring_element_fd = -1;
 static int
 _get_read_fd(XferElementGlue *self)
 {
-    if (!self->read_fdp)
-	return -1; /* shouldn't happen.. */
+    assert(self->read_fdp);
 
     if (self->read_fdp == &neighboring_element_fd) {
 	XferElement *elt = XFER_ELEMENT(self);
@@ -287,8 +286,8 @@ _get_read_fd(XferElementGlue *self)
 static int
 _get_write_fd(XferElementGlue *self)
 {
-    if (!self->write_fdp)
-	return -1; /* shouldn't happen.. */
+
+    assert(self->write_fdp);
 
     if (self->write_fdp == &neighboring_element_fd) {
 	XferElement *elt = XFER_ELEMENT(self);

@@ -261,15 +261,14 @@ search_holding_disk(
 
 	dp = NULL;
 	orig_name = g_strdup(file.name);
-	for(;;) {
+	for (;;) {
 	    char *s;
-	    if((dp = lookup_disk(file.name, file.disk)))
+	    if ((dp = lookup_disk(orig_name, file.disk)))
 		break;
-	    if((s = strrchr(file.name,'.')) == NULL)
+	    if ((s = strrchr(orig_name,'.')) == NULL)
 		break;
 	    *s = '\0';
 	}
-	strcpy(file.name, orig_name); /* restore munged string */
 	g_free(orig_name);
 
 	if ( dp == NULL ) {

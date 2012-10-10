@@ -1002,11 +1002,11 @@ amstar_validate(
     dbprintf("failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
     fprintf(stderr,"failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
     amfree(cmd);
+    free_env(env);
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
     g_ptr_array_free_full(argv_ptr);
-
 }
 
 static GPtrArray *amstar_build_argv(

@@ -123,3 +123,15 @@ safe_env_full(char **add)
     }
     return envp;
 }
+
+void
+free_env(
+    char **env)
+{
+    char **p;
+
+    for (p = env; *p != NULL; p++) {
+	g_free(*p);
+    }
+    g_free(env);
+}

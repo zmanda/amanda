@@ -394,7 +394,7 @@ check_options(
 
     if (g_str_equal(dle->program, "GNUTAR")) {
 	need_gnutar=1;
-        if(dle->device && dle->device[0] == '/' && dle->device[1] == '/') {
+        if (dle->device[0] == '/' && dle->device[1] == '/') {
 	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
 		g_printf(_("ERROR [samba support only one exclude file]\n"));
 	    }
@@ -450,7 +450,7 @@ check_options(
 #ifndef AIX_BACKUP
 #ifdef VDUMP
 #ifdef DUMP
-	if (dle->device && g_str_equal(amname_to_fstype(dle->device), "advfs"))
+	if (g_str_equal(amname_to_fstype(dle->device), "advfs"))
 #else
 	if (1)
 #endif
@@ -464,7 +464,7 @@ check_options(
 #endif /* VDUMP */
 #ifdef XFSDUMP
 #ifdef DUMP
-	if (dle->device && g_str_equal(amname_to_fstype(dle->device), "xfs"))
+	if (g_str_equal(amname_to_fstype(dle->device), "xfs"))
 #else
 	if (1)
 #endif
@@ -478,7 +478,7 @@ check_options(
 #endif /* XFSDUMP */
 #ifdef VXDUMP
 #ifdef DUMP
-	if (dle->device && g_str_equal(amname_to_fstype(dle->device), "vxfs"))
+	if (g_str_equal(amname_to_fstype(dle->device), "vxfs"))
 #else
 	if (1)
 #endif
@@ -501,7 +501,7 @@ check_options(
 	    need_restore=1;
 #endif
     }
-    if ((dle->compress == COMP_BEST) || (dle->compress == COMP_FAST) 
+    if ((dle->compress == COMP_BEST) || (dle->compress == COMP_FAST)
 		|| (dle->compress == COMP_CUST)) {
 	need_compress_path=1;
     }
@@ -509,7 +509,7 @@ check_options(
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
 	    g_fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
 		    amandad_auth, dle->auth);
-	    if (g_str_equal(dle->auth, "ssh"))  {	
+	    if (g_str_equal(dle->auth, "ssh"))  {
 		g_fprintf(stderr, _("ERROR [The auth in ~/.ssh/authorized_keys "
 				  "should be \"--auth=ssh\", or use another auth "
 				  " for the DLE]\n"));
@@ -517,7 +517,7 @@ check_options(
 	    else {
 		g_fprintf(stderr, _("ERROR [The auth in the inetd/xinetd configuration "
 				  " must be the same as the DLE]\n"));
-	    }		
+	    }
 	}
     }
 }
@@ -1251,72 +1251,73 @@ check_file_exist(
 static void
 print_platform(void)
 {
-    struct stat stat_buf;
     char *uname;
     char *distro = NULL;
     char *platform = NULL;
     char  line[1025];
     GPtrArray *argv_ptr;
+    FILE *release;
 
-    if (stat("/etc/lsb-release", &stat_buf) == 0) {
-	FILE *release = fopen("/etc/lsb-release", "r");
+    release = fopen("/etc/lsb-release", "r");
+    if (release) {
 	distro = "Ubuntu";
-	if (release) {
-	    while (fgets(line, 1024, release)) {
-		if (strstr(line, "DESCRIPTION")) {
-		    platform = strchr(line, '=');
-		    if (platform) platform++;
-		}
+	while (fgets(line, 1024, release)) {
+	    if (strstr(line, "DESCRIPTION")) {
+		platform = strchr(line, '=');
+		if (platform) platform++;
 	    }
-	    fclose(release);
 	}
-    } else if (stat("/etc/redhat-release", &stat_buf) == 0) {
-	FILE *release = fopen("/etc/redhat-release", "r");
-	distro = "RPM";
-	if (release) {
-	    char *result;
-	    result = fgets(line, 1024, release);
-	    if (result) {
-		platform = line;
-	    }
-	    fclose(release);
-	}
-    } else if (stat("/etc/debian_version", &stat_buf) == 0) {
-	FILE *release = fopen("/etc/debian_version", "r");
-	distro = "Debian";
-	if (release) {
-	    char *result;
-	    result = fgets(line, 1024, release);
-	    if (result) {
-		platform = line;
-	    }
-	    fclose(release);
-	}
-    } else {
-	argv_ptr = g_ptr_array_new();
-
-	g_ptr_array_add(argv_ptr, UNAME_PATH);
-	g_ptr_array_add(argv_ptr, "-s");
-	g_ptr_array_add(argv_ptr, NULL);
-	uname = get_first_line(argv_ptr);
-	if (uname) {
-	    if (strncmp(uname, "SunOS", 5) == 0) {
-		FILE *release = fopen("/etc/release", "r");
-		distro = "Solaris";
-		if (release) {
-		    char *result;
-		    result = fgets(line, 1024, release);
-		    if (result) {
-			platform = line;
-		    }
-		    fclose(release);
-		}
-	    }
-	    amfree(uname);
-	}
-	g_ptr_array_free(argv_ptr, TRUE);
+	fclose(release);
+	goto print_platform_out;
     }
 
+    release = fopen("/etc/redhat-release", "r");
+    if (release) {
+	char *result;
+	distro = "RPM";
+	result = fgets(line, 1024, release);
+	if (result) {
+	    platform = line;
+	}
+	fclose(release);
+	goto print_platform_out;
+    }
+
+    release = fopen("/etc/debian_version", "r");
+    if (release) {
+	char *result;
+	distro = "Debian";
+	result = fgets(line, 1024, release);
+	if (result) {
+	    platform = line;
+	}
+	fclose(release);
+	goto print_platform_out;
+    }
+
+    argv_ptr = g_ptr_array_new();
+    g_ptr_array_add(argv_ptr, UNAME_PATH);
+    g_ptr_array_add(argv_ptr, "-s");
+    g_ptr_array_add(argv_ptr, NULL);
+    uname = get_first_line(argv_ptr);
+    if (uname) {
+	if (strncmp(uname, "SunOS", 5) == 0) {
+	    FILE *release = fopen("/etc/release", "r");
+	    distro = "Solaris";
+	    if (release) {
+		char *result;
+		result = fgets(line, 1024, release);
+		if (result) {
+		   platform = line;
+		}
+		fclose(release);
+	    }
+	}
+	amfree(uname);
+    }
+    g_ptr_array_free(argv_ptr, TRUE);
+
+print_platform_out:
     if (!distro) {
 	distro = "Unknown";
     }

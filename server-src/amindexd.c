@@ -235,7 +235,7 @@ uncompress_file(
 	    g_ptr_array_add(*emsg, msg);
 	    amfree(filename);
 	    return NULL;
- 	}
+	}
 
 #ifdef UNCOMPRESS_OPT
 #  define PARAM_UNCOMPRESS_OPT UNCOMPRESS_OPT
@@ -256,7 +256,7 @@ uncompress_file(
 	    return NULL;
 	}
 
-	/* just use our stderr directly for the pipe's stderr; in 
+	/* just use our stderr directly for the pipe's stderr; in
 	 * main() we send stderr to the debug file, or /dev/null
 	 * if debugging is disabled */
 

@@ -993,7 +993,7 @@ test_pipe(void)
 	    close(p[1]);
 	    try_reading_fd(steps, handling, p[0]);
 	    close(p[0]);
-            wait(&status);
+            (void)wait(&status);
             if(WIFSIGNALED(status)) {
                 printf("child was terminated by signal %d\n", WTERMSIG(status));
                 exit(1);

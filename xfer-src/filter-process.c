@@ -156,15 +156,17 @@ start_impl(
 
 	case 0: /* child */
 	    /* first, copy our fd's out of the stdio range */
-	    while (rfd <= STDERR_FILENO)
+	    while (rfd >= 0 && rfd <= STDERR_FILENO)
 		rfd = dup(rfd);
-	    while (wfd <= STDERR_FILENO)
+	    while (wfd >= 0 && wfd <= STDERR_FILENO)
 		wfd = dup(wfd);
 
 	    /* set up stdin, stdout, and stderr, overwriting anything already open
 	     * on those fd's */
-	    dup2(rfd, STDIN_FILENO);
-	    dup2(wfd, STDOUT_FILENO);
+	    if (rfd > 0)
+		dup2(rfd, STDIN_FILENO);
+	    if (wfd > 0)
+		dup2(wfd, STDOUT_FILENO);
 	    dup2(self->pipe_err[1], STDERR_FILENO);
 
 	    /* and close everything else */

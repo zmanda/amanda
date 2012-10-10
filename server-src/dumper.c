@@ -977,7 +977,7 @@ add_msg_data(
     /*
      * Expand the buffer if it can't hold the new contents.
      */
-    if ((buflen + len + 1) > msg.size) {
+    if (!msg.buf || (buflen + len + 1) > msg.size) {
 	char *newbuf;
 	size_t newsize;
 
@@ -1229,7 +1229,15 @@ do_dump(
     g_free(errfname);
     errfname = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
 
-    mkdir(errfname, 0700);
+    if (mkdir(errfname, 0700) == -1) {
+	if (errno != EEXIST) {
+	    g_free(errstr);
+	    errstr = g_strdup_printf("Create directory \"%s\": %s",
+				     errfname, strerror(errno));
+	    amfree(errfname);
+	    goto failed;
+	}
+    }
 
     g_free(errfname);
     errfname = g_strconcat(AMANDA_DBGDIR, "/log.error/", hostname, ".", fn, ".",
@@ -1833,8 +1841,8 @@ handle_filter_stderr(
     }
 
     /* process all complete lines */
-    b = filter->buffer + filter->first;
     filter->buffer[filter->first + filter->size] = '\0';
+    b = filter->buffer + filter->first;
     while (b < filter->buffer + filter->first + filter->size &&
 	   (p = strchr(b, '\n')) != NULL) {
 	*p = '\0';
