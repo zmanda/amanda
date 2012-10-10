@@ -721,15 +721,15 @@ amgtar_estimate(
     char       line[32768];
     char      *errmsg = NULL;
     char      *qerrmsg = NULL;
-    char      *qdisk;
+    char      *qdisk = NULL;
     amwait_t   wait_status;
     int        tarpid;
     amregex_t *rp;
     times_t    start_time;
     int        level;
     GSList    *levels;
-    char      *file_exclude;
-    char      *file_include;
+    char      *file_exclude = NULL;
+    char      *file_include = NULL;
     GString   *strbuf;
 
     if (!argument->level) {
@@ -744,8 +744,6 @@ amgtar_estimate(
         fprintf(stderr, "ERROR No device argument\n");
         error(_("No device argument"));
     }
-
-    qdisk = quote_string(argument->dle.disk);
 
     if (argument->calcsize) {
 	char *dirname;
@@ -786,6 +784,7 @@ amgtar_estimate(
 	goto common_error;
     }
 
+    qdisk = quote_string(argument->dle.disk);
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
 	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
@@ -910,6 +909,11 @@ common_exit:
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
     amfree(qdisk);
+    amfree(file_exclude);
+    amfree(file_include);
+    amfree(errmsg);
+    amfree(qerrmsg);
+    amfree(incrname);
     return;
 
 common_error:
@@ -917,8 +921,11 @@ common_error:
     amfree(qdisk);
     dbprintf("%s", errmsg);
     fprintf(stdout, "ERROR %s\n", qerrmsg);
+    amfree(file_exclude);
+    amfree(file_include);
     amfree(errmsg);
     amfree(qerrmsg);
+    amfree(incrname);
     return;
 }
 
@@ -1109,6 +1116,8 @@ amgtar_backup(
 	    unlink(file_include);
     }
 
+    amfree(file_exclude);
+    amfree(file_include);
     amfree(incrname);
     amfree(qdisk);
     amfree(cmd);
@@ -1218,8 +1227,8 @@ amgtar_restore(
 		amfree(escaped);
 	    }
 	}
-	fclose(exclude);
 	fclose(exclude_list);
+	fclose(exclude);
 	g_ptr_array_add(argv_ptr, g_strdup("--exclude-from"));
 	g_ptr_array_add(argv_ptr, exclude_filename);
     }
@@ -1305,6 +1314,7 @@ amgtar_restore(
 	for (i = 0; i < argv_include->len; i++) {
 	    g_ptr_array_add(argv_ptr, (char *)g_ptr_array_index(argv_include,i));
 	}
+	amfree(sdisk);
     }
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -1327,8 +1337,7 @@ amgtar_restore(
     if (argument->verbose == 0) {
 	if (exclude_filename)
 	    unlink(exclude_filename);
-	if (include_filename)
-	    unlink(include_filename);
+	unlink(include_filename);
     }
     amfree(cmd);
     amfree(include_filename);
@@ -1487,21 +1496,24 @@ amgtar_get_incrname(
 	    exit(1);
 	}
 
+	amfree(inputname);
+	amfree(basename);
+
 	while ((nb = read(infd, &buf, sizeof(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		errmsg = g_strdup_printf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", errmsg);
+		aclose(infd);
+		aclose(outfd);
 		amfree(incrname);
-		amfree(inputname);
-		amfree(basename);
-		amfree(errmsg);
 		dbprintf("%s\n", errmsg);
 		if (command == CMD_ESTIMATE) {
 		    fprintf(mesgstream, "ERROR %s\n", errmsg);
 		} else {
 		    fprintf(mesgstream, "? %s\n", errmsg);
 		}
+		amfree(errmsg);
 		exit(1);
 	    }
 	}
@@ -1510,16 +1522,16 @@ amgtar_get_incrname(
 	    errmsg = g_strdup_printf(_("reading from %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
+	    aclose(infd);
+	    aclose(outfd);
 	    amfree(incrname);
-	    amfree(inputname);
-	    amfree(basename);
-	    amfree(errmsg);
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
 		fprintf(mesgstream, "? %s\n", errmsg);
 	    }
+	    amfree(errmsg);
 	    exit(1);
 	}
 
@@ -1527,9 +1539,8 @@ amgtar_get_incrname(
 	    errmsg = g_strdup_printf(_("closing %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
+	    aclose(outfd);
 	    amfree(incrname);
-	    amfree(inputname);
-	    amfree(basename);
 	    amfree(errmsg);
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
@@ -1544,8 +1555,6 @@ amgtar_get_incrname(
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
 	    amfree(incrname);
-	    amfree(inputname);
-	    amfree(basename);
 	    amfree(errmsg);
 	    dbprintf("%s\n", errmsg);
 	    if (command == CMD_ESTIMATE) {
@@ -1556,8 +1565,6 @@ amgtar_get_incrname(
 	    exit(1);
 	}
 
-	amfree(inputname);
-	amfree(basename);
     } else {
 	errmsg =  _("GNUTAR-LISTDIR is not defined");
 	dbprintf("%s\n", errmsg);

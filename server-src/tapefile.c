@@ -489,19 +489,20 @@ static time_t
 stamp2time(
     char *datestamp)
 {
-    struct tm *tm;
+    struct tm *tm, *tm1;
     time_t now;
     char date[9];
     int dateint;
+    time_t tt;
 
     strncpy(date, datestamp, 8);
     date[8] = '\0';
     dateint = atoi(date);
     now = time(0);
-    tm = localtime(&now);	/* initialize sec/min/hour & gmtoff */
+    tm = g_malloc(sizeof(struct tm));
+    tm1 = localtime_r(&now, tm);	/* initialize sec/min/hour & gmtoff */
 
-    if (!tm) {
-	tm = g_malloc(sizeof(struct tm));
+    if (!tm1) {
 	tm->tm_sec   = 0;
 	tm->tm_min   = 0;
 	tm->tm_hour  = 0;
@@ -510,12 +511,13 @@ stamp2time(
 	tm->tm_isdst = 0;
     }
 
-
     tm->tm_year = ( dateint          / 10000) - 1900;
     tm->tm_mon  = ((dateint % 10000) /   100) - 1;
     tm->tm_mday = ((dateint %   100)        );
 
-    return mktime(tm);
+    tt = mktime(tm);
+    amfree(tm);
+    return (tt);
 }
 
 char *list_new_tapes(int nb)

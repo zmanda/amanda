@@ -442,7 +442,7 @@ char *progname;
     start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
     dumppid = pipespawn(cmd, STDIN_PIPE, 0,
-			&dumpin, &dumpout, &mesgf, 
+			&dumpin, &dumpout, &mesgf,
 			cmdX, config,
 			"backup",
 			dumpkeys,
@@ -461,7 +461,6 @@ char *progname;
 
     aclose(dumpin);
     aclose(dumpout);
-    aclose(compout);
     aclose(dataf);
     aclose(mesgf);
     if (dle->create_index)

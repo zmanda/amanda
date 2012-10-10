@@ -53,7 +53,7 @@ main(
     gchar **strings;
 #endif
 
-    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+    if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("runtar-%s\n", VERSION);
 	return (0);
     }
@@ -63,7 +63,7 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
 

@@ -1,3 +1,6 @@
+2012-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* */*.c: Fix bug found by Coverity.
+
 2012-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/amrecover.c: Solaris do not have sa_restorer.
 

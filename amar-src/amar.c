@@ -250,7 +250,7 @@ amar_close(
     /* verify all files are done */
     g_assert(g_hash_table_size(archive->files) == 0);
 
-    if (!flush_buffer(archive, error))
+    if (archive->mode == O_WRONLY && !flush_buffer(archive, error))
 	success = FALSE;
 
     g_hash_table_destroy(archive->files);

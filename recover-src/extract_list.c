@@ -1292,12 +1292,14 @@ delete_file(
 		/* skip preamble */
 		if ((i = get_reply_line()) == -1) {
 		    amfree(ditem_path);
+		    amfree(ditem_tpath);
 		    amfree(tpath_on_disk);
 		    exit(1);
 		}
 		if(i==0)		/* assume something wrong */
 		{
 		    amfree(ditem_path);
+		    amfree(ditem_tpath);
 		    amfree(tpath_on_disk);
 		    amfree(lditem.path);
 		    l = reply_line();

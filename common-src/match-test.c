@@ -171,7 +171,7 @@ test_match(void)
 	matched = match_no_newline(t->expr, t->str);
 	if (!!matched != !!t->should_match_no_newline) {
 	    ok = FALSE;
-	    if (t->should_match) {
+	    if (t->should_match_no_newline) {
 		g_fprintf(stderr, "%s should have matched (no_newline) regular expr %s\n",
 			t->str, t->expr);
 	    } else {

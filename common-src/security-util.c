@@ -2045,6 +2045,7 @@ check_user_ruserok(
     char *result;
     int ok;
     uid_t myuid = getuid();
+    int devnull;
 
     /*
      * note that some versions of ruserok (eg SunOS 3.2) look in
@@ -2096,16 +2097,23 @@ check_user_ruserok(
 
 	saved_stderr = dup(2);
 	close(2);
-	if (open("/dev/null", O_RDWR) == -1) {
+	if ((devnull = open("/dev/null", O_RDWR)) == -1) {
             auth_debug(1, _("Could not open /dev/null: %s\n"), strerror(errno));
 	    ec = 1;
 	} else {
+	    int devnull2 = -1;
+	    if (devnull != 2) {
+		devnull2 = dup2(devnull, 2);
+	    }
 	    ok = ruserok(host, myuid == 0, remoteuser, CLIENT_LOGIN);
 	    if (ok < 0) {
 	        ec = 1;
 	    } else {
 	        ec = 0;
 	    }
+	    close(devnull);
+	    if (devnull2 != -1)
+		close(devnull2);
 	}
 	(void)dup2(saved_stderr,2);
 	close(saved_stderr);

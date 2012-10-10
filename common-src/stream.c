@@ -254,8 +254,8 @@ stream_client_internal(
     }
 
     freeaddrinfo(res);
-					  
-    if (client_socket > 0)
+
+    if (client_socket >= 0)
 	goto out;
 
     g_debug(_("stream_client: Could not bind to port in range %d-%d."),

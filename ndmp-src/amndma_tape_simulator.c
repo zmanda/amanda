@@ -117,7 +117,7 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
   skip_header_check:
 	ta->tape_fd = fd;
 	NDMOS_API_BZERO (ta->drive_name, sizeof ta->drive_name);
-	strcpy (ta->drive_name, drive_name);
+	g_strlcpy (ta->drive_name, drive_name, sizeof ta->drive_name);
 	bzero (&ta->tape_state, sizeof ta->tape_state);
 	ta->tape_state.error = NDMP9_NO_ERR;
 	ta->tape_state.state = NDMP9_TAPE_STATE_OPEN;
@@ -236,61 +236,23 @@ ndmos_tape_mtio (struct ndm_session *sess,
 		return NDMP9_DEV_NOT_OPEN_ERR;
 	}
 
-	
+
 	/* audit for valid op and for tape mode */
 	switch (op) {
 	case NDMP9_MTIO_FSF:
 		return NDMP9_NO_ERR;
-		while (*resid > 0) {
-			simu_flush_weof(sess);
-			rc = simu_forw_one (sess, 1);
-			if (rc < 0)
-				return NDMP9_IO_ERR;
-			if (rc == 0)
-				break;
-			if (rc == SIMU_GAP_RT_FILE)
-				*resid -= 1;
-		}
 		break;
 
 	case NDMP9_MTIO_BSF:
 		return NDMP9_NO_ERR;
-		while (*resid > 0) {
-			simu_flush_weof(sess);
-			rc = simu_back_one (sess, 1);
-			if (rc < 0)
-				return NDMP9_IO_ERR;
-			if (rc == 0)
-				break;
-			if (rc == SIMU_GAP_RT_FILE)
-				*resid -= 1;
-		}
 		break;
 
 	case NDMP9_MTIO_FSR:
 		return NDMP9_NO_ERR;
-		while (*resid > 0) {
-			simu_flush_weof(sess);
-			rc = simu_forw_one (sess, 0);
-			if (rc < 0)
-				return NDMP9_IO_ERR;
-			if (rc == 0)
-				break;
-			*resid -= 1;
-		}
 		break;
 
 	case NDMP9_MTIO_BSR:
 		return NDMP9_NO_ERR;
-		while (*resid > 0) {
-			simu_flush_weof(sess);
-			rc = simu_back_one (sess, 0);
-			if (rc < 0)
-				return NDMP9_IO_ERR;
-			if (rc == 0)
-				break;
-			*resid -= 1;
-		}
 		break;
 
 	case NDMP9_MTIO_REW:
@@ -306,24 +268,10 @@ ndmos_tape_mtio (struct ndm_session *sess,
 
 	case NDMP9_MTIO_OFF:
 		return NDMP9_NO_ERR;
-		simu_flush_weof(sess);
-		/* Hmmm. */
 		break;
 
 	case NDMP9_MTIO_EOF:		/* should be "WFM" write-file-mark */
 		return NDMP9_NO_ERR;
-		if (!NDMTA_TAPE_IS_WRITABLE(ta)) {
-			return NDMP9_PERMISSION_ERR;
-		}
-		while (*resid > 0) {
-			ndmp9_error	err;
-
-			err = ndmos_tape_wfm (sess);
-			if (err != NDMP9_NO_ERR)
-				return err;
-
-			*resid -= 1;
-		}
 		break;
 
 	default:

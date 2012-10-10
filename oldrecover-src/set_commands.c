@@ -194,6 +194,7 @@ set_disk(
     amfree(cmd);
 
     if (!server_happy()) {
+	amfree(uqdsk);
 	amfree(uqmtpt);
 	return;
     }

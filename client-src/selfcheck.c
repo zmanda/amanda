@@ -97,7 +97,7 @@ main(
     GSList *errlist;
     am_level_t *alevel;
 
-    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+    if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("selfcheck-%s\n", VERSION);
 	return (0);
     }

@@ -257,7 +257,14 @@ enter_record(
 
     amdp = lookup(name, 0);
 
-    if(level < 0 || level >= DUMP_LEVELS || dumpdate < amdp->dates[level]) {
+    if (level < 0 || level >= DUMP_LEVELS) {
+	qname = quote_string(name);
+	/* this is not allowed, but we can ignore it */
+        dbprintf(_("amandates botch: %s lev %d: new dumpdate %ld\n"),
+		  qname, level, (long) dumpdate);
+	amfree(qname);
+	return;
+    } else if(dumpdate < amdp->dates[level]) {
 	qname = quote_string(name);
 	/* this is not allowed, but we can ignore it */
         dbprintf(_("amandates botch: %s lev %d: new dumpdate %ld old %ld\n"),
@@ -283,7 +290,14 @@ amandates_updateone(
 
     amdp = lookup(name, 1);
 
-    if(level < 0 || level >= DUMP_LEVELS || dumpdate < amdp->dates[level]) {
+    if (level < 0 || level >= DUMP_LEVELS) {
+	/* this is not allowed, but we can ignore it */
+	qname = quote_string(name);
+	dbprintf(_("amandates updateone: %s lev %d: bad level, dumpdate %ld"),
+		  name, level, (long) dumpdate);
+	amfree(qname);
+	return;
+    } else if (dumpdate < amdp->dates[level]) {
 	/* this is not allowed, but we can ignore it */
 	qname = quote_string(name);
 	dbprintf(_("amandates updateone: %s lev %d: new dumpdate %ld old %ld"),

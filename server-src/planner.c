@@ -1999,6 +1999,7 @@ static void handle_result(
 	skip_whitespace(t, tch);
 
 	dp = lookup_hostdisk(hostp, disk);
+	amfree(disk);
 	if(dp == NULL) {
 	    log_add(L_ERROR, _("%s: invalid reply from sendsize: `%s'\n"),
 		    hostp->hostname, line);
@@ -2029,8 +2030,6 @@ static void handle_result(
 	    amfree(disk);
 	    goto bad_msg;
 	}
-
-	amfree(disk);
 
 	for (i = 0; i < MAX_LEVELS; i++) {
 	    if (est(dp)->estimate[i].level == level) {

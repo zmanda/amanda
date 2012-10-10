@@ -254,7 +254,7 @@ run_server_script(
     int        scriptin, scriptout, scripterr;
     char      *cmd;
     char      *command = NULL;
-    GPtrArray *argv_ptr = g_ptr_array_new();
+    GPtrArray *argv_ptr;
     FILE      *streamout;
     char      *line;
     char      *plugin;
@@ -288,8 +288,6 @@ run_server_script(
 	    }
 	}
     }
-
-    g_ptr_array_add(argv_ptr, g_strdup(plugin));
 
     switch (execute_on) {
     case EXECUTE_ON_PRE_AMCHECK:
@@ -361,6 +359,8 @@ run_server_script(
 	return;
     }
 
+    argv_ptr = g_ptr_array_new();
+    g_ptr_array_add(argv_ptr, g_strdup(plugin));
     g_ptr_array_add(argv_ptr, g_strdup(command));
     g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
     g_ptr_array_add(argv_ptr, g_strdup("server"));

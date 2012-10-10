@@ -47,7 +47,7 @@ main (int ac, char *av[])
 {
 	int rc;
 
-	if (ac > 1 && av && av[1] && g_str_equal(av[1], "--version")) {
+	if (ac > 1 && av[1] && g_str_equal(av[1], "--version")) {
 		printf("amndmjob-%s\n", VERSION);
 		return (0);
 	}

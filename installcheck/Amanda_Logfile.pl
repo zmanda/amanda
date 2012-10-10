@@ -400,7 +400,6 @@ is_deeply([ map { res2arr($_) } @filtered ],
 	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',      'OK'  , '',         3, 4 ],
 	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',      'OK'  , '',         4, 4 ],
 	], "filter with dumpspecs '.* /var thatbox' (union of two overlapping sets includes dupes)");
-
 @dumpspecs = Amanda::Cmdline::dumpspec_t->new('thatbox', undef, undef, undef, '20071109010002');
 @filtered = Amanda::Logfile::dumps_match_dumpspecs([@results], [@dumpspecs], 0);
 @filtered = sort { $a->{'label'} cmp $b->{'label'} ||

@@ -753,6 +753,7 @@ start_server_check(
 			strerror(errno));
 		confbad = 1;
 	    }
+	    amfree(lbl_templ);
 #if !defined(HAVE_LPR_CMD)
 	    g_fprintf(outf, _("ERROR: lbl-templ set but no LPR command defined. You should reconfigure amanda\n       and make sure it finds a lpr or lp command.\n"));
 	    confbad = 1;

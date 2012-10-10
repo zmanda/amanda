@@ -1529,11 +1529,11 @@ extract_files_setup(
      */
 
     if(am_has_feature(tapesrv_features, fe_recover_splits)){
-	char buffer[32768];
+	char buffer[32768+1];
 	in_port_t data_port = (in_port_t)-1;
         ssize_t nread;
 
-        nread = read(tape_control_sock, buffer, sizeof(buffer));
+        nread = read(tape_control_sock, buffer, sizeof(buffer)-1);
 
 	if (nread <= 0) {
 	    error(_("Could not read from control socket: %s\n"),
@@ -1547,7 +1547,7 @@ extract_files_setup(
 	    error(_("Recieved invalid port number message from control socket: %s\n"),
                   buffer);
 	    /*NOTREACHED*/
-        }	
+        }
 
 	tape_data_sock = stream_client_privileged(server_name,
 						  data_port,
@@ -1661,7 +1661,7 @@ extract_files_child(
 	/*NOTREACHED*/
     }
 
-    if (file.program != NULL) {
+    if (file.program[0] != '\0') {
 #ifdef GNUTAR
 	if (g_str_equal(file.program, GNUTAR))
 	    dumptype = IS_GNUTAR;

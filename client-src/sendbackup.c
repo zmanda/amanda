@@ -126,7 +126,7 @@ main(
     FILE   *mesgstream;
     am_level_t *alevel;
 
-    if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
+    if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("sendbackup-%s\n", VERSION);
 	return (0);
     }
@@ -1306,9 +1306,18 @@ start_index(
   save_fd(&mesg, 4);
   save_fd(&input, 4);
   dup2(pipefd[0], 0);
-  dup2(index, 1);
-  dup2(mesg, 2);
-  dup2(input, 3);
+  if (index != 1) {
+    dup2(index, 1);
+    aclose(index);
+  }
+  if (mesg != 2) {
+    dup2(mesg, 2);
+    aclose(mesg);
+  }
+  if (input != 3) {
+    dup2(input, 3);
+    aclose(input);
+  }
   for(index = 4; index < (int)FD_SETSIZE; index++) {
     if (index != dbfd()) {
       close(index);

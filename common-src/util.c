@@ -127,7 +127,7 @@ connect_portrange(
 	if(port >= first_port && port <= last_port) {
 	    s = connect_port(addrp, port, proto, svaddr, nonblock);
 	    if(s == -2) return -1;
-	    if(s > 0) {
+	    if(s >= 0) {
 		return s;
 	    }
 	    if (errno != EAGAIN && errno != EBUSY)
@@ -139,7 +139,7 @@ connect_portrange(
     for (port = first_port; port <= last_port; port++) {
 	s = connect_port(addrp, port, proto, svaddr, nonblock);
 	if(s == -2) return -1;
-	if(s > 0) {
+	if(s >= 0) {
 	    port_in_use[nb_port_in_use++] = port;
 	    return s;
 	}

@@ -1620,6 +1620,7 @@ indirecttcp_start_writing(
 		NDMP4_ADDR_TCP,
 		&real_addrs)) {
 	set_error_from_ndmp(self);
+	close(conn_sock);
 	return FALSE;
     }
 
@@ -1638,6 +1639,7 @@ indirecttcp_start_writing(
 	    device_set_error(DEVICE(self),
 		g_strdup_printf("writing to indirecttcp socket: %s", strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
+	    close(conn_sock);
 	    return FALSE;
 	}
     }

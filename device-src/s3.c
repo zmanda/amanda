@@ -650,7 +650,7 @@ rfc3339_date(
 	    int fd[2];
 	    char buf[101];
 	    time_t a;
-	    size_t size;
+	    ssize_t size;
 
 	    if (pipe(fd) == -1)
 		return 1073741824;
@@ -673,6 +673,7 @@ rfc3339_date(
 		default:
 		    close(fd[1]);
 		    size = read(fd[0], buf, 100);
+		    if (size < 0) size = 0;
 		    close(fd[0]);
 		    buf[size] = '\0';
 		    waitpid(pid, NULL, 0);
@@ -3378,7 +3379,6 @@ s3_make_bucket(S3Handle *hdl,
         { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
         };
     regmatch_t pmatch[4];
-    char *loc_end_open, *loc_content;
     CurlBuffer buf = {NULL, 0, 0, 0}, *ptr = NULL;
     s3_read_func read_func = NULL;
     s3_reset_func reset_func = NULL;
@@ -3452,8 +3452,8 @@ s3_make_bucket(S3Handle *hdl,
             }
 
             if (!s3_regexec_wrap(&location_con_regex, body, 4, pmatch, 0)) {
-                loc_end_open = find_regex_substring(body, pmatch[1]);
-                loc_content = find_regex_substring(body, pmatch[3]);
+                char *loc_end_open = find_regex_substring(body, pmatch[1]);
+                char *loc_content = find_regex_substring(body, pmatch[3]);
 
                 /* The case of an empty string is special because XML allows
                  * "self-closing" tags

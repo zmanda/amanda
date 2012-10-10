@@ -596,7 +596,7 @@ start_backup(
 
     aclose(dumpin);
     aclose(dumpout);
-    aclose(compout);
+    //aclose(compout);
     aclose(dataf);
     aclose(mesgf);
     if (dle->create_index)

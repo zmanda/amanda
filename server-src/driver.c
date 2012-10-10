@@ -1627,6 +1627,8 @@ handle_taper_result(
 	    assert(taper != NULL);
 	    taper->left = 0;
 	    taper->nb_dle = 0;
+	    taper->disk = NULL;
+	    taper->dumper = NULL;
 	    taper->state &= ~TAPER_STATE_INIT;
 	    taper->state |= TAPER_STATE_RESERVATION;
 	    taper->state |= TAPER_STATE_IDLE;
@@ -2747,6 +2749,7 @@ read_flush(
     char *qname = NULL;
     char *qdestname = NULL;
     char *conf_infofile;
+    assignedhd_t **holdp;
 
     (void)cookie;	/* Quiet unused parameter warning */
 
@@ -2897,6 +2900,9 @@ read_flush(
 	dp1->hostnext = flushhost->disks;
 	flushhost->disks = dp1;
 
+	holdp = build_diskspace(destname);
+	if (holdp == NULL) continue;
+
 	sp = (sched_t *) g_malloc(sizeof(sched_t));
 	sp->destname = destname;
 	sp->level = file.dumplevel;
@@ -2914,12 +2920,7 @@ read_flush(
 	sp->dump_attempted = 0;
 	sp->taper_attempted = 0;
 	sp->act_size = holding_file_size(destname, 0);
-	sp->holdp = build_diskspace(destname);
-	if (sp->holdp == NULL) {
-	    g_free(sp->datestamp);
-	    g_free(sp);
-	    continue;
-	}
+	sp->holdp = holdp;
 	sp->dumper = NULL;
 	sp->taper = NULL;
 	sp->timestamp = (time_t)0;

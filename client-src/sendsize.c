@@ -1450,7 +1450,7 @@ getsize_dump(
 	amfree(device);
 	amfree(qdevice);
 	amfree(qdisk);
-	close(nullfd);
+	aclose(nullfd);
 	return(-1);
     }
 
@@ -1579,7 +1579,7 @@ getsize_dump(
 	amfree(qdisk);
 	amfree(name);
 	amfree(fstype);
-	close(nullfd);
+	aclose(nullfd);
 	return -1;
     default:
 	break; 
@@ -1602,10 +1602,10 @@ getsize_dump(
 		dup2(killctl[0], 0);
 		dup2(nullfd, 1);
 		dup2(nullfd, 2);
-		close(pipefd[0]);
-		close(pipefd[1]);
-		close(killctl[1]);
-		close(nullfd);
+		aclose(pipefd[0]);
+		aclose(pipefd[1]);
+		aclose(killctl[1]);
+		aclose(nullfd);
 		if (g_options->config)
 		    config = g_options->config;
 		else
@@ -1855,8 +1855,9 @@ getsize_smbtar(
     char *qdisk;
     amwait_t wait_status;
 
-    if (level > 1)
+    if (level > 1) {
 	return -2; /* planner will not even consider this level */
+    }
 
     error_pn = g_strconcat(get_pname(), "-smbclient", NULL);
     qdisk = quote_string(dle->disk);
@@ -2107,8 +2108,9 @@ getsize_gnutar(
     amwait_t wait_status;
     char tmppath[PATH_MAX];
 
-    if (level > 9)
+    if (level > 9) {
 	return -2; /* planner will not even consider this level */
+    }
 
     qdisk = quote_string(dle->disk);
     if(dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
@@ -2193,17 +2195,21 @@ getsize_gnutar(
 	}
 
 	if (close(infd) != 0) {
+	    infd = -1;
 	    *errmsg = g_strdup_printf(_("closing %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
 	}
+	infd = -1;
 	if (close(outfd) != 0) {
+	    outfd = -1;
 	    *errmsg = g_strdup_printf(_("closing %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", *errmsg);
 	    goto common_exit;
 	}
+	outfd = -1;
 
 	amfree(inputname);
 	amfree(basename);
@@ -2363,8 +2369,6 @@ common_exit:
     if (incrname) {
 	unlink(incrname);
     }
-    aclose(infd);
-    aclose(outfd);
     amfree(incrname);
     amfree(basename);
     amfree(dirname);
@@ -2379,6 +2383,8 @@ common_exit:
     afclose(dumpout);
     afclose(in);
     afclose(out);
+    aclose(infd);
+    aclose(outfd);
 
     return size;
 }

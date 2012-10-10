@@ -800,6 +800,7 @@ merge_property(
     } else { /* take value from conf */
         g_hash_table_insert(merge_p->dle_proplist, key_p, conf_property);
     }
+
     amfree(qdisk);
 }
 

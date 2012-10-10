@@ -3944,6 +3944,7 @@ read_property(
     if (tok != CONF_STRING) {
 	amfree(property);
 	conf_parserror(_("key expected"));
+	amfree(property);
 	return;
     }
     key = amandaify_property_name(tokenval.v.s);

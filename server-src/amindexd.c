@@ -1970,6 +1970,7 @@ get_index_name(
 	    amfree(lower_hostname);
 	    return fn;
 	}
+	amfree(fn);
     }
     amfree(fn);
     fn = getindexfname(lower_hostname, diskname, timestamps, level);

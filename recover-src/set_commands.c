@@ -804,7 +804,7 @@ set_tape(
 	}
     } else
 	tapedev = uqtape;
-    
+
     if (tapedev[0])
     {
 	if (g_str_equal(tapedev, "default"))

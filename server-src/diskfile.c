@@ -463,12 +463,16 @@ parse_diskline(
 	if (!g_str_equal(hostname, p->hostname) &&
 	    g_str_equal(shost, shostp)) {
 	    disk_parserror(filename, line_num, _("Two hosts are mapping to the same name: \"%s\" and \"%s\""), p->hostname, hostname);
+	    amfree(shost);
+	    amfree(shostp);
 	    return(-1);
 	}
 	else if (strcasecmp(hostname, p->hostname) &&
 		 match_host(hostname, p->hostname) &&
 		 match_host(p->hostname, hostname)) {
 	    disk_parserror(filename, line_num, _("Duplicate host name: \"%s\" and \"%s\""), p->hostname, hostname);
+	    amfree(shost);
+	    amfree(shostp);
 	    return(-1);
 	}
 	amfree(shostp);
@@ -584,8 +588,10 @@ parse_diskline(
 		 g_str_equal(sdisk, sdiskp)) {
 		disk_parserror(filename, line_num,
 		 _("Two disks are mapping to the same name: \"%s\" and \"%s\"; you must use different diskname"),
-		 dp->name, diskname);
-	    return(-1);
+			       dp->name, diskname);
+		amfree(sdiskp);
+		amfree(sdisk);
+		return(-1);
 	    }
 	    amfree(sdiskp);
 	}

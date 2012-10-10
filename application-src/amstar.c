@@ -523,7 +523,7 @@ amstar_estimate(
     char        line[32768];
     char       *errmsg = NULL;
     char       *qerrmsg;
-    char       *qdisk;
+    char       *qdisk = NULL;
     amwait_t    wait_status;
     int         starpid;
     amregex_t  *rp;
@@ -575,6 +575,7 @@ amstar_estimate(
 
     start_time = curclock();
 
+    qdisk = quote_string(argument->dle.disk);
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
 	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE);
@@ -1004,6 +1005,7 @@ amstar_validate(
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
+    g_ptr_array_free_full(argv_ptr);
 
 }
 

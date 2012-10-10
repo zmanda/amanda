@@ -1225,7 +1225,7 @@ find(
 	for (afind = output_find; afind; afind = afind_next) {
 	    afind_next = afind->next;
 	    dp = lookup_disk(afind->hostname, afind->diskname);
-	    if (dp->todo) {
+	    if (dp && dp->todo) {
 		afind->next = new_output_find;
 		new_output_find = afind;
 	    } else {

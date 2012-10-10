@@ -75,7 +75,7 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
     i = 0;
     while (i<argc) {
 	fd_in = open(argv[i], O_RDONLY);
-	if (fd_in <= 0) {
+	if (fd_in < 0) {
 	    g_fprintf(stderr, "open of '%s' failed: %s\n", argv[i], strerror(errno));
 	    i++;
 	    continue;
@@ -246,6 +246,7 @@ do_extract(
 	    /* one of the callbacks already printed an error message */
 	    exit(1);
     }
+    amar_close(archive, NULL);
 }
 
 static gboolean
@@ -295,6 +296,7 @@ do_list(
 	    /* one of the callbacks already printed an error message */
 	    exit(1);
     }
+    amar_close(archive, NULL);
 }
 
 int main(

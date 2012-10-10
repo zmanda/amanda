@@ -197,7 +197,7 @@ unescape_label(
     
     if(!label) return(NULL);
 
-    temp_str = g_malloc(strlen(label));
+    temp_str = g_malloc(strlen(label)+1);
 
     do{
 	if(label[s_idx] == '\\' && !prev_esc){

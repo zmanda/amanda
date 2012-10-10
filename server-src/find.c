@@ -713,7 +713,7 @@ search_logfile(
     FILE *logf;
     char *host, *host_undo;
     char *disk = NULL, *qdisk, *disk_undo;
-    char *date, *date_undo;
+    char *date = NULL, *date_undo;
     int  partnum;
     int  totalparts;
     int  maxparts = -1;
@@ -875,6 +875,7 @@ search_logfile(
 	    skip_quoted_string(s, ch);
 	    disk_undo = s - 1;
 	    *disk_undo = '\0';
+	    amfree(disk);
 	    disk = unquote_string(qdisk);
 
 	    skip_whitespace(s, ch);
@@ -884,14 +885,16 @@ search_logfile(
 		amfree(disk);
 		continue;
 	    }
+	    amfree(date);
 	    date = s - 1;
 	    skip_non_whitespace(s, ch);
 	    date_undo = s - 1;
 	    *date_undo = '\0';
+	    date = g_strdup(date);
 
 	    if(strlen(date) < 3) { /* old log didn't have datestamp */
 		level = atoi(date);
-		date = datestamp;
+		date = g_strdup(datestamp);
 		partnum = 1;
 		totalparts = 1;
 	    } else {
@@ -1204,9 +1207,10 @@ search_logfile(
 		    maxparts = -1;
 		}
 	    }
-	    amfree(disk);
 	}
     }
+    amfree(date);
+    amfree(disk);
 
     g_hash_table_destroy(valid_label);
     afclose(logf);

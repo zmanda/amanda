@@ -196,7 +196,9 @@ ndmos_tape_open (struct ndm_session *sess, char *drive_name, int will_write)
 
 	rc = readlink (pos_symlink_name, pos_buf, sizeof pos_buf);
 	if (rc > 0) {
-		pos_buf[rc] = 0;
+		pos_buf[sizeof pos_buf - 1] = 0;
+		if (rc < sizeof pos_buf)
+		    pos_buf[rc] = 0;
 		pos = strtol (pos_buf, 0, 0);
 		lseek (fd, pos, 0);
 		rc = read (fd, &gap, sizeof gap);

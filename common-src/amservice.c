@@ -330,8 +330,8 @@ static void
 read_in(
     void *cookie G_GNUC_UNUSED)
 {
-    size_t nread;
-    char   buf[1025];
+    ssize_t nread;
+    char    buf[1025];
 
     nread = read(0, buf, 1024);
     if (nread <= 0) {
