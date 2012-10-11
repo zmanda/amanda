@@ -1,3 +1,7 @@
+2012-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c, device-src/ndmp-device.c,
+	  server-src/dumper.c, xfer-src/xfer-test.c: Fix bug found by Coverity.
+
 2012-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* */*.c: Fix bug found by Coverity.
 

@@ -1841,8 +1841,8 @@ handle_filter_stderr(
     }
 
     /* process all complete lines */
-    filter->buffer[filter->first + filter->size] = '\0';
     b = filter->buffer + filter->first;
+    b[filter->size] = '\0';
     while (b < filter->buffer + filter->first + filter->size &&
 	   (p = strchr(b, '\n')) != NULL) {
 	*p = '\0';

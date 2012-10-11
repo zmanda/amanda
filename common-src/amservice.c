@@ -125,6 +125,7 @@ main(
 			break;
 	case 'f':	if (got_input_file == 1) {
 			    g_critical("Invalid two -f argument");
+			    exit(1);
 			}
 			got_input_file = 1;
 			if (*optarg == '/') {
@@ -135,9 +136,11 @@ main(
 			    input_file = fopen(name, "r");
 			    amfree(name);
 			}
-			if (!input_file)
+			if (!input_file) {
 			    g_critical("Cannot open output file '%s': %s",
 				optarg, strerror(errno));
+			    exit(1);
+			}
 			break;
 	case 's':	use_connect = 1;
 			break;
@@ -146,6 +149,7 @@ main(
 
     if (use_connect && !got_input_file) {
 	g_critical("The -s option require -f");
+	exit(1);
     }
 
     argc -= optind, argv += optind;

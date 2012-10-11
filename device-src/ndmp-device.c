@@ -544,6 +544,13 @@ read_err:
 	return dself->status;
     }
 
+    if (!header) {
+	device_set_error(dself,
+			 g_strdup(_("no header set")),
+			 DEVICE_STATUS_VOLUME_UNLABELED);
+	return dself->status;
+    }
+
     /* handle a "weird" label */
     if (header->type != F_TAPESTART) {
 	device_set_error(dself,

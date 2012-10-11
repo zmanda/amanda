@@ -1506,12 +1506,16 @@ test_xfer_files(gboolean add_filters)
     XferElement *elements[4];
 
     rfd = open(in_filename, O_RDONLY, 0);
-    if (rfd < 0)
+    if (rfd < 0) {
 	g_critical("Could not open '%s': %s", in_filename, strerror(errno));
+	exit(1);
+    }
 
     wfd = open(out_filename, O_WRONLY|O_CREAT, 0777);
-    if (wfd < 0)
+    if (wfd < 0) {
 	g_critical("Could not open '%s': %s", out_filename, strerror(errno));
+	exit(1);
+    }
 
     elts = 0;
     elements[elts++] = xfer_source_fd(rfd);
@@ -1539,6 +1543,16 @@ test_xfer_files(gboolean add_filters)
     g_main_loop_run(default_main_loop());
     g_assert(xfer->status == XFER_DONE);
 
+    if (fcntl(rfd, F_GETFD) == -1) {
+	fprintf(stderr,"rfd is already closed\n");
+	exit(1);
+    }
+    if (fcntl(wfd, F_GETFD) == -1) {
+	fprintf(stderr,"wfd is already closed\n");
+	exit(1);
+    }
+    close(rfd);
+    close(wfd);
     xfer_unref(xfer);
 
     unlink(out_filename); /* ignore any errors */
