@@ -151,7 +151,7 @@ struct active_service {
  */
 GSList *serviceq = NULL;
 
-static int wait_30s = 1;
+static event_handle_t *exit_event;
 static int exit_on_qlength = 1;
 static char *auth = NULL;
 static kencrypt_type amandad_kencrypt = KENCRYPT_NONE;
@@ -451,7 +451,6 @@ main(
        strcasecmp(auth, "ssh") == 0 ||
        strcasecmp(auth, "local") == 0 ||
        strcasecmp(auth, "bsdtcp") == 0) {
-	wait_30s = 0;
 	exit_on_qlength = 1;
     }
 
@@ -504,8 +503,7 @@ main(
      * Schedule an event that will try to exit every 30 seconds if there
      * are no requests outstanding.
      */
-    if(wait_30s)
-	(void)event_register((event_id_t)30, EV_TIME, exit_check, &no_exit);
+    exit_event = event_register((event_id_t)30, EV_TIME, exit_check, &no_exit);
 
     /*
      * Call event_loop() with an arg of 0, telling it to block until all
@@ -544,6 +542,7 @@ exit_check(
     if (no_exit)
 	return;
 
+    g_debug("timeout exit");
     dbclose();
     exit(0);
 }
@@ -571,7 +570,12 @@ protocol_accept(
     /*
      * If handle is NULL, then the connection is closed.
      */
-    if(handle == NULL) {
+    if (handle == NULL) {
+	if (exit_on_qlength && exit_event) {
+	    /* remove the timeout, we will exit once the service terminate */
+	    event_release(exit_event);
+	    exit_event = NULL;
+	}
 	return;
     }
 

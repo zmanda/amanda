@@ -1,4 +1,9 @@
 2012-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Add a timeout.
+	* common-src/event.c: List all event in debug mode.
+	* common-src/security-util.c: Call the accept_fn on connection close.
+
+2012-10-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl: Add '-z 0' to gpg argument when
 	  encrypting.
 
