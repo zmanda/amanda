@@ -1786,7 +1786,7 @@ sec_tcp_conn_read_callback(
 
     assert(cookie != NULL);
 
-    auth_debug(1, _("sec: conn_read_callback\n"));
+    auth_debug(1, _("sec: conn_read_callback %d %d\n"), (int)rc->event_id, rc->read);
 
     /* Read the data off the wire.  If we get errors, shut down. */
     rval = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
@@ -1806,6 +1806,7 @@ sec_tcp_conn_read_callback(
 		       revent);
 	/* delete our 'accept' reference */
 	if (rc->accept_fn != NULL) {
+	    (*rc->accept_fn)(NULL, NULL);
 	    if(rc->refcnt != 1) {
 		dbprintf(_("STRANGE, rc->refcnt should be 1, it is %d\n"),
 			  rc->refcnt);
