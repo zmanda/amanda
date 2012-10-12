@@ -1623,12 +1623,29 @@ sub set_starttime() {
 
 
 sub showtime() {
-	my($delta)=shift;
-	my($oneday)=24*60*60;
+	my($delta) = shift;
+	my($oneday) = 24*60*60;
 
-	@now=localtime($starttime+$delta);
-	if($delta > $oneday) {
-		$result=sprintf("%d+",$delta/$oneday);
+	my @starttime = localtime($starttime);
+	my @now = localtime($starttime+$delta);
+	$now_yday = $now[7];
+
+	# leap year
+	if ($starttime[5] < $now[5]) {
+		my $days_in_year = 364;
+		my $startime1 = $starttime;
+		while ($startime1 < $starttime+$delta) {
+			my @starttime1 = localtime($starttime);
+			if ($starttime1[7] > $days_in_year) {
+				$days_in_year = $starttime1[7];
+			}
+			$startime1 += $oneday;
+		}
+		$now_yday += $days_in_year+1;
+	}
+
+	if ($starttime[7] < $now_yday) {
+		$result=sprintf("%d+", $now_yday - $starttime[7]);
 	} else {
 		$result="";
 	}
