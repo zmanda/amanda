@@ -621,7 +621,7 @@ sub setup_and_start_dump {
 	    ($params{$_} ne '')? ($_, $params{$_}) : ()
 	} qw(
 	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
-	    part_size part_cache_type part_cache_dir part_cache_max_size
+	    part_size part_cache_type part_cache_dir part_cache_max_size data_path
 	);
 
 	# convert numeric values to BigInts

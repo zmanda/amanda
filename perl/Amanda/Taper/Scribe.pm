@@ -1466,11 +1466,26 @@ sub get_splitting_args_from_config {
 	    unless defined $params{'part_cache_type'};
     }
 
-    # if any of the dle_* parameters are set, use those to set the part_*
-    # parameters, which are emptied out first.
-    if (defined $params{'dle_tape_splitsize'} or
-	defined $params{'dle_split_diskbuffer'} or
-	defined $params{'dle_fallback_splitsize'}) {
+    if (defined $splitting_args{'data_path'} and
+	$splitting_args{'data_path'} eq "DIRECTTCP") {
+	my $ps = $params{'dle_tape_splitsize'};
+	if (defined $ps and $ps > 0) {
+	    $params{'part_cache_max_size'} = undef
+	} else {
+	    $ps = $params{'part_size'};
+	    my $pcms = $params{'part_cache_max_size'};
+	    $ps = $pcms if (!defined $ps or (defined $pcms and $pcms < $ps));
+	}
+	$splitting_args{'allow_split'} = 1 if ((defined $ps and $ps > 0) or
+					       $params{'leom_supported'});
+	$params{'part_size'} = $ps;
+	$params{'part_cache_type'} = 'none';
+	$params{'part_cache_dir'} = undef;
+    } elsif (defined $params{'dle_tape_splitsize'} or
+	     defined $params{'dle_split_diskbuffer'} or
+	     defined $params{'dle_fallback_splitsize'}) {
+	# if any of the dle_* parameters are set, use those to set the part_*
+	# parameters, which are emptied out first.
 
 	$params{'part_size'} = $params{'dle_tape_splitsize'} || 0;
 	$params{'part_cache_type'} = 'none';
