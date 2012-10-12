@@ -1,4 +1,7 @@
 2012-10-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl (showtime): Use calandar days.
+
+2012-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Worker.pm: Add data_path to %splitting_args.
 	* perl/Amanda/Taper/Scribe.pm: Correctly set part_* for DIRECTTCP
 	  data_path.
