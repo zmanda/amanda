@@ -1894,7 +1894,7 @@ perform_request(S3Handle *hdl,
 	    headers = curl_slist_append(headers, header->data);
 	}
 
-        if (hdl->use_ssl && hdl->ca_info) {
+        if (hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
                 goto curl_error;
         }
