@@ -574,8 +574,10 @@ char *check_security_fd(int fd, char *userstr)
      * vector for much older Amandas */
     if ((addr.sin_family != (sa_family_t)AF_INET)
 		|| (ntohs(addr.sin_port) == 20)) {
+	char ip_addr[100];
+	inet_ntop(AF_INET, &addr.sin_addr, ip_addr, 100);
 	return g_strdup_printf("connection rejected from %s family %d port %d",
-             inet_ntoa(addr.sin_addr), addr.sin_family, htons(addr.sin_port));
+			       ip_addr, addr.sin_family, htons(addr.sin_port));
     }
 
     /* call out to check_security */

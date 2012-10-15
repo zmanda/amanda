@@ -95,8 +95,11 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	if (rc < 0) {
 		perror ("getpeername");
 	} else {
+		char ip_addr[100];
 		ndmalogf (sess, 0, 2, "Connection accepted from %s",
-			inet_ntoa ( ((struct sockaddr_in *)&sa)->sin_addr));
+			inet_ntop ( AF_INET,
+				   &(((struct sockaddr_in *)&sa)->sin_addr),
+				   ip_addr, 100));
 	}
 
 	len = sizeof sa;
@@ -104,8 +107,11 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	if (rc < 0) {
 		perror ("getsockname");
 	} else {
+		char ip_addr[100];
 		ndmalogf (sess, 0, 2, "Connection accepted to %s",
-			inet_ntoa ( ((struct sockaddr_in *)&sa)->sin_addr));
+			inet_ntop( AF_INET,
+				   &((struct sockaddr_in *)&sa)->sin_addr,
+				   ip_addr, 100));
 	}
 
 	conn = ndmconn_initialize (0, "#C");
@@ -130,8 +136,13 @@ ndma_server_session (struct ndm_session *sess, int control_sock)
 	}
 
 #if 0
-	ndmalogf (sess, 0, 2, "Connection close %s",
-		inet_ntoa ( ((struct sockaddr_in *)sa)->sin_addr));
+	{
+	    char ip_addr[100];
+	    ndmalogf (sess, 0, 2, "Connection close %s",
+		    inet_ntop( AF_INET,
+			       &((struct sockaddr_in *)&sa)->sin_addr,
+			       ip_addr, 100));
+	}
 #endif
 
 	ndmconn_destruct (conn);
