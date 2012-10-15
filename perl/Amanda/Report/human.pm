@@ -397,7 +397,7 @@ sub output_tapeinfo
     my %incr_stats  = %{ $self->{incr_stats} };
     my %total_stats = %{ $self->{total_stats} };
 
-    if (@$tape_labels > 0) {
+    if (getconf($CNF_REPORT_USE_MEDIA) and @$tape_labels > 0) {
 
 	# slightly different sentence depending on the run type
         my $tapelist_str;
@@ -458,47 +458,49 @@ sub output_tapeinfo
         }
     }
 
-    my $nb_new_tape = 0;
-    my $run_tapes   = getconf($CNF_RUNTAPES);
+    if (getconf($CNF_REPORT_NEXT_MEDIA)) {
+	my $nb_new_tape = 0;
+	my $run_tapes   = getconf($CNF_RUNTAPES);
 
-    if ($run_tapes) {
-        ($run_tapes > 1)
+	if ($run_tapes) {
+            ($run_tapes > 1)
           ? print $fh "The next $run_tapes tapes Amanda expects to use are: "
           : print $fh "The next tape Amanda expects to use is: ";
-    }
+	}
 
-    my $first = 1;
-    foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
+	my $first = 1;
+	foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
 
-        if ( my $tape_label =
-            Amanda::Tapelist::get_last_reusable_tape_label($i) ) {
+            if ( my $tape_label =
+		Amanda::Tapelist::get_last_reusable_tape_label($i) ) {
 
-	    if ($nb_new_tape) {
-		print $fh ", " if !$first;
-		print $fh "$nb_new_tape new tape"
-			. ( $nb_new_tape > 1 ? "s" : "" );
-		$nb_new_tape = 0;
+		if ($nb_new_tape) {
+		    print $fh ", " if !$first;
+		    print $fh "$nb_new_tape new tape"
+			    . ( $nb_new_tape > 1 ? "s" : "" );
+		    $nb_new_tape = 0;
+		    $first = 0;
+		}
+
+		print $fh
+		    $first ? "" : ", ",
+		    $tape_label;
 		$first = 0;
-	    }
+            } else {
+		$nb_new_tape++;
+            }
+	}
 
-	    print $fh
-		$first ? "" : ", ",
-		$tape_label;
-	    $first = 0;
-        } else {
-            $nb_new_tape++;
-        }
+	if ($nb_new_tape) {
+            print $fh ", " if !$first;
+            print $fh "$nb_new_tape new tape"
+              . ( $nb_new_tape > 1 ? "s" : "" );
+	}
+	print $fh ".\n";
+
+	my $new_tapes = Amanda::Tapelist::list_new_tapes(getconf($CNF_RUNTAPES));
+	print $fh "$new_tapes\n" if $new_tapes;
     }
-
-    if ($nb_new_tape) {
-        print $fh ", " if !$first;
-        print $fh "$nb_new_tape new tape"
-          . ( $nb_new_tape > 1 ? "s" : "" );
-    }
-    print $fh ".\n";
-
-    my $new_tapes = Amanda::Tapelist::list_new_tapes(getconf($CNF_RUNTAPES));
-    print $fh "$new_tapes\n" if $new_tapes;
 
     return;
 }

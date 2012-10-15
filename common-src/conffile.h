@@ -497,6 +497,8 @@ typedef enum {
     CNF_MAX_DLE_BY_VOLUME,
     CNF_EJECT_VOLUME,
     CNF_TMPDIR,
+    CNF_REPORT_USE_MEDIA,
+    CNF_REPORT_NEXT_MEDIA,
     CNF_CNF /* sentinel */
 } confparm_key;
 

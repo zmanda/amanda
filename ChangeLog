@@ -1,3 +1,13 @@
+2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: New REPORT-USE-MEDIA and REPORT-NEXT-MEDIA.
+	* common-src/conffile.h: And CNF_REPORT_USE_MEDIA and
+	  CNF_REPORT_NEXT_MEDIA
+	* man/xml-source/amanda.conf.5.xml: Document REPORT-USE-MEDIA and
+	  REPORT-NEXT-MEDIA.
+	* perl/Amanda/Config.swg: Add CNF_REPORT_USE_MEDIA and
+	  CNF_REPORT_NEXT_MEDIA.
+	* perl/Amanda/Report/human.pm: Use them.
+
 2012-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl (showtime): Use calandar days.
 
