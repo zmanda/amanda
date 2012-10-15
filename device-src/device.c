@@ -1295,6 +1295,22 @@ device_finish_file (Device * self)
     return (klass->finish_file)(self);
 }
 
+gboolean
+device_init_seek_file (Device * self, guint file)
+{
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+    g_assert(self->access_mode == ACCESS_READ);
+
+    klass = DEVICE_GET_CLASS(self);
+    if (klass->init_seek_file) {
+        return (klass->init_seek_file)(self,file);
+    } else {
+	return TRUE;
+    }
+}
+
 dumpfile_t*
 device_seek_file (Device * self, guint file)
 {

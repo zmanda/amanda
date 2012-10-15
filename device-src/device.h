@@ -185,6 +185,7 @@ struct _DeviceClass {
     gboolean (* start_file) (Device * self, dumpfile_t * info);
     gboolean (* write_block) (Device * self, guint size, gpointer data);
     gboolean (* finish_file) (Device * self);
+    gboolean (* init_seek_file) (Device * self, guint file);
     dumpfile_t* (* seek_file) (Device * self, guint file);
     gboolean (* seek_block) (Device * self, guint64 block);
     int (* read_block) (Device * self, gpointer buf, int * size);
@@ -318,6 +319,8 @@ gboolean 	device_write_block	(Device * self,
                                          guint size,
                                          gpointer data);
 gboolean 	device_finish_file	(Device * self);
+gboolean	device_init_seek_file	(Device * self,
+					guint file);
 dumpfile_t* 	device_seek_file	(Device * self,
 					guint file);
 gboolean 	device_seek_block	(Device * self,

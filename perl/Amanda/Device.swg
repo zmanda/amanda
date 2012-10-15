@@ -309,6 +309,11 @@ typedef struct Device {
 	    return device_finish_file(self);
 	}
 
+	gboolean
+	init_seek_file(guint file) {
+	    return device_init_seek_file(self, file);
+	}
+
 	dumpfile_t*
 	seek_file(guint file) {
 	    return device_seek_file(self, file);

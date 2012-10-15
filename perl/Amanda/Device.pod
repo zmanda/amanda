@@ -88,6 +88,7 @@ Device users generally call device methods in the following order for reading:
 
     read_label (optional)
     start
+    init_seek_file (optional)
     seek_file (optional)
     read_block (repeated)
 
@@ -279,6 +280,7 @@ garbage-collected or in the C<finish> method.  Thus in a calling sequence such a
 
     read_label
     start
+    init_seek_file
     seek_file
     ...
     finish
@@ -488,6 +490,13 @@ with status C<DEVICE_STATUS_VOLUME_ERROR> and C<is_eom> is set.
 
 This function should not be used while reading -- instead, just seek
 to the next file.
+
+=head3 init_seek_file
+
+ $dev->init_seek_file($fileno);
+
+Lauch file retrieval, so they are ready when C<seek_file> is called.
+Useful lonly with the glacier device.
 
 =head3 seek_file
 

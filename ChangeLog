@@ -1,4 +1,11 @@
 2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c (device_init_seek_file): New method to do setup
+	  before a seek_file.
+	* device-src/device.h (init_seek_file): Add method.
+	* perl/Amanda/Device.pod (init_seek_file): Document it.
+	* perl/Amanda/Device.swg (init_seek_file): New method.
+
+2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: Load a device driver at run time.
 
 2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
