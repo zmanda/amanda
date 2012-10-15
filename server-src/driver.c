@@ -449,11 +449,9 @@ main(
 
     amfree(newdir);
 
-    if(inparallel > MAX_DUMPERS) inparallel = MAX_DUMPERS;
-
     /* taper takes a while to get going, so start it up right away */
 
-    init_driverio();
+    init_driverio(inparallel, conf_taper_parallel_write);
     startup_tape_process(taper_program, conf_taper_parallel_write, no_taper);
 
     /* fire up the dumpers now while we are waiting */

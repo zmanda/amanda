@@ -42,20 +42,33 @@
 #define GLOBAL		/* the global variables defined here */
 #include "driverio.h"
 
-int nb_chunker = 0;
-
 static const char *childstr(int);
+static long generation = 1;
+
+typedef struct serial_s {
+    long gen;
+    disk_t *dp;
+} serial_t;
+
+static int max_serial;
+static serial_t *stable;
 
 void
-init_driverio(void)
+init_driverio(
+    int inparallel,
+    int taper_parallel_write)
 {
     dumper_t *dumper;
 
     taper_fd = -1;
-
-    for(dumper = dmptable; dumper < dmptable + MAX_DUMPERS; dumper++) {
+    dmptable = g_new0(dumper_t, inparallel+1);
+    chktable = g_new0(chunker_t, inparallel+1);
+    for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	dumper->fd = -1;
     }
+
+    max_serial = inparallel + taper_parallel_write;
+    stable = g_new0(serial_t, max_serial);
 }
 
 
@@ -69,7 +82,7 @@ childstr(
     if (fd == taper_fd)
 	return ("taper");
 
-    for (dumper = dmptable; dumper < dmptable + MAX_DUMPERS; dumper++) {
+    for (dumper = dmptable; dumper->fd != 0; dumper++) {
 	if (dumper->fd == fd)
 	    return (dumper->name);
 	if (dumper->chunker && dumper->chunker->fd == fd)
@@ -851,15 +864,6 @@ chunker_cmd(
     return 1;
 }
 
-#define MAX_SERIAL MAX_DUMPERS*2	/* one for each dumper and taper */
-
-long generation = 1;
-
-struct serial_s {
-    long gen;
-    disk_t *dp;
-} stable[MAX_SERIAL];
-
 disk_t *
 serial2disk(
     char *str)
@@ -871,8 +875,8 @@ serial2disk(
     if(rc != 2) {
 	error(_("error [serial2disk \"%s\" parse error]"), str);
 	/*NOTREACHED*/
-    } else if (s < 0 || s >= MAX_SERIAL) {
-	error(_("error [serial out of range 0..%d: %d]"), MAX_SERIAL, s);
+    } else if (s < 0 || s >= max_serial) {
+	error(_("error [serial out of range 0..%d: %d]"), max_serial, s);
 	/*NOTREACHED*/
     }
     if(gen != stable[s].gen)
@@ -889,7 +893,7 @@ free_serial(
     long gen;
 
     rc = sscanf(str, _("%d-%ld"), &s, &gen);
-    if(!(rc == 2 && s >= 0 && s < MAX_SERIAL)) {
+    if(!(rc == 2 && s >= 0 && s < max_serial)) {
 	/* nuke self to get core dump for Brett */
 	g_fprintf(stderr, _("driver: free_serial: str \"%s\" rc %d s %d\n"),
 		str, rc, s);
@@ -911,7 +915,7 @@ free_serial_dp(
 {
     int s;
 
-    for(s = 0; s < MAX_SERIAL; s++) {
+    for(s = 0; s < max_serial; s++) {
 	if(stable[s].dp == dp) {
 	    stable[s].gen = 0;
 	    stable[s].dp = NULL;
@@ -930,7 +934,7 @@ check_unfree_serial(void)
     int s;
 
     /* find used serial number */
-    for(s = 0; s < MAX_SERIAL; s++) {
+    for(s = 0; s < max_serial; s++) {
 	if(stable[s].gen != 0 || stable[s].dp != NULL) {
 	    g_printf(_("driver: error time %s bug: serial in use: %02d-%05ld\n"),
 		   walltime_str(curclock()), s, stable[s].gen);
@@ -944,7 +948,7 @@ char *disk2serial(
     int s;
     static char str[NUM_STR_SIZE];
 
-    for(s = 0; s < MAX_SERIAL; s++) {
+    for(s = 0; s < max_serial; s++) {
 	if(stable[s].dp == dp) {
 	    g_snprintf(str, sizeof(str), "%02d-%05ld", s, stable[s].gen);
 	    return str;
@@ -952,10 +956,10 @@ char *disk2serial(
     }
 
     /* find unused serial number */
-    for(s = 0; s < MAX_SERIAL; s++)
+    for(s = 0; s < max_serial; s++)
 	if(stable[s].gen == 0 && stable[s].dp == NULL)
 	    break;
-    if(s >= MAX_SERIAL) {
+    if(s >= max_serial) {
 	g_printf(_("driver: error time %s bug: out of serial numbers\n"),
 	       walltime_str(curclock()));
 	s = 0;

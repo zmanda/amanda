@@ -148,8 +148,8 @@ typedef struct sched_s {
 #define sched(dp)	((sched_t *) (dp)->up)
 
 
-GLOBAL dumper_t dmptable[MAX_DUMPERS];
-GLOBAL chunker_t chktable[MAX_DUMPERS];
+GLOBAL dumper_t *dmptable;
+GLOBAL chunker_t *chktable;
 GLOBAL taper_t   *tapetable;
 
 /* command/result tokens */
@@ -159,7 +159,7 @@ GLOBAL pid_t taper_pid;
 GLOBAL event_handle_t *taper_ev_read;
 GLOBAL int taper_nb_wait_reply;
 
-void init_driverio(void);
+void init_driverio(int inparallel, int taper_parallel_write);
 void startup_tape_process(char *taper_program, int taper_parallel_write, gboolean no_taper);
 void startup_dump_process(dumper_t *dumper, char *dumper_program);
 void startup_dump_processes(char *dumper_program, int inparallel, char *timestamp);

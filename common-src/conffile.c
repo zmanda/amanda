@@ -590,7 +590,6 @@ static void validate_positive(conf_var_t *, val_t *);
 static void validate_runspercycle(conf_var_t *, val_t *);
 static void validate_bumppercent(conf_var_t *, val_t *);
 static void validate_bumpmult(conf_var_t *, val_t *);
-static void validate_inparallel(conf_var_t *, val_t *);
 static void validate_displayunit(conf_var_t *, val_t *);
 static void validate_reserve(conf_var_t *, val_t *);
 static void validate_use(conf_var_t *, val_t *);
@@ -1261,7 +1260,7 @@ conf_var_t server_var [] = {
    { CONF_BUMPPERCENT          , CONFTYPE_INT      , read_int         , CNF_BUMPPERCENT          , validate_bumppercent },
    { CONF_BUMPMULT             , CONFTYPE_REAL     , read_real        , CNF_BUMPMULT             , validate_bumpmult },
    { CONF_NETUSAGE             , CONFTYPE_INT      , read_int         , CNF_NETUSAGE             , validate_positive },
-   { CONF_INPARALLEL           , CONFTYPE_INT      , read_int         , CNF_INPARALLEL           , validate_inparallel },
+   { CONF_INPARALLEL           , CONFTYPE_INT      , read_int         , CNF_INPARALLEL           , validate_positive },
    { CONF_DUMPORDER            , CONFTYPE_STR      , read_str         , CNF_DUMPORDER            , NULL },
    { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int         , CNF_MAXDUMPS             , validate_positive },
    { CONF_MAX_DLE_BY_VOLUME    , CONFTYPE_INT      , read_int         , CNF_MAX_DLE_BY_VOLUME    , validate_positive },
@@ -4785,16 +4784,6 @@ validate_bumppercent(
 {
     if(val_t__int(val) < 0 || val_t__int(val) > 100)
 	conf_parserror(_("bumppercent must be between 0 and 100"));
-}
-
-static void
-validate_inparallel(
-    struct conf_var_s *np G_GNUC_UNUSED,
-    val_t        *val)
-{
-    if(val_t__int(val) < 1 || val_t__int(val) >MAX_DUMPERS)
-	conf_parserror(_("inparallel must be between 1 and MAX_DUMPERS (%d)"),
-		       MAX_DUMPERS);
 }
 
 static void

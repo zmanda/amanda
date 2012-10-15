@@ -1,3 +1,12 @@
+2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Remove MAX_DUMPERS.
+	* common-src/conffile.c (validate_inparallel): Remov function.
+	* example/amanda.conf.in: Remove comment for MAX_DUMPERS.
+	* server-src/driverio.c: Allocation dynamic table for dmptable and
+	  chktable.
+	* server-src/driverio.h (init_driverio): New prototype.
+	* server-src/driver.c: Use new init_driverio.
+
 2012-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl (showtime): Use calandar days.
 

@@ -1105,8 +1105,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 
 #define BIND_CYCLE_RETRIES	120		/* Total of 30 minutes */
 
-#define MAX_DUMPERS 63
-
 #ifndef NI_MAXHOST
 #define NI_MAXHOST 1025
 #endif
