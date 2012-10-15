@@ -26,6 +26,7 @@
 #include "conffile.h"
 
 #include <regex.h>
+#include <dlfcn.h>
 
 #include "device.h"
 #include "property.h"
@@ -103,13 +104,48 @@ register_device(
 
 static DeviceFactory lookup_device_factory(const char *device_type) {
     gpointer key, value;
+    char *libfilename;
+    char *fn_name;
+    char *error;
+    void *lib_handle;
+    void (*fn)(void);
+    char *dev_type;
+
     g_assert(driverList != NULL);
 
     if (g_hash_table_lookup_extended(driverList, device_type, &key, &value)) {
         return (DeviceFactory)value;
-    } else {
-        return NULL;
     }
+
+    // Try to load the library
+    dev_type = g_ascii_strdown(device_type, -1);
+    libfilename = g_strdup_printf("%s/libam%s.so", amlibdir, dev_type);
+
+    lib_handle = dlopen(libfilename, RTLD_LAZY);
+    g_free(libfilename);
+    if (!lib_handle) {
+	g_debug("%s", dlerror());
+	g_free(dev_type);
+	return NULL;
+    }
+
+    fn_name = g_strdup_printf("%s_device_register", dev_type);
+    dlerror();
+    g_free(dev_type);
+    fn = dlsym(lib_handle, fn_name);
+    g_free(fn_name);
+    if ((error = dlerror()) != NULL) {
+	g_debug("%s", error);
+	return NULL;
+    }
+
+    (*fn)();
+
+    if (g_hash_table_lookup_extended(driverList, device_type, &key, &value)) {
+	return (DeviceFactory)value;
+    }
+
+    return NULL;
 }
 
 static const GFlagsValue device_status_flags_values[] = {
@@ -258,6 +294,10 @@ static void device_finalize(GObject *obj_self) {
     amfree(self->volume_label);
     amfree(self->volume_time);
     amfree(self->volume_header);
+    if (self->device_mutex) {
+	g_mutex_free(self->device_mutex);
+	self->device_mutex = NULL;
+    }
     amfree(selfp->errmsg);
     amfree(selfp->statusmsg);
     g_hash_table_destroy(selfp->simple_properties);

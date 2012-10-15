@@ -1,4 +1,7 @@
 2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c: Load a device driver at run time.
+
+2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_comm_session.c, perl/Amanda/Util.swg: Use inet_ntop
 	  instead of inet_ntoa.
 
