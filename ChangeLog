@@ -1,4 +1,14 @@
 2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: New REPORT-USE-MEDIA and REPORT-NEXT-MEDIA.
+	* common-src/conffile.h: And CNF_REPORT_USE_MEDIA and
+	  CNF_REPORT_NEXT_MEDIA
+	* man/xml-source/amanda.conf.5.xml: Document REPORT-USE-MEDIA and
+	  REPORT-NEXT-MEDIA.
+	* perl/Amanda/Config.swg: Add CNF_REPORT_USE_MEDIA and
+	  CNF_REPORT_NEXT_MEDIA.
+	* perl/Amanda/Report/human.pm: Use them.
+
+2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (device_init_seek_file): New method to do setup
 	  before a seek_file.
 	* device-src/device.h (init_seek_file): Add method.

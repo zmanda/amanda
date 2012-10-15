@@ -350,6 +350,28 @@ Specify which types of messages will trigger an email from amreport. amreport is
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>report-use-media</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>True</amdefault> if <amkeyword>max-dle-by-volume</amkeyword>
+is not set,
+<amdefault>False</amdefault> if it is set.
+If the reporter must print the list of media used in the run.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>report-next-media</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>True</amdefault> if <amkeyword>max-dle-by-volume</amkeyword>
+is not set,
+<amdefault>False</amdefault> if it is set.
+If the reporter must print the list of media expected for the next run.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>max-dle-by-volume</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:
