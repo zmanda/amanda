@@ -1,6 +1,7 @@
 /*
  * amanda, the advanced maryland automatic network disk archiver
  * Copyright (c) 1991-2000 University of Maryland at College Park
+ * Copyright (c) 2007-2012 Zmanda, Inc.  All Rights Reserved.
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its

@@ -1,3 +1,7 @@
+2012-10-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* All files: Change Zmanda licensing to GPLv2+ and LGPLv2+, Add Zmanda
+	  copyright to files modified by Zmanda.
+
 2012-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: New REPORT-USE-MEDIA and REPORT-NEXT-MEDIA.
 	* common-src/conffile.h: And CNF_REPORT_USE_MEDIA and
