@@ -305,7 +305,7 @@ sub quit {
     my $finished_cb = $params{'finished_cb'};
 
     confess "Cannot quit a Clerk while a transfer is in progress"
-	if $self->{'xfer_state'};
+	if $self->{'xfer_state'} and $self->{'xfer_state'}->{'xfer'};
 
     my $steps = define_steps 
 	cb_ref => \$finished_cb,

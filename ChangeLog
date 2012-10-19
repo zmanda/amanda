@@ -1,3 +1,12 @@
+2012-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Add [--extract --directory directory
+			[--data-path (amanda|directtcp)]
+			[--application-property='NAME=VALUE']*]
+	* man/xml-source/amfetchdump.8.xml: Document them.
+	* perl/Amanda/Extract.pm: New utilities torun application from perl.
+	* perl/Makefile.am: Add Amanda/Extract.pm
+	* perl/Amanda/Recovery/Clerk.pm: Small fix.
+
 2012-10-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* All files: Change Zmanda licensing to GPLv2+ and LGPLv2+, Add Zmanda
 	  copyright to files modified by Zmanda.

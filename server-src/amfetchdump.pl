@@ -23,6 +23,8 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use File::Basename;
+use XML::Simple;
 
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -38,6 +40,7 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
+use Amanda::Extract;
 
 # Interactivity package
 package Amanda::Interactivity::amfetchdump;
@@ -114,9 +117,11 @@ sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
 Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
-    [-h|--header-file file|--header-fd fd]i
-    [--decrypt|--no-decrypt|--server-decrypt|--client-decrypt]
+    [-h|--header-file file|--header-fd fd]
+    [-decrypt|--no-decrypt|--server-decrypt|--client-decrypt]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
+    [--extract --directory directory [--data-path (amanda|directtcp)]
+    [--application-property='NAME=VALUE']*]
     [-o configoption]* config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
 EOF
@@ -135,7 +140,8 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_assume, $opt_leave, $opt_blocksize, $opt_device, $opt_chdir, $opt_header,
     $opt_header_file, $opt_header_fd, @opt_dumpspecs,
     $opt_decrypt, $opt_server_decrypt, $opt_client_decrypt,
-    $opt_decompress, $opt_server_decompress, $opt_client_decompress);
+    $opt_decompress, $opt_server_decompress, $opt_client_decompress,
+    $opt_extract, $opt_directory, $opt_data_path, %application_property);
 
 my $NEVER = 0;
 my $ALWAYS = 1;
@@ -164,6 +170,10 @@ GetOptions(
     'decompress!' => \$opt_decompress,
     'server-decompress' => \$opt_server_decompress,
     'client-decompress' => \$opt_client_decompress,
+    'extract' => \$opt_extract,
+    'directory=s' => \$opt_directory,
+    'data-path=s' => \$opt_data_path,
+    'application-property=s' => \%application_property,
     'b=s' => \$opt_blocksize,
     'd=s' => \$opt_device,
     'O=s' => \$opt_chdir,
@@ -188,6 +198,10 @@ usage("-h, --header-file, and --header-fd are mutually incompatible")
     if (($opt_header and ($opt_header_file or $opt_header_fd))
 	    or ($opt_header_file and $opt_header_fd));
 
+     $opt_data_path = lc($opt_data_path) if defined ($opt_data_path);
+usage("--data_path must be 'amanda' or 'directtcp'")
+    if (defined $opt_data_path and $opt_data_path ne 'directtcp' and $opt_data_path ne 'amanda');
+
 if (defined $opt_leave) {
     if (defined $opt_decrypt and $opt_decrypt) {
 	print STDERR "-l is incompatible with --decrypt\n";
@@ -211,6 +225,38 @@ if (defined $opt_leave) {
     }
     if (defined $opt_client_decompress) {
 	print STDERR "-l is incompatible with --client-decompress\n";
+	usage();
+    }
+}
+
+if (( defined $opt_directory and !defined $opt_extract) or
+    (!defined $opt_directory and  defined $opt_extract)) {
+    print STDERR "Both --directorty and --extract must be set\n";
+    usage();
+}
+if (defined $opt_directory and defined $opt_extract) {
+    $opt_decrypt = 1;
+    if (defined $opt_server_decrypt or defined $opt_client_decrypt) {
+	print STDERR "--server_decrypt or --client-decrypt is incompatible with --extract\n";
+	usage();
+    }
+    $opt_decompress = 1;
+    if (defined $opt_server_decompress || defined $opt_client_decompress) {
+	print STDERR "--server-decompress r --client-decompress is incompatible with --extract\n";
+	usage();
+    }
+    if (defined($opt_leave) +
+	defined($opt_compress) +
+	defined($opt_compress_best)) {
+	print STDERR "Can't use -l -c or -C with --extract\n";
+	usage();
+    }
+    if (defined $opt_pipe) {
+	print STDERR "--pipe is incompatible with --extract\n";
+	usage();
+    }
+    if (defined $opt_header) {
+	print STDERR "--header is incompatible with --extract\n";
 	usage();
     }
 }
@@ -278,9 +324,11 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $exit_status = 0;
 my $clerk;
+use Data::Dumper;
 sub failure {
     my ($msg, $finished_cb) = @_;
     print STDERR "ERROR: $msg\n";
+    debug("FAILURE: $msg");
     $exit_status = 1;
     if ($clerk) {
 	$clerk->quit(finished_cb => sub {
@@ -339,6 +387,8 @@ sub main {
     my $timer;
     my $is_tty;
     my $delay;
+    my $directtcp = 0;
+    my @directtcp_command;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -447,10 +497,106 @@ sub main {
 	my ($errs, $hdr, $xfer_src, $directtcp_supported) = @_;
 	return failure(join("; ", @$errs), $finished_cb) if $errs;
 
+	my $dle_str = $hdr->{'dle_str'};
+	my $p1 = XML::Simple->new();
+	my $dle = $p1->XMLin($dle_str);
+
 	# and set up the destination..
 	my $dest_fh;
-	if ($opt_pipe) {
+	my $xfer_dest;
+	my @filters;
+
+	if (defined $opt_data_path and $opt_data_path eq 'directtcp' and !$directtcp_supported) {
+	    return failure("The device can't do directtcp", $finished_cb);
+	}
+	$directtcp_supported = 0 if defined $opt_data_path and $opt_data_path eq 'amanda';
+	if ($opt_extract) {
+	    my $program = uc(basename($hdr->{program}));
+	    my @argv;
+	    if ($program ne "APPLICATION") {
+		$directtcp_supported = 0;
+		my %validation_programs = (
+			"STAR" => [ $Amanda::Constants::STAR, qw(-x -f -) ],
+			"DUMP" => [ $Amanda::Constants::RESTORE, qw(xbf 2 -) ],
+			"VDUMP" => [ $Amanda::Constants::VRESTORE, qw(xf -) ],
+			"VXDUMP" => [ $Amanda::Constants::VXRESTORE, qw(xbf 2 -) ],
+			"XFSDUMP" => [ $Amanda::Constants::XFSRESTORE, qw(-v silent) ],
+			"TAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
+			"GTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
+			"GNUTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
+			"SMBCLIENT" => [ $Amanda::Constants::GNUTAR, qw(-xf -) ],
+			"PKZIP" => undef,
+		);
+		if (!exists $validation_programs{$program}) {
+		    return failure("Unknown program '$program' in header; no validation to perform",
+				   $finished_cb);
+		}
+		@argv = $validation_programs{$program};
+	    } else {
+		if (!defined $hdr->{application}) {
+		    return failure("Application not set", $finished_cb);
+		}
+		my $program_path = $Amanda::Paths::APPLICATION_DIR . "/" .
+				   $hdr->{application};
+		if (!-x $program_path) {
+		    return failure("Application '" . $hdr->{application} .
+				   "($program_path)' not available on the server",
+				   $finished_cb);
+		}
+		my %bsu_argv;
+		$bsu_argv{'application'} = $hdr->{application};
+		$bsu_argv{'config'} = $opt_config;
+		$bsu_argv{'host'} = $hdr->{'name'};
+		$bsu_argv{'disk'} = $hdr->{'disk'};
+		$bsu_argv{'device'} = $dle->{'diskdevice'} if defined $dle->{'diskdevice'};
+		my ($bsu, $err) = Amanda::Extract::BSU(%bsu_argv);
+		if (defined $opt_data_path and $opt_data_path eq 'directtcp' and
+		    !$bsu->{'data-path-directtcp'}) {
+		    return falure("The application can't do directtcp", $finished_cb);
+		}
+		if ($directtcp_supported and !$bsu->{'data-path-directtcp'}) {
+		    # application do not support directtcp
+		    $directtcp_supported = 0;
+		}
+
+		push @argv, $program_path, "restore";
+		push @argv, "--config", $opt_config;
+		push @argv, "--host", $hdr->{'name'};
+		push @argv, "--disk", $hdr->{'disk'};
+		push @argv, "--device", $dle->{'diskdevice'} if defined ($dle->{'diskdevice'});
+		push @argv, "--level", $hdr->{'dumplevel'};
+		push @argv, "--directory", $opt_directory;
+
+		# add application_property
+		while (my($name, $value) = each(%application_property)) {
+		    push @argv, "--".$name, $value if $value;
+		}
+
+		#merge property from header;
+		while (my($name, $value) = each (%{$dle->{'backup-program'}->{'property'}})) {
+		    if (!exists $application_property{$name}) {
+			push @argv, "--".$name, $value->{'value'};
+		    }
+		}
+		push @argv, ".";
+
+	    }
+	    $directtcp = $directtcp_supported;
+	    if ($directtcp_supported) {
+		$xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();
+		@directtcp_command = @argv;
+	    } else {
+		# set up the extraction command as a filter element, since
+		# we need its stderr.
+		debug("Running: ". join(' ',@argv));
+		push @filters, Amanda::Xfer::Filter::Process->new(\@argv, 0);
+
+		$dest_fh = \*STDOUT;
+		$xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
+	    }
+	} elsif ($opt_pipe) {
 	    $dest_fh = \*STDOUT;
+	    $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
 	} else {
 	    my $filename = sprintf("%s.%s.%s.%d",
 		    $hdr->{'name'},
@@ -470,6 +616,7 @@ sub main {
 	    if (!open($dest_fh, ">", $filename)) {
 		return failure("Could not open '$filename' for writing: $!", $finished_cb);
 	    }
+	    $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
 	}
 
 	$timer = Amanda::MainLoop::timeout_source($delay);
@@ -482,12 +629,7 @@ sub main {
 	    }
 	});
 
-	my $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
-
-	my $dle = $hdr->get_dle();
-
 	# set up any filters that need to be applied; decryption first
-	my @filters;
 	if ($hdr->{'encrypted'} and
 	    (($hdr->{'srv_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_SERVER)) ||
 	     ($hdr->{'clnt_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_CLIENT)))) {
@@ -599,20 +741,74 @@ sub main {
 		    $buffer .= $b;
 		    if ($b eq "\n") {
 			my $line = $buffer;
-			print STDERR "filter stderr: $line";
 			chomp $line;
-			debug("filter stderr: $line");
+			if (length($line) > 1) {
+			    print STDERR "filter stderr: $line\n";
+			    debug("filter stderr: $line");
+			}
 			$buffer = "";
 		    }
 		}
 	    });
 	}
 
-	my $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
+	my $xfer;
+	if (@filters) {
+	    $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
+	} else {
+	    $xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dest ]);
+	}
 	$xfer->start($steps->{'handle_xmsg'}, 0, $current_dump->{'bytes'});
 	$clerk->start_recovery(
 	    xfer => $xfer,
 	    recovery_cb => $steps->{'recovery_cb'});
+	if ($directtcp) {
+	    my $addr = $xfer_dest->get_addrs();
+	    push @directtcp_command, "--data-path", "DIRECTTCP";
+	    push @directtcp_command, "--direct-tcp", "$addr->[0]->[0]:$addr->[0]->[1]";
+	    debug("Running: ". join(' ', @directtcp_command));
+
+	    my ($wtr, $rdr);
+	    my $err = Symbol::gensym;
+	    my $amndmp_pid = open3($wtr, $rdr, $err, @directtcp_command);
+	    $amndmp_pid = $amndmp_pid;
+	    my $file_to_close = 2;
+	    my $amndmp_stdout_src = Amanda::MainLoop::fd_source($rdr,
+						$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+	    my $amndmp_stderr_src = Amanda::MainLoop::fd_source($err,
+						$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+
+	    $amndmp_stdout_src->set_callback( sub {
+		my $line = <$rdr>;
+		if (!defined $line) {
+		    $file_to_close--;
+		    $amndmp_stdout_src->remove();
+		    if ($file_to_close == 0) {
+			#abort the xfer
+			$xfer->cancel() if $xfer->get_status != $XFER_DONE;
+		    }
+		    return;
+		}
+		chomp $line;
+		debug("amndmp stdout: $line");
+		print "$line\n";
+	    });
+	    $amndmp_stderr_src->set_callback( sub {
+		my $line = <$err>;
+		if (!defined $line) {
+                    $file_to_close--;
+                    $amndmp_stderr_src->remove();
+                    if ($file_to_close == 0) {
+			#abort the xfer
+			$xfer->cancel() if $xfer->get_status != $XFER_DONE;
+                    }
+                    return;
+		}
+		chomp $line;
+		debug("amndmp stderr: $line");
+		print STDERR "$line\n";
+	    });
+	}
     };
 
     step handle_xmsg => sub {

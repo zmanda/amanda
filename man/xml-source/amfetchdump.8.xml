@@ -51,6 +51,12 @@
       <arg choice='plain'>--server-decompress</arg>
       <arg choice='plain'>--client-decompress</arg>
     </group>
+    <arg>
+	<arg choice='plain'>--extract</arg>
+	<arg choice='plain'>--directory<replaceable> directory</replaceable></arg>
+	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
+	<arg choice='opt'>--application-property <replaceable>NAME=VALUE</replaceable></arg>*
+    </arg>
     <group choice='opt'>
       <arg choice='plain'>--decrypt</arg>
       <arg choice='plain'>--no-decrypt</arg>
