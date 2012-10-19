@@ -37,6 +37,9 @@ sequence of several expressions intended to match particular dumps in the
 catalog.  Other applications take a DLE specification which indicates a set
 of DLEs to be operated on.  These formats are described below.</para>
 
+<para>An expression can be disabled be preceding it with the '=' character,
+in that case, an exact match is used.</para>
+<para>Many program have an '--exact-match' argument that disable expression and exact match are used.</para>
 </refsect1>
 
 <refsect1><title>HOST &amp; DISK EXPRESSIONS</title>

@@ -90,7 +90,12 @@ cmdline_parse_dumpspecs(
     enum { ARG_GET_HOST, ARG_GET_DISK, ARG_GET_DATESTAMP, ARG_GET_LEVEL } arg_state = ARG_GET_HOST;
 
     while (optind < argc) {
+	char *new_name = NULL;
         name = argv[optind];
+	if (flags & CMDLINE_EXACT_MATCH  && *name != '=') {
+	    new_name = g_strconcat("=", name, NULL);
+	    name = new_name;
+	}
         switch (arg_state) {
             case ARG_GET_HOST:
                 arg_state = ARG_GET_DISK;
@@ -113,12 +118,14 @@ cmdline_parse_dumpspecs(
                 arg_state = ARG_GET_HOST;
 		if (!(flags & CMDLINE_PARSE_LEVEL)) continue;
                 if (name[0] != '\0'
+		    && !(flags & CMDLINE_EXACT_MATCH)
                     && (errstr=validate_regexp(name)) != NULL) {
                     error(_("bad level regex \"%s\": %s\n"), name, errstr);
                 }
                 dumpspec->level = g_strdup(name);
                 break;
         }
+	amfree(new_name);
 
 	optind++;
     }

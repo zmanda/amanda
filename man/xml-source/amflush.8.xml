@@ -31,6 +31,7 @@
   <command>amflush</command>    
     <arg choice='opt'>-b</arg>
     <arg choice='opt'>-f</arg>
+    <arg choice='opt'>--exact-match</arg>
     <arg choice='opt'>-s</arg>
     <arg choice='opt'>-D <replaceable>datestamp</replaceable></arg>
     &configoverride.synopsis;
@@ -107,6 +108,13 @@ option.</para>
 for details on the format of this expression.
 <option>-D 20001225-7</option>
 will flush all dumps from 25 december 2000 to 27 december 2000.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values</para>
   </listitem>
   </varlistentry>
 

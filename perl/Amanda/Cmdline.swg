@@ -95,6 +95,7 @@ amglue_add_flag_tag_fns(cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_PARSE_DATESTAMP, cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_PARSE_LEVEL, cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_EMPTY_TO_WILDCARD, cmdline_parse_dumpspecs_flags);
+amglue_add_constant(CMDLINE_EXACT_MATCH, cmdline_parse_dumpspecs_flags);
 amglue_copy_to_tag(cmdline_parse_dumpspecs_flags, constants);
 
 %rename(parse_dumpspecs) cmdline_parse_dumpspecs;

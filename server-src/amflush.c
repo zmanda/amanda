@@ -45,6 +45,7 @@
 
 static struct option long_options[] = {
     {"version"         , 0, NULL,  1},
+    {"exact-match"     , 0, NULL,  2},
     {NULL, 0, NULL, 0}
 };
 
@@ -101,6 +102,7 @@ main(
     char **config_options;
     find_result_t *holding_files;
     disklist_t holding_disklist = { NULL, NULL };
+    gboolean exact_match = FALSE;
 
     /*
      * Configure program for internationalization:
@@ -134,7 +136,8 @@ main(
 	case 1  : printf("amflush-%s\n", VERSION);
 		  return(0);
 		  break;
-
+	case 2  : exact_match = TRUE;
+		  break;
 	case 'b': batch = 1;
 		  break;
 	case 'f': foreground = 1;
@@ -162,7 +165,7 @@ main(
     }
 
     if(argc < 1) {
-	error(_("Usage: amflush [-b] [-f] [-s] [-D date]* [-o configoption]* <confdir> [host [disk]* ]*"));
+	error(_("Usage: amflush [-b] [-f] [-s] [-D date]* [--exact-match] [-o configoption]* <confdir> [host [disk]* ]*"));
 	/*NOTREACHED*/
     }
 
@@ -192,7 +195,7 @@ main(
      * dumps will be filtered properly by match_disklist, setting the dp->todo
      * flag appropriately. */
 
-    errstr = match_disklist(&diskq, argc-1, argv+1);
+    errstr = match_disklist(&diskq, exact_match, argc-1, argv+1);
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);

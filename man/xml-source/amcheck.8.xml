@@ -34,6 +34,7 @@
     <arg choice='opt'>-sclt</arg>
     <arg choice='opt'>-M <replaceable>address</replaceable></arg>
     <arg choice='opt'>--client-verbose</arg>
+    <arg choice='opt'>--exact-match</arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt' rep='repeat'>
@@ -154,6 +155,13 @@ Implies
   <term><option>--client-verbose</option></term>
   <listitem>
 <para>Print all client messages.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values</para>
   </listitem>
   </varlistentry>
 

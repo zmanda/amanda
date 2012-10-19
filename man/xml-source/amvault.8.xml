@@ -30,6 +30,7 @@
     <group choice='opt'><arg choice='plain'>--dry-run</arg><arg choice='plain'>-n</arg></group>
     <group choice='opt'><arg choice='plain'>--quiet</arg><arg choice='plain'>-q</arg></group>
     <arg choice='opt'>--fulls-only </arg>
+    <arg choice='opt'>--exact-match </arg>
     <arg choice='opt'>--export </arg>
     <arg choice='opt'><option>--src-timestamp</option>
 	<replaceable>src-timestamp</replaceable></arg>
@@ -168,6 +169,13 @@ define changer vaulting_tape {
   <listitem>
 <para>Cause amvault to print the dumps it would vault, but not actually
 perform any vaulting operations.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values</para>
   </listitem>
   </varlistentry>
 

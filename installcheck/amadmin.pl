@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S Mathilda Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 23;
 use strict;
 use warnings;
 
@@ -124,4 +124,25 @@ like(run_get('amadmin TESTCONF force localhost share-a share-a'),
 
 like(run_get('amadmin TESTCONF balance --days 12'),
    qr/No data to report on yet.$/,
-   "shell 13");
+   "shell 14");
+
+like(run_get('amadmin TESTCONF force =localhost share-a'),
+   qr/^amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.$/,
+   "shell 15");
+
+like(run_get('amadmin TESTCONF force =localhost =share-a'),
+   qr/^Argument '=share-a' matches neither a host nor a disk.$/,
+   "shell 16");
+
+like(run_get('amadmin --exact-match TESTCONF force localhost share-a'),
+   qr/^Argument '=share-a' matches neither a host nor a disk.$/,
+   "shell 17");
+
+like(run_get('amadmin TESTCONF force =localhost \'=\\\\windows\\share-a\''),
+   qr/^amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.$/,
+   "shell 18");
+
+like(run_get('amadmin --exact-match TESTCONF force localhost \'\\\\windows\\share-a\''),
+   qr/^amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.$/,
+   "shell 19");
+

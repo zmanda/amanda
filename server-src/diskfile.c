@@ -1730,6 +1730,7 @@ disable_skip_disk(
 char *
 match_disklist(
     disklist_t *origqp,
+    gboolean    exact_match,
     int		sargc,
     char **	sargv)
 {
@@ -1742,9 +1743,22 @@ match_disklist(
     disk_t *dp_skip;
     disk_t *dp;
     GString *errbuf;
+    char **new_sargv = NULL;
 
     if(sargc <= 0)
 	return NULL;
+
+    if (exact_match) {
+	new_sargv = g_new0(char *, sargc+1);
+	for (i=0; i<sargc; i++) {
+	    if (*sargv[i] == '=') {
+		new_sargv[i] = g_strdup(sargv[i]);
+	    } else {
+		new_sargv[i] = g_strconcat("=", sargv[i], NULL);
+	    }
+	}
+	sargv = new_sargv;
+    }
 
     errbuf = g_string_new(NULL);
 
@@ -1839,12 +1853,18 @@ match_disklist(
         errstr = NULL;
     }
 
+    if (new_sargv) {
+	for (i=0; i<sargc; i++)
+	    g_free(new_sargv[i]);
+	g_free(new_sargv);
+    }
     return errstr;
 }
 
 gboolean
 match_dumpfile(
     dumpfile_t  *file,
+    gboolean	exact_match,
     int		sargc,
     char **	sargv)
 {
@@ -1869,7 +1889,7 @@ match_dumpfile(
 
     dl.head = dl.tail = &d;
 
-    (void)match_disklist(&dl, sargc, sargv);
+    (void)match_disklist(&dl, exact_match, sargc, sargv);
     return d.todo;
 }
 
