@@ -33,6 +33,7 @@
     <arg choice='opt'>--version</arg>
     <arg choice='opt'>--no-default</arg>
     <arg choice='opt'>--print-source</arg>
+    <arg choice='opt'>--exact-match</arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>command</replaceable></arg>
@@ -65,8 +66,12 @@ and <emphasis remap='B'>disklist</emphasis> commands.</para></listitem>
   </varlistentry>
  <varlistentry>
     <term><option>--print-source</option></term>
-<listitem><para>Print where a value is definedi for <emphasis remap='B'>config</emphasis>
+<listitem><para>Print where a value is defined for <emphasis remap='B'>config</emphasis>
 and <emphasis remap='B'>disklist</emphasis> commands.</para></listitem>
+  </varlistentry>
+ <varlistentry>
+    <term><option>--exact-match</option></term>
+<listitem><para>The host and disk are parsed as exact values</para></listitem>
   </varlistentry>
 
 </variablelist>

@@ -194,6 +194,7 @@ main(
     int exit_status = EXIT_SUCCESS;
     gboolean no_taper = FALSE;
     gboolean from_client = FALSE;
+    gboolean exact_match = FALSE;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("planner-%s\n", VERSION);
@@ -277,6 +278,11 @@ main(
 	from_client = TRUE;
 	diskarg_offset += 1;
     }
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--exact_match")) {
+	exact_match = TRUE;
+	diskarg_offset += 1;
+    }
 
 
     run_server_global_scripts(EXECUTE_ON_PRE_ESTIMATE, get_config_name());
@@ -349,7 +355,7 @@ main(
     g_fprintf(stderr, _("%s: timestamp %s\n"),
 		    get_pname(), planner_timestamp);
 
-    errstr = match_disklist(&origq, argc-diskarg_offset,
+    errstr = match_disklist(&origq, exact_match, argc-diskarg_offset,
 				    argv+diskarg_offset);
     if (errstr) {
 	g_fprintf(stderr,"%s",errstr);
@@ -464,7 +470,7 @@ main(
 
 	    /* see if this matches the command-line arguments */
 	    if (conf_autoflush == 1 &&
-		!match_dumpfile(&file, argc-diskarg_offset,
+		!match_dumpfile(&file, exact_match, argc-diskarg_offset,
 				       argv+diskarg_offset)) {
 		continue;
 	    }

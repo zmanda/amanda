@@ -72,7 +72,7 @@ int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 void
 usage(void)
 {
-    g_printf(_("Usage: amcheck [--version] [-am] [-w] [-sclt] [-M <address>] [--client-verbose] [-o configoption]* <conf> [host [disk]* ]*\n"));
+    g_printf(_("Usage: amcheck [--version] [-am] [-w] [-sclt] [-M <address>] [--client-verbose] [--exact_match] [-o configoption]* <conf> [host [disk]* ]*\n"));
     exit(1);
     /*NOTREACHED*/
 }
@@ -83,9 +83,11 @@ static char *displayunit;
 static long int unitdivisor;
 
 static int client_verbose = FALSE;
+static gboolean exact_match = FALSE;
 static struct option long_options[] = {
     {"client-verbose", 0, NULL,  1},
     {"version"       , 0, NULL,  2},
+    {"exact-match"   , 0, NULL,  3},
     {NULL, 0, NULL, 0}
 };
 
@@ -174,6 +176,8 @@ main(
 			break;
 	case 2:		printf("amcheck-%s\n", VERSION);
 			return(0);
+			break;
+	case 3:		exact_match = TRUE;
 			break;
 	case 'M':	if (mailto) {
 			    g_printf(_("Multiple -M options\n"));
@@ -279,7 +283,7 @@ main(
 
     conf_ctimeout = (time_t)getconf_int(CNF_CTIMEOUT);
 
-    errstr = match_disklist(&origq, argc-1, argv+1);
+    errstr = match_disklist(&origq, exact_match, argc-1, argv+1);
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);

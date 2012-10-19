@@ -939,6 +939,7 @@ sub usage {
 
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--fulls-only] [--export] [--src-timestamp src-timestamp]
+	   [--exact-match]
 	   --label-template label-template --dst-changer dst-changer
 	   [--autolabel autolabel-arg...]
 	   config
@@ -974,6 +975,7 @@ my @config_overrides_opts;
 my $opt_quiet = 0;
 my $opt_dry_run = 0;
 my $opt_fulls_only = 0;
+my $opt_exact_match = 0;
 my $opt_export = 0;
 my $opt_autolabel = {};
 my $opt_autolabel_seen = 0;
@@ -1017,6 +1019,7 @@ GetOptions(
     'q|quiet' => \$opt_quiet,
     'n|dry-run' => \$opt_dry_run,
     'fulls-only' => \$opt_fulls_only,
+    'exact-match' => \$opt_exact_match,
     'export' => \$opt_export,
     'label-template=s' => \&set_label_template,
     'autolabel=s' => \&add_autolabel,
@@ -1030,7 +1033,9 @@ $opt_autolabel->{'empty'} = 1 unless $opt_autolabel_seen;
 usage("not enough arguments") unless (@ARGV >= 1);
 
 my $config_name = shift @ARGV;
-my @opt_dumpspecs = parse_dumpspecs(\@ARGV, $CMDLINE_PARSE_DATESTAMP|$CMDLINE_PARSE_LEVEL)
+my $cmd_flags = $CMDLINE_PARSE_DATESTAMP|$CMDLINE_PARSE_LEVEL;
+$cmd_flags |= $CMDLINE_EXACT_MATCH if $opt_exact_match;
+my @opt_dumpspecs = parse_dumpspecs(\@ARGV, $cmd_flags)
     if (@ARGV);
 
 usage("no --label-template given") unless $opt_autolabel->{'template'};

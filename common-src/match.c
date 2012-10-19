@@ -870,6 +870,9 @@ int match_host(const char *glob, const char *host)
     char *lglob, *lhost;
     int ret;
 
+    if (*glob == '=') {
+	return strcmp(glob+1, host) == 0;
+    }
     lglob = g_ascii_strdown(glob, -1);
     lhost = g_ascii_strdown(host, -1);
 
@@ -938,6 +941,10 @@ int match_disk(const char *glob, const char *disk)
 
     gboolean windows_share = !(strncmp(disk, "\\\\", 2) || strchr(disk, '/'));
 
+    if (*glob == '=') {
+	return strcmp(glob+1, disk) == 0;
+    }
+
     if (windows_share) {
         glob2 = convert_winglob_to_unix(glob);
         disk2 = convert_unc_to_unix(disk);
@@ -985,6 +992,10 @@ match_datestamp(
 
     if(strlen(dateexp) >= 100 || strlen(dateexp) < 1) {
 	goto illegal;
+    }
+
+    if (*dateexp == '=') {
+	return strcmp(dateexp+1, datestamp) == 0;
     }
 
     /* strip and ignore an initial "^" */
@@ -1067,6 +1078,10 @@ match_level(
     if(strlen(levelexp) >= 100 || strlen(levelexp) < 1) {
 	error("Illegal level expression %s", levelexp);
 	/*NOTREACHED*/
+    }
+
+    if (*levelexp == '=') {
+	return strcmp(levelexp+1, level) == 0;
     }
 
     if(levelexp[0] == '^') {

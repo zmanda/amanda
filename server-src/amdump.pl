@@ -38,7 +38,7 @@ use Amanda::Paths;
 sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
-Usage: amdump <conf> [--no-taper] [--from-client] [-o configoption]* [host/disk]*
+Usage: amdump <conf> [--no-taper] [--from-client] [--exact-match] [-o configoption]* [host/disk]*
 EOF
     print STDERR "$msg\n" if $msg;
     exit 1;
@@ -51,6 +51,7 @@ my @config_overrides_opts;
 
 my $opt_no_taper = 0;
 my $opt_from_client = 0;
+my $opt_exact_match = 0;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
@@ -59,6 +60,7 @@ GetOptions(
     'help|usage|?' => \&usage,
     'no-taper' => \$opt_no_taper,
     'from-client' => \$opt_from_client,
+    'exact-match' => \$opt_exact_match,
     'o=s' => sub {
 	push @config_overrides_opts, "-o" . $_[1];
 	add_config_override_opt($config_overrides, $_[1]);
@@ -213,6 +215,7 @@ sub planner_driver_pipeline {
     my $driver = "$amlibexecdir/driver";
     my @no_taper = $opt_no_taper? ('--no-taper'):();
     my @from_client = $opt_from_client? ('--from-client'):();
+    my @exact_match = $opt_exact_match? ('--exact-match'):();
 
     check_exec($planner);
     check_exec($driver);
@@ -234,7 +237,7 @@ sub planner_driver_pipeline {
 	close($amdump_log);
 	exec $planner,
 	    # note that @no_taper must follow --starttime
-	    $config_name, '--starttime', $timestamp, @no_taper, @from_client, @config_overrides_opts, @hostdisk;
+	    $config_name, '--starttime', $timestamp, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk;
 	die "Could not exec $planner: $!";
     }
     debug(" planner: $pl_pid");

@@ -43,7 +43,7 @@ sub usage {
     print STDERR "$msg\n" if $msg;
     print STDERR <<EOF;
 Usage: amrestore [--config config] [-b blocksize] [-r|-c|-C] [-p] [-h]
-    [-f filenum] [-l label] [-o configoption]*
+    [-f filenum] [-l label] [--exact-match] [-o configoption]*
     {device | [--holding] holdingfile}
     [hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]]"));
 EOF
@@ -58,7 +58,7 @@ Amanda::Util::setup_application("amrestore", "server", $CONTEXT_CMDLINE);
 my $config_overrides = new_config_overrides($#ARGV+1);
 
 my ($opt_config, $opt_blocksize, $opt_raw, $opt_compress, $opt_compress_best,
-    $opt_pipe, $opt_header, $opt_filenum, $opt_label, $opt_holding, $opt_restore_src);
+    $opt_pipe, $opt_header, $opt_filenum, $opt_label, $opt_holding, $opt_restore_src, $opt_exact_match);
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
@@ -67,6 +67,7 @@ GetOptions(
     'help|usage|?' => \&usage,
     'config=s' => \$opt_config,
     'holding' => \$opt_holding,
+    'exact-match' => \$opt_exact_match,
     'b=i' => \$opt_blocksize,
     'r' => \$opt_raw,
     'c' => \$opt_compress,
@@ -88,8 +89,9 @@ if (!$opt_holding) {
 	if (Amanda::Holding::get_header($opt_restore_src));
 }
 
-my @opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV],
-    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
+my $cmd_flags = $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP;
+$cmd_flags |= $Amanda::Cmdline::CMDLINE_EXACT_MATCH if $opt_exact_match;
+my @opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV], $cmd_flags);
 
 usage("Cannot check a label on a holding-disk file")
     if ($opt_holding and $opt_label);

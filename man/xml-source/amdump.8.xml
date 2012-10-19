@@ -29,7 +29,8 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amdump</command>    
-    <arg choice='opt'><option>--no-taper</option></arg>
+    <arg choice='opt'>--no-taper</arg>
+    <arg choice='opt'>--exact-match</arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt' rep='repeat'>
@@ -81,6 +82,13 @@ man page for more details about Amanda.</para>
   <listitem>
 <para>Specify the host and disk on which the command will work -- see
     the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exact-match</option></term>
+  <listitem>
+<para>The host and disk are parsed as exact values</para>
   </listitem>
   </varlistentry>
 

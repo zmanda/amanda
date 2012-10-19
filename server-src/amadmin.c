@@ -94,6 +94,7 @@ static gboolean print_default = 1;
 static gboolean print_source = 0;
 static int opt_days = -1;
 static char *opt_sort = NULL;
+static gboolean exact_match = FALSE;
 static gboolean opt_long = 0;
 static gboolean opt_outdated = 0;
 
@@ -157,6 +158,7 @@ static struct option long_options[] = {
     {"print-source"  , 0, NULL,  3},
     {"days"          , 1, NULL,  4},
     {"sort"          , 1, NULL,  5},
+    {"exact-match"   , 0, NULL,  6},
     {NULL, 0, NULL, 0}
 };
 
@@ -212,6 +214,8 @@ main(
 	case 4: opt_days = atoi(optarg);
 		break;
 	case 5: opt_sort = g_strdup(optarg);
+		break;
+	case 6: exact_match = TRUE;
 		break;
 	case 'l': opt_long = TRUE;
 		break;
@@ -292,7 +296,7 @@ usage(void)
 {
     int i;
 
-    g_fprintf(stderr, _("\nUsage: %s [--version] [--no-default] [--print-source] [-o configoption]*\n               <conf> <command> {<args>} ...\n"),
+    g_fprintf(stderr, _("\nUsage: %s [--version] [--exact-match] [--no-default] [--print-source] [-o configoption]*\n               <conf> <command> {<args>} ...\n"),
 	    get_pname());
     g_fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)
@@ -370,7 +374,7 @@ diskloop(
 	usage();
     }
 
-    errstr = match_disklist(&diskq, argc-3, argv+3);
+    errstr = match_disklist(&diskq, exact_match, argc-3, argv+3);
     if (errstr) {
 	g_printf("%s", errstr);
 	amfree(errstr);
@@ -1198,7 +1202,8 @@ find(
 	}
     }
     start_argc=4;
-    errstr = match_disklist(&diskq, argc-(start_argc-1), argv+(start_argc-1));
+    errstr = match_disklist(&diskq, exact_match, argc-(start_argc-1),
+						 argv+(start_argc-1));
 
     /* check all log file exists */
     output_find_log = find_log();
@@ -1215,8 +1220,8 @@ find(
 	disk_t *dp;
 
 	amfree(errstr);
-	errstr = match_disklist(&diskq, argc-(start_argc-1),
-					argv+(start_argc-1));
+	errstr = match_disklist(&diskq, exact_match, argc-(start_argc-1),
+						     argv+(start_argc-1));
 	if (errstr) {
 	    g_printf("%s", errstr);
 	    amfree(errstr);
@@ -1251,7 +1256,8 @@ static GSList *
 get_file_list(
     int argc,
     char **argv,
-    int allow_empty)
+    int allow_empty,
+    gboolean exact_match)
 {
     GSList * file_list = NULL;
     GSList * dumplist;
@@ -1259,6 +1265,7 @@ get_file_list(
 
     flags = CMDLINE_PARSE_DATESTAMP;
     if (allow_empty) flags |= CMDLINE_EMPTY_TO_WILDCARD;
+    if (exact_match) flags |= CMDLINE_EXACT_MATCH;
     dumplist = cmdline_parse_dumpspecs(argc, argv, flags);
 
     file_list = cmdline_match_holding(dumplist);
@@ -1509,7 +1516,7 @@ holding(
 		    _("size (kB)"), _("lv"), _("outd"), _("dump specification"));
             }
 
-            file_list = get_file_list(argc, argv, 1);
+            file_list = get_file_list(argc, argv, 1, exact_match);
             for (li = file_list; li != NULL; li = li->next) {
                 char *dumpstr;
 		int is_outdated;
@@ -1544,7 +1551,7 @@ holding(
         case HOLDING_DELETE:
             argc -= 4; argv += 4;
 
-            file_list = get_file_list(argc, argv, 0);
+            file_list = get_file_list(argc, argv, 0, exact_match);
             for (li = file_list; li != NULL; li = li->next) {
                 g_fprintf(stderr, _("Deleting '%s'\n"), (char *)li->data);
                 /* remove it from the catalog */

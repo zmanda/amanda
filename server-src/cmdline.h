@@ -119,6 +119,8 @@ cmdline_parse_dumpspecs(
 #    define CMDLINE_PARSE_LEVEL (1<<1)
     /* an empty argv should result in a wildcard dumpspec */
 #    define CMDLINE_EMPTY_TO_WILDCARD (1<<2)
+    /* use exact match instead of host and disk expression */
+#    define CMDLINE_EXACT_MATCH (1<<3)
 
 /*
  * Formatting

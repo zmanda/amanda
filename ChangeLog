@@ -1,4 +1,27 @@
 2012-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/match.c: Handle '=' as first characters of expression.
+	* man/xml-source/amanda-match.7.xml: Document new '=' as first
+	  character of expression.
+	* man/xml-source/amadmin.8.xml, man/xml-source/amcheck.8.xml,
+	* man/xml-source/amdump.8.xml, man/xml-source/amfetchdump.8.xml,
+	* man/xml-source/amflush.8.xml, man/xml-source/amrestore.8.xml,
+	* man/xml-source/amvault.8.xml: Document new '--exact-match' argument.
+	* perl/Amanda/Cmdline.swg: Add CMDLINE_EXACT_MATCH
+	* server-src/diskfile.c (match_disklist, match_dumpfile):
+	  New exact_match argument.
+	* server-src/diskfile.h (match_disklist, match_dumpfile):
+	  Change prototype.
+	* server-src/cmdline.c (cmdline_parse_dumpspecs): CMDLINE_EXACT_MATCH.
+	* server-src/cmdline.h: New CMDLINE_EXACT_MATCH.
+	* server-src/amadmin.c, server-src/amcheck.c,
+	  server-src/amdump.pl, server-src/amfetchdump.pl,
+	  server-src/amflush.c, server-src/amrestore.pl,
+	  server-src/amvault.pl, server-src/planner.c: Add --exact-match
+	  argument.
+	* installcheck/Amanda_Cmdline.pl: Check '='.
+	* installcheck/amadmin.pl: Check --exact-match and '='.
+
+2012-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix for compressed dump.
 
 2012-10-19  Jean-Louis Martineau <martineau@zmanda.com>

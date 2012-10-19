@@ -179,8 +179,10 @@ char *xml_dumptype_properties(disk_t *dp);
  */
 void disable_skip_disk(disklist_t *origqp);
 
-char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
-gboolean match_dumpfile(dumpfile_t *file, int sargc, char **sargv);
+char *match_disklist(disklist_t *origqp, gboolean exact_match, int sargc,
+		     char **sargv);
+gboolean match_dumpfile(dumpfile_t *file, gboolean exact_match, int sargc,
+			char **sargv);
 void free_disklist(disklist_t *dl);
 
 netif_t *disklist_netifs(void);

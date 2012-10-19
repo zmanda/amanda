@@ -122,7 +122,7 @@ Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
     [--extract --directory directory [--data-path (amanda|directtcp)]
     [--application-property='NAME=VALUE']*]
-    [-o configoption]* config
+    [-o configoption]* [--exact-match] config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
 EOF
     print STDERR "ERROR: $msg\n" if $msg;
@@ -141,7 +141,8 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_header_file, $opt_header_fd, @opt_dumpspecs,
     $opt_decrypt, $opt_server_decrypt, $opt_client_decrypt,
     $opt_decompress, $opt_server_decompress, $opt_client_decompress,
-    $opt_extract, $opt_directory, $opt_data_path, %application_property);
+    $opt_extract, $opt_directory, $opt_data_path, %application_property,
+    $opt_exact_match);
 
 my $NEVER = 0;
 my $ALWAYS = 1;
@@ -174,6 +175,7 @@ GetOptions(
     'directory=s' => \$opt_directory,
     'data-path=s' => \$opt_data_path,
     'application-property=s' => \%application_property,
+    'exact-match' => \$opt_exact_match,
     'b=s' => \$opt_blocksize,
     'd=s' => \$opt_device,
     'O=s' => \$opt_chdir,
@@ -307,8 +309,10 @@ $decompress = $ONLY_SERVER if defined $opt_server_decompress;
 $decompress = $ONLY_CLIENT if defined $opt_client_decompress;
 
 usage("must specify at least a hostname") unless @ARGV;
-@opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV],
-    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP | $Amanda::Cmdline::CMDLINE_PARSE_LEVEL);
+my $cmd_flags = $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP |
+		$Amanda::Cmdline::CMDLINE_PARSE_LEVEL;
+$cmd_flags |= $Amanda::Cmdline::CMDLINE_EXACT_MATCH if $opt_exact_match;
+@opt_dumpspecs = Amanda::Cmdline::parse_dumpspecs([@ARGV], $cmd_flags);
 
 set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
