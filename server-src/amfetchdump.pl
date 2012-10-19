@@ -657,10 +657,10 @@ sub main {
 	if ($hdr->{'compressed'} and not $opt_compress and
 	    (($hdr->{'srvcompprog'} and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
 	     ($hdr->{'clntcompprog'} and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_FAST and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
-	     ($dle->{'compress'} == $Amanda::Config::COMP_BEST and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)))) {
+	     ($dle->{'compress'} and $dle->{'compress'} eq "SERVER-FAST" and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
+	     ($dle->{'compress'} and $dle->{'compress'} eq "SERVER-BEST" and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
+	     ($dle->{'compress'} and $dle->{'compress'} eq "FAST" and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
+	     ($dle->{'compress'} and $dle->{'compress'} eq "BEST" and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)))) {
 	    # need to uncompress this file
 	    if ($hdr->{'encrypted'}) {
 		print "Not decompressing because the backup image is not decrypted\n";
