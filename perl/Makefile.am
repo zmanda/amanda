@@ -489,6 +489,9 @@ DISTCLEANFILES += Amanda/Constants.pm
 Amanda_DATA += Amanda/Script_App.pm
 EXTRA_DIST += Amanda/Script_App.pm
 
+# PACKAGE: Amanda::Extract
+Amanda_DATA += Amanda/Extract.pm
+EXTRA_DIST += Amanda/Extract.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::Holding
