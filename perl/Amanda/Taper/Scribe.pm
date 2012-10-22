@@ -986,6 +986,14 @@ sub _xmsg_done {
     }
 }
 
+sub abort_setup {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'dump_cb'} = $params{'dump_cb'};
+    $self->_dump_done();
+}
+
 sub _dump_done {
     my $self = shift;
 
@@ -1001,6 +1009,9 @@ sub _dump_done {
     }
 
     my $dump_cb = $self->{'dump_cb'};
+
+    return if !defined $dump_cb;
+
     my %dump_cb_args = (
 	result => $result,
 	device_errors => $self->{'device_errors'},
@@ -1055,8 +1066,6 @@ sub _operation_failed {
         if (defined $self->{'dump_cb'}) {
             # _dump_done constructs the dump_cb from $self parameters
             $self->_dump_done();
-        } else {
-            confess "error with no callback to handle it: $error_message";
         }
     }
 }
