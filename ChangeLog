@@ -1,4 +1,7 @@
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: typo, remove '.' in argv.
+
+2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c (do_dump): Make the header file only
 	  HEADER_DONE.
 
