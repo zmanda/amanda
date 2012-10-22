@@ -1344,7 +1344,7 @@ do_dump(
     }
 
     /* copy the header in a file on the index dir */
-    {
+    if (ISSET(status, HEADER_DONE)) {
 	FILE *a;
 	char *s;
 	char *f = getheaderfname(hostname, diskname, dumper_timestamp, level);
