@@ -759,21 +759,24 @@ ndmp_connection_wait_for_notify_with_cond(
 	ndmp9_mover_halt_reason *mover_halt_reason,
 	ndmp9_mover_pause_reason *mover_pause_reason,
 	guint64 *mover_pause_seek_position,
+	int *cancelled,
 	GMutex *abort_mutex,
 	GCond *abort_cond)
 {
     struct ndmp_msg_buf nmb;
-    notify_data ndata;
+    notify_data *ndata;
     gboolean found = FALSE;
+    int status;
 
-    ndata.self = self;
-    ndata.data_halt_reason= data_halt_reason;
-    ndata.mover_halt_reason= mover_halt_reason;
-    ndata.mover_pause_reason= mover_pause_reason;
-    ndata.mover_pause_seek_position = mover_pause_seek_position;
-    ndata.abort_mutex = abort_mutex;
-    ndata.abort_cond = abort_cond;
-    ndata.status = 2;
+    ndata = g_new0(notify_data, 1);
+    ndata->self = self;
+    ndata->data_halt_reason= data_halt_reason;
+    ndata->mover_halt_reason= mover_halt_reason;
+    ndata->mover_pause_reason= mover_pause_reason;
+    ndata->mover_pause_seek_position = mover_pause_seek_position;
+    ndata->abort_mutex = abort_mutex;
+    ndata->abort_cond = abort_cond;
+    ndata->status = 2;
 
     g_assert(!self->startup_err);
 
@@ -819,19 +822,24 @@ ndmp_connection_wait_for_notify_with_cond(
 	 * outside of the ndmlib_mutex critical section.  This will also be
 	 * useful to allow the wait to be aborted. */
 
-    ndata.read_event = event_register(self->conn->chan.fd,
-				      EV_READFD, handle_notify, &ndata);
+    ndata->read_event = event_register(self->conn->chan.fd,
+				      EV_READFD, handle_notify, ndata);
 
-    g_cond_wait(abort_cond, abort_mutex);
-
-    if (ndata.read_event) {
-	event_release(ndata.read_event);
+    while (!*cancelled && ndata->status == 2) {
+	g_cond_wait(abort_cond, abort_mutex);
     }
-    if (ndata.status == 2) {
+
+    if (ndata->read_event) {
+	event_release(ndata->read_event);
+	ndata->read_event = NULL;
+    }
+    if (ndata->status == 2) {
 	ndmp_connection_mover_abort(self);
 	ndmp_connection_mover_stop(self);
     }
-    return ndata.status;
+    status = ndata->status;
+    g_free(ndata);
+    return status;
 
 }
 
@@ -842,6 +850,7 @@ handle_notify(void *cookie)
     struct ndmp_msg_buf nmb;
     gboolean found = FALSE;
 
+    assert (ndata->read_event);
     g_mutex_lock(ndata->abort_mutex);
 
     event_release(ndata->read_event);

@@ -1414,95 +1414,60 @@ device_listen(
     }
 }
 
-gboolean
+int
 device_accept(
     Device *self,
     DirectTCPConnection **conn,
-    ProlongProc prolong,
-    gpointer prolong_data)
+    int    *cancelled,
+    GMutex *abort_mutex,
+    GCond  *abort_cond)
 {
     DeviceClass *klass;
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->accept) {
-	return (klass->accept)(self, conn, prolong, prolong_data);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
-}
-
-gboolean
-device_accept_with_cond(
-    Device *self,
-    DirectTCPConnection **conn,
-    GMutex *abort_mutex,
-    GCond *abort_cond)
-{
-    DeviceClass *klass;
-
-    klass = DEVICE_GET_CLASS(self);
-    if(klass->accept_with_cond) {
-	return (klass->accept_with_cond)(self, conn, abort_mutex, abort_cond);
+	return (klass->accept)(self, conn, cancelled, abort_mutex, abort_cond);
     } else {
 	device_set_error(self,
 	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
+	return 1;
     }
 }
 
-gboolean
+
+int
 device_connect(
     Device *self,
     gboolean for_writing,
     DirectTCPAddr *addrs,
     DirectTCPConnection **conn,
-    ProlongProc prolong,
-    gpointer prolong_data)
-{
-    DeviceClass *klass;
-
-    klass = DEVICE_GET_CLASS(self);
-    if(klass->connect) {
-	return (klass->connect)(self, for_writing, addrs, conn, prolong, prolong_data);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
-}
-
-gboolean
-device_connect_with_cond(
-    Device *self,
-    gboolean for_writing,
-    DirectTCPAddr *addrs,
-    DirectTCPConnection **conn,
+    int    *cancelled,
     GMutex *abort_mutex,
-    GCond *abort_cond)
+    GCond  *abort_cond)
 {
     DeviceClass *klass;
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->connect) {
-	return (klass->connect_with_cond)(self, for_writing, addrs, conn, abort_mutex, abort_cond);
+	return (klass->connect)(self, for_writing, addrs, conn, cancelled,
+				abort_mutex, abort_cond);
     } else {
 	device_set_error(self,
 	    g_strdup(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
+	return 1;
     }
 }
 
-gboolean
+int
 device_write_from_connection(
     Device *self,
     guint64 size,
-    guint64 *actual_size)
+    guint64 *actual_size,
+    int    *cancelled,
+    GMutex *abort_mutex,
+    GCond  *abort_cond)
 {
     DeviceClass *klass;
 
@@ -1512,20 +1477,25 @@ device_write_from_connection(
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
 
     if(klass->write_from_connection) {
-	return (klass->write_from_connection)(self, size, actual_size);
+	return (klass->write_from_connection)(self, size, actual_size,
+					      cancelled,
+					      abort_mutex, abort_cond);
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
+	return 1;
     }
 }
 
-gboolean
+int
 device_read_to_connection(
     Device *self,
     guint64 size,
-    guint64 *actual_size)
+    guint64 *actual_size,
+    int    *cancelled,
+    GMutex *abort_mutex,
+    GCond  *abort_cond)
 {
     DeviceClass *klass;
 
@@ -1534,12 +1504,13 @@ device_read_to_connection(
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->read_to_connection) {
-	return (klass->read_to_connection)(self, size, actual_size);
+	return (klass->read_to_connection)(self, size, actual_size,
+					   cancelled, abort_mutex, abort_cond);
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),
 	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
+	return 1;
     }
 }
 

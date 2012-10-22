@@ -75,7 +75,7 @@ typedef struct XferDestTaperDirectTCP {
      * corresponding condition variable. */
     volatile gboolean paused;
     GCond *paused_cond;
-    GCond *abort_accept_cond; /* condition to trigger to abort an accept */
+    GCond *abort_cond; /* condition to trigger to abort an NDMP command */
 
 } XferDestTaperDirectTCP;
 
@@ -127,18 +127,19 @@ worker_thread(
 
     /* first, accept a new connection from the device */
     DBG(2, "accepting DirectTCP connection on device %s", self->device->device_name);
-    result = device_accept_with_cond(self->device, &self->conn,
-				     self->state_mutex,
-				     self->abort_accept_cond);
-    if (result == 2) {
+    result = device_accept(self->device, &self->conn, &elt->cancelled,
+			   self->state_mutex, self->abort_cond);
+    if (result == 1 && !elt->cancelled) {
 	xfer_cancel_with_error(XFER_ELEMENT(self),
 	    "accepting DirectTCP connection: %s",
 	    device_error_or_status(self->device));
 	g_mutex_unlock(self->state_mutex);
-	return NULL;
-    } else if (result == 1) {
+	wait_until_xfer_cancelled(elt->xfer);
+	goto send_xmsg_done;
+    } else if (result == 2 || elt->cancelled) {
 	g_mutex_unlock(self->state_mutex);
-	return NULL;
+	wait_until_xfer_cancelled(elt->xfer);
+	goto send_xmsg_done;
     }
 
     DBG(2, "connection accepted; sending XMSG_READY");
@@ -188,13 +189,17 @@ worker_thread(
 
 	/* write the part */
 	g_timer_start(timer);
-	if (!device_write_from_connection(self->device,
-		self->part_size, &size)) {
+	result = device_write_from_connection(self->device,
+		self->part_size, &size, &elt->cancelled,
+		self->state_mutex, self->abort_cond);
+	if (result == 1 && !elt->cancelled) {
 	    /* even if this is just a physical EOM, we may have lost data, so
 	     * the whole transfer is dead. */
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		"Error writing from DirectTCP connection: %s",
 		device_error_or_status(self->device));
+	    goto cancelled;
+	} else if (result == 2 || elt->cancelled) {
 	    goto cancelled;
 	}
 	g_timer_stop(timer);
@@ -336,7 +341,7 @@ cancel_impl(
      * longer paused */
     g_mutex_lock(self->state_mutex);
     g_cond_broadcast(self->paused_cond);
-    g_cond_broadcast(self->abort_accept_cond);
+    g_cond_broadcast(self->abort_cond);
     g_mutex_unlock(self->state_mutex);
 
     return rv;
@@ -428,7 +433,7 @@ instance_init(
     self->conn = NULL;
     self->state_mutex = g_mutex_new();
     self->paused_cond = g_cond_new();
-    self->abort_accept_cond = g_cond_new();
+    self->abort_cond = g_cond_new();
 }
 
 static void
@@ -451,7 +456,7 @@ finalize_impl(
 
     g_mutex_free(self->state_mutex);
     g_cond_free(self->paused_cond);
-    g_cond_free(self->abort_accept_cond);
+    g_cond_free(self->abort_cond);
 
     if (self->part_header)
 	dumpfile_free(self->part_header);

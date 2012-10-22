@@ -206,18 +206,26 @@ struct _DeviceClass {
     guint64  (* get_bytes_written) (Device * self);
 
     gboolean (* listen)(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
-    gboolean (* accept)(Device *self, DirectTCPConnection **conn,
-			ProlongProc prolong, gpointer prolong_data);
-    int (* accept_with_cond)(Device *self, DirectTCPConnection **conn,
-				  GMutex *abort_mutex, GCond *abort_cond);
-    gboolean (* connect)(Device *self, gboolean for_writing, DirectTCPAddr *addrs,
-			DirectTCPConnection **conn, ProlongProc prolong,
-			gpointer prolong_data);
-    gboolean (* connect_with_cond)(Device *self, gboolean for_writing,
+    /* The MainLoop must be running, but the following 4 methods must not be
+     * called from an event. they must be called from a different thread.
+     * They return:
+     *   0 - success
+     *   1 - failed
+     *   2 - interupted
+     */
+    int (* accept)(Device *self, DirectTCPConnection **conn,
+			int *cancelled, GMutex *abort_mutex, GCond *abort_cond);
+    int (* connect)(Device *self, gboolean for_writing,
 			DirectTCPAddr *addrs, DirectTCPConnection **conn,
+			int *cancelled,
 			GMutex *abort_mutex, GCond *abort_cond);
-    gboolean (* write_from_connection)(Device *self, guint64 size, guint64 *actual_size);
-    gboolean (* read_to_connection)(Device *self, guint64 size, guint64 *actual_size);
+    int (* write_from_connection)(Device *self, guint64 size,
+			guint64 *actual_size, int *cancelled,
+			GMutex *abort_mutex, GCond *abort_cond);
+    int (* read_to_connection)(Device *self, guint64 size,
+			guint64 *actual_size, int *cancelled,
+			GMutex *abort_mutex, GCond *abort_cond);
+
     gboolean (* use_connection)(Device *self, DirectTCPConnection *conn);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
@@ -347,18 +355,18 @@ gboolean 	device_eject	(Device * self);
 
 #define device_directtcp_supported(self) (DEVICE_GET_CLASS((self))->directtcp_supported)
 gboolean device_listen(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
-gboolean device_accept(Device *self, DirectTCPConnection **conn,
-                ProlongProc prolong, gpointer prolong_data);
-int device_accept_with_cond(Device *self, DirectTCPConnection **conn,
-				 GMutex *abort_mutex, GCond *abort_cond);
-gboolean device_connect(Device *self, gboolean for_writing, DirectTCPAddr *addrs,
-			DirectTCPConnection **conn, ProlongProc prolong,
-			gpointer prolong_data);
-gboolean device_connect_with_cond(Device *self, gboolean for_writing,
+int device_accept(Device *self, DirectTCPConnection **conn,
+			int *cancelled, GMutex *abort_mutex, GCond *abort_cond);
+int device_connect(Device *self, gboolean for_writing,
 			DirectTCPAddr *addrs, DirectTCPConnection **conn,
+			int *cancelled,
 			GMutex *abort_mutex, GCond *abort_cond);
-gboolean device_write_from_connection(Device *self, guint64 size, guint64 *actual_size);
-gboolean device_read_to_connection(Device *self, guint64 size, guint64 *actual_size);
+int device_write_from_connection(Device *self, guint64 size,
+			guint64 *actual_size, int *cancelled,
+			GMutex *abort_mutex, GCond *abort_cond);
+int device_read_to_connection(Device *self, guint64 size,
+			guint64 *actual_size, int *cancelled,
+			GMutex *abort_mutex, GCond *abort_cond);
 gboolean device_use_connection(Device *self, DirectTCPConnection *conn);
 
 /* Protected methods. Don't call these except in subclass implementations. */
