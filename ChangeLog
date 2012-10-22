@@ -1,3 +1,6 @@
+2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/event.c: Make the code thread safe.
+
 2012-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/match.c: Handle '=' as first characters of expression.
 	* man/xml-source/amanda-match.7.xml: Document new '=' as first

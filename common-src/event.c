@@ -74,7 +74,9 @@ struct event_handle {
 
 /* A list of all extant event_handle objects, used for searching for particular
  * events and for deleting dead events */
-GSList *all_events;
+GSList *all_events = NULL;
+
+GMutex *event_mutex = NULL;
 
 /*
  * Utility functions
@@ -120,6 +122,12 @@ event_register(
 {
     event_handle_t *handle;
     GIOCondition cond;
+
+    if (!event_mutex) {
+	glib_init();
+	event_mutex = g_mutex_new();
+    }
+    g_mutex_lock(event_mutex);
 
     /* sanity-checking */
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
@@ -193,6 +201,7 @@ event_register(
 	    error(_("Unknown event type %s"), event_type2str(type));
     }
 
+    g_mutex_unlock(event_mutex);
     return handle;
 }
 
@@ -207,6 +216,7 @@ event_release(
 {
     assert(handle != NULL);
 
+    g_mutex_lock(event_mutex);
     event_debug(1, _("event: release (mark): %p data=%jd, type=%s\n"),
 		    handle, handle->data,
 		    event_type2str(handle->type));
@@ -214,6 +224,7 @@ event_release(
 
     /* Mark it as dead and leave it for the event_loop to remove */
     handle->is_dead = TRUE;
+    g_mutex_unlock(event_mutex);
 }
 
 /*
@@ -227,6 +238,7 @@ event_wakeup(
     GSList *tofire = NULL;
     int nwaken = 0;
 
+    g_mutex_lock(event_mutex);
     event_debug(1, _("event: wakeup: enter (%jd)\n"), id);
 
     /* search for any and all matching events, and record them.  This way
@@ -244,7 +256,10 @@ event_wakeup(
 	event_handle_t *eh = (event_handle_t *)iter->data;
 	if (eh->type == EV_WAIT && eh->data == id && !eh->is_dead) {
 	    event_debug(1, _("A: event: wakeup triggering: %p id=%jd\n"), eh, id);
+	    /* The lcok must be release before running the event */
+	    g_mutex_unlock(event_mutex);
 	    fire(eh);
+	    g_mutex_lock(event_mutex);
 	    nwaken++;
 	}
     }
@@ -252,6 +267,7 @@ event_wakeup(
     /* and free the temporary list */
     g_slist_free(tofire);
 
+    g_mutex_unlock(event_mutex);
     return (nwaken);
 }
 
@@ -326,6 +342,11 @@ event_loop_wait(
     event_handle_t *wait_eh,
     int nonblock)
 {
+    if (!event_mutex) {
+	glib_init();
+	event_mutex = g_mutex_new();
+    }
+    g_mutex_lock(event_mutex);
     event_debug(1, _("event: loop: enter: nonblockg=%d, eh=%p\n"), nonblock, wait_eh);
 
     /* If we're waiting for a specific event, then reset its has_fired flag */
@@ -344,8 +365,11 @@ event_loop_wait(
 	if (!any_mainloop_events())
 	    break;
 
-	/* Do an interation */
+	/* Do an iteration */
+	/* Relese the lock before running an iteration */
+	g_mutex_unlock(event_mutex);
 	g_main_context_iteration(NULL, !nonblock);
+	g_mutex_lock(event_mutex);
 
 	/* If the event we've been waiting for has fired or been released, as
 	 * appropriate, we're done.  See the comments for event_wait in event.h
@@ -363,6 +387,7 @@ event_loop_wait(
      * has been released. */
     flush_dead_events(NULL);
 
+    g_mutex_unlock(event_mutex);
 }
 
 GMainLoop *
