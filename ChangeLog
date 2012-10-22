@@ -1,4 +1,20 @@
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c (device_accept, device_connect,
+	  device_write_from_connection, device_read_to_connection): They take
+	  (int *, GMutex *, GCond  *) new arguments to be able to interupt
+	  them.
+	* device-src/device.h: Change prototype.
+	* device-src/ndmp-device.c: Implement new functionnality.
+	* device-src/xfer-dest-taper-directtcp.c,
+	  device-src/xfer-source-recovery.c: Use the new API.
+	* installcheck/Amanda_Device.pl: Remove directtcp test.
+	* ndmp-src/ndmpconnobj.c (ndmp_connection_wait_for_notify_with_cond):
+	  Allow to be cancelled.
+	* ndmp-src/ndmpconnobj.h: Change prototype.
+	* perl/Amanda/Device.swg: Remove accept, connect,
+	  write_from_connection and read-to_connection.
+
+2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm (abort_setup): New method.
 	* perl/Amanda/Taper/Scribe.pm (_dump_done): Return if $dump_cb is not
 	  set.

@@ -352,68 +352,6 @@ typedef struct Device {
 		*addrs = NULL;
 	}
 
-	%newobject accept; /* connection is already ref'd, so we own it */
-	DirectTCPConnection *
-	accept() {
-	    DirectTCPConnection *conn = NULL;
-	    gboolean rv;
-
-	    rv = device_accept(self, &conn, NULL, NULL);
-	    if (!rv && conn) {
-		/* conn is ref'd for our convenience, but we don't want it */
-		g_object_unref(conn);
-		conn = NULL;
-	    }
-	    return conn;
-	}
-
-	%newobject accept_with_cond; /* connection is already ref'd, so we own it */
-	DirectTCPConnection *
-	accept_with_cond(GMutex *abort_mutex, GCond *abort_cond) {
-	    DirectTCPConnection *conn = NULL;
-	    gboolean rv;
-
-	    rv = device_accept_with_cond(self, &conn, abort_mutex, abort_cond);
-	    if (!rv && conn) {
-		/* conn is ref'd for our convenience, but we don't want it */
-		g_object_unref(conn);
-		conn = NULL;
-	    }
-	    return conn;
-	}
-
-	%newobject connect; /* connection is already ref'd, so we own it */
-	DirectTCPConnection *
-	connect(gboolean for_writing, DirectTCPAddr *addrs) {
-	    DirectTCPConnection *conn = NULL;
-	    gboolean rv;
-
-	    rv = device_connect(self, for_writing, addrs, &conn, NULL, NULL);
-	    if (!rv && conn) {
-		/* conn is ref'd for our convenience, but we don't want it */
-		g_object_unref(conn);
-		conn = NULL;
-	    }
-	    return conn;
-	}
-
-	%newobject connect_with_cond; /* connection is already ref'd, so we own it */
-	DirectTCPConnection *
-	connect_with_cond(gboolean for_writing, DirectTCPAddr *addrs,
-			  GMutex *abort_mutex, GCond *abort_cond) {
-	    DirectTCPConnection *conn = NULL;
-	    gboolean rv;
-
-	    rv = device_connect_with_cond(self, for_writing, addrs, &conn,
-					  abort_mutex, abort_cond);
-	    if (!rv && conn) {
-		/* conn is ref'd for our convenience, but we don't want it */
-		g_object_unref(conn);
-		conn = NULL;
-	    }
-	    return conn;
-	}
-
 	gboolean
 	use_connection(DirectTCPConnection *conn) {
 	    return device_use_connection(self, conn);
@@ -422,25 +360,6 @@ typedef struct Device {
 	gboolean
 	check_writable() {
 	    return device_check_writable(self);
-	}
-
-	%typemap(in,numinputs=0) guint64 *actual_size (guint64 sz) {
-	    sz = 0;
-	    $1 = &sz;
-	}
-	%typemap(argout) guint64 *actual_size {
-	    SP += argvi; PUTBACK;
-	    $result = sv_2mortal(amglue_newSVu64(*$1));
-	    SPAGAIN; SP -= argvi; argvi++;
-	}
-	gboolean
-	write_from_connection(guint64 size, guint64 *actual_size) {
-	    return device_write_from_connection(self, size, actual_size);
-	}
-
-	gboolean
-	read_to_connection(guint64 size, guint64 *actual_size) {
-	    return device_read_to_connection(self, size, actual_size);
 	}
 
 	%typemap(out) const GSList * {
