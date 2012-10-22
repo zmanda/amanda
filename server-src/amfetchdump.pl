@@ -25,6 +25,7 @@ use warnings;
 use Getopt::Long;
 use File::Basename;
 use XML::Simple;
+use IPC::Open3;
 
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -556,7 +557,7 @@ sub main {
 		my ($bsu, $err) = Amanda::Extract::BSU(%bsu_argv);
 		if (defined $opt_data_path and $opt_data_path eq 'directtcp' and
 		    !$bsu->{'data-path-directtcp'}) {
-		    return falure("The application can't do directtcp", $finished_cb);
+		    return failure("The application can't do directtcp", $finished_cb);
 		}
 		if ($directtcp_supported and !$bsu->{'data-path-directtcp'}) {
 		    # application do not support directtcp
@@ -582,7 +583,6 @@ sub main {
 			push @argv, "--".$name, $value->{'value'};
 		    }
 		}
-		push @argv, ".";
 
 	    }
 	    $directtcp = $directtcp_supported;
