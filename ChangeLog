@@ -1,4 +1,10 @@
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm (abort_setup): New method.
+	* perl/Amanda/Taper/Scribe.pm (_dump_done): Return if $dump_cb is not
+	  set.
+	* perl/Amanda/Taper/Worker.pm: Call abort_setup if setup failed.
+
+2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: typo, remove '.' in argv.
 
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
