@@ -1,4 +1,7 @@
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Controller.pm: Reverse taper/driver in log.
+
+2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmjob_args.c (handle_long_option): Close the fd.
 
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>

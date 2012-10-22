@@ -115,7 +115,7 @@ sub start {
 	tx_fh => *STDOUT,
 	message_cb => $message_cb,
 	message_obj => $self,
-	debug => $Amanda::Config::debug_taper?'driver/taper':'',
+	debug => $Amanda::Config::debug_taper?'taper/driver':'',
     );
 
     my $changer = Amanda::Changer->new(undef, tapelist => $self->{'tapelist'});
