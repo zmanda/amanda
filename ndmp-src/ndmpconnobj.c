@@ -738,7 +738,7 @@ ndmp_connection_wait_for_notify(
     }
 }
 
-typedef struct notify_data {
+typedef struct notify_data_s {
     NDMPConnection *self;
     ndmp9_data_halt_reason *data_halt_reason;
     ndmp9_mover_halt_reason *mover_halt_reason;
@@ -747,11 +747,15 @@ typedef struct notify_data {
     GMutex *abort_mutex;
     GCond *abort_cond;
     int status;
+    int in_use;
     event_handle_t *read_event;
-} notify_data;
+} notify_data_t;
 
 static void handle_notify(void *cookie);
 
+static GMutex *notify_mutex = NULL;
+static notify_data_t **notify_data = NULL;
+static int nb_notify_data = 0;
 int
 ndmp_connection_wait_for_notify_with_cond(
 	NDMPConnection *self,
@@ -764,11 +768,37 @@ ndmp_connection_wait_for_notify_with_cond(
 	GCond *abort_cond)
 {
     struct ndmp_msg_buf nmb;
-    notify_data *ndata;
+    notify_data_t *ndata;
     gboolean found = FALSE;
     int status;
+    int i;
 
-    ndata = g_new0(notify_data, 1);
+    if (!notify_mutex) {
+	glib_init();
+	notify_mutex = g_mutex_new();
+    }
+
+    g_mutex_lock(notify_mutex);
+    if (notify_data == NULL) {
+        nb_notify_data = 10;
+	notify_data = g_new0(notify_data_t *, nb_notify_data);
+    }
+    /* find a not used notify_data */
+    ndata = *notify_data;
+    i = 0;
+    while (ndata && ndata->in_use && i< nb_notify_data) {
+	i++;
+        ndata++;
+    }
+    if (i == nb_notify_data) {
+	nb_notify_data *= 2;
+	notify_data = g_realloc(notify_data,
+			        sizeof(notify_data_t *) * nb_notify_data);
+	ndata = notify_data[i];
+    }
+    if (!notify_data[i])
+        notify_data[i] = g_new0(notify_data_t, 1);
+    ndata = notify_data[i];
     ndata->self = self;
     ndata->data_halt_reason= data_halt_reason;
     ndata->mover_halt_reason= mover_halt_reason;
@@ -777,6 +807,8 @@ ndmp_connection_wait_for_notify_with_cond(
     ndata->abort_mutex = abort_mutex;
     ndata->abort_cond = abort_cond;
     ndata->status = 2;
+    ndata->in_use = 1;
+    g_mutex_unlock(notify_mutex);
 
     g_assert(!self->startup_err);
 
@@ -822,12 +854,15 @@ ndmp_connection_wait_for_notify_with_cond(
 	 * outside of the ndmlib_mutex critical section.  This will also be
 	 * useful to allow the wait to be aborted. */
 
-    ndata->read_event = event_register(self->conn->chan.fd,
-				      EV_READFD, handle_notify, ndata);
+        /* handle_notify can be executed before the register exit */
+    ndata->read_event = event_create(self->conn->chan.fd,
+				     EV_READFD, handle_notify, ndata);
+    event_activate(ndata->read_event);
 
     while (!*cancelled && ndata->status == 2) {
 	g_cond_wait(abort_cond, abort_mutex);
     }
+    g_mutex_lock(notify_mutex);
 
     if (ndata->read_event) {
 	event_release(ndata->read_event);
@@ -838,7 +873,10 @@ ndmp_connection_wait_for_notify_with_cond(
 	ndmp_connection_mover_stop(self);
     }
     status = ndata->status;
-    g_free(ndata);
+    ndata->in_use++;
+    if (ndata->in_use == 3)
+	ndata->in_use = 0;
+    g_mutex_unlock(notify_mutex);
     return status;
 
 }
@@ -846,15 +884,13 @@ ndmp_connection_wait_for_notify_with_cond(
 static void
 handle_notify(void *cookie)
 {
-    notify_data *ndata = cookie;
+    notify_data_t *ndata = cookie;
     struct ndmp_msg_buf nmb;
     gboolean found = FALSE;
+    GCond  *abort_cond = ndata->abort_cond;
+    GMutex *abort_mutex = ndata->abort_mutex;
 
-    assert (ndata->read_event);
-    g_mutex_lock(ndata->abort_mutex);
-
-    event_release(ndata->read_event);
-    ndata->read_event = NULL;
+    g_mutex_lock(abort_mutex);
 
     g_static_mutex_lock(&ndmlib_mutex);
     NDMOS_MACRO_ZEROFILL(&nmb);
@@ -895,16 +931,31 @@ handle_notify(void *cookie)
     }
 
     if (!found) {
-	ndata->read_event = event_register(ndata->self->conn->chan.fd,
-					   EV_READFD, handle_notify, ndata);
-	g_mutex_unlock(ndata->abort_mutex);
+        g_mutex_lock(notify_mutex);
+        if (ndata->in_use == 2) {
+            goto notify_done_locked;
+	}
+        g_mutex_unlock(notify_mutex);
+
+	g_mutex_unlock(abort_mutex);
 	return;
     }
 
     ndata->status = 0;
 notify_done:
-    g_cond_broadcast(ndata->abort_cond);
-    g_mutex_unlock(ndata->abort_mutex);
+    g_mutex_lock(notify_mutex);
+notify_done_locked:
+    if (ndata->read_event) {
+        event_release(ndata->read_event);
+        ndata->read_event = NULL;
+    }
+    ndata->in_use++;
+    if (ndata->in_use == 3)
+        ndata->in_use = 0;
+    g_mutex_unlock(notify_mutex);
+
+    g_cond_broadcast(abort_cond);
+    g_mutex_unlock(abort_mutex);
 }
 /*
  * Class Mechanics
