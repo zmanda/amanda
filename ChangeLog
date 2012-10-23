@@ -1,3 +1,8 @@
+2012-10-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/event.c (event_create, event_activate): New function, it
+	  split event_register in two.
+	* common-src/event.h (event_create, event_activate): New prototype.
+
 2012-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (device_accept, device_connect,
 	  device_write_from_connection, device_read_to_connection): They take
