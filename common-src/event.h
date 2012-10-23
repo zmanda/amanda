@@ -86,6 +86,8 @@ typedef void (*event_fn_t)(void *);
  * caller calling event_loop() often enough.
  */
 event_handle_t *event_register(event_id_t, event_type_t, event_fn_t, void *);
+event_handle_t *event_create(event_id_t, event_type_t, event_fn_t, void *);
+void event_activate(event_handle_t *);
 
 /*
  * Release an event handler.

@@ -124,7 +124,20 @@ event_register(
     void *arg)
 {
     event_handle_t *handle;
-    GIOCondition cond;
+    
+    handle = event_create(data, type, fn, arg);
+    event_activate(handle);
+    return handle;
+}
+
+event_handle_t *
+event_create(
+    event_id_t data,
+    event_type_t type,
+    event_fn_t fn,
+    void *arg)
+{
+    event_handle_t *handle;
 
     if (!event_mutex) {
 	glib_init();
@@ -155,21 +168,34 @@ event_register(
     event_debug(1, _("event: register: %p->data=%jd, type=%s\n"),
 		    handle, handle->data, event_type2str(handle->type));
 
+    g_mutex_unlock(event_mutex);
+    return handle;
+}
+
+void
+event_activate(
+    event_handle_t *handle)
+{
+    GIOCondition cond;
+    assert(handle != NULL);
+
+    g_mutex_lock(event_mutex);
+
     /* add to the list of events */
     all_events = g_slist_prepend(all_events, (gpointer)handle);
 
     /* and set up the GSource for this event */
-    switch (type) {
+    switch (handle->type) {
 	case EV_READFD:
 	case EV_WRITEFD:
 	    /* create a new source */
-	    if (type == EV_READFD) {
+	    if (handle->type == EV_READFD) {
 		cond = G_IO_IN | G_IO_HUP | G_IO_ERR;
 	    } else {
 		cond = G_IO_OUT | G_IO_ERR;
 	    }
 
-	    handle->source = new_fdsource(data, cond);
+	    handle->source = new_fdsource(handle->data, cond);
 
 	    /* attach it to the default GMainLoop */
 	    g_source_attach(handle->source, NULL);
@@ -187,7 +213,7 @@ event_register(
 	case EV_TIME:
 	    /* Glib provides a nice shortcut for timeouts.  The *1000 converts
 	     * seconds to milliseconds. */
-	    handle->source_id = g_timeout_add(data * 1000, event_handle_callback,
+	    handle->source_id = g_timeout_add(handle->data * 1000, event_handle_callback,
 					      (gpointer)handle);
 
 	    /* But it doesn't give us the source directly.. */
@@ -201,12 +227,13 @@ event_register(
 	    break;
 
 	default:
-	    error(_("Unknown event type %s"), event_type2str(type));
+	    error(_("Unknown event type %s"), event_type2str(handle->type));
     }
 
     g_mutex_unlock(event_mutex);
-    return handle;
+    return;
 }
+
 
 /*
  * Mark an event to be released.  Because we may be traversing the queue
