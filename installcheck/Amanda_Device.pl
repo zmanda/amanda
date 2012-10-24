@@ -1314,7 +1314,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "not built with ndmp and server", 94 unless
+    skip "not built with ndmp and server", 26 unless
 	Amanda::Util::built_with_component("ndmp") and
 	Amanda::Util::built_with_component("server");
 

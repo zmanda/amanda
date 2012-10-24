@@ -1,3 +1,6 @@
+2012-10-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Device.pl: Fix count.
+
 2012-10-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: Use event_create and event_activate.
 	  Create static notify_data_t.
