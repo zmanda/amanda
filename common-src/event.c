@@ -76,10 +76,14 @@ struct event_handle {
  * events and for deleting dead events */
 GSList *all_events = NULL;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 GStaticMutex event_mutex = G_STATIC_MUTEX_INIT;
-#pragma GCC diagnostic push
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 31))
+# pragma GCC diagnostic pop
+#endif
 
 /*
  * Utility functions
