@@ -197,7 +197,6 @@ the server.</para></listitem>
     <listitem><para>Do the decryption only if the encryption was done on
 the client.</para></listitem>
   </varlistentry>
-  <varlistentry>
 
   <varlistentry>
   <term><option>--exact-match</option></term>
@@ -206,6 +205,39 @@ the client.</para></listitem>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><option>--extract</option></term>
+  <listitem>
+<para>Extract the backup on the server in the
+<replaceable>directory</replaceable> directory.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--directory</option> <replaceable>directory</replaceable></term>
+  <listitem>
+<para>Where to extract the backup with the <option>--extract</option> option.</para>
+<para>Warning: All files in that directory can be removed.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--data-path</option> amanda|directtcp</term>
+  <listitem>
+<para>The data path to use with <option>--extract</option>, the default is
+ to use the fatest data path.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--application-property</option> <replaceable>NAME=VALUE</replaceable></term>
+  <listitem>
+<para>Application property to send to the application with
+<option>--extract.</option></para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
     <term><option>-l</option></term>
 <listitem><para>Leave dumps in the compressed/uncompressed and
 encrypted/unencrypted state in which they were found on tape.

@@ -1,4 +1,8 @@
 2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amfetchdump.8.xml: Document --extract, --directory,
+	  --data-path and --application-property.
+
+2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/event.c: Use a GStaticMutex.
 
 2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
