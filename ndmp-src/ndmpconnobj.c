@@ -753,7 +753,7 @@ typedef struct notify_data_s {
 
 static void handle_notify(void *cookie);
 
-static GMutex *notify_mutex = NULL;
+static GStaticMutex notify_mutex = G_STATIC_MUTEX_INIT;
 static notify_data_t **notify_data = NULL;
 static int nb_notify_data = 0;
 int
@@ -773,31 +773,32 @@ ndmp_connection_wait_for_notify_with_cond(
     int status;
     int i;
 
-    if (!notify_mutex) {
-	glib_init();
-	notify_mutex = g_mutex_new();
-    }
-
-    g_mutex_lock(notify_mutex);
+    g_static_mutex_lock(&notify_mutex);
     if (notify_data == NULL) {
+	glib_init();
         nb_notify_data = 10;
 	notify_data = g_new0(notify_data_t *, nb_notify_data);
+	for (i=0;i<nb_notify_data;i++) {
+	    notify_data[i] = g_new0(notify_data_t, 1);
+	}
     }
     /* find a not used notify_data */
     ndata = *notify_data;
     i = 0;
-    while (ndata && ndata->in_use && i< nb_notify_data) {
+    while (i< nb_notify_data && notify_data[i]->in_use > 0) {
 	i++;
-        ndata++;
     }
     if (i == nb_notify_data) {
-	nb_notify_data *= 2;
+        int new_nb_notify_data = nb_notify_data * 2;
+	int j;
 	notify_data = g_realloc(notify_data,
-			        sizeof(notify_data_t *) * nb_notify_data);
+			        sizeof(notify_data_t *) * new_nb_notify_data);
+	for (j=nb_notify_data; j<new_nb_notify_data; j++) {
+	    notify_data[j] = g_new0(notify_data_t, 1);
+	}
+	nb_notify_data = new_nb_notify_data;
 	ndata = notify_data[i];
     }
-    if (!notify_data[i])
-        notify_data[i] = g_new0(notify_data_t, 1);
     ndata = notify_data[i];
     ndata->self = self;
     ndata->data_halt_reason= data_halt_reason;
@@ -808,7 +809,7 @@ ndmp_connection_wait_for_notify_with_cond(
     ndata->abort_cond = abort_cond;
     ndata->status = 2;
     ndata->in_use = 1;
-    g_mutex_unlock(notify_mutex);
+    g_static_mutex_unlock(&notify_mutex);
 
     g_assert(!self->startup_err);
 
@@ -862,7 +863,7 @@ ndmp_connection_wait_for_notify_with_cond(
     while (!*cancelled && ndata->status == 2) {
 	g_cond_wait(abort_cond, abort_mutex);
     }
-    g_mutex_lock(notify_mutex);
+    g_static_mutex_lock(&notify_mutex);
 
     if (ndata->read_event) {
 	event_release(ndata->read_event);
@@ -876,7 +877,7 @@ ndmp_connection_wait_for_notify_with_cond(
     ndata->in_use++;
     if (ndata->in_use == 3)
 	ndata->in_use = 0;
-    g_mutex_unlock(notify_mutex);
+    g_static_mutex_unlock(&notify_mutex);
     return status;
 
 }
@@ -931,11 +932,11 @@ handle_notify(void *cookie)
     }
 
     if (!found) {
-        g_mutex_lock(notify_mutex);
+        g_static_mutex_lock(&notify_mutex);
         if (ndata->in_use == 2) {
             goto notify_done_locked;
 	}
-        g_mutex_unlock(notify_mutex);
+        g_static_mutex_unlock(&notify_mutex);
 
 	g_mutex_unlock(abort_mutex);
 	return;
@@ -943,7 +944,7 @@ handle_notify(void *cookie)
 
     ndata->status = 0;
 notify_done:
-    g_mutex_lock(notify_mutex);
+    g_static_mutex_lock(&notify_mutex);
 notify_done_locked:
     if (ndata->read_event) {
         event_release(ndata->read_event);
@@ -952,7 +953,7 @@ notify_done_locked:
     ndata->in_use++;
     if (ndata->in_use == 3)
         ndata->in_use = 0;
-    g_mutex_unlock(notify_mutex);
+    g_static_mutex_unlock(&notify_mutex);
 
     g_cond_broadcast(abort_cond);
     g_mutex_unlock(abort_mutex);

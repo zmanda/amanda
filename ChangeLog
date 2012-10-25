@@ -1,3 +1,6 @@
+2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmpconnobj.c: Use a GStaticMutex.
+
 2012-10-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Device.pl: Fix count.
 
