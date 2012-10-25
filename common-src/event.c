@@ -76,7 +76,10 @@ struct event_handle {
  * events and for deleting dead events */
 GSList *all_events = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 GStaticMutex event_mutex = G_STATIC_MUTEX_INIT;
+#pragma GCC diagnostic push
 
 /* should event_loop_run stop? */
 gboolean stop = FALSE;

@@ -1,4 +1,8 @@
 2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/event.c: Disable -Wmissing-field-initializers when using
+	  G_STATIC_MUTEX_INIT because of warning with glib-2.32.
+
+2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Document --extract, --directory,
 	  --data-path and --application-property.
 
