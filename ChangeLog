@@ -1,4 +1,7 @@
 2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/event.c: Use a GStaticMutex.
+
+2012-10-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: Use a GStaticMutex.
 
 2012-10-24  Jean-Louis Martineau <martineau@zmanda.com>
