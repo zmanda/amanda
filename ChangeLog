@@ -1,3 +1,7 @@
+2012-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Add a timeout.
+	* common-src/security-util.c: Call the accept_fn on connection close.
+
 2012-08-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: s/correclty/correctly/g
 
