@@ -32,6 +32,7 @@ use IPC::Open3;
 use Sys::Hostname;
 use Symbol;
 use IO::Handle;
+use MIME::Base64 ();
 use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
@@ -299,6 +300,10 @@ sub findpass {
 	        $self->{domain} = $domain if defined $domain && $domain ne "";
 	        my ($username, $password) = split('%', $userpasswd, 2);
 	        $self->{username} = $username;
+		if ($password =~ /^6G\!dr(.*)/) {
+		    my $base64 = $1;
+		    $password = MIME::Base64::decode($base64);
+		}
 	        $self->{password} = $password;
 		$self->{password} = undef if (defined $password && $password eq "");
             } else {
@@ -348,7 +353,8 @@ sub command_support {
 sub command_selfcheck {
     my $self = shift;
 
-    $self->print_to_server("disk " . quote_string($self->{disk}));
+    $self->print_to_server("disk " . quote_string($self->{disk}),
+			   $Amanda::Script_App::GOOD);
 
     $self->print_to_server("amsamba version " . $Amanda::Constants::VERSION,
 			   $Amanda::Script_App::GOOD);
