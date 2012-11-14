@@ -1673,7 +1673,8 @@ handle_taper_result(
 		amfree(qname);
 		break;
 	    }
-	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
+	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0 ||
+		strcmp(result_argv[3], "TAPE-CONFIG") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error, result_argv[5]);
 		taper->result = FAILED;
@@ -1729,7 +1730,8 @@ handle_taper_result(
 		amfree(qname);
 		break;
 	    }
-	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
+	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0 ||
+		strcmp(result_argv[3], "TAPE-CONFIG") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error, result_argv[6]);
 		taper->result = FAILED;

@@ -1,3 +1,14 @@
+2012-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Do not print failure for config
+	  setting.
+	* perl/Amanda/Taper/Worker.pm: Send TAPE-CONFIG.
+	* server-src/amflush.c: Do not add L_DISK if nothing to flush.
+	* server-src/amstatus.pl: Parse TAPE-CONFIG and print appropriate
+	  message.
+	* server-src/driver.c: Parse TAPE-CONFIG.
+	* installcheck/taper.pl: Check new TAPE-CONFIG in protocol.
+	* installcheck/catalogs/amflush.cat: Fix for new format.
+
 2012-11-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Add 'OAUTH2' and 'CASTOR' for
 	  value of the storage-api property.

@@ -1050,6 +1050,7 @@ sub output_summary
     my $nodump_PARTIAL_format = get_summary_format($col_spec, 'nodump-PARTIAL', @summary_linedata);
     my $nodump_FAILED_format = get_summary_format($col_spec, 'nodump-FAILED', @summary_linedata);
     my $nodump_FLUSH_format = get_summary_format($col_spec, 'nodump-FLUSH', @summary_linedata);
+    my $nodump_NOT_FLUSHED_format = get_summary_format($col_spec, 'nodump-NOT FLUSHED', @summary_linedata);
     my $skipped_format = get_summary_format($col_spec, 'skipped', @summary_linedata);
 
     ## print the header names
@@ -1109,6 +1110,8 @@ sub output_summary
 	    print $fh sprintf($nodump_FAILED_format, @data);
 	} elsif ($type eq 'nodump-FLUSH') {
 	    print $fh sprintf($nodump_FLUSH_format, @data);
+	} elsif ($type eq 'nodump-NOT FLUSHED') {
+	    print $fh sprintf($nodump_NOT_FLUSHED_format, @data);
 	} elsif ($type eq 'missing') {
 	    print $fh sprintf($missing_format, @data[0..2]);
 	} elsif ($type eq 'noflush') {
@@ -1130,7 +1133,7 @@ sub output_summary
 ##  ('missing', host, disk, '' ..) # MISSING -----
 ##  ('noflush', host, disk, '' ..) # NO FILE TO FLUSH ------
 ##  ('nodump-$msg', host, disk, level, '', out, '--', '',
-##	    '', tapetime, taperate, taperpartial)  # ... {FLUSH|FAILED|PARTIAL} ...
+##	    '', tapetime, taperate, taperpartial)  # ... {FLUSH|NOT FLUSHED|FAILED|PARTIAL} ...
 ##  ('skipped', host, disk, '' ..) # SKIPPED -----
 ##
 ## the taperpartial column is not covered by the columnspec, and "hangs off"
@@ -1196,7 +1199,7 @@ sub get_summary_info
 	push @rvs, [@rv];
     } elsif (keys %{$alldumps} == 0) {
 	my @rv;
-	push @rv, $report->get_flag("amflush_run")? 'noflush' : 'missing';
+	push @rv, $report->get_flag("amflush_run")? 'nodump-NOT FLUSHED' : 'missing';
 	push @rv, $hostname;
 	push @rv, $disk_out;
 	push @rv, ("",) x 8;
@@ -1227,6 +1230,7 @@ sub get_summary_info
 	    if defined $dumper;
 
 	my ( $out_size, $dump_time, $dump_rate, $tape_time, $tape_rate ) = (0) x 5;
+	my $tape_failure_from = '';
 	my ($dumper_status) = "";
 	my $saw_dumper = 0; # no dumper will mean this was a flush
 	my $taper_partial = 0; # was the last taper run partial?
@@ -1246,6 +1250,7 @@ sub get_summary_info
 		$out_size  = $try->{taper}{kb};
 		$tape_time = $try->{taper}{sec};
 		$tape_rate = $try->{taper}{kps};
+		$tape_failure_from = $try->{taper}{failure_from};
 	    } elsif ( exists $try->{taper}
 		&& ( $try->{taper}{status} eq "partial" ) ) {
 
@@ -1254,9 +1259,11 @@ sub get_summary_info
 		$out_size  = $try->{taper}{kb};
 		$tape_time = $try->{taper}{sec} if !$tape_time;
 		$tape_rate = $try->{taper}{kps} if !$tape_rate;
+		$tape_failure_from = $try->{taper}{failure_from};
 	    } elsif (exists $try->{taper} && ( $try->{taper}{status} eq "fail")) {
 		$tape_time = undef;
 		$tape_rate = undef;
+		$tape_failure_from = $try->{taper}{failure_from};
 	    }
 
 	    if (!$out_size &&
@@ -1322,7 +1329,7 @@ sub get_summary_info
 
 	my @rv;
 
-	if ( !$orig_size && !$out_size && (!defined($tape_time) || !$tape_time)) {
+	if ( !$orig_size && !$out_size && ((!defined($tape_time) || !$tape_time) && !defined($tape_failure_from))) {
 	    push @rv, $report->get_flag("amflush_run")? 'noflush' : 'missing';
 	    push @rv, $hostname;
 	    push @rv, $disk_out;
@@ -1337,20 +1344,25 @@ sub get_summary_info
 	    push @rv, $compression;
 	    push @rv, $dump_time ? $fmt_col_field->(6, mnsc($dump_time)) : "PARTIAL";
 	    push @rv, $dump_rate ? $fmt_col_field->(7, $dump_rate) : "";
-	    push @rv, $fmt_col_field->(8,
+	    if ($tape_failure_from eq 'config') {
+		push @rv, $format_space->(8,"");
+		push @rv, $format_space->(9,"");
+	    } else {
+		push @rv, $fmt_col_field->(8,
 		    (defined $tape_time) ?
 			    $tape_time ? mnsc($tape_time) : ""
 			  : "FAILED");
-	    push @rv, (defined $tape_rate) ?
-		$tape_rate ?
-		    $fmt_col_field->(9, $tape_rate)
-		  : $format_space->(9, "")
-	      : $format_space->(9, "FAILED");
+		push @rv, (defined $tape_rate) ?
+			  $tape_rate ?
+			        $fmt_col_field->(9, $tape_rate)
+			      : $format_space->(9, "")
+			  : $format_space->(9, "FAILED");
+	    }
 	    push @rv, $taper_partial? " PARTIAL" : ""; # column 10
 	} else {
 	    my $message = $saw_dumper?
 			    ($dumper_status eq 'failed') ? 'FAILED' : 'PARTIAL'
-			  : 'FLUSH';
+			  : ($tape_failure_from eq 'config') ? 'NOT FLUSHED' : 'FLUSH';
 	    push @rv, "nodump-$message";
 	    push @rv, $hostname;
 	    push @rv, $disk_out;
@@ -1360,15 +1372,21 @@ sub get_summary_info
 	    push @rv, $compression;
 	    push @rv, '';
 	    push @rv, '';
-	    push @rv, $fmt_col_field->(8,
-		    (defined $tape_time) ?
-			    $tape_time ? mnsc($tape_time) : ""
-			  : "FAILED");
-	    push @rv, (defined $tape_rate) ?
-		$tape_rate ?
-		    $fmt_col_field->(9, $tape_rate)
-		  : $format_space->(9, "")
-	      : $format_space->(9, "FAILED");
+	    if ($tape_failure_from eq 'config') {
+		push @rv, $format_space->(8,"");
+		push @rv, $format_space->(9,"");
+		next if !$report->get_flag("amflush_run"); # do not print a line for flush with config error
+	    } else {
+	       push @rv, $fmt_col_field->(8,
+		       (defined $tape_time) ?
+			       $tape_time ? mnsc($tape_time) : ""
+			     : "FAILED");
+	       push @rv, (defined $tape_rate) ?
+		   $tape_rate ?
+		       $fmt_col_field->(9, $tape_rate)
+		     : $format_space->(9, "")
+	         : $format_space->(9, "FAILED");
+	    }
 	    push @rv, $taper_partial? " PARTIAL" : "";
 	}
 	push @rvs, [@rv];
