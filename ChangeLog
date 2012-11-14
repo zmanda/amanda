@@ -1,4 +1,7 @@
 2012-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Password can be encoded.
+
+2012-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Do not print failure for config
 	  setting.
 	* perl/Amanda/Taper/Worker.pm: Send TAPE-CONFIG.
