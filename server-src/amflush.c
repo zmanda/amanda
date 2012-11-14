@@ -294,10 +294,19 @@ main(
 
     for(dp = diskq.head; dp != NULL; dp = dp->next) {
 	if(dp->todo) {
-	    char *qname;
-	    qname = quote_string(dp->name);
-	    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
-	    amfree(qname);
+	    /* is it holding_list */
+	    for (holding_file=holding_list; holding_file != NULL;
+					    holding_file = holding_file->next) {
+		dumpfile_t file;
+		holding_file_get_dumpfile((char *)holding_file->data, &file);
+		if (g_str_equal(dp->host->hostname, file.name) &&
+		    g_str_equal(dp->name, file.disk)) {
+		    char *qname;
+		    qname = quote_string(dp->name);
+		    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
+		    amfree(qname);
+		}
+	    }
 	}
     }
 

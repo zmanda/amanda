@@ -744,6 +744,13 @@ while($lineX = <AMDUMP>) {
 							$taper_finished{$hostpart} = -2;
 							$status_taper = $error;
 						}
+						if($line[9] eq "TAPE-CONFIG") {
+							$tape_config{$hostpart} = $error;
+							$error=$line[11];
+							$tape_config{$hostpart} = $error;
+							$taper_finished{$hostpart} = -2;
+							$status_taper = $error;
+						}
 						else {
 							$error=$line[10];
 							$taper_finished{$hostpart} = -1;
@@ -1128,12 +1135,20 @@ foreach $host (sort @hosts) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $xsize;
-						    print " dump done," if defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1;
+							print " dump done," if defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1;
 							if($in_flush == 0) {
-								print " failed to tape";
+								if ($tape_config{$hostpart}) {
+									print " taping delayed because of config";
+								} else {
+									print " failed to tape";
+								}
 							}
 							else {
-								print " failed to flush";
+								if ($tape_config{$hostpart}) {
+									print " flushing delayed because of config";
+								} else {
+									print " failed to flush";
+								}
 							}
 							print ": ",$error{$hostpart} if defined $error{$hostpart};
 

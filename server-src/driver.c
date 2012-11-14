@@ -1676,7 +1676,8 @@ handle_taper_result(
 		amfree(qname);
 		break;
 	    }
-	    if (g_str_equal(result_argv[3], "TAPE-ERROR")) {
+	    if (g_str_equal(result_argv[3], "TAPE-ERROR") ||
+		g_str_equal(result_argv[3], "TAPE-CONFIG")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(result_argv[5]);
@@ -1734,7 +1735,8 @@ handle_taper_result(
 		amfree(qname);
 		break;
 	    }
-	    if (g_str_equal(result_argv[3], "TAPE-ERROR")) {
+	    if (g_str_equal(result_argv[3], "TAPE-ERROR") ||
+		g_str_equal(result_argv[3], "TAPE-CONFIG")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
 		taper->tape_error = g_strdup(result_argv[6]);

@@ -456,7 +456,7 @@ taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /home 0 $date
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE worker0 $handle") or die;
 taper_cmd("NO-NEW-TAPE worker0 $handle sorry");
-like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-ERROR "" "?sorry"?.*$/,
+like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
 	"got FAILED") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -698,7 +698,7 @@ like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 2621
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE worker0 $handle") or die;
 taper_cmd("NO-NEW-TAPE worker0 $handle \"that's enough\"");
-like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-ERROR "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]" "" "that's enough"$/,
+like(taper_reply, qr/^PARTIAL $handle INPUT-GOOD TAPE-CONFIG "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]" "" "that's enough"$/,
 	"got PARTIAL") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -903,7 +903,7 @@ chmod(0755, Installcheck::Run::vtape_dir(2));
 like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
 	"got REQUEST-NEW-TAPE worker0 $handle") or die;
 taper_cmd("NO-NEW-TAPE worker0 $handle \"sorry\"");
-like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-ERROR "" "?sorry"?.*$/,
+like(taper_reply, qr/^FAILED $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
 	"got FAILED") or die;
 taper_cmd("QUIT");
 wait_for_exit();

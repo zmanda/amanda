@@ -347,7 +347,7 @@ sub result_cb {
 	$msg_params{'taper'} = 'TAPE-ERROR';
 	$msg_params{'tapererr'} = join("; ", @{$params{'device_errors'}});
     } elsif ($params{'config_denial_message'}) {
-	$msg_params{'taper'} = 'TAPE-ERROR';
+	$msg_params{'taper'} = 'TAPE-CONFIG';
 	$msg_params{'tapererr'} = $params{'config_denial_message'};
     } else {
 	$msg_params{'taper'} = 'TAPE-GOOD';
