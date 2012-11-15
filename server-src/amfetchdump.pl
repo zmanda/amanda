@@ -123,6 +123,7 @@ Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
     [--extract --directory directory [--data-path (amanda|directtcp)]
     [--application-property='NAME=VALUE']*]
+    [--init] [--restore]
     [-o configoption]* [--exact-match] config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
 EOF
@@ -142,6 +143,7 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_header_file, $opt_header_fd, @opt_dumpspecs,
     $opt_decrypt, $opt_server_decrypt, $opt_client_decrypt,
     $opt_decompress, $opt_server_decompress, $opt_client_decompress,
+    $opt_init, $opt_restore,
     $opt_extract, $opt_directory, $opt_data_path, %application_property,
     $opt_exact_match);
 
@@ -177,6 +179,8 @@ GetOptions(
     'data-path=s' => \$opt_data_path,
     'application-property=s' => \%application_property,
     'exact-match' => \$opt_exact_match,
+    'init' => \$opt_init,
+    'restore!' => \$opt_restore,
     'b=s' => \$opt_blocksize,
     'd=s' => \$opt_device,
     'O=s' => \$opt_chdir,
@@ -394,6 +398,9 @@ sub main {
     my $delay;
     my $directtcp = 0;
     my @directtcp_command;
+    my @init_needed_labels;
+    my $init_label;
+    my $scan;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -421,7 +428,7 @@ sub main {
 	if (defined $opt_device) {
 	    $chg = Amanda::Changer->new($opt_device);
 	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
-	    my $scan = Amanda::Recovery::Scan->new(
+	    $scan = Amanda::Recovery::Scan->new(
 				chg => $chg,
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
@@ -429,7 +436,7 @@ sub main {
 		feedback => main::Feedback->new($chg, $opt_device, $is_tty),
 		scan     => $scan);
 	} else {
-	    my $scan = Amanda::Recovery::Scan->new(
+	    $scan = Amanda::Recovery::Scan->new(
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 
@@ -460,7 +467,56 @@ sub main {
 	    print STDERR "WARNING: Fetch first dump only because of -p argument\n" if @{$plan->{'dumps'}} > 1;
 	    @{$plan->{'dumps'}} = ($plan->{'dumps'}[0]);
 	}
+	if ($opt_init) {
+	    return $steps->{'init_seek_file'}->();
+	}
+	$steps->{'list_volume'}->();
+    };
 
+    step init_seek_file => sub {
+
+	@init_needed_labels = $plan->get_volume_list();
+	$steps->{'loop_init_seek_file'}->();
+    };
+
+    step loop_init_seek_file => sub {
+	my $Xinit_label = shift @init_needed_labels;
+	$init_label = $Xinit_label->{'label'};
+	if (!$init_label) {
+	    return $steps->{'end_init_seek_file'}->();
+	}
+	$scan->find_volume(label  => $init_label,
+			   res_cb => $steps->{'init_seek_file_done_load'},
+			   set_current => 0);
+    };
+
+    step init_seek_file_done_load => sub {
+	my ($err, $res) = @_;
+        return failure($err, $finished_cb) if ($err);
+
+	my $dev = $res->{'device'};
+	if (!$dev->start($Amanda::Device::ACCESS_READ, undef, undef)) {
+	    $err = $dev->error_or_status();
+	}
+	for my $dump (@{$plan->{'dumps'}}) {
+	    for my $part (@{$dump->{'parts'}}) {
+		next unless defined $part; # skip parts[0]
+		next unless defined $part->{'label'}; # skip holding parts
+		next if $part->{'label'} ne $init_label;
+		$dev->init_seek_file($part->{'filenum'});
+	    }
+	}
+	$res->release(finished_cb => $steps->{'loop_init_seek_file'});
+    };
+
+    step end_init_seek_file => sub {
+	if (defined $opt_restore && $opt_restore == 0) {
+	    return $steps->{'finished'}->();
+	}
+	$steps->{'list_volume'}->();
+    };
+
+    step list_volume => sub {
 	my @needed_labels = $plan->get_volume_list();
 	my @needed_holding = $plan->get_holding_file_list();
 	if (@needed_labels) {

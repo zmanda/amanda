@@ -57,6 +57,8 @@
 	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
 	<arg choice='opt'>--application-property <replaceable>NAME=VALUE</replaceable></arg>*
     </arg>
+    <arg choice='opt'>--init</arg>
+    <arg choice='opt'>--restore</arg>
     <group choice='opt'>
       <arg choice='plain'>--decrypt</arg>
       <arg choice='plain'>--no-decrypt</arg>
@@ -196,6 +198,20 @@ the server.</para></listitem>
     <term><option>--client-decrypt</option></term>
     <listitem><para>Do the decryption only if the encryption was done on
 the client.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--init</option></term>
+  <listitem>
+<para>Prepare for a restore, some device require it for faster restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-restore</option></term>
+  <listitem>
+<para>Do not start the restore, useful with --init.</para>
+  </listitem>
   </varlistentry>
 
   <varlistentry>

@@ -1,4 +1,8 @@
 2012-11-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Add --init --no-restpre arguments.
+	* man/xml-source/amfetchdump.8.xml: Document them.
+
+2012-11-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/aggregate.pm, perl/Amanda/Changer/disk.pm,
 	  perl/Amanda/Changer/multi.pm,
 	  perl/Amanda/Changer/robot.pm: Add LOCK-TIMEOUT property.
