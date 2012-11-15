@@ -153,6 +153,20 @@ tpchanger "aggregate"
 <para>This changer driver allow to use two or more changers or standalone
 drive in sequence.</para>
 
+<refsect3><title>Properties</title>
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>STATE_FILENAME</term><listitem>
+The name of the state file (default: "$CONFIG_DIR/$changer_name.state".
+</listitem></varlistentry>
+</variablelist>
+</refsect3>
 </refsect2>
 
 <refsect2><title>chg-disk:VTAPEROOT</title>
@@ -184,6 +198,10 @@ name="amrestore" vol="8" /> command line.</para>
 <!-- ==== -->
 <varlistentry><term>AUTO-CREATE-SLOT</term><listitem>
 If a <computeroutput>slotN</computeroutput> directory in the range 1 to NUM-SLOT does not already exist, and this property is true, then the changer will create the directory.
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
 </listitem></varlistentry>
 <!-- ==== -->
 <varlistentry><term>MOUNT</term><listitem>
@@ -247,6 +265,10 @@ tpchanger "chg-multi:s3:mycompany-backups/tape-{001..100}"
 <!-- ==== -->
 <varlistentry><term>FIRST-SLOT</term><listitem>
 This property gives the number of the first slot. The default value is "1".
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
 </listitem></varlistentry>
 <!-- ==== -->
 </variablelist>
@@ -488,6 +510,10 @@ property "load-poll" "0s poll 5s until 2m"
 </programlisting>
 The default value is <command>"0s poll 3s until 2m"</command>.
 </para>
+</listitem></varlistentry>
+<!-- ==== -->
+<varlistentry><term>LOCK-TIMEOUT</term><listitem>
+The time in seconds amanda wait to lock the statefile (default:1000)
 </listitem></varlistentry>
 <!-- ==== -->
 <varlistentry><term>MTX</term><listitem>

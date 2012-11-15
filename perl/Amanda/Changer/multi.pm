@@ -112,6 +112,7 @@ sub new {
     }
 
     my $state_filename = Amanda::Config::config_dir_relative($config->{'changerfile'});
+    my $lock_timeout = $config->{'lock-timeout'};
     Amanda::Debug::debug("Using state file: $state_filename");
 
     my $self = {
@@ -123,6 +124,7 @@ sub new {
 	state_filename => $state_filename,
 	first_slot => $first_slot,
 	last_slot => $last_slot,
+	'lock-timeout' => $lock_timeout,
     };
 
     bless ($self, $class);

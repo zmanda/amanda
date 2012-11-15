@@ -1152,6 +1152,13 @@ sub with_locked_state {
     my ($statefile, $cb, $sub) = @_;
     my ($filelock, $STATE);
     my $poll = 0; # first delay will be 0.1s; see below
+    my $time;
+
+    if (defined $self->{'lock-timeout'}) {
+	$time = time() + $self->{'lock-timeout'};
+    } else {
+	$time = time() + 1000;
+    }
 
     my $steps = define_steps
 	cb_ref => \$cb;
@@ -1164,10 +1171,13 @@ sub with_locked_state {
 
     step lock => sub {
 	my $rv = $filelock->lock();
-	if ($rv == 1) {
+	if ($rv == 1 && time() < $time) {
 	    # loop until we get the lock, increasing $poll to 10s
 	    $poll += 100 unless $poll >= 10000;
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
+	} elsif ($rv == 1) {
+	    return $self->make_error("fatal", $cb,
+		    message => "Timeout trying to lock '$statefile'");
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
 		    message => "Error locking '$statefile'");

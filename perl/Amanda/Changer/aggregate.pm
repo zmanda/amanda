@@ -93,6 +93,7 @@ sub new {
 
     my $state_filename;
     my $state_filename_prop = $config->{'properties'}->{'state_filename'};
+    my $lock_timeout = $config->{'properties'}->{'lock-timeout'};
 
     if (defined $state_filename_prop) {
 	$state_filename = $state_filename_prop->{'values'}[0];
@@ -108,6 +109,7 @@ sub new {
 	num_children => scalar @children,
 	current_slot => undef,
 	state_filename => $state_filename,
+	'lock-timeout' => $lock_timeout,
     };
     bless ($self, $class);
     return $self;
