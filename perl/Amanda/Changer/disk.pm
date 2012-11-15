@@ -105,6 +105,7 @@ sub new {
     if ($config->{'changerfile'}) {
 	$self->{'state_filename'} = Amanda::Config::config_dir_relative($config->{'changerfile'});
     }
+    $self->{'lock-timeout'} = $config->get_property('lock-timeout');
 
     $self->{'num-slot'} = $config->get_property('num-slot');
     $self->{'auto-create-slot'} = $config->get_boolean_property(
@@ -652,6 +653,14 @@ sub try_lock {
     my $self = shift;
     my $cb = shift;
     my $poll = 0; # first delay will be 0.1s; see below
+    my $time;
+
+    if (defined $self->{'lock-timeout'}) {
+	$time = time() + $self->{'lock-timeout'};
+    } else {
+	$time = time() + 1000;
+    }
+
 
     my $steps = define_steps
 	cb_ref => \$cb;
@@ -666,10 +675,13 @@ sub try_lock {
 
     step lock => sub {
 	my $rv = $self->{'fl'}->lock_rd();
-	if ($rv == 1) {
+	if ($rv == 1 && time() < $time) {
 	    # loop until we get the lock, increasing $poll to 10s
 	    $poll += 100 unless $poll >= 10000;
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
+	} elsif ($rv == 1) {
+	    return $self->make_error("fatal", $cb,
+		message => "Timeout trying to lock '$self->{'umount_lockfile'}'");
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
 		message => "Error locking '$self->{'umount_lockfile'}'");

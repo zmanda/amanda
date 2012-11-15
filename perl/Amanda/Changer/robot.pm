@@ -131,6 +131,7 @@ sub new {
 
         # set below from properties
         statefile => undef,
+	'lock-timeout' => undef,
         drive2device => {}, # { drive => device name }
 	driveorder => [], # order of tape-device properties
 	drive_choice => 'lru',
@@ -162,7 +163,7 @@ sub new {
         $self->{'statefile'} = "$localstatedir/amanda/$safe_filename";
     }
     $self->_debug("using statefile '$self->{statefile}'");
-
+    $self->{'lock-timeout'} = $config->{'lock-timeout'};
     # figure out the drive number to device name mapping
     if (exists $config->{'tapedev'}
 	    and $config->{'tapedev'} ne ''

@@ -1,3 +1,11 @@
+2012-11-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/aggregate.pm, perl/Amanda/Changer/disk.pm,
+	  perl/Amanda/Changer/multi.pm,
+	  perl/Amanda/Changer/robot.pm: Add LOCK-TIMEOUT property.
+	* perl/Amanda/Changer.pm: Handle lock-timeout property.
+	* man/xml-source/amanda-changers.7.xml: Document new LOCK-TIMEOUT
+	  properties.
+
 2012-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Password can be encoded.
 
