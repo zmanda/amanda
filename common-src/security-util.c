@@ -1423,7 +1423,7 @@ udp_netfd_read_callback(
      * If no accept handler was setup, then just return.
      */
     if (udp->accept_fn == NULL) {
-	dbprintf(_("Receive packet from unknown source"));
+	g_debug(_("Receive packet from unknown source"));
 	return;
     }
 
