@@ -52,7 +52,7 @@
         # In theory this should be more reliable than awking for distver.
         %define distver %{fedora}
     %endif
-    %if "%dist" == "fedora"
+    %if "%{dist}" == "fedora"
 	%if %{distver} <= 8
 	    %define requires_libtermcap Requires: libtermcap.so.2
 	    %define curl curl
@@ -73,6 +73,8 @@
 	%define requires_libtermcap Requires: libtermcap.so.2
 	%define curl curl
 	%define without_ipv6 --without-ipv6
+	%undefine enable_as_needed
+        %define prereq_sharutils PreReq: sharutils
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
@@ -81,6 +83,7 @@
         %define tarver 1.14
 	%define requires_libtermcap Requires: libtermcap.so.2
 	%define curl curl
+        %define prereq_sharutils PreReq: sharutils
     %endif
     %if %(awk '$1 == "CentOS" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
 	%define dist redhat
@@ -89,6 +92,7 @@
 	%define tarver 1.14
 	%define requires_libtermcap Requires: libtermcap.so.2
 	%define curl curl
+        %define prereq_sharutils PreReq: sharutils
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
@@ -115,31 +119,25 @@
 # Detect Suse variants.
 %if %{_vendor} == "suse"
     %define dist SuSE
-    %if %(awk '$1 == "openSUSE" { exit 1; }' /etc/SuSE-release; echo $?)
-        %define disttag suse
-        %define distver %(awk '$1=="openSUSE" {print $2}' /etc/SuSE-release)
+    %define disttag %(awk '$1=="openSUSE" { print suse; }, $1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
+    # use printf to be sure rpm gets a number type
+    %define distver %(awk '$1=="openSUSE" {printf("%d", $2)}, $1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; printf("%d", VER)}' /etc/SuSE-release)
+    %define curl curl
+    %if %{distver} = 9
+        %undefine enable_as_needed
     %endif
-    %if %(awk '$1 == "SUSE" { exit 1; }' /etc/SuSE-release; echo $?)
-        %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
-        %define distver %(awk '$1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; print VER}' /etc/SuSE-release)
-	# Always use quotes in rpm comparisons if values could be interpreted
-	# as integers.
-	%define curl curl
-	%if "%{distver}" == "9"
-	    %undefine enable_as_needed
-	%endif
+    %if %{distver} < 11
+        %define prereq_sharutils PreReq: sharutils
     %endif
 %endif
 
 # Set options per distribution
 %if %{dist} == redhat || %{dist} == fedora
     %define rpm_group Applications/Archiving
-    %define xinetd_reload restart
     %define requires_initscripts Requires: initscripts
 %endif
 %if %{dist} == SuSE
     %define rpm_group Productivity/Archiving/Backup
-    %define xinetd_reload restart
 %endif
 
 # Let's die if we haven't detected the distro. This might save some frustration.
@@ -147,6 +145,9 @@
 %{!?distver: %{error:"Your distribution and its version were not detected."}; %tag_to_cause_exit }
 # Set minimum tar version if it wasn't set in the per-distro section
 %{!?tarver: %define tarver 1.15}
+
+# Define the native binary data encoder (for create_amkey)
+%define encoder %(which base64 2>/dev/null || which uuencode)
 
 %define packer %(%{__id_u} -n)
 
@@ -183,6 +184,7 @@ BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: glib2 >= 2.2.0
 BuildRequires: glib2-devel
+BuildRequires: gettext
 BuildRequires: readline
 # Note: newer distros have changed most *-devel to lib*-devel, and added a
 # provides tag for backwards compat.
@@ -192,6 +194,7 @@ BuildRequires: %{curl}-devel >= 7.10.0
 BuildRequires: openssl
 BuildRequires: openssl-devel
 BuildRequires: perl(ExtUtils::Embed)
+%{?prereq_sharutils}
 Requires: /bin/awk
 Requires: /bin/date
 Requires: /usr/bin/id
@@ -200,6 +203,7 @@ Requires: /bin/sh
 Requires: /usr/sbin/useradd
 Requires: /usr/sbin/usermod
 Requires: fileutils
+Requires: gettext
 Requires: grep
 Requires: gnuplot
 Requires: %{curl} >= 7.10.0
@@ -329,7 +333,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 # --- Unpack ---
 
 %prep
-#Should not be defined here!
 %setup -q
 # --- Configure and compile ---
 
@@ -358,7 +361,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 	--mandir=%{MANDIR} \
 	--with-amdatadir=%{AMDATADIR} \
         --with-gnuplot=/usr/bin/gnuplot \
-        --with-gnutar=/bin/tar \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
         --with-tape-server=localhost \
@@ -416,7 +418,7 @@ fi
 
 # Define script variables
 # Some versions of rpmbuild do not like multi-line macros in spec files. ugly.
-%define script_vars amanda_user=%{amanda_user}; amanda_group=%{amanda_group}; AMANDAHOMEDIR=%{AMANDAHOMEDIR}; os=Linux; wanted_shell=/bin/bash; dist=%{dist}; LOGDIR=%{LOGDIR}; INSTALL_LOG=$LOGDIR/install.log; SYSCONFDIR=%{SYSCONFDIR}; SBINDIR=%{SBINDIR};
+%define script_vars amanda_user=%{amanda_user}; amanda_group=%{amanda_group}; AMANDAHOMEDIR=%{AMANDAHOMEDIR}; os=Linux; wanted_shell=/bin/bash; dist=%{dist}; LOGDIR=%{LOGDIR}; INSTALL_LOG=$LOGDIR/install.log; SYSCONFDIR=%{SYSCONFDIR}; SBINDIR=%{SBINDIR}; encoder=%{encoder};
 # --- Pre/post (un)installation scripts ---
 
 %pre backup_server
@@ -481,10 +483,18 @@ case $? in
 	0) backup_xinetd "amandaclient" ;;
 esac
 
-reload_xinetd
+check_superserver_running "xinetd"
+[ "$?" = "0" ] && action=restart || action=start
+reload_xinetd $action
 create_amandates
 check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
 create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
 check_gnupg
 create_amandahosts
 check_amandahosts_entry root amindexd amidxtaped
@@ -495,7 +505,6 @@ create_ssh_key client
 create_profile
 check_profile
 install_client_conf
-create_ampassphrase
 
 logger "Amanda installation complete."
 cat $LOGFILE >> $INSTALL_LOG && {
@@ -535,25 +544,23 @@ if [ "$action" = "uninstall" ]; then
     check_xinetd "amandaserver"
     if [ $? -eq 0 ] ; then
 	rm_xinetd "amandaserver"
-	reload_xinetd
+	check_superserver_running "xinetd" && reload_xinetd
     fi
     check_inetd "amandaserver"
     if [ $? -eq 0 ] ; then
 	rm_inetd "amandaserver"
-	reload_inetd
-    fi
-    if [ -d ${SYSCONFDIR}/amanda ]; then
-        logger "Removing ${SYSCONFDIR}/amanda if empty..."
-        rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
-    fi
-    if [ -d ${AMANDAHOMEDIR} ]; then
-        logger "Removing ${AMANDAHOMEDIR}..."
-        rm -rf ${AMANDAHOMEDIR}
+	check_superserver_running "inetd" && reload_inetd
     fi
     if [ -f ${SYSCONFDIR}/amandates ]; then
         logger "Removing ${SYSCONFDIR}/amandates..."
         rm -rf ${SYSCONFDIR}/amandates
     fi
+    if [ -d ${SYSCONFDIR}/amanda ]; then
+        logger "Removing ${SYSCONFDIR}/amanda if empty..."
+        rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
+    fi
+    if [ -d /var/lib/amanda/gnutar-lists ]; then
+        rm -rf /var/lib/amanda/gnutar-lists
     # Remove ${amanda_user} from sensitive groups.
     if which deluser >/dev/null 2>&1 ; then
         for group in tape; do
@@ -566,10 +573,9 @@ if [ "$action" = "uninstall" ]; then
             fi
         done
     fi
-
+    echo "Amanda removal log can be found in '$LOGFILE'."
 fi
 
-echo "Amanda removal log can be found in '$LOGFILE'."
 
 %pre backup_client
 ##########################################
@@ -633,7 +639,13 @@ esac
 reload_xinetd
 create_amandates
 check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
 create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
 check_gnupg
 create_amandahosts
 check_amandahosts_entry ${amanda_user} amdump
@@ -695,6 +707,10 @@ if [ "$action" = "uninstall" ]; then
 	rm_inetd "amandaclient"
 	reload_inetd
     fi
+    if [ -f ${SYSCONFDIR}/amandates ]; then
+        logger "Removing ${SYSCONFDIR}/amandates..."
+        rm -rf ${SYSCONFDIR}/amandates
+    fi
     if [ -d ${SYSCONFDIR}/amanda ]; then
         logger "Removing ${SYSCONFDIR}/amanda if empty..."
         rmdir ${SYSCONFDIR}/amanda 2> /dev/null || true
@@ -702,10 +718,6 @@ if [ "$action" = "uninstall" ]; then
     if [ -d ${AMANDAHOMEDIR} ]; then
         logger "Removing ${AMANDAHOMEDIR}..."
         rm -rf ${AMANDAHOMEDIR}
-    fi
-    if [ -f ${SYSCONFDIR}/amandates ]; then
-        logger "Removing ${SYSCONFDIR}/amandates..."
-        rm -rf ${SYSCONFDIR}/amandates
     fi
     # Remove ${amanda_user} from sensitive groups.
     if which deluser >/dev/null 2>&1 ; then
@@ -719,9 +731,9 @@ if [ "$action" = "uninstall" ]; then
             fi
         done
     fi
+    echo "Amanda removal log can be found in '$LOGFILE'."
 fi
 
-echo "Amanda removal log can be found in '$LOGFILE'."
 
 %files backup_client
 # --- Files to install ---
@@ -826,7 +838,9 @@ echo "Amanda removal log can be found in '$LOGFILE'."
 # --- ChangeLog
 
 %changelog
+* %%DATE%% Dan Locks <dwlocks at zmanda dot com> %{version}
+- Package created
 * Fri Aug 20 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
-- use %%VERSION%% macro instead of reading a file.  error reported by ssgelm
+- use %%VERSION% macro instead of reading a file.  error reported by ssgelm
 * Thu Aug 19 2010 Dan Locks <dwlocks at zmanda dot com> 3.2.0alpha
 - Added detection of openSuSE 11 as suggested by ssgelm

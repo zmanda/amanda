@@ -11,7 +11,6 @@ amanda_group=disk
 AMANDAHOMEDIR=%%AMANDAHOMEDIR%%
 os=Linux
 dist=%%DISTRO%%
-
 LOGDIR=%%LOGDIR%%
 SYSCONFDIR=/etc
 
@@ -26,9 +25,13 @@ remove() {
         rm_xinetd "amanda${pkg_type}" || { \
         logger "Warning: Did not successfully remove amanda${pkg_type} from xinetd.";
             exit 1; }
-        reload_xinetd
+        check_superserver_running "xinetd" && reload_xinetd
     fi
-
+    # Check for and remove existing inetd configs
+    if check_inetd "amanda${pkg_type}"; then
+	rm_inetd "amanda${pkg_type}"
+	check_superserver_running "inetd" && reload_inetd
+    fi
 }
 
 purge() {
@@ -40,9 +43,8 @@ purge() {
         logger "Removing ${LOGDIR}..."
         rm -rf ${LOGDIR}
     fi
-    if [ -d ${AMANDAHOMEDIR} ]; then
-        logger "Removing ${AMANDAHOMEDIR}..."
-        rm -rf ${AMANDAHOMEDIR}
+    if ! rmdir $AMANDAHOMEDIR; then
+        logger "Message: $AMANDAHOMEDIR was not empty, and was not deleted: Contents are often backupsets. "
     fi
     if [ -f ${SYSCONFDIR}/amandates ]; then
         logger "Removing ${SYSCONFDIR}/amandates..."
@@ -71,7 +73,7 @@ case "$1" in
     remove
   ;;
 
-  failed-upgrade)
+  failed-upgrade|abort-upgrade)
     check_xinetd "amanda${pkg_type}"
     if [ $? -eq 1 ] ; then
 	install_xinetd

@@ -11,6 +11,7 @@
 # os: Linux, Mac, Solaris, etc...
 # SYSCONFDIR: location of system config files (ie, /etc)
 # LOGDIR: logging directory for amanda
+# encoder: either base64 or uuencode depending on the default for this platform
 
 #TODO: gnutar-lists dir for solaris??
 
@@ -59,12 +60,65 @@ create_gnupg() {
 	fi
 }
 
+create_ampassphrase() {
+    # install am_passphrase file to server
+    logger "Checking '${AMANDAHOMEDIR}/.am_passphrase' file."
+    if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase ] ; then
+        # Separate file creation from password creation to ease debugging.
+        logger "Creating '${AMANDAHOMEDIR}/.am_passphrase' file."
+        log_output_of touch ${AMANDAHOMEDIR}/.am_passphrase || \
+            { logger "WARNING:  Could not create .am_passphrase." ; return 1; }
+        phrase=`echo $RANDOM | md5sum | awk '{print $1}'` || \
+            { logger "WARNING:  Error creating pseudo random passphrase." ; return 1; }
+        echo ${phrase} >>${AMANDAHOMEDIR}/.am_passphrase
+    else
+        logger "Info: ${AMANDAHOMEDIR}/.am_passphrase already exists."
+    fi
+    # Fix permissions for both new or existing installations.
+    log_output_of chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase || \
+        { logger "WARNING:  Could not chown .am_passphrase" ; return 1; }
+    log_output_of chmod 0600 ${AMANDAHOMEDIR}/.am_passphrase || \
+        { logger "WARNING:  Could not fix permissions on .am_passphrase" ; return 1; }
+}
+
+create_amkey() {
+    [ -f ${AMANDAHOMEDIR}/.am_passphrase ] || \
+        { logger "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key."; return 1; }
+    logger "Creating encryption key for amcrypt"
+    if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
+        # TODO: don't write this stuff to disk!
+        head -c 2925 /dev/urandom | ${encoder} | head -n 51 | tail -n 50 >${AMANDAHOMEDIR}/.gnupg/am_key || \
+            { logger "WARNING: error creating random keys."; return 1; }
+        log_output_of gpg --symmetric --armor --batch \
+                --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
+                --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
+                ${AMANDAHOMEDIR}/.gnupg/am_key || \
+            { logger "WARNING: Error encrypting keys." ;
+              rm ${AMANDAHOMEDIR}/.gnupg/am_key;
+              return 1; }
+    else
+        logger "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists."
+    fi
+    # Always try to delete unencrypted keys
+    rm -f ${AMANDAHOMEDIR}/.gnupg/am_key
+}
+
 check_gnupg() {
-	logger "Ensuring correct permissions for '${AMANDAHOMEDIR}/.gnupg'."
-	log_output_of chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg || \
-		{ logger "WARNING:  Could not chown .gnupg dir." ; return 1; }
-	log_output_of chmod 700 ${AMANDAHOMEDIR}/.gnupg || \
-		{ logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
+    logger "Ensuring correct permissions for '${AMANDAHOMEDIR}/.gnupg'."
+    log_output_of chown -R ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg || \
+        { logger "WARNING:  Could not chown .gnupg dir." ; return 1; }
+    log_output_of chmod -R u=rwX ${AMANDAHOMEDIR}/.gnupg || \
+        { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
+    # If am_key.gpg and .am_passphrase already existed, we should check
+    # if they match!
+    [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ] && \
+        log_output_of gpg --decrypt --batch \
+                --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
+                --output /dev/null \
+            ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
+            { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg.";
+                return 1;
+            }
 }
 
 create_amandahosts() {
@@ -196,25 +250,6 @@ install_client_conf() {
     else
         logger "Note: ${SYSCONFDIR}/amanda/amanda-client.conf exists. Please check ${AMANDAHOMEDIR}/example/amanda-client.conf for updates."
     fi
-}
-
-create_ampassphrase() {
-	# install am_passphrase file to server
-	logger "Checking '${AMANDAHOMEDIR}/.am_passphrase' file."
-	if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase ] ; then
-		logger "Create '${AMANDAHOMEDIR}/.am_passphrase' file."
-		log_output_of touch ${AMANDAHOMEDIR}/.am_passphrase || \
-			{ logger "WARNING:  Could not create .am_passphrase." ; return 1; }
-		phrase=`echo $RANDOM | md5sum | awk '{print $1}'` || \
-			{ logger "WARNING:  Error creating pseudo random passphrase." ; return 1; }
-		echo ${phrase} >>${AMANDAHOMEDIR}/.am_passphrase
-
-		log_output_of chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase || \
-			{ logger "WARNING:  Could not chown .am_passphrase" ; return 1; }
-		log_output_of chmod 0600 ${AMANDAHOMEDIR}/.am_passphrase || \
-			{ logger "WARNING:  Could not fix permissions on .am_passphrase" ; return 1; }
-	fi
-
 }
 
 create_amtmp() {

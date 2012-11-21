@@ -21,6 +21,7 @@ SBINDIR=/usr/sbin
 AMTMP="/tmp/amanda"
 
 AMANDATES=${SYSCONFDIR}/amandates
+encoder=`which base64 2>/dev/null || which uuencode`
 
 # ---------- Common functions ------------
 %%COMMON_FUNCTIONS%%
@@ -47,10 +48,18 @@ case $? in
 	0) backup_xinetd "amanda${other_pkg_type}" ;;
 esac
 
-reload_xinetd
+check_superserver_running "xinetd"
+[ "$?" = "0" ] && action=restart || action=start
+reload_xinetd $action
 create_amandates
 check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
 create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
 check_gnupg
 create_amandahosts
 check_amandahosts_entry root amindexd amidxtaped
@@ -63,7 +72,6 @@ fi
 create_profile
 check_profile
 install_client_conf
-create_ampassphrase
 create_amtmp
 
 logger "Amanda ${pkg_type} installation complete."
