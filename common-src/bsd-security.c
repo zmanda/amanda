@@ -639,14 +639,12 @@ stream_read_callback(
 
     assert(bs != NULL);
 
-    /*
-     * Remove the event first, in case they reschedule it in the callback.
-     */
-    bsd_stream_read_cancel(bs);
     do {
 	n = read(bs->fd, bs->databuf, SIZEOF(bs->databuf));
     } while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
 
+    if (n <= 0)
+	bsd_stream_read_cancel(bs);
     if (n < 0)
 	security_stream_seterror(&bs->secstr, "%s", strerror(errno));
 
