@@ -20,8 +20,8 @@ SBINDIR="${basedir}/usr/sbin"; export SBINDIR
 AMTMP="/tmp/amanda"
 
 AMANDATES=${SYSCONFDIR}/amandates; export AMANDATES
-
-exit_msg="Amanda installation log can be found in '${INSTALL_LOG}'."
+# uuencode is still standard on sol10, but haven't checked sol 11.
+encoder=`which base64 2>/dev/null || which uuencode`
 
 # ---------- Common functions ------------
 %%COMMON_FUNCTIONS%%
@@ -61,9 +61,16 @@ fi
 
 create_amandates
 check_amandates
+create_ampassphrase || \
+    logger "Info: amcryptsimple and amcrpyt will not work until .am_passphrase is created"
 create_gnupg
+create_amkey || \
+    logger "Info: amcrypt will not work until keys are created."
+# Checks permissions, but only tries decrypting if both .am_passphrase
+# and .gnupg/am_key.gpg exist.
 check_gnupg
 create_amandahosts
+check_amandahosts_entry root amindexd amidxtaped
 check_amandahosts_entry ${amanda_user} amdump
 check_amandahosts_perms
 create_ssh_key client
@@ -73,7 +80,9 @@ install_client_conf
 create_amtmp
 
 logger "Amanda installation complete."
-cat $LOGFILE >> $INSTALL_LOG
-rm $LOGFILE
-
-echo "${exit_msg}"
+exit_msg="Amanda installation log can be found in '${INSTALL_LOG}'."
+cat $LOGFILE >> $INSTALL_LOG && {
+    rm $LOGFILE
+    echo "${exit_msg} '${INSTALL_LOG}'."
+} || \
+    echo "${exit_msg} $LOGFILE."

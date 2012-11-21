@@ -10,7 +10,7 @@ logger() {
 	# A non-annoying way to log stuff
 	# ${@} is all the parameters, also known as the message.  Quoting the input
 	# preserves whitespace.
-	msg="`date +'%b %e %Y %T'`: ${@}"
+	msg="`date +'%b %d %Y %T'`: ${@}"
 	echo "${msg}" >> ${LOGFILE}
 }
 
@@ -210,27 +210,26 @@ install_smf() {
 
 reload_xinetd() {
     # Default action is to try reload.
-    if [ "x$1" = "x" ]; then
-	action="reload"
-    elif [ "$1" = "reload" ] || [ "$1" = "restart" ]; then
-	action="$1"
-    else
-	logger "WARNING: bad argument to reload_xinetd: $1"
-	return 1
-    fi
+    case $1 in
+        reload|restart|start) action=$1 ;;
+        "") action=reload ;;
+        *) logger "WARNING: bad argument to reload_xinetd: $1"
+           return 1
+        ;;
+    esac
+
     if [ "$action" = "reload" ] ; then
 	logger "Reloading xinetd configuration..." 
 	log_output_of ${SYSCONFDIR}/init.d/xinetd $action # Don't exit!
 	if [ $? -ne 0 ] ; then
 	    logger "xinetd reload failed.  Attempting restart..."
-	    log_output_of ${SYSCONFDIR}/init.d/xinetd restart || \
-		{ logger "WARNING:  restart failed." ; return 1; }
+            action=restart
 	fi
-    else
-	# Must be restart...
-        logger "Restarting xinetd."
-	log_output_of ${SYSCONFDIR}/init.d/xinetd $1 || \
-	    { logger "WARNING:  ${1} failed." ; return 1; }
+    fi
+    if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
+        logger "${action}ing xinetd."
+	log_output_of ${SYSCONFDIR}/init.d/xinetd $action || \
+	    { logger "WARNING:  $action failed." ; return 1; }
     fi
 }
 

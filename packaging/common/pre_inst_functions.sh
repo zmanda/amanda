@@ -73,6 +73,14 @@ create_user() {
     esac
 }
 
+add_profiles() {
+    # Solaris only:  Add a comma separated list of rights profiles to the
+    # $amanda_user.  Replaces any existing profiles listed on the account.
+    log_output_of usermod -P "\"$*\"" ${amanda_user} || {
+        logger "Warning: Rights profiles were not added.  Some types of backup may not work until these rights profiles are givent to ${amanda_backup}: '$*'"
+        return 1; }
+}
+
 add_group() {
     # First, try to add the group, detect via return code if it
     # already exists. Then add ${amanda_user} to the group without

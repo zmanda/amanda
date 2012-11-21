@@ -15,11 +15,20 @@
 # SHUNIT_* and SHU_* are shunit2 variables
 # test_* should only be used by test functions.
 # All other variables will probably be used by pre/post/common functions.
+case $1 in
+    DEBUG) DEBUG=True
+        shift
+        ;;
+    *) DEBUG= ;;
+esac
+export DEBUG
 
-# shunit2 assumes _inc is, but we might run from a separate builddir. So try to
-# use srcdir, as defined by automake, or otherwise `pwd`.
+ex_from=`dirname $0`
+
+# shunit2 assumes shunit_inc, but we might run from a separate
+# builddir. So try to use srcdir, as defined by automake, or
+# otherwise `pwd`.
 SHUNIT_INC="${srcdir=`pwd`}/packaging/common"; export SHUNIT_INC
-
 TMPDIR=`pwd`/shunit-test; export TMPDIR
 amanda_user=test_amandabackup; export amanda_user
 amanda_group=test_disk; export amanda_group
@@ -31,6 +40,7 @@ wanted_shell='/bin/false'; export wanted_shell
 dist=Fedora; export dist
 SYSCONFDIR=$TMPDIR/etc; export SYSCONFDIR
 SBINDIR=$TMPDIR/sbin; export SBINDIR
+encoder=`which base64 2>/dev/null || which uuencode`; export encoder
 # Don't potentially conflict with a real value...
 deb_uid=63000; export deb_uid
 
@@ -79,7 +89,7 @@ oneTimeSetUp() {
 }
 
 oneTimeTearDown() {
-    if [ ${__shunit_assertsFailed} -eq 0 ]; then
+    if [ ${__shunit_assertsFailed} -eq 0 ] && [ ! "${DEBUG}" ]; then
 	rm -rf $test_cleanup_files
     else
 	echo "Check ${test_cleanup_files} for logs and error info."
@@ -114,6 +124,12 @@ fi
 # Source our mock utils.
 . ${SHUNIT_INC}/mock_utils.sh
 
+log_tail_no_stamp() {
+    # This strips the date off of a log line so only the message is
+    # compared.
+    LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
+}
+
 ######################################
 # Common functions
 
@@ -122,13 +138,13 @@ fi
 test___logger() {
     # Write a line to the log, test that it got there.
     TEST_MSG="test___logger message"
-    LOG_LINE="`date +'%b %e %Y %T'`: ${TEST_MSG}"
+    LOG_LINE="`date +'%b %d %Y %T'`: ${TEST_MSG}"
     # It's important for the log messages to be quoted, or funny stuff happens.
     logger "${TEST_MSG}"
     assertEquals "logger() return code" 0 $?
-    LOG_TAIL=`tail -1 ${LOGFILE}`
+    log_tail_no_stamp
     assertEquals "logger() did not write <${LOG_LINE}> " \
-	"${LOG_LINE}" "${LOG_TAIL}"
+	"${TEST_MSG}" "${LOG_TAIL}"
     # Leave this outside the unit test framework.  if the logger is
     # broken we must exit.
     if [ ! `grep -c "${LOG_LINE}" ${LOGFILE}` = "1" ]; then
@@ -142,6 +158,10 @@ test__log_output_of() {
     TEST_MSG="test__log_output_of message"
     log_output_of echo "${TEST_MSG}"
     assertEquals "log_output_of()" 0 $?
+    LOG_LINE="echo: ${TEST_MSG}"
+    log_tail_no_stamp
+    assertEquals "log_output_of() message should be: " \
+        "${LOG_LINE}" "${LOG_TAIL}"
     COUNT=`grep -c "${TEST_MSG}" ${LOGFILE}`
     assertEquals "log_output_of(): incorrect content in log" \
 	1 ${COUNT}
@@ -272,7 +292,7 @@ test_reload_xinetd() {
     # Might need init script.
     if [ "$IAmRoot" ]; then
         startSkipping
-        echo "test_install_smf: skipped"
+        echo "test_reload_xinetd: skipped"
         return
     elif [ ! -f "${SYSCONFDIR}/init.d/xinetd" ]; then
         mv ${MOCKDIR}/xinetd ${SYSCONFDIR}/init.d
@@ -284,6 +304,12 @@ test_reload_xinetd() {
     touch ${MOCKDIR}/success
     reload_xinetd "reload"
     assertEquals "reload_xinetd" 0 $?
+    # Test no argument
+    reload_xinetd
+    assertEquals "reload_xinetd should attempt to reload" 0 $?
+    flags=`cat ${mock_xinetd_flags}`
+    assertEquals "xinetd_flags should contain: " \
+        "xinetd args: reload" "${flags}"
     # Test failure
     rm ${MOCKDIR}/success
     reload_xinetd "reload"
@@ -292,7 +318,7 @@ test_reload_xinetd() {
     assertEquals "reload_xinetd should try to restart." 0 $?
     reload_xinetd "restart"
     assertEquals "restart should fail." 1 $?
-    tail -3 ${LOGFILE}|grep "Restarting xinetd" >/dev/null
+    tail -3 ${LOGFILE}|grep "restarting xinetd" >/dev/null
     assertEquals "Should log attempt to restart" 0 $?
 }
 
@@ -339,7 +365,7 @@ test_check_user_group_missing() {
         echo $os > ${MOCKDIR}/id_os
         check_user_group "abracadabra"
         assertNotEquals "'check_user group abracadabra' should not be found:" 0 $?
-        LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
+        log_tail_no_stamp
         assertEquals "check_user_group should write" \
             "User's primary group 'abracadabra' does not exist" \
             "${LOG_TAIL}"
@@ -467,6 +493,20 @@ test_create_user() {
     assertEquals "create_user()" 0 $?
 }
 
+test_add_profiles() {
+    # Solaris only, but testing using mock usermod will run if not root
+    # on any system.
+    logger "test_add_profiles"
+    [ "$IAmRoot" ] && startSkipping
+    add_profiles "Profile foo,Profile bar"
+    assertEquals "add_profiles should succeed" 0 $?
+    flags=`cat ${mock_usermod_flags}`
+    assertEquals "usermod_flags should contain:" \
+        "usermod args: -P \"Profile foo,Profile bar\" ${amanda_user}" \
+        "${flags}"
+
+}
+
 test_add_group_check_parameters_logs() {
     rm -f ${MOCKDIR}/groupadd_rc ${MOCKDIR}/num_groups
     # Return codes are integers.
@@ -474,7 +514,7 @@ test_add_group_check_parameters_logs() {
     # Test that first parameter is required.
     add_group
     assertEquals "add_group without a group should fail." 1 $?
-    LOG_TAIL=`tail -1 ${LOGFILE}|cut -d " " -f 5-`
+    log_tail_no_stamp
     assertEquals "add_group should write" \
         "Error: first argument was not a group to add." \
         "${LOG_TAIL}"
@@ -589,16 +629,60 @@ test_create_gnupg() {
     assertTrue "[ -d ${AMANDAHOMEDIR}/.gnupg ]"
 }
 
+test_create_ampassphrase() {
+    rm -f ${AMANDAHOMEDIR}/.am_passphrase
+    logger "test_create_ampassphrase"
+    create_ampassphrase
+    assertEquals "create_ampassphrase" 0 $?
+    assertSame \
+        "chown args: ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase" \
+        "`cat $mock_chown_flags`"
+    assertSame \
+        "chmod args: 0600 ${AMANDAHOMEDIR}/.am_passphrase" \
+        "`cat $mock_chmod_flags`"
+    # When .am_passphrase exists.
+    create_ampassphrase
+    log_tail_no_stamp
+    assertSame \
+        "Info: ${AMANDAHOMEDIR}/.am_passphrase already exists." \
+        "${LOG_TAIL}"
+    rm ${AMANDAHOMEDIR}/.am_passphrase
+}
+
+test_create_amkey() {
+    logger "test_create_amkey"
+    # Missing .am_passphrase
+    create_amkey
+    assertEquals "create_amkey" 1 $?
+    log_tail_no_stamp
+    assertSame \
+        "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key." \
+        "${LOG_TAIL}"
+    # Need .am_passphrase.
+    echo $RANDOM | md5sum | awk '{print $1}' > ${AMANDAHOMEDIR}/.am_passphrase
+    create_amkey
+    assertEquals "create_amkey" 0 $?
+    # Test with existing key
+    create_amkey
+    assertEquals "create_amkey" 0 $?
+    log_tail_no_stamp
+    assertSame \
+        "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists." \
+        "${LOG_TAIL}"
+    # make sure unencrypted am_key is not hanging around
+    assertFalse "[ -f ${AMANDAHOMEDIR}/.gnupg/am_key ]"
+
+}
+
 test_check_gnupg() {
     logger "test_check_gnupg"
     check_gnupg
     assertEquals "check_gnupg" 0 $?
-    [ "$IAmRoot" ] && { startSkipping; echo "test_check_gnupg: skipped"; }
     assertSame \
-	"chown args: ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg" \
+	"chown args: -R ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg" \
 	"`cat $mock_chown_flags`"
     assertSame \
-	"chmod args: 700 ${AMANDAHOMEDIR}/.gnupg" \
+	"chmod args: -R u=rwX ${AMANDAHOMEDIR}/.gnupg" \
 	"`cat $mock_chmod_flags`"
 }
 
@@ -704,7 +788,7 @@ test_install_client_conf() {
     esac
 }
 
-#TODO: create_ampassphrase, create_amtmp
+#TODO: create_amtmp
 
 ######################################
 #TODO: post_rm_functions
