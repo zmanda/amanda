@@ -35,7 +35,7 @@ GType	directtcp_connection_get_type	(void);
  * Parent class for connections
  */
 
-typedef struct DirectTCPConnection_ {
+typedef struct DirectTCPConnection {
     GObject __parent__;
 
     gboolean closed;
@@ -60,7 +60,7 @@ typedef struct DirectTCPConnectionClass_ {
      * @returns: error message on error, NULL for no error (caller should
      *  free the error message)
      */
-    char *(* close)(struct DirectTCPConnection_ *self);
+    char *(* close)(struct DirectTCPConnection *self);
 } DirectTCPConnectionClass;
 
 /* Method Stubs */

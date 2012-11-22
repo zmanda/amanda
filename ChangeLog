@@ -1,4 +1,13 @@
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/flags.m4: Swig is always compiled with
+	  -Wno-deprecated-declarations
+	* common-src/amflock.h: s/file_lock_/file_lock/
+	* device-src/directtcp-connection.h:
+	  s/DirectTCPConnection_/DirectTCPConnection/
+	* ndmp-src/ndmpconnobj.h: s/NDMPConnection_/NDMPConnection/
+	* server-src/cmdline.h: s/dumpspec_s/dumpspec_t/
+
+2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cmdline.swg: Undo previous patch.
 
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>

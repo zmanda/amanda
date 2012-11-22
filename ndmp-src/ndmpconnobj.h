@@ -39,7 +39,7 @@ GType	ndmp_connection_get_type	(void);
  * Parent class for connections
  */
 
-typedef struct NDMPConnection_ {
+typedef struct NDMPConnection {
     GObject __parent__;
 
     /* the ndmconn - interface to ndmlib */
