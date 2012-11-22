@@ -34,7 +34,7 @@
 %}
 
 /* Add a few methods to make this type act like a class */
-typedef struct dumpspec_t {
+typedef struct dumpspec_s {
     %immutable;
     char *host;
     char *disk;
@@ -45,11 +45,11 @@ typedef struct dumpspec_t {
 
     %extend {
 	/* constructor */
-	dumpspec_t(char *host, char *disk, char *datestamp, char *level, char *write_timestamp) {
+	dumpspec_s(char *host, char *disk, char *datestamp, char *level, char *write_timestamp) {
 	    return dumpspec_new(host, disk, datestamp, level, write_timestamp);
 	}
 
-	~dumpspec_t() {
+	~dumpspec_s() {
 	    dumpspec_free(self);
 	}
 
