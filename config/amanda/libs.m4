@@ -147,6 +147,11 @@ AC_DEFUN([AMANDA_CHECK_GLIB], [
         fi
     fi
 
+    # remove deprecated warning for newer version
+    if $PKG_CONFIG --atleast-version 2.30.0 glib-2.0; then
+	AMANDA_DISABLE_GCC_WARNING(deprecated-declarations)
+    fi
+
     # GLIB_CPPFLAGS is not set by autoconf, yet GLIB_CFLAGS contains what GLIB_CPPFLAGS should contain.
     AMANDA_ADD_CPPFLAGS($GLIB_CFLAGS)
     AMANDA_ADD_LIBS($GLIB_LIBS)

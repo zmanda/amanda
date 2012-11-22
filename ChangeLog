@@ -1,4 +1,8 @@
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/libs.m4: remove deprecated warning for glib > 2.34.0
+	* perl/Amanda/Cmdline.swg: s/dumpspec_t/dumpspec_s/
+
+2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: return 'all slots are empty'.
 	* perl/Amanda/Taper/Scan/traditional.pm: Call _user_msg on error.
 
