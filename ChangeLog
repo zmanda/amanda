@@ -1,4 +1,7 @@
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cmdline.swg: Undo previous patch.
+
+2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/libs.m4: remove deprecated warning for glib > 2.34.0
 	* perl/Amanda/Cmdline.swg: s/dumpspec_t/dumpspec_s/
 
