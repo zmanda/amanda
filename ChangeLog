@@ -1,3 +1,7 @@
+2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Keep a different current_slot for each
+	  config.
+
 2012-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c (stream_read_callback): Do not cancel the
 	  event in case of successful read.
