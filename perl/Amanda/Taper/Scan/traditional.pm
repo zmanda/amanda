@@ -287,9 +287,9 @@ sub stage_2 {
 	my $loaded_current = $load_current;
 	$load_current = 0; # don't load current a second time
 
-	$self->_user_msg(search_result => 1, res => $res, err => $err);
 	# bail out immediately if the scan is complete
 	if ($err and $err->failed and $err->notfound) {
+	    $self->_user_msg(search_result => 1, res => $res, err => $err);
 	    # no error, no reservation -> end of the scan
             return $self->scan_result(result_cb => $result_cb);
 	}

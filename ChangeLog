@@ -1,4 +1,8 @@
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: return 'all slots are empty'.
+	* perl/Amanda/Taper/Scan/traditional.pm: Call _user_msg on error.
+
+2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Keep a different current_slot for each
 	  config.
 
