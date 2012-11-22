@@ -410,10 +410,29 @@ sub load_unlocked {
                     message => "no 'slot' or 'label' specified to load()");
         }
 
+        if (defined $slot and !exists $state->{'slots'}->{$slot}) {
+            return $self->make_error("failed", $params{'res_cb'},
+                    reason => "invalid",
+                    message => "invalid slot '$slot'");
+        }
+
 	if (!defined $slot) {
+	    my $all_empty = 1;
+	    if (exists $params{'except_slots'}) {
+		for my $xslot (keys %{ $params{'except_slots'} }) {
+		    if ($state->{'slots'}->{$xslot}->{'state'} ne Amanda::Changer::SLOT_EMPTY) {
+			$all_empty = 0;
+		    }
+		}
+		if ($all_empty) {
+		    return $self->make_error("failed", $params{'res_cb'},
+		        reason => "notfound",
+		        message => "all slots are empty");
+	        }
+	    }
 	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "notfound",
-		message => "all slots have been loaded");
+		    reason => "notfound",
+		    message => "all slots have been loaded");
 	}
 	if (!$self->_is_slot_allowed($slot)) {
 	    if (exists $params{'label'}) {
@@ -429,9 +448,22 @@ sub load_unlocked {
 	}
 
 	if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
-	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "notfound",
-		message => "all slots have been loaded");
+	    # if all slots in except_slots are EMPTY
+	    my $all_empty = 1;
+	    for my $xslot (keys %{ $params{'except_slots'} }) {
+		if ($state->{'slots'}->{$xslot}->{'state'} ne Amanda::Changer::SLOT_EMPTY) {
+		    $all_empty = 0;
+		}
+	    }
+	    if ($all_empty) {
+	        return $self->make_error("failed", $params{'res_cb'},
+		    reason => "notfound",
+		    message => "all slots are empty");
+	    } else {
+	        return $self->make_error("failed", $params{'res_cb'},
+		    reason => "notfound",
+		    message => "all slots have been loaded");
+	    }
 	}
 
 	if ($state->{'slots'}->{$slot}->{'state'} eq Amanda::Changer::SLOT_EMPTY) {
