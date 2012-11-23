@@ -1135,7 +1135,7 @@ my $properties = getconf($CNF_PROPERTY);
     );
 
 for my $pn (@prop_names) {
-    is_deeply($properties->{$pn->{'val'}}->{values}, [ "VALUE" ]);
+    is_deeply($properties->{$pn->{'val'}}->{values}, [ "VALUE" ], "property $pn->{'val'}");
 }
 
 $testconf = Installcheck::Config->new();
