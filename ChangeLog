@@ -1,3 +1,8 @@
+2012-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/null-device.c: Return DEVICE_STATUS_VOLUME_UNLABELED |
+	  DEVICE_STATUS_VOLUME_ERROR on open for reading.
+	* installcheck/amdevcheck.pl: Fix.
+
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/flags.m4: Swig is always compiled with
 	  -Wno-deprecated-declarations

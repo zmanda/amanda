@@ -211,7 +211,7 @@ null_device_read_label(Device * dself) {
 
     device_set_error(dself,
 	stralloc(_("Can't open NULL device for reading or appending.")),
-	DEVICE_STATUS_DEVICE_ERROR);
+	DEVICE_STATUS_VOLUME_UNLABELED | DEVICE_STATUS_VOLUME_ERROR);
     return FALSE;
 }
 
@@ -249,7 +249,7 @@ null_device_start (Device * pself, DeviceAccessMode mode,
     } else {
 	device_set_error(pself,
 	    stralloc(_("Can't open NULL device for reading or appending.")),
-	    DEVICE_STATUS_DEVICE_ERROR);
+	    DEVICE_STATUS_VOLUME_UNLABELED | DEVICE_STATUS_VOLUME_ERROR);
         return FALSE;
     }
 }
