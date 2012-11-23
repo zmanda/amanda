@@ -51,7 +51,7 @@ $testconf->write();
 # test some defaults
 ok(run('amdevcheck', 'TESTCONF'), "run succeeds with a null tapedev");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
-	  [ sort "MESSAGE Can't open NULL device for reading or appending.", "DEVICE_ERROR"],
+	  [ sort "MESSAGE Can't open NULL device for reading or appending.", "VOLUME_UNLABELED", "VOLUME_ERROR"],
 	  "Fail with correct message for a null tapedev");
 
 ##
@@ -93,7 +93,7 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 ok(run('amdevcheck', 'TESTCONF', 'null:null'),
     "can override device on the command line");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
-	  [ sort "MESSAGE Can't open NULL device for reading or appending.", "DEVICE_ERROR"],
+	  [ sort "MESSAGE Can't open NULL device for reading or appending.", "VOLUME_UNLABELED", "VOLUME_ERROR"],
     ".. and produce a corresponding error message");
 
 Installcheck::Dumpcache::load("basic");
