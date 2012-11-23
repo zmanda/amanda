@@ -4,6 +4,9 @@
 	  perl/Amanda/Taper/Worker.pm, server-src/amtape.pl: Fix perl warning.
 
 2012-11-23 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec.src: fix awk SuSE detection syntax
+
+2012-11-23 Dan Locks <dwlocks@zmanda.com>
 	* common_z/post_inst_functions.sh: add --no-use-agent option to gpg
 	  invocation to avoid problems with uninitialized gpg keyrings.
 

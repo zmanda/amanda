@@ -30,7 +30,7 @@
 # set then use the env var.
 %{!?PKG_CONFIG_PATH: %{expand:%(echo ${PKG_CONFIG_PATH:+"%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH"})}}
 
-%{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}}}
+%{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}\n}}
 
 # LDFLAGS: newer gnu linkers can use "-Wl,--as-needed", while older ones,
 # like rhel3 and sles9 can't.
@@ -119,9 +119,9 @@
 # Detect Suse variants.
 %if %{_vendor} == "suse"
     %define dist SuSE
-    %define disttag %(awk '$1=="openSUSE" { print suse; }, $1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
+    %define disttag %(awk '$1=="openSUSE" { print "suse"; } $1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
     # use printf to be sure rpm gets a number type
-    %define distver %(awk '$1=="openSUSE" {printf("%d", $2)}, $1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; printf("%d", VER)}' /etc/SuSE-release)
+    %define distver %(awk '$1=="openSUSE" { printf("%d", $2); } $1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; printf("%d", VER)}' /etc/SuSE-release)
     %define curl curl
     %if %{distver} = 9
         %undefine enable_as_needed
