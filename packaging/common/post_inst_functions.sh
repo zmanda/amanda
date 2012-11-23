@@ -89,7 +89,7 @@ create_amkey() {
         # TODO: don't write this stuff to disk!
         head -c 2925 /dev/urandom | ${encoder} | head -n 51 | tail -n 50 >${AMANDAHOMEDIR}/.gnupg/am_key || \
             { logger "WARNING: error creating random keys."; return 1; }
-        log_output_of gpg --symmetric --armor --batch \
+        log_output_of gpg --symmetric --armor --batch --no-use-agent \
                 --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
                 --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
                 ${AMANDAHOMEDIR}/.gnupg/am_key || \
@@ -112,10 +112,10 @@ check_gnupg() {
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!
     [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ] && \
-        log_output_of gpg --decrypt --batch \
+        log_output_of gpg --decrypt --batch --no-use-agent\
                 --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
                 --output /dev/null \
-            ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
+                ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
             { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg.";
                 return 1;
             }
