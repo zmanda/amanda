@@ -1,3 +1,8 @@
+2012-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Config.pl, installcheck/Amanda_DB_Catalog.pl,
+	  installcheck/Installcheck/Config.pm, perl/Amanda/Report/human.pm,
+	  perl/Amanda/Taper/Worker.pm, server-src/amtape.pl: Fix perl warning.
+
 2012-11-23 Dan Locks <dwlocks@zmanda.com>
 	* common_z/post_inst_functions.sh: add --no-use-agent option to gpg
 	  invocation to avoid problems with uninitialized gpg keyrings.

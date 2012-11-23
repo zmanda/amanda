@@ -675,7 +675,7 @@ sub load_changer {
 
 sub failure {
     my ($msg, $finished_cb) = @_;
-    if ($msg->isa("Amanda::Changer::Error")) {
+    if ($msg->isa("Amanda::Changer::Error") and defined $msg->{'slot'}) {
 	print STDERR "ERROR: Slot: $msg->{'slot'}: $msg\n";
     } else {
 	print STDERR "ERROR: $msg\n";

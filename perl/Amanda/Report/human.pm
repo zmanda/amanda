@@ -1111,6 +1111,8 @@ sub output_summary
 	} elsif ($type eq 'nodump-FLUSH') {
 	    print $fh sprintf($nodump_FLUSH_format, @data);
 	} elsif ($type eq 'nodump-NOT FLUSHED') {
+debug("nodump_NOT_FLUSHED_format; $nodump_NOT_FLUSHED_format");
+debug("data: " . Data::Dumper::Dumper(\@data));
 	    print $fh sprintf($nodump_NOT_FLUSHED_format, @data);
 	} elsif ($type eq 'missing') {
 	    print $fh sprintf($missing_format, @data[0..2]);
@@ -1202,7 +1204,7 @@ sub get_summary_info
 	push @rv, $report->get_flag("amflush_run")? 'nodump-NOT FLUSHED' : 'missing';
 	push @rv, $hostname;
 	push @rv, $disk_out;
-	push @rv, ("",) x 8;
+	push @rv, ("",) x 9;
 	push @rvs, [@rv];
     }
 
@@ -1344,7 +1346,7 @@ sub get_summary_info
 	    push @rv, $compression;
 	    push @rv, $dump_time ? $fmt_col_field->(6, mnsc($dump_time)) : "PARTIAL";
 	    push @rv, $dump_rate ? $fmt_col_field->(7, $dump_rate) : "";
-	    if ($tape_failure_from eq 'config') {
+	    if (defined $tape_failure_from and $tape_failure_from eq 'config') {
 		push @rv, $format_space->(8,"");
 		push @rv, $format_space->(9,"");
 	    } else {
@@ -1362,7 +1364,9 @@ sub get_summary_info
 	} else {
 	    my $message = $saw_dumper?
 			    ($dumper_status eq 'failed') ? 'FAILED' : 'PARTIAL'
-			  : ($tape_failure_from eq 'config') ? 'NOT FLUSHED' : 'FLUSH';
+			  : (defined $tape_failure_from and
+			     $tape_failure_from eq 'config') ? 'NOT FLUSHED'
+							     : 'FLUSH';
 	    push @rv, "nodump-$message";
 	    push @rv, $hostname;
 	    push @rv, $disk_out;
@@ -1372,7 +1376,7 @@ sub get_summary_info
 	    push @rv, $compression;
 	    push @rv, '';
 	    push @rv, '';
-	    if ($tape_failure_from eq 'config') {
+	    if (defined $tape_failure_from and $tape_failure_from eq 'config') {
 		push @rv, $format_space->(8,"");
 		push @rv, $format_space->(9,"");
 		next if !$report->get_flag("amflush_run"); # do not print a line for flush with config error
