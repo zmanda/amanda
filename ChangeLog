@@ -1,3 +1,7 @@
+2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Keep a different current_slot for each
+	  config.
+
 2012-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Add a timeout.
 	* common-src/security-util.c: Call the accept_fn on connection close.
