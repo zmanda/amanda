@@ -123,7 +123,7 @@
     # use printf to be sure rpm gets a number type
     %define distver %(awk '$1=="openSUSE" { printf("%d", $2); } $1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; printf("%d", VER)}' /etc/SuSE-release)
     %define curl curl
-    %if %{distver} = 9
+    %if %{distver} == 9
         %undefine enable_as_needed
     %endif
     %if %{distver} < 11
