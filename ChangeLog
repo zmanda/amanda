@@ -1,3 +1,6 @@
+2012-11-24 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec.src: fix comparison operator
+
 2012-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Config.pl, installcheck/Amanda_DB_Catalog.pl,
 	  installcheck/Installcheck/Config.pm, perl/Amanda/Report/human.pm,
