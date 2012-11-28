@@ -1,3 +1,6 @@
+2012-11-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Force new connection after RequestTimeout.
+
 2012-11-24 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec.src: fix comparison operator
 

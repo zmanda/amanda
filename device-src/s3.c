@@ -1736,7 +1736,8 @@ perform_request(S3Handle *hdl,
     /* Set S3Internal Data */
     S3InternalData int_writedata = {{NULL, 0, 0, MAX_ERROR_RESPONSE_LEN}, NULL, NULL, NULL, FALSE, FALSE, NULL, hdl};
     gboolean should_retry;
-    guint retries = 0;
+    gint retries = 0;
+    gint retry_after_close = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
     /* corresponds to PUT, HEAD, GET, and POST */
     int curlopt_upload = 0, curlopt_nobody = 0, curlopt_httpget = 0, curlopt_post = 0;
@@ -1934,7 +1935,7 @@ perform_request(S3Handle *hdl,
 	}
 
 	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_FRESH_CONNECT,
-		(long)(hdl->reuse_connection? 0 : 1)))) {
+		(long)(hdl->reuse_connection && retry_after_close == 0 ? 0 : 1)))) {
 	    goto curl_error;
 	}
 	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_FORBID_REUSE,
@@ -1966,6 +1967,13 @@ perform_request(S3Handle *hdl,
                 break;
         }
 
+        if (retries >= EXPONENTIAL_BACKOFF_MAX_RETRIES &&
+	    retry_after_close < 3 &&
+	    hdl->last_s3_error_code == S3_ERROR_RequestTimeout) {
+	    retries = -1;
+	    retry_after_close++;
+	    g_debug("Retry on a new connection");
+	}
         if (retries >= EXPONENTIAL_BACKOFF_MAX_RETRIES) {
             /* we're out of retries, so annotate hdl->last_message appropriately and bail
              * out. */
