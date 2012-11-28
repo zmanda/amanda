@@ -549,7 +549,8 @@ main(
 	error(_("%s/tcp unknown protocol"), service_name);
 	/*NOTREACHED*/
     }
-    server_socket = stream_client_privileged(server_name,
+    server_socket = stream_client_privileged(NULL,
+					     server_name,
 					     (in_port_t)ntohs((in_port_t)sp->s_port),
 					     0,
 					     0,

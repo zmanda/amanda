@@ -610,7 +610,7 @@ main(
 		str_port = strchr(indirect_tcp, ':');
 		str_port++;
 		port = atoi(str_port);
-		fd = stream_client("localhost", port, 32768, 32768, NULL, 0);
+		fd = stream_client(NULL, "localhost", port, 32768, 32768, NULL, 0);
 		if (fd <= 0) {
 		    g_debug("Failed to connect to indirect-direct-tcp port: %s",
 			    strerror(errno));

@@ -91,7 +91,7 @@ static int newhandle = 1;
 /*
  * Local functions
  */
-static int runbsdtcp(struct sec_handle *, in_port_t port);
+static int runbsdtcp(struct sec_handle *, const char *src_ip, in_port_t port);
 
 
 /*
@@ -110,6 +110,7 @@ bsdtcp_connect(
     int result;
     char *canonname;
     char *service;
+    char *src_ip;
     in_port_t port;
 
     assert(fn != NULL);
@@ -158,8 +159,10 @@ bsdtcp_connect(
 	service = conf_fn("client_port", datap);
 	if (!service || strlen(service) <= 1)
 	    service = AMANDA_SERVICE_NAME;
+	src_ip = conf_fn("src_ip", datap);
     } else {
 	service = AMANDA_SERVICE_NAME;
+	src_ip = NULL;
     }
     port = find_port_for_service(service, "tcp");
     if (port == 0) {
@@ -173,7 +176,7 @@ bsdtcp_connect(
      * XXX need to eventually limit number of outgoing connections here.
      */
     if(rh->rc->read == -1) {
-	if (runbsdtcp(rh, port) < 0)
+	if (runbsdtcp(rh, src_ip, port) < 0)
 	    goto error;
 	rh->rc->refcnt++;
     }
@@ -255,6 +258,7 @@ bsdtcp_accept(
 static int
 runbsdtcp(
     struct sec_handle *	rh,
+    const char *src_ip,
     in_port_t port)
 {
     int			server_socket;
@@ -263,7 +267,8 @@ runbsdtcp(
 
     set_root_privs(1);
 
-    server_socket = stream_client_privileged(rc->hostname,
+    server_socket = stream_client_privileged(src_ip,
+				     rc->hostname,
 				     port,
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,

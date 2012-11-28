@@ -1360,7 +1360,8 @@ extract_files_setup(
     }
     seteuid(0);					/* it either works ... */
     setegid(0);
-    tape_control_sock = stream_client_privileged(tape_server_name,
+    tape_control_sock = stream_client_privileged(NULL,
+						  tape_server_name,
 						  (in_port_t)ntohs((in_port_t)sp->s_port),
 						  0,
 						  STREAM_BUFSIZE,
@@ -1550,7 +1551,8 @@ extract_files_setup(
 	    /*NOTREACHED*/
         }
 
-	tape_data_sock = stream_client_privileged(server_name,
+	tape_data_sock = stream_client_privileged(NULL,
+						  server_name,
 						  data_port,
 						  0,
 						  STREAM_BUFSIZE,

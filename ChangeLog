@@ -1,4 +1,20 @@
 2012-11-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add a SRC-IP in the interface section.
+	* common-src/conffile.h: Define INTER_SRC_IP.
+	* man/xml-source/amanda.conf.5.xml: Add src-ip.
+	* common-src/sockaddr-util.h: Define SU_SET_INADDR.
+	* common-src/stream.c (stream_client_internal, stream_client_privileged,
+	  stream_client_internal): Add a src_ip argument.
+	* common-src/stream.h: Changed prototype,
+	* client-src/sendbackup.c, common-src/bsd-security.c,
+	  common-src/bsdtcp-security.c, common-src/security-util.c,
+	  oldrecover-src/amrecover.c, oldrecover-src/extract_list.c: Use new
+	  stream_client.
+	* server-src/driverio.c (dumper_cmd): Add src-ip in PORT-WRITE command.
+	* server-src/dumper.c: Parse src-ip.
+	* server-src/server_util.c (amhost_get_security_conf): Return src-ip.
+
+2012-11-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Force new connection after RequestTimeout.
 
 2012-11-24 Dan Locks <dwlocks@zmanda.com>

@@ -40,7 +40,8 @@
 
 /* local functions */
 static void try_socksize(int sock, int which, size_t size);
-static int stream_client_internal(const char *hostname, in_port_t port,
+static int stream_client_internal(const char *src_ip,
+		const char *hostname, in_port_t port,
 		size_t sendsize, size_t recvsize, in_port_t *localport,
 		int nonblock, int priv);
 
@@ -203,6 +204,7 @@ out:
 
 static int
 stream_client_internal(
+    const char *src_ip,
     const char *hostname,
     in_port_t port,
     size_t sendsize,
@@ -237,6 +239,9 @@ stream_client_internal(
 
 	SU_INIT(&claddr, SU_GET_FAMILY(&svaddr));
 	SU_SET_INADDR_ANY(&claddr);
+	if (src_ip) {
+	    SU_SET_INADDR(&claddr, src_ip);
+	}
 
 	/*
 	 * If a privileged port range was requested, we try to get a port in
@@ -282,6 +287,7 @@ out:
 
 int
 stream_client_privileged(
+    const char *src_ip,
     const char *hostname,
     in_port_t port,
     size_t sendsize,
@@ -289,7 +295,8 @@ stream_client_privileged(
     in_port_t *localport,
     int nonblock)
 {
-    return stream_client_internal(hostname,
+    return stream_client_internal(src_ip,
+				  hostname,
 				  port,
 				  sendsize,
 				  recvsize,
@@ -300,6 +307,7 @@ stream_client_privileged(
 
 int
 stream_client(
+    const char *src_ip,
     const char *hostname,
     in_port_t port,
     size_t sendsize,
@@ -307,7 +315,8 @@ stream_client(
     in_port_t *localport,
     int nonblock)
 {
-    return stream_client_internal(hostname,
+    return stream_client_internal(src_ip,
+				  hostname,
 				  port,
 				  sendsize,
 				  recvsize,

@@ -464,7 +464,7 @@ bsd_stream_client(
 
     bs = g_new0(struct sec_stream, 1);
     security_streaminit(&bs->secstr, &bsd_security_driver);
-    bs->fd = stream_client(bh->hostname, (in_port_t)id,
+    bs->fd = stream_client(NULL, bh->hostname, (in_port_t)id,
 	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
     if (bs->fd < 0) {
 	security_seterror(&bh->sech,

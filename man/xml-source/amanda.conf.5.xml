@@ -2654,9 +2654,14 @@ define interface "<emphasis remap='I'>name</emphasis>" {
 is the name of this type of network interface. It is referenced from the
 <emphasis remap='I'>disklist</emphasis> file.</para>
 
-<para>Note that these sections define network interface characteristics,
-not the actual interface that will be used. Nor do they impose limits on the bandwidth that will 
-actually be taken up by Amanda.
+<para>If a
+<amkeyword>src-ip</amkeyword> is specified, then the connection should
+be from an interface with that IP. The system decide which interface to use
+if <amkeyword>src-ip</amkeyword> is not specified. You can add route at the
+system level to do more specific routing.</para>
+
+<para>The section do not impose limits
+on the bandwidth that will actually be taken up by Amanda.
 Amanda computes the estimated bandwidth each file system backup will take
 based on the estimated size and time, then compares that plus any other running
 backups with the limit as another of the criteria when deciding whether
@@ -2672,6 +2677,14 @@ leaving throttling up to the operating system and network hardware.</para>
 A comment string describing this set of network information.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>src-ip</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>The IP address to use when sending a request to an amanda client.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><amkeyword>use</amkeyword> <amtype>int</amtype></term>
   <listitem>

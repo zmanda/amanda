@@ -157,7 +157,13 @@ amhost_get_security_conf(
 	return ((am_host_t *)arg)->disks->client_username;
     else if(g_str_equal(string, "client_port"))
 	return ((am_host_t *)arg)->disks->client_port;
-    else if(g_str_equal(string, "ssh_keys"))
+    else if(g_str_equal(string, "src_ip")) {
+	char *src_ip = interface_get_src_ip(((am_host_t *)arg)->netif->config);
+	if (g_str_equal(src_ip, "NULL"))
+	    return NULL;
+	else
+	    return src_ip;
+    } else if(g_str_equal(string, "ssh_keys"))
 	return ((am_host_t *)arg)->disks->ssh_keys;
 
     return(NULL);

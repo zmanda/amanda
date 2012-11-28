@@ -880,7 +880,7 @@ tcp1_stream_client(
 	rh->rc = sec_tcp_conn_get(rh->hostname, 1);
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
-	rh->rc->read = stream_client(rh->hostname, (in_port_t)id,
+	rh->rc->read = stream_client(NULL, rh->hostname, (in_port_t)id,
 			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0);
 	if (rh->rc->read < 0) {
 	    security_seterror(&rh->sech,

@@ -138,6 +138,29 @@ int	str_to_sockaddr(
 } while (0);
 #endif
 
+/* Set the IP in a sockaddr_union that already has an family
+ *
+ * @param su: the sockaddr_union to manipulate
+ * @param ip: the IP to insert
+ */
+/* SU_SET_INADDR(su, ip) */
+#ifdef WORKING_IPV6
+#define SU_SET_INADDR(su, ip) do { \
+    switch (SU_GET_FAMILY(su)) { \
+	case AF_INET6: \
+            (su)->sin6.sin6_flowinfo = 0; \
+	    inet_pton(SU_GET_FAMILY(su), ip, &((su)->sin6.sin6_addr)); \
+	    break; \
+	case AF_INET: \
+	    inet_pton(SU_GET_FAMILY(su), ip, &((su)->sin.sin_addr)); \
+	    break; \
+    } \
+} while (0);
+#else
+#define SU_SET_INADDR(su, ip) \
+    inet_pton(SU_GET_FAMILY(su), ip, &((su)->sin.sin_addr));
+#endif
+
 /* Set the port in a sockaddr_union that already has an family
  *
  * @param su: the sockaddr_union to manipulate

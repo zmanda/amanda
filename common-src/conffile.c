@@ -155,6 +155,7 @@ typedef enum {
 
     /* network interface */
     /* COMMENT, */		/* USE, */
+    CONF_SRC_IP,
 
     /* dump options (obsolete) */
     CONF_EXCLUDE_FILE,		CONF_EXCLUDE_LIST,
@@ -1079,6 +1080,7 @@ keytab_t server_keytab[] = {
     { "SMALLEST", CONF_SMALLEST },
     { "SPEED", CONF_SPEED },
     { "SPLIT_DISKBUFFER", CONF_SPLIT_DISKBUFFER },
+    { "SRC_IP", CONF_SRC_IP },
     { "SSH_KEYS", CONF_SSH_KEYS },
     { "STANDARD", CONF_STANDARD },
     { "STARTTIME", CONF_STARTTIME },
@@ -1403,6 +1405,7 @@ conf_var_t holding_var [] = {
 conf_var_t interface_var [] = {
    { CONF_COMMENT, CONFTYPE_STR   , read_str   , INTER_COMMENT , NULL },
    { CONF_USE    , CONFTYPE_INT   , read_int   , INTER_MAXUSAGE, validate_positive },
+   { CONF_SRC_IP , CONFTYPE_STR   , read_str   , INTER_SRC_IP  , NULL },
    { CONF_UNKNOWN, CONFTYPE_INT   , NULL       , INTER_INTER   , NULL }
 };
 
@@ -2621,7 +2624,8 @@ static void
 init_interface_defaults(void)
 {
     conf_init_str(&ifcur.value[INTER_COMMENT] , "");
-    conf_init_int   (&ifcur.value[INTER_MAXUSAGE], CONF_UNIT_K, 80000);
+    conf_init_int(&ifcur.value[INTER_MAXUSAGE], CONF_UNIT_K, 80000);
+    conf_init_str(&ifcur.value[INTER_SRC_IP], "NULL");
 }
 
 static void

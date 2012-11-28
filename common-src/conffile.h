@@ -828,6 +828,7 @@ char *dumptype_name(dumptype_t *dtyp);
 typedef enum {
     INTER_COMMENT,
     INTER_MAXUSAGE,
+    INTER_SRC_IP,
     INTER_INTER /* sentinel */
 } interface_key;
 
@@ -873,6 +874,7 @@ char *interface_name(interface_t *iface);
  */
 #define interface_get_comment(iface)    (val_t_to_str(interface_getconf((iface), INTER_COMMENT)))
 #define interface_get_maxusage(iface)   (val_t_to_int(interface_getconf((iface), INTER_MAXUSAGE)))
+#define interface_get_src_ip(iface)     (val_t_to_str(interface_getconf((iface), INTER_SRC_IP)))
 
 /*
  * Holdingdisk parameter access

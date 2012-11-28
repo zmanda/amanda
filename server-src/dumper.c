@@ -103,6 +103,7 @@ char *clnt_decrypt_opt = NULL;
 static kencrypt_type dumper_kencrypt;
 
 static FILE *errf = NULL;
+static char *src_ip = NULL;
 static char *hostname = NULL;
 am_feature_t *their_features = NULL;
 static char *diskname = NULL;
@@ -423,6 +424,7 @@ main(
 	     * PORT-DUMP
 	     *   handle
 	     *   port
+	     *   src_ip
 	     *   host
 	     *   features
 	     *   disk
@@ -453,6 +455,13 @@ main(
 		/*NOTREACHED*/
 	    }
 	    header_port = (in_port_t)atoi(cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: src_ip]"));
+		/*NOTREACHED*/
+	    }
+	    g_free(src_ip);
+	    src_ip = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
@@ -584,7 +593,7 @@ main(
 	    /* connect outf to chunker/taper port */
 
 	    g_debug(_("Sending header to localhost:%d\n"), header_port);
-	    outfd = stream_client("localhost", header_port,
+	    outfd = stream_client(NULL, "localhost", header_port,
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
 		
@@ -1633,7 +1642,7 @@ read_mesgfd(
 	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
-	    db->fd = stream_client(data_host, data_port,
+	    db->fd = stream_client(NULL, data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0);
 	    if (db->fd == -1) {
                 g_free(errstr);
@@ -2393,6 +2402,11 @@ dumper_get_security_conf(
                 return (client_username);
         } else if(g_str_equal(string, "client_port")) {
                 return (client_port);
+        } else if(g_str_equal(string, "src_ip")) {
+		if (g_str_equal(src_ip, "NULL"))
+		    return NULL;
+		else
+		    return (src_ip);
         } else if(g_str_equal(string, "ssh_keys")) {
                 return (ssh_keys);
         } else if(g_str_equal(string, "kencrypt")) {
