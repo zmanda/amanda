@@ -277,17 +277,44 @@ get_logline(
     FILE *	logf)
 {
     static char *logline = NULL;
+    static size_t line_size = 0;
+    char *lline;
+    size_t loffset = 0;
     char *logstr, *progstr;
     char *s;
     int ch;
+    int n;
 
-    amfree(logline);
-    while ((logline = agets(logf)) != NULL) {
-	if (logline[0] != '\0')
-	    break;
-	amfree(logline);
+    if (!logline) {
+	line_size = 256;
+	logline = g_malloc(line_size);
     }
-    if (logline == NULL) return 0;
+
+    logline[0] = '\0';
+    while(1) {
+	lline = fgets(logline + loffset, line_size - loffset, logf);
+	if (lline == NULL) {
+	    break; /* EOF */
+	}
+	if (strlen(logline) == line_size -1 &&
+		   logline[strlen(logline)-1] != '\n') {
+	    line_size *= 2;
+	    logline = g_realloc(logline, line_size);
+	    loffset = strlen(logline);
+	} else if (strlen(logline) == 0 ||
+		   (strlen(logline) == 1 && logline[0] == '\n')) {
+	} else {
+	    break; /* good line */
+	}
+	logline[loffset] = '\0';
+    }
+    if (logline[0] == '\0')
+	return 0;
+
+    /* remove \n */
+    n = strlen(logline);
+    if (logline[n-1] == '\n') logline[n-1] = '\0';
+
     curlinenum++;
     s = logline;
     ch = *s++;
