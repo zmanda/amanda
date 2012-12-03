@@ -1,3 +1,14 @@
+2012-12-03 Dan Locks <dwlocks@zmanda.com>
+	* packaging/common/post_inst_functions.sh: add get_random_lines() and
+	  use it to generate random passwords
+	* packaging/common/test_sh_libs.sh: test and use get_random_lines(),
+	  use static log file name, enforce order on tests using
+	  (get_random_lines, create_gnupg, create_ampassphrase, and
+	  create_amkey.
+	* packaging/deb/postinst.src, packaging/rpm/amanda.spec.src,
+	  packaging/sun-pkg/client/postinstall.src: use command -v instead of
+	  unportable which.
+
 2012-12-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/logfile.c (get_logline): Parse each line separately.
 
