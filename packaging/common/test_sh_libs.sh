@@ -40,7 +40,7 @@ wanted_shell='/bin/false'; export wanted_shell
 dist=Fedora; export dist
 SYSCONFDIR=$TMPDIR/etc; export SYSCONFDIR
 SBINDIR=$TMPDIR/sbin; export SBINDIR
-encoder=`which base64 2>/dev/null || which uuencode`; export encoder
+encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
 # Don't potentially conflict with a real value...
 deb_uid=63000; export deb_uid
 
@@ -52,16 +52,11 @@ test_cleanup_files="$TMPDIR"; export test_cleanup_files
 # shunit2 is sourced.
 mkdir -p ${TMPDIR} || exit 1
 {
-    LOGFILE=`
-	(umask 077 && mktemp "$TMPDIR/test-log.XXXX") 2> /dev/null
-	` &&
-	test -f "$LOGFILE"
+    LOGFILE="$TMPDIR/test_sh_libs.log"
+    (umask 077 && touch $LOGFILE)
 } || {
-    LOGFILE=$TMPDIR/test-log.$$.$RANDOM
-    (umask 077 && touch "$LOGFILE")
-} || {
-	echo "Unable to create log file!"
-	exit 1
+    echo "Unable to create log file!"
+    exit 1
 }
 export LOGFILE
 
@@ -622,14 +617,31 @@ test_check_amandates() {
 	"`cat $mock_chmod_flags`"
 }
 
-test_create_gnupg() {
+test_a_create_gnupg() {
+    # We need to impose some order on a few tests because some functions
+    # rely on others.  Tests are sorted alphabetically.  Insert a letter after
+    # "test_" to impose order on particular tests
     logger "test_create_gnupg"
     create_gnupg
     assertEquals "create_gnupg" 0 $?
     assertTrue "[ -d ${AMANDAHOMEDIR}/.gnupg ]"
+    # Dir exists
+    create_gnupg
+    assertEquals "create_gnupg dir existing" 0 $?
 }
 
-test_create_ampassphrase() {
+test_a_get_random_lines() {
+    logger "test_get_random_lines"
+    get_random_lines > ${TMPDIR}/lines
+    assertEquals "get_random_lines" 1 $?
+    get_random_lines 1 > ${TMPDIR}/lines
+    assertEquals "get_random_lines 1" 0 $?
+    assertEquals "get_random_lines 1 output" 1 `sed -n '$=' ${TMPDIR}/lines`
+    get_random_lines 20 > ${TMPDIR}/lines
+    assertEquals "get_random_lines 20 output" 20 `sed -n '$=' ${TMPDIR}/lines`
+}
+
+test_b_create_ampassphrase() {
     rm -f ${AMANDAHOMEDIR}/.am_passphrase
     logger "test_create_ampassphrase"
     create_ampassphrase
@@ -649,17 +661,19 @@ test_create_ampassphrase() {
     rm ${AMANDAHOMEDIR}/.am_passphrase
 }
 
-test_create_amkey() {
+test_b_create_amkey() {
     logger "test_create_amkey"
     # Missing .am_passphrase
+    [ -f ${AMANDAHOMEDIR}/.am_passphrase ] && rm ${AMANDAHOMEDIR}/.am_passphrase
     create_amkey
     assertEquals "create_amkey" 1 $?
     log_tail_no_stamp
     assertSame \
         "Error: ${AMANDAHOMEDIR}/.am_passphrase is missing, can't create amcrypt key." \
         "${LOG_TAIL}"
-    # Need .am_passphrase.
-    echo $RANDOM | md5sum | awk '{print $1}' > ${AMANDAHOMEDIR}/.am_passphrase
+    # Need .am_passphrase. Ignore these test errors if get_random_lines or
+    # create_gnupg tests failed.
+    get_random_lines 1 > ${AMANDAHOMEDIR}/.am_passphrase
     create_amkey
     assertEquals "create_amkey" 0 $?
     # Test with existing key

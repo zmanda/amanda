@@ -60,6 +60,29 @@ create_gnupg() {
 	fi
 }
 
+get_random_lines() {
+    # Print $1 lines of random strings to stdout. Uuencode leaves a header and
+    # perhaps 2 unusable footer lines, but base64 outputs one unusable last
+    # line.  To cover both situations, add 3 to $1 to pad with some extra
+    # lines, and strip 1 leading line and 2 trailing.
+    [ "$1" ] && [ $1 -gt 0 ] || \
+        { logger "Error: '$1' not valid number of lines" ; return 1 ; }
+    lines=`expr $1 + 3`
+    [ -f "${encoder}" ] || \
+        { logger "Warning: Encoder '${encoder}' was not found.  Random passwords cannot be generated." ; return 1; }
+    case ${encoder} in
+        *uuencode*) enc_cmd="${encoder} -m -" ;;
+        *base64*)   enc_cmd="${encoder}" ;;
+    esac
+    # multiplying lines by 64 coincidentally results in ~ number of bytes
+    # needed to make one line of base64 encoded text.
+    head -c `expr $lines \* 64` /dev/urandom | \
+            ${enc_cmd} | \
+            head -n `expr $lines - 2` | \
+            tail -n `expr $lines - 3` || \
+        { logger "Warning: Error generating random passphrase."; return 1; }
+}
+
 create_ampassphrase() {
     # install am_passphrase file to server
     logger "Checking '${AMANDAHOMEDIR}/.am_passphrase' file."
@@ -68,8 +91,7 @@ create_ampassphrase() {
         logger "Creating '${AMANDAHOMEDIR}/.am_passphrase' file."
         log_output_of touch ${AMANDAHOMEDIR}/.am_passphrase || \
             { logger "WARNING:  Could not create .am_passphrase." ; return 1; }
-        phrase=`echo $RANDOM | md5sum | awk '{print $1}'` || \
-            { logger "WARNING:  Error creating pseudo random passphrase." ; return 1; }
+        phrase=`get_random_lines 1` || return 1 # Error already logged
         echo ${phrase} >>${AMANDAHOMEDIR}/.am_passphrase
     else
         logger "Info: ${AMANDAHOMEDIR}/.am_passphrase already exists."
@@ -87,8 +109,7 @@ create_amkey() {
     logger "Creating encryption key for amcrypt"
     if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
         # TODO: don't write this stuff to disk!
-        head -c 2925 /dev/urandom | ${encoder} | head -n 51 | tail -n 50 >${AMANDAHOMEDIR}/.gnupg/am_key || \
-            { logger "WARNING: error creating random keys."; return 1; }
+        get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
         log_output_of gpg --symmetric --armor --batch --no-use-agent \
                 --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
                 --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \

@@ -21,7 +21,7 @@ AMTMP="/tmp/amanda"
 
 AMANDATES=${SYSCONFDIR}/amandates; export AMANDATES
 # uuencode is still standard on sol10, but haven't checked sol 11.
-encoder=`which base64 2>/dev/null || which uuencode`
+encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
 
 # ---------- Common functions ------------
 %%COMMON_FUNCTIONS%%

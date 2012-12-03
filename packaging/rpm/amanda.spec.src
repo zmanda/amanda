@@ -147,7 +147,7 @@
 %{!?tarver: %define tarver 1.15}
 
 # Define the native binary data encoder (for create_amkey)
-%define encoder %(which base64 2>/dev/null || which uuencode)
+%define encoder %({ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; })
 
 %define packer %(%{__id_u} -n)
 

@@ -21,7 +21,7 @@ SBINDIR=/usr/sbin
 AMTMP="/tmp/amanda"
 
 AMANDATES=${SYSCONFDIR}/amandates
-encoder=`which base64 2>/dev/null || which uuencode`
+encoder=`{ command -v base64 2>/dev/null; } || { command -v uuencode 2>/dev/null; }`
 
 # ---------- Common functions ------------
 %%COMMON_FUNCTIONS%%
