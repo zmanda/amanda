@@ -1259,6 +1259,7 @@ run_client_script(
 }
 
 void run_client_script_output(gpointer data, gpointer user_data);
+void run_client_script_output_backup(gpointer data, gpointer user_data);
 void run_client_script_err_amcheck(gpointer data, gpointer user_data);
 void run_client_script_err_estimate(gpointer data, gpointer user_data);
 void run_client_script_err_backup(gpointer data, gpointer user_data);
@@ -1279,6 +1280,19 @@ run_client_script_output(
 
     if (line && so->stream) {
 	g_fprintf(so->stream, "%s\n", line);
+    }
+}
+
+void
+run_client_script_output_backup(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line = data;
+    script_output_t *so   = user_data;
+
+    if (line && so->stream) {
+	g_fprintf(so->stream, "| %s\n", line);
     }
 }
 
@@ -1346,31 +1360,27 @@ run_client_scripts(
     GSList          *scriptlist;
     script_t        *script;
     GFunc            client_script_err = NULL;
+    GFunc            client_script_out = NULL;
     script_output_t  so = { streamout, dle };
 
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
 	script = (script_t *)scriptlist->data;
 	run_client_script(script, execute_on, g_options, dle);
-	if (script->result && script->result->output) {
-	    g_ptr_array_foreach(script->result->output,
-				run_client_script_output,
-				&so);
-	    g_ptr_array_free(script->result->output, TRUE);
-	    script->result->output = NULL;
-	}
-	if (script->result && script->result->err) {
+	if (script->result) {
 	    switch (execute_on) {
 	    case EXECUTE_ON_PRE_DLE_AMCHECK:
 	    case EXECUTE_ON_PRE_HOST_AMCHECK:
 	    case EXECUTE_ON_POST_DLE_AMCHECK:
 	    case EXECUTE_ON_POST_HOST_AMCHECK:
+		 client_script_out = run_client_script_output;
 		 client_script_err = run_client_script_err_amcheck;
 		 break;
 	    case EXECUTE_ON_PRE_DLE_ESTIMATE:
 	    case EXECUTE_ON_PRE_HOST_ESTIMATE:
 	    case EXECUTE_ON_POST_DLE_ESTIMATE:
 	    case EXECUTE_ON_POST_HOST_ESTIMATE:
+		 client_script_out = run_client_script_output;
 		 if (am_has_feature(g_options->features,
 				    fe_sendsize_rep_warning)) {
 		     client_script_err = run_client_script_err_estimate;
@@ -1380,6 +1390,7 @@ run_client_scripts(
 	    case EXECUTE_ON_PRE_HOST_BACKUP:
 	    case EXECUTE_ON_POST_DLE_BACKUP:
 	    case EXECUTE_ON_POST_HOST_BACKUP:
+		 client_script_out = run_client_script_output_backup;
 		 client_script_err = run_client_script_err_backup;
 		 break;
 	    case EXECUTE_ON_PRE_RECOVER:
@@ -1387,15 +1398,27 @@ run_client_scripts(
 	    case EXECUTE_ON_PRE_LEVEL_RECOVER:
 	    case EXECUTE_ON_POST_LEVEL_RECOVER:
 	    case EXECUTE_ON_INTER_LEVEL_RECOVER:
+		 client_script_out = run_client_script_output;
 		 client_script_err = run_client_script_err_recover;
 	    }
-	    if (client_script_err != NULL) {
-		g_ptr_array_foreach(script->result->err,
-				    client_script_err,
-				    &so);
+	    if (script->result->output) {
+		if (client_script_out) {
+		    g_ptr_array_foreach(script->result->output,
+					client_script_out,
+					&so);
+		}
+		g_ptr_array_free(script->result->output, TRUE);
+		script->result->output = NULL;
 	    }
-	    g_ptr_array_free(script->result->err, TRUE);
-	    script->result->err = NULL;
+	    if (script->result->err) {
+		if (client_script_err != NULL) {
+		    g_ptr_array_foreach(script->result->err,
+					client_script_err,
+					&so);
+		}
+		g_ptr_array_free(script->result->err, TRUE);
+		script->result->err = NULL;
+	    }
 	}
     }
 }
