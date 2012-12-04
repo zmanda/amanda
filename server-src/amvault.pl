@@ -441,7 +441,7 @@ sub scribe_started {
 
     my $xfers_finished = sub {
 	my ($err) = @_;
-	$self->failure($err) if $err;
+	return $self->failure($err) if $err;
 	$self->quit(0);
     };
 
