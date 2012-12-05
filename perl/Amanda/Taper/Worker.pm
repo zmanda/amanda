@@ -701,12 +701,19 @@ sub setup_and_start_dump {
 	    # getting the header is easy for FILE-WRITE..
 	    my $hdr = $self->{'header'} = Amanda::Holding::get_header($params{'filename'});
 
-	    # stip out header fields we don't need
-	    $hdr->{'cont_filename'} = '';
-
 	    if (!defined $hdr || $hdr->{'type'} != $Amanda::Header::F_DUMPFILE) {
 		confess("Could not read header from '$params{filename}'");
 	    }
+
+	    # stip out header fields we don't need
+	    $hdr->{'cont_filename'} = '';
+
+	    if ($self->{'header'}->{'is_partial'}) {
+		$self->{'dumper_status'} = "FAILED";
+	    } else {
+		$self->{'dumper_status'} = "DONE";
+	    }
+
 	    $steps->{'start_dump'}->(undef);
 	} else {
 	    # ..but quite a bit harder for PORT-WRITE; this method will send the
