@@ -61,25 +61,30 @@ create_gnupg() {
 }
 
 get_random_lines() {
-    # Print $1 lines of random strings to stdout. Uuencode leaves a header and
-    # perhaps 2 unusable footer lines, but base64 outputs one unusable last
-    # line.  To cover both situations, add 3 to $1 to pad with some extra
-    # lines, and strip 1 leading line and 2 trailing.
+    # Print $1 lines of random strings to stdout.
+
     [ "$1" ] && [ $1 -gt 0 ] || \
         { logger "Error: '$1' not valid number of lines" ; return 1 ; }
-    lines=`expr $1 + 3`
+    lines=$1
     [ -f "${encoder}" ] || \
         { logger "Warning: Encoder '${encoder}' was not found.  Random passwords cannot be generated." ; return 1; }
     case ${encoder} in
         *uuencode*) enc_cmd="${encoder} -m -" ;;
         *base64*)   enc_cmd="${encoder}" ;;
     esac
-    # multiplying lines by 64 coincidentally results in ~ number of bytes
-    # needed to make one line of base64 encoded text.
-    head -c `expr $lines \* 64` /dev/urandom | \
+    # Uuencode leaves a header (and footer) line, but base64 does not.
+    # So we pad output with an extra line, and strip any trailing lines over
+    # $lines
+    pad_lines=`expr $lines + 1`
+    # Increasing bs= is substantially faster than increasing count=.
+    # The number of bytes needed to start line wrapping is implementation
+    # specific.  base64. 60b > 1 base64 encoded line for all versions tested.
+    block_size=`expr $pad_lines \* 60`
+    # Head -c is not portable.
+    dd bs=${block_size} count=1 if=/dev/urandom 2>/dev/null | \
             ${enc_cmd} | \
-            head -n `expr $lines - 2` | \
-            tail -n `expr $lines - 3` || \
+            head -n $pad_lines | \
+            tail -n $lines || \
         { logger "Warning: Error generating random passphrase."; return 1; }
 }
 

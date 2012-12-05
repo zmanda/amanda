@@ -1,3 +1,9 @@
+2012-12-04 Dan Locks <dwlocks@zmanda.com>
+	* common_z/post_inst_functions.sh: in get_random_lines(): fix line padding, use dd instead of
+	  head -c
+	* common_z/test_common.sh: fix quoting so blank test condition is
+	  still printed.
+
 2012-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: print script output for backup with the
 	  "| " prefix.

@@ -636,9 +636,9 @@ test_a_get_random_lines() {
     assertEquals "get_random_lines" 1 $?
     get_random_lines 1 > ${TMPDIR}/lines
     assertEquals "get_random_lines 1" 0 $?
-    assertEquals "get_random_lines 1 output" 1 `sed -n '$=' ${TMPDIR}/lines`
+    assertEquals "get_random_lines 1 output" 1 "`sed -n '$=' ${TMPDIR}/lines`"
     get_random_lines 20 > ${TMPDIR}/lines
-    assertEquals "get_random_lines 20 output" 20 `sed -n '$=' ${TMPDIR}/lines`
+    assertEquals "get_random_lines 20 output" 20 "`sed -n '$=' ${TMPDIR}/lines`"
 }
 
 test_b_create_ampassphrase() {
