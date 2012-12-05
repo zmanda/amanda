@@ -572,14 +572,6 @@ sub send_port_and_get_header {
 	# parse the header, finally!
 	$self->{'header'} = Amanda::Header->from_string($hdr_buf);
 
-	if (!$self->{'doing_port_write'}) {
-	    if ($self->{'header'}->{'is_partial'}) {
-		$self->{'dumper_status'} = "FAILED";
-	    } else {
-		$self->{'dumper_status'} = "DONE";
-	    }
-	}
-
 	$finished_cb->(undef);
     };
 }
