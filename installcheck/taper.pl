@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 269;
+use Test::More tests => 277;
 use strict;
 use warnings;
 
@@ -223,7 +223,7 @@ sub cleanup_log {
 # functions to create dumpfiles
 
 sub write_dumpfile_header_to {
-    my ($fh, $size, $hostname, $disk, $expect_failure) = @_;
+    my ($fh, $size, $hostname, $disk, $is_partial) = @_;
 
     my $hdr = Amanda::Header->new();
     $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
@@ -233,6 +233,7 @@ sub write_dumpfile_header_to {
     $hdr->{'comp_suffix'} = ".foo";
     $hdr->{'name'} = $hostname;
     $hdr->{'disk'} = $disk;
+    $hdr->{'is_partial'} = 1 if defined $is_partial;
     $hdr->{'program'} = "INSTALLCHECK";
     $hdr = $hdr->to_string(32768,32768);
 
@@ -259,9 +260,9 @@ sub write_dumpfile_data_to {
 
 # make a new holding-like file in test_filename
 sub make_holding_file {
-    my ($size, $hostname, $disk) = @_;
+    my ($size, $hostname, $disk, $is_partial) = @_;
     open(my $fh, ">", $test_filename);
-    write_dumpfile_header_to($fh, $size, $hostname, $disk);
+    write_dumpfile_header_to($fh, $size, $hostname, $disk, $is_partial);
     write_dumpfile_data_to($fh, $size, $hostname, $disk);
 }
 
@@ -282,7 +283,7 @@ sub write_to_port {
 	ReuseAddr => 1,
     );
 
-    write_dumpfile_header_to($sock, $size, $hostname, $disk, $expect_error);
+    write_dumpfile_header_to($sock, $size, $hostname, $disk);
     close $sock;
 
     $sock = IO::Socket::INET->new(
@@ -395,6 +396,40 @@ check_logs([
 	totalparts => -1,
     }, "header on file 4 is correct");
 }
+
+##
+# A multipart FILE-WRITE partial dump.
+
+$handle = '11-22223';
+$datestamp = "20070102030406";
+run_taper(4096, "multipart partial FILE-WRITE");
+like(taper_reply, qr/^TAPER-OK worker0$/,
+	"got TAPER-OK") or die;
+make_holding_file(1024*1024, "localhost", "/usr", 1);
+taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
+like(taper_reply, qr/^REQUEST-NEW-TAPE $handle$/,
+	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("START-SCAN worker0 $handle");
+taper_cmd("NEW-TAPE worker0 $handle");
+like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0 $handle") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+	"got PARTDONE for filenum 1") or die;
+like(taper_reply, qr/^PARTDONE $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+	"got PARTDONE for filenum 2") or die;
+like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
+	"got DONE") or die;
+taper_cmd("QUIT");
+wait_for_exit();
+
+check_logs([
+    qr(^INFO taper Slot 1 without label can be labeled$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
+    qr(^PART taper TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
+    qr(^PARTIAL taper localhost /usr $datestamp 2 0 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
+    qr(^INFO taper tape TESTCONF01 kb 1024 fm 3 \[OK\]$),
+], "multi-part partial dump logged correctly");
 
 ##
 # A PORT-WRITE with no disk buffer
