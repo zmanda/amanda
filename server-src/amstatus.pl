@@ -998,9 +998,14 @@ foreach $host (sort @hosts) {
 					$flsize += $size{$hostpart};
 					$in_flush=1;
 				}
+print "taper_started  $taper_started{$hostpart}\n";
+print "taper_finished $taper_finished{$hostpart}\n";
+print "dump_started   $dump_started{$hostpart}\n";
+print "dump_finished  $dump_finished{$hostpart}\n";
 				if(defined $taper_started{$hostpart} &&
 						$taper_started{$hostpart}==1 &&
-						$dump_finished{$hostpart}!=-3) {
+#						$dump_finished{$hostpart}!=-3) {
+						1) {
 					if(defined $dump_started{$hostpart} &&
 						$dump_started{$hostpart} == 1 &&
 							$dump_finished{$hostpart} == -1) {
@@ -1064,7 +1069,15 @@ foreach $host (sort @hosts) {
 								$exit_status |= $STATUS_FAILED;
 							}
 							if($in_flush == 0) {
-								print " dump done," if defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1;
+								if (defined $dump_finished{$hostpart}) {
+									if ($dump_finished{$hostpart} == 1) {
+										print " dump done,";
+									} else {
+										print " dump failed: ", $error{$hostpart}, ", ";
+										$fpartition++;
+										$fsize+=$esize{$hostpart};
+									}
+								}
 								print " writing to tape";
 							}
 							else {
@@ -1090,7 +1103,9 @@ foreach $host (sort @hosts) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
 							}
 							print ", ", $error{$hostpart} if (defined($error{$hostpart}) &&
-																	    $error{$hostpart} ne "");
+															  $error{$hostpart} ne "" &&
+															  (!defined $dump_finished{$hostpart} ||
+															   $dump_finished{$hostpart} != -3));
 							print "\n";
 						}
 						$tapartition++;
@@ -1189,6 +1204,11 @@ foreach $host (sort @hosts) {
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $size{$hostpart};
 							if($in_flush == 0) {
+								if (defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == -3) {
+									print " dump failed: ", $error{$hostpart}, ", ";
+									$fpartition++;
+									$fsize+=$esize{$hostpart};
+								}
 								print " finished";
 							}
 							else {
@@ -1267,6 +1287,8 @@ foreach $host (sort @hosts) {
 							print "backup failed: ", $error{$hostpart};
 							if( defined $starttime ) {
 								print " (", &showtime($dump_time{$hostpart}), ")";
+							}
+							if (defined $taper_started{$hostpart}) {
 							}
 							print "\n";
 						}
