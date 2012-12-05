@@ -271,7 +271,7 @@ sub result_cb {
     my $logtype;
 
     if ($params{'result'} eq 'DONE') {
-	if (!$self->{'doing_port_write'} or $self->{'dumper_status'} eq "DONE") {
+	if ($self->{'dumper_status'} eq "DONE") {
 	    $msgtype = Amanda::Taper::Protocol::DONE;
 	    $logtype = $L_DONE;
 	} else {
@@ -570,6 +570,14 @@ sub send_port_and_get_header {
 
 	# parse the header, finally!
 	$self->{'header'} = Amanda::Header->from_string($hdr_buf);
+
+	if (!$self->{'doing_port_write'}) {
+	    if ($self->{'header'}->{'is_partial'}) {
+		$self->{'dumper_status'} = "FAILED";
+	    } else {
+		$self->{'dumper_status'} = "DONE";
+	    }
+	}
 
 	$finished_cb->(undef);
     };
