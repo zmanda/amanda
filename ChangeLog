@@ -1,4 +1,7 @@
 2012-12-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Worker.pm: Do it at the right place.
+
+2012-12-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Worker.pm: Use header is_partial to get dump
 	  status for FILE-WRITE.
 
