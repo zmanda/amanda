@@ -1,4 +1,8 @@
 2012-12-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix exit status.
+	* installcheck/amstatus.pl: Fix for previous patch.
+
+2012-12-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Show taping status after dump failure.
 
 2012-12-05  Jean-Louis Martineau <martineau@zmanda.com>
