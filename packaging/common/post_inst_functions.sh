@@ -115,13 +115,16 @@ create_amkey() {
     if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
         # TODO: don't write this stuff to disk!
         get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
+        exec 3<${AMANDAHOMEDIR}/.am_passphrase
         log_output_of gpg --symmetric --armor --batch --no-use-agent \
-                --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
+                --passphrase-fd 3 \
                 --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
                 ${AMANDAHOMEDIR}/.gnupg/am_key || \
             { logger "WARNING: Error encrypting keys." ;
               rm ${AMANDAHOMEDIR}/.gnupg/am_key;
               return 1; }
+        # Be nice and clean up.
+        exec 3<&-
     else
         logger "Info: Encryption key '${AMANDAHOMEDIR}/.gnupg/am_key.gpg' already exists."
     fi
@@ -137,14 +140,18 @@ check_gnupg() {
         { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!
-    [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ] && \
+    if [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ]; then
+        exec 3<${AMANDAHOMEDIR}/.am_passphrase
         log_output_of gpg --decrypt --batch --no-use-agent\
-                --passphrase-file ${AMANDAHOMEDIR}/.am_passphrase \
+                --passphrase-fd 3 \
                 --output /dev/null \
                 ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
             { logger "WARNING: .am_passphrase does not decrypt .gnupg/am_key.gpg.";
                 return 1;
             }
+        # Be nice and clean up.
+        exec 3<&-
+    fi
 }
 
 create_amandahosts() {

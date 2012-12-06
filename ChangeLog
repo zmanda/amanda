@@ -1,3 +1,7 @@
+2012-12-06 Dan Locks <dwlocks@zmanda.com>
+	* packaging/common/post_inst_functions.sh: use --passphrase-fd to
+	  support older versions of gpg.
+
 2012-12-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Parse new PORT-DUMP format
 
