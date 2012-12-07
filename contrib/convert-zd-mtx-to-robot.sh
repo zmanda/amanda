@@ -128,7 +128,6 @@ echo "   tpchanger changerfile changerdev tapedev"
 echo ""
 echo "Add the following to amanda.conf (you may want to use a more descriptive name for the changer):"
 echo ""
-echo "tapedev \"converted-from-chg-zd-mtx\""
 echo "define changer \"converted-from-chg-zd-mtx\" {"
 echo "  tpchanger \"chg-robot:$changerdev\""
 echo "  changerfile \"$changerfile-state\""
@@ -148,6 +147,7 @@ if test $havereader -eq 0; then
 fi
 echo "  property \"load-poll\" \"$initial_poll_delay s poll $poll_drive_ready s until $max_drive_wait s\""
 echo "}"
+echo "tpchanger \"converted-from-chg-zd-mtx\""
 echo ""
 
 ####
