@@ -1758,12 +1758,12 @@ handle_taper_result(
 	    s = strstr(result_argv[4], " kb ");
 	    if (s) {
 		s += 4;
-		sched(dp)->dumpsize = atol(s);
+		sched(dp)->dumpsize = OFF_T_ATOI(s);
 	    } else {
 		s = strstr(result_argv[4], " bytes ");
 		if (s) {
 		    s += 7;
-		    sched(dp)->dumpsize = atol(s)/1024;
+		    sched(dp)->dumpsize = OFF_T_ATOI(s)/1024;
 		}
 	    }
 
@@ -1794,12 +1794,12 @@ handle_taper_result(
 	    s = strstr(result_argv[5], " kb ");
 	    if (s) {
 		s += 4;
-		partsize = atol(s);
+		partsize = OFF_T_ATOI(s);
 	    } else {
 		s = strstr(result_argv[5], " bytes ");
 		if (s) {
 		    s += 7;
-		    partsize = atol(s)/1024;
+		    partsize = OFF_T_ATOI(s)/1024;
 		}
 	    }
 	    taper->left -= partsize;
