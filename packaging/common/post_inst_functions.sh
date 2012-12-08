@@ -83,8 +83,8 @@ get_random_lines() {
     # Head -c is not portable.
     dd bs=${block_size} count=1 if=/dev/urandom 2>/dev/null | \
             ${enc_cmd} | \
-            head -n $pad_lines | \
-            tail -n $lines || \
+            head -$pad_lines | \
+            tail -$lines || \
         { logger "Warning: Error generating random passphrase."; return 1; }
 }
 
