@@ -116,7 +116,14 @@ create_amkey() {
         # TODO: don't write this stuff to disk!
         get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
-        log_output_of gpg --symmetric --armor --batch --no-use-agent \
+        # setting homedir prevents some errors, but creates a permissions
+        # warning. perms are fixed in check_gnupg.
+        log_output_of gpg --homedir ${AMANDAHOMEDIR}/.gnupg \
+                --no-permission-warning \
+                --no-use-agent \
+                --armor \
+                --batch \
+                --symmetric \
                 --passphrase-fd 3 \
                 --output ${AMANDAHOMEDIR}/.gnupg/am_key.gpg \
                 ${AMANDAHOMEDIR}/.gnupg/am_key || \
@@ -142,7 +149,12 @@ check_gnupg() {
     # if they match!
     if [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ]; then
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
-        log_output_of gpg --decrypt --batch --no-use-agent\
+        # Perms warning will persist because we are not running as ${amanda_user}
+        log_output_of gpg --homedir ${AMANDAHOMEDIR}/.gnupg \
+                --no-permission-warning \
+                --no-use-agent\
+                --batch \
+                --decrypt \
                 --passphrase-fd 3 \
                 --output /dev/null \
                 ${AMANDAHOMEDIR}/.gnupg/am_key.gpg || \
