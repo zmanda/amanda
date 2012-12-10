@@ -550,7 +550,7 @@ for the most up-to-date list.
  (read-write) Which API to use for the cloud:
 <programlisting>
   S3            Amanzon S3 api
-  SWITF-1.0     Openstack swift v1.0
+  SWIFT-1.0     Openstack swift v1.0
   SWIFT-2.0     Openstack swift v2.0
   OAUTH2        Google
   CASTOR        Caringo CAStor
