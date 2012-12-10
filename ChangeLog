@@ -1,4 +1,7 @@
 2012-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: No src-ip in PORT-DUMP.
+
+2012-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Log FAILED if nothing is written to
 	  tape.
 	* server-src/amstatus.pl: Check ntape is defined.
