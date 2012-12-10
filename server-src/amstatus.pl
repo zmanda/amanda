@@ -668,7 +668,7 @@ while($lineX = <AMDUMP>) {
 						$size{$hostpart}=$size;
 					}
 					$ntape = $taper_nb{$taper_name{$hostpart}};
-					$ntpartition{$ntape}++;
+					$ntpartition{$ntape}++ if defined $ntape;
 					if ($line[6] eq "PARTIAL") {
 						$partial{$hostpart} = 1;
 						if ($line[9] eq "TAPE-ERROR") {
@@ -743,16 +743,15 @@ while($lineX = <AMDUMP>) {
 							$error=$line[11];
 							$taper_finished{$hostpart} = -2;
 							$status_taper = $error;
-						}
-						if($line[9] eq "TAPE-CONFIG") {
+						} elsif($line[9] eq "TAPE-CONFIG") {
 							$tape_config{$hostpart} = $error;
 							$error=$line[11];
 							$tape_config{$hostpart} = $error;
 							$taper_finished{$hostpart} = -2;
 							$status_taper = $error;
-						}
-						else {
-							$error=$line[10];
+						} else { # INPUT-ERROR
+							$error = $line[10];
+							$error = $error{$hostpart} if defined $error{$hostpart};
 							$taper_finished{$hostpart} = -1;
 							$status_taper = "Idle";
 						}

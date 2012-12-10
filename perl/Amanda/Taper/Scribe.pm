@@ -1001,9 +1001,11 @@ sub _dump_done {
 
     # determine the correct final status - DONE if we're done, PARTIAL
     # if we've started writing to the volume, otherwise FAILED
-    if (@{$self->{'device_errors'}} or $self->{'config_denial_message'} or
-	!$self->{'last_part_successful'}) {
-	$result = $self->{'started_writing'}? 'PARTIAL' : 'FAILED';
+    if (!$self->{'started_writing'}) {
+	$result = 'FAILED';
+    } elsif (@{$self->{'device_errors'}} or $self->{'config_denial_message'} or
+	     !$self->{'last_part_successful'}) {
+	$result = 'PARTIAL';
     } else {
 	$result = 'DONE';
     }
