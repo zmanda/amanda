@@ -219,9 +219,8 @@ log_rename(
     }
 
     if(rename(logfile, fname) == -1) {
-	error(_("could not rename \"%s\" to \"%s\": %s"),
+	g_debug(_("could not rename \"%s\" to \"%s\": %s"),
 	      logfile, fname, strerror(errno));
-	/*NOTREACHED*/
     }
 
     amfree(fname);
