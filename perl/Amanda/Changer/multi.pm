@@ -626,7 +626,9 @@ sub _get_current {
     if (defined $state->{current_slot}) {
 	my $slot = $self->{number}->{$state->{current_slot}};
 	# return the slot if it exist.
-	return $slot if $slot >= $self->{'first_slot'} && $slot < $self->{'last_slot'};
+	return $slot if defined $slot and
+				$slot >= $self->{'first_slot'} and
+				$slot < $self->{'last_slot'};
 	Amanda::Debug::debug("statefile current_slot is not configured");
     }
     # return the first slot
