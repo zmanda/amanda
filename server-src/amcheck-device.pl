@@ -202,7 +202,8 @@ sub do_check {
 	    print "Will $modestr to volume '$label' in slot $slot.\n";
 	} else {
 	    my $header = $res->{'device'}->volume_header();
-	    if ($header->{'type'} == $Amanda::Header::F_WEIRD) {
+	    if (defined $header and defined $header->{'type'} and
+		$header->{'type'} == $Amanda::Header::F_WEIRD) {
 		print "Will $modestr label '$label' to non-Amanda volume in slot $slot.\n";
 	    } else {
 		print "Will $modestr label '$label' to new volume in slot $slot.\n";
