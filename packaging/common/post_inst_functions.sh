@@ -69,7 +69,8 @@ get_random_lines() {
     [ -f "${encoder}" ] || \
         { logger "Warning: Encoder '${encoder}' was not found.  Random passwords cannot be generated." ; return 1; }
     case ${encoder} in
-        *uuencode*) enc_cmd="${encoder} -m -" ;;
+        # "foo" is a required parameter that we throw away.
+        *uuencode*) enc_cmd="${encoder} foo" ;;
         *base64*)   enc_cmd="${encoder}" ;;
     esac
     # Uuencode leaves a header (and footer) line, but base64 does not.

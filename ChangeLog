@@ -1,3 +1,7 @@
+2012-12-12 Dan Locks <dwlocks@zmanda.com>
+	* packaging/common/post_inst_functions.sh: don't use uuencode -m for
+	  solaris 8 compatibility.
+
 2012-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm, server-src/amcheck-device.pl: Fix perl
 	  warning.
