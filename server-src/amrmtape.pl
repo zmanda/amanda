@@ -213,7 +213,8 @@ my $scrub_db = sub {
     unless (open(AMADMIN, "$amadmin $config_name export |")) {
         die "Failed to execute $amadmin: $! $?";
     }
-    open(CURINFO, ">$tmp_curinfo_file");
+    open(CURINFO, ">$tmp_curinfo_file") or
+        die "Failed to open $tmp_curinfo_file for writing: $! $?";
 
     sub info_line($) {
         print CURINFO "$_[0]";
