@@ -696,7 +696,7 @@ test_check_gnupg() {
 	"chown args: -R ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg" \
 	"`cat $mock_chown_flags`"
     assertSame \
-	"chmod args: -R u=rwX ${AMANDAHOMEDIR}/.gnupg" \
+	"chmod args: -R u=rwX,go= ${AMANDAHOMEDIR}/.gnupg" \
 	"`cat $mock_chmod_flags`"
 }
 
