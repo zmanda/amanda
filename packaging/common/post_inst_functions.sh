@@ -144,7 +144,7 @@ check_gnupg() {
     logger "Ensuring correct permissions for '${AMANDAHOMEDIR}/.gnupg'."
     log_output_of chown -R ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.gnupg || \
         { logger "WARNING:  Could not chown .gnupg dir." ; return 1; }
-    log_output_of chmod -R u=rwX ${AMANDAHOMEDIR}/.gnupg || \
+    log_output_of chmod -R u=rwX,go= ${AMANDAHOMEDIR}/.gnupg || \
         { logger "WARNING:  Could not set permissions on .gnupg dir." ; return 1; }
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!

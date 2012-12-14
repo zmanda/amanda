@@ -16,7 +16,7 @@ rm_inetd() {
     log_output_of sed -i "/^amanda .* amandad/d"
 }
 
-remove_smf() {
+rm_smf() {
     # Remove the amanda service from solaris style service framework.
     ret=0; export ret
     logger "Removing amanda's smf entry"

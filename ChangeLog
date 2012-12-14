@@ -1,3 +1,10 @@
+2012-12-13 Dan Locks <dwlocks@zmanda.com>
+	* packaging/common/post_inst_functions.sh: revoke rw permissions for
+	  group and other
+	* packaging/common/post_rm_functions.sh: fix function name to match
+	  usage.
+	* packaging/common/test_sh_libs.sh: update test.
+
 2012-12-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Die if opening CURINFO for writing fail.
 
