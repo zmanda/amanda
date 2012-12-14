@@ -907,7 +907,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	die $@;
     }
 
-    my $rv = eval {$pkgname->new(Amanda::Changer::Config->new($cc), $uri);};
+    my $rv = eval {$pkgname->new(Amanda::Changer::Config->new($cc), $uri, %params);};
     die "$pkgname->new return undef" if $@;
     die "$pkgname->new did not return an Amanda::Changer object or an Amanda::Changer::Error"
 	unless ($rv->isa("Amanda::Changer") or $rv->isa("Amanda::Changer::Error"));

@@ -54,7 +54,7 @@ See the amanda-changers(7) manpage for usage information.
 
 sub new {
     my $class = shift;
-    my ($config, $tpchanger) = @_;
+    my ($config, $tpchanger, %params) = @_;
     my ($kidspecs) = ( $tpchanger =~ /chg-aggregate:(.*)/ );
 
     my @kidspecs = Amanda::Util::expand_braced_alternates($kidspecs);
@@ -64,7 +64,7 @@ sub new {
     }
 
     my @children = map {
-	($_ eq "ERROR")? "ERROR" : Amanda::Changer->new($_)
+	($_ eq "ERROR")? "ERROR" : Amanda::Changer->new($_, %params)
     } @kidspecs;
 
     my $fail_on_error;
@@ -767,3 +767,20 @@ sub set_meta_label {
 
     $self->{'kid_res'}->set_meta_label(%params);
 }
+
+sub make_new_tape_label {
+    my $self = shift;
+    my %params = @_;
+Amanda::Debug::debug("Changer::aggregate::Reservation ($self) make_new_tape_label");
+
+    $self->{'kid_res'}->make_new_tape_label(%params);
+}
+
+sub make_new_meta_label {
+    my $self = shift;
+    my %params = @_;
+Amanda::Debug::debug("Changer::aggregate::Reservation ($self) make_new_meta_label");
+
+    $self->{'kid_res'}->make_new_meta_label(%params);
+}
+

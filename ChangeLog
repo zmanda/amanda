@@ -1,4 +1,10 @@
 2012-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Pass the %params to changer.
+	* perl/Amanda/Changer/aggregate.pm: Pass the %params to child changer.
+	* perl/Amanda/Changer/aggregate.pm (make_new_tape_label,
+	  make_new_meta_label): Call the child changer.
+
+2012-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Add a verify subcommand.
 	* man/xml-source/amtape.8.xml: Document the verify subcommand.
 	* perl/Amanda/Changer.pm: Add default verify method.
