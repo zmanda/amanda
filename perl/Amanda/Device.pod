@@ -167,7 +167,7 @@ from device to device.
 In addition to the status bitfield, a Device also provides a
 user-comprehensible error message, available from the methods C<error>
 (returning the error message), C<status_error> (returning the string form of
-the status), or C<status_or_error> (returning the error message if one is set,
+the status), or C<error_or_status> (returning the error message if one is set,
 otherwise the string form of the status). None of these functions will ever
 return C<undef>.
 

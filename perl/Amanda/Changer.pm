@@ -957,6 +957,7 @@ sub inventory { _stubop("inventory", "inventory_cb", @_); }
 sub move { _stubop("move", "finished_cb", @_); }
 sub set_meta_label { _stubop("set_meta_label", "finished_cb", @_); }
 sub get_meta_label { _stubop("get_meta_label", "finished_cb", @_); }
+sub verify { _stubop("verify", "finished_cb", @_); }
 
 sub have_inventory {
     my $self = shift;
