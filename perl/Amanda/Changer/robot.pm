@@ -1486,7 +1486,7 @@ sub verify_unlocked {
 
     step unload_all => sub {
 	# get a drive to eject
-	for my $drive (keys $state->{'drives'}) {
+	for my $drive (keys %{$state->{'drives'}}) {
 	    if ($state->{'drives'}->{$drive}->{'state'} == Amanda::Changer::SLOT_FULL) {
 		return $self->eject_unlocked(drive => $drive,
 			      state => $state,
@@ -1512,7 +1512,7 @@ sub verify_unlocked {
 	my @loaded_drive;
 
 	# verify all drives are unloaded
-	for my $drive (keys $state->{'drives'}) {
+	for my $drive (keys %{$state->{'drives'}}) {
 	    push @drives, $drive;
 	    if ($state->{'drives'}->{$drive}->{'state'} == Amanda::Changer::SLOT_FULL) {
 		push @loaded_drive, $drive;
@@ -1620,7 +1620,7 @@ sub verify_unlocked {
     };
 
     step find_device => sub {
-	for my $ddrive (keys $state->{'drives'}) {
+	for my $ddrive (keys %{$state->{'drives'}}) {
 	    if (defined $self->{'drive2device'}->{$ddrive}) {
 		my $device_name = $self->{'drive2device'}->{$ddrive};
 		my $device = $self->get_device($device_name);
