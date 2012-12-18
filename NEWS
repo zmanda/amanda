@@ -2,6 +2,33 @@ Changes in release 4.0.0
 
    * Add letter based sequence to autolabel and meta-autolabel.
    * And 'includefile' directive for the disklist.
+   * amanda.conf (interface section)
+       o add a src-ip setting.
+
+Changes in release 3.3.4
+
+    * amtape
+        o New verify subcommand.
+
+Changes in release 3.3.3
+
+    * amdump.X log files use timestamp instead of number, amdump and amdump.1 
+      are maintained as symlink.
+    * chg-disk
+        o Use the changerfile for the statefile.
+    * s3 device
+        o support CASTOR storage
+    * amanda.conf
+        o New REPORT-USE-MEDIA and REPORT-NEXT-MEDIA.
+    * amfetchdump
+        o new --extract, --directory, --data-path and --application-property
+          arguments. It allow to do the extraction on the server.
+    * --exact-match argument to many command, and '=' prefix to expression.
+        o It diable use of expression for host, disk, level and datestamp on
+          command line argument.
+    * All changer scripts.
+        o Add LOCK-TIMEOUT property.
+    * Many bug fix
 
 Changes in release 3.3.2
 
