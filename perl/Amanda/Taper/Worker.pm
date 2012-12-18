@@ -223,20 +223,36 @@ sub DONE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    if (!defined $self->{'dumper_status'}) {
-	$self->{'dumper_status'} = "DONE";
-	$self->{'orig_kb'} = $params{'orig_kb'};
-	if (defined $self->{'result'}) {
-	    $self->result_cb(undef);
-	}
-    } else {
-	# ignore the message
+    if ($params{'handle'} ne $self->{'handle'}) {
+	# ignore message for previous handle
+	return;
+    }
+
+    if (defined $self->{'dumper_status'}) {
+	# ignore duplicate message
+	return
+    }
+
+    $self->{'dumper_status'} = "DONE";
+    $self->{'orig_kb'} = $params{'orig_kb'};
+    if (defined $self->{'result'}) {
+	$self->result_cb(undef);
     }
 }
 
 sub FAILED {
     my $self = shift;
     my ($msgtype, %params) = @_;
+
+    if ($params{'handle'} ne $self->{'handle'}) {
+	# ignore message for previous handle
+	return;
+    }
+
+    if (defined $self->{'dumper_status'}) {
+	# ignore duplicate message
+	return
+    }
 
     $self->{'dumper_status'} = "FAILED";
     if (defined $self->{'header_xfer'}) {
