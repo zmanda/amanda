@@ -139,6 +139,11 @@ typedef struct autolabel_s {
     autolabel_set_t  autolabel;
 } autolabel_t;
 
+typedef struct labelstr_s {
+    char     *template;
+    gboolean  match_autolabel;
+} labelstr_t;
+
 /* Dump strategies */
 typedef enum {
     DS_SKIP,        /* Don't do any dumps at all */
@@ -264,6 +269,7 @@ typedef enum {
     CONFTYPE_IDENTLIST,
     CONFTYPE_DATA_PATH,
     CONFTYPE_AUTOLABEL,
+    CONFTYPE_LABELSTR,
     CONFTYPE_PART_CACHE_TYPE,
     CONFTYPE_HOST_LIMIT,
     CONFTYPE_NO_YES_ALL,
@@ -292,6 +298,7 @@ typedef struct val_s {
 	estimatelist_t  estimatelist;
 	identlist_t     identlist;
         autolabel_t     autolabel;
+        labelstr_t      labelstr;
 	host_limit_t    host_limit;
     } v;
     seen_t seen;
@@ -328,7 +335,8 @@ execute_on_t          val_t_to_execute_on(val_t *);
 execute_where_t       val_t_to_execute_where(val_t *);
 send_amreport_t       val_t_to_send_amreport(val_t *);
 data_path_t           val_t_to_data_path(val_t *);
-autolabel_t           val_t_to_autolabel(val_t *);
+autolabel_t          *val_t_to_autolabel(val_t *);
+labelstr_t           *val_t_to_labelstr(val_t *);
 part_cache_type_t     val_t_to_part_cache_type(val_t *);
 host_limit_t         *val_t_to_host_limit(val_t *);
 
@@ -380,7 +388,8 @@ host_limit_t         *val_t_to_host_limit(val_t *);
 #define val_t__execute_on(val)    ((val)->v.i)
 #define val_t__execute_where(val) ((val)->v.i)
 #define val_t__data_path(val)     ((val)->v.i)
-#define val_t__autolabel(val)     ((val)->v.autolabel)
+#define val_t__autolabel(val)     (&((val)->v.autolabel))
+#define val_t__labelstr(val)      (&((val)->v.labelstr))
 #define val_t__part_cache_type(val) ((val)->v.i)
 #define val_t__host_limit(val)    ((val)->v.host_limit)
 
@@ -550,6 +559,7 @@ val_t *getconf(confparm_key key);
 #define getconf_proplist(key)     (val_t_to_proplist(getconf((key))))
 #define getconf_send_amreport(key) (val_t_to_send_amreport(getconf((key))))
 #define getconf_autolabel(key)    (val_t_to_autolabel(getconf((key))))
+#define getconf_labelstr(key)     (val_t_to_labelstr(getconf((key))))
 #define getconf_part_cache_type(key) (val_t_to_part_cache_type(getconf((key))))
 #define getconf_recovery_limit(key) (val_t_to_host_limit(getconf((key))))
 

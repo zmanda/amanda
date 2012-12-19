@@ -1135,3 +1135,123 @@ illegal:
     error("Illegal level expression %s", levelexp);
     /*NOTREACHED*/
 }
+
+static char *
+make_template(
+    const char *al_template,
+    const char *barcode,
+    const char *meta)
+{
+    char *template = g_malloc(1024);
+    char *t = template;
+    const char *at = al_template;
+
+    if (al_template == NULL)
+	at = "";
+    while (*at != '\0') {
+	if (*at == '$') {
+	    at++;
+	    if (*at == 'c') {
+		strcpy(t, get_config_name());
+		t += strlen(get_config_name());
+		at++;
+	    } else if (*at == 'o') {
+		strcpy(t, getconf_str(CNF_ORG));
+		t += strlen(getconf_str(CNF_ORG));
+		at++;
+	    } else if (*at == 'b') {
+		if (barcode) {
+		    strcpy(t, barcode);
+		    t += strlen(barcode);
+		}
+		at++;
+	    } else if (*at == 'm') {
+		if (meta) {
+		    strcpy(t, meta);
+		    t += strlen(meta);
+		}
+		at++;
+	    } else if (*at == 's') {
+		*t++ = '[';
+		*t++ = '0';
+		*t++ = '-';
+		*t++ = '9';
+		*t++ = ']';
+		*t++ = '*';
+		at++;
+	    } else if (*at >= '0' && *at <= '9') {
+		int num = *at - '0';
+		at++;
+		while (*at >= '0' && *at <= '9') {
+		    num *= 10;
+		    num += *at - '0';
+		}
+		if (*at == 's') {
+		    int i;
+		    for (i=0; i< num; i++) {
+			*t++ = '[';
+			*t++ = '0';
+			*t++ = '-';
+			*t++ = '9';
+			*t++ = ']';
+		    }
+		}
+		at++;
+	    } else if (*at == '$') {
+		/* two $, copy one */
+		*t++ = *at++;
+	    } else if (*at == '\0') {
+		/* $ at end, copy it */
+		*t++ = *at;
+	    } else {
+		/* Copy the $ and continue withthe next character */
+		*t++ = *at;
+	    }
+	} else if (*at == '%') {
+	    *t++ = '[';
+	    *t++ = '0';
+	    *t++ = '-';
+	    *t++ = '9';
+	    *t++ = ']';
+	    at++;
+	} else if (*at == '!') {
+	    *t++ = '[';
+	    *t++ = 'A';
+	    *t++ = '-';
+	    *t++ = 'Z';
+	    *t++ = ']';
+	    at++;
+	} else if (*at == '\\') {
+	    at++;
+	    *t++ = *at++;
+	} else {
+	    *t++ = *at++;
+	}
+    }
+    *t = '\0';
+
+    return template;
+
+}
+
+int
+match_labelstr(
+    const labelstr_t *labelstr,
+    const autolabel_t *autolabel,
+    const char *label,
+    const char *barcode,
+    const char *meta)
+{
+    char *template;
+    int   result;
+
+    if (labelstr->match_autolabel) {
+	template = make_template(autolabel->template, barcode, meta);
+    } else {
+	template = make_template(labelstr->template, barcode, meta);
+    }
+    result = match(template, label);
+    g_free(template);
+    return result;
+}
+

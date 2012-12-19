@@ -796,15 +796,18 @@ after Amanda wrote data to it. It works only with some changer and device.</para
 </varlistentry>
 
 <varlistentry>
-<term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
+<term><amkeyword>labelstr</amkeyword> <amtype>string</amtype> | <amkeyword>MATCH-AUTOLABEL</amkeyword></term>
 <listitem>
 <para>Default:
-<amdefault>&quot;.*&quot;</amdefault>.
+<amdefault><amkeyword>MATCH-AUTOLABEL</amkeyword></amdefault>.
 The tape label constraint regular expression.
 All tape labels generated (see
 <manref name="amlabel" vol="8"/>)
 and used by this configuration must match the regular expression.
-If multiple configurations are run from the same tape server host,
+All <amkeyword>autolabel</amkeyword> variable can be used.
+The keywork <amkeyword>MATCH-AUTOLABEL</amkeyword> use the autolabel template
+as expression.</para>
+<para>If multiple configurations are run from the same tape server host,
 it is helpful to set their labels to different strings
 (for example, &quot;DAILY[0-9][0-9]*&quot; vs.
 &quot;ARCHIVE[0-9][0-9]*&quot;)

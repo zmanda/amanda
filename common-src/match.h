@@ -23,6 +23,7 @@
 #define MATCH_H
 
 #include <glib.h>
+#include <conffile.h>
 
 /*
  * Regular expressions
@@ -143,6 +144,13 @@ int	match_datestamp(const char *dateexp, const char *datestamp);
 
 /* Like match(), but using a level expression */
 int	match_level(const char *levelexp, const char *level);
+
+/*
+ * labelstr expressions
+ */
+
+int	match_labelstr(const labelstr_t *labelstr, const autolabel_t *autolabel,
+		       const char *label, const char *barcode, const char *meta);
 
 #endif /* MATCH_H */
 

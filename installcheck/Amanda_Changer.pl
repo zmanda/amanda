@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 50;
+use Test::More tests => 48;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -262,7 +262,8 @@ is_deeply(\@new_tape_label, [undef, "template is not set, you must set autolabel
 is($chg->make_new_meta_label(), undef, "no make_new_meta_label");
 
 $chg = Amanda::Changer->new("mychanger", tapelist => $tl,
-			    labelstr => "TESTCONF-[0-9][0-9][0-9]-[a-z][a-z][a-z]-[0-9][0-9][0-9]",
+			    labelstr => { match_autolabel => 0,
+					  template => "TESTCONF-[0-9][0-9][0-9]-[a-z][a-z][a-z]-[0-9][0-9][0-9]"},
 			    autolabel => { template => '$c-$m-$b-%%%',
 					   other_config => 1,
 					   non_amanda => 1,
@@ -273,11 +274,6 @@ my $meta = $chg->make_new_meta_label();
 is($meta, "001", "meta 001");
 my $label = $chg->make_new_tape_label(meta => $meta, barcode => 'aaa');
 is($label, 'TESTCONF-001-aaa-001', "label TESTCONF-001-aaa-001");
-
-is($chg->volume_is_labelable($DEVICE_STATUS_VOLUME_UNLABELED, $Amanda::Header::F_EMPTY),
-   1, "empty volume is labelable");
-is($chg->volume_is_labelable($DEVICE_STATUS_VOLUME_ERROR, undef),
-   0, "empty volume is labelable");
 
 # test loading by label
 {

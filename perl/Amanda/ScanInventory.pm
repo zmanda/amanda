@@ -41,7 +41,7 @@ use base qw(Exporter);
 our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
-use Amanda::Util;
+use Amanda::Util qw( match_labelstr );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::Changer;
@@ -265,7 +265,7 @@ sub _scan {
 	    $res->{device}->status == $DEVICE_STATUS_SUCCESS) {
 	    $label = $res->{device}->volume_label;
 	}
-	my $relabeled = !defined($label) || $label !~ /$self->{'labelstr'}/;
+	my $relabeled = !defined($label) || !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'});
 	$self->_user_msg(slot_result => 1,
 			 slot => $slot_scanned,
 			 label => $label,
@@ -503,7 +503,8 @@ sub _scan {
 	    return $result_cb->($err, $res);
 	}
 	$label = $res->{'device'}->volume_label;
-	if (!defined($label) || $label !~ /$self->{'labelstr'}/) {
+	if (!defined($label) ||
+	    !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'})) {
 	    $res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
 	    return;
 	}
@@ -534,6 +535,8 @@ sub volume_is_labelable {
     my $f_type = $sl->{'f_type'};
     my $label = $sl->{'label'};
     my $slot = $sl->{'slot'};
+    my $barcode = $sl->{'barcode'};
+    my $meta = $sl->{'meta'};
     my $chg = $self->{'chg'};
     my $autolabel = $chg->{'autolabel'};
 
@@ -572,7 +575,8 @@ sub volume_is_labelable {
 	return 0;
     } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
 	     $f_type == $Amanda::Header::F_TAPESTART and
-	     $label !~ /$self->{'labelstr'}/) {
+	     !match_labelstr($self->{'labelstr'}, $autolabel, $label,
+			     $barcode, $meta)) {
 	if (!$autolabel->{'other_config'}) {
 	    $self->_user_msg(slot_result  => 1,
 			     label        => $label,

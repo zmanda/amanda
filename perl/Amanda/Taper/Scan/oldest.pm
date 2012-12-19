@@ -42,7 +42,7 @@ use base qw(Exporter);
 our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
-use Amanda::Util;
+use Amanda::Util qw( match_labelstr );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::Changer;
@@ -128,7 +128,8 @@ sub analyze {
 		push @reusable, $sl;
 	    } else {
 		my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($sl->{'label'});
-		if ($vol_tle && $sl->{'label'} =~ /$self->{'labelstr'}/) {
+		if ($vol_tle &&
+		    match_labelstr( $self->{'labelstr'}, $self->{'autolabel'}, $sl->{'label'}, $sl->{'barcode'}, $sl->{'meta'})) {
 		    if ($vol_tle->{'datestamp'} eq '0') {
 			push @new_labeled, $sl;
 		    }

@@ -577,6 +577,17 @@ sub {
 		    print STDERR "slot $params{'err'}->{'slot'}:";
 		}
 		print STDERR " $params{'err'}\n";
+	    } elsif (!$params{'res'}) {
+		my $volume_label = $params{'label'};
+		if ($params{'active'}) {
+		    print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
+		} elsif ($params{'does_not_match_labelstr'}) {
+		    print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
+		} elsif ($params{'not_in_tapelist'}) {
+		    print STDERR " volume '$volume_label' is not in the tapelist\n"
+		} else {
+		    print STDERR " volume '$volume_label'\n";
+		}
 	    } else { # res must be defined
 		my $res = $params{'res'};
 		my $dev = $res->{'device'};

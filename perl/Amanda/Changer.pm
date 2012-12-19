@@ -28,7 +28,7 @@ use Data::Dumper;
 use vars qw( @ISA );
 
 use Amanda::Paths;
-use Amanda::Util;
+use Amanda::Util qw( match_labelstr );
 use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
@@ -101,9 +101,8 @@ creating a new changer is
   }
 
 C<tapelist> must be an Amanda::Tapelist object. It is required if you want to
-use $chg->volume_is_labelable(), $chg->make_new_tape_label(),
-$chg->make_new_meta_label(), $res->make_new_tape_label() or
-$res->make_new_meta_label().
+use $chg->make_new_tape_label(), $chg->make_new_meta_label(),
+$res->make_new_tape_label() or $res->make_new_meta_label().
 C<labelstr> must be like getconf($CNF_LABELSTR), that value is used if C<labelstr> is not set.
 C<autolabel> must be like getconf($CNF_AUTOLABEL), that value is used if C<autolabel> is not set.
 C<meta_autolabel> must be like getconf($CNF_META_AUTOLABEL), that value is used if C<meta_autolabel> is not set.
@@ -404,12 +403,6 @@ This will return C<undef> if no label could be created.
   $chg->have_inventory() 
 
 Return True if the changer have the inventory method.
-
-=head3 volume_is_labelable
-
-  $chg->volume_is_labelable($device_status, $f_type, $label);
-
-Return 1 if the volume is labelable acording to the autolabel setting.
 
 =over 4
 
@@ -1243,10 +1236,14 @@ sub make_new_tape_label {
     if (!defined $self->{'autolabel'}) {
 	return (undef, "autolabel not set");
     }
-    if (!defined $self->{'autolabel'}->{'template'}) {
+    if (!defined $self->{'autolabel'}->{'template'} ||
+	$self->{'autolabel'}->{'template'} eq "") {
 	return (undef, "template is not set, you must set autolabel");
     }
-    if (!defined $self->{'labelstr'}) {
+    if (!defined $self->{'labelstr'} ||
+	(!$self->{'labelstr'}->{'match_autolabel'} &&
+	 (!defined $self->{'labelstr'}->{'template'} ||
+	  $self->{'labelstr'}->{'template'} eq ""))) {
 	return (undef, "labelstr not set");
     }
     my $template = $self->{'autolabel'}->{'template'};
@@ -1370,8 +1367,13 @@ sub make_new_tape_label {
     }
 
     # verify $label matches $labelstr
-    if ($label !~ /$labelstr/) {
-        return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr'");
+    if (!match_labelstr($labelstr, $self->{'autolabel'}, $label, $barcode,
+			$meta)) {
+	if ($labelstr->{'match_autolabel'}) {
+            return (undef, "Newly-generated label '$label' does not match labelstr '$self->{'autolabel'}->{'template'}'");
+	} else {
+            return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr->{'template'}'");
+	}
     }
 
     if (!$label) {
@@ -1468,36 +1470,6 @@ sub make_new_meta_label {
     }
 
     return $meta;
-}
-
-sub volume_is_labelable {
-    my $self = shift;
-    my $dev_status  = shift;
-    my $f_type = shift;
-    my $label = shift;
-    my $autolabel = $self->{'autolabel'};
-
-    if (!defined $dev_status) {
-	return 0;
-    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	     defined $f_type and
-	     $f_type == $Amanda::Header::F_EMPTY) {
-	return 0 if (!$autolabel->{'empty'});
-    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	     defined $f_type and
-	     $f_type == $Amanda::Header::F_WEIRD) {
-	return 0 if (!$autolabel->{'non_amanda'});
-    } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
-	return 0 if (!$autolabel->{'volume_error'});
-    } elsif ($dev_status != $DEVICE_STATUS_SUCCESS) {
-	return 0;
-    } elsif ($dev_status & $DEVICE_STATUS_SUCCESS and
-	     $f_type == $Amanda::Header::F_TAPESTART and
-	     $label !~ /$self->{'labelstr'}/) {
-	return 0 if (!$autolabel->{'other_config'});
-    }
-
-    return 1;
 }
 
 package Amanda::Changer::Error;

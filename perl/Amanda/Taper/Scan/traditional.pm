@@ -39,6 +39,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
+use Amanda::Util qw( match_labelstr );
 
 sub new {
     my $class = shift;
@@ -211,8 +212,18 @@ sub stage_1 {
         # go on to stage 2 if we didn't get the expected volume
         my $label = $res->{'device'}->volume_label;
         my $labelstr = $self->{'labelstr'};
-        if ($label !~ /$labelstr/) {
+	if ($label ne $oldest_reusable) {
             warning "Searched for label '$oldest_reusable' but found a volume labeled '$label'";
+            return $self->release_and_stage_2($res, $result_cb);
+        }
+
+        my $autolabel = $self->{'autolabel'};
+my $barcode = $res->{'barcode'} || "";
+my $meta = $res->{'meta'} || "";
+	if (!match_labelstr($labelstr, $autolabel, $label,
+			    $res->{'barcode'}, $res->{'meta'})) {
+            warning "Oldest reusable volume '$oldest_reusable' do not match the labelstr '" .
+				$labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'} . "'";
             return $self->release_and_stage_2($res, $result_cb);
         }
 
@@ -342,16 +353,20 @@ sub stage_2 {
 	my $status = $dev->status;
 	my $labelstr = $res->{'chg'}->{'labelstr'};
 	my $label;
+#my $barcode = $res->{'barcode'} || "";
+#my $meta = $res->{'meta'} || "";
+	my $barcode = $res->{'barcode'};
+	my $meta = $res->{'meta'};
 	my $autolabel = $res->{'chg'}->{'autolabel'};
 
 	if ($status == $DEVICE_STATUS_SUCCESS) {
             $label = $dev->volume_label;
 
-            if ($label !~ /$labelstr/) {
+            if (!match_labelstr($labelstr, $autolabel, $label, $barcode, $meta)) {
 	        if (!$autolabel->{'other_config'}) {
 		    $self->_user_msg(slot_result             => 1,
 				     does_not_match_labelstr => 1,
-				     labelstr                => $labelstr,
+				     labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},
 				     slot                    => $slot,
 				     label                   => $label,
 				     res                     => $res);

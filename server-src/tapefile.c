@@ -212,7 +212,8 @@ lookup_last_reusable_tape(
     int count=0;
     int s;
     int tapecycle = getconf_int(CNF_TAPECYCLE);
-    char *labelstr = getconf_str (CNF_LABELSTR);
+    labelstr_t *labelstr = getconf_labelstr(CNF_LABELSTR);
+    autolabel_t *autolabel = getconf_autolabel(CNF_AUTOLABEL);
 
     /*
      * The idea here is we keep the last "several" reusable tapes we
@@ -225,7 +226,9 @@ lookup_last_reusable_tape(
 	tpsave[s] = NULL;
     }
     for(tp = tape_list; tp != NULL; tp = tp->next) {
-	if(tp->reuse == 1 && !g_str_equal(tp->datestamp, "0") && match (labelstr, tp->label)) {
+	if (tp->reuse == 1 && !g_str_equal(tp->datestamp, "0") &&
+	    match_labelstr(labelstr, autolabel, tp->label,
+			   tp->barcode, tp->meta)) {
 	    count++;
 	    for(s = skip; s > 0; s--) {
 	        tpsave[s] = tpsave[s - 1];

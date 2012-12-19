@@ -601,7 +601,7 @@ val_t_to_sv(val_t *val, SV **results) {
 	    }
 
 	    case CONFTYPE_AUTOLABEL: {
-		autolabel_t *autolabel = &val_t__autolabel(val);
+		autolabel_t *autolabel = val_t__autolabel(val);
 		HV *hv;
 
 		/* now build the hash */
@@ -622,6 +622,22 @@ val_t_to_sv(val_t *val, SV **results) {
 			(autolabel->autolabel & AL_EMPTY)? &PL_sv_yes : &PL_sv_no,
 			0);
 
+		results[0] = sv_2mortal(newRV((SV *)hv));
+		return 1;
+	    }
+
+	    case CONFTYPE_LABELSTR: {
+		labelstr_t *labelstr = val_t__labelstr(val);
+		HV *hv;
+
+		/* now build the hash */
+		hv = (HV *)sv_2mortal((SV *)newHV());
+		hv_store(hv, "template", 8,
+			(labelstr->template)? newSVpv(labelstr->template, 0) : newSV(0),
+			0);
+		hv_store(hv, "match_autolabel", 15,
+			(labelstr->match_autolabel)? &PL_sv_yes : &PL_sv_no,
+			0);
 		results[0] = sv_2mortal(newRV((SV *)hv));
 		return 1;
 	    }

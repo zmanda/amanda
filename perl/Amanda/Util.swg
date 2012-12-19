@@ -28,6 +28,7 @@
 %{
 #include <unistd.h>
 #include "amglue.h"
+#include "conffile.h"
 #include "debug.h"
 #include "full-read.h"
 #include "full-write.h"
@@ -650,13 +651,81 @@ sub unmarshal_tapespec {
 %}
 
 amglue_export_ok(
-    match_host match_disk match_datestamp match_level
+    match_host match_disk match_datestamp match_level match_labelstr
 );
 
 gboolean match_host(char *pat, char *value);
 gboolean match_disk(char *pat, char *value);
 gboolean match_datestamp(char *pat, char *value);
 gboolean match_level(char *pat, char *value);
+
+%typemap (in) const labelstr_t * {
+    HV *hv;
+    SV *sv;
+    labelstr_t *labelstr = g_new0(labelstr_t, 1);
+
+    if (!SvROK($input))
+	croak("Argument $argnum is not a reference.");
+    if (SvTYPE(SvRV($input)) != SVt_PVHV)
+	croak("Argument $argnum is not an hash.");
+
+    hv = (HV *)SvRV($input);
+    sv = *hv_fetch(hv, "match_autolabel", strlen("match_autolabel"), TRUE);
+    labelstr->match_autolabel = SvIV(sv);
+
+    sv = *hv_fetch(hv, "template", strlen("template"), TRUE);
+    labelstr->template = g_strdup(SvPV_nolen(sv));
+
+    $1 = labelstr;
+}
+
+%typemap (freearg) const labelstr_t * {
+    g_free($1->template);
+    g_free($1);
+}
+
+%typemap (in) const autolabel_t * {
+    HV *hv;
+    SV *sv;
+    autolabel_t *autolabel = g_new0(autolabel_t, 1);
+
+    if (!SvROK($input))
+	croak("Argument $argnum is not a reference.");
+    if (SvTYPE(SvRV($input)) != SVt_PVHV)
+	croak("Argument $argnum is not an hash.");
+
+    hv = (HV *)SvRV($input);
+    sv = *hv_fetch(hv, "other_config", strlen("other_config"), TRUE);
+    if (SvTRUE(sv))
+	autolabel->autolabel |= AL_OTHER_CONFIG;
+
+    sv = *hv_fetch(hv, "non_amanda", strlen("non_amanda"), TRUE);
+    if (SvTRUE(sv))
+	autolabel->autolabel |= AL_NON_AMANDA;
+
+    sv = *hv_fetch(hv, "volume_error", strlen("volume_error"), TRUE);
+    if (SvTRUE(sv))
+	autolabel->autolabel |= AL_VOLUME_ERROR;
+
+    sv = *hv_fetch(hv, "empty", strlen("empty"), TRUE);
+    if (SvTRUE(sv))
+	autolabel->autolabel |= AL_EMPTY;
+
+    sv = *hv_fetch(hv, "template", strlen("template"), TRUE);
+    if (SvOK(sv)) {
+	autolabel->template = g_strdup(SvPV_nolen(sv));
+    }
+
+    $1 = autolabel;
+}
+
+%typemap (freearg) const autolabel_t * {
+    g_free($1->template);
+    g_free($1);
+}
+
+gboolean match_labelstr(const labelstr_t *labelstr, const autolabel_t *autolabel,
+			const char *label, const char *barcode, const char *meta);
 
 
 /* -------------------------------------------------------------------------

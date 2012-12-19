@@ -29,7 +29,7 @@ use Text::Wrap;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants match_labelstr );
 use Amanda::Changer;
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
@@ -136,11 +136,6 @@ sub main {
 	finalize => sub { $chg->quit() if defined $chg };
 
     step start => sub {
-	my $labelstr = getconf($CNF_LABELSTR);
-	if (defined ($opt_label) && $opt_label !~ /$labelstr/) {
-	    return failure("Label '$opt_label' doesn't match labelstr '$labelstr'.", $finished_cb);
-	}
-
 	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 	$tl = Amanda::Tapelist->new($tlf);
 	if (!defined $tl) {
@@ -228,8 +223,11 @@ sub main {
 	    # this is a labeled Amanda tape
 	    my $label = $dev->volume_label;
 	    my $labelstr = getconf($CNF_LABELSTR);
+	    my $autolabel = getconf($CNF_AUTOLABEL);
+	    my $barcode = $res->{'barcode'};
+	    my $meta = $res->{'meta'};
 
-	    if ($label !~ /$labelstr/) {
+	    if (!match_labelstr($labelstr, $autolabel, $label, $barcode, $meta)) {
 		print "Found label '$label', but it is not from configuration " .
 		    "'" . Amanda::Config::get_config_name() . "'.\n";
 		$dev_ok = 0 unless ($opt_force);
@@ -254,8 +252,11 @@ sub main {
     step got_meta => sub {
 	my ($err, $meta) = @_;
 
+	if (defined $err) {
+	    return failure($err, $finished_cb);
+	}
 	if (defined $meta && defined $opt_meta && $meta ne $opt_meta) {
-	    return failure();
+	    return failure("Device meta '$meta' is not the same as the --meta argument '$opt_meta'", $finished_cb);
 	}
 	$meta = $opt_meta if !defined $meta;
 	($meta, my $merr) = $res->make_new_meta_label() if !defined $meta;
@@ -263,6 +264,15 @@ sub main {
 	    return failure($merr, $finished_cb);
 	}
 	$opt_meta = $meta;
+
+	if ($opt_label) {
+	    my $labelstr = getconf($CNF_LABELSTR);
+	    my $autolabel = getconf($CNF_AUTOLABEL);
+	    my $barcode = $res->{'barcode'};
+	    if (!match_labelstr($labelstr, $autolabel, $opt_label, $barcode, $meta)) {
+	        return failure("Label '$opt_label' doesn't match labelstr '" . ($labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'}) . "'", $finished_cb);
+	    }
+	}
 
 	my $label = $opt_label;
 	if (!defined($label)) {

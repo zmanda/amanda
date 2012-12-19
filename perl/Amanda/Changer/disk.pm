@@ -380,7 +380,7 @@ sub _load_by_label {
 
 sub _make_res {
     my $self = shift;
-    my ($state, $res_cb, $drive, $slot) = @_;
+    my ($state, $res_cb, $drive, $slot, $meta) = @_;
     my $res;
 
     my $device = Amanda::Device->new("file:$drive");
@@ -396,7 +396,7 @@ sub _make_res {
 		message => $err);
     }
 
-    $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot);
+    $res = Amanda::Changer::disk::Reservation->new($self, $device, $drive, $slot, $state->{'meta'});
     $state->{drives}->{$drive}->{pid} = $$;
     $device->read_label();
 
@@ -778,7 +778,7 @@ use vars qw( @ISA );
 
 sub new {
     my $class = shift;
-    my ($chg, $device, $drive, $slot) = @_;
+    my ($chg, $device, $drive, $slot, $meta) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     $self->{'chg'} = $chg;
@@ -786,6 +786,7 @@ sub new {
 
     $self->{'device'} = $device;
     $self->{'this_slot'} = $slot;
+    $self->{'meta'} = $meta;
 
     $self->{'chg'}->{'reservation'}->{$slot} += 1;
     return $self;
@@ -845,4 +846,5 @@ sub set_meta_label {
 
     $params{'slot'} = $self->{'this_slot'};
     $self->{'chg'}->set_meta_label(%params);
+    $self->{'meta'} = $params{'meta'};
 }

@@ -170,6 +170,9 @@ typedef enum {
     CONF_NON_AMANDA,		CONF_VOLUME_ERROR,	CONF_EMPTY,
     CONF_META_AUTOLABEL,
 
+    /* labelstr */
+    CONF_MATCH_AUTOLABEL,
+
     /* part_cache_type */
     CONF_PART_SIZE,		CONF_PART_CACHE_TYPE,	CONF_PART_CACHE_DIR,
     CONF_PART_CACHE_MAX_SIZE,	CONF_DISK,		CONF_MEMORY,
@@ -548,6 +551,7 @@ static void read_execute_where(conf_var_t *, val_t *);
 static void read_holdingdisk(conf_var_t *, val_t *);
 static void read_int_or_str(conf_var_t *, val_t *);
 static void read_autolabel(conf_var_t *, val_t *);
+static void read_labelstr(conf_var_t *, val_t *);
 static void read_part_cache_type(conf_var_t *, val_t *);
 static void read_host_limit(conf_var_t *, val_t *);
 
@@ -722,6 +726,7 @@ static void conf_init_intrange(val_t *val, int i1, int i2);
 static void conf_init_proplist(val_t *val); /* to empty list */
 static void conf_init_application(val_t *val);
 static void conf_init_autolabel(val_t *val);
+static void conf_init_labelstr(val_t *val);
 static void conf_init_part_cache_type(val_t *val, part_cache_type_t i);
 static void conf_init_host_limit(val_t *val);
 static void conf_init_host_limit_server(val_t *val);
@@ -1002,6 +1007,7 @@ keytab_t server_keytab[] = {
     { "MAILER", CONF_MAILER },
     { "MAILTO", CONF_MAILTO },
     { "READBLOCKSIZE", CONF_READBLOCKSIZE },
+    { "MATCH_AUTOLABEL", CONF_MATCH_AUTOLABEL },
     { "MAX_DLE_BY_VOLUME", CONF_MAX_DLE_BY_VOLUME },
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
@@ -1249,7 +1255,7 @@ conf_var_t server_var [] = {
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
    { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , NULL },
-   { CONF_LABELSTR             , CONFTYPE_STR      , read_str         , CNF_LABELSTR             , NULL },
+   { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , NULL },
    { CONF_TAPELIST             , CONFTYPE_STR      , read_str         , CNF_TAPELIST             , NULL },
    { CONF_DISKFILE             , CONFTYPE_STR      , read_str         , CNF_DISKFILE             , NULL },
    { CONF_INFOFILE             , CONFTYPE_STR      , read_str         , CNF_INFOFILE             , NULL },
@@ -4262,6 +4268,28 @@ read_autolabel(
 }
 
 static void
+read_labelstr(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_STRING) {
+	g_free(val->v.labelstr.template);
+	val->v.labelstr.template = g_strdup(tokenval.v.s);
+	val->v.labelstr.match_autolabel = FALSE;
+	get_conftoken(CONF_ANY);
+    } else if (tok == CONF_MATCH_AUTOLABEL) {
+	g_free(val->v.labelstr.template);
+	val->v.labelstr.template = NULL;
+	val->v.labelstr.match_autolabel = TRUE;
+    } else {
+	conf_parserror(_("labelstr template or MATCH_AUTOLABEL expected"));
+    }
+}
+
+static void
 read_part_cache_type(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
@@ -5354,7 +5382,6 @@ init_defaults(
     conf_init_proplist(&conf_data[CNF_PROPERTY]);
     conf_init_str(&conf_data[CNF_CHANGERDEV], NULL);
     conf_init_str(&conf_data[CNF_CHANGERFILE]             , "changer");
-    conf_init_str   (&conf_data[CNF_LABELSTR]             , ".*");
     conf_init_str   (&conf_data[CNF_TAPELIST]             , "tapelist");
     conf_init_str   (&conf_data[CNF_DISKFILE]             , "disklist");
     conf_init_str   (&conf_data[CNF_INFOFILE]             , "/usr/adm/amanda/curinfo");
@@ -5441,6 +5468,7 @@ init_defaults(
 #endif
     conf_init_send_amreport (&conf_data[CNF_SEND_AMREPORT_ON], SEND_AMREPORT_ALL);
     conf_init_autolabel(&conf_data[CNF_AUTOLABEL]);
+    conf_init_labelstr(&conf_data[CNF_LABELSTR]);
     conf_init_str(&conf_data[CNF_META_AUTOLABEL], NULL);
     conf_init_host_limit(&conf_data[CNF_RECOVERY_LIMIT]);
     conf_init_str(&conf_data[CNF_INTERACTIVITY], NULL);
@@ -5571,6 +5599,7 @@ update_derived_values(
     interface_t   *ip;
     identlist_t    il;
     holdingdisk_t *hd;
+    labelstr_t    *labelstr;
 
     if (!is_client) {
 	/* Add a 'default' interface if one doesn't already exist */
@@ -5652,6 +5681,15 @@ update_derived_values(
 	if (!getconf_seen(CNF_REPORT_NEXT_MEDIA) &&
 	    getconf_seen(CNF_MAX_DLE_BY_VOLUME)) {
 	    conf_init_bool(&conf_data[CNF_REPORT_NEXT_MEDIA], FALSE);
+	}
+
+	labelstr = &(conf_data[CNF_LABELSTR].v.labelstr);
+	if (getconf_seen(CNF_LABELSTR) && labelstr->match_autolabel &&
+	    !getconf_seen(CNF_AUTOLABEL)) {
+	    conf_parserror(_("AUTOLABEL not set and LABELSTR set to MATCH-AUTOLABEL"));
+	} else if (labelstr->match_autolabel && !getconf_seen(CNF_AUTOLABEL)) {
+	    labelstr->template = g_strdup(".*");
+	    labelstr->match_autolabel = FALSE;
 	}
     }
 
@@ -6038,6 +6076,18 @@ conf_init_autolabel(
     val->unit = CONF_UNIT_NONE;
     val->v.autolabel.template = NULL;
     val->v.autolabel.autolabel = 0;
+}
+
+static void
+conf_init_labelstr(
+    val_t *val) {
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->seen.block = NULL;
+    val->type = CONFTYPE_LABELSTR;
+    val->unit = CONF_UNIT_NONE;
+    val->v.labelstr.template = NULL;
+    val->v.labelstr.match_autolabel = TRUE;
 }
 
 void
@@ -7020,7 +7070,7 @@ val_t_to_proplist(
     return val_t__proplist(val);
 }
 
-autolabel_t
+autolabel_t *
 val_t_to_autolabel(
     val_t *val)
 {
@@ -7030,6 +7080,18 @@ val_t_to_autolabel(
 	/*NOTREACHED*/
     }
     return val_t__autolabel(val);
+}
+
+labelstr_t *
+val_t_to_labelstr(
+    val_t *val)
+{
+    assert(config_initialized);
+    if (val->type != CONFTYPE_LABELSTR) {
+	error(_("val_t_to_labelstr: val.type is not CONFTYPE_LABELSTR"));
+	/*NOTREACHED*/
+    }
+    return val_t__labelstr(val);
 }
 
 static void
@@ -7189,6 +7251,11 @@ copy_val_t(
 	    valdst->v.autolabel.template = g_strdup(valsrc->v.autolabel.template);
 	    valdst->v.autolabel.autolabel = valsrc->v.autolabel.autolabel;
 	    break;
+
+	case CONFTYPE_LABELSTR:
+	    valdst->v.labelstr.template = g_strdup(valsrc->v.labelstr.template);
+	    valdst->v.labelstr.match_autolabel = valsrc->v.labelstr.match_autolabel;
+	    break;
 	}
     }
 }
@@ -7307,6 +7374,10 @@ free_val_t(
 
 	case CONFTYPE_AUTOLABEL:
 	    amfree(val->v.autolabel.template);
+	    break;
+
+	case CONFTYPE_LABELSTR:
+	    amfree(val->v.labelstr.template);
 	    break;
     }
     val->seen.linenum = 0;
@@ -7841,6 +7912,16 @@ val_t_display_strs(
                 g_string_append(strbuf, " EMPTY");
 
             buf[0] = g_string_free(strbuf, FALSE);
+	}
+	break;
+
+    case CONFTYPE_LABELSTR:
+	{
+	    if (val->v.labelstr.match_autolabel) {
+		buf[0] = g_strdup("MATCH-AUTOLABEL");
+	    } else {
+		buf[0] = quote_string_always(val->v.labelstr.template);
+	    }
 	}
 	break;
 
