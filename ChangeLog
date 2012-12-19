@@ -1,4 +1,7 @@
 2012-12-19  Jean-Louis Martineau <martineau@zmanda.com>
+	NEWS: Add MATCH-AUTOLABEL labelstr.
+
+2012-12-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: labelstr can be the MATCH-AUTOLABEL keyword.
 	  Add all hook to handle the new labelstr_t typedef.
 	* common-src/conffile.h: Add new labelstr_t typedef.

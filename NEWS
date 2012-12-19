@@ -4,6 +4,7 @@ Changes in release 4.0.0
    * And 'includefile' directive for the disklist.
    * amanda.conf (interface section)
        o add a src-ip setting.
+       o labelstr can be a new MATCH-AUTOLABEL keyword.
 
 Changes in release 3.3.4
 
@@ -12,7 +13,7 @@ Changes in release 3.3.4
 
 Changes in release 3.3.3
 
-    * amdump.X log files use timestamp instead of number, amdump and amdump.1 
+    * amdump.X log files use timestamp instead of number, amdump and amdump.1
       are maintained as symlink.
     * chg-disk
         o Use the changerfile for the statefile.
