@@ -92,7 +92,7 @@ typedef enum {
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
     CONF_TAPER_PARALLEL_WRITE, CONF_INTERACTIVITY,	CONF_TAPERSCAN,
     CONF_MAX_DLE_BY_VOLUME,    CONF_EJECT_VOLUME,	CONF_TMPDIR,
-    CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,
+    CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_RETRY_DUMP,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -1068,6 +1068,7 @@ keytab_t server_keytab[] = {
     { "RESERVE", CONF_RESERVE },
     { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
     { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
+    { "RETRY_DUMP", CONF_RETRY_DUMP },
     { "RUNSPERCYCLE", CONF_RUNSPERCYCLE },
     { "RUNTAPES", CONF_RUNTAPES },
     { "SAME_HOST", CONF_SAME_HOST },
@@ -1397,6 +1398,7 @@ conf_var_t dumptype_var [] = {
    { CONF_MAX_WARNINGS      , CONFTYPE_INT      , read_int     , DUMPTYPE_MAX_WARNINGS       , validate_nonnegative },
    { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_RECOVERY_LIMIT  , NULL },
    { CONF_DUMP_LIMIT        , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_DUMP_LIMIT      , validate_dump_limit },
+   { CONF_RETRY_DUMP        , CONFTYPE_INT      , read_int      , DUMPTYPE_RETRY_DUMP        , validate_positive },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -2442,6 +2444,7 @@ init_dumptype_defaults(void)
     conf_init_int      (&dpcur.value[DUMPTYPE_MAX_WARNINGS]      , CONF_UNIT_NONE, 20);
     conf_init_host_limit(&dpcur.value[DUMPTYPE_RECOVERY_LIMIT]);
     conf_init_host_limit_server(&dpcur.value[DUMPTYPE_DUMP_LIMIT]);
+    conf_init_int      (&dpcur.value[DUMPTYPE_RETRY_DUMP]        , CONF_UNIT_NONE, 2);
 }
 
 static void

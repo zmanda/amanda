@@ -1,5 +1,15 @@
 2012-12-19  Jean-Louis Martineau <martineau@zmanda.com>
-	NEWS: Add MATCH-AUTOLABEL labelstr.
+	* common-src/conffile.c: Add a new RETRY-DUMP setting in a dumptype.
+	* common-src/conffile.h: Define DUMPTYPE_RETRY_DUMP.
+	* man/xml-source/amanda.conf.5.xml: Document it
+	* perl/Amanda/Config.swg: Add DUMPTYPE_RETRY_DUMP.
+	* server-src/diskfile.h (disk_t): Add retry_dump.
+	* server-src/diskfile.c: Set disk->retry_dump.
+	* server-src/driver.c: Use retry_dump
+	* NEWS: Add it.
+
+2012-12-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: Add MATCH-AUTOLABEL labelstr.
 
 2012-12-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: labelstr can be the MATCH-AUTOLABEL keyword.

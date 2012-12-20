@@ -1323,7 +1323,7 @@ start_some_dumps(
 		dumper->dp = NULL;
 		sched(diskp)->dump_attempted++;
 		free_serial_dp(diskp);
-		if(sched(diskp)->dump_attempted < 2)
+		if(sched(diskp)->dump_attempted < diskp->retry_dump)
 		    enqueue_disk(rq, diskp);
 	    }
 	    else {
@@ -2060,7 +2060,7 @@ file_taper_result(
 	g_printf("driver: taper failed %s %s: %s\n",
 		   dp->host->hostname, qname, taper->input_error);
 	if (g_str_equal(sched(dp)->datestamp, driver_timestamp)) {
-	    if(sched(dp)->taper_attempted >= 2) {
+	    if(sched(dp)->taper_attempted >= dp->retry_dump) {
 		log_add(L_FAIL, _("%s %s %s %d [too many taper retries after holding disk error: %s]"),
 		    dp->host->hostname, qname, sched(dp)->datestamp,
 		    sched(dp)->level, taper->input_error);
@@ -2102,7 +2102,7 @@ file_taper_result(
     } else if (taper->tape_error) {
 	g_printf("driver: taper failed %s %s with tape error: %s\n",
 		   dp->host->hostname, qname, taper->tape_error);
-	if(sched(dp)->taper_attempted >= 2) {
+	if(sched(dp)->taper_attempted >= dp->retry_dump) {
 	    log_add(L_FAIL, _("%s %s %s %d [too many taper retries]"),
 		    dp->host->hostname, qname, sched(dp)->datestamp,
 		    sched(dp)->level);
@@ -2186,8 +2186,8 @@ dumper_taper_result(
     sched(dp)->taper_attempted += 1;
 
     if((dumper->result != DONE || taper->result != DONE) &&
-	sched(dp)->dump_attempted <= 1 &&
-	sched(dp)->taper_attempted <= 1) {
+	sched(dp)->dump_attempted < dp->retry_dump &&
+	sched(dp)->taper_attempted < dp->retry_dump) {
 	enqueue_disk(&directq, dp);
     }
 
@@ -2312,7 +2312,7 @@ dumper_chunker_result(
     sched(dp)->dump_attempted += 1;
 
     if((dumper->result != DONE || chunker->result != DONE) &&
-       sched(dp)->dump_attempted <= 1) {
+       sched(dp)->dump_attempted < dp->retry_dump) {
 	delete_diskspace(dp);
 	if (sched(dp)->no_space) {
 	    enqueue_disk(&directq, dp);
@@ -2407,11 +2407,11 @@ handle_dumper_result(
 	     * Requeue this disk, and fall through to the FAILED
 	     * case for cleanup.
 	     */
-	    if(sched(dp)->dump_attempted) {
+	    if(sched(dp)->dump_attempted >= dp->retry_dump-1) {
 		char *qname = quote_string(dp->name);
 		char *qerr = quote_string(result_argv[2]);
 		log_add(L_FAIL, _("%s %s %s %d [too many dumper retry: %s]"),
-	    	    dp->host->hostname, qname, sched(dp)->datestamp,
+		    dp->host->hostname, qname, sched(dp)->datestamp,
 		    sched(dp)->level, qerr);
 		g_printf(_("driver: dump failed %s %s %s, too many dumper retry: %s\n"),
 		        result_argv[1], dp->host->hostname, qname, qerr);
@@ -2449,7 +2449,7 @@ handle_dumper_result(
 	    dumper->down = 1;	/* mark it down so it isn't used again */
 
             /* if it was dumping something, zap it and try again */
-            if(sched(dp)->dump_attempted) {
+            if(sched(dp)->dump_attempted >= dp->retry_dump-1) {
 	    	log_add(L_FAIL, _("%s %s %s %d [%s died]"),
 	    		dp->host->hostname, qname, sched(dp)->datestamp,
 	    		sched(dp)->level, dumper->name);
@@ -2699,7 +2699,7 @@ handle_chunker_result(
             /* if it was dumping something, zap it and try again */
             g_assert(h && activehd >= 0);
             qname = quote_string(dp->name);
-            if(sched(dp)->dump_attempted) {
+            if(sched(dp)->dump_attempted >= dp->retry_dump-1) {
                 log_add(L_FAIL, _("%s %s %s %d [%s died]"),
                         dp->host->hostname, qname, sched(dp)->datestamp,
                         sched(dp)->level, chunker->name);

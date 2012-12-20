@@ -738,6 +738,7 @@ typedef enum {
     DUMPTYPE_RECOVERY_LIMIT,
     DUMPTYPE_DUMP_LIMIT,
     DUMPTYPE_MAX_WARNINGS,
+    DUMPTYPE_RETRY_DUMP,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -830,6 +831,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_recovery_limit(dtyp)      (val_t_to_host_limit(dumptype_getconf((dtyp), DUMPTYPE_RECOVERY_LIMIT)))
 #define dumptype_get_dump_limit(dtyp)          (val_t_to_host_limit(dumptype_getconf((dtyp), DUMPTYPE_DUMP_LIMIT)))
 #define dumptype_get_max_warnings(dtyp)        (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_MAX_WARNINGS)))
+#define dumptype_get_retry_dump(dtyp)          (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_RETRY_DUMP)))
 
 /*
  * Interface parameter access

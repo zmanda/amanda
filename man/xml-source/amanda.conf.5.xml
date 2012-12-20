@@ -2243,6 +2243,16 @@ for DUMP or <filename>/usr/local/var/amanda/gnutar-lists</filename> for GNUTAR) 
 This is normally enabled for daily backups and turned off for periodic archival runs.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>retry-dump</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amkeyword>2</amkeyword>.
+The number of times a backup is tried in case of failure.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><amkeyword>skip-full</amkeyword> <amtype>boolean</amtype></term>
   <listitem>

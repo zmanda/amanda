@@ -4,7 +4,11 @@ Changes in release 4.0.0
    * And 'includefile' directive for the disklist.
    * amanda.conf (interface section)
        o add a src-ip setting.
-       o labelstr can be a new MATCH-AUTOLABEL keyword.
+   * amanda.conf (dumptype section)
+       o add a retry-dump setting.
+   * amanda.conf
+       o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
+	 the autolabel variable.
 
 Changes in release 3.3.4
 

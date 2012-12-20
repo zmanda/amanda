@@ -742,6 +742,7 @@ parse_diskline(
     disk->comprate[1]	     = dumptype_get_comprate(dtype)[1];
     disk->data_path	     = dumptype_get_data_path(dtype);
     disk->dump_limit	     = dumptype_get_dump_limit(dtype);
+    disk->retry_dump	     = dumptype_get_retry_dump(dtype);
 
     /*
      * Boolean parameters with no value (Appears here as value 2) defaults
@@ -752,7 +753,7 @@ parse_diskline(
     disk->skip_full	     = dumptype_get_skip_full(dtype) != 0;
     disk->to_holdingdisk     = dumptype_get_to_holdingdisk(dtype);
     disk->kencrypt	     = dumptype_get_kencrypt(dtype) != 0;
-    disk->index		     = dumptype_get_index(dtype) != 0; 
+    disk->index		     = dumptype_get_index(dtype) != 0;
 
     disk->todo		     = 1;
 
