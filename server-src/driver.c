@@ -3777,7 +3777,7 @@ tape_action(
     gboolean taperflush_criteria;
     gboolean flush_criteria;
 
-    driver_debug(2, "tape_action: ENTER %p", taper);
+    driver_debug(2, "tape_action: ENTER %p\n", taper);
     dumpers_size = 0;
     for(dumper = dmptable; dumper < (dmptable+inparallel); dumper++) {
 	if (dumper->busy && !sched(dumper->dp)->taper)
@@ -3815,7 +3815,9 @@ tape_action(
     for (taper1 = tapetable; taper1 < tapetable+conf_taper_parallel_write;
 	 taper1++) {
 	if (taper1->state & TAPER_STATE_TAPE_STARTED) {
-	    tapeq_size -= taper1->left;
+	    if (taper1->nb_dle < conf_max_dle_by_volume) {
+		tapeq_size -= taper1->left;
+	    }
 	    dle_free += (conf_max_dle_by_volume - taper1->nb_dle);
 	}
 	if (taper1->disk) {
@@ -3981,6 +3983,8 @@ tape_action(
 		driver_debug(2, "tape_action: TAPER_STATE_IDLE return TAPE_ACTION_START_A_FLUSH_FIT\n");
 		result |= TAPE_ACTION_START_A_FLUSH_FIT;
 	    }
+	} else {
+	    driver_debug(2, "tape_action: TAPER_STATE_IDLE return TAPE_ACTION_NO_ACTION\n");
 	}
     }
     return result;
