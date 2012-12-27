@@ -1,4 +1,7 @@
 2012-12-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amrmtape.pl: Add the pid on the temporary filename.
+
+2012-12-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (make_amanda_tmpdir): New function to create the
 	  AMANDA_TMPDIR directory.
 	* common-src/util.h (make_amanda_tmpdir): Add prototype.
