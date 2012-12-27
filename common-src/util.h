@@ -394,4 +394,7 @@ void debug_executing(GPtrArray *argv_ptr);
 
 /* execute the program and get the first line from stdout ot stderr */
 char *get_first_line(GPtrArray *argv_ptr);
+
+gboolean make_amanda_tmpdir(void);
+
 #endif	/* UTIL_H */

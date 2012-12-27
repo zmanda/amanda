@@ -545,6 +545,9 @@ debug_open(char *subdir)
     char *s = NULL;
     mode_t mask;
 
+    /* create AMANDA_TMPDIR */
+    make_amanda_tmpdir();
+
     /* set up logging while we're here */
     debug_setup_logging();
 
