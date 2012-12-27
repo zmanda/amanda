@@ -209,7 +209,7 @@ my $scrub_db = sub {
         $tapelist->write();
     }
 
-    my $tmp_curinfo_file = "$AMANDA_TMPDIR/curinfo-amrmtape-" . time();
+    my $tmp_curinfo_file = "$AMANDA_TMPDIR/curinfo-amrmtape-" . time() . "-" . $$;
     unless (open(AMADMIN, "$amadmin $config_name export |")) {
         die "Failed to execute $amadmin: $! $?";
     }
