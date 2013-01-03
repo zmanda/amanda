@@ -178,6 +178,7 @@ struct _S3Device {
     char        *project_id;
 
     gboolean	 reuse_connection;
+    gboolean	 chunked;
 
     /* CAStor */
     char        *reps;
@@ -279,6 +280,10 @@ static DevicePropertyBase device_property_storage_api;
 /* DEPRECATED */
 static DevicePropertyBase device_property_openstack_swift_api;
 #define PROPERTY_OPENSTACK_SWIFT_API (device_property_openstack_swift_api.ID)
+
+/* Whether to use chunked transfer-encoding */
+static DevicePropertyBase device_property_chunked;
+#define PROPERTY_CHUNKED (device_property_chunked.ID)
 
 /* Whether to use SSL with Amazon S3. */
 static DevicePropertyBase device_property_s3_ssl;
@@ -532,6 +537,10 @@ static gboolean s3_device_set_s3_multi_delete_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
+static gboolean s3_device_set_chunked_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
 static gboolean s3_device_set_ssl_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
@@ -722,7 +731,7 @@ write_amanda_header(S3Device *self,
                     char *label,
                     char * timestamp)
 {
-    CurlBuffer amanda_header = {NULL, 0, 0, 0};
+    CurlBuffer amanda_header = {NULL, 0, 0, 0, TRUE, NULL, NULL};
     char * key = NULL;
     gboolean result;
     dumpfile_t * dumpinfo = NULL;
@@ -760,7 +769,8 @@ write_amanda_header(S3Device *self,
     key = special_file_to_key(self, "tapestart", -1);
     g_assert(header_size < G_MAXUINT); /* for cast to guint */
     amanda_header.buffer_len = (guint)header_size;
-    result = s3_upload(self->s3t[0].s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
+    result = s3_upload(self->s3t[0].s3, self->bucket, key, FALSE,
+		       S3_BUFFER_READ_FUNCS,
                        &amanda_header, NULL, NULL);
     g_free(amanda_header.buffer);
     g_free(key);
@@ -1191,6 +1201,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_project_id,
                                       G_TYPE_STRING, "project_id",
        "project id for use with google");
+    device_property_fill_and_register(&device_property_chunked,
+                                      G_TYPE_BOOLEAN, "chunked",
+       "Whether to use chunked transfer-encoding");
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
@@ -1482,6 +1495,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_s3_multi_delete_fn);
+
+    device_class_register_property(device_class, PROPERTY_CHUNKED,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_chunked_fn);
 
     device_class_register_property(device_class, PROPERTY_S3_SSL,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1945,6 +1963,20 @@ s3_device_set_ssl_fn(Device *p_self, DevicePropertyBase *base,
 	}
     }
     self->use_ssl = new_val;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_chunked_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    gboolean new_val;
+
+    new_val = g_value_get_boolean(val);
+
+    self->chunked = new_val;
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
@@ -2610,7 +2642,7 @@ static DeviceStatusFlags
 s3_device_read_label(Device *pself) {
     S3Device *self = S3_DEVICE(pself);
     char *key;
-    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
+    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE, TRUE, NULL, NULL};
     dumpfile_t *amanda_header;
     /* note that this may be called from s3_device_start, when
      * self->access_mode is not ACCESS_NULL */
@@ -2862,7 +2894,7 @@ s3_device_get_bytes_written(
 static gboolean
 s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     S3Device *self = S3_DEVICE(pself);
-    CurlBuffer amanda_header = {NULL, 0, 0, 0};
+    CurlBuffer amanda_header = {NULL, 0, 0, 0, TRUE, NULL, NULL};
     gboolean result;
     size_t header_size;
     char  *key;
@@ -2918,7 +2950,8 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     g_mutex_unlock(self->thread_idle_mutex);
     /* write it out as a special block (not the 0th) */
     key = special_file_to_key(self, "filestart", pself->file);
-    result = s3_upload(self->s3t[0].s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
+    result = s3_upload(self->s3t[0].s3, self->bucket, key, FALSE,
+		       S3_BUFFER_READ_FUNCS,
                        &amanda_header, NULL, NULL);
     g_free(amanda_header.buffer);
     g_free(key);
@@ -2948,6 +2981,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     int idle_thread = 0;
     int thread = -1;
     int first_idle = -1;
+    guint allocate;
 
     g_assert (self != NULL);
     g_assert (data != NULL);
@@ -2971,50 +3005,110 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     }
 
     g_mutex_lock(self->thread_idle_mutex);
-    while (!idle_thread) {
-	idle_thread = 0;
-	for (thread = 0; thread < self->nb_threads_backup; thread++)  {
-	    if (self->s3t[thread].idle == 1) {
-		idle_thread++;
-		/* Check if the thread is in error */
-		if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
-		    device_set_error(pself, (char *)self->s3t[thread].errmsg,
-				     self->s3t[thread].errflags);
-		    self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
-		    self->s3t[thread].errmsg = NULL;
-		    g_mutex_unlock(self->thread_idle_mutex);
-		    return FALSE;
+    if (self->chunked) {
+	thread = 0;
+	if (pself->block == 0) {
+	    allocate = size*2 + 1;
+	} else {
+	    CurlBuffer *buf = &self->s3t[thread].curl_buffer;
+
+	    g_mutex_lock(buf->mutex);
+	    // Check for enough space in the buffer
+	    while (1) {
+		guint avail;
+		if (buf->buffer_len > buf->buffer_pos) {
+		    avail = buf->buffer_pos + buf->max_buffer_size - buf->buffer_len;
+		} else {
+		    avail = buf->buffer_pos - buf->buffer_len;
 		}
-		if (first_idle == -1) {
-		    first_idle = thread;
+		if (avail > size) {
 		    break;
 		}
+		g_cond_wait(buf->cond, buf->mutex);
+	    }
+
+	    // Copy the new data to the buffer
+	    if (buf->buffer_len > buf->buffer_pos) {
+		guint count_end = buf->max_buffer_size - buf->buffer_len;
+		guint count_begin;
+		if (count_end > size)
+		    count_end = size;
+		memcpy(buf->buffer + buf->buffer_len, data, count_end);
+		buf->buffer_len += count_end;
+		count_begin = size - count_end;
+		if (count_begin > 0) {
+		    memcpy(buf->buffer, data + count_end, count_begin);
+		    buf->buffer_len = count_begin;
+		}
+	    } else {
+		memcpy(buf->buffer + buf->buffer_len, data, size);
+		buf->buffer_len += size;
+	    }
+
+	    g_cond_broadcast(buf->cond);
+	    g_mutex_unlock(buf->mutex);
+
+	    pself->block++;
+	    self->volume_bytes += size;
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return TRUE;
+	}
+    } else {
+	while (!idle_thread) {
+	    idle_thread = 0;
+	    for (thread = 0; thread < self->nb_threads_backup; thread++)  {
+		if (self->s3t[thread].idle == 1) {
+		    idle_thread++;
+		    /* Check if the thread is in error */
+		    if (self->s3t[thread].errflags != DEVICE_STATUS_SUCCESS) {
+			device_set_error(pself, (char *)self->s3t[thread].errmsg,
+					 self->s3t[thread].errflags);
+			self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
+			self->s3t[thread].errmsg = NULL;
+			g_mutex_unlock(self->thread_idle_mutex);
+			return FALSE;
+		    }
+		    if (first_idle == -1) {
+			first_idle = thread;
+			break;
+		    }
+		}
+	    }
+	    if (!idle_thread) {
+		g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
 	    }
 	}
-	if (!idle_thread) {
-	    g_cond_wait(self->thread_idle_cond, self->thread_idle_mutex);
-	}
+	thread = first_idle;
+	allocate = size;
     }
-    thread = first_idle;
 
     self->s3t[thread].idle = 0;
     self->s3t[thread].done = 0;
     if (self->s3t[thread].curl_buffer.buffer &&
-	self->s3t[thread].curl_buffer.buffer_len < size) {
+	self->s3t[thread].curl_buffer.buffer_len < allocate) {
 	g_free((char *)self->s3t[thread].curl_buffer.buffer);
 	self->s3t[thread].curl_buffer.buffer = NULL;
 	self->s3t[thread].curl_buffer.buffer_len = 0;
 	self->s3t[thread].buffer_len = 0;
     }
     if (self->s3t[thread].curl_buffer.buffer == NULL) {
-	self->s3t[thread].curl_buffer.buffer = g_malloc(size);
+	self->s3t[thread].curl_buffer.buffer = g_malloc(allocate);
 	self->s3t[thread].curl_buffer.buffer_len = size;
 	self->s3t[thread].buffer_len = size;
     }
     memcpy((char *)self->s3t[thread].curl_buffer.buffer, data, size);
     self->s3t[thread].curl_buffer.buffer_pos = 0;
     self->s3t[thread].curl_buffer.buffer_len = size;
-    self->s3t[thread].curl_buffer.max_buffer_size = 0;
+    self->s3t[thread].curl_buffer.max_buffer_size = allocate;
+    if (self->chunked) {
+	self->s3t[thread].curl_buffer.end_of_buffer = FALSE;
+	self->s3t[thread].curl_buffer.mutex = g_mutex_new();
+	self->s3t[thread].curl_buffer.cond  = g_cond_new();
+    } else {
+	self->s3t[thread].curl_buffer.end_of_buffer = TRUE;
+	self->s3t[thread].curl_buffer.mutex = NULL;
+	self->s3t[thread].curl_buffer.cond = NULL;
+    }
     self->s3t[thread].filename = filename;
     self->s3t[thread].uploadId = g_strdup(self->uploadId);
     self->s3t[thread].partNumber = pself->block + 1;
@@ -3045,6 +3139,7 @@ s3_thread_write_block(
 				progress_func, s3t);
     } else {
 	result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
+			   self->chunked,
 			   S3_BUFFER_READ_FUNCS,
 			   (CurlBuffer *)&s3t->curl_buffer,
 			   progress_func, s3t);
@@ -3098,7 +3193,16 @@ s3_device_finish_file (Device * pself) {
     int idle_thread = 0;
     int thread;
 
+    if (self->chunked) {
+	CurlBuffer *buf = &self->s3t[0].curl_buffer;
+	g_mutex_lock(buf->mutex);
+	buf->end_of_buffer = TRUE;
+	g_cond_broadcast(buf->cond);
+	g_mutex_unlock(buf->mutex);
+    }
+
     g_mutex_lock(self->thread_idle_mutex);
+
     while (idle_thread != self->nb_threads) {
 	idle_thread = 0;
 	for (thread = 0; thread < self->nb_threads; thread++)  {
@@ -3119,7 +3223,6 @@ s3_device_finish_file (Device * pself) {
     }
     self->ultotal = 0;
     g_mutex_unlock(self->thread_idle_mutex);
-
     if (self->use_s3_multi_part_upload && self->uploadId) {
 	CurlBuffer data;
 	GString *buf = g_string_new("<CompleteMultipartUpload>\n");
@@ -3129,6 +3232,9 @@ s3_device_finish_file (Device * pself) {
 	data.buffer_len = strlen(buf->str);
 	data.buffer_pos = 0;
 	data.max_buffer_size = data.buffer_len;
+	data.end_of_buffer = FALSE;
+	data.mutex = NULL;
+	data.cond = NULL;
 	s3_complete_multi_part_upload(self->s3t[0].s3,
 				self->bucket, self->filename, self->uploadId,
 				S3_BUFFER_READ_FUNCS, &data);
@@ -3139,6 +3245,14 @@ s3_device_finish_file (Device * pself) {
     }
 
     amfree(self->uploadId);
+
+    if (self->chunked) {
+	CurlBuffer *buf = &self->s3t[0].curl_buffer;
+	g_cond_free(buf->cond);
+	buf->cond = NULL;
+	g_mutex_free(buf->mutex);
+	buf->mutex = NULL;
+    }
 
     if (device_in_error(pself)) return FALSE;
 
@@ -3225,7 +3339,7 @@ s3_device_seek_file(Device *pself, guint file) {
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
     char *key;
-    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
+    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE, TRUE, NULL, NULL};
     dumpfile_t *amanda_header;
     const char *errmsg = NULL;
     int thread;
@@ -3367,6 +3481,11 @@ s3_start_read_ahead(
     guint64 range_min = 0;
     guint64 range_max = 0;
 
+    int allocate = size_req;
+    if (self->chunked) {
+	allocate = size_req*2 + 1;
+    }
+
     /* start a read ahead for each thread */
     for (thread = 0; thread < self->nb_threads_recovery; thread++) {
 	S3_by_thread *s3t = &self->s3t[thread];
@@ -3395,20 +3514,32 @@ s3_start_read_ahead(
 	    s3t->dlnow = 0;
 	    s3t->ulnow = 0;
 	    s3t->errflags = DEVICE_STATUS_SUCCESS;
-	    if (self->s3t[thread].curl_buffer.buffer &&
-		(int)self->s3t[thread].curl_buffer.buffer_len < size_req) {
+	    if (self->chunked ||
+		(self->s3t[thread].curl_buffer.buffer &&
+		 (int)self->s3t[thread].curl_buffer.buffer_len < size_req)) {
 		g_free(self->s3t[thread].curl_buffer.buffer);
 		self->s3t[thread].curl_buffer.buffer = NULL;
 		self->s3t[thread].curl_buffer.buffer_len = 0;
 		self->s3t[thread].buffer_len = 0;
 	    }
 	    if (!self->s3t[thread].curl_buffer.buffer) {
-		self->s3t[thread].curl_buffer.buffer = g_malloc(size_req);
-		self->s3t[thread].curl_buffer.buffer_len = size_req;
-		self->s3t[thread].buffer_len = size_req;
+		self->s3t[thread].curl_buffer.buffer = g_malloc(allocate);
+		self->s3t[thread].curl_buffer.buffer_len = allocate;
+		self->s3t[thread].buffer_len = allocate;
 	    }
 	    s3t->curl_buffer.buffer_pos = 0;
-	    s3t->curl_buffer.max_buffer_size = S3_DEVICE_MAX_BLOCK_SIZE;
+	    if (self->chunked) {
+		self->s3t[thread].curl_buffer.buffer_len = 0;
+		s3t->curl_buffer.max_buffer_size = allocate;
+		s3t->curl_buffer.end_of_buffer = FALSE;
+		s3t->curl_buffer.mutex = g_mutex_new();
+		s3t->curl_buffer.cond = g_cond_new();
+	    } else {
+		s3t->curl_buffer.max_buffer_size = S3_DEVICE_MAX_BLOCK_SIZE;
+		s3t->curl_buffer.end_of_buffer = TRUE;
+		s3t->curl_buffer.mutex = NULL;
+		s3t->curl_buffer.cond = NULL;
+	    }
 	    self->next_block_to_read++;
 	    self->next_byte_to_read += size_req;
 	    g_thread_pool_push(self->thread_pool_read, s3t, NULL);
@@ -3433,6 +3564,67 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 
     /* start a read ahead for each thread */
     s3_start_read_ahead(pself, *size_req);
+
+
+    if (self->chunked) {
+	CurlBuffer *buf = &self->s3t[0].curl_buffer;
+	guint avail;
+	guint size = *size_req;
+
+	g_mutex_unlock(self->thread_idle_mutex);
+	g_mutex_lock(buf->mutex);
+
+	/* wait for the data to be available */
+	while (1) {
+	    if (buf->buffer_len == buf->buffer_pos) {
+		avail = 0;
+	    } else if (buf->buffer_len > buf->buffer_pos) {
+		avail = buf->buffer_len - buf->buffer_pos;
+	    } else {
+		avail = buf->max_buffer_size - buf->buffer_pos + buf->buffer_len;
+	    }
+
+	    if (avail > size || buf->end_of_buffer)
+		break;
+
+	    g_cond_wait(buf->cond, buf->mutex);
+	}
+
+	if (size > avail)
+	    size = avail;
+	if (size > 0) {
+	   if (buf->buffer_len > buf->buffer_pos) {
+		memcpy((char *)data, buf->buffer + buf->buffer_pos, size);
+		buf->buffer_pos += size;
+	    } else {
+		guint count_end = buf->max_buffer_size - buf->buffer_pos;
+		guint count_begin;
+
+		if (count_end > size)
+		    count_end = size;
+		memcpy((char *)data, buf->buffer + buf->buffer_pos, count_end);
+		buf->buffer_pos += count_end;
+		count_begin = size - count_end;
+		if (count_begin > 0) {
+		    memcpy((char *)data + count_end, buf->buffer, count_begin);
+		    buf->buffer_pos = count_begin;
+		}
+	    }
+	}
+	/* signal to add more data to the buffer */
+	g_cond_broadcast(buf->cond);
+	g_mutex_unlock(buf->mutex);
+
+	if (size == 0 && buf->end_of_buffer) {
+	    pself->is_eof = TRUE;
+	    pself->in_file = FALSE;
+	    device_set_error(pself, g_strdup(_("EOF")), DEVICE_STATUS_SUCCESS);
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return -1;
+	}
+	*size_req = size;
+	return size;
+    }
 
     /* get the file*/
     if (self->filename) {
@@ -3538,6 +3730,12 @@ s3_thread_read_block(
 			 progress_func, s3t);
     }
 
+    if (s3t->curl_buffer.mutex) {
+	g_mutex_lock(s3t->curl_buffer.mutex);
+	s3t->curl_buffer.end_of_buffer = TRUE;
+	g_cond_broadcast(s3t->curl_buffer.cond);
+	g_mutex_unlock(s3t->curl_buffer.mutex);
+    }
     g_mutex_lock(self->thread_idle_mutex);
     if (!result) {
 	guint response_code;

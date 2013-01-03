@@ -390,6 +390,7 @@ gboolean
 s3_upload(S3Handle *hdl,
           const char *bucket,
           const char *key,
+          const gboolean chunked,
           s3_read_func read_func,
           s3_reset_func reset_func,
           s3_size_func size_func,
@@ -621,12 +622,42 @@ s3_delete_bucket(S3Handle *hdl,
 gboolean sts_refresh_token(char ** token, const char * directory);
 
 /* These functions are for if you want to use curl on your own. You get more
- * control, but it's a lot of work that way: */
+ * control, but it's a lot of work that way:
+ */
+/* There is two use, simple buffer and circle buffer
+ */
+/* simple buffer
+ * buffer: pointer to the buffer
+ * buffer_len: size of the allocated buffer
+ * buffer_pos: size use in the buffer (from buffer to buffer+buffer_pos)
+ * max_buffer_size: maximum size the buffer can be reallocated.
+ * end_of_buffer: unused
+ * mutex: NULL
+ * cond: unused
+ */
+/* circle buffer (use for chunked transfer-encodig)
+ * buffer: pointer to the buffer
+ * buffer_len: indice of the last byte+1 use in the buffer
+ * buffer_pos: indice of the first byte use in the buffer
+ * max_buffer_size: allocated size of the buffer
+ * end_of_buffer: TRUE once reach end of data.
+ * mutex: !NULL
+ * cond: !NULL
+ *
+ * buffer_len == buffer_pos: buffer is empty
+ * The data in use are
+ *     buffer_len > buffer_pos: from buffer_pos to buffer_len
+ *     buffer_len < buffer_pos: from buffer_pos to max_buffer_size
+ *                          and from 0 to buffer_len
+ */
 typedef struct {
     char *buffer;
     guint buffer_len;
     guint buffer_pos;
     guint max_buffer_size;
+    gboolean end_of_buffer;
+    GMutex   *mutex;
+    GCond    *cond;
 } CurlBuffer;
 
 #define S3_BUFFER_READ_FUNCS s3_buffer_read_func, s3_buffer_reset_func, s3_buffer_size_func, s3_buffer_md5_func

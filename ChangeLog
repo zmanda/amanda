@@ -1,4 +1,11 @@
 2013-01-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c, device-src/s3.c: hanlde chunked
+	  transfer-encoding,
+	* device-src/s3.h (s3_upload): Add chunked argument.
+	* man/xml-source/amanda-devices.7.xml: Document new CHUNKER s3
+	  device-property.
+
+2013-01-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Display the size restored.
 
 2012-12-27  Jean-Louis Martineau <martineau@zmanda.com>

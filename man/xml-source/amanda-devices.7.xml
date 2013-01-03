@@ -424,6 +424,11 @@ device-property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+ <varlistentry><term>CHUNKED</term><listitem>
+(read-write) Default: No. Set to yes if the server support chunked
+transfer-encoding. Amazon do not support it, google support it.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>CLIENT_ID</term><listitem>
 (read-write) The client_id for oauth2.
 </listitem></varlistentry>
