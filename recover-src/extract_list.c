@@ -66,9 +66,22 @@ typedef struct EXTRACT_LIST {
 }
 EXTRACT_LIST;
 
+typedef struct cdata_s {
+    int             fd;
+    FILE           *output;
+    char           *name;
+    char           *buffer;
+    gint64          first;           /* first byte used */
+    gint64          size;            /* number of byte use in the buffer */
+    gint64          allocated_size ; /* allocated size of the buffer     */
+    event_handle_t *event;
+} cdata_t;
+
 typedef struct ctl_data_s {
   int                      header_done;
-  int                      child_pipe[2];
+  int                      child_in[2];
+  int                      child_out[2];
+  int                      child_err[2];
   int                      pid;
   EXTRACT_LIST            *elist;
   dumpfile_t               file;
@@ -76,6 +89,10 @@ typedef struct ctl_data_s {
   char                    *addrs;
   backup_support_option_t *bsu;
   gint64                   bytes_read;
+  cdata_t		   decrypt_cdata;
+  cdata_t		   decompress_cdata;
+  cdata_t		   child_out_cdata;
+  cdata_t		   child_err_cdata;
 } ctl_data_t;
 
 #define SKIP_TAPE 2
@@ -101,6 +118,9 @@ static char *amidxtaped_line = NULL;
 extern char *localhost;
 static char header_buf[32768];
 static int  header_size = 0;
+static int  stderr_isatty;
+static time_t last_time = 0;
+static gboolean  last_is_size;
 
 
 /* global pid storage for interrupt handler */
@@ -150,6 +170,7 @@ static void extract_files_child(ctl_data_t *ctl_data);
 static void send_to_tape_server(security_stream_t *stream, char *cmd);
 int writer_intermediary(EXTRACT_LIST *elist);
 int get_amidxtaped_line(void);
+static void handle_child_out(void *);
 static void read_amidxtaped_data(void *, void *, ssize_t);
 static char *merge_path(char *path1, char *path2);
 static gboolean ask_file_overwrite(ctl_data_t *ctl_data);
@@ -1875,7 +1896,21 @@ extract_files_child(
     /* never returns */
 
     /* make in_fd be our stdin */
-    if (dup2(ctl_data->child_pipe[0], STDIN_FILENO) == -1)
+    if (dup2(ctl_data->child_in[0], STDIN_FILENO) == -1)
+    {
+	error(_("dup2 failed in extract_files_child: %s"), strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    /* make out_fd be our stdout */
+    if (dup2(ctl_data->child_out[1], STDOUT_FILENO) == -1)
+    {
+	error(_("dup2 failed in extract_files_child: %s"), strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    /* make err_fd be our stdout */
+    if (dup2(ctl_data->child_err[1], STDERR_FILENO) == -1)
     {
 	error(_("dup2 failed in extract_files_child: %s"), strerror(errno));
 	/*NOTREACHED*/
@@ -2146,8 +2181,12 @@ writer_intermediary(
     amwait_t   extractor_status;
 
     ctl_data.header_done   = 0;
-    ctl_data.child_pipe[0] = -1;
-    ctl_data.child_pipe[1] = -1;
+    ctl_data.child_in[0]  = -1;
+    ctl_data.child_in[1]  = -1;
+    ctl_data.child_out[0] = -1;
+    ctl_data.child_out[1] = -1;
+    ctl_data.child_err[0] = -1;
+    ctl_data.child_err[1] = -1;
     ctl_data.pid           = -1;
     ctl_data.elist         = elist;
     fh_init(&ctl_data.file);
@@ -2209,8 +2248,12 @@ writer_intermediary(
     dumpfile_free_data(&ctl_data.file);
     amfree(ctl_data.addrs);
     amfree(ctl_data.bsu);
-    if (ctl_data.child_pipe[1] != -1)
-	aclose(ctl_data.child_pipe[1]);
+    if (ctl_data.child_in[1] != -1)
+	aclose(ctl_data.child_in[1]);
+    if (ctl_data.child_out[0] != -1)
+	aclose(ctl_data.child_out[0]);
+    if (ctl_data.child_err[0] != -1)
+	aclose(ctl_data.child_err[0]);
 
     if (ctl_data.header_done == 0) {
 	g_printf(_("Got no header and data from server, check in amidxtaped.*.debug and amandad.*.debug files on server\n"));
@@ -2671,6 +2714,10 @@ stop_amidxtaped(void)
             amidxtaped_streams[i].fd = NULL;
         }
     }
+
+    if (stderr_isatty) {
+	fprintf(stderr, "\n");
+    }
 }
 
 static char* ctl_buffer = NULL;
@@ -2718,6 +2765,75 @@ get_amidxtaped_line(void)
     return 0;
 }
 
+static void
+handle_child_out(
+    void *cookie)
+{
+    cdata_t  *cdata = cookie;
+    ssize_t   nread;
+    char     *b, *p;
+    gint64    len;
+
+    if (cdata->buffer == NULL) {
+	/* allocate initial buffer */
+	cdata->buffer = g_malloc(2048);
+	cdata->first = 0;
+	cdata->size = 0;
+	cdata->allocated_size = 2048;
+    } else if (cdata->first > 0) {
+	if (cdata->allocated_size - cdata->size - cdata->first < 1024) {
+	    memmove(cdata->buffer, cdata->buffer + cdata->first,
+	                            cdata->size);
+	    cdata->first = 0;
+	}
+    } else if (cdata->allocated_size - cdata->size < 1024) {
+	/* double the size of the buffer */
+	cdata->allocated_size *= 2;
+	cdata->buffer = g_realloc(cdata->buffer, cdata->allocated_size);
+    }
+
+    nread = read(cdata->fd, cdata->buffer + cdata->first + cdata->size,
+		 cdata->allocated_size - cdata->first - cdata->size - 2);
+
+    if (nread <= 0) {
+	event_release(cdata->event);
+	aclose(cdata->fd);
+	if (cdata->size > 0 && cdata->buffer[cdata->first + cdata->size - 1] != '\n') {
+	    /* Add a '\n' at end of buffer */
+	    cdata->buffer[cdata->first + cdata->size] = '\n';
+	    cdata->size++;
+	}
+    } else {
+	cdata->size += nread;
+    }
+
+    /* process all complete lines */
+    b = cdata->buffer + cdata->first;
+    b[cdata->size] = '\0';
+    while (b < cdata->buffer + cdata->first + cdata->size &&
+           (p = strchr(b, '\n')) != NULL) {
+        *p = '\0';
+	if (last_is_size)
+	    g_fprintf(cdata->output, "\n");
+	if (cdata->name) {
+            g_fprintf(cdata->output, "%s: %s\n", cdata->name, b);
+	} else {
+            g_fprintf(cdata->output, "%s\n", b);
+	}
+	last_is_size = FALSE;
+        len = p - b + 1;
+        cdata->first += len;
+        cdata->size -= len;
+        b = p + 1;
+    }
+
+    if (nread <= 0) {
+        g_free(cdata->name);
+        g_free(cdata->buffer);
+    }
+
+
+}
 
 static void
 read_amidxtaped_data(
@@ -2742,6 +2858,7 @@ read_amidxtaped_data(
     if (size == 0) {
 	security_stream_close(amidxtaped_streams[DATAFD].fd);
 	amidxtaped_streams[DATAFD].fd = NULL;
+	aclose(ctl_data->child_in[1]);
 	/*
 	 * If the mesg fd has also shut down, then we're done.
 	 */
@@ -2823,12 +2940,32 @@ read_amidxtaped_data(
 	    start_processing_data(ctl_data);
 	}
     } else {
+	/* print every second */
+	time_t current_time = time(NULL);
 	ctl_data->bytes_read += size;
+	if (current_time > last_time) {
+	    last_time = current_time;
+
+	    if (stderr_isatty) {
+		if (last_is_size) {
+		    fprintf(stderr, "\r%lld kb ",
+			    (long long)ctl_data->bytes_read/1024);
+		} else {
+		    fprintf(stderr, "%lld kb ",
+			    (long long)ctl_data->bytes_read/1024);
+		    last_is_size = TRUE;
+		}
+	    } else {
+		fprintf(stderr, "%lld kb\n",
+			(long long)ctl_data->bytes_read/1024);
+	    }
+	}
+
 	/* Only the data is sent to the child */
 	/*
 	 * We ignore errors while writing to the index file.
 	 */
-	(void)full_write(ctl_data->child_pipe[1], buf, (size_t)size);
+	(void)full_write(ctl_data->child_in[1], buf, (size_t)size);
     }
 }
 
@@ -2895,33 +3032,67 @@ static void
 start_processing_data(
     ctl_data_t *ctl_data)
 {
-    if (pipe(ctl_data->child_pipe) == -1) {
+    if (pipe(ctl_data->child_in) == -1) {
+	error(_("extract_list - error setting up pipe to extractor: %s\n"),
+	      strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    if (pipe(ctl_data->child_out) == -1) {
+	error(_("extract_list - error setting up pipe to extractor: %s\n"),
+	      strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    if (pipe(ctl_data->child_err) == -1) {
 	error(_("extract_list - error setting up pipe to extractor: %s\n"),
 	      strerror(errno));
 	/*NOTREACHED*/
     }
 
     /* decrypt */
+    ctl_data->decrypt_cdata.fd = -1;
     if (ctl_data->file.encrypted) {
 	char *argv[3];
 	int  crypt_out;
-	int  errfd = fileno(stderr);
+	int pipe_decrypt_err[2];
+
+	if (pipe(pipe_decrypt_err) == -1) {
+	    error(_("extract_list - error setting up pipe to extractor: %s\n"),
+	          strerror(errno));
+	    /*NOTREACHED*/
+	}
 
 	g_debug("image is encrypted %s %s", ctl_data->file.clnt_encrypt, ctl_data->file.clnt_decrypt_opt);
 	argv[0] = ctl_data->file.clnt_encrypt;
 	argv[1] = ctl_data->file.clnt_decrypt_opt;
 	argv[2] = NULL;
-	pipespawnv(ctl_data->file.clnt_encrypt, STDOUT_PIPE, 0, &ctl_data->child_pipe[0], &crypt_out, &errfd, argv);
-	ctl_data->child_pipe[0] = crypt_out;
+	pipespawnv(ctl_data->file.clnt_encrypt, STDOUT_PIPE, 0,
+		   &ctl_data->child_in[0], &crypt_out, &pipe_decrypt_err[1],
+		   argv);
+	ctl_data->child_in[0] = crypt_out;
+	aclose(pipe_decrypt_err[1]);
+	ctl_data->decrypt_cdata.fd = pipe_decrypt_err[0];
+	ctl_data->decrypt_cdata.output = stderr;
+	ctl_data->decrypt_cdata.name = g_strdup(ctl_data->file.clnt_encrypt);
+	ctl_data->decrypt_cdata.buffer = NULL;
+	ctl_data->decrypt_cdata.event = NULL;
     }
 
     /* decompress */
+    ctl_data->decompress_cdata.fd = -1;
     if (ctl_data->file.compressed) {
 	char *argv[3];
 	int  comp_out;
-	int  errfd = fileno(stderr);
 	char *comp_prog;
 	char *comp_arg;
+	int pipe_decompress_err[2];
+
+	if (pipe(pipe_decompress_err) == -1) {
+	    error(_("extract_list - error setting up pipe to extractor: %s\n"),
+	          strerror(errno));
+	    /*NOTREACHED*/
+	}
 
 	g_debug("image is compressed %s", ctl_data->file.clntcompprog);
 	if (strlen(ctl_data->file.clntcompprog) > 0) {
@@ -2934,28 +3105,75 @@ start_processing_data(
 	argv[0] = comp_prog;
 	argv[1] = comp_arg;
 	argv[2] = NULL;
-	pipespawnv(comp_prog, STDOUT_PIPE, 0, &ctl_data->child_pipe[0], &comp_out, &errfd, argv);
-	ctl_data->child_pipe[0] = comp_out;
+	pipespawnv(comp_prog, STDOUT_PIPE, 0, &ctl_data->child_in[0],
+		   &comp_out, &pipe_decompress_err[1], argv);
+	ctl_data->child_in[0] = comp_out;
+	aclose(pipe_decompress_err[1]);
+	ctl_data->decrypt_cdata.fd = pipe_decompress_err[0];
+	ctl_data->decrypt_cdata.output = stderr;
+	ctl_data->decrypt_cdata.name = g_strdup(comp_prog);
+	ctl_data->decrypt_cdata.buffer = NULL;
+	ctl_data->decrypt_cdata.event = NULL;
     }
 
     /* okay, ready to extract. fork a child to do the actual work */
     if ((ctl_data->pid = fork()) == 0) {
 	/* this is the child process */
 	/* never gets out of this clause */
-	aclose(ctl_data->child_pipe[1]);
+	aclose(ctl_data->child_in[1]);
+	aclose(ctl_data->child_out[0]);
+	aclose(ctl_data->child_err[0]);
 	extract_files_child(ctl_data);
 	/*NOTREACHED*/
     }
-	
+
+    stderr_isatty = isatty(fileno(stderr));
+
     if (ctl_data->pid == -1) {
 	g_free(errstr);
 	errstr = g_strdup(_("writer_intermediary - error forking child"));
 	g_printf(_("writer_intermediary - error forking child"));
 	return;
     }
-    aclose(ctl_data->child_pipe[0]);
+    last_is_size = FALSE;
+    aclose(ctl_data->child_in[0]);
+    aclose(ctl_data->child_out[1]);
+    aclose(ctl_data->child_err[1]);
     security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data,
 			 ctl_data);
+
+    ctl_data->child_out_cdata.fd = ctl_data->child_out[0];
+    ctl_data->child_out_cdata.output = stdout;
+    ctl_data->child_out_cdata.name = NULL;
+    ctl_data->child_out_cdata.buffer = NULL;
+    ctl_data->child_out_cdata.event = event_register(
+				(event_id_t)ctl_data->child_out[0],
+				EV_READFD, handle_child_out,
+				&ctl_data->child_out_cdata);
+
+    ctl_data->child_err_cdata.fd = ctl_data->child_out[0];
+    ctl_data->child_err_cdata.output = stderr;
+    ctl_data->child_err_cdata.name = NULL;
+    ctl_data->child_err_cdata.buffer = NULL;
+    ctl_data->child_err_cdata.event = event_register(
+				(event_id_t)ctl_data->child_err[0],
+				EV_READFD, handle_child_out,
+				&ctl_data->child_err_cdata);
+
+    if (ctl_data->decrypt_cdata.fd != -1) {
+	ctl_data->decrypt_cdata.event = event_register(
+				(event_id_t)ctl_data->decrypt_cdata.fd,
+				EV_READFD, handle_child_out,
+				&ctl_data->decrypt_cdata);
+    }
+
+    if (ctl_data->decompress_cdata.fd != -1) {
+	ctl_data->decompress_cdata.event = event_register(
+				(event_id_t)ctl_data->decompress_cdata.fd,
+				EV_READFD, handle_child_out,
+				&ctl_data->decompress_cdata);
+    }
+
     if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATAPATH-OK");
     }
