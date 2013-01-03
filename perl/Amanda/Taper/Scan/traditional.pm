@@ -195,6 +195,12 @@ sub stage_1 {
 	    if ($err->failed and $err->notfound) {
 		debug("Amanda::Taper::Scan::traditional oldest reusable volume not found");
 		return $self->stage_2($result_cb);
+	    } elsif ($err->failed and $err->volinuse) {
+		debug("Amanda::Taper::Scan::traditional oldest reusable volume in use");
+		return $self->stage_2($result_cb);
+	    } elsif ($err->failed and $err->invalid) {
+		debug("Amanda::Taper::Scan::traditional oldest reusable volume is not accessible");
+		return $self->stage_2($result_cb);
 	    } else {
 		return $self->scan_result(error => $err,
 			res => $res, result_cb => $result_cb);

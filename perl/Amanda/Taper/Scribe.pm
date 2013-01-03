@@ -1808,6 +1808,11 @@ sub _start_scanning {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "Slot $params{'slot'} with label $params{'label'} is usable");
 	    }
+	} elsif (exists($params{'search_result'})) {
+	    if ($params{'err'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "$params{'err'}");
+	    }
 	}
     };
 

@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -27,6 +27,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Changer;
+use Installcheck::Mock qw( setup_mock_mtx $mock_mtx_path );
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::MainLoop;
@@ -94,6 +95,37 @@ sub label_slot {
     }
 }
 
+sub label_mtx_slot {
+    my ($slot, $label, $stamp, $reuse, $update_tapelist) = @_;
+
+    my $drivedir = "$taperoot/tmp";
+    -d $drivedir and rmtree($drivedir);
+    mkpath($drivedir);
+    mkdir("$taperoot/slot$slot/data");
+    symlink("$taperoot/slot$slot/data", "$drivedir/data");
+
+    my $dev = Amanda::Device->new("file:$drivedir");
+    die $dev->error_or_status() unless $dev->status == $DEVICE_STATUS_SUCCESS;
+
+    if (defined $label){
+	if (!$dev->start($ACCESS_WRITE, $label, $stamp)) {
+	    die $dev->error_or_status();
+	}
+    } else {
+	$dev->erase();
+    }
+
+    rmtree($drivedir);
+
+    if ($update_tapelist) {
+	# tapelist uses '0' for new tapes; devices use 'X'..
+	$stamp = '0' if ($stamp eq 'X');
+	open(my $fh, ">>", $tapelist_filename) or die("opening tapelist_filename: $!");
+	print $fh "$stamp $label $reuse\n";
+	close($fh);
+    }
+}
+
 # run the mainloop around a scan
 sub run_scan {
     my ($ts) = @_;
@@ -126,7 +158,7 @@ sub set_current_slot {
 
 # set up and load a config
 my $testconf = Installcheck::Config->new();
-$testconf->add_param("tapelist", "\"$tapelist\"");
+$testconf->add_param("tapelist", "\"$tapelist_filename\"");
 $testconf->add_param("labelstr", "\"TEST-[0-9]+\"");
 $testconf->write();
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -293,4 +325,116 @@ is_deeply([ @results ],
 $taperscan->quit();
 
 rmtree($taperoot);
-unlink($tapelist);
+unlink($tapelist_filename);
+
+# test invalid because slot loaded in invalid drive
+my $chg_state_file = "$Installcheck::TMP/chg-robot-state";
+unlink($chg_state_file) if -f $chg_state_file;
+my $vtape_root = $taperoot;
+my $mtx_state_file = setup_mock_mtx (
+	 num_slots => 5,
+	 num_ie => 0,
+	 barcodes => 1,
+	 track_orig => 1,
+	 num_drives => 2,
+	 vtape_root => $vtape_root,
+	 loaded_slots => {
+		1 => '11111',
+		2 => '22222',
+		3 => '33333',
+		4 => '44444',
+		5 => '55555',
+	  },
+	 first_slot => 1,
+	 first_drive => 0,
+	 first_ie => 6,
+	);
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param("tapelist", "\"$tapelist_filename\"");
+$testconf->add_param("labelstr", "\"TEST-[0-9]+\"");
+$testconf->add_changer('robo1', [
+	tpchanger => "\"chg-robot:$mtx_state_file\"",
+	changerfile => "\"$chg_state_file\"",
+
+	# point to the two vtape "drives" that mock/mtx will set up
+	property => "\"tape-device\" \"1=file:$vtape_root/drive1\"",
+
+	# an point to the mock mtx
+	property => "\"mtx\" \"$mock_mtx_path\"",
+]);
+$testconf->add_changer('robo2', [
+	tpchanger => "\"chg-robot:$mtx_state_file\"",
+	changerfile => "\"$chg_state_file\"",
+
+	# point to the two vtape "drives" that mock/mtx will set up
+	property => "\"tape-device\" \"0=file:$vtape_root/drive0\" \"1=file:$vtape_root/drive1\"",
+
+	# an point to the mock mtx
+	property => "\"mtx\" \"$mock_mtx_path\"",
+]);
+$testconf->write();
+$tapelist->clear_tapelist();
+$tapelist->write();
+
+reset_taperoot(5);
+label_mtx_slot(1, "TEST-1", "20090424173001", "reuse", 1);
+label_mtx_slot(2, "TEST-2", "20090424173002", "reuse", 1);
+label_mtx_slot(3, "TEST-3", "20090424173003", "reuse", 1);
+label_mtx_slot(4, "TEST-4", "20090424173004", "reuse", 1);
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+	my ($level, @errors) = Amanda::Config::config_errors();
+	die(join "\n", @errors);
+}
+
+$chg = Amanda::Changer->new("robo2", tapelist => $tapelist);
+die "$chg" if $chg->isa("Amanda::Changer::Error");
+
+sub test_robot {
+    my $finished_cb = shift;
+
+    my $steps = define_steps
+        cb_ref => \$finished_cb;
+
+    step setup => sub {
+        $chg->load(slot => 1, res_cb => $steps->{'loaded_slot'});
+    };
+
+    step loaded_slot => sub {
+        my ($err, $res1) = @_;
+        die $err if $err;
+
+        is($res1->{'device'}->device_name, "file:$vtape_root/drive0",
+            "first load returns drive-0 device");
+
+        $res1->release(finished_cb => $steps->{'released'});
+    };
+
+    step released => sub {
+        $chg->quit();
+        $chg = Amanda::Changer->new("robo1", tapelist => $tapelist);
+        $taperscan = Amanda::Taper::Scan->new(
+	    tapelist  => $tapelist,
+	    algorithm => "traditional",
+	    tapecycle => 2,
+	    changer => $chg);
+        @results = run_scan($taperscan);
+        is_deeply([ @results ],
+	    [ undef, "TEST-2", $ACCESS_WRITE ],
+	      "skip a slot loaded in an inaccessible drive")
+	      or diag(Dumper(\@results));
+        $chg->quit();
+        $taperscan->quit();
+    };
+
+};
+
+test_robot(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
+
+unlink($chg_state_file) if -f $chg_state_file;
+unlink($mtx_state_file) if -f $mtx_state_file;
+rmtree($vtape_root);
+unlink($tapelist_filename);

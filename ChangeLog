@@ -1,4 +1,14 @@
 2013-01-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Return slot in error for:
+		the requested volume is in drive $drive, which this
+		changer instance cannot access
+	* perl/Amanda/Taper/Scan/traditional.pm: Continue scan if this error.
+	* perl/Amanda/Taper/Scribe.pm: log message.
+	* installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl: Check it.
+
+2013-01-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c, device-src/s3.c: hanlde chunked
 	  transfer-encoding,
 	* device-src/s3.h (s3_upload): Add chunked argument.
