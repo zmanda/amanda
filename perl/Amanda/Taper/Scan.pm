@@ -339,8 +339,6 @@ sub oldest_reusable_volume {
     for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
 	next unless $tle->{'reuse'};
 	next if $tle->{'datestamp'} eq '0' and !$params{'new_label_ok'};
-Amanda::Debug::debug("labelstr: " . Data::Dumper::Dumper($self->{'labelstr'}));
-Amanda::Debug::debug("autolabel: " . Data::Dumper::Dumper($self->{'autolabel'}));
 	next if !match_labelstr($self->{'labelstr'}, $self->{'autolabel'},
 				$tle->{'label'}, $tle->{'barcode'}, $tle->{'meta'});
 	$num_acceptable++;
@@ -361,6 +359,10 @@ sub is_reusable_volume {
     my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($params{'label'});
     return 0 unless $vol_tle;
     return 0 unless $vol_tle->{'reuse'};
+    return 0 if !match_labelstr($self->{'labelstr'}, $self->{'autolabel'},
+				$vol_tle->{'label'}, $vol_tle->{'barcode'},
+				$vol_tle->{'meta'});
+
     if ($vol_tle->{'datestamp'} eq '0') {
 	return $params{'new_label_ok'};
     }

@@ -1,4 +1,9 @@
-2013-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+2013-01-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Set labelstr template from autolabel.
+	* perl/Amanda/ScanInventory.pm: Use the labelstr template.
+	* perl/Amanda/Taper/Scan.pm: Check for match_labelstr.
+
+2013-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan.pm (oldest_reusable_volume): Check the
 	  labelstr.
 	* installcheck/Amanda_Taper_Scan.pl: Test it.

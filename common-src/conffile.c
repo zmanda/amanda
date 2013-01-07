@@ -5693,6 +5693,8 @@ update_derived_values(
 	} else if (labelstr->match_autolabel && !getconf_seen(CNF_AUTOLABEL)) {
 	    labelstr->template = g_strdup(".*");
 	    labelstr->match_autolabel = FALSE;
+	} else if (labelstr->match_autolabel) {
+	    labelstr->template = g_strdup(conf_data[CNF_AUTOLABEL].v.autolabel.template);
 	}
     }
 
