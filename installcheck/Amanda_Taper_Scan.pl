@@ -56,7 +56,8 @@ my $taperscan = Amanda::Taper::Scan->new(
     changer => undef, # (not used)
     tapelist => $tapelist,
     tapecycle => 1, # will be changed periodically below
-    labelstr => "TEST-[0-9]",
+    labelstr => { 'template' => "TEST-[0-9]",
+		  'match_autolabel' => 0 },
     autolabel => { 'template'    => "TEST-%",
 		   'empty'        => 1,
 		   'volume_error' => 1},
@@ -67,12 +68,13 @@ set_tapelist(<<EOF);
 20090424173002 TEST-2 reuse
 20090424173003 TEST-3 reuse
 20090424173004 TEST-4 reuse
+20090424172000 CONF-4 reuse
 EOF
 $taperscan->read_tapelist();
 
 $taperscan->{'tapecycle'} = 2;
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-1",
-   "simple tapelist, tapecycle = 2: oldest_resuable_volume correct");
+   "simple tapelist, tapecycle = 2: oldest_reusable_volume correct");
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 reusable");
@@ -80,7 +82,7 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST
 
 $taperscan->{'tapecycle'} = 3;
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-1",
-   "simple tapelist, tapecycle = 3: oldest_resuable_volume correct");
+   "simple tapelist, tapecycle = 3: oldest_reusable_volume correct");
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
@@ -88,7 +90,7 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST
 
 $taperscan->{'tapecycle'} = 5;
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), undef,
-   "simple tapelist, tapecycle = 5: oldest_resuable_volume correct (undef)");
+   "simple tapelist, tapecycle = 5: oldest_reusable_volume correct (undef)");
 ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
@@ -104,7 +106,7 @@ $taperscan->read_tapelist();
 
 $taperscan->{'tapecycle'} = 2;
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-2",
-   "no-reuse in tapelist, tapecycle = 2: oldest_resuable_volume correct");
+   "no-reuse in tapelist, tapecycle = 2: oldest_reusable_volume correct");
 ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 not reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 reusable");
@@ -112,7 +114,7 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST
 
 $taperscan->{'tapecycle'} = 4;
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), undef,
-   "no-reuse in tapelist, tapecycle = 3: oldest_resuable_volume correct (undef)");
+   "no-reuse in tapelist, tapecycle = 3: oldest_reusable_volume correct (undef)");
 ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
@@ -128,7 +130,7 @@ $taperscan->read_tapelist();
 
 $taperscan->{'tapecycle'} = 3;
 is($taperscan->oldest_reusable_volume(new_label_ok => 1), "TEST-4",
-   "newly labeled in tapelist, tapecycle = 3, new_label_ok: oldest_resuable_volume correct");
+   "newly labeled in tapelist, tapecycle = 3, new_label_ok: oldest_reusable_volume correct");
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
@@ -136,7 +138,7 @@ ok( $taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST
 
 $taperscan->{'tapecycle'} = 3;
 is($taperscan->oldest_reusable_volume(new_label_ok => 0), "TEST-1",
-   "newly labeled in tapelist, tapecycle = 3, !new_label_ok: oldest_resuable_volume correct");
+   "newly labeled in tapelist, tapecycle = 3, !new_label_ok: oldest_reusable_volume correct");
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 0), " TEST-1 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 0), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 0), " TEST-3 not reusable");

@@ -232,6 +232,7 @@ use warnings;
 use Amanda::Config qw( :getconf );
 use Amanda::Tapelist;
 use Amanda::Debug;
+use Amanda::Util qw( match_labelstr );
 
 sub new {
     my $class = shift;
@@ -338,6 +339,10 @@ sub oldest_reusable_volume {
     for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
 	next unless $tle->{'reuse'};
 	next if $tle->{'datestamp'} eq '0' and !$params{'new_label_ok'};
+Amanda::Debug::debug("labelstr: " . Data::Dumper::Dumper($self->{'labelstr'}));
+Amanda::Debug::debug("autolabel: " . Data::Dumper::Dumper($self->{'autolabel'}));
+	next if !match_labelstr($self->{'labelstr'}, $self->{'autolabel'},
+				$tle->{'label'}, $tle->{'barcode'}, $tle->{'meta'});
 	$num_acceptable++;
 	$best = $tle;
     }
