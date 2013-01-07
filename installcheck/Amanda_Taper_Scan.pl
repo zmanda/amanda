@@ -67,6 +67,7 @@ set_tapelist(<<EOF);
 20090424173002 TEST-2 reuse
 20090424173003 TEST-3 reuse
 20090424173004 TEST-4 reuse
+20090424172000 CONF-4 reuse
 EOF
 $taperscan->read_tapelist();
 

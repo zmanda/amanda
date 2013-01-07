@@ -338,6 +338,7 @@ sub oldest_reusable_volume {
     for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
 	next unless $tle->{'reuse'};
 	next if $tle->{'datestamp'} eq '0' and !$params{'new_label_ok'};
+	next if $tle->{'label'} !~ $self->{'labelstr'};
 	$num_acceptable++;
 	$best = $tle;
     }
