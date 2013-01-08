@@ -150,10 +150,11 @@ process_args (int argc, char *argv[])
 	char **		pp;
 	char *		p;
 	char *		op;
-	char *		av[1000];
+	char **		av;
 	int		ac = 0;
 
 	progname = argv[0];
+	av = malloc((argc+1000) * sizeof(char *));
 
 	if (argc == 2 && strcmp (argv[1], "-help") == 0) {
 		help();

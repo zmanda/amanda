@@ -1,3 +1,6 @@
+2013-01-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmjob_args.c: Handle more than 1000 arguments.
+
 2013-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Set labelstr template from autolabel.
 	* perl/Amanda/ScanInventory.pm: Use the labelstr template.
