@@ -1,4 +1,7 @@
 2013-01-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* VERSION: 3.3.3
+
+2013-01-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmjob_args.c: Handle more than 1000 arguments.
 
 2013-01-04  Jean-Louis Martineau <martineau@zmanda.com>
