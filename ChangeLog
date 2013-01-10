@@ -1,3 +1,6 @@
+2013-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON/Config.pm: Fix perl warning.
+
 2013-01-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmjob_args.c: Handle more than 1000 arguments.
 

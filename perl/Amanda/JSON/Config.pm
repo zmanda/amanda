@@ -18,7 +18,7 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 package Amanda::JSON::Config;
-use Amanda::Config qw( :init );
+use Amanda::Config;
 use Symbol;
 use Data::Dumper;
 use Scalar::Util;
