@@ -41,7 +41,7 @@ applicationexec_PROGRAMS = amgtar amstar
 applicationexec_SCRIPTS = $(SCRIPTS_PERL)
 
 CLEANFILES += $(SCRIPTS_PERL)
-DISTCLEANFILES = config.log
+DISTCLEANFILES += config.log
 
 LDADD = ../common-src/libamanda.la \
 	../client-src/libamclient.la \

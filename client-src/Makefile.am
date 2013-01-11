@@ -57,7 +57,7 @@ TEST_PROGS = getfsent
 EXTRA_PROGRAMS =	$(TEST_PROGS)
 
 CLEANFILES += *.test.c $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
-DISTCLEANFILES = config.log
+DISTCLEANFILES += config.log
 
 
 sendbackup_SOURCES = 	sendbackup.c		sendbackup.h	  \

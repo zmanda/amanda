@@ -112,7 +112,7 @@ test_data = \
 	data/aws-bundle.crt
 EXTRA_DIST += $(test_data)
 CLEANFILES += $(all_tests) $(mocks) $(noinst_SCRIPTS)
-DISTCLEANFILES = config.log
+DISTCLEANFILES += config.log
 
 tests =
 
