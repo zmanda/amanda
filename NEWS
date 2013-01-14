@@ -1,3 +1,9 @@
+Changes in release 3.3.4
+    * amtape
+	o new verify subcommand
+    * amanda.conf
+	o new report-format setting.
+
 Changes in release 3.3.3
 
     * amdump.X log files use timestamp instead of number, amdump and amdump.1

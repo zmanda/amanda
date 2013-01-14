@@ -143,6 +143,7 @@ drive.</para>
 
 </listitem>
 </varlistentry>
+
 <varlistentry>
 <term><command>update</command> <arg choice='opt'>what</arg></term>
 <listitem>
@@ -150,6 +151,15 @@ drive.</para>
 <para>Update changer state.  Consult <manref name="amanda-changers" vol="7" />
 for changer-specific details on the format of <arg
 choice='plain'>what</arg>.</para>
+
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><command>verify</command></term>
+<listitem>
+
+<para>Verify the changer is correctly configured. Can be useful for chg-robot and chg-ndmp.</para>
 
 </listitem>
 </varlistentry>

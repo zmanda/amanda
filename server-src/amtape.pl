@@ -363,6 +363,40 @@ sub {
     $chg->inventory(inventory_cb => $inventory_cb);
 });
 
+subcommand("verify", "verify", "verify the changer is correctly configured",
+sub {
+    my ($finished_cb, @args) = @_;
+
+    my $chg = load_changer($finished_cb) or return;
+
+    if (@args != 0) {
+	return usage($finished_cb);
+    }
+
+    # TODO -- support an --xml option
+
+    my $verify_cb = make_cb(verify => sub {
+	my ($err, @results) = @_;
+	if ($err) {
+	    if ($err->notimpl) {
+		if ($err->{'message'}) {
+		    print STDERR "verify not supported by this changer: $err->{'message'}\n";
+		} else {
+		    print STDERR "verify not supported by this changer\n";
+		}
+	    } else {
+		print STDERR "$err\n";
+	    }
+	} else {
+	    print STDERR join("\n", @results);
+	    print STDERR "\n";
+	}
+	$chg->quit();
+	return $finished_cb->();
+    });
+    $chg->verify(finished_cb => $verify_cb);
+});
+
 subcommand("current", "current", "load and show the contents of the current slot",
 sub {
     my ($finished_cb, @args) = @_;

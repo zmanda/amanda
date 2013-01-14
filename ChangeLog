@@ -1,4 +1,12 @@
 2013-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.pl: Add a verify subcommand.
+	* man/xml-source/amtape.8.xml: Document the verify subcommand.
+	* perl/Amanda/Changer.pm: Add default verify method.
+	* perl/Amanda/Changer/robot.pm (verify): Verify the drive and device
+	  matches.
+	* perl/Amanda/Device.pod: Typo.
+
+2013-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add CONF_REPORT_FORMAT.
 	* common-src/conffile.h: Add CNF_REPORT_FORMAT.
 	* man/xml-source/amanda.conf.5.xml: Document report-foramt.

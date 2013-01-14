@@ -1460,6 +1460,202 @@ sub move_unlocked {
     }
 }
 
+sub verify {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->_with_updated_state(\%params, 'finished_cb',
+	sub { $self->verify_unlocked(@_); });
+}
+
+sub verify_unlocked {
+    my $self = shift;
+    my %params = @_;
+    my $state = $params{'state'};
+    my @drives;
+    my @devices;
+    my $slot;
+    my $drive;
+    my @results;
+    my @tape_devices;
+
+    my $steps = define_steps
+	cb_ref => \$params{'finished_cb'};
+
+    step unload_all => sub {
+	# get a drive to eject
+	for my $drive (keys %{$state->{'drives'}}) {
+	    if ($state->{'drives'}->{$drive}->{'state'} == Amanda::Changer::SLOT_FULL) {
+		return $self->eject_unlocked(drive => $drive,
+			      state => $state,
+			      finished_cb => $steps->{'unload_all_unloaded'});
+	    }
+	}
+
+	# get a new state
+	$params{'finished_get_state_cb'} = $steps->{'verify_all_unloaded'};
+	return $self->_get_state(\%params);
+    };
+
+    step unload_all_unloaded => sub {
+	my ($err) = @_;
+
+	if ($err) {
+	    return $params{'finished_cb'}->($err);
+	}
+	return $steps->{'unload_all'}->();
+    };
+
+    step verify_all_unloaded => sub {
+	my @loaded_drive;
+
+	# verify all drives are unloaded
+	for my $drive (keys %{$state->{'drives'}}) {
+	    push @drives, $drive;
+	    if ($state->{'drives'}->{$drive}->{'state'} == Amanda::Changer::SLOT_FULL) {
+		push @loaded_drive, $drive;
+	    }
+	    if ($self->{'drive2device'}->{$drive}) {
+		push @devices, $self->{'drive2device'}->{$drive};
+	    }
+	}
+	if (@loaded_drive) {
+	    return $self->make_error("failed", $params{'finished_cb'},
+			reason => "invalid",
+			message => "Can't unload all drives: " .
+				   join(" ", @loaded_drive));
+	}
+	$steps->{'eject_devices'}->();
+    };
+
+    step eject_devices => sub {
+	return $steps->{'verify_a_drive'}->() if !@devices;
+
+	my $device_name = pop @devices;
+	my $device = $self->get_device($device_name);
+	if ($device->isa("Amanda::Changer::Error")) {
+	    push @results, "$device";
+	    return $steps->{'eject_devices'}->();
+	}
+	$device->eject();
+	return $steps->{'eject_devices'}->();
+    };
+
+    step verify_a_drive => sub {
+	return $steps->{'all_done'}->() if !@drives;
+
+	$drive = pop @drives;
+	if (!defined $self->{'drive2device'}->{$drive}) {
+	    return $steps->{'verify_a_drive'}->();
+	}
+
+	# find a full slot in the allowed range
+	$slot = $self->_get_next_slot($state, -1);
+
+	$self->{'interface'}->load($slot, $drive, $steps->{'load_finished'});
+    };
+
+    step load_finished => sub {
+	my ($err) = @_;
+	if ($err) {
+	    push @results, "$err";
+	    return $steps->{'verify_a_drive'}->();
+	}
+	$steps->{'start_polling'}->();
+    };
+
+    my ($next_poll, $last_poll);
+    step start_polling => sub {
+	my ($delay, $poll, $until) = @{ $self->{'load_poll'} };
+	my $now = time;
+	$next_poll = $now + $delay;
+	$last_poll = $now + $until;
+
+	return Amanda::MainLoop::call_after(1000 * ($next_poll - $now), $steps->{'check_device'});
+    };
+
+    step check_device => sub {
+	my $device_name = $self->{'drive2device'}->{$drive};
+	confess "drive $drive not found in drive2device" unless $device_name; # shouldn't happen
+
+	$self->_debug("polling '$device_name' to see if it's ready");
+
+	my $device = $self->get_device($device_name);
+	if ($device->isa("Amanda::Changer::Error")) {
+	    push @results, "$device";
+	    return $steps->{'unload'}->();
+	}
+
+	$device->read_label();
+
+	# see if the device thinks it's possible it's busy or empty
+	if ($device->status & $DEVICE_STATUS_VOLUME_MISSING
+	    or $device->status & $DEVICE_STATUS_DEVICE_BUSY) {
+	    # device is not ready -- set up for the next polling step
+	    my ($delay, $poll, $until) = @{ $self->{'load_poll'} };
+	    my $now = time;
+	    $next_poll += $poll;
+	    $next_poll = $now + 1 if ($next_poll < $now);
+	    if ($poll != 0 and $next_poll < $last_poll) {
+		return Amanda::MainLoop::call_after(
+			1000 * ($next_poll - $now), $steps->{'check_device'});
+	    }
+
+	    # (fall through if we're done polling)
+	}
+
+	if ($device->status & $DEVICE_STATUS_VOLUME_MISSING) {
+	    debug("ERROR: Drive $drive is not device $device_name");
+	    push @results, "ERROR: Drive $drive is not device $device_name";
+	    return $steps->{'find_device'}->();
+	} else {
+	    debug("GOOD : Drive $drive is device $device_name");
+	    push @results, "GOOD : Drive $drive is device $device_name";
+	    push @tape_devices, "$drive=$device_name";
+	}
+
+	return $steps->{'unload'}->();
+    };
+
+    step find_device => sub {
+	for my $ddrive (keys %{$state->{'drives'}}) {
+	    if (defined $self->{'drive2device'}->{$ddrive}) {
+		my $device_name = $self->{'drive2device'}->{$ddrive};
+		my $device = $self->get_device($device_name);
+		next if $device->isa("Amanda::Changer::Error");
+
+		$device->read_label();
+
+		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING)) {
+		    debug ("HINT : Drive $drive look to be device $device_name");
+		    push @results, "HINT : Drive $drive look to be device $device_name";
+		    push @tape_devices, "$drive=$device_name";
+		}
+	    }
+	}
+	$steps->{'unload'}->();
+    };
+
+    step unload => sub {
+	$self->{'interface'}->unload($drive, $slot, $steps->{'unload_done'});
+    };
+
+    step unload_done => sub {
+	return $steps->{'verify_a_drive'}->();
+    };
+
+    step all_done => sub {
+	my $tape_devices;
+	foreach my $tape_device (@tape_devices) {
+	    $tape_devices .= " \"$tape_device\"";
+	}
+	push @results, "property \"TAPE-DEVICE\"$tape_devices"; 
+	$params{'finished_cb'}->(undef, @results);
+    };
+}
+
 ##
 # Utilities
 
@@ -1567,15 +1763,39 @@ sub _with_updated_state {
 
     step start => sub {
 	$self->with_locked_state($self->{'statefile'},
-	    $params{$cbname}, $steps->{'got_lock'});
+		    $params{$cbname}, $steps->{'got_lock'});
     };
 
     step got_lock => sub {
 	($state, my $new_cb) = @_;
 
 	# set up params for calling through to $sub later
-	$params{'state'} = $state;
 	$params{$cbname} = $new_cb;
+	$paramsref->{'state'} = $state;
+	$paramsref->{'finished_get_state_cb'} = $steps->{'got_state'};
+	$self->_get_state($paramsref);
+    };
+
+    step got_state => sub {
+	my ($state) = @_;
+	$params{'state'} = $state;
+	# finally, call through to the user's method; $params{$cbname} has been
+	# properly patched to release the state lock when this method is done.
+	$sub->(%params);
+    }
+}
+
+sub _get_state {
+    my $self = shift;
+    my ($paramsref) = @_;
+    my %params = %$paramsref;
+
+    my $state = $params{'state'};
+
+    my $steps = define_steps
+        cb_ref => \$params{'finished_get_state_cb'};
+
+    step got_lock => sub {
 
 	if (!keys %$state) {
 	    $state->{'slots'} = {};
@@ -1616,7 +1836,7 @@ sub _with_updated_state {
     step status_cb => sub {
 	my ($err, $status) = @_;
 	if ($err) {
-	    return $self->make_error("fatal", $params{$cbname},
+	    return $self->make_error("fatal", $params{'finished_get_state_cb'},
 		message => $err);
 	}
 
@@ -1793,9 +2013,7 @@ sub _with_updated_state {
     };
 
     step done => sub {
-	# finally, call through to the user's method; $params{$cbname} has been
-	# properly patched to release the state lock when this method is done.
-	$sub->(%params);
+	$params{'finished_get_state_cb'}->($state);
     };
 }
 
