@@ -35,6 +35,7 @@
     <arg choice='opt'><replaceable>config</replaceable></arg>
   <synopfragment id="cmdline">
     <arg choice='opt'>--log=<replaceable>logfile</replaceable></arg>
+    <arg choice='opt'>--format=<replaceable>MODULE:DEST,DEST-ARG</replaceable></arg>
     <arg choice='opt'>--ps=<replaceable>filename</replaceable></arg>
     <arg choice='opt'>--text=<replaceable>filename</replaceable></arg>
     <arg choice='opt'>--xml=<replaceable>filename</replaceable></arg>
@@ -97,11 +98,36 @@ most recent logfile will be used.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>--format=<replaceable>MODULE:DEST,DEST-ARG</replaceable></option></term>
+  <listitem>
+<para>Use the given perl module to format the report and send it to DEST with the given DEST-ARG.</para>
+<para>Valid module provided with amanda are: human, json, json_raw, ps and xml,
+valid destination are file, mail and print, the DEST-ARG depend on the
+destination.</para>
+
+<para>The default destination is file.</para>
+<para>The default arg for file destination is '-' (stdout).</para>
+<para>The default arg for mail destination is the MAILTO configuration option.</para>
+<para>The default arg for print destination is the PRINTER configuration option.</para>
+<para>Examples:</para>
+<programlisting>
+  <option>--format=<replaceable>human</replaceable></option>
+  <option>--format=<replaceable>human:mail</replaceable></option>
+  <option>--format=<replaceable>human:mail:root</replaceable></option>
+  <option>--format=<replaceable>human:file:/tmp/report.text</replaceable></option>
+  <option>--format=<replaceable>xml:file:/tmp/report.xml</replaceable></option>
+  <option>--format=<replaceable>ps:file:/tmp/report.ps</replaceable></option>
+  <option>--format=<replaceable>ps:print:lp</replaceable></option>
+</programlisting>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>--ps=<replaceable>filename</replaceable></option></term>
   <listitem>
 <para>Write a postscript label to <replaceable>filename</replaceable>.
 See "LABEL PRINTING" below.  If filename is not specified, then the
 label is written to stdout.</para>
+<para>Same as --format=ps, --format=ps:file:filename</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -109,6 +135,7 @@ label is written to stdout.</para>
   <listitem>
 <para>Write a human-readable text report to <replaceable>filename</replaceable>.
 If filename is not specified, then the report is written to stdout.</para>
+<para>Same as --format=human, --format=human:file:filename</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -116,6 +143,7 @@ If filename is not specified, then the report is written to stdout.</para>
   <listitem>
 <para>Write an XML-formatted report to <replaceable>filename</replaceable>.
 If filename is not specified, then the report is written to stdout.</para>
+<para>Same as --format=xml, --format=xml:file:filename</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -125,6 +153,7 @@ If filename is not specified, then the report is written to stdout.</para>
 specifying the given <replaceable>printer</replaceable>.  If the printer is
 not specified, uses the default from the Amanda configuration, or the system
 default printer.</para>
+<para>Same as --format=ps:print, --format=ps:print:printer</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -133,6 +162,7 @@ default printer.</para>
 <para>Send a human-readable text report to the given <replaceable>recipient</replaceable> via
 the mailer specified in the Amanda configuration.  If the recipient is
 not specified, this uses the <emphasis>mailto</emphasis> from the Amanda configuration.</para>
+<para>Same as --format=human:mail, --format=human:mail:recipient</para>
   </listitem>
   </varlistentry>
 </variablelist>

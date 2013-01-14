@@ -149,7 +149,8 @@ APPLY(CNF_TAPERSCAN) \
 APPLY(CNF_EJECT_VOLUME) \
 APPLY(CNF_TMPDIR) \
 APPLY(CNF_REPORT_USE_MEDIA) \
-APPLY(CNF_REPORT_NEXT_MEDIA)
+APPLY(CNF_REPORT_NEXT_MEDIA) \
+APPLY(CNF_REPORT_FORMAT)
 
 amglue_add_enum_tag_fns(confparm_key);
 amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
@@ -571,7 +572,8 @@ val_t_to_sv(val_t *val, SV **results) {
 		sv_setpv(results[0], val_t__str(val));
 		return 1;
 
-	    case CONFTYPE_IDENTLIST: {
+	    case CONFTYPE_IDENTLIST:
+	    case CONFTYPE_STR_LIST: {
 		AV *ilist = newAV();
 
 		identlist_t il;

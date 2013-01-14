@@ -273,6 +273,7 @@ typedef enum {
     CONFTYPE_PART_CACHE_TYPE,
     CONFTYPE_HOST_LIMIT,
     CONFTYPE_NO_YES_ALL,
+    CONFTYPE_STR_LIST,
 } conftype_t;
 
 typedef enum {
@@ -315,6 +316,7 @@ float                 val_t_to_real     (val_t *);
 char                 *val_t_to_str      (val_t *); /* (also converts CONFTYPE_IDENT) */
 char                 *val_t_to_ident    (val_t *); /* (also converts CONFTYPE_STR) */
 identlist_t           val_t_to_identlist(val_t *);
+identlist_t           val_t_to_str_list (val_t *);
 time_t                val_t_to_time     (val_t *);
 ssize_t               val_t_to_size     (val_t *);
 int                   val_t_to_boolean  (val_t *);
@@ -509,6 +511,7 @@ typedef enum {
     CNF_TMPDIR,
     CNF_REPORT_USE_MEDIA,
     CNF_REPORT_NEXT_MEDIA,
+    CNF_REPORT_FORMAT,
     CNF_CNF /* sentinel */
 } confparm_key;
 

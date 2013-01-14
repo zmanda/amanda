@@ -428,9 +428,11 @@ if WANT_SERVER
 # PACKAGE: Amanda::Report::*
 AmandaReportdir = $(amperldir)/Amanda/Report
 AmandaReport_DATA = \
-	Amanda/Report/xml.pm \
+	Amanda/Report/human.pm \
+	Amanda/Report/json.pm \
+	Amanda/Report/json_raw.pm \
 	Amanda/Report/postscript.pm \
-	Amanda/Report/human.pm
+	Amanda/Report/xml.pm
 PM_FILES += $(AmandaReport_DATA)
 EXTRA_DIST += $(AmandaReport_DATA)
 endif
