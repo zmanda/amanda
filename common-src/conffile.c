@@ -93,7 +93,7 @@ typedef enum {
     CONF_DATA_PATH,            CONF_AMANDA,		CONF_DIRECTTCP,
     CONF_TAPER_PARALLEL_WRITE, CONF_INTERACTIVITY,	CONF_TAPERSCAN,
     CONF_MAX_DLE_BY_VOLUME,    CONF_EJECT_VOLUME,	CONF_TMPDIR,
-    CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,
+    CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,  CONF_REPORT_FORMAT,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -522,6 +522,7 @@ static void read_int(conf_var_t *, val_t *);
 static void read_int64(conf_var_t *, val_t *);
 static void read_real(conf_var_t *, val_t *);
 static void read_str(conf_var_t *, val_t *);
+static void read_str_list(conf_var_t *, val_t *);
 static void read_ident(conf_var_t *, val_t *);
 static void read_time(conf_var_t *, val_t *);
 static void read_size(conf_var_t *, val_t *);
@@ -702,6 +703,7 @@ static void conf_init_real(val_t *val, float r);
 static void conf_init_str(val_t *val, char *s);
 static void conf_init_ident(val_t *val, char *s);
 static void conf_init_identlist(val_t *val, char *s);
+static void conf_init_str_list(val_t *val, char *s);
 static void conf_init_time(val_t *val, time_t t);
 static void conf_init_size(val_t *val, confunit_t unit, ssize_t sz);
 static void conf_init_bool(val_t *val, int i);
@@ -1056,8 +1058,9 @@ keytab_t server_keytab[] = {
     { "RECORD", CONF_RECORD },
     { "RECOVERY_LIMIT", CONF_RECOVERY_LIMIT },
     { "REP_TRIES", CONF_REP_TRIES },
-    { "REPORT_USE_MEDIA", CONF_REPORT_USE_MEDIA },
+    { "REPORT_FORMAT", CONF_REPORT_FORMAT },
     { "REPORT_NEXT_MEDIA", CONF_REPORT_NEXT_MEDIA },
+    { "REPORT_USE_MEDIA", CONF_REPORT_USE_MEDIA },
     { "REQ_TRIES", CONF_REQ_TRIES },
     { "REQUIRED", CONF_REQUIRED },
     { "RESERVE", CONF_RESERVE },
@@ -1325,6 +1328,7 @@ conf_var_t server_var [] = {
    { CONF_TAPERSCAN            , CONFTYPE_STR      , read_dtaperscan  , CNF_TAPERSCAN            , NULL },
    { CONF_REPORT_USE_MEDIA     , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_USE_MEDIA     , NULL },
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
+   { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
 };
 
@@ -3492,6 +3496,25 @@ read_str(
 }
 
 static void
+read_str_list(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    while (tok == CONF_STRING) {
+	val->v.identlist = g_slist_append(val->v.identlist,
+					  g_strdup(tokenval.v.s));
+	get_conftoken(CONF_ANY);
+    }
+    if (tok != CONF_NL && tok != CONF_END) {
+	conf_parserror(_("string expected"));
+	unget_conftoken();
+    }
+}
+
+static void
 read_ident(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
@@ -5279,6 +5302,7 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_EJECT_VOLUME]         , 0);
     conf_init_bool     (&conf_data[CNF_REPORT_USE_MEDIA]     , TRUE);
     conf_init_bool     (&conf_data[CNF_REPORT_NEXT_MEDIA]    , TRUE);
+    conf_init_str_list (&conf_data[CNF_REPORT_FORMAT]        , NULL);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , CONF_UNIT_NONE, 3);
@@ -5666,6 +5690,21 @@ conf_init_identlist(
     val->v.identlist = NULL;
     if (s)
 	val->v.identlist = g_slist_append(val->v.identlist, stralloc(s));
+}
+
+static void
+conf_init_str_list(
+    val_t *val,
+    char  *s)
+{
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->seen.block = NULL;
+    val->type = CONFTYPE_STR_LIST;
+    val->unit = CONF_UNIT_NONE;
+    val->v.identlist = NULL;
+    if (s)
+	val->v.identlist = g_slist_append(val->v.identlist, g_strdup(s));
 }
 
 static void
@@ -6669,6 +6708,18 @@ val_t_to_identlist(
     return val_t__identlist(val);
 }
 
+identlist_t
+val_t_to_str_list(
+    val_t *val)
+{
+    assert(config_initialized);
+    if (val->type != CONFTYPE_STR_LIST) {
+	error(_("val_t_to_ident: val.type is not CONFTYPE_STR_LIST"));
+	/*NOTREACHED*/
+    }
+    return val_t__identlist(val);
+}
+
 time_t
 val_t_to_time(
     val_t *val)
@@ -6937,7 +6988,8 @@ merge_val_t(
 				     valdst->v.proplist);
 	    }
 	}
-    } else if (valsrc->type == CONFTYPE_IDENTLIST) {
+    } else if (valsrc->type == CONFTYPE_IDENTLIST ||
+	       valsrc->type == CONFTYPE_STR_LIST) {
 	if (valsrc->v.identlist) {
 	    identlist_t il;
 	    for (il = valsrc->v.identlist; il != NULL; il = il->next) {
@@ -7002,6 +7054,7 @@ copy_val_t(
 	    break;
 
 	case CONFTYPE_IDENTLIST:
+	case CONFTYPE_STR_LIST:
 	    valdst->v.identlist = NULL;
 	    for (ia = valsrc->v.identlist; ia != NULL; ia = ia->next) {
 		valdst->v.identlist = g_slist_append(valdst->v.identlist,
@@ -7160,6 +7213,7 @@ free_val_t(
 	    break;
 
 	case CONFTYPE_IDENTLIST:
+	case CONFTYPE_STR_LIST:
 	    slist_free_full(val->v.identlist, g_free);
 	    break;
 
@@ -7680,6 +7734,26 @@ val_t_display_strs(
 		} else {
 		    strappend(buf[0], " ");
 		    strappend(buf[0],  ia->data);
+		}
+	    }
+	}
+	break;
+
+    case CONFTYPE_STR_LIST:
+	{
+	    GSList *ia;
+	    int     first = 1;
+
+	    buf[0] = NULL;
+	    for (ia = val->v.identlist; ia != NULL; ia = ia->next) {
+		if (first) {
+		    buf[0] = quote_string_always(ia->data);
+		    first = 0;
+		} else {
+		    char *qdata = quote_string_always(ia->data);
+		    strappend(buf[0], " ");
+		    strappend(buf[0],  qdata);
+		    g_free(qdata);
 		}
 	    }
 	}

@@ -599,13 +599,6 @@ sub get_dles
     return @{ $cache->{dles} };
 }
 
-sub xml_output
-{
-    my ( $self, $org, $config ) = @_;
-    use Amanda::Report::xml;
-    return Amanda::Report::xml::make_amreport_xml( $self, $org, $config );
-}
-
 sub get_dle_info
 {
     my $self = shift @_;

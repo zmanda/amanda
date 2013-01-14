@@ -372,6 +372,15 @@ If the reporter must print the list of media expected for the next run.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>report-format</amkeyword> <amtype>string</amtype>+</term>
+  <listitem>
+<para>Default:
+<amdefault>Not set</amdefault>. The formats amdump, amflush and amvault use
+when invoking amreport.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>max-dle-by-volume</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default:

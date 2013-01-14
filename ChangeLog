@@ -1,3 +1,19 @@
+2013-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add CONF_REPORT_FORMAT.
+	* common-src/conffile.h: Add CNF_REPORT_FORMAT.
+	* man/xml-source/amanda.conf.5.xml: Document report-foramt.
+	* man/xml-source/amreport.8.xml: Document new --format argument.
+	* perl/Amanda/Config.swg: Add CNF_REPORT_FORMAT.
+	* perl/Amanda/Report.pm (xml_output): Remove function.
+	* perl/Amanda/Report/human.pm: change api
+	* perl/Amanda/Report/json.pm: New report format.
+	* perl/Amanda/Report/json_raw.pm: New report format.
+	* perl/Amanda/Report/xml.pm: Change api
+	* perl/Makefile.am (AmandaReport_DATA): Add Amanda/Report/json.pm and
+	  Amanda/Report/json_raw.pm
+	* server-src/amreport.pl: New --format argument, change API to call
+	  module.
+
 2013-01-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Extract.pm: Change Zmanda licensing to GPLv2+.
 
