@@ -449,7 +449,8 @@ perform_request(S3Handle *hdl,
                 gpointer write_data,
                 s3_progress_func progress_func,
                 gpointer progress_data,
-                const result_handling_t *result_handling);
+                const result_handling_t *result_handling,
+		gboolean chunked);
 
 /*
  * a CURLOPT_WRITEFUNCTION to save part of the response in memory and
@@ -1882,7 +1883,8 @@ perform_request(S3Handle *hdl,
                 gpointer write_data,
                 s3_progress_func progress_func,
                 gpointer progress_data,
-                const result_handling_t *result_handling)
+                const result_handling_t *result_handling,
+		gboolean chunked)
 {
     char *url = NULL;
     s3_result_t result = S3_RESULT_FAIL; /* assume the worst.. */
@@ -2034,7 +2036,7 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSDATA, progress_data)))
             goto curl_error;
 
-	if (size_func) {
+	if (!chunked) {
 	    /* CURLOPT_INFILESIZE_LARGE added in 7.11.0 */
 #if LIBCURL_VERSION_NUM >= 0x070b00
             if ((curl_code = curl_easy_setopt(hdl->curl,
@@ -2455,7 +2457,7 @@ get_openstack_swift_api_v1_setting(
     result = perform_request(hdl, "GET", NULL, NULL, NULL, NULL, NULL, NULL,
 			     NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                             NULL, NULL, result_handling);
+                             NULL, NULL, result_handling, FALSE);
 
     return result == S3_RESULT_OK;
 }
@@ -2503,7 +2505,7 @@ get_openstack_swift_api_v2_setting(
 			     "application/xml", NULL, NULL,
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
-                             NULL, NULL, result_handling);
+                             NULL, NULL, result_handling, FALSE);
     hdl->getting_swift_2_token = 0;
 
     return result == S3_RESULT_OK;
@@ -2882,7 +2884,7 @@ s3_upload(S3Handle *hdl,
 		 NULL, content_type, NULL, headers,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
-                 result_handling);
+                 result_handling, chunked);
 
     return result == S3_RESULT_OK;
 }
@@ -2932,7 +2934,7 @@ s3_part_upload(S3Handle *hdl,
 		 NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
-                 result_handling);
+                 result_handling, FALSE);
 
     g_free(subresource);
     if (etag) {
@@ -2963,7 +2965,7 @@ s3_initiate_multi_part_upload(
 		 NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
-                 result_handling);
+                 result_handling, FALSE);
 
     g_free(subresource);
 
@@ -2999,7 +3001,7 @@ s3_complete_multi_part_upload(
 		 NULL, NULL, NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, NULL, NULL,
-                 result_handling);
+                 result_handling, FALSE);
 
     g_free(subresource);
 
@@ -3037,7 +3039,7 @@ s3_abort_multi_part_upload(
     result = perform_request(hdl, "DELETE", bucket, key, subresource, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
-                 result_handling);
+                 result_handling, FALSE);
 
     g_free(subresource);
 
@@ -3234,7 +3236,7 @@ list_fetch(S3Handle *hdl,
     result = perform_request(hdl, "GET", bucket, NULL, subresource, query->str, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              S3_BUFFER_WRITE_FUNCS, buf, NULL, NULL,
-                             result_handling);
+                             result_handling, FALSE);
 
     g_string_free(query, TRUE);
 
@@ -3357,7 +3359,7 @@ s3_read(S3Handle *hdl,
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL,
 	NULL,
         NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
-        progress_func, progress_data, result_handling);
+        progress_func, progress_data, result_handling, FALSE);
 
     return result == S3_RESULT_OK;
 }
@@ -3394,7 +3396,7 @@ s3_read_range(S3Handle *hdl,
     g_free(buf);
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL, headers,
         NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
-        progress_func, progress_data, result_handling);
+        progress_func, progress_data, result_handling, FALSE);
 
     curl_slist_free_all(headers);
     return result == S3_RESULT_OK;
@@ -3420,7 +3422,7 @@ s3_delete(S3Handle *hdl,
 
     result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                 result_handling);
+                 result_handling, FALSE);
 
     return result == S3_RESULT_OK;
 }
@@ -3474,7 +3476,7 @@ s3_multi_delete(S3Handle *hdl,
 		 s3_buffer_read_func, s3_buffer_reset_func,
 		 s3_buffer_size_func, s3_buffer_md5_func,
 		 &data, NULL, NULL, NULL, NULL, NULL,
-                 result_handling);
+                 result_handling, FALSE);
 
     g_string_free(query, TRUE);
     if (result == S3_RESULT_OK)
@@ -3544,7 +3546,7 @@ s3_make_bucket(S3Handle *hdl,
     result = perform_request(hdl, verb, bucket, NULL, NULL,
 		 NULL, content_type, project_id, NULL,
                  read_func, reset_func, size_func, md5_func, ptr,
-                 NULL, NULL, NULL, NULL, NULL, result_handling);
+                 NULL, NULL, NULL, NULL, NULL, result_handling, FALSE);
 
    if (result == S3_RESULT_OK ||
        (result != S3_RESULT_OK &&
@@ -3555,11 +3557,11 @@ s3_make_bucket(S3Handle *hdl,
 	if (is_non_empty_string(hdl->bucket_location)) {
             result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, NULL, NULL, NULL,
                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                                     NULL, NULL, result_handling);
+                                     NULL, NULL, result_handling, FALSE);
 	} else {
             result = perform_request(hdl, "GET", bucket, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                                     NULL, NULL, result_handling);
+                                     NULL, NULL, result_handling, FALSE);
 	}
 
         if (result == S3_RESULT_OK && is_non_empty_string(hdl->bucket_location)) {
@@ -3653,7 +3655,7 @@ oauth2_get_access_token(
 			     s3_buffer_read_func, s3_buffer_reset_func,
 			     s3_buffer_size_func, s3_buffer_md5_func,
                              &data, NULL, NULL, NULL, NULL, NULL,
-			     result_handling);
+			     result_handling, FALSE);
     hdl->x_storage_url = NULL;
     hdl->getting_oauth2_access_token = 0;
 
@@ -3708,7 +3710,7 @@ s3_is_bucket_exists(S3Handle *hdl,
     result = perform_request(hdl, "GET", bucket, NULL, NULL, query,
 			     NULL, project_id, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                             NULL, NULL, result_handling);
+                             NULL, NULL, result_handling, FALSE);
 
     return result == S3_RESULT_OK;
 }

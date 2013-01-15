@@ -1,4 +1,7 @@
 2013-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Fix for chunked transfer-encoding.
+
+2013-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.h: Add all S3 error.
 	* perl/Amanda/ScanInventory.pm: Set err.
 
