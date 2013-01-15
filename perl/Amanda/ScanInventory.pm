@@ -561,6 +561,7 @@ sub volume_is_labelable {
 	if (!$autolabel->{'volume_error'}) {
 	    $self->_user_msg(slot_result  => 1,
 			     volume_error => 1,
+			     err          => $sl->{'device_error'},
 			     slot         => $slot);
 	    return 0;
 	}

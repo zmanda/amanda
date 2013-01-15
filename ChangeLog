@@ -1,3 +1,7 @@
+2013-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.h: Add all S3 error.
+	* perl/Amanda/ScanInventory.pm: Set err.
+
 2013-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Add a verify subcommand.
 	* man/xml-source/amtape.8.xml: Document the verify subcommand.

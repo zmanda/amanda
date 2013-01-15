@@ -129,58 +129,92 @@ typedef curl_progress_callback s3_progress_func;
  */
 #define S3_ERROR_LIST \
     S3_ERROR(None), \
+    S3_ERROR(Accepted), \
+    S3_ERROR(AccessDenied), \
     S3_ERROR(AccountProblem), \
     S3_ERROR(AllAccessDisabled), \
     S3_ERROR(AmbiguousGrantByEmailAddress), \
-    S3_ERROR(OperationAborted), \
+    S3_ERROR(AuthenticationRequired), \
     S3_ERROR(BadDigest), \
     S3_ERROR(BucketAlreadyExists), \
     S3_ERROR(BucketAlreadyOwnedByYou), \
     S3_ERROR(BucketNotEmpty), \
+    S3_ERROR(Conflict), \
+    S3_ERROR(Created), \
     S3_ERROR(CredentialsNotSupported), \
+    S3_ERROR(CrossLocationLoggingProhibited), \
+    S3_ERROR(EntityTooSmall), \
     S3_ERROR(EntityTooLarge), \
+    S3_ERROR(ExpiredToken), \
+    S3_ERROR(Forbidden), \
+    S3_ERROR(IllegalVersioningConfigurationException), \
     S3_ERROR(IncompleteBody), \
+    S3_ERROR(IncorrectNumberOfFilesInPostRequest), \
+    S3_ERROR(InlineDataTooLarge), \
     S3_ERROR(InternalError), \
     S3_ERROR(InvalidAccessKeyId), \
+    S3_ERROR(InvalidAddressingHeader), \
     S3_ERROR(InvalidArgument), \
     S3_ERROR(InvalidBucketName), \
+    S3_ERROR(InvalidBucketState), \
     S3_ERROR(InvalidDigest), \
+    S3_ERROR(InvalidLocationConstraint), \
+    S3_ERROR(InvalidPart), \
+    S3_ERROR(InvalidPartOrder), \
+    S3_ERROR(InvalidPayer), \
+    S3_ERROR(InvalidPolicyDocument), \
+    S3_ERROR(InvalidObjectState), \
     S3_ERROR(InvalidRange), \
+    S3_ERROR(InvalidRequest), \
     S3_ERROR(InvalidSecurity), \
     S3_ERROR(InvalidSOAPRequest), \
     S3_ERROR(InvalidStorageClass), \
     S3_ERROR(InvalidTargetBucketForLogging), \
-    S3_ERROR(KeyTooLong), \
+    S3_ERROR(InvalidToken), \
     S3_ERROR(InvalidURI), \
+    S3_ERROR(KeyTooLong), \
     S3_ERROR(MalformedACLError), \
+    S3_ERROR(MalformedPOSTRequest), \
+    S3_ERROR(MalformedXML), \
     S3_ERROR(MaxMessageLengthExceeded), \
+    S3_ERROR(MaxPostPreDataLengthExceededError), \
     S3_ERROR(MetadataTooLarge), \
     S3_ERROR(MethodNotAllowed), \
     S3_ERROR(MissingAttachment), \
     S3_ERROR(MissingContentLength), \
+    S3_ERROR(MissingRequestBodyError), \
     S3_ERROR(MissingSecurityElement), \
     S3_ERROR(MissingSecurityHeader), \
     S3_ERROR(NoLoggingStatusForKey), \
     S3_ERROR(NoSuchBucket), \
     S3_ERROR(NoSuchEntity), \
     S3_ERROR(NoSuchKey), \
+    S3_ERROR(NoSuchLifecycleConfiguration), \
+    S3_ERROR(NoSuchUpload), \
+    S3_ERROR(NoSuchVersion), \
     S3_ERROR(NotImplemented), \
     S3_ERROR(NotSignedUp), \
+    S3_ERROR(NotSuchBucketPolicy), \
+    S3_ERROR(OperationAborted), \
+    S3_ERROR(PermanentRedirect), \
     S3_ERROR(PreconditionFailed), \
+    S3_ERROR(Redirect), \
+    S3_ERROR(RestoreAlreadyInProgress), \
+    S3_ERROR(RequestIsNotMultiPartContent), \
     S3_ERROR(RequestTimeout), \
     S3_ERROR(RequestTimeTooSkewed), \
     S3_ERROR(RequestTorrentOfBucketError), \
     S3_ERROR(SignatureDoesNotMatch), \
+    S3_ERROR(ServiceUnavailable), \
+    S3_ERROR(SlowDown), \
+    S3_ERROR(TemporaryRedirect), \
+    S3_ERROR(TokenRefreshRequired), \
     S3_ERROR(TooManyBuckets), \
-    S3_ERROR(UnexpectedContent), \
-    S3_ERROR(UnresolvableGrantByEmailAddress), \
-    S3_ERROR(Unknown), \
     S3_ERROR(Unauthorized), \
-    S3_ERROR(Created), \
-    S3_ERROR(Accepted), \
-    S3_ERROR(Forbidden), \
-    S3_ERROR(Conflict), \
-    S3_ERROR(AuthenticationRequired), \
+    S3_ERROR(UnexpectedContent), \
+    S3_ERROR(Unknown), \
+    S3_ERROR(UnresolvableGrantByEmailAddress), \
+    S3_ERROR(UserKeyMustBeSpecified), \
     S3_ERROR(END)
 
 typedef enum {
