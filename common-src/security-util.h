@@ -98,6 +98,7 @@ struct tcp_conn {
     char *              buffer;
     ssize_t             size_header_read;
     ssize_t             size_buffer_read;
+    GSource            *child_watch;
 };
 
 

@@ -1,3 +1,8 @@
+2013-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.h (struct tcp_conn): Add child_watch.
+	* common-src/rsh-security.c: Add a child_watch for the rsh process.
+	* common-src/ssh-security.c: Add a child_watch for the ssh process.
+
 2013-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Fix for chunked transfer-encoding.
 
