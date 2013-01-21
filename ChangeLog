@@ -1,3 +1,6 @@
+2013-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amraw.pl: Correctly parse the --directory argument.
+
 2013-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.h: Add all S3 error.
 	* perl/Amanda/ScanInventory.pm: Set err.
