@@ -229,6 +229,9 @@ struct _DeviceClass {
 
     gboolean (* use_connection)(Device *self, DirectTCPConnection *conn);
     gboolean (* check_writable)(Device *self);
+    gboolean (* have_set_reuse)(Device *self);
+    gboolean (* set_reuse)(Device *self);
+    gboolean (* set_no_reuse)(Device *self, char *label, char *datestamp);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
     GArray *class_properties;
@@ -373,6 +376,9 @@ int device_read_to_connection(Device *self, guint64 size,
 			GMutex *abort_mutex, GCond *abort_cond);
 gboolean device_use_connection(Device *self, DirectTCPConnection *conn);
 gboolean device_check_writable(Device *self);
+gboolean device_have_set_reuse(Device *self);
+gboolean device_set_reuse(Device *self);
+gboolean device_set_no_reuse(Device *self, char *label, char *datestamp);
 
 /* Protected methods. Don't call these except in subclass implementations. */
 

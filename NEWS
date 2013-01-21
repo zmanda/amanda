@@ -9,11 +9,18 @@ Changes in release 4.0.0
    * amanda.conf
        o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
 	 the autolabel variable.
+   * amfetchdump
+       o --init and --no-restore arguments.
+   * s3 device
+       o New READ-FROM-GLACIER and TRANSITION-TO-GLACIER properties, they
+         allow to transition s3 objects to Glacier.
 
 Changes in release 3.3.4
 
     * amtape
         o New verify subcommand.
+    * amanda.conf
+        o new report-format setting.
 
 Changes in release 3.3.3
 

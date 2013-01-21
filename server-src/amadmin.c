@@ -97,6 +97,9 @@ static char *opt_sort = NULL;
 static gboolean exact_match = FALSE;
 static gboolean opt_long = 0;
 static gboolean opt_outdated = 0;
+static int argc_orig;
+static char **argv_orig;
+
 
 static const struct {
     const char *name;
@@ -168,6 +171,7 @@ main(
     char **	argv)
 {
     guint i;
+    gint  j;
     char *conf_diskfile;
     char *conf_infofile;
     config_overrides_t *cfg_ovr = NULL;
@@ -192,6 +196,13 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
 
     add_amanda_log_handler(amanda_log_stderr);
+
+    argc_orig = argc;
+    argv_orig = g_new0(char *, argc+1);
+    for (j=0; j<argc; j++) {
+	argv_orig[j] = g_strdup(argv[j]);
+    }
+    argv_orig[argc] = 0;
 
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
 
@@ -650,76 +661,24 @@ unforce_bump(
 
 void
 reuse(
-    int		argc,
-    char **	argv)
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
 {
-    tape_t *tp;
-    int count;
+    char *amadmin_perl = amlibexecdir "/amadmin_perl";
 
-    if(argc < 4) {
-	g_fprintf(stderr,_("%s: expecting \"reuse <tapelabel> ...\"\n"),
-		get_pname());
-	usage();
-    }
-
-    for(count=3; count< argc; count++) {
-	tp = lookup_tapelabel(argv[count]);
-	if ( tp == NULL) {
-	    g_fprintf(stderr, _("reuse: tape label %s not found in tapelist.\n"),
-		argv[count]);
-	    continue;
-	}
-	if( tp->reuse == 0 ) {
-	    tp->reuse = 1;
-	    g_printf(_("%s: marking tape %s as reusable.\n"),
-		   get_pname(), argv[count]);
-	} else {
-	    g_fprintf(stderr, _("%s: tape %s already reusable.\n"),
-		    get_pname(), argv[count]);
-	}
-    }
-
-    if(write_tapelist(conf_tapelist)) {
-	error(_("could not write tapelist \"%s\""), conf_tapelist);
-	/*NOTREACHED*/
-    }
+    execvp(amadmin_perl, argv_orig);
+    /*NOTREACHED*/
 }
 
 void
 noreuse(
-    int		argc,
-    char **	argv)
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
 {
-    tape_t *tp;
-    int count;
+    char *amadmin_perl = amlibexecdir "/amadmin_perl";
 
-    if(argc < 4) {
-	g_fprintf(stderr,_("%s: expecting \"no-reuse <tapelabel> ...\"\n"),
-		get_pname());
-	usage();
-    }
-
-    for(count=3; count< argc; count++) {
-	tp = lookup_tapelabel(argv[count]);
-	if ( tp == NULL) {
-	    g_fprintf(stderr, _("no-reuse: tape label %s not found in tapelist.\n"),
-		argv[count]);
-	    continue;
-	}
-	if( tp->reuse == 1 ) {
-	    tp->reuse = 0;
-	    g_printf(_("%s: marking tape %s as not reusable.\n"),
-		   get_pname(), argv[count]);
-	} else {
-	    g_fprintf(stderr, _("%s: tape %s already not reusable.\n"),
-		    get_pname(), argv[count]);
-	}
-    }
-
-    if(write_tapelist(conf_tapelist)) {
-	error(_("could not write tapelist \"%s\""), conf_tapelist);
-	/*NOTREACHED*/
-    }
+    execvp(amadmin_perl, argv_orig);
+    /*NOTREACHED*/
 }
 
 

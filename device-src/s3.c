@@ -165,6 +165,8 @@ struct S3Handle {
     char *ca_info;
     char *x_auth_token;
     char *x_storage_url;
+    char *x_amz_expiration;
+    char *x_amz_restore;
 
     CURL *curl;
 
@@ -190,6 +192,7 @@ struct S3Handle {
     char *content_type;
 
     gboolean reuse_connection;
+    gboolean read_from_glacier;
     char *transfer_encoding;
 
     /* CAStor */
@@ -308,7 +311,7 @@ static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
     x_storage_url_regex, access_token_regex, expires_in_regex,
     content_type_regex, details_regex, code_regex, uploadId_regex,
-    transfer_encoding_regex;
+    transfer_encoding_regex, x_amz_expiration_regex, x_amz_restore_regex;
 
 
 /*
@@ -2267,6 +2270,16 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	data->hdl->transfer_encoding = find_regex_substring(header, pmatch[1]);
     }
 
+    if (!s3_regexec_wrap(&x_amz_expiration_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->x_amz_expiration);
+	data->hdl->x_amz_expiration = find_regex_substring(header, pmatch[1]);
+    }
+
+    if (!s3_regexec_wrap(&x_amz_restore_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->x_amz_restore);
+	data->hdl->x_amz_restore = find_regex_substring(header, pmatch[1]);
+    }
+
     if (strlen(header) == 0)
 	data->headers_done = TRUE;
     if (g_str_equal(final_header, header))
@@ -2321,6 +2334,8 @@ compile_regexes(void)
         {"\"details\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &details_regex},
         {"\"code\": (.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &code_regex},
 	{"<UploadId>[[:space:]]*([^<]*)[[:space:]]*</UploadId>", REG_EXTENDED | REG_ICASE, &uploadId_regex},
+        {"^x-amz-expiration:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_amz_expiration_regex},
+        {"^x-amz-restore:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_amz_restore_regex},
         {NULL, 0, NULL}
     };
     char regmessage[1024];
@@ -2534,6 +2549,7 @@ s3_open(const char *access_key,
 	const char *client_secret,
 	const char *refresh_token,
 	const gboolean reuse_connection,
+	const gboolean read_from_glacier,
         const char *reps,
         const char *reps_bucket)
 {
@@ -2545,6 +2561,7 @@ s3_open(const char *access_key,
     hdl->verbose = TRUE;
     hdl->use_ssl = s3_curl_supports_ssl();
     hdl->reuse_connection = reuse_connection;
+    hdl->read_from_glacier = read_from_glacier;
 
     if (s3_api == S3_API_S3) {
 	g_assert(access_key);
@@ -3104,6 +3121,8 @@ list_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
         thunk->want_text = 1;
     } else if (g_ascii_strcasecmp(element_name, "nextmarker")) {
         thunk->want_text = 1;
+    } else if (g_ascii_strcasecmp(element_name, "storageclass")) {
+        thunk->want_text = 1;
     }
 }
 
@@ -3152,6 +3171,16 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
         if (thunk->next_marker) g_free(thunk->next_marker);
         thunk->next_marker = thunk->text;
         thunk->text = NULL;
+    } else if (g_ascii_strcasecmp(element_name, "storageclass") == 0) {
+	if (g_str_equal(thunk->text, "STANDARD")) {
+	    thunk->object->storage_class = S3_SC_STANDARD;
+	} else if (g_str_equal(thunk->text, "REDUCED_REDUNDANCY")) {
+	    thunk->object->storage_class = S3_SC_REDUCED_REDUNDANCY;
+	} else if (g_str_equal(thunk->text, "GLACIER")) {
+	    thunk->object->storage_class = S3_SC_GLACIER;
+	}
+	g_free(thunk->text);
+	thunk->text = NULL;
     }
 }
 
@@ -3262,7 +3291,7 @@ s3_list_keys(S3Handle *hdl,
      * etag: 44 (observed+assumed)
      * owner ID: 64 (observed+assumed)
      * owner DisplayName: 255 (assumed)
-     * StorageClass: const (p18 API Version 2006-03-01)
+     * StorageClass: STANDARD | REDUCED_REDUNDANCY | GLACIER
      */
     static const guint MAX_RESPONSE_LEN = 1000*2000;
     static const char *MAX_KEYS = "1000";
@@ -3337,6 +3366,81 @@ cleanup:
 }
 
 gboolean
+s3_init_restore(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key)
+{
+    CurlBuffer data;
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+        { 200, 0, 0, S3_RESULT_OK },
+        { 202, 0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
+        };
+
+    data.buffer = "<RestoreRequest xmlns=\"http://s3.amazonaws.com/doc/2006-3-01\"> <Days>4</Days> </RestoreRequest>";
+    data.buffer_len = strlen(data.buffer);
+    data.buffer_pos = 0;
+    data.max_buffer_size = data.buffer_len;
+    data.end_of_buffer = TRUE;
+    data.mutex = NULL;
+    data.cond = NULL;
+
+    result = perform_request(hdl, "POST", bucket, key, "restore", NULL, NULL,
+	NULL, NULL,
+	s3_buffer_read_func, s3_buffer_reset_func,
+	s3_buffer_size_func, s3_buffer_md5_func,
+	&data,
+	NULL, NULL, NULL,
+	NULL, NULL, result_handling, FALSE);
+
+    return (result == S3_RESULT_OK);
+}
+
+s3_head_t *
+s3_head(
+    S3Handle *hdl,
+    const char *bucket,
+    const char *key)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    s3_head_t *head;
+    static result_handling_t result_handling[] = {
+        { 200, 0, 0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
+        };
+
+    amfree(hdl->x_amz_expiration);
+    amfree(hdl->x_amz_restore);
+    result = perform_request(hdl, "HEAD", bucket, key, NULL, NULL, NULL, NULL,
+	NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, result_handling, FALSE);
+
+    if (result != S3_RESULT_OK) {
+	return NULL;
+    }
+    head = g_new0(s3_head_t, 1);
+    head->key = g_strdup(key);
+    head->x_amz_expiration = g_strdup(hdl->x_amz_expiration);
+    head->x_amz_restore = g_strdup(hdl->x_amz_restore);
+    return head;
+}
+
+void
+free_s3_head(
+    s3_head_t *head)
+{
+    g_free(head->key);
+    g_free(head->x_amz_expiration);
+    g_free(head->x_amz_restore);
+    g_free(head);
+}
+
+gboolean
 s3_read(S3Handle *hdl,
         const char *bucket,
         const char *key,
@@ -3352,14 +3456,25 @@ s3_read(S3Handle *hdl,
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
         };
+    int timeout = 300; /* 5 minutes */
 
     g_assert(hdl != NULL);
     g_assert(write_func != NULL);
 
-    result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL,
-	NULL,
-        NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
-        progress_func, progress_data, result_handling, FALSE);
+    while (1) {
+	result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL,
+	    NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
+            progress_func, progress_data, result_handling, FALSE);
+	if (!hdl->read_from_glacier ||
+	    result != S3_RESULT_FAIL ||
+	    hdl->last_response_code != 403 ||
+	    hdl->last_s3_error_code != S3_ERROR_InvalidObjectState) {
+	    break;
+	}
+	/* retry if a restore from glacier is ongoing */
+	sleep(timeout);
+    }
 
     return result == S3_RESULT_OK;
 }
@@ -3385,6 +3500,7 @@ s3_read_range(S3Handle *hdl,
         };
     struct curl_slist *headers = NULL;
     char *buf;
+    int timeout = 300; /* 5 minutes */
 
     g_assert(hdl != NULL);
     g_assert(write_func != NULL);
@@ -3394,9 +3510,22 @@ s3_read_range(S3Handle *hdl,
 			  (long long unsigned) range_end);
     headers = curl_slist_append(headers, buf);
     g_free(buf);
-    result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL, NULL, headers,
-        NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
-        progress_func, progress_data, result_handling, FALSE);
+
+    while(1) {
+	result = perform_request(hdl, "GET", bucket, key, NULL, NULL, NULL,
+	    NULL, headers,
+            NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
+            progress_func, progress_data, result_handling, FALSE);
+
+	if (!hdl->read_from_glacier ||
+	    result != S3_RESULT_FAIL ||
+	    hdl->last_response_code != 403 ||
+	    hdl->last_s3_error_code != S3_ERROR_InvalidObjectState) {
+	    break;
+	}
+	/* retry if a restore from glacier is ongoing */
+	sleep(timeout);
+    }
 
     curl_slist_free_all(headers);
     return result == S3_RESULT_OK;
@@ -3720,4 +3849,339 @@ s3_delete_bucket(S3Handle *hdl,
                  const char *bucket)
 {
     return s3_delete(hdl, bucket, NULL);
+}
+
+/* Private structure for our "thunk", which tracks where the user is in the list
+ * of keys. */
+
+typedef struct lifecycle_thunk {
+    GSList *lifecycle; /* all rules */
+    lifecycle_rule *rule;
+    lifecycle_action *action;
+
+    gboolean in_LifecycleConfiguration;
+    gboolean in_Rule;
+    gboolean in_ID;
+    gboolean in_Prefix;
+    gboolean in_Status;
+    gboolean in_Transition;
+    gboolean in_Expiration;
+    gboolean in_Days;
+    gboolean in_Date;
+    gboolean in_StorageClass;
+
+    gboolean want_text;
+
+    gchar *text;
+    gsize text_len;
+
+    gchar *error;
+} lifecycle_thunk;
+
+void
+free_lifecycle_rule(
+    gpointer data)
+{
+    lifecycle_rule *rule = (lifecycle_rule *)data;
+
+    g_free(rule->id);
+    g_free(rule->prefix);
+    g_free(rule->status);
+    if (rule->transition) {
+	g_free(rule->transition->date);
+	g_free(rule->transition->storage_class);
+	g_free(rule->transition);
+    }
+    if (rule->expiration) {
+	g_free(rule->expiration->date);
+	g_free(rule->expiration->storage_class);
+	g_free(rule->expiration);
+    }
+    g_free(rule);
+}
+
+void
+free_lifecycle(
+    GSList *lifecycle)
+{
+    g_slist_free_full(lifecycle, free_lifecycle_rule);
+}
+
+/* Functions for a SAX parser to parse the XML from Amazon */
+
+static void
+lifecycle_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
+                        const gchar *element_name,
+                        const gchar **attribute_names G_GNUC_UNUSED,
+                        const gchar **attribute_values G_GNUC_UNUSED,
+                        gpointer user_data,
+                        GError **error G_GNUC_UNUSED)
+{
+    struct lifecycle_thunk *thunk = (lifecycle_thunk *)user_data;
+
+    thunk->want_text = FALSE;
+    if (g_ascii_strcasecmp(element_name, "lifecycleconfiguration") == 0) {
+	thunk->in_LifecycleConfiguration = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "rule") == 0) {
+	thunk->in_Rule = TRUE;
+	thunk->rule = g_new0(lifecycle_rule, 1);
+    } else if (g_ascii_strcasecmp(element_name, "id") == 0) {
+	thunk->in_ID = TRUE;
+        thunk->want_text = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "prefix") == 0) {
+	thunk->in_Prefix = TRUE;
+        thunk->want_text = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "status") == 0) {
+	thunk->in_Status = TRUE;
+        thunk->want_text = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "transition") == 0) {
+	thunk->in_Transition = TRUE;
+	thunk->action = g_new0(lifecycle_action, 1);
+    } else if (g_ascii_strcasecmp(element_name, "expiration") == 0) {
+	thunk->in_Expiration = TRUE;
+	thunk->action = g_new0(lifecycle_action, 1);
+    } else if (g_ascii_strcasecmp(element_name, "days") == 0) {
+	thunk->in_Days = TRUE;
+        thunk->want_text = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "date") == 0) {
+	thunk->in_Date = TRUE;
+        thunk->want_text = TRUE;
+    } else if (g_ascii_strcasecmp(element_name, "storageclass") == 0) {
+	thunk->in_StorageClass = TRUE;
+        thunk->want_text = TRUE;
+    } else {
+	g_free(thunk->error);
+	thunk->error = g_strdup("Unknown element name in lifecycle get");
+    }
+}
+
+static void
+lifecycle_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
+                      const gchar *element_name,
+                      gpointer user_data,
+                      GError **error G_GNUC_UNUSED)
+{
+    lifecycle_thunk *thunk = (lifecycle_thunk *)user_data;
+
+    if (g_ascii_strcasecmp(element_name, "lifecycleconfiguration") == 0) {
+	thunk->in_LifecycleConfiguration = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "rule") == 0) {
+	thunk->in_Rule = FALSE;
+	thunk->lifecycle = g_slist_prepend(thunk->lifecycle, thunk->rule);
+	thunk->rule = NULL;
+    } else if (g_ascii_strcasecmp(element_name, "id") == 0) {
+	thunk->in_ID = FALSE;
+	thunk->rule->id = thunk->text;
+	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "prefix") == 0) {
+	thunk->in_Prefix = FALSE;
+	thunk->rule->prefix = thunk->text;
+	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "status") == 0) {
+	thunk->in_Status = FALSE;
+	thunk->rule->status = thunk->text;
+	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "transition") == 0) {
+	thunk->in_Transition = FALSE;
+	thunk->rule->transition = thunk->action;
+	thunk->action = NULL;
+    } else if (g_ascii_strcasecmp(element_name, "expiration") == 0) {
+	thunk->in_Expiration = FALSE;
+	thunk->rule->expiration = thunk->action;
+	thunk->action = NULL;
+    } else if (g_ascii_strcasecmp(element_name, "days") == 0) {
+	thunk->in_Days = FALSE;
+	thunk->action->days = atoi(thunk->text);
+	g_free(thunk->text);
+	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "date") == 0) {
+	thunk->in_Date = FALSE;
+	thunk->action->date = thunk->text;
+	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    } else if (g_ascii_strcasecmp(element_name, "storageclass") == 0) {
+	thunk->in_StorageClass = FALSE;
+	thunk->action->storage_class = thunk->text;
+	thunk->text = NULL;
+        thunk->want_text = FALSE;
+    }
+}
+
+static void
+lifecycle_text(GMarkupParseContext *context G_GNUC_UNUSED,
+               const gchar *text,
+               gsize text_len,
+               gpointer user_data,
+               GError **error G_GNUC_UNUSED)
+{
+    lifecycle_thunk *thunk = (lifecycle_thunk *)user_data;
+
+    if (thunk->want_text) {
+        if (thunk->text) g_free(thunk->text);
+        thunk->text = g_strndup(text, text_len);
+    }
+}
+
+
+gboolean
+s3_get_lifecycle(
+    S3Handle *hdl,
+    const char *bucket,
+    GSList **lifecycle)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    CurlBuffer buf = {NULL, 0, 0, 100000, TRUE, NULL, NULL};
+    struct lifecycle_thunk thunk;
+    GMarkupParseContext *ctxt = NULL;
+    static GMarkupParser parser = { lifecycle_start_element, lifecycle_end_element, lifecycle_text, NULL, NULL };
+    GError *err = NULL;
+    static result_handling_t result_handling[] = {
+        { 200,  0,                    0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+        };
+
+    result = perform_request(hdl, "GET", bucket, NULL, "lifecycle", NULL,
+			     NULL, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL,
+			     S3_BUFFER_WRITE_FUNCS, &buf,
+                             NULL, NULL, result_handling, FALSE);
+
+    if (result == S3_RESULT_FAIL &&
+	hdl->last_response_code == 404 &&
+	hdl->last_s3_error_code == S3_ERROR_NoSuchLifecycleConfiguration) {
+	result = S3_RESULT_OK;
+	return TRUE;
+    }
+    if (result != S3_RESULT_OK) goto cleanup;
+    if (buf.buffer_pos == 0) goto cleanup;
+
+    /* run the parser over it */
+
+    thunk.lifecycle = NULL;
+    thunk.rule = NULL;
+    thunk.action = NULL;
+
+    thunk.in_LifecycleConfiguration = FALSE;
+    thunk.in_Rule = FALSE;
+    thunk.in_ID = FALSE;
+    thunk.in_Prefix = FALSE;
+    thunk.in_Status = FALSE;
+    thunk.in_Transition = FALSE;
+    thunk.in_Expiration = FALSE;
+    thunk.in_Days = FALSE;
+    thunk.in_Date = FALSE;
+    thunk.in_StorageClass = FALSE;
+    thunk.want_text = FALSE;
+    thunk.text = NULL;
+    thunk.text_len = 0;
+    thunk.error = NULL;
+
+    ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
+
+    if (!g_markup_parse_context_parse(ctxt, buf.buffer, buf.buffer_pos, &err)) {
+	if (hdl->last_message) g_free(hdl->last_message);
+	hdl->last_message = g_strdup(err->message);
+	result = S3_RESULT_FAIL;
+	goto cleanup;
+    }
+
+    if (!g_markup_parse_context_end_parse(ctxt, &err)) {
+	if (hdl->last_message) g_free(hdl->last_message);
+	hdl->last_message = g_strdup(err->message);
+	result = S3_RESULT_FAIL;
+	goto cleanup;
+    }
+
+    g_markup_parse_context_free(ctxt);
+    ctxt = NULL;
+
+    if (thunk.error) {
+	if (hdl->last_message) g_free(hdl->last_message);
+	hdl->last_message = thunk.error;
+	thunk.error = NULL;
+	result = S3_RESULT_FAIL;
+	goto cleanup;
+    }
+
+cleanup:
+    if (err) g_error_free(err);
+    if (thunk.text) g_free(thunk.text);
+    if (ctxt) g_markup_parse_context_free(ctxt);
+    if (buf.buffer) g_free(buf.buffer);
+
+    if (result == S3_RESULT_OK) {
+	*lifecycle = thunk.lifecycle;
+    } else {
+	free_lifecycle(thunk.lifecycle);
+    }
+    return result == S3_RESULT_OK;
+}
+
+gboolean
+s3_put_lifecycle(
+    S3Handle *hdl,
+    const char *bucket,
+    GSList *lifecycle)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    CurlBuffer buf = {NULL, 0, 0, 0, TRUE, NULL, NULL};
+    GString *body = g_string_new("<LifecycleConfiguration>");
+    GSList *life;
+    lifecycle_rule *rule;
+    static result_handling_t result_handling[] = {
+        { 200,  0,                    0, S3_RESULT_OK },
+        RESULT_HANDLING_ALWAYS_RETRY,
+        { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+        };
+
+    for (life = lifecycle; life != NULL; life = life->next) {
+	rule = (lifecycle_rule *)life->data;
+	g_string_append_printf(body,
+		"<Rule><ID>%s</ID><Prefix>%s</Prefix><Status>%s</Status>",
+		rule->id, rule->prefix, rule->status);
+	if (rule->transition) {
+	    g_string_append(body, "<Transition>");
+	    if (rule->transition->date) {
+		g_string_append_printf(body, "<Date>%s</Date>",
+				       rule->transition->date);
+	    } else {
+		g_string_append_printf(body, "<Days>%u</Days>",
+				       rule->transition->days);
+	    }
+	    g_string_append_printf(body,
+			"<StorageClass>%s</StorageClass></Transition>",
+			rule->transition->storage_class);
+	}
+	if (rule->expiration) {
+	    g_string_append(body, "<Expiration>");
+	    if (rule->expiration->date) {
+		g_string_append_printf(body, "<Date>%s</Date>",
+				       rule->expiration->date);
+	    } else {
+		g_string_append_printf(body, "<Days>%u</Days>",
+				       rule->expiration->days);
+	    }
+	    g_string_append(body, "</Expiration>");
+	}
+	g_string_append_printf(body, "</Rule>");
+    }
+    g_string_append(body, "</LifecycleConfiguration>");
+
+    buf.buffer = g_string_free(body, FALSE);
+    buf.buffer_len = strlen(buf.buffer);
+
+    s3_verbose(hdl, 1);
+    result = perform_request(hdl, "PUT", bucket, NULL, "lifecycle", NULL,
+			     "application/xml", NULL, NULL,
+                             S3_BUFFER_READ_FUNCS, &buf,
+			     NULL, NULL, NULL,
+                             NULL, NULL, result_handling, FALSE);
+
+    return result == S3_RESULT_OK;
+
 }

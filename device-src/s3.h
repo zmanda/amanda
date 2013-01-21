@@ -36,6 +36,12 @@ typedef enum {
    S3_API_CASTOR
 } S3_api;
 
+typedef enum {
+   S3_SC_STANDARD,
+   S3_SC_REDUCED_REDUNDANCY,
+   S3_SC_GLACIER
+} StorageClass;
+
 /* An opaque handle.  S3Handles should only be accessed from a single
  * thread at any given time, although it is fine to use different handles
  * in different threads simultaneously. */
@@ -299,6 +305,7 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *client_secret,
 	const char *refresh_token,
 	const gboolean reuse_connection,
+	const gboolean read_from_glacier,
         const char *reps,
         const char *reps_bucket);
 
@@ -516,8 +523,34 @@ typedef struct {
     char    *uploadId;
     char    *prefix;
     guint64  size;
+    StorageClass storage_class;
 } s3_object;
 void free_s3_object(gpointer part);
+
+typedef struct {
+    char *key;
+    char *x_amz_expiration;
+    char *x_amz_restore;
+} s3_head_t;
+void free_s3_head(s3_head_t *head);
+
+typedef struct lifecycle_action {
+    gint  days;
+    char *date;
+    char *storage_class;
+} lifecycle_action;
+
+typedef struct lifecycle_rule {
+    char *id;
+    char *prefix;
+    char *status;
+    lifecycle_action *transition;
+    lifecycle_action *expiration;
+} lifecycle_rule;
+
+void free_lifecycle_rule(gpointer data);
+void free_lifecycle(GSList *lifecycle);
+
 
 /* List all of the files matching the pseudo-glob C{PREFIX*DELIMITER*},
  * returning only that portion which matches C{PREFIX*DELIMITER}.  S3 supports
@@ -540,6 +573,30 @@ s3_list_keys(S3Handle *hdl,
               const char *delimiter,
               GSList **list,
               guint64 *total_size);
+
+/* Init a restore from s3 for an object
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to list
+ * @param key: the key to get the head from
+ * @returns: FALSE if an error occurs
+ */
+gboolean
+s3_init_restore(S3Handle *hdl,
+	        const char *bucket,
+	        const char *key);
+
+/* get the head of an object
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to list
+ * @param key: the key to get the head from
+ * @returns: FALSE if an error occurs
+ */
+s3_head_t *
+s3_head(S3Handle *hdl,
+	const char *bucket,
+	const char *key);
 
 /* Read an entire file, passing the contents to write_func buffer
  * by buffer.
@@ -756,6 +813,12 @@ s3_file_reset_func(void *stream);
 size_t
 s3_file_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
 #endif
+
+gboolean
+s3_get_lifecycle(S3Handle *hdl, const char *bucket, GSList **lifecycle);
+
+gboolean
+s3_put_lifecycle(S3Handle *hdl, const char *bucket, GSList *lifecycle);
 
 /* Adds a null termination to a buffer. */
 void terminate_buffer(CurlBuffer *);

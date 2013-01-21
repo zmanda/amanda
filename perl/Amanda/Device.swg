@@ -362,6 +362,21 @@ typedef struct Device {
 	    return device_check_writable(self);
 	}
 
+	gboolean
+	have_set_reuse() {
+	    return device_have_set_reuse(self);
+	}
+
+	gboolean
+	set_reuse() {
+	    return device_set_reuse(self);
+	}
+
+	gboolean
+	set_no_reuse(char *label, char *datestamp) {
+	    return device_set_no_reuse(self, label, datestamp);
+	}
+
 	%typemap(out) const GSList * {
 	    GSList *iter;
 

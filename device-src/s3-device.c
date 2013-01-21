@@ -90,6 +90,10 @@ struct _S3_by_thread {
 struct _S3Device {
     Device __parent__;
 
+    char *catalog_filename;
+    char *catalog_label;
+    char *catalog_header;
+
     /* The "easy" curl handle we use to access Amazon S3 */
     S3_by_thread *s3t;
 
@@ -179,6 +183,9 @@ struct _S3Device {
 
     gboolean	 reuse_connection;
     gboolean	 chunked;
+
+    gboolean	 read_from_glacier;
+    int		 transition_to_glacier;
 
     /* CAStor */
     char        *reps;
@@ -335,6 +342,12 @@ static DevicePropertyBase device_property_project_id;
 static DevicePropertyBase device_property_create_bucket;
 #define PROPERTY_CREATE_BUCKET (device_property_create_bucket.ID)
 
+/* glacier */
+static DevicePropertyBase device_property_read_from_glacier;
+#define PROPERTY_READ_FROM_GLACIER (device_property_read_from_glacier.ID)
+static DevicePropertyBase device_property_transition_to_glacier;
+#define PROPERTY_TRANSITION_TO_GLACIER (device_property_transition_to_glacier.ID)
+
 /* CAStor replication values for objects and buckets */
 static DevicePropertyBase device_property_s3_reps;
 #define PROPERTY_S3_REPS (device_property_s3_reps.ID)
@@ -351,6 +364,16 @@ void s3_device_register(void);
 
 /*
  * utility functions */
+
+/* Given file and block numbers, return an S3 key.
+ *
+ * @param self: the S3Device object
+ * @param file: the file number
+ * @returns: a newly allocated string containing the prefix for the file.
+ */
+static char *
+file_to_prefix(S3Device *self,
+               int file);
 
 /* Given file and block numbers, return an S3 key.
  *
@@ -443,6 +466,20 @@ setup_handle(S3Device * self);
 static void
 s3_wait_thread_delete(S3Device *self);
 
+static gboolean
+catalog_open(S3Device *self);
+
+static gboolean
+catalog_reset(S3Device *self,
+              char     *header,
+              char     *label);
+
+static gboolean
+catalog_remove(S3Device *self);
+
+static gboolean
+catalog_close(S3Device *self);
+
 /*
  * class mechanics */
 
@@ -522,6 +559,14 @@ static gboolean s3_device_set_verbose_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_create_bucket_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_read_from_glacier_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_transition_to_glacier_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -663,6 +708,10 @@ s3_device_write_block(Device * self,
 static gboolean
 s3_device_finish_file(Device * self);
 
+static gboolean
+s3_device_init_seek_file(Device *pself,
+                         guint file);
+
 static dumpfile_t*
 s3_device_seek_file(Device *pself,
                     guint file);
@@ -684,6 +733,14 @@ static gboolean
 s3_device_erase(Device *pself);
 
 static gboolean
+s3_device_set_reuse(Device *pself);
+
+static gboolean
+s3_device_set_no_reuse(Device *pself,
+		       char   *label,
+		       char   *datestamp);
+
+static gboolean
 check_at_leom(S3Device *self,
                 guint64 size);
 
@@ -694,6 +751,15 @@ check_at_peom(S3Device *self,
 /*
  * Private functions
  */
+
+static char *
+file_to_prefix(S3Device *self,
+               int file)
+{
+    char *prefix = g_strdup_printf("%sf%08x", self->prefix, file);
+    g_assert(strlen(prefix) <= S3_MAX_KEY_LENGTH);
+    return prefix;
+}
 
 static char *
 file_and_block_to_key(S3Device *self,
@@ -766,6 +832,7 @@ write_amanda_header(S3Device *self,
     }
 
     /* write out the header and flush the uploads. */
+    catalog_reset(self, amanda_header.buffer, label);
     key = special_file_to_key(self, "tapestart", -1);
     g_assert(header_size < G_MAXUINT); /* for cast to guint */
     amanda_header.buffer_len = (guint)header_size;
@@ -1213,6 +1280,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_create_bucket,
                                       G_TYPE_BOOLEAN, "create_bucket",
        "Whether to create/delete bucket");
+    device_property_fill_and_register(&device_property_read_from_glacier,
+                                      G_TYPE_BOOLEAN, "read_from_glacier",
+       "Whether to add code to read from glacier storage class");
+    device_property_fill_and_register(&device_property_transition_to_glacier,
+                                      G_TYPE_UINT64, "transition_to_glacier",
+       "The number of days to wait before migrating to glacier after set to no-reuse");
     device_property_fill_and_register(&device_property_s3_subdomain,
                                       G_TYPE_BOOLEAN, "s3_subdomain",
        "Whether to use subdomain");
@@ -1295,6 +1368,7 @@ s3_device_init(S3Device * self)
     self->use_s3_multi_delete = 1;
     self->reps = NULL;
     self->reps_bucket = NULL;
+    self->transition_to_glacier = -1;
 
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
@@ -1382,12 +1456,15 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     device_class->write_block = s3_device_write_block;
     device_class->finish_file = s3_device_finish_file;
 
+    device_class->init_seek_file = s3_device_init_seek_file;
     device_class->seek_file = s3_device_seek_file;
     device_class->seek_block = s3_device_seek_block;
     device_class->read_block = s3_device_read_block;
     device_class->recycle_file = s3_device_recycle_file;
 
     device_class->erase = s3_device_erase;
+    device_class->set_reuse = s3_device_set_reuse;
+    device_class->set_no_reuse = s3_device_set_no_reuse;
 
     g_object_class->finalize = s3_device_finalize;
 
@@ -1480,6 +1557,16 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_create_bucket_fn);
+
+    device_class_register_property(device_class, PROPERTY_READ_FROM_GLACIER,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_read_from_glacier_fn);
+
+    device_class_register_property(device_class, PROPERTY_TRANSITION_TO_GLACIER,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_transition_to_glacier_fn);
 
     device_class_register_property(device_class, PROPERTY_STORAGE_API,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1853,17 +1940,30 @@ s3_device_set_create_bucket_fn(Device *p_self, DevicePropertyBase *base,
     GValue *val, PropertySurety surety, PropertySource source)
 {
     S3Device *self = S3_DEVICE(p_self);
-    int       thread;
 
     self->create_bucket = g_value_get_boolean(val);
-    /* Our S3 handle may not yet have been instantiated; if so, it will
-     * get the proper verbose setting when it is created */
-    if (self->s3t) {
-	for (thread = 0; thread < self->nb_threads; thread++) {
-	    if (self->s3t[thread].s3)
-		s3_verbose(self->s3t[thread].s3, self->verbose);
-	}
-    }
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_read_from_glacier_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->read_from_glacier = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_transition_to_glacier_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->transition_to_glacier = g_value_get_uint64(val);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
@@ -2342,6 +2442,9 @@ static void s3_device_finalize(GObject * obj_self) {
 	}
 	g_free(self->s3t);
     }
+    if (self->catalog_filename) {
+	catalog_close(self);
+    }
     if(self->bucket) g_free(self->bucket);
     if(self->prefix) g_free(self->prefix);
     if(self->access_key) g_free(self->access_key);
@@ -2364,12 +2467,109 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->reps_bucket) g_free(self->reps_bucket);
 }
 
+static gboolean
+catalog_open(
+    S3Device *self)
+{
+    char   *filename;
+    char   *dirname;
+    FILE   *file;
+    char    line[1025];
+
+    /* create the directory */
+    filename = g_strdup_printf("bucket-%s", self->bucket);
+    dirname  = config_dir_relative(filename);
+    mkdir(dirname, 0700);
+    amfree(filename);
+    amfree(dirname);
+
+    filename = g_strdup_printf("bucket-%s/%s", self->bucket, self->prefix);
+    self->catalog_filename = config_dir_relative(filename);
+    g_free(filename);
+    file = fopen(self->catalog_filename, "r");
+    if (!file) {
+	g_free(self->catalog_label);
+	g_free(self->catalog_header);
+	self->catalog_label = NULL;
+	self->catalog_header = NULL;
+	return TRUE;
+    }
+    fgets(line, 1024, file);
+    if (line[strlen(line)-1] == '\n')
+	line[strlen(line)-1] = '\0';
+    g_free(self->catalog_label);
+    self->catalog_label = g_strdup(line+7);
+    fgets(line, 1024, file);
+    if (line[strlen(line)-1] == '\n')
+	line[strlen(line)-1] = '\0';
+    g_free(self->catalog_header);
+    self->catalog_header = g_strdup(line+8);
+    fclose(file);
+    return TRUE;
+}
+
+static gboolean
+write_catalog(
+    S3Device *self)
+{
+    FILE *file;
+
+    file = fopen(self->catalog_filename, "w");
+    if (!file) {
+        return FALSE;
+    }
+    g_fprintf(file,"LABEL: %s\n", self->catalog_label);
+    g_fprintf(file,"HEADER: %s\n", self->catalog_header);
+    fclose(file);
+    return TRUE;
+}
+
+static gboolean
+catalog_reset(
+    S3Device *self,
+    char     *header,
+    char     *label)
+{
+    g_free(self->catalog_header);
+    self->catalog_header = quote_string(header);
+    g_free(self->catalog_label);
+    self->catalog_label = g_strdup(label);
+
+    return write_catalog(self);
+}
+
+static gboolean
+catalog_remove(
+    S3Device *self)
+{
+    unlink(self->catalog_filename);
+    amfree(self->catalog_filename);
+    amfree(self->catalog_label);
+    amfree(self->catalog_header);
+    return TRUE;
+}
+
+static gboolean
+catalog_close(
+    S3Device *self)
+{
+    gboolean result;
+
+    result = write_catalog(self);
+    amfree(self->catalog_filename);
+    amfree(self->catalog_label);
+    amfree(self->catalog_header);
+    return result;
+}
+
 static gboolean setup_handle(S3Device * self) {
     Device *d_self = DEVICE(self);
     int thread;
     guint response_code;
     s3_error_code_t s3_error_code;
     CURLcode curl_code;
+
+    catalog_open(self);
 
     if (self->s3t == NULL) {
 	if (self->s3_api == S3_API_S3) {
@@ -2488,6 +2688,7 @@ static gboolean setup_handle(S3Device * self) {
 					   self->client_secret,
 					   self->refresh_token,
 					   self->reuse_connection,
+					   self->read_from_glacier,
                                            self->reps, self->reps_bucket);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
@@ -2660,60 +2861,90 @@ s3_device_read_label(Device *pself) {
     }
     reset_thread(self);
 
-    key = special_file_to_key(self, "tapestart", -1);
+    if (self->catalog_label && self->catalog_header) {
+	char *header_buf;
 
-    if (!make_bucket(pself)) {
-	return pself->status;
-    }
+	header_buf = unquote_string(self->catalog_header);
+	amanda_header = g_new(dumpfile_t, 1);
+	fh_init(amanda_header);
+	if (strlen(header_buf) > 0) {
+	    parse_file_header(header_buf, amanda_header, strlen(header_buf));
+	}
 
-    if (!s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL)) {
-        guint response_code;
-        s3_error_code_t s3_error_code;
-        s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
-	g_free(buf.buffer);
+	pself->header_block_size = strlen(header_buf);
+	g_free(header_buf);
+	pself->volume_header = amanda_header;
+    } else {
+	key = special_file_to_key(self, "tapestart", -1);
+
+	if (!make_bucket(pself)) {
+	    return pself->status;
+	}
+
+	s3_device_init_seek_file(pself, 0);
+	if (!s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS,
+		     &buf, NULL, NULL)) {
+            guint response_code;
+            s3_error_code_t s3_error_code;
+            s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code,
+		     NULL, NULL, NULL);
+	    g_free(buf.buffer);
+	    g_free(key);
+
+            /* if it's an expected error (not found), just return FALSE */
+            if (response_code == 404 &&
+	        (s3_error_code == S3_ERROR_None ||
+	         s3_error_code == S3_ERROR_Unknown ||
+		 s3_error_code == S3_ERROR_NoSuchKey ||
+		 s3_error_code == S3_ERROR_NoSuchEntity ||
+		 s3_error_code == S3_ERROR_NoSuchBucket)) {
+		g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
+			device_set_error(pself,
+		g_strdup(_("Amanda header not found -- unlabeled volume?")),
+			   DEVICE_STATUS_DEVICE_ERROR
+			 | DEVICE_STATUS_VOLUME_ERROR
+			 | DEVICE_STATUS_VOLUME_UNLABELED);
+		return pself->status;
+            }
+
+            /* otherwise, log it and return */
+	    device_set_error(pself,
+		g_strdup_printf(_("While trying to read tapestart header: %s"),
+		       s3_strerror(self->s3t[0].s3)),
+		       DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+            return pself->status;
+	}
 	g_free(key);
 
-        /* if it's an expected error (not found), just return FALSE */
-        if (response_code == 404 &&
-             (s3_error_code == S3_ERROR_None ||
-              s3_error_code == S3_ERROR_Unknown ||
-	      s3_error_code == S3_ERROR_NoSuchKey ||
-	      s3_error_code == S3_ERROR_NoSuchEntity ||
-	      s3_error_code == S3_ERROR_NoSuchBucket)) {
-            g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
-	    device_set_error(pself,
-		g_strdup(_("Amanda header not found -- unlabeled volume?")),
-		  DEVICE_STATUS_DEVICE_ERROR
-		| DEVICE_STATUS_VOLUME_ERROR
-		| DEVICE_STATUS_VOLUME_UNLABELED);
+	/* handle an empty file gracefully */
+	if (buf.buffer_len == 0) {
+	    device_set_error(pself, g_strdup(_("Empty header file")),
+			     DEVICE_STATUS_VOLUME_ERROR);
+	    g_free(buf.buffer);
             return pself->status;
-        }
+	}
 
-        /* otherwise, log it and return */
-	device_set_error(pself,
-	    g_strdup_printf(_("While trying to read tapestart header: %s"), s3_strerror(self->s3t[0].s3)),
-	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-        return pself->status;
-    }
-    g_free(key);
-
-    /* handle an empty file gracefully */
-    if (buf.buffer_len == 0) {
-	device_set_error(pself, g_strdup(_("Empty header file")), DEVICE_STATUS_VOLUME_ERROR);
+	pself->header_block_size = buf.buffer_len;
+	g_assert(buf.buffer != NULL);
+	amanda_header = g_new(dumpfile_t, 1);
+	parse_file_header(buf.buffer, amanda_header, buf.buffer_pos);
+	pself->volume_header = amanda_header;
 	g_free(buf.buffer);
-        return pself->status;
-    }
 
-    pself->header_block_size = buf.buffer_len;
-    g_assert(buf.buffer != NULL);
-    amanda_header = g_new(dumpfile_t, 1);
-    parse_file_header(buf.buffer, amanda_header, buf.buffer_pos);
-    pself->volume_header = amanda_header;
-    g_free(buf.buffer);
+	if (amanda_header->type != F_TAPESTART) {
+	    device_set_error(pself, g_strdup(_("Invalid amanda header")),
+			     DEVICE_STATUS_VOLUME_ERROR);
+            return pself->status;
+	}
 
-    if (amanda_header->type != F_TAPESTART) {
-	device_set_error(pself, g_strdup(_("Invalid amanda header")), DEVICE_STATUS_VOLUME_ERROR);
-        return pself->status;
+	if (!self->catalog_label || self->catalog_header) {
+	    size_t header_size = 0;
+	    char *buf;
+	    buf = device_build_amanda_header(DEVICE(self), amanda_header,
+					     &header_size);
+	    catalog_reset(self, buf, amanda_header->name);
+	    g_free(buf);
+	}
     }
 
     pself->volume_label = g_strdup(amanda_header->name);
@@ -2763,6 +2994,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
             break;
 
         case ACCESS_WRITE:
+	    s3_device_set_reuse(pself);
             if (!delete_all_files(self)) {
 		return FALSE;
 	    }
@@ -3329,10 +3561,229 @@ s3_device_erase(Device *pself) {
         }
     }
     self->volume_bytes = 0;
+    catalog_remove(self);
+
+    return TRUE;
+}
+
+static gboolean
+s3_device_set_reuse(
+    Device *dself)
+{
+    S3Device *self = S3_DEVICE(dself);
+    GSList *lifecycle = NULL, *life;
+    lifecycle_rule *rule;
+    gboolean removed = FALSE;
+
+    if (self->transition_to_glacier < 0 && !self->read_from_glacier) {
+	return TRUE;
+    }
+
+    if (device_in_error(self)) return dself->status;
+
+    if (!setup_handle(self)) {
+        /* setup_handle already set our error message */
+	return dself->status;
+    }
+
+    reset_thread(self);
+
+    s3_get_lifecycle(self->s3t[0].s3, self->bucket, &lifecycle);
+
+    /* remove it if it exist */
+    for (life = lifecycle; life != NULL; life = life->next) {
+	rule = (lifecycle_rule *)life->data;
+
+	if (g_str_equal(rule->id, dself->volume_label)) {
+	    removed = TRUE;
+	    lifecycle = g_slist_delete_link(lifecycle, life);
+	    free_lifecycle_rule(rule);
+	    break;
+	}
+    }
+    if (removed) {
+	s3_put_lifecycle(self->s3t[0].s3, self->bucket, lifecycle);
+    }
+    return TRUE;
+}
+
+static gboolean
+s3_device_set_no_reuse(
+    Device *dself,
+    char   *label,
+    char   *datestamp)
+{
+    S3Device *self = S3_DEVICE(dself);
+    GSList *lifecycle = NULL, *life, *next_life, *prev_life = NULL;
+    lifecycle_rule *rule;
+    guint count = 0;
+    GSList *to_remove = NULL;
+    char *lifecycle_datestamp = NULL;
+    time_t t;
+    struct tm tmp;
+
+    if (self->transition_to_glacier < 0) {
+	return TRUE;
+    }
+
+    if (!label || !datestamp) {
+	s3_device_read_label(dself);
+	label = dself->volume_label;
+	datestamp = dself->volume_time;
+    }
+
+    if (device_in_error(self)) return dself->status;
+
+    if (!setup_handle(self)) {
+        /* setup_handle already set our error message */
+	return dself->status;
+    }
+    reset_thread(self);
+
+    s3_get_lifecycle(self->s3t[0].s3, self->bucket, &lifecycle);
+
+    /* remove it if it exist */
+    for (life = lifecycle; life != NULL; life = next_life) {
+	next_life = life->next;
+
+	rule = (lifecycle_rule *)life->data;
+	count++;
+
+	if (g_str_equal(rule->id, label)) {
+	    free_lifecycle_rule(rule);
+	    if (prev_life == NULL) {
+		lifecycle = next_life;
+	    } else {
+		prev_life->next = next_life;
+	    }
+	    //g_free(life);
+	} else {
+	    if (!to_remove ||
+		 strcmp(datestamp, lifecycle_datestamp) < 0) {
+		to_remove = life;
+		g_free(lifecycle_datestamp);
+		lifecycle_datestamp = g_strdup(datestamp);
+	    }
+	    prev_life = life;
+	    count++;
+	}
+    }
+
+    /* remove a lifecycle */
+    if (count >= 999) {
+	rule = (lifecycle_rule *)to_remove->data;
+	free_lifecycle_rule(rule);
+	lifecycle = g_slist_delete_link(lifecycle, to_remove);
+    }
+
+    /* add it */
+    rule = g_new0(lifecycle_rule, 1);
+    rule->id = g_strdup(label);
+    rule->prefix = g_strdup_printf("%sf", self->prefix);
+    rule->status = g_strdup("Enabled");
+    rule->transition = g_new0(lifecycle_action, 1);
+    rule->transition->days = 0;
+    t = time(NULL) + ((self->transition_to_glacier+1) * 86400);
+    if (!gmtime_r(&t, &tmp)) perror("localtime");
+    rule->transition->date = g_strdup_printf(
+		"%04d-%02d-%02dT00:00:00.000Z",
+		1900+tmp.tm_year, tmp.tm_mon+1, tmp.tm_mday);
+    rule->transition->storage_class = g_strdup("GLACIER");
+
+    lifecycle = g_slist_append(lifecycle, rule);
+    s3_put_lifecycle(self->s3t[0].s3, self->bucket, lifecycle);
+
     return TRUE;
 }
 
 /* functions for reading */
+
+static gboolean
+s3_device_init_seek_file(
+    Device *pself,
+    guint file)
+{
+    S3Device *self = S3_DEVICE(pself);
+    gboolean result;
+    GSList *objects;
+    char *prefix;
+    const char *errmsg = NULL;
+
+    if (!self->read_from_glacier) {
+	return TRUE;
+    }
+
+    /* get a list of all objects */
+    if (file == 0) {
+	prefix = special_file_to_key(self, "tapestart", -1);
+    } else {
+	prefix = file_to_prefix(self, file);
+    }
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, prefix, NULL,
+			  &objects, NULL);
+    g_free(prefix);
+
+    if (!result) {
+        guint response_code;
+        s3_error_code_t s3_error_code;
+        s3_error(self->s3t[0].s3, &errmsg, &response_code, &s3_error_code,
+		 NULL, NULL, NULL);
+
+	device_set_error(pself,
+		g_strdup_printf(_("failed to list objects: %s"), errmsg),
+		DEVICE_STATUS_SUCCESS);
+
+	return FALSE;
+    }
+
+    /* for all GLACIER objects */
+    for (; objects; ) {
+	s3_object *object = (s3_object *)objects->data;
+	s3_head_t *head;
+	objects = g_slist_remove(objects, objects->data);
+	if (object->storage_class == S3_SC_GLACIER) {
+	    /* HEAD object */
+	    head = s3_head(self->s3t[0].s3, self->bucket, object->key);
+	    if (!head) {
+	        guint response_code;
+	        s3_error_code_t s3_error_code;
+	        s3_error(self->s3t[0].s3, &errmsg, &response_code,
+			 &s3_error_code, NULL, NULL, NULL);
+
+		device_set_error(pself,
+			g_strdup_printf(
+				_("failed to get head of objects '%s': %s"),
+				object->key, errmsg),
+			DEVICE_STATUS_SUCCESS);
+
+		return FALSE;
+	    }
+	    /* if it is not restored */
+	    if (!head->x_amz_restore) {
+	        /* init restore */
+		result = s3_init_restore(self->s3t[0].s3, self->bucket,
+					 object->key);
+		if (!result) {
+		    guint response_code;
+		    s3_error_code_t s3_error_code;
+		    s3_error(self->s3t[0].s3, &errmsg, &response_code,
+			     &s3_error_code, NULL, NULL, NULL);
+
+		    device_set_error(pself,
+			g_strdup_printf(_("failed to list objects: %s"),
+					 errmsg),
+			DEVICE_STATUS_SUCCESS);
+
+		    return FALSE;
+		}
+	    }
+	    free_s3_head(head);
+	}
+	free_s3_object(object);
+    }
+    return TRUE;
+
+}
 
 static dumpfile_t*
 s3_device_seek_file(Device *pself, guint file) {
@@ -3363,6 +3814,7 @@ s3_device_seek_file(Device *pself, guint file) {
     self->dltotal = 0;
     g_mutex_unlock(self->thread_idle_mutex);
 
+    s3_device_init_seek_file(pself, file);
     /* read it in */
     key = special_file_to_key(self, "filestart", pself->file);
     result = s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS,
@@ -3386,6 +3838,7 @@ s3_device_seek_file(Device *pself, guint file) {
                 return s3_device_seek_file(pself, next_file);
             } else if (next_file == 0) {
                 /* No next file. Check if we are one past the end. */
+		s3_device_init_seek_file(pself, pself->file - 1);
                 key = special_file_to_key(self, "filestart", pself->file - 1);
                 result = s3_read(self->s3t[0].s3, self->bucket, key,
                     S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL);

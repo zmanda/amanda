@@ -481,6 +481,11 @@ writing long enough to bring the average below this value.
 (read-write) The projectid (for google).
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>READ-FROM-GLACIER</term><listitem>
+(read-write) Default: NO. Set it to "YES" if some files are transitioned to
+glacier.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>REUSE-CONNECTION</term><listitem>
 (read-write) Default: YES. Set it to "NO" if reusing a connection cause some bug, this is sometime the case with big block size.
 </listitem></varlistentry>
@@ -573,6 +578,10 @@ for the most up-to-date list.
  <!-- ==== -->
  <varlistentry><term>TENANT_NAME</term><listitem>
 (read-write) The tenant_name (for swift v2).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>TRANSITION-TO-GLACIER</term><listitem>
+(read-write) Default: -1. Set to a value greater or equal to zero to transition a volume to glacier that number of days after it is set to no-reuse.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>USERNAME</term><listitem>

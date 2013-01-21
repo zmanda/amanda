@@ -29,6 +29,7 @@ use File::Path;
 use Amanda::Config qw( :getconf );
 use Amanda::Debug;
 use Amanda::Changer;
+use Amanda::Tapelist;
 use Amanda::MainLoop;
 use Amanda::Device qw( :constants );
 
@@ -641,6 +642,113 @@ sub _set_current {
 
     $self->{slot} = $slot;
     $state->{current_slot} = $self->{unaliased}->{$slot};
+}
+
+sub set_reuse {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+	my @match_slots;
+	my %labels;
+
+	foreach my $label (@{$params{'labels'}}) {
+	    $labels{$label} = $label;
+	}
+
+	foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
+	    my $slot = "$_";
+	    my $unaliased = $self->{unaliased}->{$slot};
+
+	    if (exists $state->{'slots'}->{$unaliased}->{'label'} and
+		exists $labels{$state->{'slots'}->{$unaliased}->{'label'}}) {
+		push @match_slots, $slot;
+	    }
+	}
+
+	foreach my $match_slot (@match_slots) {
+	    my $slot_name = $self->{slot_name}->{$match_slot};
+	    my $device = Amanda::Device->new($slot_name);
+	    if ($device->status != $DEVICE_STATUS_SUCCESS) {
+		return $self->make_error("failed", $finished_cb,
+		    reason => "device",
+		    message => "opening '$match_slot': " . $device->error_or_status());
+	    }
+
+	    if (my $err = $self->{'config'}->configure_device($device)) {
+		return $self->make_error("failed", $finished_cb,
+		    reason => "device",
+		    message => $err);
+	    }
+
+	    if ($device->have_set_reuse()) {
+		$device->read_label();
+		$device->set_reuse();
+	    }
+	    undef $device;
+	}
+
+	$finished_cb->(undef);
+    });
+}
+
+sub set_no_reuse {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+	my %match_slots;
+	my %labels;
+
+	foreach my $label (@{$params{'labels'}}) {
+	    $labels{$label} = $label;
+	}
+
+	foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
+	    my $slot = "$_";
+	    my $unaliased = $self->{unaliased}->{$slot};
+
+	    if (exists $state->{'slots'}->{$unaliased}->{'label'} and
+		exists $labels{$state->{'slots'}->{$unaliased}->{'label'}}) {
+		$match_slots{$slot} = $state->{'slots'}->{$unaliased}->{'label'};
+		#push @match_slots, $slot;
+	    }
+	}
+
+	while ( my($match_slot, $label) = each(%match_slots)) {
+	    my $slot_name = $self->{slot_name}->{$match_slot};
+	    my $device = Amanda::Device->new($slot_name);
+	    if ($device->status != $DEVICE_STATUS_SUCCESS) {
+		return $self->make_error("failed", $finished_cb,
+		    reason => "device",
+		    message => "opening '$match_slot': " . $device->error_or_status());
+	    }
+
+	    if (my $err = $self->{'config'}->configure_device($device)) {
+		return $self->make_error("failed", $finished_cb,
+		    reason => "device",
+		    message => $err);
+	    }
+
+	    if ($device->have_set_reuse()) {
+		my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+		if ($tle) {
+		    $device->set_no_reuse($label, $tle->{'datestamp'});
+		}
+	    }
+	    undef $device;
+	}
+
+	$finished_cb->(undef);
+    });
 }
 
 package Amanda::Changer::multi::Reservation;

@@ -28,6 +28,7 @@ amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			planner
 
 amlibexec_SCRIPTS_PERL = \
+	    amadmin_perl \
 	    amlogroll \
 	    amdumpd \
 	    chunker \

@@ -1,4 +1,24 @@
 2013-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Keep a catalog of the labels.
+	  New READ-FROM-GLACIER and TRANSITION-TO-GLACIER properties.
+	  Implement set_reuse and set_no_reuse to remove/add lifecycle.
+	* device-src/device.c: New device_have_set_reuse and device_set_reuse
+	  functions.
+	* device-src/device.h: new set_reuse and set_no_reuse.
+	* device-src/s3.c: Implement init_restore, get and set lifecycle.
+	* device-src/s3.h: Lifecycle.
+	* man/xml-source/amanda-devices.7.xml: Document new READ-FROM-GLACIER
+	  and TRANSITION-TO-GLACIER S3 properties.
+	* perl/Amanda/Changer.pm: Add set_reuse and set_no_reuse method.
+	* perl/Amanda/Changer/multi.pm: Implement set_reuse and set_no_reuse.
+	* perl/Amanda/Device.swg: Add set_reuse and set_no_reuse method.
+	* server-src/Makefile.am (amlibexec_SCRIPTS_PERL) Add amadmin_perl.
+	* server-src/amadmin.c: Call perl program for the reuse and no-reuse
+	  commands.
+	* server-src/amadmin_perl.pl: Implementthe reuse and no-reuse commands
+	  of amadmin.
+
+2013-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amraw.pl: Correctly parse the --directory argument.
 
 2013-01-16  Jean-Louis Martineau <martineau@zmanda.com>
@@ -315,7 +335,7 @@
 	* common-src/security-util.c: Typo.
 
 2012-11-15  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/amfetchdump.pl: Add --init --no-restpre arguments.
+	* server-src/amfetchdump.pl: Add --init --no-restore arguments.
 	* man/xml-source/amfetchdump.8.xml: Document them.
 
 2012-11-15  Jean-Louis Martineau <martineau@zmanda.com>

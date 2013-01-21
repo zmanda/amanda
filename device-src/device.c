@@ -1601,6 +1601,50 @@ device_check_writable(
     }
 }
 
+gboolean
+device_have_set_reuse(
+    Device *self)
+{
+    DeviceClass *klass;
+
+    klass = DEVICE_GET_CLASS(self);
+    if (klass->set_reuse) {
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+gboolean
+device_set_reuse(
+    Device *self)
+{
+    DeviceClass *klass;
+
+    klass = DEVICE_GET_CLASS(self);
+    if (klass->set_reuse) {
+	return (klass->set_reuse)(self);
+    } else {
+	return TRUE;
+    }
+}
+
+gboolean
+device_set_no_reuse(
+    Device *self,
+    char   *label,
+    char   *datestamp)
+{
+    DeviceClass *klass;
+
+    klass = DEVICE_GET_CLASS(self);
+    if (klass->set_no_reuse) {
+	return (klass->set_no_reuse)(self, label, datestamp);
+    } else {
+	return TRUE;
+    }
+}
+
 /* Property handling */
 
 void
