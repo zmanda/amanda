@@ -1,3 +1,6 @@
+2013-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amraw.pl: Correctly parse the --directory argument.
+
 2013-01-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.h (struct tcp_conn): Add child_watch.
 	* common-src/rsh-security.c: Add a child_watch for the rsh process.

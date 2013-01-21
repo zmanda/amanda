@@ -231,6 +231,7 @@ sub command_restore {
     # include-list and exclude-list are ignored, the complete dle is restored.
 
     $device = "amraw-restored" if !defined $device;
+    debug("Restoring to $device");
 
     my $fd = POSIX::open($device, &POSIX::O_CREAT | &POSIX::O_RDWR, 0600 );
     if ($fd == -1) {
@@ -294,7 +295,7 @@ GetOptions(
     'calcsize'           => \$opt_calcsize,
     'include-list=s'     => \@opt_include_list,
     'exclude-list=s'     => \@opt_exclude_list,
-    'directory'          => \$opt_directory,
+    'directory=s'        => \$opt_directory,
 ) or usage();
 
 if (defined $opt_version) {
