@@ -2494,12 +2494,14 @@ catalog_open(
 	self->catalog_header = NULL;
 	return TRUE;
     }
-    fgets(line, 1024, file);
+    if (!fgets(line, 1024, file))
+	return FALSE;
     if (line[strlen(line)-1] == '\n')
 	line[strlen(line)-1] = '\0';
     g_free(self->catalog_label);
     self->catalog_label = g_strdup(line+7);
-    fgets(line, 1024, file);
+    if (!fgets(line, 1024, file))
+	return FALSE;
     if (line[strlen(line)-1] == '\n')
 	line[strlen(line)-1] = '\0';
     g_free(self->catalog_header);

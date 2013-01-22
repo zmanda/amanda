@@ -1,4 +1,7 @@
 2013-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Check result of fgets.
+
+2013-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm: Fix for exit status of
 	  amdump.
 
