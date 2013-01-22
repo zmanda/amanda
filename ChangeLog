@@ -1,3 +1,7 @@
+2013-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Exit with the ored value of the exit code of
+	  all subprocess.
+
 2013-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Keep a catalog of the labels.
 	  New READ-FROM-GLACIER and TRANSITION-TO-GLACIER properties.
