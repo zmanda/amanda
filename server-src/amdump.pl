@@ -128,12 +128,7 @@ sub run_subprocess {
     my $s = $? >> 8;
     debug("$proc exited with code $s");
     if ($?) {
-	if ($exit_code == 0) {
-	    debug("ignoring failing exit code $s from $proc");
-	} else {
-	    debug("recording failing exit code $s from $proc for amdump exit");
-	    $exit_code = $s;
-	}
+	$exit_code |= $s;
     }
 }
 

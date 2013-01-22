@@ -1,3 +1,7 @@
+2013-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Exit with the ored value of the exit code of
+	  all subprocess.
+
 2013-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amraw.pl: Correctly parse the --directory argument.
 
