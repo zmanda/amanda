@@ -1,3 +1,7 @@
+2013-01-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Amanda/Feature.c depend on
+	  ../common-src/amfeatures.h
+
 2013-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Check result of fgets.
 
