@@ -662,6 +662,8 @@ static taperscan_t *taperscan_list = NULL;
 /* storage for derived values */
 static long int unit_divisor = 1;
 
+char *prepend_prefix = NULL;
+
 int debug_amandad    = 0;
 int debug_recovery   = 0;
 int debug_amidxtaped = 0;
@@ -8414,15 +8416,22 @@ char *
 config_dir_relative(
     char *filename)
 {
+    char *cdir = NULL;
     if (*filename == '/' || config_dir == NULL) {
-	return g_strdup(filename);
+	cdir = g_strdup(filename);
     } else {
 	if (config_dir[strlen(config_dir)-1] == '/') {
-	    return g_strjoin(NULL, config_dir, filename, NULL);
+	    cdir = g_strjoin(NULL, config_dir, filename, NULL);
 	} else {
-	    return g_strjoin(NULL, config_dir, "/", filename, NULL);
+	    cdir = g_strjoin(NULL, config_dir, "/", filename, NULL);
 	}
     }
+    if (prepend_prefix) {
+	char *cdir1 = g_strconcat(prepend_prefix, "/", cdir, NULL);
+	g_free(cdir);
+	cdir = cdir1;
+    }
+    return cdir;
 }
 
 static int

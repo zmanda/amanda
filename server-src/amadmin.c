@@ -162,6 +162,7 @@ static struct option long_options[] = {
     {"days"          , 1, NULL,  4},
     {"sort"          , 1, NULL,  5},
     {"exact-match"   , 0, NULL,  6},
+    {"prepend-prefix", 1, NULL,  7},
     {NULL, 0, NULL, 0}
 };
 
@@ -227,6 +228,8 @@ main(
 	case 5: opt_sort = g_strdup(optarg);
 		break;
 	case 6: exact_match = TRUE;
+		break;
+	case 7: prepend_prefix = g_strdup(optarg);
 		break;
 	case 'l': opt_long = TRUE;
 		break;

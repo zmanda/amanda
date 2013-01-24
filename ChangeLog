@@ -1,4 +1,10 @@
 2013-01-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Add a --prepend-prefix argument.
+	* common-src/conffile.c (config_dir_relative): Prepend prepend-prefix
+	  to path.
+	* common-src/conffile.h: extern char *prepend_prefix;
+
+2013-01-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Do not use a default DB.
 
 2013-01-23  Jean-Louis Martineau <martineau@zmanda.com>

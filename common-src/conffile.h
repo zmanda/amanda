@@ -593,6 +593,8 @@ val_t *getconf_byname(char *key);
  */
 long int getconf_unit_divisor(void);
 
+extern char *prepend_prefix;
+
 /* If any of these globals are true, the corresponding component will
  * send verbose debugging output to the debug file.  The options are
  * set during config_init, but can be modified at will after that if 
