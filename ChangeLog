@@ -1,4 +1,7 @@
 2013-01-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Use nanosleep.
+
+2013-01-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Add a --prepend-prefix argument.
 	* common-src/conffile.c (config_dir_relative): Prepend prepend-prefix
 	  to path.

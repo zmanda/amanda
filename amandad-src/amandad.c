@@ -973,9 +973,14 @@ s_repwait(
 	if (as->service  == SERVICE_NOOP ||
 	    as->service  == SERVICE_SENDSIZE ||
 	    as->service  == SERVICE_SELFCHECK) {
+	    long long delay = 100000;
+	    struct timespec tdelay;
 	    int t = 0;
-	    while (t<5 && pid == 0) {
-		sleep(1);
+	    while (t < 15 && pid == 0) {
+		tdelay.tv_sec  = delay/1000000000;
+		tdelay.tv_nsec = delay%1000000000;
+		nanosleep(&tdelay, NULL);
+		delay *= 2;
 		t++;
 		pid = waitpid(as->pid, &retstat, WNOHANG);
 	    }
@@ -1819,7 +1824,6 @@ service_delete(
     struct active_service *	as)
 {
     int i;
-    int   count;
     pid_t pid;
     struct datafd_handle *dh;
 
@@ -1874,11 +1878,16 @@ service_delete(
     assert(as->pid > 0);
     pid = waitpid(as->pid, NULL, WNOHANG);
     if (pid != as->pid && kill(as->pid, SIGTERM) == 0) {
+	long long delay = 100000;
+	struct timespec tdelay;
+	int t = 0;
 	pid = waitpid(as->pid, NULL, WNOHANG);
-	count = 5;
-	while (pid != as->pid && count > 0) {
-	    count--;
-	    sleep(1);
+	while (t < 15 && pid != as->pid) {
+		    tdelay.tv_sec  = delay/1000000000;
+	    tdelay.tv_nsec = delay%1000000000;
+	    nanosleep(&tdelay, NULL);
+	    delay *= 2;
+	    t++;
 	    pid = waitpid(as->pid, NULL, WNOHANG);
 	}
 	if (pid != as->pid) {
