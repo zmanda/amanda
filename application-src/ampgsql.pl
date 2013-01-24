@@ -72,7 +72,6 @@ sub new {
     }
     # default properties
     $self->{'props'} = {
-        'pg-db' => 'template1',
         'pg-cleanupwal' => 'yes',
 	'pg-max-wal-wait' => 60,
     };
@@ -224,7 +223,8 @@ sub _run_psql_command {
     push @cmd, "-U", $self->{'props'}->{'pg-user'} if ($self->{'props'}->{'pg-user'});
 
     push @cmd, '--quiet', '--output', '/dev/null' if (!($cmd =~ /pg_xlogfile_name_offset/));
-    push @cmd, '--command', $cmd, $self->{'props'}->{'pg-db'};
+    push @cmd, '--command', $cmd;
+    push @cmd,$self->{'props'}->{'pg-db'} if exists $self->{'props'}->{'pg-db'};
     debug("running " . join(" ", @cmd));
 
     my ($wtr, $rdr);
