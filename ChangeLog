@@ -1,4 +1,7 @@
 2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/snippet: Add directory.
+
+2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/* config/gnulib/*: UPgrade gnulib to
 	  09b8fa6cb737f6e091931c494cbd56d12b3ad08d.
 	* gnulib/regenerate/regenerate: Remove ftruncate module.
