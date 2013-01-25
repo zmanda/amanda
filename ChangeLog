@@ -1,3 +1,10 @@
+2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib/* config/gnulib/*: UPgrade gnulib to
+	  09b8fa6cb737f6e091931c494cbd56d12b3ad08d.
+	* gnulib/regenerate/regenerate: Remove ftruncate module.
+	* ndmp-src/Makefile.am: Workaround to '#include "config.h"' in
+	  ndmp?_xdr.c
+
 2013-01-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Use nanosleep.
 

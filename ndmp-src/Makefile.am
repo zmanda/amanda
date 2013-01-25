@@ -209,20 +209,40 @@ ndmjob_LDADD = libndmjob.la \
 amndmjob_LDADD = libndmjob.la \
 		   ../common-src/libamanda.la
 
-ndmp0.h ndmp0_xdr.c : ndmp0.x
+ndmp0_xdr.c : ndmp0.x
 	$(RPCGEN) ndmp0.x
+	sed -i 's/#include "ndmp0.h"/#include "config.h"\n#include "ndmp0.h"/' ndmp0_xdr.c
 
-ndmp2.h ndmp2_xdr.c : ndmp2.x
+ndmp0.h : ndmp0_xdr.c
+	@
+
+ndmp2_xdr.c : ndmp2.x
 	$(RPCGEN) ndmp2.x
+	sed -i 's/#include "ndmp2.h"/#include "config.h"\n#include "ndmp2.h"/' ndmp2_xdr.c
 
-ndmp3.h ndmp3_xdr.c : ndmp3.x
+ndmp2.h : ndmp2_xdr.c
+	@
+
+ndmp3_xdr.c : ndmp3.x
 	$(RPCGEN) ndmp3.x
+	sed -i 's/#include "ndmp3.h"/#include "config.h"\n#include "ndmp3.h"/' ndmp3_xdr.c
 
-ndmp4.h ndmp4_xdr.c : ndmp4.x
+ndmp3.h : ndmp3_xdr.c
+	@
+
+ndmp4_xdr.c : ndmp4.x
 	$(RPCGEN) ndmp4.x
+	sed -i 's/#include "ndmp4.h"/#include "config.h"\n#include "ndmp4.h"/' ndmp4_xdr.c
 
-ndmp9.h ndmp9_xdr.c : ndmp9.x
+ndmp4.h : ndmp4_xdr.c
+	@
+
+ndmp9_xdr.c : ndmp9.x
 	$(RPCGEN) ndmp9.x
+	sed -i 's/#include "ndmp9.h"/#include "config.h"\n#include "ndmp9.h"/' ndmp9_xdr.c
+
+ndmp9.h : ndmp9_xdr.c
+	@
 
 # cause these files to be built before those that might depend on them
 BUILT_SOURCES += \
