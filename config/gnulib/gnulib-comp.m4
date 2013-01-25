@@ -62,7 +62,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module ftell:
   # Code from module ftello:
   AC_REQUIRE([AC_FUNC_FSEEKO])
-  # Code from module ftruncate:
   # Code from module full-read:
   # Code from module full-write:
   # Code from module getaddrinfo:
@@ -215,12 +214,6 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_FTELLO
   fi
   gl_STDIO_MODULE_INDICATOR([ftello])
-  gl_FUNC_FTRUNCATE
-  if test $HAVE_FTRUNCATE = 0 || test $REPLACE_FTRUNCATE = 1; then
-    AC_LIBOBJ([ftruncate])
-    gl_PREREQ_FTRUNCATE
-  fi
-  gl_UNISTD_MODULE_INDICATOR([ftruncate])
   gl_GETADDRINFO
   if test $HAVE_GETADDRINFO = 0; then
     AC_LIBOBJ([getaddrinfo])
@@ -589,7 +582,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/fsusage.h
   lib/ftell.c
   lib/ftello.c
-  lib/ftruncate.c
   lib/full-read.c
   lib/full-read.h
   lib/full-write.c
@@ -710,7 +702,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/fsusage.m4
   m4/ftell.m4
   m4/ftello.m4
-  m4/ftruncate.m4
   m4/getaddrinfo.m4
   m4/getopt.m4
   m4/gettimeofday.m4

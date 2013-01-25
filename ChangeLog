@@ -1,4 +1,8 @@
 2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib/regenerate/regenerate, config/gnulib/gnulib-cache.m4,
+	  config/gnulib/gnulib-comp.m4, gnulib/Makefile.am: Remove ftruncate.
+
+2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/snippet: Add directory.
 
 2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
