@@ -2479,7 +2479,11 @@ catalog_open(
     /* create the directory */
     filename = g_strdup_printf("bucket-%s", self->bucket);
     dirname  = config_dir_relative(filename);
-    mkdir(dirname, 0700);
+    if (mkdir(dirname, 0700) == -1i && errno != EEXIST) {
+	g_debug("Can't create catalog directory '%s': %s",
+		dirname, strerror(errno));
+	return FALSE;
+    }
     amfree(filename);
     amfree(dirname);
 
@@ -2494,14 +2498,18 @@ catalog_open(
 	self->catalog_header = NULL;
 	return TRUE;
     }
-    if (!fgets(line, 1024, file))
+    if (!fgets(line, 1024, file)) {
+	fclose(file);
 	return FALSE;
+    }
     if (line[strlen(line)-1] == '\n')
 	line[strlen(line)-1] = '\0';
     g_free(self->catalog_label);
     self->catalog_label = g_strdup(line+7);
-    if (!fgets(line, 1024, file))
+    if (!fgets(line, 1024, file)) {
+	fclose(file);
 	return FALSE;
+    }
     if (line[strlen(line)-1] == '\n')
 	line[strlen(line)-1] = '\0';
     g_free(self->catalog_header);

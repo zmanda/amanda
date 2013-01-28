@@ -4045,23 +4045,6 @@ s3_get_lifecycle(
         { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
         };
 
-    result = perform_request(hdl, "GET", bucket, NULL, "lifecycle", NULL,
-			     NULL, NULL, NULL,
-                             NULL, NULL, NULL, NULL, NULL,
-			     S3_BUFFER_WRITE_FUNCS, &buf,
-                             NULL, NULL, result_handling, FALSE);
-
-    if (result == S3_RESULT_FAIL &&
-	hdl->last_response_code == 404 &&
-	hdl->last_s3_error_code == S3_ERROR_NoSuchLifecycleConfiguration) {
-	result = S3_RESULT_OK;
-	return TRUE;
-    }
-    if (result != S3_RESULT_OK) goto cleanup;
-    if (buf.buffer_pos == 0) goto cleanup;
-
-    /* run the parser over it */
-
     thunk.lifecycle = NULL;
     thunk.rule = NULL;
     thunk.action = NULL;
@@ -4080,6 +4063,23 @@ s3_get_lifecycle(
     thunk.text = NULL;
     thunk.text_len = 0;
     thunk.error = NULL;
+
+    result = perform_request(hdl, "GET", bucket, NULL, "lifecycle", NULL,
+			     NULL, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL,
+			     S3_BUFFER_WRITE_FUNCS, &buf,
+                             NULL, NULL, result_handling, FALSE);
+
+    if (result == S3_RESULT_FAIL &&
+	hdl->last_response_code == 404 &&
+	hdl->last_s3_error_code == S3_ERROR_NoSuchLifecycleConfiguration) {
+	result = S3_RESULT_OK;
+	return TRUE;
+    }
+    if (result != S3_RESULT_OK) goto cleanup;
+    if (buf.buffer_pos == 0) goto cleanup;
+
+    /* run the parser over it */
 
     ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
 

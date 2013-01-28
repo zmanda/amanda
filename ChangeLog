@@ -1,4 +1,9 @@
 2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Fix memory leak and check return value of
+	  mkdir.
+	* device-src/s3.c: Fix dereferencing NULL pointer.
+
+2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/regenerate/regenerate, config/gnulib/gnulib-cache.m4,
 	  config/gnulib/gnulib-comp.m4, gnulib/Makefile.am: Remove ftruncate.
 
