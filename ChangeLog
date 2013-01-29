@@ -1,3 +1,6 @@
+2013-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amraw.pl: Check return value of POSIX::open.
+
 2013-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix memory leak and check return value of
 	  mkdir.
