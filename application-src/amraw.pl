@@ -141,6 +141,10 @@ sub command_estimate {
     }
 
     my $fd = POSIX::open($self->{device}, &POSIX::O_RDONLY);
+    if (!defined $fd) {
+	$self->print_to_server_and_die("Can't open '$self->{device}': $!",
+				       $Amanda::Script_App::ERROR);
+    }
     my $size = 0;
     my $s;
     my $buffer;
@@ -193,6 +197,10 @@ sub command_backup {
     }
 
     my $fd = POSIX::open($self->{device}, &POSIX::O_RDONLY);
+    if (!defined $fd) {
+	$self->print_to_server_and_die("Can't open '$self->{device}': $!",
+				       $Amanda::Script_App::ERROR);
+    }
     my $size = 0;
     my $s;
     my $buffer;
@@ -236,7 +244,7 @@ sub command_restore {
     debug("Restoring to $device");
 
     my $fd = POSIX::open($device, &POSIX::O_CREAT | &POSIX::O_RDWR, 0600 );
-    if ($fd == -1) {
+    if (!defined $fd) {
 	$self->print_to_server_and_die("Can't open '$device': $!",
 				       $Amanda::Script_App::ERROR);
     }
