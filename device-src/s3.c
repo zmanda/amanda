@@ -3904,7 +3904,7 @@ void
 free_lifecycle(
     GSList *lifecycle)
 {
-    g_slist_free_full(lifecycle, free_lifecycle_rule);
+    slist_free_full(lifecycle, free_lifecycle_rule);
 }
 
 /* Functions for a SAX parser to parse the XML from Amazon */
