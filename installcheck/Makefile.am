@@ -63,7 +63,7 @@ server_tests = \
 all_tests += $(server_tests)
 
 full_tests = \
-	=setupcache \
+	0_setupcache \
 	amadmin \
 	amcheck \
 	amcheckdump \
