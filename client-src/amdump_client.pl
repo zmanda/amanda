@@ -36,13 +36,17 @@ Amanda::Util::setup_application("amdump_client", "client", $CONTEXT_CMDLINE);
 
 my $config;
 my $config_overrides = new_config_overrides($#ARGV+1);
+my @config_overrides_opts;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'config=s' => sub { $config = $_[1]; },
-    'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+    'o=s' => sub {
+	push @config_overrides_opts, "-o" . $_[1];
+	add_config_override_opt($config_overrides, $_[1]);
+     },
 ) or usage();
 
 if (@ARGV < 1) {
@@ -72,7 +76,7 @@ my $amservice = $sbindir . '/amservice';
 my $amdump_server = getconf($CNF_AMDUMP_SERVER);
 my $auth = getconf($CNF_AUTH);
 
-my @cmd = ($amservice, '-f', '/dev/null', '-s', $amdump_server, $auth, 'amdumpd');
+my @cmd = ($amservice, '-f', '/dev/null', @config_overrides_opts, '-s', $amdump_server, $auth, 'amdumpd');
 
 debug("cmd: @cmd");
 my $amservice_out;
