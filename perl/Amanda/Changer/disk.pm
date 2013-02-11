@@ -29,7 +29,7 @@ use File::Glob qw( :glob );
 use File::Path;
 use File::Basename;
 use Amanda::Config qw( :getconf string_to_boolean );
-use Amanda::Debug;
+use Amanda::Debug qw( debug warning );
 use Amanda::Changer;
 use Amanda::MainLoop;
 use Amanda::Device qw( :constants );
@@ -120,6 +120,8 @@ sub new {
     }
 
     $self->_validate();
+    debug("chg-disk: Dir $dir");
+    debug("chg-disk: Using statefile '$self->{state_filename}'");
     return $self->{'fatal_error'} if defined $self->{'fatal_error'};
 
     return $self;
@@ -333,6 +335,7 @@ sub _load_by_slot {
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "invalid",
+	    slot   => $slot,
 	    message => "Slot $slot not found");
     }
 

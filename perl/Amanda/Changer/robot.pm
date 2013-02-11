@@ -413,6 +413,7 @@ sub load_unlocked {
         if (defined $slot and !exists $state->{'slots'}->{$slot}) {
             return $self->make_error("failed", $params{'res_cb'},
                     reason => "invalid",
+		    slot   => $slot,
                     message => "invalid slot '$slot'");
         }
 
@@ -438,11 +439,13 @@ sub load_unlocked {
 	    if (exists $params{'label'}) {
 		return $self->make_error("failed", $params{'res_cb'},
 			reason => "invalid",
+			slot   => $slot,
 			message => "label '$params{label}' is in slot $slot, which is " .
 				   "not in use-slots ($self->{use_slots})");
 	    } else {
 		return $self->make_error("failed", $params{'res_cb'},
 			reason => "invalid",
+			slot   => $slot,
 			message => "slot $slot not in use-slots ($self->{use_slots})");
 	    }
 	}
