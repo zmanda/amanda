@@ -4092,17 +4092,20 @@ fix_index_header(
 	g_free(f);
         return;
     }
-    g_free(f);
 
     buflen = read_fully(fd, buffer, sizeof(buffer), NULL);
     if (buflen <= 0) {
         dbprintf(_("fix_index_header: %s: empty file?\n"), f);
         close(fd);
+	g_free(f);
         return;
     }
     parse_file_header(buffer, &file, (size_t)buflen);
     lseek(fd, (off_t)0, SEEK_SET);
-    ftruncate(fd, 0);
+    if (ftruncate(fd, 0) == -1) {
+	g_debug("ftruncate of '%s' failed: %s", f, strerror(errno));
+    }
+    g_free(f);
     file.orig_size = sched(dp)->origsize;
     file.native_crc = sched(dp)->native_crc;
     file.client_crc = sched(dp)->client_crc;
