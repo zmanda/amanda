@@ -1,4 +1,8 @@
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/logfile.c (get_logname): Return a new allocated string.
+	* server-src/logfile.c (set_logname): Store a new allocated string.
+
+2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/logfile.c: Check return of symlink.
 
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>

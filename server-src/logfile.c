@@ -270,14 +270,14 @@ make_logname(
 char *
 get_logname(void)
 {
-    return logfile;
+    return g_strdup(logfile);
 }
 
 void
 set_logname(
     char *filename)
 {
-    logfile = filename;
+    logfile = g_strdup(filename);
 }
 
 void
