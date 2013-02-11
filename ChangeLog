@@ -1,4 +1,10 @@
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* autogen: Invoke automake with --add-missing.
+	* config/compile, config/config.guess, config/config.sub,
+	* config/depcomp, config/install-sh, config/missing,
+	* config/mkinstalldirs, config/ylwrap: Upgrade from automake-1.11.6
+
+2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: Return slot with invalid slot.
 	* perl/Amanda/Changer/robot.pm: Return slot with invalid slot.
 	* server-src/amtape.pl: Continue on invalid slot.
