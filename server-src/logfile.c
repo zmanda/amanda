@@ -256,7 +256,10 @@ make_logname(
     }
 
     unlink(fname);
-    symlink(logfile, fname);
+    if (symlink(logfile, fname) == -1) {
+	g_debug("Can't symlink '%s' to '%s': %s", fname, logfile,
+		strerror(errno));
+    }
 
     amfree(fname);
     amfree(conf_logdir);

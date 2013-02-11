@@ -1,4 +1,7 @@
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/logfile.c: Check return of symlink.
+
+2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Check return of ftruncate.
 
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
