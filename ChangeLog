@@ -1,3 +1,8 @@
+2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: Return slot with invalid slot.
+	* perl/Amanda/Changer/robot.pm: Return slot with invalid slot.
+	* server-src/amtape.pl: Continue on invalid slot.
+
 2013-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/amdump_client.pl: Pass the -o arguments to amservice.
 

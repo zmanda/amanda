@@ -224,6 +224,9 @@ sub {
 	    } elsif ($err->empty and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
 	        print STDERR sprintf("slot %3s: empty\n", $last_slot);
+	    } elsif ($err->invalid and defined $err->{'slot'}) {
+		$last_slot = $err->{'slot'};
+	        print STDERR sprintf("slot %3s: %s\n", $last_slot, "$err");
 	    } else {
 		return failure($err, $finished_cb) if $err;
 	    }
