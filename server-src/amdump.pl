@@ -114,6 +114,7 @@ sub run_subprocess {
     my ($proc, @args) = @_;
     check_exec($proc);
 
+    debug("Running $proc " . join(' ', @args));
     my $pid = POSIX::fork();
     if ($pid == 0) {
 	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
@@ -142,56 +143,13 @@ sub wait_for_hold {
     }
 }
 
-sub bail_already_running {
-    my $msg = "An Amanda process is already running - please run amcleanup manually";
-    debug($msg);
-    amdump_log($msg);
-
-    # put together a fake logfile and send an amreport
-    my $fakelogfile = "$AMANDA_TMPDIR/fakelog.$$";
-    open(my $fakelog, ">", $fakelogfile)
-	or die("cannot open a fake log to send an report - situation is dire");
-    print $fakelog <<EOF;
-INFO amdump amdump pid $$
-START planner date $timestamp
-START driver date $timestamp
-ERROR amdump $msg
-EOF
-    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', '-l', $fakelogfile, @config_overrides_opts);
-    unlink($fakelogfile);
-
-    # and we're done here
-    exit 1;
-}
-
-sub do_amcleanup {
-    return unless -f $amdump_log_filename_default || -f $trace_log_filename;
-
-    # logfiles are still around.  First, try an amcleanup -p to see if
-    # the actual processes are already dead
-    debug("runing amcleanup -p");
-    run_subprocess("$sbindir/amcleanup", '-p', $config_name, @config_overrides_opts);
-
-    # and check again
-    return unless -f $amdump_log_filename_default || -f $trace_log_filename;
-
-    bail_already_running();
-}
+my $log_name;
 
 sub start_logfiles {
-    debug("beginning trace log");
-    # start the trace log by simply writing an INFO line to it
-    log_add($L_INFO, "amdump pid $$");
+    $timestamp = Amanda::Logfile::make_logname("amdump", $timestamp);
+    $trace_log_filename = Amanda::Logfile::get_logname();
 
-    # but not so fast!  What if another process has also appended such a line?
-    open(my $tl, "<", $trace_log_filename)
-	or die("could not open trace log file '$trace_log_filename': $!");
-    if (<$tl> !~ /^INFO amdump amdump pid $$/) {
-	# we didn't get there first, so bail out
-	debug("another amdump raced with this one, and won");
-	bail_already_running();
-    }
-    close($tl);
+    debug("beginning trace log: $trace_log_filename");
 
     # redirect the amdump_log to the proper filename instead of stderr
     # note that perl will overwrite STDERR if we don't set $amdump_log to
@@ -211,6 +169,7 @@ sub planner_driver_pipeline {
     my @no_taper = $opt_no_taper? ('--no-taper'):();
     my @from_client = $opt_from_client? ('--from-client'):();
     my @exact_match = $opt_exact_match? ('--exact-match'):();
+    my @log_filename = ('--log-filename', $trace_log_filename);
 
     check_exec($planner);
     check_exec($driver);
@@ -229,10 +188,11 @@ sub planner_driver_pipeline {
 	POSIX::close($rpipe);
 	POSIX::close($wpipe);
 	POSIX::dup2(fileno($amdump_log), 2);
+	debug("exec: " .join(' ', $planner, $config_name, '--starttime', $timestamp, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk));
 	close($amdump_log);
 	exec $planner,
 	    # note that @no_taper must follow --starttime
-	    $config_name, '--starttime', $timestamp, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk;
+	    $config_name, '--starttime', $timestamp, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk;
 	die "Could not exec $planner: $!";
     }
     debug(" planner: $pl_pid");
@@ -247,9 +207,10 @@ sub planner_driver_pipeline {
 	POSIX::dup2(fileno($amdump_log), 1); # driver does lots of logging to stdout..
 	POSIX::close($null);
 	POSIX::dup2(fileno($amdump_log), 2);
+	debug("exec: " . join(' ', $driver, $config_name, @log_filename, @no_taper, @from_client, @config_overrides_opts));
 	close($amdump_log);
 	exec $driver,
-	    $config_name, @no_taper, @from_client, @config_overrides_opts;
+	    $config_name, @log_filename, @no_taper, @from_client, @config_overrides_opts;
 	die "Could not exec $driver: $!";
     }
     debug(" driver: $dr_pid");
@@ -272,13 +233,8 @@ sub planner_driver_pipeline {
 
 sub do_amreport {
     debug("running amreport");
-    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', @config_overrides_opts);
-}
-
-sub roll_trace_logs {
-    my $t = getconf($CNF_USETIMESTAMPS)? $timestamp : $datestamp;
-    debug("renaming trace log");
-    Amanda::Logfile::log_rename($t)
+    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', '-l',
+		   $trace_log_filename, @config_overrides_opts);
 }
 
 sub trim_trace_logs {
@@ -315,10 +271,6 @@ sub roll_amdump_logs {
 # wait for $confdir/hold to disappear
 wait_for_hold();
 
-# look for a current logfile, and if found run amcleanup -p, and if that fails
-# bail out
-do_amcleanup();
-
 my $crtl_c = 0;
 $SIG{INT} = \&interrupt;
 
@@ -353,7 +305,6 @@ amdump_log("end at $end_longdate");
 do_amreport();
 
 # do some house-keeping
-roll_trace_logs();
 trim_trace_logs();
 trim_indexes();
 roll_amdump_logs();

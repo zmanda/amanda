@@ -34,14 +34,6 @@ bumpsize 20 Mb		# minimum savings (threshold) to bump level 1 -> 2
 bumppercent 20		# minimum savings (threshold) to bump level 1 -> 2
 bumpdays 1		# minimum days at each level
 
-# By default, Amanda can only track at most one run per calendar day. When
-# the usetimestamps option is enabled, however, Amanda can track as many
-# runs as you care to make.
-# WARNING: This option is not backward-compatible. Do not enable it if you
-#          intend to downgrade your server installation to any version
-#          earlier than Amanda 2.5.1
-usetimestamps yes
-
 device_output_buffer_size 1280k
                         # amount of buffer space to use when writing to devices
 

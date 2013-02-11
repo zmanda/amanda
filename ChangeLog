@@ -1,4 +1,28 @@
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Deprecate usetimestamps, it is always "yes"
+	* example/amanda.conf.in: Remove usetimestamps.
+	* example/template.d/advanced.conf.in: Remove usetimestamps.
+	* man/xml-source/amanda.conf.5.xml: Deprecate usetimestamps.
+	* server-src/logfile.c (make_logname, get_logname, set_logname) New
+	  function.
+	* server-src/logfile.h (make_logname, get_logname, set_logname) Add
+	  prototype.
+	* perl/Amanda/Logfile.swg (make_logname, get_logname, set_logname) Add
+	  function.
+	* server-src/amdump.pl, server-src/amflush.c, server-src/amvault.pl:
+	  Create a log.<datastamps>.0 file and use it. Do not check for a
+	  'log' file.
+	* server-src/amcheck.c: Do not check for a 'log' file.
+	* server-src/driverio.c: Pass --log-filename argument to sub process.
+	* server-src/driverio.h: add log_filename variable.
+	* server-src/chunker.pl, server-src/driver.c,
+	  server-src/dumper.c, server-src/planner.c,
+	  server-src/taper.pl: Use logfile from --log-filename argument.
+	* installcheck/Amanda_Config.pl, installcheck/Amanda_Logfile.pl,
+	  installcheck/amdump.pl, installcheck/chunker.pl,
+	  installcheck/taper.pl: Fix.
+
+2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* Many Files: Compute CRC on backup and verify it on restore.
 
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>

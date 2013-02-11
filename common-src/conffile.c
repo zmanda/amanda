@@ -2001,6 +2001,7 @@ handle_deprecated_keyword(void)
 	{ CONF_TAPE_SPLITSIZE, 0 },	/* exp. in Amanda-3.3 */
 	{ CONF_SPLIT_DISKBUFFER, 0 },	/* exp. in Amanda-3.3 */
 	{ CONF_FALLBACK_SPLITSIZE, 0 }, /* exp. in Amanda-3.3 */
+	{ CONF_USETIMESTAMPS, 0 }, /* exp. in Amanda-3.4 */
 	{ 0, 0 },
     }, *dep;
 
@@ -5723,6 +5724,9 @@ update_derived_values(
 	} else if (labelstr->match_autolabel) {
 	    labelstr->template = g_strdup(conf_data[CNF_AUTOLABEL].v.autolabel.template);
 	}
+
+	/* Always TRUE */
+	conf_init_bool(&conf_data[CNF_USETIMESTAMPS], 1);
     }
 
     /* fill in the debug_* values */

@@ -167,30 +167,6 @@ sub run_subprocess {
     debug("$proc exited with code $s: $!");
 }
 
-sub do_amcleanup {
-    my $self = shift;
-
-    return 1 unless -f $self->{'trace_log_filename'};
-
-    # logfiles are still around.  First, try an amcleanup -p to see if
-    # the actual processes are already dead
-    debug("runing amcleanup -p");
-    run_subprocess("$sbindir/amcleanup", '-p', $self->{'config_name'},
-		   $self->{'config_overrides_opts'});
-
-    return 1 unless -f $self->{'trace_log_filename'};
-
-    return 0;
-}
-
-sub bail_already_running() {
-    my $self = shift;
-    my $msg = "An Amanda process is already running - please run amcleanup manually";
-    print "$msg\n";
-    debug($msg);
-    $self->{'exit_cb'}->(1);
-}
-
 sub run {
     my $self = shift;
     my ($exit_cb) = @_;
@@ -206,23 +182,11 @@ sub run {
 
     # open up a trace log file and put our imprimatur on it, unless dry_runing
     if (!$self->{'opt_dry_run'}) {
-	if (!$self->do_amcleanup()) {
-	    return $self->bail_already_running();
-	}
-	log_add($L_INFO, "amvault pid $$");
-
-	# Check we own the log file
-	open(my $tl, "<", $self->{'trace_log_filename'})
-	    or die("could not open trace log file '$self->{'trace_log_filename'}': $!");
-	if (<$tl> !~ /^INFO amvault amvault pid $$/) {
-	    debug("another amdump raced with this one, and won");
-	    close($tl);
-	    return $self->bail_already_running();
-	}
-	close($tl);
+	$self->{'dst_write_timestamp'} = Amanda::Logfile::make_logname("amvault", $self->{'dst_write_timestamp'});
+	$self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
 	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
 	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
-	$self->{'cleanup'}{'roll_trace_log'} = 1;
+	$self->{'cleanup'}{'created_log'} = 1;
     }
 
     $self->setup_src();
@@ -694,17 +658,16 @@ sub quit {
 	    $self->{'dst'}->{'chg'}->quit();
 	    $self->{'dst'}->{'chg'} = undef;
 	}
-	if ($self->{'cleanup'}{'roll_trace_log'}) {
+	if ($self->{'cleanup'}{'created_log'}) {
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
 
-	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config_name'}, "--from-amdump",
-				 @{$self->{'config_overrides_opts'}});
+	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config_name'},
+				"--from-amdump",
+				"-l", $self->{'trace_log_filename'},
+				@{$self->{'config_overrides_opts'}});
 	    debug("invoking amreport (" . join(" ", @amreport_cmd) . ")");
 	    system(@amreport_cmd);
-
-	    debug("rolling logfile..");
-	    log_rename($self->{'dst_write_timestamp'});
 	}
 
 	$exit_cb->($exit_status);
@@ -720,9 +683,8 @@ sub failure {
 
     debug("failure: $msg");
 
-    # if we've got a logfile open that will be rolled, we might as well log
-    # an error.
-    if ($self->{'cleanup'}{'roll_trace_log'}) {
+    # if we've got a logfile open, we might as well log an error.
+    if ($self->{'cleanup'}{'created_log'}) {
 	log_add($L_FATAL, "$msg");
     }
     $self->quit(1);
@@ -1073,7 +1035,10 @@ my $vault = Amvault->new(
     quiet => $opt_quiet,
     fulls_only => $opt_fulls_only,
     opt_export => $opt_export,
-    config_overrides_opts => \@config_overrides_opts);
+    config_overrides_opts => \@config_overrides_opts
+);
+
+
 Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
 Amanda::MainLoop::run();
 

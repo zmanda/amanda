@@ -243,23 +243,6 @@ main(
     if (argc > 1)
 	cfg_opt = argv[1];
     set_config_overrides(cfg_ovr);
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    read_diskfile(conf_diskfile, &origq);
-    disable_skip_disk(&origq);
-    amfree(conf_diskfile);
-
-    if (config_errors(NULL) >= CFGERR_WARNINGS) {
-	config_print_errors();
-	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical(_("errors processing config file"));
-	}
-    }
-
-    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
-    g_printf(_("%s: pid %ld executable %s version %s\n"),
-	   get_pname(), (long) getpid(), argv[0], VERSION);
 
     if(argc > 2) {
         if(g_str_equal(argv[2], "nodump")) {
@@ -267,6 +250,16 @@ main(
 	    argv++;
 	    argc--;
         }
+    }
+
+    log_filename = NULL;
+    if (argc > 3) {
+	if (g_str_equal(argv[2], "--log-filename")) {
+	    log_filename = g_strdup(argv[3]);
+	    set_logname(log_filename);
+	    argv += 2;
+	    argc -= 2;
+	}
     }
 
     if (argc > 2) {
@@ -285,6 +278,24 @@ main(
 	    argc--;
 	}
     }
+
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
+
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &origq);
+    disable_skip_disk(&origq);
+    amfree(conf_diskfile);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
+
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
+    g_printf(_("%s: pid %ld executable %s version %s\n"),
+	   get_pname(), (long) getpid(), argv[0], VERSION);
 
     safe_cd(); /* do this *after* config_init */
 

@@ -74,7 +74,8 @@ sub run_chunker {
     open(CHUNKER_ERR, ">", $chunker_stderr_file);
     $chunker_in = $chunker_out = '';
     $chunker_pid = open3($chunker_in, $chunker_out, ">&CHUNKER_ERR",
-	"$amlibexecdir/chunker", "TESTCONF");
+	"$amlibexecdir/chunker", "TESTCONF",
+	'--log-filename', "$CONFIG_DIR/TESTCONF/log/log");
     close CHUNKER_ERR;
     $chunker_in->blocking(1);
     $chunker_out->autoflush();

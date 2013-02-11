@@ -132,6 +132,7 @@ static crc_t crc_data_in;
 static crc_t crc_data_out;
 static crc_t native_crc;
 static crc_t client_crc;
+static char *log_filename = NULL;
 
 static dumpfile_t file;
 
@@ -370,6 +371,17 @@ main(
     if (argc > 1)
 	cfg_opt = argv[1];
     set_config_overrides(cfg_ovr);
+
+    log_filename = NULL;
+    if (argc > 3) {
+	if (g_str_equal(argv[2], "--log-filename")) {
+	    log_filename = g_strdup(argv[3]);
+	    set_logname(log_filename);
+	    argv += 2;
+	    argc -= 2;
+	}
+    }
+
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
 
     if (!dumper_setuid) {

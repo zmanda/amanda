@@ -1,11 +1,14 @@
 Changes in release 4.0.0
 
+   * A CRC is compted on the backup mage and is verified on restore.
+   * Run multiple backup inparallel, there is no lock preventing concurrent run.
    * Add letter based sequence to autolabel and meta-autolabel.
    * And 'includefile' directive for the disklist.
    * amanda.conf (interface section)
        o add a src-ip setting.
    * amanda.conf (dumptype section)
        o add a retry-dump setting.
+       o deprecate usetimestamps, it is always "yes"
    * amanda.conf
        o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
 	 the autolabel variable.

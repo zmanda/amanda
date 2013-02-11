@@ -162,6 +162,7 @@ GLOBAL int taper_fd;
 GLOBAL pid_t taper_pid;
 GLOBAL event_handle_t *taper_ev_read;
 GLOBAL int taper_nb_wait_reply;
+GLOBAL char *log_filename;
 
 void init_driverio(int inparallel, int taper_parallel_write);
 void startup_tape_process(char *taper_program, int taper_parallel_write, gboolean no_taper);

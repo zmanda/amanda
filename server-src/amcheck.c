@@ -1157,13 +1157,11 @@ start_server_check(
 
     if(do_localchk) {
 	char *conf_logdir;
-	char *logfile;
 	char *olddir;
 	struct stat stat_old;
 	struct stat statbuf;
 
 	conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-	logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
 
 	quoted = quote_string(conf_logdir);
 	if(stat(conf_logdir, &statbuf) == -1) {
@@ -1176,16 +1174,6 @@ start_server_check(
 	    logbad = 1;
 	}
 	amfree(quoted);
-
-	if(logbad == 0 && access(logfile, F_OK) == 0) {
-	    testtape = 0;
-	    logbad = 2;
-	    if(access(logfile, W_OK) != 0) {
-		quoted = quote_string(logfile);
-		g_fprintf(outf, _("ERROR: log file %s: not writable\n"), quoted);
-		amfree(quoted);
-	    }
-	}
 
 	olddir = g_strjoin(NULL, conf_logdir, "/oldlog", NULL);
 	quoted = quote_string(olddir);
@@ -1210,17 +1198,7 @@ start_server_check(
 	}
 	amfree(quoted);
 
-	if (logbad == 0 && testtape) {
-	    g_free(logfile);
-	    logfile = g_strconcat(conf_logdir, "/amdump", NULL);
-	    if (access(logfile, F_OK) == 0) {
-		testtape = 0;
-		logbad = 2;
-	    }
-	}
-
 	amfree(olddir);
-	amfree(logfile);
 	amfree(conf_logdir);
     }
 

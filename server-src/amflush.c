@@ -219,19 +219,11 @@ main(
     }
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-    conf_logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
-    if (access(conf_logfile, F_OK) == 0) {
-	run_amcleanup(get_config_name());
-    }
-    if (access(conf_logfile, F_OK) == 0) {
-	char *process_name = get_master_process(conf_logfile);
-	error(_("%s exists: %s is already running, or you must run amcleanup"), conf_logfile, process_name);
-	/*NOTREACHED*/
-    }
+    amflush_timestamp = make_logname("amflush", amflush_timestamp);
+    conf_logfile = get_logname();
 
     driver_program = g_strjoin(NULL, amlibexecdir, "/", "driver", NULL);
     reporter_program = g_strjoin(NULL, sbindir, "/", "amreport", NULL);
-    logroll_program = g_strjoin(NULL, amlibexecdir, "/", "amlogroll", NULL);
 
     tapedev = getconf_str(CNF_TAPEDEV);
     tpchanger = getconf_str(CNF_TPCHANGER);
@@ -282,13 +274,6 @@ main(
 	g_printf(_("Could not find any valid dump image, check directory.\n"));
 	exit(1);
     }
-
-    if (access(conf_logfile, F_OK) == 0) {
-	char *process_name = get_master_process(conf_logfile);
-	error(_("%s exists: someone started %s"), conf_logfile, process_name);
-	/*NOTREACHED*/
-    }
-    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 
     if(!batch) confirm(datestamp_list);
 
@@ -347,10 +332,12 @@ main(
 	 */
 	dup2(driver_pipe[0], 0);
 	close(driver_pipe[1]);
-	config_options = get_config_options(3);
+	config_options = get_config_options(5);
 	config_options[0] = "driver";
 	config_options[1] = get_config_name();
 	config_options[2] = "nodump";
+	config_options[3] = "--log-filename";
+	config_options[4] = conf_logfile;
 	safe_fd(-1, 0);
 	execve(driver_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), driver_program, strerror(errno));
@@ -496,10 +483,12 @@ main(
 	/*
 	 * This is the child process.
 	 */
-	config_options = get_config_options(3);
+	config_options = get_config_options(5);
 	config_options[0] = "amreport";
 	config_options[1] = get_config_name();
-        config_options[2] = "--from-amdump";
+        config_options[2] = "-l";
+        config_options[3] = conf_logfile;
+        config_options[4] = "--from-amdump";
 	safe_fd(-1, 0);
 	execve(reporter_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), reporter_program, strerror(errno));
@@ -523,17 +512,6 @@ main(
 
     log_add(L_INFO, "pid-done %ld", (long)getpid());
 
-    /*
-     * Call amlogroll to rename the log file to its datestamped version.
-     * Since we exec at this point, our exit code will be that of amlogroll.
-     */
-    config_options = get_config_options(2);
-    config_options[0] = "amlogroll";
-    config_options[1] = get_config_name();
-    safe_fd(-1, 0);
-    execve(logroll_program, config_options, safe_env());
-    error(_("cannot exec %s: %s"), logroll_program, strerror(errno));
-    /*NOTREACHED*/
     return 0;				/* keep the compiler happy */
 }
 

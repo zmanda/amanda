@@ -191,6 +191,7 @@ my $logdir = $testconf->{'logdir'};
     my $filename = "$logdir/log";
 
     -f "$filename" and unlink("$filename");
+    Amanda::Logfile::set_logname($filename);
     log_add($L_INFO, "This is my info");
     log_add($L_START, "blah blah blah date 20300405060708 blah blah");
 

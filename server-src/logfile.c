@@ -190,6 +190,92 @@ log_end_multiline(void)
     close_log();
 }
 
+char *
+make_logname(
+    char *process,
+    char *datestamp)
+{
+    char *conf_logdir;
+    char *fname = NULL;
+    struct stat statbuf;
+
+    if (datestamp == NULL) datestamp = "error";
+
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
+    fname = g_strjoin(NULL, conf_logdir, "/log", NULL);
+    while (1) {
+        g_free(logfile);
+        logfile = g_strconcat(fname, ".", datestamp, ".0", NULL);
+	if (stat(logfile, &statbuf) == -1 && errno == ENOENT) {
+	    FILE *file;
+	    /* create it           */
+	    file = fopen(logfile, "a+");
+	    if (file) {
+		gchar *text = g_strdup_printf("INFO %s %s pid %ld\n",
+				 process, process, (long)getpid());
+		fprintf(file, "%s", text);
+		fclose(file);
+		file = fopen(logfile, "r");
+		if (file) {
+		    char line[1000];
+		    if (fgets(line, 1000, file)) {
+			if (g_str_equal(line, text)) {
+			    g_free(text);
+			    fclose(file);
+			    break;
+			}
+		    }
+		    fclose(file);
+		}
+		g_free(text);
+	    }
+	}
+
+	/* increase datestamp */
+	datestamp[13]++;
+	if (datestamp[13] == ':') {
+	    datestamp[13] = '0';
+	    datestamp[12]++;
+	    if (datestamp[12] == '6') {
+		datestamp[12] = '0';
+		datestamp[11]++;
+		if (datestamp[11] == ':') {
+		    datestamp[11] = '0';
+		    datestamp[10]++;
+		    if (datestamp[10] == '6') {
+			datestamp[10] = '0';
+			datestamp[9]++;
+			if (datestamp[9] == ':') {
+			    datestamp[9] = '0';
+			    datestamp[8]++;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    unlink(fname);
+    symlink(logfile, fname);
+
+    amfree(fname);
+    amfree(conf_logdir);
+
+    return (datestamp);
+}
+
+char *
+get_logname(void)
+{
+    return logfile;
+}
+
+void
+set_logname(
+    char *filename)
+{
+    logfile = filename;
+}
 
 void
 log_rename(
@@ -206,6 +292,12 @@ log_rename(
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
+
+    if (lstat(logfile, &statbuf) == 0 && S_ISLNK(statbuf.st_mode)) {
+	g_debug("Remove symbolic link %s", logfile);
+	unlink(logfile);
+	return;
+    }
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
 	g_snprintf(seq_str, sizeof(seq_str), "%u", seq);
@@ -228,12 +320,6 @@ log_rename(
 static void
 open_log(void)
 {
-    char *conf_logdir;
-
-    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
-    logfile = g_strjoin(NULL, conf_logdir, "/log", NULL);
-    amfree(conf_logdir);
-
     logfd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600);
 
     if(logfd == -1) {
@@ -262,7 +348,6 @@ close_log(void)
     }
 
     logfd = -1;
-    amfree(logfile);
 }
 
 /* WARNING: Function accesses globals curstr, curlog, and curprog

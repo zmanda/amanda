@@ -126,6 +126,7 @@ size_t tt_blocksize_kb;
 int runs_per_cycle = 0;
 time_t today;
 char *planner_timestamp = NULL;
+char *log_filename = NULL;
 
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
@@ -258,7 +259,6 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(), argv[0], VERSION);
     for (i = 0; version_info[i] != NULL; i++)
@@ -268,6 +268,12 @@ main(
     if (argc - diskarg_offset > 1 && g_str_equal(argv[diskarg_offset],
                                                  "--starttime")) {
 	planner_timestamp = g_strdup(argv[diskarg_offset+1]);
+	diskarg_offset += 2;
+    }
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--log-filename")) {
+	log_filename = g_strdup(argv[diskarg_offset+1]);
+	set_logname(log_filename);
 	diskarg_offset += 2;
     }
     if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
@@ -285,6 +291,7 @@ main(
 	exact_match = TRUE;
 	diskarg_offset += 1;
     }
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 
 
     run_server_global_scripts(EXECUTE_ON_PRE_ESTIMATE, get_config_name());

@@ -60,14 +60,6 @@ ctimeout 30		# maximum number of seconds that amcheck waits
 device_output_buffer_size 1280k
                         # amount of buffer space to use when writing to devices
 
-# By default, Amanda can only track at most one run per calendar day. When
-# the usetimestamps option is enabled, however, Amanda can track as many
-# runs as you care to make.
-# WARNING: This option is not backward-compatible. Do not enable it if you
-#          intend to downgrade your server installation to Amanda community 
-#          edition 2.5
-usetimestamps yes
-
 # flush-threshold-dumped, flush-threshold-scheduled, taperflush, and autoflush
 # are used to control tape utilization. See the amanda.conf (5) manpage for
 # details on how they work. Taping will not start until all criteria are

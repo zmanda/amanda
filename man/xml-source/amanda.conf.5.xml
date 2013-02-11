@@ -468,10 +468,9 @@ per dumpcycle.</para>
   <term><amkeyword>usetimestamps</amkeyword>
 	<amtype>bool</amtype></term>
     <listitem>
-      <para>Default: <amkeyword>Yes</amkeyword>.
-This option allows Amanda to track multiple runs per calendar
-day. The only reason one might disable it is that Amanda versions before 2.5.1
-can't read logfiles written when this option was enabled.
+      <para>Default: <amkeyword>Yes</amkeyword>. Deprecated, the value is
+always <amkeyword>Yes</amkeyword>.
+This option allows Amanda to track multiple runs per calendar day.
       </para>
     </listitem>
   </varlistentry>

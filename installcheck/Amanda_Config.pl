@@ -136,7 +136,6 @@ if (Amanda::Tests::sizeof_size_t() > 4) {
 $testconf = Installcheck::Config->new();
 $testconf->add_param('reserve', '75');
 $testconf->add_param('autoflush', 'yes');
-$testconf->add_param('usetimestamps', '0');
 $testconf->add_param('tapedev', '"/dev/foo"');
 $testconf->add_param('bumpsize', $int64_num);
 $testconf->add_param('bumpmult', '1.4');
@@ -268,8 +267,8 @@ is(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), $size_t_num+0,
     "size global confparm");
 ok(getconf($CNF_AUTOFLUSH),
     "boolean global confparm");
-is(getconf($CNF_USETIMESTAMPS), 0,
-    "boolean global confparm, passing an integer (0)");
+is(getconf($CNF_USETIMESTAMPS), 1,
+    "boolean global confparm, passing an integer (1)");
 is(getconf($CNF_TAPERALGO), $Amanda::Config::ALGO_LAST,
     "taperalgo global confparam");
 is_deeply([getconf($CNF_RESERVED_UDP_PORT)], [100,200],

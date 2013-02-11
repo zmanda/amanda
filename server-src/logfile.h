@@ -75,6 +75,9 @@ void log_add(logtype_t typ, char * format, ...) G_GNUC_PRINTF(2, 3);
 void log_add_full(logtype_t typ, char *pname, char *format, ...) G_GNUC_PRINTF(3, 4);
 void log_start_multiline(void);
 void log_end_multiline(void);
+char *make_logname(char *process, char *datestamp);
+char *get_logname(void);
+void set_logname(char *filename);
 void log_rename(char *datestamp);
 int get_logline(FILE *);
 

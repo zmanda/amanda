@@ -162,9 +162,11 @@ startup_tape_process(
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
 	    error(_("taper dup2: %s"), strerror(errno));
-	config_options = get_config_options(2);
+	config_options = get_config_options(4);
 	config_options[0] = "taper";
 	config_options[1] = get_config_name();
+	config_options[2] = "--log-filename";
+	config_options[3] = log_filename;
 	safe_fd(-1, 0);
 	env = safe_env();
 	execve(taper_program, config_options, env);
@@ -202,9 +204,11 @@ startup_dump_process(
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
 	    error(_("%s dup2: %s"), dumper->name, strerror(errno));
-	config_options = get_config_options(2);
+	config_options = get_config_options(4);
 	config_options[0] = dumper->name ? dumper->name : "dumper",
 	config_options[1] = get_config_name();
+	config_options[2] = "--log-filename";
+	config_options[3] = log_filename;
 	safe_fd(-1, 0);
 	env = safe_env();
 	execve(dumper_program, config_options, env);
@@ -273,9 +277,11 @@ startup_chunk_process(
 	    error(_("%s dup2: %s"), chunker->name, strerror(errno));
 	    /*NOTREACHED*/
 	}
-	config_options = get_config_options(2);
+	config_options = get_config_options(4);
 	config_options[0] = chunker->name ? chunker->name : "chunker",
 	config_options[1] = get_config_name();
+	config_options[2] = "--log-filename";
+	config_options[3] = log_filename;
 	safe_fd(-1, 0);
 	env = safe_env();
 	execve(chunker_program, config_options, env);

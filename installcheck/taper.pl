@@ -98,7 +98,8 @@ sub run_taper {
     open(TAPER_ERR, ">", $taper_stderr_file);
     $taper_in = $taper_out = '';
     $taper_pid = open3($taper_in, $taper_out, ">&TAPER_ERR",
-	"$amlibexecdir/taper", "TESTCONF");
+	"$amlibexecdir/taper", "TESTCONF",
+	'--log-filename', "$CONFIG_DIR/TESTCONF/log/log");
     close TAPER_ERR;
     $taper_in->blocking(1);
     $taper_out->autoflush();

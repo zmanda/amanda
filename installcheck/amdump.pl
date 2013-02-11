@@ -81,7 +81,7 @@ localhost diskname2 $diskname {
 EODLE
 $testconf->write();
 
-ok(!run("$amlibexecdir/planner", 'TESTCONF'), "amdump fails in validate_optstr");
+ok(!run("$amlibexecdir/planner", 'TESTCONF', '--log-filename', "$CONFIG_DIR/TESTCONF/log/log"), "amdump fails in validate_optstr");
 open(my $logfile, "<", "$CONFIG_DIR/TESTCONF/log/log")
 	or die("opening log: $!");
 my $logline = grep(/^\S+ planner localhost diskname2 \d* 0 \[client custom compression with no compression program specified\]/, <$logfile>);

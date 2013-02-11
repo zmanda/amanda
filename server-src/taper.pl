@@ -40,6 +40,7 @@ Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+    'log-filename=s' => sub { Amanda::Logfile::set_logname($_[1]); },
 ) or usage();
 
 if (@ARGV != 1) {
