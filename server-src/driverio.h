@@ -144,6 +144,9 @@ typedef struct sched_s {
     int activehd;
     int no_space;
     char *degr_mesg;
+    crc_t native_crc;
+    crc_t client_crc;
+    crc_t server_crc;
 } sched_t;
 
 #define sched(dp)	((sched_t *) (dp)->up)

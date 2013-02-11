@@ -74,11 +74,13 @@ sub partstr {
     if (exists $part->{'holding_file'}) {
 	return "$part->{holding_file}: " .
 	       "$part->{dump}->{hostname} $part->{dump}->{diskname} " .
-	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}";
+	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}" .
+	       "n$part->{native_crc} c$part->{client_crc} s$part->{server_crc}";
    } else {
 	return "$part->{label}:$part->{filenum}: " .
 	       "$part->{dump}->{hostname} $part->{dump}->{diskname} $part->{dump}->{orig_kb} " .
-	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}";
+	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}" .
+	       "n$part->{native_crc} c$part->{client_crc} s$part->{server_crc}";
    }
 }
 

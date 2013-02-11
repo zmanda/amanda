@@ -131,6 +131,19 @@ static void log_add_full_(logtype_t typ, char *pname, char *message)
 
 void log_rename(char *datestamp);
 
+%typemap(in) crc_t {
+    parse_crc(SvPV_nolen($input), &$1);
+}
+
+%typemap(out) crc_t {
+    char *s_crc;
+
+    s_crc = g_strdup_printf("%08x:%lld", $1.crc, (long long)$1.size);
+    $result = sv_2mortal(newSVpv(s_crc, 0));
+    g_free(s_crc);
+    argvi++;
+}
+
 typedef struct {
     %extend {
 	/* destructor */
@@ -157,6 +170,9 @@ typedef struct {
     off_t bytes;
     off_t kb;
     off_t orig_kb;
+    crc_t native_crc;
+    crc_t client_crc;
+    crc_t server_crc;
     %mutable;
 } find_result_t;
 

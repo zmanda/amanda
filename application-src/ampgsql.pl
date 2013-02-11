@@ -874,7 +874,6 @@ sub command_backup {
 
        $self->{'index_h'}->print("/PostgreSQL-Database-$self->{'args'}->{'level'}\n");
 
-       $msg_fd->print("sendbackup: end\n");
    };
    $self->{'die_cb'} = sub {
        my $msg = shift @_;

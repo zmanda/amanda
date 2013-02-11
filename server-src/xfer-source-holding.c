@@ -21,6 +21,7 @@
  */
 
 #include "amanda.h"
+#include "util.h"
 #include "xfer-server.h"
 #include "xfer-device.h"
 
@@ -180,6 +181,7 @@ pull_buffer_impl(
     size_t *size)
 {
     XferSourceHolding *self = (XferSourceHolding *)elt;
+    XMsg *msg;
     char *buf = NULL;
     size_t bytes_read;
 
@@ -198,6 +200,7 @@ pull_buffer_impl(
 	if (bytes_read > 0) {
 	    *size = bytes_read;
 	    self->bytes_read += bytes_read;
+	    crc32((uint8_t *)buf, bytes_read, &elt->crc);
 	    return buf;
 	}
 
@@ -214,6 +217,14 @@ pull_buffer_impl(
     }
 
 return_eof:
+    g_debug("sending XMSG_CRC message");
+    g_debug("xfer-source-holding CRC: %08x     size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
     g_free(buf);
     *size = 0;
     return NULL;
@@ -227,6 +238,8 @@ instance_init(
 
     elt->can_generate_eof = TRUE;
     self->fd = -1;
+    make_crc_table();
+    crc32_init(&elt->crc);
 }
 
 static void

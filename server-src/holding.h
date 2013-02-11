@@ -166,7 +166,9 @@ holding_cleanup(corrupt_dle_fn corrupt_dle,
  * @param orig_size: the size.
  */
 void
-holding_set_origsize(char *holding_file, off_t orig_size);
+holding_set_from_driver(char *holding_file, off_t orig_size,
+			crc_t native_crc, crc_t client_crc,
+			crc_t server_crc);
 
 /* Rename holding files from the temporary names used during
  * creation.

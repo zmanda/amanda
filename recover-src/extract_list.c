@@ -82,6 +82,7 @@ typedef struct ctl_data_s {
   int                      child_in[2];
   int                      child_out[2];
   int                      child_err[2];
+  int                      crc_pipe[2];
   int                      pid;
   EXTRACT_LIST            *elist;
   dumpfile_t               file;
@@ -108,6 +109,13 @@ static struct {
     { "DATA", NULL },
 };
 
+typedef struct send_crc_s {
+    int      in;
+    int      out;
+    crc_t    crc;
+    GThread *thread;
+} send_crc_t;
+
 #define NSTREAMS G_N_ELEMENTS(amidxtaped_streams)
 
 static void amidxtaped_response(void *, pkt_t *, security_handle_t *);
@@ -121,6 +129,9 @@ static int  header_size = 0;
 static int  stderr_isatty;
 static time_t last_time = 0;
 static gboolean  last_is_size;
+static crc_t crc_in;
+static send_crc_t native_crc;
+static crc_t network_crc;
 
 
 /* global pid storage for interrupt handler */
@@ -175,6 +186,7 @@ static void read_amidxtaped_data(void *, void *, ssize_t);
 static char *merge_path(char *path1, char *path2);
 static gboolean ask_file_overwrite(ctl_data_t *ctl_data);
 static void start_processing_data(ctl_data_t *ctl_data);
+static gpointer handle_crc_thread(gpointer data);
 
 /*
  * Function:  ssize_t read_buffer(datafd, buffer, buflen, timeout_s)
@@ -2196,6 +2208,8 @@ writer_intermediary(
     ctl_data.bytes_read    = 0;
 
     header_size = 0;
+    crc32_init(&crc_in);
+    crc32_init(&native_crc.crc);
     security_stream_read(amidxtaped_streams[DATAFD].fd,
 			 read_amidxtaped_data, &ctl_data);
 
@@ -2236,8 +2250,12 @@ writer_intermediary(
 	    start_processing_data(&ctl_data);
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
 	    g_printf("%s\n",&amidxtaped_line[8]);
+	} else if(strncmp_const(amidxtaped_line, "DATA-STATUS ") == 0) {
+	    //g_printf("status: %s\n",&amidxtaped_line[12]);
+	} else if(strncmp_const(amidxtaped_line, "DATA-CRC ") == 0) {
+	    parse_crc(&amidxtaped_line[9], &network_crc);
 	} else {
-	    g_fprintf(stderr, _("Strange message from tape server: %s"),
+	    g_fprintf(stderr, _("Strange message from tape server: %s\n"),
 		    amidxtaped_line);
 	    break;
 	}
@@ -2245,6 +2263,32 @@ writer_intermediary(
 
     /* CTL might be close before DATA */
     event_loop(0);
+
+    if (native_crc.thread) {
+	g_thread_join(native_crc.thread);
+    }
+
+    g_debug("native_crc: %08x:%lld", ctl_data.file.native_crc.crc, (long long)ctl_data.file.native_crc.size);
+    g_debug("client_crc: %08x:%lld", ctl_data.file.client_crc.crc, (long long)ctl_data.file.client_crc.size);
+    g_debug("server_crc: %08x:%lld", ctl_data.file.server_crc.crc, (long long)ctl_data.file.server_crc.size);
+    g_debug("crc_in    : %08x:%lld", crc32_finish(&crc_in), (long long)crc_in.size);
+    g_debug("crc_native: %08x:%lld", crc32_finish(&native_crc.crc), (long long)native_crc.crc.size);
+
+    if (network_crc.crc > 0 && network_crc.crc != crc32_finish(&crc_in)) {
+	g_fprintf(stderr,
+		"Network-crc (%08x:%lld) and data-in-crc (%08x:%lld) differ\n",
+		network_crc.crc, (long long)network_crc.size,
+		crc32_finish(&crc_in), (long long)crc_in.size);
+    }
+
+    if (ctl_data.file.native_crc.crc > 0 &&
+	ctl_data.file.native_crc.crc != crc32_finish(&native_crc.crc)) {
+	g_fprintf(stderr,
+		"Network-crc (%08x:%lld) and data-in-crc (%08x:%lld) differ\n",
+		ctl_data.file.native_crc.crc,
+		(long long)ctl_data.file.native_crc.size,
+		crc32_finish(&native_crc.crc), (long long)native_crc.crc.size);
+    }
     dumpfile_free_data(&ctl_data.file);
     amfree(ctl_data.addrs);
     amfree(ctl_data.bsu);
@@ -2966,6 +3010,7 @@ read_amidxtaped_data(
 	 * We ignore errors while writing to the index file.
 	 */
 	(void)full_write(ctl_data->child_in[1], buf, (size_t)size);
+	crc32((uint8_t *)buf, size, &crc_in);
     }
 }
 
@@ -3116,6 +3161,24 @@ start_processing_data(
 	ctl_data->decrypt_cdata.event = NULL;
     }
 
+    /* compute native-crc */
+    if (ctl_data->file.encrypted || ctl_data->file.compressed) {
+	if (pipe(ctl_data->crc_pipe) == -1) {
+	    error(_("extract_list - error setting up ctc pipe: %s\n"),
+		  strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	native_crc.in  = ctl_data->child_in[0];
+        native_crc.out = ctl_data->crc_pipe[1];
+	crc32_init(&native_crc.crc);
+	ctl_data->child_in[0] = ctl_data->crc_pipe[0];
+	native_crc.thread = g_thread_create(handle_crc_thread,
+                                 (gpointer)&native_crc, TRUE, NULL);
+    } else {
+	native_crc.thread = NULL;
+    }
+
     /* okay, ready to extract. fork a child to do the actual work */
     if ((ctl_data->pid = fork()) == 0) {
 	/* this is the child process */
@@ -3178,3 +3241,23 @@ start_processing_data(
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATAPATH-OK");
     }
 }
+
+static gpointer
+handle_crc_thread(
+    gpointer data)
+{
+    send_crc_t *crc = (send_crc_t *)data;
+    uint8_t  buf[32768];
+    size_t   size;
+
+    while ((size = full_read(crc->in, buf, 32768)) > 0) {
+        if (full_write(crc->out, buf, size) == size) {
+            crc32(buf, size, &crc->crc);
+        }
+    }
+    close(crc->in);
+    close(crc->out);
+
+    return NULL;
+}
+

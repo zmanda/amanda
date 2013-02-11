@@ -795,8 +795,14 @@ sub _handle_dumper_line
 
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $level ) = @info[ 0 .. 2 ];
-        my ( $sec, $kb, $kps, $orig_kb ) = @info[ 4, 6, 8, 10 ];
-	$kb = int($kb/1024) if $info[4] eq 'bytes';
+	my $x;
+	if ($info[3] eq '[sec') {
+	    $x = 4;
+	} else {
+	    $x = 6; #native and client crc
+	}
+        my ( $sec, $kb, $kps, $orig_kb ) = @info[ $x, $x+2, $x+4, $x+6 ];
+	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
         $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
@@ -826,8 +832,14 @@ sub _handle_dumper_line
 
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
-        my ( $sec, $kb, $kps, $orig_kb ) = @info[ 5, 7, 9, 11 ];
-	$kb = int($kb/1024) if $info[6] eq 'bytes';
+	my $x;
+	if ($info[4] eq '[sec') {
+	    $x = 5;
+	} else {
+	    $x = 7; #native and client crc
+	}
+        my ( $sec, $kb, $kps, $orig_kb ) = @info[ $x, $x+2, $x+4, $x+6 ];
+	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
         $orig_kb =~ s{\]$}{};
 
         my $dle    = $disklist->{$hostname}->{$disk};
@@ -874,8 +886,14 @@ sub _handle_chunker_line
 
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
-        my ( $sec, $kb, $kps ) = @info[ 5, 7, 9 ];
-	$kb = int($kb/1024) if $info[6] eq 'bytes';
+	my $x;
+	if ($info[4] eq '[sec') {
+	    $x = 5;
+	} else {
+	    $x = 6; #server-src
+	}
+        my ( $sec, $kb, $kps, $orig_kb ) = @info[ $x, $x+2, $x+4, $x+6 ];
+	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
         $kps =~ s{\]$}{};
 
         my $dle     = $disklist->{$hostname}->{$disk};
@@ -976,17 +994,24 @@ sub _handle_taper_line
 
 # format is:
 # $type = DONE | PARTIAL
-# $type taper <hostname> <disk> <timestamp> <part> <level> [sec <sec> kb <kb> kps <kps>]
+# $type taper <hostname> <disk> <timestamp> <part> <level> [native-crc client-crc server-crc] [sec <sec> kb <kb> kps <kps>]
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
-        my ( $sec, $kb, $kps, $orig_kb ) = @info[ 6, 8, 10, 12 ];
-	$kb = int($kb/1024) if $info[7] eq 'bytes';
+	my $x;
+	if ($info[5] eq '[sec') {
+	    $x = 6;
+	} else {
+	    $x = 9; #native, client and server crc
+	}
+
+        my ( $sec, $kb, $kps, $orig_kb ) = @info[ $x, $x+2, $x+4, $x+6 ];
+	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
 	my $error;
 	if ($type == $L_PARTIAL) {
 	    if ($kps =~ /\]$/) {
-	        $error = join " ", @info[ 11 .. $#info ];
+	        $error = join " ", @info[ $x+5 .. $#info ];
 	    } else {
-	        $error = join " ", @info[ 13 .. $#info ];
+	        $error = join " ", @info[ $x+7 .. $#info ];
 	    }
 	}
         $kps =~ s{\]$}{};

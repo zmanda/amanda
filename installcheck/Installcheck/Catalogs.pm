@@ -198,7 +198,7 @@ sub _parse {
 	    $fileref = \$self->{$kind}{$cur_filename};
 
 	# holding file
-	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+)$/) {
+	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\S+) (\S+) (\S+)$/) {
 
 	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
 	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
@@ -221,6 +221,9 @@ sub _parse {
 		message => '',
 		nparts => 1,
 		sec => 0.0,
+		native_crc => $8,
+		client_crc => $9,
+		server_crc => $10,
 	    };
 	    my $part = $self->{'parts'}{$1} = {
 		holding_file => $hfile,
@@ -230,11 +233,14 @@ sub _parse {
 		kb => $dump->{'kb'},
 		orig_kb => 0,
 		partnum => 1,
+		native_crc => $8,
+		client_crc => $9,
+		server_crc => $10,
 	    };
 	    $dump->{'parts'} = [ undef, $part ];
 
 	# dump
-	} elsif (/^%D (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+)/) {
+	} elsif (/^%D (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
 	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
 	    my $dump = $self->{'dumps'}{$1} = {
 		dump_timestamp => $2,
@@ -248,13 +254,16 @@ sub _parse {
 		sec => $10+0.0,
 		kb => $11,
 		orig_kb => $12,
+		native_crc => $13,
+		client_crc => $14,
+		server_crc => $15,
 		parts => [ undef ],
 	    };
 	    # translate "" to an empty string
 	    $dump->{'message'} = '' if $dump->{'message'} eq '""';
 
 	# part
-	} elsif (/^%P (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\d+)/) {
+	} elsif (/^%P (\S+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
 	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
 	    die "dump tag $2 does not exist" unless exists $self->{'dumps'}{$2};
 
@@ -266,7 +275,10 @@ sub _parse {
 		status => $6,
 		sec => $7+0.0,
 		kb => $8,
-		orig_kb => $9
+		orig_kb => $9,
+		native_crc => $10,
+		client_crc => $11,
+		server_crc => $12,
 	    };
 	    $self->{'dumps'}->{$2}->{'parts'}->[$5] = $part;
 

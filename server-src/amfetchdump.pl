@@ -401,6 +401,18 @@ sub main {
     my @init_needed_labels;
     my $init_label;
     my $scan;
+    my $hdr;
+    my $source_crc;
+    my $dest_crc;
+    my $xfer_src;
+    my $xfer_dest;
+    my $client_filter;
+    my $native_filter;
+    my $restore_native_crc;
+    my $restore_client_crc;
+    my $dest_is_server;
+    my $dest_is_client;
+    my $dest_is_native;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -555,7 +567,7 @@ sub main {
     };
 
     step xfer_src_cb => sub {
-	my ($errs, $hdr, $xfer_src, $directtcp_supported) = @_;
+	(my $errs, $hdr, $xfer_src, my $directtcp_supported) = @_;
 	return failure(join("; ", @$errs), $finished_cb) if $errs;
 
 	my $dle_str = $hdr->{'dle_str'};
@@ -564,8 +576,21 @@ sub main {
 
 	# and set up the destination..
 	my $dest_fh;
-	my $xfer_dest;
 	my @filters;
+
+	# Take the CRC from the log if they are not in the header
+	if (!defined $hdr->{'native_crc'} ||
+            $hdr->{'native_crc'} =~ /^00000000:/) {
+            $hdr->{'native_crc'} = $current_dump->{'native_crc'};
+	}
+	if (!defined $hdr->{'client_crc'} ||
+            $hdr->{'client_crc'} =~ /^00000000:/) {
+            $hdr->{'client_crc'} = $current_dump->{'client_crc'};
+	}
+	if (!defined $hdr->{'server_crc'} ||
+            $hdr->{'server_crc'} =~ /^00000000:/) {
+            $hdr->{'server_crc'} = $current_dump->{'server_crc'};
+	}
 
 	if (defined $opt_data_path and $opt_data_path eq 'directtcp' and !$directtcp_supported) {
 	    return failure("The device can't do directtcp", $finished_cb);
@@ -689,6 +714,9 @@ sub main {
 	    }
 	});
 
+	$dest_is_server = 1;
+	$dest_is_client = 0;
+	$dest_is_native = 0;
 	# set up any filters that need to be applied; decryption first
 	if ($hdr->{'encrypted'} and
 	    (($hdr->{'srv_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_SERVER)) ||
@@ -712,6 +740,20 @@ sub main {
 	    $hdr->{'clnt_encrypt'} = '';
 	    $hdr->{'clnt_decrypt_opt'} = '';
 	    $hdr->{'encrypt_suffix'} = 'N';
+
+	    if (!$hdr->{'compressed'}) {
+		$native_filter = Amanda::Xfer::Filter::Crc->new();
+		push @filters, $native_filter;
+		$dest_is_native = 1;
+	    } elsif ($hdr->{'srv_encrypt'} and
+	        (!$hdr->{'srvcompprog'} and
+		 $dle->{'compress'} eq "SERVER-FAST" and
+		 $dle->{'compress'} eq "SERVER-BEST")) {
+		$client_filter = Amanda::Xfer::Filter::Crc->new();
+		push @filters, $client_filter;
+		$dest_is_client = 1;
+	    }
+	    $dest_is_server = 0;
 	}
 
 	if ($hdr->{'compressed'} and not $opt_compress and
@@ -744,6 +786,12 @@ sub main {
 	    # adjust the header
 	    $hdr->{'compressed'} = 0;
 	    $hdr->{'uncompress_cmd'} = '';
+
+	    $native_filter = Amanda::Xfer::Filter::Crc->new();
+	    push @filters, $native_filter;
+	    $dest_is_native = 1;
+	    $dest_is_client = 0;
+	    $dest_is_server = 0;
 	} elsif (!$hdr->{'compressed'} and $opt_compress and not $opt_leave) {
 	    # need to compress this file
 
@@ -760,6 +808,7 @@ sub main {
 	    $hdr->{'uncompress_cmd'} = " $Amanda::Constants::UNCOMPRESS_PATH " .
 		"$Amanda::Constants::UNCOMPRESS_OPT |";
 	    $hdr->{'comp_suffix'} = $Amanda::Constants::COMPRESS_SUFFIX;
+	    $dest_is_server = 0;
 	}
 
 	# write the header to the destination if requested
@@ -778,6 +827,7 @@ sub main {
 
 	# start reading all filter stderr
 	foreach my $filter (@filters) {
+	    next if !$filter->can('get_stderr_fd');
 	    my $fd = $filter->get_stderr_fd();
 	    $fd.="";
 	    $fd = int($fd);
@@ -874,7 +924,25 @@ sub main {
     step handle_xmsg => sub {
 	my ($src, $msg, $xfer) = @_;
 
-	$clerk->handle_xmsg($src, $msg, $xfer);
+	if ($msg->{'type'} == $XMSG_CRC) {
+	    if ($msg->{'elt'} == $xfer_src) {
+		$source_crc = $msg->{'crc'}.":".$msg->{'size'};
+		debug("source_crc: $source_crc");
+	    } elsif ($msg->{'elt'} == $xfer_dest) {
+		$dest_crc = $msg->{'crc'}.":".$msg->{'size'};
+		debug("dest_crc: $dest_crc");
+	    } elsif (defined $native_filter and $msg->{'elt'} == $native_filter) {
+		$restore_native_crc =  $msg->{'crc'}.":".$msg->{'size'};
+		debug("restore_native_crc: $restore_native_crc");
+	    } elsif (defined $client_filter and $msg->{'elt'} == $client_filter) {
+		$restore_client_crc =  $msg->{'crc'}.":".$msg->{'size'};
+		debug("restore_client_crc: $restore_client_crc");
+	    } else {
+		debug("unhandled XMSG_CRC $msg->{'elt'}");
+	    }
+	} else {
+	    $clerk->handle_xmsg($src, $msg, $xfer);
+	}
 	if ($msg->{'type'} == $XMSG_INFO) {
 	    Amanda::Debug::info($msg->{'message'});
 	} elsif ($msg->{'type'} == $XMSG_ERROR) {
@@ -897,10 +965,104 @@ sub main {
 	}
 	@xfer_errs = (@xfer_errs, @{$recovery_params{'errors'}})
 	    if $recovery_params{'errors'};
+
 	return failure(join("; ", @xfer_errs), $finished_cb)
 	    if @xfer_errs;
 	return failure("recovery failed", $finished_cb)
 	    if $recovery_params{'result'} ne 'DONE';
+
+	if (!$opt_no_reassembly) {
+	    my $msg;
+	    if (defined $hdr->{'native_crc'} and $hdr->{'native_crc'} !~ /^00000000:/ and
+		defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
+		$hdr->{'native_crc'} ne $current_dump->{'native_crc'}) {
+		$msg = "recovery failed: native-crc in header ($hdr->{'native_crc'}) and native-crc in log ($current_dump->{'native_crc'}) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+	    if (defined $hdr->{'client_crc'} and $hdr->{'client_crc'} !~ /^00000000:/ and
+		defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
+		$hdr->{'client_crc'} ne $current_dump->{'client_crc'}) {
+		$msg = "recovery failed: client-crc in header ($hdr->{'client_crc'}) and client-crc in log ($current_dump->{'client_crc'}) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+
+	    my $hdr_server_crc_size;
+	    my $current_dump_server_crc_size;
+	    my $source_crc_size;
+
+	    if (defined $hdr->{'server_crc'}) {
+		$hdr->{'server_crc'} =~ /[^:]*:(.*)/;
+		$hdr_server_crc_size = $1;
+	    }
+	    if (defined $current_dump->{'server_crc'}) {
+		$current_dump->{'server_crc'} =~ /[^:]*:(.*)/;
+		$current_dump_server_crc_size = $1;
+	    }
+	    if (defined $source_crc) {
+		$source_crc =~ /[^:]*:(.*)/;
+		$source_crc_size = $1;
+	    }
+
+	    if (defined $hdr->{'server_crc'} and $hdr->{'server_crc'} !~ /^00000000:/ and
+		defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
+		$hdr_server_crc_size == $current_dump_server_crc_size and
+		$hdr->{'server_crc'} ne $current_dump->{'server_crc'}) {
+		$msg = "recovery failed: server-crc in header ($hdr->{'server_crc'}) and server-crc in log ($current_dump->{'server_crc'}) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+
+	    if (defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
+		$current_dump_server_crc_size == $source_crc_size and
+		$current_dump->{'server_crc'} ne $source_crc) {
+		$msg = "recovery failed: server-crc ($current_dump->{'server_crc'}) and source_crc ($source_crc) differ",
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+
+	    if (defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
+		defined $restore_native_crc and $current_dump->{'native_crc'} ne $restore_native_crc) {
+		$msg = "recovery failed: native-crc ($current_dump->{'native_crc'}) and restore-native-crc ($restore_native_crc) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+	    if (defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
+		defined $restore_client_crc and $current_dump->{'client_crc'} ne $restore_client_crc) {
+		$msg = "recovery failed: client-crc ($current_dump->{'client_crc'}) and restore-client-crc ($restore_client_crc) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+
+	    debug("dest_is_native $dest_crc $restore_native_crc") if $dest_is_native;
+	    debug("dest_is_client $dest_crc $restore_client_crc") if $dest_is_client;
+	    debug("dest_is_server $dest_crc $source_crc") if $dest_is_server;
+	    if ($dest_is_native and $restore_native_crc ne $dest_crc) {
+		$msg = "recovery failed: dest-crc ($dest_crc) and restore-native-crc ($restore_native_crc) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+	    if ($dest_is_client and $restore_client_crc ne $dest_crc) {
+		$msg = "recovery failed: dest-crc ($dest_crc) and restore-client-crc ($restore_client_crc) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+	    if ($dest_is_server and $source_crc ne $dest_crc) {
+		$msg = "recovery failed: dest-crc ($dest_crc) and source-crc ($source_crc) differ";
+		print STDERR "$msg\n";
+		debug($msg);
+	    }
+	}
+	$hdr = undef;
+	$xfer_src = undef;
+	$xfer_dest = undef;
+	$native_filter = undef;
+	$client_filter = undef;
+	$source_crc = undef;
+	$dest_crc = undef;
+	$restore_native_crc = undef;
+	$restore_client_crc = undef;
 
 	$steps->{'start_dump'}->();
     };

@@ -21,6 +21,7 @@
  */
 
 #include "amanda.h"
+#include "util.h"
 #include "amxfer.h"
 
 /*

@@ -47,6 +47,13 @@
 	}				\
 } while (0)
 
+typedef struct send_crc_s {
+    int      in;
+    int      out;
+    crc_t    crc;
+    GThread *thread;
+} send_crc_t;
+
 #define TIMEOUT 30
 
 pid_t comppid = (pid_t)-1;
@@ -84,6 +91,7 @@ void parse_backup_messages(dle_t *dle, int mesgin);
 static void process_dumpline(char *str);
 static void save_fd(int *, int);
 void application_api_info_tapeheader(int mesgfd, char *prog, dle_t *dle);
+static gpointer handle_crc_thread(gpointer data);
 
 int fdprintf(int fd, char *format, ...) G_GNUC_PRINTF(2, 3);
 
@@ -132,6 +140,8 @@ main(
 	return (0);
     }
 
+    glib_init();
+
     /* initialize */
     /*
      * Configure program for internationalization:
@@ -162,6 +172,8 @@ main(
     } else {
 	interactive = 0;
     }
+
+    make_crc_table();
 
     add_amanda_log_handler(amanda_log_stderr);
     add_amanda_log_handler(amanda_log_syslog);
@@ -500,15 +512,63 @@ main(
 	GPtrArray *errarray;
 	int        errfd[2];
 	FILE      *dumperr;
+	send_crc_t native_crc;
+	send_crc_t client_crc;
+	gboolean   have_filter = FALSE;
+	int        native_pipe[2];
+	int        client_pipe[2];
+	int        data_out = datafd;
+
+	crc32_init(&native_crc.crc);
+	crc32_init(&client_crc.crc);
+	/* create pipes to compute the native CRC */
+	if (pipe(native_pipe) < 0) {
+	    char  *errmsg;
+	    char  *qerrmsg;
+	    errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
+				    dle->program);
+	    qerrmsg = quote_string(errmsg);
+	    fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
+	    dbprintf(_("ERROR %s\n"), qerrmsg);
+	    amfree(qerrmsg);
+	    amfree(errmsg);
+	    return 0;
+	}
+
+	if (dle->encrypt == ENCRYPT_CUST ||
+	    dle->compress == COMP_FAST ||
+	    dle->compress == COMP_BEST ||
+	    dle->compress == COMP_CUST) {
+
+	    have_filter = TRUE;
+
+	    /* create pipes to compute the client CRC */
+	    if (pipe(client_pipe) < 0) {
+		char  *errmsg;
+		char  *qerrmsg;
+		errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
+					 dle->program);
+		qerrmsg = quote_string(errmsg);
+		fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
+		dbprintf(_("ERROR %s\n"), qerrmsg);
+		amfree(qerrmsg);
+		amfree(errmsg);
+		return 0;
+	    }
+	    data_out = client_pipe[1];
+	} else {
+	    data_out = datafd;
+	}
+
 
 	/*  apply client-side encryption here */
 	if ( dle->encrypt == ENCRYPT_CUST ) {
 	    encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
-			       &compout, &datafd, &mesgfd,
+			       &compout, &data_out, &mesgfd,
 			       dle->clnt_encrypt, encryptopt, NULL);
 	    dbprintf(_("encrypt: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
 	} else {
-	    compout = datafd;
+	    compout = data_out;
 	    encpid = -1;
 	}
 
@@ -683,7 +743,7 @@ main(
 	    for (j = 1; j < argv_ptr->len - 1; j++)
 		dbprintf(" %s\n", (char *)g_ptr_array_index(argv_ptr,j));
 	    dbprintf(_("\"\n"));
-	    if(dup2(dumpout, 1) == -1) {
+	    if(dup2(native_pipe[1], 1) == -1) {
 		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
@@ -710,7 +770,7 @@ main(
 	    execve(cmd, (char **)argv_ptr->pdata, safe_env());
 	    exit(1);
 	    break;
- 
+
 	default:
 	    break;
 	case -1:
@@ -724,6 +784,20 @@ main(
 	    /*NOTREACHED*/
 	}
 
+	close(native_pipe[1]);
+	native_crc.in  = native_pipe[0];
+	native_crc.out = dumpout;
+	native_crc.thread = g_thread_create(handle_crc_thread,
+				 (gpointer)&native_crc, TRUE, NULL);
+
+	if (have_filter) {
+	    close(client_pipe[1]);
+	    client_crc.in  = client_pipe[0];
+	    client_crc.out = datafd;
+	    client_crc.thread = g_thread_create(handle_crc_thread,
+				 (gpointer)&client_crc, TRUE, NULL);
+	}
+
 	result = 0;
 	while ((line = agets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
@@ -732,6 +806,10 @@ main(
 		result = 1;
 	    }
 	    amfree(line);
+	}
+	g_thread_join(native_crc.thread);
+	if (have_filter) {
+	    g_thread_join(client_crc.thread);
 	}
 
 	result |= check_result(mesgfd);
@@ -754,6 +832,28 @@ main(
 		}
 	    }
 	}
+
+	if (!have_filter)
+	    client_crc.crc = native_crc.crc;
+
+	if (am_has_feature(g_options->features, fe_sendbackup_crc)) {
+	    dbprintf("sendbackup: native-CRC %08x:%lld\n",
+		     crc32_finish(&native_crc.crc),
+		     (long long)native_crc.crc.size);
+	    dbprintf("sendbackup: client-CRC %08x:%lld\n",
+		     crc32_finish(&client_crc.crc),
+		     (long long)client_crc.crc.size);
+	    fprintf(mesgstream, "sendbackup: native-CRC %08x:%lld\n",
+		crc32_finish(&native_crc.crc),
+		(long long)native_crc.crc.size);
+	    fprintf(mesgstream, "sendbackup: client-CRC %08x:%lld\n",
+		crc32_finish(&client_crc.crc),
+		(long long)client_crc.crc.size);
+	}
+
+	dbprintf("sendbackup: end\n");
+	fprintf(mesgstream, "sendbackup: end\n");
+
 	amfree(bsu);
      } else {
 	if(!interactive) {
@@ -765,7 +865,7 @@ main(
 		exit(1);
 	    }
 	}
- 
+
 	if(pipe(mesgpipe) == -1) {
 	    s = strerror(errno);
 	    dbprintf(_("error [opening mesg pipe: %s]\n"), s);
@@ -1398,6 +1498,26 @@ start_index(
 
   exit(exitcode);
 }
+
+static gpointer
+handle_crc_thread(
+    gpointer data)
+{
+    send_crc_t *crc = (send_crc_t *)data;
+    uint8_t  buf[32768];
+    size_t   size;
+
+    while ((size = full_read(crc->in, buf, 32768)) > 0) {
+	if (full_write(crc->out, buf, size) == size) {
+	    crc32(buf, size, &crc->crc);
+	}
+    }
+    close(crc->in);
+    close(crc->out);
+
+    return NULL;
+}
+
 
 extern backup_program_t dump_program, gnutar_program;
 

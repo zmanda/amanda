@@ -440,6 +440,9 @@ taper_cmd(
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
     char orig_kb[NUM_STR_SIZE];
+    char n_crc[NUM_STR_SIZE+11];
+    char c_crc[NUM_STR_SIZE+11];
+    char s_crc[NUM_STR_SIZE+11];
     char *data_path;
     disk_t *dp;
     char *qname;
@@ -520,10 +523,29 @@ taper_cmd(
 	else
 	    origsize = 0;
 	g_snprintf(number, sizeof(number), "%ju", origsize);
+	g_snprintf(n_crc, sizeof(n_crc), "%08x:%lld", sched(dp)->native_crc.crc,
+		   (long long)sched(dp)->native_crc.size);
+	g_snprintf(c_crc, sizeof(c_crc), "%08x:%lld", sched(dp)->client_crc.crc,
+		   (long long)sched(dp)->client_crc.size);
+	if (dp->compress == COMP_SERVER_FAST ||
+	    dp->compress == COMP_SERVER_BEST ||
+	    dp->compress == COMP_SERVER_CUST ||
+	    dp->encrypt  == ENCRYPT_SERV_CUST) {
+	    /* The server-crc do not match the client-crc */
+	    g_snprintf(s_crc, sizeof(s_crc), "00000000:0");
+	} else {
+	    /* The server-crc should match the client-crc */
+	    g_snprintf(s_crc, sizeof(s_crc), "%08x:%lld",
+		       sched(dp)->client_crc.crc,
+		       (long long)sched(dp)->client_crc.size);
+	}
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", sched(dp)->taper->name,
 			    " ", disk2serial(dp),
 			    " ", number,
+			    " ", n_crc,
+			    " ", c_crc,
+			    " ", s_crc,
 			    "\n", NULL);
 	break;
     case FAILED: /* handle */
@@ -747,6 +769,7 @@ chunker_cmd(
     char number[NUM_STR_SIZE];
     char chunksize[NUM_STR_SIZE];
     char use[NUM_STR_SIZE];
+    char c_crc[NUM_STR_SIZE+11];
     char *o;
     int activehd=0;
     assignedhd_t **h=NULL;
@@ -835,6 +858,26 @@ chunker_cmd(
 	}
 	break;
     case DONE:
+	if (dp) {
+	    if (sched(dp)->client_crc.crc == 0 ||
+		dp->compress == COMP_SERVER_FAST ||
+		dp->compress == COMP_SERVER_BEST ||
+		dp->compress == COMP_SERVER_CUST ||
+		dp->encrypt  == ENCRYPT_SERV_CUST) {
+		g_snprintf(c_crc, sizeof(c_crc), "00000000:0");
+	    } else {
+		g_snprintf(c_crc, sizeof(c_crc), "%08x:%lld",
+			   sched(dp)->client_crc.crc,
+			   (long long)sched(dp)->client_crc.size);
+	    }
+	    cmdline = g_strjoin(NULL, cmdstr[cmd],
+				" ", disk2serial(dp),
+				" ", c_crc,
+				"\n",  NULL);
+	} else {
+	    cmdline = g_strjoin(NULL, cmdstr[cmd], "\n", NULL);
+	}
+	break;
     case FAILED:
 	if( dp ) {
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],

@@ -428,6 +428,7 @@ sub plan_cb {
     # of the bass-ackward way that amrecover specifies the dump to us, we can't
     # check the results until *after* the plan was created.
     my $dump = $plan->{'dumps'}->[0];
+    $self->{'dump'} = $dump;
     my $dle = Amanda::Disklist::get_disk($dump->{'hostname'}, $dump->{'diskname'});
     my $recovery_limit;
     if ($dle && dumptype_seen($dle->{'config'}, $DUMPTYPE_RECOVERY_LIMIT)) {
@@ -507,9 +508,27 @@ sub xfer_src_cb {
     $self->{'xfer_src'} = $xfer_src;
     $self->{'xfer_src_supports_directtcp'} = $directtcp_supported;
     $self->{'header'} = $header;
-
+    $self->{'dest_is_native'} = 0;
+    $self->{'dest_is_client'} = 0;
+    $self->{'dest_is_server'} = 1;
     debug("recovering from " . $header->summary());
+    my $dle = $header->get_dle();
 
+    # Take the CRC from the log if they are not in the header
+    if (!defined $header->{'native_crc'} ||
+	$header->{'native_crc'} =~ /^00000000:/) {
+	$header->{'native_crc'} = $self->{'dump'}->{'native_crc'};
+    }
+    if (!defined $header->{'client_crc'} ||
+	$header->{'client_crc'} =~ /^00000000:/) {
+	$header->{'client_crc'} = $self->{'dump'}->{'client_crc'};
+    }
+    if (!defined $header->{'server_crc'} ||
+	$header->{'server_crc'} =~ /^00000000:/) {
+	$header->{'server_crc'} = $self->{'dump'}->{'server_crc'};
+    }
+
+    my $server_encrypted = 0;
     # set up any filters that need to be applied, decryption first
     my @filters;
     if ($header->{'encrypted'}) {
@@ -523,6 +542,23 @@ sub xfer_src_cb {
 	    $header->{'clnt_encrypt'} = '';
 	    $header->{'clnt_decrypt_opt'} = '';
 	    $header->{'encrypt_suffix'} = 'N';
+	    $server_encrypted = 1;
+	    if (!$header->{'compressed'}) {
+		$self->{'dest_is_client'} = 1;
+	    } elsif ($header->{'srvcompprog'}) {
+	    } elsif ($header->{'clntcompprog'}) {
+		$self->{'dest_is_client'} = 1;
+	    } elsif ($dle and
+		     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
+		      $dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST)) {
+	    } elsif ($dle and
+		     ($dle->{'compress'} == $Amanda::Config::COMP_FAST ||
+		      $dle->{'compress'} == $Amanda::Config::COMP_BEST)) {
+		$self->{'dest_is_client'} = 1;
+	    } else {
+		$self->{'dest_is_native'} = 1;
+	    }
+	    $self->{'dest_is_server'} = 0;
 	} elsif ($header->{'clnt_encrypt'}) {
 	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered)) {
 		push @filters,
@@ -535,9 +571,15 @@ sub xfer_src_cb {
 		$header->{'clnt_encrypt'} = '';
 		$header->{'clnt_decrypt_opt'} = '';
 		$header->{'encrypt_suffix'} = 'N';
+		if (!$header->{'compressed'}) {
+		    $self->{'dest_is_native'} = 1;
+		}
+		$self->{'dest_is_client'} = 0;
 	    } else {
 		debug("Not decrypting client encrypted stream");
+		$self->{'dest_is_client'} = 1;
 	    }
+	    $self->{'dest_is_server'} = 0;
 	} else {
 	    $self->sendmessage("could not decrypt encrypted dump: no program specified");
 	    return $self->quit();
@@ -558,8 +600,15 @@ sub xfer_src_cb {
 	    $header->{'compressed'} = 0;
 	    $header->{'uncompress_cmd'} = '';
 	    $header->{'srvcompprog'} = '';
+	    $self->{'dest_is_server'} = 0;
+	    $self->{'dest_is_client'} = 0;
+	    $self->{'dest_is_native'} = 1;
 	} elsif ($header->{'clntcompprog'}) {
 	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered)) {
+		if ($server_encrypted) {
+		    $self->{'client_filter'} = Amanda::Xfer::Filter::Crc->new();
+		    push @filters, $server_encrypted;
+		}
 		# TODO: this assumes that clntcompprog takes "-d" to decrypt
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
@@ -568,13 +617,19 @@ sub xfer_src_cb {
 		$header->{'compressed'} = 0;
 		$header->{'uncompress_cmd'} = '';
 		$header->{'clntcompprog'} = '';
+		$self->{'dest_is_server'} = 0;
+		$self->{'dest_is_client'} = 0;
+		$self->{'dest_is_native'} = 1;
 	    }
 	} else {
-	    my $dle = $header->get_dle();
 	    if ($dle &&
 		(!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered) ||
 		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
 		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST)) {
+		if ($server_encrypted) {
+		    $self->{'client_filter'} = Amanda::Xfer::Filter::Crc->new();
+		    push @filters, $server_encrypted;
+		}
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
@@ -582,9 +637,11 @@ sub xfer_src_cb {
 		# adjust the header
 		$header->{'compressed'} = 0;
 		$header->{'uncompress_cmd'} = '';
+		$self->{'dest_is_server'} = 0;
+		$self->{'dest_is_client'} = 0;
+		$self->{'dest_is_native'} = 1;
 	    }
 	}
-
     }
     $self->{'xfer_filters'} = [ @filters ];
 
@@ -611,6 +668,11 @@ sub send_header {
     }
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_origsize_in_header)) {
 	$header->{'orig_size'} = 0;
+    }
+    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_crc_in_header)) {
+	$header->{'native_crc'} = undef;
+	$header->{'client_crc'} = undef;
+	$header->{'server_crc'} = undef;
     }
 
     # even with fe_amrecover_splits, amrecover doesn't like F_SPLIT_DUMPFILE.
@@ -669,6 +731,7 @@ sub start_xfer {
 	$xfer_dest = Amanda::Xfer::Dest::Fd->new(
 		$self->wfd($self->{'data_stream'})),
     }
+    $self->{'xfer_dest'} = $xfer_dest;
 
     if ($self->{'datapath'} eq 'amanda') {
 	$self->sendctlline("USE-DATAPATH AMANDA\r\n");
@@ -746,10 +809,25 @@ sub handle_xmsg {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    $self->{'clerk'}->handle_xmsg($src, $msg, $xfer);
-    if ($msg->{'elt'} != $self->{'xfer_src'}) {
-	if ($msg->{'type'} == $XMSG_ERROR) {
-	    $self->sendmessage("$msg->{message}");
+    if ($msg->{'type'} == $XMSG_CRC) {
+	if ($msg->{'elt'} == $self->{'xfer_src'}) {
+	    $self->{'source_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+	    debug("source_crc: $self->{'source_crc'}");
+	} elsif ($msg->{'elt'} == $self->{'xfer_dest'}) {
+	    $self->{'dest_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+	    debug("dest_crc: $self->{'dest_crc'}");
+	} elsif (defined $self->{'client_filter'} and $msg->{'elt'} == $self->{'client_filter'}) {
+	    $self->{'client_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+	    debug("client_crc: $self->{'client_crc'}");
+	} else {
+	    debug("unhandled crc from $msg->{'elt'}");
+	}
+    } else {
+	$self->{'clerk'}->handle_xmsg($src, $msg, $xfer);
+	if ($msg->{'elt'} != $self->{'xfer_src'}) {
+	    if ($msg->{'type'} == $XMSG_ERROR) {
+		$self->sendmessage("$msg->{message}");
+	    }
 	}
     }
 }
@@ -757,8 +835,10 @@ sub handle_xmsg {
 sub recovery_cb {
     my $self = shift;
     my %params = @_;
+    my $msg;
 
     debug("recovery complete");
+
     if (@{$params{'errors'}}) {
 	for (@{$params{'errors'}}) {
 	    $self->sendmessage("$_");
@@ -771,7 +851,125 @@ sub recovery_cb {
     if ($params{'result'} ne 'DONE') {
 	warning("NOTE: transfer failed, but amrecover does not know that");
     }
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_status)) {
+	$self->sendctlline("DATA-STATUS $params{'result'}\r\n");
+    }
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_crc)) {
+	$self->sendctlline("DATA-CRC $self->{'dest_crc'}\r\n");
+    }
 
+    debug("header server_crc: $self->{'header'}->{'server_crc'}");
+    debug("header client_crc: $self->{'header'}->{'client_crc'}");
+    debug("header native_crc: $self->{'header'}->{'native_crc'}");
+    debug("log server_crc: $self->{'dump'}->{'server_crc'}");
+    debug("log client_crc: $self->{'dump'}->{'client_crc'}");
+    debug("log native_crc: $self->{'dump'}->{'native_crc'}");
+
+    my $hdr_server_crc_size;
+    my $log_server_crc_size;
+    my $source_crc_size;
+    my $dest_crc_size;
+
+    if (defined $self->{'header'}->{'server_crc'}) {
+	$self->{'header'}->{'server_crc'} =~ /[^:]*:(.*)/;
+	$hdr_server_crc_size = $1;
+    }
+    if (defined $self->{'dump'}->{'server_crc'}) {
+	$self->{'dump'}->{'server_crc'} =~ /[^:]*:(.*)/;
+	$log_server_crc_size = $1;
+    }
+    if (defined $self->{'source_crc'}) {
+	$self->{'source_crc'} =~ /[^:]*:(.*)/;
+	$source_crc_size = $1;
+    }
+    if (defined $self->{'dest_crc'}) {
+	$self->{'dest_crc'} =~ /[^:]*:(.*)/;
+	$dest_crc_size = $1;
+    }
+
+    if ($self->{'header'}->{'server_crc'} and
+	$self->{'header'}->{'server_crc'} !~ /^00000000:/ and
+	$self->{'dump'}->{'server_crc'} and
+	$self->{'dump'}->{'server_crc'} !~ /^00000000:/ and
+	$hdr_server_crc_size == $log_server_crc_size and
+        $self->{'header'}->{'server_crc'} ne $self->{'dump'}->{'server_crc'}) {
+	$msg = "recovery failed: server-crc in header ($self->{'header'}->{'server_crc'}) and server-crc in log ($self->{'dump'}->{'server_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+    if ($self->{'header'}->{'client_crc'} and
+	$self->{'header'}->{'client_crc'} !~ /^00000000:/ and
+	$self->{'dump'}->{'client_crc'} and
+	$self->{'dump'}->{'client_crc'} !~ /^00000000:/ and
+        $self->{'header'}->{'client_crc'} ne $self->{'dump'}->{'client_crc'}) {
+	$msg = "recovery failed: client-crc in header ($self->{'header'}->{'client_crc'}) and client-crc in log ($self->{'dump'}->{'client_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+    if ($self->{'header'}->{'native_crc'} and
+	$self->{'header'}->{'native_crc'} !~ /^00000000:/ and
+	$self->{'dump'}->{'native_crc'} and
+	$self->{'dump'}->{'native_crc'} !~ /^00000000:/ and
+        $self->{'header'}->{'native_crc'} ne $self->{'dump'}->{'native_crc'}) {
+	$msg = "recovery failed: native-crc in header ($self->{'header'}->{'native_crc'}) and native-crc in log ($self->{'dump'}->{'native_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+
+    if ($self->{'dump'}->{'server_crc'} and
+	$self->{'dump'}->{'server_crc'} !~ /^00000000:/ and
+	$self->{'source_crc'} and
+	$log_server_crc_size == $source_crc_size and
+        $self->{'dump'}->{'server_crc'} ne $self->{'source_crc'}) {
+	$msg = "recovery failed: server-crc ($self->{'dump'}->{'server_crc'}) and source-crc ($self->{'source_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+    if ($self->{'dump'}->{'client_crc'} and
+	$self->{'dump'}->{'client_crc'} !~ /^00000000:/ and
+	$self->{'client_crc'} and
+        $self->{'dump'}->{'client_crc'} ne $self->{'client_crc'}) {
+	$msg = "recovery failed: client-crc ($self->{'dump'}->{'client_crc'}) and restore-client-crc ($self->{'client_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+
+    if ($self->{'dest_is_server'} and
+	$self->{'dump'}->{'server_crc'} and
+	$self->{'dump'}->{'server_crc'} !~ /^00000000:/ and
+	$self->{'dest_crc'} and
+	$log_server_crc_size == $dest_crc_size and
+        $self->{'dump'}->{'server_crc'} ne $self->{'dest_crc'}) {
+	$msg = "recovery failed: dest-crc ($self->{'dest_crc'}) and server-crc in log ($self->{'dump'}->{'server_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+    if ($self->{'dest_is_client'} and
+	$self->{'dump'}->{'client_crc'} and
+	$self->{'dump'}->{'client_crc'} !~ /^00000000:/ and
+	$self->{'dest_crc'} and
+        $self->{'dump'}->{'client_crc'} ne $self->{'dest_crc'}) {
+	$msg = "recovery failed: dest-crc ($self->{'dest_crc'}) and client-crc ($self->{'dump'}->{'client_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
+    if ($self->{'dest_is_native'} and
+	$self->{'dump'}->{'native_crc'} and
+	$self->{'dump'}->{'native_crc'} !~ /^00000000:/ and
+	$self->{'dest_crc'} and
+        $self->{'dump'}->{'native_crc'} ne $self->{'dest_crc'}) {
+	$msg = "recovery failed: dest-crc ($self->{'dest_crc'}) and native-crc ($self->{'dump'}->{'native_crc'}) differ";
+	debug($msg);
+	$self->sendmessage($msg);
+	return $self->quit();
+    }
     $self->finish();
 }
 

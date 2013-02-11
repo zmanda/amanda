@@ -354,6 +354,8 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_CLIENT);
+    glib_init();
+    make_crc_table();
 
     /* treat amrecover-specific command line options as the equivalent
      * -o command-line options to set configuration values */

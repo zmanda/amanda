@@ -28,8 +28,9 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include "xfer.h"
 #include "amanda.h"
+#include "util.h"
+#include "xfer.h"
 #include "directtcp.h"
 
 typedef enum {
@@ -152,6 +153,9 @@ typedef struct XferElement {
 
     /* maximum size to transfer */
     gint64 size;
+
+    /* for crc computation */
+    crc_t crc;
 } XferElement;
 
 /*
@@ -442,6 +446,15 @@ XferElement *xfer_filter_process(gchar **argv,
  */
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
+
+/* A transfer filter that compute the crc32 of to the data
+ * that passes through it.
+ *
+ * Implemented in filter-crc.c
+ *
+ * @return: new element
+ */
+XferElement *xfer_filter_crc(void);
 
 /* A transfer destination that consumes all bytes it is given, optionally
  * validating that they match those produced by source_random

@@ -34,6 +34,7 @@
 
 #include <glib.h>
 #include <stdio.h>
+#include "util.h"
 
 #define STRMAX		256
 
@@ -72,6 +73,9 @@ typedef struct file_s {
     int totalparts; /* -1 == UNKNOWN */
     size_t blocksize;
     off_t  orig_size;
+    crc_t  native_crc;
+    crc_t  client_crc;
+    crc_t  server_crc;
 } dumpfile_t;
 
 /* local functions */

@@ -89,6 +89,7 @@ amglue_add_constant(XMSG_CANCEL, xmsg_type);
 amglue_add_constant(XMSG_PART_DONE, xmsg_type);
 amglue_add_constant(XMSG_READY, xmsg_type);
 amglue_add_constant(XMSG_CHUNK_DONE, xmsg_type);
+amglue_add_constant(XMSG_CRC, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*
@@ -168,6 +169,12 @@ new_sv_for_xmsg(
 
     /* no_room */
     hv_store(hash, "no_room", 7, amglue_newSVu64(msg->no_room), 0);
+
+    /* crc */
+    char *s_crc;
+    s_crc = g_strdup_printf("%08x", msg->crc);
+    hv_store(hash, "crc", 3, newSVpv(s_crc, 0), 0);
+    g_free(s_crc);
 
     return rv;
 }
@@ -389,6 +396,9 @@ XferElement *xfer_source_directtcp_connect(DirectTCPAddr *addrs);
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
+
+%newobject xfer_filter_crc;
+XferElement *xfer_filter_crc(void);
 
 %newobject xfer_filter_process;
 XferElement *xfer_filter_process(
@@ -624,6 +634,12 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_pattern)
 PACKAGE(Amanda::Xfer::Filter::Xor)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_xor)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Filter::Crc)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_crc)
 
 /* ---- */
 

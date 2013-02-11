@@ -23,6 +23,9 @@ typedef struct find_result_s {
     off_t bytes;	/* may be 0 for older log files, can be compressed */
     off_t kb;		/* may be 0 for older log files, can be compressed */
     off_t orig_kb;      /* native size */
+    crc_t native_crc;
+    crc_t client_crc;
+    crc_t server_crc;
     void *user_ptr;
 } find_result_t;
 

@@ -438,6 +438,14 @@ pull_buffer_impl(
                 goto error_unlocked;
 	    }
 
+	    g_debug("xfer-source-recovery sending XMSG_CRC message");
+	    DBG(2, "xfer-source-recovery CRC: %08x     size %lld",
+		crc32_finish(&elt->crc), (long long)elt->crc.size);
+	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+	    msg->crc = crc32_finish(&elt->crc);
+	    msg->size = elt->crc.size;
+	    xfer_queue_message(elt->xfer, msg);
+
 	    /* the device has signalled EOF (really end-of-part), so clean up instance
 	     * variables and report the EOP to the caller in the form of an xmsg */
 	    DBG(2, "pull_buffer hit EOF; sending XMSG_PART_DONE");
@@ -472,7 +480,7 @@ pull_buffer_impl(
 	/* initialize on first pass */
 	if (self->size == 0)
 	    self->size = elt->size;
-	
+
 	if (self->size == -1) {
 	    *size = 0;
 	    amfree(buf);
@@ -486,6 +494,10 @@ pull_buffer_impl(
 	} else {
 	    self->size -= *size;
 	}
+    }
+
+    if (buf) {
+	crc32(buf, *size, &elt->crc);
     }
 
     return buf;
@@ -638,6 +650,7 @@ instance_init(
     self->start_part_cond = g_cond_new();
     self->abort_cond = g_cond_new();
     self->start_part_mutex = g_mutex_new();
+    crc32_init(&elt->crc);
 }
 
 static void

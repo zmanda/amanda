@@ -233,7 +233,6 @@ sub command_backup {
     $ksize=32 if ($ksize<32);
 
     print {$self->{mesgout}} "sendbackup: size $ksize\n";
-    print {$self->{mesgout}} "sendbackup: end\n";
 
     # destroy all snapshot of this level and higher
     $self->zfs_purge_snapshot($level, 9);

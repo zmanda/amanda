@@ -221,7 +221,6 @@ sub command_backup {
 	    $ksize = 32;
 	}
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
-	print {$self->{mesgout}} "sendbackup: end\n";
     }
 }
 

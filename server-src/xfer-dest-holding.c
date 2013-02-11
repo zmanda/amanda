@@ -96,7 +96,6 @@ typedef struct XferDestHolding {
     guint64     chunk_offset;         /* bytes written to the current */
 				      /* chunk, including header      */
 
-
     enum { CHUNK_OK, CHUNK_EOF, CHUNK_EOC, CHUNK_NO_ROOM } chunk_status;
 } XferDestHolding;
 
@@ -243,6 +242,8 @@ holding_thread_write_chunk(
 	    self->chunk_status = CHUNK_NO_ROOM;
 	    break;
 	}
+	crc32((uint8_t *)(self->ring_buffer + self->ring_tail),
+			 to_write, &elt->crc);
 	self->chunk_offset += count;
 
 	self->data_bytes_written += count;
@@ -391,6 +392,14 @@ no_room:
     }
     g_mutex_unlock(self->state_mutex);
 
+    g_debug("sending XMSG_CRC message");
+    g_debug("xfer-dest-holding CRC: %08x     size: %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
     msg = xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0);
     msg->duration = g_timer_elapsed(timer, NULL);
     g_timer_destroy(timer);
@@ -427,6 +436,7 @@ push_buffer_impl(
 	self->ring_head_at_eof = TRUE;
 	g_cond_broadcast(self->ring_add_cond);
 	g_mutex_unlock(self->ring_mutex);
+
 	return;
     }
 
@@ -621,6 +631,7 @@ instance_init(
     self->new_filename = NULL;
     self->data_bytes_written = 0;
     self->header_bytes_written = 0;
+    crc32_init(&elt->crc);
 }
 
 static void
@@ -705,6 +716,7 @@ xfer_dest_holding(
     size_t max_memory)
 {
     XferDestHolding *self = (XferDestHolding *)g_object_new(XFER_DEST_HOLDING_TYPE, NULL);
+    XferElement *elt = XFER_ELEMENT(self);
     char *env;
 
     /* max_memory get rounded up to the next multiple of block_size */
@@ -731,7 +743,7 @@ xfer_dest_holding(
 	db_full_write = full_write;
     }
 
-    return XFER_ELEMENT(self);
+    return elt;
 }
 
 /*

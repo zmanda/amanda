@@ -200,17 +200,6 @@ sub TAKE_SCRIBE_FROM {
     my $scribe1 = $worker1->{'scribe'};
     $self->{'scribe'} = $scribe1;
     $worker1->{'scribe'} = $scribe;
-    # Change the callback to call the new scribe
-    $self->{'xfer'}->set_callback(sub {
-	my ($src, $msg, $xfer) = @_;
-	$scribe1->handle_xmsg($src, $msg, $xfer);
-
-	# if this is an error message that's not from the scribe's element, then
-	# we'll need to keep track of it ourselves
-	if ($msg->{'type'} == $XMSG_ERROR and $msg->{'elt'} != $self->{'xfer_dest'}) {
-	    push @{$self->{'input_errors'}}, $msg->{'message'};
-	}
-    });
 
     $self->{'label'} = $worker1->{'label'};
     $self->{'perm_cb'}->(scribe => $scribe1);
@@ -235,6 +224,8 @@ sub DONE {
 
     $self->{'dumper_status'} = "DONE";
     $self->{'orig_kb'} = $params{'orig_kb'};
+    $self->{'native_crc'} = $params{'native_crc'};
+    $self->{'client_crc'} = $params{'client_crc'};
     if (defined $self->{'result'}) {
 	$self->result_cb(undef);
     }
@@ -286,6 +277,45 @@ sub result_cb {
     my $msgtype;
     my $logtype;
 
+    if (!defined $self->{'source_server_crc'}) {
+	$self->{'source_server_crc'} = '00000000:0';
+    }
+    if (!defined $self->{'dest_server_crc'}) {
+	$self->{'dest_server_crc'} = '00000000:0';
+    }
+    if (!defined $self->{'server_crc'}) {
+	$self->{'server_crc'} = '00000000:0';
+    }
+    if ($self->{'server_crc'} ne '00000000:0' and
+	$self->{'source_server_crc'} ne '00000000:0' and
+	$self->{'server_crc'} ne $self->{'source_server_crc'}) {
+	if ($params{'result'} eq 'DONE') {
+	    $params{'result'} = 'PARTIAL';
+	    push @{$self->{'input_errors'}}, "source server crc ($self->{'source_server_crc'}) and input server crc ($self->{'server_crc'}) differ)";
+	}
+    }
+
+    if ($self->{'source_server_crc'} ne '00000000:0' and
+	$self->{'dest_server_crc'} ne '00000000:0' and
+	$self->{'source_server_crc'} ne $self->{'dest_server_crc'}) {
+	if ($params{'result'} eq 'DONE') {
+	    $params{'result'} = 'PARTIAL';
+	    push @{$self->{'input_errors'}}, "source server crc ($self->{'source_server_crc'}) and dest server crc ($self->{'dest_server_crc'}) differ)";
+	}
+    }
+
+    if ($self->{'server_crc'} ne '00000000:0' and
+	$self->{'source_server_crc'} ne '00000000:0' and
+	$self->{'server_crc'} ne $self->{'source_server_crc'}) {
+	if ($params{'result'} eq 'DONE') {
+	    $params{'result'} = 'PARTIAL';
+	    push @{$self->{'input_errors'}}, "server crc ($self->{'server_crc'}) and source server crc ($self->{'source_server_crc'}) differ)";
+	}
+    }
+    if ($self->{'server_crc'} eq '00000000:0') {
+	$self->{'server_crc'} = $self->{'source_server_crc'};
+    }
+
     if ($params{'result'} eq 'DONE') {
 	if ($self->{'dumper_status'} eq "DONE") {
 	    $msgtype = Amanda::Taper::Protocol::DONE;
@@ -334,12 +364,15 @@ sub result_cb {
 	    $failure_from,
 	    $msg));
     } else {
-	log_add($logtype, sprintf("%s %s %s %s %s %s%s",
+	log_add($logtype, sprintf("%s %s %s %s %s %s %s %s %s%s",
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
 	    $params{'nparts'},
 	    $self->{'level'},
+	    $self->{'native_crc'},
+	    $self->{'client_crc'},
+	    $self->{'server_crc'},
 	    $stats,
 	    ($logtype == $L_PARTIAL and @all_messages)? " $msg" : ""));
     }
@@ -349,6 +382,7 @@ sub result_cb {
 	handle => $self->{'handle'},
     );
 
+    $msg_params{'server_crc'} = $self->{'dest_server_crc'};
     # reflect errors in our own elements in INPUT-ERROR or INPUT-GOOD
     if (@{$self->{'input_errors'}}) {
 	$msg_params{'input'} = 'INPUT-ERROR';
@@ -586,6 +620,13 @@ sub send_port_and_get_header {
 
 	# parse the header, finally!
 	$self->{'header'} = Amanda::Header->from_string($hdr_buf);
+	$self->{'native_crc'} = $self->{'header'}->{'native_crc'};
+	$self->{'client_crc'} = $self->{'header'}->{'client_crc'};
+	$self->{'server_crc'} = $self->{'header'}->{'server_crc'};
+
+	Amanda::Debug::debug("header native_crc: $self->{'native_crc'}");
+	Amanda::Debug::debug("header client_crc: $self->{'client_crc'}");
+	Amanda::Debug::debug("header server_crc: $self->{'server_crc'}");
 
 	$finished_cb->(undef);
     };
@@ -617,6 +658,11 @@ sub setup_and_start_dump {
 	$self->{'level'} = $params{'level'};
 	$self->{'header'} = undef; # no header yet
 	$self->{'orig_kb'} = $params{'orig_kb'};
+	$self->{'native_crc'} = undef;
+	$self->{'client_crc'} = undef;
+	$self->{'server_crc'} = undef;
+	$self->{'source_server_crc'} = undef;
+	$self->{'dest_server_crc'} = undef;
 	$self->{'input_errors'} = [];
 
 	if ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE &&
@@ -693,7 +739,16 @@ sub setup_and_start_dump {
         $self->{'xfer'} = Amanda::Xfer->new([$xfer_source, $self->{'xfer_dest'}]);
         $self->{'xfer'}->start(sub {
 	    my ($src, $msg, $xfer) = @_;
-            $self->{'scribe'}->handle_xmsg($src, $msg, $xfer);
+
+	    if ($msg->{'type'} == $XMSG_CRC) {
+		if ($msg->{'elt'} == $self->{'xfer_source'}) {
+		    $self->{'source_server_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+		} elsif ($msg->{'elt'} == $self->{'xfer_dest'}) {
+		    $self->{'dest_server_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+		} else {
+		}
+	    }
+	    $self->{'scribe'}->handle_xmsg($src, $msg, $xfer);
 
 	    # if this is an error message that's not from the scribe's element, then
 	    # we'll need to keep track of it ourselves
@@ -722,6 +777,13 @@ sub setup_and_start_dump {
 
 	    # strip out header fields we don't need
 	    $hdr->{'cont_filename'} = '';
+
+	    $self->{'native_crc'} = $self->{'header'}->{'native_crc'};
+	    $self->{'client_crc'} = $self->{'header'}->{'client_crc'};
+	    $self->{'server_crc'} = $self->{'header'}->{'server_crc'};
+	    Amanda::Debug::debug("header native_crc: $self->{'native_crc'}");
+	    Amanda::Debug::debug("header client_crc: $self->{'client_crc'}");
+	    Amanda::Debug::debug("header server_crc: $self->{'server_crc'}");
 
 	    if ($self->{'header'}->{'is_partial'}) {
 		$self->{'dumper_status'} = "FAILED";

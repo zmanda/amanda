@@ -75,8 +75,15 @@ push_buffer_impl(
 {
     XferDestNull *self = (XferDestNull *)elt;
 
-    if (!buf)
+    if (buf) {
+	crc32(buf, len, &elt->crc);
+    } else {
+	XMsg *msg = xmsg_new((XferElement *)self, XMSG_CRC, 0);
+	msg->crc = crc32_finish(&elt->crc);
+	msg->size = elt->crc.size;
+	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
 	return;
+    }
 
     if (self->do_verify && !elt->cancelled) {
 	if (!simpleprng_verify_buffer(&self->prng, buf, len)) {
@@ -158,6 +165,7 @@ xfer_dest_null(
     } else {
 	self->do_verify = FALSE;
     }
+    crc32_init(&elt->crc);
 
     return elt;
 }

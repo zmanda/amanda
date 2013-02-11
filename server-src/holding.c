@@ -849,9 +849,12 @@ holding_cleanup(
  */
 
 void
-holding_set_origsize(
-    char  *holding_file,
-    off_t  orig_size)
+holding_set_from_driver(
+    char    *holding_file,
+    off_t    orig_size,
+    crc_t    native_crc,
+    crc_t    client_crc,
+    crc_t    server_crc)
 {
     int         fd;
     size_t      buflen;
@@ -874,6 +877,9 @@ holding_set_origsize(
     parse_file_header(buffer, &file, (size_t)buflen);
     lseek(fd, (off_t)0, SEEK_SET);
     file.orig_size = orig_size;
+    file.native_crc = native_crc;
+    file.client_crc = client_crc;
+    file.server_crc = server_crc;
     read_buffer = build_header(&file, NULL, DISK_BLOCK_BYTES);
     full_write(fd, read_buffer, DISK_BLOCK_BYTES);
     dumpfile_free_data(&file);

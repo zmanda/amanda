@@ -878,8 +878,6 @@ amstar_backup(
 
     dbprintf("sendbackup: size %lld\n", (long long)dump_size);
     fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
-    dbprintf("sendbackup: end\n");
-    fprintf(mesgstream, "sendbackup: end\n");
 
     fclose(mesgstream);
     if (argument->dle.create_index)

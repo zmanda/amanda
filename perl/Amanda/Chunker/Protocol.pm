@@ -58,8 +58,8 @@ use constant FAILED => message("FAILED",
 
 use constant DONE => message("DONE",
     format => {
-	in => [ qw( handle ) ],
-	out => [ qw( handle size stats ) ],
+	in => [ qw( handle client_crc ) ],
+	out => [ qw( handle size server_crc stats ) ],
     },
 );
 
@@ -69,7 +69,7 @@ use constant QUIT => message("QUIT",
 
 
 use constant PARTIAL => message("PARTIAL",
-    format => [ qw( handle size stats ) ],
+    format => [ qw( handle size server_crc stats ) ],
 );
 
 use constant PORT => message("PORT",

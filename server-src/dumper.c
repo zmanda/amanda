@@ -128,6 +128,10 @@ static char *dle_str = NULL;
 static char *errfname = NULL;
 static int   errf_lines = 0;
 static int   max_warnings = 0;
+static crc_t crc_data_in;
+static crc_t crc_data_out;
+static crc_t native_crc;
+static crc_t client_crc;
 
 static dumpfile_t file;
 
@@ -342,9 +346,10 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
-    textdomain("amanda"); 
+    textdomain("amanda");
+    make_crc_table();
 
     /* drop root privileges */
     dumper_setuid = set_root_privs(0);
@@ -757,6 +762,7 @@ databuf_flush(
     written = full_write(db->fd, db->dataout,
 			(size_t)(db->datain - db->dataout));
     if (written > 0) {
+	crc32((uint8_t *)db->dataout, written, &crc_data_out);
 	db->dataout += written;
         dumpbytes += (off_t)written;
     }
@@ -901,6 +907,24 @@ process_dumpline(
 	}
 
 	if (g_str_equal(tok, "no-op")) {
+	    amfree(buf);
+	    return;
+	}
+
+	if (g_str_equal(tok, "native-CRC")) {
+	    tok = strtok(NULL, "");
+	    parse_crc(tok, &native_crc);
+	    g_debug("native-CRC: %08x:%lld", native_crc.crc,
+		    (long long)native_crc.size);
+	    amfree(buf);
+	    return;
+	}
+
+	if (g_str_equal(tok, "client-CRC")) {
+	    tok = strtok(NULL, "");
+	    parse_crc(tok, &client_crc);
+	    g_debug("client-CRC: %08x:%lld", client_crc.crc,
+		    (long long)client_crc.size);
 	    amfree(buf);
 	    return;
 	}
@@ -1312,6 +1336,20 @@ do_dump(
      */
     event_loop(0);
 
+    if (client_crc.crc == 0) {
+	client_crc = crc_data_in;
+    }
+
+    if (client_crc.crc != 0 && client_crc.crc != crc_data_in.crc) {
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = g_strdup_printf(_("client CRC (%08x) do not match data-in CRC (%08x)"), client_crc.crc, crc_data_in.crc);
+    }
+
+    if (crc_data_in.crc != crc_data_out.crc) {
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = g_strdup_printf(_("data-in CRC (%08x) do not match data-out CRC (%08x)"), crc_data_in.crc, crc_data_out.crc);
+    }
+
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = g_strdup(_("got no header information"));
@@ -1443,21 +1481,29 @@ do_dump(
     m = g_strdup_printf("[%s]", errstr);
     q = quote_string(m);
     amfree(m);
-    putresult(DONE, _("%s %lld %lld %lu %s\n"), handle,
+    putresult(DONE, _("%s %lld %lld %lu %08x:%lld %08x:%lld %s\n"), handle,
 		(long long)origsize,
 		(long long)dumpsize,
-	        (unsigned long)((double)dumptime+0.5), q);
+	        (unsigned long)((double)dumptime+0.5),
+		native_crc.crc, (long long)native_crc.size,
+		client_crc.crc, (long long)client_crc.size, q);
     amfree(q);
 
     switch(dump_result) {
     case 0:
-	log_add(L_SUCCESS, "%s %s %s %d [%s]", hostname, qdiskname, dumper_timestamp, level, errstr);
+	log_add(L_SUCCESS, "%s %s %s %d %08x:%lld %08x:%lld [%s]",
+		hostname, qdiskname, dumper_timestamp, level,
+		native_crc.crc, (long long)native_crc.size,
+		client_crc.crc, (long long) client_crc.size, errstr);
 
 	break;
 
     case 1:
 	log_start_multiline();
-	log_add(L_STRANGE, "%s %s %d [%s]", hostname, qdiskname, level, errstr);
+	log_add(L_STRANGE, "%s %s %d %08x:%lld %08x:%lld [%s]",
+		hostname, qdiskname, level,
+		native_crc.crc, (long long)native_crc.size,
+		client_crc.crc, (long long)client_crc.size, errstr);
 	to_unlink = log_msgout(L_STRANGE);
 	log_end_multiline();
 
@@ -1727,6 +1773,12 @@ read_datafd(
 	security_stream_close(streams[DATAFD].fd);
 	streams[DATAFD].fd = NULL;
 	aclose(db->fd);
+	crc_data_in.crc  = crc32_finish(&crc_data_in);
+	crc_data_out.crc = crc32_finish(&crc_data_out);
+	g_debug("data in  CRC: %08x:%lld",
+		crc_data_in.crc, (long long)crc_data_in.size);
+	g_debug("data out CRC: %08x:%lld",
+		crc_data_out.crc, (long long)crc_data_out.size);
 	/*
 	 * If the mesg fd and index fd has also shut down, then we're done.
 	 */
@@ -1735,6 +1787,7 @@ read_datafd(
 	return;
     }
 
+    crc32(buf, size, &crc_data_in);
     /*
      * We read something.  Add it to the databuf and reschedule for
      * more data.
@@ -2454,6 +2507,10 @@ startup_dump(
     has_hostname = am_has_feature(their_features, fe_req_options_hostname);
     has_config   = am_has_feature(their_features, fe_req_options_config);
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
+    crc32_init(&crc_data_in);
+    crc32_init(&crc_data_out);
+    native_crc.crc = 0;
+    client_crc.crc = 0;
 
     legacy_api = (g_str_equal(progname, "DUMP") || g_str_equal(progname, "GNUTAR"));
 

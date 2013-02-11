@@ -571,8 +571,10 @@ SKIP: {
 		Amanda::MainLoop::quit();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
+	    } elsif ($msg->{'type'} == $XMSG_CRC) {
+		#push @messages, "CRC";
 	    } else {
-		push @messages, "$msg";
+		push @messages, "$msg->{'type'}";
 	    }
 	});
 
@@ -685,6 +687,8 @@ SKIP: {
 		$steps->{'got_ready'}->();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
+	    } elsif ($msg->{'type'} == $XMSG_CRC) {
+		#push @messages, "CRC";
 	    }
 	};
 
@@ -1026,7 +1030,7 @@ SKIP: {
 	Amanda::MainLoop::run();
 	close($fh);
 
-	# create a list of holding chuunks, some slab-aligned, some part-aligned,
+	# create a list of holding chunks, some slab-aligned, some part-aligned,
 	# some not
 	my @holding_chunks;
 	my $offset = 0;
@@ -1153,6 +1157,8 @@ SKIP: {
 		});
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
+	    } elsif ($msg->{'type'} == $XMSG_CRC) {
+		#push @messages, "CRC";  # order can change
 	    } else {
 		push @messages, $msg->{'type'};
 	    }
@@ -1254,8 +1260,10 @@ SKIP: {
 		Amanda::MainLoop::quit();
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
+	    } elsif ($msg->{'type'} == $XMSG_CRC) {
+		#push @messages, "CRC";
 	    } else {
-		push @messages, "$msg";
+		push @messages, "$msg->{'type'}";
 	    }
 	};
 

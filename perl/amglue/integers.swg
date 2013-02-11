@@ -39,6 +39,10 @@
     $1 = amglue_SvU32($input);
 }
 
+%typemap(in) uint32_t {
+    $1 = amglue_SvU32($input);
+}
+
 %typemap(in) gint32 {
     $1 = amglue_SvI32($input);
 }
@@ -156,6 +160,7 @@ typemap_in_signed(intmax_t)
 
 typemap_out_unsigned(guint64)
 typemap_out_unsigned(guint32)
+typemap_out_unsigned(uint32_t)
 typemap_out_unsigned(guint16)
 typemap_out_unsigned(guint8)
 typemap_out_unsigned(unsigned int)

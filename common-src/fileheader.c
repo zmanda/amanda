@@ -29,10 +29,10 @@
  */
 
 #include "amanda.h"
+#include "util.h"
 #include "fileheader.h"
 #include "match.h"
 #include <glib.h>
-#include "util.h"
 
 static const char *	filetype2str(filetype_t);
 static filetype_t	str2filetype(const char *);
@@ -472,6 +472,27 @@ parse_file_header(
 	}
 #undef SC
 
+#define SC "NATIVE-CRC="
+	if (g_str_has_prefix(line, SC)) {
+	    line += sizeof(SC) - 1;
+	    parse_crc(line, &file->native_crc);
+	}
+#undef SC
+
+#define SC "CLIENT-CRC="
+	if (g_str_has_prefix(line, SC)) {
+	    line += sizeof(SC) - 1;
+	    parse_crc(line, &file->client_crc);
+	}
+#undef SC
+
+#define SC "SERVER-CRC="
+	if (g_str_has_prefix(line, SC)) {
+	    line += sizeof(SC) - 1;
+	    parse_crc(line, &file->server_crc);
+	}
+#undef SC
+
 #define SC "DLE="
 	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
@@ -790,6 +811,21 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
 	if (file->orig_size > 0) {
 	    g_string_append_printf(rval, "ORIGSIZE=%jd\n",
 					 (intmax_t)file->orig_size);
+	}
+	if (file->native_crc.crc > 0) {
+	    g_string_append_printf(rval, "NATIVE-CRC=%08x:%lld\n",
+					 file->native_crc.crc,
+					 (long long)file->native_crc.size);
+	}
+	if (file->client_crc.crc > 0) {
+	    g_string_append_printf(rval, "CLIENT-CRC=%08x:%lld\n",
+					 file->client_crc.crc,
+					 (long long)file->client_crc.size);
+	}
+	if (file->server_crc.crc > 0) {
+	    g_string_append_printf(rval, "SERVER-CRC=%08x:%lld\n",
+					 file->server_crc.crc,
+					 (long long)file->server_crc.size);
 	}
 	if (file->dle_str && strlen(file->dle_str) < max_size-2048) {
 	    char *heredoc = quote_heredoc(file->dle_str, "ENDDLE");

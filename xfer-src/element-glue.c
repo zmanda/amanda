@@ -326,7 +326,10 @@ pull_and_write(XferElementGlue *self)
 {
     XferElement *elt = XFER_ELEMENT(self);
     int fd = get_write_fd(self);
+    XMsg *msg;
+
     self->write_fdp = NULL;
+    crc32_init(&elt->crc);
 
     while (!elt->cancelled) {
 	size_t len;
@@ -347,12 +350,21 @@ pull_and_write(XferElementGlue *self)
 	    amfree(buf);
 	    break;
 	}
+	crc32((uint8_t *)buf, len, &elt->crc);
 
 	amfree(buf);
     }
 
     if (elt->cancelled && elt->expect_eof)
 	xfer_element_drain_buffers(elt->upstream);
+
+    g_debug("sending XMSG_CRC message %p", elt->downstream);
+    g_debug("pull_and_write CRC: %08x      size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(elt->downstream, XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
 
     /* close the fd we've been writing, as an EOF signal to downstream, and
      * set it to -1 to avoid accidental re-use */
@@ -368,6 +380,8 @@ read_and_write(XferElementGlue *self)
     char *buf = g_malloc(GLUE_BUFFER_SIZE);
     int rfd = get_read_fd(self);
     int wfd = get_write_fd(self);
+    XMsg *msg;
+    crc32_init(&elt->crc);
 
     while (!elt->cancelled) {
 	size_t len;
@@ -396,6 +410,7 @@ read_and_write(XferElementGlue *self)
 	    }
 	    break;
 	}
+	crc32((uint8_t *)buf, len, &elt->crc);
     }
 
     if (elt->cancelled && elt->expect_eof)
@@ -408,6 +423,22 @@ read_and_write(XferElementGlue *self)
     /* close the fd we've been writing, as an EOF signal to downstream */
     close_write_fd(self);
 
+    g_debug("read_and_write upstream CRC: %08x      size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    g_debug("sending XMSG_CRC message");
+    msg = xmsg_new(elt->upstream, XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
+    g_debug("read_and_write downstream CRC: %08x      size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    g_debug("sending XMSG_CRC message");
+    msg = xmsg_new(elt->downstream, XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
     amfree(buf);
 }
 
@@ -417,6 +448,9 @@ read_and_push(
 {
     XferElement *elt = XFER_ELEMENT(self);
     int fd = get_read_fd(self);
+    XMsg *msg;
+
+    crc32_init(&elt->crc);
 
     while (!elt->cancelled) {
 	char *buf = g_malloc(GLUE_BUFFER_SIZE);
@@ -441,6 +475,7 @@ read_and_push(
 		break;
 	    }
 	}
+	crc32((uint8_t *)buf, len, &elt->crc);
 
 	xfer_element_push_buffer(elt->downstream, buf, len);
     }
@@ -453,6 +488,14 @@ read_and_push(
 
     /* close the read fd, since it's at EOF */
     close_read_fd(self);
+
+    g_debug("sending XMSG_CRC message");
+    g_debug("read_and_push CRC: %08x      size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(elt->upstream, XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
 }
 
 static void
@@ -1033,6 +1076,7 @@ push_buffer_impl(
     size_t len)
 {
     XferElementGlue *self = (XferElementGlue *)elt;
+    XMsg *msg;
 
     /* accept first, if required */
     if (self->on_push & PUSH_ACCEPT_FIRST) {
@@ -1128,8 +1172,16 @@ push_buffer_impl(
 		    }
 		    /* nothing special to do to handle a cancellation */
 		}
+		crc32((uint8_t *)buf, len, &elt->crc);
 		amfree(buf);
 	    } else {
+		g_debug("sending XMSG_CRC message");
+		g_debug("push_to_fd CRC: %08x", crc32_finish(&elt->crc));
+		msg = xmsg_new(elt->downstream, XMSG_CRC, 0);
+		msg->crc = crc32_finish(&elt->crc);
+		msg->size = elt->crc.size;
+		xfer_queue_message(elt->xfer, msg);
+
 		close_write_fd(self);
 	    }
 
@@ -1156,6 +1208,7 @@ instance_init(
     self->output_data_socket = -1;
     self->read_fd = -1;
     self->write_fd = -1;
+    crc32_init(&elt->crc);
 }
 
 static void

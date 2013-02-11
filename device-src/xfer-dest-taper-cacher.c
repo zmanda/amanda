@@ -241,6 +241,8 @@ typedef struct XferDestTaperCacher {
 
     /* number of slabs in a part */
     guint64 slabs_per_part;
+
+    crc_t crc_before_part;
 } XferDestTaperCacher;
 
 static GType xfer_dest_taper_cacher_get_type(void);
@@ -270,7 +272,7 @@ _xdt_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XDT: %s", msg);
+    g_debug("XDTC: %s", msg);
 }
 
 /*
@@ -856,6 +858,7 @@ write_slab_to_device(
 	    return FALSE;
 	}
 
+	crc32(buf, write_size, &elt->crc);
 	buf += write_size;
 	self->slab_bytes_written += write_size;
 	remaining -= write_size;
@@ -876,6 +879,7 @@ static XMsg *
 device_thread_write_part(
     XferDestTaperCacher *self)
 {
+    XferElement *elt = XFER_ELEMENT(self);
     GTimer *timer = g_timer_new();
     XMsg *msg;
     slab_source_state src_state = {0, 0};
@@ -887,6 +891,7 @@ device_thread_write_part(
 
     self->last_part_successful = FALSE;
     self->bytes_written = 0;
+    self->crc_before_part = elt->crc;
 
     if (!device_start_file(self->device, self->part_header)) {
 	failed = 1;
@@ -947,6 +952,8 @@ part_done:
     if (!failed) {
 	self->last_part_successful = TRUE;
 	self->no_more_parts = eof;
+    } else {
+	elt->crc = self->crc_before_part;
     }
 
     g_timer_stop(timer);
@@ -1054,6 +1061,14 @@ device_thread(
     /* make sure the other thread is done before we send XMSG_DONE */
     if (self->disk_cache_thread)
         g_thread_join(self->disk_cache_thread);
+
+    g_debug("sending XMSG_CRC message");
+    g_debug("xfer-dest-taper-cacher CRC %08x      size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
 
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
@@ -1354,6 +1369,7 @@ instance_init(
     self->part_stop_serial = 0;
     self->disk_cache_read_fd = -1;
     self->disk_cache_write_fd = -1;
+    crc32_init(&elt->crc);
 }
 
 static void

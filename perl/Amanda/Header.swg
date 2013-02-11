@@ -47,6 +47,19 @@ typedef char string_t[STRMAX];
 	SWIG_exception(SWIG_ValueError, "String too large for Amanda::Header");
 }
 
+%typemap(in) crc_t {
+    parse_crc(SvPV_nolen($input), &$1);
+}
+
+%typemap(out) crc_t {
+    char *s_crc;
+
+    s_crc = g_strdup_printf("%08x:%lld", $1.crc, (long long)$1.size);
+    $result = sv_2mortal(newSVpv(s_crc, 0));
+    g_free(s_crc);
+    argvi++;
+}
+
 %rename(Header) dumpfile_t;
 typedef struct {
     filetype_t type;
@@ -76,6 +89,9 @@ typedef struct {
     int totalparts; /* -1 == UNKNOWN */
     size_t blocksize;
     off_t  orig_size;
+    crc_t  native_crc;
+    crc_t  client_crc;
+    crc_t  server_crc;
 
     %extend {
 	/* constructor */

@@ -152,6 +152,8 @@ typedef struct XferDestTaperSplitter {
      * the links in this list. */
     FileSlice *part_slices;
     GMutex *part_slices_mutex;
+
+    crc_t crc_before_part;
 } XferDestTaperSplitter;
 
 static GType xfer_dest_taper_splitter_get_type(void);
@@ -181,7 +183,7 @@ _xdt_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XDT: %s", msg);
+    g_debug("XDTS: %s", msg);
 }
 
 /* "Fast forward" the slice list by the given length.  This will free any
@@ -425,6 +427,7 @@ device_thread_write_part(
     XMsg *msg;
 
     self->part_bytes_written = 0;
+    self->crc_before_part = elt->crc;
 
     g_timer_start(timer);
 
@@ -475,6 +478,7 @@ device_thread_write_part(
 
 	    self->part_bytes_written += to_write;
 	    bytes_from_slices -= to_write;
+	    crc32((uint8_t *)buf, to_write, &elt->crc);
 
 	    if (self->part_size && self->part_bytes_written >= self->part_size) {
 		part_status = PART_EOP;
@@ -525,6 +529,8 @@ device_thread_write_part(
 	    break;
 	}
 
+	crc32((uint8_t *)(self->ring_buffer + self->ring_tail),
+			 to_write, &elt->crc);
 	self->part_bytes_written += to_write;
 	device_thread_consume_block(self, to_write);
 
@@ -551,6 +557,9 @@ part_done:
     }
 
     g_timer_stop(timer);
+    if (part_status == PART_FAILED) {
+	elt->crc = self->crc_before_part;
+    }
 
     msg = xmsg_new(XFER_ELEMENT(self), XMSG_PART_DONE, 0);
     msg->size = self->part_bytes_written;
@@ -620,6 +629,14 @@ device_thread(
 	    break;
     }
     g_mutex_unlock(self->state_mutex);
+
+    g_debug("sending XMSG_CRC message");
+    DBG(2, "xfer-dest-taper-splitter CRC: %08x      size %lld",
+	   crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
 
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
@@ -899,6 +916,7 @@ instance_init(
     self->partnum = 1;
     self->part_bytes_written = 0;
     self->part_slices = NULL;
+    crc32_init(&elt->crc);
 }
 
 static void

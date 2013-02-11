@@ -48,6 +48,7 @@
 #include "driverio.h"
 #include "server_util.h"
 #include "timestamp.h"
+#include "amindex.h"
 
 #define driver_debug(i, ...) do {	\
 	if ((i) <= debug_driver) {	\
@@ -144,6 +145,7 @@ static void continue_port_dumps(void);
 static void update_failed_dump(disk_t *);
 static int no_taper_flushing(void);
 static int active_dumper(void);
+static void fix_index_header(disk_t *dp);
 
 typedef enum {
     TAPE_ACTION_NO_ACTION         = 0,
@@ -1701,10 +1703,10 @@ handle_taper_result(
 
 	    break;
 
-	case PARTIAL:	/* PARTIAL <handle> INPUT-* TAPE-* <stat mess> <input err mesg> <tape err mesg>*/
-	case DONE:	/* DONE <handle> INPUT-GOOD TAPE-GOOD <stat mess> <input err mesg> <tape err mesg> */
-	    if(result_argc != 7) {
-		error(_("error: [taper PARTIAL result_argc != 7: %d"), result_argc);
+	case PARTIAL:	/* PARTIAL <handle> INPUT-* TAPE-* server-crc <stat mess> <input err mesg> <tape err mesg>*/
+	case DONE:	/* DONE <handle> INPUT-GOOD TAPE-GOOD server-crc <stat mess> <input err mesg> <tape err mesg> */
+	    if(result_argc != 8) {
+		error(_("error: [taper PARTIAL result_argc != 8: %d"), result_argc);
 		/*NOTREACHED*/
 	    }
 
@@ -1721,7 +1723,7 @@ handle_taper_result(
 
 	    if (g_str_equal(result_argv[2], "INPUT-ERROR")) {
 		g_free(taper->input_error);
-		taper->input_error = g_strdup(result_argv[5]);
+		taper->input_error = g_strdup(result_argv[6]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
@@ -1739,7 +1741,7 @@ handle_taper_result(
 		g_str_equal(result_argv[3], "TAPE-CONFIG")) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(taper->tape_error);
-		taper->tape_error = g_strdup(result_argv[6]);
+		taper->tape_error = g_strdup(result_argv[7]);
 		taper->result = FAILED;
 		amfree(qname);
 		break;
@@ -1755,12 +1757,14 @@ handle_taper_result(
 		break;
 	    }
 
-	    s = strstr(result_argv[4], " kb ");
+	    parse_crc(result_argv[4], &sched(dp)->server_crc);
+
+	    s = strstr(result_argv[5], " kb ");
 	    if (s) {
 		s += 4;
 		sched(dp)->dumpsize = OFF_T_ATOI(s);
 	    } else {
-		s = strstr(result_argv[4], " bytes ");
+		s = strstr(result_argv[5], " bytes ");
 		if (s) {
 		    s += 7;
 		    sched(dp)->dumpsize = OFF_T_ATOI(s)/1024;
@@ -2178,6 +2182,8 @@ dumper_taper_result(
 		(long long)sched(dp)->est_csize,
 		sched(dp)->est_kps);
 	amfree(qname);
+
+	fix_index_header(dp);
     } else {
 	update_failed_dump(dp);
     }
@@ -2297,7 +2303,10 @@ dumper_chunker_result(
 
     is_partial = dumper->result != DONE || chunker->result != DONE;
     rename_tmp_holding(sched(dp)->destname, !is_partial);
-    holding_set_origsize(sched(dp)->destname, sched(dp)->origsize);
+    holding_set_from_driver(sched(dp)->destname, sched(dp)->origsize,
+		sched(dp)->native_crc, sched(dp)->client_crc,
+		sched(dp)->server_crc);
+    fix_index_header(dp);
 
     dummy = (off_t)0;
     for( i = 0, h = sched(dp)->holdp; i < activehd; i++ ) {
@@ -2384,14 +2393,16 @@ handle_dumper_result(
 	qname = quote_string(dp->name);
 	switch(cmd) {
 
-	case DONE: /* DONE <handle> <origsize> <dumpsize> <dumptime> <errstr> */
-	    if(result_argc != 6) {
-		error(_("error [dumper DONE result_argc != 6: %d]"), result_argc);
+	case DONE: /* DONE <handle> <origsize> <dumpsize> <dumptime> <native-crc> <client-crc> <errstr> */
+	    if(result_argc != 8) {
+		error(_("error [dumper DONE result_argc != 8: %d]"), result_argc);
 		/*NOTREACHED*/
 	    }
 
 	    sched(dp)->origsize = OFF_T_ATOI(result_argv[2]);
 	    sched(dp)->dumptime = TIME_T_ATOI(result_argv[4]);
+	    parse_crc(result_argv[5], &sched(dp)->native_crc);
+	    parse_crc(result_argv[6], &sched(dp)->client_crc);
 
 	    g_printf(_("driver: finished-cmd time %s %s dumped %s:%s\n"),
 		   walltime_str(curclock()), dumper->name,
@@ -2572,16 +2583,17 @@ handle_chunker_result(
 
 	switch(cmd) {
 
-	case PARTIAL: /* PARTIAL <handle> <dumpsize> <errstr> */
-	case DONE: /* DONE <handle> <dumpsize> <errstr> */
-	    if(result_argc != 4) {
-		error(_("error [chunker %s result_argc != 4: %d]"), cmdstr[cmd],
+	case PARTIAL: /* PARTIAL <handle> <dumpsize> <server-crc> <errstr> */
+	case DONE: /* DONE <handle> <dumpsize> <server-crc> <errstr> */
+	    if(result_argc != 5) {
+		error(_("error [chunker %s result_argc != 5: %d]"), cmdstr[cmd],
 		      result_argc);
 	        /*NOTREACHED*/
 	    }
 	    /*free_serial(result_argv[1]);*/
 
 	    sched(dp)->dumpsize = (off_t)atof(result_argv[2]);
+	    parse_crc(result_argv[3], &sched(dp)->server_crc);
 
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s %s chunked %s:%s\n"),
@@ -4051,6 +4063,46 @@ active_dumper(void)
     for(i = 0; i < inparallel; i++) if(!dmptable[i].busy) nidle++;
     return inparallel - nidle;
 }
+
+static void
+fix_index_header(
+    disk_t *dp)
+{
+    int         fd;
+    size_t      buflen;
+    char        buffer[DISK_BLOCK_BYTES];
+    char       *read_buffer;
+    dumpfile_t  file;
+    char       *f = getheaderfname(dp->host->hostname, dp->name, driver_timestamp, sched(dp)->level);
+
+    if((fd = robust_open(f, O_RDWR, 0)) == -1) {
+        dbprintf(_("holding_set_origsize: open of %s failed: %s\n"),
+                 f, strerror(errno));
+	g_free(f);
+        return;
+    }
+    g_free(f);
+
+    buflen = read_fully(fd, buffer, sizeof(buffer), NULL);
+    if (buflen <= 0) {
+        dbprintf(_("fix_index_header: %s: empty file?\n"), f);
+        close(fd);
+        return;
+    }
+    parse_file_header(buffer, &file, (size_t)buflen);
+    lseek(fd, (off_t)0, SEEK_SET);
+    ftruncate(fd, 0);
+    file.orig_size = sched(dp)->origsize;
+    file.native_crc = sched(dp)->native_crc;
+    file.client_crc = sched(dp)->client_crc;
+    file.server_crc = sched(dp)->server_crc;
+    read_buffer = build_header(&file, NULL, DISK_BLOCK_BYTES);
+    full_write(fd, read_buffer, strlen(read_buffer));
+    dumpfile_free_data(&file);
+    amfree(read_buffer);
+    close(fd);
+}
+
 #if 0
 static void
 dump_state(

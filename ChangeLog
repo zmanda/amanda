@@ -1,4 +1,7 @@
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* Many Files: Compute CRC on backup and verify it on restore.
+
+2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* autogen: Invoke automake with --add-missing.
 	* config/compile, config/config.guess, config/config.sub,
 	* config/depcomp, config/install-sh, config/missing,

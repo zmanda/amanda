@@ -196,7 +196,17 @@ sub msg_PORT_WRITE {
 					     $self->{'xfer_dest'}]);
 	$self->{'xfer'}->start(sub {
             my ($src, $msg, $xfer) = @_;
-            $self->{'scribe'}->handle_xmsg($src, $msg, $xfer);
+
+	    if ($msg->{'type'} == $XMSG_CRC) {
+		if ($msg->{'elt'} == $self->{'xfer_source'}) {
+		    $self->{'source_server_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+		} elsif ($msg->{'elt'} == $self->{'xfer_dest'}) {
+		    $self->{'server_crc'} = $msg->{'crc'}.":".$msg->{'size'};
+		} else {
+		}
+	    } else {
+		$self->{'scribe'}->handle_xmsg($src, $msg, $xfer);
+	    }
 
             # if this is an error message that's not from the scribe's element, then
             # we'll need to keep track of it ourselves
@@ -276,6 +286,7 @@ sub msg_DONE {
 
     $self->{'dumper_status'} = "DONE";
     $self->{'orig_kb'} = $params{'orig_kb'};
+    $self->{'client_crc'} = $params{'client_crc'};
     if (defined $self->{'result'}) {
 	$self->result_cb(undef);
     }
@@ -339,9 +350,30 @@ sub result_cb {
     my $msgtype;
     my $logtype;
     my $msg;
+    my $server_crc;
 
     if ($self->{'cancelled'}) {
 	goto cleanup;
+    }
+
+    if (!defined $self->{'source_server_crc'}) {
+	$self->{'source_server_crc'} = '00000000:0';
+    }
+    if (!defined $self->{'server_crc'}) {
+	$self->{'server_crc'} = '00000000:0';
+    }
+    if (defined $self->{'client_crc'} && $self->{'client_crc'} !~ /^00000000:/ &&
+	$self->{'client_crc'} ne $self->{'source_server_crc'}) {
+	if ($params{'result'} ne 'FAILED') {
+	    $params{'result'} = 'FAILED';
+	    push @{$self->{'input_errors'}}, "client crc ($self->{'client_crc'}) differ from server crc ($self->{'source_server_crc'})";
+	}
+    }
+    if ($self->{'source_server_crc'} ne $self->{'server_crc'}) {
+	if ($params{'result'} ne 'FAILED') {
+	    $params{'result'} = 'FAILED';
+	    push @{$self->{'input_errors'}}, "source server crc ($self->{'source_server_crc'}) differ from server crc ($self->{'server_crc'})";
+	}
     }
 
     if ($params{'result'} eq 'DONE' and !@{$self->{'input_errors'}}) {
@@ -387,18 +419,20 @@ sub result_cb {
 	    $self->{'level'},
 	    $msg));
     } elsif ($logtype == $L_SUCCESS) {
-	log_add($logtype, sprintf("%s %s %s %s %s",
+	log_add($logtype, sprintf("%s %s %s %s %s %s",
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
 	    $self->{'level'},
+	    $self->{'server_crc'},
 	    $stats));
     } else { # L_PARTIAL
-	log_add($logtype, sprintf("%s %s %s %s %s",
+	log_add($logtype, sprintf("%s %s %s %s %s %s",
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
 	    $self->{'level'},
+	    $self->{'server_crc'},
 	    $stats));
     }
 
@@ -414,6 +448,7 @@ sub result_cb {
     if ($msgtype eq Amanda::Chunker::Protocol::DONE ||
 	$msgtype eq Amanda::Chunker::Protocol::PARTIAL) {
 	$msg_params{'size'} = ($params{'data_size'}+0) / 1024;
+	$msg_params{'server_crc'} = $self->{'server_crc'};
 	$msg_params{'stats'} = $stats;
     }
 
@@ -622,7 +657,9 @@ sub send_port_and_get_header {
             } else {
                 $steps->{'got_header'}->();
             }
-        }
+        } else {
+	    Amanda::Debug::debug("got $xmsg->{'type'} message from $xmsg->{'elt'} ");
+	}
     };
 
     step got_header => sub {

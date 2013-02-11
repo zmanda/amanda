@@ -85,8 +85,8 @@ use constant FAILED => message("FAILED",
 
 use constant DONE => message("DONE",
     format => {
-	in => [ qw( worker_name handle orig_kb ) ],
-	out => [ qw( handle input taper stats inputerr tapererr ) ],
+	in => [ qw( worker_name handle orig_kb native_crc client_crc server_crc) ],
+	out => [ qw( handle input taper server_crc stats inputerr tapererr ) ],
     },
 );
 

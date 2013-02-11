@@ -23,6 +23,7 @@ libamxfer_la_SOURCES = \
 	dest-directtcp-connect.c \
 	dest-directtcp-listen.c \
 	element-glue.c \
+	filter-crc.c \
 	filter-xor.c \
 	filter-process.c \
 	source-random.c \

@@ -194,6 +194,10 @@ typedef enum {
     fe_application_client_name,
     fe_script_client_name,
     fe_dumptype_property,
+    fe_sendbackup_crc,
+    fe_amrecover_crc_in_header,
+    fe_amrecover_data_status,
+    fe_amrecover_data_crc,
 
     /*
      * All new features must be inserted immediately *before* this entry.

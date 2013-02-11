@@ -115,6 +115,21 @@ have an associated dump row.
 (integer) -- size (in kb) of the complete dump (before compression or encryption); undef
 if not available
 
+=item native_crc
+
+(string) -- CRC of the complete dump (before compression or encryption); undef
+if not available
+
+=item client_crc
+
+(string) -- CRC of the complete dump (after client compression or client encryption); undef
+if not available
+
+=item server_crc
+
+(string) -- CRC of the complete dump (after server compression or server encryption); undef
+if not available
+
 =item sec
 
 (integer) -- time (in seconds) spent writing this part
@@ -645,6 +660,9 @@ sub get_parts_and_dumps {
 		    diskname => $find_result->{'diskname'},
 		    level => $find_result->{'level'}+0,
 		    orig_kb => $find_result->{'orig_kb'},
+		    native_crc => $find_result->{'native_crc'},
+		    client_crc => $find_result->{'client_crc'},
+		    server_crc => $find_result->{'server_crc'},
 		    status => $find_result->{'dump_status'},
 		    message => $find_result->{'message'},
 		    # the rest of these params are unknown until we see a taper
@@ -669,6 +687,9 @@ sub get_parts_and_dumps {
 		    sec => $find_result->{'sec'},
 		    kb => $find_result->{'kb'},
 		    orig_kb => $find_result->{'orig_kb'},
+		    native_crc => $find_result->{'native_crc'},
+		    client_crc => $find_result->{'client_crc'},
+		    server_crc => $find_result->{'server_crc'},
 		    partnum => $find_result->{'partnum'},
 		);
 	    } else {
@@ -680,6 +701,9 @@ sub get_parts_and_dumps {
 		    sec => 0.0,
 		    kb => $find_result->{'kb'},
 		    orig_kb => $find_result->{'orig_kb'},
+		    native_crc => $find_result->{'native_crc'},
+		    client_crc => $find_result->{'client_crc'},
+		    server_crc => $find_result->{'server_crc'},
 		    partnum => 1,
 		);
 		# and fix up the dump, too
@@ -746,6 +770,15 @@ sub get_parts_and_dumps {
 	    }
 	    ($level, $str) = Amanda::Util::skip_quoted_string($str);
 	    if ($status ne 'FAIL') {
+		if ($str !~ /^\[sec/) {
+		    (my $crc1, $str) = Amanda::Util::skip_quoted_string($str);
+		}
+		if ($str !~ /^\[sec/) {
+		    (my $crc2, $str) = Amanda::Util::skip_quoted_string($str);
+		}
+		if ($str !~ /^\[sec/) {
+		    (my $crc3, $str) = Amanda::Util::skip_quoted_string($str);
+		}
 		my $s = $str;
 		my $b_unit;
 		($secs, $b_unit, $kb, $str) = ($str =~ /^\[sec ([-0-9.]+) (kb|bytes) ([-0-9]+).*\] ?(.*)$/)
@@ -821,6 +854,9 @@ sub get_parts_and_dumps {
 		    diskname => $diskname,
 		    level => $level+0,
 		    orig_kb => undef,
+		    native_crc => undef,
+		    client_crc => undef,
+		    server_crc => undef,
 		    status => "FAILED",
 		    # message set below
 		    nparts => $nparts, # hopefully 0?

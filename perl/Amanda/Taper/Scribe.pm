@@ -633,6 +633,7 @@ sub get_xfer_dest {
     $self->{'xfer'} = undef;
     $self->{'xdt'} = undef;
     $self->{'size'} = 0;
+    $self->{'crc_size'} = 0;
     $self->{'duration'} = 0.0;
     $self->{'nparts'} = undef;
     $self->{'dump_start_time'} = undef;
@@ -792,6 +793,8 @@ sub get_bytes_written {
 
     if (defined $self->{'xdt'}) {
 	return $self->{'size'} + $self->{'xdt'}->get_part_bytes_written();
+    } elsif ($self->{'crc_size'}) {
+	return $self->{'crc_size'};
     } else {
 	return $self->{'size'};
     }
@@ -859,6 +862,8 @@ sub handle_xmsg {
 	    $self->_xmsg_ready($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_ERROR) {
 	    $self->_xmsg_error($src, $msg, $xfer);
+	} elsif ($msg->{'type'} == $XMSG_CRC) {
+	    $self->{'crc_size'} = $msg->{'size'};
 	}
     }
 }
@@ -897,6 +902,7 @@ sub _xmsg_part_done {
 	$self->{'size'} += $msg->{'size'};
 	$self->{'duration'} += $msg->{'duration'};
     }
+    $self->{'size'} = $self->{'crc_size'} if $self->{'crc_size'};
 
     if (!$msg->{'eof'}) {
 	# update the header for the next dumpfile, if this was a non-empty part
@@ -1029,6 +1035,7 @@ sub _dump_done {
     $self->{'dump_header'} = undef;
     $self->{'dump_cb'} = undef;
     $self->{'size'} = 0;
+    $self->{'crc_size'} = 0;
     $self->{'duration'} = 0.0;
     $self->{'nparts'} = undef;
     $self->{'dump_start_time'} = undef;
@@ -1183,6 +1190,7 @@ sub _volume_cb  {
 	$new_scribe->{'xdt_ready'} = $self->{'xdt_ready'};
 	$new_scribe->{'start_part_on_xdt_ready'} = $self->{'start_part_on_xdt_ready'};
 	$new_scribe->{'size'} = $self->{'size'};
+	$new_scribe->{'crc_size'} = $self->{'crc_size'};
 	$new_scribe->{'duration'} = $self->{'duration'};
 	$new_scribe->{'dump_start_time'} = $self->{'dump_start_time'};
 	$new_scribe->{'last_part_successful'} = $self->{'last_part_successful'};

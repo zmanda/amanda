@@ -505,7 +505,7 @@ print_find_result(
 	    s = g_strdup_printf("%d/%d", output_find_result->partnum,
 					 output_find_result->totalparts);
 	    g_printf("%-*s %-*s %-*s %*d %-*s %*lld %*s %s %s\n",
-                     max_len_datestamp, 
+                     max_len_datestamp,
                      find_nicedate(output_find_result->timestamp),
                      max_len_hostname,  output_find_result->hostname,
                      max_len_diskname,  qdiskname,
@@ -740,6 +740,10 @@ search_logfile(
     off_t bytes;
     off_t orig_kb;
     int   taper_part = 0;
+    crc_t crc1, crc2, crc3;
+    crc_t native_crc;
+    crc_t client_crc;
+    crc_t server_crc;
 
     g_return_val_if_fail(output_find != NULL, 0);
     g_return_val_if_fail(logfile != NULL, 0);
@@ -944,6 +948,57 @@ search_logfile(
 	    skip_non_whitespace(s, ch);
 	    rest_undo = s - 1;
 	    *rest_undo = '\0';
+	    crc1.crc = 0;
+	    crc1.size = 0;
+	    crc2.crc = 0;
+	    crc2.size = 0;
+	    crc3.crc = 0;
+	    crc3.size = 0;
+	    if (curlog == L_DONE) {
+		if (!g_str_equal(rest, "[sec")) {
+		    // CRC
+		    parse_crc(rest, &crc1);
+		    skip_whitespace(s, ch);
+		    rest = s - 1;
+		    skip_non_whitespace(s, ch);
+		    rest_undo = s - 1;
+		    *rest_undo = '\0';
+		}
+		if (!g_str_equal(rest, "[sec")) {
+		    // CRC
+		    parse_crc(rest, &crc2);
+		    skip_whitespace(s, ch);
+		    rest = s - 1;
+		    skip_non_whitespace(s, ch);
+		    rest_undo = s - 1;
+		    *rest_undo = '\0';
+		}
+		if (!g_str_equal(rest, "[sec")) {
+		    // CRC
+		    parse_crc(rest, &crc3);
+		    skip_whitespace(s, ch);
+		    rest = s - 1;
+		    skip_non_whitespace(s, ch);
+		    rest_undo = s - 1;
+		    *rest_undo = '\0';
+		}
+	    }
+	    native_crc.crc = 0;
+	    native_crc.size = 0;
+	    client_crc.crc = 0;
+	    client_crc.size = 0;
+	    server_crc.crc = 0;
+	    server_crc.size = 0;
+	    if (curprog == P_DUMPER) {
+		native_crc = crc1;
+		client_crc = crc2;
+	    } else if (curprog == P_CHUNKER) {
+		server_crc = crc1;
+	    } else if (curprog == P_TAPER) {
+		native_crc = crc1;
+		client_crc = crc2;
+		server_crc = crc3;
+	    }
 	    if (g_str_equal(rest, "[sec")) {
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
@@ -1076,6 +1131,9 @@ search_logfile(
 		    new_output_find->bytes=bytes;
 		    new_output_find->orig_kb=orig_kb;
 		    new_output_find->next=NULL;
+		    new_output_find->native_crc = native_crc;
+		    new_output_find->client_crc = client_crc;
+		    new_output_find->server_crc = server_crc;
 		    if (curlog == L_SUCCESS) {
 			new_output_find->status = "OK";
 			new_output_find->dump_status = "OK";
@@ -1133,6 +1191,9 @@ search_logfile(
 				if (a_part_find->orig_kb == 0) {
 				    a_part_find->orig_kb = orig_kb;
 				}
+				a_part_find->native_crc = native_crc;
+				a_part_find->client_crc = client_crc;
+				a_part_find->server_crc = server_crc;
 			    }
 			}
 			if (part_find) { /* find last element */

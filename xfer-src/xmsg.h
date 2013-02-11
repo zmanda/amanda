@@ -113,6 +113,11 @@ typedef enum {
      */
     XMSG_CHUNK_DONE = 7,
 
+    /* XMSG_CRC:
+     *  - crc
+     */
+    XMSG_CRC = 8,
+
 } xmsg_type;
 
 /*
@@ -188,6 +193,9 @@ typedef struct XMsg {
 
     /* true if no more space on holding disk */
     gboolean no_room;
+
+    /* value */
+    uint32_t crc;
 } XMsg;
 
 /*
