@@ -2013,8 +2013,15 @@ stop_dump(void)
     /* Check if I have a pending ABORT command */
     cmdargs = get_pending_cmd();
     if (cmdargs) {
+	if (cmdargs->cmd == QUIT) {
+	    g_debug("Got unexpected QUIT");
+	    log_add(L_FAIL, "%s %s %s %d [Killed while dumping]",
+		    hostname, qdiskname, dumper_timestamp, level);
+	    exit(1);
+	}
 	if (cmdargs->cmd != ABORT) {
-	    error(_("beurk %d"), cmdargs->cmd);
+	    g_debug("Expected an ABORT command");
+	    exit(1);
 	}
 	amfree(errstr);
 	errstr = g_strdup(cmdargs->argv[1]);

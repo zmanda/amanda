@@ -1,3 +1,7 @@
+2013-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Do not crash if stdin if closed while a backup
+	  is running.
+
 2013-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/logfile.c (get_logname): Return a new allocated string.
 	* server-src/logfile.c (set_logname): Store a new allocated string.
