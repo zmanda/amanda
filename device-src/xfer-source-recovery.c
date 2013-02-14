@@ -422,6 +422,7 @@ pull_buffer_impl(
 	/* if this block was successful, return it */
 	if (result > 0) {
 	    self->part_size += *size;
+	    elt->crc = crc32(buf, devsize, elt->crc);
 	    break;
 	}
 
@@ -461,6 +462,8 @@ pull_buffer_impl(
 		self->part_timer = NULL;
 	    }
 
+	    DBG(2, "xfer-source-recovery CRC: %0x     size %lld",
+		crc32_finish(elt->crc), (long long)self->bytes_read);
 	    /* don't queue the XMSG_PART_DONE until we've adjusted all of our
 	     * instance variables appropriately */
 	    xfer_queue_message(elt->xfer, msg);
@@ -639,6 +642,7 @@ instance_init(
     self->start_part_cond = g_cond_new();
     self->abort_cond = g_cond_new();
     self->start_part_mutex = g_mutex_new();
+    elt->crc = crc32_init();
 }
 
 static void

@@ -128,6 +128,8 @@ static char *dle_str = NULL;
 static char *errfname = NULL;
 static int   errf_lines = 0;
 static int   max_warnings = 0;
+static uint32_t crc_data_in;
+static uint32_t crc_data_out;
 
 static dumpfile_t file;
 
@@ -345,6 +347,7 @@ main(
      */  
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
+    make_crc_table();
 
     /* drop root privileges */
     dumper_setuid = set_root_privs(0);
@@ -728,6 +731,7 @@ databuf_flush(
     written = full_write(db->fd, db->dataout,
 			(size_t)(db->datain - db->dataout));
     if (written > 0) {
+	crc_data_out = crc32((uint8_t *)db->dataout, written, crc_data_out);
 	db->dataout += written;
         dumpbytes += (off_t)written;
     }
@@ -1678,6 +1682,10 @@ read_datafd(
 	security_stream_close(streams[DATAFD].fd);
 	streams[DATAFD].fd = NULL;
 	aclose(db->fd);
+	g_debug("data in  CRC: %0x     size: %lld",
+		crc32_finish(crc_data_in), (long long)((dumpsize-32)*1024));
+	g_debug("data out CRC: %0x     size: %lld",
+		crc32_finish(crc_data_out), (long long)((dumpsize-32)*1024));
 	/*
 	 * If the mesg fd and index fd has also shut down, then we're done.
 	 */
@@ -1686,6 +1694,7 @@ read_datafd(
 	return;
     }
 
+    crc_data_in = crc32(buf, size, crc_data_in);
     /*
      * We read something.  Add it to the databuf and reschedule for
      * more data.
@@ -2389,6 +2398,8 @@ startup_dump(
     has_hostname = am_has_feature(their_features, fe_req_options_hostname);
     has_config   = am_has_feature(their_features, fe_req_options_config);
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
+    crc_data_in  = crc32_init();
+    crc_data_out = crc32_init();
 
     /*
      * Default to bsd authentication if none specified.  This is gross.

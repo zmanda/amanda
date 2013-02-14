@@ -397,4 +397,9 @@ char *get_first_line(GPtrArray *argv_ptr);
 
 gboolean make_amanda_tmpdir(void);
 
+void make_crc_table(void);
+uint32_t crc32_init(void);
+uint32_t crc32(uint8_t *buf, size_t len, uint32_t c);
+uint32_t crc32_finish(uint32_t c);
+
 #endif	/* UTIL_H */

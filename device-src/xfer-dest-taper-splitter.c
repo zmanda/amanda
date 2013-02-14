@@ -153,6 +153,7 @@ typedef struct XferDestTaperSplitter {
      * the links in this list. */
     FileSlice *part_slices;
     GMutex *part_slices_mutex;
+
 } XferDestTaperSplitter;
 
 static GType xfer_dest_taper_splitter_get_type(void);
@@ -182,7 +183,7 @@ _xdt_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XDT: %s", msg);
+    g_debug("XDTS: %s", msg);
 }
 
 /* "Fast forward" the slice list by the given length.  This will free any
@@ -527,6 +528,8 @@ device_thread_write_part(
 	    break;
 	}
 
+	elt->crc = crc32((uint8_t *)(self->ring_buffer + self->ring_tail),
+			 to_write, elt->crc);
 	self->part_bytes_written += to_write;
 	device_thread_consume_block(self, to_write);
 
@@ -589,6 +592,7 @@ device_thread(
      * tape. */
     g_mutex_lock(self->state_mutex);
     while (1) {
+    DBG(2, "zz");
 	/* wait until the main thread un-pauses us, and check that we have
 	 * the relevant device info available (block_size) */
 	while (self->paused && !elt->cancelled) {
@@ -606,26 +610,37 @@ device_thread(
 
 	if (!msg) /* cancelled */
 	    break;
+    DBG(2, "aa");
 
 	/* release the slices for this part, if there were any slices */
 	if (msg->successful && self->expect_cache_inform) {
 	    fast_forward_slices(self, msg->size);
 	}
 
+    DBG(2, "bb");
 	xfer_queue_message(elt->xfer, msg);
+    DBG(2, "cc");
 
 	/* pause ourselves and await instructions from the main thread */
 	self->paused = TRUE;
 
+    DBG(2, "dd");
 	/* if this is the last part, we're done with the part loop */
 	if (self->no_more_parts)
 	    break;
+    DBG(2, "ee");
     }
+    DBG(2, "ff");
     g_mutex_unlock(self->state_mutex);
+    DBG(2, "gg");
+
+    DBG(2, "xfer-dest-taper-splitter CRC: %0x      size %lld",
+	   crc32_finish(elt->crc), (long long)self->part_bytes_written);
 
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
+    DBG(2, "hh");
     return NULL;
 }
 
@@ -901,6 +916,7 @@ instance_init(
     self->partnum = 1;
     self->part_bytes_written = 0;
     self->part_slices = NULL;
+    elt->crc = crc32_init();
 }
 
 static void

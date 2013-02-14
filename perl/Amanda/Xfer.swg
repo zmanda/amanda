@@ -380,6 +380,9 @@ XferElement *xfer_source_directtcp_connect(DirectTCPAddr *addrs);
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
 
+%newobject xfer_filter_crc;
+XferElement *xfer_filter_crc(void);
+
 %newobject xfer_filter_process;
 XferElement *xfer_filter_process(
     gchar **argv,
@@ -614,6 +617,12 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_pattern)
 PACKAGE(Amanda::Xfer::Filter::Xor)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_xor)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Filter::Crc)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_crc)
 
 /* ---- */
 

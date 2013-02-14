@@ -427,6 +427,7 @@ tcpm_send_token(
     ssize_t		encsize;
     int			save_errno;
     time_t		logtime;
+    uint32_t            crc;
 
     assert(SIZEOF(netlength) == 4);
 
@@ -472,6 +473,11 @@ tcpm_send_token(
         nb_iov = 3;
     }
 
+    crc = crc32_init();
+    crc = crc32((uint8_t *)buf, len, crc);
+    crc = crc32_finish(crc);
+    g_debug("packet send CRC: %08x:%zu", crc, len);
+
     rval = full_writev(fd, iov, nb_iov);
     save_errno = errno;
     if (len != 0 && rc->driver->data_encrypt != NULL && buf != encbuf) {
@@ -505,6 +511,7 @@ tcpm_recv_token(
     ssize_t *	size)
 {
     ssize_t     rval;
+    uint32_t    crc;
 
     assert(SIZEOF(rc->netint) == 8);
     if (rc->size_header_read < (ssize_t)SIZEOF(rc->netint)) {
@@ -616,6 +623,11 @@ tcpm_recv_token(
     rc->buffer = NULL;
 
     auth_debug(1, _("tcpm_recv_token: read %zd bytes from %d\n"), *size, *handle);
+
+    crc = crc32_init();
+    crc = crc32((uint8_t *)*buf, *size, crc);
+    crc = crc32_finish(crc);
+    g_debug("packet receive CRC: %08x:%zu", crc, *size);
 
     if (*size > 0 && rc->driver->data_decrypt != NULL) {
 	void *decbuf;

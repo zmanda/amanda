@@ -76,6 +76,8 @@ sub setup_application {
     safe_cd(); # (also sets umask)
     check_std_fds();
 
+    make_crc_table();
+
     # set up debugging, now that we have a name, type, and context
     debug_init();
 
@@ -650,6 +652,10 @@ gboolean match_disk(char *pat, char *value);
 gboolean match_datestamp(char *pat, char *value);
 gboolean match_level(char *pat, char *value);
 
+void make_crc_table(void);
+uint32_t crc32_init(void);
+uint32_t crc32(uint8_t *buf, size_t len, uint32_t c);
+uint32_t crc32_finish(uint32_t c);
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;

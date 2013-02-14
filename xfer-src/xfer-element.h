@@ -152,6 +152,9 @@ typedef struct XferElement {
 
     /* maximum size to transfer */
     gint64 size;
+
+    /* for crc computation */
+    uint32_t crc;
 } XferElement;
 
 /*
