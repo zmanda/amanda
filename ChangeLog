@@ -1,3 +1,16 @@
+2013-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib/regenerate/regenerate: Add the nanosleep module.
+	* config/gnulib/dup2.m4, config/gnulib/gnulib-cache.m4,
+	  config/gnulib/gnulib-comp.m4, config/gnulib/nanosleep.m4,
+	  config/gnulib/select.m4, config/gnulib/sigaction.m4,
+	  config/gnulib/signalblocking.m4,
+	  config/gnulib/sys_select_h.m4: New config files.
+	* gnulib/Makefile.am: Update for new modules.
+	* gnulib/alloca.c, gnulib/dup2.c, gnulib/intprops.h,
+	  gnulib/nanosleep.c, gnulib/select.c, gnulib/sig-handler.c,
+	  gnulib/sig-handler.h, gnulib/sigaction.c, gnulib/sigprocmask.c,
+	  gnulib/sys_select.in.h: New files.
+
 2013-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Do not crash if stdin if closed while a backup
 	  is running.

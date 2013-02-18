@@ -39,6 +39,7 @@ AC_DEFUN([gl_EARLY],
   m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
   AC_REQUIRE([gl_PROG_AR_RANLIB])
   AC_REQUIRE([AM_PROG_CC_C_O])
+  # Code from module alloca:
   # Code from module alloca-opt:
   # Code from module arpa_inet:
   # Code from module base64:
@@ -46,6 +47,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module c-ctype:
   # Code from module configmake:
   # Code from module dosname:
+  # Code from module dup2:
   # Code from module environ:
   # Code from module errno:
   # Code from module extensions:
@@ -74,6 +76,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module include_next:
   # Code from module inet_ntop:
   # Code from module inet_pton:
+  # Code from module intprops:
   # Code from module langinfo:
   # Code from module largefile:
   AC_REQUIRE([AC_SYS_LARGEFILE])
@@ -93,6 +96,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module msvc-inval:
   # Code from module msvc-nothrow:
   # Code from module multiarch:
+  # Code from module nanosleep:
   # Code from module netdb:
   # Code from module netinet_in:
   # Code from module nl_langinfo:
@@ -104,8 +108,11 @@ AC_DEFUN([gl_EARLY],
   # Code from module regex:
   # Code from module safe-read:
   # Code from module safe-write:
+  # Code from module select:
   # Code from module servent:
+  # Code from module sigaction:
   # Code from module signal-h:
+  # Code from module sigprocmask:
   # Code from module size_max:
   # Code from module snippet/_Noreturn:
   # Code from module snippet/arg-nonnull:
@@ -125,6 +132,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module stdlib:
   # Code from module streq:
   # Code from module string:
+  # Code from module sys_select:
   # Code from module sys_socket:
   # Code from module sys_stat:
   # Code from module sys_time:
@@ -158,6 +166,10 @@ AC_DEFUN([gl_INIT],
   m4_pushdef([gl_LIBSOURCES_DIR], [])
   gl_COMMON
   gl_source_base='gnulib'
+changequote(,)dnl
+LTALLOCA=`echo "$ALLOCA" | sed -e 's/\.[^.]* /.lo /g;s/\.[^.]*$/.lo/'`
+changequote([, ])dnl
+AC_SUBST([LTALLOCA])
   gl_FUNC_ALLOCA
   gl_HEADER_ARPA_INET
   AC_PROG_MKDIR_P
@@ -169,6 +181,12 @@ AC_DEFUN([gl_INIT],
   fi
   gl_WCHAR_MODULE_INDICATOR([btowc])
   gl_CONFIGMAKE_PREP
+  gl_FUNC_DUP2
+  if test $HAVE_DUP2 = 0 || test $REPLACE_DUP2 = 1; then
+    AC_LIBOBJ([dup2])
+    gl_PREREQ_DUP2
+  fi
+  gl_UNISTD_MODULE_INDICATOR([dup2])
   gl_ENVIRON
   gl_UNISTD_MODULE_INDICATOR([environ])
   gl_HEADER_ERRNO_H
@@ -335,6 +353,12 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([msvc-nothrow])
   fi
   gl_MULTIARCH
+  gl_FUNC_NANOSLEEP
+  if test $HAVE_NANOSLEEP = 0 || test $REPLACE_NANOSLEEP = 1; then
+    AC_LIBOBJ([nanosleep])
+    gl_PREREQ_NANOSLEEP
+  fi
+  gl_TIME_MODULE_INDICATOR([nanosleep])
   gl_HEADER_NETDB
   gl_HEADER_NETINET_IN
   AC_PROG_MKDIR_P
@@ -364,8 +388,25 @@ AC_DEFUN([gl_INIT],
   fi
   gl_PREREQ_SAFE_READ
   gl_PREREQ_SAFE_WRITE
+  gl_FUNC_SELECT
+  if test $REPLACE_SELECT = 1; then
+    AC_LIBOBJ([select])
+  fi
+  gl_SYS_SELECT_MODULE_INDICATOR([select])
   gl_SERVENT
+  gl_SIGACTION
+  if test $HAVE_SIGACTION = 0; then
+    AC_LIBOBJ([sigaction])
+    gl_PREREQ_SIGACTION
+  fi
+  gl_SIGNAL_MODULE_INDICATOR([sigaction])
   gl_SIGNAL_H
+  gl_SIGNALBLOCKING
+  if test $HAVE_POSIX_SIGNALBLOCKING = 0; then
+    AC_LIBOBJ([sigprocmask])
+    gl_PREREQ_SIGPROCMASK
+  fi
+  gl_SIGNAL_MODULE_INDICATOR([sigprocmask])
   gl_SIZE_MAX
   gl_FUNC_SNPRINTF
   gl_STDIO_MODULE_INDICATOR([snprintf])
@@ -387,6 +428,8 @@ AC_DEFUN([gl_INIT],
   gl_STDIO_H
   gl_STDLIB_H
   gl_HEADER_STRING_H
+  gl_HEADER_SYS_SELECT
+  AC_PROG_MKDIR_P
   gl_HEADER_SYS_SOCKET
   AC_PROG_MKDIR_P
   gl_HEADER_SYS_STAT_H
@@ -558,6 +601,7 @@ AC_DEFUN([gl_FILE_LIST], [
   build-aux/snippet/arg-nonnull.h
   build-aux/snippet/c++defs.h
   build-aux/snippet/warn-on-use.h
+  lib/alloca.c
   lib/alloca.in.h
   lib/arpa_inet.in.h
   lib/asnprintf.c
@@ -568,6 +612,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/c-ctype.h
   lib/config.charset
   lib/dosname.h
+  lib/dup2.c
   lib/errno.in.h
   lib/fcntl.in.h
   lib/fd-hook.c
@@ -599,6 +644,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/threadlib.c
   lib/inet_ntop.c
   lib/inet_pton.c
+  lib/intprops.h
   lib/itold.c
   lib/langinfo.in.h
   lib/localcharset.c
@@ -619,6 +665,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/msvc-inval.h
   lib/msvc-nothrow.c
   lib/msvc-nothrow.h
+  lib/nanosleep.c
   lib/netdb.in.h
   lib/netinet_in.in.h
   lib/nl_langinfo.c
@@ -643,7 +690,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/safe-read.h
   lib/safe-write.c
   lib/safe-write.h
+  lib/select.c
+  lib/sig-handler.c
+  lib/sig-handler.h
+  lib/sigaction.c
   lib/signal.in.h
+  lib/sigprocmask.c
   lib/size_max.h
   lib/snprintf.c
   lib/sockets.c
@@ -658,6 +710,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stdlib.in.h
   lib/streq.h
   lib/string.in.h
+  lib/sys_select.in.h
   lib/sys_socket.c
   lib/sys_socket.in.h
   lib/sys_stat.in.h
@@ -687,6 +740,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/btowc.m4
   m4/codeset.m4
   m4/configmake.m4
+  m4/dup2.m4
   m4/eealloc.m4
   m4/environ.m4
   m4/errno_h.m4
@@ -740,6 +794,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/msvc-inval.m4
   m4/msvc-nothrow.m4
   m4/multiarch.m4
+  m4/nanosleep.m4
   m4/netdb_h.m4
   m4/netinet_in_h.m4
   m4/nl_langinfo.m4
@@ -753,8 +808,11 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/regex.m4
   m4/safe-read.m4
   m4/safe-write.m4
+  m4/select.m4
   m4/servent.m4
+  m4/sigaction.m4
   m4/signal_h.m4
+  m4/signalblocking.m4
   m4/size_max.m4
   m4/snprintf.m4
   m4/socketlib.m4
@@ -771,6 +829,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdio_h.m4
   m4/stdlib_h.m4
   m4/string_h.m4
+  m4/sys_select_h.m4
   m4/sys_socket_h.m4
   m4/sys_stat_h.m4
   m4/sys_time_h.m4
