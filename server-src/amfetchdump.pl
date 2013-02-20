@@ -30,7 +30,7 @@ use IPC::Open3;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants :quoting );
 use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
@@ -571,6 +571,19 @@ sub main {
 		push @argv, "--device", $dle->{'diskdevice'} if defined ($dle->{'diskdevice'});
 		push @argv, "--level", $hdr->{'dumplevel'};
 		push @argv, "--directory", $opt_directory;
+
+		if ($bsu->{'recover-dump-state-file'}) {
+		    my $host = sanitise_filename("".$hdr->{'name'});
+		    my $disk = sanitise_filename("".$hdr->{'disk'});
+		    my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
+				 '/' . $disk . '/' . $hdr->{'datestamp'} . '_' .
+				 $hdr->{'dumplevel'} . '.state';
+
+		    if (-e $state_filename) {
+			push @argv, "--recover-dump-state-file",
+				    $state_filename;
+		    }
+		}
 
 		# add application_property
 		while (my($name, $value) = each(%application_property)) {

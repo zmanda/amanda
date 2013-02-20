@@ -194,6 +194,7 @@ typedef enum {
     fe_application_client_name,
     fe_script_client_name,
     fe_dumptype_property,
+    fe_sendbackup_state,
 
     /*
      * All new features must be inserted immediately *before* this entry.

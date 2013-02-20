@@ -1,3 +1,17 @@
+2013-02-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c: Add fe_sendbackup_state amfeature.
+	* common-src/amfeatures.h: Add fe_sendbackup_state amfeature.
+	* client-src/client_util.c: Parse RECOVER-DUMP-STATE-FILE application
+	  feature.
+	* ndmp-src/ndma_noti_calls.c (ndma_send_logmsg): return if !from_conn.
+	* perl/Amanda/Extract.pm: Parse recover-dump-state-file application
+	  feature.
+	* server-src/amfetchdump.pl: Pass --recover-dump-state-file to
+	  application.
+	* server-src/driver.c (short_dump_state): Add directq.
+	* server-src/dumper.c: Parse 'sendbackup state' line and put them in
+	  the dump state file
+
 2013-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Do not crash if stdin if closed while a backup
 	  is running.

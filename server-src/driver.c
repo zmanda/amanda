@@ -3741,6 +3741,7 @@ short_dump_state(void)
     g_printf(_(" idle-dumpers: %d"), nidle);
     g_printf(_(" qlen tapeq: %d"), queue_length(tapeq));
     g_printf(_(" runq: %d"), queue_length(runq));
+    g_printf(_(" directq: %d"), queue_length(directq));
     g_printf(_(" roomq: %d"), queue_length(roomq));
     g_printf(_(" wakeup: %d"), (int)sleep_time);
     g_printf(_(" driver-idle: %s\n"), _(idle_strings[idle_reason]));

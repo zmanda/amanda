@@ -128,6 +128,7 @@ static char *dle_str = NULL;
 static char *errfname = NULL;
 static int   errf_lines = 0;
 static int   max_warnings = 0;
+static char *state_filename = NULL;
 
 static dumpfile_t file;
 
@@ -876,6 +877,16 @@ process_dumpline(
 	    return;
 	}
 
+	if (g_str_equal(tok, "state")) {
+	    FILE *statefile;
+	    tok = strtok(NULL, "");
+	    statefile = fopen(state_filename, "a");
+	    fprintf(statefile, "%s\n", tok);
+	    fclose(statefile);
+	    amfree(buf);
+	    return;
+	}
+
 	if (strcmp(tok, "end") == 0) {
 	    SET(status, GOT_ENDLINE);
 	    break;
@@ -1192,6 +1203,8 @@ do_dump(
     pid_t indexpid = -1;
     char *m;
     int to_unlink = 1;
+    char *shostname;
+    char *sdiskname;
 
     startclock();
 
@@ -1225,6 +1238,14 @@ do_dump(
 	amfree(errfname);
 	goto failed;
     }
+
+    shostname = sanitise_filename(hostname);
+    sdiskname = sanitise_filename(diskname);
+    state_filename = g_strdup_printf("%s/%s/%s/%s_%d.state",
+		 getconf_str(CNF_INDEXDIR), shostname,
+		 sdiskname, dumper_timestamp, level);
+    amfree(shostname);
+    amfree(sdiskname);
 
     if (streams[INDEXFD].fd != NULL) {
 	indexfile_real = getindexfname(hostname, diskname, dumper_timestamp, level);
@@ -1438,6 +1459,7 @@ do_dump(
     if (data_path == DATA_PATH_AMANDA)
 	aclose(db->fd);
 
+    amfree(state_filename);
     amfree(errstr);
     dumpfile_free_data(&file);
 

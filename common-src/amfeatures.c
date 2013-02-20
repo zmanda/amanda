@@ -167,6 +167,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_application_client_name);
 	am_add_feature(f, fe_script_client_name);
 	am_add_feature(f, fe_dumptype_property);
+	am_add_feature(f, fe_sendbackup_state);
     }
     return f;
 }
