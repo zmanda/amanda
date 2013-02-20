@@ -1036,6 +1036,9 @@ backup_support_option(
 	} else if (g_str_has_prefix(line, "AMFEATURES ")) {
 	    if (g_str_equal(line + 11, "YES"))
 		bsu->features = 1;
+	} else if (g_str_has_prefix(line, "RECOVER-DUMP-STATE-FILE ")) {
+	    if (g_str_equal(line + 19, "YES"))
+		bsu->features = 1;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}

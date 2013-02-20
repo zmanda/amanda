@@ -171,6 +171,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_amrecover_crc_in_header);
 	am_add_feature(f, fe_amrecover_data_status);
 	am_add_feature(f, fe_amrecover_data_crc);
+	am_add_feature(f, fe_sendbackup_state);
     }
     return f;
 }

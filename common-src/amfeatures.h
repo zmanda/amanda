@@ -198,6 +198,7 @@ typedef enum {
     fe_amrecover_crc_in_header,
     fe_amrecover_data_status,
     fe_amrecover_data_crc,
+    fe_sendbackup_state,
 
     /*
      * All new features must be inserted immediately *before* this entry.

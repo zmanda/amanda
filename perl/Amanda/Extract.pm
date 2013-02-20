@@ -93,7 +93,8 @@ sub BSU {
 	    $name eq 'caclsize' ||
 	    $name eq 'client-estimate' ||
 	    $name eq 'multi-estimate' ||
-	    $name eq 'amfeatures') {
+	    $name eq 'amfeatures' ||
+	    $name eq 'recover-dump-state-file') {
 	    $bsu{$name} = ($value eq "YES");
 	} elsif ($name eq 'max-level') {
 	    $bsu{$name} = $value;
