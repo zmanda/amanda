@@ -591,6 +591,7 @@ main(
 	    } else {
 		dbprintf(_("compress pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
 	    }
+	    aclose(compout);
 	} else if (dle->compress == COMP_CUST) {
 	    compopt = skip_argument;
 	    comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
@@ -602,6 +603,7 @@ main(
 	    } else {
 		dbprintf(_("pid %ld: %s\n"), (long)comppid, dle->compprog);
 	    }
+	    aclose(compout);
 	} else {
 	    dumpout = compout;
 	    comppid = -1;

@@ -1,4 +1,7 @@
 2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: close(compout).
+
+2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Add debugging statement.
 	* common-src/sockaddr-util.c (str_sockaddr_r, str_sockaddr_no_port_r):
 	  New thread safe function.
