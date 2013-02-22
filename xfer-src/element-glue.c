@@ -26,6 +26,7 @@
 #include "directtcp.h"
 #include "util.h"
 #include "sockaddr-util.h"
+#include "stream.h"
 #include "debug.h"
 
 /*
@@ -214,6 +215,11 @@ do_directtcp_connect(
     XferElement *elt = XFER_ELEMENT(self);
     sockaddr_union addr;
     int sock;
+#ifdef WORKING_IPV6
+    char strsockaddr[INET6_ADDRSTRLEN + 20];
+#else
+    char strsockaddr[INET_ADDRSTRLEN + 20];
+#endif
 
     if (!addrs) {
 	g_debug("element-glue got no directtcp addresses to connect to!");
@@ -228,8 +234,53 @@ do_directtcp_connect(
     /* set up the sockaddr -- IPv4 only */
     copy_sockaddr(&addr, addrs);
 
-    g_debug("do_directtcp_connect making data connection to %s", str_sockaddr(&addr));
+    str_sockaddr_r(&addr, strsockaddr, sizeof(strsockaddr));
+
+    if (strncmp(strsockaddr,"255.255.255.255:", 16) == 0) {
+	char  buffer[32770];
+	char *s;
+	int   size;
+	char *data_host;
+	int   data_port;
+
+	g_debug("do_directtcp_connect making indirect data connection to %s",
+		strsockaddr);
+	data_port = SU_GET_PORT(&addr);
+	sock = stream_client(NULL, "localhost", data_port,
+                                   STREAM_BUFSIZE, 0, NULL, 0);
+	if (sock < 0) {
+	    xfer_cancel_with_error(elt, "stream_client(): %s", strerror(errno));
+	    goto cancel_wait;
+	}
+	size = full_read(sock, buffer, 32768);
+	if (size < 0 ) {
+	    xfer_cancel_with_error(elt, "failed to read from indirecttcp: %s",
+				   strerror(errno));
+	    goto cancel_wait;
+	}
+	close(sock);
+	buffer[size++] = ' ';
+	buffer[size] = '\0';
+	if ((s = strchr(buffer, ':')) == NULL) {
+	    xfer_cancel_with_error(elt,
+				   "Failed to parse indirect data stream: %s",
+				   buffer);
+	    goto cancel_wait;
+	}
+	*s++ = '\0';
+	data_host = buffer;
+	data_port = atoi(s);
+
+	str_to_sockaddr(data_host, &addr);
+	SU_SET_PORT(&addr, data_port);
+
+	str_sockaddr_r(&addr, strsockaddr, sizeof(strsockaddr));
+    }
+
     sock = socket(SU_GET_FAMILY(&addr), SOCK_STREAM, 0);
+
+    g_debug("do_directtcp_connect making data connection to %s", strsockaddr);
+
     if (sock < 0) {
 	xfer_cancel_with_error(elt,
 	    "socket(): %s", strerror(errno));
@@ -242,11 +293,12 @@ do_directtcp_connect(
 	goto cancel_wait;
     }
 
-    g_debug("connected to %s", str_sockaddr(&addr));
+    g_debug("connected to %s", strsockaddr);
 
     return sock;
 
 cancel_wait:
+    g_free(strsockaddr);
     wait_until_xfer_cancelled(elt->xfer);
     return -1;
 }

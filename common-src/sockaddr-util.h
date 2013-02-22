@@ -45,6 +45,12 @@ void	dump_sockaddr(sockaddr_union *	sa);
 char *  str_sockaddr(sockaddr_union *sa);
 char *  str_sockaddr_no_port(sockaddr_union *sa);
 
+/* same but threadsafe, the string is put in strsockaddr
+ */
+char *  str_sockaddr_r(sockaddr_union *sa, char *strsockaddr, socklen_t size);
+char *  str_sockaddr_no_port_r(sockaddr_union *sa, char *strsockaddr,
+			       socklen_t size);
+
 /* Compare two sockaddr_union objects, optionally comparing
  * only the address (and thus ignoring port, flow info, etc.).
  *
