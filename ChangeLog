@@ -1,4 +1,7 @@
 2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Do not retry if !self->leom.
+
+2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c, xfer-src/element-glue.c: Fix stream_client use.
 
 2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
