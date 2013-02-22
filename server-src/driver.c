@@ -3971,11 +3971,13 @@ tape_action(
     // when to start a flush
     if (taper->state & TAPER_STATE_IDLE) {
 	driver_debug(2, "tape_action: TAPER_STATE_IDLE\n");
-	if (!degraded_mode && (!empty(tapeq) || !empty(directq)) &&
-	    (taper->state & TAPER_STATE_TAPE_STARTED ||		// tape already started 
-             !empty(roomq) ||					// holding disk constraint
-             idle_reason == IDLE_NO_DISKSPACE ||		// holding disk constraint
-	     flush_criteria)) {					// flush
+	if (!degraded_mode &&
+	    (!empty(directq) ||
+	     (!empty(tapeq) &&
+	      (taper->state & TAPER_STATE_TAPE_STARTED ||		// tape already started
+               !empty(roomq) ||						// holding disk constraint
+               idle_reason == IDLE_NO_DISKSPACE ||			// holding disk constraint
+	       flush_criteria)))) {					// flush
 
 	    if (nb_taper_flushing == 0) {
 		driver_debug(2, "tape_action: TAPER_STATE_IDLE return TAPE_ACTION_START_A_FLUSH\n");
