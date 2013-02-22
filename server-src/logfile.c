@@ -197,19 +197,21 @@ make_logname(
 {
     char *conf_logdir;
     char *fname = NULL;
-    struct stat statbuf;
 
-    if (datestamp == NULL) datestamp = "error";
+    if (datestamp == NULL)
+	datestamp = g_strdup("error-00000000");
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     fname = g_strjoin(NULL, conf_logdir, "/log", NULL);
     while (1) {
+	int fd;
         g_free(logfile);
         logfile = g_strconcat(fname, ".", datestamp, ".0", NULL);
-	if (stat(logfile, &statbuf) == -1 && errno == ENOENT) {
+	/* try to create it */
+	fd = open(logfile, O_EXCL | O_CREAT | O_WRONLY, 0600);
+	if (fd > -1) {
 	    FILE *file;
-	    /* create it           */
-	    file = fopen(logfile, "a+");
+	    file = fdopen(fd, "w");
 	    if (file) {
 		gchar *text = g_strdup_printf("INFO %s %s pid %ld\n",
 				 process, process, (long)getpid());
@@ -220,6 +222,7 @@ make_logname(
 		    char line[1000];
 		    if (fgets(line, 1000, file)) {
 			if (g_str_equal(line, text)) {
+			    /* the file is for us */
 			    g_free(text);
 			    fclose(file);
 			    break;

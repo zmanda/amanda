@@ -1,4 +1,7 @@
 2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/logfile.c (make_logname): Fix race.
+
+2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: close(compout).
 
 2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
