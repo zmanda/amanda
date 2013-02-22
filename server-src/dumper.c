@@ -1624,7 +1624,7 @@ read_mesgfd(
 		int size;
 
 		g_debug(_("Sendingd indirect data output stream: %s:%d\n"), data_host, data_port);
-		db->fd = stream_client(NULL, "localhost", data_port,
+		db->fd = stream_client("localhost", data_port,
 				       STREAM_BUFSIZE, 0, NULL, 0);
 		if (db->fd == -1) {
                     g_free(errstr);

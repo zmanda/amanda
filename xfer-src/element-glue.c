@@ -239,8 +239,8 @@ do_directtcp_connect(
 	g_debug("do_directtcp_connect making indirect data connection to %s",
 		strsockaddr);
 	data_port = SU_GET_PORT(&addr);
-	sock = stream_client(NULL, "localhost", data_port,
-                                   STREAM_BUFSIZE, 0, NULL, 0);
+	sock = stream_client("localhost", data_port,
+                             STREAM_BUFSIZE, 0, NULL, 0);
 	if (sock < 0) {
 	    xfer_cancel_with_error(elt, "stream_client(): %s", strerror(errno));
 	    goto cancel_wait;
