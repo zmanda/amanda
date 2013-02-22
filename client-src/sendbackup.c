@@ -603,6 +603,7 @@ main(
 		char *s, *s1;
 
 		indirect_tcp = g_strdup(dle->directtcp_list->data);
+		g_debug("indirecttcp: %s", indirect_tcp);
 		g_slist_free(dle->directtcp_list);
 		dle->directtcp_list = NULL;
 		str_port = strchr(indirect_tcp, ':');
@@ -618,13 +619,16 @@ main(
 		if (size <= 0) {
 		    g_debug("Failed to read from indirect-direct-tcp port: %s",
 			    strerror(errno));
+		    close(fd);
 		    exit(1);
 		}
+		close(fd);
 		buffer[size++] = ' ';
 		buffer[size] = '\0';
 		s1 = buffer;
 		while ((s = strchr(s1, ' ')) != NULL) {
 		    *s++ = '\0';
+		    g_debug("directtcp: %s", s1);
 		    dle->directtcp_list = g_slist_append(dle->directtcp_list, g_strdup(s1));
 		    s1 = s;
 		}

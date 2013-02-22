@@ -1617,6 +1617,47 @@ read_mesgfd(
 	}
 	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
+	    /* do indirecttcp */
+	    if (g_str_equal(data_host,"255.255.255.255")) {
+		char buffer[32770];
+		char *s;
+		int size;
+
+		g_debug(_("Sendingd indirect data output stream: %s:%d\n"), data_host, data_port);
+		db->fd = stream_client(NULL, "localhost", data_port,
+				       STREAM_BUFSIZE, 0, NULL, 0);
+		if (db->fd == -1) {
+                    g_free(errstr);
+                    errstr = g_strdup_printf(_("Can't open indirect data output stream: %s"),
+                                         strerror(errno));
+		    dump_result = 2;
+		    stop_dump();
+		    return;
+		}
+	        size = full_read(db->fd, buffer, 32768);
+		if (size <= 0) {
+		    g_debug("Failed to read from indirect-direct-tcp port: %s",
+			    strerror(errno));
+		    close(db->fd);
+		    dump_result = 2;
+		    stop_dump();
+		    return;
+		}
+		aclose(db->fd);
+		buffer[size++] = ' ';
+                buffer[size] = '\0';
+                if ((s = strchr(buffer, ':')) == NULL) {
+		    g_debug("Failed to parse indirect data output stream: %s", buffer);
+		    dump_result = 2;
+		    stop_dump();
+		    return;
+                }
+		*s++ = '\0';
+		amfree(data_host);
+		data_host = g_strdup(buffer);
+		data_port = atoi(s);
+	    }
+
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
 	    db->fd = stream_client(data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0);
@@ -1651,8 +1692,10 @@ read_mesgfd(
 		return;
 	    }
 	}
-	security_stream_read(streams[DATAFD].fd, read_datafd, db);
-	set_datafd = 1;
+	if (data_path == DATA_PATH_AMANDA) {
+	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
+	    set_datafd = 1;
+	}
     }
 
     /*

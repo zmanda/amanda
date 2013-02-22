@@ -116,6 +116,58 @@ str_sockaddr_no_port(
     return mystr_sockaddr;
 }
 
+char *
+str_sockaddr_r(
+    sockaddr_union *sa,
+    char *strsockaddr,
+    socklen_t size)
+{
+#ifdef WORKING_IPV6
+    char ipstr[INET6_ADDRSTRLEN];
+#else
+    char ipstr[INET_ADDRSTRLEN];
+#endif
+    int port;
+
+    port = SU_GET_PORT(sa);
+#ifdef WORKING_IPV6
+    if ( SU_GET_FAMILY(sa) == AF_INET6) {
+	inet_ntop(AF_INET6, &sa->sin6.sin6_addr, ipstr, sizeof(ipstr));
+    } else
+#endif
+    {
+	inet_ntop(AF_INET, &sa->sin.sin_addr.s_addr, ipstr, sizeof(ipstr));
+    }
+    g_snprintf(strsockaddr, size, "%s:%d", ipstr, port);
+
+    return strsockaddr;
+}
+
+char *
+str_sockaddr_no_port_r(
+    sockaddr_union *sa,
+    char *strsockaddr,
+    socklen_t size)
+{
+#ifdef WORKING_IPV6
+    char ipstr[INET6_ADDRSTRLEN];
+#else
+    char ipstr[INET_ADDRSTRLEN];
+#endif
+
+#ifdef WORKING_IPV6
+    if ( SU_GET_FAMILY(sa) == AF_INET6) {
+	inet_ntop(AF_INET6, &sa->sin6.sin6_addr, ipstr, sizeof(ipstr));
+    } else
+#endif
+    {
+	inet_ntop(AF_INET, &sa->sin.sin_addr.s_addr, ipstr, sizeof(ipstr));
+    }
+    g_snprintf(strsockaddr, size, "%s", ipstr);
+
+    return strsockaddr;
+}
+
 int
 str_to_sockaddr(
 	const char *src,
