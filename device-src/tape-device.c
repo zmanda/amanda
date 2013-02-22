@@ -1832,7 +1832,7 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errms
 #endif
 	) {
 	    /* if we've retried once already, then we're probably really out of space */
-	    if (retry)
+	    if (retry || !self->leom)
 		return RESULT_NO_SPACE;
 	    retry = TRUE;
 	    d_self->is_eom = TRUE;

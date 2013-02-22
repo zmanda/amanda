@@ -103,7 +103,7 @@ use constant TAPE_ERROR => message("TAPE-ERROR",
 );
 
 use constant PARTIAL => message("PARTIAL",
-    format => [ qw( handle input taper stats inputerr tapererr ) ],
+    format => [ qw( handle input taper server_crc stats inputerr tapererr ) ],
 );
 
 use constant PARTDONE => message("PARTDONE",
