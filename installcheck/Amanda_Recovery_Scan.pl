@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 95;
+use Test::More tests => 96;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -265,11 +265,13 @@ sub test_searching {
     step res_cb_03 => sub {
 	(my $err, $res03) = @_;
 
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "compat-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF03");
-	    ok($err->driveinuse, "$chg_name TESTCONF03 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->driveinuse, "$chg_name: TESTCONF03 is driveinuse");
+	    ok(!$res03, "$chg_name: TESTCONF03 give no reservation");
+	} elsif ($chg_name eq "single-changer") {
+	    ok($err, "$chg_name doesn't found TESTCONF03");
+	    ok($err->notfound, "$chg_name: TESTCONF03 is notfound");
 	    ok(!$res03, "$chg_name: TESTCONF03 give no reservation");
 	} else {
 	    ok(!$err, "$chg_name found TESTCONF03");
@@ -282,11 +284,13 @@ sub test_searching {
     step res_cb_01 => sub {
 	(my $err, $res01) = @_;
 
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "compat-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF01");
-	    ok($err->driveinuse, "$chg_name TESTCONF01 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->driveinuse, "$chg_name: TESTCONF01 is driveinuse");
+	    ok(!$res01, "$chg_name: TESTCONF01 give no reservation");
+	} elsif ($chg_name eq "single-changer") {
+	    ok($err, "$chg_name doesn't found TESTCONF01");
+	    ok($err->notfound, "$chg_name: TESTCONF01 is notfound");
 	    ok(!$res01, "$chg_name: TESTCONF01 give no reservation");
 	} else {
 	    ok(!$err, "$chg_name found TESTCONF01");
@@ -299,11 +303,13 @@ sub test_searching {
     step res_cb_05 => sub {
 	my ($err, $res) = @_;
 
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
+	if ($chg_name eq "compat-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF05");
-	    ok($err->driveinuse, "$chg_name TESTCONF05 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->driveinuse, "$chg_name: TESTCONF05 is driveinuse");
+	    ok(!$res, "$chg_name: TESTCONF05 give no reservation");
+	} elsif ($chg_name eq "single-changer") {
+	    ok($err, "$chg_name doesn't found TESTCONF05");
+	    ok($err->notfound, "$chg_name: TESTCONF05 is notfound");
 	    ok(!$res, "$chg_name: TESTCONF05 give no reservation");
 	} else {
 	    ok(!$res, "$chg_name doesn't found TESTCONF05");
@@ -317,9 +323,11 @@ sub test_searching {
 	my ($err, $res) = @_;
 
 	ok($err, "$chg_name doesn't found TESTCONF01");
-	if ($chg_name eq "compat-changer" ||
-	    $chg_name eq "single-changer") {
-	    ok($err->driveinuse, "$chg_name TESTCONF01 is driveinuse") ||
+	if ($chg_name eq "compat-changer") {
+	    ok($err, "$chg_name doesn't found TESTCONF01");
+	    ok($err->driveinuse, "$chg_name: TESTCONF01 is driveinuse");
+	} elsif ($chg_name eq "single-changer") {
+	    ok($err->notfound, "$chg_name TESTCONF01 is notfound") ||
 		diag($err."\n");
 	} else {
 	    ok($err->volinuse, "$chg_name TESTCONF01 is volinuse") ||

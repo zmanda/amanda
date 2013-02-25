@@ -53,6 +53,11 @@ sub new {
 	properties     => $properties,
     };
 
+    if (defined $self->{'properties'}->{'check-file'}) {
+	my $check_file = $self->{'properties'}->{'check-file'}->{'values'}->[0];
+	unlink($check_file);
+    }
+
     return bless ($self, $class);
 }
 
@@ -129,7 +134,6 @@ sub user_request {
 	    print {$fh} "or write 'abort' in the file to abort the scan.\n";
 	}
 	close $fh;
-	unlink($check_file);
 
 	if ($resend_delay) {
 	    $self->{'send_email_src'} = Amanda::MainLoop::call_after($resend_delay, $send_email_cb);
@@ -141,17 +145,23 @@ sub user_request {
 	$self->{'check_file_src'} = undef;
 
 	if (-f $check_file) {
+	    $self->{'send_email_src'}->remove();
+	    $self->{'send_email_src'} = undef;
 	    my $fh;
 	    open ($fh, '<' , $check_file);
 	    my $line = <$fh>;
-	    chomp $line;
-	    $self->abort();
-	    if ($line =~ /^abort$/i) {
-		return $params{'request_cb'}->(
+	    if ($line) {
+		chomp $line;
+		$self->abort();
+		if ($line =~ /^abort$/i) {
+		    return $params{'request_cb'}->(
 			Amanda::Changer::Error->new('fatal',
 				message => "Aborted by user"));
+		} else {
+		    return $params{'request_cb'}->(undef, $line);
+		}
 	    } else {
-		return $params{'request_cb'}->(undef, $line);
+		return $params{'request_cb'}->(undef, '');
 	    }
 	}
 	$self->{'check_file_src'} = Amanda::MainLoop::call_after($check_file_delay, $check_file_cb);

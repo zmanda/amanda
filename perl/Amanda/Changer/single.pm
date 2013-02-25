@@ -66,6 +66,11 @@ sub new {
 	config => $config,
 	device_name => $device_name,
 	reserved => 0,
+	state => undef,
+	device_status => undef,
+	f_type => undef,
+	label => undef,
+	'scan-require-update' => 1,
     };
 
     bless ($self, $class);
@@ -82,9 +87,18 @@ sub load {
     confess "no res_cb supplied" unless (exists $params{'res_cb'});
 
     if ($self->{'reserved'}) {
-	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "volinuse",
-	    message => "'$self->{device_name}' is already reserved");
+	if (($self->{'label'} and $params{'label'} and
+	     $self->{'label'} eq $params{'label'}) or
+	    ($self->{'slot'} and $params{'slot'} and
+	     $self->{'slot'} eq $params{'slot'})) {
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => "volinuse",
+		message => "'$self->{device_name}' is already reserved");
+	} else {
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => "driveinuse",
+		message => "'$self->{device_name}' is already reserved");
+	}
     }
 
     if (keys %{$params{'except_slots'}} > 0) {
@@ -94,6 +108,10 @@ sub load {
     }
 
     my $device = Amanda::Device->new($self->{'device_name'});
+    $self->{'state'} = Amanda::Changer::SLOT_FULL;
+    $self->{'device_status'} = $device->status();
+    $self->{'f_type'} = undef;
+    $self->{'label'} = undef;
     if ($device->status() != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("fatal", $params{'res_cb'},
 	    message => "error opening device '$self->{device_name}': " . $device->error_or_status());
@@ -109,6 +127,14 @@ sub load {
 
     my $res = Amanda::Changer::single::Reservation->new($self, $device);
     $device->read_label();
+    $self->{'state'} = Amanda::Changer::SLOT_FULL;
+    $self->{'device_status'} = $device->status;
+    if ($device->status == $DEVICE_STATUS_SUCCESS) {
+	$self->{'label'} = $device->volume_label;
+    }
+    if (defined $device->volume_header) {
+	$self->{'f_type'} = $device->volume_header->{type};
+    }
     $params{'res_cb'}->(undef, $res);
 }
 
@@ -117,14 +143,23 @@ sub inventory {
     my %params = @_;
 
     my @inventory;
-    my $s = { slot => 0,
-	      state => undef,
-	      device_status => undef,
-	      f_type => undef,
-	      label => undef };
+    my $s = { slot => 1,
+	      state => $self->{'state'},
+	      device_status => $self->{'device_status'},
+	      f_type => $self->{'f_type'},
+	      label => $self->{'label'} };
     push @inventory, $s;
 
     $params{'inventory_cb'}->(undef, \@inventory);
+}
+
+sub update {
+    my $self = shift;
+
+    $self->{'state'} = undef;
+    $self->{'device_status'} = undef;
+    $self->{'f_type'} = undef;
+    $self->{'label'} = undef;
 }
 
 sub info_key {

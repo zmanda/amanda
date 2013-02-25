@@ -1,4 +1,12 @@
 2013-02-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/single.pm: Keep an inventory.
+	* perl/Amanda/Interactivity/email.pm: Some fix.
+	* perl/Amanda/Recovery/Scan.pm: Update the changer if required.
+	* perl/Amanda/ScanInventory.pm: Update the changer if required.
+	* installcheck/Amanda_Changer_single.pl: Test changes.
+	* installcheck/Amanda_Recovery_Scan.pl: Test changes.
+
+2013-02-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Do not empties what is al;ready read when
 	  doing an includefile in the disklist.
 
