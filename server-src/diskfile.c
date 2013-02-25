@@ -37,7 +37,7 @@
 #include "util.h"
 #include "amxml.h"
 
-static am_host_t *hostlist;
+static am_host_t *hostlist = NULL;
 static netif_t *all_netifs;
 
 /* local functions */
@@ -57,8 +57,9 @@ read_diskfile(
     char *line = NULL;
 
     /* initialize */
-    hostlist = NULL;
-    lst->head = lst->tail = NULL;
+    if (hostlist == NULL) {
+	lst->head = lst->tail = NULL;
+    }
     line_num = 0;
 
     /* if we already have config errors, then don't bother */

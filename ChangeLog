@@ -1,3 +1,7 @@
+2013-02-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Do not empties what is al;ready read when
+	  doing an includefile in the disklist.
+
 2013-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Do not retry if !self->leom.
 	* perl/Amanda/Taper/Protocol.pm: PARTIAL reply include de server-crc.
