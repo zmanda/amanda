@@ -235,8 +235,7 @@ sub test_searching {
 
 	if ($chg_name eq "single-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF03");
-	    ok($err->driveinuse, "$chg_name TESTCONF03 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->notfound, "$chg_name: TESTCONF03 is notfound");
 	    ok(!$res03, "$chg_name: TESTCONF03 give no reservation");
 	} else {
 	    ok(!$err, "$chg_name found TESTCONF03");
@@ -251,8 +250,7 @@ sub test_searching {
 
 	if ($chg_name eq "single-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF01");
-	    ok($err->driveinuse, "$chg_name TESTCONF01 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->notfound, "$chg_name: TESTCONF01 is notfound");
 	    ok(!$res01, "$chg_name: TESTCONF01 give no reservation");
 	} else {
 	    ok(!$err, "$chg_name found TESTCONF01");
@@ -267,8 +265,7 @@ sub test_searching {
 
 	if ($chg_name eq "single-changer") {
 	    ok($err, "$chg_name doesn't found TESTCONF05");
-	    ok($err->driveinuse, "$chg_name TESTCONF05 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->notfound, "$chg_name: TESTCONF05 is notfound");
 	    ok(!$res, "$chg_name: TESTCONF05 give no reservation");
 	} else {
 	    ok(!$res, "$chg_name doesn't found TESTCONF05");
@@ -283,8 +280,7 @@ sub test_searching {
 
 	ok($err, "$chg_name doesn't found TESTCONF01");
 	if ($chg_name eq "single-changer") {
-	    ok($err->driveinuse, "$chg_name TESTCONF01 is driveinuse") ||
-		diag($err."\n");
+	    ok($err->notfound, "$chg_name: TESTCONF01 is notfound");
 	} else {
 	    ok($err->volinuse, "$chg_name TESTCONF01 is volinuse") ||
 		diag($err."\n");

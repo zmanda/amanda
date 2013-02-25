@@ -126,6 +126,7 @@ sub _scan {
     my $scan_running = 0;
     my $interactivity_running = 0;
     my $restart_scan = 0;
+    my $restart_scan_changer = undef;
     my $abort_scan = undef;
     my $last_err = undef; # keep the last meaningful error, the one reported
 			  # to the user, most scan end with the notfound error,
@@ -160,10 +161,19 @@ sub _scan {
 
     step restart_scan => sub {
 	$restart_scan = 0;
+
+	if ($restart_scan_changer) {
+	    $self->{'chg'}->quit() if $self->{'chg'} != $self->{'initial_chg'};
+	    $self->{'chg'} = $restart_scan_changer;
+	    $restart_scan_changer = undef;
+	}
 	return $steps->{'get_inventory'}->();
     };
 
     step get_inventory => sub {
+	if ($remove_undef_state and $self->{'chg'}->{'scan-require-update'}) {
+	    $self->{'chg'}->update();
+	}
 	$self->{'chg'}->inventory(inventory_cb => $steps->{'parse_inventory'});
     };
 
@@ -405,9 +415,11 @@ sub _scan {
     };
 
     step after_poll => sub {
-	$poll_src->remove() if defined $poll_src;
-	$poll_src = undef;
-	return $steps->{'restart_scan'}->();
+	if ($poll_src) {
+	    $poll_src->remove();
+	    $poll_src = undef;
+	    return $steps->{'restart_scan'}->();
+	}
     };
 
     step scan_interactivity => sub {
@@ -459,8 +471,7 @@ sub _scan {
 	    if ($new_chg->isa("Amanda::Changer::Error")) {
 		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
-	    $self->{'chg'}->quit() if $self->{'chg'} != $self->{'initial_chg'};
-	    $self->{'chg'} = $new_chg;
+	    $restart_scan_changer = $new_chg;
 	    %seen = ();
 	} else {
 	    $remove_undef_state = 1;

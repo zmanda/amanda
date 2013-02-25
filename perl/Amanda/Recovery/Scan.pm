@@ -264,6 +264,10 @@ sub find_volume {
     };
 
     step get_inventory => sub {
+	if ($remove_undef_state and $self->{'chg'}->{'scan-require-update'}) {
+	    Amanda::Debug::debug("update the changer");
+	    $self->{'chg'}->update();
+	}
 	$self->{'chg'}->inventory(inventory_cb => $steps->{'parse_inventory'});
     };
 

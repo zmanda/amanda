@@ -89,7 +89,7 @@ die "$chg" if $chg->isa("Amanda::Changer::Error");
 	chg_err_like($err,
 	    { message => qr{'null:/foo' is already reserved},
 	      type => 'failed',
-	      reason => 'volinuse' },
+	      reason => 'driveinuse' },
 	    "second simultaneous reservation rejected");
 
 	# release the first reservation
