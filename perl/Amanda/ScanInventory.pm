@@ -232,6 +232,7 @@ sub _scan {
 
 	if (defined $res) {
 	    $res->release(finished_cb => $steps->{'released'});
+	    $res = undef;
 	} else {
 	    $steps->{'released'}->();
 	}
@@ -242,7 +243,7 @@ sub _scan {
 	    $slot_scanned = $action_slot;
 	    $self->_user_msg(scan_slot => 1,
 			     slot => $slot_scanned);
-	    return $self->{'changer'}->load(
+	    return $self->{'chg'}->load(
 			slot => $slot_scanned,
 			set_current => $params{'set_current'},
 			res_cb => $steps->{'slot_loaded'});
@@ -460,6 +461,9 @@ sub _scan {
 	    }
 	}
 
+	# remove leading and trailing space
+	$message =~ s/^ +//g;
+	$message =~ s/ +$//g;
 	if ($message ne '') {
 	    # use a new changer
 	    my $new_chg;
@@ -508,7 +512,8 @@ sub _scan {
 	$poll_src = undef;
 	$interactivity_running = 0;
 	$self->{'interactivity'}->abort() if defined $self->{'interactivity'};
-	$self->{'chg'}->quit() if $self->{'chg'} != $self->{'initial_chg'} and !$res;
+	$self->{'chg'}->quit() if $self->{'chg'} != $self->{'initial_chg'} and
+				  !$res;
 	if ($err) {
 	    $self->{'scanning'} = 0;
 	    return $result_cb->($err, $res);

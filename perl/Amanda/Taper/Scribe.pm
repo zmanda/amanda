@@ -1399,7 +1399,8 @@ sub _device_start {
 	    my $tle = $tl->lookup_tapelabel($new_label);
 	    $meta = $tle->{'meta'} if !defined $meta && $tle->{'meta'};
 	    my $barcode = $tle->{'barcode'};
-	    if (defined $barcode and $barcode ne $reservation->{'barcode'}) {
+	    if (defined $barcode and defined $reservation->{'barcode'} and
+		$barcode ne $reservation->{'barcode'}) {
 		return $finished_cb->("tapelist for label '$new_label' have barcode '$barcode' but changer report '" . $reservation->{'barcode'} . "'");
 	    }
 	}

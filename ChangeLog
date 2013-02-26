@@ -1,3 +1,9 @@
+2013-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/ScanInventory.pm: Remove leading and trailing space in
+	  message from interactivity module. Use $self->{'chg'} instead of
+	  $self->{'changer'},
+	* perl/Amanda/Taper/Scribe.pm: Fix perl warning.
+
 2013-02-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/single.pm: Keep an inventory.
 	* perl/Amanda/Interactivity/email.pm: Some fix.
