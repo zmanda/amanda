@@ -704,7 +704,7 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /var/log $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+\] "No space left on device"$),
-    qr(^PARTIAL taper localhost /var/log $datestamp 1 0 00000000:0 00000000:0 557f9f1d:1575936 \[sec [\d.]+ bytes 0 kps [\d.]+\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
+    qr(^PARTIAL taper localhost /var/log $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 0 kps [\d.]+\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),

@@ -1,3 +1,7 @@
+2013-03-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/taper.pl: PARTIAL reply can compute the CRC from
+	  varying size.
+
 2013-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Remove leading and trailing space in
 	  message from interactivity module. Use $self->{'chg'} instead of
