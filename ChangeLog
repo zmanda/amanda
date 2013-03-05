@@ -1,4 +1,8 @@
 2013-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmjob_job.c: Call jndex_merge_environment() after reading
+	  the index file.
+
+2013-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: Add the device_sync_catalog function.
 	* device-src/device.h: Add prototype for the sync_catalog function.
 	* device-src/property.c: Add global properties
