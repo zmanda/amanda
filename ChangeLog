@@ -1,3 +1,17 @@
+2013-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c: Add the device_sync_catalog function.
+	* device-src/device.h: Add prototype for the sync_catalog function.
+	* device-src/property.c: Add global properties
+	* device-src/property.h: Add global properties
+	* device-src/s3-device.c: Remove local properties.
+	* device-src/xfer-dest-taper-splitter.c: indentation fix.
+	* perl/Amanda/Changer.pm: Add the sync_catalog method.
+	* perl/Amanda/Changer/multi.pm:Add the sync_catalog method.
+	* perl/Amanda/Device.swg: Add the sync_catalog method.
+	* server-src/amrmtape.pl: Do not die if erase() fail.
+	* server-src/amtape.pl: Add the sync-catalog subcommand.
+	* man/xml-source/amtape.8.xml: Document the sync-catalog subcommand.
+
 2013-03-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/taper.pl: PARTIAL reply can compute the CRC from
 	  varying size.

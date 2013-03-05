@@ -135,6 +135,14 @@ drive.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
+<term><command>sync-catalog</command></term>
+<listitem>
+
+<para>sync the catalog with a device that support it,</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>taper</command></term>
 <listitem>
 

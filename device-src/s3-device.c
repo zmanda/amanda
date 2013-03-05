@@ -271,14 +271,6 @@ static DevicePropertyBase device_property_s3_storage_class;
 static DevicePropertyBase device_property_s3_server_side_encryption;
 #define PROPERTY_S3_SERVER_SIDE_ENCRYPTION (device_property_s3_server_side_encryption.ID)
 
-/* proxy */
-static DevicePropertyBase device_property_proxy;
-#define PROPERTY_PROXY (device_property_proxy.ID)
-
-/* Path to certificate authority certificate */
-static DevicePropertyBase device_property_ssl_ca_info;
-#define PROPERTY_SSL_CA_INFO (device_property_ssl_ca_info.ID)
-
 /* Which strotage api to use. */
 static DevicePropertyBase device_property_storage_api;
 #define PROPERTY_STORAGE_API (device_property_storage_api.ID)
@@ -296,25 +288,11 @@ static DevicePropertyBase device_property_chunked;
 static DevicePropertyBase device_property_s3_ssl;
 #define PROPERTY_S3_SSL (device_property_s3_ssl.ID)
 
-/* Whether to re-use connection. */
-static DevicePropertyBase device_property_reuse_connection;
-#define PROPERTY_REUSE_CONNECTION (device_property_reuse_connection.ID)
-
-/* Speed limits for sending and receiving */
-static DevicePropertyBase device_property_max_send_speed;
-static DevicePropertyBase device_property_max_recv_speed;
-#define PROPERTY_MAX_SEND_SPEED (device_property_max_send_speed.ID)
-#define PROPERTY_MAX_RECV_SPEED (device_property_max_recv_speed.ID)
-
 /* Whether to use subdomain */
 static DevicePropertyBase device_property_s3_subdomain;
 #define PROPERTY_S3_SUBDOMAIN (device_property_s3_subdomain.ID)
 
-/* Number of threads to use */
-static DevicePropertyBase device_property_nb_threads_backup;
-#define PROPERTY_NB_THREADS_BACKUP (device_property_nb_threads_backup.ID)
-static DevicePropertyBase device_property_nb_threads_recovery;
-#define PROPERTY_NB_THREADS_RECOVERY (device_property_nb_threads_recovery.ID)
+/* Whether to use s3 multi-part upload */
 static DevicePropertyBase device_property_s3_multi_part_upload;
 #define PROPERTY_S3_MULTI_PART_UPLOAD (device_property_s3_multi_part_upload.ID)
 
@@ -1244,12 +1222,6 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_server_side_encryption,
                                       G_TYPE_STRING, "s3_server_side_encryption",
        "Serve side encryption as specified by Amazon (AES256)");
-    device_property_fill_and_register(&device_property_proxy,
-                                      G_TYPE_STRING, "proxy",
-       "The proxy");
-    device_property_fill_and_register(&device_property_ssl_ca_info,
-                                      G_TYPE_STRING, "ssl_ca_info",
-       "Path to certificate authority certificate");
     device_property_fill_and_register(&device_property_storage_api,
                                       G_TYPE_STRING, "storage_api",
        "Which cloud API to use.");
@@ -1274,9 +1246,7 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_ssl,
                                       G_TYPE_BOOLEAN, "s3_ssl",
        "Whether to use SSL with Amazon S3");
-    device_property_fill_and_register(&device_property_reuse_connection,
-                                      G_TYPE_BOOLEAN, "reuse_connection",
-       "Whether to reuse connection");
+
     device_property_fill_and_register(&device_property_create_bucket,
                                       G_TYPE_BOOLEAN, "create_bucket",
        "Whether to create/delete bucket");
@@ -1289,18 +1259,6 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_subdomain,
                                       G_TYPE_BOOLEAN, "s3_subdomain",
        "Whether to use subdomain");
-    device_property_fill_and_register(&device_property_max_send_speed,
-                                      G_TYPE_UINT64, "max_send_speed",
-       "Maximum average upload speed (bytes/sec)");
-    device_property_fill_and_register(&device_property_max_recv_speed,
-                                      G_TYPE_UINT64, "max_recv_speed",
-       "Maximum average download speed (bytes/sec)");
-    device_property_fill_and_register(&device_property_nb_threads_backup,
-                                      G_TYPE_UINT64, "nb_threads_backup",
-       "Number of writer thread");
-    device_property_fill_and_register(&device_property_nb_threads_recovery,
-                                      G_TYPE_UINT64, "nb_threads_recovery",
-       "Number of reader thread");
     device_property_fill_and_register(&device_property_s3_multi_delete,
                                       G_TYPE_BOOLEAN, "s3_multi_delete",
        "Whether to use multi-delete");

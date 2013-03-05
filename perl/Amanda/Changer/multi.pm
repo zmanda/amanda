@@ -441,6 +441,29 @@ sub inventory {
     })
 }
 
+sub sync_catalog {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'sync_catalog_cb'});
+
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'sync_catalog_cb'}, sub {
+	my ($state, $sync_catalog_cb) = @_;
+
+	# use the first slot
+	my $slot_name = $self->{slots}[0];
+	my $device = Amanda::Device->new($slot_name);
+	$params{'request'} += 0;
+	$params{'wait'} += 0;
+	$device->sync_catalog($params{'request'},
+			      $params{'wait'},
+			      $self->{'slots'});
+	$sync_catalog_cb->(undef);
+    })
+}
+
+
 sub _load_by_slot {
     my $self = shift;
     my %params = @_;

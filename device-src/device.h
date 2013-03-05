@@ -233,6 +233,8 @@ struct _DeviceClass {
     gboolean (* set_reuse)(Device *self);
     gboolean (* set_no_reuse)(Device *self, char *label, char *datestamp);
 
+    gboolean (* sync_catalog) (Device * self, int request, int wait, char **slot_names);
+
     /* array of DeviceProperty objects for this class, keyed by ID */
     GArray *class_properties;
 
@@ -379,6 +381,8 @@ gboolean device_check_writable(Device *self);
 gboolean device_have_set_reuse(Device *self);
 gboolean device_set_reuse(Device *self);
 gboolean device_set_no_reuse(Device *self, char *label, char *datestamp);
+gboolean device_sync_catalog(Device * self, int request, int wait,
+			     char **slot_names);
 
 /* Protected methods. Don't call these except in subclass implementations. */
 

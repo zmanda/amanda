@@ -279,8 +279,10 @@ my $erase_volume = make_cb('erase_volume' => sub {
 		});
 
                 if (!$dry_run) {
-                    $dev->erase()
-                        or die "Failed to erase volume";
+                    if (!$dev->erase()) {
+                        print STDERR "Failed to erase volume\n";
+			return $rel_cb->();
+		    }
 		    $resv->set_label(finished_cb => sub {
 			$dev->finish();
 

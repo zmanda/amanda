@@ -1645,6 +1645,28 @@ device_set_no_reuse(
     }
 }
 
+gboolean
+device_sync_catalog(
+    Device *self,
+    int request,
+    int wait,
+    char **slot_names)
+{
+    DeviceClass *klass;
+
+    g_assert(self->access_mode == ACCESS_NULL);
+
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->sync_catalog) {
+	return (klass->sync_catalog)(self, request, wait, slot_names);
+    } else {
+	device_set_error(self,
+	    g_strdup(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+}
+
 /* Property handling */
 
 void

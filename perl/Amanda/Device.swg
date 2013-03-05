@@ -377,6 +377,40 @@ typedef struct Device {
 	    return device_set_no_reuse(self, label, datestamp);
 	}
 
+	%typemap(in) (char **slot_names) {
+	    AV *av;
+	    unsigned int len;
+	    unsigned int i;
+
+	    /* check that it's an arrayref */
+	    if (!SvROK($input) || SvTYPE(SvRV($input)) != SVt_PVAV) {
+		SWIG_exception(SWIG_TypeError, "Expected a non-empty arrayref");
+	    }
+	    av = (AV *)SvRV($input);
+
+	    /* allocate memory for $1 */
+	    len = av_len(av)+1; /* av_len(av) is like $#av */
+	    if (!len) {
+		SWIG_exception(SWIG_TypeError, "Expected a non-empty arrayref");
+	    }
+	    $1 = g_new0(gchar *, len+1);
+
+	    for (i = 0; i < len; i++) {
+		SV **sv = av_fetch(av, i, 0);
+		g_assert(sv != NULL);
+		$1[i] = (char*)(SvPV_nolen(*sv));
+	    }
+
+	    /* final element is already NULL due to g_new0 */
+	}
+	%typemap(freearg) (char **slot_names) {
+	    g_free($1);
+	}
+	gboolean
+	sync_catalog(int request, int wait, char **slot_names) {
+	    return device_sync_catalog(self, request, wait, slot_names);
+	}
+
 	%typemap(out) const GSList * {
 	    GSList *iter;
 

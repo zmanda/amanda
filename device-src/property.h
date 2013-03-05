@@ -259,4 +259,31 @@ extern DevicePropertyBase device_property_comment;
 extern DevicePropertyBase device_property_leom;
 #define PROPERTY_LEOM (device_property_leom.ID)
 
+/* Whether to re-use connection. */
+extern DevicePropertyBase device_property_reuse_connection;
+#define PROPERTY_REUSE_CONNECTION (device_property_reuse_connection.ID)
+
+/* Speed limits for sending and receiving */
+extern DevicePropertyBase device_property_max_send_speed;
+extern DevicePropertyBase device_property_max_recv_speed;
+#define PROPERTY_MAX_SEND_SPEED (device_property_max_send_speed.ID)
+#define PROPERTY_MAX_RECV_SPEED (device_property_max_recv_speed.ID)
+
+/* Number of threads to use */
+extern DevicePropertyBase device_property_nb_threads_backup;
+#define PROPERTY_NB_THREADS_BACKUP (device_property_nb_threads_backup.ID)
+extern DevicePropertyBase device_property_nb_threads_recovery;
+#define PROPERTY_NB_THREADS_RECOVERY (device_property_nb_threads_recovery.ID)
+
+/* use multi part upload must be used */
+extern DevicePropertyBase device_property_multi_part_upload;
+#define PROPERTY_MULTI_PART_UPLOAD (device_property_multi_part_upload.ID)
+
+/* Path to certificate authority certificate */
+extern DevicePropertyBase device_property_ssl_ca_info;
+#define PROPERTY_SSL_CA_INFO (device_property_ssl_ca_info.ID)
+
+/* proxy */
+extern DevicePropertyBase device_property_proxy;
+#define PROPERTY_PROXY (device_property_proxy.ID)
 #endif

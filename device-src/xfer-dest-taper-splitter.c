@@ -550,10 +550,11 @@ part_done:
      * did not all make it to permanent storage -- so it's a failed part.  Note
      * that we try to finish_file even if the part failed, just to be thorough. */
     if (self->device->in_file) {
-	if (!device_finish_file(self->device))
+	if (!device_finish_file(self->device)) {
 	    if (!elt->cancelled) {
 		part_status = PART_FAILED;
 	    }
+	}
     }
 
     g_timer_stop(timer);

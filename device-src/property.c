@@ -247,6 +247,30 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_leom,
                                      G_TYPE_BOOLEAN, "leom",
        "Does this device support LEOM?");
+    device_property_fill_and_register(&device_property_reuse_connection,
+                                     G_TYPE_BOOLEAN, "reuse_connection",
+       "Whether to reuse connection");
+    device_property_fill_and_register(&device_property_max_send_speed,
+                                     G_TYPE_UINT64, "max_send_speed",
+       "Maximum average upload speed (bytes/sec)");
+    device_property_fill_and_register(&device_property_max_recv_speed,
+                                     G_TYPE_UINT64, "max_recv_speed",
+       "Maximum average download speed (bytes/sec)");
+    device_property_fill_and_register(&device_property_nb_threads_backup,
+                                     G_TYPE_UINT64, "nb_threads_backup",
+       "Number of writer thread");
+    device_property_fill_and_register(&device_property_nb_threads_recovery,
+                                     G_TYPE_UINT64, "nb_threads_recovery",
+       "Number of reader thread");
+    device_property_fill_and_register(&device_property_multi_part_upload,
+                                     G_TYPE_BOOLEAN, "multi_part_upload",
+       "Whether to use multi part upload");
+    device_property_fill_and_register(&device_property_ssl_ca_info,
+                                      G_TYPE_STRING, "ssl_ca_info",
+       "Path to certificate authority certificate");
+    device_property_fill_and_register(&device_property_proxy,
+                                      G_TYPE_STRING, "proxy",
+       "The proxy");
 }
 
 DevicePropertyBase device_property_concurrency;
@@ -267,3 +291,11 @@ DevicePropertyBase device_property_enforce_max_volume_usage;
 DevicePropertyBase device_property_comment;
 DevicePropertyBase device_property_leom;
 DevicePropertyBase device_property_verbose;
+DevicePropertyBase device_property_reuse_connection;
+DevicePropertyBase device_property_max_send_speed;
+DevicePropertyBase device_property_max_recv_speed;
+DevicePropertyBase device_property_nb_threads_backup;
+DevicePropertyBase device_property_nb_threads_recovery;
+DevicePropertyBase device_property_multi_part_upload;
+DevicePropertyBase device_property_ssl_ca_info;
+DevicePropertyBase device_property_proxy;

@@ -710,6 +710,28 @@ sub {
 	});
 });
 
+subcommand("sync-catalog", "sync-catalog [request] [wait]", "sync the catalog whith the devices.",
+sub {
+    my ($finished_cb, $request, $wait) = @_;
+
+    my $chg = load_changer($finished_cb) or return;
+
+    $chg->sync_catalog(
+	request => $request,
+	wait => $wait,
+	user_msg_fn => sub {
+	    print STDERR "$_[0]\n";
+	},
+	sync_catalog_cb => sub {
+	    my ($err) = @_;
+	    $chg->quit();
+	    return failure($err, $finished_cb) if $err;
+
+	    print STDERR "sync-catalog complete\n";
+	    $finished_cb->();
+	});
+});
+
 ##
 # Utilities
 

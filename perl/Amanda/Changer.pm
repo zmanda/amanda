@@ -382,6 +382,18 @@ change, but some entries can be added or removed.
 
 Each slot is represented by a hash with the following keys:
 
+=head3 sync_catalog
+
+  $chg->sync_catalog(request => $request,
+                     wait => $wait,
+                     sync_catalog_cb => $cb)
+
+C<request> is a time in seconds, a new catalog request is asked if the
+previous one is older than that time. Set C<wait> to true if you want to wait
+for the catalog, set it to false to return if the catalog is not available.
+The C<sync_catalog_cb> is called with an error object as the first parameter,
+or C<undef> if no error occurs.
+
 =head3 make_new_tape_label
 
   $chg->make_new_tape_label(barcode => $barcode,
@@ -947,6 +959,7 @@ sub clean { _stubop("clean", "finished_cb", @_); }
 sub eject { _stubop("eject", "finished_cb", @_); }
 sub update { _stubop("update", "finished_cb", @_); }
 sub inventory { _stubop("inventory", "inventory_cb", @_); }
+sub sync_catalog { _stubop("sync_catalog", "sync_catalog_cb", @_); }
 sub move { _stubop("move", "finished_cb", @_); }
 sub set_meta_label { _stubop("set_meta_label", "finished_cb", @_); }
 sub get_meta_label { _stubop("get_meta_label", "finished_cb", @_); }
