@@ -106,14 +106,17 @@ args_to_job (void)
 	case NDM_JOB_OP_TOC:
 		args_to_job_recover_env();
 		args_to_job_recover_nlist();
-		if (J_index_file)
+		if (J_index_file) {
 			jndex_doit();
+			jndex_merge_environment();
+		}
 		break;
 
 	case NDM_JOB_OP_EXTRACT:
 		args_to_job_recover_env();
 		args_to_job_recover_nlist();
 		jndex_doit();
+		jndex_merge_environment();
 		break;
 
 	case 'D':		/* -o daemon */
@@ -543,7 +546,12 @@ jndex_merge_environment (void)
 	int		i;
 
 	for (i = 0; i < n_ji_environment; i++) {
-		E_environment[nn_E_environment++] = ji_environment[i];
+		if (strcmp(ji_environment[i].name, "FILESYSTEM") != 0 &&
+		    strcmp(ji_environment[i].name, "PREFIX") != 0 &&
+		    strcmp(ji_environment[i].name, "HIST") != 0 &&
+		    strcmp(ji_environment[i].name, "TYPE") != 0) {
+			E_environment[nn_E_environment++] = ji_environment[i];
+		}
 	}
 
 	return 0;

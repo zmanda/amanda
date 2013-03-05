@@ -1,3 +1,7 @@
+2013-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmjob_job.c: Call jndex_merge_environment() after reading
+	  the index file.
+
 2013-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Remove leading and trailing space in
 	  message from interactivity module. Use $self->{'chg'} instead of
