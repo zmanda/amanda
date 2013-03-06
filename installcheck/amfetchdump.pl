@@ -351,7 +351,6 @@ $exp->expect(60,
 is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter",
 			  "insert-tape", "restoring", "eof" ],
 	  "restore with an explicit device follows the correct steps, prompting for each");
-
 got_files(1, "..and restored file is present in testdir");
 
 ##

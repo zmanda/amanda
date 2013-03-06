@@ -30,6 +30,9 @@ use Data::Dumper;
 use Amanda::Config qw(:getconf config_dir_relative);
 use Amanda::Util qw(:constants quote_string );
 use Amanda::Holding;
+use Amanda::Policy;
+use Amanda::Storage;
+use Amanda::Changer;
 use Amanda::Tapelist;
 use Amanda::Debug qw( debug );
 use Amanda::Util qw( quote_string );
@@ -474,7 +477,7 @@ sub output_tapeinfo
 
     if (getconf($CNF_REPORT_NEXT_MEDIA)) {
 	my $nb_new_tape = 0;
-	my $run_tapes   = getconf($CNF_RUNTAPES);
+	my $run_tapes   = $report->{'storage'}->{'runtapes'};
 
 	my $text;
 	if ($run_tapes) {
@@ -483,12 +486,29 @@ sub output_tapeinfo
 	          : "The next tape Amanda expects to use is: ";
 	}
 
+	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	my $tl = Amanda::Tapelist->new($tlf);
+
+	my $labelstr = $report->{'storage'}->{'labelstr'};
+	my $tapepool = $report->{'storage'}->{'tapepool'};
+	my $retention_tapes = $report->{'storage'}->{'policy'}->{'retention_tapes'};
+	my $retention_days = $report->{'storage'}->{'policy'}->{'retention_days'};
+	my $retention_recover = $report->{'storage'}->{'policy'}->{'retention_recover'};
+	my $retention_full = $report->{'storage'}->{'policy'}->{'retention_full'};
+
 	my $first = 1;
 	foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
 
-            if ( my $tape_label =
-		Amanda::Tapelist::get_last_reusable_tape_label($i) ) {
-
+	    if ( my $tape_label =
+		Amanda::Tapelist::get_last_reusable_tape_label(
+					$labelstr->{'template'},
+					$tapepool,
+					$report->{'storage'}->{'storage_name'},
+					$retention_tapes,
+					$retention_days,
+					$retention_recover,
+					$retention_full,
+					$i) ) {
 		if ($nb_new_tape) {
 		    $text .= ", " if !$first;
 		    $text .= "$nb_new_tape new tape"
@@ -513,7 +533,9 @@ sub output_tapeinfo
 	}
 	$self->zprint("$text.\n");
 
-	my $new_tapes = Amanda::Tapelist::list_new_tapes(getconf($CNF_RUNTAPES));
+	my $new_tapes = Amanda::Tapelist::list_new_tapes(
+						$labelstr->{'templates'},
+						$report->{'storage'}->{'runtapes'});
 	$self->zprint("$new_tapes\n") if $new_tapes;
     }
 
@@ -679,11 +701,11 @@ EOF
     my $incr_stats  = $self->{incr_stats};
     my $total_stats = $self->{total_stats};
 
-    my ( $ttyp, $tt, $tapesize, $marksize );
-    $ttyp = getconf($CNF_TAPETYPE);
-    $tt = lookup_tapetype($ttyp) if $ttyp;
+    my ($tapesize, $marksize );
+    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
+    my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
 
-    if ( $ttyp && $tt ) {
+    if ( $tapetype_name && $tt ) {
 
         $tapesize = "".tapetype_getconf( $tt, $TAPETYPE_LENGTH );
         $marksize = "".tapetype_getconf( $tt, $TAPETYPE_FILEMARK );
@@ -888,7 +910,7 @@ sub output_tape_stats
     $self->zsprint("USAGE BY TAPE:\n");
     $self->zprint(swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts"));
 
-    my $tapetype_name = getconf($CNF_TAPETYPE);
+    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
     my $tapetype      = lookup_tapetype($tapetype_name);
     my $tapesize      = "" . tapetype_getconf($tapetype, $TAPETYPE_LENGTH);
     my $marksize      = "" . tapetype_getconf($tapetype, $TAPETYPE_FILEMARK);
@@ -1657,5 +1679,6 @@ sub print_if_def
     }
     $self->zprint("\n");
 }
+
 
 1;

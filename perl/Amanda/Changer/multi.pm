@@ -229,7 +229,7 @@ sub eject {
 		reason => "device",
 		message => $device->error_or_status);
 	}
-	if (my $err = $self->{'config'}->configure_device($device)) {
+	if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	    return $self->make_error("failed", $params{'res_cb'},
 			reason => "device",
 			message => $err);
@@ -562,7 +562,7 @@ sub _make_res {
 		message => "opening '$slot': " . $device->error_or_status());
     }
 
-    if (my $err = $self->{'config'}->configure_device($device)) {
+    if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	return $self->make_error("failed", $res_cb,
 		reason => "device",
 		message => $err);

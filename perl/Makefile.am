@@ -248,6 +248,18 @@ endif
 EXTRA_DIST += Amanda/Changer.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Storage
+Amanda_DATA += Amanda/Storage.pm
+endif
+EXTRA_DIST += Amanda/Storage.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::Policy
+Amanda_DATA += Amanda/Policy.pm
+endif
+EXTRA_DIST += Amanda/Policy.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::Changer::*
 AmandaChangerdir = $(amperldir)/Amanda/Changer
 AmandaChanger_DATA = \

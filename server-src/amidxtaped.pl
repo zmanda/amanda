@@ -122,6 +122,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Util qw( :constants match_disk match_host );
 use Amanda::Feature;
 use Amanda::Config qw( :init :getconf );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Recovery::Scan;
 use Amanda::Xfer qw( :constants );
@@ -338,10 +339,18 @@ sub make_plan {
 
 	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 	my $tl = Amanda::Tapelist->new($tlf);
-	if ($use_default) {
-	    $chg = Amanda::Changer->new(undef, tapelist => $tl);
+	my $storage  = Amanda::Storage->new(tapelist => $tl);
+	if ($storage->isa("Amanda::Changer::Error")) {
+	    warning("$storage");
+	    $chg = Amanda::Changer->new("chg-null:");
 	} else {
-	    $chg = Amanda::Changer->new($self->{'command'}{'DEVICE'}, tapelist => $tl);
+	    if ($use_default) {
+		$chg = $storage->{'chg'};
+	    } else {
+		$storage->{'chg'}->quit();
+		$chg = Amanda::Changer->new($self->{'command'}{'DEVICE'},
+					    storage => $storage, tapelist => $tl);
+	    }
 	}
 
 	# if we got a bogus changer, log it to the debug log, but allow the

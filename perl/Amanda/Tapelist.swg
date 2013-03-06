@@ -125,7 +125,8 @@ sub remove_tapelabel {
 
 sub add_tapelabel {
     my $self = shift;
-    my ($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize) = @_;
+    my ($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize,
+	$pool, $storage, $config) = @_;
     $reuse = 1 if !defined $reuse;
     $datestamp = 0 if !defined $datestamp;
 
@@ -137,6 +138,9 @@ sub add_tapelabel {
         'barcode'   => $barcode,
         'meta'      => $meta,
         'blocksize' => $blocksize,
+        'pool'      => $pool,
+        'storage'   => $storage,
+        'config'    => $config,
         'comment'   => $comment,
     };
     my $tles = $self->{'tles'};
@@ -176,8 +180,11 @@ sub write {
 	my $barcode = (defined $tle->{'barcode'})? (" BARCODE:" . $tle->{'barcode'}) : '';
 	my $meta = (defined $tle->{'meta'})? (" META:" . $tle->{'meta'}) : '';
 	my $blocksize = (defined $tle->{'blocksize'})? (" BLOCKSIZE:" . $tle->{'blocksize'}) : '';
+	my $pool = (defined $tle->{'pool'})? (" POOL:" . $tle->{'pool'}) : '';
+	my $storage = (defined $tle->{'storage'})? (" STORAGE:" . $tle->{'storage'}) : '';
+	my $config = (defined $tle->{'config'})? (" CONFIG:" . $tle->{'config'}) : '';
 	my $comment = (defined $tle->{'comment'})? (" #" . $tle->{'comment'}) : '';
-	$result &&= print $fhn "$datestamp $label $reuse$barcode$meta$blocksize$comment\n";
+	$result &&= print $fhn "$datestamp $label $reuse$barcode$meta$blocksize$pool$storage$config$comment\n";
     }
     my $result_close = close($fhn);
     $result &&= $result_close;
@@ -229,19 +236,22 @@ sub _read_tapelist {
     my @tles;
     open(my $fh, "<", $self->{'filename'}) or return $self;
     while (my $line = <$fh>) {
-	my ($datestamp, $label, $reuse, $barcode, $meta, $blocksize, $comment)
-	    = $line =~ m/^([0-9]+)\s*([^\s]*)\s*(?:(reuse|no-reuse))?\s*(?:BARCODE:([^\s]*))?\s*(?:META:([^\s]*))?\s*(?:BLOCKSIZE:([^\s]*))?\s*(?:\#(.*))?$/mx;
+	my ($datestamp, $label, $reuse, $barcode, $meta, $blocksize, $pool, $storage, $config, $comment)
+	    = $line =~ m/^([0-9]+)\s*([^\s]*)\s*(?:(reuse|no-reuse))?\s*(?:BARCODE:([^\s]*))?\s*(?:META:([^\s]*))?\s*(?:BLOCKSIZE:([^\s]*))?\s*(?:POOL:([^\s]*))?\s*(?:STORAGE:([^\s]*))?\s*(?:CONFIG:([^\s]*))?\s*(?:\#(.*))?$/mx;
 	if (!defined $datestamp) {
 	    Amanda::Debug::critical("Bogus line in the tapelist ($self->{'filename'}) file: $line");
 	}
 	push @tles, {
 	    'datestamp' => $datestamp,
-	    'label' => $label,
-	    'reuse' => (!defined $reuse || $reuse eq 'reuse'),
-	    'barcode' => $barcode,
-	    'meta' => $meta,
+	    'label'     => $label,
+	    'reuse'     => (!defined $reuse || $reuse eq 'reuse'),
+	    'barcode'   => $barcode,
+	    'meta'      => $meta,
 	    'blocksize' => $blocksize,
-	    'comment' => $comment,
+	    'pool'      => $pool,
+	    'storage'   => $storage,
+	    'config'    => $config,
+	    'comment'   => $comment,
 	};
     }
     close($fh);
@@ -272,9 +282,40 @@ sub _update_positions {
 
 %}
 
-char *get_last_reusable_tape_label(int skip);
+void compute_retention(void);
+/* for list_retention and list_no_retention */
+%typemap(out) gchar ** {
+    gchar **iter;
+
+    if ($1) {
+	/* Count */
+	EXTEND(SP, g_strv_length($1)); /* make room for return values */
+
+	/* Note that we set $result several times. the nature of
+	 * SWIG's wrapping is such that incrementing argvi points
+	 * $result to the next location in perl's argument stack.
+	 */
+
+	for (iter = $1; *iter; iter++) {
+	    $result = sv_2mortal(newSVpv(*iter, 0));
+	    argvi++;
+	}
+	g_free($1);
+    }
+
+}
+gchar **list_retention();
+gchar **list_no_retention();
+
+char *get_last_reusable_tape_label(const char *l_template, const char *tapepool,
+				   const char *storage,
+				   int retention_tapes,
+				   int retention_days, int retention_recover,
+				   int retention_full, int skip);
+
+int volume_is_reusable(const char *label);
 %newobject list_new_tapes;
-char *list_new_tapes(int nb);
+char *list_new_tapes(const char *l_template, int nb);
 
 /* C functions -- should be called *only* from within this module */
 

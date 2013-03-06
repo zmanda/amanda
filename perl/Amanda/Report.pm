@@ -22,10 +22,12 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Amanda::Config qw( :getconf );
 use Amanda::Disklist;
 use Amanda::Logfile qw/:logtype_t :program_t/;
 use Amanda::Util;
 use Amanda::Debug qw( debug warning );
+use Amanda::Storage;
 
 =head1 NAME
 
@@ -471,17 +473,25 @@ sub read_file
     $self->{flags}{historical} = $self->{_historical};
     $self->{flags}{amflush_run} = 0;
     $self->{flags}{amvault_run} = 0;
+    my $storage_name;
     if (!$self->get_flag("normal_run")) {
         if (   ( defined $self->get_program_info("amflush") )
             && ( scalar %{ $self->get_program_info("amflush") } ) ) {
 	    debug("detected an amflush run");
 	    $self->{flags}{amflush_run} = 1;
+	    $storage_name = getconf($CNF_STORAGE);
 	} elsif (   ( defined $self->get_program_info("amvault") )
                  && ( scalar %{ $self->get_program_info("amvault") } ) ) {
 	    debug("detected an amvault run");
 	    $self->{flags}{amvault_run} = 1;
+	    $storage_name = getconf($CNF_AMVAULT_STORAGE);
+	    $storage_name = getconf($CNF_STORAGE) if !$storage_name;
 	}
+    } else {
+	$storage_name = getconf($CNF_STORAGE);
     }
+    $self->{'storage'} = Amanda::Storage->new(storage_name => $storage_name,
+					      changer_name => undef);
 
     # check for missing, fail and strange results
     $self->check_missing_fail_strange() if $self->get_flag('normal_run');
@@ -1117,7 +1127,7 @@ sub _handle_amvault_line
         return $self->_handle_disk_line( "amvault", $str );
 
     } else {
-        return $self->_handle_bogus_line( $P_AMFLUSH, $type, $str );
+        return $self->_handle_bogus_line( $P_AMVAULT, $type, $str );
     }
 }
 

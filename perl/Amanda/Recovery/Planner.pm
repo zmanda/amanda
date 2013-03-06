@@ -29,6 +29,7 @@ Amanda::Recovery::Planner - use the catalog to plan recoveries
 	Amanda::Recovery::Planner::make_plan(
 	    dumpspecs => [ $ds1, $ds2 ],
 	    algorithm => $algo,
+	    labelstr => $labelstr,
 	    changer => $changer,
 	    plan_cb => $subs{'plan_cb'});
     };
@@ -273,7 +274,20 @@ sub make_plan {
 	# etc.  Note that this also prefers dumps on holding disk, since they are
 	# tagged with a write_timestamp of 0
 	@options = Amanda::DB::Catalog::sort_dumps(['write_timestamp'], @options);
-	push @dumps, $options[0];
+	if ($options[0]->{'write_timestamp'} =~ /^0+$/) {
+	    # use holding disk if available
+	    push @dumps, $options[0];
+	} else {
+	    # find one that match the labelstr
+	    my $j = 0;
+	    for (my $i = 0; $i < @options; $i++) {
+		if ($options[$i]->{'parts'}[1]{'label'} =~ /^$params{'labelstr'}$/) {
+		    $j = $i;
+		    last;
+		}
+	    }
+	    push @dumps, $options[$j];
+	}
     }
 
     # at this point we have exactly one instance of each dump in @dumps.

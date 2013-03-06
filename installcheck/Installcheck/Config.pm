@@ -206,6 +206,8 @@ sub remove_param {
 =item C<add_changer($name, $values_arrayref)>
 =item C<add_interactivity($name, $values_arrayref)>
 =item C<add_taperscan($name, $values_arrayref)>
+=item C<add_policy($name, $values_arrayref)>
+=item C<add_storage($name, $values_arrayref)>
 
 Add the given subsection to the configuration file, including all values in the
 arrayref.  The values should be specified as alternating key/value pairs.
@@ -291,6 +293,18 @@ sub add_taperscan {
     my $self = shift;
     my ($name, $values) = @_;
     $self->_add_subsec("taperscans", $name, 1, $values);
+}
+
+sub add_policy {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("policys", $name, 1, $values);
+}
+
+sub add_storage {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("storages", $name, 1, $values);
 }
 
 =item C<add_text($text)>
@@ -414,6 +428,8 @@ sub _write_amanda_conf {
     $self->_write_amanda_conf_subsection($amanda_conf, "changer", $self->{"changers"});
     $self->_write_amanda_conf_subsection($amanda_conf, "interactivity", $self->{"interactivities"});
     $self->_write_amanda_conf_subsection($amanda_conf, "taperscan", $self->{"taperscans"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "policy", $self->{"policys"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "storage", $self->{"storages"});
     print $amanda_conf "\n", $self->{'text'}, "\n";
     print $amanda_conf "taperscan $taperscan\n" if $taperscan;
 

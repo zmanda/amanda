@@ -583,7 +583,8 @@ internal_server_estimate(
     disk_t *dp,
     info_t *info,
     int     level,
-    int    *stats)
+    int    *stats,
+    tapetype_t *tapetype)
 {
     int    j;
     gint64 size = 0;
@@ -608,11 +609,9 @@ internal_server_estimate(
 	    size = info->inf[level].size;
 	    *stats = 1;
 	} else {
-	    char *conf_tapetype = getconf_str(CNF_TAPETYPE);
-	    tapetype_t *tape = lookup_tapetype(conf_tapetype);
 	    size = (gint64)1000000;
-	    if (size > tapetype_get_length(tape)/2)
-		size = tapetype_get_length(tape)/2;
+	    if (size > tapetype_get_length(tapetype)/2)
+		size = tapetype_get_length(tapetype)/2;
 	    *stats = 0;
 	}
     } else if (level == info->last_level) {
@@ -654,13 +653,12 @@ internal_server_estimate(
 	else {
 	    int level0_stat;
 	    gint64 level0_size;
-	    char *conf_tapetype = getconf_str(CNF_TAPETYPE);
-	    tapetype_t *tape = lookup_tapetype(conf_tapetype);
 
-            level0_size = internal_server_estimate(dp, info, 0, &level0_stat);
+            level0_size = internal_server_estimate(dp, info, 0, &level0_stat,
+						   tapetype);
 	    size = (gint64)10000;
-	    if (size > tapetype_get_length(tape)/2)
-		size = tapetype_get_length(tape)/2;
+	    if (size > tapetype_get_length(tapetype)/2)
+		size = tapetype_get_length(tapetype)/2;
 	    if (level0_size > 0 && dp->strategy != DS_NOFULL) {
 		if (size > level0_size/2)
 		    size = level0_size/2;
@@ -690,13 +688,12 @@ internal_server_estimate(
 	} else {
 	    int level0_stat;
 	    gint64 level0_size;
-	    char *conf_tapetype = getconf_str(CNF_TAPETYPE);
-	    tapetype_t *tape = lookup_tapetype(conf_tapetype);
 
-            level0_size = internal_server_estimate(dp, info, 0, &level0_stat);
+            level0_size = internal_server_estimate(dp, info, 0, &level0_stat,
+						   tapetype);
 	    size = (gint64)100000;
-	    if (size > tapetype_get_length(tape)/2)
-		size = tapetype_get_length(tape)/2;
+	    if (size > tapetype_get_length(tapetype)/2)
+		size = tapetype_get_length(tapetype)/2;
 	    if (level0_size > 0 && dp->strategy != DS_NOFULL) {
 		if (size > level0_size/2)
 		    size = level0_size/2;
@@ -704,11 +701,9 @@ internal_server_estimate(
 	    *stats = 0;
 	}
     } else {
-	char *conf_tapetype = getconf_str(CNF_TAPETYPE);
-	tapetype_t *tape = lookup_tapetype(conf_tapetype);
 	size = (gint64)100000;
-	if (size > tapetype_get_length(tape)/2)
-	    size = tapetype_get_length(tape)/2;
+	if (size > tapetype_get_length(tapetype)/2)
+	    size = tapetype_get_length(tapetype)/2;
     }
 
     return size;
@@ -718,11 +713,12 @@ int
 server_can_do_estimate(
     disk_t *dp,
     info_t *info,
-    int     level)
+    int     level,
+    tapetype_t *tapetype)
 {
     int     stats;
 
-    internal_server_estimate(dp, info, level, &stats);
+    internal_server_estimate(dp, info, level, &stats, tapetype);
     return stats;
 }
 

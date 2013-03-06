@@ -892,7 +892,7 @@ sub get_device { # (overridden by subclasses)
 		message => "opening '$device_name': " . $device->error_or_status());
     }
 
-    if (my $err = $self->{'config'}->configure_device($device)) {
+    if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	return Amanda::Changer->make_error("fatal", undef,
 		reason => "device",
 		message => $err);

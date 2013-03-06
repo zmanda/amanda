@@ -78,6 +78,7 @@ static int  inparallel;
 static int nodump = 0;
 static off_t tape_length = (off_t)0;
 static int current_tape = 0;
+static storage_t *storage;
 static int conf_max_dle_by_volume;
 static int conf_taperalgo;
 static int conf_taper_parallel_write;
@@ -352,11 +353,12 @@ main(
     dumper_program = g_strjoin(NULL, amlibexecdir, "/", "dumper", NULL);
     chunker_program = g_strjoin(NULL, amlibexecdir, "/", "chunker", NULL);
 
-    conf_taperalgo = getconf_taperalgo(CNF_TAPERALGO);
-    conf_taper_parallel_write = getconf_int(CNF_TAPER_PARALLEL_WRITE);
-    conf_tapetype = getconf_str(CNF_TAPETYPE);
-    conf_runtapes = getconf_int(CNF_RUNTAPES);
-    conf_max_dle_by_volume = getconf_int(CNF_MAX_DLE_BY_VOLUME);
+    storage = lookup_storage(getconf_str(CNF_STORAGE));
+    conf_taperalgo = storage_get_taperalgo(storage);
+    conf_taper_parallel_write = storage_get_taper_parallel_write(storage);
+    conf_tapetype = storage_get_tapetype(storage);
+    conf_runtapes = storage_get_runtapes(storage);
+    conf_max_dle_by_volume = storage_get_max_dle_by_volume(storage);
     if (conf_taper_parallel_write > conf_runtapes) {
 	conf_taper_parallel_write = conf_runtapes;
     }
@@ -874,7 +876,7 @@ startaflush_tape(
 		fit = tapeq.head;
 		while (fit != NULL) {
 		    if (sched(fit)->act_size <=
-		             (fit->splitsize ? extra_tapes_size : taper_left) &&
+		             ((fit->tape_splitsize || fit->allow_split) ? extra_tapes_size : taper_left) &&
 			     strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;
 			fit = NULL;
@@ -900,7 +902,7 @@ startaflush_tape(
 		fit = tapeq.head;
 		while (fit != NULL) {
 		    if(sched(fit)->act_size <=
-		       (fit->splitsize ? extra_tapes_size : taper_left) &&
+		       ((fit->tape_splitsize || fit->allow_split) ? extra_tapes_size : taper_left) &&
 		       (!dp || sched(fit)->act_size > sched(dp)->act_size) &&
 		       strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;
@@ -924,7 +926,7 @@ startaflush_tape(
 		fit = dp = tapeq.head;
 		while (fit != NULL) {
 		    if (sched(fit)->act_size <=
-			(fit->splitsize ? extra_tapes_size : taper_left) &&
+			((fit->tape_splitsize || fit->allow_split) ? extra_tapes_size : taper_left) &&
 			(!dp || sched(fit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;
@@ -941,7 +943,7 @@ startaflush_tape(
 		fit = tapeq.tail;
 		while (fit != NULL) {
 		    if (sched(fit)->act_size <=
-			(fit->splitsize ? extra_tapes_size : taper_left) &&
+			((fit->tape_splitsize || fit->allow_split) ? extra_tapes_size : taper_left) &&
 			(!dp || sched(fit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(fit)->datestamp, datestamp) <= 0) {
 			dp = fit;

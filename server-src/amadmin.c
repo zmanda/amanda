@@ -408,6 +408,7 @@ diskloop(
 /* ----------------------------------------------- */
 
 
+static tapetype_t  *tapetype;
 static void
 estimate_one(
     disk_t *	dp)
@@ -422,13 +423,13 @@ estimate_one(
 
     get_info(hostname, diskname, &info);
 
-    size = internal_server_estimate(dp, &info, 0, &stats);
+    size = internal_server_estimate(dp, &info, 0, &stats, tapetype);
     if (stats) {
 	printf("%s %s %d %jd\n", qhost, qdisk, 0, (intmax_t)size);
     }
 
     if (info.last_level > 0) {
-	size = internal_server_estimate(dp, &info, info.last_level, &stats);
+	size = internal_server_estimate(dp, &info, info.last_level, &stats, tapetype);
 	if (stats) {
 	    printf("%s %s %d %jd\n", qhost, qdisk, info.last_level,
 		   (intmax_t)size);
@@ -436,7 +437,7 @@ estimate_one(
     }
 
     if (info.last_level > -1) {
-	size = internal_server_estimate(dp, &info, info.last_level+1, &stats);
+	size = internal_server_estimate(dp, &info, info.last_level+1, &stats, tapetype);
 	if (stats) {
 	    printf("%s %s %d %jd\n", qhost, qdisk, info.last_level+1,
 		   (intmax_t)size);
@@ -454,6 +455,12 @@ estimate(
     char **	argv)
 {
     disk_t *dp;
+    char   *storage_name;
+    storage_t *storage;
+
+    storage_name = getconf_str(CNF_STORAGE);
+    storage = lookup_storage(storage_name);
+    tapetype = lookup_tapetype(storage_get_tapetype(storage));
 
     if(argc >= 4)
 	diskloop(argc, argv, "estimate", estimate_one);
@@ -856,6 +863,16 @@ tape(
     int     i, j;
     int     skip;
     int     nb_new_tape;
+    storage_t *storage;
+    policy_t  *policy;
+    char   *storage_name;
+    char   *policy_name;
+    char   *l_template;
+    char   *tapepool;
+    int     retention_tapes;
+    int     retention_days;
+    int     retention_recover;
+    int     retention_full;
 
     if(argc > 4 && g_str_equal(argv[3], "--days")) {
 	nb_days = atoi(argv[4]);
@@ -867,8 +884,22 @@ tape(
 	    nb_days = 10000;
     }
 
-    runtapes = getconf_int(CNF_RUNTAPES);
-    tp = lookup_last_reusable_tape(0);
+    storage_name = getconf_str(CNF_STORAGE);
+    storage = lookup_storage(storage_name);
+
+    l_template = storage_get_labelstr(storage)->template;
+    tapepool = storage_get_tapepool(storage);
+    runtapes = storage_get_runtapes(storage);
+    policy_name = storage_get_policy(storage);
+    policy = lookup_policy(policy_name);
+    retention_tapes = policy_get_retention_tapes(policy);
+    retention_days = policy_get_retention_days(policy);
+    retention_recover = policy_get_retention_recover(policy);
+    retention_full = policy_get_retention_full(policy);
+
+    tp = lookup_last_reusable_tape(l_template, tapepool, storage_name,
+				   retention_tapes, retention_days,
+				   retention_recover, retention_full, 0);
     skip = 0;
 
     for ( j=0 ; j < nb_days ; j++ ) {
@@ -893,7 +924,10 @@ tape(
 	    }
 	    skip++;
 
-	    tp = lookup_last_reusable_tape(skip);
+	    tp = lookup_last_reusable_tape(l_template, tapepool, storage_name,
+					   retention_tapes,
+					   retention_days, retention_recover,
+					   retention_full, skip);
 	}
 	if (nb_new_tape > 0) {
 	    if (nb_new_tape == 1)
@@ -903,7 +937,7 @@ tape(
 	}
     }
 
-    print_new_tapes(stdout, nb_days * runtapes);
+    print_new_tapes(stdout, l_template, nb_days * runtapes);
 }
 
 /* ----------------------------------------------- */

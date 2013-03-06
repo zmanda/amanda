@@ -1,4 +1,15 @@
 2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* Too many files to list them.
+	* tape pool
+	    label are assigned to a tape pool,
+	    the 'labelstr' is used only for tape that are not in a pool.
+	* retention policies
+	    amanda will never rewrite a tape if it is required to satisfy a
+	    retention policies.
+	* storage, include many global setting.
+	* tapelist file: include POOL, STORAGE and CONFIG.
+
+2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Remove the debug variable.
 	* common-src/util.c: Use maxint_t to parse the crc size.
 

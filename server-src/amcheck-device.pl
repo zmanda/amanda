@@ -28,6 +28,8 @@ use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
 use Amanda::Debug;
 use Amanda::Device qw( :constants );
 use Amanda::MainLoop;
+use Amanda::Policy;
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Taper::Scan;
 use Amanda::Interactivity;
@@ -157,20 +159,23 @@ sub failure {
     $finished_cb->();
 }
 
-sub do_check {
-    my ($finished_cb) = @_;
-    my ($res, $label, $mode);
-    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my $tl = Amanda::Tapelist->new($tlf);
-    my $chg = Amanda::Changer->new(undef, tapelist => $tl);
-    return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
-    my $interactivity = Amanda::Interactivity->new(
-					name => getconf($CNF_INTERACTIVITY));
-    my $scan_name = getconf($CNF_TAPERSCAN);
-    my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
-					     changer => $chg,
-					     interactivity => $interactivity,
-					     tapelist => $tl);
+	sub do_check {
+	    my ($finished_cb) = @_;
+	    my ($res, $label, $mode);
+	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	    my $tl = Amanda::Tapelist->new($tlf);
+	    my ($storage)  = Amanda::Storage->new(tapelist => $tl);
+	    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
+	    my $chg = $storage->{'chg'};
+	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
+	    my $interactivity = Amanda::Interactivity->new(
+						name => getconf($CNF_INTERACTIVITY));
+	    my $scan_name = $storage->{'taperscan_name'};
+	    my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
+						     storage => $storage,
+						     changer => $chg,
+						     interactivity => $interactivity,
+						     tapelist => $tl);
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,

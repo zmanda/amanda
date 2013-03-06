@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 24;
+use Test::More tests => 38;
 use strict;
 use warnings;
 
@@ -111,7 +111,10 @@ is_deeply($tl->{'tles'}->[0], {
        'comment' => undef,
        'position' => 1,
        'label' => 'TESTCONF92',
-       'datestamp' => '0'
+       'datestamp' => '0',
+       'pool' => 'TESTCONF',
+       'storage' => undef,
+       'config' => undef
      },
     "tapelist correctly updated");
 
@@ -132,13 +135,13 @@ like($Installcheck::Run::stdout,
     "with correct message");
 
 ok(!run('amlabel', 'TESTCONF', 'SomeTape'),
-    "amlabel refuses to write a non-matching label");
+    "amlabel refuses to write on a  tape already labeled");
 like($Installcheck::Run::stderr,
-    qr/Label 'SomeTape' doesn't match labelstr '.*'/,
+    qr/Label 'TESTCONF92' doesn't match the labelstr 'TESTCONF\[0-9\]\[0-9\]'/,
+    "with correct message on stdout");
+like($Installcheck::Run::stderr,
+    qr/Not writing label./,
     "with correct message on stderr");
-
-ok(!run('amlabel', '-f', 'TESTCONF', 'SomeTape'),
-    "amlabel will not write a non-matching label even with -f");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF13', 'slot', '3'),
     "amlabel refuses to write a label already in the tapelist (and recognizes 'slot xx')");
@@ -155,13 +158,13 @@ like($Installcheck::Run::stdout,
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', 'slot', '2'),
     "amlabel refuses to overwrite a non-matching label");
 like($Installcheck::Run::stdout,
-    qr/Found label 'MyTape', but it is not from configuration 'TESTCONF'\./,
+    qr/Found label 'MyTape' but it is not in the tapelist file./,
     "with correct message on stdout");
 
 ok(run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', 'slot', '2'),
     "amlabel will overwrite a non-matching label with -f");
 like($Installcheck::Run::stdout,
-    qr/Found label 'MyTape', but it is not from configuration 'TESTCONF'\.
+     qr/Found label 'MyTape' but it is not in the tapelist file.
 Writing label 'TESTCONF88'/,
     "with correct message on stdout");
 
@@ -176,11 +179,14 @@ is_deeply($tl->{'tles'}->[0], {
        'reuse' => 1,
        'barcode' => 'bar-01',
        'meta' => 'meta-01',
-       'blocksize' => undef,
+       'blocksize' => 32,
        'comment' => undef,
        'position' => 1,
        'label' => 'TESTCONF88',
-       'datestamp' => '0'
+       'datestamp' => '0',
+       'pool' => 'TESTCONF',
+       'storage' => undef,
+       'config' => undef
      },
     "tapelist correctly updated after --assign");
 
@@ -203,7 +209,70 @@ is_deeply($tl->{'tles'}->[0], {
        'comment' => undef,
        'position' => 1,
        'label' => 'TESTCONF01',
-       'datestamp' => '0'
+       'datestamp' => '0',
+       'pool' => 'TESTCONF',
+       'storage' => undef,
+       'config' => undef
      },
     "tapelist correctly updated after autolabel");
 
+ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-02', '--barcode', 'bar-02', '--pool', 'pool1', '--assign'),
+    "--assign meta fail without -f");
+like($Installcheck::Run::stderr,
+     qr/TESTCONF88: Can't assign meta-label without -f, old meta-label is 'meta-01'/,
+     "amlabel --assign without -f (meta)");
+
+ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--barcode', 'bar-02', '--pool', 'pool1', '--assign'),
+    "--assign barcode fail without -f");
+like($Installcheck::Run::stderr,
+     qr/TESTCONF88: Can't assign barcode without -f, old barcode is 'bar-01'/,
+     "amlabel --assign without -f (barcode)");
+
+ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--pool', 'pool1', '--assign'),
+    "--assign pool fail without -f");
+like($Installcheck::Run::stderr,
+     qr/TESTCONF88: Can't assign pool without -f, old pool is 'TESTCONF'/,
+     "amlabel --assign without -f (pool)");
+
+ok(run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-02', '--barcode', 'bar-02', '--pool', 'pool-02', '--assign'),
+    "--assign pool succeed with -f");
+
+$tl->reload();
+is_deeply($tl->{'tles'}->[1], {
+       'reuse' => 1,
+       'barcode' => 'bar-02',
+       'meta' => 'meta-02',
+       'blocksize' => 32,
+       'comment' => undef,
+       'position' => 2,
+       'label' => 'TESTCONF88',
+       'datestamp' => '0',
+       'pool' => 'pool-02',
+       'storage' => undef,
+       'config' => undef
+     },
+    "tapelist correctly updated after -f --assign");
+
+$tl->{'tles'}->[1]->{'config'} = "TESTCONF2";
+$tl->write();
+ok(!run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-03', '--barcode', 'bar-03', '--pool', 'pool-03', '--assign'),
+    "--assign failed for another config");
+
+like($Installcheck::Run::stderr,
+     qr/TESTCONF88: Can't assign because it is is the 'TESTCONF2' config/,
+     "correct stderr  for amlabel --assign for another config");
+
+ok(!run('amlabel', 'TESTCONF', 'TESTCONF89', 'slot', '2'),
+    "label for another config fail");
+like($Installcheck::Run::stderr,
+     qr/Found label 'TESTCONF88' but it is from config 'TESTCONF2'/,
+     "label for another config fail with correct stderr");
+
+$tl->{'tles'}->[1]->{'config'} = "TESTCONF";
+$tl->write();
+
+ok(!run('amlabel', 'TESTCONF', 'TESTCONF89', 'slot', '2'),
+   "label for another pool fail");
+like($Installcheck::Run::stderr,
+     qr/Found label 'TESTCONF88' but it is from tape pool 'pool-02'/,
+     "label for another pool fail with correct stderr");

@@ -392,8 +392,7 @@ sub _make_res {
 		reason => "device",
 		message => "opening 'file:$drive': " . $device->error_or_status());
     }
-
-    if (my $err = $self->{'config'}->configure_device($device)) {
+    if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	return $self->make_error("failed", $res_cb,
 		reason => "device",
 		message => $err);

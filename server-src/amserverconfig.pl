@@ -321,54 +321,50 @@ sub create_customconf{
 	print CONF "mailto \"$mailto\"\t# space separated list of operators at your site\n";
 	print CONF "dumpcycle $dumpcycle\t\t# the number of days in the normal dump cycle\n";
 	print CONF "runspercycle $runspercycle\t\t# the number of amdump runs in dumpcycle days\n";
-	print CONF "tapecycle $tapecycle\t# the number of tapes in rotation\n";
-	print CONF "runtapes $runtapes\t\t# number of tapes to be used in a single run of amdump\n";
 
 	if ((!(defined($template)))||($template eq "harddisk"))	
 	  {
+		$tpchanger = "my_vtapes";
 		print CONF "\n";
-		print CONF "define changer my_vtapes {\n";
+		print CONF "define changer $tpchanger {\n";
 		print CONF "    tpchanger \"chg-disk:$tapedev\"\n";
 		print CONF "    property \"num-slot\" \"10\"\n";
 		print CONF "    property \"auto-create-slot\" \"yes\"\n";
 		print CONF "}\n";
-		print CONF "tpchanger \"my_vtapes\"\n\n";
 		unless ( $tapetype ) { $tapetype="HARDDISK"; }	
 	  }
 	elsif ($template eq "single-tape")
 	  {
+		$tpchanger = "my_single";
 		print CONF "\n";
-		print CONF "define changer my_single {\n";
+		print CONF "define changer $tpchanger {\n";
 		print CONF "    tpchanger \"chg-single:$tapedev\"\n";
 		print CONF "}\n";
-		print CONF "tpchanger \"my_single\"\n\n";
 		unless ($tapetype) {$tapetype="HP-DAT";}
 	  }
 	elsif ($template eq "tape-changer") 
           {
+		$tpchanger = "my_robot";
 		print CONF "\n";
-		print CONF "define changer my_robot {\n";
+		print CONF "define changer $tpchanger {\n";
 		print CONF "    tpchanger \"chg-robot:$changerdev\"\n";
 		print CONF "    property \"tape-device\" \"0=$tapedev\"\n";
 		print CONF "}\n";
-		print CONF "tpchanger \"my_robot\"\n\n";
 		unless ($tapetype)  {$tapetype="HP-DAT";}
           }
         else # S3 case
 	  {
+		$tpchanger = "my_s3";
 		print CONF "\n";
-		print CONF "define changer my_s3 {\n";
+		print CONF "define changer $tpchanger {\n";
 		print CONF "    tpchanger \"chg-multi:$tapedev\"\n";
 		print CONF "    device-property \"S3_ACCESS_KEY\" \"\"\n";
 		print CONF "    device-property \"S3_SECRET_KEY\" \"\"\n";
 		print CONF "    device-property \"NB_THREADS_BACKUP\" \"\"\n";
 		print CONF "}\n";
-		print CONF "tpchanger \"my_s3\"\n\n";
 	    unless ($tapetype)  {$tapetype="HP-DAT";}
 	  }
 
-	print CONF "tapetype $tapetype\t# what kind of tape it is\n";
-	print CONF "labelstr \"$labelstr\"\t# label constraint regex: all tapes must match\n";
 	print CONF "dtimeout $def_dtimeout\t# number of idle seconds before a dump is aborted\n";
 	print CONF "ctimeout $def_ctimeout\t# max number of secconds amcheck waits for each client\n";
 	print CONF "etimeout $def_etimeout\t# number of seconds per filesystem for estimates\n";
@@ -386,6 +382,31 @@ sub create_customconf{
 	  print CONF "       comment \"Virtual Tapes\"\n";
 	  print CONF "       length 5000 mbytes\n}\n";
 	}
+
+	print CONF "\n";
+	print CONF "define policy $config {\n";
+	print CONF "    retention-tapes   $tapecycle\n";
+	print CONF "    retention-days    0\n";
+	print CONF "    retention-recover 0\n";
+	print CONF "    retention-full    0\n";
+	print CONF "}\n";
+	print CONF "\n";
+	print CONF "define storage $config {\n";
+	print CONF "    policy \"$config\"\t# the policy\n";
+	print CONF "    tapepool \"$config\"\t# the tape-pool\n";
+	print CONF "    tpchanger \"$tpchanger\"\t# the changer\n";
+	print CONF "    runtapes $runtapes\t\t# number of tapes to be used in a single run of amdump\n";
+	print CONF "    tapetype \"$tapetype\"\t# what kind of tape it is\n";
+	print CONF "    labelstr \"$labelstr\"\t# label constraint regex: all tapes must match\n";
+	print CONF "    #autolabel\n";
+	print CONF "    #meta-autolabel\n";
+	print CONF "    taperscan \"traditional\"\n";
+	print CONF "    #max-dle-volume 1000000\n";
+	print CONF "    #taperalgo first\n";
+	print CONF "    #taper-parallel-write 1\n";
+	print CONF "}\n";
+	print CONF "storage \"$config\"\n";
+	print CONF "\n";
 	print CONF "includefile \"advanced.conf\"\n";
 	print CONF "includefile \"$confdir/template.d/dumptypes\"\n";
 	print CONF "includefile \"$confdir/template.d/tapetypes\"\n";

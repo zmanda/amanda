@@ -512,6 +512,8 @@ typedef enum {
     CNF_REPORT_USE_MEDIA,
     CNF_REPORT_NEXT_MEDIA,
     CNF_REPORT_FORMAT,
+    CNF_STORAGE,
+    CNF_AMVAULT_STORAGE,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -1299,9 +1301,148 @@ char *taperscan_name(taperscan_t *app);
  * @param ttyp: the taperscan to examine
  * @returns: various
  */
-#define taperscan_get_comment(taperscan)  (val_t_to_str(taperscan_getconf((taperscan), TAPERSCAN_COMMENT))
+#define taperscan_get_comment(taperscan)  (val_t_to_str(taperscan_getconf((taperscan), TAPERSCAN_COMMENT)))
 #define taperscan_get_plugin(taperscan)   (val_t_to_str(taperscan_getconf((taperscan), TAPERSCAN_PLUGIN)))
 #define taperscan_get_property(taperscan) (val_t_to_proplist(taperscan_getconf((taperscan), TAPERSCAN_PROPERTY)))
+
+
+/* A policy interface */
+typedef enum policy_e  {
+    POLICY_COMMENT,
+    POLICY_RETENTION_TAPES,
+    POLICY_RETENTION_DAYS,
+    POLICY_RETENTION_RECOVER,
+    POLICY_RETENTION_FULL,
+    POLICY_POLICY
+} policy_key;
+
+
+/* opaque object */
+typedef struct policy_s policy_t;
+
+/* Given the name of the policy, return a policy object.
+ *  Returns NULL if no matching policy exists.
+ *  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired policy
+ * @returns: object or NULL
+ */
+
+policy_t *lookup_policy(char *identifier);
+
+/* Given a policy and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the policy to examine
+ * @param key: policy (one of the TAPERSCAN_* constants)
+ * @returns: pointer to value
+ */
+val_t *policy_getconf(policy_t *app, policy_key key);
+
+/* Get the name of this policy.
+ *
+ * @param ttyp: the policy to examine
+ * @returns: name of the policy
+ */
+char *policy_name(policy_t *app);
+
+/* (convenience macro) has this parameter been seen in this policy?
+ * This applies to the specific parameter *within* the policy.
+ *
+ * @param key: policy_key
+ * @returns: boolean
+ */
+#define policy_seen(app, key)       (val_t_seen(policy_getconf((app), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param ttyp: the policy to examine
+ * @returns: various
+ */
+#define policy_get_comment(policy)  (val_t_to_str(policy_getconf((policy), POLICY_COMMENT)))
+#define policy_get_retention_tapes(policy)  (val_t_to_int(policy_getconf((policy), POLICY_RETENTION_TAPES)))
+#define policy_get_retention_days(policy)  (val_t_to_int(policy_getconf((policy), POLICY_RETENTION_DAYS)))
+#define policy_get_retention_recover(policy)  (val_t_to_int(policy_getconf((policy), POLICY_RETENTION_RECOVER)))
+#define policy_get_retention_full(policy)  (val_t_to_int(policy_getconf((policy), POLICY_RETENTION_FULL)))
+
+
+/* A storage interface */
+typedef enum storage_e  {
+    STORAGE_COMMENT,
+    STORAGE_POLICY,
+    STORAGE_TPCHANGER,
+    STORAGE_LABELSTR,
+    STORAGE_AUTOLABEL,
+    STORAGE_META_AUTOLABEL,
+    STORAGE_TAPEPOOL,
+    STORAGE_RUNTAPES,
+    STORAGE_TAPERSCAN,
+    STORAGE_TAPETYPE,
+    STORAGE_MAX_DLE_BY_VOLUME,
+    STORAGE_TAPERALGO,
+    STORAGE_TAPER_PARALLEL_WRITE,
+    STORAGE_STORAGE
+} storage_key;
+
+
+/* opaque object */
+typedef struct storage_s storage_t;
+
+storage_t *get_first_storage(void);
+storage_t *get_next_storage(storage_t *st);
+
+/* Given the name of the storage, return a storage object.
+ *  Returns NULL if no matching storage exists.
+ *  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired storage
+ * @returns: object or NULL
+ */
+
+storage_t *lookup_storage(char *identifier);
+
+/* Given a storage and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the storage to examine
+ * @param key: storage (one of the TAPERSCAN_* constants)
+ * @returns: pointer to value
+ */
+val_t *storage_getconf(storage_t *app, storage_key key);
+
+/* Get the name of this storage.
+ *
+ * @param ttyp: the storage to examine
+ * @returns: name of the storage
+ */
+char *storage_name(storage_t *app);
+
+/* (convenience macro) has this parameter been seen in this storage?
+ * This applies to the specific parameter *within* the storage.
+ *
+ * @param key: storage_key
+ * @returns: boolean
+ */
+#define storage_seen(app, key)       (val_t_seen(storage_getconf((app), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param ttyp: the storage to examine
+ * @returns: various
+ */
+#define storage_get_comment(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_COMMENT)))
+#define storage_get_policy(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_POLICY)))
+#define storage_get_tpchanger(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_TPCHANGER)))
+#define storage_get_labelstr(storage)  (val_t_to_labelstr(storage_getconf((storage), STORAGE_LABELSTR)))
+#define storage_get_autolabel(storage)  (val_t_to_autolabel(storage_getconf((storage), STORAGE_AUTOLABEL)))
+#define storage_get_meta_autolabel(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_META_AUTOLABEL)))
+#define storage_get_tapepool(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_TAPEPOOL)))
+#define storage_get_runtapes(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_RUNTAPES)))
+#define storage_get_taperscan(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_TAPERSCAN)))
+#define storage_get_tapetype(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_TAPETYPE)))
+#define storage_get_max_dle_by_volume(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_MAX_DLE_BY_VOLUME)))
+#define storage_get_taperalgo(storage)  (val_t_to_taperalgo(storage_getconf((storage), STORAGE_TAPERALGO)))
+#define storage_get_taper_parallel_write(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_TAPER_PARALLEL_WRITE)))
 
 
 /*

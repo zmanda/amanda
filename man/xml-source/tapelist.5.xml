@@ -35,12 +35,12 @@ manually.  Its format may change, or it may be removed altogether, in future
 versions of Amanda.  It contains lines of the form:</para>
 
 <para><programlisting>
-YYYYMMDD label flags [BARCODE:barcode] [META:meta] [BLOCKSIZE:blocksize] [#comment]
+YYYYMMDDHHMMSS label flags [BARCODE:barcode] [META:meta] [BLOCKSIZE:blocksize] [POOL:pool] [STORAGE:storage] [CONFIG:config] [#comment]
 </programlisting></para>
 
 <para>Where
-<emphasis remap='I'>YYYYMMDD</emphasis>
-is the date the tape was written,
+<emphasis remap='I'>YYYYMMDDHHMMSS</emphasis>
+is the time the tape was written,
 <emphasis remap='I'>label</emphasis>
 is a label for the tape as written by
 <emphasis remap='B'>amlabel</emphasis>
@@ -51,14 +51,26 @@ A non-reusable tape will not be overwritten, even if it is older than <emphasis
 remap='B'>dumpcycle</emphasis> dumps.  See the
 <emphasis remap='B'>reuse</emphasis>
 options of
-<manref name="amadmin" vol="8"/>.
-The optional barcode is prefixed with 'BARCODE' if the volume have a barcode.
-The optional meta label is prefixed with 'META' if the volume is on a meta volume.
-The optional blocksize is prefixed with 'BLOCKSIZE'.
-The optional comment is prefixed with a '#' and continues to the end of the line.  Amanda
-will maintain this comment until the tape is overwritten.  Note that comments are not
-allowed on blank lines.</para>
+<manref name="amadmin" vol="8"/>.</para>
+<para>The optional barcode is prefixed with 'BARCODE' if the volume have a barcode.</para>
+<para>The optional meta label is prefixed with 'META' if the volume is on a meta volume.</para>
+<para>The optional blocksize is prefixed with 'BLOCKSIZE'.</para>
+<para>The optional pool is prefixed with 'POOL', it is the name of the tape-pool.</para>
+<para>The optional storage is prefixed with 'STORAGE', it is the name of the storage.</para>
+<para>The optional config is prefixed with 'CONFIG', it is name of the config that</para>
+<para>is using that volume. This is useful to share the tapelist across multiple
+config.</para>
+<para>The optional comment is prefixed with a '#' and continues to the end of
+the line.</para>
+<para>Amanda will maintain this comment until the tape is overwritten.  Note that
+comments are not allowed on blank lines.</para>
 
+<para>An entry without POOL is in the tape-pool with the name of config running name.</para>
+<para>A new labelled volume have a timestamp of "0" and have no STORAGE and CONFIG.</para>
+<para>A used volume with timestamp != "0" without STORAGE is in the storage with the name of the running config</para>
+<para>A used volume with timestamp != "0" without CONFIG is in the running config.</para>
+
+<para>It is possible to share the same tapelist across multiple config If the POOL, STORAGE and CONFIG are correctly set.</para>
 <para>The file is sorted such that the most-recently used tape appears on the first line, and the oldest tape appears on the last line.</para>
 
 <para><emphasis remap='B'>Amdump</emphasis>

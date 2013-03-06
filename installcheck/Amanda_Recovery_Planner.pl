@@ -64,6 +64,7 @@ sub make_plan_sync {
     my $plan;
 
     Amanda::Recovery::Planner::make_plan(@_,
+	labelstr => ".*",
 	debug => 1,
 	plan_cb => sub {
 	    (my $err, $plan) = @_;

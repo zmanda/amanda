@@ -30,6 +30,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants match_labelstr );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
@@ -43,8 +44,9 @@ my $exit_status = 0;
 my %subcommands;
 
 sub usage {
-    print STDERR "Usage: amlabel [--barcode <barcode>] [--meta <meta>] [--assign] [--version]\n"
-	       . "               [-f] [-o configoption]* <conf> [<label>] [slot <slot-number>]\n";
+    print STDERR "Usage: amlabel [--barcode <barcode>] [--meta <meta>] [--pool <pool>]\n"
+	       . "               [--storage] [--assign] [--version] [-f] [-o configoption]*\n"
+	       . " <conf> [<label>] [slot <slot-number>]\n";
     exit(1);
 }
 
@@ -52,12 +54,14 @@ Amanda::Util::setup_application("amlabel", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my ($opt_force, $opt_config, $opt_slot, $opt_label);
-my ($opt_barcode, $opt_meta, $opt_assign);
+my ($opt_barcode, $opt_meta, $opt_assign, $opt_pool, $opt_storage);
 
 $opt_force = 0;
 $opt_barcode = undef;
 $opt_meta = undef;
 $opt_assign = undef;
+$opt_pool = undef;
+$opt_storage = undef;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
@@ -68,14 +72,11 @@ GetOptions(
     'f'          => \$opt_force,
     'barcode=s'  => \$opt_barcode,
     'meta=s'     => \$opt_meta,
+    'pool=s'     => \$opt_pool,
+    'storage=s'  => \$opt_storage,
     'assign'     => \$opt_assign,
     'version'    => \&Amanda::Util::version_opt,
 ) or usage();
-
-if ($opt_assign && (!$opt_meta and !$opt_barcode)) {
-    print STDERR "--assign require --barcode or --meta\n";
-    usage();
-}
 
 usage() if @ARGV == 0;
 $opt_config = $ARGV[0];
@@ -130,6 +131,9 @@ sub main {
     my $chg;
     my $dev;
     my $dev_ok;
+    my $labelstr;
+    my $autolabel;
+    my $tapepool;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -142,10 +146,14 @@ sub main {
 	    return failure("Can't load tapelist file ($tlf)", $finished_cb);
 	}
 
-	$chg = Amanda::Changer->new(undef, tapelist => $tl);
+	my $storage  = Amanda::Storage->new(tapelist => $tl);
+	return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
+	$chg = $storage->{'chg'};
+	return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
 
-	return failure($chg, $finished_cb)
-	    if $chg->isa("Amanda::Changer::Error");
+	$labelstr = $storage->{'labelstr'};
+	$autolabel = $storage->{'autolabel'};
+	$tapepool = $storage->{'tapepool'};
 
 	if ($opt_assign) {
 	    return $steps->{'assign'}->();
@@ -222,27 +230,41 @@ sub main {
 	} else {
 	    # this is a labeled Amanda tape
 	    my $label = $dev->volume_label;
-	    my $labelstr = getconf($CNF_LABELSTR);
-	    my $autolabel = getconf($CNF_AUTOLABEL);
 	    my $barcode = $res->{'barcode'};
 	    my $meta = $res->{'meta'};
+	    my $tle = $tl->lookup_tapelabel($label);
 
-	    if (!match_labelstr($labelstr, $autolabel, $label, $barcode, $meta)) {
-		print "Found label '$label', but it is not from configuration " .
-		    "'" . Amanda::Config::get_config_name() . "'.\n";
-		$dev_ok = 0 unless ($opt_force);
-	    } elsif ($tl->lookup_tapelabel($label)) {
-		print "Volume with label '$label' is active and contains data from this configuration.\n";
-		if ($opt_force) {
-		    # if -f, then the user should clean things up..
-		    print "Consider using 'amrmtape' to remove volume '$label' from the catalog.\n";
-		    # note that we don't run amrmtape automatically, as it could result in data loss when
-		    # multiple volumes have (perhaps accidentally) the same label
+	    if ($opt_label &&
+		$labelstr->{'template'} &&
+		!match_labelstr($labelstr, $autolabel, $opt_label, $barcode, $meta)) {
+		print STDERR "Label '$label' doesn't match the labelstr '$labelstr->{'template'}'\n";
+		$dev_ok = 0;
+	    } elsif ($tle) {
+		if ($tle->{'config'} && $tle->{'config'} ne get_config_name()) {
+		    print STDERR "Found label '$label' but it is from config '$tle->{'config'}'\n";
+		    $dev_ok = 0;
+		} elsif ($tle->{'pool'} &&
+			 $tle->{'pool'} ne $tapepool) {
+		    print STDERR "Found label '$label' but it is from tape pool '$tle->{'pool'}'\n";
+		    $dev_ok = 0;
+		} elsif (!$tle->{'pool'} &&
+			 !match_labelstr($labelstr, $autolabel, $label, $barcode, $meta)) {
+		    print STDERR "Found label '$label' but it doesn't match the labelstr '$labelstr->{'template'}'\n";
+		    $dev_ok = 0;
 		} else {
-		    $dev_ok = 0
+		    print "Volume with label '$label' is active and contains data from this configuration.\n";
+		    if ($opt_force) {
+			# if -f, then the user should clean things up..
+			print "Consider using 'amrmtape' to remove volume '$label' from the catalog.\n";
+			# note that we don't run amrmtape automatically, as it could result in data loss when
+			# multiple volumes have (perhaps accidentally) the same label
+		    } else {
+			$dev_ok = 0
+		    }
 		}
 	    } else {
-		print "Found Amanda volume '$label'.\n";
+		print "Found label '$label' but it is not in the tapelist file.\n";
+		$dev_ok = 0 if !$opt_force;
 	    }
 	}
 
@@ -264,15 +286,6 @@ sub main {
 	    return failure($merr, $finished_cb);
 	}
 	$opt_meta = $meta;
-
-	if ($opt_label) {
-	    my $labelstr = getconf($CNF_LABELSTR);
-	    my $autolabel = getconf($CNF_AUTOLABEL);
-	    my $barcode = $res->{'barcode'};
-	    if (!match_labelstr($labelstr, $autolabel, $opt_label, $barcode, $meta)) {
-	        return failure("Label '$opt_label' doesn't match labelstr '" . ($labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'}) . "'", $finished_cb);
-	    }
-	}
 
 	my $label = $opt_label;
 	if (!defined($label)) {
@@ -311,7 +324,10 @@ sub main {
 	    # update the tapelist
 	    $tl->reload(1);
 	    $tl->remove_tapelabel($label);
-	    $tl->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'}, $dev->block_size/1024);
+	    # the label is not yet assigned a config
+	    $tl->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'},
+			       $dev->block_size/1024,
+			       $tapepool, undef, undef);
 	    $tl->write();
 
 	    print "Success!\n";
@@ -350,37 +366,89 @@ sub main {
     };
 
     step assign => sub {
-	my $tle;
-	$tle = $tl->lookup_tapelabel($opt_label);
-	if (defined $tle) {
-	    my $meta = $opt_meta;
-	    if (defined $meta) {
-		if (defined($tle->{'meta'}) && $meta ne $tle->{'meta'} &&
-		    !$opt_force) {
-		    return failure("Can't change meta-label with --force, old meta-label is '$tle->{'meta'}'");
+	my $matched = 0;
+	my $changed = 0;
+	$tl->reload(1);
+	for my $tle (@{$tl->{'tles'}}) {
+	  if ($tle->{'label'} =~ /$opt_label/ or
+	      $tle->{'label'} eq $opt_label) {
+		my $changed1 = 0;
+		my $error = 0;
+		$matched = 1;
+		if ($tle->{'config'} &&
+		    $tle->{'config'} ne Amanda::Config::get_config_name()) {
+		    print STDERR "$tle->{'label'}: Can't assign because it is is the '$tle->{'config'}' config\n";
+		    $error = 1;
+		} else {
+		    if (!$tle->{'config'} && $tle->{'datestamp'} ne "0") {
+			$tle->{'config'} = Amanda::Config::get_config_name();
+			$changed1 = 1;
+		    }
+		    if (defined $opt_meta) {
+			if (defined($tle->{'meta'}) &&
+			    $opt_meta ne $tle->{'meta'} &&
+			    !$opt_force) {
+			    print STDERR "$tle->{'label'}: Can't assign meta-label without -f, old meta-label is '$tle->{'meta'}'\n";
+			    $error = 1;
+			} elsif ($tle->{'meta'} ne $opt_meta) {
+			    $tle->{'meta'} = $opt_meta;
+			    $changed1 = 1;
+			}
+		    }
+		    if (defined $opt_barcode) {
+			if (defined($tle->{'barcode'}) &&
+			    $opt_barcode ne $tle->{'barcode'} &&
+			    !$opt_force) {
+			    print STDERR "$tle->{'label'}: Can't assign barcode without -f, old barcode is '$tle->{'barcode'}'\n";
+			    $error = 1;
+			} elsif ($tle->{'barcode'} ne $opt_barcode) {
+			    $tle->{'barcode'} = $opt_barcode;
+			    $changed1 = 1;
+			}
+		    }
+		    if (defined $opt_pool) {
+			if (defined($tle->{'pool'}) &&
+			    $opt_pool ne $tle->{'pool'} &&
+			    !$opt_force) {
+			    print STDERR "$tle->{'label'}: Can't assign pool without -f, old pool is '$tle->{'pool'}'\n";
+			    $error = 1;
+			} elsif ($tle->{'pool'} ne $opt_pool) {
+			    $tle->{'pool'} = $opt_pool;
+			    $changed1 = 1;
+			}
+		    }
+		    if (defined $opt_storage) {
+			if (defined($tle->{'storage'}) &&
+			    $opt_storage ne $tle->{'storage'} &&
+			    !$opt_force) {
+			    print STDERR "$tle->{'label'}: Can't assign storage without -f, old storage is '$tle->{'storage'}'\n";
+			    $error = 1;
+			} elsif ($tle->{'datestamp'} eq "0") {
+			    print STDOUT "$tle->{'label'}: Can't assign storage because it is a new labelled tape.\n";
+			} elsif ($tle->{'storage'} ne $opt_storage) {
+			    $tle->{'storage'} = $opt_storage;
+			    $changed1 = 1;
+			}
+		    }
 		}
-	    } else {
-		$meta = $tle->{'meta'};
-	    }
-	    my $barcode = $opt_barcode;
-	    if (defined $barcode) {
-		if (defined($tle->{'barcode'}) &&
-		    $barcode ne $tle->{'barcode'} &&
-		    !$opt_force) {
-		    return failure("Can't change barcode with --force, old barcode is '$tle->{'barcode'}'");
-		}
-	    } else {
-		$barcode = $tle->{'barcode'};
-	    }
 
-	    $tl->reload(1);
-	    $tl->remove_tapelabel($opt_label);
-	    $tl->add_tapelabel($tle->{'datestamp'}, $tle->{'label'},
-			       $tle->{'comment'}, $tle->{'reuse'}, $meta,
-			       $barcode);
+		if ($changed1 && !$error) {
+		    print "Setting $tle->{'label'}\n";
+		    $changed++;
+		}
+		$exit_status |= $error;
+	    }
+	}
+	if ($exit_status == 1) {
+	   return $finished_cb->();
+	} elsif ($changed) {
 	    $tl->write();
+	} elsif ($matched) {
+	    $tl->unlock();
+	    print "All labels already correctly set.\n";
 	} else {
-	    return failure("Label '$opt_label' is not in the tapelist file", $finished_cb);
+	    $tl->unlock();
+	    return failure("No label matching '$opt_label' in the tapelist file", $finished_cb);
 	}
 
 	$chg->inventory(inventory_cb => $steps->{'assign_inventory'});
@@ -395,7 +463,8 @@ sub main {
 	}
 
 	for my $sl (@$inv) {
-	    if (defined $sl->{'label'} && $sl->{'label'} eq $opt_label) {
+	    if (defined $sl->{'label'} && ($sl->{'label'} =~ /$opt_label/ ||
+					   $sl->{'label'} eq $opt_label)) {
 		return $chg->set_meta_label(meta => $opt_meta,
 					    slot => $sl->{'slot'},
 					    finished_cb => $steps->{'done'});

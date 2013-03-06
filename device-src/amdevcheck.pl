@@ -27,6 +27,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
+use Amanda::Storage;
 use Amanda::Changer;
 
 # try to open the device and read its label, returning the device_read_label
@@ -136,7 +137,9 @@ if ( $#ARGV == 1 ) {
     $device_name = getconf($CNF_TAPEDEV);
     $device = Amanda::Device->new($device_name);
 } else {
-    $chg = Amanda::Changer->new();
+    my ($storage, $err) = Amanda::Storage->new();
+    die "$err" if !$storage;
+    $chg = $storage->{'chg'};
     $chg->load(relative_slot => "current",
 	res_cb => sub {
 	    (my $err, $res) = @_;

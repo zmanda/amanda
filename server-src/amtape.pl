@@ -30,6 +30,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
@@ -592,42 +593,42 @@ sub {
 		    print STDERR " volume '$volume_label'\n";
 		}
 	    } else { # res must be defined
-		my $res = $params{'res'};
-		my $dev = $res->{'device'};
-		if (exists($params{'search_result'})) {
-		    print STDERR " found in slot $res->{'this_slot'}:";
-		}
-		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
-		    my $volume_label = $res->{device}->volume_label;
-		    if ($params{'active'}) {
-			print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
-		    } elsif ($params{'does_not_match_labelstr'}) {
-			print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
-		    } elsif ($params{'not_in_tapelist'}) {
-			print STDERR " volume '$volume_label' is not in the tapelist\n"
-		    } else {
-			print STDERR " volume '$volume_label'\n";
-		    }
-		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
-			 $dev->volume_header and
-			 $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
-		    print STDERR " contains an empty volume\n";
-		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
-			 $dev->volume_header and
-			 $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-		    my $autolabel = getconf($CNF_AUTOLABEL);
-		    if ($autolabel->{'non_amanda'}) {
-			print STDERR " contains a non-Amanda volume\n";
-		    } else {
-			print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
-		    }
-		} elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
-		    my $message = $dev->error_or_status();
-		    print STDERR " can't read label: $message\n";
-		} else {
-		    my $errmsg = $res->{device}->error_or_status();
-		    print STDERR " $errmsg\n";
-		}
+                my $res = $params{'res'};
+                my $dev = $res->{'device'};
+                if (exists($params{'search_result'})) {
+                    print STDERR " found in slot $res->{'this_slot'}:";
+                }
+                if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+                    my $volume_label = $res->{device}->volume_label;
+                    if ($params{'active'}) {
+                        print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
+                    } elsif ($params{'does_not_match_labelstr'}) {
+                        print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
+                    } elsif ($params{'not_in_tapelist'}) {
+                        print STDERR " volume '$volume_label' is not in the tapelist\n"
+                    } else {
+                        print STDERR " volume '$volume_label'\n";
+                    }
+                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
+                         $dev->volume_header and
+                         $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+                    print STDERR " contains an empty volume\n";
+                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
+                         $dev->volume_header and
+                         $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
+                    my $autolabel = getconf($CNF_AUTOLABEL);
+                    if ($autolabel->{'non_amanda'}) {
+                        print STDERR " contains a non-Amanda volume\n";
+                    } else {
+                        print STDERR " contains a non-Amanda volume; check and relabel it with 'amlabel -f'\n";
+                    }
+                } elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
+                    my $message = $dev->error_or_status();
+                    print STDERR " can't read label: $message\n";
+                } else {
+                    my $errmsg = $res->{device}->error_or_status();
+                    print STDERR " $errmsg\n";
+                }
 	    }
 	} else {
 	    print STDERR "UNKNOWN\n";
@@ -639,8 +640,9 @@ sub {
 
     my $chg = load_changer($finished_cb) or return;
     my $interactivity = Amanda::Interactivity->new(name => 'tty');
-    my $scan_name = getconf($CNF_TAPERSCAN);
+    my $scan_name = $chg->{'storage'}->{'taperscan_name'};
     my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
+					     storage => $chg->{'storage'},
 					     changer => $chg,
 					     tapelist => $tl);
 
@@ -661,8 +663,10 @@ sub {
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
-	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
+	if (defined $res->{'device'} and defined $res->{'device'}->volume_label() and $res->{'device'}->volume_label() eq $label) {
 	    print STDERR "Will $modestr to volume '$label' in slot $slot.\n";
+	} elsif (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
+	    print STDERR "Will $modestr label '$label' to '" . $res->{'device'}->volume_label() . "' labelled volume in slot $slot.\n";
 	} else {
 	    my $header = $res->{'device'}->volume_header();
 	    if ($header->{'type'} == $Amanda::Header::F_WEIRD) {
@@ -738,7 +742,9 @@ sub {
 sub load_changer {
     my ($finished_cb) = @_;
 
-    my $chg = Amanda::Changer->new(undef, tapelist => $tl);
+    my $storage  = Amanda::Storage->new(tapelist => $tl);
+    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
+    my $chg = $storage->{'chg'};
     return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
     return $chg;
 }

@@ -3134,8 +3134,8 @@ The <amkeyword>append</amkeyword> keyword appends the given values to an existin
 <refsect1><title>TAPERSCAN SECTION</title>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
-file may define multiple taperscan methods, although only one will be used - that specified
-by the <amkeyword>taperscan</amkeyword> parameter.
+file may define multiple taperscan methods, it is set with the global
+<amkeyword>taperscan</amkeyword> parameter or in the storage section.
 The information is entered in a <amkeyword>taperscan</amkeyword>
 section, which looks like this:</para>
 
@@ -3178,6 +3178,204 @@ A comment string describing this taperscan.</para>
 <para>See <manref name="amanda-taperscan" vol="7" /> for more information on configuring taperscan.</para>
 
 </refsect1>
+
+<refsect1><title>POLICY SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple policy, it is set with the
+<amkeyword>policy</amkeyword> parameter of the storage section.
+A policy name CONFIG_NAME is automaticaly created.
+The information is entered in a <amkeyword>policy</amkeyword>
+section, which looks like this:</para>
+
+<programlisting>
+define policy <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>policy-option</emphasis> <emphasis remap='I'>policy-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para>The { must appear at the end of a line, and the } on its own line.</para>
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of this
+policy. The remaining parameters are specific to the policy type
+selected.
+</para>
+
+<para>The policy options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.
+A comment string describing this policy.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>retention-tapes</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: same value as global tapecycle. The number of volumes used
+before a volume can be re-used.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>retention-days</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: 0. A volume is kept for that number of days before it can be
+reused.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>retention-recover</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: 0. Keep all volumes needed to recover all files up to
+<amkeyword>retention-recover</amkeyword>ago,  if it was a level 2, also
+keep previous level 1 and level 0.
+</para>
+
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>retention-full</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: 0.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>STORAGE SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple storage, the default storage it is set with the
+<amkeyword>storage</amkeyword> parameter. The amvault storage is set with
+the the <amkeyword>amvault-storage</amkeyword> parameter.
+A storage name CONFIG_NAME is created if the global
+<amkeyword>storage</amkeyword> is not set.
+The information is entered in a <amkeyword>storage</amkeyword>
+section, which looks like this:</para>
+
+<programlisting>
+define storage <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>storage-option</emphasis> <emphasis remap='I'>storage-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para>The { must appear at the end of a line, and the } on its own line.</para>
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of this
+storage. The remaining parameters are specific to the storage type
+selected.
+</para>
+
+<para>The storage options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.
+A comment string describing this storage.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>policy</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: CONFIG_NAME. Define the policy to use.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>tpchanger</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>labelstr</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>autolabel</amkeyword>
+        <amtype>string</amtype>
+        [<amkeyword>any</amkeyword>]
+        [<amkeyword>other-config</amkeyword>]
+        [<amkeyword>non-amanda</amkeyword>]
+        [<amkeyword>volume-error</amkeyword>]
+        [<amkeyword>empty</amkeyword>]</term>
+  <listitem>
+<para>Default: value of the global <amkeyword>autolabel</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>meta-autolabel</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>meta-autolabel</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tapepool</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: CONFIG_NAME.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>runtapes</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>runtapes</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>taperscan</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>taperscan</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tapetype</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>tapetype</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>max-dle-by-volume</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>max-dle-by-volume</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>taperalgo</amkeyword>  [ <amkeyword>first</amkeyword> | <amkeyword>firstfit</amkeyword> | <amkeyword>largest</amkeyword> | <amkeyword>largestfit</amkeyword> | <amkeyword>smallest</amkeyword> | <amkeyword>last</amkeyword> ]</term>
+  <listitem>
+<para>Default: value of the global <amkeyword>taperalgo</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>taper-parallel-write</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>taper-parallel-write</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
 
 <refsect1><title>Dump Splitting Configuration</title>
 

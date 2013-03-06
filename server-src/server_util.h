@@ -98,7 +98,8 @@ void run_amcleanup(char *config_name);
 char *get_master_process(char *logfile);
 
 gint64 internal_server_estimate(disk_t *dp, info_t *info,
-                                int level, int *stats);
-int server_can_do_estimate(disk_t *dp, info_t *info, int level);
+                                int level, int *stats, tapetype_t *tapetype);
+int server_can_do_estimate(disk_t *dp, info_t *info, int level,
+			   tapetype_t *tapetype);
 
 #endif	/* SERVER_UTIL_H */

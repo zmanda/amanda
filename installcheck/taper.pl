@@ -888,6 +888,7 @@ taper_cmd("START-SCAN worker0 $handle");
 taper_cmd("NEW-TAPE worker0 $handle");
 like(taper_reply, qr/^NEW-TAPE $handle TESTCONF01$/,
 	"got proper NEW-TAPE worker0 $handle") or die;
+
 like(taper_reply, qr/^PARTDONE $handle TESTCONF01 1 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
 like(taper_reply, qr/^DONE $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
@@ -954,8 +955,8 @@ wait_for_exit();
 # A run with a bogus tapedev/tpchanger
 $handle = "44-11111";
 $datestamp = "20070102030405";
-run_taper(4096, "no tapedev", notapedev => 1);
-like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify one of 'tapedev' or 'tpchanger'"$/,
+run_taper(4096, "Yno tapedev", notapedev => 1);
+like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the storage 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
 
@@ -1429,6 +1430,7 @@ taper_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
+#    qr(^INFO taper Slot 2 with label TESTCONF02 is not reusable),
     qr(^INFO taper Slot 3 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF03 tape 1$),
     qr(^PART taper TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
@@ -1451,8 +1453,8 @@ cleanup_log();
 # A run with a bogus tapedev/tpchanger
 $handle = "44-11111";
 $datestamp = "20070102030405";
-run_taper(4096, "no tapedev", notapedev => 1, taperscan => "lexical");
-like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify one of 'tapedev' or 'tpchanger'"$/,
+run_taper(4096, "Xno tapedev", notapedev => 1, taperscan => "lexical");
+like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the storage 'tpchanger'"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
 

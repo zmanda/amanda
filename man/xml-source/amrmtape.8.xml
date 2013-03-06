@@ -35,12 +35,15 @@
     <arg choice='opt'>-n </arg>
     <arg choice='opt'>--erase </arg>
     <arg choice='opt'>--keep-label </arg>
+    <arg choice='opt'>--list-retention </arg>
+    <arg choice='opt'>--list-no-retention </arg>
+    <arg choice='opt'>--remove-no-retention </arg>
     <arg choice='opt'>--quiet </arg>
     <arg choice='opt'>-q </arg>
     <arg choice='opt'>--verbose </arg>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>label</replaceable></arg>
+    <arg choice='opt'><replaceable>label</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -98,15 +101,44 @@ in the sense that the data can most likely be recovered by someone with the
 right tools.  </para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><option>--keep-label</option></term>
   <listitem>
 <para>Do not remove
 <emphasis remap='I'>label</emphasis>
-from the tapelist.
+from the tapelist. The volume become like a new labelled tape and can be
+reused by any storage using the same tape-pool.
 </para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><option>--list-retention</option></term>
+  <listitem>
+<para>List all labels that are required for the policy of each storage.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--list-no-retention</option></term>
+  <listitem>
+<para>List all labels that are not required for the policy of each storage.
+They are the volumes that can be reused.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--remove-no-retention</option></term>
+  <listitem>
+<para>Remove all labels that are not required for the policy of each storage.
+Useful with <option>--keep-label</option> and/or <option>--erase</option>.
+</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><option>--verbose</option></term>
   <term><option>-v</option></term>

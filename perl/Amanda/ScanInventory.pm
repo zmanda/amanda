@@ -41,6 +41,8 @@ use base qw(Exporter);
 our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
+use Amanda::Tapelist;
+use Amanda::Config qw( :getconf );
 use Amanda::Util qw( match_labelstr );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
@@ -544,6 +546,27 @@ sub _scan {
     };
 }
 
+sub volume_is_new_labelled {
+    my $self = shift;
+    my $tle = shift;
+    my $sl = shift;
+
+    if ($tle->{'config'} && $tle->{'config'} ne Amanda::Config::get_config_name()) {
+	return 0;
+    }
+    if ($tle->{'pool'} && $tle->{'pool'} ne $self->{'tapepool'}) {
+	return 0;
+    }
+    if (!$tle->{'pool'} &&
+	     !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $sl->{'label'}, $sl->{'barcode'}, $sl->{'meta'})) {
+	return 0;
+    }
+    if ($tle->{'datestamp'} ne '0') {
+	return 0;
+    }
+    return 1;
+}
+
 sub volume_is_labelable {
     my $self = shift;
     my $sl = shift;
@@ -562,46 +585,51 @@ sub volume_is_labelable {
 	     defined $f_type and
 	     $f_type == $Amanda::Header::F_EMPTY) {
 	if (!$autolabel->{'empty'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     empty        => 1,
-			     slot         => $slot);
+#	    $self->_user_msg(slot_result  => 1,
+#			     empty        => 1,
+#			     slot         => $slot);
 	    return 0;
 	}
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_UNLABELED and
 	     defined $f_type and
 	     $f_type == $Amanda::Header::F_WEIRD) {
 	if (!$autolabel->{'non_amanda'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     non_amanda   => 1,
-			     slot         => $slot);
+#	    $self->_user_msg(slot_result  => 1,
+#			     non_amanda   => 1,
+#			     slot         => $slot);
 	    return 0;
 	}
     } elsif ($dev_status & $DEVICE_STATUS_VOLUME_ERROR) {
 	if (!$autolabel->{'volume_error'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     volume_error => 1,
-			     err          => $sl->{'device_error'},
-			     slot         => $slot);
+#	    $self->_user_msg(slot_result  => 1,
+#			     volume_error => 1,
+#			     err          => $sl->{'device_error'},
+#			     slot         => $slot);
 	    return 0;
 	}
     } elsif ($dev_status != $DEVICE_STATUS_SUCCESS) {
-	    $self->_user_msg(slot_result  => 1,
-			     not_success  => 1,
-			     err          => $sl->{'device_error'},
-			     slot         => $slot);
+#	    $self->_user_msg(slot_result  => 1,
+#			     not_success  => 1,
+#			     err          => $sl->{'device_error'},
+#			     slot         => $slot);
+	return 0;
+    } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
+	     $f_type != $Amanda::Header::F_TAPESTART) {
 	return 0;
     } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
 	     $f_type == $Amanda::Header::F_TAPESTART and
 	     !match_labelstr($self->{'labelstr'}, $autolabel, $label,
 			     $barcode, $meta)) {
 	if (!$autolabel->{'other_config'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     label        => $label,
-			     labelstr     => $self->{'labelstr'}->{'template'},
-			     does_not_match_labelstr => 1,
-			     slot         => $slot);
+#	    $self->_user_msg(slot_result  => 1,
+#			     label        => $label,
+#			     labelstr     => $self->{'labelstr'}->{'template'},
+#			     does_not_match_labelstr => 1,
+#			     slot         => $slot);
 	    return 0;
 	}
+    } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
+	     $f_type == $Amanda::Header::F_TAPESTART) {
     }
 
     return 1;

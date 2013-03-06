@@ -697,6 +697,7 @@ start_server_check(
     int userbad = 0, infobad = 0, indexbad = 0, pgmbad = 0;
     int testtape = do_tapechk;
     tapetype_t *tp = NULL;
+    storage_t  *storage = NULL;
     char *quoted;
     int res;
     intmax_t kb_avail, kb_needed;
@@ -739,7 +740,9 @@ start_server_check(
     g_fprintf(outf, "-----------------------------\n");
 
     if (do_localchk || testtape) {
-        tp = lookup_tapetype(getconf_str(CNF_TAPETYPE));
+	storage = lookup_storage(getconf_str(CNF_STORAGE));
+	if (storage)
+            tp = lookup_tapetype(storage_get_tapetype(storage));
     }
 
     /*
@@ -791,12 +794,14 @@ start_server_check(
 	    confbad = 1;
 	}
 
-	if (!getconf_seen(CNF_TAPETYPE)) {
+	if (!storage_seen(storage, STORAGE_TAPETYPE)) {
 	    g_fprintf(outf,
 		      _("ERROR: no tapetype specified; you must give a value for "
-			"the 'tapetype' parameter\n"));
+                       "the 'tapetype' parameter or the storage '%s'\n"),
+		      storage_name(storage));
 	    confbad = 1;
 	}
+
     }
 
     /*
@@ -938,8 +943,9 @@ start_server_check(
 	amfree(holdfile);
 	tapename = getconf_str(CNF_TAPEDEV);
 	if (tapename == NULL) {
-	    if (getconf_str(CNF_TPCHANGER) == NULL) {
-		g_fprintf(outf, _("WARNING:Parameter \"tapedev\" or \"tpchanger\" not specified in amanda.conf.\n"));
+	    if (getconf_str(CNF_TPCHANGER) == NULL &&
+		getconf_str(CNF_STORAGE) == NULL) {
+		g_fprintf(outf, _("WARNING:Parameter \"tapedev\", \"tpchanger\" or storage not specified in amanda.conf.\n"));
 		testtape = 0;
 		do_tapechk = 0;
 	    }

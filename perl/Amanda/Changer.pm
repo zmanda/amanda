@@ -748,7 +748,22 @@ sub new {
 	# assume it's a device name or alias, and invoke the single-changer
 	return _new_from_uri("chg-single:$name", undef, $name, %params);
     } else { # !defined($name)
-	if ((getconf_linenum($CNF_TPCHANGER) == -2 ||
+	if (defined $params{'storage'} &&
+	    defined $params{'storage'}->{'tpchanger'}) {
+	    my $tpchanger = $params{'storage'}->{'tpchanger'};
+	    # maybe a changer alias?
+	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
+		return _new_from_uri($uri, $cc, $tpchanger, %params);
+	    }
+
+	    # maybe a straight-up changer URI?
+	    if (_uri_to_pkgname($tpchanger)) {
+		return _new_from_uri($tpchanger, undef, $tpchanger, %params);
+	    }
+
+	    # assume it's a device name or alias, and invoke the single-changer
+	    return _new_from_uri("chg-single:$tpchanger", undef, $tpchanger, %params);
+	} elsif ((getconf_linenum($CNF_TPCHANGER) == -2 ||
 	     (getconf_seen($CNF_TPCHANGER) &&
 	      getconf_linenum($CNF_TAPEDEV) != -2)) &&
 	    getconf($CNF_TPCHANGER) ne '') {
@@ -912,7 +927,8 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	die $@;
     }
 
-    my $rv = eval {$pkgname->new(Amanda::Changer::Config->new($cc), $uri, %params);};
+    my $rv = eval {$pkgname->new(Amanda::Changer::Config->new($cc), $uri,
+				 %params);};
     die "$pkgname->new return undef" if $@;
     die "$pkgname->new did not return an Amanda::Changer object or an Amanda::Changer::Error"
 	unless ($rv->isa("Amanda::Changer") or $rv->isa("Amanda::Changer::Error"));
@@ -926,17 +942,29 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	$rv->{'fatal_error'} = undef;
     }
 
+    $rv->{'storage'} = $params{'storage'};
     $rv->{'tapelist'} = $params{'tapelist'};
+
     $rv->{'autolabel'} = $params{'autolabel'};
+    $rv->{'autolabel'} = $rv->{'storage'}->{'autolabel'}
+	if !defined $rv->{'autolabel'} && defined $rv->{'storage'};
     $rv->{'autolabel'} = getconf($CNF_AUTOLABEL)
 	unless defined $rv->{'autolabel'};
+
     $rv->{'labelstr'} = $params{'labelstr'};
+    $rv->{'labelstr'} = $rv->{'storage'}->{'labelstr'}
+	if !defined $rv->{'labestr'} && defined $rv->{'storage'};
     $rv->{'labelstr'} = getconf($CNF_LABELSTR)
-	unless defined $rv->{'labelstr'};
+	if !defined $rv->{'labelstr'};
+
     $rv->{'meta_autolabel'} = $params{'meta_autolabel'};
+    $rv->{'meta_autolabel'} = $rv->{'storage'}->{'meta_autolabel'}
+	if !defined $rv->{'meta_autolabel'} && defined $rv->{'storage'};
     $rv->{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
-	unless defined $rv->{'meta_autolabel'};
+	if !defined $rv->{'meta_autolabel'};
+
     $rv->{'chg_name'} = $name;
+
     return $rv;
 }
 
@@ -1255,14 +1283,7 @@ sub make_new_tape_label {
 	$self->{'autolabel'}->{'template'} eq "") {
 	return (undef, "template is not set, you must set autolabel");
     }
-    if (!defined $self->{'labelstr'} ||
-	(!$self->{'labelstr'}->{'match_autolabel'} &&
-	 (!defined $self->{'labelstr'}->{'template'} ||
-	  $self->{'labelstr'}->{'template'} eq ""))) {
-	return (undef, "labelstr not set");
-    }
     my $template = $self->{'autolabel'}->{'template'};
-    my $labelstr = $self->{'labelstr'};
     my $slot_digit = 1;
 
     $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
@@ -1381,16 +1402,6 @@ sub make_new_tape_label {
 		if ($i >= $nlabels);
     }
 
-    # verify $label matches $labelstr
-    if (!match_labelstr($labelstr, $self->{'autolabel'}, $label, $barcode,
-			$meta)) {
-	if ($labelstr->{'match_autolabel'}) {
-            return (undef, "Newly-generated label '$label' does not match labelstr '$self->{'autolabel'}->{'template'}'");
-	} else {
-            return (undef, "Newly-generated label '$label' does not match labelstr '$labelstr->{'template'}'");
-	}
-    }
-
     if (!$label) {
 	return (undef, "Generated label is empty");
     }
@@ -1407,6 +1418,7 @@ sub make_new_meta_label {
     return undef if !defined $self->{'meta_autolabel'};
     my $template = $self->{'meta_autolabel'};
     return if !defined $template;
+    return if !$template;
 
     if (!$template) {
 	return (undef, "template is not set, you must set meta-autolabel");
@@ -1702,14 +1714,15 @@ sub new {
 
 sub configure_device {
     my $self = shift;
-    my ($device) = @_;
+    my ($device, $storage) = @_;
 
     # we'll accumulate properties in this hash *overwriting* previous properties
     # instead of appending to them
     my %properties;
 
     # always use implicit properties
-    %properties = ( %properties, %{ $self->_get_implicit_properties() } );
+    #%properties = ( %properties, %{ $self->_get_implicit_properties( $storage) } );
+    %properties = ( %{ $self->_get_implicit_properties( $storage) } );
 
     # always use global properties
     %properties = ( %properties, %{ getconf($CNF_DEVICE_PROPERTY) } );
@@ -1770,12 +1783,18 @@ sub get_boolean_property {
 
 sub _get_implicit_properties {
     my $self = shift;
+    my $storage = shift;
     my $props = {};
+    my $tapetype;
 
-    my $tapetype_name = getconf($CNF_TAPETYPE);
-    return unless defined($tapetype_name);
+    if ($storage) {
+	$tapetype = $storage->{'tapetype'};
+    } else {
+	my $tapetype_name = getconf($CNF_TAPETYPE);
+	return unless defined($tapetype_name);
 
-    my $tapetype = lookup_tapetype($tapetype_name);
+	$tapetype = lookup_tapetype($tapetype_name);
+    }
     return unless defined($tapetype);
 
     # The property hashes used here add the 'optional' key, which indicates

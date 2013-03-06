@@ -50,11 +50,11 @@ sub new
     }, $class;
 
     # get some other parameters we'll need
-    my $ttyp = getconf($CNF_TAPETYPE);
-    my $tt = lookup_tapetype($ttyp) if $ttyp;
+    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
+    my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
     my ($tapelen, $marksize, $template_filename);
 
-    if ($ttyp && $tt) {
+    if ($tapetype_name && $tt) {
 
         # append null string to get the right context
         $tapelen = "" . tapetype_getconf($tt, $TAPETYPE_LENGTH);

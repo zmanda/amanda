@@ -27,6 +27,7 @@ use Data::Dumper;
 use lib '@amperldir@';
 
 use Installcheck;
+use Amanda::Config qw( :init :getconf );
 use Amanda::Report;
 use Amanda::Debug;
 
@@ -1199,6 +1200,13 @@ $LogfileData{amflushExample} = {
         },
     },
 };
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    die "config errors";
+}
 
 foreach my $test ( keys %LogfileContents ) {
 

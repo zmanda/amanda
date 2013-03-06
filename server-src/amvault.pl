@@ -105,6 +105,7 @@ use Amanda::Recovery::Scan;
 use Amanda::Recovery::Clerk;
 use Amanda::Taper::Scan;
 use Amanda::Taper::Scribe qw( get_splitting_args_from_config );
+use Amanda::Storage qw( :constants );
 use Amanda::Changer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Paths;
@@ -131,8 +132,6 @@ sub new {
 
 	src_write_timestamp => $params{'src_write_timestamp'},
 
-	dst_changer => $params{'dst_changer'},
-	dst_autolabel => $params{'dst_autolabel'},
 	dst_write_timestamp => $params{'dst_write_timestamp'},
 
 	src => undef,
@@ -174,12 +173,6 @@ sub run {
     die "already called" if $self->{'exit_cb'};
     $self->{'exit_cb'} = $exit_cb;
 
-    # check that the label template is valid
-    my $dst_label_template = $self->{'dst_autolabel'}->{'template'};
-    return $self->failure("Invalid label template '$dst_label_template'")
-	if ($dst_label_template =~ /%[^%]+%/
-	    or $dst_label_template =~ /^[^%]+$/);
-
     # open up a trace log file and put our imprimatur on it, unless dry_runing
     if (!$self->{'opt_dry_run'}) {
 	$self->{'dst_write_timestamp'} = Amanda::Logfile::make_logname("amvault", $self->{'dst_write_timestamp'});
@@ -199,7 +192,10 @@ sub setup_src {
 
     # put together a clerk, which of course requires a changer, scan,
     # interactivity, and feedback
-    my $chg = Amanda::Changer->new();
+    my $storage = Amanda::Storage->new();
+    return $self->failure("Error creating source storage: $storage")
+	if $storage->isa("Amanda::Changer::Error");
+    my $chg = $storage->{'chg'};
     return $self->failure("Error opening source changer: $chg")
 	if $chg->isa('Amanda::Changer::Error');
     $src->{'chg'} = $chg;
@@ -367,28 +363,31 @@ sub setup_dst {
     $dst->{'label'} = undef;
     $dst->{'tape_num'} = 0;
 
-    my $chg = Amanda::Changer->new($self->{'dst_changer'},
-				   tapelist => $tl,
-				   labelstr => getconf($CNF_LABELSTR),
-				   autolabel => $self->{'dst_autolabel'});
+    my $storage = Amanda::Storage->new(
+				storage_name => getconf($CNF_AMVAULT_STORAGE),
+				tapelist     => $tl);
+    return $self->failure("no AMVAULT-STORAGE defined: $storage")
+	if $storage->isa("Amanda::Changer::Error");
+    my $chg = $storage->{'chg'};
     return $self->failure("Error opening destination changer: $chg")
 	if $chg->isa('Amanda::Changer::Error');
     $dst->{'chg'} = $chg;
 
     my $interactivity = Amanda::Interactivity->new(
 					name => getconf($CNF_INTERACTIVITY));
-    my $scan_name = getconf($CNF_TAPERSCAN);
+    my $scan_name = $storage->{'taperscan_name'};
     $dst->{'scan'} = Amanda::Taper::Scan->new(
 	algorithm => $scan_name,
+	storage => $storage,
 	changer => $dst->{'chg'},
 	interactivity => $interactivity,
-	tapelist => $tl,
-	labelstr => getconf($CNF_LABELSTR),
-	autolabel => $self->{'dst_autolabel'});
+	tapelist => $tl);
 
     $dst->{'scribe'} = Amanda::Taper::Scribe->new(
 	taperscan => $dst->{'scan'},
 	feedback => $self);
+
+    $self->{'storage_dst'} = $storage;
 
     $dst->{'scribe'}->start(
 	write_timestamp => $self->{'dst_write_timestamp'},
@@ -467,7 +466,7 @@ sub xfer_dumps {
 	$current->{'header'} = $header;
 
 	# set up splitting args from the tapetype only, since we have no DLEs
-	my $tt = lookup_tapetype(getconf($CNF_TAPETYPE));
+	my $tt = $self->{'storage_dst'}->{'tapetype'};
 	sub empty2undef { $_[0]? $_[0] : undef }
 	my %xfer_dest_args;
 	if ($tt) {
@@ -902,8 +901,6 @@ sub usage {
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--fulls-only] [--export] [--src-timestamp src-timestamp]
 	   [--exact-match]
-	   --label-template label-template --dst-changer dst-changer
-	   [--autolabel autolabel-arg...]
 	   config
 	   [hostname [ disk [ date [ level [ hostname [...] ] ] ] ]]
 
@@ -912,16 +909,13 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --fulls-only: only copy full (level-0) dumps
     --export: move completed destination volumes to import/export slots
     --src-timestamp: the timestamp of the Amanda run that should be vaulted
-    --label-template: the template to use for new volume labels
-    --dst-changer: the changer to which dumps should be written
-    --autolabel: similar to the amanda.conf parameter; may be repeated (default: empty)
 
 Copies data from the run with timestamp <src-timestamp> onto volumes using
-the changer <dst-changer>, labeling new volumes with <label-template>.  If
-<src-timestamp> is "latest", then the most recent run of amdump or amflush
-will be used.  If any dumpspecs are included (<host-expr> and so on), then only
-dumps matching those dumpspecs will be dumped.  At least one of --fulls-only,
---src-timestamp, or a dumpspec must be specified.
+the storage <amvault-storage>.  If <src-timestamp> is "latest", then the
+most recent run of amdump or amflush will be used.  If any dumpspecs are
+included (<host-expr> and so on), then only dumps matching those dumpspecs
+will be dumped.  At least one of --fulls-only, --src-timestamp, or a dumpspec
+must be specified.
 
 EOF
     if ($msg) {
@@ -939,37 +933,7 @@ my $opt_dry_run = 0;
 my $opt_fulls_only = 0;
 my $opt_exact_match = 0;
 my $opt_export = 0;
-my $opt_autolabel = {};
-my $opt_autolabel_seen = 0;
 my $opt_src_write_timestamp;
-my $opt_dst_changer;
-
-sub set_label_template {
-    usage("only one --label-template allowed") if $opt_autolabel->{'template'};
-    $opt_autolabel->{'template'} = $_[1];
-}
-
-sub add_autolabel {
-    my ($opt, $val) = @_;
-    $val = lc($val);
-    $val =~ s/-/_/g;
-
-    $opt_autolabel_seen = 1;
-    my @ok = qw(other_config non_amanda volume_error empty);
-    for (@ok) {
-	if ($val eq $_) {
-	    $opt_autolabel->{$_} = 1;
-	    return;
-	}
-    }
-    if ($val eq 'any') {
-	for (@ok) {
-	    $opt_autolabel->{$_} = 1;
-	}
-	return;
-    }
-    usage("unknown --autolabel value '$val'");
-}
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
@@ -983,14 +947,16 @@ GetOptions(
     'fulls-only' => \$opt_fulls_only,
     'exact-match' => \$opt_exact_match,
     'export' => \$opt_export,
-    'label-template=s' => \&set_label_template,
-    'autolabel=s' => \&add_autolabel,
+    'label-template=s' => sub {
+	usage("--label-templaple is deprecated, use autolabel from the 'amvault-storage'"); },
+    'autolabel=s' => sub {
+	usage("--autolabel is deprecated, use autolabel from the 'amvault-storage'"); },
+    'dst-changer=s' => sub {
+	usage("--dst-changer is deprecated, use tpchanger from the 'amvault-storage'"); },
     'src-timestamp=s' => \$opt_src_write_timestamp,
-    'dst-changer=s' => \$opt_dst_changer,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage("usage error");
-$opt_autolabel->{'empty'} = 1 unless $opt_autolabel_seen;
 
 usage("not enough arguments") unless (@ARGV >= 1);
 
@@ -1000,8 +966,6 @@ $cmd_flags |= $CMDLINE_EXACT_MATCH if $opt_exact_match;
 my @opt_dumpspecs = parse_dumpspecs(\@ARGV, $cmd_flags)
     if (@ARGV);
 
-usage("no --label-template given") unless $opt_autolabel->{'template'};
-usage("no --dst-changer given") unless $opt_dst_changer;
 usage("specify something to select the source dumps") unless
     $opt_src_write_timestamp or $opt_fulls_only or @opt_dumpspecs;
 
@@ -1027,8 +991,6 @@ my $exit_cb = sub {
 my $vault = Amvault->new(
     config_name => $config_name,
     src_write_timestamp => $opt_src_write_timestamp,
-    dst_changer => $opt_dst_changer,
-    dst_autolabel => $opt_autolabel,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
     opt_dumpspecs => @opt_dumpspecs? \@opt_dumpspecs : undef,
     opt_dry_run => $opt_dry_run,

@@ -32,6 +32,8 @@
   <command>amlabel</command>    
     <arg choice='opt'><option>--barcode <replaceable>barcode</replaceable></option></arg>
     <arg choice='opt'><option>--meta <replaceable>meta-label</replaceable></option></arg>
+    <arg choice='opt'><option>--pool <replaceable>pool</replaceable></option></arg>
+    <arg choice='opt'><option>--storage <replaceable>storage</replaceable></option></arg>
     <arg><option>--assign</option></arg>
     <arg><option>-f</option></arg>
     &version.synopsis;
@@ -62,7 +64,13 @@ whitespace and that matches the <emphasis remap='B'>labelstr</emphasis> (see
 <para>If <arg choice="opt"><replaceable>label</replaceable></arg> is not given, an autolabel is
 generated, see <emphasis remap='B'>autolabel</emphasis> in <manref name="amanda.conf" vol="5"/>.</para>
 
-<para>If <arg><option>--assign</option></arg> is given, the barcode and meta-label are assigned to the label without labeling the volume. The label must already be in the tapelist file.</para>
+<para>If <arg><option>--assign</option></arg> is given, the
+<replaceable>label</replaceable> is interpretad as an expression and the
+<replaceable>barcode</replaceable>, <replaceable>meta-label</replaceable>,
+<replaceable>pool</replaceable>, <replaceable>storage</replaceable>  and
+config are assigned to all labels matching the expression, the volumes are
+ not labelled. The labels must already be in the tapelist file.</para>
+
 <para>This command also appends the new volume to the &tapelist; file, so that
 they will be used in the order they are labeled (depending on the taperscan in
 use &mdash; see <manref name="amanda-taperscan" vol="7" />).</para>
@@ -88,6 +96,22 @@ Without <arg choice="opt">--assign</arg>, label the volume with that barcode.</p
   <term><option>--meta <replaceable>meta-label</replaceable></option></term>
   <listitem>
   <para>Assign the meta label to the label after labeling the volume.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--pool <replaceable>pool</replaceable></option></term>
+  <listitem>
+  <para>Assign the pool to the label after labeling the volume.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--storage <replaceable>storage</replaceable></option></term>
+  <listitem>
+  <para>Assign the storage to the label, it can only be used with
+<option>--assign</option>, you can't assign a storage to a new labelled
+volume.</para>
   </listitem>
   </varlistentry>
 

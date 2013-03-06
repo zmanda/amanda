@@ -32,6 +32,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Taper::Scan;
 
@@ -159,7 +160,11 @@ sub set_current_slot {
 # set up and load a config
 my $testconf = Installcheck::Config->new();
 $testconf->add_param("tapelist", "\"$tapelist_filename\"");
-$testconf->add_param("labelstr", "\"TEST-[0-9]+\"");
+$testconf->add_policy("test_policy", [ retention_tapes => 4 ]);
+$testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
+				 policy    => "\"test_policy\"",
+				 labelstr  => "\"TEST-[0-9]+\"" ]);
+$testconf->add_param("storage", "\"disk\"");
 $testconf->write();
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
@@ -172,17 +177,17 @@ label_slot(1, "TEST-1", "20090424173001", "reuse", 1);
 label_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
 
+my $storage;
 my $chg;
 my $taperscan;
 my @results;
 
 # set up a traditional taperscan
-$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 4,
-    changer => $chg);
+    storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ "No acceptable volumes found", undef, undef ],
@@ -190,12 +195,19 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$testconf->add_policy("test_policy", [ retention_tapes => 3 ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 3,
-    changer => $chg);
+    storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-1", $ACCESS_WRITE ],
@@ -203,14 +215,23 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+die "$storage" if $storage->isa("Amanda::Changer::Error");
+$chg = $storage->{'chg'};
 $chg->{'support_fast_search'} = 0; # no fast search -> skip stage 1
 set_current_slot(2); # slot 2 is acceptable, so it should be returned
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 1,
-    changer => $chg);
+    storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
@@ -218,7 +239,16 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+$chg = $storage->{'chg'};
 $chg->{'support_fast_search'} = 1;
 
 label_slot(1); # remove TEST-1
@@ -227,8 +257,7 @@ set_current_slot(1);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 2,
-    changer => $chg);
+    storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
@@ -236,14 +265,16 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+$chg = $storage->{'chg'};
+$chg->{'support_fast_search'} = 1;
 
 set_current_slot(3);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 2,
-    changer => $chg);
+    retention_tapes => 2,
+    storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-3", $ACCESS_WRITE ],
@@ -251,16 +282,24 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot",
-			tapelist => $tapelist,
-			autolabel => { 'template'     => "TEST-%",
-			               'empty'        => 1,
-			               'volume_error' => 1});
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
+				 policy    => "\"test_policy\"",
+				 labelstr  => "\"TEST-[0-9]+\"",
+				 autolabel  => "\"TEST-%\" empty volume-error" ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 2,
-    changer => $chg);
+    retention_tapes => 2,
+    storage => $storage);
 set_current_slot(5);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
@@ -269,14 +308,25 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot",
-			tapelist => $tapelist,
-			autolabel => { });
+$testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
+$testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
+				 policy    => "\"test_policy\"",
+				 labelstr  => "\"TEST-[0-9]+\"" ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+#$chg = Amanda::Changer->new("chg-disk:$taperoot",
+#			tapelist => $tapelist,
+#			autolabel => { });
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 1,
-    changer => $chg);
+    storage => $storage);
 set_current_slot(6);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
@@ -285,15 +335,25 @@ is_deeply([ @results ],
 	  or diag(Dumper(\@results));
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot",
-			tapelist => $tapelist);
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
+				 policy    => "\"test_policy\"" ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+#$chg = Amanda::Changer->new("chg-disk:$taperoot",
+#			tapelist => $tapelist);
 # simulate "amlabel"
 label_slot(1, "TEST-6", "X", "reuse", 1);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 2,
-    changer => $chg);
+    storage => $storage);
 set_current_slot(2);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
@@ -309,14 +369,25 @@ label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
 label_slot(4, "TEST-4", "20090424173004", "reuse", 1);
 $taperscan->quit();
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
+				 policy    => "\"test_policy\"",
+				 labelstr  => "\"TEST-[0-9]+\"" ]);
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+#$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
 set_current_slot(1);
 
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    tapecycle => 2,
-    changer => $chg);
+    storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
@@ -373,6 +444,13 @@ $testconf->add_changer('robo2', [
 	# an point to the mock mtx
 	property => "\"mtx\" \"$mock_mtx_path\"",
 ]);
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->add_storage("robo1", [ tpchanger => "\"robo1\"",
+				  policy => "\"test_policy\"",
+				 labelstr  => "\"TEST-[0-9]+\"" ]);
+$testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
+				  policy => "\"test_policy\"",
+				 labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
 $tapelist->clear_tapelist();
 $tapelist->write();
@@ -383,6 +461,9 @@ label_mtx_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_mtx_slot(3, "TEST-3", "20090424173003", "reuse", 1);
 label_mtx_slot(4, "TEST-4", "20090424173004", "reuse", 1);
 
+$testconf->remove_param("tpchanger");
+$testconf->add_param("storage", "\"robo2\"");
+$testconf->write();
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
 	my ($level, @errors) = Amanda::Config::config_errors();
@@ -414,12 +495,14 @@ sub test_robot {
 
     step released => sub {
         $chg->quit();
-        $chg = Amanda::Changer->new("robo1", tapelist => $tapelist);
+	$storage = Amanda::Storage->new(storage_name => "robo1",
+					tapelist => $tapelist);
+        #$chg = Amanda::Changer->new("robo1", tapelist => $tapelist);
         $taperscan = Amanda::Taper::Scan->new(
 	    tapelist  => $tapelist,
 	    algorithm => "traditional",
 	    tapecycle => 2,
-	    changer => $chg);
+	    storage => $storage);
         @results = run_scan($taperscan);
         is_deeply([ @results ],
 	    [ undef, "TEST-2", $ACCESS_WRITE ],

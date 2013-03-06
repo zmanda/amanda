@@ -128,9 +128,8 @@ sub analyze {
 		push @reusable, $sl;
 	    } else {
 		my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($sl->{'label'});
-		if ($vol_tle &&
-		    match_labelstr( $self->{'labelstr'}, $self->{'autolabel'}, $sl->{'label'}, $sl->{'barcode'}, $sl->{'meta'})) {
-		    if ($vol_tle->{'datestamp'} eq '0') {
+		if ($vol_tle) {
+		    if ($self->volume_is_new_labelled($vol_tle, $sl)) {
 			push @new_labeled, $sl;
 		    }
 		} elsif ($self->volume_is_labelable($sl)) {

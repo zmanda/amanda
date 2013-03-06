@@ -31,7 +31,7 @@ controls one or more workers (L<Amanda::Taper::Worker>).
 
 The controller create an L<Amanda::Taper::Worker> object for each
 START_TAPER command it receive. It dispatch the following commands
-to the correct worker.  
+to the correct worker.
 
 =cut
 
@@ -42,6 +42,8 @@ use warnings;
 package Amanda::Taper::Controller;
 
 use POSIX qw( :errno_h );
+use Amanda::Policy;
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Header;
@@ -118,7 +120,24 @@ sub start {
 	debug => $Amanda::Config::debug_taper?'taper/driver':'',
     );
 
-    my $changer = Amanda::Changer->new(undef, tapelist => $self->{'tapelist'});
+    my ($storage) = Amanda::Storage->new(tapelist => $self->{'tapelist'});
+    if ($storage->isa("Amanda::Changer::Error")) {
+	$self->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
+		worker_name => "SETUP",
+		message => "$storage");
+
+	# log the error (note that the message is intentionally not quoted)
+	log_add($L_ERROR, "no-tape error [$storage]");
+
+	# wait for it to be transmitted, then exit
+	$self->{'proto'}->stop(finished_cb => sub {
+	    Amanda::MainLoop::quit();
+	});
+
+	# don't finish start()ing
+	return;
+    }
+    my $changer = $storage->{'chg'};
     if ($changer->isa("Amanda::Changer::Error")) {
 	# send a TAPE_ERROR right away
 	$self->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
@@ -139,8 +158,9 @@ sub start {
 
     my $interactivity = Amanda::Interactivity->new(
 					name => getconf($CNF_INTERACTIVITY));
-    my $scan_name = getconf($CNF_TAPERSCAN);
+    my $scan_name = $storage->{'taperscan_name'};
     $self->{'taperscan'} = Amanda::Taper::Scan->new(algorithm => $scan_name,
+					    storage => $storage,
 					    changer => $changer,
 					    interactivity => $interactivity,
 					    tapelist => $self->{'tapelist'});

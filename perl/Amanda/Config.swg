@@ -150,7 +150,9 @@ APPLY(CNF_EJECT_VOLUME) \
 APPLY(CNF_TMPDIR) \
 APPLY(CNF_REPORT_USE_MEDIA) \
 APPLY(CNF_REPORT_NEXT_MEDIA) \
-APPLY(CNF_REPORT_FORMAT)
+APPLY(CNF_REPORT_FORMAT) \
+APPLY(CNF_STORAGE) \
+APPLY(CNF_AMVAULT_STORAGE)
 
 amglue_add_enum_tag_fns(confparm_key);
 amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
@@ -319,6 +321,38 @@ amglue_add_enum_tag_fns(taperscan_key);
 amglue_add_constants(FOR_ALL_TAPERSCAN_KEY, taperscan_key);
 amglue_copy_to_tag(taperscan_key, getconf);
 constant_pod(Taperscan Parameters, FOR_ALL_TAPERSCAN_KEY)
+
+#define FOR_ALL_POLICY_KEY(APPLY)\
+APPLY(POLICY_COMMENT)\
+APPLY(POLICY_RETENTION_TAPES)\
+APPLY(POLICY_RETENTION_DAYS)\
+APPLY(POLICY_RETENTION_RECOVER)\
+APPLY(POLICY_RETENTION_FULL)
+
+amglue_add_enum_tag_fns(policy_key);
+amglue_add_constants(FOR_ALL_POLICY_KEY, policy_key);
+amglue_copy_to_tag(policy_key, getconf);
+constant_pod(Policy Parameters, FOR_ALL_POLICY_KEY)
+
+#define FOR_ALL_STORAGE_KEY(APPLY)\
+APPLY(STORAGE_COMMENT)\
+APPLY(STORAGE_TPCHANGER)\
+APPLY(STORAGE_POLICY)\
+APPLY(STORAGE_LABELSTR)\
+APPLY(STORAGE_AUTOLABEL)\
+APPLY(STORAGE_META_AUTOLABEL) \
+APPLY(STORAGE_TAPEPOOL) \
+APPLY(STORAGE_RUNTAPES) \
+APPLY(STORAGE_TAPERSCAN) \
+APPLY(STORAGE_TAPETYPE) \
+APPLY(STORAGE_MAX_DLE_BY_VOLUME) \
+APPLY(STORAGE_TAPERALGO) \
+APPLY(STORAGE_TAPER_PARALLEL_WRITE)
+
+amglue_add_enum_tag_fns(storage_key);
+amglue_add_constants(FOR_ALL_STORAGE_KEY, storage_key);
+amglue_copy_to_tag(storage_key, getconf);
+constant_pod(Storage Parameters, FOR_ALL_STORAGE_KEY)
 
 /*
  * Various enumerated conftypes
@@ -817,6 +851,24 @@ gboolean taperscan_seen(taperscan_t *app, taperscan_key key);
 amglue_export_tag(getconf,
     lookup_taperscan taperscan_getconf taperscan_name
     taperscan_seen taperscan_seen
+);
+
+policy_t *lookup_policy(char *identifier);
+val_t *policy_getconf(policy_t *app, policy_key key);
+char *policy_name(policy_t *app);
+gboolean policy_seen(policy_t *app, policy_key key);
+amglue_export_tag(getconf,
+    lookup_policy policy_getconf policy_name
+    policy_seen policy_seen
+);
+
+storage_t *lookup_storage(char *identifier);
+val_t *storage_getconf(storage_t *app, storage_key key);
+char *storage_name(storage_t *app);
+gboolean storage_seen(storage_t *app, storage_key key);
+amglue_export_tag(getconf,
+    lookup_storage storage_getconf storage_name
+    storage_seen storage_seen
 );
 
 %perlcode %{

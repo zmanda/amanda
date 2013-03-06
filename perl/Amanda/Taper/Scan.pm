@@ -56,13 +56,17 @@ volumes for writing.
 Call C<< Amanda::Taperscan->new() >> to create a new taperscan
 algorithm.  The constructor takes the following keyword arguments:
 
+    strorage      Amanda::Storage object to use
     changer       Amanda::Changer object to use (required)
     algorithm     Taperscan algorithm to instantiate
     tapelist      Amanda::Tapelist
-    tapecycle
     labelstr
     autolabel
     meta_autolabel
+    retention_tapes
+    retention_days
+    retention_recover
+    retention_full
 
 The changer object must always be provided, but C<algorithm> may be omitted, in
 which case the class specified by the user in the Amanda configuration file is
@@ -123,7 +127,6 @@ Similarly, to calculate the oldest reusable volume, call
 C<oldest_reusable_volume>:
 
     $self->oldest_reusable_volume(
-        new_label_ok => $nlo,    # count newly labeled vols as reusable?
     );
 
 =head2 user_msg_fn
@@ -232,25 +235,58 @@ use warnings;
 use Amanda::Config qw( :getconf );
 use Amanda::Tapelist;
 use Amanda::Debug;
-use Amanda::Util qw( match_labelstr );
+use Amanda::Util qw( match_labelstr_template );
 
 sub new {
     my $class = shift;
     my %params = @_;
 
-    die "No changer given to Amanda::Taper::Scan->new"
-	unless exists $params{'changer'};
+    die "No storage given to Amanda::Taper::Scan->new"
+	unless exists $params{'storage'};
     # fill in the optional parameters
     $params{'algorithm'} = "traditional"
 	unless defined $params{'algorithm'} and $params{'algorithm'} ne '';
-    $params{'tapecycle'} = getconf($CNF_TAPECYCLE)
-	unless exists $params{'tapecycle'};
+    if ($params{'storage'}) {
+	$params{'labelstr'} = $params{'storage'}->{'labelstr'}
+	    if !exists $params{'labelstr'};
+	$params{'autolabel'} = $params{'storage'}->{'autolabel'}
+	    if !exists $params{'autolabel'};
+	$params{'meta_autolabel'} = $params{'storage'}->{'meta_autolabel'}
+	    if !exists $params{'meta_autolabel'};
+	$params{'tapepool'} = $params{'storage'}->{'tapepool'}
+	    if !exists $params{'tapepool'};
+	if ($params{'storage'}->{'policy'}) {
+	    $params{'retention_tapes'} = $params{'storage'}->{'policy'}->{'retention_tapes'}
+			unless exists $params{'retention_tapes'};
+	    $params{'retention_days'} = $params{'storage'}->{'policy'}->{'retention_days'}
+			unless exists $params{'retention_days'};
+	    $params{'retention_recover'} = $params{'storage'}->{'policy'}->{'retention_recover'}
+			unless exists $params{'retention_recover'};
+	    $params{'retention_full'} = $params{'storage'}->{'policy'}->{'retention_full'}
+			unless exists $params{'retention_full'};
+	}
+	$params{'changer'} = $params{'storage'}->{'chg'}
+			unless exists $params{'changer'};
+    }
+    if ($params{'chg'}) {
+	my $chg = $params{'changer'};
+    }
+    $params{'retention_tapes'} = getconf($CNF_TAPECYCLE)
+	unless exists $params{'retention_tapes'};
+    $params{'retention_days'} = 0
+	unless defined $params{'retention_days'};
+    $params{'retention_recover'} = 0
+	unless defined $params{'retention_recover'};
+    $params{'retention_full'} = 0
+	unless defined $params{'retention_full'};
     $params{'labelstr'} = getconf($CNF_LABELSTR)
 	unless exists $params{'labelstr'};
     $params{'autolabel'} = getconf($CNF_AUTOLABEL)
 	unless exists $params{'autolabel'};
     $params{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
 	unless exists $params{'meta_autolabel'};
+    $params{'tapepool'} = get_config_name()
+	unless exists $params{'tapepool'};
 
     my $plugin;
     if (!defined $params{'algorithm'} or $params{'algorithm'} eq '') {
@@ -282,7 +318,7 @@ sub new {
     # instantiate it
     my $self = eval {$pkgname->new(%params);};
     if ($@ || !defined $self) {
-	debug("Can't instantiate $pkgname");
+	Amanda::Debug::debug("Can't instantiate $pkgname");
 	die("Can't instantiate $pkgname");
     }
 
@@ -290,11 +326,16 @@ sub new {
     $self->{'changer'} = $params{'changer'};
     $self->{'algorithm'} = $params{'algorithm'};
     $self->{'plugin'} = $params{'plugin'};
-    $self->{'tapecycle'} = $params{'tapecycle'};
+    $self->{'retention_tapes'} = $params{'retention_tapes'};
+    $self->{'retention_days'} = $params{'retention_days'};
+    $self->{'retention_recover'} = $params{'retention_recover'};
+    $self->{'retention_full'} = $params{'retention_full'};
     $self->{'labelstr'} = $params{'labelstr'};
     $self->{'autolabel'} = $params{'autolabel'};
     $self->{'meta_autolabel'} = $params{'meta_autolabel'};
     $self->{'tapelist'} = $params{'tapelist'};
+    $self->{'storage'} = $params{'storage'};
+    $self->{'tapepool'} = $params{'tapepool'};
 
     return $self;
 }
@@ -334,20 +375,39 @@ sub oldest_reusable_volume {
     my $self = shift;
     my %params = @_;
 
+    return Amanda::Tapelist::get_last_reusable_tape_label(
+					$self->{'labelstr'}->{'template'},
+					$self->{'tapepool'},
+				        $self->{'storage'}->{'storage_name'},
+					$self->{'retention_tapes'},
+					$self->{'retention_days'},
+					$self->{'retention_recover'},
+					$self->{'retention_full'},
+				        0);
+
+    my $tapecycle = $self->{'retention_tapes'};
+
     my $best = undef;
     my $num_acceptable = 0;
     for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
 	next unless $tle->{'reuse'};
 	next if $tle->{'datestamp'} eq '0' and !$params{'new_label_ok'};
-	next if !match_labelstr($self->{'labelstr'}, $self->{'autolabel'},
-				$tle->{'label'}, $tle->{'barcode'}, $tle->{'meta'});
+	next if $tle->{'config'} and
+		$tle->{'config'} ne Amanda::Config::get_config_name();
+	next if $tle->{'pool'} and
+		$tle->{'pool'} ne $self->{'tapepool'};
+	next if !$tle->{'pool'} &&
+		!match_labelstr_template($self->{'labelstr'}->{'template'},
+				$tle->{'label'}, $tle->{'barcode'},
+				$tle->{'meta'});
 	$num_acceptable++;
 	$best = $tle;
     }
 
     # if we didn't find at least $tapecycle reusable tapes, then
     # there is no oldest reusable tape
-    return undef unless $num_acceptable >= $self->{'tapecycle'};
+
+    return undef unless $num_acceptable >= $tapecycle;
 
     return $best->{'label'};
 }
@@ -359,7 +419,12 @@ sub is_reusable_volume {
     my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($params{'label'});
     return 0 unless $vol_tle;
     return 0 unless $vol_tle->{'reuse'};
-    return 0 if !match_labelstr($self->{'labelstr'}, $self->{'autolabel'},
+    return 0 if $vol_tle->{'config'} and
+		$vol_tle->{'config'} ne Amanda::Config::get_config_name();
+    return 0 if $vol_tle->{'pool'} and
+		$vol_tle->{'pool'} ne $self->{'tapepool'};
+    return 0 if !$vol_tle->{'pool'} and
+		!match_labelstr_template($self->{'labelstr'}->{'template'},
 				$vol_tle->{'label'}, $vol_tle->{'barcode'},
 				$vol_tle->{'meta'});
 
@@ -367,14 +432,7 @@ sub is_reusable_volume {
 	return $params{'new_label_ok'};
     }
 
-    # see if it's in the collection of reusable volumes
-    my @tapelist = @{$self->{'tapelist'}->{'tles'}};
-    my @reusable = @tapelist[$self->{'tapecycle'}-1 .. $#tapelist];
-    for my $tle (@reusable) {
-        return 1 if $tle eq $vol_tle;
-    }
-
-    return 0;
+    return Amanda::Tapelist::volume_is_reusable($params{'label'});
 }
 
 1;

@@ -771,16 +771,20 @@ sub set_meta_label {
 sub make_new_tape_label {
     my $self = shift;
     my %params = @_;
-Amanda::Debug::debug("Changer::aggregate::Reservation ($self) make_new_tape_label");
 
-    $self->{'kid_res'}->make_new_tape_label(%params);
+    $params{'barcode'} = $self->{'barcode'} if !defined $params{'barcode'};
+    $params{'meta'} = $self->{'meta'} if !defined $params{'meta'};
+    if (!defined $params{'slot'}) {
+	$params{'slot'} = $self->{'this_slot'};
+	$params{'slot'} =~ s/^.*://g;
+    }
+    return $self->{'kid_res'}->make_new_tape_label(%params);
 }
 
 sub make_new_meta_label {
     my $self = shift;
     my %params = @_;
-Amanda::Debug::debug("Changer::aggregate::Reservation ($self) make_new_meta_label");
 
-    $self->{'kid_res'}->make_new_meta_label(%params);
+    return $self->{'kid_res'}->make_new_meta_label(%params);
 }
 

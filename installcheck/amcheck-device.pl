@@ -51,7 +51,7 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", "\"TESTCONF-\$4s\" empty volume_error");
 $testconf->write();
 
-like(run_err("$amlibexecdir/amcheck-device", "TESTCONF"),
-    qr/ERROR: Newly-generated label 'TESTCONF-0001' does not match labelstr 'TESTCONF\[0-9\]\[0-9\]'/m,
+like(run_get("$amlibexecdir/amcheck-device", "TESTCONF"),
+    qr/Will write label 'TESTCONF-0001' to new volume in slot 1/,
     "a run with incompatible autolabel and labelstr");
 

@@ -44,8 +44,29 @@ sub setup_chg_disk {
     return "chg-disk:$vtape_root";
 }
 
+sub add_storage {
+    my $tertiary_chg = setup_chg_disk();
+
+    my $amanda_conf_filename = "$CONFIG_DIR/TESTCONF/amanda.conf";
+    open(my $fh, ">>", $amanda_conf_filename);
+    print $fh <<EOF;
+define policy "amvault-policy" {
+    comment "amvault-policy-comment"
+    retention-tapes 15
+}
+define storage "amvault-test" {
+    comment "amvault-storage-comment"
+    tpchanger "$tertiary_chg"
+    policy "amvault-policy"
+    autolabel "TESTCONF%%" any
+}
+amvault-storage "amvault-test"
+EOF
+
+}
 # set up a basic dump
 Installcheck::Dumpcache::load("basic");
+add_storage();
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
@@ -59,30 +80,21 @@ my $tertiary_chg = setup_chg_disk();
 
 # try a few failures first
 like(run_err("$sbindir/amvault",
-		'--autolabel=any',
-		'--label-template', "TESTCONF%%",
 		'--src-timestamp', 'latest',
-		'--dst-changer', $tertiary_chg,
 		'TESTCONF', 'someotherhost'),
     qr/No dumps to vault/,
     "amvault with a non-matching dumpspec dumps nothing")
     or diag($Installcheck::Run::stderr);
 
 like(run_err("$sbindir/amvault",
-		'--autolabel=any',
-		'--label-template', "TESTCONF%%",
 		'--src-timestamp', 'latest',
 		'--fulls-only',
-		'--dst-changer', $tertiary_chg,
 		'TESTCONF', '*', '*', '*', '1-3'),
     qr/No dumps to vault/,
     "amvault with --fulls-only but specifying non-full dumpspecs dumps nothing")
     or diag($Installcheck::Run::stderr);
 
 like(run_err("$sbindir/amvault",
-		'--autolabel=any',
-		'--label-template', "TESTCONF%%",
-		'--dst-changer', $tertiary_chg,
 		'TESTCONF'),
     qr/specify something to select/,
     "amvault without any limiting factors is an error"),
@@ -90,10 +102,7 @@ like(run_err("$sbindir/amvault",
 
 # now a successful vaulting
 ok(run("$sbindir/amvault",
-		'--autolabel=any',
-		'--label-template', "TESTCONF%%",
 		'--src-timestamp', 'latest',
-		'--dst-changer', $tertiary_chg,
 		'TESTCONF'),
     "amvault runs!")
     or diag($Installcheck::Run::stderr);
@@ -124,6 +133,7 @@ Installcheck::Run::cleanup();
 
 # try the multi dump, to get a better idea of the filtering possibilities
 Installcheck::Dumpcache::load("multi");
+add_storage();
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
@@ -151,10 +161,7 @@ sub get_dry_run {
 
 is_deeply([ get_dry_run("$sbindir/amvault",
 		'--dry-run',
-		'--autolabel=any',
-		'--label-template', "TESTCONF%%",
 		'--fulls-only',
-		'--dst-changer', $tertiary_chg,
 		'TESTCONF') ], [
     [ "TESTCONF01", "1", "localhost", "$diskname/dir", "0" ],
     [ "TESTCONF01", "2", "localhost", "$diskname",     "0" ],
@@ -163,9 +170,6 @@ is_deeply([ get_dry_run("$sbindir/amvault",
 
 is_deeply([ get_dry_run("$sbindir/amvault",
 		'--dry-run',
-		'--autolabel=any',
-		'--label-template', "TESTCONF%%",
-		'--dst-changer', $tertiary_chg,
 		'TESTCONF', "localhost", "$diskname/dir") ], [
     [ "holding", "",     "localhost", "$diskname/dir",     "1" ],
     [ "TESTCONF01", "1", "localhost", "$diskname/dir",     "0" ],
@@ -205,15 +209,21 @@ define changer "tertiary" {
     property append "tape-device" "1=$drive_root/drive1"
     changerfile "$chg_dir-changerfile"
 }
+define policy "tertiary-policy" {
+    retention-tapes 15
+}
+define storage "tertiary-storage" {
+    tpchanger "tertiary"
+    policy "tertiary-policy"
+    autolabel "TESTCONF%%" any
+}
 EOF
 
     $tertiary_chg = "tertiary";
     ok(run("$sbindir/amvault",
 		    '--export',
-		    '--autolabel=any',
-		    '--label-template', "TESTCONF%%",
 		    '--src-timestamp', 'latest',
-		    '--dst-changer', $tertiary_chg,
+		    '-oamvault-storage=tertiary-storage',
 		    'TESTCONF'),
 	"amvault runs with an NDMP device as secondary and tertiary, with --export")
 	or diag($Installcheck::Run::stderr);

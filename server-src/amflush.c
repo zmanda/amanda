@@ -634,9 +634,20 @@ confirm(GSList *datestamp_list)
 {
     tape_t *tp;
     char *tpchanger;
+    char *storage;
+    char *policy_name;
     GSList *datestamp;
     int ch;
     char *extra;
+    char *l_template;
+    char *tapepool;
+    int   tapecycle;
+    int   retention_tapes;
+    int   retention_days;
+    int   retention_recover;
+    int   retention_full;
+    storage_t *st = NULL;
+    policy_t *po = NULL;
 
     g_printf(_("\nToday is: %s\n"),amflush_datestamp);
     g_printf(_("Flushing dumps from"));
@@ -645,15 +656,50 @@ confirm(GSList *datestamp_list)
 	g_printf("%s %s", extra, (char *)datestamp->data);
 	extra = ",";
     }
+    storage = getconf_str(CNF_STORAGE);
     tpchanger = getconf_str(CNF_TPCHANGER);
-    if(*tpchanger != '\0') {
-	g_printf(_(" using tape changer \"%s\".\n"), tpchanger);
+
+    if (*storage != '\0') {
+	g_printf(_(" using storage \"%s\","), storage);
+	st = lookup_storage(storage);
+	tpchanger = storage_get_tpchanger(st);
+	g_printf(_(" tape changer \"%s\".\n"), tpchanger);
+	l_template = storage_get_labelstr(st)->template;
+	tapepool = storage_get_tapepool(st);
+	policy_name = storage_get_policy(st);
+	po = lookup_policy(policy_name);
+	if (po) {
+	    if (policy_seen(po, POLICY_RETENTION_TAPES))
+		retention_tapes = policy_get_retention_tapes(po);
+	    else
+		retention_tapes = getconf_int(CNF_TAPECYCLE);
+	    retention_days = policy_get_retention_days(po);
+	    retention_recover = policy_get_retention_recover(po);
+	    retention_full = policy_get_retention_full(po);
+	} else {
+	    retention_tapes = getconf_int(CNF_TAPECYCLE);
+	    retention_days = 0;
+	    retention_recover = 0;
+	    retention_full = 0;
+	}
+	tapecycle = getconf_int(CNF_TAPECYCLE);
+	tp = lookup_last_reusable_tape(l_template, tapepool, storage,
+				       retention_tapes,
+				       retention_days, retention_recover,
+				       retention_full, 0);
     } else {
-	g_printf(_(" to tape drive \"%s\".\n"), getconf_str(CNF_TAPEDEV));
+	if (*tpchanger != '\0') {
+	    g_printf(_(" using tape changer \"%s\".\n"), tpchanger);
+	} else {
+	    tpchanger = getconf_str(CNF_TAPEDEV);
+	    g_printf(_(" to tape drive \"%s\".\n"), tpchanger);
+	}
+	l_template = getconf_labelstr(CNF_LABELSTR)->template;
+	tapecycle = getconf_int(CNF_TAPECYCLE);
+	tp = lookup_last_reusable_tape(l_template, "ERROR-POOL", "ERROR-STORAGE",
+				       tapecycle, 0, 0, 0, 0);
     }
 
-    g_printf(_("Expecting "));
-    tp = lookup_last_reusable_tape(0);
     if(tp != NULL)
 	g_printf(_("tape %s or "), tp->label);
     g_printf(_("a new tape."));

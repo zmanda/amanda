@@ -31,6 +31,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants :quoting );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
@@ -435,12 +436,16 @@ sub main {
 	}
 
 	my $interactivity = Amanda::Interactivity::amfetchdump->new();
+	my $storage;
 	# if we have an explicit device, then the clerk doesn't get a changer --
 	# we operate the changer via Amanda::Recovery::Scan
 	if (defined $opt_device) {
-	    $chg = Amanda::Changer->new($opt_device);
+	    $storage = Amanda::Storage->new(changer_name => $opt_device);
+	    return failure($storage, $finished_cb) if $storage->isa("Amanda::Changer::Error");
+	    $chg = $storage->{'chg'};
 	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
 	    $scan = Amanda::Recovery::Scan->new(
+				storage => $storage,
 				chg => $chg,
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
@@ -448,7 +453,14 @@ sub main {
 		feedback => main::Feedback->new($chg, $opt_device, $is_tty),
 		scan     => $scan);
 	} else {
+	    $storage = Amanda::Storage->new();
+	    return failure($storage, $finished_cb) if $storage->isa("Amanda::Changer::Error");
+	    $chg = $storage->{'chg'};
+	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
+
 	    $scan = Amanda::Recovery::Scan->new(
+				storage       => $storage,
+				chg           => $chg,
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 
@@ -461,6 +473,7 @@ sub main {
 	# planner gets to plan against the same changer the user specified
 	Amanda::Recovery::Planner::make_plan(
 	    dumpspecs => [ @opt_dumpspecs ],
+	    labelstr => $storage->{'labelstr'},
 	    changer => $chg,
 	    plan_cb => $steps->{'plan_cb'},
 	    $opt_no_reassembly? (one_dump_per_part => 1) : ());

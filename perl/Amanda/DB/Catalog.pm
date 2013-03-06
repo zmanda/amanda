@@ -1070,7 +1070,7 @@ sub add_part {
 		    and zeropad($_->{'datestamp'}) eq zeropad($dump->{'write_timestamp'})
 		} @{$tapelist->{tles}}) {
 	    $tapelist->reload(1);
-	    $tapelist->add_tapelabel($write_timestamp, $dump->{'label'}, undef, 1);
+	    $tapelist->add_tapelabel($write_timestamp, $dump->{'label'}, undef, 1,undef,undef,undef,undef,undef, Amanda::Config::get_config_name());
 	    $tapelist->write();
 	}
     }

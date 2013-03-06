@@ -48,6 +48,8 @@ result:
    "result" :{"tles":[{"reuse":"1",
                        "comment":null,
                        "blocksize":"262144",
+                       "pool":"pool",
+                       "config":"config",
                        "position":1,
                        "barcode":null,
                        "label":"JLM-TEST-010",
@@ -56,6 +58,8 @@ result:
 		      {"reuse":"1",
                        "comment":null,
                        "blocksize":"262144",
+                       "pool":"pool",
+                       "config":"config",
                        "position":2,
                        "barcode":null,
                        "label":"JLM-TEST-009",
@@ -77,6 +81,8 @@ Add a label to the tapelist file.
               "barcode":"ABCDEF",
               "comment":"a comment",
               "blocksize":"262144",
+              "pool":"pool",
+              "config":"config",
               "meta":"AB"},
    "id:     :"2"}
 
@@ -101,6 +107,8 @@ Modify a entry in the tapelist file.
               "barcode":"ABCDEF",
               "comment":"a comment",
               "blocksize":"262144",
+              "pool":"pool",
+              "config":"config",
               "meta":"AB"},
    "id:     :"3"}
 
@@ -177,6 +185,9 @@ sub update {
     my $barcode = $params{'barcode'};
     my $meta = $params{'meta'};
     my $blocksize = $params{'blocksize'};
+    my $pool = $params{'pool'};
+    my $storage = $params{'storage'};
+    my $config = $params{'config'};
     my $comment = $params{'comment'};
 
     $tl->reload(1);
@@ -213,6 +224,27 @@ sub update {
 	    $tle->{'blocksize'} = $blocksize;
 	}
     }
+    if (exists $params{'pool'}) {
+	if (!defined $pool || $pool eq "") {
+	    $tle->{'pool'} = undef;
+	} else {
+	    $tle->{'pool'} = $blocksize;
+	}
+    }
+    if (exists $params{'storage'}) {
+	if (!defined $storage || $storage eq "") {
+	    $tle->{'storage'} = undef;
+	} else {
+	    $tle->{'storage'} = $blocksize;
+	}
+    }
+    if (exists $params{'config'}) {
+	if (!defined $config || $config eq "") {
+	    $tle->{'config'} = undef;
+	} else {
+	    $tle->{'config'} = $config;
+	}
+    }
     if (exists $params{'comment'}) {
 	if (!defined $comment || $comment eq "") {
 	    $tle->{'comment'} = undef;
@@ -237,6 +269,9 @@ sub add {
     my $barcode = $params{'barcode'};
     my $meta = $params{'meta'};
     my $blocksize = $params{'blocksize'};
+    my $pool = $params{'pool'};
+    my $storage = $params{'storage'};
+    my $config = $params{'config'};
     my $comment = $params{'comment'};
 
 
@@ -247,7 +282,7 @@ sub add {
 	$tl->unlock();
 	die [3004, "label already exist", $label];
     }
-    $tl->add_tapelabel($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize);
+    $tl->add_tapelabel($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize, $pool, $storage, $config);
     $tl->write();
 
     return "OK";

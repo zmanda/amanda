@@ -1353,7 +1353,6 @@ sub _device_start {
 
     my $device = $reservation->{'device'};
     my $tl = $self->{'taperscan'}->{'tapelist'};
-    my $meta;
 
     if (!defined $tl) { # For Mock::Taperscan in installcheck
 	if (!$device->start($access_mode, $new_label, $self->{'write_timestamp'})) {
@@ -1390,8 +1389,11 @@ sub _device_start {
 		$tl->unlock();
 		return $finished_cb->($err);
 	    }
-	    $tl->add_tapelabel('0', $new_label, undef, 1, $meta,
-			       $reservation->{'barcode'});
+	    $tl->add_tapelabel('1', $new_label, undef, 0, $meta,
+			       $reservation->{'barcode'}, undef,
+			       $self->{'taperscan'}->{'storage'}->{'tapepool'},
+			       $self->{'taperscan'}->{'storage'}->{'storage_name'},
+			       Amanda::Config::get_config_name());
 	    $tl->write();
 	    $self->dbg("generate new label '$new_label'");
 	} else {
@@ -1423,7 +1425,10 @@ sub _device_start {
 	$tl->remove_tapelabel($new_label);
 	$tl->add_tapelabel($self->{'write_timestamp'}, $new_label,
 			   $tle? $tle->{'comment'} : undef, 1, $meta,
-			   $reservation->{'barcode'}, $device->block_size/1024);
+			   $reservation->{'barcode'}, $device->block_size/1024,
+			   $self->{'taperscan'}->{'storage'}->{'tapepool'},
+			   $self->{'taperscan'}->{'storage'}->{'storage_name'},
+			   Amanda::Config::get_config_name());
 	$tl->write();
 
 	$reservation->set_meta_label(meta => $meta,
@@ -1763,6 +1768,12 @@ sub _start_scanning {
 	    } elsif ($params{'not_in_tapelist'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "Slot $params{'slot'} with label $params{'label'} is not in the tapelist");
+	    } elsif ($params{'other_config'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} is use by config $params{'config'}");
+	    } elsif ($params{'other_pool'}) {
+		$self->{'feedback'}->scribe_notif_log_info(
+		    message => "Slot $params{'slot'} with label $params{'label'} is in pool $params{'pool'}");
 	    } elsif ($params{'active'}) {
 		$self->{'feedback'}->scribe_notif_log_info(
 		    message => "Slot $params{'slot'} with label $params{'label'} is not reusable");

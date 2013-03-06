@@ -33,13 +33,28 @@
 #include "match.h"
 #include "tapefile.h"
 #include "conffile.h"
+#include "timestamp.h"
+#include "find.h"
 
 static tape_t *tape_list = NULL;
+static gboolean retention_computed = FALSE;
 
 /* local functions */
 static tape_t *parse_tapeline(int *status, char *line);
 static tape_t *insert(tape_t *list, tape_t *tp);
 static time_t stamp2time(char *datestamp);
+static void compute_storage_retention_nb(const char *storage,
+					 const char *tapepool,
+					 const char *l_template,
+					 int retention_tapes);
+static void compute_storage_retention(find_result_t *output_find,
+				      const char *storage,
+				      const char *tapepool,
+				      const char *l_template,
+				      int   retention_tapes,
+				      int   retention_days,
+				      int   retention_recover,
+				      int   retention_full);
 
 int
 read_tapelist(
@@ -111,6 +126,12 @@ write_tapelist(
 	    g_fprintf(tapef, " META:%s", tp->meta);
 	if (tp->blocksize)
 	    g_fprintf(tapef, " BLOCKSIZE:%jd", (intmax_t)tp->blocksize);
+	if (tp->pool)
+	    g_fprintf(tapef, " POOL:%s", tp->pool);
+	if (tp->storage)
+	    g_fprintf(tapef, " STORAGE:%s", tp->storage);
+	if (tp->config)
+	    g_fprintf(tapef, " CONFIG:%s", tp->config);
 	if (tp->comment)
 	    g_fprintf(tapef, " #%s", tp->comment);
 	g_fprintf(tapef, "\n");
@@ -198,22 +219,36 @@ lookup_nb_tape(void)
 
 char *
 get_last_reusable_tape_label(
-     int skip)
+    const char *l_template,
+    const char *tapepool,
+    const char *storage,
+    int   retention_tapes,
+    int   retention_days,
+    int   retention_recover,
+    int   retention_full,
+    int   skip)
 {
-    tape_t *tp = lookup_last_reusable_tape(skip);
+    tape_t *tp = lookup_last_reusable_tape(l_template, tapepool, storage,
+					   retention_tapes,
+					   retention_days, retention_recover,
+					   retention_full, skip);
     return (tp != NULL) ? tp->label : NULL;
 }
 
 tape_t *
 lookup_last_reusable_tape(
-     int skip)
+    const char *l_template,
+    const char *tapepool,
+    const char *storage,
+    int   retention_tapes,
+    int   retention_days G_GNUC_UNUSED,
+    int   retention_recover G_GNUC_UNUSED,
+    int   retention_full G_GNUC_UNUSED,
+    int   skip)
 {
     tape_t *tp, **tpsave;
     int count=0;
     int s;
-    int tapecycle = getconf_int(CNF_TAPECYCLE);
-    labelstr_t *labelstr = getconf_labelstr(CNF_LABELSTR);
-    autolabel_t *autolabel = getconf_autolabel(CNF_AUTOLABEL);
 
     /*
      * The idea here is we keep the last "several" reusable tapes we
@@ -221,14 +256,18 @@ lookup_last_reusable_tape(
      * caller.  If skip is zero, the oldest is returned, if it is
      * one, the next oldest, two, the next to next oldest and so on.
      */
+    compute_retention();
     tpsave = g_malloc((skip + 1) * sizeof(*tpsave));
     for(s = 0; s <= skip; s++) {
 	tpsave[s] = NULL;
     }
     for(tp = tape_list; tp != NULL; tp = tp->next) {
 	if (tp->reuse == 1 && !g_str_equal(tp->datestamp, "0") &&
-	    match_labelstr(labelstr, autolabel, tp->label,
-			   tp->barcode, tp->meta)) {
+	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
+	    (!tp->storage || g_str_equal(tp->storage, storage)) &&
+	    ((tp->pool && g_str_equal(tp->pool, tapepool)) ||
+	     (!tp->pool && match_labelstr_template(l_template, tp->label,
+						   tp->barcode, tp->meta)))) {
 	    count++;
 	    for(s = skip; s > 0; s--) {
 	        tpsave[s] = tpsave[s - 1];
@@ -236,9 +275,9 @@ lookup_last_reusable_tape(
 	    tpsave[0] = tp;
 	}
     }
-    s = tapecycle - count;
+    s = retention_tapes - count;
     if(s < 0) s = 0;
-    if(count < tapecycle - skip) tp = NULL;
+    if(count < retention_tapes - skip) tp = NULL;
     else tp = tpsave[skip - s];
     amfree(tpsave);
     return tp;
@@ -248,21 +287,25 @@ int
 reusable_tape(
     tape_t *tp)
 {
-    int count = 0;
+    if (tp == NULL) return 0;
+    if (tp->reuse == 0) return 0;
+    if (g_str_equal(tp->datestamp, "0")) return 1;
+    compute_retention();
 
-    if(tp == NULL) return 0;
-    if(tp->reuse == 0) return 0;
-    if( g_str_equal(tp->datestamp, "0")) return 1;
-    while(tp != NULL) {
-	if(tp->reuse == 1) count++;
-	tp = tp->prev;
-    }
-    return (count >= getconf_int(CNF_TAPECYCLE));
+    return (!tp->retention && !tp->retention_nb);
+}
+
+int
+volume_is_reusable(
+    const char *label)
+{
+    tape_t *tp = lookup_tapelabel(label);
+    return reusable_tape(tp);
 }
 
 void
 remove_tapelabel(
-    char *label)
+    const char *label)
 {
     tape_t *tp, *prev, *next;
 
@@ -286,42 +329,12 @@ remove_tapelabel(
 	amfree(tp->label);
 	amfree(tp->meta);
 	amfree(tp->comment);
+	amfree(tp->pool);
+	amfree(tp->storage);
+	amfree(tp->config);
 	amfree(tp->barcode);
 	amfree(tp);
     }
-}
-
-tape_t *
-add_tapelabel(
-    char *datestamp,
-    char *label,
-    char *comment)
-{
-    tape_t *cur, *new;
-
-    /* insert a new record to the front of the list */
-
-    new = g_new0(tape_t, 1);
-
-    new->datestamp = g_strdup(datestamp);
-    new->position = 0;
-    new->reuse = 1;
-    new->label = g_strdup(label);
-    new->comment = comment? g_strdup(comment) : NULL;
-
-    new->prev  = NULL;
-    if(tape_list != NULL) tape_list->prev = new;
-    new->next = tape_list;
-    tape_list = new;
-
-    /* scan list, updating positions */
-    cur = tape_list;
-    while(cur != NULL) {
-	cur->position++;
-	cur = cur->next;
-    }
-
-    return new;
 }
 
 int
@@ -407,6 +420,8 @@ parse_tapeline(
 	s[-1] = '\0';
 	skip_whitespace(s, ch);
     }
+    tp->retention = !tp->reuse;
+    tp->retention_nb = FALSE;
     if(strncmp_const(s - 1, "no-reuse") == 0) {
 	tp->reuse = 0;
 	s1 = s - 1;
@@ -438,6 +453,31 @@ parse_tapeline(
 	skip_whitespace(s, ch);
 	tp->blocksize = atol(s1);
     }
+
+    if (strncmp_const(s - 1, "POOL:") == 0) {
+	s1 = s - 1 + 5;
+	skip_non_whitespace(s, ch);
+	s[-1] = '\0';
+	skip_whitespace(s, ch);
+	tp->pool = g_strdup(s1);
+    }
+
+    if (strncmp_const(s - 1, "STORAGE:") == 0) {
+	s1 = s - 1 + 8;
+	skip_non_whitespace(s, ch);
+	s[-1] = '\0';
+	skip_whitespace(s, ch);
+	tp->storage = g_strdup(s1);
+    }
+
+    if (strncmp_const(s - 1, "CONFIG:") == 0) {
+	s1 = s - 1 + 7;
+	skip_non_whitespace(s, ch);
+	s[-1] = '\0';
+	skip_whitespace(s, ch);
+	tp->config = g_strdup(s1);
+    }
+
     if (*(s - 1) == '#') {
 	tp->comment = g_strdup(s); /* skip leading '#' */
     } else if (*(s-1)) {
@@ -524,7 +564,7 @@ stamp2time(
     return (tt);
 }
 
-char *list_new_tapes(int nb)
+char *list_new_tapes(const char *l_template, int nb)
 {
     tape_t *last_tape, *iter;
     int c;
@@ -549,7 +589,8 @@ char *list_new_tapes(int nb)
     iter = last_tape;
     c = 0;
 
-    while(iter && nb > 0 && g_str_equal(iter->datestamp, "0")) {
+    while (iter && nb > 0 && g_str_equal(iter->datestamp, "0") &&
+			    match(l_template, last_tape->label)) {
         if (iter->reuse) {
             c++;
             nb--;
@@ -569,7 +610,7 @@ char *list_new_tapes(int nb)
     iter = last_tape->prev;
     c--;
     while (iter && c > 0 && g_str_equal(iter->datestamp,"0")) {
-        if (iter->reuse) {
+        if (iter->reuse && match(l_template, last_tape->label)) {
             g_string_append_printf(strbuf, ", %s", iter->label);
             c--;
         }
@@ -581,12 +622,260 @@ char *list_new_tapes(int nb)
 void
 print_new_tapes(
     FILE *output,
+    const char *l_template,
     int   nb)
 {
-    char *result = list_new_tapes(nb);
+    char *result = list_new_tapes(l_template, nb);
 
     if (result) {
 	g_fprintf(output,"%s\n", result);
 	amfree(result);
     }
 }
+
+
+static find_result_t *output_find = NULL;
+void
+compute_retention(void)
+{
+    tape_t     *tp;
+    storage_t  *storage;
+    disklist_t  diskp;
+
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+	tp->retention_nb = FALSE;
+    }
+
+    for (storage = get_first_storage(); storage != NULL;
+	 storage = get_next_storage(storage)) {
+	char       *policy_name = storage_get_policy(storage);
+	policy_t   *policy = lookup_policy(policy_name);
+	labelstr_t *labelstr = storage_get_labelstr(storage);
+	compute_storage_retention_nb(storage_name(storage),
+				     storage_get_tapepool(storage),
+				     labelstr->template,
+				     policy_get_retention_tapes(policy));
+    }
+
+    if (retention_computed)
+	return;
+
+    retention_computed = TRUE;
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+	tp->retention = !tp->reuse;
+	if (tp->config && !g_str_equal(tp->config, get_config_name())) {
+	    tp->retention = 1;
+	}
+    }
+
+    for (storage = get_first_storage(); storage != NULL;
+	 storage = get_next_storage(storage)) {
+	char       *policy_name = storage_get_policy(storage);
+	policy_t   *policy = lookup_policy(policy_name);
+	labelstr_t *labelstr = storage_get_labelstr(storage);
+
+	if (!output_find && (policy_get_retention_recover(policy) ||
+			     policy_get_retention_full(policy))) {
+	    char *conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+	    read_diskfile(conf_diskfile, &diskp);
+	    output_find = find_dump(&diskp);
+	    sort_find_result("hkDLpbfw", &output_find);
+	}
+
+	compute_storage_retention(output_find, storage_name(storage),
+				  storage_get_tapepool(storage),
+				  labelstr->template,
+				  policy_get_retention_tapes(policy),
+				  policy_get_retention_days(policy),
+				  policy_get_retention_recover(policy),
+				  policy_get_retention_full(policy));
+    }
+}
+
+
+static void
+compute_storage_retention_nb(
+    const char *storage,
+    const char *tapepool,
+    const char *l_template,
+    int   retention_tapes)
+{
+    tape_t *tp;
+
+    if (retention_tapes) {
+	int count = 0;
+	for (tp = tape_list; tp != NULL; tp = tp->next) {
+	    if (tp->reuse == 1 &&
+		!g_str_equal(tp->datestamp, "0") &&
+		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
+		(!tp->storage || g_str_equal(tp->storage, storage)) &&
+		((tp->pool && g_str_equal(tp->pool, tapepool)) ||
+		 (!tp->pool && match_labelstr_template(l_template, tp->label,
+						       tp->barcode, tp->meta)))) {
+		count++;
+		if (count < retention_tapes) {
+		    /* Do not mark them, as it change when a tape is
+		     * overwritten */
+		    /* tp->retention = TRUE; */
+		    tp->retention_nb = TRUE;
+		}
+	    }
+	}
+    }
+}
+
+static void
+compute_storage_retention(
+    find_result_t *output_find,
+    const char *storage,
+    const char *tapepool,
+    const char *l_template,
+    int   retention_tapes,
+    int   retention_days,
+    int   retention_recover,
+    int   retention_full)
+{
+    tape_t        *tp;
+
+    if (retention_tapes) {
+	/* done in compute_storage_retention_nb */
+    }
+
+    if (retention_days) {
+	char *datestr = get_timestamp_from_time(time(NULL) -
+					retention_days*86400);
+	for(tp = tape_list; tp != NULL; tp = tp->prev) {
+	    if (tp->reuse == 1 &&
+		g_ascii_strcasecmp(tp->datestamp, datestr) > 0 &&
+		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
+		(!tp->storage || g_str_equal(tp->storage, storage)) &&
+		((tp->pool && g_str_equal(tp->pool, tapepool)) ||
+		 (!tp->pool && match_labelstr_template(l_template, tp->label,
+						       tp->barcode, tp->meta)))) {
+		tp->retention = TRUE;
+	    }
+	}
+	g_free(datestr);
+    }
+
+    if (retention_recover) {
+	find_result_t *ofr; /* output_find_result */
+	char *datestr = get_timestamp_from_time(time(NULL) -
+				retention_recover*86400);
+	char *hostname  = "AlKHDA";
+	char *diskname  = "ADJAOLDUIN";
+	int   level     = -1;
+
+	for (ofr = output_find;
+	     ofr;
+	     ofr = ofr->next) {
+	    if (!g_str_equal(hostname, ofr->hostname) ||
+		!g_str_equal(diskname, ofr->diskname)) {
+		/* new dle */
+		hostname  = ofr->hostname;
+		diskname  = ofr->diskname;
+		level     = -1;
+	    }
+
+	    if (ofr->level < level ||
+		g_ascii_strcasecmp(ofr->timestamp, datestr) > 0) {
+		if (ofr->label && ofr->label[0] != '/') {
+		    tp = lookup_tapelabel(ofr->label);
+		    if ((!tp->config || g_str_equal(tp->config, get_config_name())) &&
+			(!tp->storage || g_str_equal(tp->storage, storage)) &&
+			((tp->pool && g_str_equal(tp->pool, tapepool)) ||
+			 (!tp->pool && match_labelstr_template(l_template, tp->label,
+							       tp->barcode, tp->meta)))) {
+			/* keep that label */
+			tp->retention = 1;
+		    }
+		}
+		level = ofr->level;
+	    }
+	}
+    }
+
+    if (retention_full) {
+	find_result_t *ofr; /* output_find_result */
+	char *hostname = "AlKHDA";
+	char *diskname = "ADJAOLDUIN";
+	int   count    = 0;
+
+	sort_find_result("hkDLpbfw", &output_find);
+
+	for (ofr = output_find;
+	     ofr;
+	     ofr = ofr->next) {
+	    if (!g_str_equal(hostname, ofr->hostname) ||
+		!g_str_equal(diskname, ofr->diskname)) {
+		/* new dle */
+		hostname = ofr->hostname;
+		diskname = ofr->diskname;
+		count    = 0;
+	    }
+
+	    if (ofr->level == 0 &&
+		count < retention_full) {
+		if (ofr->label && ofr->label[0] != '/') {
+		    tp = lookup_tapelabel(ofr->label);
+		    if ((!tp->config || g_str_equal(tp->config, get_config_name())) &&
+			(!tp->storage || g_str_equal(tp->storage, storage)) &&
+			((tp->pool && g_str_equal(tp->pool, tapepool)) ||
+			 (!tp->pool && match_labelstr_template(l_template, tp->label,
+							       tp->barcode, tp->meta)))) {
+			/* keep that label */
+			tp->retention = 1;
+			count++;
+		    }
+		}
+	    }
+	}
+    }
+}
+
+gchar **list_retention(void)
+{
+    int nb_tapes = 0;
+    tape_t *tp;
+    gchar **rv;
+    int r;
+
+    compute_retention();
+
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+        nb_tapes++;
+    }
+
+    rv = g_new0(gchar *, nb_tapes++);
+    r = 0;
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+        if (tp->retention || tp->retention_nb)
+	    rv[r++] = tp->label;
+    }
+    rv[r] = 0;
+    return rv;
+}
+
+gchar **list_no_retention(void)
+{
+    int nb_tapes = 0;
+    tape_t *tp;
+    gchar **rv;
+    int r;
+
+    compute_retention();
+
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+        nb_tapes++;
+    }
+
+    rv = g_new0(gchar *, nb_tapes++);
+    r = 0;
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+        if (!tp->retention && !tp->retention_nb)
+	    rv[r++] = tp->label;
+    }
+    rv[r] = 0;
+    return rv;
+}
+

@@ -1235,6 +1235,21 @@ make_template(
 }
 
 int
+match_labelstr_template(
+    const char *template,
+    const char *label,
+    const char *barcode,
+    const char *meta)
+{
+    char *ztemplate = make_template(template, barcode, meta);
+    int   result;
+
+    result = match(ztemplate, label);
+    g_free(ztemplate);
+    return result;
+}
+
+int
 match_labelstr(
     const labelstr_t *labelstr,
     const autolabel_t *autolabel,

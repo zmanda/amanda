@@ -117,7 +117,7 @@ sub load {
 	    message => "error opening device '$self->{device_name}': " . $device->error_or_status());
     }
 
-    if (my $msg = $self->{'config'}->configure_device($device)) {
+    if (my $msg = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	# a failure to configure a device is fatal, since it's probably
 	# a user configuration error (and thus unlikely to work for the
 	# next device, either)

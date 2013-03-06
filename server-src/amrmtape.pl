@@ -25,6 +25,7 @@ use warnings;
 
 use Amanda::Config qw( :init :getconf config_print_errors
   config_dir_relative new_config_overrides add_config_override);
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -44,14 +45,16 @@ my $amtrmlog = "$amlibexecdir/amtrmlog";
 my $dry_run;
 my $cleanup;
 my $erase;
-my $changer_name;
 my $keep_label;
 my $verbose = 1;
 my $help;
+my $list_retention;
+my $list_no_retention;
+my $remove_no_retention;
 
 sub usage() {
     print <<EOF
-$0 [-n] [-v] [-q] [-d] [config-overwrites] <config> <label>
+$0 [-n] [-v] [-q] [-d] [config-overwrites] <config> [label]
 \t--changer changer-name
 \t\tSpecify the name of the changer to use (for --erase).
 \t--cleanup
@@ -64,6 +67,12 @@ $0 [-n] [-v] [-q] [-d] [config-overwrites] <config> <label>
 \t\tDisplay this message.
 \t--keep-label
 \t\tDo not remove label from the tapelist
+\t--list-retention
+\t\tList all labels require to satisfy the policy of each storage.
+\t--list-no-retention
+\t\tList all labels not require to satisfy the policy of each storage.
+\t--remove-no-retention
+\t\tRemove all labels not require to satisfy the policy of each storage.
 \t-q, --quiet
 \t\tQuiet, opposite of -v.
 \t-v, --verbose
@@ -92,21 +101,21 @@ debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
 my $opts_ok = GetOptions(
     'version' => \&Amanda::Util::version_opt,
-    "changer=s" => \$changer_name,
+    "changer=s" => sub { add_config_override_opt( $config_overrides, "-otpchanger=".$_[1] ); },
     "cleanup" => \$cleanup,
     "dryrun|n" => \$dry_run,
     "erase" => \$erase,
     "help|h" => \$help,
     "keep-label" => \$keep_label,
+    "list-retention" => \$list_retention,
+    "list-no-retention" => \$list_no_retention,
+    "remove-no-retention" => \$remove_no_retention,
     'o=s' => sub { add_config_override_opt( $config_overrides, $_[1] ); },
     "quiet|q" => sub { undef $verbose; },
     "verbose|v" => \$verbose,
 );
 
-unless ($opts_ok && scalar(@ARGV) == 2) {
-    unless (scalar(@ARGV) == 2) {
-        print STDERR "Specify a configuration and label.\n";
-    }
+if (!$opts_ok) {
     usage();
     exit 1;
 }
@@ -114,6 +123,19 @@ unless ($opts_ok && scalar(@ARGV) == 2) {
 if ($help) {
     usage();
     exit 0;
+}
+
+if(scalar(@ARGV) < 0) {
+    print STDERR "Specify a configuration.\n";
+    usage();
+    exit 1;
+}
+
+if ((!$list_retention && !$list_no_retention && !$remove_no_retention) &&
+     scalar(@ARGV) == 1) {
+    print STDERR "Specify a configuration and label.\n";
+    usage();
+    exit 1;
 }
 
 my ($config_name, $label) = @ARGV;
@@ -148,11 +170,13 @@ unless ($tapelist) {
 
 my $scrub_db = sub {
     my $t = $tapelist->lookup_tapelabel($label);
-    if ($keep_label) {
-        $t->{'datestamp'} = 0 if $t;
-    } elsif (!defined $t) {
+    if (!defined $t) {
 	print "label '$label' not found in $tapelist_file\n";
 	exit 0;
+    } elsif ($keep_label) {
+        $t->{'datestamp'} = 0 if $t;
+        $t->{'storage'} = undef if $t;
+        $t->{'config'} = undef if $t;
     } else {
         $tapelist->remove_tapelabel($label);
     }
@@ -256,7 +280,14 @@ my $scrub_db = sub {
 
 my $erase_volume = make_cb('erase_volume' => sub {
     if ($erase) {
-	my $chg = Amanda::Changer->new($changer_name, tapelist => $tapelist);
+	my ($storage) = Amanda::Storage->new(tapelist => $tapelist);
+	if ($storage->isa("Amanda::Changer::Error")) {
+	    die "error creating storage: $storage";
+	}
+	my $chg = $storage->{'chg'};
+	if ($chg->isa("Amanda::Changer::Error")) {
+	    die "Error creating changer:  $chg";
+	}
 	$chg->load(
 	    'label' => $label,
 	    'res_cb' => sub {
@@ -304,8 +335,27 @@ my $erase_volume = make_cb('erase_volume' => sub {
     }
 });
 
-# kick things off
-$erase_volume->();
-Amanda::MainLoop::run();
+if ($list_retention) {
+    my @list = Amanda::Tapelist::list_retention();
+    foreach my $label (@list) {
+	print "$label\n";
+    }
+} elsif ($list_no_retention) {
+    my @list = Amanda::Tapelist::list_no_retention();
+    foreach my $label (@list) {
+	print "$label\n";
+    }
+} elsif ($remove_no_retention) {
+    my @list = Amanda::Tapelist::list_no_retention();
+    foreach my $mlabel (@list) {
+	$label = $mlabel;
+	$erase_volume->();
+	Amanda::MainLoop::run();
+    }
+} else {
+    # kick things off
+    $erase_volume->();
+    Amanda::MainLoop::run();
+}
 
 Amanda::Util::finish_application();

@@ -1,22 +1,54 @@
 Changes in release 4.0.0
 
-   * A CRC is compted on the backup mage and is verified on restore.
+   * A CRC is compted on the backup image and is verified on restore.
    * Run multiple backup inparallel, there is no lock preventing concurrent run.
    * Add letter based sequence to autolabel and meta-autolabel.
    * And 'includefile' directive for the disklist.
+   * tapepool, tape are in pool
    * amanda.conf (interface section)
        o add a src-ip setting.
    * amanda.conf (dumptype section)
        o add a retry-dump setting.
        o deprecate usetimestamps, it is always "yes"
+   * amanda.conf (new policy section), define when a tape can be reuse or not.
+       o retention-tapes
+       o retention-days
+       o retention-recover
+       o retention-full
+   * amanda.conf (new storage section), define how to operate each changer.
+       o tpchanger
+       o labelstr
+       o autolabel
+       o meta-autolabel
+       o tapepool
+       o runtapes
+       o taperscan
+       o tapetype
+       o max-dle-by-volume
+       o taperalgo
+       o taper-parallel-write
    * amanda.conf
        o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
 	 the autolabel variable.
+       o storage (default storage)
+       o amvault-storage (storage used by amvault)
+   * amvault
+       o deprecated option: --label-template, --dst-changer, --autolabel
+         they must be set in a storage section
+       o new --dst-storage option to voerwrite the default amvault-storage.
+   * amlabel
+       o new --pool and --storage options.
+   * amrmtape
+       o new --list-retentionm, list-no-retention and --remove-no-retention
+         options.
    * amfetchdump
        o --init and --no-restore arguments.
    * s3 device
        o New READ-FROM-GLACIER and TRANSITION-TO-GLACIER properties, they
          allow to transition s3 objects to Glacier.
+   * tapelist file
+       o include POOL, STORAGE and CONFIG
+       o you can sahre the same tapelist file across multiple config.
 
 Changes in release 3.3.4
 

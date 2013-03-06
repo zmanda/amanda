@@ -115,7 +115,7 @@ sub scan_result {
 	# we may not ever have looked for this, the oldest reusable volume, if
 	# the changer is not fast-searchable.  But we'll tell the user about it
 	# anyway.
-	my $oldest_reusable = $self->oldest_reusable_volume(new_label_ok => 0);
+	my $oldest_reusable = $self->oldest_reusable_volume();
 	$self->_user_msg(scan_failed => 1,
 			 expected_label => $oldest_reusable,
 			 expected_new => 1);
@@ -140,7 +140,6 @@ sub stage_1 {
     step setup => sub {
 	debug("Amanda::Taper::Scan::traditional stage 1: search for oldest reusable volume");
 	$oldest_reusable = $self->oldest_reusable_volume(
-	    new_label_ok => 0,      # stage 1 never selects new volumes
 	);
 
 	if (!defined $oldest_reusable) {
@@ -217,17 +216,17 @@ sub stage_1 {
 
         # go on to stage 2 if we didn't get the expected volume
         my $label = $res->{'device'}->volume_label;
-        my $labelstr = $self->{'labelstr'};
 	if ($label ne $oldest_reusable) {
             warning "Searched for label '$oldest_reusable' but found a volume labeled '$label'";
             return $self->release_and_stage_2($res, $result_cb);
         }
 
+        my $labelstr = $self->{'labelstr'};
         my $autolabel = $self->{'autolabel'};
-my $barcode = $res->{'barcode'} || "";
-my $meta = $res->{'meta'} || "";
+	my $barcode = $res->{'barcode'} || "";
+	my $meta = $res->{'meta'} || "";
 	if (!match_labelstr($labelstr, $autolabel, $label,
-			    $res->{'barcode'}, $res->{'meta'})) {
+			    $barcode, $meta)) {
             warning "Oldest reusable volume '$oldest_reusable' do not match the labelstr '" .
 				$labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'} . "'";
             return $self->release_and_stage_2($res, $result_cb);
@@ -359,17 +358,61 @@ sub stage_2 {
 	my $status = $dev->status;
 	my $labelstr = $res->{'chg'}->{'labelstr'};
 	my $label;
-#my $barcode = $res->{'barcode'} || "";
-#my $meta = $res->{'meta'} || "";
-	my $barcode = $res->{'barcode'};
-	my $meta = $res->{'meta'};
+	my $barcode = $res->{'barcode'} || "";
+	my $meta = $res->{'meta'} || "";
 	my $autolabel = $res->{'chg'}->{'autolabel'};
 
 	if ($status == $DEVICE_STATUS_SUCCESS) {
             $label = $dev->volume_label;
 
-            if (!match_labelstr($labelstr, $autolabel, $label, $barcode, $meta)) {
-	        if (!$autolabel->{'other_config'}) {
+	    # verify that the label is in the tapelist
+	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	    if (!$tle) {
+		if (!match_labelstr($labelstr, $autolabel, $label, $barcode,
+                                    $meta)) {
+		    if (!$autolabel->{'other_config'}) {
+		        $self->_user_msg(slot_result             => 1,
+				         does_not_match_labelstr => 1,
+				         labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},,
+				         slot                    => $slot,
+				         label                   => $label,
+				         res                     => $res);
+		        return $steps->{'try_continue'}->();
+		    }
+		} else {
+		    $self->_user_msg(slot_result     => 1,
+				     not_in_tapelist => 1,
+				     slot            => $slot,
+				     label           => $label,
+				     res             => $res);
+		    return $steps->{'try_continue'}->();
+		}
+	    } else {
+		if ($tle->{'config'} &&
+		    $tle->{'config'} ne Amanda::Config::get_config_name()) {
+		    $self->_user_msg(slot_result     => 1,
+				     other_config    => 1,
+				     config          => $tle->{'config'},
+				     slot            => $slot,
+				     label           => $label,
+				     res             => $res);
+		    return $steps->{'try_continue'}->();
+		}
+
+		if ($tle->{'pool'} &&
+		    $tle->{'pool'} ne $self->{'tapepool'}) {
+		    $self->_user_msg(slot_result     => 1,
+				     other_pool      => 1,
+				     pool            => $tle->{'pool'},
+				     slot            => $slot,
+				     label           => $label,
+				     res             => $res);
+		    return $steps->{'try_continue'}->();
+		}
+
+		if (!$tle->{'pool'} &&
+		    !match_labelstr($labelstr, $autolabel, $label, $barcode,
+				    $meta)) {
 		    $self->_user_msg(slot_result             => 1,
 				     does_not_match_labelstr => 1,
 				     labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},
@@ -377,36 +420,26 @@ sub stage_2 {
 				     label                   => $label,
 				     res                     => $res);
 		    return $steps->{'try_continue'}->();
-	        }
-            } else {
-	        # verify that the label is in the tapelist
-	        my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	        if (!$tle) {
-		    $self->_user_msg(slot_result     => 1,
-				     not_in_tapelist => 1,
-				     slot            => $slot,
-				     label           => $label,
-				     res             => $res);
-		    return $steps->{'try_continue'}->();
-	        }
+		}
 
-	        # see if it's reusable
-	        if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
+		# see if it's reusable
+		if (!$self->is_reusable_volume(label => $label, new_label_ok => 1)) {
 		    $self->_user_msg(slot_result => 1,
-				     active      => 1,
-				     slot        => $slot,
-				     label       => $label,
-				     res         => $res);
+				 active      => 1,
+				 slot        => $slot,
+				 label       => $label,
+				 res         => $res);
 		    return $steps->{'try_continue'}->();
-	        }
-	        $self->_user_msg(slot_result => 1,
+		} else {
+	            $self->_user_msg(slot_result => 1,
 			         slot        => $slot,
 			         label       => $label,
 			         res         => $res);
-	        $self->scan_result(res => $res, label => $label,
+	            $self->scan_result(res => $res, label => $label,
 				   mode => $ACCESS_WRITE, is_new => 0,
 				   result_cb => $result_cb);
-	        return;
+	            return;
+		}
 	    }
 	}
 

@@ -261,7 +261,7 @@ sub _make_res {
 		message => $rait_device->error_or_status());
     }
 
-    if (my $err = $self->{'config'}->configure_device($rait_device)) {
+    if (my $err = $self->{'config'}->configure_device($rait_device, $self->{'storage'})) {
 	return $self->make_error("failed", $res_cb,
 		reason => "device",
 		message => $err);

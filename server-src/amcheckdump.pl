@@ -33,6 +33,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Tapelist;
 use Amanda::Logfile;
 use Amanda::Util qw( :constants );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
@@ -292,9 +293,10 @@ sub main {
 	$interactivity = Amanda::Interactivity::amcheckdump->new();
 
 	# make a changer
-	$chg = Amanda::Changer->new(undef, tapelist => $tapelist);
-	return $steps->{'quit'}->($chg)
-	    if $chg->isa("Amanda::Changer::Error");
+	my ($storage) = Amanda::Storage->new(tapelist => $tapelist);
+	return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
+	$chg = $storage->{'chg'};
+	return $steps->{'quit'}->($chg) if $chg->isa("Amanda::Changer::Error");
 
 	# make a scan
 	$scan = Amanda::Recovery::Scan->new(

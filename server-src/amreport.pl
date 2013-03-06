@@ -197,8 +197,8 @@ sub calculate_legacy_outputs {
     # Part of the "options" is the configuration.  Do we have a template?  And a
     # mailto? And mailer?
 
-    my $ttyp = getconf($CNF_TAPETYPE);
-    my $tt = lookup_tapetype($ttyp) if $ttyp;
+    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
+    my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
     my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
 
     my $cfg_mailer  = getconf($CNF_MAILER);
@@ -585,6 +585,11 @@ my $logfile = $opt_logfname || get_default_logfile();
 my $historical = defined $opt_logfname;
 debug("using logfile: $logfile" . ($historical? " (historical)" : ""));
 
+## Parse the report & set output
+
+$report = Amanda::Report->new($logfile, $historical);
+my $exit_status = $report->get_flag("exit_status");
+
 if ($mode == MODE_CMDLINE) {
     debug("operating in cmdline mode");
     apply_output_defaults();
@@ -605,11 +610,6 @@ if ($mode == MODE_CMDLINE) {
 	calculate_legacy_outputs();
     }
 }
-
-## Parse the report & set output
-
-$report = Amanda::Report->new($logfile, $historical);
-my $exit_status = $report->get_flag("exit_status");
 
 ## filter outputs by errors & stranges
 

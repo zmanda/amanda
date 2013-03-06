@@ -44,8 +44,17 @@ typedef struct tape_s {
     char *barcode;
     char *meta;
     guint64 blocksize;
+    char *pool;
+    char *storage;
+    char *config;
     char *comment;
+    gboolean   retention;	/* use internally */
+    gboolean   retention_nb;	/* use internally */
 } tape_t;
+
+void compute_retention(void);
+gchar **list_retention(void);
+gchar **list_no_retention(void);
 
 int read_tapelist(char *tapefile);
 int write_tapelist(char *tapefile);
@@ -54,14 +63,24 @@ tape_t *lookup_tapelabel(const char *label);
 tape_t *lookup_tapepos(int pos);
 tape_t *lookup_tapedate(char *datestamp);
 int lookup_nb_tape(void);
-char *get_last_reusable_tape_label(int skip);
-tape_t *lookup_last_reusable_tape(int skip);
-void remove_tapelabel(char *label);
-tape_t *add_tapelabel(char *datestamp, char *label, char *comment);
+char *get_last_reusable_tape_label(const char *l_template,
+				   const char *tapepool,
+				   const char *storage,
+				   int retention_tapes,
+				   int retention_days, int retention_recover,
+				   int retention_full, int skip);
+tape_t *lookup_last_reusable_tape(const char *l_template,
+				  const char *tapepool,
+				   const char *storage,
+				  int retention_tapes,
+                                  int retention_days, int retention_recover,
+                                  int retention_full, int skip);
+void remove_tapelabel(const char *label);
 int reusable_tape(tape_t *tp);
+int volume_is_reusable(const char *label);
 
 int guess_runs_from_tapelist(void);
-char *list_new_tapes(int nb);
-void print_new_tapes(FILE *output, int nb);
+char *list_new_tapes(const char *l_template, int nb);
+void print_new_tapes(FILE *output, const char *l_template, int nb);
 
 #endif /* !TAPEFILE_H */

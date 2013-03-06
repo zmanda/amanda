@@ -653,7 +653,7 @@ sub unmarshal_tapespec {
 %}
 
 amglue_export_ok(
-    match_host match_disk match_datestamp match_level match_labelstr
+    match_host match_disk match_datestamp match_level match_labelstr match_labelstr_template
 );
 
 gboolean match_host(char *pat, char *value);
@@ -726,6 +726,8 @@ gboolean match_level(char *pat, char *value);
     g_free($1);
 }
 
+gboolean match_labelstr_template(const char *l_template,
+			const char *label, const char *barcode, const char *meta);
 gboolean match_labelstr(const labelstr_t *labelstr, const autolabel_t *autolabel,
 			const char *label, const char *barcode, const char *meta);
 

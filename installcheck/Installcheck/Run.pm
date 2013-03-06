@@ -276,8 +276,6 @@ sub setup_new_vtapes {
 	mkpath("$tapepath");
     }
 
-    load_vtape(1);
-
     # set up the appropriate configuration
     $testconf->add_param("tpchanger", "\"chg-disk:$taperoot\"");
     $testconf->add_param("labelstr", "\"TESTCONF[0-9][0-9]\"");
@@ -288,6 +286,9 @@ sub setup_new_vtapes {
 	'length' => '30 mbytes',
 	'filemark' => '4 kbytes',
     ]);
+$testconf->write();
+    load_vtape(1);
+
 }
 
 sub setup_holding {

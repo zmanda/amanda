@@ -93,7 +93,8 @@ typedef enum {
     CONF_TAPER_PARALLEL_WRITE, CONF_INTERACTIVITY,	CONF_TAPERSCAN,
     CONF_MAX_DLE_BY_VOLUME,    CONF_EJECT_VOLUME,	CONF_TMPDIR,
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
-    CONF_RETRY_DUMP,
+    CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
+    CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -207,10 +208,14 @@ typedef enum {
     CONF_ATRUE,			CONF_AFALSE,
 
     CONF_CLIENT_NAME,
+
+    /* retention */
+    CONF_RETENTION_TAPES,	CONF_RETENTION_DAYS,	CONF_RETENTION_RECOVER,
+    CONF_RETENTION_FULL
 } tok_t;
 
 /* A keyword table entry, mapping the given keyword to the given token.
- * Note that punctuation, integers, and quoted strings are handled 
+ * Note that punctuation, integers, and quoted strings are handled
  * internally to the lexer, so they do not appear here. */
 typedef struct {
     char *keyword;
@@ -386,6 +391,22 @@ struct taperscan_s {
     val_t value[TAPERSCAN_TAPERSCAN];
 };
 
+struct policy_s {
+    struct policy_s *next;
+    seen_t seen;
+    char *name;
+
+    val_t value[POLICY_POLICY];
+};
+
+struct storage_s {
+    struct storage_s *next;
+    seen_t seen;
+    char *name;
+
+    val_t value[STORAGE_STORAGE];
+};
+
 /* The current parser table */
 static conf_var_t *parsetable = NULL;
 
@@ -401,7 +422,7 @@ static void read_conffile(char *filename,
 			  gboolean is_client,
 			  gboolean missing_ok);
 
-/* Read and process a line of input from the current file, using the 
+/* Read and process a line of input from the current file, using the
  * current keytable and parsetable.  For blocks, this recursively
  * reads the entire block.
  *
@@ -516,6 +537,18 @@ static void init_taperscan_defaults(void);
 static void save_taperscan(void);
 static void copy_taperscan(void);
 
+static policy_t pocur;
+static void get_policy(void);
+static void init_policy_defaults(void);
+static void save_policy(void);
+static void copy_policy(void);
+
+static storage_t stcur;
+static void get_storage(void);
+static void init_storage_defaults(void);
+static void save_storage(void);
+static void copy_storage(void);
+
 /* read_functions -- these fit into the read_function slot in a parser
  * table entry, and are responsible for calling getconf_token as necessary
  * to consume their arguments, and setting their second argument with the
@@ -546,6 +579,8 @@ static void read_intrange(conf_var_t *, val_t *);
 static void read_dapplication(conf_var_t *, val_t *);
 static void read_dinteractivity(conf_var_t *, val_t *);
 static void read_dtaperscan(conf_var_t *, val_t *);
+static void read_dpolicy(conf_var_t *, val_t *);
+//static void read_dstorage(conf_var_t *, val_t *);
 static void read_dpp_script(conf_var_t *, val_t *);
 static void read_property(conf_var_t *, val_t *);
 static void read_execute_on(conf_var_t *, val_t *);
@@ -569,6 +604,10 @@ static interactivity_t *read_interactivity(char *name, FILE *from,
 					   char *fname, int *linenum);
 static taperscan_t *read_taperscan(char *name, FILE *from, char *fname,
 				   int *linenum);
+static policy_t *read_policy(char *name, FILE *from, char *fname,
+			     int *linenum);
+static storage_t *read_storage(char *name, FILE *from, char *fname,
+			       int *linenum);
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
  * values can be written: integers can have units, boolean values can be
@@ -658,6 +697,8 @@ static device_config_t *device_config_list = NULL;
 static changer_config_t *changer_config_list = NULL;
 static interactivity_t *interactivity_list = NULL;
 static taperscan_t *taperscan_list = NULL;
+static policy_t *policy_list = NULL;
+static storage_t *storage_list = NULL;
 
 /* storage for derived values */
 static long int unit_divisor = 1;
@@ -901,6 +942,7 @@ keytab_t server_keytab[] = {
     { "AMRECOVER_CHANGER", CONF_AMRECOVER_CHANGER },
     { "AMRECOVER_CHECK_LABEL", CONF_AMRECOVER_CHECK_LABEL },
     { "AMRECOVER_DO_FSF", CONF_AMRECOVER_DO_FSF },
+    { "AMVAULT_STORAGE", CONF_AMVAULT_STORAGE },
     { "ANY", CONF_ANY_VOLUME },
     { "APPEND", CONF_APPEND },
     { "AUTH", CONF_AUTH },
@@ -1037,6 +1079,7 @@ keytab_t server_keytab[] = {
     { "PART_SIZE", CONF_PART_SIZE },
     { "PLUGIN", CONF_PLUGIN },
     { "PRE_AMCHECK", CONF_PRE_AMCHECK },
+    { "POLICY", CONF_POLICY },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
     { "POST_AMCHECK", CONF_POST_AMCHECK },
@@ -1075,6 +1118,10 @@ keytab_t server_keytab[] = {
     { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
     { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
     { "RETRY_DUMP", CONF_RETRY_DUMP },
+    { "RETENTION_DAYS", CONF_RETENTION_DAYS },
+    { "RETENTION_FULL", CONF_RETENTION_FULL },
+    { "RETENTION_RECOVER", CONF_RETENTION_RECOVER },
+    { "RETENTION_TAPES", CONF_RETENTION_TAPES },
     { "RUNSPERCYCLE", CONF_RUNSPERCYCLE },
     { "RUNTAPES", CONF_RUNTAPES },
     { "SAME_HOST", CONF_SAME_HOST },
@@ -1097,12 +1144,14 @@ keytab_t server_keytab[] = {
     { "SSH_KEYS", CONF_SSH_KEYS },
     { "STANDARD", CONF_STANDARD },
     { "STARTTIME", CONF_STARTTIME },
+    { "STORAGE", CONF_STORAGE },
     { "STRANGE", CONF_STRANGE },
     { "STRATEGY", CONF_STRATEGY },
     { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
     { "TAPECYCLE", CONF_TAPECYCLE },
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
+    { "TAPEPOOL", CONF_TAPEPOOL },
     { "TAPERALGO", CONF_TAPERALGO },
     { "TAPERSCAN", CONF_TAPERSCAN },
     { "TAPER_PARALLEL_WRITE", CONF_TAPER_PARALLEL_WRITE },
@@ -1339,6 +1388,8 @@ conf_var_t server_var [] = {
    { CONF_REPORT_USE_MEDIA     , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_USE_MEDIA     , NULL },
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
    { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
+   { CONF_STORAGE              , CONFTYPE_STR      , read_str         , CNF_STORAGE              , NULL },
+   { CONF_AMVAULT_STORAGE      , CONFTYPE_STR      , read_str         , CNF_AMVAULT_STORAGE      , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
 };
 
@@ -1475,6 +1526,32 @@ conf_var_t taperscan_var [] = {
    { CONF_PLUGIN          , CONFTYPE_STR      , read_str      , TAPERSCAN_PLUGIN         , NULL },
    { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , TAPERSCAN_PROPERTY       , NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , TAPERSCAN_TAPERSCAN      , NULL }
+};
+
+conf_var_t policy_var [] = {
+   { CONF_COMMENT          , CONFTYPE_STR      , read_str      , POLICY_COMMENT          , NULL },
+   { CONF_RETENTION_TAPES  , CONFTYPE_INT      , read_int      , POLICY_RETENTION_TAPES  , NULL },
+   { CONF_RETENTION_DAYS   , CONFTYPE_INT      , read_int      , POLICY_RETENTION_DAYS   , NULL },
+   { CONF_RETENTION_RECOVER, CONFTYPE_INT      , read_int      , POLICY_RETENTION_RECOVER, NULL },
+   { CONF_RETENTION_FULL   , CONFTYPE_INT      , read_int      , POLICY_RETENTION_FULL   , NULL },
+   { CONF_UNKNOWN          , CONFTYPE_INT      , NULL          , POLICY_POLICY           , NULL }
+};
+
+conf_var_t storage_var [] = {
+   { CONF_COMMENT             , CONFTYPE_STR      , read_str      , STORAGE_COMMENT             , NULL },
+   { CONF_POLICY              , CONFTYPE_STR      , read_dpolicy  , STORAGE_POLICY              , NULL },
+   { CONF_TPCHANGER           , CONFTYPE_STR      , read_str      , STORAGE_TPCHANGER           , NULL },
+   { CONF_LABELSTR            , CONFTYPE_LABELSTR , read_labelstr , STORAGE_LABELSTR            , NULL },
+   { CONF_AUTOLABEL           , CONFTYPE_AUTOLABEL, read_autolabel, STORAGE_AUTOLABEL           , NULL },
+   { CONF_META_AUTOLABEL      , CONFTYPE_STR      , read_str      , STORAGE_META_AUTOLABEL      , NULL },
+   { CONF_TAPEPOOL            , CONFTYPE_STR      , read_str      , STORAGE_TAPEPOOL            , NULL },
+   { CONF_RUNTAPES            , CONFTYPE_INT      , read_int      , STORAGE_RUNTAPES            , NULL },
+   { CONF_TAPERSCAN           , CONFTYPE_STR      , read_str      , STORAGE_TAPERSCAN           , NULL },
+   { CONF_TAPETYPE            , CONFTYPE_STR      , read_str      , STORAGE_TAPETYPE            , NULL },
+   { CONF_MAX_DLE_BY_VOLUME   , CONFTYPE_INT      , read_int      , STORAGE_MAX_DLE_BY_VOLUME   , NULL },
+   { CONF_TAPERALGO           , CONFTYPE_TAPERALGO, read_taperalgo, STORAGE_TAPERALGO           , NULL },
+   { CONF_TAPER_PARALLEL_WRITE, CONFTYPE_INT      , read_int      , STORAGE_TAPER_PARALLEL_WRITE, NULL },
+   { CONF_UNKNOWN             , CONFTYPE_INT      , NULL          , STORAGE_STORAGE             , NULL }
 };
 
 /*
@@ -1932,7 +2009,9 @@ read_confline(
 	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
 	    else if(tok == CONF_INTERACTIVITY) get_interactivity();
 	    else if(tok == CONF_TAPERSCAN) get_taperscan();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY or TAPERSCAN expected"));
+	    else if(tok == CONF_POLICY) get_policy();
+	    else if(tok == CONF_STORAGE) get_storage();
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY, TAPERSCAN, POLICY or STORAGE expected"));
 	    current_block = NULL;
 	}
 	break;
@@ -1961,7 +2040,7 @@ read_confline(
      * read_function we find there. */
     default:
 	{
-	    for(np = parsetable; np->token != CONF_UNKNOWN; np++) 
+	    for(np = parsetable; np->token != CONF_UNKNOWN; np++)
 		if(np->token == tok) break;
 
 	    if(np->token == CONF_UNKNOWN) {
@@ -3078,6 +3157,274 @@ copy_taperscan(void)
     }
 }
 
+static policy_t *
+read_policy(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = get_seen_filename(fname);
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_policy_defaults();
+    if (name) {
+	pocur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	pocur.name = g_strdup(tokenval.v.s);
+    }
+    current_block = g_strconcat("policy ", pocur.name, NULL);
+    pocur.seen.block = current_block;
+    pocur.seen.filename = current_filename;
+    pocur.seen.linenum = current_line_num;
+
+    read_block(policy_var, pocur.value,
+	       _("policy parameter expected"),
+	       (name == NULL), *copy_policy,
+	       "POLICY", pocur.name);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_policy();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_policy(pocur.name);
+}
+
+static void
+get_policy(
+    void)
+{
+    read_policy(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_policy_defaults(
+    void)
+{
+    pocur.name = NULL;
+    conf_init_str(&pocur.value[POLICY_COMMENT]          , "");
+    conf_init_int(&pocur.value[POLICY_RETENTION_TAPES]  , CONF_UNIT_NONE, 0);
+    conf_init_int(&pocur.value[POLICY_RETENTION_DAYS]   , CONF_UNIT_NONE, 0);
+    conf_init_int(&pocur.value[POLICY_RETENTION_RECOVER], CONF_UNIT_NONE, 0);
+    conf_init_int(&pocur.value[POLICY_RETENTION_FULL]   , CONF_UNIT_NONE, 0);
+}
+
+static void
+save_policy(
+    void)
+{
+    policy_t *po, *po1;
+
+    po = lookup_policy(pocur.name);
+
+    if (po != (policy_t *)0) {
+	conf_parserror(_("policy %s already defined at %s:%d"),
+		       po->name, po->seen.filename, po->seen.linenum);
+	return;
+    }
+
+    po = g_malloc(sizeof(policy_t));
+    *po = pocur;
+    po->next = NULL;
+    /* add at end of list */
+    if (!policy_list)
+	policy_list = po;
+    else {
+	po1 = policy_list;
+	while (po1->next != NULL) {
+	    po1 = po1->next;
+	}
+	po1->next = po;
+    }
+}
+
+static void
+copy_policy(void)
+{
+    policy_t *po;
+    int i;
+
+    po = lookup_policy(tokenval.v.s);
+
+    if (po == NULL) {
+	conf_parserror(_("policy parameter expected"));
+	return;
+    }
+
+    for (i=0; i < POLICY_POLICY; i++) {
+	if(po->value[i].seen.linenum) {
+	    merge_val_t(&pocur.value[i], &po->value[i]);
+	}
+    }
+}
+
+static storage_t *
+read_storage(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = get_seen_filename(fname);
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_storage_defaults();
+    if (name) {
+	stcur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	stcur.name = g_strdup(tokenval.v.s);
+    }
+    current_block = g_strconcat("storage ", stcur.name, NULL);
+    stcur.seen.block = current_block;
+    stcur.seen.filename = current_filename;
+    stcur.seen.linenum = current_line_num;
+
+    read_block(storage_var, stcur.value,
+	       _("storage parameter expected"),
+	       (name == NULL), *copy_storage,
+	       "STORAGE", stcur.name);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_storage();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_storage(stcur.name);
+}
+
+static void
+get_storage(
+    void)
+{
+    read_storage(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_storage_defaults(
+    void)
+{
+    stcur.name = NULL;
+    conf_init_str      (&stcur.value[STORAGE_COMMENT]             , "");
+    conf_init_str      (&stcur.value[STORAGE_POLICY]              , "");
+    conf_init_str      (&stcur.value[STORAGE_TPCHANGER]           , "");
+    conf_init_labelstr (&stcur.value[STORAGE_LABELSTR]);
+    conf_init_str      (&stcur.value[STORAGE_META_AUTOLABEL]      , "");
+    conf_init_autolabel(&stcur.value[STORAGE_AUTOLABEL]);
+    conf_init_str      (&stcur.value[STORAGE_TAPEPOOL]            , NULL);
+    conf_init_int      (&stcur.value[STORAGE_RUNTAPES]            , CONF_UNIT_NONE, 1);
+    conf_init_str      (&stcur.value[STORAGE_TAPERSCAN]           , NULL);
+    conf_init_str      (&stcur.value[STORAGE_TAPETYPE]            , "DEFAULT_TAPE");
+    conf_init_int      (&stcur.value[STORAGE_MAX_DLE_BY_VOLUME]   , CONF_UNIT_NONE, 1000000000);
+    conf_init_taperalgo(&stcur.value[STORAGE_TAPERALGO]           , 0);
+    conf_init_int      (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE], CONF_UNIT_NONE, 0);
+}
+
+static void
+save_storage(
+    void)
+{
+    storage_t *st, *st1;
+
+    st = lookup_storage(stcur.name);
+
+    if (st != (storage_t *)0) {
+	conf_parserror(_("storage %s already defined at %s:%d"),
+		       st->name, st->seen.filename, st->seen.linenum);
+	return;
+    }
+
+    st = g_malloc(sizeof(storage_t));
+    *st = stcur;
+    st->next = NULL;
+    /* add at end of list */
+    if (!storage_list)
+	storage_list = st;
+    else {
+	st1 = storage_list;
+	while (st1->next != NULL) {
+	    st1 = st1->next;
+	}
+	st1->next = st;
+    }
+}
+
+static void
+copy_storage(void)
+{
+    storage_t *st;
+    int i;
+
+    st = lookup_storage(tokenval.v.s);
+
+    if (st == NULL) {
+	conf_parserror(_("storage parameter expected"));
+	return;
+    }
+
+    for (i=0; i < STORAGE_STORAGE; i++) {
+	if(st->value[i].seen.linenum) {
+	    merge_val_t(&stcur.value[i], &st->value[i]);
+	}
+    }
+}
+
 static pp_script_t *
 read_pp_script(
     char *name,
@@ -4126,6 +4473,66 @@ read_dtaperscan(
     val->v.s = g_strdup(taperscan->name);
     ckseen(&val->seen);
 }
+
+static void
+read_dpolicy(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    policy_t *policy;
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
+	policy = read_policy(g_strjoin(NULL, "custom(po)", ".",
+				   anonymous_value(),NULL),
+				   NULL, NULL, NULL);
+	current_line_num -= 1;
+    } else if (tok == CONF_STRING) {
+	policy = lookup_policy(tokenval.v.s);
+	if (policy == NULL) {
+	    conf_parserror(_("Unknown policy named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("policy name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    amfree(val->v.s);
+    val->v.s = g_strdup(policy->name);
+    ckseen(&val->seen);
+}
+
+/*
+static void
+read_dstorage(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    storage_t *storage;
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
+	storage = read_storage(g_strjoin(NULL, "custom(po)", ".",
+				   anonymous_value(),NULL),
+				   NULL, NULL, NULL);
+	current_line_num -= 1;
+    } else if (tok == CONF_STRING) {
+	storage = lookup_storage(tokenval.v.s);
+	if (storage == NULL) {
+	    conf_parserror(_("Unknown storage named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("storage name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    amfree(val->v.s);
+    val->v.s = g_strdup(storage->name);
+    ckseen(&val->seen);
+}
+*/
 
 static void
 read_dpp_script(
@@ -5261,6 +5668,8 @@ config_uninit(void)
     changer_config_t *cc, *ccnext;
     interactivity_t  *iv, *ivnext;
     taperscan_t      *ts, *tsnext;
+    policy_t         *po, *ponext;
+    storage_t        *st, *stnext;
     int               i;
 
     if (!config_initialized) return;
@@ -5365,6 +5774,26 @@ config_uninit(void)
     }
     taperscan_list = NULL;
 
+    for(po=policy_list; po != NULL; po = ponext) {
+	amfree(po->name);
+	for(i=0; i<POLICY_POLICY; i++) {
+	   free_val_t(&po->value[i]);
+	}
+	ponext = po->next;
+	amfree(po);
+    }
+    policy_list = NULL;
+
+    for(st=storage_list; st != NULL; st = stnext) {
+	amfree(st->name);
+	for(i=0; i<STORAGE_STORAGE; i++) {
+	   free_val_t(&st->value[i]);
+	}
+	stnext = st->next;
+	amfree(st);
+    }
+    storage_list = NULL;
+
     for(i=0; i<CNF_CNF; i++)
 	free_val_t(&conf_data[i]);
 
@@ -5460,6 +5889,8 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_REPORT_NEXT_MEDIA]    , TRUE);
     conf_init_str_list (&conf_data[CNF_REPORT_FORMAT]        , NULL);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
+    conf_init_str      (&conf_data[CNF_STORAGE]              , "");
+    conf_init_str      (&conf_data[CNF_AMVAULT_STORAGE]      , "");
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , CONF_UNIT_NONE, 3);
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , CONF_UNIT_NONE, 5);
@@ -5630,7 +6061,16 @@ update_derived_values(
     interface_t   *ip;
     identlist_t    il;
     holdingdisk_t *hd;
+    policy_t      *po;
+    storage_t     *st;
     labelstr_t    *labelstr;
+    char          *conf_name;
+    autolabel_t   *autolabel;
+    char          *st_name;
+
+    conf_name = get_config_name();
+    if (!conf_name)
+	conf_name = "default";
 
     if (!is_client) {
 	/* Add a 'default' interface if one doesn't already exist */
@@ -5715,6 +6155,7 @@ update_derived_values(
 	}
 
 	labelstr = &(conf_data[CNF_LABELSTR].v.labelstr);
+	autolabel = &(conf_data[CNF_AUTOLABEL].v.autolabel);
 	if (getconf_seen(CNF_LABELSTR) && labelstr->match_autolabel &&
 	    !getconf_seen(CNF_AUTOLABEL)) {
 	    conf_parserror(_("AUTOLABEL not set and LABELSTR set to MATCH-AUTOLABEL"));
@@ -5722,7 +6163,83 @@ update_derived_values(
 	    labelstr->template = g_strdup(".*");
 	    labelstr->match_autolabel = FALSE;
 	} else if (labelstr->match_autolabel) {
-	    labelstr->template = g_strdup(conf_data[CNF_AUTOLABEL].v.autolabel.template);
+	    g_free(labelstr->template);
+	    labelstr->template = g_strdup(autolabel->template);
+	}
+
+	st_name = getconf_str(CNF_STORAGE);
+	if (!st_name || *st_name == '\0') {
+	    /* create a default policy */
+	    if (!(po = lookup_policy(conf_name))) {
+		init_policy_defaults();
+		pocur.name = g_strdup(conf_name);
+
+		val_t__str(&pocur.value[POLICY_COMMENT]) = g_strdup(_("implicit from global config"));
+		save_policy();
+
+		po = lookup_policy(conf_name);
+	    }
+
+	    /* create a default storage */
+	    if (!(st = lookup_storage(conf_name))) {
+		init_storage_defaults();
+		stcur.name = g_strdup(conf_name);
+
+		val_t__str(&stcur.value[STORAGE_COMMENT]) = g_strdup(_("implicit from global config"));
+		save_storage();
+
+		st = lookup_storage(conf_name);
+	    }
+
+	    /* set the default storage */
+	    val_t__str(&conf_data[CNF_STORAGE]) = g_strdup(conf_name);
+	}
+
+	/* Set default retention_tapes if t is not set */
+	for (po = policy_list; po != NULL; po = po->next) {
+	    if (!policy_seen(po, POLICY_RETENTION_TAPES)) {
+		copy_val_t(&po->value[POLICY_RETENTION_TAPES], &conf_data[CNF_TAPECYCLE]);
+	    }
+	}
+
+	/* Set many storage default if they are not set */
+	for (st = storage_list; st != NULL; st = st->next) {
+	    labelstr = storage_get_labelstr(st);
+	    autolabel = storage_get_autolabel(st);
+	    if (storage_seen(st, STORAGE_LABELSTR) && labelstr->match_autolabel &&
+		!storage_seen(st, STORAGE_AUTOLABEL)) {
+		conf_parserror(_("AUTOLABEL not set and LABELSTR set to MATCH-AUTOLABEL"));
+	    } else if (labelstr->match_autolabel && !storage_seen(st, STORAGE_AUTOLABEL)) {
+		labelstr->template = g_strdup(".*");
+		labelstr->match_autolabel = FALSE;
+	    } else if (labelstr->match_autolabel) {
+		g_free(labelstr->template);
+		labelstr->template = g_strdup(autolabel->template);
+	    }
+	    if (!storage_seen(st, STORAGE_POLICY))
+		conf_init_str(&st->value[STORAGE_POLICY], conf_name);
+	    if (!storage_seen(st, STORAGE_TAPEPOOL))
+		conf_init_str(&st->value[STORAGE_TAPEPOOL], conf_name);
+	    if (!storage_seen(st, STORAGE_TPCHANGER))
+		copy_val_t(&st->value[STORAGE_TPCHANGER], &conf_data[CNF_TPCHANGER]);
+	    if (!storage_seen(st, STORAGE_LABELSTR))
+		copy_val_t(&st->value[STORAGE_LABELSTR], &conf_data[CNF_LABELSTR]);
+	    if (!storage_seen(st, STORAGE_AUTOLABEL))
+		copy_val_t(&st->value[STORAGE_AUTOLABEL], &conf_data[CNF_AUTOLABEL]);
+	    if (!storage_seen(st, STORAGE_META_AUTOLABEL))
+		copy_val_t(&st->value[STORAGE_META_AUTOLABEL], &conf_data[CNF_META_AUTOLABEL]);
+	    if (!storage_seen(st, STORAGE_RUNTAPES))
+		copy_val_t(&st->value[STORAGE_RUNTAPES], &conf_data[CNF_RUNTAPES]);
+	    if (!storage_seen(st, STORAGE_TAPERSCAN))
+		copy_val_t(&st->value[STORAGE_TAPERSCAN], &conf_data[CNF_TAPERSCAN]);
+	    if (!storage_seen(st, STORAGE_TAPETYPE))
+		copy_val_t(&st->value[STORAGE_TAPETYPE], &conf_data[CNF_TAPETYPE]);
+	    if (!storage_seen(st, STORAGE_MAX_DLE_BY_VOLUME))
+		copy_val_t(&st->value[STORAGE_MAX_DLE_BY_VOLUME], &conf_data[CNF_MAX_DLE_BY_VOLUME]);
+	    if (!storage_seen(st, STORAGE_TAPERALGO))
+		copy_val_t(&st->value[STORAGE_TAPERALGO], &conf_data[CNF_TAPERALGO]);
+	    if (!storage_seen(st, STORAGE_TAPER_PARALLEL_WRITE))
+		copy_val_t(&st->value[STORAGE_TAPER_PARALLEL_WRITE], &conf_data[CNF_TAPER_PARALLEL_WRITE]);
 	}
 
 	/* Always TRUE */
@@ -6239,6 +6756,8 @@ getconf_list(
     changer_config_t *cc;
     interactivity_t  *iv;
     taperscan_t      *ts;
+    policy_t         *po;
+    storage_t        *st;
     GSList *rv = NULL;
 
     if (strcasecmp(listname,"tapetype") == 0) {
@@ -6285,6 +6804,14 @@ getconf_list(
     } else if (strcasecmp(listname,"taperscan") == 0) {
 	for(ts = taperscan_list; ts != NULL; ts=ts->next) {
 	    rv = g_slist_append(rv, ts->name);
+	}
+    } else if (strcasecmp(listname,"policy") == 0) {
+	for(po = policy_list; po != NULL; po=po->next) {
+	    rv = g_slist_append(rv, po->name);
+	}
+    } else if (strcasecmp(listname,"storage") == 0) {
+	for(st = storage_list; st != NULL; st=st->next) {
+	    rv = g_slist_append(rv, st->name);
 	}
     }
     return rv;
@@ -6541,6 +7068,78 @@ taperscan_name(
 {
     assert(ts != NULL);
     return ts->name;
+}
+
+policy_t *
+lookup_policy(
+    char *str)
+{
+    policy_t *p;
+
+    for(p = policy_list; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+val_t *
+policy_getconf(
+    policy_t *po,
+    policy_key key)
+{
+    assert(po != NULL);
+    assert(key < POLICY_POLICY);
+    return &po->value[key];
+}
+
+char *
+policy_name(
+    policy_t *po)
+{
+    assert(po != NULL);
+    return po->name;
+}
+
+storage_t *
+get_first_storage(void)
+{
+    return storage_list;
+}
+
+storage_t *
+get_next_storage(storage_t *st)
+{
+    return st->next;
+}
+
+storage_t *
+lookup_storage(
+    char *str)
+{
+    storage_t *p;
+
+    for(p = storage_list; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+val_t *
+storage_getconf(
+    storage_t *st,
+    storage_key key)
+{
+    assert(st != NULL);
+    assert(key < STORAGE_STORAGE);
+    return &st->value[key];
+}
+
+char *
+storage_name(
+    storage_t *st)
+{
+    assert(st != NULL);
+    return st->name;
 }
 
 pp_script_t *
@@ -7206,7 +7805,6 @@ copy_val_t(
 {
     GSList *ia;
 
-    if(valsrc->seen.linenum) {
 	valdst->type = valsrc->type;
 	valdst->seen = valsrc->seen;
 	switch(valsrc->type) {
@@ -7322,7 +7920,6 @@ copy_val_t(
 	    valdst->v.labelstr.match_autolabel = valsrc->v.labelstr.match_autolabel;
 	    break;
 	}
-    }
 }
 
 static void
@@ -7530,6 +8127,8 @@ dump_configuration(
     changer_config_t *cc;
     interactivity_t  *iv;
     taperscan_t      *ts;
+    policy_t         *po;
+    storage_t        *st;
     int i;
     conf_var_t *np;
     keytab_t *kt;
@@ -7543,7 +8142,7 @@ dump_configuration(
     g_printf(_("# AMANDA CONFIGURATION FROM FILE \"%s\":\n\n"), config_filename);
 
     for(np=server_var; np->token != CONF_UNKNOWN; np++) {
-	for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++) 
+	for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
 	    if (np->token == kt->token) break;
 
 	if(kt->token == CONF_UNKNOWN)
@@ -7762,6 +8361,44 @@ dump_configuration(
 		error(_("taperscan bad token"));
 
 	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &ts->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(po = policy_list; po != NULL; po = po->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE POLICY %s {\n", prefix, po->name);
+	for(i=0; i < POLICY_POLICY; i++) {
+	    for(np=policy_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("policy bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("policy bad token"));
+
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &po->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(st = storage_list; st != NULL; st = st->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE STORAGE %s {\n", prefix, st->name);
+	for(i=0; i < STORAGE_STORAGE; i++) {
+	    for(np=storage_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("storage bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("storage bad token"));
+
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &st->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -8460,6 +9097,8 @@ parm_key_info(
     device_config_t   *dc;
     changer_config_t   *cc;
     taperscan_t        *ts;
+    policy_t           *po;
+    storage_t          *st;
     interactivity_t    *iv;
     int success = FALSE;
 
@@ -8631,6 +9270,30 @@ parm_key_info(
 	    if (np->token == CONF_UNKNOWN) goto out;
 
 	    if (val) *val = &ts->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (g_str_equal(subsec_type, "POLICY")) {
+	    po = lookup_policy(subsec_name);
+	    if (!po) goto out;
+	    for(np = policy_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &po->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (g_str_equal(subsec_type, "STORAGE")) {
+	    st = lookup_storage(subsec_name);
+	    if (!st) goto out;
+	    for(np = storage_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &st->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
 	}
@@ -8992,3 +9655,4 @@ char *execute_on_to_string(int flags, char *separator)
 
     return ret;
 }
+

@@ -207,7 +207,6 @@ add_disk(
     disk->line = 0;
     disk->allow_split = 0;
     disk->max_warnings = 20;
-    disk->splitsize = (off_t)0;
     disk->tape_splitsize = (off_t)0;
     disk->split_diskbuffer = NULL;
     disk->fallback_splitsize = (off_t)0;
@@ -691,7 +690,6 @@ parse_diskline(
     disk->include_optional   = dumptype_get_include(dtype).optional;
     disk->priority	     = dumptype_get_priority(dtype);
     disk->dumpcycle	     = dumptype_get_dumpcycle(dtype);
-/*    disk->frequency	     = dumptype_get_frequency(dtype);*/
     disk->auth               = dumptype_get_auth(dtype);
     disk->maxdumps	     = dumptype_get_maxdumps(dtype);
     disk->allow_split        = dumptype_get_allow_split(dtype);
@@ -699,12 +697,6 @@ parse_diskline(
     disk->tape_splitsize     = dumptype_get_tape_splitsize(dtype);
     disk->split_diskbuffer   = dumptype_get_split_diskbuffer(dtype);
     disk->fallback_splitsize = dumptype_get_fallback_splitsize(dtype);
-    if (disk->allow_split) {
-	tapetype_t *tapetype = lookup_tapetype(getconf_str(CNF_TAPETYPE));
-	disk->splitsize = tapetype_get_part_size(tapetype);
-    } else {
-	disk->splitsize = disk->tape_splitsize;
-    }
     disk->maxpromoteday	     = dumptype_get_maxpromoteday(dtype);
     disk->bumppercent	     = dumptype_get_bumppercent(dtype);
     disk->bumpsize	     = dumptype_get_bumpsize(dtype);

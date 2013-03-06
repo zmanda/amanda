@@ -167,7 +167,8 @@ static void delay_dumps(void);
 static int promote_highest_priority_incremental(void);
 static int promote_hills(void);
 static void output_scheduleline(disk_t *dp);
-static void server_estimate(disk_t *dp, int i, info_t *info, int level);
+static void server_estimate(disk_t *dp, int i, info_t *info, int level,
+			    tapetype_t *tapetype);
 int main(int, char **);
 
 int
@@ -195,6 +196,8 @@ main(
     gboolean no_taper = FALSE;
     gboolean from_client = FALSE;
     gboolean exact_match = FALSE;
+    storage_t *storage;
+    policy_t  *policy;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("planner-%s\n", VERSION);
@@ -336,12 +339,14 @@ main(
     }
     amfree(conf_infofile);
 
-    conf_tapetype = getconf_str(CNF_TAPETYPE);
+    storage = lookup_storage(getconf_str(CNF_STORAGE));
+    conf_tapetype = storage_get_tapetype(storage);
     conf_maxdumpsize = getconf_int64(CNF_MAXDUMPSIZE);
-    conf_runtapes = getconf_int(CNF_RUNTAPES);
+    conf_runtapes = storage_get_runtapes(storage);
     conf_dumpcycle = getconf_int(CNF_DUMPCYCLE);
     conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
-    conf_tapecycle = getconf_int(CNF_TAPECYCLE);
+    policy = lookup_policy(storage_get_policy(storage));
+    conf_tapecycle = policy_get_retention_tapes(policy);
     conf_etimeout = (time_t)getconf_int(CNF_ETIMEOUT);
     conf_reserve  = getconf_int(CNF_RESERVE);
     conf_autoflush = getconf_no_yes_all(CNF_AUTOFLUSH);
@@ -1475,7 +1480,7 @@ static char *client_estimate_as_xml(disk_t *dp, am_feature_t *features,
         tmpbuf = g_string_new("  <level>");
         g_string_append_printf(tmpbuf, "%d", level);
 
-        if (server_side_xml && server_can_do_estimate(dp, &info, level))
+        if (server_side_xml && server_can_do_estimate(dp, &info, level, tape))
             g_string_append(tmpbuf, "<server>YES</server>");
 
         g_string_append(tmpbuf, "</level>");
@@ -1712,7 +1717,7 @@ static void getsize(am_host_t *hostp)
                 int lev = est(dp)->estimate[i].level;
 
                 if(lev == -1) break;
-                server_estimate(dp, i, &info, lev);
+                server_estimate(dp, i, &info, lev, tape);
             }
 
             g_fprintf(stderr,_("%s time %s: got result for host %s disk %s:"),
@@ -2593,7 +2598,7 @@ static void delay_dumps(void)
 
     for(dp = schedq.head; dp != NULL; dp = ndp) {
 	int avail_tapes = 1;
-	if (dp->splitsize > (gint64)0 || dp->allow_split)
+	if (dp->tape_splitsize > (gint64)0 || dp->allow_split)
 	    avail_tapes = conf_runtapes;
 
 	ndp = dp->next; /* remove_disk zaps this */
@@ -2601,9 +2606,10 @@ static void delay_dumps(void)
 	full_size = est_tape_size(dp, 0);
 	if (full_size > tapetype_get_length(tape) * (gint64)avail_tapes) {
 	    char *qname = quote_string(dp->name);
-	    if (conf_runtapes > 1 && dp->splitsize == (gint64)0) {
+	    if (conf_runtapes > 1 && (dp->tape_splitsize  == 0 ||
+				      !dp->allow_split)) {
 		log_add(L_WARNING, _("disk %s:%s, full dump (%lldKB) will be larger than available tape space"
-			", you could define a splitsize"),
+			", you could allow it to split"),
 			dp->host->hostname, qname,
 			(long long)full_size);
 	    } else {
@@ -2809,7 +2815,7 @@ static void delay_dumps(void)
 	int avail_tapes = 1;
 	nbi = bi->prev;
 	dp = bi->dp;
-	if(dp->splitsize > (gint64)0)
+	if(dp->tape_splitsize > (gint64)0 || dp->allow_split)
 	    avail_tapes = conf_runtapes;
 
 	if(bi->deleted) {
@@ -3303,12 +3309,13 @@ server_estimate(
     disk_t *dp,
     int     i,
     info_t *info,
-    int     level)
+    int     level,
+    tapetype_t *tapetype)
 {
     int    stats;
     gint64 size;
 
-    size = internal_server_estimate(dp, info, level, &stats);
+    size = internal_server_estimate(dp, info, level, &stats, tapetype);
 
     est(dp)->dump_est = &est(dp)->estimate[i];
     est(dp)->estimate[i].nsize = size;
