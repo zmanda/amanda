@@ -1,4 +1,8 @@
 2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Storage.pm: Add file.
+	* perl/Amanda/Policy.pm: Add file.
+
+2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* Too many files to list them.
 	* tape pool
 	    label are assigned to a tape pool,
