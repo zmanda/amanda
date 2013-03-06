@@ -1811,9 +1811,9 @@ parse_crc(
     crc_t *crc)
 {
     unsigned int c;
-    long long size;
+    intmax_t size;
 
-    if (sscanf(s, "%x:%Ld", &c, &size) == 2) {
+    if (sscanf(s, "%x:%jd", &c, &size) == 2) {
         crc->crc = c;
         crc->size = size;
     }

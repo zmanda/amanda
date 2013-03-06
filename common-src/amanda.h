@@ -640,7 +640,6 @@ time_t	unctime(char *timestr);
 		:1)
 
 /* from old bsd-security.c */
-extern int debug;
 extern int check_security(sockaddr_union *, char *, unsigned long, char **);
 
 /*
