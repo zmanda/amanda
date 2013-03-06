@@ -34,7 +34,7 @@
 #include "match.h"
 #include "conffile.h"
 #include "diskfile.h"
-#include "util.h"
+#include "amutil.h"
 #include "amxml.h"
 
 static am_host_t *hostlist = NULL;

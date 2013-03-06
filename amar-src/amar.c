@@ -20,7 +20,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "amar.h"
 #include "file.h"
 

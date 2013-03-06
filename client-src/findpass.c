@@ -32,7 +32,7 @@
 
 #include "amanda.h"
 #include "findpass.h"
-#include "util.h"
+#include "amutil.h"
 
 /*
  * Find the Samba password and optional domain for a given disk.

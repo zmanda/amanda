@@ -40,7 +40,7 @@
 #include "version.h"
 #include "holding.h"
 #include "find.h"
-#include "util.h"
+#include "amutil.h"
 #include "timestamp.h"
 #include "server_util.h"
 #include <getopt.h>

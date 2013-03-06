@@ -33,7 +33,7 @@
 #include <dirent.h>
 #include <regex.h>
 #include <time.h>
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "device.h"
 #include "s3.h"

@@ -50,7 +50,7 @@
 #include <time.h>
 #endif
 #ifdef HAVE_UTIL_H
-#include "util.h"
+#include "amutil.h"
 #endif
 #ifdef HAVE_AMANDA_H
 #include "amanda.h"

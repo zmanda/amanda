@@ -31,7 +31,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "holding.h"
 #include "diskfile.h"
 #include "fileheader.h"

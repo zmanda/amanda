@@ -34,7 +34,7 @@
 
 #include <glib.h>
 #include <stdio.h>
-#include "util.h"
+#include "amutil.h"
 
 #define STRMAX		256
 

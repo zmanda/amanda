@@ -1,4 +1,10 @@
 2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c: Renamed from common-src/util.c
+	* common-src/amutil.h: Renamed from common-src/util.h
+	  To avoid conflich with perl util.h
+	* *.*: #include "amutil.h"
+
+2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Storage.pm: Add file.
 	* perl/Amanda/Policy.pm: Add file.
 

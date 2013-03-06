@@ -36,7 +36,7 @@
 #include "conffile.h"
 #include "amfeatures.h"
 #include "am_sl.h"
-#include "util.h"		/* for bstrncmp() */
+#include "amutil.h"		/* for bstrncmp() */
 #include "amandad.h"		/* for g_option_t */
 #include "amxml.h"		/* for dle_t	  */
 

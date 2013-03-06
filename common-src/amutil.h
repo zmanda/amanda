@@ -27,8 +27,8 @@
 /*
  * $Id: util.h,v 1.17 2006/07/26 15:17:36 martinea Exp $
  */
-#ifndef UTIL_H
-#define	UTIL_H
+#ifndef AMUTIL_H
+#define	AMUTIL_H
 
 #include "amanda.h"
 #include "am_sl.h"
@@ -408,4 +408,4 @@ void crc32(uint8_t *buf, size_t len, crc_t *crc);
 uint32_t crc32_finish(crc_t *crc);
 void parse_crc(char *s, crc_t *crc);
 
-#endif	/* UTIL_H */
+#endif	/* AMUTIL_H */

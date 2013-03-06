@@ -23,7 +23,7 @@
 
 #include "amanda.h"
 #include "testutils.h"
-#include "util.h"
+#include "amutil.h"
 
 /* Utilities */
 

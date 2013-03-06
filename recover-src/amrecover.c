@@ -36,7 +36,7 @@
 #include "amrecover.h"
 #include "getfsent.h"
 #include "dgram.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "protocol.h"
 #include "event.h"

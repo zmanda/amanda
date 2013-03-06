@@ -21,7 +21,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "xfer-server.h"
 #include "xfer-device.h"
 

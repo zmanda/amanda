@@ -37,7 +37,7 @@
 #include "diskfile.h"
 #include "tapefile.h"
 #include "find.h"
-#include "util.h"
+#include "amutil.h"
 
 static int sort_by_name_reversed(const void *a, const void *b);
 

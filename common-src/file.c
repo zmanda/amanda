@@ -30,7 +30,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "timestamp.h"
 #include "file.h"
 

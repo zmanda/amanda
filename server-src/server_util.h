@@ -31,7 +31,7 @@
 #ifndef SERVER_UTIL_H
 #define	SERVER_UTIL_H
 
-#include "util.h"
+#include "amutil.h"
 #include "diskfile.h"
 #include "infofile.h"
 

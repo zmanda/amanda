@@ -34,7 +34,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "event.h"
 #include "packet.h"
 #include "security.h"

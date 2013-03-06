@@ -33,7 +33,7 @@
 #include "property.h"
 
 #include "timestamp.h"
-#include "util.h"
+#include "amutil.h"
 
 /*
  * Prototypes for subclass registration functions

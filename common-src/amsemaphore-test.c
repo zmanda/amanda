@@ -22,7 +22,7 @@
 #include "amanda.h"
 #include "amsemaphore.h"
 #include "testutils.h"
-#include "util.h"
+#include "amutil.h"
 
 /*
  * test that decrement waits properly

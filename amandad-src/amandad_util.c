@@ -31,7 +31,7 @@
 
 #include "amanda.h"
 #include "amandad.h"
-#include "util.h"
+#include "amutil.h"
 
 #define MAXMAXDUMPS 16
 

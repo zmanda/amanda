@@ -31,7 +31,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 
 #ifdef TEST
 #  include <stdio.h>

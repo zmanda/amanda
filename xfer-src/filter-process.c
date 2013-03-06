@@ -23,7 +23,7 @@
 #include "amanda.h"
 #include "amxfer.h"
 #include "event.h"
-#include "util.h"
+#include "amutil.h"
 
 /*
  * Class declaration

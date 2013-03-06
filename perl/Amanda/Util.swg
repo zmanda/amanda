@@ -34,8 +34,7 @@
 #include "full-write.h"
 #include "fsusage.h"
 #include "stream.h"
-/* use a relative path here to avoid conflicting with Perl's util.h. */
-#include "../common-src/util.h"
+#include "amutil.h"
 #include "file.h"
 #include "sockaddr-util.h"
 %}

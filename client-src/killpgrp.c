@@ -35,7 +35,7 @@
  *
  */
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 
 #ifdef HAVE_GETPGRP

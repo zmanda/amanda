@@ -52,7 +52,7 @@
 #include "logfile.h"
 #include "find.h"
 #include "tapefile.h"
-#include "util.h"
+#include "amutil.h"
 #include "amandad.h"
 #include "pipespawn.h"
 #include "sockaddr-util.h"

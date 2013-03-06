@@ -31,7 +31,7 @@
  * I/O-related functions for driver program
  */
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "clock.h"
 #include "server_util.h"
 #include "conffile.h"

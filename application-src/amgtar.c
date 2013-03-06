@@ -66,7 +66,7 @@
 #include "pipespawn.h"
 #include "amfeatures.h"
 #include "clock.h"
-#include "util.h"
+#include "amutil.h"
 #include "getfsent.h"
 #include "client_util.h"
 #include "conffile.h"

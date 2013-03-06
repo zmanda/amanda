@@ -36,7 +36,7 @@
 #include "getfsent.h"
 #include "amandates.h"
 #include "clock.h"
-#include "util.h"
+#include "amutil.h"
 #include "pipespawn.h"
 #include "amfeatures.h"
 #include "client_util.h"

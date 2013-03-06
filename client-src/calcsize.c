@@ -37,7 +37,7 @@
 #include "conffile.h"
 #include "fsusage.h"
 #include "am_sl.h"
-#include "util.h"
+#include "amutil.h"
 
 #define ROUND(n,x)	((x) + (n) - 1 - (((x) + (n) - 1) % (n)))
 

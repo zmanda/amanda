@@ -38,7 +38,7 @@
 #define GLOBAL
 #include "ndmjob.h"
 #include "debug.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 
 

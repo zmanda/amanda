@@ -32,7 +32,7 @@
 
 #include "amanda.h"
 #include "amrecover.h"
-#include "util.h"
+#include "amutil.h"
 
 DIR_ITEM *get_dir_list(void);
 DIR_ITEM *get_next_dir_item(DIR_ITEM *this);

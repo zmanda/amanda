@@ -34,7 +34,7 @@
 #define CONFFILE_H
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 
 /* Getting Configuration Values
  * ============================

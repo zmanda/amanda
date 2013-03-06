@@ -36,7 +36,7 @@
 #include "amrecover.h"
 #include "getfsent.h"
 #include "dgram.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 
 extern int process_line(char *line);

@@ -30,7 +30,7 @@
  * checks for common problems in server and clients
  */
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "fsusage.h"
 #include "diskfile.h"

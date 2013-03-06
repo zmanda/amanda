@@ -29,7 +29,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "xfer.h"
 #include "directtcp.h"
 

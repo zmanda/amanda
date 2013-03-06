@@ -24,7 +24,7 @@
 
 #include "amanda.h"
 #include "property.h"
-#include "util.h"
+#include "amutil.h"
 #include <glib.h>
 #include "glib-util.h"
 #include "device.h"

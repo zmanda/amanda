@@ -1,7 +1,7 @@
 #include "amanda.h"
 #include "pipespawn.h"
 #include "clock.h"
-#include "util.h"
+#include "amutil.h"
 
 char skip_argument[1];
 

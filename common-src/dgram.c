@@ -32,7 +32,7 @@
  */
 #include "amanda.h"
 #include "dgram.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "sockaddr-util.h"
 

@@ -32,7 +32,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "clock.h"
 #include <glib.h>

@@ -33,7 +33,7 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "infofile.h"
-#include "util.h"
+#include "amutil.h"
 
 static void zero_info(info_t *);
 

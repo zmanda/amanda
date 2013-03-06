@@ -22,7 +22,7 @@
 #include "amanda.h"
 #include "pipespawn.h"
 #include <string.h> /* memset() */
-#include "util.h"
+#include "amutil.h"
 #include "device.h"
 
 #ifdef HAVE_SYS_TAPE_H

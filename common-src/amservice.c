@@ -30,7 +30,7 @@
  * Take the REQ packet in stdin and output the REP packet in stdout
  */
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "packet.h"
 #include "protocol.h"

@@ -31,7 +31,7 @@
  */
 
 #include "amanda.h"
-#include "util.h"
+#include "amutil.h"
 #include "clock.h"
 #include "dgram.h"
 #include "event.h"

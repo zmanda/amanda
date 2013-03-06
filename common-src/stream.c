@@ -33,7 +33,7 @@
 #include "amanda.h"
 #include "dgram.h"
 #include "stream.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "security-util.h"
 #include "sockaddr-util.h"

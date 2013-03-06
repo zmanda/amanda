@@ -41,7 +41,7 @@
 #include "fileheader.h"
 #include "amfeatures.h"
 #include "server_util.h"
-#include "util.h"
+#include "amutil.h"
 #include "timestamp.h"
 #include "amxml.h"
 

@@ -32,7 +32,7 @@
 
 #include "amanda.h"
 #include "amrecover.h"
-#include "util.h"
+#include "amutil.h"
 
 gboolean translate_mode = TRUE;
 

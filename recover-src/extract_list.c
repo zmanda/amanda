@@ -40,7 +40,7 @@
 #ifdef SAMBA_CLIENT
 #include "findpass.h"
 #endif
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 #include "protocol.h"
 #include "event.h"

@@ -44,7 +44,7 @@ libamanda_la_SOURCES =		\
 	stream.c		\
 	tapelist.c		\
 	timestamp.c		\
-	util.c
+	amutil.c
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
 
@@ -125,7 +125,7 @@ noinst_HEADERS =		\
 	stream.h		\
 	tapelist.h		\
 	timestamp.h		\
-	util.h			\
+	amutil.h			\
 	version.h
 
 EXTRA_PROGRAMS = genversion $(TEST_PROGS)
@@ -169,7 +169,7 @@ STANDARD_COMMON_STUFF_NOT_FILE = \
 	conffile.lo \
 	debug.lo \
 	glib-util.lo \
-	util.lo \
+	amutil.lo \
 	match.lo \
 	sl.lo \
 	sockaddr-util.lo \

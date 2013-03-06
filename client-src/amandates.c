@@ -33,7 +33,7 @@
 
 #include "amanda.h"
 #include "getfsent.h"
-#include "util.h"
+#include "amutil.h"
 
 #include "amandates.h"
 

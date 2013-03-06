@@ -41,7 +41,7 @@
 #ifdef SAMBA_CLIENT
 #include "findpass.h"
 #endif
-#include "util.h"
+#include "amutil.h"
 
 typedef struct EXTRACT_LIST_ITEM {
     char *path;

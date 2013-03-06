@@ -35,7 +35,7 @@
 
 #include "amanda.h"
 #include "amfeatures.h"
-#include "util.h"
+#include "amutil.h"
 
 int main(int argc, char **argv);
 

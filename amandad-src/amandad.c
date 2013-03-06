@@ -42,7 +42,7 @@
 #include "version.h"
 #include "security.h"
 #include "stream.h"
-#include "util.h"
+#include "amutil.h"
 #include "conffile.h"
 
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */

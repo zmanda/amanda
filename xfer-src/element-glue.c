@@ -24,7 +24,7 @@
 #include "amxfer.h"
 #include "element-glue.h"
 #include "directtcp.h"
-#include "util.h"
+#include "amutil.h"
 #include "sockaddr-util.h"
 #include "stream.h"
 #include "debug.h"

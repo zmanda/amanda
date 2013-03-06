@@ -33,7 +33,7 @@
 #include "conffile.h"
 #include "client_util.h"
 #include "getfsent.h"
-#include "util.h"
+#include "amutil.h"
 #include "glib-util.h"
 #include "timestamp.h"
 #include "pipespawn.h"

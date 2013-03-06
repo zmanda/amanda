@@ -34,7 +34,7 @@
 #include "sendbackup.h"
 #include "amandates.h"
 #include "clock.h"
-#include "util.h"
+#include "amutil.h"
 #include "getfsent.h"			/* for amname_to_dirname lookup */
 #include "conffile.h"
 

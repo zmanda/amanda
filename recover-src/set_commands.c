@@ -32,7 +32,7 @@
 
 #include "amanda.h"
 #include "match.h"
-#include "util.h"
+#include "amutil.h"
 #include "amrecover.h"
 #include "amxml.h"
 
