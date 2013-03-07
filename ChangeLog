@@ -1,3 +1,7 @@
+2013-03-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/taper.pl: PARTIAL reply can compute the CRC from
+	  varying size.
+
 2013-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c: Renamed from common-src/util.c
 	* common-src/amutil.h: Renamed from common-src/util.h

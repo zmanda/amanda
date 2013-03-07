@@ -1244,7 +1244,7 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
-    qr(^PARTIAL taper localhost /usr $datestamp 1 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
+    qr(^PARTIAL taper localhost /usr $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
 ], "without LEOM and without allow-split logged correctly");
 cleanup_log();
