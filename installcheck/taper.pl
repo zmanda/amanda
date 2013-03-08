@@ -1275,7 +1275,7 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
     qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]$),
-    qr(^PARTIAL taper localhost /usr $datestamp 1 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device, splitting not enabled"$),
+    qr(^PARTIAL taper localhost /usr $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 864 fm 1 \[OK\]$),
 ], "with LEOM and without allow-split logged correctly");
 cleanup_log();
