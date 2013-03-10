@@ -123,6 +123,9 @@ do_build() {
     # more detail.
     rm -f ${INSTALL_DEST}/${amlibdir}/charset.alias
 
+    # Create gnutar-lists
+    mkdir ${INSTALL_DEST}/${PREFIX}/gnutar-lists
+
     echo "Amanda Enterprise Edition - version ${VERSION}" > ${INSTALL_DEST}/${PREFIX}/amanda-release || exit 1
 }
 
@@ -159,10 +162,11 @@ do_package() {
     # perl will merge into the prototype.  Note that this perl script is
     # perl-5.4 compatible
     cat > "${src_dir}/process_proto" <<'EOF'
+use strict;
 # make a hash from installperms
 open(INSTPERM, "<" . shift @ARGV) or die("open installperms.sh: $!");
 my %installperms = map {
-    my ($u, $g, $m, $fn) = ($_ =~ /^installperm "([^:"]+)(?:([^:"]+))?" "([^"]*)" "(.*)"/);
+    my ($u, $xtra, $g, $m, $fn) = ($_ =~ /^installperm "([^:"]+)(:?([^:"]+))?" "([^"]*)" "(.*)"/);
     $fn =~ s{^/}{}; # pkgproto has files without the leading slash
     ($fn, [ $u, $g, $m ]);
 } <INSTPERM>;
