@@ -1,3 +1,6 @@
+2013-03-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Parse CRC in amdump file.
+
 2013-03-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/taper.pl: PARTIAL reply can compute the CRC from
 	  varying size.

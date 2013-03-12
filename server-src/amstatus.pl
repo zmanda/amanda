@@ -490,7 +490,7 @@ while($lineX = <AMDUMP>) {
 					$taper_error{$hostpart}="";
 					$taper_name{$hostpart} = $name;
 					$worker_to_serial{$name} = $serial;
-				    $tapedsize{$hostpart} = 0;
+					$tapedsize{$hostpart} = 0;
 				}
 				elsif($line[6] eq "PORT-WRITE") {
 					#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
@@ -509,7 +509,7 @@ while($lineX = <AMDUMP>) {
 					$taper_error{$hostpart}="";
 					$taper_name{$hostpart} = $name;
 					$worker_to_serial{$name} = $serial;
-				    $tapedsize{$hostpart} = 0;
+					$tapedsize{$hostpart} = 0;
 					$size{$hostpart} = 0;
 				}
 				elsif($line[6] eq "TAKE-SCRIBE-FROM") {
@@ -649,13 +649,13 @@ while($lineX = <AMDUMP>) {
 					}
 				}
 				elsif($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
-					#DONE:    7:handle 8:label 9:filenum 10:errstr
-					#PARTIAL: 7:handle 8:INPUT-* 9:TAPE-* 10:errstr 11:INPUT-MSG 12:TAPE-MSG
+					#DONE:    7:handle 8:label 9:filenum 10:CRC 11:errstr
+					#PARTIAL: 7:handle 8:INPUT-* 9:TAPE-* 10:CRC 11:errstr 12:INPUT-MSG 13:TAPE-MSG
 					$serial=$line[7];
 
 					$status_taper = "Idle";
 					$hostpart=$serial{$serial};
-					$line[10] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
+					$line[11] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
 					if ($2 eq 'kb') {
 						$size=$3 / $unitdivisor;
 					} else {
@@ -672,8 +672,8 @@ while($lineX = <AMDUMP>) {
 					if ($line[6] eq "PARTIAL") {
 						$partial{$hostpart} = 1;
 						if ($line[9] eq "TAPE-ERROR") {
-							$error{$hostpart} = "taper: $line[12]";
-							$taper_error{$hostpart} = "taper: $line[12]";
+							$error{$hostpart} = "taper: $line[13]";
+							$taper_error{$hostpart} = "taper: $line[13]";
 						}
 					}
 					else {
