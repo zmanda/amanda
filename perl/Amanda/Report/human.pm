@@ -534,7 +534,7 @@ sub output_tapeinfo
 	$self->zprint("$text.\n");
 
 	my $new_tapes = Amanda::Tapelist::list_new_tapes(
-						$labelstr->{'templates'},
+						$labelstr->{'template'},
 						$report->{'storage'}->{'runtapes'});
 	$self->zprint("$new_tapes\n") if $new_tapes;
     }
