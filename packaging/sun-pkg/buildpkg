@@ -163,6 +163,7 @@ do_package() {
     # perl-5.4 compatible
     cat > "${src_dir}/process_proto" <<'EOF'
 use strict;
+use warnings;
 # make a hash from installperms
 open(INSTPERM, "<" . shift @ARGV) or die("open installperms.sh: $!");
 my %installperms = map {
@@ -181,7 +182,7 @@ for my $line (<PROTO>) {
     # default to amandabackup:disk, without changing mode
     ($user, $group) = ( "amandabackup", "disk" );
     if (exists $installperms{$file}) {
-	($u, $g, $m) = @{$installperms{$file}};
+	my ($u, $g, $m) = @{$installperms{$file}};
 	$user = $u if $u;
 	$group = $g if $g;
 	$mode = $m if $m;
