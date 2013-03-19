@@ -701,6 +701,7 @@ fail:
     SP += argvi; PUTBACK;
     nresults = val_t_to_sv($1, results);
     SPAGAIN; SP -= argvi;
+    EXTEND(SP, nresults);
 
     /* add val_t_to_sv's results to the stack */
     for (iter = results; nresults; iter++, nresults--) {
@@ -716,6 +717,7 @@ fail:
 %typemap (out) GSList * {
     GSList *it = $1;
 
+    EXTEND(SP, g_slist_length(it));
     while (it) {
 	$result = sv_2mortal(newSVpv(it->data, 0));
 	argvi++;
@@ -731,6 +733,14 @@ fail:
 %typemap (out) val_t_strs {
     char **it = $1;
 
+    int count = 0;
+    while (it && *it) {
+	count++;
+	it++;
+    }
+    EXTEND(SP, count);
+
+    it = $1;
     while (it && *it) {
 	$result = sv_2mortal(newSVpv(*it, 0));
 	argvi++;
@@ -955,6 +965,7 @@ void config_clear_errors(void);
 %typemap (argout) GSList **ERRLIST {
     GSList *it = *$1;
 
+    EXTEND(SP, g_slist_length(it));
     while (it) {
 	$result = sv_2mortal(newSVpv(it->data, 0));
 	argvi++;
