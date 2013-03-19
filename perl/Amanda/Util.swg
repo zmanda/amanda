@@ -290,6 +290,7 @@ sub safe_overwrite_file {
 %typemap (out) GPtrArray * {
     if ($1) {
 	guint i;
+	EXTEND(sp, $1->len);
 	for (i = 0; i < $1->len; i++) {
 	    $result = sv_2mortal(newSVpv(g_ptr_array_index($1, i), 0));
 	    argvi++;
