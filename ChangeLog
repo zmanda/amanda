@@ -1,3 +1,7 @@
+2013-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin_perl.pl: Add pool, storage and config arguments
+	  to the add_tapelabel method.
+
 2013-03-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Improve error message,
 	* perl/Amanda/Config.swg, perl/Amanda/Util.swg: EXTEND stack when

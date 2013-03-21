@@ -120,7 +120,8 @@ sub reuse {
 	    $tl->remove_tapelabel($label);
 	    $tl->add_tapelabel($tle->{'datestamp'}, $label, $tle->{'comment'},
 			       1, $tle->{'meta'}, $tle->{'barcode'},
-			       $tle->{'blocksize'});
+			       $tle->{'blocksize'}, $tle->{'pool'},
+			       $tle->{'storage'}, $tle->{'config'});
 	    $need_write = 1;
 	    print STDERR "amadmin: marking tape $label as reusable.\n";
 	} else {
@@ -164,7 +165,8 @@ sub no_reuse {
 	    $tl->remove_tapelabel($label);
 	    $tl->add_tapelabel($tle->{'datestamp'}, $label, $tle->{'comment'},
 			       0, $tle->{'meta'}, $tle->{'barcode'},
-			       $tle->{'blocksize'});
+			       $tle->{'blocksize'}, $tle->{'pool'},
+			       $tle->{'storage'}, $tle->{'config'});
 	    $need_write = 1;
 	    print STDERR "amadmin: marking tape $label as not reusable.\n";
 	} else {
