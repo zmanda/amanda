@@ -25,7 +25,7 @@
 	* server-src/driverio.h, server-src/planner.c,
 	* server-src/server_util.c, server-src/server_util.h,
 	* server-src/tapefile.c, server-src/tapefile.h,
-	* server-src/taper.pl: define mutiple storage, but use the first only.
+	* server-src/taper.pl: Set multiple storage.
 	Use a 'command_file' in the config directory to keep track of what
 	must be done.
 
