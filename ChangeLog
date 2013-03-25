@@ -1,4 +1,7 @@
-2013-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+2013-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/cmdfile.c, server-src/cmdfile.h: Add files.
+
+2013-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, common-src/amflock.c, common-src/conffile.c,
 	* common-src/conffile.h, common-src/glib-util.c,
 	* common-src/glib-util.h, common-src/match.c,
