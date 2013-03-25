@@ -1148,6 +1148,7 @@ make_template(
 
     if (al_template == NULL)
 	at = "";
+    *t++ = '^';
     while (*at != '\0') {
 	if (*at == '$') {
 	    at++;
@@ -1228,6 +1229,7 @@ make_template(
 	    *t++ = *at++;
 	}
     }
+    *t++ = '$';
     *t = '\0';
 
     return template;

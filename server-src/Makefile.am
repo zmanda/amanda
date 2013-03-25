@@ -86,7 +86,7 @@ LDADD = ../common-src/libamanda.la   \
 	../device-src/libamdevice.la     \
 	../common-src/libamanda.la
 
-libamserver_la_SOURCES=	amindex.c	\
+libamserver_la_SOURCES=	amindex.c	cmdfile.c \
 			diskfile.c	driverio.c	cmdline.c  \
 			holding.c	infofile.c	logfile.c	\
 			tapefile.c	find.c		server_util.c   \
@@ -110,7 +110,7 @@ DISTCLEANFILES += config.log
 amindexd_CSRC =		amindexd.c	disk_history.c	list_dir.c
 amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)
 
-noinst_HEADERS = 	amindex.h	cmdline.h	\
+noinst_HEADERS = 	amindex.h	cmdfile.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\

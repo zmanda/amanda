@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 9;
+use Test::More tests => 8;
 use strict;
 use warnings;
 
@@ -51,21 +51,16 @@ ok(run('amcheckdump', 'TESTCONF'),
 like($Installcheck::Run::stdout, qr(could not find)i,
      "..but finds no dumps.");
 
-Installcheck::Dumpcache::load("notimestamps");
-
-like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
-    "amcheckdump succeeds, claims to validate something (usetimestamps=no)");
-
 ##
 # and check command-line handling
+
+Installcheck::Dumpcache::load("basic");
 
 like(run_get('amcheckdump', 'TESTCONF', '-oorg=installcheck'), qr(Validating),
     "amcheckdump accepts '-o' options on the command line");
 
 ##
 # Try with usetimestamps enabled
-
-Installcheck::Dumpcache::load("basic");
 
 like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
     "amcheckdump succeeds, claims to validate something (usetimestamps=yes)");

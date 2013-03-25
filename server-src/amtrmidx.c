@@ -59,6 +59,8 @@ main(
     int		argc,
     char **	argv)
 {
+    GList  *dlist;
+    GList  *dlist1;
     disk_t *diskp;
     disklist_t diskl;
     size_t i;
@@ -140,8 +142,9 @@ main(
     /* now go through the list of disks and find which have indexes */
     time(&tmp_time);
     tmp_time -= 7*24*60*60;			/* back one week */
-    for (diskp = diskl.head; diskp != NULL; diskp = diskp->next)
+    for (dlist = diskl.head; dlist != NULL; dlist = dlist->next)
     {
+	diskp = dlist->data;
 	if (diskp->index)
 	{
 	    char *indexdir, *qindexdir;
@@ -167,9 +170,11 @@ main(
 	    qindexdir = quote_string(indexdir);
 
 	    /* find all dles that use the same indexdir */
-	    for (dp = diskl.head; dp != NULL; dp = dp->next) {
+	    for (dlist1 = diskl.head; dlist1 != NULL; dlist1 = dlist1->next)
+	    {
 		char *dp_host, *dp_disk;
 
+		dp = dlist1->data;
 		dp_host = sanitise_filename(dp->host->hostname);
 		dp_disk = sanitise_filename(dp->name);
 		if (g_str_equal(host, dp_host) &&

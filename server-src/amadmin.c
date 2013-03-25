@@ -378,6 +378,7 @@ diskloop(
     char *	cmdname,
     void	(*func)(disk_t *dp))
 {
+    GList  *dlist;
     disk_t *dp;
     int count = 0;
     char *errstr;
@@ -394,7 +395,8 @@ diskloop(
 	amfree(errstr);
     }
 
-    for(dp = diskq.head; dp != NULL; dp = dp->next) {
+    for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if(dp->todo) {
 	    count++;
 	    func(dp);
@@ -454,19 +456,25 @@ estimate(
     int		argc,
     char **	argv)
 {
+    GList  *dlist;
     disk_t *dp;
-    char   *storage_name;
+    identlist_t il;
+    char   *storage_n;
     storage_t *storage;
 
-    storage_name = getconf_str(CNF_STORAGE);
-    storage = lookup_storage(storage_name);
+    il = getconf_identlist(CNF_STORAGE);
+    storage_n= il->data;
+    storage = lookup_storage(storage_n);
     tapetype = lookup_tapetype(storage_get_tapetype(storage));
 
-    if(argc >= 4)
+    if(argc >= 4) {
 	diskloop(argc, argv, "estimate", estimate_one);
-    else
-	for(dp = diskq.head; dp != NULL; dp = dp->next)
+    } else {
+	for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    estimate_one(dp);
+	}
+    }
 }
 
 
@@ -794,13 +802,17 @@ info(
     int		argc,
     char **	argv)
 {
+    GList  *dlist;
     disk_t *dp;
 
-    if(argc >= 4)
+    if(argc >= 4) {
 	diskloop(argc, argv, "info", info_one);
-    else
-	for(dp = diskq.head; dp != NULL; dp = dp->next)
+    } else {
+	for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    info_one(dp);
+	}
+    }
 }
 
 /* ----------------------------------------------- */
@@ -840,14 +852,18 @@ due(
     int		argc,
     char **	argv)
 {
+    GList  *dlist;
     disk_t *dp;
 
     time(&today);
-    if(argc >= 4)
+    if(argc >= 4) {
 	diskloop(argc, argv, "due", due_one);
-    else
-	for(dp = diskq.head; dp != NULL; dp = dp->next)
+    } else {
+	for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    due_one(dp);
+	}
+    }
 }
 
 /* ----------------------------------------------- */
@@ -865,14 +881,16 @@ tape(
     int     nb_new_tape;
     storage_t *storage;
     policy_t  *policy;
-    char   *storage_name;
-    char   *policy_name;
+    char   *storage_n;
+    char   *policy_n;
     char   *l_template;
     char   *tapepool;
     int     retention_tapes;
     int     retention_days;
     int     retention_recover;
     int     retention_full;
+    identlist_t il;
+    int     nb_storage;
 
     if(argc > 4 && g_str_equal(argv[3], "--days")) {
 	nb_days = atoi(argv[4]);
@@ -884,60 +902,69 @@ tape(
 	    nb_days = 10000;
     }
 
-    storage_name = getconf_str(CNF_STORAGE);
-    storage = lookup_storage(storage_name);
+    il = getconf_identlist(CNF_STORAGE);
+    nb_storage = g_slist_length(il);
+    for (; il != NULL; il = il->next) {
+	storage_n = il->data;
+	storage = lookup_storage(storage_n);
 
-    l_template = storage_get_labelstr(storage)->template;
-    tapepool = storage_get_tapepool(storage);
-    runtapes = storage_get_runtapes(storage);
-    policy_name = storage_get_policy(storage);
-    policy = lookup_policy(policy_name);
-    retention_tapes = policy_get_retention_tapes(policy);
-    retention_days = policy_get_retention_days(policy);
-    retention_recover = policy_get_retention_recover(policy);
-    retention_full = policy_get_retention_full(policy);
+	l_template = storage_get_labelstr(storage)->template;
+	tapepool = storage_get_tapepool(storage);
+	runtapes = storage_get_runtapes(storage);
+	policy_n = storage_get_policy(storage);
+	policy = lookup_policy(policy_n);
+	retention_tapes = policy_get_retention_tapes(policy);
+	retention_days = policy_get_retention_days(policy);
+	retention_recover = policy_get_retention_recover(policy);
+	retention_full = policy_get_retention_full(policy);
 
-    tp = lookup_last_reusable_tape(l_template, tapepool, storage_name,
-				   retention_tapes, retention_days,
-				   retention_recover, retention_full, 0);
-    skip = 0;
+	tp = lookup_last_reusable_tape(l_template, tapepool, storage_n,
+				       retention_tapes, retention_days,
+				       retention_recover, retention_full, 0);
+	skip = 0;
 
-    for ( j=0 ; j < nb_days ; j++ ) {
-	nb_new_tape=0;
-	for ( i=0 ; i < runtapes ; i++ ) {
-	    if(i==0)
-		g_fprintf(stdout, _("The next Amanda run should go onto "));
-	    if(tp != NULL) {
-		if (nb_new_tape > 0) {
-		    if (nb_new_tape == 1)
-			g_fprintf(stdout, _("1 new tape.\n"));
-		    else
-			g_fprintf(stdout, _("%d new tapes.\n"), nb_new_tape);
-		    g_fprintf(stdout, "                                   ");
-		    nb_new_tape = 0;
+	for ( j=0 ; j < nb_days ; j++ ) {
+	    nb_new_tape=0;
+	    for ( i=0 ; i < runtapes ; i++ ) {
+		if(i==0) {
+		    if (nb_storage > 1) {
+			g_fprintf(stdout, _("The next Amanda run for storage '%s' should go onto "), storage_n);
+		    } else {
+			g_fprintf(stdout, _("The next Amanda should go onto "));
+		    }
 		}
-		g_fprintf(stdout, _("tape %s or a new tape.\n"), tp->label);
-		if (i < runtapes-1)
-		    g_fprintf(stdout, "                                   ");
-	    } else {
-		nb_new_tape++;
+		if(tp != NULL) {
+		    if (nb_new_tape > 0) {
+			if (nb_new_tape == 1)
+			    g_fprintf(stdout, _("1 new tape.\n"));
+			else
+			    g_fprintf(stdout, _("%d new tapes.\n"), nb_new_tape);
+			g_fprintf(stdout, "                                   ");
+			nb_new_tape = 0;
+		    }
+		    g_fprintf(stdout, _("tape %s or a new tape.\n"), tp->label);
+		    if (i < runtapes-1)
+			g_fprintf(stdout, "                                   ");
+		} else {
+		    nb_new_tape++;
+		}
+		skip++;
+
+		tp = lookup_last_reusable_tape(l_template, tapepool, storage_n,
+					       retention_tapes,
+					       retention_days, retention_recover,
+					       retention_full, skip);
 	    }
-	    skip++;
+	    if (nb_new_tape > 0) {
+		if (nb_new_tape == 1)
+		    g_fprintf(stdout, _("1 new tape.\n"));
+		else
+		    g_fprintf(stdout, _("%d new tapes.\n"), nb_new_tape);
+	    }
+	}
 
-	    tp = lookup_last_reusable_tape(l_template, tapepool, storage_name,
-					   retention_tapes,
-					   retention_days, retention_recover,
-					   retention_full, skip);
-	}
-	if (nb_new_tape > 0) {
-	    if (nb_new_tape == 1)
-		g_fprintf(stdout, _("1 new tape.\n"));
-	    else
-		g_fprintf(stdout, _("%d new tapes.\n"), nb_new_tape);
-	}
+	print_new_tapes(stdout, storage_n, nb_days * runtapes);
     }
-
-    print_new_tapes(stdout, l_template, nb_days * runtapes);
 }
 
 /* ----------------------------------------------- */
@@ -947,6 +974,7 @@ balance(
     int		argc G_GNUC_UNUSED,
     char **	argv G_GNUC_UNUSED)
 {
+    GList  *dlist;
     disk_t *dp;
     struct balance_stats {
 	int disks;
@@ -997,7 +1025,8 @@ balance(
 	sp[seq].origsize = sp[seq].outsize = (off_t)0;
     }
 
-    for(dp = diskq.head; dp != NULL; dp = dp->next) {
+    for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if(get_info(dp->host->hostname, dp->name, &info)) {
 	    g_printf(_("new disk %s:%s ignored.\n"), dp->host->hostname, dp->name);
 	    continue;
@@ -1638,6 +1667,7 @@ export_db(
     int		argc,
     char **	argv)
 {
+    GList  *dlist;
     disk_t *dp;
     time_t curtime;
     char hostname[MAX_HOSTNAME_LENGTH+1];
@@ -1661,10 +1691,14 @@ export_db(
     g_printf(_("\n# This file can be merged back in with \"amadmin import\".\n"));
     g_printf(_("# Edit only with care.\n"));
 
-    if(argc >= 4)
+    if(argc >= 4) {
 	diskloop(argc, argv, "export", export_one);
-    else for(dp = diskq.head; dp != NULL; dp = dp->next)
-	export_one(dp);
+    } else {
+	for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
+	    export_one(dp);
+	}
+    }
 }
 
 void
@@ -2158,13 +2192,17 @@ disklist(
     int		argc,
     char **	argv)
 {
+    GList  *dlist;
     disk_t *dp;
 
-    if(argc >= 4)
+    if(argc >= 4) {
 	diskloop(argc, argv, "disklist", disklist_one);
-    else
-	for(dp = diskq.head; dp != NULL; dp = dp->next)
+    } else {
+	for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    disklist_one(dp);
+	}
+    }
 }
 
 /* ----------------------------------------------- */
@@ -2174,14 +2212,18 @@ hosts(
     int		argc G_GNUC_UNUSED,
     char **	argv G_GNUC_UNUSED)
 {
+    GList  *dlist;
     disk_t *dp;
     gint sentinel = 1;
     GHashTable *seen = g_hash_table_new(g_str_hash, g_str_equal);
 
     /* enumerate all hosts, skipping those that have been seen (since
      * there may be more than one DLE on a host */
-    for(dp = diskq.head; dp != NULL; dp = dp->next) {
-	char *hostname = dp->host->hostname;
+    for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	char *hostname;
+
+	dp = dlist->data;
+	hostname = dp->host->hostname;
 	if (g_hash_table_lookup(seen, hostname))
 	    continue;
 	g_printf("%s\n", hostname);
@@ -2197,10 +2239,13 @@ dles(
     int		argc G_GNUC_UNUSED,
     char **	argv G_GNUC_UNUSED)
 {
+    GList  *dlist;
     disk_t *dp;
 
-    for(dp = diskq.head; dp != NULL; dp = dp->next)
+    for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	g_printf("%s %s\n", dp->host->hostname, dp->name);
+    }
 }
 
 /* ----------------------------------------------- */

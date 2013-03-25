@@ -315,7 +315,7 @@ char *get_last_reusable_tape_label(const char *l_template, const char *tapepool,
 
 int volume_is_reusable(const char *label);
 %newobject list_new_tapes;
-char *list_new_tapes(const char *l_template, int nb);
+char *list_new_tapes(char *storage_n, int nb);
 
 /* C functions -- should be called *only* from within this module */
 

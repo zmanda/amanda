@@ -130,4 +130,6 @@ void g_ptr_array_foreach (GPtrArray *array,
 guint g_str_amanda_hash(gconstpointer v);
 gboolean g_str_amanda_equal(gconstpointer v1, gconstpointer v2);
 
+GList *g_am_list_insert_after(GList *list, GList *sibling, gpointer data);
+
 #endif

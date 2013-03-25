@@ -260,6 +260,7 @@ is($chg->have_inventory(), 1, "changer have inventory");
 my @new_tape_label = $chg->make_new_tape_label();
 is_deeply(\@new_tape_label, [undef, "template is not set, you must set autolabel"], "no make_new_tape_label");
 is($chg->make_new_meta_label(), undef, "no make_new_meta_label");
+$chg->quit();
 
 $chg = Amanda::Changer->new("mychanger", tapelist => $tl,
 			    labelstr => { match_autolabel => 0,

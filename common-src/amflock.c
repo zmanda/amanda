@@ -140,12 +140,13 @@ file_lock_lock(
     }
 
     if (stat_buf.st_size) {
-	lock->data = g_malloc(stat_buf.st_size);
+	lock->data = g_malloc(stat_buf.st_size+1);
 	lock->len = stat_buf.st_size;
 	if (read_fully(fd, lock->data, lock->len, NULL) < lock->len) {
 	    rv = -1;
 	    goto done;
 	}
+	lock->data[lock->len] = '\0';
     }
 
     fd = -1; /* we'll keep the file now */

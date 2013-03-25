@@ -65,28 +65,28 @@ use constant START_SCAN => message("START-SCAN",
 use constant NEW_TAPE => message("NEW-TAPE",
     format => {
 	in => [ qw( worker_name handle ) ],
-	out => [ qw( handle label ) ],
+	out => [ qw( worker_name handle label ) ],
     },
 );
 
 use constant NO_NEW_TAPE => message("NO-NEW-TAPE",
     format => {
 	in => [ qw( worker_name handle reason ) ],
-	out => [ qw( handle ) ],
+	out => [ qw( worker_name handle ) ],
     }
 );
 
 use constant FAILED => message("FAILED",
     format => {
 	in => [ qw( worker_name handle ) ],
-	out => [ qw( handle input taper inputerr tapererr ) ],
+	out => [ qw( worker_name handle input taper inputerr tapererr ) ],
     },
 );
 
 use constant DONE => message("DONE",
     format => {
 	in => [ qw( worker_name handle orig_kb native_crc client_crc server_crc) ],
-	out => [ qw( handle input taper server_crc stats inputerr tapererr ) ],
+	out => [ qw( worker_name handle input taper server_crc stats inputerr tapererr ) ],
     },
 );
 
@@ -103,15 +103,15 @@ use constant TAPE_ERROR => message("TAPE-ERROR",
 );
 
 use constant PARTIAL => message("PARTIAL",
-    format => [ qw( handle input taper server_crc stats inputerr tapererr ) ],
+    format => [ qw( worker_name handle input taper server_crc stats inputerr tapererr ) ],
 );
 
 use constant PARTDONE => message("PARTDONE",
-    format => [ qw( handle label fileno kb stats ) ],
+    format => [ qw( worker_name handle label fileno kb stats ) ],
 );
 
 use constant REQUEST_NEW_TAPE => message("REQUEST-NEW-TAPE",
-    format => [ qw( handle ) ],
+    format => [ qw( worker_name handle ) ],
 );
 
 use constant PORT => message("PORT",
@@ -127,7 +127,7 @@ use constant TAKE_SCRIBE_FROM => message("TAKE-SCRIBE-FROM",
 );
 
 use constant DUMPER_STATUS => message("DUMPER-STATUS",
-    format => [ qw( handle ) ],
+    format => [ qw( worker_name handle ) ],
 );
 
 use constant CLOSE_VOLUME => message("CLOSE-VOLUME",

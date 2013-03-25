@@ -564,14 +564,23 @@ stamp2time(
     return (tt);
 }
 
-char *list_new_tapes(const char *l_template, int nb)
+char *list_new_tapes(
+    char *storage_n,
+    int   nb)
 {
     tape_t *last_tape, *iter;
     int c;
     GString *strbuf;
+    labelstr_t *labelstr;
+    char       *tapepool;
+    GSList     *l_list = NULL;
+    GSList     *list1;
+    storage_t  *storage;
 
     if (nb <= 0)
         return NULL;
+
+    storage = lookup_storage(storage_n);
 
     /* Find latest reusable new tape */
     last_tape = lookup_tapepos(lookup_nb_tape());
@@ -584,37 +593,53 @@ char *list_new_tapes(const char *l_template, int nb)
     if (!g_str_equal(last_tape->datestamp, "0"))
         return NULL;
 
+    labelstr = storage_get_labelstr(storage);
+    tapepool = storage_get_tapepool(storage);
+
     /* count the number of tapes we *actually* used */
 
     iter = last_tape;
     c = 0;
 
-    while (iter && nb > 0 && g_str_equal(iter->datestamp, "0") &&
-			    match(l_template, last_tape->label)) {
-        if (iter->reuse) {
+    while (iter && nb > 0 && g_str_equal(iter->datestamp, "0")) {
+	if (iter->reuse &&
+	    (!iter->config || g_str_equal(iter->config, get_config_name())) &&
+	    (!iter->storage || g_str_equal(iter->storage, storage_n)) &&
+	    ((iter->pool && g_str_equal(iter->pool, tapepool)) ||
+	     (!iter->pool && match_labelstr_template(labelstr->template, iter->label,
+						 iter->barcode, iter->meta)))) {
             c++;
             nb--;
+	    l_list = g_slist_append(l_list, iter->label);
         }
         iter = iter->prev;
     }
 
-    if (c == 1)
-        return g_strdup_printf("The next new tape already labelled is: %s.",
-            last_tape->label);
+    if (c == 0) {
+        return NULL;
+    }
+
+    if (c == 1) {
+        char *msg = g_strdup_printf("The next new tape already labelled is: %s.",
+            (char *)l_list->data);
+	g_slist_free(l_list);
+	return msg;
+    }
 
     strbuf = g_string_new(NULL);
     g_string_append_printf(strbuf,
         "The next %d new tapes already labelled are: %s", c,
-        last_tape->label);
+        (char *)l_list->data);
 
-    iter = last_tape->prev;
-    c--;
-    while (iter && c > 0 && g_str_equal(iter->datestamp,"0")) {
-        if (iter->reuse && match(l_template, last_tape->label)) {
-            g_string_append_printf(strbuf, ", %s", iter->label);
-            c--;
-        }
-        iter = iter->prev;
+    list1 = l_list;
+    l_list = l_list->next;
+    g_slist_free_1(list1);
+
+    while (l_list != NULL) {
+	g_string_append_printf(strbuf, ", %s", (char *)l_list->data);
+	list1 = l_list;
+	l_list = l_list->next;
+	g_slist_free_1(list1);
     }
     return g_string_free(strbuf, FALSE);
 }
@@ -622,10 +647,10 @@ char *list_new_tapes(const char *l_template, int nb)
 void
 print_new_tapes(
     FILE *output,
-    const char *l_template,
+    char *storage_n,
     int   nb)
 {
-    char *result = list_new_tapes(l_template, nb);
+    char *result = list_new_tapes(storage_n, nb);
 
     if (result) {
 	g_fprintf(output,"%s\n", result);

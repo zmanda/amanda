@@ -64,7 +64,7 @@ my ($idx_count_pre, $idx_count_post);
 
 
 ## test config overrides
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 
@@ -81,7 +81,7 @@ cmp_ok(
 
 ## test
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 my $tapelist = Amanda::Tapelist->new(config_dir_relative("tapelist"));
@@ -111,7 +111,7 @@ ok($dev->finish(),
 
 # test --cleanup
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -138,7 +138,7 @@ ok($dev->finish(),
 
 # test --erase
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -166,7 +166,7 @@ ok($dev->finish(),
 
 # test --keep-label
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -194,7 +194,7 @@ ok($dev->finish(),
 
 # test --keep-label --erase
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -220,7 +220,7 @@ is($dev->volume_label, 'TESTCONF01', "label is correct");
 
 # test --keep-label --erase
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -246,7 +246,7 @@ is($dev->volume_label, 'TESTCONF01', "label is correct");
 
 # test --dryrun --erase --cleanup
 
-Installcheck::Dumpcache::load("notimestamps");
+Installcheck::Dumpcache::load("basic");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 

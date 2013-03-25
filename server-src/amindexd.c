@@ -1253,7 +1253,8 @@ tapedev_is(void)
 static int
 are_dumps_compressed(void)
 {
-    disk_t *diskp;
+    GList  *dlist;
+    disk_t *diskp = NULL;
 
     /* check state okay to do this */
     if (get_config_name() == NULL) {
@@ -1270,7 +1271,8 @@ are_dumps_compressed(void)
     }
 
     /* now go through the list of disks and find which have indexes */
-    for (diskp = disk_list.head; diskp != NULL; diskp = diskp->next) {
+    for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
+	diskp = dlist->data;
 	if ((strcasecmp(diskp->host->hostname, dump_hostname) == 0)
 		&& (g_str_equal(diskp->name, disk_name))) {
 	    break;
@@ -1603,7 +1605,8 @@ main(
 	    }
 	    s[-1] = (char)ch;
 	} else if (g_str_equal(cmd, "LISTHOST")) {
-	    disk_t *disk, 
+	    GList  *dlist, *dlistup;
+	    disk_t *disk,
                    *diskdup;
 	    int nbhost = 0,
                 found = 0;
@@ -1613,9 +1616,11 @@ main(
 	    }
 	    else {
 		lreply(200, _(" List hosts for config %s"), get_config_name());
-		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
+		for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
+		    disk = dlist->data;
                     found = 0;
-		    for (diskdup = disk_list.head; diskdup!=disk; diskdup = diskdup->next) {
+		    for (dlistup = disk_list.head; dlistup != NULL; dlistup = dlistup->next) {
+			diskdup = dlistup->data;
 		        if(g_str_equal(diskdup->host->hostname,
                                        disk->host->hostname)) {
                           found = 1;
@@ -1717,6 +1722,7 @@ main(
 	    }
 	} else if (g_str_equal(cmd, "LISTDISK")) {
 	    char *qname;
+	    GList  *dlist;
 	    disk_t *disk;
 	    int nbdisk = 0;
 	    s[-1] = '\0';
@@ -1729,7 +1735,8 @@ main(
 	    else if(arg) {
 		lreply(200, _(" List of disk for device %s on host %s"), arg,
 		       dump_hostname);
-		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
+		for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
+		    disk = dlist->data;
 
 		    if (strcasecmp(disk->host->hostname, dump_hostname) == 0 &&
 		      ((disk->device && g_str_equal(disk->device, arg)) ||
@@ -1751,7 +1758,8 @@ main(
 	    }
 	    else {
 		lreply(200, _(" List of disk for host %s"), dump_hostname);
-		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
+		for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
+		    disk = dlist->data;
 		    if(strcasecmp(disk->host->hostname, dump_hostname) == 0) {
 			qname = quote_string(disk->name);
 			fast_lreply(201, " %s", qname);

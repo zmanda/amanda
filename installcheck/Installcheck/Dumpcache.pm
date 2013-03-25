@@ -55,10 +55,6 @@ to which has been added:
 
 and a few basic configuration parameters listed below.
 
-=head2 notimestamps
-
-Like 'basic', but with "usetimestamps" set to "no".
-
 =head2 ndmp
 
 Like 'basic', but with an NDMP device.  You will need to use
@@ -120,18 +116,6 @@ $flavors{'basic'} = sub {
 
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'basic'"),
 	or amdump_diag("Amdump run failed for 'basic'");
-};
-
-$flavors{'notimestamps'} = sub {
-    my $testconf = Installcheck::Run::setup();
-    basic_settings($testconf);
-    use_new_chg_disk($testconf);
-    $testconf->add_dle("localhost $diskname installcheck-test");
-    $testconf->add_param('usetimestamps', 'no');
-    $testconf->write();
-
-    ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'notimestamps'"),
-	or amdump_diag("Amdump run failed for 'notimestamps'");
 };
 
 $flavors{'multi'} = sub {

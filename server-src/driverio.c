@@ -57,11 +57,12 @@ static serial_t *stable;
 void
 init_driverio(
     int inparallel,
+    int nb_storage,
     int taper_parallel_write)
 {
     dumper_t *dumper;
 
-    taper_fd = -1;
+    tapetable = g_new0(taper_t, nb_storage+1);
     dmptable = g_new0(dumper_t, inparallel+1);
     chktable = g_new0(chunker_t, inparallel+1);
     for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
@@ -79,9 +80,12 @@ childstr(
 {
     static char buf[NUM_STR_SIZE + 32];
     dumper_t *dumper;
+    taper_t  *taper;
 
-    if (fd == taper_fd)
-	return ("taper");
+    for (taper = tapetable; taper->fd != 0; taper++) {
+	if (taper->fd == fd)
+	    return (taper->name);
+    }
 
     for (dumper = dmptable; dumper->fd != 0; dumper++) {
 	if (dumper->fd == fd)
@@ -96,88 +100,129 @@ childstr(
 
 void
 startup_tape_process(
-    char *taper_program,
-    int   taper_parallel_write,
-    gboolean no_taper)
+    char      *taper_program,
+    gboolean   no_taper)
 {
     int       fd[2];
-    int       i;
+    int       nb_taper;
+    int       nb_wtaper;
+    int       nb_worker;
     char    **config_options;
     char    **env;
     taper_t  *taper;
+    wtaper_t *wtaper;
+    identlist_t il;
 
-    /* always allocate the tapetable */
-    tapetable = calloc(sizeof(taper_t), taper_parallel_write+1);
-    if (!tapetable) {
-	error(_("could not g_malloc tapetable"));
-	/*NOTREACHED*/
-    }
+    for (il = getconf_identlist(CNF_STORAGE), nb_taper = 0; il != NULL; il = il->next, nb_taper++) {
+        storage_t *storage = lookup_storage((char *)il->data);
+	char *tapetype;
+	tapetype_t *tape;
+	int   conf_flush_threshold_dumped;
+	int   conf_flush_threshold_scheduled;
+	int   conf_taperflush;
 
-    for (taper = tapetable, i = 0; i < taper_parallel_write; taper++, i++) {
-	taper->name = g_strdup_printf("worker%d", i);
-	taper->sendresult = 0;
-	taper->input_error = NULL;
-	taper->tape_error = NULL;
-	taper->result = 0;
-	taper->dumper = NULL;
-	taper->disk = NULL;
-	taper->first_label = NULL;
-	taper->first_fileno = 0;
-	taper->state = TAPER_STATE_DEFAULT;
-	taper->left = 0;
-	taper->written = 0;
+	taper = &tapetable[nb_taper];
+	taper->name = g_strdup_printf("taper%d", nb_taper);
+	taper->storage_name = g_strdup((char *)il->data);
+	taper->ev_read = NULL;
+	taper->nb_wait_reply = 0;
+	nb_worker = storage_get_taper_parallel_write(storage);
+	taper->runtapes = storage_get_runtapes(storage);
+	if (nb_worker > taper->runtapes)
+	    nb_worker = taper->runtapes;
+	taper->nb_worker = nb_worker;
+	tapetype = storage_get_tapetype(storage);
+	tape = lookup_tapetype(tapetype);
+	taper->tape_length = tapetype_get_length(tape);
+	taper->current_tape = 0;
+	conf_flush_threshold_dumped = getconf_int(CNF_FLUSH_THRESHOLD_DUMPED);
+	conf_flush_threshold_scheduled = getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED);
+	conf_taperflush = getconf_int(CNF_TAPERFLUSH);
+	taper->flush_threshold_dumped = (conf_flush_threshold_dumped * taper->tape_length) /100;
+	taper->flush_threshold_scheduled = (conf_flush_threshold_scheduled * taper->tape_length) /100;
+	taper->taperflush = (conf_taperflush * taper->tape_length) /100;
+	g_debug("storage %s: tape_length %lld", storage_name(storage), (long long)taper->tape_length);
+	g_debug("storage %s: flush_threshold_dumped %lld", storage_name(storage), (long long)taper->flush_threshold_dumped);
+	g_debug("storage %s: flush_threshold_scheduled  %lld", storage_name(storage), (long long)taper->flush_threshold_scheduled );
+	g_debug("storage %s: taperflush %lld", storage_name(storage), (long long)taper->taperflush);
+	taper->max_dle_by_volume = storage_get_max_dle_by_volume(storage);
+	taper->tapeq.head = NULL;
+	taper->tapeq.tail = NULL;
 
-	/* jump right to degraded mode if there's no taper */
-	if (no_taper) {
-	    taper->tape_error = g_strdup("no taper started (--no-taper)");
-	    taper->result = BOGUS;
+	taper->wtapetable = g_new0(wtaper_t, tapetable[nb_taper].nb_worker + 1);
+	if (!taper->wtapetable) {
+	    error(_("could not g_malloc tapetable"));
+	    /*NOTREACHED*/
 	}
-    }
 
-    /* don't start the taper if we're not supposed to */
-    if (no_taper)
-	return;
+	for (wtaper = taper->wtapetable, nb_wtaper = 0; nb_wtaper < nb_worker; wtaper++, nb_wtaper++) {
+	    wtaper->name = g_strdup_printf("worker%d-%d", nb_taper, nb_wtaper);
+	    wtaper->sendresult = 0;
+	    wtaper->input_error = NULL;
+	    wtaper->tape_error = NULL;
+	    wtaper->result = 0;
+	    wtaper->dumper = NULL;
+	    wtaper->disk = NULL;
+	    wtaper->first_label = NULL;
+	    wtaper->first_fileno = 0;
+	    wtaper->state = TAPER_STATE_DEFAULT;
+	    wtaper->left = 0;
+	    wtaper->written = 0;
+	    wtaper->taper = taper;
 
-    if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
-	error(_("taper pipe: %s"), strerror(errno));
-	/*NOTREACHED*/
-    }
-    if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
-	error(_("taper socketpair 0: descriptor %d out of range (0 .. %d)\n"),
-	      fd[0], (int)FD_SETSIZE-1);
-        /*NOTREACHED*/
-    }
-    if(fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
-	error(_("taper socketpair 1: descriptor %d out of range (0 .. %d)\n"),
-	      fd[1], (int)FD_SETSIZE-1);
-        /*NOTREACHED*/
-    }
+	    /* jump right to degraded mode if there's no taper */
+	    if (no_taper) {
+		wtaper->tape_error = g_strdup("no taper started (--no-taper)");
+		wtaper->result = BOGUS;
+	    }
+	}
 
-    switch(taper_pid = fork()) {
-    case -1:
-	error(_("fork taper: %s"), strerror(errno));
-	/*NOTREACHED*/
+	/* don't start the taper if we're not supposed to */
+	if (no_taper)
+	    continue;
 
-    case 0:	/* child process */
-	aclose(fd[0]);
-	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
-	    error(_("taper dup2: %s"), strerror(errno));
-	config_options = get_config_options(4);
-	config_options[0] = "taper";
-	config_options[1] = get_config_name();
-	config_options[2] = "--log-filename";
-	config_options[3] = log_filename;
-	safe_fd(-1, 0);
-	env = safe_env();
-	execve(taper_program, config_options, env);
-	free_env(env);
-	error("exec %s: %s", taper_program, strerror(errno));
-	/*NOTREACHED*/
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
+	    error(_("taper pipe: %s"), strerror(errno));
+	    /*NOTREACHED*/
+	}
+	if (fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
+	    error(_("taper socketpair 0: descriptor %d out of range (0 .. %d)\n"),
+	          fd[0], (int)FD_SETSIZE-1);
+            /*NOTREACHED*/
+	}
+	if (fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
+	    error(_("taper socketpair 1: descriptor %d out of range (0 .. %d)\n"),
+	          fd[1], (int)FD_SETSIZE-1);
+            /*NOTREACHED*/
+	}
 
-    default:	/* parent process */
-	aclose(fd[1]);
-	taper_fd = fd[0];
-	taper_ev_read = NULL;
+	switch(taper->pid = fork()) {
+	case -1:
+	    error(_("fork taper: %s"), strerror(errno));
+	    /*NOTREACHED*/
+
+	case 0:	/* child process */
+	    aclose(fd[0]);
+	    if (dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
+	        error(_("taper dup2: %s"), strerror(errno));
+	    config_options = get_config_options(6);
+	    config_options[0] = "taper";
+	    config_options[1] = get_config_name();
+	    config_options[2] = "--storage";
+	    config_options[3] = storage_name(storage);
+	    config_options[4] = "--log-filename";
+	    config_options[5] = log_filename;
+	    safe_fd(-1, 0);
+	    env = safe_env();
+	    execve(taper_program, config_options, env);
+	    free_env(env);
+	    error("exec %s: %s", taper_program, strerror(errno));
+	    /*NOTREACHED*/
+
+	default: /* parent process */
+	    aclose(fd[1]);
+	    taper->fd = fd[0];
+	}
     }
 }
 
@@ -437,6 +482,8 @@ taper_splitting_args(
 
 int
 taper_cmd(
+    taper_t  *taper,
+    wtaper_t *wtaper,
     cmd_t cmd,
     void *ptr,
     char *destname,
@@ -467,7 +514,7 @@ taper_cmd(
     case CLOSE_VOLUME:
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    "\n", NULL);
 	break;
     case FILE_WRITE:
@@ -482,7 +529,7 @@ taper_cmd(
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
 	splitargs = taper_splitting_args(dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    " ", qdest,
 			    " ", dp->host->hostname,
@@ -510,7 +557,7 @@ taper_cmd(
 	*/
 	splitargs = taper_splitting_args(dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    " ", dp->host->hostname,
 			    " ", qname,
@@ -546,7 +593,7 @@ taper_cmd(
 		       (long long)sched(dp)->client_crc.size);
 	}
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    " ", number,
 			    " ", n_crc,
@@ -557,7 +604,7 @@ taper_cmd(
     case FAILED: /* handle */
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
@@ -565,7 +612,7 @@ taper_cmd(
 	dp = (disk_t *) ptr;
 	q = quote_string(destname);	/* reason why no new tape */
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    " ", q,
 			    "\n", NULL);
@@ -574,21 +621,21 @@ taper_cmd(
     case NEW_TAPE:
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
     case START_SCAN:
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
     case TAKE_SCRIBE_FROM:
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", sched(dp)->taper->name,
+			    " ", wtaper->name,
 			    " ", disk2serial(dp),
 			    " ", destname,  /* name of worker */
 			    "\n", NULL);
@@ -604,17 +651,17 @@ taper_cmd(
     /*
      * Note: cmdline already has a '\n'.
      */
-    g_printf(_("driver: send-cmd time %s to taper: %s"),
-	   walltime_str(curclock()), cmdline);
+    g_printf(_("driver: send-cmd time %s to %s: %s"),
+	   walltime_str(curclock()), taper->name, cmdline);
     fflush(stdout);
-    if ((full_write(taper_fd, cmdline, strlen(cmdline))) < strlen(cmdline)) {
+    if ((full_write(taper->fd, cmdline, strlen(cmdline))) < strlen(cmdline)) {
 	g_printf(_("writing taper command '%s' failed: %s\n"),
 		cmdline, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);
 	return 0;
     }
-    if(cmd == QUIT) aclose(taper_fd);
+    if(cmd == QUIT) aclose(taper->fd);
     amfree(cmdline);
     return 1;
 }

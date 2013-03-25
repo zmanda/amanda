@@ -36,14 +36,14 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", "\"TESTCONF%%\" empty volume_error");
 $testconf->write();
 
-like(run_get("$amlibexecdir/amcheck-device", "TESTCONF"),
+like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF"),
     qr/Will write label 'TESTCONF01' to new volume/,
     "a run of amcheck-device on a new config succeeds");
 
-ok(!run("$amlibexecdir/amcheck-device", "TESTCONF", "-o", "autolabel="),
+ok(!run("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF", "-o", "autolabel="),
     "accepts config_overrides, returns exit status on failure");
 
-like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "-w"),
+like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF", "-w"),
     qr/Volume 'TESTCONF01' is writeable/,
     "tests for writeability with -w");
 
@@ -51,7 +51,7 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_param("autolabel", "\"TESTCONF-\$4s\" empty volume_error");
 $testconf->write();
 
-like(run_get("$amlibexecdir/amcheck-device", "TESTCONF"),
+like(run_get("$amlibexecdir/amcheck-device", "TESTCONF", "TESTCONF"),
     qr/Will write label 'TESTCONF-0001' to new volume in slot 1/,
     "a run with incompatible autolabel and labelstr");
 

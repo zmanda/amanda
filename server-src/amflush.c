@@ -42,6 +42,7 @@
 #include "server_util.h"
 #include "timestamp.h"
 #include "getopt.h"
+#include "cmdfile.h"
 
 static struct option long_options[] = {
     {"version"         , 0, NULL,  1},
@@ -67,6 +68,33 @@ void detach(void);
 void run_dumps(void);
 static int get_letter_from_user(void);
 
+typedef struct cmdfile_data_s {
+    char *ids;
+    char *holding_file;
+} cmdfile_data_t;
+
+static void
+cmdfile_flush(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    int id = GPOINTER_TO_INT(key);
+    cmddata_t *cmddata = value;
+    cmdfile_data_t *data = user_data;
+
+    if (g_str_equal(data->holding_file, cmddata->holding_file)) {
+	if (data->ids) {
+	    char *ids = g_strdup_printf("%s,%d", data->ids, id);
+	    g_free(data->ids);
+	    data->ids = ids;
+	} else {
+	    data->ids = g_strdup_printf("%d", id);
+	}
+    }
+    cmddata->working_pid = getpid();
+}
+
 int
 main(
     int		argc,
@@ -79,9 +107,11 @@ main(
     int nb_datearg = 0;
     char *conf_diskfile;
     char *conf_tapelist;
+    char *conf_cmdfile;
     char *conf_logfile;
     int conf_usetimestamps;
     disklist_t diskq;
+    GList  *dlist;
     disk_t *dp;
     pid_t pid;
     pid_t driver_pid, reporter_pid;
@@ -103,6 +133,11 @@ main(
     find_result_t *holding_files;
     disklist_t holding_disklist = { NULL, NULL };
     gboolean exact_match = FALSE;
+    cmddatas_t *cmddatas;
+    GPtrArray *flush_ptr = g_ptr_array_new_full(100, &g_free);
+    char     *line;
+    gpointer *xline;
+
 
     /*
      * Configure program for internationalization:
@@ -277,7 +312,8 @@ main(
 
     if(!batch) confirm(datestamp_list);
 
-    for(dp = diskq.head; dp != NULL; dp = dp->next) {
+    for (dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if(dp->todo) {
 	    /* is it holding_list */
 	    for (holding_file=holding_list; holding_file != NULL;
@@ -352,10 +388,15 @@ main(
 	/*NOTREACHED*/
     }
 
+    conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
+    cmddatas = read_cmdfile(conf_cmdfile);
+    g_free(conf_cmdfile);
+
     g_fprintf(driver_stream, "DATE %s\n", amflush_timestamp);
     for(holding_file=holding_list; holding_file != NULL;
 				   holding_file = holding_file->next) {
 	dumpfile_t file;
+	cmdfile_data_t data;
 	holding_file_get_dumpfile((char *)holding_file->data, &file);
 
 	if (holding_file_size((char *)holding_file->data, 1) <= 0) {
@@ -375,28 +416,59 @@ main(
 	/* but match_disklist may have indicated we should not flush it */
 	if (dp->todo == 0) continue;
 
+	/* find all cmdfile for that dump */
+	data.ids = NULL;
+	data.holding_file = (char *)holding_file->data;
+
+	g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_flush, &data);
+	if (!data.ids) {
+	    identlist_t  il;
+	    cmddata_t   *cmddata = g_new0(cmddata_t, 1);
+
+	    cmddata->operation = CMD_FLUSH;
+	    cmddata->config = g_strdup(get_config_name());
+	    cmddata->holding_file = g_strdup(data.holding_file);
+	    cmddata->hostname = g_strdup(file.name);
+	    cmddata->diskname = g_strdup(file.disk);
+	    cmddata->dump_timestamp = g_strdup(file.datestamp);
+	    /* add the first storage only */
+	    il = getconf_identlist(CNF_STORAGE);
+	    cmddata->storage_dest = g_strdup((char *)il->data);
+
+	    cmddata->working_pid = getpid();
+	    cmddata->status = CMD_TODO;
+	    //add_cmd_in_cmdfile(cmddatas, cmddata);
+	    cmddatas->max_id++;
+	    cmddata->id = cmddatas->max_id;
+	    g_hash_table_insert(cmddatas->cmdfile,
+				GINT_TO_POINTER(cmddata->id), cmddata);
+g_debug("insert id %d", cmddata->id);
+	    data.ids = g_strdup_printf("%d", cmddata->id);
+	}
+
 	qdisk = quote_string(file.disk);
 	qhname = quote_string((char *)holding_file->data);
-	g_fprintf(stderr,
-		"FLUSH %s %s %s %d %s\n",
+	line = g_strdup_printf("FLUSH %s %s %s %s %d %s",
+		data.ids,
 		file.name,
 		qdisk,
 		file.datestamp,
 		file.dumplevel,
 		qhname);
-
+	g_ptr_array_add(flush_ptr, line);
 	g_debug("flushing '%s'", (char *)holding_file->data);
-	g_fprintf(driver_stream,
-		"FLUSH %s %s %s %d %s\n",
-		file.name,
-		qdisk,
-		file.datestamp,
-		file.dumplevel,
-		qhname);
-	amfree(qdisk);
-	amfree(qhname);
+
+	g_free(data.ids);
+	g_free(qdisk);
+	g_free(qhname);
 	dumpfile_free_data(&file);
     }
+    write_cmdfile(cmddatas);
+    for (xline = flush_ptr->pdata; *xline != NULL; xline++) {
+	g_fprintf(stderr, "%s\n", (char *)*xline);
+	g_fprintf(driver_stream, "%s\n", (char *)*xline);
+    }
+    g_ptr_array_free(flush_ptr, TRUE);
     g_fprintf(stderr, "ENDFLUSH\n"); fflush(stderr);
     g_fprintf(driver_stream, "ENDFLUSH\n"); fflush(driver_stream);
     fclose(driver_stream);
@@ -511,6 +583,8 @@ main(
     }
 
     log_add(L_INFO, "pid-done %ld", (long)getpid());
+
+    dbclose();
 
     return 0;				/* keep the compiler happy */
 }
@@ -634,8 +708,8 @@ confirm(GSList *datestamp_list)
 {
     tape_t *tp;
     char *tpchanger;
-    char *storage;
-    char *policy_name;
+    char *policy_n;
+    char *storage_n;
     GSList *datestamp;
     int ch;
     char *extra;
@@ -648,64 +722,67 @@ confirm(GSList *datestamp_list)
     int   retention_full;
     storage_t *st = NULL;
     policy_t *po = NULL;
+    identlist_t il;
 
     g_printf(_("\nToday is: %s\n"),amflush_datestamp);
-    g_printf(_("Flushing dumps from"));
-    extra = "";
-    for(datestamp = datestamp_list; datestamp != NULL; datestamp = datestamp->next) {
-	g_printf("%s %s", extra, (char *)datestamp->data);
-	extra = ",";
-    }
-    storage = getconf_str(CNF_STORAGE);
-    tpchanger = getconf_str(CNF_TPCHANGER);
-
-    if (*storage != '\0') {
-	g_printf(_(" using storage \"%s\","), storage);
-	st = lookup_storage(storage);
-	tpchanger = storage_get_tpchanger(st);
-	g_printf(_(" tape changer \"%s\".\n"), tpchanger);
-	l_template = storage_get_labelstr(st)->template;
-	tapepool = storage_get_tapepool(st);
-	policy_name = storage_get_policy(st);
-	po = lookup_policy(policy_name);
-	if (po) {
-	    if (policy_seen(po, POLICY_RETENTION_TAPES))
-		retention_tapes = policy_get_retention_tapes(po);
-	    else
+    for (il = getconf_identlist(CNF_STORAGE) ; il != NULL; il = il->next) {
+	g_printf(_("Flushing dumps from"));
+	extra = "";
+	for(datestamp = datestamp_list; datestamp != NULL; datestamp = datestamp->next) {
+	    g_printf("%s %s", extra, (char *)datestamp->data);
+	    extra = ",";
+	}
+	storage_n = il->data;
+	tpchanger = getconf_str(CNF_TPCHANGER);
+	if (*storage_n != '\0') {
+	    g_printf(_(" using storage \"%s\","), storage_n);
+	    st = lookup_storage(storage_n);
+	    tpchanger = storage_get_tpchanger(st);
+	    g_printf(_(" tape changer \"%s\".\n"), tpchanger);
+	    l_template = storage_get_labelstr(st)->template;
+	    tapepool = storage_get_tapepool(st);
+	    policy_n = storage_get_policy(st);
+	    po = lookup_policy(policy_n);
+	    if (po) {
+		if (policy_seen(po, POLICY_RETENTION_TAPES))
+		    retention_tapes = policy_get_retention_tapes(po);
+		else
+		    retention_tapes = getconf_int(CNF_TAPECYCLE);
+		retention_days = policy_get_retention_days(po);
+		retention_recover = policy_get_retention_recover(po);
+		retention_full = policy_get_retention_full(po);
+	    } else {
 		retention_tapes = getconf_int(CNF_TAPECYCLE);
-	    retention_days = policy_get_retention_days(po);
-	    retention_recover = policy_get_retention_recover(po);
-	    retention_full = policy_get_retention_full(po);
+		retention_days = 0;
+		retention_recover = 0;
+		retention_full = 0;
+	    }
+	    tapecycle = getconf_int(CNF_TAPECYCLE);
+	    tp = lookup_last_reusable_tape(l_template, tapepool, storage_n,
+					   retention_tapes,
+					   retention_days, retention_recover,
+					   retention_full, 0);
 	} else {
-	    retention_tapes = getconf_int(CNF_TAPECYCLE);
-	    retention_days = 0;
-	    retention_recover = 0;
-	    retention_full = 0;
-	}
-	tapecycle = getconf_int(CNF_TAPECYCLE);
-	tp = lookup_last_reusable_tape(l_template, tapepool, storage,
-				       retention_tapes,
-				       retention_days, retention_recover,
-				       retention_full, 0);
-    } else {
-	if (*tpchanger != '\0') {
-	    g_printf(_(" using tape changer \"%s\".\n"), tpchanger);
-	} else {
-	    tpchanger = getconf_str(CNF_TAPEDEV);
-	    g_printf(_(" to tape drive \"%s\".\n"), tpchanger);
-	}
-	l_template = getconf_labelstr(CNF_LABELSTR)->template;
-	tapecycle = getconf_int(CNF_TAPECYCLE);
-	tp = lookup_last_reusable_tape(l_template, "ERROR-POOL", "ERROR-STORAGE",
+	    if (*tpchanger != '\0') {
+		g_printf(_(" using tape changer \"%s\".\n"), tpchanger);
+	    } else {
+		tpchanger = getconf_str(CNF_TAPEDEV);
+		g_printf(_(" to tape drive \"%s\".\n"), tpchanger);
+	    }
+	    l_template = getconf_labelstr(CNF_LABELSTR)->template;
+	    tapecycle = getconf_int(CNF_TAPECYCLE);
+	    tp = lookup_last_reusable_tape(l_template, "ERROR-POOL", "ERROR-STORAGE",
 				       tapecycle, 0, 0, 0, 0);
-    }
+	}
 
-    if(tp != NULL)
-	g_printf(_("tape %s or "), tp->label);
-    g_printf(_("a new tape."));
-    tp = lookup_tapepos(1);
-    if(tp != NULL)
-	g_printf(_("  (The last dumps were to tape %s)"), tp->label);
+	if(tp != NULL)
+	    g_printf(_("tape %s or "), tp->label);
+	g_printf(_("a new tape."));
+	tp = lookup_tapepos(1);
+	if(tp != NULL)
+	    g_printf(_("  (The last dumps were to tape %s)"), tp->label);
+	g_printf("\n");
+    }
 
     while (1) {
 	g_printf(_("\nAre you sure you want to do this [yN]? "));

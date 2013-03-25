@@ -61,7 +61,6 @@ typedef struct amhost_s {
 typedef struct disk_s {
     int		line;			/* line number of last definition */
     char       *filename;               /* the filename where it is read */
-    struct disk_s *prev, *next;		/* doubly linked disk list */
 
     am_host_t	*host;			/* host list */
     struct disk_s *hostnext;
@@ -131,7 +130,7 @@ typedef struct disk_s {
 } disk_t;
 
 typedef struct disklist_s {
-    disk_t *head, *tail;
+    GList *head, *tail;
 } disklist_t;
 
 #define empty(dlist)	((dlist).head == NULL)

@@ -477,66 +477,72 @@ sub output_tapeinfo
 
     if (getconf($CNF_REPORT_NEXT_MEDIA)) {
 	my $nb_new_tape = 0;
-	my $run_tapes   = $report->{'storage'}->{'runtapes'};
+	for my $storage_n (@{$report->{'storage_list'}}) {
+	    my $st = Amanda::Config::lookup_storage($storage_n);
+	    if (!$st) {
+	    }
+	    my $run_tapes   = storage_getconf($st, $STORAGE_RUNTAPES);
 
-	my $text;
-	if ($run_tapes) {
-            $text = ($run_tapes > 1)
+	    my $text;
+	    if ($run_tapes) {
+		$text = ($run_tapes > 1)
 	          ? "The next $run_tapes tapes Amanda expects to use are: "
 	          : "The next tape Amanda expects to use is: ";
-	}
+	    }
 
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my $tl = Amanda::Tapelist->new($tlf);
+	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	    my $tl = Amanda::Tapelist->new($tlf);
 
-	my $labelstr = $report->{'storage'}->{'labelstr'};
-	my $tapepool = $report->{'storage'}->{'tapepool'};
-	my $retention_tapes = $report->{'storage'}->{'policy'}->{'retention_tapes'};
-	my $retention_days = $report->{'storage'}->{'policy'}->{'retention_days'};
-	my $retention_recover = $report->{'storage'}->{'policy'}->{'retention_recover'};
-	my $retention_full = $report->{'storage'}->{'policy'}->{'retention_full'};
+	    my $labelstr = storage_getconf($st, $STORAGE_LABELSTR);
+	    my $tapepool = storage_getconf($st, $STORAGE_TAPEPOOL);
+	    my $policy = Amanda::Policy->new(policy => storage_getconf($st, $STORAGE_POLICY));
+	    my $retention_tapes = $policy->{'retention_tapes'};
+	    my $retention_days = $policy->{'retention_days'};
+	    my $retention_recover = $policy->{'retention_recover'};
+	    my $retention_full = $policy->{'retention_full'};
 
-	my $first = 1;
-	foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
+	    my $first = 1;
+	    foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
 
-	    if ( my $tape_label =
-		Amanda::Tapelist::get_last_reusable_tape_label(
+		if ( my $tape_label =
+		    Amanda::Tapelist::get_last_reusable_tape_label(
 					$labelstr->{'template'},
 					$tapepool,
-					$report->{'storage'}->{'storage_name'},
+					$storage_n,
 					$retention_tapes,
 					$retention_days,
 					$retention_recover,
 					$retention_full,
 					$i) ) {
-		if ($nb_new_tape) {
-		    $text .= ", " if !$first;
-		    $text .= "$nb_new_tape new tape"
-			    . ( $nb_new_tape > 1 ? "s" : "" );
-		    $nb_new_tape = 0;
-		    $first = 0;
-		}
+		    if ($nb_new_tape) {
+			$text .= ", " if !$first;
+			$text .= "$nb_new_tape new tape"
+				. ( $nb_new_tape > 1 ? "s" : "" );
+			$nb_new_tape = 0;
+			$first = 0;
+		    }
 
-		$text .=
+		    $text .=
 		    ($first ? "" : ", ") .
 		    $tape_label;
-		$first = 0;
-            } else {
-		$nb_new_tape++;
-            }
-	}
+		    $first = 0;
+		} else {
+		    $nb_new_tape++;
+		}
+	    }
 
-	if ($nb_new_tape) {
-            $text .= ", " if !$first;
-            $text .= "$nb_new_tape new tape"
-              . ( $nb_new_tape > 1 ? "s" : "" );
-	}
-	$self->zprint("$text.\n");
+	    if ($nb_new_tape) {
+		$text .= ", " if !$first;
+		$text .= "$nb_new_tape new tape"
+			. ( $nb_new_tape > 1 ? "s" : "" );
+	    }
+	    $self->zprint("$text.\n");
 
-	my $new_tapes = Amanda::Tapelist::list_new_tapes(
-						$labelstr->{'template'},
-						$report->{'storage'}->{'runtapes'});
-	$self->zprint("$new_tapes\n") if $new_tapes;
+	    my $new_tapes = Amanda::Tapelist::list_new_tapes(
+						$storage_n,
+						$run_tapes);
+	    $self->zprint("$new_tapes\n") if $new_tapes;
+	}
     }
 
     return;
@@ -702,7 +708,10 @@ EOF
     my $total_stats = $self->{total_stats};
 
     my ($tapesize, $marksize );
-    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
+    my $st = Amanda::Config::lookup_storage($report->{'storage_list'}[0]);
+    if (!$st) {
+    }
+    my $tapetype_name = storage_getconf($st, $STORAGE_TAPETYPE);
     my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
 
     if ( $tapetype_name && $tt ) {
@@ -910,7 +919,10 @@ sub output_tape_stats
     $self->zsprint("USAGE BY TAPE:\n");
     $self->zprint(swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts"));
 
-    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
+    my $st = Amanda::Config::lookup_storage($report->{'storage_list'}[0]);
+    if (!$st) {
+    }
+    my $tapetype_name = storage_getconf($st, $STORAGE_TAPETYPE);
     my $tapetype      = lookup_tapetype($tapetype_name);
     my $tapesize      = "" . tapetype_getconf($tapetype, $TAPETYPE_LENGTH);
     my $marksize      = "" . tapetype_getconf($tapetype, $TAPETYPE_FILEMARK);
@@ -1270,6 +1282,7 @@ sub get_summary_info
 	my ($dumper_status) = "";
 	my $saw_dumper = 0; # no dumper will mean this was a flush
 	my $taper_partial = 0; # was the last taper run partial?
+	my $taper_try;
 
 	## Use this loop to set values
 	foreach my $try ( @$tries ) {
@@ -1282,6 +1295,7 @@ sub get_summary_info
 		    || $try->{taper}{status} eq "part+partial" )
 	      ) {
 		$taper_partial = 0;
+		$taper_try = $try;
 		$orig_size = $try->{taper}{orig_kb} if !defined($orig_size);
 		$out_size  = $try->{taper}{kb};
 		$tape_time = $try->{taper}{sec};
@@ -1395,6 +1409,36 @@ sub get_summary_info
 			  : $format_space->(9, "FAILED");
 	    }
 	    push @rv, $taper_partial? " PARTIAL" : ""; # column 10
+	    # if others try with successful taper (sent to another storage)
+	    foreach my $try ( @$tries ) {
+		next if !$try->{'taper'};
+		next if $try eq $taper_try;
+		next if $try->{taper}{status} ne "done";
+		push @rvs, [@rv];
+
+		@rv = 'nodump-FLUSH';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		$tape_time = $try->{taper}{sec};
+		$tape_rate = $try->{taper}{kps} if !$tape_rate;
+	        push @rv, $fmt_col_field->(8,
+		       (defined $tape_time) ?
+			       $tape_time ? mnsc($tape_time) : ""
+			     : "FAILED");
+	        push @rv, (defined $tape_rate) ?
+		   $tape_rate ?
+		       $fmt_col_field->(9, $tape_rate)
+		     : $format_space->(9, "")
+	           : $format_space->(9, "FAILED");
+	        push @rv, " ";
+
+	    }
 	} else {
 	    my $message = $saw_dumper?
 			    ($dumper_status eq 'failed') ? 'FAILED' : 'PARTIAL'
@@ -1426,6 +1470,36 @@ sub get_summary_info
 	         : $format_space->(9, "FAILED");
 	    }
 	    push @rv, $taper_partial? " PARTIAL" : "";
+	    # if others try with successful taper (sent to another storage)
+	    foreach my $try ( @$tries ) {
+		next if !$try->{'taper'};
+		next if $try eq $taper_try;
+		next if $try->{taper}{status} ne "done";
+		push @rvs, [@rv];
+
+		@rv = 'nodump-FLUSH';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		push @rv, '';
+		$tape_time = $try->{taper}{sec};
+		$tape_rate = $try->{taper}{kps} if !$tape_rate;
+	        push @rv, $fmt_col_field->(8,
+		       (defined $tape_time) ?
+			       $tape_time ? mnsc($tape_time) : ""
+			     : "FAILED");
+	        push @rv, (defined $tape_rate) ?
+		   $tape_rate ?
+		       $fmt_col_field->(9, $tape_rate)
+		     : $format_space->(9, "")
+	           : $format_space->(9, "FAILED");
+	        push @rv, " ";
+
+	    }
 	}
 	push @rvs, [@rv];
     }

@@ -86,7 +86,7 @@ typedef struct dumper_s {
     chunker_t *chunker;
 } dumper_t;
 
-typedef struct taper_s {
+typedef struct wtaper_s {
     char       *name;                  /* name of this taper */
     int         sendresult;
     char       *input_error;
@@ -100,6 +100,28 @@ typedef struct taper_s {
     off_t       left;
     off_t       written;               // Number of kb already written to tape
     int         nb_dle;                /* number of dle on the volume */
+    struct taper_s *taper;
+} wtaper_t;
+
+typedef struct taper_s {
+    char           *name;
+    char           *storage_name;
+    pid_t           pid;
+    int             fd;
+    event_handle_t *ev_read;
+    int             nb_wait_reply;
+    int             nb_worker;
+    int             nb_scan_volume;
+    off_t           tape_length;
+    int             runtapes;
+    int             max_dle_by_volume;
+    int             current_tape;
+    off_t           flush_threshold_dumped;
+    off_t           flush_threshold_scheduled;
+    off_t           taperflush;
+    wtaper_t       *wtapetable;
+    wtaper_t       *last_started_wtaper;
+    disklist_t      tapeq;
 } taper_t;
 
 /* holding disk reservation structure; this is built as a list parallel
@@ -137,7 +159,7 @@ typedef struct sched_s {
     unsigned long est_kps, degr_kps;
     char *destname;				/* file/port name */
     dumper_t *dumper;
-    taper_t  *taper;
+    wtaper_t *wtaper;
     assignedhd_t **holdp;
     time_t timestamp;
     char *datestamp;
@@ -147,25 +169,23 @@ typedef struct sched_s {
     crc_t native_crc;
     crc_t client_crc;
     crc_t server_crc;
+    int   nb_flush;
+    GHashTable *to_storage;
 } sched_t;
 
 #define sched(dp)	((sched_t *) (dp)->up)
 
 
-GLOBAL dumper_t *dmptable;
+GLOBAL dumper_t  *dmptable;
 GLOBAL chunker_t *chktable;
 GLOBAL taper_t   *tapetable;
 
 /* command/result tokens */
 
-GLOBAL int taper_fd;
-GLOBAL pid_t taper_pid;
-GLOBAL event_handle_t *taper_ev_read;
-GLOBAL int taper_nb_wait_reply;
 GLOBAL char *log_filename;
 
-void init_driverio(int inparallel, int taper_parallel_write);
-void startup_tape_process(char *taper_program, int taper_parallel_write, gboolean no_taper);
+void init_driverio(int inparallel, int nb_storage, int taper_parallel_write);
+void startup_tape_process(char *taper_program, gboolean no_taper);
 void startup_dump_process(dumper_t *dumper, char *dumper_program);
 void startup_dump_processes(char *dumper_program, int inparallel, char *timestamp);
 void startup_chunk_process(chunker_t *chunker, char *chunker_program);

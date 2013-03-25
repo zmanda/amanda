@@ -514,6 +514,7 @@ typedef enum {
     CNF_REPORT_FORMAT,
     CNF_STORAGE,
     CNF_AMVAULT_STORAGE,
+    CNF_CMDFILE,
     CNF_CNF /* sentinel */
 } confparm_key;
 

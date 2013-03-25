@@ -95,6 +95,7 @@ typedef enum {
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
+    CONF_CMDFILE,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -591,6 +592,7 @@ static void read_autolabel(conf_var_t *, val_t *);
 static void read_labelstr(conf_var_t *, val_t *);
 static void read_part_cache_type(conf_var_t *, val_t *);
 static void read_host_limit(conf_var_t *, val_t *);
+static void read_storage_identlist(conf_var_t *, val_t *);
 
 static application_t *read_application(char *name, FILE *from, char *fname,
 				       int *linenum);
@@ -969,6 +971,7 @@ keytab_t server_keytab[] = {
     { "CLIENT_NAME", CONF_CLIENT_NAME },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "COLUMNSPEC", CONF_COLUMNSPEC },
+    { "COMMAND_FILE", CONF_CMDFILE },
     { "COMMENT", CONF_COMMENT },
     { "COMPRATE", CONF_COMPRATE },
     { "COMPRESS", CONF_COMPRESS },
@@ -1388,8 +1391,9 @@ conf_var_t server_var [] = {
    { CONF_REPORT_USE_MEDIA     , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_USE_MEDIA     , NULL },
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
    { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
-   { CONF_STORAGE              , CONFTYPE_STR      , read_str         , CNF_STORAGE              , NULL },
+   { CONF_STORAGE              , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_STORAGE         , NULL },
    { CONF_AMVAULT_STORAGE      , CONFTYPE_STR      , read_str         , CNF_AMVAULT_STORAGE      , NULL },
+   { CONF_CMDFILE              , CONFTYPE_STR      , read_str         , CNF_CMDFILE              , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
 };
 
@@ -3890,6 +3894,26 @@ read_ident(
 }
 
 static void
+read_storage_identlist(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    val->v.identlist = NULL;
+    get_conftoken(CONF_ANY);
+    while (tok == CONF_STRING || tok == CONF_IDENT) {
+	val->v.identlist = g_slist_append(val->v.identlist,
+					  g_strdup(tokenval.v.s));
+	get_conftoken(CONF_ANY);
+    }
+    if (tok != CONF_NL && tok != CONF_END) {
+	conf_parserror(_("string expected"));
+	unget_conftoken();
+    }
+}
+
+static void
 read_time(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
@@ -5889,8 +5913,9 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_REPORT_NEXT_MEDIA]    , TRUE);
     conf_init_str_list (&conf_data[CNF_REPORT_FORMAT]        , NULL);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
-    conf_init_str      (&conf_data[CNF_STORAGE]              , "");
+    conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_str      (&conf_data[CNF_AMVAULT_STORAGE]      , "");
+    conf_init_str      (&conf_data[CNF_CMDFILE        ]      , "command_file");
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , CONF_UNIT_NONE, 3);
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , CONF_UNIT_NONE, 5);
@@ -6167,8 +6192,13 @@ update_derived_values(
 	    labelstr->template = g_strdup(autolabel->template);
 	}
 
-	st_name = getconf_str(CNF_STORAGE);
-	if (!st_name || *st_name == '\0') {
+	il = getconf_identlist(CNF_STORAGE);
+	if (il) {
+	    st_name = il->data;
+	} else {
+	    st_name = NULL;
+	}
+	if (!getconf_seen(CNF_STORAGE) && (!st_name || *st_name == '\0')) {
 	    /* create a default policy */
 	    if (!(po = lookup_policy(conf_name))) {
 		init_policy_defaults();
@@ -6192,10 +6222,11 @@ update_derived_values(
 	    }
 
 	    /* set the default storage */
-	    val_t__str(&conf_data[CNF_STORAGE]) = g_strdup(conf_name);
+	    il = g_slist_append(NULL, g_strdup(conf_name));
+	    val_t__identlist(&conf_data[CNF_STORAGE]) = il;
 	}
 
-	/* Set default retention_tapes if t is not set */
+	/* Set default retention_tapes if it is not set */
 	for (po = policy_list; po != NULL; po = po->next) {
 	    if (!policy_seen(po, POLICY_RETENTION_TAPES)) {
 		copy_val_t(&po->value[POLICY_RETENTION_TAPES], &conf_data[CNF_TAPECYCLE]);
@@ -6240,6 +6271,12 @@ update_derived_values(
 		copy_val_t(&st->value[STORAGE_TAPERALGO], &conf_data[CNF_TAPERALGO]);
 	    if (!storage_seen(st, STORAGE_TAPER_PARALLEL_WRITE))
 		copy_val_t(&st->value[STORAGE_TAPER_PARALLEL_WRITE], &conf_data[CNF_TAPER_PARALLEL_WRITE]);
+	}
+
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    if (!lookup_storage(il->data)) {
+		conf_parserror(_("storage '%s' is not defined"), tokenval.v.s);
+	    }
 	}
 
 	/* Always TRUE */
@@ -8569,13 +8606,17 @@ val_t_display_strs(
 	    int     first = 1;
 
 	    buf[0] = NULL;
-	    for (ia = val->v.identlist; ia != NULL; ia = ia->next) {
-		if (first) {
-		    buf[0] = g_strdup(ia->data);
-		    first = 0;
-		} else {
-		    strappend(buf[0], " ");
-		    strappend(buf[0],  ia->data);
+	    if (!val->v.identlist) {
+		strappend(buf[0], "\"\"");
+	    } else {
+		for (ia = val->v.identlist; ia != NULL; ia = ia->next) {
+		    if (first) {
+			buf[0] = g_strdup(ia->data);
+			first = 0;
+		    } else {
+			strappend(buf[0], " ");
+			strappend(buf[0],  ia->data);
+		    }
 		}
 	    }
 	}

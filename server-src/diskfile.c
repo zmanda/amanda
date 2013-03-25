@@ -137,12 +137,12 @@ enqueue_disk(
     disklist_t *list,
     disk_t *	disk)
 {
-    if(list->tail == NULL) list->head = disk;
-    else list->tail->next = disk;
-    disk->prev = list->tail;
-
-    list->tail = disk;
-    disk->next = NULL;
+    list->head = g_am_list_insert_after(list->head, list->tail, disk);
+    if (list->tail) {
+	list->tail = list->tail->next;
+    } else {
+	list->tail = list->head;
+    }
 }
 
 
@@ -155,12 +155,10 @@ headqueue_disk(
     disklist_t *list,
     disk_t *	disk)
 {
-    if(list->head == NULL) list->tail = disk;
-    else list->head->prev = disk;
-    disk->next = list->head;
-
-    list->head = disk;
-    disk->prev = NULL;
+    list->head = g_list_prepend(list->head, disk);
+    if (!list->tail) {
+	list->tail = list->head;
+    }
 }
 
 
@@ -174,23 +172,22 @@ insert_disk(
     disk_t *	disk,
     int		(*cmp)(disk_t *a, disk_t *b))
 {
-    disk_t *prev, *ptr;
+    GList *ptr;
 
-    prev = NULL;
     ptr = list->head;
 
     while(ptr != NULL) {
-	if(cmp(disk, ptr) < 0) break;
-	prev = ptr;
+	if(cmp(disk, ptr->data) < 0) break;
 	ptr = ptr->next;
     }
-    disk->next = ptr;
-    disk->prev = prev;
-
-    if(prev == NULL) list->head = disk;
-    else prev->next = disk;
-    if(ptr == NULL) list->tail = disk;
-    else ptr->prev = disk;
+    if (ptr) {
+	list->head = g_list_insert_before(list->head, ptr, disk);
+	if (!list->tail) {
+	    list->tail = list->head;
+	}
+    } else {
+	enqueue_disk(list, disk);
+    }
 }
 
 disk_t *
@@ -263,13 +260,12 @@ find_disk(
     disklist_t *list,
     disk_t *	disk)
 {
-    disk_t *t;
+    GList *glist = list->head;
 
-    t = list->head;
-    while ((t != NULL) && (t != disk)) {
-        t = t->next;
+    while (glist && glist->data != disk) {
+        glist = glist->next;
     }
-    return (t == disk);
+    return (glist && glist->data == disk);
 }
 
 
@@ -288,8 +284,8 @@ sort_disk(
 
     tmp = in;		/* just in case in == out */
 
-    out->head = (disk_t *)0;
-    out->tail = (disk_t *)0;
+    out->head = NULL;
+    out->tail = NULL;
 
     while((disk = dequeue_disk(tmp)))
 	insert_disk(out, disk, cmp);
@@ -308,13 +304,11 @@ dequeue_disk(
 
     if(list->head == NULL) return NULL;
 
-    disk = list->head;
-    list->head = disk->next;
+    disk = list->head->data;
+    list->head = g_list_remove_link(list->head, list->head);
 
     if(list->head == NULL) list->tail = NULL;
-    else list->head->prev = NULL;
 
-    disk->prev = disk->next = NULL;	/* for debugging */
     return disk;
 }
 
@@ -323,13 +317,15 @@ remove_disk(
     disklist_t *list,
     disk_t *	disk)
 {
-    if(disk->prev == NULL) list->head = disk->next;
-    else disk->prev->next = disk->next;
+    GList *ltail;
 
-    if(disk->next == NULL) list->tail = disk->prev;
-    else disk->next->prev = disk->prev;
-
-    disk->prev = disk->next = NULL;
+    if (list->tail && list->tail->data == disk) {
+	ltail = list->tail;
+	list->tail = list->tail->prev;
+	list->head = g_list_delete_link(list->head, ltail);
+    } else {
+	list->head = g_list_remove(list->head, disk);
+    }
 }
 
 void
@@ -912,16 +908,19 @@ dump_queue(
     int		npr,	/* we print first npr disks on queue, plus last two */
     FILE *	f)
 {
+    GList *dl, *pl;
     disk_t *d,*p;
     int pos;
     char *qname;
 
-    if(empty(q)) {
+    if (empty(q)) {
 	g_fprintf(f, _("%s QUEUE: empty\n"), st);
 	return;
     }
     g_fprintf(f, _("%s QUEUE:\n"), st);
-    for(pos = 0, d = q.head, p = NULL; d != NULL; p = d, d = d->next, pos++) {
+    for (pos = 0, dl = q.head, pl = NULL; dl != NULL; pl = dl, dl = dl->next, pos++) {
+	d = dl->data;
+	p = pl->data;
 	qname = quote_string(d->name);
 	if(pos < npr) g_fprintf(f, "%3d: %-10s %-4s\n",
 			      pos, d->host->hostname, qname);
@@ -930,10 +929,13 @@ dump_queue(
     if(pos > npr) {
 	if(pos > npr+2) g_fprintf(f, "  ...\n");
 	if(pos > npr+1) {
-	    d = p->prev;
+	    dl = pl->prev;
+	    d = dl->data;
 	    g_fprintf(f, "%3d: %-10s %-4s\n", pos-2, d->host->hostname, d->name);
 	}
 	d = p;
+	dl = pl;
+	d = dl->data;
 	g_fprintf(f, "%3d: %-10s %-4s\n", pos-1, d->host->hostname, d->name);
     }
 }
@@ -1712,9 +1714,11 @@ void
 disable_skip_disk(
     disklist_t *origqp)
 {
+    GList  *dlist;
     disk_t *dp;
 
-    for (dp = origqp->head; dp != NULL; dp = dp->next) {
+    for (dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if (dp->ignore || dp->strategy == DS_SKIP)
 	    dp->todo = 0;
     }
@@ -1734,6 +1738,7 @@ match_disklist(
     int match_a_host;
     int match_a_disk;
     int prev_match;
+    GList  *dlist;
     disk_t *dp_skip;
     disk_t *dp;
     GString *errbuf;
@@ -1756,7 +1761,8 @@ match_disklist(
 
     errbuf = g_string_new(NULL);
 
-    for(dp = origqp->head; dp != NULL; dp = dp->next) {
+    for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if(dp->todo == 1)
 	    dp->todo = -1;
     }
@@ -1764,13 +1770,15 @@ match_disklist(
     prev_match = 0;
     for (i = 0; i < sargc; i++) {
 	match_a_host = 0;
-	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    if (match_host(sargv[i], dp->host->hostname))
 		match_a_host = 1;
 	}
 	match_a_disk = 0;
 	dp_skip = NULL;
-	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    if (prevhost != NULL &&
 	        match_host(prevhost, dp->host->hostname) &&
 	        (match_disk(sargv[i], dp->name) ||
@@ -1798,7 +1806,8 @@ match_disklist(
 	if (!match_a_disk) {
 	    if (match_a_host == 1) {
 		if (prev_match == 1) { /* all disk of the previous host */
-		    for (dp = origqp->head; dp != NULL; dp = dp->next) {
+		    for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+			dp = dlist->data;
 			if (match_host(prevhost,dp->host->hostname))
 			    if (dp->todo == -1) {
 				dp->todo = 1;
@@ -1825,7 +1834,8 @@ match_disklist(
 
     if (prev_match == 1) { /* all disk of the previous host */
 	match_a_disk = 0;
-	for (dp = origqp->head; dp != NULL; dp = dp->next) {
+	for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    if (match_host(prevhost,dp->host->hostname))
 		if (dp->todo == -1) {
 		    dp->todo = 1;
@@ -1836,9 +1846,11 @@ match_disklist(
             g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
     }
 
-    for (dp = origqp->head; dp != NULL; dp = dp->next)
+    for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if (dp->todo == -1)
 	    dp->todo = 0;
+    }
 
     errstr = g_string_free(errbuf, FALSE);
 
@@ -1881,9 +1893,10 @@ match_dumpfile(
     d.device = file->disk;
     d.todo = 1;
 
-    dl.head = dl.tail = &d;
+    dl.head = dl.tail = g_list_prepend(NULL, &d);
 
     (void)match_disklist(&dl, exact_match, sargc, sargv);
+    dl.head = dl.tail = g_list_delete_link(dl.head, dl.head);
     return d.todo;
 }
 

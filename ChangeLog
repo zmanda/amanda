@@ -1,4 +1,36 @@
 2013-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, common-src/amflock.c, common-src/conffile.c,
+	* common-src/conffile.h, common-src/glib-util.c,
+	* common-src/glib-util.h, common-src/match.c,
+	* installcheck/Amanda_Changer.pl, installcheck/Amanda_Taper_Scan.pl,
+	* installcheck/Installcheck/Dumpcache.pm
+	* installcheck/amcheck-device.pl, installcheck/amcheckdump.pl
+	* installcheck/amreport.pl, installcheck/amrmtape.pl,
+	* installcheck/catalogs/chunker-partial.cat,
+	* installcheck/catalogs/normal.cat, installcheck/catalogs/quoted.cat,
+	* installcheck/catalogs/taper-parallel-write.cat,
+	* installcheck/taper.pl, perl/Amanda/Config.swg,
+	* perl/Amanda/Disklist.swg, perl/Amanda/Report.pm,
+	* perl/Amanda/Report/human.pm, perl/Amanda/Report/postscript.pm,
+	* perl/Amanda/Storage.pm, perl/Amanda/Tapelist.swg,
+	* perl/Amanda/Taper/Controller.pm, perl/Amanda/Taper/Protocol.pm,
+	* perl/Amanda/Taper/Worker.pm, server-src/Makefile.am,
+	* server-src/amadmin.c, server-src/amcheck-device.pl,
+	* server-src/amcheck.c, server-src/amflush.c,
+	* server-src/amindexd.c, server-src/amreport.pl,
+	* server-src/amstatus.pl, server-src/amtrmidx.c,
+	* server-src/cmdfile.c, server-src/cmdfile.h,
+	* server-src/diskfile.c, server-src/diskfile.h,
+	* server-src/driver.c, server-src/driverio.c,
+	* server-src/driverio.h, server-src/planner.c,
+	* server-src/server_util.c, server-src/server_util.h,
+	* server-src/tapefile.c, server-src/tapefile.h,
+	* server-src/taper.pl: define mutiple storage, but use the first only.
+	Use a 'command_file' in the config directory to keep track of what
+	must be done.
+
+
+2013-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin_perl.pl: Add pool, storage and config arguments
 	  to the add_tapelabel method.
 

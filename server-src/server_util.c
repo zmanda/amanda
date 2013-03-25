@@ -174,6 +174,7 @@ int check_infofile(
     disklist_t  *dl,
     char       **errmsg)
 {
+    GList       *dlist, *dlist1;
     disk_t      *dp, *diskp;
     char        *hostinfodir, *old_hostinfodir;
     char        *diskdir,     *old_diskdir;
@@ -185,7 +186,9 @@ int check_infofile(
 	return 0;
     }
 
-    for (dp = dl->head; dp != NULL; dp = dp->next) {
+//    for (dp = dl->head; dp != NULL; dp = dp->next) {
+    for (dlist = dl->head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	hostinfodir = sanitise_filename(dp->host->hostname);
 	diskdir     = sanitise_filename(dp->name);
 	infofile = g_strjoin(NULL, infodir, "/", hostinfodir, "/", diskdir,
@@ -197,18 +200,23 @@ int check_infofile(
 					old_diskdir, "/info", NULL);
 	    if (stat(old_infofile, &statbuf) == 0) {
 		other_dle_match = 0;
-		diskp = dl->head;
-		while (diskp != NULL) {
-		    char *Xhostinfodir = sanitise_filename(diskp->host->hostname);
-		    char *Xdiskdir     = sanitise_filename(diskp->name);
-		    char *Xinfofile = g_strjoin(NULL, infodir, "/", Xhostinfodir, "/",
+		dlist1 = dl->head;
+		while (dlist1 != NULL) {
+		    char *Xhostinfodir;
+		    char *Xdiskdir;
+		    char *Xinfofile;
+
+		    diskp = dlist1->data;
+		    Xhostinfodir = sanitise_filename(diskp->host->hostname);
+		    Xdiskdir     = sanitise_filename(diskp->name);
+		    Xinfofile = g_strjoin(NULL, infodir, "/", Xhostinfodir, "/",
 					  Xdiskdir, "/info", NULL);
 		    if (g_str_equal(old_infofile, Xinfofile)) {
 			other_dle_match = 1;
-			diskp = NULL;
+			dlist1 = NULL;
 		    }
 		    else {
-			diskp = diskp->next;
+			dlist1 = dlist1->next;
 		    }
 		    amfree(Xhostinfodir);
 		    amfree(Xdiskdir);

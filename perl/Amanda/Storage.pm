@@ -48,6 +48,7 @@ Amanda::Storage -- interface to storage scripts
 				       changer_name => $changer,
 				       tapelist     => $tapelist);
     my $chg = $storage->{'chg'};
+    $storage->quit();
 
 =head1 INTERFACE
 
@@ -120,7 +121,10 @@ sub new {
             message => "changer_name argument of the storage is empty");
     }
 
-    $storage_name = getconf($CNF_STORAGE) if !defined $storage_name;
+    if (!defined $storage_name) {
+	my $il = getconf($CNF_STORAGE);
+	$storage_name = $il->[0];
+    }
 
     my $self = undef;
 
@@ -173,6 +177,7 @@ sub quit {
     delete $self->{'labelstr'};
     delete $self->{'autolabel'};
     delete $self->{'tpchanger'};
+    $self->{'chg'}->quit() if defined $self->{'chg'};
     delete $self->{'chg'};
 }
 

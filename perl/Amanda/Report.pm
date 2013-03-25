@@ -473,25 +473,29 @@ sub read_file
     $self->{flags}{historical} = $self->{_historical};
     $self->{flags}{amflush_run} = 0;
     $self->{flags}{amvault_run} = 0;
-    my $storage_name;
+    my $il;
     if (!$self->get_flag("normal_run")) {
         if (   ( defined $self->get_program_info("amflush") )
             && ( scalar %{ $self->get_program_info("amflush") } ) ) {
 	    debug("detected an amflush run");
 	    $self->{flags}{amflush_run} = 1;
-	    $storage_name = getconf($CNF_STORAGE);
+	    $il = getconf($CNF_STORAGE);
+	    $self->{'storage_list'} = $il;
 	} elsif (   ( defined $self->get_program_info("amvault") )
                  && ( scalar %{ $self->get_program_info("amvault") } ) ) {
 	    debug("detected an amvault run");
 	    $self->{flags}{amvault_run} = 1;
-	    $storage_name = getconf($CNF_AMVAULT_STORAGE);
-	    $storage_name = getconf($CNF_STORAGE) if !$storage_name;
+	    my $storage_name = getconf($CNF_AMVAULT_STORAGE);
+	    if (!$storage_name) {
+	         my $il = getconf($CNF_STORAGE);
+	         $storage_name = $il->[0];
+	    }
+	    $il = ( $storage_name );
 	}
     } else {
-	$storage_name = getconf($CNF_STORAGE);
+	$il = getconf($CNF_STORAGE);
     }
-    $self->{'storage'} = Amanda::Storage->new(storage_name => $storage_name,
-					      changer_name => undef);
+    $self->{'storage_list'} = $il;
 
     # check for missing, fail and strange results
     $self->check_missing_fail_strange() if $self->get_flag('normal_run');

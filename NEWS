@@ -31,15 +31,16 @@ Changes in release 4.0.0
        o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
 	 the autolabel variable.
        o storage (default storage)
+          + You can set multiple storage, all DLEs will be sent to all storages
        o amvault-storage (storage used by amvault)
    * amvault
        o deprecated option: --label-template, --dst-changer, --autolabel
          they must be set in a storage section
-       o new --dst-storage option to voerwrite the default amvault-storage.
+       o new --dst-storage option to overwrite the default amvault-storage.
    * amlabel
        o new --pool and --storage options.
    * amrmtape
-       o new --list-retentionm, list-no-retention and --remove-no-retention
+       o new --list-retention, list-no-retention and --remove-no-retention
          options.
    * amfetchdump
        o --init and --no-restore arguments.

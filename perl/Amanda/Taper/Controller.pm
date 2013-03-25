@@ -69,7 +69,7 @@ sub new {
 	# filled in at start
 	proto => undef,
 	tapelist => $params{'tapelist'},
-
+	storage_name => $params{'storage_name'},
 	worker => {},
     }, $class;
     return $self;
@@ -120,7 +120,9 @@ sub start {
 	debug => $Amanda::Config::debug_taper?'taper/driver':'',
     );
 
-    my ($storage) = Amanda::Storage->new(tapelist => $self->{'tapelist'});
+    my ($storage) = Amanda::Storage->new(
+					storage_name => $self->{'storage_name'},
+					tapelist => $self->{'tapelist'});
     if ($storage->isa("Amanda::Changer::Error")) {
 	$self->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
 		worker_name => "SETUP",

@@ -46,6 +46,7 @@
 #include "holding.h"
 #include "timestamp.h"
 #include "amxml.h"
+#include "cmdfile.h"
 
 #define planner_debug(i,x) do {		\
 	if ((i) <= debug_planner) {	\
@@ -153,6 +154,11 @@ typedef struct bilist_s {
 
 bilist_t biq;			/* The BI queue itself */
 
+typedef struct cmdfile_data_s {
+    char *ids;
+    char *holding_file;
+} cmdfile_data_t;
+
 /*
  * ========================================================================
  * MAIN PROGRAM
@@ -169,6 +175,8 @@ static int promote_hills(void);
 static void output_scheduleline(disk_t *dp);
 static void server_estimate(disk_t *dp, int i, info_t *info, int level,
 			    tapetype_t *tapetype);
+static void cmdfile_flush(gpointer key G_GNUC_UNUSED, gpointer value,
+			  gpointer user_data);
 int main(int, char **);
 
 int
@@ -177,6 +185,7 @@ main(
     char **	argv)
 {
     disklist_t origq;
+    GList  *dlist;
     disk_t *dp;
     int moved_one;
     int diskarg_offset;
@@ -184,6 +193,7 @@ main(
     int i;
     char *conf_diskfile;
     char *conf_tapelist;
+    char *conf_cmdfile;
     char *conf_infofile;
     times_t section_start;
     char *qname;
@@ -198,6 +208,12 @@ main(
     gboolean exact_match = FALSE;
     storage_t *storage;
     policy_t  *policy;
+    char *storage_name;
+    identlist_t il;
+    cmddatas_t *cmddatas;
+    GPtrArray *flush_ptr = g_ptr_array_new_full(100, &g_free);
+    char     *line;
+    gpointer *xline;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("planner-%s\n", VERSION);
@@ -339,7 +355,9 @@ main(
     }
     amfree(conf_infofile);
 
-    storage = lookup_storage(getconf_str(CNF_STORAGE));
+    il = getconf_identlist(CNF_STORAGE);
+    storage_name = il->data;
+    storage = lookup_storage(storage_name);
     conf_tapetype = storage_get_tapetype(storage);
     conf_maxdumpsize = getconf_int64(CNF_MAXDUMPSIZE);
     conf_runtapes = storage_get_runtapes(storage);
@@ -376,7 +394,8 @@ main(
         exit_status = EXIT_FAILURE;
     }
 
-    for (dp = origq.head; dp != NULL; dp = dp->next) {
+    for (dlist = origq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if (dp->todo) {
 	    if (from_client) {
 		if (!dp->dump_limit || !dp->dump_limit->same_host)
@@ -389,7 +408,8 @@ main(
     }
 
     nb_disk = 0;
-    for (dp = origq.head; dp != NULL; dp = dp->next) {
+    for (dlist = origq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if (dp->todo) {
 	    qname = quote_string(dp->name);
 	    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
@@ -466,6 +486,11 @@ main(
 	dumpfile_t  file;
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
+	cmdfile_data_t data;
+
+	conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
+	cmddatas = read_cmdfile(conf_cmdfile);
+	g_free(conf_cmdfile);
 
 	/* get *all* flushable files in holding, without checking against
 	 * the disklist (which may not contain some of the dumps) */
@@ -489,29 +514,58 @@ main(
 		continue;
 	    }
 
+	    /* find all cmdfile for that dump */
+	    data.ids = NULL;
+	    data.holding_file = (char *)holding_file->data;
+
+	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_flush, &data);
+	    if (!data.ids) {
+		identlist_t  il;
+		cmddata_t   *cmddata = g_new0(cmddata_t, 1);
+
+		cmddata->operation = CMD_FLUSH;
+		cmddata->config = g_strdup(get_config_name());
+		cmddata->holding_file = g_strdup(data.holding_file);
+		cmddata->hostname = g_strdup(file.name);
+		cmddata->diskname = g_strdup(file.disk);
+		cmddata->dump_timestamp = g_strdup(file.datestamp);
+		/* add the first storage only */
+		il = getconf_identlist(CNF_STORAGE);
+		cmddata->storage_dest = g_strdup((char *)il->data);
+
+		cmddata->working_pid = getpid();
+		cmddata->status = CMD_TODO;
+		cmddatas->max_id++;
+		cmddata->id = cmddatas->max_id;
+		g_hash_table_insert(cmddatas->cmdfile,
+				    GINT_TO_POINTER(cmddatas->max_id), cmddata);
+		data.ids = g_strdup_printf("%d", cmddata->id);
+	    }
+
 	    qdisk = quote_string(file.disk);
 	    qhname = quote_string((char *)holding_file->data);
+	    line = g_strdup_printf("FLUSH %s %s %s %s %d %s",
+		    data.ids,
+		    file.name,
+		    qdisk,
+		    file.datestamp,
+		    file.dumplevel,
+		    qhname);
+	    g_ptr_array_add(flush_ptr, line);
 	    log_add(L_DISK, "%s %s", file.name, qdisk);
-	    g_fprintf(stderr,
-		    "FLUSH %s %s %s %d %s\n",
-		    file.name,
-		    qdisk,
-		    file.datestamp,
-		    file.dumplevel,
-		    qhname);
-	    g_fprintf(stdout,
-		    "FLUSH %s %s %s %d %s\n",
-		    file.name,
-		    qdisk,
-		    file.datestamp,
-		    file.dumplevel,
-		    qhname);
+
+	    g_free(data.ids);
 	    amfree(qdisk);
 	    amfree(qhname);
 	    dumpfile_free_data(&file);
 	}
 	slist_free_full(holding_list, g_free);
 	holding_list = NULL;
+	write_cmdfile(cmddatas);
+	for (xline = flush_ptr->pdata; *xline != NULL; xline++) {
+	    g_fprintf(stderr, "%s\n", (char *)*xline);
+	    g_fprintf(stdout, "%s\n", (char *)*xline);
+	}
     }
     g_fprintf(stderr, _("ENDFLUSH\n"));
     g_fprintf(stdout, _("ENDFLUSH\n"));
@@ -608,11 +662,13 @@ main(
      */
 
     {
+	GList  *dlist;
 	disk_t *dp;
 
 	g_fprintf(stderr, _("INITIAL SCHEDULE (size %lld):\n"),
 		(long long)total_size);
-	for(dp = schedq.head; dp != NULL; dp = dp->next) {
+	for (dlist = schedq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    qname = quote_string(dp->name);
 	    g_fprintf(stderr, _("  %s %s pri %d lev %d nsize %lld csize %lld\n"),
 		    dp->host->hostname, qname, est(dp)->dump_priority,
@@ -1367,13 +1423,15 @@ static void handle_result(void *datap, pkt_t *pkt, security_handle_t *sech);
 static void get_estimates(void)
 {
     am_host_t *hostp;
+    GList  *dlist;
     disk_t *dp, *dp1;
     int something_started;
 
     something_started = 1;
     while(something_started) {
 	something_started = 0;
-	for(dp = startq.head; dp != NULL; dp = dp->next) {
+	for (dlist = startq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
 	    hostp = dp->host;
 	    if(hostp->up == HOST_READY) {
 		something_started = 1;
@@ -2567,8 +2625,8 @@ static int promote_hills(void);
 /* delay any dumps that will not fit */
 static void delay_dumps(void)
 {
+    GList      *dlist, *dlist_next, *dlist_prev;
     disk_t *	dp;
-    disk_t *	ndp;
     disk_t *	preserve;
     disk_t *	delayed_dp;
     bi_t *	bi;
@@ -2596,12 +2654,13 @@ static void delay_dumps(void)
     ** need to be checked for separately.
     */
 
-    for(dp = schedq.head; dp != NULL; dp = ndp) {
+    for (dlist = schedq.head; dlist != NULL; dlist = dlist_next) {
 	int avail_tapes = 1;
+
+	dlist_next = dlist->next;
+	dp = dlist->data;
 	if (dp->tape_splitsize > (gint64)0 || dp->allow_split)
 	    avail_tapes = conf_runtapes;
-
-	ndp = dp->next; /* remove_disk zaps this */
 
 	full_size = est_tape_size(dp, 0);
 	if (full_size > tapetype_get_length(tape) * (gint64)avail_tapes) {
@@ -2676,7 +2735,8 @@ static void delay_dumps(void)
     preserve = NULL;
     timestamps = 2147483647;
     priority = 0;
-    for(dp = schedq.head; dp != NULL; dp = dp->next) {
+    for (dlist = schedq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	if (est(dp)->dump_est->level == 0) {
 	    if (!preserve ||
 		est(dp)->dump_priority > priority ||
@@ -2694,10 +2754,11 @@ static void delay_dumps(void)
     do {
 	delayed_dp = 0;
 	timestamps = 0;
-	for(dp = schedq.tail;
-		dp != NULL && total_size > tape_length;
-		dp = ndp) {
-	    ndp = dp->prev;
+	for (dlist = schedq.tail;
+	     dlist != NULL && total_size > tape_length;
+	     dlist = dlist_prev) {
+	    dlist_prev = dlist->prev;
+	    dp = dlist->data;
 
 	    if(est(dp)->dump_est->level != 0) continue;
 
@@ -2742,10 +2803,11 @@ static void delay_dumps(void)
 
     /* 2.b. Delay forced full if needed */
     if(nb_forced_level_0 > 0 && total_size > tape_length) {
-	for(dp = schedq.tail;
-		dp != NULL && total_size > tape_length;
-		dp = ndp) {
-	    ndp = dp->prev;
+	for (dlist = schedq.tail;
+	     dlist != NULL && total_size > tape_length;
+	     dlist = dlist_prev) {
+	    dlist_prev = dlist->prev;
+	    dp = dlist->data;
 
 	    if(est(dp)->dump_est->level == 0 && dp != preserve) {
 
@@ -2783,10 +2845,11 @@ static void delay_dumps(void)
     ** dispensable) and work forwards.
     */
 
-    for(dp = schedq.tail;
-	    dp != NULL && total_size > tape_length;
-	    dp = ndp) {
-	ndp = dp->prev;
+    for (dlist = schedq.tail;
+	 dlist != NULL && total_size > tape_length;
+	 dlist = dlist_prev) {
+	dlist_prev = dlist->prev;
+	dp = dlist->data;
 
 	if(est(dp)->dump_est->level != 0) {
 
@@ -2959,6 +3022,7 @@ static void delay_one_dump(disk_t *dp, int delete, ...)
 
 static int promote_highest_priority_incremental(void)
 {
+    GList  *dlist, *dlist1;
     disk_t *dp, *dp1, *dp_promote;
     gint64 new_total, new_lev0;
     int check_days;
@@ -2972,8 +3036,11 @@ static int promote_highest_priority_incremental(void)
      */
 
     dp_promote = NULL;
-    for(dp = schedq.head; dp != NULL; dp = dp->next) {
-	one_est_t *level0_est = est_for_level(dp, 0);
+    for (dlist = schedq.head; dlist != NULL; dlist = dlist->next) {
+	one_est_t *level0_est;
+
+	dp = dlist->data;
+	level0_est = est_for_level(dp, 0);
 	est(dp)->promote = -1000;
 
 	if (level0_est->nsize <= (gint64)0)
@@ -2992,7 +3059,8 @@ static int promote_highest_priority_incremental(void)
 	nb_same_day = 0;
 	nb_disk_today = 0;
 	nb_disk_same_day = 0;
-	for(dp1 = schedq.head; dp1 != NULL; dp1 = dp1->next) {
+	for (dlist1 = schedq.head; dlist1 != NULL; dlist1 = dlist1->next) {
+	    dp1 = dlist1->data;
 	    if(est(dp1)->dump_est->level == 0)
 		nb_disk_today++;
 	    else if(est(dp1)->next_level0 == est(dp)->next_level0)
@@ -3080,6 +3148,7 @@ static int promote_highest_priority_incremental(void)
 
 static int promote_hills(void)
 {
+    GList  *dlist;
     disk_t *dp;
     struct balance_stats {
 	int disks;
@@ -3108,7 +3177,8 @@ static int promote_hills(void)
 	sp[days].size = (gint64)0;
     }
 
-    for(dp = schedq.head; dp != NULL; dp = dp->next) {
+    for (dlist = schedq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	days = est(dp)->next_level0;
 	if (days < 0) days = 0;
 	if(days<my_dumpcycle && !dp->skip_full && dp->strategy != DS_NOFULL &&
@@ -3132,8 +3202,10 @@ static int promote_hills(void)
 	if(hill_size <= (gint64)0) break;	/* no suitable hills */
 
 	/* Find all the dumps in that hill and try and remove one */
-	for(dp = schedq.head; dp != NULL; dp = dp->next) {
+	for (dlist = schedq.head; dlist != NULL; dlist = dlist->next) {
 	    one_est_t *level0_est;
+
+	    dp = dlist->data;
 	    if(est(dp)->next_level0 != hill_days ||
 	       est(dp)->next_level0 > dp->maxpromoteday ||
 	       dp->skip_full ||
@@ -3323,3 +3395,27 @@ server_estimate(
 	est(dp)->estimate[i].guessed = 1;
     }
 }
+
+static void
+cmdfile_flush(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    int id = GPOINTER_TO_INT(key);
+    cmddata_t *cmddata = value;
+    cmdfile_data_t *data = user_data;
+
+    if (cmddata->operation == CMD_FLUSH &&
+	g_str_equal(data->holding_file, cmddata->holding_file)) {
+	if (data->ids) {
+	    char *ids = g_strdup_printf("%s,%d", data->ids, id);
+	    g_free(data->ids);
+	    data->ids = ids;
+	} else {
+	    data->ids = g_strdup_printf("%d", id);
+	}
+    }
+    cmddata->working_pid = getppid();
+}
+

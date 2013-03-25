@@ -72,6 +72,8 @@ set_tapelist(<<EOF);
 20090424173001 TEST-1 reuse
 20090424172000 CONF-4 reuse
 EOF
+$taperscan->quit();
+$storage->quit();
 
 $testconf->add_param('tapelist', "\"$tapelist_filename\"");
 $testconf->remove_param('labelstr');
@@ -95,6 +97,8 @@ ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
+$taperscan->quit();
+$storage->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 3);
@@ -115,6 +119,8 @@ ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
+$taperscan->quit();
+$storage->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 5);
@@ -135,6 +141,8 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
+$taperscan->quit();
+$storage->quit();
 
 set_tapelist(<<EOF);
 20090424173004 TEST-4 reuse
@@ -162,6 +170,8 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST
 ok( $taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 reusable");
 ok( $taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
+$taperscan->quit();
+$storage->quit();
 
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 4);
@@ -181,6 +191,7 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 1), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST-3 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 not reusable");
+$storage->quit();
 
 set_tapelist(<<EOF);
 20090424173003 TEST-3 reuse
@@ -188,9 +199,7 @@ set_tapelist(<<EOF);
 20090424173001 TEST-1 reuse
 0 TEST-4 reuse
 EOF
-$taperscan->read_tapelist();
 
-$taperscan->{'retention_tapes'} = 3;
 $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 3);
 $testconf->write();
@@ -201,6 +210,7 @@ $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
     tapelist => $tapelist,
+    retention_tapes => 3,
     storage => $storage);
 $taperscan->read_tapelist();
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
@@ -216,4 +226,5 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 0), " TEST
 ok(!$taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 0), " TEST-4 not reusable");
 
 $taperscan->quit();
+$storage->quit();
 

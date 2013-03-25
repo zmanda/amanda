@@ -65,7 +65,11 @@ struct cmdargs *getcmd(void);
 struct cmdargs *get_pending_cmd(void);
 void free_cmdargs(struct cmdargs *cmdargs);
 void putresult(cmd_t result, const char *, ...) G_GNUC_PRINTF(2, 3);
-int taper_cmd(cmd_t cmd, void *ptr, char *destname, int level, char *datestamp);
+
+struct taper_s;
+struct wtaper_s;
+int taper_cmd(struct taper_s *taper, struct wtaper_s *wtaper, cmd_t cmd,
+	      void *ptr, char *destname, int level, char *datestamp);
 
 struct disk_s;
 struct chunker_s;

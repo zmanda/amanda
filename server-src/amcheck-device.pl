@@ -47,11 +47,11 @@ GetOptions(
 ) or usage();
 
 sub usage {
-    print STDERR "USAGE: amcheck-device <config> [-w] <config-overwrites>";
+    print STDERR "USAGE: amcheck-device <config> <storage> [-w] <config-overwrites>";
     exit 1;
 }
 
-if (@ARGV != 1) {
+if (@ARGV != 2) {
     usage();
 }
 
@@ -66,6 +66,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
     }
 }
 
+my $storage_name = $ARGV[1];
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $exit_status = 0;
 
@@ -164,7 +165,8 @@ sub failure {
 	    my ($res, $label, $mode);
 	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 	    my $tl = Amanda::Tapelist->new($tlf);
-	    my ($storage)  = Amanda::Storage->new(tapelist => $tl);
+	    my ($storage)  = Amanda::Storage->new(storage_name => $storage_name,
+						  tapelist => $tl);
 	    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
 	    my $chg = $storage->{'chg'};
 	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");

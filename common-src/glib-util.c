@@ -575,3 +575,57 @@ g_str_amanda_equal(
     /* p1 is at '\0' is p2 too? */
     return *p2? FALSE : TRUE;
 }
+
+/**
+ * g_list_insert_after:
+ * @list: a pointer to a #GList
+ * @sibling: the list element after which the new element
+ *     is inserted or %NULL to insert at the begining of the list
+ * @data: the data for the new element
+ *
+ * Inserts a new element into the list after the given position.
+ *
+ * Returns: the new start of the #GList
+ */
+#define _g_list_alloc()         g_slice_new (GList)
+GList *
+g_am_list_insert_after(
+    GList   *list,
+    GList   *sibling,
+    gpointer data)
+{
+  if (!list)
+    {
+      list = g_list_alloc ();
+      list->data = data;
+      g_return_val_if_fail (sibling == NULL, list);
+      return list;
+    }
+  else if (sibling)
+    {
+      GList *node;
+
+      node = _g_list_alloc ();
+      node->data = data;
+      node->prev = sibling;
+      node->next = sibling->next;
+      sibling->next = node;
+      if (node->next)
+	{
+	  node->next->prev = node;
+	}
+      return list;
+    }
+  else
+    {
+      GList *first;
+
+      first = _g_list_alloc ();
+      first->data = data;
+      first->prev = NULL;
+      first->next = list;
+      list->prev = first;
+
+      return first;
+    }
+}

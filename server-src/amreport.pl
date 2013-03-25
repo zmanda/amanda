@@ -197,7 +197,8 @@ sub calculate_legacy_outputs {
     # Part of the "options" is the configuration.  Do we have a template?  And a
     # mailto? And mailer?
 
-    my $tapetype_name = $report->{'storage'}->{'tapetype_name'};
+    my $storage = Amanda::Storage->new(storage_name => $report->{'storage_list'}[0]);
+    my $tapetype_name = $storage->{'tapetype_name'};
     my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
     my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
 
@@ -251,6 +252,7 @@ sub calculate_legacy_outputs {
     if ($opt_psfname and $cfg_template) {
 	push @outputs, [ [ 'postscript', $cfg_template ], [ 'file', $opt_psfname ] ];
     }
+    $storage->quit();
 }
 
 sub legacy_send_amreport

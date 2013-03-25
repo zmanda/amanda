@@ -644,7 +644,8 @@ static gboolean test_tape_status(FILE * outf) {
     char *amcheck_device = NULL;
     gchar **args;
     amwait_t wait_status;
-    gboolean success;
+    gboolean success = TRUE;
+    identlist_t il;
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 	return FALSE;
@@ -654,28 +655,35 @@ static gboolean test_tape_status(FILE * outf) {
     outfd = fileno(outf);
 
     amcheck_device = g_strjoin(NULL, amlibexecdir, "/", "amcheck-device", NULL);
-    args = get_config_options(overwrite? 3 : 2);
+    args = get_config_options(overwrite? 4 : 3);
     args[0] = amcheck_device; /* steal the reference */
     args[1] = g_strdup(get_config_name());
+    args[2] = NULL;
     if (overwrite)
-	args[2] = g_strdup("-w");
+	args[3] = g_strdup("-w");
 
-    /* run libexecdir/amcheck-device.pl, capturing STDERR and STDOUT to outf */
-    devpid = pipespawnv(amcheck_device, 0, 0,
+    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+
+	args[2] = (char *)il->data;
+	/* run libexecdir/amcheck-device.pl, capturing STDERR and STDOUT to outf */
+	devpid = pipespawnv(amcheck_device, 0, 0,
 	    &nullfd, &outfd, &outfd,
 	    (char **)args);
 
-    /* and immediately wait for it to die */
-    waitpid(devpid, &wait_status, 0);
+	/* and immediately wait for it to die */
+	waitpid(devpid, &wait_status, 0);
 
-    if (WIFSIGNALED(wait_status)) {
-	g_fprintf(outf, _("amcheck-device terminated with signal %d"),
-		  WTERMSIG(wait_status));
-	success = FALSE;
-    } else if (WIFEXITED(wait_status)) {
-	success = (WEXITSTATUS(wait_status) == 0);
-    } else {
-	success = FALSE;
+	if (WIFSIGNALED(wait_status)) {
+	    g_fprintf(outf, _("amcheck-device terminated with signal %d"),
+		      WTERMSIG(wait_status));
+	    success = FALSE;
+	} else if (WIFEXITED(wait_status)) {
+	    if (WEXITSTATUS(wait_status) != 0)
+		success = FALSE;
+	} else {
+	    success = FALSE;
+	}
+	args[2] = NULL;
     }
 
     g_strfreev(args);
@@ -740,7 +748,9 @@ start_server_check(
     g_fprintf(outf, "-----------------------------\n");
 
     if (do_localchk || testtape) {
-	storage = lookup_storage(getconf_str(CNF_STORAGE));
+	identlist_t il = getconf_identlist(CNF_STORAGE);
+	char *storage_name = il->data;
+	storage = lookup_storage(storage_name);
 	if (storage)
             tp = lookup_tapetype(storage_get_tapetype(storage));
     }
@@ -944,7 +954,7 @@ start_server_check(
 	tapename = getconf_str(CNF_TAPEDEV);
 	if (tapename == NULL) {
 	    if (getconf_str(CNF_TPCHANGER) == NULL &&
-		getconf_str(CNF_STORAGE) == NULL) {
+		getconf_identlist(CNF_STORAGE) == NULL) {
 		g_fprintf(outf, _("WARNING:Parameter \"tapedev\", \"tpchanger\" or storage not specified in amanda.conf.\n"));
 		testtape = 0;
 		do_tapechk = 0;
@@ -1291,7 +1301,7 @@ start_server_check(
 	amfree(quoted);
 
 	while(!empty(origq)) {
-	    hostp = origq.head->host;
+	    hostp = ((disk_t *)origq.head->data)->host;
 	    host = sanitise_filename(hostp->hostname);
 	    if(conf_infofile) {
 		g_free(hostinfodir);
@@ -2043,6 +2053,7 @@ start_client_checks(
     int		fd)
 {
     am_host_t *hostp;
+    GList     *dlist;
     disk_t *dp, *dp1;
     int hostcount;
     pid_t pid;
@@ -2081,7 +2092,8 @@ start_client_checks(
 
     hostcount = remote_errors = 0;
 
-    for(dp = origq.head; dp != NULL; dp = dp->next) {
+    for(dlist = origq.head; dlist != NULL; dlist = dlist->next) {
+	dp = dlist->data;
 	hostp = dp->host;
 	if(hostp->up == HOST_READY && dp->todo == 1) {
 	    run_server_host_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,

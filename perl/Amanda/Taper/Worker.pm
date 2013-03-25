@@ -407,6 +407,7 @@ sub result_cb {
     if ($msgtype ne Amanda::Taper::Protocol::FAILED) {
 	$msg_params{'stats'} = $stats;
     }
+    $msg_params{'worker_name'} = $self->{'worker_name'};
 
     # reset things to 'idle' before sending the message
     $self->{'xfer'} = undef;
@@ -437,6 +438,7 @@ sub request_volume_permission {
     $self->{'perm_cb'} = $params{'perm_cb'};
     # and send the request to the driver
     $self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::REQUEST_NEW_TAPE,
+	worker_name => $self->{'worker_name'},
 	handle => $self->{'handle'});
 }
 
@@ -462,12 +464,14 @@ sub scribe_notif_new_tape {
 
 	# and inform the driver
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::NEW_TAPE,
+	    worker_name => $self->{'worker_name'},
 	    handle => $self->{'handle'},
 	    label => $params{'volume_label'});
     } else {
 	$self->{'label'} = undef;
 
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::NO_NEW_TAPE,
+	    worker_name => $self->{'worker_name'},
 	    handle => $self->{'handle'});
     }
 }
@@ -499,6 +503,7 @@ sub scribe_notif_part_done {
     # only send a PARTDONE if it was successful
     if ($params{'successful'}) {
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::PARTDONE,
+	    worker_name => $self->{'worker_name'},
 	    handle => $self->{'handle'},
 	    label => $self->{'label'},
 	    fileno => $params{'fileno'},
@@ -859,6 +864,7 @@ sub dump_cb {
 	my $proto = $controller->{'proto'};
 	my $handle = $self->{'handle'};
 	$proto->send(Amanda::Taper::Protocol::DUMPER_STATUS,
+		worker_name => $self->{'worker_name'},
 		handle => "$handle");
     } else {
 	$self->result_cb();

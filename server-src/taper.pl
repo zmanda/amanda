@@ -34,12 +34,14 @@ use Getopt::Long;
 Amanda::Util::setup_application("taper", "server", $CONTEXT_DAEMON);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
+my $opt_storage_name;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+    'storage-name=s' => \$opt_storage_name,
     'log-filename=s' => sub { Amanda::Logfile::set_logname($_[1]); },
 ) or usage();
 
@@ -71,7 +73,9 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 my $tl = Amanda::Tapelist->new($tlf);
 # transfer control to the Amanda::Taper::Controller class implemented above
-my $controller = Amanda::Taper::Controller->new(tapelist => $tl);
+my $controller = Amanda::Taper::Controller->new(
+					storage_name => $opt_storage_name,
+					tapelist => $tl);
 $controller->start();
 Amanda::MainLoop::run();
 

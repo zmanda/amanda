@@ -175,6 +175,7 @@ read_disklist_internal(
 {
     cfgerr_level_t errlev;
     disklist_t list;
+    GList  *dlist;
     disk_t *dp;
     HV *diskclass_stash = NULL;
 
@@ -186,7 +187,8 @@ read_disklist_internal(
     if (errlev >= CFGERR_ERRORS)
 	return errlev;
 
-    for (dp = list.head; dp; dp = dp->next) {
+    for (dlist = list.head; dlist; dlist = dlist->next) {
+	dp = dlist->data;
 	HV *h = newHV();
 	SV *diskref;
 	SV *hostref;

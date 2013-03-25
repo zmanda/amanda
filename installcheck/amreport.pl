@@ -227,7 +227,7 @@ results_match($mail_output,
 
 results_match($printer_output,
     $cat->get_text('postscript'),
-    "..printer output matches");
+    "..printer output matches A");
 
 ok(run($amreport, 'TESTCONF', '--from-amdump', '/garbage/directory/'),
     "amreport, as run from amdump, with mailer, mailto, and a template, and  bogus option")
@@ -238,7 +238,7 @@ results_match($mail_output,
     "..mail matches");
 results_match($printer_output,
     $cat->get_text('postscript'),
-    "..printer output matches");
+    "..printer output matches B");
 
 cleanup();
 
@@ -251,7 +251,7 @@ results_match($mail_output,
     "..mail matches");
 results_match($printer_output,
     $cat->get_text('postscript'),
-    "..printer output matches");
+    "..printer output matches C");
 
 cleanup();
 
