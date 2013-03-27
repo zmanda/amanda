@@ -71,7 +71,6 @@ int	conf_runspercycle;
 int	conf_tapecycle;
 time_t	conf_etimeout;
 int	conf_reserve;
-int	conf_autoflush;
 int	conf_usetimestamps;
 
 #define HOST_READY				((void *)0)	/* must be 0 */
@@ -367,7 +366,6 @@ main(
     conf_tapecycle = policy_get_retention_tapes(policy);
     conf_etimeout = (time_t)getconf_int(CNF_ETIMEOUT);
     conf_reserve  = getconf_int(CNF_RESERVE);
-    conf_autoflush = getconf_no_yes_all(CNF_AUTOFLUSH);
     conf_usetimestamps = getconf_boolean(CNF_USETIMESTAMPS);
 
     today = time(0);
@@ -482,7 +480,7 @@ main(
 
     g_fprintf(stderr,_("\nSENDING FLUSHES...\n"));
 
-    if(conf_autoflush && !no_taper) {
+    if (!no_taper) {
 	dumpfile_t  file;
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
@@ -508,8 +506,7 @@ main(
 	    }
 
 	    /* see if this matches the command-line arguments */
-	    if (conf_autoflush == 1 &&
-		!match_dumpfile(&file, exact_match, argc-diskarg_offset,
+	    if (!match_dumpfile(&file, exact_match, argc-diskarg_offset,
 				       argv+diskarg_offset)) {
 		continue;
 	    }
@@ -520,26 +517,30 @@ main(
 
 	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_flush, &data);
 	    if (!data.ids) {
-		identlist_t  il;
-		cmddata_t   *cmddata = g_new0(cmddata_t, 1);
+		identlist_t  il = getconf_identlist(CNF_STORAGE);
+		storage_t   *storage = lookup_storage((char *)il->data);
 
-		cmddata->operation = CMD_FLUSH;
-		cmddata->config = g_strdup(get_config_name());
-		cmddata->holding_file = g_strdup(data.holding_file);
-		cmddata->hostname = g_strdup(file.name);
-		cmddata->diskname = g_strdup(file.disk);
-		cmddata->dump_timestamp = g_strdup(file.datestamp);
-		/* add the first storage only */
-		il = getconf_identlist(CNF_STORAGE);
-		cmddata->storage_dest = g_strdup((char *)il->data);
+		if (storage_get_autoflush(storage)) {
+		    cmddata_t *cmddata = g_new0(cmddata_t, 1);
 
-		cmddata->working_pid = getpid();
-		cmddata->status = CMD_TODO;
-		cmddatas->max_id++;
-		cmddata->id = cmddatas->max_id;
-		g_hash_table_insert(cmddatas->cmdfile,
+		    cmddata->operation = CMD_FLUSH;
+		    cmddata->config = g_strdup(get_config_name());
+		    cmddata->holding_file = g_strdup(data.holding_file);
+		    cmddata->hostname = g_strdup(file.name);
+		    cmddata->diskname = g_strdup(file.disk);
+		    cmddata->dump_timestamp = g_strdup(file.datestamp);
+
+		    /* add to the first storage only */
+		    cmddata->storage_dest = g_strdup((char *)il->data);
+
+		    cmddata->working_pid = getpid();
+		    cmddata->status = CMD_TODO;
+		    cmddatas->max_id++;
+		    cmddata->id = cmddatas->max_id;
+		    g_hash_table_insert(cmddatas->cmdfile,
 				    GINT_TO_POINTER(cmddatas->max_id), cmddata);
-		data.ids = g_strdup_printf("%d", cmddata->id);
+		    data.ids = g_strdup_printf("%d", cmddata->id);
+		}
 	    }
 
 	    qdisk = quote_string(file.disk);
@@ -3405,17 +3406,20 @@ cmdfile_flush(
     int id = GPOINTER_TO_INT(key);
     cmddata_t *cmddata = value;
     cmdfile_data_t *data = user_data;
+    storage_t *storage = lookup_storage(cmddata->storage_dest);
 
-    if (cmddata->operation == CMD_FLUSH &&
-	g_str_equal(data->holding_file, cmddata->holding_file)) {
-	if (data->ids) {
-	    char *ids = g_strdup_printf("%s,%d", data->ids, id);
-	    g_free(data->ids);
-	    data->ids = ids;
-	} else {
-	    data->ids = g_strdup_printf("%d", id);
+    if (storage_get_autoflush(storage)) {
+	if (cmddata->operation == CMD_FLUSH &&
+	    g_str_equal(data->holding_file, cmddata->holding_file)) {
+	    if (data->ids) {
+		char *ids = g_strdup_printf("%s,%d", data->ids, id);
+		g_free(data->ids);
+		data->ids = ids;
+	    } else {
+		data->ids = g_strdup_printf("%d", id);
+	    }
 	}
+	cmddata->working_pid = getppid();
     }
-    cmddata->working_pid = getppid();
 }
 

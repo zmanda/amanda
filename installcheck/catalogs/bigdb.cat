@@ -34,7 +34,7 @@ START driver date 20080111
 STATS driver hostname somebox
 STATS driver startup time 0.051
 FINISH planner date 20080111 time 82.721
-START taper datestamp 20080111 label Conf-001 tape 1
+START taper datestamp 20080111 label Conf-001 tape 1 storage TESTCONF
 SUCCESS dumper somebox /lib 20080111 0 [sec 0.209 kb 1970 kps 9382.2 orig-kb 1970]
 SUCCESS chunker somebox /lib 20080111 0 [sec 0.305 kb 420 kps 1478.7]
 STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
@@ -56,7 +56,7 @@ FINISH planner date 20080222222222 time 0.102
 SUCCESS dumper somebox /lib 20080222222222 0 [sec 0.012 kb 100 kps 8115.6 orig-kb 100]
 SUCCESS chunker somebox /lib 20080222222222 0 [sec 5.075 kb 100 kps 26.0]
 STATS driver estimate somebox /lib 20080222222222 0 [sec 0 nkb 132 ckb 160 kps 1024]
-START taper datestamp 20080222222222 label Conf-002 tape 1
+START taper datestamp 20080222222222 label Conf-002 tape 1 storage TESTCONF
 %D somebox_lib_20080222222222 20080222222222 20080222222222 somebox /lib 0 OK "" 2 0.001161 172 0 00000000:0 00000000:0 00000000:0
 %P somebox_lib_20080222222222_p1 somebox_lib_20080222222222 Conf-002 1 1 OK 0.000733 100 0 00000000:0 00000000:0 00000000:0
 PART taper Conf-002 1 somebox /lib 20080222222222 1/2 0 [sec 0.000733 kb 100 kps 136425.648022]
@@ -81,7 +81,7 @@ FINISH planner date 20080313133333 time 0.286
 SUCCESS dumper somebox /usr/bin 20080313133333 1 [sec 0.001 kb 20 kps 10352.0 orig-kb 20]
 SUCCESS chunker somebox /usr/bin 20080313133333 1 [sec 1.023 kb 20 kps 50.8]
 STATS driver estimate somebox /usr/bin 20080313133333 1 [sec 0 nkb 52 ckb 64 kps 1024]
-START taper datestamp 20080313133333 label Conf-003 tape 1
+START taper datestamp 20080313133333 label Conf-003 tape 1 storage TESTCONF
 %D somebox_usr_bin_20080313133333 20080313133333 20080313133333 somebox /usr/bin 1 OK "" 1 0.000370 20 0 00000000:0 00000000:0 00000000:0
 %P somebox_usr_bin_20080313133333 somebox_usr_bin_20080313133333 Conf-003 1 1 OK 0.000370 20 0 00000000:0 00000000:0 00000000:0
 PART taper Conf-003 1 somebox /usr/bin 20080313133333 1/1 1 [sec 0.000370 kb 20 kps 54054.054054]
@@ -143,13 +143,13 @@ FINISH planner date 20080414144444 time 2.139
 SUCCESS dumper otherbox /lib 20080414144444 1 [sec 0.003 kb 60 kps 16304.3 orig-kb 60]
 SUCCESS chunker otherbox /lib 20080414144444 1 [sec 1.038 kb 60 kps 88.5]
 STATS driver estimate otherbox /lib 20080414144444 1 [sec 0 nkb 92 ckb 96 kps 1024]
-START taper datestamp 20080414144444 label Conf-004 tape 1
+START taper datestamp 20080414144444 label Conf-004 tape 1 storage TESTCONF
 %D otherbox_lib_20080414144444 20080414144444 20080414144444 otherbox /lib 1 PARTIAL full-up 0 0.000540 32 0 00000000:0 00000000:0 00000000:0
 %P otherbox_lib_20080414144444_try1 otherbox_lib_20080414144444 Conf-004 1 1 PARTIAL 0.000707 32 0 00000000:0 00000000:0 00000000:0
 PARTPARTIAL taper Conf-004 1 otherbox /lib 20080414144444 1/1 1 [sec 0.000707 kb 32 kps 45261.669024] ""
 INFO taper Will request retry of failed split part.
 INFO taper Will write new label `Conf-005' to new (previously non-amanda) tape
-START taper datestamp 20080414144444 label Conf-005 tape 2
+START taper datestamp 20080414144444 label Conf-005 tape 2 storage TESTCONF
 %P otherbox_lib_20080414144444_try2 otherbox_lib_20080414144444 Conf-005 1 1 PARTIAL 0.000540 32 0 00000000:0 00000000:0 00000000:0
 PARTPARTIAL taper Conf-005 1 otherbox /lib 20080414144444 1/1 1 [sec 0.000540 kb 32 kps 59259.259259] ""
 INFO taper Will request retry of failed split part.
@@ -180,7 +180,7 @@ FINISH planner date 20080515155555 time 0.286
 SUCCESS dumper somebox /usr/bin 20080515155555 1 [sec 0.001 kb 20 kps 10352.0 orig-kb 20]
 SUCCESS chunker somebox /usr/bin 20080515155555 1 [sec 1.023 kb 20 kps 50.8]
 STATS driver estimate somebox /usr/bin 20080515155555 1 [sec 0 nkb 52 ckb 64 kps 1024]
-START taper datestamp 20080515155555 label Conf-006 tape 1
+START taper datestamp 20080515155555 label Conf-006 tape 1 storage TESTCONF
 %D somebox_usr_bin_20080515155555 20080515155555 20080515155555 somebox /usr/bin 1 OK "" 1 0.000370 20 20 00000000:0 00000000:0 00000000:0
 %P somebox_usr_bin_20080515155555 somebox_usr_bin_20080515155555 Conf-006 1 1 OK 0.000370 20 20 00000000:0 00000000:0 00000000:0
 PART taper Conf-006 1 somebox /usr/bin 20080515155555 1/1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
@@ -244,7 +244,7 @@ FINISH planner date 20080616166666 time 0.286
 SUCCESS dumper somebox /usr/bin 20080616166666 1 [sec 0.001 kb 20 kps 10352.0 orig-kb 20]
 SUCCESS chunker somebox /usr/bin 20080616166666 1 [sec 1.023 kb 20 kps 50.8]
 STATS driver estimate somebox /usr/bin 20080616166666 1 [sec 0 nkb 52 ckb 64 kps 1024]
-START taper datestamp 20080616166666 label Conf-007 tape 1
+START taper datestamp 20080616166666 label Conf-007 tape 1 storage TESTCONF
 %D somebox_usr_bin_20080616166666 20080616166666 20080616166666 somebox /usr/bin 1 OK "" 1 0.000370 20 20 00000000:0 00000000:0 00000000:0
 %P somebox_usr_bin_20080616166666 somebox_usr_bin_20080616166666 Conf-007 1 1 OK 0.000370 20 20 00000000:0 00000000:0 00000000:0
 PART taper Conf-007 1 somebox /usr/bin 20080616166666 1/1 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
@@ -255,7 +255,7 @@ SUCCESS chunker somebox /lib 20080616166666 1 [sec 1.023 kb 20 kps 50.8]
 %P somebox_lib_20080616166666 somebox_lib_20080616166666 Conf-007 2 1 OK 0.000370 20 20 00000000:0 00000000:0 00000000:0
 PART taper Conf-007 2 somebox /lib 20080616166666 1/2 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
 STATS driver estimate somebox /lib 20080616166666 1 [sec 0 nkb 52 ckb 64 kps 1024]
-START taper datestamp 20080616166666 label Conf-008 tape 1
+START taper datestamp 20080616166666 label Conf-008 tape 1 storage TESTCONF
 # this tape has been removed from the tapelist
 #%P somebox_lib_20080616166666 somebox_lib_20080616166666 Conf-008 1 1 OK 0.000370 20 20
 PART taper Conf-008 1 somebox /lib 20080616166666 2/2 1 [sec 0.000370 kb 20 kps 54054.054054 orig-kb 20]
@@ -266,7 +266,7 @@ DONE taper somebox /lib 20080616166666 1 1 [sec 0.000370 kb 20 kps 54054.054054 
 :timestamp 20100722000000
 START planner date 20100722000000
 DISK planner lovelace /home/ada
-START taper datestamp 20100722 label Conf-009 tape 0
+START taper datestamp 20100722 label Conf-009 tape 0 storage TESTCONF
 SUCCESS dumper lovelace /home/ada 20100722 3 [sec 19.271 kb 166951 kps 8663.1 orig-kb 208420]
 SUCCESS chunker lovelace /home/ada 20100722 3 [sec 19.298 kb 166951 kps 8652.7]
 STATS driver estimate lovelace /home/ada 20100722 3 [sec 30 nkb 208422 ckb 32640 kps 1081]

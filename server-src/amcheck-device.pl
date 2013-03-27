@@ -160,24 +160,24 @@ sub failure {
     $finished_cb->();
 }
 
-	sub do_check {
-	    my ($finished_cb) = @_;
-	    my ($res, $label, $mode);
-	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	    my $tl = Amanda::Tapelist->new($tlf);
-	    my ($storage)  = Amanda::Storage->new(storage_name => $storage_name,
-						  tapelist => $tl);
-	    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
-	    my $chg = $storage->{'chg'};
-	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
-	    my $interactivity = Amanda::Interactivity->new(
-						name => getconf($CNF_INTERACTIVITY));
-	    my $scan_name = $storage->{'taperscan_name'};
-	    my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
-						     storage => $storage,
-						     changer => $chg,
-						     interactivity => $interactivity,
-						     tapelist => $tl);
+sub do_check {
+    my ($finished_cb) = @_;
+    my ($res, $label, $mode);
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    my $tl = Amanda::Tapelist->new($tlf);
+    my ($storage)  = Amanda::Storage->new(storage_name => $storage_name,
+					  tapelist => $tl);
+    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
+    my $chg = $storage->{'chg'};
+    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
+    my $interactivity = Amanda::Interactivity->new(
+					name => $storage->{'interactivity'});
+    my $scan_name = $storage->{'taperscan_name'};
+    my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
+					     storage => $storage,
+					     changer => $chg,
+					     interactivity => $interactivity,
+					     tapelist => $tl);
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -226,8 +226,8 @@ sub failure {
 	    print "WARNING: Media access mode is WRITE_ONLY; dumps may not be recoverable\n";
 	}
 
-	if (getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
-	    my $dobs = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+	if ($storage->{'seen_device_output_buffer_size'}) {
+	    my $dobs = $storage->{'device_output_buffer_size'};
 	    my $block_size = $res->{'device'}->property_get("BLOCK_SIZE");
 	    if ($block_size * 2 > $dobs) {
 		print "WARNING: DEVICE-OUTPUT-BUFFER-SIZE is not at least twice the block size of the device, it should be increased for better throughput\n";

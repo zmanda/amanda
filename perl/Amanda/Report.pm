@@ -490,7 +490,7 @@ sub read_file
 	         my $il = getconf($CNF_STORAGE);
 	         $storage_name = $il->[0];
 	    }
-	    $il = ( $storage_name );
+	    $il = [ $storage_name ];
 	}
     } else {
 	$il = getconf($CNF_STORAGE);
@@ -951,10 +951,11 @@ sub _handle_taper_line
         # format is:
         # START taper datestamp <start> label <label> tape <tapenum>
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ($datestamp, $label, $tapenum) = @info[ 1, 3, 5 ];
+        my ($datestamp, $label, $tapenum, $storage) = @info[ 1, 3, 5, 7 ];
         my $tape = $self->get_tape($label);
         $tape->{date} = $datestamp;
         $tape->{label} = $label;
+        $tape->{storage} = $storage;
 
 	# keep this tape for later
 	$self->{'_current_tape'} = $tape;

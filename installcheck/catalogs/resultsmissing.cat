@@ -14,7 +14,7 @@ DISK planner ns-new.slikon.local /home
 DISK planner ns-new.slikon.local /boot
 FAIL planner ns-new.slikon.local /boot 20090326001503 0 "[planner failed]"
 SUCCESS dumper ns-new.slikon.local //usr/local 20090326001503 0 [sec 0.040 kb 1 kps 24.6 orig-kb 30]
-START taper datestamp 20090326001503 label Daily-36 tape 1
+START taper datestamp 20090326001503 label Daily-36 tape 1 storage TESTCONF
 SUCCESS dumper cnc.slikon.local /boot 20090326001503 0 [sec 4.255 kb 17246 kps 4052.7 orig-kb 20670]
 INFO dumper pid-done 7337
 SUCCESS chunker ns-new.slikon.local //usr/local 20090326001503 0 [sec 1.109 kb 1 kps 29.8]

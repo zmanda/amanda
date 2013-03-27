@@ -414,20 +414,41 @@ sub output_tapeinfo
     my %incr_stats  = %{ $self->{incr_stats} };
     my %total_stats = %{ $self->{total_stats} };
 
-    if (getconf($CNF_REPORT_USE_MEDIA) and @$tape_labels > 0) {
-
-	# slightly different sentence depending on the run type
-        my $tapelist_str;
-	if ($report->get_flag("amflush_run")) {
-	    $tapelist_str = "The dumps were flushed ";
-	} elsif ($report->get_flag("amvault_run")) {
-	    $tapelist_str = "The dumps were vaulted ";
-	} else {
-	    $tapelist_str = "These dumps were ";
+    for my $storage_n (@{$report->{'storage_list'}}) {
+	my $st = Amanda::Config::lookup_storage($storage_n);
+	if (!$st) {
+	    debug("Storage '%s' not found", $storage_n);
+	    next;
 	}
-        $tapelist_str .= (@$tape_labels > 1) ? "to tapes " : "to tape ";
-        $tapelist_str .= join(", ", @$tape_labels) . ".\n";
-        $self->zprint($tapelist_str);
+	if (storage_getconf($st, $STORAGE_REPORT_USE_MEDIA)) {
+	    # find and count label use for the storage
+
+	    my @storage_tape_labels;
+	    foreach my $tape_label (@$tape_labels) {
+		my $tape = $tapes->{$tape_label};
+		if ($tape->{'storage'} eq $storage_n) {
+		    push @storage_tape_labels, $tape_label;
+		}
+	    }
+debug(Data::Dumper::Dumper($report));
+	    if (@storage_tape_labels > 0) {
+
+		my $to_storage = '';
+		$to_storage = " to storage '$storage_n'" if @{$report->{'storage_list'}} > 1;
+		# slightly different sentence depending on the run type
+	        my $tapelist_str;
+		if ($report->get_flag("amflush_run")) {
+		    $tapelist_str = "The dumps" . $to_storage . " were flushed ";
+		} elsif ($report->get_flag("amvault_run")) {
+		    $tapelist_str = "The dumps" . $to_storage . " were vaulted ";
+		} else {
+		    $tapelist_str = "These dumps" . $to_storage . " were ";
+		}
+	        $tapelist_str .= (@storage_tape_labels > 1) ? "to tapes " : "to tape ";
+	        $tapelist_str .= join(", ", @storage_tape_labels) . ".\n";
+	        $self->zprint($tapelist_str);
+	    }
+	}
     }
 
     if (my $tape_error =
@@ -475,19 +496,23 @@ sub output_tapeinfo
         }
     }
 
-    if (getconf($CNF_REPORT_NEXT_MEDIA)) {
-	my $nb_new_tape = 0;
-	for my $storage_n (@{$report->{'storage_list'}}) {
-	    my $st = Amanda::Config::lookup_storage($storage_n);
-	    if (!$st) {
-	    }
+    for my $storage_n (@{$report->{'storage_list'}}) {
+	my $st = Amanda::Config::lookup_storage($storage_n);
+	if (!$st) {
+	    debug("Storage '%s' not found", $storage_n);
+	    next;
+	}
+	if (storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA)) {
 	    my $run_tapes   = storage_getconf($st, $STORAGE_RUNTAPES);
+	    my $nb_new_tape = 0;
 
+	    my $for_storage = '';
+	    $for_storage = " for storage '$storage_n'" if @{$report->{'storage_list'}} > 1;
 	    my $text;
 	    if ($run_tapes) {
 		$text = ($run_tapes > 1)
-	          ? "The next $run_tapes tapes Amanda expects to use are: "
-	          : "The next tape Amanda expects to use is: ";
+	          ? "The next $run_tapes tapes Amanda expects to use" . $for_storage . " are: "
+	          : "The next tape Amanda expects to use" . $for_storage . " is: ";
 	    }
 
 	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));

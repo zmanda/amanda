@@ -1382,6 +1382,15 @@ typedef enum storage_e  {
     STORAGE_MAX_DLE_BY_VOLUME,
     STORAGE_TAPERALGO,
     STORAGE_TAPER_PARALLEL_WRITE,
+    STORAGE_EJECT_VOLUME,
+    STORAGE_DEVICE_OUTPUT_BUFFER_SIZE,
+    STORAGE_AUTOFLUSH,
+    STORAGE_FLUSH_THRESHOLD_DUMPED,
+    STORAGE_FLUSH_THRESHOLD_SCHEDULED,
+    STORAGE_TAPERFLUSH,
+    STORAGE_REPORT_USE_MEDIA,
+    STORAGE_REPORT_NEXT_MEDIA,
+    STORAGE_INTERACTIVITY,
     STORAGE_STORAGE
 } storage_key;
 
@@ -1444,6 +1453,15 @@ char *storage_name(storage_t *app);
 #define storage_get_max_dle_by_volume(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_MAX_DLE_BY_VOLUME)))
 #define storage_get_taperalgo(storage)  (val_t_to_taperalgo(storage_getconf((storage), STORAGE_TAPERALGO)))
 #define storage_get_taper_parallel_write(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_TAPER_PARALLEL_WRITE)))
+#define storage_get_eject_volume(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_EJECT_VOLUME)))
+#define storage_get_device_output_buffer_size(storage)  (val_t_to_size(storage_getconf((storage), STORAGE_DEVICE_OUTPUT_BUFFER_SIZE)))
+#define storage_get_autoflush(storage)  (val_t_to_no_yes_all(storage_getconf((storage), STORAGE_AUTOFLUSH)))
+#define storage_get_flush_threshold_dumped(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_FLUSH_THRESHOLD_DUMPED)))
+#define storage_get_flush_threshold_scheduled(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_FLUSH_THRESHOLD_SCHEDULED)))
+#define storage_get_taperflush(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_TAPERFLUSH)))
+#define storage_get_report_use_media(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_REPORT_USE_MEDIA)))
+#define storage_get_report_next_media(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_REPORT_NEXT_MEDIA)))
+#define storage_get_interactivity(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_INTERACTIVITY)))
 
 
 /*

@@ -437,7 +437,7 @@ SUCCESS dumper somebox /lib 20080111 0 [sec 0.209 kb 1970 kps 9382.2 orig-kb 197
 SUCCESS chunker somebox /lib 20080111 0 [sec 0.305 kb 420 kps 1478.7]
 STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
 INFO taper taper pid 28023
-START taper datestamp 20080111 label TESTCONF01 tape 1
+START taper datestamp 20080111 label TESTCONF01 tape 1 storage TESTCONF storage TESTCONF
 PART taper TESTCONF01 1 somebox /lib 20080111 1/-1 0 [sec 0.004722 kb 640 kps 135535.789920]
 PART taper TESTCONF01 2 somebox /lib 20080111 2/-1 0 [sec 0.003438 kb 640 kps 186154.741129]
 PART taper TESTCONF01 3 somebox /lib 20080111 3/-1 0 [sec 0.002931 kb 640 kps 218355.510065]
@@ -482,6 +482,7 @@ $LogfileData{taper} = {
                     kb      => "2016",
                     files   => "4",
                     dle     => "1",
+		    'storage' => "TESTCONF"
                 },
             },
             tape_labels => ['TESTCONF01'],
@@ -580,7 +581,7 @@ START driver date 20080111
 STATS driver hostname somebox
 STATS driver startup time 0.051
 FINISH planner date 20080111 time 82.721
-START taper datestamp 20080111 label Conf-001 tape 1
+START taper datestamp 20080111 label Conf-001 tape 1 storage TESTCONF storage TESTCONF
 SUCCESS dumper somebox /lib 20080111 0 [sec 0.209 kb 1970 kps 9382.2 orig-kb 1970]
 SUCCESS chunker somebox /lib 20080111 0 [sec 0.305 kb 420 kps 1478.7]
 STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
@@ -617,7 +618,8 @@ $LogfileData{simple} = {
                     'time'  => '4.813543',
                     'date'  => '20080111',
                     'kb'    => 419,
-                    'dle'   => 1
+                    'dle'   => 1,
+		    'storage' => "TESTCONF"
                 },
             },
             tape_labels => ["Conf-001"],
@@ -709,7 +711,7 @@ SUCCESS chunker hostname.example.org /somedir 20081002040002 1 [sec 5.070 kb 10 
 INFO chunker pid-done 11110
 STATS driver estimate hostname.example.org /somedir 20081002040002 1 [sec 0 nkb 42 ckb 64 kps 1024]
 INFO dumper pid-done 11129
-START taper datestamp 20081002040002 label FullBackup-14 tape 1
+START taper datestamp 20081002040002 label FullBackup-14 tape 1 storage TESTCONF
 PART taper FullBackup-14 1 hostname.example.org /somedir 20081002040002 1/1 1 [sec 0.002776 kb 10 kps 3602.305476]
 DONE taper hostname.example.org /somedir 20081002040002 1 1 [sec 0.002776 kb 10 kps 3602.305476]
 INFO chunker chunker pid 11157
@@ -789,7 +791,8 @@ $LogfileData{fullExample} = {
                     'time'  => '740.930972',
                     'date'  => '20081002040002',
                     'kb'    => 57568922,
-                    'dle'   => 6
+                    'dle'   => 6,
+		    'storage' => "TESTCONF",
                 },
             },
             tape_labels => ["FullBackup-14"],
@@ -1086,7 +1089,7 @@ START driver date 20090622075550
 STATS driver hostname localhost
 STATS driver startup time 0.011
 INFO taper taper pid 26077
-START taper datestamp 20090622075550 label DailyTapeDataSet-017 tape 1
+START taper datestamp 20090622075550 label DailyTapeDataSet-017 tape 1 storage TESTCONF
 PART taper DailyTapeDataSet-017 1 localhost /etc 20090620020002 1/1 1 [sec 2.504314 kb 36980 kps 14766.518895]
 DONE taper localhost /etc 20090620020002 1 1 [sec 2.504314 kb 36980 kps 14766.518895]
 PART taper DailyTapeDataSet-017 2 localhost /usr/local/bin 20090620020002 1/1 1 [sec 1.675693 kb 309 kps 184.632684]
@@ -1116,7 +1119,8 @@ $LogfileData{amflushExample} = {
                     'time'  => '4.180007',
                     'date'  => '20090622075550',
                     'kb'    => 37289,
-                    'dle'   => 2
+                    'dle'   => 2,
+		    'storage' => "TESTCONF"
                 },
             },
             tape_labels => ["DailyTapeDataSet-017"],

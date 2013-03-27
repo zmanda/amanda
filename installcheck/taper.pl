@@ -333,7 +333,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^DONE taper localhost /home $datestamp 1 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^PART taper TESTCONF01 2 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
@@ -421,7 +421,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
     qr(^PART taper TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
     qr(^PARTIAL taper localhost /usr $datestamp 2 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
@@ -468,7 +468,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 3 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
@@ -543,13 +543,13 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /usr/local $datestamp 1/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ bytes 3072 kps [\d.]+\]$),
     qr(^DONE taper localhost /usr/local $datestamp 3 0 00000000:0 00000000:0 557f9f1d:1575936 \[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1012\]$),
@@ -591,13 +591,13 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+ orig-kb 1112\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ bytes 3072 kps [\d.]+ orig-kb 1112\]$),
     qr(^DONE taper localhost /usr $datestamp 3 0 00000000:0 00000000:0 557f9f1d:1575936 \[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1112\]$),
@@ -644,13 +644,13 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /usr/local $datestamp 1/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 2 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /usr/local $datestamp 2/-1 0 \[sec [\d.]+ bytes 786432 kps [\d.]+\]$),
     qr(^PART taper TESTCONF02 2 localhost /usr/local $datestamp 3/-1 0 \[sec [\d.]+ bytes 3072 kps [\d.]+\]$),
     qr(^DONE taper localhost /usr/local $datestamp 3 0 00000000:0 00000000:0 557f9f1d:1575936 \[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1212\]$),
@@ -702,12 +702,12 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /var/log $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+\] "No space left on device"$),
     qr(^PARTIAL taper localhost /var/log $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 0 kps [\d.]+\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /boot $datestamp 1/-1 0 \[sec [\d.]+ bytes 65536 kps [\d.]+\]$),
     qr(^DONE taper localhost /boot $datestamp 1 0 00000000:0 00000000:0 bfa9b227:65536 \[sec [\d.]+ bytes 65536 kps [\d.]+ orig-kb 64\]$),
     qr(^INFO taper tape TESTCONF02 kb 64 fm 1 \[OK\]$),
@@ -741,7 +741,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /music $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]$),
     qr(^PARTPARTIAL taper TESTCONF01 2 localhost /music $datestamp 2/-1 0 \[sec [\d.]+ bytes 163840 kps [\d.]+ orig-kb 1312\] "No space left on device"$),
     qr(^INFO taper Will request retry of failed split part\.$),
@@ -786,7 +786,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /sbin $datestamp 1/-1 0 \[sec [\d.]+ bytes 655360 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 2 localhost /sbin $datestamp 2/-1 0 \[sec [\d.]+ bytes 655360 kps [\d.]+\]$),
     qr(^PART taper TESTCONF01 3 localhost /sbin $datestamp 3/-1 0 \[sec [\d.]+ bytes 655360 kps [\d.]+\]$),
@@ -839,7 +839,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 00000000:0 00000000:0 414a5a23:500000 \[sec [\d.]+ bytes 500000 kps [\d.]+ orig-kb 1412\]$),
@@ -848,7 +848,7 @@ check_logs([
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 744 fm 4 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]$),
@@ -899,7 +899,7 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Slot 2 with label TESTCONF02 is not reusable$),
     qr(^INFO taper Slot 3 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF03 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF03 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 00000000:0 00000000:0 4e7b5233:300000 \[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]$),
@@ -909,7 +909,7 @@ check_logs([
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
 #    qr(^INFO taper Slot 1 with label TESTCONF01 is usable$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 88 fm 1 \[OK\]$),
@@ -1007,11 +1007,11 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 00000000:0 00000000:0 4e7b5233:300000 \[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
@@ -1064,14 +1064,14 @@ wait_for_exit();
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF01 3 localhost /u01 $datestamp 3/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PARTPARTIAL taper TESTCONF01 4 localhost /u01 $datestamp 4/-1 0 \[sec [\d.]+ bytes 98304 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
     qr(^INFO taper Will request retry of failed split part.$),
     qr(^INFO taper tape TESTCONF01 kb 768 fm 4 \[OK\]$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /u01 $datestamp 4/-1 0 \[sec [\d.]+ bytes 213568 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 4 0 00000000:0 00000000:0 a3cd042c:1000000 \[sec [\d.]+ bytes 1000000 kps [\d.]+ orig-kb 1612\]$),
     qr(^INFO taper tape TESTCONF02 kb 208 fm 1 \[OK\]$),
@@ -1145,14 +1145,14 @@ SKIP : {
 
     check_logs([
         qr(^INFO taper Slot 3 without label can be labeled$),
-	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
 	qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF01 3 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ bytes 65536 kps [\d.]+\]$),
 	# note no "Will retry.."
 	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
         qr(^INFO taper Slot 4 without label can be labeled$),
-	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 5/-1 0 \[sec [\d.]+ bytes 32768 kps [\d.]+\]$),
 	qr(^DONE taper localhost /var $datestamp 5 0 00000000:0 00000000:0 00000000:0 \[sec [\d.]+ bytes 1277952 kps [\d.]+ orig-kb 1912\]$),
@@ -1203,13 +1203,13 @@ SKIP : {
 
     check_logs([
         qr(^INFO taper Slot 3 without label can be labeled$),
-	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+	qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
 	qr(^PART taper TESTCONF01 1 localhost /var $datestamp 1/-1 0 \[sec [\d.]+ bytes 425984 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF01 2 localhost /var $datestamp 2/-1 0 \[sec [\d.]+ bytes 425984 kps [\d.]+\]$),
 	# Note: zero-byte part is not logged, but is counted in this INFO line's 'fm' field
 	qr(^INFO taper tape TESTCONF01 kb 832 fm 3 \[OK\]$),
         qr(^INFO taper Slot 4 without label can be labeled$),
-	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+	qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
 	qr(^PART taper TESTCONF02 1 localhost /var $datestamp 3/-1 0 \[sec [\d.]+ bytes 425984 kps [\d.]+\]$),
 	qr(^PART taper TESTCONF02 2 localhost /var $datestamp 4/-1 0 \[sec [\d.]+ bytes 393216 kps [\d.]+\]$),
 	qr(^DONE taper localhost /var $datestamp 4 0 00000000:0 00000000:0 00000000:0 \[sec [\d.]+ bytes 1671168 kps [\d.]+ orig-kb 2112\]$),
@@ -1242,7 +1242,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PARTPARTIAL taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 983040 kps [\d.]+ orig-kb 1612\] \"No space left on device\"$),
     qr(^PARTIAL taper localhost /usr $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 1612\] "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 0 fm 1 \[OK\]$),
@@ -1273,7 +1273,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]$),
     qr(^PARTIAL taper localhost /usr $datestamp 1 0 00000000:0 00000000:0 [0-9a-f]{8}:\d+ \[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\] "No space left on device, splitting not enabled"$),
     qr(^INFO taper tape TESTCONF01 kb 864 fm 1 \[OK\]$),
@@ -1320,7 +1320,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /home $datestamp 1/-1 0 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^DONE taper localhost /home $datestamp 1 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^PART taper TESTCONF01 2 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
@@ -1373,7 +1373,7 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 00000000:0 00000000:0 414a5a23:500000 \[sec [\d.]+ bytes 500000 kps [\d.]+ orig-kb 1412\]$),
@@ -1382,7 +1382,7 @@ check_logs([
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF01 kb 744 fm 4 \[OK\]$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]$),
@@ -1432,7 +1432,7 @@ wait_for_exit();
 check_logs([
 #    qr(^INFO taper Slot 2 with label TESTCONF02 is not reusable),
     qr(^INFO taper Slot 3 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF03 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF03 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF03 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF03 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 00000000:0 00000000:0 4e7b5233:300000 \[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]$),
@@ -1442,7 +1442,7 @@ check_logs([
     qr(^INFO taper Will request retry of failed split part\.$),
     qr(^INFO taper tape TESTCONF03 kb 804 fm 5 \[OK\]$),
     qr(^INFO taper Slot 1 with label TESTCONF01 is usable$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
     qr(^INFO taper tape TESTCONF01 kb 88 fm 1 \[OK\]$),
@@ -1506,11 +1506,11 @@ check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
     qr(^INFO taper Slot 1 is already in use by drive.*$),
     qr(^INFO taper Slot 2 without label can be labeled$),
-    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1$),
+    qr(^START taper datestamp $datestamp label TESTCONF01 tape 1 storage TESTCONF$),
     qr(^PART taper TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),
     qr(^PART taper TESTCONF01 2 localhost /u01 $datestamp 2/-1 0 \[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]$),
     qr(^DONE taper localhost /u01 $datestamp 2 0 00000000:0 00000000:0 4e7b5233:300000 \[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]$),
-    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2$),
+    qr(^START taper datestamp $datestamp label TESTCONF02 tape 2 storage TESTCONF$),
     qr(^PART taper TESTCONF02 1 localhost /u02 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),

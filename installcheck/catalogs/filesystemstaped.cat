@@ -10,7 +10,7 @@ START driver date 20100713120014
 STATS driver hostname localhost.localdomain
 STATS driver startup time 0.015
 INFO taper taper pid 1241
-START taper datestamp 20100713120014 label DAILY-37 tape 1
+START taper datestamp 20100713120014 label DAILY-37 tape 1 storage TESTCONF
 PART taper DAILY-37 1 localhost.localdomain /boot 20100713111516 1/-1 1 [sec 0.096877 kb 10240 kps 105701.444021 orig-kb 20480]
 PART taper DAILY-37 2 localhost.localdomain /boot 20100713111516 2/-1 1 [sec 0.079061 kb 10240 kps 129519.788435 orig-kb 20480]
 DONE taper localhost.localdomain /boot 20100713111516 2 1 [sec 0.100000 kb 20480 kps 446100.000000 orig-kb 20480]

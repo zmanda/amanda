@@ -135,9 +135,9 @@ startup_tape_process(
 	tape = lookup_tapetype(tapetype);
 	taper->tape_length = tapetype_get_length(tape);
 	taper->current_tape = 0;
-	conf_flush_threshold_dumped = getconf_int(CNF_FLUSH_THRESHOLD_DUMPED);
-	conf_flush_threshold_scheduled = getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED);
-	conf_taperflush = getconf_int(CNF_TAPERFLUSH);
+	conf_flush_threshold_dumped = storage_get_flush_threshold_dumped(storage);
+	conf_flush_threshold_scheduled = storage_get_flush_threshold_scheduled(storage);
+	conf_taperflush = storage_get_taperflush(storage);
 	taper->flush_threshold_dumped = (conf_flush_threshold_dumped * taper->tape_length) /100;
 	taper->flush_threshold_scheduled = (conf_flush_threshold_scheduled * taper->tape_length) /100;
 	taper->taperflush = (conf_taperflush * taper->tape_length) /100;

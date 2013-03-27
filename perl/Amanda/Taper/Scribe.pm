@@ -452,7 +452,6 @@ sub new {
 	taperscan => $params{'taperscan'},
 	feedback => $params{'feedback'},
 	debug => $decide_debug,
-	eject_volume => $params{'eject_volume'},
 	write_timestamp => undef,
 	started => 0,
 
@@ -1091,7 +1090,7 @@ sub _release_reservation {
 
     # if we've already written a volume, log it
     if ($self->{'device'} and defined $self->{'device'}->volume_label) {
-	$do_eject = 1 if $self->{'eject_volume'};
+	$do_eject = 1 if $self->{'taperscan'}->{'storage'}->{'eject_volume'};
 	$label = $self->{'device'}->volume_label();
 	$fm = $self->{'device'}->file();
 	$kb = $self->{'device_size'} / 1024;

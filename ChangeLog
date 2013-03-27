@@ -1,3 +1,11 @@
+2013-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* Many files: Add eject-volume, device-output-buffer-size,
+	  autoflush, flush-threshold-dumped, flush-threshold-scheduled,
+	  taperflush, report-use-media, report-next-media and interactivity to
+	  the srtorage section.
+	* perl/Amanda/Taper/Worker.pm: Add the storage name to the START
+	  log line.
+
 2013-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/cmdfile.c, server-src/cmdfile.h: Add files.
 

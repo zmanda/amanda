@@ -152,6 +152,16 @@ sub new {
     $self->{'taper_parallel_write'} = storage_getconf($st, $STORAGE_TAPER_PARALLEL_WRITE);
     $self->{'policy'} = Amanda::Policy->new(policy => storage_getconf($st, $STORAGE_POLICY));
     $self->{'tapepool'} = storage_getconf($st, $STORAGE_TAPEPOOL);
+    $self->{'eject_volume'} = storage_getconf($st, $STORAGE_EJECT_VOLUME);
+    $self->{'device_output_buffer_size'} = storage_getconf($st, $STORAGE_DEVICE_OUTPUT_BUFFER_SIZE);
+    $self->{'seen_device_output_buffer_size'} = storage_seen($st, $STORAGE_DEVICE_OUTPUT_BUFFER_SIZE);
+    $self->{'autoflush'} = storage_getconf($st, $STORAGE_AUTOFLUSH);
+    $self->{'flush_threshold_dumped'} = storage_getconf($st, $STORAGE_FLUSH_THRESHOLD_DUMPED);
+    $self->{'flush_threshold_scheduled'} = storage_getconf($st, $STORAGE_FLUSH_THRESHOLD_SCHEDULED);
+    $self->{'taperflush'} = storage_getconf($st, $STORAGE_TAPERFLUSH);
+    $self->{'report_use_media'} = storage_getconf($st, $STORAGE_REPORT_USE_MEDIA);
+    $self->{'report_next_media'} = storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA);
+    $self->{'interactivity'} = storage_getconf($st, $STORAGE_INTERACTIVITY);
     bless $self, $class;
 
     if (!exists $params{'changer_name'}) {

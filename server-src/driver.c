@@ -91,9 +91,6 @@ static int num_holdalloc;
 static event_handle_t *dumpers_ev_time = NULL;
 static event_handle_t *flush_ev_read = NULL;
 static event_handle_t *schedule_ev_read = NULL;
-static off_t flush_threshold_dumped;
-static off_t flush_threshold_scheduled;
-static off_t taperflush;
 static int   schedule_done;			// 1 if we don't wait for a
 						//   schedule from the planner
 static int   force_flush;			// All dump are terminated, we
@@ -4088,9 +4085,9 @@ tape_action(
     driver_debug(2, _("dle_free: %d\n"), dle_free);
     driver_debug(2, _("new_dle: %d\n"), new_dle);
     if (new_dle > 0) {
-	if (taperflush == 0 &&
-	    flush_threshold_dumped == 0 &&
-	    flush_threshold_scheduled == 0) {
+	if (taper->taperflush == 0 &&
+	    taper->flush_threshold_dumped == 0 &&
+	    taper->flush_threshold_scheduled == 0) {
 	    /* shortcut, will trigger taperflush_criteria and/or flush_criteria */
 	    new_data += 1;
 	} else {
@@ -4132,15 +4129,15 @@ tape_action(
 	}
     }
 
-    taperflush_criteria = (taperflush < tapeq_size &&
+    taperflush_criteria = (taper->taperflush < tapeq_size &&
 			   (force_flush == 1 || dump_to_disk_terminated));
-    flush_criteria = (flush_threshold_dumped < tapeq_size &&
-		      flush_threshold_scheduled < sched_size) ||
+    flush_criteria = (taper->flush_threshold_dumped < tapeq_size &&
+		      taper->flush_threshold_scheduled < sched_size) ||
 		     taperflush_criteria;
 
-    driver_debug(2, "taperflush %lld\n", (long long)taperflush);
-    driver_debug(2, "flush_threshold_dumped %lld\n", (long long)flush_threshold_dumped);
-    driver_debug(2, "flush_threshold_scheduled %lld\n", (long long)flush_threshold_scheduled);
+    driver_debug(2, "taperflush %lld\n", (long long)taper->taperflush);
+    driver_debug(2, "flush_threshold_dumped %lld\n", (long long)taper->flush_threshold_dumped);
+    driver_debug(2, "flush_threshold_scheduled %lld\n", (long long)taper->flush_threshold_scheduled);
     driver_debug(2, "force_flush %d\n", force_flush);
     driver_debug(2, "dump_to_disk_terminated %d\n", dump_to_disk_terminated);
     driver_debug(2, "queue_length(runq) %d\n", queue_length(&runq));
@@ -4187,7 +4184,7 @@ tape_action(
 	result |= TAPE_ACTION_NEW_TAPE;
     // when to stop using new tape
     } else if ((wtaper->state & TAPER_STATE_WAIT_FOR_TAPE) &&
-	       (taperflush >= tapeq_size &&		// taperflush criteria
+	       (taper->taperflush >= tapeq_size &&		// taperflush criteria
 	       (force_flush == 1 ||			//  if force_flush
 	        dump_to_disk_terminated))		//  or all dump to disk
 	      ) {

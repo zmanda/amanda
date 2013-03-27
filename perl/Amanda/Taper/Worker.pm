@@ -102,8 +102,7 @@ sub new {
     my $scribe = Amanda::Taper::Scribe->new(
 	taperscan => $controller->{'taperscan'},
 	feedback => $self,
-	debug => $Amanda::Config::debug_taper,
-	eject_volume => getconf($CNF_EJECT_VOLUME));
+	debug => $Amanda::Config::debug_taper);
 
     $self->{'scribe'} = $scribe;
     $self->{'scribe'}->start(write_timestamp => $write_timestamp,
@@ -454,10 +453,11 @@ sub scribe_notif_new_tape {
 	$self->{'label'} = $params{'volume_label'};
 
 	# add to the trace log
-	log_add($L_START, sprintf("datestamp %s label %s tape %s",
+	log_add($L_START, sprintf("datestamp %s label %s tape %s storage %s",
 		$self->{'timestamp'},
 		quote_string($self->{'label'}),
-		++$tape_num));
+		++$tape_num,
+		quote_string($self->{'controller'}->{'taperscan'}->{'storage'}->{'storage_name'})));
 
 	# and the amdump log
 	print STDERR "taper: wrote label '$self->{label}'\n";
@@ -705,8 +705,8 @@ sub setup_and_start_dump {
 	# and convert those to get_xfer_dest args
         %get_xfer_dest_args = get_splitting_args_from_config(
 		%splitting_args);
-	$get_xfer_dest_args{'max_memory'} = getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE);
-	if (!getconf_seen($CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
+	$get_xfer_dest_args{'max_memory'} = $self->{'controller'}->{'taperscan'}->{'storage'}->{'device_output_buffer_size'};
+	if (!$self->{'controller'}->{'taperscan'}->{'storage'}->{'seen_device_output_buffer_size'}) {
 	    my $block_size4 = $device->block_size * 4;
 	    if ($block_size4 > $get_xfer_dest_args{'max_memory'}) {
 		$get_xfer_dest_args{'max_memory'} = $block_size4;

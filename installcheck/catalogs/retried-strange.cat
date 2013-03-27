@@ -41,7 +41,7 @@ INFO chunker pid-done 15112
 INFO dumper pid-done 15113
 INFO dumper pid-done 15114
 STATS driver estimate lead.zmanda.com /tensile-measurements 20100824181503 0 [sec 51455 nkb 537755342 ckb 262506912 kps 5102]
-START taper datestamp 20100824181503 label metals-003-000105 tape 1
+START taper datestamp 20100824181503 label metals-003-000105 tape 1 storage TESTCONF
 PART taper metals-003-000105 1 lead.zmanda.com /tensile-measurements 20100824181503 1/-1 0 [sec 272.900788 kb 20971520 kps 76846.681733 orig-kb 539140000]
 PART taper metals-003-000105 2 lead.zmanda.com /tensile-measurements 20100824181503 2/-1 0 [sec 277.041222 kb 20971520 kps 75698.193390 orig-kb 539140000]
 PART taper metals-003-000105 3 lead.zmanda.com /tensile-measurements 20100824181503 3/-1 0 [sec 273.880014 kb 20971520 kps 76571.925398 orig-kb 539140000]

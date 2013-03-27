@@ -749,66 +749,67 @@ start_server_check(
 
     if (do_localchk || testtape) {
 	identlist_t il = getconf_identlist(CNF_STORAGE);
-	char *storage_name = il->data;
-	storage = lookup_storage(storage_name);
-	if (storage)
-            tp = lookup_tapetype(storage_get_tapetype(storage));
-    }
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    char *storage_n = il->data;
+	    char *lbl_templ;
 
-    /*
-     * Check various server side config file settings.
-     */
-    if(do_localchk) {
-	char *lbl_templ;
+	    storage = lookup_storage(storage_n);
+	    if (storage)
+		tp = lookup_tapetype(storage_get_tapetype(storage));
 
-	lbl_templ = tapetype_get_lbl_templ(tp);
-	if(!g_str_equal(lbl_templ, "")) {
-	    lbl_templ = config_dir_relative(lbl_templ);
-	    if(access(lbl_templ, R_OK) == -1) {
-		g_fprintf(outf,
-			_("ERROR: cannot read label template (lbl-templ) file %s: %s. Check permissions\n"),
+	    lbl_templ = tapetype_get_lbl_templ(tp);
+	    if (!g_str_equal(lbl_templ, "")) {
+		lbl_templ = config_dir_relative(lbl_templ);
+		if (access(lbl_templ, R_OK) == -1) {
+		    g_fprintf(outf,
+			_("ERROR: storage %s: cannot read label template (lbl-templ) file %s: %s. Check permissions\n"),
+			storage_n,
 			lbl_templ,
 			strerror(errno));
+		    confbad = 1;
+		}
+		amfree(lbl_templ);
+#if !defined(HAVE_LPR_CMD)
+		g_fprintf(outf, _("ERROR: storage %s: lbl-templ set but no LPR command defined. You should\n       reconfigure amanda and make sure it finds a lpr or lp command.\n"), storage_n);
+		confbad = 1;
+#endif
+	    }
+
+	    if (storage_get_flush_threshold_scheduled(storage)
+		< storage_get_flush_threshold_dumped(storage)) {
+		g_fprintf(outf, _("WARNING: storage %s: flush-threshold-dumped (%d) must be less than or equal to flush-threshold-scheduled (%d).\n"),
+			  storage_n,
+			  storage_get_flush_threshold_dumped(storage),
+			  storage_get_flush_threshold_scheduled(storage));
+	    }
+
+	    if (storage_get_flush_threshold_scheduled(storage)
+		< storage_get_taperflush(storage)) {
+		g_fprintf(outf, _("WARNING: storage %s: taperflush (%d) must be less than or equal to flush-threshold-scheduled (%d).\n"),
+			  storage_n,
+			  storage_get_taperflush(storage),
+			  storage_get_flush_threshold_scheduled(storage));
+	    }
+
+	    if (storage_get_taperflush(storage) &&
+	        !storage_get_autoflush(storage)) {
+	        g_fprintf(outf, _("WARNING: storage %s: autoflush must be set to 'yes' or 'all' if taperflush (%d) is greater that 0.\n"),
+			  storage_n,
+			  storage_get_taperflush(storage));
+	    }
+
+	    if (!storage_seen(storage, STORAGE_TAPETYPE)) {
+		g_fprintf(outf,
+			  _("ERROR: storage %s: no tapetype specified; you must give a value for "
+			  "the 'tapetype' parameter or the storage\n"),
+			  storage_n);
 		confbad = 1;
 	    }
-	    amfree(lbl_templ);
-#if !defined(HAVE_LPR_CMD)
-	    g_fprintf(outf, _("ERROR: lbl-templ set but no LPR command defined. You should reconfigure amanda\n       and make sure it finds a lpr or lp command.\n"));
-	    confbad = 1;
-#endif
-	}
-
-	if (getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED) <
-				 getconf_int(CNF_FLUSH_THRESHOLD_DUMPED)) {
-	    g_fprintf(outf, _("WARNING: flush-threshold-dumped (%d) must be less than or equal to flush-threshold-scheduled (%d).\n"),
-		      getconf_int(CNF_FLUSH_THRESHOLD_DUMPED),
-		      getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED));
-	}
-
-	if (getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED) <
-				 getconf_int(CNF_TAPERFLUSH)) {
-	    g_fprintf(outf, _("WARNING: taperflush (%d) must be less than or equal to flush-threshold-scheduled (%d).\n"),
-		      getconf_int(CNF_TAPERFLUSH),
-		      getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED));
-	}
-
-	if (getconf_int(CNF_TAPERFLUSH) > 0 &&
-	    !getconf_no_yes_all(CNF_AUTOFLUSH)) {
-	    g_fprintf(outf, _("WARNING: autoflush must be set to 'yes' or 'all' if taperflush (%d) is greater that 0.\n"),
-		      getconf_int(CNF_TAPERFLUSH));
 	}
 
 	/* Double-check that 'localhost' resolves properly */
 	if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
 	    g_fprintf(outf, _("ERROR: Cannot resolve `localhost': %s\n"), gai_strerror(res));
-	    confbad = 1;
-	}
-
-	if (!storage_seen(storage, STORAGE_TAPETYPE)) {
-	    g_fprintf(outf,
-		      _("ERROR: no tapetype specified; you must give a value for "
-                       "the 'tapetype' parameter or the storage '%s'\n"),
-		      storage_name(storage));
 	    confbad = 1;
 	}
 

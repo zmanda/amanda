@@ -374,7 +374,7 @@ sub setup_dst {
     $dst->{'chg'} = $chg;
 
     my $interactivity = Amanda::Interactivity->new(
-					name => getconf($CNF_INTERACTIVITY));
+					name => $storage->{'interactivity'});
     my $scan_name = $storage->{'taperscan_name'};
     $dst->{'scan'} = Amanda::Taper::Scan->new(
 	algorithm => $scan_name,
@@ -483,8 +483,9 @@ sub xfer_dumps {
 	}
 	# (else leave %xfer_dest_args empty, for no splitting)
 
+Amanda::Debug::debug("storage_dest:".Data::Dumper::Dumper($self->{'storage_dst'}));
 	$xfer_dst = $dst->{'scribe'}->get_xfer_dest(
-	    max_memory => getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE),
+	    max_memory => $self->{'storage_dst'}->{'device_output_buffer_size'},
 	    can_cache_inform => 0,
 	    %xfer_dest_args,
 	);

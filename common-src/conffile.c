@@ -1542,20 +1542,29 @@ conf_var_t policy_var [] = {
 };
 
 conf_var_t storage_var [] = {
-   { CONF_COMMENT             , CONFTYPE_STR      , read_str      , STORAGE_COMMENT             , NULL },
-   { CONF_POLICY              , CONFTYPE_STR      , read_dpolicy  , STORAGE_POLICY              , NULL },
-   { CONF_TPCHANGER           , CONFTYPE_STR      , read_str      , STORAGE_TPCHANGER           , NULL },
-   { CONF_LABELSTR            , CONFTYPE_LABELSTR , read_labelstr , STORAGE_LABELSTR            , NULL },
-   { CONF_AUTOLABEL           , CONFTYPE_AUTOLABEL, read_autolabel, STORAGE_AUTOLABEL           , NULL },
-   { CONF_META_AUTOLABEL      , CONFTYPE_STR      , read_str      , STORAGE_META_AUTOLABEL      , NULL },
-   { CONF_TAPEPOOL            , CONFTYPE_STR      , read_str      , STORAGE_TAPEPOOL            , NULL },
-   { CONF_RUNTAPES            , CONFTYPE_INT      , read_int      , STORAGE_RUNTAPES            , NULL },
-   { CONF_TAPERSCAN           , CONFTYPE_STR      , read_str      , STORAGE_TAPERSCAN           , NULL },
-   { CONF_TAPETYPE            , CONFTYPE_STR      , read_str      , STORAGE_TAPETYPE            , NULL },
-   { CONF_MAX_DLE_BY_VOLUME   , CONFTYPE_INT      , read_int      , STORAGE_MAX_DLE_BY_VOLUME   , NULL },
-   { CONF_TAPERALGO           , CONFTYPE_TAPERALGO, read_taperalgo, STORAGE_TAPERALGO           , NULL },
-   { CONF_TAPER_PARALLEL_WRITE, CONFTYPE_INT      , read_int      , STORAGE_TAPER_PARALLEL_WRITE, NULL },
-   { CONF_UNKNOWN             , CONFTYPE_INT      , NULL          , STORAGE_STORAGE             , NULL }
+   { CONF_COMMENT                  , CONFTYPE_STR       , read_str           , STORAGE_COMMENT                  , NULL },
+   { CONF_POLICY                   , CONFTYPE_STR       , read_dpolicy       , STORAGE_POLICY                   , NULL },
+   { CONF_TPCHANGER                , CONFTYPE_STR       , read_str           , STORAGE_TPCHANGER                , NULL },
+   { CONF_LABELSTR                 , CONFTYPE_LABELSTR  , read_labelstr      , STORAGE_LABELSTR                 , NULL },
+   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL , read_autolabel     , STORAGE_AUTOLABEL                , NULL },
+   { CONF_META_AUTOLABEL           , CONFTYPE_STR       , read_str           , STORAGE_META_AUTOLABEL           , NULL },
+   { CONF_TAPEPOOL                 , CONFTYPE_STR       , read_str           , STORAGE_TAPEPOOL                 , NULL },
+   { CONF_RUNTAPES                 , CONFTYPE_INT       , read_int           , STORAGE_RUNTAPES                 , NULL },
+   { CONF_TAPERSCAN                , CONFTYPE_STR       , read_str           , STORAGE_TAPERSCAN                , NULL },
+   { CONF_TAPETYPE                 , CONFTYPE_STR       , read_str           , STORAGE_TAPETYPE                 , NULL },
+   { CONF_MAX_DLE_BY_VOLUME        , CONFTYPE_INT       , read_int           , STORAGE_MAX_DLE_BY_VOLUME        , NULL },
+   { CONF_TAPERALGO                , CONFTYPE_TAPERALGO , read_taperalgo     , STORAGE_TAPERALGO                , NULL },
+   { CONF_TAPER_PARALLEL_WRITE     , CONFTYPE_INT       , read_int           , STORAGE_TAPER_PARALLEL_WRITE     , NULL },
+   { CONF_EJECT_VOLUME             , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_EJECT_VOLUME             , NULL },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE      , read_size          , STORAGE_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
+   { CONF_AUTOFLUSH                , CONFTYPE_NO_YES_ALL, read_no_yes_all    , STORAGE_AUTOFLUSH                , NULL },
+   { CONF_FLUSH_THRESHOLD_DUMPED   , CONFTYPE_INT       , read_int           , STORAGE_FLUSH_THRESHOLD_DUMPED   , validate_nonnegative },
+   { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT       , read_int           , STORAGE_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
+   { CONF_TAPERFLUSH               , CONFTYPE_INT       , read_int           , STORAGE_TAPERFLUSH               , validate_nonnegative },
+   { CONF_REPORT_USE_MEDIA         , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_REPORT_USE_MEDIA         , NULL },
+   { CONF_REPORT_NEXT_MEDIA        , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_REPORT_NEXT_MEDIA        , NULL },
+   { CONF_INTERACTIVITY            , CONFTYPE_STR       , read_dinteractivity, STORAGE_INTERACTIVITY            , NULL },
+   { CONF_UNKNOWN                  , CONFTYPE_INT       , NULL               , STORAGE_STORAGE                  , NULL }
 };
 
 /*
@@ -3365,19 +3374,28 @@ init_storage_defaults(
     void)
 {
     stcur.name = NULL;
-    conf_init_str      (&stcur.value[STORAGE_COMMENT]             , "");
-    conf_init_str      (&stcur.value[STORAGE_POLICY]              , "");
-    conf_init_str      (&stcur.value[STORAGE_TPCHANGER]           , "");
-    conf_init_labelstr (&stcur.value[STORAGE_LABELSTR]);
-    conf_init_str      (&stcur.value[STORAGE_META_AUTOLABEL]      , "");
-    conf_init_autolabel(&stcur.value[STORAGE_AUTOLABEL]);
-    conf_init_str      (&stcur.value[STORAGE_TAPEPOOL]            , NULL);
-    conf_init_int      (&stcur.value[STORAGE_RUNTAPES]            , CONF_UNIT_NONE, 1);
-    conf_init_str      (&stcur.value[STORAGE_TAPERSCAN]           , NULL);
-    conf_init_str      (&stcur.value[STORAGE_TAPETYPE]            , "DEFAULT_TAPE");
-    conf_init_int      (&stcur.value[STORAGE_MAX_DLE_BY_VOLUME]   , CONF_UNIT_NONE, 1000000000);
-    conf_init_taperalgo(&stcur.value[STORAGE_TAPERALGO]           , 0);
-    conf_init_int      (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE], CONF_UNIT_NONE, 0);
+    conf_init_str       (&stcur.value[STORAGE_COMMENT]                  , "");
+    conf_init_str       (&stcur.value[STORAGE_POLICY]                   , "");
+    conf_init_str       (&stcur.value[STORAGE_TPCHANGER]                , "");
+    conf_init_labelstr  (&stcur.value[STORAGE_LABELSTR]);
+    conf_init_str       (&stcur.value[STORAGE_META_AUTOLABEL]           , "");
+    conf_init_autolabel (&stcur.value[STORAGE_AUTOLABEL]);
+    conf_init_str       (&stcur.value[STORAGE_TAPEPOOL]                 , NULL);
+    conf_init_int       (&stcur.value[STORAGE_RUNTAPES]                 , CONF_UNIT_NONE, 1);
+    conf_init_str       (&stcur.value[STORAGE_TAPERSCAN]                , NULL);
+    conf_init_str       (&stcur.value[STORAGE_TAPETYPE]                 , "DEFAULT_TAPE");
+    conf_init_int       (&stcur.value[STORAGE_MAX_DLE_BY_VOLUME]        , CONF_UNIT_NONE, 1000000000);
+    conf_init_taperalgo (&stcur.value[STORAGE_TAPERALGO]                , 0);
+    conf_init_int       (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE]     , CONF_UNIT_NONE, 0);
+    conf_init_bool      (&stcur.value[STORAGE_EJECT_VOLUME]             , 0);
+    conf_init_int       (&stcur.value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], CONF_UNIT_NONE, 0);
+    conf_init_no_yes_all(&stcur.value[STORAGE_AUTOFLUSH]                , 0);
+    conf_init_int       (&stcur.value[STORAGE_FLUSH_THRESHOLD_DUMPED]   , CONF_UNIT_NONE, 0);
+    conf_init_int       (&stcur.value[STORAGE_FLUSH_THRESHOLD_SCHEDULED], CONF_UNIT_NONE, 0);
+    conf_init_int       (&stcur.value[STORAGE_TAPERFLUSH]               , CONF_UNIT_NONE, 0);
+    conf_init_bool      (&stcur.value[STORAGE_REPORT_USE_MEDIA]         , TRUE);
+    conf_init_bool      (&stcur.value[STORAGE_REPORT_NEXT_MEDIA]        , TRUE);
+    conf_init_str       (&stcur.value[STORAGE_INTERACTIVITY]            , NULL);
 }
 
 static void
@@ -6271,6 +6289,24 @@ update_derived_values(
 		copy_val_t(&st->value[STORAGE_TAPERALGO], &conf_data[CNF_TAPERALGO]);
 	    if (!storage_seen(st, STORAGE_TAPER_PARALLEL_WRITE))
 		copy_val_t(&st->value[STORAGE_TAPER_PARALLEL_WRITE], &conf_data[CNF_TAPER_PARALLEL_WRITE]);
+	    if (!storage_seen(st, STORAGE_EJECT_VOLUME))
+		copy_val_t(&st->value[STORAGE_EJECT_VOLUME], &conf_data[CNF_EJECT_VOLUME]);
+	    if (!storage_seen(st, STORAGE_DEVICE_OUTPUT_BUFFER_SIZE))
+		copy_val_t(&st->value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], &conf_data[CNF_DEVICE_OUTPUT_BUFFER_SIZE]);
+	    if (!storage_seen(st, STORAGE_AUTOFLUSH))
+		copy_val_t(&st->value[STORAGE_AUTOFLUSH], &conf_data[CNF_AUTOFLUSH]);
+	    if (!storage_seen(st, STORAGE_FLUSH_THRESHOLD_DUMPED))
+		copy_val_t(&st->value[STORAGE_FLUSH_THRESHOLD_DUMPED], &conf_data[CNF_FLUSH_THRESHOLD_DUMPED]);
+	    if (!storage_seen(st, STORAGE_FLUSH_THRESHOLD_SCHEDULED))
+		copy_val_t(&st->value[STORAGE_FLUSH_THRESHOLD_SCHEDULED], &conf_data[CNF_FLUSH_THRESHOLD_SCHEDULED]);
+	    if (!storage_seen(st, STORAGE_TAPERFLUSH))
+		copy_val_t(&st->value[STORAGE_TAPERFLUSH], &conf_data[CNF_TAPERFLUSH]);
+	    if (!storage_seen(st, STORAGE_REPORT_USE_MEDIA))
+		copy_val_t(&st->value[STORAGE_REPORT_USE_MEDIA], &conf_data[CNF_REPORT_USE_MEDIA]);
+	    if (!storage_seen(st, STORAGE_REPORT_NEXT_MEDIA))
+		copy_val_t(&st->value[STORAGE_REPORT_NEXT_MEDIA], &conf_data[CNF_REPORT_NEXT_MEDIA]);
+	    if (!storage_seen(st, STORAGE_INTERACTIVITY))
+		copy_val_t(&st->value[STORAGE_INTERACTIVITY], &conf_data[CNF_INTERACTIVITY]);
 	}
 
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
