@@ -1391,6 +1391,7 @@ typedef enum storage_e  {
     STORAGE_REPORT_USE_MEDIA,
     STORAGE_REPORT_NEXT_MEDIA,
     STORAGE_INTERACTIVITY,
+    STORAGE_SET_NO_REUSE,
     STORAGE_STORAGE
 } storage_key;
 
@@ -1462,6 +1463,7 @@ char *storage_name(storage_t *app);
 #define storage_get_report_use_media(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_REPORT_USE_MEDIA)))
 #define storage_get_report_next_media(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_REPORT_NEXT_MEDIA)))
 #define storage_get_interactivity(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_INTERACTIVITY)))
+#define storage_get_set_no_reuse(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_SET_NO_REUSE)))
 
 
 /*

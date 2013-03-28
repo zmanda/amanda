@@ -1,4 +1,13 @@
 2013-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add set-no-reuse in the storage.
+	* common-src/conffile.h: Add STORAGE_SET_NO_REUSE and
+	  storage_get_set_no_reuse.
+	* perl/Amanda/Config.swg: Add STORAGE_SET_NO_REUSE.
+	* perl/Amanda/Storage.pm: Set $self->{'set_no_reuse'}.
+	* perl/Amanda/Taper/Scribe.pm: Mark the tape as no-reuse and call the
+	  changer no_reuse method if set-no-reuse is set in the storage.
+
+2013-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Print the curl version to the debug file.
 	* common-src/conffile.c, server-src/amcheck.c,
 	  server-src/cmdfile.c, server-src/diskfile.c,

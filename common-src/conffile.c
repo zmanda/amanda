@@ -95,7 +95,7 @@ typedef enum {
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
-    CONF_CMDFILE,
+    CONF_CMDFILE,	       CONF_SET_NO_REUSE,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -1136,6 +1136,7 @@ keytab_t server_keytab[] = {
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
     { "SERVER_ENCRYPT", CONF_SRV_ENCRYPT },
+    { "SET_NO_REUSE", CONF_SET_NO_REUSE },
     { "SKIP", CONF_SKIP },
     { "SKIP_FULL", CONF_SKIP_FULL },
     { "SKIP_INCR", CONF_SKIP_INCR },
@@ -1564,6 +1565,7 @@ conf_var_t storage_var [] = {
    { CONF_REPORT_USE_MEDIA         , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_REPORT_USE_MEDIA         , NULL },
    { CONF_REPORT_NEXT_MEDIA        , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_REPORT_NEXT_MEDIA        , NULL },
    { CONF_INTERACTIVITY            , CONFTYPE_STR       , read_dinteractivity, STORAGE_INTERACTIVITY            , NULL },
+   { CONF_SET_NO_REUSE             , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_SET_NO_REUSE             , NULL },
    { CONF_UNKNOWN                  , CONFTYPE_INT       , NULL               , STORAGE_STORAGE                  , NULL }
 };
 
@@ -3396,6 +3398,7 @@ init_storage_defaults(
     conf_init_bool      (&stcur.value[STORAGE_REPORT_USE_MEDIA]         , TRUE);
     conf_init_bool      (&stcur.value[STORAGE_REPORT_NEXT_MEDIA]        , TRUE);
     conf_init_str       (&stcur.value[STORAGE_INTERACTIVITY]            , NULL);
+    conf_init_bool      (&stcur.value[STORAGE_SET_NO_REUSE]             , FALSE);
 }
 
 static void

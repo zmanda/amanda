@@ -162,6 +162,7 @@ sub new {
     $self->{'report_use_media'} = storage_getconf($st, $STORAGE_REPORT_USE_MEDIA);
     $self->{'report_next_media'} = storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA);
     $self->{'interactivity'} = storage_getconf($st, $STORAGE_INTERACTIVITY);
+    $self->{'set_no_reuse'} = storage_getconf($st, $STORAGE_SET_NO_REUSE);
     bless $self, $class;
 
     if (!exists $params{'changer_name'}) {

@@ -1088,48 +1088,57 @@ sub _release_reservation {
 
     my ($label, $fm, $kb);
 
-    # if we've already written a volume, log it
-    if ($self->{'device'} and defined $self->{'device'}->volume_label) {
-	$do_eject = 1 if $self->{'taperscan'}->{'storage'}->{'eject_volume'};
-	$label = $self->{'device'}->volume_label();
-	$fm = $self->{'device'}->file();
-	$kb = $self->{'device_size'} / 1024;
+    my $steps = define_steps
+        cb_ref => \$params{'finished_cb'};
 
-	# log a message for amreport
-	$self->{'feedback'}->scribe_notif_log_info(
-	    message => "tape $label kb $kb fm $fm [OK]");
-    }
+    step setup => sub {
+	# if we've already written a volume, log it
+	if ($self->{'device'} and defined $self->{'device'}->volume_label) {
+	    $do_eject = 1 if $self->{'taperscan'}->{'storage'}->{'eject_volume'};
+	    $label = $self->{'device'}->volume_label();
+	    $fm = $self->{'device'}->file();
+	    $kb = $self->{'device_size'} / 1024;
 
-    # finish the device if it isn't finished yet
-    if ($self->{'device'}) {
-	my $already_in_error = $self->{'device'}->status() != $DEVICE_STATUS_SUCCESS;
-
-	if (!$self->{'device'}->finish() && !$already_in_error) {
-	    push @errors, $self->{'device'}->error_or_status();
+	    # log a message for amreport
+	    $self->{'feedback'}->scribe_notif_log_info(
+	        message => "tape $label kb $kb fm $fm [OK]");
+	    return $self->_set_no_reuse(finished_cb => $steps->{'c1'});
 	}
-    }
-    $self->{'device'} = undef;
-    $self->{'device_at_eom'} = 0;
+	return $steps->{'c1'}->();
+    };
 
-    $self->{'reservation'}->release(eject => $do_eject, finished_cb => sub {
-	my ($err) = @_;
-	push @errors, "$err" if $err;
+    step c1 => sub {
+	# finish the device if it isn't finished yet
+	if ($self->{'device'}) {
+	    my $already_in_error = $self->{'device'}->status() != $DEVICE_STATUS_SUCCESS;
 
-	$self->{'reservation'} = undef;
-
-	# notify the feedback that we've finished and released a tape
-	if ($label) {
-	    return $self->{'feedback'}->scribe_notif_tape_done(
-		volume_label => $label,
-		size => $kb * 1024,
-		num_files => $fm,
-		finished_cb => sub {
-		 $params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
-		});
+	    if (!$self->{'device'}->finish() && !$already_in_error) {
+		push @errors, $self->{'device'}->error_or_status();
+	    }
 	}
+	$self->{'device'} = undef;
+	$self->{'device_at_eom'} = 0;
 
-	$params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
-    });
+	$self->{'reservation'}->release(eject => $do_eject, finished_cb => sub {
+	    my ($err) = @_;
+	    push @errors, "$err" if $err;
+
+	    $self->{'reservation'} = undef;
+
+	    # notify the feedback that we've finished and released a tape
+	    if ($label) {
+		return $self->{'feedback'}->scribe_notif_tape_done(
+		    volume_label => $label,
+		    size => $kb * 1024,
+		    num_files => $fm,
+		    finished_cb => sub {
+			 $params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
+		    });
+	    }
+
+	    $params{'finished_cb'}->(@errors? join("; ", @errors) : undef);
+	});
+    };
 }
 
 # invoke the devhandling to get a new device, with all of the requisite
@@ -1580,6 +1589,37 @@ sub get_splitting_args_from_config {
 
     return %splitting_args;
 }
+
+sub _set_no_reuse {
+    my $self = shift;
+    my %params = @_;
+    my $finished_cb = $params{'finished_cb'};
+
+    return $finished_cb->() if !$self->{'taperscan'}->{'storage'}->{'set_no_reuse'};
+
+    # reload and lock tapelist
+    my $tl = $self->{'taperscan'}->{'tapelist'};
+    $tl->reload(1);
+
+    my $label = $self->{'device'}->volume_label;
+    my $tle = $tl->lookup_tapelabel($label);
+    if (!defined $tle) {
+	debug("label '%s' not found in tapelist", $label);
+	return $finished_cb->();
+    }
+
+    $tl->remove_tapelabel($label);
+    $tl->add_tapelabel($tle->{'datestamp'}, $label, $tle->{'comment'},
+		       0, $tle->{'meta'}, $tle->{'barcode'},
+		       $tle->{'blocksize'}, $tle->{'pool'},
+		       $tle->{'storage'}, $tle->{'config'});
+
+    # write tapelist
+    $tl->write();
+    $self->{'taperscan'}->{'chg'}->set_no_reuse(labels => [ $label ],
+                       finished_cb => $finished_cb);
+}
+
 ##
 ## Feedback
 ##
