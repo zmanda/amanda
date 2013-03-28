@@ -1,3 +1,6 @@
+2013-03-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Print the curl version to the debug file.
+
 2013-03-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Improve error message,
 	* pel/Amanda/Config.swg, perl/Amanda/Util.swg: EXTEND stack when

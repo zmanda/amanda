@@ -2158,6 +2158,7 @@ s3_device_open_device(Device *pself, char *device_name,
     }
 
     g_debug(_("S3 driver using bucket '%s', prefix '%s'"), self->bucket, self->prefix);
+    g_debug("curl version: %s", curl_version());
 
     /* default values */
     self->verbose = FALSE;
