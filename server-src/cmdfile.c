@@ -113,8 +113,8 @@ read_cmdfile(
     xlines = g_strsplit(cmddatas->lock->data, "\n", 0);
 
     // read
-    sscanf(xlines[0], "VERSION %d", &cmddatas->version);
-    sscanf(xlines[1], "ID %d", &cmddatas->max_id);
+    if (sscanf(xlines[0], "VERSION %d", &cmddatas->version) != 1) {};
+    if (sscanf(xlines[1], "ID %d", &cmddatas->max_id) != 1) {};
 
     // read cmd
     for (i=2; xlines[i] != NULL; i++) {
@@ -124,6 +124,7 @@ read_cmdfile(
 	ch = *s++;
 	skip_whitespace(s, ch);
 	if (ch == '\0' || sscanf((s - 1), "%d", &id) != 1) {
+	    continue;
 	}
 	skip_integer(s, ch);
 	skip_whitespace(s, ch);

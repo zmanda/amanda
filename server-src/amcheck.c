@@ -748,7 +748,7 @@ start_server_check(
     g_fprintf(outf, "-----------------------------\n");
 
     if (do_localchk || testtape) {
-	identlist_t il = getconf_identlist(CNF_STORAGE);
+	identlist_t il;
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	    char *storage_n = il->data;
 	    char *lbl_templ;

@@ -909,7 +909,7 @@ dump_queue(
     FILE *	f)
 {
     GList *dl, *pl;
-    disk_t *d,*p;
+    disk_t *d;
     int pos;
     char *qname;
 
@@ -920,7 +920,6 @@ dump_queue(
     g_fprintf(f, _("%s QUEUE:\n"), st);
     for (pos = 0, dl = q.head, pl = NULL; dl != NULL; pl = dl, dl = dl->next, pos++) {
 	d = dl->data;
-	p = pl->data;
 	qname = quote_string(d->name);
 	if(pos < npr) g_fprintf(f, "%3d: %-10s %-4s\n",
 			      pos, d->host->hostname, qname);
@@ -933,7 +932,6 @@ dump_queue(
 	    d = dl->data;
 	    g_fprintf(f, "%3d: %-10s %-4s\n", pos-2, d->host->hostname, d->name);
 	}
-	d = p;
 	dl = pl;
 	d = dl->data;
 	g_fprintf(f, "%3d: %-10s %-4s\n", pos-1, d->host->hostname, d->name);
@@ -1896,7 +1894,8 @@ match_dumpfile(
     dl.head = dl.tail = g_list_prepend(NULL, &d);
 
     (void)match_disklist(&dl, exact_match, sargc, sargv);
-    dl.head = dl.tail = g_list_delete_link(dl.head, dl.head);
+    if (g_list_delete_link(dl.head, dl.head) != NULL) {
+    };
     return d.todo;
 }
 

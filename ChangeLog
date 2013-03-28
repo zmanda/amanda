@@ -1,8 +1,14 @@
+2013-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Print the curl version to the debug file.
+	* common-src/conffile.c, server-src/amcheck.c,
+	  server-src/cmdfile.c, server-src/diskfile.c,
+	  server-src/driver.c: Fix bug found by coverity.
+
 2013-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* Many files: Add eject-volume, device-output-buffer-size,
 	  autoflush, flush-threshold-dumped, flush-threshold-scheduled,
 	  taperflush, report-use-media, report-next-media and interactivity to
-	  the srtorage section.
+	  the storage section.
 	* perl/Amanda/Taper/Worker.pm: Add the storage name to the START
 	  log line.
 

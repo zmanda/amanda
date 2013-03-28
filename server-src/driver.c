@@ -908,7 +908,7 @@ startaflush_tape(
 	case ALGO_LARGEST:
 		fit = taper->tapeq.head;
 		dp = fit->data;
-		while (dfit != NULL) {
+		while (fit != NULL) {
 		    dfit = fit->data;
 		    if(sched(dfit)->act_size > sched(dp)->act_size &&
 		       strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
@@ -1098,7 +1098,7 @@ allow_dump_dle(
     } else if (!wtaper && (holdp =
 	find_diskspace(sched(diskp)->est_size, cur_idle, NULL)) == NULL) {
 	*cur_idle = max(*cur_idle, IDLE_NO_DISKSPACE);
-	if (empty(wtaper->taper->tapeq) && dumper_to_holding == 0 && rq != &directq && no_taper_flushing()) {
+	if (all_tapeq_empty() && dumper_to_holding == 0 && rq != &directq && no_taper_flushing()) {
 	    remove_disk(rq, diskp);
 	    if (diskp->to_holdingdisk != HOLD_REQUIRED) {
 		enqueue_disk(&directq, diskp);
@@ -1279,6 +1279,7 @@ start_some_dumps(
 			diskp = diskp_accept;
 			holdp = holdp_accept;
 		    } else {
+			diskp = NULL;
 			wtaper = NULL;
 		    }
 		} else {
@@ -2088,7 +2089,7 @@ handle_taper_result(
             }
 	    need_degraded = 1;
 	    start_degraded_mode(&runq);
-            wtaper->taper->tapeq.head = wtaper->taper->tapeq.tail = NULL;
+            taper->tapeq.head = taper->tapeq.tail = NULL;
             aclose(taper->fd);
 
             break;
