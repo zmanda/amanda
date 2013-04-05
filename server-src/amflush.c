@@ -134,10 +134,9 @@ main(
     disklist_t holding_disklist = { NULL, NULL };
     gboolean exact_match = FALSE;
     cmddatas_t *cmddatas;
-    GPtrArray *flush_ptr = g_ptr_array_new_full(100, &g_free);
+    GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
     char     *line;
     gpointer *xline;
-
 
     /*
      * Configure program for internationalization:
@@ -468,7 +467,7 @@ g_debug("insert id %d", cmddata->id);
 	g_fprintf(stderr, "%s\n", (char *)*xline);
 	g_fprintf(driver_stream, "%s\n", (char *)*xline);
     }
-    g_ptr_array_free(flush_ptr, TRUE);
+    g_ptr_array_free_full(flush_ptr);
     g_fprintf(stderr, "ENDFLUSH\n"); fflush(stderr);
     g_fprintf(driver_stream, "ENDFLUSH\n"); fflush(driver_stream);
     fclose(driver_stream);

@@ -210,7 +210,7 @@ main(
     char *storage_name;
     identlist_t il;
     cmddatas_t *cmddatas;
-    GPtrArray *flush_ptr = g_ptr_array_new_full(100, &g_free);
+    GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
     char     *line;
     gpointer *xline;
 
@@ -567,6 +567,7 @@ main(
 	    g_fprintf(stderr, "%s\n", (char *)*xline);
 	    g_fprintf(stdout, "%s\n", (char *)*xline);
 	}
+	g_ptr_array_free_full(flush_ptr);
     }
     g_fprintf(stderr, _("ENDFLUSH\n"));
     g_fprintf(stdout, _("ENDFLUSH\n"));

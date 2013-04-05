@@ -315,7 +315,7 @@ void
 write_cmdfile(
     cmddatas_t *cmddatas)
 {
-    GPtrArray *lines = g_ptr_array_new_full(100, &g_free);
+    GPtrArray *lines = g_ptr_array_sized_new(100);
     char *buffer;
 
     // generate
@@ -324,6 +324,7 @@ write_cmdfile(
     g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_write, lines);
     g_ptr_array_add(lines, NULL);
     buffer = g_strjoinv(NULL, (gchar **)lines->pdata);
+    g_ptr_array_free_full(lines);
 
     // write
     file_lock_write(cmddatas->lock, buffer, strlen(buffer));
