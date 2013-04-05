@@ -587,7 +587,6 @@ g_str_amanda_equal(
  *
  * Returns: the new start of the #GList
  */
-#define _g_list_alloc()         g_slice_new (GList)
 GList *
 g_am_list_insert_after(
     GList   *list,
@@ -605,7 +604,7 @@ g_am_list_insert_after(
     {
       GList *node;
 
-      node = _g_list_alloc ();
+      node = g_list_alloc ();
       node->data = data;
       node->prev = sibling;
       node->next = sibling->next;
@@ -620,7 +619,7 @@ g_am_list_insert_after(
     {
       GList *first;
 
-      first = _g_list_alloc ();
+      first = g_list_alloc ();
       first->data = data;
       first->prev = NULL;
       first->next = list;

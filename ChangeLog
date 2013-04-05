@@ -1,4 +1,7 @@
 2013-04-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Use g_list_alloc.
+
+2013-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c, server-src/cmdfile.c,
 	  server-src/planner.c: Do not use g_ptr_array_new_full.
 
