@@ -1515,7 +1515,7 @@ handle_crc_thread(
 
     while ((size = full_read(crc->in, buf, 32768)) > 0) {
 	if (full_write(crc->out, buf, size) == size) {
-	    crc32(buf, size, &crc->crc);
+	    crc32_add(buf, size, &crc->crc);
 	}
     }
     close(crc->in);

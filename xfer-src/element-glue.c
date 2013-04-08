@@ -402,7 +402,7 @@ pull_and_write(XferElementGlue *self)
 	    amfree(buf);
 	    break;
 	}
-	crc32((uint8_t *)buf, len, &elt->crc);
+	crc32_add((uint8_t *)buf, len, &elt->crc);
 
 	amfree(buf);
     }
@@ -462,7 +462,7 @@ read_and_write(XferElementGlue *self)
 	    }
 	    break;
 	}
-	crc32((uint8_t *)buf, len, &elt->crc);
+	crc32_add((uint8_t *)buf, len, &elt->crc);
     }
 
     if (elt->cancelled && elt->expect_eof)
@@ -527,7 +527,7 @@ read_and_push(
 		break;
 	    }
 	}
-	crc32((uint8_t *)buf, len, &elt->crc);
+	crc32_add((uint8_t *)buf, len, &elt->crc);
 
 	xfer_element_push_buffer(elt->downstream, buf, len);
     }
@@ -1224,7 +1224,7 @@ push_buffer_impl(
 		    }
 		    /* nothing special to do to handle a cancellation */
 		}
-		crc32((uint8_t *)buf, len, &elt->crc);
+		crc32_add((uint8_t *)buf, len, &elt->crc);
 		amfree(buf);
 	    } else {
 		g_debug("sending XMSG_CRC message");

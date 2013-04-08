@@ -478,7 +478,7 @@ device_thread_write_part(
 
 	    self->part_bytes_written += to_write;
 	    bytes_from_slices -= to_write;
-	    crc32((uint8_t *)buf, to_write, &elt->crc);
+	    crc32_add((uint8_t *)buf, to_write, &elt->crc);
 
 	    if (self->part_size && self->part_bytes_written >= self->part_size) {
 		part_status = PART_EOP;
@@ -529,7 +529,7 @@ device_thread_write_part(
 	    break;
 	}
 
-	crc32((uint8_t *)(self->ring_buffer + self->ring_tail),
+	crc32_add((uint8_t *)(self->ring_buffer + self->ring_tail),
 			 to_write, &elt->crc);
 	self->part_bytes_written += to_write;
 	device_thread_consume_block(self, to_write);

@@ -497,7 +497,7 @@ pull_buffer_impl(
     }
 
     if (buf) {
-	crc32(buf, *size, &elt->crc);
+	crc32_add(buf, *size, &elt->crc);
     }
 
     return buf;

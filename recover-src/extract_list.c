@@ -3010,7 +3010,7 @@ read_amidxtaped_data(
 	 * We ignore errors while writing to the index file.
 	 */
 	(void)full_write(ctl_data->child_in[1], buf, (size_t)size);
-	crc32((uint8_t *)buf, size, &crc_in);
+	crc32_add((uint8_t *)buf, size, &crc_in);
     }
 }
 
@@ -3252,7 +3252,7 @@ handle_crc_thread(
 
     while ((size = full_read(crc->in, buf, 32768)) > 0) {
         if (full_write(crc->out, buf, size) == size) {
-            crc32(buf, size, &crc->crc);
+            crc32_add(buf, size, &crc->crc);
         }
     }
     close(crc->in);

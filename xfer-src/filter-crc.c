@@ -86,7 +86,7 @@ pull_buffer_impl(
     /* get a buffer from upstream, crc it, and hand it back */
     buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, size);
     if (buf) {
-	crc32((uint8_t *)buf, *size, &elt->crc);
+	crc32_add((uint8_t *)buf, *size, &elt->crc);
     } else {
 	g_debug("sending XMSG_CRC message");
 	g_debug("crc pull_buffer CRC: %08x",
@@ -116,7 +116,7 @@ push_buffer_impl(
 
     /* crc the given buffer and pass it downstream */
     if (buf) {
-	crc32((uint8_t *)buf, len, &elt->crc);
+	crc32_add((uint8_t *)buf, len, &elt->crc);
     } else {
 	g_debug("sending XMSG_CRC message to %p", elt);
 	g_debug("crc push_buffer CRC: %08x",

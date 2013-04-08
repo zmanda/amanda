@@ -775,7 +775,7 @@ databuf_flush(
     written = full_write(db->fd, db->dataout,
 			(size_t)(db->datain - db->dataout));
     if (written > 0) {
-	crc32((uint8_t *)db->dataout, written, &crc_data_out);
+	crc32_add((uint8_t *)db->dataout, written, &crc_data_out);
 	db->dataout += written;
         dumpbytes += (off_t)written;
     }
@@ -1864,7 +1864,7 @@ read_datafd(
 	return;
     }
 
-    crc32(buf, size, &crc_data_in);
+    crc32_add(buf, size, &crc_data_in);
     /*
      * We read something.  Add it to the databuf and reschedule for
      * more data.

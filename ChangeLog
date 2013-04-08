@@ -1,3 +1,13 @@
+2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c, common-src/amutil.c,
+	  common-src/amutil.h, device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-splitter.c,
+	  device-src/xfer-source-recovery.c, recover-src/extract_list.c,
+	  server-src/dumper.c, server-src/xfer-dest-holding.c,
+	  server-src/xfer-source-holding.c, xfer-src/dest-null.c,
+	  xfer-src/element-glue.c,
+	  xfer-src/filter-crc.c: Rename crc32 to crc32_add.
+
 2013-04-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Use g_list_alloc.
 

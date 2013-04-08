@@ -242,7 +242,7 @@ holding_thread_write_chunk(
 	    self->chunk_status = CHUNK_NO_ROOM;
 	    break;
 	}
-	crc32((uint8_t *)(self->ring_buffer + self->ring_tail),
+	crc32_add((uint8_t *)(self->ring_buffer + self->ring_tail),
 			 to_write, &elt->crc);
 	self->chunk_offset += count;
 

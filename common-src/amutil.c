@@ -1785,7 +1785,7 @@ crc32_init(
 }
 
 void
-crc32(
+crc32_add(
     uint8_t *buf,
     size_t len,
     crc_t *crc)

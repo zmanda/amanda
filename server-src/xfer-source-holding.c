@@ -200,7 +200,7 @@ pull_buffer_impl(
 	if (bytes_read > 0) {
 	    *size = bytes_read;
 	    self->bytes_read += bytes_read;
-	    crc32((uint8_t *)buf, bytes_read, &elt->crc);
+	    crc32_add((uint8_t *)buf, bytes_read, &elt->crc);
 	    return buf;
 	}
 
