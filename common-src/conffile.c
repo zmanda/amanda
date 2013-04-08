@@ -1339,7 +1339,7 @@ conf_var_t server_var [] = {
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_non_zero },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
-   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, NULL },
    { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , validate_columnspec },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
    { CONF_TAPER_PARALLEL_WRITE , CONFTYPE_INT      , read_int         , CNF_TAPER_PARALLEL_WRITE , NULL },
@@ -1557,7 +1557,7 @@ conf_var_t storage_var [] = {
    { CONF_TAPERALGO                , CONFTYPE_TAPERALGO , read_taperalgo     , STORAGE_TAPERALGO                , NULL },
    { CONF_TAPER_PARALLEL_WRITE     , CONFTYPE_INT       , read_int           , STORAGE_TAPER_PARALLEL_WRITE     , NULL },
    { CONF_EJECT_VOLUME             , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_EJECT_VOLUME             , NULL },
-   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE      , read_size          , STORAGE_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE      , read_size          , STORAGE_DEVICE_OUTPUT_BUFFER_SIZE, NULL },
    { CONF_AUTOFLUSH                , CONFTYPE_NO_YES_ALL, read_no_yes_all    , STORAGE_AUTOFLUSH                , NULL },
    { CONF_FLUSH_THRESHOLD_DUMPED   , CONFTYPE_INT       , read_int           , STORAGE_FLUSH_THRESHOLD_DUMPED   , validate_nonnegative },
    { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT       , read_int           , STORAGE_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
@@ -5226,8 +5226,9 @@ validate_nonnegative(
 	    conf_parserror(_("%s must be nonnegative"), get_token_name(np->token));
 	break;
     case CONFTYPE_SIZE:
-	if(val_t__size(val) < 0)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	// Can't be negative
+	//if(val_t__size(val) < 0)
+	//    conf_parserror(_("%s must be positive"), get_token_name(np->token));
 	break;
     default:
 	conf_parserror(_("validate_nonnegative invalid type %d\n"), val->type);
@@ -8596,7 +8597,7 @@ val_t_display_strs(
 	break;
 
     case CONFTYPE_SIZE:
-	buf[0] = g_strdup_printf("%zd ", (ssize_t)val_t__size(val));
+	buf[0] = g_strdup_printf("%zu ", (ssize_t)val_t__size(val));
 	i = strlen(buf[0]) - 1;
 	if (print_unit && val->unit == CONF_UNIT_K) {
 	    buf[0][i] = 'K';

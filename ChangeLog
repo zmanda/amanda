@@ -1,4 +1,8 @@
 2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c,
+	  common-src/conffile.h: Change val_t.size to be a size_t.
+
+2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c, common-src/amutil.c,
 	  common-src/amutil.h, device-src/xfer-dest-taper-cacher.c,
 	  device-src/xfer-dest-taper-splitter.c,
