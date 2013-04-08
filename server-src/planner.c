@@ -560,6 +560,8 @@ main(
 	    amfree(qhname);
 	    dumpfile_free_data(&file);
 	}
+	// NULL terminate the array
+	g_ptr_array_add(flush_ptr, NULL);
 	slist_free_full(holding_list, g_free);
 	holding_list = NULL;
 	write_cmdfile(cmddatas);
@@ -590,6 +592,7 @@ main(
 	if(dp->todo == 1) {
 	    setup_estimate(dp);
 	}
+	g_ptr_array_free_full(flush_ptr);
     }
 
     g_fprintf(stderr, _("%s: time %s: setting up estimates took %s secs\n"),

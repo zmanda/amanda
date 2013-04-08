@@ -1,4 +1,8 @@
 2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amflush.c
+	  server-src/planner.c: NULL terminate the flush_ptr array.
+
+2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c,
 	  common-src/conffile.h: Change val_t.size to be a size_t.
 

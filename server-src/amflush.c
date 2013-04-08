@@ -441,7 +441,6 @@ main(
 	    cmddata->id = cmddatas->max_id;
 	    g_hash_table_insert(cmddatas->cmdfile,
 				GINT_TO_POINTER(cmddata->id), cmddata);
-g_debug("insert id %d", cmddata->id);
 	    data.ids = g_strdup_printf("%d", cmddata->id);
 	}
 
@@ -462,6 +461,8 @@ g_debug("insert id %d", cmddata->id);
 	g_free(qhname);
 	dumpfile_free_data(&file);
     }
+    // NULL terminate the array
+    g_ptr_array_add(flush_ptr, NULL);
     write_cmdfile(cmddatas);
     for (xline = flush_ptr->pdata; *xline != NULL; xline++) {
 	g_fprintf(stderr, "%s\n", (char *)*xline);
