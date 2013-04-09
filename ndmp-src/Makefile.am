@@ -211,35 +211,40 @@ amndmjob_LDADD = libndmjob.la \
 
 ndmp0_xdr.c : ndmp0.x
 	$(RPCGEN) ndmp0.x
-	sed -i 's/#include "ndmp0.h"/#include "config.h"\n#include "ndmp0.h"/' ndmp0_xdr.c
+	sed 's/#include "ndmp0.h"/#include "config.h"\
+&/' ndmp0_xdr.c > ndmp0_xdr.c.new ; mv ndmp0_xdr.c.new ndmp0_xdr.c
 
 ndmp0.h : ndmp0_xdr.c
 	@
 
 ndmp2_xdr.c : ndmp2.x
 	$(RPCGEN) ndmp2.x
-	sed -i 's/#include "ndmp2.h"/#include "config.h"\n#include "ndmp2.h"/' ndmp2_xdr.c
+	sed 's/#include "ndmp2.h"/#include "config.h"\
+&/' ndmp2_xdr.c > ndmp2_xdr.c.new ; mv ndmp2_xdr.c.new ndmp2_xdr.c
 
 ndmp2.h : ndmp2_xdr.c
 	@
 
 ndmp3_xdr.c : ndmp3.x
 	$(RPCGEN) ndmp3.x
-	sed -i 's/#include "ndmp3.h"/#include "config.h"\n#include "ndmp3.h"/' ndmp3_xdr.c
+	sed 's/#include "ndmp3.h"/#include "config.h"\
+&/' ndmp3_xdr.c > ndmp3_xdr.c.new ; mv ndmp3_xdr.c.new ndmp3_xdr.c
 
 ndmp3.h : ndmp3_xdr.c
 	@
 
 ndmp4_xdr.c : ndmp4.x
 	$(RPCGEN) ndmp4.x
-	sed -i 's/#include "ndmp4.h"/#include "config.h"\n#include "ndmp4.h"/' ndmp4_xdr.c
+	sed 's/#include "ndmp4.h"/#include "config.h"\
+&/' ndmp4_xdr.c > ndmp4_xdr.c.new ; mv ndmp4_xdr.c.new ndmp4_xdr.c
 
 ndmp4.h : ndmp4_xdr.c
 	@
 
 ndmp9_xdr.c : ndmp9.x
 	$(RPCGEN) ndmp9.x
-	sed -i 's/#include "ndmp9.h"/#include "config.h"\n#include "ndmp9.h"/' ndmp9_xdr.c
+	sed 's/#include "ndmp9.h"/#include "config.h"\
+&/' ndmp9_xdr.c > ndmp9_xdr.c.new ; mv ndmp9_xdr.c.new ndmp9_xdr.c
 
 ndmp9.h : ndmp9_xdr.c
 	@

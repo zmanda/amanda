@@ -1,3 +1,8 @@
+2013-04-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: Fix for solaris sed.
+	* packaging/sun-pkg/buildpkg: Do not run rpcgen, just remove the file
+	  and let make do it.
+
 2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Declare flush_ptr locally.
 
