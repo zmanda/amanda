@@ -642,6 +642,7 @@ sub send_port_and_get_header {
 sub setup_and_start_dump {
     my $self = shift;
     my ($msgtype, %params) = @_;
+    my %splitting_args;
     my %get_xfer_dest_args;
 
     $self->{'dump_cb'} = $params{'dump_cb'};
@@ -684,7 +685,7 @@ sub setup_and_start_dump {
 
     step process_args => sub {
 	# extract the splitting-related parameters, stripping out empty strings
-	my %splitting_args = map {
+	%splitting_args = map {
 	    (defined $params{$_} && $params{$_} ne '')? ($_, $params{$_}) : ()
 	} qw(
 	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
@@ -697,6 +698,18 @@ sub setup_and_start_dump {
 		if (exists $splitting_args{$_});
 	}
 
+	# we've started the xfer now, but the destination won't actually write
+	# any data until we call start_dump.  And we'll need a device for that.
+
+	$self->{'scribe'}->wait_device(finished_cb => $steps->{'got_device'});
+    };
+
+    step got_device => sub {
+	my ($err) = @_;
+
+	if ($err) {
+	    debug("got_device failed: $err");
+	}
 	my $device = $self->{'scribe'}->get_device();
 	if (!defined $device) {
 	    confess "no device is available to create an xfer_dest";
@@ -762,7 +775,7 @@ sub setup_and_start_dump {
 	    }
         });
 
-	# we've started the xfer now, but the destination won't actually write
+	# we've found a device, but the destination won't actually write
 	# any data until we call start_dump.  And we'll need a header for that.
 
 	$steps->{'get_header'}->();
