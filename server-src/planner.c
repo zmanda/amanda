@@ -210,9 +210,6 @@ main(
     char *storage_name;
     identlist_t il;
     cmddatas_t *cmddatas;
-    GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
-    char     *line;
-    gpointer *xline;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("planner-%s\n", VERSION);
@@ -485,6 +482,9 @@ main(
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
 	cmdfile_data_t data;
+    GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
+    char     *line;
+    gpointer *xline;
 
 	conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
 	cmddatas = read_cmdfile(conf_cmdfile);
@@ -592,7 +592,6 @@ main(
 	if(dp->todo == 1) {
 	    setup_estimate(dp);
 	}
-	g_ptr_array_free_full(flush_ptr);
     }
 
     g_fprintf(stderr, _("%s: time %s: setting up estimates took %s secs\n"),

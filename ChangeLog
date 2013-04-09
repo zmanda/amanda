@@ -1,4 +1,7 @@
 2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Declare flush_ptr locally.
+
+2013-04-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c
 	  server-src/planner.c: NULL terminate the flush_ptr array.
 
