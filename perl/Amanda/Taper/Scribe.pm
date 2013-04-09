@@ -512,6 +512,35 @@ sub start {
     });
 }
 
+sub wait_device {
+    my $self = shift;
+    my %params = @_;
+
+    for my $rq_param (qw(finished_cb)) {
+	croak "required parameter '$rq_param' missing"
+	    unless exists $params{$rq_param};
+    }
+
+    $self->{'cancelled'} = 0;
+
+    if ($self->get_device()) {
+	return $params{'finished_cb'}->(undef);
+    }
+
+    if ($self->{'devhandling'}->{'scan_running'}) {
+	$self->{'devhandling'}->{'start_finished_cb'} = $params{'finished_cb'};
+	return;
+    }
+
+    # start up the DevHandling object, making sure we know
+    # when it's done with its startup process
+    $self->{'started'} = 0;
+    $self->{'devhandling'}->start(finished_cb => sub {
+	$self->{'started'} = 1;
+	$params{'finished_cb'}->(@_);
+    });
+}
+
 sub quit {
     my $self = shift;
     my %params = @_;
@@ -771,6 +800,7 @@ sub cancel_dump {
     confess "no xfer dest set up; call get_xfer_dest first"
 	unless defined $self->{'xdt'};
 
+    $self->{'devhandling'}->{'volume_cb'} = undef;
     # set up the dump_cb for when this dump is done, and keep the xfer
     $self->{'dump_cb'} = $params{'dump_cb'};
     $self->{'xfer'} = $params{'xfer'};
@@ -778,6 +808,7 @@ sub cancel_dump {
     # The cancel will can dump_cb.
 
     $self->{'xfer'}->cancel();
+    $self->{'cancelled'} = 1;
 
 }
 
@@ -1147,6 +1178,7 @@ sub _get_new_volume {
 	return;
     }
 
+    return if $self->{'cancelled'};
     $self->{'devhandling'}->get_volume(volume_cb => sub { $self->_volume_cb(@_); });
 }
 
@@ -1930,6 +1962,8 @@ sub _maybe_callback {
 	$self->{'new_scribe'} = undef;
 
 	$volume_cb->(@volume_cb_args);
+    } elsif (!$self->{'volume_cb'}) {
+	$self->{'scan_finished'} = 0;
     }
 }
 

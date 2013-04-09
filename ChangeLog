@@ -1,4 +1,10 @@
 2013-04-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Add await_device method and handle
+	  cancelling a dump before the device is set.
+	* perl/Amanda/Taper/Worker.pm: Call scribe wait_device before starting
+	  the dump.
+
+2013-04-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/sun-pkg/buildpkg: Do not run rpcgen, just remove the file
 	  and let make do it.
 
