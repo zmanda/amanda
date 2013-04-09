@@ -1,3 +1,7 @@
+2013-04-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/sun-pkg/buildpkg: Do not run rpcgen, just remove the file
+	  and let make do it.
+
 2013-03-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Print the curl version to the debug file.
 
