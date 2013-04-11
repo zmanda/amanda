@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 278;
+use Test::More tests => 280;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -1237,3 +1237,20 @@ foreach my $exp_ok_columnspec (
     }
 }
 
+$testconf = Installcheck::Config->new();
+$testconf->add_storage('storage1', [
+    'dump_selection' => '"full" FULL',
+    'dump_selection' => '"incr" INCR',
+    'dump_selection' => 'ALL ALL',
+]);
+$testconf->write();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+my $st = lookup_storage("storage1");
+ok($st, "found storage1");
+my $ds = storage_getconf($st, $STORAGE_DUMP_SELECTION);
+is_deeply($ds,
+	[ { 'tag_type' => $Amanda::Config::TAG_NAME, 'level' => $Amanda::Config::LEVEL_FULL, 'tag' => 'full' },
+	  { 'tag_type' => $Amanda::Config::TAG_NAME, 'level' => $Amanda::Config::LEVEL_INCR, 'tag' => 'incr' },
+	  { 'tag_type' => $Amanda::Config::TAG_ALL , 'level' => $Amanda::Config::LEVEL_ALL , 'tag' => undef  },
+        ],
+	"lookup_storage");

@@ -132,7 +132,7 @@ typedef enum {
     CONF_CLNTCOMPPROG,		CONF_SRV_ENCRYPT,	CONF_CLNT_ENCRYPT,
     CONF_SRV_DECRYPT_OPT,	CONF_CLNT_DECRYPT_OPT,	CONF_AMANDAD_PATH,
     CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,	CONF_ALLOW_SPLIT,
-    CONF_MAX_WARNINGS,
+    CONF_MAX_WARNINGS,		CONF_TAG,
 
     /* tape type */
     /*COMMENT,*/		CONF_BLOCKSIZE,
@@ -212,7 +212,12 @@ typedef enum {
 
     /* retention */
     CONF_RETENTION_TAPES,	CONF_RETENTION_DAYS,	CONF_RETENTION_RECOVER,
-    CONF_RETENTION_FULL
+    CONF_RETENTION_FULL,
+
+    /* dump_selection */
+    CONF_DUMP_SELECTION,
+    CONF_FULL,			CONF_INCR,		CONF_OTHER,
+
 } tok_t;
 
 /* A keyword table entry, mapping the given keyword to the given token.
@@ -551,7 +556,7 @@ static void save_storage(void);
 static void copy_storage(void);
 
 /* read_functions -- these fit into the read_function slot in a parser
- * table entry, and are responsible for calling getconf_token as necessary
+ * table entry, and are responsible for calling get_conftoken as necessary
  * to consume their arguments, and setting their second argument with the
  * result.  The first argument is a copy of the parser table entry, if
  * needed. */
@@ -593,6 +598,7 @@ static void read_labelstr(conf_var_t *, val_t *);
 static void read_part_cache_type(conf_var_t *, val_t *);
 static void read_host_limit(conf_var_t *, val_t *);
 static void read_storage_identlist(conf_var_t *, val_t *);
+static void read_dump_selection(conf_var_t *, val_t *);
 
 static application_t *read_application(char *name, FILE *from, char *fname,
 				       int *linenum);
@@ -778,6 +784,7 @@ static void conf_init_labelstr(val_t *val);
 static void conf_init_part_cache_type(val_t *val, part_cache_type_t i);
 static void conf_init_host_limit(val_t *val);
 static void conf_init_host_limit_server(val_t *val);
+static void conf_init_dump_selection(val_t *val);
 
 /*
  * Command-line Handling
@@ -1011,6 +1018,7 @@ keytab_t server_keytab[] = {
     { "DUMPTYPE", CONF_DUMPTYPE },
     { "DUMPUSER", CONF_DUMPUSER },
     { "DUMP_LIMIT", CONF_DUMP_LIMIT },
+    { "DUMP_SELECTION", CONF_DUMP_SELECTION },
     { "EJECT_VOLUME", CONF_EJECT_VOLUME },
     { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
@@ -1028,12 +1036,14 @@ keytab_t server_keytab[] = {
     { "FILEMARK", CONF_FILEMARK },
     { "FIRST", CONF_FIRST },
     { "FIRSTFIT", CONF_FIRSTFIT },
+    { "FULL", CONF_FULL },
     { "HANOI", CONF_HANOI },
     { "HIGH", CONF_HIGH },
     { "HOLDINGDISK", CONF_HOLDING },
     { "IGNORE", CONF_IGNORE },
     { "INCLUDE", CONF_INCLUDE },
     { "INCLUDEFILE", CONF_INCLUDEFILE },
+    { "INCR", CONF_INCR },
     { "INCRONLY", CONF_INCRONLY },
     { "INDEX", CONF_INDEX },
     { "INDEXDIR", CONF_INDEXDIR },
@@ -1075,6 +1085,7 @@ keytab_t server_keytab[] = {
     { "OPTIONAL", CONF_OPTIONAL },
     { "ORDER", CONF_ORDER },
     { "ORG", CONF_ORG },
+    { "OTHER", CONF_OTHER },
     { "OTHER_CONFIG", CONF_OTHER_CONFIG },
     { "PART_CACHE_DIR", CONF_PART_CACHE_DIR },
     { "PART_CACHE_MAX_SIZE", CONF_PART_CACHE_MAX_SIZE },
@@ -1152,6 +1163,7 @@ keytab_t server_keytab[] = {
     { "STRANGE", CONF_STRANGE },
     { "STRATEGY", CONF_STRATEGY },
     { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
+    { "TAG", CONF_TAG },
     { "TAPECYCLE", CONF_TAPECYCLE },
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
@@ -1399,70 +1411,71 @@ conf_var_t server_var [] = {
 };
 
 conf_var_t tapetype_var [] = {
-   { CONF_COMMENT              , CONFTYPE_STR     , read_str          , TAPETYPE_COMMENT         , NULL },
-   { CONF_LBL_TEMPL            , CONFTYPE_STR     , read_str          , TAPETYPE_LBL_TEMPL       , NULL },
-   { CONF_BLOCKSIZE            , CONFTYPE_SIZE    , read_size         , TAPETYPE_BLOCKSIZE       , validate_blocksize },
-   { CONF_READBLOCKSIZE        , CONFTYPE_SIZE    , read_size         , TAPETYPE_READBLOCKSIZE   , validate_blocksize },
-   { CONF_LENGTH               , CONFTYPE_INT64   , read_int64        , TAPETYPE_LENGTH          , validate_nonnegative },
-   { CONF_FILEMARK             , CONFTYPE_INT64   , read_int64        , TAPETYPE_FILEMARK        , NULL },
-   { CONF_SPEED                , CONFTYPE_INT     , read_int          , TAPETYPE_SPEED           , validate_nonnegative },
-   { CONF_PART_SIZE            , CONFTYPE_INT64    , read_int64       , TAPETYPE_PART_SIZE       , validate_nonnegative },
-   { CONF_PART_CACHE_TYPE      , CONFTYPE_PART_CACHE_TYPE, read_part_cache_type, TAPETYPE_PART_CACHE_TYPE, NULL },
-   { CONF_PART_CACHE_DIR       , CONFTYPE_STR      , read_str         , TAPETYPE_PART_CACHE_DIR	 , NULL },
-   { CONF_PART_CACHE_MAX_SIZE  , CONFTYPE_INT64    , read_int64       , TAPETYPE_PART_CACHE_MAX_SIZE, validate_nonnegative },
-   { CONF_UNKNOWN              , CONFTYPE_INT     , NULL              , TAPETYPE_TAPETYPE        , NULL }
+   { CONF_COMMENT              , CONFTYPE_STR            , read_str            , TAPETYPE_COMMENT            , NULL },
+   { CONF_LBL_TEMPL            , CONFTYPE_STR            , read_str            , TAPETYPE_LBL_TEMPL          , NULL },
+   { CONF_BLOCKSIZE            , CONFTYPE_SIZE           , read_size           , TAPETYPE_BLOCKSIZE          , validate_blocksize },
+   { CONF_READBLOCKSIZE        , CONFTYPE_SIZE           , read_size           , TAPETYPE_READBLOCKSIZE      , validate_blocksize },
+   { CONF_LENGTH               , CONFTYPE_INT64          , read_int64          , TAPETYPE_LENGTH             , validate_nonnegative },
+   { CONF_FILEMARK             , CONFTYPE_INT64          , read_int64          , TAPETYPE_FILEMARK           , NULL },
+   { CONF_SPEED                , CONFTYPE_INT            , read_int            , TAPETYPE_SPEED              , validate_nonnegative },
+   { CONF_PART_SIZE            , CONFTYPE_INT64          , read_int64          , TAPETYPE_PART_SIZE          , validate_nonnegative },
+   { CONF_PART_CACHE_TYPE      , CONFTYPE_PART_CACHE_TYPE, read_part_cache_type, TAPETYPE_PART_CACHE_TYPE    , NULL },
+   { CONF_PART_CACHE_DIR       , CONFTYPE_STR            , read_str            , TAPETYPE_PART_CACHE_DIR     , NULL },
+   { CONF_PART_CACHE_MAX_SIZE  , CONFTYPE_INT64          , read_int64          , TAPETYPE_PART_CACHE_MAX_SIZE, validate_nonnegative },
+   { CONF_UNKNOWN              , CONFTYPE_INT            , NULL                , TAPETYPE_TAPETYPE           , NULL }
 };
 
 conf_var_t dumptype_var [] = {
-   { CONF_COMMENT           , CONFTYPE_STR      , read_str      , DUMPTYPE_COMMENT           , NULL },
-   { CONF_AUTH              , CONFTYPE_STR      , read_str      , DUMPTYPE_AUTH              , NULL },
-   { CONF_BUMPDAYS          , CONFTYPE_INT      , read_int      , DUMPTYPE_BUMPDAYS          , NULL },
-   { CONF_BUMPMULT          , CONFTYPE_REAL     , read_real     , DUMPTYPE_BUMPMULT          , NULL },
-   { CONF_BUMPSIZE          , CONFTYPE_INT64    , read_int64    , DUMPTYPE_BUMPSIZE          , NULL },
-   { CONF_BUMPPERCENT       , CONFTYPE_INT      , read_int      , DUMPTYPE_BUMPPERCENT       , NULL },
-   { CONF_COMPRATE          , CONFTYPE_REAL     , read_rate     , DUMPTYPE_COMPRATE          , NULL },
-   { CONF_COMPRESS          , CONFTYPE_INT      , read_compress , DUMPTYPE_COMPRESS          , NULL },
-   { CONF_ENCRYPT           , CONFTYPE_INT      , read_encrypt  , DUMPTYPE_ENCRYPT           , NULL },
-   { CONF_DUMPCYCLE         , CONFTYPE_INT      , read_int      , DUMPTYPE_DUMPCYCLE         , validate_nonnegative },
-   { CONF_EXCLUDE           , CONFTYPE_EXINCLUDE, read_exinclude, DUMPTYPE_EXCLUDE           , NULL },
-   { CONF_INCLUDE           , CONFTYPE_EXINCLUDE, read_exinclude, DUMPTYPE_INCLUDE           , NULL },
-   { CONF_IGNORE            , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_IGNORE            , NULL },
-   { CONF_HOLDING           , CONFTYPE_HOLDING  , read_holding  , DUMPTYPE_HOLDINGDISK       , NULL },
-   { CONF_INDEX             , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_INDEX             , NULL },
-   { CONF_KENCRYPT          , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_KENCRYPT          , NULL },
-   { CONF_MAXDUMPS          , CONFTYPE_INT      , read_int      , DUMPTYPE_MAXDUMPS          , validate_positive },
-   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int      , DUMPTYPE_MAXPROMOTEDAY     , validate_nonnegative },
-   { CONF_PRIORITY          , CONFTYPE_PRIORITY , read_priority , DUMPTYPE_PRIORITY          , NULL },
-   { CONF_PROGRAM           , CONFTYPE_STR      , read_str      , DUMPTYPE_PROGRAM           , validate_program },
-   { CONF_PROPERTY          , CONFTYPE_PROPLIST , read_property , DUMPTYPE_PROPERTY          , NULL },
-   { CONF_RECORD            , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_RECORD            , NULL },
-   { CONF_SKIP_FULL         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_FULL         , NULL },
-   { CONF_SKIP_INCR         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_INCR         , NULL },
-   { CONF_STARTTIME         , CONFTYPE_TIME     , read_time     , DUMPTYPE_STARTTIME         , NULL },
-   { CONF_STRATEGY          , CONFTYPE_INT      , read_strategy , DUMPTYPE_STRATEGY          , NULL },
-   { CONF_TAPE_SPLITSIZE    , CONFTYPE_INT64    , read_int64    , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
-   { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STR      , read_str      , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
-   { CONF_ESTIMATE          , CONFTYPE_ESTIMATELIST, read_estimatelist , DUMPTYPE_ESTIMATELIST  , NULL },
-   { CONF_SRV_ENCRYPT       , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_ENCRYPT       , NULL },
-   { CONF_CLNT_ENCRYPT      , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_ENCRYPT      , NULL },
-   { CONF_AMANDAD_PATH      , CONFTYPE_STR      , read_str      , DUMPTYPE_AMANDAD_PATH      , NULL },
-   { CONF_CLIENT_USERNAME   , CONFTYPE_STR      , read_str      , DUMPTYPE_CLIENT_USERNAME   , NULL },
-   { CONF_CLIENT_PORT       , CONFTYPE_STR      , read_int_or_str, DUMPTYPE_CLIENT_PORT      , NULL },
-   { CONF_SSH_KEYS          , CONFTYPE_STR      , read_str      , DUMPTYPE_SSH_KEYS          , NULL },
-   { CONF_SRVCOMPPROG       , CONFTYPE_STR      , read_str      , DUMPTYPE_SRVCOMPPROG       , NULL },
-   { CONF_CLNTCOMPPROG      , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNTCOMPPROG      , NULL },
-   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_INT64    , read_int64    , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
-   { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
-   { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
-   { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
-   { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST       , NULL },
-   { CONF_DATA_PATH         , CONFTYPE_DATA_PATH, read_data_path, DUMPTYPE_DATA_PATH         , NULL },
-   { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN  , read_bool    , DUMPTYPE_ALLOW_SPLIT        , NULL },
-   { CONF_MAX_WARNINGS      , CONFTYPE_INT      , read_int     , DUMPTYPE_MAX_WARNINGS       , validate_nonnegative },
-   { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_RECOVERY_LIMIT  , NULL },
-   { CONF_DUMP_LIMIT        , CONFTYPE_HOST_LIMIT, read_host_limit, DUMPTYPE_DUMP_LIMIT      , validate_dump_limit },
-   { CONF_RETRY_DUMP        , CONFTYPE_INT      , read_int      , DUMPTYPE_RETRY_DUMP        , validate_positive },
-   { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
+   { CONF_COMMENT           , CONFTYPE_STR         , read_str         , DUMPTYPE_COMMENT           , NULL },
+   { CONF_AUTH              , CONFTYPE_STR         , read_str         , DUMPTYPE_AUTH              , NULL },
+   { CONF_BUMPDAYS          , CONFTYPE_INT         , read_int         , DUMPTYPE_BUMPDAYS          , NULL },
+   { CONF_BUMPMULT          , CONFTYPE_REAL        , read_real        , DUMPTYPE_BUMPMULT          , NULL },
+   { CONF_BUMPSIZE          , CONFTYPE_INT64       , read_int64       , DUMPTYPE_BUMPSIZE          , NULL },
+   { CONF_BUMPPERCENT       , CONFTYPE_INT         , read_int         , DUMPTYPE_BUMPPERCENT       , NULL },
+   { CONF_COMPRATE          , CONFTYPE_REAL        , read_rate        , DUMPTYPE_COMPRATE          , NULL },
+   { CONF_COMPRESS          , CONFTYPE_INT         , read_compress    , DUMPTYPE_COMPRESS          , NULL },
+   { CONF_ENCRYPT           , CONFTYPE_INT         , read_encrypt     , DUMPTYPE_ENCRYPT           , NULL },
+   { CONF_DUMPCYCLE         , CONFTYPE_INT         , read_int         , DUMPTYPE_DUMPCYCLE         , validate_nonnegative },
+   { CONF_EXCLUDE           , CONFTYPE_EXINCLUDE   , read_exinclude   , DUMPTYPE_EXCLUDE           , NULL },
+   { CONF_INCLUDE           , CONFTYPE_EXINCLUDE   , read_exinclude   , DUMPTYPE_INCLUDE           , NULL },
+   { CONF_IGNORE            , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_IGNORE            , NULL },
+   { CONF_HOLDING           , CONFTYPE_HOLDING     , read_holding     , DUMPTYPE_HOLDINGDISK       , NULL },
+   { CONF_INDEX             , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_INDEX             , NULL },
+   { CONF_KENCRYPT          , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_KENCRYPT          , NULL },
+   { CONF_MAXDUMPS          , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXDUMPS          , validate_positive },
+   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXPROMOTEDAY     , validate_nonnegative },
+   { CONF_PRIORITY          , CONFTYPE_PRIORITY    , read_priority    , DUMPTYPE_PRIORITY          , NULL },
+   { CONF_PROGRAM           , CONFTYPE_STR         , read_str         , DUMPTYPE_PROGRAM           , validate_program },
+   { CONF_PROPERTY          , CONFTYPE_PROPLIST    , read_property    , DUMPTYPE_PROPERTY          , NULL },
+   { CONF_RECORD            , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_RECORD            , NULL },
+   { CONF_SKIP_FULL         , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_FULL         , NULL },
+   { CONF_SKIP_INCR         , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_INCR         , NULL },
+   { CONF_STARTTIME         , CONFTYPE_TIME        , read_time        , DUMPTYPE_STARTTIME         , NULL },
+   { CONF_STRATEGY          , CONFTYPE_INT         , read_strategy    , DUMPTYPE_STRATEGY          , NULL },
+   { CONF_TAPE_SPLITSIZE    , CONFTYPE_INT64       , read_int64       , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
+   { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STR         , read_str         , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
+   { CONF_ESTIMATE          , CONFTYPE_ESTIMATELIST, read_estimatelist, DUMPTYPE_ESTIMATELIST      , NULL },
+   { CONF_SRV_ENCRYPT       , CONFTYPE_STR         , read_str         , DUMPTYPE_SRV_ENCRYPT       , NULL },
+   { CONF_CLNT_ENCRYPT      , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNT_ENCRYPT      , NULL },
+   { CONF_AMANDAD_PATH      , CONFTYPE_STR         , read_str         , DUMPTYPE_AMANDAD_PATH      , NULL },
+   { CONF_CLIENT_USERNAME   , CONFTYPE_STR         , read_str         , DUMPTYPE_CLIENT_USERNAME   , NULL },
+   { CONF_CLIENT_PORT       , CONFTYPE_STR         , read_int_or_str  , DUMPTYPE_CLIENT_PORT       , NULL },
+   { CONF_SSH_KEYS          , CONFTYPE_STR         , read_str         , DUMPTYPE_SSH_KEYS          , NULL },
+   { CONF_SRVCOMPPROG       , CONFTYPE_STR         , read_str         , DUMPTYPE_SRVCOMPPROG       , NULL },
+   { CONF_CLNTCOMPPROG      , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNTCOMPPROG      , NULL },
+   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_INT64       , read_int64       , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
+   { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR         , read_str         , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
+   { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
+   { CONF_APPLICATION       , CONFTYPE_STR         , read_dapplication, DUMPTYPE_APPLICATION       , NULL },
+   { CONF_SCRIPT            , CONFTYPE_STR         , read_dpp_script  , DUMPTYPE_SCRIPTLIST        , NULL },
+   { CONF_DATA_PATH         , CONFTYPE_DATA_PATH   , read_data_path   , DUMPTYPE_DATA_PATH         , NULL },
+   { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_ALLOW_SPLIT       , NULL },
+   { CONF_MAX_WARNINGS      , CONFTYPE_INT         , read_int         , DUMPTYPE_MAX_WARNINGS      , validate_nonnegative },
+   { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT  , read_host_limit  , DUMPTYPE_RECOVERY_LIMIT    , NULL },
+   { CONF_DUMP_LIMIT        , CONFTYPE_HOST_LIMIT  , read_host_limit  , DUMPTYPE_DUMP_LIMIT        , validate_dump_limit },
+   { CONF_RETRY_DUMP        , CONFTYPE_INT         , read_int         , DUMPTYPE_RETRY_DUMP        , validate_positive },
+   { CONF_TAG               , CONFTYPE_STR_LIST    , read_str_list    , DUMPTYPE_TAG               , NULL },
+   { CONF_UNKNOWN           , CONFTYPE_INT         , NULL             , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
 conf_var_t holding_var [] = {
@@ -1490,15 +1503,15 @@ conf_var_t application_var [] = {
 };
 
 conf_var_t pp_script_var [] = {
-   { CONF_COMMENT      , CONFTYPE_STR     , read_str     , PP_SCRIPT_COMMENT      , NULL },
-   { CONF_PLUGIN       , CONFTYPE_STR     , read_str     , PP_SCRIPT_PLUGIN       , NULL },
-   { CONF_PROPERTY     , CONFTYPE_PROPLIST, read_property, PP_SCRIPT_PROPERTY     , NULL },
-   { CONF_EXECUTE_ON   , CONFTYPE_EXECUTE_ON  , read_execute_on  , PP_SCRIPT_EXECUTE_ON   , NULL },
-   { CONF_EXECUTE_WHERE, CONFTYPE_EXECUTE_WHERE  , read_execute_where  , PP_SCRIPT_EXECUTE_WHERE, NULL },
-   { CONF_ORDER        , CONFTYPE_INT     , read_int     , PP_SCRIPT_ORDER        , NULL },
-   { CONF_SINGLE_EXECUTION, CONFTYPE_BOOLEAN, read_bool    , PP_SCRIPT_SINGLE_EXECUTION, NULL },
-   { CONF_CLIENT_NAME  , CONFTYPE_STR     , read_str     , PP_SCRIPT_CLIENT_NAME  , NULL },
-   { CONF_UNKNOWN      , CONFTYPE_INT     , NULL         , PP_SCRIPT_PP_SCRIPT    , NULL }
+   { CONF_COMMENT         , CONFTYPE_STR          , read_str          , PP_SCRIPT_COMMENT         , NULL },
+   { CONF_PLUGIN          , CONFTYPE_STR          , read_str          , PP_SCRIPT_PLUGIN          , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST     , read_property     , PP_SCRIPT_PROPERTY        , NULL },
+   { CONF_EXECUTE_ON      , CONFTYPE_EXECUTE_ON   , read_execute_on   , PP_SCRIPT_EXECUTE_ON      , NULL },
+   { CONF_EXECUTE_WHERE   , CONFTYPE_EXECUTE_WHERE, read_execute_where, PP_SCRIPT_EXECUTE_WHERE   , NULL },
+   { CONF_ORDER           , CONFTYPE_INT          , read_int          , PP_SCRIPT_ORDER           , NULL },
+   { CONF_SINGLE_EXECUTION, CONFTYPE_BOOLEAN      , read_bool         , PP_SCRIPT_SINGLE_EXECUTION, NULL },
+   { CONF_CLIENT_NAME     , CONFTYPE_STR          , read_str          , PP_SCRIPT_CLIENT_NAME     , NULL },
+   { CONF_UNKNOWN         , CONFTYPE_INT          , NULL              , PP_SCRIPT_PP_SCRIPT       , NULL }
 };
 
 conf_var_t device_config_var [] = {
@@ -1543,30 +1556,31 @@ conf_var_t policy_var [] = {
 };
 
 conf_var_t storage_var [] = {
-   { CONF_COMMENT                  , CONFTYPE_STR       , read_str           , STORAGE_COMMENT                  , NULL },
-   { CONF_POLICY                   , CONFTYPE_STR       , read_dpolicy       , STORAGE_POLICY                   , NULL },
-   { CONF_TPCHANGER                , CONFTYPE_STR       , read_str           , STORAGE_TPCHANGER                , NULL },
-   { CONF_LABELSTR                 , CONFTYPE_LABELSTR  , read_labelstr      , STORAGE_LABELSTR                 , NULL },
-   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL , read_autolabel     , STORAGE_AUTOLABEL                , NULL },
-   { CONF_META_AUTOLABEL           , CONFTYPE_STR       , read_str           , STORAGE_META_AUTOLABEL           , NULL },
-   { CONF_TAPEPOOL                 , CONFTYPE_STR       , read_str           , STORAGE_TAPEPOOL                 , NULL },
-   { CONF_RUNTAPES                 , CONFTYPE_INT       , read_int           , STORAGE_RUNTAPES                 , NULL },
-   { CONF_TAPERSCAN                , CONFTYPE_STR       , read_str           , STORAGE_TAPERSCAN                , NULL },
-   { CONF_TAPETYPE                 , CONFTYPE_STR       , read_str           , STORAGE_TAPETYPE                 , NULL },
-   { CONF_MAX_DLE_BY_VOLUME        , CONFTYPE_INT       , read_int           , STORAGE_MAX_DLE_BY_VOLUME        , NULL },
-   { CONF_TAPERALGO                , CONFTYPE_TAPERALGO , read_taperalgo     , STORAGE_TAPERALGO                , NULL },
-   { CONF_TAPER_PARALLEL_WRITE     , CONFTYPE_INT       , read_int           , STORAGE_TAPER_PARALLEL_WRITE     , NULL },
-   { CONF_EJECT_VOLUME             , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_EJECT_VOLUME             , NULL },
-   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE      , read_size          , STORAGE_DEVICE_OUTPUT_BUFFER_SIZE, NULL },
-   { CONF_AUTOFLUSH                , CONFTYPE_NO_YES_ALL, read_no_yes_all    , STORAGE_AUTOFLUSH                , NULL },
-   { CONF_FLUSH_THRESHOLD_DUMPED   , CONFTYPE_INT       , read_int           , STORAGE_FLUSH_THRESHOLD_DUMPED   , validate_nonnegative },
-   { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT       , read_int           , STORAGE_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
-   { CONF_TAPERFLUSH               , CONFTYPE_INT       , read_int           , STORAGE_TAPERFLUSH               , validate_nonnegative },
-   { CONF_REPORT_USE_MEDIA         , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_REPORT_USE_MEDIA         , NULL },
-   { CONF_REPORT_NEXT_MEDIA        , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_REPORT_NEXT_MEDIA        , NULL },
-   { CONF_INTERACTIVITY            , CONFTYPE_STR       , read_dinteractivity, STORAGE_INTERACTIVITY            , NULL },
-   { CONF_SET_NO_REUSE             , CONFTYPE_BOOLEAN   , read_bool          , STORAGE_SET_NO_REUSE             , NULL },
-   { CONF_UNKNOWN                  , CONFTYPE_INT       , NULL               , STORAGE_STORAGE                  , NULL }
+   { CONF_COMMENT                  , CONFTYPE_STR           , read_str           , STORAGE_COMMENT                  , NULL },
+   { CONF_POLICY                   , CONFTYPE_STR           , read_dpolicy       , STORAGE_POLICY                   , NULL },
+   { CONF_TPCHANGER                , CONFTYPE_STR           , read_str           , STORAGE_TPCHANGER                , NULL },
+   { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , NULL },
+   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , NULL },
+   { CONF_META_AUTOLABEL           , CONFTYPE_STR           , read_str           , STORAGE_META_AUTOLABEL           , NULL },
+   { CONF_TAPEPOOL                 , CONFTYPE_STR           , read_str           , STORAGE_TAPEPOOL                 , NULL },
+   { CONF_RUNTAPES                 , CONFTYPE_INT           , read_int           , STORAGE_RUNTAPES                 , NULL },
+   { CONF_TAPERSCAN                , CONFTYPE_STR           , read_str           , STORAGE_TAPERSCAN                , NULL },
+   { CONF_TAPETYPE                 , CONFTYPE_STR           , read_str           , STORAGE_TAPETYPE                 , NULL },
+   { CONF_MAX_DLE_BY_VOLUME        , CONFTYPE_INT           , read_int           , STORAGE_MAX_DLE_BY_VOLUME        , NULL },
+   { CONF_TAPERALGO                , CONFTYPE_TAPERALGO     , read_taperalgo     , STORAGE_TAPERALGO                , NULL },
+   { CONF_TAPER_PARALLEL_WRITE     , CONFTYPE_INT           , read_int           , STORAGE_TAPER_PARALLEL_WRITE     , NULL },
+   { CONF_EJECT_VOLUME             , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_EJECT_VOLUME             , NULL },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE          , read_size          , STORAGE_DEVICE_OUTPUT_BUFFER_SIZE, NULL },
+   { CONF_AUTOFLUSH                , CONFTYPE_NO_YES_ALL    , read_no_yes_all    , STORAGE_AUTOFLUSH                , NULL },
+   { CONF_FLUSH_THRESHOLD_DUMPED   , CONFTYPE_INT           , read_int           , STORAGE_FLUSH_THRESHOLD_DUMPED   , validate_nonnegative },
+   { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT           , read_int           , STORAGE_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
+   { CONF_TAPERFLUSH               , CONFTYPE_INT           , read_int           , STORAGE_TAPERFLUSH               , validate_nonnegative },
+   { CONF_REPORT_USE_MEDIA         , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_REPORT_USE_MEDIA         , NULL },
+   { CONF_REPORT_NEXT_MEDIA        , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_REPORT_NEXT_MEDIA        , NULL },
+   { CONF_INTERACTIVITY            , CONFTYPE_STR           , read_dinteractivity, STORAGE_INTERACTIVITY            , NULL },
+   { CONF_SET_NO_REUSE             , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_SET_NO_REUSE             , NULL },
+   { CONF_DUMP_SELECTION           , CONFTYPE_DUMP_SELECTION, read_dump_selection, STORAGE_DUMP_SELECTION           , NULL },
+   { CONF_UNKNOWN                  , CONFTYPE_INT           , NULL               , STORAGE_STORAGE                  , NULL }
 };
 
 /*
@@ -2222,7 +2236,7 @@ read_block(
 		    if(np->token == tok) break;
 
 		if(np->token == CONF_UNKNOWN)
-		    conf_parserror("%s", errormsg);
+		    conf_parserror("%d %s", tok, errormsg);
 		else {
 		    np->read_function(np, &valarray[np->parm]);
 		    if(np->validate_function)
@@ -2547,6 +2561,7 @@ init_dumptype_defaults(void)
     conf_init_host_limit(&dpcur.value[DUMPTYPE_RECOVERY_LIMIT]);
     conf_init_host_limit_server(&dpcur.value[DUMPTYPE_DUMP_LIMIT]);
     conf_init_int      (&dpcur.value[DUMPTYPE_RETRY_DUMP]        , CONF_UNIT_NONE, 2);
+    conf_init_str_list (&dpcur.value[DUMPTYPE_TAG]               , NULL);
 }
 
 static void
@@ -3376,29 +3391,30 @@ init_storage_defaults(
     void)
 {
     stcur.name = NULL;
-    conf_init_str       (&stcur.value[STORAGE_COMMENT]                  , "");
-    conf_init_str       (&stcur.value[STORAGE_POLICY]                   , "");
-    conf_init_str       (&stcur.value[STORAGE_TPCHANGER]                , "");
-    conf_init_labelstr  (&stcur.value[STORAGE_LABELSTR]);
-    conf_init_str       (&stcur.value[STORAGE_META_AUTOLABEL]           , "");
-    conf_init_autolabel (&stcur.value[STORAGE_AUTOLABEL]);
-    conf_init_str       (&stcur.value[STORAGE_TAPEPOOL]                 , NULL);
-    conf_init_int       (&stcur.value[STORAGE_RUNTAPES]                 , CONF_UNIT_NONE, 1);
-    conf_init_str       (&stcur.value[STORAGE_TAPERSCAN]                , NULL);
-    conf_init_str       (&stcur.value[STORAGE_TAPETYPE]                 , "DEFAULT_TAPE");
-    conf_init_int       (&stcur.value[STORAGE_MAX_DLE_BY_VOLUME]        , CONF_UNIT_NONE, 1000000000);
-    conf_init_taperalgo (&stcur.value[STORAGE_TAPERALGO]                , 0);
-    conf_init_int       (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE]     , CONF_UNIT_NONE, 0);
-    conf_init_bool      (&stcur.value[STORAGE_EJECT_VOLUME]             , 0);
-    conf_init_int       (&stcur.value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], CONF_UNIT_NONE, 0);
-    conf_init_no_yes_all(&stcur.value[STORAGE_AUTOFLUSH]                , 0);
-    conf_init_int       (&stcur.value[STORAGE_FLUSH_THRESHOLD_DUMPED]   , CONF_UNIT_NONE, 0);
-    conf_init_int       (&stcur.value[STORAGE_FLUSH_THRESHOLD_SCHEDULED], CONF_UNIT_NONE, 0);
-    conf_init_int       (&stcur.value[STORAGE_TAPERFLUSH]               , CONF_UNIT_NONE, 0);
-    conf_init_bool      (&stcur.value[STORAGE_REPORT_USE_MEDIA]         , TRUE);
-    conf_init_bool      (&stcur.value[STORAGE_REPORT_NEXT_MEDIA]        , TRUE);
-    conf_init_str       (&stcur.value[STORAGE_INTERACTIVITY]            , NULL);
-    conf_init_bool      (&stcur.value[STORAGE_SET_NO_REUSE]             , FALSE);
+    conf_init_str           (&stcur.value[STORAGE_COMMENT]                  , "");
+    conf_init_str           (&stcur.value[STORAGE_POLICY]                   , "");
+    conf_init_str           (&stcur.value[STORAGE_TPCHANGER]                , "");
+    conf_init_labelstr      (&stcur.value[STORAGE_LABELSTR]);
+    conf_init_str           (&stcur.value[STORAGE_META_AUTOLABEL]           , "");
+    conf_init_autolabel     (&stcur.value[STORAGE_AUTOLABEL]);
+    conf_init_str           (&stcur.value[STORAGE_TAPEPOOL]                 , NULL);
+    conf_init_int           (&stcur.value[STORAGE_RUNTAPES]                 , CONF_UNIT_NONE, 1);
+    conf_init_str           (&stcur.value[STORAGE_TAPERSCAN]                , NULL);
+    conf_init_str           (&stcur.value[STORAGE_TAPETYPE]                 , "DEFAULT_TAPE");
+    conf_init_int           (&stcur.value[STORAGE_MAX_DLE_BY_VOLUME]        , CONF_UNIT_NONE, 1000000000);
+    conf_init_taperalgo     (&stcur.value[STORAGE_TAPERALGO]                , 0);
+    conf_init_int           (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE]     , CONF_UNIT_NONE, 0);
+    conf_init_bool          (&stcur.value[STORAGE_EJECT_VOLUME]             , 0);
+    conf_init_int           (&stcur.value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], CONF_UNIT_NONE, 0);
+    conf_init_no_yes_all    (&stcur.value[STORAGE_AUTOFLUSH]                , 0);
+    conf_init_int           (&stcur.value[STORAGE_FLUSH_THRESHOLD_DUMPED]   , CONF_UNIT_NONE, 0);
+    conf_init_int           (&stcur.value[STORAGE_FLUSH_THRESHOLD_SCHEDULED], CONF_UNIT_NONE, 0);
+    conf_init_int           (&stcur.value[STORAGE_TAPERFLUSH]               , CONF_UNIT_NONE, 0);
+    conf_init_bool          (&stcur.value[STORAGE_REPORT_USE_MEDIA]         , TRUE);
+    conf_init_bool          (&stcur.value[STORAGE_REPORT_NEXT_MEDIA]        , TRUE);
+    conf_init_str           (&stcur.value[STORAGE_INTERACTIVITY]            , NULL);
+    conf_init_bool          (&stcur.value[STORAGE_SET_NO_REUSE]             , FALSE);
+    conf_init_dump_selection(&stcur.value[STORAGE_DUMP_SELECTION]);
 }
 
 static void
@@ -3932,6 +3948,44 @@ read_storage_identlist(
 	conf_parserror(_("string expected"));
 	unget_conftoken();
     }
+}
+
+static void
+read_dump_selection(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    dump_selection_t *ds = g_new0(dump_selection_t, 1);
+    ds->tag = NULL;
+    ds->tag_type = TAG_ALL;
+    ds->level = LEVEL_ALL;
+
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_STRING) {
+	ds->tag_type = TAG_NAME;
+	ds->tag = g_strdup(tokenval.v.s);
+    } else if (tok == CONF_ALL) {
+	ds->tag_type = TAG_ALL;
+    } else if (tok == CONF_OTHER) {
+	ds->tag_type = TAG_OTHER;
+    } else {
+	conf_parserror(_("string, ALL or OTHER expected"));
+    }
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_ALL) {
+	ds->level = LEVEL_ALL;
+    } else if (tok == CONF_FULL) {
+	ds->level = LEVEL_FULL;
+    } else if (tok == CONF_INCR) {
+	ds->level = LEVEL_INCR;
+    } else {
+	conf_parserror(_("ALL, FULL or INCR expected"));
+    }
+    get_conftoken(CONF_NL);
+    val->v.dump_selection = g_slist_append(val->v.dump_selection, ds);
 }
 
 static void
@@ -6802,6 +6856,15 @@ static void conf_init_application(val_t *val) {
     val->v.s = NULL;
 }
 
+static void conf_init_dump_selection(val_t *val) {
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->seen.block = NULL;
+    val->type = CONFTYPE_DUMP_SELECTION;
+    val->unit = CONF_UNIT_NONE;
+    val->v.dump_selection = NULL;
+}
+
 
 /*
  * Config access implementation
@@ -7672,6 +7735,18 @@ val_t_to_host_limit(
     return &val_t__host_limit(val);
 }
 
+dump_selection_list_t
+val_t_to_dump_selection(
+    val_t *val)
+{
+    assert(config_initialized);
+    if (val->type != CONFTYPE_DUMP_SELECTION) {
+	error(_("val_t_to_dump_selection: val.type is not CONFTYPE_DUMP_SELECTION"));
+	/*NOTREACHED*/
+    }
+    return val_t__dump_selection(val);
+}
+
 dump_holdingdisk_t
 val_t_to_holding(
     val_t *val)
@@ -7992,6 +8067,20 @@ copy_val_t(
 	    valdst->v.labelstr.template = g_strdup(valsrc->v.labelstr.template);
 	    valdst->v.labelstr.match_autolabel = valsrc->v.labelstr.match_autolabel;
 	    break;
+
+	case CONFTYPE_DUMP_SELECTION:
+	    valdst->v.dump_selection= NULL;
+	    valdst->v.host_limit.match_pats = NULL;
+	    for (ia = valsrc->v.dump_selection; ia != NULL; ia = ia->next) {
+		dump_selection_t *src_dump_s = ia->data;
+		dump_selection_t *dst_dump_s = g_new0(dump_selection_t, 1);
+		dst_dump_s->tag_type = src_dump_s->tag_type;
+		dst_dump_s->tag = g_strdup(src_dump_s->tag);
+		dst_dump_s->level = src_dump_s->level;
+		valdst->v.dump_selection =
+		    g_slist_append(valdst->v.dump_selection, dst_dump_s);
+	    }
+	    break;
 	}
 }
 
@@ -8049,6 +8138,15 @@ copy_proplist_foreach_fn(
 					      g_strdup(elem->data));
     }
     g_hash_table_insert(proplist, g_strdup(property_s), new_property);
+}
+
+static void
+free_dump_selection(
+    gpointer p)
+{
+    dump_selection_t *dump_s = p;
+    g_free(dump_s->tag);
+    g_free(dump_s);
 }
 
 static void
@@ -8114,6 +8212,10 @@ free_val_t(
 
 	case CONFTYPE_LABELSTR:
 	    amfree(val->v.labelstr.template);
+	    break;
+
+	case CONFTYPE_DUMP_SELECTION:
+	    slist_free_full(val->v.host_limit.match_pats, free_dump_selection);
 	    break;
     }
     val->seen.linenum = 0;
@@ -8996,6 +9098,48 @@ val_t_display_strs(
         buf[0] = execute_on_to_string(val->v.i, ", ");
         break;
 
+    case CONFTYPE_DUMP_SELECTION: {
+	int nb_selection = g_slist_length(val_t__dump_selection(val));
+	dump_selection_list_t dsl;
+	int i = 0;
+
+	g_free(buf);
+	buf = malloc((nb_selection+1)*sizeof(char*));
+	buf[nb_selection] = NULL;
+
+	for (dsl = val->v.dump_selection ; dsl != NULL ; dsl = dsl->next) {
+	    dump_selection_t *ds = dsl->data;
+	    char *tag = NULL;
+	    char *level = NULL;
+	    switch (ds->tag_type) {
+	    case TAG_NAME:
+		tag = quote_string_always(ds->tag);
+		break;
+	    case TAG_ALL:
+		tag = "ALL";
+		break;
+	    case TAG_OTHER:
+		tag = "OTHER";
+		break;
+	    }
+	    switch (ds->level) {
+	    case LEVEL_ALL:
+		level = "ALL";
+		break;
+	    case LEVEL_FULL:
+		level = "FULL";
+		break;
+	    case LEVEL_INCR:
+		level = "INCR";
+		break;
+	    }
+	    buf[i++] = g_strdup_printf("%s %s", tag, level);
+	    if (ds->tag_type == TAG_NAME) {
+		g_free(tag);
+	    }
+	}
+	break;
+    }
     }
 
     /* add source */

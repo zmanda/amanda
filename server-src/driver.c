@@ -122,6 +122,7 @@ static void handle_dumper_result(void *);
 static void handle_chunker_result(void *);
 static void handle_dumpers_time(void *);
 static void handle_taper_result(void *);
+static gboolean dump_match_selection(char *storage_n, disk_t *dp);
 
 static void holdingdisk_state(char *time_str);
 static wtaper_t *idle_taper(taper_t *taper);
@@ -1073,6 +1074,13 @@ allow_dump_dle(
 {
     assignedhd_t **holdp=NULL;
 
+    /* if the dump can go to that storage */
+    if (wtaper) {
+	if (!dump_match_selection(wtaper->taper->storage_name, diskp)) {
+	    return;
+	}
+    }
+
     if (diskp->host->start_t > now) {
 	*cur_idle = max(*cur_idle, IDLE_START_WAIT);
 	if (*delayed_diskp == NULL || sleep_time > diskp->host->start_t) {
@@ -1236,54 +1244,55 @@ start_some_dumps(
 
 	diskp = NULL;
 	wtaper = NULL;
-	if (!empty(directq)) {  /* to the first storage only */
-	    wtaper = idle_taper(tapetable);
-	    if (wtaper) {
-		TapeAction result_tape_action;
-		char *why_no_new_tape = NULL;
+	if (!empty(directq)) {  /* to the first allowed storage only */
+	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		wtaper = idle_taper(taper);
+		if (wtaper) {
+		    TapeAction result_tape_action;
+		    char *why_no_new_tape = NULL;
 
-		taper = wtaper->taper;
-		result_tape_action = tape_action(wtaper, &why_no_new_tape);
-		if (result_tape_action & TAPE_ACTION_START_A_FLUSH ||
-		    result_tape_action & TAPE_ACTION_START_A_FLUSH_FIT) {
-		    off_t extra_tapes_size = 0;
-		    wtaper_t *wtaper1;
+		    result_tape_action = tape_action(wtaper, &why_no_new_tape);
+		    if (result_tape_action & TAPE_ACTION_START_A_FLUSH ||
+			result_tape_action & TAPE_ACTION_START_A_FLUSH_FIT) {
+			off_t extra_tapes_size = 0;
+			wtaper_t *wtaper1;
 
-		    if (result_tape_action & TAPE_ACTION_START_A_FLUSH_FIT) {
-			extra_tapes_size = taper->tape_length *
+			if (result_tape_action & TAPE_ACTION_START_A_FLUSH_FIT) {
+			    extra_tapes_size = taper->tape_length *
 				(off_t)(taper->runtapes - taper->current_tape);
-			for (wtaper1 = taper->wtapetable;
-			     wtaper1 < taper->wtapetable + taper->nb_worker;
-			     wtaper1++) {
-			    if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
-				extra_tapes_size += wtaper1->left;
-			    }
-			    dp = wtaper1->disk;
-			    if (dp) {
-				extra_tapes_size -= (sched(dp)->est_size -
-						     wtaper1->written);
+			    for (wtaper1 = taper->wtapetable;
+				 wtaper1 < taper->wtapetable + taper->nb_worker;
+				 wtaper1++) {
+				if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
+				    extra_tapes_size += wtaper1->left;
+				}
+				dp = wtaper1->disk;
+				if (dp) {
+				    extra_tapes_size -= (sched(dp)->est_size -
+						         wtaper1->written);
+				}
 			    }
 			}
-		    }
 
-		    for (dlist = directq.head; dlist != NULL;
-					       dlist = dlist_next) {
-			dlist_next = dlist->next;
-			diskp = dlist->data;
-		        allow_dump_dle(diskp, wtaper, dumptype, &directq, now,
-				       dumper_to_holding, &cur_idle,
-				       &delayed_diskp, &diskp_accept,
-				       &holdp_accept, extra_tapes_size);
-		    }
-		    if (diskp_accept) {
-			diskp = diskp_accept;
-			holdp = holdp_accept;
+			for (dlist = directq.head; dlist != NULL;
+						   dlist = dlist_next) {
+			    dlist_next = dlist->next;
+			    diskp = dlist->data;
+		            allow_dump_dle(diskp, wtaper, dumptype, &directq, now,
+					   dumper_to_holding, &cur_idle,
+					   &delayed_diskp, &diskp_accept,
+					   &holdp_accept, extra_tapes_size);
+			}
+			if (diskp_accept) {
+			    diskp = diskp_accept;
+			    holdp = holdp_accept;
+			} else {
+			    diskp = NULL;
+			    wtaper = NULL;
+			}
 		    } else {
-			diskp = NULL;
 			wtaper = NULL;
 		    }
-		} else {
-		    wtaper = NULL;
 		}
 	    }
 	}
@@ -2430,28 +2439,32 @@ dumper_chunker_result(
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 	    cmddata_t *cmddata;
 
-	    sched(dp)->nb_flush++;
-	    enqueue_disk(&taper->tapeq, dp);
+	    /* If the dle/level must go to the storage */
+	    if (dump_match_selection(taper->storage_name, dp)) {
+		sched(dp)->nb_flush++;
+		enqueue_disk(&taper->tapeq, dp);
 
-	    cmddata = g_new0(cmddata_t, 1);
-	    cmddata->operation = CMD_FLUSH;
-	    cmddata->config = g_strdup(get_config_name());
-	    cmddata->storage = NULL;
-	    cmddata->pool = NULL;
-	    cmddata->label = NULL;
-	    cmddata->holding_file = g_strdup(sched(dp)->destname);
-	    cmddata->hostname = g_strdup(dp->hostname);
-	    cmddata->diskname = g_strdup(dp->name);
-	    cmddata->dump_timestamp = g_strdup(driver_timestamp);
-	    cmddata->storage_dest = g_strdup(taper->storage_name);
-	    cmddata->working_pid = getppid();
-	    cmddata->status = CMD_TODO;
-	    add_cmd_in_cmdfile(cmddatas, cmddata);
-	    if (!sched(dp)->to_storage) {
-		sched(dp)->to_storage=g_hash_table_new(g_str_hash, g_str_equal);
-	    }
-	    g_hash_table_insert(sched(dp)->to_storage, taper->storage_name,
+		cmddata = g_new0(cmddata_t, 1);
+		cmddata->operation = CMD_FLUSH;
+		cmddata->config = g_strdup(get_config_name());
+		cmddata->storage = NULL;
+		cmddata->pool = NULL;
+		cmddata->label = NULL;
+		cmddata->holding_file = g_strdup(sched(dp)->destname);
+		cmddata->hostname = g_strdup(dp->hostname);
+		cmddata->diskname = g_strdup(dp->name);
+		cmddata->dump_timestamp = g_strdup(driver_timestamp);
+		cmddata->storage_dest = g_strdup(taper->storage_name);
+		cmddata->working_pid = getppid();
+		cmddata->status = CMD_TODO;
+		add_cmd_in_cmdfile(cmddatas, cmddata);
+		if (!sched(dp)->to_storage) {
+		    sched(dp)->to_storage = g_hash_table_new(g_str_hash,
+							     g_str_equal);
+		}
+		g_hash_table_insert(sched(dp)->to_storage, taper->storage_name,
 				GINT_TO_POINTER(cmddata->id));
+	    }
 	}
     }
     else {
@@ -2479,6 +2492,49 @@ dumper_chunker_result(
     startaflush();
 }
 
+static gboolean
+dump_match_selection(
+    char   *storage_n,
+    disk_t *dp)
+{
+    storage_t *st = lookup_storage(storage_n);
+    dump_selection_list_t dsl;
+
+    dsl = storage_get_dump_selection(st);
+    if (!dsl)
+	return TRUE;
+
+    for (; dsl != NULL ; dsl = dsl->next) {
+	dump_selection_t *ds = dsl->data;
+	gboolean ok = FALSE;
+
+	if (ds->tag_type == TAG_ALL) {
+	    ok = TRUE;
+	} else if (ds->tag_type == TAG_NAME) {
+	    identlist_t tags;
+	    for (tags = dp->tags; tags != NULL ; tags = tags->next) {
+		if (g_str_equal(ds->tag, tags->data)) {
+		    ok = TRUE;
+		    break;
+		}
+	    }
+	} else if (ds->tag_type == TAG_OTHER) {
+	    // WHAT DO TO HERE
+	}
+
+	if (ok) {
+	    if (ds->level == LEVEL_ALL) {
+		return TRUE;
+	    } else if (ds->level == LEVEL_FULL && sched(dp)->level == 0) {
+		return TRUE;
+	    } else if (ds->level == LEVEL_INCR && sched(dp)->level > 0) {
+		return TRUE;
+	    }
+	}
+    }
+
+    return FALSE;
+}
 
 static void
 handle_dumper_result(

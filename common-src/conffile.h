@@ -226,6 +226,25 @@ typedef GHashTable* proplist_t;
 /* A GSlist where each element is a 'char*' */
 typedef GSList* identlist_t;
 
+typedef enum {
+    TAG_NAME,
+    TAG_ALL,
+    TAG_OTHER
+} dumptype_tag_t;
+
+typedef enum {
+    LEVEL_ALL,
+    LEVEL_FULL,
+    LEVEL_INCR
+} level_type_t;
+
+typedef struct {
+    dumptype_tag_t  tag_type;
+    char           *tag;
+    level_type_t    level;
+} dump_selection_t;
+typedef GSList* dump_selection_list_t;
+
 /* part_cache_types */
 typedef enum {
     PART_CACHE_TYPE_NONE,
@@ -274,6 +293,7 @@ typedef enum {
     CONFTYPE_HOST_LIMIT,
     CONFTYPE_NO_YES_ALL,
     CONFTYPE_STR_LIST,
+    CONFTYPE_DUMP_SELECTION,
 } conftype_t;
 
 typedef enum {
@@ -301,6 +321,7 @@ typedef struct val_s {
         autolabel_t     autolabel;
         labelstr_t      labelstr;
 	host_limit_t    host_limit;
+	dump_selection_list_t   dump_selection;
     } v;
     seen_t seen;
     conftype_t type;
@@ -341,6 +362,7 @@ autolabel_t          *val_t_to_autolabel(val_t *);
 labelstr_t           *val_t_to_labelstr(val_t *);
 part_cache_type_t     val_t_to_part_cache_type(val_t *);
 host_limit_t         *val_t_to_host_limit(val_t *);
+dump_selection_list_t val_t_to_dump_selection(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -394,6 +416,7 @@ host_limit_t         *val_t_to_host_limit(val_t *);
 #define val_t__labelstr(val)      (&((val)->v.labelstr))
 #define val_t__part_cache_type(val) ((val)->v.i)
 #define val_t__host_limit(val)    ((val)->v.host_limit)
+#define val_t__dump_selection(val) ((val)->v.dump_selection)
 
 /*
  * Parameters
@@ -747,6 +770,7 @@ typedef enum {
     DUMPTYPE_DUMP_LIMIT,
     DUMPTYPE_MAX_WARNINGS,
     DUMPTYPE_RETRY_DUMP,
+    DUMPTYPE_TAG,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -840,6 +864,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_dump_limit(dtyp)          (val_t_to_host_limit(dumptype_getconf((dtyp), DUMPTYPE_DUMP_LIMIT)))
 #define dumptype_get_max_warnings(dtyp)        (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_MAX_WARNINGS)))
 #define dumptype_get_retry_dump(dtyp)          (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_RETRY_DUMP)))
+#define dumptype_get_tags(dtyp)                (val_t_to_str_list(dumptype_getconf((dtyp), DUMPTYPE_TAG)))
 
 /*
  * Interface parameter access
@@ -1392,6 +1417,7 @@ typedef enum storage_e  {
     STORAGE_REPORT_NEXT_MEDIA,
     STORAGE_INTERACTIVITY,
     STORAGE_SET_NO_REUSE,
+    STORAGE_DUMP_SELECTION,
     STORAGE_STORAGE
 } storage_key;
 
@@ -1464,6 +1490,7 @@ char *storage_name(storage_t *app);
 #define storage_get_report_next_media(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_REPORT_NEXT_MEDIA)))
 #define storage_get_interactivity(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_INTERACTIVITY)))
 #define storage_get_set_no_reuse(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_SET_NO_REUSE)))
+#define storage_get_dump_selection(storage)  (val_t_to_dump_selection(storage_getconf((storage), STORAGE_DUMP_SELECTION)))
 
 
 /*

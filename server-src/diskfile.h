@@ -126,6 +126,7 @@ typedef struct disk_s {
     identlist_t pp_scriptlist;
     host_limit_t *dump_limit;
     int		retry_dump;
+    identlist_t tags;
     void	*up;			/* generic user pointer */
 } disk_t;
 

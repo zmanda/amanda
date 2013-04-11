@@ -732,6 +732,7 @@ parse_diskline(
     disk->data_path	     = dumptype_get_data_path(dtype);
     disk->dump_limit	     = dumptype_get_dump_limit(dtype);
     disk->retry_dump	     = dumptype_get_retry_dump(dtype);
+    disk->tags		     = dumptype_get_tags(dtype);
 
     /*
      * Boolean parameters with no value (Appears here as value 2) defaults

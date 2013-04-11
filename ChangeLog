@@ -1,3 +1,13 @@
+2013-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, common-src/conffile.h: Add tag in dumptype
+	  and dump-selection in storage.
+	* perl/Amanda/Config.swg: Add new configuration setting.
+	* installcheck/Amanda_Config.pl: Check parsing dump-selection.
+	* server-src/diskfile.h: Add tags to disk_t.
+	* server-src/diskfile.c: set disk_t->tags.
+	* server-src/driver.c: Use tags and dump-selection.
+	* perl/Amanda/Storage.pm: Set $self->{'dump_selection'}.
+
 2013-04-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Add await_device method and handle
 	  cancelling a dump before the device is set.

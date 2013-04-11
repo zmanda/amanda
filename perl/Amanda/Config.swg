@@ -226,7 +226,8 @@ APPLY(DUMPTYPE_ALLOW_SPLIT)\
 APPLY(DUMPTYPE_MAX_WARNINGS)\
 APPLY(DUMPTYPE_RECOVERY_LIMIT) \
 APPLY(DUMPTYPE_DUMP_LIMIT) \
-APPLY(DUMPTYPE_RETRY_DUMP)
+APPLY(DUMPTYPE_RETRY_DUMP) \
+APPLY(DUMPTYPE_TAG)
 
 amglue_add_enum_tag_fns(dumptype_key);
 amglue_add_constants(FOR_ALL_DUMPTYPE_KEY, dumptype_key);
@@ -358,7 +359,8 @@ APPLY(STORAGE_TAPERFLUSH) \
 APPLY(STORAGE_REPORT_USE_MEDIA) \
 APPLY(STORAGE_REPORT_NEXT_MEDIA) \
 APPLY(STORAGE_INTERACTIVITY) \
-APPLY(STORAGE_SET_NO_REUSE)
+APPLY(STORAGE_SET_NO_REUSE) \
+APPLY(STORAGE_DUMP_SELECTION)
 
 amglue_add_enum_tag_fns(storage_key);
 amglue_add_constants(FOR_ALL_STORAGE_KEY, storage_key);
@@ -463,6 +465,18 @@ amglue_add_constant(PART_CACHE_TYPE_DISK, part_cache_type_t);
 amglue_add_constant(PART_CACHE_TYPE_MEMORY, part_cache_type_t);
 amglue_copy_to_tag(part_cache_type_t, getconf);
 
+amglue_add_enum_tag_fns(dumptype_tag_t);
+amglue_add_constant(TAG_NAME, dumptype_tag_t);
+amglue_add_constant(TAG_ALL, dumptype_tag_t);
+amglue_add_constant(TAG_OTHER, dumptype_tag_t);
+amglue_copy_to_tag(dumptype_tag_t, getconf);
+
+amglue_add_enum_tag_fns(level_type_t);
+amglue_add_constant(LEVEL_ALL, level_type_t);
+amglue_add_constant(LEVEL_FULL, level_type_t);
+amglue_add_constant(LEVEL_INCR, level_type_t);
+amglue_copy_to_tag(level_type_t, getconf);
+
 /*
  * val_t typemaps
  */
@@ -487,6 +501,8 @@ amglue_copy_to_tag(part_cache_type_t, getconf);
  *  - CONFTYPE_HOST_LIMIT -> listref of match expressions;
  *           "SAMEHOST-SAMEHOST-SAMEHOST" in list is taken to mean 'same-host'
  *           "SERVER-SERVER-SERVER" in list is taken to mean 'server'
+ *  - CONFTYPE_DUMP_SELECTION -> listref of hashref with keys 'tag' (PV), tag_type (IV),
+							      'level' (IV)
  */
 
 %perlcode %{
@@ -552,7 +568,7 @@ val_t_to_sv(val_t *val, SV **results) {
 
 		/* now build the hash */
 		hv = (HV *)sv_2mortal((SV *)newHV());
-		
+
 		hv_store(hv, "file", 4, newRV((SV *)file_entries), 0);
 		hv_store(hv, "list", 4, newRV((SV *)list_entries), 0);
 		hv_store(hv, "optional", 8, optional, 0);
@@ -642,6 +658,26 @@ val_t_to_sv(val_t *val, SV **results) {
 		    av_push(av, newSVpv("SERVER-SERVER-SERVER", 0));
 		for (iter=rl->match_pats; iter != NULL; iter = iter->next) {
 		    av_push(av, newSVpv((char *)iter->data, 0));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)av));
+		return 1;
+	    }
+
+	    case CONFTYPE_DUMP_SELECTION: {
+		AV *av;
+		dump_selection_list_t dsl = val_t__dump_selection(val);
+		av = newAV();
+		for (dsl ; dsl != NULL; dsl = dsl->next) {
+		    dump_selection_t *ds = dsl->data;
+		    HV *hv;
+
+		    hv = (HV *)sv_2mortal((SV *)newHV());
+
+		    hv_store(hv, "tag", strlen("tag"), newSVpv(ds->tag, 0), 0);
+		    hv_store(hv, "tag_type", strlen("tag_type"), newSViv(ds->tag_type), 0);
+		    hv_store(hv, "level", strlen("level"), newSViv(ds->level), 0);
+		    av_push(av, newRV_inc((SV*)hv));
 		}
 
 		results[0] = sv_2mortal(newRV_noinc((SV *)av));
