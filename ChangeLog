@@ -1,3 +1,6 @@
+2013-04-11 Dan Locks <dwlocks@zmanda.com>
+	* Update copyright date to 2013
+
 2013-04-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Add await_device method and handle
 	  cancelling a dump before the device is set.
