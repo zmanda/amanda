@@ -234,7 +234,7 @@ use strict;
 use warnings;
 use Amanda::Config qw( :getconf );
 use Amanda::Tapelist;
-use Amanda::Debug;
+use Amanda::Debug qw( debug );
 use Amanda::Util qw( match_labelstr_template );
 
 sub new {

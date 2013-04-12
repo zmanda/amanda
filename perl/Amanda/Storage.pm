@@ -23,6 +23,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use vars qw( @ISA );
+use IPC::Open2;
 
 use Amanda::Paths;
 use Amanda::Util;
@@ -32,6 +33,7 @@ use Amanda::Debug qw( debug );
 use Amanda::MainLoop;
 use Amanda::Policy;
 use Amanda::Changer;
+use Amanda::Paths;
 
 =head1 NAME
 
@@ -153,6 +155,7 @@ sub new {
     $self->{'policy'} = Amanda::Policy->new(policy => storage_getconf($st, $STORAGE_POLICY));
     $self->{'tapepool'} = storage_getconf($st, $STORAGE_TAPEPOOL);
     $self->{'eject_volume'} = storage_getconf($st, $STORAGE_EJECT_VOLUME);
+    $self->{'erase_volume'} = storage_getconf($st, $STORAGE_ERASE_VOLUME);
     $self->{'device_output_buffer_size'} = storage_getconf($st, $STORAGE_DEVICE_OUTPUT_BUFFER_SIZE);
     $self->{'seen_device_output_buffer_size'} = storage_seen($st, $STORAGE_DEVICE_OUTPUT_BUFFER_SIZE);
     $self->{'autoflush'} = storage_getconf($st, $STORAGE_AUTOFLUSH);
@@ -180,6 +183,21 @@ sub new {
 				if defined $changer_name;
     return $self;
 
+}
+
+sub erase_no_retention {
+    my $self = shift;
+
+    my @command = ("$sbindir/amrmtape", Amanda::Config::get_config_name(), "--remove-no-retention", "--keep-label", "--erase", "-ostorage=$self->{'storage_name'}");
+    debug("Running: " . join(' ', @command));
+    my ($child_out, $child_in);
+    my $pid = open2($child_out, $child_in, @command);
+    close($child_in);
+    while (<$child_out>) {
+	debug($_);
+    }
+    close($child_out);
+    waitpid($pid, 0);
 }
 
 sub quit {

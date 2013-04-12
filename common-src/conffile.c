@@ -95,7 +95,7 @@ typedef enum {
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
-    CONF_CMDFILE,	       CONF_SET_NO_REUSE,
+    CONF_CMDFILE,	       CONF_SET_NO_REUSE,	CONF_ERASE_VOLUME,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -1020,6 +1020,7 @@ keytab_t server_keytab[] = {
     { "DUMP_LIMIT", CONF_DUMP_LIMIT },
     { "DUMP_SELECTION", CONF_DUMP_SELECTION },
     { "EJECT_VOLUME", CONF_EJECT_VOLUME },
+    { "ERASE_VOLUME", CONF_ERASE_VOLUME },
     { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
     { "ERROR", CONF_ERROR },
@@ -1570,6 +1571,7 @@ conf_var_t storage_var [] = {
    { CONF_TAPERALGO                , CONFTYPE_TAPERALGO     , read_taperalgo     , STORAGE_TAPERALGO                , NULL },
    { CONF_TAPER_PARALLEL_WRITE     , CONFTYPE_INT           , read_int           , STORAGE_TAPER_PARALLEL_WRITE     , NULL },
    { CONF_EJECT_VOLUME             , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_EJECT_VOLUME             , NULL },
+   { CONF_ERASE_VOLUME             , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_VOLUME             , NULL },
    { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE          , read_size          , STORAGE_DEVICE_OUTPUT_BUFFER_SIZE, NULL },
    { CONF_AUTOFLUSH                , CONFTYPE_NO_YES_ALL    , read_no_yes_all    , STORAGE_AUTOFLUSH                , NULL },
    { CONF_FLUSH_THRESHOLD_DUMPED   , CONFTYPE_INT           , read_int           , STORAGE_FLUSH_THRESHOLD_DUMPED   , validate_nonnegative },
@@ -3405,6 +3407,7 @@ init_storage_defaults(
     conf_init_taperalgo     (&stcur.value[STORAGE_TAPERALGO]                , 0);
     conf_init_int           (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE]     , CONF_UNIT_NONE, 0);
     conf_init_bool          (&stcur.value[STORAGE_EJECT_VOLUME]             , 0);
+    conf_init_bool          (&stcur.value[STORAGE_ERASE_VOLUME]             , 0);
     conf_init_int           (&stcur.value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], CONF_UNIT_NONE, 0);
     conf_init_no_yes_all    (&stcur.value[STORAGE_AUTOFLUSH]                , 0);
     conf_init_int           (&stcur.value[STORAGE_FLUSH_THRESHOLD_DUMPED]   , CONF_UNIT_NONE, 0);

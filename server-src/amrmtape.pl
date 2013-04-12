@@ -279,8 +279,9 @@ my $scrub_db = sub {
 };
 
 my $erase_volume = make_cb('erase_volume' => sub {
+    my $storage_name = shift;
     if ($erase) {
-	my ($storage) = Amanda::Storage->new(tapelist => $tapelist);
+	my ($storage) = Amanda::Storage->new(name => $storage_name, tapelist => $tapelist);
 	if ($storage->isa("Amanda::Changer::Error")) {
 	    die "error creating storage: $storage";
 	}
@@ -292,11 +293,14 @@ my $erase_volume = make_cb('erase_volume' => sub {
 	    'label' => $label,
 	    'res_cb' => sub {
 		my ($err, $resv) = @_;
-		die $err if $err;
 
-                my $dev = $resv->{'device'};
-                die "Can not erase $label because the device doesn't support this feature"
-                    unless $dev->property_get('full_deletion');
+		if ($err) {
+		    print "Can't erase volume because: $err\n";
+		    $chg->quit();
+		    die $err if $err;
+		    $scrub_db->();
+		}
+		#die $err if $err;
 
 		my $rel_cb = make_cb('rel_cb' => sub {
 		    $resv->release(finished_cb => sub {
@@ -308,6 +312,12 @@ my $erase_volume = make_cb('erase_volume' => sub {
 			$scrub_db->();
 		    });
 		});
+
+                my $dev = $resv->{'device'};
+		if (!$dev->property_get('full_deletion')) {
+		    print "Can not erase $label because the device doesn't support this feature\n";
+		    return $rel_cb->();
+		}
 
                 if (!$dry_run) {
                     if (!$dev->erase()) {
@@ -349,13 +359,53 @@ if ($list_retention) {
     my @list = Amanda::Tapelist::list_no_retention();
     foreach my $mlabel (@list) {
 	$label = $mlabel;
-	$erase_volume->();
-	Amanda::MainLoop::run();
+	my $storage_name;
+	my $t = $tapelist->lookup_tapelabel($label);
+	if (!defined $t) {
+	    print "label '$label' not found in $tapelist_file\n";
+	    my $t_storage = $t->{'storage'};
+	    $t_storage = get_config_name() if !defined $t_storage;
+	    if (getconf_seen($CNF_STORAGE)) {
+		my $storage_list = getconf($CNF_STORAGE);
+		for my $storage_n (@{$storage_list}) {
+		    if ($t_storage eq $storage_n) {
+                    $storage_name = $storage_n;
+		    }
+		}
+	    } else {
+		$storage_name = $t_storage;
+	    }
+
+	    if (defined $storage_name) {
+		$erase_volume->($storage_name);
+		Amanda::MainLoop::run();
+	    }
+	}
     }
 } else {
     # kick things off
-    $erase_volume->();
-    Amanda::MainLoop::run();
+    my $storage_name;
+    my $t = $tapelist->lookup_tapelabel($label);
+    if (!defined $t) {
+	print "label '$label' not found in $tapelist_file\n";
+    } else {
+	my $t_storage = $t->{'storage'};
+	$t_storage = get_config_name() if !defined $t_storage;
+	if (getconf_seen($CNF_STORAGE)) {
+	    my $storage_list = getconf($CNF_STORAGE);
+	    for my $storage_n (@{$storage_list}) {
+		if ($t_storage eq $storage_n) {
+		    $storage_name = $storage_n;
+		}
+	    }
+	} else {
+	    $storage_name = $t_storage;
+	}
+	if (defined $storage_name) {
+	    $erase_volume->($storage_name);
+	    Amanda::MainLoop::run();
+	}
+    }
 }
 
 Amanda::Util::finish_application();

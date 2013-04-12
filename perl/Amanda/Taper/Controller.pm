@@ -43,6 +43,7 @@ package Amanda::Taper::Controller;
 
 use POSIX qw( :errno_h );
 use Amanda::Policy;
+use Amanda::Debug qw( debug );
 use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
@@ -118,6 +119,7 @@ sub start {
 	message_cb => $message_cb,
 	message_obj => $self,
 	debug => $Amanda::Config::debug_taper?'taper/driver':'',
+	no_read => 1,
     );
 
     my ($storage) = Amanda::Storage->new(
@@ -138,6 +140,10 @@ sub start {
 
 	# don't finish start()ing
 	return;
+    }
+    if ($storage->{'erase_volume'}) {
+	$storage->erase_no_retention();
+	$self->{'tapelist'}->reload();
     }
     my $changer = $storage->{'chg'};
     if ($changer->isa("Amanda::Changer::Error")) {
@@ -166,6 +172,7 @@ sub start {
 					    changer => $changer,
 					    interactivity => $interactivity,
 					    tapelist => $self->{'tapelist'});
+    $self->{'proto'}->start_read();
 }
 
 sub quit {

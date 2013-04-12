@@ -3317,6 +3317,15 @@ A comment string describing this storage.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>erase-volume</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: <amkeyword>NO</amkeyword>. Automatically erase the volume when
+the policy expire. This is useful to free space on vtape or s3 devices or to
+allow another storage to use that volume.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>meta-autolabel</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: value of the global <amkeyword>meta-autolabel</amkeyword>.</para>

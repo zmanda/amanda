@@ -1408,6 +1408,7 @@ typedef enum storage_e  {
     STORAGE_TAPERALGO,
     STORAGE_TAPER_PARALLEL_WRITE,
     STORAGE_EJECT_VOLUME,
+    STORAGE_ERASE_VOLUME,
     STORAGE_DEVICE_OUTPUT_BUFFER_SIZE,
     STORAGE_AUTOFLUSH,
     STORAGE_FLUSH_THRESHOLD_DUMPED,
@@ -1481,6 +1482,7 @@ char *storage_name(storage_t *app);
 #define storage_get_taperalgo(storage)  (val_t_to_taperalgo(storage_getconf((storage), STORAGE_TAPERALGO)))
 #define storage_get_taper_parallel_write(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_TAPER_PARALLEL_WRITE)))
 #define storage_get_eject_volume(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_EJECT_VOLUME)))
+#define storage_get_erase_volume(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_VOLUME)))
 #define storage_get_device_output_buffer_size(storage)  (val_t_to_size(storage_getconf((storage), STORAGE_DEVICE_OUTPUT_BUFFER_SIZE)))
 #define storage_get_autoflush(storage)  (val_t_to_no_yes_all(storage_getconf((storage), STORAGE_AUTOFLUSH)))
 #define storage_get_flush_threshold_dumped(storage)  (val_t_to_int(storage_getconf((storage), STORAGE_FLUSH_THRESHOLD_DUMPED)))

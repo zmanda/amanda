@@ -1,4 +1,16 @@
 2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Parse erase-volume in a storage.
+	* common-src/conffile.h: Add STORAGE_ERASE_VOLUME.
+	* man/xml-source/amanda.conf.5.xml: Document erase-volume.
+	* perl/Amanda/Config.swg: Add STORAGE_ERASE_VOLUME.
+	* perl/Amanda/Changer.pm: Fix warning when meta not set.
+	* perl/Amanda/IPC/LineProtocol.pm:Allow delayed start of reading.
+	* perl/Amanda/Storage.pm: New erase_no_retention method.
+	* perl/Amanda/Taper/Controller.pm: Call $storage->erase_no_retention().
+	* perl/Amanda/Taper/Scan.pm: Use Debug qw( debug ).
+	* server-src/amrmtape.pl: hanlde multiple storage.
+
+2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Add force-level-1 command.
 	* man/xml-source/amadmin.8.xml: Document force-level-1 command.
 	* server-src/infofile.h: Add FORCE_LEVEL_1.

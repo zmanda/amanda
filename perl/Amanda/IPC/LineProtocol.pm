@@ -340,12 +340,22 @@ sub new {
 	}
     }
 
+    if (!$params{'no_read'} ) {
+	$self->start_read();
+    }
+
+    return $self;
+}
+
+sub start_read {
+    my $self = shift;
+
+    return if defined $self->{'rx_source'};
+
     # start reading..
     $self->{'rx_source'} = Amanda::MainLoop::async_read(
 	fd => $self->{'rx_fh'}->fileno(),
 	async_read_cb => sub { $self->_async_read_cb(@_); });
-
-    return $self;
 }
 
 sub set_message_cb {
@@ -365,6 +375,7 @@ sub stop {
     if (defined $self->{'rx_source'}) {
 	$self->{'rx_source'}->remove();
     }
+    $self->{'rx_source'} = undef;
 
     # and flush any outgoing messages
     if ($self->{'tx_outstanding_writes'} > 0) {
