@@ -1,4 +1,7 @@
 2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Fix bad check.
+
+2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Add force-level-1 command.
 	* man/xml-source/amadmin.8.xml: Document force-level-1 command.
 	* server-src/infofile.h: Add FORCE_LEVEL_1.

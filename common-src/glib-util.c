@@ -100,7 +100,7 @@ glib_init(void) {
      * is initialized) */
 #ifdef HAVE_LIBCURL
 # ifdef G_THREADS_ENABLED
-    if (!glib_major_version < 2 ||
+    if (glib_major_version < 2 ||
 	(glib_major_version == 2 && glib_minor_version < 31))
 	g_assert(!g_thread_supported()); /* assert threads aren't initialized yet */
 # endif
