@@ -870,6 +870,25 @@ setup_estimate(
 		    dp->host->hostname, qname);
 	}
     }
+    else if (ISSET(info->command, FORCE_LEVEL_1)) {
+	/* force a level 1 */
+	if (dp->strategy == DS_NOINC) {
+	    log_add(L_WARNING,
+		    _("Cannot force level 1 dump of %s:%s with no-incr option."),
+		    dp->host->hostname, qname);
+
+	    /* clear force-level-1 command */
+	    CLR(info->command, FORCE_LEVEL_1);
+	    ep->last_level = last_level(info);
+	    ep->next_level0 = next_level0(dp, info);
+	} else {
+	    ep->degr_mesg = "";
+	    ep->last_level = 0;
+	    ep->next_level0 = 0;
+	    log_add(L_INFO, _("Forcing level 1 of %s:%s as directed."),
+		    dp->host->hostname, qname);
+	}
+    }
     else if(dp->strategy == DS_NOFULL) {
 	/* force estimate of level 1 */
 	ep->last_level = 1;
@@ -1025,6 +1044,7 @@ setup_estimate(
 
     if (dp->strategy == DS_NOINC ||
 	(!dp->skip_full &&
+	 !ISSET(info->command, FORCE_LEVEL_1) &&
 	 (!ISSET(info->command, FORCE_BUMP) ||
 	  dp->skip_incr ||
 	  ep->last_level == -1))) {
@@ -1034,7 +1054,7 @@ setup_estimate(
 		    dp->host->hostname, qname);
 	}
 	switch (dp->strategy) {
-	case DS_STANDARD: 
+	case DS_STANDARD:
 	case DS_NOINC:
 	    askfor(ep, i++, 0, info);
 	    if (ep->last_level == -1)
@@ -1051,7 +1071,7 @@ setup_estimate(
 		 _("Ignoring FORCE_BUMP for %s:%s because the strategy is NOINC."),
 			dp->host->hostname, qname);
 	    }
-	    
+
 	    break;
 
 	case DS_NOFULL:
@@ -1078,7 +1098,10 @@ setup_estimate(
 
 	    curr_level = ep->last_level;
 
-	    if (ISSET(info->command, FORCE_NO_BUMP)) {
+	    if (ISSET(info->command, FORCE_LEVEL_1)) {
+		askfor(ep, i++, 1, info);
+		ep->degr_mesg = _("Skipping: force-level-1 disk can't be dumped in degraded mode");
+	    } else if (ISSET(info->command, FORCE_NO_BUMP)) {
 		if(curr_level > 0) { /* level 0 already asked for */
 		    askfor(ep, i++, curr_level, info);
 		}

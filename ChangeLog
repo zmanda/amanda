@@ -1,3 +1,9 @@
+2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Add force-level-1 command.
+	* man/xml-source/amadmin.8.xml: Document force-level-1 command.
+	* server-src/infofile.h: Add FORCE_LEVEL_1.
+	* server-src/planner.c: Handle FORCE_LEVEL_1.
+
 2013-04-11 Dan Locks <dwlocks@zmanda.com>
 	* Update copyright date to 2013
 

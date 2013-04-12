@@ -53,6 +53,8 @@ static void estimate(int argc, char **argv);
 static void estimate_one(disk_t *dp);
 void force(int argc, char **argv);
 void force_one(disk_t *dp);
+void force_level_1(int argc, char **argv);
+void force_level_1_one(disk_t *dp);
 void unforce(int argc, char **argv);
 void unforce_one(disk_t *dp);
 void force_bump(int argc, char **argv);
@@ -111,6 +113,8 @@ static const struct {
 	T_(" [<hostname> [<disks>]* ]*\t# Print server estimate.") },
     { "force", force,
 	T_(" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run.") },
+    { "force-level-1", force_level_1,
+	T_(" [<hostname> [<disks>]* ]+\t\t# Force level 1 at next run.") },
     { "unforce", unforce,
 	T_(" [<hostname> [<disks>]* ]+\t# Clear force command.") },
     { "force-bump", force_bump,
@@ -462,9 +466,14 @@ force_one(
 
     get_info(hostname, diskname, &info);
     SET(info.command, FORCE_FULL);
+    if (ISSET(info.command, FORCE_LEVEL_1)) {
+	CLR(info.command, FORCE_LEVEL_1);
+	g_printf(_("%s: WARNING: %s:%s FORCE-LEVEL-1 command was cleared.\n"),
+	       get_pname(), hostname, diskname);
+    }
     if (ISSET(info.command, FORCE_BUMP)) {
 	CLR(info.command, FORCE_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE-BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
@@ -495,6 +504,48 @@ force(
 
 
 void
+force_level_1_one(
+    disk_t *	dp)
+{
+    char *hostname = dp->host->hostname;
+    char *diskname = dp->name;
+    info_t info;
+
+    get_info(hostname, diskname, &info);
+    SET(info.command, FORCE_LEVEL_1);
+    if (ISSET(info.command, FORCE_FULL)) {
+	CLR(info.command, FORCE_FULL);
+	g_printf(_("%s: WARNING: %s:%s FORCE command was cleared.\n"),
+	       get_pname(), hostname, diskname);
+    }
+    if (ISSET(info.command, FORCE_BUMP)) {
+	CLR(info.command, FORCE_BUMP);
+	g_printf(_("%s: WARNING: %s:%s FORCE-BUMP command was cleared.\n"),
+	       get_pname(), hostname, diskname);
+    }
+    if(put_info(hostname, diskname, &info) == 0) {
+	g_printf(_("%s: %s:%s is set to a forced level 1 at next run.\n"),
+		 get_pname(), hostname, diskname);
+    } else {
+	g_fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
+		get_pname(), hostname, diskname);
+    }
+}
+
+
+void
+force_level_1(
+    int		argc,
+    char **	argv)
+{
+    diskloop(argc, argv, "force", force_level_1_one);
+}
+
+
+/* ----------------------------------------------- */
+
+
+void
 unforce_one(
     disk_t *	dp)
 {
@@ -511,6 +562,16 @@ unforce_one(
 	} else {
 	    g_fprintf(stderr,
 		    _("%s: force command for %s:%s could not be cleared.\n"),
+		    get_pname(), hostname, diskname);
+	}
+    } else if (ISSET(info.command, FORCE_LEVEL_1)) {
+	CLR(info.command, FORCE_LEVEL_1);
+	if(put_info(hostname, diskname, &info) == 0){
+	    g_printf(_("%s: force-level-1 command for %s:%s cleared.\n"),
+		   get_pname(), hostname, diskname);
+	} else {
+	    g_fprintf(stderr,
+		    _("%s: force-level-1 command for %s:%s could not be cleared.\n"),
 		    get_pname(), hostname, diskname);
 	}
     }
@@ -544,12 +605,17 @@ force_bump_one(
     SET(info.command, FORCE_BUMP);
     if (ISSET(info.command, FORCE_NO_BUMP)) {
 	CLR(info.command, FORCE_NO_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE_NO_BUMP command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE-NO-BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if (ISSET(info.command, FORCE_FULL)) {
 	CLR(info.command, FORCE_FULL);
-	g_printf(_("%s: WARNING: %s:%s FORCE_FULL command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE command was cleared.\n"),
+	       get_pname(), hostname, diskname);
+    }
+    if (ISSET(info.command, FORCE_LEVEL_1)) {
+	CLR(info.command, FORCE_LEVEL_1);
+	g_printf(_("%s: WARNING: %s:%s FORCE-LEVEL-1 command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
@@ -586,7 +652,7 @@ force_no_bump_one(
     SET(info.command, FORCE_NO_BUMP);
     if (ISSET(info.command, FORCE_BUMP)) {
 	CLR(info.command, FORCE_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE-BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {

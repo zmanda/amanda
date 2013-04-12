@@ -72,6 +72,7 @@ typedef struct info_s {
 #	define FORCE_FULL	1	/* force level 0 at next run */
 #	define FORCE_BUMP	2	/* force bump at next run */
 #	define FORCE_NO_BUMP	4	/* force no-bump at next run */
+#	define FORCE_LEVEL_1	8	/* force level 1 at next run */
     perf_t  full;
     perf_t  incr;
     stats_t inf[DUMP_LEVELS];
