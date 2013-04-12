@@ -1240,8 +1240,8 @@ foreach my $exp_ok_columnspec (
 $testconf = Installcheck::Config->new();
 $testconf->add_storage('storage1', [
     'dump_selection' => '"full" FULL',
-    'dump_selection' => '"incr" INCR',
-    'dump_selection' => 'ALL ALL',
+    'dump_selection' => 'append "incr" INCR',
+    'dump_selection' => 'append ALL ALL',
 ]);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
