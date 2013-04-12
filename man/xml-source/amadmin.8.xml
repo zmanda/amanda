@@ -168,10 +168,21 @@ to do a full (level 0) backup during the next Amanda run.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>force-level-1</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to do a level 1 backup during the next Amanda run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>unforce</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
   <listitem>
 <para>Undo a previous
-<emphasis remap='B'>force</emphasis>
+<emphasis remap='B'>force</emphasis> or
+<emphasis remap='B'>force-level-1</emphasis>
 command.</para>
   </listitem>
   </varlistentry>
