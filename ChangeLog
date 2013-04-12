@@ -1,4 +1,7 @@
 2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Document many storage setting.
+
+2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Config.pl: Add append keyword for dump-selection check.
 
 2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>

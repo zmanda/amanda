@@ -795,7 +795,7 @@ time. The changer must have as many drives.</para>
 </varlistentry>
 
 <varlistentry>
-  <term><amkeyword>eject-volume</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>eject-volume</amkeyword> <amtype>bool</amtype></term>
   <listitem>
     <para>Default: <amdefault>no</amdefault>.
 Set to <amkeyword>yes</amkeyword> if you want the volume to be ejected
@@ -3286,31 +3286,9 @@ selected.
 <para>The storage options and values are:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>autoflush</amkeyword> <amkeyword>no</amkeyword>|<amkeyword>yes</amkeyword>|<amkeyword>all</amkeyword></term>
   <listitem>
-<para>Default: not set.
-A comment string describing this storage.</para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><amkeyword>policy</amkeyword> <amtype>string</amtype></term>
-  <listitem>
-<para>Default: CONFIG_NAME. Define the policy to use.</para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
-  <listitem>
-<para>Default: value of the global <amkeyword>tpchanger</amkeyword>.</para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
-  <listitem>
-<para>Default: value of the global <amkeyword>labelstr</amkeyword>.</para>
+<para>Default: value of the global <amkeyword>autoflush</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
@@ -3328,6 +3306,21 @@ A comment string describing this storage.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.
+A comment string describing this storage.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>device-output-buffer-size</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>device-output-buffer-size</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>dump-selection</amkeyword> [<amkeyword>append</amkeyword>]
 	[<amtype>string</amtype> | <amkeyword>ALL</amkeyword>]
 	[ <amkeyword>ALL</amkeyword> | <amkeyword>FULL</amkeyword> | <amkeyword>INCR</amkeyword> ]</term>
@@ -3341,6 +3334,13 @@ The second field is the level, it can be <amkeyword>ALL</amkeyword> for all leve
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>eject-volume</amkeyword> <amtype>bool</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>eject-volume</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>erase-volume</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: <amkeyword>NO</amkeyword>. Automatically erase the volume when
@@ -3350,37 +3350,30 @@ allow another storage to use that volume.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>meta-autolabel</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>flush-threshold-dumped</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: value of the global <amkeyword>meta-autolabel</amkeyword>.</para>
+<para>Default: value of the global <amkeyword>flush-threshold-dumped</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>tapepool</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>flush-threshold-scheduled</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: CONFIG_NAME.</para>
+<para>Default: value of the global <amkeyword>flush-threshold-scheduled</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>runtapes</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>interactivity</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: value of the global <amkeyword>runtapes</amkeyword>.</para>
+<para>Default: value of the global <amkeyword>interactivity</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>taperscan</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>labelstr</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: value of the global <amkeyword>taperscan</amkeyword>.</para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><amkeyword>tapetype</amkeyword> <amtype>string</amtype></term>
-  <listitem>
-<para>Default: value of the global <amkeyword>tapetype</amkeyword>.</para>
+<para>Default: value of the global <amkeyword>labelstr</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
@@ -3392,6 +3385,56 @@ allow another storage to use that volume.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>meta-autolabel</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>meta-autolabel</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>policy</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: CONFIG_NAME. Define the policy to use.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>report-use-media</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>report-use-media</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>report-next-media</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>report-next-media</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>runtapes</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>runtapes</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>set-no-reuse</amkeyword> <amtype>bool</amtype></term>
+  <listitem>
+<para>Default: <amkeyword>no</amkeyword>. If set to <amkeyword>yes</amkeyword>,
+a volume is marked as <amkeyword>no-reuse</amkeyword> after it is written.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tapepool</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: CONFIG_NAME.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>taperalgo</amkeyword>  [ <amkeyword>first</amkeyword> | <amkeyword>firstfit</amkeyword> | <amkeyword>largest</amkeyword> | <amkeyword>largestfit</amkeyword> | <amkeyword>smallest</amkeyword> | <amkeyword>last</amkeyword> ]</term>
   <listitem>
 <para>Default: value of the global <amkeyword>taperalgo</amkeyword>.</para>
@@ -3399,9 +3442,37 @@ allow another storage to use that volume.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>taperflush</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>taperflush</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>taperscan</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>taperscan</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>taper-parallel-write</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default: value of the global <amkeyword>taper-parallel-write</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tapetype</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>tapetype</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>tpchanger</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
