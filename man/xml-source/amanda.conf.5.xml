@@ -372,7 +372,7 @@ If the reporter must print the list of media expected for the next run.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>report-format</amkeyword> <amtype>string</amtype>+</term>
+  <term><amkeyword>report-format</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype>+</term>
   <listitem>
 <para>Default:
 <amdefault>Not set</amdefault>. The formats amdump, amflush and amvault use
@@ -2407,6 +2407,17 @@ The default unit is Kbytes if it is not specified.</para>
 
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+      <term><amkeyword>tag</amkeyword> [<amkeyword>append</amkeyword>]
+	    <amtype>string</amtype>*</term>
+  <listitem>
+
+<para>Default: no default. Specify the tags that match the dump-selection
+of a storage.</para>
+
+  </listitem>
+  </varlistentry>
 </variablelist>
 
 <para>The following <amkeyword>dumptype</amkeyword> entries are predefined by Amanda:</para>
@@ -3313,6 +3324,19 @@ A comment string describing this storage.</para>
         [<amkeyword>empty</amkeyword>]</term>
   <listitem>
 <para>Default: value of the global <amkeyword>autolabel</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>dump-selection</amkeyword> [<amkeyword>append</amkeyword>]
+	[<amtype>string</amtype> | <amkeyword>ALL</amkeyword>]
+	[ <amkeyword>ALL</amkeyword> | <amkeyword>FULL</amkeyword> | <amkeyword>INCR</amkeyword> ]</term>
+  <listitem>
+<para>Default: no default. The dump-selection specify which dump will be written to
+the storage. The first field is the tag, either it is <amkeyword>ALL</amkeyword> and all DLEs matches or it is a tag string and a dle match only if it have that tag.
+The second field is the level, it can be <amkeyword>ALL</amkeyword> for all level,
+<amkeyword>FULL</amkeyword> for level 0 only or <amkeyword>INCR</amkeyword> for level >
+0 only.</para>
   </listitem>
   </varlistentry>
 

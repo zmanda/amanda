@@ -1,4 +1,8 @@
 2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add APPEND keyword to tag and dump-selection.
+	* man/xml-source/amanda.conf.5.xml: Document tag and dump-selection.
+
+2013-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Parse erase-volume in a storage.
 	* common-src/conffile.h: Add STORAGE_ERASE_VOLUME.
 	* man/xml-source/amanda.conf.5.xml: Document erase-volume.

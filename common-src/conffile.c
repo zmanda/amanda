@@ -3911,6 +3911,13 @@ read_str_list(
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
+    if (tok == CONF_APPEND) {
+	get_conftoken(CONF_ANY);
+    } else {
+	free_val_t(val);
+	val->v.identlist = NULL;
+	ckseen(&val->seen);
+    }
     while (tok == CONF_STRING) {
 	val->v.identlist = g_slist_append(val->v.identlist,
 					  g_strdup(tokenval.v.s));
@@ -3966,6 +3973,13 @@ read_dump_selection(
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
+    if (tok == CONF_APPEND) {
+	get_conftoken(CONF_ANY);
+    } else {
+	free_val_t(val);
+	val->v.dump_selection = NULL;
+	ckseen(&val->seen);
+    }
     if (tok == CONF_STRING) {
 	ds->tag_type = TAG_NAME;
 	ds->tag = g_strdup(tokenval.v.s);
