@@ -163,7 +163,6 @@ do_package() {
     # perl-5.4 compatible
     cat > "${src_dir}/process_proto" <<'EOF'
 use strict;
-use warnings;
 # make a hash from installperms
 open(INSTPERM, "<" . shift @ARGV) or die("open installperms.sh: $!");
 my %installperms = map {
