@@ -91,8 +91,9 @@ my $timestamp = strftime "%Y%m%d%H%M%S", @now;
 my $datestamp = strftime "%Y%m%d", @now;
 my $starttime_locale_independent = strftime "%Y-%m-%d %H:%M:%S %Z", @now;
 my $trace_log_filename = "$logdir/log";
-my $amdump_log_filename_default = "$logdir/amdump";
-my $amdump_log_filename = "$logdir/amdump.$timestamp";
+my $amdump_log_pathname_default = "$logdir/amdump";
+my $amdump_log_pathname = "$logdir/amdump.$timestamp";
+my $amdump_log_filename = "amdump.$timestamp";
 my $exit_code = 0;
 my $amdump_log = \*STDERR;
 
@@ -199,10 +200,10 @@ sub start_logfiles {
     debug("beginning amdump log");
     $amdump_log = undef;
     # Must be opened in append so that all subprocess can write to it.
-    open($amdump_log, ">>", $amdump_log_filename)
-	or die("could not open amdump log file '$amdump_log_filename': $!");
-    unlink $amdump_log_filename_default;
-    symlink $amdump_log_filename, $amdump_log_filename_default;
+    open($amdump_log, ">>", $amdump_log_pathname)
+	or die("could not open amdump log file '$amdump_log_pathname': $!");
+    unlink $amdump_log_pathname_default;
+    symlink $amdump_log_filename, $amdump_log_pathname_default;
 }
 
 sub planner_driver_pipeline {
@@ -294,8 +295,8 @@ sub trim_indexes {
 sub roll_amdump_logs {
     debug("renaming amdump log and trimming old amdump logs (beyond tapecycle+2)");
 
-    unlink "$amdump_log_filename_default.1";
-    rename $amdump_log_filename_default, "$amdump_log_filename_default.1";
+    unlink "$amdump_log_pathname_default.1";
+    rename $amdump_log_pathname_default, "$amdump_log_pathname_default.1";
 
     # keep the latest tapecycle files.
     my @files = sort {-M $b <=> -M $a} grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;

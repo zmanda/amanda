@@ -1,3 +1,6 @@
+2013-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Keep amflush as a relative symlink.
+
 2013-04-13 Dan Locks <dwlocks@zmanda.com>
 	* packaging/sun-pkg/buildpkg: remove "use warnings" for solaris 8 compatibility
 
