@@ -166,7 +166,7 @@ EOF
 }
 
 sub do_amcleanup {
-    return unless -f $amdump_log_filename_default || -f $trace_log_filename;
+    return unless -f $amdump_log_pathname_default || -f $trace_log_filename;
 
     # logfiles are still around.  First, try an amcleanup -p to see if
     # the actual processes are already dead
@@ -174,7 +174,7 @@ sub do_amcleanup {
     run_subprocess("$sbindir/amcleanup", '-p', $config_name, @config_overrides_opts);
 
     # and check again
-    return unless -f $amdump_log_filename_default || -f $trace_log_filename;
+    return unless -f $amdump_log_pathname_default || -f $trace_log_filename;
 
     bail_already_running();
 }

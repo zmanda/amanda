@@ -1,4 +1,7 @@
 2013-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.pl: Missing change for previous patch.
+
+2013-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Keep amflush as a relative symlink.
 
 2013-04-13 Dan Locks <dwlocks@zmanda.com>
