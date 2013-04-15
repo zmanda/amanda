@@ -197,6 +197,7 @@ make_logname(
 {
     char *conf_logdir;
     char *fname = NULL;
+    char *logf;
 
     if (datestamp == NULL)
 	datestamp = g_strdup("error-00000000");
@@ -259,10 +260,12 @@ make_logname(
     }
 
     unlink(fname);
-    if (symlink(logfile, fname) == -1) {
-	g_debug("Can't symlink '%s' to '%s': %s", fname, logfile,
+    logf = g_strdup(rindex(logfile,'/')+1);
+    if (symlink(logf, fname) == -1) {
+	g_debug("Can't symlink '%s' to '%s': %s", fname, logf,
 		strerror(errno));
     }
+    amfree(logf);
 
     amfree(fname);
     amfree(conf_logdir);
