@@ -2259,7 +2259,6 @@ read_block(
 	char              *key = co->key;
 	char              *keyword;
 	char              *value;
-//	keytab_t          *kt;
 
 	if (strncasecmp(key_ovr, key, strlen(key_ovr)) != 0)
 	    continue;
@@ -2268,17 +2267,8 @@ read_block(
 	    continue;
 
 	keyword = key + strlen(key_ovr) + 1;
-	/* convert keyword '-' to '_' */
-//	for (s = keyword; *s != '\0'; s++) {
-//	    if (*s == '-') *s = '_';
-//	}
 	value = co->value;
 
-	/* find the token in keytable */
-//	for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
-//	    if (kt->keyword && strcasecmp(kt->keyword, keyword) == 0)
-//		break;
-//	}
 	tok = lookup_keyword(keyword);
 	if (tok == CONF_UNKNOWN)
 	     continue;
