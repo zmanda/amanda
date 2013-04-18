@@ -2145,11 +2145,6 @@ read_block(
 	keyword = key + strlen(key_ovr) + 1;
 	value = co->value;
 
-	/* find the token in keytable */
-	for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
-	    if (kt->keyword && strcasecmp(kt->keyword, keyword) == 0)
-		break;
-	}
 	tok = lookup_keyword(keyword);
 	if (tok == CONF_UNKNOWN)
 	     continue;
