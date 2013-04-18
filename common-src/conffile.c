@@ -2135,7 +2135,6 @@ read_block(
 	char              *key = co->key;
 	char              *keyword;
 	char              *value;
-	keytab_t          *kt;
 
 	if (key_ovr && strncasecmp(key_ovr, key, strlen(key_ovr)) != 0)
 	    continue;
@@ -2151,12 +2150,13 @@ read_block(
 	    if (kt->keyword && strcasecmp(kt->keyword, keyword) == 0)
 		break;
 	}
-	if (kt->token == CONF_UNKNOWN)
+	tok = lookup_keyword(keyword);
+	if (tok == CONF_UNKNOWN)
 	     continue;
 
 	/* find the var in read_var */
 	for (np = read_var; np->token != CONF_UNKNOWN; np++)
-	    if (np->token == kt->token) break;
+	    if (np->token == tok) break;
 	if (np->token == CONF_UNKNOWN)
 	    continue;
 
