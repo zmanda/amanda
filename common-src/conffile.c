@@ -2259,7 +2259,7 @@ read_block(
 	char              *key = co->key;
 	char              *keyword;
 	char              *value;
-	keytab_t          *kt;
+//	keytab_t          *kt;
 
 	if (strncasecmp(key_ovr, key, strlen(key_ovr)) != 0)
 	    continue;
@@ -2268,19 +2268,24 @@ read_block(
 	    continue;
 
 	keyword = key + strlen(key_ovr) + 1;
+	/* convert keyword '-' to '_' */
+//	for (s = keyword; *s != '\0'; s++) {
+//	    if (*s == '-') *s = '_';
+//	}
 	value = co->value;
 
 	/* find the token in keytable */
-	for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
-	    if (kt->keyword && strcasecmp(kt->keyword, keyword) == 0)
-		break;
-	}
-	if (kt->token == CONF_UNKNOWN)
+//	for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+//	    if (kt->keyword && strcasecmp(kt->keyword, keyword) == 0)
+//		break;
+//	}
+	tok = lookup_keyword(keyword);
+	if (tok == CONF_UNKNOWN)
 	     continue;
 
 	/* find the var in read_var */
 	for (np = read_var; np->token != CONF_UNKNOWN; np++)
-	    if (np->token == kt->token) break;
+	    if (np->token == tok) break;
 	if (np->token == CONF_UNKNOWN)
 	    continue;
 
@@ -2323,7 +2328,9 @@ get_holdingdisk(
     int is_define)
 {
     int save_overwrites;
+    char *saved_block;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -2389,6 +2396,8 @@ get_holdingdisk(
     }
 
     allow_overwrites = save_overwrites;
+
+    current_block = saved_block;
 }
 
 static void
@@ -2449,6 +2458,7 @@ read_dumptype(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -2463,6 +2473,7 @@ read_dumptype(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -2492,6 +2503,8 @@ read_dumptype(
     save_dumptype();
 
     allow_overwrites = save_overwrites;
+
+    current_block = saved_block;
 
     if (linenum)
 	*linenum = current_line_num;
@@ -2626,7 +2639,9 @@ static void
 get_tapetype(void)
 {
     int save_overwrites;
+    char *saved_block;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -2652,6 +2667,8 @@ get_tapetype(void)
     save_tapetype();
 
     allow_overwrites = save_overwrites;
+
+    current_block = saved_block;
 }
 
 static void
@@ -2723,7 +2740,9 @@ static void
 get_interface(void)
 {
     int save_overwrites;
+    char *saved_block;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -2744,6 +2763,8 @@ get_interface(void)
     save_interface();
 
     allow_overwrites = save_overwrites;
+
+    current_block = saved_block;
 
     return;
 }
@@ -2814,6 +2835,7 @@ read_application(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -2828,6 +2850,7 @@ read_application(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -2854,6 +2877,7 @@ read_application(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -2943,6 +2967,7 @@ read_interactivity(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -2957,6 +2982,7 @@ read_interactivity(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -2983,6 +3009,7 @@ read_interactivity(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -3071,6 +3098,7 @@ read_taperscan(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -3085,6 +3113,7 @@ read_taperscan(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3111,6 +3140,7 @@ read_taperscan(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -3199,6 +3229,7 @@ read_policy(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -3213,6 +3244,7 @@ read_policy(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3239,6 +3271,7 @@ read_policy(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -3329,6 +3362,7 @@ read_storage(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -3343,6 +3377,7 @@ read_storage(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3369,6 +3404,7 @@ read_storage(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -3479,6 +3515,7 @@ read_pp_script(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+    char *saved_block;
 
     if (from) {
 	saved_conf = current_file;
@@ -3493,6 +3530,7 @@ read_pp_script(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3519,6 +3557,7 @@ read_pp_script(
 
     allow_overwrites = save_overwrites;
 
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -9091,8 +9130,7 @@ val_t_display_strs(
 
 	nb_property = g_hash_table_size(val_t__proplist(val));
 	g_free(buf);
-	buf = malloc((nb_property+1)*sizeof(char*));
-	buf[nb_property] = NULL;
+	buf = g_new0(char *, nb_property+1);
 	user_data.msg = buf;
 	user_data.print_source = print_source;
 	g_hash_table_foreach(val_t__proplist(val),
@@ -9163,8 +9201,10 @@ val_t_display_strs(
     if (print_source && add_source) {
 	char **buf1;
 	for (buf1 = buf; *buf1 != NULL; buf1++) {
-	    char *buf2 = g_strjoin("", *buf1, source_string(&val->seen), NULL);
+	    char *ss = source_string(&val->seen);
+	    char *buf2 = g_strjoin("", *buf1, ss, NULL);
 	    g_free(*buf1);
+	    g_free(ss);
 	    *buf1 = buf2;
 	}
     }

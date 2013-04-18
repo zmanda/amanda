@@ -1,3 +1,7 @@
+2013-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix parsing command overwrite with '-'.
+	  Fix small --print-source bug.
+
 2013-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Keep amflush as a relative symlink.
 	* server-src/logfile.c: Keep log as a relative symlink.
