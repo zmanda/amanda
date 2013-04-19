@@ -94,6 +94,7 @@ sub user_request {
 package Amvault;
 
 use Amanda::Config qw( :getconf config_dir_relative );
+use Amanda::Disklist;
 use Amanda::Debug qw( :logging debug );
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
@@ -461,7 +462,7 @@ sub xfer_dumps {
 	    cb_ref => \$finished_cb;
 
     step get_dump => sub {
-	# reset tracking for teh current dump
+	# reset tracking for the current dump
 	$self->{'current'} = $current = {
 	    src_result => undef,
 	    src_errors => undef,
@@ -505,9 +506,22 @@ sub xfer_dumps {
 	# set up splitting args from the tapetype only, since we have no DLEs
 	my $tt = lookup_tapetype(getconf($CNF_TAPETYPE));
 	sub empty2undef { $_[0]? $_[0] : undef }
+	my $dle_allow_split = 1;
+	my $dle = Amanda::Disklist::get_disk($header->{'name'},
+					     $header->{'disk'});
+	if (defined $dle) {
+	    $dle_allow_split = dumptype_getconf($dle->{'config'}, $DUMPTYPE_ALLOW_SPLIT);
+	}
+	my $xdt_first_dev = $dst->{'scribe'}->get_device();
+	if (!defined $xdt_first_dev) {
+	    return $finished_cb->("no device is available to create an xfer_dest");
+	}
+	my $leom_supported = $xdt_first_dev->property_get("leom");
 	my %xfer_dest_args;
 	if ($tt) {
 	    %xfer_dest_args = get_splitting_args_from_config(
+		dle_allow_split => $dle_allow_split,
+		leom_supported => $leom_supported,
 		part_size_kb =>
 		    empty2undef(tapetype_getconf($tt, $TAPETYPE_PART_SIZE)),
 		part_cache_type_enum =>
@@ -517,8 +531,12 @@ sub xfer_dumps {
 		part_cache_max_size =>
 		    empty2undef(tapetype_getconf($tt, $TAPETYPE_PART_CACHE_MAX_SIZE)),
 	    );
+	} else {
+	    # split only if LEOM is supported.
+	    %xfer_dest_args = get_splitting_args_from_config(
+		dle_allow_split => $dle_allow_split,
+		leom_supported => $leom_supported);
 	}
-	# (else leave %xfer_dest_args empty, for no splitting)
 
 	$xfer_dst = $dst->{'scribe'}->get_xfer_dest(
 	    max_memory => getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE),
@@ -616,12 +634,8 @@ sub xfer_dumps {
 		($logtype == $L_PARTIAL and @errors)? " $msg" : ""));
 	}
 
-	if (@errors) {
-	    return $finished_cb->("transfer failed: " .  join("; ", @errors));
-	} else {
-	    # rinse, wash, and repeat
-	    return $steps->{'get_dump'}->();
-	}
+	# next dump
+	return $steps->{'get_dump'}->();
     };
 }
 
@@ -1055,6 +1069,14 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
+
+# and the disklist
+my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
+$cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+if ($cfgerr_level >= $CFGERR_ERRORS) {
+    print STDERR "errors processing disklist\n";
+    exit(1);
+}
 
 my $exit_status;
 my $exit_cb = sub {
