@@ -1,3 +1,6 @@
+2013-04-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Use DLE allow-split and device LEOM property.
+
 2013-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix parsing command overwrite with '-'.
 	  Fix small --print-source bug.
