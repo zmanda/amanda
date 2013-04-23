@@ -1877,22 +1877,24 @@ service_delete(
      * bother to waitpid for it */
     assert(as->pid > 0);
     pid = waitpid(as->pid, NULL, WNOHANG);
-    if (pid != as->pid && kill(as->pid, SIGTERM) == 0) {
+    if (pid == 0 && kill(as->pid, SIGTERM) == 0) {
 	long long delay = 100000;
 	struct timespec tdelay;
 	int t = 0;
 	pid = waitpid(as->pid, NULL, WNOHANG);
-	while (t < 15 && pid != as->pid) {
-		    tdelay.tv_sec  = delay/1000000000;
+	while (t < 15 && pid == 0) {
+	    tdelay.tv_sec  = delay/1000000000;
 	    tdelay.tv_nsec = delay%1000000000;
 	    nanosleep(&tdelay, NULL);
 	    delay *= 2;
 	    t++;
 	    pid = waitpid(as->pid, NULL, WNOHANG);
 	}
-	if (pid != as->pid) {
+	if (pid == 0) {
 	    g_debug("Process %d failed to exit", (int)as->pid);
 	}
+    } else {
+	g_debug("Waitpid for process %d failed: %s", (int)as->pid, strerror(errno));
     }
 
     serviceq = g_slist_remove(serviceq, (gpointer)as);
