@@ -1837,17 +1837,19 @@ service_delete(
      * bother to waitpid for it */
     assert(as->pid > 0);
     pid = waitpid(as->pid, NULL, WNOHANG);
-    if (pid != as->pid && kill(as->pid, SIGTERM) == 0) {
+    if (pid == 0 && kill(as->pid, SIGTERM) == 0) {
 	pid = waitpid(as->pid, NULL, WNOHANG);
 	count = 5;
-	while (pid != as->pid && count > 0) {
+	while (pid == 0 && count > 0) {
 	    count--;
 	    sleep(1);
 	    pid = waitpid(as->pid, NULL, WNOHANG);
 	}
-	if (pid != as->pid) {
+	if (pid == 0) {
 	    g_debug("Process %d failed to exit", (int)as->pid);
 	}
+    } else {
+	g_debug("Waitpid for process %d failed: %s", (int)as->pid, strerror(errno));
     }
 
     serviceq = g_slist_remove(serviceq, (gpointer)as);
