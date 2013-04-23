@@ -1804,12 +1804,14 @@ service_delete(
     kill(as->pid, SIGTERM);
     pid = waitpid(as->pid, NULL, WNOHANG);
     count = 5;
-    while (pid != as->pid && count > 0) {
+    while (pid != -1 && pid != as->pid && count > 0) {
 	count--;
 	sleep(1);
 	pid = waitpid(as->pid, NULL, WNOHANG);
     }
     if (pid != as->pid) {
+	g_debug("Waipid for process %d failed: %s", (int)as->pid, strerror(errno));
+    } else if (pid != as->pid) {
 	g_debug("Process %d failed to exit", (int)as->pid);
     }
 

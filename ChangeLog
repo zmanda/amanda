@@ -1,3 +1,7 @@
+2013-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Do not hopelessly wait 5 seconds if waitpid
+	  return -1.
+
 2012-11-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Keep a different current_slot for each
 	  config.
