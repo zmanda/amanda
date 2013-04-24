@@ -30,6 +30,7 @@
     <group choice='opt'><arg choice='plain'>--dry-run</arg><arg choice='plain'>-n</arg></group>
     <group choice='opt'><arg choice='plain'>--quiet</arg><arg choice='plain'>-q</arg></group>
     <arg choice='opt'>--fulls-only </arg>
+    <arg choice='opt'>--incrs-only </arg>
     <arg choice='opt'>--exact-match </arg>
     <arg choice='opt'>--export </arg>
     <arg choice='opt'><option>--src-timestamp</option>
@@ -89,7 +90,8 @@ timestamp <option>src-timestamp</option> onto volumes using the changer
 <refsect2><title>Secondary Media</title>
 
 <para>The dumps to be read from secondary media can be specified by any
-combination of dump specifications, <option>--fulls-only</option>, and
+combination of dump specifications, <option>--fulls-only</option>,
+<option>--incrs-only</option>, and
 <option>--src-timestamp</option>.  At least one must be specified, lest
 amvault attempt to vault all dumps in the catalog.  See <manref
     name="amanda-match" vol="7"/> for more information on dump
@@ -189,9 +191,16 @@ import/export slots, where they can be more easily removed by an operator.
   </varlistentry>
 
   <varlistentry>
-  <term><option>---fulls-only</option></term>
+  <term><option>--fulls-only</option></term>
   <listitem>
 <para>Only full (level-0) dumps are copied.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--incrs-only</option></term>
+  <listitem>
+<para>Only incremental (level > 0) dumps are copied.</para>
   </listitem>
   </varlistentry>
 

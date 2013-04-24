@@ -125,6 +125,7 @@ sub new {
     bless {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
+	incrs_only => $params{'incrs_only'},
 	opt_export => $params{'opt_export'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
@@ -270,7 +271,8 @@ sub setup_src {
     # non-matching dumpspec with a warning.
     my @dumpspecs;
     if ($self->{'opt_dumpspecs'}) {
-	my $level = $self->{'fulls_only'}? "0" : undef;
+	my $level = $self->{'fulls_only'}? "=0" :
+		    $self->{'incrs_only'}? "1-399" : undef;
 	my $swt = $self->{'src_write_timestamp'};
 
 	# filter and adjust the dumpspecs
@@ -288,12 +290,21 @@ sub setup_src {
 	    }
 
 	    if (defined $level) {
-		if (defined $ds_level &&
-		    !match_level($ds_level, $level)) {
-		    $self->vlog("WARNING: dumpspec " . $ds->format() .
-			    " specifies non-full dumps, contradicting --fulls-only;" .
-			    " ignoring dumpspec");
-		    next;
+		if (defined $ds_level) {
+		    if ($self->{'fulls_only'} &&
+			!match_level($ds_level, '0')) {
+			$self->vlog("WARNING: dumpspec " . $ds->format() .
+			    " specifies non-full dumps, contradicting" .
+			    " --fulls-only; ignoring dumpspec");
+			next;
+		    }
+		    if ($self->{'incrs_only'} && 
+			$ds_level eq '0' || $ds_level eq '=0') {
+			$self->vlog("WARNING: dumpspec " . $ds->format() .
+			    " specifies full dumps, contradicting" .
+			    " --incrs-only; ignoring dumpspec");
+			next;
+		    }
 		}
 		$ds_level = $level;
 	    }
@@ -304,7 +315,8 @@ sub setup_src {
 	}
     } else {
 	# convert the timestamp and level to a dumpspec
-	my $level = $self->{'fulls_only'}? "0" : undef;
+	my $level = $self->{'fulls_only'}? "=0" :
+		    $self->{'incrs_only'}? "1-399" : undef;
 	push @dumpspecs, Amanda::Cmdline::dumpspec_t->new(
 		undef, undef, undef, $level, $self->{'src_write_timestamp'});
     }
@@ -952,8 +964,8 @@ sub usage {
 **NOTE** this interface is under development and will change in future releases!
 
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
-	   [--fulls-only] [--export] [--src-timestamp src-timestamp]
-	   [--exact-match]
+	   [--fulls-only] [incrs-only] [--export]
+	   [--src-timestamp src-timestamp] [--exact-match]
 	   --label-template label-template --dst-changer dst-changer
 	   [--autolabel autolabel-arg...]
 	   config
@@ -962,6 +974,7 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     -o: configuration override (see amanda(8))
     -q: quiet progress messages
     --fulls-only: only copy full (level-0) dumps
+    --incrs-only: only copy incremental (level > 0) dumps
     --export: move completed destination volumes to import/export slots
     --src-timestamp: the timestamp of the Amanda run that should be vaulted
     --label-template: the template to use for new volume labels
@@ -989,6 +1002,7 @@ my @config_overrides_opts;
 my $opt_quiet = 0;
 my $opt_dry_run = 0;
 my $opt_fulls_only = 0;
+my $opt_incrs_only = 0;
 my $opt_exact_match = 0;
 my $opt_export = 0;
 my $opt_autolabel = {};
@@ -1033,6 +1047,7 @@ GetOptions(
     'q|quiet' => \$opt_quiet,
     'n|dry-run' => \$opt_dry_run,
     'fulls-only' => \$opt_fulls_only,
+    'incrs-only' => \$opt_incrs_only,
     'exact-match' => \$opt_exact_match,
     'export' => \$opt_export,
     'label-template=s' => \&set_label_template,
@@ -1055,7 +1070,10 @@ my @opt_dumpspecs = parse_dumpspecs(\@ARGV, $cmd_flags)
 usage("no --label-template given") unless $opt_autolabel->{'template'};
 usage("no --dst-changer given") unless $opt_dst_changer;
 usage("specify something to select the source dumps") unless
-    $opt_src_write_timestamp or $opt_fulls_only or @opt_dumpspecs;
+    $opt_src_write_timestamp or $opt_fulls_only or $opt_incrs_only or @opt_dumpspecs;
+
+usage("Can't use --fulls-only and --incrs-only") if
+      $opt_fulls_only and $opt_incrs_only;
 
 set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
@@ -1094,6 +1112,7 @@ my $vault = Amvault->new(
     opt_dry_run => $opt_dry_run,
     quiet => $opt_quiet,
     fulls_only => $opt_fulls_only,
+    incrs_only => $opt_incrs_only,
     opt_export => $opt_export,
     config_overrides_opts => \@config_overrides_opts);
 Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
