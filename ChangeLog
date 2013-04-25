@@ -1,4 +1,7 @@
 2013-04-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Retry on CURLE_SSL_CACERT_BADFILE.
+
+2013-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/Config.pm, perl/Amanda/JSON/Changer.pm: Remove
 	  dependency of Digest/SHA1.
 
