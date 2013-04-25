@@ -23,7 +23,6 @@ use Symbol;
 use Data::Dumper;
 use Scalar::Util;
 use vars qw(@ISA);
-use Digest::SHA1 qw( sha1_hex );
 use Amanda::Debug;
 use Amanda::Util qw( :constants );
 

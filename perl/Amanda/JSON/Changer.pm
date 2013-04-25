@@ -32,7 +32,6 @@ use Amanda::JSON::Tapelist;
 use Symbol;
 use Data::Dumper;
 use vars qw(@ISA);
-use Digest::SHA1 qw( sha1_hex );
 
 =head1 NAME
 
