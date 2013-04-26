@@ -176,7 +176,7 @@ AC_DEFUN([AMANDA_SWIG_ERROR],
 	[
 	    case "$enableval" in
 	    "" | y | ye | yes)
-		AMANDA_SWIG_PERL_CFLAGS=-Werror
+		AMANDA_SWIG_PERL_CFLAGS=-Werror -Wno-deprecated-declarations
 		;;
 	    *n | no)
 		AMANDA_SWIG_PERL_CFLAGS=

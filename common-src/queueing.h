@@ -139,7 +139,7 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
    data should be a pointer to an queue_fd_t, with fd set to the device
    descriptor and errmsg set to NULL. */
 
-typedef struct {
+typedef struct queue_fd_t {
     int fd;
     char *errmsg;
 } queue_fd_t;

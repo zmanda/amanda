@@ -38,7 +38,7 @@
  *
  * All strings in this struct are independently malloc()ed.
  */
-typedef struct dumpspec_s {
+typedef struct dumpspec_t {
     char *host;
     char *disk;
     char *datestamp;

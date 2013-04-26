@@ -30,7 +30,7 @@
  * New interface
  */
 
-typedef struct file_lock_ {
+typedef struct file_lock {
     /* the entire contents of the locked file */
     char *data;
     size_t len;
