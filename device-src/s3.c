@@ -110,7 +110,11 @@
 
 /* general "reasonable size" parameters */
 #define MAX_ERROR_RESPONSE_LEN (100*1024)
-
+#ifdef CURLE_SSL_CACERT_BADFILE
+# define AMAMDA_CURLE_SSL_CACERT_BADFILE CURLE_SSL_CACERT_BADFILE
+#else
+# define AMANDA_CURLE_SSL_CACERT_BADFILE CURLE_GOT_NOTHING
+#endif
 /* Results which should always be retried */
 #define RESULT_HANDLING_ALWAYS_RETRY \
         { 400,  S3_ERROR_RequestTimeout,     0,                          S3_RESULT_RETRY }, \
@@ -127,10 +131,8 @@
         { 0,    0,                           CURLE_SSL_CONNECT_ERROR,    S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_SEND_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_RECV_ERROR,           S3_RESULT_RETRY }, \
-#ifdef CURLE_SSL_CACERT_BADFILE
-        { 0,    0,                           CURLE_SSL_CACERT_BADFILE,   S3_RESULT_RETRY }, \
-#endif
-        { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }
+        { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }, \
+        { 0,    0,                           AMANDA_CURLE_SSL_CACERT_BADFILE,   S3_RESULT_RETRY }
 
 /*
  * Data structures and associated functions
