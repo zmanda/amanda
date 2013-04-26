@@ -1,3 +1,7 @@
+2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: CURLE_SSL_CACERT_BADFILE is not defined on older
+	  curl.
+
 2013-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Retry on CURLE_SSL_CACERT_BADFILE.
 
