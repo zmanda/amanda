@@ -1,3 +1,7 @@
+2013-04-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/libs.m4: Disable deprecated warning for newer glib
+	  version.
+
 2013-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Do not hopelessly wait 5 seconds if waitpid
 	  return -1.
