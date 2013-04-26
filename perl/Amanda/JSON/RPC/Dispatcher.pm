@@ -137,7 +137,10 @@ All errors that are not gracefully handled by the system will be put into a fata
 =cut
 
 
-use Moose;
+eval "use Moose;";
+if ($@) {
+    die($@);
+}
 use bytes;
 extends qw(Plack::Component);
 eval "use Plack::Request;";
