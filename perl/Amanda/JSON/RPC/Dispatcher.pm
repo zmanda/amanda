@@ -140,7 +140,10 @@ All errors that are not gracefully handled by the system will be put into a fata
 use Moose;
 use bytes;
 extends qw(Plack::Component);
-use Plack::Request;
+eval "use Plack::Request;";
+if ($@) {
+    die($@);
+}
 use JSON -convert_blessed_universally;
 use Amanda::JSON::RPC::Dispatcher::Procedure;
 use Log::Any qw($log);
