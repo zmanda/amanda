@@ -1,4 +1,7 @@
 2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amanda.psgi.pl: Do not require Dispacher.pm
+
+2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: CURLE_SSL_CACERT_BADFILE is not defined on older
 	  curl.
 
