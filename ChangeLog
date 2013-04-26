@@ -1,4 +1,8 @@
 2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: CURLE_SSL_CACERT_BADFILE is not defined on older
+	  curl.
+
+2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/RPC/Dispatcher.pm: Do not require Log::Any.
 	* perl/Amanda/JSON/RPC/Dispatcher/App.pm: Do not require Dispatcher.pm.
 
