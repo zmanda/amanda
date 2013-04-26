@@ -1,4 +1,7 @@
 2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON/RPC/Dispatcher/Procedure.pm: Do not require Moose.
+
+2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/RPC/Dispatcher.pm: Do not require Moose.
 
 2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
