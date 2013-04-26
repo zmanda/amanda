@@ -4,7 +4,7 @@ BEGIN {
 }
 
 use Moose;
-use Amanda::JSON::RPC::Dispatcher;
+eval "use Amanda::JSON::RPC::Dispatcher;";
 
 =head1 NAME
 
