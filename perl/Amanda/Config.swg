@@ -675,7 +675,9 @@ val_t_to_sv(val_t *val, SV **results) {
 
 		    hv = (HV *)sv_2mortal((SV *)newHV());
 
-		    hv_store(hv, "tag", strlen("tag"), newSVpv(ds->tag, 0), 0);
+		    if (ds->tag) {
+			hv_store(hv, "tag", strlen("tag"), newSVpv(ds->tag, 0), 0);
+		    }
 		    hv_store(hv, "tag_type", strlen("tag_type"), newSViv(ds->tag_type), 0);
 		    hv_store(hv, "level", strlen("level"), newSViv(ds->level), 0);
 		    av_push(av, newRV_inc((SV*)hv));

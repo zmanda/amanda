@@ -1251,6 +1251,6 @@ my $ds = storage_getconf($st, $STORAGE_DUMP_SELECTION);
 is_deeply($ds,
 	[ { 'tag_type' => $Amanda::Config::TAG_NAME, 'level' => $Amanda::Config::LEVEL_FULL, 'tag' => 'full' },
 	  { 'tag_type' => $Amanda::Config::TAG_NAME, 'level' => $Amanda::Config::LEVEL_INCR, 'tag' => 'incr' },
-	  { 'tag_type' => $Amanda::Config::TAG_ALL , 'level' => $Amanda::Config::LEVEL_ALL , 'tag' => undef  },
+	  { 'tag_type' => $Amanda::Config::TAG_ALL , 'level' => $Amanda::Config::LEVEL_ALL },
         ],
 	"lookup_storage");

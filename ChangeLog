@@ -1,4 +1,8 @@
 2013-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Config.swg (val_t_to_sv): Do not set tag if not set.
+	* installcheck/Amanda_Config.pl: Fix for tag not set instead of undef.
+
+2013-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/automake/scripts.am: Add SCRIPTS_PERL_NO_CHECK
 	* config/amanda/json.m4: Define AMANDA_JSON_SERVER. Add --with-json-server, check for json-server
 	  and check perl module rependencies.
