@@ -1,3 +1,15 @@
+2013-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/automake/scripts.am: Add SCRIPTS_PERL_NO_CHECK
+	* config/amanda/json.m4: Define AMANDA_JSON_SERVER. Add --with-json-server, check for json-server
+	  and check perl module rependencies.
+	* config/amanda/components.m4: Invoke AMANDA_JSON_SERVER
+	* perl/Makefile.am: Check json server module conditionally.
+	* server-src/Makefile.am: Check amanda.psgi conditionally.
+	* perl/Amanda/JSON/RPC/Dispatcher.pm,
+	  perl/Amanda/JSON/RPC/Dispatcher/App.pm,
+	  perl/Amanda/JSON/RPC/Dispatcher/Procedure.pm,
+	  server-src/amanda.psgi.pl: Undo previous patches.
+
 2013-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/RPC/Dispatcher/Procedure.pm: Do not require Moose.
 

@@ -24,7 +24,7 @@ use warnings;
 
 use JSON -convert_blessed_universally;
 
-eval "use Amanda::JSON::RPC::Dispatcher;";
+use Amanda::JSON::RPC::Dispatcher;
 use Amanda::Debug;
 use Amanda::Changer;
 use Amanda::Config;

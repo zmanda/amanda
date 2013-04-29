@@ -137,22 +137,13 @@ All errors that are not gracefully handled by the system will be put into a fata
 =cut
 
 
-eval "use Moose;";
-if ($@) {
-    die($@);
-}
+use Moose;
 use bytes;
 extends qw(Plack::Component);
-eval "use Plack::Request;";
-if ($@) {
-    die($@);
-}
+use Plack::Request;
 use JSON -convert_blessed_universally;
 use Amanda::JSON::RPC::Dispatcher::Procedure;
-eval "use Log::Any;";
-if ($@) {
-    die($@);
-}
+use Log::Any;
 
 #--------------------------------------------------------
 has error_code => (

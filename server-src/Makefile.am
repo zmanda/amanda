@@ -63,6 +63,7 @@ sbin_SCRIPTS_SHELL = \
 	    amcheckdb
 
 
+SCRIPTS_PERL_NO_CHECK = amanda.psgi
 SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)

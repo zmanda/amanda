@@ -28,7 +28,7 @@ Something needs to act as an intermediary to hold the data and state of requests
 =cut
 
 
-eval "use Moose;";
+use Moose;
 
 #--------------------------------------------------------
 
