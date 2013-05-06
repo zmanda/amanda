@@ -125,9 +125,9 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
-    textdomain("amanda"); 
+    textdomain("amanda");
 
     safe_fd(-1, 0);
     safe_cd();
@@ -188,11 +188,9 @@ main(
 			   exit(1);
 			}
 			/*FALLTHROUGH*/
-	case 'm':	
-			mailout = 1;
+	case 'm':	mailout = 1;
 			break;
-	case 'a':	
-			mailout = 1;
+	case 'a':	mailout = 1;
 			alwaysmail = 1;
 			break;
 	case 's':	do_localchk = do_tapechk = 1;
@@ -255,9 +253,9 @@ main(
 	g_printf(_("To receive dump results by email configure the "
 		 "\"mailto\" parameter in amanda.conf\n"));
         if(alwaysmail)
- 		g_printf(_("When using -a option please specify -Maddress also\n\n"));
+		g_printf(_("When using -a option please specify -Maddress also\n\n"));
 	else
- 		g_printf(_("Use -Maddress instead of -m\n\n")); 
+		g_printf(_("Use -Maddress instead of -m\n\n"));
 	exit(1);
     }
     if(mailout && !mailto)
@@ -273,9 +271,9 @@ main(
        else {
 	  g_printf(_("\nNo mail address configured in  amanda.conf\n"));
           if(alwaysmail)
- 		g_printf(_("When using -a option please specify -Maddress also\n\n"));
+		g_printf(_("When using -a option please specify -Maddress also\n\n"));
 	  else
- 		g_printf(_("Use -Maddress instead of -m\n\n"));
+		g_printf(_("Use -Maddress instead of -m\n\n"));
 	  exit(1);
       }
     }
@@ -460,7 +458,7 @@ main(
 	     * is really just splitting regular old strings) */
 	    a = split_quoted_strings(getconf_str(CNF_MAILTO));
 	    if (!a) {
- 		g_printf(_("Invalid mailto address '%s'\n\n"), getconf_str(CNF_MAILTO));
+		g_printf(_("Invalid mailto address '%s'\n\n"), getconf_str(CNF_MAILTO));
 		exit(1);
 	    }
 	}
@@ -482,7 +480,7 @@ main(
 	}
 	g_ptr_array_add(pipeargs, NULL);
 	if (!valid_mailto) {
- 	    g_printf(_("Invalid mailto address '%s'\n\n"), getconf_str(CNF_MAILTO));
+	    g_printf(_("Invalid mailto address '%s'\n\n"), getconf_str(CNF_MAILTO));
 	    exit(1);
 	}
 
@@ -674,7 +672,7 @@ static gboolean test_tape_status(FILE * outf) {
 	waitpid(devpid, &wait_status, 0);
 
 	if (WIFSIGNALED(wait_status)) {
-	    g_fprintf(outf, _("amcheck-device terminated with signal %d"),
+	    g_fprintf(outf, _("amcheck-device terminated with signal %d\n"),
 		      WTERMSIG(wait_status));
 	    success = FALSE;
 	} else if (WIFEXITED(wait_status)) {
@@ -717,21 +715,21 @@ start_server_check(
 
     switch(pid = fork()) {
     case -1:
-    	error(_("could not spawn a process for checking the server: %s"), strerror(errno));
+	error(_("could not spawn a process for checking the server: %s"), strerror(errno));
         g_assert_not_reached();
-        
+
     case 0:
-    	break;
-        
+	break;
+
     default:
 	return pid;
     }
-    
+
     dup2(fd, 1);
     dup2(fd, 2);
-    
+
     set_pname("amcheck-server");
-    
+
     startclock();
 
     /* server does not need root privileges, and the access() calls below use the real userid,
@@ -819,7 +817,7 @@ start_server_check(
      * Look up the programs used on the server side.
      */
     if(do_localchk) {
-	/* 
+	/*
 	 * entreprise version will do planner/dumper suid check
 	 */
 	if(access(amlibexecdir, X_OK) == -1) {
@@ -901,7 +899,7 @@ start_server_check(
 	}
 	if(access(tape_dir, W_OK) == -1) {
 	    quoted = quote_string(tape_dir);
-	    g_fprintf(outf, _("ERROR: tapelist dir %s: not writable.\nCheck permissions\n"), 
+	    g_fprintf(outf, _("ERROR: tapelist dir %s: not writable.\nCheck permissions\n"),
 		    quoted);
 	    tapebad = 1;
 	    amfree(quoted);
@@ -1088,7 +1086,7 @@ start_server_check(
 		il != NULL;
 		il = il->next) {
 	    hdp = lookup_holdingdisk(il->data);
-    	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
+	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
 	    if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1) {
 		g_fprintf(outf, _("ERROR: holding dir %s (%s), "
 			"you must create a directory.\n"),
@@ -1278,7 +1276,7 @@ start_server_check(
 		g_fprintf(outf, _("ERROR: conf info dir %s (%s)\n"),
 			quoted, strerror(errno));
 		infobad = 1;
-	    }	
+	    }
 	    amfree(conf_infofile);
 	} else if (!S_ISDIR(statbuf.st_mode)) {
 	    g_fprintf(outf, _("ERROR: info dir %s: not a directory\n"), quoted);
@@ -1318,7 +1316,7 @@ start_server_check(
 			g_fprintf(outf, _("ERROR: host info dir %s (%s)\n"),
 				quoted, strerror(errno));
 			infobad = 1;
-		    }	
+		    }
 		    amfree(hostinfodir);
 		} else if (!S_ISDIR(statbuf.st_mode)) {
 		    g_fprintf(outf, _("ERROR: info dir %s: not a directory\n"),
@@ -1356,7 +1354,7 @@ start_server_check(
 			    g_fprintf(outf, _("ERROR: info dir %s (%s)\n"),
 				    quoted, strerror(errno));
 			    infobad = 1;
-			}	
+			}
 		    } else if (!S_ISDIR(statbuf.st_mode)) {
 			g_fprintf(outf, _("ERROR: info dir %s: not a directory\n"),
 				quoted);
@@ -1376,7 +1374,7 @@ start_server_check(
 			    g_fprintf(outf, _("ERROR: info dir %s (%s)\n"),
 				    quoted, strerror(errno));
 			    infobad = 1;
-			}	
+			}
 		    } else if (!S_ISREG(statbuf.st_mode)) {
 			g_fprintf(outf, _("ERROR: info file %s: not a file\n"),
 				quotedif);
@@ -1403,7 +1401,7 @@ start_server_check(
 				g_fprintf(outf, _("ERROR: index dir %s (%s)\n"),
 					quoted, strerror(errno));
 				indexbad = 1;
-			    }	
+			    }
 			    amfree(conf_indexdir);
 			} else if (!S_ISDIR(statbuf.st_mode)) {
 			    g_fprintf(outf, _("ERROR: index dir %s: not a directory\n"),
@@ -1467,7 +1465,7 @@ start_server_check(
 				    g_fprintf(outf, _("ERROR: index dir %s (%s)\n"),
 					quoted, strerror(errno));
 				    indexbad = 1;
-				}	
+				}
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
 				g_fprintf(outf, _("ERROR: index dir %s: not a directory\n"),
 					quoted);
@@ -1814,24 +1812,24 @@ start_host(
 		     _("ERROR: %s:%s (%s): selfcheck does not support device.\n"),
 		     hostp->hostname, qname, dp->device);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to "
-				    "specify a diskdevice in the disklist "	
-				    "or don't specify a diskdevice in the disklist.\n"));	
+				    "specify a diskdevice in the disklist "
+				    "or don't specify a diskdevice in the disklist.\n"));
 		}
 		if(!am_has_feature(hostp->features, fe_sendsize_req_device)) {
 		    g_fprintf(outf,
 		     _("ERROR: %s:%s (%s): sendsize does not support device.\n"),
 		     hostp->hostname, qname, dp->device);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to "
-				    "specify a diskdevice in the disklist"	
-				    " or don't specify a diskdevice in the disklist.\n"));	
+				    "specify a diskdevice in the disklist"
+				    " or don't specify a diskdevice in the disklist.\n"));
 		}
 		if(!am_has_feature(hostp->features, fe_sendbackup_req_device)) {
 		    g_fprintf(outf,
 		     _("ERROR: %s:%s (%s): sendbackup does not support device.\n"),
 		     hostp->hostname, qname, dp->device);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to "
-				    "specify a diskdevice in the disklist"	
-				    " or don't specify a diskdevice in the disklist.\n"));	
+				    "specify a diskdevice in the disklist"
+				    " or don't specify a diskdevice in the disklist.\n"));
 		}
 
 		if (dp->data_path != DATA_PATH_AMANDA &&
@@ -1847,21 +1845,21 @@ start_host(
 		}
 	    }
 	    if (dp->program &&
-	        (g_str_equal(dp->program, "DUMP") || 
+	        (g_str_equal(dp->program, "DUMP") ||
 	         g_str_equal(dp->program, "GNUTAR"))) {
 		if(g_str_equal(dp->program, "DUMP") &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support DUMP.\n"),
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to use DUMP "
-				    "or you can use another program.\n"));	
+				    "or you can use another program.\n"));
 		}
 		if(g_str_equal(dp->program, "GNUTAR") &&
 		   !am_has_feature(hostp->features, fe_program_gnutar)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support GNUTAR.\n"),
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to use GNUTAR "
-				    "or you can use another program.\n"));	
+				    "or you can use another program.\n"));
 		}
 		estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
 		if(estimate == ES_CALCSIZE &&
@@ -1896,15 +1894,15 @@ start_host(
 			    hostp->hostname);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to use encryption program.\n"));
 		    remote_errors++;
-		  } else if ( dp->compress == COMP_SERVER_FAST || 
+		  } else if ( dp->compress == COMP_SERVER_FAST ||
 			      dp->compress == COMP_SERVER_BEST ||
 			      dp->compress == COMP_SERVER_CUST ) {
 		    g_fprintf(outf,
 			    _("ERROR: %s: Client encryption with server compression "
-			      "is not supported. See amanda.conf(5) for detail.\n"), 
+			      "is not supported. See amanda.conf(5) for detail.\n"),
 			    hostp->hostname);
 		    remote_errors++;
-		  } 
+		  }
 		}
 		if (am_has_feature(hostp->features, fe_req_xml)) {
                     strbuf = g_string_new("<dle>\n");
@@ -1959,7 +1957,7 @@ start_host(
 			      _("ERROR: application '%s' not found.\n"), dp->application);
 			} else {
 			    char *xml_app = xml_application(dp, application, hostp->features);
-		    	    char *client_name = application_get_client_name(application);
+			    char *client_name = application_get_client_name(application);
 			    if (client_name && strlen(client_name) > 0 &&
 				!am_has_feature(hostp->features, fe_application_client_name)) {
 				g_fprintf(outf,
@@ -2040,7 +2038,7 @@ start_host(
 	fprintf(stderr, _("Could not find security driver \"%s\" for host \"%s\". auth for this dle is invalid\n"),
 	      hostp->disks->auth, hostp->hostname);
     } else {
-	protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
+	protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf,
 			 req, conf_ctimeout, handle_result, hostp);
     }
 
@@ -2062,11 +2060,11 @@ start_client_checks(
 
     switch(pid = fork()) {
     case -1:
-    	error(_("INTERNAL ERROR:could not fork client check: %s"), strerror(errno));
+	error(_("INTERNAL ERROR:could not fork client check: %s"), strerror(errno));
 	/*NOTREACHED*/
 
     case 0:
-    	break;
+	break;
 
     default:
 	return pid;
@@ -2112,7 +2110,7 @@ start_client_checks(
     protocol_run();
     run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name());
 
-    g_fprintf(outf, plural(_("Client check: %d host checked in %s seconds."), 
+    g_fprintf(outf, plural(_("Client check: %d host checked in %s seconds."),
 			 _("Client check: %d hosts checked in %s seconds."),
 			 hostcount),
 	    hostcount, walltime_str(curclock()));

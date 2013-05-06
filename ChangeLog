@@ -1,3 +1,6 @@
+2013-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Cleanup.
+
 2013-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Config.swg (val_t_to_sv): Do not set tag if not set.
 	* installcheck/Amanda_Config.pl: Fix for tag not set instead of undef.
