@@ -42,6 +42,19 @@ its default (60s) to compensate.  Note that you will need to increase
 
 </refsect1>
 
+<refsect1><title>DISKLIST</title>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> must be the cluster data
+directory, if it is "/var/lib/pgsql/data":</para>
+
+<programlisting>
+  HOST DISKNAME /var/lib/pgsql/data DUMPTYPE
+or
+  HOST /var/lib/pgsql/data DUMTYPE
+</programlisting>
+
+</refsect1>
+
 <refsect1><title>OPERATION</title>
 
 <para>This application implements the backup strategy described in <ulink
@@ -258,6 +271,32 @@ the recovery.  When the recovery is complete, the server will transition
 into a running state, and will move the <filename>recovery.conf</filename>
 file aside so that it will not attempt a recovery on the next
 invocation.</para>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+In amanda.conf:
+<programlisting>
+define application app_ampgsql {
+  plugin "ampgsql"
+  property "HOST" "localhost"
+  property "ARCHIVEDIR" "/tmp/archivedir"
+  property "PASSFILE" "/etc/amanda/ampgsql.passwd"
+}
+define dumptype dump_ampgsql {
+  global
+  program "APPLICATION"
+  application app_ampgsql
+}
+</programlisting>
+
+The disklist file:
+<programlisting>
+  localhost /var/lib/pgsql/data dump_ampgsql
+or
+  localhost postgres /var/lib/pgsql/data dump_ampgsql
+</programlisting>
 
 </refsect1>
 

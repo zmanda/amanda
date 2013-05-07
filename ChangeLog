@@ -1,3 +1,6 @@
+2013-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/ampgsql.8.xml: Add an example.
+
 2013-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Cleanup.
 
