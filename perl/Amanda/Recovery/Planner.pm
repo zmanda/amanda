@@ -238,11 +238,32 @@ sub make_plan {
     # first, get the set of dumps that match these dumpspecs
     my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs);
 
+    # Create a hash of the latest datestamp of each dle.
+    my %datestamp;
+    if ($params{'latest_fulls'}) {
+	for my $dump (@dumps) {
+	    my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
+	    if (exists $datestamp{$kd}) {
+		if ($dump->{'dump_timestamp'} > $datestamp{$kd}) {
+		    $datestamp{$kd} = $dump->{'dump_timestamp'};
+		}
+	    } else {
+		$datestamp{$kd} = $dump->{'dump_timestamp'};
+	    }
+	}
+    }
+
     # now "bin" those by host/disk/dump_ts/level
     my %dumps;
     for my $dump (@dumps) {
+	next if !defined $dump;
 	my $k = join("\0", $dump->{'hostname'}, $dump->{'diskname'},
 			   $dump->{'dump_timestamp'}, $dump->{'level'});
+	if ($params{'latest_fulls'}) {
+	    my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
+	    next if defined $datestamp{$kd} and
+		    $datestamp{$kd} != $dump->{'dump_timestamp'};
+	}
 	$dumps{$k} = [] unless exists $dumps{$k};
 	push @{$dumps{$k}}, $dump;
     }
