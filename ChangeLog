@@ -1,4 +1,8 @@
 2013-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Add that both flush-threshold-dumped
+	  and flush-threshold-scheduled must be met.
+
+2013-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Planner.pm (make_plan): Handle latest_fulls.
 	* server-src/amvault.pl: Add --latest-fulls option, pass latest_fulls
 	  to Amanda::Recovery::Planner::make_plan().

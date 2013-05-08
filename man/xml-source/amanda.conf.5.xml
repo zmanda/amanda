@@ -1359,7 +1359,8 @@ Debug level of all recovery process</para>
 <para>Default: <amdefault>0</amdefault>.
   Amanda will not begin writing data to a new volume until the amount of
   data on the holding disk is at least this percentage of the volume
-  size. In other words, Amanda will not begin until the
+  size and the criterion for flush-threshold-scheduled is also
+  met. In other words, Amanda will not begin until the
   amount of data on the holding disk is greater than the tape
   length times this parameter.
   This parameter may be larger than 100%, for example to keep
@@ -1384,7 +1385,8 @@ Debug level of all recovery process</para>
   Amanda will not begin writing data to a new volume until the sum of the
   amount of data on the holding disk and the estimated amount of data
   remaining to be dumped during this run is at least this percentage
-  of the volume size. In other words, Amanda will not begin until the
+  of the volume size and the criterion for flush-threshold-dumped is also
+  met. In other words, Amanda will not begin until the
   inequality <inlineequation><mathphrase>h + s &gt; t &#215;
   d</mathphrase></inlineequation> is satisfied,
   where <mathphrase>h</mathphrase> is the amount of data on the
