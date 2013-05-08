@@ -30,6 +30,7 @@
     <group choice='opt'><arg choice='plain'>--dry-run</arg><arg choice='plain'>-n</arg></group>
     <group choice='opt'><arg choice='plain'>--quiet</arg><arg choice='plain'>-q</arg></group>
     <arg choice='opt'>--fulls-only </arg>
+    <arg choice='opt'>--latest-fulls </arg>
     <arg choice='opt'>--incrs-only </arg>
     <arg choice='opt'>--exact-match </arg>
     <arg choice='opt'>--export </arg>
@@ -160,6 +161,13 @@ import/export slots, where they can be more easily removed by an operator.
   <term><option>--incrs-only</option></term>
   <listitem>
 <para>Only incremental (level > 0) dumps are copied.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--latest-fulls</option></term>
+  <listitem>
+<para>The latest full of every DLE in the disklist that do not have the <amkeyword>skip</amkeyword> <amkeyword>strategy</amkeyword>.</para>
   </listitem>
   </varlistentry>
 
