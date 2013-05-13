@@ -1,4 +1,4 @@
-# serial 61
+# serial 64
 
 # Copyright (C) 1996-2001, 2003-2013 Free Software Foundation, Inc.
 #
@@ -27,15 +27,21 @@ AC_DEFUN([gl_REGEX],
     # following run test, then default to *not* using the included regex.c.
     # If cross compiling, assume the test would fail and use the included
     # regex.c.
+    AC_CHECK_DECLS_ONCE([alarm])
     AC_CACHE_CHECK([for working re_compile_pattern],
                    [gl_cv_func_re_compile_pattern_working],
       [AC_RUN_IFELSE(
         [AC_LANG_PROGRAM(
-          [AC_INCLUDES_DEFAULT[
-           #include <locale.h>
-           #include <limits.h>
-           #include <regex.h>
-           ]],
+          [[#include <regex.h>
+
+            #include <locale.h>
+            #include <limits.h>
+            #include <string.h>
+            #if HAVE_DECL_ALARM
+            # include <unistd.h>
+            # include <signal.h>
+            #endif
+          ]],
           [[int result = 0;
             static struct re_pattern_buffer regex;
             unsigned char folded_chars[UCHAR_MAX + 1];
@@ -43,26 +49,65 @@ AC_DEFUN([gl_REGEX],
             const char *s;
             struct re_registers regs;
 
-            /* http://sourceware.org/ml/libc-hacker/2006-09/msg00008.html
-               This test needs valgrind to catch the bug on Debian
-               GNU/Linux 3.1 x86, but it might catch the bug better
-               on other platforms and it shouldn't hurt to try the
-               test here.  */
+#if HAVE_DECL_ALARM
+            /* Some builds of glibc go into an infinite loop on this test.  */
+            signal (SIGALRM, SIG_DFL);
+            alarm (2);
+#endif
             if (setlocale (LC_ALL, "en_US.UTF-8"))
               {
-                static char const pat[] = "insert into";
-                static char const data[] =
-                  "\xFF\0\x12\xA2\xAA\xC4\xB1,K\x12\xC4\xB1*\xACK";
-                re_set_syntax (RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE
-                               | RE_ICASE);
-                memset (&regex, 0, sizeof regex);
-                s = re_compile_pattern (pat, sizeof pat - 1, &regex);
-                if (s)
-                  result |= 1;
-                else if (re_search (&regex, data, sizeof data - 1,
-                                    0, sizeof data - 1, &regs)
-                         != -1)
-                  result |= 1;
+                {
+                  /* http://sourceware.org/ml/libc-hacker/2006-09/msg00008.html
+                     This test needs valgrind to catch the bug on Debian
+                     GNU/Linux 3.1 x86, but it might catch the bug better
+                     on other platforms and it shouldn't hurt to try the
+                     test here.  */
+                  static char const pat[] = "insert into";
+                  static char const data[] =
+                    "\xFF\0\x12\xA2\xAA\xC4\xB1,K\x12\xC4\xB1*\xACK";
+                  re_set_syntax (RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE
+                                 | RE_ICASE);
+                  memset (&regex, 0, sizeof regex);
+                  s = re_compile_pattern (pat, sizeof pat - 1, &regex);
+                  if (s)
+                    result |= 1;
+                  else if (re_search (&regex, data, sizeof data - 1,
+                                      0, sizeof data - 1, &regs)
+                           != -1)
+                    result |= 1;
+                }
+
+                {
+                  /* This test is from glibc bug 15078.
+                     The test case is from Andreas Schwab in
+                     <http://www.sourceware.org/ml/libc-alpha/2013-01/msg00967.html>.
+                     */
+                  static char const pat[] = "[^x]x";
+                  static char const data[] =
+                    /* <U1000><U103B><U103D><U1014><U103A><U102F><U1015><U103A> */
+                    "\xe1\x80\x80"
+                    "\xe1\x80\xbb"
+                    "\xe1\x80\xbd"
+                    "\xe1\x80\x94"
+                    "\xe1\x80\xba"
+                    "\xe1\x80\xaf"
+                    "\xe1\x80\x95"
+                    "\xe1\x80\xba"
+                    "x";
+                  re_set_syntax (0);
+                  memset (&regex, 0, sizeof regex);
+                  s = re_compile_pattern (pat, sizeof pat - 1, &regex);
+                  if (s)
+                    result |= 1;
+                  else
+                    {
+                      i = re_search (&regex, data, sizeof data - 1,
+                                     0, sizeof data - 1, 0);
+                      if (i != 0 && i != 21)
+                        result |= 1;
+                    }
+                }
+
                 if (! setlocale (LC_ALL, "C"))
                   return 1;
               }

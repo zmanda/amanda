@@ -108,6 +108,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module regex:
   # Code from module safe-read:
   # Code from module safe-write:
+  # Code from module secure_getenv:
   # Code from module select:
   # Code from module servent:
   # Code from module sigaction:
@@ -388,6 +389,12 @@ AC_SUBST([LTALLOCA])
   fi
   gl_PREREQ_SAFE_READ
   gl_PREREQ_SAFE_WRITE
+  gl_FUNC_SECURE_GETENV
+  if test $HAVE_SECURE_GETENV = 0; then
+    AC_LIBOBJ([secure_getenv])
+    gl_PREREQ_SECURE_GETENV
+  fi
+  gl_STDLIB_MODULE_INDICATOR([secure_getenv])
   gl_FUNC_SELECT
   if test $REPLACE_SELECT = 1; then
     AC_LIBOBJ([select])
@@ -690,6 +697,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/safe-read.h
   lib/safe-write.c
   lib/safe-write.h
+  lib/secure_getenv.c
   lib/select.c
   lib/sig-handler.c
   lib/sig-handler.h
@@ -808,6 +816,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/regex.m4
   m4/safe-read.m4
   m4/safe-write.m4
+  m4/secure_getenv.m4
   m4/select.m4
   m4/servent.m4
   m4/sigaction.m4
