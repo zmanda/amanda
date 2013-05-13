@@ -1,4 +1,7 @@
 2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: Remove perl warning.
+
+2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Check return value of system calls.
 	* oldrecover-src/extract_list.c: Check return value of system calls.
 	* oldrecover-src/amrecover.c: Call dbrename after config is set.
