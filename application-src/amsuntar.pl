@@ -456,18 +456,18 @@ sub command_restore {
 
    $cmd .= "f";      
 
-   if (defined($self->{exclude_list}) && (-e $self->{exclude_list}[0])) {
+   if (defined($self->{exclude_list}) && defined($self->{exclude_list}[0]) && (-e $self->{exclude_list}[0])) {
       $cmd .= "X";
    }
 
    my(@cmd) = ($self->{pfexec},$self->{suntar}, $cmd);
 
    push @cmd, "-";  # for f argument
-   if (defined($self->{exclude_list}) && (-e $self->{exclude_list}[0])) {
+   if (defined($self->{exclude_list}) && defined($self->{exclude_list}[0]) && (-e $self->{exclude_list}[0])) {
       push @cmd, $self->{exclude_list}[0]; # for X argument
    }
 
-   if(defined($self->{include_list}) && (-e $self->{include_list}[0]))  {
+   if(defined($self->{include_list}) && defined($self->{include_list}[0]) && (-e $self->{include_list}[0]))  {
       push @cmd, "-I", $self->{include_list}[0];
    }
 
@@ -478,7 +478,7 @@ sub command_restore {
    }
    debug("cmd:" . join(" ", @cmd));
    exec { $cmd[0] } @cmd;
-   die("Can't exec '", $cmd[0], "'");
+   die("Can't exec '", $cmd[0], "': $!");
 }
 
 sub command_validate {
