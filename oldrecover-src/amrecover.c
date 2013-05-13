@@ -437,8 +437,6 @@ main(
 
     config = newstralloc(config, DEFAULT_CONFIG);
 
-    dbrename(config, DBG_SUBDIR_CLIENT);
-
     check_running_as(RUNNING_AS_ROOT);
 
     amfree(server_name);
@@ -511,6 +509,8 @@ main(
 	(void)g_fprintf(stderr, USAGE);
 	exit(1);
     }
+
+    dbrename(config, DBG_SUBDIR_CLIENT);
 
     amfree(disk_name);
     amfree(mount_point);

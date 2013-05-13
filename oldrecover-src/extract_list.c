@@ -1336,8 +1336,8 @@ extract_files_setup(
 	return -1;
     }
     amfree(service_name);
-    seteuid(0);					/* it either works ... */
-    setegid(0);
+    if (seteuid(0) != 0) { error("Can't set euid"); }; /* it either works ... */
+    if (setegid(0) != 0) { error("Can't set egid"); };
     tape_control_sock = stream_client_privileged(tape_server_name,
 						  (in_port_t)ntohs((in_port_t)sp->s_port),
 						  0,
@@ -1355,8 +1355,8 @@ extract_files_setup(
 	return -1;
     }
  
-    setegid(getgid());
-    seteuid(getuid());				/* put it back */
+    if (setegid(getgid()) != 0) { error("Can't set gid"); };
+    if (seteuid(getuid()) != 0) { error("Can't set uid"); }; /* put it back */
 
     /* do the security thing */
     line = get_security();
