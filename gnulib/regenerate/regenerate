@@ -5,6 +5,7 @@
 # run the following in your git repository:
 #
 #   git checkout 09b8fa6cb737f6e091931c494cbd56d12b3ad08d
+#   git checkout 3fe906e98202a591a6a14010aec1538adfd821b6
 
 # get to the project root
 cd `dirname $0`/../..

@@ -1595,12 +1595,12 @@ read_mesgfd(
     if (ISSET(status, GOT_INFO_ENDLINE) && !ISSET(status, HEADER_DONE)) {
 	/* Use the first in the dataport_list */
 	in_port_t data_port;
-	char *data_host = dataport_list;
+	char *data_host = g_strdup(dataport_list);
 	char *s;
 
-	s = strchr(dataport_list, ',');
+	s = strchr(data_host, ',');
 	if (s) *s = '\0';  /* use first data_port */
-	s = strrchr(dataport_list, ':');
+	s = strrchr(data_host, ':');
 	*s = '\0';
 	s++;
 	data_port = atoi(s);
@@ -1609,9 +1609,10 @@ read_mesgfd(
 	/* time to do the header */
 	finish_tapeheader(&file);
 	if (write_tapeheader(db->fd, &file)) {
-	    errstr = newvstrallocf(errstr, _("write_tapeheader: %s"), 
+	    errstr = newvstrallocf(errstr, _("write_tapeheader: %s"),
 				  strerror(errno));
 	    dump_result = 2;
+	    amfree(data_host);
 	    stop_dump();
 	    return;
 	}
@@ -1631,6 +1632,7 @@ read_mesgfd(
                     errstr = g_strdup_printf(_("Can't open indirect data output stream: %s"),
                                          strerror(errno));
 		    dump_result = 2;
+		    amfree(data_host);
 		    stop_dump();
 		    return;
 		}
@@ -1640,6 +1642,7 @@ read_mesgfd(
 			    strerror(errno));
 		    close(db->fd);
 		    dump_result = 2;
+		    amfree(data_host);
 		    stop_dump();
 		    return;
 		}
@@ -1649,6 +1652,7 @@ read_mesgfd(
                 if ((s = strchr(buffer, ':')) == NULL) {
 		    g_debug("Failed to parse indirect data output stream: %s", buffer);
 		    dump_result = 2;
+		    amfree(data_host);
 		    stop_dump();
 		    return;
                 }
@@ -1666,10 +1670,12 @@ read_mesgfd(
 				       _("Can't open data output stream: %s"),
 				       strerror(errno));
 		dump_result = 2;
+		amfree(data_host);
 		stop_dump();
 		return;
 	    }
 	}
+	amfree(data_host);
 
 	dumpsize += (off_t)DISK_BLOCK_KB;
 	headersize += (off_t)DISK_BLOCK_KB;

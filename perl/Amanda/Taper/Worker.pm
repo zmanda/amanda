@@ -625,7 +625,7 @@ sub setup_and_start_dump {
 	    (my $err = $self->{'scribe'}->check_data_path($params{'data_path'}))) {
 	    return $params{'dump_cb'}->(
 		result => "FAILED",
-		device_errors => [ ['error', "$err"] ],
+		device_errors => [ 'error', "$err" ],
 		size => 0,
 		duration => 0.0,
 		total_duration => 0);
