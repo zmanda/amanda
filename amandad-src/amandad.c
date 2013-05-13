@@ -260,9 +260,9 @@ main(
     if (geteuid() == 0) {
 	check_running_as(RUNNING_AS_ROOT);
 	initgroups(CLIENT_LOGIN, get_client_gid());
-	setgid(get_client_gid());
-	setegid(get_client_gid());
-	seteuid(get_client_uid());
+	if(setgid(get_client_gid()) != 0) { error("Can't set gid"); };
+	if(setegid(get_client_gid()) != 0) { error("Can't set egid"); };
+	if(seteuid(get_client_uid()) != 0) { error("Can't set euid"); };
     } else {
 	check_running_as(RUNNING_AS_CLIENT_LOGIN);
     }
@@ -492,7 +492,7 @@ main(
 
     /* krb5 require the euid to be 0 */
     if (strcasecmp(auth, "krb5") == 0) {
-	seteuid((uid_t)0);
+	if(seteuid((uid_t)0) != 0) { error("Can't set euid to 0"); };
     }
 
     /*

@@ -1,6 +1,11 @@
 2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Check return value of system calls.
+	* oldrecover-src/extract_list.c: Check return value of system calls.
+	* oldrecover-src/amrecover.c: Call dbrename after config is set.
+
+2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/*, config/gnulib/*: upgrade gnulib to
-	 3fe906e98202a591a6a14010aec1538adfd821b6.
+	  3fe906e98202a591a6a14010aec1538adfd821b6.
 
 2013-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Add that both flush-threshold-dumped
