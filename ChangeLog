@@ -1,4 +1,7 @@
 2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/snippet: Add directory.
+
+2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/*, config/gnulib/*: upgrade gnulib to
 	  3fe906e98202a591a6a14010aec1538adfd821b6.
 
