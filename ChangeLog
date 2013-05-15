@@ -1,4 +1,7 @@
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/json.m4: Improve check for perl module.
+
+2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* xfer-src/element-glue.c: Add debugging statement.
 
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>

@@ -27,21 +27,23 @@ AC_DEFUN([AMANDA_JSON_SERVER], [
 
     ALL_JSON_MODULE=true;
     JSON_MODULE=;
-    # check Plack::Request module
-    if ! `$PERL -e 'use Plack::Request'`; then
+
+    AC_PERL_MODULE_VERSION([ Plack::Request 1.0004], [], [
 	JSON_MODULE=" Plack::Request";
 	ALL_JSON_MODULE=false;
-    fi
+    ])
+
     # check Moose module
-    if ! `$PERL -e 'use Moose'`; then
+    AC_PERL_MODULE_VERSION([ Moose 2.0205], [], [
 	JSON_MODULE="$JSON_MODULE Moose";
 	ALL_JSON_MODULE=false;
-    fi
+    ])
+
     # check Log::Any module
-    if ! `$PERL -e 'use Log::Any'`; then
+    AC_PERL_MODULE_VERSION([ Log::Any 0.11], [], [
 	JSON_MODULE="$JSON_MODULE Log:Any";
 	ALL_JSON_MODULE=false;
-    fi
+    ])
 
     if test x"$WANT_JSON_SERVER" = x""; then
 	if test $ALL_JSON_MODULE = false; then
