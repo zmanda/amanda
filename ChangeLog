@@ -1,3 +1,6 @@
+2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/ampgsql.8.xml: Add disklist example.
+
 2013-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Remove perl warning.
 
