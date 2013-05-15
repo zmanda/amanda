@@ -620,7 +620,7 @@ sub check_data_path {
     my $device = $self->get_device();
 
     if (!defined $device) {
-	confess "no device is available to check the datapath";
+	return "no device is available to check the datapath";
     }
 
     my $use_directtcp = $device->directtcp_supported();
@@ -663,7 +663,7 @@ sub get_xfer_dest {
     $self->{'xdt'} = undef;
     $self->{'size'} = 0;
     $self->{'duration'} = 0.0;
-    $self->{'nparts'} = undef;
+    $self->{'nparts'} = 0;
     $self->{'dump_start_time'} = undef;
     $self->{'last_part_successful'} = 1;
     $self->{'started_writing'} = 0;
