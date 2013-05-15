@@ -158,6 +158,9 @@ clear_tapelist(void)
 	amfree(tp->datestamp);
 	amfree(tp->barcode);
 	amfree(tp->meta);
+	amfree(tp->config);
+	amfree(tp->pool);
+	amfree(tp->storage);
 	amfree(tp->comment);
 	next = tp->next;
 	amfree(tp);

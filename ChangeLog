@@ -1,4 +1,7 @@
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c: Memory leak.
+
+2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/cmdfile.c: Memory leak.
 
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
