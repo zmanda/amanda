@@ -237,6 +237,7 @@ read_cmdfile(
 	g_hash_table_insert(cmddatas->cmdfile, GINT_TO_POINTER(cmddata->id), cmddata);
     }
 
+    g_strfreev(xlines);
     checked_working_pid = 1;
 
     return cmddatas;
