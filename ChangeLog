@@ -1,4 +1,8 @@
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Do not confess if device not available.
+	* perl/Amanda/Taper/Worker.pm: Fix device_errors.
+
+2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fix data_host memory handling.
 
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
