@@ -1,4 +1,7 @@
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fix data_host memory handling.
+
+2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.c: Memory leak.
 
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
