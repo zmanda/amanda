@@ -197,6 +197,8 @@ do_directtcp_accept(
     close(*socketp);
     *socketp = -1;
 
+    g_debug("do_directtcp_accept: %d", sock);
+
     return sock;
 }
 
@@ -285,7 +287,7 @@ do_directtcp_connect(
 	goto cancel_wait;
     }
 
-    g_debug("connected to %s", strsockaddr);
+    g_debug("do_directtcp_connect: connected to %s, fd %d", strsockaddr, sock);
 
     return sock;
 
@@ -414,6 +416,7 @@ read_and_write(XferElementGlue *self)
     int rfd = get_read_fd(self);
     int wfd = get_write_fd(self);
 
+    g_debug("read_and_write: read from %d, write to %d", rfd, wfd);
     while (!elt->cancelled) {
 	size_t len;
 
