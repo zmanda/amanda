@@ -1097,7 +1097,8 @@ sub getline {
 	last if $c eq "\n";
     }
 
-    my $chopped = $line;
+    $line =~ /^(.*)$/;
+    my $chopped = $1;
     $chopped =~ s/[\r\n]*$//g;
     debug("CTL << $chopped");
 
@@ -1121,8 +1122,8 @@ sub getline_async {
 	return $async_read_cb->($err, undef) if $err;
 
 	$buf .= $data;
-	if ($buf =~ /\r\n$/) {
-	    my $chopped = $buf;
+	if ($buf =~ /^(.*\r\n)$/) {
+	    my $chopped = $1;
 	    $chopped =~ s/[\r\n]*$//g;
 	    debug("CTL << $chopped");
 
