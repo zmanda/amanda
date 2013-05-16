@@ -1,3 +1,7 @@
+2013-05-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Add a VERBOSE property.
+	* man/xml-source/ampgsql.8.xml: Document VERBOSE property.
+
 2013-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/ps.m4: use one AC_MSG_RESULT.
 
