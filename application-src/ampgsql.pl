@@ -143,6 +143,9 @@ if defined $self->{'args'}->{$pdumpname};
 	$self->{'props'}->{'pg-datadir'} =  $self->{'args'}->{'device'};
     }
 
+    $self->{'args'}->{'verbose'} ||= "no";
+    $self->{'args'}->{'verbose'} = string_to_boolean($self->{'args'}->{'verbose'});
+
     return $self;
 }
 
@@ -222,7 +225,9 @@ sub _run_psql_command {
     push @cmd, "-p", $self->{'props'}->{'pg-port'} if ($self->{'props'}->{'pg-port'});
     push @cmd, "-U", $self->{'props'}->{'pg-user'} if ($self->{'props'}->{'pg-user'});
 
-    push @cmd, '--quiet', '--output', '/dev/null' if (!($cmd =~ /pg_xlogfile_name_offset/));
+    if (!($cmd =~ /pg_xlogfile_name_offset/) && !$self->{'args'}->{'verbose'}) {
+	push @cmd, '--quiet', '--output', '/dev/null';
+    }
     push @cmd, '--command', $cmd;
     push @cmd,$self->{'props'}->{'pg-db'} if exists $self->{'props'}->{'pg-db'};
     debug("running " . join(" ", @cmd));
@@ -1062,7 +1067,8 @@ GetOptions(
     'passfile=s',
     'port=s',
     'user=s',
-    'psql-path=s'
+    'psql-path=s',
+    'verbose=s'
 ) or usage();
 
 if (defined $opt_version) {
