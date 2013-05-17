@@ -89,6 +89,7 @@ sub get_device {
     my ($device_name) = @_;
 
     my $device = Amanda::Changer::robot::get_device($self, $device_name);
+    return $device if $device->isa("Amanda::Changer::Error");
 
     # set the authentication properties for the new device based on our
     # own settings, but only if they haven't been set by the user
