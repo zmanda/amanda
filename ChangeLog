@@ -1,5 +1,9 @@
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
-	* device-src/s3.c (s3_make_bucket_ Init add_create to FALSE.
+	* perl/Amanda/Changer/ndmp.pm (get_device): Return the
+	  Amanda::Changer::Error on error.
+
+2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (s3_make_bucket): Init add_create to FALSE.
 
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Try to locate the label in all storage if
