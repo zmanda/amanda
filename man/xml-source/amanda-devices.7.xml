@@ -532,6 +532,7 @@ for the most up-to-date list.
 or "REDUCED_REDUNDANCY" (cheaper, but less redundant).  See
 <ulink url="http://docs.amazonwebservices.com/AmazonS3/latest/dev/index.html?DataDurability.html" />
 for the most up-to-date list.
+It can be "DURABLE_REDUCED_AVAILABILITY" for GOOGLE storage.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_SSL</term><listitem>
