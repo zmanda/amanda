@@ -1,4 +1,8 @@
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amrmtape.pl: Try to locate the label in all storage if
+	  the storage is not in the tapelist.
+
+2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Do not abort partial upload if
 	  multi-part-upload is not set.
 	* device-src/s3.c: Handle DURABLE_REDUCED_AVAILABILITY for OAUTH2.
