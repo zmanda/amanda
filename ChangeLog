@@ -1,4 +1,7 @@
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (s3_make_bucket_ Init add_create to FALSE.
+
+2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Handle DURABLE_REDUCED_AVAILABILITY for OAUTH2.
 	* man/xml-source/amanda-devices.7.xml: Document
 	  DURABLE_REDUCED_AVAILABILITY for google storage.
