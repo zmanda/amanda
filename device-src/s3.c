@@ -3644,7 +3644,7 @@ s3_make_bucket(S3Handle *hdl,
     s3_md5_func md5_func = NULL;
     s3_size_func size_func = NULL;
     GString *CreateBucketConfiguration;
-    gboolean add_create;
+    gboolean add_create = FALSE;
 
     g_assert(hdl != NULL);
 

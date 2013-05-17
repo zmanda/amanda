@@ -1,4 +1,7 @@
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (s3_make_bucket_ Init add_create to FALSE.
+
+2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Try to locate the label in all storage if
 	  the storage is not in the tapelist.
 
