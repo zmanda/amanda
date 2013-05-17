@@ -88,10 +88,6 @@
 #define S3_MAX_KEY_LENGTH 1024
 
 #define AMAZON_SECURITY_HEADER "x-amz-security-token"
-#define AMAZON_BUCKET_CONF_TEMPLATE "\
-  <CreateBucketConfiguration%s>\n\
-    <LocationConstraint>%s</LocationConstraint>\n\
-  </CreateBucketConfiguration>"
 
 #define AMAZON_STORAGE_CLASS_HEADER "x-amz-storage-class"
 
@@ -939,6 +935,7 @@ authenticate_request(S3Handle *hdl,
 	}
 
 	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	    hdl->s3_api == S3_API_S3 &&
 	    is_non_empty_string(hdl->storage_class)) {
 	    g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
 	    g_string_append(auth_string, ":");
@@ -1007,6 +1004,7 @@ authenticate_request(S3Handle *hdl,
 	}
 
 	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	    hdl->s3_api != S3_API_OAUTH2 &&
 	    is_non_empty_string(hdl->storage_class)) {
 	    buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s",
 				  hdl->storage_class);
@@ -3645,42 +3643,64 @@ s3_make_bucket(S3Handle *hdl,
     s3_reset_func reset_func = NULL;
     s3_md5_func md5_func = NULL;
     s3_size_func size_func = NULL;
+    GString *CreateBucketConfiguration;
+    gboolean add_create;
 
     g_assert(hdl != NULL);
 
+    CreateBucketConfiguration = g_string_new("<CreateBucketConfiguration");
+    if (g_str_equal(hdl->host, "gss.iijgio.com")) {
+	g_string_append(CreateBucketConfiguration,
+			" xmlns=\"http://acs.iijgio.com/doc/2006-03-01/\"");
+    }
+    g_string_append(CreateBucketConfiguration, ">");
     if (is_non_empty_string(hdl->bucket_location) &&
         !g_str_equal(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
         if (s3_bucket_location_compat(bucket)) {
-            ptr = &buf;
-            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE,
-		 g_str_equal(hdl->host, "gss.iijgio.com")?
-			" xmlns=\"http://acs.iijgio.com/doc/2006-03-01/\"":
-			"",
-		hdl->bucket_location);
-            buf.buffer_len = (guint) strlen(buf.buffer);
-            buf.buffer_pos = 0;
-            buf.max_buffer_size = buf.buffer_len;
-            read_func = s3_buffer_read_func;
-            reset_func = s3_buffer_reset_func;
-            size_func = s3_buffer_size_func;
-            md5_func = s3_buffer_md5_func;
+	    g_string_append_printf(CreateBucketConfiguration,
+			    "<LocationConstraint>%s</LocationConstraint>",
+			    hdl->bucket_location);
+	    add_create = TRUE;
         } else {
             hdl->last_message = g_strdup_printf(_(
                 "Location constraint given for Amazon S3 bucket, "
                 "but the bucket name (%s) is not usable as a subdomain."), bucket);
+	    g_string_free(CreateBucketConfiguration, TRUE);
             return FALSE;
         }
     }
+    if (hdl->s3_api == S3_API_OAUTH2 && hdl->storage_class) {
+	g_string_append_printf(CreateBucketConfiguration,
+			       "<StorageClass>%s</StorageClass>",
+			       hdl->storage_class);
+	add_create = TRUE;
+    }
+    g_string_append(CreateBucketConfiguration, "</CreateBucketConfiguration>");
 
     if (hdl->s3_api == S3_API_CASTOR) {
         verb = "POST";
         content_type = "application/castorcontext";
     }
 
+    if (add_create) {
+	ptr = &buf;
+	buf.buffer = g_string_free(CreateBucketConfiguration, FALSE);
+	buf.buffer_len = (guint) strlen(buf.buffer);
+	buf.buffer_pos = 0;
+	buf.max_buffer_size = buf.buffer_len;
+	read_func = s3_buffer_read_func;
+	reset_func = s3_buffer_reset_func;
+	size_func = s3_buffer_size_func;
+	md5_func = s3_buffer_md5_func;
+    } else {
+	g_string_free(CreateBucketConfiguration, TRUE);
+    }
     result = perform_request(hdl, verb, bucket, NULL, NULL,
 		 NULL, content_type, project_id, NULL,
                  read_func, reset_func, size_func, md5_func, ptr,
                  NULL, NULL, NULL, NULL, NULL, result_handling, FALSE);
+   if (ptr)
+	g_free(ptr->buffer);
 
    if (result == S3_RESULT_OK ||
        (result != S3_RESULT_OK &&

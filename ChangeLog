@@ -1,3 +1,10 @@
+2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Do not abort partial upload if
+	  multi-part-upload is not set.
+	* device-src/s3.c: Handle DURABLE_REDUCED_AVAILABILITY for OAUTH2.
+	* man/xml-source/amanda-devices.7.xml: Document
+	  DURABLE_REDUCED_AVAILABILITY for google storage.
+
 2013-05-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amidxtaped.pl: untaint input variable.
 

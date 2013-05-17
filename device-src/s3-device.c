@@ -899,6 +899,9 @@ abort_partial_upload(S3Device *self)
     GSList *objects;
     s3_object *part = NULL;
 
+    if (!self->use_s3_multi_part_upload)
+	return TRUE;
+
     result = s3_list_keys(self->s3t[0].s3, self->bucket, "uploads", NULL, NULL, &objects, NULL);
 
     if (!result) {
