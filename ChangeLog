@@ -1,4 +1,7 @@
 2013-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/gnutar.pl: Fix for fc18.
+
+2013-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	 * device-src/ndmp-device.c: Parse the LEOM property.
 
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
