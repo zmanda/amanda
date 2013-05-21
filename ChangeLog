@@ -1,3 +1,6 @@
+2013-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Parse the LEOM property.
+
 2013-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/ndmp.pm (get_device): Return the
 	  Amanda::Changer::Error on error.

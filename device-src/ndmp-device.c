@@ -1925,7 +1925,7 @@ ndmp_device_set_read_block_size_fn(Device *p_self, DevicePropertyBase *base G_GN
 	    ((gsize)read_block_size < p_self->block_size ||
 	     (gsize)read_block_size > p_self->max_block_size)) {
 	device_set_error(p_self,
-	    g_strdup_printf("Error setting READ-BLOCk-SIZE property to '%zu', it must be between %zu and %zu", read_block_size, p_self->block_size, p_self->max_block_size),
+	    g_strdup_printf("Error setting READ-BLOCK-SIZE property to '%zu', it must be between %zu and %zu", read_block_size, p_self->block_size, p_self->max_block_size),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -1947,6 +1947,22 @@ ndmp_device_set_indirect_fn(Device *dself,
     self->indirect = g_value_get_boolean(val);
 
     return device_simple_property_set_fn(dself, base, val, surety, source);
+}
+
+static gboolean
+ndmp_device_set_leom_fn(Device *dself,
+    DevicePropertyBase *base G_GNUC_UNUSED, GValue *val,
+    PropertySurety surety G_GNUC_UNUSED, PropertySource source G_GNUC_UNUSED)
+{
+    gboolean leom = g_value_get_boolean(val);
+
+    if (!leom) {
+	device_set_error(dself,
+	    g_strdup_printf("Error setting LEOM property, it must be TRUE"),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+    return TRUE;
 }
 
 static void
@@ -2010,6 +2026,12 @@ ndmp_device_class_init(NdmpDeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    ndmp_device_set_read_block_size_fn);
+
+    device_class_register_property(device_class, PROPERTY_LEOM,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    ndmp_device_set_leom_fn);
+
 }
 
 static void
