@@ -1,3 +1,6 @@
+2013-05-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Parse psql version with four numbers.
+
 2013-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for fc18.
 
