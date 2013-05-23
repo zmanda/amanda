@@ -485,7 +485,7 @@ ndmp_connection_mover_listen(
 		ndmp4_tcp_addr *na = &reply->connect_addr.ndmp4_addr_u.tcp_addr.tcp_addr_val[i];
 		(*addrs)[i].sin.sin_family = AF_INET;
 		(*addrs)[i].sin.sin_addr.s_addr = htonl(na->ip_addr);
-		SU_SET_PORT(addrs[i], na->port);
+		SU_SET_PORT(&((*addrs)[i]), na->port);
 	    }
 	}
 	NDMP_FREE();
