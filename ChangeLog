@@ -1,3 +1,7 @@
+2013-05-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (start_some_dumps): Fix when multiple storage in
+	  use.
+
 2013-05-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: Fix SU_SET_PORT argument.
 

@@ -1173,6 +1173,7 @@ start_some_dumps(
     chunker_t *chunker;
     dumper_t *dumper;
     wtaper_t *wtaper;
+    wtaper_t *wtaper_accept;
     taper_t  *taper;
     char dumptype;
     char *dumporder;
@@ -1246,12 +1247,13 @@ start_some_dumps(
 	wtaper = NULL;
 	if (!empty(directq)) {  /* to the first allowed storage only */
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-		wtaper = idle_taper(taper);
-		if (wtaper) {
+		wtaper_accept = idle_taper(taper);
+		if (wtaper_accept) {
 		    TapeAction result_tape_action;
 		    char *why_no_new_tape = NULL;
 
-		    result_tape_action = tape_action(wtaper, &why_no_new_tape);
+		    result_tape_action = tape_action(wtaper_accept,
+						     &why_no_new_tape);
 		    if (result_tape_action & TAPE_ACTION_START_A_FLUSH ||
 			result_tape_action & TAPE_ACTION_START_A_FLUSH_FIT) {
 			off_t extra_tapes_size = 0;
@@ -1278,20 +1280,18 @@ start_some_dumps(
 						   dlist = dlist_next) {
 			    dlist_next = dlist->next;
 			    diskp = dlist->data;
-		            allow_dump_dle(diskp, wtaper, dumptype, &directq, now,
+		            allow_dump_dle(diskp, wtaper_accept, dumptype, &directq, now,
 					   dumper_to_holding, &cur_idle,
 					   &delayed_diskp, &diskp_accept,
 					   &holdp_accept, extra_tapes_size);
 			}
 			if (diskp_accept) {
 			    diskp = diskp_accept;
-			    holdp = holdp_accept;
+			    wtaper = wtaper_accept;
 			} else {
 			    diskp = NULL;
 			    wtaper = NULL;
 			}
-		    } else {
-			wtaper = NULL;
 		    }
 		}
 	    }
