@@ -377,38 +377,38 @@ while (@tapespecs) {
 	    "unmarshal '$tapespec'");
 }
 
-is_deeply(Amanda::Util::unmarshal_tapespec(0, "x:100,99"), ['x', [99,100] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "x:100,99"), [undef, 'x', [99,100] ],
     "filenums are sorted when unmarshalled");
 
-is_deeply(Amanda::Util::marshal_tapespec(0, [ 'x', [100, 99] ]), "x:100,99",
+is_deeply(Amanda::Util::marshal_tapespec(0, [ undef, 'x', [100, 99] ]), "x:100,99",
     "un-sorted filenums are NOT sorted when marshalled");
 
-is_deeply(Amanda::Util::unmarshal_tapespec(0, "x:34,34"), [ 'x', [34, 34] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "x:34,34"), [ undef, 'x', [34, 34] ],
     "duplicate filenums are NOT collapsed when unmarshalled");
 
-is_deeply(Amanda::Util::marshal_tapespec(0, [ 'x', [34, 34] ]), "x:34,34",
+is_deeply(Amanda::Util::marshal_tapespec(0, [ undef, 'x', [34, 34] ]), "x:34,34",
     "duplicate filenums are NOT collapsed when marshalled");
 
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "sim\\\\ple\\:quoted\\;file\\,name"),
-    [ "sim\\ple:quoted;file,name", [0] ],
+    [ undef, "sim\\ple:quoted;file,name", [0] ],
     "simple non-tapespec string translated like string:0");
 
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "tricky\\,tricky\\:1,2,3"),
-    [ "tricky,tricky:1,2,3", [0] ],
+    [ undef, "tricky,tricky:1,2,3", [0] ],
     "tricky non-tapespec string also translated to string:0");
 
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\:3"), # one slash
-    [ ":3" , [0] ],
+    [ undef, ":3" , [0] ],
     "one slash escapes the colon");
 
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\:3"), # two slashes
-    [ "\\" , [3] ],
+    [ undef, "\\" , [3] ],
     "two slashes escape to one");
 
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\\\:3"), # three slashes
-    [ "\\:3", [0] ],
+    [ undef, "\\:3", [0] ],
     "three slashes escape to a slash and a colon");
 
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\\\\\:3"), # four slashes
-    [ "\\\\", [3] ],
+    [ undef, "\\\\", [3] ],
     "four slashes escape to two");

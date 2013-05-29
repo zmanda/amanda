@@ -270,7 +270,7 @@ sub run_amidxtaped {
 	    my $safe = $params{'holding'};
 	    $safe =~ s/([\\:;,])/\\$1/g;
 	    $safe .= ':0' unless $params{'holding_no_colon_zero'};
-	    $service->send($cmd_stream, "DEVICE=HOLDING:$safe\r\n");
+	    $service->send($cmd_stream, "DEVICE=$safe\r\n");
 	} elsif ($params{'feedme'}) {
 	    # bogus device name
 	    $service->send($cmd_stream, "DEVICE=file:/does/not/exist\r\n");
