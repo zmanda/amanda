@@ -11,6 +11,8 @@ typedef struct find_result_s {
     char *write_timestamp;
     char *hostname;
     char *diskname;
+    char *storage;
+    int   storage_id;
     int level;
     char *label;	/* holding filename for holding files */
     off_t filenum;

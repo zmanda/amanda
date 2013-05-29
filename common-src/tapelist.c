@@ -61,6 +61,11 @@ dump_tapelist(
     dbprintf("dump_tapelist(%p):\n", tapelist);
     for(cur_tape = tapelist ; cur_tape != NULL ; cur_tape = cur_tape->next) {
 	dbprintf("  %p->next     = %p\n", cur_tape, cur_tape->next);
+	if (cur_tape->storage) {
+	    dbprintf("  %p->storage  = %s\n", cur_tape, cur_tape->storage);
+	} else {
+	    dbprintf("  %p->storage  = %s\n", cur_tape, "NULL");
+	}
 	dbprintf("  %p->label    = %s\n", cur_tape, cur_tape->label);
 	dbprintf("  %p->isafile  = %d\n", cur_tape, cur_tape->isafile);
 	dbprintf("  %p->numfiles = %d\n", cur_tape, cur_tape->numfiles);
@@ -81,6 +86,7 @@ dump_tapelist(
 tapelist_t *
 append_to_tapelist(
     tapelist_t *tapelist,
+    char *	storage,
     char *	label,
     off_t	file,
     int 	partnum,
@@ -89,12 +95,18 @@ append_to_tapelist(
     tapelist_t *new_tape, *cur_tape;
     int c;
 
-    dbprintf("append_to_tapelist(tapelist=%p, label='%s', file=%lld, partnum=%d,  isafile=%d)\n",
-		tapelist, label, (long long)file, partnum, isafile);
+    if (storage) {
+	dbprintf("append_to_tapelist(tapelist=%p, storage='%s', label='%s', file=%lld, partnum=%d,  isafile=%d)\n",
+		 tapelist, storage, label, (long long)file, partnum, isafile);
+    } else {
+	dbprintf("append_to_tapelist(tapelist=%p, storage='%s', label='%s', file=%lld, partnum=%d,  isafile=%d)\n",
+		 tapelist, "NULL", label, (long long)file, partnum, isafile);
+    }
 
     /* see if we have this tape already, and if so just add to its file list */
     for(cur_tape = tapelist; cur_tape; cur_tape = cur_tape->next) {
-	if(g_str_equal(label, cur_tape->label)) {
+	if (g_strcmp0(storage, cur_tape->storage) == 0 &&
+	    g_str_equal(label, cur_tape->label)) {
 	    int d_idx = 0;
 	    off_t *newfiles;
 	    int   *newpartnum;
@@ -128,8 +140,8 @@ append_to_tapelist(
 	}
     }
 
-    new_tape = g_malloc(sizeof(tapelist_t));
-    memset(new_tape, 0, sizeof(tapelist_t));
+    new_tape = g_new0(tapelist_t, 1);
+    new_tape->storage = g_strdup(storage);
     new_tape->label = g_strdup(label);
     if(file >= (off_t)0){
 	new_tape->files = g_malloc(sizeof(*(new_tape->files)));
@@ -225,7 +237,8 @@ unescape_label(
 char *
 marshal_tapelist(
     tapelist_t *tapelist,
-    int		do_escape)
+    int		do_escape,
+    int         with_storage)
 {
     tapelist_t *cur_tape;
     char *str;
@@ -238,10 +251,17 @@ marshal_tapelist(
         char *p;
 	int c;
 
+	strbuf = g_string_new("");
+	if (with_storage) {
+            p = escape_label(cur_tape->storage);
+	    g_string_append(strbuf, p);
+	    g_free(p);
+	    g_string_append_c(strbuf, ':');
+	}
+
         p = (do_escape) ? escape_label(cur_tape->label)
             : g_strdup(cur_tape->label);
-
-        strbuf = g_string_new(p);
+        g_string_append(strbuf, p);
         g_free(p);
 
         g_string_append_c(strbuf, ':');
@@ -278,9 +298,10 @@ marshal_tapelist(
  */
 tapelist_t *
 unmarshal_tapelist_str(
-    char *	tapelist_str)
+    char *	tapelist_str,
+    int		with_storage)
 {
-    char *temp_label, *temp_filenum;
+    char *temp_storage, *temp_label, *temp_filenum;
     int l_idx, n_idx;
     size_t input_length;
     tapelist_t *tapelist = NULL;
@@ -290,10 +311,28 @@ unmarshal_tapelist_str(
     input_length = strlen(tapelist_str);
 
     temp_label = g_malloc(input_length+1);
+    temp_storage = g_malloc(input_length+1);
     temp_filenum = g_malloc(input_length+1);
 
-    do{
-	/* first, read the label part */
+    do {
+	/* first, read the storage part */
+	if (with_storage) {
+	    memset(temp_storage, '\0', input_length+1);
+            l_idx = 0;
+	    while(*tapelist_str != ':' && *tapelist_str != '\0'){
+		if(*tapelist_str == '\\')
+		    tapelist_str++; /* skip escapes */
+		temp_storage[l_idx] = *tapelist_str;
+		if(*tapelist_str == '\0')
+		    break; /* bad format, should kvetch */
+		tapelist_str++;
+		l_idx++;
+	    }
+	    if(*tapelist_str != '\0')
+		tapelist_str++;
+	}
+
+	/* then, read the label part */
 	memset(temp_label, '\0', input_length+1);
         l_idx = 0;
 	while(*tapelist_str != ':' && *tapelist_str != '\0'){
@@ -307,7 +346,7 @@ unmarshal_tapelist_str(
 	}
 	if(*tapelist_str != '\0')
 	    tapelist_str++;
-	tapelist = append_to_tapelist(tapelist, temp_label, (off_t)-1, -1, 0);
+	tapelist = append_to_tapelist(tapelist, temp_storage, temp_label, (off_t)-1, -1, 0);
 
 	/* now read the list of file numbers */
 	while(*tapelist_str != ';' && *tapelist_str != '\0'){
@@ -323,7 +362,7 @@ unmarshal_tapelist_str(
 	    }
 	    filenum = OFF_T_ATOI(temp_filenum);
 
-	    tapelist = append_to_tapelist(tapelist, temp_label, filenum, -1, 0);
+	    tapelist = append_to_tapelist(tapelist, temp_storage, temp_label, filenum, -1, 0);
 	    if(*tapelist_str != '\0' && *tapelist_str != ';')
 		tapelist_str++;
 	}
@@ -333,6 +372,7 @@ unmarshal_tapelist_str(
     } while(*tapelist_str != '\0');
 
     amfree(temp_label);
+    amfree(temp_storage);
     amfree(temp_filenum);
 
     return(tapelist);
@@ -349,6 +389,7 @@ free_tapelist(
     tapelist_t *prev = NULL;
 
     for(cur_tape = tapelist ; cur_tape ; cur_tape = cur_tape->next){
+	amfree(cur_tape->storage);
 	amfree(cur_tape->label);
 	amfree(cur_tape->files);
 	amfree(cur_tape->partnum);

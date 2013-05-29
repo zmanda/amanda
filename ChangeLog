@@ -1,3 +1,59 @@
+2013-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: Add fe_amrecover_storage_in_marshall and
+	  fe_amrecover_storage_in_marshall amfeatures.
+	* common-src/amfeatures.c: Add fe_amrecover_storage_in_marshall and
+	  fe_amrecover_storage_in_marshall amfeatures.
+	* common-src/tapelist.h (tapelist_t): Add storage.
+	* common-src/tapelist.h: Many prototy change for storage.
+	* common-src/tapelist.c: Marshall and unmarshall storage.
+	* oldrecover-src/extract_list.c: Handle storage in marshall list.
+	* recover-src/extract_list.c: Handle storage in marshall list.
+	* perl/Amanda/Chunker/Scribe.pm: Typo.
+	* perl/Amanda/DB/Catalog.pm: handle storage.
+	* perl/Amanda/Logfile.swg (find_result_t): Add storage.
+	* perl/Amanda/Recovery/Planner.pm (make_plan): Add storage_list,
+	  all_copy and only_in_storage parameters.
+	* perl/Amanda/Recovery/Scan.pm: Handle Storage in log line.
+	* perl/Amanda/Report.pm: Handle Storage in log lines.
+	* perl/Amanda/Storage.pm: Add DESTROY method.
+	* perl/Amanda/Taper/Scribe.pm: Typo.
+	* perl/Amanda/Taper/Worker.pm: Add Storage to log lines.
+	* perl/Amanda/Util.swg (marshal_tapespec, unmarshal_tapespec): Handle
+	  storage, new with_storage argument.
+	* server-src/amcheckdump.pl: Check the dumps on all storages.
+	* server-src/amfetchdump.pl: Fetch from the specified storage.
+	* server-src/amidxtaped.pl: Fetch from the specified storage.
+	* server-src/amindexd.c: Send storage to amrecover.
+	* server-src/disk_history.h (DUMP_ITEM): Add storage.
+	* server-src/disk_history.c: Handle storage.
+	* server-src/find.c: Return storage, print storage.
+	* server-src/find.h (find_result_t): Add storage and storage_id.
+	* installcheck/Amanda_DB_Catalog.pl,
+	  installcheck/Amanda_Recovery_Planner.pl,
+	  installcheck/Amanda_Report.pl,
+	  installcheck/Amanda_Util.pl,
+	  installcheck/Installcheck/Catalogs.pm,
+	  installcheck/amidxtaped.pl,
+	  installcheck/catalogs/amflush.cat,
+	  installcheck/catalogs/bigdb.cat,
+	  installcheck/catalogs/bigestimate.cat,
+	  installcheck/catalogs/doublefailure.cat,
+	  installcheck/catalogs/filesystemstaped.cat,
+	  installcheck/catalogs/flush-noorigsize.cat,
+	  installcheck/catalogs/flush-origsize.cat,
+	  installcheck/catalogs/longstrange.cat,
+	  installcheck/catalogs/multi-taper.cat,
+	  installcheck/catalogs/normal.cat,
+	  installcheck/catalogs/resultsmissing.cat,
+	  installcheck/catalogs/retried-nofinish.cat,
+	  installcheck/catalogs/retried-strange.cat,
+	  installcheck/catalogs/retried.cat,
+	  installcheck/catalogs/shortstrange.cat,
+	  installcheck/catalogs/skipped.cat,
+	  installcheck/catalogs/spanned.cat,
+	  installcheck/catalogs/strontium.cat,
+	  installcheck/taper.pl: Change for new log format and API.
+
 2013-05-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (start_some_dumps): Fix when multiple storage in
 	  use.

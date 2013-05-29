@@ -30,7 +30,10 @@ Amanda::Recovery::Planner - use the catalog to plan recoveries
 	    dumpspecs => [ $ds1, $ds2 ],
 	    algorithm => $algo,
 	    labelstr => $labelstr,
+	    storage_list => \@storage_list,
 	    changer => $changer,
+	    all_copy => $all_copy,
+	    only_in_storage => $only_in_storage,
 	    plan_cb => $subs{'plan_cb'});
     };
 
@@ -154,7 +157,7 @@ performed.  Callers should shift dumps off this list to present to the Clerk.
 To get a list of volumes that the plan requires, in order, use
 C<get_volume_list>.  Each volume is represented as a hash:
 
-  { label => 'DATA182', available => 1 }
+  { label => 'DATA182', storage => 'STORAGE-1', available => 1 }
 
 where C<available> is false if the planner did not find this volume in the
 changer.  Planners which do not consult the changer will have a false value for
@@ -183,6 +186,7 @@ sub make_plan {
 	chg => $params{'changer'},
 	debug => $params{'debug'},
 	one_dump_per_part => $params{'one_dump_per_part'},
+	all_copy => $params{'all_copy'},
     });
 
     if (exists $params{'holding_file'}) {
@@ -231,7 +235,7 @@ sub make_plan {
     my %params = @_;
 
     for my $rq_param (qw(changer plan_cb dumpspecs)) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
     my $dumpspecs = $params{'dumpspecs'};
@@ -269,10 +273,50 @@ sub make_plan {
 	push @{$dumps{$k}}, $dump;
     }
 
+    # all_copy  storage_list only_in_storage
+    #     0            0         0		first
+    #     0            0         1		-------
+    #     0            1         0		first in storage_list or first
+    #     0            1         1		first in storage_list
+    #     1            0         0		all
+    #     1            0         1		-------
+    #     1            1         0		all
+    #     1            1         1		all in storage_list
     # now select the "best" of each set of dumps, and put that in @dumps
     @dumps = ();
     for my $options (values %dumps) {
 	my @options = @$options;
+
+	# remove if not in a valid storage
+	if ($params{'storage_list'} && $params{'only_in_storage'}) {
+	    @options = grep { my $storage = $_->{'storage'};
+			      grep { $_ eq $storage } @{$params{'storage_list'}}
+			    } @options;
+	}
+
+	# remove dump without parts
+	@options = grep { defined $_->{'parts'} } @options;
+
+	if ($params{'all_copy'}) {
+	    push @dumps, @options;
+	    next;
+	}
+
+	# limit to the one in order of the storage_list
+	if ($params{'storage_list'}) {
+	    for my $storage (@{$params{'storage_list'}}) {
+		my @options1 = grep { $_->{'storage'} eq $storage } @options;
+		if (@options1) {
+		    @options = @options1;
+		    last;
+		}
+	    }
+	}
+
+	if (@options == 0) {
+	    next;
+	}
+
 	# if there's only one option, the choice is easy
 	if (@options == 1) {
 	    push @dumps, $options[0];
@@ -376,7 +420,7 @@ sub make_holding_plan {
     my %params = @_;
 
     for my $rq_param (qw(holding_file plan_cb)) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 
@@ -427,7 +471,7 @@ sub make_plan_from_filelist {
     my %params = @_;
 
     for my $rq_param (qw(filelist plan_cb)) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 
@@ -452,14 +496,16 @@ sub make_plan_from_filelist {
 	my @labels;
 	my %files;
 	my @filelist = @{$params{'filelist'}};
+	my $storage;
 	while (@filelist) {
+	    $storage = shift @filelist;
 	    my $label = shift @filelist;
 	    push @labels, $label;
 	    $files{$label} = shift @filelist;
 	}
-
 	my @parts = Amanda::DB::Catalog::get_parts(
 		$params{'dumpspec'}? (dumpspecs => [ $params{'dumpspec'} ]) : (),
+		storage => $storage,
 		labels => [ @labels ]);
 
 	# filter down to the parts that match filelist (using %files)
@@ -527,6 +573,9 @@ sub make_plan_from_filelist {
 	    }
 	}
 
+	if ($storage && $storage ne $dumps[0]->{'storage'}) {
+	    die("bad storage $storage : $dumps[0]->{'storage'}");
+	}
 	# now, because of the weak linking used by Amanda::DB::Catalog, we need to
 	# re-query for this dump.  If we don't do this, the parts will all be
 	# garbage-collected when we hand back the plan.  This is, chartiably, "less
@@ -538,6 +587,7 @@ sub make_plan_from_filelist {
 	    level => $dumps[0]->{'level'},
 	    dump_timestamp => $dumps[0]->{'dump_timestamp'},
 	    write_timestamp => $dumps[0]->{'write_timestamp'},
+	    storage => $dumps[0]->{'storage'},
 	    dumpspecs => $params{'dumpspecs'});
 
 	# sanity check
@@ -589,7 +639,7 @@ sub get_volume_list {
 	    next unless defined $part->{'label'}; # skip holding parts
 	    if (!defined $last_label || $part->{'label'} ne $last_label) {
 		$last_label = $part->{'label'};
-		push @volumes, { label => $last_label, available => 0 };
+		push @volumes, { label => $last_label, storage => $dump->{'storage'}, available => 0 };
 	    }
 	}
     }

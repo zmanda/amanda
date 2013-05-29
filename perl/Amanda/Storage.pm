@@ -107,6 +107,12 @@ It should be used to describe the storage in messages to the user.
 
 =cut
 
+sub DESTROY {
+    my $self = shift;
+
+    debug("Storage '$self->{'storage_name'}' not quit") if defined $self->{'storage_name'};
+}
+
 # this is a "virtual" constructor which instantiates objects of different
 # classes based on its argument.  Subclasses should not try to chain up!
 sub new {

@@ -172,6 +172,8 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_amrecover_data_status);
 	am_add_feature(f, fe_amrecover_data_crc);
 	am_add_feature(f, fe_sendbackup_state);
+	am_add_feature(f, fe_amrecover_storage_in_marshall);
+	am_add_feature(f, fe_amidxtaped_storage_in_marshall);
     }
     return f;
 }

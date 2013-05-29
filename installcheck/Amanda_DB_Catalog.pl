@@ -79,7 +79,7 @@ sub partstr {
    } else {
 	return "$part->{label}:$part->{filenum}: " .
 	       "$part->{dump}->{hostname} $part->{dump}->{diskname} $part->{dump}->{orig_kb} " .
-	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp}" .
+	       "w$part->{dump}->{write_timestamp} d$part->{dump}->{dump_timestamp} " .
 	       "n$part->{native_crc} c$part->{client_crc} s$part->{server_crc}";
    }
 }
@@ -295,7 +295,7 @@ is(Amanda::DB::Catalog::get_run_type('20080111000000'), "amflush",
 
 got_parts([ sortparts Amanda::DB::Catalog::get_parts() ],
     [ sortparts parts_named qr/.*/ ],
-    "get_parts returns all parts when given no parameters");
+    "get_parts returns all parts when given no parameters (1)");
 got_parts([ sortparts Amanda::DB::Catalog::get_parts(write_timestamp => '20080111000000') ],
     [ sortparts parts_named qr/somebox_lib_20080111/ ],
     "get_parts parameter write_timestamp");
@@ -692,5 +692,5 @@ Amanda::DB::Catalog::_clear_cache();
 
 got_parts([ sortparts Amanda::DB::Catalog::get_parts() ],
 	[ sortparts parts_named qr/.*/ ],
-	"get_parts returns all parts when given no parameters");
+	"get_parts returns all parts when given no parameters (2)");
 

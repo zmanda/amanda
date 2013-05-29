@@ -198,32 +198,33 @@ sub _parse {
 	    $fileref = \$self->{$kind}{$cur_filename};
 
 	# holding file
-	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\S+) (\S+) (\S+)$/) {
+	} elsif (/^%H (\S+) (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\d+) (\S+) (\S+) (\S+)$/) {
 
 	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
 	    die "part tag $1 already exists" if exists $self->{'parts'}{$1};
 
-	    my $safe_disk = $4;
+	    my $safe_disk = $5;
 	    $safe_disk =~ tr{/}{_};
-	    my $hfile = "$holdingdir/$2/$3.$safe_disk";
+	    my $hfile = "$holdingdir/$3/$4.$safe_disk";
 
-	    $self->{'holding_files'}->{$1} = [ $hfile, $2, $3, $4, $5, $6, $7 ];
+	    $self->{'holding_files'}->{$1} = [ $hfile, $3, $4, $5, $6, $7, $8 ];
 
 	    my $dump = $self->{'dumps'}{$1} = {
-		dump_timestamp => $2,
-		hostname => $3,
-		diskname => $4,
-		level => $5+0,
-		status => $6,
-		kb => $7,
+		storage => $2,
+		dump_timestamp => $3,
+		hostname => $4,
+		diskname => $5,
+		level => $6+0,
+		status => $7,
+		kb => $8,
 		orig_kb => 0,
 		write_timestamp => '00000000000000',
 		message => '',
 		nparts => 1,
 		sec => 0.0,
-		native_crc => $8,
-		client_crc => $9,
-		server_crc => $10,
+		native_crc => $9,
+		client_crc => $10,
+		server_crc => $11,
 	    };
 	    my $part = $self->{'parts'}{$1} = {
 		holding_file => $hfile,
@@ -233,30 +234,31 @@ sub _parse {
 		kb => $dump->{'kb'},
 		orig_kb => 0,
 		partnum => 1,
-		native_crc => $8,
-		client_crc => $9,
-		server_crc => $10,
+		native_crc => $9,
+		client_crc => $10,
+		server_crc => $11,
 	    };
 	    $dump->{'parts'} = [ undef, $part ];
 
 	# dump
-	} elsif (/^%D (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
+	} elsif (/^%D (\S+) (\S+) (\d+) (\d+) (\S+) (\S+) (\d+) (\S+) (\S+) (\d+) (\S+) (\d+) (\d+) (\S+) (\S+) (\S+)/) {
 	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
 	    my $dump = $self->{'dumps'}{$1} = {
-		dump_timestamp => $2,
-		write_timestamp => $3,
-		hostname => $4,
-		diskname => $5,
-		level => $6+0,
-		status => $7,
-		message => $8,
-		nparts => $9,
-		sec => $10+0.0,
-		kb => $11,
-		orig_kb => $12,
-		native_crc => $13,
-		client_crc => $14,
-		server_crc => $15,
+		storage => $2,
+		dump_timestamp => $3,
+		write_timestamp => $4,
+		hostname => $5,
+		diskname => $6,
+		level => $7+0,
+		status => $8,
+		message => $9,
+		nparts => $10,
+		sec => $11+0.0,
+		kb => $12,
+		orig_kb => $13,
+		native_crc => $14,
+		client_crc => $15,
+		server_crc => $16,
 		parts => [ undef ],
 	    };
 	    # translate "" to an empty string

@@ -140,7 +140,7 @@ Initiate the scan of the slot $slot:
 Initiate the scan of the slot $slot which should have the label $label:
   $self->user_msg_fn(scan_slot => 1,
                      slot      => $slot,
-                     label     => $label);   
+                     label     => $label);
 
 The result of scanning slot $slot:
   $self->user_msg_fn(slot_result => 1,

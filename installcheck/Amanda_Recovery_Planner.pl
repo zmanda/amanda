@@ -274,7 +274,7 @@ is_plan(make_plan_sync(
 is_plan(make_plan_sync(
 	    dumpspec => ds("somebox", "/lib", "20080515155555"),
 	    filelist => [
-		'Conf-006' => [2, 3, 4, 5,       8, 9, 10, 11],
+		'TESTCONF', 'Conf-006', [2, 3, 4, 5,       8, 9, 10, 11],
 		#  (make_plan should fill in files 6 and 7)
 	    ],
 	    changer => $changer),
@@ -297,7 +297,7 @@ is_plan(make_plan_sync(
 
 is_plan(make_plan_sync(
 	    filelist => [
-		'Conf-006' => [2, 3, 4, 5,       8, 9, 10, 11],
+		'TESTCONF', 'Conf-006', [2, 3, 4, 5,       8, 9, 10, 11],
 		#  (make_plan should fill in files 6 and 7)
 	    ],
 	    changer => $changer),

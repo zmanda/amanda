@@ -200,6 +200,8 @@ typedef enum {
     fe_amrecover_data_crc,
     fe_sendbackup_state,
 
+    fe_amrecover_storage_in_marshall,
+    fe_amidxtaped_storage_in_marshall,
     /*
      * All new features must be inserted immediately *before* this entry.
      */

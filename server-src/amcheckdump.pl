@@ -254,10 +254,11 @@ sub main {
     my ($finished_cb) = @_;
 
     my $tapelist;
-    my $chg;
     my $interactivity;
-    my $scan;
+    my %scan;
     my $clerk;
+    my %clerk;
+    my %storage;
     my $plan;
     my $timestamp;
     my $all_success = 1;
@@ -276,8 +277,10 @@ sub main {
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
-	finalize => sub { $scan->quit() if defined $scan;
-			  $chg->quit() if defined $chg    };
+	finalize => sub { foreach my $name (keys %storage) {
+			    $storage{$name}->quit();
+			  }
+			};
 
     step start => sub {
 	# set up the tapelist
@@ -295,26 +298,38 @@ sub main {
 	# make a changer
 	my ($storage) = Amanda::Storage->new(tapelist => $tapelist);
 	return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
-	$chg = $storage->{'chg'};
+	$storage{$storage->{"storage_name"}} = $storage;
+	my $chg = $storage->{'chg'};
 	return $steps->{'quit'}->($chg) if $chg->isa("Amanda::Changer::Error");
 
 	# make a scan
-	$scan = Amanda::Recovery::Scan->new(
+	my $scan = Amanda::Recovery::Scan->new(
 			    chg => $chg,
 			    interactivity => $interactivity);
 	return $steps->{'quit'}->($scan)
 	    if $scan->isa("Amanda::Changer::Error");
+	$scan{$storage->{"storage_name"}} = $scan;
 
 	# make a clerk
-	$clerk = Amanda::Recovery::Clerk->new(
+	my $clerk = Amanda::Recovery::Clerk->new(
 	    feedback => main::Feedback->new($chg),
-	    scan     => $scan);
+	    scan     => $scan{$storage->{"storage_name"}});
+	$clerk{$storage->{"storage_name"}} = $clerk;
 
 	# make a plan
 	my $spec = Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, $timestamp);
+	my $storage_list;
+	my $only_in_storage = 0;
+	if (getconf_linenum($CNF_STORAGE) == -2) {
+	    $storage_list = getconf($CNF_STORAGE);
+	    $only_in_storage = 1;
+	}
         Amanda::Recovery::Planner::make_plan(
             dumpspecs => [ $spec ],
+	    storage_list => $storage_list,
+	    only_in_storage => $only_in_storage,
             changer => $chg,
+	    all_copy => 1,
             plan_cb => $steps->{'plan_cb'});
     };
 
@@ -365,6 +380,30 @@ sub main {
 	}
 	print "\n";
 
+	my $storage_name = $dump->{'storage'};
+	if (!$storage{$storage_name}) {
+	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
+						 tapelist     => $tapelist);
+            #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
+	    $storage{$storage_name} = $storage;
+
+	};
+	my $chg = $storage{$storage_name}->{'chg'};
+	if (!$scan{$storage_name}) {
+	    my $scan = Amanda::Recovery::Scan->new(
+				    chg => $chg,
+				    interactivity => $interactivity);
+	    #return $steps->{'quit'}->($scan)
+	    #    if $scan{$storage->{"storage_name"}}->isa("Amanda::Changer::Error");
+	    $scan{$storage_name} = $scan;
+	};
+	if (!$clerk{$storage_name}) {
+	    my $clerk = Amanda::Recovery::Clerk->new(
+		feedback => main::Feedback->new($chg),
+		scan     => $scan{$storage_name});
+	    $clerk{$storage_name} = $clerk;
+	};
+	$clerk = $clerk{$storage_name};
 	@xfer_errs = ();
 	$clerk->get_xfer_src(
 	    dump => $dump,
@@ -387,8 +426,7 @@ sub main {
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
 	    } else {
-		return failure("could not decrypt encrypted dump: no program specified",
-			    $finished_cb);
+		return $steps->quit("could not decrypt encrypted dump: no program specified");
 	    }
 
 	    $hdr->{'encrypted'} = 0;
@@ -598,18 +636,24 @@ sub main {
 	if ($err) {
 	    $exit_code = 1;
 	    print STDERR $err, "\n";
-	    return $clerk->quit(finished_cb => $finished_cb) if defined $clerk;
-	    return $finished_cb->();
-	}
-
-	if ($all_success) {
+	} elsif ($all_success) {
 	    print "All images successfully validated\n";
 	} else {
 	    print "Some images failed to be correctly validated.\n";
 	    $exit_code = 1;
 	}
 
-	return $clerk->quit(finished_cb => $finished_cb);
+	return $steps->{'quit2'}->();
+    };
+
+    step quit2 => sub {
+	my ($storage_name) = keys %clerk;
+	if ($storage_name) {
+	    my $clerk = $clerk{$storage_name};
+	    delete $clerk{$storage_name};
+	    return $clerk->quit(finished_cb => $steps->{'quit2'});
+	}
+	return $finished_cb->();
     };
 
 }

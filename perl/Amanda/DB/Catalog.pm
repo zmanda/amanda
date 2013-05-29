@@ -528,8 +528,10 @@ sub get_parts_and_dumps {
 	if exists($params{'diskname'});
     push @{$params{'levels'}}, $params{'level'} 
 	if exists($params{'level'});
+    push @{$params{'storages'}}, $params{'storage'}
+	if defined($params{'storage'});
     if ($get_what eq 'parts') {
-	push @{$params{'labels'}}, $params{'label'} 
+	push @{$params{'labels'}}, $params{'label'}
 	    if exists($params{'label'});
     } else {
 	delete $params{'labels'};
@@ -571,7 +573,7 @@ sub get_parts_and_dumps {
     }
 
     # Set up some hash tables for speedy lookups of various attributes
-    my (%dump_timestamps_hash, %hostnames_hash, %disknames_hash, %levels_hash, %labels_hash);
+    my (%dump_timestamps_hash, %hostnames_hash, %disknames_hash, %levels_hash, %storages_hash, %labels_hash);
     %dump_timestamps_hash = map { ($_, undef) } @{$params{'dump_timestamps'}}
 	if (exists($params{'dump_timestamps'}));
     %hostnames_hash = map { ($_, undef) } @{$params{'hostnames'}}
@@ -580,6 +582,8 @@ sub get_parts_and_dumps {
 	if (exists($params{'disknames'}));
     %levels_hash = map { ($_, undef) } @{$params{'levels'}}
 	if (exists($params{'levels'}));
+    %storages_hash = map { ($_, undef) } @{$params{'storages'}}
+	if (defined($params{'storages'}));
     %labels_hash = map { ($_, undef) } @{$params{'labels'}}
 	if (exists($params{'labels'}));
 
@@ -625,18 +629,20 @@ sub get_parts_and_dumps {
 	    next unless (defined $find_result->{'label'});
 
 	    # bail out on this result early, if possible
-	    next if (%dump_timestamps_hash 
+	    next if (%dump_timestamps_hash
 		and !exists($dump_timestamps_hash{zeropad($find_result->{'timestamp'})}));
-	    next if (%hostnames_hash 
+	    next if (%hostnames_hash
 		and !exists($hostnames_hash{$find_result->{'hostname'}}));
-	    next if (%disknames_hash 
+	    next if (%disknames_hash
 		and !exists($disknames_hash{$find_result->{'diskname'}}));
-	    next if (%levels_hash 
+	    next if (%levels_hash
 		and !exists($levels_hash{$find_result->{'level'}}));
-	    next if (%labels_hash 
+	    next if (%storages_hash
+		and !exists($storages_hash{$find_result->{'storage'}}));
+	    next if (%labels_hash
 		and !exists($labels_hash{$find_result->{'label'}}));
 	    if ($get_what eq 'parts') {
-		next if (exists($params{'status'}) 
+		next if (exists($params{'status'})
 		    and defined $find_result->{'status'}
 		    and $find_result->{'status'} ne $params{'status'});
 	    }
@@ -650,6 +656,7 @@ sub get_parts_and_dumps {
 	    my $dump_timestamp = zeropad($find_result->{'timestamp'});
 
 	    my $dumpkey = join("\0", $find_result->{'hostname'}, $find_result->{'diskname'},
+				     $find_result->{'storage'},
 			             $write_timestamp, $find_result->{'level'}, $dump_timestamp);
 	    my $dump = $dumps{$dumpkey};
 	    if (!defined $dump) {
@@ -658,6 +665,7 @@ sub get_parts_and_dumps {
 		    write_timestamp => $write_timestamp,
 		    hostname => $find_result->{'hostname'},
 		    diskname => $find_result->{'diskname'},
+		    storage  => $find_result->{'storage'},
 		    level => $find_result->{'level'}+0,
 		    orig_kb => $find_result->{'orig_kb'},
 		    native_crc => $find_result->{'native_crc'},
@@ -719,7 +727,7 @@ sub get_parts_and_dumps {
 
 	    # count the number of successful parts in the dump
 	    $dump->{'nparts'}++ if $part{'status'} eq 'OK';
-	    
+
 	    # and add a ref to the array of parts; if we're getting
 	    # parts, then this is a weak ref
 	    $dump->{'parts'}[$part{'partnum'}] = \%part;
@@ -753,8 +761,16 @@ sub get_parts_and_dumps {
 
 	    # now extract the appropriate info; luckily these log lines have the same
 	    # format, more or less
-	    my ($hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $bytes, $message);
-	    ($hostname, $str) = Amanda::Util::skip_quoted_string($str);
+	    my ($storage, $hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $bytes, $message);
+	    ($storage, $str) = Amanda::Util::skip_quoted_string($str);
+	    $storage = Amanda::Util::unquote_string($storage);
+	    if ($storage =~ /^ST:/) {
+		$storage =~ s/^ST://;
+		($hostname, $str) = Amanda::Util::skip_quoted_string($str);
+	    } else {
+		$hostname = $storage;
+		$storage = Amanda::Config::get_config_name();
+	    }
 	    ($diskname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($dump_timestamp, $str) = Amanda::Util::skip_quoted_string($str);
 	    if ($status ne 'FAIL' and $type != $L_SUCCESS) { # nparts is not in SUCCESS lines
@@ -764,7 +780,7 @@ sub get_parts_and_dumps {
 		} else { # nparts is not in all PARTIAL lines
 		    $nparts = 0;
 		}
-		
+
 	    } else {
 		$nparts = 0;
 	    }
@@ -804,21 +820,25 @@ sub get_parts_and_dumps {
 	    # filter against dump criteria
 	    next if ($params{'dump_timestamp_match'}
 		and !match_datestamp($params{'dump_timestamp_match'}, zeropad($dump_timestamp)));
-	    next if (%dump_timestamps_hash 
+	    next if (%dump_timestamps_hash
 		and !exists($dump_timestamps_hash{zeropad($dump_timestamp)}));
 
 	    next if ($params{'hostname_match'}
 		and !match_host($params{'hostname_match'}, $hostname));
-	    next if (%hostnames_hash 
+	    next if (%hostnames_hash
 		and !exists($hostnames_hash{$hostname}));
 
 	    next if ($params{'diskname_match'}
 		and !match_disk($params{'diskname_match'}, $diskname));
-	    next if (%disknames_hash 
+	    next if (%disknames_hash
 		and !exists($disknames_hash{$diskname}));
 
-	    next if (%levels_hash 
+	    next if (%levels_hash
 		and !exists($levels_hash{$level}));
+
+	    next if (%storages_hash
+		and !exists($storages_hash{$storage}));
+
 	    # get_dumps filters on status
 
 	    if ($params{'dumpspecs'}) {
@@ -842,7 +862,7 @@ sub get_parts_and_dumps {
 		next unless $ok;
 	    }
 
-	    my $dumpkey = join("\0", $hostname, $diskname, $write_timestamp,
+	    my $dumpkey = join("\0", $hostname, $diskname, $storage, $write_timestamp,
 				     $level, zeropad($dump_timestamp));
 	    my $dump = $dumps{$dumpkey};
 	    if (!defined $dump) {
@@ -852,6 +872,7 @@ sub get_parts_and_dumps {
 		    write_timestamp => $write_timestamp,
 		    hostname => $hostname,
 		    diskname => $diskname,
+		    storage  => $storage,
 		    level => $level+0,
 		    orig_kb => undef,
 		    native_crc => undef,

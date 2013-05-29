@@ -949,9 +949,17 @@ sub _handle_taper_line
 
     if ( $type == $L_START ) {
         # format is:
-        # START taper datestamp <start> label <label> tape <tapenum>
+        # START taper [ST:Storage] datestamp <start> label <label> tape <tapenum>
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ($datestamp, $label, $tapenum, $storage) = @info[ 1, 3, 5, 7 ];
+        my ($datestamp, $label, $tapenum, $storage);
+	if ($info[0] =~ /^ST:/) {
+	    $storage = $info[0];
+	    $storage =~ s/^ST://g;
+	    ($datestamp, $label, $tapenum) = @info[ 2, 4, 6 ];
+	} else {
+            ($datestamp, $label, $tapenum) = @info[ 1, 3, 5 ];
+	    $storage = Amanda::Config::get_config_name();
+	}
         my $tape = $self->get_tape($label);
         $tape->{date} = $datestamp;
         $tape->{label} = $label;
@@ -965,10 +973,16 @@ sub _handle_taper_line
     } elsif ( $type == $L_PART || $type == $L_PARTPARTIAL ) {
 
 # format is:
-# <label> <tapefile> <hostname> <disk> <timestamp> <currpart>/<predparts> <level> [sec <sec> kb <kb> kps <kps>]
+# [ST:<storage>] <label> <tapefile> <hostname> <disk> <timestamp> <currpart>/<predparts> <level> [sec <sec> kb <kb> kps <kps>]
 #
 # format for $L_PARTPARTIAL is the same as $L_PART, plus <err> at the end
         my @info = Amanda::Util::split_quoted_strings($str);
+	my $storage = $info[0];
+	if ($storage =~ /^ST:/) {
+	    shift @info;
+	} else {
+	    $storage = undef;
+	}
         my ($label, $tapefile, $hostname, $disk, $timestamp) = @info[ 0 .. 4 ];
 
         $info[5] =~ m{^(\d+)\/(-?\d+)$};
@@ -1009,8 +1023,15 @@ sub _handle_taper_line
 
 # format is:
 # $type = DONE | PARTIAL
-# $type taper <hostname> <disk> <timestamp> <part> <level> [native-crc client-crc server-crc] [sec <sec> kb <kb> kps <kps>]
+# $type taper [ST:<storage>] <hostname> <disk> <timestamp> <part> <level> [native-crc client-crc server-crc] [sec <sec> kb <kb> kps <kps>]
         my @info = Amanda::Util::split_quoted_strings($str);
+	my $storage = $info[0];
+	if ($storage =~ /^ST:/) {
+	    shift @info;
+	} else {
+	    $storage = undef;
+	}
+
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
 	my $x;
 	if ($info[5] eq '[sec') {
@@ -1166,6 +1187,13 @@ sub _handle_fail_line
     my ($self, $program, $str) = @_;
 
     my @info = Amanda::Util::split_quoted_strings($str);
+    my $storage = $info[0];
+    if ($storage =~ /^ST:/) {
+	shift @info;
+    } else {
+	$storage = undef;
+    }
+
     my ($hostname, $disk, $timestamp, $level) = @info;
     my $error;
     my $failure_from;

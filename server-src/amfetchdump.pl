@@ -333,21 +333,13 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $exit_status = 0;
-my $clerk;
 use Data::Dumper;
 sub failure {
     my ($msg, $finished_cb) = @_;
     print STDERR "ERROR: $msg\n";
     debug("FAILURE: $msg");
     $exit_status = 1;
-    if ($clerk) {
-	$clerk->quit(finished_cb => sub {
-	    # ignore error
-	    $finished_cb->();
-	});
-    } else {
-	$finished_cb->();
-    }
+    $finished_cb->();
 }
 
 package main::Feedback;
@@ -401,7 +393,11 @@ sub main {
     my @directtcp_command;
     my @init_needed_labels;
     my $init_label;
-    my $scan;
+    my %scan;
+    my $clerk;
+    my %clerk;
+    my %storage;
+    my $interactivity;
     my $hdr;
     my $source_crc;
     my $dest_crc;
@@ -416,7 +412,11 @@ sub main {
     my $dest_is_native;
 
     my $steps = define_steps
-	cb_ref => \$finished_cb;
+	cb_ref => \$finished_cb,
+	finalize => sub { foreach my $name (keys %storage) {
+			    $storage{$name}->quit();
+			  }
+			};
 
     step start => sub {
 	my $chg;
@@ -425,7 +425,7 @@ sub main {
 	# were started in
 	my $destdir = $opt_chdir || Amanda::Util::get_original_cwd();
 	if (!chdir($destdir)) {
-	    return failure("Cannot chdir to $destdir: $!", $finished_cb);
+	    return failure("Cannot chdir to $destdir: $!", $steps->{'quit2'});
 	}
 
 	$is_tty = -t STDERR;
@@ -435,45 +435,58 @@ sub main {
 	    $delay = 5000; # 5 seconds
 	}
 
-	my $interactivity = Amanda::Interactivity::amfetchdump->new();
+	$interactivity = Amanda::Interactivity::amfetchdump->new();
 	my $storage;
 	# if we have an explicit device, then the clerk doesn't get a changer --
 	# we operate the changer via Amanda::Recovery::Scan
 	if (defined $opt_device) {
-	    $storage = Amanda::Storage->new(changer_name => $opt_device);
-	    return failure($storage, $finished_cb) if $storage->isa("Amanda::Changer::Error");
-	    $chg = $storage->{'chg'};
-	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
-	    $scan = Amanda::Recovery::Scan->new(
+	    my $storage = Amanda::Storage->new(changer_name => $opt_device);
+	    return failure($storage, $steps->{'quit2'}) if $storage->isa("Amanda::Changer::Error");
+	    $storage{$storage->{"storage_name"}} = $storage;
+	    my $chg = $storage->{'chg'};
+	    return failure($chg, $steps->{'quit2'}) if $chg->isa("Amanda::Changer::Error");
+	    my $scan = Amanda::Recovery::Scan->new(
 				storage => $storage,
 				chg => $chg,
 				interactivity => $interactivity);
-	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
-	    $clerk = Amanda::Recovery::Clerk->new(
+	    return failure($scan, $steps->{'quit2'}) if $scan->isa("Amanda::Changer::Error");
+	    $scan{$storage->{"storage_name"}} = $scan;
+	    my $clerk = Amanda::Recovery::Clerk->new(
 		feedback => main::Feedback->new($chg, $opt_device, $is_tty),
 		scan     => $scan);
+	    $clerk{$storage->{"storage_name"}} = $clerk;
 	} else {
-	    $storage = Amanda::Storage->new();
-	    return failure($storage, $finished_cb) if $storage->isa("Amanda::Changer::Error");
-	    $chg = $storage->{'chg'};
-	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
+	    my $storage = Amanda::Storage->new();
+	    return failure($storage, $steps->{'quit2'}) if $storage->isa("Amanda::Changer::Error");
+	    $storage{$storage->{"storage_name"}} = $storage;
+	    my $chg = $storage->{'chg'};
+	    return failure($chg, $steps->{'quit2'}) if $chg->isa("Amanda::Changer::Error");
 
-	    $scan = Amanda::Recovery::Scan->new(
+	    my $scan = Amanda::Recovery::Scan->new(
 				storage       => $storage,
 				chg           => $chg,
 				interactivity => $interactivity);
-	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
+	    return failure($scan, $steps->{'quit2'}) if $scan->isa("Amanda::Changer::Error");
+	    $scan{$storage->{"storage_name"}} = $scan;
 
-	    $clerk = Amanda::Recovery::Clerk->new(
+	    my $clerk = Amanda::Recovery::Clerk->new(
 		changer => $chg,
 		feedback => main::Feedback->new($chg, undef, $is_tty),
 		scan     => $scan);
+	    $clerk{$storage->{"storage_name"}} = $clerk;
 	}
 
 	# planner gets to plan against the same changer the user specified
+	my $storage_list = getconf($CNF_STORAGE);
+	my $only_in_storage = 0;
+	if (getconf_linenum($CNF_STORAGE) == -2) {
+	    $only_in_storage = 1;
+	}
 	Amanda::Recovery::Planner::make_plan(
 	    dumpspecs => [ @opt_dumpspecs ],
 	    labelstr => $storage->{'labelstr'},
+	    storage_list => $storage_list,
+	    only_in_storage => $only_in_storage,
 	    changer => $chg,
 	    plan_cb => $steps->{'plan_cb'},
 	    $opt_no_reassembly? (one_dump_per_part => 1) : ());
@@ -481,10 +494,10 @@ sub main {
 
     step plan_cb => sub {
 	(my $err, $plan) = @_;
-	return failure($err, $finished_cb) if $err;
+	return failure($err, $steps->{'quit2'}) if $err;
 
 	if (!@{$plan->{'dumps'}}) {
-	    return failure("No matching dumps found", $finished_cb);
+	    return failure("No matching dumps found", $steps->{'quit2'});
 	}
 
 	# if we are doing a -p operation, only keep the first dump
@@ -506,18 +519,36 @@ sub main {
 
     step loop_init_seek_file => sub {
 	my $Xinit_label = shift @init_needed_labels;
+	return $steps->{'end_init_seek_file'}->() if !$Xinit_label;
+	#return $steps->{'end_init_seek_file'}->() if !$Xinit_label->{'available'};
 	$init_label = $Xinit_label->{'label'};
-	if (!$init_label) {
-	    return $steps->{'end_init_seek_file'}->();
-	}
-	$scan->find_volume(label  => $init_label,
-			   res_cb => $steps->{'init_seek_file_done_load'},
-			   set_current => 0);
+	return $steps->{'end_init_seek_file'}->() if !$init_label;
+
+	#find the storage
+	my $storage_name=$Xinit_label->{'storage'};
+	if (!$storage{$storage_name}) {
+	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name);
+	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
+	    $storage{$storage_name} = $storage;
+	};
+
+	my $chg = $storage{$storage_name}->{'chg'};
+	if (!$scan{$storage_name}) {
+	    my $scan = Amanda::Recovery::Scan->new(chg => $chg,
+						   interactivity => $interactivity);
+	    #return $steps->{'quit'}->($scan)
+	    #    if $scan{$storage->{"storage_name"}}->isa("Amanda::Changer::Error");
+	    $scan{$storage_name} = $scan;
+	};
+
+	$scan{$storage_name}->find_volume(label  => $init_label,
+					  res_cb => $steps->{'init_seek_file_done_load'},
+					  set_current => 0);
     };
 
     step init_seek_file_done_load => sub {
 	my ($err, $res) = @_;
-        return failure($err, $finished_cb) if ($err);
+        return failure($err, $steps->{'quit2'}) if ($err);
 
 	my $dev = $res->{'device'};
 	if (!$dev->start($Amanda::Device::ACCESS_READ, undef, undef)) {
@@ -574,6 +605,29 @@ sub main {
 	$recovery_done = 0;
 	%recovery_params = ();
 
+	my $storage_name = $current_dump->{'storage'};
+	if (!$storage{$storage_name}) {
+	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name);
+	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
+	    $storage{$storage_name} = $storage;
+	};
+
+	my $chg = $storage{$storage_name}->{'chg'};
+	if (!$scan{$storage_name}) {
+	    my $scan = Amanda::Recovery::Scan->new(chg => $chg,
+						   interactivity => $interactivity);
+	    #return $steps->{'quit'}->($scan)
+	    #    if $scan{$storage->{"storage_name"}}->isa("Amanda::Changer::Error");
+	    $scan{$storage_name} = $scan;
+	};
+
+	if (!$clerk{$storage_name}) {
+	    my $clerk = Amanda::Recovery::Clerk->new(feedback => main::Feedback->new($chg),
+						     scan     => $scan{$storage_name});
+	    $clerk{$storage_name} = $clerk;
+	};
+	$clerk = $clerk{$storage_name};
+
 	$clerk->get_xfer_src(
 	    dump => $current_dump,
 	    xfer_src_cb => $steps->{'xfer_src_cb'});
@@ -581,7 +635,7 @@ sub main {
 
     step xfer_src_cb => sub {
 	(my $errs, $hdr, $xfer_src, my $directtcp_supported) = @_;
-	return failure(join("; ", @$errs), $finished_cb) if $errs;
+	return failure(join("; ", @$errs), $steps->{'quit2'}) if $errs;
 
 	my $dle_str = $hdr->{'dle_str'};
 	my $p1 = XML::Simple->new();
@@ -606,7 +660,7 @@ sub main {
 	}
 
 	if (defined $opt_data_path and $opt_data_path eq 'directtcp' and !$directtcp_supported) {
-	    return failure("The device can't do directtcp", $finished_cb);
+	    return failure("The device can't do directtcp", $steps->{'quit2'});
 	}
 	$directtcp_supported = 0 if defined $opt_data_path and $opt_data_path eq 'amanda';
 	if ($opt_extract) {
@@ -628,19 +682,19 @@ sub main {
 		);
 		if (!exists $validation_programs{$program}) {
 		    return failure("Unknown program '$program' in header; no validation to perform",
-				   $finished_cb);
+				   $steps->{'quit2'});
 		}
 		@argv = $validation_programs{$program};
 	    } else {
 		if (!defined $hdr->{application}) {
-		    return failure("Application not set", $finished_cb);
+		    return failure("Application not set", $steps->{'quit2'});
 		}
 		my $program_path = $Amanda::Paths::APPLICATION_DIR . "/" .
 				   $hdr->{application};
 		if (!-x $program_path) {
 		    return failure("Application '" . $hdr->{application} .
 				   "($program_path)' not available on the server",
-				   $finished_cb);
+				   $steps->{'quit2'});
 		}
 		my %bsu_argv;
 		$bsu_argv{'application'} = $hdr->{application};
@@ -651,7 +705,7 @@ sub main {
 		my ($bsu, $err) = Amanda::Extract::BSU(%bsu_argv);
 		if (defined $opt_data_path and $opt_data_path eq 'directtcp' and
 		    !$bsu->{'data-path-directtcp'}) {
-		    return failure("The application can't do directtcp", $finished_cb);
+		    return failure("The application can't do directtcp", $steps->{'quit2'});
 		}
 		if ($directtcp_supported and !$bsu->{'data-path-directtcp'}) {
 		    # application do not support directtcp
@@ -725,7 +779,7 @@ sub main {
 	    }
 
 	    if (!open($dest_fh, ">", $filename)) {
-		return failure("Could not open '$filename' for writing: $!", $finished_cb);
+		return failure("Could not open '$filename' for writing: $!", $steps->{'quit2'});
 	    }
 	    $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
 	}
@@ -757,7 +811,7 @@ sub main {
 			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
 	    } else {
 		return failure("could not decrypt encrypted dump: no program specified",
-			    $finished_cb);
+			    $steps->{'quit2'});
 	    }
 
 	    $hdr->{'encrypted'} = 0;
@@ -843,10 +897,10 @@ sub main {
 	    my $hdr_fh = $dest_fh;
 	    if (defined $opt_header_file) {
 		open($hdr_fh, ">", $opt_header_file)
-		    or return failure("could not open '$opt_header_file': $!", $finished_cb);
+		    or return failure("could not open '$opt_header_file': $!", $steps->{'quit2'});
 	    } elsif (defined $opt_header_fd) {
 		open($hdr_fh, "<&".($opt_header_fd+0))
-		    or return failure("could not open fd $opt_header_fd: $!", $finished_cb);
+		    or return failure("could not open fd $opt_header_fd: $!", $steps->{'quit2'});
 	    }
 	    syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
 	}
@@ -992,9 +1046,9 @@ sub main {
 	@xfer_errs = (@xfer_errs, @{$recovery_params{'errors'}})
 	    if $recovery_params{'errors'};
 
-	return failure(join("; ", @xfer_errs), $finished_cb)
+	return failure(join("; ", @xfer_errs), $steps->{'quit2'})
 	    if @xfer_errs;
-	return failure("recovery failed", $finished_cb)
+	return failure("recovery failed", $steps->{'quit2'})
 	    if $recovery_params{'result'} ne 'DONE';
 
 	if (!$opt_no_reassembly) {
@@ -1108,10 +1162,20 @@ sub main {
 	    $timer->remove();
 	    $timer = undef;
 	}
-	print STDERR "\n" if $is_tty;
-	return failure($err, $finished_cb) if $err;
+	$steps->{'quit2'}->();
+    };
 
-	$finished_cb->();
+    step quit2 => sub {
+	my ($storage_name) = keys %clerk;
+	if ($storage_name) {
+	    my $clerk = $clerk{$storage_name};
+	    delete $clerk{$storage_name};
+	    return $clerk->quit(finished_cb => $steps->{'quit2'});
+	}
+
+	print STDERR "\n" if $is_tty;
+
+	return $finished_cb->();
     };
 }
 

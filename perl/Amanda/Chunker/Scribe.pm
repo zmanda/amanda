@@ -256,7 +256,7 @@ sub new {
 
     my $decide_debug = $Amanda::Config::debug_chunker || $params{'debug'};
     for my $rq_param (qw(feedback)) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 

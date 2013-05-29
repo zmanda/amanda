@@ -318,7 +318,8 @@ sub make_plan {
 
     # figure out if this is a holding-disk recovery
     my $is_holding = 0;
-    if (!exists $self->{'command'}{'LABEL'} and exists $self->{'command'}{'DEVICE'}) {
+    if ((!exists $self->{'command'}{'LABEL'} and exists $self->{'command'}{'DEVICE'}) ||
+	$self->{'command'}{'DEVICE'} =~ /HOLDING:\//) {
 	$is_holding = 1;
     }
 
@@ -339,17 +340,48 @@ sub make_plan {
 
 	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 	my $tl = Amanda::Tapelist->new($tlf);
-	my $storage  = Amanda::Storage->new(tapelist => $tl);
-	if ($storage->isa("Amanda::Changer::Error")) {
-	    warning("$storage");
-	    $chg = Amanda::Changer->new("chg-null:");
-	} else {
-	    if ($use_default) {
-		$chg = $storage->{'chg'};
-	    } else {
-		$storage->{'chg'}->quit();
+	if (!$use_default) {
+	    $self->{'storage'} = Amanda::Storage->new(storage_name => $self->{'command'}{'DEVICE'},
+						      tapelist => $tl);
+	    if ($self->{'storage'}->isa("Amanda::Changer::Error")) {
+		$self->{'storage'} = Amanda::Storage->new(tapelist => $tl);
+		if ($self->{'storage'}->isa("Amanda::Changer::Error")) {
+		    die("$self->{'storage'}");
+		}
 		$chg = Amanda::Changer->new($self->{'command'}{'DEVICE'},
-					    storage => $storage, tapelist => $tl);
+					    storage => $self->{'storage'}, tapelist => $tl);
+		$self->{'storage'}->{'chg'}->quit();
+		$self->{'storage'}->{'chg'} = $chg;
+	    } else {
+		$chg = $self->{'storage'}->{'chg'};
+	    }
+	}
+	if (!$self->{'storage'}) {
+	    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_storage_in_marshall)) {
+		my $filelist = Amanda::Util::unmarshal_tapespec(1,
+						 $self->{'command'}{'LABEL'});
+		my $storage_name = $filelist->[0];
+		$self->{'storage'}  = Amanda::Storage->new(
+				storage_name => $storage_name, tapelist => $tl);
+	    }
+	    if (!$self->{'storage'} ||
+		$self->{'storage'}->isa("Amanda::Changer::Error")) {
+	        warning("$self->{'storage'}") if $self->{'storage'};
+		$self->{'storage'} =  Amanda::Storage->new(tapelist => $tl);
+		if ($use_default) {
+		    $chg = Amanda::Changer->new(undef,
+					        storage => $self->{'storage'},
+						tapelist => $tl);
+		} else {
+		    $chg = Amanda::Changer->new($self->{'command'}{'DEVICE'},
+						storage => $self->{'storage'},
+						tapelist => $tl);
+		}
+		if ($chg->isa("Amanda::Changer::Error")) {
+	            $chg = Amanda::Changer->new("chg-null:");
+		}
+	    } else {
+		$chg = $self->{'storage'}->{'chg'};
 	    }
 	}
 
@@ -390,20 +422,21 @@ sub make_plan {
 	    $spec? (dumpspec => $spec) : (),
 	    plan_cb => sub { $self->plan_cb(@_); });
     } else {
-	my $filelist = Amanda::Util::unmarshal_tapespec($self->{'command'}{'LABEL'});
-
+	my $filelist = Amanda::Util::unmarshal_tapespec(0+$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_storage_in_marshall), $self->{'command'}{'LABEL'});
 	# if LABEL was just a label, then FSF should contain the filenum we want to
 	# start with.
-	if ($filelist->[1][0] == 0) {
+	if ($filelist->[2][0] == 0) {
 	    if (exists $self->{'command'}{'FSF'}) {
-		$filelist->[1][0] = 0+$self->{'command'}{'FSF'};
+		$filelist->[2][0] = 0+$self->{'command'}{'FSF'};
 		# note that if this is a split dump, make_plan will helpfully find the
 		# remaining parts and include them in the restore.  Pretty spiffy.
 	    } else {
 		# we have only a label and (hopefully) a dumpspec, so let's see if the
 		# catalog can find a dump for us.
 		$filelist = $self->try_to_find_dump(
-			$self->{'command'}{'LABEL'},
+#			$self->{'command'}{'LABEL'},
+			$filelist->[0],
+			$filelist->[1],
 			$spec);
 		if (!$filelist) {
 		    return $self->quit();
@@ -1015,6 +1048,7 @@ sub quit {
 sub quit1 {
     my $self = shift;
 
+    $self->{'storage'}->quit() if defined($self->{'storage'});
     $self->{'fetch_done'} = 1;
     if (!%{$self->{'all_filter'}}) {
 	Amanda::MainLoop::quit();
@@ -1191,25 +1225,27 @@ sub tapespec_to_holding {
     my $self = shift;
     my ($tapespec) = @_;
 
-    my $filelist = Amanda::Util::unmarshal_tapespec($tapespec);
+    my $filelist = Amanda::Util::unmarshal_tapespec(0, $tapespec);
 
-    # $filelist should have the form [ $holding_file => [ 0 ] ]
-    die "invalid holding tapespec" unless @$filelist == 2;
-    die "invalid holding tapespec" unless @{$filelist->[1]} == 1;
-    die "invalid holding tapespec" unless $filelist->[1][0] == 0;
+    # $filelist should have the form [ "HOLDING", $holding_file, [ 0 ] ]
+    die "invalid holding tapespec" unless @$filelist == 3;
+    die "invalid holding tapespec" unless $filelist->[0] eq "HOLDING";
+    die "invalid holding tapespec" unless @{$filelist->[2]} == 1;
+    die "invalid holding tapespec" unless $filelist->[2][0] == 0;
 
-    return $filelist->[0];
+    return $filelist->[1];
 }
 
 # amrecover didn't give us much to go on, but see if we can find a dump that
 # will make it happy.
 sub try_to_find_dump {
     my $self = shift;
-    my ($label, $spec) = @_;
+    my ($storage, $label, $spec) = @_;
 
     # search the catalog; get_dumps cannot search by labels, so we have to use
     # get_parts instead
     my @parts = Amanda::DB::Catalog::get_parts(
+	storage => $storage,
 	label => $label,
 	dumpspecs => [ $spec ]);
 
@@ -1234,7 +1270,7 @@ sub try_to_find_dump {
 	if ($part->{'label'} ne $last_label) {
 	    $last_label = $part->{'label'};
 	    $last_filenums = [];
-	    push @$filelist, $last_label, $last_filenums;
+	    push @$filelist, $part->{'storage'}, $last_label, $last_filenums;
 	}
 	push @$last_filenums, $part->{'filenum'};
     }

@@ -808,7 +808,7 @@ check_and_load_config(
     /* the 'w' here sorts by write timestamp, so that the first instance of
      * any particular datestamp/host/disk/level/part that we see is the one
      * written earlier */
-    sort_find_result("DLKHpwB", &output_find);
+    sort_find_result("DLKHpwSB", &output_find);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
     if (stat (conf_indexdir, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
@@ -882,7 +882,7 @@ build_disk_table(void)
 	    last_partnum = find_output->partnum;
 	    date = amindexd_nicedate(find_output->timestamp);
 	    add_dump(find_output->hostname, date, find_output->level,
-		     find_output->label, find_output->filenum,
+		     find_output->storage, find_output->label, find_output->filenum,
 		     find_output->partnum, find_output->totalparts);
 	    dbprintf("- %s %d %s %lld %d %d\n",
 		     date, find_output->level, 
@@ -921,7 +921,8 @@ disk_history_list(void)
 	  get_config_name(), dump_hostname, qdisk_name);
 
     for (item=first_dump(); item!=NULL; item=next_dump(item)){
-        char *tapelist_str = marshal_tapelist(item->tapes, 1);
+        char *tapelist_str = marshal_tapelist(item->tapes, 1,
+		am_has_feature(their_features, fe_amrecover_storage_in_marshall));
 
 	strncpy(date, item->date, 20);
 	date[19] = '\0';
@@ -1164,7 +1165,8 @@ void opaque_ls_one(
     char *qpath;
 
     if (am_has_feature(their_features, marshall_feature)) {
-	tapelist_str = marshal_tapelist(dir_item->dump->tapes, 1);
+	tapelist_str = marshal_tapelist(dir_item->dump->tapes, 1,
+		 am_has_feature(their_features, fe_amrecover_storage_in_marshall));
     } else {
 	tapelist_str = dir_item->dump->tapes->label;
     }

@@ -1785,8 +1785,8 @@ extract_files_setup(
 	    tt = g_strconcat("CONFIG=", get_config_name(), NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
-	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
-	   label && label[0] != '/') {
+	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) && label &&
+	   label[0] != '/' && strncmp(label, "HOLDING:/", 9) != 0) {
 	    g_free(tt);
 	    tt = g_strconcat("LABEL=", label, NULL);
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
@@ -2268,6 +2268,10 @@ writer_intermediary(
 	g_thread_join(native_crc.thread);
     }
 
+    if (!ctl_data.file.encrypted && !ctl_data.file.compressed) {
+	native_crc.crc.crc = crc_in.crc;
+	native_crc.crc.size = crc_in.size;
+    }
     g_debug("native_crc: %08x:%lld", ctl_data.file.native_crc.crc, (long long)ctl_data.file.native_crc.size);
     g_debug("client_crc: %08x:%lld", ctl_data.file.client_crc.crc, (long long)ctl_data.file.client_crc.size);
     g_debug("server_crc: %08x:%lld", ctl_data.file.server_crc.crc, (long long)ctl_data.file.server_crc.size);
@@ -2284,7 +2288,7 @@ writer_intermediary(
     if (ctl_data.file.native_crc.crc > 0 &&
 	ctl_data.file.native_crc.crc != crc32_finish(&native_crc.crc)) {
 	g_fprintf(stderr,
-		"Network-crc (%08x:%lld) and data-in-crc (%08x:%lld) differ\n",
+		"dump-native-crc (%08x:%lld) and native-crc (%08x:%lld) differ\n",
 		ctl_data.file.native_crc.crc,
 		(long long)ctl_data.file.native_crc.size,
 		crc32_finish(&native_crc.crc), (long long)native_crc.crc.size);
@@ -2346,6 +2350,7 @@ extract_files(void)
     g_option_t g_options;
     levellist_t all_level = NULL;
     int last_level;
+    char *etapelist;
 
     if (!is_extract_list_nonempty())
     {
@@ -2384,7 +2389,7 @@ extract_files(void)
 
     first=1;
     for (elist = first_tape_list(); elist != NULL; elist = next_tape_list(elist)) {
-	if(elist->tape[0]!='/') {
+	if (elist->tape[0] != '/' && strncmp(elist->tape, "HOLDING:/",9) != 0) {
 	    if(first) {
 		g_printf(_("\nExtracting files using tape drive %s on host %s.\n"),
 			tape_device_name, tape_server_name);
@@ -2393,7 +2398,9 @@ extract_files(void)
 	    }
 	    else
 		g_printf("                               ");
-	    tlist = unmarshal_tapelist_str(elist->tape);
+	    tlist = unmarshal_tapelist_str(elist->tape,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    for(a_tlist = tlist ; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
 	    g_printf("\n");
@@ -2402,7 +2409,7 @@ extract_files(void)
     }
     first=1;
     for (elist = first_tape_list(); elist != NULL; elist = next_tape_list(elist)) {
-	if(elist->tape[0]=='/') {
+	if (elist->tape[0] == '/' || strncmp(elist->tape, "HOLDING:/",9) == 0) {
 	    if(first) {
 		g_printf(_("\nExtracting files from holding disk on host %s.\n"),
 			tape_server_name);
@@ -2411,7 +2418,9 @@ extract_files(void)
 	    }
 	    else
 		g_printf("                               ");
-	    tlist = unmarshal_tapelist_str(elist->tape);
+	    tlist = unmarshal_tapelist_str(elist->tape,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    for(a_tlist = tlist; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
 	    g_printf("\n");
@@ -2438,11 +2447,17 @@ extract_files(void)
     last_level = -1;
     while ((elist = first_tape_list()) != NULL)
     {
-	if(elist->tape[0]=='/') {
+	if (elist->tape[0] == '/' || strncmp(elist->tape, "HOLDING:/",9) == 0) {
 	    g_free(dump_device_name);
-	    dump_device_name = g_strdup(elist->tape);
+	    if (elist->tape[0] == '/') {
+		dump_device_name = g_strdup(elist->tape);
+	    } else {
+		dump_device_name = g_strdup(elist->tape+8);
+	    }
 	    g_printf(_("Extracting from file "));
-	    tlist = unmarshal_tapelist_str(dump_device_name);
+	    tlist = unmarshal_tapelist_str(dump_device_name,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    for(a_tlist = tlist; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
 	    g_printf("\n");
@@ -2451,7 +2466,9 @@ extract_files(void)
 	else {
 	    g_printf(_("Extracting files using tape drive %s on host %s.\n"),
 		   tape_device_name, tape_server_name);
-	    tlist = unmarshal_tapelist_str(elist->tape);
+	    tlist = unmarshal_tapelist_str(elist->tape,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    g_printf(_("Load tape %s now\n"), tlist->label);
 	    dbprintf(_("Requesting tape %s from user\n"), tlist->label);
 	    free_tapelist(tlist);
@@ -2484,13 +2501,30 @@ extract_files(void)
 	    dump_dle->levellist = NULL;
 	}
 
+	if (am_has_feature(indexsrv_features, fe_amrecover_storage_in_marshall) &&
+	    !am_has_feature(indexsrv_features, fe_amidxtaped_storage_in_marshall)) {
+	    tlist = unmarshal_tapelist_str(elist->tape, 1);
+	    etapelist = marshal_tapelist(tlist, 1, 7);
+	    free_tapelist(tlist);
+	} else if (!am_has_feature(indexsrv_features, fe_amidxtaped_storage_in_marshall) &&
+	            am_has_feature(indexsrv_features, fe_amidxtaped_storage_in_marshall)) {
+	    tlist = unmarshal_tapelist_str(elist->tape, 0);
+	    for(a_tlist = tlist; a_tlist != NULL; a_tlist = a_tlist->next)
+		a_tlist->storage = g_strdup(get_config_name());
+	    etapelist = marshal_tapelist(tlist, 1, 0);
+	    free_tapelist(tlist);
+	} else {
+	    etapelist = g_strdup(elist->tape);
+	}
 	/* connect to the tape handler daemon on the tape drive server */
-	if ((extract_files_setup(elist->tape, elist->fileno)) == -1)
+	if ((extract_files_setup(etapelist, elist->fileno)) == -1)
 	{
 	    g_fprintf(stderr, _("amrecover - can't talk to tape server: %s\n"),
 		    errstr);
+	    g_free(etapelist);
 	    return;
 	}
+	g_free(etapelist);
 	if (dump_dle) {
 	    am_level_t *level;
 

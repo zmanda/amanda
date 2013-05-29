@@ -161,6 +161,7 @@ typedef struct {
     char *write_timestamp;
     char *hostname;
     char *diskname;
+    char *storage;
     int level;
     char *label;
     off_t filenum;

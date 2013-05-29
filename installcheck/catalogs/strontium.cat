@@ -27,7 +27,7 @@ SUCCESS chunker strontium /home/elantra 20100107111335 1 [sec 0.184 kb 10 kps 22
 INFO chunker pid-done 13015
 INFO dumper pid-done 13016
 STATS driver estimate strontium /home/elantra 20100107111335 1 [sec 0 nkb 49 ckb 64 kps 1024]
-START taper datestamp 20100107111335 label metals-013 tape 1 storage TESTCONF
+START taper datestamp 20100107111335 label metals-013 tape 1
 PART taper metals-013 1 strontium /home/elantra 20100107111335 1/1 1 [sec 0.001107 kb 10 kps 9033.423668]
 DONE taper strontium /home/elantra 20100107111335 1 1 [sec 0.001107 kb 10 kps 9033.423668]
 INFO chunker chunker pid 13017

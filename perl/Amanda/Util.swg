@@ -602,23 +602,67 @@ amglue_export_tag(constants,
 # common-src/tapelist.c - they pass the same tests, at least.
 
 sub marshal_tapespec {
+    my $with_storage = shift;
     my ($filelist) = @_;
     my @filelist = @$filelist; # make a copy we can wreck
     my @specs;
 
     while (@filelist) {
+	my $storage = shift @filelist;
 	my $label = shift @filelist;
 	my $files = shift @filelist;
 
+	$storage =~ s/([\\:;,])/\\$1/g;
 	$label =~ s/([\\:;,])/\\$1/g;
-	push @specs, "$label:" . join(",", @$files);
+	if ($with_storage) {
+	    push @specs, "$storage:$label:" . join(",", @$files);
+	} else {
+	    push @specs, "$label:" . join(",", @$files);
+	}
     }
     return join(";", @specs);
 }
 
 sub unmarshal_tapespec {
+    my $with_storage = shift;
     my ($tapespec) = @_;
     my @filelist;
+
+    if (!$with_storage) {
+	# detect a non-tapespec string for special handling; in particular, a string
+	# without an unquoted : followed by digits and commas at the end.  The easiest
+	# way to do this is to replace every quoted character with a dummy, then look
+	# for the colon and digits.
+	my $tmp = $tapespec;
+	$tmp =~ s/\\([\\:;,])/X/g;
+	if ($tmp !~ /:[,\d]+$/) {
+	    # ok, it doesn't end with the right form, so unquote it and return it
+            # with filenum 0
+            $tapespec =~ s/\\([\\:;,])/$1/g;
+	    my $storage = undef;;
+	    $storage = "HOLDING" if $tapespec =~ /^\//;
+            return [ $storage, $tapespec, [ 0 ] ];
+	}
+
+	# use a lookbehind to mask out any quoted ;'s
+	my @volumes = split(/(?<!\\);/, $tapespec);
+	for my $vol (@volumes) {
+	    my ($label, $files) = ($vol =~ /(.+):([\d,]+)/);
+
+	    $label =~ s/\\([\\:;,])/$1/g;
+	    my $storage = undef;;
+	    $storage = "HOLDING" if $tapespec =~ /^\//;
+	    push @filelist, $storage;
+	    push @filelist, $label;
+
+	    my @files = split(/,/, $files);
+	    @files = map { $_+0 } @files;
+	    @files = sort { $a <=> $b } @files;
+	    push @filelist, \@files;
+	}
+
+	return \@filelist;
+    }
 
     # detect a non-tapespec string for special handling; in particular, a string
     # without an unquoted : followed by digits and commas at the end.  The easiest
@@ -627,17 +671,26 @@ sub unmarshal_tapespec {
     my $tmp = $tapespec;
     $tmp =~ s/\\([\\:;,])/X/g;
     if ($tmp !~ /:[,\d]+$/) {
-	# ok, it doesn't end with the right form, so unquote it and return it
-	# with filenum 0
-	$tapespec =~ s/\\([\\:;,])/$1/g;
-	return [ $tapespec, [ 0 ] ];
+	my ($storage, $label) = ($tapespec =~ /^((?:(?:\\.)|[^:])+):((?:(?:\\.)|[^:])+)$/);
+	if ($storage && $label) {
+	    $storage =~ s/\\([\\:;,])/$1/g;
+	    $label =~ s/\\([\\:;,])/$1/g;
+	    return [ $storage, $label, [ 0 ] ];
+	} else {
+	    # ok, it doesn't end with the right form, so unquote it and return it
+	    # with filenum 0
+	    $tapespec =~ s/\\([\\:;,])/$1/g;
+	    return [ "HOLDING", $tapespec, [ 0 ] ];
+	}
     }
 
     # use a lookbehind to mask out any quoted ;'s
     my @volumes = split(/(?<!\\);/, $tapespec);
     for my $vol (@volumes) {
-	my ($label, $files) = ($vol =~ /(.+):([\d,]+)/);
+	my ($storage, $label, $files) = ($vol =~ /^((?:(?:\\.)|[^:])+):((?:(?:\\.)|[^:])+):([\d,]+)$/);
 
+	$storage =~ s/\\([\\:;,])/$1/g;
+	push @filelist, $storage;
 	$label =~ s/\\([\\:;,])/$1/g;
 	push @filelist, $label;
 

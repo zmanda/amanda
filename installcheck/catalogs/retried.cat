@@ -6,7 +6,7 @@ START driver date 20090326001503
 INFO amdump amdump pid 22014
 INFO driver driver pid 22043
 INFO planner planner pid 22042
-START taper datestamp 20090326001503 label Daily-36 tape 1 storage TESTCONF
+START taper datestamp 20090326001503 label Daily-36 tape 1
 DISK planner jamon.slikon.local /var
 WARNING planner disk jamon.slikon.local:/var, estimate of level 1 failed.
 FAIL dumper jamon.slikon.local /var 20090326001503 0 [/bin/tar exited with status 2: see /var/log/amanda/client/Daily/amgtar.20090326133640000.debug]

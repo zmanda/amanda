@@ -23,14 +23,14 @@ INFO dumper pid-done 30164
 SUCCESS chunker euclid /A/b/server-src 20100303153307 0 [sec 0.290 kb 21830 kps 75337.9]
 INFO chunker pid-done 30160
 STATS driver estimate euclid /A/b/server-src 20100303153307 0 [sec 21 nkb 21862 ckb 21888 kps 1024]
-START taper datestamp 20100303153307 label Conf-001 tape 1 storage TESTCONF
+START taper datestamp 20100303153307 label Conf-001 tape 1
 PART taper Conf-001 1 euclid /A/b/server-src 20100303153307 1/-1 0 [sec 0.020357 kb 5120 kps 251515.911452 orig-kb 21830]
 PART taper Conf-001 2 euclid /A/b/server-src 20100303153307 2/-1 0 [sec 0.022239 kb 5120 kps 230222.763006 orig-kb 21830]
 PART taper Conf-001 3 euclid /A/b/server-src 20100303153307 3/-1 0 [sec 0.019910 kb 5120 kps 257153.694334 orig-kb 21830]
 PARTPARTIAL taper Conf-001 4 euclid /A/b/server-src 20100303153307 4/-1 0 [sec 0.017390 kb 4960 kps 285216.405648 orig-kb 21830] "No space left on device"
 INFO taper Will request retry of failed split part.
 INFO taper tape Conf-001 kb 15360 fm 4 [OK]
-START taper datestamp 20100303153307 label Conf-002 tape 2 storage TESTCONF
+START taper datestamp 20100303153307 label Conf-002 tape 2
 PART taper Conf-002 1 euclid /A/b/server-src 20100303153307 4/-1 0 [sec 0.022851 kb 5120 kps 224055.372485 orig-kb 21830]
 PART taper Conf-002 2 euclid /A/b/server-src 20100303153307 5/-1 0 [sec 0.004047 kb 1350 kps 333557.846590 orig-kb 21830]
 DONE taper euclid /A/b/server-src 20100303153307 5 0 [sec 0.089405 kb 21830 kps 244169.966680 orig-kb 21830]

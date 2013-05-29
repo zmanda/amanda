@@ -2114,7 +2114,9 @@ extract_files(void)
 	    }
 	    else
 		g_printf("                               ");
-	    tlist = unmarshal_tapelist_str(elist->tape);
+	    tlist = unmarshal_tapelist_str(elist->tape,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    for( ; tlist != NULL; tlist = tlist->next)
 		g_printf(" %s", tlist->label);
 	    g_printf("\n");
@@ -2132,7 +2134,9 @@ extract_files(void)
 	    }
 	    else
 		g_printf("                               ");
-	    tlist = unmarshal_tapelist_str(elist->tape);
+	    tlist = unmarshal_tapelist_str(elist->tape,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    for( ; tlist != NULL; tlist = tlist->next)
 		g_printf(" %s", tlist->label);
 	    g_printf("\n");
@@ -2161,7 +2165,9 @@ extract_files(void)
 	    g_free(dump_device_name);
 	    dump_device_name = g_strdup(elist->tape);
 	    g_printf(_("Extracting from file "));
-	    tlist = unmarshal_tapelist_str(dump_device_name);
+	    tlist = unmarshal_tapelist_str(dump_device_name,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    for( ; tlist != NULL; tlist = tlist->next)
 		g_printf(" %s", tlist->label);
 	    g_printf("\n");
@@ -2170,7 +2176,9 @@ extract_files(void)
 	else {
 	    g_printf(_("Extracting files using tape drive %s on host %s.\n"),
 		   tape_device_name, tape_server_name);
-	    tlist = unmarshal_tapelist_str(elist->tape);
+	    tlist = unmarshal_tapelist_str(elist->tape,
+			am_has_feature(indexsrv_features,
+				       fe_amrecover_storage_in_marshall));
 	    g_printf(_("Load tape %s now\n"), tlist->label);
 	    amfree(tlist->label);
 	    amfree(tlist);

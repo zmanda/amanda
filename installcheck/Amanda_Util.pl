@@ -27,6 +27,8 @@ use Amanda::Util qw(slurp burp safe_overwrite_file);
 use Installcheck;
 use POSIX;
 
+Amanda::Debug::dbopen("installcheck");
+
 # Data::Dumper is used to output strings with control characters
 # in them, below
 $Data::Dumper::Useqq = 1;  # quote strings
@@ -354,56 +356,59 @@ is($fl->data, "THIS IS MY DATA", "data is set correctly after lock");
 ## check (un)marshal_tapespec
 
 my @tapespecs = (
-    "FOO:1,2;BAR:3" => [ FOO => [ 1, 2 ], BAR => [ 3 ] ],
-    "SE\\;MI:0;COL\\:ON:3" => [ 'SE;MI' => [0], 'COL:ON' => [3] ],
-    "CO\\,MMA:88,99;BACK\\\\SLASH:3" => [ 'CO,MMA' => [88,99], 'BACK\\SLASH' => [3] ],
-    "FUNNY\\;:1;CHARS\\::2;AT\\,:3;END\\\\:4" =>
-	[ 'FUNNY;' => [ 1 ], 'CHARS:' => [ 2 ], 'AT,' => [ 3 ], 'END\\' => [ 4 ], ],
-    "\\;FUNNY:1;\\:CHARS:2;\\,AT:3;\\\\BEG:4" =>
-	[ ';FUNNY' => [ 1 ], ':CHARS' => [ 2 ], ',AT' => [ 3 ], '\\BEG' => [ 4 ], ],
+    "TESTCONF:FOO:1,2;TESTCONF:BAR:3" =>
+	[ "TESTCONF", "FOO", [ 1, 2 ], "TESTCONF", "BAR", [ 3 ] ],
+    "TEST\\;CONF:SE\\;MI:0;TEST\\:CONF:COL\\:ON:3" =>
+	[ 'TEST;CONF', 'SE;MI', [0], 'TEST:CONF', 'COL:ON', [3] ],
+    "TEST\\,CONF:CO\\,MMA:88,99;TEST\\\\CONF:BACK\\\\SLASH:3" =>
+	[ 'TEST,CONF', 'CO,MMA', [88,99], 'TEST\\CONF', 'BACK\\SLASH', [3] ],
+    "TESTCONF\\;:FUNNY\\;:1;TESTCONF\\::CHARS\\::2;TESTCONF\\,:AT\\,:3;TESTCONF\\\\:END\\\\:4" =>
+	[ 'TESTCONF;', 'FUNNY;', [ 1 ], 'TESTCONF:', 'CHARS:', [ 2 ], 'TESTCONF,', 'AT,', [ 3 ], 'TESTCONF\\', 'END\\', [ 4 ], ],
+    "\\;TESTCONF:\\;FUNNY:1;\\:TESTCONF:\\:CHARS:2;\\,TESTCONF:\\,AT:3;\\\\TESTCONF:\\\\BEG:4" =>
+	[ ';TESTCONF', ';FUNNY', [ 1 ], ':TESTCONF', ':CHARS', [ 2 ], ',TESTCONF', ',AT', [ 3 ], '\\TESTCONF', '\\BEG', [ 4 ], ],
 );
 
 while (@tapespecs) {
     my $tapespec = shift @tapespecs;
     my $filelist = shift @tapespecs;
-    is(Amanda::Util::marshal_tapespec($filelist), $tapespec,
+    is(Amanda::Util::marshal_tapespec(1, $filelist), $tapespec,
 	    "marshal '$tapespec'");
-    is_deeply(Amanda::Util::unmarshal_tapespec($tapespec), $filelist,
+    is_deeply(Amanda::Util::unmarshal_tapespec(1, $tapespec), $filelist,
 	    "unmarshal '$tapespec'");
 }
 
-is_deeply(Amanda::Util::unmarshal_tapespec("x:100,99"), [ x => [99,100] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "x:100,99"), ['x', [99,100] ],
     "filenums are sorted when unmarshalled");
 
-is_deeply(Amanda::Util::marshal_tapespec([ x => [100, 99] ]), "x:100,99",
+is_deeply(Amanda::Util::marshal_tapespec(0, [ 'x', [100, 99] ]), "x:100,99",
     "un-sorted filenums are NOT sorted when marshalled");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("x:34,34"), [ x => [34, 34] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "x:34,34"), [ 'x', [34, 34] ],
     "duplicate filenums are NOT collapsed when unmarshalled");
 
-is_deeply(Amanda::Util::marshal_tapespec([ x => [34, 34] ]), "x:34,34",
+is_deeply(Amanda::Util::marshal_tapespec(0, [ 'x', [34, 34] ]), "x:34,34",
     "duplicate filenums are NOT collapsed when marshalled");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("sim\\\\ple\\:quoted\\;file\\,name"),
-    [ "sim\\ple:quoted;file,name" => [0] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "sim\\\\ple\\:quoted\\;file\\,name"),
+    [ "sim\\ple:quoted;file,name", [0] ],
     "simple non-tapespec string translated like string:0");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("tricky\\,tricky\\:1,2,3"),
-    [ "tricky,tricky:1,2,3" => [0] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "tricky\\,tricky\\:1,2,3"),
+    [ "tricky,tricky:1,2,3", [0] ],
     "tricky non-tapespec string also translated to string:0");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("\\:3"), # one slash
-    [ ":3" => [0] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\:3"), # one slash
+    [ ":3" , [0] ],
     "one slash escapes the colon");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("\\\\:3"), # two slashes
-    [ "\\" => [3] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\:3"), # two slashes
+    [ "\\" , [3] ],
     "two slashes escape to one");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("\\\\\\:3"), # three slashes
-    [ "\\:3" => [0] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\\\:3"), # three slashes
+    [ "\\:3", [0] ],
     "three slashes escape to a slash and a colon");
 
-is_deeply(Amanda::Util::unmarshal_tapespec("\\\\\\\\:3"), # four slashes
-    [ "\\\\" => [3] ],
+is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\\\\\:3"), # four slashes
+    [ "\\\\", [3] ],
     "four slashes escape to two");

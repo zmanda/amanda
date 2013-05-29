@@ -4,7 +4,7 @@ START driver date 20090326001503
 INFO amdump amdump pid 22014
 INFO driver driver pid 22043
 INFO planner planner pid 22042
-START taper datestamp 20090326001503 label Daily-13 tape 1 storage TESTCONF
+START taper datestamp 20090326001503 label Daily-13 tape 1
 DISK planner ns-new.slikon.local /opt/var
 INFO planner Forcing full dump of ns-new.slikon.local:/opt/var as directed.
 FAIL dumper ns-new.slikon.local /opt/var 20090326001503 0 [/bin/tar exited with status 2: see /var/log/amanda/client/Daily/amgtar.20090326134405000.debug]

@@ -444,7 +444,7 @@ sub new {
 
     my $decide_debug = $Amanda::Config::debug_taper || $params{'debug'};
     for my $rq_param (qw(taperscan feedback)) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 
@@ -1748,7 +1748,7 @@ sub quit {
     my %params = @_;
 
     for my $rq_param (qw(finished_cb)) {
-	croak "required parameter '$rq_param' mising"
+	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
 

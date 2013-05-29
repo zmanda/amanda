@@ -13,7 +13,7 @@ START driver date 20090622075550
 STATS driver hostname centralcity.zmanda.com
 STATS driver startup time 0.011
 INFO taper taper pid 26077
-START taper datestamp 20090622075550 label Flushy-017 tape 1 storage TESTCONF
+START taper datestamp 20090622075550 label Flushy-017 tape 1
 PART taper Flushy-017 1 localhost /var/mysql 20090620020002 1/1 1 [sec 2.504314 kb 36980 kps 14766.518895]
 DONE taper localhost /var/mysql 20090620020002 1 1 [sec 2.504314 kb 36980 kps 14766.518895]
 PART taper Flushy-017 2 localhost /usr/lib 20090620020002 1/1 1 [sec 1.675693 kb 309 kps 184.632684]

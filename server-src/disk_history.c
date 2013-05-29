@@ -64,6 +64,7 @@ add_dump(
     char *      hostname,
     char *	date,
     int		level,
+    char *	storage,
     char *	tape,
     off_t	file,
     int		partnum,
@@ -81,7 +82,7 @@ add_dump(
 	    before = item, item = item->next) {
 	    if (g_str_equal(item->date, date) &&
 		    item->level == level && item->is_split) {
-		item->tapes = append_to_tapelist(item->tapes, tape, file,
+		item->tapes = append_to_tapelist(item->tapes, storage, tape, file,
 						 partnum, isafile);
 		if (maxpart > item->maxpart)
 		    item->maxpart = maxpart;
@@ -95,6 +96,8 @@ add_dump(
     strncpy(new->date, date, sizeof(new->date)-1);
     new->date[sizeof(new->date)-1] = '\0';
     new->level = level;
+    strncpy(new->storage, tape, sizeof(new->storage)-1);
+    new->storage[sizeof(new->storage)-1] = '\0';
     strncpy(new->tape, tape, sizeof(new->tape)-1);
     new->tape[sizeof(new->tape)-1] = '\0';
     new->file = file;
@@ -106,7 +109,7 @@ add_dump(
     new->tapes = NULL;
     new->hostname = g_strdup(hostname);
 
-    new->tapes = append_to_tapelist(new->tapes, tape, file, partnum, isafile);
+    new->tapes = append_to_tapelist(new->tapes, storage, tape, file, partnum, isafile);
 
     if (disk_hist == NULL)
     {

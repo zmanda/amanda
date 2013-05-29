@@ -224,13 +224,13 @@ sub run_amidxtaped {
 	    if ($params{'splits'} eq 'parts') {
 		# nine-part dump
 		if ($params{'no_tapespec'}) {
-		    $service->send($cmd_stream, "LABEL=TESTCONF01\r\n");
+		    $service->send($cmd_stream, "LABEL=TESTCONF:TESTCONF01\r\n");
 		} else {
-		    $service->send($cmd_stream, "LABEL=TESTCONF01:1,2,3,4,5,6,7,8,9\r\n");
+		    $service->send($cmd_stream, "LABEL=TESTCONF:TESTCONF01:1,2,3,4,5,6,7,8,9\r\n");
 		}
 	    } else {
 		# single-part dump
-		$service->send($cmd_stream, "LABEL=TESTCONF01:1\r\n");
+		$service->send($cmd_stream, "LABEL=TESTCONF:TESTCONF01:1\r\n");
 	    }
 	}
 	if (!$params{'no_fsf'}) {
@@ -270,7 +270,7 @@ sub run_amidxtaped {
 	    my $safe = $params{'holding'};
 	    $safe =~ s/([\\:;,])/\\$1/g;
 	    $safe .= ':0' unless $params{'holding_no_colon_zero'};
-	    $service->send($cmd_stream, "DEVICE=$safe\r\n");
+	    $service->send($cmd_stream, "DEVICE=HOLDING:$safe\r\n");
 	} elsif ($params{'feedme'}) {
 	    # bogus device name
 	    $service->send($cmd_stream, "DEVICE=file:/does/not/exist\r\n");

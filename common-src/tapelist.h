@@ -43,6 +43,7 @@
 
 typedef struct tapelist_s {
     struct tapelist_s *next;
+    char *storage;
     char *label;
     int isafile; /* set to 1 and make *label the path to the file */
     off_t *files;
@@ -51,10 +52,11 @@ typedef struct tapelist_s {
 } tapelist_t;
 
 int num_entries(tapelist_t *tapelist);
-tapelist_t *append_to_tapelist(tapelist_t *tapelist, char *label,
-					off_t file, int partnum, int isafile);
-char *marshal_tapelist(tapelist_t *tapelist, int escape);
-tapelist_t *unmarshal_tapelist_str(char *tapelist_str);
+tapelist_t *append_to_tapelist(tapelist_t *tapelist, char *storage,
+			       char *label, off_t file, int partnum,
+			       int isafile);
+char *marshal_tapelist(tapelist_t *tapelist, int escape, int with_storage);
+tapelist_t *unmarshal_tapelist_str(char *tapelist_str, int with_storage);
 char *escape_label(char *label);
 char *unescape_label(char *label);
 void free_tapelist(tapelist_t *tapelist);

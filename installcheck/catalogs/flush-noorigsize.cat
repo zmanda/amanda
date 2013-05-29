@@ -9,7 +9,7 @@ START driver date 20100303132501
 STATS driver hostname localhost.localdomain
 STATS driver startup time 0.020
 INFO taper taper pid 11756
-START taper datestamp 20100303132501 label TESTCONF02 tape 1 storage TESTCONF
+START taper datestamp 20100303132501 label TESTCONF02 tape 1
 PART taper TESTCONF02 1 localhost /boot 20100303132432 1/-1 0 [sec 0.493936 kb 83480 kps 169009.900121]
 DONE taper localhost /boot 20100303132432 1 0 [sec 0.493936 kb 83480 kps 169009.900121]
 INFO taper tape TESTCONF02 kb 83480 fm 9 [OK]

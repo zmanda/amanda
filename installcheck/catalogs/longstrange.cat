@@ -8,7 +8,7 @@ INFO amdump amdump pid 22014
 INFO driver driver pid 22043
 INFO planner planner pid 22042
 DISK planner bsdfw.slikon.local /
-START taper datestamp 20090326001503 label Daily-36 tape 1 storage TESTCONF
+START taper datestamp 20090326001503 label Daily-36 tape 1
 STRANGE dumper bsdfw.slikon.local / 0 [sec 1775.514 kb 2317814 kps 1305.4 orig-kb 5401240]
   sendbackup: info BACKUP=APPLICATION
   sendbackup: info APPLICATION=amgtar
