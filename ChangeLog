@@ -1,4 +1,7 @@
 2013-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/tapelist.c: Do not use g_strcmp0.
+
+2013-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Util.pl, installcheck/amidxtaped.pl: Fix.
 
 2013-05-29  Jean-Louis Martineau <martineau@zmanda.com>
