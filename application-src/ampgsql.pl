@@ -527,7 +527,7 @@ sub _run_tar_totals {
 
     my @cmd;
     @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
+        $Amanda::Constants::GNUTAR, '--create', '--dereference', '--totals', @other_args);
     debug("running: " . join(" ", @cmd));
 
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
@@ -611,7 +611,7 @@ sub _get_backup_info {
 	       # this works!)
                local *TAROUT;
                my $conf = $self->{'args'}->{'config'} || 'NOCONFIG';
-               my $cmd = "$self->{'runtar'} $conf $Amanda::Constants::GNUTAR --create --file - --directory $self->{'props'}->{'pg-archivedir'} $fname | $Amanda::Constants::GNUTAR --file - --extract --to-stdout";
+               my $cmd = "$self->{'runtar'} $conf $Amanda::Constants::GNUTAR --create --dereference --file - --directory $self->{'props'}->{'pg-archivedir'} $fname | $Amanda::Constants::GNUTAR --file - --extract --to-stdout";
                debug("running: $cmd");
                open(TAROUT, "$cmd |");
                my ($start, $end, $lab);
@@ -944,6 +944,7 @@ sub command_restore {
 	debug("extracting incremental backup to $cur_dir/$_ARCHIVE_DIR_RESTORE");
 	$status = system($self->{'args'}->{'gnutar-path'},
 		'--extract',
+		'--dereference',
 		'--file', '-',
 		'--ignore-zeros',
 		'--exclude', 'empty-incremental',
@@ -956,6 +957,7 @@ sub command_restore {
 	    mkdir($_DATA_DIR_RESTORE) or die("could not create archive WAL directory: $!");
 	}
 	my @cmd = ($self->{'args'}->{'gnutar-path'}, '--extract',
+		'--dereference',
 		'--file', '-',
 		'--ignore-zero',
 		'--transform', "s,^DATA/,$_DATA_DIR_RESTORE/,S",
@@ -967,6 +969,7 @@ sub command_restore {
 	if (-f $_ARCHIVE_DIR_TAR) {
 	    debug("extracting archive dir to $cur_dir/$_ARCHIVE_DIR_RESTORE");
 	    my @cmd = ($self->{'args'}->{'gnutar-path'}, '--extract',
+		'--dereference',
 		'--exclude', 'empty-incremental',
 		'--file', $_ARCHIVE_DIR_TAR, '--directory',
 		$_ARCHIVE_DIR_RESTORE);
@@ -984,6 +987,7 @@ sub command_restore {
 	if (-f $_DATA_DIR_TAR) {
 	    debug("extracting data dir to $cur_dir/$_DATA_DIR_RESTORE");
 	    my @cmd = ($self->{'args'}->{'gnutar-path'}, '--extract',
+		'--dereference',
 		'--file', $_DATA_DIR_TAR,
 		'--directory', $_DATA_DIR_RESTORE);
 	    debug("run: " . join ' ',@cmd);
