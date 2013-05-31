@@ -1,3 +1,9 @@
+2013-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Add TIMEOUT property.
+	* device-src/s3.c: Set CURLOPT_TIMEOUT with timeout value.
+	* device-src/s3.h (s3_open): Add timeout argument.
+	* man/xml-source/amanda-devices.7.xml: Add TIMEOUT property.
+
 2013-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Add --dereference to all gtar command.
 

@@ -186,6 +186,7 @@ struct _S3Device {
 
     gboolean	 read_from_glacier;
     int		 transition_to_glacier;
+    long	 timeout;
 
     /* CAStor */
     char        *reps;
@@ -325,6 +326,9 @@ static DevicePropertyBase device_property_read_from_glacier;
 #define PROPERTY_READ_FROM_GLACIER (device_property_read_from_glacier.ID)
 static DevicePropertyBase device_property_transition_to_glacier;
 #define PROPERTY_TRANSITION_TO_GLACIER (device_property_transition_to_glacier.ID)
+
+static DevicePropertyBase device_property_timeout;
+#define PROPERTY_TIMEOUT (device_property_timeout.ID)
 
 /* CAStor replication values for objects and buckets */
 static DevicePropertyBase device_property_s3_reps;
@@ -569,6 +573,10 @@ static gboolean s3_device_set_ssl_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_reuse_connection_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_timeout_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1275,6 +1283,10 @@ s3_device_register(void)
                                       G_TYPE_BOOLEAN, "s3_multi_part_upload",
        "If multi part upload must be used");
 
+    device_property_fill_and_register(&device_property_timeout,
+                                      G_TYPE_UINT64, "timeout",
+       "The timeout for one tranfer");
+
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
 }
@@ -1558,6 +1570,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_reuse_connection_fn);
+
+    device_class_register_property(device_class, PROPERTY_TIMEOUT,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_timeout_fn);
 
     device_class_register_property(device_class, PROPERTY_MAX_SEND_SPEED,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -2054,6 +2071,19 @@ s3_device_set_reuse_connection_fn(Device *p_self, DevicePropertyBase *base,
 }
 
 static gboolean
+s3_device_set_timeout_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->timeout = g_value_get_uint64(val);
+    if (self->timeout > 0 && self->timeout < 300)
+	self->timeout = 300;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 s3_device_set_max_send_speed_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -2354,6 +2384,14 @@ s3_device_open_device(Device *pself, char *device_name,
     g_value_init(&tmp_value, G_TYPE_BOOLEAN);
     g_value_set_boolean(&tmp_value, self->reuse_connection);
     device_set_simple_property(pself, device_property_reuse_connection.ID,
+	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
+
+    /* timeout */
+    self->timeout = 0;
+    bzero(&tmp_value, sizeof(GValue));
+    g_value_init(&tmp_value, G_TYPE_UINT64);
+    g_value_set_uint64(&tmp_value, self->timeout);
+    device_set_simple_property(pself, device_property_timeout.ID,
 	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
 
     /* Set default create_bucket */
@@ -2661,6 +2699,7 @@ static gboolean setup_handle(S3Device * self) {
 					   self->refresh_token,
 					   self->reuse_connection,
 					   self->read_from_glacier,
+					   self->timeout,
                                            self->reps, self->reps_bucket);
             if (self->s3t[thread].s3 == NULL) {
 	        device_set_error(d_self,
@@ -3458,13 +3497,15 @@ s3_device_finish_file (Device * pself) {
 	buf->mutex = NULL;
     }
 
-    if (device_in_error(pself)) return FALSE;
-
     /* we're not in a file anymore */
     g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
     pself->bytes_written = 0;;
     g_mutex_unlock(pself->device_mutex);
+
+    if (pself->status != DEVICE_STATUS_SUCCESS) {
+	return FALSE;
+    }
 
     return TRUE;
 }

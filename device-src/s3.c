@@ -195,6 +195,7 @@ struct S3Handle {
     gboolean reuse_connection;
     gboolean read_from_glacier;
     char *transfer_encoding;
+    long     timeout;
 
     /* CAStor */
     char *reps;
@@ -2124,6 +2125,10 @@ perform_request(S3Handle *hdl,
 		(long)(hdl->reuse_connection? 0 : 1)))) {
 	    goto curl_error;
 	}
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_TIMEOUT,
+		(long)hdl->timeout))) {
+	    goto curl_error;
+	}
 
         /* Perform the request */
         curl_code = curl_easy_perform(hdl->curl);
@@ -2553,6 +2558,7 @@ s3_open(const char *access_key,
 	const char *refresh_token,
 	const gboolean reuse_connection,
 	const gboolean read_from_glacier,
+	const long timeout,
         const char *reps,
         const char *reps_bucket)
 {
@@ -2565,6 +2571,7 @@ s3_open(const char *access_key,
     hdl->use_ssl = s3_curl_supports_ssl();
     hdl->reuse_connection = reuse_connection;
     hdl->read_from_glacier = read_from_glacier;
+    hdl->timeout = timeout;
 
     if (s3_api == S3_API_S3) {
 	g_assert(access_key);
