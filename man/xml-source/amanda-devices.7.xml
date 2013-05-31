@@ -566,6 +566,10 @@ It can be "DURABLE_REDUCED_AVAILABILITY" for GOOGLE storage.
 (read-write) The tenant_name (for swift v2).
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>TIMEOUT</term><listitem>
+(read-write) Add a timeout to all transfer to the cloud, default is 0, which is no timeout.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>USERNAME</term><listitem>
 (read-write) The username (for swift v2).
 </listitem></varlistentry>

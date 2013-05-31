@@ -299,6 +299,7 @@ s3_open(const char * access_key, const char *secret_key,
 	const char *client_secret,
 	const char *refresh_token,
 	const gboolean reuse_connection,
+	const long  timeout,
         const char *reps,
         const char *reps_bucket);
 
