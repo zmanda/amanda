@@ -213,7 +213,9 @@ main(
     amfree(olddir);
     amfree(conf_logdir);
     clear_tapelist();
-    free_disklist(&diskl);
+    unload_disklist();
+    diskl.head = NULL;
+    diskl.tail = NULL;
 
     dbclose();
 

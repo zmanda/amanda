@@ -1,3 +1,11 @@
+2013-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c (unload_disklist): New function.
+	* server-src/diskfile.h (unload_disklist): New prototype.
+	* perl/Amanda/Disklist.swg: swig unload_disklist.
+	* server-src/amadmin.c, server-src/amtrmidx.c,
+	  server-src/amtrmlog.c: Call unload_disklist().
+	* installcheck/Amanda_Disklist.pl: Test unload_disklist.
+
 2013-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Add --dereference to all gtar command.
 

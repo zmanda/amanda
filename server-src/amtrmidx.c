@@ -306,7 +306,9 @@ main(
     amfree(conf_indexdir);
     free_find_result(&output_find);
     clear_tapelist();
-    free_disklist(&diskl);
+    unload_disklist();
+    diskl.head = NULL;
+    diskl.tail = NULL;
 
     dbclose();
 

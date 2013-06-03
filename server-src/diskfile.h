@@ -183,7 +183,7 @@ char *match_disklist(disklist_t *origqp, gboolean exact_match, int sargc,
 		     char **sargv);
 gboolean match_dumpfile(dumpfile_t *file, gboolean exact_match, int sargc,
 			char **sargv);
-void free_disklist(disklist_t *dl);
+void unload_disklist(void);
 
 netif_t *disklist_netifs(void);
 

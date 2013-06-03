@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 13;
+use Test::More tests => 15;
 use strict;
 use warnings;
 
@@ -89,3 +89,12 @@ is(interface_name($x->{'config'}), "eth1", "get_interface returns an interface")
 
 @list = Amanda::Disklist::all_interfaces();
 is(scalar @list, 2, "all_interfaces returns two interfaces");
+
+Amanda::Disklist::unload_disklist();
+is(Amanda::Disklist::read_disklist(), $CFGERR_OK,
+    "read_disklist returns CFGERR_OK after unload_disklist")
+    or die("Error loading disklist");
+
+is(Amanda::Disklist::read_disklist(), $CFGERR_ERRORS,
+    "read_disklist returns CFGERR_ERRORS for second read");
+

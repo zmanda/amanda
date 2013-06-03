@@ -289,7 +289,9 @@ main(
 
 done:
 
-    free_disklist(&diskq);
+    unload_disklist();
+    diskq.head = NULL;
+    diskq.tail = NULL;
     dbclose();
     return 0;
 }

@@ -243,6 +243,13 @@ read_disklist_internal(
 }
 %}
 
+%inline %{
+void
+unload_disklist_internal(void) {
+    unload_disklist();
+}
+%}
+
 %perlcode %{
 
 package Amanda::Disklist::Disk;
@@ -278,6 +285,10 @@ sub read_disklist {
 	\%hosts, ($params{host_class} or "Amanda::Disklist::Host"),
 	\%interfaces, ($params{interface_class} or "Amanda::Disklist::Interface"),
     );
+}
+
+sub unload_disklist {
+    return unload_disklist_internal();
 }
 
 sub get_host {
