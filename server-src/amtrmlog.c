@@ -214,6 +214,7 @@ main(
     amfree(conf_logdir);
     clear_tapelist();
     free_disklist(&diskl);
+    unload_disklist();
 
     dbclose();
 

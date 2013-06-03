@@ -311,6 +311,7 @@ main(
     free_find_result(&output_find);
     clear_tapelist();
     free_disklist(&diskl);
+    unload_disklist();
 
     dbclose();
 

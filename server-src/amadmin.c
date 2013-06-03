@@ -304,7 +304,9 @@ main(
 done:
 
     free_disklist(&diskq);
+    unload_disklist();
     dbclose();
+    config_uninit();
     return 0;
 }
 

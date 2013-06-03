@@ -1,3 +1,11 @@
+2013-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c (unload_disklist): New function.
+	* server-src/diskfile.h (unload_disklist): New prototype.
+	* perl/Amanda/Disklist.swg: swig unload_disklist.
+	* server-src/amadmin.c, server-src/amtrmidx.c,
+	  server-src/amtrmlog.c: Call unload_disklist().
+	* installcheck/Amanda_Disklist.pl: Test unload_disklist.
+
 2013-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Add TIMEOUT property.
 	* device-src/s3.c: Set CURLOPT_TIMEOUT with timeout value.

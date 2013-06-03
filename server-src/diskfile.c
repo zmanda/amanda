@@ -38,7 +38,7 @@
 #include "amxml.h"
 
 static am_host_t *hostlist = NULL;
-static netif_t *all_netifs;
+static netif_t *all_netifs = NULL;
 
 /* local functions */
 static char *upcase(char *st);
@@ -332,28 +332,34 @@ void
 free_disklist(
     disklist_t* dl)
 {
-    disk_t    *dp;
+    while (dequeue_disk(dl));
+}
+
+
+void
+unload_disklist(void)
+{
+    disk_t    *dp, *dpnext;
     am_host_t *host, *hostnext;
     netif_t *netif, *next_if;
-
-    while (dl->head != NULL) {
-	dp = dequeue_disk(dl);
-	amfree(dp->filename);
-	amfree(dp->name);
-	amfree(dp->hostname);
-	amfree(dp->device);
-	free_sl(dp->exclude_file);
-	free_sl(dp->exclude_list);
-	free_sl(dp->include_file);
-	free_sl(dp->include_list);
-	free(dp);
-    }
 
     for(host=hostlist; host != NULL; host = hostnext) {
 	amfree(host->hostname);
 	am_release_feature_set(host->features);
 	host->features = NULL;
 	hostnext = host->next;
+	for (dp = host->disks; dp != NULL ; dp = dpnext) {
+	    dpnext = dp->hostnext;
+	    amfree(dp->filename);
+	    amfree(dp->name);
+	    amfree(dp->hostname);
+	    amfree(dp->device);
+	    free_sl(dp->exclude_file);
+	    free_sl(dp->exclude_list);
+	    free_sl(dp->include_file);
+	    free_sl(dp->include_list);
+	    free(dp);
+	}
 	amfree(host);
     }
     hostlist=NULL;
