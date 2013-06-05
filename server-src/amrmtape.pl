@@ -350,19 +350,43 @@ sub erase_volume {
     my @list = @_;
     foreach my $label (@list) {
 	my $storage_name;
-	my $t = $tapelist->lookup_tapelabel($label);
-	if (!defined $t) {
+	my $tle = $tapelist->lookup_tapelabel($label);
+	if (!defined $tle) {
 	    print "label '$label' not found in $tapelist_file\n";
 	    next;
 	}
 
-	$storage_name = $t->{'storage'};
+	$storage_name = $tle->{'storage'};
 	if ($storage_name) {
 	    $erase_volume->($storage_name);
 	    Amanda::MainLoop::run();
 	    next;
 	}
 
+	# no storage in the tapelist, use the first storage with the same pool
+	if ($tle->{'pool'}) {
+	    if (getconf_seen($CNF_STORAGE)) {
+		my $storage_list = getconf($CNF_STORAGE);
+		my $done = 0;
+		for $storage_name (@{$storage_list}) {
+		    my ($storage) = Amanda::Storage->new(storage_name => $storage_name, tapelist => $tapelist);
+		    if (!$storage->isa("Amanda::Changer::Error")) {
+			if ($storage->{'tapepool'} eq $tle->{'pool'}) {
+			    $storage->quit();
+			    debug("Using storage '$storage_name' because it use the same '$tle->{'pool'}' tape pool");
+			    $erase_volume->($storage_name);
+			    Amanda::MainLoop::run();
+			    $done = 1;
+			    last;
+			}
+			$storage->quit();
+		    }
+		}
+		next if $done;
+	    }
+	}
+
+	# try in the default storage
 	if (getconf_seen($CNF_STORAGE)) {
 	    my $storage_list = getconf($CNF_STORAGE);
 	    for $storage_name (@{$storage_list}) {
@@ -371,6 +395,8 @@ sub erase_volume {
 	    }
 	    next;
 	}
+
+	# try in the config_name storage;
 	$storage_name = get_config_name();
 	if (defined $storage_name) {
 	    $erase_volume->($storage_name);
