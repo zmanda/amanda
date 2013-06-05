@@ -535,11 +535,21 @@ sub _scan {
 	if (defined $err) {
 	    return $result_cb->($err, $res);
 	}
-	($label, my $make_err) = $res->make_new_tape_label(meta => $meta);
+	($label, my $make_err, my $not_fatal) = $res->make_new_tape_label(meta => $meta);
 	if (!defined $label) {
-	    # make this fatal, rather than silently skipping new tapes
-	    $self->{'scanning'} = 0;
-	    return $result_cb->($make_err, $res);
+	    if ($not_fatal) {
+		# must be logged
+		$self->_user_msg(slot_result => 1,
+				 slot => $slot_scanned,
+				 err => "Can't label slot $slot_scanned: $make_err");
+		my $res1 = $res;
+		$res = undef;
+		return $res1->release(finished_cb => $steps->{'get_inventory'});
+	    } else {
+		# make this fatal, rather than silently skipping new tapes
+		$self->{'scanning'} = 0;
+		return $result_cb->($make_err, $res);
+	    }
 	}
 	$self->{'scanning'} = 0;
 	return $result_cb->(undef, $res, $label, $ACCESS_WRITE, 1);

@@ -1339,7 +1339,7 @@ sub make_new_tape_label {
 	} elsif ($label eq $template) {
 	    return (undef, "autolabel require at least one '%' or '!'");
 	} elsif ($tl->lookup_tapelabel($label)) {
-	    return (undef, "Label '$label' already exists");
+	    return (undef, "Label '$label' already exists", 1);
 	}
     } else {
 	my %existing_labels;

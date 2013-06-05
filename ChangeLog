@@ -1,4 +1,10 @@
 2013-06-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm (make_new_tape_label): Return a not_fatal bit
+	  for some error.
+	* perl/Amanda/ScanInventory.pm: Continue the scan on not_fatal
+	  make_new_tape_label error.
+
+2013-06-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Use the itapelist pool to find the storage
 	  if the storage is not in the tapelist.
 
