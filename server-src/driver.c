@@ -159,15 +159,17 @@ static const char *idle_strings[] = {
     T_("not-idle"),
 #define IDLE_NO_DUMPERS		1
     T_("no-dumpers"),
-#define IDLE_START_WAIT		2
+#define IDLE_BUSY		2
+    T_("busy"),
+#define IDLE_START_WAIT		3
     T_("start-wait"),
-#define IDLE_NO_HOLD		3
+#define IDLE_NO_HOLD		4
     T_("no-hold"),
-#define IDLE_CLIENT_CONSTRAINED	4
+#define IDLE_CLIENT_CONSTRAINED	5
     T_("client-constrained"),
-#define IDLE_NO_BANDWIDTH	5
+#define IDLE_NO_BANDWIDTH	6
     T_("no-bandwidth"),
-#define IDLE_NO_DISKSPACE	6
+#define IDLE_NO_DISKSPACE	7
     T_("no-diskspace")
 };
 
@@ -888,42 +890,50 @@ startaflush_tape(
 	datestamp = sched((disk_t *)(taper->tapeq.head->data))->datestamp;
 	switch(taperalgo) {
 	case ALGO_FIRST:
-		dp = dequeue_disk(&taper->tapeq);
+		fit = taper->tapeq.head;
+		while (fit != NULL) {
+		    dfit = fit->data;
+		    if (!sched(dfit)->wtaper) {
+			dp = dfit;
+			fit = NULL;
+		    } else {
+			fit = fit->next;
+		    }
+		}
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_FIRSTFIT:
 		fit = taper->tapeq.head;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if (sched(dfit)->act_size <=
+		    if (!sched(dfit)->wtaper && sched(dfit)->act_size <=
 		             ((dfit->tape_splitsize || dfit->allow_split) ? extra_tapes_size : taper_left) &&
 			     strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
 			dp = dfit;
-			dfit = NULL;
-		    }
-		    else {
+			fit = NULL;
+		    } else {
 			fit = fit->next;
 		    }
 		}
-		if(dp) remove_disk(&taper->tapeq, dp);
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_LARGEST:
 		fit = taper->tapeq.head;
-		dp = fit->data;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if(sched(dfit)->act_size > sched(dp)->act_size &&
+		    if (!sched(dfit)->wtaper && (!dp || sched(dfit)->act_size > sched(dp)->act_size) &&
 		       strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
 			dp = dfit;
 		    }
 		    fit = fit->next;
 		}
-		if(dp) remove_disk(&taper->tapeq, dp);
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_LARGESTFIT:
 		fit = taper->tapeq.head;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if(sched(dfit)->act_size <=
+		    if (!sched(dfit)->wtaper && sched(dfit)->act_size <=
 		       ((dfit->tape_splitsize || dfit->allow_split) ? extra_tapes_size : taper_left) &&
 		       (!dp || sched(dfit)->act_size > sched(dp)->act_size) &&
 		       strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
@@ -931,27 +941,25 @@ startaflush_tape(
 		    }
 		    fit = fit->next;
 		}
-		if(dp) remove_disk(&taper->tapeq, dp);
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_SMALLEST:
 		fit = taper->tapeq.head;
-		dp = fit->data;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if (sched(dfit)->act_size < sched(dp)->act_size &&
+		    if (!sched(dfit)->wtaper && (!dp || sched(dfit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
 			dp = dfit;
 		    }
 	            fit = fit->next;
 		}
-		if(dp) remove_disk(&taper->tapeq, dp);
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_SMALLESTFIT:
 		fit = taper->tapeq.head;
-		dp = fit->data;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if (sched(dfit)->act_size <=
+		    if (!sched(dfit)->wtaper && sched(dfit)->act_size <=
 			((dfit->tape_splitsize || dfit->allow_split) ? extra_tapes_size : taper_left) &&
 			(!dp || sched(dfit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
@@ -959,17 +967,26 @@ startaflush_tape(
 		    }
 	            fit = fit->next;
 		}
-		if(dp) remove_disk(&taper->tapeq, dp);
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_LAST:
-		dp = taper->tapeq.tail->data;
-		remove_disk(&taper->tapeq, dp);
+		fit = taper->tapeq.tail;
+		while (fit != NULL) {
+		    dfit = fit->data;
+		    if (!sched(dfit)->wtaper) {
+			dp = dfit;
+			fit = NULL;
+		    } else {
+			fit = fit->prev;
+		    }
+		}
+		if (dp) remove_disk(&taper->tapeq, dp);
 		break;
 	case ALGO_LASTFIT:
 		fit = taper->tapeq.tail;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if (sched(dfit)->act_size <=
+		    if (!sched(dfit)->wtaper && sched(dfit)->act_size <=
 			((dfit->tape_splitsize || dfit->allow_split) ? extra_tapes_size : taper_left) &&
 			(!dp || sched(dfit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
@@ -988,10 +1005,9 @@ startaflush_tape(
 		}
 
 		fit = taper->tapeq.head;
-		dp = fit->data;
 		while (fit != NULL) {
 		    dfit = fit->data;
-		    if (sched(dfit)->act_size < sched(dp)->act_size &&
+		    if (!sched(dfit)->wtaper && (!dp || sched(dfit)->act_size < sched(dp)->act_size) &&
 			strcmp(sched(dfit)->datestamp, datestamp) <= 0) {
 			dp = dfit;
 		    }
@@ -1001,7 +1017,9 @@ startaflush_tape(
 	    }
 	}
 	if (dp) {
+	    assert(sched(dp)->wtaper == NULL);
 	    wtaper->disk = dp;
+	    sched(dp)->wtaper = wtaper;
 	    wtaper->dumper = NULL;
 	    amfree(wtaper->input_error);
 	    amfree(wtaper->tape_error);
@@ -1081,7 +1099,9 @@ allow_dump_dle(
 	}
     }
 
-    if (diskp->host->start_t > now) {
+    if (sched(diskp)->wtaper) {
+	*cur_idle = max(*cur_idle, IDLE_BUSY);
+    } else if (diskp->host->start_t > now) {
 	*cur_idle = max(*cur_idle, IDLE_START_WAIT);
 	if (*delayed_diskp == NULL || sleep_time > diskp->host->start_t) {
 	    *delayed_diskp = diskp;
@@ -1740,8 +1760,6 @@ handle_taper_result(
 	    dp = serial2disk(result_argv[2]);
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
 	    assert(dp == wtaper->disk);
-	    if (!wtaper->dumper && sched(dp)->nb_flush == 1)
-		free_serial(result_argv[2]);
 
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
@@ -1799,8 +1817,6 @@ handle_taper_result(
 	    dp = serial2disk(result_argv[2]);
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
 	    assert(dp == wtaper->disk);
-            if (!wtaper->dumper && sched(dp)->nb_flush == 1)
-                free_serial(result_argv[2]);
 
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
@@ -2146,6 +2162,8 @@ file_taper_result(
 
     sched(dp)->taper_attempted += 1;
 
+    sched(dp)->wtaper = NULL;
+
     if (wtaper->input_error) {
 	g_printf("driver: taper failed %s %s: %s\n",
 		   dp->host->hostname, qname, wtaper->input_error);
@@ -2156,12 +2174,14 @@ file_taper_result(
 		    sched(dp)->level, wtaper->input_error);
 		g_printf("driver: taper failed %s %s, too many taper retry after holding disk error\n",
 		   dp->host->hostname, qname);
-		amfree(sched(dp)->destname);
-		amfree(sched(dp)->dumpdate);
-		amfree(sched(dp)->degr_dumpdate);
-		amfree(sched(dp)->degr_mesg);
-		amfree(sched(dp)->datestamp);
-		amfree(dp->up);
+		if (sched(dp)->nb_flush == 0) {
+		    amfree(sched(dp)->destname);
+		    amfree(sched(dp)->dumpdate);
+		    amfree(sched(dp)->degr_dumpdate);
+		    amfree(sched(dp)->degr_mesg);
+		    amfree(sched(dp)->datestamp);
+		    amfree(dp->up);
+		}
 	    } else {
 		log_add(L_INFO, _("%s %s %s %d [Will retry dump because of holding disk error: %s]"),
 			dp->host->hostname, qname, sched(dp)->datestamp,
@@ -2173,21 +2193,25 @@ file_taper_result(
 		    sched(dp)->dump_attempted -= 1;
 		    headqueue_disk(&directq, dp);
 		} else {
-		    amfree(sched(dp)->destname);
-		    amfree(sched(dp)->dumpdate);
-		    amfree(sched(dp)->degr_dumpdate);
-		    amfree(sched(dp)->degr_mesg);
-		    amfree(sched(dp)->datestamp);
-		    amfree(dp->up);
+		    if (sched(dp)->nb_flush == 0) {
+			amfree(sched(dp)->destname);
+			amfree(sched(dp)->dumpdate);
+			amfree(sched(dp)->degr_dumpdate);
+			amfree(sched(dp)->degr_mesg);
+			amfree(sched(dp)->datestamp);
+			amfree(dp->up);
+		    }
 		}
 	    }
 	} else {
-	    amfree(sched(dp)->destname);
-	    amfree(sched(dp)->dumpdate);
-	    amfree(sched(dp)->degr_dumpdate);
-	    amfree(sched(dp)->degr_mesg);
-	    amfree(sched(dp)->datestamp);
-	    amfree(dp->up);
+	    if (sched(dp)->nb_flush == 0) {
+		amfree(sched(dp)->destname);
+		amfree(sched(dp)->dumpdate);
+		amfree(sched(dp)->degr_dumpdate);
+		amfree(sched(dp)->degr_mesg);
+		amfree(sched(dp)->datestamp);
+		amfree(dp->up);
+	    }
 	}
     } else if (wtaper->tape_error) {
 	g_printf("driver: taper failed %s %s with tape error: %s\n",
@@ -2198,12 +2222,14 @@ file_taper_result(
 		    sched(dp)->level);
 	    g_printf("driver: taper failed %s %s, too many taper retry\n",
 		   dp->host->hostname, qname);
-	    amfree(sched(dp)->destname);
-	    amfree(sched(dp)->dumpdate);
-	    amfree(sched(dp)->degr_dumpdate);
-	    amfree(sched(dp)->degr_mesg);
-	    amfree(sched(dp)->datestamp);
-	    amfree(dp->up);
+	    if (sched(dp)->nb_flush == 0) {
+		amfree(sched(dp)->destname);
+		amfree(sched(dp)->dumpdate);
+		amfree(sched(dp)->degr_dumpdate);
+		amfree(sched(dp)->degr_mesg);
+		amfree(sched(dp)->datestamp);
+		amfree(dp->up);
+	    }
 	} else {
 	    g_printf("driver: taper will retry %s %s\n",
 		   dp->host->hostname, qname);
@@ -2240,6 +2266,7 @@ file_taper_result(
 
     amfree(qname);
 
+    free_serial_dp(dp);
     wtaper->state &= ~TAPER_STATE_FILE_TO_TAPE;
     wtaper->state |= TAPER_STATE_IDLE;
     amfree(wtaper->input_error);

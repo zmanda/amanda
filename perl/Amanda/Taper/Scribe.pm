@@ -931,6 +931,7 @@ sub _xmsg_part_done {
 	$self->{'device_size'} += $msg->{'size'};
 	$self->{'size'} += $msg->{'size'};
 	$self->{'duration'} += $msg->{'duration'};
+	$self->{'tape_good'} = 1;
     }
     $self->{'size'} = $self->{'crc_size'} if $self->{'crc_size'};
 
@@ -1133,7 +1134,22 @@ sub _release_reservation {
 	    # log a message for amreport
 	    $self->{'feedback'}->scribe_notif_log_info(
 	        message => "tape $label kb $kb fm $fm [OK]");
-	    return $self->_set_no_reuse(finished_cb => $steps->{'c1'});
+	    if ($self->{'taperscan'}->{'storage'}->{'erase_on_failure'} && $self->{'tape_labelled'} && !$self->{'tape_good'}) {
+		# rewrite the tapelist
+		my $tl = $self->{'taperscan'}->{'tapelist'};
+		$tl->reload(1);
+		$label = $self->{'device'}->volume_label;
+		my $tle = $tl->lookup_tapelabel($label);
+		$tl->remove_tapelabel($label);
+		$tl->add_tapelabel('0', $label,
+                           $tle->{'comment'}, 1, $tle->{'meta'},
+                           $tle->{'barcode'}, $self->{'device'}->block_size/1024,
+			   $tle->{'pool'}, undef, undef);
+		$tl->write();
+		return $steps->{'c1'}->();
+	    } else {
+		return $self->_set_no_reuse(finished_cb => $steps->{'c1'});
+	    }
 	}
 	return $steps->{'c1'}->();
     };
@@ -1146,7 +1162,20 @@ sub _release_reservation {
 	    if (!$self->{'device'}->finish() && !$already_in_error) {
 		push @errors, $self->{'device'}->error_or_status();
 	    }
+	    if ($self->{'taperscan'}->{'storage'}->{'erase_on_failure'} && $self->{'tape_labelled'} && !$self->{'tape_good'}) {
+		# erase the volume
+		$self->{'device'}->erase();
+
+		# rewrite the label
+		if (!$self->{'device'}->start($ACCESS_WRITE, $label, "X")) {
+		    debug("Error writting label after erase: " . $self->{'device'}->error_or_status());
+		} elsif (!$self->{'device'}->finish()) {
+		    debug("Error finishing the device after erase: " . $self->{'device'}->error_or_status());
+		}
+	    }
 	}
+	$self->{'tape_labelled'} = 0;
+	$self->{'tape_good'} = 0;
 	$self->{'device'} = undef;
 	$self->{'device_at_eom'} = 0;
 
@@ -1201,6 +1230,8 @@ sub _volume_cb  {
     my $self = shift;
     my ($scan_error, $config_denial_message, $error_denial_message,
 	$reservation, $new_label, $access_mode, $is_new, $new_scribe) = @_;
+
+    $self->{'tape_labelled'} = 0;
 
     # note that we prefer the config_denial_message over the scan error.  If
     # both occurred, then the results of the scan are immaterial -- we
@@ -1360,8 +1391,9 @@ sub _volume_cb  {
 	    $self->_get_new_volume();
 	    return $cbX->();
 	}
-
 	$new_label = $device->volume_label;
+	$self->{'tape_labelled'} = 1;
+	$self->{'tape_good'} = 0;
 
 	# success!
 	$self->{'feedback'}->scribe_notif_new_tape(

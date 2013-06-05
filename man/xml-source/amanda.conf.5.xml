@@ -3343,7 +3343,16 @@ The second field is the level, it can be <amkeyword>ALL</amkeyword> for all leve
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>erase-volume</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>erase-on-failure</amkeyword> <amtype>bool</amtype></term>
+  <listitem>
+<para>Default: <amkeyword>NO</amkeyword>. Automatically erase a volume if
+nothing useful was written to it. This is useful to reuse the volume sooner.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>erase-volume</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Default: <amkeyword>NO</amkeyword>. Automatically erase the volume when
 the policy expire. This is useful to free space on vtape or s3 devices or to

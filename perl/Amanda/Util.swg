@@ -612,7 +612,7 @@ sub marshal_tapespec {
 	my $label = shift @filelist;
 	my $files = shift @filelist;
 
-	$storage =~ s/([\\:;,])/\\$1/g;
+	$storage =~ s/([\\:;,])/\\$1/g if defined $storage;
 	$label =~ s/([\\:;,])/\\$1/g;
 	if ($with_storage) {
 	    push @specs, "$storage:$label:" . join(",", @$files);

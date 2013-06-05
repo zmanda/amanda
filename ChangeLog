@@ -1,3 +1,18 @@
+2013-06-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add ERASE_ON_FAILURE storage setting.
+	* common-src/conffile.h: Add STORAGE_ERASE_ON_FAILURE.
+	* man/xml-source/amanda.conf.5.xml: add erase-on-failure.
+	* perl/Amanda/Config.swg: Add STORAGE_ERASE_ON_FAILURE.
+	* perl/Amanda/Report.pm: Parse new taper line, add storage in %part.
+	* perl/Amanda/Report/human.pm: Take care of storage.
+	* perl/Amanda/Storage.pm: Set erase_on_failure.
+	* perl/Amanda/Taper/Scribe.pm: Erase a volume if nothing good written
+	  to it.
+	* perl/Amanda/Util.swg (marshal_tapespec): Fix storage.
+	* server-src/driver.c: Fix to not do two flush in parallel.
+	* server-src/driverio.c: Add comment.
+	* installcheck/Amanda_Report.pl: Fix for new report format.
+
 2013-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c (unload_disklist): New function.
 	* server-src/diskfile.h (unload_disklist): New prototype.

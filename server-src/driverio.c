@@ -1015,6 +1015,7 @@ free_serial_dp(
 
     for(s = 0; s < max_serial; s++) {
 	if(stable[s].dp == dp) {
+	    //g_printf("free serial %02d-%05ld for disk %s", s, stable[s].gen, dp->name);
 	    stable[s].gen = 0;
 	    stable[s].dp = NULL;
 	    return;
@@ -1066,6 +1067,7 @@ char *disk2serial(
     stable[s].gen = generation++;
     stable[s].dp = dp;
 
+    //printf("create serial %02d-%05ld for disk %s", s, stable[s].gen, dp->name);
     g_snprintf(str, sizeof(str), "%02d-%05ld", s, stable[s].gen);
     return str;
 }

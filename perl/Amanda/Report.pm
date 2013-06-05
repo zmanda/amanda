@@ -952,12 +952,13 @@ sub _handle_taper_line
         # START taper [ST:Storage] datestamp <start> label <label> tape <tapenum>
         my @info = Amanda::Util::split_quoted_strings($str);
         my ($datestamp, $label, $tapenum, $storage);
-	if ($info[0] =~ /^ST:/) {
-	    $storage = $info[0];
+	$datestamp = $info[1];
+	if ($info[2] =~ /^ST:/) {
+	    $storage = $info[2];
 	    $storage =~ s/^ST://g;
-	    ($datestamp, $label, $tapenum) = @info[ 2, 4, 6 ];
+	    ($label, $tapenum) = @info[ 4, 6 ];
 	} else {
-            ($datestamp, $label, $tapenum) = @info[ 1, 3, 5 ];
+            ($label, $tapenum) = @info[ 3, 5 ];
 	    $storage = Amanda::Config::get_config_name();
 	}
         my $tape = $self->get_tape($label);
@@ -999,12 +1000,13 @@ sub _handle_taper_line
         my $parts = $taper->{parts} ||= [];
 
         my $part = {
-            label => $label,
-            date  => $timestamp,
-            file  => $tapefile,
-            sec   => $sec,
-            kb    => $kb,
-            kps   => $kps,
+            storage  => $storage,
+            label    => $label,
+            date     => $timestamp,
+            file     => $tapefile,
+            sec      => $sec,
+            kb       => $kb,
+            kps      => $kps,
             partnum  => $currpart,
         };
 
@@ -1062,13 +1064,14 @@ sub _handle_taper_line
             ## this should always be true; do nothing right now
         }
 
-        $taper->{level} = $level;
-        $taper->{sec}   = $sec;
-        $taper->{kb}    = $kb;
-        $taper->{kps}   = $kps;
+        $taper->{storage} = $storage;
+        $taper->{level}   = $level;
+        $taper->{sec}     = $sec;
+        $taper->{kb}      = $kb;
+        $taper->{kps}     = $kps;
 
-        $taper->{status} = ( $type == $L_DONE ) ? "done" : "partial";
-	$taper->{error} = $error if $type == $L_PARTIAL;
+        $taper->{status}  = ( $type == $L_DONE ) ? "done" : "partial";
+	$taper->{error}   = $error if $type == $L_PARTIAL;
 
     } elsif ( $type == $L_INFO ) {
         $self->_handle_info_line("taper", $str);

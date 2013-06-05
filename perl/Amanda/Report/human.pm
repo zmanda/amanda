@@ -1287,6 +1287,7 @@ sub get_summary_info
 	  :                               $last_try->{dumper}{level};
 
 	my $orig_size = undef;
+	my $storage = undef;
 
 	# find the try with the successful dumper entry
 	my $dumper = undef;
@@ -1296,6 +1297,7 @@ sub get_summary_info
 		&& (   $try->{dumper}{status} eq "success"
 		    || $try->{dumper}{status} eq "strange")) {
 		$dumper = $try->{dumper};
+		$storage = $try->{taper}->{storage};
 		last;
 	    }
 	}
@@ -1316,6 +1318,7 @@ sub get_summary_info
 
 	    if (
 		exists $try->{taper}
+		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& (   $try->{taper}{status} eq "done"
 		    || $try->{taper}{status} eq "part+partial" )
 	      ) {
@@ -1327,6 +1330,7 @@ sub get_summary_info
 		$tape_rate = $try->{taper}{kps};
 		$tape_failure_from = $try->{taper}{failure_from};
 	    } elsif ( exists $try->{taper}
+		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& ( $try->{taper}{status} eq "partial" ) ) {
 
 		$taper_partial = 1;
@@ -1335,7 +1339,9 @@ sub get_summary_info
 		$tape_time = $try->{taper}{sec} if !$tape_time;
 		$tape_rate = $try->{taper}{kps} if !$tape_rate;
 		$tape_failure_from = $try->{taper}{failure_from};
-	    } elsif (exists $try->{taper} && ( $try->{taper}{status} eq "fail")) {
+	    } elsif (exists $try->{taper}
+		&& (!$storage || $try->{taper}->{storage} eq $storage)
+		&& ( $try->{taper}{status} eq "fail")) {
 		$tape_time = undef;
 		$tape_rate = undef;
 		$tape_failure_from = $try->{taper}{failure_from};

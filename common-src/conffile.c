@@ -96,6 +96,7 @@ typedef enum {
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
     CONF_CMDFILE,	       CONF_SET_NO_REUSE,	CONF_ERASE_VOLUME,
+    CONF_ERASE_ON_FAILURE,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -1021,6 +1022,7 @@ keytab_t server_keytab[] = {
     { "DUMP_SELECTION", CONF_DUMP_SELECTION },
     { "EJECT_VOLUME", CONF_EJECT_VOLUME },
     { "ERASE_VOLUME", CONF_ERASE_VOLUME },
+    { "ERASE_ON_FAILURE", CONF_ERASE_ON_FAILURE },
     { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
     { "ERROR", CONF_ERROR },
@@ -1582,6 +1584,7 @@ conf_var_t storage_var [] = {
    { CONF_INTERACTIVITY            , CONFTYPE_STR           , read_dinteractivity, STORAGE_INTERACTIVITY            , NULL },
    { CONF_SET_NO_REUSE             , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_SET_NO_REUSE             , NULL },
    { CONF_DUMP_SELECTION           , CONFTYPE_DUMP_SELECTION, read_dump_selection, STORAGE_DUMP_SELECTION           , NULL },
+   { CONF_ERASE_ON_FAILURE         , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_ON_FAILURE         , NULL },
    { CONF_UNKNOWN                  , CONFTYPE_INT           , NULL               , STORAGE_STORAGE                  , NULL }
 };
 
@@ -3444,6 +3447,7 @@ init_storage_defaults(
     conf_init_str           (&stcur.value[STORAGE_INTERACTIVITY]            , NULL);
     conf_init_bool          (&stcur.value[STORAGE_SET_NO_REUSE]             , FALSE);
     conf_init_dump_selection(&stcur.value[STORAGE_DUMP_SELECTION]);
+    conf_init_bool          (&stcur.value[STORAGE_ERASE_ON_FAILURE]         , 0);
 }
 
 static void

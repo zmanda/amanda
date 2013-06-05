@@ -522,6 +522,7 @@ $LogfileData{taper} = {
                             status => "partial",
                             parts  => [
                                 {
+				    storage => undef,
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "1",
@@ -531,6 +532,7 @@ $LogfileData{taper} = {
                                     kps   => "135535.789920",
                                 },
                                 {
+				    storage => undef,
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "2",
@@ -540,6 +542,7 @@ $LogfileData{taper} = {
                                     kps   => "186154.741129",
                                 },
                                 {
+				    storage => undef,
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "3",
@@ -549,6 +552,7 @@ $LogfileData{taper} = {
                                     kps   => "218355.510065",
                                 },
                                 {
+				    storage => undef,
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "4",
@@ -564,6 +568,7 @@ $LogfileData{taper} = {
                             kps     => "172765.446911",
                             orig_kb => undef,
                             error   => '',
+			    storage => undef,
                         },
                     },
                   ]
@@ -653,6 +658,7 @@ $LogfileData{simple} = {
                             status => "done",
                             parts  => [
                                 {
+				    storage => undef,
                                     label => "Conf-001",
                                     date  => "20080111",
                                     file  => "1",
@@ -667,6 +673,7 @@ $LogfileData{simple} = {
                             kb      => "419",
                             kps     => "87.133307",
                             orig_kb => undef,
+			    storage => undef,
                         },
                         chunker => {
                             status => "success",
@@ -832,11 +839,13 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "4",
                                     kb    => "8392",
+                                    'storage' => undef,
                                     label => "FullBackup-14"
                                 },
                             ],
                             kb      => '8392',
-                            orig_kb => undef
+                            orig_kb => undef,
+			    storage => undef,
                         },
                         dumper => {
                             kps     => "2771.1",
@@ -880,6 +889,7 @@ $LogfileData{fullExample} = {
                             status => "done",
                             parts  => [
                                 {
+                                    'storage' => undef,
                                     label => 'FullBackup-14',
                                     date  => '20081002040002',
                                     kps   => '77695.214669',
@@ -890,7 +900,8 @@ $LogfileData{fullExample} = {
                                 }
                             ],
                             kb      => "28776940",
-                            orig_kb => undef
+                            orig_kb => undef,
+			    storage => undef,
                         },
                     },
                   ],
@@ -903,6 +914,7 @@ $LogfileData{fullExample} = {
                             status => "done",
                             parts  => [
                                 {
+                                    'storage' => undef,
                                     label => 'FullBackup-14',
                                     date  => '20081002030002',
                                     kps   => '77695.214669',
@@ -913,7 +925,8 @@ $LogfileData{fullExample} = {
                                 }
                             ],
                             kb      => "28776940",
-                            orig_kb => undef
+                            orig_kb => undef,
+			    storage => undef,
                         },
 		    },
 		  ]
@@ -951,11 +964,13 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "2",
                                     kb    => "10",
+                                    'storage' => undef,
                                     label => "FullBackup-14"
                                 },
                             ],
                             'kb'    => '10',
-                            orig_kb => undef
+                            orig_kb => undef,
+			    storage => undef,
                         },
                         'dumper' => {
                             'kps'    => '250.8',
@@ -1002,11 +1017,13 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "3",
                                     kb    => "6630",
+                                    'storage' => undef,
                                     label => "FullBackup-14"
                                 },
                             ],
                             kb      => "6630",
                             orig_kb => undef,
+			    storage => undef,
                         },
                         dumper => {
                             kps     => "16013.4",
@@ -1053,11 +1070,13 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "1",
                                     kb    => "10",
+                                    'storage' => undef,
                                     label => "FullBackup-14",
                                 },
                             ],
                             kb      => "10",
-                            orig_kb => undef
+                            orig_kb => undef,
+			    storage => undef,
                         },
                         dumper => {
                             kps     => "250.4",
@@ -1152,11 +1171,13 @@ $LogfileData{amflushExample} = {
                                     'partnum'  => '1',
                                     'file'  => '1',
                                     'kb'    => '36980',
+                                    'storage' => undef,
                                     'label' => 'DailyTapeDataSet-017'
                                 },
                             ],
                             'kb'     => '36980',
-                            orig_kb  => undef
+                            orig_kb  => undef,
+			    storage  => undef,
                         },
                     },
 		  ]
@@ -1184,11 +1205,13 @@ $LogfileData{amflushExample} = {
                                     'partnum'  => '1',
                                     'file'  => '2',
                                     'kb'    => '309',
+                                    'storage' => undef,
                                     'label' => 'DailyTapeDataSet-017'
                                 },
                             ],
                             'kb'     => '309',
-                            orig_kb  => undef
+                            orig_kb  => undef,
+			    storage  => undef,
                         },
                     }]
                 },
@@ -1292,11 +1315,13 @@ is_deeply(
                             partnum  => "1",
                             file  => "3",
                             kb    => "6630",
+                            'storage' => undef,
                             label => "FullBackup-14"
                         },
                     ],
                     kb      => "6630",
                     orig_kb => undef,
+		    storage => undef,
                 },
                 dumper => {
                     kps     => "16013.4",

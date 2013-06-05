@@ -173,6 +173,7 @@ sub new {
     $self->{'interactivity'} = storage_getconf($st, $STORAGE_INTERACTIVITY);
     $self->{'set_no_reuse'} = storage_getconf($st, $STORAGE_SET_NO_REUSE);
     $self->{'dump_selection'} = storage_getconf($st, $STORAGE_DUMP_SELECTION);
+    $self->{'erase_on_failure'} = storage_getconf($st, $STORAGE_ERASE_ON_FAILURE);
     bless $self, $class;
 
     if (!exists $params{'changer_name'}) {
