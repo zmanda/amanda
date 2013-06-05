@@ -93,10 +93,11 @@ subcommand("reset", "reset", "reset changer to known state",
 sub {
     my ($finished_cb, @args) = @_;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     $chg->reset(finished_cb => sub {
 	    my ($err) = @_;
+	    $storage->quit();
 	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
@@ -110,7 +111,7 @@ sub {
     my ($finished_cb, @args) = @_;
     my @drive_args;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     if (@args) {
 	@drive_args = (drive => shift @args);
@@ -118,6 +119,7 @@ sub {
     $chg->eject(@drive_args,
 	finished_cb => sub {
 	    my ($err) = @_;
+	    $storage->quit();
 	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
@@ -131,7 +133,7 @@ sub {
     my ($finished_cb, @args) = @_;
     my @drive_args;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     if (@args == 1) {
 	@drive_args = (drive => shift @args);
@@ -142,6 +144,7 @@ sub {
     $chg->clean(@drive_args,
 	finished_cb => sub {
 	    my ($err) = @_;
+	    $storage->quit();
 	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
@@ -155,7 +158,6 @@ sub {
     my ($finished_cb, @args) = @_;
     my $last_slot;
     my %seen_slots;
-    my $chg;
 
     if (@args > 1) {
 	return usage($finished_cb);
@@ -183,11 +185,12 @@ sub {
 
     my $use_slots = @slots > 0;
 
-    $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
-	finalize => sub { $chg->quit() if defined $chg };
+	finalize => sub { $storage->quit() if defined $storage;
+			  $chg->quit() if defined $chg };
 
     step start => sub {
 	$chg->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
@@ -283,7 +286,7 @@ subcommand("inventory", "inventory", "show inventory of changer slots",
 sub {
     my ($finished_cb, @args) = @_;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     if (@args != 0) {
 	return usage($finished_cb);
@@ -304,6 +307,7 @@ sub {
 		print STDERR "$err\n";
 	    }
 
+	    $storage->quit();
 	    $chg->quit();
 	    return $finished_cb->();
 	}
@@ -365,6 +369,7 @@ sub {
 	    print "$line\n";
 	}
 
+	$storage->quit();
 	$chg->quit();
 	$finished_cb->();
     });
@@ -375,7 +380,7 @@ subcommand("verify", "verify", "verify the changer is correctly configured",
 sub {
     my ($finished_cb, @args) = @_;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     if (@args != 0) {
 	return usage($finished_cb);
@@ -399,6 +404,7 @@ sub {
 	    print STDERR join("\n", @results);
 	    print STDERR "\n";
 	}
+	$storage->quit();
 	$chg->quit();
 	return $finished_cb->();
     });
@@ -420,11 +426,13 @@ subcommand("slot", "slot <slot>",
 sub {
     my ($finished_cb, @args) = @_;
     my @slotarg;
+    my $storage;
     my $chg;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
-	finalize => sub { $chg->quit() if defined $chg };
+	finalize => sub { $storage->quit() if defined $storage;
+			  $chg->quit() if defined $chg };
 
     # NOTE: the syntax of this subcommand precludes actual slots named
     # 'current' or 'next' ..  when we have a changer using such slot names,
@@ -433,7 +441,7 @@ sub {
     return usage($finished_cb) unless (@args == 1);
     my $slot = shift @args;
 
-    $chg = load_changer($finished_cb) or return;
+    ($storage, $chg) = load_changer($finished_cb) or return;
 
     step get_slot => sub {
 	if ($slot eq 'current' or $slot eq 'next') {
@@ -495,6 +503,7 @@ sub {
     my ($finished_cb, @args) = @_;
     my $interactivity;
     my $scan;
+    my $storage;
     my $chg;
 
     return usage($finished_cb) unless (@args == 1);
@@ -503,6 +512,7 @@ sub {
     my $steps = define_steps
 	cb_ref => \$finished_cb,
 	finalize => sub { $scan->quit() if defined $scan;
+			  $storage->quit() if defined $storage;
 			  $chg->quit() if defined $chg };
 
     step start => sub {
@@ -529,7 +539,7 @@ sub {
 	};
 
 	$interactivity = Amanda::Interactivity->new(name => 'stdin');
-	$chg = load_changer($finished_cb) or return;
+	($storage, $chg) = load_changer($finished_cb) or return;
 	$scan = Amanda::Recovery::Scan->new(chg => $chg,
 					    interactivity => $interactivity);
 	return failure("$scan", $finished_cb)
@@ -638,7 +648,7 @@ sub {
     return usage($finished_cb) unless (@args == 0);
     my $label = shift @args;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
     my $interactivity = Amanda::Interactivity->new(name => 'tty');
     my $scan_name = $chg->{'storage'}->{'taperscan_name'};
     my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,
@@ -651,11 +661,13 @@ sub {
 	if ($err) {
 	    if ($res) {
 		$res->release(finished_cb => sub {
+		    $storage->quit() if defined $storage;
 		    $taperscan->quit() if defined $taperscan;
 		    return failure($err, $finished_cb);
 		});
 		return;
 	    } else {
+		$storage->quit() if defined $storage;
 		$taperscan->quit() if defined $taperscan;
 		return failure($err, $finished_cb);
 	    }
@@ -679,6 +691,7 @@ sub {
 	    my ($err) = @_;
 	    die "$err" if $err;
 
+	    $storage->quit() if defined $storage;
 	    $taperscan->quit() if defined $taperscan;
 	    $finished_cb->();
 	});
@@ -695,7 +708,7 @@ sub {
     my ($finished_cb, @args) = @_;
     my @changed_args;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     if (@args) {
 	@changed_args = (changed => shift @args);
@@ -706,6 +719,7 @@ sub {
 	},
 	finished_cb => sub {
 	    my ($err) = @_;
+	    $storage->quit();
 	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
@@ -718,7 +732,7 @@ subcommand("sync-catalog", "sync-catalog [request] [wait]", "sync the catalog wh
 sub {
     my ($finished_cb, $request, $wait) = @_;
 
-    my $chg = load_changer($finished_cb) or return;
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     $chg->sync_catalog(
 	request => $request,
@@ -728,6 +742,7 @@ sub {
 	},
 	sync_catalog_cb => sub {
 	    my ($err) = @_;
+	    $storage->quit();
 	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
@@ -745,8 +760,11 @@ sub load_changer {
     my $storage  = Amanda::Storage->new(tapelist => $tl);
     return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
-    return failure($chg, $finished_cb) if ($chg->isa("Amanda::Changer::Error"));
-    return $chg;
+    if ($chg->isa("Amanda::Changer::Error")) {
+	$storage->quit();
+	return failure($chg, $finished_cb);
+    }
+    return ($storage, $chg );
 }
 
 sub failure {

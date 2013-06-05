@@ -287,6 +287,7 @@ my $erase_volume = make_cb('erase_volume' => sub {
 	}
 	my $chg = $storage->{'chg'};
 	if ($chg->isa("Amanda::Changer::Error")) {
+	    $storage->quit();
 	    die "Error creating changer:  $chg";
 	}
 	$chg->load(
@@ -296,6 +297,7 @@ my $erase_volume = make_cb('erase_volume' => sub {
 
 		if ($err) {
 		    print STDERR "Can't erase volume because: $err\n";
+		    $storage->quit();
 		    $chg->quit();
 		    return Amanda::MainLoop::quit();
 		}
@@ -305,6 +307,7 @@ my $erase_volume = make_cb('erase_volume' => sub {
 			my ($err) = @_;
 
 			print STDERR "$err\n" if $err;
+			$storage->quit();
 			$chg->quit();
 
 			$scrub_db->();

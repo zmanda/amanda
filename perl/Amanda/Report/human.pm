@@ -1443,7 +1443,7 @@ sub get_summary_info
 	    # if others try with successful taper (sent to another storage)
 	    foreach my $try ( @$tries ) {
 		next if !$try->{'taper'};
-		next if $try eq $taper_try;
+		next if $taper_try and $try == $taper_try;
 		next if $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
 

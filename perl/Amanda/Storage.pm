@@ -145,13 +145,23 @@ sub new {
 	return Amanda::Changer::Error->new('fatal',
 		message => "Storage '$storage_name' not found");
     }
+
+    my $tpchanger = storage_getconf($st, $STORAGE_TPCHANGER);
+    if (!exists $params{'changer_name'}) {
+	$changer_name = $tpchanger if !$changer_name;
+	if (!$changer_name) {
+            return Amanda::Changer::Error->new('fatal',
+		message => "You must specify the storage 'tpchanger'");
+	}
+    }
+
     $self = {
 	storage_name   => $storage_name,
     };
     $self->{'labelstr'} = storage_getconf($st, $STORAGE_LABELSTR);
     $self->{'autolabel'} = storage_getconf($st, $STORAGE_AUTOLABEL);
     $self->{'meta_autolabel'} = storage_getconf($st, $STORAGE_META_AUTOLABEL);
-    $self->{'tpchanger'} = storage_getconf($st, $STORAGE_TPCHANGER);
+    $self->{'tpchanger'} = $tpchanger;
     $self->{'runtapes'} = storage_getconf($st, $STORAGE_RUNTAPES);
     $self->{'taperscan_name'} = storage_getconf($st, $STORAGE_TAPERSCAN);
     $self->{'tapetype_name'} = storage_getconf($st, $STORAGE_TAPETYPE);
@@ -175,14 +185,6 @@ sub new {
     $self->{'dump_selection'} = storage_getconf($st, $STORAGE_DUMP_SELECTION);
     $self->{'erase_on_failure'} = storage_getconf($st, $STORAGE_ERASE_ON_FAILURE);
     bless $self, $class;
-
-    if (!exists $params{'changer_name'}) {
-	$changer_name = $self->{'tpchanger'} if !$changer_name;
-	if (!$changer_name) {
-            return Amanda::Changer::Error->new('fatal',
-		message => "You must specify the storage 'tpchanger'");
-	}
-    }
 
     $self->{'tapetype'} = lookup_tapetype($self->{'tapetype_name'});
     $self->{'chg'} = Amanda::Changer->new($changer_name, storage => $self,

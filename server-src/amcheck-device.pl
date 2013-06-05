@@ -169,7 +169,10 @@ sub do_check {
 					  tapelist => $tl);
     return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
-    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
+    if ($chg->isa("Amanda::Changer::Error")) {
+	$storage->quit();
+	return failure($chg, $finished_cb);
+    }
     my $interactivity = Amanda::Interactivity->new(
 					name => $storage->{'interactivity'});
     my $scan_name = $storage->{'taperscan_name'};
@@ -181,7 +184,8 @@ sub do_check {
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
-	finalize => sub { $taperscan->quit(); };
+	finalize => sub { $storage->quit();
+			  $taperscan->quit(); };
 
     step start => sub {
 	$taperscan->scan(

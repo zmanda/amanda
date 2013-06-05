@@ -210,6 +210,7 @@ is_deeply([ @results ],
 	  "no reusable tapes -> error")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 3 ]);
 $testconf->write();
@@ -230,6 +231,7 @@ is_deeply([ @results ],
 	  "finds the best reusable tape")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->write();
@@ -252,6 +254,7 @@ is_deeply([ @results ],
 	  "finds the first reusable tape")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->write();
@@ -273,6 +276,7 @@ is_deeply([ @results ],
 	  "finds the first reusable tape")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->write();
@@ -295,6 +299,7 @@ is_deeply([ @results ],
 	  "finds the first reusable tape")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -322,6 +327,7 @@ is_deeply([ @results ],
 	  "labels new tapes in blank slots")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -350,6 +356,7 @@ is_deeply([ @results ],
 	  "scans for volumes, even with a newly labeled volume available")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -405,6 +412,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -475,6 +483,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -545,6 +554,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -598,6 +608,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 4 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -640,6 +651,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -674,6 +686,7 @@ is_deeply([ @results ],
 	  "skips a no-reuse volume")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 rmtree($taperoot);
 
@@ -787,6 +800,7 @@ sub test_robot {
 	      or diag(Dumper(\@results));
         $chg->quit();
         $taperscan->quit();
+	$storage->quit();
     };
 
 };

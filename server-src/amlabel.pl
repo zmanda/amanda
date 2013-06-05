@@ -128,6 +128,7 @@ sub failure {
 sub main {
     my ($finished_cb) = @_;
     my $gerr;
+    my $storage;
     my $chg;
     my $dev;
     my $dev_ok;
@@ -137,7 +138,8 @@ sub main {
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
-	finalize => sub { $chg->quit() if defined $chg };
+	finalize => sub { $storage->quit() if defined $storage;
+			  $chg->quit() if defined $chg };
 
     step start => sub {
 	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
@@ -146,7 +148,7 @@ sub main {
 	    return failure("Can't load tapelist file ($tlf)", $finished_cb);
 	}
 
-	my $storage  = Amanda::Storage->new(tapelist => $tl);
+	$storage  = Amanda::Storage->new(tapelist => $tl);
 	return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
 	$chg = $storage->{'chg'};
 	return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");

@@ -896,7 +896,7 @@ sub recovery_cb {
     if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_status)) {
 	$self->sendctlline("DATA-STATUS $params{'result'}\r\n");
     }
-    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_crc)) {
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_crc) and defined $self->{'dest_crc'}) {
 	$self->sendctlline("DATA-CRC $self->{'dest_crc'}\r\n");
     }
 

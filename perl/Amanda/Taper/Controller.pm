@@ -160,6 +160,8 @@ sub start {
 	    Amanda::MainLoop::quit();
 	});
 
+	$storage->quit();
+
 	# don't finish start()ing
 	return;
     }
@@ -167,6 +169,7 @@ sub start {
     my $interactivity = Amanda::Interactivity->new(
 					name => $storage->{'interactivity'});
     my $scan_name = $storage->{'taperscan_name'};
+    $self->{'storage'} = $storage;
     $self->{'taperscan'} = Amanda::Taper::Scan->new(algorithm => $scan_name,
 					    storage => $storage,
 					    changer => $changer,
@@ -215,6 +218,7 @@ sub quit {
 
     step done => sub {
 	$self->{'taperscan'}->quit() if defined $self->{'taperscan'};
+	$self->{'storage'}->quit() if defined $self->{'storage'};
 	if (@errors) {
 	    $params{'finished_cb'}->(join("; ", @errors));
 	} else {

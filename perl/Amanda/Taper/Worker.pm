@@ -356,7 +356,7 @@ sub result_cb {
     # write a DONE/PARTIAL/FAIL log line
     if ($logtype == $L_FAIL) {
 	log_add($L_FAIL, sprintf("%s %s %s %s %s %s %s",
-	    quote_string("ST:" . $self->{'controller'}->{'taperscan'}->{'storage'}->{'storage_name'}),
+	    quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
@@ -365,7 +365,7 @@ sub result_cb {
 	    $msg));
     } else {
 	log_add($logtype, sprintf("%s %s %s %s %s %s %s %s %s %s%s",
-	    quote_string("ST:" . $self->{'controller'}->{'taperscan'}->{'storage'}->{'storage_name'}),
+	    quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
@@ -457,7 +457,7 @@ sub scribe_notif_new_tape {
 	# add to the trace log
 	log_add($L_START, sprintf("datestamp %s %s label %s tape %s",
 		$self->{'timestamp'},
-		quote_string("ST:" . $self->{'controller'}->{'taperscan'}->{'storage'}->{'storage_name'}),
+		quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
 		quote_string($self->{'label'}),
 		++$tape_num));
 
@@ -488,7 +488,7 @@ sub scribe_notif_part_done {
 
     # log the part, using PART or PARTPARTIAL
     my $logbase = sprintf("%s %s %s %s %s %s %s/%s %s %s",
-	quote_string("ST:" . $self->{'controller'}->{'taperscan'}->{'storage'}->{'storage_name'}),
+	quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
 	quote_string($self->{'label'}),
 	$params{'fileno'},
 	quote_string($self->{'header'}->{'name'}.""), # " is required for SWIG..
@@ -721,8 +721,8 @@ sub setup_and_start_dump {
 	# and convert those to get_xfer_dest args
         %get_xfer_dest_args = get_splitting_args_from_config(
 		%splitting_args);
-	$get_xfer_dest_args{'max_memory'} = $self->{'controller'}->{'taperscan'}->{'storage'}->{'device_output_buffer_size'};
-	if (!$self->{'controller'}->{'taperscan'}->{'storage'}->{'seen_device_output_buffer_size'}) {
+	$get_xfer_dest_args{'max_memory'} = $self->{'controller'}->{'storage'}->{'device_output_buffer_size'};
+	if (!$self->{'controller'}->{'storage'}->{'seen_device_output_buffer_size'}) {
 	    my $block_size4 = $device->block_size * 4;
 	    if ($block_size4 > $get_xfer_dest_args{'max_memory'}) {
 		$get_xfer_dest_args{'max_memory'} = $block_size4;

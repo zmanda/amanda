@@ -199,8 +199,12 @@ sub setup_src {
     return $self->failure("Error creating source storage: $storage")
 	if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
-    return $self->failure("Error opening source changer: $chg")
-	if $chg->isa('Amanda::Changer::Error');
+
+    if ($chg->isa('Amanda::Changer::Error')) {
+	$storage->quit();
+	return $self->failure("Error opening source changer: $chg")
+    }
+    $src->{'storage'} = $storage;
     $src->{'chg'} = $chg;
 
     $src->{'seen_labels'} = {};
@@ -387,8 +391,11 @@ sub setup_dst {
     return $self->failure("no AMVAULT-STORAGE defined: $storage")
 	if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
-    return $self->failure("Error opening destination changer: $chg")
-	if $chg->isa('Amanda::Changer::Error');
+    if ($chg->isa('Amanda::Changer::Error')) {
+	$storage->quit();
+	return $self->failure("Error opening destination changer: $chg")
+    }
+    $dst->{'storage'} = $storage;
     $dst->{'chg'} = $chg;
 
     my $interactivity = Amanda::Interactivity->new(
@@ -404,8 +411,6 @@ sub setup_dst {
     $dst->{'scribe'} = Amanda::Taper::Scribe->new(
 	taperscan => $dst->{'scan'},
 	feedback => $self);
-
-    $self->{'storage_dst'} = $storage;
 
     $dst->{'scribe'}->start(
 	write_timestamp => $self->{'dst_write_timestamp'},
@@ -484,7 +489,7 @@ sub xfer_dumps {
 	$current->{'header'} = $header;
 
 	# set up splitting args from the tapetype only, since we have no DLEs
-	my $tt = $self->{'storage_dst'}->{'tapetype'};
+	my $tt = $self->{'dst'}->{'storage'}->{'tapetype'};
 	sub empty2undef { $_[0]? $_[0] : undef }
 	my $dle_allow_split = 1;
 	my $dle = Amanda::Disklist::get_disk($header->{'name'},
@@ -518,7 +523,7 @@ sub xfer_dumps {
 		leom_supported => $leom_supported);
 	}
 	$xfer_dst = $dst->{'scribe'}->get_xfer_dest(
-	    max_memory => $self->{'storage_dst'}->{'device_output_buffer_size'},
+	    max_memory => $self->{'dst'}->{'storage'}->{'device_output_buffer_size'},
 	    can_cache_inform => 0,
 	    %xfer_dest_args,
 	);
@@ -679,6 +684,14 @@ sub quit {
     };
 
     step roll_log => sub {
+	if (defined $self->{'src'}->{'storage'}) {
+	    $self->{'src'}->{'storage'}->quit();
+	    $self->{'src'}->{'storage'} = undef;
+	}
+	if (defined $self->{'dst'}->{'storage'}) {
+	    $self->{'dst'}->{'storage'}->quit();
+	    $self->{'dst'}->{'storage'} = undef;
+	}
 	if (defined $self->{'src'}->{'chg'}) {
 	    $self->{'src'}->{'chg'}->quit();
 	    $self->{'src'}->{'chg'} = undef;

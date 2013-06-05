@@ -194,6 +194,7 @@ is_deeply([ @results ],
 	  "no reusable tapes -> error")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 3 ]);
 $testconf->write();
@@ -214,6 +215,7 @@ is_deeply([ @results ],
 	  "finds the best reusable tape")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->write();
@@ -238,6 +240,7 @@ is_deeply([ @results ],
 	  "finds the first reusable tape when fast_search is false")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->write();
@@ -264,6 +267,7 @@ is_deeply([ @results ],
 	  "uses the first usable tape it finds when oldest is missing")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
 $chg = $storage->{'chg'};
@@ -281,6 +285,7 @@ is_deeply([ @results ],
 	  "starts sequential scan at 'current'")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -307,6 +312,7 @@ is_deeply([ @results ],
 	  "labels new tapes in blank slots")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -334,6 +340,7 @@ is_deeply([ @results ],
 	  "handles an invalid current slot by going to the next")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -368,6 +375,7 @@ label_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
 label_slot(4, "TEST-4", "20090424173004", "reuse", 1);
 $taperscan->quit();
+$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -394,6 +402,7 @@ is_deeply([ @results ],
 	  "skips a no-reuse volume")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 rmtree($taperoot);
 unlink($tapelist_filename);
@@ -510,6 +519,7 @@ sub test_robot {
 	      or diag(Dumper(\@results));
         $chg->quit();
         $taperscan->quit();
+	$storage->quit();
     };
 
 };
