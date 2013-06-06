@@ -3436,6 +3436,9 @@ s3_device_finish_file (Device * pself) {
     int idle_thread = 0;
     int thread;
 
+    if (!pself->in_file)
+	return TRUE;
+
     if (self->chunked) {
 	CurlBuffer *buf = &self->s3t[0].curl_buffer;
 	g_mutex_lock(buf->mutex);

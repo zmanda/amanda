@@ -1,3 +1,11 @@
+2013-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c, device-src/null-device.c,
+	  device-src/rait-device.c, device-src/s3-device.c,
+	  device-src/tape-device.c, device-src/vfs-device.c
+	  (*device__finish_file): Set in_file even when already on error.
+	* device-src/xfer-dest-taper-directtcp.c: Always call
+	  device_finish_file().
+
 2013-06-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm (make_new_tape_label): Return a not_fatal bit
 	  for some error.

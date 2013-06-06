@@ -1324,6 +1324,14 @@ tape_device_finish_file (Device * d_self) {
     TapeDevice * self;
 
     self = TAPE_DEVICE(d_self);
+
+    if (!d_self->in_file)
+	return TRUE;
+
+    g_mutex_lock(d_self->device_mutex);
+    d_self->in_file = FALSE;
+    g_mutex_unlock(d_self->device_mutex);
+
     if (device_in_error(d_self)) return FALSE;
 
     if (!tape_weof(self->fd, 1)) {
@@ -1335,9 +1343,6 @@ tape_device_finish_file (Device * d_self) {
         return FALSE;
     }
 
-    g_mutex_lock(d_self->device_mutex);
-    d_self->in_file = FALSE;
-    g_mutex_unlock(d_self->device_mutex);
     return TRUE;
 }
 

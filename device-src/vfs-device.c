@@ -1134,13 +1134,16 @@ static gboolean
 vfs_device_finish_file(Device * dself) {
     VfsDevice * self = VFS_DEVICE(dself);
 
-    if (device_in_error(self)) return FALSE;
-
-    release_file(self);
+    if (!dself->in_file)
+	return TRUE;
 
     g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
     g_mutex_unlock(dself->device_mutex);
+
+    release_file(self);
+
+    if (device_in_error(self)) return FALSE;
 
     return TRUE;
 }

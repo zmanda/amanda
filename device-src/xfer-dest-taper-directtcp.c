@@ -197,8 +197,10 @@ worker_thread(
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		"Error writing from DirectTCP connection: %s",
 		device_error_or_status(self->device));
+	    device_finish_file(self->device);
 	    goto cancelled;
 	} else if (result == 2 || elt->cancelled) {
+	    device_finish_file(self->device);
 	    goto cancelled;
 	}
 	g_timer_stop(timer);
