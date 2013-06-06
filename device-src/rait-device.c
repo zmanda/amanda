@@ -1616,6 +1616,9 @@ rait_device_finish_file (Device * dself) {
     RaitDevice * self = RAIT_DEVICE(dself);
 
     g_assert(self != NULL);
+    if (!dself->in_file)
+	return TRUE;
+
     if (rait_device_in_error(dself)) return FALSE;
     if (self->private->status != RAIT_STATUS_COMPLETE) return FALSE;
 

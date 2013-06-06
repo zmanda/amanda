@@ -2975,6 +2975,9 @@ s3_device_finish_file (Device * pself) {
     int idle_thread = 0;
     int thread;
 
+    if (!pself->in_file)
+	return TRUE;
+
     g_mutex_lock(self->thread_idle_mutex);
     while (idle_thread != self->nb_threads) {
 	idle_thread = 0;

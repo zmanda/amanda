@@ -844,12 +844,15 @@ ndmp_device_finish_file(
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
 
-    if (device_in_error(dself)) return FALSE;
+    if (!dself->in_file)
+	return TRUE;
 
     /* we're not in a file anymore */
     g_mutex_lock(dself->device_mutex);
     dself->in_file = FALSE;
     g_mutex_unlock(dself->device_mutex);
+
+    if (device_in_error(dself)) return FALSE;
 
     if (!single_ndmp_mtio(self, NDMP9_MTIO_EOF)) {
 	/* error was set by single_ndmp_mtio */

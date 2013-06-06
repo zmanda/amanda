@@ -296,10 +296,15 @@ null_device_write_block (Device * pself, guint size G_GNUC_UNUSED,
 
 static gboolean
 null_device_finish_file(Device * pself) {
-    if (device_in_error(pself)) return FALSE;
+
+    if (!pself->in_file)
+	return TRUE;
 
     g_mutex_lock(pself->device_mutex);
     pself->in_file = FALSE;
     g_mutex_unlock(pself->device_mutex);
+
+    if (device_in_error(pself)) return FALSE;
+
     return TRUE;
 }

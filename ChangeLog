@@ -1,3 +1,11 @@
+2013-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c, device-src/null-device.c,
+	  device-src/rait-device.c, device-src/s3-device.c,
+	  device-src/tape-device.c, device-src/vfs-device.c
+	  (*device__finish_file): Set in_file even when already on error.
+	* device-src/xfer-dest-taper-directtcp.c: Always call
+	  device_finish_file().
+
 2013-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c (unload_disklist): New function.
 	* server-src/diskfile.h (unload_disklist): New prototype.
