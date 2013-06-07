@@ -1,3 +1,6 @@
+2013-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Do not enqueue_disk, add_disk already do it.
+
 2013-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, device-src/null-device.c,
 	  device-src/rait-device.c, device-src/s3-device.c,
