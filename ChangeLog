@@ -1,5 +1,8 @@
 2013-06-07  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/driver.c: Degraded dles onlt for degraded storage.
+	* server-src/find.c: Do not enqueue_disk, add_disk already do it.
+
+2013-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Degraded dles only for degraded storage.
 	* server-src/driverio.c: Set default degraded_mode.
 	* server-src/driverio.h (taper_t): Add degraded_mode.
 

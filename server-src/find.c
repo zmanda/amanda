@@ -279,7 +279,6 @@ search_holding_disk(
 		continue;
 	    }
 	    dp = add_disk(dynamic_disklist, file.name, file.disk);
-	    enqueue_disk(dynamic_disklist, dp);
 	}
 
 	if(find_match(file.name,file.disk)) {
@@ -1175,7 +1174,6 @@ search_logfile(
 		    continue;
 		}
 		dp = add_disk(dynamic_disklist, host, disk);
-		enqueue_disk(dynamic_disklist, dp);
 	    }
             if (find_match(host, disk)) {
 		if(curprog == P_TAPER) {
