@@ -1,3 +1,8 @@
+2013-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Degraded dles onlt for degraded storage.
+	* server-src/driverio.c: Set default degraded_mode.
+	* server-src/driverio.h (taper_t): Add degraded_mode.
+
 2013-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, device-src/null-device.c,
 	  device-src/rait-device.c, device-src/s3-device.c,

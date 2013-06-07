@@ -68,7 +68,7 @@ static disklist_t runq;		// dle waiting to be dumped to holding disk
 static disklist_t directq;	// dle waiting to be dumped directly to tape
 static disklist_t roomq;	// dle waiting for more space on holding disk
 static int pending_aborts;
-static int degraded_mode;
+static gboolean all_degraded_mode = FALSE;
 static off_t reserved_space;
 static off_t total_disksize;
 static char *dumper_program;
@@ -85,7 +85,6 @@ static int idle_reason;
 static char *driver_timestamp;
 static char *hd_driver_timestamp;
 static am_host_t *flushhost = NULL;
-static int need_degraded=0;
 static holdalloc_t *holdalloc;
 static int num_holdalloc;
 static event_handle_t *dumpers_ev_time = NULL;
@@ -482,10 +481,11 @@ main(
     roomq.head = NULL;
     roomq.tail = NULL;
 
-    need_degraded = 0;
     if (no_taper || conf_runtapes <= 0) {
 	taper_started = 1; /* we'll pretend the taper started and failed immediately */
-	need_degraded = 1;
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    taper->degraded_mode = TRUE;
+	}
     } else {
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 	    wtaper = taper->wtapetable;
@@ -536,26 +536,32 @@ main(
 		sched(diskp)->level,
 		_("can't dump required holdingdisk"));
 	    amfree(qname);
-	}
-	else if (!degraded_mode) {
-	    char *qname = quote_string(diskp->name);
-	    log_add(L_FAIL, "%s %s %s %d [%s]",
-		diskp->host->hostname, qname, sched(diskp)->datestamp,
-		sched(diskp)->level,
-		_("can't dump in non degraded mode"));
-	    amfree(qname);
-	}
-	else {
-	    char *qname = quote_string(diskp->name);
-	    log_add(L_FAIL, "%s %s %s %d [%s]",
-		diskp->host->hostname, qname, sched(diskp)->datestamp,
-		sched(diskp)->level,
-		num_holdalloc == 0 ?
-		    _("can't do degraded dump without holding disk") :
-		diskp->to_holdingdisk != HOLD_NEVER ?
-		    _("out of holding space in degraded mode") :
-	 	    _("can't dump 'holdingdisk never' dle in degraded mode"));
-	    amfree(qname);
+	} else {
+	    gboolean dp_degraded_mode = FALSE;
+	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		if (dump_match_selection(taper->storage_name, diskp)) {
+		    dp_degraded_mode |= taper->degraded_mode;
+		}
+	    }
+	    if (!dp_degraded_mode) {
+		char *qname = quote_string(diskp->name);
+		log_add(L_FAIL, "%s %s %s %d [%s]",
+			diskp->host->hostname, qname, sched(diskp)->datestamp,
+			sched(diskp)->level,
+			_("can't dump in non degraded mode"));
+		amfree(qname);
+	    } else {
+		char *qname = quote_string(diskp->name);
+		log_add(L_FAIL, "%s %s %s %d [%s]",
+			diskp->host->hostname, qname, sched(diskp)->datestamp,
+			sched(diskp)->level,
+			num_holdalloc == 0 ?
+			    _("can't do degraded dump without holding disk") :
+			    diskp->to_holdingdisk != HOLD_NEVER ?
+				_("out of holding space in degraded mode") :
+				_("can't dump 'holdingdisk never' dle in degraded mode"));
+		amfree(qname);
+	    }
 	}
     }
 
@@ -829,6 +835,7 @@ startaflush_tape(
 	wtaper->state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 	taper_cmd(taper, wtaper, NO_NEW_TAPE, wtaper->disk, why_no_new_tape, 0, NULL);
 	wtaper->state |= TAPER_STATE_DONE;
+	taper->degraded_mode = TRUE;
 	start_degraded_mode(&runq);
 	*state_changed = TRUE;
     } else if (result_tape_action & TAPE_ACTION_MOVE) {
@@ -849,7 +856,7 @@ startaflush_tape(
 	}
     }
 
-    if (!degraded_mode &&
+    if (!taper->degraded_mode &&
         wtaper->state & TAPER_STATE_IDLE &&
 	!empty(taper->tapeq) &&
 	(result_tape_action & TAPE_ACTION_START_A_FLUSH ||
@@ -1094,6 +1101,9 @@ allow_dump_dle(
 
     /* if the dump can go to that storage */
     if (wtaper) {
+	if (wtaper->taper->degraded_mode) {
+	    return;
+	}
 	if (!dump_match_selection(wtaper->taper->storage_name, diskp)) {
 	    return;
 	}
@@ -1162,7 +1172,8 @@ allow_dump_dle(
 	    }
 	}
 	if(accept) {
-	    if( !*diskp_accept || !degraded_mode || diskp->priority >= (*diskp_accept)->priority) {
+	    if (!*diskp_accept || (wtaper && !wtaper->taper->degraded_mode) ||
+		 diskp->priority >= (*diskp_accept)->priority) {
 		if(*holdp_accept) free_assignedhd(*holdp_accept);
 		*diskp_accept = diskp;
 		*holdp_accept = holdp;
@@ -1267,6 +1278,8 @@ start_some_dumps(
 	wtaper = NULL;
 	if (!empty(directq)) {  /* to the first allowed storage only */
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		if (taper->degraded_mode)
+		    continue;
 		wtaper_accept = idle_taper(taper);
 		if (wtaper_accept) {
 		    TapeAction result_tape_action;
@@ -1528,38 +1541,21 @@ start_degraded_mode(
     off_t est_full_size;
     char *qname;
     taper_t  *taper;
-    wtaper_t *wtaper;
+    static gboolean schedule_degraded = FALSE;
 
-    if (need_degraded == 0) {
-	for(taper = tapetable;
-	    taper < tapetable + nb_storage;
-	    taper++) {
-	    for (wtaper = taper->wtapetable;
-		 wtaper < taper->wtapetable + taper->nb_worker;
-		 wtaper++) {
-		if (!(wtaper->state & TAPER_STATE_DONE))
-		    return;
-	    }
-	}
-	need_degraded = 1;
-    }
-
-    if (!schedule_done || degraded_mode) {
+    if (!schedule_done || all_degraded_mode) {
 	return;
     }
 
-    if (need_degraded == 0) {
-	for(taper = tapetable;
-	    taper < tapetable + nb_storage;
-	    taper++) {
-	    for (wtaper = taper->wtapetable;
-		 wtaper < taper->wtapetable + taper->nb_worker;
-		 wtaper++) {
-		if (!(wtaper->state & TAPER_STATE_DONE))
-		    return;
-	    }
+    if (!schedule_degraded) {
+	gboolean one_degraded_mode = FALSE;
+	schedule_degraded = TRUE;
+
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    one_degraded_mode |= taper->degraded_mode;
 	}
-	need_degraded = 1;
+	if (!one_degraded_mode)
+	    return;
     }
 
     newq.head = newq.tail = 0;
@@ -1575,7 +1571,17 @@ start_degraded_mode(
 	    /* go ahead and do the disk as-is */
 	    enqueue_disk(&newq, dp);
 	else {
-	    if (reserved_space + est_full_size + sched(dp)->est_size
+	    gboolean must_degrade_dp = FALSE;
+	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		if (taper->degraded_mode &&
+		    dump_match_selection(taper->storage_name, dp)) {
+		    must_degrade_dp = TRUE;
+		}
+	    }
+	    if (!must_degrade_dp) {
+		/* go ahead and do the disk as-is */
+		enqueue_disk(&newq, dp);
+	    } else if (reserved_space + est_full_size + sched(dp)->est_size
 		<= total_disksize) {
 		enqueue_disk(&newq, dp);
 		est_full_size += sched(dp)->est_size;
@@ -1599,7 +1605,10 @@ start_degraded_mode(
     }
 
     /*@i@*/ *queuep = newq;
-    degraded_mode = 1;
+    all_degraded_mode = TRUE;
+    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	all_degraded_mode &= taper->degraded_mode;
+    }
 
     dump_schedule(queuep, _("after start degraded mode"));
 }
@@ -1663,7 +1672,7 @@ continue_port_dumps(void)
 	}
     }
     if((dp != NULL) && (active_dumpers == 0) && (busy_dumpers > 0) &&
-        ((no_taper_flushing() && all_tapeq_empty()) || degraded_mode) &&
+        ((no_taper_flushing() && all_tapeq_empty()) || all_degraded_mode) &&
 	pending_aborts == 0 ) { /* case b */
 	sched(dp)->no_space = 1;
 	/* At this time, dp points to the dump with the smallest est_size.
@@ -1956,7 +1965,7 @@ handle_taper_result(
 	    /* start a new worker */
 	    for (i = 0; i < taper->nb_worker ; i++) {
 		wtaper1 = &taper->wtapetable[i];
-		if (need_degraded == 0 &&
+		if (!taper->degraded_mode &&
 		    wtaper1->state == TAPER_STATE_DEFAULT) {
 		    wtaper1->state = TAPER_STATE_INIT;
 		    if (taper->nb_wait_reply == 0) {
@@ -1985,6 +1994,7 @@ handle_taper_result(
 	    assert(dp == wtaper->disk);
 	    wtaper->state |= TAPER_STATE_DONE;
 	    taper->last_started_wtaper = NULL;
+	    taper->degraded_mode = TRUE;
 	    start_degraded_mode(&runq);
 	    break;
 
@@ -2013,7 +2023,6 @@ handle_taper_result(
 	    if (g_str_equal(result_argv[1], "SETUP")) {
 		taper->nb_wait_reply = 0;
 		taper->nb_scan_volume = 0;
-		need_degraded = 1;
 	    } else {
 		wtaper = wtaper_from_name(taper, result_argv[1]);
 		assert(wtaper);
@@ -2030,10 +2039,10 @@ handle_taper_result(
 		dp = wtaper->disk;
 	    }
 	    if (taper->nb_wait_reply == 0) {
-		need_degraded = 1;
 		event_release(taper->ev_read);
 		taper->ev_read = NULL;
 	    }
+	    taper->degraded_mode = TRUE;
 	    start_degraded_mode(&runq);
 	    start_some_dumps(&runq);
 	    break;
@@ -2112,7 +2121,7 @@ handle_taper_result(
                 taper->ev_read = NULL;
 		taper->nb_wait_reply = 0;
             }
-	    need_degraded = 1;
+	    taper->degraded_mode = TRUE;
 	    start_degraded_mode(&runq);
             taper->tapeq.head = taper->tapeq.tail = NULL;
             aclose(taper->fd);
@@ -4022,22 +4031,27 @@ short_dump_state(void)
     g_printf(_("free kps: %lu space: %lld taper: "),
 	   free_kps(NULL),
 	   (long long)free_space());
-    if(degraded_mode) g_printf(_("DOWN"));
-    else {
+    {
 	taper_t *taper;
 	int writing = 0;
+	int down = TRUE;
 
 	for (taper = tapetable; taper < tapetable + nb_storage ; taper++) {
 	    wtaper_t *wtaper;
-	    for(wtaper = taper->wtapetable;
-		wtaper < taper->wtapetable + taper->nb_worker;
-		wtaper++) {
-		if (wtaper->state & TAPER_STATE_DUMP_TO_TAPE ||
-		    wtaper->state & TAPER_STATE_FILE_TO_TAPE)
-		    writing = 1;
+	    if (!taper->degraded_mode) {
+		down = FALSE;
+		for(wtaper = taper->wtapetable;
+		    wtaper < taper->wtapetable + taper->nb_worker;
+		    wtaper++) {
+		    if (wtaper->state & TAPER_STATE_DUMP_TO_TAPE ||
+			wtaper->state & TAPER_STATE_FILE_TO_TAPE)
+			writing = 1;
+		}
 	    }
 	}
-	if(writing)
+	if (down)
+	    g_printf(_("down"));
+	else if (writing)
 	    g_printf(_("writing"));
 	else
 	    g_printf(_("idle"));
@@ -4291,7 +4305,7 @@ tape_action(
     // when to start a flush
     if (wtaper->state & TAPER_STATE_IDLE) {
 	driver_debug(2, "tape_action: TAPER_STATE_IDLE\n");
-	if (!degraded_mode &&
+	if (!taper->degraded_mode &&
 	    (!empty(directq) ||
 	     (!empty(taper->tapeq) &&
 	      (wtaper->state & TAPER_STATE_TAPE_STARTED ||		// tape already started
