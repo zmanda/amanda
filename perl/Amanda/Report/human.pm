@@ -1133,13 +1133,13 @@ sub output_summary
       $col_spec->[1]->[COLSPEC_WIDTH] +
       $col_spec->[2]->[COLSPEC_PRE_SPACE] +
       $col_spec->[2]->[COLSPEC_WIDTH];
-    my $ds =
+    my $xs =
       $col_spec->[3]->[COLSPEC_WIDTH] +
       $col_spec->[4]->[COLSPEC_PRE_SPACE] +
       $col_spec->[4]->[COLSPEC_WIDTH] +
       $col_spec->[5]->[COLSPEC_PRE_SPACE] +
-      $col_spec->[5]->[COLSPEC_WIDTH] +
-      $col_spec->[6]->[COLSPEC_PRE_SPACE] +
+      $col_spec->[5]->[COLSPEC_WIDTH];
+    my $ds =
       $col_spec->[6]->[COLSPEC_WIDTH] +
       $col_spec->[7]->[COLSPEC_PRE_SPACE] +
       $col_spec->[7]->[COLSPEC_WIDTH];
@@ -1153,18 +1153,20 @@ sub output_summary
     ## centering..
     my $summary_header_format =
       ' ' x ($col_spec->[0]->[COLSPEC_PRE_SPACE] +
-          $hdl + $col_spec->[4]->[COLSPEC_PRE_SPACE])
+          $hdl + $col_spec->[3]->[COLSPEC_PRE_SPACE] + $xs + $col_spec->[6]->[COLSPEC_PRE_SPACE])
       . '@' . '|' x ($ds - 1)
-      . ' ' x $col_spec->[9]->[COLSPEC_PRE_SPACE]
+      . ' ' x $col_spec->[8]->[COLSPEC_PRE_SPACE]
       . '@'. '|' x ($ts - 1) . "\n";
     my $summary_header = swrite($summary_header_format, "DUMPER STATS", "TAPER STATS");
 
     my $summary_dashes =
         ' ' x $col_spec->[0]->[COLSPEC_PRE_SPACE]
       . '-' x $hdl
-      . ' ' x $col_spec->[4]->[COLSPEC_PRE_SPACE]
+      . ' ' x $col_spec->[3]->[COLSPEC_PRE_SPACE]
+      . '-' x $xs
+      . ' ' x $col_spec->[6]->[COLSPEC_PRE_SPACE]
       . '-' x $ds
-      . ' ' x $col_spec->[9]->[COLSPEC_PRE_SPACE]
+      . ' ' x $col_spec->[8]->[COLSPEC_PRE_SPACE]
       . '-' x $ts . "\n";
 
     $self->zsprint("DUMP SUMMARY:\n");
