@@ -68,7 +68,7 @@ USAGE BY TAPE:
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
 HOSTNAME            DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
---------------------------------- ------------------------------------- --------------
+--------------------------------- ---------------------- -------------- --------------
 cnc.slikon.local    /             MISSING --------------------------------------------
 cnc.slikon.local    /boot       0   20670   17245   83.4    0:04 4052.7   0:01 23216.5
 ns-new.slikon.local //usr/local 0      30       1    3.3    0:00   24.6   0:00   153.5

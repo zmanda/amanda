@@ -1,3 +1,6 @@
+2013-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/catalogs/*.cat: Fix for previous change.
+
 2013-06-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Center 'DUMPER STATS'.
 
