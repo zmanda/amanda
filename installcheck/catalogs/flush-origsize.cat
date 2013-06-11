@@ -58,7 +58,7 @@ NOTES:
 DUMP SUMMARY:
                                        DUMPER STATS                TAPER STATS
 HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
--------------------------- ------------------------------------- ---------------
+-------------------------- ---------------------- -------------- ---------------
 localhost    /boot       0  148870   83480   56.1     FLUSH        0:00 169009.9
 
 (brought to you by Amanda version 2.6.2alpha)
