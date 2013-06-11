@@ -1,4 +1,9 @@
 2013-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Undo previous patch, debugging is not
+	  yet enabled.
+	* device-src/s3-device.c: Do it here.
+
+2013-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Print to debug the ssl version amanda is
 	  compiled for.
 

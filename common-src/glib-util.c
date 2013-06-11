@@ -52,7 +52,6 @@ init_ssl(void)
 {
     int i;
 
-    g_debug("init_ssl for OPENSSL");
     openssl_mutex_array = g_new0(GMutex *, CRYPTO_num_locks());
 
     for (i=0; i<CRYPTO_num_locks(); i++) {
@@ -72,7 +71,6 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 static void
 init_ssl(void)
 {
-    g_debug("init_ssl for GNUTLS");
     gcry_control(GCRYCTL_SET_THREAD_CBS);
 }
 
@@ -81,7 +79,6 @@ init_ssl(void)
 static void
 init_ssl(void)
 {
-    g_debug("init_ssl for NSS");
 }
 #endif	/* LIBCURL_USE_GNUTLS  */
 #endif  /* LIBCURL_USE_OPENSSL */
