@@ -1,4 +1,8 @@
 2013-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Do not save catalog if not label or header.
+	* perl/Amanda/Changer/multi.pm (reset): Remove th slots hash.
+
+2013-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Undo previous patch, debugging is not
 	  yet enabled.
 	* device-src/s3-device.c: Do it here.

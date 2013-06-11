@@ -2533,6 +2533,9 @@ write_catalog(
 {
     FILE *file;
 
+    if (!self->catalog_label || !self->catalog_header)
+	return TRUE;
+
     file = fopen(self->catalog_filename, "w");
     if (!file) {
         return FALSE;

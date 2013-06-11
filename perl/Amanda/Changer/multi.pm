@@ -192,6 +192,7 @@ sub reset {
 	$params{state} = $state;
 	$slot = $self->{first_slot};
 	$self->{slot} = $slot;
+	undef $state->{'slots'};
 	$self->_set_current($state, $slot);
 
 	$finished_cb->();
