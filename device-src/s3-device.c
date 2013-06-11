@@ -2189,6 +2189,15 @@ s3_device_open_device(Device *pself, char *device_name,
 
     g_debug(_("S3 driver using bucket '%s', prefix '%s'"), self->bucket, self->prefix);
     g_debug("curl version: %s", curl_version());
+    #ifdef LIBCURL_USE_OPENSSL
+	g_debug("curl compiled for OPENSSL");
+    #else
+    #if defined LIBCURL_USE_GNUTLS
+	g_debug("curl compiled for GNUTLS");
+    #else
+	g_debug("curl compiled for NSS");
+    #endif
+    #endif
 
     /* default values */
     self->verbose = FALSE;
