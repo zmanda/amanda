@@ -1832,6 +1832,9 @@ perform_request(S3Handle *hdl,
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
             md5_hash_b64, content_type, request_body_size, project_id);
 
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOSIGNAL, TRUE)))
+	    goto curl_error;
+
         if (hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
                 goto curl_error;

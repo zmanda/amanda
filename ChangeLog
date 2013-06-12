@@ -1,3 +1,7 @@
+2013-06-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Call
+	  curl_easy_setopt(hdl->curl, CURLOPT_NOSIGNAL, TRUE)))
+
 2013-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm (reset): Remove th slots hash.
 
