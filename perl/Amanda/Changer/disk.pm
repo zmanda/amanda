@@ -44,10 +44,6 @@ This changer operates within a root directory, specified in the changer
 string, which it arranges as follows:
 
   $dir -|
-        |- drive0/ -|
-        |           | data -> '../slot4'
-        |- drive1/ -|
-        |           | data -> '../slot1'
         |- data -> slot5
         |- slot1/
         |- slot2/
@@ -55,13 +51,9 @@ string, which it arranges as follows:
         |- slot$n/
 
 The user should create the desired number of C<slot$n> subdirectories.  The
-changer will take care of dynamically creating the drives as needed, and track
+changer track
 the current slot using a "data" symlink.  This allows use of "file:$dir" as a
 device operating on the current slot, although note that it is unlocked.
-
-Drives are dynamically allocated as Amanda applications request access to
-particular slots.  Each drive is represented as a subdirectory containing a
-'data' symlink pointing to the "loaded" slot.
 
 See the amanda-changers(7) manpage for usage information.
 
@@ -71,11 +63,14 @@ See the amanda-changers(7) manpage for usage information.
 #
 # The device state is shared between all changers accessing the same changer.
 # It is a hash with keys:
-#   drives - see below
+#   current - the slot directory of the current slot
+#   meta    - meta label of the vtapes
+#   drives  - see below
 #
 # The 'drives' key is a hash, with drive as keys and hashes
 # as values.  Each drive's hash has keys:
-#   pid - the pid that reserved that drive.
+#   slot - slot directory
+#   pid  - the pid that reserved that drive.
 #
 
 
@@ -85,8 +80,6 @@ sub new {
     my ($dir) = ($tpchanger =~ /chg-disk:(.*)/);
     my $properties = $config->{'properties'};
 
-    # note that we don't track outstanding Reservation objects -- we know
-    # they're gone when they delete their drive directory
     my $self = {
 	dir => $dir,
 	config => $config,
@@ -212,7 +205,7 @@ sub reset {
 	my ($state, $finished_cb) = @_;
 
 	$slot = (scalar @slots)? $slots[0] : 0;
-	$self->_set_current($slot);
+	$self->_set_current($state, $slot);
 
 	$finished_cb->();
     });
@@ -229,7 +222,7 @@ sub inventory {
 	my @inventory;
 
 	my @slots = $self->_all_slots();
-	my $current = $self->_get_current();
+	my $current = $self->_get_current($state);
 	for my $slot (@slots) {
 	    my $s = { slot => $slot, state => Amanda::Changer::SLOT_FULL };
 	    $s->{'reserved'} = $self->_is_slot_in_use($state, $slot);
@@ -308,15 +301,15 @@ sub _load_by_slot {
 
     if (exists $params{'relative_slot'}) {
 	if ($params{'relative_slot'} eq "current") {
-	    $slot = $self->_get_current();
+	    $slot = $self->_get_current($params{'state'});
 	} elsif ($params{'relative_slot'} eq "next") {
 	    if (exists $params{'slot'}) {
 		$slot = $params{'slot'};
 	    } else {
-		$slot = $self->_get_current();
+		$slot = $self->_get_current($params{'state'});
 	    }
 	    $slot = $self->_get_next($slot);
-	    $self->_set_current($slot) if ($params{'set_current'});
+	    $self->_set_current($params{'state'}, $slot) if ($params{'set_current'});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
 		reason => "invalid",
@@ -346,9 +339,9 @@ sub _load_by_slot {
 	    message => "Slot $slot is already in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
     }
 
-    $drive = $self->_alloc_drive();
-    $self->_load_drive($drive, $slot);
-    $self->_set_current($slot) if ($params{'set_current'});
+    $drive = $self->_alloc_drive($params{state});
+    $self->_load_drive($params{state}, $drive, $slot);
+    $self->_set_current($params{state}, $slot) if ($params{'set_current'});
 
     $self->_make_res($params{'state'}, $params{'res_cb'}, $drive, $slot);
 }
@@ -374,9 +367,9 @@ sub _load_by_label {
 			"in use by drive '$drive'");
     }
 
-    $drive = $self->_alloc_drive();
-    $self->_load_drive($drive, $slot);
-    $self->_set_current($slot) if ($params{'set_current'});
+    $drive = $self->_alloc_drive($params{state});
+    $self->_load_drive($params{state}, $drive, $slot);
+    $self->_set_current($params{state}, $slot) if ($params{'set_current'});
 
     $self->_make_res($params{'state'}, $params{'res_cb'}, $drive, $slot);
 }
@@ -386,11 +379,17 @@ sub _make_res {
     my ($state, $res_cb, $drive, $slot, $meta) = @_;
     my $res;
 
-    my $device = Amanda::Device->new("file:$drive");
+    my $slot_path = "$self->{'dir'}/slot$slot";
+    my $device_name = "file:$slot_path";
+    my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $res_cb,
 		reason => "device",
-		message => "opening 'file:$drive': " . $device->error_or_status());
+		message => "opening '$device_name': " . $device->error_or_status());
+    }
+    my ($use_data, $surety, $source) = $device->property_get("USE-DATA");
+    if ($source == $PROPERTY_SOURCE_DEFAULT) {
+	$use_data = $device->property_set("USE-DATA", "NO");
     }
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	return $self->make_error("failed", $res_cb,
@@ -408,16 +407,14 @@ sub _make_res {
 # Internal function to find an unused (nonexistent) driveN subdirectory and
 # create it.  Note that this does not add a 'data' symlink inside the directory.
 sub _alloc_drive {
-    my ($self) = @_;
+    my ($self, $state) = @_;
     my $n = 0;
 
     while (1) {
-	my $drive = $self->{'dir'} . "/drive$n";
+	my $drive = "drive$n";
 	$n++;
 
-	warn "$drive is not a directory; please remove it" if (-e $drive and ! -d $drive);
-	next if (-e $drive);
-	next if (!mkdir($drive)); # TODO probably not a very effective locking mechanism..
+	next if exists $state->{'drives'}->{$drive};
 
 	return $drive;
     }
@@ -451,36 +448,24 @@ sub _is_slot_in_use {
     my ($self, $state, $slot) = @_;
     my $dir = _quote_glob($self->{'dir'});
 
-    for my $symlink (bsd_glob("$dir/drive*/data")) {
-	if (! -l $symlink) {
-	    warn "'$symlink' is not a symlink; please remove it";
+    foreach my $drive (keys %{$state->{'drives'}}) {
+	my $adrive = $state->{'drives'}->{$drive};
+	if (!defined $adrive->{'slot'} or !defined $adrive->{'pid'}) {
+	    delete $state->{'drives'}->{$drive};
 	    next;
 	}
 
-	my $target = readlink($symlink);
-	if (!$target) {
-	    warn "could not read '$symlink': $!";
-	    next;
-	}
-
-	my $tslot;
-	if (!(($tslot) = ($target =~ /..\/slot([0-9]+)/))) {
-	    warn "invalid changer symlink '$symlink' -> '$target'";
+	my $tslot = $adrive->{'slot'};
+	if (!(($tslot) = ($adrive->{'slot'} =~ /slot([0-9]+)/))) {
+	    warn "invalid slot '$adrive->{'slot'}' for drive '$drive'";
 	    next;
 	}
 
 	if ($tslot+0 == $slot) {
-	    my $drive = $symlink;
-	    $drive =~ s{/data$}{}; # strip the trailing '/data'
-
 	    #check if process is alive
-	    my $pid = $state->{drives}->{$drive}->{pid};
+	    my $pid = $state->{'drives'}->{$drive}->{'pid'};
 	    if (!defined $pid or !Amanda::Util::is_pid_alive($pid)) {
-		unlink("$drive/data")
-		    or warn("Could not unlink '$drive/data': $!");
-		rmdir("$drive")
-		    or warn("Could not rmdir '$drive': $!");
-		delete $state->{drives}->{$drive}->{pid};
+		delete $state->{'drives'}->{$drive};
 		next;
 	    }
 	    return $drive;
@@ -504,15 +489,9 @@ sub _get_slot_label {
 
 # Internal function to point a drive to a slot
 sub _load_drive {
-    my ($self, $drive, $slot) = @_;
+    my ($self, $state, $drive, $slot) = @_;
 
-    confess "'$drive' does not exist" unless (-d $drive);
-    if (-e "$drive/data") {
-	unlink("$drive/data");
-    }
-
-    symlink("../slot$slot", "$drive/data");
-    # TODO: read it to be sure??
+    $state->{'drives'}->{$drive}->{'slot'} = "slot$slot";
 }
 
 # Internal function to return the slot containing a volume with the given
@@ -558,7 +537,15 @@ sub _get_next {
 
 # Get the 'current' slot, represented as a symlink named 'data'
 sub _get_current {
-    my ($self) = @_;
+    my $self = shift;
+    my $state = shift;
+
+    if ($state->{'current'}) {
+        if ($state->{'current'} =~ "^slot([0-9]+)/?") {
+            return $1;
+        }
+    }
+
     my $curlink = $self->{'dir'} . "/data";
 
     # for 2.6.1-compatibility, also parse a "current" symlink
@@ -582,7 +569,11 @@ sub _get_current {
 
 # Set the 'current' slot
 sub _set_current {
-    my ($self, $slot) = @_;
+    my $self  = shift;
+    my $state = shift;
+    my $slot  = shift;
+
+    $state->{'current'} = "slot$slot";
     my $curlink = $self->{'dir'} . "/data";
 
     if (-l $curlink or -e $curlink) {
@@ -799,11 +790,6 @@ sub do_release {
     my %params = @_;
     my $drive = $self->{'drive'};
 
-    unlink("$drive/data")
-	or warn("Could not unlink '$drive/data': $!");
-    rmdir("$drive")
-	or warn("Could not rmdir '$drive': $!");
-
     # unref the device, for good measure
     $self->{'device'} = undef;
     my $slot = $self->{'this_slot'};
@@ -828,7 +814,7 @@ sub do_release {
 				    $finish, sub {
 	my ($state, $finished_cb) = @_;
 
-	delete $state->{drives}->{$drive}->{pid};
+	delete $state->{drives}->{$drive};
 
 	$finished_cb->();
     });

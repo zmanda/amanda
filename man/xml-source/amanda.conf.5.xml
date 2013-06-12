@@ -706,11 +706,10 @@ option.</para>
   <term><amkeyword>changerfile</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
-<amdefault>&quot;/usr/adm/amanda/log/changer-status&quot;</amdefault>.
-A tape changer configuration parameter.
-Usage depends on the particular changer defined with the
-<amkeyword>tpchanger</amkeyword>
-option.</para>
+<amdefault>&quot;changer&quot;</amdefault>.
+This option is deprecated; use the <amkeyword>changerfile</amkeyword> in the
+<amkeyword>changer</amkeyword> section. Only chg-multi use it.
+A file where the changer store its state.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

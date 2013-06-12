@@ -151,10 +151,23 @@ sub run_scan {
 
 # set the current slot on the changer
 sub set_current_slot {
-    my ($slot) = @_;
+    my ($chg, $slot) = @_;
 
-    unlink("$taperoot/data");
-    symlink("slot$slot", "$taperoot/data");
+    $chg->load(slot => $slot, set_current => 1,
+	res_cb => sub {
+	    my ($err, $reservation) = @_;
+            if ($err) {
+                Amanda::MainLoop::quit();
+		return;
+            }
+            $reservation->release(
+                finished_cb => sub {
+                     Amanda::MainLoop::quit();
+		     return;
+                });
+
+	});
+    Amanda::MainLoop::run();
 }
 
 # set up and load a config
@@ -229,7 +242,7 @@ $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
 die "$storage" if $storage->isa("Amanda::Changer::Error");
 $chg = $storage->{'chg'};
 $chg->{'support_fast_search'} = 0; # no fast search -> skip stage 1
-set_current_slot(2); # slot 2 is acceptable, so it should be returned
+set_current_slot($chg, 2); # slot 2 is acceptable, so it should be returned
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
@@ -256,7 +269,7 @@ $chg->{'support_fast_search'} = 1;
 
 label_slot(1); # remove TEST-1
 label_slot(4, "TEST-4", "20090424183004", "reuse", 1);
-set_current_slot(1);
+set_current_slot($chg, 1);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
@@ -273,7 +286,7 @@ $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
 $chg = $storage->{'chg'};
 $chg->{'support_fast_search'} = 1;
 
-set_current_slot(3);
+set_current_slot($chg, 3);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
@@ -300,12 +313,13 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+$chg = $storage->{'chg'};
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     retention_tapes => 2,
     storage => $storage);
-set_current_slot(5);
+set_current_slot($chg, 5);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-5", $ACCESS_WRITE ],
@@ -326,14 +340,12 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
-#$chg = Amanda::Changer->new("chg-disk:$taperoot",
-#			tapelist => $tapelist,
-#			autolabel => { });
+$chg = $storage->{'chg'};
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     storage => $storage);
-set_current_slot(6);
+set_current_slot($chg, 6);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
@@ -353,15 +365,13 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
-#$chg = Amanda::Changer->new("chg-disk:$taperoot",
-#			tapelist => $tapelist);
-# simulate "amlabel"
+$chg = $storage->{'chg'};
 label_slot(1, "TEST-6", "X", "reuse", 1);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
     storage => $storage);
-set_current_slot(2);
+set_current_slot($chg, 2);
 @results = run_scan($taperscan);
 is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
@@ -389,8 +399,9 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+$chg = $storage->{'chg'};
 #$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
-set_current_slot(1);
+set_current_slot($chg, 1);
 
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,

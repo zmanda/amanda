@@ -1707,7 +1707,6 @@ sub new {
 	$self->{'tapedev'} = getconf($CNF_TAPEDEV);
 	$self->{'tpchanger'} = getconf($CNF_TPCHANGER);
 	$self->{'changerdev'} = getconf($CNF_CHANGERDEV);
-	$self->{'changerfile'} = getconf($CNF_CHANGERFILE);
 
 	# no changer or device properties, since there's no changer definition to use
 	$self->{'properties'} = {};

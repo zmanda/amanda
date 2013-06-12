@@ -57,6 +57,9 @@ typedef struct {
     /* should we monitor free space? (controlled by MONITOR_FREE_SPACE property) */
     gboolean monitor_free_space;
 
+    /* should the data subdir must be use */
+    int use_data;
+
     /* how many bytes were free at last check */
     guint64 checked_fs_free_bytes;
 

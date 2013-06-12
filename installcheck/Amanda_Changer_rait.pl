@@ -135,7 +135,7 @@ sub test_threeway {
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	   "rait:{file:$tapebase/1/slot1,file:$tapebase/2/slot1,file:$tapebase/3/slot1}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,1,1}',
 	    "returns correct 'this_slot' name");
@@ -156,7 +156,7 @@ sub test_threeway {
 	ok(!$err, "no error loading slot 'next'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	   "rait:{file:$tapebase/1/slot2,file:$tapebase/2/slot2,file:$tapebase/3/slot2}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{2,2,2}',
 	    "returns correct 'this_slot' name");
@@ -176,7 +176,7 @@ sub test_threeway {
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	   "rait:{file:$tapebase/1/slot1,file:$tapebase/2/slot3,file:$tapebase/3/slot4}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,3,4}',
 	    "returns correct 'this_slot' name, even with different slots");
@@ -196,7 +196,7 @@ sub test_threeway {
 	ok(!$err, "no error loading slot '{1,2,3}'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	   "rait:{file:$tapebase/1/slot1,file:$tapebase/2/slot2,file:$tapebase/3/slot3}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,2,3}',
 	    "returns the 'this_slot' I requested");
@@ -217,7 +217,7 @@ sub test_threeway {
 	ok(!$err, "no error loading slot '2'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	   "rait:{file:$tapebase/1/slot2,file:$tapebase/2/slot2,file:$tapebase/3/slot2}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{2,2,2}',
 	    "returns an expanded 'this_slot' of {2,2,2} in response to the shorthand '2'");
@@ -330,7 +330,7 @@ sub test_threeway_error {
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,MISSING}",
+	   "rait:{file:$tapebase/1/slot1,file:$tapebase/2/slot1,MISSING}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,1,ERROR}',
 	    "returns correct 'this_slot' name");
@@ -350,7 +350,7 @@ sub test_threeway_error {
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,MISSING}",
+	   "rait:{file:$tapebase/1/slot1,file:$tapebase/2/slot3,MISSING}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,3,ERROR}',
 	    "returns correct 'this_slot' name, even with different slots");
@@ -476,7 +476,7 @@ sub test_properties {
 	ok(!$err, "no error loading slot '1'")
 	    or diag($err);
 	is($res->{'device'}->device_name,
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	   "rait:{file:$tapebase/1/slot1,file:$tapebase/2/slot1,file:$tapebase/3/slot1}",
 	    "returns correct (full) device name");
 	is($res->{'this_slot'}, '{1,1,1}',
 	    "returns correct 'this_slot' name");

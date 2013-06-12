@@ -660,6 +660,7 @@ static void validate_program(conf_var_t *, val_t *);
 static void validate_dump_limit(conf_var_t *, val_t *);
 static void validate_columnspec(conf_var_t *, val_t *);
 static void validate_tmpdir(conf_var_t *, val_t *);
+static void validate_deprecated_changerfile(conf_var_t *, val_t *);
 
 gint compare_pp_script_order(gconstpointer a, gconstpointer b);
 
@@ -1329,7 +1330,7 @@ conf_var_t server_var [] = {
    { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_property    , CNF_PROPERTY             , NULL },
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
-   { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , NULL },
+   { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , validate_deprecated_changerfile },
    { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , NULL },
    { CONF_TAPELIST             , CONFTYPE_STR      , read_str         , CNF_TAPELIST             , NULL },
    { CONF_DISKFILE             , CONFTYPE_STR      , read_str         , CNF_DISKFILE             , NULL },
@@ -5681,6 +5682,14 @@ static void validate_tmpdir(conf_var_t *var G_GNUC_UNUSED, val_t *value)
 	}
 	g_free(dir);
     }
+}
+
+/* global changerfile deprecated in 3.4        */
+/* global changerfile must be removed in 3.4.5 */
+static void validate_deprecated_changerfile(conf_var_t *var G_GNUC_UNUSED,
+					    val_t *value G_GNUC_UNUSED)
+{
+    conf_parswarn(_("warning: Global changerfile is deprecated, it must be set in the changer section"));
 }
 
 /*

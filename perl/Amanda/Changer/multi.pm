@@ -105,6 +105,12 @@ sub new {
 	$last_slot++;
     }
 
+    #must be removed when the global changer is removed
+    if (!defined $config->{changerfile} ||
+	$config->{changerfile} eq "") {
+	$config->{changerfile} = getconf($CNF_CHANGERFILE);
+    }
+
     if (!defined $config->{changerfile} ||
 	$config->{changerfile} eq "") {
 	return Amanda::Changer->make_error("fatal", undef,

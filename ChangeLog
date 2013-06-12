@@ -1,4 +1,19 @@
 2013-06-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Global changerfile is deprecated.
+	* device-src/vfs-device.c: Add USE-DATA property.
+	* device-src/vfs-device.h (VfsDevice): Add use_data.
+	* man/xml-source/amanda-devices.7.xml: Document USE-DATA property.
+	* man/xml-source/amanda.conf.5.xml: Global changerfile is deprecated.
+	* perl/Amanda/Changer.pm: Do not set changerfile from global.
+	* perl/Amanda/Changer/disk.pm: Do not create symlink.
+	* perl/Amanda/Changer/multi.pm: Use global changerfile.
+	* installcheck/Amanda_Changer_disk.pl,
+	* installcheck/Amanda_Changer_multi.pl,
+	* installcheck/Amanda_Changer_rait.pl,
+	* installcheck/Amanda_Taper_Scan_traditional.pl,
+	* installcheck/amdevcheck.pl: Fixes for changes.
+
+2013-06-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Call
 	  curl_easy_setopt(hdl->curl, CURLOPT_NOSIGNAL, TRUE)))
 

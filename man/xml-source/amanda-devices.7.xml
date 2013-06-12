@@ -777,11 +777,16 @@ size, regardless of the blocksize used to write the data.</para>
 
 <variablelist>
  <varlistentry><term>MONITOR_FREE_SPACE</term><listitem>
-	 (read-write) This property controls whether the device will monitor
-	 the filesystem's free space to detect a full filesystem before an
-	 error occurs, and defaults to true.  The monitoring operation works on
-	 most filesystems, but if it causes problems, use this property to
-	 disable it.
+(read-write) This property controls whether the device will monitor
+the filesystem's free space to detect a full filesystem before an
+error occurs, and defaults to true.  The monitoring operation works on
+most filesystems, but if it causes problems, use this property to
+disable it.
+</listitem></varlistentry>
+ <varlistentry><term>USE_DATA</term><listitem>
+(read-write) (Default: "EXIST") This property controls whether the device
+use the 'data' subdirectory, A value of "NO" never use it. A value of "YES"
+always use it. A value of "EXIST" use it only if it exist.
 </listitem></varlistentry>
 </variablelist>
 

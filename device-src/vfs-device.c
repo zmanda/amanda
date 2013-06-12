@@ -109,6 +109,12 @@ static gboolean property_get_monitor_free_space_fn(Device *p_self,
 static gboolean property_set_monitor_free_space_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
+static gboolean property_get_use_data_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety *surety, PropertySource *source);
+static gboolean property_set_use_data_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety surety, PropertySource source);
 static gboolean property_set_leom_fn(Device *p_self,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
@@ -145,12 +151,18 @@ static DeviceClass *parent_class = NULL;
 DevicePropertyBase device_property_monitor_free_space;
 #define PROPERTY_MONITOR_FREE_SPACE (device_property_monitor_free_space.ID)
 
+DevicePropertyBase device_property_use_data;
+#define PROPERTY_USE_DATA (device_property_use_data.ID)
+
 void vfs_device_register(void) {
     static const char * device_prefix_list[] = { "file", NULL };
 
     device_property_fill_and_register(&device_property_monitor_free_space,
                                       G_TYPE_BOOLEAN, "monitor_free_space",
       "Should VFS device monitor the filesystem's available free space?");
+    device_property_fill_and_register(&device_property_use_data,
+                                      G_TYPE_STRING, "use_data",
+      "Should VFS device use the data subdir?");
 
     register_device(vfs_device_factory, device_prefix_list);
 }
@@ -194,6 +206,7 @@ vfs_device_init (VfsDevice * self) {
     self->enforce_volume_limit = TRUE;
 
     self->monitor_free_space = TRUE;
+    self->use_data = 2;
     self->checked_fs_free_bytes = G_MAXUINT64;
     self->checked_fs_free_time = 0;
     self->checked_fs_free_bytes = G_MAXUINT64;
@@ -290,6 +303,11 @@ vfs_device_base_init (VfsDeviceClass * c)
 	    property_get_monitor_free_space_fn,
 	    property_set_monitor_free_space_fn);
 
+    device_class_register_property(device_class, PROPERTY_USE_DATA,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
+	    property_get_use_data_fn,
+	    property_set_use_data_fn);
+
     device_class_register_property(device_class, PROPERTY_MAX_VOLUME_USAGE,
 	    (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
 			(~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
@@ -365,6 +383,52 @@ property_set_monitor_free_space_fn(Device *p_self,
     VfsDevice *self = VFS_DEVICE(p_self);
 
     self->monitor_free_space = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+property_get_use_data_fn(Device *p_self, DevicePropertyBase *base G_GNUC_UNUSED,
+    GValue *val, PropertySurety *surety, PropertySource *source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    g_value_unset_init(val, G_TYPE_STRING);
+    switch (self->use_data) {
+	case 0: g_value_set_string(val, "NO"); break;
+	case 1: g_value_set_string(val, "YES"); break;
+	case 2: g_value_set_string(val, "EXIST"); break;
+    }
+    if (surety)
+	*surety = PROPERTY_SURETY_GOOD;
+
+    if (source)
+	*source = PROPERTY_SOURCE_DEFAULT;
+
+    return TRUE;
+}
+
+
+static gboolean
+property_set_use_data_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    const char *value = g_value_get_string(val);
+
+    if (g_strcasecmp(value, "NO") == 0 ||
+	g_strcasecmp(value, "FALSE") == 0) {
+	self->use_data = 0;
+    } else if (g_strcasecmp(value, "YES") == 0 ||
+	g_strcasecmp(value, "TRUE") == 0) {
+	self->use_data = 1;
+    } else if (g_strcasecmp(value, "EXIST") == 0) {
+	self->use_data = 2;
+    } else {
+	g_warning(_("Illegal USE-DATA value (%s), using 'EXIST'."), value);
+    }
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
@@ -567,6 +631,7 @@ static void update_volume_size(VfsDevice * self) {
 static void
 vfs_device_open_device (Device * pself, char * device_name, char * device_type, char * device_node) {
     VfsDevice * self;
+    struct stat dir_status;
     self = VFS_DEVICE(pself);
 
     pself->min_block_size = VFS_DEVICE_MIN_BLOCK_SIZE;
@@ -575,7 +640,19 @@ vfs_device_open_device (Device * pself, char * device_name, char * device_type, 
 
     /* We don't have to free this ourselves; it will be freed by
      * vfs_device_finalize whether we succeed here or not. */
-    self->dir_name = g_strconcat(device_node, "/data/", NULL);
+    switch (self->use_data) {
+	case 0: self->dir_name = g_strconcat(device_node, "/", NULL);
+		break;
+	case 1: self->dir_name = g_strconcat(device_node, "/data/", NULL);
+		break;
+	case 2: self->dir_name = g_strconcat(device_node, "/data/", NULL);
+		if (stat(self->dir_name, &dir_status) != 0) {
+		    g_free(self->dir_name);
+		    self->dir_name = g_strconcat(device_node, "/", NULL);
+		}
+		break;
+    }
+    g_debug("dir_name: %s", self->dir_name);
 
     if (parent_class->open_device) {
         parent_class->open_device(pself, device_name, device_type, device_node);

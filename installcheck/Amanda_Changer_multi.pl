@@ -60,6 +60,10 @@ sub reset_taperoot {
 
 # Build a configuration that specifies Amanda::Changer::Multi
 my $testconf = Installcheck::Config->new();
+$testconf->add_changer('multi', [
+    tpchanger => "\"chg-multi:file:$taperoot/slot{0,1,2,3,4}\"",
+    changerfile => "\"changer\"",
+]);
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -70,7 +74,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 reset_taperoot(5);
 
-my $chg = Amanda::Changer->new("chg-multi:file:$taperoot/slot{0,1,2,3,4}");
+my $chg = Amanda::Changer->new("multi");
 die($chg) if $chg->isa("Amanda::Changer::Error");
 is($chg->have_inventory(), '1', "changer have inventory");
 {
@@ -379,7 +383,7 @@ Amanda::MainLoop::run();
 	    is_deeply($inv, [
 	      { slot => 1, state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_DEVICE_ERROR,
-		device_error  => "Error checking directory $taperoot/slot0/data/: No such file or directory",
+		device_error  => "Error checking directory $taperoot/slot0/: No such file or directory",
 		f_type => undef, label => undef,
 		reserved => 0 },
 	      { slot => 2, state => Amanda::Changer::SLOT_FULL,
