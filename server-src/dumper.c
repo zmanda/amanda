@@ -539,6 +539,9 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: dataport_list]"));
 	    }
 	    dataport_list = newstralloc(dataport_list, cmdargs->argv[a++]);
+	    if (data_path == DATA_PATH_DIRECTTCP && *dataport_list == '\0') {
+		error(_("error [dumper PORT-DUMP: dataport_list empty for DIRECTTCP]"));
+	    }
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: max_warnings]"));
