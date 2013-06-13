@@ -403,7 +403,10 @@ XferElement *xfer_filter_crc(void);
 %newobject xfer_filter_process;
 XferElement *xfer_filter_process(
     gchar **argv,
-    gboolean need_root);
+    gboolean need_root,
+    gboolean must_drain,
+    gboolean cancel_on_success,
+    gboolean ignore_broken_pipe);
 int get_err_fd(
     XferElement *elt);
 

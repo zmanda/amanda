@@ -42,6 +42,9 @@ xfer_element_init(
     xe->upstream = xe->downstream = NULL;
     xe->_input_fd = xe->_output_fd = -1;
     xe->repr = NULL;
+    xe->must_drain = FALSE;
+    xe->cancel_on_success = FALSE;
+    xe->ignore_broken_pipe = FALSE;
 }
 
 static gboolean

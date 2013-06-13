@@ -410,6 +410,10 @@ sub main {
     my $dest_is_server;
     my $dest_is_client;
     my $dest_is_native;
+    my $xfer_app;
+    my $app_success;
+    my $app_error;
+    my $check_crc;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -604,6 +608,10 @@ sub main {
 
 	$recovery_done = 0;
 	%recovery_params = ();
+	$app_success = 0;
+	$app_error = 0;
+	$check_crc = !$opt_no_reassembly;
+	$xfer_app = undef;
 
 	my $storage_name = $current_dump->{'storage'};
 	if (!$storage{$storage_name}) {
@@ -684,7 +692,7 @@ sub main {
 		    return failure("Unknown program '$program' in header; no validation to perform",
 				   $steps->{'quit2'});
 		}
-		@argv = $validation_programs{$program};
+		@argv = @{$validation_programs{$program}};
 	    } else {
 		if (!defined $hdr->{application}) {
 		    return failure("Application not set", $steps->{'quit2'});
@@ -754,7 +762,8 @@ sub main {
 		# set up the extraction command as a filter element, since
 		# we need its stderr.
 		debug("Running: ". join(' ',@argv));
-		push @filters, Amanda::Xfer::Filter::Process->new(\@argv, 0);
+		$xfer_app = Amanda::Xfer::Filter::Process->new(\@argv, 0, 0, 1, 1);
+		push @filters, $xfer_app;
 
 		$dest_fh = \*STDOUT;
 		$xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
@@ -804,11 +813,11 @@ sub main {
 	    if ($hdr->{'srv_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
+			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0, 0, 0, 1);
 	    } elsif ($hdr->{'clnt_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
+			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0, 0, 0, 1);
 	    } else {
 		return failure("could not decrypt encrypted dump: no program specified",
 			    $steps->{'quit2'});
@@ -850,17 +859,17 @@ sub main {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0);
+			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0, 0, 1);
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0);
+			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0, 0, 1);
 	    } else {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 1);
 	    }
 
 	    # adjust the header
@@ -881,7 +890,7 @@ sub main {
 	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
 		    [ $Amanda::Constants::COMPRESS_PATH,
-		      $compress_opt ], 0);
+		      $compress_opt ], 0, 0, 0, 1);
 
 	    # adjust the header
 	    $hdr->{'compressed'} = 1;
@@ -933,7 +942,9 @@ sub main {
 			my $line = $buffer;
 			chomp $line;
 			if (length($line) > 1) {
-			    print STDERR "filter stderr: $line\n";
+			    if (!$app_success || $app_error) {
+				print STDERR "filter stderr: $line\n";
+			    }
 			    debug("filter stderr: $line");
 			}
 			$buffer = "";
@@ -1021,12 +1032,29 @@ sub main {
 		debug("unhandled XMSG_CRC $msg->{'elt'}");
 	    }
 	} else {
+	    if ($msg->{'elt'} == $xfer_app) {
+		if ($msg->{'type'} == $XMSG_DONE) {
+		    $app_success = 1;
+		} elsif ($msg->{'type'} == $XMSG_ERROR) {
+		} elsif ($msg->{'type'} == $XMSG_INFO and
+			 $msg->{'message'} eq "SUCCESS") {
+		    $app_success = 1;
+		} elsif ($msg->{'type'} == $XMSG_INFO and
+			 $msg->{'message'} eq "ERROR") {
+		    $app_error = 1;
+		}
+	    }
+
 	    $clerk->handle_xmsg($src, $msg, $xfer);
-	}
-	if ($msg->{'type'} == $XMSG_INFO) {
-	    Amanda::Debug::info($msg->{'message'});
-	} elsif ($msg->{'type'} == $XMSG_ERROR) {
-	    push @xfer_errs, $msg->{'message'};
+
+	    if ($msg->{'type'} == $XMSG_INFO) {
+		Amanda::Debug::info($msg->{'message'});
+	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
+		$check_crc = 0;
+	    } elsif ($msg->{'type'} == $XMSG_ERROR) {
+		push @xfer_errs, $msg->{'message'};
+		$check_crc = 0;
+	    }
 	}
     };
 
@@ -1051,7 +1079,7 @@ sub main {
 	return failure("recovery failed", $steps->{'quit2'})
 	    if $recovery_params{'result'} ne 'DONE';
 
-	if (!$opt_no_reassembly) {
+	if ($check_crc) {
 	    my $msg;
 	    if (defined $hdr->{'native_crc'} and $hdr->{'native_crc'} !~ /^00000000:/ and
 		defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and

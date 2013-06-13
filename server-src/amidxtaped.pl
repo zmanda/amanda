@@ -577,7 +577,7 @@ sub xfer_src_cb {
 	if ($header->{'srv_encrypt'}) {
 	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srv_encrypt'}, $header->{'srv_decrypt_opt'} ], 0);
+		    [ $header->{'srv_encrypt'}, $header->{'srv_decrypt_opt'} ], 0, 0, 0, 1);
 	    $header->{'encrypted'} = 0;
 	    $header->{'srv_encrypt'} = '';
 	    $header->{'srv_decrypt_opt'} = '';
@@ -606,7 +606,7 @@ sub xfer_src_cb {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 		        [ $header->{'clnt_encrypt'},
-			  $header->{'clnt_decrypt_opt'} ], 0);
+			  $header->{'clnt_decrypt_opt'} ], 0, 0, 0, 1);
 		$header->{'encrypted'} = 0;
 		$header->{'srv_encrypt'} = '';
 		$header->{'srv_decrypt_opt'} = '';
@@ -637,7 +637,7 @@ sub xfer_src_cb {
 	    # TODO: this assumes that srvcompprog takes "-d" to decrypt
 	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srvcompprog'}, "-d" ], 0);
+		    [ $header->{'srvcompprog'}, "-d" ], 0, 0, 0, 1);
 	    # adjust the header
 	    $header->{'compressed'} = 0;
 	    $header->{'uncompress_cmd'} = '';
@@ -654,7 +654,7 @@ sub xfer_src_cb {
 		# TODO: this assumes that clntcompprog takes "-d" to decrypt
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $header->{'clntcompprog'}, "-d" ], 0);
+			[ $header->{'clntcompprog'}, "-d" ], 0, 0, 0, 1);
 		# adjust the header
 		$header->{'compressed'} = 0;
 		$header->{'uncompress_cmd'} = '';
@@ -675,7 +675,7 @@ sub xfer_src_cb {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 1);
 		# adjust the header
 		$header->{'compressed'} = 0;
 		$header->{'uncompress_cmd'} = '';

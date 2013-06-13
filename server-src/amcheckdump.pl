@@ -420,11 +420,11 @@ sub main {
 	    if ($hdr->{'srv_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
+			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0, 0, 0, 0);
 	    } elsif ($hdr->{'clnt_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
+			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0, 0, 0, 0);
 	    } else {
 		return $steps->quit("could not decrypt encrypted dump: no program specified");
 	    }
@@ -444,17 +444,17 @@ sub main {
 		# TODO: this assumes that srvcompprog takes "-d" to decrypt
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0);
+			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0, 0, 0);
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decrypt
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0);
+			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0, 0, 0);
 	    } else {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 0);
 	    }
 
 	    # adjust the header
@@ -470,7 +470,7 @@ sub main {
 	# we need to throw out its stdout
 	my $argv = find_validation_command($hdr);
 	if (defined $argv) {
-	    push @filters, Amanda::Xfer::Filter::Process->new($argv, 0);
+	    push @filters, Amanda::Xfer::Filter::Process->new($argv, 0, 1, 0, 1);
 	}
 
 	# we always throw out stdout
@@ -532,7 +532,7 @@ sub main {
 		$dest_crc = $msg->{'crc'}.":".$msg->{'size'};
 		debug("dest_crc: $dest_crc");
 	    } else {
-		debug("unhandled XMSG_CRC $msg->{'elt'}")
+		debug("unhandled XMSG_CRC $msg->{'elt'} $msg->{'crc'}:$msg->{'size'}")
 	    }
 	} else {
 	    $clerk->handle_xmsg($src, $msg, $xfer);
