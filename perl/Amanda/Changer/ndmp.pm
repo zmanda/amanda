@@ -315,7 +315,7 @@ sub _do_move_medium {
 	}
 
 	unless (defined $dst_elem) {
-	    return $finished_cb->("unknown destiation slot/drive '$dst'");
+	    return $finished_cb->("unknown destination slot/drive '$dst'");
 	}
 
 	# send a MOVE MEDIUM command
