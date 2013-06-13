@@ -1,4 +1,9 @@
 2013-06-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: s/destiation/destination/
+	* perl/Amanda/Changer/robot.pm: (eject) Return an error if the drive
+	  is empty.
+
+2013-06-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* xfer-src/filter-process.c (xfer_filter_process): Add must_drain,
 	  cancel_on_success and ignore_broken_pipe flag).
 	* xfer-src/filter-process.c (child_watch_callback): Send XMSG_INFO.

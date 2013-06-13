@@ -1071,6 +1071,12 @@ sub eject_unlocked {
 		    message => "tape in drive '$drive' is in use");
 	}
 
+	if (!defined $drive_info->{'orig_slot'}) {
+	    return $self->make_error("failed", $params{'finished_cb'},
+			reason => "invalid",
+			message => "drive '$drive' is empty");
+	}
+
 	if ($self->{'eject_before_unload'}) {
 	    $steps->{'wait_to_eject'}->();
 	} else {
