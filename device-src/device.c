@@ -259,6 +259,10 @@ static void device_finalize(GObject *obj_self) {
     amfree(self->volume_label);
     amfree(self->volume_time);
     amfree(self->volume_header);
+    if (self->device_mutex) {
+	g_mutex_free(self->device_mutex);
+	self->device_mutex = NULL;
+    }
     amfree(selfp->errmsg);
     amfree(selfp->statusmsg);
     g_hash_table_destroy(selfp->simple_properties);

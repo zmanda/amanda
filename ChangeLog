@@ -1,5 +1,10 @@
+2013-06-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c, device-src/device.c, device-src/s3-device.c,
+	  device-src/s3.c, perl/Amanda/Util.swg, server-src/tapefile.c:
+	  Fix memory leak.
+
 2013-06-13  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/dumper.c: Fail with good error message id the 
+	* server-src/dumper.c: Fail with good error message if the
 	  dataport-list is empty.
 
 2013-06-13  Jean-Louis Martineau <martineau@zmanda.com>

@@ -438,6 +438,7 @@ parse_tapeline(
     } else if (*(s-1)) {
 	g_critical("Bogus line in the tapelist file: %s", cline);
     }
+    g_free(cline);
 
     return tp;
 }

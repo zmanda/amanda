@@ -2011,6 +2011,7 @@ cleanup:
     if (headers) curl_slist_free_all(headers);
     g_free(md5_hash_b64);
     g_free(md5_hash_hex);
+    g_free(int_writedata.etag);
 
     /* we don't deallocate the response body -- we keep it for later */
     hdl->last_response_body = int_writedata.resp_buf.buffer;

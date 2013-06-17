@@ -898,6 +898,7 @@ delete_file(S3Device *self,
 
     result = s3_list_keys(self->s3t[0].s3, self->bucket, my_prefix, NULL,
 			  &keys, &total_size);
+    g_free(my_prefix);
     if (!result) {
 	device_set_error(d_self,
 		g_strdup_printf(_("While listing S3 keys: %s"),
@@ -2569,6 +2570,8 @@ s3_device_read_label(Device *pself) {
     char *key;
     CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
     dumpfile_t *amanda_header;
+    gboolean result;
+
     /* note that this may be called from s3_device_start, when
      * self->access_mode is not ACCESS_NULL */
 
@@ -2585,17 +2588,18 @@ s3_device_read_label(Device *pself) {
     }
     reset_thread(self);
 
-    key = special_file_to_key(self, "tapestart", -1);
-
     if (!make_bucket(pself)) {
 	return pself->status;
     }
 
-    if (!s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL)) {
+    key = special_file_to_key(self, "tapestart", -1);
+
+    result = s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL);
+    g_free(key);
+    if (!result) {
         guint response_code;
         s3_error_code_t s3_error_code;
         s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
-
         /* if it's an expected error (not found), just return FALSE */
         if (response_code == 404 &&
              (s3_error_code == S3_ERROR_None ||
