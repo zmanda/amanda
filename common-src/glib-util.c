@@ -486,16 +486,17 @@ char * g_english_strjoinv(char ** strv, const char * conjunction) {
     char * last;
     char * joined;
     char * rval;
-    strv = g_strdupv(strv);
 
     length = g_strv_length(strv);
 
     if (length == 1)
 	return g_strdup(strv[0]);
 
+    strv = g_strdupv(strv);
+
     last = strv[length - 1];
     strv[length - 1] = NULL;
-    
+
     joined = g_strjoinv(", ", strv);
     rval = g_strdup_printf("%s, %s %s", joined, conjunction, last);
 
@@ -508,7 +509,7 @@ char * g_english_strjoinv(char ** strv, const char * conjunction) {
 char * g_english_strjoinv_and_free(char ** strv, const char * conjunction) {
     char * rval = g_english_strjoinv(strv, conjunction);
     g_strfreev(strv);
-    return rval;   
+    return rval;
 }
 
 #if !(GLIB_CHECK_VERSION(2,6,0))

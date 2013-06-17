@@ -3894,6 +3894,7 @@ build_diskspace(
     size_t buflen;
     char buffer[DISK_BLOCK_BYTES];
     dumpfile_t file;
+    gboolean file_set = FALSE;
     assignedhd_t **result;
     holdalloc_t *ha;
     off_t *used;
@@ -3954,11 +3955,14 @@ build_diskspace(
 	}
 	used[j] += ((off_t)finfo.st_size+(off_t)1023)/(off_t)1024;
 	if ((buflen = read_fully(fd, buffer, sizeof(buffer), NULL)) > 0) {
+		if (file_set) dumpfile_free_data(&file);
 		parse_file_header(buffer, &file, buflen);
+		file_set = TRUE;
 	}
 	close(fd);
 	filename = file.cont_filename;
     }
+    if (file_set) dumpfile_free_data(&file);
 
     for(j = 0, i=0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
 	if(used[j] != (off_t)0) {

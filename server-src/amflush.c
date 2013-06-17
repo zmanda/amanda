@@ -326,6 +326,7 @@ main(
 		    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
 		    amfree(qname);
 		}
+		dumpfile_free_data(&file);
 	    }
 	}
     }

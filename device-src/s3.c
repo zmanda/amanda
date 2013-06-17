@@ -3170,6 +3170,7 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	       thunk->in_contents) {
 	thunk->object->size = g_ascii_strtoull (thunk->text, NULL, 10);
         thunk->size += thunk->object->size;
+	g_free(thunk->text);
         thunk->text = NULL;
     } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0 && thunk->in_contents) {
 	thunk->object->uploadId = thunk->text;

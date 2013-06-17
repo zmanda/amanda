@@ -2497,6 +2497,7 @@ catalog_open(
     amfree(dirname);
 
     filename = g_strdup_printf("bucket-%s/%s", self->bucket, self->prefix);
+    g_free(self->catalog_filename);
     self->catalog_filename = config_dir_relative(filename);
     g_free(filename);
     file = fopen(self->catalog_filename, "r");
@@ -2868,6 +2869,8 @@ s3_device_read_label(Device *pself) {
     char *key;
     CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE, TRUE, NULL, NULL};
     dumpfile_t *amanda_header;
+    gboolean result;
+
     /* note that this may be called from s3_device_start, when
      * self->access_mode is not ACCESS_NULL */
 
@@ -2898,21 +2901,22 @@ s3_device_read_label(Device *pself) {
 	g_free(header_buf);
 	pself->volume_header = amanda_header;
     } else {
-	key = special_file_to_key(self, "tapestart", -1);
-
 	if (!make_bucket(pself)) {
 	    return pself->status;
 	}
 
+	key = special_file_to_key(self, "tapestart", -1);
+
 	s3_device_init_seek_file(pself, 0);
-	if (!s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS,
-		     &buf, NULL, NULL)) {
+	result =  s3_read(self->s3t[0].s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS,
+			  &buf, NULL, NULL);
+	g_free(key);
+	if (!result) {
             guint response_code;
             s3_error_code_t s3_error_code;
             s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code,
 		     NULL, NULL, NULL);
 	    g_free(buf.buffer);
-	    g_free(key);
 
             /* if it's an expected error (not found), just return FALSE */
             if (response_code == 404 &&
@@ -2937,7 +2941,6 @@ s3_device_read_label(Device *pself) {
 		       DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
             return pself->status;
 	}
-	g_free(key);
 
 	/* handle an empty file gracefully */
 	if (buf.buffer_len == 0) {

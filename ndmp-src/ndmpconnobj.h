@@ -227,6 +227,11 @@ gboolean ndmp_connection_wait_for_notify(
 
 /* Synchronous notification interface.  This handles all types of notification,
  * returning the result in the appropriate output parameter. */
+/* not sure of the return value
+ * return 0: Notification received
+ * return 1: Notification received
+ * return 2: Cancelled
+ */
 int ndmp_connection_wait_for_notify_with_cond(
 	NDMPConnection *self,
 	/* NDMP_NOTIFY_DATA_HALTED */

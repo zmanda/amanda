@@ -292,9 +292,11 @@ sub safe_overwrite_file {
 %typemap (out) GPtrArray * {
     if ($1) {
 	guint i;
+	gpointer *pdata;
+
 	EXTEND(sp, $1->len);
-	for (i = 0; i < $1->len; i++) {
-	    char *str = g_ptr_array_index($1, i);
+	for (i = 0, pdata = $1->pdata; i < $1->len; i++) {
+	    char *str = *pdata++;
 	    $result = sv_2mortal(newSVpv(str, 0));
 	    g_free(str);
 	    argvi++;
@@ -484,7 +486,7 @@ typedef struct file_lock {
 	%typemap(out) (SV *) { $result = $1; argvi++; };
 	SV *data() {
 	    if (self->data) {
-		return newSVpvn(self->data, self->len);
+		return sv_2mortal(newSVpvn(self->data, self->len));
 	    } else {
 		return &PL_sv_undef;
 	    }

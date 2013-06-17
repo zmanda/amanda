@@ -1,5 +1,11 @@
+2013-06-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c, device-src/s3-device.c, device-src/s3.c,
+	  ndmp-src/ndmpconnobj.h, perl/Amanda/Util.swg, server-src/amflush.c,
+	  server-src/driver.c, server-src/holding.c, server-src/tapefile.c:
+	  Fix memory leak.
+
 2013-06-13  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/dumper.c: Fail with good error message id the
+	* server-src/dumper.c: Fail with good error message if the
 	  dataport-list is empty.
 
 2013-06-13  Jean-Louis Martineau <martineau@zmanda.com>
