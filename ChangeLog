@@ -1,3 +1,8 @@
+2013-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Recovery/Planner.pm (make_plan): Use dump from the
+	  changer if available.
+	* server-src/amfetchdump.pl: Set the changer.
+
 2013-06-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c, device-src/device.c, device-src/s3-device.c,
 	  device-src/s3.c, perl/Amanda/Util.swg, server-src/tapefile.c:

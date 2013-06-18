@@ -233,128 +233,155 @@ sub make_plan {
 	croak "required parameter '$rq_param' mising"
 	    unless exists $params{$rq_param};
     }
-    my $dumpspecs = $params{'dumpspecs'};
 
-    # first, get the set of dumps that match these dumpspecs
-    my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs);
+    my $steps = define_steps
+	cb_ref => \$params{'plan_cb'};
 
-    # Create a hash of the latest datestamp of each dle.
-    my %datestamp;
-    if ($params{'latest_fulls'}) {
-	for my $dump (@dumps) {
-	    my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
-	    if (exists $datestamp{$kd}) {
-		if ($dump->{'dump_timestamp'} > $datestamp{$kd}) {
+    step get_inventory => sub {
+	if (defined $params{'changer'} and $params{'changer'}->have_inventory()) {
+	    return $params{'changer'}->inventory( inventory_cb => $steps->{'got_inventory'});
+	} else {
+	    return $steps->{'got_inventory'}->(undef, undef);
+	}
+    };
+    step got_inventory => sub {
+	my ($err, $inventory) = @_;
+
+	my $dumpspecs = $params{'dumpspecs'};
+
+	# first, get the set of dumps that match these dumpspecs
+	my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs);
+
+	# Create a hash of the latest datestamp of each dle.
+	my %datestamp;
+	if ($params{'latest_fulls'}) {
+	    for my $dump (@dumps) {
+		my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
+		if (exists $datestamp{$kd}) {
+		    if ($dump->{'dump_timestamp'} > $datestamp{$kd}) {
+			$datestamp{$kd} = $dump->{'dump_timestamp'};
+		    }
+		} else {
 		    $datestamp{$kd} = $dump->{'dump_timestamp'};
 		}
-	    } else {
-		$datestamp{$kd} = $dump->{'dump_timestamp'};
 	    }
 	}
-    }
 
-    # now "bin" those by host/disk/dump_ts/level
-    my %dumps;
-    for my $dump (@dumps) {
-	next if !defined $dump;
-	my $k = join("\0", $dump->{'hostname'}, $dump->{'diskname'},
-			   $dump->{'dump_timestamp'}, $dump->{'level'});
-	if ($params{'latest_fulls'}) {
-	    my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
-	    next if defined $datestamp{$kd} and
-		    $datestamp{$kd} != $dump->{'dump_timestamp'};
-	}
-	$dumps{$k} = [] unless exists $dumps{$k};
-	push @{$dumps{$k}}, $dump;
-    }
-
-    # now select the "best" of each set of dumps, and put that in @dumps
-    @dumps = ();
-    for my $options (values %dumps) {
-	my @options = @$options;
-	# if there's only one option, the choice is easy
-	if (@options == 1) {
-	    push @dumps, $options[0];
-	    next;
+	# now "bin" those by host/disk/dump_ts/level
+	my %dumps;
+	for my $dump (@dumps) {
+	    next if !defined $dump;
+	    my $k = join("\0", $dump->{'hostname'}, $dump->{'diskname'},
+			       $dump->{'dump_timestamp'}, $dump->{'level'});
+	    if ($params{'latest_fulls'}) {
+		my $kd = join("\0", $dump->{'hostname'}, $dump->{'diskname'});
+		next if defined $datestamp{$kd} and
+			        $datestamp{$kd} != $dump->{'dump_timestamp'};
+	    }
+	    $dumps{$k} = [] unless exists $dumps{$k};
+	    push @{$dumps{$k}}, $dump;
 	}
 
-	# if there are several, narrow to those with an OK status or barring that,
-	# those with a PARTIAL status.  FAIL need not apply.
-	my @ok_options = grep { $_->{'status'} eq 'OK' } @options;
-	my @partial_options = grep { $_->{'status'} eq 'PARTIAL' } @options;
+	# now select the "best" of each set of dumps, and put that in @dumps
+	@dumps = ();
+	for my $options (values %dumps) {
+	    my @options = @$options;
+	    # if there's only one option, the choice is easy
+	    if (@options == 1) {
+		push @dumps, $options[0];
+		next;
+	    }
 
-	if (@ok_options) {
-	    @options = @ok_options;
-	} else {
-	    @options = @partial_options;
+	    # if there are several, narrow to those with an OK status or barring that,
+	    # those with a PARTIAL status.  FAIL need not apply.
+	    my @ok_options = grep { $_->{'status'} eq 'OK' } @options;
+	    my @partial_options = grep { $_->{'status'} eq 'PARTIAL' } @options;
+
+	    if (@ok_options) {
+		@options = @ok_options;
+	    } else {
+		@options = @partial_options;
+	    }
+
+	    # now, take the one written longest ago - this gets us the dump on secondary
+	    # media if it hasn't been overwritten, otherwise the dump on tertiary media,
+	    # etc.  Note that this also prefers dumps on holding disk, since they are
+	    # tagged with a write_timestamp of 0
+	    @options = Amanda::DB::Catalog::sort_dumps(['write_timestamp'], @options);
+
+	    my $found;
+	    for my $option (@options) {
+		foreach my $sl (@$inventory) {
+		    if(defined $sl->{'label'} and $sl->{'label'} eq $option->{'parts'}[1]{'label'}) {
+			push @dumps, $option;
+			$found = 1;
+		    }
+		}
+	    }
+	    if (!$found) {
+		push @dumps, $options[0];
+	    }
 	}
 
-	# now, take the one written longest ago - this gets us the dump on secondary
-	# media if it hasn't been overwritten, otherwise the dump on tertiary media,
-	# etc.  Note that this also prefers dumps on holding disk, since they are
-	# tagged with a write_timestamp of 0
-	@options = Amanda::DB::Catalog::sort_dumps(['write_timestamp'], @options);
-	push @dumps, $options[0];
-    }
+	# at this point we have exactly one instance of each dump in @dumps.
 
-    # at this point we have exactly one instance of each dump in @dumps.
-
-    # If one_dump_per_part was specified, rearrange @dumps to have a distinct
-    # dump object for each part.
-    if ($self->{'one_dump_per_part'}) {
-	@dumps = $self->split_dumps_per_part(\@dumps);
-    }
-
-    # now sort the dumps in order by their constituent parts.  This sorts based
-    # on write_timestamp, then on the label of the first part of the dump,
-    # using the tapelist to order the labels.  Where labels match, it sorts on
-    # the part's filenum.  This should sort the dumps into the order in which
-    # they were written, with holding dumps coming in at the head of the list.
-    my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
-    my $tapelist = Amanda::Tapelist->new($tapelist_filename);
-
-    my $sortfn = sub {
-	my $rv;
-	my $tle;
-
-	return $rv
-	    if ($rv = $a->{'write_timestamp'} cmp $b->{'write_timestamp'});
-
-	# above will take care of comparing a holding dump to an on-media dump, but
-	# if both are on holding then we need to compare them lexically
-	if (exists $a->{'parts'}[1]{'holding_file'}
-	and exists $b->{'parts'}[1]{'holding_file'}) {
-	    return $a->{'parts'}[1]{'holding_file'} cmp $b->{'parts'}[1]{'holding_file'};
+	# If one_dump_per_part was specified, rearrange @dumps to have a distinct
+	# dump object for each part.
+	if ($self->{'one_dump_per_part'}) {
+	    @dumps = $self->split_dumps_per_part(\@dumps);
 	}
 
-	my ($alabel, $blabel) = (
-	    $a->{'parts'}[1]{'label'},
-	    $b->{'parts'}[1]{'label'},
-	);
+	# now sort the dumps in order by their constituent parts.  This sorts based
+	# on write_timestamp, then on the label of the first part of the dump,
+	# using the tapelist to order the labels.  Where labels match, it sorts on
+	# the part's filenum.  This should sort the dumps into the order in which
+	# they were written, with holding dumps coming in at the head of the list.
+	my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
+	my $tapelist = Amanda::Tapelist->new($tapelist_filename);
 
-	my ($apos, $bpos);
-	$apos = $tle->{'position'}
-	    if (($tle = $tapelist->lookup_tapelabel($alabel)));
-	$bpos = $tle->{'position'}
-	    if (($tle = $tapelist->lookup_tapelabel($blabel)));
-	return ($bpos <=> $apos) # not: reversed for "oldest to newest"
-	    if defined $bpos && defined $apos && ($bpos <=> $apos);
+	my $sortfn = sub {
+	    my $rv;
+	    my $tle;
 
-	# if a tape wasn't in the tapelist, just sort the labels lexically (this
-	# really shouldn't happen)
-	if (!defined $bpos || !defined $apos) {
-	    return $alabel cmp $blabel
-		if defined $alabel and defined $blabel and $alabel cmp $blabel ;
-	}
+	    return $rv
+		if ($rv = $a->{'write_timestamp'} cmp $b->{'write_timestamp'});
 
-	# finally, the dumps are on the same volume, so just sort by filenum
-	return $a->{'parts'}[1]{'filenum'} <=> $b->{'parts'}[1]{'filenum'};
+	    # above will take care of comparing a holding dump to an on-media dump, but
+	    # if both are on holding then we need to compare them lexically
+	    if (exists $a->{'parts'}[1]{'holding_file'}
+	    and exists $b->{'parts'}[1]{'holding_file'}) {
+		return $a->{'parts'}[1]{'holding_file'} cmp $b->{'parts'}[1]{'holding_file'};
+	    }
+
+	    my ($alabel, $blabel) = (
+		$a->{'parts'}[1]{'label'},
+		$b->{'parts'}[1]{'label'},
+	    );
+
+	    my ($apos, $bpos);
+	    $apos = $tle->{'position'}
+		if (($tle = $tapelist->lookup_tapelabel($alabel)));
+	    $bpos = $tle->{'position'}
+		if (($tle = $tapelist->lookup_tapelabel($blabel)));
+	    return ($bpos <=> $apos) # not: reversed for "oldest to newest"
+		if defined $bpos && defined $apos && ($bpos <=> $apos);
+
+	    # if a tape wasn't in the tapelist, just sort the labels lexically (this
+	    # really shouldn't happen)
+	    if (!defined $bpos || !defined $apos) {
+		return $alabel cmp $blabel
+		    if defined $alabel and defined $blabel and $alabel cmp $blabel ;
+	    }
+
+	    # finally, the dumps are on the same volume, so just sort by filenum
+	    return $a->{'parts'}[1]{'filenum'} <=> $b->{'parts'}[1]{'filenum'};
+	};
+	@dumps = sort $sortfn @dumps;
+
+	$self->{'dumps'} = \@dumps;
+
+	Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
     };
-    @dumps = sort $sortfn @dumps;
-
-    $self->{'dumps'} = \@dumps;
-
-    Amanda::MainLoop::call_later($params{'plan_cb'}, undef, $self);
 }
 
 sub make_holding_plan {

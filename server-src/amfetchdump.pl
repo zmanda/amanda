@@ -327,6 +327,10 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+if (!$opt_device && getconf_linenum($CNF_TPCHANGER) == -2) {
+    $opt_device = getconf($CNF_TPCHANGER);
+}
+
 my $exit_status = 0;
 my $clerk;
 use Data::Dumper;
