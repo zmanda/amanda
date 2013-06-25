@@ -1,3 +1,6 @@
+2013-06-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Always get a status initially.
+
 2013-06-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c, device-src/s3-device.c, device-src/s3.c,
 	  ndmp-src/ndmpconnobj.h, perl/Amanda/Util.swg, server-src/amflush.c,
