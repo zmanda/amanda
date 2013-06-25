@@ -277,6 +277,7 @@ sub legacy_send_amreport
     if ($cfg_send == $SEND_AMREPORT_STRANGE) {
 
         if (   !$report->get_flag("got_finish")
+            || ($report->get_flag("exit_status") != 0)
 	    || ($report->get_flag("dump_failed") != 0)
 	    || ($report->get_flag("results_missing") != 0)
 	    || ($report->get_flag("dump_strange") != 0)) {
@@ -293,10 +294,9 @@ sub legacy_send_amreport
     } elsif ($cfg_send = $SEND_AMREPORT_ERROR) {
 
         if (   !$report->get_flag("got_finish")
-            || ($report->get_flag("exit_status") != 0)
+            || ($report->get_flag("exit_status") != 0 && $report->get_flag("exit_status") != 2)
             || ($report->get_flag("dump_failed") != 0)
-            || ($report->get_flag("results_missing") != 0)
-            || ($report->get_flag("dump_strange") != 0)) {
+            || ($report->get_flag("results_missing") != 0)) {
 
             debug("send-amreport-on=$cfg_send, condition filled for $output_name");
             $send_amreport = 1;

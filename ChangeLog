@@ -1,4 +1,7 @@
 2013-06-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amreport.pl: Fix send-amreport-on.
+
+2013-06-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Always get a status initially.
 
 2013-06-17  Jean-Louis Martineau <martineau@zmanda.com>
