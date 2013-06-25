@@ -1826,7 +1826,8 @@ sub _get_state {
 	# if it's not time for another run of the status command yet, then just skip to
 	# the end.
 	if (defined $state->{'last_status'}
-	    and time < $state->{'last_status'} + $self->{'status_interval'}) {
+	    and time < $state->{'last_status'} + $self->{'status_interval'}
+	    and  defined $self->{'got_status'}) {
 	    $self->_debug("too early for another 'status' invocation");
 	    $steps->{'done'}->();
 	} else {
@@ -2022,6 +2023,7 @@ sub _get_state {
     };
 
     step done => sub {
+	$self->{'got_status'} = 1;
 	$params{'finished_get_state_cb'}->($state);
     };
 }

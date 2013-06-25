@@ -1,3 +1,6 @@
+2013-06-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Always get a status initially.
+
 2013-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Planner.pm (make_plan): Use dump from the
 	  changer if available.
