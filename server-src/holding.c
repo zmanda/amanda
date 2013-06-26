@@ -441,9 +441,14 @@ holding_get_walk_fn(
     int is_cruft)
 {
     holding_get_datap_t *data = (holding_get_datap_t *)datap;
+    int l;
 
     /* ignore cruft */
     if (is_cruft) return 0;
+
+    /* ignore tmp file */
+    if ((l = strlen(element)) >= 7 && g_str_has_prefix(&element[l - 4], ".tmp"))
+	return 0;
 
     if (data->fullpaths)
 	data->result = g_slist_insert_sorted(data->result,
@@ -715,6 +720,8 @@ holding_cleanup_dir(
     int is_cruft)
 {
     holding_cleanup_datap_t *data = (holding_cleanup_datap_t *)datap;
+    char *pid_file;
+    FILE *pid_FILE;
 
     if (is_cruft) {
 	if (data->verbose_output)
@@ -722,6 +729,28 @@ holding_cleanup_dir(
 		_("Invalid holding directory '%s'\n"), fqpath);
 	return 0;
     }
+
+    /* Do not cleanup if not from us and their amdump is still running */
+    pid_file = g_strconcat(fqpath, "/pid", NULL);
+    pid_FILE = fopen(pid_file, "r");
+    if (pid_FILE) {
+	char line[1000];
+	int  pid;
+	fgets(line, 1000, pid_FILE);
+	pid = atoi(line);
+	if (pid != getpid()) {
+	    /* check if pid is alive */
+	    if (kill(pid, 0) == 0) {
+		if (data->verbose_output)
+		    g_fprintf(data->verbose_output,
+			_("..skipping running directory '%s'\n"), element);
+		g_free(pid_file);
+		return 0;
+	    }
+	}
+	unlink(pid_file);
+    }
+    g_free(pid_file);
 
     /* try removing it */
     if (rmdir(fqpath) == 0) {
@@ -798,7 +827,7 @@ holding_cleanup_file(
 	return 0;
     }
 
-    if ((l = strlen(element)) >= 7 && g_str_has_prefix(&fqpath[l - 4], ".tmp")) {
+    if ((l = strlen(element)) >= 7 && g_str_has_prefix(&element[l - 4], ".tmp")) {
 	char *destname;
 
 	/* generate a name without '.tmp' */
@@ -971,7 +1000,9 @@ mkholdingdir(
     char *	diskdir)
 {
     struct stat stat_hdp;
-    int success = 1;
+    int   success = 1;
+    char *pid_file;
+    FILE *pid_FILE;
 
     if (mkpdir(diskdir, 0770, (uid_t)-1, (gid_t)-1) != 0 && errno != EEXIST) {
 	log_add(L_WARNING, _("WARNING: could not create parents of %s: %s"),
@@ -1000,5 +1031,19 @@ mkholdingdir(
 	    success = 0;
 	}
     }
+
+    /* create a 'pid' file */
+    pid_file = g_strconcat(diskdir, "/pid", NULL);
+    pid_FILE = fopen(pid_file, "w");
+    if (!pid_FILE) {
+	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
+		pid_file, strerror(errno));
+	success = 0;
+    } else {
+	fprintf(pid_FILE, "%d", getpid());
+	fclose(pid_FILE);
+    }
+    g_free(pid_file);
+
     return success;
 }

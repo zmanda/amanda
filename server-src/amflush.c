@@ -222,6 +222,8 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
+    holding_cleanup(NULL, stdout);
+
     /* load DLEs from the holding disk, in case there's anything to flush there */
     search_holding_disk(&holding_files, &holding_disklist);
     /* note that the dumps are added to the global disklist, so we need not

@@ -1,3 +1,8 @@
+2013-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amflush.c, server-src/planner.c: Call holding_cleanup.
+	* server-src/holding.c: ignore tmp file, add pid file in holding disk
+	  to prevent parallel use.
+
 2013-06-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amreport.pl: Fix send-amreport-on.
 

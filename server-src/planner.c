@@ -482,13 +482,15 @@ main(
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
 	cmdfile_data_t data;
-    GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
-    char     *line;
-    gpointer *xline;
+	GPtrArray *flush_ptr = g_ptr_array_sized_new(100);
+	char     *line;
+	gpointer *xline;
 
 	conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
 	cmddatas = read_cmdfile(conf_cmdfile);
 	g_free(conf_cmdfile);
+
+	holding_cleanup(NULL, stderr);
 
 	/* get *all* flushable files in holding, without checking against
 	 * the disklist (which may not contain some of the dumps) */
