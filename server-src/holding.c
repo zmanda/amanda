@@ -736,19 +736,20 @@ holding_cleanup_dir(
     if (pid_FILE) {
 	char line[1000];
 	int  pid;
-	fgets(line, 1000, pid_FILE);
-	pid = atoi(line);
-	if (pid != getpid()) {
-	    /* check if pid is alive */
-	    if (kill(pid, 0) == 0) {
-		if (data->verbose_output)
-		    g_fprintf(data->verbose_output,
-			_("..skipping running directory '%s'\n"), element);
-		g_free(pid_file);
-		return 0;
+	if (fgets(line, 1000, pid_FILE) > 0) {
+	    pid = atoi(line);
+	    if (pid != getpid()) {
+		/* check if pid is alive */
+		if (kill(pid, 0) == 0) {
+		    if (data->verbose_output)
+			g_fprintf(data->verbose_output,
+			    _("..skipping running directory '%s'\n"), element);
+		    g_free(pid_file);
+		    return 0;
+		}
 	    }
+	    unlink(pid_file);
 	}
-	unlink(pid_file);
     }
     g_free(pid_file);
 
