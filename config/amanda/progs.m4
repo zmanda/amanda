@@ -150,7 +150,9 @@ AC_DEFUN([AMANDA_PROG_LPR],
 		lp|*/lp) amanda_cv_printer_flag="-d";;
 	    esac
 	])
-	if test -z "$amanda_cv_printer_flag"; then
+	if test ! -z "$amanda_cv_printer_flag"; then
+	    LPRFLAG=$amanda_cv_printer_flag
+	else
 	    AMANDA_MSG_WARN([WARNING: amanda will always print to the default printer])
 	fi
     fi
