@@ -736,7 +736,7 @@ holding_cleanup_dir(
     if (pid_FILE) {
 	char line[1000];
 	int  pid;
-	if(fgets(line, 1000, pid_FILE) > 0) {
+	if (fgets(line, 1000, pid_FILE) != NULL) {
 	    pid = atoi(line);
 	    if (pid != getpid()) {
 		/* check if pid is alive */
