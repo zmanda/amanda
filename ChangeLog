@@ -1,4 +1,7 @@
 2013-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/rait.pm: Set barcode in a reservation.
+
+2013-06-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/rait.pm: Set chg in a reservation.
 
 2013-06-27  Jean-Louis Martineau <martineau@zmanda.com>
