@@ -687,7 +687,7 @@ sub new {
     $self->{'child_reservations'} = $child_reservations;
 
     $self->{'device'} = $rait_device;
-    my @barcodes = errmap { "" . $_->{'barcode'} } @$child_reservations;
+    my @barcodes = errmap { defined($_->{'barcode'}) ? "" . $_->{'barcode'} : "" } @$child_reservations;
     $self->{'barcode'} = collapse_braced_alternates(\@barcodes);
 
     my @slot_names;
