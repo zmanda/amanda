@@ -268,6 +268,7 @@ sub _make_res {
     }
 
     my $combined_res = Amanda::Changer::rait::Reservation->new(
+	$self,
 	$kid_reservations, $rait_device);
     $rait_device->read_label();
 
@@ -676,8 +677,10 @@ sub errmap (&@) {
 
 sub new {
     my $class = shift;
-    my ($child_reservations, $rait_device) = @_;
+    my ($chg, $child_reservations, $rait_device) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
+
+    $self->{'chg'} = $chg;
 
     # note that $child_reservations may contain "ERROR" in place of a reservation
 
