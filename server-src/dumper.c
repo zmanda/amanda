@@ -883,9 +883,17 @@ process_dumpline(
 	if (g_str_equal(tok, "state")) {
 	    FILE *statefile;
 	    tok = strtok(NULL, "");
-	    statefile = fopen(state_filename, "a");
-	    fprintf(statefile, "%s\n", tok);
-	    fclose(statefile);
+	    if (tok) {
+		statefile = fopen(state_filename, "a");
+		if (statefile) {
+		    fprintf(statefile, "%s\n", tok);
+		    fclose(statefile);
+		} else {
+		    g_debug("Can't open statefile '%s': %s", state_filename, strerror(errno));
+		}
+	    } else {
+		g_debug("Invalid state");
+	    }
 	    amfree(buf);
 	    return;
 	}

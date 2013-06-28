@@ -1,4 +1,7 @@
 2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fix use of NULL dereference.
+
+2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/holding.c (holding_cleanup_dir): fclose pid_FILE.
 
 2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
