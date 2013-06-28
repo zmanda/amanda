@@ -269,9 +269,10 @@ static void holding_walk_dir(
 
         if (!(dumpf_ok=holding_file_get_dumpfile(hfile, &dumpf)) ||
             dumpf.type != F_DUMPFILE) {
-            if (dumpf_ok && dumpf.type == F_CONT_DUMPFILE)
+            if (dumpf_ok && dumpf.type == F_CONT_DUMPFILE) {
 		dumpfile_free_data(&dumpf);
                 continue; /* silently skip expected file */
+	    }
 
             is_cruft = 1;
         }
