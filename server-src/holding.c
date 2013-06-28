@@ -745,12 +745,14 @@ holding_cleanup_dir(
 		    if (data->verbose_output)
 			g_fprintf(data->verbose_output,
 			    _("..skipping running directory '%s'\n"), element);
-			g_free(pid_file);
+		    g_free(pid_file);
+		    fclose(pid_FILE);
 		    return 0;
 		}
 	    }
 	    unlink(pid_file);
 	}
+	fclose(pid_FILE);
     }
     g_free(pid_file);
 
