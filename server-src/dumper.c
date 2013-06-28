@@ -930,27 +930,43 @@ process_dumpline(
 	if (g_str_equal(tok, "state")) {
 	    FILE *statefile;
 	    tok = strtok(NULL, "");
-	    statefile = fopen(state_filename, "a");
-	    fprintf(statefile, "%s\n", tok);
-	    fclose(statefile);
+	    if (tok) {
+		statefile = fopen(state_filename, "a");
+		if (statefile) {
+		    fprintf(statefile, "%s\n", tok);
+		    fclose(statefile);
+		} else {
+		    g_debug("Can't open statefile '%s': %s", state_filename, strerror(errno));
+		}
+	    } else {
+		g_debug("Invalid state");
+	    }
 	    amfree(buf);
 	    return;
 	}
 
 	if (g_str_equal(tok, "native-CRC")) {
 	    tok = strtok(NULL, "");
-	    parse_crc(tok, &native_crc);
-	    g_debug("native-CRC: %08x:%lld", native_crc.crc,
-		    (long long)native_crc.size);
+	    if (tok) {
+		parse_crc(tok, &native_crc);
+		g_debug("native-CRC: %08x:%lld", native_crc.crc,
+			(long long)native_crc.size);
+	    } else {
+		g_debug("invalid native-CRC");
+	    }
 	    amfree(buf);
 	    return;
 	}
 
 	if (g_str_equal(tok, "client-CRC")) {
 	    tok = strtok(NULL, "");
-	    parse_crc(tok, &client_crc);
-	    g_debug("client-CRC: %08x:%lld", client_crc.crc,
-		    (long long)client_crc.size);
+	    if (tok) {
+		parse_crc(tok, &client_crc);
+		g_debug("client-CRC: %08x:%lld", client_crc.crc,
+			(long long)client_crc.size);
+	    } else {
+		g_debug("invalid client-CRC");
+	    }
 	    amfree(buf);
 	    return;
 	}
