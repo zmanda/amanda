@@ -52,11 +52,20 @@ Changes in release 4.0.0
        o you can sahre the same tapelist file across multiple config.
 
 Changes in release 3.3.4
-
-    * amtape
-        o New verify subcommand.
+    * amreport
+        o new --format argument
+        o new 'json' and 'json_raw' format.
     * amanda.conf
-        o new report-format setting.
+        o new REPORT-FORMAT option.
+    * amtape
+        o new 'verify' command.
+    * amadmin
+        o new 'force-level-1' command.
+    * ampgslq
+        o Add VERBOSE property.
+    * S3 device
+        o handle DURABLE_REDUCED_AVAILABILITY for google storage.
+    * Many bugs fix.
 
 Changes in release 3.3.3
 

@@ -1,4 +1,7 @@
 2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Changes in 3.3.4
+
+2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fix use of NULL dereference.
 
 2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
