@@ -1,3 +1,21 @@
+		Release Notes for amanda-3.3.4
+
+* amreport
+    o new --format argument
+    o new 'json' and 'json_raw' format.
+* amanda.conf
+    o new REPORT-FORMAT option.
+* amtape
+    o new 'verify' command.
+* amadmin
+    o new 'force-level-1' command.
+* ampgsql
+    o Add VERBOSE property.
+* S3 device
+    o handle DURABLE_REDUCED_AVAILABILITY for google storage.
+* Many bugs fix.
+
+
 		Release Notes for amanda-3.3.3
 
 * amdump.X log files use timestamp instead of number, amdump and amdump.1
