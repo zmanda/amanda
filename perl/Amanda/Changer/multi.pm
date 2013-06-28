@@ -50,7 +50,8 @@ See the amanda-changers(7) manpage for usage information.
 #
 # The device state is shared between all changers accessing the same changer.
 # It is a hash with keys:
-#   current_slot - the unaliased device name of the current slot
+#   current_slot - the unaliased device name of the current slot (deprecated)
+#   current_slot_by_config - hash (by config name) of the unaliased device name of the current slot
 #   slots - see below
 #
 # The 'slots' key is a hash, with unaliased device name as keys and hashes
@@ -652,16 +653,21 @@ sub _get_next {
 # Get the 'current' slot
 sub _get_current {
     my ($self, $state) = @_;
+    my $slot;
 
     return $self->{slot} if defined $self->{slot};
-    if (defined $state->{current_slot}) {
-	my $slot = $self->{number}->{$state->{current_slot}};
-	# return the slot if it exist.
-	return $slot if defined $slot and
-				$slot >= $self->{'first_slot'} and
-				$slot < $self->{'last_slot'};
-	Amanda::Debug::debug("statefile current_slot is not configured");
+    if (defined $state->{current_slot_by_config}{Amanda::Config::get_config_name()}) {
+	$slot = $self->{number}->{$state->{current_slot_by_config}{Amanda::Config::get_config_name()}};
+    } elsif (defined $state->{current_slot}) {
+	$slot = $self->{number}->{$state->{current_slot}};
     }
+
+    # return the slot if it exist.
+    return $slot if defined $slot and
+		    $slot >= $self->{'first_slot'} and
+		    $slot < $self->{'last_slot'};
+    Amanda::Debug::debug("statefile current_slot is not configured");
+
     # return the first slot
     return $self->{first_slot};
 }
@@ -671,7 +677,7 @@ sub _set_current {
     my ($self, $state, $slot) = @_;
 
     $self->{slot} = $slot;
-    $state->{current_slot} = $self->{unaliased}->{$slot};
+    $state->{current_slot_by_config}{Amanda::Config::get_config_name()} = $self->{unaliased}->{$slot};
 }
 
 sub set_reuse {
