@@ -2194,8 +2194,12 @@ static void handle_result(
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    if (dp->todo) {
 		qname = quote_string(dp->name);
+		if(est(dp)->state == DISK_ACTIVE) {
+		    remove_disk(&waitq, dp);
+		} else if(est(dp)->state == DISK_PARTIALY_DONE) {
+		    remove_disk(&pestq, dp);
+		}
 		est(dp)->state = DISK_DONE;
-		remove_disk(&waitq, dp);
 		enqueue_disk(&failq, dp);
 
 		est(dp)->errstr = g_strdup(errbuf);

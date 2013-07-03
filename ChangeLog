@@ -1,3 +1,6 @@
+2013-07-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Remove from correct queue.
+
 2013-06-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Changes in 3.3.4
 	* VERSION: 3.3.4
