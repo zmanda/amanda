@@ -66,6 +66,9 @@ void device_api_init(void) {
     device_property_init();
     driverList = g_hash_table_new(g_str_hash, g_str_equal);
 
+    device_status_flags_get_type();	/* to register it */
+    device_get_type();			/* to register it */
+
     /* register other types and devices. */
     null_device_register();
     vfs_device_register();
