@@ -1,4 +1,7 @@
 2013-07-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Typo.
+
+2013-07-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: register types at initialization.
 
 2013-07-03  Jean-Louis Martineau <martineau@zmanda.com>

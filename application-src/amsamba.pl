@@ -740,7 +740,7 @@ sub command_backup {
 	    return;
 	}
 	# message if samba server is configured with 'security = share'
-	return if $line =~$line =~  /Server not using user level security and no password supplied./;
+	return if $line =~  /Server not using user level security and no password supplied./;
 	if ($line =~ /^Total bytes written: (\d*)/) {
 	    $size = $1;
 	    return;
