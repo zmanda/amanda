@@ -114,7 +114,8 @@ result:
 sub get_parts {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
 
     my @parts = Amanda::DB::Catalog::get_parts(%params);
 
@@ -127,11 +128,12 @@ sub get_parts {
 sub get_dumps {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
 
     my @dumps = Amanda::DB::Catalog::get_dumps(%params);
 
-    # uncomment commented line to remove undef pats.
+    # uncomment commented line to remove undef parts.
     foreach my $dump (@dumps) {
 	my $parts = $dump->{'parts'};
 #	my @newparts;

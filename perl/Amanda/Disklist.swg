@@ -35,6 +35,7 @@
 %perlcode %{
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :getconf config_dir_relative );
+use Amanda::Util qw ( match_disk match_host );
 %}
 
 /* handle creation of opaque objects from Amanda::Config */
@@ -254,6 +255,144 @@ unload_disklist_internal(void) {
 
 %perlcode %{
 
+sub do_on_match_disklist {
+    my %params = @_;
+    my $user_msg = $params{'user_msg'};
+    my $disk_cb = $params{'disk_cb'};
+    my $exact_match = $params{'exact_match'};
+    my @args = @{$params{'args'}};
+
+    if ($exact_match) {
+	@args = map { /^=/?$_:"=$_" } @args;
+    }
+
+    for my $disk (Amanda::Disklist::all_disks()) {
+	$disk->{'todo'} = -1;
+    }
+
+    my $prev_match = 0;
+    my $prevhost = undef;
+    for my $arg (@args) {
+	my $match_a_host = 0;
+	for my $hostname (keys %hosts) {
+	    if (match_host($arg, $hostname)) {
+		$match_a_host = 1;
+		next;
+	    }
+	}
+
+	my $match_a_disk = 0;
+	my $disk_skip;
+	for my $disk (Amanda::Disklist::all_disks()) {
+	    if ($prevhost and
+		match_host($prevhost, $disk->{'host'}->{'hostname'}) and
+		(match_disk($arg, $disk->{'name'}) or
+		 ($disk->{'device'} and match_disk($arg, $disk->{'device'})))) {
+		if ($match_a_host) {
+		    return $user_msg->(Amanda::Disklist::Message->new(
+					source_filename => __FILE__,
+					source_line     => __LINE__,
+					code  => 1400000,
+					arg   => $arg));
+		} else {
+		    if ($disk->{'todo'} == -1) {
+			$disk->{'todo'} = 1;
+			$match_a_disk = 1;
+			$prev_match = 0;
+		    } elsif ($disk->{'todo'} == 0) {
+			$match_a_disk = 1;
+			$prev_match = 0;
+			$disk_skip = $disk;
+		    } else { # $disk->{'todo'} == 1
+			$match_a_disk = 1;
+			$prev_match = 0;
+		    }
+		}
+	    }
+	}
+
+	if (!$match_a_disk) {
+	    if ($match_a_host == 1) {
+		if ($prev_match == 1) { # all disk of the previous host
+		    for my $disk (Amanda::Disklist::get_host($prevhost)->all_disks()) {
+			$disk->{'todo'} = 1;
+			$match_a_disk = 1;
+		    }
+		    if (!match_a_disk) {
+			$user_msg->(Amanda::Disklist::Message->new(
+					source_filename => __FILE__,
+					source_line     => __LINE__,
+					code  => 1400001,
+					host  => $prevhost));
+		    }
+		}
+		$prevhost = $arg;
+		$prev_match = 1;
+	    } else {
+		$user_msg->(Amanda::Disklist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1400002,
+				arg   => $arg,
+				host  => $prevhost,
+				incorrect_quoting => $arg =~ /\\/));
+		$prev_match = 0;
+	    }
+	} elsif ($disk_skip) {
+	    $strategy = dumptype_getconf($dle->{config}, $DUMPTYPE_STRATEGY);
+	    if ($strategy == $DS_SKIP) {
+		$user_msg->(Amanda::Disklist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1400003,
+				arg   => $arg));
+	    } else {
+		$user_msg->(Amanda::Disklist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1400004,
+				arg   => $arg));
+	    }
+	    $prev_match = 0;
+	}
+    }
+
+    if ($prev_match == 1) { # all disk of the previous host
+	$match_a_disk = 0;
+	for my $disk (Amanda::Disklist::get_host($prevhost)->all_disks()) {
+	    $disk->{'todo'} = 1;
+	    $match_a_disk = 1;
+	}
+
+	if (!$match_a_disk) {
+	    $user_msg->(Amanda::Disklist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1400005,
+				host   => $prevhost));
+	}
+    }
+
+    for my $disk (Amanda::Disklist::all_disks()) {
+	if ($disk->{'todo'} == -1) {
+	    $disk->{'todo'} = 0;
+	}
+    }
+
+    for my $disk (Amanda::Disklist::all_disks()) {
+	if ($disk->{'todo'} == 1) {
+	    my @result_messages = $disk_cb->($disk);
+	    for my $message (@result_messages) {
+		$user_msg->($message);
+	    }
+	}
+    }
+}
+
+%}
+
+%perlcode %{
+
 package Amanda::Disklist::Disk;
 
 # methods
@@ -331,3 +470,38 @@ push @EXPORT_OK, qw( read_disklist
 
 %}
 char *clean_dle_str_for_client(char *dle_str, am_feature_t *their_features);
+
+%perlcode %{
+package Amanda::Disklist::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 1400000) {
+	return "Argument '$self->{'arg'}' cannot be both a host and a disk.";
+    } elsif ($self->{'code'} == 1400001) {
+	return "All disks on host '$self->{'host'}' are ignored or have strategy \"skip\".";
+    } elsif ($self->{'code'} == 1400002) {
+	return "Argument '$self->{'arg'}' matches neither a host nor a disk". (($self->{'incorrect_quoting'}) ? "; quoting may be incorrect.":".");
+    } elsif ($self->{'code'} == 1400003) {
+	return "Argument '$self->{'arg'}' matches a disk with strategy \"skip\"";
+    } elsif ($self->{'code'} == 1400004) {
+	return "Argument '$self->{'arg'}' matches a disk marked \"ignore\"";
+    } elsif ($self->{'code'} == 1400005) {
+	return "All disks on host '$self->{'host'}' are ignored or have strategy \"skip\".";
+    } elsif ($self->{'code'} == 1400006) {
+	return "Errors processing disklist '$self->{'diskfile'}'.";
+    } elsif ($self->{'code'} == 1400007) {
+	return "No such host '$self->{'host'}' in disklist.";
+    } elsif ($self->{'code'} == 1400008) {
+	return "No such disk '$self->{'disk'}' for host '$self->{'host'}' in disklist.";
+    }
+}
+%}
+

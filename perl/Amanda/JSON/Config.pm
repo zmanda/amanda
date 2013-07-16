@@ -18,7 +18,7 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 package Amanda::JSON::Config;
-use Amanda::Config;
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Symbol;
 use Data::Dumper;
 use Scalar::Util;
@@ -83,24 +83,39 @@ sub config_init {
     my $config_name      = $params{'config'};
     my $config_overrides = $params{'config_overrides'};
 
+    my @result_messages;
+
     Amanda::Config::config_uninit();
-    my $g_config_overrides = new_config_overrides(@{$config_overrides} + 1);
+    my $g_config_overrides = Amanda::Config::new_config_overrides(@{$config_overrides} + 1);
     for my $co (@{$config_overrides}) {
 	add_config_override_opt($g_config_overrides, $co);
     }
-    set_config_overrides($g_config_overrides);
+    Amanda::Config::set_config_overrides($g_config_overrides);
     Amanda::Config::config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
 
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_WARNINGS) {
-	die [1000, "failed to parse config file", $config_name];
+	for my $cfgerr (@cfgerr_errors) {
+	    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => $cfgerr_level == $CFGERR_WARNINGS
+						? 1500000 : 1500001,
+				cfgerror => $cfgerr);
+	}
+	#die [1000, "failed to parse config file", $config_name];
+	#die "failed to parse config file";
     }
+
+    return @result_messages;
 }
 
 sub getconf_byname {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
+
     my $name             = $params{'name'};
 
     my $result = Amanda::Config::getconf_byname($name);
@@ -113,7 +128,9 @@ sub getconf_byname {
 sub config_dir_relative {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
+
     my $filename      = $params{'filename'};
 
     my $result = Amanda::Config::config_dir_relative($filename);
@@ -127,7 +144,8 @@ sub config_dir_relative {
 sub configuration {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
 
     die [1005, "Amanda::JSON::Config::configuration not implemented yet"];
 }
@@ -135,7 +153,8 @@ sub configuration {
 sub disklist {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
 
     die [1005, "Amanda::JSON::Config::disklist not implemented yet"];
 }

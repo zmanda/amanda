@@ -109,13 +109,13 @@ like(run_get('amadmin TESTCONF force localhost share'),
 
 like(run_get('amadmin TESTCONF force localhost windows'),
    qr/amadmin: localhost:\\\\windows\\share is set to a forced level 0 at next run.
-amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.
-amadmin: localhost:\\\\windows\\share-b is set to a forced level 0 at next run.$/,
+amadmin: localhost:\\\\windows\\share-b is set to a forced level 0 at next run.
+amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.$/,
    "shell 11");
 
 like(run_get('amadmin TESTCONF force localhost share-\*'),
-   qr/amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.
-amadmin: localhost:\\\\windows\\share-b is set to a forced level 0 at next run.$/,
+   qr/amadmin: localhost:\\\\windows\\share-b is set to a forced level 0 at next run.
+amadmin: localhost:\\\\windows\\share-a is set to a forced level 0 at next run.$/,
    "shell 12");
 
 like(run_get('amadmin TESTCONF force localhost share-a share-a'),
@@ -131,11 +131,11 @@ like(run_get('amadmin TESTCONF force =localhost share-a'),
    "shell 15");
 
 like(run_get('amadmin TESTCONF force =localhost =share-a'),
-   qr/^Argument '=share-a' matches neither a host nor a disk.$/,
+   qr/^amadmin: Argument '=share-a' matches neither a host nor a disk.$/,
    "shell 16");
 
 like(run_get('amadmin --exact-match TESTCONF force localhost share-a'),
-   qr/^Argument '=share-a' matches neither a host nor a disk.$/,
+   qr/^amadmin: Argument '=share-a' matches neither a host nor a disk.$/,
    "shell 17");
 
 like(run_get('amadmin TESTCONF force =localhost \'=\\\\windows\\share-a\''),

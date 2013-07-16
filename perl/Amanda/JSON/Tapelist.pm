@@ -45,7 +45,10 @@ Return the list of all label in the tapelist file.
 result:
 
   {"jsonrpc":"2.0",
-   "result" :{"tles":[{"reuse":"1",
+   "result":{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/JSON/Tapelist.pm",
+	      "source_line":"178",
+	      "code":1600001,
+	      "tles":[{"reuse":"1",
                        "comment":null,
                        "blocksize":"262144",
                        "pool":"pool",
@@ -64,80 +67,9 @@ result:
                        "barcode":null,
                        "label":"JLM-TEST-009",
                        "datestamp":"20120524110634",
-                       "meta":null}]},
+                       "meta":null}],
+   "message":"tapelist"},
    "id":"1"}
-
-=item Amanda::JSON::Tapelist::add
-
-Interface to C<Amanda::Tapelist::add_tapelabel>
-Add a label to the tapelist file.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::Tapelist::add",
-   "params" :{"config":"test",
-              "label":"new-label",
-              "datestamp":"20120526083221",
-              "reuse":"1",
-              "barcode":"ABCDEF",
-              "comment":"a comment",
-              "blocksize":"262144",
-              "pool":"pool",
-              "config":"config",
-              "meta":"AB"},
-   "id:     :"2"}
-
-config and label are required.
-
-result:
-
-  {"jsonrpc":"2.0",
-   "result":"OK",
-   "id":"2"}
-
-=item Amanda::JSON::Tapelist::update
-
-Modify a entry in the tapelist file.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::Tapelist::add",
-   "params" :{"config":"test",
-              "label":"new-label",
-              "datestamp":"20120526083221",
-              "reuse":"1",
-              "barcode":"ABCDEF",
-              "comment":"a comment",
-              "blocksize":"262144",
-              "pool":"pool",
-              "config":"config",
-              "meta":"AB"},
-   "id:     :"3"}
-
-config and label are required.
-
-result:
-
-  {"jsonrpc":"2.0",
-   "result":"OK",
-   "id":"3"}
-
-=item Amanda::JSON::Tapelist:remove
-
-Interface to C<Amanda::Tapelist::remove_tapelabel>
-remove an entry from the tapelist file.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::Tapelist::remove",
-   "params" :{"config":"test",
-              "label" :"new-label"},
-   "id:     :"4"}
-
-config and label are required.
-
-result:
-
-  {"jsonrpc":"2.0",
-   "result":"OK",
-   "id":"4"}
 
 =back
 
@@ -154,7 +86,11 @@ sub init {
 
     my $tl = Amanda::Tapelist->new($filename);
     if (!defined $tl) {
-	die [3002, "failed to read tapelist file", $filename];
+	return Amanda::Tapelist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1600000,
+				tapefile => $filename);
     }
     return $tl;
 }
@@ -162,145 +98,18 @@ sub init {
 sub get {
     my %params = @_;
 
-    Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    return \@result_messages if @result_messages;
 
-    my $filename = config_dir_relative(getconf($CNF_TAPELIST));
-
-    my $tl = Amanda::Tapelist->new($filename);
-    if (!defined $tl) {
-	die [3002, "failed to read tapelist file", $filename];
+    my $tl = Amanda::JSON::Tapelist::init();
+    if ($tl->isa("Amanda::Message")) {
+	return $tl;
     }
-    return { "tles" => $tl->{'tles'} };
-}
-
-sub update {
-    my %params = @_;
-
-    Amanda::JSON::Config::config_init(@_);
-    $tl = Amanda::JSON::Tapelist::init(@_);
-
-    my $label = $params{'label'};
-    my $datestamp = $params{'datestamp'};
-    my $reuse = $params{'reuse'};
-    my $barcode = $params{'barcode'};
-    my $meta = $params{'meta'};
-    my $blocksize = $params{'blocksize'};
-    my $pool = $params{'pool'};
-    my $storage = $params{'storage'};
-    my $config = $params{'config'};
-    my $comment = $params{'comment'};
-
-    $tl->reload(1);
-    $tle = $tl->lookup_tapelabel($label);
-
-    if (!$tle) {
-	$tl->unlock();
-	die [3003, "label does not exist", $label];
-    }
-    if (defined $datestamp) {
-	$tle->{'datestamp'} = $datestamp;
-    }
-    if (defined $reuse) {
-	$tle->{'reuse'} = $reuse;
-    }
-    if (exists $params{'barcode'}) {
-	if (!defined $barcode || $barcode eq "") {
-	    $tle->{'barcode'} = undef;
-	} else {
-	    $tle->{'barcode'} = $barcode;
-	}
-    }
-    if (exists $params{'meta'}) {
-	if (!defined $meta || $meta eq "") {
-	    $tle->{'meta'} = undef;
-	} else {
-	    $tle->{'meta'} = $meta;
-	}
-    }
-    if (exists $params{'blocksize'}) {
-	if (!defined $blocksize || $blocksize eq "") {
-	    $tle->{'blocksize'} = undef;
-	} else {
-	    $tle->{'blocksize'} = $blocksize;
-	}
-    }
-    if (exists $params{'pool'}) {
-	if (!defined $pool || $pool eq "") {
-	    $tle->{'pool'} = undef;
-	} else {
-	    $tle->{'pool'} = $blocksize;
-	}
-    }
-    if (exists $params{'storage'}) {
-	if (!defined $storage || $storage eq "") {
-	    $tle->{'storage'} = undef;
-	} else {
-	    $tle->{'storage'} = $blocksize;
-	}
-    }
-    if (exists $params{'config'}) {
-	if (!defined $config || $config eq "") {
-	    $tle->{'config'} = undef;
-	} else {
-	    $tle->{'config'} = $config;
-	}
-    }
-    if (exists $params{'comment'}) {
-	if (!defined $comment || $comment eq "") {
-	    $tle->{'comment'} = undef;
-	} else {
-	    $tle->{'comment'} = $comment;
-	}
-    }
-    $tl->write();
-
-    return "OK";
-}
-
-sub add {
-    my %params = @_;
-
-    Amanda::JSON::Config::config_init(@_);
-    $tl = Amanda::JSON::Tapelist::init(@_);
-
-    my $label = $params{'label'};
-    my $datestamp = $params{'datestamp'};
-    my $reuse = $params{'reuse'};
-    my $barcode = $params{'barcode'};
-    my $meta = $params{'meta'};
-    my $blocksize = $params{'blocksize'};
-    my $pool = $params{'pool'};
-    my $storage = $params{'storage'};
-    my $config = $params{'config'};
-    my $comment = $params{'comment'};
-
-
-    $tl->reload(1);
-    $tle = $tl->lookup_tapelabel($label);
-
-    if (defined $tle) {
-	$tl->unlock();
-	die [3004, "label already exist", $label];
-    }
-    $tl->add_tapelabel($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize, $pool, $storage, $config);
-    $tl->write();
-
-    return "OK";
-}
-
-sub remove {
-    my %params = @_;
-
-    Amanda::JSON::Config::config_init(@_);
-    $tl = Amanda::JSON::Tapelist::init(@_);
-
-    my $label = $params{'label'};
-
-    $tl->reload(1);
-    $tl->remove_tapelabel($label);
-    $tl->write();
-
-    return "OK";
+    return Amanda::Tapelist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1600001,
+				tles => $tl->{'tles'});
 }
 
 1;

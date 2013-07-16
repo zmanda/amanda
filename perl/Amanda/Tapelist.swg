@@ -234,12 +234,20 @@ sub _read_tapelist {
     my $self = shift;
 
     my @tles;
+    my $linenum = 0;
     open(my $fh, "<", $self->{'filename'}) or return $self;
     while (my $line = <$fh>) {
+	$linenum++;
 	my ($datestamp, $label, $reuse, $barcode, $meta, $blocksize, $pool, $storage, $config, $comment)
 	    = $line =~ m/^([0-9]+)\s*([^\s]*)\s*(?:(reuse|no-reuse))?\s*(?:BARCODE:([^\s]*))?\s*(?:META:([^\s]*))?\s*(?:BLOCKSIZE:([^\s]*))?\s*(?:POOL:([^\s]*))?\s*(?:STORAGE:([^\s]*))?\s*(?:CONFIG:([^\s]*))?\s*(?:\#(.*))?$/mx;
 	if (!defined $datestamp) {
-	    Amanda::Debug::critical("Bogus line in the tapelist ($self->{'filename'}) file: $line");
+	    return Amanda::Tapelist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code    => 1600002,
+			tapelist_filename => $self->{'filename'},
+			linenum => $linenum,
+			line    => $line);
 	}
 	push @tles, {
 	    'datestamp' => $datestamp,
@@ -324,3 +332,26 @@ int read_tapelist(char *tapefile);
 
 %rename(C_clear_tapelist) clear_tapelist;
 void clear_tapelist(void);
+
+%perlcode %{
+package Amanda::Tapelist::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 1600000) {
+        return "Failed to read tapelist file '$self->{'tapefile'}'.";
+    } elsif ($self->{'code'} == 1600001) {
+        return "tapelist";
+    } elsif ($self->{'code'} == 1600002) {
+        return "Failed to read tapelist file '$self->{'tapelist_filename'}' on line $self->{'linenum'}: $self->{'line'}";
+    }
+}
+%}
+

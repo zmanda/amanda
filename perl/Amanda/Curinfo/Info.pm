@@ -120,14 +120,23 @@ Paul C. Mantz E<lt>pcmantz@zmanda.comE<gt>
 =cut
 
 my $numdot = qr{[.\d]};
+#my $minusnumdot = qr{[.\d\-]};
+my $minusnumdot = "[.\\d\-]";
 
 package Amanda::Curinfo::Info;
 
 use strict;
 use warnings;
+
+our $NO_COMMAND    = 0;
+our $FORCE_FULL    = 1;
+our $FORCE_BUMP    = 2;
+our $FORCE_NO_BUMP = 4;
+our $FORCE_LEVEL_1 = 8;
+
 use Carp;
 
-use Amanda::Config;
+use Amanda::Config qw( :getconf );
 
 sub new
 {
@@ -135,18 +144,41 @@ sub new
 
     my $self = {
         command => undef,
+	infofile => $infofile,
         full    => Amanda::Curinfo::Perf->new(),
         incr    => Amanda::Curinfo::Perf->new(),
         inf              => [],      # contains Amanda::Curinfo::Stats
         history          => [],      # contains Amanda::Curinfo::History
-        last_level       => undef,
-        consecutive_runs => undef,
+	last_level       => -1,
+	consecutive_runs => -1,
     };
 
     bless $self, $class;
-    $self->read_infofile($infofile) if -e $infofile;
+    my $err = $self->read_infofile($infofile) if -e $infofile;
+    return $err if $err;
 
     return $self;
+}
+
+sub set {
+    my $self = shift;
+    my $command = shift;
+
+    $self->{'command'} |= $command;
+}
+
+sub isset {
+    my $self = shift;
+    my $command = shift;
+
+    return $self->{'command'} & $command;
+}
+
+sub clear {
+    my $self = shift;
+    my $command = shift;
+
+    $self->{'command'} &= ~$command;
 }
 
 sub get_dumpdate
@@ -176,21 +208,40 @@ sub get_dumpdate
 sub read_infofile
 {
     my ( $self, $infofile ) = @_;
+    my $err;
 
-    open my $fh, "<", $infofile or croak "couldn't open $infofile: $!";
+    open my $fh, "<", $infofile or
+    return Amanda::Curinfo::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code        => 1300029,
+			infofile    => $infofile,
+			error       => $!);
 
     ## read in the fixed-length data
-    $self->read_infofile_perfs($fh);
+    $err = $self->read_infofile_perfs($fh);
+    if ($err) {
+	close $fh;
+	return $err
+    }
 
     ## read in the stats data
-    $self->read_infofile_stats($fh);
+    $err = $self->read_infofile_stats($fh);
+    if ($err) {
+	close $fh;
+	return $err
+    }
 
     ## read in the history data
-    $self->read_infofile_history($fh);
+    $err = $self->read_infofile_history($fh);
+    if ($err) {
+	close $fh;
+	return $err
+    }
 
     close $fh;
 
-    return 1;
+    return;
 }
 
 sub read_infofile_perfs
@@ -198,47 +249,67 @@ sub read_infofile_perfs
     my ($self, $fh) = @_;
 
     my $fail = sub {
-        my ($line) = @_;
-        croak "error: malformed infofile header in $self->infofile:$line\n";
+        my ($line, $linenum) = @_;
+	return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => $linenum,
+				code     => 1300009,
+				infofile => $self->{'infofile'},
+				line     => $line);
     };
 
     my $skip_blanks = sub {
+	my $linenum = shift;
         my $line = "";
         while ($line eq "") {
-            croak "error: infofile ended prematurely" if eof($fh);
+	    if (eof($fh)) {
+		return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => $linenum,
+				code     => 1300010,
+				infofile => $self->{'infofile'},
+				line     => $line);
+	    }
             $line = <$fh>;
         }
         return $line;
     };
 
     # version not paid attention to right now
-    my $line = $skip_blanks->();
-    ($line =~ /^version: ($numdot+)/) ? 1 : $fail->($line);
+    my $line = $skip_blanks->(__LINE__);
+    ($line =~ /^version: ($numdot+)/) ? 1 : return $fail->($line, __LINE__);
 
-    $line = $skip_blanks->();
-    ($line =~ /^command: ($numdot+)/) ? $self->{command} = $1 : $fail->($line);
+    $line = $skip_blanks->(__LINE__);
+    return $line if $line->isa("Amanda::Message");
+    ($line =~ /^command: ($numdot+)/)
+      ? $self->{command} = $1
+      : return $fail->($line, __LINE__);
 
-    $line = $skip_blanks->();
-    ($line =~ /^full-rate: ($numdot+) ($numdot+) ($numdot+)/)
+    $line = $skip_blanks->(__LINE__);
+    return $line if $line->isa("Amanda::Message");
+    ($line =~ /^full-rate:(?: ($minusnumdot+))?(?: ($minusnumdot+))?(?: ($minusnumdot+))?/)
       ? $self->{full}->set_rate($1, $2, $3)
-      : $fail->($line);
+      : return $fail->($line, __LINE__);
 
-    $line = $skip_blanks->();
-    ($line =~ /^full-comp: ($numdot+) ($numdot+) ($numdot+)/)
+    $line = $skip_blanks->(__LINE__);
+    return $line if $line->isa("Amanda::Message");
+    ($line =~ /^full-comp:(?: ($minusnumdot+))?(?: ($minusnumdot+))?(?: ($minusnumdot+))?/)
       ? $self->{full}->set_comp($1, $2, $3)
-      : $fail->($line);
+      : return $fail->($line, __LINE__);
 
-    $line = $skip_blanks->();
-    ($line =~ /^incr-rate: ($numdot+) ($numdot+) ($numdot+)/)
+    $line = $skip_blanks->(__LINE__);
+    return $line if $line->isa("Amanda::Message");
+    ($line =~ /^incr-rate:(?: ($minusnumdot+))?(?: ($minusnumdot+))?(?: ($minusnumdot+))?/)
       ? $self->{incr}->set_rate($1, $2, $3)
-      : $fail->($line);
+      : return $fail->($line, __LINE__);
 
-    $line = $skip_blanks->();
-    ($line =~ /^incr-comp: ($numdot+) ($numdot+) ($numdot+)/)
+    $line = $skip_blanks->(__LINE__);
+    return $line if $line->isa("Amanda::Message");
+    ($line =~ /^incr-comp:(?: ($minusnumdot+))?(?: ($minusnumdot+))?(?: ($minusnumdot+))?/)
       ? $self->{incr}->set_comp($1, $2, $3)
-      : $fail->($line);
+      : return $fail->($line, __LINE__);
 
-    return 1;
+    return;
 }
 
 sub read_infofile_stats
@@ -254,29 +325,45 @@ sub read_infofile_stats
             next;
 
         } elsif ( $line =~ m{^//} ) {
-            croak "unexpected end of data in stats section (received //)\n";
+	    return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300011,
+				infofile => $self->{'infofile'},
+				line     => $line);
 
         } elsif ( $line =~ m{^history:} ) {
-            croak "history line before end of stats section\n";
+	    return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300012,
+				infofile => $self->{'infofile'},
+				line     => $line);
 
         } elsif ( $line =~ m{^stats:} ) {
 
             ## make a new Stats object and push it on to the queue
             my $stats = Amanda::Curinfo::Stats->from_line($line);
+	    return $stats if $stats->isa("Amanda::Message");
             push @$inf, $stats;
 
-        } elsif ( $line =~ m{^last_level: (\d+) (\d+)$} ) {
+        } elsif ( $line =~ m{^last_level:(?: ([\d\-]+))?(?: ([\d\-]+))?$} ) {
 
             $self->{last_level}       = $1;
             $self->{consecutive_runs} = $2;
             last;
 
         } else {
-            croak "bad line in read_infofile_stats: $line";
+	    return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300013,
+				infofile => $self->{'infofile'},
+				line     => $line);
         }
     }
 
-    return 1;
+    return;
 }
 
 sub read_infofile_history
@@ -292,10 +379,16 @@ sub read_infofile_history
 
         } elsif ( $line =~ m{^history:} ) {
             my $hist = Amanda::Curinfo::History->from_line($line);
+	    return $hist if $hist->isa("Amanda::Message");
             push @$history, $hist;
 
         } else {
-            croak "bad line found in history section:$line\n";
+	    return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300014,
+				infofile => $self->infofile,
+				line     => $line);
         }
     }
 
@@ -303,7 +396,7 @@ sub read_infofile_history
     # TODO: make sure there were the right number of history lines
     #
 
-    return 1;
+    return;
 }
 
 sub write_to_file
@@ -312,7 +405,13 @@ sub write_to_file
 
     unlink $infofile if -f $infofile;
 
-    open my $fh, ">", $infofile or die "error: couldn't open $infofile: $!";
+    open my $fh, ">", $infofile or
+	return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300015,
+				infofile => $self->infofile,
+				error    => $!);
 
     ## print basics
 
@@ -336,7 +435,6 @@ sub write_to_file
     return 1;
 }
 
-1;
 
 #
 #
@@ -387,7 +485,12 @@ sub from_line
             secs  => $5,
         };
     } else {
-        croak "bad history line: $line";
+	return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300016,
+				infofile => $self->infofile,
+				line     => $line);
     }
 
     return bless $self, $class;
@@ -419,8 +522,8 @@ sub new
     my ($class) = @_;
 
     my $self = {
-        rate => undef,
-        comp => undef,
+        rate => [ -1.0, -1.0, -1.0 ],
+        comp => [ -1.0, -1.0, -1.0 ],
     };
 
     return bless $self, $class;
@@ -458,15 +561,21 @@ sub set_field_from_line
 
     if (
         $line =~ m{\w+-$field\: \s+
-                      ($numdot) \s+
-                      ($numdot) \s+
-                      ($numdot) $
+                      ($minusnumdot) \s+
+                      ($minusnumdot) \s+
+                      ($minusnumdot) $
                    }x
       ) {
         $self->{$field} = [ $1, $2, $3 ];
 
     } else {
-        croak "bad perf $field line: $line";
+	return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300017,
+				infofile => $self->infofile,
+				field    => $field,
+				line     => $line);
     }
 
     return;
@@ -475,14 +584,23 @@ sub set_field_from_line
 sub to_line
 {
     my ( $self, $lvl ) = @_;
-    return
-        "$lvl-rate: "
-      . join( " ", @{ $self->{rate} } ) . "\n"
-      . "$lvl-comp: "
-      . join( " ", @{ $self->{comp} } ) . "\n";
+
+    my $result;
+    if ($self->{rate}) {
+	$result = "$lvl-rate: " . join( " ", @{ $self->{rate} } ) . "\n"
+    } else {
+	$result = "$lvl-rate: -1.0 -1.0 -1.0\n";
+    }
+
+    if ($self->{comp}) {
+	$result .= "$lvl-comp: " . join( " ", @{ $self->{comp} } ) . "\n"
+    } else {
+	$result .= "$lvl-comp: -1.0 -1.0 -1.0\n";
+    }
+
+    return $result;
 }
 
-1;
 
 #
 #
@@ -527,7 +645,19 @@ sub from_line
                      ($numdot+) \s+   # filenum
                      (.*) $           # label
               }x
-      or croak "bad stats line: $line";
+      or $line =~ m{^stats:      \s+
+                     (\d+)      \s+   # level
+                     ($numdot+) \s+   # size
+                     ($numdot+) \s+   # csize
+                     ($numdot+) \s+   # sec
+                     ($numdot+)       # date
+              }x
+      or return Amanda::Curinfo::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1300018,
+				infofile => $self->infofile,
+				line     => $line);
 
     $self = {
         level   => $1,

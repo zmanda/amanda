@@ -1075,3 +1075,24 @@ amglue_export_ok(string_to_boolean);
 %newobject amandaify_property_name;
 gchar * amandaify_property_name(const gchar *name);
 amglue_export_ok(amandaify_property_name);
+
+%perlcode %{
+package Amanda::Config::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 1500000) {
+	return "config warning: $self->{'cfgerror'}";
+    } elsif ($self->{'code'} == 1500001) {
+	return "config error: $self->{'cfgerror'}";
+    }
+}
+%}
+

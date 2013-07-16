@@ -165,11 +165,13 @@ sub do_check {
     my ($res, $label, $mode);
     my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
     my $tl = Amanda::Tapelist->new($tlf);
+    return failure("$tl", $finished_cb) if $tl->isa("Amanda::Message");
+
     my ($storage)  = Amanda::Storage->new(storage_name => $storage_name,
 					  tapelist => $tl);
-    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Changer::Error");
+    return failure("$storage", $finished_cb) if $storage->isa("Amanda::Message");
     my $chg = $storage->{'chg'};
-    if ($chg->isa("Amanda::Changer::Error")) {
+    if ($chg->isa("Amanda::Message")) {
 	$storage->quit();
 	return failure($chg, $finished_cb);
     }

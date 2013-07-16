@@ -72,6 +72,9 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 my $tl = Amanda::Tapelist->new($tlf);
+if ($tl->isa("Amanda::Message")) {
+    die "Could not read the tapelist: $tl";
+}
 # transfer control to the Amanda::Taper::Controller class implemented above
 my $controller = Amanda::Taper::Controller->new(
 					storage_name => $opt_storage_name,

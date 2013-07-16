@@ -51,20 +51,7 @@ int main(int argc, char **argv);
 void usage(void);
 static void estimate(int argc, char **argv);
 static void estimate_one(disk_t *dp);
-void force(int argc, char **argv);
-void force_one(disk_t *dp);
-void force_level_1(int argc, char **argv);
-void force_level_1_one(disk_t *dp);
-void unforce(int argc, char **argv);
-void unforce_one(disk_t *dp);
-void force_bump(int argc, char **argv);
-void force_bump_one(disk_t *dp);
-void force_no_bump(int argc, char **argv);
-void force_no_bump_one(disk_t *dp);
-void unforce_bump(int argc, char **argv);
-void unforce_bump_one(disk_t *dp);
-void reuse(int argc, char **argv);
-void noreuse(int argc, char **argv);
+void call_amadmin_perl(int argc, char **argv);
 void info(int argc, char **argv);
 void info_one(disk_t *dp);
 void due(int argc, char **argv);
@@ -114,17 +101,17 @@ static const struct {
 	T_("\t\t\t\t\t# Show configuration.") },
     { "estimate", estimate,
 	T_(" [<hostname> [<disks>]* ]*\t# Print server estimate.") },
-    { "force", force,
+    { "force", call_amadmin_perl,
 	T_(" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run.") },
-    { "force-level-1", force_level_1,
+    { "force-level-1", call_amadmin_perl,
 	T_(" [<hostname> [<disks>]* ]+\t\t# Force level 1 at next run.") },
-    { "unforce", unforce,
+    { "unforce", call_amadmin_perl,
 	T_(" [<hostname> [<disks>]* ]+\t# Clear force command.") },
-    { "force-bump", force_bump,
+    { "force-bump", call_amadmin_perl,
 	T_(" [<hostname> [<disks>]* ]+\t# Force bump at next run.") },
-    { "force-no-bump", force_no_bump,
+    { "force-no-bump", call_amadmin_perl,
 	T_(" [<hostname> [<disks>]* ]+\t# Force no-bump at next run.") },
-    { "unforce-bump", unforce_bump,
+    { "unforce-bump", call_amadmin_perl,
 	T_(" [<hostname> [<disks>]* ]+\t# Clear bump command.") },
     { "disklist", disklist,
 	T_(" [<hostname> [<disks>]* ]*\t# Debug disklist entries.") },
@@ -132,9 +119,9 @@ static const struct {
 	T_("\t\t\t\t\t# Show all distinct hosts in disklist.") },
     { "dles", dles,
 	T_("\t\t\t\t\t# Show all dles in disklist, one per line.") },
-    { "reuse", reuse,
+    { "reuse", call_amadmin_perl,
 	T_(" <tapelabel> ...\t\t # re-use this tape.") },
-    { "no-reuse", noreuse,
+    { "no-reuse", call_amadmin_perl,
 	T_(" <tapelabel> ...\t # never re-use this tape.") },
     { "find", find,
 	T_(" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on.") },
@@ -486,267 +473,8 @@ estimate(
 
 /* ----------------------------------------------- */
 
-
 void
-force_one(
-    disk_t *	dp)
-{
-    char *hostname = dp->host->hostname;
-    char *diskname = dp->name;
-    info_t info;
-
-    get_info(hostname, diskname, &info);
-    SET(info.command, FORCE_FULL);
-    if (ISSET(info.command, FORCE_LEVEL_1)) {
-	CLR(info.command, FORCE_LEVEL_1);
-	g_printf(_("%s: WARNING: %s:%s FORCE-LEVEL-1 command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if (ISSET(info.command, FORCE_BUMP)) {
-	CLR(info.command, FORCE_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE-BUMP command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if(put_info(hostname, diskname, &info) == 0) {
-	if (dp->strategy == DS_INCRONLY) {
-	    g_printf(_("%s: %s:%s, full dump done offline, next dump will be at level 1.\n"),
-		     get_pname(), hostname, diskname);
-	} else {
-	    g_printf(_("%s: %s:%s is set to a forced level 0 at next run.\n"),
-		     get_pname(), hostname, diskname);
-	}
-    } else {
-	g_fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
-		get_pname(), hostname, diskname);
-    }
-}
-
-
-void
-force(
-    int		argc,
-    char **	argv)
-{
-    diskloop(argc, argv, "force", force_one);
-}
-
-
-/* ----------------------------------------------- */
-
-
-void
-force_level_1_one(
-    disk_t *	dp)
-{
-    char *hostname = dp->host->hostname;
-    char *diskname = dp->name;
-    info_t info;
-
-    get_info(hostname, diskname, &info);
-    SET(info.command, FORCE_LEVEL_1);
-    if (ISSET(info.command, FORCE_FULL)) {
-	CLR(info.command, FORCE_FULL);
-	g_printf(_("%s: WARNING: %s:%s FORCE command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if (ISSET(info.command, FORCE_BUMP)) {
-	CLR(info.command, FORCE_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE-BUMP command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if(put_info(hostname, diskname, &info) == 0) {
-	g_printf(_("%s: %s:%s is set to a forced level 1 at next run.\n"),
-		 get_pname(), hostname, diskname);
-    } else {
-	g_fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
-		get_pname(), hostname, diskname);
-    }
-}
-
-
-void
-force_level_1(
-    int		argc,
-    char **	argv)
-{
-    diskloop(argc, argv, "force", force_level_1_one);
-}
-
-
-/* ----------------------------------------------- */
-
-
-void
-unforce_one(
-    disk_t *	dp)
-{
-    char *hostname = dp->host->hostname;
-    char *diskname = dp->name;
-    info_t info;
-
-    get_info(hostname, diskname, &info);
-    if (ISSET(info.command, FORCE_FULL)) {
-	CLR(info.command, FORCE_FULL);
-	if(put_info(hostname, diskname, &info) == 0){
-	    g_printf(_("%s: force command for %s:%s cleared.\n"),
-		   get_pname(), hostname, diskname);
-	} else {
-	    g_fprintf(stderr,
-		    _("%s: force command for %s:%s could not be cleared.\n"),
-		    get_pname(), hostname, diskname);
-	}
-    } else if (ISSET(info.command, FORCE_LEVEL_1)) {
-	CLR(info.command, FORCE_LEVEL_1);
-	if(put_info(hostname, diskname, &info) == 0){
-	    g_printf(_("%s: force-level-1 command for %s:%s cleared.\n"),
-		   get_pname(), hostname, diskname);
-	} else {
-	    g_fprintf(stderr,
-		    _("%s: force-level-1 command for %s:%s could not be cleared.\n"),
-		    get_pname(), hostname, diskname);
-	}
-    }
-    else {
-	g_printf(_("%s: no force command outstanding for %s:%s, unchanged.\n"),
-	       get_pname(), hostname, diskname);
-    }
-}
-
-void
-unforce(
-    int		argc,
-    char **	argv)
-{
-    diskloop(argc, argv, "unforce", unforce_one);
-}
-
-
-/* ----------------------------------------------- */
-
-
-void
-force_bump_one(
-    disk_t *	dp)
-{
-    char *hostname = dp->host->hostname;
-    char *diskname = dp->name;
-    info_t info;
-
-    get_info(hostname, diskname, &info);
-    SET(info.command, FORCE_BUMP);
-    if (ISSET(info.command, FORCE_NO_BUMP)) {
-	CLR(info.command, FORCE_NO_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE-NO-BUMP command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if (ISSET(info.command, FORCE_FULL)) {
-	CLR(info.command, FORCE_FULL);
-	g_printf(_("%s: WARNING: %s:%s FORCE command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if (ISSET(info.command, FORCE_LEVEL_1)) {
-	CLR(info.command, FORCE_LEVEL_1);
-	g_printf(_("%s: WARNING: %s:%s FORCE-LEVEL-1 command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if(put_info(hostname, diskname, &info) == 0) {
-	g_printf(_("%s: %s:%s is set to bump at next run.\n"),
-	       get_pname(), hostname, diskname);
-    } else {
-	g_fprintf(stderr, _("%s: %s:%s could not be forced to bump.\n"),
-		get_pname(), hostname, diskname);
-    }
-}
-
-
-void
-force_bump(
-    int		argc,
-    char **	argv)
-{
-    diskloop(argc, argv, "force-bump", force_bump_one);
-}
-
-
-/* ----------------------------------------------- */
-
-
-void
-force_no_bump_one(
-    disk_t *	dp)
-{
-    char *hostname = dp->host->hostname;
-    char *diskname = dp->name;
-    info_t info;
-
-    get_info(hostname, diskname, &info);
-    SET(info.command, FORCE_NO_BUMP);
-    if (ISSET(info.command, FORCE_BUMP)) {
-	CLR(info.command, FORCE_BUMP);
-	g_printf(_("%s: WARNING: %s:%s FORCE-BUMP command was cleared.\n"),
-	       get_pname(), hostname, diskname);
-    }
-    if(put_info(hostname, diskname, &info) == 0) {
-	g_printf(_("%s: %s:%s is set to not bump at next run.\n"),
-	       get_pname(), hostname, diskname);
-    } else {
-	g_fprintf(stderr, _("%s: %s:%s could not be force to not bump.\n"),
-		get_pname(), hostname, diskname);
-    }
-}
-
-
-void
-force_no_bump(
-    int		argc,
-    char **	argv)
-{
-    diskloop(argc, argv, "force-no-bump", force_no_bump_one);
-}
-
-
-/* ----------------------------------------------- */
-
-
-void
-unforce_bump_one(
-    disk_t *	dp)
-{
-    char *hostname = dp->host->hostname;
-    char *diskname = dp->name;
-    info_t info;
-
-    get_info(hostname, diskname, &info);
-    if (ISSET(info.command, FORCE_BUMP|FORCE_NO_BUMP)) {
-	CLR(info.command, FORCE_BUMP|FORCE_NO_BUMP);
-	if(put_info(hostname, diskname, &info) == 0) {
-	    g_printf(_("%s: bump command for %s:%s cleared.\n"),
-		   get_pname(), hostname, diskname);
-	} else {
-	    g_fprintf(stderr, _("%s: %s:%s bump command could not be cleared.\n"),
-		    get_pname(), hostname, diskname);
-	}
-    }
-    else {
-	g_printf(_("%s: no bump command outstanding for %s:%s, unchanged.\n"),
-	       get_pname(), hostname, diskname);
-    }
-}
-
-
-void
-unforce_bump(
-    int		argc,
-    char **	argv)
-{
-    diskloop(argc, argv, "unforce-bump", unforce_bump_one);
-}
-
-
-/* ----------------------------------------------- */
-
-void
-reuse(
+call_amadmin_perl(
     int		argc G_GNUC_UNUSED,
     char **	argv G_GNUC_UNUSED)
 {
@@ -756,16 +484,6 @@ reuse(
     /*NOTREACHED*/
 }
 
-void
-noreuse(
-    int		argc G_GNUC_UNUSED,
-    char **	argv G_GNUC_UNUSED)
-{
-    char *amadmin_perl = amlibexecdir "/amadmin_perl";
-
-    execvp(amadmin_perl, argv_orig);
-    /*NOTREACHED*/
-}
 
 
 /* ----------------------------------------------- */

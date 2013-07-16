@@ -75,7 +75,7 @@ cmp_ok(
 
 cmp_ok(
     $Installcheck::Run::stdout, "=~",
-    qr/label 'TESTCONF01' not found in \/this\/is\/a\/fake\/tapelist/,
+    qr/label 'TESTCONF01' not found in tapelist file '\/this\/is\/a\/fake\/tapelist'/,
     "config overrides handled correctly"
 ) or proc_diag();
 
@@ -120,7 +120,7 @@ ok(run('amrmtape', '--cleanup', 'TESTCONF', 'TESTCONF01'),
      or proc_diag();
 
 $idx_count_post = dir_file_count($CNF_INDEXDIR);
-isnt($idx_count_post, $idx_count_pre, "number of index files before and after is different");
+isnt($idx_count_post, $idx_count_pre, "number of index files before ($idx_count_pre) and after ($idx_count_post) is different");
 
 $tapelist->reload();
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),

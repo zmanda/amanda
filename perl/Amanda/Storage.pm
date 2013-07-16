@@ -138,7 +138,8 @@ sub new {
 
     # Create a storage
     if (!$storage_name) {
-	die ("no storage_name");
+	return Amanda::Changer::Error->new('fatal',
+		message => "No storage_name provide");
     }
     my $st = Amanda::Config::lookup_storage($storage_name);
     if (!$st) {

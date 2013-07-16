@@ -1191,7 +1191,12 @@ sub update_unlocked {
 			reason => "unknown", message => $whynot);
 	    }
 
-	    $user_msg_fn->("recoding volume '$label' in slot $slot");
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100020,
+			slot  => $slot,
+			label => $label));
 	    # ok, now erase all knowledge of that label
 	    while (my ($bc, $lb) = each %{$state->{'bc2lb'}}) {
 		if ($lb eq $label) {
@@ -1261,7 +1266,11 @@ sub update_unlocked {
 	return $steps->{'done'}->() if (!@slots_to_check);
 
 	my $slot = shift @slots_to_check;
-	$user_msg_fn->("Removing entry for slot $slot");
+	$user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100021,
+			slot  => $slot));
 	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
 	    $state->{'slots'}->{$slot}->{'device_status'} = undef;
@@ -1283,7 +1292,11 @@ sub update_unlocked {
 	return $steps->{'done'}->() if (!@slots_to_check);
 
 	my $slot = shift @slots_to_check;
-	$user_msg_fn->("scanning slot $slot");
+	$user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code => 1100019,
+			slot => $slot));
 
 	$self->load_unlocked(
 		slot => $slot,
@@ -1294,7 +1307,8 @@ sub update_unlocked {
     step slot_loaded => sub {
 	my ($err, $res) = @_;
 	if ($err) {
-	    return $params{'finished_cb'}->($err);
+	    $user_msg_fn->($err);
+	    return $steps->{'update_slot'}->();
 	}
 
 	# load() already fixed up the metadata, so just release; but we have to
@@ -1618,11 +1632,21 @@ sub verify_unlocked {
 
 	if ($device->status & $DEVICE_STATUS_VOLUME_MISSING) {
 	    debug("ERROR: Drive $drive is not device $device_name");
-	    push @results, "ERROR: Drive $drive is not device $device_name";
+	    push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100009,
+				drive => $drive,
+				device_name => $device_name);
 	    return $steps->{'find_device'}->();
 	} else {
 	    debug("GOOD : Drive $drive is device $device_name");
-	    push @results, "GOOD : Drive $drive is device $device_name";
+	    push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100006,
+				drive => $drive,
+				device_name => $device_name);
 	    push @tape_devices, "$drive=$device_name";
 	}
 
@@ -1639,8 +1663,12 @@ sub verify_unlocked {
 		$device->read_label();
 
 		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING)) {
-		    debug ("HINT : Drive $drive look to be device $device_name");
-		    push @results, "HINT : Drive $drive look to be device $device_name";
+		    push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100007,
+				drive => $drive,
+				device_name => $device_name);
 		    push @tape_devices, "$drive=$device_name";
 		}
 	    }
@@ -1661,7 +1689,11 @@ sub verify_unlocked {
 	foreach my $tape_device (@tape_devices) {
 	    $tape_devices .= " \"$tape_device\"";
 	}
-	push @results, "property \"TAPE-DEVICE\"$tape_devices"; 
+	push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100008,
+				tape_devices => $tape_devices);
 	$params{'finished_cb'}->(undef, @results);
     };
 }

@@ -163,27 +163,10 @@ sub {
 	return usage($finished_cb);
     }
 
-    my $what = $args[0];
-    my @slots;
-
-    if (defined $what) {
-	my @what1 = split /,/, $what;
-	foreach my $what1 (@what1) {
-	    if ($what1 =~ /^(\d*)-(\d*)$/) {
-		my $begin = $1;
-		my $end = $2;
-		$end = $begin if $begin > $end;
-		while ($begin <= $end) {
-		    push @slots, $begin;
-		    $begin++;
-		}
-	    } else {
-		push @slots, $what1;
-	    }
-	}
-    }
-
-    my $use_slots = @slots > 0;
+    my $user_msg = sub {
+	my $msg = shift;
+	print STDERR $msg->message() . "\n";
+    };
 
     my ($storage, $chg) = load_changer($finished_cb) or return;
 
@@ -193,92 +176,9 @@ sub {
 			  $chg->quit() if defined $chg };
 
     step start => sub {
-	$chg->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
-    };
-
-    step info_cb => sub {
-	my ($err, %info) = @_;
-	return failure($err, $finished_cb) if $err;
-
-	if ($use_slots) {
-	   my $slot = shift @slots;
-	   $chg->load(slot => $slot,
-		      mode => "read",
-		      res_cb => $steps->{'loaded'});
-
-	} else {
-	    print STDERR "amtape: scanning all $info{num_slots} slots in changer:\n";
-
-	    $chg->load(relative_slot => 'current',
-		       mode => "read",
-		       res_cb => $steps->{'loaded'});
-	}
-    };
-
-    step loaded => sub {
-	my ($err, $res) = @_;
-	if ($err) {
-	    if ($err->notfound) {
-		# no more interesting slots
-		$finished_cb->();
-		return;
-	    } elsif ($err->volinuse and defined $err->{'slot'}) {
-		$last_slot = $err->{'slot'};
-	        print STDERR sprintf("slot %3s: in use\n", $last_slot);
-	    } elsif ($err->empty and defined $err->{'slot'}) {
-		$last_slot = $err->{'slot'};
-	        print STDERR sprintf("slot %3s: empty\n", $last_slot);
-	    } elsif ($err->invalid and defined $err->{'slot'}) {
-		$last_slot = $err->{'slot'};
-	        print STDERR sprintf("slot %3s: %s\n", $last_slot, "$err");
-	    } else {
-		return failure($err, $finished_cb) if $err;
-	    }
-	} else {
-	    $last_slot = $res->{'this_slot'};
-	}
-
-	$seen_slots{$last_slot} = 1;
-
-	if ($res) {
-	    my $dev = $res->{'device'};
-	    my $st = $dev->read_label();
-	    if ($st == $DEVICE_STATUS_SUCCESS) {
-		print STDERR sprintf("slot %3s: date %-14s label %s",
-			$last_slot, $dev->volume_time(),
-			$dev->volume_label());
-	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
-		print STDERR sprintf("slot %3s: unlabeled volume", $last_slot);
-	    } else {
-		print STDERR sprintf("slot %3s: %s", $last_slot, $dev->error_or_status());
-	    }
-	    if (!$dev->check_writable()) {
-		print STDERR " (Write protected)";
-	    }
-	    print STDERR "\n";
-	}
-
-	if ($res) {
-	    $res->release(finished_cb => $steps->{'released'});
-	} else {
-	    $steps->{'released'}->();
-	}
-    };
-
-    step released => sub {
-	if ($use_slots) {
-	   return $finished_cb->() if @slots == 0;
-	   my $slot = shift @slots;
-	   $chg->load(slot => $slot,
-		      mode => "read",
-		      res_cb => $steps->{'loaded'});
-
-	} else {
-	    $chg->load(relative_slot => 'next',
-		       slot => $last_slot,
-		       except_slots => { %seen_slots },
-		       res_cb => $steps->{'loaded'});
-	}
+	$chg->show(slots => $args[0],
+		   user_msg => $user_msg,
+		   finished_cb => $finished_cb);
     };
 });
 
@@ -401,8 +301,14 @@ sub {
 		print STDERR "$err\n";
 	    }
 	} else {
-	    print STDERR join("\n", @results);
-	    print STDERR "\n";
+	    foreach my $result (@results) {
+		if ($result->isa("Amanda::Message")) {
+		    print "GOOD : " if $result->{'code'} == 1100006;
+		    print "HINT : " if $result->{'code'} == 1100007;
+		    print "ERROR: " if $result->{'code'} == 1100009;
+		}
+		print STDERR $result . "\n";
+	    }
 	}
 	$storage->quit();
 	$chg->quit();
@@ -517,24 +423,16 @@ sub {
 
     step start => sub {
 	my $_user_msg_fn = sub {
-	    my %params = @_;
+	    my $msg = shift;
 
-	    if (exists($params{'scan_slot'})) {
-		print "slot $params{'slot'}:";
-	    } elsif (exists($params{'slot_result'})) {
-		if (defined($params{'err'})) {
-		    print " $params{'err'}\n";
-		} else { # res must be defined
-		    my $res = $params{'res'};
-		    my $dev = $res->{'device'};
-		    if ($dev->status == $DEVICE_STATUS_SUCCESS) {
-			my $volume_label = $res->{device}->volume_label;
-			print " $volume_label\n";
-		    } else {
-			my $errmsg = $res->{device}->error_or_status();
-			print " $errmsg\n";
-		    }
-		}
+	    if ($msg->{'code'} == 1200000) {
+		printf "slot %3s:", $msg->{'slot'};
+	    } elsif ($msg->{'code'} == 1200001) {
+		print " " . $msg->message() . "\n";
+	    } elsif ($msg->{'code'} == 1200002) {
+		print " " . $msg->message() . "\n";
+	    } elsif ($msg->{'code'} == 1200003) {
+		print " " . $msg->message() . "\n";
 	    }
 	};
 
@@ -825,6 +723,10 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 $tl = Amanda::Tapelist->new($tlf);
+if ($tl->isa("Amanda::Message")) {
+    die "Could not read the tapelist: $tl";
+}
+
 
 #make STDOUT not line buffered
 my $previous_fh = select(STDOUT);

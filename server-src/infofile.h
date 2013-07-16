@@ -66,6 +66,9 @@ typedef struct perf_s {
     double comp[AVG_COUNT];
 } perf_t;
 
+/* The command are also defined in perl/Amanda/Curinfo/Info.pm
+   You must modify that file if you change them.
+*/
 typedef struct info_s {
     unsigned int  command;		/* command word */
 #	define NO_COMMAND	0	/* no outstanding commands */

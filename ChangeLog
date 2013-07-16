@@ -1,3 +1,10 @@
+2013-07-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON/*: json server interface.
+	* perl/Amanda/*: Add many functionnalities of the servewr program.
+			 Modified to return Amanda::Message
+	* server-src/*: Mv functionalities to perl Modules.
+	* installcheck/*: Change for modified interface.
+
 2013-07-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: register types at initialization.
 

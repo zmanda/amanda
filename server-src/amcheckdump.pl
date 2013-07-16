@@ -286,6 +286,7 @@ sub main {
 	# set up the tapelist
 	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
 	$tapelist = Amanda::Tapelist->new($tapelist_file);
+	return  $steps->{'quit'}->($tapelist) if $tapelist->isa("Amanda::Message");
 
 	# get the timestamp
 	$timestamp = $opt_timestamp;
@@ -297,10 +298,10 @@ sub main {
 
 	# make a changer
 	my ($storage) = Amanda::Storage->new(tapelist => $tapelist);
-	return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
+	return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Message");
 	$storage{$storage->{"storage_name"}} = $storage;
 	my $chg = $storage->{'chg'};
-	return $steps->{'quit'}->($chg) if $chg->isa("Amanda::Changer::Error");
+	return $steps->{'quit'}->($chg) if $chg->isa("Amanda::Message");
 
 	# make a scan
 	my $scan = Amanda::Recovery::Scan->new(

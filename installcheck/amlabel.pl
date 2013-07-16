@@ -136,8 +136,8 @@ like($Installcheck::Run::stdout,
 
 ok(!run('amlabel', 'TESTCONF', 'SomeTape'),
     "amlabel refuses to write on a  tape already labeled");
-like($Installcheck::Run::stderr,
-    qr/Label 'TESTCONF92' doesn't match the labelstr 'TESTCONF\[0-9\]\[0-9\]'/,
+like($Installcheck::Run::stdout,
+    qr/Reading label...\nLabel 'TESTCONF92' doesn't match the labelstr 'TESTCONF\[0-9\]\[0-9\]'/,
     "with correct message on stdout");
 like($Installcheck::Run::stderr,
     qr/Not writing label./,
@@ -218,19 +218,19 @@ is_deeply($tl->{'tles'}->[0], {
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-02', '--barcode', 'bar-02', '--pool', 'pool1', '--assign'),
     "--assign meta fail without -f");
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/TESTCONF88: Can't assign meta-label without -f, old meta-label is 'meta-01'/,
      "amlabel --assign without -f (meta)");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--barcode', 'bar-02', '--pool', 'pool1', '--assign'),
     "--assign barcode fail without -f");
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/TESTCONF88: Can't assign barcode without -f, old barcode is 'bar-01'/,
      "amlabel --assign without -f (barcode)");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--pool', 'pool1', '--assign'),
     "--assign pool fail without -f");
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/TESTCONF88: Can't assign pool without -f, old pool is 'TESTCONF'/,
      "amlabel --assign without -f (pool)");
 
@@ -258,21 +258,21 @@ $tl->write();
 ok(!run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-03', '--barcode', 'bar-03', '--pool', 'pool-03', '--assign'),
     "--assign failed for another config");
 
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/TESTCONF88: Can't assign because it is is the 'TESTCONF2' config/,
-     "correct stderr  for amlabel --assign for another config");
+     "correct stdout  for amlabel --assign for another config");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF89', 'slot', '2'),
     "label for another config fail");
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/Found label 'TESTCONF88' but it is from config 'TESTCONF2'/,
-     "label for another config fail with correct stderr");
+     "label for another config fail with correct stdout");
 
 $tl->{'tles'}->[1]->{'config'} = "TESTCONF";
 $tl->write();
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF89', 'slot', '2'),
    "label for another pool fail");
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/Found label 'TESTCONF88' but it is from tape pool 'pool-02'/,
-     "label for another pool fail with correct stderr");
+     "label for another pool fail with correct stdout");

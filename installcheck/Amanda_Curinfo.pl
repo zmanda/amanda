@@ -28,9 +28,14 @@ use lib '@amperldir@';
 use Installcheck::Config;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( slurp burp sanitise_filename );
+use Amanda::Debug;
 
 use Amanda::Curinfo;
 use Amanda::Curinfo::Info;
+
+# set up debugging so debug output doesn't interfere with test results
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $use_diff;
 
@@ -183,7 +188,7 @@ is_deeply(
 
 ok(my $info = Amanda::Curinfo::Info->new($tmp_infofile),
     "create the Amanda::Curinfo::Info object");
-ok($ci->put_info($host, $disk, $info),
+ok($ci->put_info($host, $disk, $info) == undef,
     "test writing the Info object to the Curinfo database");
 ok(-f $curinfo_file, "Info object installed in the correct location");
 
@@ -1278,7 +1283,7 @@ ok(!-f "$infodir/$host_q/$disk_q/info", "infofile successfully deleted");
 
 ## rewrite it using the built-in
 
-ok( $ci->put_info($host, $disk, $info), "Amanda::Curinfo->put_info check");
+ok( $ci->put_info($host, $disk, $info) == undef, "Amanda::Curinfo->put_info check");
 
 ## compare the two files
 

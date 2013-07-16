@@ -800,3 +800,39 @@ sub new {
     Amanda::Device::Device->new(@_);
 }
 %}
+
+%perlcode %{
+sub to_message {
+    my $dev = shift;
+
+    return Amanda::Device::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code        => 1700000,
+		device_name => $dev->device_name,
+		dev_status  => $dev->status,
+		dev_error   => $dev->error_or_status);
+}
+%}
+
+%perlcode %{
+package Amanda::Device::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 1700000) {
+        return "device '%self->{'device_name'}: status: $self->{'dev_error'}.";
+    } elsif ($self->{'code'} == 1700001) {
+	return "property '$self->{'property_name'}' is '$self->{'property_value'}'.";
+    }
+}
+
+%}
+

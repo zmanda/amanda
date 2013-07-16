@@ -381,6 +381,9 @@ sub setup_dst {
     my $dst = $self->{'dst'} = {};
     my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
     my $tl = Amanda::Tapelist->new($tlf);
+    if ($tl->isa("Amanda::Message")) {
+	return $self->failure("Could not read the tapelist: $tl")
+    }
 
     $dst->{'label'} = undef;
     $dst->{'tape_num'} = 0;

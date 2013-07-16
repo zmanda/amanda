@@ -143,7 +143,8 @@ extends qw(Plack::Component);
 use Plack::Request;
 use JSON -convert_blessed_universally;
 use Amanda::JSON::RPC::Dispatcher::Procedure;
-use Log::Any;
+#use Log::Any;
+use Log::Any qw($log);
 
 #--------------------------------------------------------
 has error_code => (
@@ -226,8 +227,8 @@ sub acquire_procedures_from_post {
         $self->error_code(-32700);
         $self->error_message('Parse error.');
         $self->error_data($body);
-        $Log::Any::log->fatal('Parse error.');
-        $Log::Any::log->debug($body);
+        $log->fatal('Parse error.');
+        $log->debug($body);
         return undef;
     }
     else {
@@ -245,8 +246,8 @@ sub acquire_procedures_from_post {
             $self->error_code(-32600);
             $self->error_message('Invalid request.');
             $self->error_data($request);
-            $Log::Any::log->fatal('Invalid request.');
-            $Log::Any::log->debug($body);
+            $log->fatal('Invalid request.');
+            $log->debug($body);
             return undef;
         }
     }
@@ -320,22 +321,22 @@ sub handle_procedures {
                 # deal with result
                 if ($@ && ref($@) eq 'ARRAY') {
                     $proc->error(@{$@});
-                    $Log::Any::log->error($@->[1]);
-                    $Log::Any::log->debug($@->[2]);
+                    $log->error($@->[1]);
+                    $log->debug($@->[2]);
                 }
                 elsif ($@) {
                     my $error = $@;
                     if ($error->can('error') && $error->can('trace')) {
-                         $Log::Any::log->fatal($error->error);
-                         $Log::Any::log->trace($error->trace->as_string);
+                         $log->fatal($error->error);
+                         $log->trace($error->trace->as_string);
                          $error = $error->error;
                     }
                     elsif ($error->can('error')) {
                         $error = $error->error;
-                        $Log::Any::log->fatal($error);
+                        $log->fatal($error);
                     }
                     elsif (ref $error ne '' && ref $error ne 'HASH' && ref $error ne 'ARRAY') {
-                        $Log::Any::log->fatal($error);
+                        $log->fatal($error);
                         $error = ref $error;
                     }
                     $proc->internal_error($error);
@@ -378,7 +379,7 @@ sub call {
     my ($self, $env) = @_;
 
     my $request = Plack::Request->new($env);
-    $Log::Any::log->info("REQUEST: ".$request->content) if $Log::Any::log->is_info;
+    $log->info("REQUEST: ".$request->content) if $log->is_info;
     $self->clear_error;
     my $procs = $self->acquire_procedures($request);
 
@@ -401,7 +402,7 @@ sub call {
     if ($rpc_response) {
         my $json = eval{JSON->new->convert_blessed->utf8->encode($rpc_response)};
         if ($@) {
-            $Log::Any::log->error("JSON repsonse error: ".$@);
+            $log->error("JSON repsonse error: ".$@);
             $json = JSON->new->utf8->encode({
                 jsonrpc => "2.0",
                 error   => {
@@ -416,15 +417,15 @@ sub call {
         $response->content_length(bytes::length($json));
         $response->body($json);
         if ($response->status == 200) {
-            $Log::Any::log->info("RESPONSE: ".$response->body) if $Log::Any::log->is_info;
+            $log->info("RESPONSE: ".$response->body) if $log->is_info;
         }
         else {
-            $Log::Any::log->error("RESPONSE: ".$response->body);
+            $log->error("RESPONSE: ".$response->body);
         }
     }
     else { # is a notification only request
         $response->status(204);
-        $Log::Any::log->info('RESPONSE: Notification Only');
+        $log->info('RESPONSE: Notification Only');
     }
     return $response->finalize;
 }

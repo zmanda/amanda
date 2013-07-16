@@ -290,6 +290,9 @@ AmandaJSONdir = $(amperldir)/Amanda/JSON
 AmandaJSON_DATA = \
 	Amanda/JSON/Changer.pm \
 	Amanda/JSON/Config.pm \
+	Amanda/JSON/Device.pm \
+	Amanda/JSON/Dle.pm \
+	Amanda/JSON/Label.pm \
 	Amanda/JSON/Tapelist.pm
 PM_FILES += $(AmandaJSON_DATA)
 endif
@@ -338,6 +341,12 @@ AmandaCurinfo_DATA = \
 PM_FILES += $(AmandaCurinfo_DATA)
 endif
 EXTRA_DIST += $(AmandaCurinfo_DATA)
+
+if WANT_SERVER
+# PACKAGE: Amanda::Recovery
+Amanda_DATA += Amanda/Recovery.pm
+endif
+EXTRA_DIST += Amanda/Recovery.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::Recovery::*
@@ -570,6 +579,16 @@ if WANT_SERVER
 Amanda_DATA += Amanda/Holding.pm
 endif
 EXTRA_DIST += Amanda/Holding.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::Label
+Amanda_DATA += Amanda/Label.pm
+endif
+EXTRA_DIST += Amanda/Label.pm Amanda/Label.pod
+
+# PACKAGE: Amanda::Message
+Amanda_DATA += Amanda/Message.pm
+EXTRA_DIST += Amanda/Message.pm Amanda/Message.pod
 
 if WANT_CLIENT
 # PACKAGE: Amanda::Application

@@ -31,11 +31,14 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
+use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
 use Amanda::MainLoop;
 use Amanda::Tapelist;
-use Amanda::Xfer qw( :constants );
+use Amanda::Label;
+use Amanda::Disklist;
+use Amanda::Curinfo;
 
 
 Amanda::Util::setup_application("amadmin_perl", "server", $CONTEXT_CMDLINE);
@@ -73,118 +76,113 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 usage() unless (@ARGV);
 $opt_command = shift @ARGV;
+my $exit_status = 0;
 
-my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-my $tl = Amanda::Tapelist->new($tlf);
-my $chg = Amanda::Changer->new(undef, tapelist => $tl);
-if ($chg->isa("Amanda::Changer::Error")) {
-    print STDERR "amadmin: $chg\n";
-    exit 1;
+sub user_msg_err {
+    my $msg = shift;
+
+    print STDERR $msg->message() . "\n";
 }
 
-if ($opt_command eq "reuse") {
-    reuse(@ARGV);
-} elsif ($opt_command eq "no-reuse") {
-    no_reuse(@ARGV);
-} else {
-    print STDERR "Only 'reuse' and 'no-reuse' command\n";
-    usage();
+sub user_msg_out {
+    my $msg = shift;
+
+    print STDOUT "amadmin: " . $msg->message() . "\n";
 }
 
-$chg->quit();
+sub main {
+    my ($finished_cb) = @_;
+    my $storage;
+    my $chg;
+
+    my $steps = define_steps
+	cb_ref => \$finished_cb,
+	finalize => sub { $storage->quit() if defined $storage;
+			  $chg->quit() if defined $chg };
+
+    step start => sub {
+	if ($opt_command eq "reuse" or $opt_command eq "no-reuse") {
+	    $steps->{'reuse'}->();
+	}
+
+	my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+	my $cfgerr_level += Amanda::Disklist::read_disklist('filename' => $diskfile);
+	($cfgerr_level < $CFGERR_ERRORS) || die "Errors processing disklist";
+
+	my $curinfodir = getconf($CNF_INFOFILE);
+	my $ci = Amanda::Curinfo->new($curinfodir);
+	Amanda::Disklist::do_on_match_disklist(
+		user_msg => \&user_msg_out,
+		exact_match => $opt_exact_match,
+		disk_cb => sub {
+				my $dle = shift;
+				if ($opt_command eq "force") {
+				    $ci->force($dle);
+				} elsif ($opt_command eq "unforce") {
+				    $ci->unforce($dle);
+				} elsif ($opt_command eq "force-level-1") {
+				    $ci->force_level_1($dle);
+				} elsif ($opt_command eq "force-bump") {
+				    $ci->force_bump($dle);
+				} elsif ($opt_command eq "force-no-bump") {
+				    $ci->force_no_bump($dle);
+				} elsif ($opt_command eq "unforce-bump") {
+				    $ci->unforce_bump($dle);
+				}
+			  },
+		args   => \@ARGV);
+	$finished_cb->();
+    };
+
+    step reuse => sub {
+	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	my $tl = Amanda::Tapelist->new($tlf);
+	if ($tl->isa("Amanda::Message")) {
+            print STDERR "amadmin: Could not read the tapelist: $tl";
+	    $exit_status = 1;
+	    $finished_cb->();
+        }
+	$storage  = Amanda::Storage->new(tapelist => $tl);
+	if ($storage->isa("Amanda::Changer::Error")) {
+	    print STDERR "amadmin: $storage\n";
+	    $exit_status = 1;
+	    $finished_cb->();
+	}
+	$chg = $storage->{'chg'};
+	if ($chg->isa("Amanda::Changer::Error")) {
+	    print STDERR "amadmin: $chg\n";
+	    $exit_status = 1;
+	    $finished_cb->();
+	}
+
+	my $Label = Amanda::Label->new(storage  => $storage,
+				       tapelist => $tl,
+				       user_msg => \&user_msg_err);
+
+	if ($opt_command eq "reuse") {
+	    if (@ARGV < 1) {
+		print STDERR "amadmin: expecting \"reuse <tapelabel> ...\"\n";
+	    } else {
+		return $Label->reuse(labels => \@ARGV,
+				     finished_cb => $finished_cb);
+	    }
+	} elsif ($opt_command eq "no-reuse") {
+	    if (@ARGV < 1) {
+		print STDERR "amadmin: expecting \"no-reuse <tapelabel> ...\"\n";
+	    } else {
+		return $Label->no_reuse(labels => \@ARGV,
+					finished_cb => $finished_cb);
+	    }
+	} else {
+	    print STDERR "Only 'reuse' and 'no-reuse' command\n";
+	    usage();
+	}
+	$finished_cb->();
+    };
+}
+
+main(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 Amanda::Util::finish_application();
-
-sub quit {
-    Amanda::MainLoop::quit();
-}
-
-sub reuse {
-    my @labels = @_;
-    my $finished_cb = \&quit;
-    my $need_write = 0;
-
-    if (@ARGV < 1) {
-	print STDERR "amadmin: expecting \"reuse <tapelabel> ...\"\n";
-    }
-
-    foreach my $label (@labels) {
-	my $tle = $tl->lookup_tapelabel($label);
-
-	if (!defined $tle) {
-	    print STDERR "amadmin: tape label $label not found in tapelist.\n";
-	    next;
-	}
-
-	if ($tle->{'reuse'} == 0) {
-	    $tl->reload(1) if $need_write == 0;;
-	    $tl->remove_tapelabel($label);
-	    $tl->add_tapelabel($tle->{'datestamp'}, $label, $tle->{'comment'},
-			       1, $tle->{'meta'}, $tle->{'barcode'},
-			       $tle->{'blocksize'}, $tle->{'pool'},
-			       $tle->{'storage'}, $tle->{'config'});
-	    $need_write = 1;
-	    print STDERR "amadmin: marking tape $label as reusable.\n";
-	} else {
-	    print STDERR "amadmin: tape $label already reusable.\n";
-	}
-    }
-
-    $tl->write() if $need_write == 1;
-
-    my $steps = define_steps
-	cb_ref =>\$finished_cb;
-
-    step start => sub {
-	    return $chg->set_reuse(labels => \@labels,
-                                   finished_cb => $finished_cb);
-    };
-
-
-    Amanda::MainLoop::run();
-}
-
-sub no_reuse {
-    my @labels = @_;
-    my $finished_cb = \&quit;
-    my $need_write = 0;
-
-    if (@ARGV < 1) {
-	print STDERR "amadmin: expecting \"no-reuse <tapelabel> ...\"\n";
-    }
-
-    foreach my $label (@labels) {
-	my $tle = $tl->lookup_tapelabel($label);
-
-	if (!defined $tle) {
-	    print STDERR "amadmin: tape label $label not found in tapelist.\n";
-	    next;
-	}
-
-	if ($tle->{'reuse'} == 1) {
-	    $tl->reload(1) if $need_write == 0;
-	    $tl->remove_tapelabel($label);
-	    $tl->add_tapelabel($tle->{'datestamp'}, $label, $tle->{'comment'},
-			       0, $tle->{'meta'}, $tle->{'barcode'},
-			       $tle->{'blocksize'}, $tle->{'pool'},
-			       $tle->{'storage'}, $tle->{'config'});
-	    $need_write = 1;
-	    print STDERR "amadmin: marking tape $label as not reusable.\n";
-	} else {
-	    print STDERR "amadmin: tape $label already not reusable.\n";
-	}
-    }
-
-    $tl->write() if $need_write == 1;
-
-    my $steps = define_steps
-	cb_ref =>\$finished_cb;
-
-    step start => sub {
-	    return $chg->set_no_reuse(labels => \@labels,
-                                      finished_cb => $finished_cb);
-    };
-
-    Amanda::MainLoop::run();
-}
-
+exit($exit_status);
 

@@ -297,7 +297,12 @@ sub update {
 			reason => "unknown", message => $whynot);
 	    }
 
-	    $user_msg_fn->("recording volume '$label' in slot $slot");
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100020,
+				slot  => $slot,
+				label => $label));
 	    # ok, now erase all knowledge of that label
 	    while (my ($sl, $inf) = each %{$state->{'slots'}}) {
 		if ($inf->{'label'} and $inf->{'label'} eq $label) {
@@ -351,17 +356,29 @@ sub update {
 	return $steps->{'done'}->() if (!@slots_to_check);
 	my $slot = shift @slots_to_check;
 	if ($self->_is_slot_in_use($state, $slot)) {
-	    $user_msg_fn->("Slot $slot is already in use");
+	     $user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100022,
+				slot  => $slot));
 	    return $steps->{'update_slot'}->();
 	}
 
 	if ($set_to_unknown == 1) {
-	    $user_msg_fn->("removing entry for slot $slot");
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100021,
+				slot  => $slot));
 	    my $unaliased = $self->{unaliased}->{$slot};
 	    delete $state->{slots}->{$unaliased};
 	    return $steps->{'update_slot'}->();
 	} else {
-	    $user_msg_fn->("scanning slot $slot");
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100019,
+				slot => $slot));
 	    $params{'slot'} = $slot;
 	    $params{'res_cb'} = $steps->{'slot_loaded'};
 	    $self->_load_by_slot(%params);
@@ -379,10 +396,20 @@ sub update {
 	$self->_update_slot_state(state => $state, dev => $dev, slot =>$slot);
 	if ($dev->status() == $DEVICE_STATUS_SUCCESS) {
 	    my $label = $dev->volume_label;
-	    $user_msg_fn->("recording volume '$label' in slot $slot");
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100020,
+				slot  => $slot,
+				label => $label));
 	} else {
 	    my $status = $dev->error_or_status;
-	    $user_msg_fn->("recording device error '" . $status . "' in slot $slot");
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100023,
+				slot  => $slot,
+				dev_status => $status));
 	}
 	$res->release(
 	    finished_cb => $steps->{'released'},

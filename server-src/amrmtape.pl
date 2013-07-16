@@ -34,6 +34,7 @@ use Amanda::Paths;
 use Amanda::MainLoop;
 use Amanda::Tapelist;
 use Amanda::Util qw( :constants );
+use Amanda::Label;
 use File::Copy;
 use File::Basename;
 use Getopt::Long;
@@ -153,274 +154,77 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-# amadmin may later try to load this and will die if it has errors
-# load it now to catch the problem sooner (before we might erase data)
-my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
-$cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
-if ($cfgerr_level >= $CFGERR_ERRORS) {
-    die "Errors processing disklist";
+sub user_msg {
+    my $msg = shift;
+
+    print STDOUT $msg->message() . "\n";
 }
 
-my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-my $tapelist = Amanda::Tapelist->new($tapelist_file, !$dry_run);
-unless ($tapelist) {
-    die "Could not read the tapelist";
-}
+sub main {
+    my ($finished_cb) = @_;
 
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
 
-my $scrub_db = sub {
-    my $t = $tapelist->lookup_tapelabel($label);
-    if (!defined $t) {
-	print "label '$label' not found in $tapelist_file\n";
-	exit 0;
-    } elsif ($keep_label) {
-        $t->{'datestamp'} = 0 if $t;
-        $t->{'storage'} = undef if $t;
-        $t->{'config'} = undef if $t;
-    } else {
-        $tapelist->remove_tapelabel($label);
-    }
-
-    #take a copy in case we roolback
-    my $backup_tapelist_file = dirname($tapelist_file) . "-backup-amrmtape-" . time();
-    if (-x $tapelist_file) {
-	unless (copy($tapelist_file, $backup_tapelist_file)) {
-	    die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
+    step start => sub {
+	# amadmin may later try to load this and will die if it has errors
+	# load it now to catch the problem sooner (before we might erase data)
+	my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+	$cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+	if ($cfgerr_level >= $CFGERR_ERRORS) {
+	    die "Errors processing disklist";
 	}
-    }
 
-    unless ($dry_run) {
-        $tapelist->write();
-    }
+	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
+	my $tapelist = Amanda::Tapelist->new($tapelist_file, !$dry_run);
+	unless ($tapelist) {
+	    die "Could not read the tapelist";
+	}
+	if ($tapelist->isa("Amanda::Message")) {
+	    die "Could not read the tapelist: $tapelist";
+	}
 
-    my $tmp_curinfo_file = "$AMANDA_TMPDIR/curinfo-amrmtape-" . time() . "-" . $$;
-    unless (open(AMADMIN, "$amadmin $config_name export |")) {
-        die "Failed to execute $amadmin: $! $?";
-    }
-    open(CURINFO, ">$tmp_curinfo_file") or
-        die "Failed to open $tmp_curinfo_file for writing: $! $?";
 
-    sub info_line($) {
-        print CURINFO "$_[0]";
-    }
+	if ($list_retention) {
+	    my @list = Amanda::Tapelist::list_retention();
+	    foreach my $label (@list) {
+		print "$label\n";
+	    }
+	} elsif ($list_no_retention) {
+	    my @list = Amanda::Tapelist::list_no_retention();
+	    foreach my $label (@list) {
+		print "$label\n";
+	    }
+	} else {
+	    my @list;
+	    if ($remove_no_retention) {
+		@list = Amanda::Tapelist::list_no_retention();
+	    } else {
+		@list = ($label);
+	    }
+	    my $Label = Amanda::Label->new(tapelist => $tapelist,
+					   user_msg => \&user_msg);
 
-    my $host;
-    my $disk;
-    my $dead_level = 10;
-    while(my $line = <AMADMIN>) {
-        my @parts = split(/\s+/, $line);
-        if ($parts[0] =~ /^CURINFO|#|(?:command|last_level|consecutive_runs|(?:full|incr)-(?:rate|comp)):$/) {
-            info_line $line;
-        } elsif ($parts[0] eq 'host:') {
-            $host = $parts[1];
-            info_line $line;
-        } elsif ($parts[0] eq 'disk:') {
-            $disk = $parts[1];
-            info_line $line;
-        } elsif ($parts[0] eq 'history:') {
-            info_line $line;
-        } elsif ($line eq "//\n") {
-            info_line $line;
-            $dead_level = 10;
-        } elsif ($parts[0] eq 'stats:') {
-            if (scalar(@parts) < 6 || scalar(@parts) > 8) {
-                die "unexpected number of fields in \"stats\" entry for $host:$disk\n\t$line";
-            }
-            my $level = $parts[1];
-            my $cur_label = $parts[7];
-            if (defined $cur_label and $cur_label eq $label) {
-                $dead_level = $level;
-                vlog "Discarding Host: $host, Disk: $disk, Level: $level\n";
-            } elsif ( $level > $dead_level ) {
-                vlog "Discarding Host: $host, Disk: $disk, Level: $level\n";
-            } else {
-                info_line $line;
-            }
-        } else {
-            die "Error: unrecognized line of input:\n\t$line";
-        }
-    }
-
-    my $rollback_from_curinfo = sub {
-            unlink $tmp_curinfo_file;
-            return if $keep_label;
-            unless (move($backup_tapelist_file, $tapelist_file)) {
-                printf STDERR "Failed to rollback new tapelist.\n";
-            }
+	    return $Label->erase(labels      => \@list,
+				 cleanup     => $cleanup,
+				 dry_run     => $dry_run,
+				 erase       => $erase,
+				 keep_label  => $keep_label,
+				 finished_cb => $steps->{'erase_finished'});
+	}
+	$finished_cb->();
     };
 
-    close CURINFO;
+    step erase_finished => sub {
+	my ($err) = @_;
 
-    unless (close AMADMIN) {
-        $rollback_from_curinfo->();
-        die "$amadmin exited with non-zero while exporting: $! $?";
-    }
+        print STDERR "$err\n" if $err;
 
-    unless ($dry_run) {
-        if (system("$amadmin $config_name import < $tmp_curinfo_file")) {
-            $rollback_from_curinfo->();
-            die "$amadmin exited with non-zero while importing: $! $?";
-        }
-    }
-
-    unlink $tmp_curinfo_file;
-    unlink $backup_tapelist_file;
-
-    if ($cleanup && !$dry_run) {
-        if (system($amtrmlog, $config_name)) {
-            die "$amtrmlog exited with non-zero while scrubbing logs: $! $?";
-        }
-        if (system($amtrmidx, $config_name)) {
-            die "$amtrmidx exited with non-zero while scrubbing indexes: $! $?";
-        }
-    }
-
-    Amanda::MainLoop::quit();
-};
-
-my $erase_volume = make_cb('erase_volume' => sub {
-    my $storage_name = shift;
-    if ($erase) {
-	my ($storage) = Amanda::Storage->new(storage_name => $storage_name, tapelist => $tapelist);
-	if ($storage->isa("Amanda::Changer::Error")) {
-	    die "error creating storage: $storage";
-	}
-	my $chg = $storage->{'chg'};
-	if ($chg->isa("Amanda::Changer::Error")) {
-	    $storage->quit();
-	    die "Error creating changer:  $chg";
-	}
-	$chg->load(
-	    'label' => $label,
-	    'res_cb' => sub {
-		my ($err, $resv) = @_;
-
-		if ($err) {
-		    print STDERR "Can't erase volume because: $err\n";
-		    $storage->quit();
-		    $chg->quit();
-		    return Amanda::MainLoop::quit();
-		}
-
-		my $rel_cb = make_cb('rel_cb' => sub {
-		    $resv->release(finished_cb => sub {
-			my ($err) = @_;
-
-			print STDERR "$err\n" if $err;
-			$storage->quit();
-			$chg->quit();
-
-			$scrub_db->();
-		    });
-		});
-
-                my $dev = $resv->{'device'};
-		if (!$dev->property_get('full_deletion')) {
-		    print "Can not erase $label because the device doesn't support this feature\n";
-		    return $rel_cb->();
-		}
-
-                if (!$dry_run) {
-                    if (!$dev->erase()) {
-                        print STDERR "Failed to erase volume\n";
-			return $rel_cb->();
-		    }
-		    $resv->set_label(finished_cb => sub {
-			$dev->finish();
-
-			# label the tape with the same label it had
-			if ($keep_label) {
-			    $dev->start($ACCESS_WRITE, $label, undef)
-				or die "Failed to write tape label";
-			    return $resv->set_label(label => $label, finished_cb => $rel_cb);
-			}
-			$rel_cb->();
-		    });
-		} else {
-		    $rel_cb->();
-		}
-
-            });
-    } else {
-        $scrub_db->();
-    }
-});
-
-sub erase_volume {
-    my @list = @_;
-    foreach my $label (@list) {
-	my $storage_name;
-	my $tle = $tapelist->lookup_tapelabel($label);
-	if (!defined $tle) {
-	    print "label '$label' not found in $tapelist_file\n";
-	    next;
-	}
-
-	$storage_name = $tle->{'storage'};
-	if ($storage_name) {
-	    $erase_volume->($storage_name);
-	    Amanda::MainLoop::run();
-	    next;
-	}
-
-	# no storage in the tapelist, use the first storage with the same pool
-	if ($tle->{'pool'}) {
-	    if (getconf_seen($CNF_STORAGE)) {
-		my $storage_list = getconf($CNF_STORAGE);
-		my $done = 0;
-		for $storage_name (@{$storage_list}) {
-		    my ($storage) = Amanda::Storage->new(storage_name => $storage_name, tapelist => $tapelist);
-		    if (!$storage->isa("Amanda::Changer::Error")) {
-			if ($storage->{'tapepool'} eq $tle->{'pool'}) {
-			    $storage->quit();
-			    debug("Using storage '$storage_name' because it use the same '$tle->{'pool'}' tape pool");
-			    $erase_volume->($storage_name);
-			    Amanda::MainLoop::run();
-			    $done = 1;
-			    last;
-			}
-			$storage->quit();
-		    }
-		}
-		next if $done;
-	    }
-	}
-
-	# try in the default storage
-	if (getconf_seen($CNF_STORAGE)) {
-	    my $storage_list = getconf($CNF_STORAGE);
-	    for $storage_name (@{$storage_list}) {
-		$erase_volume->($storage_name);
-		Amanda::MainLoop::run();
-	    }
-	    next;
-	}
-
-	# try in the config_name storage;
-	$storage_name = get_config_name();
-	if (defined $storage_name) {
-	    $erase_volume->($storage_name);
-	    Amanda::MainLoop::run();
-	    next;
-	}
-    }
+        $finished_cb->();
+    };
 }
 
-if ($list_retention) {
-    my @list = Amanda::Tapelist::list_retention();
-    foreach my $label (@list) {
-	print "$label\n";
-    }
-} elsif ($list_no_retention) {
-    my @list = Amanda::Tapelist::list_no_retention();
-    foreach my $label (@list) {
-	print "$label\n";
-    }
-} elsif ($remove_no_retention) {
-    my @list = Amanda::Tapelist::list_no_retention();
-    erase_volume(@list);
-} else {
-    erase_volume($label);
-}
-
+main(\&Amanda::MainLoop::quit);
+Amanda::MainLoop::run();
 Amanda::Util::finish_application();
+#exit $exit_status;

@@ -35,6 +35,7 @@ use Amanda::Debug qw( debug );
 use Amanda::Changer;
 use Amanda::MainLoop;
 use Amanda::Interactivity;
+use Amanda::Recovery;
 
 use constant SCAN_ASK  => 1;     # call Amanda::Interactivity module
 use constant SCAN_POLL => 2;     # wait 'poll_delay' and retry the scan.
@@ -300,9 +301,13 @@ sub find_volume {
 			    undef);
 		}
 		Amanda::Debug::debug("parse_inventory: load slot $slot_scanned with label '$label'");
-		$user_msg_fn->(scan_slot => 1,
+		$user_msg_fn->(Amanda::Recovery::Message->new(
+			       source_filename => __FILE__,
+			       source_line     => __LINE__,
+			       code => 1200000,
+			       scan_slot => 1,
 			       slot      => $slot_scanned,
-			       label     => $label);
+			       label     => $label));
 		$seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					 f_type        => $sl->{'f_type'},
 					 label         => $sl->{'label'} };
@@ -353,7 +358,12 @@ sub find_volume {
 		    !$sl->{'reserved'} &&
 		    !$seen{$slot}) {
 		    $slot_scanned = $slot;
-		    $user_msg_fn->(scan_slot => 1, slot => $slot_scanned);
+		    $user_msg_fn->(Amanda::Recovery::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1200000,
+				scan_slot => 1,
+				slot => $slot_scanned));
 		    $seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					     f_type        => $sl->{'f_type'},
 					     label         => $sl->{'label'} };
@@ -396,7 +406,12 @@ sub find_volume {
 		$current = $slot;
 		$slot_scanned = $current;
 		Amanda::Debug::debug("parse_inventory: load slot $current");
-		$user_msg_fn->(scan_slot => 1, slot => $slot_scanned);
+		$user_msg_fn->(Amanda::Recovery::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1200000,
+				scan_slot => 1,
+				slot => $slot_scanned));
 		$seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					 f_type        => $sl->{'f_type'},
 					 label         => $sl->{'label'} };
@@ -425,16 +440,29 @@ sub find_volume {
 	# we don't responsd to abort_scan or restart_scan here, since we
 	# have an open reservation that we should deal with.
 
-	$user_msg_fn->(slot_result => 1,
-		       slot => $slot_scanned,
-		       err  => $err,
-		       res  => $res);
 	if ($res) {
 	    if ($res->{device}->status == $DEVICE_STATUS_SUCCESS &&
-		$res->{device}->volume_label &&
-		$res->{device}->volume_label eq $label) {
+		$res->{device}->volume_label) {
 		my $volume_label = $res->{device}->volume_label;
-		return $steps->{'call_res_cb'}->(undef, $res);
+		$user_msg_fn->(Amanda::Recovery::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code => 1200001,
+			slot_result => 1,
+			slot => $slot_scanned,
+			label      => $volume_label));
+		if ($volume_label eq $label) {
+		    return $steps->{'call_res_cb'}->(undef, $res);
+		}
+	    } else {
+		$user_msg_fn->(Amanda::Recovery::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1200002,
+				slot_result => 1,
+				slot => $slot_scanned,
+				dev_status => $res->{'device'},
+				dev_error  => $res->{'device'}->error_or_status()));
 	    }
 	    my $f_type;
 	    if (defined $res->{device}->volume_header) {
@@ -460,6 +488,13 @@ sub find_volume {
 	    }
 	    return $res->release(finished_cb => $steps->{'load_released'});
 	} else {
+	    $user_msg_fn->(Amanda::Recovery::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1200003,
+				slot_result => 1,
+				slot => $slot_scanned,
+				err  => $err));
 	    if ($load_for_label == 0 && $err->volinuse) {
 		# Scan semantics for volinuse is different than changer.
 		# If a slot with unknown label is loaded then we map
@@ -714,7 +749,7 @@ sub _find_volume_no_inventory {
 }
 
 sub _user_msg_fn {
-    my %params = @_;
+    my $msg = shift;
 }
 
 package Amanda::Recovery::Scan::Config;

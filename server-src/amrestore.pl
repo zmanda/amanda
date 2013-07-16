@@ -161,6 +161,9 @@ sub main {
 	} else {
 	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 	    my $tl = Amanda::Tapelist->new($tlf);
+	    if ($tl->isa("Amanda::Message")) {
+		return failure($tl, $finished_cb);
+	    }
 	    $chg = Amanda::Changer->new($opt_restore_src, tapelist => $tl);
 	    if ($chg->isa("Amanda::Changer::Error")) {
 		return failure($chg, $finished_cb);

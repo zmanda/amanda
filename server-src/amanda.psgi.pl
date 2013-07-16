@@ -41,9 +41,12 @@ use Amanda::Paths;
 use Amanda::Process;
 use Amanda::Util qw( :constants );
 use Amanda::JSON::Config;
-use Amanda::JSON::Tapelist;
 use Amanda::JSON::Changer;
 use Amanda::JSON::DB::Catalog;
+use Amanda::JSON::Device;
+use Amanda::JSON::Dle;
+use Amanda::JSON::Label;
+use Amanda::JSON::Tapelist;
 
 Amanda::Util::setup_application("amjson-server", "server", $CONTEXT_CMDLINE);
 Amanda::Config::config_init(0,undef);
@@ -58,16 +61,37 @@ $rpc->register( 'Amanda::JSON::Config::getconf_byname', \&Amanda::JSON::Config::
 $rpc->register( 'Amanda::JSON::Config::config_dir_relative', \&Amanda::JSON::Config::config_dir_relative );
 
 $rpc->register( 'Amanda::JSON::Tapelist::get', \&Amanda::JSON::Tapelist::get );
-$rpc->register( 'Amanda::JSON::Tapelist::update', \&Amanda::JSON::Tapelist::update );
-$rpc->register( 'Amanda::JSON::Tapelist::add', \&Amanda::JSON::Tapelist::add );
-$rpc->register( 'Amanda::JSON::Tapelist::remove', \&Amanda::JSON::Tapelist::remove );
+#$rpc->register( 'Amanda::JSON::Tapelist::update', \&Amanda::JSON::Tapelist::update );
+#$rpc->register( 'Amanda::JSON::Tapelist::add', \&Amanda::JSON::Tapelist::add );
+#$rpc->register( 'Amanda::JSON::Tapelist::remove', \&Amanda::JSON::Tapelist::remove );
 
 $rpc->register( 'Amanda::JSON::Changer::inventory', \&Amanda::JSON::Changer::inventory );
-$rpc->register( 'Amanda::JSON::Changer::update', \&Amanda::JSON::Changer::update );
 $rpc->register( 'Amanda::JSON::Changer::load', \&Amanda::JSON::Changer::load );
-$rpc->register( 'Amanda::JSON::Changer::unload', \&Amanda::JSON::Changer::unload );
+$rpc->register( 'Amanda::JSON::Changer::reset', \&Amanda::JSON::Changer::reset );
+$rpc->register( 'Amanda::JSON::Changer::eject', \&Amanda::JSON::Changer::eject );
+$rpc->register( 'Amanda::JSON::Changer::clean', \&Amanda::JSON::Changer::clean );
+$rpc->register( 'Amanda::JSON::Changer::verify', \&Amanda::JSON::Changer::verify );
+$rpc->register( 'Amanda::JSON::Changer::show', \&Amanda::JSON::Changer::show );
+$rpc->register( 'Amanda::JSON::Changer::label', \&Amanda::JSON::Changer::label );
+$rpc->register( 'Amanda::JSON::Changer::update', \&Amanda::JSON::Changer::update );
 
 $rpc->register( 'Amanda::JSON::DB::Catalog::get_parts', \&Amanda::JSON::DB::Catalog::get_parts );
 $rpc->register( 'Amanda::JSON::DB::Catalog::get_dumps', \&Amanda::JSON::DB::Catalog::get_dumps );
+
+$rpc->register( 'Amanda::JSON::Dle::force', \&Amanda::JSON::Dle::force );
+$rpc->register( 'Amanda::JSON::Dle::force_level_1', \&Amanda::JSON::Dle::force_level_1 );
+$rpc->register( 'Amanda::JSON::Dle::unforce', \&Amanda::JSON::Dle::unforce );
+$rpc->register( 'Amanda::JSON::Dle::force_bump', \&Amanda::JSON::Dle::force_bump );
+$rpc->register( 'Amanda::JSON::Dle::force_no_bump', \&Amanda::JSON::Dle::force_no_bump );
+$rpc->register( 'Amanda::JSON::Dle::unforce_bump', \&Amanda::JSON::Dle::unforce_bump );
+
+$rpc->register( 'Amanda::JSON::Label::assign', \&Amanda::JSON::Label::assign );
+$rpc->register( 'Amanda::JSON::Label::label', \&Amanda::JSON::Label::label );
+$rpc->register( 'Amanda::JSON::Label::erase', \&Amanda::JSON::Label::erase );
+$rpc->register( 'Amanda::JSON::Label::reuse', \&Amanda::JSON::Label::reuse );
+$rpc->register( 'Amanda::JSON::Label::no_reuse', \&Amanda::JSON::Label::no_reuse );
+
+$rpc->register( 'Amanda::JSON::Device::read_label', \&Amanda::JSON::Device::read_label );
+$rpc->register( 'Amanda::JSON::Device::get_properties', \&Amanda::JSON::Device::get_properties );
 
 $rpc->to_app;

@@ -17,6 +17,71 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
+package Amanda::Changer::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 1100000) {
+        return "The inventory";
+    } elsif ($self->{'code'} == 1100001) {
+	return "no device";
+    } elsif ($self->{'code'} == 1100002) {
+	return "load result";
+    } elsif ($self->{'code'} == 1100003) {
+	return "Changer is reset";
+    } elsif ($self->{'code'} == 1100004) {
+	return "Drive '$self->{'drive'}' ejected";
+    } elsif ($self->{'code'} == 1100005) {
+	return "Drive '$self->{'drive'}' cleaned";
+    } elsif ($self->{'code'} == 1100006) {
+	return "Drive $self->{'drive'} is device $self->{'device_name'}";
+    } elsif ($self->{'code'} == 1100007) {
+	return "Drive $self->{'drive'} look to be device $self->{'device_name'}";
+    } elsif ($self->{'code'} == 1100008) {
+	return "property \"TAPE-DEVICE\"$self->{'tape_devices'}";
+    } elsif ($self->{'code'} == 1100009) {
+	return "Drive $self->{'drive'} is not device $self->{'device_name'}";
+    } elsif ($self->{'code'} == 1100010) {
+	return "scanning all $self->{'num_slots'} slots in changer:";
+    } elsif ($self->{'code'} == 1100011) {
+	return sprintf("slot %3s: in use", $self->{'slot'});
+    } elsif ($self->{'code'} == 1100012) {
+	return sprintf("slot %3s: empty", $self->{'slot'});
+    } elsif ($self->{'code'} == 1100013) {
+	return sprintf("slot %3s: %s\n", $self->{'slot'}, "$self->{'err'}");
+    } elsif ($self->{'code'} == 1100014) {
+	return "$self->{'err'}";
+    } elsif ($self->{'code'} == 1100015) {
+	return sprintf("slot %3s: date %-14s label %s%s", $self->{'slot'},
+			$self->{'datestamp'}, $self->{'label'},
+			$self->{'write_protected'}?" (Write protected)":"");
+    } elsif ($self->{'code'} == 1100016) {
+	return sprintf("slot %3s: unlabeled volume%s", $self->{'slot'},
+			 $self->{'write_protected'}?" (Write protected)":"");
+    } elsif ($self->{'code'} == 1100017) {
+	return sprintf("slot %3s: %s", $self->{'slot'}, $self->{'dev_error'});
+    } elsif ($self->{'code'} == 1100018) {
+	return  "Update completed";
+    } elsif ($self->{'code'} == 1100019) {
+	return "scanning slot $self->{'slot'}";
+    } elsif ($self->{'code'} == 1100020) {
+	return "Recording volume '$self->{'label'}' in slot $self->{'slot'}";
+    } elsif ($self->{'code'} == 1100021) {
+	return "Removing entry for slot $self->{'slot'}";
+    } elsif ($self->{'code'} == 1100022) {
+	return "Slot $self->{'slot'} is already in use";
+    } elsif ($self->{'code'} == 1100023) {
+	return "recording device error '$self->{'dev_status'}' in slot $self->{'slot'}";
+    }
+}
+
 package Amanda::Changer;
 
 use strict;
@@ -1503,10 +1568,173 @@ sub make_new_meta_label {
     return $meta;
 }
 
+sub show {
+    my $self = shift;
+    my %params = @_;
+
+    my $finished_cb = $params{'finished_cb'};
+    my $last_slot;
+    my %seen_slots;
+
+    my @slots;
+    if (defined $params{'slots'}) {
+	my @what = split /,/, $params{'slots'};
+	foreach my $what (@what) {
+	    if ($what =~ /^(\d*)-(\d*)$/) {
+		my $begin = $1;
+		my $end = $2;
+		$end = $begin if $begin > $end;
+		while ($begin <= $end) {
+		    push @slots, $begin;
+		    $begin++;
+		}
+	    } else  {
+		push @slots, $what;
+	    }
+	}
+    }
+
+    my $use_slots = @slots > 0;
+
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step start => sub {
+	$self->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
+    };
+
+    step info_cb => sub {
+	my ($err, %info) = @_;
+
+	if ($err) {
+	    $params{'user_msg'}->($err);
+	    return $steps->{'done'}->();
+	}
+
+	if ($use_slots) {
+	    my $slot = shift @slots;
+	    $self->load(slot => $slot,
+			   mode => "read",
+			   res_cb => $steps->{'loaded'});
+	} else {
+	    $params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100010,
+					num_slots  => $info{'num_slots'}));
+	    $self->load(relative_slot => 'current',
+			mode => "read",
+			res_cb => $steps->{'loaded'});
+	}
+    };
+
+    step loaded => sub {
+	my ($err, $res) = @_;
+	if ($err) {
+	    if ($err->notfound) {
+		# no more interesting slots
+		return $steps->{'done'}->();
+	    } elsif ($err->volinuse and defined $err->{'slot'}) {
+		$last_slot = $err->{'slot'};
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100011,
+					slot   => $last_slot));
+	   } elsif ($err->empty and defined $err->{'slot'}) {
+		$last_slot = $err->{'slot'};
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100012,
+					slot   => $last_slot));
+	    } elsif ($err->invalid and defined $err->{'slot'}) {
+		$last_slot = $err->{'slot'};
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100013,
+					slot   => $last_slot,
+					err    => $err));
+	    } else {
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100014,
+					err    => $err));
+		return $steps->{'done'}->();
+	    }
+	} else {
+	    $last_slot = $res->{'this_slot'};
+	}
+
+	$seen_slots{$last_slot} = 1;
+
+	if ($res) {
+	    my $dev = $res->{'device'};
+	    my $st = $dev->read_label();
+	    my $write_protected = !$dev->check_writable();
+	    if ($st == $DEVICE_STATUS_SUCCESS) {
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100015,
+					slot   => $last_slot,
+					datestamp  => $dev->volume_time(),
+					label  => $dev->volume_label(),
+					write_protected => $write_protected));
+	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100016,
+					slot   => $last_slot,
+					write_protected => $write_protected));
+	    } else {
+		$params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100017,
+					slot   => $last_slot,
+					dev_error    => $dev->error_or_status()));
+	    }
+
+	    return $res->release(finished_cb => $steps->{'released'});
+	} else {
+	    return $steps->{'released'}->();
+	}
+    };
+
+    step released => sub {
+	if ($use_slots) {
+	    return $finished_cb->() if @slots == 0;
+	    my $slot = shift @slots;
+	    $self->load(slot => $slot,
+			mode => "read",
+			res_cb => $steps->{'loaded'});
+	} else {
+	    $self->load(relative_slot => 'next',
+			slot => $last_slot,
+			except_slots => { %seen_slots },
+			res_cb => $steps->{'loaded'});
+	}
+    };
+
+    step done => sub {
+	my $err = shift;
+	$params{'user_msg'}->($err) if $err;
+	return $finished_cb->();
+    };
+}
+
 package Amanda::Changer::Error;
 use Amanda::Debug qw( :logging );
 use Carp qw( cluck );
 use Amanda::Debug;
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
 use overload
     '""' => sub { $_[0]->{'message'}; },
     'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
@@ -1521,6 +1749,10 @@ sub new {
     my $reason = "";
     $reason = ", reason='$info{reason}'" if $type eq "failed";
     debug("new Amanda::Changer::Error: type='$type'$reason, message='$info{message}'");
+    # Amanda::Message
+    $info{'source_filename'} = 'unknown' if !$info{'source_filename'};
+    $info{'source_line'} = 0 if !$info{'source_line'};
+    $info{'code'} = 3 if !$info{'code'};
 
     $info{'type'} = $type;
 

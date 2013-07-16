@@ -3440,7 +3440,7 @@ cmdfile_flush(
     cmdfile_data_t *data = user_data;
     storage_t *storage = lookup_storage(cmddata->storage_dest);
 
-    if (storage_get_autoflush(storage)) {
+    if (storage && storage_get_autoflush(storage)) {
 	if (cmddata->operation == CMD_FLUSH &&
 	    g_str_equal(data->holding_file, cmddata->holding_file)) {
 	    if (data->ids) {
