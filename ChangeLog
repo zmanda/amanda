@@ -1,3 +1,6 @@
+2013-07-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: lowercase the bucket for the auth_string.
+
 2013-07-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Typo.
 

@@ -938,13 +938,15 @@ authenticate_request(S3Handle *hdl,
 	}
 	g_string_append(auth_string, "/");
 	if (bucket) {
+	    char *lc_bucket = g_ascii_strdown(bucket, -1);
 	    if (hdl->use_subdomain)
-		g_string_append(auth_string, bucket);
+		g_string_append(auth_string, lc_bucket);
 	    else {
-		esc_bucket = curl_escape(bucket, 0);
+		esc_bucket = curl_escape(lc_bucket, 0);
 		if (!esc_bucket) goto cleanup;
 		g_string_append(auth_string, esc_bucket);
 	    }
+	    g_free(lc_bucket);
 	}
 
 	if (bucket && (hdl->use_subdomain || key))
