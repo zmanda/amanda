@@ -1,3 +1,6 @@
+2013-07-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: lowercase the bucket for the auth_string.
+
 2013-07-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/*: json server interface.
 	* perl/Amanda/*: Add many functionnalities of the servewr program.
