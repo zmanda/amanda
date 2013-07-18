@@ -2215,6 +2215,16 @@ s3_device_set_use_subdomain_fn(Device *p_self,
 
     self->use_subdomain = g_value_get_boolean(val);
 
+    if (self->use_subdomain && !s3_bucket_location_compat(self->bucket)) {
+	device_set_error(p_self, g_strdup_printf(_(
+		"S3-SUBDOMAIN is set, "
+		"but the bucket name (%s) is not usable as a subdomain."),
+		self->bucket),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	self->use_subdomain = FALSE;
+	return FALSE;
+    }
+
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
