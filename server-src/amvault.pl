@@ -1023,25 +1023,32 @@ sub set_label_template {
 }
 
 sub add_autolabel {
-    my ($opt, $val) = @_;
-    $val = lc($val);
-    $val =~ s/-/_/g;
+    my ($opt, $values) = @_;
+    $values = lc($values);
+    $values =~ s/-/_/g;
 
-    $opt_autolabel_seen = 1;
-    my @ok = qw(other_config non_amanda volume_error empty);
-    for (@ok) {
-	if ($val eq $_) {
-	    $opt_autolabel->{$_} = 1;
-	    return;
-	}
-    }
-    if ($val eq 'any') {
+    my @values = split ' ', $values;
+    my @bad_values;
+    foreach my $val (@values) {
+	$opt_autolabel_seen = 1;
+	my @ok = qw(other_config non_amanda volume_error empty);
 	for (@ok) {
-	    $opt_autolabel->{$_} = 1;
+	    if ($val eq $_) {
+		$opt_autolabel->{$_} = 1;
+		$val = "";
+	    }
 	}
-	return;
+	if ($val eq 'any') {
+	    for (@ok) {
+		$opt_autolabel->{$_} = 1;
+	    }
+	    $val = "";
+	}
+	push @bad_values, $val if $val ne "";
     }
-    usage("unknown --autolabel value '$val'");
+    if (@bad_values) {
+	usage("unknown --autolabel value '" . join(',', @bad_values) . "'");
+    }
 }
 
 debug("Arguments: " . join(' ', @ARGV));

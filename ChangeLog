@@ -1,3 +1,7 @@
+2013-07-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Accept multiple options to --autolabel
+	  argument.
+
 2013-07-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Undo previous patch.
 	* device-src/s3-device.c: Verify the bucket can be used as a subdomain
