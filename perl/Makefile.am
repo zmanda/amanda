@@ -279,6 +279,12 @@ endif
 EXTRA_DIST += $(AmandaChanger_DATA)
 
 if WANT_SERVER
+# PACKAGE: Amanda::Status
+Amanda_DATA += Amanda/Status.pm
+endif
+EXTRA_DIST += Amanda/Status.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::JSON
 Amanda_DATA += Amanda/JSON.pm
 endif
@@ -293,6 +299,7 @@ AmandaJSON_DATA = \
 	Amanda/JSON/Device.pm \
 	Amanda/JSON/Dle.pm \
 	Amanda/JSON/Label.pm \
+	Amanda/JSON/Status.pm \
 	Amanda/JSON/Tapelist.pm
 PM_FILES += $(AmandaJSON_DATA)
 endif

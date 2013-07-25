@@ -83,13 +83,14 @@ cmdfile_flush(
     cmddata_t *cmddata = value;
     cmdfile_data_t *data = user_data;
 
-    if (g_str_equal(data->holding_file, cmddata->holding_file)) {
+    if (cmddata->operation == CMD_FLUSH &&
+	g_str_equal(data->holding_file, cmddata->holding_file)) {
 	if (data->ids) {
-	    char *ids = g_strdup_printf("%s,%d", data->ids, id);
+	    char *ids = g_strdup_printf("%s,%d;%s", data->ids, id, cmddata->storage_dest);
 	    g_free(data->ids);
 	    data->ids = ids;
 	} else {
-	    data->ids = g_strdup_printf("%d", id);
+	    data->ids = g_strdup_printf("%d;%s", id, cmddata->storage_dest);
 	}
     }
     cmddata->working_pid = getpid();
@@ -444,7 +445,7 @@ main(
 	    cmddata->id = cmddatas->max_id;
 	    g_hash_table_insert(cmddatas->cmdfile,
 				GINT_TO_POINTER(cmddata->id), cmddata);
-	    data.ids = g_strdup_printf("%d", cmddata->id);
+	    data.ids = g_strdup_printf("%d;%s", cmddata->id, (char *)il->data);
 	}
 
 	qdisk = quote_string(file.disk);

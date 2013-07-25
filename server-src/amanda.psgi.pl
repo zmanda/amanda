@@ -46,6 +46,7 @@ use Amanda::JSON::DB::Catalog;
 use Amanda::JSON::Device;
 use Amanda::JSON::Dle;
 use Amanda::JSON::Label;
+use Amanda::JSON::Status;
 use Amanda::JSON::Tapelist;
 
 Amanda::Util::setup_application("amjson-server", "server", $CONTEXT_CMDLINE);
@@ -93,5 +94,8 @@ $rpc->register( 'Amanda::JSON::Label::no_reuse', \&Amanda::JSON::Label::no_reuse
 
 $rpc->register( 'Amanda::JSON::Device::read_label', \&Amanda::JSON::Device::read_label );
 $rpc->register( 'Amanda::JSON::Device::get_properties', \&Amanda::JSON::Device::get_properties );
+
+$rpc->register( 'Amanda::JSON::Status::current', \&Amanda::JSON::Status::current );
+$rpc->register( 'Amanda::JSON::Status::stream', \&Amanda::JSON::Status::stream );
 
 $rpc->to_app;

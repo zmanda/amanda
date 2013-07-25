@@ -1771,8 +1771,8 @@ handle_taper_result(
 	    assert(dp == wtaper->disk);
 
 	    qname = quote_string(dp->name);
-	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
-		   walltime_str(curclock()), dp->host->hostname, qname);
+	    g_printf(_("driver: finished-cmd time %s taper %s worker %s wrote %s:%s\n"),
+		   walltime_str(curclock()), taper->name, wtaper->name, dp->host->hostname, qname);
 	    fflush(stdout);
 
 	    if (g_str_equal(result_argv[3], "INPUT-ERROR")) {
@@ -1828,8 +1828,8 @@ handle_taper_result(
 	    assert(dp == wtaper->disk);
 
 	    qname = quote_string(dp->name);
-	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
-		   walltime_str(curclock()), dp->host->hostname, qname);
+	    g_printf(_("driver: finished-cmd time %s taper %s worker %s wrote %s:%s\n"),
+		   walltime_str(curclock()), taper->name, wtaper->name, dp->host->hostname, qname);
 	    fflush(stdout);
 
 	    if (g_str_equal(result_argv[3], "INPUT-ERROR")) {
@@ -1974,7 +1974,7 @@ handle_taper_result(
 		    }
 		    taper->nb_wait_reply++;
 		    taper->nb_scan_volume++;
-		    taper_cmd(taper, wtaper, START_TAPER, NULL, wtaper1->name, 0,
+		    taper_cmd(taper, wtaper1, START_TAPER, NULL, wtaper1->name, 0,
 			      driver_timestamp);
 		    break;
 		}
@@ -2414,7 +2414,6 @@ dumper_chunker_result(
     off_t dummy;
     off_t size;
     int is_partial;
-    char *qname;
 
     dumper = sched(dp)->dumper;
     chunker = dumper->chunker;
@@ -2425,9 +2424,9 @@ dumper_chunker_result(
     activehd = sched(dp)->activehd;
 
     if(dumper->result == DONE && chunker->result == DONE) {
+	char *qname = quote_string(dp->name);/*quote to take care of spaces*/
 	update_info_dumper(dp, sched(dp)->origsize,
 			   sched(dp)->dumpsize, sched(dp)->dumptime);
-	qname = quote_string(dp->name);/*quote to take care of spaces*/
 
 	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
 		dp->host->hostname, qname, sched(dp)->datestamp,
@@ -2477,6 +2476,7 @@ dumper_chunker_result(
 
 	    /* If the dle/level must go to the storage */
 	    if (dump_match_selection(taper->storage_name, dp)) {
+		char *qname = quote_string(dp->name);
 		sched(dp)->nb_flush++;
 		enqueue_disk(&taper->tapeq, dp);
 
@@ -2500,6 +2500,9 @@ dumper_chunker_result(
 		}
 		g_hash_table_insert(sched(dp)->to_storage, taper->storage_name,
 				GINT_TO_POINTER(cmddata->id));
+		g_printf("driver: to write host %s disk %s date %s on storage %s\n",
+			 dp->host->hostname, qname, driver_timestamp, taper->storage_name);
+		amfree(qname);
 	    }
 	}
     }
@@ -3186,6 +3189,11 @@ read_flush(
 	/* for all ids */
 	ids_array = g_strsplit(ids, ",", 0);
 	for (one_id = ids_array; *one_id != NULL; one_id++) {
+	    char *storage = strchr(*one_id, ':');
+	    if (storage) {
+		*storage = '\0';
+		storage++;
+	    }
 	    id = atoi(*one_id);
 	    cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(id));
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
@@ -4063,8 +4071,9 @@ short_dump_state(void)
     nidle = 0;
     for(i = 0; i < inparallel; i++) if(!dmptable[i].busy) nidle++;
     g_printf(_(" idle-dumpers: %d"), nidle);
+    g_printf(" qlen");
     for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	g_printf(_(" qlen tapeq %s: %d"), taper->name, queue_length(&taper->tapeq));
+	g_printf(_(" tapeq %s: %d"), taper->name, queue_length(&taper->tapeq));
     }
     g_printf(_(" runq: %d"), queue_length(&runq));
     g_printf(_(" directq: %d"), queue_length(&directq));

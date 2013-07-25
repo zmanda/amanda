@@ -541,25 +541,26 @@ main(
 		    cmddata->id = cmddatas->max_id;
 		    g_hash_table_insert(cmddatas->cmdfile,
 				    GINT_TO_POINTER(cmddatas->max_id), cmddata);
-		    data.ids = g_strdup_printf("%d", cmddata->id);
+		    data.ids = g_strdup_printf("%d;%s", cmddata->id, (char *)il->data);
 		}
 	    }
 
-	    qdisk = quote_string(file.disk);
-	    qhname = quote_string((char *)holding_file->data);
-	    line = g_strdup_printf("FLUSH %s %s %s %s %d %s",
-		    data.ids,
-		    file.name,
-		    qdisk,
-		    file.datestamp,
-		    file.dumplevel,
-		    qhname);
-	    g_ptr_array_add(flush_ptr, line);
-	    log_add(L_DISK, "%s %s", file.name, qdisk);
-
+	    if (data.ids && *data.ids) {
+		qdisk = quote_string(file.disk);
+		qhname = quote_string((char *)holding_file->data);
+		line = g_strdup_printf("FLUSH %s %s %s %s %d %s",
+				       data.ids,
+				       file.name,
+				       qdisk,
+				       file.datestamp,
+				       file.dumplevel,
+				       qhname);
+		g_ptr_array_add(flush_ptr, line);
+		log_add(L_DISK, "%s %s", file.name, qdisk);
+		amfree(qdisk);
+		amfree(qhname);
+	    }
 	    g_free(data.ids);
-	    amfree(qdisk);
-	    amfree(qhname);
 	    dumpfile_free_data(&file);
 	}
 	// NULL terminate the array
@@ -3438,20 +3439,30 @@ cmdfile_flush(
     int id = GPOINTER_TO_INT(key);
     cmddata_t *cmddata = value;
     cmdfile_data_t *data = user_data;
-    storage_t *storage = lookup_storage(cmddata->storage_dest);
 
-    if (storage && storage_get_autoflush(storage)) {
-	if (cmddata->operation == CMD_FLUSH &&
-	    g_str_equal(data->holding_file, cmddata->holding_file)) {
-	    if (data->ids) {
-		char *ids = g_strdup_printf("%s,%d", data->ids, id);
-		g_free(data->ids);
-		data->ids = ids;
+    if (cmddata->operation == CMD_FLUSH &&
+	g_str_equal(data->holding_file, cmddata->holding_file)) {
+	storage_t *storage = lookup_storage(cmddata->storage_dest);
+	if (storage) {
+	    if (storage_get_autoflush(storage)) {
+		if (data->ids) {
+		    char *ids = g_strdup_printf("%s,%d;%s", data->ids, id, cmddata->storage_dest);
+		    g_free(data->ids);
+		    data->ids = ids;
+		} else {
+		    data->ids = g_strdup_printf("%d;%s", id, cmddata->storage_dest);
+		}
+		cmddata->working_pid = getppid();
 	    } else {
-		data->ids = g_strdup_printf("%d", id);
+		if (!data->ids) {
+		    data->ids = strdup("");
+		}
+	    }
+	} else {
+	    if (!data->ids) {
+		data->ids = strdup("");
 	    }
 	}
-	cmddata->working_pid = getppid();
     }
 }
 

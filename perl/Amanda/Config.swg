@@ -36,7 +36,7 @@
 %define constant_pod(DESCRIPTION, FORALL_FN)
 %perlcode %{
 
-use Amanda::Config::FoldingHash;
+require Amanda::Config::FoldingHash;
 
 =pod
 

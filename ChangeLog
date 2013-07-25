@@ -1,3 +1,29 @@
+2013-07-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Use Amanda::Status module
+	* perl/Amanda/Status.pm: New perl module, rewrite of amstatus.
+	* perl/Amanda/Config.swg: require Amanda::Config::FoldingHash.
+	* perl/Amanda/Config/FoldingHash.pm: s/use/require/
+	* perl/Amanda/JSON/RPC/Dispatcher.pm: Handle streaming reply.
+	* perl/Amanda/JSON/Status.pm: New JSON perl module.
+	* perl/Amanda/Message.pod: 1800000  Amanda::Status::Message
+	* perl/Amanda/Taper/Protocol.pm: Add taper_name and storage on
+	 START-TAPER.
+	* perl/Amanda/Taper/Worker.pm (new): Taper taper_name as argument.
+	* perl/Amanda/Taper/Controller.pm: Add taper_name argument to
+	 Controller.
+	* perl/Makefile.am: Add Amanda/Status.pm and Amanda/JSON/Status.pm
+	* server-src/amanda.psgi.pl: Register Amanda::JSON::Status::current
+	* server-src/amflush.c: Add storage in FLUSH line.
+	* server-src/planner.c: Add storage in FLUSH line.
+	* server-src/driver.c: Add more date in stdout file.
+	* server-src/driverio.c: Add taper and storage in START-TAPER line.
+	* installcheck/amstatus.pl: Fix for new amstatus output.
+	* installcheck/catalogs/chunker-partial.cat,
+	  installcheck/catalogs/normal.cat,
+	  installcheck/catalogs/taper-parallel-write.cat,
+	  installcheck/catalogs/quoted.cat: Fix for new amdump.X format.
+	* installcheck/taper.pl: Fx for new amdump.X format.
+
 2013-07-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Undo previous patch.
 	* device-src/s3-device.c: Verify the bucket can be used as a subdomain

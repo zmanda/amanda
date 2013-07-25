@@ -1,8 +1,8 @@
 package Amanda::Config::FoldingHash;
 use Tie::Hash;
 use base 'Tie::StdHash';
-use Amanda::Config;
-use Amanda::Debug;
+require Amanda::Config;
+require Amanda::Debug;
 
 use strict;
 use warnings;

@@ -224,6 +224,7 @@ startup_tape_process(
 	    aclose(fd[1]);
 	    taper->fd = fd[0];
 	}
+	g_fprintf(stderr, "driver: taper %s storage %s tape_size %lld\n", taper->name, taper->storage_name, (long long)taper->tape_length);
     }
 }
 
@@ -508,7 +509,9 @@ taper_cmd(
     switch(cmd) {
     case START_TAPER:
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", destname,
+			    " ", taper->name,
+			    " ", wtaper->name,
+			    " ", taper->storage_name,
 			    " ", datestamp,
 			    "\n", NULL);
 	break;

@@ -234,7 +234,7 @@ sub msg_START_TAPER {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    my $worker = new Amanda::Taper::Worker($params{'worker_name'}, $self,
+    my $worker = new Amanda::Taper::Worker($params{'taper_name'}, $params{'worker_name'}, $self,
 				  $params{'timestamp'});
 
     $self->{'worker'}->{$params{'worker_name'}} = $worker;

@@ -10,6 +10,7 @@ READING CONF INFO...
 planner: timestamp 20080618130147
 planner: time 0.000: startup took 0.000 secs
 
+driver: taper taper0 storage TESTCONF tape_size 102400
 SENDING FLUSHES...
 ENDFLUSH
 
@@ -23,7 +24,7 @@ GETTING ESTIMATES...
 driver: pid 4080 executable /path/to/driver version 9.8.7
 driver: adding holding disk 0 dir /holding size 868352 chunksize 1048576
 reserving 0 out of 868352 for degraded-mode dumps
-driver: send-cmd time 0.015 to taper: START-TAPER worker0 20080618130147
+driver: send-cmd time 0.015 to taper0: START-TAPER taper0 worker0-0 TESTCONF 20080618130147
 taper: pid 4084 executable taper version 9.8.7
 driver: started dumper0 pid 4086
 driver: send-cmd time 0.031 to dumper0: START 20080618130147
@@ -63,8 +64,8 @@ DUMP clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" 20080618130147 14050 0 1
 dumper: pid 4086 executable dumper0 version 9.8.7
 dumper: pid 4095 executable dumper3 version 9.8.7
 taper: wrote label 'Conf-001'
-driver: result time 1.312 from taper: TAPER-OK worker0
-driver: state time 1.312 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: result time 1.312 from taper0: TAPER-OK worker0-0
+driver: state time 1.312 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
 driver: interface-state time 1.312 if default: free 600
 driver: hdisk-state time 1.312 hdisk 0: free 868352 dumpers 0
 driver: flush size 0
@@ -74,38 +75,38 @@ driver: send-cmd time 1.314 to chunker0: PORT-WRITE 00-00001 /holding/2008061813
 chunker: pid 4129 executable chunker0 version 9.8.7
 driver: result time 1.330 from chunker0: PORT 1487
 driver: send-cmd time 1.330 to dumper0: PORT-DUMP 00-00001 1487 NULL clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" NODEVICE 0 1970:1:1:0:0:0 GNUTAR X amanda X local |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n"
-driver: state time 6.408 free kps: 0 space: 868160 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 6.408 free kps: 0 space: 868160 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.408 if default: free 0
 driver: hdisk-state time 6.408 hdisk 0: free 868160 dumpers 1
 driver: result time 6.408 from dumper0: DONE 00-00001 100 100 0 "[sec 0.012 kb 100 kps 7915.1 orig-kb 100]"
 driver: finished-cmd time 6.408 dumper0 dumped clienthost:"C:\\Some Dir\\"
 driver: send-cmd time 6.408 to chunker0: DONE 00-00001
-driver: state time 6.408 free kps: 0 space: 868160 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 6.408 free kps: 0 space: 868160 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.408 if default: free 0
 driver: hdisk-state time 6.408 hdisk 0: free 868160 dumpers 1
 driver: result time 6.408 from chunker0: DONE 00-00001 100 "[sec 5.075 kb 100 kps 26.0]"
 driver: finished-cmd time 6.408 chunker0 chunked clienthost:"C:\\Some Dir\\"
-driver: send-cmd time 6.410 to taper: FILE-WRITE worker0 00-00002 /holding/20080618130147/clienthost._some_dir.0 clienthost "C:\\Some Dir\\" 0 20080618130147 0
+driver: send-cmd time 6.410 to taper0: FILE-WRITE worker0-0 00-00002 /holding/20080618130147/clienthost._some_dir.0 clienthost "C:\\Some Dir\\" 0 20080618130147 0
 driver: startaflush: FIRST clienthost "C:\\Some Dir\\" 132 102400
-driver: state time 6.410 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 6.410 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.410 if default: free 600
 driver: hdisk-state time 6.410 hdisk 0: free 868220 dumpers 0
-driver: result time 6.411 from taper: REQUEST-NEW-TAPE worker0 00-00002
-driver: send-cmd time 6.411 to taper: NEW-TAPE worker0 00-00002
-driver: state time 6.412 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: result time 6.411 from taper0: REQUEST-NEW-TAPE worker0-0 00-00002
+driver: send-cmd time 6.411 to taper0: NEW-TAPE worker0-0 00-00002
+driver: state time 6.412 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.412 if default: free 600
 driver: hdisk-state time 6.412 hdisk 0: free 868220 dumpers 0
-driver: result time 6.412 from taper: NEW-TAPE worker0 00-00002 Conf-001
-driver: state time 6.414 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: result time 6.412 from taper0: NEW-TAPE worker0-0 00-00002 Conf-001
+driver: state time 6.414 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.414 if default: free 600
 driver: hdisk-state time 6.414 hdisk 0: free 868220 dumpers 0
-driver: result time 6.415 from taper: PARTDONE worker0 00-00002 Conf-001 1 100 "[sec 0.001177 kb 100 kps 84961.767205]"
-driver: state time 6.415 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: result time 6.415 from taper0: PARTDONE worker0-0 00-00002 Conf-001 1 100 "[sec 0.001177 kb 100 kps 84961.767205]"
+driver: state time 6.415 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.415 if default: free 600
 driver: hdisk-state time 6.415 hdisk 0: free 868220 dumpers 0
-driver: result time 6.415 from taper: DONE worker0 00-00002 INPUT-GOOD TAPE-GOOD "00000000:0" "[sec 0.001177 kb 100 kps 84961.767205]" "" ""
+driver: result time 6.415 from taper0: DONE worker0-0 00-00002 INPUT-GOOD TAPE-GOOD "00000000:0" "[sec 0.001177 kb 100 kps 84961.767205]" "" ""
 driver: finished-cmd time 6.415 taper wrote clienthost:"C:\\Some Dir\\"
-driver: state time 6.415 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 6.415 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.415 if default: free 600
 driver: hdisk-state time 6.415 hdisk 0: free 868352 dumpers 0
 driver: QUITTING time 6.415 telling children to quit
@@ -113,7 +114,7 @@ driver: send-cmd time 6.415 to dumper0: QUIT
 driver: send-cmd time 6.415 to dumper1: QUIT
 driver: send-cmd time 6.417 to dumper2: QUIT
 driver: send-cmd time 6.417 to dumper3: QUIT
-driver: send-cmd time 6.418 to taper: QUIT
+driver: send-cmd time 6.418 to taper0: QUIT
 taper: DONE
 driver: FINISHED time 7.426
 amdump: end at Wed Jun 18 13:01:55 EDT 2008

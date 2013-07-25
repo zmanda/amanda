@@ -40,7 +40,7 @@ $cat->install();
 ok(run('amstatus', 'TESTCONF'),
     "plain amstatus runs without error");
 like($Installcheck::Run::stdout,
-    qr{clienthost:/some/dir\s*0\s*100k\s*finished\s*\(13:01:53\)},
+    qr{clienthost:/some/dir [0-9]{14}\s*0\s*100k\s*dump done, written\s*\(13:01:53\)},
     "output is reasonable");
 
 ok(run('amstatus', 'TESTCONF', '--summary'),
@@ -61,7 +61,7 @@ ok(run('amstatus', 'TESTCONF'),
     "amstatus runs without error with quoted disknames");
 like($Installcheck::Run::stdout,
     # note that amstatus' output is quoted, so backslashes are doubled
-    qr{clienthost:"C:\\\\Some Dir\\\\"\s*0\s*100k\s*finished\s*\(13:01:53\)},
+    qr{clienthost:"C:\\\\Some Dir\\\\" [0-9]{14}\s*0\s*100k\s*dump done, written\s*\(13:01:53\)},
     "output is correct");
 
 ## now test a chunker partial result
@@ -74,7 +74,7 @@ ok(!run('amstatus', 'TESTCONF'),
 is($Installcheck::Run::exit_code, 4,
     "correct exit code for chunker partial");
 like($Installcheck::Run::stdout,
-    qr{localhost:/etc 0\s*80917k dump failed: dumper: \[/usr/sbin/tar returned error\], finished \(7:49:53\)},
+    qr{localhost:/etc [0-9]{14} 0\s*80917k dump failed: dumper: \[/usr/sbin/tar returned error\], written \(7:49:53\)},
     "output is correct");
 
 ## now test a taper-parallel-write > 1
@@ -85,5 +85,5 @@ $cat->install();
 ok(run('amstatus', 'TESTCONF'),
     "amstatus with taper-parallel-write runs without error");
 like($Installcheck::Run::stdout,
-    qr{\s*tape 3\s*:\s*1\s*142336k\s*142336k \(  5.82\%\) amstatus_test_3-AA-003 \(1 chunks\)},
+    qr{\s*tape 3\s*:\s*1\s*142336k\s*142336k \(  5.82\%\) amstatus_test_3-AA-003 \(1 parts\)},
     "output is correct");

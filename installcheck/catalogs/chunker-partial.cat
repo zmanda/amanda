@@ -35,6 +35,7 @@ READING CONF INFO...
 planner: timestamp 20090410074759
 planner: time 0.001: startup took 0.001 secs
 
+driver: taper taper0 storage TESTCONF tape_size 122880
 SENDING FLUSHES...
 ENDFLUSH
 
@@ -50,7 +51,7 @@ driver: pid 4109 executable /usr/lib/amanda/driver version 3.0.0
 driver: tape size 122880
 driver: adding holding disk 0 dir /var/lib/amanda/staging size 1215488 chunksize 1048576
 reserving 1215488 out of 1215488 for degraded-mode dumps
-driver: send-cmd time 0.010 to taper: START-TAPER worker0 20090410074759
+driver: send-cmd time 0.010 to taper0: START-TAPER taper0 worker0-0 TESTCONF 20090410074759
 driver: started dumper0 pid 4116
 driver: send-cmd time 0.012 to dumper0: START 20090410074759
 driver: started dumper1 pid 4117
@@ -90,8 +91,8 @@ dumper: pid 4119 executable dumper3 version 3.0.0
 dumper: pid 4118 executable dumper2 version 3.0.0
 dumper: pid 4117 executable dumper1 version 3.0.0
 taper: wrote label 'maitreyee-010'
-driver: result time 2.928 from taper: TAPER-OK worker0
-driver: state time 2.937 free kps: 8000 space: 1215488 taper: idle idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: result time 2.928 from taper0: TAPER-OK worker0-0
+driver: state time 2.937 free kps: 8000 space: 1215488 taper: idle idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
 driver: interface-state time 2.937 if default: free 8000
 driver: hdisk-state time 2.937 hdisk 0: free 1215488 dumpers 0
 driver: flush size 0
@@ -100,22 +101,22 @@ driver: send-cmd time 2.954 to chunker0: START 20090410074759
 driver: send-cmd time 2.954 to chunker0: PORT-WRITE 00-00001 /var/lib/amanda/staging/20090410074759/localhost._etc.0 localhost ffffffff9efeffffffffff01 /etc 0 1970:1:1:0:0:0 1048576 APPLICATION 80896 |;auth=bsdtcp;index;
 chunker: pid 4160 executable chunker0 version 3.0.0
 driver: result time 3.000 from chunker0: PORT 11005
-driver: send-cmd time 3.001 to dumper0: PORT-DUMP 00-00001 11005 localhost ffffffff9efeffffffffff01 /etc /etc 0 1970:1:1:0:0:0 amsuntar X X X bsdtcp |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <backup-program>\n    <plugin>amsuntar</plugin>\n    <property>\n      <name>EXTENDED-HEADERS</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>EXTENDED-ATTRIBUTES</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>BLOCK-SIZE</name>\n      <value>64</value>\n    </property>\n  </backup-program>\n"
-driver: state time 3.034 free kps: 7071 space: 1134592 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: send-cmd time 3.001 to dumper0: PORT-DUMP 00-00001 11005 NULL localhost ffffffff9efeffffffffff01 /etc /etc 0 1970:1:1:0:0:0 amsuntar X X X bsdtcp |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <backup-program>\n    <plugin>amsuntar</plugin>\n    <property>\n      <name>EXTENDED-HEADERS</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>EXTENDED-ATTRIBUTES</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>BLOCK-SIZE</name>\n      <value>64</value>\n    </property>\n  </backup-program>\n"
+driver: state time 3.034 free kps: 7071 space: 1134592 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 3.034 if default: free 7071
 driver: hdisk-state time 3.034 hdisk 0: free 1134592 dumpers 1
-driver: state time 49.732 free kps: 7071 space: 1134592 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 49.732 free kps: 7071 space: 1134592 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 49.732 if default: free 7071
 driver: hdisk-state time 49.732 hdisk 0: free 1134592 dumpers 1
 driver: result time 49.732 from chunker0: RQ-MORE-DISK 00-00001
 driver: send-cmd time 49.733 to chunker0: CONTINUE 00-00001 /var/lib/amanda/staging/20090410074759/localhost._etc.0 1048576 4096
 dumper: kill index command
-driver: state time 49.901 free kps: 7071 space: 1130496 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 49.901 free kps: 7071 space: 1130496 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 49.901 if default: free 7071
 driver: hdisk-state time 49.901 hdisk 0: free 1130496 dumpers 1
 driver: result time 49.901 from dumper0: FAILED 00-00001 "[/usr/sbin/tar returned error]"
 driver: send-cmd time 49.901 to chunker0: FAILED 00-00001
-driver: state time 49.906 free kps: 7071 space: 1130496 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 49.906 free kps: 7071 space: 1130496 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 49.906 if default: free 7071
 driver: hdisk-state time 49.906 hdisk 0: free 1130496 dumpers 1
 driver: result time 49.906 from chunker0: PARTIAL 00-00001 80909 "[sec 46.789 kb 80909 kps 1729.9]"
@@ -125,45 +126,45 @@ driver: send-cmd time 50.094 to chunker0: START 20090410074759
 driver: send-cmd time 50.094 to chunker0: PORT-WRITE 00-00002 /var/lib/amanda/staging/20090410074759/localhost._etc.0 localhost ffffffff9efeffffffffff01 /etc 0 1970:1:1:0:0:0 1048576 APPLICATION 84960 |;auth=bsdtcp;index;
 chunker: pid 4184 executable chunker0 version 3.0.0
 driver: result time 50.139 from chunker0: PORT 11035
-driver: send-cmd time 50.140 to dumper0: PORT-DUMP 00-00002 11035 localhost ffffffff9efeffffffffff01 /etc /etc 0 1970:1:1:0:0:0 amsuntar X X X bsdtcp |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <backup-program>\n    <plugin>amsuntar</plugin>\n    <property>\n      <name>EXTENDED-HEADERS</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>EXTENDED-ATTRIBUTES</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>BLOCK-SIZE</name>\n      <value>64</value>\n    </property>\n  </backup-program>\n"
-driver: state time 50.175 free kps: 7071 space: 1130528 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: send-cmd time 50.140 to dumper0: PORT-DUMP 00-00002 11035 NULL localhost ffffffff9efeffffffffff01 /etc /etc 0 1970:1:1:0:0:0 amsuntar X X X bsdtcp |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <backup-program>\n    <plugin>amsuntar</plugin>\n    <property>\n      <name>EXTENDED-HEADERS</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>EXTENDED-ATTRIBUTES</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>BLOCK-SIZE</name>\n      <value>64</value>\n    </property>\n  </backup-program>\n"
+driver: state time 50.175 free kps: 7071 space: 1130528 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 50.175 if default: free 7071
 driver: hdisk-state time 50.175 hdisk 0: free 1130528 dumpers 1
-driver: state time 84.740 free kps: 7071 space: 1130528 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 84.740 free kps: 7071 space: 1130528 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 84.740 if default: free 7071
 driver: hdisk-state time 84.740 hdisk 0: free 1130528 dumpers 1
 driver: result time 84.740 from dumper0: FAILED 00-00002 "[/usr/sbin/tar returned error]"
 driver: send-cmd time 84.740 to chunker0: FAILED 00-00002
-driver: state time 84.745 free kps: 7071 space: 1130528 taper: idle idle-dumpers: 3 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 84.745 free kps: 7071 space: 1130528 taper: idle idle-dumpers: 3 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 84.745 if default: free 7071
 driver: hdisk-state time 84.745 hdisk 0: free 1130528 dumpers 1
 driver: result time 84.745 from chunker0: PARTIAL 00-00002 80917 "[sec 34.565 kb 80917 kps 2341.9]"
 driver: finished-cmd time 84.745 chunker0 chunked localhost:/etc
 dumper: kill index command
-driver: send-cmd time 84.890 to taper: FILE-WRITE worker0 00-00003 /var/lib/amanda/staging/20090410074759/localhost._etc.0 localhost /etc 0 20090410074759 0
+driver: send-cmd time 84.890 to taper0: FILE-WRITE worker0-0 00-00003 /var/lib/amanda/staging/20090410074759/localhost._etc.0 localhost /etc 0 20090410074759 0
 driver: startaflush: FIRST localhost /etc 80949 122880
-driver: state time 84.890 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 84.890 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 84.890 if default: free 8000
 driver: hdisk-state time 84.890 hdisk 0: free 1134539 dumpers 0
-driver: state time 84.891 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 84.891 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 84.891 if default: free 8000
 driver: hdisk-state time 84.891 hdisk 0: free 1134539 dumpers 0
-driver: result time 84.891 from taper: REQUEST-NEW-TAPE worker0 00-00003
-driver: send-cmd time 84.891 to taper: NEW-TAPE worker0 00-00003
-driver: state time 84.906 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: result time 84.891 from taper0: REQUEST-NEW-TAPE worker0-0 00-00003
+driver: send-cmd time 84.891 to taper0: NEW-TAPE worker0-0 00-00003
+driver: state time 84.906 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 84.906 if default: free 8000
 driver: hdisk-state time 84.906 hdisk 0: free 1134539 dumpers 0
-driver: result time 84.906 from taper: NEW-TAPE worker0 00-00003 maitreyee-010
-driver: state time 114.910 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: result time 84.906 from taper0: NEW-TAPE worker0-0 00-00003 maitreyee-010
+driver: state time 114.910 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 114.910 if default: free 8000
 driver: hdisk-state time 114.910 hdisk 0: free 1134539 dumpers 0
-driver: result time 114.911 from taper: PARTDONE worker0 00-00003 maitreyee-010 1 80917 "[sec 30.003926 kb 80917 kps 2696.880402]"
-driver: state time 114.911 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: result time 114.911 from taper0: PARTDONE worker0-0 00-00003 maitreyee-010 1 80917 "[sec 30.003926 kb 80917 kps 2696.880402]"
+driver: state time 114.911 free kps: 8000 space: 1134539 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 114.911 if default: free 8000
 driver: hdisk-state time 114.911 hdisk 0: free 1134539 dumpers 0
-driver: result time 114.911 from taper: DONE worker0 00-00003 INPUT-GOOD TAPE-GOOD "00000000:0" "[sec 30.003926 kb 80917 kps 2696.880402]" "" ""
+driver: result time 114.911 from taper0: DONE worker0-0 00-00003 INPUT-GOOD TAPE-GOOD "00000000:0" "[sec 30.003926 kb 80917 kps 2696.880402]" "" ""
 driver: finished-cmd time 114.911 taper wrote localhost:/etc
-driver: state time 114.943 free kps: 8000 space: 1215488 taper: idle idle-dumpers: 4 qlen tapeq taper: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: state time 114.943 free kps: 8000 space: 1215488 taper: idle idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 114.943 if default: free 8000
 driver: hdisk-state time 114.943 hdisk 0: free 1215488 dumpers 0
 driver: QUITTING time 114.943 telling children to quit
@@ -171,7 +172,7 @@ driver: send-cmd time 114.943 to dumper0: QUIT ""
 driver: send-cmd time 114.944 to dumper1: QUIT ""
 driver: send-cmd time 114.944 to dumper2: QUIT ""
 driver: send-cmd time 114.944 to dumper3: QUIT ""
-driver: send-cmd time 114.944 to taper: QUIT
+driver: send-cmd time 114.944 to taper0: QUIT
 taper: DONE
 driver: FINISHED time 115.961
 amdump: end at Fri Apr 10 07:49:55 PDT 2009

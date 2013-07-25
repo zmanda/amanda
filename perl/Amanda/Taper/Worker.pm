@@ -63,12 +63,14 @@ our $tape_num = 0;
 
 sub new {
     my $class           = shift;
+    my $taper_name      = shift;
     my $worker_name     = shift;
     my $controller      = shift;
     my $write_timestamp = shift;
 
     my $self = bless {
 	state       => "init",
+	taper_name  => $taper_name,
 	worker_name => $worker_name,
 	controller  => $controller,
 	scribe      => undef,
@@ -550,7 +552,7 @@ sub create_status_file {
     # tell amstatus about it by writing it to the dump log
     my $qdisk = Amanda::Util::quote_string($self->{'diskname'});
     my $qhost = Amanda::Util::quote_string($self->{'hostname'});
-    print STDERR "taper: status file $qhost $qdisk:" .
+    print STDERR "taper: status file $self->{'taper_name'} $self->{'worker_name'} $qhost $qdisk:" .
 		    "$self->{status_filename}\n";
     print {$self->{status_fh}} "0";
 

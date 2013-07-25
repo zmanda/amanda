@@ -120,7 +120,7 @@ sub run_taper {
 	$taper_reply_timeout = 120;
     }
 
-    taper_cmd("START-TAPER worker0 $datestamp");
+    taper_cmd("START-TAPER taper0 worker0-0 TESTCONF $datestamp");
 }
 
 sub wait_for_exit {
@@ -269,7 +269,7 @@ sub write_to_port {
     my ($port_cmd, $size, $hostname, $disk, $expect_error) = @_;
 
     my ($header_port, $data_addr) =
-	($last_taper_reply =~ /^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+)/);
+	($last_taper_reply =~ /^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+)/);
 
     # just run this in the child
     return unless fork() == 0;
@@ -300,19 +300,19 @@ sub write_to_port {
 $handle = "11-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "single-part and multipart FILE-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /home 0 $datestamp \"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" 12");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 1024 "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /home 0 $datestamp \"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" 12");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 1024 "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]"$/,
 	"got PARTDONE") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]" "" ""$/,
 	"got DONE") or die;
 
 ##
@@ -321,12 +321,12 @@ like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:104857
 
 $handle = '11-22222';
 make_holding_file(1024*1024, "localhost", "/usr");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -400,21 +400,21 @@ check_logs([
 $handle = '11-22223';
 $datestamp = "20070102030406";
 run_taper(4096, "multipart partial FILE-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/usr", 1);
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -434,34 +434,34 @@ check_logs([
 $handle = "11-33333";
 $datestamp = "19780615010203";
 run_taper(4096, "multipart PORT-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE worker0 $handle localhost /var 0 $datestamp 524288 \"\" 393216 1 0 \"\" \"\" 0 AMANDA");
-like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+taper_cmd("PORT-WRITE worker0-0 $handle localhost /var 0 $datestamp 524288 \"\" 393216 1 0 \"\" \"\" 0 AMANDA");
+like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 63*32768, "localhost", "/var", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 4 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 4 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 4") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 5 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 5 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 5") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 6 96 "\[sec [\d.]+ bytes 98304 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 6 96 "\[sec [\d.]+ bytes 98304 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 6") or die;
-like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE worker0 $handle 712 00000000:0 00000000:0 00000000:0");
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "1ed19554:2064384" "\[sec [\d.]+ bytes 2064384 kps [\d.]+ orig-kb 712\]" "" ""$/,
+taper_cmd("DONE worker0-0 $handle 712 00000000:0 00000000:0 00000000:0");
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "1ed19554:2064384" "\[sec [\d.]+ bytes 2064384 kps [\d.]+ orig-kb 712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -485,14 +485,14 @@ check_logs([
 $handle = "11-44444";
 $datestamp = "19411207000000";
 run_taper(4096, "testing NO-NEW-TAPE from the driver on 1st request");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /home 0 $datestamp 0 \"\" 0 1 0 \"\" \"\" 0 912");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("NO-NEW-TAPE worker0 $handle sorry");
-like(taper_reply, qr/^FAILED worker0 $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /home 0 $datestamp 0 \"\" 0 1 0 \"\" \"\" 0 912");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("NO-NEW-TAPE worker0-0 $handle sorry");
+like(taper_reply, qr/^FAILED worker0-0 $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
 	"got FAILED") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -509,34 +509,34 @@ check_logs([
 $handle = "11-55555";
 $datestamp = "19750711095836";
 run_taper(1024, "PORT-WRITE retry on EOT (mem cache)");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE worker0 $handle localhost /usr/local 0 $datestamp 786432 \"\" 786432 1 0 \"\" \"\" 0 AMANDA");
-like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+taper_cmd("PORT-WRITE worker0-0 $handle localhost /usr/local 0 $datestamp 786432 \"\" 786432 1 0 \"\" \"\" 0 AMANDA");
+like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 1575936, "localhost", "/usr/local", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 3 "\[sec [\d.]+ bytes 3072 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 3 "\[sec [\d.]+ bytes 3072 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE worker0 $handle 1012 00000000:0 00000000:0 00000000:0");
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "557f9f1d:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1012\]" "" ""$/,
+taper_cmd("DONE worker0-0 $handle 1012 00000000:0 00000000:0 00000000:0");
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "557f9f1d:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1012\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -562,29 +562,29 @@ check_logs([
 $handle = "11-66666";
 $datestamp = "19470815000000";
 run_taper(1024, "FILE-WRITE retry on EOT");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(1575936, "localhost", "/usr");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp \"\" \"\" \"\" 1 786432 \"\" \"\" \"\" 1112");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp \"\" \"\" \"\" 1 786432 \"\" \"\" \"\" 1112");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+ orig-kb 1112\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 3 "\[sec [\d.]+ bytes 3072 kps [\d.]+ orig-kb 1112\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 3 "\[sec [\d.]+ bytes 3072 kps [\d.]+ orig-kb 1112\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "557f9f1d:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1112\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "557f9f1d:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1112\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -610,34 +610,34 @@ check_logs([
 $handle = "11-77777";
 $datestamp = "20090427212500";
 run_taper(1024, "PORT-WRITE retry on EOT (disk cache)");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE worker0 $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432 1 0 \"\" \"\" 0 AMANDA");
-like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+taper_cmd("PORT-WRITE worker0-0 $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432 1 0 \"\" \"\" 0 AMANDA");
+like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 1575936, "localhost", "/usr/local", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 768 "\[sec [\d.]+ bytes 786432 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 3 "\[sec [\d.]+ bytes 3072 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 3 "\[sec [\d.]+ bytes 3072 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE worker0 $handle 1212 00000000:0 00000000:0 00000000:0");
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "557f9f1d:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1212\]" "" ""$/,
+taper_cmd("DONE worker0-0 $handle 1212 00000000:0 00000000:0 00000000:0");
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "557f9f1d:1575936" "\[sec [\d.]+ bytes 1575936 kps [\d.]+ orig-kb 1212\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -664,38 +664,38 @@ check_logs([
 $handle = "11-88888";
 $datestamp = "20090424173000";
 run_taper(1024, "PORT-WRITE failure on EOT (no cache)");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE worker0 $handle localhost /var/log 0 $datestamp 0 \"\" 0 0 0 \"\" \"\" 0 AMANDA");
-like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+taper_cmd("PORT-WRITE worker0-0 $handle localhost /var/log 0 $datestamp 0 \"\" 0 0 0 \"\" \"\" 0 AMANDA");
+like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 1575936, "localhost", "/var/log", 1);
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTIAL worker0 $handle INPUT-GOOD TAPE-ERROR "00000000:0" "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "00000000:0" "\[sec [\d.]+ bytes 0 kps [\d.]+\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
 	"got PARTIAL") or die;
 # retry on the next tape
 $handle = "11-88899";
-taper_cmd("PORT-WRITE worker0 $handle localhost /boot 0 $datestamp 0 \"\" 0 0 0 \"\" \"\" 0 AMANDA");
-like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+taper_cmd("PORT-WRITE worker0-0 $handle localhost /boot 0 $datestamp 0 \"\" 0 0 0 \"\" \"\" 0 AMANDA");
+like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 65536, "localhost", "/boot", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 64 "\[sec [\d.]+ bytes 65536 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 64 "\[sec [\d.]+ bytes 65536 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("DONE worker0 $handle 64 00000000:0 00000000:0 00000000:0");
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "bfa9b227:65536" "\[sec [\d.]+ bytes 65536 kps [\d.]+ orig-kb 64\]" "" ""$/,
+taper_cmd("DONE worker0-0 $handle 64 00000000:0 00000000:0 00000000:0");
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "bfa9b227:65536" "\[sec [\d.]+ bytes 65536 kps [\d.]+ orig-kb 64\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -719,22 +719,22 @@ check_logs([
 $handle = "11-99999";
 $datestamp = "20100101000000";
 run_taper(512, "FILE-WRITE runs out of tapes");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(512*1024, "localhost", "/music");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /music 0 $datestamp \"\" \"\" \"\" 1 262144 \"none\" \"\" 10240 1312");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /music 0 $datestamp \"\" \"\" \"\" 1 262144 \"none\" \"\" 10240 1312");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]"$/,
 	"got PARTDONE for filenum 1 on first tape") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("NO-NEW-TAPE worker0 $handle \"that's enough\"");
-like(taper_reply, qr/^PARTIAL worker0 $handle INPUT-GOOD TAPE-CONFIG "d5194ae1:262144" "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]" "" "that's enough"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("NO-NEW-TAPE worker0-0 $handle \"that's enough\"");
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-CONFIG "d5194ae1:262144" "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1312\]" "" "that's enough"$/,
 	"got PARTIAL") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -756,30 +756,30 @@ check_logs([
 $handle = "22-00000";
 $datestamp = "20200202222222";
 run_taper(4096, "multipart PORT-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("PORT-WRITE worker0 $handle localhost /sbin 0 $datestamp 999999 \"\" 655360 1 \"\" \"\" \"\" \"\" AMANDA");
-like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+taper_cmd("PORT-WRITE worker0-0 $handle localhost /sbin 0 $datestamp 999999 \"\" 655360 1 \"\" \"\" \"\" \"\" AMANDA");
+like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_taper_reply, 63*32768, "localhost", "/sbin", 0);
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 640 "\[sec [\d.]+ bytes 655360 kps [\d.]+\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 640 "\[sec [\d.]+ bytes 655360 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 640 "\[sec [\d.]+ bytes 655360 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 640 "\[sec [\d.]+ bytes 655360 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 640 "\[sec [\d.]+ bytes 655360 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 640 "\[sec [\d.]+ bytes 655360 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 4 96 "\[sec [\d.]+ bytes 98304 kps [\d.]+\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 4 96 "\[sec [\d.]+ bytes 98304 kps [\d.]+\]"$/,
 	"got PARTDONE for filenum 4") or die;
-like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	"got DUMPER-STATUS request") or die;
-taper_cmd("FAILED worker0 $handle");
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "1ed19554:2064384" "\[sec [\d.]+ bytes 2064384 kps [\d.]+\]" "" ""$/,
+taper_cmd("FAILED worker0-0 $handle");
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "1ed19554:2064384" "\[sec [\d.]+ bytes 2064384 kps [\d.]+\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -801,38 +801,38 @@ check_logs([
 $handle = "33-11111";
 $datestamp = "20090101010000";
 run_taper(1024, "first in a sequence");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1412");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1412");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 232 "\[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 232 "\[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "414a5a23:500000" "\[sec [\d.]+ bytes 500000 kps [\d.]+ orig-kb 1412\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "414a5a23:500000" "\[sec [\d.]+ bytes 500000 kps [\d.]+ orig-kb 1412\]" "" ""$/,
 	"got DONE") or die;
 $handle = "33-22222";
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1512");
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1512");
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -859,39 +859,39 @@ cleanup_log();
 $handle = "33-33333";
 $datestamp = "20090202020000";
 run_taper(1024, "second in a sequence", keep_config => 1);
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF03$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF03$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
 $handle = "33-44444";
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 4 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 4 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 4") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
 
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -922,32 +922,32 @@ cleanup_log();
 $handle = "33-55555";
 $datestamp = "20090303030000";
 run_taper(1024, "failure to overwrite a volume", keep_config => 1);
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(32768, "localhost", "/u03");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u03 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1812");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u03 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1812");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
 # we've secretly replaced the tape in slot 1 with a read-only tape.. let's see
 # if anyone can tell the difference!
 chmod(0555, Installcheck::Run::vtape_dir(2));
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
 # NO-NEW-TAPE indicates it did *not* overwrite the tape
-like(taper_reply, qr/^NO-NEW-TAPE worker0 $handle$/,
-	"got proper NO-NEW-TAPE worker0 $handle"); # no "die" here, so we can restore perms
+like(taper_reply, qr/^NO-NEW-TAPE worker0-0 $handle$/,
+	"got proper NO-NEW-TAPE worker0-0 $handle"); # no "die" here, so we can restore perms
 chmod(0755, Installcheck::Run::vtape_dir(2));
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("NO-NEW-TAPE worker0 $handle \"sorry\"");
-like(taper_reply, qr/^FAILED worker0 $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("NO-NEW-TAPE worker0-0 $handle \"sorry\"");
+like(taper_reply, qr/^FAILED worker0-0 $handle INPUT-GOOD TAPE-CONFIG "" "?sorry"?.*$/,
 	"got FAILED") or die;
 taper_cmd("QUIT");
 wait_for_exit();
 
 # (logs aren't that interesting here - filled with VFS-specific error messages)
 
-# TODO: simulate an "erased" tape, to which taper should reply with "NEW-TAPE worker0 $handle" and
+# TODO: simulate an "erased" tape, to which taper should reply with "NEW-TAPE worker0-0 $handle" and
 # immediately REQUEST-NEW-TAPE.  I can't see a way to make the VFS device erase a
 # volume without start_device succeeding.
 
@@ -966,40 +966,40 @@ my $handle0 = "66-00000";
 my $handle1 = "66-11111";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("START-TAPER worker1 $datestamp");
-like(taper_reply, qr/^TAPER-OK worker1$/,
+taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
+like(taper_reply, qr/^TAPER-OK worker0-1$/,
        "got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle0$/,
-	"got REQUEST-NEW-TAPE worker0 $handle0") or die;
-taper_cmd("START-SCAN worker0 $handle0");
-taper_cmd("NEW-TAPE worker0 $handle0");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle0 TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle0") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle0 TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle0$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle0") or die;
+taper_cmd("START-SCAN worker0-0 $handle0");
+taper_cmd("NEW-TAPE worker0-0 $handle0");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle0 TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle0") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle0 TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle0 TESTCONF01 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle0 TESTCONF01 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle0 INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle0 INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE worker1 $handle1 \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker1 $handle1$/,
-	"got REQUEST-NEW-TAPE worker1 $handle1") or die;
-taper_cmd("START-SCAN worker1 $handle1");
-taper_cmd("NEW-TAPE worker1 $handle1");
-like(taper_reply, qr/^NEW-TAPE worker1 $handle1 TESTCONF02$/,
-	"got proper NEW-TAPE worker1 $handle1") or die;
-like(taper_reply, qr/^PARTDONE worker1 $handle1 TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+taper_cmd("FILE-WRITE worker0-1 $handle1 \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-1 $handle1$/,
+	"got REQUEST-NEW-TAPE worker0-1 $handle1") or die;
+taper_cmd("START-SCAN worker0-1 $handle1");
+taper_cmd("NEW-TAPE worker0-1 $handle1");
+like(taper_reply, qr/^NEW-TAPE worker0-1 $handle1 TESTCONF02$/,
+	"got proper NEW-TAPE worker0-1 $handle1") or die;
+like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker1 $handle1 TESTCONF02 2 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 2 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker1 $handle1 TESTCONF02 3 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 3 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 3 on second tape") or die;
-like(taper_reply, qr/^DONE worker1 $handle1 INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-1 $handle1 INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1016,8 +1016,8 @@ check_logs([
     qr(^PART taper "ST:TESTCONF" TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper "ST:TESTCONF" localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
-    qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
     qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
+    qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
 ], "two workers logged correctly 1");
 cleanup_log();
 
@@ -1026,37 +1026,37 @@ cleanup_log();
 $handle = "66-22222";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers and a take_scribe");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("START-TAPER worker1 $datestamp");
-like(taper_reply, qr/^TAPER-OK worker1$/,
+taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
+like(taper_reply, qr/^TAPER-OK worker0-1$/,
 	"got TAPER-OK") or die;
 make_holding_file(1000000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 worker0 $handle") or die;
-taper_cmd("TAKE-SCRIBE-FROM worker0 $handle worker1");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 208 "\[sec [\d.]+ bytes 213568 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 worker0-0 $handle") or die;
+taper_cmd("TAKE-SCRIBE-FROM worker0-0 $handle worker0-1");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 208 "\[sec [\d.]+ bytes 213568 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 4") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "a3cd042c:1000000" "\[sec [\d.]+ bytes 1000000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "a3cd042c:1000000" "\[sec [\d.]+ bytes 1000000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1092,53 +1092,53 @@ SKIP : {
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE",
 	ndmp_server => $ndmp);
-    like(taper_reply, qr/^TAPER-OK worker0$/,
+    like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	    "got TAPER-OK") or die;
     # note that, with the addition of the new splitting params, this does the "sensible"
     # thing and uses the tape_splitsize, not the fallback_splitsize (this is a change from
     # Amanda-3.1)
-    taper_cmd("PORT-WRITE worker0 $handle localhost /var 0 $datestamp 393216 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
-    like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+    taper_cmd("PORT-WRITE worker0-0 $handle localhost /var 0 $datestamp 393216 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
+    like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 1230*1024, "localhost", "/var", 0);
-    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	    "got REQUEST-NEW-TAPE worker0 $handle") or die;
-    taper_cmd("START-SCAN worker0 $handle");
-    taper_cmd("NEW-TAPE worker0 $handle");
-    like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	    "got proper NEW-TAPE worker0 $handle") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	    "got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+    taper_cmd("START-SCAN worker0-0 $handle");
+    taper_cmd("NEW-TAPE worker0-0 $handle");
+    like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	    "got proper NEW-TAPE worker0-0 $handle") or die;
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 1") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 2") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 64 "\[sec [\d.]+ bytes 65536 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 64 "\[sec [\d.]+ bytes 65536 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 3 (short part)") or die;
-    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	    "got REQUEST-NEW-TAPE worker0 $handle") or die;
-    taper_cmd("START-SCAN worker0 $handle");
-    taper_cmd("NEW-TAPE worker0 $handle");
-    like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	    "got proper NEW-TAPE worker0 $handle") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	    "got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+    taper_cmd("START-SCAN worker0-0 $handle");
+    taper_cmd("NEW-TAPE worker0-0 $handle");
+    like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	    "got proper NEW-TAPE worker0-0 $handle") or die;
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 4") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 32 "\[sec [\d.]+ bytes 32768 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 32 "\[sec [\d.]+ bytes 32768 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 5") or die;
-    like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+    like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	    "got DUMPER-STATUS request") or die;
-    taper_cmd("DONE worker0 $handle 1912 00000000:0 00000000:0 00000000:0");
-    like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 1277952 kps [\d.]+ orig-kb 1912\]" "" ""$/,
+    taper_cmd("DONE worker0-0 $handle 1912 00000000:0 00000000:0 00000000:0");
+    like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 1277952 kps [\d.]+ orig-kb 1912\]" "" ""$/,
 	    "got DONE") or die;
     $handle = "55-22222";
-    taper_cmd("PORT-WRITE worker0 $handle localhost /etc 0 $datestamp 524288 \"\" 393216 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
-    like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+    taper_cmd("PORT-WRITE worker0-0 $handle localhost /etc 0 $datestamp 524288 \"\" 393216 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
+    like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 300*1024, "localhost", "/etc", 0);
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 3 320 "\[sec [\d.]+ bytes 327680 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 3 320 "\[sec [\d.]+ bytes 327680 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 1") or die;
-    like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+    like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	    "got DUMPER-STATUS request") or die;
-    taper_cmd("DONE worker0 $handle 2012 00000000:0 00000000:0 00000000:0");
-    like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 327680 kps [\d.]+ orig-kb 2012\]" "" ""$/,
+    taper_cmd("DONE worker0-0 $handle 2012 00000000:0 00000000:0 00000000:0");
+    like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 327680 kps [\d.]+ orig-kb 2012\]" "" ""$/,
 	    "got DONE") or die;
     taper_cmd("QUIT");
     wait_for_exit();
@@ -1165,38 +1165,38 @@ SKIP : {
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE, with a zero-byte part",
 	ndmp_server => $ndmp);
-    like(taper_reply, qr/^TAPER-OK worker0$/,
+    like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	    "got TAPER-OK") or die;
     # use a different part size this time, to hit EOM "on the head"
-    taper_cmd("PORT-WRITE worker0 $handle localhost /var 0 $datestamp 425984 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
-    like(taper_reply, qr/^PORT worker0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
+    taper_cmd("PORT-WRITE worker0-0 $handle localhost /var 0 $datestamp 425984 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
+    like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	    "got PORT with data address");
     write_to_port($last_taper_reply, 1632*1024, "localhost", "/var", 0);
-    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	    "got REQUEST-NEW-TAPE worker0 $handle") or die;
-    taper_cmd("START-SCAN worker0 $handle");
-    taper_cmd("NEW-TAPE worker0 $handle");
-    like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	    "got proper NEW-TAPE worker0 $handle") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 416 "\[sec [\d.]+ bytes 425984 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	    "got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+    taper_cmd("START-SCAN worker0-0 $handle");
+    taper_cmd("NEW-TAPE worker0-0 $handle");
+    like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	    "got proper NEW-TAPE worker0-0 $handle") or die;
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 416 "\[sec [\d.]+ bytes 425984 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 1") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 416 "\[sec [\d.]+ bytes 425984 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 416 "\[sec [\d.]+ bytes 425984 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 2") or die;
     # note: zero-byte part is not reported as PARTDONE
-    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	    "got REQUEST-NEW-TAPE worker0 $handle") or die;
-    taper_cmd("START-SCAN worker0 $handle");
-    taper_cmd("NEW-TAPE worker0 $handle");
-    like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	    "got proper NEW-TAPE worker0 $handle") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 416 "\[sec [\d.]+ bytes 425984 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	    "got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+    taper_cmd("START-SCAN worker0-0 $handle");
+    taper_cmd("NEW-TAPE worker0-0 $handle");
+    like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	    "got proper NEW-TAPE worker0-0 $handle") or die;
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 416 "\[sec [\d.]+ bytes 425984 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 3") or die;
-    like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
+    like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 384 "\[sec [\d.]+ bytes 393216 kps [\d.]+\]"$/,
 	    "got PARTDONE for part 4") or die;
-    like(taper_reply, qr/^DUMPER-STATUS worker0 $handle$/,
+    like(taper_reply, qr/^DUMPER-STATUS worker0-0 $handle$/,
 	    "got DUMPER-STATUS request") or die;
-    taper_cmd("DONE worker0 $handle 2112 00000000:0 00000000:0 00000000:0");
-    like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 1671168 kps [\d.]+ orig-kb 2112\]" "" ""$/,
+    taper_cmd("DONE worker0-0 $handle 2112 00000000:0 00000000:0 00000000:0");
+    like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "00000000:0" "\[sec [\d.]+ bytes 1671168 kps [\d.]+ orig-kb 2112\]" "" ""$/,
 	    "got DONE") or die;
     taper_cmd("QUIT");
     wait_for_exit();
@@ -1226,16 +1226,16 @@ $handle = "77-11111";
 $datestamp = "20090302020000";
 run_taper(1024, "without LEOM and without allow-split");
 make_holding_file(1024*1024, "localhost", "/usr");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTIAL worker0 $handle INPUT-GOOD TAPE-ERROR "00000000:0" "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "00000000:0" "\[sec [\d.]+ bytes \d* kps [\d.]+ orig-kb 1612\]" "" "No space left on device: more than MAX_VOLUME_USAGE bytes written, splitting not enabled"$/,
 	"got PARTIAL for filenum 1") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1255,18 +1255,18 @@ $handle = "77-11112";
 $datestamp = "20090303020000";
 run_taper(1024, "with LEOM and without allow-split", leom => 1);
 make_holding_file(1024*1024, "localhost", "/usr");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 864 "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 864 "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTIAL worker0 $handle INPUT-GOOD TAPE-ERROR "c643cd8a:884736" "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]" "" "No space left on device, splitting not enabled"$/,
+like(taper_reply, qr/^PARTIAL worker0-0 $handle INPUT-GOOD TAPE-ERROR "c643cd8a:884736" "\[sec [\d.]+ bytes 884736 kps [\d.]+ orig-kb 1612\]" "" "No space left on device, splitting not enabled"$/,
 	"got PARTIAL") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1287,19 +1287,19 @@ cleanup_log();
 $handle = "11-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "single-part and multipart FILE-WRITE", taperscan => "lexical");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /home 0 $datestamp \"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" 12");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 1024 "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /home 0 $datestamp \"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" 12");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 1024 "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]"$/,
 	"got PARTDONE") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]" "" ""$/,
 	"got DONE") or die;
 
 ##
@@ -1308,12 +1308,12 @@ like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:104857
 
 $handle = '11-22222';
 make_holding_file(1024*1024, "localhost", "/usr");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1335,38 +1335,38 @@ check_logs([
 $handle = "33-11111";
 $datestamp = "20090101010000";
 run_taper(1024, "first in a sequence", taperscan => "lexical");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1412");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1412");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1412\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 2 232 "\[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 232 "\[sec [\d.]+ bytes 237856 kps [\d.]+ orig-kb 1412\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "414a5a23:500000" "\[sec [\d.]+ bytes 500000 kps [\d.]+ orig-kb 1412\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "414a5a23:500000" "\[sec [\d.]+ bytes 500000 kps [\d.]+ orig-kb 1412\]" "" ""$/,
 	"got DONE") or die;
 $handle = "33-22222";
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1512");
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1512");
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF02$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF02$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF02 2 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF02 2 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1512\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1393,38 +1393,38 @@ cleanup_log();
 $handle = "33-33333";
 $datestamp = "20090202020000";
 run_taper(1024, "second in a sequence", keep_config => 1);
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF03$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF03$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
 $handle = "33-44444";
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE worker0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 3 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 3") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF03 4 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF03 4 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 4") or die;
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle$/,
-	"got REQUEST-NEW-TAPE worker0 $handle") or die;
-taper_cmd("START-SCAN worker0 $handle");
-taper_cmd("NEW-TAPE worker0 $handle");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle TESTCONF01 1 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle") or die;
+taper_cmd("START-SCAN worker0-0 $handle");
+taper_cmd("NEW-TAPE worker0-0 $handle");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^DONE worker0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1464,40 +1464,40 @@ $handle0 = "66-00000";
 $handle1 = "66-11111";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers", taperscan => "lexical");
-like(taper_reply, qr/^TAPER-OK worker0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0$/,
 	"got TAPER-OK") or die;
-taper_cmd("START-TAPER worker1 $datestamp");
-like(taper_reply, qr/^TAPER-OK worker1$/,
+taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
+like(taper_reply, qr/^TAPER-OK worker0-1$/,
        "got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
-taper_cmd("FILE-WRITE worker0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker0 $handle0$/,
-	"got REQUEST-NEW-TAPE worker0 $handle0") or die;
-taper_cmd("START-SCAN worker0 $handle0");
-taper_cmd("NEW-TAPE worker0 $handle0");
-like(taper_reply, qr/^NEW-TAPE worker0 $handle0 TESTCONF01$/,
-	"got proper NEW-TAPE worker0 $handle0") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle0 TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
+taper_cmd("FILE-WRITE worker0-0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle0$/,
+	"got REQUEST-NEW-TAPE worker0-0 $handle0") or die;
+taper_cmd("START-SCAN worker0-0 $handle0");
+taper_cmd("NEW-TAPE worker0-0 $handle0");
+like(taper_reply, qr/^NEW-TAPE worker0-0 $handle0 TESTCONF01$/,
+	"got proper NEW-TAPE worker0-0 $handle0") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle0 TESTCONF01 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 1") or die;
-like(taper_reply, qr/^PARTDONE worker0 $handle0 TESTCONF01 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-0 $handle0 TESTCONF01 2 36 "\[sec [\d.]+ bytes 37856 kps [\d.]+ orig-kb 1612\]"$/,
 	"got PARTDONE for filenum 2") or die;
-like(taper_reply, qr/^DONE worker0 $handle0 INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-0 $handle0 INPUT-GOOD TAPE-GOOD "4e7b5233:300000" "\[sec [\d.]+ bytes 300000 kps [\d.]+ orig-kb 1612\]" "" ""$/,
 	"got DONE") or die;
 make_holding_file(614400, "localhost", "/u02");
-taper_cmd("FILE-WRITE worker1 $handle1 \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
-like(taper_reply, qr/^REQUEST-NEW-TAPE worker1 $handle1$/,
-	"got REQUEST-NEW-TAPE worker1 $handle1") or die;
-taper_cmd("START-SCAN worker1 $handle1");
-taper_cmd("NEW-TAPE worker1 $handle1");
-like(taper_reply, qr/^NEW-TAPE worker1 $handle1 TESTCONF02$/,
-	"got proper NEW-TAPE worker1 $handle1") or die;
-like(taper_reply, qr/^PARTDONE worker1 $handle1 TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+taper_cmd("FILE-WRITE worker0-1 $handle1 \"$test_filename\" localhost /u02 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1712");
+like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-1 $handle1$/,
+	"got REQUEST-NEW-TAPE worker0-1 $handle1") or die;
+taper_cmd("START-SCAN worker0-1 $handle1");
+taper_cmd("NEW-TAPE worker0-1 $handle1");
+like(taper_reply, qr/^NEW-TAPE worker0-1 $handle1 TESTCONF02$/,
+	"got proper NEW-TAPE worker0-1 $handle1") or die;
+like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 1 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 1 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker1 $handle1 TESTCONF02 2 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 2 256 "\[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 2 on second tape") or die;
-like(taper_reply, qr/^PARTDONE worker1 $handle1 TESTCONF02 3 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
+like(taper_reply, qr/^PARTDONE worker0-1 $handle1 TESTCONF02 3 88 "\[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]"$/,
 	"got PARTDONE for filenum 3 on second tape") or die;
-like(taper_reply, qr/^DONE worker1 $handle1 INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
+like(taper_reply, qr/^DONE worker0-1 $handle1 INPUT-GOOD TAPE-GOOD "5957f952:614400" "\[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
 wait_for_exit();
@@ -1515,8 +1515,8 @@ check_logs([
     qr(^PART taper "ST:TESTCONF" TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper "ST:TESTCONF" localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
-    qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
     qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
+    qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
 ], "two workers logged correctly 2");
 cleanup_log();
 

@@ -41,7 +41,7 @@ use Amanda::IPC::LineProtocol;
 use base "Amanda::IPC::LineProtocol";
 
 use constant START_TAPER => message("START-TAPER",
-    format => [ qw( worker_name timestamp ) ],
+    format => [ qw( taper_name worker_name storage timestamp ) ],
 );
 
 use constant PORT_WRITE => message("PORT-WRITE",
