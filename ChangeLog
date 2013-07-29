@@ -1,4 +1,7 @@
 2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON/Report.pm: add it.
+
+2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/Device.pm, perl/Amanda/JSON/Dle.pm,
 	  perl/Amanda/JSON/Label.pm, perl/Amanda/JSON/Status.pm: Fix Copyright
 	  to 2013.
