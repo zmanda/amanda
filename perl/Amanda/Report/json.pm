@@ -18,6 +18,92 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 #
 
+=head1 NAME
+
+Amanda::Report::json -- Generate an amanda report in json format.
+
+=over
+
+=item report format
+
+$report->{'head'}->{'config_name'} => $config;
+                   {'org'}         => $org;
+                   {'date'}        => "July 24, 2013";
+		   {'hostname'}    => "localhost.localdomain"
+$report->{'tapeinfo'}->{'storage'}->{$storage}->{'use'}          => @labels	#label used for each storage
+						{'next'}         => @labels	#labels to use on next run
+						{'next_to_use'}  => $nb		#
+						{'new_labelled'} => @labels	# new labelled tapes.
+$report->{'usage_by_tape'}[]->{'tape_label'} => $label
+			      {'nb'}
+			      {'size'}
+			      {'dump_timestamp'}
+			      {'configuration_id'}
+			      {'time_duration'}
+			      {'nc'}
+			      {'percent_use'}
+$report->{'notes'}[]  # array of text lines;
+$report->{'summary'}[]->{'last_tape_label'}
+			{'dle_status'}
+			{'tape_duration'}
+			{'backup_level'}
+			{'configuration_id'}
+			{'hostname'}
+			{'dump_partial'}
+			{'tape_rate'}
+			{'dump_rate'}
+			{'disk_name'}
+			{'dump_duration'}
+			{'dump_timestamp'}
+			{'dump_orig_kb'}
+			{'dump_comp'}
+			{'dump_out_kb'}
+$respot->{'statistic'}->{'tape_size'}->{'incr'}
+				       {'full'}
+				       {'total'}
+			{'parts_taped'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'dles_taped'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'Avg_tape_write_speed'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'dump_time'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'tape_used'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'tape_time'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'original_size'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'output_size'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'dles_dumped'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'avg_compression'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'avg_dump_rate'}->{'incr'}
+				         {'full'}
+				         {'total'}
+			{'dumpdisks'} =>  "1:1"
+			{'tapeparts'} =>  "1:1"
+			{'tapedisks'} =>  "1:1"
+			{'run_time'}
+			{'estimate_time'}
+
+=back
+
+=cut
+
 package Amanda::Report::json;
 
 use strict;
@@ -133,12 +219,9 @@ sub zsprint
     #statistics
 }
 
-sub write_report
+sub generate_report
 {
-    my ( $self, $fh ) = @_;
-
-    $fh || confess "error: no file handle given to Amanda::Report::human::write_report\n";
-    $self->{fh} = $fh;
+    my $self = shift;
 
     ## collect statistics
     $self->calculate_stats();
@@ -163,6 +246,17 @@ sub write_report
 
     ## print out dump statistics per DLE
     $self->output_summary();
+}
+
+sub write_report
+{
+    my $self = shift;
+    my $fh   = shift;
+
+    $fh || confess "error: no file handle given to Amanda::Report::human::write_report\n";
+    $self->{fh} = $fh;
+
+    $self->generate_report();
 
     my $json = JSON->new->allow_nonref;
     print {$self->{'fh'}} $json->pretty->encode($self->{'sections'});
@@ -200,14 +294,157 @@ sub print_header
     return;
 }
 
+sub output_tapeinfo
+{
+    my ($self)   = @_;
+    my $report   = $self->{report};
+    my $fh       = $self->{fh};
+    my $logfname = $self->{logfname};
+
+    my $taper       = $report->get_program_info("taper");
+    my $tapes       = $taper->{tapes}       || {};
+    my $tape_labels = $taper->{tape_labels} || [];
+
+    my %full_stats  = %{ $self->{full_stats} };
+    my %incr_stats  = %{ $self->{incr_stats} };
+    my %total_stats = %{ $self->{total_stats} };
+
+    for my $storage_n (@{$report->{'storage_list'}}) {
+	my $st = Amanda::Config::lookup_storage($storage_n);
+	if (!$st) {
+	    debug("Storage '%s' not found", $storage_n);
+	    next;
+	}
+	if (storage_getconf($st, $STORAGE_REPORT_USE_MEDIA)) {
+	    # find and count label use for the storage
+	    my @storage_tape_labels;
+	    foreach my $tape_label (@$tape_labels) {
+		my $tape = $tapes->{$tape_label};
+		if ($tape->{'storage'} eq $storage_n) {
+		    push @storage_tape_labels, $tape_label;
+		}
+	    }
+
+	    if (@storage_tape_labels > 0) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'use'} = \@storage_tape_labels;
+	    }
+	}
+    }
+
+    if (my $tape_error =
+        $report->get_program_info("taper", "tape_error", undef)) {
+
+        if ($report->get_program_info("taper", "failure_from", undef) eq "config") {
+	    # remove leading [ and trailling ]
+	                $tape_error =~ s/^\[//;
+            $tape_error =~ s/\]$//;
+            $self->zprint("Not using all tapes because $tape_error.\n");
+        } else {
+            $self->zprint("*** A TAPE ERROR OCCURRED: $tape_error.\n");
+        }
+	#$tape_error =~ s{^no-tape }{};
+    }
+
+    ## if this is a historical report, do not generate holding disk
+    ## information.  If this dump is the most recent, output holding
+    ## disk info.
+    if ($report->get_flag("historical")) {
+	$self->{'sections'}->{'tapeinfo'}->{'hdisk'}->{'some_dump'} = 1
+          if $report->get_flag("degraded_mode")
+
+    } else {
+
+        my @holding_list = Amanda::Holding::get_files_for_flush();
+        my $h_size = 0;
+        foreach my $holding_file (@holding_list) {
+            $h_size += (0 + Amanda::Holding::file_size($holding_file, 1));
+        }
+
+        if ($h_size > 0) {
+	    $self->{'sections'}->{'tapeinfo'}->{'hdisk'}->{'size'} = $h_size;
+
+            (getconf($CNF_AUTOFLUSH))
+	      ? $self->{'sections'}->{'tapeinfo'}->{'hdisk'}->{'flush_next_run'} = 1
+	      : $self->{'sections'}->{'tapeinfo'}->{'hdisk'}->{'run_amflush'} = 1;
+
+        } elsif ($report->get_flag("degraded_mode")) {
+	    $self->{'sections'}->{'tapeinfo'}->{'hdisk'}->{'size'} = 0;
+        }
+    }
+
+    for my $storage_n (@{$report->{'storage_list'}}) {
+        my $st = Amanda::Config::lookup_storage($storage_n);
+        if (!$st) {
+            debug("Storage '%s' not found", $storage_n);
+            next;
+        }
+        if (storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA)) {
+            my $run_tapes   = storage_getconf($st, $STORAGE_RUNTAPES);
+            my $nb_new_tape = 0;
+
+            my $for_storage = '';
+            $for_storage = " for storage '$storage_n'" if @{$report->{'storage_list'}} > 1;
+            my @tape_labels;
+
+	    if ($run_tapes) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'next_to_use'} = $run_tapes;
+	    }
+
+            my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+            my $tl = Amanda::Tapelist->new($tlf);
+
+            my $labelstr = storage_getconf($st, $STORAGE_LABELSTR);
+            my $tapepool = storage_getconf($st, $STORAGE_TAPEPOOL);
+            my $policy = Amanda::Policy->new(policy => storage_getconf($st, $STORAGE_POLICY));
+            my $retention_tapes = $policy->{'retention_tapes'};
+            my $retention_days = $policy->{'retention_days'};
+            my $retention_recover = $policy->{'retention_recover'};
+            my $retention_full = $policy->{'retention_full'};
+
+            foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
+
+                if ( my $tape_label =
+                    Amanda::Tapelist::get_last_reusable_tape_label(
+                                        $labelstr->{'template'},
+                                        $tapepool,
+                                        $storage_n,
+                                        $retention_tapes,
+                                        $retention_days,
+                                        $retention_recover,
+                                        $retention_full,
+                                        $i) ) {
+
+                    push @tape_labels, $tape_label;
+                } else {
+                    $nb_new_tape++;
+                }
+            }
+            if (@tape_labels) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'next'} = \@tape_labels;
+            }
+
+            if ($nb_new_tape) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'new'} = $nb_new_tape;
+            }
+
+            my @new_tapes = Amanda::Tapelist::list_new_tapes(
+                                                $storage_n,
+                                                $run_tapes);
+	    if (@new_tapes) {
+		$self->{'sections'}->{'tapeinfo'}->{'storage'}->{$storage_n}->{'new_labelled'} = \@new_tapes;
+	    }
+        }
+    }
+
+    return;
+}
+
 sub output_stats
 {
     my ($self) = @_;
     my $fh     = $self->{fh};
     my $report = $self->{report};
 
-    $self->zprint("\n");
-    $self->zprint("\n");
     $self->zsprint("STATISTICS:");
 
     # TODO: the hashes are a cheap fix.  fix these.
@@ -361,7 +598,6 @@ sub output_tape_stats
       . "@>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
     $self->zsprint("USAGE BY TAPE:\n");
-#    $self->zprint(swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts"));
 
     my $tapetype_name = getconf($CNF_TAPETYPE);
     my $tapetype      = lookup_tapetype($tapetype_name);
@@ -386,7 +622,6 @@ sub output_tape_stats
 			'time_duration' => Amanda::Report::human::hrmn($tape->{time}),
 			};
     }
-    $self->zprint("\n");
     return;
 }
 
@@ -499,7 +734,6 @@ sub output_details
     $self->print_if_def(\@strange_dump_details, "STRANGE DUMP DETAILS:");
     $self->print_if_def($notes,                 "NOTES:");
 
-    $self->zprint("\n");
     return;
 }
 

@@ -291,7 +291,7 @@ sub _update_positions {
 %}
 
 void compute_retention(void);
-/* for list_retention and list_no_retention */
+/* for list_retention, list_no_retention and list_new_tapes */
 %typemap(out) gchar ** {
     gchar **iter;
 
@@ -314,6 +314,7 @@ void compute_retention(void);
 }
 gchar **list_retention();
 gchar **list_no_retention();
+gchar **list_new_tapes(char *storage_n, int nb);
 
 char *get_last_reusable_tape_label(const char *l_template, const char *tapepool,
 				   const char *storage,
@@ -322,8 +323,6 @@ char *get_last_reusable_tape_label(const char *l_template, const char *tapepool,
 				   int retention_full, int skip);
 
 int volume_is_reusable(const char *label);
-%newobject list_new_tapes;
-char *list_new_tapes(char *storage_n, int nb);
 
 /* C functions -- should be called *only* from within this module */
 

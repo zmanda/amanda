@@ -677,6 +677,7 @@ tape(
     int     retention_full;
     identlist_t il;
     int     nb_storage;
+    char  **tapes;
 
     if(argc > 4 && g_str_equal(argv[3], "--days")) {
 	nb_days = atoi(argv[4]);
@@ -749,7 +750,32 @@ tape(
 	    }
 	}
 
-	print_new_tapes(stdout, storage_n, nb_days * runtapes);
+	tapes = list_new_tapes(storage_n, nb_days * runtapes);
+
+	if (*tapes) {
+	    char **tape;
+	    int c = 0;
+	    for (tape = tapes; *tape != NULL; tape++) {
+		c++;
+	    }
+	    if (c == 1) {
+		printf("The next new tape already labelled is: %s.", *tapes);
+		g_free(*tapes);
+	    } else {
+		printf("The next %d new tapes already labelled are: %s",
+			c, *tapes);
+		g_free(*tapes);
+		tape = tapes;
+		tape++;
+		while (*tape != NULL) {
+		    printf(", %s", *tape);
+		    g_free(*tape);
+		    tape++;
+		}
+	    }
+	}
+	g_free(tapes);
+	//print_new_tapes(stdout, storage_n, nb_days * runtapes);
     }
 }
 

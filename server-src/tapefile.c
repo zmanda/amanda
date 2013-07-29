@@ -567,18 +567,19 @@ stamp2time(
     return (tt);
 }
 
-char *list_new_tapes(
+gchar **list_new_tapes(
     char *storage_n,
     int   nb)
 {
     tape_t *last_tape, *iter;
     int c;
-    GString *strbuf;
     labelstr_t *labelstr;
     char       *tapepool;
     GSList     *l_list = NULL;
     GSList     *list1;
     storage_t  *storage;
+    char **lists;
+    int d;
 
     if (nb <= 0)
         return NULL;
@@ -618,49 +619,21 @@ char *list_new_tapes(
         iter = iter->prev;
     }
 
-    if (c == 0) {
-        return NULL;
-    }
-
-    if (c == 1) {
-        char *msg = g_strdup_printf("The next new tape already labelled is: %s.",
-            (char *)l_list->data);
-	g_slist_free(l_list);
-	return msg;
-    }
-
-    strbuf = g_string_new(NULL);
-    g_string_append_printf(strbuf,
-        "The next %d new tapes already labelled are: %s", c,
-        (char *)l_list->data);
-
+    lists = g_new0(gchar *, (c+1));
+    d = 0;
     list1 = l_list;
-    l_list = l_list->next;
-    g_slist_free_1(list1);
 
-    while (l_list != NULL) {
-	g_string_append_printf(strbuf, ", %s", (char *)l_list->data);
-	list1 = l_list;
-	l_list = l_list->next;
-	g_slist_free_1(list1);
+    while (list1 != NULL) {
+	lists[d] = list1->data;
+	list1 = list1->next;
+	d++;
     }
-    return g_string_free(strbuf, FALSE);
+    lists[d] = 0;
+
+    g_slist_free(l_list);
+    return lists;
+
 }
-
-void
-print_new_tapes(
-    FILE *output,
-    char *storage_n,
-    int   nb)
-{
-    char *result = list_new_tapes(storage_n, nb);
-
-    if (result) {
-	g_fprintf(output,"%s\n", result);
-	amfree(result);
-    }
-}
-
 
 static find_result_t *output_find = NULL;
 void

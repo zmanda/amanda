@@ -58,7 +58,7 @@ not handled by Amanda::Message):
  1600000  Amanda::Tapelist::Message
  1700000  Amanda::Device::Message
  1800000  Amanda::Status::Message
- 1900000  Amanda:: message
+ 1900000  Amanda::Report::Message
 
 general keys:
   code            =>

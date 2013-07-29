@@ -402,10 +402,10 @@ sub call {
     if ($rpc_response and ref $rpc_response->{'result'} eq "CODE") {
 	return $rpc_response->{'result'};
     } elsif ($rpc_response) {
-        my $json = eval{JSON->new->convert_blessed->utf8->encode($rpc_response)};
+        my $json = eval{JSON->new->convert_blessed->utf8->pretty->encode($rpc_response)};
         if ($@) {
             $log->error("JSON repsonse error: ".$@);
-            $json = JSON->new->utf8->encode({
+            $json = JSON->new->utf8->pretty->encode({
                 jsonrpc => "2.0",
                 error   => {
                     code    => -32099,

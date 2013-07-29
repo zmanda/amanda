@@ -80,7 +80,6 @@ int reusable_tape(tape_t *tp);
 int volume_is_reusable(const char *label);
 
 int guess_runs_from_tapelist(void);
-char *list_new_tapes(char *storage_n, int nb);
-void print_new_tapes(FILE *output, char *storage_n, int nb);
+gchar **list_new_tapes(char *storage_n, int nb);
 
 #endif /* !TAPEFILE_H */

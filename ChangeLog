@@ -1,4 +1,22 @@
 2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON/Device.pm, perl/Amanda/JSON/Dle.pm,
+	  perl/Amanda/JSON/Label.pm, perl/Amanda/JSON/Status.pm: Fix Copyright
+	  to 2013.
+	* perl/Amanda/JSON/RPC/Dispatcher.pm: Use pretty json output.
+	* perl/Amanda/JSON/Report.pm: New perl module.
+	* perl/Amanda/Message.pod: Report use 190000 message code.
+	* perl/Amanda/Report.pm: Add Amanda::Report::Message.
+	* perl/Amanda/Report/human.pm: Use new
+	  Amanda::Tapelist::list_new_tapes output.
+	* perl/Amanda/Report/json.pm: Document json format, add a
+	  generate_report method, jsonify the output_tapeinfo method.
+	* perl/Amanda/Tapelist.swg: New binding for list_new_tapes.
+	* perl/Makefile.am: Add Amanda/JSON/Report.pm
+	* server-src/amadmin.c: Use new list_new_tapes output.
+	* server-src/tapefile.c (list_new_tapes): Output an array of string.
+	* server-src/tapefile.h: new prototype for list_new_tapes.
+
+2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm, server-src/amstatus.pl: Fix for perl 5.10
 
 2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>

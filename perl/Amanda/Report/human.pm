@@ -430,7 +430,7 @@ sub output_tapeinfo
 		    push @storage_tape_labels, $tape_label;
 		}
 	    }
-debug(Data::Dumper::Dumper($report));
+
 	    if (@storage_tape_labels > 0) {
 
 		my $to_storage = '';
@@ -563,10 +563,14 @@ debug(Data::Dumper::Dumper($report));
 	    }
 	    $self->zprint("$text.\n");
 
-	    my $new_tapes = Amanda::Tapelist::list_new_tapes(
+	    my @new_tapes = Amanda::Tapelist::list_new_tapes(
 						$storage_n,
 						$run_tapes);
-	    $self->zprint("$new_tapes\n") if $new_tapes;
+	    if (@new_tapes == 1) {
+		$self->zprint("The next new tape already labelled is: $new_tapes[0].");
+	    } elsif (@new_tapes > 1) {
+		$self->zprint("The next " . @new_tapes . " tape already labelled are: " . join(',', @new_tapes) . ".");
+	    }
 	}
     }
 

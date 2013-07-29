@@ -299,6 +299,7 @@ AmandaJSON_DATA = \
 	Amanda/JSON/Device.pm \
 	Amanda/JSON/Dle.pm \
 	Amanda/JSON/Label.pm \
+	Amanda/JSON/Report.pm \
 	Amanda/JSON/Status.pm \
 	Amanda/JSON/Tapelist.pm
 PM_FILES += $(AmandaJSON_DATA)

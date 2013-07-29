@@ -17,6 +17,24 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
+package Amanda::Report::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 1900000) {
+	return "Failed to make report: $self->{'error'}";
+    } elsif ($self->{'code'} == 1900001) {
+	return "The report";
+    }
+}
+
 package Amanda::Report;
 use strict;
 use warnings;
