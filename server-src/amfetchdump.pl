@@ -763,7 +763,6 @@ sub main {
 		# we need its stderr.
 		debug("Running: ". join(' ',@argv));
 		$xfer_app = Amanda::Xfer::Filter::Process->new(\@argv, 0, 0, 1, 1);
-		push @filters, $xfer_app;
 
 		$dest_fh = \*STDOUT;
 		$xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
@@ -898,6 +897,10 @@ sub main {
 		"$Amanda::Constants::UNCOMPRESS_OPT |";
 	    $hdr->{'comp_suffix'} = $Amanda::Constants::COMPRESS_SUFFIX;
 	    $dest_is_server = 0;
+	}
+
+	if ($xfer_app) {
+	    push @filters, $xfer_app;
 	}
 
 	# write the header to the destination if requested
