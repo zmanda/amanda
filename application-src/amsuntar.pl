@@ -184,9 +184,8 @@ sub command_estimate() {
     $pidwc = open2($rdrwc, '>&DATA', @cmdwc);
     close $wtr;
 
-    my ($msgsize) = <$rdrwc>;
     my $errmsg;
-    my $result;
+    my $result = 0;
     while (<$err>) {
 	my $matched = 0;
 	for my $regex (@{$self->{regex}}) {
@@ -200,6 +199,7 @@ sub command_estimate() {
 	$result = 1 if ($matched == 0);
 	$errmsg = $_ if (!defined $errmsg);
     }
+    my ($msgsize) = <$rdrwc>;
     waitpid $pid, 0;
     close $rdrwc;
     close $err;
@@ -253,8 +253,8 @@ sub command_backup {
 				     $Amanda::Script_App::ERROR);
    close($wtr);
 
-   unlink($self->{include_tmp}) if(-e $self->{include_tmp});
-   unlink($self->{exclude_tmp}) if(-e $self->{exclude_tmp});
+   unlink($self->{include_tmp}) if defined $self->{include_tmp} and -e $self->{include_tmp};
+   unlink($self->{exclude_tmp}) if defined $self->{exclude_tmp} and -e $self->{exclude_tmp};
 
    my $result;
    if(defined($self->{index})) {
