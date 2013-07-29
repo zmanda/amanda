@@ -237,7 +237,7 @@ foreach my $host (keys %{$status->{'dles'}}) {
 
 my $nb_storage = 0;
 if (defined $status->{'storage'}) {
-    $nb_storage = keys $status->{'storage'};
+    $nb_storage = keys %{$status->{'storage'}};
 }
 
 foreach my $host (sort keys %{$status->{'dles'}}) {
@@ -247,7 +247,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 	    my $taper_status;
 	    if ($nb_storage == 1) {
 		if (defined $dle->{'storage'}) {
-		    my @storage = keys $dle->{'storage'};
+		    my @storage = keys %{$dle->{'storage'}};
 		    my $storage = $storage[0];
 		    my $dlet = $dle->{'storage'}->{$storage};
 		    $taper_status = $dlet->{'message'};
@@ -277,7 +277,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 		    print $taper_status;
 		}
 		if ($taper_status) {
-		    my @storage = keys $dle->{'storage'};
+		    my @storage = keys %{$dle->{'storage'}};
 		    my $storage = $storage[0];
 		    my $dlet = $dle->{'storage'}->{$storage};
 		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'}) {
@@ -299,7 +299,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 	    } elsif (defined $dle->{'storage'}) {
 		my $first = 0;
 		my $dump_status_length = 0;
-		for my $storage (sort keys $dle->{'storage'}) {
+		for my $storage (sort keys %{$dle->{'storage'}}) {
 		    my $dlet = $dle->{'storage'}->{$storage};
 		    my $taper_status;
 		    $taper_status = $dlet->{'message'};
@@ -375,7 +375,7 @@ if ($status->{'idle_dumpers'} == 0) {
 }
 
 if (defined $status->{'storage'}) {
-    for my $storage (sort keys $status->{'storage'}) {
+    for my $storage (sort keys %{$status->{'storage'}}) {
 	next if !$storage;
 	my $taper = $status->{'storage'}->{$storage}->{'taper'};
 	next if !$taper;
@@ -386,7 +386,7 @@ if (defined $status->{'storage'}) {
 	printf "%16s: ", "status";
 	if (defined $status->{'taper'}->{$taper}->{'worker'}) {
 	    my @worker_status;
-	    for my $worker (sort keys $status->{'taper'}->{$taper}->{'worker'}) {
+	    for my $worker (sort keys %{$status->{'taper'}->{$taper}->{'worker'}}) {
 		my $wstatus = $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
 		push @worker_status, $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'};
 	    }
@@ -412,7 +412,7 @@ if (defined $status->{'free_space'}) {
 
 my $len_storage = 0;
 if (defined $status->{'taper'}) {
-    foreach my $taper (keys $status->{'taper'}) {
+    foreach my $taper (keys %{$status->{'taper'}}) {
 	my $len = length($status->{'taper'}->{$taper}->{'storage'});
 	if ($len > $len_storage) {
 	    $len_storage = $len;
@@ -424,7 +424,7 @@ my $r;
 if (defined $status->{'current_time'} and
     $status->{'current_time'} != $status->{'start_time'}) {
     my $total_time = $status->{'current_time'} - $status->{'start_time'};
-    foreach my $key (sort byprocess keys $status->{'busy'}) {
+    foreach my $key (sort byprocess keys %{$status->{'busy'}}) {
 	my $name = $key;
 	if ($status->{'busy'}->{$key}->{'type'} eq "taper") {
 	    $name = $status->{'busy'}->{$key}->{'storage'};
@@ -446,7 +446,7 @@ if (defined $status->{'current_time'} and
 	my $s2 = " " x length($l);
 
 	if (defined $status->{'busy_dumper'}->{$d}->{'status'}) {
-	    foreach my $key (sort keys $status->{'busy_dumper'}->{$d}->{'status'}) {
+	    foreach my $key (sort keys %{$status->{'busy_dumper'}->{$d}->{'status'}}) {
 		printf "%s%20s: %8s  (%6.2f%%)\n",
 			$s1,
 			$key,
@@ -534,7 +534,7 @@ sub summary_storage {
     my $print_estat = shift;
 
     if (!$status->{'stat'}->{$key}->{'storage'} ||
-	keys $status->{'stat'}->{$key}->{'storage'} == 0) {
+	keys %{$status->{'stat'}->{$key}->{'storage'}} == 0) {
 	printf "$name\n";
 	return;
     }
@@ -542,7 +542,7 @@ sub summary_storage {
 	printf "$name\n";
     };
 
-    for my $storage (sort keys $status->{'stat'}->{$key}->{'storage'}) {
+    for my $storage (sort keys %{$status->{'stat'}->{$key}->{'storage'}}) {
 	if ($nb_storage > 1) {
 	    $name = sprintf "%-16s", "  $storage";
 	}

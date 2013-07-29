@@ -408,7 +408,7 @@ sub parse {
 		my ($id, $storage) = split ';', $id1;
 		$dle->{'storage'}->{$storage} = { status   => $WAIT_FOR_FLUSHING,
 						  flushing => 1 };
-		for my $taper (keys $self->{'taper'}) {
+		for my $taper (keys %{$self->{'taper'}}) {
 		    if ($self->{'taper'}->{$taper}->{'storage'} eq $storage) {
 			$self->{'storage'}->{$storage}->{'taper'} = $taper;
 		    }
@@ -679,7 +679,7 @@ sub parse {
 			    $dle->{'status'} = $DUMPING_DUMPER;
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
 			    $dle->{'status'} = $DUMPING_TO_TAPE_DUMPER;
-			    my @storage = keys $dle->{'storage'};
+			    my @storage = keys %{$dle->{'storage'}};
 			    my $storage = $storage[0];
 			    my $dlet = $dle->{'storage'}->{$storage};
 			    $dlet->{'status'} = $DUMPING_TO_TAPE_DUMPER;
@@ -1181,7 +1181,7 @@ sub set_summary {
 
 		$dle->{'flush'} = 0;
 		if ($dle->{'storage'}) {
-		    for my $storage (keys $dle->{'storage'}) {
+		    for my $storage (keys %{$dle->{'storage'}}) {
 			my $dlet = $dle->{'storage'}->{$storage};
 			delete $dlet->{'message'};
 			delete $dlet->{'wsize'};
@@ -1319,13 +1319,13 @@ sub set_summary {
     }
 
     if (defined $self->{'qlen'}->{'tapeq'}) {
-	for my $taper (keys $self->{'qlen'}->{'tapeq'}) {
+	for my $taper (keys %{$self->{'qlen'}->{'tapeq'}}) {
 	    my $storage = $self->{'taper'}->{$taper}->{'storage'};
 
 	    next if !$storage;
 
 	    if (defined $self->{'taper'}->{$taper}->{'worker'}) {
-		for my $worker (keys $self->{'taper'}->{$taper}->{'worker'}) {
+		for my $worker (keys %{$self->{'taper'}->{$taper}->{'worker'}}) {
 		    my $wstatus = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
 
 		    if ($wstatus == $IDLE) {
@@ -1380,7 +1380,7 @@ sub set_summary {
 	$self->{'current_time'} != $self->{'start_time'}) {
 	my $total_time = $self->{'current_time'} - $self->{'start_time'};
 
-	foreach my $key (keys $self->{'busy_time'}) {
+	foreach my $key (keys %{$self->{'busy_time'}}) {
 	    my $type = $key;
 	       $type =~ s/[0-9]*$//g;
 	    my $name = $key;
@@ -1400,7 +1400,7 @@ sub set_summary {
 	    $self->{'busy_dumper'}->{$d}->{'percent'} =
 		     ($self->{'dumpers_actives'}[$d] * 1.0 / $total_time) * 100;
 
-	    foreach my $key (keys $self->{'dumpers_held'}[$d]) {
+	    foreach my $key (keys %{$self->{'dumpers_held'}[$d]}) {
 		next unless $self->{'dumpers_held'}[$d]{$key} >= 1;
 		$self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'} =
 		     $self->{'dumpers_held'}[$d]{$key};
@@ -1470,7 +1470,7 @@ sub _summary_storage {
     $self->{'stat'}->{$key}->{'name'} = $name;
 
     return if !$self->{'stat'}->{$key}->{'storage'};
-    for my $storage (sort keys $self->{'stat'}->{$key}->{'storage'}) {
+    for my $storage (sort keys %{$self->{'stat'}->{$key}->{'storage'}}) {
 	my $nb = $self->{'stat'}->{$key}->{'storage'}->{$storage}->{'nb'};
 	my $real_size;
 	$real_size = $self->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'} || 0 if $set_real_size;

@@ -1,4 +1,7 @@
 2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm, server-src/amstatus.pl: Fix for perl 5.10
+
+2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Run application after filters.
 
 2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
