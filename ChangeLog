@@ -1,3 +1,7 @@
+2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl (command_estimate): Change order for
+	  reading the pipe. Fix perl warnings.
+
 2013-07-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Use Amanda::Status module
 	* perl/Amanda/Status.pm: New perl module, rewrite of amstatus.
