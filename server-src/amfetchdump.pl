@@ -398,6 +398,7 @@ sub main {
     my $delay;
     my $directtcp = 0;
     my @directtcp_command;
+    my $xfer_app;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -610,7 +611,7 @@ sub main {
 		# set up the extraction command as a filter element, since
 		# we need its stderr.
 		debug("Running: ". join(' ',@argv));
-		push @filters, Amanda::Xfer::Filter::Process->new(\@argv, 0);
+		$xfer_app =  Amanda::Xfer::Filter::Process->new(\@argv, 0);
 
 		$dest_fh = \*STDOUT;
 		$xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
@@ -721,6 +722,10 @@ sub main {
 	    $hdr->{'uncompress_cmd'} = " $Amanda::Constants::UNCOMPRESS_PATH " .
 		"$Amanda::Constants::UNCOMPRESS_OPT |";
 	    $hdr->{'comp_suffix'} = $Amanda::Constants::COMPRESS_SUFFIX;
+	}
+
+	if ($xfer_app) {
+	    push @filters, $xfer_app;
 	}
 
 	# write the header to the destination if requested
