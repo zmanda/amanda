@@ -1,4 +1,7 @@
 2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amanda.psgi.pl: Add missing JSON method.
+
+2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/json.pm: Fix doc formating.
 
 2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>

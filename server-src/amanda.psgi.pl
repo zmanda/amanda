@@ -46,6 +46,7 @@ use Amanda::JSON::DB::Catalog;
 use Amanda::JSON::Device;
 use Amanda::JSON::Dle;
 use Amanda::JSON::Label;
+use Amanda::JSON::Report;
 use Amanda::JSON::Status;
 use Amanda::JSON::Tapelist;
 
@@ -61,11 +62,6 @@ my $rpc = Amanda::JSON::RPC::Dispatcher->new;
 $rpc->register( 'Amanda::JSON::Config::getconf_byname', \&Amanda::JSON::Config::getconf_byname );
 $rpc->register( 'Amanda::JSON::Config::config_dir_relative', \&Amanda::JSON::Config::config_dir_relative );
 
-$rpc->register( 'Amanda::JSON::Tapelist::get', \&Amanda::JSON::Tapelist::get );
-#$rpc->register( 'Amanda::JSON::Tapelist::update', \&Amanda::JSON::Tapelist::update );
-#$rpc->register( 'Amanda::JSON::Tapelist::add', \&Amanda::JSON::Tapelist::add );
-#$rpc->register( 'Amanda::JSON::Tapelist::remove', \&Amanda::JSON::Tapelist::remove );
-
 $rpc->register( 'Amanda::JSON::Changer::inventory', \&Amanda::JSON::Changer::inventory );
 $rpc->register( 'Amanda::JSON::Changer::load', \&Amanda::JSON::Changer::load );
 $rpc->register( 'Amanda::JSON::Changer::reset', \&Amanda::JSON::Changer::reset );
@@ -78,6 +74,9 @@ $rpc->register( 'Amanda::JSON::Changer::update', \&Amanda::JSON::Changer::update
 
 $rpc->register( 'Amanda::JSON::DB::Catalog::get_parts', \&Amanda::JSON::DB::Catalog::get_parts );
 $rpc->register( 'Amanda::JSON::DB::Catalog::get_dumps', \&Amanda::JSON::DB::Catalog::get_dumps );
+
+$rpc->register( 'Amanda::JSON::Device::read_label', \&Amanda::JSON::Device::read_label );
+$rpc->register( 'Amanda::JSON::Device::get_properties', \&Amanda::JSON::Device::get_properties );
 
 $rpc->register( 'Amanda::JSON::Dle::force', \&Amanda::JSON::Dle::force );
 $rpc->register( 'Amanda::JSON::Dle::force_level_1', \&Amanda::JSON::Dle::force_level_1 );
@@ -92,10 +91,10 @@ $rpc->register( 'Amanda::JSON::Label::erase', \&Amanda::JSON::Label::erase );
 $rpc->register( 'Amanda::JSON::Label::reuse', \&Amanda::JSON::Label::reuse );
 $rpc->register( 'Amanda::JSON::Label::no_reuse', \&Amanda::JSON::Label::no_reuse );
 
-$rpc->register( 'Amanda::JSON::Device::read_label', \&Amanda::JSON::Device::read_label );
-$rpc->register( 'Amanda::JSON::Device::get_properties', \&Amanda::JSON::Device::get_properties );
+$rpc->register( 'Amanda::JSON::Report::report', \&Amanda::JSON::Report::report );
 
 $rpc->register( 'Amanda::JSON::Status::current', \&Amanda::JSON::Status::current );
-$rpc->register( 'Amanda::JSON::Status::stream', \&Amanda::JSON::Status::stream );
+
+$rpc->register( 'Amanda::JSON::Tapelist::get', \&Amanda::JSON::Tapelist::get );
 
 $rpc->to_app;
