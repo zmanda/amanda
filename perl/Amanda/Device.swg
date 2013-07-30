@@ -144,6 +144,7 @@ static gboolean
 set_gvalue_from_sv(SV *sv, GValue *value)
 {
     GType fundamental = G_TYPE_FUNDAMENTAL(G_VALUE_TYPE(value));
+    gchar *err = NULL;
 
     /* if we got a string, use g_value_set_from_string to parse any funny
      * values or suffixes */
@@ -159,36 +160,60 @@ set_gvalue_from_sv(SV *sv, GValue *value)
 	    return TRUE;
 
 	case G_TYPE_CHAR:
-	    g_value_set_char(value, amglue_SvI8(sv));
-	    return TRUE;
+	    {	gint8 val = amglue_SvI8(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_char(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_UCHAR:
-	    g_value_set_uchar(value, amglue_SvU8(sv));
-	    return TRUE;
+	    {	guint8 val = amglue_SvU8(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_uchar(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_INT:
-	    g_value_set_int(value, amglue_SvI32(sv));
-	    return TRUE;
+	    {	gint32 val = amglue_SvI32(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_int(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_UINT:
-	    g_value_set_uint(value, amglue_SvU32(sv));
-	    return TRUE;
+	    {	guint32 val = amglue_SvU32(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_uint(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_LONG:
-	    g_value_set_int64(value, amglue_SvI64(sv));
-	    return TRUE;
+	    {	gint64 val = amglue_SvI64(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_int64(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_ULONG:
-	    g_value_set_uint64(value, amglue_SvU64(sv));
-	    return TRUE;
+	    {	guint64 val = amglue_SvU64(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_uint64(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_INT64:
-	    g_value_set_int64(value, amglue_SvI64(sv));
-	    return TRUE;
+	    {	gint64 val = amglue_SvI64(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_int64(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_UINT64:
-	    g_value_set_uint64(value, amglue_SvU64(sv));
-	    return TRUE;
+	    {	guint64 val = amglue_SvU64(sv, &err);
+		if (err) { g_free(err); return FALSE; };
+		g_value_set_uint64(value, val);
+		return TRUE;
+	    }
 
 	case G_TYPE_FLOAT:
 	    g_value_set_float(value, SvNV(sv));

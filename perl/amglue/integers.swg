@@ -28,39 +28,57 @@
  */
 
 %typemap(in) guint64 {
-    $1 = amglue_SvU64($input);
+    gchar *err = NULL;
+    $1 = amglue_SvU64($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) gint64 {
-    $1 = amglue_SvI64($input);
+    gchar *err = NULL;
+    $1 = amglue_SvI64($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) guint32 {
-    $1 = amglue_SvU32($input);
+    gchar *err = NULL;
+    $1 = amglue_SvU32($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) uint32_t {
-    $1 = amglue_SvU32($input);
+    gchar *err = NULL;
+    $1 = amglue_SvU32($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) gint32 {
-    $1 = amglue_SvI32($input);
+    gchar *err = NULL;
+    $1 = amglue_SvI32($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) guint16 {
-    $1 = amglue_SvU16($input);
+    gchar *err = NULL;
+    $1 = amglue_SvU16($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) gint16 {
-    $1 = amglue_SvI16($input);
+    gchar *err = NULL;
+    $1 = amglue_SvI16($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) guint8 {
-    $1 = amglue_SvU8($input);
+    gchar *err = NULL;
+    $1 = amglue_SvU8($input, &err);
+    if (err) croak(err);
 }
 
 %typemap(in) gint8 {
-    $1 = amglue_SvI8($input);
+    gchar *err = NULL;
+    $1 = amglue_SvI8($input, &err);
+    if (err) croak(err);
 }
 
 /* remaining types depend on the complier to optimize out constant sizeof() 
@@ -69,17 +87,19 @@
 
 %define typemap_in_unsigned(type)
 %typemap(in) type {
+    gchar *err = NULL;
     if (sizeof(type) == 1) {
-	$1 = amglue_SvU8($input);
+	$1 = amglue_SvU8($input, &err);
     } else if (sizeof(type) == 2) {
-	$1 = amglue_SvU16($input);
+	$1 = amglue_SvU16($input, &err);
     } else if (sizeof(type) == 4) {
-	$1 = amglue_SvU32($input);
+	$1 = amglue_SvU32($input, &err);
     } else if (sizeof(type) == 8) {
-	$1 = amglue_SvU64($input);
+	$1 = amglue_SvU64($input, &err);
     } else {
 	croak("Unexpected type >64 bits?"); /* should be optimized out unless sizeof(type) > 8 */
     }
+    if (err) croak(err);
 }
 %enddef
 
@@ -98,17 +118,19 @@ typemap_in_unsigned(uintmax_t)
 
 %define typemap_in_signed(type)
 %typemap(in) type {
+    gchar *err = NULL;
     if (sizeof(type) == 1) {
-	$1 = amglue_SvI8($input);
+	$1 = amglue_SvI8($input, &err);
     } else if (sizeof(type) == 2) {
-	$1 = amglue_SvI16($input);
+	$1 = amglue_SvI16($input, &err);
     } else if (sizeof(type) == 4) {
-	$1 = amglue_SvI32($input);
+	$1 = amglue_SvI32($input, &err);
     } else if (sizeof(type) == 8) {
-	$1 = amglue_SvI64($input);
+	$1 = amglue_SvI64($input, &err);
     } else {
 	g_critical("Unexpected type >64 bits?"); /* should be optimized out unless sizeof(type) > 8 */
     }
+    if (err) croak(err);
 }
 %enddef
 

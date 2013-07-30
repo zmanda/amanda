@@ -1,3 +1,13 @@
+2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/amglue/bigint.c (amglue_Sv*): Theses functions take a new err
+	  argument to be able to return error message.
+	* perl/amglue/amglue.h (amglue_Sv*): Change prototypes.
+	* perl/amglue/integers.swg: Add new amglue_Sv* argument and croak on
+	  error.
+	* perl/Amanda/Device.swg (set_gvalue_from_sv): return FALSE if
+	  amglue_Sv* return an error.
+	* perl/Amanda/NDMP.swg: Use new amglue_SvU64 err argument.
+
 2013-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/Report.pm: add it.
 

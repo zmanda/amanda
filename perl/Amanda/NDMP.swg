@@ -183,7 +183,8 @@ typedef struct NDMPConnection {
 	    (gpointer datain, gsize datain_max_len, gsize *actual_datain_len)
 	    (gpointer datain_buf, gsize actual_datain_len) {
 	    /* datain */
-	    gsize max_size = amglue_SvU64($input);
+	    gchar *err = NULL;
+	    gsize max_size = amglue_SvU64($input, &err);
 	    $2 = max_size;
 	    if (max_size) {
 		$1 = g_malloc(max_size);
@@ -321,7 +322,8 @@ typedef struct NDMPConnection {
 	%typemap(in,numinputs=1)
 	    (gpointer buf, guint64 count, guint64 *out_count)
 	    (guint64 out_count) {
-	    $2 = amglue_SvU64($input);
+	    gchar *err = NULL;
+	    $2 = amglue_SvU64($input, &err);
 	    $1 = $2?g_malloc($2):NULL;
 	    out_count = 0;
 	    $3 = &out_count;

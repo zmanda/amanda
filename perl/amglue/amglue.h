@@ -148,14 +148,14 @@ SV *amglue_newSVu64(guint64 v);
  * @param sv: perl value to convert
  * @returns: value of the given type
  */
-gint64 amglue_SvI64(SV *sv);
-guint64 amglue_SvU64(SV *sv);
-gint32 amglue_SvI32(SV *sv);
-guint32 amglue_SvU32(SV *sv);
-gint16 amglue_SvI16(SV *sv);
-guint16 amglue_SvU16(SV *sv);
-gint8 amglue_SvI8(SV *sv);
-guint8 amglue_SvU8(SV *sv);
+gint64 amglue_SvI64(SV *sv, gchar **err);
+guint64 amglue_SvU64(SV *sv, gchar **err);
+gint32 amglue_SvI32(SV *sv, gchar **err);
+guint32 amglue_SvU32(SV *sv, gchar **err);
+gint16 amglue_SvI16(SV *sv, gchar **err);
+guint16 amglue_SvU16(SV *sv, gchar **err);
+gint8 amglue_SvI8(SV *sv, gchar **err);
+guint8 amglue_SvU8(SV *sv, gchar **err);
 
 /*
  * prototypes for objwrap.c
