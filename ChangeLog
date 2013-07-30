@@ -1,4 +1,7 @@
 2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/JSON.pm: Add missing Amanda::JSON modules.
+
+2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/amglue/bigint.c (amglue_Sv*): Theses functions take a new err
 	  argument to be able to return error message.
 	* perl/amglue/amglue.h (amglue_Sv*): Change prototypes.
