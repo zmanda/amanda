@@ -26,79 +26,79 @@ Amanda::Report::json -- Generate an amanda report in json format.
 
 =item report format
 
-$report->{'head'}->{'config_name'} => $config;
-                   {'org'}         => $org;
-                   {'date'}        => "July 24, 2013";
-		   {'hostname'}    => "localhost.localdomain"
-$report->{'tapeinfo'}->{'storage'}->{$storage}->{'use'}          => @labels	#label used for each storage
-						{'next'}         => @labels	#labels to use on next run
-						{'next_to_use'}  => $nb		#
-						{'new_labelled'} => @labels	# new labelled tapes.
-$report->{'usage_by_tape'}[]->{'tape_label'} => $label
-			      {'nb'}
-			      {'size'}
-			      {'dump_timestamp'}
-			      {'configuration_id'}
-			      {'time_duration'}
-			      {'nc'}
-			      {'percent_use'}
-$report->{'notes'}[]  # array of text lines;
-$report->{'summary'}[]->{'last_tape_label'}
-			{'dle_status'}
-			{'tape_duration'}
-			{'backup_level'}
-			{'configuration_id'}
-			{'hostname'}
-			{'dump_partial'}
-			{'tape_rate'}
-			{'dump_rate'}
-			{'disk_name'}
-			{'dump_duration'}
-			{'dump_timestamp'}
-			{'dump_orig_kb'}
-			{'dump_comp'}
-			{'dump_out_kb'}
-$respot->{'statistic'}->{'tape_size'}->{'incr'}
-				       {'full'}
-				       {'total'}
-			{'parts_taped'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'dles_taped'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'Avg_tape_write_speed'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'dump_time'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'tape_used'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'tape_time'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'original_size'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'output_size'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'dles_dumped'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'avg_compression'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'avg_dump_rate'}->{'incr'}
-				         {'full'}
-				         {'total'}
-			{'dumpdisks'} =>  "1:1"
-			{'tapeparts'} =>  "1:1"
-			{'tapedisks'} =>  "1:1"
-			{'run_time'}
-			{'estimate_time'}
+ $report->{'head'}->{'config_name'} => $config;
+                    {'org'}         => $org;
+                    {'date'}        => "July 24, 2013";
+                    {'hostname'}    => "localhost.localdomain"
+ $report->{'tapeinfo'}->{'storage'}->{$storage}->{'use'}          => @labels  #label used for each storage
+                                                 {'next'}         => @labels  #labels to use on next run
+                                                 {'next_to_use'}  => $nb      #
+                                                 {'new_labelled'} => @labels  # new labelled tapes.
+ $report->{'usage_by_tape'}[]->{'tape_label'} => $label
+                               {'nb'}
+                               {'size'}
+                               {'dump_timestamp'}
+                               {'configuration_id'}
+                               {'time_duration'}
+                               {'nc'}
+                               {'percent_use'}
+ $report->{'notes'}[]  # array of text lines;
+ $report->{'summary'}[]->{'last_tape_label'}
+                         {'dle_status'}
+                         {'tape_duration'}
+                         {'backup_level'}
+                         {'configuration_id'}
+                         {'hostname'}
+                         {'dump_partial'}
+                         {'tape_rate'}
+                         {'dump_rate'}
+                         {'disk_name'}
+                         {'dump_duration'}
+                         {'dump_timestamp'}
+                         {'dump_orig_kb'}
+                         {'dump_comp'}
+                         {'dump_out_kb'}
+ $report->{'statistic'}->{'tape_size'}->{'incr'}
+                                        {'full'}
+                                        {'total'}
+                         {'parts_taped'}->{'incr'}
+                                          {'full'}
+                                          {'total'}
+                         {'dles_taped'}->{'incr'}
+                                         {'full'}
+                                         {'total'}
+                         {'Avg_tape_write_speed'}->{'incr'}
+                                                   {'full'}
+                                                   {'total'}
+                         {'dump_time'}->{'incr'}
+                                        {'full'}
+                                        {'total'}
+                         {'tape_used'}->{'incr'}
+                                        {'full'}
+                                        {'total'}
+                         {'tape_time'}->{'incr'}
+                                        {'full'}
+                                        {'total'}
+                         {'original_size'}->{'incr'}
+                                            {'full'}
+                                            {'total'}
+                         {'output_size'}->{'incr'}
+                                          {'full'}
+                                          {'total'}
+                         {'dles_dumped'}->{'incr'}
+                                          {'full'}
+                                          {'total'}
+                         {'avg_compression'}->{'incr'}
+                                              {'full'}
+                                              {'total'}
+                         {'avg_dump_rate'}->{'incr'}
+                                            {'full'}
+                                            {'total'}
+                         {'dumpdisks'} =>  "1:1"
+                         {'tapeparts'} =>  "1:1"
+                         {'tapedisks'} =>  "1:1"
+                         {'run_time'}
+                         {'estimate_time'}
 
 =back
 
