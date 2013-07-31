@@ -1031,6 +1031,13 @@ sub abort_setup {
     $self->_dump_done();
 }
 
+sub set_dump_cb {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'dump_cb'} = $params{'dump_cb'};
+}
+
 sub _dump_done {
     my $self = shift;
 

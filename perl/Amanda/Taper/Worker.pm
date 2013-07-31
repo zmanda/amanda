@@ -44,6 +44,7 @@ use POSIX qw( :errno_h );
 use Amanda::Changer;
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Debug qw( :logging );
+use Amanda::Device qw( :constants );
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::MainLoop qw( :GIOCondition );
@@ -580,6 +581,17 @@ sub send_port_and_get_header {
 	# get the ip:port pairs for the data connection from the data xfer source,
 	# which should be an Amanda::Xfer::Source::DirectTCPListen
 	my $data_addrs = $self->{'xfer_source'}->get_addrs();
+
+	if (!$data_addrs || @$data_addrs == 0) {
+	    if (@{$self->{'scribe'}->{'device_errors'}}) {
+		$self->{'scribe'}->abort_setup(dump_cb => $self->{'dump_cb'});
+		return;
+	    }
+	    #An XMSG_ERROR will call the dump_cb
+	    $self->{'scribe'}->set_dump_cb(dump_cb => $self->{'dump_cb'});
+	    return;
+	}
+
 	$data_addrs = join ";", map { $_->[0] . ':' . $_->[1] } @$data_addrs;
 
 	# and set up an xfer for the header, too, using DirectTCP as an easy

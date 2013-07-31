@@ -1,3 +1,9 @@
+2013-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm (set_dump_cb): New method.
+	* perl/Amanda/Taper/Worker.pm: return FAILED if
+	  $self->{'xfer_source'}->get_addrs failed.
+	* server-src/driver.c: Accept a FAILED immediately after a PORT-WRITE.
+
 2013-07-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amanda.psgi.pl: Add missing JSON method.
 

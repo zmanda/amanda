@@ -1775,16 +1775,18 @@ handle_taper_result(
 		   walltime_str(curclock()), taper->name, wtaper->name, dp->host->hostname, qname);
 	    fflush(stdout);
 
+	    wtaper->result = cmd;
+	    if (wtaper->dumper && !dp->dataport_list) {
+		wtaper->dumper->result = FAILED;
+	    }
 	    if (g_str_equal(result_argv[3], "INPUT-ERROR")) {
 		g_free(wtaper->input_error);
 		wtaper->input_error = g_strdup(result_argv[5]);
-		wtaper->result = FAILED;
 		amfree(qname);
 		break;
 	    } else if (!g_str_equal(result_argv[3], "INPUT-GOOD")) {
 		g_free(wtaper->tape_error);
 		wtaper->tape_error = g_strdup(_("Taper protocol error"));
-		wtaper->result = FAILED;
 		log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		        dp->host->hostname, qname, sched(dp)->datestamp,
 		        sched(dp)->level, wtaper->tape_error);
@@ -1796,14 +1798,12 @@ handle_taper_result(
 		wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(wtaper->tape_error);
 		wtaper->tape_error = g_strdup(result_argv[6]);
-		wtaper->result = FAILED;
 		amfree(qname);
 		break;
 	    } else if (!g_str_equal(result_argv[4], "TAPE-GOOD")) {
 		wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(wtaper->tape_error);
 		wtaper->tape_error = g_strdup(_("Taper protocol error"));
-		wtaper->result = FAILED;
 		log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		        dp->host->hostname, qname, sched(dp)->datestamp,
 		        sched(dp)->level, wtaper->tape_error);
@@ -1812,7 +1812,6 @@ handle_taper_result(
 	    }
 
 	    amfree(qname);
-	    wtaper->result = cmd;
 
 	    break;
 
@@ -2073,7 +2072,6 @@ handle_taper_result(
 	    /* tell the dumper to dump to a port */
 	    dumper_cmd(dumper, PORT_DUMP, dp, NULL);
 	    dp->host->start_t = time(NULL) + 5;
-	    amfree(dp->dataport_list);
 
 	    wtaper->state |= TAPER_STATE_DUMP_TO_TAPE;
 
