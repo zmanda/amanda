@@ -1,4 +1,11 @@
 2013-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Set storage_name to "NO-STORAGE" if there is
+	  no storage.
+	* perl/Amanda/Changer/aggregate.pm, perl/Amanda/Changer/disk.pm,
+	  perl/Amanda/Changer/multi.pm, perl/Amanda/Changer/robot.pm:
+	  Keep a current slot by config/storage/changer.
+
+2013-07-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm (set_dump_cb): New method.
 	* perl/Amanda/Taper/Worker.pm: return FAILED if
 	  $self->{'xfer_source'}->get_addrs failed.

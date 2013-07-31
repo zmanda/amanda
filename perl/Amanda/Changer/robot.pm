@@ -28,9 +28,8 @@ use vars qw( @ISA );
 use Data::Dumper;
 use File::Path;
 use Amanda::Paths;
-use Amanda::Config qw( :init );
+use Amanda::Config qw( :init :getconf );
 use Amanda::MainLoop qw( :GIOCondition make_cb define_steps step );
-use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug warning );
 use Amanda::Device qw( :constants );
 use Amanda::Changer;
@@ -62,6 +61,8 @@ See the amanda-changers(7) manpage for usage information.
 #   drive_lru - recently used drives, least recent first
 #   bc2lb - hash mapping known barcodes to known labels
 #   current_slot - hash of the current slot
+#       ->{$config_name}    #deprecated
+#       ->{'config'}->{$config_name}->{'storage'}->{$storage_name}->{'changer'}->{$changer_name}
 #   last_operation_time - time the last operation finished
 #   last_operation_delay - required delay for that operation
 #   last_status - last time a 'status' command finished
@@ -86,8 +87,6 @@ See the amanda-changers(7) manpage for usage information.
 #   barcode - volume barcode
 #   orig_slot - slot from which this tape was loaded
 #
-## The 'current_slot' key is also a hash by config name, the values of
-# which are the current slot for the config.
 # #
 # LOCKING
 #
@@ -319,6 +318,30 @@ sub load {
     $self->_with_updated_state(\%params, 'res_cb', sub { $self->load_unlocked(@_) });
 }
 
+sub _get_current {
+    my $self = shift;
+    my %params = @_;
+    my $state = $params{'state'};
+
+    my $storage = $self->{'storage'}->{'storage_name'};
+    my $changer = $self->{'chg_name'};
+    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+    return $current_slot if defined $current_slot;
+    return $state->{'current_slot'}{get_config_name()};
+}
+
+sub _set_current {
+    my $self = shift;
+    my %params = @_;
+    my $state = $params{'state'};
+    my $slot = $params{'slot'};
+
+    my $storage = $self->{'storage'}->{'storage_name'};
+    my $changer = $self->{'chg_name'};
+    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = $slot;
+    #$state->{'current_slot'}{get_config_name()} = $slot;
+}
+
 sub load_unlocked {
     my $self = shift;
     my %params = @_;
@@ -350,7 +373,8 @@ sub load_unlocked {
 			$self->_debug("no next slot relative to $params{slot}");
 		    }
 		} else {
-		    $slot = $self->_get_next_slot($state, $state->{'current_slot'}{get_config_name()}, $params{'except_slots'});
+		    my $current_slot = $self->_get_current(state => $state);
+		    $slot = $self->_get_next_slot($state, $current_slot, $params{'except_slots'});
 		    if (defined $slot) {
 			$self->_debug("loading next relative to current slot: $slot");
 		    } else {
@@ -363,16 +387,17 @@ sub load_unlocked {
 			    message => "could not find next slot");
 		}
             } elsif ($params{'relative_slot'} eq "current") {
-                $slot = $state->{'current_slot'}{get_config_name()};
-		if (defined $slot && $slot == -1) {
+		my $current_slot = $self->_get_current(state => $state);
+		if (defined $current_slot && $current_slot == -1) {
 		    # seek to the first slot
-		    $slot = $self->_get_next_slot($state, $state->{'current_slot'}{get_config_name()}, $params{'except_slots'});
+		    $slot = $self->_get_next_slot($state, $current_slot, $params{'except_slots'});
 		}
-		if (defined $slot && $slot == -1) {
+		if (defined $current_slot && $current_slot == -1) {
 		    return $self->make_error("failed", $params{'res_cb'},
 			    reason => "invalid",
 			    message => "no current slot");
 		}
+		$slot = $current_slot;
 	    } else {
 		return $self->make_error("failed", $params{'res_cb'},
 			reason => "invalid",
@@ -790,7 +815,7 @@ sub load_unlocked {
 	}
 	if ($params{'set_current'}) {
 	    $self->_debug("setting current slot to $slot");
-	    $state->{'current_slot'}{get_config_name()} = $slot;
+	    $self->_set_current(state => $state, slot => $slot);
 	}
 
         return $params{'res_cb'}->(undef, $res);
@@ -1004,7 +1029,7 @@ sub reset_unlocked {
     my %params = @_;
     my $state = $params{'state'};
 
-    $state->{'current_slot'}{get_config_name()} = $self->_get_next_slot($state, -1);
+    $self->_set_current(state => $state, slot => $self->_get_next_slot($state, -1));
 
     $params{'finished_cb'}->();
 }
@@ -1374,7 +1399,7 @@ sub inventory_unlocked {
 	    if $slot->{'ie'};
 
 	$i->{'current'} = 1
-	    if $slot_name eq $state->{'current_slot'}{get_config_name()};
+	    if $slot_name eq $self->_get_current(state => $state);
 
 	push @inv, $i;
     }
@@ -1844,13 +1869,14 @@ sub _get_state {
 	    $state->{'drives'} = {};
 	    $state->{'drive_lru'} = [];
 	    $state->{'bc2lb'} = {};
-	    $state->{'current_slot'}{get_config_name()} = -1;
+	    $self->_set_current(state => $state, slot => -1);
 	}
 
 	if (defined $state->{'current_slot'} &&
 	    ref(\$state->{'current_slot'}) eq "SCALAR") {
 	    my $current_slot = $state->{'current_slot'};
-	    $state->{'current_slot'} = {get_config_name() => $current_slot};
+	    delete $state->{'current_slot'};
+	    $self->_set_current(state => $state, slot => $current_slot);
 	}
 
 	# this is for testing ONLY!
@@ -2047,9 +2073,9 @@ sub _get_state {
 	    }
 	}
 
-	if (!defined $state->{'current_slot'}{get_config_name()} ||
-	    $state->{'current_slot'}{get_config_name()} == -1) {
-	    $state->{'current_slot'}{get_config_name()} = $self->_get_next_slot($state, -1);
+	my $current_slot = $self->_get_current(state => $state);
+	if (!defined $current_slot || $current_slot == -1) {
+	    $self->_set_current(state => $state, slot => $self->_get_next_slot($state, -1));
 	}
 
 	$steps->{'done'}->();

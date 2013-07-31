@@ -133,7 +133,10 @@ sub _get_current_slot
 
     $self->with_locked_state($self->{'state_filename'}, $cb, sub {
 	my ($state, $cb) = @_;
-	$self->{'current_slot'} = $state->{'current_slot'};
+	my $storage = $self->{'storage'}->{'storage_name'};
+	my $changer = $self->{'chg_name'};
+	$self->{'current-slot'} = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}) {
+	$self->{'current_slot'} = $state->{'current_slot'} if !defined $self->{'current_slot'};;
 	$self->{'current_slot'} = "0:first" if !defined $self->{'current_slot'};
 	$cb->();
     });
@@ -146,6 +149,9 @@ sub _set_current_slot
 
     $self->with_locked_state($self->{'state_filename'}, $cb, sub {
 	my ($state, $cb) = @_;
+	my $storage = $self->{'storage'}->{'storage_name'};
+	my $changer = $self->{'chg_name'};
+	$state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = $self->{'current_slot'};
 	$state->{'current_slot'} = $self->{'current_slot'};
 	$cb->();
     });

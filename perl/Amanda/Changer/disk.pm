@@ -28,7 +28,7 @@ use vars qw( @ISA );
 use File::Glob qw( :glob );
 use File::Path;
 use File::Basename;
-use Amanda::Config qw( :getconf string_to_boolean );
+use Amanda::Config qw( :getconf :init string_to_boolean );
 use Amanda::Debug qw( debug warning );
 use Amanda::Changer;
 use Amanda::MainLoop;
@@ -64,6 +64,7 @@ See the amanda-changers(7) manpage for usage information.
 # The device state is shared between all changers accessing the same changer.
 # It is a hash with keys:
 #   current - the slot directory of the current slot
+#   current_slot->{'config'}->{$config_name}->{'storage'}->{$storage_name}->{'changer'}->{$changer}
 #   meta    - meta label of the vtapes
 #   drives  - see below
 #
@@ -540,6 +541,15 @@ sub _get_current {
     my $self = shift;
     my $state = shift;
 
+    my $storage = $self->{'storage'}->{'storage_name'};
+    my $changer = $self->{'chg_name'};
+    my $current_slot = $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+    if (defined $current_slot) {
+	if ($current_slot =~ "^slot([0-9]+)/?") {
+	    return $1;
+	}
+    }
+
     if ($state->{'current'}) {
         if ($state->{'current'} =~ "^slot([0-9]+)/?") {
             return $1;
@@ -574,6 +584,9 @@ sub _set_current {
     my $slot  = shift;
 
     $state->{'current'} = "slot$slot";
+    my $storage = $self->{'storage'}->{'storage_name'};
+    my $changer = $self->{'chg_name'};
+    $state->{'current_slot'}->{'config'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = "slot$slot";
     my $curlink = $self->{'dir'} . "/data";
 
     if (-l $curlink or -e $curlink) {

@@ -1007,24 +1007,28 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	$rv->{'fatal_error'} = undef;
     }
 
-    $rv->{'storage'} = $params{'storage'};
+    if ($params{'storage'}) {
+	$rv->{'storage'} = $params{'storage'};
+    } else {
+	$rv->{'storage'}->{'storage_name'} = "NO-STORAGE";
+    }
     $rv->{'tapelist'} = $params{'tapelist'};
 
     $rv->{'autolabel'} = $params{'autolabel'};
     $rv->{'autolabel'} = $rv->{'storage'}->{'autolabel'}
-	if !defined $rv->{'autolabel'} && defined $rv->{'storage'};
+	if !defined $rv->{'autolabel'} && defined $rv->{'storage'}->{'autolabel'};
     $rv->{'autolabel'} = getconf($CNF_AUTOLABEL)
 	unless defined $rv->{'autolabel'};
 
     $rv->{'labelstr'} = $params{'labelstr'};
     $rv->{'labelstr'} = $rv->{'storage'}->{'labelstr'}
-	if !defined $rv->{'labestr'} && defined $rv->{'storage'};
+	if !defined $rv->{'labestr'} && defined $rv->{'storage'}->{'labelstr'};
     $rv->{'labelstr'} = getconf($CNF_LABELSTR)
 	if !defined $rv->{'labelstr'};
 
     $rv->{'meta_autolabel'} = $params{'meta_autolabel'};
     $rv->{'meta_autolabel'} = $rv->{'storage'}->{'meta_autolabel'}
-	if !defined $rv->{'meta_autolabel'} && defined $rv->{'storage'};
+	if !defined $rv->{'meta_autolabel'} && defined $rv->{'storage'}->{'meta_autolabel'};
     $rv->{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
 	if !defined $rv->{'meta_autolabel'};
 
@@ -1956,7 +1960,6 @@ sub configure_device {
     my %properties;
 
     # always use implicit properties
-    #%properties = ( %properties, %{ $self->_get_implicit_properties( $storage) } );
     %properties = ( %{ $self->_get_implicit_properties( $storage) } );
 
     # always use global properties
@@ -2022,7 +2025,7 @@ sub _get_implicit_properties {
     my $props = {};
     my $tapetype;
 
-    if ($storage) {
+    if (defined $storage->{'tapetype'}) {
 	$tapetype = $storage->{'tapetype'};
     } else {
 	my $tapetype_name = getconf($CNF_TAPETYPE);

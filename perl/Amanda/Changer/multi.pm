@@ -26,7 +26,7 @@ use vars qw( @ISA );
 
 use File::Glob qw( :glob );
 use File::Path;
-use Amanda::Config qw( :getconf );
+use Amanda::Config qw( :init :getconf );
 use Amanda::Debug;
 use Amanda::Changer;
 use Amanda::Tapelist;
@@ -683,7 +683,11 @@ sub _get_current {
     my $slot;
 
     return $self->{slot} if defined $self->{slot};
-    if (defined $state->{current_slot_by_config}{Amanda::Config::get_config_name()}) {
+    my $storage = $self->{'storage'}->{'storage_name'};
+    my $changer = $self->{'chg_name'};
+    if (defined $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}) {
+	$slot = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}
+    } elsif (defined $state->{current_slot_by_config}{Amanda::Config::get_config_name()}) {
 	$slot = $self->{number}->{$state->{current_slot_by_config}{Amanda::Config::get_config_name()}};
     } elsif (defined $state->{current_slot}) {
 	$slot = $self->{number}->{$state->{current_slot}};
@@ -704,6 +708,9 @@ sub _set_current {
     my ($self, $state, $slot) = @_;
 
     $self->{slot} = $slot;
+    my $storage = $self->{'storage'}->{'storage_name'};
+    my $changer = $self->{'chg_name'};
+    $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer} = $self->{unaliased}->{$slot};
     $state->{current_slot_by_config}{Amanda::Config::get_config_name()} = $self->{unaliased}->{$slot};
 }
 
