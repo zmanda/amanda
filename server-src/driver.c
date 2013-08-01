@@ -1605,7 +1605,7 @@ continue_port_dumps(void)
 {
     GList  *dlist, *dlist_next;
     disk_t *dp;
-    job_t  *job;
+    job_t  *job = NULL;
     assignedhd_t **h;
     int active_dumpers=0, busy_dumpers=0, i;
     dumper_t *dumper;
