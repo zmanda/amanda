@@ -882,8 +882,40 @@ set_mode(
   }
 }
 
+static char *storage_in = NULL;
 void
-show_mode(void) 
+add_storage_value(
+    char *storage) {
+
+    char *new_storage_in;
+
+    if (storage_in) {
+	new_storage_in = g_strconcat(storage, " ", storage_in, NULL);
+	g_free(storage_in);
+	storage_in = new_storage_in;
+    } else {
+	storage_in = g_strdup(storage);
+    }
+}
+
+void
+set_storage(void)
+{
+    char *qstorage = quote_string(storage_in);
+    char *cmd = g_strconcat("STORAGE ", qstorage, NULL);
+    storage_in = NULL;
+    g_free(qstorage);
+
+    if (exchange(cmd) == -1)
+	exit(1);
+    g_free(cmd);
+    if (!server_happy()) {
+    }
+    suck_dir_list_from_server();	/* get list of directory contents */
+}
+
+void
+show_mode(void)
 {
 #ifdef SAMBA_CLIENT
   g_printf (_("SAMBA dumps are extracted "));

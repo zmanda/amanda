@@ -202,6 +202,8 @@ typedef enum {
 
     fe_amrecover_storage_in_marshall,
     fe_amidxtaped_storage_in_marshall,
+    fe_amindexd_STORAGE,
+
     /*
      * All new features must be inserted immediately *before* this entry.
      */

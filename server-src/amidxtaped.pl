@@ -652,7 +652,7 @@ sub xfer_src_cb {
 	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered)) {
 		if ($server_encrypted) {
 		    $self->{'client_filter'} = Amanda::Xfer::Filter::Crc->new();
-		    push @filters, $server_encrypted;
+		    push @filters, $self->{'client_filter'};
 		}
 		# TODO: this assumes that clntcompprog takes "-d" to decrypt
 		push @filters,
@@ -671,9 +671,11 @@ sub xfer_src_cb {
 		(!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered) ||
 		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
 		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST)) {
-		if ($server_encrypted) {
+		if ($server_encrypted &&
+		    $dle->{'compress'} != $Amanda::Config::COMP_SERVER_FAST &&
+		    $dle->{'compress'} != $Amanda::Config::COMP_SERVER_BEST) {
 		    $self->{'client_filter'} = Amanda::Xfer::Filter::Crc->new();
-		    push @filters, $server_encrypted;
+		    push @filters, $self->{'client_filter'};
 		}
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
@@ -786,39 +788,41 @@ sub start_xfer {
 	}
     }
 
-    # start reading all filter stderr
+    # start reading all filters stderr
     foreach my $filter (@{$self->{'xfer_filters'}}) {
-	my $fd = $filter->get_stderr_fd();
-	$fd.="";
-	$fd = int($fd);
-	my $src = Amanda::MainLoop::fd_source($fd,
-					      $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-	my $buffer = "";
-	$self->{'all_filter'}{$src} = 1;
-	$src->set_callback( sub {
-	    my $b;
-	    my $n_read = POSIX::read($fd, $b, 1);
-	    if (!defined $n_read) {
-		return;
-	    } elsif ($n_read == 0) {
-		delete $self->{'all_filter'}->{$src};
-		$src->remove();
-		POSIX::close($fd);
-		if (!%{$self->{'all_filter'}} and $self->{'fetch_done'}) {
-		    Amanda::MainLoop::quit();
+	if ($filter->can("get_stderr_fd")) {
+	    my $fd = $filter->get_stderr_fd();
+	    $fd.="";
+	    $fd = int($fd);
+	    my $src = Amanda::MainLoop::fd_source($fd,
+						  $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+	    my $buffer = "";
+	    $self->{'all_filter'}{$src} = 1;
+	    $src->set_callback( sub {
+		my $b;
+		my $n_read = POSIX::read($fd, $b, 1);
+		if (!defined $n_read) {
+		    return;
+		} elsif ($n_read == 0) {
+		    delete $self->{'all_filter'}->{$src};
+		    $src->remove();
+		    POSIX::close($fd);
+		    if (!%{$self->{'all_filter'}} and $self->{'fetch_done'}) {
+			Amanda::MainLoop::quit();
+		    }
+		} else {
+		    $buffer .= $b;
+		    if ($b eq "\n") {
+			my $line = $buffer;
+			#print STDERR "filter stderr: $line";
+			chomp $line;
+			$self->sendmessage("filter stderr: $line");
+			debug("filter stderr: $line");
+			$buffer = "";
+		    }
 		}
-	    } else {
-		$buffer .= $b;
-		if ($b eq "\n") {
-		    my $line = $buffer;
-		    #print STDERR "filter stderr: $line";
-		    chomp $line;
-		    $self->sendmessage("filter stderr: $line");
-		    debug("filter stderr: $line");
-		    $buffer = "";
-		}
-	    }
-	});
+	    });
+	}
     }
 
     # create and start the transfer

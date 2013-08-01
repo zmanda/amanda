@@ -104,6 +104,7 @@ lcd		{ BEGIN(needstring); return LCD; }
 lpwd		{ BEGIN(needstring); return LPWD; }
 extract		{ BEGIN(needstring); return EXTRACT; }
 mode		{ BEGIN(needstring); return MODE; }
+storage		{ BEGIN(needstring); return STORAGE; }
 <needmode>tar   { BEGIN(needstring); return TAR; }
 <needmode>smb   { BEGIN(needstring); return SMB; }
 <INITIAL,needdevice,needmode,needstring,astring,propertyappend,propertypriority>{LINEFEED}	{ BEGIN(INITIAL); return NL; }

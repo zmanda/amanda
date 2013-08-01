@@ -221,6 +221,12 @@ mount point instead of full pathnames.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>storage</emphasis> [<emphasis remap='I'>storage-name</emphasis>]*</term>
+  <listitem>
+<para>The name of the <emphasis remap='B'>storage</emphasis> in order of preference, use 'HOLDING' for the holding disk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>listproperty</emphasis></term>
   <listitem>
 <para>List all

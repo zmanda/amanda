@@ -1,4 +1,23 @@
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: Add fe_amindexd_STORAGE.
+	* common-src/amfeatures.c: Add fe_amindexd_STORAGE.
+	* recover-src/amrecover.h (add_storage_value, set_storage): Add
+	  prototype.
+	* recover-src/help.c: Add storage command.
+	* recover-src/set_commands.c (add_storage_value, set_storage): New
+	  function.
+	* recover-src/uparse.y: Parse storage command.
+	* recover-src/uscan.l: Parse storage keyword,
+	* server-src/amadmin.c (find): Add new 's' sort order for storage.
+	* server-src/amidxtaped.pl: Fix filter issue.
+	* server-src/amindexd.c: Accept STORAGE command from amrecover.
+	* server-src/disk_history.c: Check storage.
+	* server-src/find.c: Sort by storage.
+	* server-src/find.h (DEFAULT_SORT_ORDER): Now "hkdlspbfw".
+	* man/xml-source/amadmin.8.xml (find): Add new 's' sort order.
+	* man/xml-source/amrecover.8.xml: Add new storage command.
+
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/aggregate.pm: Small fix.
 	* server-src/amadmin_perl.pl: Do not use XML::Simple.
 

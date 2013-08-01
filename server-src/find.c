@@ -358,7 +358,7 @@ find_compare(
 	case 'p' :
 		   compare=i->partnum - j->partnum;
 		   break;
-	case 's' : compare=j->storage_id - i->storage_id;
+	case 's' : compare=i->storage_id - j->storage_id;
 		   break;
 	}
 	if(compare != 0)
@@ -370,6 +370,15 @@ find_compare(
 void
 sort_find_result(
     char *sort_order,
+    find_result_t **output_find)
+{
+    sort_find_result_with_storage(sort_order, NULL, output_find);
+}
+
+void
+sort_find_result_with_storage(
+    char *sort_order,
+    char **storage_list,
     find_result_t **output_find)
 {
     find_result_t *output_find_result;
@@ -389,12 +398,22 @@ sort_find_result(
 	output_find_result;
 	output_find_result=output_find_result->next) {
 	nb_result++;
-	for (i = 0, il = getconf_identlist(CNF_STORAGE); il != NULL;
-	     i++, il = il->next) {
-	    char *storage_n = il->data;
-	    if (g_str_equal(output_find_result->storage,
-			    storage_n)) {
-		output_find_result->storage_id = i;
+	if (!storage_list) {
+	    for (i = 1, il = getconf_identlist(CNF_STORAGE); il != NULL;
+		i++, il = il->next) {
+		char *storage_n = il->data;
+		if (g_str_equal(output_find_result->storage,
+				storage_n)) {
+		    output_find_result->storage_id = i;
+		}
+	    }
+	} else {
+	    char **storage_l;
+	    for (i=1, storage_l = storage_list; *storage_l != NULL;
+		 storage_l++, i++) {
+		if (g_str_equal(output_find_result->storage, *storage_l)) {
+		    output_find_result->storage_id = i;
+		}
 	    }
 	}
     }

@@ -214,10 +214,10 @@ security to be sure amanda will not overwrite them.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>find</emphasis> [ <option>--sort</option> <replaceable>hkdlpbfw</replaceable> ]<emphasis remap='B'></emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <term><emphasis remap='B'>find</emphasis> [ <option>--sort</option> <replaceable>hkdlspbfw</replaceable> ]<emphasis remap='B'></emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
   <listitem>
 <para>Display all backups currently on tape or in the holding disk.
-The tape label or holding disk filename,
+The storage name, tape label or holding disk filename,
 file number,
 and status are displayed.</para>
 <para>The <option>--sort</option> option changes the sort order using the following flags:
@@ -228,12 +228,13 @@ and status are displayed.</para>
 <emphasis>l</emphasis>: backup level
 <emphasis>p</emphasis>: dump part
 <emphasis>b</emphasis>: tape label
+<emphasis>s</emphasis>: storage name
 <emphasis>f</emphasis>: filenum on tape
 <emphasis>w</emphasis>: write timestamp
 </programlisting></para>
 
 <para>An uppercase letter reverses the sort order for that key.
-The default sort order is <emphasis remap='B'>hkdlpbfw</emphasis>.</para>
+The default sort order is <emphasis remap='B'>hkdlspbfw</emphasis>.</para>
 </listitem>
 </varlistentry>
 

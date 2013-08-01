@@ -105,6 +105,9 @@ extern void set_property_name(char *name, int append);
 extern void add_property_value(char *value);
 extern void list_property(void);
 
+extern void add_storage_value(char *storage);
+extern void set_storage(void);
+
 extern void list_disk_history(void);
 extern void list_directory(void);
 extern DIR_ITEM *get_dir_list(void);

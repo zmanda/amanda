@@ -77,8 +77,9 @@ static int from_amandad;
 static char local_hostname[MAX_HOSTNAME_LENGTH+1];	/* me! */
 static char *dump_hostname = NULL;		/* machine we are restoring */
 static char *disk_name;				/* disk we are restoring */
-char *qdisk_name = NULL;			/* disk we are restoring */
+static char *qdisk_name = NULL;			/* disk we are restoring */
 static char *target_date = NULL;
+static char **storage_list = NULL;
 static disklist_t disk_list;			/* all disks in cur config */
 static find_result_t *output_find = NULL;
 static g_option_t *g_options = NULL;
@@ -434,7 +435,7 @@ process_ls_dump(
     filename_gz = get_index_name(dump_hostname, dump_item->hostname, disk_name,
 				 dump_item->date, dump_item->level);
     if (filename_gz == NULL) {
-	g_ptr_array_add(*emsg, g_strdup(_("index file not found")));
+	g_ptr_array_add(*emsg, g_strdup_printf(_("index file not found for host '%s' disk '%s' level '%d' date '%s'"), dump_item->hostname, disk_name, dump_item->level, dump_item->date));
 	amfree(filename_gz);
 	amfree(dir_slash);
 	return -1;
@@ -808,7 +809,7 @@ check_and_load_config(
     /* the 'w' here sorts by write timestamp, so that the first instance of
      * any particular datestamp/host/disk/level/part that we see is the one
      * written earlier */
-    sort_find_result("DLKHpwSB", &output_find);
+    sort_find_result("DLKHspwB", &output_find);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
     if (stat (conf_indexdir, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
@@ -827,6 +828,7 @@ build_disk_table(void)
 {
     char *date;
     char *last_timestamp;
+    char *last_storage;
     off_t last_filenum;
     int last_level;
     int last_partnum;
@@ -847,6 +849,7 @@ build_disk_table(void)
 
     clear_list();
     last_timestamp = NULL;
+    last_storage = NULL;
     last_filenum = (off_t)-1;
     last_level = -1;
     last_partnum = -1;
@@ -870,13 +873,26 @@ build_disk_table(void)
 		continue;
 	    }
 	    /* ignore duplicate partnum */
-	    if(last_timestamp &&
-	       g_str_equal(find_output->timestamp, last_timestamp) &&
-	       find_output->level == last_level && 
-	       find_output->partnum == last_partnum) {
+	    if (last_timestamp &&
+	        g_str_equal(find_output->timestamp, last_timestamp) &&
+	        find_output->level == last_level &&
+	        find_output->partnum == last_partnum &&
+	        (!am_has_feature(their_features, fe_amindexd_STORAGE) ||
+		 g_str_equal(find_output->storage, last_storage))) {
 		continue;
 	    }
+	    if (storage_list) {
+		char **storage_l;
+		gboolean found = FALSE;
+		for (storage_l = storage_list; *storage_l != NULL; storage_l++) {
+		     if (g_str_equal(find_output->storage, *storage_l))
+			found = TRUE;
+		}
+		if (!found)
+		    continue;
+	    }
 	    last_timestamp = find_output->timestamp;
+	    last_storage = find_output->storage;
 	    last_filenum = find_output->filenum;
 	    last_level = find_output->level;
 	    last_partnum = find_output->partnum;
@@ -1007,7 +1023,7 @@ is_dir_valid_opaque(
 	filename_gz = get_index_name(dump_hostname, item->hostname, disk_name,
 				     item->date, item->level);
 	if (filename_gz == NULL) {
-	    reply(599, "index not found");
+	    reply(599, "index file not found for host '%s' disk '%s' level '%d' date '%s'", item->hostname, disk_name, item->level, item->date);
 	    amfree(ldir);
 	    return -1;
 	}
@@ -1825,6 +1841,48 @@ main(
 	    (void)tapedev_is();
 	} else if (g_str_equal(cmd, "DCMP")) {
 	    (void)are_dumps_compressed();
+	} else if (g_str_equal(cmd, "STORAGE")) {
+	    s[-1] = '\0';
+	    g_strfreev(storage_list);
+	    if (arg && *arg != '\0') {
+		char **storage_l;
+		char **storage_n;
+		char *invalid_storage;
+
+		storage_list = split_quoted_strings(arg);
+		storage_n = storage_list;
+		for (storage_l = storage_list; *storage_l != NULL; storage_l++) {
+		    if (g_str_equal(*storage_l, "HOLDING") ||
+			lookup_storage(*storage_l)) {
+			*storage_n = *storage_l;
+			storage_n++;
+		    } else {
+			char *qstorage = quote_string(*storage_l);
+			if (invalid_storage) {
+			    char *new_invalid_storage = g_strconcat(invalid_storage, " ", qstorage, NULL);
+			    g_free(invalid_storage);
+			    invalid_storage = new_invalid_storage;
+			    g_free(qstorage);
+			} else {
+			    invalid_storage = qstorage;
+			}
+			g_free(*storage_l);
+			*storage_l = NULL;
+		    }
+		}
+		if (invalid_storage) {
+		    reply(599, _("invalid storage: %s"), invalid_storage);
+		    invalid_storage = NULL;
+		} else {
+		    reply(200, _("storage set to %s"), arg);
+		}
+	    } else {
+		storage_list = NULL;
+		reply(200, _("storage unset"));
+	    }
+	    sort_find_result_with_storage("DLKHspwB", storage_list, &output_find);
+	    build_disk_table();
+	    s[-1] = (char)ch;
 	} else {
 	    *cmd_undo = cmd_undo_ch;	/* restore the command line */
 	    reply(500, _("Command not recognised/incorrect: %s"), cmd);

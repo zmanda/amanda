@@ -81,7 +81,8 @@ add_dump(
 	for(item = disk_hist, before = NULL; item;
 	    before = item, item = item->next) {
 	    if (g_str_equal(item->date, date) &&
-		    item->level == level && item->is_split) {
+		item->level == level && item->is_split &&
+		g_str_equal(item->storage, storage)) {
 		item->tapes = append_to_tapelist(item->tapes, storage, tape, file,
 						 partnum, isafile);
 		if (maxpart > item->maxpart)
@@ -121,7 +122,7 @@ add_dump(
     /* prepend this item to the history list, if it's newer */
     /* XXX this should probably handle them being on the same date with
        datestamp_uax or something */
-    if (strcmp(disk_hist->date, new->date) <= 0)
+    if (strcmp(disk_hist->date, new->date) < 0)
     {
 	new->next = disk_hist;
 	disk_hist = new;
@@ -131,7 +132,7 @@ add_dump(
     /* append this item to the history list, if it's older */
     before = disk_hist;
     item = disk_hist->next;
-    while ((item != NULL) && (strcmp(item->date, new->date) > 0))
+    while ((item != NULL) && (strcmp(item->date, new->date) >= 0))
     {
 	before = item;
 	item = item->next;

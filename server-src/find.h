@@ -3,7 +3,7 @@
 
 #include "diskfile.h"
 
-#define DEFAULT_SORT_ORDER      "hkdlpbfw"
+#define DEFAULT_SORT_ORDER      "hkdlspbfw"
 
 typedef struct find_result_s {
     struct find_result_s *next;
@@ -46,6 +46,7 @@ find_result_t *find_dump(disklist_t* diskqp);
 char **find_log(void);
 
 void sort_find_result(char *sort_order, find_result_t **output_find);
+void sort_find_result_with_storage(char *sort_order, char **storage_list, find_result_t **output_find);
 void print_find_result(find_result_t *output_find);
 void free_find_result(find_result_t **output_find);
 find_result_t *dump_exist(find_result_t *output_find, char *hostname,

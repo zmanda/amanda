@@ -54,7 +54,7 @@ extern char *	yytext;
 %token SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE SETPROPERTY
 %token CD CDX QUIT DHIST LS ADD ADDX EXTRACT DASH_H
 %token LIST DELETE DELETEX PWD CLEAR HELP LCD LPWD MODE SMB TAR
-%token APPEND PRIORITY SETTRANSLATE
+%token APPEND PRIORITY SETTRANSLATE STORAGE
 %token NL
 
         /* typed tokens */
@@ -127,6 +127,7 @@ set_command:
   |	SETMODE TAR invalid_string { yyerror("Invalid argument"); }
   |	SETMODE invalid_string { yyerror("Invalid argument"); }
   |	SETMODE NL { yyerror("Argument required"); }
+  |	STORAGE storage_value { set_storage(); }
   ;
 
 setdate_command:
@@ -269,6 +270,11 @@ invalid_command:
 
 property_value:
 	STRING property_value { add_property_value($1); amfree( $1); }
+  |     NL { ; }
+  ;
+
+storage_value:
+	STRING storage_value { add_storage_value($1); amfree( $1); }
   |     NL { ; }
   ;
 
