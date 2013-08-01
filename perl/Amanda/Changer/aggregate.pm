@@ -136,7 +136,7 @@ sub _get_current_slot
 	my $storage = $self->{'storage'}->{'storage_name'};
 	my $changer = $self->{'chg_name'};
 	$self->{'current-slot'} = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
-	$self->{'current_slot'} = $state->{'current_slot'} if !defined $self->{'current_slot'};;
+	$self->{'current_slot'} = $state->{'current_slot'} if !defined $self->{'current_slot'};
 	$self->{'current_slot'} = "0:first" if !defined $self->{'current_slot'};
 	$cb->();
     });

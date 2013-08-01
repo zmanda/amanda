@@ -24,7 +24,6 @@ use warnings;
 
 use Getopt::Long;
 use File::Basename;
-use XML::Simple;
 use IPC::Open3;
 
 use Amanda::Device qw( :constants );

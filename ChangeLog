@@ -1,4 +1,8 @@
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/aggregate.pm: Small fix.
+	* server-src/amadmin_perl.pl: Do not use XML::Simple.
+
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Disklist.swg: Fix perl warning.
 	* perl/Amanda/Report.pm: Set the storage.
 	* perl/Amanda/Report/human.pm: Fix perl warning.
