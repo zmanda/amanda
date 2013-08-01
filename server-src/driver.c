@@ -2782,7 +2782,6 @@ handle_chunker_result(
     chunker_t *chunker = cookie;
     assignedhd_t **h=NULL;
     job_t    *job;
-    dumper_t *dumper;
     disk_t *dp, *sdp;
     cmd_t cmd;
     int result_argc;
@@ -2793,8 +2792,7 @@ handle_chunker_result(
 
     assert(chunker != NULL);
     job = chunker->job;
-    dumper = job->dumper;
-    assert(dumper != NULL);
+    assert(job->dumper != NULL);
     dp = job->disk;
     assert(dp != NULL);
     assert(sched(dp) != NULL);
