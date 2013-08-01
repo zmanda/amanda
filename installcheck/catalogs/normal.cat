@@ -28,7 +28,7 @@ INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 START taper datestamp 20090225080737 label DIRO-TEST-003 tape 1
 PART taper DIRO-TEST-003 1 localhost.localdomain /boot1 20090225080737 1/1 0 [sec 0.250557 kb 12 kps 156611.070535]
-DONE taper localhost.localdomain /boot1 20090225080737 1 0 [sec 0.250557 kb 12 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot1 20090225080737 1 0 [sec 0.250557 kb 12 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot2 20090225080737 0 [sec 1.585 kb 123 kps 24748.4 orig-kb 167]
@@ -37,7 +37,7 @@ SUCCESS chunker localhost.localdomain /boot2 20090225080737 0 [sec 1.607 kb 123 
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 2 localhost.localdomain /boot2 20090225080737 1/1 0 [sec 0.250557 kb 123 kps 156611.070535]
-DONE taper localhost.localdomain /boot2 20090225080737 1 0 [sec 0.250557 kb 123 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot2 20090225080737 1 0 [sec 0.250557 kb 123 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot3 20090225080737 0 [sec 1.585 kb 1234 kps 24748.4 orig-kb 1678]
@@ -46,7 +46,7 @@ SUCCESS chunker localhost.localdomain /boot3 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 3 localhost.localdomain /boot3 20090225080737 1/1 0 [sec 0.250557 kb 1234 kps 156611.070535]
-DONE taper localhost.localdomain /boot3 20090225080737 1 0 [sec 0.250557 kb 1234 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot3 20090225080737 1 0 [sec 0.250557 kb 1234 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot4 20090225080737 0 [sec 1.585 kb 12345 kps 24748.4 orig-kb 16789]
@@ -55,7 +55,7 @@ SUCCESS chunker localhost.localdomain /boot4 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 4 localhost.localdomain /boot4 20090225080737 1/1 0 [sec 0.250557 kb 12345 kps 156611.070535]
-DONE taper localhost.localdomain /boot4 20090225080737 1 0 [sec 0.250557 kb 12345 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot4 20090225080737 1 0 [sec 0.250557 kb 12345 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot5 20090225080737 0 [sec 1.585 kb 123456 kps 24748.4 orig-kb 167890]
@@ -64,7 +64,7 @@ SUCCESS chunker localhost.localdomain /boot5 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 5 localhost.localdomain /boot5 20090225080737 1/1 0 [sec 0.250557 kb 123456 kps 156611.070535]
-DONE taper localhost.localdomain /boot5 20090225080737 1 0 [sec 0.250557 kb 123456 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot5 20090225080737 1 0 [sec 0.250557 kb 123456 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot6 20090225080737 0 [sec 1.585 kb 1234567 kps 24748.4 orig-kb 1678901]
@@ -73,7 +73,7 @@ SUCCESS chunker localhost.localdomain /boot6 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 6 localhost.localdomain /boot6 20090225080737 1/1 0 [sec 0.250557 kb 1234567 kps 156611.070535]
-DONE taper localhost.localdomain /boot6 20090225080737 1 0 [sec 0.250557 kb 1234567 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot6 20090225080737 1 0 [sec 0.250557 kb 1234567 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot7 20090225080737 0 [sec 1.585 kb 12345678 kps 24748.4 orig-kb 16789012]
@@ -82,7 +82,7 @@ SUCCESS chunker localhost.localdomain /boot7 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 7 localhost.localdomain /boot7 20090225080737 1/1 0 [sec 0.250557 kb 12345678 kps 156611.070535]
-DONE taper localhost.localdomain /boot7 20090225080737 1 0 [sec 0.250557 kb 12345678 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot7 20090225080737 1 0 [sec 0.250557 kb 12345678 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 SUCCESS dumper localhost.localdomain /boot8 20090225080737 0 [sec 1.585 kb 123456789 kps 24748.4 orig-kb 167890123]
@@ -91,7 +91,7 @@ SUCCESS chunker localhost.localdomain /boot8 20090225080737 0 [sec 1.607 kb 1234
 INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 PART taper DIRO-TEST-003 8 localhost.localdomain /boot8 20090225080737 1/1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
-DONE taper localhost.localdomain /boot8 20090225080737 1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot8 20090225080737 1 0 [sec 0.250557 kb 123456789 kps 156611.070535]
 INFO chunker chunker pid 23733
 INFO dumper gzip pid 23738
 # add an 'orig-kb 0' which should be equivalent to a missing field
@@ -102,7 +102,7 @@ INFO chunker pid-done 23733
 INFO dumper pid-done 23738
 # add an 'orig-kb -1', which the driver has been known to produce, and which should be treated as missing
 PART taper DIRO-TEST-003 9 localhost.localdomain /boot9 20090225080737 1/1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
-DONE taper localhost.localdomain /boot9 20090225080737 1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
+DONE taper "ST:TESTCONF" localhost.localdomain /boot9 20090225080737 1 0 [sec 0.250557 kb 1234567890 kps 156611.070535 orig-kb -1]
 INFO dumper pid-done 23686
 INFO taper tape DIRO-TEST-003 kb 39240 fm 10 [OK]
 INFO taper pid-done 23685
@@ -213,7 +213,7 @@ driver: result time 6.415 from taper0: worker0-0 PARTDONE 00-00002 Conf-001 1 10
 driver: state time 6.415 free kps: 600 space: 868220 taper: writing idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.415 if default: free 600
 driver: hdisk-state time 6.415 hdisk 0: free 868220 dumpers 0
-driver: result time 6.415 from taper0: DONE worker0-0 00-00002 INPUT-GOOD TAPE-GOOD"00000000:0" "[sec 0.001177 kb 100 kps 84961.767205]" "" ""
+driver: result time 6.415 from taper0: DONE worker0-0 00-00002 INPUT-GOOD TAPE-GOOD "00000000:0" "[sec 0.001177 kb 100 kps 84961.767205]" "" ""
 driver: finished-cmd time 6.415 taper wrote clienthost:/some/dir
 driver: state time 6.415 free kps: 600 space: 868352 taper: idle idle-dumpers: 4 qlen tapeq taper0: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.415 if default: free 600

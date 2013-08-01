@@ -188,7 +188,7 @@ is_deeply(
 
 ok(my $info = Amanda::Curinfo::Info->new($tmp_infofile),
     "create the Amanda::Curinfo::Info object");
-ok($ci->put_info($host, $disk, $info) == undef,
+ok(!defined $ci->put_info($host, $disk, $info),
     "test writing the Info object to the Curinfo database");
 ok(-f $curinfo_file, "Info object installed in the correct location");
 
@@ -1283,7 +1283,7 @@ ok(!-f "$infodir/$host_q/$disk_q/info", "infofile successfully deleted");
 
 ## rewrite it using the built-in
 
-ok( $ci->put_info($host, $disk, $info) == undef, "Amanda::Curinfo->put_info check");
+ok( !defined $ci->put_info($host, $disk, $info), "Amanda::Curinfo->put_info check");
 
 ## compare the two files
 

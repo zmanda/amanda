@@ -1,4 +1,16 @@
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Disklist.swg: Fix perl warning.
+	* perl/Amanda/Report.pm: Set the storage.
+	* perl/Amanda/Report/human.pm: Fix perl warning.
+	* perl/Amanda/Status.pm: Fix perl warning.
+	* server-src/amstatus.pl: Fix perl warning.
+	* installcheck/Amanda_Curinfo.pl: Fix perl warning.
+	* installcheck/Amanda_Report.pl: Add the storage.
+	* installcheck/catalogs/filesystemstaped.cat,
+	  installcheck/catalogs/multi-taper.cat.
+	  installcheck/catalogs/normal.cat: Add the storage in taper DONE.
+
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (handle_chunker_result): Remove dumper variable.
 
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>

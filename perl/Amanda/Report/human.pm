@@ -1315,15 +1315,14 @@ sub get_summary_info
 	my ($dumper_status) = "";
 	my $saw_dumper = 0; # no dumper will mean this was a flush
 	my $taper_partial = 0; # was the last taper run partial?
-	my $taper_try;
+	my $taper_try = undef;
 
 	## Use this loop to set values
 	foreach my $try ( @$tries ) {
 
 	    ## find the outsize for the output summary
-
 	    if (
-		exists $try->{taper}
+		exists $try->{taper} && defined $try->{taper}->{storage}
 		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& (   $try->{taper}{status} eq "done"
 		    || $try->{taper}{status} eq "part+partial" )
@@ -1335,7 +1334,7 @@ sub get_summary_info
 		$tape_time = $try->{taper}{sec};
 		$tape_rate = $try->{taper}{kps};
 		$tape_failure_from = $try->{taper}{failure_from};
-	    } elsif ( exists $try->{taper}
+	    } elsif ( exists $try->{taper} && defined $try->{taper}->{storage}
 		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& ( $try->{taper}{status} eq "partial" ) ) {
 
@@ -1345,7 +1344,7 @@ sub get_summary_info
 		$tape_time = $try->{taper}{sec} if !$tape_time;
 		$tape_rate = $try->{taper}{kps} if !$tape_rate;
 		$tape_failure_from = $try->{taper}{failure_from};
-	    } elsif (exists $try->{taper}
+	    } elsif (exists $try->{taper} && defined $try->{taper}->{storage}
 		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& ( $try->{taper}{status} eq "fail")) {
 		$tape_time = undef;
@@ -1354,7 +1353,7 @@ sub get_summary_info
 	    }
 
 	    if (!$out_size &&
-		exists $try->{chunker}
+		exists $try->{chunker} && defined $try->{chunker}->{status}
 		&& (   $try->{chunker}{status} eq "success"
 		    || $try->{chunker}{status} eq "partial" )
 	      ) {
@@ -1362,17 +1361,17 @@ sub get_summary_info
 	    }
 
 	    if (!$out_size &&
-		exists $try->{dumper}) {
+		exists $try->{dumper} && defined $try->{dumper}{kb}) {
 		$out_size = $try->{dumper}{kb};
 	    }
 
-	    if ( exists $try->{dumper}) {
+	    if ( exists $try->{dumper} && defined $try->{dumper}{status}) {
 		$saw_dumper = 1;
 		$dumper_status = $try->{dumper}{status};
 	    }
 
 	    ## find the dump time
-	    if ( exists $try->{dumper}
+	    if ( exists $try->{dumper} && defined $try->{dumper}{status}
 		&& exists $try->{dumper}{status}
 		&& (   $try->{dumper}{status} eq "success"
 		    || $try->{dumper}{status} eq "strange")) {
@@ -1449,7 +1448,8 @@ sub get_summary_info
 	    # if others try with successful taper (sent to another storage)
 	    foreach my $try ( @$tries ) {
 		next if !$try->{'taper'};
-		next if $taper_try and $try == $taper_try;
+		next if !defined $try->{'taper'}->{status};
+		next if defined $taper_try and $try == $taper_try;
 		next if $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
 
@@ -1510,7 +1510,7 @@ sub get_summary_info
 	    # if others try with successful taper (sent to another storage)
 	    foreach my $try ( @$tries ) {
 		next if !$try->{'taper'};
-		next if $try eq $taper_try;
+		next if defined $taper_try and $try eq $taper_try;
 		next if $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
 

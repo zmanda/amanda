@@ -785,7 +785,7 @@ sub parse {
 			    }
 			}
 		    } elsif ($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
-			#DONE:    7:worker 8:handle 9:label 10:filenum 11:CRC 12:errstr
+			#DONE:    7:worker 8:handle 9:INPUT-GOOD 10:TAPE-GOOD 11:CRC 12:errstr
 			#PARTIAL: 7:worker 8:handle 9:INPUT-* 10:TAPE-* 11:CRC 12:errstr 13:INPUT-MSG 14:TAPE-MSG
 			my $worker = $line[7];
 			my $serial = $line[8];
@@ -1010,7 +1010,7 @@ sub parse {
 		$self->{'qlen'}->{'roomq'} = $line[$i+3];
 
 		if (defined $self->{'dumpers_actives'}) {
-		    if ($self->{'status_driver'} ne "") {
+		    if (defined $self->{'status_driver'} and $self->{'status_driver'} ne "") {
 			$self->{'dumpers_actives'}[$self->{'dumpers_active_prev'}]
 				+= $self->{'current_time'} - $self->{'state_time_prev'};
 			$self->{'dumpers_held'}[$self->{'dumpers_active_prev'}]{$self->{'status_driver'}}
@@ -1038,12 +1038,8 @@ sub parse {
 		$self->{'start_degraded_mode'} = 1;
 	    }
 	} elsif ($line[0] eq "taper") {
-	    if ($line[2] eq "worker" &&
-	        $line[4] eq "wrote") {
-		#1:taper 2:"worker" 3:worker 4:"wrote" 5:host 6:disk
-		my $tape = $line[1];
-		my $worker = $line[3];
-	    } elsif($line[1] eq "status" && $line[2] eq "file") {
+	    if ($line[1] eq "DONE") {
+	    } elsif ($line[1] eq "status" && $line[2] eq "file") {
 		#1:"status" #2:"file:" #3:taper #4:worker #5:hostname #6:diskname #7:filename
 		my $taper = $line[3];
 		my $worker = $line[4];
@@ -1051,7 +1047,11 @@ sub parse {
 		my $wworker = $self->{'taper'}->{$taper}->{'worker'}->{$worker};
 		my $dle = $self->{'dles'}->{$wworker->{'host'}}->{$wworker->{'disk'}}->{$wworker->{'datestamp'}};
 		$dle->{'taper_status_file'} = $line[7];
-
+	    } elsif ($line[2] eq "worker" &&
+	        $line[4] eq "wrote") {
+		#1:taper 2:"worker" 3:worker 4:"wrote" 5:host 6:disk
+		my $tape = $line[1];
+		my $worker = $line[3];
 	    }
 	} elsif ($line[0] eq "splitting" &&
 		 $line[1] eq "chunk" &&
@@ -1461,14 +1461,19 @@ sub _summary {
     my $set_estimated_stat = shift;
 
     my $nb = $self->{'stat'}->{$key}->{'nb'};
+    if (!defined $nb) {
+	$nb = $self->{'stat'}->{$key}->{'nb'} = 0;
+    }
     $self->{'stat'}->{$key}->{'name'} = $name;
     my $real_size;
     $real_size = $self->{'stat'}->{$key}->{'real_size'} || 0 if $set_real_size;
     $self->{'stat'}->{$key}->{'real_size'} = $real_size;
+    $real_size ||= 0;
 
     my $estimated_size;
     $estimated_size = $self->{'stat'}->{$key}->{'estimated_size'} || 0 if $set_estimated_size;
     $self->{'stat'}->{$key}->{'estimated_size'} = $estimated_size;
+    $estimated_size ||= 0;
 
     my $est_size = $self->{'stat'}->{'estimated'}->{'estimated_size'};
 

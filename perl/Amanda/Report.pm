@@ -1047,9 +1047,10 @@ sub _handle_taper_line
         my @info = Amanda::Util::split_quoted_strings($str);
 	my $storage = $info[0];
 	if ($storage =~ /^ST:/) {
+	    $storage =~ s/^ST://g;
 	    shift @info;
 	} else {
-	    $storage = undef;
+	    $storage = Amanda::Config::get_config_name();
 	}
 
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];

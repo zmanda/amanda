@@ -568,7 +568,7 @@ $LogfileData{taper} = {
                             kps     => "172765.446911",
                             orig_kb => undef,
                             error   => '',
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                     },
                   ]
@@ -673,7 +673,7 @@ $LogfileData{simple} = {
                             kb      => "419",
                             kps     => "87.133307",
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                         chunker => {
                             status => "success",
@@ -845,7 +845,7 @@ $LogfileData{fullExample} = {
                             ],
                             kb      => '8392',
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                         dumper => {
                             kps     => "2771.1",
@@ -901,7 +901,7 @@ $LogfileData{fullExample} = {
                             ],
                             kb      => "28776940",
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                     },
                   ],
@@ -926,7 +926,7 @@ $LogfileData{fullExample} = {
                             ],
                             kb      => "28776940",
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
 		    },
 		  ]
@@ -970,7 +970,7 @@ $LogfileData{fullExample} = {
                             ],
                             'kb'    => '10',
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                         'dumper' => {
                             'kps'    => '250.8',
@@ -1023,7 +1023,7 @@ $LogfileData{fullExample} = {
                             ],
                             kb      => "6630",
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                         dumper => {
                             kps     => "16013.4",
@@ -1076,7 +1076,7 @@ $LogfileData{fullExample} = {
                             ],
                             kb      => "10",
                             orig_kb => undef,
-			    storage => undef,
+			    storage => "TESTCONF",
                         },
                         dumper => {
                             kps     => "250.4",
@@ -1177,7 +1177,7 @@ $LogfileData{amflushExample} = {
                             ],
                             'kb'     => '36980',
                             orig_kb  => undef,
-			    storage  => undef,
+			    storage  => "TESTCONF",
                         },
                     },
 		  ]
@@ -1211,7 +1211,7 @@ $LogfileData{amflushExample} = {
                             ],
                             'kb'     => '309',
                             orig_kb  => undef,
-			    storage  => undef,
+			    storage  => "TESTCONF",
                         },
                     }]
                 },
@@ -1321,7 +1321,7 @@ is_deeply(
                     ],
                     kb      => "6630",
                     orig_kb => undef,
-		    storage => undef,
+		    storage => "TESTCONF",
                 },
                 dumper => {
                     kps     => "16013.4",

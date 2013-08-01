@@ -329,13 +329,14 @@ sub do_on_match_disklist {
 		$prevhost = $arg;
 		$prev_match = 1;
 	    } else {
+		my $incorrect_quoting = $arg =~ /\\/;
 		$user_msg->(Amanda::Disklist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1400002,
 				arg   => $arg,
 				host  => $prevhost,
-				incorrect_quoting => $arg =~ /\\/));
+				incorrect_quoting => $incorrect_quoting));
 		$prev_match = 0;
 	    }
 	} elsif ($disk_skip) {

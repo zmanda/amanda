@@ -59,7 +59,7 @@ sub usage() {
 	exit 0;
 }
 
-Amanda::Util::setup_application("amlabel", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amstatus", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 
@@ -210,6 +210,7 @@ else {
 }
 
 print "Using: $errfile\n";
+debug("Using: $errfile");
 my $status = Amanda::Status->new(filename => $errfile);
 
 $status->current(user_msg => sub {});
@@ -512,9 +513,9 @@ sub summary {
        $esize = sprintf "%8dk", $status->{'stat'}->{$key}->{'estimated_size'} if defined $status->{'stat'}->{$key}->{'estimated_size'};
 
     my $rstat = "";
-       $rstat = sprintf "(%6.2f\%)", $status->{'stat'}->{$key}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'real_stat'};
+       $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'real_stat'};
     my $estat = "";
-       $estat = sprintf "(%6.2f\%)", $status->{'stat'}->{$key}->{'estimated_stat'} if defined $status->{'stat'}->{$key}->{'estimated_stat'};
+       $estat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'estimated_stat'} if defined $status->{'stat'}->{$key}->{'estimated_stat'};
 
     my $line = sprintf "%-16s:%4d  %9s  %9s %9s %9s",
 		$status->{'stat'}->{$key}->{'name'},
@@ -553,9 +554,9 @@ sub summary_storage {
 	$esize = sprintf "%8dk", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
 
 	my $rstat = "";
-	    $rstat = sprintf "(%6.2f\%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'};
+	    $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'};
 	my $estat = "";
-	    $estat = sprintf "(%6.2f\%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'};
+	    $estat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'};
 
 	my $line = sprintf "%-16s:%4d  %9s  %9s %9s %9s",
 			$name,
