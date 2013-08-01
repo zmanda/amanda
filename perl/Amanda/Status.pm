@@ -547,6 +547,7 @@ sub parse {
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			delete $dlet->{'wait_for_tape'};
+			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
 		    } elsif ($line[6] eq "NO-NEW-TAPE") {
 			#7:name 8:handle 9:errmsg
 			my $worker = $line[7];
@@ -556,6 +557,7 @@ sub parse {
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			delete $dlet->{'wait_for_tape'};
+			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
 		    } elsif ($line[6] eq "FILE-WRITE") {
 			#7:name 8:handle 9:filename 10:host 11:disk 12:level 13:datestamp 14:splitsize
 			my $worker = $line[7];
@@ -827,14 +829,6 @@ sub parse {
 			}
 			my $ntape = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
 			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_dle'} += 1;
-			if ($line[6] eq "PARTIAL") {
-			    $dlet->{'partial'} = 1;
-			    if ($line[10] eq "TAPE-ERROR") {
-				$dlet->{'error'} = $line[14];
-			    }
-			} else {
-			     $dlet->{'partial'} = 0;
-			}
 			delete $dle->{'taper_status_file'};
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
@@ -842,6 +836,26 @@ sub parse {
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+
+			if ($line[6] eq "PARTIAL") {
+			    $dlet->{'partial'} = 1;
+			    if ($line[10] eq "TAPE-ERROR") {
+				$dlet->{'error'} = $line[14];
+				$dlet->{'tape_error'} = $line[14];
+				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
+				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[14];
+			    } elsif ($line[10] eq "TAPE-CONFIG") {
+				$dlet->{'error'} = $line[14];
+				$dlet->{'tape_config'} = $line[14];
+				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $CONFIG_ERROR;
+				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[14];
+			    }
+			    if ($line[9] eq "INPUT-ERROR") {
+				$dlet->{'error'} = $line[13] if !defined $dlet->{'error'};
+			    }
+			} else {
+			     $dlet->{'partial'} = 0;
+			}
 			undef $worker_to_serial{$worker};
 		    } elsif($line[6] eq "PARTDONE") {
 			#7:worker 8:handle 9:label 10:filenum 11:ksize 12:errstr
@@ -1275,7 +1289,11 @@ sub set_summary {
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
-			    $dlet->{'message'} = "flushed";
+			    if ($dlet->{'partial'}) {
+				$dlet->{'message'} = "partially flushed";
+			    } else {
+				$dlet->{'message'} = "flushed";
+			    }
 			    #$dlet->{'wsize'} = $dle->{'size'};
 			    $dlet->{'dsize'} = $dle->{'size'};
 			} elsif ($dlet->{'status'} == $WRITE_DONE) {
@@ -1286,7 +1304,11 @@ sub set_summary {
 				$self->{'stat'}->{'taped'}->{'estimated_size'} += $dle->{'esize'};
 				$dle->{'taped'} = 1;
 			    }
-			    $dlet->{'message'} = "written";
+			    if ($dlet->{'partial'}) {
+				$dlet->{'message'} = "partially written";
+			    } else {
+				$dlet->{'message'} = "written";
+			    }
 			    #$dlet->{'wsize'} = $dle->{'size'};
 			    $dlet->{'dsize'} = $dle->{'size'};
 			} elsif ($dlet->{'status'} == $DUMP_TO_TAPE_DONE) {
@@ -1539,7 +1561,7 @@ sub current {
 
 sub _dump_size() {
     my $self = shift;
-    my $filename = @_;
+    my $filename = shift;
     my $dsize = 0;
     my($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
        $atime,$mtime,$ctime,$blksize,$blocks);

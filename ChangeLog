@@ -1,3 +1,6 @@
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Some fix.
+
 2013-07-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Set storage_name to "NO-STORAGE" if there is
 	  no storage.
