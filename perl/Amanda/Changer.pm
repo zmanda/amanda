@@ -1676,15 +1676,17 @@ sub show {
 					source_line => __LINE__,
 					code   => 1100014,
 					err    => $err));
-		return $steps->{'done'}->();
+		if ($err->fatal || !defined $err->{'slot'}) {
+		    return $steps->{'done'}->();
+		}
+		$last_slot = $err->{'slot'};
 	    }
-	} else {
+	    $seen_slots{$last_slot} = 1;
+	    return $steps->{'released'}->();
+	} else {  # $res is set
 	    $last_slot = $res->{'this_slot'};
-	}
+	    $seen_slots{$last_slot} = 1;
 
-	$seen_slots{$last_slot} = 1;
-
-	if ($res) {
 	    my $dev = $res->{'device'};
 	    my $st = $dev->read_label();
 	    my $write_protected = !$dev->check_writable();
@@ -1714,8 +1716,6 @@ sub show {
 	    }
 
 	    return $res->release(finished_cb => $steps->{'released'});
-	} else {
-	    return $steps->{'released'}->();
 	}
     };
 

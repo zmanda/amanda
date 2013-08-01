@@ -740,6 +740,7 @@ sub load_unlocked {
 
 	    return $self->make_error("failed", $params{'res_cb'},
 		    reason => "notfound",
+		    slot   => $slot,
 		    message => "Found unexpected tape '$label' while looking " .
 			       "for '$params{label}'");
 	}
@@ -767,24 +768,9 @@ sub load_unlocked {
 
 	    return $self->make_error("failed", $params{'res_cb'},
 		    reason => "notfound",
+		    slot   => $slot,
 		    message => "Found unlabeled tape while looking for '$params{label}'");
 	}
-
-	if (defined $self->{'tapelist'}) {
-	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
-	    if (defined $tle and defined $tle->{'barcode'} and
-		defined $state->{'slots'}->{$slot}->{'barcode'} and
-		$state->{'slots'}->{$slot}->{'barcode'} ne $tle->{'barcode'}) {
-		return $self->make_error("failed", $params{'res_cb'},
-		    reason => "device",
-		    message => "Slot $slot, label '$label', mismatch barcode between changer '$state->{'slots'}->{$slot}->{'barcode'}' and tapelist file '$tle->{'barcode'}'");
-	    }
-	}
-        my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive,
-                                $device, $state->{'slots'}->{$slot}->{'barcode'});
-
-	# mark this as reserved
-	$state->{'drives'}->{$drive}->{'res_info'} = $self->_res_info_new();
 
 	# update our state before returning
 	$state->{'slots'}->{$slot}->{'loaded_in'} = $drive;
@@ -817,6 +803,23 @@ sub load_unlocked {
 	    $self->_debug("setting current slot to $slot");
 	    $self->_set_current(state => $state, slot => $slot);
 	}
+
+	if (defined $self->{'tapelist'}) {
+	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	    if (defined $tle and defined $tle->{'barcode'} and
+		defined $state->{'slots'}->{$slot}->{'barcode'} and
+		$state->{'slots'}->{$slot}->{'barcode'} ne $tle->{'barcode'}) {
+		return $self->make_error("failed", $params{'res_cb'},
+		    reason => "device",
+		    slot   => $slot,
+		    message => "Slot $slot, label '$label', mismatch barcode between changer '$state->{'slots'}->{$slot}->{'barcode'}' and tapelist file '$tle->{'barcode'}'");
+	    }
+	}
+        my $res = Amanda::Changer::robot::Reservation->new($self, $slot, $drive,
+                                $device, $state->{'slots'}->{$slot}->{'barcode'});
+
+	# mark this as reserved
+	$state->{'drives'}->{$drive}->{'res_info'} = $self->_res_info_new();
 
         return $params{'res_cb'}->(undef, $res);
     };
