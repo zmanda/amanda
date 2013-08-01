@@ -1,4 +1,10 @@
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	Add a job_t struct tolink dumper/chunker and taper.
+	* server-src/driver.c: Use it.
+	* server-src/driverio.c: Use it.
+	* server-src/driverio.h: Define job_t.
+
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm (show): fix.
 	* perl/Amanda/Changer/robot.pm: Set slot on some error.
 

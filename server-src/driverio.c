@@ -47,12 +47,14 @@ static const char *childstr(int);
 static long generation = 1;
 
 typedef struct serial_s {
-    long gen;
-    disk_t *dp;
+    long   gen;
+    job_t *job;
 } serial_t;
 
 static int max_serial;
 static serial_t *stable;
+static int max_jobs;
+static job_t *jobs;
 
 void
 init_driverio(
@@ -71,6 +73,8 @@ init_driverio(
 
     max_serial = inparallel + taper_parallel_write;
     stable = g_new0(serial_t, max_serial);
+    max_jobs = inparallel + taper_parallel_write;
+    jobs   = g_new0(job_t, max_jobs);
 }
 
 
@@ -79,8 +83,9 @@ childstr(
     int fd)
 {
     static char buf[NUM_STR_SIZE + 32];
-    dumper_t *dumper;
-    taper_t  *taper;
+    dumper_t  *dumper;
+    chunker_t *chunker;
+    taper_t   *taper;
 
     for (taper = tapetable; taper->fd != 0; taper++) {
 	if (taper->fd == fd)
@@ -90,8 +95,10 @@ childstr(
     for (dumper = dmptable; dumper->fd != 0; dumper++) {
 	if (dumper->fd == fd)
 	    return (dumper->name);
-	if (dumper->chunker && dumper->chunker->fd == fd)
-	    return (dumper->chunker->name);
+    }
+    for (chunker = chktable; chunker->fd != 0; chunker++) {
+	if (chunker->fd == fd)
+	    return (chunker->name);
     }
     g_snprintf(buf, sizeof(buf), _("unknown child (fd %d)"), fd);
     return (buf);
@@ -162,8 +169,7 @@ startup_tape_process(
 	    wtaper->input_error = NULL;
 	    wtaper->tape_error = NULL;
 	    wtaper->result = 0;
-	    wtaper->dumper = NULL;
-	    wtaper->disk = NULL;
+	    wtaper->job = NULL;
 	    wtaper->first_label = NULL;
 	    wtaper->first_fileno = 0;
 	    wtaper->state = TAPER_STATE_DEFAULT;
@@ -269,7 +275,6 @@ startup_dump_process(
 	dumper->fd = fd[0];
 	dumper->ev_read = NULL;
 	dumper->busy = dumper->down = 0;
-	dumper->dp = NULL;
 	g_fprintf(stderr,_("driver: started %s pid %u\n"),
 		dumper->name, (unsigned)dumper->pid);
 	fflush(stderr);
@@ -289,9 +294,9 @@ startup_dump_processes(
     for(dumper = dmptable, i = 0; i < inparallel; dumper++, i++) {
 	g_snprintf(number, sizeof(number), "%d", i);
 	dumper->name = g_strconcat("dumper", number, NULL);
-	dumper->chunker = &chktable[i];
+	dumper->job = NULL;
 	chktable[i].name = g_strconcat("chunker", number, NULL);
-	chktable[i].dumper = dumper;
+	chktable[i].job = NULL;
 	chktable[i].fd = -1;
 
 	startup_dump_process(dumper, dumper_program);
@@ -534,7 +539,7 @@ taper_cmd(
 	splitargs = taper_splitting_args(dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    " ", qdest,
 			    " ", dp->host->hostname,
 			    " ", qname,
@@ -562,7 +567,7 @@ taper_cmd(
 	splitargs = taper_splitting_args(dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    " ", dp->host->hostname,
 			    " ", qname,
 			    " ", number,
@@ -598,7 +603,7 @@ taper_cmd(
 	}
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    " ", number,
 			    " ", n_crc,
 			    " ", c_crc,
@@ -609,7 +614,7 @@ taper_cmd(
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    "\n", NULL);
 	break;
     case NO_NEW_TAPE:
@@ -617,7 +622,7 @@ taper_cmd(
 	q = quote_string(destname);	/* reason why no new tape */
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    " ", q,
 			    "\n", NULL);
 	amfree(q);
@@ -626,21 +631,21 @@ taper_cmd(
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    "\n", NULL);
 	break;
     case START_SCAN:
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    "\n", NULL);
 	break;
     case TAKE_SCRIBE_FROM:
 	dp = (disk_t *) ptr;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
-			    " ", disk2serial(dp),
+			    " ", job2serial(wtaper->job),
 			    " ", destname,  /* name of worker */
 			    "\n", NULL);
 	break;
@@ -707,7 +712,7 @@ dumper_cmd(
         }
 
         g_ptr_array_add(array, g_strdup(cmdstr[cmd]));
-        g_ptr_array_add(array, g_strdup(disk2serial(dp)));
+        g_ptr_array_add(array, g_strdup(job2serial(dumper->job)));
         g_ptr_array_add(array, g_strdup_printf("%d", dumper->output_port));
         g_ptr_array_add(array, g_strdup(interface_get_src_ip(dp->host->netif->config)));
         g_ptr_array_add(array, g_strdup(dp->host->hostname));
@@ -856,7 +861,7 @@ chunker_cmd(
 	    features = am_feature_to_string(dp->host->features);
 	    o = optionstr(dp);
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
-			    " ", disk2serial(dp),
+			    " ", job2serial(chunker->job),
 			    " ", qdest,
 			    " ", dp->host->hostname,
 			    " ", features,
@@ -893,7 +898,7 @@ chunker_cmd(
 	    g_snprintf(use, sizeof(use), "%lld",
 		     (long long)(h[activehd]->reserved - h[activehd]->used));
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
-				" ", disk2serial(dp),
+				" ", job2serial(chunker->job),
 				" ", qdest,
 				" ", chunksize,
 				" ", use,
@@ -928,7 +933,7 @@ chunker_cmd(
 			   (long long)sched(dp)->client_crc.size);
 	    }
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
-				" ", disk2serial(dp),
+				" ", job2serial(chunker->job),
 				" ", c_crc,
 				"\n",  NULL);
 	} else {
@@ -938,7 +943,7 @@ chunker_cmd(
     case FAILED:
 	if( dp ) {
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
-				" ", disk2serial(dp),
+				" ", job2serial(chunker->job),
 				"\n",  NULL);
 	} else {
 	    cmdline = g_strjoin(NULL, cmdstr[cmd], "\n", NULL);
@@ -966,8 +971,33 @@ chunker_cmd(
     return 1;
 }
 
-disk_t *
-serial2disk(
+job_t *
+alloc_job(void)
+{
+    int i;
+
+    for (i=0; i<max_jobs; i++) {
+	if (jobs[i].in_use == 0) {
+	    jobs[i].in_use = 1;
+	    return &jobs[i];
+	}
+    }
+    error("All job in use");
+}
+
+void
+free_job(
+    job_t *job)
+{
+    job->in_use  = 0;
+    job->disk    = NULL;
+    job->dumper  = NULL;
+    job->chunker = NULL;
+    job->wtaper  = NULL;
+}
+
+job_t *
+serial2job(
     char *str)
 {
     int rc, s;
@@ -975,16 +1005,16 @@ serial2disk(
 
     rc = sscanf(str, "%d-%ld", &s, &gen);
     if(rc != 2) {
-	error(_("error [serial2disk \"%s\" parse error]"), str);
+	error(_("error [serial2job \"%s\" parse error]"), str);
 	/*NOTREACHED*/
     } else if (s < 0 || s >= max_serial) {
 	error(_("error [serial out of range 0..%d: %d]"), max_serial, s);
 	/*NOTREACHED*/
     }
     if(gen != stable[s].gen)
-	g_printf(_("driver: serial2disk error time %s serial gen mismatch %s\n"),
+	g_printf(_("driver: serial2job error time %s serial gen mismatch %s\n"),
 	       walltime_str(curclock()), str);
-    return stable[s].dp;
+    return stable[s].job;
 }
 
 void
@@ -1007,27 +1037,28 @@ free_serial(
 	g_printf(_("driver: free_serial error time %s serial gen mismatch %s\n"),
 	       walltime_str(curclock()),str);
     stable[s].gen = 0;
-    stable[s].dp = NULL;
+    stable[s].job = NULL;
 }
 
 
 void
-free_serial_dp(
-    disk_t *dp)
+free_serial_job(
+    job_t *job)
 {
     int s;
 
     for(s = 0; s < max_serial; s++) {
-	if(stable[s].dp == dp) {
+	if(stable[s].job == job) {
 	    //g_printf("free serial %02d-%05ld for disk %s", s, stable[s].gen, dp->name);
 	    stable[s].gen = 0;
-	    stable[s].dp = NULL;
+	    stable[s].job = NULL;
 	    return;
 	}
     }
 
-    g_printf(_("driver: error time %s serial not found for disk %s\n"),
-	   walltime_str(curclock()), dp->name);
+    // Should try to print DB name found by dumper/chunker or wtaper.
+    g_printf(_("driver: error time %s serial not found for job %p\n"),
+	   walltime_str(curclock()), job);
 }
 
 
@@ -1038,21 +1069,21 @@ check_unfree_serial(void)
 
     /* find used serial number */
     for(s = 0; s < max_serial; s++) {
-	if(stable[s].gen != 0 || stable[s].dp != NULL) {
+	if(stable[s].gen != 0 || stable[s].job != NULL) {
 	    g_printf(_("driver: error time %s bug: serial in use: %02d-%05ld\n"),
 		   walltime_str(curclock()), s, stable[s].gen);
 	}
     }
 }
 
-char *disk2serial(
-    disk_t *dp)
+char *job2serial(
+    job_t *job)
 {
     int s;
     static char str[NUM_STR_SIZE];
 
     for(s = 0; s < max_serial; s++) {
-	if(stable[s].dp == dp) {
+	if(stable[s].job == job) {
 	    g_snprintf(str, sizeof(str), "%02d-%05ld", s, stable[s].gen);
 	    return str;
 	}
@@ -1060,7 +1091,7 @@ char *disk2serial(
 
     /* find unused serial number */
     for(s = 0; s < max_serial; s++)
-	if(stable[s].gen == 0 && stable[s].dp == NULL)
+	if(stable[s].gen == 0 && stable[s].job == NULL)
 	    break;
     if(s >= max_serial) {
 	g_printf(_("driver: error time %s bug: out of serial numbers\n"),
@@ -1069,9 +1100,8 @@ char *disk2serial(
     }
 
     stable[s].gen = generation++;
-    stable[s].dp = dp;
+    stable[s].job = job;
 
-    //printf("create serial %02d-%05ld for disk %s", s, stable[s].gen, dp->name);
     g_snprintf(str, sizeof(str), "%02d-%05ld", s, stable[s].gen);
     return str;
 }
@@ -1236,3 +1266,4 @@ void free_assignedhd(
     }
     amfree(ahd);
 }
+

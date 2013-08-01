@@ -59,6 +59,14 @@ typedef enum {
    TAPER_STATE_DONE           = (1 << 9),
 } TaperState;
 
+typedef struct job_s {
+    int               in_use;
+    struct disk_s    *disk;
+    struct chunker_s *chunker;
+    struct dumper_s  *dumper;
+    struct wtaper_s  *wtaper;
+} job_t;
+
 /* chunker process structure */
 
 typedef struct chunker_s {
@@ -69,7 +77,7 @@ typedef struct chunker_s {
     int result;
     int sendresult;
     event_handle_t *ev_read;	/* read event handle */
-    struct dumper_s *dumper;
+    job_t *job;
 } chunker_t;
 
 /* dumper process structure */
@@ -82,8 +90,7 @@ typedef struct dumper_s {
     int result;
     int output_port;		/* output port */
     event_handle_t *ev_read;	/* read event handle */
-    disk_t *dp;			/* disk currently being dumped */
-    chunker_t *chunker;
+    job_t *job;
 } dumper_t;
 
 typedef struct wtaper_s {
@@ -92,8 +99,7 @@ typedef struct wtaper_s {
     char       *input_error;
     char       *tape_error;
     int         result;
-    dumper_t   *dumper;
-    disk_t     *disk;
+    job_t      *job;
     char       *first_label;
     off_t       first_fileno;
     TaperState  state;
@@ -155,12 +161,10 @@ typedef struct sched_s {
     off_t est_nsize, est_csize, est_size;
     off_t degr_nsize, degr_csize, act_size;
     off_t origsize, dumpsize;
-    time_t dumptime, tapetime;
+    time_t dumptime;
     char *dumpdate, *degr_dumpdate;
     unsigned long est_kps, degr_kps;
     char *destname;				/* file/port name */
-    dumper_t *dumper;
-    wtaper_t *wtaper;
     assignedhd_t **holdp;
     time_t timestamp;
     char *datestamp;
@@ -192,11 +196,15 @@ void startup_dump_processes(char *dumper_program, int inparallel, char *timestam
 void startup_chunk_process(chunker_t *chunker, char *chunker_program);
 
 cmd_t getresult(int fd, int show, int *result_argc, char ***result_argv);
-disk_t *serial2disk(char *str);
+
+job_t * alloc_job(void);
+void free_job(job_t *job);
+
+job_t *serial2job(char *str);
 void free_serial(char *str);
-void free_serial_dp(disk_t *dp);
+void free_serial_job(job_t *job);
 void check_unfree_serial(void);
-char *disk2serial(disk_t *dp);
+char *job2serial(job_t *job);
 void update_info_dumper(disk_t *dp, off_t origsize, off_t dumpsize, time_t dumptime);
 void update_info_taper(disk_t *dp, char *label, off_t filenum, int level);
 void free_assignedhd(assignedhd_t **holdp);
