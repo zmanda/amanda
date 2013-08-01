@@ -176,6 +176,9 @@ sub info_key {
 
     if ($key eq 'num_slots') {
 	$results{$key} = $self->{last_slot} - $self->{first_slot};
+    } elsif ($key eq 'slots') {
+	my @slots = ($self->{first_slot} .. $self->{last_slot}-1);
+	$results{$key} = \@slots;
     } elsif ($key eq 'vendor_string') {
 	$results{$key} = 'chg-multi'; # mostly just for testing
     } elsif ($key eq 'fast_search') {

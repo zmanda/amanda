@@ -832,6 +832,8 @@ sub info_key {
 	$self->info_key_vendor_string(%params);
     } elsif ($key eq 'num_slots') {
 	$self->info_key_num_slots(%params);
+    } elsif ($key eq 'slots') {
+	$self->info_key_slots(%params);
     }
 }
 
@@ -880,6 +882,25 @@ sub info_key_num_slots_unlocked {
 			keys %{$state->{'slots'}};
 
     $params{'info_cb'}->(undef, num_slots => scalar @allowed_slots);
+}
+
+sub info_key_slots {
+    my $self = shift;
+    my %params = @_;
+
+    $self->_with_updated_state(\%params, 'info_cb',
+	sub { $self->info_key_slots_unlocked(@_) });
+}
+
+sub info_key_slots_unlocked {
+    my $self = shift;
+    my %params = @_;
+    my $state = $params{'state'};
+
+    my @allowed_slots = sort {$a <=> $b} grep { $self->_is_slot_allowed($_) }
+			keys %{$state->{'slots'}};
+
+    $params{'info_cb'}->(undef, slots => \@allowed_slots);
 }
 
 sub get_interface { # (overridden by subclasses)

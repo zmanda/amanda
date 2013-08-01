@@ -183,6 +183,9 @@ sub info_key {
 	if ($key eq 'num_slots') {
 	    my @slots = $self->_all_slots();
 	    $results{$key} = scalar @slots;
+	} elsif ($key eq 'slots') {
+	    my @slots = $self->_all_slots();
+	    $results{$key} = \@slots;
 	} elsif ($key eq 'vendor_string') {
 	    $results{$key} = 'chg-disk'; # mostly just for testing
 	} elsif ($key eq 'fast_search') {

@@ -27,7 +27,7 @@ use vars qw( @ISA );
 
 use File::Glob qw( :glob );
 use File::Path;
-use Amanda::Config qw( :getconf );
+use Amanda::Config qw( :init :getconf );
 use Amanda::Debug qw( debug warning );
 use Amanda::Util qw( :alternates );
 use Amanda::Changer;
@@ -335,6 +335,33 @@ sub info_key {
 	    oksub => sub {
 		my ($kid_chg, $kid_cb) = @_;
 		$kid_chg->info(info => [ 'num_slots' ], info_cb => $kid_cb);
+	    },
+	    errsub => undef,
+	    parent_cb => $all_kids_done_cb,
+	);
+    } elsif ($key eq 'slots') {
+	my $all_kids_done_cb = sub {
+	    my ($kid_results) = @_;
+	    return if ($check_and_report_errors->($kid_results));
+
+	    my @slots;
+	    my $a = 0;
+	    my $nb_kid = @$kid_results;
+	    while (@{@{$kid_results}[0]->[2]}) {
+		my @name;
+		for (my $k = 0; $k < $nb_kid; $k++) {
+		    push @name, shift @{@{$kid_results}[$k]->[2]};
+		}
+		my $name = '{' . join(',', @name) . '}';
+		push @slots, $name;
+	    }
+	    $params{'info_cb'}->(undef, slots => \@slots) if $params{'info_cb'};
+	};
+
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb) = @_;
+		$kid_chg->info(info => [ 'slots' ], info_cb => $kid_cb);
 	    },
 	    errsub => undef,
 	    parent_cb => $all_kids_done_cb,

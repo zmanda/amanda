@@ -1604,7 +1604,7 @@ sub show {
 	cb_ref => \$finished_cb;
 
     step start => sub {
-	$self->info(info => [ 'num_slots' ], info_cb => $steps->{'info_cb'});
+	$self->info(info => [ 'slots' ], info_cb => $steps->{'info_cb'});
     };
 
     step info_cb => sub {
@@ -1615,6 +1615,16 @@ sub show {
 	    return $steps->{'done'}->();
 	}
 
+	if (!$use_slots) {
+	    my $num_slots = scalar @{$info{'slots'}};
+	    $params{'user_msg'}->(Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100010,
+					num_slots  => $num_slots));
+	    @slots = @{$info{'slots'}};
+	    $use_slots = @slots > 0;
+	}
 	if ($use_slots) {
 	    my $slot = shift @slots;
 	    $self->load(slot => $slot,

@@ -1,4 +1,11 @@
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/aggregate.pm, perl/Amanda/Changer/disk.pm,
+	  perl/Amanda/Changer/multi.pm, perl/Amanda/Changer/null.pm,
+	  perl/Amanda/Changer/rait.pm, perl/Amanda/Changer/robot.pm,
+	  perl/Amanda/Changer/single.pm: info can return the slots list.
+	* perl/Amanda/Changer.pm (show): Use the slot list returned by info.
+
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Some fix.
 
 2013-07-31  Jean-Louis Martineau <martineau@zmanda.com>
