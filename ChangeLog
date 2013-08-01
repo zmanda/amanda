@@ -1,4 +1,7 @@
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Initialize invalid_stotage to NULL.
+
+2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h: Add fe_amindexd_STORAGE.
 	* common-src/amfeatures.c: Add fe_amindexd_STORAGE.
 	* recover-src/amrecover.h (add_storage_value, set_storage): Add

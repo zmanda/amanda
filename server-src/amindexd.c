@@ -1847,7 +1847,7 @@ main(
 	    if (arg && *arg != '\0') {
 		char **storage_l;
 		char **storage_n;
-		char *invalid_storage;
+		char *invalid_storage = NULL;
 
 		storage_list = split_quoted_strings(arg);
 		storage_n = storage_list;
@@ -1872,6 +1872,7 @@ main(
 		}
 		if (invalid_storage) {
 		    reply(599, _("invalid storage: %s"), invalid_storage);
+		    g_free(invalid_storage);
 		    invalid_storage = NULL;
 		} else {
 		    reply(200, _("storage set to %s"), arg);
