@@ -615,6 +615,13 @@ main(
 	fprintf(stderr, "Unknown command `%s'.\n", command);
 	exit (1);
     }
+
+    g_free(argument.config);
+    g_free(argument.host);
+    g_free(argument.dle.disk);
+    g_free(argument.dle.device);
+    g_free(argument.tar_blocksize);
+
     return 0;
 }
 

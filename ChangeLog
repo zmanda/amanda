@@ -1,3 +1,9 @@
+2013-08-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, common-src/conffile.c,
+	  perl/Amanda/Header.swg, perl/Amanda/Logfile.swg, server-src/dumper.c,
+	  server-src/find.c, server-src/holding.c,
+	  server-src/planner.c: Fix memory leak.
+
 2013-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Initialize invalid_stotage to NULL.
 

@@ -2024,6 +2024,7 @@ handle_filter_stderr(
     }
 
     if (nread <= 0) {
+	g_free(filter->name);
 	g_free(filter->buffer);
 	g_free(filter);
     }
@@ -2191,7 +2192,7 @@ runcompress(
 	aclose(errpipe[1]);
 	filter = g_new0(filter_t, 1);
 	filter->fd = errpipe[0];
-	filter->name = name;
+	filter->name = g_strdup(name);
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;

@@ -650,9 +650,11 @@ holding_file_unlink(
         if (unlink((char *)chunk->data)<0) {
 	    dbprintf(_("holding_file_unlink: could not unlink %s: %s\n"),
                     (char *)chunk->data, strerror(errno));
+	    g_slist_free_full(chunklist, g_free);
             return 0;
         }
     }
+    g_slist_free_full(chunklist, g_free);
     return 1;
 }
 

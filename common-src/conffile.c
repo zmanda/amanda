@@ -2047,6 +2047,7 @@ read_confline(
 	    else if(tok == CONF_POLICY) get_policy();
 	    else if(tok == CONF_STORAGE) get_storage();
 	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY, TAPERSCAN, POLICY or STORAGE expected"));
+	    g_free(current_block);
 	    current_block = NULL;
 	}
 	break;
@@ -2391,6 +2392,7 @@ get_holdingdisk(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
 }
 
@@ -2498,6 +2500,7 @@ read_dumptype(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
 
     if (linenum)
@@ -2662,6 +2665,7 @@ get_tapetype(void)
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
 }
 
@@ -2758,6 +2762,7 @@ get_interface(void)
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
 
     return;
@@ -2871,6 +2876,7 @@ read_application(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3003,6 +3009,7 @@ read_interactivity(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3134,6 +3141,7 @@ read_taperscan(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3265,6 +3273,7 @@ read_policy(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3398,6 +3407,7 @@ read_storage(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3552,6 +3562,7 @@ read_pp_script(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3644,8 +3655,10 @@ read_device_config(
     int *linenum)
 {
     int save_overwrites;
+    char *saved_block;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
+
 
     if (from) {
 	saved_conf = current_file;
@@ -3660,6 +3673,7 @@ read_device_config(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3686,6 +3700,8 @@ read_device_config(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -3772,6 +3788,7 @@ read_changer_config(
     int *linenum)
 {
     int save_overwrites;
+    char *saved_block;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
 
@@ -3788,6 +3805,7 @@ read_changer_config(
     if (linenum)
 	current_line_num = *linenum;
 
+    saved_block = current_block;
     save_overwrites = allow_overwrites;
     allow_overwrites = 1;
 
@@ -3814,6 +3832,8 @@ read_changer_config(
 
     allow_overwrites = save_overwrites;
 
+    g_free(current_block);
+    current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
 
@@ -4522,7 +4542,7 @@ read_property(
     }
     while(tok == CONF_STRING) {
 	property->values = g_slist_append(property->values,
-					  strdup(tokenval.v.s));
+					  g_strdup(tokenval.v.s));
 	get_conftoken(CONF_ANY);
     }
     unget_conftoken();
@@ -6296,8 +6316,10 @@ update_derived_values(
 	    (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
 	     getconf_seen(CNF_AUTOLABEL) >= 0)) {
 	    autolabel_t *autolabel = &(conf_data[CNF_AUTOLABEL].v.autolabel);
+	    g_free(autolabel->template);
 	    autolabel->template = g_strdup(getconf_str(CNF_LABEL_NEW_TAPES));
 	    if (!autolabel->template || autolabel->template == '\0') {
+		g_free(autolabel->template);
 		autolabel->template = NULL;
 		autolabel->autolabel = 0;
 	    } else {
@@ -6320,6 +6342,7 @@ update_derived_values(
 	    !getconf_seen(CNF_AUTOLABEL)) {
 	    conf_parserror(_("AUTOLABEL not set and LABELSTR set to MATCH-AUTOLABEL"));
 	} else if (labelstr->match_autolabel && !getconf_seen(CNF_AUTOLABEL)) {
+	    g_free(labelstr->template);
 	    labelstr->template = g_strdup(".*");
 	    labelstr->match_autolabel = FALSE;
 	} else if (labelstr->match_autolabel) {
@@ -6339,6 +6362,7 @@ update_derived_values(
 		init_policy_defaults();
 		pocur.name = g_strdup(conf_name);
 
+		free_val_t(&pocur.value[POLICY_COMMENT]);
 		val_t__str(&pocur.value[POLICY_COMMENT]) = g_strdup(_("implicit from global config"));
 		save_policy();
 	    }
@@ -6348,6 +6372,7 @@ update_derived_values(
 		init_storage_defaults();
 		stcur.name = g_strdup(conf_name);
 
+		free_val_t(&stcur.value[STORAGE_COMMENT]);
 		val_t__str(&stcur.value[STORAGE_COMMENT]) = g_strdup(_("implicit from global config"));
 		save_storage();
 	    }
@@ -6360,6 +6385,7 @@ update_derived_values(
 	/* Set default retention_tapes if it is not set */
 	for (po = policy_list; po != NULL; po = po->next) {
 	    if (!policy_seen(po, POLICY_RETENTION_TAPES)) {
+		free_val_t(&po->value[POLICY_RETENTION_TAPES]);
 		copy_val_t(&po->value[POLICY_RETENTION_TAPES], &conf_data[CNF_TAPECYCLE]);
 	    }
 	}
@@ -6372,54 +6398,85 @@ update_derived_values(
 		!storage_seen(st, STORAGE_AUTOLABEL)) {
 		conf_parserror(_("AUTOLABEL not set and LABELSTR set to MATCH-AUTOLABEL"));
 	    } else if (labelstr->match_autolabel && !storage_seen(st, STORAGE_AUTOLABEL)) {
+		g_free(labelstr->template);
 		labelstr->template = g_strdup(".*");
 		labelstr->match_autolabel = FALSE;
 	    } else if (labelstr->match_autolabel) {
 		g_free(labelstr->template);
 		labelstr->template = g_strdup(autolabel->template);
 	    }
-	    if (!storage_seen(st, STORAGE_POLICY))
+	    if (!storage_seen(st, STORAGE_POLICY)) {
+		free_val_t(&st->value[STORAGE_POLICY]);
 		conf_init_str(&st->value[STORAGE_POLICY], conf_name);
-	    if (!storage_seen(st, STORAGE_TAPEPOOL))
+	    }
+	    if (!storage_seen(st, STORAGE_TAPEPOOL)) {
+		free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		conf_init_str(&st->value[STORAGE_TAPEPOOL], conf_name);
-	    if (!storage_seen(st, STORAGE_TPCHANGER))
+	    }
+	    if (!storage_seen(st, STORAGE_TPCHANGER)) {
+		free_val_t(&st->value[STORAGE_TPCHANGER]);
 		copy_val_t(&st->value[STORAGE_TPCHANGER], &conf_data[CNF_TPCHANGER]);
-	    if (!storage_seen(st, STORAGE_LABELSTR))
+	    }
+	    if (!storage_seen(st, STORAGE_LABELSTR)) {
+		free_val_t(&st->value[STORAGE_LABELSTR]);
 		copy_val_t(&st->value[STORAGE_LABELSTR], &conf_data[CNF_LABELSTR]);
-	    if (!storage_seen(st, STORAGE_AUTOLABEL))
+	    }
+	    if (!storage_seen(st, STORAGE_AUTOLABEL)) {
+		free_val_t(&st->value[STORAGE_AUTOLABEL]);
 		copy_val_t(&st->value[STORAGE_AUTOLABEL], &conf_data[CNF_AUTOLABEL]);
-	    if (!storage_seen(st, STORAGE_META_AUTOLABEL))
+	    }
+	    if (!storage_seen(st, STORAGE_META_AUTOLABEL)) {
+		free_val_t(&st->value[STORAGE_META_AUTOLABEL]);
 		copy_val_t(&st->value[STORAGE_META_AUTOLABEL], &conf_data[CNF_META_AUTOLABEL]);
-	    if (!storage_seen(st, STORAGE_RUNTAPES))
+	    }
+	    if (!storage_seen(st, STORAGE_RUNTAPES)) {
 		copy_val_t(&st->value[STORAGE_RUNTAPES], &conf_data[CNF_RUNTAPES]);
-	    if (!storage_seen(st, STORAGE_TAPERSCAN))
+	    }
+	    if (!storage_seen(st, STORAGE_TAPERSCAN)) {
+		free_val_t(&st->value[STORAGE_TAPERSCAN]);
 		copy_val_t(&st->value[STORAGE_TAPERSCAN], &conf_data[CNF_TAPERSCAN]);
-	    if (!storage_seen(st, STORAGE_TAPETYPE))
+	    }
+	    if (!storage_seen(st, STORAGE_TAPETYPE)) {
+		free_val_t(&st->value[STORAGE_TAPETYPE]);
 		copy_val_t(&st->value[STORAGE_TAPETYPE], &conf_data[CNF_TAPETYPE]);
-	    if (!storage_seen(st, STORAGE_MAX_DLE_BY_VOLUME))
+	    }
+	    if (!storage_seen(st, STORAGE_MAX_DLE_BY_VOLUME)) {
 		copy_val_t(&st->value[STORAGE_MAX_DLE_BY_VOLUME], &conf_data[CNF_MAX_DLE_BY_VOLUME]);
-	    if (!storage_seen(st, STORAGE_TAPERALGO))
+	    }
+	    if (!storage_seen(st, STORAGE_TAPERALGO)) {
 		copy_val_t(&st->value[STORAGE_TAPERALGO], &conf_data[CNF_TAPERALGO]);
-	    if (!storage_seen(st, STORAGE_TAPER_PARALLEL_WRITE))
+	    }
+	    if (!storage_seen(st, STORAGE_TAPER_PARALLEL_WRITE)) {
 		copy_val_t(&st->value[STORAGE_TAPER_PARALLEL_WRITE], &conf_data[CNF_TAPER_PARALLEL_WRITE]);
-	    if (!storage_seen(st, STORAGE_EJECT_VOLUME))
+	    }
+	    if (!storage_seen(st, STORAGE_EJECT_VOLUME)) {
 		copy_val_t(&st->value[STORAGE_EJECT_VOLUME], &conf_data[CNF_EJECT_VOLUME]);
-	    if (!storage_seen(st, STORAGE_DEVICE_OUTPUT_BUFFER_SIZE))
+	    }
+	    if (!storage_seen(st, STORAGE_DEVICE_OUTPUT_BUFFER_SIZE)) {
 		copy_val_t(&st->value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], &conf_data[CNF_DEVICE_OUTPUT_BUFFER_SIZE]);
-	    if (!storage_seen(st, STORAGE_AUTOFLUSH))
+	    }
+	    if (!storage_seen(st, STORAGE_AUTOFLUSH)) {
 		copy_val_t(&st->value[STORAGE_AUTOFLUSH], &conf_data[CNF_AUTOFLUSH]);
-	    if (!storage_seen(st, STORAGE_FLUSH_THRESHOLD_DUMPED))
+	    }
+	    if (!storage_seen(st, STORAGE_FLUSH_THRESHOLD_DUMPED)) {
 		copy_val_t(&st->value[STORAGE_FLUSH_THRESHOLD_DUMPED], &conf_data[CNF_FLUSH_THRESHOLD_DUMPED]);
-	    if (!storage_seen(st, STORAGE_FLUSH_THRESHOLD_SCHEDULED))
+	    }
+	    if (!storage_seen(st, STORAGE_FLUSH_THRESHOLD_SCHEDULED)) {
 		copy_val_t(&st->value[STORAGE_FLUSH_THRESHOLD_SCHEDULED], &conf_data[CNF_FLUSH_THRESHOLD_SCHEDULED]);
-	    if (!storage_seen(st, STORAGE_TAPERFLUSH))
+	    }
+	    if (!storage_seen(st, STORAGE_TAPERFLUSH)) {
 		copy_val_t(&st->value[STORAGE_TAPERFLUSH], &conf_data[CNF_TAPERFLUSH]);
-	    if (!storage_seen(st, STORAGE_REPORT_USE_MEDIA))
+	    }
+	    if (!storage_seen(st, STORAGE_REPORT_USE_MEDIA)) {
 		copy_val_t(&st->value[STORAGE_REPORT_USE_MEDIA], &conf_data[CNF_REPORT_USE_MEDIA]);
-	    if (!storage_seen(st, STORAGE_REPORT_NEXT_MEDIA))
+	    }
+	    if (!storage_seen(st, STORAGE_REPORT_NEXT_MEDIA)) {
 		copy_val_t(&st->value[STORAGE_REPORT_NEXT_MEDIA], &conf_data[CNF_REPORT_NEXT_MEDIA]);
-	    if (!storage_seen(st, STORAGE_INTERACTIVITY))
+	    }
+	    if (!storage_seen(st, STORAGE_INTERACTIVITY)) {
+		free_val_t(&st->value[STORAGE_INTERACTIVITY]);
 		copy_val_t(&st->value[STORAGE_INTERACTIVITY], &conf_data[CNF_INTERACTIVITY]);
+	    }
 	}
 
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
@@ -8274,7 +8331,7 @@ free_val_t(
 	    break;
 
 	case CONFTYPE_DUMP_SELECTION:
-	    slist_free_full(val->v.host_limit.match_pats, free_dump_selection);
+	    slist_free_full(val->v.dump_selection, free_dump_selection);
 	    break;
     }
     val->seen.linenum = 0;

@@ -688,6 +688,7 @@ parse_taper_datestamp_log(
 	    return 0;
 	}
 	*storage = g_strdup(uqstorage+3);
+	g_free(uqstorage);
     } else if (strcmp(uqstorage, "label") == 0) {
 	g_free(uqstorage);
 	*storage = g_strdup(get_config_name());
@@ -777,7 +778,7 @@ search_logfile(
     disklist_t * dynamic_disklist)
 {
     FILE *logf;
-    char *host;
+    char *host = NULL;
     char *disk = NULL, *qdisk, *disk_undo;
     char *date = NULL, *date_undo;
     int  partnum;
@@ -925,47 +926,54 @@ search_logfile(
 
 		if (curlog == L_PART || curlog == L_PARTPARTIAL) {
 		    part_label = next_string;
-		if (!g_hash_table_lookup(valid_label, part_label)) {
-		    amfree(part_label);
-		    continue;
-		}
-		amfree(current_label);
-		current_label = part_label;
-		amfree(current_storage);
-		current_storage = part_storage;
+		    if (!g_hash_table_lookup(valid_label, part_label)) {
+			amfree(part_label);
+			amfree(part_storage);
+			continue;
+		    }
+		    amfree(current_label);
+		    current_label = part_label;
+		    amfree(current_storage);
+		    current_storage = part_storage;
 
-		skip_whitespace(s, ch);
-		if(ch == '\0') {
-		    g_printf("strange log line in %s \"%s\"\n",
+		    skip_whitespace(s, ch);
+		    if (ch == '\0') {
+			g_printf("strange log line in %s \"%s\"\n",
 			   logfile, curstr);
-		    continue;
-		}
+			continue;
+		    }
 
-		number = s - 1;
-		skip_non_whitespace(s, ch);
-		s[-1] = '\0';
-		fileno = atoi(number);
-		filenum = fileno;
-		if (filenum == 0)
-		    continue;
+		    number = s - 1;
+		    skip_non_whitespace(s, ch);
+		    s[-1] = '\0';
+		    fileno = atoi(number);
+		    filenum = fileno;
+		    if (filenum == 0)
+			continue;
 
-		skip_whitespace(s, ch);
-		if(ch == '\0') {
-		    g_printf("strange log line in %s \"%s\"\n",
+		    skip_whitespace(s, ch);
+		    if(ch == '\0') {
+			g_printf("strange log line in %s \"%s\"\n",
 			   logfile, curstr);
-		    continue;
-		}
-		host = s - 1;
-		skip_non_whitespace(s, ch);
-		s[-1] = '\0';
+			continue;
+		    }
+		    amfree(host);
+		    host = s - 1;
+		    skip_non_whitespace(s, ch);
+		    s[-1] = '\0';
+		    host = g_strdup(host);
 		} else {
+		    amfree(part_storage);
+		    amfree(host);
 		    host = next_string;
 		}
 	    } else {
 		taper_part = 0;
+		    amfree(host);
 		host = s - 1;
 		skip_non_whitespace(s, ch);
 		s[-1] = '\0';
+		host = g_strdup(host);
 	    }
 
 	    skip_whitespace(s, ch);
@@ -1342,7 +1350,7 @@ search_logfile(
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    new_output_find->next = *output_find;
 		    new_output_find->timestamp = g_string_chunk_insert_const(string_chunk, date);
-		    new_output_find->write_timestamp = g_strdup("00000000000000"); /* dump was not written.. */
+		    new_output_find->write_timestamp = g_string_chunk_insert_const(string_chunk, "00000000000000"); /* dump was not written.. */
 		    new_output_find->hostname=g_string_chunk_insert_const(string_chunk, host);
 		    new_output_find->diskname=g_string_chunk_insert_const(string_chunk, disk);
 		    if (current_storage != NULL) {
@@ -1374,10 +1382,12 @@ search_logfile(
 	    }
 	}
     }
+    amfree(host);
     amfree(date);
     amfree(disk);
 
     g_hash_table_destroy(valid_label);
+    g_hash_table_destroy(part_by_dle);
     afclose(logf);
     amfree(datestamp);
     amfree(current_label);

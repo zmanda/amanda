@@ -568,6 +568,7 @@ main(
 	slist_free_full(holding_list, g_free);
 	holding_list = NULL;
 	write_cmdfile(cmddatas);
+	close_cmdfile(cmddatas); cmddatas = NULL;
 	for (xline = flush_ptr->pdata; *xline != NULL; xline++) {
 	    g_fprintf(stderr, "%s\n", (char *)*xline);
 	    g_fprintf(stdout, "%s\n", (char *)*xline);
@@ -1752,7 +1753,7 @@ static void getsize(am_host_t *hostp)
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
         char *tmp;
         gchar **errors;
-        GPtrArray *array = g_ptr_array_new();
+        GPtrArray *array;
         gchar **strings;
 
         /*
@@ -1845,6 +1846,7 @@ static void getsize(am_host_t *hostp)
          */
         nb_client++;
 
+        array = g_ptr_array_new();
         if (am_has_feature(features, fe_req_xml)) {
             for(i = 0; i < MAX_LEVELS; i++) {
                 int level = est(dp)->estimate[i].level;

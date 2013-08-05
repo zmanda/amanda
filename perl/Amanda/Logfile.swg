@@ -130,6 +130,7 @@ static void log_add_full_(logtype_t typ, char *pname, char *message)
 %}
 
 char *make_logname(char *process, char *datestamp);
+%newobject get_logname;
 char *get_logname(void);
 void set_logname(char *filename);
 void log_rename(char *datestamp);

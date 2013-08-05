@@ -112,7 +112,7 @@ typedef struct {
 	}
 
 	/* destructor */
-	~dumpfile_t(void) {
+	~dumpfile_t() {
 	    dumpfile_free(self);
 	}
 
