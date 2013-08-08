@@ -286,6 +286,14 @@ sub make_plan {
 	@dumps = ();
 	for my $options (values %dumps) {
 	    my @options = @$options;
+
+	    # remove dump without parts
+	    @options = grep { defined $_->{'parts'} } @options;
+
+	    if (@options == 0) {
+		next;
+	    }
+
 	    # if there's only one option, the choice is easy
 	    if (@options == 1) {
 		push @dumps, $options[0];
@@ -301,6 +309,10 @@ sub make_plan {
 		@options = @ok_options;
 	    } else {
 		@options = @partial_options;
+	    }
+
+	    if (@options == 0) {
+		next;
 	    }
 
 	    # now, take the one written longest ago - this gets us the dump on secondary
