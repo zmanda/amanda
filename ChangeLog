@@ -1,4 +1,8 @@
 2013-08-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c (tape_device_check_writable): Declare get
+	  conditionaly.
+
+2013-08-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, server-src/holding.c: Cast getpid() to int
 	  before printing it.
 

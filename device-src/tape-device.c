@@ -1674,7 +1674,9 @@ static gboolean
 tape_device_check_writable(Device * d_self)
 {
     TapeDevice *self;
+#ifdef GMT_WR_PROT
     struct mtget get;
+#endif
 
     self = TAPE_DEVICE(d_self);
 
