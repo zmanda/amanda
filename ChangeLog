@@ -1,4 +1,8 @@
 2013-08-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, server-src/holding.c: Cast getpid() to int
+	  before printing it.
+
+2013-08-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/holding.c: s/g_slist_free_full/slist_free_full/
 
 2013-08-05  Jean-Louis Martineau <martineau@zmanda.com>

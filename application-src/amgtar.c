@@ -1200,7 +1200,7 @@ amgtar_restore(
 	if (argument->dle.disk) {
 	    sdisk = sanitise_filename(argument->dle.disk);
 	} else {
-	    sdisk = g_strdup_printf("no_dle-%d", getpid());
+	    sdisk = g_strdup_printf("no_dle-%d", (int)getpid());
 	}
 	exclude_filename= g_strjoin(NULL, AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
 	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
@@ -1255,7 +1255,7 @@ amgtar_restore(
 	if (argument->dle.disk) {
 	    sdisk = sanitise_filename(argument->dle.disk);
 	} else {
-	    sdisk = g_strdup_printf("no_dle-%d", getpid());
+	    sdisk = g_strdup_printf("no_dle-%d", (int)getpid());
 	}
 	include_filename = g_strjoin(NULL, AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
 	include = fopen(include_filename, "w");

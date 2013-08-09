@@ -1046,7 +1046,7 @@ mkholdingdir(
 		pid_file, strerror(errno));
 	success = 0;
     } else {
-	fprintf(pid_FILE, "%d", getpid());
+	fprintf(pid_FILE, "%d", (int)getpid());
 	fclose(pid_FILE);
     }
     g_free(pid_file);
