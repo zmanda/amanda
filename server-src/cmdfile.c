@@ -286,7 +286,7 @@ cmdfile_write(
 	char *holding_file = quote_string(cmddata->holding_file);
 	line = g_strdup_printf("%d FLUSH %s %s %s %s %s %s WORKING:%d %s\n",
 		id, config, holding_file, hostname, diskname,
-		dump_timestamp, storage_dest, cmddata->working_pid, status);
+		dump_timestamp, storage_dest, (int)cmddata->working_pid, status);
 	g_free(holding_file);
 	g_ptr_array_add(lines, line);
     } else if (cmddata->operation == CMD_COPY) {
@@ -295,7 +295,7 @@ cmdfile_write(
 	char *label = quote_string(cmddata->label);
 	line = g_strdup_printf("%d COPY %s %s %s %s %s %s %s %s WORKING:%d %s\n",
 		id, config, storage, pool, label, hostname, diskname,
-		dump_timestamp, storage_dest, cmddata->working_pid, status);
+		dump_timestamp, storage_dest, (int)cmddata->working_pid, status);
 	g_free(storage);
 	g_free(pool);
 	g_free(label);
