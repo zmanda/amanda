@@ -231,10 +231,11 @@ sub scan_log($) {
 	    }
 	    if (defined $self->{pstable}->{$pid} && $pname eq $self->{pstable}->{$pid}) {
 		$self->{pids}->{$pid} = $pname;
-	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /^perl/) {
+	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /perl/) {
 		# We can get 'perl' for a perl script.
 		$self->{pids}->{$pid} = $pname;
 	    } elsif (defined $self->{pstable}->{$pid}) {
+		debug("pid $pid doesn't match: " . $pname . " != " . $self->{pstable}->{$pid});
 		print "pid $pid doesn't match: ", $pname, " != ", $self->{pstable}->{$pid}, "\n" if $self->{verbose};
 	    }
 	} elsif ($line =~ /^INFO .* pid-done (\d*)$/) {
