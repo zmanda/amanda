@@ -388,6 +388,7 @@ sub main {
     my %recovery_params;
     my $timer;
     my $is_tty;
+    my $last_is_size;
     my $delay;
     my $directtcp = 0;
     my @directtcp_command;
@@ -764,8 +765,8 @@ sub main {
 		debug("Running: ". join(' ',@argv));
 		$xfer_app = Amanda::Xfer::Filter::Process->new(\@argv, 0, 0, 1, 1);
 
-		$dest_fh = \*STDOUT;
-		$xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
+		#$dest_fh = \*STDOUT;
+		$xfer_dest = Amanda::Xfer::Dest::Buffer->new(1048576);
 	    }
 	} elsif ($opt_pipe) {
 	    $dest_fh = \*STDOUT;
@@ -796,6 +797,10 @@ sub main {
 	$timer->set_callback(sub {
 	    my $size = $xfer_src->get_bytes_read();
 	    if ($is_tty) {
+		if (!$last_is_size) {
+		    print STDERR "\n";
+		    $last_is_size = 1;
+		}
 		print STDERR "\r" . int($size/1024) . " kb ";
 	    } else {
 		print STDERR "READ SIZE: " . int($size/1024) . " kb\n";
@@ -946,6 +951,12 @@ sub main {
 			chomp $line;
 			if (length($line) > 1) {
 			    if (!$app_success || $app_error) {
+				if ($is_tty) {
+				    if ($last_is_size) {
+					print STDERR "\n";
+					$last_is_size = 0;
+				    }
+				}
 				print STDERR "filter stderr: $line\n";
 			    }
 			    debug("filter stderr: $line");
@@ -1070,9 +1081,22 @@ sub main {
 
     step filter_done => sub {
 	if ($is_tty) {
-	    print STDERR "\r" . int($recovery_params{'bytes_read'}/1024) . " kb ";
+	    if (!$last_is_size) {
+		print STDERR "\n";
+	    }
+	    $last_is_size = 0;
+	    print STDERR "\r" . int($recovery_params{'bytes_read'}/1024) . " kb \n";
 	} else {
 	    print STDERR "READ SIZE: " . int($recovery_params{'bytes_read'}/1024) . " kb\n";
+	}
+	if ($xfer_dest && $xfer_dest->isa("Amanda::Xfer::Dest::Buffer")) {
+	    my $buf = $xfer_dest->get();
+	    my @lines = split "\n", $buf;
+	    foreach (@lines) {
+		next if $_ =~ /^$/;
+		print STDERR "Application stdout: $_\n";
+		debug("Application stdout: $_");
+	    }
 	}
 	@xfer_errs = (@xfer_errs, @{$recovery_params{'errors'}})
 	    if $recovery_params{'errors'};
@@ -1204,8 +1228,7 @@ sub main {
 	    return $clerk->quit(finished_cb => $steps->{'quit2'});
 	}
 
-	print STDERR "\n" if $is_tty;
-
+	print STDERR "\n" if $is_tty and $last_is_size;
 	return $finished_cb->();
     };
 }
