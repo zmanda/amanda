@@ -1,3 +1,6 @@
+2013-08-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Process.pm: Be less scrict on perl binary name.
+
 2013-08-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/cmdfile.c (cmdfile_write): Cast pid_t to int for printf.
 
