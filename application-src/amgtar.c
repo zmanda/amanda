@@ -621,6 +621,7 @@ main(
     g_free(argument.dle.disk);
     g_free(argument.dle.device);
     g_free(argument.tar_blocksize);
+    g_slist_free(argument.level);
 
     return 0;
 }

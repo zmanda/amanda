@@ -168,7 +168,7 @@ startup_tape_process(
 	    wtaper->sendresult = 0;
 	    wtaper->input_error = NULL;
 	    wtaper->tape_error = NULL;
-	    wtaper->result = 0;
+	    wtaper->result = LAST_TOK;
 	    wtaper->job = NULL;
 	    wtaper->first_label = NULL;
 	    wtaper->first_fileno = 0;

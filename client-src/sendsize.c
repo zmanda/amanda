@@ -900,7 +900,7 @@ application_api_calc_estimate(
 	for (level = 0; level < DUMP_LEVELS; level++) {
 	    est->est[level].needestimate = 0;
 	}
-	g_ptr_array_free(errarray, TRUE);
+	g_ptr_array_free_full(errarray);
 	return;
     }
 

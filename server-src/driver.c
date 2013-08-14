@@ -1628,6 +1628,7 @@ continue_port_dumps(void)
 		(void)dp; /* Quiet lint */
 	    }
 	    assert( dumper < dmptable + inparallel );
+	    assert( dumper->job );
 	    sched(dp)->activehd = assign_holdingdisk( h, dp );
 	    chunker_cmd( dumper->job->chunker, CONTINUE, dp, NULL );
 	    amfree(h);
@@ -2103,17 +2104,17 @@ handle_taper_result(
 	    for (wtaper = taper->wtapetable;
 		 wtaper < taper->wtapetable + taper->nb_worker;
                  wtaper++) {
-		if (wtaper && job->disk) {
+		if (wtaper && wtaper->job && wtaper->job->disk) {
 		    g_free(wtaper->tape_error);
 		    wtaper->tape_error = g_strdup("BOGUS");
 		    wtaper->result = cmd;
 		    if (wtaper->job->dumper) {
 			if (wtaper->job->dumper->result != LAST_TOK) {
 			    // Dumper already returned it's result
-			    dumper_taper_result(job);
+			    dumper_taper_result(wtaper->job);
 			}
 		    } else {
-			file_taper_result(job);
+			file_taper_result(wtaper->job);
 		    }
 		}
 	    }
@@ -2143,8 +2144,8 @@ handle_taper_result(
 	    if (wtaper->nb_dle >= taper->max_dle_by_volume) {
 		taper_cmd(taper, wtaper, CLOSE_VOLUME, job->disk, NULL, 0, NULL);
 	    }
-	    if (wtaper->job->dumper) {
-		if (wtaper->job->dumper->result != LAST_TOK) {
+	    if (job->dumper) {
+		if (job->dumper->result != LAST_TOK) {
 		    // Dumper already returned it's result
 		    dumper_taper_result(job);
 		}
@@ -2193,6 +2194,7 @@ file_taper_result(
 		    amfree(sched(dp)->degr_dumpdate);
 		    amfree(sched(dp)->degr_mesg);
 		    amfree(sched(dp)->datestamp);
+		    g_hash_table_destroy(sched(dp)->to_storage);
 		    amfree(dp->up);
 		}
 	    } else {
@@ -2212,6 +2214,7 @@ file_taper_result(
 			amfree(sched(dp)->degr_dumpdate);
 			amfree(sched(dp)->degr_mesg);
 			amfree(sched(dp)->datestamp);
+			g_hash_table_destroy(sched(dp)->to_storage);
 			amfree(dp->up);
 		    }
 		}
@@ -2223,6 +2226,7 @@ file_taper_result(
 		amfree(sched(dp)->degr_dumpdate);
 		amfree(sched(dp)->degr_mesg);
 		amfree(sched(dp)->datestamp);
+		g_hash_table_destroy(sched(dp)->to_storage);
 		amfree(dp->up);
 	    }
 	}
@@ -2241,6 +2245,7 @@ file_taper_result(
 		amfree(sched(dp)->degr_dumpdate);
 		amfree(sched(dp)->degr_mesg);
 		amfree(sched(dp)->datestamp);
+		g_hash_table_destroy(sched(dp)->to_storage);
 		amfree(dp->up);
 	    }
 	} else {
@@ -2272,6 +2277,7 @@ file_taper_result(
 	    amfree(sched(dp)->degr_dumpdate);
 	    amfree(sched(dp)->degr_mesg);
 	    amfree(sched(dp)->datestamp);
+	    g_hash_table_destroy(sched(dp)->to_storage);
 	    amfree(dp->up);
 	}
 	g_free(holding_file);

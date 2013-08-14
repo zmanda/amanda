@@ -634,6 +634,7 @@ main(
 		amfree(qerrmsg);
 		amfree(errmsg);
 	    }
+	    g_ptr_array_free_full(errarray);
 	    return 0;
 	}
 

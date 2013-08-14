@@ -1,4 +1,11 @@
 2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, client-src/client_util.c,
+	  client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c, common-src/conffile.c,
+	  server-src/diskfile.c, server-src/driver.c,
+	  server-src/driverio.c: Fix memory leak.
+
+2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Get in error state if the tape drive is in
 	  fixed block size and it is different than the tapetype size.
 

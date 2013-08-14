@@ -305,7 +305,7 @@ dequeue_disk(
     if(list->head == NULL) return NULL;
 
     disk = list->head->data;
-    list->head = g_list_remove_link(list->head, list->head);
+    list->head = g_list_delete_link(list->head, list->head);
 
     if(list->head == NULL) list->tail = NULL;
 
@@ -1882,6 +1882,7 @@ match_dumpfile(
     disk_t d;
     am_host_t h;
     disklist_t dl;
+    char *errstr;
 
     /* rather than try to reproduce the adaptive matching logic in
      * match_disklist, this simply creates a new, fake disklist with one
@@ -1900,7 +1901,11 @@ match_dumpfile(
 
     dl.head = dl.tail = g_list_prepend(NULL, &d);
 
-    (void)match_disklist(&dl, exact_match, sargc, sargv);
+    errstr = match_disklist(&dl, exact_match, sargc, sargv);
+    if (errstr) {
+	g_debug("%s", errstr);
+	g_free(errstr);
+    }
     if (g_list_delete_link(dl.head, dl.head) != NULL) {
     };
     return d.todo;

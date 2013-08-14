@@ -4001,6 +4001,7 @@ read_storage_identlist(
 {
     ckseen(&val->seen);
 
+    free_val_t(val);
     val->v.identlist = NULL;
     get_conftoken(CONF_ANY);
     while (tok == CONF_STRING || tok == CONF_IDENT) {
@@ -4251,6 +4252,7 @@ read_estimatelist(
 	if (tok == CONF_NL)
 	    break;
     } while (1);
+    g_slist_free(val->v.estimatelist);
     val_t__estimatelist(val) = estimates;
 }
 

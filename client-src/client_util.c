@@ -918,7 +918,7 @@ backup_support_option(
     char   *err = NULL;
     backup_support_option_t *bsu;
 
-    *errarray = g_ptr_array_new();
+    *errarray = NULL;
     cmd = g_strjoin(NULL, APPLICATION_DIR, "/", program, NULL);
     g_ptr_array_add(argv_ptr, g_strdup(program));
     g_ptr_array_add(argv_ptr, g_strdup("support"));
@@ -1056,6 +1056,8 @@ backup_support_option(
     }
     while((line = agets(streamerr)) != NULL) {
 	if (strlen(line) > 0) {
+	    if (!*errarray)
+		*errarray = g_ptr_array_new();
 	    g_ptr_array_add(*errarray, g_strdup(line));
 	    dbprintf("Application '%s': %s\n", program, line);
 	}
@@ -1073,6 +1075,8 @@ backup_support_option(
     }
 
     if (err) {
+	if (!*errarray)
+	    *errarray = g_ptr_array_new();
 	g_ptr_array_add(*errarray, err);
 	dbprintf("Application '%s': %s\n", program, err);
 	amfree(bsu);

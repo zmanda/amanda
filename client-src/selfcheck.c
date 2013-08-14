@@ -752,6 +752,7 @@ check_disk(
 			dle->program, line);
 		amfree(line);
 	    }
+	    g_ptr_array_free_full(errarray);
 	    err = g_strdup_printf(_("Application '%s': can't run support command"),
 			     dle->program);
 	    goto common_exit;
