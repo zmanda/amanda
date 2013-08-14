@@ -142,6 +142,7 @@ gboolean tape_setcompression(int fd, gboolean on);
 gboolean tape_offl(int fd);
 
 DeviceStatusFlags tape_is_tape_device(int fd);
+DeviceStatusFlags get_tape_blocksize(int fd, guint64 *tape_blocksize);
 DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self);
 
 #define tape_device_read_size(self) \
@@ -687,6 +688,7 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
     int fd;
     int save_errno;
     DeviceStatusFlags new_status;
+    guint64 tape_blocksize;
 
 #ifdef O_NONBLOCK
     int nonblocking = 0;
@@ -796,6 +798,31 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
 	    new_status);
         robust_close(fd);
         return -1;
+    }
+
+    new_status = get_tape_blocksize(fd, &tape_blocksize);
+    if (new_status != DEVICE_STATUS_SUCCESS) {
+	device_set_error(DEVICE(self),
+	    g_strdup_printf(_("Can't get the blocksize of the device %s"),
+			 self->private->device_filename),
+	    new_status);
+        robust_close(fd);
+        return -1;
+    }
+    if (tape_blocksize > 0 && tape_blocksize != tape_device_read_size(self)) {
+	device_set_error(DEVICE(self),
+	    g_strdup_printf(_("Device %s use fixed block size of %lld and tapetype use %lld"), 
+			 self->private->device_filename,
+			 (long long)tape_blocksize,
+			 (long long)tape_device_read_size(self)),
+	    DEVICE_STATUS_VOLUME_ERROR|DEVICE_STATUS_DEVICE_ERROR);
+        robust_close(fd);
+        return -1;
+    }
+    if (tape_blocksize == 0) {
+	g_debug("Device is in variable block size");
+    } else {
+	g_debug("Device is in fixed block size of %lld", (long long)tape_blocksize);
     }
 
     return fd;
@@ -941,6 +968,14 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 		 new_status);
 	amfree(msg);
 	return dself->status;
+    }
+
+    if (buffer_len < 32768) {
+	device_set_error(dself,
+		g_strdup_printf(_("header is too small: %d bytes"), buffer_len),
+		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	free(header_buffer);
+        return dself->status;
     }
 
     dself->header_block_size = buffer_len;
@@ -1473,6 +1508,14 @@ reseek:
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
 	amfree(msg);
         return NULL;
+    }
+
+    if (buffer_len < 32768) {
+	device_set_error(d_self,
+		g_strdup_printf(_("header is too small: %d bytes"), buffer_len),
+		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	free(header_buffer);
+	return NULL;
     }
 
     rval = g_new(dumpfile_t, 1);
@@ -2238,6 +2281,25 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
 	    return DEVICE_STATUS_DEVICE_ERROR;
 	}
     }
+}
+
+DeviceStatusFlags get_tape_blocksize(int fd, guint64 *tape_blocksize) {
+   struct mtget status;
+
+   if (ioctl(fd, MTIOCGET, (char *)&status) < 0) {
+	g_debug("get_tape_blocksize: ioctl(MTIOCGET) failed: %s",
+		strerror(errno));
+	*tape_blocksize = -1;
+	return DEVICE_STATUS_DEVICE_ERROR;
+    }
+
+    if (status.mt_type == MT_ISSCSI1 ||
+	status.mt_type == MT_ISSCSI2) {
+	*tape_blocksize = ((status.mt_dsreg & MT_ST_BLKSIZE_MASK) >> MT_ST_BLKSIZE_SHIFT);
+    } else {
+	*tape_blocksize = 0;
+    }
+    return DEVICE_STATUS_SUCCESS;
 }
 
 DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self G_GNUC_UNUSED) {
