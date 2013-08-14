@@ -1,4 +1,7 @@
 2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Fix for not supported platform.
+
+2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, client-src/client_util.c,
 	  client-src/selfcheck.c, client-src/sendbackup.c,
 	  client-src/sendsize.c, common-src/conffile.c,
