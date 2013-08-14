@@ -2231,12 +2231,19 @@ DeviceStatusFlags get_tape_blocksize(int fd, guint64 *tape_blocksize) {
 	return DEVICE_STATUS_DEVICE_ERROR;
     }
 
-    if (status.mt_type == MT_ISSCSI1 ||
-	status.mt_type == MT_ISSCSI2) {
+    *tape_blocksize = 0;
+#if defined MT_ST_BLKSIZE_MASK && defined MT_ST_BLKSIZE_SHIFT
+    if (
+#ifdef MT_ISSCSI1
+	status.mt_type == MT_ISSCSI1 ||
+#endif
+#ifdef MT_ISSCSI2
+	status.mt_type == MT_ISSCSI2 ||
+#endif
+	0) {
 	*tape_blocksize = ((status.mt_dsreg & MT_ST_BLKSIZE_MASK) >> MT_ST_BLKSIZE_SHIFT);
-    } else {
-	*tape_blocksize = 0;
     }
+#endif
     return DEVICE_STATUS_SUCCESS;
 }
 

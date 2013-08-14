@@ -1,4 +1,7 @@
 2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Fix for not supported platform.
+
+2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Get in error state if the tape drive is in
 	  fixed block size and it is different than the tapetype size.
 
