@@ -750,7 +750,6 @@ check_disk(
 		line = g_ptr_array_index(errarray, i);
 		fprintf(stdout, _("ERROR Application '%s': %s\n"),
 			dle->program, line);
-		amfree(line);
 	    }
 	    g_ptr_array_free_full(errarray);
 	    err = g_strdup_printf(_("Application '%s': can't run support command"),
