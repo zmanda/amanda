@@ -177,7 +177,7 @@ sub run {
     if ($self->{'is_tty'}) {
 	$self->{'delay'} = 1000; # 1 second
     } else {
-	$self->{'delay'} = 5000; # 5 seconds
+	$self->{'delay'} = 15000; # 15 seconds
     }
     $self->{'last_is_size'} = 0;
 
@@ -555,7 +555,7 @@ sub xfer_dumps {
 		}
 	        print STDERR "\r" . int($size/1024) . " kb ";
 	    } else {
-		print STDERR "WRITTEN SIZE: " . int($size/1024) . " kb\n";
+		g_debug("WRITTEN SIZE: " . int($size/1024) . " kb");
 	    }
 	});
 
