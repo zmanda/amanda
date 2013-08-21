@@ -198,6 +198,14 @@ sub run {
     my $self = shift;
     my ($exit_cb) = @_;
 
+    $self->{'is_tty'} = -t STDERR;
+    if ($self->{'is_tty'}) {
+	$self->{'delay'} = 1000; # 1 second
+    } else {
+	$self->{'delay'} = 5000; # 5 seconds
+    }
+    $self->{'last_is_size'} = 0;
+
     die "already called" if $self->{'exit_cb'};
     $self->{'exit_cb'} = $exit_cb;
 
@@ -567,6 +575,20 @@ sub xfer_dumps {
 	$size = $current->{'dump'}->{'bytes'} if exists $current->{'dump'}->{'bytes'};
 	$xfer->start($steps->{'handle_xmsg'}, 0, $size);
 
+	$self->{'timer'} = Amanda::MainLoop::timeout_source($self->{'delay'});
+	$self->{'timer'}->set_callback(sub {
+	    my $size = $dst->{'scribe'}->get_bytes_written();
+	    if ($self->{'is_tty'}) {
+		if (!$self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 1;
+		}
+	        print STDERR "\r" . int($size/1024) . " kb ";
+	    } else {
+		print STDERR "WRITTEN SIZE: " . int($size/1024) . " kb\n";
+	    }
+	});
+
 	# count the "threads" running here (clerk and scribe)
 	$n_threads = 2;
 
@@ -664,6 +686,15 @@ sub quit {
     my $steps = define_steps
 	    cb_ref => \$exit_cb;
 
+    step quit_timer => sub {
+	if (defined $self->{'timer'}) {
+	    $self->{'timer'}->remove();
+	    $self->{'timer'} = undef;
+	}
+
+	$steps->{'check_exporting'}->();
+    };
+
     # the export may not start until we quit the scribe, so wait for it now..
     step check_exporting => sub {
 	# if we're exporting the final volume, wait for that to complete
@@ -689,7 +720,14 @@ sub quit {
 	$self->{'dst'}{'scan'}->quit();
 	my ($err) = @_;
 	if ($err) {
+	    if ($self->{'is_tty'}) {
+		if ($self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 0;
+		}
+	    }
 	    print STDERR "$err\n";
+	    debug("scribe error: $err");
 	    $exit_status = 1;
 	}
 
@@ -709,7 +747,14 @@ sub quit {
     step quit_clerk_finished => sub {
 	my ($err) = @_;
 	if ($err) {
+	    if ($self->{'is_tty'}) {
+		if ($self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 0;
+		}
+	    }
 	    print STDERR "$err\n";
+	    debug("clerk error: $err");
 	    $exit_status = 1;
 	}
 
@@ -747,6 +792,12 @@ sub quit {
 sub failure {
     my $self = shift;
     my ($msg) = @_;
+    if ($self->{'is_tty'}) {
+	if ($self->{'last_is_size'}) {
+	    print STDERR "\n";
+	    $self->{'last_is_size'} = 0;
+	}
+    }
     print STDERR "$msg\n";
 
     debug("failure: $msg");
@@ -796,6 +847,12 @@ sub scribe_notif_new_tape {
     } else {
 	$self->{'dst'}->{'label'} = undef;
 
+	if ($self->{'is_tty'}) {
+	    if ($self->{'last_is_size'}) {
+		print STDERR "\n";
+		$self->{'last_is_size'} = 0;
+	    }
+	}
 	print STDERR "Could not start new destination volume: $params{error}";
     }
 }
@@ -868,6 +925,12 @@ sub scribe_notif_tape_done {
     step inventory_cb => sub {
 	my ($err, $inventory) = @_;
 	if ($err) {
+	    if ($self->{'is_tty'}) {
+		if ($self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 0;
+		}
+	    }
 	    print STDERR "Could not get destination inventory: $err\n";
 	    return $steps->{'done'}->();
 	}
@@ -886,9 +949,21 @@ sub scribe_notif_tape_done {
 	}
 
 	if (!$ie_slot) {
+	    if ($self->{'is_tty'}) {
+		if ($self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 0;
+		}
+	    }
 	    print STDERR "No import/export slots available; skipping export\n";
 	    return $steps->{'done'}->();
 	} elsif (!$from_slot) {
+	    if ($self->{'is_tty'}) {
+		if ($self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 0;
+		}
+	    }
 	    print STDERR "Could not find the just-written tape; skipping export\n";
 	    return $steps->{'done'}->();
 	} else {
@@ -913,6 +988,12 @@ sub scribe_notif_tape_done {
     step moved => sub {
 	my ($err) = @_;
 	if ($err) {
+	    if ($self->{'is_tty'}) {
+		if ($self->{'last_is_size'}) {
+		    print STDERR "\n";
+		    $self->{'last_is_size'} = 0;
+		}
+	    }
 	    print STDERR "While exporting just-written tape: $err (ignored)\n";
 	}
 	$steps->{'done'}->();

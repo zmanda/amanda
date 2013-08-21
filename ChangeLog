@@ -1,3 +1,6 @@
+2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Print progress status.
+
 2013-08-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Fix for not supported platform.
 
