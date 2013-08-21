@@ -112,6 +112,11 @@ For restore command only, the data is recoved in that directory. Must be a unix 
  <varlistentry><term>RECOVER-MODE</term><listitem>
 "tar" or "smb", default to "tar". If "tar", the data is recovered on the local machine, If "smb", the data is recovered on the smb client machine.
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>REGEX-MATCH</term><listitem>
+If set to "YES", amsamba use the 'r' tarmode which uses regex to do the
+include and exclude pattern matching, it can be slow.
+</listitem></varlistentry>
 </variablelist>
 
 </refsect1>

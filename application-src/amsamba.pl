@@ -42,7 +42,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode, $allow_anonymous, $directory) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode, $allow_anonymous, $directory, $regex_match) = @_;
     my $self = $class->SUPER::new($config);
 
     if (defined $gnutar_path) {
@@ -88,6 +88,11 @@ sub new {
     $self->{recover_mode}     = $recover_mode;
     $self->{allow_anonymous}  = $allow_anonymous;
     $self->{directory}        = $directory;
+    if ($regex_match =~ /^yes$/i) {
+	$self->{'regex_match'} = 1;
+    } else {
+	$self->{'regex_match'} = 0;
+    }
 
     return $self;
 }
@@ -160,6 +165,7 @@ sub validate_inexclude {
 	    if (defined $self->{'subdir'}) {
 		$_ =~ s/^\./$self->{'subdir'}/;
 	    }
+	    $_ =~ s/\\([0-7]{3})/chr oct $1/eg;
 	    print INC_FILE "$_\n";
 	}
 
@@ -633,6 +639,9 @@ sub command_backup {
 	    $comm = "tarmode inc noreset hidden system quiet;";
 	}
 	$comm .= " tar c";
+	if ($self->{'regex_match'}) {
+	    $comm .= "r";
+	}
 	if ($#{$self->{exclude}} >= 0) {
 	    $comm .= "X";
 	}
@@ -735,12 +744,13 @@ sub command_backup {
 	debug("stderr: " . $line);
 	return if $line =~ /^Domain=/;
 	return if $line =~ /^tarmode is now /;
+	return if $line =~ /^tar_re_search set/;
 	if ($line =~ /dumped (\d+) files and directories/) {
 	    $nb_files = $1;
 	    return;
 	}
 	# message if samba server is configured with 'security = share'
-	return if $line =~$line =~  /Server not using user level security and no password supplied./;
+	return if $line =~  /Server not using user level security and no password supplied./;
 	if ($line =~ /^Total bytes written: (\d*)/) {
 	    $size = $1;
 	    return;
@@ -972,6 +982,7 @@ my $opt_include_optional;
 my $opt_recover_mode;
 my $opt_allow_anonymous;
 my $opt_directory;
+my $opt_regex_match;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -998,6 +1009,7 @@ GetOptions(
     'recover-mode=s'     => \$opt_recover_mode,
     'allow-anonymous=s'  => \$opt_allow_anonymous,
     'directory=s'        => \$opt_directory,
+    'regex-match=s'      => \$opt_regex_match,
 ) or usage();
 
 if (defined $opt_version) {
@@ -1005,7 +1017,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_directory);
+my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_directory, $opt_regex_match);
 
 $application->do($ARGV[0]);
 # NOTREACHED

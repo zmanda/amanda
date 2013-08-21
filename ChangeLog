@@ -1,4 +1,8 @@
 2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Add REGEX-MATCH property.
+	* man/xml-source/amsamba.8.xml: Document REGEX-MATCH property.
+
+2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Print progress status.
 
 2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
