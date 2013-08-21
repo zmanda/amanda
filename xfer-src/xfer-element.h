@@ -152,6 +152,12 @@ typedef struct XferElement {
 
     /* maximum size to transfer */
     gint64 size;
+
+    /* if input must be drained in case of write error */
+    gboolean must_drain;
+    gboolean drain_mode;
+    gboolean cancel_on_success;
+    gboolean ignore_broken_pipe;
 } XferElement;
 
 /*
@@ -283,6 +289,12 @@ typedef struct {
      * @returns: array of mech pairs, terminated by <NONE,NONE>
      */
     xfer_element_mech_pair_t *(*get_mech_pairs)(XferElement *elt);
+
+    /* If the data must be drained without error if writing fail
+     *
+     * @param elt: the XferElement
+     */
+    gboolean (*must_drain)(XferElement *elt);
 
     /* class variables */
 
@@ -417,6 +429,15 @@ XferElement * xfer_source_directtcp_listen(void);
  */
 XferElement * xfer_source_directtcp_connect(DirectTCPAddr *addrs);
 
+/* A transfer filter that copy its input to its output but contimue to read
+ *  the input if it get a Broken pipe to the output.
+ *
+ * Implemented in filter-drain.c
+ *
+ * @return: new element
+ */
+XferElement *xfer_filter_drain(void);
+
 /* A transfer filter that executes an external application, feeding it data on
  * stdin and taking the results on stdout.
  *
@@ -430,7 +451,10 @@ XferElement * xfer_source_directtcp_connect(DirectTCPAddr *addrs);
  * @return: new element
  */
 XferElement *xfer_filter_process(gchar **argv,
-    gboolean need_root);
+    gboolean need_root,
+    gboolean must_drain,
+    gboolean cancel_on_success,
+    gboolean ignore_broken_pipe);
 
 /* A transfer filter that just applies a bytewise XOR transformation to the data
  * that passes through it.

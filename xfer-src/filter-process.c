@@ -101,16 +101,30 @@ child_watch_callback(
 	}
     }
 
-    /* if this is an error exit, send an XMSG_ERROR and cancel */
     if (errmsg) {
-	msg = xmsg_new(XFER_ELEMENT(self), XMSG_ERROR, 0);
-	msg->message = errmsg;
+	msg = xmsg_new(XFER_ELEMENT(self), XMSG_INFO, 0);
+	msg->message = g_strdup("ERROR");
 	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
-
-	xfer_cancel(elt->xfer);
-
-	/* this element is as good as cancelled already, so fall through to XMSG_DONE */
+    } else {
+	msg = xmsg_new(XFER_ELEMENT(self), XMSG_INFO, 0);
+	msg->message = g_strdup("SUCCESS");
+	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
     }
+
+    /* if this is an error exit, send an XMSG_ERROR and cancel */
+    if (!elt->cancelled) {
+	if (errmsg) {
+	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_ERROR, 0);
+	    msg->message = errmsg;
+	    xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
+
+	    xfer_cancel(elt->xfer);
+
+	} else if (elt->cancel_on_success) {
+	    xfer_cancel(elt->xfer);
+	}
+    }
+    /* this element is as good as cancelled already, so fall through to XMSG_DONE */
 
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 }
@@ -176,7 +190,7 @@ start_impl(
 	    }
 
 	    execve(self->argv[0], self->argv, env);
-	    errmsg = g_strdup_printf("exec failed: %s\n", strerror(errno));
+	    errmsg = g_strdup_printf("exec of '%s' failed: %s\n", self->argv[0], strerror(errno));
 	    full_write(STDERR_FILENO, errmsg, strlen(errmsg));
 	    exit(1);
 
@@ -318,7 +332,10 @@ xfer_filter_process_get_type (void)
 XferElement *
 xfer_filter_process(
     gchar **argv,
-    gboolean need_root)
+    gboolean need_root,
+    gboolean must_drain,
+    gboolean cancel_on_success,
+    gboolean ignore_broken_pipe)
 {
     XferFilterProcess *xfp = (XferFilterProcess *)g_object_new(XFER_FILTER_PROCESS_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xfp);
@@ -331,6 +348,9 @@ xfer_filter_process(
     if (pipe(xfp->pipe_err) < 0) {
 	g_critical(_("Can't create pipe: %s"), strerror(errno));
     }
+    elt->must_drain = must_drain;
+    elt->cancel_on_success = cancel_on_success;
+    elt->ignore_broken_pipe = ignore_broken_pipe;
     return elt;
 }
 

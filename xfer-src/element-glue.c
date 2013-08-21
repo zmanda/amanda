@@ -385,14 +385,21 @@ pull_and_write(XferElementGlue *self)
 	    break;
 
 	/* write it */
-	if (full_write(fd, buf, len) < len) {
-	    if (!elt->cancelled) {
-		xfer_cancel_with_error(elt,
-		    _("Error writing to fd %d: %s"), fd, strerror(errno));
-		wait_until_xfer_cancelled(elt->xfer);
+	if (!elt->downstream->drain_mode && full_write(fd, buf, len) < len) {
+	    if (elt->downstream->must_drain) {
+		g_debug("Error writing to fd %d: %s", fd, strerror(errno));
+	    } else if (elt->downstream->ignore_broken_pipe && errno == EPIPE) {
+	    } else {
+		if (!elt->cancelled) {
+		    xfer_cancel_with_error(elt,
+			_("Error writing to fd %d: %s"), fd, strerror(errno));
+		    xfer_cancel(elt->xfer);
+		    wait_until_xfer_cancelled(elt->xfer);
+		}
+		amfree(buf);
+		break;
 	    }
-	    amfree(buf);
-	    break;
+	    elt->downstream->drain_mode = TRUE;
 	}
 
 	amfree(buf);
@@ -436,13 +443,19 @@ read_and_write(XferElementGlue *self)
 	}
 
 	/* write the buffer fully */
-	if (full_write(wfd, buf, len) < len) {
-	    if (!elt->cancelled) {
-		xfer_cancel_with_error(elt,
-		    _("Could not write to fd %d: %s"), wfd, strerror(errno));
-		wait_until_xfer_cancelled(elt->xfer);
+	if (!elt->downstream->drain_mode && full_write(wfd, buf, len) < len) {
+	    if (elt->downstream->must_drain) {
+		g_debug("Could not write to fd %d: %s",  wfd, strerror(errno));
+	    } else if (elt->downstream->ignore_broken_pipe && errno == EPIPE) {
+	    } else {
+		if (!elt->cancelled) {
+		    xfer_cancel_with_error(elt,
+			_("Could not write to fd %d: %s"),
+			wfd, strerror(errno));
+		    wait_until_xfer_cancelled(elt->xfer);
+		}
+		break;
 	    }
-	    break;
 	}
     }
 
@@ -1170,13 +1183,23 @@ push_buffer_impl(
 
 	    /* write the full buffer to the fd, or close on EOF */
 	    if (buf) {
-		if (full_write(fd, buf, len) < len) {
-		    if (!elt->cancelled) {
-			xfer_cancel_with_error(elt,
-			    _("Error writing to fd %d: %s"), fd, strerror(errno));
-			wait_until_xfer_cancelled(elt->xfer);
+		if (!elt->downstream->drain_mode &&
+		    full_write(fd, buf, len) < len) {
+		    if (elt->downstream->must_drain) {
+			g_debug("Error writing to fd %d: %s",
+				fd, strerror(errno));
+		    } else if (elt->downstream->ignore_broken_pipe &&
+			       errno == EPIPE) {
+		    } else {
+			if (!elt->cancelled) {
+			    xfer_cancel_with_error(elt,
+				_("Error writing to fd %d: %s"),
+				fd, strerror(errno));
+			    wait_until_xfer_cancelled(elt->xfer);
+			}
+			/* nothing special to do to handle a cancellation */
 		    }
-		    /* nothing special to do to handle a cancellation */
+		    elt->downstream->drain_mode = TRUE;
 		}
 		amfree(buf);
 	    } else {

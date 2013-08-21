@@ -268,9 +268,9 @@ pass("Two simultaneous transfers run to completion");
     my $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
 	Amanda::Xfer::Filter::Process->new(
-	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0),
+	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0, 0, 0, 0),
 	Amanda::Xfer::Filter::Process->new(
-	    [ $Amanda::Constants::UNCOMPRESS_PATH, $Amanda::Constants::UNCOMPRESS_OPT ], 0),
+	    [ $Amanda::Constants::UNCOMPRESS_PATH, $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 0),
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
     ]);
 
@@ -300,7 +300,7 @@ pass("Two simultaneous transfers run to completion");
     my $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Fd->new($zerofd),
 	Amanda::Xfer::Filter::Process->new(
-	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0),
+	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0, 0, 0, 0),
 	Amanda::Xfer::Dest::Null->new(0),
     ]);
 

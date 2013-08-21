@@ -1,4 +1,19 @@
 2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/filter-process.c (xfer_filter_process): Add must_drain,
+	  cancel_on_success and ignore_broken_pipe flag).
+	* xfer-src/filter-process.c (child_watch_callback): Send XMSG_INFO.
+	* xfer-src/xfer-element.c: Initialize new flags.
+	* xfer-src/xfer-element.h (XferElement): Add must_drain, drain_mode,
+	  cancel_on_success and ignore_broken_pipe.
+	* xfer-src/element-glue.c: Handle new flags.
+	* perl/Amanda/Xfer.swg (xfer_filter_process): Add new flags.
+	* installcheck/Amanda_Xfer.pl: Test new flags.
+	* server-src/amcheckdump.pl: Use new flags.
+	* server-src/amfetchdump.pl: Use new flags.
+	* server-src/amidxtaped.pl: Use new flags.
+	* server-src/amrestore.pl: Use new flags.
+
+2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Add REGEX-MATCH property.
 	* man/xml-source/amsamba.8.xml: Document REGEX-MATCH property.
 

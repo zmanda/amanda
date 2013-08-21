@@ -399,8 +399,10 @@ sub main {
     my $delay;
     my $directtcp = 0;
     my @directtcp_command;
-    my $xfer_app;
     my $xfer_dest;
+    my $xfer_app;
+    my $app_success;
+    my $app_error;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -499,6 +501,9 @@ sub main {
 
 	$recovery_done = 0;
 	%recovery_params = ();
+	$app_success = 0;
+	$app_error = 0;
+	$xfer_app = undef;
 
 	$clerk->get_xfer_src(
 	    dump => $current_dump,
@@ -542,7 +547,7 @@ sub main {
 		    return failure("Unknown program '$program' in header; no validation to perform",
 				   $finished_cb);
 		}
-		@argv = $validation_programs{$program};
+		@argv = @{$validation_programs{$program}};
 	    } else {
 		if (!defined $hdr->{application}) {
 		    return failure("Application not set", $finished_cb);
@@ -612,7 +617,7 @@ sub main {
 		# set up the extraction command as a filter element, since
 		# we need its stderr.
 		debug("Running: ". join(' ',@argv));
-		$xfer_app =  Amanda::Xfer::Filter::Process->new(\@argv, 0);
+		$xfer_app =  Amanda::Xfer::Filter::Process->new(\@argv, 0, 0, 1, 1);
 
 		#$dest_fh = \*STDOUT;
 		$xfer_dest = Amanda::Xfer::Dest::Buffer->new(1048576);
@@ -663,11 +668,11 @@ sub main {
 	    if ($hdr->{'srv_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0);
+			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0, 0, 0, 1);
 	    } elsif ($hdr->{'clnt_encrypt'}) {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0);
+			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0, 0, 0, 1);
 	    } else {
 		return failure("could not decrypt encrypted dump: no program specified",
 			    $finished_cb);
@@ -695,17 +700,17 @@ sub main {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0);
+			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0, 0, 1);
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0);
+			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0, 0, 1);
 	    } else {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0);
+			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 1);
 	    }
 
 	    # adjust the header
@@ -720,7 +725,7 @@ sub main {
 	    push @filters,
 		Amanda::Xfer::Filter::Process->new(
 		    [ $Amanda::Constants::COMPRESS_PATH,
-		      $compress_opt ], 0);
+		      $compress_opt ], 0, 0, 0, 1);
 
 	    # adjust the header
 	    $hdr->{'compressed'} = 1;
@@ -774,13 +779,15 @@ sub main {
 			my $line = $buffer;
 			chomp $line;
 			if (length($line) > 1) {
-			    if ($is_tty) {
-				if ($last_is_size) {
-				    print STDERR "\n";
-				    $last_is_size = 0;
+			    if (!$app_success || $app_error) {
+				if ($is_tty) {
+				    if ($last_is_size) {
+					print STDERR "\n";
+					$last_is_size = 0;
+				    }
 				}
+				print STDERR "filter stderr: $line\n";
 			    }
-			    print STDERR "filter stderr: $line\n";
 			    debug("filter stderr: $line");
 			}
 			$buffer = "";
@@ -851,7 +858,21 @@ sub main {
     step handle_xmsg => sub {
 	my ($src, $msg, $xfer) = @_;
 
+	if ($msg->{'elt'} == $xfer_app) {
+	    if ($msg->{'type'} == $XMSG_DONE) {
+		$app_success = 1;
+	    } elsif ($msg->{'type'} == $XMSG_ERROR) {
+	    } elsif ($msg->{'type'} == $XMSG_INFO and
+		$msg->{'message'} eq "SUCCESS") {
+		$app_success = 1;
+	    } elsif ($msg->{'type'} == $XMSG_INFO and
+		$msg->{'message'} eq "ERROR") {
+		$app_error = 1;
+	    }
+	}
+
 	$clerk->handle_xmsg($src, $msg, $xfer);
+
 	if ($msg->{'type'} == $XMSG_INFO) {
 	    Amanda::Debug::info($msg->{'message'});
 	} elsif ($msg->{'type'} == $XMSG_ERROR) {
