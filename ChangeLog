@@ -1,4 +1,7 @@
 2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Print progress to debug file if not on a tty.
+
+2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* xfer-src/filter-process.c (xfer_filter_process): Add must_drain,
 	  cancel_on_success and ignore_broken_pipe flag).
 	* xfer-src/filter-process.c (child_watch_callback): Send XMSG_INFO.
