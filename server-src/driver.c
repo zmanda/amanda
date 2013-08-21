@@ -1442,6 +1442,9 @@ start_some_dumps(
 	    job->disk = diskp;
 	    job->dumper = dumper;
 	    job->wtaper = wtaper;
+	    wtaper->job = job;
+	    dumper->job = job;
+
 	    sched(diskp)->timestamp = now;
 	    amfree(diskp->dataport_list);
 
