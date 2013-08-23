@@ -555,7 +555,7 @@ sub xfer_dumps {
 		}
 	        print STDERR "\r" . int($size/1024) . " kb ";
 	    } else {
-		g_debug("WRITTEN SIZE: " . int($size/1024) . " kb");
+		debug("WRITTEN SIZE: " . int($size/1024) . " kb");
 	    }
 	});
 

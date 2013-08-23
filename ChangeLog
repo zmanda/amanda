@@ -1,3 +1,6 @@
+2013-08-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: s/g_debug/debug/
+
 2013-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Print progress to debug file if not on a tty.
 
