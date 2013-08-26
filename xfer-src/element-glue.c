@@ -292,7 +292,6 @@ do_directtcp_connect(
     return sock;
 
 cancel_wait:
-    g_free(strsockaddr);
     wait_until_xfer_cancelled(elt->xfer);
     return -1;
 }
