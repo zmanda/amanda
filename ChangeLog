@@ -1,3 +1,7 @@
+2013-08-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/element-glue.c (do_directtcp_connect): Do not free
+	  unallocated memory.
+
 2013-08-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: s/g_debug/debug/
 
