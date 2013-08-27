@@ -1518,6 +1518,12 @@ sub verify_unlocked {
     };
 
     step verify_all_unloaded => sub {
+	my ($newstate) = @_;
+
+	if (UNIVERSAL::isa($state, 'Amanda::Changer::Error')) {
+	    return $params{'finished_cb'}->($newstate);
+	}
+
 	my @loaded_drive;
 
 	# verify all drives are unloaded
@@ -1787,6 +1793,11 @@ sub _with_updated_state {
 
     step got_state => sub {
 	my ($state) = @_;
+
+	if (UNIVERSAL::isa($state, 'Amanda::Changer::Error')) {
+	    return $paramsref->{$cbname}->($state);
+	}
+
 	$params{'state'} = $state;
 	# finally, call through to the user's method; $params{$cbname} has been
 	# properly patched to release the state lock when this method is done.
