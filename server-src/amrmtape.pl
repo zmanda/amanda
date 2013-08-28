@@ -178,7 +178,7 @@ sub main {
 	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
 	my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_file, !$dry_run);
 	if (defined $message) {
-	    die "Could not read the tapelist: $message : " . Data::Dumper::Dumper($message) . " : " . Data::Dumper::Dumper($tapelist);
+	    die "Could not read the tapelist: $message";
 	}
 	unless ($tapelist) {
 	    die "Could not read the tapelist";

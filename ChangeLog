@@ -1,4 +1,8 @@
 2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amrmtape.pl, server-src/taper.pl: Remove useless
+	  debugging.
+
+2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix STORAGE_DEVICE_OUTPUT_BUFFER_SIZE init.
 	* device-src/xfer-dest-taper-splitter.c: Abort with better message if
 	  memory allocation fail.

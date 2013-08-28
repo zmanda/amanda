@@ -73,7 +73,7 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
 my ($tl, $message) = Amanda::Tapelist->new($tlf);
 if (defined $message) {
-    die "Could not read the tapelist: $message : " . Data::Dumper::Dumper($message);
+    die "Could not read the tapelist: $message";
 }
 # transfer control to the Amanda::Taper::Controller class implemented above
 my $controller = Amanda::Taper::Controller->new(
