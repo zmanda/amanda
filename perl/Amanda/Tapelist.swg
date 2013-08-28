@@ -258,6 +258,17 @@ sub _read_tapelist {
 
     # and re-calculate the positions
     $self->_update_positions(\@tles);
+
+    # check for duplicate labels
+    my %labels;
+    for my $tle (@{$self->{'tles'}}) {
+	my $label = $tle->{'label'};
+	if (exists $labels{$label}) {
+	    debug("Duplicate label '$label' in tapelist file.");
+	    die("ERROR: Duplicate label '$label' in tapelist file.");
+	}
+	$labels{$label} = 1;
+    }
 }
 
 # update the 'position' key for each TLE
