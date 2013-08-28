@@ -1041,7 +1041,10 @@ xfer_dest_taper_splitter(
 
     /* set up a ring buffer of size max_memory */
     self->ring_length = max_memory;
-    self->ring_buffer = g_malloc(max_memory);
+    self->ring_buffer = g_try_malloc(max_memory);
+    if (!self->ring_buffer) {
+	g_critical("Can't allocate %llu KB (device-output-buffer-size) of memory", (long long)max_memory/1024);
+    }
     self->ring_head = self->ring_tail = 0;
     self->ring_count = 0;
     self->ring_head_at_eof = 0;

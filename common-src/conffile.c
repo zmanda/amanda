@@ -3448,7 +3448,7 @@ init_storage_defaults(
     conf_init_int           (&stcur.value[STORAGE_TAPER_PARALLEL_WRITE]     , CONF_UNIT_NONE, 0);
     conf_init_bool          (&stcur.value[STORAGE_EJECT_VOLUME]             , 0);
     conf_init_bool          (&stcur.value[STORAGE_ERASE_VOLUME]             , 0);
-    conf_init_int           (&stcur.value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], CONF_UNIT_NONE, 0);
+    conf_init_size          (&stcur.value[STORAGE_DEVICE_OUTPUT_BUFFER_SIZE], CONF_UNIT_NONE, 0);
     conf_init_no_yes_all    (&stcur.value[STORAGE_AUTOFLUSH]                , 0);
     conf_init_int           (&stcur.value[STORAGE_FLUSH_THRESHOLD_DUMPED]   , CONF_UNIT_NONE, 0);
     conf_init_int           (&stcur.value[STORAGE_FLUSH_THRESHOLD_SCHEDULED], CONF_UNIT_NONE, 0);

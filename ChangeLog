@@ -1,4 +1,11 @@
 2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix STORAGE_DEVICE_OUTPUT_BUFFER_SIZE init.
+	* device-src/xfer-dest-taper-splitter.c: Abort with better message if
+	  memory allocation fail.
+	* server-src/amcheck.c: Check device-output-buffer-size is nmot larger
+	  than physical memory.
+
+2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Message.pm: Add a 'severity' to a message.
 	* perl/Amanda/Message.pod: Document severity.
 	* perl/Amanda/Tapelist.swg (new): Return an array of two elements,
