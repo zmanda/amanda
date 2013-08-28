@@ -84,8 +84,10 @@ sub init {
 
     my $filename = config_dir_relative(getconf($CNF_TAPELIST));
 
-    my $tl = Amanda::Tapelist->new($filename);
-    if (!defined $tl) {
+    my ($tl, $message) = Amanda::Tapelist->new($filename);
+    if (defined $message) {
+	return $message;
+    } elsif (!defined $tl) {
 	return Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

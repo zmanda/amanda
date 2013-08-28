@@ -220,7 +220,7 @@ print $tlf "20071109010002 TESTCONF003 reuse\n";
 print $tlf "20071109010002 TESTCONF002 reuse\n";
 print $tlf "20071108010001 TESTCONF001 reuse\n";
 close $tlf;
-Amanda::Tapelist->new($tapelist);
+my ($tl, $message) = Amanda::Tapelist->new($tapelist);
 
 # set up a number of logfiles in logdir.
 my $logf;

@@ -339,9 +339,9 @@ sub make_plan {
 	}
 
 	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my $tl = Amanda::Tapelist->new($tlf);
-	if ($tl->isa("Amanda::Message")) {
-	    die "Could not read the tapelist: $tl";
+	my ($tl, $message) = Amanda::Tapelist->new($tlf);
+	if (defined $message) {
+	    die "Could not read the tapelist: $message";
 	}
 	if (!$use_default) {
 	    $self->{'storage'} = Amanda::Storage->new(storage_name => $self->{'command'}{'DEVICE'},

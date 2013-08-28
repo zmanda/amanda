@@ -391,7 +391,7 @@ sub output_tapeinfo
 	    }
 
             my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-            my $tl = Amanda::Tapelist->new($tlf);
+            my ($tl, $message) = Amanda::Tapelist->new($tlf);
 
             my $labelstr = storage_getconf($st, $STORAGE_LABELSTR);
             my $tapepool = storage_getconf($st, $STORAGE_TAPEPOOL);

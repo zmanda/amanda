@@ -140,9 +140,9 @@ sub main {
 
     step start => sub {
 	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	$tl = Amanda::Tapelist->new($tlf);
-	if ($tl->isa("Amanda::Message")) {
-	    return failure("Can't load tapelist file ($tlf): $tl", $finished_cb);
+	($tl, my $message) = Amanda::Tapelist->new($tlf);
+	if (defined $message) {
+	    return failure("Can't load tapelist file ($tlf): $message", $finished_cb);
 	}
 
 	$storage  = Amanda::Storage->new(tapelist => $tl);

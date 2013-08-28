@@ -34,20 +34,21 @@ use Amanda::Debug qw(:logging);
 use Amanda::Config qw( config_dir_relative );
 use File::Copy;
 use Fcntl qw(:flock); # import LOCK_* constants
+use Amanda::Message qw( :severity );
 
 ## package functions
 
 sub new {
     my ($class)  = shift;
-    my ($filename, $lock ) = @_;
+    my ($filename, $lock) = @_;
     my $self = {
 	filename => $filename,
 	lockname => $filename . '.lock',
     };
     bless $self, $class;
 
-    $self->reload($lock);
-    return $self;
+    my $message = $self->reload($lock);
+    return ($self, $message);
 }
 
 sub clear_tapelist {
@@ -77,7 +78,8 @@ sub reload {
     # let C read the file
     C_read_tapelist($self->{'filename'});
 
-    $self->_read_tapelist();
+    my $message = $self->_read_tapelist();
+    return $message;
 }
 
 sub lookup_tapelabel {
@@ -235,7 +237,7 @@ sub _read_tapelist {
 
     my @tles;
     my $linenum = 0;
-    open(my $fh, "<", $self->{'filename'}) or return $self;
+    open(my $fh, "<", $self->{'filename'}) or return undef;
     while (my $line = <$fh>) {
 	$linenum++;
 	my ($datestamp, $label, $reuse, $barcode, $meta, $blocksize, $pool, $storage, $config, $comment)
@@ -277,6 +279,23 @@ sub _read_tapelist {
 
     # and re-calculate the positions
     $self->_update_positions(\@tles);
+
+    # check for duplicate labels
+    my %labels;
+    for my $tle (@{$self->{'tles'}}) {
+	my $label = $tle->{'label'};
+	if (exists $labels{$label}) {
+	    return Amanda::Tapelist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			severity => $Amanda::Message::WARNING,
+			code    => 1600003,
+			tapelist_filename => $self->{'filename'},
+			label   => $label);
+	}
+	$labels{$label} = 1;
+    }
+    return undef;
 }
 
 # update the 'position' key for each TLE
@@ -350,6 +369,8 @@ sub local_message {
         return "tapelist";
     } elsif ($self->{'code'} == 1600002) {
         return "Failed to read tapelist file '$self->{'tapelist_filename'}' on line $self->{'linenum'}: $self->{'line'}";
+    } elsif ($self->{'code'} == 1600003) {
+        return "duplicate label '$self->{'label'} in tapelist file '$self->{'tapelist_filename'}'";
     }
 }
 %}

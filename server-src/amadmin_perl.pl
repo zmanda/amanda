@@ -135,9 +135,9 @@ sub main {
 
     step reuse => sub {
 	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	my $tl = Amanda::Tapelist->new($tlf);
-	if ($tl->isa("Amanda::Message")) {
-            print STDERR "amadmin: Could not read the tapelist: $tl";
+	my ($tl, $message) = Amanda::Tapelist->new($tlf);
+	if (defined $message) {
+            print STDERR "amadmin: Could not read the tapelist: $message";
 	    $exit_status = 1;
 	    $finished_cb->();
         }

@@ -84,7 +84,7 @@ cmp_ok(
 Installcheck::Dumpcache::load("basic");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-my $tapelist = Amanda::Tapelist->new(config_dir_relative("tapelist"));
+my ($tapelist, $message) = Amanda::Tapelist->new(config_dir_relative("tapelist"));
 ok($tapelist->lookup_tapelabel('TESTCONF01'), "looked up tape after dump");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);

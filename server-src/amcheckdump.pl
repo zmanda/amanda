@@ -285,8 +285,8 @@ sub main {
     step start => sub {
 	# set up the tapelist
 	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-	$tapelist = Amanda::Tapelist->new($tapelist_file);
-	return  $steps->{'quit'}->($tapelist) if $tapelist->isa("Amanda::Message");
+	($tapelist, my $message) = Amanda::Tapelist->new($tapelist_file);
+	return $steps->{'quit'}->($message) if defined $message;
 
 	# get the timestamp
 	$timestamp = $opt_timestamp;

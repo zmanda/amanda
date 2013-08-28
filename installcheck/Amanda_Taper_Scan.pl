@@ -56,7 +56,7 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 # we use a "traditional" Amanda::Taper::Scan object, only because instantiating
 # the parent class alone is difficult.  We never call scan(), so traditional's
 # methods are never invoked in this test.
-my $tapelist = Amanda::Tapelist->new($tapelist_filename);
+my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 my $storage = Amanda::Storage->new(tapelist => $tapelist);
 my $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
@@ -82,7 +82,7 @@ $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 2);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-$tapelist = Amanda::Tapelist->new($tapelist_filename);
+($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 $storage = Amanda::Storage->new(tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
@@ -104,7 +104,7 @@ $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 3);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-$tapelist = Amanda::Tapelist->new($tapelist_filename);
+($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 $storage = Amanda::Storage->new(tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
@@ -126,7 +126,7 @@ $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 5);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-$tapelist = Amanda::Tapelist->new($tapelist_filename);
+($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 $storage = Amanda::Storage->new(tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
@@ -155,7 +155,7 @@ $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 2);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-$tapelist = Amanda::Tapelist->new($tapelist_filename);
+($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 $storage = Amanda::Storage->new(tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
@@ -177,7 +177,7 @@ $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 4);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-$tapelist = Amanda::Tapelist->new($tapelist_filename);
+($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 $storage = Amanda::Storage->new(tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
@@ -204,7 +204,7 @@ $testconf->remove_param('tapecycle');
 $testconf->add_param('tapecycle', 3);
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-$tapelist = Amanda::Tapelist->new($tapelist_filename);
+($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 $storage = Amanda::Storage->new(tapelist => $tapelist);
 $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",

@@ -98,7 +98,7 @@ sub setup_vtapes {
 
     $chg->quit();
     my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my $tl = Amanda::Tapelist->new($tlf, 1);
+    my ($tl, $message) = Amanda::Tapelist->new($tlf, 1);
     $tl->add_tapelabel("0", "TESTCONF13", "test tape");
     $tl->write($tlf);
 }

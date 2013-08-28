@@ -1138,7 +1138,7 @@ sub add_part {
 sub _load_tapelist {
     if (!defined $tapelist) {
 	my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
-	$tapelist = Amanda::Tapelist->new($tapelist_filename);
+	($tapelist, my $message) = Amanda::Tapelist->new($tapelist_filename);
     }
 }
 

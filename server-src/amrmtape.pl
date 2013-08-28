@@ -176,14 +176,13 @@ sub main {
 	}
 
 	my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
-	my $tapelist = Amanda::Tapelist->new($tapelist_file, !$dry_run);
+	my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_file, !$dry_run);
+	if (defined $message) {
+	    die "Could not read the tapelist: $message : " . Data::Dumper::Dumper($message) . " : " . Data::Dumper::Dumper($tapelist);
+	}
 	unless ($tapelist) {
 	    die "Could not read the tapelist";
 	}
-	if ($tapelist->isa("Amanda::Message")) {
-	    die "Could not read the tapelist: $tapelist";
-	}
-
 
 	if ($list_retention) {
 	    my @list = Amanda::Tapelist::list_retention();

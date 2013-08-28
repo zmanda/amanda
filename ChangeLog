@@ -1,3 +1,29 @@
+2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: Add a 'severity' to a message.
+	* perl/Amanda/Message.pod: Document severity.
+	* perl/Amanda/Tapelist.swg (new): Return an array of two elements,
+	  The first is the Amanda::Tapelist object, the second is a message.
+	* server-src/amadmin_perl.pl, server-src/amtape.pl: Handle new return
+	  value of Amanda::Tapelist->new, continue if it is a warning
+	  severity.
+	* perl/Amanda/DB/Catalog.pm, perl/Amanda/JSON/Tapelist.pm,
+	  perl/Amanda/Recovery/Planner.pm, perl/Amanda/Report/human.pm,
+	  perl/Amanda/Report/json.pm, server-src/amcheck-device.pl,
+	  server-src/amcheckdump.pl, server-src/amidxtaped.pl,
+	  server-src/amlabel.pl, server-src/amreport.pl,
+	  server-src/amrestore.pl, server-src/amrmtape.pl,
+	  server-src/amvault.pl, server-src/taper.pl: Handle new return
+	  value of Amanda::Tapelist->new, abort on any message.
+	* installcheck/Amanda_Changer.pl, installcheck/Amanda_Logfile.pl,
+	  installcheck/Amanda_Recovery_Clerk.pl,
+	  installcheck/Amanda_Tapelist.pl, installcheck/Amanda_Taper_Scan.pl,
+	  installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl,
+	  installcheck/amlabel.pl, installcheck/amrmtape.pl,
+	  installcheck/amtape.pl: Handle new return value of
+	  Amanda::Tapelist->new.
+
 2013-08-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Check error result from _get_state.
 

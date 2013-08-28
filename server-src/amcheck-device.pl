@@ -164,8 +164,14 @@ sub do_check {
     my ($finished_cb) = @_;
     my ($res, $label, $mode);
     my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-    my $tl = Amanda::Tapelist->new($tlf);
-    return failure("$tl", $finished_cb) if $tl->isa("Amanda::Message");
+    my ($tl, $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	if ($message->{'severity'} >= $Amanda::Message::CRITICAL) {
+	    return failure("$message", $finished_cb);
+	} else {
+	    print STDERR "ERROR: $message\n";
+	}
+    }
 
     my ($storage)  = Amanda::Storage->new(storage_name => $storage_name,
 					  tapelist => $tl);

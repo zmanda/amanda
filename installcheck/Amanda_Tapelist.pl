@@ -32,6 +32,7 @@ use Data::Dumper;
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
+my $message;
 my $tl;
 my $tl_ok;
 my $line;
@@ -76,7 +77,7 @@ sub readtapelist {
 );
 mktapelist($tapelist, @lines);
 
-$tl = Amanda::Tapelist->new($tapelist);
+($tl, $message) = Amanda::Tapelist->new($tapelist);
 $tl_ok = is_deeply($tl,	{
  filename => $tapelist,
  lockname => $tapelist . ".lock",
@@ -258,7 +259,7 @@ SKIP: {
 );
 mktapelist($tapelist, @lines);
 
-$tl = Amanda::Tapelist->new($tapelist);
+($tl, $message) = Amanda::Tapelist->new($tapelist);
 is_deeply($tl, {
   filename => $tapelist,
   lockname => $tapelist . ".lock",

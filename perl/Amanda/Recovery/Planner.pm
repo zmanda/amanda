@@ -369,7 +369,7 @@ sub make_plan {
     # the part's filenum.  This should sort the dumps into the order in which
     # they were written, with holding dumps coming in at the head of the list.
     my $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
-    my $tapelist = Amanda::Tapelist->new($tapelist_filename);
+    my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 
     my $sortfn = sub {
 	my $rv;

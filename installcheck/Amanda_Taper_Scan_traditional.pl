@@ -45,7 +45,7 @@ Amanda::Debug::disable_die_override();
 
 my $taperoot = "$Installcheck::TMP/Amanda_Taper_Scan_traditional";
 my $tapelist_filename = "$Installcheck::TMP/tapelist";
-my $tapelist = Amanda::Tapelist->new($tapelist_filename);
+my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 
 # vtape support
 

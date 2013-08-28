@@ -20,8 +20,6 @@
 
 package Amanda::Message;
 
-use strict;
-use warnings;
 
 use Data::Dumper;
 
@@ -30,6 +28,16 @@ require Amanda::Debug;
 use overload
     '""'  => sub { $_[0]->message(); },
     'cmp' => sub { $_[0]->message() cmp $_[1]; };
+
+$ERROR    = 32;
+$CRITICAL = 16;
+$WARNING  =  8;
+$MESSAGE  =  4;
+$INFO     =  2;
+$DEBUG    =  1;
+
+use strict;
+use warnings;
 
 sub new {
     my $class = shift @_;
@@ -45,8 +53,9 @@ sub new {
     $self->{'message'} = "" if $self->{'code'} == 1 and !defined $self->{'message'};
     $self->{'message'} = "" if $self->{'code'} == 2 and !defined $self->{'message'};
     $self->{'message'} = $self->message() if !defined $self->{'message'};
+    $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};
 
-    Amanda::Debug::debug("$params{'source_filename'}:$params{'source_line'}: $self->{'message'}");
+    Amanda::Debug::debug("$params{'source_filename'}:$params{'source_line'}:$self->{'severity'}:$self->{'code'} $self->{'message'}");
 
     return $self;
 }

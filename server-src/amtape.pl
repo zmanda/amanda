@@ -38,6 +38,7 @@ use Amanda::Taper::Scan;
 use Amanda::Recovery::Scan;
 use Amanda::Interactivity;
 use Amanda::Tapelist;
+use Amanda::Message qw( :severity );
 
 my $exit_status = 0;
 my $tl;
@@ -722,9 +723,12 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-$tl = Amanda::Tapelist->new($tlf);
-if ($tl->isa("Amanda::Message")) {
-    die "Could not read the tapelist: $tl";
+($tl, my $message) = Amanda::Tapelist->new($tlf);
+if (defined $message) {
+    if ($message->{'severity'} >= $Amanda::Message::CRITICAL) {
+	die("error loading tapelist: $message");
+    }
+    print STDERR "ERROR: $message\n";
 }
 
 

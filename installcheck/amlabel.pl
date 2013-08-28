@@ -49,7 +49,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-my $tl = Amanda::Tapelist->new($tlf, 1);
+my ($tl, $message) = Amanda::Tapelist->new($tlf, 1);
 my $chg;
 my $dev;
 

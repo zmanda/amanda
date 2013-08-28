@@ -252,7 +252,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 # check out the relevant changer properties
 my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-my $tl = Amanda::Tapelist->new($tlf);
+my ($tl, $message) = Amanda::Tapelist->new($tlf);
 my $chg = Amanda::Changer->new("mychanger", tapelist => $tl);
 is($chg->{'config'}->get_property("testprop"), "testval",
     "changer properties are correctly represented");
