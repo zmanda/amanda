@@ -788,6 +788,17 @@ start_server_check(
 			"the 'tapetype' parameter\n"));
 	    confbad = 1;
 	}
+
+	{
+	    uintmax_t kb_avail = physmem_total() / 1024;
+	    uintmax_t kb_needed = getconf_size(CNF_DEVICE_OUTPUT_BUFFER_SIZE) / 1024;
+	    if (kb_avail < kb_needed) {
+		g_fprintf(outf,
+		    "ERROR: system has %ju %sB memory, but device-output-buffer-size needs %ju %sB\n",
+		kb_avail/(uintmax_t)unitdivisor, displayunit,
+		kb_needed/(uintmax_t)unitdivisor, displayunit);
+	    }
+	}
     }
 
     /*

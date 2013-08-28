@@ -1,4 +1,13 @@
 2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-splitter.c: Abort with better message if
+	  memory allocation fail.
+	* server-src/amcheck.c: Check device-output-buffer-size is nmot larger
+	  than physical memory.
+	* server-src/amdump.pl, server-src/amflush.c,
+	  server-src/amvault.pl: Print "please run amcleanup if you wish to
+	  abort the current process and clean up open log files".
+
+2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg (_read_tapelist): Abort if a duplicate
 	  label is found.
 

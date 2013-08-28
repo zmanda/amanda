@@ -188,7 +188,7 @@ sub do_amcleanup {
 
 sub bail_already_running() {
     my $self = shift;
-    my $msg = "An Amanda process is already running - please run amcleanup manually";
+    my $msg = "An Amanda process is already running - please run amcleanup if you wish to abort the current process and clean up open log files";
     print "$msg\n";
     debug($msg);
     $self->{'exit_cb'}->(1);

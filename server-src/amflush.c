@@ -227,7 +227,7 @@ main(
     }
     if (access(conf_logfile, F_OK) == 0) {
 	char *process_name = get_master_process(conf_logfile);
-	error(_("%s exists: %s is already running, or you must run amcleanup"), conf_logfile, process_name);
+	error(_("%s exists: %s is already running, please run amcleanup if you wish to abort the current process and clean up open log files"), conf_logfile, process_name);
 	/*NOTREACHED*/
     }
 

@@ -144,7 +144,7 @@ sub wait_for_hold {
 }
 
 sub bail_already_running {
-    my $msg = "An Amanda process is already running - please run amcleanup manually";
+    my $msg = "An Amanda process is already running - please run amcleanup if you wish to abort the current process and clean up open log files";
     debug($msg);
     amdump_log($msg);
 
