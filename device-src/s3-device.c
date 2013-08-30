@@ -3688,7 +3688,6 @@ s3_device_set_no_reuse(
 	next_life = life->next;
 
 	rule = (lifecycle_rule *)life->data;
-	count++;
 
 	if (g_str_equal(rule->id, label)) {
 	    free_lifecycle_rule(rule);

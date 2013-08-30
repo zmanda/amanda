@@ -297,7 +297,7 @@ main(
 	/*NOTREACHED*/
     }
     uid_dumpuser = pw->pw_uid;
-    if ((pw = getpwuid(uid_me)) == NULL) {
+    if (getpwuid(uid_me) == NULL) {
 	error(_("cannot get username for running user, uid %ld is not in your user database."),
 	    (long)uid_me);
 	/*NOTREACHED*/

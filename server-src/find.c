@@ -278,7 +278,7 @@ search_holding_disk(
 		dumpfile_free_data(&file);
 		continue;
 	    }
-	    dp = add_disk(dynamic_disklist, file.name, file.disk);
+	    add_disk(dynamic_disklist, file.name, file.disk);
 	}
 
 	if(find_match(file.name,file.disk)) {
@@ -1200,7 +1200,7 @@ search_logfile(
 		    amfree(disk);
 		    continue;
 		}
-		dp = add_disk(dynamic_disklist, host, disk);
+		add_disk(dynamic_disklist, host, disk);
 	    }
             if (find_match(host, disk)) {
 		if(curprog == P_TAPER) {

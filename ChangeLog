@@ -1,3 +1,8 @@
+2013-08-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Remove double increment of count.
+	* server-src/amcheck.c: Do not set pw which is never used.
+	* server-src/find.c: Do not set dp which is never used.
+
 2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl, server-src/taper.pl: Remove useless
 	  debugging.
