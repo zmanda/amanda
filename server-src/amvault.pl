@@ -633,7 +633,8 @@ sub xfer_dumps {
 		'error',
 		$msg));
 	} else {
-	    log_add_full($logtype, "taper", sprintf("%s %s %s %s %s %s%s",
+	    log_add_full($logtype, "taper", sprintf("%s %s %s %s %s %s %s%s",
+		quote_string("ST:" . $self->{'dst'}{'chg'}{'storage'}->{'storage_name'}),
 		quote_string($dump->{'hostname'}.""), # " is required for SWIG..
 		quote_string($dump->{'diskname'}.""),
 		$dump->{'dump_timestamp'},
@@ -816,8 +817,9 @@ sub scribe_notif_new_tape {
 	$self->{'dst'}->{'label'} = $params{'volume_label'};
 
 	# add to the trace log
-	log_add_full($L_START, "taper", sprintf("datestamp %s label %s tape %s",
+	log_add_full($L_START, "taper", sprintf("datestamp %s %s label %s tape %s",
 		$self->{'dst_write_timestamp'},
+		quote_string("ST:" . $self->{'dst'}{'chg'}{'storage'}->{'storage_name'}),
 		quote_string($self->{'dst'}->{'label'}),
 		++$self->{'dst'}->{'tape_num'}));
     } else {
@@ -843,7 +845,8 @@ sub scribe_notif_part_done {
 
     # log the part, using PART or PARTPARTIAL
     my $hdr = $self->{'current'}->{'header'};
-    my $logbase = sprintf("%s %s %s %s %s %s/%s %s %s",
+    my $logbase = sprintf("%s %s %s %s %s %s %s/%s %s %s",
+	quote_string("ST:" . $self->{'dst'}{'chg'}{'storage'}->{'storage_name'}),
 	quote_string($self->{'dst'}->{'label'}),
 	$params{'fileno'},
 	quote_string($hdr->{'name'}.""), # " is required for SWIG..

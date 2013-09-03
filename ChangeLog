@@ -1,3 +1,6 @@
+2013-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Add the "ST:storage" in many taper log lines.
+
 2013-08-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Remove double increment of count.
 	* server-src/amcheck.c: Do not set pw which is never used.
