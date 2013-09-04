@@ -165,6 +165,98 @@ use Amanda::MainLoop;
 use Amanda::Tapelist;
 use Amanda::Paths;
 
+
+=head1 NAME
+
+Amanda::Label - Amanda module to handle label on volume.
+
+=head1 SYNOPSIS
+
+  # create a Label class
+  my $Label = Amanda::Label->new(storage  => $storage,
+				 tapelist => $tl,
+				 user_msg => \&user_msg);
+
+  $Label->assign(...);
+  $Label->label(...);
+  $Label->erase(...);
+  $Label->reuse(...);
+  $label->no_reuse(...);
+
+=head1 user_msg callback
+
+The C<user_msg> is a method that take an Amanda::Message as argument.
+This methos is called every time a message must be sent to the caller.
+
+=head1 Label Objects
+
+=head2 assign
+
+  $Label->assign(finished_cb => $cb,
+		 label       => $label,
+		 meta        => $meta,
+		 barcode     => $barcode,
+		 pool        => $pool,
+		 storage     => $storage,
+		 force       => $force);
+
+Assign the C<meta>, C<barcode>, C<pool> and C<storage> to the label, they can
+be undef to not modify the setting. An empty string will remove the setting.
+
+The C<finished_cb> method is called with an Amanda::Message argument.
+
+=head2 label
+
+  $Label->label(finished_cb => $cb,
+		label       => $label,
+		slot        => $slot,
+		barcode     => $barcode,
+		meta        => $meta,
+		force       => $force);
+
+Label a volume with the C<label>, the volume is selected  by the C<slot> or C<barcode> or the current slot.
+C<meta> verifies it is the same as on the changer.
+
+The C<finished_cb> method is called with an Amanda::Message argument.
+
+=head2 erase
+
+  $Label->erase(finished_cb => $cb,
+		labels      => @labels,
+		erase       => $erase,
+		keep_label  => $keep_label,
+		cleanup     => $cleanup,
+		dry_run     => $dry_run);
+
+Remove C<labels> from the amanda database, erase the volume is C<erase> is set,
+keep the label is C<keep_label> is set,
+
+Run amtrmlog and amtrmidx is C<cleanup> is set.
+
+Do nothing is C<dry_run> is set.
+
+The C<finished_cb> method is called with an Amanda::Message argument.
+
+=head2 reuse
+
+  $Label->reuse(finished_cb => $cb,
+		labels      => @labels);
+
+Mark all C<labels> as reuse, calling the changer set_reuse method.
+
+The C<finished_cb> method is called with an Amanda::Message argument.
+
+=head2 no_reuse
+
+  $Label->no_reuse(finished_cb => $cb,
+		   labels      => @labels);
+
+Mark all C<labels> as reuse, calling the changer set_no_reuse method.
+
+The C<finished_cb> method is called with an Amanda::Message argument.
+
+=cut
+
 my $amadmin = "$sbindir/amadmin";
 my $amtrmidx = "$amlibexecdir/amtrmidx";
 my $amtrmlog = "$amlibexecdir/amtrmlog";

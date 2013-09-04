@@ -29,6 +29,91 @@ use overload
     '""'  => sub { $_[0]->message(); },
     'cmp' => sub { $_[0]->message() cmp $_[1]; };
 
+
+=head1 NAME
+
+Amanda::Message - Amanda object use to return a message
+
+Most API use or should be converted to use it.
+
+=head1 SYNOPSIS
+
+   # create a message
+   my $msg = Amanda::Message->new(source_filename => __FILE__,
+				  source_line => __LINE__,
+				  severity    => $AM_CRITICAL;
+				  code        => 1,
+				  message     => "This is a message",
+				  label       => $label);
+
+   print $msg->message();
+
+=head1 Message Objects
+
+'source_filename' and 'source_line' are use for debuging to find where the
+message was generated.
+
+The 'severity' of the message, the default is G_CRITICAL, it must be one of
+these predefined constants:
+  AM_ERROR
+  AM_CRITICAL
+  AM_WARNING
+  AM_MESSAGE
+  AM_INFO
+  AM_DEBUG
+
+The 'code' must be unique, it identify the message (0 to 3 are used for message
+not handled by Amanda::Message):
+       0  GOOD message
+       1  ERROR with a message
+       2  ERROR without a message
+       3  Amanda::Changer::Error   #You should never create it
+ 1000000  Amanda::Label message
+ 1100000  Amanda::Changer::Message
+ 1200000  Amanda::Recovery::Message
+ 1300000  Amanda::Curinfo::Message
+ 1400000  Amanda::Disklist::Message
+ 1500000  Amanda::Config::Message
+ 1600000  Amanda::Tapelist::Message
+ 1700000  Amanda::Device::Message
+ 1800000  Amanda::Status::Message
+ 1900000  Amanda::Report::Message
+
+general keys:
+  code            =>
+  source_filename =>
+  source_line     =>
+  message         => 'default message'  #optional
+
+each code can have it's own set of keys:
+  filename        =>
+  errno           =>
+  label           =>
+  config          =>
+  barcode         =>
+  storage         =>
+  pool            =>
+  meta            =>
+  dev_error       =>
+
+'message' is required only for code 0 and 1.
+
+You must add all required fields to be able to rebuild the message string,
+this can include the label, config, barcode, errno, errorstr or any other
+fields.
+
+=head1 Using as subclass
+
+Each Amanda perl module should have an Amanda::Message subclass to describe
+all messages from the module.
+
+eg. class C<Amanda::Label::Message> is used by class C<Amanda::Label>.
+
+The subclass (C<Amanda::Label::Message>) must overload the local_message
+method to return a string version of the message.
+
+=cut
+
 $ERROR    = 32;
 $CRITICAL = 16;
 $WARNING  =  8;

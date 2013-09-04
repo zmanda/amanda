@@ -592,11 +592,11 @@ if WANT_SERVER
 # PACKAGE: Amanda::Label
 Amanda_DATA += Amanda/Label.pm
 endif
-EXTRA_DIST += Amanda/Label.pm Amanda/Label.pod
+EXTRA_DIST += Amanda/Label.pm
 
 # PACKAGE: Amanda::Message
 Amanda_DATA += Amanda/Message.pm
-EXTRA_DIST += Amanda/Message.pm Amanda/Message.pod
+EXTRA_DIST += Amanda/Message.pm
 
 if WANT_CLIENT
 # PACKAGE: Amanda::Application
