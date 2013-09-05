@@ -92,12 +92,13 @@ sub user_msg {
     }
 }
 
+my $hostdisk = \@ARGV;
 my ($amdump, @messages) = Amanda::Amdump->new(config      => $config_name,
 				 no_taper    => $opt_no_taper,
 				 from_client => $opt_from_client,
 				 exact_match => $opt_exact_match,
 				 config_overrides => \@config_overrides_opts,
-				 hostdisk    => \@ARGV,
+				 hostdisk    => $hostdisk,
 				 user_msg    => \&user_msg);
 
 my $exit_code = $amdump->run(1);

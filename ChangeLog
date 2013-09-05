@@ -1,4 +1,9 @@
 2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amdump.pm: cleanup.
+	* server-src/amanda.psgi.pl: Add Amanda::JSON::Amdump::run
+	* server-src/amdump.pl: cleanup.
+
+2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix previous patch.
 
 2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>

@@ -88,11 +88,13 @@ sub new {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 2000001,
+			severity    => $Amanda::Message::INFO,
 			amdump_log  => $self->{'amdump_log_pathname'});
     push @result_messages, Amanda::Amdump::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 2000000,
+			severity    => $Amanda::Message::INFO,
 			trace_log   => $self->{'trace_log_filename'});
     return $self, \@result_messages;
 }
@@ -161,27 +163,6 @@ sub wait_for_hold {
     }
 }
 
-sub start_logfiles {
-    my $self = shift;
-    my $timestamp = shift;
-
-    $self->{'timestamp'} = Amanda::Logfile::make_logname("amdump", $timestamp);
-    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
-
-    debug("beginning trace log: $self->{'trace_log_filename'}");
-
-    # redirect the amdump_log to the proper filename instead of stderr
-    # note that perl will overwrite STDERR if we don't set $amdump_log to
-    # undef first.. stupid perl.
-    debug("beginning amdump log");
-    $self->{'amdump_log'} = undef;
-    # Must be opened in append so that all subprocess can write to it.
-    open($self->{'amdump_log'}, ">>", $self->{'amdump_log_pathname'})
-	or die("could not open amdump log file '$self->{'amdump_log_pathname'}': $!");
-    unlink $self->{'amdump_log_pathname_default'};
-    symlink $self->{'amdump_log_filename'}, $self->{'amdump_log_pathname_default'};
-}
-
 sub planner_driver_pipeline {
     my $self = shift;
 
@@ -191,8 +172,17 @@ sub planner_driver_pipeline {
     my @from_client = $self->{'from_client'} ? ('--from-client'):();
     my @exact_match = $self->{'exact_match'} ? ('--exact-match'):();
     my @log_filename = ('--log-filename', $self->{'trace_log_filename'});
-    my @config_overrides = $self->{'config_overrides'} ? $self->{'config_overrides'} :();
-    my @hostdisk = $self->{'hostdisk'} ? @{$self->{'hostdisk'}} :();
+    my @config_overrides = ();
+    if (defined $self->{'config_overrides'} and
+	@{$self->{'config_overrides'}}) {
+	@config_overrides = @{$self->{'config_overrides'}};
+    }
+
+    my @hostdisk = ();
+    if (defined $self->{'hostdisk'} and
+	@{$self->{'hostdisk'}}) {
+	@hostdisk = @{$self->{'hostdisk'}};
+    }
 
     $self->check_exec($planner);
     $self->check_exec($driver);
@@ -293,7 +283,7 @@ sub roll_amdump_logs {
     }
     foreach my $name (@files) {
 	unlink $name;
-	amdump_log("unlink $name");
+	$self->amdump_log("unlink $name");
     }
 }
 
