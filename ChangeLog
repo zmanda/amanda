@@ -1,3 +1,6 @@
+2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Parse header without dle_str.
+
 2013-08-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-splitter.c: Abort with better message if
 	  memory allocation fail.

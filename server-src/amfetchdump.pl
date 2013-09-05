@@ -516,7 +516,8 @@ sub main {
 
 	my $dle_str = $hdr->{'dle_str'};
 	my $p1 = XML::Simple->new();
-	my $dle = $p1->XMLin($dle_str);
+	$dle_str = undef;
+	my $dle = $p1->XMLin($dle_str) if defined $dle_str;
 
 	# and set up the destination..
 	my $dest_fh;
