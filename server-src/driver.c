@@ -1287,10 +1287,13 @@ start_some_dumps(
 				if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
 				    extra_tapes_size += wtaper1->left;
 				}
-				dp = wtaper1->job->disk;
-				if (dp) {
-				    extra_tapes_size -= (sched(dp)->est_size -
+				if (wtaper1->job) {
+				    dp = wtaper1->job->disk;
+				    if (dp) {
+					extra_tapes_size -=
+							 (sched(dp)->est_size -
 						         wtaper1->written);
+				    }
 				}
 			    }
 			}

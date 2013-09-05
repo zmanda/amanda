@@ -1,4 +1,7 @@
 2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix use of NULL pointer.
+
+2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Amdump.pm: cleanup.
 	* server-src/amanda.psgi.pl: Add Amanda::JSON::Amdump::run
 	* server-src/amdump.pl: cleanup.
