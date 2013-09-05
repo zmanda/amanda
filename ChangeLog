@@ -1,4 +1,7 @@
 2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Fix previous patch.
+
+2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/JSON/Report.pm: Take a trace_log as argument.
 	* perl/Amanda/JSON/Status.pm: Take a amdump_log as argument.
 	* perl/Amanda/Message.pod: Amndmp use 200000 message code.
