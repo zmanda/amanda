@@ -49,7 +49,7 @@ Amanda::JSON::Report -- JSON interface to Amanda::Report
   {"jsonrpc":"2.0",
    "method" :"Amanda::JSON::Report::report",
    "params" :{"config":"test",
-	      "logfile":"log"},
+	      "trace_log":"log"},
    "id"     :"1"}
 
 The result is an array of Amanda::Message:
@@ -74,7 +74,7 @@ sub report {
     return \@result_messages if @result_messages;
 
     my $config_name = $params{'config'};
-    my $logfile = $params{'logfile'};
+    my $logfile = $params{'trace_log'} || $params{'logfile'};
 
     my $logdir = getconf($CNF_LOGDIR);
     $logfile = "$logdir/$logfile" if $logfile !~ /^\//;

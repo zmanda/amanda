@@ -1,0 +1,353 @@
+#! @PERL@
+# Copyright (c) 2013 Zmanda Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+package Amanda::Amdump::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 2000000) {
+	return "The trace log file is '$self->{'trace_log'}'";
+    } elsif ($self->{'code'} == 2000001) {
+	return "The amdump log file is '$self->{'amdump_log'}'";
+    }
+}
+
+
+package Amanda::Amdump;
+use strict;
+use warnings;
+
+use Getopt::Long;
+use POSIX qw(WIFEXITED WEXITSTATUS strftime);
+use File::Glob qw( :glob );
+
+use Amanda::Config qw( :init :getconf );
+use Amanda::Util qw( :constants );
+use Amanda::Logfile qw( :logtype_t log_add );
+use Amanda::Debug qw( debug );
+use Amanda::Paths;
+
+sub new {
+    my $class = shift @_;
+    my %params = @_;
+
+    my @result_messages;
+
+    my $self = \%params;
+    bless $self, $class;
+
+    my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+    my @now = localtime;
+    $self->{'longdate'} = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
+
+    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("amdump", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+
+    $timestamp = $self->{'timestamp'};
+    $self->{'datestamp'} = strftime "%Y%m%d", @now;
+    $self->{'starttime_locale_independent'} = strftime "%Y-%m-%d %H:%M:%S %Z", @now;
+    $self->{'amdump_log_pathname_default'} = "$logdir/amdump";
+    $self->{'amdump_log_pathname'} = "$logdir/amdump.$timestamp";
+    $self->{'amdump_log_filename'} = "amdump.$timestamp";
+    $self->{'exit_code'} = 0;
+    $self->{'amlibexecdir'} = 0;
+
+    debug("beginning amdump log");
+    # Must be opened in append so that all subprocess can write to it.
+    open($self->{'amdump_log'}, ">>", $self->{'amdump_log_pathname'})
+	or die("could not open amdump log file '$self->{'amdump_log_pathname'}': $!");
+    unlink $self->{'amdump_log_pathname_default'};
+    symlink $self->{'amdump_log_filename'}, $self->{'amdump_log_pathname_default'};
+    push @result_messages, Amanda::Amdump::Message->new(
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code        => 2000001,
+			amdump_log  => $self->{'amdump_log_pathname'});
+    push @result_messages, Amanda::Amdump::Message->new(
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code        => 2000000,
+			trace_log   => $self->{'trace_log_filename'});
+    return $self, \@result_messages;
+}
+
+sub user_msg {
+    my $self = shift;
+    my $msg = shift;
+
+    if (defined $self->{'user_msg'}) {
+	$self->{'user_msg'}->($msg);
+    }
+}
+
+##
+# subs for below
+
+sub amdump_log {
+    my $self = shift;
+
+    print {$self->{'amdump_log'}} "amdump: ", @_, "\n";
+}
+
+sub check_exec {
+    my $self = shift;
+
+    my ($prog) = @_;
+    return if -x $prog;
+
+    log_add($L_ERROR, "Can't execute $prog");
+}
+
+sub run_subprocess {
+    my $self = shift;
+
+    my ($proc, @args) = @_;
+    $self->check_exec($proc);
+
+    debug("Running $proc " . join(' ', @args));
+    my $pid = POSIX::fork();
+    if ($pid == 0) {
+	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
+	POSIX::dup2($null, 0);
+	POSIX::dup2($null, 1);
+	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
+	close($self->{'amdump_log'});
+	exec $proc, @args;
+	die "Could not exec $proc: $!";
+    }
+    waitpid($pid, 0);
+    my $s = $? >> 8;
+    debug("$proc exited with code $s");
+    if ($?) {
+	$self->{'exit_code'} |= $s;
+    }
+}
+
+sub wait_for_hold {
+    my $self = shift;
+
+    my $holdfile = "$CONFIG_DIR/$self->{'config'}/hold";
+    if (-f $holdfile) {
+	debug("waiting for hold file '$holdfile' to be removed");
+	while (-f $holdfile) {
+	    sleep(60);
+	}
+    }
+}
+
+sub start_logfiles {
+    my $self = shift;
+    my $timestamp = shift;
+
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("amdump", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+
+    # redirect the amdump_log to the proper filename instead of stderr
+    # note that perl will overwrite STDERR if we don't set $amdump_log to
+    # undef first.. stupid perl.
+    debug("beginning amdump log");
+    $self->{'amdump_log'} = undef;
+    # Must be opened in append so that all subprocess can write to it.
+    open($self->{'amdump_log'}, ">>", $self->{'amdump_log_pathname'})
+	or die("could not open amdump log file '$self->{'amdump_log_pathname'}': $!");
+    unlink $self->{'amdump_log_pathname_default'};
+    symlink $self->{'amdump_log_filename'}, $self->{'amdump_log_pathname_default'};
+}
+
+sub planner_driver_pipeline {
+    my $self = shift;
+
+    my $planner = "$amlibexecdir/planner";
+    my $driver = "$amlibexecdir/driver";
+    my @no_taper = $self->{'no_taper'} ? ('--no-taper'):();
+    my @from_client = $self->{'from_client'} ? ('--from-client'):();
+    my @exact_match = $self->{'exact_match'} ? ('--exact-match'):();
+    my @log_filename = ('--log-filename', $self->{'trace_log_filename'});
+    my @config_overrides = $self->{'config_overrides'} ? $self->{'config_overrides'} :();
+    my @hostdisk = $self->{'hostdisk'} ? @{$self->{'hostdisk'}} :();
+
+    $self->check_exec($planner);
+    $self->check_exec($driver);
+
+    # Perl's open3 is an embarassment to the language.  We'll do this manually.
+    debug("invoking planner | driver");
+    my ($rpipe, $wpipe) = POSIX::pipe();
+
+    my $pl_pid = POSIX::fork();
+    if ($pl_pid == 0) {
+	## child
+	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
+	POSIX::dup2($null, 0);
+	POSIX::close($null);
+	POSIX::dup2($wpipe, 1);
+	POSIX::close($rpipe);
+	POSIX::close($wpipe);
+	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
+	debug("exec: " .join(' ', $planner, $self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk));
+	close($self->{'amdump_log'});
+	exec $planner,
+	    # note that @no_taper must follow --starttime
+	    $self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk;
+	die "Could not exec $planner: $!";
+    }
+    debug(" planner: $pl_pid");
+
+    my $dr_pid = POSIX::fork();
+    if ($dr_pid == 0) {
+	## child
+	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
+	POSIX::dup2($rpipe, 0);
+	POSIX::close($rpipe);
+	POSIX::close($wpipe);
+	POSIX::dup2(fileno($self->{'amdump_log'}), 1); # driver does lots of logging to stdout..
+	POSIX::close($null);
+	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
+	debug("exec: " . join(' ', $driver, $self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides));
+	close($self->{'amdump_log'});
+	exec $driver,
+	    $self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides;
+	die "Could not exec $driver: $!";
+    }
+    debug(" driver: $dr_pid");
+
+    POSIX::close($rpipe);
+    POSIX::close($wpipe);
+
+    my $first_bad_exit = 0;
+    for (my $i = 0; $i < 2; $i++) {
+	my $dead = wait();
+	die("Error waiting: $!") if ($dead <= 0);
+	my $s = $? >> 8;
+	debug("planner finished with exit code $s") if $dead == $pl_pid;
+	debug("driver finished with exit code $s") if $dead == $dr_pid;
+	my $exit = WIFEXITED($?)? WEXITSTATUS($?) : 1;
+	$first_bad_exit = $exit if ($exit && !$first_bad_exit)
+    }
+    $self->{'exit_code'} |= $first_bad_exit;
+}
+
+sub do_amreport {
+    my $self = shift;
+
+    debug("running amreport");
+    $self->run_subprocess("$sbindir/amreport", $self->{'config'}, '--from-amdump', '-l',
+		   $self->{'trace_log_filename'}, @{$self->{'config_overrides'}});
+}
+
+sub trim_trace_logs {
+    my $self = shift;
+
+    debug("trimming old trace logs");
+    $self->run_subprocess("$amlibexecdir/amtrmlog", $self->{'config'}, @{$self->{'config_overrides'}});
+}
+
+sub trim_indexes {
+    my $self = shift;
+
+    debug("trimming old indexes");
+    $self->run_subprocess("$amlibexecdir/amtrmidx", $self->{'config'}, @{$self->{'config_overrides'}});
+}
+
+sub roll_amdump_logs {
+    my $self = shift;
+
+    debug("renaming amdump log and trimming old amdump logs (beyond tapecycle+2)");
+
+    unlink "$self->{'amdump_log_pathname_default'}.1";
+    rename $self->{'amdump_log_pathname_default'}, "$self->{'amdump_log_pathname_default'}.1";
+
+    # keep the latest tapecycle files.
+    my $logdir = $self->{'logdir'};
+    my @files = sort {-M $b <=> -M $a} grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;
+    my $days = getconf($CNF_TAPECYCLE) + 2;
+    for (my $i = $days-1; $i >= 1; $i--) {
+	my $a = pop @files;
+    }
+    foreach my $name (@files) {
+	unlink $name;
+	amdump_log("unlink $name");
+    }
+}
+
+# now do the meat of the amdump work; these operations are ported directly
+# from the old amdump.sh script
+
+my $ctrl_c = 0;
+sub _interrupt {
+}
+
+sub run {
+    my $self = shift;
+    my $catch_ctrl_c = shift;
+
+    # wait for $confdir/hold to disappear
+    $self->wait_for_hold();
+
+    if ($catch_ctrl_c) {
+	$SIG{INT} = \&_interrupt;
+
+    }
+
+    # amstatus needs a lot of forms of the time, I guess
+    $self->amdump_log("start at $self->{'longdate'}");
+    $self->amdump_log("datestamp $self->{'datestamp'}");
+    $self->amdump_log("starttime $self->{'timestamp'}");
+    $self->amdump_log("starttime-locale-independent $self->{'starttime_locale_independent'}");
+
+    # run the planner and driver, the one piped to the other
+    $self->planner_driver_pipeline();
+
+    if ($catch_ctrl_c) {
+	if ($ctrl_c == 1) {
+	    print "Caught a ctrl-c\n";
+	    log_add($L_FATAL, "amdump killed by ctrl-c");
+	    debug("Caught a ctrl-c");
+	    $self->{'exit_code'} = 1;
+	}
+	$SIG{INT} = 'DEFAULT';
+    }
+
+    my $end_longdate = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
+    $self->amdump_log("end at $end_longdate");
+
+    # send the dump report
+    $self->do_amreport();
+
+    # do some house-keeping
+    $self->trim_trace_logs();
+    $self->trim_indexes();
+    $self->roll_amdump_logs();
+
+    debug("Amdump exiting with code $self->{'exit_code'}");
+    return($self->{'exit_code'});
+}
+
+1;

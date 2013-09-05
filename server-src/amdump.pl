@@ -31,6 +31,7 @@ use Amanda::Util qw( :constants );
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Debug qw( debug );
 use Amanda::Paths;
+use Amanda::Amdump;
 
 ##
 # Main
@@ -82,233 +83,24 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-# useful info for below
-my @hostdisk = @ARGV;
-my $logdir = getconf($CNF_LOGDIR);
-my @now = localtime;
-my $longdate = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
-my $timestamp = strftime "%Y%m%d%H%M%S", @now;
-my $datestamp = strftime "%Y%m%d", @now;
-my $starttime_locale_independent = strftime "%Y-%m-%d %H:%M:%S %Z", @now;
-my $trace_log_filename = "$logdir/log";
-my $amdump_log_pathname_default = "$logdir/amdump";
-my $amdump_log_pathname = "$logdir/amdump.$timestamp";
-my $amdump_log_filename = "amdump.$timestamp";
-my $exit_code = 0;
-my $amdump_log = \*STDERR;
+sub user_msg {
+    my $msg = shift;
 
-##
-# subs for below
-
-sub amdump_log {
-    print $amdump_log "amdump: ", @_, "\n";
-}
-
-sub check_exec {
-    my ($prog) = @_;
-    return if -x $prog;
-
-    log_add($L_ERROR, "Can't execute $prog");
-}
-
-sub run_subprocess {
-    my ($proc, @args) = @_;
-    check_exec($proc);
-
-    debug("Running $proc " . join(' ', @args));
-    my $pid = POSIX::fork();
-    if ($pid == 0) {
-	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
-	POSIX::dup2($null, 0);
-	POSIX::dup2($null, 1);
-	POSIX::dup2(fileno($amdump_log), 2);
-	close($amdump_log);
-	exec $proc, @args;
-	die "Could not exec $proc: $!";
-    }
-    waitpid($pid, 0);
-    my $s = $? >> 8;
-    debug("$proc exited with code $s");
-    if ($?) {
-	$exit_code |= $s;
+    if ($msg->{'code'} != 2000000 and
+	$msg->{'code'} != 2000001) {
+	print STDOUT $msg->message() . "\n";
     }
 }
 
-sub wait_for_hold {
-    my $holdfile = "$CONFIG_DIR/$config_name/hold";
-    if (-f $holdfile) {
-	debug("waiting for hold file '$holdfile' to be removed");
-	while (-f $holdfile) {
-	    sleep(60);
-	}
-    }
-}
+my ($amdump, @messages) = Amanda::Amdump->new(config      => $config_name,
+				 no_taper    => $opt_no_taper,
+				 from_client => $opt_from_client,
+				 exact_match => $opt_exact_match,
+				 config_overrides => \@config_overrides_opts,
+				 hostdisk    => \@ARGV,
+				 user_msg    => \&user_msg);
 
-my $log_name;
-
-sub start_logfiles {
-    $timestamp = Amanda::Logfile::make_logname("amdump", $timestamp);
-    $trace_log_filename = Amanda::Logfile::get_logname();
-
-    debug("beginning trace log: $trace_log_filename");
-
-    # redirect the amdump_log to the proper filename instead of stderr
-    # note that perl will overwrite STDERR if we don't set $amdump_log to
-    # undef first.. stupid perl.
-    debug("beginning amdump log");
-    $amdump_log = undef;
-    # Must be opened in append so that all subprocess can write to it.
-    open($amdump_log, ">>", $amdump_log_pathname)
-	or die("could not open amdump log file '$amdump_log_pathname': $!");
-    unlink $amdump_log_pathname_default;
-    symlink $amdump_log_filename, $amdump_log_pathname_default;
-}
-
-sub planner_driver_pipeline {
-    my $planner = "$amlibexecdir/planner";
-    my $driver = "$amlibexecdir/driver";
-    my @no_taper = $opt_no_taper? ('--no-taper'):();
-    my @from_client = $opt_from_client? ('--from-client'):();
-    my @exact_match = $opt_exact_match? ('--exact-match'):();
-    my @log_filename = ('--log-filename', $trace_log_filename);
-
-    check_exec($planner);
-    check_exec($driver);
-
-    # Perl's open3 is an embarassment to the language.  We'll do this manually.
-    debug("invoking planner | driver");
-    my ($rpipe, $wpipe) = POSIX::pipe();
-
-    my $pl_pid = POSIX::fork();
-    if ($pl_pid == 0) {
-	## child
-	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
-	POSIX::dup2($null, 0);
-	POSIX::close($null);
-	POSIX::dup2($wpipe, 1);
-	POSIX::close($rpipe);
-	POSIX::close($wpipe);
-	POSIX::dup2(fileno($amdump_log), 2);
-	debug("exec: " .join(' ', $planner, $config_name, '--starttime', $timestamp, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk));
-	close($amdump_log);
-	exec $planner,
-	    # note that @no_taper must follow --starttime
-	    $config_name, '--starttime', $timestamp, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk;
-	die "Could not exec $planner: $!";
-    }
-    debug(" planner: $pl_pid");
-
-    my $dr_pid = POSIX::fork();
-    if ($dr_pid == 0) {
-	## child
-	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
-	POSIX::dup2($rpipe, 0);
-	POSIX::close($rpipe);
-	POSIX::close($wpipe);
-	POSIX::dup2(fileno($amdump_log), 1); # driver does lots of logging to stdout..
-	POSIX::close($null);
-	POSIX::dup2(fileno($amdump_log), 2);
-	debug("exec: " . join(' ', $driver, $config_name, @log_filename, @no_taper, @from_client, @config_overrides_opts));
-	close($amdump_log);
-	exec $driver,
-	    $config_name, @log_filename, @no_taper, @from_client, @config_overrides_opts;
-	die "Could not exec $driver: $!";
-    }
-    debug(" driver: $dr_pid");
-
-    POSIX::close($rpipe);
-    POSIX::close($wpipe);
-
-    my $first_bad_exit = 0;
-    for (my $i = 0; $i < 2; $i++) {
-	my $dead = wait();
-	die("Error waiting: $!") if ($dead <= 0);
-	my $s = $? >> 8;
-	debug("planner finished with exit code $s") if $dead == $pl_pid;
-	debug("driver finished with exit code $s") if $dead == $dr_pid;
-	my $exit = WIFEXITED($?)? WEXITSTATUS($?) : 1;
-	$first_bad_exit = $exit if ($exit && !$first_bad_exit)
-    }
-    $exit_code |= $first_bad_exit;
-}
-
-sub do_amreport {
-    debug("running amreport");
-    run_subprocess("$sbindir/amreport", $config_name, '--from-amdump', '-l',
-		   $trace_log_filename, @config_overrides_opts);
-}
-
-sub trim_trace_logs {
-    debug("trimming old trace logs");
-    run_subprocess("$amlibexecdir/amtrmlog", $config_name, @config_overrides_opts);
-}
-
-sub trim_indexes {
-    debug("trimming old indexes");
-    run_subprocess("$amlibexecdir/amtrmidx", $config_name, @config_overrides_opts);
-}
-
-sub roll_amdump_logs {
-    debug("renaming amdump log and trimming old amdump logs (beyond tapecycle+2)");
-
-    unlink "$amdump_log_pathname_default.1";
-    rename $amdump_log_pathname_default, "$amdump_log_pathname_default.1";
-
-    # keep the latest tapecycle files.
-    my @files = sort {-M $b <=> -M $a} grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;
-    my $days = getconf($CNF_TAPECYCLE) + 2;
-    for (my $i = $days-1; $i >= 1; $i--) {
-	my $a = pop @files;
-    }
-    foreach my $name (@files) {
-	unlink $name;
-	amdump_log("unlink $name");
-    }
-}
-
-# now do the meat of the amdump work; these operations are ported directly
-# from the old amdump.sh script
-
-# wait for $confdir/hold to disappear
-wait_for_hold();
-
-my $crtl_c = 0;
-$SIG{INT} = \&interrupt;
-
-sub interrupt {
-    $crtl_c = 1;
-}
-
-# start up the log file
-start_logfiles();
-
-# amstatus needs a lot of forms of the time, I guess
-amdump_log("start at $longdate");
-amdump_log("datestamp $datestamp");
-amdump_log("starttime $timestamp");
-amdump_log("starttime-locale-independent $starttime_locale_independent");
-
-# run the planner and driver, the one piped to the other
-planner_driver_pipeline();
-
-if ($crtl_c == 1) {
-    print "Caught a ctrl-c\n";
-    log_add($L_FATAL, "amdump killed by ctrl-c");
-    debug("Caught a ctrl-c");
-    $exit_code = 1;
-}
-$SIG{INT} = 'DEFAULT';
-
-my $end_longdate = strftime "%a %b %e %H:%M:%S %Z %Y", localtime;
-amdump_log("end at $end_longdate");
-
-# send the dump report
-do_amreport();
-
-# do some house-keeping
-trim_trace_logs();
-trim_indexes();
-roll_amdump_logs();
-
+my $exit_code = $amdump->run(1);
 debug("exiting with code $exit_code");
 exit($exit_code);
+

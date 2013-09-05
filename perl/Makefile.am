@@ -291,9 +291,16 @@ endif
 EXTRA_DIST += Amanda/JSON.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Amdump
+Amanda_DATA += Amanda/Amdump.pm
+endif
+EXTRA_DIST += Amanda/Amdump.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::JSON::*
 AmandaJSONdir = $(amperldir)/Amanda/JSON
 AmandaJSON_DATA = \
+	Amanda/JSON/Amdump.pm \
 	Amanda/JSON/Changer.pm \
 	Amanda/JSON/Config.pm \
 	Amanda/JSON/Device.pm \

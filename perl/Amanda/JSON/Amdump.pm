@@ -17,20 +17,12 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-package Amanda::JSON::Status;
+package Amanda::JSON::Amdump;
 use strict;
 use warnings;
 
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Device qw( :constants );
-use Amanda::Storage;
-use Amanda::Changer;
-use Amanda::Header;
-use Amanda::MainLoop;
-use Amanda::Tapelist;
-use Amanda::Label;
-use Amanda::Curinfo;
-use Amanda::Status;
+use Amanda::Amdump;
 use Amanda::JSON::Config;
 use Symbol;
 use Data::Dumper;
@@ -38,69 +30,67 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::JSON::Status -- JSON interface to Amanda::Status
+Amanda::JSON::Label -- JSON interface to Amanda::Label
 
 =head1 INTERFACE
 
 =over
 
-=item Amanda::JSON::Status::current
+=item Amanda::JSON::Amdump::run
 
-Interface to C<Amanda::Status::current>
-Get the current status.
+Interface to C<Amanda::Amdump::run>
 
   {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::Status::current",
+   "method" :"Amanda::JSON::Amdump::run",
    "params" :{"config":"test",
-	      "amdump_log":"/path/to/amdump.1"},
+	      "no_taper":"0",
+	      "from_client":"0",
+	      "exact_match":"0",
+              "hostdisk":["localhost","/boot"]},
    "id"     :"1"}
 
 The result is an array of Amanda::Message:
 
   {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Status.pm",
-	      "source_line":"1433",
-	      "code":1800000,
-	      "message":"The status",
-	      "status":{...} }],
+   "result":[{"source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
+              "trace_log" : "/etc/amanda/test/log.20130904144908.0",
+              "source_line" : "89",
+              "severity" : "16",
+              "code" : "2000000",
+              "message" : "The trace log file is '/amanda/h1/var/amanda/test/log.20130904144908.0'" },
+             { "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
+              "amdump_log" : "/etc/amanda/test/amdump.20130904144908",
+              "source_line" : "94",
+              "severity" : "16",
+              "code" : "2000001",
+              "message" : "The amdump log file is 'amdump.20130904144908'"}],
    "id":"1"}
 
 =back
 
 =cut
 
-sub current {
+sub run {
     my %params = @_;
     my @result_messages = Amanda::JSON::Config::config_init(@_);
     return \@result_messages if @result_messages;
 
-    $params{'filename'} = $params{'amdump_log'} if defined $params{'amdump_log'};
-    my $status = Amanda::Status->new(%params);
-    push @result_messages, $status->current();
+    my $user_msg = sub {
+	my $msg = shift;
+	push @result_messages, $msg;
+    };
 
+    my ($amdump, $messages) = Amanda::Amdump->new(@_, user_msg => $user_msg);
+    push @result_messages, @{$messages};
+
+    # fork the amdump process and detach
+    my $pid = POSIX::fork();
+    if ($pid == 0) {
+	my $exit_code = $amdump->run(0);
+	debug("exiting with code $exit_code");
+	exit($exit_code);
+    }
     return \@result_messages;
 }
-
-#sub stream {
-#
-#    return sub {
-#	my $responder = shift;
-#	my $writer = $responder->(
-#	    [ 200, [ 'Content-Type', 'application/json' ]]);
-#
-#	for my $i ("AA","BB","CC") {
-#	    my $m = Amanda::Message->new(
-#			source_filename => __FILE__,
-#			source_line     => __LINE__,
-#			code => 0,
-#			message => $i);
-#	    my $a = JSON->new->convert_blessed->utf8->encode($m);
-#	    $writer->write("$a\n");
-#	    sleep 5;
-#	}
-#
-#	$writer->close;
-#    }
-#}
 
 1;

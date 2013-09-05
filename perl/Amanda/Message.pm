@@ -78,6 +78,7 @@ not handled by Amanda::Message):
  1700000  Amanda::Device::Message
  1800000  Amanda::Status::Message
  1900000  Amanda::Report::Message
+ 2000000  Amanda::Amdump::Message
 
 general keys:
   code            =>
