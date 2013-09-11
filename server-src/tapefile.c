@@ -37,6 +37,7 @@
 #include "find.h"
 
 static tape_t *tape_list = NULL;
+static tape_t *tape_list_end = NULL;
 static gboolean retention_computed = FALSE;
 
 /* local functions */
@@ -166,6 +167,7 @@ clear_tapelist(void)
 	amfree(tp);
     }
     tape_list = NULL;
+    tape_list_end = NULL;
 }
 
 tape_t *
@@ -323,6 +325,8 @@ remove_tapelabel(
 	    tape_list = next;
 	if(next != NULL)
 	    next->prev = prev;
+	else /* end of list */
+	    tape_list_end = prev;
 	/*@end@*/
 	while (next != NULL) {
 	    next->position--;
@@ -501,24 +505,32 @@ insert(
 {
     tape_t *prev, *cur;
 
-    prev = NULL;
-    cur = list;
+    if (tape_list_end && strcmp(tape_list_end->datestamp, tp->datestamp) >= 0) {
+	prev = tape_list_end;
+	cur = NULL;
+    } else {
+	prev = NULL;
+	cur = list;
 
-    while(cur != NULL && strcmp(cur->datestamp, tp->datestamp) >= 0) {
-	prev = cur;
-	cur = cur->next;
+	while (cur != NULL && strcmp(cur->datestamp, tp->datestamp) >= 0) {
+	    prev = cur;
+	    cur = cur->next;
+	}
     }
     tp->prev = prev;
     tp->next = cur;
-    if(prev == NULL) {
+    if (prev == NULL) {
 	list = tp;
 #ifndef __lint
     } else {
 	prev->next = tp;
 #endif
     }
-    if(cur !=NULL)
+    if (cur == NULL) {
+	tape_list_end = tp;
+    } else {
 	cur->prev = tp;
+    }
 
     return list;
 }

@@ -901,10 +901,10 @@ sub erase {
 	# try in the config_name storage;
 	$storage_name = get_config_name();
 	if (defined $storage_name) {
-	    $steps->{'erase'}->($storage_name);
+	    return $steps->{'erase'}->($storage_name);
 	}
 
-	$steps->{'start'}->();
+	return $steps->{'start'}->();
     };
 
     step erase => sub {
@@ -920,19 +920,19 @@ sub erase {
 						tapelist => $self->{'tapelist'});
 	    }
 	    if ($storage->isa("Amanda::Changer::Error")) {
-		$steps->{'done'}->($storage);
+		return $steps->{'done'}->($storage);
 	    }
 
 	    $chg = $storage->{'chg'};
 	    if ($chg->isa("Amanda::Changer::Error")) {
-		$steps->{'done'}->($chg);
+		return $steps->{'done'}->($chg);
 	    }
 
 	    $chg->load(
 		'label'  => $label,
 		'res_cb' => $steps->{'loaded'});
 	} else {
-            $steps->{'scrub_db'}->();
+            return $steps->{'scrub_db'}->();
 	}
     };
 
@@ -1022,7 +1022,7 @@ sub erase {
 	    }
 	    $self->user_msg($err);
 	}
-	$steps->{'scrub_db'}->();
+	return $steps->{'scrub_db'}->();
     };
 
     step scrub_db => sub {
@@ -1248,7 +1248,7 @@ sub erase {
 
 	$self->user_msg($err) if $err;
 
-	$finished_cb->();
+	return $finished_cb->();
     };
 }
 
@@ -1268,7 +1268,6 @@ sub reuse {
     step start => sub {
 	$label = shift @{$params{'labels'}};
 
-Amanda::Debug::debug("start $label");
 	if (!defined $label) {
 	    return $steps->{'write_tapelist'}->();
         }

@@ -1,3 +1,7 @@
+2013-09-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Label.pm: Fix.
+	* server-src/tapefile.c: Speedup parsing.
+
 2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix use of NULL pointer.
 
