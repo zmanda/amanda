@@ -33,28 +33,17 @@ my $STATUS_MISSING =  8;
 my $STATUS_TAPE    = 16;
 my $exit_status    =  0;
 
+my $opt_detail;
 my $opt_summary;
 my $opt_stats;
-my $opt_dumping;
-my $opt_waitdumping;
-my $opt_waittaper;
-my $opt_dumpingtape;
-my $opt_writingtape;
-my $opt_finished;
-my $opt_failed;
-my $opt_estimate;
-my $opt_gestimate;
-my $opt_date;
 my $opt_config;
 my $opt_file;
-my $opt_locale_independent_date_format;
+my $opt_locale_independent_date_format = 0;
 
 sub usage() {
 	print "amstatus [--file amdump_file]\n";
-	print "         [--summary] [--dumping] [--waitdumping] [--waittaper]\n";
-	print "         [--dumpingtape] [--writingtape] [--finished] [--failed]\n";
-	print "         [--estimate] [--gestimate] [--stats] [--date]\n";
-	print "         [--locale-independent-date-format]\n";
+	print "         [--[no]detail] [--[no]summary] [--[no]stats]\n";
+	print "         [--[no]locale-independent-date-format]\n";
 	print "         [--config] <config>\n";
 	exit 0;
 }
@@ -67,21 +56,21 @@ debug("Arguments: " . join(' ', @ARGV));
 
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
-    'summary'                        => \$opt_summary,
-    'stats|statistics'               => \$opt_stats,
-    'dumping|d'                      => \$opt_dumping,
-    'waitdumping|wdumping'           => \$opt_waitdumping,
-    'waittaper|wtaper'               => \$opt_waittaper,
-    'dumpingtape|dtape'              => \$opt_dumpingtape,
-    'writingtape|wtape'              => \$opt_writingtape,
-    'finished'                       => \$opt_finished,
-    'failed|error'                   => \$opt_failed,
-    'estimate'                       => \$opt_estimate,
-    'gestimate|gettingestimate'      => \$opt_gestimate,
-    'date'                           => \$opt_date,
-    'config|c:s'                     => \$opt_config,
-    'file:s'                         => \$opt_file,
-    'locale-independent-date-format' => \$opt_locale_independent_date_format,
+    'detail!'                         => \$opt_detail,
+    'summary!'                        => \$opt_summary,
+    'stats|statistics!'               => \$opt_stats,
+#    'dumping|d!'                      => \$opt_dumping,
+#    'waitdumping|wdumping!'           => \$opt_waitdumping,
+#    'waittaper|wtaper!'               => \$opt_waittaper,
+#    'dumpingtape|dtape!'              => \$opt_dumpingtape,
+#    'writingtape|wtape!'              => \$opt_writingtape,
+#    'finished!'                       => \$opt_finished,
+#    'failed|error!'                   => \$opt_failed,
+#    'estimate!'                       => \$opt_estimate,
+#    'gestimate|gettingestimate!'      => \$opt_gestimate,
+    'config|c:s'                      => \$opt_config,
+    'file:s'                          => \$opt_file,
+    'locale-independent-date-format!' => \$opt_locale_independent_date_format,
     'o=s'  => sub { add_config_override_opt($config_overrides, $_[1]); },
     ) or usage();
 
@@ -100,7 +89,7 @@ else {
 }
 
 set_config_overrides($config_overrides);
-config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
+config_init($CONFIG_INIT_EXPLICIT_NAME, $conf);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
@@ -130,43 +119,40 @@ if ( ! -d "$confdir/$conf" ) {
 
 my $pwd = `pwd`;
 chomp $pwd;
-chdir "$confdir/$conf";
+#chdir "$confdir/$conf";
 
-my $logdir=`$sbindir/amgetconf logdir`;
-exit 1 if $? != 0;
+my $logdir = getconf($CNF_LOGDIR);
 chomp $logdir;
 my $errfile="$logdir/amdump";
 
-my $nb_options = defined( $opt_summary ) +
-				  defined( $opt_stats ) +
-				  defined( $opt_dumping ) +
-				  defined( $opt_waitdumping ) +
-				  defined( $opt_waittaper ) +
-				  defined( $opt_dumpingtape ) +
-				  defined( $opt_writingtape ) +
-				  defined( $opt_finished ) +
-				  defined( $opt_estimate ) +
-				  defined( $opt_gestimate ) +
-				  defined( $opt_failed );
+my $nb_options = defined($opt_detail) +
+		 defined($opt_summary) +
+		 defined($opt_stats);
+my $set_options = $opt_detail +
+		  $opt_summary +
+		  $opt_stats;
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-if($nb_options == 0 ) {
+if ($nb_options == 0) {
+	$opt_detail      = 1;
 	$opt_summary     = 1;
-	$opt_stats       = 1; 
-	$opt_dumping     = 1;
-	$opt_waitdumping = 1;
-	$opt_waittaper   = 1;
-	$opt_dumpingtape = 1;
-	$opt_writingtape = 1;
-	$opt_finished    = 1;
-	$opt_failed      = 1;
-	$opt_gestimate   = 1;
-	$opt_estimate    = 1;
+	$opt_stats       = 1;
+} elsif ($set_options > 0) {
+	$opt_detail  = 0 if !defined $opt_detail;
+	$opt_summary = 0 if !defined $opt_summary;
+	$opt_stats   = 0 if !defined $opt_stats;
+} else {
+	$opt_detail  = 1 if !defined $opt_detail;
+	$opt_summary = 1 if !defined $opt_summary;
+	$opt_stats   = 1 if !defined $opt_stats;
 }
 
-my $unit=`$sbindir/amgetconf displayunit`;
-chomp($unit);
+print "detail: $opt_detail\n";
+print "summary: $opt_summary\n";
+print "stats: $opt_stats\n";
+
+my $unit = getconf($CNF_DISPLAYUNIT);
 $unit =~ tr/A-Z/a-z/;
 my $unitdivisor=1;
 if($unit eq 'k') {
@@ -186,6 +172,10 @@ else {
   $unitdivisor = 1;
 }
 
+sub dn {
+    my $number = shift;
+    return $number/$unitdivisor;
+}
 
 my $dead_run = 0;
 if( defined $opt_file) {
@@ -214,7 +204,11 @@ debug("Using: $errfile");
 my $status = Amanda::Status->new(filename => $errfile);
 
 $status->current(user_msg => sub {});
-print "From $status->{'datestr'}\n";
+if ($opt_locale_independent_date_format) {
+    print "From $status->{'starttime-locale-independent'}\n";
+} else {
+    print "From $status->{'datestr'}\n";
+}
 print "\n";
 
 #print Data::Dumper::Dumper($status);
@@ -241,7 +235,8 @@ if (defined $status->{'storage'}) {
     $nb_storage = keys %{$status->{'storage'}};
 }
 
-foreach my $host (sort keys %{$status->{'dles'}}) {
+if ($opt_detail) {
+  foreach my $host (sort keys %{$status->{'dles'}}) {
     foreach my $disk (sort keys %{$status->{'dles'}->{$host}}) {
 	foreach my $datestamp (sort keys %{$status->{'dles'}->{$host}->{$disk}}) {
 	    my $dle = $status->{'dles'}->{$host}->{$disk}->{$datestamp};
@@ -258,13 +253,12 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 	    my $qdisk = Amanda::Util::quote_string($disk);
 	    printf "%-${maxnamelength}s $datestamp %-${maxlevellength}s ","$host:$qdisk", $dle->{'level'};
 	    if (defined $dle->{'dsize'}) {
-		printf "%9dk ", $dle->{'dsize'};
+		printf "%9d$unit ", dn($dle->{'dsize'});
 	    } elsif (defined $dle->{'esize'}) {
-		printf "%9dk ", $dle->{'esize'};
+		printf "%9d$unit ", dn($dle->{'esize'});
 	    } else {
 		printf "%9s  ", "";
 	    }
-	    #print "$host $disk $datestamp $dle->{'level'} ";
 	    my $dump_status = $dle->{'message'};
 
 	    if ($nb_storage == 0) {
@@ -282,7 +276,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 		    my $storage = $storage[0];
 		    my $dlet = $dle->{'storage'}->{$storage};
 		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'}) {
-			printf " (%dk done (%0.2f%%))", $dlet->{'wsize'},
+			printf " (%d$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }
 		    if (defined $dlet->{'taper_time'}) {
@@ -290,7 +284,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 		    }
 		} else {
 		    if (defined $dle->{'wsize'} && defined $dle->{'esize'}) {
-			printf " (%dk done (%0.2f%%))", $dle->{'wsize'},
+			printf " (%d$unit done (%0.2f%%))", dn($dle->{'wsize'}),
 				 100.0 * $dle->{'wsize'} / $dle->{'esize'};
 		    }
 		    if (defined $dle->{'dump_time'}) {
@@ -322,7 +316,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 		    }
 		    $first++;
 		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'}) {
-			printf " (%dk done (%0.2f%%))", $dlet->{'wsize'},
+			printf " (%d$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }
 		    if (defined $dlet->{'taper_time'}) {
@@ -332,7 +326,7 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 	    } else {
 		print $dump_status;
 		if (defined $dle->{'wsize'} && defined $dle->{'esize'}) {
-		    printf " (%dk done (%0.2f%%))", $dle->{'wsize'},
+		    printf " (%d$unit done (%0.2f%%))", dn($dle->{'wsize'}),
 				 100.0 * $dle->{'wsize'} / $dle->{'esize'};
 		}
 		if (defined $dle->{'dump_time'}) {
@@ -342,73 +336,76 @@ foreach my $host (sort keys %{$status->{'dles'}}) {
 	    print "\n";
 	}
     }
+  }
+  print "\n";
 }
 
-print "\n";
-printf "%-16s %4s %10s %10s\n", "SUMMARY", "dle", "real", "estimated";
-printf "%-16s %4s %10s %10s\n", "", "", "size", "size";
-printf "%-16s %4s %10s %10s\n", "----------------", "----", "---------", "---------";
-summary($status, 'disk', 'disk', 0, 0, 0, 0);
-summary($status, 'estimated', 'estimated', 0, 1, 0, 0);
-summary_storage($status, 'flush', 'flush', 1, 0, 0, 0);
-summary($status, 'dump_failed', 'dump failed', 1, 1, 1, 1);
-summary($status, 'wait_for_dumping', 'wait for dumping', 0, 1, 0, 1);
-summary($status, 'dumping_to_tape', 'dumping to tape', 1, 1, 1, 1);
-summary($status, 'dumping', 'dumping', 1, 1, 1, 1);
-summary($status, 'dumped', 'dumped', 1, 1, 1, 1);
-summary_storage($status, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1);
-summary_storage($status, 'wait_to_flush'   , 'wait_to_flush'   , 1, 1, 1, 1);
-summary_storage($status, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
-summary_storage($status, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
-summary_storage($status, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
-summary_storage($status, 'taped'           , 'taped'           , 1, 1, 1, 1);
+if ($opt_summary) {
+    printf "%-16s %4s %10s %10s\n", "SUMMARY", "dle", "real", "estimated";
+    printf "%-16s %4s %10s %10s\n", "", "", "size", "size";
+    printf "%-16s %4s %10s %10s\n", "----------------", "----", "---------", "---------";
+    summary($status, 'disk', 'disk', 0, 0, 0, 0);
+    summary($status, 'estimated', 'estimated', 0, 1, 0, 0);
+    summary_storage($status, 'flush', 'flush', 1, 0, 0, 0);
+    summary($status, 'dump_failed', 'dump failed', 1, 1, 1, 1);
+    summary($status, 'wait_for_dumping', 'wait for dumping', 0, 1, 0, 1);
+    summary($status, 'dumping_to_tape', 'dumping to tape', 1, 1, 1, 1);
+    summary($status, 'dumping', 'dumping', 1, 1, 1, 1);
+    summary($status, 'dumped', 'dumped', 1, 1, 1, 1);
+    summary_storage($status, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1);
+    summary_storage($status, 'wait_to_flush'   , 'wait_to_flush'   , 1, 1, 1, 1);
+    summary_storage($status, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
+    summary_storage($status, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
+    summary_storage($status, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
+    summary_storage($status, 'taped'           , 'taped'           , 1, 1, 1, 1);
 
-print "\n";
-if ($status->{'idle_dumpers'} == 0) {
-    printf "all dumpers active\n";
-} else {
-    my $c1 = ($status->{'idle_dumpers'} == 1) ? "" : "s";
-    my $c2 = ($status->{'idle_dumpers'} < 10) ? " " : "";
-    my $c3 = ($status->{'idle_dumpers'} == 1) ? " " : "";
-    printf "%d dumper%s idle%s %s: %s\n", $status->{'idle_dumpers'},
-					  $c1, $c2, $c3,
-					  $status->{'status_driver'};
-}
-
-if (defined $status->{'storage'}) {
-    for my $storage (sort keys %{$status->{'storage'}}) {
-	next if !$storage;
-	my $taper = $status->{'storage'}->{$storage}->{'taper'};
-	next if !$taper;
-
-	printf "%-11s qlen: %d\n", "$storage",
-				   $status->{'qlen'}->{'tapeq'}->{$taper};
-
-	printf "%16s: ", "status";
-	if (defined $status->{'taper'}->{$taper}->{'worker'}) {
-	    my @worker_status;
-	    for my $worker (sort keys %{$status->{'taper'}->{$taper}->{'worker'}}) {
-		my $wstatus = $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
-		push @worker_status, $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'};
-	    }
-	    print join ', ', @worker_status;
-	} else {
-	    print "Idle";
-	}
-	print "\n";
-    }
-}
-
-printf "%-16s: %d\n", "network free kps", $status->{'free_kps'};
-
-if (defined $status->{'free_space'}) {
-    my $hs;
-    if ($status->{'holding_space'}) {
-	$hs = ($status->{'free_space'} * 1.0 / $status->{'holding_space'}) *100;
+    print "\n";
+    if ($status->{'idle_dumpers'} == 0) {
+	printf "all dumpers active\n";
     } else {
-	$hs = 0.0;
+	my $c1 = ($status->{'idle_dumpers'} == 1) ? "" : "s";
+	my $c2 = ($status->{'idle_dumpers'} < 10) ? " " : "";
+	my $c3 = ($status->{'idle_dumpers'} == 1) ? " " : "";
+	printf "%d dumper%s idle%s %s: %s\n", $status->{'idle_dumpers'},
+					      $c1, $c2, $c3,
+					      $status->{'status_driver'};
     }
-    printf "%-16s: %dk (%0.2f%%)\n", "holding space", $status->{'free_space'}, $hs;
+
+    if (defined $status->{'storage'}) {
+	for my $storage (sort keys %{$status->{'storage'}}) {
+	    next if !$storage;
+	    my $taper = $status->{'storage'}->{$storage}->{'taper'};
+	    next if !$taper;
+
+	    printf "%-11s qlen: %d\n", "$storage",
+				       $status->{'qlen'}->{'tapeq'}->{$taper};
+
+	    printf "%16s: ", "status";
+	    if (defined $status->{'taper'}->{$taper}->{'worker'}) {
+		my @worker_status;
+		for my $worker (sort keys %{$status->{'taper'}->{$taper}->{'worker'}}) {
+		    my $wstatus = $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
+		    push @worker_status, $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'};
+		}
+		print join ', ', @worker_status;
+	    } else {
+		print "Idle";
+	    }
+	    print "\n";
+	}
+    }
+
+    printf "%-16s: %d\n", "network free kps", $status->{'free_kps'};
+
+    if (defined $status->{'free_space'}) {
+	my $hs;
+	if ($status->{'holding_space'}) {
+	    $hs = ($status->{'free_space'} * 1.0 / $status->{'holding_space'}) *100;
+	} else {
+	    $hs = 0.0;
+	}
+	printf "%-16s: %d$unit (%0.2f%%)\n", "holding space", dn($status->{'free_space'}), $hs;
+    }
 }
 
 my $len_storage = 0;
@@ -422,42 +419,44 @@ if (defined $status->{'taper'}) {
 }
 
 my $r;
-if (defined $status->{'current_time'} and
-    $status->{'current_time'} != $status->{'start_time'}) {
-    my $total_time = $status->{'current_time'} - $status->{'start_time'};
-    foreach my $key (sort byprocess keys %{$status->{'busy'}}) {
-	my $name = $key;
-	if ($status->{'busy'}->{$key}->{'type'} eq "taper") {
-	    $name = $status->{'busy'}->{$key}->{'storage'};
+if ($opt_stats) {
+    if (defined $status->{'current_time'} and
+	$status->{'current_time'} != $status->{'start_time'}) {
+	my $total_time = $status->{'current_time'} - $status->{'start_time'};
+	foreach my $key (sort byprocess keys %{$status->{'busy'}}) {
+	    my $name = $key;
+	    if ($status->{'busy'}->{$key}->{'type'} eq "taper") {
+		$name = $status->{'busy'}->{$key}->{'storage'};
+	    }
+	    $name = sprintf "%*s", $len_storage, $name;
+	    printf "%-16s: %8s  (%6.2f%%)\n",
+		   "$name busy", &busytime($status->{'busy'}->{$key}->{'time'}),
+		   $status->{'busy'}->{$key}->{'percent'};
 	}
-	$name = sprintf "%*s", $len_storage, $name;
-	printf "%-16s: %8s  (%6.2f%%)\n",
-		"$name busy", &busytime($status->{'busy'}->{$key}->{'time'}),
-		$status->{'busy'}->{$key}->{'percent'};
-    }
 
-    for (my $d = 0; $d < @{$status->{'dumpers_actives'}}; $d++) {
-	my $l = sprintf "%2d dumper%s busy%s : %8s  (%6.2f%%)", $d,
+	for (my $d = 0; $d < @{$status->{'dumpers_actives'}}; $d++) {
+	    my $l = sprintf "%2d dumper%s busy%s : %8s  (%6.2f%%)", $d,
 		($d == 1) ? "" : "s",
 		($d == 1) ? " " : "",
 		&busytime($status->{'busy_dumper'}->{$d}->{'time'}),
 		$status->{'busy_dumper'}->{$d}->{'percent'};
-	print "$l";
-	my $s1 = "";
-	my $s2 = " " x length($l);
+	    print "$l";
+	    my $s1 = "";
+	    my $s2 = " " x length($l);
 
-	if (defined $status->{'busy_dumper'}->{$d}->{'status'}) {
-	    foreach my $key (sort keys %{$status->{'busy_dumper'}->{$d}->{'status'}}) {
-		printf "%s%20s: %8s  (%6.2f%%)\n",
-			$s1,
-			$key,
-			&busytime($status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'}),
-			$status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'};
-		$s1 = $s2;
+	    if (defined $status->{'busy_dumper'}->{$d}->{'status'}) {
+		foreach my $key (sort keys %{$status->{'busy_dumper'}->{$d}->{'status'}}) {
+		    printf "%s%20s: %8s  (%6.2f%%)\n",
+			    $s1,
+			    $key,
+			    &busytime($status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'}),
+			    $status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'};
+		    $s1 = $s2;
+		}
 	    }
-	}
-	if ($s1 eq "") {
-	    print "\n";
+	    if ($s1 eq "") {
+		print "\n";
+	    }
 	}
     }
 }
@@ -493,9 +492,9 @@ sub byprocess() {
 }
 
 
-sub valuesort() {
-    $r->{$b} <=> $r->{$a};
-}
+#sub valuesort() {
+#    $r->{$b} <=> $r->{$a};
+#}
 
 sub summary {
     my $status = shift;
@@ -508,9 +507,9 @@ sub summary {
 
     my $nb = $status->{'stat'}->{$key}->{'nb'};
     my $rsize = "";
-       $rsize = sprintf "%8dk", $status->{'stat'}->{$key}->{'real_size'} if defined $status->{'stat'}->{$key}->{'real_size'};
+       $rsize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'real_size'};
     my $esize = "";
-       $esize = sprintf "%8dk", $status->{'stat'}->{$key}->{'estimated_size'} if defined $status->{'stat'}->{$key}->{'estimated_size'};
+       $esize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'estimated_size'};
 
     my $rstat = "";
        $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'real_stat'};
@@ -549,9 +548,9 @@ sub summary_storage {
 	}
 	my $nb = $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'nb'};
 	my $rsize = "";
-	$rsize = sprintf "%8dk", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'};
+	$rsize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'};
 	my $esize = "";
-	$esize = sprintf "%8dk", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
+	$esize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
 
 	my $rstat = "";
 	    $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'};
@@ -585,7 +584,7 @@ sub summary_taped {
 	my $label = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'label'};
 	my $nb_part = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'nb_part'};
 	my $tape = "tape " . ($i+1);
-	printf "    %-12s:%4d %9dk %9dk (%6.2f%%) %s (%d parts)\n", $tape, $nb, $real_size, $estimated_size, $percent, $label, $nb_part;
+	printf "    %-12s:%4d %9d$unit %9d$unit (%6.2f%%) %s (%d parts)\n", $tape, $nb, dn($real_size), dn($estimated_size), $percent, $label, $nb_part;
 	$i++;
     }
 }

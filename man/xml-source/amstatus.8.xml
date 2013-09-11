@@ -30,18 +30,10 @@
 <cmdsynopsis>
   <command>amstatus</command>    
     <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>amdumpfile</replaceable></arg></arg>
-    <arg choice='opt'>--summary </arg>
-    <arg choice='opt'>--dumping </arg>
-    <arg choice='opt'>--waitdumping </arg>
-    <arg choice='opt'>--waittaper </arg>
-    <arg choice='opt'>--dumpingtape </arg>
-    <arg choice='opt'>--writingtape </arg>
-    <arg choice='opt'>--finished </arg>
-    <arg choice='opt'>--failed </arg>
-    <arg choice='opt'>--estimate </arg>
-    <arg choice='opt'>--gestimate </arg>
-    <arg choice='opt'>--stats </arg>
-    <arg choice='opt'>--locale-independent-date-format </arg>
+    <arg choice='opt'>--[no]detail </arg>
+    <arg choice='opt'>--[no]summary </arg>
+    <arg choice='opt'>--[no]stats </arg>
+    <arg choice='opt'>--[no]locale-independent-date-format </arg>
     <arg choice='opt'>--config </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
@@ -82,65 +74,15 @@ file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>--detail</option></term>
+  <listitem>
+<para>Display a detail of each dles.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>--summary</option></term>
   <listitem>
 <para>Display a summary of the state of the run.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--dumping</option></term>
-  <listitem>
-<para>Display all partitions that are dumping.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--waitdumping|wdumping</option></term>
-  <listitem>
-<para>Display all partitions that are waiting to be dumped.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--waittaper|wtaper</option></term>
-  <listitem>
-<para>Display all partitions dumped that are waiting to be written to tape.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--dumpingtape|dtape</option></term>
-  <listitem>
-<para>Display all partitions that are dumping directly to tape.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--writingtape|wtape</option></term>
-  <listitem>
-<para>Display all partitions that are writing to tape.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--finished</option></term>
-  <listitem>
-<para>Display all partitions that are dumped and written to tape.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--failed|error</option></term>
-  <listitem>
-<para>Display all partitions that failed.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--estimate</option></term>
-  <listitem>
-<para>Display all partitions whose estimate is finished.
-Works only during the estimate phase.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>--gestimate|gettingestimate</option></term>
-  <listitem>
-<para>Display all partitions whose estimate is not finished.
-Works only during the estimate phase.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

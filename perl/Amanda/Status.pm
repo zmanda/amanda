@@ -283,6 +283,7 @@ sub parse {
 	    } elsif ($line[1] eq "starttime") {
 		$self->{'starttime'} = &set_starttime($line[2]);
 	    } elsif ($line[1] eq "starttime-locale-independent") {
+		$self->{'starttime-locale-independent'} = $line[2] . " " . $line[3] . ":" . $line[4] . ":" . $line[5] . " " . $line[6];
 	    }
 	    if ($line[0] eq "amflush") {
 	    }

@@ -1,4 +1,12 @@
 2013-09-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Handle displayunit,
+	  add --detail, --summary --stats and --locale-independent-date-format,
+	  remove --dumping, --waitdumping, --waittaper, --dumpingtape,
+	  --writingtape, --finished, --failed, --estimate, --gestimate
+	* perl/Amanda/Status.pm: Set $self->{'starttime-locale-independent'}
+	* man/xml-source/amstatus.8.xml: Document them.
+
+2013-09-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Label.pm: Fix.
 	* server-src/tapefile.c: Speedup parsing.
 
