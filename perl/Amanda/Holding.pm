@@ -53,7 +53,7 @@ Get some statistics:
 
 Schematic for something like C<amflush>:
 
-    for my $ts (sort Amanda::Holding::get_all_timestamps()) {
+    for my $ts (sort Amanda::Holding::get_all_datestamps()) {
 	print $ts, "\n";
     }
     my @to_dump = <>;
@@ -156,7 +156,7 @@ The remaining two functions are utilities for amflush and related tools:
 
 =over
 
-=item C<get_all_timestamps()>
+=item C<get_all_datestamps()>
 
 returns a sorted list of all timestamps with dumps in any active holding disk.
 
@@ -503,7 +503,6 @@ sub get_files_for_flush {
 	if (!Amanda::Disklist::get_disk($header->{'name'}, $header->{'disk'})) {
 	    return;
 	}
-
 	push @results, $filename;
     };
     _walk($each_file_fn, 0);
