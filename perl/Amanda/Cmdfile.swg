@@ -82,13 +82,14 @@ typedef struct cmddata_s {
 package Amanda::Cmdfile::Cmddata;
 
 sub new {
+    my $class = shift;
     my %params = @_;
 
     $params{'working_pid'} ||= 0;
     $params{'todo'} ||= 0;
     $params{'size'} ||= 0;
 
-    my $cmddata = Amanda::Cmdfile::Cmddata->new_Cmddata();
+    my $cmddata = Amanda::Cmdfile::cmddata_t->new_Cmddata();
     $cmddata->{'operation'}      = $params{'operation'};
     $cmddata->{'config'}         = $params{'config'};
     $cmddata->{'storage'}        = $params{'storage'};
@@ -106,11 +107,6 @@ sub new {
 
     return $cmddata;
 };
-
-# SWIG produces a sub-package for the cmddata_t "class", in this case named
-# Amanda::Cmdfile::cmddata_t.  For user convenience, we allow
-# Amanda::Cmdfile->new(..) to do the same thing.  This is a wrapper function,
-# and not just a typeglob assignment, because we want to get the right blessing.
 
 %}
 
@@ -144,7 +140,7 @@ typedef struct cmdatas_s {
 	    return add_cmd_in_memory(self, cmddata);
 	}
 
-	void add_file(cmddata_t *cmddata) {
+	void add_to_file(cmddata_t *cmddata) {
 	    add_cmd_in_cmdfile(self, cmddata);
 	}
 

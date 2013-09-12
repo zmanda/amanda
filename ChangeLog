@@ -1,4 +1,7 @@
 2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cmdfile.swg: Fix.
+
+2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/amglue/integers.swg: Add pid_t.
 
 2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
