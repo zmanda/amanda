@@ -1,4 +1,10 @@
 2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Disklist.swg (match_disklist, reset_disklist,
+	  add_holding_to_disklist): New methods.
+	* perl/Amanda/Disklist.pod: Document them.
+	* installcheck/Amanda_Disklist.pl: Create a debug file.
+
+2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/cmdfile.c (add_cmd_in_memory,
 	  cmdfile_get_ids_for_holding): New functions.
 	* server-src/cmdfile.h (add_cmd_in_memory,

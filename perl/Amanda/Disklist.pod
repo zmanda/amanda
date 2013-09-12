@@ -69,6 +69,43 @@ objects.
 
 =head1 FUNCTIONS
 
+=over 4
+
+=item read_disklist
+
+my $cfgerr_level = Amanda::Disklist::read_disklist(filename => $diskfile);
+
+=item reset_disklist
+
+Amanda::Disklist::reset_disklist();
+
+Reset the perl state from the C state.
+
+=item match_disklist
+
+Amanda::Disklist::match_disklist(user_msg => \&user_msg,
+				 exact_match => $exact_match,
+				 args => ["HOST", "DISK" ... ]);
+
+Set the 'todo' field for dle entry matching the args.
+
+=item do_on_match_disklist
+
+Amanda::Disklist::match_disklist(user_msg => \&user_msg,
+				 exact_match => $exact_match,
+				 args => ["HOST", "DISK" ... ],
+				 disk_cb => \&disk_cb);
+
+Call the disk_cb for each dles that match the args
+
+=item add_holding_to_disklist
+
+Amanda::Disklist::add_holding_to_disklist();
+
+Add holding dle in the disklist if they are not there.
+
+=back
+
 After calling C<Amanda::Config::config_init()>, call C<read_disklist>.
 The following parameters are available:
 

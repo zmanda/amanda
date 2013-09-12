@@ -36,6 +36,7 @@
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Util qw ( match_disk match_host );
+use Amanda::Logfile;
 %}
 
 /* handle creation of opaque objects from Amanda::Config */
@@ -130,9 +131,11 @@ get_host(
 	hv_store_const(h, "disks", newRV_noinc((SV *)newAV()));
 
 	/* and make a link to the relevant interface object */
-	ref = get_iface(ifaces, ifaceclass, dp->host->netif);
-	SvREFCNT_inc(ref);
-	hv_store_const(h, "interface", ref);
+	if (dp->host->netif) {
+	    ref = get_iface(ifaces, ifaceclass, dp->host->netif);
+	    SvREFCNT_inc(ref);
+	    hv_store_const(h, "interface", ref);
+	}
     }
 
     /* push the name of the disk into @{$self->{disks}}; we don't store
@@ -169,7 +172,17 @@ get_host(
 %inline %{
 static cfgerr_level_t
 read_disklist_internal(
-	char *filename,
+	char *filename)
+{
+    cfgerr_level_t errlev;
+    disklist_t list;
+
+    errlev = read_diskfile(filename, &list);
+    return errlev;
+}
+
+static void
+reset_disklist_internal(
 	HV *disks, char *diskclass,
 	HV *hosts, char *hostclass,
 	HV *ifaces, char *ifaceclass)
@@ -179,17 +192,14 @@ read_disklist_internal(
     GList  *dlist;
     disk_t *dp;
     HV *diskclass_stash = NULL;
+    am_host_t *hp;
 
     hv_clear(hosts);
     hv_clear(disks);
     hv_clear(ifaces);
 
-    errlev = read_diskfile(filename, &list);
-    if (errlev >= CFGERR_ERRORS)
-	return errlev;
-
-    for (dlist = list.head; dlist; dlist = dlist->next) {
-	dp = dlist->data;
+    for (hp = get_hostlist(); hp != NULL; hp = hp->next) {
+      for (dp = hp->disks; dp != NULL; dp = dp->hostnext) {
 	HV *h = newHV();
 	SV *diskref;
 	SV *hostref;
@@ -206,12 +216,15 @@ read_disklist_internal(
 	hv_store_const(h, "name", safe_newSVpv(dp->name));
 	hv_store_const(h, "device", safe_newSVpv(dp->device));
 	hv_store_const(h, "spindle", newSViv(dp->spindle));
+	hv_store_const(h, "todo", newSViv(dp->todo));
 
-	hv_store_const(h, "config",
-	  SvREFCNT_inc(
-	    SWIG_NewPointerObj(lookup_dumptype(dp->dtype_name),
-			       /* can't use $descriptor here.. */
-			       SWIGTYPE_p_dumptype_t, 0)));
+	if (dp->dtype_name) {
+	    hv_store_const(h, "config",
+	      SvREFCNT_inc(
+	        SWIG_NewPointerObj(lookup_dumptype(dp->dtype_name),
+			           /* can't use $descriptor here.. */
+			           SWIGTYPE_p_dumptype_t, 0)));
+	}
 
 	/* create an uplink ref to the host object */
 	hostref = get_host(hosts, hostclass, ifaces, ifaceclass, dp);
@@ -236,8 +249,8 @@ read_disklist_internal(
 	g_assert(SvTYPE(SvRV(*svp)) == SVt_PVHV);
 	SvREFCNT_inc(diskref);
 	hv_store(h, dp->name, strlen(dp->name), diskref, 0);
+      }
     }
-
     /* free_disklist frees the globals, too, which is not what we want.
      * So this leaks memory. */
     /* free_disklist(&list); */
@@ -255,19 +268,22 @@ unload_disklist_internal(void) {
 
 %perlcode %{
 
-sub do_on_match_disklist {
+sub match_disklist {
     my %params = @_;
     my $user_msg = $params{'user_msg'};
-    my $disk_cb = $params{'disk_cb'};
     my $exact_match = $params{'exact_match'};
     my @args = @{$params{'args'}};
+
+    return if !@args;
 
     if ($exact_match) {
 	@args = map { /^=/?$_:"=$_" } @args;
     }
 
     for my $disk (Amanda::Disklist::all_disks()) {
-	$disk->{'todo'} = -1;
+	if ($disk->{'todo'} == 1) {
+	    $disk->{'todo'} = -1;
+	}
     }
 
     my $prev_match = 0;
@@ -314,9 +330,11 @@ sub do_on_match_disklist {
 	if (!$match_a_disk) {
 	    if ($match_a_host == 1) {
 		if ($prev_match == 1) { # all disk of the previous host
-		    for my $disk (Amanda::Disklist::get_host($prevhost)->all_disks()) {
-			$disk->{'todo'} = 1;
-			$match_a_disk = 1;
+		    for my $disk (Amanda::Disklist::all_disks()) {
+			if (match_host($prevhost, $disk->{'host'}->{'hostname'})) {
+			    $disk->{'todo'} = 1;
+			    $match_a_disk = 1;
+			}
 		    }
 		    if (!match_a_disk) {
 			$user_msg->(Amanda::Disklist::Message->new(
@@ -360,9 +378,11 @@ sub do_on_match_disklist {
 
     if ($prev_match == 1) { # all disk of the previous host
 	$match_a_disk = 0;
-	for my $disk (Amanda::Disklist::get_host($prevhost)->all_disks()) {
-	    $disk->{'todo'} = 1;
-	    $match_a_disk = 1;
+	for my $disk (Amanda::Disklist::all_disks()) {
+	    if (match_host($prevhost, $disk->{'host'}->{'hostname'})) {
+		$disk->{'todo'} = 1;
+		$match_a_disk = 1;
+	    }
 	}
 
 	if (!$match_a_disk) {
@@ -379,6 +399,14 @@ sub do_on_match_disklist {
 	    $disk->{'todo'} = 0;
 	}
     }
+}
+
+sub do_on_match_disklist {
+    my %params = @_;
+    my $user_msg = $params{'user_msg'};
+    my $disk_cb = $params{'disk_cb'};
+
+    Amanda::Disklist::match_disklist(%params);
 
     for my $disk (Amanda::Disklist::all_disks()) {
 	if ($disk->{'todo'} == 1) {
@@ -421,12 +449,32 @@ our (%disks, %hosts, %interfaces);
 sub read_disklist {
     my %params = @_;
 
-    return read_disklist_internal(
-	($params{filename} or config_dir_relative(getconf($CNF_DISKFILE))),
+    my $errlev = read_disklist_internal(
+	($params{filename} or config_dir_relative(getconf($CNF_DISKFILE))));
+    if ($errlev >= CFGERR_ERRORS) {
+	return $errlev;
+    }
+    reset_disklist_internal(
 	\%disks, ($params{disk_class} or "Amanda::Disklist::Disk"),
 	\%hosts, ($params{host_class} or "Amanda::Disklist::Host"),
 	\%interfaces, ($params{interface_class} or "Amanda::Disklist::Interface"),
     );
+    return $errlev;
+}
+
+sub reset_disklist {
+    reset_disklist_internal(
+	\%disks, ($params{disk_class} or "Amanda::Disklist::Disk"),
+	\%hosts, ($params{host_class} or "Amanda::Disklist::Host"),
+	\%interfaces, ($params{interface_class} or "Amanda::Disklist::Interface"));
+}
+
+sub add_holding_to_disklist {
+    Amanda::Logfile::search_holding_disk();
+    reset_disklist_internal(
+	\%disks, ($params{disk_class} or "Amanda::Disklist::Disk"),
+	\%hosts, ($params{host_class} or "Amanda::Disklist::Host"),
+	\%interfaces, ($params{interface_class} or "Amanda::Disklist::Interface"));
 }
 
 sub unload_disklist {

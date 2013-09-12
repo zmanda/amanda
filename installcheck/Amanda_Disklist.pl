@@ -26,6 +26,10 @@ use Amanda::Config qw( :init :getconf );
 use Amanda::Disklist;
 use Installcheck::Config;
 
+# put the debug messages somewhere
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
+
 my $testconf;
 
 $testconf = Installcheck::Config->new();
