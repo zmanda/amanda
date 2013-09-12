@@ -335,6 +335,19 @@ write_cmdfile(
     file_lock_unlock(cmddatas->lock);
 }
 
+int
+add_cmd_in_memory(
+    cmddatas_t *cmddatas,
+    cmddata_t  *cmddata)
+{
+    cmddatas->max_id++;
+    cmddatas->max_id = cmddatas->max_id;
+    cmddata->id = cmddatas->max_id;
+
+    g_hash_table_insert(cmddatas->cmdfile,
+		        GINT_TO_POINTER(cmddatas->max_id), cmddata);
+    return cmddata->id;
+}
 void
 add_cmd_in_cmdfile(
     cmddatas_t *cmddatas,
@@ -476,3 +489,45 @@ holding_in_cmdfile(
 
     return cmd_holding.found;
 }
+
+typedef struct cmdfile_data_s {
+    char *ids;
+    char *holding_file;
+} cmdfile_data_t;
+
+static void
+cmdfile_flush(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    int id = GPOINTER_TO_INT(key);
+    cmddata_t *cmddata = value;
+    cmdfile_data_t *data = user_data;
+
+    if (cmddata->operation == CMD_FLUSH &&
+        g_str_equal(data->holding_file, cmddata->holding_file)) {
+        if (data->ids) {
+            char *ids = g_strdup_printf("%s,%d;%s", data->ids, id, cmddata->storage_dest);
+            g_free(data->ids);
+            data->ids = ids;
+        } else {
+            data->ids = g_strdup_printf("%d;%s", id, cmddata->storage_dest);
+        }
+    }
+    cmddata->working_pid = getpid();
+}
+
+char *
+cmdfile_get_ids_for_holding(
+    cmddatas_t *cmddatas,
+    char       *holding_file)
+{
+    cmdfile_data_t data;
+    data.ids = NULL;
+    data.holding_file = holding_file;
+    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_flush, &data);
+    return g_strdup(data.ids);
+}
+
+

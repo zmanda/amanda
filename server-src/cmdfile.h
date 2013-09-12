@@ -60,9 +60,11 @@ void unlock_cmdfile(cmddatas_t *cmddatas);
 cmddatas_t *read_cmdfile(char *filename);
 void close_cmdfile(cmddatas_t *cmddatas);
 void write_cmdfile(cmddatas_t *cmddatas);
+int add_cmd_in_memory(cmddatas_t *cmddatas, cmddata_t *cmddata);
 void add_cmd_in_cmdfile(cmddatas_t *cmddatas, cmddata_t *cmddata);
 void remove_cmd_in_cmdfile(cmddatas_t *cmddatas, int id);
 void change_cmd_in_cmdfile(cmddatas_t *cmddatas, int id, cmdstatus_t status, off_t size);
 void remove_working_in_cmdfile(cmddatas_t *cmddatas, pid_t pid);
 gboolean holding_in_cmdfile(cmddatas_t *cmddatas, char *holding_file);
+char *cmdfile_get_ids_for_holding(cmddatas_t *cmddatas, char *holding_file);
 

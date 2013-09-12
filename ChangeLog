@@ -1,3 +1,12 @@
+2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/cmdfile.c (add_cmd_in_memory,
+	  cmdfile_get_ids_for_holding): New functions.
+	* server-src/cmdfile.h (add_cmd_in_memory,
+	  cmdfile_get_ids_for_holding): Prototype for new functions.
+	* perl/Amanda/Cmdfile.swg: Perlify server-src/cmdfile.c
+	* perl/Amanda/Cmdfile.pod: Document it.
+	* perl/Makefile.am: Add Cmdfile module.
+
 2013-09-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Handle displayunit,
 	  add --detail, --summary --stats and --locale-independent-date-format,

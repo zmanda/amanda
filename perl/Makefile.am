@@ -200,6 +200,20 @@ MAINTAINERCLEANFILES += Amanda/Disklist.c Amanda/Disklist.pm
 endif
 EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm Amanda/Disklist.pod
 
+if WANT_SERVER
+# PACKAGE: Amanda::Cmdfile
+libCmdfiledir = $(amperldir)/auto/Amanda/Cmdfile
+libCmdfile_LTLIBRARIES = libCmdfile.la
+libCmdfile_la_SOURCES = Amanda/Cmdfile.c $(AMGLUE_SWG)
+libCmdfile_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libCmdfile_la_LIBADD = amglue/libamglue.la \
+	$(top_builddir)/server-src/libamserver.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Cmdfile.pm
+MAINTAINERCLEANFILES += Amanda/Cmdfile.c Amanda/Cmdfile.pm
+endif
+EXTRA_DIST += Amanda/Cmdfile.swg Amanda/Cmdfile.pm Amanda/Cmdfile.pod
+
 # PACKAGE: Amanda::Feature
 Amanda/Feature.pm: ../common-src/amfeatures.h
 Amanda/Feature.c: ../common-src/amfeatures.h
