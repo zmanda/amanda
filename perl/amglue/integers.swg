@@ -81,6 +81,8 @@
     if (err) croak(err);
 }
 
+%typedef unsigned pid_t;
+
 /* remaining types depend on the complier to optimize out constant sizeof() 
  * expressions.  The SWIG preprocessor can't perform calculations based on 
  * sizeof(). */
