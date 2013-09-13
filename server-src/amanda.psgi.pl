@@ -41,6 +41,7 @@ use Amanda::Paths;
 use Amanda::Process;
 use Amanda::Util qw( :constants );
 use Amanda::JSON::Amdump;
+use Amanda::JSON::Amflush;
 use Amanda::JSON::Config;
 use Amanda::JSON::Changer;
 use Amanda::JSON::DB::Catalog;
@@ -61,6 +62,8 @@ my $rpc = Amanda::JSON::RPC::Dispatcher->new;
 
 
 $rpc->register( 'Amanda::JSON::Amdump::run', \&Amanda::JSON::Amdump::run );
+
+$rpc->register( 'Amanda::JSON::Amflush::run', \&Amanda::JSON::Amflush::run );
 
 $rpc->register( 'Amanda::JSON::Config::getconf_byname', \&Amanda::JSON::Config::getconf_byname );
 $rpc->register( 'Amanda::JSON::Config::config_dir_relative', \&Amanda::JSON::Config::config_dir_relative );

@@ -20,8 +20,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES = 	libamserver.la
 
-sbin_PROGRAMS =		amadmin		amcheck		\
-			amflush
+sbin_PROGRAMS =		amadmin		amcheck
 
 amlibexec_PROGRAMS =	amindexd	amtrmidx	\
 			amtrmlog	driver		dumper		\
@@ -50,6 +49,7 @@ sbin_SCRIPTS_PERL = \
 	    amtape \
 	    amvault \
 	    amdump \
+	    amflush \
 	    amstatus
 if WANT_RESTORE
 amlibexec_SCRIPTS_PERL += \

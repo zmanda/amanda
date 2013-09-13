@@ -1,4 +1,14 @@
 2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amflush.pm: Perl module with amflush functionnality.
+	* perl/Amanda/JSON/Amflush.pm: New JSON module for running a flush.
+	* perl/Amanda/Message.pm: Add Amanda::Amflush::Message.
+	* perl/Makefile.am: Add Amanda/Amflush.pm, Amanda/JSON/Amflush.pm
+	* server-src/amflush.c: Remove.
+	* server-src/amflush.pl: New amflush programthat use the perl module.
+	* server-src/Makefile.am: Add amflush perl script.
+	* server-src/amanda.psgi.pl: Register Amanda::JSON::Amflush::run.
+
+2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Amdump.pm: Add message code 2000002.
 	* perl/Amanda/Config.swg: Add message code 1500002.
 	* perl/Amanda/JSON/Amdump.pm: Use message code 2000002.
