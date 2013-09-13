@@ -1,4 +1,7 @@
 2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Disklist.swg: Fix.
+
+2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cmdfile.swg: Fix.
 
 2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>

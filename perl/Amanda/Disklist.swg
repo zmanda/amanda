@@ -34,7 +34,7 @@
 
 %perlcode %{
 use Amanda::Debug qw( :logging );
-use Amanda::Config qw( :getconf config_dir_relative );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw ( match_disk match_host );
 use Amanda::Logfile;
 %}
@@ -254,8 +254,6 @@ reset_disklist_internal(
     /* free_disklist frees the globals, too, which is not what we want.
      * So this leaks memory. */
     /* free_disklist(&list); */
-
-    return 0;
 }
 %}
 
@@ -451,7 +449,7 @@ sub read_disklist {
 
     my $errlev = read_disklist_internal(
 	($params{filename} or config_dir_relative(getconf($CNF_DISKFILE))));
-    if ($errlev >= CFGERR_ERRORS) {
+    if ($errlev >= $CFGERR_ERRORS) {
 	return $errlev;
     }
     reset_disklist_internal(
