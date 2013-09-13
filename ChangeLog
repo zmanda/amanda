@@ -1,4 +1,11 @@
-2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amdump.pm: Add message code 2000002.
+	* perl/Amanda/Config.swg: Add message code 1500002.
+	* perl/Amanda/JSON/Amdump.pm: Use message code 2000002.
+	* perl/Amanda/JSON/Config.pm: Use message code 1500002.
+	* perl/Amanda/Message.pm: Fix documentation.
+
+2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Disklist.swg: Fix.
 
 2013-09-12  Jean-Louis Martineau <martineau@zmanda.com>

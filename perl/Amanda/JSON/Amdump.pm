@@ -75,6 +75,7 @@ sub run {
     my @result_messages = Amanda::JSON::Config::config_init(@_);
     return \@result_messages if @result_messages;
 
+    Amanda::Util::set_pname("amdump");
     my $user_msg = sub {
 	my $msg = shift;
 	push @result_messages, $msg;
@@ -90,6 +91,13 @@ sub run {
 	debug("exiting with code $exit_code");
 	exit($exit_code);
     }
+
+    push @result_messages, Amanda::Amdump::Message->new(
+	source_filename => __FILE__,
+	source_line     => __LINE__,
+	code         => 2000002,
+	severity     => $Amanda::Message::INFO);
+
     return \@result_messages;
 }
 

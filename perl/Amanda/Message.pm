@@ -41,7 +41,7 @@ Most API use or should be converted to use it.
    # create a message
    my $msg = Amanda::Message->new(source_filename => __FILE__,
 				  source_line => __LINE__,
-				  severity    => $AM_CRITICAL;
+				  severity    => $CRITICAL;
 				  code        => 1,
 				  message     => "This is a message",
 				  label       => $label);
@@ -55,12 +55,12 @@ message was generated.
 
 The 'severity' of the message, the default is G_CRITICAL, it must be one of
 these predefined constants:
-  AM_ERROR
-  AM_CRITICAL
-  AM_WARNING
-  AM_MESSAGE
-  AM_INFO
-  AM_DEBUG
+  ERROR
+  CRITICAL
+  WARNING
+  MESSAGE
+  INFO
+  DEBUG
 
 The 'code' must be unique, it identify the message (0 to 3 are used for message
 not handled by Amanda::Message):
@@ -79,6 +79,7 @@ not handled by Amanda::Message):
  1800000  Amanda::Status::Message
  1900000  Amanda::Report::Message
  2000000  Amanda::Amdump::Message
+ 2100000  Amanda::Cmdfile::Message
 
 general keys:
   code            =>

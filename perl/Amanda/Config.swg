@@ -1092,6 +1092,8 @@ sub local_message {
 	return "config warning: $self->{'cfgerror'}";
     } elsif ($self->{'code'} == 1500001) {
 	return "config error: $self->{'cfgerror'}";
+    } elsif ($self->{'code'} == 1500002) {
+	return "No config specified";
     }
 }
 %}

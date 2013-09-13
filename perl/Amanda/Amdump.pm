@@ -33,6 +33,8 @@ sub local_message {
 	return "The trace log file is '$self->{'trace_log'}'";
     } elsif ($self->{'code'} == 2000001) {
 	return "The amdump log file is '$self->{'amdump_log'}'";
+    } elsif ($self->{'code'} == 2000002) {
+	return "Running a dump";
     }
 }
 
@@ -287,11 +289,9 @@ sub roll_amdump_logs {
     }
 }
 
-# now do the meat of the amdump work; these operations are ported directly
-# from the old amdump.sh script
-
 my $ctrl_c = 0;
 sub _interrupt {
+    $ctrl_c = 1;
 }
 
 sub run {

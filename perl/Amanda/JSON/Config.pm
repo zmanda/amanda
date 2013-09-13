@@ -85,12 +85,21 @@ sub config_init {
 
     my @result_messages;
 
-    Amanda::Config::config_uninit();
-    my $g_config_overrides = Amanda::Config::new_config_overrides(@{$config_overrides} + 1);
-    for my $co (@{$config_overrides}) {
-	add_config_override_opt($g_config_overrides, $co);
+    if (!defined $config_name) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500002);
     }
-    Amanda::Config::set_config_overrides($g_config_overrides);
+
+    Amanda::Config::config_uninit();
+    if (@{$config_overrides}) {
+	my $g_config_overrides = Amanda::Config::new_config_overrides(@{$config_overrides} + 1);
+	for my $co (@{$config_overrides}) {
+	    add_config_override_opt($g_config_overrides, $co);
+	}
+	Amanda::Config::set_config_overrides($g_config_overrides);
+    }
     Amanda::Config::config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
 
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
@@ -103,8 +112,6 @@ sub config_init {
 						? 1500000 : 1500001,
 				cfgerror => $cfgerr);
 	}
-	#die [1000, "failed to parse config file", $config_name];
-	#die "failed to parse config file";
     }
 
     return @result_messages;
