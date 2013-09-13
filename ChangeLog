@@ -1,4 +1,9 @@
 2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amflush.pm: Fix.
+	* perl/Amanda/Cmdfile.swg: Fix for newer swig.
+	* server-src/cmdfile.c: Cleanup.
+
+2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Amflush.pm: Perl module with amflush functionnality.
 	* perl/Amanda/JSON/Amflush.pm: New JSON module for running a flush.
 	* perl/Amanda/Message.pm: Add Amanda::Amflush::Message.

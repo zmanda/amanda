@@ -49,8 +49,11 @@ typedef enum cmdstatus_e {
     CMD_PARTIAL
 } cmdstatus_t;
 
-%rename(Cmddata) cmddata_t;
-typedef struct cmddata_s {
+%{
+typedef cmddata_t Cmddata;
+%}
+
+typedef struct {
     int             id;
     cmdoperation_t  operation;
     char           *config;
@@ -70,18 +73,73 @@ typedef struct cmddata_s {
     %extend {
 	/* disable destructor */
 	/* they are freed when closing the cmddatas */
-	~cmddata_t() {
+	~Cmddata() {
 	    return;
 	}
 
     }
-} cmddata_t;
+} Cmddata;
+
+%{
+typedef cmddatas_t Cmdfile;
+%}
+
+typedef struct {
+    int        version;
+    int        max_id;
+    file_lock *lock;
+    cmdfile_t  cmdfile;
+
+    %extend {
+	/* constructor */
+	Cmdfile(char *filename) {
+	    return read_cmdfile(filename);
+	}
+
+	/* destructor */
+	~Cmdfile() {
+	    return close_cmdfile(self);
+	}
+
+	void write() {
+	    return write_cmdfile(self);
+	}
+
+	void unlock() {
+	    return unlock_cmdfile(self);
+	}
+
+	int add_to_memory(Cmddata *cmddata) {
+	    return add_cmd_in_memory(self, cmddata);
+	}
+
+	void add_to_file(Cmddata *cmddata) {
+	    add_cmd_in_cmdfile(self, cmddata);
+	}
+
+	gboolean has_holding(char *holding_file) {
+	    return holding_in_cmdfile(self, holding_file);
+	}
+
+	char *get_ids_for_holding(char *holding_file) {
+	    return cmdfile_get_ids_for_holding(self, holding_file);
+	}
+    }
+} Cmdfile;
+
 
 %perlcode %{
-
-package Amanda::Cmdfile::Cmddata;
-
+# SWIG produces a sub-package for the cmddatas_t "class", in this case named
+# Amanda::Cmdfile::cmddatas_t.  For user convenience, we allow
+# Amanda::Cmdfile->new(..) to do the same thing.  This is a wrapper function,
+# and not just a typeglob assignment, because we want to get the right blessing.
+package Amanda::Cmdfile;
 sub new {
+    my $pkg = shift;
+    Amanda::Cmdfile::Cmdfile->new(@_);
+}
+
+sub new_Cmddata {
     my $class = shift;
     my %params = @_;
 
@@ -89,7 +147,7 @@ sub new {
     $params{'todo'} ||= 0;
     $params{'size'} ||= 0;
 
-    my $cmddata = Amanda::Cmdfile::cmddata_t->new_Cmddata();
+    my $cmddata = Amanda::Cmdfile::Cmddata->new();
     $cmddata->{'operation'}      = $params{'operation'};
     $cmddata->{'config'}         = $params{'config'};
     $cmddata->{'storage'}        = $params{'storage'};
@@ -108,63 +166,6 @@ sub new {
     return $cmddata;
 };
 
-%}
-
-%rename(Cmdfile) cmddatas_t;
-typedef struct cmdatas_s {
-    int        version;
-    int        max_id;
-    file_lock *lock;
-    cmdfile_t  cmdfile;
-
-    %extend {
-	/* constructor */
-	cmddatas_t(char *filename) {
-	    return read_cmdfile(filename);
-	}
-
-	/* destructor */
-	~cmddatas_t() {
-	    return close_cmdfile(self);
-	}
-
-	void write() {
-	    return write_cmdfile(self);
-	}
-
-	void unlock() {
-	    return unlock_cmdfile(self);
-	}
-
-	int add_to_memory(cmddata_t *cmddata) {
-	    return add_cmd_in_memory(self, cmddata);
-	}
-
-	void add_to_file(cmddata_t *cmddata) {
-	    add_cmd_in_cmdfile(self, cmddata);
-	}
-
-	gboolean has_holding(char *holding_file) {
-	    return holding_in_cmdfile(self, holding_file);
-	}
-
-	char *get_ids_for_holding(char *holding_file) {
-	    return cmdfile_get_ids_for_holding(self, holding_file);
-	}
-    }
-} cmddatas_t;
-
-
-%perlcode %{
-# SWIG produces a sub-package for the cmddatas_t "class", in this case named
-# Amanda::Cmdfile::cmddatas_t.  For user convenience, we allow
-# Amanda::Cmdfile->new(..) to do the same thing.  This is a wrapper function,
-# and not just a typeglob assignment, because we want to get the right blessing.
-package Amanda::Cmdfile;
-sub new {
-    my $pkg = shift;
-    Amanda::Cmdfile::cmddatas_t->new_Cmdfile(@_);
-}
 %}
 
 %perlcode %{

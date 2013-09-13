@@ -238,7 +238,7 @@ sub get_flush {
 	if (!$ids) {
 	    my $storages = getconf($CNF_STORAGE);
 	    my $storage_name = $storages->[0];
-	    my $cmddata = Amanda::Cmdfile::Cmddata->new(
+	    my $cmddata = Amanda::Cmdfile->new_Cmddata(
 		operation      => $Amanda::Cmdfile::CMD_FLUSH,
 		config         => get_config_name(),
 		holding_file   => $hfile,

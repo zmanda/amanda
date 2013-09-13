@@ -341,11 +341,10 @@ add_cmd_in_memory(
     cmddata_t  *cmddata)
 {
     cmddatas->max_id++;
-    cmddatas->max_id = cmddatas->max_id;
     cmddata->id = cmddatas->max_id;
 
     g_hash_table_insert(cmddatas->cmdfile,
-		        GINT_TO_POINTER(cmddatas->max_id), cmddata);
+		        GINT_TO_POINTER(cmddata->id), cmddata);
     return cmddata->id;
 }
 void
