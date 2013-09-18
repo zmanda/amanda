@@ -2176,6 +2176,7 @@ read_block(
 	amfree(current_line);
 	current_char = NULL;
     }
+    token_pushed = 0;
     amfree(key_ovr);
 
 }
@@ -6654,6 +6655,7 @@ apply_config_overrides(
 
 	amfree(current_line);
 	current_char = NULL;
+	token_pushed = 0;
     }
 
     return cfgerr_level;
