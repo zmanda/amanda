@@ -104,6 +104,7 @@ struct _S3Device {
     /* The S3 access information. */
     char *secret_key;
     char *access_key;
+    char *session_token;
     char *user_token;
 
     /* The Openstack swift information. */
@@ -231,8 +232,10 @@ static DeviceClass *parent_class = NULL;
 /* Authentication information for Amazon S3. Both of these are strings. */
 static DevicePropertyBase device_property_s3_access_key;
 static DevicePropertyBase device_property_s3_secret_key;
+static DevicePropertyBase device_property_s3_session_token;
 #define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
 #define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
+#define PROPERTY_S3_SESSION_TOKEN (device_property_s3_session_token.ID)
 
 /* Authentication information for Openstack Swift. Both of these are strings. */
 static DevicePropertyBase device_property_swift_account_id;
@@ -485,6 +488,10 @@ static gboolean s3_device_set_access_key_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_secret_key_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_session_token_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1197,6 +1204,9 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_access_key,
                                       G_TYPE_STRING, "s3_access_key",
        "Access key ID to authenticate with Amazon S3");
+    device_property_fill_and_register(&device_property_s3_session_token,
+                                      G_TYPE_STRING, "s3_session_token",
+       "Session token to authenticate with Amazon S3");
     device_property_fill_and_register(&device_property_swift_account_id,
                                       G_TYPE_STRING, "swift_account_id",
        "Account ID to authenticate with openstack swift");
@@ -1451,6 +1461,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_secret_key_fn);
 
+    device_class_register_property(device_class, PROPERTY_S3_SESSION_TOKEN,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_session_token_fn);
+
     device_class_register_property(device_class, PROPERTY_SWIFT_ACCOUNT_ID,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
@@ -1680,6 +1695,19 @@ s3_device_set_secret_key_fn(Device *p_self, DevicePropertyBase *base,
 
     amfree(self->secret_key);
     self->secret_key = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_session_token_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->session_token);
+    self->session_token = g_value_dup_string(val);
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
@@ -2468,6 +2496,7 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->prefix) g_free(self->prefix);
     if(self->access_key) g_free(self->access_key);
     if(self->secret_key) g_free(self->secret_key);
+    if(self->session_token) g_free(self->session_token);
     if(self->swift_account_id) g_free(self->swift_account_id);
     if(self->swift_access_key) g_free(self->swift_access_key);
     if(self->username) g_free(self->username);
@@ -2704,6 +2733,7 @@ static gboolean setup_handle(S3Device * self) {
 	    self->s3t[thread].curl_buffer.buffer_len = 0;
 	    self->s3t[thread].now_mutex = g_mutex_new();
             self->s3t[thread].s3 = s3_open(self->access_key, self->secret_key,
+					   self->session_token,
 					   self->swift_account_id,
 					   self->swift_access_key,
 					   self->host, self->service_path,

@@ -494,6 +494,10 @@ glacier.
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>S3_SESSION_TOKEN</term><listitem>
+ (read-write) This property gives the Amazon S3 session token used to access the service.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_BUCKET_LOCATION</term><listitem>
  (read-write) Location constraint for buckets on Amazon S3.
 As of this writing, it can be set to "*" (US Standard, i.e. lowest-latency

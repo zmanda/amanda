@@ -139,6 +139,7 @@ struct S3Handle {
 
     char *access_key;
     char *secret_key;
+    char *session_token;
     char *user_token;
     char *swift_account_id;
     char *swift_access_key;
@@ -927,6 +928,14 @@ authenticate_request(S3Handle *hdl,
 	    g_string_append(auth_string, "\n");
 	}
 
+	/* CanonicalizedAmzHeaders, sorted lexicographically */
+	if (is_non_empty_string(hdl->session_token)) {
+	    g_string_append(auth_string, AMAZON_SECURITY_HEADER);
+	    g_string_append(auth_string, ":");
+	    g_string_append(auth_string, hdl->session_token);
+	    g_string_append(auth_string, "\n");
+	}
+
 	if (g_str_equal(verb,"PUT") &&
 	    is_non_empty_string(hdl->server_side_encryption)) {
 	    g_string_append(auth_string, AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
@@ -992,6 +1001,14 @@ authenticate_request(S3Handle *hdl,
 
 	    buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s",
 				  STS_PRODUCT_TOKEN);
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
+	}
+
+	if (is_non_empty_string(hdl->session_token)) {
+	    /* Devpay headers are included in hash. */
+	    buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s",
+				  hdl->session_token);
 	    headers = curl_slist_append(headers, buf);
 	    g_free(buf);
 	}
@@ -2540,6 +2557,7 @@ get_openstack_swift_api_v2_setting(
 S3Handle *
 s3_open(const char *access_key,
         const char *secret_key,
+        const char *session_token,
         const char *swift_account_id,
         const char *swift_access_key,
         const char *host,
@@ -2581,6 +2599,8 @@ s3_open(const char *access_key,
 	hdl->access_key = g_strdup(access_key);
 	g_assert(secret_key);
 	hdl->secret_key = g_strdup(secret_key);
+	/* NULL is okay */
+	hdl->session_token = g_strdup(session_token);
     } else if (s3_api == S3_API_SWIFT_1) {
 	g_assert(swift_account_id);
 	hdl->swift_account_id = g_strdup(swift_account_id);
@@ -2708,6 +2728,7 @@ s3_free(S3Handle *hdl)
     if (hdl) {
         g_free(hdl->access_key);
         g_free(hdl->secret_key);
+        g_free(hdl->session_token);
         g_free(hdl->swift_account_id);
         g_free(hdl->swift_access_key);
         g_free(hdl->content_type);

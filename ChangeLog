@@ -1,4 +1,10 @@
 2013-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Add SESSION-TOKEN property.
+	* device-src/s3.h (s3_open): Add session_token argument.
+	* device-src/s3-device.c: Add SESSION-TOKEN property.
+	* man/xml-source/amanda-devices.7.xml: Document the new property.
+
+2013-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix parsing of config override.
 
 2013-09-13  Jean-Louis Martineau <martineau@zmanda.com>

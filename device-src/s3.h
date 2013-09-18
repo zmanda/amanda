@@ -289,6 +289,7 @@ s3_init(void);
  */
 S3Handle *
 s3_open(const char * access_key, const char *secret_key,
+	const char *session_token,
 	const char *swift_account_id, const char *swift_access_key,
 	const char *host,
         const char *service_path, gboolean use_subdomain,
