@@ -1,4 +1,7 @@
 2013-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Process.pm: Use Amanda::Debug.
+
+2013-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix parsing of config override.
 
 2013-09-05  Jean-Louis Martineau <martineau@zmanda.com>

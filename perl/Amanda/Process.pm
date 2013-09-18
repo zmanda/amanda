@@ -27,6 +27,7 @@ use Exporter;
 use vars qw( @ISA @EXPORT_OK );
 use File::Basename;
 use Amanda::Constants;
+use Amanda::Debug qw( debug );
 @ISA = qw( Exporter );
 
 =head1 NAME
