@@ -1,4 +1,8 @@
 2013-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c,
+	  common-src/conffile.h: Change val_t.size to be a size_t.
+
+2013-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Benjamin Kerensa
 	* oldrecover-src/extract_list.c: Typo.
 

@@ -284,7 +284,7 @@ typedef struct val_s {
         gint64		int64;
         double		r;
         char		*s;
-        ssize_t		size;
+        size_t		size;
         time_t		t;
         float		rate[2];
         exinclude_t	exinclude;

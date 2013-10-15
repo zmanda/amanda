@@ -1276,7 +1276,7 @@ conf_var_t server_var [] = {
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int         , CNF_ETIMEOUT             , validate_non_zero },
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int         , CNF_CTIMEOUT             , validate_positive },
-   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, NULL },
    { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
    { CONF_TAPER_PARALLEL_WRITE , CONFTYPE_INT      , read_int         , CNF_TAPER_PARALLEL_WRITE , NULL },
@@ -4759,8 +4759,9 @@ validate_nonnegative(
 	    conf_parserror(_("%s must be nonnegative"), get_token_name(np->token));
 	break;
     case CONFTYPE_SIZE:
-	if(val_t__size(val) < 0)
-	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	// Can't be negative
+	//if(val_t__size(val) < 0)
+	//    conf_parserror(_("%s must be positive"), get_token_name(np->token));
 	break;
     default:
 	conf_parserror(_("validate_nonnegative invalid type %d\n"), val->type);
@@ -7713,7 +7714,7 @@ val_t_display_strs(
 	break;
 
     case CONFTYPE_SIZE:
-	buf[0] = vstrallocf("%zd ", (ssize_t)val_t__size(val));
+	buf[0] = vstrallocf("%zu ", (ssize_t)val_t__size(val));
 	i = strlen(buf[0]) - 1;
 	if (print_unit && val->unit == CONF_UNIT_K) {
 	    buf[0][i] = 'K';
