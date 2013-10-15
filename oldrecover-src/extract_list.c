@@ -1546,7 +1546,7 @@ extract_files_setup(
 	buffer[nread] = '\0';
         if (sscanf(buffer, "CONNECT %hu\n",
 		(unsigned short *)&data_port) != 1) {
-	    error(_("Recieved invalid port number message from control socket: %s\n"),
+	    error(_("Received invalid port number message from control socket: %s\n"),
                   buffer);
 	    /*NOTREACHED*/
         }
