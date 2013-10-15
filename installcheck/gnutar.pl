@@ -86,16 +86,12 @@ my ($fc14, $fc15);
     if ($uname =~ /\.fc14\./) {
 	$fc14 = 1;
     }
-    if ($uname =~ /\.fc15\./) {
-	$fc15 = 1;
-    }
-    if ($uname =~ /\.fc16\./) { #like fc15
-	$fc15 = 1;
-    }
-    if ($uname =~ /\.fc17\./) { #like fc15
-	$fc15 = 1;
-    }
-    if ($uname =~ /\.fc18\./) { #like fc15
+    if ($uname =~ /\.fc15\./ ||
+        $uname =~ /\.fc16\./ ||
+        $uname =~ /\.fc17\./ ||
+        $uname =~ /\.fc18\./ ||
+        $uname =~ /\.fc19\./ ||
+        $uname =~ /\.fc2\d\./) {
 	$fc15 = 1;
     }
 }
