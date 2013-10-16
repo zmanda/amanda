@@ -1,3 +1,6 @@
+2013-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcryptsimple.pl: Fix for no gpg-agent or gpg2.
+
 2013-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for fc19.
 
