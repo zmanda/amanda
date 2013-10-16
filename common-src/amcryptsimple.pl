@@ -57,6 +57,10 @@ $ENV{'GNUPGHOME'} = "$AMANDA_HOME/.gnupg";
 sub do_gpg_agent() {
     my $path=`which gpg-agent 2>/dev/null`;
     chomp $path;
+    if ($path =~ /^no gpg-agent/) {
+	return "";
+    }
+
     if (-x $path) {
 	return "gpg-agent --daemon --";
     }
@@ -65,10 +69,10 @@ sub do_gpg_agent() {
 
 sub which_gpg() {
     my $path=`which gpg2 2>/dev/null`;
-    if (!$path) {
+    if (!$path || $path =~ /no gpg2/) {
         $path=`which gpg 2>/dev/null`;
     }
-    if (!$path) {
+    if (!$path || $path =~ /no gpg/) {
         die("no gpg or gpg2");
     }
     chomp $path;
