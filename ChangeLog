@@ -1,4 +1,7 @@
 2013-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Tag 'file changed as we read it' as GOOD.
+
+2013-10-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Do not load the config for version subcommand.
 
 2013-10-16  Jean-Louis Martineau <martineau@zmanda.com>
