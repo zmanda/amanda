@@ -1,3 +1,6 @@
+2013-10-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: Add dependencis for genversion.$(OBJEXT)
+
 2013-10-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Tag 'file changed as we read it' as GOOD.
 
