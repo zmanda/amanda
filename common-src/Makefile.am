@@ -143,6 +143,8 @@ genversion_SOURCES = genversion.c svn-info.h
 genversion_LDADD = $(libamanda_la_LIBADD)	\
 	../gnulib/libgnu.la
 
+genversion.$(OBJEXT): $(genversion_SOURCES) genversion.h
+
 genversion.h: $(top_builddir)/config.status
 	-rm -f $@ $@.new
 	echo '#define CC "$(CC)"' > $@.new
