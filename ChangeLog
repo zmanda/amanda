@@ -1,3 +1,6 @@
+2013-10-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: amandaify property name.
+
 2013-10-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/Makefile.am: Add dependencis for genversion.$(OBJEXT)
 

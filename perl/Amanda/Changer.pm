@@ -2049,7 +2049,7 @@ sub _get_implicit_properties {
     # that the property is implicit and that a failure to set it is not fatal.
     # The flag is used by configure_device.
     if (tapetype_seen($tapetype, $TAPETYPE_LENGTH)) {
-	$props->{'max_volume_usage'} = {
+	$props->{Amanda::Config::amandaify_property_name('max-volume-usage')} = {
 	    optional => 1,
 	    priority => 0,
 	    append => 0,
@@ -2059,7 +2059,7 @@ sub _get_implicit_properties {
     }
 
     if (tapetype_seen($tapetype, $TAPETYPE_READBLOCKSIZE)) {
-	$props->{'read_block_size'} = {
+	$props->{Amanda::Config::amandaify_property_name('read-block-size')} = {
 	    optional => "warn", # optional, but give a warning
 	    priority => 0,
 	    append => 0,
@@ -2069,7 +2069,7 @@ sub _get_implicit_properties {
     }
 
     if (tapetype_seen($tapetype, $TAPETYPE_BLOCKSIZE)) {
-	$props->{'block_size'} = {
+	$props->{Amanda::Config::amandaify_property_name('block-size')} = {
 	    optional => 0,
 	    priority => 0,
 	    append => 0,
