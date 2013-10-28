@@ -1517,12 +1517,8 @@ sub make_new_meta_label {
     if ($npercents == 0 and $nexclamations == 0) {
 	return (undef, "Can't generate meta-label: no '%' or '!' in meta-autolabel")
     } else {
-	my %existing_meta_labels;
-	foreach my $tle (@{$tl->{'tles'}}) {
-	    $existing_meta_labels{$tle->{'meta'}} = 1 if defined $tle->{'meta'};
-	}
-	#my %existing_meta_labels =
-	#    map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
+	my %existing_meta_labels =
+	    map { $_->{'meta'} => 1 } grep { defined $_->{'meta'} } @{$tl->{'tles'}};
 
 	my $nlabels;
 	my $i = 0;

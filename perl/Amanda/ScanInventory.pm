@@ -627,23 +627,32 @@ sub volume_is_labelable {
 	     $f_type != $Amanda::Header::F_TAPESTART) {
 	return 0;
     } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
-	     $f_type == $Amanda::Header::F_TAPESTART and
-	     !match_labelstr($self->{'labelstr'}, $autolabel, $label,
-			     $barcode, $meta)) {
-	if (!$autolabel->{'other_config'}) {
-#	    $self->_user_msg(slot_result  => 1,
-#			     label        => $label,
-#			     labelstr     => $self->{'labelstr'}->{'template'},
-#			     does_not_match_labelstr => 1,
-#			     slot         => $slot);
-	    return 0;
-	}
-    } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
 	     $f_type == $Amanda::Header::F_TAPESTART) {
+	if (!match_labelstr($self->{'labelstr'}, $autolabel, $label,
+			    $barcode, $meta)) {
+	    if (!$autolabel->{'other_config'}) {
+#	        $self->_user_msg(slot_result  => 1,
+#			         label        => $label,
+#			         labelstr     => $self->{'labelstr'}->{'template'},
+#			         does_not_match_labelstr => 1,
+#			         slot         => $slot);
+		return 0;
+	    }
+	} else {
+	    my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	    if (!$vol_tle) {
+#		$self->_user_msg(slot_result     => 1,
+#				 label           => $label,
+#				 not_in_tapelist => 1,
+#				 slot            => $slot);
+		return 0;
+	    }
+	}
     }
 
     return 1;
 }
+
 package Amanda::ScanInventory::Config;
 
 sub new {
