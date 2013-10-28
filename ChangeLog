@@ -1,4 +1,7 @@
 2013-10-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: Change features order to match 3.3 branch.
+
+2013-10-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix perl warning.
 	* perl/Amanda/ScanInventory.pm: Check for label not in tapelist.
 

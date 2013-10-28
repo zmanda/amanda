@@ -194,11 +194,11 @@ typedef enum {
     fe_application_client_name,
     fe_script_client_name,
     fe_dumptype_property,
+    fe_sendbackup_state,
     fe_sendbackup_crc,
     fe_amrecover_crc_in_header,
     fe_amrecover_data_status,
     fe_amrecover_data_crc,
-    fe_sendbackup_state,
 
     fe_amrecover_storage_in_marshall,
     fe_amidxtaped_storage_in_marshall,
