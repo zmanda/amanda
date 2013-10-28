@@ -1408,7 +1408,7 @@ sub make_new_meta_label {
     (my $sprintf_pat = $template) =~ s/(%+)/"%0" . length($1) . "d"/e;
 
     my %existing_meta_labels =
-	map { $_->{'meta'} => 1 } @{$tl->{'tles'}};
+	map { $_->{'meta'} => 1 } grep { defined $_->{'meta'} } @{$tl->{'tles'}};
 
     my ($i, $meta);
     for ($i = 1; $i < $nlabels; $i++) {

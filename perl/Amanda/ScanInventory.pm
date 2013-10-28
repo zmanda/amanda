@@ -588,15 +588,25 @@ sub volume_is_labelable {
 			     slot         => $slot);
 	return 0;
     } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
-	     $f_type == $Amanda::Header::F_TAPESTART and
-	     $label !~ /$self->{'labelstr'}/) {
-	if (!$autolabel->{'other_config'}) {
-	    $self->_user_msg(slot_result  => 1,
-			     label        => $label,
-			     labelstr     => $self->{'labelstr'},
-			     does_not_match_labelstr => 1,
-			     slot         => $slot);
-	    return 0;
+	     $f_type == $Amanda::Header::F_TAPESTART) {
+	if ($label !~ /$self->{'labelstr'}/) {
+	    if (!$autolabel->{'other_config'}) {
+		$self->_user_msg(slot_result  => 1,
+				 label        => $label,
+				 labelstr     => $self->{'labelstr'},
+				 does_not_match_labelstr => 1,
+				 slot         => $slot);
+		return 0;
+	    }
+	} else {
+	   my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	   if (!$vol_tle) {
+		$self->_user_msg(slot_result  => 1,
+				 label        => $label,
+				 not_in_tapelist => 1,
+				 slot         => $slot);
+		return 0;
+	   }
 	}
     }
 
