@@ -2140,7 +2140,7 @@ ndmp_device_init(NdmpDevice *self)
     device_set_simple_property(dself, PROPERTY_INDIRECT,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
     g_value_unset(&response);
-    self->indirect = FALSE;
+    self->indirect = TRUE;
 
     self->indirecttcp_sock = -1;
 }
