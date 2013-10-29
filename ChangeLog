@@ -1,3 +1,7 @@
+2013-10-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: INDIRECT property default ot yes.
+	* man/xml-source/amanda-devices.7.xml: Document it.
+
 2013-10-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix perl warning.
 	* perl/Amanda/ScanInventory.pm: Check for label not in tapelist.

@@ -700,8 +700,8 @@ access the NDMP server.  The default for both is "ndmp".</para>
 <variablelist>
  <!-- ==== -->
 <varlistentry><term>INDIRECT</term><listitem>
-(read-write) Set to "yes" if the ndmp server doesn't allow to set a window length to 0.
-The default is "no".
+(read-write) The default in "yes". You can set it to "no" if the ndmp server
+allow to set a window length to 0.
 </listitem></varlistentry>
  <!-- ==== -->
 <varlistentry><term>NDMP_AUTH</term><listitem>
