@@ -1,3 +1,7 @@
+2013-10-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Unlock the abort_mutex when wait waiting
+	  for the wait_thread thread.
+
 2013-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: INDIRECT property default ot yes.
 	* man/xml-source/amanda-devices.7.xml: Document it.
