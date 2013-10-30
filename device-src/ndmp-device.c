@@ -1210,7 +1210,9 @@ accept_impl(
 	    g_cond_wait(self->abort_cond, self->abort_mutex);
 	}
 	self->cancel = TRUE;
+	g_mutex_unlock(self->abort_mutex);
 	state = GPOINTER_TO_INT(g_thread_join(wait_thread));
+	g_mutex_lock(self->abort_mutex);
 
 	if (*cancelled) {
 	    result = 2;
