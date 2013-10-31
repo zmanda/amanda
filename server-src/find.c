@@ -54,35 +54,28 @@ static GStringChunk *string_chunk = NULL;
 
 find_result_t * find_dump(disklist_t* diskqp) {
     char *conf_logdir, *logfile = NULL;
-    int tape, tape1, maxtape, logs;
+    int tape, maxtape, logs;
     unsigned seq;
-    tape_t *tp, *tp1;
+    tape_t *tp;
     find_result_t *output_find = NULL;
-    gboolean *tape_seen = NULL;
+    GHashTable *tape_seen = g_hash_table_new(g_str_hash, g_str_equal);
 
     if (string_chunk == NULL) {
 	string_chunk = g_string_chunk_new(32768);
     }
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
-    tape_seen = g_new0(gboolean, maxtape+1);
 
     for(tape = 1; tape <= maxtape; tape++) {
 
-	if (tape_seen[tape] == 1)
-	    continue;
 	tp = lookup_tapepos(tape);
 	if(tp == NULL) continue;
 
-	/* find all tape with the same datestamp */
-	for (tape1 = tape; tape1 <= maxtape; tape1++) {
-	    tp1 = lookup_tapepos(tape1);
-	    if (tp1 == NULL) continue;
-	    if (!g_str_equal(tp->datestamp, tp1->datestamp))
-		continue;
-
-	    tape_seen[tape1] = 1;
+	/* Do not search the log file if we already searched that datestamp */
+	if (g_hash_table_lookup(tape_seen, tp->datestamp)) {
+	    continue;
 	}
+	g_hash_table_insert(tape_seen, tp->datestamp, GINT_TO_POINTER(1));
 
 	/* search log files */
 
@@ -127,7 +120,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
             }
 	}
     }
-    g_free(tape_seen);
+    g_hash_table_destroy(tape_seen);
     amfree(logfile);
     amfree(conf_logdir);
 
