@@ -1,4 +1,7 @@
 2013-10-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Use hash table instead of re-scanning a list.
+
+2013-10-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck-device.pl: Output DATA-PATH
 	* server-src/amcheck.c: Check device data-path against dle data-path.
 
