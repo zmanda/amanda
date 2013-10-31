@@ -1,3 +1,7 @@
+2013-10-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck-device.pl: Output DATA-PATH
+	* server-src/amcheck.c: Check device data-path against dle data-path.
+
 2013-10-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: Unlock the abort_mutex when wait waiting
 	  for the wait_thread thread.

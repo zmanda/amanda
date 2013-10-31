@@ -81,6 +81,8 @@ static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static char *displayunit;
 static long int unitdivisor;
+static gboolean dev_amanda_data_path = FALSE;
+static gboolean dev_directtcp_data_path = FALSE;
 
 static int client_verbose = FALSE;
 static gboolean exact_match = FALSE;
@@ -622,10 +624,13 @@ test_server_pgm(
 /* check that the tape is a valid amanda tape
    Returns TRUE if all tests passed; FALSE otherwise. */
 static gboolean test_tape_status(FILE * outf) {
+    int dev_outfd = -1;
+    FILE *dev_outf = NULL;
     int outfd;
     int nullfd = -1;
     pid_t devpid;
     char *amcheck_device = NULL;
+    char *line;
     gchar **args;
     amwait_t wait_status;
     gboolean success;
@@ -645,9 +650,28 @@ static gboolean test_tape_status(FILE * outf) {
 	args[2] = g_strdup("-w");
 
     /* run libexecdir/amcheck-device.pl, capturing STDERR and STDOUT to outf */
-    devpid = pipespawnv(amcheck_device, 0, 0,
-	    &nullfd, &outfd, &outfd,
+    devpid = pipespawnv(amcheck_device, STDOUT_PIPE, 0,
+	    &nullfd, &dev_outfd, &outfd,
 	    (char **)args);
+
+    dev_outf = fdopen(dev_outfd, "r");
+    while ((line = agets(dev_outf)) != NULL) {
+	if (strncmp(line, "DATA-PATH", 9) == 0) {
+	    char *c = line;
+	    while ((c = strchr(c, ' ')) != NULL) {
+		c++;
+		if (strncmp(c, "AMANDA", 6) == 0) {
+		    dev_amanda_data_path = TRUE;
+		} else if (strncmp(c, "DIRECTTCP", 9) == 0) {
+		    dev_directtcp_data_path = TRUE;
+		}
+	    }
+	} else {
+	    write(outfd, line, strlen(line));
+	    write(outfd, "\n", 1);
+	}
+	g_free(line);
+    }
 
     /* and immediately wait for it to die */
     waitpid(devpid, &wait_status, 0);
@@ -1230,6 +1254,8 @@ start_server_check(
     } else if (do_tapechk) {
 	g_fprintf(outf, _("WARNING: skipping tape test because amdump or amflush seem to be running\n"));
 	g_fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
+	dev_amanda_data_path = TRUE;
+	dev_directtcp_data_path = TRUE;
     } else if (logbad == 2) {
 	g_fprintf(outf, _("NOTE: amdump or amflush seem to be running\n"));
 	g_fprintf(outf, _("NOTE: if they are not, you must run amcleanup\n"));
@@ -1237,8 +1263,12 @@ start_server_check(
 	/* we skipped the tape checks, but this is just a NOTE and
 	 * should not result in a nonzero exit status, so reset logbad to 0 */
 	logbad = 0;
+	dev_amanda_data_path = TRUE;
+	dev_directtcp_data_path = TRUE;
     } else {
 	g_fprintf(outf, _("NOTE: skipping tape checks\n"));
+	dev_amanda_data_path = TRUE;
+	dev_directtcp_data_path = TRUE;
     }
 
     /*
@@ -1592,6 +1622,18 @@ start_server_check(
 				  hostp->hostname, dp->name);
 			pgmbad = 1;
 		    }
+		}
+		if (dp->data_path == DATA_PATH_DIRECTTCP && !dev_directtcp_data_path) {
+		    g_fprintf(outf,
+			      _("ERROR: %s %s: data-path is DIRECTTCP but device do not support it\n"),
+			      hostp->hostname, dp->name);
+		    pgmbad = 1;
+		}
+		if (dp->data_path == DATA_PATH_AMANDA && !dev_amanda_data_path) {
+		    g_fprintf(outf,
+			      _("ERROR: %s %s: data-path is AMANDA but device do not support it\n"),
+			      hostp->hostname, dp->name);
+		    pgmbad = 1;
 		}
 
 		for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;

@@ -108,8 +108,15 @@ sub _user_msg_fn {
                     print STDERR " volume '$volume_label'\n";
                 }
             } else { # res must be defined
+		my $directtcp = "";
                 my $res = $params{'res'};
                 my $dev = $res->{'device'};
+
+		if ($dev->directtcp_supported()) {
+		    $directtcp = "DIRECTTCP ";
+		}
+		print STDOUT "DATA-PATH AMANDA $directtcp\n";
+
                 if (exists($params{'search_result'})) {
                     print STDERR "found in slot $res->{'this_slot'}:";
                 }
