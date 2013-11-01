@@ -1,3 +1,6 @@
+2013-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Archive.swg: amar_attr_add_data_fd return an off_t.
+
 2013-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/flags.m4: Swig is always compiled with
 	  -Wno-deprecated-declarations
