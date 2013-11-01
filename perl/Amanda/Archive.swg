@@ -334,10 +334,10 @@ void amar_attr_add_data_buffer_(amar_attr_t *attr, char *buffer, gsize size, gbo
 	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
 }
 
-size_t
+off_t
 amar_attr_add_data_fd_(amar_attr_t *attr, int fd, gboolean eoa) {
     GError *error = NULL;
-    size_t rv = amar_attr_add_data_fd(attr, fd, eoa, &error);
+    off_t rv = amar_attr_add_data_fd(attr, fd, eoa, &error);
     if (rv < 0)
 	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return rv;

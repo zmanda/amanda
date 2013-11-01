@@ -1,3 +1,6 @@
+2013-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Archive.swg: amar_attr_add_data_fd return an off_t.
+
 2013-10-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Use hash table instead of re-scanning a list.
 
