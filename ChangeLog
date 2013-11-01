@@ -1,4 +1,10 @@
 2013-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Check return value of fdopen,
+	  fclose(dev_outf).
+	* server-src/driver.c, server-src/planner.c: Check return value of
+	  holding_file_get_dumpfile.
+
+2013-11-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Archive.swg: amar_attr_add_data_fd return an off_t.
 
 2013-10-31  Jean-Louis Martineau <martineau@zmanda.com>

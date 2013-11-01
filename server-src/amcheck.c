@@ -655,22 +655,27 @@ static gboolean test_tape_status(FILE * outf) {
 	    (char **)args);
 
     dev_outf = fdopen(dev_outfd, "r");
-    while ((line = agets(dev_outf)) != NULL) {
-	if (strncmp(line, "DATA-PATH", 9) == 0) {
-	    char *c = line;
-	    while ((c = strchr(c, ' ')) != NULL) {
-		c++;
-		if (strncmp(c, "AMANDA", 6) == 0) {
-		    dev_amanda_data_path = TRUE;
-		} else if (strncmp(c, "DIRECTTCP", 9) == 0) {
-		    dev_directtcp_data_path = TRUE;
+    if (dev_outf == NULL) {
+	g_debug("Can't fdopen amcheck-device stdout: %s", strerror(errno));
+	aclose(dev_outfd);
+    } else {
+	while ((line = agets(dev_outf)) != NULL) {
+	    if (strncmp(line, "DATA-PATH", 9) == 0) {
+		char *c = line;
+		while ((c = strchr(c, ' ')) != NULL) {
+		    c++;
+		    if (strncmp(c, "AMANDA", 6) == 0) {
+			dev_amanda_data_path = TRUE;
+		    } else if (strncmp(c, "DIRECTTCP", 9) == 0) {
+			dev_directtcp_data_path = TRUE;
+		    }
 		}
+	    } else {
+		write(outfd, line, strlen(line));
+		write(outfd, "\n", 1);
 	    }
-	} else {
-	    write(outfd, line, strlen(line));
-	    write(outfd, "\n", 1);
+	    g_free(line);
 	}
-	g_free(line);
     }
 
     /* and immediately wait for it to die */
