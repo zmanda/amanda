@@ -3126,7 +3126,10 @@ read_flush(
 	s[-1] = '\0';
 	destname = unquote_string(qdestname);
 
-	holding_file_get_dumpfile(destname, &file);
+	if (!holding_file_get_dumpfile(destname, &file)) {
+	    continue;
+	}
+
 	if( file.type != F_DUMPFILE) {
 	    if( file.type != F_CONT_DUMPFILE )
 		log_add(L_INFO, _("%s: ignoring cruft file."), destname);

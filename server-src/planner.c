@@ -497,7 +497,9 @@ main(
 	holding_list = holding_get_files_for_flush(NULL);
 	for(holding_file=holding_list; holding_file != NULL;
 				       holding_file = holding_file->next) {
-	    holding_file_get_dumpfile((char *)holding_file->data, &file);
+	    if (!holding_file_get_dumpfile((char *)holding_file->data, &file)) {
+		continue;
+	    }
 
 	    if (holding_file_size((char *)holding_file->data, 1) <= 0) {
 		log_add(L_INFO, "%s: removing file with no data.",
