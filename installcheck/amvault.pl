@@ -203,6 +203,7 @@ define changer "tertiary" {
     tpchanger "$chg_spec"
     property        "tape-device" "0=$drive_root/drive0"
     property append "tape-device" "1=$drive_root/drive1"
+    device-property "indirect" "FALSE"
     changerfile "$chg_dir-changerfile"
 }
 EOF
