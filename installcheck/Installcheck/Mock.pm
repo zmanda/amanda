@@ -183,6 +183,7 @@ sub config {
 	tpchanger => "\"chg-ndmp:127.0.0.1:$port\@$chg\"",
 	property => "\"tape-device\" \"0=ndmp:127.0.0.1:$port\@$drive0\"",
 	property => "append \"tape-device\" \"1=ndmp:127.0.0.1:$port\@$drive1\"",
+	device_property => "\"indirect\" \"FALSE\"",
 	changerfile => "\"$chg-state\"",
     ]);
 }

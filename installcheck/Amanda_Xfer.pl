@@ -1198,6 +1198,7 @@ SKIP: {
     my $mkdevice = sub {
 	my $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$drive");
 	die "can't create device" unless $dev->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS;
+	$dev->property_set("indirect", 0) or die "can't set INDIRECT";
 	$dev->property_set("verbose", 1) or die "can't set VERBOSE";
 	$dev->property_set("ndmp_username", "ndmp") or die "can't set username";
 	$dev->property_set("ndmp_password", "ndmp") or die "can't set password";
