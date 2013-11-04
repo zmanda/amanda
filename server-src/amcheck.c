@@ -671,8 +671,12 @@ static gboolean test_tape_status(FILE * outf) {
 		    }
 		}
 	    } else {
-		write(outfd, line, strlen(line));
-		write(outfd, "\n", 1);
+		if (full_write(outfd, line, strlen(line)) != strlen(line)) {
+		    g_debug("Failed to print amcheck-device output to stdout: %s", strerror(errno));
+		}
+		if (full_write(outfd, "\n", 1) != 1) {
+		    g_debug("Failed to print amcheck-device \\n to stdout: %s", strerror(errno));
+		}
 	    }
 	    g_free(line);
 	}
