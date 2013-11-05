@@ -1,3 +1,7 @@
+2013-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Check for S3_ERROR_NoSuchBucket error.
+	* device-src/s3.c: Do not free hdl->user_token twice.
+
 2013-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Xfer.pl, installcheck/Installcheck/Mock.pm,
 	  installcheck/amvault.pl: installcheck do not do indirect ndmp.

@@ -900,6 +900,16 @@ delete_file(S3Device *self,
 			  &keys, &total_size);
     g_free(my_prefix);
     if (!result) {
+	guint response_code;
+	s3_error_code_t s3_error_code;
+	CURLcode curl_code;
+
+	s3_error(self->s3t[0].s3, NULL, &response_code,
+		 &s3_error_code, NULL, &curl_code, NULL);
+	if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket) {
+	    return TRUE;
+	}
+
 	device_set_error(d_self,
 		g_strdup_printf(_("While listing S3 keys: %s"),
 		    s3_strerror(self->s3t[0].s3)),
