@@ -139,7 +139,7 @@ xfer_source_readfd_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferSourceReadfdClass),
             (GBaseInitFunc) NULL,
@@ -237,7 +237,7 @@ xfer_source_writefd_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferSourceWritefdClass),
             (GBaseInitFunc) NULL,
@@ -339,7 +339,7 @@ xfer_source_push_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferSourcePushClass),
             (GBaseInitFunc) NULL,
@@ -435,7 +435,7 @@ xfer_source_pull_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferSourcePullClass),
             (GBaseInitFunc) NULL,
@@ -557,7 +557,7 @@ xfer_source_listen_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferSourceListenClass),
             (GBaseInitFunc) NULL,
@@ -710,7 +710,7 @@ xfer_source_connect_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferSourceConnectClass),
             (GBaseInitFunc) NULL,
@@ -819,7 +819,7 @@ xfer_dest_readfd_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestReadfdClass),
             (GBaseInitFunc) NULL,
@@ -941,7 +941,7 @@ xfer_dest_writefd_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestWritefdClass),
             (GBaseInitFunc) NULL,
@@ -1039,7 +1039,7 @@ xfer_dest_push_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestPushClass),
             (GBaseInitFunc) NULL,
@@ -1138,7 +1138,7 @@ xfer_dest_pull_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestPullClass),
             (GBaseInitFunc) NULL,
@@ -1283,7 +1283,7 @@ xfer_dest_listen_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestListenClass),
             (GBaseInitFunc) NULL,
@@ -1404,7 +1404,7 @@ xfer_dest_connect_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestConnectClass),
             (GBaseInitFunc) NULL,

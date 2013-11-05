@@ -1479,11 +1479,10 @@ main(
 	/* send the REP packet */
 	g_printf("CONNECT MESG %d\n", DATA_FD_OFFSET);
 	g_printf("\n");
-	fflush(stdin);
 	fflush(stdout);
 	fclose(stdin);
 	fclose(stdout);
-	
+
 	cmdout = fdopen(DATA_FD_OFFSET + 0, "a");
 	if (!cmdout) {
 	    error(_("amindexd: Can't fdopen(%d): %s"), DATA_FD_OFFSET + 0, strerror(errno));

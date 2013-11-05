@@ -93,7 +93,7 @@ xfer_dest_directtcp_listen_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (XferDestDirectTCPListenClass),
             (GBaseInitFunc) NULL,

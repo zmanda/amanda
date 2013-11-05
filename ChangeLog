@@ -1,3 +1,6 @@
+2013-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* */*.c: Cleanup found by cppcheck.
+
 2013-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Xfer.pl, installcheck/Installcheck/Mock.pm,
 	  installcheck/amvault.pl: installcheck do not do indirect ndmp.

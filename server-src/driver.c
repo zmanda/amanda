@@ -3581,7 +3581,7 @@ static unsigned long
 free_kps(
     netif_t *ip)
 {
-    unsigned long res;
+    unsigned long res = 0;
 
     if (ip == NULL) {
 	netif_t *p;
@@ -3593,14 +3593,10 @@ free_kps(
 	}
 	if (maxusage >= curusage)
 	    res = maxusage - curusage;
-	else
-	    res = 0;
 #ifndef __lint
     } else {
 	if ((unsigned long)interface_get_maxusage(ip->config) >= ip->curusage)
 	    res = interface_get_maxusage(ip->config) - ip->curusage;
-	else
-	    res = 0;
 #endif
     }
 

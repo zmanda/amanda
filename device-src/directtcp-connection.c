@@ -62,7 +62,7 @@ GType
 directtcp_connection_get_type(void)
 {
     static GType type = 0;
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (DirectTCPConnectionClass),
             (GBaseInitFunc) NULL,
@@ -144,7 +144,7 @@ directtcp_connection_socket_get_type (void)
 {
     static GType type = 0;
 
-    if G_UNLIKELY(type == 0) {
+    if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (DirectTCPConnectionSocketClass),
             (GBaseInitFunc) NULL,
