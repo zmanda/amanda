@@ -1032,6 +1032,15 @@ delete_file(S3Device *self,
 			  &objects, &total_size);
     g_free(my_prefix);
     if (!result) {
+	guint response_code;
+	s3_error_code_t s3_error_code;
+	CURLcode curl_code;
+
+	s3_error(self->s3t[0].s3, NULL, &response_code,
+		 &s3_error_code, NULL, &curl_code, NULL);
+	if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket) {
+	    return TRUE;
+	}
 	device_set_error(d_self,
 	    g_strdup_printf(_("While listing S3 keys: %s"),
 		s3_strerror(self->s3t[0].s3)),
@@ -2841,7 +2850,7 @@ make_bucket(
     }
 
     if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket, self->project_id)) {
-	self->bucket_made = 1;
+	self->bucket_made = TRUE;
 	abort_partial_upload(self);
 	return TRUE;
     }
@@ -2881,7 +2890,7 @@ make_bucket(
         }
     }
 
-    self->bucket_made = 1;
+    self->bucket_made = TRUE;
     abort_partial_upload(self);
     return TRUE;
 }
@@ -3630,6 +3639,7 @@ s3_device_erase(Device *pself) {
 	        DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
         }
+	self->bucket_made = FALSE;
     }
     self->volume_bytes = 0;
     catalog_remove(self);

@@ -2732,7 +2732,6 @@ s3_free(S3Handle *hdl)
         g_free(hdl->swift_account_id);
         g_free(hdl->swift_access_key);
         g_free(hdl->content_type);
-        g_free(hdl->user_token);
         g_free(hdl->ca_info);
         g_free(hdl->proxy);
         g_free(hdl->username);
