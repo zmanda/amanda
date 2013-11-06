@@ -943,7 +943,7 @@ sub output_tape_stats
     }
     my $ts_format = "  @"
       . '<' x ($label_length - 1)
-      . "@>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
+      . " @>>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
     $self->zsprint("USAGE BY TAPE:\n");
     $self->zprint(swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts"));
