@@ -1055,6 +1055,11 @@ delete_file(S3Device *self,
 	self->objects = g_slist_concat(self->objects, objects);
     }
 
+    if (!self->objects) {
+	g_mutex_unlock(self->thread_idle_mutex);
+	return TRUE;
+    }
+
     // start the threads
     for (thread = 0; thread < self->nb_threads; thread++)  {
 	if (self->s3t[thread].idle == 1) {
