@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 541;
+use Test::More tests => 543;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -737,7 +737,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            101 +
+            103 +
             1 * $verify_file_count +
             7 * $write_file_count +
             13 * $s3_make_device_count
@@ -823,7 +823,7 @@ SKIP: {
     my $hostname  = hostname();
     $hostname =~ s/\./-/g;
     $base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
-    $dev_name = "s3:$base_name-s3";
+    $dev_name = "s3:$base_name-s3-1";
     $dev = s3_make_device($dev_name, "s3");
     $dev->read_label();
     my $status = $dev->status();
@@ -909,12 +909,18 @@ SKIP: {
        "status is unlabeled after an erase")
         or diag($dev->error_or_status());
 
+    ok($dev->erase(),
+       "erase device")
+      or diag($dev->error_or_status());
+
+    $dev_name = "s3:$base_name-s3-2";
     $dev = s3_make_device($dev_name, "s3");
 
     ok($dev->erase(),
        "erase device right after creation")
        or diag($dev->error_or_status());
 
+    $dev_name = "s3:$base_name-s3-3";
     $dev = s3_make_device($dev_name, "s3");
 
     # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=false
@@ -941,6 +947,7 @@ SKIP: {
        "erase device")
        or diag($dev->error_or_status());
     
+    $dev_name = "s3:$base_name-s3-4";
     $dev = s3_make_device($dev_name, "s3");
 
     # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=true
@@ -970,6 +977,7 @@ SKIP: {
        "erase device")
        or diag($dev->error_or_status());
     
+    $dev_name = "s3:$base_name-s3-5";
     $dev = s3_make_device($dev_name, "s3");
 
     # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=false
@@ -1000,7 +1008,7 @@ SKIP: {
        or diag($dev->error_or_status());
     
     # try with empty user token
-    $dev_name = lc("s3:$base_name-s3");
+    $dev_name = lc("s3:$base_name-s3-6");
     $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_USER_TOKEN', ''),
        "set devpay user token")
@@ -1043,7 +1051,7 @@ SKIP: {
     $dev_name = lc("s3:$base_name-s3-wild");
     $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_BUCKET_LOCATION', '*'),
-       "set S3 bucket location to ''")
+       "set S3 bucket location to '*'")
         or diag($dev->error_or_status());
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
@@ -1055,8 +1063,12 @@ SKIP: {
         or diag($dev->error_or_status());
 
     $dev->finish();
+    ok($dev->erase(),
+       "erase device")
+      or diag($dev->error_or_status());
 
     # test again with invalid ca_info
+    $dev_name = lc("s3:$base_name-s3-ca");
     $dev = s3_make_device($dev_name, "s3");
     SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 2
@@ -1078,6 +1090,7 @@ SKIP: {
     }
 
     # test again with our own CA bundle
+    $dev_name = lc("s3:$base_name-s3-oca");
     $dev = s3_make_device($dev_name, "s3");
     SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 4
@@ -1106,14 +1119,14 @@ SKIP: {
        or diag($dev->error_or_status());
 
     # bucket names incompatible with location constraint
-    $dev_name = "s3:-$base_name-s3-eu";
+    $dev_name = "s3:-$base_name-s3-eu-2";
     $dev = s3_make_device($dev_name, "s3");
 
     ok($dev->property_set('S3_BUCKET_LOCATION', ''),
        "should be able to set an empty S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 
-    $dev_name = "s3:$base_name-s3.eu";
+    $dev_name = "s3:$base_name-s3.eu-3";
     $dev = s3_make_device($dev_name, "s3");
 
     ok($dev->property_set('S3_BUCKET_LOCATION', ''),
@@ -1127,7 +1140,7 @@ SKIP: {
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 
-    $dev_name = lc("s3:$base_name-s3-eu");
+    $dev_name = lc("s3:$base_name-s3-eu-4");
     $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_BUCKET_LOCATION', 'XYZ'),
        "should be able to set S3 bucket location with a compatible name")
