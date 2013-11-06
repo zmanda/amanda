@@ -924,7 +924,7 @@ delete_file(S3Device *self,
 	self->keys = g_slist_concat(self->keys, keys);
     }
 
-    if (!self->objects) {
+    if (!self->keys) {
 	g_mutex_unlock(self->thread_idle_mutex);
 	return TRUE;
     }

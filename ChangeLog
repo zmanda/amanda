@@ -1,4 +1,7 @@
 2013-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c (delete_file): Fix typo.
+
+2013-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c (delete_file): Check for no objects.
 	* installcheck/Amanda_Device.pl: Use different bucket name for each
 	  test.
