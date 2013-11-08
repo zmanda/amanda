@@ -134,6 +134,7 @@ static void amgtar_estimate(application_argument_t *argument);
 static void amgtar_backup(application_argument_t *argument);
 static void amgtar_restore(application_argument_t *argument);
 static void amgtar_validate(application_argument_t *argument);
+static void amgtar_index(application_argument_t *argument);
 static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_include);
@@ -610,6 +611,8 @@ main(
 	amgtar_restore(&argument);
     } else if (g_str_equal(command, "validate")) {
 	amgtar_validate(&argument);
+    } else if (g_str_equal(command, "index")) {
+	amgtar_index(&argument);
     } else {
 	dbprintf("Unknown command `%s'.\n", command);
 	fprintf(stderr, "Unknown command `%s'.\n", command);
@@ -1385,6 +1388,78 @@ amgtar_validate(
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
+    amfree(cmd);
+}
+
+static void
+amgtar_index(
+    application_argument_t *argument G_GNUC_UNUSED)
+{
+    char       *cmd = NULL;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    int         datain = 0;
+    int         indexf;
+    int         errf = 2;
+    pid_t       tarpid;
+    FILE       *indexstream;
+    char        line[32768];
+    amwait_t    wait_status;
+    char       *errmsg = NULL;
+
+    if (!gnutar_path) {
+	dbprintf("GNUTAR-PATH not set\n");
+	fprintf(stderr,"GNUTAR-PATH not set\n");
+	exit(1);
+    }
+
+    cmd = g_strdup(gnutar_path);
+    g_ptr_array_add(argv_ptr, g_strdup(gnutar_path));
+    /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
+    g_ptr_array_add(argv_ptr, g_strdup("--ignore-zeros"));
+    g_ptr_array_add(argv_ptr, g_strdup("-tf"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
+    g_ptr_array_add(argv_ptr, NULL);
+
+    tarpid = pipespawnv(cmd, STDOUT_PIPE, 0,
+			&datain, &indexf, &errf, (char **)argv_ptr->pdata);
+    aclose(datain);
+
+    indexstream = fdopen(indexf, "r");
+    if (!indexstream) {
+	error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+    }
+
+    while (fgets(line, sizeof(line), indexstream) != NULL) {
+	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+	    /* remove trailling \n */
+	    line[strlen(line)-1] = '\0';
+	}
+	if (*line == '.' && *(line+1) == '/') { /* filename */
+	    fprintf(stdout, "%s\n", &line[1]); /* remove . */
+	}
+    }
+    fclose(indexstream);
+    waitpid(tarpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+				 cmd, WTERMSIG(wait_status), dbfn());
+    } else if (WIFEXITED(wait_status)) {
+	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+				     cmd, WEXITSTATUS(wait_status), dbfn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+				 cmd, dbfn());
+    }
+    dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
+    if (errmsg) {
+	dbprintf("%s", errmsg);
+	fprintf(stderr, "error [%s]\n", errmsg);
+    }
+
     amfree(cmd);
 }
 

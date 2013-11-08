@@ -1,4 +1,15 @@
 2013-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Implement the index command.
+	* man/Makefile.am: Add amreindex.8
+	* man/xml-source/amanda.8.xml: Add amreindex.8
+	* man/xml-source/amreindex.8.xml: Document the new amreindex program.
+	* perl/Amanda/Logfile.swg: Add getindex_*_fname and getheaderfname
+	  methods.
+	* server-src/Makefile.am: Add amreindex.
+	* server-src/amreindex.pl: New program to reindex dumps.
+	* server-src/amtrmidx.c: Unlink a few more index files.
+
+2013-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add compress-index and sort-index
 	* common-src/conffile.h: Add CNF_COMPRESS_INDEX and CNF_SORT_INDEX
 	* perl/Amanda/Config.swg: Add CNF_COMPRESS_INDEX and CNF_SORT_INDEX

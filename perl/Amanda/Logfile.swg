@@ -310,6 +310,12 @@ find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
     amglue_dumpspec_list *dumpspecs,
     gboolean ok);
 
+char *getindex_unsorted_fname(char *host, char *disk, char *date, int level);
+char *getindex_unsorted_gz_fname(char *host, char *disk, char *date, int level);
+char *getindex_sorted_fname(char *host, char *disk, char *date, int level);
+char *getindex_sorted_gz_fname(char *host, char *disk, char *date, int level);
+char *getheaderfname(char *host, char *disk, char *date, int level);
+
 %immutable;
 amanda_log_handler_t *amanda_log_trace_log;
 %mutable;

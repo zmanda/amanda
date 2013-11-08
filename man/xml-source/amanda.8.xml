@@ -115,6 +115,9 @@ configuration files for quick reference.</para>
 <manref name="amrecover" vol="8"/>,
 </listitem>
 <listitem>
+<manref name="amreindex" vol="8"/>,
+</listitem>
+<listitem>
 <manref name="amreport" vol="8"/>,
 </listitem>
 <listitem>

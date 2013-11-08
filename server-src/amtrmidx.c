@@ -325,12 +325,6 @@ main(
 		char *sorted_gz_name = getindex_sorted_gz_fname(host, disk, datestamp, level);
 		char *unsorted_name = getindex_unsorted_fname(host, disk, datestamp, level);
 		char *unsorted_gz_name = getindex_unsorted_gz_fname(host, disk, datestamp, level);
-		char *path = g_strconcat(indexdir, names[i], NULL);
-
-		//struct stat sorted_stat;
-		//struct stat sorted_gz_stat;
-		//struct stat unsorted_stat;
-		//struct stat unsorted_gz_stat;
 
 		gboolean orig_exist = FALSE;
 		gboolean sorted_exist = FALSE;
@@ -373,9 +367,16 @@ main(
 			    unlink(unsorted_name);
 			    unlink(sorted_name);
 			}
-		    }
-		    if (strcmp(path, sorted_gz_name) != 0) {
-			//unlink(path);
+		    } else {
+			if (sorted_exist) {
+			    unlink(sorted_name);
+			}
+			if (unsorted_exist) {
+			    unlink(unsorted_name);
+			}
+			if (unsorted_gz_exist) {
+			    unlink(unsorted_gz_name);
+			}
 		    }
 		} else if (sort_index && !compress_index) {
 		    if (!sorted_exist) {
@@ -400,9 +401,16 @@ main(
 			    unlink(unsorted_name);
 			    unlink(orig_name);
 			}
-		    }
-		    if (strcmp(path, sorted_name) != 0) {
-			//unlink(path);
+		    } else {
+			if (sorted_gz_exist) {
+			    unlink(sorted_gz_name);
+			}
+			if (unsorted_exist) {
+			    unlink(unsorted_name);
+			}
+			if (unsorted_gz_exist) {
+			    unlink(unsorted_gz_name);
+			}
 		    }
 		} else if (!sort_index && compress_index) {
 		    if (!sorted_gz_exist && !unsorted_gz_exist) {
@@ -418,10 +426,16 @@ main(
 			    // RENAME orig
 			    rename(orig_name, unsorted_gz_name);
 			}
-		    }
-		    if (strcmp(path, sorted_gz_name) != 0 &&
-			strcmp(path, unsorted_gz_name) != 0) {
-			//unlink(path);
+		    } else {
+			if (sorted_exist) {
+			    unlink(sorted_name);
+			}
+			if (unsorted_exist) {
+			    unlink(unsorted_name);
+			}
+			if (sorted_gz_exist && unsorted_gz_exist) {
+			    unlink(unsorted_gz_name);
+			}
 		    }
 		} else if (!sort_index && !compress_index) {
 		    if (!sorted_exist && !unsorted_exist) {
@@ -438,9 +452,16 @@ main(
 			    run_uncompress(orig_name, unsorted_name);
 			    unlink(orig_name);
 			}
-		    }
-		    if (strcmp(path, sorted_gz_name) != 0) {
-			//unlink(path);
+		    } else {
+			if (sorted_gz_exist) {
+			    unlink(sorted_gz_name);
+			}
+			if (unsorted_gz_exist) {
+			    unlink(unsorted_gz_name);
+			}
+			if (sorted_exist && unsorted_exist) {
+			    unlink(unsorted_name);
+			}
 		    }
 		}
 		}

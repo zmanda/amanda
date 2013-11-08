@@ -54,6 +54,7 @@ SERVER_MAN_PAGES =  \
     amgpgcrypt.8 \
     amlabel.8 \
     amoverview.8 \
+    amreindex.8 \
     amreport.8 \
     amrmtape.8 \
     amserverconfig.8 \

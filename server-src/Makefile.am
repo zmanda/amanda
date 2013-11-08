@@ -50,6 +50,7 @@ sbin_SCRIPTS_PERL = \
 	    amvault \
 	    amdump \
 	    amflush \
+	    amreindex \
 	    amstatus
 if WANT_RESTORE
 amlibexec_SCRIPTS_PERL += \
