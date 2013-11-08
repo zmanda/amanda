@@ -1,3 +1,21 @@
+2013-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add compress-index and sort-index
+	* common-src/conffile.h: Add CNF_COMPRESS_INDEX and CNF_SORT_INDEX
+	* perl/Amanda/Config.swg: Add CNF_COMPRESS_INDEX and CNF_SORT_INDEX
+	* man/xml-source/amanda.conf.5.xml: Document compress-index and
+	  sort-index
+	* server-src/amindex.c (getindex_unsorted_fname,
+				getindex_unsorted_gz_fname,
+				getindex_sorted_fname,
+				getindex_sorted_gz_fname): New methods to
+	  retrieve the various names of the index files.
+	* server-src/amindex.h: Add prototype.
+	* server-src/amindexd.c: Read un/sorted un/compressed index file.
+	* server-src/amtrmidx.c: sort and un/compress index files.
+	* server-src/dumper.c: Do not compress the index stream if it must
+	  be sorted.
+	* NEWS: Document it.
+
 2013-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c (delete_file): Check for no objects.
 	* installcheck/Amanda_Device.pl: Use different bucket name for each

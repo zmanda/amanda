@@ -1,10 +1,11 @@
 Changes in release 4.0.0
 
-   * A CRC is compted on the backup image and is verified on restore.
+   * A CRC is computed on the backup image and is verified on restore.
    * Run multiple backup inparallel, there is no lock preventing concurrent run.
    * Add letter based sequence to autolabel and meta-autolabel.
    * And 'includefile' directive for the disklist.
    * tapepool, tape are in pool
+   * index file can be kept sort, compressed or uncompressed.
    * amanda.conf (interface section)
        o add a src-ip setting.
    * amanda.conf (dumptype section)
@@ -15,6 +16,8 @@ Changes in release 4.0.0
        o retention-days
        o retention-recover
        o retention-full
+       o compress-index
+       o sort-index
    * amanda.conf (new storage section), define how to operate each changer.
        o tpchanger
        o labelstr
@@ -40,7 +43,7 @@ Changes in release 4.0.0
    * amlabel
        o new --pool and --storage options.
    * amrmtape
-       o new --list-retention, list-no-retention and --remove-no-retention
+       o new --list-retention, --list-no-retention and --remove-no-retention
          options.
    * amfetchdump
        o --init and --no-restore arguments.
@@ -49,7 +52,7 @@ Changes in release 4.0.0
          allow to transition s3 objects to Glacier.
    * tapelist file
        o include POOL, STORAGE and CONFIG
-       o you can sahre the same tapelist file across multiple config.
+       o you can share the same tapelist file across multiple config.
 
 Changes in release 3.3.4
     * amreport

@@ -96,7 +96,7 @@ typedef enum {
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
     CONF_CMDFILE,	       CONF_SET_NO_REUSE,	CONF_ERASE_VOLUME,
-    CONF_ERASE_ON_FAILURE,
+    CONF_ERASE_ON_FAILURE,     CONF_COMPRESS_INDEX,	CONF_SORT_INDEX,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -984,6 +984,7 @@ keytab_t server_keytab[] = {
     { "COMMENT", CONF_COMMENT },
     { "COMPRATE", CONF_COMPRATE },
     { "COMPRESS", CONF_COMPRESS },
+    { "COMPRESS_INDEX", CONF_COMPRESS_INDEX },
     { "CONNECT_TRIES", CONF_CONNECT_TRIES },
     { "CTIMEOUT", CONF_CTIMEOUT },
     { "CUSTOM", CONF_CUSTOM },
@@ -1157,6 +1158,7 @@ keytab_t server_keytab[] = {
     { "SKIP_INCR", CONF_SKIP_INCR },
     { "SINGLE_EXECUTION", CONF_SINGLE_EXECUTION },
     { "SMALLEST", CONF_SMALLEST },
+    { "SORT_INDEX", CONF_SORT_INDEX },
     { "SPEED", CONF_SPEED },
     { "SPLIT_DISKBUFFER", CONF_SPLIT_DISKBUFFER },
     { "SRC_IP", CONF_SRC_IP },
@@ -1411,6 +1413,8 @@ conf_var_t server_var [] = {
    { CONF_STORAGE              , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_STORAGE         , NULL },
    { CONF_AMVAULT_STORAGE      , CONFTYPE_STR      , read_str         , CNF_AMVAULT_STORAGE      , NULL },
    { CONF_CMDFILE              , CONFTYPE_STR      , read_str         , CNF_CMDFILE              , NULL },
+   { CONF_COMPRESS_INDEX       , CONFTYPE_BOOLEAN  , read_bool        , CNF_COMPRESS_INDEX       , NULL },
+   { CONF_SORT_INDEX           , CONFTYPE_BOOLEAN  , read_bool        , CNF_SORT_INDEX           , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
 };
 
@@ -6070,6 +6074,8 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_REPORT_USE_MEDIA]     , TRUE);
     conf_init_bool     (&conf_data[CNF_REPORT_NEXT_MEDIA]    , TRUE);
     conf_init_str_list (&conf_data[CNF_REPORT_FORMAT]        , NULL);
+    conf_init_bool     (&conf_data[CNF_COMPRESS_INDEX]       , TRUE);
+    conf_init_bool     (&conf_data[CNF_SORT_INDEX]           , FALSE);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_str      (&conf_data[CNF_AMVAULT_STORAGE]      , "");

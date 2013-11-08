@@ -538,6 +538,8 @@ typedef enum {
     CNF_STORAGE,
     CNF_AMVAULT_STORAGE,
     CNF_CMDFILE,
+    CNF_COMPRESS_INDEX,
+    CNF_SORT_INDEX,
     CNF_CNF /* sentinel */
 } confparm_key;
 

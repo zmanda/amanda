@@ -1117,6 +1117,28 @@ option enabled.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><amkeyword>compress-index</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>yes</amdefault>. Compress all index files, this is useful to
+save space in the <amkeyword>indexdir</amkeyword> but require more
+processing.</para>
+<para>The compression ratio is generaly above 20x, it is faster to read
+compressed index files because there is 20 times less data to read from
+disk.</para>
+<para>Changing this setting will uncompress/compress all index files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>sort-index</amkeyword> <amtype>boolean</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>no</amdefault>. Sort all index files, this make amrecover
+start faster on big filesystem but it require more processing at backup
+time. Changing this setting can sort all index files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><amkeyword>tapelist</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:

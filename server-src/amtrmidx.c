@@ -38,8 +38,15 @@
 #include "tapefile.h"
 #include "find.h"
 #include "amutil.h"
+#include "amindex.h"
+#include "pipespawn.h"
 
 static int sort_by_name_reversed(const void *a, const void *b);
+static gboolean file_exists(char *filename);
+static gboolean run_compress(char *source_filename, char *dest_filename);
+static gboolean run_uncompress(char *source_filename, char *dest_filename);
+static gboolean run_sort(char *source_filename, char *dest_filename);
+
 
 int main(int argc, char **argv);
 
@@ -71,6 +78,10 @@ main(
     time_t tmp_time;
     int amtrmidx_debug = 0;
     config_overrides_t *cfg_ovr = NULL;
+    gboolean   compress_index;
+    gboolean   sort_index;
+    char      *lock_file;
+    file_lock *lock_index;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("amtrmidx-%s\n", VERSION);
@@ -82,9 +93,9 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
-    textdomain("amanda"); 
+    textdomain("amanda");
 
     safe_fd(-1, 0);
     safe_cd();
@@ -135,9 +146,18 @@ main(
     }
     amfree(conf_tapelist);
 
+    compress_index = getconf_boolean(CNF_COMPRESS_INDEX);
+    sort_index = getconf_boolean(CNF_SORT_INDEX);
+
     output_find = find_dump(&diskl);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
+
+    /* take a lock file to prevent concurent trim */
+    lock_file = g_strdup_printf("%s/%s", conf_indexdir, "lock");
+    lock_index = file_lock_new(lock_file);
+    if (file_lock_lock_wr(lock_index) != 0)
+	goto lock_failed;
 
     /* now go through the list of disks and find which have indexes */
     time(&tmp_time);
@@ -187,11 +207,11 @@ main(
 
 	    dbprintf("%s %s -> %s\n", diskp->host->hostname,
 			qdisk, qindexdir);
-	    amfree(host);
 	    amfree(qdisk);
-	    amfree(disk);
 	    if ((d = opendir(indexdir)) == NULL) {
 		dbprintf(_("could not open index directory %s\n"), qindexdir);
+		amfree(host);
+		amfree(disk);
 		amfree(indexdir);
 	        amfree(qindexdir);
 		g_slist_free(matching_dp);
@@ -297,17 +317,151 @@ main(
 		    amfree(qpath);
 		    amfree(path);
 		}
+
+		/* Did it require un/compression and/or sorting */
+		{
+		char *orig_name = getindexfname(host, disk, datestamp, level);
+		char *sorted_name = getindex_sorted_fname(host, disk, datestamp, level);
+		char *sorted_gz_name = getindex_sorted_gz_fname(host, disk, datestamp, level);
+		char *unsorted_name = getindex_unsorted_fname(host, disk, datestamp, level);
+		char *unsorted_gz_name = getindex_unsorted_gz_fname(host, disk, datestamp, level);
+		char *path = g_strconcat(indexdir, names[i], NULL);
+
+		//struct stat sorted_stat;
+		//struct stat sorted_gz_stat;
+		//struct stat unsorted_stat;
+		//struct stat unsorted_gz_stat;
+
+		gboolean orig_exist = FALSE;
+		gboolean sorted_exist = FALSE;
+		gboolean sorted_gz_exist = FALSE;
+		gboolean unsorted_exist = FALSE;
+		gboolean unsorted_gz_exist = FALSE;
+
+		orig_exist = file_exists(orig_name);
+		sorted_exist = file_exists(sorted_name);
+		sorted_gz_exist = file_exists(sorted_gz_name);
+		unsorted_exist = file_exists(unsorted_name);
+		unsorted_gz_exist = file_exists(unsorted_gz_name);
+
+		if (sort_index && compress_index) {
+		    if (!sorted_gz_exist) {
+			if (sorted_exist) {
+			    // COMPRESS
+			    run_compress(sorted_name, sorted_gz_name);
+			    unlink(sorted_name);
+			} else if (unsorted_exist) {
+			    // SORT AND COMPRESS
+			    run_sort(unsorted_name, sorted_name);
+			    run_compress(sorted_name, sorted_gz_name);
+			    unlink(unsorted_name);
+			    unlink(sorted_name);
+			} else if (unsorted_gz_exist) {
+			    // UNCOMPRESS SORT AND COMPRESS
+			    run_uncompress(unsorted_gz_name, unsorted_name);
+			    run_sort(unsorted_name, sorted_name);
+			    run_compress(sorted_name, sorted_gz_name);
+			    unlink(unsorted_gz_name);
+			    unlink(unsorted_name);
+			    unlink(sorted_name);
+			} else if (orig_exist) {
+			    // UNCOMPRESS SORT AND COMPRESS
+			    run_uncompress(orig_name, unsorted_name);
+			    run_sort(unsorted_name, sorted_name);
+			    run_compress(sorted_name, sorted_gz_name);
+			    unlink(orig_name);
+			    unlink(unsorted_name);
+			    unlink(sorted_name);
+			}
+		    }
+		    if (strcmp(path, sorted_gz_name) != 0) {
+			//unlink(path);
+		    }
+		} else if (sort_index && !compress_index) {
+		    if (!sorted_exist) {
+			if (sorted_gz_exist) {
+			    // UNCOMPRESS
+			    run_uncompress(sorted_gz_name, sorted_name);
+			    unlink(sorted_gz_name);
+			} else if (unsorted_exist) {
+			    // SORT
+			    run_sort(unsorted_name, sorted_name);
+			    unlink(unsorted_name);
+			} else if (unsorted_gz_exist) {
+			    // UNCOMPRESS AND SORT
+			    run_uncompress(unsorted_gz_name, unsorted_name);
+			    run_sort(unsorted_name, sorted_name);
+			    unlink(unsorted_name);
+			    unlink(unsorted_gz_name);
+			} else if (orig_exist) {
+			    // UNCOMPRESS AND SORT
+			    run_uncompress(orig_name, unsorted_name);
+			    run_sort(unsorted_name, sorted_name);
+			    unlink(unsorted_name);
+			    unlink(orig_name);
+			}
+		    }
+		    if (strcmp(path, sorted_name) != 0) {
+			//unlink(path);
+		    }
+		} else if (!sort_index && compress_index) {
+		    if (!sorted_gz_exist && !unsorted_gz_exist) {
+			if (sorted_exist) {
+			    // COMPRESS sorted
+			    run_compress(sorted_name, sorted_gz_name);
+			    unlink(sorted_name);
+			} else if (unsorted_exist) {
+			    // COMPRESS unsorted
+			    run_compress(unsorted_name, unsorted_gz_name);
+			    unlink(unsorted_name);
+			} else if (orig_exist) {
+			    // RENAME orig
+			    rename(orig_name, unsorted_gz_name);
+			}
+		    }
+		    if (strcmp(path, sorted_gz_name) != 0 &&
+			strcmp(path, unsorted_gz_name) != 0) {
+			//unlink(path);
+		    }
+		} else if (!sort_index && !compress_index) {
+		    if (!sorted_exist && !unsorted_exist) {
+			if (sorted_gz_exist) {
+			    // UNCOMPRESS sorted
+			    run_uncompress(sorted_gz_name, sorted_name);
+			    unlink(sorted_gz_name);
+			} else if (unsorted_gz_exist) {
+			    // UNCOMPRESS unsorted
+			    run_uncompress(unsorted_gz_name, unsorted_name);
+			    unlink(unsorted_gz_name);
+			} else if (orig_exist) {
+			    // UNCOMPRESS orig
+			    run_uncompress(orig_name, unsorted_name);
+			    unlink(orig_name);
+			}
+		    }
+		    if (strcmp(path, sorted_gz_name) != 0) {
+			//unlink(path);
+		    }
+		}
+		}
+
 		amfree(datestamp);
 		amfree(names[i]);
 	    }
 	    g_slist_free(matching_dp);
 	    amfree(names);
+	    amfree(host);
+	    amfree(disk);
 	    amfree(indexdir);
 	    amfree(qindexdir);
 	}
     }
 
+    file_lock_unlock(lock_index);
+lock_failed:
+    file_lock_free(lock_index);
     amfree(conf_indexdir);
+    amfree(lock_file);
     free_find_result(&output_find);
     clear_tapelist();
     free_disklist(&diskl);
@@ -316,4 +470,148 @@ main(
     dbclose();
 
     return 0;
+}
+
+static gboolean
+file_exists(
+    char *filename)
+{
+    struct stat stat_buf;
+
+    if (stat(filename, &stat_buf) != 0) {
+	if (errno == ENOENT) {
+	    return FALSE;
+	}
+    }
+    return TRUE;
+}
+
+static gboolean
+run_compress(
+    char *source_filename,
+    char *dest_filename)
+{
+    int in_fd = open(source_filename, O_RDONLY);
+    int out_fd = open(dest_filename, O_WRONLY|O_CREAT, S_IRUSR);
+    int compress_errfd = 0;
+    gboolean rval = TRUE;
+    amwait_t  wait_status;
+    pid_t pid_gzip;
+    char *line;
+
+    pid_gzip = pipespawn(COMPRESS_PATH, STDERR_PIPE, 0,
+			 &in_fd, &out_fd, &compress_errfd,
+			 COMPRESS_PATH, COMPRESS_BEST_OPT, NULL);
+    close(in_fd);
+    close(out_fd);
+    while ((line = areads(compress_errfd)) != NULL) {
+	g_debug("compress stderr: %s", line);
+	rval = FALSE;
+	free(line);
+    }
+    close(compress_errfd);
+    waitpid(pid_gzip, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	g_debug("compress terminated with signal %d", WTERMSIG(wait_status));
+	rval = FALSE;
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    g_debug("compress exited with status %d", WEXITSTATUS(wait_status));
+	    rval = FALSE;
+	}
+    } else {
+	g_debug("compress got bad exit");
+	rval = FALSE;
+    }
+
+    return rval;
+}
+
+static gboolean
+run_uncompress(
+    char *source_filename,
+    char *dest_filename)
+{
+    int in_fd = open(source_filename, O_RDONLY);
+    int out_fd = open(dest_filename, O_WRONLY|O_CREAT, S_IRUSR);
+    int uncompress_errfd = 0;
+    gboolean rval = TRUE;
+    amwait_t  wait_status;
+    pid_t pid_gzip;
+    char *line;
+
+    pid_gzip = pipespawn(UNCOMPRESS_PATH, STDERR_PIPE, 0,
+			 &in_fd, &out_fd, &uncompress_errfd,
+			 UNCOMPRESS_PATH, UNCOMPRESS_OPT, NULL);
+    close(in_fd);
+    close(out_fd);
+    while ((line = areads(uncompress_errfd)) != NULL) {
+	g_debug("uncompress stderr: %s", line);
+	rval = FALSE;
+	free(line);
+    }
+    close(uncompress_errfd);
+    waitpid(pid_gzip, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	g_debug("uncompress terminated with signal %d", WTERMSIG(wait_status));
+	rval = FALSE;
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    g_debug("uncompress exited with status %d", WEXITSTATUS(wait_status));
+	    rval = FALSE;
+	}
+    } else {
+	g_debug("uncompress got bad exit");
+	rval = FALSE;
+    }
+
+    return rval;
+}
+
+static gboolean
+run_sort(
+    char *source_filename,
+    char *dest_filename)
+{
+    int in_fd;
+    int out_fd;
+    int sort_errfd = 0;
+    gboolean rval = TRUE;
+    amwait_t  wait_status;
+    pid_t pid_sort;
+    char *line;
+    gchar *tmpdir = getconf_str(CNF_TMPDIR);
+
+    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 0,
+			 &in_fd, &out_fd, &sort_errfd,
+			 SORT_PATH, "--output", dest_filename,
+				    "-T", tmpdir, source_filename, NULL);
+    close(in_fd);
+    while ((line = areads(out_fd)) != NULL) {
+	g_debug("sort stdout: %s", line);
+	rval = FALSE;
+	free(line);
+    }
+    close(out_fd);
+    while ((line = areads(sort_errfd)) != NULL) {
+	g_debug("sort stderr: %s", line);
+	rval = FALSE;
+	free(line);
+    }
+    close(sort_errfd);
+    waitpid(pid_sort, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	g_debug("sort terminated with signal %d", WTERMSIG(wait_status));
+	rval = FALSE;
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    g_debug("sort exited with status %d", WEXITSTATUS(wait_status));
+	    rval = FALSE;
+	}
+    } else {
+	g_debug("sort got bad exit");
+	rval = FALSE;
+    }
+
+    return rval;
 }

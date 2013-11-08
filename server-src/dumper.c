@@ -1340,7 +1340,12 @@ do_dump(
     amfree(sdiskname);
 
     if (streams[INDEXFD].fd != NULL) {
-	indexfile_real = getindexfname(hostname, diskname, dumper_timestamp, level);
+	if (getconf_boolean(CNF_COMPRESS_INDEX) &&
+			    !getconf_boolean(CNF_SORT_INDEX)) {
+	    indexfile_real = getindex_unsorted_gz_fname(hostname, diskname, dumper_timestamp, level);
+	} else {
+	    indexfile_real = getindex_unsorted_fname(hostname, diskname, dumper_timestamp, level);
+	}
 	indexfile_tmp = g_strconcat(indexfile_real, ".tmp", NULL);
 
 	if (mkpdir(indexfile_tmp, 0755, (uid_t)-1, (gid_t)-1) == -1) {
@@ -1357,7 +1362,8 @@ do_dump(
 	    errstr = g_strdup_printf(_("err open %s: %s"),
                                      indexfile_tmp, strerror(errno));
 	    goto failed;
-	} else {
+	} else if (getconf_boolean(CNF_COMPRESS_INDEX) &&
+		   !getconf_boolean(CNF_SORT_INDEX)) {
 	    if (runcompress(indexout, &indexpid, COMP_BEST, "index compress") < 0) {
 		aclose(indexout);
 		goto failed;
@@ -1432,8 +1438,10 @@ do_dump(
 	amwait_t index_status;
 
 	/*@i@*/ aclose(indexout);
-	waitpid(indexpid,&index_status,0);
-	log_add(L_INFO, "pid-done %ld", (long)indexpid);
+	if (indexpid > 0) {
+	    waitpid(indexpid,&index_status,0);
+	    log_add(L_INFO, "pid-done %ld", (long)indexpid);
+	}
 	if (rename(indexfile_tmp, indexfile_real) != 0) {
 	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
 		    indexfile_tmp, indexfile_real, strerror(errno));

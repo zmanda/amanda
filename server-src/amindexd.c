@@ -83,18 +83,24 @@ static char **storage_list = NULL;
 static disklist_t disk_list;			/* all disks in cur config */
 static find_result_t *output_find = NULL;
 static g_option_t *g_options = NULL;
+static file_lock *lock_index = NULL;
 
 static int amindexd_debug = 0;
 
 static REMOVE_ITEM *uncompress_remove = NULL;
 					/* uncompressed files to remove */
+static REMOVE_ITEM *compress_sorted_files = NULL;
+					/* compress new sorted files */
 
 static am_feature_t *our_features = NULL;
 static am_feature_t *their_features = NULL;
 
 static int get_pid_status(int pid, char *program, GPtrArray **emsg);
 static REMOVE_ITEM *remove_files(REMOVE_ITEM *);
-static char *uncompress_file(char *, GPtrArray **);
+static REMOVE_ITEM *compress_files(REMOVE_ITEM *);
+static char *uncompress_file(char *, char *, char *, int,
+			     char *, GPtrArray **,
+			     gboolean need_uncompress, gboolean need_sort);
 static int process_ls_dump(char *, DUMP_ITEM *, int, GPtrArray **);
 
 static size_t reply_buffer_size = 1;
@@ -121,7 +127,8 @@ static int are_dumps_compressed(void);
 static char *amindexd_nicedate (char *datestamp);
 static int cmp_date (const char *date1, const char *date2);
 static char *get_index_name(char *dump_hostname, char *hostname,
-			    char *diskname, char *timestamps, int level);
+			    char *diskname, char *timestamps, int level,
+			    GPtrArray **emsg);
 static int get_index_dir(char *dump_hostname, char *hostname, char *diskname);
 
 int main(int, char **);
@@ -172,239 +179,48 @@ remove_files(
 {
     REMOVE_ITEM *prev;
 
-    while(remove) {
-	dbprintf(_("removing index file: %s\n"), remove->filename);
-	unlink(remove->filename);
-	amfree(remove->filename);
-	prev = remove;
-	remove = remove->next;
-	amfree(prev);
+    if (file_lock_locked(lock_index)) {
+	while(remove) {
+	    dbprintf(_("removing index file: %s\n"), remove->filename);
+	    unlink(remove->filename);
+	    amfree(remove->filename);
+	    prev = remove;
+	    remove = remove->next;
+	    amfree(prev);
+	}
     }
     return remove;
 }
 
-static char *
-uncompress_file(
-    char       *filename_gz,
-    GPtrArray **emsg)
+static REMOVE_ITEM *
+compress_files(
+    REMOVE_ITEM *compress)
 {
-    char *cmd = NULL;
-    char *filename = NULL;
-    struct stat stat_filename;
-    int result;
-    size_t len;
-    int pipe_from_gzip;
-    int pipe_to_sort;
-    int indexfd;
-    int nullfd;
-    int uncompress_errfd;
-    int sort_errfd;
-    char line[STR_SIZE];
-    FILE *pipe_stream;
-    pid_t pid_gzip;
-    pid_t pid_sort;
-    pid_t pid_index;
-    int        status;
-    char      *msg;
-    gpointer  *p;
-    gpointer  *p_last;
-    GPtrArray *uncompress_err;
-    GPtrArray *sort_err;
-    FILE      *uncompress_err_stream;
-    FILE      *sort_err_stream;
+    REMOVE_ITEM *prev;
+    pid_t        pid;
 
-    filename = g_strdup(filename_gz);
-    len = strlen(filename);
-    if(len > 3 && g_str_equal(&(filename[len - 3]), ".gz")) {
-	filename[len-3]='\0';
-    } else if(len > 2 && g_str_equal(&(filename[len - 2]), ".Z")) {
-	filename[len-2]='\0';
+    if (file_lock_locked(lock_index)) {
+	while(compress) {
+	    dbprintf(_("compressing index file: %s\n"), compress->filename);
+
+	    switch (pid = fork()) {
+	    case -1:
+		error("error: couldn't fork: %s", strerror(errno));
+	    case 0:
+		execlp(COMPRESS_PATH, COMPRESS_PATH, COMPRESS_BEST_OPT, compress->filename, NULL);
+		error("error: couldn't exec %s: %s", COMPRESS_PATH, strerror(errno));
+		/*NOTREACHED*/
+	    default:
+		break;
+	    }
+	    waitpid(pid, NULL, 0);
+	    amfree(compress->filename);
+	    prev = compress;
+	    compress = compress->next;
+	    amfree(prev);
+	}
     }
-
-    /* uncompress the file */
-    result=stat(filename,&stat_filename);
-    if(result==-1 && errno==ENOENT) {		/* file does not exist */
-	struct stat statbuf;
-	REMOVE_ITEM *remove_file;
-
-	/*
-	 * Check that compressed file exists manually.
-	 */
-	if (stat(filename_gz, &statbuf) < 0) {
-	    msg = g_strdup_printf(_("Compressed file '%s' is inaccessable: %s"),
-			     filename_gz, strerror(errno));
-	    dbprintf("%s\n", msg);
-	    g_ptr_array_add(*emsg, msg);
-	    amfree(filename);
-	    return NULL;
-	}
-
-#ifdef UNCOMPRESS_OPT
-#  define PARAM_UNCOMPRESS_OPT UNCOMPRESS_OPT
-#else
-#  define PARAM_UNCOMPRESS_OPT skip_argument
-#endif
-
-	nullfd = open("/dev/null", O_RDONLY);
-
-	indexfd = open(filename,O_WRONLY|O_CREAT, 0600);
-	if (indexfd == -1) {
-	    msg = g_strdup_printf(_("Can't open '%s' for writting: %s"),
-			      filename, strerror(errno));
-	    dbprintf("%s\n", msg);
-	    g_ptr_array_add(*emsg, msg);
-	    amfree(filename);
-	    aclose(nullfd);
-	    return NULL;
-	}
-
-	/* just use our stderr directly for the pipe's stderr; in
-	 * main() we send stderr to the debug file, or /dev/null
-	 * if debugging is disabled */
-
-	/* start the uncompress process */
-	putenv(g_strdup("LC_ALL=C"));
-	pid_gzip = pipespawn(UNCOMPRESS_PATH, STDOUT_PIPE|STDERR_PIPE, 0,
-			     &nullfd, &pipe_from_gzip, &uncompress_errfd,
-			     UNCOMPRESS_PATH, PARAM_UNCOMPRESS_OPT,
-			     filename_gz, NULL);
-	aclose(nullfd);
-
-	pipe_stream = fdopen(pipe_from_gzip,"r");
-	if(pipe_stream == NULL) {
-	    msg = g_strdup_printf(_("Can't fdopen pipe from gzip: %s"),
-			     strerror(errno));
-	    dbprintf("%s\n", msg);
-	    g_ptr_array_add(*emsg, msg);
-	    amfree(filename);
-	    aclose(indexfd);
-	    return NULL;
-	}
-
-	/* start the sort process */
-	putenv(g_strdup("LC_ALL=C"));
-	if (getconf_seen(CNF_TMPDIR)) {
-	    gchar *tmpdir = getconf_str(CNF_TMPDIR);
-	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
-				 &pipe_to_sort, &indexfd, &sort_errfd,
-				 SORT_PATH, "-T", tmpdir, NULL);
-	} else {
-	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
-				 &pipe_to_sort, &indexfd, &sort_errfd,
-				 SORT_PATH, NULL);
-	}
-	aclose(indexfd);
-
-	/* start a subprocess */
-	/* send all ouput from uncompress process to sort process */
-	pid_index = fork();
-	switch (pid_index) {
-	case -1:
-	    msg = g_strdup_printf(
-			_("fork error: %s"),
-			strerror(errno));
-	    dbprintf("%s\n", msg);
-	    g_ptr_array_add(*emsg, msg);
-	    unlink(filename);
-	    amfree(filename);
-	default: break;
-	case 0:
-	    while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
-		if (line[0] != '\0') {
-		    if (strchr(line,'/')) {
-			full_write(pipe_to_sort,line,strlen(line));
-		    }
-		}
-	    }
-	    exit(0);
-	}
-
-	fclose(pipe_stream);
-	aclose(pipe_to_sort);
-
-	uncompress_err_stream = fdopen(uncompress_errfd, "r");
-	uncompress_err = g_ptr_array_new();
-	if (!uncompress_err_stream) {
-	    g_ptr_array_add(uncompress_err,
-		    g_strdup_printf("Can't fdopen uncompress_err_stream: %s\n",
-				    strerror(errno)));
-	} else {
-	    while (fgets(line, sizeof(line), uncompress_err_stream) != NULL) {
-		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
-		    line[strlen(line)-1] = '\0';
-		g_ptr_array_add(uncompress_err, g_strdup_printf("  %s", line));
-		dbprintf("Uncompress: %s\n", line);
-	    }
-	    fclose(uncompress_err_stream);
-	}
-
-	sort_err_stream = fdopen(sort_errfd, "r");
-	sort_err = g_ptr_array_new();
-	if (!sort_err_stream) {
-	    g_ptr_array_add(sort_err,
-		    g_strdup_printf("Can't fdopen sort_err_stream: %s\n",
-				    strerror(errno)));
-	} else {
-	    while (fgets(line, sizeof(line), sort_err_stream) != NULL) {
-		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
-		    line[strlen(line)-1] = '\0';
-		g_ptr_array_add(sort_err, g_strdup_printf("  %s", line));
-		dbprintf("Sort: %s\n", line);
-	    }
-	    fclose(sort_err_stream);
-	}
-
-	status = get_pid_status(pid_gzip, UNCOMPRESS_PATH, emsg);
-	if (status == 0 && filename) {
-	    unlink(filename);
-	    amfree(filename);
-	}
-	if (uncompress_err->len > 0) {
-	    p_last = uncompress_err->pdata + uncompress_err->len;
-	    for (p = uncompress_err->pdata; p < p_last ;p++) {
-		g_ptr_array_add(*emsg, (char *)*p);
-	    }
-	}
-	g_ptr_array_free(uncompress_err, TRUE);
-
-	status = get_pid_status(pid_index, "index", emsg);
-	if (status == 0 && filename) {
-	    unlink(filename);
-	    amfree(filename);
-	}
-
-	status = get_pid_status(pid_sort, SORT_PATH, emsg);
-	if (status == 0 && filename) {
-	    unlink(filename);
-	    amfree(filename);
-	}
-	if (sort_err->len > 0) {
-	    p_last = sort_err->pdata + sort_err->len;
-	    for (p = sort_err->pdata; p < p_last ;p++) {
-		g_ptr_array_add(*emsg, (char *)*p);
-	    }
-	}
-	g_ptr_array_free(sort_err, TRUE);
-
-	/* add at beginning */
-	if (filename) {
-	    remove_file = (REMOVE_ITEM *)g_malloc(sizeof(REMOVE_ITEM));
-	    remove_file->filename = g_strdup(filename);
-	    remove_file->next = uncompress_remove;
-	    uncompress_remove = remove_file;
-	}
-
-    } else if(!S_ISREG((stat_filename.st_mode))) {
-	    msg = g_strdup_printf(_("\"%s\" is not a regular file"), filename);
-	    dbprintf("%s\n", msg);
-	    g_ptr_array_add(*emsg, msg);
-	    errno = -1;
-	    amfree(filename);
-	    amfree(cmd);
-	    return NULL;
-    }
-    amfree(cmd);
-    return filename;
+    return compress;
 }
 
 /* find all matching entries in a dump listing */
@@ -418,7 +234,6 @@ process_ls_dump(
 {
     char line[STR_SIZE], old_line[STR_SIZE];
     char *filename = NULL;
-    char *filename_gz;
     char *dir_slash = NULL;
     FILE *fp;
     char *s;
@@ -432,21 +247,13 @@ process_ls_dump(
 	dir_slash = g_strconcat(dir, "/", NULL);
     }
 
-    filename_gz = get_index_name(dump_hostname, dump_item->hostname, disk_name,
-				 dump_item->date, dump_item->level);
-    if (filename_gz == NULL) {
-	g_ptr_array_add(*emsg, g_strdup_printf(_("index file not found for host '%s' disk '%s' level '%d' date '%s'"), dump_item->hostname, disk_name, dump_item->level, dump_item->date));
-	amfree(filename_gz);
+    filename = get_index_name(dump_hostname, dump_item->hostname, disk_name,
+			      dump_item->date, dump_item->level, emsg);
+    if (filename == NULL) {
+	amfree(filename);
 	amfree(dir_slash);
 	return -1;
     }
-    filename = uncompress_file(filename_gz, emsg);
-    if(filename == NULL) {
-	amfree(filename_gz);
-	amfree(dir_slash);
-	return -1;
-    }
-    amfree(filename_gz);
 
     if((fp = fopen(filename,"r"))==0) {
 	g_ptr_array_add(*emsg, g_strdup_printf("%s", strerror(errno)));
@@ -529,12 +336,14 @@ static void reply(int n, char *fmt, ...)
     {
 	dbprintf(_("! error %d (%s) in printf\n"), errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
+	compress_sorted_files = compress_files(compress_sorted_files);
 	exit(1);
     }
     if (fflush(cmdout) != 0)
     {
 	dbprintf(_("! error %d (%s) in fflush\n"), errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
+	compress_sorted_files = compress_files(compress_sorted_files);
 	exit(1);
     }
     dbprintf(_("< %03d %s\n"), n, reply_buffer);
@@ -567,6 +376,7 @@ static void lreply(int n, char *fmt, ...)
 	dbprintf(_("! error %d (%s) in printf\n"),
 		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
+	compress_sorted_files = compress_files(compress_sorted_files);
 	exit(1);
     }
     if (fflush(cmdout) != 0)
@@ -574,6 +384,7 @@ static void lreply(int n, char *fmt, ...)
 	dbprintf(_("! error %d (%s) in fflush\n"),
 		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
+	compress_sorted_files = compress_files(compress_sorted_files);
 	exit(1);
     }
 
@@ -608,6 +419,7 @@ static void fast_lreply(int n, char *fmt, ...)
 	dbprintf(_("! error %d (%s) in printf\n"),
 		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
+	compress_sorted_files = compress_files(compress_sorted_files);
 	exit(1);
     }
 
@@ -770,6 +582,7 @@ check_and_load_config(
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_indexdir;
+    char *lock_file;
     struct stat dir_stat;
 
     /* check that the config actually exists */
@@ -817,6 +630,20 @@ check_and_load_config(
 	amfree(conf_indexdir);
 	return -1;
     }
+
+    /* remove previous lock */
+    if (lock_index) {
+	file_lock_unlock(lock_index);
+	file_lock_free(lock_index);
+	lock_index = NULL;
+    }
+
+    /* take a lock file to prevent concurent trim */
+    lock_file = g_strdup_printf("%s/%s", conf_indexdir, "lock");
+    lock_index = file_lock_new(lock_file);
+    file_lock_lock_rd(lock_index);
+
+    amfree(lock_file);
     amfree(conf_indexdir);
 
     return 0;
@@ -976,7 +803,6 @@ is_dir_valid_opaque(
     FILE *fp;
     int last_level;
     char *ldir = NULL;
-    char *filename_gz = NULL;
     char *filename = NULL;
     size_t ldir_len;
     GPtrArray *emsg = NULL;
@@ -1020,23 +846,15 @@ is_dir_valid_opaque(
     do
     {
 	amfree(filename);
-	filename_gz = get_index_name(dump_hostname, item->hostname, disk_name,
-				     item->date, item->level);
-	if (filename_gz == NULL) {
-	    reply(599, "index file not found for host '%s' disk '%s' level '%d' date '%s'", item->hostname, disk_name, item->level, item->date);
-	    amfree(ldir);
-	    return -1;
-	}
 	emsg = g_ptr_array_new();
-	if((filename = uncompress_file(filename_gz, &emsg)) == NULL) {
+	filename = get_index_name(dump_hostname, item->hostname, disk_name,
+				  item->date, item->level, &emsg);
+	if (filename == NULL) {
 	    reply_ptr_array(599, emsg);
-	    amfree(filename_gz);
-	    g_ptr_array_free_full(emsg);
 	    amfree(ldir);
 	    return -1;
 	}
 	g_ptr_array_free_full(emsg);
-	amfree(filename_gz);
 	dbprintf("f %s\n", filename);
 	if ((fp = fopen(filename, "r")) == NULL) {
 	    reply(599, _("System error: %s"), strerror(errno));
@@ -1535,6 +1353,7 @@ main(
 		amfree(part);
 		amfree(arg);
 		uncompress_remove = remove_files(uncompress_remove);
+		compress_sorted_files = compress_files(compress_sorted_files);
 		dbclose();
 		return 1;		/* they hung up? */
 	    }
@@ -1893,6 +1712,15 @@ main(
     amfree(line);
 
     uncompress_remove = remove_files(uncompress_remove);
+    compress_sorted_files = compress_files(compress_sorted_files);
+
+    /* remove previous lock */
+    if (lock_index) {
+	file_lock_unlock(lock_index);
+	file_lock_free(lock_index);
+	lock_index = NULL;
+    }
+
     free_find_result(&output_find);
     reply(200, _("Good bye."));
     dbclose();
@@ -2012,64 +1840,371 @@ get_index_dir(
 
 static char *
 get_index_name(
-    char *dump_hostname,
-    char *hostname,
-    char *diskname,
-    char *timestamps,
-    int   level)
+    char       *dump_hostname,
+    char       *hostname,
+    char       *diskname,
+    char       *timestamps,
+    int         level,
+    GPtrArray **emsg)
 {
     struct stat  dir_stat;
     char        *fn;
     char        *s;
     char        *lower_hostname;
+    gboolean     need_uncompress = FALSE;
+    gboolean     need_sort = FALSE;
 
     lower_hostname = g_strdup(dump_hostname);
     for(s=lower_hostname; *s != '\0'; s++)
 	*s = tolower(*s);
 
+    fn = getindex_sorted_fname(dump_hostname, diskname, timestamps, level);
+    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	need_uncompress = FALSE;
+	need_sort = FALSE;
+	goto process_dump;
+    }
+    amfree(fn);
+
+    fn = getindex_sorted_gz_fname(dump_hostname, diskname, timestamps, level);
+    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	need_uncompress = TRUE;
+	need_sort = FALSE;
+	goto process_dump;
+    }
+    amfree(fn);
+
+    fn = getindex_unsorted_fname(dump_hostname, diskname, timestamps, level);
+    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	need_uncompress = FALSE;
+	need_sort = TRUE;
+	goto process_dump;
+    }
+    amfree(fn);
+
+    fn = getindex_unsorted_gz_fname(dump_hostname, diskname, timestamps, level);
+    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	need_uncompress = TRUE;
+	need_sort = TRUE;
+	goto process_dump;
+    }
+    amfree(fn);
+
     fn = getindexfname(dump_hostname, diskname, timestamps, level);
     if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
-	amfree(lower_hostname);
-	return fn;
+	need_uncompress = TRUE;
+	need_sort = TRUE;
+	goto process_dump;
     }
     amfree(fn);
     if(hostname != NULL) {
 	fn = getindexfname(hostname, diskname, timestamps, level);
 	if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
-	    amfree(lower_hostname);
-	    return fn;
+	    need_uncompress = TRUE;
+	    need_sort = TRUE;
+	    goto process_dump;
 	}
 	amfree(fn);
     }
     amfree(fn);
     fn = getindexfname(lower_hostname, diskname, timestamps, level);
     if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
-	amfree(lower_hostname);
-	return fn;
+	need_uncompress = TRUE;
+	need_sort = TRUE;
+	goto process_dump;
     }
     amfree(fn);
     if(diskname != NULL) {
 	fn = getoldindexfname(dump_hostname, diskname, timestamps, level);
 	if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
-	    amfree(lower_hostname);
-	    return fn;
+	    need_uncompress = TRUE;
+	    need_sort = TRUE;
+	    goto process_dump;
 	}
 	amfree(fn);
 	if(hostname != NULL) {
 	    fn = getoldindexfname(hostname, diskname, timestamps, level);
 	    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
-		amfree(lower_hostname);
-		return fn;
+		need_uncompress = TRUE;
+		need_sort = TRUE;
+		goto process_dump;
 	    }
 	}
 	amfree(fn);
 	fn = getoldindexfname(lower_hostname, diskname, timestamps, level);
 	if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
-	    amfree(lower_hostname);
-	    return fn;
+	    need_uncompress = TRUE;
+	    need_sort = TRUE;
+	    goto process_dump;
 	}
 	amfree(fn);
     }
     amfree(lower_hostname);
+    g_ptr_array_add(*emsg, g_strdup_printf(_("index file not found for host '%s' disk '%s' level '%d' date '%s'"), dump_hostname, diskname, level, timestamps));
     return NULL;
+
+process_dump:
+    amfree(lower_hostname);
+    return uncompress_file(hostname, diskname, timestamps, level,
+			   fn, emsg, need_uncompress, need_sort);
 }
+
+static char *
+uncompress_file(
+    char       *hostname,
+    char       *diskname,
+    char       *timestamps,
+    int         level,
+    char       *filename,
+    GPtrArray **emsg,
+    gboolean    need_uncompress,
+    gboolean    need_sort)
+{
+    char *cmd = NULL;
+    char *new_filename = NULL;
+    struct stat stat_filename;
+    int result;
+    int pipe_from_gzip;
+    int pipe_to_sort;
+    int indexfd;
+    int nullfd;
+    int uncompress_errfd;
+    int sort_errfd;
+    char line[STR_SIZE];
+    FILE *pipe_stream;
+    pid_t pid_gzip;
+    pid_t pid_sort;
+    pid_t pid_index;
+    int        status;
+    char      *msg;
+    gpointer  *p;
+    gpointer  *p_last;
+    GPtrArray *uncompress_err;
+    GPtrArray *sort_err;
+    FILE      *uncompress_err_stream;
+    FILE      *sort_err_stream;
+
+    new_filename = getindex_unsorted_fname(hostname, diskname, timestamps, level);
+
+    /* uncompress the file */
+    result = stat(filename, &stat_filename);
+    if (result == -1) {
+	msg = g_strdup_printf(_("Source index file '%s' is inaccessible: %s"),
+			     filename, strerror(errno));
+	dbprintf("%s\n", msg);
+	g_ptr_array_add(*emsg, msg);
+	amfree(filename);
+	return NULL;
+    } else if(!S_ISREG((stat_filename.st_mode))) {
+	    msg = g_strdup_printf(_("\"%s\" is not a regular file"), filename);
+	    dbprintf("%s\n", msg);
+	    g_ptr_array_add(*emsg, msg);
+	    errno = -1;
+	    amfree(filename);
+	    amfree(cmd);
+	    return NULL;
+    }
+
+    if (g_str_equal(filename, new_filename)) {
+	return new_filename;
+    }
+    if (!need_uncompress || need_sort) {
+	return new_filename;
+    }
+
+#ifdef UNCOMPRESS_OPT
+#  define PARAM_UNCOMPRESS_OPT UNCOMPRESS_OPT
+#else
+#  define PARAM_UNCOMPRESS_OPT skip_argument
+#endif
+
+    indexfd = open(new_filename, O_WRONLY|O_CREAT, 0600);
+    if (indexfd == -1) {
+	msg = g_strdup_printf(_("Can't open '%s' for writting: %s"),
+			      filename, strerror(errno));
+	dbprintf("%s\n", msg);
+	g_ptr_array_add(*emsg, msg);
+	amfree(filename);
+	return NULL;
+    }
+
+    if (need_uncompress) {
+	int  pipedef;
+	int *out_fd;
+
+	/* just use our stderr directly for the pipe's stderr; in
+	 * main() we send stderr to the debug file, or /dev/null
+	 * if debugging is disabled */
+
+	/* start the uncompress process */
+	putenv(g_strdup("LC_ALL=C"));
+	nullfd = open("/dev/null", O_RDONLY);
+
+	if (need_sort) {
+	    pipedef = STDOUT_PIPE|STDERR_PIPE;
+	    out_fd = &pipe_from_gzip;
+	} else {
+	    pipedef = STDERR_PIPE;
+	    out_fd = &indexfd;
+	}
+	pid_gzip = pipespawn(UNCOMPRESS_PATH, pipedef, 0,
+			     &nullfd, out_fd, &uncompress_errfd,
+			     UNCOMPRESS_PATH, PARAM_UNCOMPRESS_OPT,
+			     filename, NULL);
+	aclose(nullfd);
+
+	if (need_sort) {
+	    pipe_stream = fdopen(pipe_from_gzip, "r");
+	    if (pipe_stream == NULL) {
+		msg = g_strdup_printf(_("Can't fdopen pipe from gzip: %s"),
+				      strerror(errno));
+		dbprintf("%s\n", msg);
+		g_ptr_array_add(*emsg, msg);
+		amfree(filename);
+		aclose(indexfd);
+		return NULL;
+	    }
+	} else {
+	    aclose(indexfd);
+	}
+    } else {
+	pipe_stream = fopen(filename, "r");
+	if (pipe_stream == NULL) {
+	    msg = g_strdup_printf(_("Can't fopen index file (%s): %s"),
+			     filename, strerror(errno));
+	    dbprintf("%s\n", msg);
+	    g_ptr_array_add(*emsg, msg);
+	    amfree(filename);
+	    aclose(indexfd);
+	    return NULL;
+	}
+    }
+
+    if (need_sort) {
+	/* start the sort process */
+	putenv(g_strdup("LC_ALL=C"));
+
+	if (getconf_seen(CNF_TMPDIR)) {
+	    gchar *tmpdir = getconf_str(CNF_TMPDIR);
+	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
+				 &pipe_to_sort, &indexfd, &sort_errfd,
+				 SORT_PATH, "-T", tmpdir, NULL);
+	} else {
+	    pid_sort = pipespawn(SORT_PATH, STDIN_PIPE|STDERR_PIPE, 0,
+				 &pipe_to_sort, &indexfd, &sort_errfd,
+				 SORT_PATH, NULL);
+	}
+	aclose(indexfd);
+
+	/* start a subprocess */
+	/* send all ouput from uncompress process to sort process */
+	pid_index = fork();
+	switch (pid_index) {
+	case -1:
+	    msg = g_strdup_printf(
+			_("fork error: %s"),
+			strerror(errno));
+	    dbprintf("%s\n", msg);
+	    g_ptr_array_add(*emsg, msg);
+	    unlink(filename);
+	    amfree(filename);
+	default: break;
+	case 0:
+	    while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
+		if (line[0] != '\0') {
+		    if (strchr(line,'/')) {
+			full_write(pipe_to_sort,line,strlen(line));
+		    }
+		}
+	    }
+	    exit(0);
+	}
+
+	fclose(pipe_stream);
+	aclose(pipe_to_sort);
+
+	uncompress_err_stream = fdopen(uncompress_errfd, "r");
+	uncompress_err = g_ptr_array_new();
+	if (!uncompress_err_stream) {
+	    g_ptr_array_add(uncompress_err,
+		    g_strdup_printf("Can't fdopen uncompress_err_stream: %s\n",
+				    strerror(errno)));
+	} else {
+	    while (fgets(line, sizeof(line), uncompress_err_stream) != NULL) {
+		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
+		    line[strlen(line)-1] = '\0';
+		g_ptr_array_add(uncompress_err, g_strdup_printf("  %s", line));
+		dbprintf("Uncompress: %s\n", line);
+	    }
+	    fclose(uncompress_err_stream);
+	}
+
+	sort_err_stream = fdopen(sort_errfd, "r");
+	sort_err = g_ptr_array_new();
+	if (!sort_err_stream) {
+	    g_ptr_array_add(sort_err,
+		    g_strdup_printf("Can't fdopen sort_err_stream: %s\n",
+				    strerror(errno)));
+	} else {
+	    while (fgets(line, sizeof(line), sort_err_stream) != NULL) {
+		if (strlen(line) > 0 && line[strlen(line)-1] == '\n')
+		    line[strlen(line)-1] = '\0';
+		g_ptr_array_add(sort_err, g_strdup_printf("  %s", line));
+		dbprintf("Sort: %s\n", line);
+	    }
+	    fclose(sort_err_stream);
+	}
+
+	status = get_pid_status(pid_gzip, UNCOMPRESS_PATH, emsg);
+	if (status == 0 && filename) {
+	    unlink(filename);
+	    amfree(filename);
+	}
+	if (uncompress_err->len > 0) {
+	    p_last = uncompress_err->pdata + uncompress_err->len;
+	    for (p = uncompress_err->pdata; p < p_last ;p++) {
+		g_ptr_array_add(*emsg, (char *)*p);
+	    }
+	}
+	g_ptr_array_free(uncompress_err, TRUE);
+
+	status = get_pid_status(pid_index, "index", emsg);
+	if (status == 0 && filename) {
+	    unlink(filename);
+	    amfree(filename);
+	}
+
+	status = get_pid_status(pid_sort, SORT_PATH, emsg);
+	if (status == 0 && filename) {
+	    unlink(filename);
+	    amfree(filename);
+	}
+	if (sort_err->len > 0) {
+	    p_last = sort_err->pdata + sort_err->len;
+	    for (p = sort_err->pdata; p < p_last ;p++) {
+		g_ptr_array_add(*emsg, (char *)*p);
+	    }
+	}
+	g_ptr_array_free(sort_err, TRUE);
+    }
+
+    if (need_sort && new_filename && getconf_boolean(CNF_COMPRESS_INDEX)) {
+	/* add at beginning */
+	REMOVE_ITEM *compress_file;
+	compress_file = (REMOVE_ITEM *)g_malloc(sizeof(REMOVE_ITEM));
+	compress_file->filename = g_strdup(new_filename);
+	compress_file->next = uncompress_remove;
+	compress_sorted_files = compress_file;
+    } else if (need_uncompress && new_filename && !getconf_boolean(CNF_COMPRESS_INDEX)) {
+	/* add at beginning */
+	REMOVE_ITEM *remove_file;
+	remove_file = (REMOVE_ITEM *)g_malloc(sizeof(REMOVE_ITEM));
+	remove_file->filename = g_strdup(new_filename);
+	remove_file->next = uncompress_remove;
+	uncompress_remove = remove_file;
+    }
+
+    amfree(cmd);
+    return new_filename;
+}
+
