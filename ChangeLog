@@ -1,3 +1,6 @@
+2013-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Fix typo.
+
 2013-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Implement the index command.
 	* man/Makefile.am: Add amreindex.8

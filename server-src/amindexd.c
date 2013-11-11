@@ -2008,7 +2008,7 @@ uncompress_file(
     if (g_str_equal(filename, new_filename)) {
 	return new_filename;
     }
-    if (!need_uncompress || need_sort) {
+    if (!need_uncompress || !need_sort) {
 	return new_filename;
     }
 
