@@ -1972,9 +1972,9 @@ uncompress_file(
     int sort_errfd;
     char line[STR_SIZE];
     FILE *pipe_stream;
-    pid_t pid_gzip;
-    pid_t pid_sort;
-    pid_t pid_index;
+    pid_t pid_gzip = 0;
+    pid_t pid_sort = 0;
+    pid_t pid_index = 0;
     int        status;
     char      *msg;
     gpointer  *p;
@@ -2154,7 +2154,9 @@ uncompress_file(
 	    }
 	    fclose(sort_err_stream);
 	}
+    }
 
+    if (need_uncompress) {
 	status = get_pid_status(pid_gzip, UNCOMPRESS_PATH, emsg);
 	if (status == 0 && filename) {
 	    unlink(filename);
@@ -2167,7 +2169,9 @@ uncompress_file(
 	    }
 	}
 	g_ptr_array_free(uncompress_err, TRUE);
+    }
 
+    if (need_sort) {
 	status = get_pid_status(pid_index, "index", emsg);
 	if (status == 0 && filename) {
 	    unlink(filename);

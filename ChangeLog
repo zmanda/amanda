@@ -1,4 +1,7 @@
 2013-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: More fix.
+
+2013-11-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Fix typo.
 
 2013-11-08  Jean-Louis Martineau <martineau@zmanda.com>
