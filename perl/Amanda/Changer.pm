@@ -447,40 +447,6 @@ change, but some entries can be added or removed.
 
 Each slot is represented by a hash with the following keys:
 
-=head3 sync_catalog
-
-  $chg->sync_catalog(request => $request,
-                     wait => $wait,
-                     sync_catalog_cb => $cb)
-
-C<request> is a time in seconds, a new catalog request is asked if the
-previous one is older than that time. Set C<wait> to true if you want to wait
-for the catalog, set it to false to return if the catalog is not available.
-The C<sync_catalog_cb> is called with an error object as the first parameter,
-or C<undef> if no error occurs.
-
-=head3 make_new_tape_label
-
-  $chg->make_new_tape_label(barcode => $barcode,
-			    slot    => $slot,
-			    meta    => $meta);
-
-To devise a new name for a volume using the C<barcode> and C<meta> arguments.
-This will return C<undef> if no label could be created.
-
-=head3 make_new_meta_label
-
-  $chg->make_new_meta_label();
-
-To devise a new meta name for a meta volume.
-This will return C<undef> if no label could be created.
-
-=head3 have_inventory
-
-  $chg->have_inventory() 
-
-Return True if the changer have the inventory method.
-
 =over 4
 
 =item slot
@@ -536,6 +502,40 @@ easily add or remove volumes.  This information may be useful for operations to
 bulk-import newly-inserted tapes or bulk-export a set of tapes.
 
 =back
+
+=head3 sync_catalog
+
+  $chg->sync_catalog(request => $request,
+                     wait => $wait,
+                     sync_catalog_cb => $cb)
+
+C<request> is a time in seconds, a new catalog request is asked if the
+previous one is older than that time. Set C<wait> to true if you want to wait
+for the catalog, set it to false to return if the catalog is not available.
+The C<sync_catalog_cb> is called with an error object as the first parameter,
+or C<undef> if no error occurs.
+
+=head3 make_new_tape_label
+
+  $chg->make_new_tape_label(barcode => $barcode,
+			    slot    => $slot,
+			    meta    => $meta);
+
+To devise a new name for a volume using the C<barcode> and C<meta> arguments.
+This will return C<undef> if no label could be created.
+
+=head3 make_new_meta_label
+
+  $chg->make_new_meta_label();
+
+To devise a new meta name for a meta volume.
+This will return C<undef> if no label could be created.
+
+=head3 have_inventory
+
+  $chg->have_inventory()
+
+Return True if the changer have the inventory method.
 
 =head3 move
 
