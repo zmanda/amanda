@@ -1,4 +1,7 @@
 2013-11-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Fix gcc warnings.
+
+2013-11-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix pod.
 
 2013-11-11  Jean-Louis Martineau <martineau@zmanda.com>

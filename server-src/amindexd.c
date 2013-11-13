@@ -1979,8 +1979,8 @@ uncompress_file(
     char      *msg;
     gpointer  *p;
     gpointer  *p_last;
-    GPtrArray *uncompress_err;
-    GPtrArray *sort_err;
+    GPtrArray *uncompress_err = NULL;
+    GPtrArray *sort_err = NULL;
     FILE      *uncompress_err_stream;
     FILE      *sort_err_stream;
 
