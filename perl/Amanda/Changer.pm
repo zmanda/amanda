@@ -384,34 +384,6 @@ change, but some entries can be added or removed.
 
 Each slot is represented by a hash with the following keys:
 
-=head3 make_new_tape_label
-
-  $chg->make_new_tape_label(barcode => $barcode,
-			    slot    => $slot,
-			    meta    => $meta);
-
-To devise a new name for a volume using the C<barcode> and C<meta> arguments.
-This will return C<undef> if no label could be created.
-
-=head3 make_new_meta_label
-
-  $chg->make_new_meta_label();
-
-To devise a new meta name for a meta volume.
-This will return C<undef> if no label could be created.
-
-=head3 have_inventory
-
-  $chg->have_inventory() 
-
-Return True if the changer have the inventory method.
-
-=head3 volume_is_labelable
-
-  $chg->volume_is_labelable($device_status, $f_type, $label);
-
-Return 1 if the volume is labelable acording to the autolabel setting.
-
 =over 4
 
 =item slot
@@ -467,6 +439,34 @@ easily add or remove volumes.  This information may be useful for operations to
 bulk-import newly-inserted tapes or bulk-export a set of tapes.
 
 =back
+
+=head3 make_new_tape_label
+
+  $chg->make_new_tape_label(barcode => $barcode,
+			    slot    => $slot,
+			    meta    => $meta);
+
+To devise a new name for a volume using the C<barcode> and C<meta> arguments.
+This will return C<undef> if no label could be created.
+
+=head3 make_new_meta_label
+
+  $chg->make_new_meta_label();
+
+To devise a new meta name for a meta volume.
+This will return C<undef> if no label could be created.
+
+=head3 have_inventory
+
+  $chg->have_inventory() 
+
+Return True if the changer have the inventory method.
+
+=head3 volume_is_labelable
+
+  $chg->volume_is_labelable($device_status, $f_type, $label);
+
+Return 1 if the volume is labelable acording to the autolabel setting.
 
 =head3 move
 

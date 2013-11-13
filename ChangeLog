@@ -1,3 +1,6 @@
+2013-11-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Fix pod.
+
 2013-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c (delete_file): Fix typo.
 
