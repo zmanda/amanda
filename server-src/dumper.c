@@ -1340,8 +1340,7 @@ do_dump(
     amfree(sdiskname);
 
     if (streams[INDEXFD].fd != NULL) {
-	if (getconf_boolean(CNF_COMPRESS_INDEX) &&
-			    !getconf_boolean(CNF_SORT_INDEX)) {
+	if (getconf_boolean(CNF_COMPRESS_INDEX)) {
 	    indexfile_real = getindex_unsorted_gz_fname(hostname, diskname, dumper_timestamp, level);
 	} else {
 	    indexfile_real = getindex_unsorted_fname(hostname, diskname, dumper_timestamp, level);
@@ -1362,8 +1361,7 @@ do_dump(
 	    errstr = g_strdup_printf(_("err open %s: %s"),
                                      indexfile_tmp, strerror(errno));
 	    goto failed;
-	} else if (getconf_boolean(CNF_COMPRESS_INDEX) &&
-		   !getconf_boolean(CNF_SORT_INDEX)) {
+	} else if (getconf_boolean(CNF_COMPRESS_INDEX)) {
 	    if (runcompress(indexout, &indexpid, COMP_BEST, "index compress") < 0) {
 		aclose(indexout);
 		goto failed;
