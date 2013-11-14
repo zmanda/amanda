@@ -1,4 +1,8 @@
 2013-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amreindex.pl: Compress the index file if compress-index
+	  is set.
+
+2013-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Add erase-on-full And many missing storage setting.
 	* common-src/conffile.c: Add CONF_ERASE_ON_FULL in storage.
 	* common-src/conffile.h: Add STORAGE_ERASE_ON_FULL.
