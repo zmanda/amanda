@@ -1,4 +1,7 @@
 2013-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Curinfo/Info.pm: Small fix.
+
+2013-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amreindex.pl: Compress the index file if compress-index
 	  is set.
 

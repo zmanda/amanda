@@ -638,7 +638,7 @@ sub from_line
     my $self = undef;
 
 			# level size csize sec date filenum label
-    $line =~ m{^stats: (\d+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) (.*) $}
+    $line =~ m{^stats: (\d+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) (.*)$}
 			# level size csize sec date
       or $line =~ m{^stats: (\d+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+)}
       or return Amanda::Curinfo::Message->new(
