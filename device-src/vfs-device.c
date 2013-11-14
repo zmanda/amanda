@@ -84,7 +84,8 @@ static gboolean vfs_device_recycle_file (Device * pself, guint filenum);
 static gboolean vfs_device_erase (Device * pself);
 static Device * vfs_device_factory(char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags vfs_device_read_label(Device * dself);
-static gboolean vfs_device_write_block(Device * self, guint size, gpointer data);
+static DeviceWriteResult vfs_device_write_block(Device * self, guint size,
+						gpointer data);
 static int vfs_device_read_block(Device * self, gpointer data, int * size_req);
 static IoResult vfs_device_robust_write(VfsDevice * self,  char *buf,
                                               int count);
@@ -862,11 +863,16 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
     return dself->status;
 }
 
-static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data) {
+static DeviceWriteResult
+vfs_device_write_block(
+    Device * pself,
+    guint size,
+    gpointer data)
+{
     VfsDevice * self = VFS_DEVICE(pself);
     IoResult result;
 
-    if (device_in_error(self)) return FALSE;
+    if (device_in_error(self)) return WRITE_FAILED;
 
     g_assert(self->open_file_fd >= 0);
 
@@ -875,27 +881,51 @@ static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data
 
     if (check_at_peom(self, size)) {
 	/* check_at_peom() only checks against MAX_VOLUME_USAGE limit */
+	DeviceWriteResult dwr = self->leom ? WRITE_FULL : WRITE_FAILED;
 	pself->is_eom = TRUE;
 	device_set_error(pself,
 	    g_strdup(_("No space left on device: more than MAX_VOLUME_USAGE bytes written")),
 	    DEVICE_STATUS_VOLUME_ERROR);
-	return FALSE;
+	if (fsync(self->open_file_fd) == -1) {
+	    g_debug("fsync failed: %s", strerror(errno));
+	    dwr = WRITE_FAILED;
+	}
+	return dwr;
     }
 
     result = vfs_device_robust_write(self, data, size);
-    if (result != RESULT_SUCCESS) {
+
+    if (result == RESULT_NO_SPACE) {
+	DeviceWriteResult dwr = self->leom ? WRITE_SPACE : WRITE_FAILED;
+	if (ftruncate(self->open_file_fd,
+		      pself->bytes_written + VFS_DEVICE_LABEL_SIZE) == -1) {
+	    g_debug("ftruncate failed: %s", strerror(errno));
+	    dwr = WRITE_FAILED;
+	}
+	if (lseek(self->open_file_fd,
+		  pself->bytes_written + VFS_DEVICE_LABEL_SIZE,
+		  SEEK_SET) == -1) {
+	    g_debug("ftruncate failed: %s", strerror(errno));
+	    dwr = WRITE_FAILED;
+	}
+	if (fsync(self->open_file_fd) == -1) {
+	    g_debug("fsync failed: %s", strerror(errno));
+	    dwr = WRITE_FAILED;
+	}
+	return dwr;
+    } else if (result != RESULT_SUCCESS) {
 	/* vfs_device_robust_write set error status appropriately */
-        return FALSE;
+        return WRITE_FAILED;
     }
 
     self->volume_bytes += size;
     self->checked_bytes_used += size;
-    pself->block ++;
+    pself->block++;
     g_mutex_lock(pself->device_mutex);
     pself->bytes_written += size;
     g_mutex_unlock(pself->device_mutex);
 
-    return TRUE;
+    return WRITE_SUCCEED;
 }
 
 static int

@@ -79,7 +79,7 @@ do_block(
 {
     XferElement *elt = XFER_ELEMENT(self);
 
-    if (!device_write_block(self->device, size, data)) {
+    if (device_write_block(self->device, size, data) != WRITE_SUCCEED) {
 	xfer_cancel_with_error(elt, "%s: %s",
 		self->device->device_name, device_error_or_status(self->device));
 	wait_until_xfer_cancelled(elt->xfer);

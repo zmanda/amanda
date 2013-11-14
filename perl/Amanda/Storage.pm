@@ -185,6 +185,7 @@ sub new {
     $self->{'set_no_reuse'} = storage_getconf($st, $STORAGE_SET_NO_REUSE);
     $self->{'dump_selection'} = storage_getconf($st, $STORAGE_DUMP_SELECTION);
     $self->{'erase_on_failure'} = storage_getconf($st, $STORAGE_ERASE_ON_FAILURE);
+    $self->{'erase_on_full'} = storage_getconf($st, $STORAGE_ERASE_ON_FULL);
     bless $self, $class;
 
     $self->{'tapetype'} = lookup_tapetype($self->{'tapetype_name'});

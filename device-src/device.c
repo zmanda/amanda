@@ -573,6 +573,17 @@ device_open (char * device_name)
     return device;
 }
 
+void
+device_reset(
+    Device *self)
+{
+    self->status = DEVICE_STATUS_SUCCESS;
+    amfree(selfp->errmsg);
+    selfp->last_status = DEVICE_STATUS_SUCCESS;
+    amfree(selfp->statusmsg);
+    self->is_eom = FALSE;
+}
+
 char *
 device_error(Device * self)
 {
@@ -1246,7 +1257,7 @@ device_start (Device * self, DeviceAccessMode mode,
     return rv;
 }
 
-gboolean
+DeviceWriteResult
 device_write_block (Device * self, guint size, gpointer block)
 {
     DeviceClass *klass;

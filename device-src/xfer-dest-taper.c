@@ -140,3 +140,16 @@ xfer_dest_taper_get_part_bytes_written(
     else
 	return 0;
 }
+
+void
+xfer_dest_taper_new_space_available(
+    XferElement *elt,
+    int          made_space)
+{
+    XferDestTaperClass *klass;
+    g_assert(IS_XFER_DEST_TAPER(elt));
+
+    klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    if (klass->new_space_available)
+	klass->new_space_available(XFER_DEST_TAPER(elt), made_space);
+}

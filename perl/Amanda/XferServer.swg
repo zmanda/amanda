@@ -102,6 +102,10 @@ void xfer_dest_taper_cache_inform(
 guint64 xfer_dest_taper_get_part_bytes_written(
     XferElement *self);
 
+void xfer_dest_taper_new_space_available(
+   XferElement *self,
+   int          made_space);
+
 %newobject xfer_source_recovery;
 XferElement *xfer_source_recovery(Device *first_device);
 
@@ -152,6 +156,7 @@ DECLARE_METHOD(use_device, Amanda::XferServer::xfer_dest_taper_use_device)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_dest_taper_start_part)
 DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_dest_taper_cache_inform)
 DECLARE_METHOD(get_part_bytes_written, Amanda::XferServer::xfer_dest_taper_get_part_bytes_written)
+DECLARE_METHOD(new_space_available, Amanda::XferServer::xfer_dest_taper_new_space_available)
 
 /* ---- */
 

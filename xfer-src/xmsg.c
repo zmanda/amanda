@@ -79,6 +79,7 @@ xmsg_repr(
 	    case XMSG_READY: typ = "READY"; break;
 	    case XMSG_CHUNK_DONE: typ = "CHUNK_DONE"; break;
 	    case XMSG_CRC: typ = "CRC"; break;
+	    case XMSG_NO_SPACE: typ = "NO_SPACE"; break;
 	    default: typ = "**UNKNOWN**"; break;
 	}
 

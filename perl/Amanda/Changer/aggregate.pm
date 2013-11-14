@@ -157,6 +157,31 @@ sub _set_current_slot
     });
 }
 
+sub slot_in_same_changer {
+    my $self  = shift;
+    my $slot1 = shift;
+    my $slot2 = shift;
+
+    (my $kid1 = $slot1) =~ s/:.*$//g;
+    (my $kid2 = $slot2) =~ s/:.*$//g;
+
+    if ($kid1 != $kid2) {
+	return 0;
+    }
+
+    my $child = $self->{'children'}[$kid1];
+    if (!defined $child) {
+	return 0;
+    }
+
+    if ($child->can("slot_in_same_changer")) {
+	my $kid_slot1 =~ s/[^:]*://g;
+	my $kid_slot2 =~ s/[^:]*://g;
+	return $child->slot_in_same_changer($kid_slot1, $kid_slot2);
+    }
+    return 1;
+}
+
 sub load {
     my $self = shift;
     my %params = @_;

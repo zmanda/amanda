@@ -846,9 +846,9 @@ write_slab_to_device(
 
     while (remaining && !elt->cancelled) {
 	gsize write_size = MIN(self->block_size, remaining);
-	gboolean ok;
+	DeviceWriteResult ok;
 	ok = device_write_block(self->device, write_size, buf);
-	if (!ok) {
+	if (ok != WRITE_SUCCEED) {
             self->bytes_written += slab->size - remaining;
 
             /* TODO: handle an error without is_eom

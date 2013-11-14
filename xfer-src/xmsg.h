@@ -118,6 +118,11 @@ typedef enum {
      */
     XMSG_CRC = 8,
 
+    /* XMSG_NO_SPACE
+     *  - device is full, need more space
+     */
+    XMSG_NO_SPACE = 9,
+
 } xmsg_type;
 
 /*

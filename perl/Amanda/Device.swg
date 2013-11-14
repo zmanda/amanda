@@ -280,6 +280,11 @@ typedef struct Device {
 	    return device_configure(self, use_global_config);
 	}
 
+	void
+	reset() {
+	    return device_reset(self);
+	}
+
 	char *
 	error() {
 	    return device_error(self);
@@ -325,7 +330,7 @@ typedef struct Device {
 	    return device_start_file(self, jobInfo);
 	}
 
-	gboolean
+	DeviceWriteResult
 	write_block(guint size, gpointer data) {
 	    return device_write_block(self, size, data);
 	}
@@ -664,7 +669,7 @@ write_random_to_device(guint32 seed, size_t length, Device *device) {
 	size_t to_write = min(block_size, length);
 
 	simpleprng_fill_buffer(&prng, buf, to_write);
-	if (!device_write_block(device, (guint)block_size, buf)) {
+	if (device_write_block(device, (guint)block_size, buf) != WRITE_SUCCEED) {
 	    g_free(buf);
 	    return FALSE;
 	}

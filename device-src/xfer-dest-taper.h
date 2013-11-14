@@ -50,6 +50,7 @@ typedef struct {
     void (*use_device)(XferDestTaper *self, Device *device);
     void (*cache_inform)(XferDestTaper *self, const char *filename, off_t offset,
 			 off_t length);
+    void (*new_space_available)(XferDestTaper *self, int made_space);
     guint64 (*get_part_bytes_written)(XferDestTaper *self);
 } XferDestTaperClass;
 
@@ -95,6 +96,10 @@ void xfer_dest_taper_cache_inform(
     const char *filename,
     off_t offset,
     off_t length);
+
+void xfer_dest_taper_new_space_available(
+    XferElement *self,
+    int          made_space);
 
 /* Return the number of bytes written for the current part.
  *

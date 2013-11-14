@@ -66,7 +66,8 @@ static gboolean null_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean null_device_finish (Device * pself);
 static gboolean null_device_start_file(Device * self, dumpfile_t * jobInfo);
-static gboolean null_device_write_block (Device * self, guint size, gpointer data);
+static DeviceWriteResult null_device_write_block(Device * self, guint size,
+						 gpointer data);
 static gboolean null_device_finish_file(Device * self);
 static Device* null_device_factory(char * device_name, char * device_type, char * device_node);
 
@@ -283,17 +284,17 @@ null_device_start_file(Device * d_self,
     return TRUE;
 }
 
-static gboolean
+static DeviceWriteResult
 null_device_write_block (Device * pself, guint size G_GNUC_UNUSED,
 	    gpointer data G_GNUC_UNUSED) {
     NullDevice * self;
     self = NULL_DEVICE(pself);
 
-    if (device_in_error(self)) return FALSE;
+    if (device_in_error(self)) return WRITE_FAILED;
 
     pself->block++;
 
-    return TRUE;
+    return WRITE_SUCCEED;
 }
 
 static gboolean

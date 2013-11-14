@@ -85,6 +85,7 @@ sub new {
 	dir => $dir,
 	config => $config,
 	state_filename => "$dir/state",
+	global_space => 1,
 
 	# list of all reservations
 	reservation => {},

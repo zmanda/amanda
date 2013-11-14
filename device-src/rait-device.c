@@ -158,7 +158,8 @@ static gboolean rait_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean rait_device_configure(Device * self, gboolean use_global_config);
 static gboolean rait_device_start_file(Device * self, dumpfile_t * info);
-static gboolean rait_device_write_block (Device * self, guint size, gpointer data);
+static DeviceWriteResult rait_device_write_block(Device * self, guint size,
+						 gpointer data);
 static gboolean rait_device_finish_file (Device * self);
 static dumpfile_t * rait_device_seek_file (Device * self, guint file);
 static gboolean rait_device_seek_block (Device * self, guint64 block);
@@ -1507,11 +1508,11 @@ static char * extract_data_block(char * data, guint size,
     return rval;
 }
 
-static gboolean
+static DeviceWriteResult
 rait_device_write_block (Device * dself, guint size, gpointer data) {
     GPtrArray * ops;
     guint i;
-    gboolean success;
+    DeviceWriteResult rait_result;
     guint data_children, num_children;
     gsize blocksize = dself->block_size;
     RaitDevice * self;
@@ -1519,8 +1520,8 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
 
     self = RAIT_DEVICE(dself);
 
-    if (rait_device_in_error(self)) return FALSE;
-    if (self->private->status != RAIT_STATUS_COMPLETE) return FALSE;
+    if (rait_device_in_error(self)) return WRITE_FAILED;
+    if (self->private->status != RAIT_STATUS_COMPLETE) return WRITE_FAILED;
 
     find_simple_params(RAIT_DEVICE(self), &num_children, &data_children);
     num_children = self->private->children->len;
@@ -1562,10 +1563,15 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
 
     do_rait_child_ops(self, write_block_do_op, ops);
 
-    success = g_ptr_array_and(ops, extract_boolean_generic_op);
-
+    rait_result = WRITE_SUCCEED;
     for (i = 0; i < self->private->children->len; i ++) {
         WriteBlockOp * op = g_ptr_array_index(ops, i);
+	DeviceWriteResult result = GPOINTER_TO_INT(op->base.result);
+	if (result == WRITE_SUCCEED && rait_result == WRITE_SUCCEED) {
+	} else if (result == WRITE_SPACE && rait_result == WRITE_SUCCEED) {
+	} else {
+	    rait_result = WRITE_FAILED;
+	}
         if (op->data_needs_free)
             free(op->data);
     }
@@ -1576,7 +1582,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
 
     g_ptr_array_free_full(ops);
 
-    if (!success) {
+    if (rait_result != WRITE_SUCCEED) {
 	/* TODO be more specific here */
 	/* TODO: handle EOM here -- if one or more (or two or more??)
 	 * children have is_eom set, then reflect that in our error
@@ -1587,14 +1593,14 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
 	    DEVICE_STATUS_DEVICE_ERROR);
         /* this is EOM or an error, so call it EOM */
         dself->is_eom = TRUE;
-        return FALSE;
+        return WRITE_FAILED;
     } else {
         dself->block ++;
 	g_mutex_lock(dself->device_mutex);
 	dself->bytes_written += size;
 	g_mutex_unlock(dself->device_mutex);
 
-        return TRUE;
+        return WRITE_SUCCEED;
     }
 }
 

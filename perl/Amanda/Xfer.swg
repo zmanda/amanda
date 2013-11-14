@@ -90,6 +90,7 @@ amglue_add_constant(XMSG_PART_DONE, xmsg_type);
 amglue_add_constant(XMSG_READY, xmsg_type);
 amglue_add_constant(XMSG_CHUNK_DONE, xmsg_type);
 amglue_add_constant(XMSG_CRC, xmsg_type);
+amglue_add_constant(XMSG_NO_SPACE, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*

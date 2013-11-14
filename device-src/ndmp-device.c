@@ -793,7 +793,7 @@ ndmp_device_start_file(
     return TRUE;
 }
 
-static gboolean
+static DeviceWriteResult
 ndmp_device_write_block(
     Device   *dself,
     guint     size,
@@ -802,7 +802,7 @@ ndmp_device_write_block(
     NdmpDevice *self = NDMP_DEVICE(dself);
     gpointer replacement_buffer = NULL;
 
-    if (device_in_error(self)) return FALSE;
+    if (device_in_error(self)) return WRITE_FAILED;
 
     /* zero out to the end of a short block -- tape devices only write
      * whole blocks. */
@@ -835,7 +835,7 @@ ndmp_device_write_block(
 	case ROBUST_WRITE_ERROR:
 	    /* error was set by robust_write or above */
 	    if (replacement_buffer) g_free(replacement_buffer);
-	    return FALSE;
+	    return WRITE_FAILED;
     }
 
     dself->block++;
@@ -844,7 +844,7 @@ ndmp_device_write_block(
     g_mutex_unlock(dself->device_mutex);
 
     if (replacement_buffer) g_free(replacement_buffer);
-    return TRUE;
+    return WRITE_SUCCEED;
 }
 
 static gboolean

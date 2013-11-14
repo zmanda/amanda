@@ -143,6 +143,8 @@ sub local_message {
 	return "amtrmidx exited with non-zero while scrubbing logs: $self->{'errno'} $self->{'child_error'}.";
     } elsif ($self->{'code'} == 1000056) {
 	return "Failed to rewrite label '$self->{'label'}' to volume: $self->{'dev_error'}.";
+    } elsif ($self->{'code'} == 1000057) {
+	return "Set datestamp to \"0\" for label '$self->{'label'} in tapelist file.";
     }
 }
 
@@ -973,7 +975,7 @@ sub erase {
 
 		# label the tape with the same label it had
 		if ($params{'keep_label'}) {
-		    if (!$dev->start($ACCESS_WRITE, $label, undef)) {
+		    if (!$dev->start($ACCESS_WRITE, $label, "X")) {
 			$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
@@ -1027,6 +1029,7 @@ sub erase {
 
     step scrub_db => sub {
 	my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+	my $tapelist_code;
 	if (!defined $tle) {
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
@@ -1039,8 +1042,10 @@ sub erase {
             $tle->{'datestamp'} = 0 if $tle;
             $tle->{'storage'} = undef if $tle;
             $tle->{'config'} = undef if $tle;
+	    $tapelist_code = 1000057;
 	} else {
             $self->{'tapelist'}->remove_tapelabel($label);
+	    $tapelist_code = 1000052;
 	}
 
 	#take a copy in case we roolback
@@ -1063,7 +1068,7 @@ sub erase {
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code      => 1000052,
+				code      => $tapelist_code,
 				label     => $label,
 				tapelist_filename => $self->{'tapelist'}->{'filename'}));
 	}

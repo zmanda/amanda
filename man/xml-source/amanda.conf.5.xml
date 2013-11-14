@@ -3373,6 +3373,15 @@ nothing useful was written to it. This is useful to reuse the volume sooner.
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>erase-on-full</amkeyword> <amtype>bool</amtype></term>
+  <listitem>
+<para>Default: <amkeyword>NO</amkeyword>. Automatically erase a no-retention
+volume if the vtape area become full.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>erase-volume</amkeyword> <amtype>bool</amtype></term>
   <listitem>
 <para>Default: <amkeyword>NO</amkeyword>. Automatically erase the volume when

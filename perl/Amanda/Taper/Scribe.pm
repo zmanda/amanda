@@ -433,6 +433,7 @@ use Amanda::Header;
 use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
 use Amanda::Tapelist;
+use Amanda::Label;
 use Amanda::Config qw( :getconf config_dir_relative );
 use base qw( Exporter );
 
@@ -894,6 +895,8 @@ sub handle_xmsg {
 	    $self->_xmsg_error($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_CRC) {
 	    $self->{'crc_size'} = $msg->{'size'};
+	} elsif ($msg->{'type'} == $XMSG_NO_SPACE) {
+	    $self->_xmsg_no_space($src, $msg, $xfer);
 	}
     }
 }
@@ -1021,6 +1024,78 @@ sub _xmsg_done {
 	$self->dbg("transfer is complete");
 	$self->_dump_done();
     }
+}
+
+sub _xmsg_no_space {
+    my $self = shift;
+    my ($src, $msg, $xfer) = @_;
+    my $chg = $self->{'taperscan'}->{'chg'};
+    my $made_space = 0;
+    my $inventory;
+
+    if (!$self->{'taperscan'}->{'storage'}->{'erase_on_full'}) {
+	return $msg->{'elt'}->new_space_available(0);
+    }
+
+    my $finished_cb = sub {
+	$msg->{'elt'}->new_space_available($made_space);
+    };
+
+    my $steps = define_steps
+	cb_ref => \$finished_cb;
+
+    step init => sub {
+	if ($chg->{'global_space'}) {
+	    $chg->inventory(inventory_cb => $steps->{'got_inventory'});
+	} else {
+	    return $finished_cb();
+	}
+    };
+
+    step got_inventory => sub {
+	(my $err, $inventory) = @_;
+
+	if ($err && $err->notimpl) {
+	    return $finished_cb->();
+	} elsif ($err) {
+	    return $finished_cb->();
+	}
+	$steps->{'erase'}->();
+    };
+
+    step erase => sub {
+	for my $i (0..(scalar(@$inventory)-1)) {
+	    my $sl = $inventory->[$i];
+	    my $slot = $sl->{'slot'};
+	    my $label = $sl->{'label'};
+
+	    if (!$sl->{'reserved'} and
+		defined $sl->{'device_status'} and
+		$sl->{'device_status'} == $DEVICE_STATUS_SUCCESS and
+		defined $sl->{'label'} and
+		Amanda::Tapelist::volume_is_reusable($sl->{'label'}) and
+		(!$chg->can("slot_in_same_changer") or
+		 !$self->{'reservation'} or
+		 $chg->slot_in_same_changer($slot, $self->{'reservation'}->{'slot'}))) {
+
+		my $tle = $self->{'taperscan'}->{'tapelist'}->lookup_tapelabel($sl->{'label'});
+		if (defined $tle and $tle->{'datestamp'} ne "0") {
+		    my $Label = Amanda::Label->new(
+				storage  => $self->{'taperscan'}->{'storage'},
+				tapelist => $self->{'taperscan'}->{'tapelist'});
+		    $made_space++;
+		    return $Label->erase(finished_cb => $steps->{'erased'},
+					 labels      => [ $sl->{'label'} ],
+					 erase       => 1,
+					 keep_label  => 1);
+		}
+	    }
+	}
+    };
+
+    step erased => sub {
+	$finished_cb->();
+    };
 }
 
 sub abort_setup {

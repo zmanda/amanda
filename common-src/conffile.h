@@ -1422,6 +1422,7 @@ typedef enum storage_e  {
     STORAGE_SET_NO_REUSE,
     STORAGE_DUMP_SELECTION,
     STORAGE_ERASE_ON_FAILURE,
+    STORAGE_ERASE_ON_FULL,
     STORAGE_STORAGE
 } storage_key;
 
@@ -1496,7 +1497,8 @@ char *storage_name(storage_t *app);
 #define storage_get_interactivity(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_INTERACTIVITY)))
 #define storage_get_set_no_reuse(storage)  (val_t_to_bool(storage_getconf((storage), STORAGE_SET_NO_REUSE)))
 #define storage_get_dump_selection(storage)  (val_t_to_dump_selection(storage_getconf((storage), STORAGE_DUMP_SELECTION)))
-#define storage_get_erase_on_failure(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FAILUERE)))
+#define storage_get_erase_on_failure(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FAILURE)))
+#define storage_get_erase_on_full(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FULL)))
 
 
 /*

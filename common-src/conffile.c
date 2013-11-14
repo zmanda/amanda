@@ -97,6 +97,7 @@ typedef enum {
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
     CONF_CMDFILE,	       CONF_SET_NO_REUSE,	CONF_ERASE_VOLUME,
     CONF_ERASE_ON_FAILURE,     CONF_COMPRESS_INDEX,	CONF_SORT_INDEX,
+    CONF_ERASE_ON_FULL,
 
     /* execute on */
     CONF_PRE_AMCHECK,          CONF_POST_AMCHECK,
@@ -1025,6 +1026,7 @@ keytab_t server_keytab[] = {
     { "EJECT_VOLUME", CONF_EJECT_VOLUME },
     { "ERASE_VOLUME", CONF_ERASE_VOLUME },
     { "ERASE_ON_FAILURE", CONF_ERASE_ON_FAILURE },
+    { "ERASE_ON_FULL", CONF_ERASE_ON_FULL },
     { "EMPTY", CONF_EMPTY },
     { "ENCRYPT", CONF_ENCRYPT },
     { "ERROR", CONF_ERROR },
@@ -1590,6 +1592,7 @@ conf_var_t storage_var [] = {
    { CONF_SET_NO_REUSE             , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_SET_NO_REUSE             , NULL },
    { CONF_DUMP_SELECTION           , CONFTYPE_DUMP_SELECTION, read_dump_selection, STORAGE_DUMP_SELECTION           , NULL },
    { CONF_ERASE_ON_FAILURE         , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_ON_FAILURE         , NULL },
+   { CONF_ERASE_ON_FULL            , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_ON_FULL            , NULL },
    { CONF_UNKNOWN                  , CONFTYPE_INT           , NULL               , STORAGE_STORAGE                  , NULL }
 };
 
@@ -3464,6 +3467,7 @@ init_storage_defaults(
     conf_init_bool          (&stcur.value[STORAGE_SET_NO_REUSE]             , FALSE);
     conf_init_dump_selection(&stcur.value[STORAGE_DUMP_SELECTION]);
     conf_init_bool          (&stcur.value[STORAGE_ERASE_ON_FAILURE]         , 0);
+    conf_init_bool          (&stcur.value[STORAGE_ERASE_ON_FULL]            , 0);
 }
 
 static void

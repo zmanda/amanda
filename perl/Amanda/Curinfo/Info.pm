@@ -88,8 +88,8 @@ the future.
 You can also instantiate these objects directly from a
 properly-formatted line in an infofile:
 
-   my $history = Amanda::Curinfo::History->from_line($hist_line);
-   my $stats   = Amanda::Curinfo::Stats->from_line($stat_line);
+   my $history = Amanda::Curinfo::History->from_line($info, $hist_line);
+   my $stats   = Amanda::Curinfo::Stats->from_line($info, $stat_line);
 
    my $perf = Amanda::Curinfo::Perf->new();
    $perf->set_rate_from_line($rate_line);
@@ -343,7 +343,7 @@ sub read_infofile_stats
         } elsif ( $line =~ m{^stats:} ) {
 
             ## make a new Stats object and push it on to the queue
-            my $stats = Amanda::Curinfo::Stats->from_line($line);
+            my $stats = Amanda::Curinfo::Stats->from_line($self, $line);
 	    return $stats if $stats->isa("Amanda::Message");
             push @$inf, $stats;
 
@@ -378,7 +378,7 @@ sub read_infofile_history
             return;
 
         } elsif ( $line =~ m{^history:} ) {
-            my $hist = Amanda::Curinfo::History->from_line($line);
+            my $hist = Amanda::Curinfo::History->from_line($self, $line);
 	    return $hist if $hist->isa("Amanda::Message");
             push @$history, $hist;
 
@@ -387,7 +387,7 @@ sub read_infofile_history
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300014,
-				infofile => $self->infofile,
+				infofile => $self->{'infofile'},
 				line     => $line);
         }
     }
@@ -410,7 +410,7 @@ sub write_to_file
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300015,
-				infofile => $self->infofile,
+				infofile => $self->{'infofile'},
 				error    => $!);
 
     ## print basics
@@ -464,7 +464,7 @@ sub new
 
 sub from_line
 {
-    my ( $class, $line ) = @_;
+    my ( $class, $info, $line ) = @_;
 
     my $self = undef;
 
@@ -489,7 +489,7 @@ sub from_line
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300016,
-				infofile => $self->infofile,
+				infofile => $info->{'infofile'},
 				line     => $line);
     }
 
@@ -573,7 +573,7 @@ sub set_field_from_line
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300017,
-				infofile => $self->infofile,
+				infofile => $self->{'infofile'},
 				field    => $field,
 				line     => $line);
     }
@@ -633,30 +633,19 @@ sub new
 
 sub from_line
 {
-    my ( $class, $line ) = @_;
+    my ( $class, $info, $line ) = @_;
+
     my $self = undef;
 
-    $line =~ m{^stats:      \s+
-                     (\d+)      \s+   # level
-                     ($numdot+) \s+   # size
-                     ($numdot+) \s+   # csize
-                     ($numdot+) \s+   # sec
-                     ($numdot+) \s+   # date
-                     ($numdot+) \s+   # filenum
-                     (.*) $           # label
-              }x
-      or $line =~ m{^stats:      \s+
-                     (\d+)      \s+   # level
-                     ($numdot+) \s+   # size
-                     ($numdot+) \s+   # csize
-                     ($numdot+) \s+   # sec
-                     ($numdot+)       # date
-              }x
+			# level size csize sec date filenum label
+    $line =~ m{^stats: (\d+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) (.*) $}
+			# level size csize sec date
+      or $line =~ m{^stats: (\d+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+) ($minusnumdot+)}
       or return Amanda::Curinfo::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300018,
-				infofile => $self->infofile,
+				infofile => $info->{'infofile'},
 				line     => $line);
 
     $self = {

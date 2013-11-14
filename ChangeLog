@@ -1,4 +1,41 @@
 2013-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: Add erase-on-full And many missing storage setting.
+	* common-src/conffile.c: Add CONF_ERASE_ON_FULL in storage.
+	* common-src/conffile.h: Add STORAGE_ERASE_ON_FULL.
+	* device-src/device.c: Add device_reset(), device_write_block() now
+	  return DeviceWriteResult.
+	* device-src/device.h: Add DeviceWriteResult and prototype.
+	* device-src/ndmp-device.c, device-src/null-device.c,
+	  device-src/rait-device.c, device-src/s3-device.c,
+	  device-src/tape-device.c (*_device_write_block): return WRITE_FAILED
+	  or WRITE_SUCCEED.
+	* device-src/vfs-device.c (vfs_device_write_block): return
+	  WRITE_FAILED, WRITE_SUCCEED, WRITE_FULL or WRITE_SPACE.
+	* device-src/xfer-dest-device.c, device-src/xfer-dest-taper-cacher.c:
+	  Handle new return value from device_write_block.
+	* device-src/xfer-dest-taper-splitter.c: Also handle WRITE_FULL or
+	  WRITE_SPACE.
+	* device-src/xfer-dest-taper.c (xfer_dest_taper_new_space_available):
+	  New method
+	* device-src/xfer-dest-taper.h: Add prototype
+	* man/xml-source/amanda.conf.5.xml: Document erase-on-full storage
+	  setting
+	* perl/Amanda/Changer/aggregate.pm: Add slot_in_same_changer method.
+	* perl/Amanda/Changer/disk.pm: Set global_space to 1.
+	* perl/Amanda/Config.swg: Add STORAGE_ERASE_ON_FULL.
+	* perl/Amanda/Device.swg: Add device_reset().
+	* perl/Amanda/Curinfo/Info.pm: Fix.
+	* perl/Amanda/Label.pm: Some fix.
+	* perl/Amanda/Storage.pm: Set erase_on_full.
+	* perl/Amanda/Taper/Scribe.pm: Handle XMSG_NO_SPACE, try to erase
+	  volume and call element new_space_available method.
+	* perl/Amanda/Xfer.swg: Add XMSG_NO_SPACE.
+	* perl/Amanda/XferServer.swg: Add xfer_dest_taper_new_space_available
+	* server-src/tapefile.c (read_tapelist): Set retention_computed=FALSE
+	* xfer-src/xmsg.c (xmsg_repr): Add XMSG_NO_SPACE
+	* xfer-src/xmsg.h (xmsg_type): Add XMSG_NO_SPACE
+
+2013-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtrmidx.c: Do not use temporary files.
 	* server-src/dumper.c: Always compress the index if required.
 

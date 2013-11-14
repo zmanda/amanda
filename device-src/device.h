@@ -47,6 +47,15 @@ typedef enum {
     ACCESS_APPEND
 } DeviceAccessMode;
 
+/* Different write result modes */
+typedef enum {
+    WRITE_SUCCEED,	/* everything is written                      */
+    WRITE_FAILED,	/* something was written                      */
+    WRITE_SPACE,	/* nothing was written, global space is full
+			   freeing space could make the write succeed */
+    WRITE_FULL		/* nothing was written, volume is full        */
+} DeviceWriteResult;
+
 #define IS_WRITABLE_ACCESS_MODE(mode) ((mode) == ACCESS_WRITE || \
                                        (mode) == ACCESS_APPEND)
 
@@ -184,7 +193,8 @@ struct _DeviceClass {
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
     gboolean (* start_file) (Device * self, dumpfile_t * info);
-    gboolean (* write_block) (Device * self, guint size, gpointer data);
+    DeviceWriteResult (* write_block) (Device * self, guint size,
+				       gpointer data);
     gboolean (* finish_file) (Device * self);
     gboolean (* init_seek_file) (Device * self, guint file);
     dumpfile_t* (* seek_file) (Device * self, guint file);
@@ -282,6 +292,9 @@ gboolean device_configure(Device *self, gboolean use_global_config);
  * Error Handling
  */
 
+/* remove error */
+void device_reset(Device * self);
+
 /* return the error message or the string "Unknown Device error".  The
  * string remains the responsibility of the Device, and should not
  * be freed by the caller. */
@@ -329,7 +342,7 @@ guint64 	device_get_bytes_read	(Device * self);
 guint64 	device_get_bytes_written(Device * self);
 gboolean        device_start_file       (Device * self,
                                          dumpfile_t * jobInfo);
-gboolean 	device_write_block	(Device * self,
+DeviceWriteResult device_write_block	(Device * self,
                                          guint size,
                                          gpointer data);
 gboolean 	device_finish_file	(Device * self);

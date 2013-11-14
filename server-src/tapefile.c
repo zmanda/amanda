@@ -97,6 +97,7 @@ read_tapelist(
     for(pos=1,tp=tape_list; tp != NULL; pos++,tp=tp->next) {
 	tp->position = pos;
     }
+    retention_computed = FALSE;
 
     return 0;
 }

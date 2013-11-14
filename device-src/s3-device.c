@@ -693,7 +693,7 @@ static gboolean
 s3_device_start_file(Device * self,
                      dumpfile_t * jobInfo);
 
-static gboolean
+static DeviceWriteResult
 s3_device_write_block(Device * self,
                       guint size,
                       gpointer data);
@@ -3286,7 +3286,7 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     return TRUE;
 }
 
-static gboolean
+static DeviceWriteResult
 s3_device_write_block (Device * pself, guint size, gpointer data) {
     char *filename;
     S3Device * self = S3_DEVICE(pself);
@@ -3297,7 +3297,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 
     g_assert (self != NULL);
     g_assert (data != NULL);
-    if (device_in_error(self)) return FALSE;
+    if (device_in_error(self)) return WRITE_FAILED;
 
     if(check_at_leom(self, size))
         pself->is_eom = TRUE;
@@ -3307,7 +3307,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
         device_set_error(pself,
             g_strdup(_("No space left on device")),
             DEVICE_STATUS_DEVICE_ERROR);
-        return FALSE;
+        return WRITE_FAILED;
     }
 
     if (self->use_s3_multi_part_upload && self->uploadId) {
@@ -3363,7 +3363,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 	    pself->block++;
 	    self->volume_bytes += size;
 	    g_mutex_unlock(self->thread_idle_mutex);
-	    return TRUE;
+	    return WRITE_SUCCEED;
 	}
     } else {
 	while (!idle_thread) {
@@ -3378,7 +3378,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 			self->s3t[thread].errflags = DEVICE_STATUS_SUCCESS;
 			self->s3t[thread].errmsg = NULL;
 			g_mutex_unlock(self->thread_idle_mutex);
-			return FALSE;
+			return WRITE_FAILED;
 		    }
 		    if (first_idle == -1) {
 			first_idle = thread;
@@ -3429,7 +3429,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 
     pself->block++;
     self->volume_bytes += size;
-    return TRUE;
+    return WRITE_SUCCEED;
 }
 
 static void

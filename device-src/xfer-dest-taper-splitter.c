@@ -24,6 +24,7 @@
 #include "amxfer.h"
 #include "xfer-device.h"
 #include "conffile.h"
+#include "device.h"
 
 /* A transfer destination that writes an entire dumpfile to one or more files
  * on one or more devices, without any caching.  This destination supports both
@@ -154,7 +155,12 @@ typedef struct XferDestTaperSplitter {
     GMutex *part_slices_mutex;
 
     crc_t crc_before_part;
+    int more_space;
+
 } XferDestTaperSplitter;
+
+static DeviceWriteResult retry_write(XferDestTaperSplitter *self, gsize to_write,
+				     gpointer buf);
 
 static GType xfer_dest_taper_splitter_get_type(void);
 #define XFER_DEST_TAPER_SPLITTER_TYPE (xfer_dest_taper_splitter_get_type())
@@ -458,7 +464,7 @@ device_thread_write_part(
 
 	iterate_slices(self, &iter);
 	while (bytes_from_slices) {
-	    gboolean ok;
+	    DeviceWriteResult ok;
 
 	    if (!iterator_get_block(self, &iter, buf, to_write)) {
 		part_status = PART_FAILED;
@@ -470,8 +476,19 @@ device_thread_write_part(
 	     * are static at this point */
 	    ok = device_write_block(self->device, (guint)to_write, buf);
 
-	    if (!ok) {
+	    if (ok == WRITE_SPACE)
+		ok = retry_write(self, to_write, buf);
+
+	    if (ok == WRITE_FAILED) {
 		part_status = PART_FAILED;
+		successful = FALSE;
+		break;
+	    } else if (ok == WRITE_FULL) {
+		part_status = PART_EOP;
+		successful = FALSE;
+		break;
+	    } else if (ok == WRITE_SPACE) {
+		part_status = PART_EOP;
 		successful = FALSE;
 		break;
 	    }
@@ -502,7 +519,7 @@ device_thread_write_part(
     g_mutex_lock(self->ring_mutex);
     while (1) {
 	gsize to_write;
-	gboolean ok;
+	DeviceWriteResult ok;
 
 	/* wait for at least one block, and (if necessary) prebuffer */
 	to_write = device_thread_wait_for_block(self);
@@ -522,10 +539,21 @@ device_thread_write_part(
 	 * are static at this point */
 	ok = device_write_block(self->device, (guint)to_write,
 		self->ring_buffer + self->ring_tail);
+
+	if (ok == WRITE_SPACE)
+	    ok = retry_write(self, to_write,
+			     self->ring_buffer + self->ring_tail);
+
 	g_mutex_lock(self->ring_mutex);
 
-	if (!ok) {
+	if (ok == WRITE_FAILED) {
 	    part_status = PART_FAILED;
+	    break;
+	} else if (ok == WRITE_FULL) {
+	    part_status = PART_EOP;
+	    break;
+	} else if (ok == WRITE_SPACE) {
+	    part_status = PART_EOP;
 	    break;
 	}
 
@@ -898,6 +926,21 @@ get_part_bytes_written_impl(
 }
 
 static void
+new_space_available_impl(
+    XferDestTaper *xdtself,
+    int            made_space)
+{
+    XferDestTaperSplitter *self;
+
+    self = XFER_DEST_TAPER_SPLITTER(xdtself);
+
+    self->more_space = made_space;
+    g_mutex_lock(self->state_mutex);
+    device_reset(self->device);
+    g_cond_broadcast(self->state_cond);
+    g_mutex_unlock(self->state_mutex);
+}
+static void
 instance_init(
     XferElement *elt)
 {
@@ -975,6 +1018,7 @@ class_init(
     xdt_klass->use_device = use_device_impl;
     xdt_klass->cache_inform = cache_inform_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
+    xdt_klass->new_space_available = new_space_available_impl;
     goc->finalize = finalize_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Taper::Splitter";
@@ -1065,3 +1109,37 @@ xfer_dest_taper_splitter(
 
     return XFER_ELEMENT(self);
 }
+
+static DeviceWriteResult
+retry_write(
+    XferDestTaperSplitter *self,
+    gsize to_write,
+    gpointer buf)
+{
+    XferElement *elt = XFER_ELEMENT(self);
+    XMsg *msg;
+    DeviceWriteResult result;
+
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_NO_SPACE, 0);
+    xfer_queue_message(elt->xfer, msg);
+
+    while(1) {
+	self->more_space = -1;
+	while (self->more_space == -1 && !elt->cancelled) {
+	    g_cond_wait(self->state_cond, self->state_mutex);
+	}
+
+	if (elt->cancelled) {
+	    return WRITE_FAILED;
+	}
+
+	result = device_write_block(self->device, (guint)to_write, buf);
+	if (result != WRITE_SPACE) {
+	    return result;   /* WRITE_SUCCEED, WRITE_FAILED or WRITE_FULL */
+	}
+	if (self->more_space == 0) {
+	    return result;   /* WRITE_SPACE */
+	}
+    }
+}
+

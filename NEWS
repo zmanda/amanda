@@ -19,17 +19,33 @@ Changes in release 4.0.0
        o compress-index
        o sort-index
    * amanda.conf (new storage section), define how to operate each changer.
-       o tpchanger
-       o labelstr
+       o autoflush
        o autolabel
-       o meta-autolabel
-       o tapepool
-       o runtapes
-       o taperscan
-       o tapetype
+       o comment
+       o device-output-buffer-size
+       o dump-selection
+       o eject-volume
+       o erase-on-failure
+       o erase-on-full
+       o erase-volume
+       o flush-threshold-dumped
+       o flush-threshold-scheduled
+       o interactivity
+       o labelstr
        o max-dle-by-volume
+       o meta-autolabel
+       o policy
+       o report-use-media
+       o report-next-media
+       o runtapes
+       o set-no-reuse
+       o tapepool
        o taperalgo
+       o taperflush
+       o taperscan
        o taper-parallel-write
+       o tapetype
+       o tpchanger
    * amanda.conf
        o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
 	 the autolabel variable.

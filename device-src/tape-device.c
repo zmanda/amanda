@@ -193,7 +193,8 @@ static gboolean tape_device_set_read_block_size_fn(Device *p_self, DevicePropert
 static void tape_device_open_device (Device * self, char * device_name, char * device_type, char * device_node);
 static Device * tape_device_factory (char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags tape_device_read_label(Device * self);
-static gboolean tape_device_write_block(Device * self, guint size, gpointer data);
+static DeviceWriteResult tape_device_write_block(Device * self, guint size,
+						 gpointer data);
 static int tape_device_read_block(Device * self,  gpointer buf,
                                        int * size_req);
 static gboolean tape_device_start (Device * self, DeviceAccessMode mode,
@@ -1000,7 +1001,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     return dself->status;
 }
 
-static gboolean
+static DeviceWriteResult
 tape_device_write_block(Device * pself, guint size, gpointer data) {
     TapeDevice * self;
     char *replacement_buffer = NULL;
@@ -1010,7 +1011,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
     self = TAPE_DEVICE(pself);
 
     g_assert(self->fd >= 0);
-    if (device_in_error(self)) return FALSE;
+    if (device_in_error(self)) return WRITE_FAILED;
 
     /* zero out to the end of a short block -- tape devices only write
      * whole blocks. */
@@ -1035,7 +1036,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 		g_strdup(_("No space left on device")),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    pself->is_eom = TRUE;
-	    return FALSE;
+	    return WRITE_FAILED;
 
 	default:
 	    msg = g_strdup(_("unknown error"));
@@ -1045,7 +1046,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 		g_strdup_printf(_("Error writing block: %s"), msg),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    amfree(msg);
-	    return FALSE;
+	    return WRITE_FAILED;
     }
 
     pself->block++;
@@ -1053,7 +1054,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
     pself->bytes_written += size;
     g_mutex_unlock(pself->device_mutex);
 
-    return TRUE;
+    return WRITE_SUCCEED;
 }
 
 static int tape_device_read_block (Device * pself, gpointer buf,
