@@ -648,7 +648,14 @@ sub main {
 
 	my $dle_str = $hdr->{'dle_str'};
 	my $p1 = XML::Simple->new();
-	my $dle = $p1->XMLin($dle_str) if defined $dle_str;
+	my $dle;
+	if (defined $dle_str) {
+	    eval { $dle = $p1->XMLin($dle_str); };
+	    if ($@) {
+		print "ERROR: XML error\n";
+		debug("XML Error: $@\n$dle_str");
+	    }
+	}
 
 	# and set up the destination..
 	my $dest_fh;

@@ -39,7 +39,8 @@ static filetype_t	str2filetype(const char *);
 static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
 static char            *quote_heredoc(char *text, char *delimiter_prefix);
-static char            *parse_heredoc(char *line, char **saveptr);
+static char            *parse_heredoc(char *line, char **saveptr,
+				      const char *message);
 
 void
 fh_init(
@@ -497,7 +498,7 @@ parse_file_header(
 	if (g_str_has_prefix(line, SC)) {
 	    line += sizeof(SC) - 1;
 	    amfree(file->dle_str);
-	    file->dle_str = parse_heredoc(line, &saveptr);
+	    file->dle_str = parse_heredoc(line, &saveptr, buffer);
 	}
 #undef SC
 
@@ -1152,7 +1153,8 @@ static char *quote_heredoc(
 
 static char *parse_heredoc(
     char  *line,
-    char **saveptr)
+    char **saveptr,
+    const char  *message)
 {
     char *result, *keyword, *new_line;
     GPtrArray *array;
@@ -1169,6 +1171,12 @@ static char *parse_heredoc(
         if (g_str_equal(new_line, keyword))
             break;
         g_ptr_array_add(array, g_strdup(new_line));
+    }
+
+    if (!new_line || !g_str_equal(new_line, keyword)) {
+	g_debug("No end of heredoc: %s", keyword);
+	if (message)
+	    g_debug("Message: %s", message);
     }
 
     g_ptr_array_add(array, NULL);
