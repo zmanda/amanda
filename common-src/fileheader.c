@@ -39,7 +39,8 @@ static filetype_t	str2filetype(const char *);
 static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
 static char            *quote_heredoc(char *text, char *delimiter_prefix);
-static char            *parse_heredoc(char *line, char **saveptr);
+static char            *parse_heredoc(char *line, char **saveptr,
+				      const char *message);
 
 void
 fh_init(
@@ -457,7 +458,7 @@ parse_file_header(
 #define SC "DLE="
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
-	    file->dle_str = parse_heredoc(line, &saveptr);
+	    file->dle_str = parse_heredoc(line, &saveptr, buffer);
 	}
 #undef SC
 
@@ -1093,7 +1094,8 @@ static char *quote_heredoc(
 
 static char *parse_heredoc(
     char  *line,
-    char **saveptr)
+    char **saveptr,
+    const char  *message)
 {
     char *result = NULL;
 
@@ -1105,6 +1107,13 @@ static char *parse_heredoc(
 	      strcmp(new_line, keyword) != 0) {
 	    result = vstrextend(&result, new_line, "\n", NULL);
 	}
+
+	if (!new_line || !g_str_equal(new_line, keyword)) {
+	    g_debug("No end of heredoc: %s", keyword);
+	    if (message)
+		g_debug("Message: %s", message);
+	}
+
 	/* make sure we have something */
 	if (!result)
 	    result = g_strdup("");
