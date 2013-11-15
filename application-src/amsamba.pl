@@ -832,13 +832,13 @@ sub index_from_output {
    }
 }
 
-sub command_index_from_image {
-   my $self = shift;
-   my $index_fd;
-   open($index_fd, "$self->{gnutar} --list --file - |") ||
-      $self->print_to_server_and_die("Can't run $self->{gnutar}: $!",
-				     $Amanda::Script_App::ERROR);
-   index_from_output($index_fd, 1);
+sub command_index {
+    my $self = shift;
+    my $index_fd;
+    open2($index_fd, ">&0", $self->{gnutar}, "--list", "--file", "-") ||
+	$self->print_to_server_and_die("Can't run $self->{gnutar}: $!",
+				       $Amanda::Script_App::ERROR);
+    index_from_output($index_fd, \*STDOUT);
 }
 
 sub command_restore {

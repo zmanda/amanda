@@ -415,13 +415,22 @@ sub index_from_output {
    }
 }
 
-sub command_index_from_image {
-   my $self = shift;
-   my $index_fd;
-   open($index_fd, "$self->{suntar} -tf - |") ||
-      $self->print_to_server_and_die("Can't run $self->{suntar}: $!",
-				     $Amanda::Script_App::ERROR);
-   index_from_output($index_fd, 1);
+sub command_index {
+    my $self = shift;
+    my $program;
+    my $index_fd;
+
+    if (-e $self->{suntar}) {
+	$program = $self->{suntar};
+    } elsif (-e $self->{gnutar}) {
+	$program = $self->{gnutar};
+    }
+
+    open2($index_fd, ">&0", $program, "tf", "-") ||
+	$self->print_to_server_and_die("Can't run $program: $!",
+				       $Amanda::Script_App::ERROR);
+    index_from_output($index_fd, \*STDOUT);
+
 }
 
 sub command_restore {

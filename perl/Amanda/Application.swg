@@ -49,6 +49,7 @@ sub new {
         backup    => 1,
         restore   => 1,
         validate  => 1,
+        index     => 1,
     };
     return $self;
 }

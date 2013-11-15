@@ -1,4 +1,13 @@
 2013-11-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/ampgsql.pl,
+	* application-src/amraw.pl, application-src/amsamba.pl,
+	* application-src/amstar.c, application-src/amsuntar.pl,
+	* application-src/amzfs-sendrecv.pl: Implement index command.
+	* perl/Amanda/Application.swg: Enable index command
+	* server-src/amcheckdump.pl, server-src/amreindex.pl: Pass --config,
+	  --host, --disk, --device and --level to the application.
+
+2013-11-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/fileheader.c (parse_heredoc): print message to debug if
 	  end of heredoc is not found.
 	* server-src/amfetchdump.pl: Trap failure on XML::Simple::XMLin.

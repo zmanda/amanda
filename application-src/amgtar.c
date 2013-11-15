@@ -1409,6 +1409,8 @@ amgtar_index(
     if (!gnutar_path) {
 	dbprintf("GNUTAR-PATH not set\n");
 	fprintf(stderr,"GNUTAR-PATH not set\n");
+	while (read(0, line, 32768) > 0) {
+	}
 	exit(1);
     }
 

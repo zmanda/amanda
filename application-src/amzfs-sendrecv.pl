@@ -325,7 +325,16 @@ sub get_compratio
     return $msg
 }
 
-sub command_index_from_output {
+sub command_index {
+    my $self = shift;
+    my $buffer;
+
+    print "/\n";
+
+    do {
+        sysread STDIN, $buffer, 1048576;
+    } while (defined $buffer and length($buffer) > 0);
+
 }
 
 sub command_index_from_image {

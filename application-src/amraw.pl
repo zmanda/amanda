@@ -263,6 +263,17 @@ sub command_validate {
     $self->default_validate();
 }
 
+sub command_index {
+    my $self = shift;
+    my $buffer;
+
+    print "/\n";
+
+    do {
+        sysread STDIN, $buffer, 1048576;
+    } while (defined $buffer and length($buffer) > 0);
+}
+
 package main;
 
 sub usage {

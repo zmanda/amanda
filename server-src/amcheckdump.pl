@@ -43,6 +43,7 @@ use Amanda::DB::Catalog;
 use Amanda::Cmdline;
 use Amanda::MainLoop;
 use Amanda::Xfer qw( :constants );
+use XML::Simple;
 
 sub usage {
     print <<EOF;
@@ -245,7 +246,26 @@ sub find_validation_command {
 			 "($program_path)' not available on the server");
 	    return undef;
 	} else {
-	    return [ $program_path, "validate" ];
+	    my $dle_str = $header->{'dle_str'};
+	    my $p1 = XML::Simple->new();
+	    my $dle;
+	    if (defined $dle_str) {
+		eval { $dle = $p1->XMLin($dle_str); };
+		if ($@) {
+		    print "ERROR: XML error\n";
+		    debug("XML Error: $@\n$dle_str");
+		}
+	    }
+	    my @argv;
+	    push @argv, $program_path, "validate",
+			"--config", get_config_name(),
+			"--host" , $header->{'name'},
+			"--disk" , $header->{'disk'},
+			"--level", $header->{'dumplevel'};
+	    if ($dle) {
+		push @argv, "--device", $dle->{'diskdevice'} if defined $dle->{'diskdevice'};
+	    }
+	    return [ @argv ];
 	}
     }
 }

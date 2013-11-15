@@ -123,6 +123,7 @@ static void amstar_estimate(application_argument_t *argument);
 static void amstar_backup(application_argument_t *argument);
 static void amstar_restore(application_argument_t *argument);
 static void amstar_validate(application_argument_t *argument);
+static void amstar_index(application_argument_t *argument);
 static GPtrArray *amstar_build_argv(application_argument_t *argument,
 				int level,
 				int command);
@@ -403,6 +404,8 @@ main(
 	amstar_restore(&argument);
     } else if (g_str_equal(command, "validate")) {
 	amstar_validate(&argument);
+    } else if (g_str_equal(command, "index")) {
+	amstar_index(&argument);
     } else {
 	fprintf(stderr, "Unknown command `%s'.\n", command);
 	exit (1);
@@ -1006,6 +1009,80 @@ pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
     g_ptr_array_free_full(argv_ptr);
+}
+
+static void
+amstar_index(
+    application_argument_t *argument G_GNUC_UNUSED)
+{
+    char       *cmd;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    int         datain = 0;
+    int         indexf;
+    int         errf = 2;
+    pid_t       tarpid;
+    FILE       *indexstream;
+    char        line[32768];
+    amwait_t    wait_status;
+    char       *errmsg = NULL;
+
+    if (!star_path) {
+	dbprintf("STAR-PATH not set; Piping to /dev/null\n");
+	fprintf(stderr,"STAR-PATH not set; Piping to /dev/null\n");
+	while (read(0, line, 32768) > 0) {
+	}
+	exit(1);
+    }
+
+    cmd = g_strdup(star_path);
+
+    g_ptr_array_add(argv_ptr, g_strdup(star_path));
+    g_ptr_array_add(argv_ptr, g_strdup("-t"));
+    g_ptr_array_add(argv_ptr, g_strdup("-f"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
+    g_ptr_array_add(argv_ptr, NULL);
+
+    tarpid = pipespawnv(cmd, STDOUT_PIPE, 0,
+			&datain, &indexf, &errf, (char **)argv_ptr->pdata);
+    aclose(datain);
+
+    indexstream = fdopen(indexf, "r");
+    if (!indexstream) {
+	error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+    }
+
+    while (fgets(line, sizeof(line), indexstream) != NULL) {
+	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+	    /* remove trailling \n */
+	    line[strlen(line)-1] = '\0';
+	}
+	if (*line == '.' && *(line+1) == '/') { /* filename */
+	    fprintf(stdout, "%s\n", &line[1]); /* remove . */
+	}
+    }
+    fclose(indexstream);
+    waitpid(tarpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+				 cmd, WTERMSIG(wait_status), dbfn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) > 0) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+				     cmd, WEXITSTATUS(wait_status), dbfn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+				 cmd, dbfn());
+    }
+    dbprintf(_("amstar: %s: pid %ld\n"), cmd, (long)tarpid);
+    if (errmsg) {
+	dbprintf("%s", errmsg);
+	fprintf(stderr, "error [%s]\n", errmsg);
+    }
+
+    amfree(cmd);
 }
 
 static GPtrArray *amstar_build_argv(
