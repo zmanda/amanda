@@ -1,3 +1,16 @@
+2013-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/progs.m4: AC_SUBST(SORT_PATH)
+	* perl/Amanda/Constants.pm.in: Add SORT_PATH
+	* perl/Amanda/Logfile.swg: Add getindexfname
+	* perl/Amanda/Message.pm: Add Amanda::Index::Message
+	* perl/Amanda/Status.pm:: s/Message/Amanda::Status::Message/
+	* perl/Amanda/Index.pm: New perl module to return index file and
+	  header from index directory.
+	* perl/Amanda/JSON/Index.pm: New JSON module.
+	* perl/Amanda/JSON.pm: Add missing JSON modules.
+	* perl/Makefile.am: Add Amanda/JSON/Index.pm and Amanda/Index.pm
+	* server-src/amanda.psgi.pl: Add Amanda::JSON::Index::* methods.
+
 2013-11-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/ampgsql.pl,
 	* application-src/amraw.pl, application-src/amsamba.pl,

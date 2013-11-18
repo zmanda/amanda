@@ -249,6 +249,8 @@ AC_DEFUN([AMANDA_PROG_SORT],
 
     AC_DEFINE_UNQUOTED(SORT_PATH,"$SORT",
 	    [Define to the exact path to the sort program. ])
+    SORT_PATH="$SORT"
+    AC_SUBST(SORT_PATH)
 ])
 
 AC_DEFUN([AMANDA_PROG_MAILER],

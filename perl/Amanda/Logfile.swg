@@ -310,6 +310,7 @@ find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
     amglue_dumpspec_list *dumpspecs,
     gboolean ok);
 
+char *getindexfname(char *host, char *disk, char *date, int level);
 char *getindex_unsorted_fname(char *host, char *disk, char *date, int level);
 char *getindex_unsorted_gz_fname(char *host, char *disk, char *date, int level);
 char *getindex_sorted_fname(char *host, char *disk, char *date, int level);

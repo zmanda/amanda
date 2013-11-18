@@ -326,6 +326,7 @@ AmandaJSON_DATA = \
 	Amanda/JSON/Config.pm \
 	Amanda/JSON/Device.pm \
 	Amanda/JSON/Dle.pm \
+	Amanda/JSON/Index.pm \
 	Amanda/JSON/Label.pm \
 	Amanda/JSON/Report.pm \
 	Amanda/JSON/Status.pm \
@@ -377,6 +378,12 @@ AmandaCurinfo_DATA = \
 PM_FILES += $(AmandaCurinfo_DATA)
 endif
 EXTRA_DIST += $(AmandaCurinfo_DATA)
+
+if WANT_SERVER
+# PACKAGE: Amanda::Index
+Amanda_DATA += Amanda/Index.pm
+endif
+EXTRA_DIST += Amanda/Index.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::Recovery

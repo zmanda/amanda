@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-package Message;
+package Amanda::Status::Message;
 use strict;
 use warnings;
 
@@ -1551,7 +1551,7 @@ sub current {
 		 exit_status   => $self->{'exit_status'}
 	       };
 
-    return Message->new(
+    return Amanda::Status::Message->new(
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code   => 1800000,

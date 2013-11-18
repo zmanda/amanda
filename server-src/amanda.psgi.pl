@@ -47,6 +47,7 @@ use Amanda::JSON::Changer;
 use Amanda::JSON::DB::Catalog;
 use Amanda::JSON::Device;
 use Amanda::JSON::Dle;
+use Amanda::JSON::Index;
 use Amanda::JSON::Label;
 use Amanda::JSON::Report;
 use Amanda::JSON::Status;
@@ -102,5 +103,9 @@ $rpc->register( 'Amanda::JSON::Report::report', \&Amanda::JSON::Report::report )
 $rpc->register( 'Amanda::JSON::Status::current', \&Amanda::JSON::Status::current );
 
 $rpc->register( 'Amanda::JSON::Tapelist::get', \&Amanda::JSON::Tapelist::get );
+
+$rpc->register( 'Amanda::JSON::Index::get_header', \&Amanda::JSON::Index::get_header );
+$rpc->register( 'Amanda::JSON::Index::get_header_buffer', \&Amanda::JSON::Index::get_header_buffer );
+$rpc->register( 'Amanda::JSON::Index::get_index', \&Amanda::JSON::Index::get_index );
 
 $rpc->to_app;

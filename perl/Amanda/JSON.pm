@@ -27,11 +27,14 @@ You need a psgi enabled web server to use the amanda JSON server, it must be con
 
 =head1 SEE_ALSO
 
+    Amanda::JSON::Amdump
+    Amanda::JSON::Amflush
     Amanda::JSON::Changer
     Amanda::JSON::Config
     Amanda::JSON::DB::Catalog
     Amanda::JSON::Device
     Amanda::JSON::Dle
+    Amanda::JSON::Index
     Amanda::JSON::Label
     Amanda::JSON::Report
     Amanda::JSON::Status
