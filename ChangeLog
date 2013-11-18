@@ -1,3 +1,8 @@
+2013-11-18 Dan Locks <dwlocks@zmanda.com>
+	* example/Makefile.am: include new files in dist tarball
+	* example/amandaclient-tcp.xml.in, example/amandaserver-tcp.xml.in:
+	  smf manifests for solaris >= 10
+
 2013-11-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/fileheader.c (parse_heredoc): print message to debug if
 	  end of heredoc is not found.
