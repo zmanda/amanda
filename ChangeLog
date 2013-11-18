@@ -1,3 +1,8 @@
+2013-11-18 Dan Locks <dwlocks@zmanda.com>
+	* example/Makefile.am: include new files in dist tarball
+	* example/amandaclient-tcp.xml.in, example/amandaserver-tcp.xml.in:
+	  smf manifests for solaris >= 10
+
 2013-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/progs.m4: AC_SUBST(SORT_PATH)
 	* perl/Amanda/Constants.pm.in: Add SORT_PATH
