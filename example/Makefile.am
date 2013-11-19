@@ -30,7 +30,7 @@ server_example_in_FILE = \
 		amanda.conf.in \
 		inetd.conf.amandaserver.in \
 		xinetd.amandaserver.in \
-		amandaserver-tcp.xml.in
+		amandaserver.xml.in
 server_example_FILE = \
 		chg-multi.conf \
 		chg-scsi.conf \
@@ -45,7 +45,7 @@ client_example_in_FILE = \
 		amanda-client-postgresql.conf.in \
 		inetd.conf.amandaclient.in \
 		xinetd.amandaclient.in \
-		amandaclient-tcp.xml.in
+		amandaclient.xml.in
 client_example_FILE = 
 client_example_generated_FILE = $(client_example_in_FILE:%.in=%)
 client_example_DATA = $(client_example_FILE) $(client_example_generated_FILE)

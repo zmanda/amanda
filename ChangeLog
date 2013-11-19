@@ -1,4 +1,11 @@
 2013-11-18 Dan Locks <dwlocks@zmanda.com>
+	* example/Makefile.am: update xml file names
+	* example/amandaclient-tcp.xml.in: rename this
+	* example/amandaclient.xml.in: to this
+	* example/amandaserver-tcp.xml.in: rename this
+	* example/amandaserver.xml.in: to this
+
+2013-11-18 Dan Locks <dwlocks@zmanda.com>
 	* example/Makefile.am: include new files in dist tarball
 	* example/amandaclient-tcp.xml.in, example/amandaserver-tcp.xml.in:
 	  smf manifests for solaris >= 10
