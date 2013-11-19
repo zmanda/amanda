@@ -9,7 +9,7 @@
 <service_bundle type='manifest' name='inetconv:amanda'>
 
 <service
-	name='network/amanda/tcp'
+	name='network/amandaclient/tcp'
 	type='service'
 	version='1'>
 
@@ -30,7 +30,7 @@
 	<exec_method
 		type='method'
 		name='inetd_start'
-		exec='@amlibexecdir@/amandad -auth=bsdtcp amdump amindexd amidxtaped'
+		exec='@amlibexecdir@/amandad -auth=bsdtcp amdump'
 		timeout_seconds='0'>
 		<method_context>
 			<method_credential user='amandabackup' group='disk' />
@@ -58,7 +58,7 @@
 		<propval name='converted' type='boolean' value='true' />
 		<propval name='version' type='integer' value='1' />
 		<propval name='source_line' type='astring' value=
-'amanda stream tcp nowait amandabackup @amlibexecdir@/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped'
+'amanda stream tcp nowait amandabackup @amlibexecdir@/amandad amandad -auth=bsdtcp amdump'
 		/>
 	</property_group>
 
