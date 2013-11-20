@@ -1625,6 +1625,10 @@ sub verify_unlocked {
 	    debug("ERROR: Drive $drive is not device $device_name");
 	    push @results, "ERROR: Drive $drive is not device $device_name";
 	    return $steps->{'find_device'}->();
+	} elsif ($device->status & $DEVICE_STATUS_DEVICE_ERROR) {
+	    debug("ERROR: Drive $drive: " . $device->error());
+	    push @results, "ERROR: Drive $drive: " . $device->error();
+	    return $steps->{'find_device'}->();
 	} else {
 	    debug("GOOD : Drive $drive is device $device_name");
 	    push @results, "GOOD : Drive $drive is device $device_name";
@@ -1643,7 +1647,8 @@ sub verify_unlocked {
 
 		$device->read_label();
 
-		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING)) {
+		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING) &&
+		    !($device->status & $DEVICE_STATUS_DEVICE_ERROR)) {
 		    debug ("HINT : Drive $drive look to be device $device_name");
 		    push @results, "HINT : Drive $drive look to be device $device_name";
 		    push @tape_devices, "$drive=$device_name";

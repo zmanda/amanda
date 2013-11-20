@@ -1,4 +1,7 @@
 2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm (verify): Report drive error.
+
+2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm (verify): Report non-existant drive.
 
 2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
