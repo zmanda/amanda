@@ -81,6 +81,8 @@ sub local_message {
 	return "recording device error '$self->{'dev_status'}' in slot $self->{'slot'}";
     } elsif ($self->{'code'} == 1100024) {
 	return "Drive $self->{'drive'}: no such drive in changer";
+    } elsif ($self->{'code'} == 1100025) {
+	return "Drive $self->{'drive'}: device '$self->{'device_name'}' error: $self->{'error'}";
     }
 }
 

@@ -1694,6 +1694,16 @@ sub verify_unlocked {
 				drive => $drive,
 				device_name => $device_name);
 	    return $steps->{'find_device'}->();
+	} elsif ($device->status & $DEVICE_STATUS_DEVICE_ERROR) {
+	    debug("ERROR: Drive $drive: " . $device->error());
+	    push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100025,
+				drive => $drive,
+				device_name => $device_name,
+				error => $device->error());
+	    return $steps->{'find_device'}->();
 	} else {
 	    debug("GOOD : Drive $drive is device $device_name");
 	    push @results, Amanda::Changer::Message->new(
@@ -1717,7 +1727,8 @@ sub verify_unlocked {
 
 		$device->read_label();
 
-		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING)) {
+		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING) &&
+		    !($device->status & $DEVICE_STATUS_DEVICE_ERROR)) {
 		    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
