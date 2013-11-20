@@ -178,7 +178,10 @@ GetOptions(
     'extract' => \$opt_extract,
     'directory=s' => \$opt_directory,
     'data-path=s' => \$opt_data_path,
-    'application-property=s' => \%application_property,
+    'application-property=s' => sub {
+	    my ($name, $value) = split '=', $_[1];
+	    push @{$application_property{$name}}, $value;
+	},
     'exact-match' => \$opt_exact_match,
     'init' => \$opt_init,
     'restore!' => \$opt_restore,
@@ -750,14 +753,23 @@ sub main {
 		}
 
 		# add application_property
-		while (my($name, $value) = each(%application_property)) {
-		    push @argv, "--".$name, $value if $value;
+		while (my($name, $values) = each(%application_property)) {
+		    foreach my $value (@{$values}) {
+			push @argv, "--".$name, $value if defined $value;
+		    }
 		}
 
 		#merge property from header;
-		while (my($name, $value) = each (%{$dle->{'backup-program'}->{'property'}})) {
+		while (my($name, $values) =
+			 each (%{$dle->{'backup-program'}->{'property'}})) {
 		    if (!exists $application_property{$name}) {
-			push @argv, "--".$name, $value->{'value'};
+			if (UNIVERSAL::isa( $values->{'value'}, "ARRAY" )) {
+			    foreach my $value (@{$values->{'value'}}) {
+				push @argv, "--".$name, $value if defined $value;
+			    }
+			} else {
+			    push @argv, "--".$name, $values->{'value'};
+			}
 		    }
 		}
 
