@@ -1663,6 +1663,14 @@ sub verify_unlocked {
 
     step all_done => sub {
 	my $tape_devices;
+
+	for my $drive (@{$self->{'driveorder'}}) {
+	    if (!exists $state->{'drives'}->{$drive}) {
+		debug("ERROR: Drive $drive: no such drive in changer");
+		push @results, "ERROR: Drive $drive: no such drive in changer";
+	    }
+	}
+
 	foreach my $tape_device (@tape_devices) {
 	    $tape_devices .= " \"$tape_device\"";
 	}
