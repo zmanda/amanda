@@ -1,4 +1,9 @@
 2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Add message 1100024
+	* perl/Amanda/Changer/robot.pm (verify): Report non-existant drive.
+	* server-src/amtape.pl: Handle message 1100024.
+
+2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Allow multiple values for the one
 	  property.
 

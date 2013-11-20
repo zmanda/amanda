@@ -307,6 +307,7 @@ sub {
 		    print "GOOD : " if $result->{'code'} == 1100006;
 		    print "HINT : " if $result->{'code'} == 1100007;
 		    print "ERROR: " if $result->{'code'} == 1100009;
+		    print "ERROR: " if $result->{'code'} == 1100024;
 		}
 		print STDERR $result . "\n";
 	    }

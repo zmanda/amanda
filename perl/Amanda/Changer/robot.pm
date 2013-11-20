@@ -1741,6 +1741,18 @@ sub verify_unlocked {
 
     step all_done => sub {
 	my $tape_devices;
+
+	for my $drive (@{$self->{'driveorder'}}) {
+	    if (!exists $state->{'drives'}->{$drive}) {
+		debug("ERROR: Drive $drive: no such drive in changer");
+		push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100024,
+				drive => $drive);
+	    }
+	}
+
 	foreach my $tape_device (@tape_devices) {
 	    $tape_devices .= " \"$tape_device\"";
 	}
