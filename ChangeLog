@@ -1,3 +1,7 @@
+2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Allow multiple values for the one
+	  property.
+
 2013-11-18 Dan Locks <dwlocks@zmanda.com>
 	* example/Makefile.am: update xml file names
 	* example/amandaclient-tcp.xml.in: rename this
