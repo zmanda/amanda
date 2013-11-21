@@ -1,4 +1,7 @@
 2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Fix bug found by coverity.
+
+2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Speedup by checking all devices.
 
 2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>

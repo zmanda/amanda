@@ -2008,7 +2008,7 @@ uncompress_file(
     if (g_str_equal(filename, new_filename)) {
 	return new_filename;
     }
-    if (!need_uncompress || !need_sort) {
+    if (!need_uncompress && !need_sort) {
 	return new_filename;
     }
 
@@ -2108,6 +2108,7 @@ uncompress_file(
 	    g_ptr_array_add(*emsg, msg);
 	    unlink(filename);
 	    amfree(filename);
+	    break;
 	default: break;
 	case 0:
 	    while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
@@ -2122,7 +2123,9 @@ uncompress_file(
 
 	fclose(pipe_stream);
 	aclose(pipe_to_sort);
+    }
 
+    if (need_uncompress) {
 	uncompress_err_stream = fdopen(uncompress_errfd, "r");
 	uncompress_err = g_ptr_array_new();
 	if (!uncompress_err_stream) {
@@ -2138,7 +2141,9 @@ uncompress_file(
 	    }
 	    fclose(uncompress_err_stream);
 	}
+    }
 
+    if (need_sort) {
 	sort_err_stream = fdopen(sort_errfd, "r");
 	sort_err = g_ptr_array_new();
 	if (!sort_err_stream) {
