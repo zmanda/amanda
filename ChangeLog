@@ -1,3 +1,6 @@
+2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Speedup by checking all devices.
+
 2013-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Add message 1100025
 	* perl/Amanda/Changer/robot.pm (verify): Report drive error.

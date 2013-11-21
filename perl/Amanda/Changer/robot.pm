@@ -1659,6 +1659,7 @@ sub verify_unlocked {
 	my $device_name = $self->{'drive2device'}->{$drive};
 	confess "drive $drive not found in drive2device" unless $device_name; # shouldn't happen
 
+	my ($delay, $poll, $until) = @{ $self->{'load_poll'} };
 	$self->_debug("polling '$device_name' to see if it's ready");
 
 	my $device = $self->get_device($device_name);
@@ -1669,11 +1670,32 @@ sub verify_unlocked {
 
 	$device->read_label();
 
+	my $device_name2;
+	my $hint = 0;
 	# see if the device thinks it's possible it's busy or empty
 	if ($device->status & $DEVICE_STATUS_VOLUME_MISSING
 	    or $device->status & $DEVICE_STATUS_DEVICE_BUSY) {
+
+	    # check if any other device is loaded, to abort the poll sooner
+	    for my $ddrive (keys %{$state->{'drives'}}) {
+		#next if $ddrive == $drive;
+		if (defined $self->{'drive2device'}->{$ddrive}) {
+		    $device_name2 = $self->{'drive2device'}->{$ddrive};
+		    my $device2 = $self->get_device($device_name2);
+		    next if $device2->isa("Amanda::Changer::Error");
+
+		    $device2->read_label();
+
+		    if (!($device2->status & $DEVICE_STATUS_VOLUME_MISSING) &&
+			!($device2->status & $DEVICE_STATUS_DEVICE_ERROR)) {
+			$hint = 1;
+			$last_poll -= $until;
+			last;
+		    }
+		}
+	    }
+
 	    # device is not ready -- set up for the next polling step
-	    my ($delay, $poll, $until) = @{ $self->{'load_poll'} };
 	    my $now = time;
 	    $next_poll += $poll;
 	    $next_poll = $now + 1 if ($next_poll < $now);
@@ -1693,7 +1715,6 @@ sub verify_unlocked {
 				code => 1100009,
 				drive => $drive,
 				device_name => $device_name);
-	    return $steps->{'find_device'}->();
 	} elsif ($device->status & $DEVICE_STATUS_DEVICE_ERROR) {
 	    debug("ERROR: Drive $drive: " . $device->error());
 	    push @results, Amanda::Changer::Message->new(
@@ -1703,7 +1724,6 @@ sub verify_unlocked {
 				drive => $drive,
 				device_name => $device_name,
 				error => $device->error());
-	    return $steps->{'find_device'}->();
 	} else {
 	    debug("GOOD : Drive $drive is device $device_name");
 	    push @results, Amanda::Changer::Message->new(
@@ -1714,32 +1734,18 @@ sub verify_unlocked {
 				device_name => $device_name);
 	    push @tape_devices, "$drive=$device_name";
 	}
-
-	return $steps->{'unload'}->();
-    };
-
-    step find_device => sub {
-	for my $ddrive (keys %{$state->{'drives'}}) {
-	    if (defined $self->{'drive2device'}->{$ddrive}) {
-		my $device_name = $self->{'drive2device'}->{$ddrive};
-		my $device = $self->get_device($device_name);
-		next if $device->isa("Amanda::Changer::Error");
-
-		$device->read_label();
-
-		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING) &&
-		    !($device->status & $DEVICE_STATUS_DEVICE_ERROR)) {
-		    push @results, Amanda::Changer::Message->new(
+	if ($hint) {
+	    debug("HINT: Drive $drive look to be device $device_name2");
+	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100007,
 				drive => $drive,
-				device_name => $device_name);
-		    push @tape_devices, "$drive=$device_name";
-		}
-	    }
+				device_name => $device_name2);
+	    push @tape_devices, "$drive=$device_name2";
 	}
-	$steps->{'unload'}->();
+
+	return $steps->{'unload'}->();
     };
 
     step unload => sub {
