@@ -1735,7 +1735,7 @@ sub verify_unlocked {
 	    push @tape_devices, "$drive=$device_name";
 	}
 	if ($hint) {
-	    debug("HINT: Drive $drive look to be device $device_name2");
+	    debug("HINT : Drive $drive look to be device $device_name2");
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
