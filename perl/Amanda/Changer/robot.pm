@@ -1655,8 +1655,8 @@ sub verify_unlocked {
 	    push @tape_devices, "$drive=$device_name";
 	}
 	if ($hint) {
-	    debug("HINT: Drive $drive look to be device $device_name2");
-	    push @results, "HINT: Drive $drive look to be device $device_name2";
+	    debug("HINT : Drive $drive look to be device $device_name2");
+	    push @results, "HINT : Drive $drive look to be device $device_name2";
 	    push @tape_devices, "$drive=$device_name2";
 	}
 
