@@ -1655,32 +1655,12 @@ sub verify_unlocked {
 	    push @tape_devices, "$drive=$device_name";
 	}
 	if ($hint) {
-	    debug("HINT : Drive $drive look to be device $device_name2");
-	    push @results, "HINT : Drive $drive look to be device $device_name2";
+	    debug("HINT : Drive $drive looks to be device $device_name2");
+	    push @results, "HINT : Drive $drive looks to be device $device_name2";
 	    push @tape_devices, "$drive=$device_name2";
 	}
 
 	return $steps->{'unload'}->();
-    };
-
-    step find_device => sub {
-	for my $ddrive (keys %{$state->{'drives'}}) {
-	    if (defined $self->{'drive2device'}->{$ddrive}) {
-		my $device_name = $self->{'drive2device'}->{$ddrive};
-		my $device = $self->get_device($device_name);
-		next if $device->isa("Amanda::Changer::Error");
-
-		$device->read_label();
-
-		if (!($device->status & $DEVICE_STATUS_VOLUME_MISSING) &&
-		    !($device->status & $DEVICE_STATUS_DEVICE_ERROR)) {
-		    debug ("HINT : Drive $drive look to be device $device_name");
-		    push @results, "HINT : Drive $drive look to be device $device_name";
-		    push @tape_devices, "$drive=$device_name";
-		}
-	    }
-	}
-	$steps->{'unload'}->();
     };
 
     step unload => sub {
@@ -1704,7 +1684,7 @@ sub verify_unlocked {
 	foreach my $tape_device (@tape_devices) {
 	    $tape_devices .= " \"$tape_device\"";
 	}
-	push @results, "property \"TAPE-DEVICE\"$tape_devices"; 
+	push @results, "property \"TAPE-DEVICE\"$tape_devices";
 	$params{'finished_cb'}->(undef, @results);
     };
 }
