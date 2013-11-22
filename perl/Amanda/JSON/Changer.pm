@@ -221,7 +221,7 @@ result:
 	      "code":1100007,
 	      "device_name":"tape:/dev/nst0",
 	      "drive":"0",
-	      "message":"Drive 0 look to be device tape:/dev/nst0"},
+	      "message":"Drive 0 looks to be device tape:/dev/nst0"},
 	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
 	      "source_line":"1646",
 	      "code":1100006,

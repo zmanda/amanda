@@ -43,7 +43,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1100006) {
 	return "Drive $self->{'drive'} is device $self->{'device_name'}";
     } elsif ($self->{'code'} == 1100007) {
-	return "Drive $self->{'drive'} look to be device $self->{'device_name'}";
+	return "Drive $self->{'drive'} looks to be device $self->{'device_name'}";
     } elsif ($self->{'code'} == 1100008) {
 	return "property \"TAPE-DEVICE\"$self->{'tape_devices'}";
     } elsif ($self->{'code'} == 1100009) {

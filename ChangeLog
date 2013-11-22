@@ -1,4 +1,8 @@
 2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm, perl/Amanda/Changer,
+	  perl/Amanda/JSON/Changer.pm: s/look to be/looks to be/.
+
+2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Fix bug found by coverity.
 
 2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
