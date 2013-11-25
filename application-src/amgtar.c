@@ -1438,7 +1438,12 @@ amgtar_get_incrname(
 		errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", errmsg);
-		return NULL;
+		if (command == CMD_ESTIMATE) {
+		    fprintf(mesgstream, "ERROR %s\n", errmsg);
+		} else {
+		    fprintf(mesgstream, "? %s\n", errmsg);
+		}
+		exit(1);
 	    }
 	}
 
@@ -1446,20 +1451,36 @@ amgtar_get_incrname(
 	    errmsg = vstrallocf(_("reading from %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 
 	if (close(infd) != 0) {
 	    errmsg = vstrallocf(_("closing %s: %s"),
 			         inputname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 	if (close(outfd) != 0) {
 	    errmsg = vstrallocf(_("closing %s: %s"),
 			         incrname, strerror(errno));
 	    dbprintf("%s\n", errmsg);
-	    return NULL;
+	    dbprintf("%s\n", errmsg);
+	    if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	    } else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	    }
+	    exit(1);
 	}
 
 	amfree(inputname);
