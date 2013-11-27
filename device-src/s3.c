@@ -3872,6 +3872,7 @@ cleanup:
 gboolean
 s3_is_bucket_exists(S3Handle *hdl,
 		    const char *bucket,
+		    const char *prefix,
 		    const char *project_id)
 {
     s3_result_t result = S3_RESULT_FAIL;
@@ -3885,18 +3886,20 @@ s3_is_bucket_exists(S3Handle *hdl,
 
     if (hdl->s3_api == S3_API_SWIFT_1 ||
 	hdl->s3_api == S3_API_SWIFT_2) {
-	query = "limit=1";
+	query = g_strdup("limit=1");
     } else if (hdl->s3_api == S3_API_CASTOR) {
-        query = "format=xml&size=0";
+        query = g_strdup("format=xml&size=0");
+    } else if (prefix) {
+	query = g_strdup_printf("prefix=%s&max-keys=1", prefix);
     } else {
-	query = "max-keys=1";
+        query = g_strdup("max-keys=1");
     }
 
     result = perform_request(hdl, "GET", bucket, NULL, NULL, query,
 			     NULL, project_id, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling, FALSE);
-
+    g_free(query);
     return result == S3_RESULT_OK;
 }
 

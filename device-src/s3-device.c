@@ -917,7 +917,7 @@ abort_partial_upload(S3Device *self)
     if (!self->use_s3_multi_part_upload)
 	return TRUE;
 
-    result = s3_list_keys(self->s3t[0].s3, self->bucket, "uploads", NULL, NULL, &objects, NULL);
+    result = s3_list_keys(self->s3t[0].s3, self->bucket, "uploads", self->prefix, NULL, &objects, NULL);
 
     if (!result) {
 	device_set_error(d_self,
@@ -2854,7 +2854,7 @@ make_bucket(
 	return TRUE;
     }
 
-    if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket, self->project_id)) {
+    if (s3_is_bucket_exists(self->s3t[0].s3, self->bucket, self->prefix, self->project_id)) {
 	self->bucket_made = TRUE;
 	abort_partial_upload(self);
 	return TRUE;
@@ -3098,7 +3098,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
 		/* s3_device_read_label already set our error message */
 		return FALSE;
 	    } else {
-                result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, NULL, NULL, &keys, &total_size);
+                result = s3_list_keys(self->s3t[0].s3, self->bucket, NULL, self->prefix, NULL, &keys, &total_size);
                 if(!result) {
                     device_set_error(pself,
                                  g_strdup_printf(_("While listing S3 keys: %s"), s3_strerror(self->s3t[0].s3)),

@@ -695,6 +695,7 @@ s3_make_bucket(S3Handle *hdl,
 gboolean
 s3_is_bucket_exists(S3Handle *hdl,
                     const char *bucket,
+                    const char *prefix,
 		    const char *project_id);
 
 /* Delete a bucket

@@ -1,3 +1,9 @@
+2013-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Always use the prefix when accessing the
+	  bucket.
+	* device-src/s3.c (s3_is_bucket_exists): Add prefix as argument.
+	* device-src/s3.h (s3_is_bucket_exists): Change prototype.
+
 2013-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm, perl/Amanda/Changer,
 	  perl/Amanda/JSON/Changer.pm: s/look to be/looks to be/.
