@@ -1,3 +1,17 @@
+		Release Notes for amanda-3.3.5
+
+* amtape
+    o faster 'verify' command.
+* fix parsing of config override arguments.
+* amsamba
+    o Add REGEX-MATCH property.
+* amvault
+    o Print progress status.
+* ndmp device
+    o INDIRECT property default to yes.
+* Many bugs fix.
+
+
 		Release Notes for amanda-3.3.4
 
 * amreport
