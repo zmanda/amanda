@@ -1,4 +1,8 @@
 2013-12-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driverio.c(update_info_taper): Log a message if label is
+	  not set.
+
+2013-12-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.pl: Fix parsing of letter argument.
 
 2013-11-27  Jean-Louis Martineau <martineau@zmanda.com>

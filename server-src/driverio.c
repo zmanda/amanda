@@ -1220,6 +1220,11 @@ update_info_taper(
     stats_t *infp;
     int rc;
 
+    if (!label) {
+	log_add(L_ERROR, "update_info_taper without label");
+	return;
+    }
+
     rc = open_infofile(getconf_str(CNF_INFOFILE));
     if(rc) {
 	error(_("could not open infofile %s: %s (%d)"), getconf_str(CNF_INFOFILE),
