@@ -1,3 +1,7 @@
+2013-12-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driverio.c(update_info_taper): Log a message if label is
+	  not set.
+
 2013-12-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Changes in 3.3.5
 	* VERSION: 3.3.5
