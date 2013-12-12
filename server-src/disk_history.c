@@ -97,7 +97,7 @@ add_dump(
     strncpy(new->date, date, sizeof(new->date)-1);
     new->date[sizeof(new->date)-1] = '\0';
     new->level = level;
-    strncpy(new->storage, tape, sizeof(new->storage)-1);
+    strncpy(new->storage, storage, sizeof(new->storage)-1);
     new->storage[sizeof(new->storage)-1] = '\0';
     strncpy(new->tape, tape, sizeof(new->tape)-1);
     new->tape[sizeof(new->tape)-1] = '\0';
@@ -162,7 +162,7 @@ clean_dump(void)
 		}
 	    }
 	    if (found_maxpart == 0) {
-		DUMP_ITEM *myitem = item; 
+		DUMP_ITEM *myitem = item;
 
 		if (before)
 		    before->next = item->next;
