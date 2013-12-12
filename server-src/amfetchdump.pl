@@ -614,19 +614,39 @@ sub main {
 		}
 
 		#merge property from header;
-		while (my($name, $values) =
-			 each (%{$dle->{'backup-program'}->{'property'}})) {
+		if (exists $dle->{'backup-program'}->{'property'}->{'name'} and
+		    !UNIVERSAL::isa($dle->{'backup-program'}->{'property'}->{'name'}, "HASH")) {
+		    # header have one property
+		    my $name = $dle->{'backup-program'}->{'property'}->{'name'};
 		    if (!exists $application_property{$name}) {
-			if (UNIVERSAL::isa( $values->{'value'}, "ARRAY" )) {
-			    foreach my $value (@{$values->{'value'}}) {
+			my $values = $dle->{'backup-program'}->{'property'}->{'value'};
+			if (UNIVERSAL::isa( $values, "ARRAY" )) {
+			    # multiple values
+			    foreach my $value (@{$values}) {
 				push @argv, "--".$name, $value if defined $value;
 			    }
 			} else {
-			    push @argv, "--".$name, $values->{'value'};
+			    # one value
+			    push @argv, "--".$name, $values;
+			}
+		    }
+		} elsif (exists $dle->{'backup-program'}->{'property'}) {
+		    # header have multiple properties
+		    while (my($name, $values) =
+			 each (%{$dle->{'backup-program'}->{'property'}})) {
+			if (!exists $application_property{$name}) {
+			    if (UNIVERSAL::isa( $values->{'value'}, "ARRAY" )) {
+				# multiple values
+				foreach my $value (@{$values->{'value'}}) {
+				    push @argv, "--".$name, $value if defined $value;
+				}
+			    } else {
+				# one value
+				push @argv, "--".$name, $values->{'value'};
+			    }
 			}
 		    }
 		}
-
 	    }
 	    $directtcp = $directtcp_supported;
 	    if ($directtcp_supported) {

@@ -1,3 +1,7 @@
+2013-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Fix if header have only one
+	  application property.
+
 2013-12-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c(update_info_taper): Log a message if label is
 	  not set.
