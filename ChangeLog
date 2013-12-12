@@ -1,4 +1,7 @@
 2013-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Fix read from applicaiton stderr.
+
+2013-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/disk_history.c: Fix storage setting.
 
 2013-12-06  Jean-Louis Martineau <martineau@zmanda.com>

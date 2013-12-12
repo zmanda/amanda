@@ -3248,7 +3248,7 @@ start_processing_data(
 				EV_READFD, handle_child_out,
 				&ctl_data->child_out_cdata);
 
-    ctl_data->child_err_cdata.fd = ctl_data->child_out[0];
+    ctl_data->child_err_cdata.fd = ctl_data->child_err[0];
     ctl_data->child_err_cdata.output = stderr;
     ctl_data->child_err_cdata.name = NULL;
     ctl_data->child_err_cdata.buffer = NULL;
