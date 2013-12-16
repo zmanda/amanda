@@ -1,7 +1,7 @@
 /*
  * Amanda, The Advanced Maryland Automatic Network Disk Archiver
  * Copyright (c) 1991-1998 University of Maryland at College Park
- * Copyright (c) 2007-2013 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2007-2012 Zmanda, Inc.  All Rights Reserved.
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -24,39 +24,25 @@
  * Authors: the Amanda Development Team.  Its members are listed in a
  * file named AUTHORS, in the root directory of this distribution.
  */
-/* 
- * $Id: amgtar.c 8888 2007-10-02 13:40:42Z martineau $
- *
- * send estimated backup sizes using dump
- */
 
 /* PROPERTY:
  *
- * GNUTAR-PATH     (default GNUTAR)
- * GNUTAR-LISTDIR  (default CNF_GNUTAR_LIST_DIR)
+ * BSDTAR-PATH     (default /usr/bin/tar))
+ * STATE-DIR       (default $AMSTATDIR/bsdtar)
  * DIRECTORY       (no default, if set, the backup will be from that directory
  *		    instead of from the --device)
  * ONE-FILE-SYSTEM (default YES)
- * SPARSE          (default YES)
- * ATIME-PRESERVE  (default YES)
- * CHECK-DEVICE    (default YES)
- * NO-UNQUOTE      (default NO)
- * ACLS            (default NO)
- * SELINUX         (default NO)
- * XATTRS          (default NO)
  * INCLUDE-FILE
  * INCLUDE-LIST
- * INCLUDE-LIST-GLOB
  * INCLUDE-OPTIONAL
  * EXCLUDE-FILE
  * EXCLUDE-LIST
- * EXCLUDE-LIST-GLOB
  * EXCLUDE-OPTIONAL
  * NORMAL
  * IGNORE
  * STRANGE
  * EXIT-HANDLING   (1=GOOD 2=BAD)
- * TAR-BLOCKSIZE   (default does not add --blocking-factor option,
+ * TAR-BLOCKSIZE   (default does not add --block-size option,
  *                  using tar's default)
  * VERBOSE
  */
@@ -75,7 +61,7 @@
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
 	if ((i) <= debug_application) {	\
-	    dbprintf(__VA_ARGS__);	\
+	    g_debug(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -99,7 +85,7 @@ static amregex_t init_re_table[] = {
   AM_NORMAL_RE(": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"),
   AM_NORMAL_RE(": Cannot add file .*: No such file or directory$"),
   AM_NORMAL_RE(": Error exit delayed from previous errors"),
-  
+
   /* catch-all: DMP_STRANGE is returned for all other lines */
   AM_STRANGE_RE(NULL)
 };
@@ -117,43 +103,40 @@ typedef struct application_argument_s {
     char      *tar_blocksize;
     GSList    *level;
     GSList    *command_options;
-    char      *include_list_glob;
-    char      *exclude_list_glob;
     dle_t      dle;
     int        argc;
     char     **argv;
     int        verbose;
-    int        ignore_zeros;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
 
-static void amgtar_support(application_argument_t *argument);
-static void amgtar_selfcheck(application_argument_t *argument);
-static void amgtar_estimate(application_argument_t *argument);
-static void amgtar_backup(application_argument_t *argument);
-static void amgtar_restore(application_argument_t *argument);
-static void amgtar_validate(application_argument_t *argument);
-static void amgtar_build_exinclude(dle_t *dle, int verbose,
-				   int *nb_exclude, char **file_exclude,
-				   int *nb_include, char **file_include);
-static char *amgtar_get_incrname(application_argument_t *argument, int level,
-				 FILE *mesgstream, int command);
-static void check_no_check_device(void);
-static GPtrArray *amgtar_build_argv(application_argument_t *argument,
-				char *incrname, char **file_exclude,
-				char **file_include, int command);
-static char *gnutar_path;
-static char *gnutar_listdir;
-static char *gnutar_directory;
-static int gnutar_onefilesystem;
-static int gnutar_atimepreserve;
-static int gnutar_acls;
-static int gnutar_selinux;
-static int gnutar_xattrs;
-static int gnutar_checkdevice;
-static int gnutar_no_unquote;
-static int gnutar_sparse;
+static void ambsdtar_support(application_argument_t *argument);
+static void ambsdtar_selfcheck(application_argument_t *argument);
+static void ambsdtar_estimate(application_argument_t *argument);
+static void ambsdtar_backup(application_argument_t *argument);
+static void ambsdtar_restore(application_argument_t *argument);
+static void ambsdtar_validate(application_argument_t *argument);
+static void ambsdtar_index(application_argument_t *argument);
+static void ambsdtar_build_exinclude(dle_t *dle, int verbose,
+				     int *nb_exclude, char **file_exclude,
+				     int *nb_include, char **file_include);
+static char *ambsdtar_get_timestamps(application_argument_t *argument,
+				     int level,
+				     FILE *mesgstream, int command);
+static void ambsdtar_set_timestamps(application_argument_t *argument,
+				    int                     level,
+				    char                   *timestamps,
+				    FILE                   *mesgstream,
+				    int                     command);
+static GPtrArray *ambsdtar_build_argv(application_argument_t *argument,
+				      char *timestamps,
+				      char **file_exclude, char **file_include,
+				      int command);
+static char *bsdtar_path;
+static char *state_dir;
+static char *bsdtar_directory;
+static int bsdtar_onefilesystem;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
@@ -170,12 +153,9 @@ static struct option long_options[] = {
     {"message"         , 1, NULL,  7},
     {"collection"      , 0, NULL,  8},
     {"record"          , 0, NULL,  9},
-    {"gnutar-path"     , 1, NULL, 10},
-    {"gnutar-listdir"  , 1, NULL, 11},
+    {"bsdtar-path"     , 1, NULL, 10},
+    {"state-dir"       , 1, NULL, 11},
     {"one-file-system" , 1, NULL, 12},
-    {"sparse"          , 1, NULL, 13},
-    {"atime-preserve"  , 1, NULL, 14},
-    {"check-device"    , 1, NULL, 15},
     {"include-file"    , 1, NULL, 16},
     {"include-list"    , 1, NULL, 17},
     {"include-optional", 1, NULL, 18},
@@ -190,14 +170,8 @@ static struct option long_options[] = {
     {"calcsize"        , 0, NULL, 27},
     {"tar-blocksize"   , 1, NULL, 28},
     {"no-unquote"      , 1, NULL, 29},
-    {"acls"            , 1, NULL, 30},
-    {"selinux"         , 1, NULL, 31},
-    {"xattrs"          , 1, NULL, 32},
     {"command-options" , 1, NULL, 33},
-    {"include-list-glob", 1, NULL, 34},
-    {"exclude-list-glob", 1, NULL, 35},
     {"verbose"          , 1, NULL, 36},
-    {"ignore-zeros"     , 1, NULL, 37},
     {NULL, 0, NULL, 0}
 };
 
@@ -295,21 +269,14 @@ main(
     application_argument_t argument;
     int i;
 
-#ifdef GNUTAR
-    gnutar_path = GNUTAR;
+#ifdef BSDTAR
+    bsdtar_path = g_strdup(BSDTAR);
 #else
-    gnutar_path = NULL;
+    bsdtar_path = NULL;
 #endif
-    gnutar_listdir = NULL;
-    gnutar_directory = NULL;
-    gnutar_onefilesystem = 1;
-    gnutar_atimepreserve = 1;
-    gnutar_acls = 0;
-    gnutar_selinux = 0;
-    gnutar_xattrs = 0;
-    gnutar_checkdevice = 1;
-    gnutar_sparse = 1;
-    gnutar_no_unquote = 0;
+    state_dir = NULL;
+    bsdtar_directory = NULL;
+    bsdtar_onefilesystem = 1;
     exit_handling = NULL;
 
     /* initialize */
@@ -324,21 +291,21 @@ main(
     textdomain("amanda");
 
     if (argc < 2) {
-        printf("ERROR no command given to amgtar\n");
-        error(_("No command given to amgtar"));
+        printf("ERROR no command given to ambsdtar\n");
+        error(_("No command given to ambsdtar"));
     }
 
     /* drop root privileges */
     if (!set_root_privs(0)) {
-	if (strcmp(argv[1], "selfcheck") == 0) {
-	    printf("ERROR amgtar must be run setuid root\n");
+	if (g_str_equal(argv[1], "selfcheck")) {
+	    printf("ERROR ambsdtar must be run setuid root\n");
 	}
-	error(_("amgtar must be run setuid root"));
+	error(_("ambsdtar must be run setuid root"));
     }
 
     safe_fd(3, 2);
 
-    set_pname("amgtar");
+    set_pname("ambsdtar");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -351,7 +318,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), VERSION);
+    g_debug(_("version %s"), VERSION);
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
@@ -366,31 +333,32 @@ main(
     argument.host       = NULL;
     argument.message    = 0;
     argument.collection = 0;
-    argument.calcsize   = 0;
+    argument.calcsize = 0;
     argument.tar_blocksize = NULL;
     argument.level      = NULL;
     argument.command_options = NULL;
-    argument.include_list_glob = NULL;
-    argument.exclude_list_glob = NULL;
     argument.verbose = 0;
-    argument.ignore_zeros = 1;
     init_dle(&argument.dle);
     argument.dle.record = 0;
 
     while (1) {
 	int option_index = 0;
-    	c = getopt_long (argc, argv, "", long_options, &option_index);
+	c = getopt_long (argc, argv, "", long_options, &option_index);
 	if (c == -1) {
 	    break;
 	}
 	switch (c) {
-	case 1: argument.config = stralloc(optarg);
+	case 1: amfree(argument.config);
+		argument.config = g_strdup(optarg);
 		break;
-	case 2: argument.host = stralloc(optarg);
+	case 2: amfree(argument.host);
+		argument.host = g_strdup(optarg);
 		break;
-	case 3: argument.dle.disk = stralloc(optarg);
+	case 3: amfree(argument.dle.disk);
+		argument.dle.disk = g_strdup(optarg);
 		break;
-	case 4: argument.dle.device = stralloc(optarg);
+	case 4: amfree(argument.dle.device);
+		argument.dle.device = g_strdup(optarg);
 		break;
 	case 5: argument.level = g_slist_append(argument.level,
 					        GINT_TO_POINTER(atoi(optarg)));
@@ -403,110 +371,61 @@ main(
 		break;
 	case 9: argument.dle.record = 1;
 		break;
-	case 10: gnutar_path = stralloc(optarg);
+	case 10: amfree(bsdtar_path);
+		 bsdtar_path = g_strdup(optarg);
 		 break;
-	case 11: gnutar_listdir = stralloc(optarg);
+	case 11: amfree(state_dir);
+		 state_dir = g_strdup(optarg);
 		 break;
-	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     gnutar_onefilesystem = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     gnutar_onefilesystem = 1;
+	case 12: if (strcasecmp(optarg, "NO") == 0)
+		     bsdtar_onefilesystem = 0;
+		 else if (strcasecmp(optarg, "YES") == 0)
+		     bsdtar_onefilesystem = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 13: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     gnutar_sparse = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     gnutar_sparse = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
-		 break;
-	case 14: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     gnutar_atimepreserve = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     gnutar_atimepreserve = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ATIME-PRESERVE property value (%s)]\n"), get_pname(), optarg);
-		 break;
-	case 15: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     gnutar_checkdevice = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     gnutar_checkdevice = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n"), get_pname(), optarg);
-		 break;
-	case 16: if (optarg)
-		     argument.dle.include_file =
+	case 16: argument.dle.include_file =
 			 append_sl(argument.dle.include_file, optarg);
 		 break;
-	case 17: if (optarg)
-		     argument.dle.include_list =
+	case 17: argument.dle.include_list =
 			 append_sl(argument.dle.include_list, optarg);
 		 break;
 	case 18: argument.dle.include_optional = 1;
 		 break;
-	case 19: if (optarg)
-		     argument.dle.exclude_file =
+	case 19: argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);
 		 break;
-	case 20: if (optarg)
-		     argument.dle.exclude_list =
+	case 20: argument.dle.exclude_list =
 			 append_sl(argument.dle.exclude_list, optarg);
 		 break;
 	case 21: argument.dle.exclude_optional = 1;
 		 break;
-	case 22: gnutar_directory = stralloc(optarg);
+	case 22: amfree(bsdtar_directory);
+		 bsdtar_directory = g_strdup(optarg);
 		 break;
-	case 23: if (optarg)
-		     normal_message = 
+	case 23: normal_message =
 			 g_slist_append(normal_message, optarg);
 		 break;
-	case 24: if (optarg)
-		     ignore_message = 
+	case 24: ignore_message =
 			 g_slist_append(ignore_message, optarg);
 		 break;
-	case 25: if (optarg)
-		     strange_message = 
+	case 25: strange_message =
 			 g_slist_append(strange_message, optarg);
 		 break;
-	case 26: if (optarg)
-		     exit_handling = stralloc(optarg);
+	case 26: amfree(exit_handling);
+		 exit_handling = g_strdup(optarg);
 		 break;
 	case 27: argument.calcsize = 1;
 		 break;
-	case 28: argument.tar_blocksize = stralloc(optarg);
+	case 28: amfree(argument.tar_blocksize);
+		 argument.tar_blocksize = g_strdup(optarg);
 		 break;
-	case 29: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     gnutar_no_unquote = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     gnutar_no_unquote = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad No_UNQUOTE property value (%s)]\n"), get_pname(), optarg);
-		 break;
-        case 30: if (optarg && strcasecmp(optarg, "YES") == 0)
-                   gnutar_acls = 1;
-                 break;
-        case 31: if (optarg && strcasecmp(optarg, "YES") == 0)
-                   gnutar_selinux = 1;
-                 break;
-        case 32: if (optarg && strcasecmp(optarg, "YES") == 0)
-                   gnutar_xattrs = 1;
-                 break;
 	case 33: argument.command_options =
 			g_slist_append(argument.command_options,
-				       stralloc(optarg));
+				       g_strdup(optarg));
 		 break;
-	case 34: if (optarg)
-		     argument.include_list_glob = stralloc(optarg);
-		 break;
-	case 35: if (optarg)
-		     argument.exclude_list_glob = stralloc(optarg);
-		 break;
-	case 36: if (optarg  && strcasecmp(optarg, "YES") == 0)
+	case 36: if (strcasecmp(optarg, "YES") == 0)
 		     argument.verbose = 1;
-		 break;
-	case 37: if (strcasecmp(optarg, "YES") != 0)
-		     argument.ignore_zeros = 0;
 		 break;
 	case ':':
 	case '?':
@@ -515,9 +434,9 @@ main(
     }
 
     if (!argument.dle.disk && argument.dle.device)
-	argument.dle.disk = stralloc(argument.dle.device);
+	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
-	argument.dle.device = stralloc(argument.dle.disk);
+	argument.dle.device = g_strdup(argument.dle.disk);
 
     argument.argc = argc - optind;
     argument.argv = argv + optind;
@@ -532,8 +451,10 @@ main(
 	g_critical(_("errors processing config file"));
     }
 
-    if (!gnutar_listdir) {
-	gnutar_listdir = g_strdup(getconf_str(CNF_GNUTAR_LIST_DIR));
+    if (state_dir && strlen(state_dir) == 0)
+	amfree(state_dir);
+    if (!state_dir) {
+	state_dir = g_strdup_printf("%s/%s", amdatadir, "bsdtar");
     }
 
     re_table = build_re_table(init_re_table, normal_message, ignore_message,
@@ -560,60 +481,59 @@ main(
 	}
     }
 
-    if (strlen(gnutar_listdir) == 0)
-	gnutar_listdir = NULL;
-
-    if (gnutar_path) {
-	dbprintf("GNUTAR-PATH %s\n", gnutar_path);
+    if (bsdtar_path) {
+	g_debug("BSDTAR-PATH %s", bsdtar_path);
     } else {
-	dbprintf("GNUTAR-PATH is not set\n");
+	g_debug("BSDTAR-PATH is not set");
     }
-    if (gnutar_listdir) {
-	    dbprintf("GNUTAR-LISTDIR %s\n", gnutar_listdir);
+    if (state_dir) {
+	    g_debug("STATE-DIR %s", state_dir);
     } else {
-	dbprintf("GNUTAR-LISTDIR is not set\n");
+	g_debug("STATE-DIR is not set");
     }
-    if (gnutar_directory) {
-	dbprintf("DIRECTORY %s\n", gnutar_directory);
+    if (bsdtar_directory) {
+	g_debug("DIRECTORY %s", bsdtar_directory);
     }
-    dbprintf("ONE-FILE-SYSTEM %s\n", gnutar_onefilesystem? "yes":"no");
-    dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
-    dbprintf("NO-UNQUOTE %s\n", gnutar_no_unquote? "yes":"no");
-    dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
-    dbprintf("ACLS %s\n", gnutar_acls? "yes":"no");
-    dbprintf("SELINUX %s\n", gnutar_selinux? "yes":"no");
-    dbprintf("XATTRS %s\n", gnutar_xattrs? "yes":"no");
-    dbprintf("CHECK-DEVICE %s\n", gnutar_checkdevice? "yes":"no");
+    g_debug("ONE-FILE-SYSTEM %s", bsdtar_onefilesystem? "yes":"no");
     {
 	amregex_t *rp;
 	for (rp = re_table; rp->regex != NULL; rp++) {
 	    switch (rp->typ) {
-		case DMP_NORMAL : dbprintf("NORMAL %s\n", rp->regex); break;
-		case DMP_IGNORE : dbprintf("IGNORE %s\n", rp->regex); break;
-		case DMP_STRANGE: dbprintf("STRANGE %s\n", rp->regex); break;
-		case DMP_SIZE   : dbprintf("SIZE %s\n", rp->regex); break;
-		case DMP_ERROR  : dbprintf("ERROR %s\n", rp->regex); break;
+		case DMP_NORMAL : g_debug("NORMAL %s", rp->regex); break;
+		case DMP_IGNORE : g_debug("IGNORE %s", rp->regex); break;
+		case DMP_STRANGE: g_debug("STRANGE %s", rp->regex); break;
+		case DMP_SIZE   : g_debug("SIZE %s", rp->regex); break;
+		case DMP_ERROR  : g_debug("ERROR %s", rp->regex); break;
 	    }
 	}
     }
 
-    if (strcmp(command, "support") == 0) {
-	amgtar_support(&argument);
-    } else if (strcmp(command, "selfcheck") == 0) {
-	amgtar_selfcheck(&argument);
-    } else if (strcmp(command, "estimate") == 0) {
-	amgtar_estimate(&argument);
-    } else if (strcmp(command, "backup") == 0) {
-	amgtar_backup(&argument);
-    } else if (strcmp(command, "restore") == 0) {
-	amgtar_restore(&argument);
-    } else if (strcmp(command, "validate") == 0) {
-	amgtar_validate(&argument);
+    if (g_str_equal(command, "support")) {
+	ambsdtar_support(&argument);
+    } else if (g_str_equal(command, "selfcheck")) {
+	ambsdtar_selfcheck(&argument);
+    } else if (g_str_equal(command, "estimate")) {
+	ambsdtar_estimate(&argument);
+    } else if (g_str_equal(command, "backup")) {
+	ambsdtar_backup(&argument);
+    } else if (g_str_equal(command, "restore")) {
+	ambsdtar_restore(&argument);
+    } else if (g_str_equal(command, "validate")) {
+	ambsdtar_validate(&argument);
+    } else if (g_str_equal(command, "index")) {
+	ambsdtar_index(&argument);
     } else {
-	dbprintf("Unknown command `%s'.\n", command);
+	g_debug("Unknown command `%s'.", command);
 	fprintf(stderr, "Unknown command `%s'.\n", command);
 	exit (1);
     }
+
+    g_free(argument.config);
+    g_free(argument.host);
+    g_free(argument.dle.disk);
+    g_free(argument.dle.device);
+    g_free(argument.tar_blocksize);
+    g_slist_free(argument.level);
 
     dbclose();
 
@@ -621,7 +541,7 @@ main(
 }
 
 static void
-amgtar_support(
+ambsdtar_support(
     application_argument_t *argument)
 {
     (void)argument;
@@ -636,11 +556,9 @@ amgtar_support(
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
     fprintf(stdout, "INCLUDE-LIST YES\n");
-    fprintf(stdout, "INCLUDE-LIST-GLOB YES\n");
     fprintf(stdout, "INCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "EXCLUDE-FILE YES\n");
     fprintf(stdout, "EXCLUDE-LIST YES\n");
-    fprintf(stdout, "EXCLUDE-LIST-GLOB YES\n");
     fprintf(stdout, "EXCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "COLLECTION NO\n");
     fprintf(stdout, "MULTI-ESTIMATE YES\n");
@@ -649,7 +567,7 @@ amgtar_support(
 }
 
 static void
-amgtar_selfcheck(
+ambsdtar_selfcheck(
     application_argument_t *argument)
 {
     if (argument->dle.disk) {
@@ -658,51 +576,54 @@ amgtar_selfcheck(
 	amfree(qdisk);
     }
 
-    printf("OK amgtar version %s\n", VERSION);
-    amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
+    printf("OK ambsdtar version %s\n", VERSION);
+    ambsdtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
-    printf("OK amgtar\n");
-    if (gnutar_path) {
-	if (check_file(gnutar_path, X_OK)) {
-	    char *gtar_version;
+    printf("OK ambsdtar\n");
+    if (bsdtar_path) {
+	if (check_file(bsdtar_path, X_OK)) {
+	    char *bsdtar_version;
 	    GPtrArray *argv_ptr = g_ptr_array_new();
 
-	    g_ptr_array_add(argv_ptr, gnutar_path);
+	    g_ptr_array_add(argv_ptr, bsdtar_path);
 	    g_ptr_array_add(argv_ptr, "--version");
 	    g_ptr_array_add(argv_ptr, NULL);
 
-	    gtar_version = get_first_line(argv_ptr);
-	    if (gtar_version) {
-		char *gv;
-		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
-		printf("OK amgtar gtar-version %s\n", gv);
+	    bsdtar_version = get_first_line(argv_ptr);
+	    if (bsdtar_version) {
+		char *tv, *bv;
+		for (tv = bsdtar_version; *tv && !g_ascii_isdigit(*tv); tv++);
+		for (bv = tv; *bv && *bv != ' '; bv++);
+		if (*bv) *bv = '\0';
+		printf("OK ambsdtar bsdtar-version %s\n", tv);
 	    } else {
-		printf(_("ERROR [Can't get %s version]\n"), gnutar_path);
+		printf(_("ERROR [Can't get %s version]\n"), bsdtar_path);
 	    }
 
 	    g_ptr_array_free(argv_ptr, TRUE);
-	    amfree(gtar_version);
+	    amfree(bsdtar_version);
 	}
     } else {
-	printf(_("ERROR [GNUTAR program not available]\n"));
+	printf(_("ERROR [BSDTAR program not available]\n"));
     }
 
     set_root_privs(1);
-    if (gnutar_listdir && strlen(gnutar_listdir) == 0)
-	gnutar_listdir = NULL;
-    if (gnutar_listdir) {
-	check_dir(gnutar_listdir, R_OK|W_OK);
+    if (state_dir && strlen(state_dir) == 0)
+	state_dir = NULL;
+    if (state_dir) {
+	check_dir(state_dir, R_OK|W_OK);
     } else {
-	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
+	printf(_("ERROR [No STATE-DIR]\n"));
     }
 
-    if (gnutar_directory) {
-	check_dir(gnutar_directory, R_OK);
+    if (bsdtar_directory) {
+	check_dir(bsdtar_directory, R_OK);
     } else if (argument->dle.device) {
 	check_dir(argument->dle.device, R_OK);
     }
+
     if (argument->calcsize) {
-	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);
@@ -711,7 +632,7 @@ amgtar_selfcheck(
 }
 
 static void
-amgtar_estimate(
+ambsdtar_estimate(
     application_argument_t *argument)
 {
     char      *incrname = NULL;
@@ -724,15 +645,16 @@ amgtar_estimate(
     char       line[32768];
     char      *errmsg = NULL;
     char      *qerrmsg = NULL;
-    char      *qdisk;
+    char      *qdisk = NULL;
     amwait_t   wait_status;
     int        tarpid;
     amregex_t *rp;
     times_t    start_time;
     int        level;
     GSList    *levels;
-    char      *file_exclude;
-    char      *file_include;
+    char      *file_exclude = NULL;
+    char      *file_include = NULL;
+    GString   *strbuf;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -747,23 +669,20 @@ amgtar_estimate(
         error(_("No device argument"));
     }
 
-    qdisk = quote_string(argument->dle.disk);
-
     if (argument->calcsize) {
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
-
-	if (gnutar_directory) {
-	    dirname = gnutar_directory;
+	if (bsdtar_directory) {
+	    dirname = bsdtar_directory;
 	} else {
 	    dirname = argument->dle.device;
 	}
-	amgtar_build_exinclude(&argument->dle, 1,
-			       &nb_exclude, &file_exclude,
-			       &nb_include, &file_include);
+	ambsdtar_build_exinclude(&argument->dle, 1,
+				 &nb_exclude, &file_exclude,
+				 &nb_include, &file_include);
 
-	run_calcsize(argument->config, "GNUTAR", argument->dle.disk, dirname,
+	run_calcsize(argument->config, "BSDTAR", argument->dle.disk, dirname,
 		     argument->level, file_exclude, file_include);
 
 	if (argument->verbose == 0) {
@@ -771,31 +690,37 @@ amgtar_estimate(
 		unlink(file_exclude);
 	    if (file_include)
 		unlink(file_include);
-        }
+	}
+	amfree(file_exclude);
+	amfree(file_include);
+	amfree(qdisk);
 	return;
     }
 
-    if (!gnutar_path) {
-	errmsg = vstrallocf(_("GNUTAR-PATH not defined"));
+    if (!bsdtar_path) {
+	errmsg = g_strdup(_("BSDTAR-PATH not defined"));
 	goto common_error;
     }
 
-    if (!gnutar_listdir) {
-	errmsg = vstrallocf(_("GNUTAR-LISTDIR not defined"));
+    if (!state_dir) {
+	errmsg = g_strdup(_("STATE-DIR not defined"));
 	goto common_error;
     }
 
+    qdisk = quote_string(argument->dle.disk);
     for (levels = argument->level; levels != NULL; levels = levels->next) {
+	char *timestamps;
 	level = GPOINTER_TO_INT(levels->data);
-	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
-	cmd = stralloc(gnutar_path);
-	argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
-				     &file_include, CMD_ESTIMATE);
+	timestamps = ambsdtar_get_timestamps(argument, level, stdout, CMD_ESTIMATE);
+	cmd = g_strdup(bsdtar_path);
+	argv_ptr = ambsdtar_build_argv(argument, timestamps, &file_exclude,
+				       &file_include, CMD_ESTIMATE);
+	amfree(timestamps);
 
 	start_time = curclock();
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+	    errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
 				strerror(errno));
 	    goto common_exit;
 	}
@@ -812,11 +737,13 @@ amgtar_estimate(
 
 	size = (off_t)-1;
 	while (size < 0 && (fgets(line, sizeof(line), dumpout) != NULL)) {
-	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	    if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+		/* remove trailling \n */
 		line[strlen(line)-1] = '\0';
+	    }
 	    if (line[0] == '\0')
 		continue;
-	    dbprintf("%s\n", line);
+	    g_debug("%s", line);
 	    /* check for size match */
 	    /*@ignore@*/
 	    for(rp = re_table; rp->regex != NULL; rp++) {
@@ -833,56 +760,59 @@ amgtar_estimate(
 	}
 
 	while (fgets(line, sizeof(line), dumpout) != NULL) {
-	    dbprintf("%s", line);
+	    g_debug("%s", line);
 	}
 
-	dbprintf(".....\n");
-	dbprintf(_("estimate time for %s level %d: %s\n"),
+	g_debug(".....");
+	g_debug(_("estimate time for %s level %d: %s"),
 		 qdisk,
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = vstrallocf(_("no size line match in %s output"), cmd);
-	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
-	    dbprintf(".....\n");
+	    errmsg = g_strdup_printf(_("no size line match in %s output"), cmd);
+	    g_debug(_("%s for %s"), errmsg, qdisk);
+	    g_debug(".....");
 	} else if(size == (off_t)0 && argument->level == 0) {
-	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+	    g_debug(_("possible %s problem -- is \"%s\" really empty?"),
 		     cmd, argument->dle.disk);
-	    dbprintf(".....\n");
+	    g_debug(".....");
 	}
-	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+	g_debug(_("estimate size for %s level %d: %lld KB"),
 		 qdisk,
 		 level,
 		 (long long)size);
 
 	kill(-tarpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+	g_debug(_("waiting for %s \"%s\" child"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
-	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-				cmd, WTERMSIG(wait_status), dbfn());
+	    strbuf = g_string_new(errmsg);
+	    g_string_append_printf(strbuf, "%s terminated with signal %d: see %s",
+                cmd, WTERMSIG(wait_status), dbfn());
+	    g_free(errmsg);
+            errmsg = g_string_free(strbuf, FALSE);
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-				    cmd, WEXITSTATUS(wait_status), dbfn());
+                strbuf = g_string_new(errmsg);
+                g_string_append_printf(strbuf, "%s exited with status %d: see %s",
+                    cmd, WEXITSTATUS(wait_status), dbfn());
+		g_free(errmsg);
+                errmsg = g_string_free(strbuf, FALSE);
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
-	    errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 				cmd, dbfn());
 	}
-	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+	g_debug(_("after %s %s wait"), cmd, qdisk);
 
 common_exit:
 	if (errmsg) {
-	    dbprintf("%s", errmsg);
+	    g_debug("%s", errmsg);
 	    fprintf(stdout, "ERROR %s\n", errmsg);
-	}
-
-	if (incrname) {
-	    unlink(incrname);
+	    amfree(errmsg);
 	}
 
 	if (argument->verbose == 0) {
@@ -894,6 +824,7 @@ common_exit:
 
 	g_ptr_array_free_full(argv_ptr);
 	amfree(cmd);
+	amfree(incrname);
 
 	aclose(nullfd);
 	afclose(dumpout);
@@ -901,26 +832,34 @@ common_exit:
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
     amfree(qdisk);
+    amfree(file_exclude);
+    amfree(file_include);
+    amfree(errmsg);
+    amfree(qerrmsg);
+    amfree(incrname);
     return;
 
 common_error:
     qerrmsg = quote_string(errmsg);
     amfree(qdisk);
-    dbprintf("%s", errmsg);
+    g_debug("%s", errmsg);
     fprintf(stdout, "ERROR %s\n", qerrmsg);
+    amfree(file_exclude);
+    amfree(file_include);
     amfree(errmsg);
     amfree(qerrmsg);
+    amfree(incrname);
     return;
 }
 
 static void
-amgtar_backup(
+ambsdtar_backup(
     application_argument_t *argument)
 {
     int         dumpin;
     char      *cmd = NULL;
     char      *qdisk;
-    char      *incrname;
+    char      *timestamps;
     char       line[32768];
     amregex_t *rp;
     off_t      dump_size = -1;
@@ -937,19 +876,21 @@ amgtar_backup(
     amwait_t   wait_status;
     GPtrArray *argv_ptr;
     int        tarpid;
+    time_t     tt;
     char      *file_exclude;
     char      *file_include;
+    char       new_timestamps[64];
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
 	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
     }
 
-    if (!gnutar_path) {
-	error(_("GNUTAR-PATH not defined"));
+    if (!bsdtar_path) {
+	error(_("BSDTAR-PATH not defined"));
     }
-    if (!gnutar_listdir) {
-	error(_("GNUTAR-LISTDIR not defined"));
+    if (!state_dir) {
+	error(_("STATE-DIR not defined"));
     }
 
     if (!argument->level) {
@@ -967,12 +908,15 @@ amgtar_backup(
 
     qdisk = quote_string(argument->dle.disk);
 
-    incrname = amgtar_get_incrname(argument,
+    tt = time(NULL);
+    ctime_r(&tt, new_timestamps);
+    new_timestamps[strlen(new_timestamps)-1] = '\0';
+    timestamps = ambsdtar_get_timestamps(argument,
 				   GPOINTER_TO_INT(argument->level->data),
 				   mesgstream, CMD_BACKUP);
-    cmd = stralloc(gnutar_path);
-    argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
-				 &file_include, CMD_BACKUP);
+    cmd = g_strdup(bsdtar_path);
+    argv_ptr = ambsdtar_build_argv(argument, timestamps, &file_exclude,
+				   &file_include, CMD_BACKUP);
 
     tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
@@ -992,11 +936,19 @@ amgtar_backup(
     }
 
     while (fgets(line, sizeof(line), outstream) != NULL) {
-	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+	    /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
-	if (*line == '.' && *(line+1) == '/') { /* filename */
+	}
+	if (strlen(line) == 3 && *line == 'a' && *(line+1) == ' ' &&
+	    *(line+2) == '.') { /* 'a .' */
 	    if (argument->dle.create_index) {
-		fprintf(indexstream, "%s\n", &line[1]); /* remove . */
+		fprintf(indexstream, "/\n"); /* add '/' */
+	    }
+	} else if (strlen(line) >= 4 && *line == 'a' && *(line+1) == ' ' &&
+	    *(line+2) == '.' && *(line+3) == '/') { /* filename */
+	    if (argument->dle.create_index) {
+		fprintf(indexstream, "%s\n", &line[3]); /* remove 'a .' */
 	    }
 	} else { /* message */
 	    for(rp = re_table; rp->regex != NULL; rp++) {
@@ -1031,59 +983,41 @@ amgtar_backup(
 		startchr = '!';
 		break;
 	    }
-	    dbprintf("%3d: %7s(%c): %s\n", rp->srcline, type, startchr, line);
+	    g_debug("%3d: %7s(%c): %s", rp->srcline, type, startchr, line);
 	    fprintf(mesgstream,"%c %s\n", startchr, line);
         }
     }
+    fclose(outstream);
 
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
+	    ambsdtar_set_timestamps(argument,
+				    GPOINTER_TO_INT(argument->level->data),
+				    new_timestamps,
+				    mesgstream, CMD_BACKUP);
 	}
     } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    cmd, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), cmd, qdisk);
-    dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
+    g_debug(_("after %s %s wait"), cmd, qdisk);
+    g_debug(_("ambsdtar: %s: pid %ld"), cmd, (long)tarpid);
     if (errmsg) {
-	dbprintf("%s", errmsg);
+	g_debug("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
     }
 
-    if (!errmsg && incrname && strlen(incrname) > 4) {
-	if (argument->dle.record) {
-	    char *nodotnew;
-	    nodotnew = stralloc(incrname);
-	    nodotnew[strlen(nodotnew)-4] = '\0';
-	    if (rename(incrname, nodotnew)) {
-		dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
-			 get_pname(), incrname, nodotnew, strerror(errno));
-		g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
-			  incrname, nodotnew, strerror(errno));
-	    }
-	    amfree(nodotnew);
-	} else {
-	    if (unlink(incrname) == -1) {
-		dbprintf(_("%s: warning [unlink %s: %s]\n"),
-			 get_pname(), incrname, strerror(errno));
-		g_fprintf(mesgstream, _("? warning [unlink %s: %s]\n"),
-			  incrname, strerror(errno));
-	    }
-	}
-    }
 
-    dbprintf("sendbackup: size %lld\n", (long long)dump_size);
+    g_debug("sendbackup: size %lld", (long long)dump_size);
     fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
-    dbprintf("sendbackup: end\n");
-    fprintf(mesgstream, "sendbackup: end\n");
 
     if (argument->dle.create_index)
 	fclose(indexstream);
@@ -1097,14 +1031,17 @@ amgtar_backup(
 	    unlink(file_include);
     }
 
-    amfree(incrname);
+    amfree(file_exclude);
+    amfree(file_include);
+    amfree(timestamps);
     amfree(qdisk);
     amfree(cmd);
+    amfree(errmsg);
     g_ptr_array_free_full(argv_ptr);
 }
 
 static void
-amgtar_restore(
+ambsdtar_restore(
     application_argument_t *argument)
 {
     char       *cmd;
@@ -1116,50 +1053,38 @@ amgtar_restore(
     char       *exclude_filename = NULL;
     int         tarpid;
 
-    if (!gnutar_path) {
-	error(_("GNUTAR-PATH not defined"));
+    if (!bsdtar_path) {
+	error(_("BSDTAR-PATH not defined"));
     }
 
-    cmd = stralloc(gnutar_path);
-    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
-    g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
-    if (gnutar_no_unquote)
-	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
-    if (gnutar_acls)
-	g_ptr_array_add(argv_ptr, stralloc("--acls"));
-    if (gnutar_selinux)
-	g_ptr_array_add(argv_ptr, stralloc("--selinux"));
-    if (gnutar_xattrs)
-	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
+    cmd = g_strdup(bsdtar_path);
+    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
+    g_ptr_array_add(argv_ptr, g_strdup("--numeric-owner"));
     /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
-    if (argument->ignore_zeros) {
-	g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
-    }
     if (argument->tar_blocksize) {
-	g_ptr_array_add(argv_ptr, stralloc("--blocking-factor"));
-	g_ptr_array_add(argv_ptr, stralloc(argument->tar_blocksize));
+	g_ptr_array_add(argv_ptr, g_strdup("--block-size"));
+	g_ptr_array_add(argv_ptr, g_strdup(argument->tar_blocksize));
     }
-    g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
-    g_ptr_array_add(argv_ptr, stralloc("-"));
-    if (gnutar_directory) {
+    g_ptr_array_add(argv_ptr, g_strdup("-xvf"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
+    if (bsdtar_directory) {
 	struct stat stat_buf;
-	if(stat(gnutar_directory, &stat_buf) != 0) {
-	    fprintf(stderr,"can not stat directory %s: %s\n", gnutar_directory, strerror(errno));
+	if(stat(bsdtar_directory, &stat_buf) != 0) {
+	    fprintf(stderr,"can not stat directory %s: %s\n", bsdtar_directory, strerror(errno));
 	    exit(1);
 	}
 	if (!S_ISDIR(stat_buf.st_mode)) {
-	    fprintf(stderr,"%s is not a directory\n", gnutar_directory);
+	    fprintf(stderr,"%s is not a directory\n", bsdtar_directory);
 	    exit(1);
 	}
-	if (access(gnutar_directory, W_OK) != 0) {
-	    fprintf(stderr, "Can't write to %s: %s\n", gnutar_directory, strerror(errno));
+	if (access(bsdtar_directory, W_OK) != 0) {
+	    fprintf(stderr, "Can't write to %s: %s\n", bsdtar_directory, strerror(errno));
 	    exit(1);
 	}
-	g_ptr_array_add(argv_ptr, stralloc("--directory"));
-	g_ptr_array_add(argv_ptr, stralloc(gnutar_directory));
+	g_ptr_array_add(argv_ptr, g_strdup("--directory"));
+	g_ptr_array_add(argv_ptr, g_strdup(bsdtar_directory));
     }
 
-    g_ptr_array_add(argv_ptr, stralloc("--wildcards"));
     if (argument->dle.exclude_list &&
 	argument->dle.exclude_list->nb_element == 1) {
 	FILE      *exclude;
@@ -1174,10 +1099,24 @@ amgtar_restore(
 	} else {
 	    sdisk = g_strdup_printf("no_dle-%d", (int)getpid());
 	}
-	exclude_filename= vstralloc(AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
+	exclude_filename= g_strjoin(NULL, AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
 	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
-
+	if (!exclude_list) {
+	    fprintf(stderr, "Cannot open exclude file '%s': %s\n",
+		    argument->dle.exclude_list->first->name, strerror(errno));
+	    error("Cannot open exclude file '%s': %s\n",
+		  argument->dle.exclude_list->first->name, strerror(errno));
+	    /*NOTREACHED*/
+	}
 	exclude = fopen(exclude_filename, "w");
+	if (!exclude) {
+	    fprintf(stderr, "Cannot open exclude file '%s': %s\n",
+		    exclude_filename, strerror(errno));
+	    fclose(exclude_list);
+	    error("Cannot open exclude file '%s': %s\n",
+		  exclude_filename, strerror(errno));
+	    /*NOTREACHED*/
+	}
 	while (fgets(line, 2*PATH_MAX, exclude_list)) {
 	    char *escaped;
 	    line[strlen(line)-1] = '\0'; /* remove '\n' */
@@ -1191,14 +1130,10 @@ amgtar_restore(
 		amfree(escaped);
 	    }
 	}
+	fclose(exclude_list);
 	fclose(exclude);
-	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
+	g_ptr_array_add(argv_ptr, g_strdup("--exclude-from"));
 	g_ptr_array_add(argv_ptr, exclude_filename);
-    }
-
-    if (argument->exclude_list_glob) {
-	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
-	g_ptr_array_add(argv_ptr, stralloc(argument->exclude_list_glob));
     }
 
     {
@@ -1214,16 +1149,49 @@ amgtar_restore(
 	} else {
 	    sdisk = g_strdup_printf("no_dle-%d", (int)getpid());
 	}
-	include_filename = vstralloc(AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
+	include_filename = g_strjoin(NULL, AMANDA_TMPDIR, "/", "include-", sdisk,  NULL);
 	include = fopen(include_filename, "w");
+	if (!include) {
+	    fprintf(stderr, "Cannot open include file '%s': %s\n",
+		    include_filename, strerror(errno));
+	    error("Cannot open include file '%s': %s\n",
+		  include_filename, strerror(errno));
+	    /*NOTREACHED*/
+	}
 	if (argument->dle.include_list &&
 	    argument->dle.include_list->nb_element == 1) {
 	    char line[2*PATH_MAX];
 	    FILE *include_list = fopen(argument->dle.include_list->first->name, "r");
+	    if (!include_list) {
+		fclose(include);
+		fprintf(stderr, "Cannot open include file '%s': %s\n",
+			argument->dle.include_list->first->name,
+			strerror(errno));
+		error("Cannot open include file '%s': %s\n",
+		      argument->dle.include_list->first->name,
+		      strerror(errno));
+		/*NOTREACHED*/
+	    }
 	    while (fgets(line, 2*PATH_MAX, include_list)) {
 		char *escaped;
 		line[strlen(line)-1] = '\0'; /* remove '\n' */
-		escaped = escape_tar_glob(line, &in_argv);
+		if (!g_str_equal(line, ".")) {
+		    escaped = escape_tar_glob(line, &in_argv);
+		    if (in_argv) {
+			g_ptr_array_add(argv_include, escaped);
+		    } else {
+			fprintf(include,"%s\n", escaped);
+			entry_in_include++;
+			amfree(escaped);
+		    }
+		}
+	    }
+	    fclose(include_list);
+	}
+
+	for (j=1; j< argument->argc; j++) {
+	    if (!g_str_equal(argument->argv[j], ".")) {
+		char *escaped = escape_tar_glob(argument->argv[j], &in_argv);
 		if (in_argv) {
 		    g_ptr_array_add(argv_include, escaped);
 		} else {
@@ -1233,32 +1201,17 @@ amgtar_restore(
 		}
 	    }
 	}
-
-	for (j=1; j< argument->argc; j++) {
-	    char *escaped = escape_tar_glob(argument->argv[j], &in_argv);
-	    if (in_argv) {
-		g_ptr_array_add(argv_include, escaped);
-	    } else {
-		fprintf(include,"%s\n", escaped);
-		entry_in_include++;
-		amfree(escaped);
-	    }
-	}
 	fclose(include);
 
 	if (entry_in_include) {
-	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	    g_ptr_array_add(argv_ptr, g_strdup("--files-from"));
 	    g_ptr_array_add(argv_ptr, include_filename);
-	}
-
-	if (argument->include_list_glob) {
-	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
-	    g_ptr_array_add(argv_ptr, stralloc(argument->include_list_glob));
 	}
 
 	for (i = 0; i < argv_include->len; i++) {
 	    g_ptr_array_add(argv_ptr, (char *)g_ptr_array_index(argv_include,i));
 	}
+	amfree(sdisk);
     }
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -1271,6 +1224,7 @@ amgtar_restore(
 	env = safe_env();
 	become_root();
 	execve(cmd, (char **)argv_ptr->pdata, env);
+	execv(cmd, (char **)argv_ptr->pdata);
 	e = strerror(errno);
 	error(_("error [exec %s: %s]"), cmd, e);
 	break;
@@ -1281,48 +1235,128 @@ amgtar_restore(
     if (argument->verbose == 0) {
 	if (exclude_filename)
 	    unlink(exclude_filename);
-	if (include_filename)
-	    unlink(include_filename);
+	unlink(include_filename);
     }
+    amfree(cmd);
+    amfree(include_filename);
+    amfree(exclude_filename);
 }
 
 static void
-amgtar_validate(
+ambsdtar_validate(
     application_argument_t *argument G_GNUC_UNUSED)
 {
-    char       *cmd;
+    char       *cmd = NULL;
     GPtrArray  *argv_ptr = g_ptr_array_new();
     char      **env;
     char       *e;
     char        buf[32768];
 
-    if (!gnutar_path) {
-	dbprintf("GNUTAR-PATH not set; Piping to /dev/null\n");
-	fprintf(stderr,"GNUTAR-PATH not set; Piping to /dev/null\n");
+    if (!bsdtar_path) {
+	g_debug("BSDTAR-PATH not set; Piping to /dev/null");
+	fprintf(stderr,"BSDTAR-PATH not set; Piping to /dev/null\n");
 	goto pipe_to_null;
     }
 
-    cmd = stralloc(gnutar_path);
-    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    cmd = g_strdup(bsdtar_path);
+    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
     /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
-    g_ptr_array_add(argv_ptr, stralloc("--ignore-zeros"));
-    g_ptr_array_add(argv_ptr, stralloc("-tf"));
-    g_ptr_array_add(argv_ptr, stralloc("-"));
+    g_ptr_array_add(argv_ptr, g_strdup("-tf"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
     g_ptr_array_add(argv_ptr, NULL);
 
     debug_executing(argv_ptr);
     env = safe_env();
     execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
-    dbprintf("failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
+    g_debug("failed to execute %s: %s; Piping to /dev/null", cmd, e);
     fprintf(stderr,"failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
+    amfree(cmd);
 }
 
 static void
-amgtar_build_exinclude(
+ambsdtar_index(
+    application_argument_t *argument G_GNUC_UNUSED)
+{
+    char       *cmd = NULL;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    int         datain = 0;
+    int         indexf;
+    int         errf = 2;
+    pid_t       tarpid;
+    FILE       *indexstream;
+    char        line[32768];
+    amwait_t    wait_status;
+    char       *errmsg = NULL;
+
+    if (!bsdtar_path) {
+	g_debug("BSDTAR-PATH not set");
+	fprintf(stderr,"BSDTAR-PATH not set");
+	while (read(0, line, 32768) > 0) {
+	}
+	exit(1);
+    }
+
+    cmd = g_strdup(bsdtar_path);
+    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
+    /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
+    g_ptr_array_add(argv_ptr, g_strdup("-tf"));
+    g_ptr_array_add(argv_ptr, g_strdup("-"));
+    g_ptr_array_add(argv_ptr, NULL);
+
+    tarpid = pipespawnv(cmd, STDOUT_PIPE, 0,
+			&datain, &indexf, &errf, (char **)argv_ptr->pdata);
+    aclose(datain);
+
+    indexstream = fdopen(indexf, "r");
+    if (!indexstream) {
+	error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+    }
+
+    fprintf(stdout, "/\n");
+    while (fgets(line, sizeof(line), indexstream) != NULL) {
+	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
+	    /* remove trailling \n */
+	    line[strlen(line)-1] = '\0';
+	}
+	if (strlen(line) > 1 && line[strlen(line)-1] == '/') {
+	    /* remove trailling / */
+	    line[strlen(line)-1] = '\0';
+	}
+	if (*line == '.' && *(line+1) == '/') { /* filename */
+	    fprintf(stdout, "%s\n", &line[1]); /* remove . */
+	}
+    }
+    fclose(indexstream);
+    waitpid(tarpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+				 cmd, WTERMSIG(wait_status), dbfn());
+    } else if (WIFEXITED(wait_status)) {
+	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+				     cmd, WEXITSTATUS(wait_status), dbfn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+				 cmd, dbfn());
+    }
+    g_debug(_("ambsdtar: %s: pid %ld"), cmd, (long)tarpid);
+    if (errmsg) {
+	g_debug("%s", errmsg);
+	fprintf(stderr, "error [%s]\n", errmsg);
+    }
+
+    amfree(cmd);
+}
+
+static void
+ambsdtar_build_exinclude(
     dle_t  *dle,
     int     verbose,
     int    *nb_exclude,
@@ -1359,56 +1393,61 @@ amgtar_build_exinclude(
 }
 
 static char *
-amgtar_get_incrname(
+ambsdtar_get_timestamps(
     application_argument_t *argument,
     int                     level,
     FILE                   *mesgstream,
     int                     command)
 {
     char *basename = NULL;
-    char *incrname = NULL;
-    int   infd, outfd;
-    ssize_t   nb;
+    char *filename = NULL;
+    int   infd;
     char *inputname = NULL;
     char *errmsg = NULL;
-    char *buf;
 
-    if (gnutar_listdir) {
+    if (state_dir) {
 	char number[NUM_STR_SIZE];
 	int baselevel;
 	char *sdisk = sanitise_filename(argument->dle.disk);
+	FILE *tt;
+	char line[1024];
 
-	basename = vstralloc(gnutar_listdir,
+	basename = g_strjoin(NULL, state_dir,
 			     "/",
 			     argument->host,
 			     sdisk,
 			     NULL);
 	amfree(sdisk);
 
-	snprintf(number, SIZEOF(number), "%d", level);
-	incrname = vstralloc(basename, "_", number, ".new", NULL);
-	unlink(incrname);
+	snprintf(number, sizeof(number), "%d", level);
+	filename = g_strjoin(NULL, basename, "_", number, NULL);
+	unlink(filename);
 
 	/*
-	 * Open the listed incremental file from the previous level.  Search
+	 * Open the timestamps file from the previous level.  Search
 	 * backward until one is found.  If none are found (which will also
 	 * be true for a level 0), arrange to read from /dev/null.
 	 */
 	baselevel = level;
 	infd = -1;
-	while (infd == -1) {
+	inputname = g_strdup("AA");
+	while (infd == -1 && inputname != NULL) {
+	    amfree(inputname);
 	    if (--baselevel >= 0) {
-		snprintf(number, SIZEOF(number), "%d", baselevel);
-		inputname = newvstralloc(inputname,
-					 basename, "_", number, NULL);
+		snprintf(number, sizeof(number), "%d", baselevel);
+		inputname = g_strconcat(basename, "_", number, NULL);
 	    } else {
-		inputname = newstralloc(inputname, "/dev/null");
+		inputname = NULL;
+		amfree(basename);
+		amfree(filename);
+		g_debug("Using NULL timestamps");
+		return NULL;
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
-		errmsg = vstrallocf(_("amgtar: error opening %s: %s"),
-				     inputname, strerror(errno));
-		dbprintf("%s\n", errmsg);
+		errmsg = g_strdup_printf(_("ambsdtar: error opening %s: %s"),
+					 inputname, strerror(errno));
+		g_debug("%s", errmsg);
 		if (baselevel < 0) {
 		    if (command == CMD_ESTIMATE) {
 			fprintf(mesgstream, "ERROR %s\n", errmsg);
@@ -1421,13 +1460,10 @@ amgtar_get_incrname(
 	    }
 	}
 
-	/*
-	 * Copy the previous listed incremental file to the new one.
-	 */
-	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    errmsg = vstrallocf(_("error opening %s: %s"),
-			         incrname, strerror(errno));
-	    dbprintf("%s\n", errmsg);
+	tt = fdopen(infd, "r");
+	if (!fgets(line, 1024, tt)) {
+	    errmsg = g_strdup_printf(_("ambsdtar: error reading '%s': %s"),
+				     inputname, strerror(errno));
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
@@ -1435,177 +1471,137 @@ amgtar_get_incrname(
 	    }
 	    exit(1);
 	}
-
-	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
-	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		errmsg = vstrallocf(_("writing to %s: %s"),
-				     incrname, strerror(errno));
-		dbprintf("%s\n", errmsg);
-		if (command == CMD_ESTIMATE) {
-		    fprintf(mesgstream, "ERROR %s\n", errmsg);
-		} else {
-		    fprintf(mesgstream, "? %s\n", errmsg);
-		}
-		exit(1);
-	    }
-	}
-
-	if (nb < 0) {
-	    errmsg = vstrallocf(_("reading from %s: %s"),
-			         inputname, strerror(errno));
-	    dbprintf("%s\n", errmsg);
-	    if (command == CMD_ESTIMATE) {
-		fprintf(mesgstream, "ERROR %s\n", errmsg);
-	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
-	    }
-	    exit(1);
-	}
-
-	if (close(infd) != 0) {
-	    errmsg = vstrallocf(_("closing %s: %s"),
-			         inputname, strerror(errno));
-	    dbprintf("%s\n", errmsg);
-	    if (command == CMD_ESTIMATE) {
-		fprintf(mesgstream, "ERROR %s\n", errmsg);
-	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
-	    }
-	    exit(1);
-	}
-	if (close(outfd) != 0) {
-	    errmsg = vstrallocf(_("closing %s: %s"),
-			         incrname, strerror(errno));
-	    dbprintf("%s\n", errmsg);
-	    dbprintf("%s\n", errmsg);
-	    if (command == CMD_ESTIMATE) {
-		fprintf(mesgstream, "ERROR %s\n", errmsg);
-	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
-	    }
-	    exit(1);
-	}
-
-	amfree(inputname);
+	fclose(tt);
+	tt = NULL;
+	infd = -1;
+	g_debug("Read timestamps '%s' to '%s'", line, filename);
 	amfree(basename);
+	amfree(filename);
+	amfree(inputname);
+	return g_strdup(line);
+    } else {
+	errmsg =  _("STATE-DIR is not defined");
+	g_debug("%s", errmsg);
+	if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	} else {
+		fprintf(mesgstream, "? %s\n", errmsg);
+	}
+	exit(1);
     }
-    return incrname;
+    return NULL;
 }
 
 static void
-check_no_check_device(void)
+ambsdtar_set_timestamps(
+    application_argument_t *argument,
+    int                     level,
+    char                   *timestamps,
+    FILE                   *mesgstream,
+    int                     command)
 {
-    if (gnutar_checkdevice == 0) {
-	GPtrArray *argv_ptr = g_ptr_array_new();
-	int dumpin;
-	int dataf;
-	int outf;
-	int size;
-	char buf[32768];
+    char *basename = NULL;
+    char *filename = NULL;
+    char *errmsg = NULL;
 
-	g_ptr_array_add(argv_ptr, gnutar_path);
-	g_ptr_array_add(argv_ptr, "-x");
-	g_ptr_array_add(argv_ptr, "--no-check-device");
-	g_ptr_array_add(argv_ptr, "-f");
-	g_ptr_array_add(argv_ptr, "-");
-	g_ptr_array_add(argv_ptr, NULL);
+    if (state_dir) {
+	char number[NUM_STR_SIZE];
+	char *sdisk = sanitise_filename(argument->dle.disk);
+	FILE *tt;
 
-	pipespawnv(gnutar_path, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 0,
-			     &dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
-	aclose(dumpin);
-	aclose(dataf);
-	size = read(outf, buf, 32767);
-	if (size > 0) {
-	    buf[size] = '\0';
-	    if (strstr(buf, "--no-check-device")) {
-		g_debug("disabling --no-check-device since '%s' doesn't support it", gnutar_path);
-		gnutar_checkdevice = 1;
-	    }
+	basename = g_strjoin(NULL, state_dir,
+			     "/",
+			     argument->host,
+			     sdisk,
+			     NULL);
+	amfree(sdisk);
+
+	snprintf(number, sizeof(number), "%d", level);
+	filename = g_strjoin(NULL, basename, "_", number, NULL);
+
+	tt = fopen(filename, "w");
+	fprintf(tt, "%s", timestamps);
+	fclose(tt);
+	g_debug("Wrote timestamps '%s' to '%s'", timestamps, filename);
+	amfree(basename);
+	amfree(filename);
+    } else {
+	errmsg =  _("STATE-DIR is not defined");
+	g_debug("%s", errmsg);
+	if (command == CMD_ESTIMATE) {
+		fprintf(mesgstream, "ERROR %s\n", errmsg);
+	} else {
+		fprintf(mesgstream, "? %s\n", errmsg);
 	}
-	aclose(outf);
-	g_ptr_array_free(argv_ptr, TRUE);
+	exit(1);
     }
 }
 
-GPtrArray *amgtar_build_argv(
+static GPtrArray *
+ambsdtar_build_argv(
     application_argument_t *argument,
-    char  *incrname,
+    char  *timestamps,
     char **file_exclude,
     char **file_include,
     int    command)
 {
-    int    nb_exclude;
-    int    nb_include;
-    char  *dirname;
-    char   tmppath[PATH_MAX];
+    int        nb_exclude = 0;
+    int        nb_include = 0;
+    char      *dirname;
+    char       tmppath[PATH_MAX];
     GPtrArray *argv_ptr = g_ptr_array_new();
     GSList    *copt;
 
-    check_no_check_device();
-    amgtar_build_exinclude(&argument->dle, 1,
-			   &nb_exclude, file_exclude,
-			   &nb_include, file_include);
+    ambsdtar_build_exinclude(&argument->dle, 1,
+			     &nb_exclude, file_exclude,
+			     &nb_include, file_include);
 
-    if (gnutar_directory) {
-	dirname = gnutar_directory;
+    if (bsdtar_directory) {
+	dirname = bsdtar_directory;
     } else {
 	dirname = argument->dle.device;
     }
 
-    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
 
-    g_ptr_array_add(argv_ptr, stralloc("--create"));
+    g_ptr_array_add(argv_ptr, g_strdup("--create"));
     if (command == CMD_BACKUP && argument->dle.create_index)
-        g_ptr_array_add(argv_ptr, stralloc("--verbose"));
-    g_ptr_array_add(argv_ptr, stralloc("--file"));
+        g_ptr_array_add(argv_ptr, g_strdup("--verbose"));
+    g_ptr_array_add(argv_ptr, g_strdup("--file"));
     if (command == CMD_ESTIMATE) {
-        g_ptr_array_add(argv_ptr, stralloc("/dev/null"));
+        g_ptr_array_add(argv_ptr, g_strdup("/dev/null"));
     } else {
-        g_ptr_array_add(argv_ptr, stralloc("-"));
+        g_ptr_array_add(argv_ptr, g_strdup("-"));
     }
-    if (gnutar_no_unquote)
-	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
-    g_ptr_array_add(argv_ptr, stralloc("--directory"));
+    g_ptr_array_add(argv_ptr, g_strdup("--directory"));
     canonicalize_pathname(dirname, tmppath);
-    g_ptr_array_add(argv_ptr, stralloc(tmppath));
-    if (gnutar_onefilesystem)
-	g_ptr_array_add(argv_ptr, stralloc("--one-file-system"));
-    if (gnutar_atimepreserve)
-	g_ptr_array_add(argv_ptr, stralloc("--atime-preserve=system"));
-    if (!gnutar_checkdevice)
-	g_ptr_array_add(argv_ptr, stralloc("--no-check-device"));
-    if (gnutar_acls)
-	g_ptr_array_add(argv_ptr, stralloc("--acls"));
-    if (gnutar_selinux)
-	g_ptr_array_add(argv_ptr, stralloc("--selinux"));
-    if (gnutar_xattrs)
-	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
-    g_ptr_array_add(argv_ptr, stralloc("--listed-incremental"));
-    g_ptr_array_add(argv_ptr, stralloc(incrname));
-    if (gnutar_sparse)
-	g_ptr_array_add(argv_ptr, stralloc("--sparse"));
-    if (argument->tar_blocksize) {
-	g_ptr_array_add(argv_ptr, stralloc("--blocking-factor"));
-	g_ptr_array_add(argv_ptr, stralloc(argument->tar_blocksize));
+    g_ptr_array_add(argv_ptr, g_strdup(tmppath));
+    if (timestamps) {
+	g_ptr_array_add(argv_ptr, g_strdup("--newer"));
+	g_ptr_array_add(argv_ptr, g_strdup(timestamps));
     }
-    g_ptr_array_add(argv_ptr, stralloc("--ignore-failed-read"));
-    g_ptr_array_add(argv_ptr, stralloc("--totals"));
+    if (bsdtar_onefilesystem)
+	g_ptr_array_add(argv_ptr, g_strdup("--one-file-system"));
+    if (argument->tar_blocksize) {
+	g_ptr_array_add(argv_ptr, g_strdup("--block-size"));
+	g_ptr_array_add(argv_ptr, g_strdup(argument->tar_blocksize));
+    }
+    g_ptr_array_add(argv_ptr, g_strdup("--totals"));
 
     for (copt = argument->command_options; copt != NULL; copt = copt->next) {
-	g_ptr_array_add(argv_ptr, stralloc((char *)copt->data));
+	g_ptr_array_add(argv_ptr, g_strdup((char *)copt->data));
     }
 
     if (*file_exclude) {
-	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
-	g_ptr_array_add(argv_ptr, stralloc(*file_exclude));
+	g_ptr_array_add(argv_ptr, g_strdup("--exclude-from"));
+	g_ptr_array_add(argv_ptr, g_strdup(*file_exclude));
     }
 
     if (*file_include) {
-	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
-	g_ptr_array_add(argv_ptr, stralloc(*file_include));
-    }
-    else {
-	g_ptr_array_add(argv_ptr, stralloc("."));
+	g_ptr_array_add(argv_ptr, g_strdup("--files-from"));
+	g_ptr_array_add(argv_ptr, g_strdup(*file_include));
+    } else {
+	g_ptr_array_add(argv_ptr, g_strdup("."));
     }
     g_ptr_array_add(argv_ptr, NULL);
 

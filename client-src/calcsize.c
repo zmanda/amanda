@@ -93,6 +93,10 @@ int main(int, char **);
 void traverse_dirs(char *, char *);
 
 
+void add_file_name_bsdtar(int, char *);
+void add_file_bsdtar(int, struct stat *);
+off_t final_size_bsdtar(int, char *);
+
 void add_file_name_dump(int, char *);
 void add_file_dump(int, struct stat *);
 off_t final_size_dump(int, char *);
@@ -201,7 +205,7 @@ main(
     /* need at least program, amname, and directory name */
 
     if(argc < 4) {
-	error(_("Usage: %s config [DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*"),
+	error(_("Usage: %s config [BSDTAR|DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*"),
 	      get_pname());
         /*NOTREACHED*/
     }
@@ -235,6 +239,12 @@ main(
 	final_size = final_size_gnutar;
 	use_gtar_excl++;
 #endif
+    }
+    else if(strcmp(*argv, "BSDTAR") == 0) {
+	add_file_name = add_file_name_gnutar;
+	add_file = add_file_gnutar;
+	final_size = final_size_gnutar;
+	use_gtar_excl++;
     }
     else {
 	add_file_name = add_file_name_unknown;

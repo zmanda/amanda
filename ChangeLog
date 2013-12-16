@@ -1,3 +1,18 @@
+2013-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/Makefile.am: Add ambsdtar.
+	* application-src/ambsdtar.c: New application script for BSD tar
+	* application-src/amgtar.c: Call dbclose()
+	* application-src/amstar.c: Call dbclose()
+	* client-src/calcsize.c: Handle BSDTAR
+	* config/amanda/dumpers.m4 (AMANDA_PROG_BSDTAR): function to find
+	  bsdtar binary.
+	* configure.in: Call AMANDA_PROG_BSDTAR
+	* man/Makefile.am: Add ambsdtar.8
+	* man/entities/global.entities.in: Add bsdtar.
+	* man/xml-source/ambsdtar.8.xml: New ambsdtar man page
+	* perl/Amanda/Constants.pm.in: Add $BSDTAR
+	* NEWS, ReleaseNotes: Add ambsdtar
+
 2013-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix if header have only one
 	  application property.

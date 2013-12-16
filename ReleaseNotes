@@ -1,3 +1,9 @@
+		Release Notes for amanda-3.3.6
+
+* ambsdtar
+    o new application that use BSD tar to do the backup.
+
+
 		Release Notes for amanda-3.3.5
 
 * amtape

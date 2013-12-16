@@ -2,6 +2,11 @@ Changes in release 3.3.5
 
     * amtape
         o faster 'verify' command.
+
+Changes in release 3.3.5
+
+    * amtape
+        o faster 'verify' command.
     * fix parsing of config override arguments.
     * amsamba
         o Add REGEX-MATCH property.
