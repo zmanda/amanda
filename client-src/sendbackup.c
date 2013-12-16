@@ -610,8 +610,7 @@ main(
 	}
 
 	cur_dumptime = time(0);
-	bsu = backup_support_option(dle->program, g_options, dle->disk,
-				    dle->device, &errarray);
+	bsu = backup_support_option(dle->program, &errarray);
 	if (!bsu) {
 	    char  *errmsg;
 	    char  *qerrmsg;

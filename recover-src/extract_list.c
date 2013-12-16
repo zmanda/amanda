@@ -2947,7 +2947,6 @@ read_amidxtaped_data(
 
     if (ctl_data->header_done == 0) {
 	GPtrArray  *errarray;
-	g_option_t  g_options;
 	data_path_t data_path_set = DATA_PATH_AMANDA;
 	int to_move;
 
@@ -2969,19 +2968,12 @@ read_amidxtaped_data(
 	parse_file_header(header_buf, &ctl_data->file, (size_t)header_size);
 
 	/* call backup_support_option */
-	g_options.config = get_config_name();
-	g_options.hostname = dump_hostname;
 	if (g_str_equal(ctl_data->file.program, "APPLICATION")) {
 	    if (dump_dle) {
 	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
-						      &g_options,
-						      ctl_data->file.disk,
-						      dump_dle->device,
 						      &errarray);
 	    } else {
 	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
-						      &g_options,
-						      ctl_data->file.disk, NULL,
 						      &errarray);
 	    }
 	    if (!ctl_data->bsu) {

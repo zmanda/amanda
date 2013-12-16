@@ -1,3 +1,11 @@
+2013-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c (backup_support_option): Do pass pass the
+	  --config, --host, --disk and --device
+	* client-src/client_util.h (backup_support_option): Change prototype.
+	* client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c,  recover-src/extract_list.c: Use new
+	  backup_support_option arguments.
+
 2013-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix if header have only one
 	  application property.

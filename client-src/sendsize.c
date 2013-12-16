@@ -853,8 +853,7 @@ application_api_calc_estimate(
     int            has_calcsize = 0;
     int            has_client = 0;
 
-    bsu = backup_support_option(est->dle->program, g_options, est->dle->disk,
-				est->dle->device, &errarray);
+    bsu = backup_support_option(est->dle->program, &errarray);
     if (!bsu) {
 	guint  i;
 	for (i=0; i < errarray->len; i++) {

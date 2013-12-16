@@ -902,9 +902,6 @@ merge_dles_properties(
 backup_support_option_t *
 backup_support_option(
     char       *program,
-    g_option_t *g_options,
-    char       *disk,
-    char       *amdevice,
     GPtrArray **errarray)
 {
     pid_t   supportpid;
@@ -922,22 +919,6 @@ backup_support_option(
     cmd = g_strjoin(NULL, APPLICATION_DIR, "/", program, NULL);
     g_ptr_array_add(argv_ptr, g_strdup(program));
     g_ptr_array_add(argv_ptr, g_strdup("support"));
-    if (g_options->config) {
-	g_ptr_array_add(argv_ptr, g_strdup("--config"));
-	g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
-    }
-    if (g_options->hostname) {
-	g_ptr_array_add(argv_ptr, g_strdup("--host"));
-	g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
-    }
-    if (disk) {
-	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
-	g_ptr_array_add(argv_ptr, g_strdup(disk));
-    }
-    if (amdevice) {
-	g_ptr_array_add(argv_ptr, g_strdup("--device"));
-	g_ptr_array_add(argv_ptr, g_strdup(amdevice));
-    }
     g_ptr_array_add(argv_ptr, NULL);
 
     supporterr = fileno(stderr);

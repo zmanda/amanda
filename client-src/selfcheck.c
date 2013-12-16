@@ -740,8 +740,7 @@ check_disk(
 	int                      app_err[2];
 	GPtrArray               *errarray;
 
-	bsu = backup_support_option(dle->program, g_options, dle->disk,
-				    dle->device, &errarray);
+	bsu = backup_support_option(dle->program, &errarray);
 
 	if (!bsu) {
 	    char  *line;
