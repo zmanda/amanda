@@ -410,6 +410,9 @@ main(
 	fprintf(stderr, "Unknown command `%s'.\n", command);
 	exit (1);
     }
+
+    dbclose();
+
     return 0;
 }
 

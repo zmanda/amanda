@@ -201,7 +201,7 @@ main(
     /* need at least program, amname, and directory name */
 
     if(argc < 4) {
-	error(_("Usage: %s config [DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*"),
+	error(_("Usage: %s config [BSDTAR|DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*"),
 	      get_pname());
         /*NOTREACHED*/
     }
@@ -224,6 +224,12 @@ main(
 	add_file = add_file_dump;
 	final_size = final_size_dump;
 #endif
+    }
+    else if(g_str_equal(*argv, "BSDTAR")) {
+	add_file_name = add_file_name_gnutar;
+	add_file = add_file_gnutar;
+	final_size = final_size_gnutar;
+	use_gtar_excl++;
     }
     else if(g_str_equal(*argv, "GNUTAR")) {
 #ifndef GNUTAR

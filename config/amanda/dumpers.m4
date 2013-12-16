@@ -137,6 +137,86 @@ AC_DEFUN([AMANDA_PROG_STAR],
 
 # SYNOPSIS
 #
+#   AMANDA_PROG_BSDTAR
+#
+# OVERVIEW
+#
+#   Search for a 'bsdtar' or 'tar' binary, placing the result in the precious
+#   variable BSDTAR.  The discovered binary is tested to ensure it's really
+#   bsdtar.
+#
+#   Also handle --with-bsdtar
+#
+AC_DEFUN([AMANDA_PROG_BSDTAR],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+
+    # call with
+    AC_ARG_WITH(bsdtar,
+	AS_HELP_STRING([--with-bsdtar=PROG],
+		       [use PROG as 'bsdtar']),
+	[
+	    # check withval
+	    case "$withval" in
+		/*) BSDTAR="$withval";;
+		y|ye|yes) :;;
+		n|no) BSDTAR=no ;;
+		*)  AC_MSG_ERROR([*** You must supply a full pathname to --with-bsdtar]);;
+	    esac
+	    # done
+	]
+    )
+
+    if test "x$BSDTAR" = "xno"; then
+	BSDTAR=
+    else
+	OLD_BSDTAR=$BSDTAR
+	AC_PATH_PROGS(BSDTAR, bsdtar, , $LOCSYSPATH)
+	if test -n "$BSDTAR"; then
+	    case `"$BSDTAR" --version 2>/dev/null` in
+	     *bsdtar*)
+		    # OK, it is bsdtar
+		    break
+		    ;;
+	     *)
+		    BSDTAR=''
+		    ;;
+	    esac
+	fi
+	if test "x$BSDTAR" = "x"; then
+	    AC_PATH_PROGS(BSDTAR, tar, , $LOCSYSPATH)
+	    if test -n "$BSDTAR"; then
+		case `"$BSDTAR" --version 2>/dev/null` in
+		 *bsdtar*)
+			# OK, it is bsdtar
+			break;
+			;;
+		 *)
+		    if test -n "$OLD_BSDTAR"; then
+			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, it will be used.])
+		    else
+			# warning..
+			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, so it will not be used.])
+			# reset the cache for BSDTAR so AC_PATH_PROGS will search again
+			BSDTAR=''
+			unset ac_cv_path_BSDTAR
+		    fi
+		    ;;
+		esac
+	    fi
+	fi
+    fi
+
+    if test "x$BSDTAR" != "x"; then
+	# define unquoted
+	AC_DEFINE_UNQUOTED(BSDTAR, "$BSDTAR", [Location of the 'bsdtar' binary])
+    fi
+    AC_ARG_VAR(BSDTAR, [Location of the 'bsdtar' binary])
+    AC_SUBST(BSDTAR)
+])
+
+# SYNOPSIS
+#
 #   AMANDA_PROG_SUNTAR
 #
 # OVERVIEW

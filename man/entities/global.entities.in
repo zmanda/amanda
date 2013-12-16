@@ -149,6 +149,7 @@
 <!ENTITY taper ' <command>taper</command>'>
 
 <!-- IDs for commands used by AMANDA-->
+<!ENTITY bsdtar '<command>bsdtar</command>'>
 <!ENTITY mt '<command>mt</command>'>
 <!ENTITY mtx '<command>mtx</command>'>
 <!ENTITY tar '<command>tar</command>'>
