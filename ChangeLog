@@ -1,3 +1,6 @@
+2013-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ambsdtar.c: Print the 'sendbackup: end' line.
+
 2013-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am: Add ambsdtar.
 	* application-src/ambsdtar.c: New application script for BSD tar

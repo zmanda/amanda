@@ -1018,6 +1018,8 @@ ambsdtar_backup(
 
     g_debug("sendbackup: size %lld", (long long)dump_size);
     fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
+    g_debug("sendbackup: end");
+    fprintf(mesgstream, "sendbackup: end\n");
 
     if (argument->dle.create_index)
 	fclose(indexstream);
