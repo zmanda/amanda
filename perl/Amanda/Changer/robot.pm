@@ -1923,7 +1923,9 @@ sub _get_state {
 	    } else {
 		# assume the status of this slot has not changed since the last
                 # time we looked at it, although mark it as not loaded in a slot
-		if (exists $state->{'slots'}->{$slot}) {
+		if (exists $state->{'slots'}->{$slot} and
+		    exists $state->{'slots'}->{$slot}->{'state'} and
+		    $state->{'slots'}->{$slot}->{'state'} == Amanda::Changer::SLOT_FULL) {
 		    $new_slots->{$slot} = $state->{'slots'}->{$slot};
 		    $new_slots->{$slot}->{'loaded_in'} = undef;
 		} else {

@@ -1,4 +1,8 @@
 2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Change state if now loaded.
+	* server-src/amtape.pl (inventory): Print empty slot.
+
+2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c: Some fixes.
 
 2013-12-17  Jean-Louis Martineau <martineau@zmanda.com>
