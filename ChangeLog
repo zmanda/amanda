@@ -1,4 +1,7 @@
 2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Run sw_vers to find Mac platform.
+
+2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Change state if now loaded.
 	* server-src/amtape.pl (inventory): Print empty slot.
 
