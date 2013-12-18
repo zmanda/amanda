@@ -1,3 +1,6 @@
+2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ambsdtar.c: Some fixes.
+
 2013-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am: Add ambsdtar.
 	* application-src/ambsdtar.c: New application script for BSD tar
