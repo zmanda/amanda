@@ -1223,9 +1223,11 @@ static void
 print_platform(void)
 {
     struct stat stat_buf;
-    char *uname;
+    char *uname = NULL;
     char *distro = NULL;
     char *platform = NULL;
+    char *productName = NULL;
+    char *productVersion = NULL;
     char  line[1025];
     GPtrArray *argv_ptr;
 
@@ -1235,8 +1237,11 @@ print_platform(void)
 	if (release) {
 	    while (fgets(line, 1024, release)) {
 		if (strstr(line, "DESCRIPTION")) {
-		    platform = strchr(line, '=');
-		    if (platform) platform++;
+		    char *p = strchr(line, '=');
+		    if (p) {
+			g_free(platform);
+			platform = g_strdup(p+1);
+		    }
 		}
 	    }
 	    fclose(release);
@@ -1248,7 +1253,7 @@ print_platform(void)
 	    char *result;
 	    result = fgets(line, 1024, release);
 	    if (result) {
-		platform = line;
+		platform = g_strdup(line);
 	    }
 	    fclose(release);
 	}
@@ -1259,44 +1264,66 @@ print_platform(void)
 	    char *result;
 	    result = fgets(line, 1024, release);
 	    if (result) {
-		platform = line;
+		platform = g_strdup(line);
 	    }
 	    fclose(release);
 	}
     } else {
 	argv_ptr = g_ptr_array_new();
-
 	g_ptr_array_add(argv_ptr, UNAME_PATH);
 	g_ptr_array_add(argv_ptr, "-s");
 	g_ptr_array_add(argv_ptr, NULL);
 	uname = get_first_line(argv_ptr);
-	if (uname) {
-	    if (strncmp(uname, "SunOS", 5) == 0) {
-		FILE *release = fopen("/etc/release", "r");
-		distro = "Solaris";
-		if (release) {
-		    char *result;
-		    result = fgets(line, 1024, release);
-		    if (result) {
-			platform = line;
-		    }
-		    fclose(release);
+	g_ptr_array_free(argv_ptr, TRUE);
+	if (uname && strncmp(uname, "SunOS", 5) == 0) {
+	    FILE *release = fopen("/etc/release", "r");
+	    distro = "Solaris";
+	    if (release) {
+		char *result;
+		result = fgets(line, 1024, release);
+		if (result) {
+		    platform = g_strdup(line);
 		}
+		fclose(release);
 	    }
 	    amfree(uname);
+	} else {
+	    amfree(uname);
+	    argv_ptr = g_ptr_array_new();
+	    g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
+	    g_ptr_array_add(argv_ptr, "-productName");
+	    g_ptr_array_add(argv_ptr, NULL);
+	    productName = get_first_line(argv_ptr);
+	    g_ptr_array_free(argv_ptr, TRUE);
+	    argv_ptr = g_ptr_array_new();
+	    g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
+	    g_ptr_array_add(argv_ptr, "-productVersion");
+	    g_ptr_array_add(argv_ptr, NULL);
+	    productVersion = get_first_line(argv_ptr);
+	    g_ptr_array_free(argv_ptr, TRUE);
+	    if (productName && productVersion &&
+		!g_str_equal(productName, "unknown") &&
+		!g_str_equal(productVersion, "unknown")) {
+		distro = "mac";
+		platform = g_strdup_printf("%s %s", productVersion, productVersion);
+	    }
 	}
-	g_ptr_array_free(argv_ptr, TRUE);
+
     }
 
     if (!distro) {
 	distro = "Unknown";
     }
     if (!platform) {
-	platform = "Unknown";
+	platform = g_strdup("Unknown");
     }
     if (platform[strlen(platform) -1] == '\n') {
 	platform[strlen(platform) -1] = '\0';
     }
     g_fprintf(stdout, "OK distro %s\n", distro);
     g_fprintf(stdout, "OK platform %s\n", platform);
+
+    amfree(platform);
+    amfree(productName);
+    amfree(productVersion);
 }
