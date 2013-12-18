@@ -127,8 +127,7 @@ static char *ambsdtar_get_timestamps(application_argument_t *argument,
 static void ambsdtar_set_timestamps(application_argument_t *argument,
 				    int                     level,
 				    char                   *timestamps,
-				    FILE                   *mesgstream,
-				    int                     command);
+				    FILE                   *mesgstream);
 static GPtrArray *ambsdtar_build_argv(application_argument_t *argument,
 				      char *timestamps,
 				      char **file_exclude, char **file_include,
@@ -1002,7 +1001,7 @@ ambsdtar_backup(
 	    ambsdtar_set_timestamps(argument,
 				    GPOINTER_TO_INT(argument->level->data),
 				    new_timestamps,
-				    mesgstream, CMD_BACKUP);
+				    mesgstream);
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
@@ -1463,7 +1462,11 @@ ambsdtar_get_timestamps(
 	}
 
 	tt = fdopen(infd, "r");
-	if (!fgets(line, 1024, tt)) {
+	if (!tt) {
+	    g_debug("Failed to fdopen '%s' to '%s'", inputname, strerror(errno));
+	    close(infd);
+	    infd = -1;
+	} else if (!fgets(line, 1024, tt)) {
 	    errmsg = g_strdup_printf(_("ambsdtar: error reading '%s': %s"),
 				     inputname, strerror(errno));
 	    if (command == CMD_ESTIMATE) {
@@ -1471,12 +1474,14 @@ ambsdtar_get_timestamps(
 	    } else {
 		fprintf(mesgstream, "? %s\n", errmsg);
 	    }
+	    fclose(tt);
 	    exit(1);
+	} else {
+	    fclose(tt);
+	    tt = NULL;
+	    infd = -1;
+	    g_debug("Read timestamps '%s' to '%s'", line, filename);
 	}
-	fclose(tt);
-	tt = NULL;
-	infd = -1;
-	g_debug("Read timestamps '%s' to '%s'", line, filename);
 	amfree(basename);
 	amfree(filename);
 	amfree(inputname);
@@ -1499,8 +1504,7 @@ ambsdtar_set_timestamps(
     application_argument_t *argument,
     int                     level,
     char                   *timestamps,
-    FILE                   *mesgstream,
-    int                     command)
+    FILE                   *mesgstream)
 {
     char *basename = NULL;
     char *filename = NULL;
@@ -1522,19 +1526,22 @@ ambsdtar_set_timestamps(
 	filename = g_strjoin(NULL, basename, "_", number, NULL);
 
 	tt = fopen(filename, "w");
-	fprintf(tt, "%s", timestamps);
-	fclose(tt);
-	g_debug("Wrote timestamps '%s' to '%s'", timestamps, filename);
+	if (!tt) {
+	    errmsg = g_strdup_printf("Failed to open '%s': %s",
+				     filename, strerror(errno));
+	    g_debug("%s", errmsg);
+	    fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
+	} else {
+	    fprintf(tt, "%s", timestamps);
+	    fclose(tt);
+	    g_debug("Wrote timestamps '%s' to '%s'", timestamps, filename);
+	}
 	amfree(basename);
 	amfree(filename);
     } else {
 	errmsg =  _("STATE-DIR is not defined");
 	g_debug("%s", errmsg);
-	if (command == CMD_ESTIMATE) {
-		fprintf(mesgstream, "ERROR %s\n", errmsg);
-	} else {
-		fprintf(mesgstream, "? %s\n", errmsg);
-	}
+	fprintf(mesgstream, "? %s\n", errmsg);
 	exit(1);
     }
 }
