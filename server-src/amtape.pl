@@ -216,10 +216,10 @@ sub {
 	for my $sl (@$inv) {
 	    my $line = "slot $sl->{slot}:";
 	    my $tle;
-	    if (!defined($sl->{device_status}) && !defined($sl->{label})) {
-		$line .= " unknown state";
-	    } elsif ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
+	    if ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 		$line .= " empty";
+	    } elsif (!defined($sl->{device_status}) && !defined($sl->{label})) {
+		$line .= " unknown state";
 	    } else {
 		if (defined $sl->{label}) {
 		    $line .= " label $sl->{label}";
