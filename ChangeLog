@@ -1,4 +1,9 @@
 2013-12-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/multi.pm: Get current slot from
+	  current_slot_csc.
+	* server-src/driver.c: Correctly parse PARTDONE message.
+
+2013-12-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Fix for CURLE_SSL_CACERT_BADFILE.
 
 2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>

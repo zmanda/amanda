@@ -1897,10 +1897,10 @@ handle_taper_result(
             }
 	    if (!wtaper->first_label) {
 		amfree(wtaper->first_label);
-		wtaper->first_label = g_strdup(result_argv[2]);
-		wtaper->first_fileno = OFF_T_ATOI(result_argv[3]);
+		wtaper->first_label = g_strdup(result_argv[3]);
+		wtaper->first_fileno = OFF_T_ATOI(result_argv[4]);
 	    }
-	    wtaper->written += OFF_T_ATOI(result_argv[4]);
+	    wtaper->written += OFF_T_ATOI(result_argv[5]);
 	    if (wtaper->written > sched(dp)->act_size)
 		sched(dp)->act_size = wtaper->written;
 

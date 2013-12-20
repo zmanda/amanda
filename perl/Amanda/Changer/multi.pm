@@ -51,7 +51,10 @@ See the amanda-changers(7) manpage for usage information.
 # The device state is shared between all changers accessing the same changer.
 # It is a hash with keys:
 #   current_slot - the unaliased device name of the current slot (deprecated)
-#   current_slot_by_config - hash (by config name) of the unaliased device name of the current slot
+#   current_slot_by_config - hash (by config name) of the unaliased device name
+#			     of the current slot
+#   current_slot_csc - hash (by config name, storage, changer) of the unaliased
+#		       device name of the current slot
 #   slots - see below
 #
 # The 'slots' key is a hash, with unaliased device name as keys and hashes
@@ -689,7 +692,7 @@ sub _get_current {
     my $storage = $self->{'storage'}->{'storage_name'};
     my $changer = $self->{'chg_name'};
     if (defined $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}) {
-	$slot = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}
+	$slot = $self->{number}->{$state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer}};
     } elsif (defined $state->{current_slot_by_config}{Amanda::Config::get_config_name()}) {
 	$slot = $self->{number}->{$state->{current_slot_by_config}{Amanda::Config::get_config_name()}};
     } elsif (defined $state->{current_slot}) {
