@@ -34,6 +34,9 @@ by users directly.  It uses BSD Tar to backup and restore data.</para>
 <para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
 must be the directory to backup.</para>
 
+<para>Extracting backup never remove files. If a file where present in the
+level 0 backup, you removed it, made a level 1 backup, then after extracting
+both levels, the file will be present.</para>
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>

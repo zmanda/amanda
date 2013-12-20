@@ -1,4 +1,9 @@
-2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+2013-12-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ambsdtar.c: Add a trailling '/' on directory entry
+	  in the index.
+	* man/xml-source/ambsdtar.8.xml: Say that restore never remove files.
+
+2013-12-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Fix for CURLE_SSL_CACERT_BADFILE.
 
 2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>

@@ -57,6 +57,7 @@
 #include "client_util.h"
 #include "conffile.h"
 #include "getopt.h"
+#include "event.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -851,6 +852,180 @@ common_error:
     return;
 }
 
+typedef struct filter_s {
+    int    fd;
+    char  *name;
+    char  *buffer;
+    gint64 first;		/* first byte used */
+    gint64 size;		/* number of byte use in the buffer */
+    gint64 allocated_size;	/* allocated size of the buffer     */
+    event_handle_t *event;
+} filter_t;
+
+static off_t dump_size = -1;
+static int   dataf = 1;
+static int   index_in;
+static FILE *mesgstream;
+static FILE *indexstream = NULL;
+
+static void read_fd(int fd, char *name, event_fn_t fn);
+static void read_data_out(void *cookie);
+static void read_text(void *cookie);
+
+static void
+read_fd(
+    int   fd,
+    char *name,
+    event_fn_t fn)
+{
+    filter_t *filter = g_new0(filter_t, 1);
+    filter->fd = fd;
+    filter->name = g_strdup(name);
+    filter->event = event_register((event_id_t)filter->fd, EV_READFD,
+				   fn, filter);
+}
+
+static void
+read_data_out(
+    void *cookie)
+{
+    filter_t *filter = cookie;
+    ssize_t nread;
+    ssize_t nwrite;
+
+    if (!filter->buffer) {
+	filter->buffer = malloc(32768);
+    }
+    nread = read(filter->fd, filter->buffer, 32768);
+    if (nread <= 0) {
+	aclose(filter->fd);
+	aclose(dataf);
+	aclose(index_in);
+	event_release(filter->event);
+	if (nread < 0) {
+	}
+	g_free(filter->buffer);
+	g_free(filter->name);
+	g_free(filter);
+    } else {
+	nwrite = full_write(dataf, filter->buffer, nread);
+	if (nwrite != nread) {
+	}
+	nwrite = full_write(index_in, filter->buffer, nread);
+	if (nwrite != nread) {
+	}
+    }
+}
+
+static void
+read_text(
+    void *cookie)
+{
+    filter_t  *filter = cookie;
+    char      *line;
+    char      *p;
+    amregex_t *rp;
+    char      *type;
+    char       startchr;
+    ssize_t    nread;
+    int        len;
+
+    if (filter->buffer == NULL) {
+	/* allocate initial buffer */
+	filter->buffer = g_malloc(32768);
+	filter->first = 0;
+	filter->size = 0;
+	filter->allocated_size = 32768;
+    } else if (filter->first > 0) {
+	if (filter->allocated_size - filter->size - filter->first < 1024) {
+	    memmove(filter->buffer, filter->buffer + filter->first,
+		    filter->size);
+	    filter->first = 0;
+	}
+    } else if (filter->allocated_size - filter->size < 1024) {
+	/* double the size of the buffer */
+	filter->allocated_size *= 2;
+	filter->buffer = g_realloc(filter->buffer, filter->allocated_size);
+    }
+
+    nread = read(filter->fd, filter->buffer + filter->first + filter->size,
+		 filter->allocated_size - filter->first - filter->size - 2);
+
+    if (nread <= 0) {
+	event_release(filter->event);
+	aclose(filter->fd);
+	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
+	    /* Add a '\n' at end of buffer */
+	    filter->buffer[filter->first + filter->size] = '\n';
+	    filter->size++;
+	}
+    } else {
+	filter->size += nread;
+    }
+
+    /* process all complete lines */
+    line = filter->buffer + filter->first;
+    line[filter->size] = '\0';
+    while (line < filter->buffer + filter->first + filter->size &&
+	   (p = strchr(line, '\n')) != NULL) {
+	*p = '\0';
+	if (g_str_equal(filter->name, "data err")) {
+	    g_debug("data err: %s", line);
+	    for(rp = re_table; rp->regex != NULL; rp++) {
+		if(match(rp->regex, line)) {
+		    break;
+		}
+	    }
+	    if(rp->typ == DMP_SIZE) {
+		dump_size = (off_t)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
+	    }
+	    switch(rp->typ) {
+	    case DMP_NORMAL:
+		type = "normal";
+		startchr = '|';
+		break;
+	    case DMP_IGNORE:
+		continue;
+	    case DMP_STRANGE:
+		type = "strange";
+		startchr = '?';
+		break;
+	    case DMP_SIZE:
+		type = "size";
+		startchr = '|';
+		break;
+	    case DMP_ERROR:
+		type = "error";
+		startchr = '?';
+		break;
+	    default:
+		type = "unknown";
+		startchr = '!';
+		break;
+	    }
+	    g_debug("%3d: %7s(%c): %s", rp->srcline, type, startchr, line);
+	    fprintf(mesgstream,"%c %s\n", startchr, line);
+	} else if (g_str_equal(filter->name, "index out")) {
+	    g_fprintf(indexstream, "%s\n", line+1);  // remove initial '.'
+	} else if (g_str_equal(filter->name, "index err")) {
+	    g_debug("index err: %s", line);
+	    g_fprintf(mesgstream, "? %s\n", line);
+	} else {
+	    g_debug("unknown: %s", line);
+	}
+	len = p - line + 1;
+	filter->first += len;
+	filter->size -= len;
+	line = p + 1;
+    }
+
+    if (nread <= 0) {
+	g_free(filter->name);
+	g_free(filter->buffer);
+	g_free(filter);
+    }
+
+}
 static void
 ambsdtar_backup(
     application_argument_t *argument)
@@ -859,22 +1034,17 @@ ambsdtar_backup(
     char      *cmd = NULL;
     char      *qdisk;
     char      *timestamps;
-    char       line[32768];
-    amregex_t *rp;
-    off_t      dump_size = -1;
-    char      *type;
-    char       startchr;
-    int        dataf = 1;
     int        mesgf = 3;
     int        indexf = 4;
     int        outf;
-    FILE      *mesgstream;
-    FILE      *indexstream = NULL;
-    FILE      *outstream;
+    int        data_out;
+    int        index_out;
+    int        index_err;
     char      *errmsg = NULL;
     amwait_t   wait_status;
     GPtrArray *argv_ptr;
-    int        tarpid;
+    pid_t      tarpid;
+    pid_t      indexpid = 0;
     time_t     tt;
     char      *file_exclude;
     char      *file_include;
@@ -917,76 +1087,40 @@ ambsdtar_backup(
     argv_ptr = ambsdtar_build_argv(argument, timestamps, &file_exclude,
 				   &file_include, CMD_BACKUP);
 
-    tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
-			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
-    /* close the write ends of the pipes */
-
-    aclose(dumpin);
-    aclose(dataf);
     if (argument->dle.create_index) {
+	tarpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
+			&dumpin, &data_out, &outf, (char **)argv_ptr->pdata);
+	g_ptr_array_free_full(argv_ptr);
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
+	g_ptr_array_add(argv_ptr, g_strdup("tf"));
+	g_ptr_array_add(argv_ptr, g_strdup("-"));
+	g_ptr_array_add(argv_ptr, NULL);
+	indexpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
+			  &index_in, &index_out, &index_err,
+			  (char **)argv_ptr->pdata);
+	g_ptr_array_free_full(argv_ptr);
+
+	aclose(dumpin);
+
 	indexstream = fdopen(indexf, "w");
 	if (!indexstream) {
 	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
 	}
-    }
-    outstream = fdopen(outf, "r");
-    if (!outstream) {
-	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
+	read_fd(data_out , "data out" , &read_data_out);
+	read_fd(outf     , "data err" , &read_text);
+	read_fd(index_out, "index out", &read_text);
+	read_fd(index_err, "index_err", &read_text);
+    } else {
+	tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
+			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
+	g_ptr_array_free_full(argv_ptr);
+	aclose(dumpin);
+	aclose(dataf);
+	read_fd(outf, "data err", &read_text);
     }
 
-    while (fgets(line, sizeof(line), outstream) != NULL) {
-	if (strlen(line) > 0 && line[strlen(line)-1] == '\n') {
-	    /* remove trailling \n */
-	    line[strlen(line)-1] = '\0';
-	}
-	if (strlen(line) == 3 && *line == 'a' && *(line+1) == ' ' &&
-	    *(line+2) == '.') { /* 'a .' */
-	    if (argument->dle.create_index) {
-		fprintf(indexstream, "/\n"); /* add '/' */
-	    }
-	} else if (strlen(line) >= 4 && *line == 'a' && *(line+1) == ' ' &&
-	    *(line+2) == '.' && *(line+3) == '/') { /* filename */
-	    if (argument->dle.create_index) {
-		fprintf(indexstream, "%s\n", &line[3]); /* remove 'a .' */
-	    }
-	} else { /* message */
-	    for(rp = re_table; rp->regex != NULL; rp++) {
-		if(match(rp->regex, line)) {
-		    break;
-		}
-	    }
-	    if(rp->typ == DMP_SIZE) {
-		dump_size = (off_t)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
-	    }
-	    switch(rp->typ) {
-	    case DMP_NORMAL:
-		type = "normal";
-		startchr = '|';
-		break;
-	    case DMP_IGNORE:
-		continue;
-	    case DMP_STRANGE:
-		type = "strange";
-		startchr = '?';
-		break;
-	    case DMP_SIZE:
-		type = "size";
-		startchr = '|';
-		break;
-	    case DMP_ERROR:
-		type = "error";
-		startchr = '?';
-		break;
-	    default:
-		type = "unknown";
-		startchr = '!';
-		break;
-	    }
-	    g_debug("%3d: %7s(%c): %s", rp->srcline, type, startchr, line);
-	    fprintf(mesgstream,"%c %s\n", startchr, line);
-        }
-    }
-    fclose(outstream);
+    event_loop(0);
 
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
@@ -998,20 +1132,38 @@ ambsdtar_backup(
 				cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
-	    ambsdtar_set_timestamps(argument,
-				    GPOINTER_TO_INT(argument->level->data),
-				    new_timestamps,
-				    mesgstream);
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    cmd, dbfn());
+    }
+    if (argument->dle.create_index) {
+	waitpid(indexpid, &wait_status, 0);
+	if (WIFSIGNALED(wait_status)) {
+	    errmsg = g_strdup_printf(_("'%s index' terminated with signal %d: see %s"),
+			    cmd, WTERMSIG(wait_status), dbfn());
+	} else if (WIFEXITED(wait_status)) {
+	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
+		errmsg = g_strdup_printf(_("'%s index' exited with status %d: see %s"),
+				cmd, WEXITSTATUS(wait_status), dbfn());
+	    } else {
+		/* Normal exit */
+	    }
+	} else {
+	    errmsg = g_strdup_printf(_("'%s index' got bad exit: see %s"),
+			    cmd, dbfn());
+	}
     }
     g_debug(_("after %s %s wait"), cmd, qdisk);
     g_debug(_("ambsdtar: %s: pid %ld"), cmd, (long)tarpid);
     if (errmsg) {
 	g_debug("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
+    } else if (argument->dle.record) {
+	ambsdtar_set_timestamps(argument,
+				GPOINTER_TO_INT(argument->level->data),
+				new_timestamps,
+				mesgstream);
     }
 
 
@@ -1038,7 +1190,6 @@ ambsdtar_backup(
     amfree(qdisk);
     amfree(cmd);
     amfree(errmsg);
-    g_ptr_array_free_full(argv_ptr);
 }
 
 static void
@@ -1323,10 +1474,6 @@ ambsdtar_index(
 	    /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
 	}
-	if (strlen(line) > 1 && line[strlen(line)-1] == '/') {
-	    /* remove trailling / */
-	    line[strlen(line)-1] = '\0';
-	}
 	if (*line == '.' && *(line+1) == '/') { /* filename */
 	    fprintf(stdout, "%s\n", &line[1]); /* remove . */
 	}
@@ -1422,7 +1569,6 @@ ambsdtar_get_timestamps(
 
 	snprintf(number, sizeof(number), "%d", level);
 	filename = g_strjoin(NULL, basename, "_", number, NULL);
-	unlink(filename);
 
 	/*
 	 * Open the timestamps file from the previous level.  Search
@@ -1574,8 +1720,6 @@ ambsdtar_build_argv(
     g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
 
     g_ptr_array_add(argv_ptr, g_strdup("--create"));
-    if (command == CMD_BACKUP && argument->dle.create_index)
-        g_ptr_array_add(argv_ptr, g_strdup("--verbose"));
     g_ptr_array_add(argv_ptr, g_strdup("--file"));
     if (command == CMD_ESTIMATE) {
         g_ptr_array_add(argv_ptr, g_strdup("/dev/null"));
