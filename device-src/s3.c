@@ -106,10 +106,12 @@
 
 /* general "reasonable size" parameters */
 #define MAX_ERROR_RESPONSE_LEN (100*1024)
-#ifdef CURLE_SSL_CACERT_BADFILE
-# define AMAMDA_CURLE_SSL_CACERT_BADFILE CURLE_SSL_CACERT_BADFILE
+
+// CURLE_SSL_CACERT_BADFILE is defined in 7.16.0
+#if LIBCURL_VERSION_NUM >= 0x071600
+#define AMAMDA_CURLE_SSL_CACERT_BADFILE CURLE_SSL_CACERT_BADFILE
 #else
-# define AMANDA_CURLE_SSL_CACERT_BADFILE CURLE_GOT_NOTHING
+# define AMAMDA_CURLE_SSL_CACERT_BADFILE CURLE_GOT_NOTHING
 #endif
 /* Results which should always be retried */
 #define RESULT_HANDLING_ALWAYS_RETRY \
@@ -128,7 +130,7 @@
         { 0,    0,                           CURLE_SEND_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_RECV_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }, \
-        { 0,    0,                           AMANDA_CURLE_SSL_CACERT_BADFILE,   S3_RESULT_RETRY }
+        { 0,    0,                           AMAMDA_CURLE_SSL_CACERT_BADFILE,   S3_RESULT_RETRY }
 
 /*
  * Data structures and associated functions
@@ -1329,6 +1331,9 @@ interpret_response(S3Handle *hdl,
 
     if (hdl->last_message) g_free(hdl->last_message);
     hdl->last_message = NULL;
+    hdl->last_response_code = 0;
+    hdl->last_s3_error_code = 0;
+    hdl->last_curl_code = 0;
 
     /* bail out from a CURL error */
     if (curl_code != CURLE_OK) {
@@ -1886,7 +1891,6 @@ curl_debug_message(CURL *curl G_GNUC_UNUSED,
 
     return 0;
 }
-
 static s3_result_t
 perform_request(S3Handle *hdl,
                 const char *verb,

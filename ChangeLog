@@ -1,3 +1,6 @@
+2013-12-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Fix for CURLE_SSL_CACERT_BADFILE.
+
 2013-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: Run sw_vers to find Mac platform.
 
