@@ -81,8 +81,8 @@ static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static char *displayunit;
 static long int unitdivisor;
-static gboolean dev_amanda_data_path = FALSE;
-static gboolean dev_directtcp_data_path = FALSE;
+static gboolean dev_amanda_data_path = TRUE;
+static gboolean dev_directtcp_data_path = TRUE;
 
 static int client_verbose = FALSE;
 static gboolean exact_match = FALSE;
@@ -662,6 +662,8 @@ static gboolean test_tape_status(FILE * outf) {
 	while ((line = agets(dev_outf)) != NULL) {
 	    if (strncmp(line, "DATA-PATH", 9) == 0) {
 		char *c = line;
+		dev_amanda_data_path = FALSE;
+		dev_directtcp_data_path = FALSE;
 		while ((c = strchr(c, ' ')) != NULL) {
 		    c++;
 		    if (strncmp(c, "AMANDA", 6) == 0) {

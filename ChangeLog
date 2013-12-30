@@ -1,3 +1,7 @@
+2013-12-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Do not report DATA-PATH error if a device is
+	  not found.
+
 2013-12-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c: Add a trailling '/' on directory entry
 	  in the index.
