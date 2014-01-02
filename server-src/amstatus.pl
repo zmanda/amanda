@@ -392,17 +392,17 @@ while($lineX = <AMDUMP>) {
 			if($line[5] =~ /dumper\d*/) {
 				$dumper = $line[5];
 				if($line[6] eq "PORT-DUMP") {
-					#7:handle 8:port 9:host 10:amfeatures 11:disk 12:device 13:level ...
-					$host = $line[9];
-					$partition = $line[11];
+					#7:handle 8:port 9:maxdumps 10:host 11:amfeatures 12:disk 13:device 14:level ...
+					$host = $line[10];
+					$partition = $line[12];
 					$hostpart=&make_hostpart($host,$partition,$gdatestamp);
 					$serial=$line[7];
 					$dumper_to_serial{$line[5]} = $serial;
 					$dump_started{$hostpart}=1;
 					$dump_time{$hostpart}=$current_time;
 					$dump_finished{$hostpart}=0;
-					if(     $level{$hostpart} != $line[13] &&
-					   $degr_level{$hostpart} == $line[13]) {
+					if(     $level{$hostpart} != $line[14] &&
+					   $degr_level{$hostpart} == $line[14]) {
 						$level{$hostpart}=$degr_level{$hostpart};
 						$esize{$hostpart}=$degr_size{$hostpart};
 					}
