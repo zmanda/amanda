@@ -1,4 +1,7 @@
 2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Use server estimate on estimate timeout.
+
+2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/catalogs/chunker-partial.cat,
 	  installcheck/catalogs/normal.cat, installcheck/catalogs/quoted.cat,
 	  installcheck/catalogs/taper-parallel-write.cat: Fix for maxdumps in
