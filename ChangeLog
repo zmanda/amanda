@@ -1,4 +1,7 @@
 2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Fix for maxdumps in PORT-DUMP line.
+
+2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c: Send maxdumps to dumper.
 	* server-src/dumper.c: Parse maxdumps, add maxdumps in REQ packet.
 

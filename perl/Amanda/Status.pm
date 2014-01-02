@@ -453,15 +453,15 @@ sub parse {
 		if ($line[5] =~ /dumper\d*/) {
 		    my $dumper = $line[5];
 		    if ($line[6] eq "PORT-DUMP") {
-			#7:handle 8:port 9:interface 10:host 11:amfeatures 12:disk 13:device 14:level ...
-			my $host = $line[10];
-			my $disk = $line[12];
+			#7:handle 8:port 9:interface 10:maxdumps 11:host 12:amfeatures 13:disk 14:device 15:level ...
+			my $host = $line[11];
+			my $disk = $line[13];
 			my $serial=$line[7];
 			$dumper_to_serial{$line[5]} = $serial;
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
 			$dle->{'dump_time'} = $self->{'current_time'};
-			if (      $dle->{'level'} != $line[14] &&
-			     $dle->{'degr_level'} == $line[14]) {
+			if (      $dle->{'level'} != $line[15] &&
+			     $dle->{'degr_level'} == $line[15]) {
 			    $dle->{'level'} = $dle->{'degr_level'};
 			    $dle->{'esize'} = $dle->{'degr_size'};
 			}
