@@ -1,4 +1,10 @@
 2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/catalogs/chunker-partial.cat,
+	  installcheck/catalogs/normal.cat, installcheck/catalogs/quoted.cat,
+	  installcheck/catalogs/taper-parallel-write.cat: Fix for maxdumps in
+	  PORT-DUMP line.
+
+2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix for maxdumps in PORT-DUMP line.
 
 2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
