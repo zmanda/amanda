@@ -99,6 +99,7 @@ typedef struct est_s {
     one_est_t *dump_est;
     one_est_t *degr_est;
     one_est_t  estimate[MAX_LEVELS];
+    gboolean   allow_server;
     int last_level;
     gint64 last_lev0size;
     int next_level0;
@@ -1555,7 +1556,8 @@ static void getsize(
 		if (estimate == ES_SERVER)
 		    break;
 	    }
-	    if (estimate == ES_SERVER) {
+	    est(dp)->allow_server = estimate == ES_SERVER;
+	    if (est(dp)->allow_server) {
 		info_t info;
 		nb_server++;
 		get_info(dp->host->hostname, dp->name, &info);
@@ -1875,7 +1877,7 @@ static void handle_result(
 
     if (pkt == NULL) {
 	if (strcmp(security_geterror(sech), "timeout waiting for REP") == 0) {
-	    errbuf = vstrallocf("Some estimate timeout on %s, using server estimate if possible", hostp->hostname);
+	    errbuf = vstrallocf("Some estimate timeout on %s", hostp->hostname);
 	} else {
 	    errbuf = vstrallocf(_("Request to %s failed: %s"),
 			hostp->hostname, security_geterror(sech));
@@ -2173,16 +2175,28 @@ static void handle_result(
     i = 0;
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	if (dp->todo) {
-	    if(est(dp)->state == DISK_ACTIVE) {
+	    if (est(dp)->state == DISK_ACTIVE ||
+		est(dp)->state == DISK_PARTIALY_DONE) {
+		char *tt;
 		qname = quote_string(dp->name);
+		if (est(dp)->state == DISK_ACTIVE) {
+		    remove_disk(&waitq, dp);
+		} else if(est(dp)->state == DISK_PARTIALY_DONE) {
+		    remove_disk(&pestq, dp);
+		}
 		est(dp)->state = DISK_DONE;
-		remove_disk(&waitq, dp);
-		enqueue_disk(&failq, dp);
+		if (est(dp)->allow_server) {
+		    enqueue_disk(&estq, dp);
+		    tt = ", using server estimate";
+		} else {
+		    enqueue_disk(&failq, dp);
+		    tt = "";
+		}
 		i++;
 
-		est(dp)->errstr = stralloc(errbuf);
+		est(dp)->errstr = g_strdup_printf("%s%s", errbuf, tt);
 		g_fprintf(stderr, _("error result for host %s disk %s: %s\n"),
-			  dp->host->hostname, qname, errbuf);
+			  dp->host->hostname, qname, est(dp)->errstr);
 		amfree(qname);
 	    }
 	}
@@ -2211,6 +2225,7 @@ static void handle_result(
 	    }
 	}
     }
+
     hostp->up = HOST_DONE;
     amfree(errbuf);
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
