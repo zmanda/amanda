@@ -104,6 +104,7 @@ static kencrypt_type dumper_kencrypt;
 
 static FILE *errf = NULL;
 static char *src_ip = NULL;
+static char *maxdumps = NULL;
 static char *hostname = NULL;
 am_feature_t *their_features = NULL;
 static char *diskname = NULL;
@@ -480,6 +481,13 @@ main(
 	    }
 	    g_free(src_ip);
 	    src_ip = g_strdup(cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: maxdumps]"));
+		/*NOTREACHED*/
+	    }
+	    g_free(maxdumps);
+	    maxdumps = g_strdup(cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
@@ -2607,6 +2615,7 @@ startup_dump(
     int response_error;
     const security_driver_t *secdrv;
     int has_features;
+    int has_maxdumps;
     int has_hostname;
     int has_device;
     int has_config;
@@ -2621,6 +2630,7 @@ startup_dump(
     (void)auth;			/* Quiet unused parameter warning */
 
     has_features = am_has_feature(their_features, fe_req_options_features);
+    has_maxdumps = am_has_feature(their_features, fe_req_options_maxdumps);
     has_hostname = am_has_feature(their_features, fe_req_options_hostname);
     has_config   = am_has_feature(their_features, fe_req_options_config);
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
@@ -2643,6 +2653,9 @@ startup_dump(
 
     if (has_features)
         g_string_append_printf(reqbuf, "features=%s;", our_feature_string);
+
+    if (has_maxdumps)
+        g_string_append_printf(reqbuf, "maxdumps=%s;", maxdumps);
 
     if (has_hostname)
         g_string_append_printf(reqbuf, "hostname=%s;", hostname);

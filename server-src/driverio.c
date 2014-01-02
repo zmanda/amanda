@@ -715,6 +715,7 @@ dumper_cmd(
         g_ptr_array_add(array, g_strdup(job2serial(dumper->job)));
         g_ptr_array_add(array, g_strdup_printf("%d", dumper->output_port));
         g_ptr_array_add(array, g_strdup(interface_get_src_ip(dp->host->netif->config)));
+        g_ptr_array_add(array, g_strdup_printf("%d", dp->host->maxdumps));
         g_ptr_array_add(array, g_strdup(dp->host->hostname));
         g_ptr_array_add(array, am_feature_to_string(features));
         g_ptr_array_add(array, quote_string(dp->name));

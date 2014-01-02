@@ -1,3 +1,7 @@
+2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driverio.c: Send maxdumps to dumper.
+	* server-src/dumper.c: Parse maxdumps, add maxdumps in REQ packet.
+
 2013-12-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Do not report DATA-PATH error if a device is
 	  not found.
