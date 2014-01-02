@@ -575,6 +575,7 @@ dumper_cmd(
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
     char numberport[NUM_STR_SIZE];
+    char maxdumps[NUM_STR_SIZE];
     char maxwarnings[NUM_STR_SIZE];
     char *o, *oo;
     char *device;
@@ -613,6 +614,7 @@ dumper_cmd(
 	    qname = quote_string(dp->name);
 	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
 	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
+	    g_snprintf(maxdumps, SIZEOF(maxdumps), "%d", dp->host->maxdumps);
 	    g_snprintf(maxwarnings, SIZEOF(maxwarnings), "%d", dp->max_warnings);
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
@@ -653,6 +655,7 @@ dumper_cmd(
 	    cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", numberport,
+			    " ", maxdumps,
 			    " ", dp->host->hostname,
 			    " ", features,
 			    " ", qname,

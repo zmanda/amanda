@@ -105,6 +105,7 @@ static kencrypt_type dumper_kencrypt;
 
 static FILE *errf = NULL;
 static char *hostname = NULL;
+static char *maxdumps = NULL;
 am_feature_t *their_features = NULL;
 static char *diskname = NULL;
 static char *qdiskname = NULL, *b64disk;
@@ -453,6 +454,12 @@ main(
 		/*NOTREACHED*/
 	    }
 	    header_port = (in_port_t)atoi(cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: maxdumps]"));
+		/*NOTREACHED*/
+	    }
+	    maxdumps = newstralloc(maxdumps, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
@@ -2456,6 +2463,7 @@ startup_dump(
     const security_driver_t *secdrv;
     char *application_api;
     int has_features;
+    int has_maxdumps;
     int has_hostname;
     int has_device;
     int has_config;
@@ -2469,6 +2477,7 @@ startup_dump(
 
     has_features = am_has_feature(their_features, fe_req_options_features);
     has_hostname = am_has_feature(their_features, fe_req_options_hostname);
+    has_maxdumps = am_has_feature(their_features, fe_req_options_maxdumps);
     has_config   = am_has_feature(their_features, fe_req_options_config);
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
 
@@ -2491,6 +2500,9 @@ startup_dump(
 		    has_features ? "features=" : "",
 		    has_features ? our_feature_string : "",
 		    has_features ? ";" : "",
+		    has_maxdumps ? "maxdumps=" : "",
+		    has_maxdumps ? maxdumps : "",
+		    has_maxdumps ? ";" : "",
 		    has_hostname ? "hostname=" : "",
 		    has_hostname ? hostname : "",
 		    has_hostname ? ";" : "",
