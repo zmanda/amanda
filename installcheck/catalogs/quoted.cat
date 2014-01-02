@@ -73,7 +73,7 @@ driver: send-cmd time 1.314 to chunker0: START 20080618130147
 driver: send-cmd time 1.314 to chunker0: PORT-WRITE 00-00001 /holding/20080618130147/clienthost._some_dir.0 clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" 0 1970:1:1:0:0:0 1048576 GNUTAR 192 |;auth=local;index;
 chunker: pid 4129 executable chunker0 version 9.8.7
 driver: result time 1.330 from chunker0: PORT 1487
-driver: send-cmd time 1.330 to dumper0: PORT-DUMP 00-00001 1487 clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" NODEVICE 0 1970:1:1:0:0:0 GNUTAR X amanda X local |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n"
+driver: send-cmd time 1.330 to dumper0: PORT-DUMP 00-00001 1487 4 clienthost ffffffff9ffeffffffff1f "C:\\Some Dir\\" NODEVICE 0 1970:1:1:0:0:0 GNUTAR X amanda X local |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n"
 driver: state time 6.408 free kps: 0 space: 868160 taper: idle idle-dumpers: 3 qlen tapeq: 0 runq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
 driver: interface-state time 6.408 if default: free 0
 driver: hdisk-state time 6.408 hdisk 0: free 868160 dumpers 1
