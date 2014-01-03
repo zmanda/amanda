@@ -687,7 +687,6 @@ amgtar_selfcheck(
 	printf(_("ERROR [GNUTAR program not available]\n"));
     }
 
-    set_root_privs(1);
     if (gnutar_listdir && strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
     if (gnutar_listdir) {
@@ -696,6 +695,7 @@ amgtar_selfcheck(
 	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
     }
 
+    set_root_privs(1);
     if (gnutar_directory) {
 	check_dir(gnutar_directory, R_OK);
     } else if (argument->dle.device) {

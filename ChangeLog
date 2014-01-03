@@ -1,3 +1,15 @@
+2014-01-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Check gnutar_listdir before uid to 0.
+	* client-src/client_util.c: Use EUIDACCESS.
+	* common-src/amanda.h: Define EUIDACCESS.
+	* configure.in: Check for euidaccess and eaccess.
+	* config/gnulib/euidaccess.m4, config/gnulib/getgroups.m4,
+	  config/gnulib/gnulib-cache.m4, config/gnulib/gnulib-comp.m4,
+	  config/gnulib/group-member.m4, gnulib/Makefile.am,
+	  gnulib/euidaccess.c, gnulib/getgroups.c, gnulib/group-member.c,
+	  gnulib/regenerate/regenerate, gnulib/root-uid.h,
+	  gnulib/xalloc-oversized.h: Add euidaccess module.
+
 2014-01-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Use server estimate on estimate timeout.
 

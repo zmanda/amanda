@@ -1611,6 +1611,7 @@ check_access(
 {
     char *noun, *adjective;
     char *quoted = quote_string(filename);
+    gboolean result;
 
     if(mode == F_OK)
         noun = "find", adjective = "exists";
@@ -1621,15 +1622,17 @@ check_access(
     else 
 	noun = "access", adjective = "accessible";
 
-    if(access(filename, mode) == -1) {
-	g_printf(_("ERROR [can not %s %s: %s]\n"), noun, quoted, strerror(errno));
-	amfree(quoted);
-	return FALSE;
+    if(EUIDACCESS(filename, mode) == -1) {
+	g_printf(_("ERROR [can not %s %s: %s (ruid:%d euid:%d)\n"), noun, quoted, strerror(errno),
+	    getuid(), geteuid());
+	result = FALSE;
     } else {
-	g_printf(_("OK %s %s\n"), quoted, adjective);
+	g_printf(_("OK %s %s (ruid:%d euid:%d)\n"), quoted, adjective,
+	    getuid(), geteuid());
+	result = TRUE;
     }
     amfree(quoted);
-    return TRUE;
+    return result;
 }
 
 gboolean
@@ -1655,14 +1658,8 @@ check_file(
 	amfree(quoted);
 	return FALSE;
     }
-    if (getuid() == geteuid()) {
-	return check_access(filename, mode);
-    } else {
-	quoted = quote_string(filename);
-	g_printf("OK %s\n", quoted);
-	amfree(quoted);
-    }
-    return TRUE;
+
+    return check_access(filename, mode);
 }
 
 gboolean
@@ -1673,6 +1670,7 @@ check_dir(
     struct stat stat_buf;
     char *quoted;
     char *dir;
+    gboolean result;
 
     if(!stat(dirname, &stat_buf)) {
 	if(!S_ISDIR(stat_buf.st_mode)) {
@@ -1689,18 +1687,11 @@ check_dir(
 	amfree(quoted);
 	return FALSE;
     }
-    if (getuid() == geteuid()) {
-	gboolean  result;
-	dir = stralloc2(dirname, "/.");
-	result = check_access(dir, mode);
-	amfree(dir);
-	return result;
-    } else {
-	quoted = quote_string(dirname);
-	g_printf("OK %s\n", quoted);
-	amfree(quoted);
-    }
-    return TRUE;
+
+    dir = g_strconcat(dirname, "/.", NULL);
+    result = check_access(dir, mode);
+    amfree(dir);
+    return result;
 }
 
 gboolean
