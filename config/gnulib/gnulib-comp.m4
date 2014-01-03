@@ -50,6 +50,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module dup2:
   # Code from module environ:
   # Code from module errno:
+  # Code from module euidaccess:
   # Code from module extensions:
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   # Code from module extern-inline:
@@ -67,10 +68,12 @@ AC_DEFUN([gl_EARLY],
   # Code from module full-read:
   # Code from module full-write:
   # Code from module getaddrinfo:
+  # Code from module getgroups:
   # Code from module getopt-gnu:
   # Code from module getopt-posix:
   # Code from module gettext-h:
   # Code from module gettimeofday:
+  # Code from module group-member:
   # Code from module havelib:
   # Code from module hostent:
   # Code from module include_next:
@@ -106,6 +109,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module raise:
   # Code from module read:
   # Code from module regex:
+  # Code from module root-uid:
   # Code from module safe-read:
   # Code from module safe-write:
   # Code from module secure_getenv:
@@ -150,6 +154,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module wcrtomb:
   # Code from module wctype-h:
   # Code from module write:
+  # Code from module xalloc-oversized:
   # Code from module xsize:
 ])
 
@@ -191,6 +196,12 @@ AC_SUBST([LTALLOCA])
   gl_ENVIRON
   gl_UNISTD_MODULE_INDICATOR([environ])
   gl_HEADER_ERRNO_H
+  gl_FUNC_EUIDACCESS
+  if test $HAVE_EUIDACCESS = 0; then
+    AC_LIBOBJ([euidaccess])
+    gl_PREREQ_EUIDACCESS
+  fi
+  gl_UNISTD_MODULE_INDICATOR([euidaccess])
   AC_REQUIRE([gl_EXTERN_INLINE])
   gl_FCNTL_H
   gl_FLOAT_H
@@ -241,6 +252,11 @@ AC_SUBST([LTALLOCA])
     AC_LIBOBJ([gai_strerror])
   fi
   gl_NETDB_MODULE_INDICATOR([getaddrinfo])
+  gl_FUNC_GETGROUPS
+  if test $HAVE_GETGROUPS = 0 || test $REPLACE_GETGROUPS = 1; then
+    AC_LIBOBJ([getgroups])
+  fi
+  gl_UNISTD_MODULE_INDICATOR([getgroups])
   gl_FUNC_GETOPT_GNU
   if test $REPLACE_GETOPT = 1; then
     AC_LIBOBJ([getopt])
@@ -268,6 +284,12 @@ AC_SUBST([LTALLOCA])
     gl_PREREQ_GETTIMEOFDAY
   fi
   gl_SYS_TIME_MODULE_INDICATOR([gettimeofday])
+  gl_FUNC_GROUP_MEMBER
+  if test $HAVE_GROUP_MEMBER = 0; then
+    AC_LIBOBJ([group-member])
+    gl_PREREQ_GROUP_MEMBER
+  fi
+  gl_UNISTD_MODULE_INDICATOR([group-member])
   gl_HOSTENT
   gl_FUNC_INET_NTOP
   if test $HAVE_INET_NTOP = 0 || test $REPLACE_INET_NTOP = 1; then
@@ -621,6 +643,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/dosname.h
   lib/dup2.c
   lib/errno.in.h
+  lib/euidaccess.c
   lib/fcntl.in.h
   lib/fd-hook.c
   lib/fd-hook.h
@@ -640,6 +663,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/full-write.h
   lib/gai_strerror.c
   lib/getaddrinfo.c
+  lib/getgroups.c
   lib/getopt.c
   lib/getopt.in.h
   lib/getopt1.c
@@ -649,6 +673,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/glthread/lock.c
   lib/glthread/lock.h
   lib/glthread/threadlib.c
+  lib/group-member.c
   lib/inet_ntop.c
   lib/inet_pton.c
   lib/intprops.h
@@ -693,6 +718,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/regex_internal.c
   lib/regex_internal.h
   lib/regexec.c
+  lib/root-uid.h
   lib/safe-read.c
   lib/safe-read.h
   lib/safe-write.c
@@ -739,6 +765,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/wctype-h.c
   lib/wctype.in.h
   lib/write.c
+  lib/xalloc-oversized.h
   lib/xsize.c
   lib/xsize.h
   m4/00gnulib.m4
@@ -752,6 +779,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/eealloc.m4
   m4/environ.m4
   m4/errno_h.m4
+  m4/euidaccess.m4
   m4/exponentd.m4
   m4/extensions.m4
   m4/extern-inline.m4
@@ -765,10 +793,12 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/ftell.m4
   m4/ftello.m4
   m4/getaddrinfo.m4
+  m4/getgroups.m4
   m4/getopt.m4
   m4/gettimeofday.m4
   m4/glibc21.m4
   m4/gnulib-common.m4
+  m4/group-member.m4
   m4/hostent.m4
   m4/include_next.m4
   m4/inet_ntop.m4

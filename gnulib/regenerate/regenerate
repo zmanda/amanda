@@ -43,7 +43,7 @@ shopt -u nullglob
 GNULIB_MODULES="getaddrinfo lock base64 physmem fsusage"
 GNULIB_MODULES="$GNULIB_MODULES mkdtemp getopt-gnu full-read full-write"
 GNULIB_MODULES="$GNULIB_MODULES lseek fseeko ftello regex environ"
-GNULIB_MODULES="$GNULIB_MODULES inet_pton nanosleep"
+GNULIB_MODULES="$GNULIB_MODULES inet_pton nanosleep euidaccess"
 
 ######################################################################
 ## End modules                                                      ##

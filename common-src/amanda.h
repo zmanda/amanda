@@ -295,6 +295,15 @@ struct iovec {
 #  include <unistd.h>
 #endif
 
+#if HAVE_EUIDACCESS
+#   define EUIDACCESS euidaccess
+#elif HAVE_EACCESS
+#   define EUIDACCESS eaccess
+#else
+#   define EUIDACCESS access
+#endif
+
+
 #ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>
 #endif
@@ -1101,7 +1110,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #    define        OFF_T_STRTOL	 (off_t)strtol
 #  endif
 #endif
-
 
 #define BIND_CYCLE_RETRIES	120		/* Total of 30 minutes */
 
