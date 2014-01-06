@@ -1,3 +1,9 @@
+2014-01-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib/group-member.c, gnulib/xalloc-oversized.h,
+	  gnulib/euidaccess.c, gnulib/getgroups.c, gnulib/root-uid.h,
+	  config/gnulib/getgroups.m4, config/gnulib/group-member.m4,
+	  config/gnulib/euidaccess.m4: Missing file gnulib euidaccess.
+
 2014-01-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Check gnutar_listdir before uid to 0.
 	* client-src/client_util.c: Use EUIDACCESS.
