@@ -1,4 +1,10 @@
 2014-01-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c, amar-src/amar.h, perl/Amanda/Archive.pod,
+	  perl/Amanda/Archive.swg: Add amar_size and
+	  amar_attr_add_data_fd_in_thread
+	* installcheck/Amanda_Archive.pl: Test amar_size.
+
+2014-01-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Do not vault dle not in the disklist.
 
 2014-01-06  Jean-Louis Martineau <martineau@zmanda.com>

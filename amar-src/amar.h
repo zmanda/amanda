@@ -52,6 +52,7 @@ enum {
     /* anything above this value can be used by the application */
     AMAR_ATTR_APP_START = 16,
     AMAR_ATTR_GENERIC_DATA = AMAR_ATTR_APP_START,
+    AMAR_ATTR_VMWARE_DISK_DATA = 17,
 };
 
 /* Create an object to read/write an amanda archive on the file descriptor fd.
@@ -64,6 +65,9 @@ amar_t *amar_new(int fd, mode_t mode, GError **error);
 /* Finish writing to this fd.  All buffers are flushed, but the file descriptor
  * is not closed -- the user must close it. */
 gboolean amar_close(amar_t *archive, GError **error);
+
+/* Return the size of the archive if opened in write mode */
+off_t amar_size(amar_t *archive);
 
 /* create a new 'file' object on the archive.  The filename is treated as a
  * binary blob, but if filename_len is zero, then its length will be calculated
@@ -127,6 +131,16 @@ gboolean amar_attr_add_data_buffer(
  * @returns: number of bytes read from fd, or -1 on error
  */
 off_t amar_attr_add_data_fd(
+	    amar_attr_t *attribute,
+	    int fd,
+	    gboolean eoa,
+	    GError **error);
+
+/* Same but do it in a new thread
+ * Return immediately
+ * Caller should not use the archive, next call must be attr->close
+ */
+off_t amar_attr_add_data_fd_in_thread(
 	    amar_attr_t *attribute,
 	    int fd,
 	    gboolean eoa,

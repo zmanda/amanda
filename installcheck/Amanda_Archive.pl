@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 20;
+use Test::More tests => 24;
 use strict;
 use warnings;
 
@@ -29,6 +29,8 @@ use Installcheck;
 use Amanda::Archive;
 use Amanda::Paths;
 use Data::Dumper;
+
+Amanda::Debug::dbopen("installcheck");
 
 my $arch_filename = "$Installcheck::TMP/amanda_archive.bin";
 my $data_filename = "$Installcheck::TMP/some_data.bin";
@@ -97,9 +99,11 @@ open($dfh, "<", $data_filename);
 $a1->add_data_fd(fileno($dfh), 1);
 close($dfh);
 pass("Add data from a file descriptor");
+ok($ar->size() == 5242989, "Size A is " . $ar->size);
 
 $a1 = undef;
 pass("Close attribute when its refcount hits zero");
+ok($ar->size() == 5242989, "Size B is " . $ar->size);
 
 $f2 = Amanda::Archive::File->new($ar, "filename2");
 pass("Add a new file (filename2)");
@@ -107,9 +111,11 @@ pass("Add a new file (filename2)");
 $a1 = $f2->new_attr(82);
 $a1->add_data("word", 1);
 pass("Add data to it");
+ok($ar->size() == 5243018, "Size C is " . $ar->size);
 
 $a2->add_data("barrrrr?", 0);	# note no EOA
 pass("Add more data to first attribute");
+ok($ar->size() == 5243034, "Size D is " . $ar->size);
 
 ($f1, $posn) = $ar->new_file("posititioned file", 1);
 ok($posn > 0, "new_file returns a positive position");

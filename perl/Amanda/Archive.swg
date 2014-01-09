@@ -234,7 +234,9 @@ is_number(char *str, int len, int *result)
 %rename(amar_attr_close) amar_attr_close_;
 %rename(amar_attr_add_data_buffer) amar_attr_add_data_buffer_;
 %rename(amar_attr_add_data_fd) amar_attr_add_data_fd_;
+%rename(amar_attr_add_data_fd_in_thread) amar_attr_add_data_fd_in_thread_;
 %rename(amar_read) amar_read_;
+%rename(amar_size) amar_size_;
 
 /* typemaps for the below */
 %apply (char *STRING, int LENGTH) { (char *filename, gsize filename_len) };
@@ -279,6 +281,10 @@ amar_t *amar_new_(int fd, char *modestr) {
 
     croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return NULL;
+}
+
+off_t amar_size_(amar_t *archive) {
+    return amar_size(archive);
 }
 
 void amar_close_(amar_t *arch) {
@@ -338,6 +344,15 @@ off_t
 amar_attr_add_data_fd_(amar_attr_t *attr, int fd, gboolean eoa) {
     GError *error = NULL;
     off_t rv = amar_attr_add_data_fd(attr, fd, eoa, &error);
+    if (rv < 0)
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
+    return rv;
+}
+
+off_t
+amar_attr_add_data_fd_in_thread_(amar_attr_t *attr, int fd, gboolean eoa) {
+    GError *error = NULL;
+    off_t rv = amar_attr_add_data_fd_in_thread(attr, fd, eoa, &error);
     if (rv < 0)
 	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return rv;
@@ -519,6 +534,14 @@ sub close {
     }
 }
 
+sub size {
+    my $self = shift;
+    if ($$self) {
+	return Amanda::Archive::amar_size($$self);
+    }
+    return 0;
+}
+
 sub DESTROY {
     my $self = shift;
     $self->close();
@@ -602,5 +625,11 @@ sub add_data_fd {
     my ($self, $fd, $eoa) = @_;
     die "Attr is not open" unless ($self->[0]);
     return Amanda::Archive::amar_attr_add_data_fd($self->[0], $fd, $eoa);
+}
+
+sub add_data_fd_in_thread {
+    my ($self, $fd, $eoa) = @_;
+    die "Attr is not open" unless ($self->[0]);
+    return Amanda::Archive::amar_attr_add_data_fd_in_thread($self->[0], $fd, $eoa);
 }
 %}
