@@ -100,9 +100,13 @@ struct amar_file_s {
 };
 
 struct amar_attr_s {
-    amar_file_t *file;	/* file for this attribute	*/
-    gint attrid;	/* id of this attribute		*/
-    gboolean wrote_eoa;	/* If the attribute is finished	*/
+    amar_file_t *file;		/* file for this attribute	*/
+    gint         attrid;	/* id of this attribute		*/
+    gboolean     wrote_eoa;	/* If the attribute is finished	*/
+    GThread     *thread;
+    int          fd;
+    int          eoa;
+    GError     **error;
 };
 
 /*
@@ -261,6 +265,13 @@ amar_close(
     return success;
 }
 
+off_t
+amar_size(
+    amar_t *archive)
+{
+    return archive->position;
+}
+
 /*
  * Writing
  */
@@ -357,6 +368,11 @@ foreach_attr_close(
     amar_attr_t *attr = value;
     GError **error = user_data;
 
+    if (attr->thread) {
+	g_thread_join(attr->thread);
+	attr->thread = NULL;
+    }
+
     /* return immediately if we've already seen an error */
     if (*error)
 	return;
@@ -418,7 +434,9 @@ amar_new_attr(
     attribute->file = file;
     attribute->attrid = attrid;
     attribute->wrote_eoa = FALSE;
-    g_hash_table_replace(file->attributes, &attribute->attrid, attribute);
+    attribute->thread = NULL;
+    attribute->fd = -1;
+    attribute->eoa = 0;
 
     /* (note this function cannot currently return an error) */
 
@@ -433,6 +451,11 @@ amar_attr_close(
     amar_file_t   *file    = attribute->file;
     amar_t        *archive = file->archive;
     gboolean rv = TRUE;
+
+    if (attribute->thread) {
+	g_thread_join(attribute->thread);
+	attribute->thread = NULL;
+    }
 
     /* write an empty record with EOA_BIT set if we haven't ended
      * this attribute already */
@@ -485,6 +508,35 @@ amar_attr_add_data_buffer(
 
     return TRUE;
 }
+
+static gpointer amar_attr_add_data_fd_thread(gpointer data);
+off_t
+amar_attr_add_data_fd_in_thread(
+    amar_attr_t *attribute,
+    int fd,
+    gboolean eoa,
+    GError **error)
+{
+    attribute->fd = fd;
+    attribute->eoa = eoa;
+    attribute->error = error;
+    attribute->thread = g_thread_create(amar_attr_add_data_fd_thread, attribute, TRUE, NULL);
+    return 0;
+}
+
+static gpointer
+amar_attr_add_data_fd_thread(
+    gpointer data)
+{
+    amar_attr_t *attribute = (amar_attr_t *)data;
+
+    amar_attr_add_data_fd(attribute, attribute->fd, attribute->eoa, attribute->error);
+    attribute->fd = -1;
+    attribute->eoa = 0;
+    attribute->error = NULL;
+    return NULL;
+}
+
 
 off_t
 amar_attr_add_data_fd(

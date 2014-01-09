@@ -81,6 +81,10 @@ Amanda::Archive::Archive->new >> are equivalent.
 Create a new archive for reading ("<") or writing (">") from or to
 file C<$fd> (a file handle or integer file descriptor).
 
+=item C<size()>
+
+Return the number of bytes already written to the archive.
+
 =item C<new_file($filename, $want_posn)>
 
 Create a new C<Amanda::Archive::File> object with the given filename
@@ -139,6 +143,13 @@ if C<$eoa> is true.
 
 Copy data from C<$fh> to this attribute, adding an EOA
 (end-of-attribute) bit if C<$eoa> is true.
+
+=item C<add_data_fd_in_thread($fh, $eoa)>
+
+Same as C<add_data_fd> but the copy is done in a newly created thread.
+This function return immediately.
+Nothing should be done on the archive while it is running.
+The next action on the archive must be $attr->close().
 
 =item C<close()>
 
