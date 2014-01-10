@@ -2266,12 +2266,15 @@ sub status {
 	    my ($exitstatus, $output) = @_;
 	    if ($exitstatus != 0) {
 		my $err = $output;
+		for my $line (split '\n', $output) {
+		    debug("mtx: $line");
+		}
 		# if it's a regular SCSI error, just show the sense key
 		my ($sensekey) = ($err =~ /mtx: Request Sense: Sense Key=(.*)\n/);
 		$err = "SCSI error; Sense Key=$sensekey" if $sensekey;
 		$counter--;
-		if ($sensekey eq "Not Ready" and $counter > 0) {
-		    debug("$output");
+		if (($sensekey eq "Not Ready" and $counter > 0) ||
+		    ($sensekey eq "No Sense" and $counter > 0)) {
 		    return Amanda::MainLoop::call_after(1000, $run_mtx);
 		}
 		return $status_cb->("error from mtx: " . $err, {});
