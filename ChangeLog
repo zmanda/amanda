@@ -1,3 +1,6 @@
+2014-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Retry on MTX 'No Sense'.
+
 2014-01-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c, amar-src/amar.h, perl/Amanda/Archive.pod,
 	  perl/Amanda/Archive.swg: Add amar_size and
