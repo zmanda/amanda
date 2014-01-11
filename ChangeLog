@@ -1,3 +1,6 @@
+2014-01-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/glib-util.c: Fix for curl and gnutls.
+
 2014-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Retry on MTX 'No Sense'.
 

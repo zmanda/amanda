@@ -27,6 +27,7 @@
 
 #include "amanda.h"
 #include "glib-util.h"
+#include "pthread.h"
 #include "conffile.h" /* For find_multiplier. */
 
 #ifdef HAVE_LIBCURL
@@ -71,7 +72,13 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 static void
 init_ssl(void)
 {
-    gcry_control(GCRYCTL_SET_THREAD_CBS);
+    gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+
+    if (!gcry_check_version (GCRYPT_VERSION)) {
+	g_critical("libgcrypt version mismatch");
+    }
+
+    gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
 }
 
 #else	/* LIBCURL_USE_GNUTLS  */
