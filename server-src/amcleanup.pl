@@ -94,7 +94,7 @@ $Amanda_process->load_ps_table();
 if (-f "$logfile") {
     $Amanda_process->scan_log($logfile);
 } elsif (!$process_alive) {
-    $Amanda_process->set_master_process($config_name, "amdump", "amflush");
+    $Amanda_process->set_master_process($config_name, "amdump", "amflush", "amvault");
 }
 
 $Amanda_process->add_child();

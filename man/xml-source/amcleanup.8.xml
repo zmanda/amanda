@@ -65,7 +65,9 @@ man page for more details about Amanda.</para>
   <varlistentry>
   <term><option>-k</option></term>
   <listitem>
-   <para>Kill all process listed in the log file are their child. if there is no log file, then kill all amdump and amflush process and their child.</para>
+   <para>Kill all process listed in the log file are their child. if there
+is no log file, then kill all amdump, amflush and amvault process and their
+child.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
