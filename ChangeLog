@@ -1,3 +1,7 @@
+2014-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amcleanup.8.xml: Add amvault.
+	* server-src/amcleanup.pl: Add amvault.
+
 2014-01-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/glib-util.c: Fix for curl and gnutls.
 
