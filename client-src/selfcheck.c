@@ -1231,7 +1231,46 @@ print_platform(void)
     char  line[1025];
     GPtrArray *argv_ptr;
 
-    if (stat("/etc/lsb-release", &stat_buf) == 0) {
+    if (!stat("/usr/bin/lsb-release", &stat_buf)) {
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, "/usr/bin/lsb_release");
+	g_ptr_array_add(argv_ptr, "--id");
+	g_ptr_array_add(argv_ptr, "-s");
+	g_ptr_array_add(argv_ptr, NULL);
+	distro = get_first_line(argv_ptr);
+	if (distro && distro[0] == '"') {
+	    char *p= g_strdup(distro+1);
+	    p[strlen(p)-1] = '\0';
+	    g_free(distro);
+	    distro = p;
+	}
+	g_ptr_array_free(argv_ptr, TRUE);
+
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, "/usr/bin/lsb_release");
+	g_ptr_array_add(argv_ptr, "--description");
+	g_ptr_array_add(argv_ptr, "-s");
+	g_ptr_array_add(argv_ptr, NULL);
+	platform = get_first_line(argv_ptr);
+	if (platform && platform[0] == '"') {
+	    char *p= g_strdup(platform+1);
+	    p[strlen(p)-1] = '\0';
+	    g_free(platform);
+	    platform = p;
+	}
+	g_ptr_array_free(argv_ptr, TRUE);
+    } else if (stat("/etc/redhat-release", &stat_buf) == 0) {
+	FILE *release = fopen("/etc/redhat-release", "r");
+	distro = "RPM";
+	if (release) {
+	    char *result;
+	    result = fgets(line, 1024, release);
+	    if (result) {
+		platform = g_strdup(line);
+	    }
+	    fclose(release);
+	}
+    } else if (stat("/etc/lsb-release", &stat_buf) == 0) {
 	FILE *release = fopen("/etc/lsb-release", "r");
 	distro = "Ubuntu";
 	if (release) {
@@ -1243,17 +1282,6 @@ print_platform(void)
 			platform = g_strdup(p+1);
 		    }
 		}
-	    }
-	    fclose(release);
-	}
-    } else if (stat("/etc/redhat-release", &stat_buf) == 0) {
-	FILE *release = fopen("/etc/redhat-release", "r");
-	distro = "RPM";
-	if (release) {
-	    char *result;
-	    result = fgets(line, 1024, release);
-	    if (result) {
-		platform = g_strdup(line);
 	    }
 	    fclose(release);
 	}
