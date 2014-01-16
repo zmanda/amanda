@@ -1259,23 +1259,38 @@ print_platform(void)
     char  line[1025];
     GPtrArray *argv_ptr;
     FILE *release;
+    struct stat stat_buf;
 
-    release = fopen("/etc/lsb-release", "r");
-    if (release) {
-	distro = "Ubuntu";
-	while (fgets(line, 1024, release)) {
-	    if (strstr(line, "DESCRIPTION")) {
-		char *p = strchr(line, '=');
-		if (p) {
-		    g_free(platform);
-		    platform = g_strdup(p+1);
-		}
-	    }
+    if (!stat("/usr/bin/lsb-release", &stat_buf)) {
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, "/usr/bin/lsb_release");
+	g_ptr_array_add(argv_ptr, "--id");
+	g_ptr_array_add(argv_ptr, "-s");
+	g_ptr_array_add(argv_ptr, NULL);
+	distro = get_first_line(argv_ptr);
+	if (distro && distro[0] == '"') {
+	    char *p= g_strdup(distro+1);
+	    p[strlen(p)-1] = '\0';
+	    g_free(distro);
+	    distro = p;
 	}
-	fclose(release);
+	g_ptr_array_free(argv_ptr, TRUE);
+
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, "/usr/bin/lsb_release");
+	g_ptr_array_add(argv_ptr, "--description");
+	g_ptr_array_add(argv_ptr, "-s");
+	g_ptr_array_add(argv_ptr, NULL);
+	platform = get_first_line(argv_ptr);
+	if (platform && platform[0] == '"') {
+	    char *p= g_strdup(platform+1);
+	    p[strlen(p)-1] = '\0';
+	    g_free(platform);
+	    platform = p;
+	}
+	g_ptr_array_free(argv_ptr, TRUE);
 	goto print_platform_out;
     }
-
     release = fopen("/etc/redhat-release", "r");
     if (release) {
 	char *result;
@@ -1283,6 +1298,29 @@ print_platform(void)
 	result = fgets(line, 1024, release);
 	if (result) {
 	    platform = g_strdup(line);
+	}
+	fclose(release);
+	goto print_platform_out;
+    }
+
+    release = fopen("/etc/lsb-release", "r");
+    if (release) {
+	distro = "Ubuntu";
+	while (fgets(line, 1024, release)) {
+	    if (strstr(line, "DISTRIB_ID")) {
+		char *p = strchr(line, '=');
+		if (p) {
+		    g_free(distro);
+		    distro = g_strdup(p+1);
+		}
+	    }
+	    if (strstr(line, "DESCRIPTION")) {
+		char *p = strchr(line, '=');
+		if (p) {
+		    g_free(platform);
+		    platform = g_strdup(p+1);
+		}
+	    }
 	}
 	fclose(release);
 	goto print_platform_out;

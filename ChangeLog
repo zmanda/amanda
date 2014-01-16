@@ -1,3 +1,7 @@
+2014-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c (print_platform): Run /usr/bin/lsb_release if
+	  it exist.
+
 2014-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amcleanup.8.xml: Add amvault.
 	* server-src/amcleanup.pl: Add amvault.
