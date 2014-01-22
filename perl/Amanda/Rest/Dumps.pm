@@ -19,7 +19,7 @@
 
 package Amanda::Rest::Dumps;
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::JSON::Config;
+use Amanda::Rest::Configs;
 use Amanda::Tapelist;
 use Amanda::DB::Catalog;
 use Symbol;
@@ -29,18 +29,18 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::Rest::Dups -- JSON interface to Amanda::DB::Catalog
+Amanda::Rest::Dumps -- Rest interface to Amanda::DB::Catalog
 
 =head1 INTERFACE
 
 =over
 
-=item Amanda::JSON::DB::Catalog::get_parts
+=item Amanda::Rest::Dumps::get_parts
 
-JSON interface to Amanda::DB::Catalog::get_parts.
+Rest interface to Amanda::DB::Catalog::get_parts.
 
   {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::DB::Catalog::get_parts",
+   "method" :"Amanda::Rest::Dumps::get_parts",
    "params" :{"config":"test",
 	      "any param":"param value"},
    "id:     :"1"}
@@ -69,12 +69,12 @@ result:
                        "partnum":1}]},
    "id":"1"}
 
-=item Amanda::JSON::DB::Catalog::get_dumps
+=item Amanda::Rest::Dumps::get_dumps
 
-JSON interface to Amanda::DB::Catalog::get_dumps.
+Rest interface to Amanda::DB::Catalog::get_dumps.
 
   {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::DB::Catalog::get_dumps",
+   "method" :"Amanda::Rest::Dumps::get_dumps",
    "params" :{"config":"test",
 	      "any param":"param value"},
    "id:     :"2"}
@@ -115,7 +115,7 @@ result:
 sub get_parts {
     my %params = @_;
 
-    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
     my @parts = Amanda::DB::Catalog::get_parts(%params);
@@ -129,7 +129,7 @@ sub get_parts {
 sub get_dumps {
     my %params = @_;
 
-    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
     my @dumps = Amanda::DB::Catalog::get_dumps(%params);
@@ -152,7 +152,7 @@ sub get_dumps {
 sub list {
     my %params = @_;
 
-    my @result_messages = Amanda::Rest::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
     if ($params{'HOST'}) {

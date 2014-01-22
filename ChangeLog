@@ -1,4 +1,11 @@
 2014-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* Amanda/Rest/Amanda/bin/app.pl.in: Replace app.pl  with substituted
+	  value.
+	* Amanda/Rest/Amanda/bin/app.pl: Remove
+	* Amanda/Rest/Amanda/logs/deployment.log: Remove
+	* Amanda/Rest/Dumps.pm: Fix.
+
+2014-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Use the perl Amanda::Vault Module.
 	* perl/Amanda/Vault.pm: New module for vaulting.
 	* perl/Amanda/Report/human.pm: Fix for vaulting.

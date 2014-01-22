@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-use lib '/amanda/h1/linux/lib/amanda/perl';
+use lib '@amperldir@';
 
 Dancer::ModuleLoader->load_with_params('JSON', '-support_by_pp', '-convert_blessed_universally');
 use Dancer;
