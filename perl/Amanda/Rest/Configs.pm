@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-package Amanda::JSON::Config;
+package Amanda::Rest::Configs;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Symbol;
 use Data::Dumper;
@@ -28,19 +28,19 @@ use Amanda::Util qw( :constants );
 
 =head1 NAME
 
-Amanda::JSON::Config -- JSON interface to Amanda::Config
+Amanda::Rest::Configs -- Rest interface to Amanda::Config
 
 =head1 INTERFACE
 
 =over
 
-=item Amanda::JSON::Config::getconf_byname
+=item Amanda::Rest::Configs::getconf_byname
 
 Interface to C<Amanda::Config::getconf_byname>
 Return the value of the configuration keyword.
 
   {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::Config::getconf_byname",
+   "method" :"Amanda::Rest::Configs::getconf_byname",
    "params" :{"config":"test",
               "name":"autolabel"},
    "id:     :"1"}
@@ -57,13 +57,13 @@ result:
 
 The result vary with the type of the value.
 
-=item Amanda::JSON::Config::config_dir_relative
+=item Amanda::Rest::Configs::config_dir_relative
 
 Interface to C<Amanda::Config::config_dir_relative>
 Return the path relative to the config directory.
 
   {"jsonrpc":"2.0",
-   "method" :"Amanda::JSON::Config::config_dir_relative",
+   "method" :"Amanda::Rest::Configs::config_dir_relative",
    "params" :{"config":"test",
               "filename":"testfile"},
    "id:     :"2"}
@@ -80,7 +80,7 @@ result:
 
 sub config_init {
     my %params = @_;
-    my $config_name      = $params{'config'};
+    my $config_name      = $params{'CONF'};
     my $config_overrides = $params{'config_overrides'};
 
     my @result_messages;
@@ -120,7 +120,7 @@ sub config_init {
 sub getconf_byname {
     my %params = @_;
 
-    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
     my $name             = $params{'name'};
@@ -135,7 +135,7 @@ sub getconf_byname {
 sub config_dir_relative {
     my %params = @_;
 
-    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
     my $filename      = $params{'filename'};
@@ -151,40 +151,49 @@ sub config_dir_relative {
 sub configuration {
     my %params = @_;
 
-    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
-    die [1005, "Amanda::JSON::Config::configuration not implemented yet"];
+    die [1005, "Amanda::Rest::Configs::configuration not implemented yet"];
 }
 
 sub disklist {
     my %params = @_;
 
-    my @result_messages = Amanda::JSON::Config::config_init(@_);
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
-    die [1005, "Amanda::JSON::Config::disklist not implemented yet"];
+    die [1005, "Amanda::Rest::Configs::disklist not implemented yet"];
 }
 
 sub list {
     my %params = @_;
+    my @result_messages;
 
-    #opendir(my $dh, "/asdas/da") || die [1006, "beurp"];
-    opendir(my $dh, $Amanda::Paths::CONFIG_DIR) || die [1006, "beurp"];
-    #my @conf = grep { !/^\./ && -f "$Amanda::Paths::CONFIG_DIR/$_/amanda.conf" } readdir($dh);
-    my @conf;
-    closedir($dh);
-    if (@conf) {
+    if (!opendir(my $dh, $Amanda::Paths::CONFIG_DIR)) {
 	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500006,
+				errno    => $!,
+				dir      => $Amanda::Paths::CONFIG_DIR);
+	Dancer::status(404);
+    } else {
+	my @conf = grep { !/^\./ && -f "$Amanda::Paths::CONFIG_DIR/$_/amanda.conf" } readdir($dh);
+	closedir($dh);
+	if (@conf) {
+	    push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1500003,
 				config   => \@conf);
-    } else {
-	push @result_messages, Amanda::Config::Message->new(
+	} else {
+	    push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1500004);
+	    Dancer::status(404);
+	}
     }
     return \@result_messages;
 }

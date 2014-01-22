@@ -82,6 +82,7 @@ not handled by Amanda::Message):
  2100000  Amanda::Cmdfile::Message
  2200000  Amanda::Amflush::Message
  2400000  Amanda::Index::Message
+ 2500000  Amanda::Amvault::Message
 
 general keys:
   code            =>

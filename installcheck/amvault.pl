@@ -28,7 +28,7 @@ use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Mock;
-use Installcheck::Run qw(run run_err run_get $diskname);
+use Installcheck::Run qw(run run_err run_out run_get $diskname);
 use Amanda::DB::Catalog;
 use Amanda::Paths;
 use Amanda::Config qw( :init );
@@ -79,14 +79,14 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 my $tertiary_chg = setup_chg_disk();
 
 # try a few failures first
-like(run_err("$sbindir/amvault",
+like(run_out("$sbindir/amvault",
 		'--src-timestamp', 'latest',
 		'TESTCONF', 'someotherhost'),
     qr/No dumps to vault/,
     "amvault with a non-matching dumpspec dumps nothing")
-    or diag($Installcheck::Run::stderr);
+    or diag($Installcheck::Run::stdout);
 
-like(run_err("$sbindir/amvault",
+like(run_out("$sbindir/amvault",
 		'--src-timestamp', 'latest',
 		'--fulls-only',
 		'TESTCONF', '*', '*', '*', '1-3'),

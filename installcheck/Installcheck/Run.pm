@@ -158,7 +158,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(setup
-    run run_get run_get_err run_err
+    run run_get run_get_err run_out run_err
     cleanup
     $diskname $taperoot $holdingdir
     $stdout $stderr $exit_code
@@ -416,6 +416,17 @@ sub run_get_err {
     }
 
     my $ret = $stderr;
+    chomp($ret);
+    return $ret;
+}
+
+sub run_out {
+    if (run @_) {
+	Test::More::diag("run unexpectedly succeeded; no output to compare");
+	return '';
+    }
+
+    my $ret = $stdout;
     chomp($ret);
     return $ret;
 }

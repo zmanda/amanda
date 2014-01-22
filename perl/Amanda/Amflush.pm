@@ -49,7 +49,6 @@ package Amanda::Amflush;
 use strict;
 use warnings;
 
-use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
 use File::Glob qw( :glob );
 

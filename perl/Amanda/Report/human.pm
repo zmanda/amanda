@@ -645,9 +645,10 @@ sub output_error_summaries
 		    && (   $try->{taper}->{status} eq 'fail'
 			|| (   $try->{taper}->{status} eq 'partial'))) {
 		    my $flush = "FLUSH";
+		    $flush = "VAULT" if $report->get_flag("amvault_run");
 		    $flush = "FAILED" if exists $try->{dumper} && !exists $try->{chunker};
-		    if ($flush ne "FLUSH" or !defined $try->{taper}->{failure_from}
-					  or $try->{taper}->{failure_from} ne 'config') {
+		    if ($flush eq "FAILED" or !defined $try->{taper}->{failure_from}
+					   or $try->{taper}->{failure_from} ne 'config') {
 		        if ($try->{taper}->{status} eq 'partial') {
 			    # if the error message is omitted, then the taper only got a partial
 			    # dump from the dumper/chunker, rather than failing with a taper error
@@ -1127,6 +1128,7 @@ sub output_summary
     my $nodump_PARTIAL_format = get_summary_format($col_spec, 'nodump-PARTIAL', @summary_linedata);
     my $nodump_FAILED_format = get_summary_format($col_spec, 'nodump-FAILED', @summary_linedata);
     my $nodump_FLUSH_format = get_summary_format($col_spec, 'nodump-FLUSH', @summary_linedata);
+    my $nodump_VAULT_format = get_summary_format($col_spec, 'nodump-VAULT', @summary_linedata);
     my $nodump_NOT_FLUSHED_format = get_summary_format($col_spec, 'nodump-NOT FLUSHED', @summary_linedata);
     my $skipped_format = get_summary_format($col_spec, 'skipped', @summary_linedata);
 
@@ -1189,6 +1191,8 @@ sub output_summary
 	    $self->zprint(sprintf($nodump_FAILED_format, @data));
 	} elsif ($type eq 'nodump-FLUSH') {
 	    $self->zprint(sprintf($nodump_FLUSH_format, @data));
+	} elsif ($type eq 'nodump-VAULT') {
+	    $self->zprint(sprintf($nodump_VAULT_format, @data));
 	} elsif ($type eq 'nodump-NOT FLUSHED') {
 	    $self->zprint(sprintf($nodump_NOT_FLUSHED_format, @data));
 	} elsif ($type eq 'missing') {
@@ -1212,7 +1216,7 @@ sub output_summary
 ##  ('missing', host, disk, '' ..) # MISSING -----
 ##  ('noflush', host, disk, '' ..) # NO FILE TO FLUSH ------
 ##  ('nodump-$msg', host, disk, level, '', out, '--', '',
-##	    '', tapetime, taperate, taperpartial)  # ... {FLUSH|NOT FLUSHED|FAILED|PARTIAL} ...
+##	    '', tapetime, taperate, taperpartial)  # ... {VAULT|FLUSH|NOT FLUSHED|FAILED|PARTIAL} ...
 ##  ('skipped', host, disk, '' ..) # SKIPPED -----
 ##
 ## the taperpartial column is not covered by the columnspec, and "hangs off"
@@ -1454,6 +1458,7 @@ sub get_summary_info
 		push @rvs, [@rv];
 
 		@rv = 'nodump-FLUSH';
+		@rv = 'nodump-VAULT' if $report->get_flag("amvault_run");
 		push @rv, '';
 		push @rv, '';
 		push @rv, '';
@@ -1481,6 +1486,7 @@ sub get_summary_info
 			    ($dumper_status eq 'failed') ? 'FAILED' : 'PARTIAL'
 			  : (defined $tape_failure_from and
 			     $tape_failure_from eq 'config') ? 'NOT FLUSHED'
+			  : $report->get_flag("amvault_run") ? 'VAULT'
 							     : 'FLUSH';
 	    push @rv, "nodump-$message";
 	    push @rv, $hostname;
@@ -1515,6 +1521,7 @@ sub get_summary_info
 		push @rvs, [@rv];
 
 		@rv = 'nodump-FLUSH';
+		@rv = 'nodump-VAULT' if $report->get_flag("amvault_run");
 		push @rv, '';
 		push @rv, '';
 		push @rv, '';

@@ -1,0 +1,208 @@
+#!/usr/bin/env perl
+
+use lib '/amanda/h1/linux/lib/amanda/perl';
+
+Dancer::ModuleLoader->load_with_params('JSON', '-support_by_pp', '-convert_blessed_universally');
+use Dancer;
+#use Dancer::Plugin::REST;
+
+use Amanda::Debug;
+use Amanda::Changer;
+use Amanda::Config;
+use Amanda::Constants;
+use Amanda::Device;
+use Amanda::Disklist;
+use Amanda::Tapelist;
+use Amanda::Feature;
+use Amanda::Header;
+use Amanda::Holding;
+use Amanda::Interactivity;
+use Amanda::MainLoop;
+use Amanda::Paths;
+use Amanda::Process;
+use Amanda::Util qw( :constants );
+use Amanda::Rest::Configs;
+use Amanda::Rest::Dles;
+use Amanda::Rest::Dumps;
+use Amanda::Rest::Labels;
+use Amanda::Rest::Report;
+use Amanda::Rest::Runs;
+use Amanda::Rest::Storages::Labels;
+use Amanda::Rest::Status;
+use Amanda::Rest::Storages;
+use Amanda::Rest::Version;
+
+use Data::Structure::Util qw(unbless);
+
+Amanda::Util::setup_application("amrest-server", "server", $CONTEXT_CMDLINE);
+
+set serializer => 'JSON';
+#prepare_serializer_for_format;
+
+get '/amanda/v1.0' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Version::version(%p);
+	return $r
+};
+get '/amanda/v1.0/configs' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Configs::list(%p);
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Configs::fields(%p);
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::inventory(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/show' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::show(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/reset' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::reset(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/update' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::update(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/eject' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::eject(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/clean' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::clean(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/verify' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::verify(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/load' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::load(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::list(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::label(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::label(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::post_label(%p);
+	return $r
+};
+del '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::erase(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/labels' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Labels::list(%p);
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
+};
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
+};
+post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dles::setting(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dles::setting(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/estimate' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dles::estimate(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/info' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dles::info(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/due' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dles::due(%p);
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/dumps' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dumps::list(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dumps/hosts/:HOST' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dumps::list(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dumps/hosts/:HOST/disks/:DISK' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Dumps::list(%p);
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/status' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Status::current(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/report' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Report::report(%p);
+	return $r
+};
+
+post '/amanda/v1.0/configs/:CONF/runs/amdump' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::amdump(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/runs/amflush' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::amflush(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/runs/amvault' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::amvault(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/runs/:ID/status' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::list(%p);
+	return $r
+};
+
+dance;

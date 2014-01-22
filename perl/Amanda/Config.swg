@@ -1097,6 +1097,18 @@ sub local_message {
 	return "config error: $self->{'cfgerror'}";
     } elsif ($self->{'code'} == 1500002) {
 	return "No config specified";
+    } elsif ($self->{'code'} == 1500003) {
+	return "config name";
+    } elsif ($self->{'code'} == 1500004) {
+	return "no config";
+    } elsif ($self->{'code'} == 1500005) {
+	return "no such '$self->{'config'}' config";
+    } elsif ($self->{'code'} == 1500006) {
+	return "Can't open config directory '$self->{'dir'}': $self->{'errno'}";
+
+
+    } elsif ($self->{'code'} == 1550000) {
+	return "The version";
     }
 }
 %}

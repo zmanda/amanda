@@ -1234,7 +1234,7 @@ sub erase {
 			source_line => __LINE__,
 			code        => 1000054,
 			errno       => $!,
-			chilk_error => $?));
+			child_error => $?));
             }
             if (system($amtrmidx, $config_name)) {
 		return $steps->{'done'}->(Amanda::Label::Message->new(
@@ -1242,7 +1242,7 @@ sub erase {
 			source_line => __LINE__,
 			code        => 1000055,
 			errno       => $!,
-			chilk_error => $?));
+			child_error => $?));
             }
 	}
 	return $steps->{'done'}->();

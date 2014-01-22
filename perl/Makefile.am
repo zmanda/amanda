@@ -317,6 +317,12 @@ endif
 EXTRA_DIST += Amanda/Amflush.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Vault
+Amanda_DATA += Amanda/Vault.pm
+endif
+EXTRA_DIST += Amanda/Vault.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::JSON::*
 AmandaJSONdir = $(amperldir)/Amanda/JSON
 AmandaJSON_DATA = \
@@ -633,6 +639,26 @@ EXTRA_DIST += Amanda/Label.pm
 Amanda_DATA += Amanda/Message.pm
 EXTRA_DIST += Amanda/Message.pm
 
+# PACKAGE: Amanda::Rest::Config
+if WANT_SERVER
+# PACKAGE: Amanda::Rest::*
+AmandaRestdir = $(amperldir)/Amanda/Rest
+AmandaRest_DATA = \
+	Amanda/Rest/Configs.pm \
+	Amanda/Rest/Dles.pm \
+	Amanda/Rest/Dumps.pm \
+	Amanda/Rest/Labels.pm \
+	Amanda/Rest/Report.pm \
+	Amanda/Rest/Runs.pm \
+	Amanda/Rest/Status.pm \
+	Amanda/Rest/Storages.pm \
+	Amanda/Rest/Version.pm
+AmandaRestStoragesdir = $(amperldir)/Amanda/Rest/Storages
+AmandaRestStorages_DATA = Amanda/Rest/Storages/Labels.pm
+PM_FILES += $(AmandaRest_DATA) $(AmandaRestStorages_DATA)
+endif
+EXTRA_DIST += $(AmandaRest_DATA) $(AmandaRestStorages_DATA) Amanda/Rest/Amanda
+
 if WANT_CLIENT
 # PACKAGE: Amanda::Application
 libApplicationdir = $(amperldir)/auto/Amanda/Application
@@ -660,14 +686,15 @@ EXTRA_DIST += Amanda/Application/Zfs.pm
 
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.
-if WANT_CYGWIN_COPY_PERL_DLL
 amperldirauto="$(DESTDIR)$(amperldir)/auto/Amanda"
 install-data-hook:
+if WANT_CYGWIN_COPY_PERL_DLL
 	@for cygdll in $(wildcard $(amperldirauto)/bin/cyg*.dll); do \
 	    destfname=`echo $$cygdll|sed 's!/bin/cyg\([^.]*\).dll!/\1/\1.dll!'`; \
 	   cp "$$cygdll" "$$destfname"; \
 	done
 endif
+	cp -r Amanda/Rest/Amanda $(amlibexecdir)/Rest
 
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:

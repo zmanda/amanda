@@ -270,7 +270,7 @@ sub parse {
 	my @line = &quotewords('[:\s]+', 0, $line);
 	next if !defined $line[0];
 
-	if ($line[0] eq "amdump" || $line[0] eq "amflush") {
+	if ($line[0] eq "amdump" || $line[0] eq "amflush" || $line[0] eq "amvault") {
 	    if ($line[1] eq "start" && $line[2] eq "at") {
 		$self->{'datestr'} = $line;
 		$self->{'datestr'} =~ s/.*start at //g;
@@ -285,7 +285,13 @@ sub parse {
 	    } elsif ($line[1] eq "starttime-locale-independent") {
 		$self->{'starttime-locale-independent'} = $line[2] . " " . $line[3] . ":" . $line[4] . ":" . $line[5] . " " . $line[6];
 	    }
-	    if ($line[0] eq "amflush") {
+	    if ($line[0] eq "amvault") {
+		if ($line[1] eq 'vaulting') {
+		} elsif ($line[1] eq 'status' and $line[2] eq 'file') {
+		} elsif ($line[1] eq 'Done' and $line[2] eq 'vaulting') {
+		} elsif ($line[1] eq 'Partial' and $line[2] eq 'vaulting') {
+		} elsif ($line[1] eq 'Failed' and $line[2] eq 'vaulting') {
+		}
 	    }
 	} elsif ($line[0] eq "planner") {
 	    if ($line[1] eq "timestamp") {
