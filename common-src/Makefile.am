@@ -145,12 +145,14 @@ genversion_LDADD = $(libamanda_la_LIBADD)	\
 
 genversion.$(OBJEXT): $(genversion_SOURCES) genversion.h
 
-genversion.h: $(top_builddir)/config.status
-	-rm -f $@ $@.new
-	echo '#define CC "$(CC)"' > $@.new
-	echo '#define BUILT_DATE "'`date`'"' >> $@.new
-	echo '#define BUILT_MACH "$(target)"' >> $@.new
-	mv $@.new $@
+genversion.h ../perl/Amanda/Constants.pm.in: $(top_builddir)/config.status
+	-rm -f genversion.h genversion.h.new
+	echo '#define CC "$(CC)"' > genversion.h.new
+	GENDATE=`date`; \
+	echo '#define BUILT_DATE "'$$GENDATE'"' >> genversion.h.new; \
+	echo '#define BUILT_MACH "$(target)"' >> genversion.h.new; \
+	mv genversion.h.new genversion.h; \
+	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" ../perl/Amanda/Constants.pm.in.src > ../perl/Amanda/Constants.pm.in;
 
 version.c: genversion$(EXEEXT)
 	-rm -f version.c

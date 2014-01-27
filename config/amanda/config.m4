@@ -45,6 +45,8 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
 	( echo '#define BUILT_REV "'$SVN_REV'"'
 	  echo '#define BUILT_BRANCH "'$SVN_BRANCH'"'
 	) > common-src/svn-info.h
+	BUILT_REV="$SVN_REV"
+	BUILT_BRANCH="$SVN_BRANCH"
 
 	AC_MSG_RESULT([updated])
     else
@@ -56,7 +58,15 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
 	    echo '/* no information available */' > common-src/svn-info.h
 	    AC_MSG_RESULT([not available])
 	fi
+	BUILT_REV=""
+	BUILT_BRANCH=""
     fi
+
+    AC_SUBST(BUILT_BRANCH)
+    AC_SUBST(BUILT_REV)
+
+#    AC_DEFINE_UNQUOTED([BUILT_BRANCH], [$BUILT_BRANCH], [Amanda built branch])
+#    AC_DEFINE_UNQUOTED([BUILT_REV], [$BUILT_REV], [Amanda built svn rev])
 
     rm -f conftemp.svn
 ])

@@ -1,4 +1,15 @@
 2014-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: Make perl/Amanda/Constants.pm.in from
+				  perl/Amanda/Constants.pm.in.src
+	* config/amanda/config.m4: Set BUILT_REV and BUILR_BRANCH
+	* perl/Amanda/Constants.pm.in: Removed
+	* perl/Amanda/Constants.pm.in.src: New file
+	* perl/Amanda/Rest/Version.pm: Return BYUILT_DARA, BUILT_REV and
+	  BUILT_BRANCH.
+	* perl/Makefile.am: Make perl/Amanda/Constants.pm.in from
+			    perl/Amanda/Constants.pm.in.src
+
+2014-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (config_init_with_global): New function.
 	* common-src/conffile.h: Add CONFIG_INIT_GLOBAL and
 	  config_init_with_global prototype.

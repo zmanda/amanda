@@ -19,6 +19,7 @@
 
 package Amanda::Rest::Version;
 use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Constants;
 use Symbol;
 use Data::Dumper;
 use Scalar::Util;
@@ -43,9 +44,9 @@ sub version {
 				source_line     => __LINE__,
 				code     => 1550000,
 				VERSION  => $Amanda::Constants::VERSION,
-				BUILD_DATE => $Amanda::Constants::BUILD_DATE,
-				BUILD_REV => $Amanda::Constants::BUILD_REV,
-				BUILD_BRANCH => $Amanda::Constants::BUILD_BRANCH);
+				BUILT_DATE => $Amanda::Constants::BUILT_DATE,
+				BUILT_REV => $Amanda::Constants::BUILT_REV,
+				BUILT_BRANCH => $Amanda::Constants::BUILT_BRANCH);
     return \@result_messages;
 }
 

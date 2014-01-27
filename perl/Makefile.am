@@ -1,4 +1,4 @@
-##
+
 ## Prepare for SWIGging
 ##
 
@@ -7,6 +7,8 @@ include $(top_srcdir)/config/automake/scripts.am
 
 # build amglue *first*
 SUBDIRS = amglue .
+
+amlibexec_SCRIPTS_PERL = Amanda/Rest/Amanda/bin/app
 
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
@@ -615,6 +617,11 @@ Amanda_DATA += Amanda/Constants.pm
 EXTRA_DIST += Amanda/Constants.pm.in
 DISTCLEANFILES += Amanda/Constants.pm
 
+# PACKAGE: Amanda/Rest/Amanda/bin/app.pl
+Amanda_DATA += Amanda/Rest/Amanda/bin/app.pl
+EXTRA_DIST += Amanda/Rest/Amanda/bin/app.pl.in
+DISTCLEANFILES += Amanda/Rest/Amanda/bin/app.pl
+
 # PACKAGE: Amanda::Script_App
 Amanda_DATA += Amanda/Script_App.pm
 EXTRA_DIST += Amanda/Script_App.pm
@@ -683,6 +690,15 @@ AmandaApplication_DATA = Amanda/Application/Zfs.pm
 PM_FILES += $(AmandaApplication_DATA)
 endif
 EXTRA_DIST += Amanda/Application/Zfs.pm
+
+../genversion.h Amanda/Constants.pm.in: $(top_builddir)/config.status Amanda/Constants.pm.in.src
+	-rm -f ../common-src/genversion.h ../common-src/genversion.h.new
+	echo '#define CC "$(CC)"' > ../common-src/genversion.h.new
+	GENDATE=`date`; \
+	echo '#define BUILT_DATE "'$$GENDATE'"' >> ../common-src/genversion.h.new; \
+	echo '#define BUILT_MACH "$(target)"' >> ../common-src/genversion.h.new; \
+	mv ../common-src/genversion.h.new ../common-src/genversion.h; \
+	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" Amanda/Constants.pm.in.src > Amanda/Constants.pm.in;
 
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.
