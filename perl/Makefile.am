@@ -710,7 +710,33 @@ if WANT_CYGWIN_COPY_PERL_DLL
 	   cp "$$cygdll" "$$destfname"; \
 	done
 endif
-	cp -r Amanda/Rest/Amanda $(amlibexecdir)/Rest
+	mkdir -p $(amlibexecdir)/Rest/Amanda
+	mkdir -p $(amlibexecdir)/Rest/Amanda/environments
+	mkdir -p $(amlibexecdir)/Rest/Amanda/logs
+	mkdir -p $(amlibexecdir)/Rest/Amanda/public
+	mkdir -p $(amlibexecdir)/Rest/Amanda/public/css
+	mkdir -p $(amlibexecdir)/Rest/Amanda/public/images
+	mkdir -p $(amlibexecdir)/Rest/Amanda/public/javascripts
+	mkdir -p $(amlibexecdir)/Rest/Amanda/public
+	mkdir -p $(amlibexecdir)/Rest/Amanda/public
+	mkdir -p $(amlibexecdir)/Rest/Amanda/views
+	mkdir -p $(amlibexecdir)/Rest/Amanda/views/layouts
+	mkdir -p $(amlibexecdir)/Rest/Amanda/bin
+	cp -r Amanda/Rest/Amanda/config.yml $(amlibexecdir)/Rest/Amanda
+	cp -r Amanda/Rest/Amanda/environments/development.yml $(amlibexecdir)/Rest/Amanda/environments
+	cp -r Amanda/Rest/Amanda/environments/production.yml $(amlibexecdir)/Rest/Amanda/environments
+	cp -r Amanda/Rest/Amanda/public/404.html $(amlibexecdir)/Rest/Amanda/public
+	cp -r Amanda/Rest/Amanda/public/500.html $(amlibexecdir)/Rest/Amanda/public
+	cp -r Amanda/Rest/Amanda/public/dispatch.cgi $(amlibexecdir)/Rest/Amanda/public
+	cp -r Amanda/Rest/Amanda/public/dispatch.fcgi $(amlibexecdir)/Rest/Amanda/public
+	cp -r Amanda/Rest/Amanda/public/favicon.ico $(amlibexecdir)/Rest/Amanda/public
+	cp -r Amanda/Rest/Amanda/public/css $(amlibexecdir)/Rest/Amanda/public/css
+	cp -r Amanda/Rest/Amanda/public/images/perldancer-bg.jpg $(amlibexecdir)/Rest/Amanda/public/images
+	cp -r Amanda/Rest/Amanda/public/images/perldancer.jpg $(amlibexecdir)/Rest/Amanda/public/images
+	cp -r Amanda/Rest/Amanda/public/javascripts/jquery.js $(amlibexecdir)/Rest/Amanda/public/javascripts
+	cp -r Amanda/Rest/Amanda/views/index.tt $(amlibexecdir)/Rest/Amanda/views
+	cp -r Amanda/Rest/Amanda/views/layouts/main.tt $(amlibexecdir)/Rest/Amanda/views/layouts
+	cp -r Amanda/Rest/Amanda/bin/app.pl $(amlibexecdir)/Rest/Amanda/bin
 
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:

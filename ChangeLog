@@ -1,4 +1,7 @@
 2014-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Install Dancer generated file only.
+
+2014-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/Makefile.am: Make perl/Amanda/Constants.pm.in from
 				  perl/Amanda/Constants.pm.in.src
 	* config/amanda/config.m4: Set BUILT_REV and BUILR_BRANCH
