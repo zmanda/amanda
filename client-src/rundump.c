@@ -92,7 +92,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_CLIENT);
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
 
     if (argc < 3) {
 	error(_("Need at least 3 arguments\n"));

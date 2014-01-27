@@ -225,7 +225,7 @@ main(
 	do_tapechk = 1;
 
     set_config_overrides(cfg_ovr);
-    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[0]);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[0]);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));

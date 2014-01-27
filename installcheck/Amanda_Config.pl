@@ -104,7 +104,7 @@ $testconf->add_client_param('property', '"ANotHer_prOp" "baz"');
 $testconf->add_client_param('property', 'append "ANOTHER-prop" "boo"');
 $testconf->write();
 
-my $cfg_result = config_init($CONFIG_INIT_CLIENT, undef);
+my $cfg_result = config_init($CONFIG_INIT_CLIENT|$CONFIG_INIT_GLOBAL, undef);
 is($cfg_result, $CFGERR_OK,
     "Load test client configuration")
     or diag_config_errors();
@@ -1142,7 +1142,7 @@ $testconf->add_client_config_param('amdump-server', '"amdump.localhost"');
 $testconf->add_client_config_param('index-server', '"index.localhost"');
 $testconf->add_client_config_param('tape-server', '"tape.localhost"');
 $testconf->write();
-config_init($CONFIG_INIT_CLIENT | $CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+config_init_with_global($CONFIG_INIT_CLIENT | $CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 my $amdump_server = getconf($CNF_AMDUMP_SERVER);
 is ($amdump_server, "amdump.localhost", "amdump-server is \"amdump.localhost\"");
 my $index_server = getconf($CNF_INDEX_SERVER);

@@ -239,7 +239,7 @@ sub read_command {
     if (!$command->{'CONFIG'}) {
 	die "no CONFIG line given";
     }
-    config_init($CONFIG_INIT_EXPLICIT_NAME, $command->{'CONFIG'});
+    config_init_with_global($CONFIG_INIT_EXPLICIT_NAME, $command->{'CONFIG'});
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_ERRORS) {
 	die "configuration errors; aborting connection";
@@ -1297,7 +1297,7 @@ our $exit_status = 0;
 
 sub main {
     Amanda::Util::setup_application("amidxtaped", "server", $CONTEXT_DAEMON);
-    config_init(0, undef);
+    config_init($CONFIG_INIT_GLOBAL, undef);
     Amanda::Debug::debug_dup_stderr_to_debug();
 
     my $cs = main::ClientService->new();

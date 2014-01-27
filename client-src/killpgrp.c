@@ -82,7 +82,7 @@ main(
     set_pname("killpgrp");
 
     dbopen(DBG_SUBDIR_CLIENT);
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
 
     if (argc < 2) {
 	error("Need at least 2 arguments\n");

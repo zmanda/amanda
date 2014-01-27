@@ -89,7 +89,7 @@ else {
 }
 
 set_config_overrides($config_overrides);
-config_init($CONFIG_INIT_EXPLICIT_NAME, $conf);
+config_init_with_global($CONFIG_INIT_EXPLICIT_NAME, $conf);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

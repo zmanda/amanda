@@ -188,7 +188,7 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
     /* (check for config errors comes later) */
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);

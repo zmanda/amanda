@@ -2001,9 +2001,9 @@ main(
   signal(SIGPIPE, SIG_IGN);
 
   if (argc>1) {
-    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
   } else {
-    config_init(CONFIG_INIT_USE_CWD, NULL)
+    config_init_with_global(CONFIG_INIT_USE_CWD, NULL)
   }
 
   if (config_errors(NULL) >= CFGERR_WARNINGS) {

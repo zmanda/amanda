@@ -142,7 +142,7 @@ if ((!$list_retention && !$list_no_retention && !$remove_no_retention) &&
 my ($config_name, $label) = @ARGV;
 
 set_config_overrides($config_overrides);
-my $cfg_ok = config_init( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
+my $cfg_ok = config_init_with_global( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
 
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {

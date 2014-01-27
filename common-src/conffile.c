@@ -5728,6 +5728,19 @@ static void validate_deprecated_changerfile(conf_var_t *var G_GNUC_UNUSED,
  */
 
 cfgerr_level_t
+config_init_with_global(
+    config_init_flags flags,
+    char *arg_config_name)
+{
+    cfgerr_level_t cfgerr_level;
+    cfgerr_level = config_init(flags|CONFIG_INIT_GLOBAL, arg_config_name);
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	return cfgerr_level;
+    }
+    return config_init(flags|CONFIG_INIT_OVERLAY, arg_config_name);
+}
+
+cfgerr_level_t
 config_init(
     config_init_flags flags,
     char *arg_config_name)
@@ -5759,14 +5772,18 @@ config_init(
 	    flags = (flags & (~CONFIG_INIT_EXPLICIT_NAME)) | CONFIG_INIT_USE_CWD;
     }
 
-    if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
+    if (flags & CONFIG_INIT_GLOBAL) {
+	amfree(config_name);
+	g_free(config_dir);
+	config_dir = g_strdup(CONFIG_DIR);
+    } else if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
 	g_free(config_name);
 	config_name = g_strdup(arg_config_name);
 	g_free(config_dir);
 	config_dir = g_strconcat(CONFIG_DIR, "/", arg_config_name, NULL);
     } else if (flags & CONFIG_INIT_USE_CWD) {
         char * cwd;
-        
+
         cwd = get_original_cwd();
 	if (!cwd) {
 	    /* (this isn't a config error, so it's always fatal) */
@@ -5779,10 +5796,6 @@ config_init(
 	    config_name = g_strdup(config_name + 1);
 	}
 
-    } else if (flags & CONFIG_INIT_CLIENT) {
-	amfree(config_name);
-	g_free(config_dir);
-	config_dir = g_strdup(CONFIG_DIR);
     } else {
 	/* ok, then, we won't read anything (for e.g., amrestore) */
 	amfree(config_name);
@@ -5821,7 +5834,7 @@ config_init(
 
 	read_conffile(config_filename,
 		flags & CONFIG_INIT_CLIENT,
-		flags & CONFIG_INIT_CLIENT);
+		flags & (CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL));
     } else {
 	amfree(config_filename);
     }
@@ -5829,17 +5842,19 @@ config_init(
     /* apply config overrides to default setting */
     apply_config_overrides(config_overrides, NULL);
 
-    if (config_overrides) {
-	int i;
-	for (i = 0; i < config_overrides->n_used; i++) {
-	    if (config_overrides->ovr[i].applied == FALSE) {
-		conf_parserror(_("unknown parameter '%s'"),
+    if (!(flags & CONFIG_INIT_GLOBAL) || !arg_config_name) {
+	if (config_overrides) {
+	    int i;
+	    for (i = 0; i < config_overrides->n_used; i++) {
+		if (config_overrides->ovr[i].applied == FALSE) {
+		    conf_parserror(_("unknown parameter '%s'"),
 			       config_overrides->ovr[i].key);
+		}
 	    }
 	}
-    }
 
-    update_derived_values(flags & CONFIG_INIT_CLIENT);
+	update_derived_values(flags & CONFIG_INIT_CLIENT);
+    }
 
     return cfgerr_level;
 }

@@ -103,9 +103,9 @@ $opt_header = 1 if $opt_raw;
 
 set_config_overrides($config_overrides);
 if ($opt_config) {
-    config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
+    config_init_with_global($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
 } else {
-    config_init(0, undef);
+    config_init($CONFIG_INIT_GLOBAL, undef);
 }
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {

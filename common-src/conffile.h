@@ -1631,6 +1631,9 @@ typedef enum {
     /* New configuration should "overlay" existing configuration; this
      * is used by clients to load multiple amanda-client.conf files. */
     CONFIG_INIT_OVERLAY = 1 << 3,
+
+    /* Load the global config */
+    CONFIG_INIT_GLOBAL = 1 << 4,
 } config_init_flags;
 
 /* Initialize this application's configuration, with the specific actions
@@ -1652,6 +1655,9 @@ typedef enum {
  * @returns: current error level
  */
 cfgerr_level_t config_init(
+	 config_init_flags flags,
+	 char *arg_config_name);
+cfgerr_level_t config_init_with_global(
 	 config_init_flags flags,
 	 char *arg_config_name);
 

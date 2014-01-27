@@ -320,7 +320,7 @@ main(
     startclock();
     g_debug(_("version %s"), VERSION);
 
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
 
     //check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
     //root for amrecover

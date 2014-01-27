@@ -54,7 +54,7 @@ use Amanda::JSON::Status;
 use Amanda::JSON::Tapelist;
 
 Amanda::Util::setup_application("amjson-server", "server", $CONTEXT_CMDLINE);
-Amanda::Config::config_init(0,undef);
+Amanda::Config::config_init(CONFIG_INIT_GLOBAL, undef);
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 use Data::Dumper;

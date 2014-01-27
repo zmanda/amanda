@@ -63,7 +63,7 @@ usage() unless (@ARGV);
 $opt_config = shift @ARGV;
 
 set_config_overrides($config_overrides);
-config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
+config_init_with_global($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

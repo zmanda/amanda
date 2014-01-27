@@ -94,7 +94,7 @@ sub cmd_config {
 	return;
     }
     my $config = $1;
-    config_init($CONFIG_INIT_EXPLICIT_NAME, $config);
+    config_init_with_global($CONFIG_INIT_EXPLICIT_NAME, $config);
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_ERRORS) {
 	$self->sendctlline("ERROR configuration errors; aborting connection");
@@ -386,7 +386,7 @@ our $exit_status = 0;
 
 sub main {
     Amanda::Util::setup_application("amdumpd", "server", $CONTEXT_DAEMON);
-    config_init(0, undef);
+    config_init($CONFIG_INIT_GLOBAL, undef);
     Amanda::Debug::debug_dup_stderr_to_debug();
 
     my $cs = main::ClientService->new();

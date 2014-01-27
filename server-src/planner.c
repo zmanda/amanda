@@ -240,7 +240,7 @@ main(
 	cfg_opt = argv[1];
 
     set_config_overrides(cfg_ovr);
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, cfg_opt);
 
     /* conf_diskfile is freed later, as it may be used in an error message */
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));

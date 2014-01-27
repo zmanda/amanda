@@ -255,7 +255,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     /* Parse the configuration; we'll handle errors later */
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
 
     if (geteuid() == 0) {
 	check_running_as(RUNNING_AS_ROOT);

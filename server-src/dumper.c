@@ -384,7 +384,7 @@ main(
 	}
     }
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
 
     if (!dumper_setuid) {
 	error(_("dumper must be run setuid root"));

@@ -556,7 +556,7 @@ $config_name = shift @ARGV;    # only use first argument
 $config_name ||= '.';          # default config is current dir
 
 set_config_overrides($config_overrides);
-config_init( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
+config_init_with_global( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
 
 my ( $cfgerr_level, @cfgerr_errors ) = config_errors();
 if ( $cfgerr_level >= $CFGERR_WARNINGS ) {

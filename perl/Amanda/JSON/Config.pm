@@ -100,7 +100,7 @@ sub config_init {
 	}
 	Amanda::Config::set_config_overrides($g_config_overrides);
     }
-    Amanda::Config::config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+    Amanda::Config::config_init_global($CONFIG_INIT_EXPLICIT_NAME, $config_name);
 
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_WARNINGS) {

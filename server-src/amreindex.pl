@@ -103,7 +103,7 @@ $cmd_flags |= $Amanda::Cmdline::CMDLINE_EXACT_MATCH if $opt_exact_match;
 my $timestamp = $opt_timestamp;
 
 set_config_overrides($config_overrides);
-config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+config_init_with_global($CONFIG_INIT_EXPLICIT_NAME, $config_name);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

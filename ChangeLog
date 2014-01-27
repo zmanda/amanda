@@ -1,3 +1,17 @@
+2014-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (config_init_with_global): New function.
+	* common-src/conffile.h: Add CONFIG_INIT_GLOBAL and
+	  config_init_with_global prototype.
+	* man/xml-source/amanda.conf.5.xml: Document /etc/amanda/amanda.conf
+	  is loaded.
+	* perl/Amanda/Config.swg: Swig CONFIG_INIT_GLOBAL and
+	  config_init_with_global.
+	* installcheck/Amanda_Config.pl: Use CONFIG_INIT_GLOBAL and/or
+	  config_init_with_global.
+	* installcheck/amgetconf.pl: Fix for amandates.
+	* */*.c, */*.pl: Use CONFIG_INIT_GLOBAL and/or
+	  config_init_with_global.
+
 2014-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* Amanda/Rest/Amanda/bin/app.pl.in: Replace app.pl  with substituted
 	  value.

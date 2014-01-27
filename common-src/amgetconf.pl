@@ -316,14 +316,14 @@ if (@ARGV == 1) {
 ## Now start looking at the parameter.
 
 if ($parameter =~ /^build(?:\..*)?/) {
-    config_init(0|$execute_where, undef);
+    config_init($CONFIG_INIT_GLOBAL|$execute_where, undef);
     build_param($parameter, $opt_list);
     Amanda::Util::finish_application();
     exit(0);
 } 
 
 if ($parameter =~ /^db(open|close)\./) {
-    config_init(0|$execute_where, undef);
+    config_init($CONFIG_INIT_GLOBAL|$execute_where, undef);
     db_param($parameter, $opt_list);
     Amanda::Util::finish_application();
     exit(0);
@@ -333,14 +333,14 @@ if ($parameter =~ /^db(open|close)\./) {
 set_config_overrides($config_overrides);
 if ($execute_where == $CONFIG_INIT_CLIENT &&
     defined($config_name) && $config_name eq '.') {
-    config_init($CONFIG_INIT_USE_CWD | $execute_where, undef);
+    config_init_with_global($CONFIG_INIT_USE_CWD | $execute_where, undef);
 } elsif ($execute_where == $CONFIG_INIT_CLIENT &&
     defined($config_name) && $config_name ne '.') {
-    config_init($CONFIG_INIT_EXPLICIT_NAME | $execute_where, $config_name);
+    config_init_with_global($CONFIG_INIT_EXPLICIT_NAME | $execute_where, $config_name);
 } elsif ($execute_where == $CONFIG_INIT_CLIENT) {
-    config_init($execute_where, undef);
+    config_init($execute_where|$CONFIG_INIT_GLOBAL, undef);
 } else {
-    config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD | $execute_where, $config_name);
+    config_init_with_global($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD | $execute_where, $config_name);
 }
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {

@@ -454,7 +454,7 @@ main(
     if(!tape_server_name) tape_server_name = DEFAULT_TAPE_SERVER;
     tape_server_name = g_strdup(tape_server_name);
 
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();

@@ -28,8 +28,11 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para>&amconf; is the main configuration file for Amanda. This manpage lists the
-relevant sections and parameters of this file for quick reference.</para> 
-<para> The file <emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda.conf</emphasis> is loaded.</para>
+relevant sections and parameters of this file for quick reference.</para>
+<para> The file <emphasis remap='B'>&lt;CONFIG_DIR&gt;/amanda.conf</emphasis>
+is loaded if it exists then the files
+<emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda.conf</emphasis>
+is loaded.</para>
 </refsect1>
 
 <refsect1><title>SYNTAX</title>

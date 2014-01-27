@@ -144,7 +144,7 @@ main(
     set_pname("calcsize");
 
     dbopen(NULL);
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -183,7 +183,7 @@ main(
     set_pname("calcsize");
 
     dbopen(DBG_SUBDIR_CLIENT);
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
     dbprintf(_("version %s\n"), VERSION);
 
     /* drop root privileges; we'll regain them for the required operations */

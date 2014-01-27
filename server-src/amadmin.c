@@ -241,7 +241,7 @@ main(
 	goto done;
     }
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskq);

@@ -996,9 +996,12 @@ amglue_add_constant(CONFIG_INIT_EXPLICIT_NAME, config_init_flags);
 amglue_add_constant(CONFIG_INIT_USE_CWD, config_init_flags);
 amglue_add_constant(CONFIG_INIT_CLIENT, config_init_flags);
 amglue_add_constant(CONFIG_INIT_OVERLAY, config_init_flags);
+amglue_add_constant(CONFIG_INIT_GLOBAL, config_init_flags);
 amglue_copy_to_tag(config_init_flags, init);
 
 cfgerr_level_t config_init(config_init_flags flags,
+		     char *arg_config_name);
+cfgerr_level_t config_init_with_global(config_init_flags flags,
 		     char *arg_config_name);
 void config_uninit(void);
 char **get_config_options(int first);
@@ -1039,7 +1042,7 @@ void add_config_override_opt(config_overrides_t *co,
 void set_config_overrides(config_overrides_t *co);
 
 amglue_export_tag(init,
-    config_init config_uninit get_config_options
+    config_init config_init_with_global config_uninit get_config_options
     get_config_name get_config_dir get_config_filename
     config_print_errors config_clear_errors config_errors
     new_config_overrides free_config_overrides add_config_override

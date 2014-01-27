@@ -135,7 +135,7 @@ main(
 	amandad_auth = g_strdup(argv[2]);
     }
 
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(CONFIG_INIT_CLIENT|CONFIG_INIT_GLOBAL, NULL);
     /* (check for config errors comes later) */
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);

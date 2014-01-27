@@ -105,7 +105,7 @@ main(
     dbprintf(_("%s: version %s\n"), argv[0], VERSION);
 
     set_config_overrides(cfg_ovr);
-    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &diskl);

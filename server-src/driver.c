@@ -277,7 +277,7 @@ main(
 	}
     }
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
+    config_init_with_global(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &origq);

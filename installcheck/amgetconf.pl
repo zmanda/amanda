@@ -61,15 +61,15 @@ is(run_get('amgetconf', 'TESTCONF', "taperalgo"), "FIRST",
 is(run_get('amgetconf', 'TESTCONF', "printer"), "",
     "printer defaults to empty string, which is not an error");
 
-# test command-line parsing
+# test command-line parsing (amandates is in the global amanbda-client.conA)f
 is(run_get('amgetconf', 'TESTCONF', '--execute-where', 'client', 'amandates'),
-   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "$Installcheck::TMP/TESTCONF/amandates",
     "--execute-where client");
 is(run_get('amgetconf', 'TESTCONF', '--execute-where=client', 'amandates'),
-   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "$Installcheck::TMP/TESTCONF/amandates",
     "--execute-where=client");
 is(run_get('amgetconf', 'TESTCONF', '--client', 'amandates'),
-   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "$Installcheck::TMP/TESTCONF/amandates",
     "--client");
 
 is(run_get('amgetconf', 'TESTCONF', '--execute-where', 'server', 'reserve'), "100",
@@ -79,7 +79,7 @@ is(run_get('amgetconf', 'TESTCONF', '--execute-where=server', 'reserve'), "100",
 is(run_get('amgetconf', 'TESTCONF', '--execute-where=server', '--execute-where=server', 'reserve'), "100",
     "--execute-where=server --execute-where=server");
 is(run_get('amgetconf', 'TESTCONF', '--execute-where=client', '--execute-where=client', 'amandates'),
-   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "$Installcheck::TMP/TESTCONF/amandates",
     "--execute-where=client --execute-where=client");
 
 like(run_err('amgetconf', 'TESTCONF', '--execute-where=server', '--execute-where=client'),
@@ -287,9 +287,9 @@ is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my_script:eXECute-on'), 'PRE-DL
     "insensitive to case in subsec_key");
 is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute_on'), 'PRE-DLE-AMCHECK',
     "insensitive to -/_ in subsec_key");
-is(run_get('amgetconf', 'TESTCONF', 'dumptype:testdump1:auth', '-odumptype:testdump:auth=SSH'), 'SSH',
+is(run_get('amgetconf', 'TESTCONF', 'dumptype:srvcompress:Auth', '-odumptype:srvcompress:auth=SSH'), 'SSH',
     "inherited setting are overrided");
-is(run_get('amgetconf', 'TESTCONF', 'dumptype:testdump1:compress', '-odumptype:testdump:compress=SERVER BEST'), 'SERVER BEST',
+is(run_get('amgetconf', 'TESTCONF', 'dumptype:srvcompress:compress', '-odumptype:srvcompress:compress=SERVER BEST'), 'SERVER BEST',
     "inherited default are overrided");
 
 is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'device')))],
