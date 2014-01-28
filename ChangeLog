@@ -1,4 +1,7 @@
 2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Fix distro.
+
+2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Fix check and installation of dancer module
 
 2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>

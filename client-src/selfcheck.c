@@ -1294,7 +1294,7 @@ print_platform(void)
     release = fopen("/etc/redhat-release", "r");
     if (release) {
 	char *result;
-	distro = "RPM";
+	distro = g_strdup("RPM");
 	result = fgets(line, 1024, release);
 	if (result) {
 	    platform = g_strdup(line);
@@ -1305,7 +1305,7 @@ print_platform(void)
 
     release = fopen("/etc/lsb-release", "r");
     if (release) {
-	distro = "Ubuntu";
+	distro = g_strdup("Ubuntu");
 	while (fgets(line, 1024, release)) {
 	    if (strstr(line, "DISTRIB_ID")) {
 		char *p = strchr(line, '=');
@@ -1329,7 +1329,7 @@ print_platform(void)
     release = fopen("/etc/debian_version", "r");
     if (release) {
 	char *result;
-	distro = "Debian";
+	distro = g_strdup("Debian");
 	result = fgets(line, 1024, release);
 	if (result) {
 	    platform = g_strdup(line);
@@ -1347,7 +1347,7 @@ print_platform(void)
     if (uname) {
 	if (strncmp(uname, "SunOS", 5) == 0) {
 	    FILE *release = fopen("/etc/release", "r");
-	    distro = "Solaris";
+	    distro = g_strdup("Solaris");
 	    if (release) {
 		char *result;
 		result = fgets(line, 1024, release);
@@ -1374,13 +1374,13 @@ print_platform(void)
     if (productName && productVersion &&
 	!g_str_equal(productName, "unknown") &&
 	!g_str_equal( productVersion, "unknown")) {
-	distro = "mac";
+	distro = g_strdup("mac");
 	platform = g_strdup_printf("%s %s", productVersion, productVersion);
     }
 
 print_platform_out:
     if (!distro) {
-	distro = "Unknown";
+	distro = g_strdup("Unknown");
     }
     if (!platform) {
 	platform = g_strdup("Unknown");
@@ -1391,6 +1391,7 @@ print_platform_out:
     g_fprintf(stdout, "OK distro %s\n", distro);
     g_fprintf(stdout, "OK platform %s\n", platform);
 
+    amfree(distro);
     amfree(platform);
     amfree(productName);
     amfree(productVersion);
