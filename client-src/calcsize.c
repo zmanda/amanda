@@ -588,12 +588,19 @@ final_size_dump(
     struct fs_usage fsusage;
     off_t mapsize;
     char *s;
+    int   rc;
+    int   saved_errno;
 
     /* calculate the map sizes */
 
     s = g_strconcat(topdir, "/.", NULL);
-    if(get_fs_usage(s, NULL, &fsusage) == -1) {
-	error("statfs %s: %s", s, strerror(errno));
+    set_root_privs(1);
+    rc = get_fs_usage(s, NULL, &fsusage);
+    saved_errno = errno;
+    set_root_privs(0);
+
+    if (rc == -1) {
+	error("statfs %s: %s", s, strerror(saved_errno));
 	/*NOTREACHED*/
     }
     amfree(s);
