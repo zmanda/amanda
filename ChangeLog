@@ -1,5 +1,8 @@
 2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
-	* recover-src/extract_list.c: Do not uncpress/decrypt if server do not
+	* client-src/selfcheck.c: fix for /usr/bin/lsb_release
+
+2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Do not uncompress/decrypt if server do not
 	  have fe_amrecover_receive_unfiltered.
 
 2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
