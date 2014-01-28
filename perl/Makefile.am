@@ -8,7 +8,8 @@ include $(top_srcdir)/config/automake/scripts.am
 # build amglue *first*
 SUBDIRS = amglue .
 
-amlibexec_SCRIPTS_PERL = Amanda/Rest/Amanda/bin/app
+amlibexec_SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app
+SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app
 
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
@@ -617,11 +618,6 @@ Amanda_DATA += Amanda/Constants.pm
 EXTRA_DIST += Amanda/Constants.pm.in
 DISTCLEANFILES += Amanda/Constants.pm
 
-# PACKAGE: Amanda/Rest/Amanda/bin/app.pl
-Amanda_DATA += Amanda/Rest/Amanda/bin/app.pl
-EXTRA_DIST += Amanda/Rest/Amanda/bin/app.pl.in
-DISTCLEANFILES += Amanda/Rest/Amanda/bin/app.pl
-
 # PACKAGE: Amanda::Script_App
 Amanda_DATA += Amanda/Script_App.pm
 EXTRA_DIST += Amanda/Script_App.pm
@@ -645,6 +641,39 @@ EXTRA_DIST += Amanda/Label.pm
 # PACKAGE: Amanda::Message
 Amanda_DATA += Amanda/Message.pm
 EXTRA_DIST += Amanda/Message.pm
+
+# PACKAGE: Amanda/Rest/Amanda/bin/app.pl
+if WANT_SERVER
+#Amanda_DATA += Amanda/Rest/Amanda/bin/app.pl
+AmandaRestAmandadir = $(amperldir)/Amanda/Rest/Amanda
+AmandaRestAmanda = Amanda/Rest/Amanda/config.ymp
+AmandaRestAmandaEnvironmentsdir = $(amperldir)/Amanda/Rest/Amanda/environments
+AmandaRestAmandaEnvironments_DATA = Amanda/Rest/Amanda/environments/development.yml \
+			        Amanda/Rest/Amanda/environments/production.yml
+AmandaRestAmandapublicdir = $(amperldir)/Amanda/Rest/Amanda/public
+AmandaRestAmandapublic_DATA = Amanda/Rest/Amanda/public/404.html \
+			      Amanda/Rest/Amanda/public/500.html \
+			      Amanda/Rest/Amanda/public/dispatch.cgi \
+			      Amanda/Rest/Amanda/public/dispatch.fcgi \
+			      Amanda/Rest/Amanda/public/favicon.ico
+AmandaRestAmandapubliccssdir = $(amperldir)/Amanda/Rest/Amanda/public/css
+AmandaRestAmandapubliccss_DATA = Amanda/Rest/Amanda/public/css/error.css \
+				 Amanda/Rest/Amanda/public/css/style.css
+AmandaRestAmandapublicimagesdir = $(amperldir)/Amanda/Rest/Amanda/public/images
+AmandaRestAmandapublicimages_DATA = Amanda/Rest/Amanda/public/images/perldancer-bg.jpg \
+				    Amanda/Rest/Amanda/public/images/perldancer.jpg
+AmandaRestAmandapublicjavascriptsdir = $(amperldir)/Amanda/Rest/Amanda/public/javascripts
+AmandaRestAmandapublicjavascripts_DATA = Amanda/Rest/Amanda/public/javascripts/jquery.js
+AmandaRestAmandaviewsdir = $(amperldir)/Amanda/Rest/Amanda/views
+AmandaRestAmandaviews_DATA = Amanda/Rest/Amanda/views/index.tt
+AmandaRestAmandaviewslayoutsdir = $(amperldir)/Amanda/Rest/Amanda/views/layout
+AmandaRestAmandaviewslayouts_DATA = Amanda/Rest/Amanda/views/layouts/main.tt
+AmandaRestAmandabindir = $(amperldir)/Amanda/Rest/Amanda/bin
+AmandaRestAmandabin_DATA = Amanda/Rest/Amanda/bin/app.pl
+
+endif
+EXTRA_DIST += Amanda/Rest/Amanda/bin/app.pl.in
+DISTCLEANFILES += Amanda/Rest/Amanda/bin/app.pl
 
 # PACKAGE: Amanda::Rest::Config
 if WANT_SERVER
@@ -710,33 +739,7 @@ if WANT_CYGWIN_COPY_PERL_DLL
 	   cp "$$cygdll" "$$destfname"; \
 	done
 endif
-	mkdir -p $(amlibexecdir)/Rest/Amanda
-	mkdir -p $(amlibexecdir)/Rest/Amanda/environments
 	mkdir -p $(amlibexecdir)/Rest/Amanda/logs
-	mkdir -p $(amlibexecdir)/Rest/Amanda/public
-	mkdir -p $(amlibexecdir)/Rest/Amanda/public/css
-	mkdir -p $(amlibexecdir)/Rest/Amanda/public/images
-	mkdir -p $(amlibexecdir)/Rest/Amanda/public/javascripts
-	mkdir -p $(amlibexecdir)/Rest/Amanda/public
-	mkdir -p $(amlibexecdir)/Rest/Amanda/public
-	mkdir -p $(amlibexecdir)/Rest/Amanda/views
-	mkdir -p $(amlibexecdir)/Rest/Amanda/views/layouts
-	mkdir -p $(amlibexecdir)/Rest/Amanda/bin
-	cp -r Amanda/Rest/Amanda/config.yml $(amlibexecdir)/Rest/Amanda
-	cp -r Amanda/Rest/Amanda/environments/development.yml $(amlibexecdir)/Rest/Amanda/environments
-	cp -r Amanda/Rest/Amanda/environments/production.yml $(amlibexecdir)/Rest/Amanda/environments
-	cp -r Amanda/Rest/Amanda/public/404.html $(amlibexecdir)/Rest/Amanda/public
-	cp -r Amanda/Rest/Amanda/public/500.html $(amlibexecdir)/Rest/Amanda/public
-	cp -r Amanda/Rest/Amanda/public/dispatch.cgi $(amlibexecdir)/Rest/Amanda/public
-	cp -r Amanda/Rest/Amanda/public/dispatch.fcgi $(amlibexecdir)/Rest/Amanda/public
-	cp -r Amanda/Rest/Amanda/public/favicon.ico $(amlibexecdir)/Rest/Amanda/public
-	cp -r Amanda/Rest/Amanda/public/css $(amlibexecdir)/Rest/Amanda/public/css
-	cp -r Amanda/Rest/Amanda/public/images/perldancer-bg.jpg $(amlibexecdir)/Rest/Amanda/public/images
-	cp -r Amanda/Rest/Amanda/public/images/perldancer.jpg $(amlibexecdir)/Rest/Amanda/public/images
-	cp -r Amanda/Rest/Amanda/public/javascripts/jquery.js $(amlibexecdir)/Rest/Amanda/public/javascripts
-	cp -r Amanda/Rest/Amanda/views/index.tt $(amlibexecdir)/Rest/Amanda/views
-	cp -r Amanda/Rest/Amanda/views/layouts/main.tt $(amlibexecdir)/Rest/Amanda/views/layouts
-	cp -r Amanda/Rest/Amanda/bin/app.pl $(amlibexecdir)/Rest/Amanda/bin
 
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:
