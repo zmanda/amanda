@@ -1,4 +1,7 @@
 2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Fix distro.
+
+2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/calcsize.c: Take root privilege to call get_fs_usage.
 
 2014-01-16  Jean-Louis Martineau <martineau@zmanda.com>
