@@ -1231,7 +1231,7 @@ print_platform(void)
     char  line[1025];
     GPtrArray *argv_ptr;
 
-    if (!stat("/usr/bin/lsb-release", &stat_buf)) {
+    if (!stat("/usr/bin/lsb_release", &stat_buf)) {
 	argv_ptr = g_ptr_array_new();
 	g_ptr_array_add(argv_ptr, "/usr/bin/lsb_release");
 	g_ptr_array_add(argv_ptr, "--id");
