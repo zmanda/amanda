@@ -2862,7 +2862,8 @@ start_processing_data(
     }
 
     /* decrypt */
-    if (ctl_data->file.encrypted) {
+    if (ctl_data->file.encrypted &&
+	am_has_feature(tapesrv_features, fe_amrecover_receive_unfiltered)) {
 	char *argv[3];
 	int  crypt_out;
 	int  errfd = fileno(stderr);
@@ -2876,7 +2877,8 @@ start_processing_data(
     }
 
     /* decompress */
-    if (ctl_data->file.compressed) {
+    if (ctl_data->file.compressed &&
+	am_has_feature(tapesrv_features, fe_amrecover_receive_unfiltered)) {
 	char *argv[3];
 	int  comp_out;
 	int  errfd = fileno(stderr);
