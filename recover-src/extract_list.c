@@ -3123,7 +3123,8 @@ start_processing_data(
 
     /* decrypt */
     ctl_data->decrypt_cdata.fd = -1;
-    if (ctl_data->file.encrypted) {
+    if (ctl_data->file.encrypted &&
+	am_has_feature(tapesrv_features, fe_amrecover_receive_unfiltered)) {
 	char *argv[3];
 	int  crypt_out;
 	int pipe_decrypt_err[2];
@@ -3152,7 +3153,8 @@ start_processing_data(
 
     /* decompress */
     ctl_data->decompress_cdata.fd = -1;
-    if (ctl_data->file.compressed) {
+    if (ctl_data->file.compressed &&
+	am_has_feature(tapesrv_features, fe_amrecover_receive_unfiltered)) {
 	char *argv[3];
 	int  comp_out;
 	char *comp_prog;
