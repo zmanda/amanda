@@ -83,6 +83,12 @@ sub local_message {
 	return "Drive $self->{'drive'}: no such drive in changer";
     } elsif ($self->{'code'} == 1100025) {
 	return "Drive $self->{'drive'}: device '$self->{'device_name'}' error: $self->{'error'}";
+    } elsif ($self->{'code'} == 1100026) {
+	return "Can't create vtape root '$self->{'dir'}': $self->{'error'}";
+    } elsif ($self->{'code'} == 1100027) {
+	return "Created vtape root '$self->{'dir'}'";
+    } elsif ($self->{'code'} == 1100028) {
+	return "Bucket created";
     }
 }
 
@@ -283,6 +289,11 @@ C<relative_slot> parameter to C<load>.
 =head3 quit
 
 To terminate a changer object.
+
+=head3 create
+
+Initialize a changer and create required data.
+This method should be called once only.
 
 =head3 load
 
@@ -1054,6 +1065,7 @@ sub _stubop {
 	message => "'$chg_foo:' does not support $op");
 }
 
+sub create { _stubop("create", "finished_cb", @_); }
 sub load { _stubop("loading volumes", "res_cb", @_); }
 sub reset { _stubop("reset", "finished_cb", @_); }
 sub clean { _stubop("clean", "finished_cb", @_); }
@@ -1742,16 +1754,18 @@ sub show {
 }
 
 package Amanda::Changer::Error;
-use Amanda::Debug qw( :logging );
+#use Amanda::Debug qw( :logging );
 use Carp qw( cluck );
-use Amanda::Debug;
 use Amanda::Message;
 use vars qw( @ISA );
-@ISA = qw( Amanda::Message );
+@ISA = qw( Amanda::Changer::Message );
 
+#use overload
+#    '""' => sub { $_[0]->{'message'}; },
+#    'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
 use overload
-    '""' => sub { $_[0]->{'message'}; },
-    'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
+    '""'  => sub { $_[0]->message(); },
+    'cmp' => sub { $_[0]->message() cmp $_[1]; };
 
 my %known_err_types = map { ($_, 1) } qw( fatal failed );
 my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl driveinuse volinuse unknown device empty );
@@ -1760,15 +1774,19 @@ sub new {
     my $class = shift; # ignore class
     my ($type, %info) = @_;
 
+    my $self = \%info;
+    #bless ($self, "Amanda::Changer::Message");
+    bless ($self, $class);
     my $reason = "";
-    $reason = ", reason='$info{reason}'" if $type eq "failed";
-    debug("new Amanda::Changer::Error: type='$type'$reason, message='$info{message}'");
+    $reason = ", reason='$self->{reason}'" if $type eq "failed";
     # Amanda::Message
-    $info{'source_filename'} = 'unknown' if !$info{'source_filename'};
-    $info{'source_line'} = 0 if !$info{'source_line'};
-    $info{'code'} = 3 if !$info{'code'};
-
-    $info{'type'} = $type;
+    $self->{'source_filename'} = 'unknown' if !$self->{'source_filename'};
+    $self->{'source_line'} = 0 if !$self->{'source_line'};
+    $self->{'code'} = 3 if !$self->{'code'};
+    $self->{'message'} = $self->message() if !defined $self->{'message'};
+    $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};
+    $self->{'type'} = $type;
+    Amanda::Debug::debug("new Amanda::Changer::Error: type='$type'$reason, message='$self->{message}'");
 
     # do some sanity checks.  Note that these sanity checks issue a warning
     # with cluck, but add default values to the error.  This is in the hope
@@ -1776,9 +1794,9 @@ sub new {
     # make_error invocation.  The stack trace produced by cluck should help to
     # track down the bad make_error invocation.
 
-    if (!exists $info{'message'}) {
+    if (!exists $self->{'message'} and $self->{'code'} == 3) {
 	cluck("no message given to A::C::make_error");
-	$info{'message'} = "unknown error";
+	$self->{'message'} = "unknown error";
     }
 
     if (!exists $known_err_types{$type}) {
@@ -1786,17 +1804,17 @@ sub new {
 	$type = 'fatal';
     }
 
-    if ($type eq 'failed' and !exists $info{'reason'}) {
+    if ($type eq 'failed' and !exists $self->{'reason'}) {
 	cluck("no reason given to A::C::make_error");
-	$info{'reason'} = "unknown";
+	$self->{'reason'} = "unknown";
     }
 
-    if ($type eq 'failed' and !exists $known_err_reasons{$info{'reason'}}) {
-	cluck("invalid Amanda::Changer::Error reason '$info{reason}'");
-	$info{'reason'} = 'unknown';
+    if ($type eq 'failed' and !exists $known_err_reasons{$self->{'reason'}}) {
+	cluck("invalid Amanda::Changer::Error reason '$self->{reason}'");
+	$self->{'reason'} = 'unknown';
     }
 
-    return bless (\%info, $class);
+    return $self;
 }
 
 # do nothing in quit

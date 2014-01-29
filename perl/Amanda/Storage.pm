@@ -190,7 +190,8 @@ sub new {
 
     $self->{'tapetype'} = lookup_tapetype($self->{'tapetype_name'});
     $self->{'chg'} = Amanda::Changer->new($changer_name, storage => $self,
-					  tapelist => $params{'tapelist'})
+					  tapelist => $params{'tapelist'},
+					  no_validate => $params{'no_validate'})
 				if defined $changer_name;
     return $self;
 

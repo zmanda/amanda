@@ -277,6 +277,40 @@ sub {
     $chg->inventory(inventory_cb => $inventory_cb);
 });
 
+subcommand("create", "create", "create the changer root directory",
+sub {
+    my ($finished_cb, @args) = @_;
+
+    my ($storage, $chg) = load_changer($finished_cb) or return;
+
+    if (@args != 0) {
+	return usage($finished_cb);
+    }
+
+    # TODO -- support an --xml option
+
+    my $create_cb = make_cb(create => sub {
+	my ($err, @results) = @_;
+	if ($err) {
+	    if ($err->notimpl) {
+		if ($err->{'message'}) {
+		    print STDERR "create not supported by this changer: $err->{'message'}\n";
+		} else {
+		    print STDERR "create not supported by this changer\n";
+		}
+	    } else {
+		print STDERR "$err\n";
+	    }
+	} else {
+	    print STDERR "Created\n";
+	}
+	$storage->quit();
+	$chg->quit();
+	return $finished_cb->();
+    });
+    $chg->create(finished_cb => $create_cb);
+});
+
 subcommand("verify", "verify", "verify the changer is correctly configured",
 sub {
     my ($finished_cb, @args) = @_;

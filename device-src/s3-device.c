@@ -672,6 +672,9 @@ static void
 s3_device_open_device(Device *pself, char *device_name,
 		  char * device_type, char * device_node);
 
+static gboolean
+s3_device_create(Device *pself);
+
 static DeviceStatusFlags s3_device_read_label(Device * self);
 
 static gboolean
@@ -1443,6 +1446,7 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     parent_class = g_type_class_ref (TYPE_DEVICE);
 
     device_class->open_device = s3_device_open_device;
+    device_class->create = s3_device_create;
     device_class->read_label = s3_device_read_label;
     device_class->start = s3_device_start;
     device_class->finish = s3_device_finish;
@@ -2468,6 +2472,35 @@ s3_device_open_device(Device *pself, char *device_name,
     }
 }
 
+static gboolean
+s3_device_create(Device *pself)
+{
+    S3Device *self = S3_DEVICE(pself);
+    guint response_code;
+    s3_error_code_t s3_error_code;
+
+    if (!setup_handle(self)) {
+        /* setup_handle already set our error message */
+	return FALSE;
+    }
+
+    if (!s3_make_bucket(self->s3t[0].s3, self->bucket, self->project_id)) {
+	s3_error(self->s3t[0].s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+
+	device_set_error(pself,
+	    g_strdup_printf(_("While creating S3 bucket: %s"), s3_strerror(self->s3t[0].s3)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
+    self->bucket_made = TRUE;
+
+    if (parent_class->create) {
+        return parent_class->create(pself);
+    }
+    return TRUE;
+}
+
 static void s3_device_finalize(GObject * obj_self) {
     S3Device *self = S3_DEVICE (obj_self);
     int thread;
@@ -2638,7 +2671,8 @@ catalog_close(
     return result;
 }
 
-static gboolean setup_handle(S3Device * self) {
+static gboolean
+setup_handle(S3Device * self) {
     Device *d_self = DEVICE(self);
     int thread;
     guint response_code;

@@ -701,6 +701,71 @@ sub clean {
     return \@result_messages;
 }
 
+sub create {
+    my %params = @_;
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my $user_msg = sub {
+        my $msg = shift;
+        push @result_messages, $msg;
+    };
+
+    my $main = sub {
+	my $finished_cb = shift;
+	my $storage;
+	my $chg;
+
+	my $steps = define_steps
+	    cb_ref => \$finished_cb,
+	    finalize => sub { $storage->quit() if defined $storage;
+			      $chg->quit() if defined $chg };
+
+	step start => sub {
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+					    no_validate  => 1);
+	    if ($storage->isa("Amanda::Changer::Error")) {
+		Dancer::status(404);
+		push @result_messages, $storage;
+		return $steps->{'done'}->();
+	    }
+
+	    $chg = $storage->{'chg'};
+	    if ($chg->isa("Amanda::Changer::Error")) {
+		Dancer::status(404);
+		push @result_messages, $chg;
+		return $steps->{'done'}->();
+	    }
+
+	    return $chg->create(finished_cb => $steps->{'create_cb'});
+	};
+
+	step create_cb => sub {
+	    my ($err, @results) = @_;
+
+	    if ($err) {
+		push @result_messages, $err;
+	    } else {
+		push @result_messages, @results;
+	    }
+	    return $steps->{'done'}->();
+	};
+
+	step done => sub {
+	    my $err = shift;
+	    push @result_messages, $err if $err;
+	    return $finished_cb->();
+	};
+
+    };
+
+    $main->(\&Amanda::MainLoop::quit);
+    Amanda::MainLoop::run();
+    $main = undef;
+
+    return \@result_messages;
+}
+
 sub verify {
     my %params = @_;
     my @result_messages = Amanda::Rest::Configs::config_init(@_);

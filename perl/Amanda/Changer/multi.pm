@@ -142,6 +142,37 @@ sub new {
     return $self;
 }
 
+sub create {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    # use the first slot
+    my $slot_name = $self->{slots}[0];
+    my $device = Amanda::Device->new($slot_name);
+    if ($device->status != $DEVICE_STATUS_SUCCESS) {
+	return $self->make_error("failed", $params{'finished_cb'},
+		reason => "device",
+		message => "opening '$slot_name': " . $device->error_or_status());
+    }
+    if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
+	return $self->make_error("failed", $params{'finisehd_cb'},
+		reason => "device",
+		message => $err);
+    }
+
+    if (!$device->create()) {
+	return $self->make_error("failed", $params{'finished_cb'},
+		reason => "device",
+		message => $device->error_or_status());
+    }
+    $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100028));
+}
+
 sub load {
     my $self = shift;
     my %params = @_;

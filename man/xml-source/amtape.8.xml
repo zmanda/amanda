@@ -59,6 +59,15 @@ config override option, e.g.,
 <variablelist remap='TP'>
 
 <varlistentry>
+<term><command>create</command></term>
+<listitem>
+
+<para>Call the changer create method, it create the vtape root dirtectory or
+the s3 bucket.</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
 <term><command>label</command> <arg choice='plain'><replaceable>label</replaceable></arg></term>
 <listitem>
 

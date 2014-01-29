@@ -1,3 +1,19 @@
+2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c (device_create): New function.
+	* device-src/device.h (device_create): Add prototype.
+	* device-src/s3-device.c (s3_device_create): New function.
+	* perl/Amanda/Device.swg: Swig device_create.
+	* perl/Amanda/Changer.pm (create): New method.
+	* perl/Amanda/Changer/disk.pm (create): New create method.
+	* perl/Amanda/Changer/multi.pm (create): New create method.
+	* perl/Amanda/JSON/Changer.pm: Add create method.
+	* perl/Amanda/Rest/Storages.pm (create): Add method to the Rest API.
+	* perl/Amanda/Rest/Storages/Labels.pm: Remove debugging message.
+	* perl/Amanda/Storage.pm: Add no_validate argument.
+	* server-src/amtape.pl: Add create subcommand that call the changer
+	  create method.
+	* man/xml-source/amtape.8.xml: Document create subcommand.
+
 2014-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: fix for /usr/bin/lsb_release
 

@@ -243,6 +243,7 @@ struct _DeviceClass {
     gboolean (* set_reuse)(Device *self);
     gboolean (* set_no_reuse)(Device *self, char *label, char *datestamp);
 
+    gboolean (* create) (Device * self);
     gboolean (* sync_catalog) (Device * self, int request, int wait, char **slot_names);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
@@ -394,6 +395,7 @@ gboolean device_check_writable(Device *self);
 gboolean device_have_set_reuse(Device *self);
 gboolean device_set_reuse(Device *self);
 gboolean device_set_no_reuse(Device *self, char *label, char *datestamp);
+gboolean device_create(Device *self);
 gboolean device_sync_catalog(Device * self, int request, int wait,
 			     char **slot_names);
 

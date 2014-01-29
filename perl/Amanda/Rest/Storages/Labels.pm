@@ -292,11 +292,9 @@ sub label {
 
 sub erase {
     my %params = @_;
-Amanda::Debug::debug("erase");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
-Amanda::Debug::debug("erase a1");
     my $user_msg = sub {
 	my $msg = shift;
 	push @result_messages, $msg;
@@ -305,13 +303,11 @@ Amanda::Debug::debug("erase a1");
     my $main = sub {
 	my $finished_cb = shift;
 
-Amanda::Debug::debug("erase a2");
 	my $steps = define_steps
 	    cb_ref => \$finished_cb;
 
 	step start => sub {
 
-Amanda::Debug::debug("erase a3");
 	    # amadmin may later try to load this and will die if it has errors
 	    # load it now to catch the problem sooner (before we might erase data)
 	    my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
@@ -325,17 +321,14 @@ Amanda::Debug::debug("erase a3");
 		$steps->done();
 	    }
 
-Amanda::Debug::debug("erase a4");
             my $tl = Amanda::Rest::Labels::init();
 	    if ($tl->isa("Amanda::Message")) {
 		return $steps->done($tl);
 	    }
 
-Amanda::Debug::debug("erase a5");
 	    my $Label = Amanda::Label->new(tapelist => $tl,
 					   user_msg => $user_msg);
 
-Amanda::Debug::debug("erase a6");
 	    my @labels;
 	    if ($params{'remove_no_retention'}) {
 		@labels = Amanda::Tapelist::list_no_retention();
@@ -343,7 +336,6 @@ Amanda::Debug::debug("erase a6");
 		@labels = ($params{'LABEL'});
 	    }
 
-Amanda::Debug::debug("erase a7: ".join(',',@labels));
 	    $Label->erase(labels      => \@labels,
 			  cleanup     => $params{'cleanup'},
 			  dry_run     => $params{'dry_run'},

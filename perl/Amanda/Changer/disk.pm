@@ -77,7 +77,7 @@ See the amanda-changers(7) manpage for usage information.
 
 sub new {
     my $class = shift;
-    my ($config, $tpchanger) = @_;
+    my ($config, $tpchanger, %params) = @_;
     my ($dir) = ($tpchanger =~ /chg-disk:(.*)/);
     my $properties = $config->{'properties'};
 
@@ -114,7 +114,9 @@ sub new {
 	$self->{'fl'} = Amanda::Util::file_lock->new($self->{'umount_lockfile'})
     }
 
-    $self->_validate();
+    if (!$params{'no_validate'}) {
+	$self->_validate();
+    }
     debug("chg-disk: Dir $dir");
     debug("chg-disk: Using statefile '$self->{state_filename}'");
     return $self->{'fatal_error'} if defined $self->{'fatal_error'};
@@ -134,6 +136,28 @@ sub quit {
     $self->force_unlock();
     delete $self->{'fl'};
     $self->SUPER::quit();
+}
+
+sub create {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    if (!mkdir($self->{'dir'}, 0700)) {
+	return $self->make_error("failed", $params{'finished_cb'},
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100026,
+		dir     => $self->{'dir'},
+		error   => $!,
+		reason  => "unknown");
+    }
+    return $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100027,
+		dir     => $self->{'dir'}));
 }
 
 sub load {

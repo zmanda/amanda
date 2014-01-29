@@ -441,6 +441,11 @@ typedef struct Device {
 	    return device_sync_catalog(self, request, wait, slot_names);
 	}
 
+	gboolean
+	create() {
+	    return device_create(self);
+	}
+
 	%typemap(out) const GSList * {
 	    GSList *iter;
 

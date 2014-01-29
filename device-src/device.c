@@ -1681,6 +1681,25 @@ device_sync_catalog(
     }
 }
 
+gboolean
+device_create(
+    Device *self)
+{
+    DeviceClass *klass;
+
+    g_assert(self->access_mode == ACCESS_NULL);
+
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->create) {
+	return (klass->create)(self);
+    } else {
+	device_set_error(self,
+	    g_strdup(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+}
+
 /* Property handling */
 
 void
