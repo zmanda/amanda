@@ -1,4 +1,7 @@
 2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am, perl/Makefile.am: Fix build.
+
+2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am (EXTRA_DIST): Add Amanda/Constants.pm.in.src
 
 2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>

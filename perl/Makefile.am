@@ -727,7 +727,8 @@ EXTRA_DIST += Amanda/Application/Zfs.pm
 	echo '#define BUILT_DATE "'$$GENDATE'"' >> ../common-src/genversion.h.new; \
 	echo '#define BUILT_MACH "$(target)"' >> ../common-src/genversion.h.new; \
 	mv ../common-src/genversion.h.new ../common-src/genversion.h; \
-	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" Amanda/Constants.pm.in.src > Amanda/Constants.pm.in;
+	mkdir ../perl/Amanda; \
+	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" $(srcdir)/Amanda/Constants.pm.in.src > Amanda/Constants.pm.in;
 
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.
