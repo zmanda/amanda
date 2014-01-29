@@ -615,8 +615,8 @@ DISTCLEANFILES += Amanda/Paths.pm
 
 # PACKAGE: Amanda::Constants
 Amanda_DATA += Amanda/Constants.pm
-EXTRA_DIST += Amanda/Constants.pm.in
-DISTCLEANFILES += Amanda/Constants.pm
+EXTRA_DIST += Amanda/Constants.pm.in.src
+DISTCLEANFILES += Amanda/Constants.pm Amanda/Constants.pm.in
 
 # PACKAGE: Amanda::Script_App
 Amanda_DATA += Amanda/Script_App.pm

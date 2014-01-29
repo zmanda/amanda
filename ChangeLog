@@ -1,4 +1,7 @@
 2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am (EXTRA_DIST): Add Amanda/Constants.pm.in.src
+
+2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (device_create): New function.
 	* device-src/device.h (device_create): Add prototype.
 	* device-src/s3-device.c (s3_device_create): New function.
