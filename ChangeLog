@@ -1,3 +1,7 @@
+2014-01-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Storages.pm: Fix update command.
+	* perl/Makefile.am: Fix installation of Amanda/Rest/Amanda/config.yml
+
 2014-01-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/Makefile.am, perl/Makefile.am: Fix build.
 

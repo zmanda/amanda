@@ -1001,7 +1001,8 @@ sub update {
 	    }
 
 	    return $chg->update(user_msg_fn => $user_msg,
-				finished_cb => $steps->{'done'});
+				finished_cb => $steps->{'done'},
+				changed     => $params{'changed'});
 	};
 
 	step done => sub {

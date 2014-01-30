@@ -646,7 +646,7 @@ EXTRA_DIST += Amanda/Message.pm
 if WANT_SERVER
 #Amanda_DATA += Amanda/Rest/Amanda/bin/app.pl
 AmandaRestAmandadir = $(amperldir)/Amanda/Rest/Amanda
-AmandaRestAmanda = Amanda/Rest/Amanda/config.ymp
+AmandaRestAmanda_DATA = Amanda/Rest/Amanda/config.yml
 AmandaRestAmandaEnvironmentsdir = $(amperldir)/Amanda/Rest/Amanda/environments
 AmandaRestAmandaEnvironments_DATA = Amanda/Rest/Amanda/environments/development.yml \
 			        Amanda/Rest/Amanda/environments/production.yml
