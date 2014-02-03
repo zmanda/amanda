@@ -45,143 +45,119 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 
 =over
 
-=item Amanda::Rest::Dles::force
+=item Changed setting on Dles
 
-Interface to C<Amanda::Curinfo::force>
-Force a full backup of a Dle at next run.
+request:
+  POST /amanda/v1.0/configs/:CONF/dles/hosts/:HOST
+    query arguments:
+        disk=DISK
+        force=0|1
+        force_level_1=0|1
+        force_bump=0|1
+        force_no_bump=0|1
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dles::force",
-   "params" :{"config":"test",
-	      "host":"$host",
-	      "disk":"$disk"},
-   "id"     :"1"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1300003",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "localhost.localdomain:/bootAMGTAR is set to a forced level 0 at next run.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "336"
+     }
+  ]
+  [
+     {
+        "code" : "1300019",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "force command for localhost.localdomain:/bootAMGTAR cleared.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "365"
+     }
+  ]
+  [
+     {
+        "code" : "1300021",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "no force command outstanding for localhost.localdomain:/bootAMGTAR, unchanged.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "390"
+     }
+  ]
+  [
+     {
+        "code" : "1300022",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "localhost.localdomain:/bootAMGTAR FORCE command was cleared",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "466"
+     }
+  ]
+  [
+     {
+        "code" : "1300023",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "localhost.localdomain:/bootAMGTAR is set to a forced level 1 at next run.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "434"
+     }
+  ]
+  [
+     {
+        "code" : "1300020",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "force-level-1 command for localhost.localdomain:/bootAMGTAR cleared.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "380"
+     }
+  ]
+  [
+     {
+        "code" : "1300025",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "localhost.localdomain:/bootAMGTAR is set to bump at next run.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "486"
+     }
+  ]
+  [
+     {
+        "code" : "1300027",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "bump command for localhost.localdomain:/bootAMGTAR cleared.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "547"
+     }
+  ]
+  [
+     {
+        "code" : "1300026",
+        "disk" : "/bootAMGTAR",
+        "host" : "localhost.localdomain",
+        "message" : "localhost.localdomain:/bootAMGTAR is set to not bump at next run.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Curinfo.pm",
+        "source_line" : "520"
+     }
+  ]
 
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Curinfo.pm",
-	      "disk":"$disk",
-	      "source_line":"334",
-	      "code":1300003,
-	      "host":"$host",
-	      "message":"$host:$disk is set to a forced level 0 at next run."}],
-   "id":"1"}
-
-=item Amanda::Rest::Dles::force_level_1
-
-Interface to C<Amanda::Curinfo::force_level_1>
-Force a level 1 backup of a Dle at next run.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dles::force_level_1",
-   "params" :{"config":"test",
-	      "host":"$host",
-	      "disk":"$disk"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Curinfo.pm",
-	      "disk":"$disk",
-	      "source_line":"432",
-	      "code":1300023,
-	      "host":"$host",
-	      "message":"$host:$disk is set to a forced level 1 at next run."}],
-   "id":"1"}
-
-=item Amanda::Rest::Dles::unforce
-
-Interface to C<Amanda::Curinfo::unforce>
-Remove force/force_level_1 command for a Dle.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dles::unforce",
-   "params" :{"config":"test",
-	      "host":"$host",
-	      "disk":"$disk"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Curinfo.pm",
-	      "disk":"$disk",
-	      "source_line":"363",
-	      "code":1300019,
-	      "host":"$host",
-	      "message":"force command for $host:$disk cleared."}],
-   "id":"1"}
-
-=item Amanda::Rest::Dles::force_bump
-
-Interface to C<Amanda::Curinfo::force_bump>
-Force a bump to next higher level of a Dle at next run.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dles::force_bump",
-   "params" :{"config":"test",
-	      "host":"$host",
-	      "disk":"$disk"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Curinfo.pm",
-	      "disk":"$disk",
-	      "source_line":"484",
-	      "code":1300025,
-	      "host":"$host",
-	      "message":"$host:$disk is set to bump at next run."}],
-   "id":"1"}
-
-=item Amanda::Rest::Dles::force_no_bump
-
-Interface to C<Amanda::Curinfo::force_no_bump>
-Prevent a Dle to bump at next run.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dles::force_no_bump",
-   "params" :{"config":"test",
-	      "host":"$host",
-	      "disk":"$disk"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Curinfo.pm",
-	      "disk":"$disk",
-	      "source_line":"518",
-	      "code":1300026,
-	      "host":"$host",
-	      "message":"$host:$disk is set to not bump at next run."}],
-   "id":"1"}
-
-=item Amanda::Rest::Dles::unforce_bump
-
-Interface to C<Amanda::Curinfo::unforce_bump>
-Remove force_bump/force_no_bump command for a Dle.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dles::unforce_bump",
-   "params" :{"config":"test",
-	      "host":"$host",
-	      "disk":"$disk"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Curinfo.pm",
-	      "disk":"$disk",
-	      "source_line":"545",
-	      "code":1300027,
-	      "host":"$host",
-	      "message":"bump command for $host:$disk cleared."}],
-   "id":"1"}
 
 =back
 
@@ -202,36 +178,39 @@ print STDERR "disk: $params{'disk'}\n";
     Amanda::Disklist::unload_disklist();
     my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
     if ($cfgerr_level >= $CFGERR_ERRORS) {
-	return Amanda::Disklist::Message->new(
+	push @result_messages, Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
+	return \@result_messages;
     }
 
     my $curinfodir = getconf($CNF_INFOFILE);;
     my $ci = Amanda::Curinfo->new($curinfodir);
     my $host = Amanda::Disklist::get_host($params{'HOST'});
     if (!$host) { # $host->isa("Amanda::Message");
-	return Amanda::Disklist::Message->new(
+	push @result_messages, Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400007,
 			diskfile     => $diskfile,
 			host         => $params{'HOST'});
+	return \@result_messages;
     }
     my @disks;
     if ($params{'disk'}) {
 	my $disk = $host->get_disk($params{'disk'});
 	if (!$disk) {  # $disk->isa("Amanda::Message");
-	    return Amanda::Disklist::Message->new(
+	    push @result_messages, Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400008,
 			diskfile     => $diskfile,
 			host         => $params{'HOST'},
 			disk         => $params{'disk'});
+	    return \@result_messages;
 	}
 	push @disks, $disk;
     } else {
@@ -247,21 +226,21 @@ print STDERR "disk: $params{'disk'}\n";
 	    }
 	}
 	if (defined $params{'force_level_1'}) {
-	    if ($params{'force'}) {
+	    if ($params{'force_level_1'}) {
 		push @result_messages, $ci->force_level_1($disk);
 	    } else {
-		push @result_messages, $ci->unforce_level_1($disk);
+		push @result_messages, $ci->unforce($disk);
 	    }
 	}
 	if (defined $params{'force_bump'}) {
-	    if ($params{'force'}) {
+	    if ($params{'force_bump'}) {
 		push @result_messages, $ci->force_bump($disk);
 	    } else {
 		push @result_messages, $ci->unforce_bump($disk);
 	    }
 	}
 	if (defined $params{'force_no_bump'}) {
-	    if ($params{'force'}) {
+	    if ($params{'force_no_bump'}) {
 		push @result_messages, $ci->force_no_bump($disk);
 	    } else {
 		push @result_messages, $ci->unforce_bump($disk);

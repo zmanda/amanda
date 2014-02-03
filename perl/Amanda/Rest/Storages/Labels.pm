@@ -36,166 +36,184 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::Rest::Stroages::Labels -- Rest interface to Amanda::Label
+Amanda::Rest::Storages::Labels -- Rest interface to manage label
 
 =head1 INTERFACE
 
 =over
 
-=item Amanda::Rest::Storages::Labels::assign
+=item List labels of a storage
 
-Interface to C<Amanda::Rest::Stoages::labels::assign>
-Assign meta, barcode, pool and/or storage to a label.
+You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the storage.
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::Labels::assign",
-   "params" :{"config":"test",
-	      "label":"$label"
-	      "meta":"$meta"
-	      "barcode":"$barcode"
-	      "pool":"$pool"
-              "storage":"$storage"},
-   "id"     :"1"}
+request:
+  GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
 
-Do not set "meta", "barcode", "pool" or "storage" if you do not want to modify them, set them to an empty string "" if you want to unset them.
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1600001",
+        "message" : "List of labels",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages/Labels.pm",
+        "source_line" : "245",
+        "tles" : [
+           {
+              "barcode" : null,
+              "blocksize" : "32",
+              "comment" : null,
+              "config" : "test",
+              "datestamp" : "20131118134146",
+              "label" : "test-ORG-AA-vtapes-002",
+              "meta" : "test-ORG-AA",
+              "pool" : "my_vtapes",
+              "position" : 45,
+              "reuse" : "1",
+              "storage" : "my_vtapes"
+           }
+	   ...
+        ]
+     }
+  ]
 
-The result is an array of Amanda::Message:
+=item List one label
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"Amanda/Label.pm",
-              "source_line":"298",
-              "code":"1000006",
-	      "message":"Setting $label"}],
-   "id":"1"}
+request:
+  GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
 
-=item Amanda::Rest::Label::label
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1600001",
+        "message" : "List of labels",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages/Labels.pm",
+        "source_line" : "245",
+        "tles" : [
+           {
+              "barcode" : null,
+              "blocksize" : "32",
+              "comment" : null,
+              "config" : "test",
+              "datestamp" : "20131118134146",
+              "label" : "test-ORG-AA-vtapes-002",
+              "meta" : "test-ORG-AA",
+              "pool" : "my_vtapes",
+              "position" : 45,
+              "reuse" : "1",
+              "storage" : "my_vtapes"
+           }
+        ]
+     }
+  ]
 
-Interface to C<Amanda::label::label>
-Label a volume.
+=item Modify label setting
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Label::label",
-   "params" :{"config":"test",
-	      "slot":"$slot"
-	      "label":"$label"
-	      "meta":"$meta"
-	      "barcode":"$barcode"},
-   "id"     :"1"}
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
+    query arguments:
+	force=0|1
+	config=CONFIG
+	storage=STORAGE
+        meta=META
+        barcode=BARCODE
+	reuse=0|1
 
-The result is an array of Amanda::Message:
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1000045",
+        "label" : "test-ORG-AC-vtapes2-001",
+        "message" : "marking tape 'test-ORG-AC-vtapes2-001' as reusable.",
+        "severity" : "16",
+        "source_filename" : "/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "1315"
+     },
+     {
+        "code" : "1000006",
+        "label" : "test-ORG-AC-vtapes2-001",
+        "message" : "Setting test-ORG-AC-vtapes2-001",
+        "severity" : "16",
+        "source_filename" : "/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "408"
+     }
+  ]
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "source_line":"404",
-	      "code":1000008,
-	      "message":"Reading label..."},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "source_line":"465",
-	      "code":1000009,
-	      "message":"Found an empty tape."},
-	      {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"$label",
-	      "source_line":"598",
-	      "code":1000020,
-	      "message":"Writing label '$label'..."},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "source_line":"618",
-	      "code":1000021,
-	      "message":"Checking label..."},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "source_line":"660",
-	      "code":1000022,
-	      "message":"Success!"}],
-   "id":"1"}
+=item Label a volume
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
+
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1000008",
+        "message" : "Reading label...",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "513"
+     },
+     {
+        "code" : "1000009",
+        "message" : "Found an empty tape.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "574"
+     },
+     {
+        "code" : "1000020",
+        "label" : "test-ORG-AA-vtapes-002",
+        "message" : "Writing label 'test-ORG-AA-vtapes-002'...",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "707"
+     },
+     {
+        "code" : "1000021",
+        "message" : "Checking label...",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "727"
+     },
+     {
+        "code" : "1000022",
+        "message" : "Success!",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "769"
+     }
+  ]
 
 
-=item Amanda::Rest::Label::erase
+=item Remove a label
 
-Interface to C<Amanda::label::erase>
-Erase a volume.
+request:
+  DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
+  DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
+    query arguments:
+	remove_no_retention
+	labels=LABEL1,LABEL2
+        cleanup
+        dry_run
+        erase
+        keep_label
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Label::erase",
-   "params" :{"config":"test",
-	      "labels":["$label1","$label2"],
-	      "cleanup":"$cleanup"
-	      "dry_run":"$dry_run"
-	      "erase":"$erase"
-	      "keep_label":"$keep_label"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"test-ORG-AA-vtapes-001",
-	      "source_line":"878",
-	      "code":1000049,
-	      "message":"Erased volume with label 'test-ORG-AA-vtapes-001'."},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"test-ORG-AA-vtapes-001",
-	      "source_line":"891",
-	      "code":1000050,"message":
-	      "Rewrote label 'test-ORG-AA-vtapes-001' to volume."},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "tapelist_filename":"/amanda/h1/etc/amanda/test/tapelist",
-	      "label":"test-ORG-AA-vtapes-001",
-	      "source_line":"971",
-	      "code":1000052,
-	      "message":"Removed label 'test-ORG-AA-vtapes-001 from tapelist file."}],
-   "id":"1"}
-
-=item Amanda::Rest::Label::reuse
-
-Interface to C<Amanda::label::reuse>
-Erase a volume.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Label::reuse",
-   "params" :{"config":"test",
-	      "labels":["$label1","$label2"]},
-   "id:     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"$label1:,
-	      "source_line":"1180",
-	      "code":1000045,
-	      "message":"marking tape '$label1' as reusable."}]
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"$label2",
-	      "source_line":"1180",
-	      "code":1000045,
-	      "message":"marking tape '$label2' as reusable."}]
-   "id:     :"1"}
-
-=item Amanda::Rest::Label::no_reuse
-
-Interface to C<Amanda::label::no_reuse>
-Erase a volume.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Label::no_reuse",
-   "params" :{"config":"test",
-	      "labels":["$label1","$label2"]},
-   "id:     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"$label1:,
-	      "source_line":"1256",
-	      "code":1000047,
-	      "message":"marking tape '$label1' as not reusable."}]
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Label.pm",
-	      "label":"$label2",
-	      "source_line":"1256",
-	      "code":1000047,
-	      "message":"marking tape '$label2' as not reusable."}]
-   "id:     :"1"}
+reply:
+  HTTP status: 200 OK
+  [
+    {
+        "code" : "1000052",
+        "label" : "test-ORG-AA-vtapes-002",
+        "message" : "Removed label 'test-ORG-AA-vtapes-002 from tapelist file.",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Label.pm",
+        "source_line" : "1070",
+        "tapelist_filename" : "/usr/amanda/test/tapelist"
+     }
+  ]
 
 =back
 
@@ -223,70 +241,28 @@ sub init {
 
 sub label {
     my %params = @_;
+
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    return @result_messages if @result_messages;
 
-    my $user_msg = sub {
-	my $msg = shift;
-	push @result_messages, $msg;
-    };
+    my $tl = Amanda::Rest::Labels::init();
+    if ($tl->isa("Amanda::Message")) {
+	push @result_messages, $tl;
+	return \@result_messages;
+    }
 
-    my $main = sub {
-	my $finished_cb = shift;
-	my $storage;
-	my $chg;
-
-	my $steps = define_steps
-	    cb_ref => \$finished_cb,
-	    finalize => sub { $storage->quit() if defined $storage;
-			      $chg->quit() if defined $chg };
-
-	step start => sub {
-            my $tl = Amanda::Rest::Labels::init();
-	    if ($tl->isa("Amanda::Message")) {
-		return $steps->done($tl);
-	    }
-
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
-					    tapelist     => $tl);
-	    if ($storage->isa("Amanda::Changer::Error")) {
-		push @result_messages, $storage;
-		return $steps->done();
-	    }
-
-	    $chg = $storage->{'chg'};
-	    if ($chg->isa("Amanda::Changer::Error")) {
-		push @result_messages, $chg;
-		return $steps->done();
-	    }
-
-	    my $Label = Amanda::Label->new(storage  => $storage,
-					   tapelist => $tl,
-					   user_msg => $user_msg);
-
-	    $Label->label(slot    => $params{'slot'},
-			  label   => $params{'label'},
-			  meta    => $params{'meta'},
-			  force   => $params{'force'},
-			  barcode => $params{'barcode'},
-			  finished_cb => $steps->{'done'});
-	};
-
-	step done => sub {
-	    my $err = shift;
-
-	    push @result_messages, $err if $err;
-
-	    $finished_cb->();
-	};
-
-    };
-
-
-    $main->(\&Amanda::MainLoop::quit);
-    Amanda::MainLoop::run();
-    $main = undef;
-
+    my @tles = grep {$_->{'label'} eq $params{'LABEL'}} @{$tl->{'tles'}};
+    @tles = grep {$_->{'storage'} eq $params{'STORAGE'}} @tles if $params{'storage'};
+    @tles = grep {$_->{'config'}  eq $params{'config'}}  @tles if $params{'config'};
+    @tles = grep {$_->{'storage'} eq $params{'storage'}} @tles if $params{'storage'};
+    @tles = grep {$_->{'pool'}    eq $params{'pool'}}    @tles if $params{'pool'};
+    @tles = grep {$_->{'meta'}    eq $params{'meta'}}    @tles if $params{'meta'};
+    @tles = grep {$_->{'reuse'}   eq $params{'reuse'}}   @tles if $params{'reuse'};
+    push @result_messages, Amanda::Tapelist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1600001,
+				tles => \@tles);
     return \@result_messages;
 }
 
@@ -318,25 +294,35 @@ sub erase {
 				source_line     => __LINE__,
 				code		=> 1,
 				message => "Errors processing disklist");
-		$steps->done();
+		$steps->{'done'}->();
 	    }
 
             my $tl = Amanda::Rest::Labels::init();
 	    if ($tl->isa("Amanda::Message")) {
-		return $steps->done($tl);
+		return $steps->{'done'}->($tl);
 	    }
 
 	    my $Label = Amanda::Label->new(tapelist => $tl,
 					   user_msg => $user_msg);
 
 	    my @labels;
-	    if ($params{'remove_no_retention'}) {
+	    if (exists $params{'remove_no_retention'}) {
 		@labels = Amanda::Tapelist::list_no_retention();
-	    } else {
+	    } elsif ($params{'labels'}){
+		@labels = split ',', $params{'labels'};
+	    } elsif ($params{'LABEL'}){
 		@labels = ($params{'LABEL'});
+	    } else {
+		push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code   => 1500015);
+		return $steps->{'done'}->();
 	    }
 
+	    my $storage = $params{'storage'} || $params{'STORAGE'};
 	    $Label->erase(labels      => \@labels,
+			  storage     => $storage,
 			  cleanup     => $params{'cleanup'},
 			  dry_run     => $params{'dry_run'},
 			  erase       => $params{'erase'},
@@ -362,7 +348,73 @@ sub erase {
     return \@result_messages;
 }
 
-sub post_label {
+sub add_label {
+    my %params = @_;
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my $user_msg = sub {
+        my $msg = shift;
+        push @result_messages, $msg;
+    };
+
+    my $main = sub {
+	my $finished_cb = shift;
+	my $storage;
+	my $chg;
+
+	my $steps = define_steps
+	    cb_ref => \$finished_cb,
+	    finalize => sub { $storage->quit() if defined $storage;
+			      $chg->quit() if defined $chg };
+
+	step start => sub {
+	    my $tl = Amanda::Rest::Labels::init();
+	    if ($tl->isa("Amanda::Message")) {
+		return $steps->{'done'}->($tl);
+	    }
+	    $storage = Amanda::Storage->new(tapelist => $tl,
+					    storage_name => $params{'STORAGE'});
+	    if ($storage->isa("Amanda::Changer::Error")) {
+		return $steps->{'done'}->($storage);
+	    }
+
+	    $chg = $storage->{'chg'};
+	    if ($chg->isa("Amanda::Changer::Error")) {
+		return $steps->{'done'}->($chg);
+	    }
+
+	    my $Label = Amanda::Label->new(storage  => $storage,
+					   tapelist => $tl,
+					   user_msg => $user_msg);
+
+	    $Label->label(slot    => $params{'slot'},
+			  label   => $params{'label'},
+			  meta    => $params{'meta'},
+			  force   => $params{'force'},
+			  barcode => $params{'barcode'},
+			  storage => $params{'STORAGE'},
+			  finished_cb => $steps->{'done'});
+	};
+
+	step done => sub {
+	    my $err = shift;
+
+	    push @result_messages, $err if $err;
+
+	    $finished_cb->();
+	};
+
+    };
+
+    $main->(\&Amanda::MainLoop::quit);
+    Amanda::MainLoop::run();
+    $main = undef;
+
+    return \@result_messages;
+}
+
+sub update_label {
     my %params = @_;
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
@@ -386,18 +438,18 @@ sub post_label {
 	step start => sub {
             my $tl = Amanda::Rest::Labels::init();
 	    if ($tl->isa("Amanda::Message")) {
-		return $steps->done($tl);
+		return $steps->{'done'}->($tl);
 	    }
 
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
 					    tapelist     => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
-		return $steps->done($storage);
+		return $steps->{'done'}->($storage);
 	    }
 
 	    $chg = $storage->{'chg'};
 	    if ($chg->isa("Amanda::Changer::Error")) {
-		return $steps->done($chg);
+		return $steps->{'done'}->($chg);
 	    }
 
 	    $Label = Amanda::Label->new(storage  => $storage,
@@ -460,14 +512,23 @@ sub list {
 
     my $tl = Amanda::Rest::Labels::init();
     if ($tl->isa("Amanda::Message")) {
-	return $tl;
+	push @result_messages, $tl;
+	return \@result_messages;
     }
-    my @new_tles = grep {$_->{'storage'} eq $params{'STORAGE'}} @{$tl->{'tles'}};
-    return Amanda::Tapelist::Message->new(
+    my @tles = @{$tl->{'tles'}};
+    @tles = grep {defined $_->{'storage'} and $_->{'storage'} eq $params{'STORAGE'}} @tles if $params{'STORAGE'};
+    @tles = grep {                            $_->{'label'}   eq $params{'LABEL'}}   @tles if $params{'LABEL'};
+    @tles = grep {defined $_->{'config'}  and $_->{'config'}  eq $params{'config'}}  @tles if $params{'config'};
+    @tles = grep {defined $_->{'storage'} and $_->{'storage'} eq $params{'storage'}} @tles if $params{'storage'};
+    @tles = grep {defined $_->{'pool'}    and $_->{'pool'}    eq $params{'pool'}}    @tles if $params{'pool'};
+    @tles = grep {defined $_->{'meta'}    and $_->{'meta'}    eq $params{'meta'}}    @tles if $params{'meta'};
+    @tles = grep {                            $_->{'reuse'}   eq $params{'reuse'}}   @tles if $params{'reuse'};
+    push @result_messages, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1600001,
-				tles => \@new_tles);
+				tles => \@tles);
+    return \@result_messages;
 }
 
 1;

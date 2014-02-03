@@ -1432,6 +1432,7 @@ typedef struct storage_s storage_t;
 
 storage_t *get_first_storage(void);
 storage_t *get_next_storage(storage_t *st);
+char **get_storage_list(void);
 
 /* Given the name of the storage, return a storage object.
  *  Returns NULL if no matching storage exists.

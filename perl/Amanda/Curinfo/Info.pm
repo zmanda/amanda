@@ -532,12 +532,18 @@ sub new
 sub set_rate
 {
     my ( $self, @rate ) = @_;
+    foreach my $rate (@rate) {
+	$rate = -1 if !defined $rate;
+    }
     $self->{rate} = \@rate;
 }
 
 sub set_comp
 {
     my ( $self, @comp ) = @_;
+    foreach my $comp (@comp) {
+	$comp = -1 if !defined $comp;
+    }
     $self->{comp} = \@comp;
 }
 

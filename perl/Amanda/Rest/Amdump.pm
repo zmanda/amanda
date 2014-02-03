@@ -57,7 +57,7 @@ The result is an array of Amanda::Message:
               "source_line" : "89",
               "severity" : "16",
               "code" : "2000000",
-              "message" : "The trace log file is '/amanda/h1/var/amanda/test/log.20130904144908.0'" },
+              "message" : "The trace log file is '/var/amanda/test/log.20130904144908.0'" },
              { "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
               "amdump_log" : "/etc/amanda/test/amdump.20130904144908",
               "source_line" : "94",

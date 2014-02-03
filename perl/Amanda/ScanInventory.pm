@@ -561,9 +561,6 @@ sub volume_is_new_labelled {
     my $tle = shift;
     my $sl = shift;
 
-    if ($tle->{'config'} && $tle->{'config'} ne Amanda::Config::get_config_name()) {
-	return 0;
-    }
     if ($tle->{'pool'} && $tle->{'pool'} ne $self->{'tapepool'}) {
 	return 0;
     }

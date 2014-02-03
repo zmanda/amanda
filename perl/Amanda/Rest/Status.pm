@@ -58,7 +58,7 @@ Get the current status.
 The result is an array of Amanda::Message:
 
   {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Status.pm",
+   "result":[{"source_filename":"/usr/lib/amanda/perl/Amanda/Status.pm",
 	      "source_line":"1433",
 	      "code":1800000,
 	      "message":"The status",

@@ -515,7 +515,7 @@ sub update {
     my $user_msg_fn = $params{'user_msg_fn'};
     $user_msg_fn ||= sub { Amanda::Debug::info("chg-aggregate: " . $_[0]); };
 
-    if (exists $params{'changed'}) {
+    if (defined $params{'changed'}) {
 	for my $range (split ',', $params{'changed'}) {
 	    my ($first, $last) = ($range =~ /([:\d]+)(?:-([:\d]+))?/);
 	    $last = $first unless defined($last);

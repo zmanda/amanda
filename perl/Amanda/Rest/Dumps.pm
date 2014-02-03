@@ -21,6 +21,7 @@ package Amanda::Rest::Dumps;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Rest::Configs;
 use Amanda::Tapelist;
+use Amanda::DB;
 use Amanda::DB::Catalog;
 use Symbol;
 use Data::Dumper;
@@ -35,15 +36,67 @@ Amanda::Rest::Dumps -- Rest interface to Amanda::DB::Catalog
 
 =over
 
-=item Amanda::Rest::Dumps::get_parts
+=item Get the list of restorable dumps
 
-Rest interface to Amanda::DB::Catalog::get_parts.
+Request:
+  GET /amanda/v1.0/configs/:CONF/dumps
+  GET /amanda/v1.0/configs/:CONF/dumps/hosts/:HOST
+    query arguments:
+        disk=DISK
+        dump_timestamp=DUMP_TIMESTAMP
+        write_timestamp=WRITE_TIMESTAMP
+        level=LEVEL
+	status=OK|PARTIAL|FAIL
+	holding=0|1
+	label=LABEL
+  [
+     {
+        "code" : "2600000",
+        "dumps" : [
+           {
+              "bytes" : 81478422,
+              "client_crc" : "09dbccef:81478422",
+              "diskname" : "/bootAMGTAR",
+              "dump_timestamp" : "20140203085941",
+              "hostname" : "localhost.localdomain",
+              "kb" : 79568.771484375,
+              "level" : 0,
+              "message" : "",
+              "native_crc" : "ff45fab4:87556096",
+              "nparts" : 1,
+              "orig_kb" : 85504,
+              "parts" : [
+                 {},
+                 {
+                    "client_crc" : "09dbccef:81478422",
+                    "filenum" : 1,
+                    "kb" : 79568,
+                    "label" : "test-ORG-AA-vtapes-011",
+                    "native_crc" : "ff45fab4:87556096",
+                    "orig_kb" : 85504,
+                    "partnum" : 1,
+                    "sec" : 0.253803,
+                    "server_crc" : "09dbccef:81478422",
+                    "status" : "OK"
+                 }
+              ],
+              "sec" : 0.1,
+              "server_crc" : "09dbccef:81478422",
+              "status" : "OK",
+              "storage" : "my_vtapes",
+              "write_timestamp" : "20140203085941"
+           }
+        ],
+        "message" : "The dumps",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Dumps.pm",
+        "source_line" : "194"
+     }
+  ]
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Dumps::get_parts",
-   "params" :{"config":"test",
-	      "any param":"param value"},
-   "id:     :"1"}
+Reply:
+  HTTP status 200 OK
+
 
 result:
 
@@ -179,7 +232,12 @@ sub list {
 #	$dump->{'parts'} = \@newparts;
     }
 
-    return { "dumps" => \@dumps };
+    push @result_messages, Amanda::DB::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2600000,
+				dumps           => \@dumps);
+    return \@result_messages;
 }
 
 1;

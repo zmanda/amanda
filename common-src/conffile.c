@@ -4008,9 +4008,8 @@ read_storage_identlist(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
 {
-    ckseen(&val->seen);
-
     free_val_t(val);
+    ckseen(&val->seen);
     val->v.identlist = NULL;
     get_conftoken(CONF_ANY);
     while (tok == CONF_STRING || tok == CONF_IDENT) {
@@ -7390,6 +7389,26 @@ storage_t *
 get_next_storage(storage_t *st)
 {
     return st->next;
+}
+
+char **
+get_storage_list(void)
+{
+    int         count = 0;
+    storage_t  *p;
+    char      **result;
+    char       **r;
+
+    for(p = storage_list; p != NULL; p = p->next) {
+	count++;
+    };
+    result = g_new0(char *, count+1);
+    for (r = result, p = storage_list; p != NULL; p = p->next, r++) {
+	*r = g_strdup(p->name);
+    }
+    *r = NULL;
+
+    return result;
 }
 
 storage_t *

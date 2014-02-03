@@ -447,11 +447,14 @@ endif
 EXTRA_DIST += $(AmandaTaperScan_DATA)
 
 if WANT_SERVER
+# PACKAGE: Amanda::DB
+Amanda_DATA += Amanda/DB.pm
 # PACKAGE: Amanda::DB::*
 Amanda_DBdir = $(Amandadir)/DB
 Amanda_DB_DATA =
-PM_FILES += $(Amanda_DB_DATA)
+PM_FILES += Amanda/DB.pm $(Amanda_DB_DATA)
 endif
+EXTRA_DIST += Amanda/DB.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::DB::Catalog
@@ -642,9 +645,9 @@ EXTRA_DIST += Amanda/Label.pm
 Amanda_DATA += Amanda/Message.pm
 EXTRA_DIST += Amanda/Message.pm
 
-# PACKAGE: Amanda/Rest/Amanda/bin/app.pl
+# PACKAGE: Amanda::Rest
 if WANT_SERVER
-#Amanda_DATA += Amanda/Rest/Amanda/bin/app.pl
+Amanda_DATA += Amanda/Rest.pm
 AmandaRestAmandadir = $(amperldir)/Amanda/Rest/Amanda
 AmandaRestAmanda_DATA = Amanda/Rest/Amanda/config.yml
 AmandaRestAmandaEnvironmentsdir = $(amperldir)/Amanda/Rest/Amanda/environments
@@ -672,7 +675,7 @@ AmandaRestAmandabindir = $(amperldir)/Amanda/Rest/Amanda/bin
 AmandaRestAmandabin_DATA = Amanda/Rest/Amanda/bin/app.pl
 
 endif
-EXTRA_DIST += Amanda/Rest/Amanda/bin/app.pl.in
+EXTRA_DIST += Amanda/Rest.pm Amanda/Rest/Amanda/bin/app.pl.in
 DISTCLEANFILES += Amanda/Rest/Amanda/bin/app.pl
 
 # PACKAGE: Amanda::Rest::Config

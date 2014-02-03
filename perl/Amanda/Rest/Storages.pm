@@ -45,275 +45,384 @@ Amanda::Rest::Storages -- Rest interface to Amanda::Storage
 
 =over
 
-=item Amanda::Rest::Sorage::inventory
+=item Get the list of defined storage
 
-Interface to C<Amanda::Changer::inventory>
-Return the inventory from the changer.
+request:
+  GET /amanda/v1.0/configs/:CONF/storages/:STORAGE
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::inventory",
-   "params" :{"config":"test",
-   "id"     :"1"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1500014",
+        "message" : "Defined storage",
+        "severity" : "16",
+        "source_filename" : "/usr/linux/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "1100",
+        "storage" : [
+         "my_vtapes",
+         "my_robot"
+        ]
+     }
+  ]
 
-result:
+=item Get parameters values of a storage
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest::Storages.pm",
-	      "source_line":"147",
-	      "code":1100000,
-	      "message":"The inventory",
-	      "inventory":[{"device_status":"0",
-                            "label":"DIRO-TEST-001",
-                            "f_type":"1",
-                            "reserved":0,
-                            "state":1,
-                            "slot":"1"},
-                           {"device_status":"0",
-                            "label":"DIRO-TEST-002",
-                            "f_type":"1",
-                            "reserved":0,
-                            "state":1,
-                            "slot":"2"}],
-	    }],
-   "id":"1"}
+request:
+  GET /amanda/v1.0/configs/:CONF/storages/:STORAGE?fields=runtapes,foo
 
-=item Amanda::Rest::Storages::load
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1500011",
+        "message" : "Not existant parameters in storage 'my_vtapes'",
+        "parameters" : [
+           "foo"
+        ],
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "1063",
+        "storage" : "my_vtapes"
+     },
+     {
+        "code" : "1500012",
+        "message" : "Parameters values for storage 'my_vtapes'",
+        "result" : {
+           "runtapes" : 4
+        },
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "1071",
+        "storage" : "my_vtapes"
+     }
+  ]
 
-Interface to C<Amanda::Changer::load>
-Return the device status or label
+=item Create a storage
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/create
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::load",
-   "params" :{"config":"test",
-              "slot":"1"},
-   "id"     :"2"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1100027",
+        "dir" : "/amanda/h1/vtapes2",
+        "message" : "Created vtape root '/amanda/h1/vtapes2'",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/disk.pm",
+        "source_line" : "158"
+     }
+  ]
 
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Storage.pm",
-	      "source_line":"241",
-	      "code":1100002,
-	      "load_result":{"label":"TESTCONF-001",
-			     "device_status":0,
-			     "f_type":"1",
-			     "datestamp":"X"},
-	      "message":"load result"}],
-   "id":"2"}
+=item Get the inventory of a storage
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Storage.pm",
-	      "source_line":"241",
-	      "code":1100002,
-	      "load_result":{"device_status_error":"Volume not labeled",
-			     "device_status":8,
-			     "device_error":"File 0 not found"},
-	      "message":"load result"}],
-   "id":"2"}
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory
 
-=item Amanda::Rest::Storages::reset
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "chg_name" : "my_robot",
+        "code" : "1100000",
+        "message" : "The inventory",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "368",
+        "storage_name" : "my_robot",
+        "inventory" : [
+           {
+              "device_error" : null,
+              "device_status" : 0,
+              "f_type" : 1,
+              "label" : "JLM-robot-E01001L4",
+              "slot" : "1",
+              "state" : 1
+           },
+           {
+              "device_error" : null,
+              "device_status" : 0,
+              "f_type" : 1,
+              "label" : "JLM-robot-E01002L4",
+              "slot" : "2",
+              "state" : 1
+           },
+           ...
+        ]
+     }
+  ]
 
-Interface to C<Amanda::Changer::reset>
-Reset a changer.
+=item Load a slot
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::reset",
-   "params" :{"config":"test"},
-   "id"     :"3"}
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/load?slot=SLOT
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/load?label=LABEL
 
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Storage.pm",
-	      "source_line":"307",
-	      "code":1100003,
-	      "message":"Changer is reset"}],
-   "id":"3"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "chg_name" : "my_vtapes",
+        "code" : "1100002",
+        "load_result" : {
+           "datestamp" : "20140120174846",
+           "device_status" : 0,
+           "f_type" : 1,
+           "label" : "test-ORG-AA-vtapes-001"
+        },
+        "message" : "load result",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "468",
+        "storage_name" : "my_vtapes"
+     }
+  ]
+or
+  [
+     {
+        "chg_name" : "my_vtapes",
+        "code" : "1100002",
+        "load_result" : {
+           "device_error" : "File 0 not found",
+           "device_status" : 8,
+           "device_status_error" : "Volume not labeled"
+        },
+        "message" : "load result",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "517",
+        "storage_name" : "my_vtapes"
+     }
+  ]
 
-=item Amanda::Rest::Storages::eject
+=item Reset a storage
 
-Interface to C<Amanda::Changer::eject>
-Eject a drive.
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/reset
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::eject",
-   "params" :{"config":"test",
-	      "drive":"0"},
-   "id"     :"4"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "chg_name" : "my_vtapes",
+        "code" : "1100003",
+        "message" : "Changer is reset",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "588",
+        "storage_name" : "my_vtapes"
+     }
+  ]
 
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"unknown",
-	      "source_line":"0",
-	      "code":3,
-	      "reason":"notimpl",
-	      "type":"failed",
-	      "message":"'chg-disk:' does not support eject"}],
-   "id":"4"}
+=item Eject a volume from a drive in a storage
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Storage.pm",
-	      "source_line":"403",
-	      "code":1100004,
-              "drive":"0",
-	      "message":"Drive '0' ejected"}],
-   "id":"4"}
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/eject?drive=DRIVE
 
-=item Amanda::Rest::Storages::clean
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "chg_name" : "my_robot",
+        "code" : "1100004",
+        "drive" : "1",
+        "message" : "Drive '1' ejected",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "705",
+        "storage_name" : "my_robot"
+     }
+  ]
+or
+  [
+     {
+        "code" : 3,
+        "message" : "drive '0' is empty",
+        "reason" : "invalid",
+        "severity" : 16,
+        "source_filename" : "unknown",
+        "source_line" : 0,
+        "type" : "failed"
+     }
+  ]
+or
+  [
+     {
+        "code" : 3,
+        "message" : "'chg-disk:' does not support eject",
+        "reason" : "notimpl",
+        "severity" : 16,
+        "source_filename" : "unknown",
+        "source_line" : 0,
+        "type" : "failed"
+     }
+  ]
 
-Interface to C<Amanda::Changer::clean>
-Clean a drive.
+=item Clean a drive from a storage
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::clean",
-   "params" :{"config":"test",
-	      "drive":"0"},
-   "id"     :"4"}
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/clean?drive=DRIVE
 
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"unknown",
-	      "source_line":"0",
-	      "code":3,
-	      "reason":"notimpl",
-	      "type":"failed",
-	      "message":"'chg-robot:' does not support clean"}],
-   "id":"4"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : 3,
+        "message" : "'chg-robot:' does not support clean",
+        "reason" : "notimpl",
+        "severity" : 16,
+        "source_filename" : "unknown",
+        "source_line" : 0,
+        "type" : "failed"
+     }
+  ]
 
-=item Amanda::Rest::Storages::verify
+=item Verify a storage configuration
 
-Interface to C<Amanda::Changer::verify>
-Verify a changer is correctly configured.
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/verify
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::verify",
-   "params" :{"config":"test"},
-   "id"     :"5"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1100006",
+        "device_name" : "tape:/dev/nst0",
+        "drive" : "0",
+        "message" : "Drive 0 is device tape:/dev/nst0",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1731"
+     },
+     {
+        "code" : "1100006",
+        "device_name" : "tape:/dev/nst1",
+        "drive" : "1",
+        "message" : "Drive 1 is device tape:/dev/nst1",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1731"
+     },
+     {
+        "code" : "1100025",
+        "device_name" : "tape:/dev/nst12",
+        "drive" : "3",
+        "error" : "Can't open tape device /dev/nst12: No such file or directory",
+        "message" : "Drive 3: device 'tape:/dev/nst12' error: Can't open tape device /dev/nst12: No such file or directory",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1722"
+     },
+     {
+        "code" : "1100009",
+        "device_name" : "tape:/dev/nst3",
+        "drive" : "2",
+        "message" : "Drive 2 is not device tape:/dev/nst3",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1714"
+     },
+     {
+        "code" : "1100007",
+        "device_name" : "tape:/dev/nst2",
+        "drive" : "2",
+        "message" : "Drive 2 looks to be device tape:/dev/nst2",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1741"
+     },
 
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1646",
-	      "code":1100006,
-	      "device_name":"tape:/dev/nst0",
-	      "drive":"0",
-	      "message":"Drive 0 is device tape:/dev/nst0"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",,
-	      "source_line":"1694",
-	      "code":1100008,
-	      "tape_devices":" \"0=tape:/dev/nst0\"",
-	      "message":"property \"TAPE-DEVICE\" \"0=tape:/dev/nst0\""}]}
-   "id":"5"}
+     {
+        "code" : "1100008",
+        "message" : "property \"TAPE-DEVICE\" \"0=tape:/dev/nst0\" \"1=tape:/dev/nst1\" \"2=tape:/dev/nst2\" \"3=tape:/dev/nst3\"",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1778",
+        "tape_devices" : " \"0=tape:/dev/nst0\" \"1=tape:/dev/nst1\" \"2=tape:/dev/nst2\" \"3=tape:/dev/nst3\""
+     }
+  ]
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1637",
-	      "code":1100009,
-	      "device_name":"tape:/dev/nst0",
-	      "drive":"2",
-	      "message":"Drive 2 is not device tape:/dev/nst0"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1637",
-	      "code":1100009,
-	      "device_name":"tape:/dev/nst1",
-	      "drive":"0",
-	      "message":"Drive 0 is not device tape:/dev/nst1"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1668",
-	      "code":1100007,
-	      "device_name":"tape:/dev/nst0",
-	      "drive":"0",
-	      "message":"Drive 0 looks to be device tape:/dev/nst0"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1646",
-	      "code":1100006,
-	      "device_name":"tape:/dev/nst1",
-	      "drive":"1",
-	      "message":"Drive 1 is device tape:/dev/nst1"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1694",
-	      "code":1100008,
-	      "tape_devices":" \"0=tape:/dev/nst0\" \"1=tape:/dev/nst1\"",
-	      "message":"property \"TAPE-DEVICE\" \"0=tape:/dev/nst0\" \"1=tape:/dev/nst1\""}]
-   "id":"5"}
+=item Show what is in the storage (scan the storage)
 
-=item Amanda::Rest::Storages::show
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/show
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/show?slots=3..5
 
-Interface to C<Amanda::Changer::show>
-Show what is in the changer.
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1100010",
+        "message" : "scanning all 20 slots in changer:",
+        "num_slots" : "20",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer.pm",
+        "source_line" : "1634"
+     },
+     {
+        "code" : "1100015",
+        "datestamp" : "20140120174913",
+        "label" : "test-ORG-AA-vtapes-003",
+        "message" : "slot   3: date 20140120174913 label test-ORG-AA-vtapes-003",
+        "severity" : "16",
+        "slot" : "3",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer.pm",
+        "source_line" : "1708",
+        "write_protected" : ""
+     },
+     {
+        "code" : "1100015",
+        "datestamp" : "20140120191101",
+        "label" : "test-ORG-AA-vtapes-004",
+        "message" : "slot   4: date 20140120191101 label test-ORG-AA-vtapes-004",
+        "severity" : "16",
+        "slot" : "4",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer.pm",
+        "source_line" : "1708",
+        "write_protected" : ""
+     },
+     {
+        "code" : "1100015",
+        "datestamp" : "20140120191153",
+        "label" : "test-ORG-AA-vtapes-005",
+        "message" : "slot   5: date 20140120191153 label test-ORG-AA-vtapes-005",
+        "severity" : "16",
+        "slot" : "5",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer.pm",
+        "source_line" : "1708",
+        "write_protected" : ""
+     }
+  ]
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::show",
-   "params" :{"config":"test"},
-   "id"     :"6"}
+=item Update the storage (amtape update)
 
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm",
-	      "source_line":"1626",
-	      "code":1100010,
-	      "num_slots":"2",
-	      "message":"scanning all 20 slots in changer"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm",
-	      "source_line":"1684",
-	      "code":1100015,
-	      "datestamp":"20130704091458",
-	      "message":"slot   1: date 20130704091458 label {E01020L4,G03020TA}",
-	      "label":"{E01020L4,G03020TA}",
-	      "slot":"1",
-	      "write_protected":""},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm",
-	      "source_line":"1684",
-	      "code":1100015,
-	      "datestamp":"20130704091458",
-	      "message":"slot   2: date 20130704091458 label {E01001L4,G03001TA}",
-	      "label":"{E01001L4,G03001TA}",
-	      "slot":"2",
-	      "write_protected":""}],
-   "id":"6"}
+request:
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/update
+  POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/update?changed=CHANGED
 
-=item Amanda::Rest::Storages::label
-
-Interface to C<Amanda::Changer::label>
-Load a tape by label.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::label",
-   "params" :{"config":"test",
-	     "label":"$label"},
-   "id"     :"7"}
-
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Storage.pm",
-	      "source_line":"814",
-	      "code":1200004,
-	      "label":"test-ORG-AA-vtapes-001",
-	      "device":"file:/amanda/h1/vtapes/slot1",
-	      "slot":"1",
-	      "message":"label 'test-ORG-AA-vtapes-001' is now loaded from slot 1 in device 'file:/amanda/h1/vtapes/slot1'"}],
-   "id":"7"}
-
-=item Amanda::Rest::Storages::update
-
-Interface to C<Amanda::Changer::update>
-Update a changer.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Storages::update",
-   "params" :{"config":"test"},
-   "id"     :"8"}
-
-result:
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/robot.pm",
-	      "source_line":"1297",
-	      "code":1100019,
-	      "slot":"1",
-	      "message":"scanning slot 1"},
-	     {"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Storage.pm",
-	      "source_line":"754",
-	      "code":1100018,
-	      "message":"Update completed"}],
-   "id":"8"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1100019",
+        "message" : "scanning slot 1",
+        "severity" : "16",
+        "slot" : "1",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
+        "source_line" : "1346"
+     },
+     ...
+     {
+        "chg_name" : "my_robot",
+        "code" : "1100018",
+        "message" : "Update completed",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Storages.pm",
+        "source_line" : "1084",
+        "storage_name" : "my_robot"
+     }
+  ]
 
 =back
 
@@ -362,7 +471,6 @@ sub inventory {
 
 	    push @result_messages, $err if $err;
 
-Amanda::Debug::debug("Chg: " . Data::Dumper::Dumper($chg));
 	    push @result_messages, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -418,7 +526,6 @@ sub load {
 
 	    $chg = $storage->{'chg'};
 	    if ($chg->isa("Amanda::Changer::Error")) {
-		Dancer::status(404);
 		push @result_messages, $chg;
 		return $steps->{'done'}->();
 	    }
@@ -435,14 +542,12 @@ sub load {
 	    my ($err, $res) = @_;
 
 	    if ($err) {
-		Dancer::status(405);
-		push @result_messages, $chg;
+		push @result_messages, $err;
 		return $steps->{'done'}->();
 	    }
 
 	    my $dev = $res->{'device'};
 	    if (!defined $dev) {
-		Dancer::status(404);
 		push @result_messages, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
@@ -891,6 +996,14 @@ sub label {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    if (!defined $params{'label'}) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code   => 1500015);
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -911,19 +1024,16 @@ sub label {
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
 	    if ($storage->isa("Amanda::Changer::Error")) {
-		Dancer::status(404);
 		return $steps->{'done'}->($storage);
 	    }
 
 	    $chg = $storage->{'chg'};
 	    if ($chg->isa("Amanda::Changer::Error")) {
-		Dancer::status(404);
 		return $steps->{'done'}->($chg);
 	    }
 
 	    $scan = Amanda::Recovery::Scan->new(chg => $chg);
 	    if ($scan->isa("Amanda::Changer::Error")) {
-		Dancer::status(404);
 		push @result_messages, $scan;
 		return $steps->{'done'}->();
 	    }
@@ -1030,11 +1140,77 @@ sub update {
     return \@result_messages;
 }
 
+sub fields {
+    my %params = @_;
+
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my $storage_name = $params{'STORAGE'};
+    my $st = Amanda::Config::lookup_storage($storage_name);
+    if (!$st) {
+        push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500010,
+				storage   => $storage_name);
+	return \@result_messages;
+    }
+
+    my @no_parameters;
+    my %values;
+    foreach my $name (split ',', $params{'fields'}) {
+        my $result = Amanda::Config::getconf_byname("storage:$storage_name:$name");
+        if (!defined $result) {
+            push @no_parameters, $name;
+        } else {
+            $values{$name} = $result;
+        }
+    }
+    if (@no_parameters) {
+        push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code       => 1500011,
+				storage    => $storage_name,
+				parameters => \@no_parameters);
+    }
+    if (%values) {
+        push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500012,
+				storage    => $storage_name,
+				result    => \%values);
+    }
+    if (!@no_parameters and !%values) {
+        push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500009);
+    }
+    return \@result_messages;
+}
+
 sub list {
     my %params = @_;
-    my @result_messages;
 
-    # How can I list all storage in PERL?
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my @storage = Amanda::Config::get_storage_list();
+    if (!@storage) {
+        push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code       => 1500013);
+    } else {
+        push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code       => 1500014,
+				storage    => \@storage);
+    }
 
     return \@result_messages;
 }

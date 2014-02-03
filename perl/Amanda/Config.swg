@@ -926,6 +926,28 @@ amglue_export_tag(getconf,
     policy_seen policy_seen
 );
 
+%typemap(out) char ** {
+    gchar **iter;
+
+    if ($1) {
+        /* Count the DeviceProperties */
+        EXTEND(SP, g_strv_length($1)); /* make room for return values */
+
+        /* Note that we set $result several times. the nature of
+         * SWIG's wrapping is such that incrementing argvi points
+         * $result to the next location in perl's argument stack.
+         */
+
+        for (iter = $1; *iter; iter++) {
+            $result = sv_2mortal(newSVpv(*iter, 0));
+            g_free(*iter);
+            argvi++;
+        }
+        g_free($1);
+    }
+}
+%newobject get_storage_list;
+char **get_storage_list();
 storage_t *lookup_storage(char *identifier);
 val_t *storage_getconf(storage_t *app, storage_key key);
 char *storage_name(storage_t *app);
@@ -1108,8 +1130,24 @@ sub local_message {
 	return "no such '$self->{'config'}' config";
     } elsif ($self->{'code'} == 1500006) {
 	return "Can't open config directory '$self->{'dir'}': $self->{'errno'}";
-
-
+    } elsif ($self->{'code'} == 1500007) {
+	return "Not existant parameters";
+    } elsif ($self->{'code'} == 1500008) {
+	return "Parameters values";
+    } elsif ($self->{'code'} == 1500009) {
+	return "No fields specified";
+    } elsif ($self->{'code'} == 1500010) {
+	return "Storage '$self->{'storage'}' not found";
+    } elsif ($self->{'code'} == 1500011) {
+	return "Not existant parameters in storage '$self->{'storage'}'";
+    } elsif ($self->{'code'} == 1500012) {
+	return "Parameters values for storage '$self->{'storage'}'";
+    } elsif ($self->{'code'} == 1500013) {
+	return "No storage defined";
+    } elsif ($self->{'code'} == 1500014) {
+	return "Defined storage";
+    } elsif ($self->{'code'} == 1500015) {
+	return "No label specified";
     } elsif ($self->{'code'} == 1550000) {
 	return "The version";
     }

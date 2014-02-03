@@ -29,9 +29,28 @@ use Amanda::Util qw( :constants );
 
 =head1 NAME
 
-Amanda::Rest::Version
+Amanda::Rest::Version - Get the amande version.
 
 =head1 INTERFACE
+
+request:
+  GET /amanda/v1.0
+
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "BUILT_BRANCH" : "trunk",
+        "BUILT_DATE" : "Mon Jan 30 9:37:11 EST 2014",
+        "BUILT_REV" : "5613",
+        "VERSION" : "4.0.0alpha",
+        "code" : "1550000",
+        "message" : "The version",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Version.pm",
+        "source_line" : "44"
+     }
+  ]
 
 =cut
 

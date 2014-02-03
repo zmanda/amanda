@@ -34,45 +34,96 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
 
 =over
 
-=item Amanda::Rest::Configs::getconf_byname
+=item Get a list of config
 
-Interface to C<Amanda::Config::getconf_byname>
-Return the value of the configuration keyword.
+request:
+  GET /amanda/v1.0/configs
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Configs::getconf_byname",
-   "params" :{"config":"test",
-              "name":"autolabel"},
-   "id:     :"1"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1500003",
+        "config" : [
+	  "test",
+        ],
+        "message" : "config name",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "187"
+     }
+  ]
+
+reply:
+  HTTP status: 404 Not found
+  [
+     {
+        "code" : "1500004",
+        "message" : "no config",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "193"
+     }
+  ]
+
+reply:
+  HTTP status: 404 Not found
+  [
+     {
+        "code" : "1500006",
+        "dir" : "/etc/amanda",
+        "errno" : "No such file or directory",
+        "message" : "Can't open config directory '/etc/amanda': No such file or directory",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "176"
+     }
+  ]
+
+=item Get the value of global parameters
+
+request:
+  GET /amanda/v1.0/configs/:CONF?fields=runtapes,foo,tapecycle,bar
 
 result:
+  [
+     {
+        "code" : "1500007",
+        "message" : "Not existant parameters",
+        "parameters" : [
+           "foo",
+           "bar"
+        ],
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "144"
+     },
+     {
+        "code" : "1500008",
+        "message" : "Parameters values",
+        "result" : {
+           "runtapes" : 3,
+           "tapecycle" : 50
+        },
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "151"
+     }
+  ]
 
-  {"jsonrpc":"2.0",
-   "result":{"other_config":"1",
-             "volume_error":"1",
-             "non_amanda":"1",
-             "template":"JLM-TEST-$3s",
-             "empty":"1"},
-   "id":"1"}
-
-The result vary with the type of the value.
-
-=item Amanda::Rest::Configs::config_dir_relative
-
-Interface to C<Amanda::Config::config_dir_relative>
-Return the path relative to the config directory.
-
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Configs::config_dir_relative",
-   "params" :{"config":"test",
-              "filename":"testfile"},
-   "id:     :"2"}
+request:
+  GET /amanda/v1.0/configs/:CONF
 
 result:
-
-  {"jsonrpc":"2.0",
-   "result":"/etc/amanda/test/testfile"
-   "id":"2"}
+  [
+     {
+        "code" : "1500009",
+        "message" : "No fields specified",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "194"
+     }
+  ]
 
 =back
 
@@ -117,53 +168,43 @@ sub config_init {
     return @result_messages;
 }
 
-sub getconf_byname {
+sub fields {
     my %params = @_;
 
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
-    my $name             = $params{'name'};
-
-    my $result = Amanda::Config::getconf_byname($name);
-    if (!defined $result) {
-	die [1003, "parameter do not exists", $name];
+    my @no_parameters;
+    my %values;
+    foreach my $name (split ',', $params{'fields'}) {
+	my $result = Amanda::Config::getconf_byname($name);
+	if (!defined $result) {
+	    push @no_parameters, $name;
+	} else {
+	    $values{$name} = $result;
+	}
     }
-    return $result;
-}
-
-sub config_dir_relative {
-    my %params = @_;
-
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
-
-    my $filename      = $params{'filename'};
-
-    my $result = Amanda::Config::config_dir_relative($filename);
-    if (!defined $result) {
-	die [1004, "config_dir_relative failed", $filename];
+    if (@no_parameters) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500007,
+				parameters => \@no_parameters);
     }
-
-    return $result;
-}
-
-sub configuration {
-    my %params = @_;
-
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
-
-    die [1005, "Amanda::Rest::Configs::configuration not implemented yet"];
-}
-
-sub disklist {
-    my %params = @_;
-
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
-
-    die [1005, "Amanda::Rest::Configs::disklist not implemented yet"];
+    if (%values) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500008,
+				result    => \%values);
+    }
+    if (!@no_parameters and !%values) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500009);
+    }
+    return \@result_messages;
 }
 
 sub list {

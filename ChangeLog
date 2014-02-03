@@ -1,3 +1,25 @@
+2014-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (get_storage_list): New function.
+	* common-src/conffile.h (get_storage_list): Add prototype.
+	* perl/Amanda/Config.swg (get_storage_list): Swig function.
+	* perl/Amanda/Changer/aggregate.pm,
+	  perl/Amanda/Changer/multi.pm
+	  perl/Amanda/Changer/robot.pm: Fix for some arguments.
+	* perl/Amanda/Curinfo/Info.pm: Fix.
+	* perl/Amanda/DB.pm: New module.
+	* perl/Amanda/Label.pm: Add messages.
+	* perl/Amanda/Message.pm: Add messages.
+	* perl/Amanda/Rest.pm: New module.
+	* perl/Amanda/Rest/Amdump.pm: Fix message.
+	* perl/Amanda/Rest/Configs.pm, perl/Amanda/Rest/Dles.pm,
+	  perl/Amanda/Rest/Dumps.pm, perl/Amanda/Rest/Labels.pm,
+	  perl/Amanda/Rest/Runs.pm, perl/Amanda/Rest/Status.pm,
+	  perl/Amanda/Rest/Storages.pm, perl/Amanda/Rest/Storages/Labels.pm,
+	  perl/Amanda/Rest/Version.pm: Implement REST API and document it.
+	* perl/Amanda/ScanInventory.pm: Fix.
+	* perl/Amanda/Tapelist.swg: Fix messages.
+	* perl/Makefile.am: Add Amanda/DB.pm and Amanda/Rest.pm.
+
 2014-01-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Storages.pm: Fix update command.
 	* perl/Makefile.am: Fix installation of Amanda/Rest/Amanda/config.yml

@@ -27,49 +27,52 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::Rest::Labels -- Rest interface to Amanda::tapelist
+Amanda::Rest::Labels -- Rest interface to get a list of labels
 
 =head1 INTERFACE
 
 =over
 
-=item Amanda::Rest::Labels::get
+=item Get a list of all labels.
 
-Return the list of all label in the tapelist file.
+request:
+  GET /amanda/v1.0/configs/:CONF/labels
+  you can filter the labels listed with the following query arguments:
+            config=CONF
+            storage=STORAGE
+            meta=META
+            pool=POOL
+            reuse=0|1
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Labels::get",
-   "params" :{"config":"test"},
-   "id:     :"1"}
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1600001",
+        "message" : "List of labels",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Labels.pm",
+        "source_line" : "86",
+        "tles" : [
+           {
+              "barcode" : null,
+              "blocksize" : "32",
+              "comment" : null,
+              "config" : "test",
+              "datestamp" : "20140121184644",
+              "label" : "test-ORG-AC-vtapes2-005",
+              "meta" : "test-ORG-AC",
+              "pool" : "my_vtapes2",
+              "position" : 1,
+              "reuse" : "1",
+              "storage" : "my_vtapes2"
+           },
+           ...
+        ]
+     }
+  ]
 
-result:
 
-  {"jsonrpc":"2.0",
-   "result":{"source_filename":"/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Label.pm",
-	      "source_line":"178",
-	      "code":1600001,
-	      "tles":[{"reuse":"1",
-                       "comment":null,
-                       "blocksize":"262144",
-                       "pool":"pool",
-                       "config":"config",
-                       "position":1,
-                       "barcode":null,
-                       "label":"JLM-TEST-010",
-                       "datestamp":"20120526083220",
-                       "meta":null},
-		      {"reuse":"1",
-                       "comment":null,
-                       "blocksize":"262144",
-                       "pool":"pool",
-                       "config":"config",
-                       "position":2,
-                       "barcode":null,
-                       "label":"JLM-TEST-009",
-                       "datestamp":"20120524110634",
-                       "meta":null}],
-   "message":"tapelist"},
-   "id":"1"}
 
 =back
 
@@ -103,17 +106,25 @@ sub list {
     my %params = @_;
 
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return @result_messages if @result_messages;
+    return \@result_messages if @result_messages;
 
     my $tl = Amanda::Rest::Labels::init();
     if ($tl->isa("Amanda::Message")) {
-	return $tl;
+	push @result_messages, $tl;
+	return \@result_messages;
     }
-    return Amanda::Tapelist::Message->new(
+    @tles = @{$tl->{'tles'}};
+    @tles = grep {$_->{'config'}  eq $params{'config'}}  @tles if $params{'config'};
+    @tles = grep {$_->{'storage'} eq $params{'storage'}} @tles if $params{'storage'};
+    @tles = grep {$_->{'pool'}    eq $params{'pool'}}    @tles if $params{'pool'};
+    @tles = grep {$_->{'meta'}    eq $params{'meta'}}    @tles if $params{'meta'};
+    @tles = grep {$_->{'reuse'}   eq $params{'reuse'}}   @tles if $params{'reuse'};
+    push @result_messages, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1600001,
-				tles => $tl->{'tles'});
+				tles => \@tles);
+    return \@result_messages;
 }
 
 1;

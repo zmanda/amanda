@@ -319,7 +319,7 @@ sub update {
     step handle_assignment => sub {
 	$state = $params{state};
 	# check for the SL=LABEL format, and handle it here
-	if (exists $params{'changed'} and
+	if (defined $params{'changed'} and
 	    $params{'changed'} =~ /^\d+=\S+$/) {
 	    my ($slot, $label) = ($params{'changed'} =~ /^(\d+)=(\S+)$/);
 
@@ -353,7 +353,7 @@ sub update {
 
 	    # that's it -- no changer motion required
 	    return $params{'finished_cb'}->(undef);
-	} elsif (exists $params{'changed'} and
+	} elsif (defined $params{'changed'} and
 	       $params{'changed'} =~ /^(.+)=$/) {
 	    $params{'changed'} = $1;
 	    $set_to_unknown = 1;
@@ -364,7 +364,7 @@ sub update {
     };
 
     step calculate_slots => sub {
-	if (exists $params{'changed'}) {
+	if (defined $params{'changed'}) {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
 	    for my $range (split ',', $params{'changed'}) {

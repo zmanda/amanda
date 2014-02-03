@@ -1219,7 +1219,7 @@ sub update_unlocked {
 
     step handle_assignment => sub {
 	# check for the SL=LABEL format, and handle it here
-	if (exists $params{'changed'} and $params{'changed'} =~ /^\d+=\S+$/) {
+	if (defined $params{'changed'} and $params{'changed'} =~ /^\d+=\S+$/) {
 	    my ($slot, $label) = ($params{'changed'} =~ /^(\d+)=(\S+)$/);
 
 	    # let's list the reasons we *can't* do what the user has asked
@@ -1273,7 +1273,7 @@ sub update_unlocked {
 
 	    # that's it -- no changer motion required
 	    return $params{'finished_cb'}->(undef);
-	} elsif (exists $params{'changed'} and
+	} elsif (defined $params{'changed'} and
 		 $params{'changed'} =~ /^(.+)=$/) {
 	    $params{'changed'} = $1;
 	    $set_to_unknown = 1;
@@ -1285,7 +1285,7 @@ sub update_unlocked {
 
     step calculate_slots => sub {
 	my ($update_slot_cb) = shift @_;
-	if (exists $params{'changed'}) {
+	if (defined $params{'changed'}) {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
 	    for my $range (split ',', $params{'changed'}) {

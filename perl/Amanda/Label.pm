@@ -32,13 +32,13 @@ sub local_message {
     if ($self->{'code'} == 1000000) {
 	return "$self->{'label'}: Can't assign because it is is the '$self->{'config'}' config";
     } elsif ($self->{'code'} == 1000001) {
-	return "$self->{'label'}: Can't assign meta-label without -f, old meta-label is '$self->{'meta'}'";
+	return "$self->{'label'}: Can't assign meta-label without force, old meta-label is '$self->{'meta'}'";
     } elsif ($self->{'code'} == 1000002) {
-	return "$self->{'label'}: Can't assign barcode without -f, old barcode is '$self->{'barcode'}'";
+	return "$self->{'label'}: Can't assign barcode without force, old barcode is '$self->{'barcode'}'";
     } elsif ($self->{'code'} == 1000003) {
-	return  "$self->{'label'}: Can't assign pool without -f, old pool is '$self->{'pool'}'";
+	return  "$self->{'label'}: Can't assign pool without force, old pool is '$self->{'pool'}'";
     } elsif ($self->{'code'} == 1000004) {
-	return "$self->{'label'}: Can't assign storage without -f, old storage is '$self->{'storage'}'";
+	return "$self->{'label'}: Can't assign storage without force, old storage is '$self->{'storage'}'";
     } elsif ($self->{'code'} == 1000005) {
 	return "$self->{'label'}: Can't assign storage because it is a new labelled tape.";
     } elsif ($self->{'code'} == 1000006) {
@@ -145,6 +145,12 @@ sub local_message {
 	return "Failed to rewrite label '$self->{'label'}' to volume: $self->{'dev_error'}.";
     } elsif ($self->{'code'} == 1000057) {
 	return "Set datestamp to \"0\" for label '$self->{'label'} in tapelist file.";
+    } elsif ($self->{'code'} == 1000058) {
+	return "Can't remove the pool of label '$self->{'label'}'.";
+    } elsif ($self->{'code'} == 1000059) {
+	return "Can't remove the storage of label '$self->{'label'}'.";
+    } elsif ($self->{'code'} == 1000060) {
+	return "Can't remove the config of label '$self->{'label'}'.";
     }
 }
 
@@ -339,6 +345,7 @@ sub assign {
 			} elsif (!defined $tle->{'meta'} or
 				 $tle->{'meta'} ne $params{'meta'}) {
 			    $tle->{'meta'} = $params{'meta'};
+			    $tle->{'meta'} = undef if $params{'meta'} eq '';
 			    $changed1 = 1;
 			}
 		    }
@@ -356,11 +363,19 @@ sub assign {
 			} elsif (!defined $tle->{'barcode'} or
 				 $tle->{'barcode'} ne $params{'barcode'}) {
 			    $tle->{'barcode'} = $params{'barcode'};
+			    $tle->{'barcode'} = undef if $params{'barcode'} eq '';
 			    $changed1 = 1;
 			}
 		    }
 		    if (defined $params{'pool'}) {
-			if (defined($tle->{'pool'}) &&
+			if ($params{'pool'} eq '') {
+			    $self->user_msg(Amanda::Label::Message->new(
+						source_filename => __FILE__,
+						source_line => __LINE__,
+						code   => 1000058,
+						label  => $tle->{'label'}));
+			    $error = 1;
+			} elsif (defined($tle->{'pool'}) &&
 			    $params{'pool'} ne $tle->{'pool'} &&
 			    !$params{'force'}) {
 			    $self->user_msg(Amanda::Label::Message->new(
@@ -377,7 +392,14 @@ sub assign {
 			}
 		    }
 		    if (defined $params{'storage'}) {
-			if (defined($tle->{'storage'}) &&
+			if ($params{'storage'} eq '') {
+			    $self->user_msg(Amanda::Label::Message->new(
+						source_filename => __FILE__,
+						source_line => __LINE__,
+						code   => 1000059,
+						label  => $tle->{'label'}));
+			    $error = 1;
+			} elsif (defined($tle->{'storage'}) &&
 			    $params{'storage'} ne $tle->{'storage'} &&
 			    !$params{'force'}) {
 			    $self->user_msg(Amanda::Label::Message->new(
@@ -480,6 +502,8 @@ sub label {
     my $labelstr;
     my $autolabel;
     my $tapepool;
+    my $storage_name;
+    my $comment;
     my $finished_cb = $params{'finished_cb'};
     my $res;
 
@@ -493,6 +517,8 @@ sub label {
 	$labelstr = $self->{'storage'}->{'labelstr'};
 	$autolabel = $self->{'storage'}->{'autolabel'};
 	$tapepool = $self->{'storage'}->{'tapepool'};
+	$storage_name = $self->{'storage'}->{'storage_name'};
+	$comment  = $params{'comment'};
 
 	if (defined($params{'label'}) && !$params{'force'}) {
 	    if ($self->{'tapelist'}->lookup_tapelabel($params{'label'})) {
@@ -759,9 +785,9 @@ sub label {
 	    $self->{'tapelist'}->reload(1);
 	    $self->{'tapelist'}->remove_tapelabel($label);
 	    # the label is not yet assigned a config
-	    $self->{'tapelist'}->add_tapelabel("0", $label, undef, 1, $meta, $res->{'barcode'},
+	    $self->{'tapelist'}->add_tapelabel("0", $label, $comment, 1, $meta, $res->{'barcode'},
 			       $dev->block_size/1024,
-			       $tapepool, undef, undef);
+			       $tapepool, $storage_name, Amanda::Config::get_config_name());
 	    $self->{'tapelist'}->write();
 
 	    $self->user_msg(Amanda::Label::Message->new(
@@ -792,6 +818,8 @@ sub label {
 
     step releasing => sub {
 	my ($err) = @_;
+
+	$self->user_msg($err) if $err;
 	$gerr = $err if !$gerr;
 
 	return $res->release(finished_cb => $steps->{'released'}) if $res;
@@ -859,6 +887,11 @@ sub erase {
 	}
 
 	my $storage_name = $tle->{'storage'};
+	if ($storage_name) {
+	    return $steps->{'erase'}->($storage_name);
+	}
+
+	$storage_name = $params{'storage'};
 	if ($storage_name) {
 	    return $steps->{'erase'}->($storage_name);
 	}

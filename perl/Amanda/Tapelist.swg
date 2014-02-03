@@ -366,7 +366,7 @@ sub local_message {
     if ($self->{'code'} == 1600000) {
         return "Failed to read tapelist file '$self->{'tapefile'}'.";
     } elsif ($self->{'code'} == 1600001) {
-        return "tapelist";
+        return "List of labels";
     } elsif ($self->{'code'} == 1600002) {
         return "Failed to read tapelist file '$self->{'tapelist_filename'}' on line $self->{'linenum'}: $self->{'line'}";
     } elsif ($self->{'code'} == 1600003) {

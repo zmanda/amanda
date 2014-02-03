@@ -1,0 +1,43 @@
+# Copyright (c) 2012 Zmanda, Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
+# Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+
+=head1 NAME
+
+Amanda::Rest - A REST server for amanda.
+
+=head1 SYNOPSIS
+
+A REST server for amanda.
+
+=head1 SEE_ALSO
+
+    Amanda::Rest::Amdump
+    Amanda::Rest::Amflush
+    Amanda::Rest::Configs
+    Amanda::Rest::Dles
+    Amanda::Rest::Dumps
+    Amanda::Rest::Labels
+    Amanda::Rest::Report
+    Amanda::Rest::Runs
+    Amanda::Rest::Status
+    Amanda::Rest::Storages
+    Amanda::Rest::Storages::Labels
+    Amanda::Rest::Version
+
+=cut
