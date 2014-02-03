@@ -113,8 +113,8 @@ is_deeply($tl->{'tles'}->[0], {
        'label' => 'TESTCONF92',
        'datestamp' => '0',
        'pool' => 'TESTCONF',
-       'storage' => undef,
-       'config' => undef
+       'storage' => 'TESTCONF',
+       'config' => 'TESTCONF'
      },
     "tapelist correctly updated");
 
@@ -185,8 +185,8 @@ is_deeply($tl->{'tles'}->[0], {
        'label' => 'TESTCONF88',
        'datestamp' => '0',
        'pool' => 'TESTCONF',
-       'storage' => undef,
-       'config' => undef
+       'storage' => "TESTCONF",
+       'config' => "TESTCONF"
      },
     "tapelist correctly updated after --assign");
 
@@ -211,27 +211,27 @@ is_deeply($tl->{'tles'}->[0], {
        'label' => 'TESTCONF01',
        'datestamp' => '0',
        'pool' => 'TESTCONF',
-       'storage' => undef,
-       'config' => undef
+       'storage' => "TESTCONF",
+       'config' => "TESTCONF"
      },
     "tapelist correctly updated after autolabel");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-02', '--barcode', 'bar-02', '--pool', 'pool1', '--assign'),
     "--assign meta fail without -f");
 like($Installcheck::Run::stdout,
-     qr/TESTCONF88: Can't assign meta-label without -f, old meta-label is 'meta-01'/,
+     qr/TESTCONF88: Can't assign meta-label without force, old meta-label is 'meta-01'/,
      "amlabel --assign without -f (meta)");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--barcode', 'bar-02', '--pool', 'pool1', '--assign'),
     "--assign barcode fail without -f");
 like($Installcheck::Run::stdout,
-     qr/TESTCONF88: Can't assign barcode without -f, old barcode is 'bar-01'/,
+     qr/TESTCONF88: Can't assign barcode without force, old barcode is 'bar-01'/,
      "amlabel --assign without -f (barcode)");
 
 ok(!run('amlabel', 'TESTCONF', 'TESTCONF88', '--pool', 'pool1', '--assign'),
     "--assign pool fail without -f");
 like($Installcheck::Run::stdout,
-     qr/TESTCONF88: Can't assign pool without -f, old pool is 'TESTCONF'/,
+     qr/TESTCONF88: Can't assign pool without force, old pool is 'TESTCONF'/,
      "amlabel --assign without -f (pool)");
 
 ok(run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-02', '--barcode', 'bar-02', '--pool', 'pool-02', '--assign'),
@@ -248,8 +248,8 @@ is_deeply($tl->{'tles'}->[1], {
        'label' => 'TESTCONF88',
        'datestamp' => '0',
        'pool' => 'pool-02',
-       'storage' => undef,
-       'config' => undef
+       'storage' => "TESTCONF",
+       'config' => "TESTCONF"
      },
     "tapelist correctly updated after -f --assign");
 

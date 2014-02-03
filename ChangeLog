@@ -1,4 +1,7 @@
 2014-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amlabel.pl: Fix.
+
+2014-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (get_storage_list): New function.
 	* common-src/conffile.h (get_storage_list): Add prototype.
 	* perl/Amanda/Config.swg (get_storage_list): Swig function.
