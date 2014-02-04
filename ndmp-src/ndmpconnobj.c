@@ -568,6 +568,8 @@ ndmp_connection_mover_close(
 gboolean ndmp_connection_mover_get_state(
 	NDMPConnection *self,
 	ndmp9_mover_state *state,
+	ndmp9_mover_pause_reason *pause_reason,
+	ndmp9_mover_halt_reason  *halt_reason,
 	guint64 *bytes_moved,
 	guint64 *window_offset,
 	guint64 *window_length)
@@ -577,9 +579,11 @@ gboolean ndmp_connection_mover_get_state(
     NDMP_TRANS_NO_REQUEST(self, ndmp4_mover_get_state)
 	NDMP_CALL(self);
 	if (state) *state = reply->state;
-	if (bytes_moved) *bytes_moved = reply->bytes_moved;
+	if (bytes_moved)   *bytes_moved   = reply->bytes_moved;
 	if (window_offset) *window_offset = reply->window_offset;
 	if (window_length) *window_length = reply->window_length;
+	if (pause_reason)  *pause_reason  = reply->pause_reason;
+	if (halt_reason)   *halt_reason   = reply->halt_reason;
 	NDMP_FREE();
     NDMP_END
     return TRUE;

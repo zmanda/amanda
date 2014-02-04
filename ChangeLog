@@ -1,3 +1,12 @@
+2014-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Call ndmp_connection_mover_get_state
+	  before calling ndmp_connection_wait_for_notify_with_cond to verify
+	  the mover state.
+	* ndmp-src/ndmpconnobj.c (ndmp_connection_mover_get_state): Return
+	  pause_reason and halt_reason
+	* ndmp-src/ndmpconnobj.h (ndmp_connection_mover_get_state): Change
+	  prototype.
+
 2014-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amlabel.pl: Fix.
 
