@@ -1140,7 +1140,7 @@ accept_wait_cond(
     while (1) {
 	g_mutex_unlock(self->abort_mutex);
 	if (!ndmp_connection_mover_get_state(self->ndmp,
-		    &state, &bytes_moved, NULL, NULL)) {
+		    &state, NULL, NULL, &bytes_moved, NULL, NULL)) {
 	    g_mutex_lock(self->abort_mutex);
 	    set_error_from_ndmp(self);
 	    state = 0;
@@ -1247,24 +1247,36 @@ accept_impl(
     }
 
     if (self->indirecttcp_sock == -1) {
-	/* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to
-	 * write outside the window, while the standard specifies .._EOW,
-	 * instead.  When reading to a connection, we get the appropriate
-	 * .._SEEK.  It's easy enough to handle both. */
-	result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
+
+	/* Check if it is already in PAUSED state */
+	if (!ndmp_connection_mover_get_state(self->ndmp,
+		&state, &mover_pause_reason, &mover_halt_reason,
+		NULL, NULL, NULL)) {
+	    set_error_from_ndmp(self);
+	    result = 1;
+	    goto accept_failed;
+	}
+
+	if (state != NDMP9_MOVER_STATE_PAUSED &&
+	    state != NDMP9_MOVER_STATE_HALTED) {
+	    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to
+	     * write outside the window, while the standard specifies .._EOW,
+	     * instead.  When reading to a connection, we get the appropriate
+	     * .._SEEK.  It's easy enough to handle both. */
+	    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
 			NULL,
 			&mover_halt_reason,
 			&mover_pause_reason, &seek_position,
 			cancelled,
 			abort_mutex, abort_cond);
 
-	if (result == 1) {
-	    set_error_from_ndmp(self);
-	    goto accept_failed;
-	} else if (result == 2) {
-	    goto accept_failed;
+	    if (result == 1) {
+		set_error_from_ndmp(self);
+		goto accept_failed;
+	    } else if (result == 2) {
+		goto accept_failed;
+	    }
 	}
-
 	err = NULL;
 	if (mover_pause_reason) {
 	    switch (mover_pause_reason) {
@@ -1336,6 +1348,7 @@ connect_impl(
     GCond  *abort_cond)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
+    ndmp9_mover_state state;
     ndmp9_mover_mode mode;
     ndmp9_mover_halt_reason mover_halt_reason = NDMP9_MOVER_HALT_NA;
     ndmp9_mover_pause_reason mover_pause_reason = NDMP9_MOVER_PAUSE_NA;
@@ -1398,18 +1411,29 @@ connect_impl(
      * reading to a connection, we get the appropriate .._SEEK.  It's easy
      * enough to handle both. */
 
-    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
+    /* Check if it is already in PAUSED state */
+    if (!ndmp_connection_mover_get_state(self->ndmp,
+		&state, &mover_pause_reason, &mover_halt_reason,
+		NULL, NULL, NULL)) {
+	set_error_from_ndmp(self);
+	return 1;
+    }
+
+    if (state != NDMP9_MOVER_STATE_PAUSED &&
+	state != NDMP9_MOVER_STATE_HALTED) {
+	result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
 	    NULL,
 	    &mover_halt_reason,
 	    &mover_pause_reason, &seek_position,
 	    cancelled,
 	    abort_mutex, abort_cond);
 
-    if (result == 1) {
-	set_error_from_ndmp(self);
-	return 1;
-    } else if (result == 2) {
-	return 2;
+	if (result == 1) {
+	    set_error_from_ndmp(self);
+	    return 1;
+	} else if (result == 2) {
+	    return 2;
+	}
     }
 
     if (mover_halt_reason != NDMP9_MOVER_HALT_NA) {
@@ -1551,7 +1575,7 @@ write_from_connection_impl(
     g_assert(nconn->mode == NDMP9_MOVER_MODE_READ);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_before, NULL, NULL)) {
+		&mover_state, NULL, NULL, &bytes_moved_before, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return 1;
     }
@@ -1648,7 +1672,7 @@ write_from_connection_impl(
      * In any case, we want to know how many bytes were written. */
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_after, NULL, NULL)) {
+		&mover_state, NULL, NULL, &bytes_moved_after, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return 1;
     }
@@ -1708,7 +1732,7 @@ read_to_connection_impl(
     g_assert(nconn->mode == NDMP9_MOVER_MODE_WRITE);
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_before, NULL, NULL)) {
+		&mover_state, NULL, NULL, &bytes_moved_before, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return 1;
     }
@@ -1787,7 +1811,7 @@ read_to_connection_impl(
      * In any case, we want to know how many bytes were written. */
 
     if (!ndmp_connection_mover_get_state(self->ndmp,
-		&mover_state, &bytes_moved_after, NULL, NULL)) {
+		&mover_state, NULL, NULL, &bytes_moved_after, NULL, NULL)) {
 	set_error_from_ndmp(self);
 	return 1;
     }
@@ -2215,7 +2239,7 @@ directtcp_connection_ndmp_close(DirectTCPConnection *dself)
     /* based on the current state, we may need to abort or stop the
      * mover before closing it */
     if (!ndmp_connection_mover_get_state(self->ndmp, &state,
-				    &bytes_moved, NULL, NULL)) {
+				    NULL, NULL, &bytes_moved, NULL, NULL)) {
 	rv = ndmp_connection_err_msg(self->ndmp);
 	goto error;
     }
