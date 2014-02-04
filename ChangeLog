@@ -1,4 +1,10 @@
 2014-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c, ndmp-src/ndmpconnobj.c,
+	  ndmp-src/ndmpconnobj.h: Undo previous patch.
+	* device-src/ndmp-device.c: ndmp_connection_wait_for_notify_with_cond
+	  returning 1 is a valid result.
+
+2014-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: Call ndmp_connection_mover_get_state
 	  before calling ndmp_connection_wait_for_notify_with_cond to verify
 	  the mover state.
