@@ -208,8 +208,6 @@ gboolean ndmp_connection_mover_close(
 gboolean ndmp_connection_mover_get_state(
 	NDMPConnection *self,
 	ndmp9_mover_state *state,
-	ndmp9_mover_pause_reason *pause_reason,
-	ndmp9_mover_halt_reason  *halt_reason,
 	guint64 *bytes_moved,
 	guint64 *window_offset,
 	guint64 *window_length);
