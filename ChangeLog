@@ -1,4 +1,7 @@
 2014-02-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Status.pm: Fix documentation.
+
+2014-02-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Dumps.pm: Fix documentation.
 
 2014-02-04  Jean-Louis Martineau <martineau@zmanda.com>

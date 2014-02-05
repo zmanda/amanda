@@ -44,26 +44,25 @@ Amanda::Rest::Status -- Rest interface to Amanda::Status
 
 =over
 
-=item Amanda::Rest::Status::current
+=item Get the status
 
-Interface to C<Amanda::Status::current>
-Get the current status.
+request:
+  GET /amanda/v1.0/configs/:CONF/status?amdump_log=/path/to/amdump_log_file
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Status::current",
-   "params" :{"config":"test",
-	      "amdump_log":"/path/to/amdump.1"},
-   "id"     :"1"}
-
-The result is an array of Amanda::Message:
-
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"/usr/lib/amanda/perl/Amanda/Status.pm",
-	      "source_line":"1433",
-	      "code":1800000,
-	      "message":"The status",
-	      "status":{...} }],
-   "id":"1"}
+reply:
+  HTTP status 200 OK
+    [
+     {
+        "code" : "1800000",
+        "message" : "The status",
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Status.pm",
+        "source_line" : "1562",
+        "status" : {
+	    ...
+        }
+     }
+    ]
 
 =back
 
@@ -80,27 +79,5 @@ sub current {
 
     return \@result_messages;
 }
-
-#sub stream {
-#
-#    return sub {
-#	my $responder = shift;
-#	my $writer = $responder->(
-#	    [ 200, [ 'Content-Type', 'application/json' ]]);
-#
-#	for my $i ("AA","BB","CC") {
-#	    my $m = Amanda::Message->new(
-#			source_filename => __FILE__,
-#			source_line     => __LINE__,
-#			code => 0,
-#			message => $i);
-#	    my $a = JSON->new->convert_blessed->utf8->encode($m);
-#	    $writer->write("$a\n");
-#	    sleep 5;
-#	}
-#
-#	$writer->close;
-#    }
-#}
 
 1;
