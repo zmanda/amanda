@@ -43,26 +43,29 @@ Amanda::Rest::Report -- Rest interface to Amanda::Report
 
 =over
 
-=item Amanda::Rest::Report::report
+=item Get a report
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Report::report",
-   "params" :{"config":"test",
-	      "trace_log":"log"},
-   "id"     :"1"}
+request:
+  GET /amanda/v1.0/configs/:CONF/report?logfile=/path/to/log/file
 
-The result is an array of Amanda::Message:
+reply:
+  HTTP status: 200 OK
+  [
+     {
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Report.pm",
+        "source_line" : "95"
+        "code" : "1900001",
+        "logfile" : "/var/amanda/test/log.20140204090209.0",
+        "message" : "The report",
+        "report" : {
+	   ...
+        },
+     }
+  ]
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename":"Amanda/Rest/Report.pm",
-              "source_line":"97",
-              "code":"1900001",
-	      "logfile":"/etc/amanda/test/logs/log";
-	      "message":"The report",
-	      "report":"....."}],
-   "id":"1"}
+See perldoc Amanda::Report::json for the report format.
 
-see perldoc Amanda::Report::json for report format
 =back
 
 =cut

@@ -184,6 +184,49 @@ sub new
     return $self;
 }
 
+sub divzero
+{
+    my ($self) = shift;
+    my ($a, $b) = @_;
+    return ($b == 0) ? undef : 0+$a / $b;
+}
+
+sub divzero_wide
+{
+    my ($self) = shift;
+    my ($a, $b) = @_;
+    return ($b == 0) ? undef : 0+$a / $b;
+}
+
+sub divzero_col
+{
+    my ($self) = shift;
+    my ($a, $b, $col) = @_;
+    return ($b == 0) ? undef : 0+($a / $b);
+}
+
+sub hrmn
+{
+    my ($self) = shift;
+    my ($sec) = @_;
+    return $sec;
+}
+
+sub mnsc
+{
+    my ($self) = shift;
+    my ($sec) = @_;
+    return $sec;
+}
+
+sub tounits
+{
+    my ($self) = shift;
+    my ($val, %params) = @_;
+    return $val;
+
+}
+
 sub zprint
 {
     my $self = shift;
@@ -253,13 +296,13 @@ sub write_report
     my $self = shift;
     my $fh   = shift;
 
-    $fh || confess "error: no file handle given to Amanda::Report::human::write_report\n";
+    $fh || confess "error: no file handle given to Amanda::Report::json::write_report\n";
     $self->{fh} = $fh;
 
     $self->generate_report();
 
     my $json = JSON->new->allow_nonref;
-    print {$self->{'fh'}} $json->pretty->encode($self->{'sections'});
+    print {$self->{'fh'}} $json->pretty->allow_blessed->encode($self->{'sections'});
 
     return;
 }
@@ -489,7 +532,7 @@ sub output_stats
 
     my $comp_size = sub {
         my ($stats) = @_;
-        return Amanda::Report::human::divzero(100 * $stats->{outsize}, $stats->{origsize});
+        return $self->divzero(100 * $stats->{outsize}, $stats->{origsize});
     };
 
     $self->{'sections'}{'statistic'}{'avg_compression'} = {
@@ -505,9 +548,9 @@ sub output_stats
     };
 
     $self->{'sections'}{'statistic'}{'avg_dump_rate'} = {
-		total => Amanda::Report::human::divzero_wide( $total_stats->{outsize}, $total_stats->{dumper_time} ),
-		full  => Amanda::Report::human::divzero_wide( $full_stats->{outsize},  $full_stats->{dumper_time} ),
-		incr  => Amanda::Report::human::divzero_wide( $incr_stats->{outsize},  $incr_stats->{dumper_time} )
+		total => $self->divzero_wide( $total_stats->{outsize}, $total_stats->{dumper_time} ),
+		full  => $self->divzero_wide( $full_stats->{outsize},  $full_stats->{dumper_time} ),
+		incr  => $self->divzero_wide( $incr_stats->{outsize},  $incr_stats->{dumper_time} )
     };
 
     $self->{'sections'}{'statistic'}{'dumpdisks'} =
@@ -527,7 +570,7 @@ sub output_stats
 
     my $tape_usage = sub {
         my ($stat_ref) = @_;
-        return Amanda::Report::human::divzero(
+        return $self->divzero(
             100 * (
                 $marksize *
                   ($stat_ref->{tapedisk_count} + $stat_ref->{tapepart_count}) +
@@ -568,9 +611,9 @@ sub output_stats
 		$self->{tapeparts}[1] > 0 ? Amanda::Report::human::by_level_count($self->{tapeparts}) : "";
 
     $self->{'sections'}{'statistic'}{'Avg_tape_write_speed'} = {
-		total => Amanda::Report::human::divzero_wide( $total_stats->{tapesize}, $total_stats->{taper_time} ),
-		full  => Amanda::Report::human::divzero_wide( $full_stats->{tapesize},  $full_stats->{taper_time} ),
-		incr  => Amanda::Report::human::divzero_wide( $incr_stats->{tapesize},  $incr_stats->{taper_time} )
+		total => $self->divzero_wide( $total_stats->{tapesize}, $total_stats->{taper_time} ),
+		full  => $self->divzero_wide( $full_stats->{tapesize},  $full_stats->{taper_time} ),
+		incr  => $self->divzero_wide( $incr_stats->{tapesize},  $incr_stats->{taper_time} )
     };
 
     return;
@@ -616,10 +659,10 @@ sub output_tape_stats
 			'dump_timestamp' => $self->{'_current_tape'}->{'date'},
 			'nb' => int($tape->{dle}),
 			'nc' => int($tape->{files}),
-			'percent_use' => Amanda::Report::human::divzero(100 * $tapeused, $tapesize),
+			'percent_use' => $self->divzero(100 * $tapeused, $tapesize),
 			'size' => $tape->{kb},
 			'tape_label' => $label,
-			'time_duration' => Amanda::Report::human::hrmn($tape->{time}),
+			'time_duration' => $tape->{time},
 			};
     }
     return;
@@ -769,9 +812,9 @@ sub output_summary
 		'dump_orig_kb' => $$record[4],
 		'dump_out_kb' => $$record[5],
 		'dump_comp' => $$record[6],
-		'dump_duration' => int($$record[7]),
+		'dump_duration' => $$record[7],
 		'dump_rate' => $$record[8],
-		'tape_duration' => int($$record[9]),
+		'tape_duration' => $$record[9],
 		'tape_rate' => $$record[10],
 		'dump_partial' => $$record[11],
 		'last_tape_label' => $$record[12]

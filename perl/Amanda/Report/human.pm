@@ -57,6 +57,7 @@ use constant PROGRAM_ORDER =>
 
 sub divzero
 {
+    my ($self) = shift;
     my ( $a, $b ) = @_;
     my $q;
     return
@@ -68,6 +69,7 @@ sub divzero
 
 sub divzero_wide
 {
+    my ($self) = shift;
     my ( $a, $b ) = @_;
     my $q;
     return
@@ -79,6 +81,7 @@ sub divzero_wide
 
 sub divzero_col
 {
+    my ($self) = shift;
     my ( $a, $b, $col ) = @_;
     return ( $b == 0 )
       ? "-- "
@@ -115,6 +118,7 @@ sub min
 
 sub hrmn
 {
+    my ($self) = shift;
     my ($sec) = @_;
     $sec += 30; # round up
     my ( $hr, $mn ) = ( int( $sec / ( 60 * 60 ) ), int( $sec / 60 ) % 60 );
@@ -123,6 +127,7 @@ sub hrmn
 
 sub mnsc
 {
+    my ($self) = shift;
     my ($sec) = @_;
     $sec += 0.5; # round up
     my ( $mn, $sc ) = ( int( $sec / (60) ), int( $sec % 60 ) );
@@ -759,23 +764,23 @@ EOF
     $self->zprint(swrite(
         $st_format,
         "Estimate Time (hrs:min)",
-        hrmn( $total_stats->{planner_time} ),
+        $self->hrmn( $total_stats->{planner_time} ),
         "", "", ""
     ));
 
     $self->zprint(swrite(
         $st_format,
         "Run Time (hrs:min)",
-        hrmn( $total_stats->{total_time} ),
+        $self->hrmn( $total_stats->{total_time} ),
         "", "", ""
     ));
 
     $self->zprint(swrite(
         $st_format,
         "Dump Time (hrs:min)",
-        hrmn( $total_stats->{dumper_time} ),
-        hrmn( $full_stats->{dumper_time} ),
-        hrmn( $incr_stats->{dumper_time} ),
+        $self->hrmn( $total_stats->{dumper_time} ),
+        $self->hrmn( $full_stats->{dumper_time} ),
+        $self->hrmn( $incr_stats->{dumper_time} ),
 	""
     ));
 
@@ -799,7 +804,7 @@ EOF
 
     my $comp_size = sub {
         my ($stats) = @_;
-        return divzero(100 * $stats->{outsize}, $stats->{origsize});
+        return $self->divzero(100 * $stats->{outsize}, $stats->{origsize});
     };
 
     $self->zprint(swrite(
@@ -823,9 +828,9 @@ EOF
     $self->zprint(swrite(
         $st_format,
         "Avg Dump Rate (k/s)",
-        divzero_wide( $total_stats->{outsize}, $total_stats->{dumper_time} ),
-        divzero_wide( $full_stats->{outsize},  $full_stats->{dumper_time} ),
-        divzero_wide( $incr_stats->{outsize},  $incr_stats->{dumper_time} ),
+        $self->divzero_wide( $total_stats->{outsize}, $total_stats->{dumper_time} ),
+        $self->divzero_wide( $full_stats->{outsize},  $full_stats->{dumper_time} ),
+        $self->divzero_wide( $incr_stats->{outsize},  $incr_stats->{dumper_time} ),
         ""
     ));
     $self->zprint("\n");
@@ -833,9 +838,9 @@ EOF
     $self->zprint(swrite(
         $st_format,
         "Tape Time (hrs:min)",
-        hrmn( $total_stats->{taper_time} ),
-        hrmn( $full_stats->{taper_time} ),
-        hrmn( $incr_stats->{taper_time} ),
+        $self->hrmn( $total_stats->{taper_time} ),
+        $self->hrmn( $full_stats->{taper_time} ),
+        $self->hrmn( $incr_stats->{taper_time} ),
 	""
     ));
 
@@ -850,7 +855,7 @@ EOF
 
     my $tape_usage = sub {
         my ($stat_ref) = @_;
-        return divzero(
+        return $self->divzero(
             100 * (
                 $marksize *
                   ($stat_ref->{tapedisk_count} + $stat_ref->{tapepart_count}) +
@@ -905,9 +910,9 @@ EOF
     $self->zprint(swrite(
         $st_format,
         "Avg Tp Write Rate (k/s)",
-        divzero_wide( $total_stats->{tapesize}, $total_stats->{taper_time} ),
-        divzero_wide( $full_stats->{tapesize},  $full_stats->{taper_time} ),
-        divzero_wide( $incr_stats->{tapesize},  $incr_stats->{taper_time} ),
+        $self->divzero_wide( $total_stats->{tapesize}, $total_stats->{taper_time} ),
+        $self->divzero_wide( $full_stats->{tapesize},  $full_stats->{taper_time} ),
+        $self->divzero_wide( $incr_stats->{tapesize},  $incr_stats->{taper_time} ),
         ""
     ));
 
@@ -967,9 +972,9 @@ sub output_tape_stats
         $self->zprint(swrite(
             $ts_format,
             $label,
-            hrmn($tape->{time}),                               # time
+            $self->hrmn($tape->{time}),                               # time
             sprintf("%.0f", $self->tounits($tape->{kb})) . $self->{disp_unit},  # size
-            divzero(100 * $tapeused, $tapesize),    # % usage
+            $self->divzero(100 * $tapeused, $tapesize),    # % usage
             int($tape->{dle}),                        # # of dles
             int($tape->{files})                       # # of parts
         ));
@@ -1394,22 +1399,30 @@ sub get_summary_info
 	my $compression;
 	if (!defined $orig_size || $orig_size == $out_size) {
 	    $compression = '--';
+	    $compression = $self->divzero(0, 0);
 	} else {
 	    $compression =
-	      divzero_col((100 * $out_size), $orig_size, $col_spec->[5]);
+	      $self->divzero_col((100 * $out_size), $orig_size, $col_spec->[5]);
 	}
 
 	## simple formatting macros
+	my $fmt_col_field;
+	if ($self->isa("Amanda::Report::json")) {
+	    $fmt_col_field = sub {
+		my ( $column, $data ) = @_;
+		return $data;
+	    };
+	} else {
+	    $fmt_col_field = sub {
+		my ( $column, $data ) = @_;
 
-	my $fmt_col_field = sub {
-	    my ( $column, $data ) = @_;
-
-	    return sprintf(
-		$col_spec->[$column]->[COLSPEC_FORMAT],
-		$col_spec->[$column]->[COLSPEC_WIDTH],
-		$col_spec->[$column]->[COLSPEC_PREC], $data
-	    );
-	};
+		return sprintf(
+		    $col_spec->[$column]->[COLSPEC_FORMAT],
+		    $col_spec->[$column]->[COLSPEC_WIDTH],
+		    $col_spec->[$column]->[COLSPEC_PREC], $data
+		);
+	    };
+	}
 
 	my $format_space = sub {
 	    my ( $column, $data ) = @_;
@@ -1432,7 +1445,7 @@ sub get_summary_info
 	    push @rv, $orig_size ? $fmt_col_field->(3, $self->tounits($orig_size)) : '';
 	    push @rv, $out_size ? $fmt_col_field->(4, $self->tounits($out_size)) : '';
 	    push @rv, $compression;
-	    push @rv, $dump_time ? $fmt_col_field->(6, mnsc($dump_time)) : "PARTIAL";
+	    push @rv, $dump_time ? $fmt_col_field->(6, $self->mnsc($dump_time)) : "PARTIAL";
 	    push @rv, $dump_rate ? $fmt_col_field->(7, $dump_rate) : "";
 	    if (defined $tape_failure_from and $tape_failure_from eq 'config') {
 		push @rv, $format_space->(8,"");
@@ -1440,7 +1453,7 @@ sub get_summary_info
 	    } else {
 		push @rv, $fmt_col_field->(8,
 		    (defined $tape_time) ?
-			    $tape_time ? mnsc($tape_time) : ""
+			    $tape_time ? $self->mnsc($tape_time) : ""
 			  : "FAILED");
 		push @rv, (defined $tape_rate) ?
 			  $tape_rate ?
@@ -1471,7 +1484,7 @@ sub get_summary_info
 		$tape_rate = $try->{taper}{kps} if !$tape_rate;
 	        push @rv, $fmt_col_field->(8,
 		       (defined $tape_time) ?
-			       $tape_time ? mnsc($tape_time) : ""
+			       $tape_time ? $self->mnsc($tape_time) : ""
 			     : "FAILED");
 	        push @rv, (defined $tape_rate) ?
 		   $tape_rate ?
@@ -1504,7 +1517,7 @@ sub get_summary_info
 	    } else {
 	       push @rv, $fmt_col_field->(8,
 		       (defined $tape_time) ?
-			       $tape_time ? mnsc($tape_time) : ""
+			       $tape_time ? $self->mnsc($tape_time) : ""
 			     : "FAILED");
 	       push @rv, (defined $tape_rate) ?
 		   $tape_rate ?
@@ -1534,7 +1547,7 @@ sub get_summary_info
 		$tape_rate = $try->{taper}{kps} if !$tape_rate;
 	        push @rv, $fmt_col_field->(8,
 		       (defined $tape_time) ?
-			       $tape_time ? mnsc($tape_time) : ""
+			       $tape_time ? $self->mnsc($tape_time) : ""
 			     : "FAILED");
 	        push @rv, (defined $tape_rate) ?
 		   $tape_rate ?
