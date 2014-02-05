@@ -99,6 +99,7 @@ reply:
   ]
 
 =item Create a storage
+
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/create
 

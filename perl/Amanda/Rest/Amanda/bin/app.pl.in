@@ -56,44 +56,64 @@ get '/amanda/v1.0/configs/:CONF' => sub {
 	return $r
 };
 
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory' => sub {
+get '/amanda/v1.0/configs/:CONF/storages' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::list(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/storages/:STORAGE' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::fields(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::inventory(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/show' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/show' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::show(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/reset' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/reset' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::reset(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/update' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/update' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::update(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/eject' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/eject' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::eject(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/clean' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/clean' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::clean(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/verify' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/create' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::create(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/verify' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::verify(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/load' => sub {
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/load' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Storages::load(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/label' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::label(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
@@ -101,19 +121,24 @@ get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
 	my $r = Amanda::Rest::Storages::Labels::list(%p);
 	return $r
 };
-post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
-	my %p = params;
-	my $r = Amanda::Rest::Storages::Labels::label(%p);
-	return $r
-};
 get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
 	my %p = params;
-	my $r = Amanda::Rest::Storages::Labels::label(%p);
+	my $r = Amanda::Rest::Storages::Labels::list(%p);
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::add_label(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
 	my %p = params;
-	my $r = Amanda::Rest::Storages::Labels::post_label(%p);
+	my $r = Amanda::Rest::Storages::Labels::update_label(%p);
+	return $r
+};
+del '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Storages::Labels::erase(%p);
 	return $r
 };
 del '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
@@ -127,10 +152,10 @@ get '/amanda/v1.0/configs/:CONF/labels' => sub {
 	return $r
 };
 
-get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
-};
-get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
-};
+#get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
+#};
+#get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
+#};
 post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Dles::setting(%p);
@@ -184,6 +209,11 @@ get '/amanda/v1.0/configs/:CONF/report' => sub {
 	return $r
 };
 
+get '/amanda/v1.0/configs/:CONF/runs' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::list(%p);
+	return $r
+};
 post '/amanda/v1.0/configs/:CONF/runs/amdump' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Runs::amdump(%p);

@@ -38,35 +38,104 @@ Amanda::Rest::Amdump -- Rest interface to Amanda::Amdump
 
 =over
 
-=item Amanda::Rest::Amdump::run
+=item Run amdump
 
-Interface to C<Amanda::Amdump::run>
+request:
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amdump
+    query arguments:
+        host=HOST
+        disk=DISK               #repeatable
+        hostdisk=HOST|DISK      #repeatable
+        no_taper=0|1
+        from_client=0|1
 
-  {"jsonrpc":"2.0",
-   "method" :"Amanda::Rest::Amdump::run",
-   "params" :{"config":"test",
-	      "no_taper":"0",
-	      "from_client":"0",
-	      "exact_match":"0",
-              "hostdisk":["localhost","/boot"]},
-   "id"     :"1"}
+reply:
+  HTTP status: 202 Accepted
+  [
+     {
+        "amdump_log" : "/var/log/amanda/test/amdump.20140205112550",
+        "code" : "2000001",
+        "message" : "The amdump log file is '/var/log/amanda/test/amdump.20140205112550'",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
+        "source_line" : "91"
+     },
+     {
+        "code" : "2000000",
+        "message" : "The trace log file is '/amanda/h1/var/amanda/test/log.20140205112550.0'",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
+        "source_line" : "97",
+        "trace_log" : "/var/log/amanda/test/log.20140205112550.0"
+     },
+     {
+        "code" : "2000002",
+        "message" : "Running a dump",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+        "source_line" : "105"
+     }
+  ]
 
-The result is an array of Amanda::Message:
+=item Run amflush
 
-  {"jsonrpc":"2.0",
-   "result":[{"source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
-              "trace_log" : "/etc/amanda/test/log.20130904144908.0",
-              "source_line" : "89",
-              "severity" : "16",
-              "code" : "2000000",
-              "message" : "The trace log file is '/var/amanda/test/log.20130904144908.0'" },
-             { "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
-              "amdump_log" : "/etc/amanda/test/amdump.20130904144908",
-              "source_line" : "94",
-              "severity" : "16",
-              "code" : "2000001",
-              "message" : "The amdump log file is 'amdump.20130904144908'"}],
-   "id":"1"}
+request:
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amflush
+    query arguments:
+        host=HOST
+        disk=DISK               #repeatable
+        hostdisk=HOST|DISK      #repeatable
+	datestamps=DATESTAMP    #repeatable
+
+reply:
+  HTTP status: 202 Accepted
+  [
+     {
+        "amdump_log" : "/var/log/amanda/test/amdump.20140205120327",
+        "code" : "2200001",
+        "message" : "The amdump log file is '/var/log/amanda/test/amdump.20140205120327'",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Amflush.pm",
+        "source_line" : "98"
+     },
+     {
+        "code" : "2200000",
+        "message" : "The trace log file is '/var/log/amanda/test/log.20140205120327.0'",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Amflush.pm",
+        "source_line" : "104",
+        "trace_log" : "/var/log/amanda/test/log.20140205120327.0"
+     },
+     {
+        "code" : "2200005",
+        "message" : "Running a flush",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+        "source_line" : "315"
+     }
+  ]
+
+=item Run amflush
+
+request:
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amvault
+    query arguments:
+        host=HOST
+        disk=DISK               #repeatable
+        hostdisk=HOST|DISK      #repeatable
+quiet=0|1
+fulls_only=0|1
+latest_fulls=0|1
+incrs_only=0|1
+opt_export=0|1
+opt_dry_run=0|1
+src_write_timestamp=TIMESTAMP
+dst_write_timestamp=TIMESTAMP
+
+
+reply:
+  HTTP status: 202 Accepted
+
 
 =back
 
@@ -84,11 +153,22 @@ sub amdump {
     };
 
     if (defined($params{'host'})) {
-	my @hostdisk = ($params{'host'});
-	push @hostdisk, $params{'disk'} if $params{'disk'};
+	my @hostdisk;
+	if (defined($params{'disk'})) {
+	    if (ref($params{'disk'}) eq 'ARRAY') {
+		foreach my $disk (@{$params{'disk'}}) {
+		    push @hostdisk, $params{'host'}, $disk;
+		}
+	    } else {
+		push @hostdisk, $params{'host'}, ${'disk'};
+	    }
+	} else {
+	    push @hostdisk, $params{'host'};
+	}
 	$params{'hostdisk'} = \@hostdisk;
     }
     $params{'config'} = $params{'CONF'};
+    $params{'exact_match'} = 1;
     my ($amdump, $messages) = Amanda::Amdump->new(%params, user_msg => $user_msg);
     push @result_messages, @{$messages};
 
@@ -105,7 +185,7 @@ sub amdump {
 	source_line     => __LINE__,
 	code         => 2000002,
 	severity     => $Amanda::Message::INFO);
-    Dancer::status(201);
+    Dancer::status(202);
 
     return \@result_messages;
 }
@@ -121,12 +201,23 @@ sub amvault {
 	push @result_messages, $msg;
     };
 
-#    if (defined($params{'host'})) {
-#`	my @hostdisk = ($params{'host'});
-#	push @hostdisk, $params{'disk'} if $params{'disk'};
-#	$params{'hostdisk'} = \@hostdisk;
-#    }
+    if (defined($params{'host'})) {
+	my @hostdisk;
+	if (defined($params{'disk'})) {
+	    if (ref($params{'disk'}) eq 'ARRAY') {
+		foreach my $disk (@{$params{'disk'}}) {
+		    push @hostdisk, $params{'host'}, $disk;
+		}
+	    } else {
+		push @hostdisk, $params{'host'}, ${'disk'};
+	    }
+	} else {
+	    push @hostdisk, $params{'host'};
+	}
+	$params{'hostdisk'} = \@hostdisk;
+    }
     $params{'config'} = $params{'CONF'};
+    $params{'exact_match'} = $params{'CONF'};
     my ($vault, $messages) = Amanda::Vault->new(%params, user_msg => $user_msg);
     push @result_messages, @{$messages};
 
@@ -143,7 +234,7 @@ sub amvault {
 	source_line     => __LINE__,
 	code         => 2400003,
 	severity     => $Amanda::Message::INFO);
-    Dancer::status(201);
+    Dancer::status(202);
 
     return \@result_messages;
 }
@@ -171,16 +262,29 @@ sub amflush {
 	push @result_messages, $msg;
     };
 
-    Amanda::Disklist::match_disklist(
-        user_msg => \&user_msg,
-        exact_match => $params{'exact_match'},
-        args        => $params{'hostdisk'});
     if (defined($params{'host'})) {
-	my @hostdisk = ($params{'host'});
-	push @hostdisk, $params{'disk'} if $params{'disk'};
+	my @hostdisk;
+	if (defined($params{'disk'})) {
+	    if (ref($params{'disk'}) eq 'ARRAY') {
+		foreach my $disk (@{$params{'disk'}}) {
+		    push @hostdisk, $params{'host'}, $disk;
+		}
+	    } else {
+		push @hostdisk, $params{'host'}, ${'disk'};
+	    }
+	} else {
+	    push @hostdisk, $params{'host'};
+	}
 	$params{'hostdisk'} = \@hostdisk;
     }
     $params{'config'} = $params{'CONF'};
+    $params{'exact_match'} = 1;
+
+    Amanda::Disklist::match_disklist(
+        user_msg => $user_msg,
+        exact_match => $params{'exact_match'},
+        args        => $params{'hostdisk'});
+
     my ($amflush, $messages) = Amanda::Amflush->new(%params, user_msg => $user_msg);
     push @result_messages, @{$messages};
     open STDERR, ">>&", $amflush->{'amdump_log'} || die("stdout: $!");
@@ -192,7 +296,7 @@ sub amflush {
 	foreach my $datestamp (@{$params{'datestamps'}}) {
 	    my $matched = 0;
 	    foreach my $ts (@ts) {
-		if (match_datestamp($datestamp, $ts)) {
+		if (Amanda::Util::match_datestamp($datestamp, $ts)) {
 		    push @datestamps, $ts;
 		    $matched = 1;
 		    last;
@@ -234,7 +338,7 @@ sub amflush {
 			source_line     => __LINE__,
 			code         => 2200005,
 			severity     => $Amanda::Message::INFO);
-    Dancer::status(201);
+    Dancer::status(202);
 
     return \@result_messages;
 }
@@ -242,7 +346,7 @@ sub amflush {
 
 sub list {
 
-print STDERR "LIST LIST\n";
+   return "LIST or runs in not available yet\n";
 }
 
 1;

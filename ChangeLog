@@ -1,4 +1,11 @@
 2014-02-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amflush.pm: Fix message.
+	* perl/Amanda/Rest/Runs.pm: Add amdump and amflush
+	* perl/Amanda/Rest/Storages.pm: Fix documentation.
+	* perl/Amanda/Rest/Storages/Labels.pm: Fix documentation.
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add many methods.
+
+2014-02-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm (divzero, divzero_wide, divzero_col,
 	  hrmn, mnsc):  Function must be dalled from the package.
 	* perl/Amanda/Report/json.pm (divzero, divzero_wide, divzero_col,

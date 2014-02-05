@@ -34,7 +34,7 @@ sub local_message {
     } elsif ($self->{'code'} == 2200001) {
 	return "The amdump log file is '$self->{'amdump_log'}'";
     } elsif ($self->{'code'} == 2200002) {
-	return "The Datestamp '$self->{'datestamps'} doesn't match a holding disk datestamps";
+	return "The Datestamp '$self->{'datestamp'} doesn't match a holding disk datestamps";
     } elsif ($self->{'code'} == 2200003) {
 	return "None of the datestamp provided match a holding datestamp."
     } elsif ($self->{'code'} == 2200004) {

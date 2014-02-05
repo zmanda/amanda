@@ -114,12 +114,12 @@ reply:
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
     query arguments:
-	force=0|1
-	config=CONFIG
-	storage=STORAGE
+        force=0|1
+        config=CONFIG
+        storage=STORAGE
         meta=META
         barcode=BARCODE
-	reuse=0|1
+        reuse=0|1
 
 reply:
   HTTP status: 200 OK
@@ -194,8 +194,8 @@ request:
   DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
   DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
     query arguments:
-	remove_no_retention
-	labels=LABEL1,LABEL2
+        remove_no_retention
+        labels=LABEL1,LABEL2
         cleanup
         dry_run
         erase
