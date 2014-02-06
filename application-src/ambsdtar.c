@@ -1594,7 +1594,7 @@ ambsdtar_get_timestamps(
 		errmsg = g_strdup_printf(_("ambsdtar: error opening %s: %s"),
 					 inputname, strerror(errno));
 		g_debug("%s", errmsg);
-		if (baselevel < 0) {
+		if (baselevel == 0) {
 		    if (command == CMD_ESTIMATE) {
 			fprintf(mesgstream, "ERROR %s\n", errmsg);
 		    } else {

@@ -1,3 +1,6 @@
+2014-02-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c, application-src/ambsdtar.c: Coverity fix.
+
 2014-02-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Amflush.pm: Fix message.
 	* perl/Amanda/Rest/Runs.pm: Add amdump and amflush
