@@ -1,3 +1,6 @@
+2014-02-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c, application-src/ambsdtar.c: Coverity fix.
+
 2014-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, ndmp-src/ndmpconnobj.c,
 	  ndmp-src/ndmpconnobj.h: Undo previous patch.

@@ -112,6 +112,8 @@ struct amar_attr_s {
  * Internal functions
  */
 
+static gboolean amar_attr_close_no_remove(amar_attr_t *attribute, GError **error);
+
 GQuark
 amar_error_quark(void)
 {
@@ -371,7 +373,7 @@ foreach_attr_close(
 	return;
 
     if (!attr->wrote_eoa) {
-	amar_attr_close(attr, error);
+	amar_attr_close_no_remove(attr, error);
     }
 }
 
@@ -425,14 +427,15 @@ amar_new_attr(
     attribute->thread = NULL;
     attribute->fd = -1;
     attribute->eoa = 0;
+    g_hash_table_replace(file->attributes, &attribute->attrid, attribute);
 
     /* (note this function cannot currently return an error) */
 
     return attribute;
 }
 
-gboolean
-amar_attr_close(
+static gboolean
+amar_attr_close_no_remove(
     amar_attr_t *attribute,
     GError **error)
 {
@@ -453,6 +456,21 @@ amar_attr_close(
 	    rv = FALSE;
 	attribute->wrote_eoa = TRUE;
     }
+
+    return rv;
+}
+
+gboolean
+amar_attr_close(
+    amar_attr_t *attribute,
+    GError **error)
+{
+    amar_file_t *file = attribute->file;
+    gboolean     rv   = TRUE;
+    gint  attrid_gint = attribute->attrid;
+
+    rv = amar_attr_close_no_remove(attribute, error);
+    g_hash_table_remove(file->attributes, &attrid_gint);
 
     return rv;
 }
