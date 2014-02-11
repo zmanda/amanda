@@ -59,6 +59,8 @@ sub usage() {
 	exit 0;
 }
 
+my $o_options;
+
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
     'summary'                        => \$opt_summary,
@@ -76,6 +78,7 @@ GetOptions(
     'config|c:s'                     => \$opt_config,
     'file:s'                         => \$opt_file,
     'locale-independent-date-format' => \$opt_locale_independent_date_format,
+    'o:s'			     => sub { $o_options .= " -o $_[1]"; }
     ) or usage();
 
 
@@ -113,7 +116,7 @@ $pwd = `pwd`;
 chomp $pwd;
 chdir "$confdir/$conf";
 
-$logdir=`$sbindir/amgetconf logdir`;
+$logdir=`$sbindir/amgetconf logdir $o_options`;
 exit 1 if $? != 0;
 chomp $logdir;
 $errfile="$logdir/amdump";
@@ -144,7 +147,7 @@ if($nb_options == 0 ) {
 	$opt_estimate    = 1;
 }
 
-$unit=`$sbindir/amgetconf displayunit`;
+$unit=`$sbindir/amgetconf displayunit $o_options`;
 chomp($unit);
 $unit =~ tr/A-Z/a-z/;
 $unitdivisor=1;

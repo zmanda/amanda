@@ -1,3 +1,6 @@
+2014-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Accept -o arguments.
+
 2014-02-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c, application-src/ambsdtar.c: Coverity fix.
 
