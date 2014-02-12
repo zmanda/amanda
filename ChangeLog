@@ -1,3 +1,9 @@
+2014-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c: Detect failure to write the file and ftruncate
+	  it to 0.
+	* perl/Amanda/Changer.pm: Detect failure to read the state file and do
+	  like if it was empty.
+
 2014-02-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c, application-src/ambsdtar.c: Coverity fix.
 
