@@ -1220,10 +1220,12 @@ sub with_locked_state {
 	    if ($@) {
 		# $fh goes out of scope here, and is thus automatically
 		# unlocked
-		return $cb->("error reading '$statefile': $@", undef);
+		debug("error reading '$statefile': $@");
+		$STATE = {};
 	    }
 	    if (!defined $STATE or ref($STATE) ne 'HASH') {
-		return $cb->("'$statefile' did not define \$STATE properly", undef);
+		debug("'$statefile' did not define \$STATE properly");
+		$STATE = {};
 	    }
 	} else {
 	    # initial state (blank file)
