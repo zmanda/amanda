@@ -210,7 +210,7 @@ sub calculate_stats
     my $total_stats = $self->{total_stats};
     my $dumpdisks   = $self->{dumpdisks};
     my $tapedisks   = $self->{tapedisks};
-    my $tapeparts  = $self->{tapeparts};
+    my $tapeparts   = $self->{tapeparts};
 
     ## initialize all relevant fields to 0
     map { $incr_stats->{$_} = $full_stats->{$_} = 0; }
@@ -225,6 +225,8 @@ sub calculate_stats
 
 	while( my ($timestamp, $tries) = each %$alldumps ) {
 	    foreach my $try ( @$tries ) {
+
+		next if exists $try->{'retry'};
 
 		my $level = exists $try->{dumper} ? $try->{dumper}{'level'} :
 			    exists $try->{taper} ? $try->{taper}{'level'} :
@@ -635,6 +637,7 @@ sub output_error_summaries
 	while( my ($timestamp, $tries) = each %$alldumps ) {
 	    my $failed = 0;
 	    foreach my $try (@$tries) {
+		next if exists $try->{'retry'};
 		if (exists $try->{dumper} &&
 		    $try->{dumper}->{status} &&
 		    $try->{dumper}->{status} eq 'fail') {

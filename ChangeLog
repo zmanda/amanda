@@ -1,4 +1,18 @@
 2014-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c, common-src/amfeatures.h,
+	  perl/Amanda/Logfile.swg: Add fe_sendbackup_retry,
+	  fe_sendbackup_retry_delay, fe_sendbackup_retry_level,
+	  fe_sendbackup_retry_message.
+	* perl/Amanda/Report.pm: Handle RETRY line from dumper.
+	* perl/Amanda/Report/human.pm: Handle RETRY line from dumper.
+	* perl/Amanda/Status.pm: Handle RETRY line from dumper.
+	* server-src/amstatus.pl: Remove unneeded print statement.
+	* server-src/driver.c: Handle RETRY result from dumper.
+	* server-src/dumper.c: Handle 'sendbackup: retry' line.
+	* server-src/logfile.c, server-src/logfile.h: Add L_RETRY
+	* server-src/server_util.c, server-src/server_util.h: Add RETRY
+
+2014-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Check the size section of the CRC.
 
 2014-02-12  Jean-Louis Martineau <martineau@zmanda.com>

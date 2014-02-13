@@ -46,8 +46,9 @@ char *logtype_str[] = {
     "DONE", "PART", "PARTPARTIAL", "SUCCESS", "PARTIAL", "FAIL", "STRANGE",
     "CHUNK", "CHUNKSUCCESS",                            /* ... continued */
     "STATS",						   /* statistics */
+    "CONT",				   /* continuation line; special */
+    "RETRY",
     "MARKER",					  /* marker for reporter */
-    "CONT"				   /* continuation line; special */
 };
 
 char *program_str[] = {

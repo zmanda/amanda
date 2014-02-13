@@ -135,6 +135,9 @@ static crc_t native_crc;
 static crc_t client_crc;
 static char *log_filename = NULL;
 static char *state_filename = NULL;
+static int   retry_delay;
+static int   retry_level;
+static char *retry_message = NULL;
 
 static dumpfile_t file;
 
@@ -625,7 +628,7 @@ main(
 	    outfd = stream_client(NULL, "localhost", header_port,
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
-		
+
 		g_free(errstr);
 		errstr = g_strdup_printf(_("port open: %s"), strerror(errno));
 		q = quote_string(errstr);
@@ -813,6 +816,7 @@ static int status;
 #define	GOT_SIZELINE		(1 << 1)
 #define	GOT_ENDLINE		(1 << 2)
 #define	HEADER_DONE		(1 << 3)
+#define	GOT_RETRY		(1 << 4)
 
 
 static void
@@ -963,7 +967,7 @@ process_dumpline(
 		g_debug("invalid native-CRC");
 	    }
 	    amfree(buf);
-	    return;
+	    break;
 	}
 
 	if (g_str_equal(tok, "client-CRC")) {
@@ -976,7 +980,38 @@ process_dumpline(
 		g_debug("invalid client-CRC");
 	    }
 	    amfree(buf);
-	    return;
+	    break;
+	}
+
+	if (g_str_equal(tok, "retry")) {
+	    tok = strtok(NULL, " ");
+	    SET(status, GOT_RETRY);
+	    if (tok && g_str_equal(tok, "delay")) {
+		tok = strtok(NULL, " ");
+		if (tok) {
+		    retry_delay = atoi(tok);
+		}
+		tok = strtok(NULL, " ");
+	    }
+	    if (tok && g_str_equal(tok, "level")) {
+		tok = strtok(NULL, " ");
+		if (tok) {
+		    retry_level = atoi(tok);
+		}
+		tok = strtok(NULL, " ");
+	    }
+	    if (tok && g_str_equal(tok, "message")) {
+		tok = strtok(NULL, "");
+		if (tok) {
+		     retry_message = g_strdup(tok);
+		} else {
+		    retry_message = g_strdup("\"No message\"");
+		}
+	    } else {
+		retry_message = g_strdup("\"No message\"");
+	    }
+            stop_dump();
+	    break;
 	}
 
 	if (g_str_equal(tok, "end")) {
@@ -1304,6 +1339,9 @@ do_dump(
     if (msg.buf) msg.buf[0] = '\0';	/* reset msg buffer */
     status = 0;
     dump_result = 0;
+    retry_delay = -1;
+    retry_level = -1;
+    amfree(retry_message);
     dumpbytes = dumpsize = headersize = origsize = (off_t)0;
     fh_init(&file);
 
@@ -1399,6 +1437,21 @@ do_dump(
      * (read the mesgfd, read the datafd, and timeout) are removed.
      */
     event_loop(0);
+
+    if (ISSET(status, GOT_RETRY)) {
+	if (indexfile_tmp) {
+	    unlink(indexfile_tmp);
+	}
+	log_add(L_RETRY, "%s %s %s %d delay %d level %d message %s %d",
+			 hostname, qdiskname, dumper_timestamp, level,
+			 retry_delay, retry_level, retry_message, L_RETRY);
+	putresult(RETRY, _("%s %d %d %s\n"), handle, retry_delay, retry_level,
+					     retry_message);
+
+	// should kill filter
+	// should close all file descriptors
+	return 1;
+    }
 
     if (client_crc.crc == 0) {
 	client_crc = crc_data_in;
@@ -1850,7 +1903,9 @@ read_mesgfd(
     /*
      * Reset the timeout for future reads
      */
-    timeout(conf_dtimeout);
+    if (!ISSET(status, GOT_RETRY)) {
+	timeout(conf_dtimeout);
+    }
 }
 
 /*

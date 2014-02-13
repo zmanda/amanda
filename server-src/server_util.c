@@ -50,7 +50,7 @@ const char *cmdstr[] = {
     "PARTDONE", "PORT-WRITE", "DUMPER-STATUS",		    /* taper cmds */
     "PORT", "TAPE-ERROR", "TAPER-OK",			 /* taper results */
     "REQUEST-NEW-TAPE", "DIRECTTCP-PORT", "TAKE-SCRIBE-FROM",
-    "START-SCAN", "CLOSE-VOLUME", "LAST_TOK",
+    "START-SCAN", "CLOSE-VOLUME", "RETRY", "LAST_TOK",
     NULL
 };
 

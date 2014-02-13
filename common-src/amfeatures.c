@@ -175,6 +175,10 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_amrecover_storage_in_marshall);
 	am_add_feature(f, fe_amidxtaped_storage_in_marshall);
 	am_add_feature(f, fe_amindexd_STORAGE);
+	am_add_feature(f, fe_sendbackup_retry);
+	am_add_feature(f, fe_sendbackup_retry_delay);
+	am_add_feature(f, fe_sendbackup_retry_level);
+	am_add_feature(f, fe_sendbackup_retry_message);
     }
     return f;
 }

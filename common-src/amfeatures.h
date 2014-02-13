@@ -203,6 +203,10 @@ typedef enum {
     fe_amrecover_storage_in_marshall,
     fe_amidxtaped_storage_in_marshall,
     fe_amindexd_STORAGE,
+    fe_sendbackup_retry,
+    fe_sendbackup_retry_delay,
+    fe_sendbackup_retry_level,
+    fe_sendbackup_retry_message,
 
     /*
      * All new features must be inserted immediately *before* this entry.

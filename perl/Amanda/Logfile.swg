@@ -60,8 +60,9 @@ amglue_add_constant(L_STRANGE, logtype_t);
 amglue_add_constant(L_CHUNK, logtype_t);
 amglue_add_constant(L_CHUNKSUCCESS, logtype_t);
 amglue_add_constant(L_STATS, logtype_t);
-amglue_add_constant(L_MARKER, logtype_t);
 amglue_add_constant(L_CONT, logtype_t);
+amglue_add_constant(L_RETRY, logtype_t);
+amglue_add_constant(L_MARKER, logtype_t);
 amglue_copy_to_tag(logtype_t, constants);
 
 amglue_add_enum_tag_fns(program_t);

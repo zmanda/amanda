@@ -2342,8 +2342,10 @@ dumper_taper_result(
 	update_failed_dump(dp);
     }
 
-    sched(dp)->dump_attempted += 1;
-    sched(dp)->taper_attempted += 1;
+    if (dumper->result != RETRY) {
+	sched(dp)->dump_attempted += 1;
+	sched(dp)->taper_attempted += 1;
+    }
 
     if((dumper->result != DONE || wtaper->result != DONE) &&
 	sched(dp)->dump_attempted < dp->retry_dump &&
@@ -2476,7 +2478,9 @@ dumper_chunker_result(
     h[activehd]->disk->allocated_dumpers--;
     adjust_diskspace(dp, DONE);
 
-    sched(dp)->dump_attempted += 1;
+    if (dumper->result != RETRY) {
+	sched(dp)->dump_attempted += 1;
+    }
 
     if((dumper->result != DONE || chunker->result != DONE) &&
        sched(dp)->dump_attempted < dp->retry_dump) {
@@ -2692,6 +2696,24 @@ handle_dumper_result(
 	    /*free_serial(result_argv[1]);*/
 	    dumper->result = cmd;
 	    break;
+
+	case RETRY: /* RETRY <handle> <delay> <level> <errstr> */
+	    {
+		const time_t now = time(NULL);
+		int delay = atoi(result_argv[2]);
+		int level = atoi(result_argv[3]);
+
+		dumper->result = cmd;
+		if (delay >= 0) {
+		    dp->start_t = now + delay;
+		} else {
+		    dp->start_t = now + 300;
+		}
+		if (level != -1) {
+		    sched(dp)->level = level;
+		}
+		break;
+	    }
 
 	case BOGUS:
 	    /* either EOF or garbage from dumper.  Turn it off */

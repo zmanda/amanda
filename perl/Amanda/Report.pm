@@ -887,6 +887,17 @@ sub _handle_dumper_line
 
         return $dumper->{status} = "success";
 
+    } elsif ( $type == $L_RETRY ) {
+        my @info = Amanda::Util::split_quoted_strings($str);
+        my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
+
+        my $dle    = $disklist->{$hostname}->{$disk};
+        my $try    = $self->_get_try( $dle, "dumper", $timestamp );
+	$try->{retry} = 1;
+	$try->{retry_delay} = $info[5];
+	$try->{retry_level} = $info[7];
+	$try->{retry_message} = $info[9];
+
     } elsif ( $type == $L_ERROR ) {
         return $self->_handle_error_line( "dumper", $str );
 

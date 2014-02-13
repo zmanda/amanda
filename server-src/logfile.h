@@ -51,8 +51,9 @@ typedef enum logtype_e {
     L_DONE, L_PART, L_PARTPARTIAL, L_SUCCESS, L_PARTIAL, L_FAIL, L_STRANGE,
     L_CHUNK, L_CHUNKSUCCESS,                            /* ... continued */
     L_STATS,						   /* statistics */
-    L_MARKER,					  /* marker for reporter */
-    L_CONT			 /* continuation line, used when reading */
+    L_CONT,			 /* continuation line, used when reading */
+    L_RETRY,
+    L_MARKER,			    /* marker for reporter, must be last */
 } logtype_t;
 
 typedef enum program_e {

@@ -51,7 +51,7 @@ enum {
     PARTDONE, PORT_WRITE, DUMPER_STATUS,                /* ... cmds */
     PORT, TAPE_ERROR, TAPER_OK,				/* taper results */
     REQUEST_NEW_TAPE, DIRECTTCP_PORT, TAKE_SCRIBE_FROM,
-    START_SCAN, CLOSE_VOLUME, LAST_TOK
+    START_SCAN, CLOSE_VOLUME, RETRY, LAST_TOK
 };
 extern const char *cmdstr[];
 

@@ -148,10 +148,6 @@ if ($nb_options == 0) {
 	$opt_stats   = 1 if !defined $opt_stats;
 }
 
-print "detail: $opt_detail\n";
-print "summary: $opt_summary\n";
-print "stats: $opt_stats\n";
-
 my $unit = getconf($CNF_DISPLAYUNIT);
 $unit =~ tr/A-Z/a-z/;
 my $unitdivisor=1;
