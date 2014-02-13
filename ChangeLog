@@ -1,3 +1,6 @@
+2014-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Check the size section of the CRC.
+
 2014-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c: Detect failure to write the file and ftruncate
 	  it to 0.

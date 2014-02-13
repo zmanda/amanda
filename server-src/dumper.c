@@ -1404,14 +1404,17 @@ do_dump(
 	client_crc = crc_data_in;
     }
 
-    if (client_crc.crc != 0 && client_crc.crc != crc_data_in.crc) {
+    if (client_crc.crc != 0 &&
+	(client_crc.crc  != crc_data_in.crc ||
+	 client_crc.size != crc_data_in.size)) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup_printf(_("client CRC (%08x) do not match data-in CRC (%08x)"), client_crc.crc, crc_data_in.crc);
+	if (!errstr) errstr = g_strdup_printf(_("client CRC (%08x:%lld) do not match data-in CRC (%08x:%lld)"), client_crc.crc, (long long)client_crc.size, crc_data_in.crc, (long long)crc_data_in.size);
     }
 
-    if (crc_data_in.crc != crc_data_out.crc) {
+    if (crc_data_in.crc  != crc_data_out.crc ||
+	crc_data_in.size != crc_data_out.size) {
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup_printf(_("data-in CRC (%08x) do not match data-out CRC (%08x)"), crc_data_in.crc, crc_data_out.crc);
+	if (!errstr) errstr = g_strdup_printf(_("data-in CRC (%08x:%lld) do not match data-out CRC (%08x:%lld)"), crc_data_in.crc, (long long)crc_data_in.size, crc_data_out.crc, (long long)crc_data_out.size);
     }
 
     if (!ISSET(status, HEADER_DONE)) {
