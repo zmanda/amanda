@@ -510,9 +510,9 @@ sub command_estimate {
 	    push @ARGV, "-D", $self->{subdir},
 	}
 	if ($level == 0) {
-	    push @ARGV, "-c", "archive 0;recurse;du";
+	    push @ARGV, "-c", "archive 1;recurse;du /" . $self->{subdir};
 	} else {
-	    push @ARGV, "-c", "archive 1;recurse;du";
+	    push @ARGV, "-c", "archive 1;recurse;du /" . $self->{subdir};
 	}
 	debug("execute: " . $self->{smbclient} . " " .
 	      join(" ", @ARGV));
