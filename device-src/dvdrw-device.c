@@ -178,13 +178,13 @@ dvdrw_device_get_type (void)
 
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
-            sizeof (VfsDeviceClass),
+            sizeof (DvdRwDeviceClass),
             (GBaseInitFunc) NULL,
             (GBaseFinalizeFunc) NULL,
             (GClassInitFunc) dvdrw_device_class_init,
             (GClassFinalizeFunc) NULL,
             NULL /* class_data */,
-            sizeof (VfsDevice),
+            sizeof (DvdRwDevice),
             0 /* n_preallocs */,
             (GInstanceInitFunc) dvdrw_device_init,
             NULL
