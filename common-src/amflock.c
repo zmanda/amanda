@@ -262,21 +262,21 @@ file_lock_write(
     /* seek to position 0, rewrite, and truncate */
     if (lseek(fd, 0, SEEK_SET) < 0) {
 	g_debug("file_lock_write: failed to lseek: %s", strerror(errno));
-	ftruncate(fd, 0);
+	if (ftruncate(fd, 0) < 0) {};
 	return -1;
     }
 
     /* from here on out, any errors have corrupted the datafile.. */
     if (full_write(fd, data, len) < len) {
 	g_debug("file_lock_write: failed to write: %s", strerror(errno));
-	ftruncate(fd, 0);
+	if (ftruncate(fd, 0) < 0) {};
 	return -1;
     }
 
     if (lock->len > len) {
 	if (ftruncate(fd, len) < 0) {
 	    g_debug("file_lock_write: failed to ftruncate: %s", strerror(errno));
-	    ftruncate(fd, 0);
+	    if (ftruncate(fd, 0) < 0) {};
 	    return -1;
 	}
     }
