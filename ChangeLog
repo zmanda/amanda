@@ -1,4 +1,7 @@
 2014-02-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/dvdrw-device.c: Fix.
+
+2014-02-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c: Check return value of truncate.
 
 2014-02-13  Jean-Louis Martineau <martineau@zmanda.com>
