@@ -152,7 +152,9 @@ genversion.h ../perl/Amanda/Constants.pm.in: $(top_builddir)/config.status
 	echo '#define BUILT_DATE "'$$GENDATE'"' >> genversion.h.new; \
 	echo '#define BUILT_MACH "$(target)"' >> genversion.h.new; \
 	mv genversion.h.new genversion.h; \
-	mkdir ../perl/Amanda; \
+	if test ! -e ../perl/Amanda; then \
+		mkdir ../perl/Amanda; \
+	fi; \
 	sed "s/^\$$BUILT_DATE.*$$/\$$BUILT_DATE = \"$$GENDATE\";/" $(srcdir)/../perl/Amanda/Constants.pm.in.src > ../perl/Amanda/Constants.pm.in;
 
 version.c: genversion$(EXEEXT)
