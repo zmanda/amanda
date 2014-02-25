@@ -743,7 +743,7 @@ if WANT_CYGWIN_COPY_PERL_DLL
 	   cp "$$cygdll" "$$destfname"; \
 	done
 endif
-	mkdir -p $(amlibexecdir)/Rest/Amanda/logs
+	mkdir -p $(DESTDIR)$(amlibexecdir)/Rest/Amanda/logs
 
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:
