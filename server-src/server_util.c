@@ -41,16 +41,16 @@
 #include "sys/wait.h"
 
 const char *cmdstr[] = {
-    "BOGUS", "QUIT", "QUITTING", "DONE", "PARTIAL", 
+    "BOGUS", "QUIT", "QUITTING", "DONE", "PARTIAL",
     "START", "FILE-DUMP", "PORT-DUMP", "CONTINUE", "ABORT",/* dumper cmds */
     "FAILED", "TRY-AGAIN", "NO-ROOM", "RQ-MORE-DISK",	/* dumper results */
     "ABORT-FINISHED", "BAD-COMMAND",			/* dumper results */
     "START-TAPER", "FILE-WRITE", "NEW-TAPE", "NO-NEW-TAPE",
-     
+
     "PARTDONE", "PORT-WRITE", "DUMPER-STATUS",		    /* taper cmds */
     "PORT", "TAPE-ERROR", "TAPER-OK",			 /* taper results */
     "REQUEST-NEW-TAPE", "DIRECTTCP-PORT", "TAKE-SCRIBE-FROM",
-    "START-SCAN", "CLOSE-VOLUME", "RETRY", "LAST_TOK",
+    "START-SCAN", "CLOSE-VOLUME", "RETRY", "READY", "LAST_TOK",
     NULL
 };
 

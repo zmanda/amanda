@@ -106,6 +106,7 @@ typedef struct wtaper_s {
     off_t       left;
     off_t       written;               // Number of kb already written to tape
     int         nb_dle;                /* number of dle on the volume */
+    gboolean    ready;
     struct taper_s *taper;
 } wtaper_t;
 

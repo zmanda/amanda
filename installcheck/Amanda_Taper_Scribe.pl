@@ -185,6 +185,13 @@ sub request_volume_permission {
     $params{'perm_cb'}->(%{$answer});
 }
 
+sub scribe_ready {
+    my $self = shift;
+    my %params = @_;
+
+    main::event("scribe_ready");
+}
+
 sub scribe_notif_new_tape {
     my $self = shift;
     my %params = @_;
@@ -496,6 +503,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(8192) ],
@@ -510,6 +518,7 @@ run_scribe_xfer(1024*30, $main::scribe);
 quit_scribe($main::scribe);
 
 is_deeply([ @events ], [
+      [ 'scribe_ready' ],
       [ 'scribe_notif_part_done', bi(1), bi(4), 1, bi(30720) ],
       [ 'dump_cb', 'DONE', [], undef, bi(30720) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(4), bi(235520) ],
@@ -535,6 +544,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(98304) ],
       [ 'scribe_notif_part_done', bi(3), bi(3), 1, bi(8192) ],
@@ -565,6 +575,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
@@ -605,6 +616,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
@@ -643,6 +655,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
@@ -677,6 +690,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
@@ -711,6 +725,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
 
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(2), bi(2), 1, bi(131072) ],
@@ -743,6 +758,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(1), bi(307200) ],
@@ -765,6 +781,7 @@ is_deeply([ @events ], [
       [ 'scan-finished', undef, 'slot: 1' ],
       [ 'request_volume_permission', 'answer:', { allow => 1 } ],
       [ 'scribe_notif_new_tape', undef, 'FAKELABEL' ],
+      [ 'scribe_ready' ],
       [ 'scribe_notif_part_done', bi(1), bi(1), 1, bi(307200) ],
       [ 'dump_cb', 'DONE', [], undef, bi(307200) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(1), bi(307200) ],

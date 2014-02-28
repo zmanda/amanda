@@ -870,6 +870,9 @@ sub _start_part {
     # and start writing this part
     $self->{'started_writing'} = 1;
     $self->dbg("resuming transfer");
+    if ($self->{'nparts'} == 0) {
+	$self->{'feedback'}->scribe_ready();
+    }
     $self->{'xdt'}->start_part(!$self->{'last_part_successful'},
 			       $self->{'dump_header'});
 }

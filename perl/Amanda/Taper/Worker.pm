@@ -481,6 +481,15 @@ sub scribe_notif_new_tape {
     }
 }
 
+sub scribe_ready {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::READY,
+	worker_name => $self->{'worker_name'},
+	handle => $self->{'handle'});
+}
+
 sub scribe_notif_part_done {
     my $self = shift;
     my %params = @_;

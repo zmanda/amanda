@@ -902,6 +902,9 @@ sub request_volume_permission {
     $params{'perm_cb'}->(allow => 1);
 }
 
+sub scribe_ready {
+}
+
 sub scribe_notif_new_tape {
     my $self = shift;
     my %params = @_;

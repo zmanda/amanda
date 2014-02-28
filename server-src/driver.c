@@ -1475,6 +1475,7 @@ start_some_dumps(
 	    taper->nb_wait_reply++;
 	    taper_cmd(taper, wtaper, PORT_WRITE, diskp, NULL, sched(diskp)->level,
 		      sched(diskp)->datestamp);
+	    wtaper->ready = FALSE;
 	    diskp->host->start_t = now + 5;
 
 	    state_changed = TRUE;
@@ -1810,6 +1811,21 @@ handle_taper_result(
 
 	    amfree(qname);
 
+	    break;
+
+	case READY:	/* READY <worker> <handle> */
+	    job = serial2job(result_argv[2]);
+	    dp = job->disk;
+	    wtaper = wtaper_from_name(taper, result_argv[1]);
+	    wtaper->ready = TRUE;
+	    if (wtaper->job->dumper &&
+		wtaper->job->dumper->result != LAST_TOK) {
+		if( wtaper->job->dumper->result == DONE) {
+		    taper_cmd(taper, wtaper, DONE, dp, NULL, 0, NULL);
+		} else {
+		    taper_cmd(taper, wtaper, FAILED, dp, NULL, 0, NULL);
+		}
+	    }
 	    break;
 
 	case PARTIAL:	/* PARTIAL <worker> <handle> INPUT-* TAPE-* server-crc <stat mess> <input err mesg> <tape err mesg>*/
@@ -2792,7 +2808,7 @@ handle_dumper_result(
 	    if (dumper->result != LAST_TOK &&
 		job->chunker->result != LAST_TOK)
 		dumper_chunker_result(job);
-	} else { /* send the dumper result to the taper */
+	} else if (job->wtaper->ready) { /* send the dumper result to the taper */
 	    wtaper = job->wtaper;
 	    taper = wtaper->taper;
 	    if (cmd == DONE) {
