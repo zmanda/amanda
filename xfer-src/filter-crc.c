@@ -110,6 +110,8 @@ push_buffer_impl(
 
     /* drop the buffer if we've been cancelled */
     if (elt->cancelled) {
+	/* send EOF to downstream */
+	xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, 0);
 	amfree(buf);
 	return;
     }

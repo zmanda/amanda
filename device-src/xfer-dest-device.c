@@ -122,7 +122,13 @@ push_buffer_impl(
     /* set up the block buffer, now that we can depend on having a blocksize
      * from the device */
     if (!self->partial) {
-	self->partial = g_malloc(self->device->block_size);
+	self->partial = g_try_malloc(self->device->block_size);
+	if (self->partial == NULL) {
+	    xfer_cancel_with_error(elt, "%s: Cannot allocate memory",
+				   self->device->device_name);
+	    wait_until_xfer_cancelled(elt->xfer);
+	    return;
+	}
 	self->block_size = self->device->block_size;
 	self->partial_length = 0;
     }

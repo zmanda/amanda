@@ -3428,8 +3428,6 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 	allocate = size;
     }
 
-    self->s3t[thread].idle = 0;
-    self->s3t[thread].done = 0;
     if (self->s3t[thread].curl_buffer.buffer &&
 	self->s3t[thread].curl_buffer.buffer_len < allocate) {
 	g_free((char *)self->s3t[thread].curl_buffer.buffer);
@@ -3438,10 +3436,18 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 	self->s3t[thread].buffer_len = 0;
     }
     if (self->s3t[thread].curl_buffer.buffer == NULL) {
-	self->s3t[thread].curl_buffer.buffer = g_malloc(allocate);
+	self->s3t[thread].curl_buffer.buffer = g_try_malloc(allocate);
+	if (self->s3t[thread].curl_buffer.buffer == NULL) {
+	    device_set_error(pself, g_strdup("Failed to allocate memory"),
+			     DEVICE_STATUS_DEVICE_ERROR);
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return WRITE_FAILED;
+	}
 	self->s3t[thread].curl_buffer.buffer_len = size;
 	self->s3t[thread].buffer_len = size;
     }
+    self->s3t[thread].idle = 0;
+    self->s3t[thread].done = 0;
     memcpy((char *)self->s3t[thread].curl_buffer.buffer, data, size);
     self->s3t[thread].curl_buffer.buffer_pos = 0;
     self->s3t[thread].curl_buffer.buffer_len = size;
@@ -4095,7 +4101,14 @@ s3_start_read_ahead(
 		self->s3t[thread].buffer_len = 0;
 	    }
 	    if (!self->s3t[thread].curl_buffer.buffer) {
-		self->s3t[thread].curl_buffer.buffer = g_malloc(allocate);
+		self->s3t[thread].curl_buffer.buffer = g_try_malloc(allocate);
+		if (self->s3t[thread].curl_buffer.buffer == NULL) {
+		    s3t->done = 1;
+		    s3t->idle = 1;
+		    device_set_error(pself, g_strdup("Failed to allocate memory"),
+				     DEVICE_STATUS_DEVICE_ERROR);
+		    return;
+		}
 		self->s3t[thread].curl_buffer.buffer_len = allocate;
 		self->s3t[thread].buffer_len = allocate;
 	    }
@@ -4136,7 +4149,10 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 
     /* start a read ahead for each thread */
     s3_start_read_ahead(pself, *size_req);
-
+    if (device_in_error(self)) {
+	g_mutex_unlock(self->thread_idle_mutex);
+	return -1;
+    }
 
     if (self->chunked) {
 	CurlBuffer *buf = &self->s3t[0].curl_buffer;
@@ -4274,6 +4290,10 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     s3_start_read_ahead(pself, *size_req);
 
     g_mutex_unlock(self->thread_idle_mutex);
+
+    if (device_in_error(self)) {
+	return -1;
+    }
 
     return *size_req;
 
