@@ -2948,8 +2948,6 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     }
     thread = first_idle;
 
-    self->s3t[thread].idle = 0;
-    self->s3t[thread].done = 0;
     if (self->s3t[thread].curl_buffer.buffer &&
 	self->s3t[thread].curl_buffer.buffer_len < size) {
 	g_free((char *)self->s3t[thread].curl_buffer.buffer);
@@ -2958,10 +2956,18 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 	self->s3t[thread].buffer_len = 0;
     }
     if (self->s3t[thread].curl_buffer.buffer == NULL) {
-	self->s3t[thread].curl_buffer.buffer = g_malloc(size);
+	self->s3t[thread].curl_buffer.buffer = g_try_malloc(size);
+	if (self->s3t[thread].curl_buffer.buffer == NULL) {
+	    device_set_error(pself, g_strdup("Failed to allocate memory"),
+			     DEVICE_STATUS_DEVICE_ERROR);
+	    g_mutex_unlock(self->thread_idle_mutex);
+	    return FALSE;
+	}
 	self->s3t[thread].curl_buffer.buffer_len = size;
 	self->s3t[thread].buffer_len = size;
     }
+    self->s3t[thread].idle = 0;
+    self->s3t[thread].done = 0;
     memcpy((char *)self->s3t[thread].curl_buffer.buffer, data, size);
     self->s3t[thread].curl_buffer.buffer_pos = 0;
     self->s3t[thread].curl_buffer.buffer_len = size;
@@ -3266,7 +3272,14 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 		self->s3t[thread].buffer_len = 0;
 	    }
 	    if (!self->s3t[thread].curl_buffer.buffer) {
-		self->s3t[thread].curl_buffer.buffer = g_malloc(*size_req);
+		self->s3t[thread].curl_buffer.buffer = g_try_malloc(*size_req);
+		if (self->s3t[thread].curl_buffer.buffer == NULL) {
+		    device_set_error(pself,
+				     stralloc("Failed to allocate memory"),
+				     DEVICE_STATUS_DEVICE_ERROR);
+		    g_mutex_unlock(self->thread_idle_mutex);
+		    return -1;
+		}
 		self->s3t[thread].curl_buffer.buffer_len = *size_req;
 		self->s3t[thread].buffer_len = *size_req;
 	    }
@@ -3345,7 +3358,14 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	    s3t->ulnow = 0;
 	    s3t->errflags = DEVICE_STATUS_SUCCESS;
 	    if (!self->s3t[thread].curl_buffer.buffer) {
-		self->s3t[thread].curl_buffer.buffer = g_malloc(*size_req);
+		self->s3t[thread].curl_buffer.buffer = g_try_malloc(*size_req);
+		if (self->s3t[thread].curl_buffer.buffer == NULL) {
+		    device_set_error(pself,
+				     stralloc("Failed to allocate memory"),
+				     DEVICE_STATUS_DEVICE_ERROR);
+		    g_mutex_unlock(self->thread_idle_mutex);
+		    return -1;
+		}
 		self->s3t[thread].curl_buffer.buffer_len = *size_req;
 	    }
 	    s3t->curl_buffer.buffer_pos = 0;
@@ -3354,6 +3374,10 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	}
     }
     g_mutex_unlock(self->thread_idle_mutex);
+
+    if (device_in_error(self)) {
+	return -1;
+    }
 
     return *size_req;
 

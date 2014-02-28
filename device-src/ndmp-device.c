@@ -501,7 +501,13 @@ ndmp_device_read_label(
     /* read the tape header from the NDMP server */
     dself->status = 0;
     read_block_size = ndmp_device_read_size(self);
-    buf = g_malloc(read_block_size);
+    buf = g_try_malloc(read_block_size);
+    if (buf == NULL) {
+	device_set_error(dself,
+		g_strdup(_("Cannot allocate memory")),
+			DEVICE_STATUS_DEVICE_ERROR);
+	goto read_err;
+    }
     if (!ndmp_connection_tape_read(self->ndmp,
 	buf,
 	read_block_size,
@@ -798,7 +804,13 @@ ndmp_device_write_block(
     /* zero out to the end of a short block -- tape devices only write
      * whole blocks. */
     if (size < dself->block_size) {
-        replacement_buffer = malloc(dself->block_size);
+        replacement_buffer = g_try_malloc(dself->block_size);
+	if (replacement_buffer == NULL) {
+	    device_set_error(dself,
+		g_strdup(_("Cannot allocate memory")),
+			DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
         memcpy(replacement_buffer, data, size);
         bzero(replacement_buffer+size, dself->block_size-size);
 
@@ -951,7 +963,13 @@ incomplete_bsf:
 
     /* now read the header */
     read_block_size = ndmp_device_read_size(self);
-    buf = g_malloc(read_block_size);
+    buf = g_try_malloc(read_block_size);
+    if (buf == NULL) {
+	device_set_error(dself,
+		g_strdup(_("Cannot allocate memory")),
+			DEVICE_STATUS_DEVICE_ERROR);
+	return NULL;
+    }
     if (!ndmp_connection_tape_read(self->ndmp,
 		buf, read_block_size, &buf_size)) {
 	switch (ndmp_connection_err_code(self->ndmp)) {

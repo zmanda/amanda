@@ -1,4 +1,11 @@
 2014-02-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c, device-src/s3-device.c,
+	  device-src/tape-device.c, device-src/xfer-dest-device.c,
+	  src/xfer-source-device.c, device-src/xfer-source-recovery.c,
+	  xfer-src/element-glue.c: Correctly report memory allocation error
+	  for large buffer.
+
+2014-02-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Protocol.pm: Add READY Message.
 	* perl/Amanda/Taper/Scribe.pm: Call
 	  $self->{'feedback'}->scribe_ready();

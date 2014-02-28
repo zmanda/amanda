@@ -918,7 +918,11 @@ setup_impl(
 
     /* set up ring if desired */
     if (need_ring) {
-	self->ring = g_malloc(sizeof(*self->ring) * GLUE_RING_BUFFER_SIZE);
+	self->ring = g_try_malloc(sizeof(*self->ring) * GLUE_RING_BUFFER_SIZE);
+	if (self->ring == NULL) {
+	    xfer_cancel_with_error(elt, "Can't allocate memory for ring");
+	    return FALSE;
+	}
 	self->ring_used_sem = amsemaphore_new_with_value(0);
 	self->ring_free_sem = amsemaphore_new_with_value(GLUE_RING_BUFFER_SIZE);
     }

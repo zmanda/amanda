@@ -89,7 +89,14 @@ pull_buffer_impl(
     }
 
     do {
-	buf = g_malloc(self->block_size);
+	buf = g_try_malloc(self->block_size);
+	if (buf == NULL) {
+	    xfer_cancel_with_error(elt,
+		_("%s: cannot allocate memory"),
+		self->device->device_name);
+	    wait_until_xfer_cancelled(elt->xfer);
+	    return NULL;
+	}
 	devsize = (int)self->block_size;
 	result = device_read_block(self->device, buf, &devsize);
 	*size = devsize;

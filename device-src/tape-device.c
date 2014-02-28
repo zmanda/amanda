@@ -913,7 +913,14 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     }
 
     buffer_len = tape_device_read_size(self);
-    header_buffer = malloc(buffer_len);
+    header_buffer = g_try_malloc(buffer_len);
+    if (header_buffer == NULL) {
+	device_set_error(dself,
+	    g_strdup(_("Failed to allocate memory")),
+	      DEVICE_STATUS_DEVICE_ERROR
+	    | DEVICE_STATUS_VOLUME_ERROR);
+        return dself->status;
+    }
     result = tape_device_robust_read(self, header_buffer, &buffer_len, &msg);
 
     if (result != RESULT_SUCCESS) {
@@ -999,7 +1006,13 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
     /* zero out to the end of a short block -- tape devices only write
      * whole blocks. */
     if (size < pself->block_size) {
-        replacement_buffer = malloc(pself->block_size);
+        replacement_buffer = g_try_malloc(pself->block_size);
+	if (replacement_buffer == NULL) {
+	    device_set_error(pself,
+		g_strdup(_("failed to allocate memory")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
         memcpy(replacement_buffer, data, size);
         bzero(replacement_buffer+size, pself->block_size-size);
 
@@ -1453,7 +1466,14 @@ reseek:
     }
 
     buffer_len = tape_device_read_size(d_self);
-    header_buffer = malloc(buffer_len);
+    header_buffer = g_try_malloc(buffer_len);
+    if (header_buffer == NULL) {
+	device_set_error(d_self,
+		g_strdup(_("failed to allocate memory")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	return NULL;
+    }
+
     d_self->is_eof = FALSE;
     result = tape_device_robust_read(self, header_buffer, &buffer_len, &msg);
 
