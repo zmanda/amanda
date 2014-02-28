@@ -1389,6 +1389,7 @@ start_some_dumps(
 	    taper_nb_wait_reply++;
 	    taper_cmd(PORT_WRITE, diskp, NULL, sched(diskp)->level,
 		      sched(diskp)->datestamp);
+	    taper->ready = FALSE;
 	    diskp->host->start_t = now + 5;
 
 	    state_changed = TRUE;
@@ -1695,6 +1696,21 @@ handle_taper_result(
 	    amfree(qname);
 	    taper->result = cmd;
 
+	    break;
+
+	case READY:	/* READY <handle> */
+	    dp = serial2disk(result_argv[1]);
+	    taper = sched(dp)->taper;
+	    assert(dp == taper->disk);
+
+	    if (taper->dumper &&
+		taper->dumper->result != LAST_TOK) {
+		if( taper->dumper->result == DONE) {
+		    taper_cmd(DONE, dp, NULL, 0, NULL);
+		} else {
+		    taper_cmd(FAILED, dp, NULL, 0, NULL);
+		}
+	    }
 	    break;
 
 	case PARTIAL:	/* PARTIAL <handle> INPUT-* TAPE-* <stat mess> <input err mesg> <tape err mesg>*/
@@ -2501,7 +2517,7 @@ handle_dumper_result(
 	    if( dumper->result != LAST_TOK &&
 	 	dumper->chunker->result != LAST_TOK)
 		dumper_chunker_result(dp);
-	} else { /* send the dumper result to the taper */
+	} else if (taper->ready) { /* send the dumper result to the taper */
 	    if (cmd == DONE) {
 		taper_cmd(DONE, dp, NULL, 0, NULL);
 	    } else {

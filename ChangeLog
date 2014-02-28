@@ -1,3 +1,18 @@
+2014-02-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Protocol.pm: Add READY Message.
+	* perl/Amanda/Taper/Scribe.pm: Call
+	  $self->{'feedback'}->scribe_ready();
+	* perl/Amanda/Taper/Worker.pm (scribe_ready): New method to send the
+	  READY message.
+	* server-src/amvault.pl (scribe_ready): New method that do nothing.
+	* server-src/driver.c: Send dumper result to taper only after it sent
+	  the READY message.
+	* server-src/driverio.h (wtaper_t): Add ready.
+	* server-src/server_util.c (cmdstr): Add READY.
+	* server-src/server_util.h (enum): Add READY.
+	* installcheck/Amanda_Taper_Scribe.pl,
+	  installcheck/taper.pl: Fix check.
+
 2014-02-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/dvdrw-device.c: Fix.
 

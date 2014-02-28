@@ -99,6 +99,7 @@ typedef struct taper_s {
     off_t       left;
     off_t       written;               // Number of kb already written to tape
     int         nb_dle;                /* number of dle on the volume */
+    gboolean    ready;
 } taper_t;
 
 /* holding disk reservation structure; this is built as a list parallel

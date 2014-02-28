@@ -134,4 +134,8 @@ use constant CLOSE_VOLUME => message("CLOSE-VOLUME",
     format => [ qw( worker_name ) ],
 );
 
+use constant READY => message("READY",
+    format => [ qw( handle ) ],
+);
+
 1;
