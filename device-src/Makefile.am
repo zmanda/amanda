@@ -34,6 +34,7 @@ libamdevice_la_SOURCES = \
 	property.c \
 	device.c \
 	directtcp-connection.c \
+	diskflat-device.c \
 	null-device.c \
 	rait-device.c \
 	vfs-device.c \
@@ -84,6 +85,7 @@ endif
 noinst_HEADERS = \
 	device.h \
 	directtcp-connection.h \
+	diskflat-device.h \
 	property.h \
 	s3.h \
 	s3-util.h \

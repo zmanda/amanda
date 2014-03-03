@@ -798,6 +798,34 @@ always use it. A value of "EXIST" use it only if it exist.
 
 </refsect2>
 
+<refsect2><title>DISKFLAT Device</title>
+<programlisting>
+tapedev "diskflat:/path/to/diskflat/label-001"
+</programlisting>
+
+<para>Each slot is a single file named with the slot label.</para>
+<para>The <amkeyword>MAX-DLE-BY-VOLUME</amkeyword> setting must be set to
+<amdefault>1</amdefault>.</para>
+<para>Must be used with the <amkeyword>multi</amkeyword> changer.</para>
+<programlisting>
+    tpchanger "chg-multi:diskflat:/path/to/diskflat/label-{001..010}"
+    autolabel "label-$3s" empty volume-error
+    labelstr MATCH-AUTOLABEL
+    max-dle-by-volume 1
+</programlisting>
+
+<refsect3><title>Device-Specific Properties</title>
+<para>Have the same property as the VFS device with the following difference:</para>
+
+<variablelist>
+  <varlistentry><term>USE_DATA</term><listitem>Unused
+</listitem></varlistentry>
+</variablelist>
+
+</refsect3>
+
+</refsect2>
+
 <refsect2><title>DVD-RW Device</title>
 <programlisting>
 tapedev "dvdrw:/var/cache/amanda/dvd-cache:/dev/scd0"

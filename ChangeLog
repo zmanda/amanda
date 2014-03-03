@@ -1,3 +1,13 @@
+2014-03-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/Makefile.am: Add diskflat-device.c and diskflat-device.h
+	* device-src/device.c: Call diskflat_device_register
+	* device-src/diskflat-device.c: New diskflat device.
+	* device-src/diskflat-device.h: New diskflat device header file.
+	* device-src/vfs-device.c: Refactoring.
+	* device-src/vfs-device.h: Refactoring.
+	* installcheck/Amanda_Device.pl: Check the diskflat device.
+	* man/xml-source/amanda-devices.7.xml: Document the diskflat device.
+
 2014-02-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, device-src/s3-device.c,
 	  device-src/tape-device.c, device-src/xfer-dest-device.c,

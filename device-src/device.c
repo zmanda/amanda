@@ -42,14 +42,15 @@
 void    null_device_register    (void);
 void	rait_device_register	(void);
 #ifdef WANT_S3_DEVICE
-void    s3_device_register    (void);
+void    s3_device_register      (void);
 #endif
 #ifdef WANT_TAPE_DEVICE
 void    tape_device_register    (void);
 #endif
 void    vfs_device_register     (void);
+void    diskflat_device_register (void);
 #ifdef WANT_DVDRW_DEVICE
-void    dvdrw_device_register    (void);
+void    dvdrw_device_register   (void);
 #endif
 #ifdef WANT_NDMP_DEVICE
 void    ndmp_device_register    (void);
@@ -72,6 +73,7 @@ void device_api_init(void) {
     /* register other types and devices. */
     null_device_register();
     vfs_device_register();
+    diskflat_device_register();
 #ifdef WANT_TAPE_DEVICE
     tape_device_register();
 #endif
@@ -1332,7 +1334,7 @@ device_seek_file (Device * self, guint file)
     DeviceClass *klass;
 
     g_assert(IS_DEVICE (self));
-    g_assert(self->access_mode == ACCESS_READ);
+    g_assert(file == 0 || self->access_mode == ACCESS_READ);
 
     klass = DEVICE_GET_CLASS(self);
     g_assert(klass->seek_file);

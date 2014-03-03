@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 543;
+use Test::More tests => 616;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -45,6 +45,7 @@ my ($vtape1, $vtape2);
 my ($input_filename, $output_filename) =
     ( "$Installcheck::TMP/input.tmp", "$Installcheck::TMP/output.tmp" );
 my $taperoot = "$Installcheck::TMP/Amanda_Device_test_tapes";
+my $diskflatroot = "$Installcheck::TMP/Amanda_Device_test_diskflat";
 my $testconf;
 
 # we'll need some vtapes..
@@ -54,6 +55,16 @@ sub mkvtape {
     my $mytape = "$taperoot/$num";
     if (-d $mytape) { rmtree($mytape); }
     mkpath("$mytape/data");
+    return $mytape;
+}
+
+# we'll need some diskflat..
+sub mkdiskflat {
+    my ($num) = @_;
+
+    my $mytape = "$diskflatroot/TESTCONF$num";
+    if (-e $mytape) { unlink($mytape); }
+    mkpath("$diskflatroot");
     return $mytape;
 }
 
@@ -315,6 +326,260 @@ verify_file(0x2FACE, $dev->block_size()*10+17, 3);
     $hdr = $dev->seek_file(3);
     is($hdr? $hdr->{'type'} : -1, $Amanda::Header::F_DUMPFILE, "seek_file the second time");
 }
+
+ok($dev->finish(),
+    "finish device after read")
+    or diag($dev->error_or_status());
+
+# test erase
+ok($dev->erase(),
+   "erase device")
+    or diag($dev->error_or_status());
+
+ok($dev->erase(),
+   "erase device (again)")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after erase")
+    or diag($dev->error_or_status());
+
+# test monitor_free_space property (testing the monitoring would require a
+# dedicated partition for the tests - it's not worth it)
+
+ok($dev->property_get("monitor_free_space"),
+    "monitor_free_space property is set by default");
+
+ok($dev->property_set("monitor_free_space", 0),
+    "monitor_free_space property can be set to false");
+
+ok(!$dev->property_get("monitor_free_space"),
+    "monitor_free_space property value 'sticks'");
+
+# test the LEOM functionality
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+    "set MAX_VOLUME_USAGE to test LEOM");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 0),
+    "set ENFORCE_MAX_VOLUME_USAGE");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
+    "write random data into the early-warning zone");
+
+ok(!$dev->is_eom,
+    "device does not indicates LEOM after writing when ENFORCE_MAX_VOLUME_USAGE is FALSE");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+    "set MAX_VOLUME_USAGE to test LEOM");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 1),
+    "set ENFORCE_MAX_VOLUME_USAGE");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok(!$dev->is_eom,
+    "device does not indicate LEOM before writing");
+
+ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
+    "write random data into the early-warning zone");
+
+ok($dev->is_eom,
+    "device indicates LEOM after writing");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+    "set MAX_VOLUME_USAGE to test LEOM");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok(!$dev->is_eom,
+    "device does not indicate LEOM before writing");
+
+ok(Amanda::Device::write_random_to_device(0xCAFE, 440*1024, $dev),
+    "write random data into the early-warning zone");
+
+ok($dev->is_eom,
+    "device indicates LEOM after writing as default value of ENFORCE_MAX_VOLUME_USAGE is true for vfs device");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+ok($dev->property_set("MAX_VOLUME_USAGE", "160k"),
+    "set MAX_VOLUME_USAGE to test LEOM while writing the first header");
+ok($dev->property_set("LEOM", 1),
+    "set LEOM");
+
+ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok($dev->start_file($dumpfile),
+    "start file 1")
+    or diag($dev->error_or_status());
+
+ok($dev->is_eom,
+    "device indicates LEOM after writing first header");
+
+ok($dev->finish_file(),
+    "..but a finish_file is allowed to complete")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after LEOM test")
+    or diag($dev->error_or_status());
+
+####
+## Now some full device tests
+
+## DISKFLAT device
+
+my $diskflat1 = mkdiskflat(13);
+$dev_name = "diskflat:$diskflat1";
+
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: create successful")
+    or diag($dev->error_or_status());
+
+properties_include([ $dev->property_list() ],
+    [ @common_properties, 'max_volume_usage' ],
+    "necessary properties listed on diskflat device");
+
+# play with properties a little bit
+ok($dev->property_set("comment", 16),
+    "set an string property to an integer");
+
+ok($dev->property_set("comment", 16.0),
+    "set an string property to a float");
+
+ok($dev->property_set("comment", "hi mom"),
+    "set an string property to a string");
+
+ok($dev->property_set("comment", "32768"),
+    "set an integer property to a simple string");
+
+ok($dev->property_set("comment", "32k"),
+    "set an integer property to a string with a unit");
+
+ok($dev->property_set("block_size", 32768),
+    "set an integer property to an integer");
+
+ok(!($dev->property_set("invalid-property-name", 32768)),
+    "set an invalid-property-name");
+
+$dev->read_label();
+ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
+    "initially unlabeled")
+    or diag($dev->error_or_status());
+
+ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+    "not unlabeled anymore")
+    or diag($dev->error_or_status());
+
+write_file(0x2FACE, $dev->block_size()*10+17, 1);
+
+# try to write a second file
+
+ok(!$dev->start_file($dumpfile),
+    "start_file of seconf file failed")
+    or diag($dev->error_or_status());
+
+ok($dev->error_or_status() eq "Can't write more than one file to the diskflat device",
+    "error message is correct")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+    "finish device after write")
+    or diag($dev->error_or_status());
+
+$dev->read_label();
+ok(!($dev->status()),
+    "no error, at all, from read_label")
+    or diag($dev->error_or_status());
+
+# try reading the first file back, creating a new device
+# object first, and skipping the read-label step.
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
+
+ok($dev->start($ACCESS_READ, undef, undef),
+    "start in read mode")
+    or diag($dev->error_or_status());
+
+verify_file(0x2FACE, $dev->block_size()*10+17, 1);
 
 ok($dev->finish(),
     "finish device after read")
