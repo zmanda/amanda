@@ -1,3 +1,9 @@
+2014-03-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.h (struct disk_s): Add orig_holdingdisk.
+	* server-src/diskfile.c: Set orig_holdingdisk.
+	* server-src/driver.c: Use orig_holdingdisk to report error.
+	* server-src/planner.c: Improve message.
+
 2014-02-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c, device-src/s3-device.c,
 	  device-src/tape-device.c, device-src/xfer-dest-device.c,
