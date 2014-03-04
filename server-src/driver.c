@@ -529,7 +529,7 @@ main(
     while(!empty(directq)) {
 	diskp = dequeue_disk(&directq);
 
-	if (diskp->to_holdingdisk == HOLD_REQUIRED) {
+	if (diskp->orig_holdingdisk == HOLD_REQUIRED) {
 	    char *qname = quote_string(diskp->name);
 	    log_add(L_FAIL, "%s %s %s %d [%s]",
 		diskp->host->hostname, qname, sched(diskp)->datestamp,
@@ -557,7 +557,7 @@ main(
 			sched(diskp)->level,
 			num_holdalloc == 0 ?
 			    _("can't do degraded dump without holding disk") :
-			    diskp->to_holdingdisk != HOLD_NEVER ?
+			    diskp->orig_holdingdisk != HOLD_NEVER ?
 				_("out of holding space in degraded mode") :
 				_("can't dump 'holdingdisk never' dle in degraded mode"));
 		amfree(qname);
@@ -1123,7 +1123,14 @@ allow_dump_dle(
 	*cur_idle = max(*cur_idle, IDLE_NO_DISKSPACE);
 	if (all_tapeq_empty() && dumper_to_holding == 0 && rq != &directq && no_taper_flushing()) {
 	    remove_disk(rq, diskp);
-	    if (diskp->to_holdingdisk != HOLD_REQUIRED) {
+	    if (diskp->to_holdingdisk == HOLD_REQUIRED) {
+		char *qname = quote_string(diskp->name);
+		log_add(L_FAIL, "%s %s %s %d [%s]",
+			diskp->host->hostname, qname, sched(diskp)->datestamp,
+			sched(diskp)->level,
+			_("can't dump required holdingdisk when no holdingdisk space available "));
+		amfree(qname);
+	    } else {
 		enqueue_disk(&directq, diskp);
 		diskp->to_holdingdisk = HOLD_NEVER;
 	    }

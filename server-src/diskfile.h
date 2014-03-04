@@ -114,7 +114,8 @@ typedef struct disk_s {
     int		record;			/* record dump in /etc/dumpdates ? */
     int		skip_incr;		/* incs done externally ? */
     int		skip_full;		/* fulls done externally ? */
-    int		to_holdingdisk;		/* use holding disk ? */
+    int		orig_holdingdisk;	/* original holdingdisk setting */
+    int		to_holdingdisk;		/* holding disk setting */
     int		kencrypt;
     int		index;			/* produce an index ? */
     data_path_t	data_path;		/* defined data-path */

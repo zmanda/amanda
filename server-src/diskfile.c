@@ -747,7 +747,8 @@ parse_diskline(
     disk->record	     = dumptype_get_record(dtype) != 0;
     disk->skip_incr	     = dumptype_get_skip_incr(dtype) != 0;
     disk->skip_full	     = dumptype_get_skip_full(dtype) != 0;
-    disk->to_holdingdisk     = dumptype_get_to_holdingdisk(dtype);
+    disk->orig_holdingdisk   = dumptype_get_to_holdingdisk(dtype);
+    disk->to_holdingdisk     = disk->orig_holdingdisk;
     disk->kencrypt	     = dumptype_get_kencrypt(dtype) != 0;
     disk->index		     = dumptype_get_index(dtype) != 0;
 
