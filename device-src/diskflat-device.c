@@ -264,6 +264,7 @@ diskflat_device_seek_file(
     char header_buffer[VFS_DEVICE_LABEL_SIZE];
     int header_buffer_size = sizeof(header_buffer);
     IoResult result;
+    off_t result_seek;
 
     if (device_in_error(dself)) return NULL;
     if (requested_file > 1) {
@@ -292,8 +293,16 @@ diskflat_device_seek_file(
     dself->bytes_read = 0;
     g_mutex_unlock(dself->device_mutex);
 
-    lseek(vself->open_file_fd, requested_file * DISK_BLOCK_BYTES, SEEK_SET);
-        result = vfs_device_robust_read(vself, header_buffer,
+    result_seek = lseek(vself->open_file_fd, requested_file * DISK_BLOCK_BYTES,
+			SEEK_SET);
+    if (result_seek == -1) {
+        device_set_error(dself,
+            g_strdup_printf(_("Error seeking within file: %s"), strerror(errno)),
+            DEVICE_STATUS_DEVICE_ERROR);
+        return NULL;
+    }
+
+    result = vfs_device_robust_read(vself, header_buffer,
                                     &header_buffer_size);
     if (result != RESULT_SUCCESS) {
         device_set_error(dself,
