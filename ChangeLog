@@ -1,4 +1,7 @@
 2014-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Util.swg (setup_application): Call glib_init.
+
+2014-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix perl warning.
 
 2014-03-04  Jean-Louis Martineau <martineau@zmanda.com>
