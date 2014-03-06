@@ -59,7 +59,7 @@ sub usage() {
 	exit 0;
 }
 
-my $o_options;
+my $o_options = "";
 
 Getopt::Long::Configure(qw{ bundling });
 GetOptions(
