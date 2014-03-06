@@ -39,6 +39,8 @@
 #include "sockaddr-util.h"
 %}
 
+void glib_init(void);
+
 %perlcode %{
 
 use Amanda::Debug qw(:init);
@@ -80,6 +82,8 @@ sub setup_application {
 
     # set up debugging, now that we have a name, type, and context
     debug_init();
+
+    glib_init();
 
     # ignore SIGPIPE
     $SIG{'PIPE'} = 'IGNORE';
