@@ -1708,6 +1708,8 @@ handle_taper_result(
 	case READY:	/* READY <handle> */
 	    dp = serial2disk(result_argv[1]);
 	    taper = sched(dp)->taper;
+	    taper->ready = TRUE;
+
 	    assert(dp == taper->disk);
 
 	    if (taper->dumper &&
