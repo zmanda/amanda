@@ -52,7 +52,7 @@ enum {
     /* anything above this value can be used by the application */
     AMAR_ATTR_APP_START = 16,
     AMAR_ATTR_GENERIC_DATA = AMAR_ATTR_APP_START,
-    AMAR_ATTR_VMWARE_DISK_DATA = 17,
+    AMAR_ATTR_RMAN_DATA = 17
 };
 
 /* Create an object to read/write an amanda archive on the file descriptor fd.
