@@ -1,3 +1,11 @@
+2014-03-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.h: Fix constant.
+	* amar-src/amarchiver.c: Do not append attribute id (16) to filename
+	  on extraction.
+	* installcheck/Amanda_Archive.pl: Add check.
+	* installcheck/amarchiver.pl: Add check.
+	* perl/Amanda/Archive.swg: Document and export attribute id.
+
 2014-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix READY message.
 

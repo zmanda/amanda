@@ -178,7 +178,12 @@ extract_frag_cb(
     int fd = GPOINTER_TO_INT(*attr_data);
 
     if (!fd) {
-	char *filename = g_strdup_printf("%s.%d", (char *)file_data, attrid);
+	char *filename;
+	if (attrid == AMAR_ATTR_GENERIC_DATA) {
+	    filename = g_strdup((char *)file_data);
+	} else {
+	    filename = g_strdup_printf("%s.%d", (char *)file_data, attrid);
+	}
 	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0660);
 	if (fd < 0) {
 	    g_fprintf(stderr, _("Could not open '%s' for writing: %s"),

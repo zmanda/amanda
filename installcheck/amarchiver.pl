@@ -98,18 +98,18 @@ is($Installcheck::Run::stdout, "test.tmp-1\ntest.tmp-2\n",
 
 # test extracting archives
 
-unlink("test.tmp-1.16");
-unlink("test.tmp-2.16");
+unlink("test.tmp-1");
+unlink("test.tmp-2");
 ok(run('amarchiver', '--extract', '--file', $archfile),
     "archive extraction succeeds");
-ok((-f "test.tmp-1.16" && -f "test.tmp-2.16"), "..and the files reappear")
+ok((-f "test.tmp-1" && -f "test.tmp-2"), "..and the files reappear")
     or diag(`find .`);
 
-unlink("test.tmp-1.16");
-unlink("test.tmp-2.16");
+unlink("test.tmp-1");
+unlink("test.tmp-2");
 ok(run('amarchiver', '--extract', '--file', $archfile, "test.tmp-2"),
     "archive extraction of only one file succeeds");
-ok((! -f "test.tmp-1.16" && -f "test.tmp-2.16"), "..and the file reappears")
+ok((! -f "test.tmp-1" && -f "test.tmp-2"), "..and the file reappears")
     or diag(`find .`);
 
 END {

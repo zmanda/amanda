@@ -81,7 +81,7 @@ pass("Create a new archive");
 $f1 = $ar->new_file("filename1");
 pass("Start an archive file");
 
-$a1 = $f1->new_attr(18);
+$a1 = $f1->new_attr($Amanda::Archive::AMAR_ATTR_GENERIC_DATA);
 $a1->add_data("foo!", 0);
 $a2 = $f1->new_attr(19);
 $a2->add_data("BAR!", 0);

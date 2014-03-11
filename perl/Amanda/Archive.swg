@@ -30,6 +30,33 @@
 #include "amar.h"
 %}
 
+/*
+ * Documentation Macro
+ */
+
+%define constant_pod(DESCRIPTION, FORALL_FN)
+%perlcode %{
+
+require Amanda::Config::FoldingHash;
+
+=pod
+
+DESCRIPTION: amglue_constants_list(FORALL_FN)
+
+=cut
+%}
+%enddef
+
+#define FOR_ALL_AMAR_ATTR(APPLY)\
+APPLY(AMAR_ATTR_FILENAME) \
+APPLY(AMAR_ATTR_EOF) \
+APPLY(AMAR_ATTR_GENERIC_DATA) \
+APPLY(AMAR_ATTR_RMAN_DATA)
+
+amglue_add_enum_tag_fns(amar_attr);
+amglue_add_constants(FOR_ALL_AMAR_ATTR, amar_attr);
+constant_pod(Amar default attribute, FOR_ALL_AMAR_ATTR)
+
 %{
 /* Support code (not directly available from perl) */
 
