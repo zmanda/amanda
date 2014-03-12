@@ -1,3 +1,9 @@
+2014-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Log empty part.
+	* server-src/amreport.pl: Fix.
+	* installcheck/Amanda_Taper_Scribe.pl: Fix for Scribe change.
+	* installcheck/taper.pl: Fix for Scribe change.
+
 2014-03-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.h: Fix constant.
 	* amar-src/amarchiver.c: Do not append attribute id (16) to filename

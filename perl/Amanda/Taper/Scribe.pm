@@ -912,7 +912,7 @@ sub _xmsg_part_done {
     # are an implementation detail of the splitting done by the transfer
     # destination.
 
-    if ($msg->{'successful'} and $msg->{'size'} == 0) {
+    if ($msg->{'successful'} and $msg->{'size'} == 0 and $msg->{'partnum'} == 0) {
 	$self->dbg("not notifying for empty, successful part");
     } else {
 	# double-check partnum

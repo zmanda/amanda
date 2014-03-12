@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 309;
+use Test::More tests => 312;
 use strict;
 use warnings;
 
@@ -328,6 +328,8 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 512 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 2") or die;
 like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 3") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 4 0 "\[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 512\]"$/,
+	"got PARTDONE for filenum 4") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
@@ -340,7 +342,8 @@ check_logs([
     qr(^DONE taper "ST:TESTCONF" localhost /home $datestamp 1 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 2 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 3 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
-    qr(^DONE taper "ST:TESTCONF" localhost /usr $datestamp 2 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
+    qr(^PART taper "ST:TESTCONF" TESTCONF01 4 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 512\]$),
+    qr(^DONE taper "ST:TESTCONF" localhost /usr $datestamp 3 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
     qr(^INFO taper tape TESTCONF01 kb 2048 fm 4 \[OK\]$),
 ], "single-part and multi-part dump logged correctly");
 
@@ -417,6 +420,8 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 1 512 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 1") or die;
 like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 2") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 0 "\[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 512\]"$/,
+	"got PARTDONE for filenum 3") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
@@ -427,7 +432,8 @@ check_logs([
     qr(^START taper datestamp $datestamp "ST:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 1 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 2 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
-    qr(^PARTIAL taper "ST:TESTCONF" localhost /usr $datestamp 2 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
+    qr(^PART taper "ST:TESTCONF" TESTCONF01 3 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 512\]$),
+    qr(^PARTIAL taper "ST:TESTCONF" localhost /usr $datestamp 3 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
     qr(^INFO taper tape TESTCONF01 kb 1024 fm 3 \[OK\]$),
 ], "multi-part partial dump logged correctly");
 
@@ -1339,6 +1345,8 @@ like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 2 512 "\[sec [\d.]+ 
 	"got PARTDONE for filenum 2") or die;
 like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 3 512 "\[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]"$/,
 	"got PARTDONE for filenum 3") or die;
+like(taper_reply, qr/^PARTDONE worker0-0 $handle TESTCONF01 4 0 "\[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 512\]"$/,
+	"got PARTDONE for filenum 4") or die;
 like(taper_reply, qr/^DONE worker0-0 $handle INPUT-GOOD TAPE-GOOD "17478a47:1048576" "\[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]" "" ""$/,
 	"got DONE") or die;
 taper_cmd("QUIT");
@@ -1351,7 +1359,8 @@ check_logs([
     qr(^DONE taper "ST:TESTCONF" localhost /home $datestamp 1 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 12\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 2 localhost /usr $datestamp 1/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 3 localhost /usr $datestamp 2/-1 0 \[sec [\d.]+ bytes 524288 kps [\d.]+ orig-kb 512\]$),
-    qr(^DONE taper "ST:TESTCONF" localhost /usr $datestamp 2 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
+    qr(^PART taper "ST:TESTCONF" TESTCONF01 4 localhost /usr $datestamp 3/-1 0 \[sec [\d.]+ bytes 0 kps [\d.]+ orig-kb 512\]$),
+    qr(^DONE taper "ST:TESTCONF" localhost /usr $datestamp 3 0 00000000:0 00000000:0 17478a47:1048576 \[sec [\d.]+ bytes 1048576 kps [\d.]+ orig-kb 512\]$),
     qr(^INFO taper tape TESTCONF01 kb 2048 fm 4 \[OK\]$),
 ], "single-part and multi-part dump logged correctly");
 

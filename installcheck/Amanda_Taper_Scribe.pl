@@ -590,8 +590,7 @@ is_deeply([ @events ], [
 
       [ 'scribe_notif_part_done', bi(4), bi(1), 1, bi(131072) ],
       [ 'scribe_notif_part_done', bi(5), bi(2), 1, bi(131072) ],
-      # empty part is written but not notified, although it is counted
-      # in scribe_notif_tape_done
+      [ 'scribe_notif_part_done', bi(6), bi(3), 1, bi(0) ],
 
       [ 'dump_cb', 'DONE', [], undef, bi(655360) ],
       [ 'scribe_notif_tape_done', 'FAKELABEL', bi(3), bi(262144) ],

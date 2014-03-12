@@ -59,6 +59,7 @@ my ($opt_mailto, $opt_filename, $opt_logfname, $opt_psfname, $opt_xml);
 my $from_amdump = 1;
 my ($config_name, $report, $outfh);
 my $mode = MODE_NONE;
+my $tl;
 
 # list of [ report-spec, output-spec ]
 my (@outputs, @output_queue);
@@ -198,7 +199,9 @@ sub calculate_legacy_outputs {
     # mailto? And mailer?
 
 Amanda::Debug::debug("storage_list:" . Data::Dumper::Dumper($report->{'storage_list'}));
-    my $storage = Amanda::Storage->new(storage_name => $report->{'storage_list'}[0]);
+    my $storage = Amanda::Storage->new(
+			storage_name => $report->{'storage_list'}[0],
+			tapelist => $tl);
     my $tapetype_name = $storage->{'tapetype_name'};
     my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
     my $cfg_template = "" . tapetype_getconf($tt, $TAPETYPE_LBL_TEMPL) if $tt;
@@ -570,7 +573,7 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 # read the tapelist
 my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
-my ($tl, $message) = Amanda::Tapelist->new($tl_file);
+($tl, my $message) = Amanda::Tapelist->new($tl_file);
 if (defined $message) {
     debug("Could not read the tapelist: $message");
 }
