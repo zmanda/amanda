@@ -273,13 +273,12 @@ runbsdtcp(
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,
-				     0);
+				     1);
     set_root_privs(0);
 
     if(server_socket < 0) {
 	security_seterror(&rh->sech,
 	    "%s", strerror(errno));
-	
 	return -1;
     }
 

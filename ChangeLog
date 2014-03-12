@@ -1,4 +1,7 @@
 2014-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsdtcp-security.c: Make a non blocking connection.
+
+2014-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Log empty part.
 	* server-src/amreport.pl: Fix.
 	* installcheck/Amanda_Taper_Scribe.pl: Fix for Scribe change.
