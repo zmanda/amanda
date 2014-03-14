@@ -3720,6 +3720,11 @@ find_diskspace(
 
     (void)cur_idle;	/* Quiet unused parameter warning */
 
+    if (holdalloc == NULL) {
+	/* no holding disk in use */
+	return NULL;
+    }
+
     if (size < 2*DISK_BLOCK_KB)
 	size = 2*DISK_BLOCK_KB;
     size = am_round(size, (off_t)DISK_BLOCK_KB);
