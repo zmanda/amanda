@@ -161,6 +161,35 @@ extract_file_finish_cb(
     return TRUE;
 }
 
+static int
+mkpath(
+    const char *s,
+    mode_t mode)
+{
+    char *path = NULL;
+    char *r = NULL;
+    int rv = -1;
+
+    if (strcmp(s, ".") == 0 || strcmp(s, "/") == 0)
+	return 0;
+
+    path = g_strdup(s);
+    r = dirname(path);
+
+    if ((mkpath(r, mode) == -1) && (errno != EEXIST))
+	goto out;
+
+    if ((mkdir(s, mode) == -1) && (errno != EEXIST))
+	rv = -1;
+    else
+	rv = 0;
+
+out:
+    g_free(path);
+
+    return rv;
+}
+
 static gboolean
 extract_frag_cb(
 	gpointer user_data G_GNUC_UNUSED,
@@ -179,11 +208,15 @@ extract_frag_cb(
 
     if (!fd) {
 	char *filename;
+	char *dir;
 	if (attrid == AMAR_ATTR_GENERIC_DATA) {
 	    filename = g_strdup((char *)file_data);
 	} else {
 	    filename = g_strdup_printf("%s.%d", (char *)file_data, attrid);
 	}
+	dir = g_strdup(filename);
+	mkpath(dirname(dir), 0770);
+	g_free(dir);
 	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0660);
 	if (fd < 0) {
 	    g_fprintf(stderr, _("Could not open '%s' for writing: %s"),
