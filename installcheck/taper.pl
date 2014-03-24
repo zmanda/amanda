@@ -1109,7 +1109,7 @@ cleanup_log();
 # Test with NDMP device (DirectTCP)
 
 SKIP : {
-    skip "not built with NDMP", 33 unless Amanda::Util::built_with_component("ndmp");
+    skip "not built with NDMP", 36 unless Amanda::Util::built_with_component("ndmp");
 
     my $ndmp = Installcheck::Mock::NdmpServer->new(tape_limit => 1024*1024);
     my $ndmp_port = $ndmp->{'port'};

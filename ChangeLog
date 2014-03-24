@@ -1,3 +1,6 @@
+2014-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/taper.pl: Fix count of test.
+
 2014-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amarchiver.c: Create parent directory on extraction.
 
