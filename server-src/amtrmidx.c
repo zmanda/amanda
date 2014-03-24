@@ -476,6 +476,12 @@ main(
 			wait_process(sort_pid, sort_err_fd, "sort");
 		    if (compress_pid != -1)
 			wait_process(compress_pid, compress_err_fd, "compress");
+
+		    g_free(orig_name);
+		    g_free(sorted_name);
+		    g_free(sorted_gz_name);
+		    g_free(unsorted_name);
+		    g_free(unsorted_gz_name);
 		}
 
 		amfree(datestamp);

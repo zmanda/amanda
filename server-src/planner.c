@@ -513,6 +513,7 @@ main(
 	    /* see if this matches the command-line arguments */
 	    if (!match_dumpfile(&file, exact_match, argc-diskarg_offset,
 				       argv+diskarg_offset)) {
+		dumpfile_free_data(&file);
 		continue;
 	    }
 
