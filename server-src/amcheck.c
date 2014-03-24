@@ -1301,15 +1301,23 @@ start_server_check(
 	int hostindexdir_checked = 0;
 	char *host;
 	char *disk;
-	int conf_tapecycle, conf_runspercycle;
+	int conf_tapecycle;
+	int conf_runspercycle;
+	int conf_runtapes;
 	identlist_t pp_scriptlist;
 
 	conf_tapecycle = getconf_int(CNF_TAPECYCLE);
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
+	conf_runtapes = getconf_int(CNF_RUNTAPES);
 
-	if(conf_tapecycle <= conf_runspercycle) {
+	if (conf_tapecycle <= conf_runspercycle) {
 		g_fprintf(outf, _("WARNING: tapecycle (%d) <= runspercycle (%d).\n"),
 			conf_tapecycle, conf_runspercycle);
+	}
+
+	if (conf_tapecycle <= conf_runtapes) {
+		g_fprintf(outf, _("WARNING: tapecycle (%d) <= runtapes (%d).\n"),
+			conf_tapecycle, conf_runtapes);
 	}
 
 	conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
