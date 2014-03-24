@@ -785,6 +785,8 @@ start_server_check(
 	identlist_t il;
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	    char *storage_n = il->data;
+	    policy_t *policy;
+	    char *policy_n;
 	    char *lbl_templ;
 
 	    storage = lookup_storage(storage_n);
@@ -838,6 +840,14 @@ start_server_check(
 			  "the 'tapetype' parameter or the storage\n"),
 			  storage_n);
 		confbad = 1;
+	    }
+
+	    policy_n = storage_get_policy(storage);
+	    policy = lookup_policy(policy_n);
+	    if (policy_get_retention_tapes(policy) <= storage_get_runtapes(storage)) {
+		g_fprintf(outf,
+			  "ERROR: storage %s: runtapes is larger or equal to policy '%s' retention-tapes\n",
+			  storage_n, policy_n);
 	    }
 
 	    {
@@ -1305,15 +1315,23 @@ start_server_check(
 	int hostindexdir_checked = 0;
 	char *host;
 	char *disk;
-	int conf_tapecycle, conf_runspercycle;
+	int conf_tapecycle;
+	int conf_runspercycle;
+	int conf_runtapes;
 	identlist_t pp_scriptlist;
 
 	conf_tapecycle = getconf_int(CNF_TAPECYCLE);
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
+	conf_runtapes = getconf_int(CNF_RUNTAPES);
 
-	if(conf_tapecycle <= conf_runspercycle) {
+	if (conf_tapecycle <= conf_runspercycle) {
 		g_fprintf(outf, _("WARNING: tapecycle (%d) <= runspercycle (%d).\n"),
 			conf_tapecycle, conf_runspercycle);
+	}
+
+	if (conf_tapecycle <= conf_runtapes) {
+		g_fprintf(outf, _("WARNING: tapecycle (%d) <= runtapes (%d).\n"),
+			conf_tapecycle, conf_runtapes);
 	}
 
 	conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
