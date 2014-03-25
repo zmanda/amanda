@@ -90,6 +90,10 @@ amar_file_t *amar_new_file(
 	    off_t *header_offset,
 	    GError **error);
 
+/* return the size of the fil */
+off_t amar_file_size(
+	amar_file_t *file);
+
 /* Flush all buffer the 'file' object and write a record with ID=2 */
 gboolean amar_file_close(
 	    amar_file_t *file,
@@ -103,6 +107,10 @@ amar_attr_t *amar_new_attr(
 	    amar_file_t *file,
 	    uint16_t attrid,
 	    GError **error);
+
+/* return the size of the attribute */
+off_t amar_attr_size(
+	amar_attr_t *attribute);
 
 /* flush all buffers and mark the end of the attribute */
 gboolean amar_attr_close(

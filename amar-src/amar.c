@@ -93,13 +93,15 @@ struct amar_s {
 };
 
 struct amar_file_s {
-    amar_t *archive;		/* archive for this file	*/
-    gint             filenum;		/* filenum of this file; gint is required by hash table */
-    GHashTable       *attributes;	/* all attributes for this file */
+    amar_t     *archive;	/* archive for this file	*/
+    off_t       size;		/* size of the file             */
+    gint        filenum;	/* filenum of this file; gint is required by hash table */
+    GHashTable  *attributes;	/* all attributes for this file */
 };
 
 struct amar_attr_s {
     amar_file_t *file;		/* file for this attribute	*/
+    off_t        size;		/* size of the attribute        */
     gint         attrid;	/* id of this attribute		*/
     gboolean     wrote_eoa;	/* If the attribute is finished	*/
     GThread     *thread;
@@ -161,7 +163,7 @@ write_header(
 static gboolean
 write_record(
 	amar_t *archive,
-	uint16_t filenum,
+	amar_file_t *file,
 	uint16_t attrid,
 	gboolean eoa,
 	gpointer data,
@@ -169,7 +171,7 @@ write_record(
 	GError **error)
 {
     /* the buffer always has room for a new record header */
-    MKRECORD(archive->buf + archive->buf_len, filenum, attrid, data_size, eoa);
+    MKRECORD(archive->buf + archive->buf_len, file->filenum, attrid, data_size, eoa);
     archive->buf_len += RECORD_SIZE;
 
     /* is it worth copying this record into the buffer? */
@@ -196,6 +198,7 @@ write_record(
     }
 
     archive->position += data_size + RECORD_SIZE;
+    file->size += data_size + RECORD_SIZE;
     return TRUE;
 }
 
@@ -328,6 +331,7 @@ amar_new_file(
     file = g_new0(amar_file_t, 1);
     file->archive = archive;
     file->filenum = archive->maxfilenum;
+    file->size = 0;
     file->attributes = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
     g_hash_table_insert(archive->files, &file->filenum, file);
 
@@ -339,7 +343,7 @@ amar_new_file(
     }
 
     /* add a filename record */
-    if (!write_record(archive, file->filenum, AMAR_ATTR_FILENAME,
+    if (!write_record(archive, file, AMAR_ATTR_FILENAME,
 		      1, filename_buf, filename_len, error))
 	goto error_exit;
 
@@ -352,6 +356,13 @@ error_exit:
 	g_free(file);
     }
     return NULL;
+}
+
+off_t
+amar_file_size(
+    amar_file_t *file)
+{
+    return file->size;
 }
 
 static void
@@ -392,7 +403,7 @@ amar_file_close(
 
     /* write an EOF record */
     if (success) {
-	if (!write_record(archive, file->filenum, AMAR_ATTR_EOF, 1,
+	if (!write_record(archive, file, AMAR_ATTR_EOF, 1,
 			  NULL, 0, error))
 	    success = FALSE;
     }
@@ -422,6 +433,7 @@ amar_new_attr(
 
     attribute = malloc(SIZEOF(amar_attr_t));
     attribute->file = file;
+    attribute->size = 0;
     attribute->attrid = attrid;
     attribute->wrote_eoa = FALSE;
     attribute->thread = NULL;
@@ -432,6 +444,13 @@ amar_new_attr(
     /* (note this function cannot currently return an error) */
 
     return attribute;
+}
+
+off_t
+amar_attr_size(
+    amar_attr_t *attr)
+{
+    return attr->size;
 }
 
 static gboolean
@@ -451,7 +470,7 @@ amar_attr_close_no_remove(
     /* write an empty record with EOA_BIT set if we haven't ended
      * this attribute already */
     if (!attribute->wrote_eoa) {
-	if (!write_record(archive, file->filenum, attribute->attrid,
+	if (!write_record(archive, file, attribute->attrid,
 			  1, NULL, 0, error))
 	    rv = FALSE;
 	attribute->wrote_eoa = TRUE;
@@ -500,12 +519,13 @@ amar_attr_add_data_buffer(
 		rec_eoa = TRUE;
 	}
 
-	if (!write_record(archive, file->filenum, attribute->attrid,
+	if (!write_record(archive, file, attribute->attrid,
 			  rec_eoa, data, rec_data_size, error))
 	    return FALSE;
 
 	data += rec_data_size;
 	size -= rec_data_size;
+	attribute->size += rec_data_size;
     }
 
     if (eoa) {
@@ -561,11 +581,12 @@ amar_attr_add_data_fd(
 
     /* read and write until reaching EOF */
     while ((size = full_read(fd, buf, MAX_RECORD_DATA_SIZE)) >= 0) {
-	if (!write_record(archive, file->filenum, attribute->attrid,
+	if (!write_record(archive, file, attribute->attrid,
 			    eoa && (size < MAX_RECORD_DATA_SIZE), buf, size, error))
 	    goto error_exit;
 
 	filesize += size;
+	attribute->size += size;
 
 	if (size < MAX_RECORD_DATA_SIZE)
 	    break;
