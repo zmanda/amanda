@@ -124,6 +124,10 @@ Create a new C<Amanda::Archive::Attribute> object.  Equivalent to
 
   Amanda::Archive::Attr->new($file, $attrid);
 
+=item C<size()>
+
+Return the size on the archive of all attributes of the file.
+
 =item C<close()>
 
 Close this file, writing an EOF record.
@@ -150,6 +154,10 @@ Same as C<add_data_fd> but the copy is done in a newly created thread.
 This function return immediately.
 Nothing should be done on the archive while it is running.
 The next action on the archive must be $attr->close().
+
+=item C<size()>
+
+Return the size of the data of the attribute.
 
 =item C<close()>
 

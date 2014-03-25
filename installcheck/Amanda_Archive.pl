@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 24;
+use Test::More tests => 30;
 use strict;
 use warnings;
 
@@ -99,6 +99,8 @@ open($dfh, "<", $data_filename);
 $a1->add_data_fd(fileno($dfh), 1);
 close($dfh);
 pass("Add data from a file descriptor");
+ok($a1->size() == 5242880, "size attribute A is " . $a1->size());
+ok($f1->size() == 5242961, "size file A is " . $f1->size());
 ok($ar->size() == 5242989, "Size A is " . $ar->size);
 
 $a1 = undef;
@@ -111,10 +113,14 @@ pass("Add a new file (filename2)");
 $a1 = $f2->new_attr(82);
 $a1->add_data("word", 1);
 pass("Add data to it");
+ok($a1->size() == 4, "size attribute A1 is " . $a1->size());
+ok($f2->size() == 29, "size file F2 is " . $f2->size());
 ok($ar->size() == 5243018, "Size C is " . $ar->size);
 
 $a2->add_data("barrrrr?", 0);	# note no EOA
 pass("Add more data to first attribute");
+ok($a2->size() == 16, "size attribute A2 is " . $a2->size());
+ok($f1->size() == 5242977, "size file F1 is " . $f1->size());
 ok($ar->size() == 5243034, "Size D is " . $ar->size);
 
 ($f1, $posn) = $ar->new_file("posititioned file", 1);

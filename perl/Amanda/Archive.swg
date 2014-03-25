@@ -254,16 +254,18 @@ is_number(char *str, int len, int *result)
 /* Rename all of the below wrapper functions (suffixed with '_') for
  * consumption by perl */
 %rename(amar_new) amar_new_;
+%rename(amar_size) amar_size_;
 %rename(amar_close) amar_close_;
 %rename(amar_new_file) amar_new_file_;
+%rename(amar_file_size) amar_file_size_;
 %rename(amar_file_close) amar_file_close_;
 %rename(amar_new_attr) amar_new_attr_;
+%rename(amar_attr_size) amar_attr_size_;
 %rename(amar_attr_close) amar_attr_close_;
 %rename(amar_attr_add_data_buffer) amar_attr_add_data_buffer_;
 %rename(amar_attr_add_data_fd) amar_attr_add_data_fd_;
 %rename(amar_attr_add_data_fd_in_thread) amar_attr_add_data_fd_in_thread_;
 %rename(amar_read) amar_read_;
-%rename(amar_size) amar_size_;
 
 /* typemaps for the below */
 %apply (char *STRING, int LENGTH) { (char *filename, gsize filename_len) };
@@ -334,6 +336,10 @@ amar_new_file_(amar_t *arch, char *filename, gsize filename_len, off_t *want_pos
     return NULL;
 }
 
+off_t amar_file_size_(amar_file_t *file) {
+    return amar_file_size(file);
+}
+
 void amar_file_close_(amar_file_t *file) {
     GError *error = NULL;
     if (!amar_file_close(file, &error))
@@ -353,6 +359,10 @@ amar_new_attr_(amar_file_t *file, guint16 attrid) {
 
     croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
     return NULL;
+}
+
+off_t amar_attr_size_(amar_attr_t *attr) {
+    return amar_attr_size(attr);
 }
 
 void amar_attr_close_(amar_attr_t *attr) {
@@ -602,6 +612,14 @@ sub new {
     }
 }
 
+sub size {
+    my $self = shift;
+    if ($self->[0]) {
+	return Amanda::Archive::amar_file_size($self->[0]);
+    }
+    return 0;
+}
+
 sub close {
     my $self = shift;
     if ($self->[0]) {
@@ -627,6 +645,14 @@ sub new {
     die "File is not open" unless ($file->[0]);
     my $attr = Amanda::Archive::amar_new_attr($file->[0], $attrid);
     return bless ([$attr, $file], $class);
+}
+
+sub size {
+    my $self = shift;
+    if ($self->[0]) {
+	return Amanda::Archive::amar_attr_size($self->[0]);
+    }
+    return 0;
 }
 
 sub close {
