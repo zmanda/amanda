@@ -39,6 +39,7 @@ SERVER_MAN_PAGES =  \
     amaddclient.8    \
     amadmin.8 \
     amaespipe.8 \
+    amanda-rest-server.8 \
     amcheck.8 \
     amcheckdb.8 \
     amcheckdump.8 \

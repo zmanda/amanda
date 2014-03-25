@@ -95,7 +95,10 @@ typedef enum {
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
-    CONF_CMDFILE,	       CONF_SET_NO_REUSE,	CONF_ERASE_VOLUME,
+    CONF_CMDFILE,              CONF_REST_API_PORT,
+
+    /* storage setting */
+    CONF_SET_NO_REUSE,	       CONF_ERASE_VOLUME,
     CONF_ERASE_ON_FAILURE,     CONF_COMPRESS_INDEX,	CONF_SORT_INDEX,
     CONF_ERASE_ON_FULL,
 
@@ -1138,6 +1141,7 @@ keytab_t server_keytab[] = {
     { "RESERVE", CONF_RESERVE },
     { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
     { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
+    { "REST_API_PORT", CONF_REST_API_PORT },
     { "RETRY_DUMP", CONF_RETRY_DUMP },
     { "RETENTION_DAYS", CONF_RETENTION_DAYS },
     { "RETENTION_FULL", CONF_RETENTION_FULL },
@@ -1415,6 +1419,7 @@ conf_var_t server_var [] = {
    { CONF_STORAGE              , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_STORAGE         , NULL },
    { CONF_AMVAULT_STORAGE      , CONFTYPE_STR      , read_str         , CNF_AMVAULT_STORAGE      , NULL },
    { CONF_CMDFILE              , CONFTYPE_STR      , read_str         , CNF_CMDFILE              , NULL },
+   { CONF_REST_API_PORT        , CONFTYPE_INT      , read_int         , CNF_REST_API_PORT        , validate_positive },
    { CONF_COMPRESS_INDEX       , CONFTYPE_BOOLEAN  , read_bool        , CNF_COMPRESS_INDEX       , NULL },
    { CONF_SORT_INDEX           , CONFTYPE_BOOLEAN  , read_bool        , CNF_SORT_INDEX           , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
@@ -6097,7 +6102,8 @@ init_defaults(
     conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_str      (&conf_data[CNF_AMVAULT_STORAGE]      , "");
-    conf_init_str      (&conf_data[CNF_CMDFILE        ]      , "command_file");
+    conf_init_str      (&conf_data[CNF_CMDFILE]              , "command_file");
+    conf_init_int      (&conf_data[CNF_REST_API_PORT]        , CONF_UNIT_NONE, 0);
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , CONF_UNIT_NONE, 3);
     conf_init_int      (&conf_data[CNF_REP_TRIES]            , CONF_UNIT_NONE, 5);

@@ -540,6 +540,7 @@ typedef enum {
     CNF_CMDFILE,
     CNF_COMPRESS_INDEX,
     CNF_SORT_INDEX,
+    CNF_REST_API_PORT,
     CNF_CNF /* sentinel */
 } confparm_key;
 

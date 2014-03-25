@@ -1,4 +1,14 @@
 2014-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add CNF_REST_API_PORT
+	* common-src/conffile.h: Add CNF_REST_API_PORT
+	* perl/Amanda/Config.swg: Add CNF_REST_API_PORT
+	* server-src/amanda-rest-server.pl: New script to start/stop the rest
+	  server.
+	* server-src/Makefile.am (sbin_SCRIPTS_PERL): Add amanda-rest-server.
+	* man/xml-source/amanda-rest-server.8.xml: New man page.
+	* man/Makefile.am (SERVER_MAN_PAGES): Add amanda-rest-server.8
+
+2014-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_file_size, amar_attr_size): New function to
 	  return file and attribute size.
 	* amar-src/amar.h (amar_file_size, amar_attr_size): Add prototype.

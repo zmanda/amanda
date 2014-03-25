@@ -37,6 +37,7 @@ amlibexec_SCRIPTS_PERL = \
 
 sbin_SCRIPTS_PERL = \
 	    amaddclient \
+	    amanda-rest-server \
 	    amoverview \
 	    amserverconfig \
 	    amtoc \
