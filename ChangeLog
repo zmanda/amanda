@@ -1,3 +1,10 @@
+2014-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Add read function that use the mainloop.
+	* amar-src/amar.h: Add read function that use the mainloop.
+	* amar-src/amarchiver.c: Use new event interface.
+	* perl/Amanda/Archive.swg: Swig new event interface.
+	* perl/Amanda/MainLoop.swg (run_until_empty): New method.
+
 2014-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add CNF_REST_API_PORT
 	* common-src/conffile.h: Add CNF_REST_API_PORT

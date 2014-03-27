@@ -19,6 +19,7 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
+#include "event.h"
 #include <glib.h>
 
 /* A note regarding error handling in this module.  Amar returns errors via the
@@ -105,7 +106,7 @@ gboolean amar_file_close(
  */
 amar_attr_t *amar_new_attr(
 	    amar_file_t *file,
-	    uint16_t attrid,
+	    guint16  attrid,
 	    GError **error);
 
 /* return the size of the attribute */
@@ -190,9 +191,9 @@ off_t amar_attr_add_data_fd_in_thread(
  */
 typedef gboolean (*amar_fragment_callback_t)(
 	gpointer user_data,
-	uint16_t filenum,
+	guint16  filenum,
 	gpointer file_data,
-	uint16_t attrid,
+	guint16  attrid,
 	gpointer attrid_data,
 	gpointer *attr_data,
 	gpointer data,
@@ -204,7 +205,7 @@ typedef gboolean (*amar_fragment_callback_t)(
  * with attrid 0.  This final entry is used as the "catchall" for attributes
  * not matching any other array entries. */
 typedef struct amar_attr_handling_s {
-    uint16_t attrid;
+    guint16  attrid;
 
     /* if nonzero, this is the minimum size fragment that will be passed to the
      * callback.  Use SIZE_MAX for no limit, although this may result in
@@ -232,7 +233,7 @@ typedef struct amar_attr_handling_s {
  */
 typedef gboolean (*amar_file_start_callback_t)(
 	gpointer user_data,
-	uint16_t filenum,
+	guint16  filenum,
 	gpointer filename_buf,
 	gsize filename_len,
 	gboolean *ignore,
@@ -250,7 +251,7 @@ typedef gboolean (*amar_file_start_callback_t)(
  */
 typedef gboolean (*amar_file_finish_callback_t)(
 	gpointer user_data,
-	uint16_t filenum,
+	guint16  filenum,
 	gpointer *file_data,
 	gboolean truncated);
 
@@ -272,3 +273,20 @@ gboolean amar_read(
 	amar_file_start_callback_t file_start_cb,
 	amar_file_finish_callback_t file_finish_cb,
 	GError **error);
+
+
+event_fn_t
+set_amar_read_cb(
+    amar_t *archive,
+    gpointer user_data,
+    amar_attr_handling_t *handling_array,
+    amar_file_start_callback_t file_start_cb,
+    amar_file_finish_callback_t file_finish_cb,
+    GError **error);
+
+void amar_read_to(
+    amar_t   *archive,
+    guint16   filenum,
+    guint16   attrid,
+    int       fd);
+

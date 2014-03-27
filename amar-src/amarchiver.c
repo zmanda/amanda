@@ -20,6 +20,7 @@
  */
 
 #include "amanda.h"
+#include "event.h"
 #include "getopt.h"
 #include "amar.h"
 
@@ -278,14 +279,22 @@ do_extract(
     if (!archive)
 	error_exit("amar_new", error);
 
-    if (!amar_read(archive, &ud, handling, extract_file_start_cb,
-		   extract_file_finish_cb, &error)) {
-	if (error)
-	    error_exit("amar_read", error);
-	else
-	    /* one of the callbacks already printed an error message */
-	    exit(1);
+//    if (!amar_read(archive, &ud, handling, extract_file_start_cb,
+//		   extract_file_finish_cb, &error)) {
+//	if (error)
+//	    error_exit("amar_read", error);
+//	else
+//	    /* one of the callbacks already printed an error message */
+//	    exit(1);
+//    }
+
+    set_amar_read_cb(archive, &ud, handling, extract_file_start_cb,
+		      extract_file_finish_cb, &error);
+    event_loop(0);
+    if (error) {
+	error_exit("amar_read", error);
     }
+
     amar_close(archive, NULL);
 }
 
@@ -303,6 +312,7 @@ list_file_start_cb(
 
     return TRUE;
 }
+
 static void
 do_list(
 	char *opt_file,
