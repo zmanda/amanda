@@ -288,7 +288,6 @@ sub _run_psql_command {
 	}
     });
 
-    close($wtr);
     Amanda::MainLoop::run();
     close($rdr);
     close($err);
@@ -668,7 +667,7 @@ sub _get_pg_version {
     my @cmd = ($self->{'props'}->{'psql-path'});
     push @cmd, "-X";
     push @cmd, "--version";
-    my $pid = open3('>&STDIN', \*VERSOUT, '>&STDERR', @cmd)
+    my $pid = open3('>STDIN', \*VERSOUT, '>STDERR', @cmd)
 	or $self->{'die_cb'}->("could not open psql to determine version");
     my @lines = <VERSOUT>;
     waitpid($pid, 0);
