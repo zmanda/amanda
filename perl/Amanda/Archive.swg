@@ -75,7 +75,7 @@ typedef struct perl_read_data_s {
 static gboolean
 read_start_file_cb(
 	gpointer user_data,
-	uint16_t filenum,
+	guint16  filenum,
 	gpointer filename,
 	gsize filename_len,
 	gboolean *ignore,
@@ -125,15 +125,18 @@ read_start_file_cb(
     FREETMPS;
     LEAVE;
 
-    if (SvTRUE(ERRSV))
+    if (SvTRUE(ERRSV)) {
+	printf ("Uh oh X - %s\n", SvPV_nolen(ERRSV));
+	POPs;
 	return FALSE;
+    }
     return TRUE;
 }
 
 static gboolean
 read_finish_file_cb(
 	gpointer user_data,
-	uint16_t filenum,
+	guint16  filenum,
 	gpointer *file_data,
 	gboolean truncated)
 {
@@ -157,17 +160,20 @@ read_finish_file_cb(
     FREETMPS;
     LEAVE;
 
-    if (SvTRUE(ERRSV))
+    if (SvTRUE(ERRSV)) {
+	printf ("Uh oh Y - %s\n", SvPV_nolen(ERRSV));
+	POPs;
 	return FALSE;
+    }
     return TRUE;
 }
 
 static gboolean
 read_frag_cb(
 	gpointer user_data,
-	uint16_t filenum,
+	guint16  filenum,
 	gpointer file_data,
-	uint16_t attrid,
+	guint16  attrid,
 	gpointer attrid_data,
 	gpointer *attr_data,
 	gpointer data,
@@ -221,8 +227,11 @@ read_frag_cb(
     FREETMPS;
     LEAVE;
 
-    if (SvTRUE(ERRSV))
+    if (SvTRUE(ERRSV)) {
+	printf ("Uh oh Z - %s\n", SvPV_nolen(ERRSV));
+	POPs;
 	return FALSE;
+    }
     return TRUE;
 }
 
@@ -266,6 +275,8 @@ is_number(char *str, int len, int *result)
 %rename(amar_attr_add_data_fd) amar_attr_add_data_fd_;
 %rename(amar_attr_add_data_fd_in_thread) amar_attr_add_data_fd_in_thread_;
 %rename(amar_read) amar_read_;
+%rename(set_amar_read_cb) set_amar_read_cb_;
+%rename(amar_read_to) amar_read_to_;
 
 /* typemaps for the below */
 %apply (char *STRING, int LENGTH) { (char *filename, gsize filename_len) };
@@ -541,6 +552,157 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
     }
 }
 
+void amar_read_to_(
+    amar_t   *archive,
+    guint16   filenum,
+    guint16   attrid,
+    int       fd) {
+
+    amar_read_to(archive, filenum, attrid, fd);
+}
+
+void destroy_read_cb(perl_read_data_t *dat)
+{
+    if (dat->file_start_sub)
+	SvREFCNT_dec(dat->file_start_sub);
+    if (dat->file_finish_sub)
+	SvREFCNT_dec(dat->file_finish_sub);
+    if (dat->user_data && dat->user_data != &PL_sv_undef)
+	SvREFCNT_dec(dat->user_data);
+
+//    for (hdl_idx = 0; hdl_idx <= maxhandlers; hdl_idx++) {
+//	if (dat->handling_array[hdl_idx].attrid_data)
+//	    SvREFCNT_dec(dat->handling_array[hdl_idx].attrid_data);
+//    }
+
+    g_free(dat->handling_array);
+    g_free(dat);
+}
+
+perl_read_data_t *set_amar_read_cb_(amar_t *archive, SV *params_hashref)
+{
+    perl_read_data_t *dat = g_new0(perl_read_data_t, 1);
+    GError *error = NULL;
+    HV *params;
+    HE *param;
+    I32 len;
+    int maxhandlers;
+    int hdl_idx;
+
+    /* make sure we got a hashref */
+    if (!SvROK(params_hashref) || SvTYPE(SvRV(params_hashref)) != SVt_PVHV)
+	croak("read() expects a single hashref");
+    params = (HV *)SvRV(params_hashref);
+    len = hv_iterinit(params);
+
+    maxhandlers = hdl_idx = len;
+    dat->handling_array = g_new0(amar_attr_handling_t, len+1);
+
+    /* loop through the parameters */
+    while ((param = hv_iternext(params))) {
+	I32 keylen;
+	char *key = hv_iterkey(param, &keylen);
+	int attrid;
+
+	/* if it's a number, it's handling information for an attrid */
+	if (is_number(key, keylen, &attrid)) {
+	    SV *val = hv_iterval(params, param);
+	    SV *coderef;
+	    UV bufsize = 0;
+	    int i;
+
+	    if (!SvROK(val)) goto croak_hdl;
+
+	    switch (SvTYPE(SvRV(val))) {
+		case SVt_PVCV:
+		    coderef = val;
+		    break;
+
+		case SVt_PVAV: {
+		    AV *arr = (AV *)SvRV(val);
+		    SV **svp;
+
+		    if (av_len(arr) != 1) /* av_len == largest index, not length */
+			goto croak_hdl;
+
+		    /* get the bufsize */
+		    svp = av_fetch(arr, 0, 0);
+		    if (!SvIOK(*svp))
+			goto croak_hdl;
+		    bufsize = SvUV(*svp);
+
+		    /* and the coderef */
+		    svp = av_fetch(arr, 1, 0);
+		    if (!SvROK(*svp) || SvTYPE(SvRV(*svp)) != SVt_PVCV)
+			goto croak_hdl;
+		    coderef = *svp;
+		    break;
+		}
+
+		default:
+		    goto croak_hdl;
+	    }
+
+	    /* fill in the handling array, putting attrid 0 at the end, and
+	     * filling in entries backward from there */
+	    i = (attrid == 0)? maxhandlers : --hdl_idx;
+	    dat->handling_array[i].attrid = attrid;
+	    dat->handling_array[i].min_size = bufsize;
+	    dat->handling_array[i].callback = read_frag_cb;
+	    dat->handling_array[i].attrid_data = coderef;
+	    SvREFCNT_inc(coderef);
+	    continue;
+
+	croak_hdl:
+	    croak("Expected CODEREF or [ MIN_SIZE, CODEREF ] for attrid %d", attrid);
+	}
+
+#define key_compare(key, val, keylen) \
+    (keylen == sizeof(val)-1) && (0 == strncmp(key, val, keylen))
+
+	if (key_compare(key, "file_start", keylen)) {
+	    SV *val = hv_iterval(params, param);
+	    if (!SvROK(val) || SvTYPE(SvRV(val)) != SVt_PVCV)
+		croak("Expected a CODEREF for file_start");
+	    dat->file_start_sub = val;
+	    SvREFCNT_inc(val);
+	    continue;
+	}
+
+	if (key_compare(key, "file_finish", keylen)) {
+	    SV *val = hv_iterval(params, param);
+	    if (!SvROK(val) || SvTYPE(SvRV(val)) != SVt_PVCV)
+		croak("Expected a CODEREF for file_finish");
+	    dat->file_finish_sub = val;
+	    SvREFCNT_inc(val);
+	    continue;
+	}
+
+	if (key_compare(key, "user_data", keylen)) {
+	    SV *val = hv_iterval(params, param);
+	    dat->user_data = val;
+	    SvREFCNT_inc(val);
+	    continue;
+	}
+#undef key_compare
+	croak("Invalid parameter named '%*s'", (int)keylen, key);
+    }
+
+    if (!dat->user_data)
+	dat->user_data = &PL_sv_undef;
+
+    set_amar_read_cb(archive, dat, dat->handling_array + hdl_idx,
+	dat->file_start_sub? read_start_file_cb : NULL,
+	dat->file_finish_sub? read_finish_file_cb : NULL,
+	&error);
+
+
+    if (error)
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
+
+    return dat;
+}
+
 %}
 
 /* now wrap those flat functions in Perl classes, depending on the perl
@@ -579,8 +741,12 @@ sub size {
     return 0;
 }
 
+my $dat;
 sub DESTROY {
     my $self = shift;
+    if ($dat) {
+	Amanda::Archive::destroy_read_cb($dat);
+    }
     $self->close();
 }
 
@@ -595,6 +761,23 @@ sub Amanda::Archive::Archive::read {
     # pass a hashref to the C code
     my %h = @_;
     Amanda::Archive::amar_read($$self, \%h);
+}
+
+sub Amanda::Archive::Archive::set_read_cb {
+    my $self = shift;
+    die "Archive is not open" unless ($$self);
+    # pass a hashref to the C code
+    my %h = @_;
+    $dat = Amanda::Archive::set_amar_read_cb($$self, \%h);
+}
+
+sub Amanda::Archive::Archive::read_to {
+    my $self = shift;
+    die "Archive is not open" unless ($$self);
+    my $filenum  = shift;
+    my $attrid   = shift;
+    my $fd       = shift;
+    Amanda::Archive::amar_read_to($$self, $filenum, $attrid, $fd);
 }
 
 package Amanda::Archive::File;
