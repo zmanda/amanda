@@ -1,4 +1,7 @@
 2014-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Do not close STDIN and STDERR.
+
+2014-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: Add read function that use the mainloop.
 	* amar-src/amar.h: Add read function that use the mainloop.
 	* amar-src/amarchiver.c: Use new event interface.
