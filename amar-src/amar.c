@@ -923,6 +923,19 @@ void amar_read_to(
     as->fd = fd;
 }
 
+void amar_stop_read(
+    amar_t   *archive)
+{
+    event_release(archive->hp->event_read_extract);
+}
+
+void amar_start_read(
+    amar_t   *archive)
+{
+    archive->hp->event_read_extract = event_register(archive->fd, EV_READFD,
+						     amar_read_cb, archive);
+}
+
 void amar_read_cb(void *cookie);
 void
 amar_read_cb(

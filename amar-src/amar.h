@@ -290,3 +290,8 @@ void amar_read_to(
     guint16   attrid,
     int       fd);
 
+void amar_stop_read(
+    amar_t   *archive);
+
+void amar_start_read(
+    amar_t   *archive);
