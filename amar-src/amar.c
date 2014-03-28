@@ -144,6 +144,7 @@ struct amar_attr_s {
  */
 
 static gboolean amar_attr_close_no_remove(amar_attr_t *attribute, GError **error);
+static void amar_read_cb(void *cookie);
 
 GQuark
 amar_error_quark(void)
@@ -801,7 +802,6 @@ finish_attr(
 			&as->attr_data, as->buf, as->buf_len, TRUE, truncated);
     }
     amfree(as->buf);
-    amfree(as);
 
     return success;
 }
@@ -820,13 +820,13 @@ finish_file(
 	attr_state_t *as = (attr_state_t *)iter->data;
 	success = success && finish_attr(hp, fs, as, TRUE);
     }
-    g_slist_free(fs->attr_states);
+    g_slist_free_full(fs->attr_states, g_free);
     fs->attr_states = NULL;
 
     if (hp->file_finish_cb && !fs->ignore)
-	success = success && hp->file_finish_cb(hp->user_data, fs->filenum, &fs->file_data, truncated);
+	success = success && hp->file_finish_cb(hp->user_data, fs->filenum,
+					        &fs->file_data, truncated);
 
-    amfree(fs);
     return success;
 }
 
@@ -936,8 +936,7 @@ void amar_start_read(
 						     amar_read_cb, archive);
 }
 
-void amar_read_cb(void *cookie);
-void
+static void
 amar_read_cb(
     void *cookie)
 {
@@ -1033,7 +1032,7 @@ amar_read_cb(
 		if (fs) {
 		    hp->file_states = g_slist_remove(hp->file_states, fs);
 		    success = finish_file(hp, fs, FALSE);
-		    as = NULL;
+		    g_free(fs);
 		    fs = NULL;
 		    if (!success)
 			break;
@@ -1044,7 +1043,7 @@ amar_read_cb(
 		    /* TODO: warn - previous file did not end correctly */
 		    hp->file_states = g_slist_remove(hp->file_states, fs);
 		    success = finish_file(hp, fs, TRUE);
-		    as = NULL;
+		    g_free(fs);
 		    fs = NULL;
 		    if (!success)
 			break;
@@ -1196,9 +1195,10 @@ amar_read_cb(
 	if (eoa) {
 	    success = finish_attr(hp, fs, as, FALSE);
 	    fs->attr_states = g_slist_remove(fs->attr_states, as);
+	    g_free(as);
+	    as = NULL;
 	    if (!success)
 		break;
-	    as = NULL;
         }
     }
 
@@ -1223,7 +1223,7 @@ amar_read_cb(
 	    file_state_t *fs = (file_state_t *)iter->data;
 	    finish_file(hp, fs, TRUE);
 	}
-	g_slist_free(hp->file_states);
+	g_slist_free_full(hp->file_states, g_free);
 	g_free(hp->buf);
 	g_free(hp);
 	archive->hp = NULL;
@@ -1371,6 +1371,7 @@ amar_read(
 		    success = finish_file(&hp, fs, FALSE);
 		    hp.file_states = g_slist_remove(hp.file_states, fs);
 		    as = NULL;
+		    g_free(fs);
 		    fs = NULL;
 		    if (!success)
 			break;
@@ -1386,6 +1387,7 @@ amar_read(
 		    success = finish_file(&hp, fs, TRUE);
 		    hp.file_states = g_slist_remove(hp.file_states, fs);
 		    as = NULL;
+		    g_free(fs);
 		    fs = NULL;
 		    if (!success)
 			break;
@@ -1556,9 +1558,10 @@ amar_read(
 	if (eoa) {
 	    success = finish_attr(&hp, fs, as, FALSE);
 	    fs->attr_states = g_slist_remove(fs->attr_states, as);
+	    g_free(as);
+	    as = NULL;
 	    if (!success)
 		break;
-	    as = NULL;
 	}
     }
 
@@ -1568,7 +1571,7 @@ amar_read(
 	file_state_t *fs = (file_state_t *)iter->data;
 	finish_file(&hp, fs, TRUE);
     }
-    g_slist_free(hp.file_states);
+    g_slist_free_full(hp.file_states, g_free);
     g_free(hp.buf);
 
     return success;
