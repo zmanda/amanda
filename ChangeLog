@@ -1,4 +1,7 @@
 2014-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Fix memory leak.
+
+2014-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_stop_read, amar_start_read): New function.
 	* amar-src/amar.h (amar_stop_read, amar_start_read): Add prototype.
 	* perl/Amanda/Archive.swg: Swig them.
