@@ -277,6 +277,8 @@ is_number(char *str, int len, int *result)
 %rename(amar_read) amar_read_;
 %rename(set_amar_read_cb) set_amar_read_cb_;
 %rename(amar_read_to) amar_read_to_;
+%rename(amar_stop_read) amar_stop_read_;
+%rename(amar_start_read) amar_start_read_;
 
 /* typemaps for the below */
 %apply (char *STRING, int LENGTH) { (char *filename, gsize filename_len) };
@@ -556,9 +558,22 @@ void amar_read_to_(
     amar_t   *archive,
     guint16   filenum,
     guint16   attrid,
-    int       fd) {
+    int       fd)
+{
 
     amar_read_to(archive, filenum, attrid, fd);
+}
+
+void amar_stop_read_(
+    amar_t   *archive)
+{
+    amar_stop_read(archive);
+}
+
+void amar_start_read_(
+    amar_t   *archive)
+{
+    amar_start_read(archive);
 }
 
 void destroy_read_cb(perl_read_data_t *dat)
@@ -778,6 +793,18 @@ sub Amanda::Archive::Archive::read_to {
     my $attrid   = shift;
     my $fd       = shift;
     Amanda::Archive::amar_read_to($$self, $filenum, $attrid, $fd);
+}
+
+sub Amanda::Archive::Archive::stop_read {
+    my $self = shift;
+    die "Archive is not open" unless ($$self);
+    Amanda::Archive::amar_stop_read($$self);
+}
+
+sub Amanda::Archive::Archive::start_read {
+    my $self = shift;
+    die "Archive is not open" unless ($$self);
+    Amanda::Archive::amar_start_read($$self);
 }
 
 package Amanda::Archive::File;
