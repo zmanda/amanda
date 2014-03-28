@@ -953,14 +953,19 @@ void amar_read_to(
 void amar_stop_read(
     amar_t   *archive)
 {
-    event_release(archive->hp->event_read_extract);
+    if (archive->hp->event_read_extract) {
+	event_release(archive->hp->event_read_extract);
+	archive->hp->event_read_extract = NULL;
+    }
 }
 
 void amar_start_read(
     amar_t   *archive)
 {
-    archive->hp->event_read_extract = event_register(archive->fd, EV_READFD,
-						     amar_read_cb, archive);
+    if (!archive->hp->event_read_extract) {
+	archive->hp->event_read_extract = event_register(archive->fd, EV_READFD,
+						         amar_read_cb, archive);
+    }
 }
 
 static void
@@ -995,7 +1000,7 @@ amar_read_cb(
     }
 
     /* process all complete records */
-    while (hp->buf_len >= RECORD_SIZE) {
+    while (hp->buf_len >= RECORD_SIZE && hp->event_read_extract) {
 	as = NULL;
 	fs = NULL;
 	GETRECORD(buf_ptr(hp), filenum, attrid, datasize, eoa);
