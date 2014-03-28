@@ -1,4 +1,7 @@
 2014-03-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Stop processing input file on stopped mode.
+
+2014-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: Fix memory leak.
 
 2014-03-28  Jean-Louis Martineau <martineau@zmanda.com>
