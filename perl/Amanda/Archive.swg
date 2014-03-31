@@ -68,8 +68,11 @@ typedef struct perl_read_data_s {
     SV *user_data;
     SV *file_start_sub;
     SV *file_finish_sub;
+    SV *done_sub;
 
     amar_attr_handling_t *handling_array;
+    amar_t *archive;
+    GError *error;
 } perl_read_data_t;
 
 static gboolean
@@ -126,7 +129,9 @@ read_start_file_cb(
     LEAVE;
 
     if (SvTRUE(ERRSV)) {
-	printf ("Uh oh X - %s\n", SvPV_nolen(ERRSV));
+	if (dat && dat->archive) {
+	    amar_set_error(dat->archive, SvPV_nolen(ERRSV));
+	}
 	POPs;
 	return FALSE;
     }
@@ -161,11 +166,49 @@ read_finish_file_cb(
     LEAVE;
 
     if (SvTRUE(ERRSV)) {
-	printf ("Uh oh Y - %s\n", SvPV_nolen(ERRSV));
+	if (dat && dat->archive) {
+	    amar_set_error(dat->archive, SvPV_nolen(ERRSV));
+	}
 	POPs;
 	return FALSE;
     }
     return TRUE;
+}
+
+static gboolean
+read_done_cb(
+	gpointer user_data)
+{
+    dSP;
+    perl_read_data_t *dat = user_data;
+    gboolean rv = TRUE;
+
+    g_assert(dat->done_sub != NULL);
+
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    if (dat && dat->error && dat->error->message) {
+	XPUSHs(sv_2mortal(newSVpv(dat->error->message, 0)));
+    }
+    PUTBACK;
+
+    call_sv(dat->done_sub, G_EVAL|G_DISCARD);
+
+    SPAGAIN;
+
+    if (SvTRUE(ERRSV)) {
+	fprintf(stderr,"read_done failed: %s", SvPV_nolen(ERRSV));
+	POPs;
+	rv = FALSE;
+    }
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+
+    return rv;
 }
 
 static gboolean
@@ -228,7 +271,7 @@ read_frag_cb(
     LEAVE;
 
     if (SvTRUE(ERRSV)) {
-	printf ("Uh oh Z - %s\n", SvPV_nolen(ERRSV));
+	amar_set_error(dat->archive, SvPV_nolen(ERRSV));
 	POPs;
 	return FALSE;
     }
@@ -509,6 +552,15 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
 	    continue;
 	}
 
+	if (key_compare(key, "done", keylen)) {
+	    SV *val = hv_iterval(params, param);
+	    if (!SvROK(val) || SvTYPE(SvRV(val)) != SVt_PVCV)
+		croak("Expected a CODEREF for done");
+	    dat->done_sub = val;
+	    SvREFCNT_inc(val);
+	    continue;
+	}
+
 	if (key_compare(key, "user_data", keylen)) {
 	    SV *val = hv_iterval(params, param);
 	    dat->user_data = val;
@@ -525,6 +577,7 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
     success = amar_read(archive, dat, dat->handling_array + hdl_idx,
 	dat->file_start_sub? read_start_file_cb : NULL,
 	dat->file_finish_sub? read_finish_file_cb : NULL,
+	dat->done_sub? read_done_cb : NULL,
 	&error);
 
     /* now unreference and free everything we referenced earlier */
@@ -532,6 +585,8 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
 	SvREFCNT_dec(dat->file_start_sub);
     if (dat->file_finish_sub)
 	SvREFCNT_dec(dat->file_finish_sub);
+    if (dat->done_sub)
+	SvREFCNT_dec(dat->done_sub);
     if (dat->user_data && dat->user_data != &PL_sv_undef)
 	SvREFCNT_dec(dat->user_data);
 
@@ -560,7 +615,6 @@ void amar_read_to_(
     guint16   attrid,
     int       fd)
 {
-
     amar_read_to(archive, filenum, attrid, fd);
 }
 
@@ -582,6 +636,8 @@ void destroy_read_cb(perl_read_data_t *dat)
 	SvREFCNT_dec(dat->file_start_sub);
     if (dat->file_finish_sub)
 	SvREFCNT_dec(dat->file_finish_sub);
+    if (dat->done_sub)
+	SvREFCNT_dec(dat->done_sub);
     if (dat->user_data && dat->user_data != &PL_sv_undef)
 	SvREFCNT_dec(dat->user_data);
 
@@ -597,12 +653,12 @@ void destroy_read_cb(perl_read_data_t *dat)
 perl_read_data_t *set_amar_read_cb_(amar_t *archive, SV *params_hashref)
 {
     perl_read_data_t *dat = g_new0(perl_read_data_t, 1);
-    GError *error = NULL;
     HV *params;
     HE *param;
     I32 len;
     int maxhandlers;
     int hdl_idx;
+    dat->archive = archive;
 
     /* make sure we got a hashref */
     if (!SvROK(params_hashref) || SvTYPE(SvRV(params_hashref)) != SVt_PVHV)
@@ -693,6 +749,15 @@ perl_read_data_t *set_amar_read_cb_(amar_t *archive, SV *params_hashref)
 	    continue;
 	}
 
+	if (key_compare(key, "done", keylen)) {
+	    SV *val = hv_iterval(params, param);
+	    if (!SvROK(val) || SvTYPE(SvRV(val)) != SVt_PVCV)
+		croak("Expected a CODEREF for file_finish");
+	    dat->done_sub = val;
+	    SvREFCNT_inc(val);
+	    continue;
+	}
+
 	if (key_compare(key, "user_data", keylen)) {
 	    SV *val = hv_iterval(params, param);
 	    dat->user_data = val;
@@ -709,11 +774,12 @@ perl_read_data_t *set_amar_read_cb_(amar_t *archive, SV *params_hashref)
     set_amar_read_cb(archive, dat, dat->handling_array + hdl_idx,
 	dat->file_start_sub? read_start_file_cb : NULL,
 	dat->file_finish_sub? read_finish_file_cb : NULL,
-	&error);
+	dat->done_sub? read_done_cb : NULL,
+	&dat->error);
 
 
-    if (error)
-	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &error);
+    if (dat->error)
+	croak_gerror(AMANDA_ARCHIVE_ERROR_DOMAIN, &dat->error);
 
     return dat;
 }
@@ -740,10 +806,15 @@ sub new {
     return bless (\$arch, $class);
 }
 
+my $dat = undef;
 sub close {
     my $self = shift;
     if ($$self) {
 	Amanda::Archive::amar_close($$self);
+	if ($dat) {
+	    Amanda::Archive::destroy_read_cb($dat);
+	    $dat = undef;
+	}
 	$$self = undef;
     }
 }
@@ -756,11 +827,11 @@ sub size {
     return 0;
 }
 
-my $dat;
 sub DESTROY {
     my $self = shift;
     if ($dat) {
 	Amanda::Archive::destroy_read_cb($dat);
+	$dat = undef;
     }
     $self->close();
 }

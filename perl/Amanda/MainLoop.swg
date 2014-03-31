@@ -57,11 +57,6 @@ sub run {
     run_c();
     $mainloop_running = 0;
 }
-sub run_until_empty {
-    $mainloop_running = 1;
-    run_until_empty_c();
-    $mainloop_running = 0;
-}
 push @EXPORT_OK, "run";
 
 sub is_running {
