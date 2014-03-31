@@ -89,7 +89,8 @@ typedef struct handling_params_s {
     amar_file_attr_handling_t *handling_file_attr_array;
     amar_file_start_callback_t file_start_cb;
     amar_file_finish_callback_t file_finish_cb;
-    GError ** error;
+    amar_done_callback_t done_cb;
+    GError **error;
 
     /* tracking for open files and attributes */
     GSList *file_states;
@@ -830,6 +831,16 @@ finish_file(
     return success;
 }
 
+static gboolean
+read_done(
+    handling_params_t *hp)
+{
+    if (hp->done_cb) {
+	return hp->done_cb(hp->user_data);
+    }
+    return TRUE;
+}
+
 /* buffer the data and/or call the callback for this attribute */
 static gboolean
 handle_hunk(
@@ -990,12 +1001,14 @@ amar_read_cb(
 	    if (sscanf(buf_ptr(hp), HEADER_MAGIC " %d", &vers) != 1) {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Invalid archive header");
+		amar_stop_read(archive);
 		return;
 	    }
 
 	    if (vers > HEADER_VERSION) {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Archive version %d is not supported", vers);
+		amar_stop_read(archive);
 		return;
 	    }
 
@@ -1008,6 +1021,7 @@ amar_read_cb(
 	    g_set_error(hp->error, amar_error_quark(), EINVAL,
 			"Invalid record: data size must be less than %d",
 			MAX_RECORD_DATA_SIZE);
+	    amar_stop_read(archive);
 	    return;
 
 	} else if (hp->buf_len < RECORD_SIZE + datasize) {
@@ -1030,6 +1044,7 @@ amar_read_cb(
 		if (datasize != 0) {
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
 				"Archive contains an EOF record with nonzero size");
+		    amar_stop_read(archive);
 		    return;
 		}
 		hp->buf_offset += RECORD_SIZE;
@@ -1078,6 +1093,7 @@ amar_read_cb(
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
 				"Archive file %d has an empty filename",
 				(int)filenum);
+		    amar_stop_read(archive);
 		    return;
 		}
 
@@ -1087,6 +1103,7 @@ amar_read_cb(
 				"not have its EOA bit set", (int)filenum);
 		    hp->buf_offset += (RECORD_SIZE + datasize);
 		    hp->buf_len    -= (RECORD_SIZE + datasize);
+		    amar_stop_read(archive);
 		    return;
 		}
 
@@ -1111,6 +1128,7 @@ amar_read_cb(
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Unknown attribute id %d in archive file %d",
 			    (int)attrid, (int)filenum);
+		amar_stop_read(archive);
 		return;
 	    }
 	}
@@ -1229,6 +1247,7 @@ amar_read_cb(
 	    finish_file(hp, fs, TRUE);
 	}
 	g_slist_free_full(hp->file_states, g_free);
+	read_done(hp);
 	g_free(hp->buf);
 	g_free(hp);
 	archive->hp = NULL;
@@ -1243,6 +1262,7 @@ set_amar_read_cb(
 	amar_attr_handling_t *handling_array,
 	amar_file_start_callback_t file_start_cb,
 	amar_file_finish_callback_t file_finish_cb,
+	amar_done_callback_t done_cb,
 	GError **error)
 {
     handling_params_t *hp = g_new0(handling_params_t, 1);
@@ -1253,6 +1273,7 @@ set_amar_read_cb(
     hp->handling_array = handling_array;
     hp->file_start_cb = file_start_cb;
     hp->file_finish_cb = file_finish_cb;
+    hp->done_cb = done_cb;
     hp->error = error;
     hp->file_states = NULL;
     hp->buf_len = 0;
@@ -1275,6 +1296,7 @@ amar_read(
 	amar_attr_handling_t *handling_array,
 	amar_file_start_callback_t file_start_cb,
 	amar_file_finish_callback_t file_finish_cb,
+	amar_done_callback_t done_cb,
 	GError **error)
 {
     file_state_t *fs = NULL;
@@ -1294,6 +1316,7 @@ amar_read(
     hp.handling_array = handling_array;
     hp.file_start_cb = file_start_cb;
     hp.file_finish_cb = file_finish_cb;
+    hp.done_cb = done_cb;
     hp.file_states = NULL;
     hp.buf_len = 0;
     hp.buf_offset = 0;
@@ -1580,4 +1603,14 @@ amar_read(
     g_free(hp.buf);
 
     return success;
+}
+
+void amar_set_error(
+    amar_t *archive,
+    char *msg)
+{
+    g_set_error_literal(archive->hp->error, amar_error_quark(), EINVAL,
+			g_strdup(msg));
+    amar_stop_read(archive);
+    read_done(archive->hp);
 }

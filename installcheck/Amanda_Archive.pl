@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 30;
+use Test::More tests => 31;
 use strict;
 use warnings;
 
@@ -28,6 +28,8 @@ use lib "@amperldir@";
 use Installcheck;
 use Amanda::Archive;
 use Amanda::Paths;
+use Amanda::MainLoop;
+use Amanda::Debug;
 use Data::Dumper;
 
 Amanda::Debug::dbopen("installcheck");
@@ -257,5 +259,95 @@ is_deeply([@res], [
     or diag(Dumper(\@res));
 $ar->close();
 
+unlink($arch_filename);
+
+open($fh, ">", $arch_filename);
+$ar = Amanda::Archive->new(fileno($fh), ">");
+$f1 = $ar->new_file("filename1");
+$a1 = $f1->new_attr($Amanda::Archive::AMAR_ATTR_GENERIC_DATA);
+
+open($dfh, "<", $data_filename);
+$a1->add_data_fd(fileno($dfh), 1);
+close($dfh);
+
+$a1->close();
+$f1->close();
+
+$f1 = $ar->new_file("filename2");
+$a1 = $f1->new_attr($Amanda::Archive::AMAR_ATTR_GENERIC_DATA);
+$a1->add_data("abcdefgh" x 16384);
+$a1->close();
+$f1->close();
+
+$f1 = $ar->new_file("filename3");
+$a1 = $f1->new_attr($Amanda::Archive::AMAR_ATTR_GENERIC_DATA);
+$a1->add_data("abcdefgh" x 16384);
+$a1->close();
+$f1->close();
+
+$ar->close();
+close($fh);
+
+open($fh, "<", $arch_filename);
+$ar = Amanda::Archive->new(fileno($fh), "<");
+@res = ();
+my $fh1;
+open $fh1, ">/dev/null" || die("/dev/null");
+$ar->set_read_cb(
+    file_start => sub {
+	my ($user_data, $filenum, $filename) = @_;
+	push @res, ["file_start", @_ ];
+	if ($filename eq "filename1") {
+	    my $time_str = Amanda::MainLoop::timeout_source(500);
+	    $time_str->set_callback(sub {
+		$ar->read_to($filenum, $Amanda::Archive::AMAR_ATTR_GENERIC_DATA, fileno($fh1));
+		$ar->start_read();
+		$time_str->remove();
+	    });
+	    $ar->stop_read();
+	}
+	return "dog $filenum $filename";
+    },
+    file_finish => sub {
+	my ($user_data, $filenum, $filename) = @_;
+	push @res, [ "file_finish", @_ ];
+    },
+    16 => sub {
+	my ($user_data, $filenum, $file_data, $attrid,
+	    $attr_data, $data, $eoa, $truncated) = @_;
+	push @res, [ "frag", $user_data, $filenum, $file_data, $attrid, $attr_data, $eoa, $truncated ];
+    },
+    0 => sub {
+	my ($user_data, $filenum, $file_data, $attrid,
+	    $attr_data, $data, $eoa, $truncated) = @_;
+	push @res, [ "16", $user_data, $filenum, $file_data, $attrid, $attr_data, $eoa, $truncated ];
+    },
+    user_data => $user_data,
+    done => sub {
+	my ($error) = @_;
+	push @res, [ "done" , @_ ];
+	Amanda::MainLoop::quit();
+    }
+);
+Amanda::MainLoop::run();
+close $fh1;
+$ar->close();
+
+is_deeply([@res], [
+	[ 'file_start', $user_data, 1, 'filename1' ],
+	[ 'file_finish', $user_data, 'dog 1 filename1', 1, 0 ],
+	[ 'file_start', $user_data, 2, 'filename2' ],
+	[ 'frag', $user_data, 2, "dog 2 filename2", 16, undef, 0, 0 ],
+	[ 'frag', $user_data, 2, "dog 2 filename2", 16, 4, 1, 0 ],
+	[ 'file_finish', $user_data, 'dog 2 filename2', 2, 0 ],
+	[ 'file_start', $user_data, 3, 'filename3' ],
+	[ 'frag', $user_data, 3, "dog 3 filename3", 16, undef, 0, 0 ],
+	[ 'frag', $user_data, 3, "dog 3 filename3", 16, 8, 1, 0 ],
+	[ 'file_finish', $user_data, "dog 3 filename3", 3, 0 ],
+	[ 'done' ]
+], "buffering parameters parsed correctly")
+    or diag(Dumper(\@res));
 unlink($data_filename);
 unlink($arch_filename);
+
+

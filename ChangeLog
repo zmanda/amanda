@@ -1,3 +1,13 @@
+2014-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c (amar_read, set_amar_read_cb): Add a done_cb.
+	* amar-src/amar.c (amar_set_error): New function to set an error.
+	* amar-src/amar.h: New prototype.
+	* amar-src/amarchiver.c: Use NULL done_cb.
+	* amar-src/amar-test.c: Pass a NULL done_cb.
+	* installcheck/Amanda_Archive.pl: Test set_read_cb with done_cb.
+	* perl/Amanda/Archive.swg: Handle done_cb and error.
+	* perl/Amanda/MainLoop.swg (run_until_empty): Remove method.
+
 2014-03-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: Stop processing input file on stopped mode.
 

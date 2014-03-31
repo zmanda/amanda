@@ -255,6 +255,9 @@ typedef gboolean (*amar_file_finish_callback_t)(
 	gpointer *file_data,
 	gboolean truncated);
 
+typedef gboolean (*amar_done_callback_t)(
+	gpointer user_data);
+
 /* This function actually performs the read operation, calling all of the
  * above callbacks.  If any of the callbacks return FALSE, this function
  * returns FALSE but does not set its error parameter.
@@ -272,6 +275,7 @@ gboolean amar_read(
 	amar_attr_handling_t *handling_array,
 	amar_file_start_callback_t file_start_cb,
 	amar_file_finish_callback_t file_finish_cb,
+	amar_done_callback_t done_cb,
 	GError **error);
 
 
@@ -282,6 +286,7 @@ set_amar_read_cb(
     amar_attr_handling_t *handling_array,
     amar_file_start_callback_t file_start_cb,
     amar_file_finish_callback_t file_finish_cb,
+    amar_done_callback_t done_cb,
     GError **error);
 
 void amar_read_to(
@@ -295,3 +300,8 @@ void amar_stop_read(
 
 void amar_start_read(
     amar_t   *archive);
+
+void amar_set_error(
+    amar_t *archive,
+    char *msg);
+

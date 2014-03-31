@@ -279,16 +279,16 @@ do_extract(
 	error_exit("amar_new", error);
 
 //    if (!amar_read(archive, &ud, handling, extract_file_start_cb,
-//		   extract_file_finish_cb, &error)) {
+//		   extract_file_finish_cb, NULL, &error)) {
 //	if (error)
 //	    error_exit("amar_read", error);
 //	else
 //	    /* one of the callbacks already printed an error message */
 //	    exit(1);
 //    }
-//
+
     set_amar_read_cb(archive, &ud, handling, extract_file_start_cb,
-		     extract_file_finish_cb, &error);
+		     extract_file_finish_cb, NULL, &error);
     event_loop(0);
     if (error) {
 	error_exit("amar_read", error);
@@ -337,7 +337,7 @@ do_list(
 	error_exit("amar_new", error);
 
     if (!amar_read(archive, NULL, handling, list_file_start_cb,
-		   NULL, &error)) {
+		   NULL, NULL, &error)) {
 	if (error)
 	    error_exit("amar_read", error);
 	else
