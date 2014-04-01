@@ -503,6 +503,7 @@ sub start {
 
     $self->dbg("starting");
     $self->{'write_timestamp'} = $params{'write_timestamp'};
+    $self->{'taperscan'}->set_write_timestamp($self->{'write_timestamp'});
 
     # start up the DevHandling object, making sure we know
     # when it's done with its startup process

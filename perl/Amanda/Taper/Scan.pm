@@ -316,6 +316,13 @@ sub quit {
     }
 }
 
+sub set_write_timestamp {
+    my $self = shift;
+    my $write_timestamp = shift;
+
+    $self->{'write_timestamp'} = $write_timestamp;
+}
+
 sub scan {
     my $self = shift;
     my %params = @_;
@@ -359,6 +366,10 @@ sub is_reusable_volume {
     return 0 unless $vol_tle->{'reuse'};
     if ($vol_tle->{'datestamp'} eq '0') {
 	return $params{'new_label_ok'};
+    }
+
+    if ($vol_tle->{'datestamp'} eq $self->{'write_timestamp'}) {
+	return 0;
     }
 
     # see if it's in the collection of reusable volumes
