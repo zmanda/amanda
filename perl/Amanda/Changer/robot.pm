@@ -1909,7 +1909,21 @@ sub _get_state {
 	    if (defined $info->{'barcode'}) {
 
                 my $label = $state->{'bc2lb'}->{$info->{'barcode'}};
+		my $tl_label;
+		if (defined $self->{'tapelist'}) {
+		    my $tle = $self->{'tapelist'}->lookup_by_barcode($info->{'barcode'});
+		    if (defined $tle) {
+			$tl_label = $tle->{'label'};
+		    }
+		}
 
+		if (defined $label and defined $tl_label) {
+		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		}
+		if (!defined $label && defined $tl_label) {
+		    $label = $tl_label;
+		    $state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
+		}
 		$new_slots->{$slot} = {
                     state => Amanda::Changer::SLOT_FULL,
 		    device_status => $state->{'slots'}->{$slot}->{device_status},
@@ -2009,6 +2023,21 @@ sub _get_state {
 	    # and look up the label by barcode if possible
 	    if (!defined $label && defined $info->{'barcode'}) {
 		$label = $state->{'bc2lb'}->{$info->{'barcode'}};
+		my $tl_label;
+		if (defined $self->{'tapelist'}) {
+		    my $tle = $self->{'tapelist'}->lookup_by_barcode($info->{'barcode'});
+		    if (defined $tle) {
+			$tl_label = $tle->{'label'};
+		    }
+		}
+
+		if (defined $label and defined $tl_label) {
+		    debug("MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		}
+		if (!defined $label && defined $tl_label) {
+		    $label = $tl_label;
+		    $state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
+		}
 	    }
 
 	    $new_drives->{$drv} = {
