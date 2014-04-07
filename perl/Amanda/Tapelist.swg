@@ -93,6 +93,17 @@ sub lookup_tapelabel {
     return undef;
 }
 
+sub lookup_by_barcode {
+    my $self = shift;
+    my ($barcode) = @_;
+
+    for my $tle (@{$self->{'tles'}}) {
+	return $tle if ($tle->{'barcode'} eq $barcode);
+    }
+
+    return undef;
+}
+
 sub lookup_tapepos {
     my $self = shift;
     my ($position) = @_;
