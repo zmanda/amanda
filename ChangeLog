@@ -1,4 +1,8 @@
 2014-04-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Tapelist.swg (lookup_by_barcode): New method to return a
+	  tle from a barcode.
+
+2014-04-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm (_get_state): Lookupo label in tapelist
 	  file if it is not availbale in bc2lb.
 
