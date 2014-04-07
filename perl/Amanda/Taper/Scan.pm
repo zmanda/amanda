@@ -368,7 +368,8 @@ sub is_reusable_volume {
 	return $params{'new_label_ok'};
     }
 
-    if ($vol_tle->{'datestamp'} eq $self->{'write_timestamp'}) {
+    if (defined $self->{'write_timestamp'} and
+	$vol_tle->{'datestamp'} eq $self->{'write_timestamp'}) {
 	return 0;
     }
 

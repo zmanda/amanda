@@ -130,6 +130,13 @@ sub make_new_tape_label {
     return "FAKELABEL";
 }
 
+sub set_write_timestamp {
+    my $self = shift;
+    my $write_timestamp = shift;
+
+    $self->{'write_timestamp'} = $write_timestamp;
+}
+
 sub scan {
     my $self = shift;
     my %params = @_;

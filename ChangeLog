@@ -1,4 +1,8 @@
 2014-04-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Taper_Scribe.pl (set_write_timestamp): Add method.
+	* perl/Amanda/Taper/Scan.pm: Fix perl warning.
+
+2014-04-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg (lookup_by_barcode): New method to return a
 	  tle from a barcode.
 
