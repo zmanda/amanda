@@ -117,6 +117,7 @@ sub user_request {
 
     my $send_email_cb;
     $send_email_cb = sub {
+	$self->{'send_email_src'}->remove() if defined $self->{'send_email_src'};
 	$self->{'send_email_src'} = undef;
 	debug("cmd: " . join(" ", @cmd) . "\n");
 	my ($pid, $fh);
@@ -142,6 +143,7 @@ sub user_request {
 
     my $check_file_cb;
     $check_file_cb = sub {
+	$self->{'check_file_src'}->remove() if $self->{'check_file_src'};
 	$self->{'check_file_src'} = undef;
 
 	if (-f $check_file) {
@@ -150,6 +152,9 @@ sub user_request {
 	    my $fh;
 	    open ($fh, '<' , $check_file);
 	    my $line = <$fh>;
+	    close($fh);
+	    $send_email_cb = undef;
+	    $check_file_cb = undef;
 	    if ($line) {
 		chomp $line;
 		$self->abort();
