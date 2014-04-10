@@ -848,7 +848,7 @@ finish_file(
 	attr_state_t *as = (attr_state_t *)iter->data;
 	success = success && finish_attr(hp, fs, as, TRUE);
     }
-    g_slist_free_full(fs->attr_states, g_free);
+    slist_free_full(fs->attr_states, g_free);
     fs->attr_states = NULL;
 
     if (hp->file_finish_cb && !fs->ignore)
@@ -1636,8 +1636,8 @@ void amar_set_error(
     amar_t *archive,
     char *msg)
 {
-    g_set_error_literal(archive->hp->error, amar_error_quark(), EINVAL,
-			g_strdup(msg));
+    g_set_error(archive->hp->error, amar_error_quark(), EINVAL, "%s",
+		g_strdup(msg));
     amar_stop_read(archive);
     read_done(archive->hp);
 }
