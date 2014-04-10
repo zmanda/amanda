@@ -1273,7 +1273,7 @@ amar_read_cb(
 	    file_state_t *fs = (file_state_t *)iter->data;
 	    finish_file(hp, fs, TRUE);
 	}
-	g_slist_free_full(hp->file_states, g_free);
+	slist_free_full(hp->file_states, g_free);
 	read_done(hp);
 	g_free(hp->buf);
 	g_free(hp);
@@ -1626,7 +1626,7 @@ amar_read(
 	file_state_t *fs = (file_state_t *)iter->data;
 	finish_file(&hp, fs, TRUE);
     }
-    g_slist_free_full(hp.file_states, g_free);
+    slist_free_full(hp.file_states, g_free);
     g_free(hp.buf);
 
     return success;
