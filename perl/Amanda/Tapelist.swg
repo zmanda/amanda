@@ -98,7 +98,8 @@ sub lookup_by_barcode {
     my ($barcode) = @_;
 
     for my $tle (@{$self->{'tles'}}) {
-	return $tle if ($tle->{'barcode'} eq $barcode);
+	return $tle if (defined $tle->{'barcode'} and
+			$tle->{'barcode'} eq $barcode);
     }
 
     return undef;

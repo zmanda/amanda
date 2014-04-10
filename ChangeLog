@@ -1,4 +1,7 @@
 2014-04-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Tapelist.swg: Fix perl warning.
+
+2014-04-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix.
 	* perl/Amanda/Interactivity/email.pm: Try to fix memory leak.
 	* perl/Amanda/ScanInventory.pm: Abort the scan on inventory error.
