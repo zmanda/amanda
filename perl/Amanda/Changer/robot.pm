@@ -1917,7 +1917,8 @@ sub _get_state {
 		    }
 		}
 
-		if (defined $label and defined $tl_label) {
+		if (defined $label and defined $tl_label and
+		    $label ne $tl_label) {
 		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
