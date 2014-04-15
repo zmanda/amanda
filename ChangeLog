@@ -1,3 +1,7 @@
+2014-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix compiler warning.
+	* config/amanda/syshacks.m4: Compile on s390x-8-linux-*
+
 2014-04-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tapelist.swg: Fix perl warning.
 

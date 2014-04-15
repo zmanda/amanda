@@ -54,6 +54,8 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 		    ;;
 	sparc*-*-linux-*)
 		    ;;
+	s390x-*-linux-*)
+		    ;;
 	powerpc-*-linux-*)
 		    ;;
         *-sgi-irix3*)
