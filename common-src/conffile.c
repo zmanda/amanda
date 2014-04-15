@@ -2036,7 +2036,7 @@ handle_invalid_keyword(
     }
 
     for (;;) {
-        char c = conftoken_getc();
+        int c = conftoken_getc();
         if (c == '\n' || c == -1) {
             conftoken_ungetc(c);
             return;
