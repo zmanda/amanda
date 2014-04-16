@@ -1007,7 +1007,7 @@ amar_read_cb(
 
     if (count == 0) {
 	hp->got_eof = TRUE;
-	event_release(archive->hp->event_read_extract);
+	amar_stop_read(archive);
     }
 
     /* process all complete records */
@@ -1311,8 +1311,7 @@ set_amar_read_cb(
     hp->just_lseeked = FALSE;
     archive->hp = hp;
 
-    archive->hp->event_read_extract = event_register(archive->fd, EV_READFD,
-						     amar_read_cb, archive);
+    amar_start_read(archive);
     return amar_read_cb;
 }
 
