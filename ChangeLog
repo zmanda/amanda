@@ -1,3 +1,7 @@
+2014-04-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c (amar_read_cb): Call amar_stop_read.
+	* amar-src/amar.c (set_amar_read_cb): Call amar_start_read.
+
 2014-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix compiler warning.
 	* config/amanda/syshacks.m4: Compile on s390x-8-linux-*
