@@ -836,7 +836,7 @@ read_done(
     handling_params_t *hp)
 {
     if (hp->done_cb) {
-	return hp->done_cb(hp->user_data);
+	return hp->done_cb(hp->user_data, *hp->error);
     }
     return TRUE;
 }
@@ -1001,14 +1001,14 @@ amar_read_cb(
 	    if (sscanf(buf_ptr(hp), HEADER_MAGIC " %d", &vers) != 1) {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Invalid archive header");
-		amar_stop_read(archive);
+		read_done(archive->hp);
 		return;
 	    }
 
 	    if (vers > HEADER_VERSION) {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Archive version %d is not supported", vers);
-		amar_stop_read(archive);
+		read_done(archive->hp);
 		return;
 	    }
 
@@ -1021,7 +1021,7 @@ amar_read_cb(
 	    g_set_error(hp->error, amar_error_quark(), EINVAL,
 			"Invalid record: data size must be less than %d",
 			MAX_RECORD_DATA_SIZE);
-	    amar_stop_read(archive);
+	    read_done(archive->hp);
 	    return;
 
 	} else if (hp->buf_len < RECORD_SIZE + datasize) {
@@ -1044,7 +1044,7 @@ amar_read_cb(
 		if (datasize != 0) {
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
 				"Archive contains an EOF record with nonzero size");
-		    amar_stop_read(archive);
+		    read_done(archive->hp);
 		    return;
 		}
 		hp->buf_offset += RECORD_SIZE;
@@ -1093,7 +1093,7 @@ amar_read_cb(
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
 				"Archive file %d has an empty filename",
 				(int)filenum);
-		    amar_stop_read(archive);
+		    read_done(archive->hp);
 		    return;
 		}
 
@@ -1103,7 +1103,7 @@ amar_read_cb(
 				"not have its EOA bit set", (int)filenum);
 		    hp->buf_offset += (RECORD_SIZE + datasize);
 		    hp->buf_len    -= (RECORD_SIZE + datasize);
-		    amar_stop_read(archive);
+		    read_done(archive->hp);
 		    return;
 		}
 
@@ -1128,7 +1128,7 @@ amar_read_cb(
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Unknown attribute id %d in archive file %d",
 			    (int)attrid, (int)filenum);
-		amar_stop_read(archive);
+		read_done(archive->hp);
 		return;
 	    }
 	}
@@ -1252,7 +1252,6 @@ amar_read_cb(
 	g_free(hp);
 	archive->hp = NULL;
     }
-
 }
 
 event_fn_t
