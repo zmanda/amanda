@@ -256,7 +256,8 @@ typedef gboolean (*amar_file_finish_callback_t)(
 	gboolean truncated);
 
 typedef gboolean (*amar_done_callback_t)(
-	gpointer user_data);
+	gpointer user_data,
+	GError *error);
 
 /* This function actually performs the read operation, calling all of the
  * above callbacks.  If any of the callbacks return FALSE, this function

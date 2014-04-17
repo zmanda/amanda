@@ -177,7 +177,8 @@ read_finish_file_cb(
 
 static gboolean
 read_done_cb(
-	gpointer user_data)
+    gpointer  user_data,
+    GError   *error)
 {
     dSP;
     perl_read_data_t *dat = user_data;
@@ -191,6 +192,8 @@ read_done_cb(
     PUSHMARK(SP);
     if (dat && dat->error && dat->error->message) {
 	XPUSHs(sv_2mortal(newSVpv(dat->error->message, 0)));
+    } else if (error && error->message) {
+	XPUSHs(sv_2mortal(newSVpv(error->message, 0)));
     }
     PUTBACK;
 

@@ -1,3 +1,9 @@
+2014-04-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c (read_done): Call done_cb withthe error.
+	* amar-src/amar.c (amar_read_cb): Call read_done on error.
+	* amar-src/amar.h (amar_done_callback_t): Add error in prototype.
+	* perl/Amanda/Archive.swg: (read_done_cb): Get error.
+
 2014-04-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_read_cb): Call amar_stop_read.
 	* amar-src/amar.c (set_amar_read_cb): Call amar_start_read.
