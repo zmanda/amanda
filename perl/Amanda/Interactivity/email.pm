@@ -24,6 +24,8 @@ use warnings;
 use POSIX qw( :errno_h );
 use vars qw( @ISA );
 use IPC::Open3;
+use File::stat;
+use Time::localtime;
 @ISA = qw( Amanda::Interactivity );
 
 use Amanda::Paths;
@@ -55,7 +57,6 @@ sub new {
 
     if (defined $self->{'properties'}->{'check-file'}) {
 	my $check_file = $self->{'properties'}->{'check-file'}->{'values'}->[0];
-	unlink($check_file);
     }
 
     return bless ($self, $class);
@@ -133,6 +134,17 @@ sub user_request {
 	if ($check_file) {
 	    print {$fh} "or write the name of a new changer in '$check_file'\n";
 	    print {$fh} "or write 'abort' in the file to abort the scan.\n";
+	    $self->{'check_file_mtime'} = 0;
+	    $self->{'check_file_ctime'} = 0;
+	    if (-e $check_file) {
+		$self->{'check_file_mtime'} = (stat($check_file))->mtime;
+		$self->{'check_file_ctime'} = (stat($check_file))->ctime;
+		if (!-f $check_file) {
+		    print {$fh} "\nThe check-file '$check_file' is not a flat file.\n";
+		} elsif (!-r $check_file) {
+		    print {$fh} "\nThe check-file '$check_file' is not readable.\n";
+		}
+	    }
 	}
 	close $fh;
 
@@ -146,35 +158,49 @@ sub user_request {
 	$self->{'check_file_src'}->remove() if $self->{'check_file_src'};
 	$self->{'check_file_src'} = undef;
 
-	if (-f $check_file) {
+	if (-e $check_file) {
 	    $self->{'send_email_src'}->remove() if $self->{'send_email_src'};
 	    $self->{'send_email_src'} = undef;
-	    my $fh;
-	    open ($fh, '<' , $check_file);
-	    my $line = <$fh>;
-	    close($fh);
-	    $send_email_cb = undef;
-	    $check_file_cb = undef;
-	    if ($line) {
-		chomp $line;
-		$self->abort();
-		if ($line =~ /^abort$/i) {
-		    return $params{'request_cb'}->(
-			Amanda::Changer::Error->new('fatal',
-				message => "Aborted by user"));
+	    my $check_file_mtime = (stat($check_file))->mtime;
+	    my $check_file_ctime = (stat($check_file))->ctime;
+	    if ($self->{'check_file_mtime'} < $check_file_mtime or
+		$self->{'check_file_ctime'} < $check_file_ctime) {
+
+		$self->{'check_file_ctime'} = $check_file_ctime;
+		$self->{'check_file_mtime'} = $check_file_mtime;
+
+		if (!-f $check_file || !-r $check_file) {
+		    $send_email_cb->();
 		} else {
-		    return $params{'request_cb'}->(undef, $line);
+		    my $fh;
+		    open ($fh, '<' , $check_file);
+		    my $line = <$fh>;
+		    close($fh);
+		    $send_email_cb = undef;
+		    $check_file_cb = undef;
+		    if ($line) {
+			chomp $line;
+			$self->abort();
+			if ($line =~ /^abort$/i) {
+			    return $params{'request_cb'}->(
+				Amanda::Changer::Error->new('fatal',
+					message => "Aborted by user"));
+			} else {
+			    return $params{'request_cb'}->(undef, $line);
+			}
+		    } else {
+			return $params{'request_cb'}->(undef, '');
+		    }
 		}
-	    } else {
-		return $params{'request_cb'}->(undef, '');
 	    }
+	} else {
+	    $self->{'check_file_mtime'} = 0;
 	}
 	$self->{'check_file_src'} = Amanda::MainLoop::call_after($check_file_delay, $check_file_cb);
     };
 
     $send_email_cb->();
     if ($check_file) {
-	unlink($check_file);
 	$check_file_cb->();
     }
 }
