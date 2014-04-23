@@ -1,4 +1,8 @@
 2014-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Interactivity/email.pm: Do not call remove if
+	  resend_delay is 0.
+
+2014-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck-device.pl: Fix output from tape scan.
 
 2014-04-17  Jean-Louis Martineau <martineau@zmanda.com>

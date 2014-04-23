@@ -147,7 +147,7 @@ sub user_request {
 	$self->{'check_file_src'} = undef;
 
 	if (-f $check_file) {
-	    $self->{'send_email_src'}->remove();
+	    $self->{'send_email_src'}->remove() if $self->{'send_email_src'};
 	    $self->{'send_email_src'} = undef;
 	    my $fh;
 	    open ($fh, '<' , $check_file);
