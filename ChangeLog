@@ -1,3 +1,6 @@
+2014-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck-device.pl: Fix output from tape scan.
+
 2014-04-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (read_done): Call done_cb withthe error.
 	* amar-src/amar.c (amar_read_cb): Call read_done on error.

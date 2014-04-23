@@ -90,7 +90,7 @@ sub _user_msg_fn {
             print STDERR "Searching for label '$params{'label'}':";
         } elsif (exists($params{'slot_result'}) ||
                  exists($params{'search_result'})) {
-            if (defined($params{'err'})) {
+            if (defined($params{'err'} and ref($params{'err'}) eq "HASH")) {
                 if (exists($params{'search_result'}) &&
                     defined($params{'err'}->{'this_slot'})) {
                     print STDERR "slot $params{'err'}->{'this_slot'}:";
@@ -98,12 +98,25 @@ sub _user_msg_fn {
                 print STDERR " $params{'err'}\n";
             } elsif (!$params{'res'}) {
                 my $volume_label = $params{'label'};
+		if ($params{'slot'}) {
+		    print STDERR "slot $params{'slot'}:";
+		}
                 if ($params{'active'}) {
                     print STDERR " volume '$volume_label' is still active and cannot be overwritten\n";
                 } elsif ($params{'does_not_match_labelstr'}) {
                     print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
                 } elsif ($params{'not_in_tapelist'}) {
                     print STDERR " volume '$volume_label' is not in the tapelist\n"
+		} elsif ($params{'non_amanda'}) {
+		    print STDERR " not an amanda volume\n";
+		} elsif ($params{'volume_error'}) {
+		    print STDERR " $params{'err'}\n";
+		} elsif ($params{'not_autolabel'}) {
+		    print STDERR " The volume can't be labelled\n";
+		} elsif ($params{'empty'}) {
+		    print STDERR " The volume is empty\n";
+		} elsif ($params{'not_success'}) {
+		    print STDERR " $params{'err'}\n";
                 } else {
                     print STDERR " volume '$volume_label'\n";
                 }
