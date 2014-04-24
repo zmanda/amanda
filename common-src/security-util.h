@@ -129,6 +129,12 @@ struct sec_handle {
     struct udp_handle *	udp;
     void		(*accept_fn)(security_handle_t *, pkt_t *);
     int			(*recv_security_ok)(struct sec_handle *, pkt_t *);
+    struct addrinfo    *res;
+    struct addrinfo    *next_res;
+    void                (*connect_callback)(void *, security_handle_t *, security_status_t);
+    void               *connect_arg;
+    char               *src_ip;
+    int                 port;
 };
 
 /*

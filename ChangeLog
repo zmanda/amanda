@@ -1,3 +1,11 @@
+2014-04-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsdtcp-security.c: Retry all IPs on connection refused.
+	* common-src/security-util.h (struct sec_handle): Add res, next_res,
+	  connect_callback, connect_arg and port.
+	* common-src/stream.c (stream_client_addr): New function to open a
+	  connection to a 'struct addrinfo'.
+	* common-src/stream.h (stream_client_addr): Add prototype.
+
 2014-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Interactivity/email.pm: Check permission of the
 	  check-file.
