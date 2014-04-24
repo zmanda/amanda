@@ -1,4 +1,7 @@
 2014-04-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck-device.pl: Typo.
+
+2014-04-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsdtcp-security.c: Retry all IPs on connection refused.
 	* common-src/security-util.h (struct sec_handle): Add res, next_res,
 	  connect_callback, connect_arg, src_ip and port.

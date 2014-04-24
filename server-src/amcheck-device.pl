@@ -93,7 +93,7 @@ sub _user_msg_fn {
             print STDERR "Searching for label '$params{'label'}':";
         } elsif (exists($params{'slot_result'}) ||
                  exists($params{'search_result'})) {
-            if (defined($params{'err'} and ref($params{'err'}) eq "HASH")) {
+            if (defined($params{'err'}) and ref($params{'err'}) eq "HASH") {
                 if (exists($params{'search_result'}) &&
                     defined($params{'err'}->{'this_slot'})) {
                     print STDERR "slot $params{'err'}->{'this_slot'}:";
