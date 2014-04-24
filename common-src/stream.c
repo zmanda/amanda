@@ -202,6 +202,67 @@ out:
     return server_socket;
 }
 
+int
+stream_client_addr(
+    const char *src_ip,
+    struct addrinfo *res,
+    in_port_t port,
+    size_t sendsize,
+    size_t recvsize,
+    in_port_t *localport,
+    int nonblock,
+    int priv)
+{
+    sockaddr_union svaddr, claddr;
+    int save_errno = 0;
+    int client_socket = 0;
+    int *portrange = NULL;
+
+    /* copy the first (preferred) address we found */
+    copy_sockaddr(&svaddr, (sockaddr_union *)res->ai_addr);
+    SU_SET_PORT(&svaddr, port);
+
+    SU_INIT(&claddr, SU_GET_FAMILY(&svaddr));
+    SU_SET_INADDR_ANY(&claddr);
+    if (src_ip) {
+	SU_SET_INADDR(&claddr, src_ip);
+    }
+
+    /*
+     * If a privileged port range was requested, we try to get a port in
+     * that range first and fail if it is not available.  Next, we try
+     * to get a port in the range built in when Amanda was configured.
+     * If that fails, we just go for any port.
+     *
+     * It is up to the caller to make sure we have the proper permissions
+     * to get the desired port, and to make sure we return a port that
+     * is within the range it requires.
+     */
+    if (priv) {
+	portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
+    } else {
+	portrange = getconf_intrange(CNF_UNRESERVED_TCP_PORT);
+    }
+    client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
+				      (in_port_t)portrange[1],
+				      "tcp", &svaddr, nonblock);
+    save_errno = errno;
+
+    if (client_socket < 0) {
+	g_debug(_("stream_client: Could not bind to port in range %d-%d."),
+		  portrange[0], portrange[1]);
+
+	errno = save_errno;
+	return -1;
+    }
+
+    try_socksize(client_socket, SO_SNDBUF, sendsize);
+    try_socksize(client_socket, SO_RCVBUF, recvsize);
+    if (localport != NULL)
+	*localport = SU_GET_PORT(&claddr);
+    return client_socket;
+}
+
 static int
 stream_client_internal(
     const char *src_ip,

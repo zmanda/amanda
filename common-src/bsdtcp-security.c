@@ -91,6 +91,9 @@ static int newhandle = 1;
 /*
  * Local functions
  */
+static void bsdtcp_fn_connect(void              *cookie,
+			      security_handle_t *security_handle,
+			      security_status_t  status);
 static int runbsdtcp(struct sec_handle *, const char *src_ip, in_port_t port);
 
 
@@ -112,6 +115,7 @@ bsdtcp_connect(
     char *service;
     char *src_ip;
     in_port_t port;
+    struct addrinfo *res = NULL;
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -127,7 +131,7 @@ bsdtcp_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    result = resolve_hostname(hostname, 0, NULL, &canonname);
+    result = resolve_hostname(hostname, SOCK_STREAM, &res, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
 	security_seterror(&rh->sech, _("resolve_hostname(%s): %s\n"), hostname,
@@ -175,8 +179,18 @@ bsdtcp_connect(
      *
      * XXX need to eventually limit number of outgoing connections here.
      */
+    rh->res = res;
+    rh->next_res = res;
+    rh->src_ip = src_ip;
+    rh->port = port;
     if(rh->rc->read == -1) {
-	if (runbsdtcp(rh, src_ip, port) < 0)
+	int result = -1;
+	while (rh->next_res) {
+	    result = runbsdtcp(rh, rh->src_ip, rh->port);
+	    if (result >=0 )
+		break;
+	}
+	if (result < 0)
 	    goto error;
 	rh->rc->refcnt++;
     }
@@ -189,8 +203,10 @@ bsdtcp_connect(
      * Overload rh->rs->ev_read to provide a write event handle.
      * We also register a timeout.
      */
-    rh->fn.connect = fn;
-    rh->arg = arg;
+    rh->fn.connect = &bsdtcp_fn_connect;
+    rh->arg = rh;
+    rh->connect_callback = fn;
+    rh->connect_arg = arg;
     rh->rs->ev_read = event_register((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
     rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
@@ -199,7 +215,63 @@ bsdtcp_connect(
     return;
 
 error:
+    if (res) {
+	freeaddrinfo(res);
+    }
+    rh->res = NULL;
+    rh->next_res = NULL;
     (*fn)(arg, &rh->sech, S_ERROR);
+}
+
+static void
+bsdtcp_fn_connect(
+    void              *cookie,
+    security_handle_t *security_handle,
+    security_status_t  status)
+{
+    struct sec_handle *rh = cookie;
+    int result;
+
+    if (status == S_OK) {
+	int so_errno;
+	socklen_t error_len = sizeof(so_errno);
+	getsockopt(rh->rc->write, SOL_SOCKET, SO_ERROR, &so_errno, &error_len);
+	if ( rh->next_res && so_errno == ECONNREFUSED) {
+	    status = S_ERROR;
+	}
+    }
+
+    switch (status) {
+    case S_TIMEOUT:
+    case S_ERROR:
+	if (rh->next_res) {
+	    while (rh->next_res) {
+		result = runbsdtcp(rh, rh->src_ip, rh->port);
+		if (result >= 0) {
+		    rh->rc->refcnt++;
+		    rh->rs->ev_read = event_register(
+				(event_id_t)(rh->rs->rc->write),
+				EV_WRITEFD, sec_connect_callback, rh);
+		    rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
+				sec_connect_timeout, rh);
+		    return;
+		}
+	    }
+	}
+	// pass through
+    case S_OK:
+	if (rh->res)
+	    freeaddrinfo(rh->res);
+	rh->res = NULL;
+	rh->next_res = NULL;
+	rh->src_ip = NULL;
+	rh->port = 0;
+	rh->connect_callback(rh->connect_arg, security_handle, status);
+	break;
+    default:
+	assert(0);
+	break;
+    }
 }
 
 /*
@@ -267,14 +339,16 @@ runbsdtcp(
 
     set_root_privs(1);
 
-    server_socket = stream_client_privileged(src_ip,
-				     rc->hostname,
+    server_socket = stream_client_addr(src_ip,
+				     rh->next_res,
 				     port,
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,
+				     1,
 				     1);
     set_root_privs(0);
+    rh->next_res = rh->next_res->ai_next;
 
     if(server_socket < 0) {
 	security_seterror(&rh->sech,

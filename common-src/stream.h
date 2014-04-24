@@ -41,6 +41,14 @@
 int stream_server(int family, in_port_t *port, size_t sendsize,
 		  size_t recvsize, int priv);
 int stream_accept(int sock, int timeout, size_t sendsize, size_t recvsize);
+int stream_client_addr(const char *src_ip,
+		       struct addrinfo *res,
+		       in_port_t port,
+		       size_t sendsize,
+		       size_t recvsize,
+		       in_port_t *localport,
+		       int nonblock,
+		       int priv);
 int stream_client_privileged(const char *src_ip,
 				const char *hostname,
 				in_port_t port,
