@@ -1,4 +1,7 @@
 2014-04-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c (amar_read_cb): Handle eof correctly.
+
+2014-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/config.m4 (AMANDA_CONFIGURE_ARGS): New macro to set
 	  CONFIGURE_ARGS.
 	* configure.in: Call AMANDA_CONFIGURE_ARGS
