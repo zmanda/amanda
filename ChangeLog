@@ -1,4 +1,7 @@
 2014-04-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/uparse.y: Remove unused variable.
+
+2014-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_read_cb): Handle eof correctly.
 
 2014-04-25  Jean-Louis Martineau <martineau@zmanda.com>
