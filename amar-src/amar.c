@@ -975,13 +975,12 @@ amar_read_cb(
     count = read(archive->fd, hp->buf + hp->buf_offset + hp->buf_len,
 			      hp->buf_size - hp->buf_len - hp->buf_offset);
     if (count == -1) {
+	int save_errno = errno;
+	g_debug("failed to read archive: %s", strerror(save_errno));
+	g_set_error(hp->error, amar_error_quark(), save_errno,
+			"failed to read archive: %s", strerror(save_errno));
     }
     hp->buf_len += count;
-
-    if (count == 0) {
-	hp->got_eof = TRUE;
-	amar_stop_read(archive);
-    }
 
     /* process all complete records */
     while (hp->buf_len >= RECORD_SIZE && hp->event_read_extract) {
@@ -1239,8 +1238,11 @@ amar_read_cb(
 	hp->buf_offset = 0;
     }
 
+    if (count == -1 ||
+	(count == 0 && hp->buf_len == 0)) {
+	hp->got_eof = TRUE;
+	amar_stop_read(archive);
 
-    if (hp->got_eof) {
 	/* close any open files, assuming that they have been truncated */
 	for (iter = hp->file_states; iter; iter = iter->next) {
 	    file_state_t *fs = (file_state_t *)iter->data;

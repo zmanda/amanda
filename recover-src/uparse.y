@@ -134,7 +134,6 @@ setdate_command:
 			time_t now;
 			struct tm *t;
 			int y=2000, m=0, d=1, h=0, mi=0, s=0;
-			int ret;
 			char *mydate = $2;
 
 			now = time((time_t *)NULL);
