@@ -445,6 +445,10 @@ main(
     prvar("UNCOMPRESS_OPT", UNCOMPRESS_OPT);
 #endif
 
+#ifdef CONFIGURE_ARGS
+    prvar("CONFIGURE_ARGS", CONFIGURE_ARGS);
+#endif
+
     endline();
 
     g_printf("  0\n};\n");
