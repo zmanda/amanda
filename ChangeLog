@@ -1,3 +1,8 @@
+2014-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Fix lock.
+	* perl/Amanda/Changer/robot.pm (_get_state): Return "failed".
+	* server-src/amlabel.pl (user_msg): Fix for string.
+
 2014-04-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/uparse.y: Remove unused variable.
 

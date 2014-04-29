@@ -55,7 +55,11 @@ sub usage {
 sub user_msg {
     my $msg = shift;
 
-    print STDOUT $msg->message() . "\n";
+    if ($msg->isa("Amanda::Changer")) {
+	print STDOUT $msg->message() . "\n";
+    } else {
+	print STDOUT "$msg\n";
+    }
 }
 
 Amanda::Util::setup_application("amlabel", "server", $CONTEXT_CMDLINE);

@@ -1897,6 +1897,7 @@ sub _with_updated_state {
 
 	# set up params for calling through to $sub later
 	$params{$cbname} = $new_cb;
+	$paramsref->{$cbname} = $new_cb;
 	$paramsref->{'state'} = $state;
 	$paramsref->{'finished_get_state_cb'} = $steps->{'got_state'};
 	$self->_get_state($paramsref);
@@ -1969,7 +1970,8 @@ sub _get_state {
     step status_cb => sub {
 	my ($err, $status) = @_;
 	if ($err) {
-	    return $self->make_error("fatal", $params{'finished_get_state_cb'},
+	    return $self->make_error("failed", $params{'finished_get_state_cb'},
+		reason => "invalid",
 		message => $err);
 	}
 
