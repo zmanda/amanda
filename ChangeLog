@@ -1,3 +1,6 @@
+2014-04-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Improve error message.
+
 2014-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix lock.
 	* perl/Amanda/Changer/robot.pm (_get_state): Return "failed".
