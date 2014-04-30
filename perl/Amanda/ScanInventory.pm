@@ -162,6 +162,9 @@ sub _scan {
     step restart_scan => sub {
 	$restart_scan = 0;
 
+	# Reload the tapelist at every scan.
+	$self->{'tapelist'}->reload(0);
+
 	if ($restart_scan_changer) {
 	    $self->{'chg'}->quit() if $self->{'chg'} != $self->{'initial_chg'};
 	    $self->{'chg'} = $restart_scan_changer;
