@@ -2197,7 +2197,7 @@ check_user_amandahosts(
 	goto common_exit;
     }
     if ((sbuf.st_mode & 077) != 0) {
-	result = vstrallocf(_("%s: incorrect permissions; file must be accessible only by its owner"), ptmp);
+	result = vstrallocf(_("%s: incorrect permissions; file must be accessible only by its owner (chmod 600 %s)"), ptmp, ptmp);
 	goto common_exit;
     }
 
