@@ -312,6 +312,13 @@ xml_check_options(
     } else {
 	srvencrypt = ENCRYPT_NONE;
     }
+
+    if (dle->kencrypt) {
+	dumper_kencrypt = KENCRYPT_WILL_DO;
+    } else {
+	dumper_kencrypt = KENCRYPT_NONE;
+    }
+
     free_dle(dle);
     amfree(o);
 }

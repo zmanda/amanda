@@ -1,3 +1,6 @@
+2014-05-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c (xml_check_options): Set dumper_kencrypt.
+
 2014-04-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Reload the tapelist at every scan.
 
