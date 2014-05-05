@@ -1221,6 +1221,7 @@ start_some_dumps(
 	}
     }
     for (dumper = dmptable; dumper < dmptable+inparallel; dumper++) {
+	gboolean directq_is_empty;
 
 	if( dumper->busy || dumper->down) {
 	    continue;
@@ -1269,6 +1270,7 @@ start_some_dumps(
 
 	diskp = NULL;
 	wtaper = NULL;
+	directq_is_empty = empty(directq);
 	if (!empty(directq)) {  /* to the first allowed storage only */
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		if (taper->degraded_mode)
@@ -1339,6 +1341,12 @@ start_some_dumps(
 	    }
 	    diskp = diskp_accept;
 	    holdp = holdp_accept;
+	}
+
+	/* Redo with same dumper if a diskp was moved to directq */
+	if (diskp == NULL && directq_is_empty && !empty(directq)) {
+	    dumper--;
+	    continue;
 	}
 
 	idle_reason = max(idle_reason, cur_idle);
