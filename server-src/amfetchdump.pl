@@ -53,6 +53,10 @@ use vars qw( @ISA );
 sub new {
     my $class = shift;
 
+    if (!-r STDIN) {
+	return undef;
+    }
+
     my $self = {
 	input_src => undef};
     return bless ($self, $class);
