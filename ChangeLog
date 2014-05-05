@@ -1,4 +1,8 @@
 2014-05-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (start_some_dumps): Fix if a disk is moved to
+	  directq.
+
+2014-05-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Interactivity/stdin.pm, server-src/amcheckdump.pl,
 	  server-src/amfetchdump.pl, server-src/amvault.pl: Disable
 	  interactivity if STDIN can't be read.
