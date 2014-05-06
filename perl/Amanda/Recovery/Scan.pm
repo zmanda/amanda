@@ -297,7 +297,7 @@ sub find_volume {
 		    return $steps->{'handle_error'}->(
 			    Amanda::Changer::Error->new('failed',
 				reason => 'volinuse',
-				message => "Volume '$label' in slot $slot_scanned is reserved"),
+				message => "Source volume '$label' in slot $slot_scanned is reserved"),
 			    undef);
 		}
 		Amanda::Debug::debug("parse_inventory: load slot $slot_scanned with label '$label'");
@@ -429,7 +429,7 @@ sub find_volume {
 	    return $steps->{'handle_error'}->(
 		    Amanda::Changer::Error->new('failed',
 			    reason => 'notfound',
-			    message => "Volume '$label' not found"),
+			    message => "Source Volume '$label' not found"),
 		    undef);
 	}
     };
