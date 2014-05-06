@@ -8,6 +8,12 @@ if [ "$1" = "-v" ]; then
 else
     silent_make_flags="-s LIBTOOLFLAGS=--silent"
 fi
+if [ -f /usr/csw/bin/gmake ]; then
+    MAKE=/usr/csw/bin/gmake
+else
+    MAKE=make
+fi
+
 #### CHECKS
 if [ ! -f common-src/amanda.h ]; then
     echo "Error: 'buildpkg' must be run from the root of an otherwise unused amanda source"
@@ -58,7 +64,7 @@ do_build() {
 	{ echo "client or server not given" && exit 1; }
     rm -rf ${INSTALL_DEST} ${PKG_DEST}
     mkdir ${INSTALL_DEST} ${PKG_DEST} || exit 1
-    make ${silent_make_flags} distclean
+    ${MAKE} ${silent_make_flags} distclean
     echo "Running configure.."
     CONF="$CONF \
 	STAR=/opt/csw/bin/star \
@@ -103,6 +109,7 @@ do_build() {
         GLIB_GENMARSHAL=glib-genmarshal \
         GOBJECT_QUERY=gobject-query \
         GLIB_MKENUMS=glib-mkenums \
+	MAKE=${MAKE} \
 	${CONF} || exit 1
 
     echo "Building $1.."
@@ -113,8 +120,8 @@ do_build() {
 
     (cd ndmp-src;rm -f ndmp?_xdr.c)
 
-    make ${silent_make_flags}|| exit 1
-    make ${silent_make_flags} DESTDIR=${INSTALL_DEST} install || exit 1
+    ${MAKE} ${silent_make_flags}|| exit 1
+    ${MAKE} ${silent_make_flags} DESTDIR=${INSTALL_DEST} install || exit 1
 
     # the gnulib makefiles create $amlibdir/charset.alias in hopes of "merging"
     # it with a similar file from other applications.  This doesn't work with
