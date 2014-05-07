@@ -8,8 +8,8 @@ if [ "$1" = "-v" ]; then
 else
     silent_make_flags="-s LIBTOOLFLAGS=--silent"
 fi
-if [ -f /usr/csw/bin/gmake ]; then
-    MAKE=/usr/csw/bin/gmake
+if [ -f /opt/csw/bin/gmake ]; then
+    MAKE=/opt/csw/bin/gmake
 else
     MAKE=make
 fi
@@ -22,7 +22,7 @@ if [ ! -f common-src/amanda.h ]; then
 fi
 
 if [ ! -f configure ]; then
-    echo "Error: The source directory has not been autogen'd -- please download a source" 
+    echo "Error: The source directory has not been autogen'd -- please download a source"
     echo " distribution tarball or run ./autogen.  You will need autoconf, automake,"
     echo " and libtool to run autogen (but not to compile from a distribution tarball)."
     exit 1
@@ -99,7 +99,7 @@ do_build() {
 	--disable-installperms \
 	--disable-syntax-checks \
         --disable-static"
-    
+
     # PKG_CONFIG_PATH was exported, so is in the environment.
     ./configure CFLAGS="${CFLAGS}" \
 	CPPFLAGS="${CPPFLAGS}" \
@@ -151,7 +151,7 @@ do_package() {
     fi
     cp ${src_dir}/${pkg_root}/${subpkg}/* ${PKG_DEST} || exit 1
     cd ${INSTALL_DEST} || exit 1
-    
+
     # amanda does not create /etc/amanda
     mkdir -p ${AMSTATEDIR} || exit 1
     mkdir -p ${ETCDIR}/amanda || exit 1

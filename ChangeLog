@@ -1,3 +1,6 @@
+2014-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/sun-pkg/buildpkg: gmake is in /opt/csw/bin
+
 2014-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/sun-pkg/buildpkg: Use /usr/csw/bin/gmake if available.
 
