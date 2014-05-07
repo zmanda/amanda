@@ -152,12 +152,16 @@ start_new_chunk(
     hdrbuf = NULL;
 
     if (hdr.type != F_DUMPFILE && hdr.type != F_CONT_DUMPFILE) {
-	dumpfile_free_data(&hdr);
-	xfer_cancel_with_error(XFER_ELEMENT(self),
-	    "unexpected header type %d in holding file '%s'",
-	    hdr.type, self->next_filename);
-	wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
-	return FALSE;
+	if (hdr.type == F_SPLIT_DUMPFILE) {
+	    g_debug("Reading a SPLIT_DUMPFILE) from holding disk");
+	} else {
+	    dumpfile_free_data(&hdr);
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
+		"unexpected header type %d in holding file '%s'",
+		hdr.type, self->next_filename);
+	    wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
+	    return FALSE;
+	}
     }
 
     g_free(self->next_filename);
