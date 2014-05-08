@@ -116,7 +116,7 @@ AC_DEFUN([AMANDA_CHECK_GLIB], [
     if test x"$explicit_glib" = x"no"; then
 	# search for pkg-config, which the glib configuration uses, adding a few
 	# system-specific search paths.
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin:/opt/local/bin)
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin:/opt/local/bin:/opt/csw/bin)
 
 	case "$host" in
 	    sparc-sun-solaris2.8) # Solaris 8

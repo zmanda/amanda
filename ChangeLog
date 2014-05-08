@@ -1,3 +1,6 @@
+2014-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/libs.m4: Search pkg-config in /opt/csw/bin.
+
 2014-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/xfer-source-holding.c: Allow to rad s SPINT_DUMPFILE
 	  from holding disk.
