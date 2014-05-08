@@ -1,4 +1,13 @@
 2014-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/diskflat-device.c (erase): Add method.
+	* perl/Amanda/Changer/diskflat.pm: New chg-diskflat changer.
+	* perl/Amanda/Changer.pm (label_to_slot): New method.
+	* perl/Makefile.am: Add Amanda/Changer/diskflat.pm.
+	* installcheck/Amanda_Changer_diskflat.pl: Test chg-diskflat.
+	* installcheck/Makefile.am: Add Amanda_Changer_diskflat.
+	* server-src/amreport.pl: Remove degugging.
+
+2014-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/libs.m4: Search pkg-config in /opt/csw/bin.
 
 2014-05-07  Jean-Louis Martineau <martineau@zmanda.com>

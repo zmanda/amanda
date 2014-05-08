@@ -1357,6 +1357,61 @@ sub validate_params {
     }
 }
 
+sub label_to_slot {
+    my $self = shift;
+    my %params = @_;
+
+    my $tl = $self->{'tapelist'};
+    die ("make_new_tape_label: no tapelist") if !$tl;
+    if (!defined $self->{'autolabel'}) {
+	return (undef, "autolabel not set");
+    }
+    if (!defined $self->{'autolabel'}->{'template'} ||
+	$self->{'autolabel'}->{'template'} eq "") {
+	return (undef, "template is not set, you must set autolabel");
+    }
+    my $template = $self->{'autolabel'}->{'template'};
+    my $slot_digit = 1;
+
+    $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
+    $template =~ s/\$b/SUBSTITUTE_BARCODE/g;
+    $template =~ s/\$m/SUBSTITUTE_META/g;
+    $template =~ s/\$o/SUBSTITUTE_ORG/g;
+    $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+    if ($template =~ /\$([0-9]*)s/) {
+	$slot_digit = $1;
+	$slot_digit = 1 if $slot_digit < 1;
+	$template =~ s/\$[0-9]*s/SUBSTITUTE_SLOT/g;
+    } else {
+	return (undef, "No '\$s' in autolabel template");
+    }
+
+    my $org = getconf($CNF_ORG);
+    my $config = Amanda::Config::get_config_name();
+    my $barcode = $params{'barcode'};
+    $barcode = '' if !defined $barcode;
+    my $meta = $params{'meta'};
+    $meta = $self->make_new_meta_label(%params) if !defined $meta;
+    $meta = '' if !defined $meta;
+
+    $template =~ s/SUBSTITUTE_DOLLAR/\$/g;
+    $template =~ s/SUBSTITUTE_ORG/$org/g;
+    $template =~ s/SUBSTITUTE_CONFIG/$config/g;
+    $template =~ s/SUBSTITUTE_META/$meta/g;
+    $template =~ s/SUBSTITUTE_BARCODE/$barcode/g;
+    my $qtemplate = quotemeta($template);
+    $qtemplate =~ s/SUBSTITUTE_SLOT/\(\[0-9\]*\)/g;
+
+    my $label = $params{'label'};
+    $label =~ $qtemplate;
+    my $slot = $1;
+
+    if (!defined $slot) {
+	return (undef, "label '$params{'label'}' doesn't match autolabel");
+    }
+    return $slot;
+}
+
 sub make_new_tape_label {
     my $self = shift;
     my %params = @_;
@@ -1425,7 +1480,7 @@ sub make_new_tape_label {
 	    return (undef, "Can't generate new label because volume has no slot");
 	} elsif ($label eq $template) {
 	    return (undef, "autolabel require at least one '%' or '!'");
-	} elsif ($tl->lookup_tapelabel($label)) {
+	} elsif (!$params{'label_exist'} and $tl->lookup_tapelabel($label)) {
 	    return (undef, "Label '$label' already exists", 1);
 	}
     } else {

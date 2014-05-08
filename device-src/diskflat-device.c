@@ -83,6 +83,9 @@ static gboolean
 diskflat_device_seek_block (Device * dself, guint64 block);
 
 static gboolean
+diskflat_device_erase (Device * dself);
+
+static gboolean
 diskflat_device_finish(Device *dself);
 
 static void
@@ -163,6 +166,7 @@ diskflat_device_class_init (
     device_class->open_device = diskflat_device_open_device;
     device_class->seek_file = diskflat_device_seek_file;
     device_class->seek_block = diskflat_device_seek_block;
+    device_class->erase = diskflat_device_erase;
     device_class->finish = diskflat_device_finish;
 
     g_object_class->finalize = diskflat_device_finalize;
@@ -376,6 +380,36 @@ diskflat_device_seek_block(
             DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
+
+    return TRUE;
+}
+
+static gboolean
+diskflat_device_erase(
+    Device *dself)
+{
+    DiskflatDevice *self = DISKFLAT_DEVICE(dself);
+    VfsDevice *vself = VFS_DEVICE(dself);
+
+    if (vself->open_file_fd < 0) {
+	vself->open_file_fd = robust_open(self->filename,
+					  O_CREAT | O_RDWR,
+					  VFS_DEVICE_CREAT_MODE);
+	if (vself->open_file_fd < 0) {
+	    device_set_error(dself,
+		g_strdup_printf(_("Can't open file %s: %s"), self->filename, strerror(errno)),
+			DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	    return FALSE;
+	}
+    }
+    lseek(vself->open_file_fd, 0, SEEK_SET);
+    ftruncate(vself->open_file_fd, 0);
+    vself->release_file(dself);
+
+    dumpfile_free(dself->volume_header);
+    dself->volume_header = NULL;
+    device_set_error(dself, g_strdup("Unlabeled volume"),
+                     DEVICE_STATUS_VOLUME_UNLABELED);
 
     return TRUE;
 }

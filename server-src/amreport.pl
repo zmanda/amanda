@@ -198,7 +198,6 @@ sub calculate_legacy_outputs {
     # Part of the "options" is the configuration.  Do we have a template?  And a
     # mailto? And mailer?
 
-Amanda::Debug::debug("storage_list:" . Data::Dumper::Dumper($report->{'storage_list'}));
     my $storage = Amanda::Storage->new(
 			storage_name => $report->{'storage_list'}[0],
 			tapelist => $tl);

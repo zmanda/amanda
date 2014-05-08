@@ -282,6 +282,7 @@ AmandaChangerdir = $(amperldir)/Amanda/Changer
 AmandaChanger_DATA = \
 	Amanda/Changer/aggregate.pm \
 	Amanda/Changer/disk.pm \
+	Amanda/Changer/diskflat.pm \
 	Amanda/Changer/multi.pm \
 	Amanda/Changer/null.pm \
 	Amanda/Changer/rait.pm \
