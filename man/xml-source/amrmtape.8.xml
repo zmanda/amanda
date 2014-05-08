@@ -34,6 +34,7 @@
     <arg choice='opt'>--dryrun </arg>
     <arg choice='opt'>-n </arg>
     <arg choice='opt'>--erase </arg>
+    <arg choice='opt'>--external-copy </arg>
     <arg choice='opt'>--keep-label </arg>
     <arg choice='opt'>--list-retention </arg>
     <arg choice='opt'>--list-no-retention </arg>
@@ -71,6 +72,7 @@ man page for more details about Amanda.</para>
 </para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><option>--cleanup</option></term>
   <listitem>
@@ -80,6 +82,7 @@ Otherwise, they'll remain until the next run of amdump.
 </para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><option>--dryrun</option></term>
   <term><option>-n</option></term>
@@ -91,6 +94,7 @@ removed, but leave them in
 and do not update the original copies.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><option>--erase</option></term>
   <listitem>
@@ -99,6 +103,16 @@ This requires that Amanda be able to find that volume using the tape changer.
 Erasure is not supported by all Amanda devices, and the erasure is not "secure"
 in the sense that the data can most likely be recovered by someone with the
 right tools.  </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--external-copy</option></term>
+  <listitem>
+<para>The volume is erased but the <emphasis remap='I'>label</emphasis> is kept in
+the tapelist and the log file. This function must be used if you manually made a copy
+of the volume that you can manually restore.</para>
+<para>You should also mark the label as noreuse.</para>
   </listitem>
   </varlistentry>
 

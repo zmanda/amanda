@@ -229,12 +229,13 @@ The C<finished_cb> method is called with an Amanda::Message argument.
 
 =head2 erase
 
-  $Label->erase(finished_cb => $cb,
-		labels      => @labels,
-		erase       => $erase,
-		keep_label  => $keep_label,
-		cleanup     => $cleanup,
-		dry_run     => $dry_run);
+  $Label->erase(finished_cb   => $cb,
+		labels        => @labels,
+		erase         => $erase,
+		keep_label    => $keep_label,
+		external_copy => $external_copy,
+		cleanup       => $cleanup,
+		dry_run       => $dry_run);
 
 Remove C<labels> from the amanda database, erase the volume is C<erase> is set,
 keep the label is C<keep_label> is set,
@@ -1006,8 +1007,10 @@ sub erase {
 	    return $res->set_label(finished_cb => sub {
 		$dev->finish();
 
-		# label the tape with the same label it had
-		if ($params{'keep_label'}) {
+		if ($params{'external_copy'}) {
+		    $dev->erase();
+		} elsif ($params{'keep_label'}) {
+		    # label the tape with the same label it had
 		    if (!$dev->start($ACCESS_WRITE, $label, "X")) {
 			$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
@@ -1071,6 +1074,8 @@ sub erase {
 				label     => $label,
 				tapelist_filename => $self->{'tapelist'}->{'filename'}));
 	    return $steps->{'start'}->();
+	} elsif ($params{'external_copy'}) {
+	    #do nothing
 	} elsif ($params{'keep_label'}) {
             $tle->{'datestamp'} = 0 if $tle;
             $tle->{'storage'} = undef if $tle;

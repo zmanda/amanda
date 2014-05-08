@@ -47,6 +47,7 @@ my $dry_run;
 my $cleanup;
 my $erase;
 my $keep_label;
+my $external_copy;
 my $verbose = 1;
 my $help;
 my $list_retention;
@@ -68,6 +69,9 @@ $0 [-n] [-v] [-q] [-d] [config-overwrites] <config> [label]
 \t\tDisplay this message.
 \t--keep-label
 \t\tDo not remove label from the tapelist
+\t--external-copy
+\t\tErase the volume, keep it in tapelist and log
+\t\tAssume an external copy fo the volume was done
 \t--list-retention
 \t\tList all labels require to satisfy the policy of each storage.
 \t--list-no-retention
@@ -108,6 +112,7 @@ my $opts_ok = GetOptions(
     "erase" => \$erase,
     "help|h" => \$help,
     "keep-label" => \$keep_label,
+    "external-copy" => \$external_copy,
     "list-retention" => \$list_retention,
     "list-no-retention" => \$list_no_retention,
     "remove-no-retention" => \$remove_no_retention,
@@ -204,12 +209,13 @@ sub main {
 	    my $Label = Amanda::Label->new(tapelist => $tapelist,
 					   user_msg => \&user_msg);
 
-	    return $Label->erase(labels      => \@list,
-				 cleanup     => $cleanup,
-				 dry_run     => $dry_run,
-				 erase       => $erase,
-				 keep_label  => $keep_label,
-				 finished_cb => $steps->{'erase_finished'});
+	    return $Label->erase(labels        => \@list,
+				 cleanup       => $cleanup,
+				 dry_run       => $dry_run,
+				 erase         => $erase,
+				 keep_label    => $keep_label,
+				 external_copy => $external_copy,
+				 finished_cb   => $steps->{'erase_finished'});
 	}
 	$finished_cb->();
     };

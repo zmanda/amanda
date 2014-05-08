@@ -199,6 +199,7 @@ request:
         cleanup
         dry_run
         erase
+        external_copy
         keep_label
 
 reply:
@@ -321,13 +322,14 @@ sub erase {
 	    }
 
 	    my $storage = $params{'storage'} || $params{'STORAGE'};
-	    $Label->erase(labels      => \@labels,
-			  storage     => $storage,
-			  cleanup     => $params{'cleanup'},
-			  dry_run     => $params{'dry_run'},
-			  erase       => $params{'erase'},
-			  keep_label  => $params{'keep_label'},
-			  finished_cb => $steps->{'done'});
+	    $Label->erase(labels        => \@labels,
+			  storage       => $storage,
+			  cleanup       => $params{'cleanup'},
+			  dry_run       => $params{'dry_run'},
+			  erase         => $params{'erase'},
+			  external_copy => $params{'external_copy'},
+			  keep_label    => $params{'keep_label'},
+			  finished_cb   => $steps->{'done'});
 	};
 
 	step done => sub {
