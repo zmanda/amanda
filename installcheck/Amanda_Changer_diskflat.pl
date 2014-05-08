@@ -90,7 +90,7 @@ close AA;
 my ($tl, $message) = Amanda::Tapelist->new($tlf);
 reset_taperoot(5);
 
-File::Path::remove_tree($taperoot);
+File::Path::rmtree($taperoot);
 # first try an error
 my $chg = Amanda::Changer->new("flat",
 			       tapelist => $tl);
