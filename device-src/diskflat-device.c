@@ -402,8 +402,10 @@ diskflat_device_erase(
 	    return FALSE;
 	}
     }
-    lseek(vself->open_file_fd, 0, SEEK_SET);
-    ftruncate(vself->open_file_fd, 0);
+    if (ftruncate(vself->open_file_fd, 0) == -1)  {
+	g_debug("ftruncate failed: %s", strerror(errno));
+	return FALSE;
+    }
     vself->release_file(dself);
 
     dumpfile_free(dself->volume_header);

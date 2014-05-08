@@ -1,4 +1,7 @@
 2014-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/diskflat-device.c: Check result of ftruncate.
+
+2014-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Add --external-copy argument.
 	* man/xml-source/amrmtape.8.xml: Document --external-copy argument.
 	* perl/Amanda/Label.pm: Implement external_copy argument.
