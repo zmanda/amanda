@@ -1597,7 +1597,6 @@ getsize_dump(
 
 	    default:
 	    {
-		char *config;
 		char *killpgrp_cmd = g_strjoin(NULL, amlibexecdir, "/killpgrp", NULL);
 		dbprintf(_("running %s\n"), killpgrp_cmd);
 		dup2(killctl[0], 0);
@@ -1607,10 +1606,6 @@ getsize_dump(
 		aclose(pipefd[1]);
 		aclose(killctl[1]);
 		aclose(nullfd);
-		if (g_options->config)
-		    config = g_options->config;
-		else
-		    config = "NOCONFIG";
 		safe_fd(-1, 0);
 		env = safe_env();
 		execle(killpgrp_cmd, killpgrp_cmd, config, (char *)0, env);
