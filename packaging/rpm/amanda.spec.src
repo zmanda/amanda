@@ -36,6 +36,12 @@
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
+%if %{_vendor} == amazon
+    %define dist amazon
+    %define disttag amzn
+    %define distver 1
+    %define curl libcurl
+%endif
 %if %{_vendor} == redhat
     # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
     # fc3-8.  So RHEL and Fedora look at the same file.  Different versions have
