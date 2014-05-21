@@ -551,6 +551,8 @@ sub {
                         print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
                     } elsif ($params{'not_in_tapelist'}) {
                         print STDERR " volume '$volume_label' is not in the tapelist\n"
+                    } elsif ($params{'relabeled'}) {
+                        print STDERR " volume '$volume_label' from another config will be relabeled\n";
                     } else {
                         print STDERR " volume '$volume_label'\n";
                     }
