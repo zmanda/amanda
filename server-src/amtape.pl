@@ -576,7 +576,7 @@ sub {
 		    print STDERR "slot $params{'err'}->{'slot'}:";
 		}
 		print STDERR " $params{'err'}\n";
-	    } else { # res must be defined
+	    } elsif ($params{'res'}) {
 		my $res = $params{'res'};
 		my $dev = $res->{'device'};
 		if (exists($params{'search_result'})) {
@@ -589,7 +589,9 @@ sub {
 		    } elsif ($params{'does_not_match_labelstr'}) {
 			print STDERR " volume '$volume_label' does not match labelstr '$params{'labelstr'}'\n";
 		    } elsif ($params{'not_in_tapelist'}) {
-			print STDERR " volume '$volume_label' is not in the tapelist\n"
+			print STDERR " volume '$volume_label' is not in the tapelist\n";
+		    } elsif ($params{'relabeled'}) {
+			print STDERR " volume '$volume_label' from another config will be relabeled\n";
 		    } else {
 			print STDERR " volume '$volume_label'\n";
 		    }
@@ -646,8 +648,10 @@ sub {
 
 	my $modestr = ($mode == $ACCESS_APPEND)? "append" : "write";
 	my $slot = $res->{'this_slot'};
-	if (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
+	if (defined $res->{'device'} and defined $res->{'device'}->volume_label() and $res->{'device'}->volume_label() eq $label) {
 	    print STDERR "Will $modestr to volume '$label' in slot $slot.\n";
+	} elsif (defined $res->{'device'} and defined $res->{'device'}->volume_label()) {
+	    print STDERR "Will $modestr label '$label' to '" . $res->{'device'}->volume_label() . "' labelled volume in slot $slot.\n";
 	} else {
 	    my $header = $res->{'device'}->volume_header();
 	    if ($header->{'type'} == $Amanda::Header::F_WEIRD) {
