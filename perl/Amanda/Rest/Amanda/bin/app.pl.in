@@ -235,4 +235,16 @@ get '/amanda/v1.0/configs/:CONF/runs/:ID/status' => sub {
 	return $r
 };
 
+post '/amanda/v1.0/configs/:CONF/runs/checkdump' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::checkdump(%p);
+	return $r;
+};
+
+post '/amanda/v1.0/configs/:CONF/runs/messages' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::messages(%p);
+	return $r;
+};
+
 dance;

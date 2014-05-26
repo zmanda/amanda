@@ -1,3 +1,14 @@
+2014-05-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/CheckDump.pm: New perl module for checkdump.
+	* server-src/amcheckdump.pl: Use new Amanda::Checkdump module.
+	* perl/Amanda/JSON/Amdump.pm: Typo.
+	* perl/Amanda/Message.pm: Add Amanda::CheckDump::Message
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add
+		/amanda/v1.0/configs/:CONF/runs/checkdump
+		/amanda/v1.0/configs/:CONF/runs/messages
+	* perl/Amanda/Rest/Runs.pm: Add checkdump and messages methods.
+	* perl/Makefile.am: Add Amanda/CheckDump.pm
+
 2014-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.pl: Add relabeled case.
 

@@ -24,10 +24,13 @@ use warnings;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Amdump;
 use Amanda::Amflush;
+use Amanda::CheckDump;
 use Amanda::Vault;
 use Amanda::Rest::Configs;
 use Symbol;
 use Data::Dumper;
+use Data::Structure::Util qw( unbless );
+
 use vars qw(@ISA);
 
 =head1 NAME
@@ -62,7 +65,7 @@ reply:
      },
      {
         "code" : "2000000",
-        "message" : "The trace log file is '/amanda/h1/var/amanda/test/log.20140205112550.0'",
+        "message" : "The trace log file is '/var/log/amanda/test/log.20140205112550.0'",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
         "source_line" : "97",
@@ -115,7 +118,7 @@ reply:
      }
   ]
 
-=item Run amflush
+=item Run amvault
 
 request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amvault
@@ -123,19 +126,99 @@ request:
         host=HOST
         disk=DISK               #repeatable
         hostdisk=HOST|DISK      #repeatable
-quiet=0|1
-fulls_only=0|1
-latest_fulls=0|1
-incrs_only=0|1
-opt_export=0|1
-opt_dry_run=0|1
-src_write_timestamp=TIMESTAMP
-dst_write_timestamp=TIMESTAMP
-
+        quiet=0|1
+        fulls_only=0|1
+        latest_fulls=0|1
+        incrs_only=0|1
+        opt_export=0|1
+        opt_dry_run=0|1
+        src_write_timestamp=TIMESTAMP
+        dst_write_timestamp=TIMESTAMP
 
 reply:
   HTTP status: 202 Accepted
 
+
+=item Run amcheckdump
+
+request:
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/checkdump
+    query argument:
+        timestamp=TIMESTAMP
+
+reply:
+  HTTP status 202 Accepted
+  [
+     {
+        "code" : "2700018",
+        "message" : "Running a CheckDump",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+        "source_line" : "415"
+     },
+     {
+        "code" : "2700020",
+        "message" : "The message filename is 'checkdump.3545'",
+        "message_filename" : "checkdump.3545",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+        "source_line" : "420"
+     }
+  ]
+
+=item Get messages for amcheckdump
+
+request:
+  POST http://localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
+    query argument:
+        message_filename=MESAGE_FILENAME
+
+reply:
+  HTTP status 200 Ok
+  [
+     {
+        "code" : 2700001,
+        "labels" : [
+           {
+              "available" : 0,
+              "label" : "test-ORG-AG-vtapes-005",
+              "storage" : "my_vtapes"
+           }
+        ],
+        "message" : "You will need the following volume: test-ORG-AG-vtapes-005",
+        "severity" : 16,
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/CheckDump.pm",
+        "source_line" : "367"
+     },
+     {
+        "code" : 2700005,
+        "diskname" : "/bootAMGTAR",
+        "dump_timestamp" : "20140516130638",
+        "hostname" : "localhost.localdomain",
+        "level" : 1,
+        "message" : "Validating image localhost.localdomain:/bootAMGTAR dumped 20140516130638 level 1",
+        "nparts" : 1,
+        "severity" : 16,
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/CheckDump.pm",
+        "source_line" : "402"
+     },
+     {
+        "code" : 2700003,
+        "filenum" : 1,
+        "label" : "test-ORG-AG-vtapes-005",
+        "message" : "Reading volume test-ORG-AG-vtapes-005 file 1",
+        "severity" : 16,
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/CheckDump.pm",
+        "source_line" : "175"
+     },
+     {
+        "code" : 2700006,
+        "message" : "All images successfully validated",
+        "severity" : 16,
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/CheckDump.pm",
+        "source_line" : "695"
+     }
+  ]
 
 =back
 
@@ -343,6 +426,129 @@ sub amflush {
     return \@result_messages;
 }
 
+sub checkdump {
+    my %params = @_;
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+    Amanda::Disklist::unload_disklist();
+    my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	return Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400006,
+			diskfile     => $diskfile,
+			cfgerr_level => $cfgerr_level);
+    }
+
+    Amanda::Util::set_pname("amcheckdump");
+
+    my $message_filename = "checkdump.$$";
+    my $message_path =  getconf($CNF_LOGDIR) . "/" . $message_filename;
+    my $message_fh;
+    if (open ($message_fh, ">$message_path") == 0) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700021,
+		message_filename => $message_filename,
+		errno            => $!,
+		severity         => $Amanda::Message::ERROR);
+	return \@result_messages;
+    }
+
+    my $count = 0;
+    my $user_msg = sub {
+	my $msg = shift;
+	unbless $msg;
+	my $d = Data::Dumper->new([$msg], ["MESSAGES[$count]"]);
+	print {$message_fh} $d->Dump();
+	#print Data::Dumper::Dumper($msg) , "\n";
+	#print {$message_fh} Data::Dumper::Dumper($msg) , "\n";
+	#push @result_messages, $msg;
+	$count++;
+    };
+
+    my ($checkdump, $messages) = Amanda::CheckDump->new(%params, user_msg => $user_msg);
+    push @result_messages, @{$messages};
+
+    if (!$checkdump) {
+	return \@result_messages;
+    }
+
+    my $exit_status = 0;
+    my $exit_cb = sub {
+	($exit_status) = @_;
+	Amanda::MainLoop::quit();
+    };
+
+    my $pid = POSIX::fork();
+    if ($pid == 0) {
+	Amanda::MainLoop::call_later(sub { $checkdump->run($exit_cb) });
+	Amanda::MainLoop::run();
+	exit;
+    } elsif ($pid > 0) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700018,
+		severity         => $Amanda::Message::INFO);
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700020,
+		message_filename => $message_filename,
+		severity         => $Amanda::Message::INFO);
+    } else {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700019,
+		severity         => $Amanda::Message::ERROR);
+    }
+    Dancer::status(202);
+
+    return \@result_messages;
+}
+
+sub messages {
+    my %params = @_;
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    if (!$params{'message_filename'}) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700022,
+		severity         => $Amanda::Message::ERROR);
+	return \@result_messages;
+    }
+    my $message_path =  getconf($CNF_LOGDIR) . "/" . $params{'message_filename'};
+    my $message_fh;
+    if (open ($message_fh, "<$message_path") == 0) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700023,
+		message_filename => $params{'message_filename'},
+		errno            => $!,
+		severity         => $Amanda::Message::ERROR);
+	return \@result_messages;
+    }
+
+    my $data;
+    {
+	local $/;
+	$data = <$message_fh>;
+    }
+
+    my @MESSAGES;
+    eval $data;
+    return \@MESSAGES;
+}
 
 sub list {
 

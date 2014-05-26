@@ -30,7 +30,7 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::JSON::Label -- JSON interface to Amanda::Label
+Amanda::JSON::Amdump -- JSON interface to Amanda::Amdump
 
 =head1 INTERFACE
 
