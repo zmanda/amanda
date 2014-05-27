@@ -1,3 +1,24 @@
+2014-05-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Configs.pl: Check Amanda::Rest::Configs
+	* installcheck/Amanda_Rest_Dles.pl: Check Amanda::Rest:Dles
+	* installcheck/Amanda_Rest_Labels.pl: Check Amanda::Rest::Labels
+	* installcheck/Amanda_Rest_Version.pl: Check Amanda::Rest::Version
+	* installcheck/Amanda_Tapelist.pl: Fix for reuse.
+	* installcheck/Installcheck/Dumpcache.pm: Fix for 0_setupcache
+	* installcheck/Installcheck/Rest.pm: New perl modules to start/stop
+	  the Rest server.
+	* installcheck/Makefile.am: Add Amanda_Rest_Configs, Amanda_Rest_Dles,
+	  Amanda_Rest_Labels and Amanda_Rest_Version
+	* perl/Amanda/Config.swg: Small fix.
+	* perl/Amanda/Curinfo.pm: Add message code 1300030 and 1300031
+	* perl/Amanda/Curinfo/Info.pm: Fix perl warning.
+	* perl/Amanda/Disklist.swg: Add message code 1400009
+	* perl/Amanda/Paths.pm.in: Add amperldir.
+	* perl/Amanda/Rest/Dles.pm: Add check and generate message code
+	  1400009, 1300030 and 1300031
+	* perl/Amanda/Rest/Labels.pm: fix for defined $params.
+	* perl/Amanda/Tapelist.swg: Set reuse to 0.
+
 2014-05-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/CheckDump.pm: New perl module for checkdump.
 	* server-src/amcheckdump.pl: Use new Amanda::Checkdump module.

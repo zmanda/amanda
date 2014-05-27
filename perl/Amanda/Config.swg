@@ -1128,6 +1128,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1500004) {
 	return "no config";
     } elsif ($self->{'code'} == 1500005) {
+	return "INVALID ERROR CODE '1500005': " . Data::Dumper::Dumper($self);
 	return "no such '$self->{'config'}' config";
     } elsif ($self->{'code'} == 1500006) {
 	return "Can't open config directory '$self->{'dir'}': $self->{'errno'}";

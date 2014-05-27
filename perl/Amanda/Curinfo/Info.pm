@@ -164,21 +164,33 @@ sub set {
     my $self = shift;
     my $command = shift;
 
-    $self->{'command'} |= $command;
+    if (!defined $self->{'command'}) {
+	$self->{'command'} = $command;
+    } else {
+	$self->{'command'} |= $command;
+    }
 }
 
 sub isset {
     my $self = shift;
     my $command = shift;
 
-    return $self->{'command'} & $command;
+    if (!defined $self->{'command'}) {
+	return 0;
+    } else {
+	return $self->{'command'} & $command;
+    }
 }
 
 sub clear {
     my $self = shift;
     my $command = shift;
 
-    $self->{'command'} &= ~$command;
+    if (!defined $self->{'command'}) {
+	$self->{'command'} = ~$command;
+    } else {
+	$self->{'command'} &= ~$command;
+    }
 }
 
 sub get_dumpdate

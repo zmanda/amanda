@@ -95,7 +95,7 @@ $tl_ok = is_deeply($tl,	{
     'pool' => undef, 'storage' => undef, 'config' => undef,
     'barcode' => 'BAR-002', 'meta' => 'META2', 'comment' => 'comment 2' },
   { 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
-    'reuse' => '', 'position' => 4, 'blocksize' => undef,
+    'reuse' => 0, 'position' => 4, 'blocksize' => undef,
     'pool' => undef, 'storage' => undef, 'config' => undef,
     'barcode' => undef, 'meta' => undef, 'comment' => 'comment 1' },
   { 'datestamp' => '20071107110002', 'label' => 'TESTCONF015',
@@ -103,7 +103,7 @@ $tl_ok = is_deeply($tl,	{
     'pool' => undef, 'storage' => undef, 'config' => undef,
     'barcode' => undef, 'meta' => undef, 'comment' => undef },
   { 'datestamp' => '20071107010002', 'label' => 'TESTCONF006',
-    'reuse' => '', 'position' => 6, 'blocksize' => undef,
+    'reuse' => 0, 'position' => 6, 'blocksize' => undef,
     'pool' => undef, 'storage' => undef, 'config' => undef,
     'barcode' => undef, 'meta' => undef, 'comment' => undef },
   { 'datestamp' => '20071106010002', 'label' => 'TESTCONF005',
@@ -143,7 +143,7 @@ SKIP: {
 
     is_deeply($tl->lookup_tapepos(4),
 	{ 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
-	  'reuse' => '', 'position' => 4, 'blocksize' => undef,
+	  'reuse' => 0, 'position' => 4, 'blocksize' => undef,
 	  'pool' => undef, 'storage' => undef, 'config' => undef,
 	  'barcode' => undef, 'meta' => undef, 'comment' => 'comment 1' },
 	"lookup_tapepos works");
@@ -205,7 +205,7 @@ SKIP: {
 
     is_deeply($tl->lookup_tapepos(4), # used to be in position 5
 	{ 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
-	  'reuse' => '', 'position' => 4, 'blocksize' => undef,
+	  'reuse' => 0, 'position' => 4, 'blocksize' => undef,
 	  'pool' => undef, 'storage' => undef, 'config' => undef,
 	  'barcode' => undef, 'meta' => undef, 'comment' => 'comment 1' },
 	".. tape positions are adjusted correctly");

@@ -41,7 +41,7 @@ The dump cache captures everything: vtapes, curinfo, indexes, trace logs,
 tapelist, timestamp, and configuration.  When a flavor is loaded, the timestamp
 for all runs are available in the package variable C<@timestamps>.
 
-The function C<create_all> is called by the special installcheck '=setupcache',
+The function C<create_all> is called by the special installcheck '0_setupcache',
 and fills the cache.
 
 =head1 FLAVORS
@@ -272,7 +272,7 @@ sub load {
     my $conf_tarball = "$tarballdir/$flavor-conf.tgz";
 
     if (! -f $tmp_tarball || ! -f $conf_tarball) {
-	die "Cached dump '$flavor' is not available.  Re-run the '=setupcache' check";
+	die "Cached dump '$flavor' is not available.  Re-run the '0_setupcache' check";
     }
     if (system("$Amanda::Constants::GNUTAR",
 		"-zxf", "$tmp_tarball",

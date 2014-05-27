@@ -548,6 +548,8 @@ sub local_message {
 	return "No such host '$self->{'host'}' in disklist.";
     } elsif ($self->{'code'} == 1400008) {
 	return "No such disk '$self->{'disk'}' for host '$self->{'host'}' in disklist.";
+    } elsif ($self->{'code'} == 1400009) {
+	return "Required 'disk' argument is not provided.";
     }
 }
 %}

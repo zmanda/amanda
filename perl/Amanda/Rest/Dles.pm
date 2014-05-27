@@ -172,8 +172,15 @@ sub setting {
 	$params{'disk'} = uri_unescape($params{'DISK'});
     }
 
-print STDERR "HOST: $params{'HOST'}\n";
-print STDERR "disk: $params{'disk'}\n";
+    if (!defined $params{'disk'}) {
+	push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400009);
+	Dancer::status(404);
+	return \@result_messages;
+    }
+
     my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
     Amanda::Disklist::unload_disklist();
     my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
@@ -215,6 +222,30 @@ print STDERR "disk: $params{'disk'}\n";
 	push @disks, $disk;
     } else {
 	@disks = $host->all_disks();
+    }
+
+    if (!defined $params{'force'} and
+	!defined $params{'force_level_1'} and
+	!defined $params{'force_bump'} and
+	!defined $params{'force_no_bump'}) {
+	push @result_messages, Amanda::Curinfo::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1300030);
+	return \@result_messages;
+    }
+
+    my $a = 0;
+    $a++ if defined $params{'force'} and $params{'force'} == 1;
+    $a++ if defined $params{'force_level_1'} and $params{'force_level_1'} == 1;
+    $a++ if defined $params{'force_bump'} and $params{'force_bump'} == 1;
+    $a++ if defined $params{'force_no_bump'} and $params{'force_no_bump'} == 1;
+    if ($a > 1) {
+	push @result_messages, Amanda::Curinfo::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1300031);
+	return \@result_messages;
     }
 
     for my $disk (@disks) {

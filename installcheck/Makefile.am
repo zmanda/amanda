@@ -47,6 +47,10 @@ server_tests = \
 	Amanda_Recovery_Planner \
 	Amanda_Recovery_Scan \
 	Amanda_Report \
+	Amanda_Rest_Configs \
+	Amanda_Rest_Dles \
+	Amanda_Rest_Labels \
+	Amanda_Rest_Version \
 	Amanda_Tapelist \
 	Amanda_Taper_Scan \
 	Amanda_Taper_Scan_lexical \

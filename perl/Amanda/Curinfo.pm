@@ -88,6 +88,10 @@ sub local_message {
 	return "no bump command outstanding for $self->{'host'}:$self->{'disk'}, unchanged.";
     } elsif ($self->{'code'} == 1300029) {
 	return "couldn't open '$self->{'infofile'}: $self->{'error'}.";
+    } elsif ($self->{'code'} == 1300030) {
+	return "No command specified: force, force_level_1, force_bump, force_no_bump.";
+    } elsif ($self->{'code'} == 1300031) {
+	return "Only one command allowed.";
     }
 }
 

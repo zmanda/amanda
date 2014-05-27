@@ -142,6 +142,7 @@ sub add_tapelabel {
     my ($datestamp, $label, $comment, $reuse, $meta, $barcode, $blocksize,
 	$pool, $storage, $config) = @_;
     $reuse = 1 if !defined $reuse;
+    $reuse = 0 if $reuse eq '';
     $datestamp = 0 if !defined $datestamp;
 
     # prepend this (presumably new) volume to the beginning of the list
@@ -266,7 +267,7 @@ sub _read_tapelist {
 	push @tles, {
 	    'datestamp' => $datestamp,
 	    'label'     => $label,
-	    'reuse'     => (!defined $reuse || $reuse eq 'reuse'),
+	    'reuse'     => (!defined $reuse || $reuse eq 'reuse')?1:0,
 	    'barcode'   => $barcode,
 	    'meta'      => $meta,
 	    'blocksize' => $blocksize,

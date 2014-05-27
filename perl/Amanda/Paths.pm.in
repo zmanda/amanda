@@ -82,6 +82,7 @@ $datarootdir = "@datarootdir@";
 $sysconfdir = "@sysconfdir@";
 $amdatadir = "@amdatadir@";
 $localstatedir = "@localstatedir@";
+$amperldir = "@amperldir@";
 
 ## amanda configuration directories
 
