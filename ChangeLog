@@ -1,4 +1,7 @@
 2014-05-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Runs.pm: Remove Data::Structure::Util dependencies.
+
+2014-05-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Configs.pl: Check Amanda::Rest::Configs
 	* installcheck/Amanda_Rest_Dles.pl: Check Amanda::Rest:Dles
 	* installcheck/Amanda_Rest_Labels.pl: Check Amanda::Rest::Labels

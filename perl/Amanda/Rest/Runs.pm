@@ -29,7 +29,6 @@ use Amanda::Vault;
 use Amanda::Rest::Configs;
 use Symbol;
 use Data::Dumper;
-use Data::Structure::Util qw( unbless );
 
 use vars qw(@ISA);
 
@@ -462,8 +461,13 @@ sub checkdump {
     my $count = 0;
     my $user_msg = sub {
 	my $msg = shift;
-	unbless $msg;
-	my $d = Data::Dumper->new([$msg], ["MESSAGES[$count]"]);
+	my $d;
+	if (ref $msg eq "SCALAR") {
+	    $d = Data::Dumper->new([$msg], ["MESSAGES[$count]"]);
+	} else {
+	    my %msg_hash = %$msg;
+	    $d = Data::Dumper->new([\%msg_hash], ["MESSAGES[$count]"]);
+	}
 	print {$message_fh} $d->Dump();
 	#print Data::Dumper::Dumper($msg) , "\n";
 	#print {$message_fh} Data::Dumper::Dumper($msg) , "\n";
