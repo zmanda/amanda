@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 27;
+use Test::More;
 use File::Path;
 use strict;
 use warnings;
@@ -26,13 +26,19 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
-use Installcheck::Rest;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+
+eval 'use Installcheck::Rest;';
+if ($@) {
+    plan skip_all => "Can't load Installcheck::Rest: $@";
+} else {
+    plan tests => 27;
+}
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");

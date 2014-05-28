@@ -1,3 +1,9 @@
+2014-05-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Configs.pl, installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl: Skip test if WWW::Curl::Easy is
+	  not available.
+
 2014-05-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Runs.pm: Remove Data::Structure::Util dependencies.
 
