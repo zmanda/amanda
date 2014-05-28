@@ -168,6 +168,7 @@ test_utils = \
 	Installcheck/Config.pm \
 	Installcheck/ClientService.pm \
 	Installcheck/Mock.pm \
+	Installcheck/Rest.pm \
 	Installcheck/Run.pm \
 	Installcheck/Dumpcache.pm \
 	Installcheck/Application.pm \
