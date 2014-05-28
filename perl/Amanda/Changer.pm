@@ -1143,7 +1143,7 @@ sub info {
 	my @annotated_errs =
 	    map { [ sprintf("While getting info key '%s'", $_), $key_results{$_}->[0] ] }
 	    grep { defined($key_results{$_}->[0]) }
-	    keys %key_results;
+	    sort keys %key_results;
 
 	if (@annotated_errs) {
 	    return $self->make_combined_error(

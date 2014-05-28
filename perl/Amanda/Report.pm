@@ -603,7 +603,7 @@ sub get_hosts
     my $self  = shift @_;
     my $cache = $self->{cache};
 
-    $cache->{hosts} = [ keys %{ $self->{data}{disklist} } ]
+    $cache->{hosts} = [ sort keys %{ $self->{data}{disklist} } ]
       if ( !defined $cache->{hosts} );
 
     return @{ $cache->{hosts} };
@@ -613,7 +613,7 @@ sub get_disks
 {
     my $self = shift @_;
     my ($hostname) = @_;
-    return keys %{ $self->{data}{disklist}{$hostname} };
+    return sort keys %{ $self->{data}{disklist}{$hostname} };
 }
 
 sub get_dles

@@ -288,7 +288,7 @@ sub match_disklist {
     my $prevhost = undef;
     for my $arg (@args) {
 	my $match_a_host = 0;
-	for my $hostname (keys %hosts) {
+	for my $hostname (sort keys %hosts) {
 	    if (match_host($arg, $hostname)) {
 		$match_a_host = 1;
 		next;
@@ -433,7 +433,8 @@ sub get_disk {
 
 sub all_disks {
     my ($self) = @_;
-    return values %{$Amanda::Disklist::disks{$self->{'hostname'}}};
+    #return map { $Amanda::Disklist::disks{$self->{'hostname'}}{$_} } sort keys %{$Amanda::Disklist::disks{$self->{'hostname'}}};
+    return sort values %{$Amanda::Disklist::disks{$self->{'hostname'}}};
 }
 
 package Amanda::Disklist::Interface;
@@ -485,7 +486,7 @@ sub get_host {
 }
 
 sub all_hosts {
-    return values %hosts;
+    return sort values %hosts;
 }
 
 sub get_disk {
@@ -495,8 +496,10 @@ sub get_disk {
 
 sub all_disks {
     my @rv;
-    foreach my $disk (values %disks) {
-	push @rv, (values %$disk);
+    #foreach my $disk (values %disks) {
+    #foreach my $disk (map { $disks{$_} } sort keys %disks) {
+    foreach my $disk (sort values %disks) {
+	push @rv, (sort values %$disk);
     }
     return @rv;
 }
@@ -507,7 +510,7 @@ sub get_interface {
 }
 
 sub all_interfaces {
-    return values %interfaces;
+    return sort values %interfaces;
 }
 
 push @EXPORT_OK, qw( read_disklist
