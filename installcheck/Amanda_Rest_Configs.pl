@@ -51,6 +51,7 @@ my $rest = Installcheck::Rest->new();
 my $reply;
 
 my $amperldir = $Amanda::Paths::amperldir;
+my $config_dir = $Amanda::Paths::CONFIG_DIR;
 my $testconf;
 
 #CODE 1500000
@@ -88,14 +89,14 @@ is_deeply ($reply,
         ],
       http_code => 200,
     },
-    "Get no fields");
+    "Get runtapes");
 
 #CODE 1500003
 $testconf = Installcheck::Run::setup();
 $testconf->write();
 $reply = $rest->get("http://localhost:5000/amanda/v1.0/configs");
 
-my @conf = </etc/amanda/*/amanda.conf>;
+my @conf = <$config_dir/*/amanda.conf>;
 ok (@conf > 0, "More than one config");
 #get the list of config directories
 my @newconf;
@@ -129,7 +130,7 @@ is_deeply ($reply,
 $testconf->cleanup();
 # Get the list of configs (can be zero config)
 $reply = $rest->get("http://localhost:5000/amanda/v1.0/configs");
-@conf = </etc/amanda/*/amanda.conf>;
+@conf = <$config_dir/*/amanda.conf>;
 if (@conf > 0) {
     #get the list of config directories
     my @newconf;
@@ -176,7 +177,7 @@ if (@conf > 0) {
 #CODE 1500006
 $testconf = Installcheck::Run::setup();
 $testconf->write();
-chmod 0000, '/etc/amanda';
+chmod 0000, $config_dir;
 $reply = $rest->get("http://localhost:5000/amanda/v1.0/configs");
 
 is_deeply ($reply,
@@ -192,8 +193,8 @@ is_deeply ($reply,
         ],
       http_code => 404,
     },
-    "Get config list error");
-chmod 0700, '/etc/amanda';
+    "Get config list error (Permission denied)");
+chmod 0700, $config_dir;
 
 
 #CODE 1500007 and 1500008
@@ -218,7 +219,7 @@ is_deeply ($reply,
         ],
       http_code => 200,
     },
-    "Get invalid fields");
+    "Get invalid fields (foobar,tapecycle)");
 
 #CODE 1500008
 $reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF?fields=runtapes,tapecycle");
@@ -236,7 +237,7 @@ is_deeply ($reply,
         ],
       http_code => 200,
     },
-    "Get valid fields");
+    "Get valid fields (runtapes,tapecycle)");
 
 #CODE 1500009
 $reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF");
