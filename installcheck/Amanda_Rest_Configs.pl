@@ -36,8 +36,7 @@ use Amanda::Changer;
 eval 'use Installcheck::Rest;';
 if ($@) {
     plan skip_all => "Can't load Installcheck::Rest: $@";
-} else {
-    plan tests => 9;
+    exit 1;
 }
 
 # set up debugging so debug output doesn't interfere with test results
@@ -48,6 +47,12 @@ Installcheck::log_test_output();
 Amanda::Debug::disable_die_override();
 
 my $rest = Installcheck::Rest->new();
+if ($rest->{'error'}) {
+   plan skip_all => "Can't star JSON Rest server: see " . Amanda::Debug::dbfn();
+   exit 1;
+}
+plan tests => 9;
+
 my $reply;
 
 my $amperldir = $Amanda::Paths::amperldir;

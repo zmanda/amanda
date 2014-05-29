@@ -1,4 +1,13 @@
 2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Rest.pm: Retrun error if can't fork
+	  starman.
+	* installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl: SKIP test if forking starman
+	  failed.
+
+2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Rest.pm: Fix to send starman stderr to the
 	  debug file.
 

@@ -61,6 +61,7 @@ sub new {
     if ($pid == 0) {
 	Amanda::Debug::debug_dup_stderr_to_debug();
 	exec("starman", "--env", "development", "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl");
+	exit(-1);
     } elsif ($pid < 0) {
 	die("Can't fork for rest server");
     }
@@ -68,11 +69,17 @@ sub new {
     # Wait for the server to start
     sleep 1;
 
+    use POSIX ":sys_wait_h";
+    my $kid = waitpid($pid, WNOHANG);
+
     my $self = {
 	pid  => $pid,
 	curl => $curl,
 	json => $json
     };
+    if ($kid == $pid) {
+	$self->{'error'} = $kid;
+    }
     bless $self, $class;
     return $self;
 }
