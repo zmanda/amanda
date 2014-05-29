@@ -57,7 +57,7 @@ my $reply;
 my $amperldir = $Amanda::Paths::amperldir;
 
 #CODE 1550000
-$reply = $rest->get("http://localhost:5000/amanda/v1.0");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Version.pm",

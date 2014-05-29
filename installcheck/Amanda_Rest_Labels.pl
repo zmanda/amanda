@@ -63,7 +63,7 @@ $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -100,7 +100,7 @@ print TAPELIST $tapelist_data;
 close TAPELIST;
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -249,7 +249,7 @@ is_deeply ($reply,
     "All Dles");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?config=TESTCONF2");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?config=TESTCONF2");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -288,7 +288,7 @@ is_deeply ($reply,
     "config=TESTCONF2");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?storage=my_robot");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_robot");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -349,7 +349,7 @@ is_deeply ($reply,
     "storage=my_robot");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?meta=AA");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?meta=AA");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -410,7 +410,7 @@ is_deeply ($reply,
     "meta=AA");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?pool=my_vtapes");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_vtapes");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -493,7 +493,7 @@ is_deeply ($reply,
     "pool=my_vtapes");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?reuse=1");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?reuse=1");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -587,7 +587,7 @@ is_deeply ($reply,
     "resue=1");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?reuse=0");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?reuse=0");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -659,7 +659,7 @@ is_deeply ($reply,
     "reuse=0");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -709,7 +709,7 @@ is_deeply ($reply,
     "storage=my_vtapes&config=TESTCONF&reuse=1");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1&meta=AA");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1&meta=AA");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -748,7 +748,7 @@ is_deeply ($reply,
     "storage=my_vtapes&config=TESTCONF&reuse=1&meta=AA");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
@@ -809,7 +809,7 @@ is_deeply ($reply,
     "pool=my_robot&config=TESTCONF");
 
 #CODE 1600001
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF2");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF2");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",

@@ -60,7 +60,7 @@ sub new {
     my $pid = fork;
     if ($pid == 0) {
 	Amanda::Debug::debug_dup_stderr_to_debug();
-	exec("starman", "--env", "development", "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl");
+	exec("starman", "--env", "development", "--port", "5001", "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl");
 	exit(-1);
     } elsif ($pid < 0) {
 	die("Can't fork for rest server");

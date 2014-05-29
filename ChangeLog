@@ -1,4 +1,13 @@
 2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl,
+	  installcheck/Installcheck/Rest.pm: Use port 5001.
+	* installcheck/amadmin.pl: Fix sort
+	* perl/Amanda/Disklist.swg: Fix sort.
+
+2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Rest.pm: Retrun error if can't fork
 	  starman.
 	* installcheck/Amanda_Rest_Configs.pl,

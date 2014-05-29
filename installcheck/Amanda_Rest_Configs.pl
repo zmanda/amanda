@@ -63,7 +63,7 @@ my $testconf;
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('AMRECOVER_DO_FSF', 'YES');
 $testconf->write();
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF?fields=amrecover_do_fsf");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=amrecover_do_fsf");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -81,7 +81,7 @@ is_deeply ($reply,
 #CODE 1500001
 $testconf = Installcheck::Run::setup();
 $testconf->write();
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/FOOBAR?fields=runtapes");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/FOOBAR?fields=runtapes");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -99,7 +99,7 @@ is_deeply ($reply,
 #CODE 1500003
 $testconf = Installcheck::Run::setup();
 $testconf->write();
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 
 my @conf = <$config_dir/*/amanda.conf>;
 ok (@conf > 0, "More than one config");
@@ -134,7 +134,7 @@ is_deeply ($reply,
 # CODE 1500003 or 1500004
 $testconf->cleanup();
 # Get the list of configs (can be zero config)
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 @conf = <$config_dir/*/amanda.conf>;
 if (@conf > 0) {
     #get the list of config directories
@@ -183,7 +183,7 @@ if (@conf > 0) {
 $testconf = Installcheck::Run::setup();
 $testconf->write();
 chmod 0000, $config_dir;
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 
 is_deeply ($reply,
     { body =>
@@ -203,7 +203,7 @@ chmod 0700, $config_dir;
 
 
 #CODE 1500007 and 1500008
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF?fields=foobar,tapecycle");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=foobar,tapecycle");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -227,7 +227,7 @@ is_deeply ($reply,
     "Get invalid fields (foobar,tapecycle)");
 
 #CODE 1500008
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF?fields=runtapes,tapecycle");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=runtapes,tapecycle");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -245,7 +245,7 @@ is_deeply ($reply,
     "Get valid fields (runtapes,tapecycle)");
 
 #CODE 1500009
-$reply = $rest->get("http://localhost:5000/amanda/v1.0/configs/TESTCONF");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",

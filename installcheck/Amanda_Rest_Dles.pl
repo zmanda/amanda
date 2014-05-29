@@ -59,7 +59,7 @@ my $amperldir = $Amanda::Paths::amperldir;
 my $testconf;
 
 #CODE 1500001
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -95,7 +95,7 @@ my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 my $infodir = getconf($CNF_INFOFILE);
 
 #CODE 1400007
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
@@ -111,7 +111,7 @@ is_deeply ($reply,
 
 
 #CODE 140009
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/Localhost?disk=/home","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/Localhost?disk=/home","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
@@ -128,7 +128,7 @@ is_deeply ($reply,
     "No such host in disklist");
 
 #CODE 140009
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
@@ -143,7 +143,7 @@ is_deeply ($reply,
     "No command");
 
 #CODE 1300003
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -160,7 +160,7 @@ is_deeply ($reply,
     "first force=1");
 
 #CODE 1300003
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -177,7 +177,7 @@ is_deeply ($reply,
     "second force=1");
 
 #CODE 1300019
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -194,7 +194,7 @@ is_deeply ($reply,
     "first force=0");
 
 #CODE 1300021
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -212,7 +212,7 @@ is_deeply ($reply,
 
 
 #CODE 1300031
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1&force_level_1=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1&force_level_1=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Dles.pm",
@@ -227,7 +227,7 @@ is_deeply ($reply,
     "force=1&force_level_1=1");
 
 #CODE 1300023
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -244,7 +244,7 @@ is_deeply ($reply,
     "first force_level_1=1");
 
 #CODE 1300023
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -261,7 +261,7 @@ is_deeply ($reply,
     "second force_level_1=1");
 
 #CODE 1300020
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -278,7 +278,7 @@ is_deeply ($reply,
     "first force_level_1=0");
 
 #CODE 1300021
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -295,7 +295,7 @@ is_deeply ($reply,
     "second force_level_1=0");
 
 #CODE 1300023
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_level_1=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -312,7 +312,7 @@ is_deeply ($reply,
     "third force_level_1=1");
 
 #CODE 1300000 and 1300003
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -337,7 +337,7 @@ is_deeply ($reply,
     "first force=1");
 
 #CODE 1300022 and 1300025
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -362,7 +362,7 @@ is_deeply ($reply,
     "first force_bump=1");
 
 #CODE 1300025
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -379,7 +379,7 @@ is_deeply ($reply,
     "second force_bump=1");
 
 #CODE 1300027
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -396,7 +396,7 @@ is_deeply ($reply,
     "first force_bump=0");
 
 #CODE 1300028
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -413,7 +413,7 @@ is_deeply ($reply,
     "second force_bump=0");
 
 #CODE 1300025
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -430,7 +430,7 @@ is_deeply ($reply,
     "third force_bump=1");
 
 #CODE 1300001 and 1300026
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -455,7 +455,7 @@ is_deeply ($reply,
     "first force_no_bump=1");
 
 #CODE 1300026
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -472,7 +472,7 @@ is_deeply ($reply,
     "second force_no_bump=1");
 
 #CODE 1300026
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -489,7 +489,7 @@ is_deeply ($reply,
     "first force_no_bump=0");
 
 #CODE 1300028
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=0","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=0","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -506,7 +506,7 @@ is_deeply ($reply,
     "second force_no_bump=0");
 
 #CODE 1300002
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home-incronly&force=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home-incronly&force=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -523,7 +523,7 @@ is_deeply ($reply,
     "first force=1 for /home-incronly");
 
 #CODE 1300026
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_no_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
@@ -540,7 +540,7 @@ is_deeply ($reply,
     "third force_no_bump=1");
 
 #CODE 1300024 and 1300025
-$reply = $rest->post("http://localhost:5000/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=/home&force_bump=1","");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Curinfo.pm",
