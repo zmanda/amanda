@@ -1,4 +1,10 @@
 2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Version.pl.
+	  installcheck/Amanda_Rest_Configs.pl.
+	  installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Labels.pl: Typo.
+
+2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Configs.pl,
 	  installcheck/Amanda_Rest_Dles.pl,
 	  installcheck/Amanda_Rest_Labels.pl,

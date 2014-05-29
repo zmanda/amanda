@@ -48,7 +48,7 @@ Amanda::Debug::disable_die_override();
 
 my $rest = Installcheck::Rest->new();
 if ($rest->{'error'}) {
-   plan skip_all => "Can't star JSON Rest server: see " . Amanda::Debug::dbfn();
+   plan skip_all => "Can't start JSON Rest server: see " . Amanda::Debug::dbfn();
    exit 1;
 }
 plan tests => 1;
