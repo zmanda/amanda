@@ -21,6 +21,7 @@
 package Installcheck::Rest;
 
 use Amanda::Paths;
+use Amanda::Debug;
 use WWW::Curl::Easy;
 use JSON;
 
@@ -58,7 +59,8 @@ sub new {
 
     my $pid = fork;
     if ($pid == 0) {
-	exec("starman", "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl");
+	Amanda::Debug::debug_dup_stderr_to_debug();
+	exec("starman", "--env", "development", "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl");
     } elsif ($pid < 0) {
 	die("Can't fork for rest server");
     }

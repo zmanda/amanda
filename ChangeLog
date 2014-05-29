@@ -1,4 +1,8 @@
 2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Rest.pm: Fix to send starman stderr to the
+	  debug file.
+
+2014-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Configs.pl: Fix.
 
 2014-05-28  Jean-Louis Martineau <martineau@zmanda.com>
