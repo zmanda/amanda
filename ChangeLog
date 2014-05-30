@@ -1,4 +1,8 @@
 2014-05-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in:
+	  Remove 'use Data::Structure::Util'.
+
+2014-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for SunOS
 	* perl/Amanda/Interactivity.pm: Do not die if ->new return  undef.
 	* perl/Amanda/Interactivity/stdin.pm: Add debugging if can't read

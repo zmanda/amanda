@@ -32,8 +32,6 @@ use Amanda::Rest::Status;
 use Amanda::Rest::Storages;
 use Amanda::Rest::Version;
 
-use Data::Structure::Util qw(unbless);
-
 Amanda::Util::setup_application("amrest-server", "server", $CONTEXT_CMDLINE);
 
 set serializer => 'JSON';
