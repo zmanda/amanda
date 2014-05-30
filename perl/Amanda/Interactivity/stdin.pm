@@ -46,6 +46,7 @@ sub new {
     my $class = shift;
 
     if (!-r STDIN) {
+	debug("Disabling Amanda::Interactivity::stdin because STDIN is not readable");
 	return undef;
     }
 

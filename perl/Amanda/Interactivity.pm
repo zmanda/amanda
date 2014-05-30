@@ -105,6 +105,7 @@ C<request_cb> with C<(undef, undef)>.
 =cut
 
 use Amanda::Config qw( :getconf );
+use Amanda::Debug qw( debug );
 
 sub new {
     shift eq 'Amanda::Interactivity'
@@ -140,10 +141,11 @@ sub new {
     }
 
     my $self = eval {$pkgname->new($property);};
-    if ($@ || !defined $self) {
-	print STDERR "Can't instantiate $pkgname\n";
-	debug("Can't instantiate $pkgname");
-	die("Can't instantiate $pkgname");
+    if ($@) {
+	my $err = $@;
+	print STDERR "Can't instantiate $pkgname: $err\n";
+	debug("Can't instantiate $pkgname: $err");
+	die("Can't instantiate $pkgname: $err");
     }
 
     return $self;
