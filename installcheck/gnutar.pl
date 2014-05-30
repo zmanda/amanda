@@ -35,6 +35,10 @@ use Amanda::Util qw( slurp );
 ## GNU Tar's behavior, as recorded at
 ##  http://wiki.zmanda.com/index.php/GNU_Tar_Include_and_Exclude_Behavior
 
+# put the debug messages somewhere
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
+
 my $gnutar = $Amanda::Constants::GNUTAR;
 $gnutar = $ENV{'GNUTAR'} if exists $ENV{'GNUTAR'};
 
@@ -80,11 +84,14 @@ my ($v, $numeric_version);
 
 }
 
-my ($fc14, $fc15);
+my ($fc14, $fc15, $sunos);
 {
     my $uname = `uname -a`;
     if ($uname =~ /\.fc14\./) {
 	$fc14 = 1;
+    }
+    if ($uname =~ /^SunOS /) {
+	$sunos = 1;
     }
     if ($uname =~ /\.fc15\./ ||
         $uname =~ /\.fc16\./ ||
@@ -121,6 +128,7 @@ my %version_classes = (
     '!1.23' => ($numeric_version < 12290 || ($numeric_version > 12300 && $numeric_version < 12500)),
     '>=1.25' => $numeric_version >= 12500,
     'fc15' => ($numeric_version >= 12500 and $fc15),
+    'sunos' => ($numeric_version >= 12600 and $sunos),
 );
 
 # include and exclude all use the same set of patterns and filenames
@@ -378,6 +386,7 @@ test_gnutar_inclusion(
 	{'<1.16' => 'alpha'},
         {'1.23fc14' => 'zeta'},
 	{'1.16..<1.25' => 'beta'},
+	{'sunos' => 'beta'},
 	{'>=1.25' => 'zeta'},
     ],
 );
@@ -388,6 +397,7 @@ test_gnutar_inclusion(
 	{'<1.16' => undef},
 	{'1.23fc14' => 'eta'},
 	{'1.16..<1.25' => 'gamma'},
+	{'sunos' => 'gamma'},
 	{'>=1.25' => 'eta'},
     ],
 );
@@ -500,6 +510,7 @@ test_gnutar_exclusion(
 	{'!1.23' => 'gamma'},
 	{'1.23fc14' => 'iota'},
 	{'1.23' => 'delta'},
+	{'sunos' => 'gamma'},
 	{'>=1.25' => 'eta'},
     ],
 );
