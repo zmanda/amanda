@@ -265,7 +265,7 @@ sub get_disk {
 
 sub all_disks {
     my ($self) = @_;
-    return values %{$Amanda::Disklist::disks{$self->{'hostname'}}};
+    return sort { $a->{'name'} cmp $b->{'name'} } values %{$Amanda::Disklist::disks{$self->{'hostname'}}};
 }
 
 package Amanda::Disklist::Interface;
@@ -297,7 +297,7 @@ sub get_host {
 }
 
 sub all_hosts {
-    return values %hosts;
+    return sort { $a->{'hostname'} cmp $b->{'hostname'} } values %hosts;
 }
 
 sub get_disk {
@@ -307,8 +307,10 @@ sub get_disk {
 
 sub all_disks {
     my @rv;
-    foreach my $disk (values %disks) {
-	push @rv, (values %$disk);
+    foreach my $hostname (sort keys %disks) {
+	foreach my $diskname ( sort keys %{$disks{$hostname}} ) {
+	    push @rv, $disks{$hostname}->{$diskname};
+	}
     }
     return @rv;
 }

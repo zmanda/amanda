@@ -1,3 +1,10 @@
+2014-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Sort to get repeatable result.
+	* perl/Amanda/Disklist.swg: Sort to get repeatable result.
+	* perl/Amanda/Report.pm: Sort to get repeatable result.
+	* perl/Amanda/Report/human.pm: Sort to get repeatable result.
+	* installcheck/catalogs/filesystemstaped.cat: Fix for new order.
+
 2014-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for SunOS
 	* perl/Amanda/Interactivity.pm: Do not die if ->new return undef.

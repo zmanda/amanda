@@ -1222,7 +1222,8 @@ sub get_summary_info
 	push @rvs, [@rv];
     }
 
-    while( my ($timestamp, $tries) = each %$alldumps ) {
+    foreach my $timestamp (sort keys %$alldumps) {
+	my $tries = $alldumps->{$timestamp};
 	my $last_try = $tries->[-1];
 	my $level =
 	    exists $last_try->{taper}   ? $last_try->{taper}{level}
