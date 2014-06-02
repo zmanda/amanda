@@ -121,7 +121,7 @@ is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'source_line' => '228',
+		'source_line' => '230',
 		'severity' => '16',
 		'message' => 'config name',
 		'code' => '1500003'
@@ -155,7 +155,7 @@ if (@conf > 0) {
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'source_line' => '228',
+		'source_line' => '230',
 		'severity' => '16',
 		'message' => 'config name',
 		'code' => '1500003'
@@ -188,7 +188,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '217',
+		'source_line' => '219',
 		'severity' => '16',
 		'errno'    => 'Permission denied',
 		'message' => "Can't open config directory '$Amanda::Paths::CONFIG_DIR': Permission denied",
@@ -207,14 +207,14 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=f
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '190',
+		'source_line' => '192',
 		'severity' => '16',
 		'parameters' => [ 'foobar' ],
 		'message' => 'Not existant parameters',
 		'code' => '1500007'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '197',
+		'source_line' => '199',
 		'severity' => '16',
 		'result' => {
 			'tapecycle' => 3 },
@@ -231,7 +231,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=r
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '197',
+		'source_line' => '199',
 		'severity' => '16',
 		'result' => {
 			'tapecycle' => 3,
@@ -249,7 +249,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
 is_deeply ($reply,
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '204',
+		'source_line' => '206',
 		'severity' => '16',
 		'message' => 'No fields specified',
 		'code' => '1500009'

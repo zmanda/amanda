@@ -18,7 +18,7 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 package Amanda::Rest::Configs;
-use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Config qw( :getconf config_dir_relative );
 use Symbol;
 use Data::Dumper;
 use Scalar::Util;
@@ -144,22 +144,22 @@ sub config_init {
     }
 
     Amanda::Config::config_uninit();
-    if (@{$config_overrides}) {
+    if (defined $config_overrides and @{$config_overrides}) {
 	my $g_config_overrides = Amanda::Config::new_config_overrides(@{$config_overrides} + 1);
 	for my $co (@{$config_overrides}) {
 	    add_config_override_opt($g_config_overrides, $co);
 	}
 	Amanda::Config::set_config_overrides($g_config_overrides);
     }
-    Amanda::Config::config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+    Amanda::Config::config_init($Amanda::Config::CONFIG_INIT_EXPLICIT_NAME, $config_name);
 
-    my ($cfgerr_level, @cfgerr_errors) = config_errors();
-    if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    my ($cfgerr_level, @cfgerr_errors) = Amanda::Config::config_errors();
+    if ($cfgerr_level >= $Amanda::Config::CFGERR_WARNINGS) {
 	for my $cfgerr (@cfgerr_errors) {
 	    push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code     => $cfgerr_level == $CFGERR_WARNINGS
+				code     => $cfgerr_level == $Amanda::Config::CFGERR_WARNINGS
 						? 1500000 : 1500001,
 				cfgerror => $cfgerr);
 	}
@@ -176,12 +176,14 @@ sub fields {
 
     my @no_parameters;
     my %values;
-    foreach my $name (split ',', $params{'fields'}) {
-	my $result = Amanda::Config::getconf_byname($name);
-	if (!defined $result) {
-	    push @no_parameters, $name;
-	} else {
-	    $values{$name} = $result;
+    if (defined $params{'fields'}) {
+	foreach my $name (split ',', $params{'fields'}) {
+	    my $result = Amanda::Config::getconf_byname($name);
+	    if (!defined $result) {
+		push @no_parameters, $name;
+	    } else {
+		$values{$name} = $result;
+	    }
 	}
     }
     if (@no_parameters) {

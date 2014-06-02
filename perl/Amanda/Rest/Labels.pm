@@ -114,11 +114,11 @@ sub list {
 	return \@result_messages;
     }
     @tles = @{$tl->{'tles'}};
-    @tles = grep {$_->{'config'}  eq $params{'config'}}  @tles if defined $params{'config'};
-    @tles = grep {$_->{'storage'} eq $params{'storage'}} @tles if defined $params{'storage'};
-    @tles = grep {$_->{'pool'}    eq $params{'pool'}}    @tles if defined $params{'pool'};
-    @tles = grep {$_->{'meta'}    eq $params{'meta'}}    @tles if defined $params{'meta'};
-    @tles = grep {$_->{'reuse'}   eq $params{'reuse'}}   @tles if defined $params{'reuse'};
+    @tles = grep {defined $_->{'config'}  and $_->{'config'}  eq $params{'config'}}  @tles if defined $params{'config'};
+    @tles = grep {defined $_->{'storage'} and $_->{'storage'} eq $params{'storage'}} @tles if defined $params{'storage'};
+    @tles = grep {defined $_->{'pool'}    and $_->{'pool'}    eq $params{'pool'}}    @tles if defined $params{'pool'};
+    @tles = grep {defined $_->{'meta'}    and $_->{'meta'}    eq $params{'meta'}}    @tles if defined $params{'meta'};
+    @tles = grep {defined $_->{'reuse'}   and $_->{'reuse'}   eq $params{'reuse'}}   @tles if defined $params{'reuse'};
     push @result_messages, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

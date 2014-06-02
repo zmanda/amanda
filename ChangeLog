@@ -1,4 +1,9 @@
 2014-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Configs.pl: Fix.
+	* perl/Amanda/Rest/Configs.pm: Fix perl warning.
+	* perl/Amanda/Rest/Labels.pm: Fix perl warning.
+
+2014-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add 'directory is on a different
 	  filesystem; not dumped' as a normal message.
 
