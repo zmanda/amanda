@@ -88,6 +88,9 @@ static amregex_t init_re_table[] = {
   AM_IGNORE_RE(": Directory is new$"),
   AM_IGNORE_RE(": Directory has been renamed"),
 
+  /* GNU tar 1.27 */
+  AM_NORMAL_RE(": directory is on a different filesystem; not dumped"),
+
   /* GNU tar 1.13.17 will print this warning when (not) backing up a
      Unix named socket.  */
   AM_NORMAL_RE(": socket ignored$"),
