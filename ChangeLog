@@ -1,4 +1,7 @@
 2014-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Configs.pl: Fix line number.
+
+2014-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Configs.pl: Fix.
 	* perl/Amanda/Rest/Configs.pm: Fix perl warning.
 	* perl/Amanda/Rest/Labels.pm: Fix perl warning.

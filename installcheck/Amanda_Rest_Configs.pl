@@ -168,7 +168,7 @@ if (@conf > 0) {
     is_deeply ($reply,
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '234',
+		'source_line' => '236',
 		'severity' => '16',
 		'message' => 'no config',
 		'code' => '1500004'
