@@ -667,8 +667,8 @@ results_match($printer_output,
 setup_config(catalog => 'retried', want_template => 1);
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
-is($Installcheck::Run::exit_code, 4,
-    "amreport with retried logfile exit==4");
+is($Installcheck::Run::exit_code, 0,
+    "amreport with retried logfile exit==0");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches");
 results_match($printer_output,
@@ -678,16 +678,16 @@ results_match($printer_output,
 setup_config(catalog => 'retried-strange');
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
-is($Installcheck::Run::exit_code, 6,
-    "amreport with retried logfile, with strange exit==6");
+is($Installcheck::Run::exit_code, 2,
+    "amreport with retried logfile, with strange exit==2");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches");
 
 setup_config(catalog => 'retried-nofinish', want_template => 1);
 
 run($amreport, 'TESTCONF', '-f', $out_filename);
-is($Installcheck::Run::exit_code, 4,
-    "amreport with retried logfile where driver did not finish exit==4");
+is($Installcheck::Run::exit_code, 0,
+    "amreport with retried logfile where driver did not finish exit==0");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches");
 

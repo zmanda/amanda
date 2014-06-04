@@ -1,3 +1,8 @@
+2014-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Fix exit_status.
+	* installcheck/Amanda_Report.pl: Add check for exit_status.
+	* installcheck/amreport.pl: Fix exit_status check.
+
 2014-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Configs.pl: Fix line number.
 

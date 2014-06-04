@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 58;
+use Test::More tests => 67;
 use strict;
 use warnings;
 
@@ -66,7 +66,8 @@ $LogfileFlags{planner} = {
     normal_run => 1,
     results_missing => 1,
     dump_failed => 0,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 8,
 };
 
 $LogfileData{planner} = {
@@ -113,7 +114,8 @@ $LogfileFlags{driver} = {
     normal_run => 1,
     results_missing => 1,
     dump_failed => 0,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 8,
 };
 
 $LogfileData{driver} = {
@@ -187,7 +189,8 @@ $LogfileFlags{dumper} = {
     normal_run => 1,
     results_missing => 0,
     dump_failed => 1,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 4,
 };
 
 $LogfileData{dumper} = {
@@ -309,7 +312,8 @@ $LogfileFlags{chunker} = {
     normal_run => 1,
     results_missing => 0,
     dump_failed => 1,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 4,
 };
 
 $LogfileData{chunker} = {
@@ -453,7 +457,8 @@ $LogfileFlags{taper} = {
     normal_run => 1,
     results_missing => 0,
     dump_failed => 0,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 0,
 };
 
 $LogfileData{taper} = {
@@ -600,7 +605,8 @@ $LogfileFlags{simple} = {
     normal_run => 1,
     results_missing => 0,
     dump_failed => 0,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 0,
 };
 
 $LogfileData{simple} = {
@@ -772,7 +778,8 @@ $LogfileFlags{fullExample} = {
     normal_run => 1,
     results_missing => 0,
     dump_failed => 0,
-    dump_strange => 1
+    dump_strange => 1,
+    exit_status => 2,
 };
 
 $LogfileData{fullExample} = {
@@ -1124,7 +1131,8 @@ $LogfileFlags{amflushExample} = {
     amflush_run => 1,
     results_missing => 0,
     dump_failed => 0,
-    dump_strange => 0
+    dump_strange => 0,
+    exit_status => 0,
 };
 
 $LogfileData{amflushExample} = {
@@ -1389,6 +1397,9 @@ is(
 
 ok($report->get_flag('historical'),
     "historical flag processed correctly");
+
+is($report->get_flag('exit_status'), 2,
+   "exit_status");
 
 # clean up
 unlink($log_filename) if -f $log_filename;

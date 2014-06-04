@@ -1258,7 +1258,6 @@ sub _handle_fail_line
     my $errors = $self->get_program_info("program", "errors", []);
     push @$errors, $error;
 
-    $self->{flags}{exit_status} |= STATUS_FAILED;
     if ($program eq "dumper") {
         $self->{contline} = $program_d->{errors} ||= [];
 	$program_d->{nb_errors} = 0;
@@ -1427,6 +1426,7 @@ sub check_missing_fail_strange
 
 	if ($planner && $planner->{'status'} eq 'fail') {
 	    $self->{flags}{dump_failed} = 1;
+	    $self->{flags}{exit_status} |= STATUS_FAILED;
 	} elsif ($planner && $planner->{'status'} eq 'skipped') {
 	    # We don't want these to be counted as missing below
 	} elsif (!defined $alldumps->{$self->{'run_timestamp'}} and
@@ -1441,6 +1441,7 @@ sub check_missing_fail_strange
 
 	    if (exists $try->{dumper} && $try->{dumper}->{status} eq 'fail') {
 		$self->{flags}{dump_failed} = 1;
+		$self->{flags}{exit_status} |= STATUS_FAILED;
 	    } elsif ((defined($try->{'chunker'}) &&
 		 $try->{'chunker'}->{status} eq 'success') ||
 		(defined($try->{'taper'}) &&
@@ -1449,9 +1450,14 @@ sub check_missing_fail_strange
 		if (exists $try->{dumper} && $try->{dumper}->{status} eq 'strange') {
 		    $self->{flags}{dump_strange} = 1;
 		}
-	    } else {
+	    } elsif ((defined($try->{'chunker'}) &&
+		 $try->{'chunker'}->{status} ne 'success') ||
+		(defined($try->{'taper'}) &&
+		 $try->{'taper'}->{status} ne 'done') ||
+		(!defined($try->{'chunker'}) and !defined($try->{'taper'}))) {
 		#chunker or taper failed, the dump is not valid.
 		$self->{flags}{dump_failed} = 1;
+		$self->{flags}{exit_status} |= STATUS_FAILED;
 	    }
 	}
     }
