@@ -422,6 +422,7 @@ sub main {
     my $app_success;
     my $app_error;
     my $check_crc;
+    my $tl;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -432,6 +433,12 @@ sub main {
 
     step start => sub {
 	my $chg;
+
+	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	($tl, my $message) = Amanda::Tapelist->new($tlf);
+	if (defined $message) {
+	    die "Could not read the tapelist: $message";
+	}
 
 	# first, go to opt_directory or the original working directory we
 	# were started in
@@ -452,7 +459,8 @@ sub main {
 	# if we have an explicit device, then the clerk doesn't get a changer --
 	# we operate the changer via Amanda::Recovery::Scan
 	if (defined $opt_device) {
-	    my $storage = Amanda::Storage->new(changer_name => $opt_device);
+	    my $storage = Amanda::Storage->new(changer_name => $opt_device,
+					       tapelist => $tl);
 	    return failure($storage, $steps->{'quit2'}) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage->{"storage_name"}} = $storage;
 	    my $chg = $storage->{'chg'};
@@ -468,7 +476,7 @@ sub main {
 		scan     => $scan);
 	    $clerk{$storage->{"storage_name"}} = $clerk;
 	} else {
-	    my $storage = Amanda::Storage->new();
+	    my $storage = Amanda::Storage->new(tapelist => $tl);
 	    return failure($storage, $steps->{'quit2'}) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage->{"storage_name"}} = $storage;
 	    my $chg = $storage->{'chg'};
@@ -539,7 +547,8 @@ sub main {
 	#find the storage
 	my $storage_name=$Xinit_label->{'storage'};
 	if (!$storage{$storage_name}) {
-	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name);
+	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
+						 tapelist => $tl);
 	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage_name} = $storage;
 	};
@@ -623,7 +632,8 @@ sub main {
 
 	my $storage_name = $current_dump->{'storage'};
 	if (!$storage{$storage_name}) {
-	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name);
+	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
+						 tapelist => $tl);
 	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	    $storage{$storage_name} = $storage;
 	};
