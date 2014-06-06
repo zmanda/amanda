@@ -365,8 +365,11 @@ sub _load_by_slot {
 	    $self->_set_current($params{'state'}, $slot) if ($params{'set_current'});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
-		reason => "invalid",
-		message => "Invalid relative slot '$params{relative_slot}'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100031,
+		relative_slot => $params{relative_slot},
+		reason => "invalid");
 	}
     } else {
 	$slot = $params{'slot'};
@@ -374,22 +377,30 @@ sub _load_by_slot {
 
     if (exists $params{'except_slots'} and exists $params{'except_slots'}->{$slot}) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
-	    message => "all slots have been loaded");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100032,
+		reason => "notfound");
     }
 
     if (!$self->_slot_exists($slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "invalid",
-	    slot   => $slot,
-	    message => "Slot $slot not found");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100033,
+		reason => "invalid",
+		slot   => $slot);
     }
 
     if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "volinuse",
-	    slot => $slot,
-	    message => "Slot $slot is already in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100034,
+		reason => "volinuse",
+		slot => $slot,
+		drive => $drive,
+		pid   => $params{state}->{drives}->{$drive}->{pid});
     }
 
     $drive = $self->_alloc_drive($params{state});
@@ -409,15 +420,22 @@ sub _load_by_label {
     $slot = $self->_find_label($label);
     if (!defined $slot) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "notfound",
-	    message => "Label '$label' not found");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100035,
+		label => $label,
+		reason => "notfound");
     }
 
     if ($drive = $self->_is_slot_in_use($params{'state'}, $slot)) {
 	return $self->make_error("failed", $params{'res_cb'},
-	    reason => "volinuse",
-	    message => "Slot $slot, containing '$label', is already " .
-			"in use by drive '$drive'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100036,
+		slot  => $slot,
+		label => $label,
+		drive => $drive,
+		reason => "volinuse");
     }
 
     $drive = $self->_alloc_drive($params{state});
@@ -437,16 +455,23 @@ sub _make_res {
 						   label_exist => 1);
     if ($err) {
 	return $self->make_error("failed", $res_cb,
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100037,
 		reason => "device",
-		message => "Can't find label for slot '$slot'");
+		slot   => $slot);
     }
     my $slot_path = "$self->{'dir'}/$label";
     my $device_name = "diskflat:$slot_path";
     my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $res_cb,
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100038,
 		reason => "device",
-		message => "opening '$device_name': " . $device->error_or_status());
+		device => $device_name,
+		device_error =>  $device->error_or_status());
     }
     my ($use_data, $surety, $source) = $device->property_get("USE-DATA");
     if ($source == $PROPERTY_SOURCE_DEFAULT) {
@@ -654,11 +679,18 @@ sub _validate() {
 
     unless (-d $dir) {
 	return $self->make_error("fatal", undef,
-	    message => "directory '$dir' does not exist");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100039,
+		dir     => $dir);
     }
     if (!-w $dir) {
 	return $self->make_error("fatal", undef,
-	    message => "Cannot write to directory '$dir': $!");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100040,
+		dir     => $dir,
+		error   => $!);
     }
 
     if ($self->{'removable'}) {
@@ -673,8 +705,11 @@ sub _validate() {
 	}
 	if ($dev == $pdev) {
 	    return $self->make_error("failed", undef,
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100041,
 		reason => "notfound",
-		message => "No removable disk mounted on '$dir'");
+		dir     => $dir);
 	}
     }
 
@@ -686,23 +721,37 @@ sub _validate() {
 					label_exist => 1);
 	    if (!$label) {
 		return $self->make_error("fatal", undef,
-			message => "Can't compute label for slot '$i': $err");
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code    => 1100042,
+			slot    => $i,
+			error   => $err);
 	    }
 	    my $slot_file = "$dir/$label";
 	    if (!-e $slot_file) {
 		open AA, ">$slot_file" or
 		    return $self->make_error("fatal", undef,
-				message => "Can't create '$slot_file': $!");
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code    => 1100043,
+				slot_file => $slot_file,
+				error     => $!);
 		close AA;
 	    } elsif (!-r $slot_file) {
 		return $self->make_error("fatal", undef,
-			message => "Can't read '$slot_file': $!");
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code    => 1100044,
+				slot_file => $slot_file,
+				error     => $!);
 	    }
 	}
     } else {
 	if ($self->{'auto-create-slot'}) {
 	    return $self->make_error("fatal", undef,
-		message => "property 'auto-create-slot' set but property 'num-slot' is not set");
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code    => 1100045);
 	}
     }
     return undef;
@@ -740,10 +789,16 @@ sub try_lock {
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
 	} elsif ($rv == 1) {
 	    return $self->make_error("fatal", $cb,
-		message => "Timeout trying to lock '$self->{'umount_lockfile'}'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100046,
+		lock_file => $self->{'umount_lockfile'});
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
-		message => "Error locking '$self->{'umount_lockfile'}'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code    => 1100047,
+		lock_file => $self->{'umount_lockfile'});
 	} elsif ($rv == 0) {
 	    if (defined $self->{'umount_src'}) {
 		$self->{'umount_src'}->remove();

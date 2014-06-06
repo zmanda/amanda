@@ -434,6 +434,13 @@ sub inventory {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -450,7 +457,8 @@ sub inventory {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		push @result_messages, $storage;
@@ -502,6 +510,13 @@ sub load {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -518,7 +533,8 @@ sub load {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		push @result_messages, $storage;
@@ -600,6 +616,13 @@ sub reset {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -616,7 +639,8 @@ sub reset {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		push @result_messages, $storage;
@@ -670,6 +694,13 @@ sub eject {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -686,7 +717,8 @@ sub eject {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		push @result_messages, $storage;
@@ -742,6 +774,13 @@ sub clean {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -758,7 +797,8 @@ sub clean {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		push @result_messages, $storage;
 		return $steps->{'done'}->();
@@ -812,6 +852,13 @@ sub create {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -829,6 +876,7 @@ sub create {
 
 	step start => sub {
 	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl,
 					    no_validate  => 1);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
@@ -877,6 +925,13 @@ sub verify {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -893,7 +948,8 @@ sub verify {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		push @result_messages, $storage;
@@ -942,6 +998,13 @@ sub show {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -958,7 +1021,8 @@ sub show {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		push @result_messages, $storage;
@@ -1005,6 +1069,13 @@ sub label {
 	return \@result_messages;
     }
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $user_msg = sub {
         my $msg = shift;
         push @result_messages, $msg;
@@ -1023,7 +1094,8 @@ sub label {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		return $steps->{'done'}->($storage);
 	    }
@@ -1088,6 +1160,13 @@ sub update {
         push @result_messages, $msg;
     };
 
+    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+    (my $tl, my $message) = Amanda::Tapelist->new($tlf);
+    if (defined $message) {
+	push @result_messages, $message;
+	return \@result_messages;
+    }
+
     my $main = sub {
 	my $finished_cb = shift;
 	my $storage;
@@ -1099,7 +1178,8 @@ sub update {
 			      $chg->quit() if defined $chg };
 
 	step start => sub {
-	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'});
+	    $storage = Amanda::Storage->new(storage_name => $params{'STORAGE'},
+				tapelist => $tl);
 	    if ($storage->isa("Amanda::Changer::Error")) {
 		Dancer::status(404);
 		return $steps->{'done'}->($storage);
@@ -1188,6 +1268,7 @@ sub fields {
         push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
+				storage   => $storage_name,
 				code      => 1500009);
     }
     return \@result_messages;

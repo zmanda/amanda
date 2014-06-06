@@ -49,7 +49,9 @@ server_tests = \
 	Amanda_Report \
 	Amanda_Rest_Configs \
 	Amanda_Rest_Dles \
+	Amanda_Rest_Dumps \
 	Amanda_Rest_Labels \
+	Amanda_Rest_Storages \
 	Amanda_Rest_Version \
 	Amanda_Tapelist \
 	Amanda_Taper_Scan \

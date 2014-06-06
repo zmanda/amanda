@@ -126,7 +126,9 @@ sub new {
 
     if (defined $changer_name and !$changer_name) {
         return Amanda::Changer::Error->new('fatal',
-            message => "changer_name argument of the storage is empty");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code            => 1150000);
     }
 
     if (!defined $storage_name) {
@@ -139,12 +141,17 @@ sub new {
     # Create a storage
     if (!$storage_name) {
 	return Amanda::Changer::Error->new('fatal',
-		message => "No storage_name provide");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code            => 1150001);
     }
     my $st = Amanda::Config::lookup_storage($storage_name);
     if (!$st) {
 	return Amanda::Changer::Error->new('fatal',
-		message => "Storage '$storage_name' not found");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code            => 1150002,
+		storage    => $storage_name);
     }
 
     my $tpchanger = storage_getconf($st, $STORAGE_TPCHANGER);
@@ -152,7 +159,10 @@ sub new {
 	$changer_name = $tpchanger if !$changer_name;
 	if (!$changer_name) {
             return Amanda::Changer::Error->new('fatal',
-		message => "You must specify the storage 'tpchanger'");
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code            => 1150003,
+		storage    => $storage_name);
 	}
     }
 

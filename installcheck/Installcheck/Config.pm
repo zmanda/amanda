@@ -118,6 +118,8 @@ sub new {
 	'script' => [ ],
 	'devices' => [ ],
 	'changers' => [ ],
+	'policy' => [ ],
+	'storage' => [ ],
 	'text' => '',
 
 	'dles' => [ ],

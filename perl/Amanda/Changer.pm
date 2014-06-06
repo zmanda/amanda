@@ -89,6 +89,59 @@ sub local_message {
 	return "Created vtape root '$self->{'dir'}'";
     } elsif ($self->{'code'} == 1100028) {
 	return "Bucket created";
+    } elsif ($self->{'code'} == 1100029) {
+	return "You must specify one of 'tapedev' or 'tpchanger'";
+    } elsif ($self->{'code'} == 1100030) {
+	return "Cannot specify both 'tapedev' and 'tpchanger'";
+    } elsif ($self->{'code'} == 1100031) {
+	return "Invalid relative slot '$self->{'relative_slot'}'";
+    } elsif ($self->{'code'} == 1100032) {
+	return "all slots have been loaded";
+    } elsif ($self->{'code'} == 1100033) {
+	return "Slot $self->{'slot'} not found";
+    } elsif ($self->{'code'} == 1100034) {
+	return "Slot $self->{'slot'} is already in use by drive '$self->{'drive'}' and process '$self->{'pid'}'";
+    } elsif ($self->{'code'} == 1100035) {
+	return "Label '$self->{'label'}' not found";
+    } elsif ($self->{'code'} == 1100036) {
+	return "Slot $self->{'slot'}, containing '$self->{'label'}', is already in use by drive '$self->{'drive'}'";
+    } elsif ($self->{'code'} == 1100037) {
+	return "Can't find label for slot '$self->{'slot'}'";
+    } elsif ($self->{'code'} == 1100038) {
+	return "opening '$self->{'device'}': $self->{'device_error'}";
+    } elsif ($self->{'code'} == 1100039) {
+	return "directory '$self->{'dir'}' does not exist";
+    } elsif ($self->{'code'} == 1100040) {
+	return "Cannot write to directory '$self->{'dir'}': $self->{'error'}";
+    } elsif ($self->{'code'} == 1100041) {
+	return "No removable disk mounted on '$self->{'dir'}'";
+    } elsif ($self->{'code'} == 1100042) {
+	return "Can't compute label for slot '$self->{'slot'}': $self->{'error'}";
+    } elsif ($self->{'code'} == 1100043) {
+	return "Can't create '$self->{'slot_file'}': $self->{'error'}";
+    } elsif ($self->{'code'} == 1100044) {
+	return "Can't read '$self->{'slot_file'}': $self->{'error'}";
+    } elsif ($self->{'code'} == 1100045) {
+	return "property 'auto-create-slot' set but property 'num-slot' is not set";
+    } elsif ($self->{'code'} == 1100046) {
+	return "Timeout trying to lock '$self->{'lock_file'}'";
+    } elsif ($self->{'code'} == 1100047) {
+	return "Error locking '$self->{'lock_file'}'";
+    } elsif ($self->{'code'} == 1100048) {
+	return "'$self->{'chg_type'}' does not support $self->{'op'}";
+    } elsif ($self->{'code'} == 1100049) {
+	return "
+    } elsif ($self->{'code'} == 1100050) {
+	return "
+
+    } elsif ($self->{'code'} == 1150000) {
+	return "changer_name argument of the storage is empty";
+    } elsif ($self->{'code'} == 1150001) {
+	return "No storage_name provided";
+    } elsif ($self->{'code'} == 1150002) {
+	return "Storage '$self->{'storage'}' not found";
+    } elsif ($self->{'code'} == 1150003) {
+	return "You must specify the storage 'tpchanger'";
     }
 }
 
@@ -855,7 +908,9 @@ sub new {
 		  getconf_linenum($CNF_TPCHANGER) > 0) ||
 		 (getconf_linenum($CNF_TAPEDEV) == -2))) {
 		return Amanda::Changer::Error->new('fatal',
-		    message => "Cannot specify both 'tapedev' and 'tpchanger'");
+			source_filename => __FILE__,
+	                source_line     => __LINE__,
+	                code            => 1100030);
 	    }
 
 	    # maybe a changer alias?
@@ -889,7 +944,9 @@ sub new {
 	    return _new_from_uri("chg-single:$tapedev", undef, $tapedev, %params);
 	} else {
 	    return Amanda::Changer::Error->new('fatal',
-		message => "You must specify one of 'tapedev' or 'tpchanger'");
+		source_filename => __FILE__,
+                source_line     => __LINE__,
+                code            => 1100029);
 	}
     }
 }
@@ -922,11 +979,15 @@ sub _changer_alias_to_uri {
 	my $seen_tapedev = changer_config_seen($cc, $CHANGER_CONFIG_TAPEDEV);
 	if ($seen_tpchanger and $seen_tapedev) {
 	    return Amanda::Changer::Error->new('fatal',
-		message => "Cannot specify both 'tapedev' and 'tpchanger'");
+		source_filename => __FILE__,
+	        source_line     => __LINE__,
+	        code            => 1100030);
 	}
 	if (!$seen_tpchanger and !$seen_tapedev) {
 	    return Amanda::Changer::Error->new('fatal',
-		message => "You must specify one of 'tapedev' or 'tpchanger'");
+		source_filename => __FILE__,
+                source_line     => __LINE__,
+                code            => 1100029);
 	}
 	$tpchanger ||= changer_config_getconf($cc, $CHANGER_CONFIG_TAPEDEV);
 
@@ -1061,8 +1122,12 @@ sub _stubop {
     my $class = ref($self);
     my $chg_foo = "chg-" . ($class =~ /Amanda::Changer::(.*)/)[0];
     return $self->make_error("failed", $params{$cbname},
-	reason => "notimpl",
-	message => "'$chg_foo:' does not support $op");
+	source_filename => __FILE__,
+	source_line     => __LINE__,
+	code   => 1100048,
+	chg_type => $chg_foo,
+	op     => $op,
+	reason => "notimpl");
 }
 
 sub create { _stubop("create", "finished_cb", @_); }
@@ -1299,10 +1364,16 @@ sub with_locked_state {
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
 	} elsif ($rv == 1) {
 	    return $self->make_error("fatal", $cb,
-		    message => "Timeout trying to lock '$statefile'");
+		    source_file => __FILE__,
+		    source_line => __LINE__,
+		    code    => 1100046,
+		    lock_file => $statefile);
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
-		    message => "Error locking '$statefile'");
+		    source_file => __FILE__,
+		    source_line => __LINE__,
+		    code    => 1100047,
+		    lock_file => $statefile);
 	}
 
 	$steps->{'read'}->();
