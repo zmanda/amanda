@@ -57,10 +57,9 @@ my $reply;
 my $amperldir = $Amanda::Paths::amperldir;
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
-                'source_line' => '140',
                 'severity' => '16',
                 'message' => "The dumps",
 		'dumps' => [],
@@ -75,7 +74,7 @@ my $cat = Installcheck::Catalogs::load("bigdb");
 $cat->install();
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
@@ -144,7 +143,6 @@ is_deeply ($reply,
                            'storage' => 'HOLDING'
                          }
                        ],
-            'source_line' => '140',
             'severity' => '16',
             'message' => 'The dumps',
             'code' => '2600000'
@@ -155,7 +153,7 @@ is_deeply ($reply,
     "All hosts");
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
@@ -192,7 +190,6 @@ is_deeply ($reply,
                            'storage' => 'HOLDING'
                          }
                        ],
-            'source_line' => '140',
             'severity' => '16',
             'message' => 'The dumps',
             'code' => '2600000'
@@ -203,7 +200,7 @@ is_deeply ($reply,
     "One host, all disk==1");
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox?disk=/lib");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
@@ -240,7 +237,6 @@ is_deeply ($reply,
                            'storage' => 'HOLDING'
                          }
                        ],
-            'source_line' => '140',
             'severity' => '16',
             'message' => 'The dumps',
             'code' => '2600000'
@@ -251,11 +247,10 @@ is_deeply ($reply,
     "One host, one disk");
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/nohost");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
 	    'dumps' => [],
-            'source_line' => '140',
             'severity' => '16',
             'message' => 'The dumps',
             'code' => '2600000'

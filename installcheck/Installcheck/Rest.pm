@@ -203,4 +203,21 @@ sub delete {
     }
 }
 
+sub remove_source_line {
+    my $reply = shift;
+    my $body = $reply->{'body'};
+
+    if ($body and ref $body eq "ARRAY") {
+	foreach my $msg (@$body) {
+	    if (ref $msg eq "HASH") {
+		delete $msg->{'source_line'};
+		if ($msg->{'error'} and ref $msg->{'error'} eq "HASH") {
+		    delete $msg->{'error'}->{'source_line'};
+		}
+	    }
+	}
+    }
+
+    return $reply;
+}
 1;

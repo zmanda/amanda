@@ -64,10 +64,9 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [],
 		'severity' => '16',
 		'message' => 'List of labels',
@@ -101,10 +100,9 @@ close TAPELIST;
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 1,
 		    'datestamp' => 20140527000201,
@@ -250,10 +248,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?config=TESTCONF2");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 1,
 		    'datestamp' => 20140527000201,
@@ -289,10 +286,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_robot");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 3,
 		    'datestamp' => 20140527000103,
@@ -350,10 +346,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?meta=AA");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 8,
 		    'datestamp' => 20140527000004,
@@ -411,10 +406,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_vtapes");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 7,
 		    'datestamp' => 20140527000005,
@@ -494,10 +488,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?reuse=1");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 1,
 		    'datestamp' => 20140527000201,
@@ -588,10 +581,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?reuse=0");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 3,
 		    'datestamp' => 20140527000103,
@@ -660,10 +652,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 10,
 		    'datestamp' => 20140527000002,
@@ -710,10 +701,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?storage=my_vtapes&config=TESTCONF&reuse=1&meta=AA");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 11,
 		    'datestamp' => 20140527000001,
@@ -749,10 +739,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		  { 'position' => 3,
 		    'datestamp' => 20140527000103,
@@ -810,10 +799,9 @@ is_deeply ($reply,
 
 #CODE 1600001
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/labels?pool=my_robot&config=TESTCONF2");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Labels.pm",
-		'source_line' => '124',
 		'tles' => [
 		],
 		'severity' => '16',

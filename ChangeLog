@@ -1,4 +1,15 @@
 2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Rest.pm (remove_source_line): Function to
+	  remove the source_line from all Message of a json reply.
+	* installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Dumps.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Storages.pl,
+	  installcheck/Amanda_Rest_Storages_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl: Use remove_source_line.
+
+2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Rest.pm: Improve rest server startup.
 
 2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>

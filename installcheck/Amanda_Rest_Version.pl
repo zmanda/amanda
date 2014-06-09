@@ -58,10 +58,9 @@ my $amperldir = $Amanda::Paths::amperldir;
 
 #CODE 1550000
 $reply = $rest->get("http://localhost:5001/amanda/v1.0");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Version.pm",
-		'source_line' => '63',
 		'BUILT_DATE' => $Amanda::Constants::BUILT_DATE,
 		'BUILT_REV' => $Amanda::Constants::BUILT_REV,
 		'BUILT_BRANCH' => $Amanda::Constants::BUILT_BRANCH,

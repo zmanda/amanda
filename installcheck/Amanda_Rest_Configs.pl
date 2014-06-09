@@ -64,10 +64,9 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_param('AMRECOVER_DO_FSF', 'YES');
 $testconf->write();
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=amrecover_do_fsf");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '161',
 		'cfgerror' => "\"$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf\", line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'severity' => '16',
 		'message' => "config warning: \"$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf\", line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
@@ -82,10 +81,9 @@ is_deeply ($reply,
 $testconf = Installcheck::Run::setup();
 $testconf->write();
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/FOOBAR?fields=runtapes");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '161',
 		'cfgerror' => "parse error: could not open conf file \"$Amanda::Paths::CONFIG_DIR/FOOBAR/amanda.conf\": No such file or directory",
 		'severity' => '16',
 		'message' => "config error: parse error: could not open conf file \"$CONFIG_DIR/FOOBAR/amanda.conf\": No such file or directory",
@@ -117,11 +115,10 @@ if (defined $reply->{'body'}[0]->{'config'}) {
     @{$reply->{'body'}[0]->{'config'}} = sort @{$reply->{'body'}[0]->{'config'}};
 }
 
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'source_line' => '230',
 		'severity' => '16',
 		'message' => 'config name',
 		'code' => '1500003'
@@ -151,11 +148,10 @@ if (@conf > 0) {
 	@{$reply->{'body'}[0]->{'config'}} = sort @{$reply->{'body'}[0]->{'config'}};
     }
 
-    is_deeply ($reply,
+    is_deeply (Installcheck::Rest::remove_source_line($reply),
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'source_line' => '230',
 		'severity' => '16',
 		'message' => 'config name',
 		'code' => '1500003'
@@ -165,10 +161,9 @@ if (@conf > 0) {
         },
         "Get config list");
 } else {
-    is_deeply ($reply,
+    is_deeply (Installcheck::Rest::remove_source_line($reply),
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '236',
 		'severity' => '16',
 		'message' => 'no config',
 		'code' => '1500004'
@@ -185,10 +180,9 @@ $testconf->write();
 chmod 0000, $config_dir;
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '219',
 		'severity' => '16',
 		'errno'    => 'Permission denied',
 		'message' => "Can't open config directory '$Amanda::Paths::CONFIG_DIR': Permission denied",
@@ -204,17 +198,15 @@ chmod 0700, $config_dir;
 
 #CODE 1500007 and 1500008
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=foobar,tapecycle");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '192',
 		'severity' => '16',
 		'parameters' => [ 'foobar' ],
 		'message' => 'Not existant parameters',
 		'code' => '1500007'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '199',
 		'severity' => '16',
 		'result' => {
 			'tapecycle' => 3 },
@@ -228,10 +220,9 @@ is_deeply ($reply,
 
 #CODE 1500008
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=runtapes,tapecycle");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '199',
 		'severity' => '16',
 		'result' => {
 			'tapecycle' => 3,
@@ -246,10 +237,9 @@ is_deeply ($reply,
 
 #CODE 1500009
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
-is_deeply ($reply,
+is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'source_line' => '206',
 		'severity' => '16',
 		'message' => 'No fields specified',
 		'code' => '1500009'
