@@ -77,7 +77,7 @@ $cat->install();
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
 is_deeply ($reply,
     { body =>
-        [ { 'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Dumps.pm',
+        [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
                          {
                            'bytes' => 0,
@@ -157,7 +157,7 @@ is_deeply ($reply,
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox");
 is_deeply ($reply,
     { body =>
-        [ { 'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Dumps.pm',
+        [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
                          {
                            'bytes' => 0,
@@ -205,7 +205,7 @@ is_deeply ($reply,
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox?disk=/lib");
 is_deeply ($reply,
     { body =>
-        [ { 'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Dumps.pm',
+        [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
                          {
                            'bytes' => 0,
@@ -253,7 +253,7 @@ is_deeply ($reply,
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/nohost");
 is_deeply ($reply,
     { body =>
-        [ { 'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Dumps.pm',
+        [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
 	    'dumps' => [],
             'source_line' => '140',
             'severity' => '16',

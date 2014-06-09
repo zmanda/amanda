@@ -1,4 +1,8 @@
 2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Dumps.pl,
+	  installcheck/Amanda_Rest_Storages.pl: Typos.
+
+2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Storages.pl,
 	  installcheck/Amanda_Rest_Dumps.pl: Add files.
 

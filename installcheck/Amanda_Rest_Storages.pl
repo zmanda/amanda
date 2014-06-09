@@ -136,7 +136,7 @@ is_deeply ($reply,
 		'storage' => 'TESTCONF',
 		'result' => { 'tapepool' => 'TESTCONF',
 			      'runtapes' => 1,
-			      'tpchanger' => 'chg-disk:/tmp/amanda/installchecks/vtapes'
+			      'tpchanger' => "chg-disk:$Installcheck::TMP/vtapes"
 			    },
                 'code' => '1500012'
           },
