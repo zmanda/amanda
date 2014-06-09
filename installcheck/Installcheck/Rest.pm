@@ -67,6 +67,13 @@ sub new {
 	die("Can't fork for rest server");
     }
 
+    my $self = {
+	pid  => $pid,
+	curl => $curl,
+	json => $json
+    };
+    bless $self, $class;
+
     # Wait for the server to start
     my $time = time();
     my $retcode = -1;
@@ -81,22 +88,18 @@ sub new {
 
 	if ($retcode !=0 and time() > $time + 5) {
 	    kill 'TERM', $pid;
-	    die("Can't connect to the Rest server.");
+
+	    $self->{'error'} = "Can't connect to the Rest server.";
+	    return $self;
 	}
     }
 
     use POSIX ":sys_wait_h";
     my $kid = waitpid($pid, WNOHANG);
 
-    my $self = {
-	pid  => $pid,
-	curl => $curl,
-	json => $json
-    };
     if ($kid == $pid) {
 	$self->{'error'} = $kid;
     }
-    bless $self, $class;
     return $self;
 }
 
