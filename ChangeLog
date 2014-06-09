@@ -1,3 +1,7 @@
+2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Storages.pl,
+	  installcheck/Amanda_Rest_Dumps.pl: Add files.
+
 2014-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Dumps.pl: Check the Dumps endpoint
 	* installcheck/Amanda_Rest_Storages.pl: Check the Storages endpoint
