@@ -68,18 +68,22 @@ sub new {
     }
 
     # Wait for the server to start
+    my $time = time();
     my $retcode = -1;
     while ($retcode != 0) {
 	$curl->setopt(CURLOPT_HEADER, 0);
-	$curl->setopt(CURLOPT_URL, "http://localhost:5001/amanda/h1/v1.0/version");
+	$curl->setopt(CURLOPT_URL, "http://localhost:5001/amanda/h1/v1.0");
 	$curl->setopt(CURLOPT_POST, 0);
 
 	my $response_body;
 	$curl->setopt(CURLOPT_WRITEDATA,\$response_body);
-
 	$retcode = $curl->perform;
+
+	if ($retcode !=0 and time() > $time + 5) {
+	    kill 'TERM', $pid;
+	    die("Can't connect to the Rest server.");
+	}
     }
-#    sleep 2;
 
     use POSIX ":sys_wait_h";
     my $kid = waitpid($pid, WNOHANG);
