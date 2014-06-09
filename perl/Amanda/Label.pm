@@ -134,7 +134,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1000051) {
 	return "Can not erase '$self->{'label'} because the device doesn't support this feature";
     } elsif ($self->{'code'} == 1000052) {
-	return "Removed label '$self->{'label'} from tapelist file.";
+	return "Removed label '$self->{'label'}' from tapelist file.";
     } elsif ($self->{'code'} == 1000053) {
 	return "Failed to erase volume with label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000054) {
@@ -151,6 +151,8 @@ sub local_message {
 	return "Can't remove the storage of label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000060) {
 	return "Can't remove the config of label '$self->{'label'}'.";
+    } elsif ($self->{'code'} == 1000061) {
+	return "No label matching '$self->{'label'}' in the tapelist file";
     }
 }
 
@@ -206,6 +208,7 @@ This methos is called every time a message must be sent to the caller.
 		 barcode     => $barcode,
 		 pool        => $pool,
 		 storage     => $storage,
+		 comment     => $comment,
 		 force       => $force);
 
 Assign the C<meta>, C<barcode>, C<pool> and C<storage> to the label, they can
@@ -425,6 +428,9 @@ sub assign {
 		}
 
 		if ($changed1 && !$error) {
+		    if (exists $params{'comment'}) {
+			$tle->{'comment'} = $params{'comment'};
+		    }
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
@@ -450,7 +456,11 @@ sub assign {
 				code   => 1000007));
 	} else {
 	    $self->{'tapelist'}->unlock();
-	    return $finished_cb->("No label matching '$params{'label'}' in the tapelist file");
+	    return $finished_cb->(Amanda::Label::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code    => 1000061,
+					label => $params{'label'}));
 	}
 
 	return $finished_cb->() if !$params{'meta'};

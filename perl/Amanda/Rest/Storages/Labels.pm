@@ -119,6 +119,7 @@ request:
         storage=STORAGE
         meta=META
         barcode=BARCODE
+        comment=COMMENT
         reuse=0|1
 
 reply:
@@ -402,8 +403,6 @@ sub add_label {
 	step done => sub {
 	    my $err = shift;
 
-	    push @result_messages, $err if $err;
-
 	    $finished_cb->();
 	};
 
@@ -482,6 +481,7 @@ sub update_label {
 			       barcode => $params{'barcode'},
 			       pool    => $params{'pool'},
 			       storage => $params{'storage'},
+			       comment => $params{'comment'},
 			       finished_cb => $steps->{'done'});
 	    } else {
 		$steps->{'done'}->();

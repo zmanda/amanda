@@ -201,7 +201,7 @@ diskflat_device_init (
     g_value_unset(&val);
 
     g_value_init(&val, G_TYPE_BOOLEAN);
-    g_value_set_boolean(&val, FALSE);
+    g_value_set_boolean(&val, TRUE);
     device_set_simple_property(dself, PROPERTY_FULL_DELETION,
 	&val, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&val);
@@ -391,16 +391,19 @@ diskflat_device_erase(
     DiskflatDevice *self = DISKFLAT_DEVICE(dself);
     VfsDevice *vself = VFS_DEVICE(dself);
 
+    if (vself->open_file_fd >= 0) {
+	robust_close(vself->open_file_fd);
+	vself->open_file_fd = -1;
+    }
+
+    vself->open_file_fd = robust_open(self->filename,
+				      O_CREAT | O_RDWR,
+				      VFS_DEVICE_CREAT_MODE);
     if (vself->open_file_fd < 0) {
-	vself->open_file_fd = robust_open(self->filename,
-					  O_CREAT | O_RDWR,
-					  VFS_DEVICE_CREAT_MODE);
-	if (vself->open_file_fd < 0) {
-	    device_set_error(dself,
-		g_strdup_printf(_("Can't open file %s: %s"), self->filename, strerror(errno)),
-			DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-	    return FALSE;
-	}
+	device_set_error(dself,
+	    g_strdup_printf(_("Can't open file %s: %s"), self->filename, strerror(errno)),
+			    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
     }
     if (ftruncate(vself->open_file_fd, 0) == -1)  {
 	g_debug("ftruncate failed: %s", strerror(errno));

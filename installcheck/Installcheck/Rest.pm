@@ -24,6 +24,7 @@ use Amanda::Paths;
 use Amanda::Debug;
 use WWW::Curl::Easy;
 use JSON;
+use Test::More;
 
 =head1 NAME
 
@@ -67,7 +68,18 @@ sub new {
     }
 
     # Wait for the server to start
-    sleep 1;
+    my $retcode = -1;
+    while ($retcode != 0) {
+	$curl->setopt(CURLOPT_HEADER, 0);
+	$curl->setopt(CURLOPT_URL, "http://localhost:5001/amanda/h1/v1.0/version");
+	$curl->setopt(CURLOPT_POST, 0);
+
+	my $response_body;
+	$curl->setopt(CURLOPT_WRITEDATA,\$response_body);
+
+	$retcode = $curl->perform;
+    }
+#    sleep 2;
 
     use POSIX ":sys_wait_h";
     my $kid = waitpid($pid, WNOHANG);
@@ -128,6 +140,42 @@ sub post {
     $self->{'curl'}->setopt(CURLOPT_INFILESIZE_LARGE, 0);
     $self->{'curl'}->setopt(CURLOPT_HTTPHEADER, [
 		"Content-Type: application/json; charset=utf-8" ]);
+
+    my $response_body;
+    $self->{'curl'}->setopt(CURLOPT_WRITEDATA,\$response_body);
+
+    my $retcode = $self->{'curl'}->perform;
+
+    if ($retcode == 0) {
+	my $http_code = $self->{'curl'}->getinfo(CURLINFO_HTTP_CODE);
+	if ($http_code >= 500) {
+	    return {
+		http_code => $http_code,
+	    };
+	} else {
+	    return {
+		http_code => $http_code,
+		body      => $self->{'json'}->decode($response_body),
+	    };
+	}
+    } else {
+	die("An error happened: $retcode ".$self->{'curl'}->strerror($retcode)." ".$self->{'curl'}->errbuf."\n");
+    }
+}
+
+sub delete {
+    my $self = shift;
+    my $url = shift;
+    my $postfields = shift;
+
+    $self->{'curl'}->setopt(CURLOPT_HEADER, 0);
+    $self->{'curl'}->setopt(CURLOPT_URL, $url);
+    $self->{'curl'}->setopt(CURLOPT_CUSTOMREQUEST, 'DELETE');
+    #$self->{'curl'}->setopt(CURLOPT_POST, 1);
+    #$self->{'curl'}->setopt(CURLOPT_POSTFIELDS, $postfields);
+    #$self->{'curl'}->setopt(CURLOPT_INFILESIZE_LARGE, 0);
+    #$self->{'curl'}->setopt(CURLOPT_HTTPHEADER, [
+#		"Content-Type: application/json; charset=utf-8" ]);
 
     my $response_body;
     $self->{'curl'}->setopt(CURLOPT_WRITEDATA,\$response_body);

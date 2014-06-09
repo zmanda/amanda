@@ -199,7 +199,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply ($reply,
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '989',
+                'source_line' => '1021',
                 'severity' => '16',
 		'type'     => 'fatal',
                 'message' => 'You must specify one of \'tapedev\' or \'tpchanger\'',
@@ -243,7 +243,13 @@ is_deeply ($reply,
                 'code'  => '1100042',
 		'slot'  => 1,
 		'type'  => 'fatal',
-		'error' => 'template is not set, you must set autolabel',
+		'error' => {
+			'source_filename' => "$amperldir/Amanda/Changer.pm",
+			'source_line' => '1548',
+			'severity' => '16',
+			'message' => 'template is not set, you must set autolabel',
+			'code' => '1100050'
+		},
           },
         ],
       http_code => 404,
@@ -462,14 +468,14 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply ($reply,
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1762',
+                'source_line' => '1851',
                 'severity' => '16',
                 'message' => 'scanning all 5 slots in changer:',
 		'num_slots' => '5',
 		'code' => '1100010',
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1836',
+                'source_line' => '1925',
                 'severity' => '16',
                 'message' => 'slot   1: date 20140509113436 label DISKFLAT-001',
 		'label' => 'DISKFLAT-001',
@@ -479,7 +485,7 @@ is_deeply ($reply,
 		'slot' => '1'
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1852',
+                'source_line' => '1941',
                 'severity' => '16',
                 'message' => 'slot   2: Error loading device header -- unlabeled volume?',
 		'dev_error' => 'Error loading device header -- unlabeled volume?',
@@ -487,7 +493,7 @@ is_deeply ($reply,
 		'slot' => '2'
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1852',
+                'source_line' => '1941',
                 'severity' => '16',
                 'message' => 'slot   3: Error loading device header -- unlabeled volume?',
 		'dev_error' => 'Error loading device header -- unlabeled volume?',
@@ -495,7 +501,7 @@ is_deeply ($reply,
 		'slot' => '3'
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1852',
+                'source_line' => '1941',
                 'severity' => '16',
                 'message' => 'slot   4: Error loading device header -- unlabeled volume?',
 		'dev_error' => 'Error loading device header -- unlabeled volume?',
@@ -503,7 +509,7 @@ is_deeply ($reply,
 		'slot' => '4'
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1852',
+                'source_line' => '1941',
                 'severity' => '16',
                 'message' => 'slot   5: Error loading device header -- unlabeled volume?',
 		'dev_error' => 'Error loading device header -- unlabeled volume?',
@@ -535,7 +541,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply ($reply,
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1126',
+                'source_line' => '1158',
                 'severity' => '16',
                 'message' => '\'chg-diskflat\' does not support clean',
 		'reason' => 'notimpl',
@@ -553,7 +559,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply ($reply,
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1126',
+                'source_line' => '1158',
                 'severity' => '16',
                 'message' => '\'chg-diskflat\' does not support verify',
 		'reason' => 'notimpl',
@@ -571,7 +577,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply ($reply,
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'source_line' => '1126',
+                'source_line' => '1158',
                 'severity' => '16',
                 'message' => '\'chg-diskflat\' does not support update',
 		'reason' => 'notimpl',
@@ -587,6 +593,8 @@ is_deeply ($reply,
 
 
 $rest->stop();
+
+rmtree $taperoot;
 
 #$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/reset","");
 #$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/eject","");

@@ -130,8 +130,40 @@ sub local_message {
     } elsif ($self->{'code'} == 1100048) {
 	return "'$self->{'chg_type'}' does not support $self->{'op'}";
     } elsif ($self->{'code'} == 1100049) {
-	return "
+	return "autolabel not set";
     } elsif ($self->{'code'} == 1100050) {
+	return "template is not set, you must set autolabel";
+    } elsif ($self->{'code'} == 1100051) {
+	return "No '\$s' in autolabel template";
+    } elsif ($self->{'code'} == 1100052) {
+	return "label '$self->{'label'}' doesn't match autolabel";
+    } elsif ($self->{'code'} == 1100053) {
+	return "Can't generate label: '%' and '!' in autolabel";
+    } elsif ($self->{'code'} == 1100054) {
+	return "Can't generate new label because volume has no barcode";
+    } elsif ($self->{'code'} == 1100055) {
+	return "Can't generate new label because volume has no slot";
+    } elsif ($self->{'code'} == 1100056) {
+	return "autolabel require at least one '%' or '!'";
+    } elsif ($self->{'code'} == 1100057) {
+	return "Label '$self->{'label'}' already exists";
+    } elsif ($self->{'code'} == 1100058) {
+	return "Can't label unlabeled volume: All labels used";
+    } elsif ($self->{'code'} == 1100059) {
+	return "Generated label is empty";
+    } elsif ($self->{'code'} == 1100060) {
+	return "template is not set, you must set meta-autolabel";
+    } elsif ($self->{'code'} == 1100061) {
+	return "Can't generate meta-label: '%' and '!' in meta-autolabel";
+    } elsif ($self->{'code'} == 1100062) {
+	return "Can't generate meta-label: no '%' or '!' in meta-autolabel";
+    } elsif ($self->{'code'} == 1100063) {
+	return "Can't label unlabeled meta volume: All meta labels used";
+    } elsif ($self->{'code'} == 1100064) {
+	return "Generated meta-label is empty";
+    } elsif ($self->{'code'} == 1100065) {
+	return "
+    } elsif ($self->{'code'} == 1100066) {
 	return "
 
     } elsif ($self->{'code'} == 1150000) {
@@ -1435,11 +1467,17 @@ sub label_to_slot {
     my $tl = $self->{'tapelist'};
     die ("make_new_tape_label: no tapelist") if !$tl;
     if (!defined $self->{'autolabel'}) {
-	return (undef, "autolabel not set");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100049));
     }
     if (!defined $self->{'autolabel'}->{'template'} ||
 	$self->{'autolabel'}->{'template'} eq "") {
-	return (undef, "template is not set, you must set autolabel");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100050));
     }
     my $template = $self->{'autolabel'}->{'template'};
     my $slot_digit = 1;
@@ -1454,7 +1492,10 @@ sub label_to_slot {
 	$slot_digit = 1 if $slot_digit < 1;
 	$template =~ s/\$[0-9]*s/SUBSTITUTE_SLOT/g;
     } else {
-	return (undef, "No '\$s' in autolabel template");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100051));
     }
 
     my $org = getconf($CNF_ORG);
@@ -1478,7 +1519,11 @@ sub label_to_slot {
     my $slot = $1;
 
     if (!defined $slot) {
-	return (undef, "label '$params{'label'}' doesn't match autolabel");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					label  => $params{'label'},
+					code   => 1100052));
     }
     return $slot;
 }
@@ -1491,10 +1536,17 @@ sub make_new_tape_label {
     die ("make_new_tape_label: no tapelist") if !$tl;
     if (!defined $self->{'autolabel'}) {
 	return (undef, "autolabel not set");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100049));
     }
     if (!defined $self->{'autolabel'}->{'template'} ||
 	$self->{'autolabel'}->{'template'} eq "") {
-	return (undef, "template is not set, you must set autolabel");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100050));
     }
     my $template = $self->{'autolabel'}->{'template'};
     my $slot_digit = 1;
@@ -1535,7 +1587,10 @@ sub make_new_tape_label {
 
     my $label;
     if ($npercents > 0 and $nexclamations > 0) {
-	return (undef, "Can't generate label: '%' and '!' in autolabel")
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100053));
     }
 
     if ($npercents == 0 and $nexclamations == 0) {
@@ -1546,13 +1601,26 @@ sub make_new_tape_label {
             $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
 	}
 	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {
-	    return (undef, "Can't generate new label because volume has no barcode");
+	    return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100054));
 	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
-	    return (undef, "Can't generate new label because volume has no slot");
+	    return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100055));
 	} elsif ($label eq $template) {
-	    return (undef, "autolabel require at least one '%' or '!'");
+	    return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100056));
 	} elsif (!$params{'label_exist'} and $tl->lookup_tapelabel($label)) {
-	    return (undef, "Label '$label' already exists", 1);
+	    return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					label  => $label,
+					code   => 1100057), 1);
 	}
     } else {
 	my %existing_labels;
@@ -1611,12 +1679,18 @@ sub make_new_tape_label {
 	}
 
 	# bail out if we didn't find an unused label
-	return (undef, "Can't label unlabeled volume: All label used")
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100058))
 		if ($i >= $nlabels);
     }
 
     if (!$label) {
-	return (undef, "Generated label is empty");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100059));
     }
 
     return $label;
@@ -1634,7 +1708,10 @@ sub make_new_meta_label {
     return if !$template;
 
     if (!$template) {
-	return (undef, "template is not set, you must set meta-autolabel");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100060));
     }
     $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
@@ -1656,10 +1733,16 @@ sub make_new_meta_label {
 
     my $meta;
     if ($npercents > 0 and $nexclamations > 0) {
-	return (undef, "Can't generate meta-label: '%' and '!' in meta-autolabel")
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100061));
     }
     if ($npercents == 0 and $nexclamations == 0) {
-	return (undef, "Can't generate meta-label: no '%' or '!' in meta-autolabel")
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100062));
     } else {
 	my %existing_meta_labels =
 	    map { $_->{'meta'} => 1 } grep { defined $_->{'meta'} } @{$tl->{'tles'}};
@@ -1701,12 +1784,18 @@ sub make_new_meta_label {
 	}
 
 	# bail out if we didn't find an unused label
-	return (undef, "Can't label unlabeled meta volume: All meta label used")
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100063))
 		if ($i >= $nlabels);
     }
 
     if (!$meta) {
-	return (undef, "Generated meta-label is empty");
+	return (undef, Amanda::Changer::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code   => 1100064));
     }
 
     return $meta;

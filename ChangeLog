@@ -1,4 +1,16 @@
 2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/diskflat-device.c: Fix erase method.
+	* perl/Amanda/Changer.pm: Many new Amanda::Changer::Message.
+	* perl/Amanda/Label.pm: Allow to assign comment.
+	* perl/Amanda/Rest/Storages/Labels.pm: Allow to assign comment.
+	* installcheck/Amanda_Rest_Storages.pl: source_line change.
+	* installcheck/Amanda_Rest_Storages_Labels.pl: Check The
+	  storages/:STORAGE/labels endpoint.
+	* installcheck/Installcheck/Rest.pm: Allow DELETE, improive rest
+	  server startup.
+	* installcheck/Makefile.am: Add Amanda_Rest_Storages_Labels.
+
+2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Dumps.pl: More typos.
 
 2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
