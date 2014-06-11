@@ -1,5 +1,10 @@
+2014-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Split in two files.
+	* config/amanda/amanda_configure.m4: All global settings.
+	* device-src/s3-util.h: Undef _
+
 2014-06-09  Jean-Louis Martineau <martineau@zmanda.com>
-	* installcheck/Installcheck/Rest.pm (): Better error if straman can't
+	* installcheck/Installcheck/Rest.pm (): Better error if starman can't
 	  be forked.
 	* installcheck/Amanda_Rest_Configs.pl,
 	  installcheck/Amanda_Rest_Dles.pl,

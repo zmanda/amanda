@@ -68,6 +68,7 @@ typedef enum
 
 #ifndef USE_GETTEXT
 /* we don't use gettextize, so hack around this ... */
+#undef _
 #define _(str) (str)
 #endif
 
