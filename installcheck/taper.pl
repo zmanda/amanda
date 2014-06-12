@@ -191,11 +191,32 @@ sub check_logs {
 
     while (@logfile and @$expected) {
 	my $logline = shift @logfile;
-	my $expline = shift @$expected;
 	chomp $logline;
-	if ($logline !~ $expline) {
-	    like($logline, $expline, $msg);
-	    return;
+	my $expline = shift @$expected;
+        if (ref $expline eq "ARRAY") {
+	    my @newexp;
+	    my $matched = 0;
+	    foreach my $expl (@$expline) {
+		if ($logline =~ $expl) {
+		    $matched = 1;
+		} else {
+		    push @newexp, $expl;
+		}
+	    }
+	    if ($matched == 0) {
+		is($matched, 1, "'$logline' matched " . Data::Dumper::Dumper(@$expected));
+		return;
+	    }
+	    if (@newexp > 1) {
+		unshift @$expected, [@newexp];
+	    } else {
+		unshift @$expected, $newexp[0];
+	    }
+        } else {
+	    if ($logline !~ $expline) {
+	        like($logline, $expline, $msg);
+	        return;
+            }
 	}
     }
     if (@logfile) {
@@ -1039,9 +1060,9 @@ check_logs([
     qr(^PART taper "ST:TESTCONF" TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper "ST:TESTCONF" localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
-    qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
-    qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
-], "two workers logged correctly 1");
+    [ qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
+      qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$) ],
+], "two worker logged correctly 1");
 cleanup_log();
 
 ##
@@ -1556,8 +1577,8 @@ check_logs([
     qr(^PART taper "ST:TESTCONF" TESTCONF02 2 localhost /u02 $datestamp 2/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1712\]$),
     qr(^PART taper "ST:TESTCONF" TESTCONF02 3 localhost /u02 $datestamp 3/-1 0 \[sec [\d.]+ bytes 90112 kps [\d.]+ orig-kb 1712\]$),
     qr(^DONE taper "ST:TESTCONF" localhost /u02 $datestamp 3 0 00000000:0 00000000:0 5957f952:614400 \[sec [\d.]+ bytes 614400 kps [\d.]+ orig-kb 1712\]$),
-    qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
-    qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$),
+    [ qr(^INFO taper tape TESTCONF02 kb 600 fm 3 \[OK\]$),
+      qr(^INFO taper tape TESTCONF01 kb 292 fm 2 \[OK\]$) ],
 ], "two workers logged correctly 2");
 cleanup_log();
 
