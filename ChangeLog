@@ -1,3 +1,6 @@
+2014-06-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/taper.pl: Accept some log lines in varying order.
+
 2014-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add 'directory is on a different
 	  filesystem; not dumped' as a normal message.
