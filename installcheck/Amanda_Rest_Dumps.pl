@@ -73,9 +73,25 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 my $cat = Installcheck::Catalogs::load("bigdb");
 $cat->install();
 
+sub sort_dumps {
+    my $dumps = shift;
+
+    return sort {$a->{'hostname'} cmp $b->{'hostname'}} $dumps;
+}
+
+sub sort_reply {
+    my $reply = shift;
+
+    if (exists $reply->{'body'}[0]->{'dumps'}) {
+        for my $i (0 .. @{$reply->{'body'}[0]->{'dumps'}}) {
+            $reply->{'body'}[0]->{'dumps'}[$1] = sort_dumps($reply->{'body'}[0]->{'dumps'}[$1]);
+        }
+    }
+}
+
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
+is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
+    sort_reply({ body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
             'dumps' => [
                          {
@@ -149,8 +165,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
           }
          ],
       http_code => 200,
-    },
-    "All hosts");
+    }),
+    "All hosts") || diag(Data::Dumper::Dumper($reply));
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps/hosts/otherbox");
 is_deeply (Installcheck::Rest::remove_source_line($reply),

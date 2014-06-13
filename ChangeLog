@@ -1,3 +1,6 @@
+2014-06-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Dumps.pl: Sort dumps in reply.
+
 2014-06-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/taper.pl: Accept some log lines in varying order.
 
