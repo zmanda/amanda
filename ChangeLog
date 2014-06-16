@@ -1,4 +1,8 @@
 2014-06-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am: Fix for client/server install-build-dependencies
+	  target.
+
+2014-06-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am, common-src/Makefile.am, device-src/Makefile.am,
 	  ndmp-src/Makefile.am, xfer-src/Makefile.am: Add
 	  install-build-dependencies target.

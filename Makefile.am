@@ -111,7 +111,8 @@ dist-hook:
 	find $(distdir)/. -name '*.test.c' -exec rm {} \;
 
 install-build-dependencies:
-	rm -rf ${DESTDIR}/*
+	rm -rf ${DESTDIR}
+if WANT_SERVER
 	(cd common-src ; make install-build-dependencies)
 	(cd xfer-src ; make install-build-dependencies)
 	(cd ndmp-src ; make install-build-dependencies)
@@ -140,7 +141,8 @@ install-build-dependencies:
 	find . -name '*.h' -exec cp {} ${DESTDIR}/include/{} \;
 	mkdir ${DESTDIR}/config
 	cp -av config/amanda config/gnulib config/macro-archive ${DESTDIR}/config
-	echo ${CONFIGURE_ARGS} > ${DESTDIR}/configure_args
+endif
+	echo "${CONFIGURE_ARGS}" > ${DESTDIR}/configure_args
 
 # ensure that configure gets the right arguments for distcheck; this keeps the
 # user/group through to the distcheck, rather than defaulting back to 'amanda'.
