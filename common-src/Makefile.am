@@ -292,6 +292,8 @@ listlibsrc:
 	echo '#define TEST' >$@
 	echo '#include "$<"' >>$@
 
+install-build-dependencies: install-data-am
+
 distclean-local:
 	if test `cd $(srcdir) && pwd` != `pwd`; then rm -f svn-info.h; fi
 MAINTAINERCLEANFILES+=svn-info.h

@@ -94,3 +94,6 @@ noinst_HEADERS = \
 	vfs-device.h
 
 aminclude_HEADERS = 
+
+install-build-dependencies: install-data-am
+	sed -e 's@ ${amlibdir}@ ${DESTDIR}${amlibdir}@g' -i ${DESTDIR}/${amlibdir}/libamdevice.la

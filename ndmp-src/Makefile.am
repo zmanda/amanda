@@ -283,3 +283,7 @@ EXTRA_DIST += \
 	ShakeOut.sh \
 	ThingsToTry \
 	idx_dump.pl
+
+install-build-dependencies: install-data-am
+	sed -e 's@ ${amlibdir}@ ${DESTDIR}${amlibdir}@g' -i ${DESTDIR}/${amlibdir}/libndmlib.la
+

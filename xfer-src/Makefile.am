@@ -69,3 +69,7 @@ listlibsrc:
 		listlibsrcs="$$listlibsrcs `pwd`/$$p";		\
 	done;							\
 	echo $$listlibsrcs >listlibsrc.output
+
+install-build-dependencies: install-data-am
+	sed -e 's@ ${amlibdir}@ ${DESTDIR}${amlibdir}@g' -i ${DESTDIR}/${amlibdir}/libamxfer.la
+
