@@ -112,6 +112,7 @@ dist-hook:
 
 install-build-dependencies:
 	rm -rf ${DESTDIR}
+	mkdir -p ${DESTDIR}
 if WANT_SERVER
 	(cd common-src ; make install-build-dependencies)
 	(cd xfer-src ; make install-build-dependencies)

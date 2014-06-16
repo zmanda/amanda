@@ -1,4 +1,7 @@
 2014-06-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am: Create the directory.
+
+2014-06-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am: Fix for client/server install-build-dependencies
 	  target.
 
