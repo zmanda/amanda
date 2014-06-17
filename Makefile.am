@@ -118,6 +118,7 @@ if WANT_SERVER
 	(cd xfer-src ; make install-build-dependencies)
 	(cd ndmp-src ; make install-build-dependencies)
 	(cd device-src ; make install-build-dependencies)
+endif
 	mkdir ${DESTDIR}/include
 	mkdir ${DESTDIR}/include/common-src
 	mkdir ${DESTDIR}/include/device-src
@@ -142,7 +143,6 @@ if WANT_SERVER
 	find . -name '*.h' -exec cp {} ${DESTDIR}/include/{} \;
 	mkdir ${DESTDIR}/config
 	cp -av config/amanda config/gnulib config/macro-archive ${DESTDIR}/config
-endif
 	echo "${CONFIGURE_ARGS}" > ${DESTDIR}/configure_args
 
 # ensure that configure gets the right arguments for distcheck; this keeps the

@@ -1,3 +1,7 @@
+2014-06-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am (install-build-dependencies): Copy include and config
+	  for client.
+
 2014-06-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am: Create the directory.
 
