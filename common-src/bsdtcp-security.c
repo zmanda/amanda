@@ -339,7 +339,7 @@ runbsdtcp(
 				       STREAM_BUFSIZE,
 				       STREAM_BUFSIZE,
 				       &my_port,
-				       1,
+				       0,
 				       1);
     set_root_privs(0);
     rh->next_res = rh->next_res->ai_next;
