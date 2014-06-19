@@ -71,5 +71,5 @@ listlibsrc:
 	echo $$listlibsrcs >listlibsrc.output
 
 install-build-dependencies: install-data-am
-	sed -e 's@ ${amlibdir}@ ${DESTDIR}${amlibdir}@g' -i ${DESTDIR}/${amlibdir}/libamxfer.la
+	sed -e 's@ ${amlibdir}/libam@ ${DESTDIR}${amlibdir}/libam@g' -i ${DESTDIR}/${amlibdir}/libamxfer.la
 

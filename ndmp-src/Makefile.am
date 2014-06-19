@@ -285,5 +285,5 @@ EXTRA_DIST += \
 	idx_dump.pl
 
 install-build-dependencies: install-data-am
-	sed -e 's@ ${amlibdir}@ ${DESTDIR}${amlibdir}@g' -i ${DESTDIR}/${amlibdir}/libndmlib.la
+	sed -e 's@ ${amlibdir}/libam@ ${DESTDIR}${amlibdir}/libam@g' -i ${DESTDIR}/${amlibdir}/libndmlib.la
 
