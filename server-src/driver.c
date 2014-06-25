@@ -213,7 +213,7 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda");
 
@@ -665,7 +665,7 @@ wait_children(int count)
 		    who = g_strdup("unknown");
 		}
 		if(who && what) {
-		    log_add(L_WARNING, _("%s pid %u exited with %s %d\n"), who, 
+		    log_add(L_WARNING, _("%s pid %u exited with %s %d\n"), who,
 			    (unsigned)pid, what, code);
 		    g_printf(_("driver: %s pid %u exited with %s %d\n"), who,
 			   (unsigned)pid, what, code);
@@ -1513,7 +1513,7 @@ handle_dumpers_time(
 {
     disklist_t *runq = cookie;
     event_release(dumpers_ev_time);
-    dumpers_ev_time = NULL; 
+    dumpers_ev_time = NULL;
     start_some_dumps(runq);
 }
 
@@ -2482,7 +2482,7 @@ dumper_chunker_result(
 	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
 		dp->host->hostname, qname, sched(dp)->datestamp,
 		sched(dp)->level,
-		sched(dp)->est_time, (long long)sched(dp)->est_nsize, 
+		sched(dp)->est_time, (long long)sched(dp)->est_nsize,
                 (long long)sched(dp)->est_csize,
 		sched(dp)->est_kps);
 	amfree(qname);

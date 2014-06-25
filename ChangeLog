@@ -1,3 +1,6 @@
+2014-06-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Remove useless space.
+
 2014-06-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/Makefile.am, patching file ndmp-src/Makefile.am,
 	  xfer-src/Makefile.am: Fix install-build-dependencies.
