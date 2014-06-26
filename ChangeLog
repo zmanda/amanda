@@ -1,3 +1,8 @@
+2014-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am: Use ${MKDIR_P}
+	* device-src/Makefile.am, ndmp-src/Makefile.am, xfer-src/Makefile.am:
+	  Use ${SED}
+
 2014-06-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Remove useless space.
 

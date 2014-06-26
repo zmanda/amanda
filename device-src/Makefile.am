@@ -96,5 +96,5 @@ noinst_HEADERS = \
 aminclude_HEADERS = 
 
 install-build-dependencies: install-data-am
-	sed -e 's@ ${amlibdir}/libam@ ${DESTDIR}${amlibdir}/libam@g' -i ${DESTDIR}/${amlibdir}/libamdevice.la
-	sed -e 's@ ${amlibdir}/libndmlib@ ${DESTDIR}${amlibdir}/libndmlib@g' -i ${DESTDIR}/${amlibdir}/libamdevice.la
+	${SED} -e 's@ ${amlibdir}/libam@ ${DESTDIR}${amlibdir}/libam@g' -i ${DESTDIR}/${amlibdir}/libamdevice.la
+	${SED} -e 's@ ${amlibdir}/libndmlib@ ${DESTDIR}${amlibdir}/libndmlib@g' -i ${DESTDIR}/${amlibdir}/libamdevice.la
