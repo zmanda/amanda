@@ -1,3 +1,7 @@
+2014-06-26  Strong Liang <strong@zmanda.com>
+	* server-src/driver.c: Updated copyright-info.
+	* ChangeLog: trimed trailing spaces.
+
 2014-06-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am: Use ${MKDIR_P}
 	* device-src/Makefile.am, ndmp-src/Makefile.am, xfer-src/Makefile.am:
@@ -4213,7 +4217,7 @@
 2011-09-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl: Do not use gpg-agent if it is not
 	  available.
-		  
+
 2011-09-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c (print_platform): Another fix.
 
@@ -4386,7 +4390,7 @@
 	* perl/Amanda/Changer.pm: Support minimun number of digit in $3s
 	  autolabel template.
 	* man/xml-source/amanda.conf.5.xml: Document it.
-  
+
 2011-07-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm (do_release): Support eject params.
 	* perl/Amanda/Changer/single.pm (do_release): Do the eject correctly.
@@ -4458,7 +4462,7 @@
 	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm,
 	  perl/Amanda/Taper/Scribe.pm: Call make_new_tape_label with the slot.
 	* man/xml-source/amanda.conf.5.xml: Document $s substitution.
-					  
+
 2011-07-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Fix compuation of npercents and
 	  nexclamations.
@@ -5632,7 +5636,7 @@
 					    taperscan section.
 	* perl/Amanda/Changer.pm (new): Take tapelist, labelstr, autolabel and
 	  meta_autolabel arguments.
-	* perl/Amanda/Changer.pm (volume_is_labelable, make_new_meta_label, 
+	* perl/Amanda/Changer.pm (volume_is_labelable, make_new_meta_label,
 	  make_new_tape_label, have_inventory: New method.
 	* perl/Amanda/Interactive.pm: Renamed
 	* perl/Amanda/Interactive/stdin.pm: Renamed
@@ -5681,7 +5685,7 @@
 	  xfer-src/xfer-element.c xfer-src/xfer-element.h: xfer: rename
 	  xfer_element_drain* utility functions - Both functions are used to
 	  pulling data from an upstream element, either buffers or reading a
-	  file descriptor, until it is "empty". 
+	  file descriptor, until it is "empty".
 
 2011-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/amndma_tape_simulator.c: Use full_read.
@@ -6252,7 +6256,7 @@
 2010-11-02  Nikhil Bhupale <nikhilb@zmanda.com>
 	* server-src/amtape.pl: Remove call to set_label.
 	* server-src/amcheck-device.pl: Remove call to set_label.
- 
+
 2010-10-29  Dustin J. Mitchell <dustin@mozilla.com>
 	* man/xml-source/amanda-changers.7.xml: improve chg-disk properties
 	  documentation
@@ -6536,7 +6540,7 @@
 
 2010-10-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Report.pm: fix autovivification bug
-	* perl/Amanda/Report/human.pm: detect re-flushing; fix a lot of 
+	* perl/Amanda/Report/human.pm: detect re-flushing; fix a lot of
 	  undefined's
 
 2010-10-04  Jean-Louis Martineau <martineau@zmanda.com>
@@ -7597,7 +7601,7 @@
 	* device-src/xfer-dest-taper-cacher.c: new name for old .._splitter
 	* perl/Amanda/Xfer.pod perl/Amanda/XferServer.swg: SWIG new class
 	  and renamed class
-	* device-src/xfer-dest-taper-directtcp.c 
+	* device-src/xfer-dest-taper-directtcp.c
 	  device-src/xfer-dest-taper.c: move null cach_inform to parent class
 	* device-src/xfer-device.h: prototypes
 	* device-src/Makefile.am: new file
@@ -8068,7 +8072,7 @@
 
 2010-05-11 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/common/substitute.pl: added.  contains much machinery not
-	   yet used in packaging. 
+	   yet used in packaging.
 	*  packaging/deb/changelog.src: added %%DEB_REL%%,%%DISTRO%% and
 	   %%DATE%% macros which are expanded by substitute.pl.
 	*  packaging/deb/changelog: renamed to above
@@ -8080,7 +8084,7 @@
 	* common-src/bsd-security.c: Use global buffer for bsd_stream_read_sync
 
 2010-05-07  Jean-Louis Martineau <martineau@zmanda.com>
-	* common-src/security-util.c: Use global buffer for 
+	* common-src/security-util.c: Use global buffer for
 	  security_stream_read_sync.
 	* recover-src/amrecover.c, recover-src/extract_list.c: Free buffer
 	  returnned by security_stream_read_sync.
@@ -8764,7 +8768,7 @@
 	*  configure.in: update to rc06.  NOTEST
 
 2010-03-11 Dan Locks <dwlocks@zmanda.com>
-	*  configure.in: update to rc05. 
+	*  configure.in: update to rc05.
 
 2010-03-11  Paul C. Mantz <pcmantz@zmanda.com>
 	* perl/Amanda/Report.pm: fixed order that messages are reported
@@ -9832,7 +9836,7 @@
 	  on a spanned NDMP device
 
 2010-01-13  Dustin J. Mitchell <dustin@zmanda.com>
-	* installcheck/Installcheck/Dumpcache.pm: Add an 'ndmp' dumpcache 
+	* installcheck/Installcheck/Dumpcache.pm: Add an 'ndmp' dumpcache
 	* installcheck/Installcheck/Mock.pm: add a way to revive it for
 	  recovery tests
 	* installcheck/amfetchdump.pl: use it
@@ -9960,7 +9964,7 @@
 	  device-src/xfer-dest-taper-splitter.c device-src/xfer-dest-taper.c:
 	  add a use_device method, start_part no longer needs a device
 	* perl/Amanda/Device.pod perl/Amanda/Device.swg perl/Amanda/Xfer.pod
-	  perl/Amanda/XferServer.swg: SWIG it 
+	  perl/Amanda/XferServer.swg: SWIG it
 	* perl/Amanda/Taper/Scribe.pm: call new use_device and start_part
 	* installcheck/Amanda_Xfer.pl installcheck/taper.pl: test it
 
@@ -10454,8 +10458,8 @@
 2009-12-03  Paul C. Mantz <pcmantz@zmanda.com>
 	* server-src/tapefile.c server-src/tapefile.h
           perl/Amanda/Tapelist.swg installcheck/Amanda_Tapelist.pl:
-          added and swigged get_last_reusable_tape_label(). 
-	
+          added and swigged get_last_reusable_tape_label().
+
 2009-12-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: continue the scan on inuse
 						 error.
@@ -10523,7 +10527,7 @@
 				    XferDestTaperClass.
 	* device-src/xfer-dest-taper.c: new
 			xfer_dest_taper_get_part_bytes_written function.
-	* device-src/xfer-dest-taper-splitter.c: New 
+	* device-src/xfer-dest-taper-splitter.c: New
 			get_part_bytes_written_impl function.
 	* perl/Amanda/Taper/Scribe.pm: New get_bytes_written method.
 	* perl/Amanda/XferServer.swg: swig
@@ -10713,12 +10717,12 @@
 	   perl:Depends
 	*  packaging/deb/rules: tweak build dirs for clarity, update shlibs
 	   invocation, remove unneeded debhelper commands.
-	*  packaging/deb/amanda-backup-server.substvars, 
+	*  packaging/deb/amanda-backup-server.substvars,
 	   packaging/deb/amanda-backup-client.substvars: delete. These files
 	   are generated at build time
 
 2009-11-13 Dan Locks <dwlocks@zmanda.com>
-	*  packaging/deb/buildpkg: delete unused functions, detect and add 
+	*  packaging/deb/buildpkg: delete unused functions, detect and add
 	   distro/release tag to version number changelog prior to build
 
 2009-11-12  Jean-Louis Martineau <martineau@zmanda.com>
@@ -10822,7 +10826,7 @@
 	* ndmp-src/ndml_log.c: use static to eliminate unnecessary global
 
 2009-10-29  Satya Ganga <gsat@zmanda.com>
-	* application-src/amgtar.c,application-src/amstar.c: Correct validation 
+	* application-src/amgtar.c,application-src/amstar.c: Correct validation
 	  of directory property for existence and access.
 
 2009-10-29  Satya Ganga <gsat@zmanda.com>
@@ -10833,7 +10837,7 @@
 	* client-src/sendsize.c: Fix error reporting.
 
 2009-10-29  Satya Ganga <gsat@zmanda.com>
-	* ndmp-src/ndmos_glib.h: On Solaris platforms create platform specific 
+	* ndmp-src/ndmos_glib.h: On Solaris platforms create platform specific
 				 environment for NDMP
 
 2009-10-28  Jean-Louis Martineau <martineau@zmanda.com>
