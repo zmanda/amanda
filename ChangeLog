@@ -1,3 +1,8 @@
+2014-07-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driverio.c (update_info_dumper): Do not update if size or
+	  csize is 0.
+	* server-src/server_util.c: Do not uses history if size is 0.
+
 2014-06-26  Strong Liang <strong@zmanda.com>
 	* server-src/driver.c: Updated copyright-info.
 	* ChangeLog: trimed trailing spaces.

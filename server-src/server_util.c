@@ -605,7 +605,7 @@ internal_server_estimate(
 
 	for (j=NB_HISTORY-2; j>=0; j--) {
 	    if (info->history[j].level == 0) {
-		if (info->history[j].size < (gint64)0) continue;
+		if (info->history[j].size <= (gint64)0) continue;
 		est_size = info->history[j].size;
 		nb_est++;
 	    }
@@ -636,7 +636,7 @@ internal_server_estimate(
 
 	for (j=NB_HISTORY-2; j>=0; j--) {
 	    if (info->history[j].level <= 0) continue;
-	    if (info->history[j].size < (gint64)0) continue;
+	    if (info->history[j].size <= (gint64)0) continue;
 	    if (info->history[j].level == info->history[j+1].level) {
 		if (nb_day <NB_DAY-1) nb_day++;
 		est_size_day[nb_day] += info->history[j].size;
@@ -681,7 +681,7 @@ internal_server_estimate(
 
 	for (j=NB_HISTORY-2; j>=0; j--) {
 	    if (info->history[j].level <= 0) continue;
-	    if (info->history[j].size < (gint64)0) continue;
+	    if (info->history[j].size <= (gint64)0) continue;
 	    if (info->history[j].level == info->history[j+1].level + 1 ) {
 		est_size += info->history[j].size;
 		nb_est++;
