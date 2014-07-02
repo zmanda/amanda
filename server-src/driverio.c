@@ -980,6 +980,11 @@ update_info_dumper(
 
     level = sched(dp)->level;
 
+    if (infp->size == 0 || infp->csize = 0) {
+	g_debug("not updating because size or csize is 0");
+	return;
+    }
+
     conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if (open_infofile(conf_infofile)) {
 	error(_("could not open info db \"%s\""), conf_infofile);
