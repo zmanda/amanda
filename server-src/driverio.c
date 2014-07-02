@@ -1122,7 +1122,7 @@ update_info_dumper(
 
     level = sched(dp)->level;
 
-    if (infp->size == 0 || infp->csize = 0) {
+    if (infp->size == 0 || infp->csize == 0) {
 	g_debug("not updating because size or csize is 0");
 	return;
     }
