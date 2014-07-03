@@ -2823,16 +2823,18 @@ handle_dumper_result(
 	    if (dumper->result != LAST_TOK &&
 		job->chunker->result != LAST_TOK)
 		dumper_chunker_result(job);
-	} else if (job->wtaper->ready) { /* send the dumper result to the taper */
-	    wtaper = job->wtaper;
-	    taper = wtaper->taper;
-	    if (cmd == DONE) {
-		taper_cmd(taper, wtaper, DONE, dp, NULL, 0, NULL);
-	    } else {
-		taper_cmd(taper, wtaper, FAILED, dp, NULL, 0, NULL);
+	} else {
+	    if (job->wtaper->ready) { /* send the dumper result to the taper */
+		wtaper = job->wtaper;
+		taper = wtaper->taper;
+		if (cmd == DONE) {
+		    taper_cmd(taper, wtaper, DONE, dp, NULL, 0, NULL);
+		} else {
+		    taper_cmd(taper, wtaper, FAILED, dp, NULL, 0, NULL);
+		}
+		wtaper->sendresult = 0;
 	    }
-	    wtaper->sendresult = 0;
-	    if (job->dumper && wtaper->result != LAST_TOK) {
+	    if (job->dumper && job->wtaper->result != LAST_TOK) {
 		dumper_taper_result(job);
 	    }
 	}
