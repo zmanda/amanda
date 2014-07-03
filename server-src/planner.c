@@ -190,7 +190,6 @@ main(
     int moved_one;
     int diskarg_offset;
     gint64 initial_size;
-    int i;
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_cmdfile;
@@ -199,6 +198,8 @@ main(
     char *qname;
     int    nb_disk;
     char  *errstr = NULL;
+    GPtrArray *err_array;
+    guint i;
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     int    planner_setuid;
@@ -383,12 +384,18 @@ main(
     g_fprintf(stderr, _("%s: timestamp %s\n"),
 		    get_pname(), planner_timestamp);
 
-    errstr = match_disklist(&origq, exact_match, argc-diskarg_offset,
+    err_array = match_disklist(&origq, exact_match, argc-diskarg_offset,
 				    argv+diskarg_offset);
-    if (errstr) {
-	g_fprintf(stderr,"%s",errstr);
-        exit_status = EXIT_FAILURE;
+    if (err_array->len > 0) {
+	for (i = 0; i < err_array->len; i++) {
+	    char *errstr = g_ptr_array_index(err_array, i);
+	    g_fprintf(stderr, "%s\n", errstr);
+	    g_debug("%s", errstr);
+	    log_add(L_INFO, "%s", errstr);
+	    exit_status = EXIT_FAILURE;
+	}
     }
+    g_ptr_array_free(err_array, TRUE);
 
     for (dlist = origq.head; dlist != NULL; dlist = dlist->next) {
 	dp = dlist->data;

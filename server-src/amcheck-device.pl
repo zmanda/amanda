@@ -39,15 +39,17 @@ Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE);
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $overwrite = 0;
+my $opt_message = 0;
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+    'message' => \$opt_message,
     'w' => \$overwrite,
 ) or usage();
 
 sub usage {
-    print STDERR "USAGE: amcheck-device <config> <storage> [-w] <config-overwrites>";
+    print STDERR "USAGE: amcheck-device <config> <storage> [--message] [-w] <config-overwrites>";
     exit 1;
 }
 

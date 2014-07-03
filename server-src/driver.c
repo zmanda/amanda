@@ -202,6 +202,7 @@ main(
     int from_client = FALSE;
     char *storage_name;
     int sum_taper_parallel_write;
+    char *argv0;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("driver-%s\n", VERSION);
@@ -241,6 +242,7 @@ main(
     if (argc > 1)
 	cfg_opt = argv[1];
     set_config_overrides(cfg_ovr);
+    argv0 = argv[0];
 
     if(argc > 2) {
         if(g_str_equal(argv[2], "nodump")) {
@@ -293,7 +295,7 @@ main(
 
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_printf(_("%s: pid %ld executable %s version %s\n"),
-	   get_pname(), (long) getpid(), argv[0], VERSION);
+	   get_pname(), (long) getpid(), argv0, VERSION);
 
     safe_cd(); /* do this *after* config_init */
 

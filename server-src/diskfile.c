@@ -1731,7 +1731,7 @@ disable_skip_disk(
 }
 
 
-char *
+GPtrArray *
 match_disklist(
     disklist_t *origqp,
     gboolean    exact_match,
@@ -1739,7 +1739,7 @@ match_disklist(
     char **	sargv)
 {
     char *prevhost = NULL;
-    char *errstr;
+    GPtrArray *err_array = g_ptr_array_new();
     int i;
     int match_a_host;
     int match_a_disk;
@@ -1747,11 +1747,10 @@ match_disklist(
     GList  *dlist;
     disk_t *dp_skip;
     disk_t *dp;
-    GString *errbuf;
     char **new_sargv = NULL;
 
-    if(sargc <= 0)
-	return NULL;
+    if (sargc <= 0)
+	return err_array;
 
     if (exact_match) {
 	new_sargv = g_new0(char *, sargc+1);
@@ -1764,8 +1763,6 @@ match_disklist(
 	}
 	sargv = new_sargv;
     }
-
-    errbuf = g_string_new(NULL);
 
     for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
 	dp = dlist->data;
@@ -1821,19 +1818,19 @@ match_disklist(
 			    }
 		    }
 		    if (!match_a_disk)
-                        g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
+			g_ptr_array_add(err_array, g_strdup_printf("All disks on host '%s' are ignored or have strategy \"skip\".", prevhost));
 		}
 		prevhost = sargv[i];
 		prev_match = 1;
 	    }
 	    else {
-                g_string_append_printf(errbuf, "Argument '%s' matches neither a host nor a disk%s\n",
-                    sargv[i], (strchr(sargv[i], '\\')) ? "; quoting may be incorrect." : ".");
+                g_ptr_array_add(err_array, g_strdup_printf("Argument '%s' matches neither a host nor a disk%s",
+                    sargv[i], (strchr(sargv[i], '\\')) ? "; quoting may be incorrect." : "."));
 		prev_match = 0;
 	    }
 	} else if (dp_skip) {
-                g_string_append_printf(errbuf, "Argument '%s' matches a disk %s.\n",
-                   sargv[i], (dp_skip->strategy == DS_SKIP) ? "with strategy \"skip\"" : "marked \"ignore\"");
+		g_ptr_array_add(err_array, g_strdup_printf("Argument '%s' matches a disk %s.",
+                   sargv[i], (dp_skip->strategy == DS_SKIP) ? "with strategy \"skip\"" : "marked \"ignore\""));
 		prev_match = 0;
 	}
     }
@@ -1849,7 +1846,7 @@ match_disklist(
 		}
 	}
         if (!match_a_disk)
-            g_string_append_printf(errbuf, "All disks on host '%s' are ignored or have strategy \"skip\".\n", prevhost);
+            g_ptr_array_add(err_array, g_strdup_printf("All disks on host '%s' are ignored or have strategy \"skip\".", prevhost));
     }
 
     for(dlist = origqp->head; dlist != NULL; dlist = dlist->next) {
@@ -1858,19 +1855,12 @@ match_disklist(
 	    dp->todo = 0;
     }
 
-    errstr = g_string_free(errbuf, FALSE);
-
-    if (!*errstr) { /* We want to return NULL instead of an empty string */
-        g_free(errstr);
-        errstr = NULL;
-    }
-
     if (new_sargv) {
 	for (i=0; i<sargc; i++)
 	    g_free(new_sargv[i]);
 	g_free(new_sargv);
     }
-    return errstr;
+    return err_array;
 }
 
 gboolean
@@ -1883,7 +1873,8 @@ match_dumpfile(
     disk_t d;
     am_host_t h;
     disklist_t dl;
-    char *errstr;
+    GPtrArray *err_array;
+    guint i;
 
     /* rather than try to reproduce the adaptive matching logic in
      * match_disklist, this simply creates a new, fake disklist with one
@@ -1902,11 +1893,14 @@ match_dumpfile(
 
     dl.head = dl.tail = g_list_prepend(NULL, &d);
 
-    errstr = match_disklist(&dl, exact_match, sargc, sargv);
-    if (errstr) {
-	g_debug("%s", errstr);
-	g_free(errstr);
+    err_array = match_disklist(&dl, exact_match, sargc, sargv);
+    if (err_array->len > 0) {
+	for (i = 0; i < err_array->len; i++) {
+	    char *errstr = g_ptr_array_index(err_array, i);
+	    g_debug("%s", errstr);
+	}
     }
+    g_ptr_array_free(err_array, TRUE);
     if (g_list_delete_link(dl.head, dl.head) != NULL) {
     };
     return d.todo;
