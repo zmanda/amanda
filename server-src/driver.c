@@ -2534,13 +2534,15 @@ handle_dumper_result(
 	    if( dumper->result != LAST_TOK &&
 	 	dumper->chunker->result != LAST_TOK)
 		dumper_chunker_result(dp);
-	} else if (taper->ready) { /* send the dumper result to the taper */
-	    if (cmd == DONE) {
-		taper_cmd(DONE, dp, NULL, 0, NULL);
-	    } else {
-		taper_cmd(FAILED, dp, NULL, 0, NULL);
+	} else {
+	    if (taper->ready) { /* send the dumper result to the taper */
+		if (cmd == DONE) {
+		    taper_cmd(DONE, dp, NULL, 0, NULL);
+		} else {
+		    taper_cmd(FAILED, dp, NULL, 0, NULL);
+		}
+		taper->sendresult = 0;
 	    }
-	    taper->sendresult = 0;
 	    if (taper->dumper && taper->result != LAST_TOK) {
 		dumper_taper_result(dp);
 	    }

@@ -1,3 +1,7 @@
+2014-07-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (handle_dumper_result): Call dumper_taper_result
+	  if we already get the taper result.
+
 2014-07-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c (update_info_dumper): Do not update if size or
 	  csize is 0.
