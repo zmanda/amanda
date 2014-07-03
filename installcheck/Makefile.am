@@ -47,6 +47,7 @@ server_tests = \
 	Amanda_Recovery_Planner \
 	Amanda_Recovery_Scan \
 	Amanda_Report \
+	Amanda_Rest_Amcheck \
 	Amanda_Rest_Configs \
 	Amanda_Rest_Dles \
 	Amanda_Rest_Dumps \

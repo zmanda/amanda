@@ -376,7 +376,8 @@ diskloop(
     GList  *dlist;
     disk_t *dp;
     int count = 0;
-    char *errstr;
+    GPtrArray *err_array;
+    guint i;
 
     if(argc < 4) {
 	g_fprintf(stderr,_("%s: expecting \"%s [<hostname> [<disks>]* ]+\"\n"),
@@ -384,11 +385,15 @@ diskloop(
 	usage();
     }
 
-    errstr = match_disklist(&diskq, exact_match, argc-3, argv+3);
-    if (errstr) {
-	g_printf("%s", errstr);
-	amfree(errstr);
+    err_array = match_disklist(&diskq, exact_match, argc-3, argv+3);
+    if (err_array->len > 0) {
+	for (i = 0; i < err_array->len; i++) {
+	    char *errstr = g_ptr_array_index(err_array, i);
+	    g_debug("%s", errstr);
+	    g_printf("%s\n", errstr);
+	}
     }
+    g_ptr_array_free(err_array, TRUE);
 
     for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
 	dp = dlist->data;
@@ -995,7 +1000,8 @@ find(
     int start_argc;
     char *sort_order = NULL;
     find_result_t *output_find;
-    char *errstr;
+    GPtrArray *err_array;
+    guint      i;
     char **output_find_log;
     char **name;
 
@@ -1045,8 +1051,17 @@ find(
 	}
     }
     start_argc=4;
-    errstr = match_disklist(&diskq, exact_match, argc-(start_argc-1),
-						 argv+(start_argc-1));
+    err_array = match_disklist(&diskq, exact_match, argc-(start_argc-1),
+						    argv+(start_argc-1));
+    if (err_array->len > 0) {
+	for (i = 0; i < err_array->len; i++) {
+	    char *errstr = g_ptr_array_index(err_array, i);
+	    g_debug("%s", errstr);
+	    g_printf("%s\n", errstr);
+	}
+    }
+    g_ptr_array_free(err_array, TRUE);
+
 
     /* check all log file exists */
     output_find_log = find_log();
@@ -1062,13 +1077,17 @@ find(
 	find_result_t *new_output_find = NULL;
 	disk_t *dp;
 
-	amfree(errstr);
-	errstr = match_disklist(&diskq, exact_match, argc-(start_argc-1),
-						     argv+(start_argc-1));
-	if (errstr) {
-	    g_printf("%s", errstr);
-	    amfree(errstr);
+	err_array = match_disklist(&diskq, exact_match, argc-(start_argc-1),
+							argv+(start_argc-1));
+	if (err_array->len > 0) {
+	    for (i = 0; i < err_array->len; i++) {
+		char *errstr = g_ptr_array_index(err_array, i);
+		g_debug("%s", errstr);
+		g_printf("%s\n", errstr);
+	    }
 	}
+	g_ptr_array_free(err_array, TRUE);
+
 	for (afind = output_find; afind; afind = afind_next) {
 	    afind_next = afind->next;
 	    dp = lookup_disk(afind->hostname, afind->diskname);
@@ -1080,9 +1099,6 @@ find(
 	    }
 	}
 	output_find = new_output_find;
-    } else if (errstr) {
-	g_printf("%s", errstr);
-	amfree(errstr);
     }
 
     sort_find_result(sort_order, &output_find);

@@ -180,7 +180,7 @@ char *xml_dumptype_properties(disk_t *dp);
  */
 void disable_skip_disk(disklist_t *origqp);
 
-char *match_disklist(disklist_t *origqp, gboolean exact_match, int sargc,
+GPtrArray *match_disklist(disklist_t *origqp, gboolean exact_match, int sargc,
 		     char **sargv);
 gboolean match_dumpfile(dumpfile_t *file, gboolean exact_match, int sargc,
 			char **sargv);

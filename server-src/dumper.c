@@ -348,6 +348,7 @@ main(
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     int dumper_setuid;
+    char *argv0;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("dumper-%s\n", VERSION);
@@ -380,6 +381,7 @@ main(
     add_amanda_log_handler(amanda_log_trace_log);
 
     cfg_ovr = extract_commandline_config_overrides(&argc, &argv);
+    argv0 = argv[0];
     if (argc > 1)
 	cfg_opt = argv[1];
     set_config_overrides(cfg_ovr);
@@ -417,7 +419,7 @@ main(
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
-	    argv[0], VERSION);
+	    argv0, VERSION);
     fflush(stderr);
 
     /* now, make sure we are a valid user */

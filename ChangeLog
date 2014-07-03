@@ -1,4 +1,18 @@
 2014-07-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: Add amcheck message.
+	* perl/Amanda/Rest/Amcheck.pm: Rest API endpoint to execute amcheck.
+	* perl/Makefile.am (AmandaRest_DATA): Add Amanda/Rest/Amcheck.pm.
+	* server-src/diskfile.c (match_disklist): return a GPtrArray.
+	* server-src/diskfile.h (match_disklist): Change prototype.
+	* server-src/driver.c, server-src/dumper.c: Fix argv0.
+	* server-src/amadmin.c, server-src/planner.c: Use newest
+	  match_disklist function.
+	* server-src/amcheck.c, server-src/amcheck-device.pl: new --message
+	  argument to format the output in json.
+	* installcheck/Amanda_Rest_Amcheck.pl: Check the Amcheckrest api.
+	* installcheck/Makefile.am: Add Amanda_Rest_Amcheck.
+
+2014-07-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (handle_dumper_result): Call dumper_taper_result
 	  if we already get the taper result.
 
