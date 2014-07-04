@@ -1,4 +1,7 @@
 2014-07-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Amcheck.pl: Fix.
+
+2014-07-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add Amcheck module.
 
 2014-07-03  Jean-Louis Martineau <martineau@zmanda.com>
