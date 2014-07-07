@@ -2,6 +2,7 @@
 
 * ambsdtar
     o new application that use BSD tar to do the backup.
+* Many bugs fix.
 
 
 		Release Notes for amanda-3.3.5

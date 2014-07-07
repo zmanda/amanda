@@ -1,3 +1,8 @@
+2014-07-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: Change in 3.3.6
+	* ReleaseNotes: Change in 3.3.6
+	* VERSION: 3.3.6
+
 2014-07-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (handle_dumper_result): Call dumper_taper_result
 	  if we already get the taper result.
