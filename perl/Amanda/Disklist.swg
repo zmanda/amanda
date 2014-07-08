@@ -270,7 +270,8 @@ sub match_disklist {
     my %params = @_;
     my $user_msg = $params{'user_msg'};
     my $exact_match = $params{'exact_match'};
-    my @args = @{$params{'args'}};
+    my @args;
+    @args = @{$params{'args'}} if defined $params{'args'};
 
     return if !@args;
 

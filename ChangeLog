@@ -1,4 +1,7 @@
 2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Disklist.swg: Fix perl warning.
+
+2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Runs.pl: Fix.
 
 2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
