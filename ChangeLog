@@ -1,3 +1,8 @@
+2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Move some declaration to s3-device.h
+	* device-src/s3-device.h: New file.
+	* device-src/Makefile.am: Add s3-device.h.
+
 2014-07-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Amcheck.pl: Fix.
 
