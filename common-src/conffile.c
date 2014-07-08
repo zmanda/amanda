@@ -1998,7 +1998,7 @@ read_conffile(
 
     if ((current_file = fopen(current_filename, "r")) == NULL) {
 	if (!missing_ok)
-	    conf_parserror(_("could not open conf file \"%s\": %s"), 
+	    conf_parserror(_("could not open conf file '%s': %s"), 
 		    current_filename, strerror(errno));
 	goto finish;
     }
@@ -5643,7 +5643,7 @@ static void validate_one_columnspec(const char *element)
     g_free(token);
 
     if (i == nr_valid_names) { /* No match! Bye... */
-        conf_parserror("invalid column name: \"%s\"", element);
+        conf_parserror("invalid column name: '%s'", element);
         return;
     }
 
@@ -8484,7 +8484,7 @@ dump_configuration(
 	/* NOTREACHED */
     }
 
-    g_printf(_("# AMANDA CONFIGURATION FROM FILE \"%s\":\n\n"), config_filename);
+    g_printf(_("# AMANDA CONFIGURATION FROM FILE '%s':\n\n"), config_filename);
 
     for(np=server_var; np->token != CONF_UNKNOWN; np++) {
 	for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
@@ -9823,10 +9823,10 @@ static void conf_error_common(
     char *errstr = NULL;
 
     if(current_line)
-	errstr = g_strdup_printf(_("argument \"%s\": %s"),
+	errstr = g_strdup_printf(_("argument '%s': %s"),
 		    current_line, msg);
     else if (current_filename && current_line_num > 0)
-	errstr = g_strdup_printf(_("\"%s\", line %d: %s"),
+	errstr = g_strdup_printf(_("'%s', line %d: %s"),
 		    current_filename, current_line_num, msg);
     else
 	errstr = g_strdup_printf(_("parse error: %s"), msg);

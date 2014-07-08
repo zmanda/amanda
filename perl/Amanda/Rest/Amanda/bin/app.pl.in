@@ -228,11 +228,6 @@ post '/amanda/v1.0/configs/:CONF/runs/amvault' => sub {
 	my $r = Amanda::Rest::Runs::amvault(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/runs/:ID/status' => sub {
-	my %p = params;
-	my $r = Amanda::Rest::Runs::list(%p);
-	return $r
-};
 
 post '/amanda/v1.0/configs/:CONF/runs/checkdump' => sub {
 	my %p = params;

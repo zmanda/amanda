@@ -1,4 +1,19 @@
 2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: s/"/'/
+	* installcheck/Amanda_Config.pl: Check '.
+	* installcheck/Amanda_Rest_Configs.pl: Check '.
+	* installcheck/Amanda_Rest_Dles.pl: Check '.
+	* installcheck/Amanda_Rest_Runs.pl: Check Amanda::Rest::Runs module.
+	* installcheck/Makefile.am (server_tests): Add Amanda_Rest_Runs.
+	* perl/Amanda/Amdump.pm: Small Improvement.
+	* perl/Amanda/Amflush.pm: Small Improvement.
+	* perl/Amanda/Rest/Runs.pm: Add list method.
+	* perl/Amanda/Status.pm: Improve documentation.
+	* perl/Amanda/Vault.pm: Remove debugging statement.
+	* server-src/amflush.pl: log pid-done line.
+	* server-src/planner.c: s/--exact_match/--exact-match/
+
+2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Move some declaration to s3-device.h
 	* device-src/s3-device.h: New file.
 	* device-src/Makefile.am: Add s3-device.h.

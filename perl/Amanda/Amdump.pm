@@ -35,6 +35,10 @@ sub local_message {
 	return "The amdump log file is '$self->{'amdump_log'}'";
     } elsif ($self->{'code'} == 2000002) {
 	return "Running a dump";
+    } elsif ($self->{'code'} == 2000003) {
+	return "The timestamp is '$self->{'timestamp'}'";
+    } elsif ($self->{'code'} == 2000004) {
+	return "one run";
     }
 }
 
@@ -79,6 +83,7 @@ sub new {
     $self->{'amdump_log_filename'} = "amdump.$timestamp";
     $self->{'exit_code'} = 0;
     $self->{'amlibexecdir'} = 0;
+    $self->{'pid'} = $$;
 
     debug("beginning amdump log");
     # Must be opened in append so that all subprocess can write to it.
@@ -86,6 +91,12 @@ sub new {
 	or die("could not open amdump log file '$self->{'amdump_log_pathname'}': $!");
     unlink $self->{'amdump_log_pathname_default'};
     symlink $self->{'amdump_log_filename'}, $self->{'amdump_log_pathname_default'};
+    push @result_messages, Amanda::Amdump::Message->new(
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code        => 2000003,
+			severity    => $Amanda::Message::INFO,
+			timestamp   => $timestamp);
     push @result_messages, Amanda::Amdump::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
@@ -336,6 +347,7 @@ sub run {
     $self->trim_indexes();
     $self->roll_amdump_logs();
 
+    log_add($L_INFO, "pid-done $self->{'pid'}");
     debug("Amdump exiting with code $self->{'exit_code'}");
     return($self->{'exit_code'});
 }

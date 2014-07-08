@@ -52,6 +52,7 @@ server_tests = \
 	Amanda_Rest_Dles \
 	Amanda_Rest_Dumps \
 	Amanda_Rest_Labels \
+	Amanda_Rest_Runs \
 	Amanda_Rest_Storages \
 	Amanda_Rest_Storages_Labels \
 	Amanda_Rest_Version \

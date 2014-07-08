@@ -27,6 +27,7 @@ use Amanda::Amflush;
 use Amanda::CheckDump;
 use Amanda::Vault;
 use Amanda::Rest::Configs;
+use Amanda::Process;
 use Symbol;
 use Data::Dumper;
 
@@ -34,7 +35,7 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::Rest::Amdump -- Rest interface to Amanda::Amdump
+Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda::Vault
 
 =head1 INTERFACE
 
@@ -55,19 +56,27 @@ reply:
   HTTP status: 202 Accepted
   [
      {
+        "timestamp" : "20140205112550",
+        "code" : "2000003",
+        "message" : "The timestamp is '20140205112550'",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
+        "source_line" : "96"
+     },
+     {
         "amdump_log" : "/var/log/amanda/test/amdump.20140205112550",
         "code" : "2000001",
         "message" : "The amdump log file is '/var/log/amanda/test/amdump.20140205112550'",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
-        "source_line" : "91"
+        "source_line" : "102"
      },
      {
         "code" : "2000000",
         "message" : "The trace log file is '/var/log/amanda/test/log.20140205112550.0'",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
-        "source_line" : "97",
+        "source_line" : "108",
         "trace_log" : "/var/log/amanda/test/log.20140205112550.0"
      },
      {
@@ -75,7 +84,7 @@ reply:
         "message" : "Running a dump",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
-        "source_line" : "105"
+        "source_line" : "269"
      }
   ]
 
@@ -93,19 +102,27 @@ reply:
   HTTP status: 202 Accepted
   [
      {
+        "timestamp" : "20140205120327",
+        "code" : "2200006",
+        "message" : "The timestamp is '20140205120327'",
+        "severity" : "2",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Amflush.pm",
+        "source_line" : "101"
+     },
+     {
         "amdump_log" : "/var/log/amanda/test/amdump.20140205120327",
         "code" : "2200001",
         "message" : "The amdump log file is '/var/log/amanda/test/amdump.20140205120327'",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amflush.pm",
-        "source_line" : "98"
+        "source_line" : "107"
      },
      {
         "code" : "2200000",
         "message" : "The trace log file is '/var/log/amanda/test/log.20140205120327.0'",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amflush.pm",
-        "source_line" : "104",
+        "source_line" : "113",
         "trace_log" : "/var/log/amanda/test/log.20140205120327.0"
      },
      {
@@ -113,7 +130,7 @@ reply:
         "message" : "Running a flush",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
-        "source_line" : "315"
+        "source_line" : "421"
      }
   ]
 
@@ -555,8 +572,55 @@ sub messages {
 }
 
 sub list {
+    my %params = @_;
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
 
-   return "LIST or runs in not available yet\n";
+    my $Amanda_process = Amanda::Process->new();
+    $Amanda_process->load_ps_table();
+
+    my $logdir = Amanda::Config::getconf($CNF_LOGDIR);
+    foreach my $logfile(<$logdir/amdump.*>) {
+	$logfile =~ /amdump\.(.*)$/;
+	my $timestamp = $1;
+	next if length($timestamp) != 14;
+	my $run_type;
+	my $pid;
+	my $status = "running";
+	my $tracefile = "$logdir/log.$timestamp.0";
+	next if !-f $tracefile;
+
+	open (TRACE, "<", $tracefile);
+	while (my $line = <TRACE>) {
+	    if ($line =~ /^INFO amdump amdump pid (\d*)$/) {
+		$run_type = "amdump";
+		$pid = $1;
+	    } elsif ($line =~ /^INFO amflush amflush pid (\d*)$/) {
+		$run_type = "amflush";
+		$pid = $1;
+	    } elsif ($line =~ /^INFO amvault amvault pid (\d*)$/) {
+		$run_type = "amvault";
+		$pid = $1;
+	    }
+	    if (defined $run_type and
+		$line =~ /^INFO $run_type pid-done $pid/) {
+		$status = "done";
+	    }
+	}
+	if ($status eq "running" and $pid) {
+	    $status = "aborted" if !$Amanda_process->process_alive($pid, $run_type);
+	}
+	push @result_messages, Amanda::Amdump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2000004,
+		run_type         => $run_type,
+		timestamp        => $timestamp,
+		amdump_log       => $logfile,
+		trace_log        => $tracefile,
+		status           => $status);
+    }
+    return \@result_messages;
 }
 
 1;

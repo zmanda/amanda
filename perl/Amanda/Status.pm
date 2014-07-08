@@ -60,86 +60,86 @@ Amanda::Status -- Get the status of a running job.
 
     use Amanda::Status;
 
-filename      => $filename
-dead_run      => If the run is already finished/killed
-datestamp     => $datestamp "20080618130147"
-idle_dumpers  => number of idle dumpers
-status_driver => status of the driver
-free_kps      => free network bandwidth
-free_space    => free holding disk space
-holding_space => total holding disk space
-starttime     => The time at start of job (1213808507)
-current_time  => The current time since starttime (12.34)
-exit_status   => The exit status
-dles->{$host}->{$disk}->{$datestamp}->{'status'}            => $status
-				      {'level'}             => $level
-				      {'error'}             => error message
-				      {'storage'}           => $storage_name  # when dump to tape.
-				      {'message'}           => amstatus message
-				      {'holding_file'}      => holding disk file path
-				      {'size'}              => real size
-				      {'esize'}             => estimated size
-				      {'wsize'}             => working size (when dumping)
-				      {'dsize'}             => dumped size (when dumping done)
-				      {'dump_time'}         => time the dump started or finished
-				      {'chunk_time'}        => time the dump started or finished
-				      {'wait_holding_disk'} => dump to holding disk wait for more space
-				      {'failed_to_tape'}    #internal use
-				      {'taped'}             #internal use
-				      {'flush'}             #internal use
-				      {'writing_to_tape'}   #internal use
-				      {'wait_fo_writing'}   #internal use
-dles->{$host}->{$disk}->{$datestamp}->{'storage'}->{$storage_name}->{'status'}          => $status
-						                    {'message'}         => amstatus message
-						                    {'size'}            => real size
-						                    {'dsize'}           => taped size (when flush done)
-						                    {'wsize'}           => working size (when flushing)
-						                    {'partial'}         => partial flush
-						                    {'taper_time'}      => time the flush started or finished
-						                    {'error'}           => tape or config error
-						                    {'flushing'}        #internal use
-						                    {'wait_for_tape'}   => 1 if waiting for a tape
-						                    {'search_for_tape'} => 1 if searching for a tape
-						                    {'tape_error'}      => 1 if a tape error
-						                    {'tape_config'}     => 1 if a config error
-taper->{$taper}->{'storage'}   => $storage
-taper->{$taper}->{'tape_size'} => tape size for the storage
-taper->{$taper}->{'nb_tape'} => number of tape used
-taper->{$taper}->{'worker'}->{$worker}->{'status'}            => $status
-					{'taper_status_file'} => filename of status file for the flush
-					{'message'}           => amstatus message
-					{'error'}             => error message
-					{'host'}              => host actualy flushing
-					{'disk'}              => disk actualy flushing
-					{'datestamp'}         => datestamp actualy flushing
-					{'wait_for_tape'}     => 1 if worker wait for a tape
-					{'search_for_tape'}   => 1 if worker serach for a tape
-					{'no_tape'}           => index in {taper->{$taper}->{'stat'}[]} of actualy writting tape
-taper->{$taper}->{'stat'}[]->{'label'}   => label of the tape
-			     {'nb_dle'}  => number of dle
-			     {'nb_part'} => number of part
-			     {'size'}    => real size
-			     {'esize'}   => estimated size
-			     {'percent'} =>
-storage->{$storage}->{'taper'} = $taper;
-qlen->{'tapeq'}->{'taper'}->{$taper} => number of dle in queue
-qlen->{'tapeq'}->{'roomq'} => number of dle in queue
-qlen->{'tapeq'}->{'runq'}  => number of dle in queue
-busy->{$process}->{'type'}    => 'dumper' or 'chunker' or 'taper'
-		  {'time'}    =>
-		  {'percent'} =>
-		  {'storage'} => $storage # for type eq 'taper'
-busy_dumper =>
-stat->{$status}->{'real_size'}      =>
-		 {'real_stat'}      =>
-		 {'estimated_size'} =>
-		 {'estimated_stat'} =>
-		 {'name'}           => To print to user
-stat->{'taped'}->{'storage'}->{$storage}->{'real_size'}      =>
-					  {'real_stat'}      =>
-					  {'estimated_size'} =>
-					  {'estimated_stat'} =>
-					  {'nb'}             =>
+ filename      => $filename
+ dead_run      => If the run is already finished/killed
+ datestamp     => $datestamp "20080618130147"
+ idle_dumpers  => number of idle dumpers
+ status_driver => status of the driver
+ free_kps      => free network bandwidth
+ free_space    => free holding disk space
+ holding_space => total holding disk space
+ starttime     => The time at start of job (1213808507)
+ current_time  => The current time since starttime (12.34)
+ exit_status   => The exit status
+ dles->{$host}->{$disk}->{$datestamp}->{'status'}            => $status
+				       {'level'}             => $level
+				       {'error'}             => error message
+				       {'storage'}           => $storage_name  # when dump to tape.
+				       {'message'}           => amstatus message
+				       {'holding_file'}      => holding disk file path
+				       {'size'}              => real size
+				       {'esize'}             => estimated size
+				       {'wsize'}             => working size (when dumping)
+				       {'dsize'}             => dumped size (when dumping done)
+				       {'dump_time'}         => time the dump started or finished
+				       {'chunk_time'}        => time the dump started or finished
+				       {'wait_holding_disk'} => dump to holding disk wait for more space
+				       {'failed_to_tape'}    #internal use
+				       {'taped'}             #internal use
+				       {'flush'}             #internal use
+				       {'writing_to_tape'}   #internal use
+				       {'wait_fo_writing'}   #internal use
+ dles->{$host}->{$disk}->{$datestamp}->{'storage'}->{$storage_name}->{'status'}          => $status
+						                     {'message'}         => amstatus message
+						                     {'size'}            => real size
+						                     {'dsize'}           => taped size (when flush done)
+						                     {'wsize'}           => working size (when flushing)
+						                     {'partial'}         => partial flush
+						                     {'taper_time'}      => time the flush started or finished
+						                     {'error'}           => tape or config error
+						                     {'flushing'}        #internal use
+						                     {'wait_for_tape'}   => 1 if waiting for a tape
+						                     {'search_for_tape'} => 1 if searching for a tape
+						                     {'tape_error'}      => 1 if a tape error
+						                     {'tape_config'}     => 1 if a config error
+ taper->{$taper}->{'storage'}   => $storage
+ taper->{$taper}->{'tape_size'} => tape size for the storage
+ taper->{$taper}->{'nb_tape'} => number of tape used
+ taper->{$taper}->{'worker'}->{$worker}->{'status'}            => $status
+					 {'taper_status_file'} => filename of status file for the flush
+					 {'message'}           => amstatus message
+					 {'error'}             => error message
+					 {'host'}              => host actualy flushing
+					 {'disk'}              => disk actualy flushing
+					 {'datestamp'}         => datestamp actualy flushing
+					 {'wait_for_tape'}     => 1 if worker wait for a tape
+					 {'search_for_tape'}   => 1 if worker serach for a tape
+					 {'no_tape'}           => index in {taper->{$taper}->{'stat'}[]} of actualy writting tape
+ taper->{$taper}->{'stat'}[]->{'label'}   => label of the tape
+			      {'nb_dle'}  => number of dle
+			      {'nb_part'} => number of part
+			      {'size'}    => real size
+			      {'esize'}   => estimated size
+			      {'percent'} =>
+ storage->{$storage}->{'taper'} = $taper;
+ qlen->{'tapeq'}->{'taper'}->{$taper} => number of dle in queue
+ qlen->{'tapeq'}->{'roomq'} => number of dle in queue
+ qlen->{'tapeq'}->{'runq'}  => number of dle in queue
+ busy->{$process}->{'type'}    => 'dumper' or 'chunker' or 'taper'
+		   {'time'}    =>
+		   {'percent'} =>
+		   {'storage'} => $storage # for type eq 'taper'
+ busy_dumper =>
+ stat->{$status}->{'real_size'}      =>
+		  {'real_stat'}      =>
+		  {'estimated_size'} =>
+		  {'estimated_stat'} =>
+		  {'name'}           => To print to user
+ stat->{'taped'}->{'storage'}->{$storage}->{'real_size'}      =>
+					   {'real_stat'}      =>
+					   {'estimated_size'} =>
+					   {'estimated_stat'} =>
+					   {'nb'}             =>
 
 
 =cut

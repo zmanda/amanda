@@ -67,9 +67,9 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=a
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'cfgerror' => "\"$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf\", line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'severity' => '16',
-		'message' => "config warning: \"$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf\", line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'code' => '1500000'
 	  },
         ],
@@ -84,9 +84,9 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/FOOBAR?fields=run
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'cfgerror' => "parse error: could not open conf file \"$Amanda::Paths::CONFIG_DIR/FOOBAR/amanda.conf\": No such file or directory",
+		'cfgerror' => "parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
 		'severity' => '16',
-		'message' => "config error: parse error: could not open conf file \"$CONFIG_DIR/FOOBAR/amanda.conf\": No such file or directory",
+		'message' => "config error: parse error: could not open conf file '$CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
 		'code' => '1500001'
 	  },
         ],

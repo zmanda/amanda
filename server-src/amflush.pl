@@ -265,6 +265,7 @@ if (@opt_datestamps) {
 
 if (!@datestamps) {
     print "Could not find any Amanda directories to flush.\n";
+    log_add($L_INFO, "pid-done $$");
     exit(1);
 }
 

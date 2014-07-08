@@ -41,6 +41,8 @@ sub local_message {
 	return "Nothing to flush";
     } elsif ($self->{'code'} == 2200005) {
 	return "Running a flush";
+    } elsif ($self->{'code'} == 2200006) {
+	return "The timestamp is '$self->{'timestamp'}'";
     }
 }
 
@@ -76,6 +78,7 @@ sub new {
     my $timestamp = strftime "%Y%m%d%H%M%S", @now;
     $self->{'timestamp'} = Amanda::Logfile::make_logname("amflush", $timestamp);
     $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    $self->{'pid'} = $$;
     debug("beginning trace log: $self->{'trace_log_filename'}");
 
     $timestamp = $self->{'timestamp'};
@@ -93,6 +96,12 @@ sub new {
 	or die("could not open amdump log file '$self->{'amdump_log_pathname'}': $!");
     unlink $self->{'amdump_log_pathname_default'};
     symlink $self->{'amdump_log_filename'}, $self->{'amdump_log_pathname_default'};
+    push @result_messages, Amanda::Amflush::Message->new(
+			source_filename => __FILE__,
+			source_line => __LINE__,
+			code        => 2200006,
+			severity    => $Amanda::Message::INFO,
+			timestamp   => $self->{'timestamp'});
     push @result_messages, Amanda::Amflush::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
@@ -367,6 +376,7 @@ sub run {
     # do some house-keeping
     $self->roll_amdump_logs();
 
+    log_add($L_INFO, "pid-done $self->{'pid'}");
     debug("Amflush exiting with code $self->{'exit_code'}");
     return($self->{'exit_code'});
 }
