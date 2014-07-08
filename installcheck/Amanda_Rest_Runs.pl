@@ -207,6 +207,7 @@ my $logdir = getconf($CNF_LOGDIR);
 $amdump_log = "$logdir/amdump";
 $trace_log = "$logdir/log";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -239,7 +240,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                 }
                                                   },
                                        'dead_run' => 1,
-                                       'starttime' => 1213808507,
+                                       'starttime' => $starttime,
                                        'holding_space' => 868352,
                                        'free_kps' => '600',
                                        'qlen' => {
@@ -693,6 +694,7 @@ $cat = Installcheck::Catalogs::load('quoted');
 $cat->install();
 $amdump_log = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -725,7 +727,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                 }
                                                   },
                                        'dead_run' => 1,
-                                       'starttime' => 1213808507,
+                                       'starttime' => $starttime,
                                        'holding_space' => 868352,
                                        'free_kps' => '600',
                                        'qlen' => {
@@ -908,6 +910,7 @@ $cat = Installcheck::Catalogs::load('chunker-partial');
 $cat->install();
 $amdump_log = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -940,7 +943,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                 }
                                                   },
                                        'dead_run' => 1,
-                                       'starttime' => 1239364079,
+                                       'starttime' => $starttime,
                                        'holding_space' => 1215488,
                                        'free_kps' => '8000',
                                        'qlen' => {
@@ -1129,6 +1132,7 @@ $cat = Installcheck::Catalogs::load('taper-parallel-write');
 $cat->install();
 $amdump_log = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -1182,7 +1186,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                 }
                                                   },
                                        'dead_run' => 1,
-                                       'starttime' => 1348079730,
+                                       'starttime' => $starttime,
                                        'holding_space' => undef,
                                        'free_kps' => '2000000',
                                        'qlen' => {
