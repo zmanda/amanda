@@ -46,6 +46,12 @@ Amanda::Rest::Status -- Rest interface to Amanda::Status
 
 =item Get the status
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   GET /amanda/v1.0/configs/:CONF/status?amdump_log=/path/to/amdump_log_file
 
@@ -63,6 +69,12 @@ reply:
         }
      }
     ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =back
 

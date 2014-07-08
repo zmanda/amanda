@@ -47,6 +47,12 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 
 =item Changed setting on Dles
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   POST /amanda/v1.0/configs/:CONF/dles/hosts/:HOST
     query arguments:
@@ -158,6 +164,11 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
 
 =back
 

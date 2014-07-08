@@ -33,6 +33,12 @@ Amanda::Rest::Version - Get the amande version.
 
 =head1 INTERFACE
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   GET /amanda/v1.0
 
@@ -51,6 +57,12 @@ reply:
         "source_line" : "44"
      }
   ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =cut
 

@@ -34,13 +34,19 @@ use vars qw(@ISA);
 
 =head1 NAME
 
-Amanda::Rest::Amdump -- Rest interface to Amanda::Amdump
+Amanda::Rest::Amcheck -- Rest interface to Amanda::Amcheck
 
 =head1 INTERFACE
 
 =over
 
 =item Run amcheck
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/amcheck
@@ -127,6 +133,12 @@ reply:
       "source_line" : "457"
    }
   ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =back
 

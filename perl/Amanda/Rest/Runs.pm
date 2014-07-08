@@ -43,6 +43,12 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
 
 =item Run amdump
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amdump
     query arguments:
@@ -88,7 +94,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Run amflush
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amflush
@@ -134,7 +152,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Run amvault
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amvault
@@ -154,8 +184,19 @@ request:
 reply:
   HTTP status: 202 Accepted
 
+=begin html
+
+</pre>
+
+=end html
 
 =item Run amcheckdump
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/checkdump
@@ -182,10 +223,22 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Get messages for amcheckdump
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
-  POST http://localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
     query argument:
         message_filename=MESAGE_FILENAME
 
@@ -235,6 +288,12 @@ reply:
         "source_line" : "695"
      }
   ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =back
 

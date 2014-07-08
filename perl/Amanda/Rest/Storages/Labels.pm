@@ -46,6 +46,12 @@ Amanda::Rest::Storages::Labels -- Rest interface to manage label
 
 You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the storage.
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
 
@@ -77,7 +83,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item List one label
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
@@ -109,7 +127,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Modify label setting
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
@@ -143,7 +173,20 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Label a volume
+
+=begin html
+
+<pre>
+
+=end html
+
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
 
@@ -188,8 +231,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
 
 =item Remove a label
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
@@ -216,6 +270,12 @@ reply:
         "tapelist_filename" : "/usr/amanda/test/tapelist"
      }
   ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =back
 

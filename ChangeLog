@@ -1,4 +1,7 @@
 2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/*.pm: Improve html formating.
+
+2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: s/"/'/
 	* installcheck/Amanda_Config.pl: Check '.
 	* installcheck/Amanda_Rest_Configs.pl: Check '.
