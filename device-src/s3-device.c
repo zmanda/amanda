@@ -36,6 +36,7 @@
 #include "amutil.h"
 #include "conffile.h"
 #include "device.h"
+#include "s3-device.h"
 #include "s3.h"
 #include <curl/curl.h>
 #ifdef HAVE_OPENSSL_HMAC_H
@@ -49,158 +50,6 @@
 #  endif
 # endif
 #endif
-
-/*
- * Type checking and casting macros
- */
-#define TYPE_S3_DEVICE	(s3_device_get_type())
-#define S3_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), s3_device_get_type(), S3Device)
-#define S3_DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), s3_device_get_type(), S3Device const)
-#define S3_DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), s3_device_get_type(), S3DeviceClass)
-#define IS_S3_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), s3_device_get_type ())
-
-#define S3_DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), s3_device_get_type(), S3DeviceClass)
-static GType	s3_device_get_type	(void);
-
-/*
- * Main object structure
- */
-typedef struct _S3MetadataFile S3MetadataFile;
-typedef struct _S3Device S3Device;
-
-typedef struct _S3_by_thread S3_by_thread;
-struct _S3_by_thread {
-    S3Handle            *s3;
-    CurlBuffer           curl_buffer;
-    guint                buffer_len;
-    int                  idle;
-    int                  eof;
-    int                  done;
-    char                *filename;
-    char		*uploadId;
-    int			 partNumber;
-    guint64		 range_min;
-    guint64		 range_max;
-    DeviceStatusFlags    errflags;	/* device_status */
-    char                *errmsg;	/* device error message */
-    GMutex		*now_mutex;
-    guint64		 dlnow, ulnow;
-};
-
-struct _S3Device {
-    Device __parent__;
-
-    char *catalog_filename;
-    char *catalog_label;
-    char *catalog_header;
-
-    /* The "easy" curl handle we use to access Amazon S3 */
-    S3_by_thread *s3t;
-
-    /* S3 access information */
-    char *bucket;
-    char *prefix;
-
-    /* The S3 access information. */
-    char *secret_key;
-    char *access_key;
-    char *session_token;
-    char *user_token;
-
-    /* The Openstack swift information. */
-    char *swift_account_id;
-    char *swift_access_key;
-
-    char *username;
-    char *password;
-    char *tenant_id;
-    char *tenant_name;
-
-    char *bucket_location;
-    char *storage_class;
-    char *host;
-    char *service_path;
-    char *server_side_encryption;
-    char *proxy;
-
-    char *ca_info;
-
-    /* a cache for unsuccessful reads (where we get the file but the caller
-     * doesn't have space for it or doesn't want it), where we expect the
-     * next call will request the same file.
-     */
-    char *cached_buf;
-    char *cached_key;
-    int cached_size;
-
-    /* Produce verbose output? */
-    gboolean verbose;
-
-    /* create the bucket? */
-    gboolean create_bucket;
-
-    /* Use SSL? */
-    gboolean use_ssl;
-    S3_api s3_api;
-
-    /* Throttling */
-    guint64 max_send_speed;
-    guint64 max_recv_speed;
-
-    gboolean leom;
-    guint64 volume_bytes;
-    guint64 volume_limit;
-    gboolean enforce_volume_limit;
-    gboolean use_subdomain;
-    gboolean use_s3_multi_delete;
-    char        *uploadId;
-    GTree       *part_etag;
-    char        *filename;
-
-    int          nb_threads;
-    int          nb_threads_backup;
-    int          nb_threads_recovery;
-    gboolean     use_s3_multi_part_upload;
-    GThreadPool *thread_pool_delete;
-    GThreadPool *thread_pool_write;
-    GThreadPool *thread_pool_read;
-    GCond       *thread_idle_cond;
-    GMutex      *thread_idle_mutex;
-    int		 last_byte_read;
-    int          next_block_to_read;
-    int		 next_byte_to_read;
-    GSList      *objects;
-    guint64	 object_size;
-    gboolean	 bucket_made;
-
-    guint64      dltotal;
-    guint64      ultotal;
-
-    /* google OAUTH2 */
-    char        *client_id;
-    char        *client_secret;
-    char        *refresh_token;
-    char        *project_id;
-
-    gboolean	 reuse_connection;
-    gboolean	 chunked;
-
-    gboolean	 read_from_glacier;
-    int		 transition_to_glacier;
-    long	 timeout;
-
-    /* CAStor */
-    char        *reps;
-    char        *reps_bucket;
-};
-
-/*
- * Class definition
- */
-typedef struct _S3DeviceClass S3DeviceClass;
-struct _S3DeviceClass {
-    DeviceClass __parent__;
-};
 
 
 /*
@@ -230,11 +79,11 @@ static DeviceClass *parent_class = NULL;
  */
 
 /* Authentication information for Amazon S3. Both of these are strings. */
-static DevicePropertyBase device_property_s3_access_key;
-static DevicePropertyBase device_property_s3_secret_key;
+DevicePropertyBase device_property_s3_access_key;
+DevicePropertyBase device_property_s3_secret_key;
 static DevicePropertyBase device_property_s3_session_token;
-#define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
-#define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
+//#define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
+//#define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
 #define PROPERTY_S3_SESSION_TOKEN (device_property_s3_session_token.ID)
 
 /* Authentication information for Openstack Swift. Both of these are strings. */
@@ -473,6 +322,9 @@ s3_device_init(S3Device * o);
 
 static void
 s3_device_class_init(S3DeviceClass * c);
+
+static void
+s3_device_base_init( S3DeviceClass *c);
 
 static void
 s3_device_finalize(GObject * o);
@@ -1318,7 +1170,7 @@ s3_device_register(void)
     register_device(s3_device_factory, device_prefix_list);
 }
 
-static GType
+GType
 s3_device_get_type(void)
 {
     static GType type = 0;
@@ -1326,7 +1178,7 @@ s3_device_get_type(void)
     if (G_UNLIKELY(type == 0)) {
         static const GTypeInfo info = {
             sizeof (S3DeviceClass),
-            (GBaseInitFunc) NULL,
+            (GBaseInitFunc) s3_device_base_init,
             (GBaseFinalizeFunc) NULL,
             (GClassInitFunc) s3_device_class_init,
             (GClassFinalizeFunc) NULL,
@@ -1468,6 +1320,13 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     device_class->set_no_reuse = s3_device_set_no_reuse;
 
     g_object_class->finalize = s3_device_finalize;
+}
+
+static void
+s3_device_base_init(
+    S3DeviceClass *c)
+{
+    DeviceClass *device_class = (DeviceClass *)c;
 
     device_class_register_property(device_class, PROPERTY_S3_ACCESS_KEY,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -2044,6 +1903,7 @@ s3_device_set_openstack_swift_api_fn(Device *p_self, DevicePropertyBase *base,
     const gboolean openstack_swift_api = g_value_get_boolean(val);
     if (openstack_swift_api) {
 	GValue storage_api_val;
+	bzero(&storage_api_val, sizeof(GValue));
 	g_value_init(&storage_api_val, G_TYPE_STRING);
 	g_value_set_static_string(&storage_api_val, "SWIFT-1.0");
 	return s3_device_set_storage_api(p_self, base, &storage_api_val,

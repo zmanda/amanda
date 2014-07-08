@@ -88,6 +88,7 @@ noinst_HEADERS = \
 	diskflat-device.h \
 	property.h \
 	s3.h \
+	s3-device.h \
 	s3-util.h \
 	xfer-device.h \
 	xfer-dest-taper.h \
