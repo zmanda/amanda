@@ -35,6 +35,12 @@ Amanda::Rest::Labels -- Rest interface to get a list of labels
 
 =item Get a list of all labels.
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   GET /amanda/v1.0/configs/:CONF/labels
   you can filter the labels listed with the following query arguments:
@@ -72,7 +78,11 @@ reply:
      }
   ]
 
+=begin html
 
+</pre>
+
+=end html
 
 =back
 

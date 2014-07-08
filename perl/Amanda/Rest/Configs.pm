@@ -36,6 +36,12 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
 
 =item Get a list of config
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   GET /amanda/v1.0/configs
 
@@ -80,7 +86,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Get the value of global parameters
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   GET /amanda/v1.0/configs/:CONF?fields=runtapes,foo,tapecycle,bar
@@ -124,6 +142,12 @@ result:
         "source_line" : "194"
      }
   ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =back
 

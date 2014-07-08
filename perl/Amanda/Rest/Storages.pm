@@ -47,6 +47,12 @@ Amanda::Rest::Storages -- Rest interface to Amanda::Storage
 
 =item Get the list of defined storage
 
+=begin html
+
+<pre>
+
+=end html
+
 request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE
 
@@ -66,7 +72,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Get parameters values of a storage
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE?fields=runtapes,foo
@@ -98,7 +116,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Create a storage
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/create
@@ -116,7 +146,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Get the inventory of a storage
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory
@@ -154,7 +196,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Load a slot
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/load?slot=SLOT
@@ -197,7 +251,19 @@ or
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Reset a storage
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/reset
@@ -216,7 +282,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Eject a volume from a drive in a storage
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/eject?drive=DRIVE
@@ -260,7 +338,19 @@ or
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Clean a drive from a storage
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/clean?drive=DRIVE
@@ -279,7 +369,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Verify a storage configuration
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/verify
@@ -333,7 +435,6 @@ reply:
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Changer/robot.pm",
         "source_line" : "1741"
      },
-
      {
         "code" : "1100008",
         "message" : "property \"TAPE-DEVICE\" \"0=tape:/dev/nst0\" \"1=tape:/dev/nst1\" \"2=tape:/dev/nst2\" \"3=tape:/dev/nst3\"",
@@ -344,7 +445,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Show what is in the storage (scan the storage)
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/show
@@ -396,7 +509,19 @@ reply:
      }
   ]
 
+=begin html
+
+</pre>
+
+=end html
+
 =item Update the storage (amtape update)
+
+=begin html
+
+<pre>
+
+=end html
 
 request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/update
@@ -424,6 +549,12 @@ reply:
         "storage_name" : "my_robot"
      }
   ]
+
+=begin html
+
+</pre>
+
+=end html
 
 =back
 
