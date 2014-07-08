@@ -406,7 +406,6 @@ sub setup_src {
 
     # if we ignored all of the dumpspecs and didn't create any, then dump
     # nothing.  We do *not* want the wildcard "vault it all!" behavior.
-Amanda::Debug::debug("WERTY " . @dumpspecs);
     if (!@dumpspecs) {
 	return $self->failure(Amanda::Vault::Message->new(
 					source_filename => __FILE__,

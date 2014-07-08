@@ -613,8 +613,8 @@ waitpid $pid, 0;
 my $fn = Amanda::Config::get_config_filename();
 my $dump_filename = $dump_first_line;
 chomp $dump_filename;
-$dump_filename =~ s/^# AMANDA CONFIGURATION FROM FILE "//g;
-$dump_filename =~ s/":$//g;
+$dump_filename =~ s/^# AMANDA CONFIGURATION FROM FILE '//g;
+$dump_filename =~ s/':$//g;
 is($dump_filename, $fn, 
     "config filename is included correctly");
 
