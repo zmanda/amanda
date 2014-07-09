@@ -1,3 +1,7 @@
+2014-07-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Fix curl version check for
+	  CURLE_SSL_CACERT_BADFILE.
+
 2014-07-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Change in 3.3.6
 	* ReleaseNotes: Change in 3.3.6
