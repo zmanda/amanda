@@ -676,7 +676,7 @@ protocol_accept(
     if (access(service_path, X_OK) < 0) {
 	dbprintf(_("can't execute %s: %s\n"), service_path, strerror(errno));
 	    pkt_init(&pkt_out, P_NAK,
-		     _("ERROR execute access to \"%s\" denied\n"),
+		     _("ERROR execute access to '%s' denied\n"),
 		     service_path);
 	goto send_pkt_out;
     }
