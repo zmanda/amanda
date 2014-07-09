@@ -1,3 +1,7 @@
+2014-07-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Use '.
+	* server-src/amcheck.c: Encode " and / in json reply.
+
 2014-07-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Disklist.swg: Fix perl warning.
 

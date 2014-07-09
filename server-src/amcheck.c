@@ -87,6 +87,28 @@ static struct option long_options[] = {
     {NULL, 0, NULL, 0}
 };
 
+char *encode_json(char *str);
+
+static char encoded_json[4096];
+char *
+encode_json(
+    char *str)
+{
+    int i = 0;
+    char *s = str;
+    char *e = encoded_json;
+    while(*s != '\0') {
+	if (i++ >= 4094) {
+	    error("encode_json: str is too long: %s", str);
+	}
+	if (*s == '\\' || *s == '"')
+	    *e++ = '\\';
+	*e++ = *s++;
+    }
+    *e = '\0';
+    return encoded_json;
+}
+
 #define print_message(code, msg) if (opt_message) g_printf( \
 "  {\n" \
 "    \"source_filename\" : \"" __FILE__ "\",\n" \
@@ -94,7 +116,7 @@ static struct option long_options[] = {
 "    \"severity\" : \"16\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, msg); else \
+"  },\n", __LINE__, code, encode_json(msg)); else \
 g_printf("%s\n", msg);
 
 #define fprint_message(file, code, msg) if (opt_message) g_fprintf(file, \
@@ -104,7 +126,7 @@ g_printf("%s\n", msg);
 "    \"severity\" : \"16\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, msg); else \
+"  },\n", __LINE__, code, encode_json(msg)); else \
 g_fprintf(file,"%s\n", msg);
 
 #define fprintf_message(file, code, msg, ...) { \
@@ -116,7 +138,7 @@ g_fprintf(file,"%s\n", msg);
 "    \"severity\" : \"16\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, msg1); else \
+"  },\n", __LINE__, code, encode_json(msg1)); else \
 g_fprintf(file,"%s\n", msg1); \
 g_free(msg1); \
 }
