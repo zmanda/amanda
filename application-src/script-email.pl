@@ -173,16 +173,18 @@ sub sendmail {
    my $dest;
    if ($self->{mailto}) {
       my $destcheck = join ',', @{$self->{mailto}};
-      $destcheck =~ /^([a-zA-Z,]*)$/;
+      $destcheck =~ /^(.*)$/;
       $dest = $1;
    } else {
       $dest = "root";
    }
+
+   my $subject =  "$self->{config} $function $self->{host} $self->{disk} $self->{device} " . join (" ", @{$self->{level}});
    my @args = ( "-s", "$self->{config} $function $self->{host} $self->{disk} $self->{device} " . join (" ", @{$self->{level}}), $dest );
    my $args = join(" ", @args);
-   debug("cmd: $Amanda::Constants::MAILER $args\n");
+   debug("cmd: $Amanda::Constants::MAILER -s \"$subject\" " . $dest);
    my $mail;
-   open $mail, '|-', $Amanda::Constants::MAILER, @args;
+   open $mail, '|-', $Amanda::Constants::MAILER, '-s', $subject, $dest;
    print $mail "$self->{action} $self->{config} $function $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
    close $mail;
 }
