@@ -1,4 +1,7 @@
 2014-07-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/script-email.pl: Accept all characters in mailto.
+
+2014-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c: Fix curl version check for
 	  CURLE_SSL_CACERT_BADFILE.
 
