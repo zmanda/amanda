@@ -176,7 +176,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 	  },
           {	'source_filename' => "amcheck.c",
 		'severity' => '16',
-		'message' => 'ERROR: localhost: Could not access /home-incronly (/home-incronly): No such file or directory',
+		'message' => Amanda::Util::built_with_component("client")
+                            ? 'ERROR: localhost: Could not access /home-incronly (/home-incronly): No such file or directory'
+                            : 'ERROR: NAK localhost: execute access to \'/var/tmp/buildslave-prod/config-trunk-without_client/amanda-4.0.0alpha/prefix/libexec/amanda/noop\' denied',
 		'code' => '2800211'
 	  },
           {	'source_filename' => "amcheck.c",
