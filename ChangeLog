@@ -1,4 +1,7 @@
 2014-07-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Amcheck.pl: Fix for --without-client.
+
+2014-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Use '.
 	* server-src/amcheck.c: Encode " and / in json reply.
 
