@@ -181,7 +181,6 @@ sub sendmail {
 
    my $subject =  "$self->{config} $function $self->{host} $self->{disk} $self->{device} " . join (" ", @{$self->{level}});
    my @args = ( "-s", "$self->{config} $function $self->{host} $self->{disk} $self->{device} " . join (" ", @{$self->{level}}), $dest );
-   my $args = join(" ", @args);
    debug("cmd: $Amanda::Constants::MAILER -s \"$subject\" " . $dest);
    my $mail;
    open $mail, '|-', $Amanda::Constants::MAILER, '-s', $subject, $dest;
