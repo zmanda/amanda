@@ -259,6 +259,12 @@ define tapetype global {
     part_cache_type none
 }
 
+define tapetype DISK {
+    global
+    comment "File System"
+    length -1 mbytes           # Reserve 1 mbyte
+}
+
 define tapetype QIC-60 {
     global
     comment "Archive Viper"
