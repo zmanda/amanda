@@ -2570,6 +2570,9 @@ Once the backups start, Amanda will continue to write to a tape until it gets an
 regardless of what value is entered for <amkeyword>length</amkeyword>
 (but see <manref name="amanda-devices" vol="7" /> for exceptions).
  </para>
+<para>When using file: for <amkeyword>tapedev</amkeywork> or chg-disk: for
+<amkeyword>tpchanger</amkeyword>, you can specify a negative value to represent
+how much less than the full size of the target filesystem to use.</para>
   </listitem>
   </varlistentry>
 

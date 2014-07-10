@@ -35,6 +35,7 @@
 #include "amutil.h"
 #include "conffile.h"
 #include "clock.h"
+#include "fsusage.h"
 #include <glib.h>
 
 /*
@@ -665,6 +666,7 @@ static void validate_dump_limit(conf_var_t *, val_t *);
 static void validate_columnspec(conf_var_t *, val_t *);
 static void validate_tmpdir(conf_var_t *, val_t *);
 static void validate_deprecated_changerfile(conf_var_t *, val_t *);
+static void validate_tapelength(conf_var_t *, val_t *);
 
 gint compare_pp_script_order(gconstpointer a, gconstpointer b);
 
@@ -1430,7 +1432,7 @@ conf_var_t tapetype_var [] = {
    { CONF_LBL_TEMPL            , CONFTYPE_STR            , read_str            , TAPETYPE_LBL_TEMPL          , NULL },
    { CONF_BLOCKSIZE            , CONFTYPE_SIZE           , read_size           , TAPETYPE_BLOCKSIZE          , validate_blocksize },
    { CONF_READBLOCKSIZE        , CONFTYPE_SIZE           , read_size           , TAPETYPE_READBLOCKSIZE      , validate_blocksize },
-   { CONF_LENGTH               , CONFTYPE_INT64          , read_int64          , TAPETYPE_LENGTH             , validate_nonnegative },
+   { CONF_LENGTH               , CONFTYPE_INT64          , read_int64          , TAPETYPE_LENGTH             , validate_tapelength },
    { CONF_FILEMARK             , CONFTYPE_INT64          , read_int64          , TAPETYPE_FILEMARK           , NULL },
    { CONF_SPEED                , CONFTYPE_INT            , read_int            , TAPETYPE_SPEED              , validate_nonnegative },
    { CONF_PART_SIZE            , CONFTYPE_INT64          , read_int64          , TAPETYPE_PART_SIZE          , validate_nonnegative },
@@ -5725,6 +5727,47 @@ static void validate_deprecated_changerfile(conf_var_t *var G_GNUC_UNUSED,
 					    val_t *value G_GNUC_UNUSED)
 {
     conf_parswarn(_("warning: Global changerfile is deprecated, it must be set in the changer section"));
+}
+
+/*
+ * Validate tapelength, make sure a reserve tapelength is less than the size of
+ * the filessystem
+ */
+
+static void
+validate_tapelength(
+    struct conf_var_s *np G_GNUC_UNUSED,
+    val_t        *val)
+{
+    struct fs_usage fsusage;
+    char datadir[256];
+    intmax_t kb_blocks;
+
+    np = np;
+    if(val_t__int64(val) < 0) {
+       /* This only works with disk changers */
+	if(strncasecmp(conf_data[CNF_TPCHANGER].v.s,"chg-disk:",9) == 0) {
+	    sprintf(datadir,"%s/data",&conf_data[CNF_TPCHANGER].v.s[9]);
+        } else if(strncasecmp(conf_data[CNF_TAPEDEV].v.s,"file:",5) == 0) {
+	    sprintf(datadir,"%s/data",&conf_data[CNF_TAPEDEV].v.s[5]);
+	} else {
+	    conf_parserror("Tape length must be positive");
+	}
+
+       /* Make sure we have enough space */
+	if(get_fs_usage(datadir, NULL, &fsusage) == 0) {
+	    /* do the division first to avoid potential integer overflow */
+	    kb_blocks = fsusage.fsu_blocks / 1024 * fsusage.fsu_blocksize;
+
+	    if (kb_blocks > -(val_t__int64(val))) {
+		val_t__int64(val) = kb_blocks + val_t__int64(val);
+	    } else {
+		conf_parserror("Negative tape length is greater the filesytem size");
+	    }
+	} else {
+	    conf_parserror("Cannot stat filesystem at %s",datadir);
+	}
+    }
 }
 
 /*
