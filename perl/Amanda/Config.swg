@@ -381,6 +381,7 @@ amglue_add_enum_tag_fns(dump_holdingdisk_t);
 amglue_add_constant(HOLD_NEVER, dump_holdingdisk_t);
 amglue_add_constant(HOLD_AUTO, dump_holdingdisk_t);
 amglue_add_constant(HOLD_REQUIRED, dump_holdingdisk_t);
+amglue_add_constant(HOLD_AVOID, dump_holdingdisk_t);
 amglue_copy_to_tag(dump_holdingdisk_t, getconf);
 
 amglue_add_enum_tag_fns(comp_t);

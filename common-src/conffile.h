@@ -95,7 +95,8 @@ typedef struct seen_s {
 typedef enum {
     HOLD_NEVER,                 /* Always direct to tape  */
     HOLD_AUTO,                  /* If possible            */
-    HOLD_REQUIRED               /* Always to holding disk */
+    HOLD_REQUIRED,              /* Always to holding disk */
+    HOLD_AVOID                  /* Avoid holding disk if possible */
 } dump_holdingdisk_t;
 
 /* Compression types */

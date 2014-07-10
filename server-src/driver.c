@@ -1543,13 +1543,47 @@ dump_schedule(
 }
 
 static void
+process_degraded_disk(
+    disklist_t *queuep,
+    disk_t     *dp)
+{
+    static off_t est_full_size = (off_t)0;
+    char *qname;
+
+    qname = quote_string(dp->name);
+    if(sched(dp)->level != 0)
+	/* go ahead and do the disk as-is */
+	enqueue_disk(queuep, dp);
+    else {
+	if (reserved_space + est_full_size + sched(dp)->est_size
+	    <= total_disksize) {
+	    enqueue_disk(queuep, dp);
+	    est_full_size += sched(dp)->est_size;
+	}
+	else if(sched(dp)->degr_level != -1) {
+	    sched(dp)->level = sched(dp)->degr_level;
+	    sched(dp)->dumpdate = sched(dp)->degr_dumpdate;
+	    sched(dp)->est_nsize = sched(dp)->degr_nsize;
+	    sched(dp)->est_csize = sched(dp)->degr_csize;
+	    sched(dp)->est_time = sched(dp)->degr_time;
+	    sched(dp)->est_kps  = sched(dp)->degr_kps;
+	    enqueue_disk(queuep, dp);
+	}
+	else {
+	    log_add(L_FAIL, "%s %s %s %d [%s]",
+	    dp->host->hostname, qname, sched(dp)->datestamp,
+	    sched(dp)->level, sched(dp)->degr_mesg);
+	}
+    }
+    amfree(qname);
+}
+
+static void
 start_degraded_mode(
     /*@keep@*/ disklist_t *queuep)
 {
-    disk_t *dp;
+    disk_t *dp,*dpnext;
     disklist_t newq;
-    off_t est_full_size;
-    char *qname;
     taper_t  *taper;
     static gboolean schedule_degraded = FALSE;
 
@@ -1572,46 +1606,20 @@ start_degraded_mode(
 
     dump_schedule(queuep, _("before start degraded mode"));
 
-    est_full_size = (off_t)0;
+    /* Move dumps we tried to send directly to tape back to the runq */
+    dp = directq.head;
+    while(dp != NULL) {
+	dpnext = dp->next;
+	if(dp->to_holdingdisk == HOLD_AVOID) {
+	    remove_disk(&directq, dp);
+	    enqueue_disk(queuep, dp);
+	}
+	dp = dpnext;
+    }
+
     while(!empty(*queuep)) {
 	dp = dequeue_disk(queuep);
-
-	qname = quote_string(dp->name);
-	if(sched(dp)->level != 0)
-	    /* go ahead and do the disk as-is */
-	    enqueue_disk(&newq, dp);
-	else {
-	    gboolean must_degrade_dp = FALSE;
-	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-		if (taper->degraded_mode &&
-		    dump_match_selection(taper->storage_name, dp)) {
-		    must_degrade_dp = TRUE;
-		}
-	    }
-	    if (!must_degrade_dp) {
-		/* go ahead and do the disk as-is */
-		enqueue_disk(&newq, dp);
-	    } else if (reserved_space + est_full_size + sched(dp)->est_size
-		<= total_disksize) {
-		enqueue_disk(&newq, dp);
-		est_full_size += sched(dp)->est_size;
-	    }
-	    else if(sched(dp)->degr_level != -1) {
-		sched(dp)->level = sched(dp)->degr_level;
-		sched(dp)->dumpdate = sched(dp)->degr_dumpdate;
-		sched(dp)->est_nsize = sched(dp)->degr_nsize;
-		sched(dp)->est_csize = sched(dp)->degr_csize;
-		sched(dp)->est_time = sched(dp)->degr_time;
-		sched(dp)->est_kps  = sched(dp)->degr_kps;
-		enqueue_disk(&newq, dp);
-	    }
-	    else {
-		log_add(L_FAIL, "%s %s %s %d [%s]",
-		        dp->host->hostname, qname, sched(dp)->datestamp,
-			sched(dp)->level, sched(dp)->degr_mesg);
-	    }
-	}
-        amfree(qname);
+	process_degraded_disk(&newq, dp);
     }
 
     /*@i@*/ *queuep = newq;
@@ -2383,7 +2391,11 @@ dumper_taper_result(
     if((dumper->result != DONE || wtaper->result != DONE) &&
 	sched(dp)->dump_attempted < dp->retry_dump &&
 	sched(dp)->taper_attempted < dp->retry_dump) {
-	enqueue_disk(&directq, dp);
+	if(degraded_mode == 1 && dp->to_holdingdisk == HOLD_AVOID) {
+	    process_degraded_disk(&runq, dp);
+	} else {
+	    enqueue_disk(&directq, dp);
+	}
     }
 
     if(dumper->ev_read != NULL) {
@@ -3613,7 +3625,8 @@ read_schedule(
 		dp->to_holdingdisk = HOLD_NEVER;
 	    }
 
-	    if (dp->to_holdingdisk == HOLD_NEVER) {
+	    if (dp->to_holdingdisk == HOLD_NEVER ||
+		dp->to_holdingdisk == HOLD_AVOID) {
 		enqueue_disk(&directq, dp);
 	    } else {
 		enqueue_disk(&runq, dp);

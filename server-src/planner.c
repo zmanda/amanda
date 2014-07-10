@@ -897,7 +897,8 @@ setup_estimate(
 		      dp->host->hostname, qname);
 	    amfree(qname);
 	    return;
-	} else if (dp->to_holdingdisk == HOLD_AUTO) {
+	} else if (dp->to_holdingdisk == HOLD_AUTO ||
+		   dp->to_holdingdisk == HOLD_AVOID) {
 	    g_fprintf(stderr,_("%s:%s Disabling holding disk\n"),
 		      dp->host->hostname, qname);
 	    dp->to_holdingdisk = HOLD_NEVER;
