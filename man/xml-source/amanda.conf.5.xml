@@ -740,6 +740,15 @@ Maximum number of bytes the planner will schedule for a run.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><amkeyword>maxdumpper</amkeyword> <amtype>int</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>100</amdefault>.
+Maximum percentage of the <amkeyword>tape-length</amkeyword> the planner will
+schedule for a run.  Useful if the tape-length is variable from run to run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><amkeyword>taperalgo</amkeyword> [ <amkeyword>first</amkeyword> | <amkeyword>firstfit</amkeyword> | <amkeyword>largest</amkeyword> | <amkeyword>largestfit</amkeyword> | <amkeyword>smallest</amkeyword> | <amkeyword>last</amkeyword> ]</term>
   <listitem>
 <para>Default:

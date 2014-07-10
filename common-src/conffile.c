@@ -95,7 +95,7 @@ typedef enum {
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
-    CONF_CMDFILE,              CONF_REST_API_PORT,
+    CONF_CMDFILE,              CONF_REST_API_PORT,	CONF_MAXDUMPPER,
 
     /* storage setting */
     CONF_SET_NO_REUSE,	       CONF_ERASE_VOLUME,
@@ -1079,6 +1079,7 @@ keytab_t server_keytab[] = {
     { "READBLOCKSIZE", CONF_READBLOCKSIZE },
     { "MATCH_AUTOLABEL", CONF_MATCH_AUTOLABEL },
     { "MAX_DLE_BY_VOLUME", CONF_MAX_DLE_BY_VOLUME },
+    { "MAXDUMPPER", CONF_MAXDUMPPER },
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
@@ -1374,6 +1375,7 @@ conf_var_t server_var [] = {
    { CONF_DISPLAYUNIT          , CONFTYPE_STR      , read_str         , CNF_DISPLAYUNIT          , validate_displayunit },
    { CONF_AUTOFLUSH            , CONFTYPE_NO_YES_ALL,read_no_yes_all  , CNF_AUTOFLUSH            , NULL },
    { CONF_RESERVE              , CONFTYPE_INT      , read_int         , CNF_RESERVE              , validate_reserve },
+   { CONF_MAXDUMPPER           , CONFTYPE_INT      , read_int         , CNF_MAXDUMPPER           , NULL },
    { CONF_MAXDUMPSIZE          , CONFTYPE_INT64    , read_int64       , CNF_MAXDUMPSIZE          , NULL },
    { CONF_KRB5KEYTAB           , CONFTYPE_STR      , read_str         , CNF_KRB5KEYTAB           , NULL },
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
@@ -6079,6 +6081,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_MAILER]               , DEFAULT_MAILER);
     conf_init_no_yes_all(&conf_data[CNF_AUTOFLUSH]            , 0);
     conf_init_int      (&conf_data[CNF_RESERVE]              , CONF_UNIT_NONE, 100);
+    conf_init_int      (&conf_data[CNF_MAXDUMPPER]           , CONF_UNIT_NONE, 100);
     conf_init_int64    (&conf_data[CNF_MAXDUMPSIZE]          , CONF_UNIT_K   , (gint64)-1);
     conf_init_str   (&conf_data[CNF_COLUMNSPEC]           , "");
     conf_init_bool     (&conf_data[CNF_AMRECOVER_DO_FSF]     , 1);

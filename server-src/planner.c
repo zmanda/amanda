@@ -65,6 +65,7 @@
 
 char *	conf_tapetype;
 gint64 	conf_maxdumpsize;
+int 	conf_maxdumpper;
 int	conf_runtapes;
 int	conf_dumpcycle;
 int	conf_runspercycle;
@@ -357,6 +358,7 @@ main(
     storage_name = il->data;
     storage = lookup_storage(storage_name);
     conf_tapetype = storage_get_tapetype(storage);
+    conf_maxdumpper = getconf_int(CNF_MAXDUMPPER);
     conf_maxdumpsize = getconf_int64(CNF_MAXDUMPSIZE);
     conf_runtapes = storage_get_runtapes(storage);
     conf_dumpcycle = getconf_int(CNF_DUMPCYCLE);
@@ -467,6 +469,7 @@ main(
 			 conf_runtapes,
 			 (intmax_t)tape_length);
     }
+    tape_length *= (float)conf_maxdumpper/100.0;
     tape_mark = (size_t)tapetype_get_filemark(tape);
     tt_blocksize_kb = (size_t)tapetype_get_blocksize(tape);
     tt_blocksize = tt_blocksize_kb * 1024;

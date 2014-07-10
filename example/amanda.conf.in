@@ -127,6 +127,8 @@ tapedev "@EXAMPLE_TAPEDEV@"	# tape changer or device to use
 
 maxdumpsize -1		# Maximum number of bytes the planner will schedule
 			# for a run (default: runtapes * tape_length).
+maxdumpper 100          # maximum percentage of runtapes * tape_length to target
+
 tapetype HP-DAT		# what kind of tape it is (see tapetypes below)
 labelstr "^@DEFAULT_CONFIG@-[0-9][0-9]*$"	# label constraint regex: all tapes must match
 
