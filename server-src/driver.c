@@ -1555,7 +1555,17 @@ process_degraded_disk(
 	/* go ahead and do the disk as-is */
 	enqueue_disk(queuep, dp);
     else {
-	if (reserved_space + est_full_size + sched(dp)->est_size
+	gboolean must_degrade_dp = FALSE;
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    if (taper->degraded_mode &&
+	        dump_match_selection(taper->storage_name, dp)) {
+	        must_degrade_dp = TRUE;
+	    }
+	}
+	if (!must_degrade_dp) {
+	    /* go ahead and do the disk as-is */
+	    enqueue_disk(&newq, dp);
+	else if (reserved_space + est_full_size + sched(dp)->est_size
 	    <= total_disksize) {
 	    enqueue_disk(queuep, dp);
 	    est_full_size += sched(dp)->est_size;
