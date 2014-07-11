@@ -1,3 +1,7 @@
+2014-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Orion Poplawski <orion@cora.nwra.com>
+	* ndmp-src/Makefile.am: Fix for building out of tree.
+
 2014-07-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/script-email.pl: Remove $args.
 
