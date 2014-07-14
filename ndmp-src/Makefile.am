@@ -210,7 +210,8 @@ amndmjob_LDADD = libndmjob.la \
 		   ../common-src/libamanda.la
 
 ndmp0_xdr.c : ndmp0.x
-	$(RPCGEN) $(srcdir)/ndmp0.x
+	rm -f ndmp0_xdr.c
+	$(RPCGEN) -c -o ndmp0_xdr.c $(srcdir)/ndmp0.x
 	sed 's/#include "ndmp0.h"/#include "config.h"\
 &/' ndmp0_xdr.c > ndmp0_xdr.c.new ; mv ndmp0_xdr.c.new ndmp0_xdr.c
 
@@ -218,7 +219,8 @@ ndmp0.h : ndmp0_xdr.c
 	@
 
 ndmp2_xdr.c : ndmp2.x
-	$(RPCGEN) $(srcdir)/ndmp2.x
+	rm -f ndmp2_xdr.c
+	$(RPCGEN) -c -o ndmp2_xdr.c $(srcdir)/ndmp2.x
 	sed 's/#include "ndmp2.h"/#include "config.h"\
 &/' ndmp2_xdr.c > ndmp2_xdr.c.new ; mv ndmp2_xdr.c.new ndmp2_xdr.c
 
@@ -226,7 +228,8 @@ ndmp2.h : ndmp2_xdr.c
 	@
 
 ndmp3_xdr.c : ndmp3.x
-	$(RPCGEN) $(srcdir)/ndmp3.x
+	rm -f ndmp3_xdr.c
+	$(RPCGEN) -c -o ndmp3_xdr.c $(srcdir)/ndmp3.x
 	sed 's/#include "ndmp3.h"/#include "config.h"\
 &/' ndmp3_xdr.c > ndmp3_xdr.c.new ; mv ndmp3_xdr.c.new ndmp3_xdr.c
 
@@ -234,7 +237,8 @@ ndmp3.h : ndmp3_xdr.c
 	@
 
 ndmp4_xdr.c : ndmp4.x
-	$(RPCGEN) $(srcdir)/ndmp4.x
+	rm -f ndmp4_xdr.c
+	$(RPCGEN) -c -o ndmp4_xdr.c $(srcdir)/ndmp4.x
 	sed 's/#include "ndmp4.h"/#include "config.h"\
 &/' ndmp4_xdr.c > ndmp4_xdr.c.new ; mv ndmp4_xdr.c.new ndmp4_xdr.c
 
@@ -242,7 +246,8 @@ ndmp4.h : ndmp4_xdr.c
 	@
 
 ndmp9_xdr.c : ndmp9.x
-	$(RPCGEN) $(srcdir)/ndmp9.x
+	rm -f ndmp9_xdr.c
+	$(RPCGEN) -c -o ndmp9_xdr.c $(srcdir)/ndmp9.x
 	sed 's/#include "ndmp9.h"/#include "config.h"\
 &/' ndmp9_xdr.c > ndmp9_xdr.c.new ; mv ndmp9_xdr.c.new ndmp9_xdr.c
 
