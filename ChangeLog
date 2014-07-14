@@ -1,6 +1,9 @@
 2014-07-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/Makefile.am: Fix for building out of tree.
 
+2014-07-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: Fix for building out of tree.
+
 2014-07-11  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Orion Poplawski <orion@cora.nwra.com>
 	* ndmp-src/Makefile.am: Fix for building out of tree.
