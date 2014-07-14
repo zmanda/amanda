@@ -211,45 +211,55 @@ amndmjob_LDADD = libndmjob.la \
 
 ndmp0_xdr.c : ndmp0.x
 	rm -f ndmp0_xdr.c
+	rm -f ndmp0.h
 	$(RPCGEN) -c -o ndmp0_xdr.c $(srcdir)/ndmp0.x
-	sed 's/#include "ndmp0.h"/#include "config.h"\
-&/' ndmp0_xdr.c > ndmp0_xdr.c.new ; mv ndmp0_xdr.c.new ndmp0_xdr.c
+	$(RPCGEN) -h -o ndmp0.h $(srcdir)/ndmp0.x
+	sed 's+#include "$(srcdir)\/ndmp0.h"+#include "config.h"\
+\#include "ndmp0.h"+' ndmp0_xdr.c > ndmp0_xdr.c.new ; mv ndmp0_xdr.c.new ndmp0_xdr.c
 
 ndmp0.h : ndmp0_xdr.c
 	@
 
 ndmp2_xdr.c : ndmp2.x
 	rm -f ndmp2_xdr.c
+	rm -f ndmp2.h
 	$(RPCGEN) -c -o ndmp2_xdr.c $(srcdir)/ndmp2.x
-	sed 's/#include "ndmp2.h"/#include "config.h"\
-&/' ndmp2_xdr.c > ndmp2_xdr.c.new ; mv ndmp2_xdr.c.new ndmp2_xdr.c
+	$(RPCGEN) -h -o ndmp2.h $(srcdir)/ndmp2.x
+	sed 's+#include "$(srcdir)\/ndmp2.h"+#include "config.h"\
+\#include "ndmp2.h"+' ndmp2_xdr.c > ndmp2_xdr.c.new ; mv ndmp2_xdr.c.new ndmp2_xdr.c
 
 ndmp2.h : ndmp2_xdr.c
 	@
 
 ndmp3_xdr.c : ndmp3.x
 	rm -f ndmp3_xdr.c
+	rm -f ndmp3.h
 	$(RPCGEN) -c -o ndmp3_xdr.c $(srcdir)/ndmp3.x
-	sed 's/#include "ndmp3.h"/#include "config.h"\
-&/' ndmp3_xdr.c > ndmp3_xdr.c.new ; mv ndmp3_xdr.c.new ndmp3_xdr.c
+	$(RPCGEN) -h -o ndmp3.h $(srcdir)/ndmp3.x
+	sed 's+#include "$(srcdir)\/ndmp3.h"+#include "config.h"\
+\#include "ndmp3.h"+' ndmp3_xdr.c > ndmp3_xdr.c.new ; mv ndmp3_xdr.c.new ndmp3_xdr.c
 
 ndmp3.h : ndmp3_xdr.c
 	@
 
 ndmp4_xdr.c : ndmp4.x
 	rm -f ndmp4_xdr.c
+	rm -f ndmp4.h
 	$(RPCGEN) -c -o ndmp4_xdr.c $(srcdir)/ndmp4.x
-	sed 's/#include "ndmp4.h"/#include "config.h"\
-&/' ndmp4_xdr.c > ndmp4_xdr.c.new ; mv ndmp4_xdr.c.new ndmp4_xdr.c
+	$(RPCGEN) -h -o ndmp4.h $(srcdir)/ndmp4.x
+	sed 's+#include "$(srcdir)\/ndmp4.h"+#include "config.h"\
+\#include "ndmp4.h"+' ndmp4_xdr.c > ndmp4_xdr.c.new ; mv ndmp4_xdr.c.new ndmp4_xdr.c
 
 ndmp4.h : ndmp4_xdr.c
 	@
 
 ndmp9_xdr.c : ndmp9.x
 	rm -f ndmp9_xdr.c
+	rm -f ndmp9.h
 	$(RPCGEN) -c -o ndmp9_xdr.c $(srcdir)/ndmp9.x
-	sed 's/#include "ndmp9.h"/#include "config.h"\
-&/' ndmp9_xdr.c > ndmp9_xdr.c.new ; mv ndmp9_xdr.c.new ndmp9_xdr.c
+	$(RPCGEN) -h -o ndmp9.h $(srcdir)/ndmp9.x
+	sed 's+#include "$(srcdir)\/ndmp9.h"+#include "config.h"\
+\#include "ndmp9.h"+' ndmp9_xdr.c > ndmp9_xdr.c.new ; mv ndmp9_xdr.c.new ndmp9_xdr.c
 
 ndmp9.h : ndmp9_xdr.c
 	@
