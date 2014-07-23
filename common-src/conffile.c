@@ -5727,6 +5727,12 @@ static void validate_deprecated_changerfile(conf_var_t *var G_GNUC_UNUSED,
     conf_parswarn(_("warning: Global changerfile is deprecated, it must be set in the changer section"));
 }
 
+gboolean
+config_is_initialized()
+{
+    return config_initialized;
+}
+
 /*
  * Initialization Implementation
  */

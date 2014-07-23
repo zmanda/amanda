@@ -1408,7 +1408,7 @@ main(
 	    user_validated = amindexd_debug ||
 				check_security(
 					(sockaddr_union *)&his_addr,
-					arg, 0, &errstr);
+					arg, 0, &errstr, "amindexd");
 	    if(user_validated) {
 		reply(200, _("Access OK"));
 		amfree(line);

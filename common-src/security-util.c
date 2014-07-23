@@ -2359,7 +2359,8 @@ check_security(
     sockaddr_union *addr,
     char *		str,
     unsigned long	cksum,
-    char **		errstr)
+    char **		errstr,
+    char               *service)
 {
     char *		remotehost = NULL, *remoteuser = NULL;
     char *		bad_bsd = NULL;
@@ -2448,7 +2449,7 @@ check_security(
 #ifndef USE_AMANDAHOSTS
     s = check_user_ruserok(remotehost, pwptr, remoteuser);
 #else
-    s = check_user_amandahosts(remotehost, addr, pwptr, remoteuser, NULL);
+    s = check_user_amandahosts(remotehost, addr, pwptr, remoteuser, service);
 #endif
 
     if (s != NULL) {

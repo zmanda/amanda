@@ -649,7 +649,7 @@ time_t	unctime(char *timestr);
 		:1)
 
 /* from old bsd-security.c */
-extern int check_security(sockaddr_union *, char *, unsigned long, char **);
+extern int check_security(sockaddr_union *, char *, unsigned long, char **, char *);
 
 /*
  * Handle functions which are not always declared on all systems.  This

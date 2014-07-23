@@ -1619,6 +1619,10 @@ void set_config_overrides(config_overrides_t *co);
  * Initialization
  */
 
+/* I the config is initialized */
+gboolean
+config_is_initialized();
+
 /* Constants for config_init */
 typedef enum {
     /* Use arg_config_name, if not NULL */
