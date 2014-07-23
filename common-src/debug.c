@@ -341,6 +341,8 @@ debug_unlink_old(void)
 
     memset(&sbuf, 0, SIZEOF(sbuf));
 
+    if (!config_is_initialized())
+	return;
     pname = get_pname();
     pname_len = strlen(pname);
 

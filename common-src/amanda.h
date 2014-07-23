@@ -686,7 +686,7 @@ time_t	unctime(char *timestr);
 
 /* from old bsd-security.c */
 extern int debug;
-extern int check_security(sockaddr_union *, char *, unsigned long, char **);
+extern int check_security(sockaddr_union *, char *, unsigned long, char **, char *);
 
 /*
  * Handle functions which are not always declared on all systems.  This

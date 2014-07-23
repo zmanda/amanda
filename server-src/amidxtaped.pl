@@ -827,7 +827,7 @@ sub check_inetd_security {
 	return 0;
     }
 
-    my $errmsg = $self->check_bsd_security($stream, $1);
+    my $errmsg = $self->check_bsd_security($stream, $1, "amidxtaped");
     if ($errmsg) {
 	print "ERROR $errmsg\r\n";
 	return 0;
