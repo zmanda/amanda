@@ -1404,7 +1404,7 @@ void set_config_overrides(config_overrides_t *co);
  * Initialization
  */
 
-/* I the config is initialized */
+/* If the config is initialized */
 gboolean
 config_is_initialized(void);
 

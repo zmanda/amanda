@@ -5007,7 +5007,7 @@ static void validate_tmpdir(conf_var_t *var G_GNUC_UNUSED, val_t *value)
 }
 
 gboolean
-config_is_initialized()
+config_is_initialized(void)
 {
     return config_initialized;
 }

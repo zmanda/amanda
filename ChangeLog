@@ -1,4 +1,8 @@
 2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (config_is_initialized): Fix declaration.
+	* common-src/conffile.h: Comment typo.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.h (config_is_initialized): Fix prototype.
 
 2014-07-23  Jean-Louis Martineau <martineau@zmanda.com>
