@@ -1,10 +1,13 @@
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h (config_is_initialized): Fix prototype.
+
 2014-07-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (check_security): Take a new service
 	  argument.
 	* common-src/amanda.h (check_security): Change prototype.
 	* common-src/conffile.c (config_is_initialized): New functionto return
 	  if the config is initialized.
-	* common-src/conffile.h (config_is_initialized) New prototype.
+	* common-src/conffile.h (config_is_initialized): New prototype.
 	* common-src/debug.c: (debug_unlink_old): Return if config is not
 	  initialized.
 	* server-src/amidxtaped.pl: Add "amidxtaped" as argument to
