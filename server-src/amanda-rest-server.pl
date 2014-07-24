@@ -85,12 +85,22 @@ if ($command eq 'start') {
     }
 
     my $port = getconf($CNF_REST_API_PORT);
+    if ($port == 0) {
+	debug("The REST-API-PORT must be defined in the global amanda.conf (" . $Amanda::Paths::CONFIG_DIR . "/amanda.conf) and be larger than 1024");
+	print "The REST-API-PORT must be defined in the global amanda.conf (" . $Amanda::Paths::CONFIG_DIR . "/amanda.conf) and be larger than 1024\n";
+	exit;
+    } elsif ($port < 1024) {
+	debug("The REST-API-PORT must be larger than 1024");
+	print "The REST-API-PORT must be larger than 1024\n";
+	exit;
+    }
     my @command = ('starman',
 		   '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl',
 		   '--listen', '127.0.0.1:' . $port,
 		   '--preload-app',
 		   '--daemonize',
 		   '--pid', $pid_file);
+    debug("running: " . join(' ', @command));
     system(@command);
     print "Started the Amanda Rest Server\n";
 } elsif ($command eq 'stop') {

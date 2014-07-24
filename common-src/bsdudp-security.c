@@ -130,7 +130,7 @@ bsdudp_connect(
     result = resolve_hostname(hostname, SOCK_DGRAM, &res, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	security_seterror(&bh->sech, _("resolve_hostname(%s): %s\n"), hostname,
+	security_seterror(&bh->sech, _("resolve_hostname(%s): %s"), hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
@@ -138,14 +138,14 @@ bsdudp_connect(
     if (canonname == NULL) {
 	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	security_seterror(&bh->sech,
-	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	        _("resolve_hostname(%s) did not return a canonical name"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
        return;
     }
     if (res == NULL) {
 	dbprintf(_("resolve_hostname(%s): no results\n"), hostname);
 	security_seterror(&bh->sech,
-	        _("resolve_hostname(%s): no results\n"), hostname);
+	        _("resolve_hostname(%s): no results"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
        amfree(canonname);
        return;
@@ -235,7 +235,7 @@ bsdudp_connect(
     if (res_addr == NULL) {
 	dbprintf(_("Can't bind a socket to connect to %s\n"), hostname);
 	security_seterror(&bh->sech,
-	        _("Can't bind a socket to connect to %s\n"), hostname);
+	        _("Can't bind a socket to connect to %s"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
        amfree(canonname);
        return;

@@ -1,4 +1,10 @@
 2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb5-security.c:
+	  Remove "\n" in security_seterror error message.
+	* server-src/amanda-rest-server.pl: Improve error detection.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (config_is_initialized): Fix declaration.
 	* common-src/conffile.h: Comment typo.
 
