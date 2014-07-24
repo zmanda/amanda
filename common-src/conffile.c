@@ -5728,7 +5728,7 @@ static void validate_deprecated_changerfile(conf_var_t *var G_GNUC_UNUSED,
 }
 
 gboolean
-config_is_initialized()
+config_is_initialized(void)
 {
     return config_initialized;
 }
