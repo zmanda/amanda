@@ -2334,7 +2334,7 @@ check_security(
     char *		str,
     unsigned long	cksum,
     char **		errstr,
-    char               *service)
+    char               *service G_GNUC_UNUSED)
 {
     char *		remotehost = NULL, *remoteuser = NULL;
     char *		bad_bsd = NULL;

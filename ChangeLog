@@ -1,4 +1,8 @@
 2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (check_security): service is
+	  unused in some compilation path.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (config_is_initialized): Fix declaration.
 	* common-src/conffile.h: Comment typo.
 
