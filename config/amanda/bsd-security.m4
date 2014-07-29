@@ -49,10 +49,10 @@ AC_DEFUN([AMANDA_BSD_SECURITY],
     if test "x$BSD_SECURITY" = "xyes"; then
         AC_DEFINE(BSD_SECURITY,1,
             [Define to use BSD .rhosts/.amandahosts security. ])
-        if test "x$USE_AMANDAHOSTS" = "xyes"; then
-            AC_DEFINE(USE_AMANDAHOSTS,1,
-                [Define if you want to use the ".amandahosts" for BSD security. ])
-        fi
+    fi
+    if test "x$USE_AMANDAHOSTS" = "xyes"; then
+        AC_DEFINE(USE_AMANDAHOSTS,1,
+            [Define if you want to use the ".amandahosts" for BSD* security. ])
     fi
 
     AM_CONDITIONAL(WANT_BSD_SECURITY, test x"$BSD_SECURITY" = x"yes")

@@ -1,4 +1,8 @@
 2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/bsd-security.m4: USE_AMANDAHOSTS must be defined even
+	  without bsd security (for bsdudp and bsdtcp).
+
+2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Nathan Stratton Treadway
 	* man/xml-source/amgtar.8.xml:
 	  Add ": directory is on a different filesystem; not dumped".
