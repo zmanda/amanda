@@ -2997,7 +2997,7 @@ in the form of "device" sections, which look like this:</para>
 
 <programlisting>
 define device <emphasis remap='I'>name</emphasis> {
-    commend "<emphasis remap='I'>comment (optional)</emphasis>"
+    comment "<emphasis remap='I'>comment (optional)</emphasis>"
     tapedev "<emphasis remap='I'>device-specifier</emphasis>"
     device-property "<emphasis remap='I'>prop-name</emphasis>" "<emphasis remap='I'>prop-value</emphasis>"
     <literal>...</literal>

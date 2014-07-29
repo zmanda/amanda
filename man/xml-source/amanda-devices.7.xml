@@ -848,6 +848,7 @@ environment variable.</para>
 
 <seealso>
 <manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-changers" vol="7"/>,
 </seealso>
 
 </refentry>

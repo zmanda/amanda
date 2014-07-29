@@ -28,7 +28,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Amgtar is an Amanda Application API script.  It should not be run
+<para>Ambsdtar is an Amanda Application API script.  It should not be run
 by users directly.  It uses BSD Tar to backup and restore data.</para>
 
 <para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
@@ -144,7 +144,7 @@ do not include the trailing slash.  Example expressions:
 
 <para>Similarly, include expressions are supplied to &gnutar;'s
 <option>--files-from</option> option.  This option ordinarily does not
-accept any sort of wildcards, but amgtar "manually" applies glob pattern
+accept any sort of wildcards, but ambsdtar "manually" applies glob pattern
 matching to include expressions with only one slash.  The expressions must
 still begin with "./", so this effectively only allows expressions like
 "./[abc]*" or "./*.txt".</para>
