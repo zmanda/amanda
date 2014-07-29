@@ -132,6 +132,7 @@ List all regex (POSIX Extended Regular Expression syntax) that are normal output
   ": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"
   ": Cannot add file .*: No such file or directory$"
   ": Error exit delayed from previous errors"
+  ": directory is on a different filesystem; not dumped"
 </programlisting>
 <para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
 </listitem></varlistentry>

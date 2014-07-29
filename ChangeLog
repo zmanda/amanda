@@ -1,5 +1,13 @@
+2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Nathan Stratton Treadway
+	* man/xml-source/amgtar.8.xml:
+	  Add ": directory is on a different filesystem; not dumped".
+	* man/xml-source/amanda-devices.7.xml: Add amanda-changers man page.
+	* man/xml-source/ambsdtar.8.xml: Typo.
+	* man/xml-source/amanda.conf.5.xml: Typo.
+
 2014-07-28  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/amanda-rest-server.pl: Use Amadna::Paths::AMANDA_DBGDIR
+	* server-src/amanda-rest-server.pl: Use Amanda::Paths::AMANDA_DBGDIR
 	  instead of CNF_LOGDIR for the rest-api-pid file.
 
 2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
