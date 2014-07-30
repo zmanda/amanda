@@ -9888,6 +9888,23 @@ config_print_errors(void)
     }
 }
 
+void
+config_print_errors_as_message(void)
+{
+    GSList *iter;
+
+    for (iter = cfgerr_errors; iter; iter = g_slist_next(iter)) {
+	g_fprintf(stdout,
+"  {" \
+"     \"source_filename\" : \"%s\",\n" \
+"     \"source_line\" : \"%d\",\n" \
+"     \"severity\" : \"16\",\n" \
+"     \"code\" : \"%d\",\n" \
+"     \"message\" : \"%s\"\n" \
+"  },\n", __FILE__, __LINE__, 1500016 , (char *)iter->data);
+    }
+}
+
 /* Get the config name */
 char *get_config_name(void)
 {

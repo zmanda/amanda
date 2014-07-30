@@ -1540,6 +1540,7 @@ void config_clear_errors(void);
  * applications.
  */
 void config_print_errors(void);
+void config_print_errors_as_message(void);
 
 /* Add an error message to the list of errors, and make sure tha the
  * error level is at least LEVEL.  This is used by the diskfile module

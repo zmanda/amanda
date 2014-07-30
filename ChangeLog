@@ -1,4 +1,12 @@
 2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (config_print_errors_as_message): New function.
+	* common-src/conffile.h (config_print_errors_as_message): New
+	  prototype.
+	* perl/Amanda/Config.swg: Add error 1500016.
+	* server-src/amanda-rest-server.pl: s/Amadna/Amanda/
+	* server-src/amcheck.c: Use printf_message instead of error.
+
+2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Amcheck.pm: Use '-c' for client check.
 
 2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
