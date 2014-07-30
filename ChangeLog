@@ -1,3 +1,6 @@
+2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Amcheck.pm: Use '-c' for client check.
+
 2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/bsd-security.m4: USE_AMANDAHOSTS must be defined even
 	  without bsd security (for bsdudp and bsdtcp).
