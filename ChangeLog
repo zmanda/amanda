@@ -1,3 +1,6 @@
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Improve error message for bsdtar.
+
 2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (config_print_errors_as_message): New function.
 	* common-src/conffile.h (config_print_errors_as_message): New
