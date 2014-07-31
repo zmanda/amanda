@@ -1,3 +1,6 @@
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Improve error message for bsdtar.
+
 2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/bsd-security.m4: USE_AMANDAHOSTS must be defined even
 	  without bsd security (for bsdudp and bsdtcp).

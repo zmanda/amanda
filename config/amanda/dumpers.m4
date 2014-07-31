@@ -193,10 +193,10 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 			;;
 		 *)
 		    if test -n "$OLD_BSDTAR"; then
-			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, it will be used.])
+			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, it will be used by the ambsdtar application.])
 		    else
 			# warning..
-			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, so it will not be used.])
+			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, so it will not be used by the ambsdtar application.])
 			# reset the cache for BSDTAR so AC_PATH_PROGS will search again
 			BSDTAR=''
 			unset ac_cv_path_BSDTAR
