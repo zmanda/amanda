@@ -452,7 +452,7 @@ typedef struct message_arg_array_s {
     char *value;
 } message_arg_array_t;
 
-typedef struct message_s {
+struct message_s {
     char *file;
     int   line;
     int   code;
@@ -461,7 +461,7 @@ typedef struct message_s {
     char *errnocode;
     char *errnostr;
     message_arg_array_t *arg_array;
-} message_t;
+};
 
 static char *ammessage_encode_json(char *str);
 static void set_message(message_t *message);
