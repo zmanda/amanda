@@ -1815,7 +1815,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 	     * in tokenval.v.s
 	     */
 	    tmps = unquote_string(tkbuf);
-	    strncpy(tkbuf, tmps, sizeof(tkbuf));
+	    g_strlcpy(tkbuf, tmps, sizeof(tkbuf));
 	    amfree(tmps);
 	    tokenval.v.s = tkbuf;
 

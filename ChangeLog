@@ -1,4 +1,8 @@
 2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, server-src/amcheck.c: Fix bug found by
+	  coverity.
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Handle senddiscover service.
 	* client-src/Makefile.am: Build senddiscover.
 	* client-src/client_util.c: Parse DISCOVER backup support option.

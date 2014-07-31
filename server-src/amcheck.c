@@ -485,15 +485,21 @@ main(
 	char line[1025];
 	FILE *tempfdr;
 	tempfdr = fopen(tempfname, "r");
-	if(fseek(tempfdr, (off_t)0, 0) == (off_t)-1) {
-	    printf_message(2800220, "seek temp file: %s", strerror(errno));
-	    /*NOTREACHED*/
-	}
+	if (!tempfdr) {
+	    printf_message(2800228, "Can't oprn '%s' for reading: %s",
+			   tempfname,strerror(errno));
+	} else {
+	    if(fseek(tempfdr, (off_t)0, 0) == (off_t)-1) {
+		printf_message(2800220, "seek temp file: %s", strerror(errno));
+		exit(1);
+		/*NOTREACHED*/
+	    }
 
-	while (fgets(line, 1024, tempfdr)) {
-	    fprintf(mainfd, "%s", line);
+	    while (fgets(line, 1024, tempfdr)) {
+		fprintf(mainfd, "%s", line);
+	    }
+	    fclose(tempfdr);
 	}
-	fclose(tempfdr);
 	fclose(tempfd);
 	unlink(tempfname);			/* so it goes away on close */
 	amfree(tempfname);
