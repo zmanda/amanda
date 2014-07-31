@@ -18,7 +18,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =	libamclient.la
 
-amlibexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup sendsize
+amlibexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup senddiscover sendsize
 
 amlibexec_SCRIPTS_SHELL = patch-system
 

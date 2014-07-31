@@ -9895,7 +9895,7 @@ config_print_errors_as_message(void)
 
     for (iter = cfgerr_errors; iter; iter = g_slist_next(iter)) {
 	g_fprintf(stdout,
-"  {" \
+"  {\n" \
 "     \"source_filename\" : \"%s\",\n" \
 "     \"source_line\" : \"%d\",\n" \
 "     \"severity\" : \"16\",\n" \

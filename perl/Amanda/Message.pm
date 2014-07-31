@@ -86,6 +86,7 @@ not handled by Amanda::Message):
  2600000  Amanda::DB::Message
  2700000  Amanda::CheckDump::Message
  2800000  amcheck
+ 2900000  senddiscover
 
 general keys:
   code            =>

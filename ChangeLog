@@ -1,4 +1,17 @@
 2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Handle senddiscover service.
+	* client-src/Makefile.am: Build senddiscover.
+	* client-src/client_util.c: Parse DISCOVER backup support option.
+	* client-src/client_util.h (backup_support_option_t): Add discover.
+	* client-src/senddiscover.c: New client service.
+	* common-src/Makefile.am: Add ammessage.
+	* common-src/ammessage.c: Add struct and function to handle Message
+	  and print them in JSON format.
+	* common-src/ammessage.h: Add prototype.
+	* common-src/conffile.c: Fix json indentation.
+	* perl/Amanda/Message.pm: Add senddiscover.
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dumpers.m4: Improve error message for bsdtar.
 
 2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>

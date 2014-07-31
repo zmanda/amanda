@@ -83,7 +83,8 @@ typedef enum {
     SERVICE_SELFCHECK,
     SERVICE_AMINDEXD,
     SERVICE_AMIDXTAPED,
-    SERVICE_AMDUMPD
+    SERVICE_AMDUMPD,
+    SERVICE_SENDDISCOVER
 } service_t;
 
 static struct services {
@@ -97,7 +98,8 @@ static struct services {
    { "selfcheck", 1, SERVICE_SELFCHECK },
    { "amindexd", 0, SERVICE_AMINDEXD },
    { "amidxtaped", 0, SERVICE_AMIDXTAPED },
-   { "amdumpd", 0, SERVICE_AMDUMPD }
+   { "amdumpd", 0, SERVICE_AMDUMPD },
+   { "senddiscover", 1, SERVICE_SENDDISCOVER }
 };
 #define NSERVICES G_N_ELEMENTS(services)
 
@@ -972,7 +974,8 @@ s_repwait(
 	pid = waitpid(as->pid, &retstat, WNOHANG);
 	if (as->service  == SERVICE_NOOP ||
 	    as->service  == SERVICE_SENDSIZE ||
-	    as->service  == SERVICE_SELFCHECK) {
+	    as->service  == SERVICE_SELFCHECK ||
+	    as->service  == SERVICE_SENDDISCOVER) {
 	    long long delay = 100000;
 	    struct timespec tdelay;
 	    int t = 0;
