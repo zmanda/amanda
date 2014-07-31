@@ -1,4 +1,10 @@
 2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/amanda_configure.m4: Call AMANDA_REST_HOOK
+	* perl/Amanda/Constants.pm.in.src: Add $REST_HOOK_DIR.
+	* config/amanda/rest-hook.m4 (AMANDA_REST_HOOK): --with-rest-hook
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Load rest-hook
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c, server-src/amcheck.c: Fix bug found by
 	  coverity.
 

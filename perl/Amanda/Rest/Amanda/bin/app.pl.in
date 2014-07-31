@@ -246,4 +246,12 @@ post '/amanda/v1.0/configs/:CONF/amcheck' => sub {
 	return $r;
 };
 
+my $hook_dir = $Amanda::Constants::REST_HOOK_DIR;
+
+if (-d $hook_dir) {
+    foreach my $file (<$hook_dir/*>) {
+        eval { require $file };
+    }
+}
+
 dance;
