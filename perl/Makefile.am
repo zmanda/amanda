@@ -520,12 +520,6 @@ EXTRA_DIST += Amanda/Service.pm
 endif
 
 if WANT_SERVER
-# PACKAGE: Amanda::Report
-Amanda_DATA += Amanda/Service.pm
-EXTRA_DIST += Amanda/Service.pm
-endif
-
-if WANT_SERVER
 # PACKAGE: Amanda::Report::*
 AmandaReportdir = $(amperldir)/Amanda/Report
 AmandaReport_DATA = \

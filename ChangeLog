@@ -1,4 +1,7 @@
 2014-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Remove duplicate entry.
+
+2014-08-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/senddiscover.c: Fix.
 	* common-src/ammessage.c: Fix json output.
 	* perl/Amanda/Message.pm: Add Amanda::Service::Message.
