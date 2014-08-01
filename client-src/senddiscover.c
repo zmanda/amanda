@@ -262,20 +262,20 @@ main(
 			"application", g_strdup(dle->program)));
 	    }
 	    g_ptr_array_free_full(errarray);
-	    return 0;
+	    goto err;
 	}
 
 	if (!bsu->discover) {
 	    fprint_message_free(stdout, build_message(
 			__FILE__, __LINE__, 2900002, 16, 1,
 			"application", g_strdup(dle->program)));
-	    return 0;
+	    goto err;
 	}
 	if (pipe(errfd) < 0) {
 	    fprint_message_free(stdout, build_message(
 			__FILE__, __LINE__, 2900005, 16, 1,
 			"application", g_strdup(dle->program)));
-	    return 0;
+	    goto err;
 	}
 
 	switch(application_api_pid=fork()) {

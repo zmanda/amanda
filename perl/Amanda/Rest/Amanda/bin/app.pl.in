@@ -28,6 +28,7 @@ use Amanda::Rest::Dumps;
 use Amanda::Rest::Labels;
 use Amanda::Rest::Report;
 use Amanda::Rest::Runs;
+use Amanda::Rest::Services;
 use Amanda::Rest::Storages::Labels;
 use Amanda::Rest::Status;
 use Amanda::Rest::Storages;
@@ -243,6 +244,12 @@ post '/amanda/v1.0/configs/:CONF/runs/messages' => sub {
 post '/amanda/v1.0/configs/:CONF/amcheck' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Amcheck::check(%p);
+	return $r;
+};
+
+get '/amanda/v1.0/services/discover' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Services::discover(%p);
 	return $r;
 };
 

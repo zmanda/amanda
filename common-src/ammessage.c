@@ -671,8 +671,14 @@ sprint_message(
     message_t *message)
 {
     int i;
+    static int first_message = 1;
 
     GString *result = g_string_sized_new(512);
+    if (first_message) {
+	first_message = 0;
+    } else {
+	g_string_append_c(result, ',');
+    }
     g_string_append_printf(result,
         "  {\n" \
         "    \"source_filename\" : \"%s\",\n" \
@@ -688,8 +694,8 @@ sprint_message(
 	set_message(message);
     }
     g_string_append_printf(result,
-        "    \"message\" : \"%s\",\n" \
-        "  },\n", message->msg);
+        "    \"message\" : \"%s\"\n" \
+        "  }\n", message->msg);
 
     return g_string_free(result, FALSE);
 }
