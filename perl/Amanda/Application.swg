@@ -44,6 +44,7 @@ sub new {
 
     $self->{known_commands} = {
         support   => 1,
+        discover  => 1,
         selfcheck => 1,
         estimate  => 1,
         backup    => 1,
