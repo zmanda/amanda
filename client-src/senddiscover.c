@@ -176,8 +176,8 @@ main(
 	g_printf(";");
     }
     g_printf("\n");
-    fflush(stdout);
     g_printf("[\n");
+    fflush(stdout);
 
     if (am_has_feature(g_options->features, fe_req_xml)) {
 	char *errmsg = NULL;

@@ -1,4 +1,8 @@
 2014-08-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: fllush(stdout)
+	* perl/Amanda/Service.pm: Add error code 3100005.
+
+2014-08-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/senddiscover.c: Add the --device argument.
 	* perl/Amanda/Rest/Services.pm: Do not read a config, set diskdevice
 	  and esxpass property.

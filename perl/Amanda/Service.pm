@@ -39,6 +39,8 @@ sub local_message {
         return "amservice failed: $self->{'errmsg'}: $self->{'buffer'}";
     } elsif ($self->{'code'} == 3100004) {
         return "No application argument specified";
+    } elsif ($self->{'code'} == 3100005) {
+        return "senddiscover result";
     } else {
 	return "no message for code $self->{'code'}";
     }
