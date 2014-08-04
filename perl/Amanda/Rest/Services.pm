@@ -83,8 +83,9 @@ sub discover {
     my %params = @_;
 
     my @amservice_args;
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my @result_messages;
+#    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+#    return \@result_messages if @result_messages;
 
     my $user_msg = sub {
 	my $msg = shift;
@@ -117,9 +118,18 @@ sub discover {
     my($wtr, $rdr);
     open3($wtr, $rdr, undef, "$Amanda::Paths::sbindir/amservice", @amservice_args);
     print $wtr "<dle>\n";
+    if (defined $params{'diskdevice'}) {
+	print $wtr "  <diskdevice>$params{'diskdevice'}</diskdevice>\n";
+    }
     print $wtr "  <program>APPLICATION</program>\n";
     print $wtr "  <backup-program>\n";
     print $wtr "    <plugin>$params{'application'}</plugin>\n";
+    if (defined $params{'esxpass'}) {
+	print $wtr "    <property>\n";
+	print $wtr "      <name>esxpass</name>\n";
+	print $wtr "      <value>$params{'esxpass'}</value>\n";
+	print $wtr "    </property>\n";
+    }
     print $wtr "  </backup-program>\n";
     print $wtr "</dle>\n";
     close($wtr);
