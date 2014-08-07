@@ -14,5 +14,5 @@ service amanda
         group           = disk
         groups          = yes
         server          = @amlibexecdir@/amandad
-        server_args     = -auth=bsdtcp amdump amindexd amidxtaped
+        server_args     = -auth=bsdtcp amdump amindexd amidxtaped senddiscover
 }
