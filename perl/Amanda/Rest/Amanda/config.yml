@@ -2,6 +2,9 @@
 # env-related settings should go to environments/$env.yml
 # all the settings in this file will be loaded at Dancer's startup.
 
+# The log directory
+log_path: "/var/log/amanda/amanda-rest-server-log"
+
 # Your application's name
 appname: "amanda"
 
