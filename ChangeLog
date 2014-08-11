@@ -1,4 +1,7 @@
 2014-08-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: Fix memory use.
+
+2014-08-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Amanda/config.yml: Add log_path
 
 2014-08-07  Jean-Louis Martineau <martineau@zmanda.com>

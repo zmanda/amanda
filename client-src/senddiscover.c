@@ -254,7 +254,7 @@ main(
 		fprint_message_free(stdout, build_message(
 			__FILE__, __LINE__, 2900000, 16, 2,
 			"application", g_strdup(dle->program),
-			"errmsg", errmsg));
+			"errmsg", g_strdup(errmsg)));
 	    }
 	    if (i == 0) { /* no errarray */
 		fprint_message_free(stdout, build_message(
