@@ -114,6 +114,17 @@ sub discover {
     push @amservice_args, $params{'auth'};
     push @amservice_args, 'senddiscover';
 
+    my $config_overrides = $params{'config_overrides'};
+    if (defined $config_overrides) {
+	if (ref $config_overrides eq 'ARRAY') {
+	    for my $co (@{$config_overrides}) {
+		push @amservice_args, "-o", $co;
+	    }
+	} else {
+	    push @amservice_args, "-o", $config_overrides;
+	}
+    }
+
     # fork the amservice process
     my($wtr, $rdr);
     open3($wtr, $rdr, undef, "$Amanda::Paths::sbindir/amservice", @amservice_args);

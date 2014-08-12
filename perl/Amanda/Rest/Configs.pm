@@ -168,12 +168,20 @@ sub config_init {
     }
 
     Amanda::Config::config_uninit();
-    if (defined $config_overrides and @{$config_overrides}) {
-	my $g_config_overrides = Amanda::Config::new_config_overrides(@{$config_overrides} + 1);
-	for my $co (@{$config_overrides}) {
-	    add_config_override_opt($g_config_overrides, $co);
+    if (defined $config_overrides) {
+	my $g_config_overrides;
+	if (ref $config_overrides eq 'ARRAY') {
+	    $g_config_overrides = Amanda::Config::new_config_overrides(@{$config_overrides} + 1);
+	    for my $co (@{$config_overrides}) {
+		Amanda::Config::add_config_override_opt($g_config_overrides, $co);
+	    }
+	} else {
+	    $g_config_overrides = Amanda::Config::new_config_overrides(2);
+	    Amanda::Config::add_config_override_opt($g_config_overrides, $config_overrides);
 	}
-	Amanda::Config::set_config_overrides($g_config_overrides);
+	if (defined $g_config_overrides) {
+	    Amanda::Config::set_config_overrides($g_config_overrides);
+	}
     }
     Amanda::Config::config_init($Amanda::Config::CONFIG_INIT_EXPLICIT_NAME, $config_name);
 

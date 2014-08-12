@@ -115,6 +115,13 @@ main(
 
     /* process arguments */
 
+    {
+	int i;
+	for (i=0; i<argc; i++) {
+	    g_debug("argc[%d] = %s", i, argv[i]);
+	}
+    }
+
     cfg_ovr = new_config_overrides(argc/2);
     input_file = stdin;
     while((opt = getopt_long(argc, argv, "o:f:s", long_options, NULL)) != EOF) {

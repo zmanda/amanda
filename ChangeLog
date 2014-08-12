@@ -1,3 +1,9 @@
+2014-08-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c: Print arguments to the debug file.
+	* common-src/conffile.c: Add ctimeout to client config file.
+	* perl/Amanda/Rest/Configs.pm: Fix parsing of config_overrides.
+	* perl/Amanda/Rest/Services.pm: Pass config_overrides to amservice.
+
 2014-08-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/senddiscover.c: Fix memory use.
 
