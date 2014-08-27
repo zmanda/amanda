@@ -33,6 +33,8 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 			    AMANDA_ADD_CFLAGS([-Ae])
 			    ;;
 		    esac
+		    # hpux needs LD_LIBRARY_PATH to load perl binary module
+		    AC_DEFINE(NEED_LD_LIBRARY_PATH_ENV,1,[Define on hpux. ])
 		    ;;
 	*-ibm-aix*)
 		    ;;

@@ -1,3 +1,12 @@
+2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/syshacks.m4: Define NEED_LD_LIBRARY_PATH_ENV on hpux.
+	* common-src/alloc.c (safe_env_full): Add LD_LIBRARY_PATH.
+	* amar-src/amar.c, common-src/ipc-binary.h, device-src/ndmp-device.c,
+	  device-src/xfer-dest-device.c, device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-splitter.c: Change so gpointer to gchar*
+	  because hpux compiler can't do arithmetic on gpointer.
+
+
 2014-08-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amservice.c: Print arguments to the debug file.
 	* common-src/conffile.c: Add ctimeout to client config file.
