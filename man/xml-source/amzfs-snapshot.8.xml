@@ -40,7 +40,7 @@ where the path specified is mounted.</para>
 </programlisting></para>
 <para>The PRE_DLE_* script output a DIRECTORY property telling where the directory is located in the snapshot. The application must be able to use the DIRECTORY property, amgtar can do it.</para>
 
-<para>The script is run as the amanda user, it must have the priviledge to create and destroy snapshot:
+<para>The script is run as the amanda user, it must have the privilege to create and destroy snapshot:
 <programlisting>
     zfs allow -ldu AMANDA_USER mount,snapshot,destroy FILESYSTEM
 </programlisting></para>
