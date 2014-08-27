@@ -136,7 +136,7 @@ push_buffer_impl(
     /* if we already have data in the buffer, add the new data to it */
     if (self->partial_length != 0) {
 	gsize to_copy = min(self->block_size - self->partial_length, len);
-	memmove(self->partial + self->partial_length, buf, to_copy);
+	memmove((char *)self->partial + self->partial_length, buf, to_copy);
 	buf = (gpointer)(to_copy + (char *)buf);
 	len -= to_copy;
 	self->partial_length += to_copy;

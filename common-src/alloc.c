@@ -331,6 +331,9 @@ safe_env_full(char **add)
 	"PATH",
 #endif
 	"DISPLAY",
+#ifdef NEED_LD_LIBRARY_PATH_ENV
+	"LD_LIBRARY_PATH",
+#endif
 	NULL
     };
 

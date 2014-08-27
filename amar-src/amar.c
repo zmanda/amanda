@@ -96,7 +96,7 @@ typedef struct handling_params_s {
     GSList *file_states;
 
     /* read buffer */
-    gpointer buf;
+    gchar *buf;
     gsize buf_size; /* allocated size */
     gsize buf_len; /* number of active bytes .. */
     gsize buf_offset; /* ..starting at buf + buf_offset */
@@ -116,7 +116,7 @@ struct amar_s {
 
     /* internal buffer; on writing, this is WRITE_BUFFER_SIZE bytes, and
      * always has at least RECORD_SIZE bytes free. */
-    gpointer buf;
+    gchar *buf;
     size_t buf_len;
     size_t buf_size;
     handling_params_t *hp;
@@ -554,7 +554,7 @@ amar_attr_add_data_buffer(
 			  rec_eoa, data, rec_data_size, error))
 	    return FALSE;
 
-	data += rec_data_size;
+	data = (gchar *)data + rec_data_size;
 	size -= rec_data_size;
 	attribute->size += rec_data_size;
     }
@@ -651,7 +651,7 @@ typedef struct attr_state_s {
     guint16  attrid;
     amar_attr_handling_t *handling;
     int      fd;
-    gpointer buf;
+    gchar *buf;
     gsize buf_len;
     gsize buf_size;
     gpointer attr_data;
@@ -784,7 +784,7 @@ retry:
       : buf_skip_((archive), (hp), (skipbytes)))
 
 /* Get a pointer to the current position in the buffer */
-#define buf_ptr(hp) ((hp)->buf + (hp)->buf_offset)
+#define buf_ptr(hp) ((gchar *)(hp)->buf + (hp)->buf_offset)
 
 /* Get the amount of data currently available in the buffer */
 #define buf_avail(hp) ((hp)->buf_len)

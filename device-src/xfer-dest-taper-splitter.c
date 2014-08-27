@@ -311,7 +311,7 @@ iterator_get_block(
 
 	read_size = MIN(iter->slice_remaining, bytes_needed);
 	bytes_read = full_read(iter->cur_fd,
-			       buf + buf_offset,
+			       (gchar *)buf + buf_offset,
 			       read_size);
 	if (bytes_read < 0 || (gsize)bytes_read < read_size) {
 	    xfer_cancel_with_error(elt,

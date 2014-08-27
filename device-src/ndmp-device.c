@@ -797,7 +797,7 @@ ndmp_device_write_block(
     gpointer  data)
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
-    gpointer replacement_buffer = NULL;
+    gchar *replacement_buffer = NULL;
 
     if (device_in_error(self)) return FALSE;
 
