@@ -858,7 +858,7 @@ write_slab_to_device(
 	    return FALSE;
 	}
 
-	crc32_add(buf, write_size, &elt->crc);
+	crc32_add((uint8_t *)buf, write_size, &elt->crc);
 	buf += write_size;
 	self->slab_bytes_written += write_size;
 	remaining -= write_size;
