@@ -581,7 +581,7 @@ tape_device_set_compression_fn(Device *p_self, DevicePropertyBase *base,
 	device_clear_volume_details(p_self);
     } else {
 	device_set_error(p_self,
-	    g_strdup("Error setting COMPRESION property"),
+	    g_strdup("Error setting COMPRESSION property"),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }

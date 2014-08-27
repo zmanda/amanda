@@ -3156,7 +3156,7 @@ A comment string describing this taperscan.</para>
     <para>In order to support re-writing from the beginning of a failed part,
 	Amanda must have access to the contents of the part after it has been
 	partially written.  If the dump is being read from holding disk, then
-	the part contents are availble there.  Otherwise, the part must be
+	the part contents are available there.  Otherwise, the part must be
 	cached, and this can be done memory or on disk.  In either of the
 	latter cases, the cache must have enough space to hold an entire
 	part.</para>

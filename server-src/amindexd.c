@@ -249,7 +249,7 @@ uncompress_file(
 
 	indexfd = open(filename,O_WRONLY|O_CREAT, 0600);
 	if (indexfd == -1) {
-	    msg = vstrallocf(_("Can't open '%s' for writting: %s"),
+	    msg = vstrallocf(_("Can't open '%s' for writing: %s"),
 			      filename, strerror(errno));
 	    dbprintf("%s\n", msg);
 	    g_ptr_array_add(*emsg, msg);
