@@ -2303,7 +2303,7 @@ check_user_amandahosts(
 	    }
 	    else {
 		amfree(line);
-		break;
+		continue;
 	    }
 	}
 

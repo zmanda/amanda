@@ -1,4 +1,8 @@
 2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (check_user_amandahosts): Proceed to next
+	  line if host and user match but not the service.
+
+2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Bill Blough <devel@blough.us>
 	* ndmp-src/ndmjob_args.c, device-src/tape-device.c,
 	  server-src/amindexd.c, man/xml-source/amanda.conf.5.xml,
