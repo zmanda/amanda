@@ -89,6 +89,7 @@ not handled by Amanda::Message):
  2900000  senddiscover
  3000000  Amanda::Amvmware::Message
  3100000  Amanda::Service::Message
+ 3200000  amanda-extensions
 
 general keys:
   code            =>

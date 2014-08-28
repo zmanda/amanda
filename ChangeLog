@@ -1,3 +1,6 @@
+2014-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: 32xxxxx are for amanda-extensions.
+
 2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-dest-taper-cacher.c: Cast pointer.
 
