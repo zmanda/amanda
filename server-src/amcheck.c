@@ -548,8 +548,8 @@ main(
 	}
 	if(mailto) {
 	    a = (char **) g_new0(char *, 2);
-	    a[1] = g_strdup(mailto);
-	    a[2] = NULL;
+	    a[0] = g_strdup(mailto);
+	    a[1] = NULL;
 	} else {
 	    /* (note that validate_mailto doesn't allow any quotes, so this
 	     * is really just splitting regular old strings) */

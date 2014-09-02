@@ -1,4 +1,7 @@
 2014-09-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Fix mailto allocation.
+
+2014-09-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/rait-device.c: Use int value instead of pointer value.
 
 2014-08-28  Jean-Louis Martineau <martineau@zmanda.com>
