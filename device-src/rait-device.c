@@ -1096,7 +1096,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
     for (i = 0; i < ops->len; i ++) {
         GenericOp * op = g_ptr_array_index(ops, i);
         DeviceStatusFlags result = GPOINTER_TO_INT(op->result);
-        if (op->result == DEVICE_STATUS_SUCCESS) {
+        if (result == DEVICE_STATUS_SUCCESS) {
             if (first_success == NULL) {
                 /* This is the first successful device. */
                 first_success = op->child;
