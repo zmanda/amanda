@@ -2546,6 +2546,8 @@ get_openstack_swift_api_v2_setting(
     buf.buffer_len = strlen(buf.buffer);
     s3_verbose(hdl, 1);
     hdl->getting_swift_2_token = 1;
+    g_free(hdl->x_auth_token);
+    hdl->x_auth_token = NULL;
     g_free(hdl->x_storage_url);
     hdl->x_storage_url = NULL;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
