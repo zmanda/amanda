@@ -1,4 +1,10 @@
 2014-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/dvdrw-device.c: dvdrw_growisofs_command,
+	  dvdrw_mount_command and dvdrw_umount_command property are
+	  G_TYPE_STRING.
+	* installcheck/Amanda_Device.pl: Test parsing dvd properties.
+
+2014-09-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.c (get_openstack_swift_api_v2_setting): Set
 	  hdl->x_auth_token to NULL.
 
