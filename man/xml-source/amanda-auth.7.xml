@@ -131,7 +131,7 @@ below.</para>
 
 <para><emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>username</emphasis> [ <emphasis remap='I'>service...</emphasis> ] ]</para>
 
-<para>If <emphasis remap='I'>username</emphasis> is ommitted, it defaults to the user running <emphasis remap='B'>amandad</emphasis>, i.e. the user listed in the <emphasis remap='B'>inetd</emphasis> or <emphasis remap='B'>xinetd</emphasis>
+<para>If <emphasis remap='I'>username</emphasis> is omitted, it defaults to the user running <emphasis remap='B'>amandad</emphasis>, i.e. the user listed in the <emphasis remap='B'>inetd</emphasis> or <emphasis remap='B'>xinetd</emphasis>
 configuration file.</para>
 
 <para><emphasis remap='I'>service...</emphasis> is a space-delimited list of services the client is authorized to execute:

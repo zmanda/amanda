@@ -30,11 +30,11 @@
 <para>amzfs-sendrecv is an Amanda application implementing the Application API.
 It should not be run by users directly.
 It create a zfs snapshot of the filesystem and backup the snapshot with 'zfs send'.
-Snapshot are kept after the backup is done, this increase the disk space use on the client but it is neccesary to be able do to incremental backup.
+Snapshot are kept after the backup is done, this increase the disk space use on the client but it is necessary to be able do to incremental backup.
 If you want only full backup, you can disable this feature by setting the KEEP-SNAPSHOT property to 'NO'.
 Only the restoration of the complete backup is allowed, it is impossible to restore a single file.</para>
 
-<para>The application is run as the amanda user, it must have many zfs priviledge:
+<para>The application is run as the amanda user, it must have many zfs privilege:
 <programlisting>
     zfs allow -ldu AMANDA_USER mount,create,rename,snapshot,destroy,send,receive FILESYSTEM
 </programlisting></para>

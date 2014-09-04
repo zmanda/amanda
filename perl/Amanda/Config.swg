@@ -1150,6 +1150,8 @@ sub local_message {
 	return "Defined storage";
     } elsif ($self->{'code'} == 1500015) {
 	return "No label specified";
+    } elsif ($self->{'code'} == 1500016) {
+	return "Config error";
     } elsif ($self->{'code'} == 1550000) {
 	return "The version";
     }

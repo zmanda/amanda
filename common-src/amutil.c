@@ -1092,7 +1092,7 @@ int copy_file(
     if ((outfd = open(dst, O_WRONLY|O_CREAT, 0600)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(dst);
-	*errmsg = g_strdup_printf(_("Can't open file '%s' for writting: %s"),
+	*errmsg = g_strdup_printf(_("Can't open file '%s' for writing: %s"),
 			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);

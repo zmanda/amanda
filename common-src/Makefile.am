@@ -22,6 +22,7 @@ libamanda_la_SOURCES =		\
 	am_sl.c			\
 	amfeatures.c		\
 	amflock.c		\
+	ammessage.c		\
 	ipc-binary.c		\
 	amxml.c			\
 	clock.c			\
@@ -100,6 +101,7 @@ libamanda_la_LDFLAGS =  -release $(VERSION) $(AS_NEEDED_FLAGS)
 noinst_HEADERS =		\
 	amanda.h		\
 	amfeatures.h		\
+	ammessage.h		\
 	ipc-binary.h		\
 	amxml.h			\
 	clock.h			\

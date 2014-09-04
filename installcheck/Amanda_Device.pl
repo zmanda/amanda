@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 616;
+use Test::More tests => 623;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -746,6 +746,36 @@ ok($dev->finish_file(),
 ok($dev->finish(),
    "finish device after LEOM test")
     or diag($dev->error_or_status());
+
+## dvdrw device
+
+$vtape1 = mkvtape(1);
+$dev_name = "dvdrw:$vtape1:/dev/scd0";
+
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: create successful")
+    or diag($dev->error_or_status());
+
+properties_include([ $dev->property_list() ],
+    [ @common_properties, 'max_volume_usage' ],
+    "necessary properties listed on vfs device");
+
+# play with properties a little bit
+ok($dev->property_set("DVDRW_GROWISOFS_COMMAND", "/path/to/growisofs"),
+    "set DVDRW_GROWISOFS_COMMAND");
+
+ok($dev->property_set("dvdrw_mount_command", "/path/to/mount"),
+    "set dvdrw_mount_command");
+
+ok($dev->property_set("dvdrw_umount_command", "/path/to/umount"),
+    "set dvdrw_umount_command");
+
+ok($dev->property_set("block_size", 32768),
+    "set an integer property to an integer");
+
+ok(!($dev->property_set("invalid-property-name", 32768)),
+    "set an invalid-property-name");
 
 ####
 ## Test a RAIT device of two vfs devices.

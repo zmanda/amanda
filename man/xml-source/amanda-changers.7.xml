@@ -558,7 +558,7 @@ not found in these slots, except for import/export purposes.
 
 <para>Tape libraries are fickle, and in many cases will report that an
 operation is complete when it is still in progress.  Chg-robot takes several
-timing-related properties to accomodate such behavior.</para>
+timing-related properties to accommodate such behavior.</para>
 
 <para>A typical sequence of operations performed during a load are: get library
 status, eject a tape, unload the tape back to a storage slot, load a new tape,

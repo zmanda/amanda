@@ -239,7 +239,7 @@ krb5_connect(
     result = resolve_hostname(hostname, 0, NULL, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	security_seterror(&rh->sech, _("resolve_hostname(%s): %s\n"), hostname,
+	security_seterror(&rh->sech, _("resolve_hostname(%s): %s"), hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
@@ -247,7 +247,7 @@ krb5_connect(
     if (canonname == NULL) {
 	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	security_seterror(&rh->sech,
-	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	        _("resolve_hostname(%s) did not return a canonical name"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
        return;
     }

@@ -877,6 +877,7 @@ keytab_t client_keytab[] = {
     { "CLIENT_NAME", CONF_CLIENT_NAME },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "CLIENT_PORT", CONF_CLIENT_PORT },
+    { "CTIMEOUT", CONF_CTIMEOUT },
     { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
     { "AMANDATES", CONF_AMANDATES },
     { "KRB5KEYTAB", CONF_KRB5KEYTAB },
@@ -1292,6 +1293,7 @@ conf_var_t client_var [] = {
    { CONF_AMANDAD_PATH       , CONFTYPE_STR     , read_str     , CNF_AMANDAD_PATH       , NULL },
    { CONF_CLIENT_USERNAME    , CONFTYPE_STR     , read_str     , CNF_CLIENT_USERNAME    , NULL },
    { CONF_CLIENT_PORT        , CONFTYPE_STR     , read_int_or_str, CNF_CLIENT_PORT      , NULL },
+   { CONF_CTIMEOUT           , CONFTYPE_INT     , read_int     , CNF_CTIMEOUT           , validate_positive },
    { CONF_GNUTAR_LIST_DIR    , CONFTYPE_STR     , read_str     , CNF_GNUTAR_LIST_DIR    , NULL },
    { CONF_AMANDATES          , CONFTYPE_STR     , read_str     , CNF_AMANDATES          , NULL },
    { CONF_MAILER             , CONFTYPE_STR     , read_str     , CNF_MAILER             , NULL },
@@ -1815,7 +1817,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 	     * in tokenval.v.s
 	     */
 	    tmps = unquote_string(tkbuf);
-	    strncpy(tkbuf, tmps, sizeof(tkbuf));
+	    g_strlcpy(tkbuf, tmps, sizeof(tkbuf));
 	    amfree(tmps);
 	    tokenval.v.s = tkbuf;
 
@@ -5725,6 +5727,12 @@ static void validate_deprecated_changerfile(conf_var_t *var G_GNUC_UNUSED,
 					    val_t *value G_GNUC_UNUSED)
 {
     conf_parswarn(_("warning: Global changerfile is deprecated, it must be set in the changer section"));
+}
+
+gboolean
+config_is_initialized(void)
+{
+    return config_initialized;
 }
 
 /*
@@ -9879,6 +9887,23 @@ config_print_errors(void)
 
     for (iter = cfgerr_errors; iter; iter = g_slist_next(iter)) {
 	g_fprintf(stderr, "%s\n", (char *)iter->data);
+    }
+}
+
+void
+config_print_errors_as_message(void)
+{
+    GSList *iter;
+
+    for (iter = cfgerr_errors; iter; iter = g_slist_next(iter)) {
+	g_fprintf(stdout,
+"  {\n" \
+"     \"source_filename\" : \"%s\",\n" \
+"     \"source_line\" : \"%d\",\n" \
+"     \"severity\" : \"16\",\n" \
+"     \"code\" : \"%d\",\n" \
+"     \"message\" : \"%s\"\n" \
+"  },\n", __FILE__, __LINE__, 1500016 , (char *)iter->data);
     }
 }
 
