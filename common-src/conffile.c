@@ -190,7 +190,7 @@ typedef enum {
 
     /* holdingdisk */
     CONF_NEVER,			CONF_AUTO,		CONF_REQUIRED,
-    CONF_AVOID,
+    CONF_AVOID_IF_POSSIBLE,
 
     /* send_amreport */
     CONF_ALL,			CONF_STRANGE,		CONF_ERROR,
@@ -966,7 +966,7 @@ keytab_t server_keytab[] = {
     { "AUTO", CONF_AUTO },
     { "AUTOFLUSH", CONF_AUTOFLUSH },
     { "AUTOLABEL", CONF_AUTOLABEL },
-    { "AVOID", CONF_AVOID },
+    { "AVOID_IF_POSSIBLE", CONF_AVOID_IF_POSSIBLE },
     { "APPLICATION", CONF_APPLICATION },
     { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
     { "BEST", CONF_BEST },
@@ -4226,8 +4226,8 @@ read_holding(
      holding = HOLD_REQUIRED;
      break;
 
-   case CONF_AVOID: 
-     holding = HOLD_AVOID;
+   case CONF_AVOID_IF_POSSIBLE: 
+     holding = HOLD_AVOID_IF_POSSIBLE;
      break;
 
    default: /* can be a BOOLEAN */
@@ -8266,8 +8266,8 @@ copy_val_t(
 	    }
 	    break;
 
-	case HOLD_AVOID:
-	    buf[0] = vstrallocf("AVOID");
+	case HOLD_AVOID_IF_POSSIBLE:
+	    buf[0] = vstrallocf("AVOID_IF_POSSIBLE");
 	    break;
 	}
 }

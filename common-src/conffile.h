@@ -96,7 +96,7 @@ typedef enum {
     HOLD_NEVER,                 /* Always direct to tape  */
     HOLD_AUTO,                  /* If possible            */
     HOLD_REQUIRED,              /* Always to holding disk */
-    HOLD_AVOID                  /* Avoid holding disk if possible */
+    HOLD_AVOID_IF_POSSIBLE      /* Avoid holding disk if possible */
 } dump_holdingdisk_t;
 
 /* Compression types */

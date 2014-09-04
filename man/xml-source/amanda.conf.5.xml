@@ -2065,7 +2065,7 @@ for a backup of <filename>/var</filename>,
 </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>holdingdisk</amkeyword> [ <amkeyword>never</amkeyword> | <amkeyword>auto</amkeyword> | <amkeyword>required</amkeyword> | <amkeyword>avoid</amkeyword> ]</term>
+  <term><amkeyword>holdingdisk</amkeyword> [ <amkeyword>never</amkeyword> | <amkeyword>auto</amkeyword> | <amkeyword>required</amkeyword> | <amkeyword>avoid-if-possible</amkeyword> ]</term>
   <listitem>
 <para>Default:
 <amkeyword>auto</amkeyword>.
@@ -2097,9 +2097,9 @@ to avoid backing up the holding disk into itself.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><amkeyword>avoid</amkeyword></term>
+  <term><amkeyword>avoid-if-possible</amkeyword></term>
   <listitem>
-  <para>Avoid using a holdingdisk. The dump will go directly to tape unless you have a tape error, then it will go to the holdingdisk.</para>
+  <para>Avoid using a holdingdisk if possible. The dump will go directly to tape unless you have a tape error, then it will go to the holdingdisk.</para>
   </listitem>
   </varlistentry>
   </variablelist>
