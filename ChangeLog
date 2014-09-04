@@ -1,3 +1,201 @@
+2014-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/dvdrw-device.c: dvdrw_growisofs_command,
+	  dvdrw_mount_command and dvdrw_umount_command property are
+	  G_TYPE_STRING.
+	* installcheck/Amanda_Device.pl: Test parsing dvd properties.
+
+2014-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (get_openstack_swift_api_v2_setting): Set
+	  hdl->x_auth_token to NULL.
+
+2014-09-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Fix mailto allocation.
+
+2014-09-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/rait-device.c: Use int value instead of pointer value.
+
+2014-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: 32xxxxx are for amanda-extensions.
+
+2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-dest-taper-cacher.c: Cast pointer.
+
+2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (check_user_amandahosts): Proceed to next
+	  line if host and user match but not the service.
+
+2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Bill Blough <devel@blough.us>
+	* ndmp-src/ndmjob_args.c, device-src/tape-device.c,
+	  server-src/amindexd.c, man/xml-source/amanda.conf.5.xml,
+	  man/xml-source/amanda-auth.7.xml, man/xml-source/amzfs-sendrecv.8.xml,
+	  man/xml-source/amanda-changers.7.xml,
+	  man/xml-source/amzfs-snapshot.8.xml,
+	  common-src/amutil.c: Fix typos.
+
+2014-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/syshacks.m4: Define NEED_LD_LIBRARY_PATH_ENV on hpux.
+	* common-src/alloc.c (safe_env_full): Add LD_LIBRARY_PATH.
+	* amar-src/amar.c, common-src/ipc-binary.h, device-src/ndmp-device.c,
+	  device-src/xfer-dest-device.c, device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-splitter.c: Change so gpointer to gchar*
+	  because hpux compiler can't do arithmetic on gpointer.
+
+
+2014-08-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c: Print arguments to the debug file.
+	* common-src/conffile.c: Add ctimeout to client config file.
+	* perl/Amanda/Rest/Configs.pm: Fix parsing of config_overrides.
+	* perl/Amanda/Rest/Services.pm: Pass config_overrides to amservice.
+
+2014-08-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: Fix memory use.
+
+2014-08-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Amanda/config.yml: Add log_path
+
+2014-08-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* example/inetd.conf.amandaclient.in,
+	  example/inetd.conf.amandaserver.in
+	  example/xinetd.amandaclient.in,
+	  example/xinetd.amandaserver.in: Add senddicover service.
+
+2014-08-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Set log_path to
+	  "@AMANDA_DBGDIR@/amanda-rest-server-log"
+	* perl/Amanda/Rest/Amanda/config.yml: Set appname to "amanda".
+	* perl/Makefile.am: Do not create ../Rest/Amanda/logs
+
+2014-08-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Script_App.pm (print_to_server): print CRITICAL message
+	  in [].
+
+2014-08-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: fllush(stdout)
+	* perl/Amanda/Service.pm: Add error code 3100005.
+
+2014-08-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: Add the --device argument.
+	* perl/Amanda/Rest/Services.pm: Do not read a config, set diskdevice
+	  and esxpass property.
+
+2014-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Remove duplicate entry.
+
+2014-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: Fix.
+	* common-src/ammessage.c: Fix json output.
+	* perl/Amanda/Message.pm: Add Amanda::Service::Message.
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add
+	  /amanda/v1.0/services/discover URL
+	* perl/Makefile.am: Add Amanda/Service.pm and Amanda/Rest/Services.pm
+	* perl/Amanda/Service.pm: New perl module
+	* perl/Amanda/Rest/Services.pm: REST API for deicover service.
+
+2014-08-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Application.swg (known_commands: Add discover.
+	* perl/Amanda/Message.pm: Add Amanda::Amvmware::Message.
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Fix typedef.
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/amanda_configure.m4: Call AMANDA_REST_HOOK
+	* perl/Amanda/Constants.pm.in.src: Add $REST_HOOK_DIR.
+	* config/amanda/rest-hook.m4 (AMANDA_REST_HOOK): --with-rest-hook
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Load rest-hook
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, server-src/amcheck.c: Fix bug found by
+	  coverity.
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Handle senddiscover service.
+	* client-src/Makefile.am: Build senddiscover.
+	* client-src/client_util.c: Parse DISCOVER backup support option.
+	* client-src/client_util.h (backup_support_option_t): Add discover.
+	* client-src/senddiscover.c: New client service.
+	* common-src/Makefile.am: Add ammessage.
+	* common-src/ammessage.c: Add struct and function to handle Message
+	  and print them in JSON format.
+	* common-src/ammessage.h: Add prototype.
+	* common-src/conffile.c: Fix json indentation.
+	* perl/Amanda/Message.pm: Add senddiscover.
+
+2014-07-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Improve error message for bsdtar.
+
+2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (config_print_errors_as_message): New function.
+	* common-src/conffile.h (config_print_errors_as_message): New
+	  prototype.
+	* perl/Amanda/Config.swg: Add error 1500016.
+	* server-src/amanda-rest-server.pl: s/Amadna/Amanda/
+	* server-src/amcheck.c: Use printf_message instead of error.
+
+2014-07-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Amcheck.pm: Use '-c' for client check.
+
+2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/bsd-security.m4: USE_AMANDAHOSTS must be defined even
+	  without bsd security (for bsdudp and bsdtcp).
+
+2014-07-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Nathan Stratton Treadway
+	* man/xml-source/amgtar.8.xml:
+	  Add ": directory is on a different filesystem; not dumped".
+	* man/xml-source/amanda-devices.7.xml: Add amanda-changers man page.
+	* man/xml-source/ambsdtar.8.xml: Typo.
+	* man/xml-source/amanda.conf.5.xml: Typo.
+
+2014-07-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amanda-rest-server.pl: Use Amanda::Paths::AMANDA_DBGDIR
+	  instead of CNF_LOGDIR for the rest-api-pid file.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (check_security): service is
+	  unused in some compilation path.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb5-security.c:
+	  Remove "\n" in security_seterror error message.
+	* server-src/amanda-rest-server.pl: Improve error detection.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (config_is_initialized): Fix declaration.
+	* common-src/conffile.h: Comment typo.
+
+2014-07-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h (config_is_initialized): Fix prototype.
+
+2014-07-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (check_security): Take a new service
+	  argument.
+	* common-src/amanda.h (check_security): Change prototype.
+	* common-src/conffile.c (config_is_initialized): New functionto return
+	  if the config is initialized.
+	* common-src/conffile.h (config_is_initialized): New prototype.
+	* common-src/debug.c: (debug_unlink_old): Return if config is not
+	  initialized.
+	* server-src/amidxtaped.pl: Add "amidxtaped" as argument to
+	  check_bsd_security.
+	* server-src/amindexd.c: Add "amindexd" as argument to check_security.
+	* perl/Amanda/Util.swg (check_security_fd): Take a new service
+	  argument, pass it to check_security.
+	* perl/Amanda/ClientService.pm (check_bsd_security): Take a new
+	  service argument, pass it to Amanda::Util::check_security.
+
+2014-07-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: Fix for building out of tree.
+
+2014-07-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/Makefile.am: Fix for building out of tree.
+
+2014-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Orion Poplawski <orion@cora.nwra.com>
+	* ndmp-src/Makefile.am: Fix for building out of tree.
+
 2014-07-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/script-email.pl: Remove $args.
 

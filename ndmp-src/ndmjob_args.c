@@ -54,8 +54,8 @@ char *help_text[] = {
 	"  -o init-labels -- init media labels",
 #endif /* !NDMOS_OPTION_NO_CONTROL_AGENT */
 #ifndef NDMOS_EFFECT_NO_SERVER_AGENTS
-	"  -o daemon      -- launch session for incomming connections",
-	"  -o test-daemon -- launch session for incomming connections, exit when stdin is closed",
+	"  -o daemon      -- launch session for incoming connections",
+	"  -o test-daemon -- launch session for incoming connections, exit when stdin is closed",
 	"  -o tape-size=SIZE -- specify the length, in bytes of the simulated tape",
 #endif /* !NDMOS_EFFECT_NO_SERVER_AGENTS */
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT

@@ -86,6 +86,10 @@ not handled by Amanda::Message):
  2600000  Amanda::DB::Message
  2700000  Amanda::CheckDump::Message
  2800000  amcheck
+ 2900000  senddiscover
+ 3000000  Amanda::Amvmware::Message
+ 3100000  Amanda::Service::Message
+ 3200000  amanda-extensions
 
 general keys:
   code            =>
@@ -136,6 +140,9 @@ sub new {
     my $class = shift @_;
     my %params = @_;
 
+    if (!defined $params{'code'}) {
+	Amanda::Debug::debug(Data::Dumper::Dumper(\%params));
+    }
     die("no code") if !defined $params{'code'};
     die("no source_filename") if !defined $params{'source_filename'};
     die("no source_line") if !defined $params{'source_line'};

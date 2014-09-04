@@ -64,7 +64,7 @@ typedef struct Slab {
     gsize size;
 
     /* base of the slab_size buffer */
-    gpointer base;
+    gchar *base;
 } Slab;
 
 /*
@@ -841,7 +841,7 @@ write_slab_to_device(
     Slab *slab)
 {
     XferElement *elt = XFER_ELEMENT(self);
-    gpointer buf = slab->base;
+    gchar *buf = slab->base;
     gsize remaining = slab->size;
 
     while (remaining && !elt->cancelled) {
@@ -858,7 +858,7 @@ write_slab_to_device(
 	    return FALSE;
 	}
 
-	crc32_add(buf, write_size, &elt->crc);
+	crc32_add((uint8_t *)buf, write_size, &elt->crc);
 	buf += write_size;
 	self->slab_bytes_written += write_size;
 	remaining -= write_size;
@@ -1130,7 +1130,7 @@ push_buffer_impl(
     size_t size)
 {
     XferDestTaperCacher *self = (XferDestTaperCacher *)elt;
-    gpointer p;
+    char *p;
 
     DBG(3, "push_buffer(%p, %ju)", buf, (uintmax_t)size);
 

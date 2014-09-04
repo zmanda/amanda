@@ -71,6 +71,8 @@ typedef struct backup_support_option_s {
     int features;
     data_path_t data_path_set;  /* bitfield of all allowed data-path */
     recover_path_t recover_path;
+    int recover_dump_state_file;
+    int discover;
 } backup_support_option_t;
 
 typedef struct client_script_result_s {

@@ -127,8 +127,21 @@ g_printf("%s\n", msg);
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
 "  },\n", __LINE__, code, encode_json(msg)); else \
-g_fprintf(file,"%s\n", msg);
+g_fprintf(file, "%s\n", msg);
 
+#define printf_message(code, msg, ...) { \
+  char *msg1 = g_strdup_printf(msg, __VA_ARGS__); \
+  if (opt_message) g_printf( \
+"  {\n" \
+"    \"source_filename\" : \"" __FILE__ "\",\n" \
+"    \"source_line\" : \"%d\",\n" \
+"    \"severity\" : \"16\",\n" \
+"    \"code\" : \"%d\",\n" \
+"    \"message\" : \"%s\"\n" \
+"  },\n", __LINE__, code, encode_json(msg1)); else \
+g_printf("%s\n", msg1); \
+g_free(msg1); \
+}
 #define fprintf_message(file, code, msg, ...) { \
   char *msg1 = g_strdup_printf(msg, __VA_ARGS__); \
   if (opt_message) g_fprintf(file, \
@@ -139,7 +152,7 @@ g_fprintf(file,"%s\n", msg);
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
 "  },\n", __LINE__, code, encode_json(msg1)); else \
-g_fprintf(file,"%s\n", msg1); \
+g_fprintf(file, "%s\n", msg1); \
 g_free(msg1); \
 }
 
@@ -304,9 +317,15 @@ main(
     amfree(conf_diskfile);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
-	config_print_errors();
+	if (opt_message) {
+	    config_print_errors_as_message();
+	} else {
+	    config_print_errors();
+	}
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    g_critical("errors processing config file");
+	    print_message(2800228, "errors processing config file");
+	    exit(1);
+	    //g_critical("errors processing config file");
 	}
     }
 
@@ -371,20 +390,23 @@ main(
      */
     dumpuser = getconf_str(CNF_DUMPUSER);
     if ((pw = getpwnam(dumpuser)) == NULL) {
-	error("amanda.conf has dump user configured to \"%s\", but that user does not exist.", dumpuser);
+	printf_message(2800215, "amanda.conf has dump user configured to \"%s\", but that user does not exist.", dumpuser);
+	exit(1);
 	/*NOTREACHED*/
     }
     uid_dumpuser = pw->pw_uid;
     if (getpwuid(uid_me) == NULL) {
-	error("cannot get username for running user, uid %ld is not in your user database.",
+	printf_message(2800216, "cannot get username for running user, uid %ld is not in your user database.",
 	    (long)uid_me);
+	exit(1);
 	/*NOTREACHED*/
     }
 #ifdef CHECK_USERID
     if (uid_me != uid_dumpuser) {
-	error("running as user \"%s\" instead of \"%s\".\n"
+	printf_message(2800217, "running as user \"%s\" instead of \"%s\".\n"
 		"Change user to \"%s\" or change dump user to \"%s\" in amanda.conf",
 	      pw->pw_name, dumpuser, dumpuser, pw->pw_name);
+	exit(1);
         /*NOTREACHED*/
     }
 #endif
@@ -404,7 +426,8 @@ main(
 	/* we need the temp file */
 	tempfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.temp.", pid_str, NULL);
 	if((tempfd = fopen(tempfname, "w+")) == NULL) {
-	    error("could not open temporary amcheck output file %s: %s. Check permissions", tempfname, strerror(errno));
+	    printf_message(2800218, "could not open temporary amcheck output file %s: %s. Check permissions", tempfname, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
     }
@@ -413,7 +436,8 @@ main(
 	/* the main fd is a file too */
 	mainfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.main.", pid_str, NULL);
 	if((mainfd = fopen(mainfname, "w+")) == NULL) {
-	    error("could not open amcheck server output file %s: %s. Check permissions", mainfname, strerror(errno));
+	    printf_message(2800219, "could not open amcheck server output file %s: %s. Check permissions", mainfname, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 	unlink(mainfname);			/* so it goes away on close */
@@ -461,15 +485,21 @@ main(
 	char line[1025];
 	FILE *tempfdr;
 	tempfdr = fopen(tempfname, "r");
-	if(fseek(tempfdr, (off_t)0, 0) == (off_t)-1) {
-	    error("seek temp file: %s", strerror(errno));
-	    /*NOTREACHED*/
-	}
+	if (!tempfdr) {
+	    printf_message(2800228, "Can't oprn '%s' for reading: %s",
+			   tempfname,strerror(errno));
+	} else {
+	    if(fseek(tempfdr, (off_t)0, 0) == (off_t)-1) {
+		printf_message(2800220, "seek temp file: %s", strerror(errno));
+		exit(1);
+		/*NOTREACHED*/
+	    }
 
-	while (fgets(line, 1024, tempfdr)) {
-	    fprintf(mainfd, "%s", line);
+	    while (fgets(line, 1024, tempfdr)) {
+		fprintf(mainfd, "%s", line);
+	    }
+	    fclose(tempfdr);
 	}
-	fclose(tempfdr);
 	fclose(tempfd);
 	unlink(tempfname);			/* so it goes away on close */
 	amfree(tempfname);
@@ -504,7 +534,8 @@ main(
 
 	fflush(stdout);
 	if (fseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
-	    error("fseek main file: %s", strerror(errno));
+	    printf_message(2800221, "fseek main file: %s", strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 	if(alwaysmail && !(server_probs || client_probs)) {
@@ -517,8 +548,8 @@ main(
 	}
 	if(mailto) {
 	    a = (char **) g_new0(char *, 2);
-	    a[1] = g_strdup(mailto);
-	    a[2] = NULL;
+	    a[0] = g_strdup(mailto);
+	    a[1] = NULL;
 	} else {
 	    /* (note that validate_mailto doesn't allow any quotes, so this
 	     * is really just splitting regular old strings) */
@@ -529,7 +560,8 @@ main(
 	    }
 	}
 	if((nullfd = open("/dev/null", O_RDWR)) < 0) {
-	    error("nullfd: /dev/null: %s", strerror(errno));
+	    printf_message(2800227, "nullfd: /dev/null: %s", strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 
@@ -572,10 +604,12 @@ main(
 		    strappend(extra_info, "EPIPE writing to mail process\n");
 		    break;
 		} else if(errno != 0) {
-		    error("mailfd write: %s", strerror(errno));
+		    printf_message(2800222, "mailfd write: %s", strerror(errno));
+		    exit(1);
 		    /*NOTREACHED*/
 		} else {
-		    error("mailfd write: wrote %zd instead of %zd", w, r);
+		    printf_message(2800223, "mailfd write: wrote %zd instead of %zd", w, r);
+		    exit(1);
 		    /*NOTREACHED*/
 		}
 	    }
@@ -583,7 +617,8 @@ main(
 	aclose(mailfd);
 	ferr = fdopen(errfd, "r");
 	if (!ferr) {
-	    error("Can't fdopen: %s", strerror(errno));
+	    printf_message(2800224, "Can't fdopen: %s", strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 	for(; (line = agets(ferr)) != NULL; free(line)) {
@@ -609,7 +644,8 @@ main(
 		fputs(extra_info, stderr);
 		amfree(extra_info);
 	    }
-	    error("error running mailer %s: %s", mailer, err?err:"(unknown)");
+	    printf_message(2800225, "error running mailer %s: %s", mailer, err?err:"(unknown)");
+	    exit(1);
 	    /*NOTREACHED*/
 	} else {
 	    amfree(extra_info);
@@ -821,7 +857,8 @@ start_server_check(
 
     switch(pid = fork()) {
     case -1:
-	error("could not spawn a process for checking the server: %s", strerror(errno));
+	printf_message(2800226, "could not spawn a process for checking the server: %s", strerror(errno));
+	exit(1);
         g_assert_not_reached();
 
     case 0:

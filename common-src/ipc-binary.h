@@ -167,7 +167,7 @@ void ipc_binary_cmd_add_arg(
  */
 
 typedef struct ipc_binary_buf_t {
-    gpointer buf;
+    gchar *buf;
     gsize size;
     gsize offset;
     gsize length;

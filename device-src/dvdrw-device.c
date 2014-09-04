@@ -215,15 +215,15 @@ dvdrw_device_register(void)
 	"Treat unmountable volumes as unlabelled when reading label");
 
     device_property_fill_and_register(&device_property_dvdrw_growisofs_command,
-	G_TYPE_BOOLEAN, "dvdrw_growisofs_command",
+	G_TYPE_STRING, "dvdrw_growisofs_command",
 	"The location of the growisofs command used to write the DVD-RW");
 
     device_property_fill_and_register(&device_property_dvdrw_mount_command,
-	G_TYPE_BOOLEAN, "dvdrw_mount_command",
+	G_TYPE_STRING, "dvdrw_mount_command",
 	"The location of the mount command used to mount the DVD-RW filesystem for reading");
 
     device_property_fill_and_register(&device_property_dvdrw_umount_command,
-	G_TYPE_BOOLEAN, "dvdrw_umount_command",
+	G_TYPE_STRING, "dvdrw_umount_command",
 	"The location of the umount command used to unmount the DVD-RW filesystem after reading");
 
     register_device(dvdrw_device_factory, device_prefix_list);

@@ -1408,7 +1408,7 @@ main(
 	    user_validated = amindexd_debug ||
 				check_security(
 					(sockaddr_union *)&his_addr,
-					arg, 0, &errstr);
+					arg, 0, &errstr, "amindexd");
 	    if(user_validated) {
 		reply(200, _("Access OK"));
 		amfree(line);
@@ -2020,7 +2020,7 @@ uncompress_file(
 
     indexfd = open(new_filename, O_WRONLY|O_CREAT, 0600);
     if (indexfd == -1) {
-	msg = g_strdup_printf(_("Can't open '%s' for writting: %s"),
+	msg = g_strdup_printf(_("Can't open '%s' for writing: %s"),
 			      filename, strerror(errno));
 	dbprintf("%s\n", msg);
 	g_ptr_array_add(*emsg, msg);

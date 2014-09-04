@@ -166,7 +166,7 @@ sub check {
 	push @amcheck_args, '-t';
     }
     if (defined $params{'client'} and $params{'client'}) {
-	push @amcheck_args, '-s';
+	push @amcheck_args, '-c';
     }
     if (defined $params{'client-verbose'} and $params{'client-verbose'}) {
 	push @amcheck_args, '--client-verbose';

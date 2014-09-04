@@ -514,6 +514,12 @@ EXTRA_DIST += Amanda/Report.pm
 endif
 
 if WANT_SERVER
+# PACKAGE: Amanda::Report
+Amanda_DATA += Amanda/Service.pm
+EXTRA_DIST += Amanda/Service.pm
+endif
+
+if WANT_SERVER
 # PACKAGE: Amanda::Report::*
 AmandaReportdir = $(amperldir)/Amanda/Report
 AmandaReport_DATA = \
@@ -697,6 +703,7 @@ AmandaRest_DATA = \
 	Amanda/Rest/Labels.pm \
 	Amanda/Rest/Report.pm \
 	Amanda/Rest/Runs.pm \
+	Amanda/Rest/Services.pm \
 	Amanda/Rest/Status.pm \
 	Amanda/Rest/Storages.pm \
 	Amanda/Rest/Version.pm
@@ -751,7 +758,6 @@ if WANT_CYGWIN_COPY_PERL_DLL
 	   cp "$$cygdll" "$$destfname"; \
 	done
 endif
-	mkdir -p $(DESTDIR)$(amlibexecdir)/Rest/Amanda/logs
 
 # only syntax-check the .pm files if SYNTAX_CHECKS are enabled
 check-pm:

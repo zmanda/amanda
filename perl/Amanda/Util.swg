@@ -568,7 +568,7 @@ socketfd stream_accept(int fd, int timeout, size_t sendsize, size_t recvsize);
 %newobject check_security_fd;
 %rename(check_security) check_security_fd;
 %inline %{
-char *check_security_fd(int fd, char *userstr)
+char *check_security_fd(int fd, char *userstr, char *service)
 {
     socklen_t_equiv i;
     struct sockaddr_in addr;
@@ -591,7 +591,7 @@ char *check_security_fd(int fd, char *userstr)
     }
 
     /* call out to check_security */
-    if (!check_security((sockaddr_union *)&addr, userstr, 0, &errstr))
+    if (!check_security((sockaddr_union *)&addr, userstr, 0, &errstr, service))
 	return errstr;
 
     return NULL;

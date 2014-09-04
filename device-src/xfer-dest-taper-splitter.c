@@ -317,7 +317,7 @@ iterator_get_block(
 	}
 
 	read_size = MIN(iter->slice_remaining, bytes_needed);
-	bytes_read = read_fully(iter->cur_fd, buf + buf_offset, read_size,
+	bytes_read = read_fully(iter->cur_fd, (gchar *)buf + buf_offset, read_size,
 	    NULL);
 
 	if (bytes_read < read_size) {
