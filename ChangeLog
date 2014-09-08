@@ -1,4 +1,9 @@
 2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Application.swg: Add discover command
+	* perl/Amanda/Message.pm: New file
+	* perl/Makefile.am: Add perl/Amanda/Message.pm.
+
+2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Can changer set_error_to_unknown if a
 	  slot previously in error succeed.
 	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm:

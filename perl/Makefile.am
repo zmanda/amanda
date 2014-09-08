@@ -495,6 +495,10 @@ EXTRA_DIST += Amanda/Script_App.pm
 Amanda_DATA += Amanda/Extract.pm
 EXTRA_DIST += Amanda/Extract.pm
 
+# PACKAGE: Amanda::Message
+Amanda_DATA += Amanda/Message.pm
+EXTRA_DIST += Amanda/Message.pm
+
 if WANT_SERVER
 # PACKAGE: Amanda::Holding
 Amanda_DATA += Amanda/Holding.pm
