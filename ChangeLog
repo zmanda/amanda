@@ -1,3 +1,11 @@
+2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/ScanInventory.pm: Can changer set_error_to_unknown if a
+	  slot previously in error succeed.
+	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm:
+	  Scan one slot for each error message.
+	* perl/Amanda/Changer/multi.pm (set_error_to_unknown): new function to
+	  mark as unknown all slot with a given error message.
+
 2014-09-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/dvdrw-device.c: dvdrw_growisofs_command,
 	  dvdrw_mount_command and dvdrw_umount_command property are

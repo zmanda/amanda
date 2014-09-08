@@ -232,6 +232,7 @@ sub _scan {
 	    }
 	}
 
+	$self->{'slot-error-message'} = undef;
 	($action, $action_slot) = $self->analyze($inventory, \%seen, $res);
 
 	if ($action == Amanda::ScanInventory::SCAN_DONE) {
@@ -276,8 +277,37 @@ sub _scan {
     step slot_loaded => sub {
 	(my $err, $res) = @_;
 
+	$self->{'slot_loaded_err'} = $err;
+
 	# we don't responsd to abort_scan or restart_scan here, since we
 	# have an open reservation that we should deal with.
+
+	# change status of slot in error if that one succeeded.
+	if (defined $self->{'slot-error-message'} and
+	    $res and defined $res->{'device'} and
+	    $self->{'slot-error-message'} ne $res->{'device'}->error) {
+	    # mark all unseen slots with that error message as unknown state
+	    for my $i (0..(scalar(@$inventory)-1)) {
+		my $sl = $inventory->[$i];
+		next if $seen{$sl->{slot}};
+		next if $self->{'slot-error-message'} ne $sl->{'device_error'};
+		# mark the slot as unknown
+		$inventory->[$i] = { slot  => $sl->{'slot'},
+				     state => $sl->{'state'}};
+	    }
+	    if ($self->{'chg'}->can("set_error_to_unknown")) {
+		$self->{'chg'}->set_error_to_unknown(
+			error_message => $self->{'slot-error-message'},
+			set_to_unknown_cb => $steps->{'set_to_unknown_cb'});
+	    }
+	} else {
+	    return $steps->{'set_to_unknown_cb'}->();
+	}
+    };
+
+    step set_to_unknown_cb => sub {
+	my $err = $self->{'slot_loaded_err'};
+	$self->{'slot_loaded_err'} = undef;
 
 	my $label;
 	if ($res && defined $res->{device} &&
