@@ -65,6 +65,7 @@ sub new {
 	return Amanda::Taper::Scan::traditional->new(%params);
     }
     my $self = Amanda::ScanInventory->new(%params);
+    $self->{'handled-error'} = {};
     return bless ($self, $class);
 }
 
@@ -103,12 +104,15 @@ sub analyze {
     my $first_new_volume;
     my $new_volume;
     my @new_volume;
+    my $first_error;
+    my $new_error;
+    my @new_error;
     my $first_unknown;
     my $unknown;
     my $current;
     my $label = $self->most_prefered();
     $self->{'most_prefered_label'} = $label;
-
+    $self->{'new-error'}= {};
     for my $i (0..(scalar(@$inventory)-1)) {
 	my $sl = $inventory->[$i];
 	if ($sl->{current}) {
@@ -153,6 +157,13 @@ sub analyze {
 	} elsif (!defined($sl->{device_status}) && !defined($sl->{label})) {
 	    $first_unknown = $sl if !$first_unknown;
 	    $unknown = $sl if $current && !$unknown;
+	} elsif (defined($sl->{device_status}) and
+		 ($sl->{'device_status'} & $DEVICE_STATUS_DEVICE_ERROR or
+		  $sl->{'device_status'} & $DEVICE_STATUS_VOLUME_ERROR) and
+		 not exists $self->{'handled-error'}->{$sl->{'device_error'}} and
+		 not exists $self->{'new_error'}->{$sl->{'device_error'}}) {
+	    $first_error = $sl if !$first_error;
+	    $new_error = $sl if $current && !$new_error;
 	} else {
 	}
     }
@@ -236,6 +247,10 @@ sub analyze {
 	$use = $new_labeled;
     } elsif ($new_volume and $self->{'scan_conf'}->{'new_volume'} eq 'last') {
 	$use = $new_volume;
+    } elsif ($new_error) {
+	$use = $new_error;
+	$self->{'handled-error'}->{$new_error->{'device_error'}} = 1;
+	$self->{'slot-error-message'} = $new_error->{'device_error'};
     }
 
     if ($use) {

@@ -563,6 +563,27 @@ sub _slot_exists {
     return 0;
 }
 
+sub set_error_to_unknown {
+    my $self  = shift;
+    my %params = @_;
+    my $state;
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'set_to_unknown_cb'}, sub {
+	my ($state, $set_to_unknown_cb) = @_;
+	foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
+	    my $slot = "$_";
+	    my $unaliased = $self->{unaliased}->{$slot};
+	    if (defined $state->{slots}->{$unaliased}->{'device_error'} and
+		$state->{slots}->{$unaliased}->{'device_error'} eq
+		$params{'error_message'}) {
+		$state->{slots}->{$unaliased}->{'device_status'} = undef;
+		$state->{slots}->{$unaliased}->{'device_error'} = undef;
+	    }
+	}
+	$set_to_unknown_cb->();
+    });
+}
+
 sub _update_slot_state {
     my $self = shift;
     my %params = @_;
