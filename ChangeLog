@@ -1,4 +1,8 @@
 2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Fix for dump to tape.
+	* installcheck/Amanda_Rest_Runs.pl: Fix.
+
+2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/ScanInventory.pm: Can changer set_error_to_unknown if a
 	  slot previously in error succeed.
 	* perl/Amanda/Taper/Scan/lexical.pm, perl/Amanda/Taper/Scan/oldest.pm:

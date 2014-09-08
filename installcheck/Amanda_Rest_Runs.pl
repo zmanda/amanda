@@ -1292,6 +1292,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                 'flush' => 0,
                                                                                                                                 'error' => '',
                                                                                                                                 'dsize' => '142336',
+                                                                                                                                'dump_to_tape_storage' => 'TESTCONF',
                                                                                                                                 'storage' => {
                                                                                                                                                'TESTCONF' => {
                                                                                                                                                                'taped_size' => 142336,
@@ -1321,6 +1322,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                              'flush' => 0,
                                                                                                                              'error' => '',
                                                                                                                              'dsize' => '35584',
+                                                                                                                             'dump_to_tape_storage' => 'TESTCONF',
                                                                                                                              'storage' => {
                                                                                                                                             'TESTCONF' => {
                                                                                                                                                             'taped_size' => 35584,
@@ -1350,6 +1352,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                       'flush' => 0,
                                                                                                                       'error' => '',
                                                                                                                       'dsize' => '715072',
+                                                                                                                      'dump_to_tape_storage' => 'TESTCONF',
                                                                                                                       'storage' => {
                                                                                                                                      'TESTCONF' => {
                                                                                                                                                      'taped_size' => 715072,

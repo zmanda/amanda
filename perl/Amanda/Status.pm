@@ -627,9 +627,10 @@ sub parse {
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 			$dle->{'level'} = $level;
 			$dles{$serial} = $dle;
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
-			$dle->{'storage'}->{$storage} = {} if !defined $dle->{'storage'}->{$storage};
-			my $dlet = $dle->{'storage'}->{$storage};
+			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
+			$dle->{'dump_to_tape_storage'} = $storage_name;
+			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
+			my $dlet = $dle->{'storage'}->{$storage_name};
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_WILL_RETRY and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
@@ -682,6 +683,9 @@ sub parse {
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE ||
 				 $dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 			    $dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    my $storage_name = $dle->{'dump_to_tape_storage'};
+			    my $dlet = $dle->{'storage'}->{$storage_name};
+			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			} else {
 			    die ("bad status on dumper FAILED: $dle->{'status'}");
 			}
@@ -705,9 +709,8 @@ sub parse {
 			    $dle->{'status'} = $DUMP_RETRY;
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
 			    $dle->{'status'} = $DUMP_TO_TAPE_RETRY;
-			    my @storage = keys %{$dle->{'storage'}};
-			    my $storage = $storage[0];
-			    my $dlet = $dle->{'storage'}->{$storage};
+			    my $storage_name = $dle->{'dump_to_tape_storage'};
+			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMP_TO_TAPE_RETRY;
 			} else {
 			    die ("bad status on dumper RETRY: $dle->{'status'}");
@@ -726,9 +729,8 @@ sub parse {
 			    $dle->{'status'} = $DUMPING_DUMPER;
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
 			    $dle->{'status'} = $DUMPING_TO_TAPE_DUMPER;
-			    my @storage = keys %{$dle->{'storage'}};
-			    my $storage = $storage[0];
-			    my $dlet = $dle->{'storage'}->{$storage};
+			    my $storage_name = $dle->{'dump_to_tape_storage'};
+			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMPING_TO_TAPE_DUMPER;
 			} else {
 			    die("bad status on dumper DONE: $dle->{'status'}");
