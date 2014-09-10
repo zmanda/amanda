@@ -1,4 +1,15 @@
 2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/amanda_configure.m4:
+	  s/AMANDA_REST_HOOK/AMANDA_EXTENSIONS_HOOK/
+	* config/amanda/rest-hook.m4: remove file
+	* perl/Amanda/Constants.pm.in.src:
+	  s/AMANDA_REST_HOOK/AMANDA_EXTENSIONS_HOOK/
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Use REST_EXTENSIONS_DIR
+	* config/amanda/rest-extensions.m4: Copy of rest-hook.m4, rename
+	  AMANDA_REST_HOOK to AMANDA_EXTENSIONS_HOOK, define REST_EXTENSIONS_DIR
+	  instead of REST_HOOK_DIR.
+
+2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (get_changer_list): New function.
 	* common-src/conffile.h (get_changer_list): Add protoype.
 	* perl/Amanda/Config.swg (get_changer_list) Swig it.

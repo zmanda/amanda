@@ -256,10 +256,10 @@ get '/amanda/v1.0/services/discover' => sub {
 	return $r;
 };
 
-my $hook_dir = $Amanda::Constants::REST_HOOK_DIR;
+my $extensions_dir = $Amanda::Constants::REST_EXTENSIONS_DIR;
 
-if (-d $hook_dir) {
-    foreach my $file (<$hook_dir/*>) {
+if (-d $extensions_dir) {
+    foreach my $file (<$extensions_dir/*>) {
         eval { require $file };
     }
 }
