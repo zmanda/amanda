@@ -1,4 +1,8 @@
 2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/amanda_configure.m4: Fix,
+	  s/AMANDA_EXTENSIONS_HOOK/AMANDA_REST_EXTENSIONS/g
+
+2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/rest-extensions.m4: Fix,
 	  s/EXTENSIONS_HOOK_DIR/REST_EXTENSIONS_DIR/g
 
