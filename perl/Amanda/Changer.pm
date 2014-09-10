@@ -162,9 +162,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1100064) {
 	return "Generated meta-label is empty";
     } elsif ($self->{'code'} == 1100065) {
-	return "
-    } elsif ($self->{'code'} == 1100066) {
-	return "
+	return "";
 
     } elsif ($self->{'code'} == 1150000) {
 	return "changer_name argument of the storage is empty";

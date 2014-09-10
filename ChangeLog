@@ -1,3 +1,15 @@
+2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (get_changer_list): New function.
+	* common-src/conffile.h (get_changer_list): Add protoype.
+	* perl/Amanda/Config.swg (get_changer_list) Swig it.
+	* perl/Amanda/Config.swg: Add new message.
+	* perl/Amanda/Changer.pm: Fix typo.
+	* perl/Amanda/Rest/Storages.pm: Fix typo.
+	* perl/Makefile.am: Add Amanda/Rest/Changers.pm
+	* perl/Amanda/Rest/Changers.pm: Add new REST API
+	* installcheck/Makefile.am: Add Amanda_Rest_Changers
+	* installcheck/Amanda_Rest_Changers.pl: Test the new REST API.
+
 2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix for dump to tape.
 	* installcheck/Amanda_Rest_Runs.pl: Fix.

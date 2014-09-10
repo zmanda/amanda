@@ -7515,6 +7515,26 @@ device_config_name(
     return devconf->name;
 }
 
+char **
+get_changer_list(void)
+{
+    int         count = 0;
+    changer_config_t  *p;
+    char      **result;
+    char       **r;
+
+    for(p = changer_config_list; p != NULL; p = p->next) {
+	count++;
+    };
+    result = g_new0(char *, count+1);
+    for (r = result, p = changer_config_list; p != NULL; p = p->next, r++) {
+	*r = g_strdup(p->name);
+    }
+    *r = NULL;
+
+    return result;
+}
+
 changer_config_t *
 lookup_changer_config(
     char *str)

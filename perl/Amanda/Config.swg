@@ -891,6 +891,28 @@ amglue_export_tag(getconf,
     device_config_seen device_config_seen
 );
 
+%typemap(out) char ** {
+    gchar **iter;
+
+    if ($1) {
+        /* Count the DeviceProperties */
+        EXTEND(SP, g_strv_length($1)); /* make room for return values */
+
+        /* Note that we set $result several times. the nature of
+         * SWIG's wrapping is such that incrementing argvi points
+         * $result to the next location in perl's argument stack.
+         */
+
+        for (iter = $1; *iter; iter++) {
+            $result = sv_2mortal(newSVpv(*iter, 0));
+            g_free(*iter);
+            argvi++;
+        }
+        g_free($1);
+    }
+}
+%newobject get_changer_list;
+char **get_changer_list();
 changer_config_t *lookup_changer_config(char *identifier);
 val_t *changer_config_getconf(changer_config_t *pps, changer_config_key key);
 char *changer_config_name(changer_config_t *pps);
@@ -1152,6 +1174,16 @@ sub local_message {
 	return "No label specified";
     } elsif ($self->{'code'} == 1500016) {
 	return "Config error";
+    } elsif ($self->{'code'} == 1500017) {
+	return "Changer '$self->{'changer'}' not found";
+    } elsif ($self->{'code'} == 1500018) {
+	return "Not existant parameters in changer '$self->{'changer'}'";
+    } elsif ($self->{'code'} == 1500019) {
+	return "Parameters values for changer '$self->{'changer'}'";
+    } elsif ($self->{'code'} == 1500020) {
+	return "No changer defined";
+    } elsif ($self->{'code'} == 1500021) {
+	return "Defined changer";
     } elsif ($self->{'code'} == 1550000) {
 	return "The version";
     }

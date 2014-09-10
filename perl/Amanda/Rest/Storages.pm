@@ -54,7 +54,7 @@ Amanda::Rest::Storages -- Rest interface to Amanda::Storage
 =end html
 
 request:
-  GET /amanda/v1.0/configs/:CONF/storages/:STORAGE
+  GET /amanda/v1.0/configs/:CONF/storages
 
 reply:
   HTTP status: 200 OK

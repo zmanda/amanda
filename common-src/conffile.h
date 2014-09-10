@@ -1177,6 +1177,8 @@ typedef enum {
 } changer_config_key;
 
 /* opaque object */
+char **get_changer_list(void);
+
 typedef struct changer_config_s changer_config_t;
 
 /* Given the name of the changer, return a changer_config_t object.  Returns NULL

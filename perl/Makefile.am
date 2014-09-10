@@ -697,6 +697,7 @@ if WANT_SERVER
 AmandaRestdir = $(amperldir)/Amanda/Rest
 AmandaRest_DATA = \
 	Amanda/Rest/Amcheck.pm \
+	Amanda/Rest/Changers.pm \
 	Amanda/Rest/Configs.pm \
 	Amanda/Rest/Dles.pm \
 	Amanda/Rest/Dumps.pm \
