@@ -22,6 +22,7 @@ use Amanda::Paths;
 use Amanda::Process;
 use Amanda::Util qw( :constants );
 use Amanda::Rest::Amcheck;
+use Amanda::Rest::Changers;
 use Amanda::Rest::Configs;
 use Amanda::Rest::Dles;
 use Amanda::Rest::Dumps;
@@ -254,6 +255,17 @@ get '/amanda/v1.0/services/discover' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Services::discover(%p);
 	return $r;
+};
+
+get '/amanda/v1.0/configs/:CONF/changers' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Changers::list(%p);
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/changers/:CHANGER' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Changers::fields(%p);
+	return $r
 };
 
 my $extensions_dir = $Amanda::Constants::REST_EXTENSIONS_DIR;

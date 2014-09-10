@@ -49,8 +49,6 @@ if ($rest->{'error'}) {
 }
 plan tests => 5;
 
-my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
-
 # set up and load a simple config
 my $testconf = Installcheck::Run::setup();
 $testconf->add_changer("DISKFLAT", [
