@@ -1,3 +1,6 @@
+2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/gnutar.pl: Fix for rhel7.
+
 2014-09-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application.swg: Add discover command
 	* perl/Amanda/Message.pm: New file
