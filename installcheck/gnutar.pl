@@ -98,7 +98,8 @@ my ($fc14, $fc15, $sunos);
         $uname =~ /\.fc17\./ ||
         $uname =~ /\.fc18\./ ||
         $uname =~ /\.fc19\./ ||
-        $uname =~ /\.fc2\d\./) {
+        $uname =~ /\.fc2\d\./ ||
+        $uname =~ /\-rhel7\-/) {
 	$fc15 = 1;
     }
 }
