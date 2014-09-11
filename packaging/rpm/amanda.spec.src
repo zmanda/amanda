@@ -116,7 +116,13 @@
         %define distver 6
 	%define curl libcurl
     %endif
-    
+    %if %(awk '$1 == "CentOS" && $4 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 7
+	%define curl libcurl
+    %endif
+   
     # If dist is undefined, we didn't detect.
     %{!?dist:%define dist unknown}
 %endif
