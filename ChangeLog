@@ -1,3 +1,6 @@
+2014-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* autogen: automake --add-missing
+
 2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for rhel7.
 

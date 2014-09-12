@@ -57,4 +57,4 @@ autoheader || die "autoheader failed"
 touch config/config.h.in
 
 echo "..automake"
-automake --force --copy --warnings=none || die "automake failed"
+automake --add-missing --force --copy --warnings=none || die "automake failed"
