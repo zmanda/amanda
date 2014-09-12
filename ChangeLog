@@ -1,3 +1,6 @@
+2014-09-10 Xu Han <xhan@carbonite.com>
+	* packaging/rpm/amanda.spec.src: CentOS 7 packaging.
+
 2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/gnutar.pl: Fix for rhel7.
 
