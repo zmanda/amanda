@@ -1715,7 +1715,7 @@ sub verify_unlocked {
 				code => 1100009,
 				drive => $drive,
 				device_name => $device_name);
-	} elsif ($device->status & $DEVICE_STATUS_DEVICE_ERROR) {
+	} elsif ($device->status == $DEVICE_STATUS_DEVICE_ERROR) {
 	    debug("ERROR: Drive $drive: " . $device->error());
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
@@ -1773,11 +1773,18 @@ sub verify_unlocked {
 	foreach my $tape_device (@tape_devices) {
 	    $tape_devices .= " \"$tape_device\"";
 	}
-	push @results, Amanda::Changer::Message->new(
+	if (defined $tape_devices) {
+	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100008,
 				tape_devices => $tape_devices);
+	} else {
+	    push @results, Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code => 1100065);
+	}
 	$params{'finished_cb'}->(undef, @results);
     };
 }

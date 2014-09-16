@@ -162,8 +162,9 @@ sub local_message {
     } elsif ($self->{'code'} == 1100064) {
 	return "Generated meta-label is empty";
     } elsif ($self->{'code'} == 1100065) {
+	return "ERROR: Found no valid tape device";
+    } elsif ($self->{'code'} == 1100066) {
 	return "";
-
     } elsif ($self->{'code'} == 1150000) {
 	return "changer_name argument of the storage is empty";
     } elsif ($self->{'code'} == 1150001) {
@@ -172,6 +173,8 @@ sub local_message {
 	return "Storage '$self->{'storage'}' not found";
     } elsif ($self->{'code'} == 1150003) {
 	return "You must specify the storage 'tpchanger'";
+    } else {
+	return "No message for code $self->{'code'}";
     }
 }
 
