@@ -471,6 +471,13 @@ tcpm_send_token(
         nb_iov = 3;
     }
 
+    if (debug_auth >= 6) {
+	crc_t crc;
+	crc32_init(&crc);
+	crc32_add((uint8_t *)buf, len, &crc);
+	g_debug("packet send CRC: %08x:%llu", crc32_finish(&crc), (long long)crc.size);
+    }
+
     rval = full_writev(fd, iov, nb_iov);
     save_errno = errno;
     if (len != 0 && rc->driver->data_encrypt != NULL && buf != encbuf) {
@@ -636,6 +643,12 @@ tcpm_recv_token(
 	*size = decsize;
     }
 
+    if (debug_auth >= 6) {
+	crc_t crc;
+	crc32_init(&crc);
+	crc32_add((uint8_t *)*buf, *size, &crc);
+	g_debug("packet receive CRC: %08x:%llu", crc32_finish(&crc), (long long)crc.size);
+    }
     return((*size));
 }
 

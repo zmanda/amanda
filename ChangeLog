@@ -1,4 +1,8 @@
-2014-09-10 Xu Han <xhan@carbonite.com>
+2014-09-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Compute and print crc32 of each packet if
+	  debug_auth >= 6.
+
+2014-09-10  Xu Han <xhan@carbonite.com>
 	* packaging/rpm/amanda.spec.src: CentOS 7 packaging.
 
 2014-09-10  Jean-Louis Martineau <martineau@zmanda.com>
