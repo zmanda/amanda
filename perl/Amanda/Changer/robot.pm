@@ -1646,7 +1646,7 @@ sub verify_unlocked {
 	if ($device->status & $DEVICE_STATUS_VOLUME_MISSING) {
 	    debug("ERROR: Drive $drive is not device $device_name");
 	    push @results, "ERROR: Drive $drive is not device $device_name";
-	} elsif ($device->status & $DEVICE_STATUS_DEVICE_ERROR) {
+	} elsif ($device->status == $DEVICE_STATUS_DEVICE_ERROR) {
 	    debug("ERROR: Drive $drive: " . $device->error());
 	    push @results, "ERROR: Drive $drive: " . $device->error();
 	} else {
@@ -1684,7 +1684,11 @@ sub verify_unlocked {
 	foreach my $tape_device (@tape_devices) {
 	    $tape_devices .= " \"$tape_device\"";
 	}
-	push @results, "property \"TAPE-DEVICE\"$tape_devices";
+	if (defined $tape_devices) {
+	    push @results, "property \"TAPE-DEVICE\"$tape_devices";
+	} else {
+	    push @results, "ERROR: Found no valid tape device";
+	}
 	$params{'finished_cb'}->(undef, @results);
     };
 }

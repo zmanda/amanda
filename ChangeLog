@@ -1,4 +1,8 @@
 2014-09-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm (verify): Failure to read the label is not an
+	  error.
+
+2014-09-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, common-src/amservice.c,
 	  server-src/amcheck.c, server-src/dumper.c,
 	  server-src/planner.c, perl/Amanda/Util.swg: Call make_crc_table
