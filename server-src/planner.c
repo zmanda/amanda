@@ -215,6 +215,7 @@ main(
     planner_setuid = set_root_privs(0);
 
     safe_fd(-1, 0);
+    make_crc_table();
 
     set_pname("planner");
 

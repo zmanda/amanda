@@ -96,6 +96,7 @@ main(
 
     safe_fd(-1, 0);
     safe_cd();
+    make_crc_table();
 
     set_pname("amservice");
     /* drop root privileges */

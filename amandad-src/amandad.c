@@ -214,6 +214,7 @@ main(
 
     safe_fd(-1, 0);
     safe_cd();
+    make_crc_table();
 
     /*
      * Nexenta needs the SUN_PERSONALITY env variable to be unset, otherwise

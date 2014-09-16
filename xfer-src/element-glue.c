@@ -373,6 +373,7 @@ pull_and_write(XferElementGlue *self)
     XferElement *elt = XFER_ELEMENT(self);
     int fd = get_write_fd(self);
     self->write_fdp = NULL;
+    crc32_init(&elt->crc);
 
     while (!elt->cancelled) {
 	size_t len;
@@ -399,6 +400,7 @@ pull_and_write(XferElementGlue *self)
 		break;
 	    }
 	    elt->downstream->drain_mode = TRUE;
+	    crc32_add((uint8_t *)buf, len, &elt->crc);
 	}
 
 	amfree(buf);
@@ -406,6 +408,9 @@ pull_and_write(XferElementGlue *self)
 
     if (elt->cancelled && elt->expect_eof)
 	xfer_element_drain_buffers(elt->upstream);
+
+    g_debug("xfer-dest-fd CRC: %08x:%lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
 
     /* close the fd we've been writing, as an EOF signal to downstream, and
      * set it to -1 to avoid accidental re-use */
@@ -478,6 +483,7 @@ read_and_push(
     XferElement *elt = XFER_ELEMENT(self);
     int fd = get_read_fd(self);
 
+    crc32_init(&elt->crc);
     while (!elt->cancelled) {
 	char *buf = g_malloc(GLUE_BUFFER_SIZE);
 	size_t len;
@@ -502,6 +508,7 @@ read_and_push(
 	    }
 	}
 
+	crc32_add((uint8_t *)buf, len, &elt->crc);
 	xfer_element_push_buffer(elt->downstream, buf, len);
     }
 
@@ -513,6 +520,9 @@ read_and_push(
 
     /* close the read fd, since it's at EOF */
     close_read_fd(self);
+
+    g_debug("xfer-source-fd CRC: %08x:%lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
 }
 
 static void

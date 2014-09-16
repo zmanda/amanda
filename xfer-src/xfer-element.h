@@ -30,6 +30,7 @@
 #include <glib-object.h>
 #include "xfer.h"
 #include "amanda.h"
+#include "util.h"
 #include "directtcp.h"
 
 typedef enum {
@@ -152,6 +153,9 @@ typedef struct XferElement {
 
     /* maximum size to transfer */
     gint64 size;
+
+    /* for crc computation */
+    crc_t crc;
 
     /* if input must be drained in case of write error */
     gboolean must_drain;

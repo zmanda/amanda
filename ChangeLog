@@ -1,3 +1,21 @@
+2014-09-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, common-src/amservice.c,
+	  server-src/amcheck.c, server-src/dumper.c,
+	  server-src/planner.c, perl/Amanda/Util.swg: Call make_crc_table
+	* common-src/security-util.c: Compute and print crc32 of each packet if
+	  debug_auth >= 6.
+	* common-src/util.c (make_crc_table, crc32_init, crc32_add,
+	  crc32_finish): New functions to handle crc32.
+	* common-src/util.h: prototype the new functions.
+	* device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-directtcp.c
+	  device-src/xfer-dest-taper-splitter.c
+	  server-src/dumper.c
+	  server-src/xfer-source-holding.c: compute and print crc32 of the
+	  data stream.
+	* xfer-src/element-glue.c: Compute crc32 of an element.
+	* xfer-src/xfer-element.h (XferElement): Add crc.
+
 2014-09-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* autogen: automake --add-missing
 

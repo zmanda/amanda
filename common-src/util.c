@@ -1720,3 +1720,54 @@ make_amanda_tmpdir(void)
 	return TRUE;
     }
 }
+
+static uint32_t crc_table[256];
+static gboolean crc_initialized = FALSE;
+/* Run this function previously */
+void
+make_crc_table(void)
+{
+    uint32_t i;
+    int      j;
+
+    if (!crc_initialized) {
+	for (i = 0; i < 256; i++) {
+	    uint32_t c = i;
+	    for (j = 0; j < 8; j++) {
+		c = (c & 1) ? (0xEDB88320 ^ (c >> 1)) : (c >> 1);
+	    }
+	    crc_table[i] = c;
+	}
+	crc_initialized = TRUE;
+    }
+}
+
+void
+crc32_init(
+    crc_t *crc)
+{
+    crc->crc = 0xFFFFFFFF;
+    crc->size = 0;
+}
+
+void
+crc32_add(
+    uint8_t *buf,
+    size_t len,
+    crc_t *crc)
+{
+    size_t i;
+
+    for (i = 0; i < len; i++) {
+	crc->crc = crc_table[(crc->crc ^ buf[i]) & 0xFF] ^ (crc->crc >> 8);
+    }
+    crc->size += len;
+}
+
+uint32_t
+crc32_finish(
+    crc_t *crc)
+{
+    return crc->crc ^ 0xFFFFFFFF;
+}
+

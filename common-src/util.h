@@ -397,4 +397,14 @@ char *get_first_line(GPtrArray *argv_ptr);
 
 gboolean make_amanda_tmpdir(void);
 
+typedef struct crc_s {
+    uint32_t crc;
+    off_t    size;
+} crc_t;
+
+void make_crc_table(void);
+void crc32_init(crc_t *crc);
+void crc32_add(uint8_t *buf, size_t len, crc_t *crc);
+uint32_t crc32_finish(crc_t *crc);
+
 #endif	/* UTIL_H */

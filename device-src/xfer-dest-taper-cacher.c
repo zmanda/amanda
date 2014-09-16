@@ -271,7 +271,7 @@ _xdt_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XDT: %s", msg);
+    g_debug("XDTC: %s", msg);
 }
 
 /*
@@ -857,6 +857,7 @@ write_slab_to_device(
 	    return FALSE;
 	}
 
+	crc32_add((uint8_t *)buf, write_size, &elt->crc);
 	buf += write_size;
 	self->slab_bytes_written += write_size;
 	remaining -= write_size;
@@ -1059,6 +1060,8 @@ device_thread(
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
+    g_debug("xfer-dest-taper-cacher CRC %08x:%lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
     return NULL;
 }
 
@@ -1355,6 +1358,7 @@ instance_init(
     self->part_stop_serial = 0;
     self->disk_cache_read_fd = -1;
     self->disk_cache_write_fd = -1;
+    crc32_init(&elt->crc);
 }
 
 static void

@@ -182,7 +182,7 @@ _xdt_dbg(const char *fmt, ...)
     arglist_start(argp, fmt);
     g_vsnprintf(msg, sizeof(msg), fmt, argp);
     arglist_end(argp);
-    g_debug("XDT: %s", msg);
+    g_debug("XDTS: %s", msg);
 }
 
 /* "Fast forward" the slice list by the given length.  This will free any
@@ -527,6 +527,8 @@ device_thread_write_part(
 	    break;
 	}
 
+	crc32_add((uint8_t *)(self->ring_buffer + self->ring_tail),
+		  to_write, &elt->crc);
 	self->part_bytes_written += to_write;
 	device_thread_consume_block(self, to_write);
 
@@ -625,7 +627,8 @@ device_thread(
 
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
-
+    g_debug("xfer-dest-taper-splitter CRC: %08x:%lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
     return NULL;
 }
 
@@ -901,6 +904,7 @@ instance_init(
     self->partnum = 1;
     self->part_bytes_written = 0;
     self->part_slices = NULL;
+    crc32_init(&elt->crc);
 }
 
 static void
