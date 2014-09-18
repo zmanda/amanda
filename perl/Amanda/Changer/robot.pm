@@ -504,6 +504,7 @@ sub load_unlocked {
 			# not 'volinuse' because we can't expect the tape to be magically
 			# unloaded any time soon -- it's not actually in use, just inaccessible
 			reason => "invalid",
+			slot => $slot,
 			message => "the requested volume is in drive $drive, which this " .
 				   "changer instance cannot access");
 	    }
