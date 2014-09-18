@@ -1,3 +1,6 @@
+2014-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm: Continue on invalid.
+
 2014-09-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm (verify): Failure to read the label is not an
 	  error.

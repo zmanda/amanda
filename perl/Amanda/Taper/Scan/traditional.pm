@@ -200,6 +200,9 @@ sub stage_1 {
 	    } elsif ($err->failed and $err->invalid) {
 		debug("Amanda::Taper::Scan::traditional oldest reusable volume is not accessible");
 		return $self->stage_2($result_cb);
+	    } elsif ($err->failed and $err->invalid) {
+		debug("Amanda::Taper::Scan::traditional oldest reusable volume is in an invalid slot");
+		return $self->stage_2($result_cb);
 	    } else {
 		return $self->scan_result(error => $err,
 			res => $res, result_cb => $result_cb);
@@ -329,6 +332,7 @@ sub stage_2 {
 	    # or if we loaded the 'current' slot and it was invalid (this happens if
 	    # the user changes 'use-slots', for example
 	    $ignore_error = 1 if ($loaded_current && $err->invalid);
+	    $ignore_error = 1 if (defined($err->{'slot'}) && $err->invalid);
 	    $ignore_error = 1 if ($err->empty);
 
 	    if ($ignore_error) {
