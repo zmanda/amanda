@@ -47,7 +47,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 22;
+plan tests => 21;
 
 my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 
@@ -163,6 +163,7 @@ $testconf->add_changer("DISKFLAT", [
 ]);
 $testconf->add_storage("DISKFLAT", [
 	policy => '"DISKFLAT"',
+	runtapes => 4,
 ]);
 $testconf->write();
 
@@ -184,6 +185,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $testconf->add_storage("DISKFLAT", [
 	policy    => '"DISKFLAT"',
 	tpchanger => '"DISKFLAT"',
+	runtapes => 4,
 ]);
 $testconf->write();
 
@@ -223,32 +225,33 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "Create storage DISKFLAT - 1100027") || diag("reply: " .Data::Dumper::Dumper($reply));
 ok(-d $taperoot, "DIR EXISTS");
 
-$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
-                'severity' => '16',
-                'message' => 'Can\'t compute label for slot \'1\': template is not set, you must set autolabel',
-                'code'  => '1100042',
-		'slot'  => 1,
-		'type'  => 'fatal',
-		'error' => {
-			'source_filename' => "$amperldir/Amanda/Changer.pm",
-			'severity' => '16',
-			'message' => 'template is not set, you must set autolabel',
-			'code' => '1100050'
-		},
-          },
-        ],
-      http_code => 404,
-    },
-    "inventory DISKFLAT - 1100042") || diag("reply: " .Data::Dumper::Dumper($reply));
+#$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/inventory","");
+#is_deeply (Installcheck::Rest::remove_source_line($reply),
+#    { body =>
+#        [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
+#                'severity' => '16',
+#                'message' => 'Can\'t compute label for slot \'1\': template is not set, you must set autolabel',
+#                'code'  => '1100042',
+#		'slot'  => 1,
+#		'type'  => 'fatal',
+#		'error' => {
+#			'source_filename' => "$amperldir/Amanda/Changer.pm",
+#			'severity' => '16',
+#			'message' => 'template is not set, you must set autolabel',
+#			'code' => '1100050'
+#		},
+#          },
+#        ],
+#      http_code => 404,
+#    },
+#    "inventory DISKFLAT - 1100042") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $testconf->add_storage("DISKFLAT", [
 	policy    => '"DISKFLAT"',
 	tpchanger => '"DISKFLAT"',
 	autolabel => '"DISKFLAT-$3s" any',
 	labelstr  => 'MATCH-AUTOLABEL',
+	runtapes  => '5',
 ]);
 $testconf->write();
 
@@ -429,17 +432,13 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/load?label=DISKFLAT-002","");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
+        [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
                 'severity' => '16',
-                'message' => 'load result',
-                'code'  => '1100002',
-		'storage_name' => 'DISKFLAT',
-		'chg_name' => 'DISKFLAT',
-		'load_result' => {
-			'device_status_error' => 'one of Device error, Volume not labeled, or Volume error',
-			'device_status' => 25,
-			'device_error' => 'Error loading device header -- unlabeled volume?'
-		},
+                'message' => 'Label \'DISKFLAT-002\' not found',
+		'label' => 'DISKFLAT-002',
+                'code'  => '1100035',
+		'type'  => 'failed',
+		'reason' => 'notfound'
           },
         ],
       http_code => 200,

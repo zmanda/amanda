@@ -396,17 +396,10 @@ diskflat_device_erase(
 	vself->open_file_fd = -1;
     }
 
-    vself->open_file_fd = robust_open(self->filename,
-				      O_CREAT | O_RDWR,
-				      VFS_DEVICE_CREAT_MODE);
-    if (vself->open_file_fd < 0) {
+    if (unlink(self->filename) == -1 && errno != ENOENT)  {
 	device_set_error(dself,
-	    g_strdup_printf(_("Can't open file %s: %s"), self->filename, strerror(errno)),
+	    g_strdup_printf(_("Can't unlink file %s: %s"), self->filename, strerror(errno)),
 			    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-	return FALSE;
-    }
-    if (ftruncate(vself->open_file_fd, 0) == -1)  {
-	g_debug("ftruncate failed: %s", strerror(errno));
 	return FALSE;
     }
     vself->release_file(dself);

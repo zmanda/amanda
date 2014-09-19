@@ -120,6 +120,8 @@ sub new {
     # must be set here.
     $self->{'tapelist'} = $params{'tapelist'};
 
+    $self->{'storage_name'} = $params{'storage'}->{'storage_name'};
+    $self->{'runtapes'} = $params{'storage'}->{'runtapes'} || 1;
     $self->{'autolabel'} = $params{'autolabel'};
     $self->{'autolabel'} = $params{'storage'}->{'autolabel'}
 	if !defined $self->{'autolabel'} and defined $params{'storage'}->{'autolabel'};
@@ -279,15 +281,33 @@ sub inventory {
 	for my $slot (@slots) {
 	    my $s = { slot => $slot, state => Amanda::Changer::SLOT_FULL };
 	    $s->{'reserved'} = $self->_is_slot_in_use($state, $slot);
-	    my $label = $self->_get_slot_label($slot);
+	    my ($label, $err) = $self->make_new_tape_label(slot => $slot,
+						meta => $self->{'meta'},
+						label_exist => 1);
 	    if ($label) {
-		$s->{'label'} = $self->_get_slot_label($slot);
-		$s->{'f_type'} = "".$Amanda::Header::F_TAPESTART;
-		$s->{'device_status'} = "".$DEVICE_STATUS_SUCCESS;
+		if (!-e "$self->{'dir'}/$label") {
+		    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
+		    if ($tle) {
+			$s->{'state'} = Amanda::Changer::SLOT_EMPTY;
+		    } else {
+			$s->{'state'} = Amanda::Changer::SLOT_FULL;
+			$s->{'label'} = undef;
+			$s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
+			$s->{'device_status'} = "".$DEVICE_STATUS_VOLUME_UNLABELED;
+		    }
+		} elsif (!-s "$self->{'dir'}/$label") {
+		    $s->{'label'} = undef;
+		    $s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
+		    $s->{'device_status'} = "".$DEVICE_STATUS_VOLUME_UNLABELED;
+		} else {
+		    $s->{'label'} = $label;
+		    $s->{'f_type'} = "".$Amanda::Header::F_TAPESTART;
+		    $s->{'device_status'} = "".$DEVICE_STATUS_SUCCESS;
+		}
 	    } else {
-		$s->{'label'} = undef;
-		$s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
-		$s->{'device_status'} = "".$DEVICE_STATUS_VOLUME_UNLABELED;
+		    $s->{'label'} = undef;
+		    $s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
+		    $s->{'device_status'} = "".$DEVICE_STATUS_VOLUME_UNLABELED;
 	    }
 	    $s->{'current'} = 1 if $slot eq $current;
 	    push @inventory, $s;
@@ -461,8 +481,22 @@ sub _make_res {
 		reason => "device",
 		slot   => $slot);
     }
-    my $slot_path = "$self->{'dir'}/$label";
-    my $device_name = "diskflat:$slot_path";
+    my $slot_file = "$self->{'dir'}/$label";
+    if (!-e $slot_file) {
+	if ($self->{'tapelist'}->lookup_tapelabel($label)) {
+	    return $self->make_error("failed", $res_cb,
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code      => 1100066,
+			reason    => "invalid",
+			label     => $label,
+			slot      => $slot,
+			slot_file => $slot_file,
+			error     => $!);
+	}
+    }
+
+    my $device_name = "diskflat:$slot_file";
     my $device = Amanda::Device->new($device_name);
     if ($device->status != $DEVICE_STATUS_SUCCESS) {
 	return $self->make_error("failed", $res_cb,
@@ -511,18 +545,45 @@ sub _alloc_drive {
 sub _all_slots {
     my ($self) = @_;
     my $dir = _quote_glob($self->{'dir'});
-    my @slots;
+    my $last_slot = 0;
 
+    my %slots;
     for my $slot_dir (bsd_glob("$dir/*")) {
 	$slot_dir =~ /$dir\/(.*)/;
 	my $label = $1;
+	next if $label eq "state";
 	my ($slot, $err) = $self->label_to_slot(label => $label,
 						meta => $self->{'meta'});
 	next if $err;	# skip files that do not match autolabel
-	push @slots, $slot + 0;
+	$slot = $slot + 0;
+	$slots{$slot} = 1;
+	$last_slot = $slot if $slot > $last_slot;
     }
 
-    return map { "$_"} sort { $a <=> $b } @slots;
+    foreach my $tle (@{$self->{'tapelist'}->{'tles'}}) {
+	next if $tle->{'storage'} ne $self->{'storage_name'};
+	my ($slot, $err) = $self->label_to_slot(label => $tle->{'label'},
+                                                meta => $tle->{'meta'});
+	next if !defined $slot;
+	$last_slot = $slot if $slot > $last_slot;
+    }
+
+#    for my $slot (1..$self->{'num-slot'}) {
+#	my ($label, $err) = $self->make_new_tape_label(slot => $slot,
+#                                                   meta => $self->{'meta'},
+#                                                   label_exist => 1);
+#	if ($self->{'tapelist'}->lookup_tapelabel($label)) {
+#	    $last_slot = $slot if $slot > $last_slot;
+#	}
+#    }
+
+    $last_slot += $self->{'runtapes'};
+    $last_slot = $self->{'num-slot'} if $last_slot > $self->{'num-slot'};
+    for my $i (1..$last_slot) {
+	$slots{$i} = 1
+    }
+
+    return map { "$_"} sort { $a <=> $b } keys(%slots);
 }
 
 # Internal function to determine whether a slot exists.
@@ -714,30 +775,13 @@ sub _validate() {
     }
 
     if ($self->{'num-slot'}) {
-	for my $i (1..$self->{'num-slot'}) {
-	    my ($label, $err) = $self->make_new_tape_label(
-					slot => $i,
-					meta => $self->{'meta'},
-					label_exist => 1);
-	    if (!$label) {
-		return $self->make_error("fatal", undef,
-			source_filename => __FILE__,
-			source_line     => __LINE__,
-			code    => 1100042,
-			slot    => $i,
-			error   => $err);
-	    }
-	    my $slot_file = "$dir/$label";
-	    if (!-e $slot_file) {
-		open AA, ">$slot_file" or
-		    return $self->make_error("fatal", undef,
-				source_filename => __FILE__,
-				source_line     => __LINE__,
-				code    => 1100043,
-				slot_file => $slot_file,
-				error     => $!);
-		close AA;
-	    } elsif (!-r $slot_file) {
+	foreach my $tle (@{$self->{'tapelist'}->{'tles'}}) {
+	    next if $tle->{'storage'} ne $self->{'storage_name'};
+	    my ($slot, $err) = $self->label_to_slot(label => $tle->{'label'},
+                                                    meta => $tle->{'meta'});
+	    next if !defined $slot;
+	    my $slot_file = "$dir/$tle->{'label'}";
+	    if (-e $slot_file and !-r $slot_file) {
 		return $self->make_error("fatal", undef,
 				source_filename => __FILE__,
 				source_line     => __LINE__,

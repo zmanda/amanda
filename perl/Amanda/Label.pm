@@ -987,7 +987,7 @@ sub erase {
 
 	if ($err) {
 	    $self->user_msg($err);
-	    return $steps->{'start'}->();
+	    return $steps->{'scrub_db'}->();
 	}
 
 	my $dev = $res->{'device'};

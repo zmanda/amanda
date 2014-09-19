@@ -164,7 +164,10 @@ sub local_message {
     } elsif ($self->{'code'} == 1100065) {
 	return "ERROR: Found no valid tape device";
     } elsif ($self->{'code'} == 1100066) {
+	return "label '$self->{'label'}' already in tapelist and slot file '$self->{'slot_file'}' do not exists";
+    } elsif ($self->{'code'} == 1100067) {
 	return "";
+
     } elsif ($self->{'code'} == 1150000) {
 	return "changer_name argument of the storage is empty";
     } elsif ($self->{'code'} == 1150001) {
@@ -1466,7 +1469,7 @@ sub label_to_slot {
     my %params = @_;
 
     my $tl = $self->{'tapelist'};
-    die ("make_new_tape_label: no tapelist") if !$tl;
+    die ("label_to_slot: no tapelist") if !$tl;
     if (!defined $self->{'autolabel'}) {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,

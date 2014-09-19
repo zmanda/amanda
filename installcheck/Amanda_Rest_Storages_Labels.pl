@@ -464,7 +464,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "LABEL=DISKFLAT-002") || diag("reply: " . Data::Dumper::Dumper($reply));
 
-#CODE 1000008 1000009 1100057
+#CODE 1000008 1100066
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels","");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
@@ -473,17 +473,18 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'message' => 'Reading label...',
 		'code' => '1000008'
 	  },
-          {	'source_filename' => "$amperldir/Amanda/Label.pm",
-		'severity' => '16',
-		'message' => 'Found an empty tape.',
-		'code' => '1000009'
-	  },
-          {	'source_filename' => "$amperldir/Amanda/Changer.pm",
-		'severity' => '16',
+	  {
+		'slot_file' => '/tmp/amanda/installchecks/Amanda_Changer_Diskflat_test/DISKFLAT-001',
+		'reason' => 'invalid',
+		'message' => 'label \'DISKFLAT-001\' already in tapelist and slot file \'/tmp/amanda/installchecks/Amanda_Changer_Diskflat_test/DISKFLAT-001\' do not exists',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/diskflat.pm',
+		'error' => 'No such file or directory',
+		'type' => 'failed',
+		'severity' => 16,
+		'code' => 1100066,
 		'label' => 'DISKFLAT-001',
-		'message' => 'Label \'DISKFLAT-001\' already exists',
-		'code' => '1100057'
-	  },
+		'slot' => '1'
+	  }
         ],
       http_code => 200,
     },
@@ -590,31 +591,32 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
         ],
       http_code => 200,
     },
-    "DELETE DISKFLAT-008") || diag("reply: " . Data::Dumper::Dumper($reply));
+    "DELETE DISKFLAT-006") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 #CODE 1000049 1000052
-$reply = $rest->delete("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-005?erase=1","");
+$reply = $rest->delete("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/labels/DISKFLAT-007?erase=1","");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => '16',
-		'label' => 'DISKFLAT-005',
-		'message' => 'Erased volume with label \'DISKFLAT-005\'.',
+		'label' => 'DISKFLAT-007',
+		'message' => 'Erased volume with label \'DISKFLAT-007\'.',
 		'code' => '1000049'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Label.pm",
 		'severity' => '16',
-		'label' => 'DISKFLAT-005',
+		'label' => 'DISKFLAT-007',
 		'tapelist_filename' =>$tlf,
-		'message' => "Removed label 'DISKFLAT-005' from tapelist file.",
+		'message' => "Removed label 'DISKFLAT-007' from tapelist file.",
 		'code' => '1000052'
 	  },
         ],
       http_code => 200,
     },
-    "DELETE DISKFLAT-005") || diag("reply: " . Data::Dumper::Dumper($reply));
+    "DELETE DISKFLAT-007") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 $rest->stop();
+exit;
 
 rmtree $taperoot;
 

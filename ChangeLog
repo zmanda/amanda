@@ -1,3 +1,12 @@
+2014-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/diskflat-device.c: Unlink file on erase.
+	* perl/Amanda/Changer.pm: Add message 1100066
+	* perl/Amanda/Changer/diskflat.pm: Do not create files if slot not
+	  used.
+	* perl/Amanda/Label.pm: Fix.
+	* installcheck/Amanda_Rest_Storages.pl: Fix.
+	* installcheck/Amanda_Rest_Storages_Labels.pl: Fix.
+
 2014-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: Continue on invalid.
 
