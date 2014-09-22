@@ -1,3 +1,6 @@
+2014-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Storages_Labels.pl: Fix.
+
 2014-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/diskflat-device.c: Unlink file on erase.
 	* perl/Amanda/Changer.pm: Add message 1100066

@@ -474,10 +474,10 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'code' => '1000008'
 	  },
 	  {
-		'slot_file' => '/tmp/amanda/installchecks/Amanda_Changer_Diskflat_test/DISKFLAT-001',
+		'slot_file' => "$Installcheck::TMP/Amanda_Changer_Diskflat_test/DISKFLAT-001",
 		'reason' => 'invalid',
-		'message' => 'label \'DISKFLAT-001\' already in tapelist and slot file \'/tmp/amanda/installchecks/Amanda_Changer_Diskflat_test/DISKFLAT-001\' do not exists',
-		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer/diskflat.pm',
+		'message' => "label 'DISKFLAT-001' already in tapelist and slot file '$Installcheck::TMP/Amanda_Changer_Diskflat_test/DISKFLAT-001' do not exists",
+		'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
 		'error' => 'No such file or directory',
 		'type' => 'failed',
 		'severity' => 16,
