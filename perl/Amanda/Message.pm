@@ -26,7 +26,7 @@ use Data::Dumper;
 require Amanda::Debug;
 
 use overload
-    '""'  => sub { $_[0]->message(); },
+    '""'  => sub { $_[0]->full_message(); },
     'cmp' => sub { $_[0]->message() cmp $_[1]; };
 
 
@@ -90,6 +90,7 @@ not handled by Amanda::Message):
  3000000  Amanda::Amvmware::Message
  3100000  Amanda::Service::Message
  3200000  amanda-extensions
+ 3300000  Amanda::Fetchdump::Message
 
 general keys:
   code            =>
@@ -167,13 +168,26 @@ sub message {
 
     my $message = $self->local_message();
     return $message if $message;
+}
 
-    return Data::Dumper::Dumper($self);
+sub full_message {
+    my $self = shift;
+
+    return $self->local_full_message();
 }
 
 # Should be overloaded
 sub local_message {
-    return;
+    my $self = shift;
+
+    return $self->{'message'};
+}
+
+#Can be overloaded
+sub local_full_message {
+    my $self = shift;
+
+    return $self->{'message'};
 }
 
 1;

@@ -1152,6 +1152,9 @@ amgtar_restore(
     char       *include_filename = NULL;
     char       *exclude_filename = NULL;
     int         tarpid;
+    amwait_t    wait_status;
+    int         exit_status = 0;
+    char       *errmsg = NULL;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
@@ -1348,7 +1351,31 @@ amgtar_restore(
     default: break;
     }
 
-    waitpid(tarpid, NULL, 0);
+    waitpid(tarpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+                                 cmd, WTERMSIG(wait_status), dbfn());
+	exit_status = 1;
+    } else if (WIFEXITED(wait_status)) {
+	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+				     cmd, WEXITSTATUS(wait_status), dbfn());
+	    exit_status = 1;
+	} else {
+	    /* Normal exit */
+	    exit_status = 0;
+	}
+    } else {
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+				 cmd, dbfn());
+	exit_status = 1;
+    }
+    if (errmsg) {
+	dbprintf("%s", errmsg);
+	fprintf(stderr, "ERROR %s\n", errmsg);
+	amfree(errmsg);
+    }
+
     if (argument->verbose == 0) {
 	if (exclude_filename)
 	    unlink(exclude_filename);
@@ -1357,6 +1384,7 @@ amgtar_restore(
     amfree(cmd);
     amfree(include_filename);
     amfree(exclude_filename);
+    exit(exit_status);
 }
 
 static void

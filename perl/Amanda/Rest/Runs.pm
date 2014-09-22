@@ -25,6 +25,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Amdump;
 use Amanda::Amflush;
 use Amanda::CheckDump;
+use Amanda::FetchDump;
 use Amanda::Vault;
 use Amanda::Rest::Configs;
 use Amanda::Process;
@@ -295,6 +296,114 @@ reply:
 
 =end html
 
+=item Run amfetchdump --extract
+
+=begin html
+
+<pre>
+
+=end html
+
+request:
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/fetchdump
+    query argument:
+      host=HOST
+      disk=DISK
+      timestamp=TIMESTAMP
+      level=LEVEL
+      write_timestamp=WRITE_TIMESTAMP
+      directory=/PATH/WHERE/TO/EXTRACT
+
+      The application_property setting can only be set in the body
+    of the POST request, the Content-Type header must be set to
+    'application/json'.
+
+    POS header:
+	Content-Type: application/json
+    POST body (example):
+      { "application_property":{ "esxpass":"/etc/amanda/esxpass"}}
+
+reply:
+  HTTP status 202 Accepted
+  [
+   {
+      "code" : "3300057",
+      "message" : "Running a Fetchdump",
+      "severity" : "2",
+      "source_filename" : "/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Runs.pm",
+      "source_line" : "734"
+   },
+   {
+      "code" : "3300059",
+      "message" : "The message filename is 'fetchdump.27363'",
+      "message_filename" : "fetchdump.27363",
+      "severity" : "2",
+      "source_filename" : "/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Runs.pm",
+      "source_line" : "739"
+   }
+  ]
+
+=begin html
+
+</pre>
+
+=end html
+
+=item Get messages for amfetchdump
+
+=begin html
+
+<pre>
+
+=end html
+
+request:
+  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
+    query argument:
+        message_filename=MESAGE_FILENAME
+
+reply:
+  HTTP status 200 Ok
+  [
+   {
+      "code" : 3300002,
+      "message" : "1 volume(s) needed for restoration\nThe following volumes are needed: Xtest-ORG-AG-vtapes-004\n",
+      "needed_holding" : [],
+      "needed_labels" : [
+         {
+            "available" : 0,
+            "label" : "Xtest-ORG-AG-vtapes-004",
+            "storage" : "my_vtapes"
+         }
+      ],
+      "severity" : 16,
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/FetchDump.pm",
+      "source_line" : "689"
+   },
+   {
+      "code" : 3300012,
+      "message" : "READ SIZE: 85504 kb",
+      "severity" : 16,
+      "size" : 87556096,
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/FetchDump.pm",
+      "source_line" : "1347"
+   },
+   {
+      "code" : 3300013,
+      "message" :
+      "severity" : 16,
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/FetchDump.pm",
+      "source_line" : "1357",
+      "application_stdout: [ ... ]
+   }
+  ]
+
+=begin html
+
+</pre>
+
+=end html
+
 =back
 
 =cut
@@ -518,7 +627,7 @@ sub checkdump {
 			cfgerr_level => $cfgerr_level);
     }
 
-    Amanda::Util::set_pname("amcheckdump");
+    Amanda::Util::set_pname("checkdump");
 
     my $message_filename = "checkdump.$$";
     my $message_path =  getconf($CNF_LOGDIR) . "/" . $message_filename;
@@ -586,6 +695,193 @@ sub checkdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 2700019,
+		severity         => $Amanda::Message::ERROR);
+    }
+    Dancer::status(202);
+
+    return \@result_messages;
+}
+
+package Amanda::Rest::Runs::FetchFeedback;
+use base 'Amanda::Recovery::Clerk::Feedback';
+
+sub new {
+    my $class = shift;
+    my $message_fh = shift;
+
+    my $self = bless {
+	count => 0,
+	message_fh => $message_fh
+    }, $class;
+
+    return $self;
+}
+
+sub set_feedback {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'chg'} = $params{'chg'} if exists $params{'chg'};
+    $self->{'dev_name'} = $params{'dev_name'} if exists $params{'dev_name'};
+
+    return $self;
+}
+
+sub clerk_notif_part {
+    my $self = shift;
+    my ($label, $filenum, $header) = @_;
+
+    $self->user_message(Amanda::FetchDump::Message->new(
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 3300003,
+		label		=> $label,
+		filenum		=> $filenum,
+		header_summary	=> $header->summary()));
+}
+
+sub clerk_notif_holding {
+    my $self = shift;
+    my ($filename, $header) = @_;
+
+    $self->user_message(Amanda::FetchDump::Message->new(
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 3300004,
+		holding_file	=> $filename,
+		header_summary	=> $header->summary()));
+}
+
+sub  user_message {
+    my $self = shift;
+    my $message = shift;
+
+    my $d;
+    if (ref $message eq "SCALAR") {
+	$d = Data::Dumper->new([$message], ["MESSAGES[$self->{'count'}]"]);
+    } else {
+	my %msg_hash = %$message;
+	$d = Data::Dumper->new([\%msg_hash], ["MESSAGES[$self->{'count'}]"]);
+    }
+    print {$self->{'message_fh'}} $d->Dump();
+    $self->{'count'}++;
+}
+
+sub close {
+    my $self = shift;
+    delete $self->{'message_fh'}
+}
+
+package Amanda::Rest::Runs;
+
+sub fetchdump {
+    my %params = @_;
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+    Amanda::Disklist::unload_disklist();
+    my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	return Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400006,
+			diskfile     => $diskfile,
+			cfgerr_level => $cfgerr_level);
+    }
+
+    Amanda::Util::set_pname("fetchdump");
+
+    my $message_filename = "fetchdump.$$";
+    my $message_path =  getconf($CNF_LOGDIR) . "/" . $message_filename;
+    my $message_fh;
+    if (open ($message_fh, ">$message_path") == 0) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700021,
+		message_filename => $message_filename,
+		errno            => $!,
+		severity         => $Amanda::Message::ERROR);
+	return \@result_messages;
+    }
+
+    my ($fetchdump, $messages) = Amanda::FetchDump->new(%params);
+    push @result_messages, @{$messages};
+
+    if (!$fetchdump) {
+	return \@result_messages;
+    }
+
+    my $exit_status = 0;
+
+    my $pid = POSIX::fork();
+    if ($pid == 0) {
+
+	my $spec = Amanda::Cmdline::dumpspec_t->new($params{'host'}, $params{'disk'}, $params{'timestamp'}, $params{'level'}, $params{'write_timestamp'});
+	my @dumpspecs;
+	push @dumpspecs, $spec;
+	my $fetchfeedback = Amanda::Rest::Runs::FetchFeedback->new($message_fh);
+	my $finished_cb = sub { $exit_status = shift;
+				$fetchfeedback->user_message(
+				    Amanda::FetchDump::Message->new(
+					source_filename	=> __FILE__,
+					source_line	=> __LINE__,
+					code		=> 3300060,
+					severity	=> $Amanda::Message::INFO,
+					exit_status	=> $exit_status));
+				Amanda::MainLoop::quit(); };
+	Amanda::MainLoop::call_later(sub { $fetchdump->restore(
+                'application_property'  => $params{'application_property'},
+#                'assume'                => $opt_assume,
+#                'chdir'                 => $opt_chdir,
+#                'client-decompress'     => $opt_client_decompress,
+#                'client-decrypt'        => $opt_client_decrypt,
+#                'compress'              => $opt_compress,
+#                'compress-best'         => $opt_compress_best,
+#                'data-path'             => $opt_data_path,
+                'decompress'            => 1,
+                'decrypt'               => 1,
+                'device'                => $params{'device'},
+                'directory'             => $params{'directory'},
+                'dumpspecs'             => \@dumpspecs,
+                'exact-match'           => 1,
+                'extract'               => 1,
+#                'header'                => $opt_header,
+#                'header-fd'             => $opt_header_fd,
+#                'header-file'           => $opt_header_file,
+#                'init'                  => $opt_init,
+#                'leave'                 => $opt_leave,
+#                'no-reassembly'         => $opt_no_reassembly,
+#                'pipe-fd'               => $opt_pipe ? 1 : undef,
+                'restore'               => 1,
+#                'server-decompress'     => 1,
+#                'server-decrypt'        => 1,
+                'finished_cb'           => $finished_cb,
+#                'interactivity'         => $interactivity,
+                'feedback'              => $fetchfeedback) });
+	Amanda::MainLoop::run();
+	$fetchfeedback->close();
+	$message_fh->close();
+	exit;
+    } elsif ($pid > 0) {
+	push @result_messages, Amanda::FetchDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 3300057,
+		severity         => $Amanda::Message::INFO);
+	push @result_messages, Amanda::FetchDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 3300059,
+		message_filename => $message_filename,
+		severity         => $Amanda::Message::INFO);
+    } else {
+	push @result_messages, Amanda::FetchDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 3300058,
 		severity         => $Amanda::Message::ERROR);
     }
     Dancer::status(202);

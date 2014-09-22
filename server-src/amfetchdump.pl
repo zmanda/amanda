@@ -43,6 +43,7 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::Extract;
+use Amanda::FetchDump;
 
 # Interactivity package
 package Amanda::Interactivity::amfetchdump;
@@ -116,6 +117,46 @@ sub user_request {
     $self->{'input_src'}->set_callback($data_in);
     return;
 };
+
+package amfetchdump;
+
+use base 'Amanda::Recovery::Clerk::Feedback';
+
+sub set_feedback {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'chg'} = $params{'chg'} if exists $params{'chg'};
+    $self->{'dev_name'} = $params{'dev_name'} if exists $params{'dev_name'};
+
+    return $self;
+}
+
+sub clerk_notif_part {
+    my $self = shift;
+    my ($label, $filenum, $header) = @_;
+
+    $self->user_message(Amanda::FetchDump::Message->new(
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 3300003,
+		label		=> $label,
+		filenum		=> $filenum,
+		header_summary	=> $header->summary()));
+}
+
+sub clerk_notif_holding {
+    my $self = shift;
+    my ($filename, $header) = @_;
+
+    # this used to give the fd from which the holding file was being read.. why??
+    $self->user_message(Amanda::FetchDump::Message->new(
+		source_filename	=> __FILE__,
+		source_line	=> __LINE__,
+		code		=> 3300004,
+		holding_file	=> $filename,
+		header_summary	=> $header->summary()));
+}
 
 package main;
 
@@ -304,22 +345,22 @@ if (defined($opt_compress_best) and
     usage();
 }
 
-$decompress = $ALWAYS;
-$decrypt = $ALWAYS;
-$decrypt = $NEVER  if defined $opt_leave;
-$decrypt = $NEVER  if defined $opt_decrypt and !$opt_decrypt;
-$decrypt = $ALWAYS if defined $opt_decrypt and $opt_decrypt;
-$decrypt = $ONLY_SERVER if defined $opt_server_decrypt;
-$decrypt = $ONLY_CLIENT if defined $opt_client_decrypt;
-
-$opt_compress = 1 if $opt_compress_best;
-
-$decompress = $NEVER  if defined $opt_compress;
-$decompress = $NEVER  if defined $opt_leave;
-$decompress = $NEVER  if defined $opt_decompress and !$opt_decompress;
-$decompress = $ALWAYS if defined $opt_decompress and $opt_decompress;
-$decompress = $ONLY_SERVER if defined $opt_server_decompress;
-$decompress = $ONLY_CLIENT if defined $opt_client_decompress;
+#$decompress = $ALWAYS;
+#$decrypt = $ALWAYS;
+#$decrypt = $NEVER  if defined $opt_leave;
+#$decrypt = $NEVER  if defined $opt_decrypt and !$opt_decrypt;
+#$decrypt = $ALWAYS if defined $opt_decrypt and $opt_decrypt;
+#$decrypt = $ONLY_SERVER if defined $opt_server_decrypt;
+#$decrypt = $ONLY_CLIENT if defined $opt_client_decrypt;
+#
+#$opt_compress = 1 if $opt_compress_best;
+#
+#$decompress = $NEVER  if defined $opt_compress;
+#$decompress = $NEVER  if defined $opt_leave;
+#$decompress = $NEVER  if defined $opt_decompress and !$opt_decompress;
+#$decompress = $ALWAYS if defined $opt_decompress and $opt_decompress;
+#$decompress = $ONLY_SERVER if defined $opt_server_decompress;
+#$decompress = $ONLY_CLIENT if defined $opt_client_decompress;
 
 usage("must specify at least a hostname") unless @ARGV;
 my $cmd_flags = $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP |
@@ -339,954 +380,101 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-my $exit_status = 0;
-use Data::Dumper;
-sub failure {
-    my ($msg, $finished_cb) = @_;
-    print STDERR "ERROR: $msg\n";
-    debug("FAILURE: $msg");
-    $exit_status = 1;
-    $finished_cb->();
-}
-
-package main::Feedback;
-
-use base 'Amanda::Recovery::Clerk::Feedback';
-use Amanda::MainLoop;
+package amfetchdump;
 
 sub new {
     my $class = shift;
-    my ($chg, $dev_name, $is_tty) = @_;
 
-    return bless {
-	chg => $chg,
-	dev_name => $dev_name,
-	is_tty => $is_tty,
+    my $self = bless {
+	is_tty => -t STDERR
     }, $class;
+
+    return $self;
 }
 
-sub clerk_notif_part {
+sub user_message {
     my $self = shift;
-    my ($label, $filenum, $header) = @_;
+    my $message = shift;
 
-    print STDERR "\n" if $self->{'is_tty'};
-    print STDERR "amfetchdump: $filenum: restoring ", $header->summary(), "\n";
+    if ($message->{'code'} == 3300000) { #SIZE
+	if ($self->{'is_tty'}) {
+	    #print STDERR "\n" if !$self->{'last_is_size'};
+	    print STDERR "\r$message    ";
+	    $self->{'last_is_size'} = 1;
+	} else {
+	    print STDERR "READ SIZE: $message\n";
+	}
+    } elsif ($message->{'code'} == 3300012) { #READ SIZE
+	#if ($self->{'is_tty'}) {
+	#    print STDERR "A\n" if !$self->{'last_is_size'};
+	#}
+	print STDERR "\r$message\n";
+    } else {
+	if ($message->{'code'} == 3300003 || $message->{'code'} == 3300004) {
+	    print "\n";
+	}
+	print STDERR "\n" if $self->{'is_tty'} and $self->{'last_is_size'};
+	print STDERR "$message\n";
+	$self->{'last_is_size'} = 0;
+
+	if ($message->{'code'} == 3300002 and !$opt_assume) {
+	    print STDERR "Press enter when ready\n";
+	    my $resp = <STDIN>;
+	}
+    }
 }
 
-sub clerk_notif_holding {
-    my $self = shift;
-    my ($filename, $header) = @_;
+package amfetchdump;
 
-    # this used to give the fd from which the holding file was being read.. why??
-    print STDERR "\n" if $self->{'is_tty'};
-    print STDERR "Reading '$filename'\n", $header->summary(), "\n";
+use Amanda::MainLoop qw( :GIOCondition );
+sub main {
+    my $self = shift;
+    my ($finished_cb) = @_;
+
+    my $interactivity = Amanda::Interactivity::amfetchdump->new();
+    my ($fetchdump, $result_message) = Amanda::FetchDump->new();
+
+    $fetchdump->restore(
+		'application_property'	=> \%application_property,
+		'assume'		=> $opt_assume,
+		'chdir'			=> $opt_chdir,
+		'client-decompress'	=> $opt_client_decompress,
+		'client-decrypt'	=> $opt_client_decrypt,
+		'compress'		=> $opt_compress,
+		'compress-best'		=> $opt_compress_best,
+		'data-path'		=> $opt_data_path,
+		'decompress'		=> $opt_decompress,
+		'decrypt'		=> $opt_decrypt,
+		'device'		=> $opt_device,
+		'directory'		=> $opt_directory,
+		'dumpspecs'		=> \@opt_dumpspecs,
+		'exact-match'		=> $opt_exact_match,
+		'extract'		=> $opt_extract,
+		'header'		=> $opt_header,
+		'header-fd'		=> $opt_header_fd,
+		'header-file'		=> $opt_header_file,
+		'init'			=> $opt_init,
+		'leave'			=> $opt_leave,
+		'no-reassembly'		=> $opt_no_reassembly,
+		'pipe-fd'		=> $opt_pipe ? 1 : undef,
+		'restore'		=> $opt_restore,
+		'server-decompress'	=> $opt_server_decompress,
+		'server-decrypt'	=> $opt_server_decrypt,
+		'finished_cb'		=> $finished_cb,
+		'interactivity'		=> $interactivity,
+		'feedback'		=> $self);
 }
 
 package main;
 
-use Amanda::MainLoop qw( :GIOCondition );
-sub main {
-    my ($finished_cb) = @_;
-    my $current_dump;
-    my $plan;
-    my @xfer_errs;
-    my %all_filter;
-    my $recovery_done;
-    my %recovery_params;
-    my $timer;
-    my $is_tty;
-    my $last_is_size;
-    my $delay;
-    my $directtcp = 0;
-    my @directtcp_command;
-    my @init_needed_labels;
-    my $init_label;
-    my %scan;
-    my $clerk;
-    my %clerk;
-    my %storage;
-    my $interactivity;
-    my $hdr;
-    my $source_crc;
-    my $dest_crc;
-    my $xfer_src;
-    my $xfer_dest;
-    my $client_filter;
-    my $native_filter;
-    my $restore_native_crc;
-    my $restore_client_crc;
-    my $dest_is_server;
-    my $dest_is_client;
-    my $dest_is_native;
-    my $xfer_app;
-    my $app_success;
-    my $app_error;
-    my $check_crc;
-    my $tl;
-
-    my $steps = define_steps
-	cb_ref => \$finished_cb,
-	finalize => sub { foreach my $name (keys %storage) {
-			    $storage{$name}->quit();
-			  }
-			};
-
-    step start => sub {
-	my $chg;
-
-	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
-	($tl, my $message) = Amanda::Tapelist->new($tlf);
-	if (defined $message) {
-	    die "Could not read the tapelist: $message";
-	}
-
-	# first, go to opt_directory or the original working directory we
-	# were started in
-	my $destdir = $opt_chdir || Amanda::Util::get_original_cwd();
-	if (!chdir($destdir)) {
-	    return failure("Cannot chdir to $destdir: $!", $steps->{'quit2'});
-	}
-
-	$is_tty = -t STDERR;
-	if($is_tty) {
-	    $delay = 1000; # 1 second
-	} else {
-	    $delay = 5000; # 5 seconds
-	}
-
-	$interactivity = Amanda::Interactivity::amfetchdump->new();
-	my $storage;
-	# if we have an explicit device, then the clerk doesn't get a changer --
-	# we operate the changer via Amanda::Recovery::Scan
-	if (defined $opt_device) {
-	    my $storage = Amanda::Storage->new(changer_name => $opt_device,
-					       tapelist => $tl);
-	    return failure($storage, $steps->{'quit2'}) if $storage->isa("Amanda::Changer::Error");
-	    $storage{$storage->{"storage_name"}} = $storage;
-	    my $chg = $storage->{'chg'};
-	    return failure($chg, $steps->{'quit2'}) if $chg->isa("Amanda::Changer::Error");
-	    my $scan = Amanda::Recovery::Scan->new(
-				storage => $storage,
-				chg => $chg,
-				interactivity => $interactivity);
-	    return failure($scan, $steps->{'quit2'}) if $scan->isa("Amanda::Changer::Error");
-	    $scan{$storage->{"storage_name"}} = $scan;
-	    my $clerk = Amanda::Recovery::Clerk->new(
-		feedback => main::Feedback->new($chg, $opt_device, $is_tty),
-		scan     => $scan);
-	    $clerk{$storage->{"storage_name"}} = $clerk;
-	} else {
-	    my $storage = Amanda::Storage->new(tapelist => $tl);
-	    return failure($storage, $steps->{'quit2'}) if $storage->isa("Amanda::Changer::Error");
-	    $storage{$storage->{"storage_name"}} = $storage;
-	    my $chg = $storage->{'chg'};
-	    return failure($chg, $steps->{'quit2'}) if $chg->isa("Amanda::Changer::Error");
-
-	    my $scan = Amanda::Recovery::Scan->new(
-				storage       => $storage,
-				chg           => $chg,
-				interactivity => $interactivity);
-	    return failure($scan, $steps->{'quit2'}) if $scan->isa("Amanda::Changer::Error");
-	    $scan{$storage->{"storage_name"}} = $scan;
-
-	    my $clerk = Amanda::Recovery::Clerk->new(
-		changer => $chg,
-		feedback => main::Feedback->new($chg, undef, $is_tty),
-		scan     => $scan);
-	    $clerk{$storage->{"storage_name"}} = $clerk;
-	}
-
-	# planner gets to plan against the same changer the user specified
-	my $storage_list = getconf($CNF_STORAGE);
-	my $only_in_storage = 0;
-	if (getconf_linenum($CNF_STORAGE) == -2) {
-	    $only_in_storage = 1;
-	}
-	Amanda::Recovery::Planner::make_plan(
-	    dumpspecs => [ @opt_dumpspecs ],
-	    labelstr => $storage->{'labelstr'},
-	    storage_list => $storage_list,
-	    only_in_storage => $only_in_storage,
-	    changer => $chg,
-	    plan_cb => $steps->{'plan_cb'},
-	    $opt_no_reassembly? (one_dump_per_part => 1) : ());
-    };
-
-    step plan_cb => sub {
-	(my $err, $plan) = @_;
-	return failure($err, $steps->{'quit2'}) if $err;
-
-	if (!@{$plan->{'dumps'}}) {
-	    return failure("No matching dumps found", $steps->{'quit2'});
-	}
-
-	# if we are doing a -p operation, only keep the first dump
-	if ($opt_pipe) {
-	    print STDERR "WARNING: Fetch first dump only because of -p argument\n" if @{$plan->{'dumps'}} > 1;
-	    @{$plan->{'dumps'}} = ($plan->{'dumps'}[0]);
-	}
-	if ($opt_init) {
-	    return $steps->{'init_seek_file'}->();
-	}
-	$steps->{'list_volume'}->();
-    };
-
-    step init_seek_file => sub {
-
-	@init_needed_labels = $plan->get_volume_list();
-	$steps->{'loop_init_seek_file'}->();
-    };
-
-    step loop_init_seek_file => sub {
-	my $Xinit_label = shift @init_needed_labels;
-	return $steps->{'end_init_seek_file'}->() if !$Xinit_label;
-	#return $steps->{'end_init_seek_file'}->() if !$Xinit_label->{'available'};
-	$init_label = $Xinit_label->{'label'};
-	return $steps->{'end_init_seek_file'}->() if !$init_label;
-
-	#find the storage
-	my $storage_name=$Xinit_label->{'storage'};
-	if (!$storage{$storage_name}) {
-	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
-						 tapelist => $tl);
-	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
-	    $storage{$storage_name} = $storage;
-	};
-
-	my $chg = $storage{$storage_name}->{'chg'};
-	if (!$scan{$storage_name}) {
-	    my $scan = Amanda::Recovery::Scan->new(chg => $chg,
-						   interactivity => $interactivity);
-	    #return $steps->{'quit'}->($scan)
-	    #    if $scan{$storage->{"storage_name"}}->isa("Amanda::Changer::Error");
-	    $scan{$storage_name} = $scan;
-	};
-
-	$scan{$storage_name}->find_volume(label  => $init_label,
-					  res_cb => $steps->{'init_seek_file_done_load'},
-					  set_current => 0);
-    };
-
-    step init_seek_file_done_load => sub {
-	my ($err, $res) = @_;
-        return failure($err, $steps->{'quit2'}) if ($err);
-
-	my $dev = $res->{'device'};
-	if (!$dev->start($Amanda::Device::ACCESS_READ, undef, undef)) {
-	    $err = $dev->error_or_status();
-	}
-	for my $dump (@{$plan->{'dumps'}}) {
-	    for my $part (@{$dump->{'parts'}}) {
-		next unless defined $part; # skip parts[0]
-		next unless defined $part->{'label'}; # skip holding parts
-		next if $part->{'label'} ne $init_label;
-		$dev->init_seek_file($part->{'filenum'});
-	    }
-	}
-	$res->release(finished_cb => $steps->{'loop_init_seek_file'});
-    };
-
-    step end_init_seek_file => sub {
-	if (defined $opt_restore && $opt_restore == 0) {
-	    return $steps->{'finished'}->();
-	}
-	$steps->{'list_volume'}->();
-    };
-
-    step list_volume => sub {
-	my @needed_labels = $plan->get_volume_list();
-	my @needed_holding = $plan->get_holding_file_list();
-	if (@needed_labels) {
-	    print STDERR (scalar @needed_labels), " volume(s) needed for restoration\n";
-	    print STDERR "The following volumes are needed: ",
-		join(" ", map { $_->{'label'} } @needed_labels ), "\n";
-	}
-	if (@needed_holding) {
-	    print STDERR (scalar @needed_holding), " holding file(s) needed for restoration\n";
-	    for my $hf (@needed_holding) {
-		print "  $hf\n";
-	    }
-	}
-
-	unless ($opt_assume) {
-	    print STDERR "Press enter when ready\n";
-	    my $resp = <STDIN>;
-	}
-
-	$steps->{'start_dump'}->();
-    };
-
-    step start_dump => sub {
-	$current_dump = shift @{$plan->{'dumps'}};
-
-	if (!$current_dump) {
-	    return $steps->{'finished'}->();
-	}
-
-	$recovery_done = 0;
-	%recovery_params = ();
-	$app_success = 0;
-	$app_error = 0;
-	$check_crc = !$opt_no_reassembly;
-	$xfer_app = undef;
-
-	my $storage_name = $current_dump->{'storage'};
-	if (!$storage{$storage_name}) {
-	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
-						 tapelist => $tl);
-	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
-	    $storage{$storage_name} = $storage;
-	};
-
-	my $chg = $storage{$storage_name}->{'chg'};
-	if (!$scan{$storage_name}) {
-	    my $scan = Amanda::Recovery::Scan->new(chg => $chg,
-						   interactivity => $interactivity);
-	    #return $steps->{'quit'}->($scan)
-	    #    if $scan{$storage->{"storage_name"}}->isa("Amanda::Changer::Error");
-	    $scan{$storage_name} = $scan;
-	};
-
-	if (!$clerk{$storage_name}) {
-	    my $clerk = Amanda::Recovery::Clerk->new(feedback => main::Feedback->new($chg),
-						     scan     => $scan{$storage_name});
-	    $clerk{$storage_name} = $clerk;
-	};
-	$clerk = $clerk{$storage_name};
-
-	$clerk->get_xfer_src(
-	    dump => $current_dump,
-	    xfer_src_cb => $steps->{'xfer_src_cb'});
-    };
-
-    step xfer_src_cb => sub {
-	(my $errs, $hdr, $xfer_src, my $directtcp_supported) = @_;
-	return failure(join("; ", @$errs), $steps->{'quit2'}) if $errs;
-
-	my $dle_str = $hdr->{'dle_str'};
-	my $p1 = XML::Simple->new();
-	my $dle;
-	if (defined $dle_str) {
-	    eval { $dle = $p1->XMLin($dle_str); };
-	    if ($@) {
-		print "ERROR: XML error\n";
-		debug("XML Error: $@\n$dle_str");
-	    }
-	}
-
-	# and set up the destination..
-	my $dest_fh;
-	my @filters;
-
-	# Take the CRC from the log if they are not in the header
-	if (!defined $hdr->{'native_crc'} ||
-            $hdr->{'native_crc'} =~ /^00000000:/) {
-            $hdr->{'native_crc'} = $current_dump->{'native_crc'};
-	}
-	if (!defined $hdr->{'client_crc'} ||
-            $hdr->{'client_crc'} =~ /^00000000:/) {
-            $hdr->{'client_crc'} = $current_dump->{'client_crc'};
-	}
-	if (!defined $hdr->{'server_crc'} ||
-            $hdr->{'server_crc'} =~ /^00000000:/) {
-            $hdr->{'server_crc'} = $current_dump->{'server_crc'};
-	}
-
-	if (defined $opt_data_path and $opt_data_path eq 'directtcp' and !$directtcp_supported) {
-	    return failure("The device can't do directtcp", $steps->{'quit2'});
-	}
-	$directtcp_supported = 0 if defined $opt_data_path and $opt_data_path eq 'amanda';
-	if ($opt_extract) {
-	    my $program = uc(basename($hdr->{program}));
-	    my @argv;
-	    if ($program ne "APPLICATION") {
-		$directtcp_supported = 0;
-		my %validation_programs = (
-			"STAR" => [ $Amanda::Constants::STAR, qw(-x -f -) ],
-			"DUMP" => [ $Amanda::Constants::RESTORE, qw(xbf 2 -) ],
-			"VDUMP" => [ $Amanda::Constants::VRESTORE, qw(xf -) ],
-			"VXDUMP" => [ $Amanda::Constants::VXRESTORE, qw(xbf 2 -) ],
-			"XFSDUMP" => [ $Amanda::Constants::XFSRESTORE, qw(-v silent) ],
-			"TAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
-			"GTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
-			"GNUTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
-			"SMBCLIENT" => [ $Amanda::Constants::GNUTAR, qw(-xf -) ],
-			"PKZIP" => undef,
-		);
-		if (!exists $validation_programs{$program}) {
-		    return failure("Unknown program '$program' in header; no validation to perform",
-				   $steps->{'quit2'});
-		}
-		@argv = @{$validation_programs{$program}};
-	    } else {
-		if (!defined $hdr->{application}) {
-		    return failure("Application not set", $steps->{'quit2'});
-		}
-		my $program_path = $Amanda::Paths::APPLICATION_DIR . "/" .
-				   $hdr->{application};
-		if (!-x $program_path) {
-		    return failure("Application '" . $hdr->{application} .
-				   "($program_path)' not available on the server",
-				   $steps->{'quit2'});
-		}
-		my %bsu_argv;
-		$bsu_argv{'application'} = $hdr->{application};
-		$bsu_argv{'config'} = $opt_config;
-		$bsu_argv{'host'} = $hdr->{'name'};
-		$bsu_argv{'disk'} = $hdr->{'disk'};
-		$bsu_argv{'device'} = $dle->{'diskdevice'} if defined $dle->{'diskdevice'};
-		my ($bsu, $err) = Amanda::Extract::BSU(%bsu_argv);
-		if (defined $opt_data_path and $opt_data_path eq 'directtcp' and
-		    !$bsu->{'data-path-directtcp'}) {
-		    return failure("The application can't do directtcp", $steps->{'quit2'});
-		}
-		if ($directtcp_supported and !$bsu->{'data-path-directtcp'}) {
-		    # application do not support directtcp
-		    $directtcp_supported = 0;
-		}
-
-		push @argv, $program_path, "restore";
-		push @argv, "--config", $opt_config;
-		push @argv, "--host", $hdr->{'name'};
-		push @argv, "--disk", $hdr->{'disk'};
-		push @argv, "--device", $dle->{'diskdevice'} if defined ($dle->{'diskdevice'});
-		push @argv, "--level", $hdr->{'dumplevel'};
-		push @argv, "--directory", $opt_directory;
-
-		if ($bsu->{'recover-dump-state-file'}) {
-		    my $host = sanitise_filename("".$hdr->{'name'});
-		    my $disk = sanitise_filename("".$hdr->{'disk'});
-		    my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
-				 '/' . $disk . '/' . $hdr->{'datestamp'} . '_' .
-				 $hdr->{'dumplevel'} . '.state';
-
-		    if (-e $state_filename) {
-			push @argv, "--recover-dump-state-file",
-				    $state_filename;
-		    }
-		}
-
-		# add application_property
-		while (my($name, $values) = each(%application_property)) {
-		    foreach my $value (@{$values}) {
-			push @argv, "--".$name, $value if defined $value;
-		    }
-		}
-
-		#merge property from header;
-		if (exists $dle->{'backup-program'}->{'property'}->{'name'} and
-		    !UNIVERSAL::isa($dle->{'backup-program'}->{'property'}->{'name'}, "HASH")) {
-		    # header have one property
-		    my $name = $dle->{'backup-program'}->{'property'}->{'name'};
-		    if (!exists $application_property{$name}) {
-			my $values = $dle->{'backup-program'}->{'property'}->{'value'};
-			if (UNIVERSAL::isa( $values, "ARRAY" )) {
-			    # multiple values
-			    foreach my $value (@{$values}) {
-				push @argv, "--".$name, $value if defined $value;
-			    }
-			} else {
-			    # one value
-			    push @argv, "--".$name, $values;
-			}
-		    }
-		} elsif (exists $dle->{'backup-program'}->{'property'}) {
-		    # header have multiple properties
-		    while (my($name, $values) =
-			 each (%{$dle->{'backup-program'}->{'property'}})) {
-			if (!exists $application_property{$name}) {
-			    if (UNIVERSAL::isa( $values->{'value'}, "ARRAY" )) {
-				# multiple values
-				foreach my $value (@{$values->{'value'}}) {
-				    push @argv, "--".$name, $value if defined $value;
-				}
-			    } else {
-				# one value
-				push @argv, "--".$name, $values->{'value'};
-			    }
-			}
-		    }
-		}
-	    }
-	    $directtcp = $directtcp_supported;
-	    if ($directtcp_supported) {
-		$xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();
-		@directtcp_command = @argv;
-	    } else {
-		# set up the extraction command as a filter element, since
-		# we need its stderr.
-		debug("Running: ". join(' ',@argv));
-		$xfer_app = Amanda::Xfer::Filter::Process->new(\@argv, 0, 0, 1, 1);
-
-		#$dest_fh = \*STDOUT;
-		$xfer_dest = Amanda::Xfer::Dest::Buffer->new(1048576);
-	    }
-	} elsif ($opt_pipe) {
-	    $dest_fh = \*STDOUT;
-	    $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
-	} else {
-	    my $filename = sprintf("%s.%s.%s.%d",
-		    $hdr->{'name'},
-		    Amanda::Util::sanitise_filename("".$hdr->{'disk'}), # workaround SWIG bug
-		    $hdr->{'datestamp'},
-		    $hdr->{'dumplevel'});
-	    if ($opt_no_reassembly) {
-		$filename .= sprintf(".%07d", $hdr->{'partnum'});
-	    }
-
-	    # add an appropriate suffix
-	    if ($opt_compress) {
-		$filename .= ($hdr->{'compressed'} && $hdr->{'comp_suffix'})?
-		    $hdr->{'comp_suffix'} : $Amanda::Constants::COMPRESS_SUFFIX;
-	    }
-
-	    if (!open($dest_fh, ">", $filename)) {
-		return failure("Could not open '$filename' for writing: $!", $steps->{'quit2'});
-	    }
-	    $xfer_dest = Amanda::Xfer::Dest::Fd->new($dest_fh);
-	}
-
-	$timer = Amanda::MainLoop::timeout_source($delay);
-	$timer->set_callback(sub {
-	    my $size = $xfer_src->get_bytes_read();
-	    if ($is_tty) {
-		if (!$last_is_size) {
-		    print STDERR "\n";
-		    $last_is_size = 1;
-		}
-		print STDERR "\r" . int($size/1024) . " kb ";
-	    } else {
-		print STDERR "READ SIZE: " . int($size/1024) . " kb\n";
-	    }
-	});
-
-	$dest_is_server = 1;
-	$dest_is_client = 0;
-	$dest_is_native = 0;
-	# set up any filters that need to be applied; decryption first
-	if ($hdr->{'encrypted'} and
-	    (($hdr->{'srv_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_SERVER)) ||
-	     ($hdr->{'clnt_encrypt'} and ($decrypt == $ALWAYS || $decrypt == $ONLY_CLIENT)))) {
-	    if ($hdr->{'srv_encrypt'}) {
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srv_encrypt'}, $hdr->{'srv_decrypt_opt'} ], 0, 0, 0, 1);
-	    } elsif ($hdr->{'clnt_encrypt'}) {
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clnt_encrypt'}, $hdr->{'clnt_decrypt_opt'} ], 0, 0, 0, 1);
-	    } else {
-		return failure("could not decrypt encrypted dump: no program specified",
-			    $steps->{'quit2'});
-	    }
-
-	    $hdr->{'encrypted'} = 0;
-	    $hdr->{'srv_encrypt'} = '';
-	    $hdr->{'srv_decrypt_opt'} = '';
-	    $hdr->{'clnt_encrypt'} = '';
-	    $hdr->{'clnt_decrypt_opt'} = '';
-	    $hdr->{'encrypt_suffix'} = 'N';
-
-	    if (!$hdr->{'compressed'}) {
-		$native_filter = Amanda::Xfer::Filter::Crc->new();
-		push @filters, $native_filter;
-		$dest_is_native = 1;
-	    } elsif ($hdr->{'srv_encrypt'} and
-	        (!$hdr->{'srvcompprog'} and
-		 $dle->{'compress'} eq "SERVER-FAST" and
-		 $dle->{'compress'} eq "SERVER-BEST")) {
-		$client_filter = Amanda::Xfer::Filter::Crc->new();
-		push @filters, $client_filter;
-		$dest_is_client = 1;
-	    }
-	    $dest_is_server = 0;
-	}
-
-	if ($hdr->{'compressed'} and not $opt_compress and
-	    (($hdr->{'srvcompprog'} and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
-	     ($hdr->{'clntcompprog'} and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
-	     ($dle->{'compress'} and $dle->{'compress'} eq "SERVER-FAST" and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
-	     ($dle->{'compress'} and $dle->{'compress'} eq "SERVER-BEST" and ($decompress == $ALWAYS || $decompress == $ONLY_SERVER)) ||
-	     ($dle->{'compress'} and $dle->{'compress'} eq "FAST" and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)) ||
-	     ($dle->{'compress'} and $dle->{'compress'} eq "BEST" and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)))) {
-	    # need to uncompress this file
-	    if ($hdr->{'encrypted'}) {
-		print "Not decompressing because the backup image is not decrypted\n";
-	    } elsif ($hdr->{'srvcompprog'}) {
-		# TODO: this assumes that srvcompprog takes "-d" to decompress
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0, 0, 1);
-	    } elsif ($hdr->{'clntcompprog'}) {
-		# TODO: this assumes that clntcompprog takes "-d" to decompress
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0, 0, 1);
-	    } else {
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 1);
-	    }
-
-	    # adjust the header
-	    $hdr->{'compressed'} = 0;
-	    $hdr->{'uncompress_cmd'} = '';
-
-	    $native_filter = Amanda::Xfer::Filter::Crc->new();
-	    push @filters, $native_filter;
-	    $dest_is_native = 1;
-	    $dest_is_client = 0;
-	    $dest_is_server = 0;
-	} elsif (!$hdr->{'compressed'} and $opt_compress and not $opt_leave) {
-	    # need to compress this file
-
-	    my $compress_opt = $opt_compress_best?
-		$Amanda::Constants::COMPRESS_BEST_OPT :
-		$Amanda::Constants::COMPRESS_FAST_OPT;
-	    push @filters,
-		Amanda::Xfer::Filter::Process->new(
-		    [ $Amanda::Constants::COMPRESS_PATH,
-		      $compress_opt ], 0, 0, 0, 1);
-
-	    # adjust the header
-	    $hdr->{'compressed'} = 1;
-	    $hdr->{'uncompress_cmd'} = " $Amanda::Constants::UNCOMPRESS_PATH " .
-		"$Amanda::Constants::UNCOMPRESS_OPT |";
-	    $hdr->{'comp_suffix'} = $Amanda::Constants::COMPRESS_SUFFIX;
-	    $dest_is_server = 0;
-	}
-
-	if ($xfer_app) {
-	    push @filters, $xfer_app;
-	}
-
-	# write the header to the destination if requested
-	$hdr->{'blocksize'} = Amanda::Holding::DISK_BLOCK_BYTES;
-	if (defined $opt_header or defined $opt_header_file or defined $opt_header_fd) {
-	    my $hdr_fh = $dest_fh;
-	    if (defined $opt_header_file) {
-		open($hdr_fh, ">", $opt_header_file)
-		    or return failure("could not open '$opt_header_file': $!", $steps->{'quit2'});
-	    } elsif (defined $opt_header_fd) {
-		open($hdr_fh, "<&".($opt_header_fd+0))
-		    or return failure("could not open fd $opt_header_fd: $!", $steps->{'quit2'});
-	    }
-	    syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
-	}
-
-	# start reading all filter stderr
-	foreach my $filter (@filters) {
-	    next if !$filter->can('get_stderr_fd');
-	    my $fd = $filter->get_stderr_fd();
-	    $fd.="";
-	    $fd = int($fd);
-	    my $src = Amanda::MainLoop::fd_source($fd,
-						 $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-	    my $buffer = "";
-	    $all_filter{$src} = 1;
-	    $src->set_callback( sub {
-		my $b;
-		my $n_read = POSIX::read($fd, $b, 1);
-		if (!defined $n_read) {
-		    return;
-		} elsif ($n_read == 0) {
-		    delete $all_filter{$src};
-		    $src->remove();
-		    POSIX::close($fd);
-		    if (!%all_filter and $recovery_done) {
-			$steps->{'filter_done'}->();
-		    }
-		} else {
-		    $buffer .= $b;
-		    if ($b eq "\n") {
-			my $line = $buffer;
-			chomp $line;
-			if (length($line) > 1) {
-			    if (!$app_success || $app_error) {
-				if ($is_tty) {
-				    if ($last_is_size) {
-					print STDERR "\n";
-					$last_is_size = 0;
-				    }
-				}
-				print STDERR "filter stderr: $line\n";
-			    }
-			    debug("filter stderr: $line");
-			}
-			$buffer = "";
-		    }
-		}
-	    });
-	}
-
-	my $xfer;
-	if (@filters) {
-	    $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
-	} else {
-	    $xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dest ]);
-	}
-	$xfer->start($steps->{'handle_xmsg'}, 0, $current_dump->{'bytes'});
-	$clerk->start_recovery(
-	    xfer => $xfer,
-	    recovery_cb => $steps->{'recovery_cb'});
-	if ($directtcp) {
-	    my $addr = $xfer_dest->get_addrs();
-	    push @directtcp_command, "--data-path", "DIRECTTCP";
-	    push @directtcp_command, "--direct-tcp", "$addr->[0]->[0]:$addr->[0]->[1]";
-	    debug("Running: ". join(' ', @directtcp_command));
-
-	    my ($wtr, $rdr);
-	    my $err = Symbol::gensym;
-	    my $amndmp_pid = open3($wtr, $rdr, $err, @directtcp_command);
-	    $amndmp_pid = $amndmp_pid;
-	    my $file_to_close = 2;
-	    my $amndmp_stdout_src = Amanda::MainLoop::fd_source($rdr,
-						$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-	    my $amndmp_stderr_src = Amanda::MainLoop::fd_source($err,
-						$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-
-	    $amndmp_stdout_src->set_callback( sub {
-		my $line = <$rdr>;
-		if (!defined $line) {
-		    $file_to_close--;
-		    $amndmp_stdout_src->remove();
-		    if ($file_to_close == 0) {
-			#abort the xfer
-			$xfer->cancel() if $xfer->get_status != $XFER_DONE;
-		    }
-		    return;
-		}
-		chomp $line;
-		debug("amndmp stdout: $line");
-		print "$line\n";
-	    });
-	    $amndmp_stderr_src->set_callback( sub {
-		my $line = <$err>;
-		if (!defined $line) {
-                    $file_to_close--;
-                    $amndmp_stderr_src->remove();
-                    if ($file_to_close == 0) {
-			#abort the xfer
-			$xfer->cancel() if $xfer->get_status != $XFER_DONE;
-                    }
-                    return;
-		}
-		chomp $line;
-		debug("amndmp stderr: $line");
-		print STDERR "$line\n";
-	    });
-	}
-    };
-
-    step handle_xmsg => sub {
-	my ($src, $msg, $xfer) = @_;
-
-	if ($msg->{'type'} == $XMSG_CRC) {
-	    if ($msg->{'elt'} == $xfer_src) {
-		$source_crc = $msg->{'crc'}.":".$msg->{'size'};
-		debug("source_crc: $source_crc");
-	    } elsif ($msg->{'elt'} == $xfer_dest) {
-		$dest_crc = $msg->{'crc'}.":".$msg->{'size'};
-		debug("dest_crc: $dest_crc");
-	    } elsif (defined $native_filter and $msg->{'elt'} == $native_filter) {
-		$restore_native_crc =  $msg->{'crc'}.":".$msg->{'size'};
-		debug("restore_native_crc: $restore_native_crc");
-	    } elsif (defined $client_filter and $msg->{'elt'} == $client_filter) {
-		$restore_client_crc =  $msg->{'crc'}.":".$msg->{'size'};
-		debug("restore_client_crc: $restore_client_crc");
-	    } else {
-		debug("unhandled XMSG_CRC $msg->{'elt'}");
-	    }
-	} else {
-	    if ($msg->{'elt'} == $xfer_app) {
-		if ($msg->{'type'} == $XMSG_DONE) {
-		    $app_success = 1;
-		} elsif ($msg->{'type'} == $XMSG_ERROR) {
-		} elsif ($msg->{'type'} == $XMSG_INFO and
-			 $msg->{'message'} eq "SUCCESS") {
-		    $app_success = 1;
-		} elsif ($msg->{'type'} == $XMSG_INFO and
-			 $msg->{'message'} eq "ERROR") {
-		    $app_error = 1;
-		}
-	    }
-
-	    $clerk->handle_xmsg($src, $msg, $xfer);
-
-	    if ($msg->{'type'} == $XMSG_INFO) {
-		Amanda::Debug::info($msg->{'message'});
-	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
-		$check_crc = 0;
-	    } elsif ($msg->{'type'} == $XMSG_ERROR) {
-		push @xfer_errs, $msg->{'message'};
-		$check_crc = 0;
-	    }
-	}
-    };
-
-    step recovery_cb => sub {
-	%recovery_params = @_;
-	$recovery_done = 1;
-
-	$steps->{'filter_done'}->() if !%all_filter;
-    };
-
-    step filter_done => sub {
-	if ($is_tty) {
-	    if (!$last_is_size) {
-		print STDERR "\n";
-	    }
-	    $last_is_size = 0;
-	    print STDERR "\r" . int($recovery_params{'bytes_read'}/1024) . " kb \n";
-	} else {
-	    print STDERR "READ SIZE: " . int($recovery_params{'bytes_read'}/1024) . " kb\n";
-	}
-	if ($xfer_dest && $xfer_dest->isa("Amanda::Xfer::Dest::Buffer")) {
-	    my $buf = $xfer_dest->get();
-	    my @lines = split "\n", $buf;
-	    foreach (@lines) {
-		next if $_ =~ /^$/;
-		print STDERR "Application stdout: $_\n";
-		debug("Application stdout: $_");
-	    }
-	}
-	@xfer_errs = (@xfer_errs, @{$recovery_params{'errors'}})
-	    if $recovery_params{'errors'};
-
-	return failure(join("; ", @xfer_errs), $steps->{'quit2'})
-	    if @xfer_errs;
-	return failure("recovery failed", $steps->{'quit2'})
-	    if $recovery_params{'result'} ne 'DONE';
-
-	if ($check_crc) {
-	    my $msg;
-	    if (defined $hdr->{'native_crc'} and $hdr->{'native_crc'} !~ /^00000000:/ and
-		defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
-		$hdr->{'native_crc'} ne $current_dump->{'native_crc'}) {
-		$msg = "recovery failed: native-crc in header ($hdr->{'native_crc'}) and native-crc in log ($current_dump->{'native_crc'}) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-	    if (defined $hdr->{'client_crc'} and $hdr->{'client_crc'} !~ /^00000000:/ and
-		defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
-		$hdr->{'client_crc'} ne $current_dump->{'client_crc'}) {
-		$msg = "recovery failed: client-crc in header ($hdr->{'client_crc'}) and client-crc in log ($current_dump->{'client_crc'}) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-
-	    my $hdr_server_crc_size;
-	    my $current_dump_server_crc_size;
-	    my $source_crc_size;
-
-	    if (defined $hdr->{'server_crc'}) {
-		$hdr->{'server_crc'} =~ /[^:]*:(.*)/;
-		$hdr_server_crc_size = $1;
-	    }
-	    if (defined $current_dump->{'server_crc'}) {
-		$current_dump->{'server_crc'} =~ /[^:]*:(.*)/;
-		$current_dump_server_crc_size = $1;
-	    }
-	    if (defined $source_crc) {
-		$source_crc =~ /[^:]*:(.*)/;
-		$source_crc_size = $1;
-	    }
-
-	    if (defined $hdr->{'server_crc'} and $hdr->{'server_crc'} !~ /^00000000:/ and
-		defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
-		$hdr_server_crc_size == $current_dump_server_crc_size and
-		$hdr->{'server_crc'} ne $current_dump->{'server_crc'}) {
-		$msg = "recovery failed: server-crc in header ($hdr->{'server_crc'}) and server-crc in log ($current_dump->{'server_crc'}) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-
-	    if (defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
-		$current_dump_server_crc_size == $source_crc_size and
-		$current_dump->{'server_crc'} ne $source_crc) {
-		$msg = "recovery failed: server-crc ($current_dump->{'server_crc'}) and source_crc ($source_crc) differ",
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-
-	    if (defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
-		defined $restore_native_crc and $current_dump->{'native_crc'} ne $restore_native_crc) {
-		$msg = "recovery failed: native-crc ($current_dump->{'native_crc'}) and restore-native-crc ($restore_native_crc) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-	    if (defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
-		defined $restore_client_crc and $current_dump->{'client_crc'} ne $restore_client_crc) {
-		$msg = "recovery failed: client-crc ($current_dump->{'client_crc'}) and restore-client-crc ($restore_client_crc) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-
-	    debug("dest_is_native $dest_crc $restore_native_crc") if $dest_is_native;
-	    debug("dest_is_client $dest_crc $restore_client_crc") if $dest_is_client;
-	    debug("dest_is_server $dest_crc $source_crc") if $dest_is_server;
-	    if ($dest_is_native and $restore_native_crc ne $dest_crc) {
-		$msg = "recovery failed: dest-crc ($dest_crc) and restore-native-crc ($restore_native_crc) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-	    if ($dest_is_client and $restore_client_crc ne $dest_crc) {
-		$msg = "recovery failed: dest-crc ($dest_crc) and restore-client-crc ($restore_client_crc) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-	    if ($dest_is_server and $source_crc ne $dest_crc) {
-		$msg = "recovery failed: dest-crc ($dest_crc) and source-crc ($source_crc) differ";
-		print STDERR "$msg\n";
-		debug($msg);
-	    }
-	}
-	$hdr = undef;
-	$xfer_src = undef;
-	$xfer_dest = undef;
-	$native_filter = undef;
-	$client_filter = undef;
-	$source_crc = undef;
-	$dest_crc = undef;
-	$restore_native_crc = undef;
-	$restore_client_crc = undef;
-
-	$steps->{'start_dump'}->();
-    };
-
-    step finished => sub {
-	if ($clerk) {
-	    $clerk->quit(finished_cb => $steps->{'quit'});
-	} else {
-	    $steps->{'quit'}->();
-	}
-    };
-
-    step quit => sub {
-	my ($err) = @_;
-
-	if (defined $timer) {
-	    $timer->remove();
-	    $timer = undef;
-	}
-	$steps->{'quit2'}->();
-    };
-
-    step quit2 => sub {
-	my ($storage_name) = keys %clerk;
-	if ($storage_name) {
-	    my $clerk = $clerk{$storage_name};
-	    delete $clerk{$storage_name};
-	    return $clerk->quit(finished_cb => $steps->{'quit2'});
-	}
-
-	print STDERR "\n" if $is_tty and $last_is_size;
-	return $finished_cb->();
-    };
+my $exit_status;
+sub fetchdump_done {
+    $exit_status = shift;
+    Amanda::MainLoop::quit();
 }
 
-main(\&Amanda::MainLoop::quit);
+my $amfetchdump = amfetchdump->new();
+$amfetchdump->main(\&fetchdump_done);
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();
 exit $exit_status;

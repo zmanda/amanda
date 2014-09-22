@@ -25,7 +25,7 @@ use warnings;
 ##
 # Interactivity class
 
-package main::Interactivity;
+package Amanda::Interactivity::amidxtaped;
 use base 'Amanda::Interactivity';
 use Amanda::Util qw( weaken_ref );
 use Amanda::MainLoop;
@@ -112,8 +112,11 @@ sub user_request {
 ##
 # ClientService class
 
-package main::ClientService;
-use base 'Amanda::ClientService';
+package amidxtaped;
+use vars qw( @ISA );
+use Amanda::ClientService;
+use Amanda::Recovery::Clerk;
+@ISA = qw( Amanda::ClientService Amanda::Recovery::Clerk::Feedback);
 
 use Sys::Hostname;
 
@@ -132,6 +135,7 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Scan;
 use Amanda::DB::Catalog;
 use Amanda::Disklist;
+use Amanda::FetchDump;
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
@@ -145,6 +149,16 @@ sub run {
     $self->{'all_filter'} = {};
 
     $self->setup_streams();
+}
+
+sub set_feedback {
+}
+
+sub user_message {
+    my $self = shift;
+    my $message = shift;
+
+    debug("$message");
 }
 
 sub setup_streams {
@@ -397,11 +411,12 @@ sub make_plan {
     }
     $self->{'chg'} = $chg;
 
-    my $interactivity = main::Interactivity->new(clientservice => $self);
+    my $interactivity = Amanda::Interactivity::amidxtaped->new(clientservice => $self);
+    $self->{'interactivity'} = $interactivity;
 
     my $scan = Amanda::Recovery::Scan->new(
 			chg => $chg,
-			interactivity => $interactivity);
+			interactivity => $self->{'interactivity'});
     $self->{'scan'} = $scan;
 
     # XXX temporary
@@ -532,222 +547,41 @@ sub plan_cb {
 		"interaction is necessary");
     }
 
-    # now set up the transfer
-    $self->{'dump'} = $plan->{'dumps'}[0];
-    $self->{'clerk'}->get_xfer_src(
-	dump => $self->{'dump'},
-	xfer_src_cb => sub { $self->xfer_src_cb(@_); });
+    ($self->{'fetchdump'}, my $result_message) = Amanda::FetchDump->new();
+    $self->{'fetchdump'}->restore(
+		'plan'		=> $plan,
+		#'pipe'		=> 1,
+		'pipe-fd'	=> $self->wfd($self->{'data_stream'}),
+		'header'	=> $self->{'command'}{'HEADER'} ? 1 : undef,
+		'interactivity'	=> $self->{'interactivity'},
+		'scan'		=> $self->{'scan'},
+		'clerk'		=> $self->{'clerk'},
+		'feedback'	=> $self,
+		'their_features' => $self->{'their_features'},
+		'finished_cb'	=> sub {
+					$main::exit_status = shift;
+					Amanda::MainLoop::quit();
+				       });
+
+    return;
 }
 
-sub xfer_src_cb {
-    my $self = shift;
-    my ($errors, $header, $xfer_src, $directtcp_supported) = @_;
-
-    if ($errors) {
-	for (@$errors) {
-	    $self->sendmessage("$_");
-	}
-	return $self->quit();
-    }
-
-    $self->{'xfer_src'} = $xfer_src;
-    $self->{'xfer_src_supports_directtcp'} = $directtcp_supported;
-    $self->{'header'} = $header;
-    $self->{'dest_is_native'} = 0;
-    $self->{'dest_is_client'} = 0;
-    $self->{'dest_is_server'} = 1;
-    debug("recovering from " . $header->summary());
-    my $dle = $header->get_dle();
-
-    # Take the CRC from the log if they are not in the header
-    if (!defined $header->{'native_crc'} ||
-	$header->{'native_crc'} =~ /^00000000:/) {
-	$header->{'native_crc'} = $self->{'dump'}->{'native_crc'};
-    }
-    if (!defined $header->{'client_crc'} ||
-	$header->{'client_crc'} =~ /^00000000:/) {
-	$header->{'client_crc'} = $self->{'dump'}->{'client_crc'};
-    }
-    if (!defined $header->{'server_crc'} ||
-	$header->{'server_crc'} =~ /^00000000:/) {
-	$header->{'server_crc'} = $self->{'dump'}->{'server_crc'};
-    }
-
-    my $server_encrypted = 0;
-    # set up any filters that need to be applied, decryption first
-    my @filters;
-    if ($header->{'encrypted'}) {
-	if ($header->{'srv_encrypt'}) {
-	    push @filters,
-		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srv_encrypt'}, $header->{'srv_decrypt_opt'} ], 0, 0, 0, 1);
-	    $header->{'encrypted'} = 0;
-	    $header->{'srv_encrypt'} = '';
-	    $header->{'srv_decrypt_opt'} = '';
-	    $header->{'clnt_encrypt'} = '';
-	    $header->{'clnt_decrypt_opt'} = '';
-	    $header->{'encrypt_suffix'} = 'N';
-	    $server_encrypted = 1;
-	    if (!$header->{'compressed'}) {
-		$self->{'dest_is_client'} = 1;
-	    } elsif ($header->{'srvcompprog'}) {
-	    } elsif ($header->{'clntcompprog'}) {
-		$self->{'dest_is_client'} = 1;
-	    } elsif ($dle and
-		     ($dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
-		      $dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST)) {
-	    } elsif ($dle and
-		     ($dle->{'compress'} == $Amanda::Config::COMP_FAST ||
-		      $dle->{'compress'} == $Amanda::Config::COMP_BEST)) {
-		$self->{'dest_is_client'} = 1;
-	    } else {
-		$self->{'dest_is_native'} = 1;
-	    }
-	    $self->{'dest_is_server'} = 0;
-	} elsif ($header->{'clnt_encrypt'}) {
-	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered)) {
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-		        [ $header->{'clnt_encrypt'},
-			  $header->{'clnt_decrypt_opt'} ], 0, 0, 0, 1);
-		$header->{'encrypted'} = 0;
-		$header->{'srv_encrypt'} = '';
-		$header->{'srv_decrypt_opt'} = '';
-		$header->{'clnt_encrypt'} = '';
-		$header->{'clnt_decrypt_opt'} = '';
-		$header->{'encrypt_suffix'} = 'N';
-		if (!$header->{'compressed'}) {
-		    $self->{'dest_is_native'} = 1;
-		}
-		$self->{'dest_is_client'} = 0;
-	    } else {
-		debug("Not decrypting client encrypted stream");
-		$self->{'dest_is_client'} = 1;
-	    }
-	    $self->{'dest_is_server'} = 0;
-	} else {
-	    $self->sendmessage("could not decrypt encrypted dump: no program specified");
-	    return $self->quit();
-	}
-
-    }
-
-    if ($header->{'compressed'}) {
-	# need to uncompress this file
-	debug("..with decompression applied");
-
-	if ($header->{'srvcompprog'}) {
-	    # TODO: this assumes that srvcompprog takes "-d" to decrypt
-	    push @filters,
-		Amanda::Xfer::Filter::Process->new(
-		    [ $header->{'srvcompprog'}, "-d" ], 0, 0, 0, 1);
-	    # adjust the header
-	    $header->{'compressed'} = 0;
-	    $header->{'uncompress_cmd'} = '';
-	    $header->{'srvcompprog'} = '';
-	    $self->{'dest_is_server'} = 0;
-	    $self->{'dest_is_client'} = 0;
-	    $self->{'dest_is_native'} = 1;
-	} elsif ($header->{'clntcompprog'}) {
-	    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered)) {
-		if ($server_encrypted) {
-		    $self->{'client_filter'} = Amanda::Xfer::Filter::Crc->new();
-		    push @filters, $self->{'client_filter'};
-		}
-		# TODO: this assumes that clntcompprog takes "-d" to decrypt
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $header->{'clntcompprog'}, "-d" ], 0, 0, 0, 1);
-		# adjust the header
-		$header->{'compressed'} = 0;
-		$header->{'uncompress_cmd'} = '';
-		$header->{'clntcompprog'} = '';
-		$self->{'dest_is_server'} = 0;
-		$self->{'dest_is_client'} = 0;
-		$self->{'dest_is_native'} = 1;
-	    }
-	} else {
-	    if ($dle &&
-		(!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_receive_unfiltered) ||
-		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_FAST ||
-		 $dle->{'compress'} == $Amanda::Config::COMP_SERVER_BEST)) {
-		if ($server_encrypted &&
-		    $dle->{'compress'} != $Amanda::Config::COMP_SERVER_FAST &&
-		    $dle->{'compress'} != $Amanda::Config::COMP_SERVER_BEST) {
-		    $self->{'client_filter'} = Amanda::Xfer::Filter::Crc->new();
-		    push @filters, $self->{'client_filter'};
-		}
-		push @filters,
-		    Amanda::Xfer::Filter::Process->new(
-			[ $Amanda::Constants::UNCOMPRESS_PATH,
-			  $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 1);
-		# adjust the header
-		$header->{'compressed'} = 0;
-		$header->{'uncompress_cmd'} = '';
-		$self->{'dest_is_server'} = 0;
-		$self->{'dest_is_client'} = 0;
-		$self->{'dest_is_native'} = 1;
-	    }
-	}
-    }
-    $self->{'xfer_filters'} = [ @filters ];
-
-    # only send the header if requested
-    if ($self->{'command'}{'HEADER'}) {
-	$self->send_header();
-    } else {
-	$self->expect_datapath();
-    }
-}
-
-sub send_header {
-    my $self = shift;
-
-    my $header = $self->{'header'};
-
-    # filter out some things the remote might not be able to process
-    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_dle_in_header)) {
-	$header->{'dle_str'} = undef;
-    } else {
-	$header->{'dle_str'} =
-	    Amanda::Disklist::clean_dle_str_for_client($header->{'dle_str'},
-		   Amanda::Feature::am_features($self->{'their_features'}));
-    }
-    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_origsize_in_header)) {
-	$header->{'orig_size'} = 0;
-    }
-    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_crc_in_header)) {
-	$header->{'native_crc'} = undef;
-	$header->{'client_crc'} = undef;
-	$header->{'server_crc'} = undef;
-    }
-
-    # even with fe_amrecover_splits, amrecover doesn't like F_SPLIT_DUMPFILE.
-    $header->{'type'} = $Amanda::Header::F_DUMPFILE;
-
-    my $hdr_str = $header->to_string(32768, 32768);
-    Amanda::Util::full_write($self->wfd($self->{'data_stream'}), $hdr_str, length($hdr_str))
-	or die "writing to $self->{data_stream}: $!";
-
-    $self->expect_datapath();
-}
-
-sub expect_datapath {
+sub check_datapath {
     my $self = shift;
 
     $self->{'datapath'} = 'none';
 
     # short-circuit this if amrecover doesn't support datapaths
     if (!$self->{'their_features'}->has($Amanda::Feature::fe_amidxtaped_datapath)) {
-	return $self->start_xfer();
+	return undef;
     }
 
     my $line = $self->getline($self->{'ctl_stream'});
     if ($line eq "ABORT\r\n") {
-	return Amanda::MainLoop::quit();
+	return "ABORT";
     }
     my ($dpspec) = ($line =~ /^AVAIL-DATAPATH (.*)\r\n$/);
-    die "bad AVAIL-DATAPATH line" unless $dpspec;
+    return "bad AVAIL-DATAPATH line" unless $dpspec;
     my @avail_dps = split / /, $dpspec;
 
     if (grep /^DIRECT-TCP$/, @avail_dps) {
@@ -759,277 +593,37 @@ sub expect_datapath {
 	}
     } else {
 	# remote can at least handle AMANDA
-	die "remote cannot handle AMANDA datapath??"
+	return "remote cannot handle AMANDA datapath??"
 	    unless grep /^AMANDA$/, @avail_dps;
 	$self->{'datapath'} = 'amanda';
     }
-
-    $self->start_xfer();
-}
-
-sub start_xfer {
-    my $self = shift;
-
-    # create the appropriate destination based on our datapath
-    my $xfer_dest;
-    if ($self->{'datapath'} eq 'directtcp') {
-	$xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();
-    } else {
-	$xfer_dest = Amanda::Xfer::Dest::Fd->new(
-		$self->wfd($self->{'data_stream'})),
-    }
-    $self->{'xfer_dest'} = $xfer_dest;
 
     if ($self->{'datapath'} eq 'amanda') {
 	$self->sendctlline("USE-DATAPATH AMANDA\r\n");
 	my $dpline = $self->getline($self->{'ctl_stream'});
 	if ($dpline ne "DATAPATH-OK\r\n") {
-	    die "expected DATAPATH-OK";
+	    return "expected DATAPATH-OK";
 	}
     }
+    return;
+}
 
-    # start reading all filters stderr
-    foreach my $filter (@{$self->{'xfer_filters'}}) {
-	if ($filter->can("get_stderr_fd")) {
-	    my $fd = $filter->get_stderr_fd();
-	    $fd.="";
-	    $fd = int($fd);
-	    my $src = Amanda::MainLoop::fd_source($fd,
-						  $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-	    my $buffer = "";
-	    $self->{'all_filter'}{$src} = 1;
-	    $src->set_callback( sub {
-		my $b;
-		my $n_read = POSIX::read($fd, $b, 1);
-		if (!defined $n_read) {
-		    return;
-		} elsif ($n_read == 0) {
-		    delete $self->{'all_filter'}->{$src};
-		    $src->remove();
-		    POSIX::close($fd);
-		    if (!%{$self->{'all_filter'}} and $self->{'fetch_done'}) {
-			Amanda::MainLoop::quit();
-		    }
-		} else {
-		    $buffer .= $b;
-		    if ($b eq "\n") {
-			my $line = $buffer;
-			#print STDERR "filter stderr: $line";
-			chomp $line;
-			$self->sendmessage("filter stderr: $line");
-			debug("filter stderr: $line");
-			$buffer = "";
-		    }
-		}
-	    });
-	}
-    }
-
-    # create and start the transfer
-    $self->{'xfer'} = Amanda::Xfer->new([
-	$self->{'xfer_src'},
-	@{$self->{'xfer_filters'}},
-	$xfer_dest,
-    ]);
-    my $size = 0;
-    $size = $self->{'dump'}->{'bytes'} if exists $self->{'dump'}->{'bytes'};
-    $self->{'xfer'}->start(sub { $self->handle_xmsg(@_); }, 0, $size);
-    debug("started xfer; datapath=$self->{datapath}");
+sub send_directtcp_datapath {
+    my $self = shift;
 
     # send the data-path response, if we have a datapath
     if ($self->{'datapath'} eq 'directtcp') {
-	my $addrs = $xfer_dest->get_addrs();
+	my $addrs = $self->{'fetchdump'}->{'xfer_dest'}->get_addrs();
 	$addrs = [ map { $_->[0] . ":" . $_->[1] } @$addrs ];
 	$addrs = join(" ", @$addrs);
 	$self->sendctlline("USE-DATAPATH DIRECT-TCP $addrs\r\n");
 	my $dpline = $self->getline($self->{'ctl_stream'});
 	if ($dpline ne "DATAPATH-OK\r\n") {
-	    die "expected DATAPATH-OK";
-	}
-    }
-
-    # and let the clerk know
-    $self->{'clerk'}->start_recovery(
-	xfer => $self->{'xfer'},
-	recovery_cb => sub { $self->recovery_cb(@_); });
-}
-
-sub handle_xmsg {
-    my $self = shift;
-    my ($src, $msg, $xfer) = @_;
-
-    if ($msg->{'type'} == $XMSG_CRC) {
-	if ($msg->{'elt'} == $self->{'xfer_src'}) {
-	    $self->{'source_crc'} = $msg->{'crc'}.":".$msg->{'size'};
-	    debug("source_crc: $self->{'source_crc'}");
-	} elsif ($msg->{'elt'} == $self->{'xfer_dest'}) {
-	    $self->{'dest_crc'} = $msg->{'crc'}.":".$msg->{'size'};
-	    debug("dest_crc: $self->{'dest_crc'}");
-	} elsif (defined $self->{'client_filter'} and $msg->{'elt'} == $self->{'client_filter'}) {
-	    $self->{'client_crc'} = $msg->{'crc'}.":".$msg->{'size'};
-	    debug("client_crc: $self->{'client_crc'}");
-	} else {
-	    debug("unhandled crc from $msg->{'elt'}");
-	}
-    } else {
-	$self->{'clerk'}->handle_xmsg($src, $msg, $xfer);
-	if ($msg->{'elt'} != $self->{'xfer_src'}) {
-	    if ($msg->{'type'} == $XMSG_ERROR) {
-		$self->sendmessage("$msg->{message}");
-	    }
+	    return "expected DATAPATH-OK";
 	}
     }
 }
 
-sub recovery_cb {
-    my $self = shift;
-    my %params = @_;
-    my $msg;
-
-    debug("recovery complete");
-
-    if (@{$params{'errors'}}) {
-	for (@{$params{'errors'}}) {
-	    $self->sendmessage("$_");
-	}
-	return $self->quit();
-    }
-
-    # note that the amidxtaped protocol has no way to indicate successful
-    # completion of a transfer
-    if ($params{'result'} ne 'DONE') {
-	warning("NOTE: transfer failed, but amrecover does not know that");
-    }
-    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_status)) {
-	$self->sendctlline("DATA-STATUS $params{'result'}\r\n");
-    }
-    if ($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_data_crc) and defined $self->{'dest_crc'}) {
-	$self->sendctlline("DATA-CRC $self->{'dest_crc'}\r\n");
-    }
-
-    debug("header server_crc: $self->{'header'}->{'server_crc'}");
-    debug("header client_crc: $self->{'header'}->{'client_crc'}");
-    debug("header native_crc: $self->{'header'}->{'native_crc'}");
-    debug("log server_crc: $self->{'dump'}->{'server_crc'}");
-    debug("log client_crc: $self->{'dump'}->{'client_crc'}");
-    debug("log native_crc: $self->{'dump'}->{'native_crc'}");
-
-    my $hdr_server_crc_size;
-    my $log_server_crc_size;
-    my $source_crc_size;
-    my $dest_crc_size;
-
-    if (defined $self->{'header'}->{'server_crc'}) {
-	$self->{'header'}->{'server_crc'} =~ /[^:]*:(.*)/;
-	$hdr_server_crc_size = $1;
-    }
-    if (defined $self->{'dump'}->{'server_crc'}) {
-	$self->{'dump'}->{'server_crc'} =~ /[^:]*:(.*)/;
-	$log_server_crc_size = $1;
-    }
-    if (defined $self->{'source_crc'}) {
-	$self->{'source_crc'} =~ /[^:]*:(.*)/;
-	$source_crc_size = $1;
-    }
-    if (defined $self->{'dest_crc'}) {
-	$self->{'dest_crc'} =~ /[^:]*:(.*)/;
-	$dest_crc_size = $1;
-    }
-
-    if ($self->{'header'}->{'server_crc'} and
-	$self->{'header'}->{'server_crc'} !~ /^00000000:/ and
-	$self->{'dump'}->{'server_crc'} and
-	$self->{'dump'}->{'server_crc'} !~ /^00000000:/ and
-	$hdr_server_crc_size == $log_server_crc_size and
-        $self->{'header'}->{'server_crc'} ne $self->{'dump'}->{'server_crc'}) {
-	$msg = "recovery failed: server-crc in header ($self->{'header'}->{'server_crc'}) and server-crc in log ($self->{'dump'}->{'server_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-    if ($self->{'header'}->{'client_crc'} and
-	$self->{'header'}->{'client_crc'} !~ /^00000000:/ and
-	$self->{'dump'}->{'client_crc'} and
-	$self->{'dump'}->{'client_crc'} !~ /^00000000:/ and
-        $self->{'header'}->{'client_crc'} ne $self->{'dump'}->{'client_crc'}) {
-	$msg = "recovery failed: client-crc in header ($self->{'header'}->{'client_crc'}) and client-crc in log ($self->{'dump'}->{'client_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-    if ($self->{'header'}->{'native_crc'} and
-	$self->{'header'}->{'native_crc'} !~ /^00000000:/ and
-	$self->{'dump'}->{'native_crc'} and
-	$self->{'dump'}->{'native_crc'} !~ /^00000000:/ and
-        $self->{'header'}->{'native_crc'} ne $self->{'dump'}->{'native_crc'}) {
-	$msg = "recovery failed: native-crc in header ($self->{'header'}->{'native_crc'}) and native-crc in log ($self->{'dump'}->{'native_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-
-    if ($self->{'dump'}->{'server_crc'} and
-	$self->{'dump'}->{'server_crc'} !~ /^00000000:/ and
-	$self->{'source_crc'} and
-	$log_server_crc_size == $source_crc_size and
-        $self->{'dump'}->{'server_crc'} ne $self->{'source_crc'}) {
-	$msg = "recovery failed: server-crc ($self->{'dump'}->{'server_crc'}) and source-crc ($self->{'source_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-    if ($self->{'dump'}->{'client_crc'} and
-	$self->{'dump'}->{'client_crc'} !~ /^00000000:/ and
-	$self->{'client_crc'} and
-        $self->{'dump'}->{'client_crc'} ne $self->{'client_crc'}) {
-	$msg = "recovery failed: client-crc ($self->{'dump'}->{'client_crc'}) and restore-client-crc ($self->{'client_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-
-    if ($self->{'dest_is_server'} and
-	$self->{'dump'}->{'server_crc'} and
-	$self->{'dump'}->{'server_crc'} !~ /^00000000:/ and
-	$self->{'dest_crc'} and
-	$log_server_crc_size == $dest_crc_size and
-        $self->{'dump'}->{'server_crc'} ne $self->{'dest_crc'}) {
-	$msg = "recovery failed: dest-crc ($self->{'dest_crc'}) and server-crc in log ($self->{'dump'}->{'server_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-    if ($self->{'dest_is_client'} and
-	$self->{'dump'}->{'client_crc'} and
-	$self->{'dump'}->{'client_crc'} !~ /^00000000:/ and
-	$self->{'dest_crc'} and
-        $self->{'dump'}->{'client_crc'} ne $self->{'dest_crc'}) {
-	$msg = "recovery failed: dest-crc ($self->{'dest_crc'}) and client-crc ($self->{'dump'}->{'client_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-    if ($self->{'dest_is_native'} and
-	$self->{'dump'}->{'native_crc'} and
-	$self->{'dump'}->{'native_crc'} !~ /^00000000:/ and
-	$self->{'dest_crc'} and
-        $self->{'dump'}->{'native_crc'} ne $self->{'dest_crc'}) {
-	$msg = "recovery failed: dest-crc ($self->{'dest_crc'}) and native-crc ($self->{'dump'}->{'native_crc'}) differ";
-	debug($msg);
-	$self->sendmessage($msg);
-	return $self->quit();
-    }
-    $self->finish();
-}
-
-sub finish {
-    my $self = shift;
-
-    # close the data fd for writing to signal EOF
-    $self->close($self->{'data_stream'}, 'w');
-
-    $self->quit();
-}
 
 sub quit {
     my $self = shift;
@@ -1289,24 +883,27 @@ sub try_to_find_dump {
 # main driver
 
 package main;
+
 use Amanda::Debug qw( debug );
 use Amanda::Util qw( :constants );
 use Amanda::Config qw( :init );
 
 our $exit_status = 0;
 
-sub main {
-    Amanda::Util::setup_application("amidxtaped", "server", $CONTEXT_DAEMON);
-    config_init($CONFIG_INIT_GLOBAL, undef);
-    Amanda::Debug::debug_dup_stderr_to_debug();
-
-    my $cs = main::ClientService->new();
-    Amanda::MainLoop::call_later(sub { $cs->run(); });
-    Amanda::MainLoop::run();
-
-    debug("exiting with $exit_status");
-    Amanda::Util::finish_application();
+sub fetchdump_done {
+    $exit_status = shift;
+    Amanda::MainLoop::quit();
 }
 
-main();
+Amanda::Util::setup_application("amidxtaped", "server", $CONTEXT_DAEMON);
+config_init($CONFIG_INIT_GLOBAL, undef);
+Amanda::Debug::debug_dup_stderr_to_debug();
+
+my $amidxtaped = amidxtaped->new();
+Amanda::MainLoop::call_later(sub { $amidxtaped->run(); });
+Amanda::MainLoop::run();
+
+debug("exiting with $exit_status");
+Amanda::Util::finish_application();
+
 exit($exit_status);

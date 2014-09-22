@@ -124,8 +124,11 @@ $exp->expect(60,
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
-    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-    sub {
+    [ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	push @results, "restoring";
 	exp_continue;
     } ],
@@ -138,9 +141,8 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	  "simple restore follows the correct steps");
-
 got_files(1, "..and restored file is present in testdir");
 
 ##
@@ -186,8 +188,11 @@ $exp->expect(60,
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
-    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-    sub {
+    [ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	push @results, "restoring";
 	exp_continue;
     } ],
@@ -200,7 +205,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	  "restore with -O follows the correct steps");
 
 chdir($testdir);
@@ -224,8 +229,11 @@ $exp->expect(60,
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
-    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-    sub {
+    [ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	push @results, "restoring";
 	exp_continue;
     } ],
@@ -238,7 +246,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	  "restore with -h follows the correct steps");
 
 $fok = got_files(1, "..and restored file is present in testdir");
@@ -275,8 +283,11 @@ $exp->expect(60,
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
-    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-    sub {
+    [ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	push @results, "restoring";
 	exp_continue;
     } ],
@@ -289,7 +300,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	  "restore with --header-file follows the correct steps");
 
 $fok = got_files(1, "..and restored file is present in testdir");
@@ -339,8 +350,11 @@ $exp->expect(60,
 	$exp->send("\n");
 	exp_continue;
     }, ],
-    [ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-    sub {
+    [ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	push @results, "restoring";
 	exp_continue;
     } ],
@@ -349,7 +363,7 @@ $exp->expect(60,
     }, ],
 );
 is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter",
-			  "insert-tape", "restoring", "eof" ],
+			  "insert-tape", "reading", "restoring", "eof" ],
 	  "restore with an explicit device follows the correct steps, prompting for each");
 got_files(1, "..and restored file is present in testdir");
 
@@ -372,8 +386,11 @@ $exp->expect(60,
 	push @results, "tapes-needed";
 	exp_continue;
     } ],
-    [ qr{amfetchdump: (\d+): restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-    sub {
+    [ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	push @results, "reading";
+	exp_continue;
+    } ],
+    [ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	push @results, "restoring";
 	exp_continue;
     } ],
@@ -386,7 +403,7 @@ $exp->expect(60,
 	push @results, "eof";
     }, ],
 );
-is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter",
+is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", 
 			  ("restoring",)x9, "eof" ],
 	  "restore with -n follows the correct steps");
 
@@ -491,8 +508,11 @@ SKIP: {
 	    push @results, "tapes-needed";
 	    exp_continue;
 	} ],
-	[ qr{amfetchdump: 1: restoring split dumpfile: date [[:digit:]]+ host localhost disk .*},
-	sub {
+	[ qr{Reading label 'TESTCONF01' filenum 1}, sub {
+	    push @results, "reading";
+	    exp_continue;
+	} ],
+	[ qr{split dumpfile: date [[:digit:]]+ host localhost disk .*}, sub {
 	    push @results, "restoring";
 	    exp_continue;
 	} ],
@@ -505,7 +525,7 @@ SKIP: {
 	    push @results, "eof";
 	}, ],
     );
-    is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "restoring", "eof" ],
+    is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	      "ndmp restore follows the correct steps");
 
     got_files(1, "..and restored file is present in testdir");

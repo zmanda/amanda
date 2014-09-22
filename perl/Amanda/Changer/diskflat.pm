@@ -776,7 +776,8 @@ sub _validate() {
 
     if ($self->{'num-slot'}) {
 	foreach my $tle (@{$self->{'tapelist'}->{'tles'}}) {
-	    next if $tle->{'storage'} ne $self->{'storage_name'};
+	    next if defined($tle->{'storage'}) and $tle->{'storage'} ne $self->{'storage_name'};
+	    next if !defined($tle->{'storage'}) and $self->{'storage_name'} ne Amanda::Config::get_config_name();
 	    my ($slot, $err) = $self->label_to_slot(label => $tle->{'label'},
                                                     meta => $tle->{'meta'});
 	    next if !defined $slot;

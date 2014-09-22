@@ -1,4 +1,17 @@
 2014-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c (amgtar_restore): Exit on error if tar fail.
+	* perl/Amanda/Changer/diskflat.pm: fix.
+	* perl/Amanda/FetchDump.pm: New perl module to fetch a dump.
+	* perl/Amanda/Message.pm (full_message): New function.
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add
+	  post /amanda/v1.0/configs/:CONF/runs/fetchdump
+	* perl/Amanda/Rest/Runs.pm (fetchdump): New function.
+	* perl/Makefile.am: Add Amanda/FetchDump.pm
+	* server-src/amfetchdump.pl: Use new perl Amanda::Fetchdump module.
+	* server-src/amidxtaped.pl: Use new perl Amanda::Fetchdump module.
+	* installcheck/amfetchdump.pl: Fix for module use.
+
+2014-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Storages_Labels.pl: Fix.
 
 2014-09-19  Jean-Louis Martineau <martineau@zmanda.com>
