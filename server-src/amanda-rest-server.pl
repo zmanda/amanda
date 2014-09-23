@@ -98,6 +98,7 @@ if ($command eq 'start') {
 		   '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl',
 		   '--listen', '127.0.0.1:' . $port,
 		   '--preload-app',
+		   '--max-requests', '1',
 		   '--daemonize',
 		   '--pid', $pid_file);
     debug("running: " . join(' ', @command));

@@ -1,3 +1,7 @@
+2014-09-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amanda-rest-server.pl: Add '--max-requests 1' to starman
+	  arguments.
+
 2014-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c (amgtar_restore): Exit on error if tar fail.
 	* perl/Amanda/Changer/diskflat.pm: fix.
