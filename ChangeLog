@@ -1,3 +1,8 @@
+2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Fix perl warning.
+	* perl/Amanda/Taper/Worker.pm (TAKE_SCRIBE_FROM): Set
+	  scribe1->{'cancelled'} to 0.
+
 2014-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Set slot in invalid error.
 	* perl/Amanda/Taper/Scan/traditional.pm: Continue on invalid.
