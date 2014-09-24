@@ -47,16 +47,10 @@ Amanda::Rest::Storages -- Rest interface to Amanda::Storage
 
 =item Get the list of defined storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/storages
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -72,24 +66,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get parameters values of a storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE?fields=runtapes,foo
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -116,24 +98,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Create a storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/create
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -146,24 +116,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get the inventory of a storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -196,25 +154,13 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Load a slot
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/load?slot=SLOT
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/load?label=LABEL
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -233,7 +179,7 @@ reply:
         "storage_name" : "my_vtapes"
      }
   ]
-or
+ or
   [
      {
         "chg_name" : "my_vtapes",
@@ -251,24 +197,12 @@ or
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Reset a storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/reset
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -282,24 +216,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Eject a volume from a drive in a storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/eject?drive=DRIVE
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -338,24 +260,12 @@ or
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Clean a drive from a storage
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/clean?drive=DRIVE
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -369,24 +279,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Verify a storage configuration
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/verify
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -445,25 +343,13 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Show what is in the storage (scan the storage)
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/show
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/show?slots=3..5
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -509,25 +395,13 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Update the storage (amtape update)
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/update
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/update?changed=CHANGED
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -549,12 +423,6 @@ reply:
         "storage_name" : "my_robot"
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

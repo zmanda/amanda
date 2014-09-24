@@ -39,16 +39,10 @@ Amanda::Rest::Changers -- Rest interface to Amanda::Changer
 
 =item Get the list of defined changer
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/changers/:CHANGER
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -64,24 +58,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get parameters values of a changer
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/changers/:CHANGER?fields=runtapes,foo
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -107,12 +89,6 @@ reply:
         "changer" : "my_vtapes"
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

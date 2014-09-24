@@ -38,13 +38,7 @@ Amanda::Rest::Dumps -- Rest interface to Amanda::DB::Catalog
 
 =item Get the list of restorable dumps
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/dumps
   GET /amanda/v1.0/configs/:CONF/dumps/hosts/:HOST
     query arguments:
@@ -57,7 +51,7 @@ request:
 	holding=0|1
 	label=LABEL
 
-reply:
+ reply:
   [
      {
         "code" : "2600000",
@@ -102,12 +96,6 @@ reply:
         "source_line" : "194"
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

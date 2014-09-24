@@ -42,13 +42,7 @@ Amanda::Rest::Amcheck -- Rest interface to Amanda::Amcheck
 
 =item Run amcheck
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/amcheck
     query arguments:
         host=HOST
@@ -59,7 +53,7 @@ request:
         local=0|1
         tape=0|1
 
-reply:
+ reply:
   HTTP status: 200 Ok
   [
    {
@@ -133,12 +127,6 @@ reply:
       "source_line" : "457"
    }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

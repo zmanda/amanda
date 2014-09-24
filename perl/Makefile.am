@@ -58,7 +58,7 @@ html: make_html amperl.css $(PM_FILES)
 	cp amperl.css html-tmp/
 	$(PERL) make_html --homeurl "$(POD_HOME_URL)" html-tmp/ $(PM_FILES)
 	cd html-tmp/ && tar -zcf $(abs_builddir)/html.tar.gz .
-	rm -rf html-tmp/
+#	rm -rf html-tmp/
 ##
 ## SWIG-generated packages
 ##

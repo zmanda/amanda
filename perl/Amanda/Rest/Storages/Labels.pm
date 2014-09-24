@@ -46,16 +46,10 @@ Amanda::Rest::Storages::Labels -- Rest interface to manage label
 
 You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the storage.
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -83,24 +77,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item List one label
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -127,21 +109,9 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Modify label setting
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
     query arguments:
         force=0|1
@@ -152,7 +122,7 @@ request:
         comment=COMMENT
         reuse=0|1
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -173,24 +143,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Label a volume
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -231,21 +189,9 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Remove a label
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
   DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
     query arguments:
@@ -257,7 +203,7 @@ request:
         external_copy
         keep_label
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
     {
@@ -270,12 +216,6 @@ reply:
         "tapelist_filename" : "/usr/amanda/test/tapelist"
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

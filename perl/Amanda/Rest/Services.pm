@@ -43,20 +43,14 @@ Amanda::Rest::Services -- Rest interface to amservice
 
 =item Run amservice
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET localhost:5000/amanda/v1.0/configs/:CONFIG/service/discover
     query arguments:
         host=HOST
         application=APPLICATION
         auth=AUTH
 
-reply:
+ reply:
   HTTP status: 200 Ok
   [
    {
@@ -68,12 +62,6 @@ reply:
       "source_line" : "270"
    }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

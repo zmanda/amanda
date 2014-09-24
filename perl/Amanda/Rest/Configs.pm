@@ -36,16 +36,10 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
 
 =item Get a list of config
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -60,7 +54,7 @@ reply:
      }
   ]
 
-reply:
+ reply:
   HTTP status: 404 Not found
   [
      {
@@ -72,7 +66,7 @@ reply:
      }
   ]
 
-reply:
+ reply:
   HTTP status: 404 Not found
   [
      {
@@ -86,24 +80,12 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get the value of global parameters
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF?fields=runtapes,foo,tapecycle,bar
 
-result:
+ result:
   [
      {
         "code" : "1500007",
@@ -129,10 +111,10 @@ result:
      }
   ]
 
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF
 
-result:
+ result:
   [
      {
         "code" : "1500009",
@@ -142,12 +124,6 @@ result:
         "source_line" : "194"
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

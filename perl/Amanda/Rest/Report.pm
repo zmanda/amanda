@@ -45,16 +45,10 @@ Amanda::Rest::Report -- Rest interface to Amanda::Report
 
 =item Get a report
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/report?logfile=/path/to/log/file
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -69,12 +63,6 @@ reply:
         },
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 See perldoc Amanda::Report::json for the report format.
 

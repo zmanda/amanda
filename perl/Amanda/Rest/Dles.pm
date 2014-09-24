@@ -47,13 +47,7 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 
 =item Changed setting on Dles
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST /amanda/v1.0/configs/:CONF/dles/hosts/:HOST
     query arguments:
         disk=DISK
@@ -62,7 +56,7 @@ request:
         force_bump=0|1
         force_no_bump=0|1
 
-reply:
+ reply:
   HTTP status: 200 OK
   [
      {
@@ -163,12 +157,6 @@ reply:
         "source_line" : "520"
      }
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

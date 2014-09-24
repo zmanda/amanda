@@ -1,4 +1,9 @@
 2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/*.pm, perl/Amanda/Rest/Storages/Labels.pm: Fix for
+	  html generated pages.
+	* perl/Makefile.am (html): Do not remove html-tmp.
+
+2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/diskflat-device.c: Error is DEVICE_STATUS_VOLUME_UNLABELED
 	  if the file do not exists.
 	* device-src/vfs-device.c (vfs_device_read_label): Do not reset an

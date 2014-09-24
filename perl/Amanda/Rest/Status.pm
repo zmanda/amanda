@@ -46,16 +46,10 @@ Amanda::Rest::Status -- Rest interface to Amanda::Status
 
 =item Get the status
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET /amanda/v1.0/configs/:CONF/status?amdump_log=/path/to/amdump_log_file
 
-reply:
+ reply:
   HTTP status 200 OK
     [
      {
@@ -69,12 +63,6 @@ reply:
         }
      }
     ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 

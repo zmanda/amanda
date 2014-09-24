@@ -44,13 +44,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
 
 =item Run amdump
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amdump
     query arguments:
         host=HOST
@@ -59,7 +53,7 @@ request:
         no_taper=0|1
         from_client=0|1
 
-reply:
+ reply:
   HTTP status: 202 Accepted
   [
      {
@@ -95,21 +89,9 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Run amflush
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amflush
     query arguments:
         host=HOST
@@ -117,7 +99,7 @@ request:
         hostdisk=HOST|DISK      #repeatable
 	datestamps=DATESTAMP    #repeatable
 
-reply:
+ reply:
   HTTP status: 202 Accepted
   [
      {
@@ -153,21 +135,9 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Run amvault
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/amvault
     query arguments:
         host=HOST
@@ -182,29 +152,17 @@ request:
         src_write_timestamp=TIMESTAMP
         dst_write_timestamp=TIMESTAMP
 
-reply:
+ reply:
   HTTP status: 202 Accepted
-
-=begin html
-
-</pre>
-
-=end html
 
 =item Run amcheckdump
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/checkdump
     query argument:
         timestamp=TIMESTAMP
 
-reply:
+ reply:
   HTTP status 202 Accepted
   [
      {
@@ -224,26 +182,14 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get messages for amcheckdump
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
     query argument:
         message_filename=MESAGE_FILENAME
 
-reply:
+ reply:
   HTTP status 200 Ok
   [
      {
@@ -290,21 +236,9 @@ reply:
      }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Run amfetchdump --extract
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/fetchdump
     query argument:
       host=HOST
@@ -318,12 +252,12 @@ request:
     of the POST request, the Content-Type header must be set to
     'application/json'.
 
-    POS header:
+    POST header:
 	Content-Type: application/json
     POST body (example):
       { "application_property":{ "esxpass":"/etc/amanda/esxpass"}}
 
-reply:
+ reply:
   HTTP status 202 Accepted
   [
    {
@@ -343,26 +277,14 @@ reply:
    }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get messages for amfetchdump
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
     query argument:
         message_filename=MESAGE_FILENAME
 
-reply:
+ reply:
   HTTP status 200 Ok
   [
    {
@@ -398,27 +320,15 @@ reply:
    }
   ]
 
-=begin html
-
-</pre>
-
-=end html
-
 =item Get a list of all operations
 
-=begin html
-
-<pre>
-
-=end html
-
-request:
+ request:
   GET localhost:5000/amanda/v1.0/configs/:CONFIG/runs
     optional query arguments:
 	status=STATUS
 	run_type=$RUN_TYPE
 
-reply:
+ reply:
   HTTP status 200 Ok
   [
    {
@@ -472,12 +382,6 @@ reply:
 
 
   ]
-
-=begin html
-
-</pre>
-
-=end html
 
 =back
 
