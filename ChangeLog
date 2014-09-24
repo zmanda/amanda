@@ -1,3 +1,8 @@
+2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Fix perl warning.
+	* perl/Amanda/Taper/Worker.pm (TAKE_SCRIBE_FROM): Set
+	  scribe1->{'cancelled'} to 0.
+
 2014-09-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amanda-rest-server.pl: Add '--max-requests 1' to starman
 	  arguments.

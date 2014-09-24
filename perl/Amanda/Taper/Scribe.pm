@@ -871,7 +871,7 @@ sub _start_part {
     # and start writing this part
     $self->{'started_writing'} = 1;
     $self->dbg("resuming transfer");
-    if ($self->{'nparts'} == 0) {
+    if (!defined ($self->{'nparts'}) or $self->{'nparts'} == 0) {
 	$self->{'feedback'}->scribe_ready();
     }
     $self->{'xdt'}->start_part(!$self->{'last_part_successful'},
@@ -1178,7 +1178,7 @@ sub _operation_failed {
     # tuck the message away as desired
     push @{$self->{'device_errors'}}, $params{'device_error'}
 	if defined $params{'device_error'};
-    $self->{'config_denial_message'} = $params{'config_denial_message'} 
+    $self->{'config_denial_message'} = $params{'config_denial_message'}
 	if $params{'config_denial_message'};
 
     # cancelling the xdt will eventually cause an XMSG_DONE, which will notice

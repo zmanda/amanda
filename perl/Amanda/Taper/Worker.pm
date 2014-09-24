@@ -208,13 +208,14 @@ sub TAKE_SCRIBE_FROM {
     delete $worker1->{'scribe'};
     $worker1->{'state'} = 'error';
     $scribe->quit(finished_cb => sub {});
+    $scribe1->{'cancelled'} = 0;
  }
 
 sub DONE {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    if ($params{'handle'} ne $self->{'handle'}) {
+    if (!defined($self->{'handle'}) or $params{'handle'} ne $self->{'handle'}) {
 	# ignore message for previous handle
 	return;
     }
@@ -237,7 +238,7 @@ sub FAILED {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    if ($params{'handle'} ne $self->{'handle'}) {
+    if (!defined($self->{'handle'}) or $params{'handle'} ne $self->{'handle'}) {
 	# ignore message for previous handle
 	return;
     }
