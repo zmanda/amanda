@@ -145,6 +145,7 @@ sub new {
 	src => undef,
 	dst => undef,
 	cleanup => {},
+	message_count => 0,
 
 	config_overrides_opts => $params{'config_overrides_opts'},
 
@@ -154,6 +155,30 @@ sub new {
     $self->{'exit_code'} = 0;
     $self->{'amlibexecdir'} = 0;
 
+    my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+    my @now = localtime;
+    my $run_timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'pid'} = $$;
+    $run_timestamp = Amanda::Logfile::make_logname("checkdump", $run_timestamp);
+    $self->{'run_timestamp'} = $run_timestamp;
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+    $self->{'checkdump_log_filename'} = "checkdump.$run_timestamp";
+    $self->{'checkdump_log_pathname'} = "$logdir/checkdump.$run_timestamp";
+
+    # Must be opened in append so that all subprocess can write to it.
+    if (open($self->{'message_file'}, ">>", $self->{'checkdump_log_pathname'}) == 0) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+                source_filename  => __FILE__,
+                source_line      => __LINE__,
+                code             => 2700021,
+                message_filename => $self->{'checkdump_log_pathname'},
+                errno            => $!,
+                severity         => $Amanda::Message::ERROR);
+    } else {
+	log_add($L_INFO, "message file $self->{'checkdump_log_filename'}");
+    }
+
     return $self, \@result_messages;
 }
 
@@ -161,6 +186,17 @@ sub user_msg {
     my $self = shift;
     my $msg = shift;
 
+    if (defined $self->{'message_file'}) {
+	my $d;
+	if (ref $msg eq "SCALAR") {
+	    $d = Data::Dumper->new([$msg], ["MESSAGES[$self->{'message_count'}]"]);
+	} else {
+	    my %msg_hash = %$msg;
+	    $d = Data::Dumper->new([\%msg_hash], ["MESSAGES[$self->{'message_count'}]"]);
+	}
+	print {$self->{'message_file'}} $d->Dump();
+	$self->{'message_count'}++;
+    }
     if (defined $self->{'user_msg'}) {
 	$self->{'user_msg'}->($msg);
     }
@@ -170,7 +206,7 @@ sub clerk_notif_part {
     my $self = shift;
     my ($label, $filenum, $header) = @_;
 
-    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700003,
@@ -182,7 +218,7 @@ sub clerk_notif_holding {
     my $self = shift;
     my ($filename, $header) = @_;
 
-    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700004,
@@ -354,7 +390,7 @@ sub run {
 	my @tapes = $plan->get_volume_list();
 	my @holding = $plan->get_holding_file_list();
 	if (!@tapes && !@holding) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700000));
@@ -362,14 +398,14 @@ sub run {
 	}
 
 	if (@tapes) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700001,
 				labels          => \@tapes));
 	}
 	if (@holding) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700002,
@@ -397,7 +433,7 @@ sub run {
 	$recovery_done = 0;
 	%recovery_params = ();
 
-	$self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	$self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700005,
@@ -538,7 +574,7 @@ sub run {
 		    if ($b eq "\n") {
 			my $line = $buffer;
 			chomp $line;
-			$self->{'user_msg'}(Amanda::CheckDump::Message->new(
+			$self->user_msg(Amanda::CheckDump::Message->new(
 					source_filename => __FILE__,
 					source_line     => __LINE__,
 					code            => 2700016,
@@ -592,7 +628,7 @@ sub run {
     step filter_done => sub {
 	# distinguish device errors from validation errors
 	if (@{$recovery_params{'errors'}}) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700008,
@@ -601,7 +637,7 @@ sub run {
 	}
 
 	if (@xfer_errs) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700009,
@@ -612,7 +648,7 @@ sub run {
         if (defined $hdr->{'native_crc'} and $hdr->{'native_crc'} !~ /^00000000:/ and
             defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
             $hdr->{'native_crc'} ne $current_dump->{'native_crc'}) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700010,
@@ -622,7 +658,7 @@ sub run {
         if (defined $hdr->{'client_crc'} and $hdr->{'client_crc'} !~ /^00000000:/ and
             defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
             $hdr->{'client_crc'} ne $current_dump->{'client_crc'}) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700011,
@@ -651,7 +687,7 @@ sub run {
             defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
             $hdr_server_crc_size == $current_dump_server_crc_size and
             $hdr->{'server_crc'} ne $current_dump->{'server_crc'}) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700012,
@@ -662,7 +698,7 @@ sub run {
         if (defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
             $current_dump_server_crc_size == $source_crc_size and
             $current_dump->{'server_crc'} ne $source_crc) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700013,
@@ -672,7 +708,7 @@ sub run {
 
         if (defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
             defined $dest_native_crc and $current_dump->{'native_crc'} ne $dest_native_crc) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700014,
@@ -693,14 +729,14 @@ sub run {
 
 	if ($msg) {
 	    $self->{'exit_code'} = 1;
-	    $self->{'user_msg'}($msg);
+	    $self->user_msg($msg);
 	} elsif ($all_success) {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700006));
 	} else {
-	    $self->{'user_msg'}(Amanda::CheckDump::Message->new(
+	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700007));
@@ -717,6 +753,7 @@ sub run {
 	    delete $clerk{$storage_name};
 	    return $clerk->quit(finished_cb => $steps->{'quit2'});
 	}
+	log_add($L_INFO, "pid-done $self->{'pid'}");
 	return $finished_cb->($self->{'exit_code'});
     };
 

@@ -283,9 +283,15 @@ diskflat_device_seek_file(
 	vself->open_file_fd = robust_open(self->filename,
                                           O_RDONLY, 0);
 	if (vself->open_file_fd < 0) {
-	    device_set_error(dself,
-		g_strdup_printf(_("Couldn't open file %s: %s"), self->filename, strerror(errno)),
+	    if (errno == ENOENT) {
+		device_set_error(dself,
+		    g_strdup_printf(_("Couldn't open file %s: %s (unlabeled)"), self->filename, strerror(errno)),
+			DEVICE_STATUS_VOLUME_UNLABELED);
+	    } else {
+		device_set_error(dself,
+		    g_strdup_printf(_("Couldn't open file %s: %s"), self->filename, strerror(errno)),
 			DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	    }
 	    return NULL;
 	}
     }
@@ -308,7 +314,12 @@ diskflat_device_seek_file(
 
     result = vfs_device_robust_read(vself, header_buffer,
                                     &header_buffer_size);
-    if (result != RESULT_SUCCESS) {
+    if (result == RESULT_NO_DATA) {
+        device_set_error(dself,
+            g_strdup_printf(_("Problem reading Amanda header: empty file")),
+            DEVICE_STATUS_VOLUME_UNLABELED);
+        return NULL;
+    } else if (result != RESULT_SUCCESS) {
         device_set_error(dself,
             g_strdup_printf(_("Problem reading Amanda header: %s"), device_error(dself)),
             DEVICE_STATUS_VOLUME_ERROR);

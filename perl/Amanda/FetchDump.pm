@@ -186,6 +186,7 @@ sub local_full_message {
 
 package Amanda::FetchDump;
 
+use POSIX qw(strftime);
 use File::Basename;
 use XML::Simple;
 use IPC::Open3;
@@ -208,6 +209,7 @@ use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::Extract;
 use Amanda::Feature;
+use Amanda::Logfile qw( :logtype_t log_add log_add_full );
 
 
 my $NEVER = 0;
@@ -225,6 +227,7 @@ sub new {
 	delay => $params{'delay'},
 	src => undef,
 	dst => undef,
+	message_count => 0,
 
     }, $class;
 
@@ -232,16 +235,61 @@ sub new {
     $self->{'exit_status'} = 0;
     $self->{'amlibexecdir'} = 0;
 
+    my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+    my @now = localtime;
+    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'pid'} = $$;
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("fetchdump", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+    $self->{'fetchdump_log_filename'} = "fetchdump.$timestamp";
+    $self->{'fetchdump_log_pathname'} = "$logdir/fetchdump.$timestamp";
+
+    # Must be opened in append so that all subprocess can write to it.
+    if (open($self->{'message_file'}, ">>", $self->{'fetchdump_log_pathname'}) == 0) {
+	push @result_messages, Amanda::CheckDump::Message->new(
+		source_filename  => __FILE__,
+		source_line      => __LINE__,
+		code             => 2700021,
+		message_filename => $self->{'fetchdump_log_pathname'},
+		errno            => $!,
+		severity         => $Amanda::Message::ERROR);
+    } else {
+	log_add($L_INFO, "message file $self->{'fetchdump_log_filename'}");
+    }
+
     return $self, \@result_messages;
 }
 
+
+sub user_message {
+    my $self = shift;
+    my $msg = shift;
+
+    if (defined $self->{'message_file'}) {
+	my $d;
+	if (ref $msg eq "SCALAR") {
+	    $d = Data::Dumper->new([$msg], ["MESSAGES[$self->{'message_count'}]"]);
+	} else {
+	    my %msg_hash = %$msg;
+	    $d = Data::Dumper->new([\%msg_hash], ["MESSAGES[$self->{'message_count'}]"]);
+	}
+	print {$self->{'message_file'}} $d->Dump();
+	$self->{'message_count'}++;
+    }
+    if ($self->{'feedback'}->can('user_message')) {
+	$self->{'feedback'}->user_message($msg);
+    }
+}
 
 sub restore {
     my $self = shift;
     my %params = @_;
 
+    $self->{'feedback'} = $params{'feedback'};
+
     if (defined $params{'compress'} and defined $params{'compress-best'}) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -250,7 +298,7 @@ sub restore {
     }
 
     if (defined $params{'leave'} and defined $params{'compress'}) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -258,7 +306,7 @@ sub restore {
 	$params{'finished_cb'}->();
     }
     if (defined $params{'leave'} and defined $params{'compress-best'}) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -266,7 +314,7 @@ sub restore {
 	$params{'finished_cb'}->();
     }
     if (defined $params{'leave'} and defined $params{'no-reassembly'}) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -275,7 +323,7 @@ sub restore {
     }
     if (defined $params{'header'} and (defined $params{'header-file'} or
 				       defined $params{'header-fd'})) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -287,7 +335,7 @@ sub restore {
 	$params{'data-path'} = lc($params{'data-path'});
 	if ($params{'data-path'} ne 'directtcp' and
 	    $params{'data-path'} ne 'amanda') {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -298,7 +346,7 @@ sub restore {
 
     if ($params{'leave'}) {
 	if ($params{'decrypt'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -306,7 +354,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'server-decrypt'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -314,7 +362,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'client-decrypt'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -322,7 +370,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'decompress'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -330,7 +378,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'server-decompress'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -338,7 +386,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'client-decompress'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -349,7 +397,7 @@ sub restore {
 
     if ((defined $params{'directory'} and !defined $params{'extract'}) or
 	(!defined $params{'directory'} and  defined $params{'extract'})) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -360,7 +408,7 @@ sub restore {
     if (defined $params{'directory'} and defined $params{'extract'}) {
 	$params{'decrypt'} = 1;
 	if (defined $params{'server-decrypt'} or defined $params{'client-decrypt'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -370,7 +418,7 @@ sub restore {
 
 	$params{'decompress'} = 1;
 	if (defined $params{'server-decompress'} || defined $params{'client-decompress'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -380,7 +428,7 @@ sub restore {
 	if (defined($params{'leave'}) +
 	    defined($params{'compress'}) +
 	    defined($params{'compress-best'})) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -388,7 +436,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if (defined $params{'pipe'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -396,7 +444,7 @@ sub restore {
 	    $params{'finished_cb'}->();
 	}
 	if (defined $params{'header'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -408,7 +456,7 @@ sub restore {
     if (defined($params{'decrypt'}) +
 	defined($params{'server-decrypt'}) +
 	defined($params{'client-decrypt'}) > 1) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -418,7 +466,7 @@ sub restore {
     if (defined($params{'decompress'}) +
 	defined($params{'server-decompress'}) +
 	defined($params{'client-decompress'}) > 1) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -430,7 +478,7 @@ sub restore {
 	defined($params{'decompress'}) +
 	defined($params{'server-decompress'}) +
 	defined($params{'client-decompress'}) > 0) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -442,7 +490,7 @@ sub restore {
 	defined($params{'decompress'}) +
 	defined($params{'server-decompress'}) +
 	defined($params{'client-decompress'}) > 0) {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -616,7 +664,7 @@ sub restore {
 
 	# if we are doing a -p operation, only keep the first dump
 	if ($params{'pipe-fd'}) {
-	    $params{'feedback'}->user_message(
+	    $self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -694,7 +742,7 @@ sub restore {
     step list_volume => sub {
 	my @needed_labels = $plan->get_volume_list();
 	my @needed_holding = $plan->get_holding_file_list();
-	$params{'feedback'}->user_message(
+	$self->user_message(
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
@@ -758,7 +806,7 @@ sub restore {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code            => 3300045,
-			errs		=> @$errs)) if $errs;
+			errs		=> $errs)) if $errs;
 
 	my $dle_str = $hdr->{'dle_str'};
 	my $p1 = XML::Simple->new();
@@ -766,7 +814,7 @@ sub restore {
 	if (defined $dle_str) {
 	    eval { $dle = $p1->XMLin($dle_str); };
 	    if ($@) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1055,7 +1103,7 @@ sub restore {
 	$timer->set_callback(sub {
 	    if (defined $xfer_src) {
 		my $size = $xfer_src->get_bytes_read();
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1118,7 +1166,7 @@ sub restore {
 	     ($dle->{'compress'} and $dle->{'compress'} eq "BEST" and ($decompress == $ALWAYS || $decompress == $ONLY_CLIENT)))) {
 	    # need to uncompress this file
 	    if ($hdr->{'encrypted'}) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1201,7 +1249,7 @@ sub restore {
 			chomp $line;
 			if (length($line) > 1) {
 			    if (!$app_success || $app_error) {
-				$params{'feedback'}->user_message(
+				$self->user_message(
 				    Amanda::FetchDump::Message->new(
 					source_filename => __FILE__,
 					source_line     => __LINE__,
@@ -1262,7 +1310,7 @@ sub restore {
 		    return;
 		}
 		chomp $line;
-		$params{'feedback'}->user_message(
+		$self->user_message(
 		    Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1281,7 +1329,7 @@ sub restore {
                     return;
 		}
 		chomp $line;
-		$params{'feedback'}->user_message(
+		$self->user_message(
 		    Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1346,7 +1394,7 @@ sub restore {
     };
 
     step filter_done => sub {
-	$params{'feedback'}->user_message(
+	$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1356,7 +1404,7 @@ sub restore {
 	    my $buf = $xfer_dest->get();
 	    if ($buf) {
 		my @lines = split "\n", $buf;
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1384,7 +1432,7 @@ sub restore {
 	    if (defined $hdr->{'native_crc'} and $hdr->{'native_crc'} !~ /^00000000:/ and
 		defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
 		$hdr->{'native_crc'} ne $current_dump->{'native_crc'}) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1395,7 +1443,7 @@ sub restore {
 	    if (defined $hdr->{'client_crc'} and $hdr->{'client_crc'} !~ /^00000000:/ and
 		defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
 		$hdr->{'client_crc'} ne $current_dump->{'client_crc'}) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1425,7 +1473,7 @@ sub restore {
 		defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
 		$hdr_server_crc_size == $current_dump_server_crc_size and
 		$hdr->{'server_crc'} ne $current_dump->{'server_crc'}) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1437,7 +1485,7 @@ sub restore {
 	    if (defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
 		$current_dump_server_crc_size == $source_crc_size and
 		$current_dump->{'server_crc'} ne $source_crc) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1448,7 +1496,7 @@ sub restore {
 
 	    if (defined $current_dump->{'native_crc'} and $current_dump->{'native_crc'} !~ /^00000000:/ and
 		defined $restore_native_crc and $current_dump->{'native_crc'} ne $restore_native_crc) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1458,7 +1506,7 @@ sub restore {
 	    }
 	    if (defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
 		defined $restore_client_crc and $current_dump->{'client_crc'} ne $restore_client_crc) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1471,7 +1519,7 @@ sub restore {
 	    debug("dest_is_client $dest_crc $restore_client_crc") if $dest_is_client;
 	    debug("dest_is_server $dest_crc $source_crc") if $dest_is_server;
 	    if ($dest_is_native and $restore_native_crc ne $dest_crc) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1480,7 +1528,7 @@ sub restore {
 				restore_native_crc => $restore_native_crc));
 	    }
 	    if ($dest_is_client and $restore_client_crc ne $dest_crc) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1489,7 +1537,7 @@ sub restore {
 				restore_client_crc => $restore_client_crc));
 	    }
 	    if ($dest_is_server and $source_crc ne $dest_crc) {
-		$params{'feedback'}->user_message(
+		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -1542,7 +1590,7 @@ sub restore {
 
     step failure => sub {
 	my ($msg) = @_;
-	$params{'feedback'}->user_message($msg);
+	$self->user_message($msg);
 	$self->{'exit_status'} = 1;
 	$steps->{'quit2'}->();
     };

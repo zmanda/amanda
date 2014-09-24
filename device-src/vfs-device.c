@@ -898,11 +898,11 @@ vfs_device_read_label(
     if (amanda_header == NULL) {
         /* This means an error occured getting locks or opening the header
          * file. */
-	device_set_error(dself,
-		g_strdup("Error loading device header -- unlabeled volume?"),
-		  DEVICE_STATUS_DEVICE_ERROR
-		| DEVICE_STATUS_VOLUME_ERROR
-		| DEVICE_STATUS_VOLUME_UNLABELED);
+//	device_set_error(dself,
+//		g_strdup("Error loading device header -- unlabeled volume?"),
+//		  DEVICE_STATUS_DEVICE_ERROR
+//		| DEVICE_STATUS_VOLUME_ERROR
+//		| DEVICE_STATUS_VOLUME_UNLABELED);
 	return dself->status;
     }
 

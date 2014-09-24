@@ -404,6 +404,81 @@ reply:
 
 =end html
 
+=item Get a list of all operations
+
+=begin html
+
+<pre>
+
+=end html
+
+request:
+  GET localhost:5000/amanda/v1.0/configs/:CONFIG/runs
+    optional query arguments:
+	status=STATUS
+	run_type=$RUN_TYPE
+
+reply:
+  HTTP status 200 Ok
+  [
+   {
+      "amdump_log" : "/etc/amanda/TESTCONF/logs/amdump.20140527122705",
+      "code" : "2000004",
+      "message" : "one run",
+      "run_type" : "amdump",
+      "severity" : "16",
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+      "source_line" : "985",
+      "status" : "aborted",
+      "timestamp" : "20140527122705",
+      "trace_log" : "/etc/amanda/TESTCONF/logst/log.20140527122705.0"
+   },
+   {
+      "amdump_log" : "/etc/amanda/TESTCONF/logs/amdump.20140702163539",
+      "code" : "2000004",
+      "message" : "one run",
+      "run_type" : "amflush",
+      "severity" : "16",
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+      "source_line" : "985",
+      "status" : "aborted",
+      "timestamp" : "20140702163539",
+      "trace_log" : "/etc/amanda/TESTCONF/logs/log.20140702163539.0"
+   },
+   {
+      "amdump_log" : "/etc/amanda/TESTCONF/logs/amdump.20140708100915",
+      "code" : "2000004",
+      "message" : "one run",
+      "run_type" : "amvault",
+      "severity" : "16",
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+      "source_line" : "985",
+      "status" : "done",
+      "timestamp" : "20140708100915",
+      "trace_log" : "/etc/amanda/TESTCONF/logs/log.20140708100915.0"
+   },
+   {
+      "code" : "2000004",
+      "message" : "one run",
+      "message_file" : "/etc/amanda/TESTCONF/logs/checkdump.20140922151405",
+      "run_type" : "checkdump",
+      "severity" : "16",
+      "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Runs.pm",
+      "source_line" : "995",
+      "status" : "done",
+      "timestamp" : "20140922151405",
+      "trace_log" : "/etc/amanda/TESTCONF/logs/log.20140922151405.0"
+   },
+
+
+  ]
+
+=begin html
+
+</pre>
+
+=end html
+
 =back
 
 =cut
@@ -629,38 +704,7 @@ sub checkdump {
 
     Amanda::Util::set_pname("checkdump");
 
-    my $message_filename = "checkdump.$$";
-    my $message_path =  getconf($CNF_LOGDIR) . "/" . $message_filename;
-    my $message_fh;
-    if (open ($message_fh, ">$message_path") == 0) {
-	push @result_messages, Amanda::CheckDump::Message->new(
-		source_filename  => __FILE__,
-		source_line      => __LINE__,
-		code             => 2700021,
-		message_filename => $message_filename,
-		errno            => $!,
-		severity         => $Amanda::Message::ERROR);
-	return \@result_messages;
-    }
-
-    my $count = 0;
-    my $user_msg = sub {
-	my $msg = shift;
-	my $d;
-	if (ref $msg eq "SCALAR") {
-	    $d = Data::Dumper->new([$msg], ["MESSAGES[$count]"]);
-	} else {
-	    my %msg_hash = %$msg;
-	    $d = Data::Dumper->new([\%msg_hash], ["MESSAGES[$count]"]);
-	}
-	print {$message_fh} $d->Dump();
-	#print Data::Dumper::Dumper($msg) , "\n";
-	#print {$message_fh} Data::Dumper::Dumper($msg) , "\n";
-	#push @result_messages, $msg;
-	$count++;
-    };
-
-    my ($checkdump, $messages) = Amanda::CheckDump->new(%params, user_msg => $user_msg);
+    my ($checkdump, $messages) = Amanda::CheckDump->new(%params);
     push @result_messages, @{$messages};
 
     if (!$checkdump) {
@@ -688,7 +732,7 @@ sub checkdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 2700020,
-		message_filename => $message_filename,
+		message_filename => $checkdump->{'checkdump_log_filename'},
 		severity         => $Amanda::Message::INFO);
     } else {
 	push @result_messages, Amanda::CheckDump::Message->new(
@@ -707,11 +751,8 @@ use base 'Amanda::Recovery::Clerk::Feedback';
 
 sub new {
     my $class = shift;
-    my $message_fh = shift;
 
     my $self = bless {
-	count => 0,
-	message_fh => $message_fh
     }, $class;
 
     return $self;
@@ -752,26 +793,6 @@ sub clerk_notif_holding {
 		header_summary	=> $header->summary()));
 }
 
-sub  user_message {
-    my $self = shift;
-    my $message = shift;
-
-    my $d;
-    if (ref $message eq "SCALAR") {
-	$d = Data::Dumper->new([$message], ["MESSAGES[$self->{'count'}]"]);
-    } else {
-	my %msg_hash = %$message;
-	$d = Data::Dumper->new([\%msg_hash], ["MESSAGES[$self->{'count'}]"]);
-    }
-    print {$self->{'message_fh'}} $d->Dump();
-    $self->{'count'}++;
-}
-
-sub close {
-    my $self = shift;
-    delete $self->{'message_fh'}
-}
-
 package Amanda::Rest::Runs;
 
 sub fetchdump {
@@ -793,20 +814,6 @@ sub fetchdump {
 
     Amanda::Util::set_pname("fetchdump");
 
-    my $message_filename = "fetchdump.$$";
-    my $message_path =  getconf($CNF_LOGDIR) . "/" . $message_filename;
-    my $message_fh;
-    if (open ($message_fh, ">$message_path") == 0) {
-	push @result_messages, Amanda::CheckDump::Message->new(
-		source_filename  => __FILE__,
-		source_line      => __LINE__,
-		code             => 2700021,
-		message_filename => $message_filename,
-		errno            => $!,
-		severity         => $Amanda::Message::ERROR);
-	return \@result_messages;
-    }
-
     my ($fetchdump, $messages) = Amanda::FetchDump->new(%params);
     push @result_messages, @{$messages};
 
@@ -822,9 +829,9 @@ sub fetchdump {
 	my $spec = Amanda::Cmdline::dumpspec_t->new($params{'host'}, $params{'disk'}, $params{'timestamp'}, $params{'level'}, $params{'write_timestamp'});
 	my @dumpspecs;
 	push @dumpspecs, $spec;
-	my $fetchfeedback = Amanda::Rest::Runs::FetchFeedback->new($message_fh);
+	my $fetchfeedback = Amanda::Rest::Runs::FetchFeedback->new();
 	my $finished_cb = sub { $exit_status = shift;
-				$fetchfeedback->user_message(
+				$fetchdump->user_message(
 				    Amanda::FetchDump::Message->new(
 					source_filename	=> __FILE__,
 					source_line	=> __LINE__,
@@ -862,8 +869,6 @@ sub fetchdump {
 #                'interactivity'         => $interactivity,
                 'feedback'              => $fetchfeedback) });
 	Amanda::MainLoop::run();
-	$fetchfeedback->close();
-	$message_fh->close();
 	exit;
     } elsif ($pid > 0) {
 	push @result_messages, Amanda::FetchDump::Message->new(
@@ -875,7 +880,7 @@ sub fetchdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 3300059,
-		message_filename => $message_filename,
+		message_filename => $fetchdump->{'checkdump_log_filename'},
 		severity         => $Amanda::Message::INFO);
     } else {
 	push @result_messages, Amanda::FetchDump::Message->new(
@@ -935,14 +940,27 @@ sub list {
     $Amanda_process->load_ps_table();
 
     my $logdir = Amanda::Config::getconf($CNF_LOGDIR);
-    foreach my $logfile(<$logdir/amdump.*>) {
-	$logfile =~ /amdump\.(.*)$/;
-	my $timestamp = $1;
+    foreach my $logfile (<$logdir/amdump.*>, <$logdir/fetchdump.*>, <$logdir/checkdump.*> ) {
+	my $timestamp;
+	if ($logfile =~ /amdump\.(.*)$/) {
+	    $timestamp = $1;
+	}
+	if (!defined $timestamp) {
+	    if ($logfile =~ /checkdump\.(.*)$/) {
+		$timestamp = $1;
+	    }
+	}
+	if (!defined $timestamp) {
+	    if ($logfile =~ /fetchdump\.(.*)$/) {
+		$timestamp = $1;
+	    }
+	}
 	next if length($timestamp) != 14;
 	my $run_type;
 	my $pid;
 	my $status = "running";
 	my $tracefile = "$logdir/log.$timestamp.0";
+	my $message_file;
 	next if !-f $tracefile;
 
 	open (TRACE, "<", $tracefile);
@@ -956,6 +974,14 @@ sub list {
 	    } elsif ($line =~ /^INFO amvault amvault pid (\d*)$/) {
 		$run_type = "amvault";
 		$pid = $1;
+	    } elsif ($line =~ /^INFO checkdump checkdump pid (\d*)$/) {
+		$run_type = "checkdump";
+		$pid = $1;
+	    } elsif ($line =~ /^INFO fetchdump fetchdump pid (\d*)$/) {
+		$run_type = "fetchdump";
+		$pid = $1;
+	    } elsif ($line =~ /^INFO .* message_file (.*)$/) {
+		$message_file = $1;
 	    }
 	    if (defined $run_type and
 		$line =~ /^INFO $run_type pid-done $pid/) {
@@ -965,16 +991,36 @@ sub list {
 	if ($status eq "running" and $pid) {
 	    $status = "aborted" if !$Amanda_process->process_alive($pid, $run_type);
 	}
-	push @result_messages, Amanda::Amdump::Message->new(
-		source_filename  => __FILE__,
-		source_line      => __LINE__,
-		code             => 2000004,
-		run_type         => $run_type,
-		timestamp        => $timestamp,
-		amdump_log       => $logfile,
-		trace_log        => $tracefile,
-		status           => $status);
+	if ((!defined($params{'status'}) or
+	     $params{'status'} eq $status) and
+	    (!defined($params{'run_type'}) or
+	     $params{'run_type'} eq $run_type)) {
+	    if ($run_type eq "amdump" or
+		$run_type eq "amflush" or
+		$run_type eq "amvault") {
+		push @result_messages, Amanda::Amdump::Message->new(
+			source_filename  => __FILE__,
+			source_line      => __LINE__,
+			code             => 2000004,
+			run_type         => $run_type,
+			timestamp        => $timestamp,
+			amdump_log       => $logfile,
+			trace_log        => $tracefile,
+			status           => $status);
+	    } else {
+		push @result_messages, Amanda::Amdump::Message->new(
+			source_filename  => __FILE__,
+			source_line      => __LINE__,
+			code             => 2000004,
+			run_type         => $run_type,
+			timestamp        => $timestamp,
+			message_file     => $logfile,
+			trace_log        => $tracefile,
+			status           => $status);
+	    }
+	}
     }
+
     return \@result_messages;
 }
 

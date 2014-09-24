@@ -1,4 +1,17 @@
 2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/diskflat-device.c: Error is DEVICE_STATUS_VOLUME_UNLABELED
+	  if the file do not exists.
+	* device-src/vfs-device.c (vfs_device_read_label): Do not reset an
+	  error when it is set.
+	* installcheck/Amanda_Rest_Storages.pl: Fix fo device change.
+	* perl/Amanda/Changer/diskflat.pm: Fix perl warning.
+	* perl/Amanda/CheckDump.pm ,perl/Amanda/FetchDump.pm: Create a
+	  log.<timestamp>.0 file can a checkdump.<timestamp> or
+	  fetchdump.<timestamp>
+	* perl/Amanda/Rest/Runs.pm: Do not create the checkdump.$$ or
+	  fetchdump.$$. list also list checkdump and fetchdump run.
+
+2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Fix perl warning.
 	* perl/Amanda/Taper/Worker.pm (TAKE_SCRIBE_FROM): Set
 	  scribe1->{'cancelled'} to 0.
