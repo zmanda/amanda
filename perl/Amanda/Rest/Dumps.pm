@@ -108,6 +108,7 @@ Amanda::Rest::Dumps -- Rest interface to Amanda::DB::Catalog
 sub list {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Dumps");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 

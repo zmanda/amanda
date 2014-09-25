@@ -2003,6 +2003,8 @@ sub new {
     # Amanda::Message
     $self->{'source_filename'} = 'unknown' if !$self->{'source_filename'};
     $self->{'source_line'} = 0 if !$self->{'source_line'};
+    $self->{'process'} = Amanda::Util::get_pname() if !defined $self->{'process'};
+    $self->{'running_on'} = Amanda::Config::get_running_on() if !defined $self->{'running_on'};
     $self->{'code'} = 3 if !$self->{'code'};
     $self->{'message'} = $self->message() if !defined $self->{'message'};
     $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};

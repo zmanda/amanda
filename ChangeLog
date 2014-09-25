@@ -1,4 +1,27 @@
 2014-09-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (get_running_on): new function.
+	* common-src/conffile.h (get_running_on): add prototype.
+	* perl/Amanda/Config.swg (get_running_on): swig it.
+	* common-src/ammessage.c, perl/Amanda/Changer.pm,
+	  perl/Amanda/Message.pm,
+	  server-src/amcheck.c: Add process and running_on in message.
+	* perl/Amanda/Rest/Changers.pm, perl/Amanda/Rest/Configs.pm,
+	  perl/Amanda/Rest/Dles.pm, perl/Amanda/Rest/Dumps.pm,
+	  perl/Amanda/Rest/Labels.pm, perl/Amanda/Rest/Runs.pm,
+	  perl/Amanda/Rest/Storages.pm, perl/Amanda/Rest/Storages/Labels.pm,
+	  perl/Amanda/Rest/Version.pm: call Amanda::Util::set_pname.
+	* installcheck/Amanda_Rest_Amcheck.pl,
+	  installcheck/Amanda_Rest_Changers.pl,
+	  installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Dumps.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Runs.pl,
+	  installcheck/Amanda_Rest_Storages.pl,
+	  installcheck/Amanda_Rest_Storages_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl: Fix for new field in message.
+
+2014-09-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/traditional.pm: Check for
 	  DEVICE_STATUS_VOLUME_UNLABELED without volume_header.
 

@@ -9946,6 +9946,16 @@ char *get_config_filename(void)
 }
 
 char *
+get_running_on(void)
+{
+    if (!config_client) {
+	return "amanda-server";
+    } else {
+	return "amanda-client";
+    }
+}
+
+char *
 anonymous_value(void)
 {
     static char number[NUM_STR_SIZE];

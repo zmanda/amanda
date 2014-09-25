@@ -155,6 +155,8 @@ sub new {
     $self->{'message'} = "" if $self->{'code'} == 2 and !defined $self->{'message'};
     $self->{'message'} = $self->message() if !defined $self->{'message'};
     $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};
+    $self->{'process'} = Amanda::Util::get_pname() if !defined $self->{'process'};
+    $self->{'running_on'} = Amanda::Config::get_running_on() if !defined $self->{'running_on'};
 
     Amanda::Debug::debug("$params{'source_filename'}:$params{'source_line'}:$self->{'severity'}:$self->{'code'} $self->{'message'}");
 

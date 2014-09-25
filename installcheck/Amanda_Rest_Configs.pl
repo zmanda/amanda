@@ -70,6 +70,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'severity' => '16',
 		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500000'
 	  },
         ],
@@ -87,6 +89,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'cfgerror' => "parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
 		'severity' => '16',
 		'message' => "config error: parse error: could not open conf file '$CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500001'
 	  },
         ],
@@ -121,6 +125,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'config' => [@newconf],
 		'severity' => '16',
 		'message' => 'config name',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500003'
           }
         ],
@@ -154,6 +160,8 @@ if (@conf > 0) {
 		'config' => [@newconf],
 		'severity' => '16',
 		'message' => 'config name',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500003'
               }
             ],
@@ -166,6 +174,8 @@ if (@conf > 0) {
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => '16',
 		'message' => 'no config',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500004'
               }
             ],
@@ -187,6 +197,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'errno'    => 'Permission denied',
 		'message' => "Can't open config directory '$Amanda::Paths::CONFIG_DIR': Permission denied",
 		'dir' => $Amanda::Paths::CONFIG_DIR,
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500006'
           }
         ],
@@ -204,6 +216,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'severity' => '16',
 		'parameters' => [ 'foobar' ],
 		'message' => 'Not existant parameters',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500007'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -211,6 +225,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'result' => {
 			'tapecycle' => 3 },
 		'message' => 'Parameters values',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500008'
           }
         ],
@@ -228,6 +244,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'tapecycle' => 3,
 			'runtapes' => 1},
 		'message' => 'Parameters values',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500008'
           }
         ],
@@ -242,6 +260,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => '16',
 		'message' => 'No fields specified',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
 		'code' => '1500009'
 	  },
         ],

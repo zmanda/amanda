@@ -1705,6 +1705,8 @@ char *get_config_dir(void);
 /* Get the config filename */
 char *get_config_filename(void);
 
+char *get_running_on(void);
+
 /*
  * Utilities
  */

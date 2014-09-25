@@ -114,9 +114,11 @@ encode_json(
 "    \"source_filename\" : \"" __FILE__ "\",\n" \
 "    \"source_line\" : \"%d\",\n" \
 "    \"severity\" : \"16\",\n" \
+"    \"process\" : \"%s\",\n" \
+"    \"running_on\" : \"%s\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, encode_json(msg)); else \
+"  },\n", __LINE__, get_pname(), get_running_on(), code, encode_json(msg)); else \
 g_printf("%s\n", msg);
 
 #define fprint_message(file, code, msg) if (opt_message) g_fprintf(file, \
@@ -124,9 +126,11 @@ g_printf("%s\n", msg);
 "    \"source_filename\" : \"" __FILE__ "\",\n" \
 "    \"source_line\" : \"%d\",\n" \
 "    \"severity\" : \"16\",\n" \
+"    \"process\" : \"%s\",\n" \
+"    \"running_on\" : \"%s\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, encode_json(msg)); else \
+"  },\n", __LINE__, get_pname(), get_running_on(), code, encode_json(msg)); else \
 g_fprintf(file, "%s\n", msg);
 
 #define printf_message(code, msg, ...) { \
@@ -136,9 +140,11 @@ g_fprintf(file, "%s\n", msg);
 "    \"source_filename\" : \"" __FILE__ "\",\n" \
 "    \"source_line\" : \"%d\",\n" \
 "    \"severity\" : \"16\",\n" \
+"    \"process\" : \"%s\",\n" \
+"    \"running_on\" : \"%s\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, encode_json(msg1)); else \
+"  },\n", __LINE__, get_pname(), get_running_on(), code, encode_json(msg1)); else \
 g_printf("%s\n", msg1); \
 g_free(msg1); \
 }
@@ -149,9 +155,11 @@ g_free(msg1); \
 "    \"source_filename\" : \"" __FILE__ "\",\n" \
 "    \"source_line\" : \"%d\",\n" \
 "    \"severity\" : \"16\",\n" \
+"    \"process\" : \"%s\",\n" \
+"    \"running_on\" : \"%s\",\n" \
 "    \"code\" : \"%d\",\n" \
 "    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, code, encode_json(msg1)); else \
+"  },\n", __LINE__, get_pname(), get_running_on(), code, encode_json(msg1)); else \
 g_fprintf(file, "%s\n", msg1); \
 g_free(msg1); \
 }

@@ -24,6 +24,8 @@
  */
 
 #include "amanda.h"
+#include "amutil.h"
+#include "conffile.h"
 #include "ammessage.h"
 
 char *errcode[500];
@@ -455,6 +457,8 @@ typedef struct message_arg_array_s {
 struct message_s {
     char *file;
     int   line;
+    char *process;
+    char *running_on;
     int   code;
     int   severity;
     char *msg;
@@ -647,6 +651,8 @@ build_message(
 
    message->file = g_strdup(file);
    message->line = line;
+   message->process = get_pname();;
+   message->running_on = get_running_on();;
    message->code = code;
    message->severity = severity;
    message->arg_array = g_new0(message_arg_array_t, nb+1);
@@ -684,8 +690,10 @@ sprint_message(
         "    \"source_filename\" : \"%s\",\n" \
         "    \"source_line\" : \"%d\",\n" \
         "    \"severity\" : \"%d\",\n" \
+        "    \"process\" : \"%s\",\n" \
+        "    \"running_on\" : \"%s\",\n" \
         "    \"code\" : \"%d\",\n" \
-        , message->file, message->line, message->severity, message->code);
+        , message->file, message->line, message->severity, message->process, message->running_on, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	g_string_append_printf(result,
 	"    \"%s\" : \"%s\",\n", message->arg_array[i].key, message->arg_array[i].value);

@@ -244,6 +244,7 @@ sub init {
 sub label {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return @result_messages if @result_messages;
 
@@ -270,6 +271,7 @@ sub label {
 
 sub erase {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -353,6 +355,7 @@ sub erase {
 
 sub add_label {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -417,6 +420,7 @@ sub add_label {
 
 sub update_label {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -509,6 +513,7 @@ sub update_label {
 sub list {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return @result_messages if @result_messages;
 

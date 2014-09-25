@@ -103,6 +103,7 @@ sub init {
 sub list {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Labels");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 

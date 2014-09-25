@@ -1053,6 +1053,7 @@ char **get_config_options(int first);
 char *get_config_name(void);
 char *get_config_dir(void);
 char *get_config_filename(void);
+char *get_running_on(void);
 
 void config_print_errors(void);
 void config_clear_errors(void);

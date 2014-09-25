@@ -179,6 +179,7 @@ sub config_init {
 sub fields {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -221,6 +222,7 @@ sub list {
     my %params = @_;
     my @result_messages;
 
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
     if (!opendir(my $dh, $Amanda::Paths::CONFIG_DIR)) {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,

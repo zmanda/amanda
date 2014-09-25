@@ -129,23 +129,31 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'severity' => '2',
 		'message' => "The timestamp is '$timestamp'",
 		'timestamp' => $timestamp,
+		'process' => 'amdump',
+		'running_on' => 'amanda-server',
 		'code' => '2000003'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Amdump.pm",
 		'severity' => '2',
 		'message' => "The amdump log file is '$amdump_log'",
 		'amdump_log' => $amdump_log,
+		'process' => 'amdump',
+		'running_on' => 'amanda-server',
 		'code' => '2000001'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Amdump.pm",
 		'severity' => '2',
 		'message' => "The trace log file is '$trace_log'",
 		'trace_log' => $trace_log,
+		'process' => 'amdump',
+		'running_on' => 'amanda-server',
 		'code' => '2000000'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Runs.pm",
 		'severity' => '2',
 		'message' => 'Running a dump',
+		'process' => 'amdump',
+		'running_on' => 'amanda-server',
 		'code' => '2000002'
 	  }
         ],
@@ -161,6 +169,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'severity' => '16',
 		'cfgerror' => "parse error: could not open conf file '$config_dir/BADCONF/amanda.conf': No such file or directory",
 		'message' => "config error: parse error: could not open conf file '$config_dir/BADCONF/amanda.conf': No such file or directory",
+		'process' => 'Amanda::Rest::Runs',
+		'running_on' => 'amanda-server',
 		'code' => '1500001'
 	  },
         ],
@@ -184,6 +194,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'amdump_log' => $amdump_log,
 		'trace_log' => $trace_log,
 		'status' => 'done',
+		'process' => 'Amanda::Rest::Runs',
+		'running_on' => 'amanda-server',
 		'code' => '2000004'
 	  },
         ],
@@ -411,6 +423,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                      },
                          'severity' => '16',
                          'message' => 'The status',
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1800000
                        }
                      ],
@@ -682,6 +696,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -898,6 +914,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                      },
                          'severity' => '16',
                          'message' => 'The status',
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1800000
                        }
                      ],
@@ -1120,6 +1138,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                      },
                          'severity' => '16',
                          'message' => 'The status',
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1800000
                        }
                      ],
@@ -1431,6 +1451,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                      },
                          'severity' => '16',
                          'message' => 'The status',
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1800000
                        }
                      ],
@@ -1597,6 +1619,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -1786,6 +1810,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -1989,6 +2015,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -2191,6 +2219,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -2341,6 +2371,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -2584,6 +2616,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -2717,6 +2751,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -2858,6 +2894,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3022,6 +3060,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3166,6 +3206,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3293,6 +3335,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3444,6 +3488,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3574,6 +3620,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3712,6 +3760,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -3850,6 +3900,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -4031,6 +4083,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -4160,6 +4214,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -4317,6 +4373,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -4584,6 +4642,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'severity' => '16',
                          'message' => 'The report',
                          'logfile' => $trace_log,
+			 'process' => 'Amanda::Rest::Runs',
+			 'running_on' => 'amanda-server',
                          'code' => 1900001
                        }
                      ],
@@ -4621,6 +4681,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			 'timestamp' => $timestamp,
                          'severity' => '2',
                          'message' => "The timestamp is '$timestamp'",
+			 'process' => 'amflush',
+			 'running_on' => 'amanda-server',
                          'code' => '2200006'
                        },
 		       {
@@ -4628,6 +4690,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'amdump_log' => $amdump_log,
                          'severity' => '2',
                          'message' => "The amdump log file is '$amdump_log'",
+			 'process' => 'amflush',
+			 'running_on' => 'amanda-server',
                          'code' => '2200001'
                        },
                        {
@@ -4635,12 +4699,16 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'trace_log' => $trace_log,
                          'severity' => '2',
                          'message' => "The trace log file is '$trace_log'",
+			 'process' => 'amflush',
+			 'running_on' => 'amanda-server',
                          'code' => '2200000'
                        },
                        {
                          'source_filename' => "$amperldir/Amanda/Rest/Runs.pm",
                          'severity' => '2',
                          'message' => 'Running a flush',
+			 'process' => 'amflush',
+			 'running_on' => 'amanda-server',
                          'code' => '2200005'
                        }
                      ],
@@ -4663,6 +4731,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'amdump_log' => $amdump_log,
 		'trace_log' => $trace_log,
 		'status' => 'done',
+		'process' => 'Amanda::Rest::Runs',
+		'running_on' => 'amanda-server',
 		'code' => '2000004'
 	  },
         ],

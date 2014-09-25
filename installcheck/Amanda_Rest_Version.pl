@@ -67,6 +67,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'VERSION' => $Amanda::Constants::VERSION,
 		'severity' => '16',
 		'message' => 'The version',
+		'process' => 'Amanda::Rest::Version',
+		'running_on' => 'amanda-server',
 		'code' => '1550000'
 	  },
         ],

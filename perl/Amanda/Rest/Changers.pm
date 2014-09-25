@@ -97,6 +97,7 @@ Amanda::Rest::Changers -- Rest interface to Amanda::Changer
 sub fields {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Changers");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -150,6 +151,7 @@ sub fields {
 sub list {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Changers");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 

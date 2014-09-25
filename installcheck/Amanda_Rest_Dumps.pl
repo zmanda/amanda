@@ -63,6 +63,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                 'severity' => '16',
                 'message' => "The dumps",
 		'dumps' => [],
+		'process' => 'Amanda::Rest::Dumps',
+		'running_on' => 'amanda-server',
                 'code' => '2600000'
           },
         ],
@@ -161,6 +163,8 @@ is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
                        ],
             'severity' => '16',
             'message' => 'The dumps',
+	    'process' => 'Amanda::Rest::Dumps',
+	    'running_on' => 'amanda-server',
             'code' => '2600000'
           }
          ],
@@ -208,6 +212,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        ],
             'severity' => '16',
             'message' => 'The dumps',
+	    'process' => 'Amanda::Rest::Dumps',
+	    'running_on' => 'amanda-server',
             'code' => '2600000'
           }
          ],
@@ -255,6 +261,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        ],
             'severity' => '16',
             'message' => 'The dumps',
+	    'process' => 'Amanda::Rest::Dumps',
+	    'running_on' => 'amanda-server',
             'code' => '2600000'
           }
          ],
@@ -269,6 +277,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 	    'dumps' => [],
             'severity' => '16',
             'message' => 'The dumps',
+	    'process' => 'Amanda::Rest::Dumps',
+	    'running_on' => 'amanda-server',
             'code' => '2600000'
           }
          ],

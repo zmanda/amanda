@@ -389,6 +389,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
 
 sub amdump {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -438,6 +439,7 @@ sub amdump {
 
 sub amvault {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -487,6 +489,7 @@ sub amvault {
 
 sub amflush {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -591,6 +594,7 @@ sub amflush {
 
 sub checkdump {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -701,6 +705,7 @@ package Amanda::Rest::Runs;
 
 sub fetchdump {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -800,6 +805,7 @@ sub fetchdump {
 
 sub messages {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -837,6 +843,7 @@ sub messages {
 
 sub list {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 

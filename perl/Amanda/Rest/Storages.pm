@@ -430,6 +430,7 @@ or
 
 sub inventory {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -506,6 +507,7 @@ sub inventory {
 
 sub load {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -612,6 +614,7 @@ sub load {
 
 sub reset {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -690,6 +693,7 @@ sub reset {
 
 sub eject {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -770,6 +774,7 @@ sub eject {
 
 sub clean {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -848,6 +853,7 @@ sub clean {
 
 sub create {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -921,6 +927,7 @@ sub create {
 
 sub verify {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -994,6 +1001,7 @@ sub verify {
 
 sub show {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -1057,6 +1065,7 @@ sub show {
 
 sub label {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -1151,6 +1160,7 @@ sub label {
 
 sub update {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -1223,6 +1233,7 @@ sub update {
 sub fields {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -1276,6 +1287,7 @@ sub fields {
 sub list {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Storages");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
