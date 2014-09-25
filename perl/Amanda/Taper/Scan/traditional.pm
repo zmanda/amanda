@@ -450,8 +450,8 @@ sub stage_2 {
 	if (!defined $autolabel->{'template'} ||
 	    $autolabel->{'template'} eq "") {
 	    if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
-		$dev->volume_header and
-		$dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+		(!$dev->volume_header or
+		 $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY)) {
 		$self->_user_msg(slot_result   => 1,
 			         not_autolabel => 1,
 				 empty         => 1,
@@ -489,8 +489,8 @@ sub stage_2 {
 	}
 
 	if ($status & $DEVICE_STATUS_VOLUME_UNLABELED and
-	    $dev->volume_header and
-	    $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY) {
+	    (!$dev->volume_header or
+	     $dev->volume_header->{'type'} == $Amanda::Header::F_EMPTY)) {
 	    if (!$autolabel->{'empty'}) {
 	        $self->_user_msg(slot_result  => 1,
 			         empty        => 1,

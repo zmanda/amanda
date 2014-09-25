@@ -1,3 +1,7 @@
+2014-09-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/traditional.pm: Check for
+	  DEVICE_STATUS_VOLUME_UNLABELED without volume_header.
+
 2014-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/*.pm, perl/Amanda/Rest/Storages/Labels.pm: Fix for
 	  html generated pages.
