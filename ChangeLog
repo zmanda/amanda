@@ -1,4 +1,7 @@
 2014-09-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Dles.pl: Fix for new message format.
+
+2014-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Set component and module.
 	* common-src/amutil.c (set_pcomponent, get_pcomponent, set_pmodule,
 	  get_pmodule, push_component_module, pop_component_module):
