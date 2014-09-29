@@ -306,6 +306,8 @@ main(
     safe_fd(3, 2);
 
     set_pname("ambsdtar");
+    set_pcomponent("application");
+    set_pmodule("ambsdtar");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);

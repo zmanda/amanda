@@ -899,6 +899,7 @@ sub new {
     shift eq 'Amanda::Changer'
 	or die("Do not call the Amanda::Changer constructor from subclasses");
     my ($name) = shift;
+    Amanda::Util::push_component_module("changer", "changer");
     my %params = @_;
     my ($uri, $cc);
 
@@ -906,32 +907,44 @@ sub new {
     if (defined($name)) {
 	# first, is it a changer alias?
 	if (($uri,$cc) = _changer_alias_to_uri($name)) {
-	    return _new_from_uri($uri, $cc, $name, %params);
+	    my $chg = _new_from_uri($uri, $cc, $name, %params);
+	    Amanda::Util::pop_component_module();
+	    return $chg;
 	}
 
 	# maybe a straight-up changer URI?
 	if (_uri_to_pkgname($name)) {
-	    return _new_from_uri($name, undef, $name, %params);
+	    my $chg = _new_from_uri($name, undef, $name, %params);
+	    Amanda::Util::pop_component_module();
+	    return $chg;
 	}
 
 	# assume it's a device name or alias, and invoke the single-changer
-	return _new_from_uri("chg-single:$name", undef, $name, %params);
+	my $chg = _new_from_uri("chg-single:$name", undef, $name, %params);
+	Amanda::Util::pop_component_module();
+	return $chg;
     } else { # !defined($name)
 	if (defined $params{'storage'} &&
 	    defined $params{'storage'}->{'tpchanger'}) {
 	    my $tpchanger = $params{'storage'}->{'tpchanger'};
 	    # maybe a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
-		return _new_from_uri($uri, $cc, $tpchanger, %params);
+		my $chg = _new_from_uri($uri, $cc, $tpchanger, %params);
+		Amanda::Util::pop_component_module();
+		return $chg;
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tpchanger)) {
-		return _new_from_uri($tpchanger, undef, $tpchanger, %params);
+		my $chg = _new_from_uri($tpchanger, undef, $tpchanger, %params);
+		Amanda::Util::pop_component_module();
+		return $chg;
 	    }
 
 	    # assume it's a device name or alias, and invoke the single-changer
-	    return _new_from_uri("chg-single:$tpchanger", undef, $tpchanger, %params);
+	    my $chg = _new_from_uri("chg-single:$tpchanger", undef, $tpchanger, %params);
+	    Amanda::Util::pop_component_module();
+	    return $chg;
 	} elsif ((getconf_linenum($CNF_TPCHANGER) == -2 ||
 	     (getconf_seen($CNF_TPCHANGER) &&
 	      getconf_linenum($CNF_TAPEDEV) != -2)) &&
@@ -943,35 +956,47 @@ sub new {
 		((getconf_linenum($CNF_TAPEDEV) > 0 and
 		  getconf_linenum($CNF_TPCHANGER) > 0) ||
 		 (getconf_linenum($CNF_TAPEDEV) == -2))) {
-		return Amanda::Changer::Error->new('fatal',
+		my $error = Amanda::Changer::Error->new('fatal',
 			source_filename => __FILE__,
 	                source_line     => __LINE__,
 	                code            => 1100030);
+		Amanda::Util::pop_component_module();
+		return $error;
 	    }
 
 	    # maybe a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
-		return _new_from_uri($uri, $cc, $tpchanger, %params);
+		my $chg = _new_from_uri($uri, $cc, $tpchanger, %params);
+		Amanda::Util::pop_component_module();
+		return $chg;
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tpchanger)) {
-		return _new_from_uri($tpchanger, undef, $tpchanger, %params);
+		my $chg = _new_from_uri($tpchanger, undef, $tpchanger, %params);
+		Amanda::Util::pop_component_module();
+		return $chg;
 	    }
 
 	    # assume it's a device name or alias, and invoke the single-changer
-	    return _new_from_uri("chg-single:$tpchanger", undef, $tpchanger, %params);
+	    my $chg = _new_from_uri("chg-single:$tpchanger", undef, $tpchanger, %params);
+	    Amanda::Util::pop_component_module();
+	    return $chg;
 	} elsif (getconf_seen($CNF_TAPEDEV) and getconf($CNF_TAPEDEV) ne '') {
 	    my $tapedev = getconf($CNF_TAPEDEV);
 
 	    # first, is it a changer alias?
 	    if (($uri,$cc) = _changer_alias_to_uri($tapedev)) {
-		return _new_from_uri($uri, $cc, $tapedev, %params);
+		my $chg = _new_from_uri($uri, $cc, $tapedev, %params);
+		Amanda::Util::pop_component_module();
+		return $chg;
 	    }
 
 	    # maybe a straight-up changer URI?
 	    if (_uri_to_pkgname($tapedev)) {
-		return _new_from_uri($tapedev, undef, $tapedev, %params);
+		my $chg = _new_from_uri($tapedev, undef, $tapedev, %params);
+		Amanda::Util::pop_component_module();
+		return $chg;
 	    }
 
 	    # assume it's a device name or alias, and invoke chg-single.
@@ -979,10 +1004,12 @@ sub new {
 	    # if the device name is invalid.
 	    return _new_from_uri("chg-single:$tapedev", undef, $tapedev, %params);
 	} else {
-	    return Amanda::Changer::Error->new('fatal',
+	    my $error = Amanda::Changer::Error->new('fatal',
 		source_filename => __FILE__,
                 source_line     => __LINE__,
                 code            => 1100029);
+	    Amanda::Util::pop_component_module();
+	    return $error;
 	}
     }
 }
@@ -1114,6 +1141,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 	return $rv;
     }
 
+    Amanda::Util::set_pmodule($pkgname);
     if ($rv->isa("Amanda::Changer")) {
 	# add an instance variable or two
 	$rv->{'fatal_error'} = undef;
@@ -2005,6 +2033,8 @@ sub new {
     $self->{'source_line'} = 0 if !$self->{'source_line'};
     $self->{'process'} = Amanda::Util::get_pname() if !defined $self->{'process'};
     $self->{'running_on'} = Amanda::Config::get_running_on() if !defined $self->{'running_on'};
+    $self->{'component'} = Amanda::Util::get_pcomponent() if !defined $self->{'component'};
+    $self->{'module'} = Amanda::Util::get_pmodule() if !defined $self->{'module'};
     $self->{'code'} = 3 if !$self->{'code'};
     $self->{'message'} = $self->message() if !defined $self->{'message'};
     $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};

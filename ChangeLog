@@ -1,3 +1,44 @@
+2014-09-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Set component and module.
+	* common-src/amutil.c (set_pcomponent, get_pcomponent, set_pmodule,
+	  get_pmodule, push_component_module, pop_component_module):
+	  New functions.
+	* common-src/amutil.h: Add prototype.
+	* perl/Amanda/Changer.pm: Call push_component_module and
+	  pop_component_module.
+	* perl/Amanda/Message.pm: Set component and module.
+	* server-src/amcheck.c: Set component and module.
+	* application-src/ambsdtar.c, application-src/amgtar.c
+	  application-src/amstar.c: Call set_pcomponent and set_pmodule,
+	* perl/Amanda/Util.swg (setup_application): Call set_pcomponent and
+	  set_pmodule.
+	* client-src/amdump_client.pl, common-src/amgetconf.pl,
+	  device-src/amdevcheck.pl, device-src/amtapetype.pl,
+	  perl/Amanda/Rest/Amanda/bin/app.pl.in, perl/Amanda/Script_App.pm,
+	  server-src/amadmin_perl.pl, server-src/amanda-rest-server.pl,
+	  server-src/amanda.psgi.pl, server-src/amcheck-device.pl,
+	  server-src/amcheckdump.pl, server-src/amcleanup.pl,
+	  server-src/amcleanupdisk.pl, server-src/amdump.pl,
+	  server-src/amdumpd.pl, server-src/amfetchdump.pl,
+	  server-src/amflush.pl, server-src/amidxtaped.pl,
+	  server-src/amlabel.pl, server-src/amlogroll.pl,
+	  server-src/amreindex.pl, server-src/amreport.pl,
+	  server-src/amrestore.pl, server-src/amrmtape.pl,
+	  server-src/amserverconfig.pl, server-src/amstatus.pl,
+	  server-src/amtape.pl, server-src/amvault.pl,
+	  server-src/chunker.pl,
+	  server-src/taper.pl: Call setup_application with component and module.
+	* installcheck/Amanda_Rest_Amcheck.pl,
+	  installcheck/Amanda_Rest_Changers.pl,
+	  installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Dumps.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Runs.pl,
+	  installcheck/Amanda_Rest_Storages.pl,
+	  installcheck/Amanda_Rest_Storages_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl: Fix for new message format.
+
+
 2014-09-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (get_running_on): new function.
 	* common-src/conffile.h (get_running_on): add prototype.

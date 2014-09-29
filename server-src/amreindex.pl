@@ -64,7 +64,7 @@ EOF
 
 ## Application initialization
 
-Amanda::Util::setup_application("amreindex", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amreindex", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $exit_code = 0;
 

@@ -217,6 +217,8 @@ main(
     safe_fd(3, 2);
 
     set_pname("amstar");
+    set_pcomponent("application");
+    set_pmodule("amstar");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);

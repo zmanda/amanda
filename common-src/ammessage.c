@@ -459,6 +459,8 @@ struct message_s {
     int   line;
     char *process;
     char *running_on;
+    char *component;
+    char *module;
     int   code;
     int   severity;
     char *msg;
@@ -632,6 +634,10 @@ delete_message(
 	g_free(message->arg_array[i].key);
 	g_free(message->arg_array[i].value);
     }
+    g_free(message->process);
+    g_free(message->running_on);
+    g_free(message->component);
+    g_free(message->module);
     g_free(message->arg_array);
     g_free(message);
 }
@@ -651,8 +657,10 @@ build_message(
 
    message->file = g_strdup(file);
    message->line = line;
-   message->process = get_pname();;
-   message->running_on = get_running_on();;
+   message->process = g_strdup(get_pname());
+   message->running_on = g_strdup(get_running_on());
+   message->component = g_strdup(get_pcomponent());
+   message->module = g_strdup(get_pmodule());
    message->code = code;
    message->severity = severity;
    message->arg_array = g_new0(message_arg_array_t, nb+1);
@@ -692,8 +700,10 @@ sprint_message(
         "    \"severity\" : \"%d\",\n" \
         "    \"process\" : \"%s\",\n" \
         "    \"running_on\" : \"%s\",\n" \
+        "    \"component\" : \"%s\",\n" \
+        "    \"module\" : \"%s\",\n" \
         "    \"code\" : \"%d\",\n" \
-        , message->file, message->line, message->severity, message->process, message->running_on, message->code);
+        , message->file, message->line, message->severity, message->process, message->running_on, message->component, message->module, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	g_string_append_printf(result,
 	"    \"%s\" : \"%s\",\n", message->arg_array[i].key, message->arg_array[i].value);

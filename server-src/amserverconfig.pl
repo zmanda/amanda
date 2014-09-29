@@ -502,7 +502,7 @@ $date=`date +%Y%m%d%H%M%S`;
 chomp($date);
 my $logfile="$tmpdir/amserverconfig.$date.debug";
 
-Amanda::Util::setup_application("amserverconfig", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amserverconfig", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 unless ( -e "$tmpdir" ) {

@@ -62,7 +62,7 @@ sub user_msg {
     }
 }
 
-Amanda::Util::setup_application("amlabel", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amlabel", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my ($opt_force, $opt_config, $opt_slot, $opt_label);

@@ -385,7 +385,7 @@ use Amanda::Config qw( :init );
 our $exit_status = 0;
 
 sub main {
-    Amanda::Util::setup_application("amdumpd", "server", $CONTEXT_DAEMON);
+    Amanda::Util::setup_application("amdumpd", "server", $CONTEXT_DAEMON, "amanda", "amanda");
     config_init($CONFIG_INIT_GLOBAL, undef);
     Amanda::Debug::debug_dup_stderr_to_debug();
 

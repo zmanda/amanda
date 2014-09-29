@@ -58,12 +58,13 @@ my $_ptype;
 my $_pcontext;
 
 sub setup_application {
-    my ($name, $type, $context) = @_;
+    my ($name, $type, $context, $component, $module) = @_;
 
     # sanity check
     croak("no name given") unless ($name);
     croak("no type given") unless ($type);
     croak("no context given") unless ($context);
+    croak("no component given") unless ($component);
 
     # store these as perl values
     $_pname = $name;
@@ -74,6 +75,8 @@ sub setup_application {
     set_pname($name);
     set_ptype($type);
     set_pcontext($context);
+    set_pcomponent($component);
+    set_pmodule($module);
 
     safe_cd(); # (also sets umask)
     check_std_fds();
@@ -805,6 +808,12 @@ void set_ptype(char *type);
 char *get_ptype();
 void set_pcontext(pcontext_t context);
 pcontext_t get_pcontext();
+void set_pcomponent(char *component);
+char *get_pcomponent();
+void set_pmodule(char *module);
+char *get_pmodule();
+void push_component_module(char *component, char *module);
+void pop_component_module(void);
 void safe_cd(void);
 
 void check_running_as(running_as_flags who);

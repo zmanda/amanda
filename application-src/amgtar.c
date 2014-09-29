@@ -343,6 +343,8 @@ main(
     safe_fd(3, 2);
 
     set_pname("amgtar");
+    set_pcomponent("application");
+    set_pmodule("amgtar");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);

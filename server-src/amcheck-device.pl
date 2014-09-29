@@ -35,7 +35,7 @@ use Amanda::Taper::Scan;
 use Amanda::Interactivity;
 use Getopt::Long;
 
-Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amcheck-device", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $overwrite = 0;

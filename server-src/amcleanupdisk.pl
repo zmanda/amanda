@@ -41,7 +41,7 @@ sub usage() {
     exit 1;
 }
 
-Amanda::Util::setup_application("amcleanupdisk", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amcleanupdisk", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 

@@ -157,6 +157,8 @@ sub new {
     $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};
     $self->{'process'} = Amanda::Util::get_pname() if !defined $self->{'process'};
     $self->{'running_on'} = Amanda::Config::get_running_on() if !defined $self->{'running_on'};
+    $self->{'component'} = Amanda::Util::get_pcomponent() if !defined $self->{'component'};
+    $self->{'module'} = Amanda::Util::get_pmodule() if !defined $self->{'module'};
 
     Amanda::Debug::debug("$params{'source_filename'}:$params{'source_line'}:$self->{'severity'}:$self->{'code'} $self->{'message'}");
 

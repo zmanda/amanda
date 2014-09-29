@@ -46,7 +46,7 @@ EOF
     exit 1;
 }
 
-Amanda::Util::setup_application("amflush", "server", $CONTEXT_DAEMON);
+Amanda::Util::setup_application("amflush", "server", $CONTEXT_DAEMON, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my @config_overrides_opts;

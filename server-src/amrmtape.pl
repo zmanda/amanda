@@ -98,7 +98,7 @@ sub vlog(@) {
     }
 }
 
-Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 

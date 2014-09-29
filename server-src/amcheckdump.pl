@@ -51,7 +51,7 @@ EOF
 
 ## Application initialization
 
-Amanda::Util::setup_application("amcheckdump", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amcheckdump", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $exit_code = 0;
 

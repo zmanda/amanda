@@ -331,6 +331,33 @@ void set_pcontext(pcontext_t context);
  */
 pcontext_t get_pcontext(void);
 
+/* Set the process's component
+ *
+ * @param component: the new component
+ */
+void set_pcomponent(char *component);
+
+/* Get the process's component
+ *
+ * @returns: the component
+ */
+char *get_pcomponent(void);
+
+/* Set the process's module
+ *
+ * @param module: the new module
+ */
+void set_pmodule(char *module);
+
+/* Get the process's module
+ *
+ * @returns: the module
+ */
+char *get_pmodule(void);
+
+void push_component_module(char *component, char *module);
+void pop_component_module(void);
+
 /*
  * Readline support
  *

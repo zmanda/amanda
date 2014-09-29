@@ -28,7 +28,7 @@ use Amanda::Logfile qw( log_rename get_current_log_timestamp $amanda_log_trace_l
 use Amanda::Debug qw( debug );
 use Getopt::Long;
 
-Amanda::Util::setup_application("amlogroll", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amlogroll", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 

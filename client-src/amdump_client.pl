@@ -32,7 +32,7 @@ use Amanda::Paths;
 use Amanda::Util qw ( match_disk );
 use Amanda::Debug qw( debug );
 
-Amanda::Util::setup_application("amdump_client", "client", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amdump_client", "client", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config;
 my $config_overrides = new_config_overrides($#ARGV+1);

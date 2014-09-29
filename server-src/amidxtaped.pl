@@ -895,7 +895,7 @@ sub fetchdump_done {
     Amanda::MainLoop::quit();
 }
 
-Amanda::Util::setup_application("amidxtaped", "server", $CONTEXT_DAEMON);
+Amanda::Util::setup_application("amidxtaped", "server", $CONTEXT_DAEMON, "amanda", "amanda");
 config_init($CONFIG_INIT_GLOBAL, undef);
 Amanda::Debug::debug_dup_stderr_to_debug();
 

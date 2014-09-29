@@ -65,6 +65,10 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'dumps' => [],
 		'process' => 'Amanda::Rest::Dumps',
 		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+		'component' => 'rest-server',
+		'module' => 'amanda',
                 'code' => '2600000'
           },
         ],
@@ -165,6 +169,8 @@ is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
+	    'component' => 'rest-server',
+	    'module' => 'amanda',
             'code' => '2600000'
           }
          ],
@@ -214,6 +220,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
+	    'component' => 'rest-server',
+	    'module' => 'amanda',
             'code' => '2600000'
           }
          ],
@@ -263,6 +271,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
+	    'component' => 'rest-server',
+	    'module' => 'amanda',
             'code' => '2600000'
           }
          ],
@@ -279,6 +289,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
+	    'component' => 'rest-server',
+	    'module' => 'amanda',
             'code' => '2600000'
           }
          ],

@@ -40,7 +40,7 @@ use Amanda::Disklist;
 use Amanda::Curinfo;
 
 
-Amanda::Util::setup_application("amadmin_perl", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amadmin_perl", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 

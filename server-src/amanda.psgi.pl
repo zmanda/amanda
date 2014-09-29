@@ -53,7 +53,7 @@ use Amanda::JSON::Report;
 use Amanda::JSON::Status;
 use Amanda::JSON::Tapelist;
 
-Amanda::Util::setup_application("amjson-server", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amjson-server", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 Amanda::Config::config_init(CONFIG_INIT_GLOBAL, undef);
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 

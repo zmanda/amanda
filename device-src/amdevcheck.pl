@@ -89,7 +89,7 @@ EOF
 
 ## Application initialization
 
-Amanda::Util::setup_application("amdevcheck", "server", $CONTEXT_SCRIPTUTIL);
+Amanda::Util::setup_application("amdevcheck", "server", $CONTEXT_SCRIPTUTIL, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $getproplist;

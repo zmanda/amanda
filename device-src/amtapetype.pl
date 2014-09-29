@@ -667,7 +667,7 @@ EOF
 
 ## Application initialization
 
-Amanda::Util::setup_application("amtapetype", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amtapetype", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 config_init(0, undef);
 
 my $config_overrides = new_config_overrides($#ARGV+1);

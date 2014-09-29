@@ -268,7 +268,7 @@ sub conf_param {
     }
 }
 
-Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
+Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL, "amanda", "amanda");
 
 ## Command-line parsing
 

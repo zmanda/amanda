@@ -31,7 +31,7 @@ use Amanda::Debug qw( debug );
 use Amanda::Taper::Controller;
 use Getopt::Long;
 
-Amanda::Util::setup_application("taper", "server", $CONTEXT_DAEMON);
+Amanda::Util::setup_application("taper", "server", $CONTEXT_DAEMON, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $opt_storage_name;

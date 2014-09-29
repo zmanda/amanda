@@ -1568,7 +1568,11 @@ property_add_to_argv(
 
 static char *pname = NULL;
 static char *ptype = NULL;
-static pcontext_t pcontext = CONTEXT_DEFAULT; 
+static pcontext_t pcontext = CONTEXT_DEFAULT;
+static char *pcomponent = NULL;
+static char *pmodule = NULL;
+static GQueue *component_stack;
+static GQueue *module_stack;
 
 void
 set_pname(char *p)
@@ -1609,6 +1613,58 @@ get_pcontext(void)
 {
     return pcontext;
 }
+
+void
+set_pcomponent(char *component)
+{
+    g_free(pcomponent);
+    pcomponent = g_strdup(component);
+}
+
+char *
+get_pcomponent(void)
+{
+    if (!pcomponent) pcomponent = g_strdup("amanda");
+    return pcomponent;
+}
+
+void
+set_pmodule(char *module)
+{
+    g_free(pmodule);
+    pmodule = g_strdup(module);
+}
+
+char *
+get_pmodule(void)
+{
+    if (!pmodule) pmodule = g_strdup(get_pcomponent());
+    return pmodule;
+}
+
+void
+push_component_module(
+    char *component,
+    char *module)
+{
+    if (component_stack == NULL)
+	component_stack = g_queue_new();
+    g_queue_push_head(component_stack, pcomponent);
+    pcomponent = g_strdup(component);
+
+    if (module_stack == NULL)
+	module_stack = g_queue_new();
+    g_queue_push_head(module_stack, pmodule);
+    pmodule = g_strdup(module);
+}
+
+void
+pop_component_module(void)
+{
+    pcomponent = g_queue_pop_head(component_stack);
+    pmodule = g_queue_pop_head(module_stack);
+}
+
 
 #ifdef __OpenBSD__
 void

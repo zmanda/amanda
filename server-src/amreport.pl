@@ -506,7 +506,7 @@ sub run_output {
 
 ## Application initialization
 
-Amanda::Util::setup_application("amreport", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amreport", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides( scalar(@ARGV) + 1 );
 

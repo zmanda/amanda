@@ -38,7 +38,7 @@ use Amanda::Rest::Version;
 setting log_path => "@AMANDA_DBGDIR@/amanda-rest-server-log";
 mkdir "@AMANDA_DBGDIR@/amanda-rest-server-log";
 
-Amanda::Util::setup_application("amrest-server", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amrest-server", "server", $CONTEXT_CMDLINE, "rest-server", "amanda");
 
 set serializer => 'JSON';
 #prepare_serializer_for_format;

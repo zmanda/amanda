@@ -733,7 +733,7 @@ sub show_slot {
 ##
 # main
 
-Amanda::Util::setup_application("amtape", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amtape", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 

@@ -31,7 +31,7 @@ use Amanda::Debug qw( debug );
 use Amanda::Chunker::Controller;
 use Getopt::Long;
 
-Amanda::Util::setup_application("chunker", "server", $CONTEXT_DAEMON);
+Amanda::Util::setup_application("chunker", "server", $CONTEXT_DAEMON, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 

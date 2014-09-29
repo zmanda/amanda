@@ -53,7 +53,7 @@ EOF
 ##
 # main
 
-Amanda::Util::setup_application("amrestore", "server", $CONTEXT_CMDLINE);
+Amanda::Util::setup_application("amrestore", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
 
