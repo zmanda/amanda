@@ -89,6 +89,7 @@ sub last_use_label {
     my $self = shift;
 
     my $tles = $self->{'tapelist'}->{tles};
+    return undef if !defined $tles->[0];
     my $label = $tles->[0]->{'label'};
 }
 
