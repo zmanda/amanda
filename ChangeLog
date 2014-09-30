@@ -1,4 +1,7 @@
 2014-09-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/file.c (debug_agets): Fix parsing of comment.
+
+2014-09-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scan/lexical.pm,
 	  perl/Amanda/Taper/Scan/oldest.pm (last_use_label): Fix for empty
 	  tapelist.

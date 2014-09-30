@@ -426,6 +426,16 @@ debug_agets(
     (void)lineno;	/* Quiet unused parameter warning if not debugging */
 
     while ((ch = fgetc(stream)) != EOF) {
+
+	if (ch == '#' && !escape && !inquote) {
+	    // consume to the end of line.
+	    ch = fgetc(stream);
+	    while (ch != EOF && ch != '\n') {
+		ch = fgetc(stream);
+	    }
+	    break;
+	}
+
 	if (ch == '\n') {
 	    if (!inquote) {
 		if (escape) {
@@ -442,7 +452,7 @@ debug_agets(
 	    escape = !escape;
 	} else {
 	    if (ch == '"') {
-		if (!escape) 
+		if (!escape)
 		    inquote = !inquote;
 	    }
 	    escape = 0;
