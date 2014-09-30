@@ -1,3 +1,8 @@
+2014-09-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scan/lexical.pm,
+	  perl/Amanda/Taper/Scan/oldest.pm (last_use_label): Fix for empty
+	  tapelist.
+
 2014-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Dles.pl: Fix for new message format.
 
