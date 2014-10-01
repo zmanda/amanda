@@ -29,6 +29,7 @@ use Amanda::Header;
 use Amanda::MainLoop;
 use Amanda::Tapelist;
 use Amanda::Label;
+use Amanda::Util qw( match_datestamp );
 use Amanda::Rest::Configs;
 use Symbol;
 use Data::Dumper;
@@ -48,6 +49,13 @@ You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the s
 
  request:
   GET /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels
+  You can filter the labels listed with the following query arguments:
+            config=CONF
+            datestamp=datastamp_range
+            storage=STORAGE
+            meta=META
+            pool=POOL
+            reuse=0|1
 
  reply:
   HTTP status: 200 OK
@@ -523,13 +531,14 @@ sub list {
 	return \@result_messages;
     }
     my @tles = @{$tl->{'tles'}};
-    @tles = grep {defined $_->{'storage'} and $_->{'storage'} eq $params{'STORAGE'}} @tles if $params{'STORAGE'};
-    @tles = grep {                            $_->{'label'}   eq $params{'LABEL'}}   @tles if $params{'LABEL'};
-    @tles = grep {defined $_->{'config'}  and $_->{'config'}  eq $params{'config'}}  @tles if $params{'config'};
-    @tles = grep {defined $_->{'storage'} and $_->{'storage'} eq $params{'storage'}} @tles if $params{'storage'};
-    @tles = grep {defined $_->{'pool'}    and $_->{'pool'}    eq $params{'pool'}}    @tles if $params{'pool'};
-    @tles = grep {defined $_->{'meta'}    and $_->{'meta'}    eq $params{'meta'}}    @tles if $params{'meta'};
-    @tles = grep {                            $_->{'reuse'}   eq $params{'reuse'}}   @tles if $params{'reuse'};
+    @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'STORAGE'}}                    @tles if $params{'STORAGE'};
+    @tles = grep {                              $_->{'label'}   eq $params{'LABEL'}}                      @tles if $params{'LABEL'};
+    @tles = grep {defined $_->{'config'}    and $_->{'config'}  eq $params{'config'}}                     @tles if $params{'config'};
+    @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'storage'}}                    @tles if $params{'storage'};
+    @tles = grep {defined $_->{'pool'}      and $_->{'pool'}    eq $params{'pool'}}                       @tles if $params{'pool'};
+    @tles = grep {defined $_->{'meta'}      and $_->{'meta'}    eq $params{'meta'}}                       @tles if $params{'meta'};
+    @tles = grep {                              $_->{'reuse'}   eq $params{'reuse'}}                      @tles if $params{'reuse'};
+    @tles = grep {defined $_->{'datestamp'} and match_datestamp($params{'datestamp'}, $_->{'datestamp'})} @tles if defined $params{'datestamp'};
     push @result_messages, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

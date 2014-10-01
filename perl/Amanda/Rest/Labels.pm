@@ -21,6 +21,7 @@ package Amanda::Rest::Labels;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Rest::Configs;
 use Amanda::Tapelist;
+use Amanda::Util qw( match_datestamp );
 use Symbol;
 use Data::Dumper;
 use vars qw(@ISA);
@@ -39,6 +40,7 @@ Amanda::Rest::Labels -- Rest interface to get a list of labels
   GET /amanda/v1.0/configs/:CONF/labels
   you can filter the labels listed with the following query arguments:
             config=CONF
+            datestamp=datestamp=datastamp_range
             storage=STORAGE
             meta=META
             pool=POOL
@@ -113,11 +115,12 @@ sub list {
 	return \@result_messages;
     }
     @tles = @{$tl->{'tles'}};
-    @tles = grep {defined $_->{'config'}  and $_->{'config'}  eq $params{'config'}}  @tles if defined $params{'config'};
-    @tles = grep {defined $_->{'storage'} and $_->{'storage'} eq $params{'storage'}} @tles if defined $params{'storage'};
-    @tles = grep {defined $_->{'pool'}    and $_->{'pool'}    eq $params{'pool'}}    @tles if defined $params{'pool'};
-    @tles = grep {defined $_->{'meta'}    and $_->{'meta'}    eq $params{'meta'}}    @tles if defined $params{'meta'};
-    @tles = grep {defined $_->{'reuse'}   and $_->{'reuse'}   eq $params{'reuse'}}   @tles if defined $params{'reuse'};
+    @tles = grep {defined $_->{'config'}    and $_->{'config'}  eq $params{'config'}}                     @tles if defined $params{'config'};
+    @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'storage'}}                    @tles if defined $params{'storage'};
+    @tles = grep {defined $_->{'pool'}      and $_->{'pool'}    eq $params{'pool'}}                       @tles if defined $params{'pool'};
+    @tles = grep {defined $_->{'meta'}      and $_->{'meta'}    eq $params{'meta'}}                       @tles if defined $params{'meta'};
+    @tles = grep {defined $_->{'reuse'}     and $_->{'reuse'}   eq $params{'reuse'}}                      @tles if defined $params{'reuse'};
+    @tles = grep {defined $_->{'datestamp'} and match_datestamp($params{'datestamp'}, $_->{'datestamp'})} @tles if defined $params{'datestamp'};
     push @result_messages, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
