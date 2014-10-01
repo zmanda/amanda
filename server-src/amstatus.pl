@@ -430,28 +430,30 @@ if ($opt_stats) {
 		   $status->{'busy'}->{$key}->{'percent'};
 	}
 
-	for (my $d = 0; $d < @{$status->{'dumpers_actives'}}; $d++) {
-	    my $l = sprintf "%2d dumper%s busy%s : %8s  (%6.2f%%)", $d,
-		($d == 1) ? "" : "s",
-		($d == 1) ? " " : "",
+	if (defined $status->{'dumpers_actives'}) {
+	    for (my $d = 0; $d < @{$status->{'dumpers_actives'}}; $d++) {
+		my $l = sprintf "%2d dumper%s busy%s : %8s  (%6.2f%%)", $d,
+			($d == 1) ? "" : "s",
+			($d == 1) ? " " : "",
 		&busytime($status->{'busy_dumper'}->{$d}->{'time'}),
 		$status->{'busy_dumper'}->{$d}->{'percent'};
-	    print "$l";
-	    my $s1 = "";
-	    my $s2 = " " x length($l);
+		print "$l";
+		my $s1 = "";
+		my $s2 = " " x length($l);
 
-	    if (defined $status->{'busy_dumper'}->{$d}->{'status'}) {
-		foreach my $key (sort keys %{$status->{'busy_dumper'}->{$d}->{'status'}}) {
-		    printf "%s%20s: %8s  (%6.2f%%)\n",
+		if (defined $status->{'busy_dumper'}->{$d}->{'status'}) {
+		    foreach my $key (sort keys %{$status->{'busy_dumper'}->{$d}->{'status'}}) {
+			printf "%s%20s: %8s  (%6.2f%%)\n",
 			    $s1,
 			    $key,
 			    &busytime($status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'}),
 			    $status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'};
-		    $s1 = $s2;
+			$s1 = $s2;
+		    }
 		}
-	    }
-	    if ($s1 eq "") {
-		print "\n";
+		if ($s1 eq "") {
+		    print "\n";
+		}
 	    }
 	}
     }

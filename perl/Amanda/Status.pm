@@ -536,6 +536,7 @@ sub parse {
 			    push @datestamp, $datestamp;
 			}
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = 1;
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
 			$self->{'storage'}->{$storage}->{'taper'} = $taper;
 		    } elsif ($line[6] eq "START-SCAN") {
 			#7:name 8:handle
@@ -851,31 +852,59 @@ sub parse {
 			    $size = $3/1024
 			}
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
-			if ($dle->{'status'} == $IDLE) {
-			} elsif ($dle->{'status'} == $DUMP_DONE) {
-			} elsif ($dle->{'status'} == $DUMP_FAILED) {
-			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
-			    $dle->{'status'} = $DUMP_TO_TAPE_DONE;
-			} elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
-			    $dle->{'status'} = $DUMP_TO_TAPE_FAILED;
-			} elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
-			    $dle->{'status'} = $DUMP_WILL_RETRY;
-			} else {
-			    die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
-			}
 			my $dlet = $dle->{'storage'}->{$storage};
-			if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
-			    $dlet->{'status'} = $DUMP_TO_TAPE_DONE;
-			} elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
-			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
-			} elsif ($dlet->{'status'} == $DUMP_TO_TAPE_RETRY) {
-			    $dlet->{'status'} = $DUMP_WILL_RETRY;
-			} elsif ($dlet->{'status'} == $WRITING) {
-			    $dlet->{'status'} = $WRITE_DONE;
-			} elsif ($dlet->{'status'} == $FLUSHING) {
-			    $dlet->{'status'} = $FLUSH_DONE;
+			if ($line[6] eq "DONE") {
+			    if ($dle->{'status'} == $IDLE) {
+			    } elsif ($dle->{'status'} == $DUMP_DONE) {
+			    } elsif ($dle->{'status'} == $DUMP_FAILED) {
+			    } elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				$dle->{'status'} = $DUMP_TO_TAPE_DONE;
+			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
+				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
+				$dle->{'status'} = $DUMP_WILL_RETRY;
+			    } else {
+				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
+			    }
+			    if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				$dlet->{'status'} = $DUMP_TO_TAPE_DONE;
+			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
+				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_RETRY) {
+				$dlet->{'status'} = $DUMP_WILL_RETRY;
+			    } elsif ($dlet->{'status'} == $WRITING) {
+				$dlet->{'status'} = $WRITE_DONE;
+			    } elsif ($dlet->{'status'} == $FLUSHING) {
+				$dlet->{'status'} = $FLUSH_DONE;
+			    } else {
+				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
+			    }
 			} else {
-			    die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
+			    if ($dle->{'status'} == $IDLE) {
+			    } elsif ($dle->{'status'} == $DUMP_DONE) {
+			    } elsif ($dle->{'status'} == $DUMP_FAILED) {
+			    } elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
+				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
+				$dle->{'status'} = $DUMP_WILL_RETRY;
+			    } else {
+				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
+			    }
+			    if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				$dlet->{'status'} = $WAIT_FOR_DUMPING;
+			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
+				$dlet->{'status'} = $WAIT_FOR_DUMPING;
+			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_RETRY) {
+				$dlet->{'status'} = $DUMP_WILL_RETRY;
+			    } elsif ($dlet->{'status'} == $WRITING) {
+				$dlet->{'status'} = $WAIT_FOR_WRITING;
+			    } elsif ($dlet->{'status'} == $FLUSHING) {
+				$dlet->{'status'} = $WAIT_FOR_FLUSHING;
+			    } else {
+				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
+			    }
 			}
 			$self->{'busy_time'}->{$taper} += ($self->{'current_time'} - $dlet->{'taper_time'});
 			$dlet->{'taper_time'} = $self->{'current_time'};
@@ -1487,19 +1516,21 @@ sub set_summary {
 		 ($self->{'busy_time'}->{$key} * 1.0 / $total_time) * 100;
 	}
 
-	for (my $d = 0; $d < @{$self->{'dumpers_actives'}}; $d++) {
-	    $self->{'busy_dumper'}->{$d}->{'time'} =
-		     $self->{'dumpers_actives'}[$d];
-	    $self->{'busy_dumper'}->{$d}->{'percent'} =
-		     ($self->{'dumpers_actives'}[$d] * 1.0 / $total_time) * 100;
+	if (defined $self->{'dumpers_actives'}) {
+	    for (my $d = 0; $d < @{$self->{'dumpers_actives'}}; $d++) {
+		$self->{'busy_dumper'}->{$d}->{'time'} =
+			$self->{'dumpers_actives'}[$d];
+		$self->{'busy_dumper'}->{$d}->{'percent'} =
+			($self->{'dumpers_actives'}[$d] * 1.0 / $total_time) * 100;
 
-	    foreach my $key (keys %{$self->{'dumpers_held'}[$d]}) {
-		next unless $self->{'dumpers_held'}[$d]{$key} >= 1;
-		$self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'} =
-		     $self->{'dumpers_held'}[$d]{$key};
-		$self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'} =
-		     ($self->{'dumpers_held'}[$d]{$key} * 1.0 /
-		      $self->{'dumpers_actives'}[$d]) * 100;
+		foreach my $key (keys %{$self->{'dumpers_held'}[$d]}) {
+		    next unless $self->{'dumpers_held'}[$d]{$key} >= 1;
+		    $self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'} =
+			$self->{'dumpers_held'}[$d]{$key};
+		    $self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'} =
+			($self->{'dumpers_held'}[$d]{$key} * 1.0 /
+			 $self->{'dumpers_actives'}[$d]) * 100;
+		}
 	    }
 	}
     }
