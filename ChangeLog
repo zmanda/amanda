@@ -1,4 +1,8 @@
 2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Runs.pm (/amanda/v1.0/configs/:CONF/runs/messages):
+	  change from post to get method.
+
+2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Amanda/bin/app.pl.in
 	  (/amanda/v1.0/configs/:CONF/runs/messages): change from post to get
 	  method.

@@ -185,7 +185,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
 =item Get messages for amcheckdump
 
  request:
-  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
+  GET localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
     query argument:
         message_filename=MESAGE_FILENAME
 
@@ -280,7 +280,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
 =item Get messages for amfetchdump
 
  request:
-  POST localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
+  GET localhost:5000/amanda/v1.0/configs/:CONFIG/runs/messages
     query argument:
         message_filename=MESAGE_FILENAME
 
