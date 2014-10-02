@@ -253,7 +253,7 @@ sub list {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1500004,
-				severity => $Amanda::Message::SUCCESS);
+				severity => $Amanda::Message::ERROR);
 	    Dancer::status(404);
 	}
     }
