@@ -177,7 +177,8 @@ sub setting {
 	push @result_messages, Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code         => 1400009);
+			code         => 1400009,
+			severity     => $Amanda::Message::ERROR);
 	Dancer::status(404);
 	return \@result_messages;
     }
@@ -190,6 +191,7 @@ sub setting {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
+			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
 	return \@result_messages;
@@ -203,6 +205,7 @@ sub setting {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400007,
+			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			host         => $params{'HOST'});
 	return \@result_messages;
@@ -215,6 +218,7 @@ sub setting {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400008,
+			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			host         => $params{'HOST'},
 			disk         => $params{'disk'});
@@ -232,7 +236,8 @@ sub setting {
 	push @result_messages, Amanda::Curinfo::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code         => 1300030);
+			code         => 1300030,
+			severity     => $Amanda::Message::ERROR);
 	return \@result_messages;
     }
 
@@ -245,7 +250,8 @@ sub setting {
 	push @result_messages, Amanda::Curinfo::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code         => 1300031);
+			code         => 1300031,
+			severity     => $Amanda::Message::ERROR);
 	return \@result_messages;
     }
 

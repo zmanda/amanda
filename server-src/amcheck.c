@@ -949,7 +949,7 @@ start_server_check(
     set_root_privs(-1);
 
     delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800027, MSG_ERROR, 0)));
+			__FILE__, __LINE__, 2800027, MSG_INFO, 0)));
     if (!opt_message) {
 	fprintf(outf, "-----------------------------\n");
     }

@@ -63,6 +63,7 @@ sub version {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1550000,
+				severity => $Amanda::Message::SUCCESS,
 				VERSION  => $Amanda::Constants::VERSION,
 				BUILT_DATE => $Amanda::Constants::BUILT_DATE,
 				BUILT_REV => $Amanda::Constants::BUILT_REV,

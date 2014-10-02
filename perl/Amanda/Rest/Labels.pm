@@ -97,6 +97,7 @@ sub init {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1600000,
+				severity => $Amanda::Message::ERROR,
 				tapefile => $filename);
     }
     return $tl;
@@ -125,6 +126,7 @@ sub list {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1600001,
+				severity => $Amanda::Message::SUCCESS,
 				tles => \@tles);
     return \@result_messages;
 }

@@ -60,7 +60,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dumps");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
-                'severity' => '16',
+                'severity' => '1',
                 'message' => "The dumps",
 		'dumps' => [],
 		'process' => 'Amanda::Rest::Dumps',
@@ -165,7 +165,7 @@ is_deeply (sort_reply(Installcheck::Rest::remove_source_line($reply)),
                            'storage' => 'HOLDING'
                          }
                        ],
-            'severity' => '16',
+            'severity' => '1',
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
@@ -216,7 +216,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                            'storage' => 'HOLDING'
                          }
                        ],
-            'severity' => '16',
+            'severity' => '1',
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
@@ -267,7 +267,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                            'storage' => 'HOLDING'
                          }
                        ],
-            'severity' => '16',
+            'severity' => '1',
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',
@@ -285,7 +285,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ { 'source_filename' => "$amperldir/Amanda/Rest/Dumps.pm",
 	    'dumps' => [],
-            'severity' => '16',
+            'severity' => '1',
             'message' => 'The dumps',
 	    'process' => 'Amanda::Rest::Dumps',
 	    'running_on' => 'amanda-server',

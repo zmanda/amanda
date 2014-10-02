@@ -431,7 +431,7 @@ sub amdump {
 	source_filename => __FILE__,
 	source_line     => __LINE__,
 	code         => 2000002,
-	severity     => $Amanda::Message::INFO);
+	severity     => $Amanda::Message::SUCCESS);
     Dancer::status(202);
 
     return \@result_messages;
@@ -481,7 +481,7 @@ sub amvault {
 	source_filename => __FILE__,
 	source_line     => __LINE__,
 	code         => 2400003,
-	severity     => $Amanda::Message::INFO);
+	severity     => $Amanda::Message::SUCCESS);
     Dancer::status(202);
 
     return \@result_messages;
@@ -501,6 +501,7 @@ sub amflush {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
+			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
     }
@@ -556,7 +557,7 @@ sub amflush {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 2200002,
-			severity     => $Amanda::Message::INFO,
+			severity     => $Amanda::Message::WARNING,
 			datestamp    => $datestamp);
 	    }
 	}
@@ -586,7 +587,7 @@ sub amflush {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 2200005,
-			severity     => $Amanda::Message::INFO);
+			severity     => $Amanda::Message::SUCCESS);
     Dancer::status(202);
 
     return \@result_messages;
@@ -606,6 +607,7 @@ sub checkdump {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
+			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
     }
@@ -635,13 +637,13 @@ sub checkdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 2700018,
-		severity         => $Amanda::Message::INFO);
+		severity         => $Amanda::Message::SUCCESS);
 	push @result_messages, Amanda::CheckDump::Message->new(
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 2700020,
-		message_filename => $checkdump->{'checkdump_log_filename'},
-		severity         => $Amanda::Message::INFO);
+		severity         => $Amanda::Message::INFO,
+		message_filename => $checkdump->{'checkdump_log_filename'});
     } else {
 	push @result_messages, Amanda::CheckDump::Message->new(
 		source_filename  => __FILE__,
@@ -684,6 +686,7 @@ sub clerk_notif_part {
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 3300003,
+		severity        => $Amanda::Message::INFO,
 		label		=> $label,
 		filenum		=> $filenum,
 		header_summary	=> $header->summary()));
@@ -697,6 +700,7 @@ sub clerk_notif_holding {
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 3300004,
+		severity        => $Amanda::Message::INFO,
 		holding_file	=> $filename,
 		header_summary	=> $header->summary()));
 }
@@ -717,6 +721,7 @@ sub fetchdump {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
+			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
     }
@@ -745,7 +750,7 @@ sub fetchdump {
 					source_filename	=> __FILE__,
 					source_line	=> __LINE__,
 					code		=> 3300060,
-					severity	=> $Amanda::Message::INFO,
+					severity	=> $exit_status == 0 ? $Amanda::Message::SUCCESS : $Amanda::Message::ERROR,
 					exit_status	=> $exit_status));
 				Amanda::MainLoop::quit(); };
 	Amanda::MainLoop::call_later(sub { $fetchdump->restore(
@@ -784,7 +789,7 @@ sub fetchdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 3300057,
-		severity         => $Amanda::Message::INFO);
+		severity         => $Amanda::Message::SUCCESS);
 	push @result_messages, Amanda::FetchDump::Message->new(
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
@@ -824,9 +829,9 @@ sub messages {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 2700023,
+		severity         => $Amanda::Message::ERROR,
 		message_filename => $params{'message_filename'},
-		errno            => $!,
-		severity         => $Amanda::Message::ERROR);
+		errno            => $!);
 	return \@result_messages;
     }
 
@@ -913,6 +918,7 @@ sub list {
 			source_filename  => __FILE__,
 			source_line      => __LINE__,
 			code             => 2000004,
+			severity         => $Amanda::Message::INFO,
 			run_type         => $run_type,
 			timestamp        => $timestamp,
 			amdump_log       => $logfile,
@@ -923,6 +929,7 @@ sub list {
 			source_filename  => __FILE__,
 			source_line      => __LINE__,
 			code             => 2000004,
+			severity         => $Amanda::Message::INFO,
 			run_type         => $run_type,
 			timestamp        => $timestamp,
 			message_file     => $logfile,

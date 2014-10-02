@@ -140,6 +140,7 @@ sub list {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2600000,
+				severity => $Amanda::Message::SUCCESS,
 				dumps           => \@dumps);
     return \@result_messages;
 }

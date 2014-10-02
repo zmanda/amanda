@@ -170,7 +170,8 @@ sub create {
     $params{'finished_cb'}->(undef, Amanda::Changer::Message->new(
 		source_filename => __FILE__,
 		source_line     => __LINE__,
-		code    => 1100028));
+		code    => 1100028,
+		severity => $Amanda::Message::SUCCESS));
 }
 
 sub load {
@@ -338,6 +339,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100020,
+				severity => $Amanda::Message::INFO,
 				slot  => $slot,
 				label => $label));
 	    # ok, now erase all knowledge of that label
@@ -397,6 +399,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100022,
+				severity => $Amanda::Message::WARNING,
 				slot  => $slot));
 	    return $steps->{'update_slot'}->();
 	}
@@ -406,6 +409,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100021,
+				severity => $Amanda::Message::INFO,
 				slot  => $slot));
 	    my $unaliased = $self->{unaliased}->{$slot};
 	    delete $state->{slots}->{$unaliased};
@@ -415,6 +419,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100019,
+				severity => $Amanda::Message::INFO,
 				slot => $slot));
 	    $params{'slot'} = $slot;
 	    $params{'res_cb'} = $steps->{'slot_loaded'};
@@ -437,6 +442,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100020,
+				severity => $Amanda::Message::INFO,
 				slot  => $slot,
 				label => $label));
 	} else {
@@ -445,6 +451,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100023,
+				severity => $Amanda::Message::INFO,
 				slot  => $slot,
 				dev_status => $status));
 	}

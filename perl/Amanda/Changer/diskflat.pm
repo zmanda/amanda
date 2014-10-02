@@ -175,6 +175,7 @@ sub create {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100026,
+		severity => $Amanda::Message::ERROR,
 		dir     => $self->{'dir'},
 		error   => $!,
 		reason  => "unknown");
@@ -183,6 +184,7 @@ sub create {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100027,
+		severity => $Amanda::Message::SUCCESS,
 		dir     => $self->{'dir'}));
 }
 
@@ -408,6 +410,7 @@ sub _load_by_slot {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100033,
+		severity => $Amanda::Message::ERROR,
 		reason => "invalid",
 		slot   => $slot);
     }
@@ -443,6 +446,7 @@ sub _load_by_label {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100035,
+		severity => $Amanda::Message::ERROR,
 		label => $label,
 		reason => "notfound");
     }
@@ -488,6 +492,7 @@ sub _make_res {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code      => 1100066,
+			severity  => $Amanda::Message::ERROR,
 			reason    => "invalid",
 			label     => $label,
 			slot      => $slot,

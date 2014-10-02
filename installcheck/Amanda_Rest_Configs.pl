@@ -68,7 +68,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
-		'severity' => '16',
+		'severity' => '8',
 		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -127,7 +127,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'severity' => '16',
+		'severity' => '1',
 		'message' => 'config name',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -164,7 +164,7 @@ if (@conf > 0) {
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'severity' => '16',
+		'severity' => '1',
 		'message' => 'config name',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -235,7 +235,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'code' => '1500007'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '16',
+		'severity' => '1',
 		'result' => {
 			'tapecycle' => 3 },
 		'message' => 'Parameters values',
@@ -255,7 +255,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=r
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '16',
+		'severity' => '1',
 		'result' => {
 			'tapecycle' => 3,
 			'runtapes' => 1},

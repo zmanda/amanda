@@ -24,12 +24,12 @@
  */
 
 typedef struct message_s message_t;
-#define MSG_ERROR	32
-#define MSG_CRITICAL	16
+#define MSG_CRITICAL	32
+#define MSG_ERROR	16
 #define MSG_WARNING	8
 #define MSG_MESSAGE	4
 #define MSG_INFO	2
-#define MSG_DEBUG	1
+#define MSG_SUCCESS	1
 
 void
 delete_message(

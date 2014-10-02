@@ -108,6 +108,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500017,
+				severity  => $Amanda::Message::ERROR,
 				changer   => $changer_name);
 	return \@result_messages;
     }
@@ -127,6 +128,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code       => 1500018,
+				severity  => $Amanda::Message::ERROR,
 				changer    => $changer_name,
 				parameters => \@no_parameters);
     }
@@ -135,6 +137,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500019,
+				severity  => $Amanda::Message::SUCCESS,
 				changer    => $changer_name,
 				result    => \%values);
     }
@@ -143,7 +146,8 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				changer   => $changer_name,
-				code      => 1500009);
+				code      => 1500009,
+				severity  => $Amanda::Message::ERROR);
     }
     return \@result_messages;
 }
@@ -160,12 +164,14 @@ sub list {
         push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code       => 1500020);
+				code       => 1500020,
+				severity  => $Amanda::Message::ERROR);
     } else {
         push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code       => 1500021,
+				severity  => $Amanda::Message::SUCCESS,
 				changer    => \@changer);
     }
 

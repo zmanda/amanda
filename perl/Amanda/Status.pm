@@ -1656,6 +1656,7 @@ sub current {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code   => 1800000,
+		severity => $Amanda::Message::INFO,
 		status => $data);
 }
 

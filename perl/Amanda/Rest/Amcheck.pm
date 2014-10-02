@@ -198,7 +198,7 @@ sub check {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code            => 2850000,
-		severity	=> $exit_code == 0 ? $Amanda::Message::INFO : $Amanda::Message::ERROR,
+		severity	=> $exit_code == 0 ? $Amanda::Message::SUCCESS : $Amanda::Message::ERROR,
 		exit_code       => $exit_code);
 
     #remove last comma in $buf

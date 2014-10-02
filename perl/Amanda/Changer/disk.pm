@@ -149,6 +149,7 @@ sub create {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100026,
+		severity => $Amanda::Message::ERROR,
 		dir     => $self->{'dir'},
 		error   => $!,
 		reason  => "unknown");
@@ -157,6 +158,7 @@ sub create {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100027,
+		severity => $Amanda::Message::SUCCESS,
 		dir     => $self->{'dir'}));
 }
 

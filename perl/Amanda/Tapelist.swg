@@ -260,6 +260,7 @@ sub _read_tapelist {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code    => 1600002,
+			severity => $Amanda::Message::ERROR,
 			tapelist_filename => $self->{'filename'},
 			linenum => $linenum,
 			line    => $line);
@@ -301,8 +302,8 @@ sub _read_tapelist {
 	    return Amanda::Tapelist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			severity => $Amanda::Message::WARNING,
 			code    => 1600003,
+			severity => $Amanda::Message::WARNING,
 			tapelist_filename => $self->{'filename'},
 			label   => $label);
 	}

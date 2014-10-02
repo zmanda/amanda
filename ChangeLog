@@ -1,4 +1,31 @@
 2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.h: Change severity values.
+	* perl/Amanda/Message.pm: Change severity values.
+	* perl/Amanda/Changer.pm, perl/Amanda/Changer/disk.pm,
+	* perl/Amanda/Changer/diskflat.pm, perl/Amanda/Changer/multi.pm,
+	  perl/Amanda/Changer/robot.pm, perl/Amanda/Curinfo.pm,
+	  perl/Amanda/Curinfo/Info.pm, perl/Amanda/Label.pm,
+	  perl/Amanda/Recovery/Scan.pm, perl/Amanda/Rest/Amcheck.pm,
+	  perl/Amanda/Rest/Changers.pm, perl/Amanda/Rest/Configs.pm,
+	  perl/Amanda/Rest/Dles.pm, perl/Amanda/Rest/Dumps.pm,
+	  perl/Amanda/Rest/Labels.pm, perl/Amanda/Rest/Report.pm,
+	  perl/Amanda/Rest/Runs.pm, perl/Amanda/Rest/Services.pm,
+	  perl/Amanda/Rest/Storages.pm, perl/Amanda/Rest/Storages/Labels.pm,
+	  perl/Amanda/Rest/Version.pm, perl/Amanda/Status.pm,
+	  perl/Amanda/Storage.pm, perl/Amanda/Tapelist.swg,
+	  perl/Amanda/Vault.pm, server-src/amcheck.c: Set severity.
+	* installcheck/Amanda_Rest_Amcheck.pl,
+	  installcheck/Amanda_Rest_Changers.pl,
+	  installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Dles.pl,
+	  installcheck/Amanda_Rest_Dumps.pl,
+	  installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Runs.pl,
+	  installcheck/Amanda_Rest_Storages.pl,
+	  installcheck/Amanda_Rest_Storages_Labels.pl,
+	  installcheck/Amanda_Rest_Version.pl: Change for new severity values.
+
+2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Change API. Add all messages for amcheck.
 	* common-src/ammessage.h: Change prototype.
 	* server-src/amcheck.c, client-src/senddiscover.c: Use new API.

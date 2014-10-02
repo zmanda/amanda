@@ -140,7 +140,8 @@ sub config_init {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code     => 1500002);
+				code     => 1500002,
+				severity => $Amanda::Message::ERROR);
     }
 
     Amanda::Config::config_uninit();
@@ -169,6 +170,8 @@ sub config_init {
 				source_line     => __LINE__,
 				code     => $cfgerr_level == $Amanda::Config::CFGERR_WARNINGS
 						? 1500000 : 1500001,
+				severity => $cfgerr_level == $Amanda::Config::CFGERR_WARNINGS
+						? $Amanda::Message::WARNING : $Amanda::Message::ERROR,
 				cfgerror => $cfgerr);
 	}
     }
@@ -200,6 +203,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500007,
+				severity => $Amanda::Message::ERROR,
 				parameters => \@no_parameters);
     }
     if (%values) {
@@ -207,13 +211,15 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500008,
+				severity => $Amanda::Message::SUCCESS,
 				result    => \%values);
     }
     if (!@no_parameters and !%values) {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code      => 1500009);
+				code      => 1500009,
+				severity => $Amanda::Message::ERROR);
     }
     return \@result_messages;
 }
@@ -228,6 +234,7 @@ sub list {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1500006,
+				severity => $Amanda::Message::ERROR,
 				errno    => $!,
 				dir      => $Amanda::Paths::CONFIG_DIR);
 	Dancer::status(404);
@@ -239,12 +246,14 @@ sub list {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1500003,
+				severity => $Amanda::Message::SUCCESS,
 				config   => \@conf);
 	} else {
 	    push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code     => 1500004);
+				code     => 1500004,
+				severity => $Amanda::Message::SUCCESS);
 	    Dancer::status(404);
 	}
     }

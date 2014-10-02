@@ -261,6 +261,7 @@ sub create_status_file {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400008,
+				severity	=> $Amanda::Message::INFO,
 				bytes_written   => $size));
 	    }
 	}
@@ -330,15 +331,17 @@ sub setup_src {
 	    Amanda::DB::Catalog::get_latest_write_timestamp(types => ['amdump', 'amflush']);
 	if (!defined $ts) {
 	    return $self->failure(Amanda::Vault::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code            => 2400007));
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2400007,
+				severity	=> $Amanda::Message::ERROR));
 	}
 
 	$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400012,
+				severity	=> $Amanda::Message::INFO,
 				timestamp       => $ts));
     }
 
@@ -375,6 +378,7 @@ sub setup_src {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400013,
+				severity	=> $Amanda::Message::WARNING,
 				dumpspec_format => $ds->format()));
 			next;
 		    }
@@ -384,6 +388,7 @@ sub setup_src {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400014,
+				severity	=> $Amanda::Message::WARNING,
 				dumpspec_format => $ds->format()));
 			next;
 		    }
@@ -408,9 +413,10 @@ sub setup_src {
     # nothing.  We do *not* want the wildcard "vault it all!" behavior.
     if (!@dumpspecs) {
 	return $self->failure(Amanda::Vault::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code            => 2400002));
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2400002,
+				severity	=> $Amanda::Message::ERROR));
     }
 
     if (!$self->{'opt_dry_run'}) {
@@ -462,27 +468,27 @@ sub plan_cb {
 	    shift @parts; # skip partnum 0
 	    for my $part (@parts) {
 		$self->user_msg(Amanda::Vault::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code            => 2400005,
-					severity        => $Amanda::Message::INFO,
-					label           => $part->{'label'},
-					holding_file    => $part->{'holding_file'},
-					filenum         => $part->{'filenum'},
-					hostname        => $dump->{'hostname'},
-					diskname        => $dump->{'diskname'},
-					dump_timestamp  => $dump->{'dump_timestamp'},
-					level           => $dump->{'level'}));
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2400005,
+				severity        => $Amanda::Message::INFO,
+				label           => $part->{'label'},
+				holding_file    => $part->{'holding_file'},
+				filenum         => $part->{'filenum'},
+				hostname        => $dump->{'hostname'},
+				diskname        => $dump->{'diskname'},
+				dump_timestamp  => $dump->{'dump_timestamp'},
+				level           => $dump->{'level'}));
 	    }
 	    $total_kb += int $dump->{'kb'};
 	}
 
 	$self->user_msg(Amanda::Vault::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code            => 2400006,
-					severity        => $Amanda::Message::INFO,
-					total_size_kb   => $total_kb));
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2400006,
+				severity        => $Amanda::Message::INFO,
+				total_size_kb   => $total_kb));
 
 	return $self->quit(0);
     }
@@ -500,9 +506,10 @@ sub plan_cb {
 Amanda::Debug::debug("qwe " . @{$plan->{'dumps'}});
     if (@{$plan->{'dumps'}} == 0) {
 	return $self->failure(Amanda::Vault::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code            => 2400002));
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 2400002,
+				severity	=> $Amanda::Message::ERROR));
     }
 
     $self->setup_dst();
@@ -956,6 +963,7 @@ sub scribe_notif_part_done {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400015,
+				severity	=> $Amanda::Message::INFO,
 				label           => $self->{dst}->{label},
 				fileno          => $params{'fileno'},
 				header_summary  => $hdr->summary()));
@@ -1083,6 +1091,7 @@ sub clerk_notif_part {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400016,
+				severity	=> $Amanda::Message::INFO,
 				label           => $label,
 				fileno          => $fileno,
 				header_summary  => $header->summary()));
@@ -1097,6 +1106,7 @@ sub clerk_notif_holding {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2400017,
+				severity	=> $Amanda::Message::INFO,
 				holding_filename => $filename,
 				header_summary  => $header->summary()));
 }

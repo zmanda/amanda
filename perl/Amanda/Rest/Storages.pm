@@ -484,6 +484,7 @@ sub inventory {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 1100000,
+				severity	=> $Amanda::Message::SUCCESS,
 				storage_name    => $storage->{'storage_name'},
 				chg_name        => $chg->{'chg_name'},
 				inventory => $inventory) if $inventory;
@@ -569,15 +570,18 @@ sub load {
 		push @result_messages, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100001);
+					code   => 1100001,
+					severity => $Amanda::Message::ERROR);
 		return $steps->{'done'}->();
 	    }
 
 	    my $ret;
+	    my $severity;
 	    $ret->{'device_status'} = $dev->status;
 	    if ($dev->status != $DEVICE_STATUS_SUCCESS) {
 		$ret->{'device_status_error'} = $dev->status_error;
 		$ret->{'device_error'} = $dev->error;
+		$severity = $Amanda::Message::ERROR;
 	    } else {
 		my $volume_header = $dev->volume_header;
 		$ret->{'f_type'} = $volume_header->{'type'};
@@ -585,6 +589,7 @@ sub load {
 		    $ret->{'datestamp'} = $volume_header->{'datestamp'};
 		    $ret->{'label'} = $volume_header->{'name'};
 		}
+		$severity = $Amanda::Message::SUCCESS;
 	    }
 	    push @result_messages, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
@@ -592,6 +597,7 @@ sub load {
 					storage_name    => $storage->{'storage_name'},
 					chg_name        => $chg->{'chg_name'},
 					code   => 1100002,
+					severity => $severity,
 					load_result => $ret);
 
 	    return $res->release(finished_cb => $steps->{'done'});
@@ -671,7 +677,8 @@ sub reset {
 					source_line => __LINE__,
 					storage_name    => $storage->{'storage_name'},
 					chg_name        => $chg->{'chg_name'},
-					code   => 1100003);
+					code   => 1100003,
+					severity => $Amanda::Message::SUCCESS);
 	    }
 	    return $steps->{'done'}->();
 	};
@@ -752,6 +759,7 @@ sub eject {
 					storage_name    => $storage->{'storage_name'},
 					chg_name        => $chg->{'chg_name'},
 					code   => 1100004,
+					severity => $Amanda::Message::SUCCESS,
 					drive  => $params{'drive'});
 	    }
 	    return $steps->{'done'}->();
@@ -829,6 +837,7 @@ sub clean {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100005,
+					severity => $Amanda::Message::SUCCESS,
 					storage_name    => $storage->{'storage_name'},
 					chg_name        => $chg->{'chg_name'},
 					drive  => $params{'drive'});
@@ -1073,7 +1082,8 @@ sub label {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code   => 1500015);
+				code   => 1500015,
+				severity => $Amanda::Message::ERROR);
 	return \@result_messages;
     }
 
@@ -1137,6 +1147,7 @@ sub label {
 				storage_name    => $storage->{'storage_name'},
 				chg_name        => $chg->{'chg_name'},
 				code   => 1200004,
+				severity => $Amanda::Message::SUCCESS,
 				slot   => $res->{'this_slot'},
 				label  => $params{'label'},
 				device => $res->{'device'}->device_name);
@@ -1216,7 +1227,8 @@ sub update {
 				source_line     => __LINE__,
 				storage_name    => $storage->{'storage_name'},
 				chg_name        => $chg->{'chg_name'},
-				code   => 1100018);
+				code   => 1100018,
+				severity => $Amanda::Message::SUCCESS);
 	    }
 	    return $finished_cb->();
 	};
@@ -1244,6 +1256,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500010,
+				severity => $Amanda::Message::ERROR,
 				storage   => $storage_name);
 	return \@result_messages;
     }
@@ -1263,6 +1276,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code       => 1500011,
+				severity => $Amanda::Message::ERROR,
 				storage    => $storage_name,
 				parameters => \@no_parameters);
     }
@@ -1271,6 +1285,7 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500012,
+				severity => $Amanda::Message::SUCCESS,
 				storage    => $storage_name,
 				result    => \%values);
     }
@@ -1279,7 +1294,8 @@ sub fields {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				storage   => $storage_name,
-				code      => 1500009);
+				code      => 1500009,
+				severity => $Amanda::Message::WARNING);
     }
     return \@result_messages;
 }
@@ -1296,12 +1312,14 @@ sub list {
         push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code       => 1500013);
+				code       => 1500013,
+				severity => $Amanda::Message::ERROR);
     } else {
         push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code       => 1500014,
+				severity => $Amanda::Message::SUCCESS,
 				storage    => \@storage);
     }
 

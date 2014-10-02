@@ -1007,7 +1007,8 @@ sub new {
 	    my $error = Amanda::Changer::Error->new('fatal',
 		source_filename => __FILE__,
                 source_line     => __LINE__,
-                code            => 1100029);
+                code            => 1100029,
+		severity	=> $Amanda::Message::ERROR);
 	    Amanda::Util::pop_component_module();
 	    return $error;
 	}
@@ -1050,7 +1051,8 @@ sub _changer_alias_to_uri {
 	    return Amanda::Changer::Error->new('fatal',
 		source_filename => __FILE__,
                 source_line     => __LINE__,
-                code            => 1100029);
+                code            => 1100029,
+		severity	=> $Amanda::Message::ERROR);
 	}
 	$tpchanger ||= changer_config_getconf($cc, $CHANGER_CONFIG_TAPEDEV);
 
@@ -1189,6 +1191,7 @@ sub _stubop {
 	source_filename => __FILE__,
 	source_line     => __LINE__,
 	code   => 1100048,
+	severity => $Amanda::Message::ERROR,
 	chg_type => $chg_foo,
 	op     => $op,
 	reason => "notimpl");
@@ -1431,12 +1434,14 @@ sub with_locked_state {
 		    source_file => __FILE__,
 		    source_line => __LINE__,
 		    code    => 1100046,
+		    severity => $Amanda::Message::ERROR,
 		    lock_file => $statefile);
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
 		    source_file => __FILE__,
 		    source_line => __LINE__,
 		    code    => 1100047,
+		    severity => $Amanda::Message::ERROR,
 		    lock_file => $statefile);
 	}
 
@@ -1502,14 +1507,16 @@ sub label_to_slot {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100049));
+					code   => 1100049,
+					severity => $Amanda::Message::ERROR));
     }
     if (!defined $self->{'autolabel'}->{'template'} ||
 	$self->{'autolabel'}->{'template'} eq "") {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100050));
+					code   => 1100050,
+					severity => $Amanda::Message::ERROR));
     }
     my $template = $self->{'autolabel'}->{'template'};
     my $slot_digit = 1;
@@ -1527,7 +1534,8 @@ sub label_to_slot {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100051));
+					code   => 1100051,
+					severity => $Amanda::Message::ERROR));
     }
 
     my $org = getconf($CNF_ORG);
@@ -1555,7 +1563,8 @@ sub label_to_slot {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					label  => $params{'label'},
-					code   => 1100052));
+					code   => 1100052,
+					severity => $Amanda::Message::ERROR));
     }
     return $slot;
 }
@@ -1571,14 +1580,16 @@ sub make_new_tape_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100049));
+					code   => 1100049,
+					severity => $Amanda::Message::ERROR));
     }
     if (!defined $self->{'autolabel'}->{'template'} ||
 	$self->{'autolabel'}->{'template'} eq "") {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100050));
+					code   => 1100050,
+					severity => $Amanda::Message::ERROR));
     }
     my $template = $self->{'autolabel'}->{'template'};
     my $slot_digit = 1;
@@ -1622,7 +1633,8 @@ sub make_new_tape_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100053));
+					code   => 1100053,
+					severity => $Amanda::Message::ERROR));
     }
 
     if ($npercents == 0 and $nexclamations == 0) {
@@ -1636,23 +1648,27 @@ sub make_new_tape_label {
 	    return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100054));
+					code   => 1100054,
+					severity => $Amanda::Message::ERROR));
 	} elsif ($template =~ /SUBSTITUTE_SLOT/ && !defined $slot) {
 	    return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100055));
+					code   => 1100055,
+					severity => $Amanda::Message::ERROR));
 	} elsif ($label eq $template) {
 	    return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100056));
+					code   => 1100056,
+					severity => $Amanda::Message::ERROR));
 	} elsif (!$params{'label_exist'} and $tl->lookup_tapelabel($label)) {
 	    return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					label  => $label,
-					code   => 1100057), 1);
+					code   => 1100057,
+					severity => $Amanda::Message::ERROR), 1);
 	}
     } else {
 	my %existing_labels;
@@ -1714,7 +1730,8 @@ sub make_new_tape_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100058))
+					code   => 1100058,
+					severity => $Amanda::Message::ERROR))
 		if ($i >= $nlabels);
     }
 
@@ -1722,7 +1739,8 @@ sub make_new_tape_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100059));
+					code   => 1100059,
+					severity => $Amanda::Message::ERROR));
     }
 
     return $label;
@@ -1743,7 +1761,8 @@ sub make_new_meta_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100060));
+					code   => 1100060,
+					severity => $Amanda::Message::ERROR));
     }
     $template =~ s/\$\$/SUBSTITUTE_DOLLAR/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
@@ -1768,13 +1787,15 @@ sub make_new_meta_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100061));
+					code   => 1100061,
+					severity => $Amanda::Message::ERROR));
     }
     if ($npercents == 0 and $nexclamations == 0) {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100062));
+					code   => 1100062,
+					severity => $Amanda::Message::ERROR));
     } else {
 	my %existing_meta_labels =
 	    map { $_->{'meta'} => 1 } grep { defined $_->{'meta'} } @{$tl->{'tles'}};
@@ -1819,7 +1840,8 @@ sub make_new_meta_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100063))
+					code   => 1100063,
+					severity => $Amanda::Message::ERROR))
 		if ($i >= $nlabels);
     }
 
@@ -1827,7 +1849,8 @@ sub make_new_meta_label {
 	return (undef, Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1100064));
+					code   => 1100064,
+					severity => $Amanda::Message::ERROR));
     }
 
     return $meta;
@@ -1882,6 +1905,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100010,
+					severity => $Amanda::Message::INFO,
 					num_slots  => $num_slots));
 	    @slots = @{$info{'slots'}};
 	    $use_slots = @slots > 0;
@@ -1896,6 +1920,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100010,
+					severity => $Amanda::Message::INFO,
 					num_slots  => $info{'num_slots'}));
 	    $self->load(relative_slot => 'current',
 			mode => "read",
@@ -1915,6 +1940,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100011,
+					severity => $Amanda::Message::ERROR,
 					slot   => $last_slot));
 	   } elsif ($err->empty and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
@@ -1922,6 +1948,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100012,
+					severity => $Amanda::Message::ERROR,
 					slot   => $last_slot));
 	    } elsif ($err->invalid and defined $err->{'slot'}) {
 		$last_slot = $err->{'slot'};
@@ -1929,6 +1956,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100013,
+					severity => $Amanda::Message::ERROR,
 					slot   => $last_slot,
 					err    => $err));
 	    } else {
@@ -1936,6 +1964,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100014,
+					severity => $Amanda::Message::ERROR,
 					err    => $err));
 		if ($err->fatal || !defined $err->{'slot'}) {
 		    return $steps->{'done'}->();
@@ -1956,6 +1985,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100015,
+					severity => $Amanda::Message::INFO,
 					slot   => $last_slot,
 					datestamp  => $dev->volume_time(),
 					label  => $dev->volume_label(),
@@ -1965,6 +1995,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100016,
+					severity => $Amanda::Message::INFO,
 					slot   => $last_slot,
 					write_protected => $write_protected));
 	    } else {
@@ -1972,6 +2003,7 @@ sub show {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1100017,
+					severity => $Amanda::Message::ERROR,
 					slot   => $last_slot,
 					dev_error    => $dev->error_or_status()));
 	    }
@@ -2037,7 +2069,7 @@ sub new {
     $self->{'module'} = Amanda::Util::get_pmodule() if !defined $self->{'module'};
     $self->{'code'} = 3 if !$self->{'code'};
     $self->{'message'} = $self->message() if !defined $self->{'message'};
-    $self->{'severity'} = $Amanda::Message::CRITICAL if !defined $self->{'severity'};
+    $self->{'severity'} = $Amanda::Message::ERROR if !defined $self->{'severity'};
     $self->{'type'} = $type;
     Amanda::Debug::debug("new Amanda::Changer::Error: type='$type'$reason, message='$self->{message}'");
 

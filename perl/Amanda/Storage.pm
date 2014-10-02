@@ -128,7 +128,8 @@ sub new {
         return Amanda::Changer::Error->new('fatal',
 		source_filename => __FILE__,
 		source_line     => __LINE__,
-		code            => 1150000);
+		code            => 1150000,
+		severity	=> $Amanda::Message::ERROR);
     }
 
     if (!defined $storage_name) {
@@ -143,7 +144,8 @@ sub new {
 	return Amanda::Changer::Error->new('fatal',
 		source_filename => __FILE__,
 		source_line     => __LINE__,
-		code            => 1150001);
+		code            => 1150001,
+		severity	=> $Amanda::Message::ERROR);
     }
     my $st = Amanda::Config::lookup_storage($storage_name);
     if (!$st) {
@@ -151,6 +153,7 @@ sub new {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code            => 1150002,
+		severity	=> $Amanda::Message::ERROR,
 		storage    => $storage_name);
     }
 
@@ -162,6 +165,7 @@ sub new {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code            => 1150003,
+		severity	=> $Amanda::Message::ERROR,
 		storage    => $storage_name);
 	}
     }

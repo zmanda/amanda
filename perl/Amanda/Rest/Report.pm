@@ -90,6 +90,7 @@ sub report {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code   => 1900000,
+			severity => $Amanda::Message::ERROR,
 			error  => $@);
     } else {
 	$rep->generate_report();
@@ -97,6 +98,7 @@ sub report {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code    => 1900001,
+			severity => $Amanda::Message::SUCCESS,
 			logfile => $logfile,
 			report => $rep->{'sections'});
     }

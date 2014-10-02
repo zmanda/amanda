@@ -53,14 +53,14 @@ Most API use or should be converted to use it.
 'source_filename' and 'source_line' are use for debuging to find where the
 message was generated.
 
-The 'severity' of the message, the default is G_CRITICAL, it must be one of
+The 'severity' of the message, the default is CRITICAL, it must be one of
 these predefined constants:
-  ERROR
   CRITICAL
+  ERROR
   WARNING
   MESSAGE
   INFO
-  DEBUG
+  SUCCESS
 
 The 'code' must be unique, it identify the message (0 to 3 are used for message
 not handled by Amanda::Message):
@@ -127,12 +127,12 @@ method to return a string version of the message.
 
 =cut
 
-$ERROR    = 32;
-$CRITICAL = 16;
+$CRITICAL = 32;
+$ERROR    = 16;
 $WARNING  =  8;
 $MESSAGE  =  4;
 $INFO     =  2;
-$DEBUG    =  1;
+$SUCCESS  =  1;
 
 use strict;
 use warnings;

@@ -84,19 +84,22 @@ sub discover {
 	return Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code     => 3100004);
+			code     => 3100004,
+			severity => $Amanda::Message::ERROR);
     }
     if (!defined $params{'host'} or !$params{'host'}) {
 	return Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code     => 3100000);
+			code     => 3100000,
+			severity => $Amanda::Message::ERROR);
     }
     if (!defined $params{'auth'} or !$params{'auth'}) {
 	return Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code     => 3100001);
+			code     => 3100001,
+			severity => $Amanda::Message::ERROR);
     }
     push @amservice_args, $params{'host'};
     push @amservice_args, $params{'auth'};
@@ -150,6 +153,7 @@ sub discover {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100003,
+			severity => $Amanda::Message::ERROR,
 			errmsg   => $@,
 			buffer   => $first_line . "\n" . $buf);
 	}
@@ -158,6 +162,7 @@ sub discover {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100002,
+			severity => $Amanda::Message::ERROR,
 			errmsg   => $first_line . "\n" . $buf);
     }
     close($rdr);

@@ -227,6 +227,7 @@ sub read_infofile
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code        => 1300029,
+			severity    => $Amanda::Message::ERROR,
 			infofile    => $infofile,
 			error       => $!);
 
@@ -266,6 +267,7 @@ sub read_infofile_perfs
 				source_filename => __FILE__,
 				source_line     => $linenum,
 				code     => 1300009,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				line     => $line);
     };
@@ -279,6 +281,7 @@ sub read_infofile_perfs
 				source_filename => __FILE__,
 				source_line     => $linenum,
 				code     => 1300010,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				line     => $line);
 	    }
@@ -341,6 +344,7 @@ sub read_infofile_stats
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300011,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				line     => $line);
 
@@ -349,6 +353,7 @@ sub read_infofile_stats
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300012,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				line     => $line);
 
@@ -370,6 +375,7 @@ sub read_infofile_stats
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300013,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				line     => $line);
         }
@@ -399,6 +405,7 @@ sub read_infofile_history
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300014,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				line     => $line);
         }
@@ -422,6 +429,7 @@ sub write_to_file
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300015,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				error    => $!);
 
@@ -501,6 +509,7 @@ sub from_line
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300016,
+				severity => $Amanda::Message::ERROR,
 				infofile => $info->{'infofile'},
 				line     => $line);
     }
@@ -591,6 +600,7 @@ sub set_field_from_line
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300017,
+				severity => $Amanda::Message::ERROR,
 				infofile => $self->{'infofile'},
 				field    => $field,
 				line     => $line);
@@ -663,6 +673,7 @@ sub from_line
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300018,
+				severity => $Amanda::Message::ERROR,
 				infofile => $info->{'infofile'},
 				line     => $line);
 

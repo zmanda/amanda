@@ -305,6 +305,7 @@ sub find_volume {
 			       source_filename => __FILE__,
 			       source_line     => __LINE__,
 			       code => 1200000,
+			       severity => $Amanda::Message::INFO,
 			       scan_slot => 1,
 			       slot      => $slot_scanned,
 			       label     => $label));
@@ -362,6 +363,7 @@ sub find_volume {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1200000,
+				severity => $Amanda::Message::INFO,
 				scan_slot => 1,
 				slot => $slot_scanned));
 		    $seen{$slot_scanned} = { device_status => $sl->{'device_status'},
@@ -410,6 +412,7 @@ sub find_volume {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1200000,
+				severity => $Amanda::Message::INFO,
 				scan_slot => 1,
 				slot => $slot_scanned));
 		$seen{$slot_scanned} = { device_status => $sl->{'device_status'},
@@ -448,6 +451,7 @@ sub find_volume {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code => 1200001,
+			severity => $Amanda::Message::INFO,
 			slot_result => 1,
 			slot => $slot_scanned,
 			label      => $volume_label));
@@ -459,6 +463,7 @@ sub find_volume {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1200002,
+				severity => $Amanda::Message::ERROR,
 				slot_result => 1,
 				slot => $slot_scanned,
 				dev_status => $res->{'device'},
@@ -492,6 +497,7 @@ sub find_volume {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1200003,
+				severity => $Amanda::Message::ERROR,
 				slot_result => 1,
 				slot => $slot_scanned,
 				err  => $err));

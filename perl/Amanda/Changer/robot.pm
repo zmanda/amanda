@@ -1244,6 +1244,7 @@ sub update_unlocked {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code  => 1100020,
+			severity => $Amanda::Message::INFO,
 			slot  => $slot,
 			label => $label));
 	    # ok, now erase all knowledge of that label
@@ -1319,6 +1320,7 @@ sub update_unlocked {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code  => 1100021,
+			severity => $Amanda::Message::INFO,
 			slot  => $slot));
 	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
 	    $state->{'slots'}->{$slot}->{'label'} = undef;
@@ -1345,6 +1347,7 @@ sub update_unlocked {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code => 1100019,
+			severity => $Amanda::Message::INFO,
 			slot => $slot));
 
 	$self->load_unlocked(
@@ -1713,6 +1716,7 @@ sub verify_unlocked {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100009,
+				severity => $Amanda::Message::WARNING,
 				drive => $drive,
 				device_name => $device_name);
 	} elsif ($device->status == $DEVICE_STATUS_DEVICE_ERROR) {
@@ -1721,6 +1725,7 @@ sub verify_unlocked {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100025,
+				severity => $Amanda::Message::INFO,
 				drive => $drive,
 				device_name => $device_name,
 				error => $device->error());
@@ -1730,6 +1735,7 @@ sub verify_unlocked {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100006,
+				severity => $Amanda::Message::INFO,
 				drive => $drive,
 				device_name => $device_name);
 	    push @tape_devices, "$drive=$device_name";
@@ -1740,6 +1746,7 @@ sub verify_unlocked {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100007,
+				severity => $Amanda::Message::INFO,
 				drive => $drive,
 				device_name => $device_name2);
 	    push @tape_devices, "$drive=$device_name2";
@@ -1766,6 +1773,7 @@ sub verify_unlocked {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100024,
+				severity => $Amanda::Message::WARNING,
 				drive => $drive);
 	    }
 	}
@@ -1778,12 +1786,14 @@ sub verify_unlocked {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1100008,
+				severity => $Amanda::Message::INFO,
 				tape_devices => $tape_devices);
 	} else {
 	    push @results, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code => 1100065);
+				code => 1100065,
+				severity => $Amanda::Message::ERROR);
 	}
 	$params{'finished_cb'}->(undef, @results);
     };

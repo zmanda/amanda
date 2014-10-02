@@ -208,7 +208,8 @@ sub new
 	|| return Amanda::Curinfo::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code    => 1300004);
+				code    => 1300004,
+				severity => $Amanda::Message::ERROR);
 
     my $self = { infodir => $infodir };
 
@@ -245,6 +246,7 @@ sub put_info
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300005,
+				severity => $Amanda::Message::ERROR,
 				infofile => $infofile,
 				error    => $!);
     } elsif (!-d $infofiledir) {
@@ -253,6 +255,7 @@ sub put_info
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code        => 1300006,
+				severity    => $Amanda::Message::ERROR,
 				infofiledir => $infofiledir,
 				error       => $!);
     }
@@ -264,6 +267,7 @@ sub put_info
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300007,
+				severity => $Amanda::Message::ERROR,
 				infofile => $infofile,
 				error    => $!);
             unlink $infofile_tmp;
@@ -272,6 +276,7 @@ sub put_info
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code     => 1300008,
+				severity => $Amanda::Message::ERROR,
 				infofile => $infofile);
     };
 
@@ -309,6 +314,7 @@ sub force {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300000,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -318,6 +324,7 @@ sub force {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300001,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -332,6 +339,7 @@ sub force {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300002,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
 	 } else {
@@ -339,6 +347,7 @@ sub force {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300003,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
 	 }
@@ -368,6 +377,7 @@ sub unforce {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300019,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
 	}
@@ -383,6 +393,7 @@ sub unforce {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300020,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
 	}
@@ -393,6 +404,7 @@ sub unforce {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300021,
+				severity => $Amanda::Message::WARNING,
 				host    => $host,
 				disk    => $disk)
     }
@@ -417,6 +429,7 @@ sub force_level_1 {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300022,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -426,6 +439,7 @@ sub force_level_1 {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300001,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -437,6 +451,7 @@ sub force_level_1 {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300023,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -460,6 +475,7 @@ sub force_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300024,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -469,6 +485,7 @@ sub force_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300022,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -478,6 +495,7 @@ sub force_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300000,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -489,6 +507,7 @@ sub force_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300025,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -512,6 +531,7 @@ sub force_no_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300001,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -523,6 +543,7 @@ sub force_no_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300026,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
     }
@@ -550,6 +571,7 @@ sub unforce_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300027,
+				severity => $Amanda::Message::SUCCESS,
 				host    => $host,
 				disk    => $disk)
 	}
@@ -558,6 +580,7 @@ sub unforce_bump {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1300028,
+				severity => $Amanda::Message::WARNING,
 				host    => $host,
 				disk    => $disk)
     }

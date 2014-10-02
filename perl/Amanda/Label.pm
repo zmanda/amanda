@@ -327,6 +327,7 @@ sub assign {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000000,
+					severity => $Amanda::Message::ERROR,
 					label  => $tle->{'label'},
 					config => $tle->{'config'}));
 		    $error = 1;
@@ -343,6 +344,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code   => 1000001,
+						severity => $Amanda::Message::ERROR,
 						label  => $tle->{'label'},
 						meta => $tle->{'meta'}));
 			    $error = 1;
@@ -361,6 +363,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code    => 1000002,
+						severity => $Amanda::Message::ERROR,
 						label   => $tle->{'label'},
 						barcode => $tle->{'barcode'}));
 			    $error = 1;
@@ -377,6 +380,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code   => 1000058,
+						severity => $Amanda::Message::ERROR,
 						label  => $tle->{'label'}));
 			    $error = 1;
 			} elsif (defined($tle->{'pool'}) &&
@@ -386,6 +390,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code   => 1000003,
+						severity => $Amanda::Message::ERROR,
 						label  => $tle->{'label'},
 						pool   => $tle->{'pool'}));
 			    $error = 1;
@@ -401,6 +406,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code   => 1000059,
+						severity => $Amanda::Message::ERROR,
 						label  => $tle->{'label'}));
 			    $error = 1;
 			} elsif (defined($tle->{'storage'}) &&
@@ -410,6 +416,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code    => 1000004,
+						severity => $Amanda::Message::ERROR,
 						label   => $tle->{'label'},
 						storage => $tle->{'storage'}));
 			    $error = 1;
@@ -418,6 +425,7 @@ sub assign {
 						source_filename => __FILE__,
 						source_line => __LINE__,
 						code   => 1000005,
+						severity => $Amanda::Message::ERROR,
 						label  => $tle->{'label'}));
 			} elsif (!defined $tle->{'storage'} or
 				 $tle->{'storage'} ne $params{'storage'}) {
@@ -435,6 +443,7 @@ sub assign {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000006,
+					severity => $Amanda::Message::SUCCESS,
 					label  => $tle->{'label'}));
 		    $changed++;
 		}
@@ -445,7 +454,8 @@ sub assign {
 	    return $finished_cb->(Amanda::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 2));
+					code   => 2,
+					severity => $Amanda::Message::ERROR));
 	} elsif ($changed) {
 	    $self->{'tapelist'}->write();
 	} elsif ($matched) {
@@ -453,13 +463,15 @@ sub assign {
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code   => 1000007));
+				code   => 1000007,
+				severity => $Amanda::Message::INFO));
 	} else {
 	    $self->{'tapelist'}->unlock();
 	    return $finished_cb->(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code    => 1000061,
+					severity => $Amanda::Message::ERROR,
 					label => $params{'label'}));
 	}
 
@@ -476,6 +488,7 @@ sub assign {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code    => 1,
+					severity => $Amanda::Message::ERROR,
 					message => $err));
 	}
 
@@ -537,6 +550,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000023,
+					severity => $Amanda::Message::ERROR,
 					label  => $params{'label'}));
 	    }
 	}
@@ -548,7 +562,8 @@ sub label {
 	$self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code   => 1000008));
+				code   => 1000008,
+				severity => $Amanda::Message::INFO));
 	if ($params{'slot'}) {
 	    $chg->load(slot => $params{'slot'}, mode => "write",
 		       res_cb => $steps->{'loaded'});
@@ -576,6 +591,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code     => 1000024,
+					severity => $Amanda::Message::ERROR,
 					barcode  => $params{'barcode'}));
     };
 
@@ -591,6 +607,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code        => 1000025,
+					severity     => $Amanda::Message::ERROR,
 					slot        => $params{'slot'},
 					barcode     => $params{'barcode'},
 					red_barcode => $res->{'barcode'}));
@@ -599,6 +616,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code        => 1000026,
+					severity    => $Amanda::Message::ERROR,
 					slot        => $params{'slot'}));
 	    }
 	}
@@ -609,13 +627,15 @@ sub label {
 		$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1000009));
+					code   => 1000009,
+					severity    => $Amanda::Message::INFO));
 	    } else {
 		# force is required for non-Amanda tapes
 		$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1000010));
+					code   => 1000010,
+					severity    => $Amanda::Message::INFO));
 		$dev_ok = 0 unless ($params{'force'});
 	    }
 	} elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
@@ -624,6 +644,7 @@ sub label {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1000011,
+				severity  => $Amanda::Message::ERROR,
 				dev_error => $dev->error_or_status()));
 	    $dev_ok = 0 unless ($params{'force'});
 	} elsif ($dev->status != $DEVICE_STATUS_SUCCESS) {
@@ -632,6 +653,7 @@ sub label {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1000012,
+				severity  => $Amanda::Message::ERROR,
 				dev_error => $dev->error_or_status()));
 	    $dev_ok = 0;
 	} else {
@@ -648,6 +670,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000013,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					labelstr  => $labelstr));
 		$dev_ok = 0;
@@ -657,6 +680,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000014,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					config    => $tle->{'config'}));
 		    $dev_ok = 0;
@@ -666,6 +690,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000015,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					pool      => $tle->{'pool'}));
 		    $dev_ok = 0;
@@ -675,6 +700,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000016,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					labelstr  => $labelstr));
 		    $dev_ok = 0;
@@ -683,14 +709,16 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000017,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label));
 		    if ($params{'force'}) {
 			# if -f, then the user should clean things up..
 			$self->user_msg(Amanda::Label::Message->new(
-						source_filename => __FILE__,
-						source_line => __LINE__,
-						code      => 1000018,
-						label     => $label));
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code      => 1000018,
+					severity  => $Amanda::Message::INFO,
+					label     => $label));
 			# note that we don't run amrmtape automatically, as it could result in data loss when
 			# multiple volumes have (perhaps accidentally) the same label
 		    } else {
@@ -702,6 +730,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000019,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label));
 		$dev_ok = 0 if !$params{'force'};
 	    }
@@ -720,6 +749,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code        => 1000027,
+					severity  => $Amanda::Message::ERROR,
 					dev_meta    => $meta,
 					meta        => $params{'meta'}));
 	}
@@ -743,6 +773,7 @@ sub label {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1000020,
+				severity  => $Amanda::Message::INFO,
 				label     => $label));
 
 	    if (!$dev->start($ACCESS_WRITE, $label, "X")) {
@@ -750,37 +781,43 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000028,
+					severity  => $Amanda::Message::ERROR,
 					dev_error => $dev->error_or_status()));
 	    } elsif (!$dev->finish()) {
 		return $steps->{'releasing'}->(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000029,
+					severity  => $Amanda::Message::ERROR,
 					dev_error => $dev->error_or_status()));
 	    }
 
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code      => 1000021));
+				code      => 1000021,
+				severity  => $Amanda::Message::INFO));
 	    my $status = $dev->read_label();
 	    if ($status != $DEVICE_STATUS_SUCCESS) {
 		return $steps->{'releasing'}->(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000030,
+					severity  => $Amanda::Message::ERROR,
 					dev_error => $dev->error_or_status()));
 	    } elsif (!$dev->volume_label) {
 		return $steps->{'releasing'}->(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code   => 1000031));
+					code   => 1000031,
+					severity  => $Amanda::Message::ERROR));
 	    } elsif ($dev->volume_label ne $label) {
 		my $got = $dev->volume_label;
 		return $steps->{'releasing'}->(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000032,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					got_label => $got));
 	    } elsif ($dev->volume_time ne "X") {
@@ -789,6 +826,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000033,
+					severity  => $Amanda::Message::ERROR,
 					got_timestamp => $got));
 	    }
 
@@ -804,7 +842,8 @@ sub label {
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code      => 1000022));
+				code      => 1000022,
+				severity  => $Amanda::Message::SUCCESS));
 
 	    # notify the changer
 	    $res->set_label(label => $label, finished_cb => $steps->{'set_meta_label'});
@@ -812,7 +851,8 @@ sub label {
 	    return $steps->{'releasing'}->(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code      => 1000034));
+					code      => 1000034,
+					severity  => $Amanda::Message::ERROR));
 	}
     };
 
@@ -849,6 +889,7 @@ sub label {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1,
+				severity  => $Amanda::Message::ERROR,
 				message   => "$err");
 	    }
 	    return $finished_cb->($err);
@@ -892,6 +933,7 @@ sub erase {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000035,
+			severity  => $Amanda::Message::ERROR,
 			label  => $label,
 			tapelist_filename =>$self->{'tapelist'}->{'filename'}));
 	    return $steps->{'start'}->();
@@ -996,6 +1038,7 @@ sub erase {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000051,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label));
 	    return $steps->{'releasing'}->();
 	}
@@ -1006,6 +1049,7 @@ sub erase {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000053,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label));
 		return $steps->{'releasing'}->();
 	    }
@@ -1013,6 +1057,7 @@ sub erase {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000049,
+					severity  => $Amanda::Message::SUCCESS,
 					label     => $label));
 	    return $res->set_label(finished_cb => sub {
 		$dev->finish();
@@ -1026,6 +1071,7 @@ sub erase {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000056,
+					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					dev_error => $dev->status_or_error));
 			return $steps->{'releasing'}->();
@@ -1034,6 +1080,7 @@ sub erase {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000050,
+					severity  => $Amanda::Message::SUCCESS,
 					label     => $label));
 		    return $res->set_label(label => $label,
 					    finished_cb => $steps->{'releasing'});
@@ -1066,6 +1113,7 @@ sub erase {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1,
+					severity  => $Amanda::Message::ERROR,
 					message   => "$err");
 	    }
 	    $self->user_msg($err);
@@ -1081,6 +1129,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1000035,
+				severity  => $Amanda::Message::ERROR,
 				label     => $label,
 				tapelist_filename => $self->{'tapelist'}->{'filename'}));
 	    return $steps->{'start'}->();
@@ -1104,6 +1153,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1000036,
+				severity  => $Amanda::Message::ERROR,
 				tapelist_filename =>$self->{'tapelist'}->{'filename'},
 				backup_tapelist   =>$backup_tapelist_file,
 				strerror          => $!));
@@ -1117,6 +1167,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => $tapelist_code,
+				severity  => $Amanda::Message::SUCCESS,
 				label     => $label,
 				tapelist_filename => $self->{'tapelist'}->{'filename'}));
 	}
@@ -1128,6 +1179,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000037,
+				severity  => $Amanda::Message::ERROR,
 				program     => $amadmin,
 				strerror    => $!,
 				exit_value  => $?));
@@ -1138,6 +1190,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000038,
+				severity  => $Amanda::Message::ERROR,
 				filename    => $amadmin,
 				strerror    => $!,
 				exit_value  => $?));
@@ -1173,6 +1226,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000039,
+				severity    => $Amanda::Message::ERROR,
 				host        => $host,
 				disk        => $disk,
 				line        => $line));
@@ -1188,6 +1242,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000040,
+				severity    => $Amanda::Message::INFO,
 				host        => $host,
 				disk        => $disk,
 				level       => $level));
@@ -1196,6 +1251,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000040,
+				severity    => $Amanda::Message::INFO,
 				host        => $host,
 				disk        => $disk,
 				level       => $level));
@@ -1207,6 +1263,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000041,
+				severity    => $Amanda::Message::ERROR,
 				line        => $line));
 		close CURINFO;
 		close AMADMIN;
@@ -1221,6 +1278,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000043,
+				severity    => $Amanda::Message::ERROR,
 				program     => $amadmin,
 				strerror    => $!,
 				exit_value  => $?));
@@ -1234,6 +1292,7 @@ sub erase {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code        => 1000044,
+				severity    => $Amanda::Message::ERROR,
 				program     => $amadmin,
 				strerror    => $!,
 				exit_value  => $?));
@@ -1252,6 +1311,7 @@ sub erase {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 1000042,
+			severity    => $Amanda::Message::ERROR,
 			tapelist_filename=> $self->{'tapelist'}->{'filename'},
 			backup_tapelist   =>$backup_tapelist_file,
 			strerror    => $!,
@@ -1281,6 +1341,7 @@ sub erase {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 1000054,
+			severity    => $Amanda::Message::ERROR,
 			errno       => $!,
 			child_error => $?));
             }
@@ -1289,6 +1350,7 @@ sub erase {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 1000055,
+			severity    => $Amanda::Message::ERROR,
 			errno       => $!,
 			child_error => $?));
             }
@@ -1332,6 +1394,7 @@ sub reuse {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000035,
+			severity => $Amanda::Message::ERROR,
 			label  => $label,
 			tapelist_filename =>$self->{'tapelist'}->{'filename'}));
             return $steps->{'start'}->();
@@ -1350,12 +1413,14 @@ sub reuse {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000045,
+			severity => $Amanda::Message::INFO,
 			label  => $label));
         } else {
 	    $self->user_msg(Amanda::Label::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000046,
+			severity => $Amanda::Message::INFO,
 			label  => $label));
         }
         return $steps->{'start'}->();
@@ -1408,6 +1473,7 @@ sub no_reuse {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000035,
+			severity => $Amanda::Message::ERROR,
 			label  => $label,
 			tapelist_filename =>$self->{'tapelist'}->{'filename'}));
             return $steps->{'start'}->();
@@ -1426,12 +1492,14 @@ sub no_reuse {
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000047,
+			severity => $Amanda::Message::SUCCESS,
 			label  => $label));
         } else {
 	    $self->user_msg(Amanda::Label::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code   => 1000048,
+			severity => $Amanda::Message::INFO,
 			label  => $label));
         }
         return $steps->{'start'}->();

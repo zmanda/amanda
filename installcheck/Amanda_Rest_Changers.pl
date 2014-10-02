@@ -64,7 +64,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '16',
+                'severity' => '1',
                 'message' => "Defined changer",
 		'changer' => ['DISKFLAT'],
 		'process' => 'Amanda::Rest::Changers',
@@ -147,7 +147,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                 'code' => '1500018'
           },
           {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '16',
+                'severity' => '1',
                 'message' => 'Parameters values for changer \'DISKFLAT\'',
 		'changer' => 'DISKFLAT',
 		'result' => { 'tpchanger' => 'chg-disk:/amanda/h1/vtapes',
