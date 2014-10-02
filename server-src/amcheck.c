@@ -1033,8 +1033,8 @@ start_server_check(
 		if (kb_avail < kb_needed) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			__FILE__, __LINE__, 2800036, MSG_ERROR, 2,
-			"kb_avail",	g_strdup_printf("%ld", kb_avail),
-			"kb_needed",	g_strdup_printf("%ld", kb_needed))));
+			"kb_avail",	g_strdup_printf("%ju", kb_avail),
+			"kb_needed",	g_strdup_printf("%ju", kb_needed))));
 		}
 	    }
 	}
@@ -1297,7 +1297,7 @@ start_server_check(
 	if (part_size && part_size * 1000 < tape_size) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
 			__FILE__, __LINE__, 2800063, MSG_WARNING, 1,
-			"part-size", g_strdup_printf("%lu", part_size))));
+			"part-size", g_strdup_printf("%ju", (uintmax_t)part_size))));
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
 		delete_message(amcheck_fprint_message(outf, build_message(
@@ -1809,7 +1809,7 @@ start_server_check(
 					__FILE__, __LINE__, 2800149, MSG_WARNING, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
-					"tape_splitsize", g_strdup_printf("%ld",dp->tape_splitsize))));
+					"tape_splitsize", g_strdup_printf("%jd", (intmax_t)dp->tape_splitsize))));
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
 			    delete_message(amcheck_fprint_message(outf, build_message(
@@ -1826,7 +1826,7 @@ start_server_check(
 					__FILE__, __LINE__, 2800151, MSG_WARNING, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
-					"fallback_splitsize", g_strdup_printf("%ld",dp->fallback_splitsize))));
+					"fallback_splitsize", g_strdup_printf("%jd", (intmax_t)dp->fallback_splitsize))));
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
 			    delete_message(amcheck_fprint_message(outf, build_message(
