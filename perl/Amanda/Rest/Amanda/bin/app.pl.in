@@ -246,7 +246,7 @@ post '/amanda/v1.0/configs/:CONF/runs/fetchdump' => sub {
 	return $r;
 };
 
-post '/amanda/v1.0/configs/:CONF/runs/messages' => sub {
+get '/amanda/v1.0/configs/:CONF/runs/messages' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Runs::messages(%p);
 	return $r;
