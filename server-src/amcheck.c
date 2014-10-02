@@ -919,7 +919,6 @@ start_server_check(
     int testtape = do_tapechk;
     tapetype_t *tp = NULL;
     storage_t  *storage = NULL;
-    char *quoted;
     int res;
     intmax_t kb_avail, kb_needed;
     off_t tape_size;
@@ -1397,7 +1396,6 @@ start_server_check(
 			"using", g_strdup_printf("%jd", kb_avail + holdingdisk_get_disksize(hdp)))));
 		}
 	    }
-	    amfree(quoted);
 	}
     }
 
@@ -1411,7 +1409,6 @@ start_server_check(
 
 	conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
 
-	quoted = quote_string(conf_logdir);
 	if(stat(conf_logdir, &statbuf) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
 			__FILE__, __LINE__, 2800077, MSG_INFO, 2,
@@ -1426,10 +1423,8 @@ start_server_check(
 			"logdir", conf_logdir)));
 	    logbad = 1;
 	}
-	amfree(quoted);
 
 	olddir = g_strjoin(NULL, conf_logdir, "/oldlog", NULL);
-	quoted = quote_string(olddir);
 	if (logbad == 0 && stat(olddir,&stat_old) == 0) { /* oldlog exist */
 	    if(!(S_ISDIR(stat_old.st_mode))) {
 		delete_message(amcheck_fprint_message(outf, build_message(
@@ -1452,7 +1447,6 @@ start_server_check(
 			"oldlogdir", olddir)));
 	    logbad = 1;
 	}
-	amfree(quoted);
 
 	amfree(olddir);
 	amfree(conf_logdir);
@@ -1524,13 +1518,12 @@ start_server_check(
 	    delete_message(amcheck_fprint_message(outf, build_message(
 			__FILE__, __LINE__, 2800091, MSG_INFO, 2,
 			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
-			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
+			"runtapes", g_strdup_printf("%d", conf_runtapes))));
 	}
 
 	conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
 	conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
 
-	quoted = quote_string(conf_infofile);
 	if(stat(conf_infofile, &statbuf) == -1) {
 	    if (errno == ENOENT) {
 	        delete_message(amcheck_fprint_message(outf, build_message(
@@ -1567,7 +1560,6 @@ start_server_check(
 	    }
 	    strappend(conf_infofile, "/");
 	}
-	amfree(quoted);
 
 	while(!empty(origq)) {
 	    hostp = ((disk_t *)origq.head->data)->host;
@@ -1575,7 +1567,6 @@ start_server_check(
 	    if(conf_infofile) {
 		g_free(hostinfodir);
 		hostinfodir = g_strconcat(conf_infofile, host, NULL);
-		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
 			delete_message(amcheck_fprint_message(outf, build_message(
@@ -1604,18 +1595,14 @@ start_server_check(
 		} else {
 		    strappend(hostinfodir, "/");
 		}
-		amfree(quoted);
 	    }
 	    for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 		disk = sanitise_filename(dp->name);
 		if(hostinfodir) {
-		    char *quotedif;
 
 		    g_free(diskdir);
 		    diskdir = g_strconcat(hostinfodir, disk, NULL);
 		    infofile = g_strjoin(NULL, diskdir, "/", "info", NULL);
-		    quoted = quote_string(diskdir);
-		    quotedif = quote_string(infofile);
 		    if(stat(diskdir, &statbuf) == -1) {
 			if (errno == ENOENT) {
 			    delete_message(amcheck_fprint_message(outf, build_message(
@@ -1661,13 +1648,10 @@ start_server_check(
 				"infofile", infofile)));
 			infobad = 1;
 		    }
-		    amfree(quotedif);
-		    amfree(quoted);
 		    amfree(infofile);
 		}
 		if(dp->index) {
 		    if(! indexdir_checked) {
-			quoted = quote_string(conf_indexdir);
 			if(stat(conf_indexdir, &statbuf) == -1) {
 			    if (errno == ENOENT) {
 				delete_message(amcheck_fprint_message(outf, build_message(
@@ -1697,12 +1681,10 @@ start_server_check(
 			    strappend(conf_indexdir, "/");
 			}
 			indexdir_checked = 1;
-			amfree(quoted);
 		    }
 		    if(conf_indexdir) {
 			if(! hostindexdir_checked) {
 			    hostindexdir = g_strconcat(conf_indexdir, host, NULL);
-			    quoted = quote_string(hostindexdir);
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
 				    delete_message(amcheck_fprint_message(outf, build_message(
@@ -1732,12 +1714,10 @@ start_server_check(
 				strappend(hostindexdir, "/");
 			    }
 			    hostindexdir_checked = 1;
-			    amfree(quoted);
 			}
 			if(hostindexdir) {
 			    g_free(diskdir);
 			    diskdir = g_strconcat(hostindexdir, disk, NULL);
-			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
 				    delete_message(amcheck_fprint_message(outf, build_message(
@@ -1762,7 +1742,6 @@ start_server_check(
 					"diskindexdir", diskdir)));
 				indexbad = 1;
 			    }
-			    amfree(quoted);
 			}
 		    }
 		}

@@ -1,4 +1,9 @@
 2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Fix small bug found by coverity.
+	* common-src/ammessage.c: typo.
+	* server-src/amcheck.c: typo, remove unused variable.
+
+2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c : Print severity as name.
 	* perl/Amanda/Message.pm: severity constant are name.
 	* installcheck/Amanda_Rest_Amcheck.pl,

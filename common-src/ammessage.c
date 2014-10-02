@@ -750,7 +750,7 @@ set_message(
     } else if (message->code == 2800090) {
 	msg  = "WARNING: tapecycle (%{tapecycle}) <= runspercycle (%{runspercycle)";
     } else if (message->code == 2800091) {
-	msg  = "WARNING: tapecycle (%{tapecycle}) <= runtapes (%{runspercycle})";
+	msg  = "WARNING: tapecycle (%{tapecycle}) <= runtapes (%{runtapes})";
     } else if (message->code == 2800092) {
 	msg  = "NOTE: conf info dir '%{infodir}' does not exist";
 	hint = "      it will be created on the next run";

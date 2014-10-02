@@ -493,6 +493,10 @@ main(
 	exit(1);
     }
     mesgstream = fdopen(mesgfd,"w");
+    if (mesgstream == NULL) {
+	g_debug("Failed to fdopen mesgfd (%d): %s", mesgfd, strerror(errno));
+	exit(1);
+    }
     run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream);
     fflush(mesgstream);
 
@@ -671,6 +675,10 @@ main(
 		g_slist_free(dle->directtcp_list);
 		dle->directtcp_list = NULL;
 		str_port = strchr(indirect_tcp, ':');
+		if (str_port == NULL) {
+		    g_debug("Invalid indirect_tcp: %s", indirect_tcp);
+		    exit(1);
+		}
 		str_port++;
 		port = atoi(str_port);
 		fd = stream_client(NULL, "localhost", port, 32768, 32768, NULL, 0);
