@@ -472,6 +472,27 @@ struct message_s {
 
 static char *ammessage_encode_json(char *str);
 static void set_message(message_t *message);
+static char *severity_name(int severity);
+
+static char *
+severity_name(
+    int severity)
+{
+    if (severity == 1)
+	return "success";
+    else if (severity == 2)
+	return "info";
+    else if (severity == 4)
+	return "message";
+    else if (severity == 8)
+	return "warning";
+    else if (severity == 16)
+	return "error";
+    else if (severity == 32)
+	return "critical";
+    else
+	return "unknown";
+}
 
 static char *
 ammessage_encode_json(
@@ -1143,9 +1164,7 @@ set_message(
                 "%d", message->code);
 		g_string_append(result, num);
 	    } else if (strcmp(code, "severity") == 0) {
-		g_snprintf(num, sizeof(num),
-                "%d", message->severity);
-		g_string_append(result, num);
+		g_string_append(result, severity_name(message->severity));
 	    } else if (strcmp(code, "errnostr") == 0) {
 		g_free(message->errnostr);
 		message->errnostr = NULL;
@@ -1309,13 +1328,13 @@ sprint_message(
         "  {\n" \
         "    \"source_filename\" : \"%s\",\n" \
         "    \"source_line\" : \"%d\",\n" \
-        "    \"severity\" : \"%d\",\n" \
+        "    \"severity\" : \"%s\",\n" \
         "    \"process\" : \"%s\",\n" \
         "    \"running_on\" : \"%s\",\n" \
         "    \"component\" : \"%s\",\n" \
         "    \"module\" : \"%s\",\n" \
         "    \"code\" : \"%d\",\n" \
-        , message->file, message->line, message->severity, message->process, message->running_on, message->component, message->module, message->code);
+        , message->file, message->line, severity_name(message->severity), message->process, message->running_on, message->component, message->module, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	g_string_append_printf(result,
 	"    \"%s\" : \"%s\",\n", message->arg_array[i].key, message->arg_array[i].value);

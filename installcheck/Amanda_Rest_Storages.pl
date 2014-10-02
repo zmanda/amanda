@@ -62,7 +62,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => "Defined storage",
 		'storage' => ['TESTCONF'],
 		'process' => 'Amanda::Rest::Storages',
@@ -80,7 +80,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Storage \'TEST\' not found',
 		'storage' => 'TEST',
 		'process' => 'Amanda::Rest::Storages',
@@ -98,7 +98,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Storage \'TEST\' not found',
 		'storage' => 'TEST',
 		'process' => 'Amanda::Rest::Storages',
@@ -116,7 +116,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '8',
+                'severity' => $Amanda::Message::WARNING,
                 'message' => 'No fields specified',
 		'storage' => 'TESTCONF',
 		'process' => 'Amanda::Rest::Storages',
@@ -134,7 +134,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Not existant parameters in storage \'TESTCONF\'',
 		'storage' => 'TESTCONF',
 		'parameters' => [ 'pool' ],
@@ -145,7 +145,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                 'code' => '1500011'
           },
           {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'Parameters values for storage \'TESTCONF\'',
 		'storage' => 'TESTCONF',
 		'result' => { 'tapepool' => 'TESTCONF',
@@ -167,7 +167,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Storage.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
 		'type'     => 'fatal',
                 'message' => 'Storage \'DISKFLAT\' not found',
 		'storage' => 'DISKFLAT',
@@ -199,7 +199,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Storage.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
 		'type'     => 'fatal',
                 'message' => 'You must specify the storage \'tpchanger\'',
 		'storage' => 'DISKFLAT',
@@ -225,7 +225,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
 		'type'     => 'fatal',
                 'message' => 'You must specify one of \'tapedev\' or \'tpchanger\'',
 		'process' => 'Amanda::Rest::Storages',
@@ -250,7 +250,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
 		'dir'     => $taperoot,
                 'message' => "Created vtape root '$taperoot'",
 		'process' => 'Amanda::Rest::Storages',
@@ -269,7 +269,7 @@ ok(-d $taperoot, "DIR EXISTS");
 #is_deeply (Installcheck::Rest::remove_source_line($reply),
 #    { body =>
 #        [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
-#                'severity' => '16',
+#                'severity' => $Amanda::Message::ERROR,
 #                'message' => 'Can\'t compute label for slot \'1\': template is not set, you must set autolabel',
 #		'process' => 'Amanda::Rest::Storages',
 #		'running_on' => 'amanda-server',
@@ -280,7 +280,7 @@ ok(-d $taperoot, "DIR EXISTS");
 #		'type'  => 'fatal',
 #		'error' => {
 #			'source_filename' => "$amperldir/Amanda/Changer.pm",
-#			'severity' => '16',
+#			'severity' => $Amanda::Message::ERROR,
 #			'message' => 'template is not set, you must set autolabel',
 #			'code' => '1100050'
 #		},
@@ -303,7 +303,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'The inventory',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -366,7 +366,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'The inventory',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -423,7 +423,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'load result',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -448,7 +448,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'load result',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -472,7 +472,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'load result',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -497,7 +497,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer/diskflat.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Label \'DISKFLAT-002\' not found',
 		'label' => 'DISKFLAT-002',
 		'process' => 'Amanda::Rest::Storages',
@@ -517,7 +517,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '2',
+                'severity' => $Amanda::Message::INFO,
                 'message' => 'scanning all 5 slots in changer:',
 		'num_slots' => '5',
 		'process' => 'Amanda::Rest::Storages',
@@ -527,7 +527,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'code' => '1100010',
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '2',
+                'severity' => $Amanda::Message::INFO,
                 'message' => 'slot   1: date 20140509113436 label DISKFLAT-001',
 		'label' => 'DISKFLAT-001',
 		'datestamp' => '20140509113436',
@@ -540,7 +540,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'slot' => '1'
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '2',
+                'severity' => $Amanda::Message::INFO,
                 'message' => 'slot   2: unlabeled volume',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -551,7 +551,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'write_protected' => ''
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '2',
+                'severity' => $Amanda::Message::INFO,
                 'message' => 'slot   3: unlabeled volume',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -562,7 +562,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'write_protected' => ''
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '2',
+                'severity' => $Amanda::Message::INFO,
                 'message' => 'slot   4: unlabeled volume',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -573,7 +573,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'write_protected' => ''
           },
           {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '2',
+                'severity' => $Amanda::Message::INFO,
                 'message' => 'slot   5: unlabeled volume',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -592,7 +592,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'Changer is reset',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',
@@ -611,7 +611,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => '\'chg-diskflat\' does not support clean',
 		'reason' => 'notimpl',
 		'type'   => 'failed',
@@ -632,7 +632,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => '\'chg-diskflat\' does not support verify',
 		'reason' => 'notimpl',
 		'type'   => 'failed',
@@ -653,7 +653,7 @@ $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storage
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => '\'chg-diskflat\' does not support update',
 		'reason' => 'notimpl',
 		'type'   => 'failed',

@@ -64,7 +64,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => "Defined changer",
 		'changer' => ['DISKFLAT'],
 		'process' => 'Amanda::Rest::Changers',
@@ -82,7 +82,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Changer \'TEST\' not found',
 		'changer' => 'TEST',
 		'process' => 'Amanda::Rest::Changers',
@@ -100,7 +100,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Changer \'TEST\' not found',
 		'changer' => 'TEST',
 		'process' => 'Amanda::Rest::Changers',
@@ -118,7 +118,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'No fields specified',
 		'changer' => 'DISKFLAT',
 		'process' => 'Amanda::Rest::Changers',
@@ -136,7 +136,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '16',
+                'severity' => $Amanda::Message::ERROR,
                 'message' => 'Not existant parameters in changer \'DISKFLAT\'',
 		'changer' => 'DISKFLAT',
 		'parameters' => [ 'pool' ],
@@ -147,7 +147,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                 'code' => '1500018'
           },
           {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",
-                'severity' => '1',
+                'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'Parameters values for changer \'DISKFLAT\'',
 		'changer' => 'DISKFLAT',
 		'result' => { 'tpchanger' => 'chg-disk:/amanda/h1/vtapes',

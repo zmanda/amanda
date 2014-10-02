@@ -68,7 +68,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
-		'severity' => '8',
+		'severity' => $Amanda::Message::WARNING,
 		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -89,7 +89,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'cfgerror' => "parse error: could not open conf file '$Amanda::Paths::CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
-		'severity' => '16',
+		'severity' => $Amanda::Message::ERROR,
 		'message' => "config error: parse error: could not open conf file '$CONFIG_DIR/FOOBAR/amanda.conf': No such file or directory",
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -127,7 +127,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'severity' => '1',
+		'severity' => $Amanda::Message::SUCCESS,
 		'message' => 'config name',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -164,7 +164,7 @@ if (@conf > 0) {
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'config' => [@newconf],
-		'severity' => '1',
+		'severity' => $Amanda::Message::SUCCESS,
 		'message' => 'config name',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -180,7 +180,7 @@ if (@conf > 0) {
     is_deeply (Installcheck::Rest::remove_source_line($reply),
         { body =>
             [ { 'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '16',
+		'severity' => $Amanda::Message::ERROR,
 		'message' => 'no config',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -203,7 +203,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '16',
+		'severity' => $Amanda::Message::ERROR,
 		'errno'    => 'Permission denied',
 		'message' => "Can't open config directory '$Amanda::Paths::CONFIG_DIR': Permission denied",
 		'dir' => $Amanda::Paths::CONFIG_DIR,
@@ -225,7 +225,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=f
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '16',
+		'severity' => $Amanda::Message::ERROR,
 		'parameters' => [ 'foobar' ],
 		'message' => 'Not existant parameters',
 		'process' => 'Amanda::Rest::Configs',
@@ -235,7 +235,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'code' => '1500007'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '1',
+		'severity' => $Amanda::Message::SUCCESS,
 		'result' => {
 			'tapecycle' => 3 },
 		'message' => 'Parameters values',
@@ -255,7 +255,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=r
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '1',
+		'severity' => $Amanda::Message::SUCCESS,
 		'result' => {
 			'tapecycle' => 3,
 			'runtapes' => 1},
@@ -276,7 +276,7 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => '16',
+		'severity' => $Amanda::Message::ERROR,
 		'message' => 'No fields specified',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',

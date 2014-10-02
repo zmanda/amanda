@@ -1,4 +1,18 @@
 2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c : Print severity as name.
+	* perl/Amanda/Message.pm: severity constant are name.
+	* installcheck/Amanda_Rest_Amcheck.pl,
+	   installcheck/Amanda_Rest_Changers.pl,
+	   installcheck/Amanda_Rest_Configs.pl,
+	   installcheck/Amanda_Rest_Dles.pl,
+	   installcheck/Amanda_Rest_Dumps.pl,
+	   installcheck/Amanda_Rest_Labels.pl,
+	   installcheck/Amanda_Rest_Runs.pl,
+	   installcheck/Amanda_Rest_Storages.pl,
+	   installcheck/Amanda_Rest_Storages_Labels.pl,
+	   installcheck/Amanda_Rest_Version.pl: Use symbol for the severity.
+
+2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.h: Change severity values.
 	* perl/Amanda/Message.pm: Change severity values.
 	* perl/Amanda/Changer.pm, perl/Amanda/Changer/disk.pm,

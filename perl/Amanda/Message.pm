@@ -127,12 +127,12 @@ method to return a string version of the message.
 
 =cut
 
-$CRITICAL = 32;
-$ERROR    = 16;
-$WARNING  =  8;
-$MESSAGE  =  4;
-$INFO     =  2;
-$SUCCESS  =  1;
+$CRITICAL = "critical";
+$ERROR    = "error";
+$WARNING  = "warning";
+$MESSAGE  = "message";
+$INFO     = "info";
+$SUCCESS  = "success";
 
 use strict;
 use warnings;
