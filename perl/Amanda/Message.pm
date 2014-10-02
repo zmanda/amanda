@@ -184,7 +184,11 @@ sub full_message {
 sub local_message {
     my $self = shift;
 
-    return $self->{'message'};
+    if ($self->{'code'} == 2850000) {
+	return "Amcheck exit code is '$self->{'exit_code'}'";
+    } else {
+	return $self->{'message'};
+    }
 }
 
 #Can be overloaded

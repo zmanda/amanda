@@ -1,4 +1,13 @@
 2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Change API. Add all messages for amcheck.
+	* common-src/ammessage.h: Change prototype.
+	* server-src/amcheck.c, client-src/senddiscover.c: Use new API.
+	* perl/Amanda/Message.pm: Add message code 2850000.
+	* perl/Amanda/Rest/Amcheck.pm: Add a message with exit_status of
+	  amcheck
+	* installcheck/Amanda_Rest_Amcheck.pl: Fix for new message.
+
+2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Runs.pm (/amanda/v1.0/configs/:CONF/runs/messages):
 	  change from post to get method.
 

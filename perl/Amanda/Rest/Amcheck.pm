@@ -24,6 +24,7 @@ use warnings;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Debug;
 use Amanda::Paths;
+use Amanda::Message;
 use Amanda::Rest::Configs;
 use Symbol;
 use Data::Dumper;
@@ -144,6 +145,7 @@ sub check {
 	push @result_messages, $msg;
     };
 
+    push @amcheck_args, '--message';
     if (defined $params{'server'} and $params{'server'}) {
 	push @amcheck_args, '-s';
     }
@@ -159,7 +161,6 @@ sub check {
     if (defined $params{'client-verbose'} and $params{'client-verbose'}) {
 	push @amcheck_args, '--client-verbose';
     }
-    push @amcheck_args, '--message';
     push @amcheck_args, '--exact-match';
     push @amcheck_args, $params{'CONF'};
     if (defined($params{'host'})) {
@@ -179,20 +180,40 @@ sub check {
     }
 
     # fork the amcheck process
+    Amanda::Debug::debug("running: amcheck " . join(' ', @amcheck_args));
     my($wtr, $rdr);
-    open3($wtr, $rdr, undef, "$Amanda::Paths::sbindir/amcheck", @amcheck_args);
+    my $pid = open3($wtr, $rdr, undef, "$Amanda::Paths::sbindir/amcheck", @amcheck_args);
     close($wtr);
 
     #read stdout in a buffer
-    my $buf = "[ ";
+    my $buf;
     while (my $line = <$rdr>) {
 	$buf .= $line;
     }
-    $buf .= " { } ]";
     close($rdr);
+
+    waitpid($pid, 0);
+    my $exit_code = $? >> 8;
+    my $exit_message = Amanda::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code            => 2850000,
+		severity	=> $exit_code == 0 ? $Amanda::Message::INFO : $Amanda::Message::ERROR,
+		exit_code       => $exit_code);
+
+    #remove last comma in $buf
+    my $c = substr $buf, -1;
+    while ( $c eq "\n" or $c eq ' ' or $c eq ',' ) {
+	chop $buf;
+	$c = substr $buf, -1;
+    }
+    $buf = '[' . $buf . "\n ]";
 
     #convert JSON buffer to perl object
     my $ret = decode_json $buf;
+
+    # add the exit_message at the beginning.
+    unshift $ret, $exit_message;
 
     #return perl object
     return $ret

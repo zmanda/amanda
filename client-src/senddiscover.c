@@ -160,8 +160,8 @@ main(
     if (g_options == NULL) {
 	g_printf("OPTIONS \n");
 	g_printf("[\n");
-	fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900004, 16, 0));
+	delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900004, 16, 0)));
 	goto err;
     }
     g_printf("OPTIONS ");
@@ -184,55 +184,55 @@ main(
 
 	dle = amxml_parse_node_FILE(stdin, &errmsg);
 	if (errmsg) {
-	    fprint_message_free(stdout, build_message(
+	    delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900013, 16, 1,
-			"errmsg", g_strdup(errmsg)));
+			"errmsg", errmsg)));
 	    goto err;
 	}
 	if (!dle) {
-	    fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900014, 16, 0));
+	    delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900014, 16, 0)));
 	    goto err;
 	} else if (dle->next) {
-	    fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900015, 16, 0));
+	    delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900015, 16, 0)));
 	    goto err;
 	}
 
     } else {
-	fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900007, 16, 0));
+	delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900007, 16, 0)));
 	goto err;
     }
     gdle = dle;
 
     if (dle->program   == NULL) {
-	fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900008, 16, 0));
+	delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900008, 16, 0)));
 	goto err;
     }
 
     g_debug("  Parsed request as: program '%s'", dle->program);
 
     if (dle->program_is_application_api == 0) {
-	fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900003, 16, 0));
+	delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900003, 16, 0)));
 	goto err;
     }
 
     if (dle->auth && amandad_auth) {
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
-	    fprint_message_free(stdout, build_message(
+	    delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900009, 16, 2,
-			"amandad_auth", g_strdup(amandad_auth),
-			"dle_auth", g_strdup(dle->auth)));
+			"amandad_auth", amandad_auth,
+			"dle_auth", dle->auth)));
 	    goto err;
 	}
     }
 
     if (merge_dles_properties(dle, 0) == 0) {
-	fprint_message_free(stdout, build_message(
-			__FILE__, __LINE__, 2900003, 16, 0));
+	delete_message(fprint_message(stdout, build_message(
+			__FILE__, __LINE__, 2900003, 16, 0)));
 	goto err;
     }
     if (dle->program_is_application_api == 1) {
@@ -251,30 +251,30 @@ main(
 	    guint  i;
 	    for (i=0; i < errarray->len; i++) {
 		errmsg = g_ptr_array_index(errarray, i);
-		fprint_message_free(stdout, build_message(
+		delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900000, 16, 2,
-			"application", g_strdup(dle->program),
-			"errmsg", g_strdup(errmsg)));
+			"application", dle->program,
+			"errmsg", errmsg)));
 	    }
 	    if (i == 0) { /* no errarray */
-		fprint_message_free(stdout, build_message(
+		delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900000, 16, 1,
-			"application", g_strdup(dle->program)));
+			"application", dle->program)));
 	    }
 	    g_ptr_array_free_full(errarray);
 	    goto err;
 	}
 
 	if (!bsu->discover) {
-	    fprint_message_free(stdout, build_message(
+	    delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900002, 16, 1,
-			"application", g_strdup(dle->program)));
+			"application", dle->program)));
 	    goto err;
 	}
 	if (pipe(errfd) < 0) {
-	    fprint_message_free(stdout, build_message(
+	    delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900005, 16, 1,
-			"application", g_strdup(dle->program)));
+			"application", dle->program)));
 	    goto err;
 	}
 
@@ -309,16 +309,16 @@ main(
 	    g_debug("\"");
 	    if (dup2(errfd[1], 2) == -1) {
 		int save_errno = errno;
-	        fprint_message_free(stdout, build_message(
+	        delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900006, 16, 1,
-			"errno", g_strdup_printf("%d", save_errno)));
+			"errno", save_errno)));
 		goto err;
 	    }
 	    if (dup2(1, 3) == -1) {
 		int save_errno = errno;
-	        fprint_message_free(stdout, build_message(
+	        delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900006, 16, 1,
-			"errno", g_strdup_printf("%d", save_errno)));
+			"errno", save_errno)));
 		goto err;
 	    }
 	    safe_fd(3, 1);
@@ -330,10 +330,10 @@ main(
 	    break;
 	case -1: {
 	    int save_errno = errno;
-	    fprint_message_free(stdout, build_message(
+	    delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900010, 16, 2,
-			"application", g_strdup(dle->program),
-			"errno", g_strdup_printf("%d", save_errno)));
+			"application", dle->program,
+			"errno", save_errno)));
 	    goto err;
 	  }
 	}
@@ -342,19 +342,19 @@ main(
 	dumperr = fdopen(errfd[0],"r");
 	if (!dumperr) {
 	    int save_errno = errno;
-	    fprint_message_free(stdout, build_message(
+	    delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900011, 16, 1,
-			"errno", g_strdup_printf("%d", save_errno)));
+			"errno", save_errno)));
 	    goto err;
 	}
 
 	result = 0;
 	while ((line = agets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
-		fprint_message_free(stdout, build_message(
+		delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900012, 16, 2,
-			"application", g_strdup(dle->program),
-			g_strdup("errmsg"), g_strdup(line)));
+			"application", dle->program,
+			"errmsg", line)));
 		result = 1;
 	    }
 	    amfree(line);
@@ -429,17 +429,17 @@ check_status(
     }
 
     if (ret == 0) {
-	fprint_message_free(stdout, build_message(
+	delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900016, 16, 3,
-			"application", g_strdup(str),
+			"application", str,
 			"pid", g_strdup_printf("%d", (int)pid),
-			"signal", g_strdup_printf("%d", (int)sig)));
+			"signal", g_strdup_printf("%d", (int)sig))));
     } else {
-	fprint_message_free(stdout, build_message(
+	delete_message(fprint_message(stdout, build_message(
 			__FILE__, __LINE__, 2900017, 16, 3,
-			"application", g_strdup(str),
+			"application", str,
 			"pid", g_strdup_printf("%d", (int)pid),
-			"return_code", g_strdup_printf("%d", (int)ret)));
+			"return_code", g_strdup_printf("%d", (int)ret))));
     }
 
     return 1;

@@ -47,6 +47,7 @@
 #include "property.h"
 #include "timestamp.h"
 #include "amxml.h"
+#include "ammessage.h"
 #include "physmem.h"
 #include <getopt.h>
 
@@ -109,21 +110,36 @@ encode_json(
     return encoded_json;
 }
 
-#define print_message(code, msg) if (opt_message) g_printf( \
-"  {\n" \
-"    \"source_filename\" : \"" __FILE__ "\",\n" \
-"    \"source_line\" : \"%d\",\n" \
-"    \"severity\" : \"16\",\n" \
-"    \"process\" : \"%s\",\n" \
-"    \"running_on\" : \"%s\",\n" \
-"    \"component\" : \"%s\",\n" \
-"    \"module\" : \"%s\",\n" \
-"    \"code\" : \"%d\",\n" \
-"    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, get_pname(), get_running_on(), get_pcomponent(), get_pmodule(), code, encode_json(msg)); else \
-g_printf("%s\n", msg);
+static message_t *
+amcheck_print_message(
+    message_t *message)
+{
+    char *hint;
 
-#define fprint_message(file, code, msg) if (opt_message) g_fprintf(file, \
+    if (opt_message)
+	print_message(message);
+    else {
+	g_printf("%s\n", get_message(message));
+	if ((hint = get_hint(message)) != NULL) {
+	    g_printf("%s\n", hint);
+	}
+    }
+    return message;
+}
+
+static message_t *
+amcheck_fprint_message(
+    FILE      *file,
+    message_t *message)
+{
+    if (opt_message)
+	fprint_message(file, message);
+    else
+	g_fprintf(file, "%s\n", get_message(message));
+    return message;
+}
+
+#define Xfprint_message(file, code, msg) if (opt_message) g_fprintf(file, \
 "  {\n" \
 "    \"source_filename\" : \"" __FILE__ "\",\n" \
 "    \"source_line\" : \"%d\",\n" \
@@ -137,24 +153,9 @@ g_printf("%s\n", msg);
 "  },\n", __LINE__, get_pname(), get_running_on(), get_pcomponent(), get_pmodule(), code, encode_json(msg)); else \
 g_fprintf(file, "%s\n", msg);
 
-#define printf_message(code, msg, ...) { \
-  char *msg1 = g_strdup_printf(msg, __VA_ARGS__); \
-  if (opt_message) g_printf( \
-"  {\n" \
-"    \"source_filename\" : \"" __FILE__ "\",\n" \
-"    \"source_line\" : \"%d\",\n" \
-"    \"severity\" : \"16\",\n" \
-"    \"process\" : \"%s\",\n" \
-"    \"running_on\" : \"%s\",\n" \
-"    \"component\" : \"%s\",\n" \
-"    \"module\" : \"%s\",\n" \
-"    \"code\" : \"%d\",\n" \
-"    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, get_pname(), get_running_on(), get_pcomponent(), get_pmodule(), code, encode_json(msg1)); else \
-g_printf("%s\n", msg1); \
-g_free(msg1); \
-}
-#define fprintf_message(file, code, msg, ...) { \
+#define Yamcheck_fprintf_message(file, msg) if (opt_message) fprintf_message(file, msg) else g_fprintf(file, "%s\n", msg);
+
+#define Xfprintf_message(file, code, msg, ...) { \
   char *msg1 = g_strdup_printf(msg, __VA_ARGS__); \
   if (opt_message) g_fprintf(file, \
 "  {\n" \
@@ -182,7 +183,8 @@ amcheck_exit(
 void
 usage(void)
 {
-    print_message(2800000, "Usage: amcheck [--version] [-am] [-w] [-sclt] [-M <address>] [--client-verbose] [--exact_match] [-o configoption]* <conf> [host [disk]* ]*");
+    delete_message(amcheck_print_message(build_message(
+		__FILE__, __LINE__, 2800000, MSG_ERROR, 0)));
 
     amcheck_exit(1);
     /*NOTREACHED*/
@@ -194,7 +196,6 @@ main(
     char **	argv)
 {
     char buffer[BUFFER_SIZE];
-    char *version_string;
     char *mainfname = NULL;
     char pid_str[NUM_STR_SIZE];
     int do_clientchk, client_probs;
@@ -271,7 +272,9 @@ main(
 	switch(c) {
 	case 1:		client_verbose = TRUE;
 			break;
-	case 2:		print_message(2800001, g_strdup_printf("amcheck-%s", VERSION));
+	case 2:		delete_message(amcheck_print_message(build_message(
+				__FILE__, __LINE__, 2800001, MSG_INFO, 1,
+				"version", VERSION)));
 			return(0);
 			break;
 	case 3:		exact_match = TRUE;
@@ -279,12 +282,14 @@ main(
 	case 4:		opt_message = TRUE;
 			break;
 	case 'M':	if (mailto) {
-			    print_message(2800002, "Multiple -M options");
+			    delete_message(amcheck_print_message(build_message(
+				__FILE__, __LINE__, 2800002, MSG_INFO, 0)));
 			    amcheck_exit(1);
 			}
 			mailto=g_strdup(optarg);
 			if(!validate_mailto(mailto)){
-			   print_message(2800003, "Invalid characters in mail address");
+			    delete_message(amcheck_print_message(build_message(
+				__FILE__, __LINE__, 2800003, MSG_INFO, 0)));
 			   amcheck_exit(1);
 			}
 			/*FALLTHROUGH*/
@@ -339,7 +344,8 @@ main(
 	    config_print_errors();
 	}
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
-	    print_message(2800228, "errors processing config file");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800228, MSG_INFO, 0)));
 	    exit(1);
 	    //g_critical("errors processing config file");
 	}
@@ -348,21 +354,26 @@ main(
     mailer = getconf_str(CNF_MAILER);
     if ((!mailer || *mailer == '\0') && mailout == 1) {
 	if (alwaysmail == 1) {
-	    print_message(2800004, "You can't use -a because a mailer is not defined");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800004, MSG_INFO, 0)));
 	} else {
-	    print_message(2800005, "You can't use -m because a mailer is not defined");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800005, MSG_INFO, 0)));
 	}
 	amcheck_exit(1);
     }
     if(mailout && !mailto &&
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
-	print_message(2800006, "WARNING:No mail address configured in  amanda.conf.");
-	print_message(2800007, "To receive dump results by email configure the "
-		 "\"mailto\" parameter in amanda.conf");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800006, MSG_WARNING, 0)));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800007, MSG_INFO, 0)));
         if (alwaysmail) {
-	    print_message(2800008, "When using -a option please specify -Maddress also");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800008, MSG_ERROR, 0)));
 	} else {
-	    print_message(2800009, "Use -Maddress instead of -m");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800009, MSG_INFO, 0)));
 	}
 	amcheck_exit(1);
     }
@@ -371,17 +382,23 @@ main(
        if(getconf_seen(CNF_MAILTO) &&
           strlen(getconf_str(CNF_MAILTO)) > 0) {
           if(!validate_mailto(getconf_str(CNF_MAILTO))){
-		print_message(2800010, "Mail address in amanda.conf has invalid characters");
-		print_message(2800011, "No email will be sent");
+		delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800010, MSG_ERROR, 1,
+			"mailto", getconf_str(CNF_MAILTO))));
+		delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800011, MSG_INFO, 0)));
                 mailout = 0;
           }
        }
        else {
-	  print_message(2800012, "No mail address configured in  amanda.conf");
+	  delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800012, MSG_ERROR, 0)));
           if (alwaysmail) {
-		print_message(2800013, "When using -a option please specify -Maddress also");
+		delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800013, MSG_INFO, 0)));
 	  } else {
-		print_message(2800014, "Use -Maddress instead of -m");
+		delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800014, MSG_INFO, 0)));
 	  }
 	  amcheck_exit(1);
       }
@@ -394,7 +411,9 @@ main(
 	for (i = 0; i < err_array->len; i++) {
 	    char *errstr = g_ptr_array_index(err_array, i);
 	    g_debug("%s", errstr);
-	    print_message(2800015, errstr);
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800015, MSG_INFO, 1,
+			"errstr", errstr)));
 	}
     }
     g_ptr_array_free(err_array, TRUE);
@@ -406,22 +425,27 @@ main(
      */
     dumpuser = getconf_str(CNF_DUMPUSER);
     if ((pw = getpwnam(dumpuser)) == NULL) {
-	printf_message(2800215, "amanda.conf has dump user configured to \"%s\", but that user does not exist.", dumpuser);
+	delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800215, MSG_ERROR, 1,
+			"dumpuser"	, dumpuser)));
 	exit(1);
 	/*NOTREACHED*/
     }
     uid_dumpuser = pw->pw_uid;
     if (getpwuid(uid_me) == NULL) {
-	printf_message(2800216, "cannot get username for running user, uid %ld is not in your user database.",
-	    (long)uid_me);
+	// leak memory
+	delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800216, MSG_ERROR, 1,
+			"uid"	, g_strdup_printf("%ld", (long)uid_me))));
 	exit(1);
 	/*NOTREACHED*/
     }
 #ifdef CHECK_USERID
     if (uid_me != uid_dumpuser) {
-	printf_message(2800217, "running as user \"%s\" instead of \"%s\".\n"
-		"Change user to \"%s\" or change dump user to \"%s\" in amanda.conf",
-	      pw->pw_name, dumpuser, dumpuser, pw->pw_name);
+	delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800217, MSG_ERROR, 2,
+			"running_user"	, pw->pw_name,
+			"expected_user" , dumpuser)));
 	exit(1);
         /*NOTREACHED*/
     }
@@ -442,7 +466,10 @@ main(
 	/* we need the temp file */
 	tempfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.temp.", pid_str, NULL);
 	if((tempfd = fopen(tempfname, "w+")) == NULL) {
-	    printf_message(2800218, "could not open temporary amcheck output file %s: %s. Check permissions", tempfname, strerror(errno));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800218, MSG_ERROR, 2,
+			"filename", tempfname,
+			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
 	}
@@ -452,7 +479,10 @@ main(
 	/* the main fd is a file too */
 	mainfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.main.", pid_str, NULL);
 	if((mainfd = fopen(mainfname, "w+")) == NULL) {
-	    printf_message(2800219, "could not open amcheck server output file %s: %s. Check permissions", mainfname, strerror(errno));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800219, MSG_ERROR, 2,
+			"filename", tempfname,
+			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
 	}
@@ -491,7 +521,9 @@ main(
 	    server_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
 	    serverchk_pid = 0;
 	} else {
-	    fprintf_message(mainfd, 2800021, "parent: reaped bogus pid %ld", (long)pid);
+	    delete_message(amcheck_fprint_message(mainfd, build_message(
+					__FILE__, __LINE__, 2800021, MSG_ERROR, 1,
+					"pid", g_strdup_printf("%ld", (long)pid))));
 	}
     }
 
@@ -502,15 +534,20 @@ main(
 	FILE *tempfdr;
 	tempfdr = fopen(tempfname, "r");
 	if (!tempfdr) {
-	    printf_message(2800228, "Can't oprn '%s' for reading: %s",
-			   tempfname,strerror(errno));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800228, MSG_ERROR, 2,
+			"filename", tempfname,
+			"errno"   , errno)));
 	} else {
 	    if(fseek(tempfdr, (off_t)0, 0) == (off_t)-1) {
-		printf_message(2800220, "seek temp file: %s", strerror(errno));
+		delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800220, MSG_ERROR, 2,
+			"errno"   , errno)));
 		exit(1);
 		/*NOTREACHED*/
 	    }
 
+	    if (opt_message) fprintf(mainfd,",");
 	    while (fgets(line, 1024, tempfdr)) {
 		fprintf(mainfd, "%s", line);
 	    }
@@ -521,9 +558,10 @@ main(
 	amfree(tempfname);
     }
 
-    version_string = g_strdup_printf("(brought to you by Amanda %s)", VERSION);
-    print_message(2800016, version_string);
-    amfree(version_string);
+    if (opt_message) printf(",");
+    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800016, MSG_INFO, 1,
+			"version", VERSION)));
 
     amfree(our_feature_string);
     am_release_feature_set(our_features);
@@ -550,7 +588,9 @@ main(
 
 	fflush(stdout);
 	if (fseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
-	    printf_message(2800221, "fseek main file: %s", strerror(errno));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800221, MSG_ERROR, 2,
+			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
 	}
@@ -571,12 +611,16 @@ main(
 	     * is really just splitting regular old strings) */
 	    a = split_quoted_strings(getconf_str(CNF_MAILTO));
 	    if (!a) {
-		print_message(2800016, g_strdup_printf("Invalid mailto address '%s'", getconf_str(CNF_MAILTO)));
+		 delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800017, MSG_ERROR, 1,
+			"mailto", getconf_str(CNF_MAILTO))));
 		amcheck_exit(1);
 	    }
 	}
 	if((nullfd = open("/dev/null", O_RDWR)) < 0) {
-	    printf_message(2800227, "nullfd: /dev/null: %s", strerror(errno));
+		delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800227, MSG_ERROR, 2,
+			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
 	}
@@ -594,7 +638,9 @@ main(
 	}
 	g_ptr_array_add(pipeargs, NULL);
 	if (!valid_mailto) {
-	    print_message(2800017, g_strdup_printf("Invalid mailto address '%s'", getconf_str(CNF_MAILTO)));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800017, MSG_ERROR, 1,
+			"mailto", getconf_str(CNF_MAILTO))));
 	    amcheck_exit(1);
 	}
 
@@ -620,11 +666,17 @@ main(
 		    strappend(extra_info, "EPIPE writing to mail process\n");
 		    break;
 		} else if(errno != 0) {
-		    printf_message(2800222, "mailfd write: %s", strerror(errno));
+		    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800222, MSG_ERROR, 2,
+			"errno"   , errno)));
 		    exit(1);
 		    /*NOTREACHED*/
 		} else {
-		    printf_message(2800223, "mailfd write: wrote %zd instead of %zd", w, r);
+		    // the 2 g_strdup_printf leak memory.
+		    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800223, MSG_ERROR, 2,
+			"write_size"	, g_strdup_printf("%zd", w),
+			"expected_size"	, g_strdup_printf("%zd", r))));
 		    exit(1);
 		    /*NOTREACHED*/
 		}
@@ -633,7 +685,9 @@ main(
 	aclose(mailfd);
 	ferr = fdopen(errfd, "r");
 	if (!ferr) {
-	    printf_message(2800224, "Can't fdopen: %s", strerror(errno));
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800224, MSG_ERROR, 1,
+			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
 	}
@@ -660,7 +714,10 @@ main(
 		fputs(extra_info, stderr);
 		amfree(extra_info);
 	    }
-	    printf_message(2800225, "error running mailer %s: %s", mailer, err?err:"(unknown)");
+	    delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800225, MSG_ERROR, 2,
+			"mailer"   , mailer,
+			"errmsg"   , err?err:"(unknown)")));
 	    exit(1);
 	    /*NOTREACHED*/
 	} else {
@@ -669,6 +726,8 @@ main(
     }
 
     dbclose();
+//printf("server_probs %d\n", server_probs);
+//printf("client_probs %d\n", client_probs);
     return (server_probs || client_probs);
 }
 
@@ -681,32 +740,26 @@ int check_tapefile(
     char *tapefile)
 {
     struct stat statbuf;
-    char *quoted;
     int tapebad = 0;
-    char *s;
 
     if (stat(tapefile, &statbuf) == 0) {
 	if (!S_ISREG(statbuf.st_mode)) {
-	    quoted = quote_string(tapefile);
-	    s = g_strdup_printf("ERROR: tapelist %s: should be a regular file.", quoted);
-	    fprint_message(outf, 2800018, s);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800018, MSG_ERROR, 1,
+			"tapelist" , tapefile)));
 	    tapebad = 1;
-	    amfree(s);
-	    amfree(quoted);
 	} else if (access(tapefile, F_OK) != 0) {
-	    quoted = quote_string(tapefile);
-	    s = g_strdup_printf("ERROR: can't access tapelist %s", quoted);
-	    fprint_message(outf, 2800019, s);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800019, MSG_ERROR, 2,
+			"errno"	   , errno,
+			"tapelist" , tapefile)));
 	    tapebad = 1;
-	    amfree(s);
-	    amfree(quoted);
 	} else if (access(tapefile, W_OK) != 0) {
-	    quoted = quote_string(tapefile);
-	    s = g_strdup_printf("ERROR: tapelist %s: not writable", quoted);
-	    fprint_message(outf, 2800020, s);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800020, MSG_ERROR, 2,
+			"errno"	   , errno,
+			"tapelist" , tapefile)));
 	    tapebad = 1;
-	    amfree(s);
-	    amfree(quoted);
 	}
     }
     return tapebad;
@@ -722,28 +775,30 @@ test_server_pgm(
 {
     struct stat statbuf;
     int pgmbad = 0;
-    char *quoted;
 
     pgm = g_strjoin(NULL, dir, "/", pgm, NULL);
-    quoted = quote_string(pgm);
     if(stat(pgm, &statbuf) == -1) {
-	fprintf_message(outf, 2800022, "ERROR: program %s: does not exist",
-		quoted);
+	delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800022, MSG_ERROR, 1,
+					"program", pgm)));
 	pgmbad = 1;
     } else if (!S_ISREG(statbuf.st_mode)) {
-	fprintf_message(outf, 2800023, "ERROR: program %s: not a file",
-		quoted);
+	delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800023, MSG_ERROR, 1,
+					"program", pgm)));
 	pgmbad = 1;
     } else if (access(pgm, X_OK) == -1) {
-	fprintf_message(outf, 2800024, "ERROR: program %s: not executable",
-		quoted);
+	delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800024, MSG_ERROR, 1,
+					"program", pgm)));
 	pgmbad = 1;
 #ifndef SINGLE_USERID
     } else if (suid \
 	       && dumpuid != 0
 	       && (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
-	fprintf_message(outf, 2800025, "ERROR: program %s: not setuid-root",
-		quoted);
+	delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800025, MSG_ERROR, 1,
+					"program", pgm)));
 	pgmbad = 1;
 #else
     /* Quiet unused parameter warnings */
@@ -751,7 +806,6 @@ test_server_pgm(
     (void)dumpuid;
 #endif /* SINGLE_USERID */
     }
-    amfree(quoted);
     amfree(pgm);
     return pgmbad;
 }
@@ -820,7 +874,9 @@ static gboolean test_tape_status(FILE * outf) {
 			}
 		    }
 		} else {
-		    fprintf_message(outf, 123, "%s", line);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 123, MSG_ERROR, 1,
+					"errstr", line)));
 		}
 		g_free(line);
 	    }
@@ -831,8 +887,9 @@ static gboolean test_tape_status(FILE * outf) {
 	waitpid(devpid, &wait_status, 0);
 
 	if (WIFSIGNALED(wait_status)) {
-	    fprintf_message(outf, 2800026, "amcheck-device terminated with signal %d",
-		      WTERMSIG(wait_status));
+	    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800026, MSG_ERROR, 1,
+					"signal", g_strdup_printf("%d", WTERMSIG(wait_status)))));
 	    success = FALSE;
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0)
@@ -867,13 +924,12 @@ start_server_check(
     intmax_t kb_avail, kb_needed;
     off_t tape_size;
     gboolean printed_small_part_size_warning = FALSE;
-    char *small_part_size_warning =
-	" This may create > 1000 parts, severely degrading backup/restore performance."
-	" See http://wiki.zmanda.com/index.php/Splitsize_too_small for more information.";
 
     switch(pid = fork()) {
     case -1:
-	printf_message(2800226, "could not spawn a process for checking the server: %s", strerror(errno));
+	delete_message(amcheck_print_message(build_message(
+			__FILE__, __LINE__, 2800226, MSG_ERROR, 1,
+			"errno"	, errno)));
 	exit(1);
         g_assert_not_reached();
 
@@ -892,8 +948,11 @@ start_server_check(
      * so totally drop privileges at this point (making the userid equal to the dumpuser) */
     set_root_privs(-1);
 
-    fprint_message(outf, 2800027, "Amanda Tape Server Host Check");
-    fprint_message(outf, 2800028, "-----------------------------");
+    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800027, MSG_ERROR, 0)));
+    if (!opt_message) {
+	fprintf(outf, "-----------------------------\n");
+    }
 
     if (do_localchk || testtape) {
 	identlist_t il;
@@ -911,74 +970,81 @@ start_server_check(
 	    if (!g_str_equal(lbl_templ, "")) {
 		lbl_templ = config_dir_relative(lbl_templ);
 		if (access(lbl_templ, R_OK) == -1) {
-		    fprintf_message(outf, 2800029,
-			"ERROR: storage %s: cannot read label template (lbl-templ) file %s: %s. Check permissions",
-			storage_n,
-			lbl_templ,
-			strerror(errno));
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800029, MSG_ERROR, 3,
+			"errno",	errno,
+			"storage",	storage_n,
+			"filename",	lbl_templ)));
 		    confbad = 1;
 		}
 		amfree(lbl_templ);
 #if !defined(HAVE_LPR_CMD)
-		fprintf_message(outf, 2800030, "ERROR: storage %s: lbl-templ set but no LPR command defined. You should reconfigure amanda and make sure it finds a lpr or lp command.", storage_n);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800030, MSG_ERROR, 1,
+			"storage",	storage_n)));
 		confbad = 1;
 #endif
 	    }
 
 	    if (storage_get_flush_threshold_scheduled(storage)
 		< storage_get_flush_threshold_dumped(storage)) {
-		fprintf_message(outf, 2800031, "WARNING: storage %s: flush-threshold-dumped (%d) must be less than or equal to flush-threshold-scheduled (%d).",
-			  storage_n,
-			  storage_get_flush_threshold_dumped(storage),
-			  storage_get_flush_threshold_scheduled(storage));
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800031, MSG_WARNING, 3,
+			"storage",	storage_n,
+			"flush_threshold_dumped", g_strdup_printf("%d",storage_get_flush_threshold_dumped(storage)),
+			"flush_threshold_scheduled", g_strdup_printf("%d",storage_get_flush_threshold_scheduled(storage)))));
 	    }
 
 	    if (storage_get_flush_threshold_scheduled(storage)
 		< storage_get_taperflush(storage)) {
-		fprintf_message(outf, 2800032, "WARNING: storage %s: taperflush (%d) must be less than or equal to flush-threshold-scheduled (%d).",
-			  storage_n,
-			  storage_get_taperflush(storage),
-			  storage_get_flush_threshold_scheduled(storage));
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800032, MSG_WARNING, 3,
+			"storage",	storage_n,
+			"taperflush", g_strdup_printf("%d",storage_get_taperflush(storage)),
+			"flush_threshold_scheduled", g_strdup_printf("%d",storage_get_flush_threshold_scheduled(storage)))));
 	    }
 
 	    if (storage_get_taperflush(storage) &&
 	        !storage_get_autoflush(storage)) {
-	        fprintf_message(outf, 2800033, "WARNING: storage %s: autoflush must be set to 'yes' or 'all' if taperflush (%d) is greater that 0.",
-			  storage_n,
-			  storage_get_taperflush(storage));
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800033, MSG_WARNING, 3,
+			"storage",	storage_n,
+			"taperflush", g_strdup_printf("%d",storage_get_taperflush(storage)))));
 	    }
 
 	    if (!storage_seen(storage, STORAGE_TAPETYPE)) {
-		fprintf_message(outf, 2800034,
-			  "ERROR: storage %s: no tapetype specified; you must give a value for "
-			  "the 'tapetype' parameter or the storage",
-			  storage_n);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800034, MSG_ERROR, 1,
+			"storage",	storage_n)));
 		confbad = 1;
 	    }
 
 	    policy_n = storage_get_policy(storage);
 	    policy = lookup_policy(policy_n);
 	    if (policy_get_retention_tapes(policy) <= storage_get_runtapes(storage)) {
-		fprintf_message(outf, 2800035,
-			  "ERROR: storage %s: runtapes is larger or equal to policy '%s' retention-tapes",
-			  storage_n, policy_n);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800035, MSG_ERROR, 2,
+			"storage",	storage_n,
+			"policy",	policy_n)));
 	    }
 
 	    {
 		uintmax_t kb_avail = physmem_total() / 1024;
 		uintmax_t kb_needed = storage_get_device_output_buffer_size(storage) / 1024;
 		if (kb_avail < kb_needed) {
-		    fprintf_message(outf, 2800036,
-			"ERROR: system has %ju %sB memory, but device-output-buffer-size needs %ju %sB",
-			kb_avail/(uintmax_t)unitdivisor, displayunit,
-			kb_needed/(uintmax_t)unitdivisor, displayunit);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800036, MSG_ERROR, 2,
+			"kb_avail",	g_strdup_printf("%ld", kb_avail),
+			"kb_needed",	g_strdup_printf("%ld", kb_needed))));
 		}
 	    }
 	}
 
 	/* Double-check that 'localhost' resolves properly */
 	if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
-	    fprintf_message(outf, 2800037, "ERROR: Cannot resolve `localhost': %s", gai_strerror(res));
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800037, MSG_ERROR, 1,
+			"gai_strerror",	gai_strerror(res))));
 	    confbad = 1;
 	}
 
@@ -992,12 +1058,11 @@ start_server_check(
 	 * entreprise version will do planner/dumper suid check
 	 */
 	if(access(amlibexecdir, X_OK) == -1) {
-	    quoted = quote_string(amlibexecdir);
-	    fprintf_message(outf, 2800038, "ERROR: Directory %s containing Amanda tools is not accessible.",
-		    quoted);
-	    fprint_message(outf, 2800039, "Check permissions");
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800038, MSG_ERROR, 2,
+			"dir",	amlibexecdir,
+			"errno", errno)));
 	    pgmbad = 1;
-	    amfree(quoted);
 	} else {
 	    if(test_server_pgm(outf, amlibexecdir, "planner", 1, uid_dumpuser))
 		pgmbad = 1;
@@ -1013,12 +1078,11 @@ start_server_check(
 		pgmbad = 1;
 	}
 	if(access(sbindir, X_OK) == -1) {
-	    quoted = quote_string(sbindir);
-	    fprintf_message(outf, 2800040, "ERROR: Directory %s containing Amanda tools is not accessible",
-		    sbindir);
-	    fprint_message(outf, 2800041, "Check permissions");
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800040, MSG_ERROR, 2,
+			"dir",	sbindir,
+			"errno", errno)));
 	    pgmbad = 1;
-	    amfree(quoted);
 	} else {
 	    if(test_server_pgm(outf, sbindir, "amgetconf", 0, uid_dumpuser))
 		pgmbad = 1;
@@ -1030,11 +1094,10 @@ start_server_check(
 		pgmbad = 1;
 	}
 	if(access(COMPRESS_PATH, X_OK) == -1) {
-	    quoted = quote_string(COMPRESS_PATH);
-	    fprintf_message(outf, 2800042, "WARNING: %s is not executable, server-compression "
-			    "and indexing will not work.",quoted);
-	    fprint_message(outf, 2800043, "Check permissions");
-	    amfree(quoted);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800042, MSG_WARNING, 2,
+			"program", COMPRESS_PATH,
+			"errno",   errno)));
 	}
     }
 
@@ -1069,30 +1132,30 @@ start_server_check(
 	 */
 	}
 	if(access(tape_dir, W_OK) == -1) {
-	    quoted = quote_string(tape_dir);
-	    fprintf_message(outf, 2800044, "ERROR: tapelist dir %s: not writable.\nCheck permissions",
-		    quoted);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800044, MSG_ERROR, 2,
+			"tape_dir", tape_dir,
+			"errno",   errno)));
 	    tapebad = 1;
-	    amfree(quoted);
 	}
 	else if(stat(tapefile, &statbuf) == -1) {
 	    if (errno != ENOENT) {
-		quoted = quote_string(tape_dir);
-		fprintf_message(outf, 2800045, "ERROR: tapelist %s (%s), "
-			"you must create an empty file.",
-			quoted, strerror(errno));
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800045, MSG_ERROR, 2,
+			"tapefile", tapefile,
+			"errno",   errno)));
 		tapebad = 1;
-		amfree(quoted);
 	    } else {
-		fprint_message(outf, 2800046, "NOTE: tapelist will be created on the next run.");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800046, MSG_INFO, 0)));
 	    }
 	} else {
 	    tapebad |= check_tapefile(outf, tapefile);
 	    if (tapebad == 0 && read_tapelist(tapefile)) {
-		quoted = quote_string(tapefile);
-		fprintf_message(outf, 2800047, "ERROR: tapelist %s: parse error", quoted);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800047, MSG_INFO, 1,
+			"tapefile", tapefile)));
 		tapebad = 1;
-		amfree(quoted);
 	    }
 	    newtapefile = g_strconcat(tapefile, ".new", NULL);
 	    tapebad |= check_tapefile(outf, newtapefile);
@@ -1112,11 +1175,9 @@ start_server_check(
 	}
 	holdfile = config_dir_relative("hold");
 	if(access(holdfile, F_OK) != -1) {
-	    quoted = quote_string(holdfile);
-	    fprintf_message(outf, 2800048, "WARNING: hold file %s exists.", holdfile);
-	    fprint_message(outf, 2800049, "Amdump will sleep as long as this file exists.");
-	    fprint_message(outf, 2800050, "You might want to delete the existing hold file");
-	    amfree(quoted);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800048, MSG_INFO, 1,
+			"holdfile", holdfile)));
 	}
 	amfree(tapefile);
 	amfree(tape_dir);
@@ -1125,7 +1186,8 @@ start_server_check(
 	if (tapename == NULL) {
 	    if (getconf_str(CNF_TPCHANGER) == NULL &&
 		getconf_identlist(CNF_STORAGE) == NULL) {
-		fprint_message(outf, 2800051, "WARNING:Parameter \"tapedev\", \"tpchanger\" or storage not specified in amanda.conf.");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800051, MSG_WARNING, 0)));
 		testtape = 0;
 		do_tapechk = 0;
 	    }
@@ -1139,15 +1201,18 @@ start_server_check(
 
 	if (!tapetype_seen(tp, TAPETYPE_PART_SIZE)) {
 	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_TYPE)) {
-		fprint_message(outf, 2800052, "ERROR: part-cache-type specified, but no part-size");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800052, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)) {
-		fprint_message(outf, 2800053, "ERROR: part-cache-dir specified, but no part-size");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800053, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
-		fprint_message(outf, 2800054, "ERROR: part-cache-max-size specified, but no part-size");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800054, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 	} else {
@@ -1155,13 +1220,15 @@ start_server_check(
 	    case PART_CACHE_TYPE_DISK:
 		if (!tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)
 			    || !part_cache_dir || !*part_cache_dir) {
-		    fprint_message(outf, 2800055,
-			"ERROR: part-cache-type is DISK, but no part-cache-dir specified");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800055, MSG_ERROR, 0)));
 		    tapebad = 1;
 		} else {
 		    if(get_fs_usage(part_cache_dir, NULL, &fsusage) == -1) {
-			fprintf_message(outf, 2800056, "ERROR: part-cache-dir '%s': %s",
-				part_cache_dir, strerror(errno));
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800056, MSG_ERROR, 2,
+				"errno", errno,
+				"part-cache-dir", part_cache_dir)));
 			tapebad = 1;
 		    } else {
 			kb_avail = fsusage.fsu_bavail_top_bit_set?
@@ -1171,10 +1238,10 @@ start_server_check(
 			    kb_needed = part_cache_max_size;
 			}
 			if (kb_avail < kb_needed) {
-			    fprintf_message(outf, 2800057,
-				"ERROR: part-cache-dir has %ju %sB available, but needs %ju %sB",
-				kb_avail/(uintmax_t)unitdivisor, displayunit,
-				kb_needed/(uintmax_t)unitdivisor, displayunit);
+			    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800057, MSG_ERROR, 2,
+				"kb_avail", kb_avail,
+				"kb_needed", kb_needed)));
 			    tapebad = 1;
 			}
 		    }
@@ -1188,10 +1255,10 @@ start_server_check(
 		    kb_needed = part_cache_max_size;
 		}
 		if (kb_avail < kb_needed) {
-		    fprintf_message(outf, 2800058,
-			"ERROR: system has %ju %sB memory, but part cache needs %ju %sB",
-			kb_avail/(uintmax_t)unitdivisor, displayunit,
-			kb_needed/(uintmax_t)unitdivisor, displayunit);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800058, MSG_ERROR, 2,
+			"kb_avail", kb_avail,
+			"kb_needed", kb_needed)));
 		    tapebad = 1;
 		}
 
@@ -1199,8 +1266,8 @@ start_server_check(
 
 	    case PART_CACHE_TYPE_NONE:
 		if (tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)) {
-		    fprint_message(outf, 2800059,
-			"ERROR: part-cache-dir specified, but part-cache-type is not DISK");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800059, MSG_ERROR, 0)));
 		    tapebad = 1;
 		}
 		break;
@@ -1209,40 +1276,42 @@ start_server_check(
 
 	if (tapetype_seen(tp, TAPETYPE_PART_SIZE) && part_size == 0
 		&& part_cache_type != PART_CACHE_TYPE_NONE) {
-	    fprint_message(outf, 2800060,
-		    "ERROR: part_size is zero, but part-cache-type is not 'none'");
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800060, MSG_ERROR, 0)));
 	    tapebad = 1;
 	}
 
 	if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
 	    if (part_cache_type == PART_CACHE_TYPE_NONE) {
-		fprint_message(outf, 2800061,
-		    "ERROR: part-cache-max-size is specified but no part cache is in use");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800061, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 
 	    if (part_cache_max_size > part_size) {
-		fprint_message(outf, 2800062,
-		    "WARNING: part-cache-max-size is greater than part-size");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800062, MSG_WARNING, 0)));
 	    }
 	}
 
 	tape_size = tapetype_get_length(tp);
 	if (part_size && part_size * 1000 < tape_size) {
-	    fprintf_message(outf, 2800063,
-		      "WARNING: part-size of %ju %sB < 0.1%% of tape length.",
-		      (uintmax_t)part_size/(uintmax_t)unitdivisor, displayunit);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800063, MSG_WARNING, 1,
+			"part-size", g_strdup_printf("%lu", part_size))));
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
-		fprintf_message(outf, 2800064, "%s", small_part_size_warning);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
 	    }
 	} else if (part_cache_max_size && part_cache_max_size * 1000 < tape_size) {
-	    fprintf_message(outf, 2800065,
-		      "WARNING: part-cache-max-size of %ju %sB < 0.1%% of tape length.",
-		      (uintmax_t)part_cache_max_size/(uintmax_t)unitdivisor, displayunit);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800065, MSG_WARNING, 1,
+			"part_size_max_size", part_cache_max_size)));
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
-		fprintf_message(outf, 2800064, "%s", small_part_size_warning);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
 	    }
 	}
     }
@@ -1257,13 +1326,12 @@ start_server_check(
 		il != NULL;
 		il = il->next) {
 	    hdp = lookup_holdingdisk(il->data);
-	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
 	    if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1) {
-		fprintf_message(outf, 2800066, "ERROR: holding dir %s (%s), "
-			"you must create a directory.",
-			quoted, strerror(errno));
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800066, MSG_ERROR, 2,
+			"errno", errno,
+			"holding_dir", holdingdisk_get_diskdir(hdp))));
 		disklow = 1;
-		amfree(quoted);
 		continue;
 	    }
 
@@ -1274,65 +1342,59 @@ start_server_check(
 		kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
 
 	    if(access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
-		fprintf_message(outf, 2800067, "ERROR: holding disk %s: not writable: %s.",
-			quoted, strerror(errno));
-		fprint_message(outf, 2800068, "Check permissions");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800067, MSG_ERROR, 2,
+			"errno", errno,
+			"holding_dir", holdingdisk_get_diskdir(hdp))));
 		disklow = 1;
 	    }
 	    else if(access(holdingdisk_get_diskdir(hdp), X_OK) == -1) {
-		fprintf_message(outf, 2800069, "ERROR: holding disk %s: not searcheable: %s.",
-			quoted, strerror(errno));
-		fprintf_message(outf, 2800070, "Check permissions of ancestors of %s", quoted);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800069, MSG_ERROR, 2,
+			"errno", errno,
+			"holding_dir", holdingdisk_get_diskdir(hdp))));
 		disklow = 1;
 	    }
 	    else if(holdingdisk_get_disksize(hdp) > (off_t)0) {
 		if(kb_avail == 0) {
-		    fprintf_message(outf, 2800071,
-			    "WARNING: holding disk %s: "
-			    "no space available (%lld %sB requested)", quoted,
-			    (long long)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
-			    displayunit);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800071, MSG_WARNING, 2,
+			"holding_dir", holdingdisk_get_diskdir(hdp),
+			"size", holdingdisk_get_disksize(hdp))));
 		    disklow = 1;
 		}
 		else if(kb_avail < holdingdisk_get_disksize(hdp)) {
-		    fprintf_message(outf, 2800072,
-			    "WARNING: holding disk %s: "
-			    "only %lld %sB available (%lld %sB requested)", quoted,
-			    (long long)(kb_avail / (off_t)unitdivisor),
-			    displayunit,
-			    (long long)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
-			    displayunit);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800072, MSG_WARNING, 3,
+			"holding_dir", holdingdisk_get_diskdir(hdp),
+			"avail", g_strdup_printf("%jd", kb_avail),
+			"requested", g_strdup_printf("%jd", holdingdisk_get_disksize(hdp)))));
 		    disklow = 1;
 		}
 		else {
-		    fprintf_message(outf, 2800073,
-			    "Holding disk %s: %lld %sB disk space available,"
-			    " using %lld %sB as requested",
-			    quoted,
-			    (long long)(kb_avail / (off_t)unitdivisor),
-			    displayunit,
-			    (long long)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
-			    displayunit);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800073, MSG_INFO, 3,
+			"holding_dir", holdingdisk_get_diskdir(hdp),
+			"avail", g_strdup_printf("%jd", kb_avail),
+			"requested", g_strdup_printf("%jd", holdingdisk_get_disksize(hdp)))));
 		}
 	    }
 	    else {
 		if(kb_avail < -holdingdisk_get_disksize(hdp)) {
-		    fprintf_message(outf, 2800074,
-			    "WARNING: holding disk %s: "
-			    "only %lld %sB free, using nothing",
-			    quoted, (long long)(kb_avail / (off_t)unitdivisor),
-			    displayunit);
-		    fprint_message(outf, 2800075, "WARNING: Not enough free space specified in amanda.conf");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800074, MSG_WARNING, 2,
+			"holding_dir", holdingdisk_get_diskdir(hdp),
+			"avail", g_strdup_printf("%jd", kb_avail))));
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800075, MSG_WARNING, 0)));
 		    disklow = 1;
 		}
 		else {
-		    fprintf_message(outf, 2800076,
-			    "Holding disk %s: %lld %sB disk space available, using %lld %sB",
-			    quoted,
-			    (long long)(kb_avail/(off_t)unitdivisor),
-			    displayunit,
-			    (long long)((kb_avail + holdingdisk_get_disksize(hdp)) / (off_t)unitdivisor),
-			    displayunit);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800076, MSG_INFO, 3,
+			"holding_dir", holdingdisk_get_diskdir(hdp),
+			"avail", g_strdup_printf("%jd", kb_avail),
+			"using", g_strdup_printf("%jd", kb_avail + holdingdisk_get_disksize(hdp)))));
 		}
 	    }
 	    amfree(quoted);
@@ -1351,12 +1413,17 @@ start_server_check(
 
 	quoted = quote_string(conf_logdir);
 	if(stat(conf_logdir, &statbuf) == -1) {
-	    fprintf_message(outf, 2800077, "ERROR: logdir %s (%s), you must create directory.",
-		    quoted, strerror(errno));
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800077, MSG_INFO, 2,
+			"errno", errno,
+			"logdir", conf_logdir)));
 	    disklow = 1;
 	}
 	else if(access(conf_logdir, W_OK) == -1) {
-	    fprintf_message(outf, 2800078, "ERROR: log dir %s: not writable", quoted);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800078, MSG_ERROR, 2,
+			"errno", errno,
+			"logdir", conf_logdir)));
 	    logbad = 1;
 	}
 	amfree(quoted);
@@ -1365,21 +1432,24 @@ start_server_check(
 	quoted = quote_string(olddir);
 	if (logbad == 0 && stat(olddir,&stat_old) == 0) { /* oldlog exist */
 	    if(!(S_ISDIR(stat_old.st_mode))) {
-		fprintf_message(outf, 2800079, "ERROR: oldlog directory %s is not a directory",
-			quoted);
-		fprint_message(outf, 2800080, "Remove the entry and create a new directory");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800079, MSG_ERROR, 2,
+			"oldlogdir", olddir)));
 		logbad = 1;
 	    }
 	    if(logbad == 0 && access(olddir, W_OK) == -1) {
-		fprintf_message(outf, 2800081, "ERROR: oldlog dir %s: not writable", quoted);
-		fprint_message(outf, 2800082, "Check permissions");
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800081, MSG_ERROR, 2,
+			"errno", errno,
+			"oldlogdir", olddir)));
 		logbad = 1;
 	    }
 	}
 	else if(logbad == 0 && lstat(olddir,&stat_old) == 0) {
-	    fprintf_message(outf, 2800083, "ERROR: oldlog directory %s is not a directory",
-		    quoted);
-	    fprint_message(outf, 2800084, "Remove the entry and create a new directory");
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800083, MSG_ERROR, 2,
+			"errno", errno,
+			"oldlogdir", olddir)));
 	    logbad = 1;
 	}
 	amfree(quoted);
@@ -1391,13 +1461,17 @@ start_server_check(
     if (testtape) {
         tapebad = !test_tape_status(outf);
     } else if (do_tapechk) {
-	fprint_message(outf, 2800085, "WARNING: skipping tape test because amdump or amflush seem to be running");
-	fprint_message(outf, 2800086, "WARNING: if they are not, you must run amcleanup");
+	delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800085, MSG_WARNING, 0)));
+	delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800086, MSG_WARNING, 0)));
 	dev_amanda_data_path = TRUE;
 	dev_directtcp_data_path = TRUE;
     } else if (logbad == 2) {
-	fprint_message(outf, 2800087, "NOTE: amdump or amflush seem to be running");
-	fprint_message(outf, 2800088, "NOTE: if they are not, you must run amcleanup");
+	delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800087, MSG_INFO, 0)));
+	delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800088, MSG_INFO, 0)));
 
 	/* we skipped the tape checks, but this is just a NOTE and
 	 * should not result in a nonzero exit status, so reset logbad to 0 */
@@ -1405,7 +1479,8 @@ start_server_check(
 	dev_amanda_data_path = TRUE;
 	dev_directtcp_data_path = TRUE;
     } else {
-	fprint_message(outf, 2800089, "NOTE: skipping tape checks");
+	delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800089, MSG_INFO, 0)));
 	dev_amanda_data_path = TRUE;
 	dev_directtcp_data_path = TRUE;
     }
@@ -1439,13 +1514,17 @@ start_server_check(
 	conf_runtapes = getconf_int(CNF_RUNTAPES);
 
 	if (conf_tapecycle <= conf_runspercycle) {
-		fprintf_message(outf, 2800090, "WARNING: tapecycle (%d) <= runspercycle (%d).",
-			conf_tapecycle, conf_runspercycle);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800090, MSG_INFO, 2,
+			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
+			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
 	}
 
 	if (conf_tapecycle <= conf_runtapes) {
-		fprintf_message(outf, 2800091, "WARNING: tapecycle (%d) <= runtapes (%d).",
-			conf_tapecycle, conf_runtapes);
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800091, MSG_INFO, 2,
+			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
+			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
 	}
 
 	conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
@@ -1454,29 +1533,35 @@ start_server_check(
 	quoted = quote_string(conf_infofile);
 	if(stat(conf_infofile, &statbuf) == -1) {
 	    if (errno == ENOENT) {
-		fprintf_message(outf, 2800092, "NOTE: conf info dir %s does not exist",
-			quoted);
-		fprint_message(outf, 2800093, "NOTE: it will be created on the next run.");
+	        delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800092, MSG_INFO, 1,
+			"infodir", conf_infofile)));
 	    } else {
-		fprintf_message(outf, 2800094, "ERROR: conf info dir %s (%s)",
-			quoted, strerror(errno));
+	        delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800094, MSG_ERROR, 2,
+			"errno", errno,
+			"infodir", conf_infofile)));
 		infobad = 1;
 	    }
 	    amfree(conf_infofile);
 	} else if (!S_ISDIR(statbuf.st_mode)) {
-	    fprintf_message(outf, 2800095, "ERROR: info dir %s: not a directory", quoted);
-	    fprint_message(outf, 2800096, "Remove the entry and create a new directory");
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800095, MSG_ERROR, 1,
+			"infodir", conf_infofile)));
 	    amfree(conf_infofile);
 	    infobad = 1;
 	} else if (access(conf_infofile, W_OK) == -1) {
-	    fprintf_message(outf, 2800097, "ERROR: info dir %s: not writable", quoted);
-	    fprint_message(outf, 2800098, "Check permissions");
+	    delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800097, MSG_ERROR, 1,
+			"infodir", conf_infofile)));
 	    amfree(conf_infofile);
 	    infobad = 1;
 	} else {
 	    char *errmsg = NULL;
 	    if (check_infofile(conf_infofile, &origq, &errmsg) == -1) {
-		fprintf_message(outf, 2800099, "ERROR: Can't copy infofile: %s", errmsg);
+		delete_message(amcheck_fprint_message(outf, build_message(
+			__FILE__, __LINE__, 2800099, MSG_ERROR, 1,
+			"errmsg", errmsg)));
 		infobad = 1;
 		amfree(errmsg);
 	    }
@@ -1493,25 +1578,27 @@ start_server_check(
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
-			fprintf_message(outf, 2800100, "NOTE: host info dir %s does not exist",
-				quoted);
-			fprint_message(outf, 2800101,
-				"NOTE: it will be created on the next run.");
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800100, MSG_INFO, 1,
+				"hostinfodir", hostinfodir)));
 		    } else {
-			fprintf_message(outf, 2800102, "ERROR: host info dir %s (%s)",
-				quoted, strerror(errno));
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800102, MSG_ERROR, 2,
+				"errno", errno,
+				"hostinfodir", hostinfodir)));
 			infobad = 1;
 		    }
 		    amfree(hostinfodir);
 		} else if (!S_ISDIR(statbuf.st_mode)) {
-		    fprintf_message(outf, 2800103, "ERROR: info dir %s: not a directory",
-			    quoted);
-		    fprint_message(outf, 2800104, "Remove the entry and create a new directory");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800103, MSG_ERROR, 1,
+				"hostinfodir", hostinfodir)));
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else if (access(hostinfodir, W_OK) == -1) {
-		    fprintf_message(outf, 2800105, "ERROR: info dir %s: not writable", quoted);
-		    fprint_message(outf, 2800106, "Check permissions");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800105, MSG_ERROR, 1,
+				"hostinfodir", hostinfodir)));
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else {
@@ -1531,43 +1618,47 @@ start_server_check(
 		    quotedif = quote_string(infofile);
 		    if(stat(diskdir, &statbuf) == -1) {
 			if (errno == ENOENT) {
-			    fprintf_message(outf, 2800107, "NOTE: info dir %s does not exist",
-				quoted);
-			    fprint_message(outf, 2800108,
-				"NOTE: it will be created on the next run.");
+			    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800107, MSG_INFO, 1,
+				"diskdir", diskdir)));
 			} else {
-			    fprintf_message(outf, 2800109, "ERROR: info dir %s (%s)",
-				    quoted, strerror(errno));
+			    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800109, MSG_ERROR, 2,
+				"errno", errno,
+				"diskdir", diskdir)));
 			    infobad = 1;
 			}
 		    } else if (!S_ISDIR(statbuf.st_mode)) {
-			fprintf_message(outf, 2800110, "ERROR: info dir %s: not a directory",
-				quoted);
-			fprint_message(outf, 2800111, "Remove the entry and create a new directory");
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800110, MSG_ERROR, 1,
+				"diskdir", diskdir)));
 			infobad = 1;
 		    } else if (access(diskdir, W_OK) == -1) {
-			fprintf_message(outf, 2800112, "ERROR: info dir %s: not writable",
-				quoted);
-			fprint_message(outf, 2800113, "Check permissions");
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800112, MSG_ERROR, 1,
+				"diskdir", diskdir)));
 			infobad = 1;
 		    } else if(stat(infofile, &statbuf) == -1) {
 			if (errno == ENOENT) {
-			    fprintf_message(outf, 2800114, "NOTE: info file %s does not exist",
-				    quotedif);
-			    fprint_message(outf, 2800115, "NOTE: it will be created on the next run.");
+			    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800114, MSG_INFO, 1,
+				"infofile", infofile)));
 			} else {
-			    fprintf_message(outf, 2800116, "ERROR: info dir %s (%s)",
-				    quoted, strerror(errno));
+			    delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800116, MSG_INFO, 2,
+				"errno", errno,
+				"diskdir", diskdir)));
 			    infobad = 1;
 			}
 		    } else if (!S_ISREG(statbuf.st_mode)) {
-			fprintf_message(outf, 2800117, "ERROR: info file %s: not a file",
-				quotedif);
-			fprint_message(outf, 2800118, "Remove the entry and create a new file");
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800117, MSG_ERROR, 1,
+				"infofile", infofile)));
 			infobad = 1;
 		    } else if (access(infofile, R_OK) == -1) {
-			fprintf_message(outf, 2800119, "ERROR: info file %s: not readable",
-				quotedif);
+			delete_message(amcheck_fprint_message(outf, build_message(
+				__FILE__, __LINE__, 2800119, MSG_ERROR, 1,
+				"infofile", infofile)));
 			infobad = 1;
 		    }
 		    amfree(quotedif);
@@ -1579,24 +1670,27 @@ start_server_check(
 			quoted = quote_string(conf_indexdir);
 			if(stat(conf_indexdir, &statbuf) == -1) {
 			    if (errno == ENOENT) {
-				fprintf_message(outf, 2800120, "NOTE: index dir %s does not exist",
-				        quoted);
-				fprint_message(outf, 2800121, "NOTE: it will be created on the next run.");
+				delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800120, MSG_INFO, 1,
+					"indexdir", conf_indexdir)));
 			    } else {
-				fprintf_message(outf, 2800122, "ERROR: index dir %s (%s)",
-					quoted, strerror(errno));
+				delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800122, MSG_ERROR, 2,
+					"errno", errno,
+					"indexdir", conf_indexdir)));
 				indexbad = 1;
 			    }
 			    amfree(conf_indexdir);
 			} else if (!S_ISDIR(statbuf.st_mode)) {
-			    fprintf_message(outf, 2800123, "ERROR: index dir %s: not a directory",
-				    quoted);
-			    fprint_message(outf, 2800124, "Remove the entry and create a new directory");
+			    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800123, MSG_ERROR, 1,
+					"indexdir", conf_indexdir)));
 			    amfree(conf_indexdir);
 			    indexbad = 1;
 			} else if (access(conf_indexdir, W_OK) == -1) {
-			    fprintf_message(outf, 2800125, "ERROR: index dir %s: not writable",
-				    quoted);
+			    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800125, MSG_ERROR, 1,
+					"indexdir", conf_indexdir)));
 			    amfree(conf_indexdir);
 			    indexbad = 1;
 			} else {
@@ -1611,24 +1705,27 @@ start_server_check(
 			    quoted = quote_string(hostindexdir);
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
-				    fprintf_message(outf, 2800126, "NOTE: index dir %s does not exist",
-				            quoted);
-				    fprint_message(outf, 2800127, "NOTE: it will be created on the next run.");
+				    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800126, MSG_INFO, 1,
+					"hostindexdir", hostindexdir)));
 			        } else {
-				    fprintf_message(outf, 2800128, "ERROR: index dir %s (%s)",
-					    quoted, strerror(errno));
+				    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800128, MSG_ERROR, 2,
+					"errno", errno,
+					"hostindexdir", hostindexdir)));
 				    indexbad = 1;
 				}
 			        amfree(hostindexdir);
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
-			        fprintf_message(outf, 2800129, "ERROR: index dir %s: not a directory",
-				        quoted);
-				fprint_message(outf, 2800130, "Remove the entry and create a new directory");
+				delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800129, MSG_ERROR, 1,
+					"hostindexdir", hostindexdir)));
 			        amfree(hostindexdir);
 			        indexbad = 1;
 			    } else if (access(hostindexdir, W_OK) == -1) {
-			        fprintf_message(outf, 2800131, "ERROR: index dir %s: not writable",
-				        quoted);
+				delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800131, MSG_ERROR, 1,
+					"hostindexdir", hostindexdir)));
 			        amfree(hostindexdir);
 			        indexbad = 1;
 			    } else {
@@ -1643,22 +1740,26 @@ start_server_check(
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
-				    fprintf_message(outf, 2800132, "NOTE: index dir %s does not exist",
-					    quoted);
-				    fprint_message(outf, 2800133, "NOTE: it will be created on the next run.");
+				    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800132, MSG_INFO, 1,
+					"diskindexdir", diskdir)));
 				} else {
-				    fprintf_message(outf, 2800134, "ERROR: index dir %s (%s)",
-					quoted, strerror(errno));
+				    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800132, MSG_ERROR, 2,
+					"errno", errno,
+					"diskindexdir", diskdir)));
 				    indexbad = 1;
 				}
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
-				fprintf_message(outf, 2800135, "ERROR: index dir %s: not a directory",
-					quoted);
-				fprint_message(outf, 2800136, "Remove the entry and create a new directory");
+				delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800135, MSG_ERROR, 2,
+					"errno", errno,
+					"diskindexdir", diskdir)));
 				indexbad = 1;
 			    } else if (access(diskdir, W_OK) == -1) {
-				fprintf_message(outf, 2800137, "ERROR: index dir %s: is not writable",
-					quoted);
+				delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800137, MSG_ERROR, 1,
+					"diskindexdir", diskdir)));
 				indexbad = 1;
 			    }
 			    amfree(quoted);
@@ -1668,33 +1769,30 @@ start_server_check(
 
 		if ( dp->encrypt == ENCRYPT_SERV_CUST ) {
 		  if ( dp->srv_encrypt[0] == '\0' ) {
-		    fprint_message(outf, 2800138, "ERROR: server encryption program not specified");
-		    fprint_message(outf, 2800139, "Specify \"server-custom-encrypt\" in the dumptype");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800138, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    pgmbad = 1;
 		  }
 		  else if(access(dp->srv_encrypt, X_OK) == -1) {
-		    fprintf_message(outf, 2800140, "ERROR: %s is not executable, server encryption will not work",
-			    dp->srv_encrypt );
-		   fprint_message(outf, 2800141, "Check file type");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800140, MSG_ERROR, 1,
+					"program", dp->srv_encrypt)));
 		    pgmbad = 1;
 		  }
 		}
 		if ( dp->compress == COMP_SERVER_CUST ) {
 		  if ( dp->srvcompprog[0] == '\0' ) {
-		    fprint_message(outf, 2800142, "ERROR: server custom compression program "
-				    "not specified");
-		    fprint_message(outf, 2800143, "Specify \"server-custom-compress\" in "
-				    "the dumptype");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800142, MSG_ERROR, 0)));
 		    pgmbad = 1;
 		  }
 		  else if(access(dp->srvcompprog, X_OK) == -1) {
-		    quoted = quote_string(dp->srvcompprog);
 
-		    fprintf_message(outf, 2800144, "ERROR: %s is not executable, server custom "
-				    "compression will not work",
-			    quoted);
-		    amfree(quoted);
-		   fprint_message(outf, 2800145, "Check file type");
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800144, MSG_ERROR, 1,
+					"program", dp->srvcompprog)));
 		    pgmbad = 1;
 		  }
 		}
@@ -1705,34 +1803,38 @@ start_server_check(
 		    || dumptype_seen(dp->config, DUMPTYPE_FALLBACK_SPLITSIZE)) {
 		    tape_size = tapetype_get_length(tp);
 		    if (dp->tape_splitsize > tape_size) {
-			fprintf_message(outf, 2800146,
-				  "ERROR: %s %s: tape-splitsize > tape size",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800145, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->tape_splitsize && dp->fallback_splitsize * 1024 > physmem_total()) {
-			fprintf_message(outf, 2800147,
-				  "ERROR: %s %s: fallback-splitsize > total available memory",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800147, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->tape_splitsize && dp->fallback_splitsize > tape_size) {
-			fprintf_message(outf, 2800148,
-				  "ERROR: %s %s: fallback-splitsize > tape size",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800148, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 
 		    /* also check for part sizes that are too small */
 		    if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
-			fprintf_message(outf, 2800149,
-				  "WARNING: %s %s: tape-splitsize of %ju %sB < 0.1%% of tape length.",
-				  hostp->hostname, dp->name,
-				  (uintmax_t)dp->tape_splitsize/(uintmax_t)unitdivisor,
-				  displayunit);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800149, MSG_WARNING, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"tape_splitsize", g_strdup_printf("%ld",dp->tape_splitsize))));
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
-			    fprintf_message(outf, 2800150, "%s", small_part_size_warning);
+			    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
 			}
 		    }
 
@@ -1741,48 +1843,54 @@ start_server_check(
 			    (dp->split_diskbuffer == NULL ||
 			     dp->split_diskbuffer[0] == '\0') &&
 			    dp->fallback_splitsize * 1000 < tape_size) {
-			fprintf_message(outf, 2800151,
-			      "WARNING: %s %s: fallback-splitsize of %ju %sB < 0.1%% of tape length.",
-			      hostp->hostname, dp->name,
-			      (uintmax_t)dp->fallback_splitsize/(uintmax_t)unitdivisor,
-			      displayunit);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800151, MSG_WARNING, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"fallback_splitsize", g_strdup_printf("%ld",dp->fallback_splitsize))));
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
-			    fprintf_message(outf, 2800152, "%s", small_part_size_warning);
+			    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
 			}
 		    }
 		}
 
 		if (dp->data_path == DATA_PATH_DIRECTTCP) {
 		    if (dp->compress != COMP_NONE) {
-			fprintf_message(outf, 2800153,
-				  "ERROR: %s %s: Can't compress directtcp data-path",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800153, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->encrypt != ENCRYPT_NONE) {
-			fprintf_message(outf, 2800154,
-				  "ERROR: %s %s: Can't encrypt directtcp data-path",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800154, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->to_holdingdisk == HOLD_REQUIRED) {
-			fprintf_message(outf, 2800155,
-				  "ERROR: %s %s: Holding disk can't be use for directtcp data-path",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800155, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		}
 		if (dp->data_path == DATA_PATH_DIRECTTCP && !dev_directtcp_data_path) {
-		    fprintf_message(outf, 2800156,
-			      "ERROR: %s %s: data-path is DIRECTTCP but device do not support it",
-			      hostp->hostname, dp->name);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800156, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    pgmbad = 1;
 		}
 		if (dp->data_path == DATA_PATH_AMANDA && !dev_amanda_data_path) {
-		    fprintf_message(outf, 2800157,
-			      "ERROR: %s %s: data-path is AMANDA but device do not support it",
-			      hostp->hostname, dp->name);
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800157, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    pgmbad = 1;
 		}
 
@@ -1792,14 +1900,16 @@ start_server_check(
 		    g_assert(pp_script != NULL);
 		    if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_PRE_HOST_BACKUP) {
-			fprintf_message(outf, 2800158,
-				  "ERROR: %s %s: Can't run pre-host-backup script on client",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800158, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    } else if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_POST_HOST_BACKUP) {
-			fprintf_message(outf, 2800159,
-				  "ERROR: %s %s: Can't run post-host-backup script on client",
-				  hostp->hostname, dp->name);
+			delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800159, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    }
 		}
 
@@ -1818,7 +1928,9 @@ start_server_check(
 
     amfree(datestamp);
 
-    fprintf_message(outf, 2800160, "Server check took %s seconds", walltime_str(curclock()));
+     delete_message(amcheck_fprint_message(outf, build_message(
+					__FILE__, __LINE__, 2800160, MSG_INFO, 1,
+					"seconds", walltime_str(curclock()))));
 
     fflush(outf);
     g_debug("userbad: %d", userbad);
@@ -1895,43 +2007,37 @@ start_host(
 
 	if(!am_has_feature(hostp->features, fe_selfcheck_req) &&
 	   !am_has_feature(hostp->features, fe_selfcheck_req_device)) {
-	    fprintf_message(client_outf, 2800161,
-		    "ERROR: Client %s does not support selfcheck REQ packet.",
-		    hostp->hostname);
-	    fprint_message(client_outf, 2800162, "Client might be of a very old version");
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800161, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_selfcheck_rep)) {
-	    fprintf_message(client_outf, 2800163,
-		    "ERROR: Client %s does not support selfcheck REP packet.",
-		    hostp->hostname);
-	    fprint_message(client_outf, 2800164, "Client might be of a very old version");
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800163, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendsize_req_options) &&
 	   !am_has_feature(hostp->features, fe_sendsize_req_no_options) &&
 	   !am_has_feature(hostp->features, fe_sendsize_req_device)) {
-	    fprintf_message(client_outf, 2800165,
-		    "ERROR: Client %s does not support sendsize REQ packet.",
-		    hostp->hostname);
-	    fprint_message(client_outf, 2800166, "Client might be of a very old version");
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800165, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendsize_rep)) {
-	    fprintf_message(client_outf, 2800167,
-		    "ERROR: Client %s does not support sendsize REP packet.",
-		    hostp->hostname);
-	    fprint_message(client_outf, 2800168, "Client might be of a very old version");
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800167, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendbackup_req) &&
 	   !am_has_feature(hostp->features, fe_sendbackup_req_device)) {
-	    fprintf_message(client_outf, 2800169,
-		   "ERROR: Client %s does not support sendbackup REQ packet.",
-		   hostp->hostname);
-	    fprint_message(client_outf, 2800170, "Client might be of a very old version");
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800169, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendbackup_rep)) {
-	    fprintf_message(client_outf, 2800171,
-		   "ERROR: Client %s does not support sendbackup REP packet.",
-		   hostp->hostname);
-	    fprint_message(client_outf, 2800172, "Client might be of a very old version");
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800171, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 	}
 
 	g_snprintf(number, sizeof(number), "%d", hostp->maxdumps);
@@ -1975,8 +2081,11 @@ start_host(
             if (errors) {
                 gchar **ptr;
                 for (ptr = errors; *ptr; ptr++)
-                    fprintf_message(client_outf, 2800173, "ERROR: %s:%s %s", hostp->hostname, qname,
-                        *ptr);
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800173, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"errstr"  , *ptr)));
                 g_strfreev(errors);
 		amfree(qname);
 		remote_errors++;
@@ -1994,51 +2103,48 @@ start_host(
 	    if ((qname[0] == '"') ||
 		(dp->device && qdevice[0] == '"')) {
 		if(!am_has_feature(hostp->features, fe_interface_quoted_text)) {
-		    fprintf_message(client_outf, 2800174,
-			    "WARNING: %s:%s:%s host does not support quoted text",
-			    hostp->hostname, qname, qdevice);
-		    fprint_message(client_outf, 2800175, "You must upgrade amanda on the client to "
-				    "specify a quoted text/device in the disklist, "
-				    "or don't use quoted text for the device.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800174, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"device"  , dp->device)));
 		}
 	    }
 
 	    if(dp->device) {
 		if(!am_has_feature(hostp->features, fe_selfcheck_req_device)) {
-		    fprintf_message(client_outf, 2800176,
-		     "ERROR: %s:%s (%s): selfcheck does not support device.",
-		     hostp->hostname, qname, dp->device);
-		    fprint_message(client_outf, 2800177, "You must upgrade amanda on the client to "
-				    "specify a diskdevice in the disklist "
-				    "or don't specify a diskdevice in the disklist.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800176, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"device"  , dp->device)));
 		}
 		if(!am_has_feature(hostp->features, fe_sendsize_req_device)) {
-		    fprintf_message(client_outf, 2800178,
-		     "ERROR: %s:%s (%s): sendsize does not support device.",
-		     hostp->hostname, qname, dp->device);
-		    fprint_message(client_outf, 2800179, "You must upgrade amanda on the client to "
-				    "specify a diskdevice in the disklist"
-				    " or don't specify a diskdevice in the disklist.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800178, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"device"  , dp->device)));
 		}
 		if(!am_has_feature(hostp->features, fe_sendbackup_req_device)) {
-		    fprintf_message(client_outf, 2800180,
-		     "ERROR: %s:%s (%s): sendbackup does not support device.",
-		     hostp->hostname, qname, dp->device);
-		    fprint_message(client_outf, 2800181, "You must upgrade amanda on the client to "
-				    "specify a diskdevice in the disklist"
-				    " or don't specify a diskdevice in the disklist.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800180, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"device"  , dp->device)));
 		}
 
 		if (dp->data_path != DATA_PATH_AMANDA &&
 		    !am_has_feature(hostp->features, fe_xml_data_path)) {
-		    fprintf_message(client_outf, 2800182,
-			      "ERROR: Client %s does not support %s data-path",
-			      hostp->hostname,  data_path_to_string(dp->data_path));
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800182, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"data-path", data_path_to_string(dp->data_path))));
 		} else if (dp->data_path == DATA_PATH_DIRECTTCP &&
 		    !am_has_feature(hostp->features, fe_xml_directtcp_list)) {
-		    fprintf_message(client_outf, 2800183,
-			      "ERROR: Client %s does not support directtcp data-path",
-			      hostp->hostname);
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800183, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 		}
 	    }
 	    if (dp->program &&
@@ -2046,26 +2152,25 @@ start_host(
 	         g_str_equal(dp->program, "GNUTAR"))) {
 		if(g_str_equal(dp->program, "DUMP") &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
-		    fprintf_message(client_outf, 2800184, "ERROR: %s:%s does not support DUMP.",
-			    hostp->hostname, qname);
-	    fprint_message(client_outf, 2800185, "You must upgrade amanda on the client to use DUMP "
-				    "or you can use another program.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800184, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		}
 		if(g_str_equal(dp->program, "GNUTAR") &&
 		   !am_has_feature(hostp->features, fe_program_gnutar)) {
-		    fprintf_message(client_outf, 2800186, "ERROR: %s:%s does not support GNUTAR.",
-			    hostp->hostname, qname);
-		    fprint_message(client_outf, 2800187, "You must upgrade amanda on the client to use GNUTAR "
-				    "or you can use another program.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800186, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		}
 		estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
 		if(estimate == ES_CALCSIZE &&
 		   !am_has_feature(hostp->features, fe_calcsize_estimate)) {
-		    fprintf_message(client_outf, 2800188, "ERROR: %s:%s does not support CALCSIZE for "
-				    "estimate, using CLIENT.",
-			    hostp->hostname, qname);
-		    fprint_message(client_outf, 2800189, "You must upgrade amanda on the client to use "
-				    "CALCSIZE for estimate or don't use CALCSIZE for estimate.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800188, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    estimate = ES_CLIENT;
 		}
 		if(estimate == ES_CALCSIZE &&
@@ -2076,28 +2181,22 @@ start_host(
 
 		if(dp->compress == COMP_CUST &&
 		   !am_has_feature(hostp->features, fe_options_compress_cust)) {
-		  fprintf_message(client_outf, 2800190,
-			  "ERROR: Client %s does not support custom compression.",
-			  hostp->hostname);
-		    fprint_message(client_outf, 2800191, "You must upgrade amanda on the client to "
-				    "use custom compression");
-		    fprint_message(client_outf, 2800192, "Otherwise you can use the default client "
-				    "compression program.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800190, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 		}
 		if(dp->encrypt == ENCRYPT_CUST ) {
 		  if ( !am_has_feature(hostp->features, fe_options_encrypt_cust)) {
-		    fprintf_message(client_outf, 2800193,
-			    "ERROR: Client %s does not support data encryption.",
-			    hostp->hostname);
-		    fprint_message(client_outf, 2800194, "You must upgrade amanda on the client to use encryption program.");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800193, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 		    remote_errors++;
 		  } else if ( dp->compress == COMP_SERVER_FAST ||
 			      dp->compress == COMP_SERVER_BEST ||
 			      dp->compress == COMP_SERVER_CUST ) {
-		    fprintf_message(client_outf, 2800195,
-			    "ERROR: %s: Client encryption with server compression "
-			      "is not supported. See amanda.conf(5) for detail.",
-			    hostp->hostname);
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800195, MSG_ERROR, 1,
+					"hostname", hostp->hostname)));
 		    remote_errors++;
 		  }
 		}
@@ -2138,10 +2237,10 @@ start_host(
 	    } else {
 		if (!am_has_feature(hostp->features, fe_program_application_api) ||
 		    !am_has_feature(hostp->features, fe_req_xml)) {
-		    fprintf_message(client_outf, 2800196, "ERROR: %s:%s does not support APPLICATION-API.",
-			    hostp->hostname, qname);
-		    fprint_message(client_outf, 2800197, "Dumptype configuration is not GNUTAR or DUMP."
-				    " It is case sensitive");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800196, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 		    remote_errors++;
 		    l = g_strdup("");
 		} else {
@@ -2150,16 +2249,18 @@ start_host(
 			application_t *application = lookup_application(dp->application);
 
 			if (!application) {
-			    fprintf_message(client_outf, 2800198,
-			      "ERROR: application '%s' not found.", dp->application);
+			    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800198, MSG_ERROR, 1,
+					"application", dp->application)));
 			} else {
 			    char *xml_app = xml_application(dp, application, hostp->features);
 			    char *client_name = application_get_client_name(application);
 			    if (client_name && strlen(client_name) > 0 &&
 				!am_has_feature(hostp->features, fe_application_client_name)) {
-				fprintf_message(client_outf, 2800199,
-			      "WARNING: %s:%s does not support client-name in application.",
-			      hostp->hostname, qname);
+				delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800199, MSG_WARNING, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			    }
                             g_string_append(strbuf, xml_app);
 			    g_free(xml_app);
@@ -2168,9 +2269,10 @@ start_host(
 
 		    if (dp->pp_scriptlist) {
 			if (!am_has_feature(hostp->features, fe_pp_script)) {
-			    fprintf_message(client_outf, 2800200,
-			      "ERROR: %s:%s does not support SCRIPT-API.",
-			      hostp->hostname, qname);
+			   delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800200, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 			} else {
 			    identlist_t pp_scriptlist;
 			    for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
@@ -2179,9 +2281,10 @@ start_host(
 				char *client_name = pp_script_get_client_name(pp_script);;
 				if (client_name && strlen(client_name) > 0 &&
 				    !am_has_feature(hostp->features, fe_script_client_name)) {
-				    fprintf_message(client_outf, 2800201,
-					"WARNING: %s:%s does not support client-name in script.",
-					hostp->hostname, dp->name);
+				   delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800201, MSG_WARNING, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
 				}
 			    }
 			}
@@ -2232,8 +2335,10 @@ start_host(
 
     secdrv = security_getdriver(hostp->disks->auth);
     if (secdrv == NULL) {
-	fprintf_message(stderr, 2800213, "Could not find security driver \"%s\" for host \"%s\". auth for this dle is invalid",
-	      hostp->disks->auth, hostp->hostname);
+	delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800213, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"auth", hostp->disks->auth)));
     } else {
 	protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf,
 			 req, conf_ctimeout, handle_result, hostp);
@@ -2273,8 +2378,10 @@ start_client_checks(
     startclock();
 
 //    fprint_message(outf, 2800214, "\n");
-    fprint_message(outf, 2800202, "Amanda Backup Client Hosts Check");
-    fprint_message(outf, 2800203,   "--------------------------------");
+    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800202, MSG_INFO, 0)));
+    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800203, MSG_INFO, 0)));
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
@@ -2300,20 +2407,15 @@ start_client_checks(
     protocol_run();
     run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name());
 
-    {
-	char *a = plural("Client check: %d host checked in %s seconds.",
-			 "Client check: %d hosts checked in %s seconds.",
-			 hostcount);
-	char *b = plural("  %d problem found.",
-			 "  %d problems found.",
-			 remote_errors);
-	char *c = g_strdup_printf("%s%s", a, b);
-	fprintf_message(outf, 2800204, c,
-	    hostcount, walltime_str(curclock()), remote_errors);
-	g_free(c);
-    }
+    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800204, MSG_INFO, 3,
+					"hostcount", g_strdup_printf("%d", hostcount),
+					"remote_errors", g_strdup_printf("%d", remote_errors),
+					"seconds", walltime_str(curclock()))));
     fflush(outf);
 
+g_debug("userbad: %d", userbad);
+g_debug("remote_errors: %d", remote_errors);
     amcheck_exit(userbad || remote_errors > 0);
     /*NOTREACHED*/
     return 0;
@@ -2338,9 +2440,10 @@ handle_result(
     hostp->up = HOST_READY;
 
     if (pkt == NULL) {
-	fprintf_message(client_outf, 2800206,
-	    "WARNING: %s: selfcheck request failed: %s", hostp->hostname,
-	    security_geterror(sech));
+	delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800206, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"errstr", security_geterror(sech))));
 	remote_errors++;
 	hostp->up = HOST_DONE;
 	return;
@@ -2365,9 +2468,10 @@ handle_result(
 		t += sizeof("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
-		    fprintf_message(client_outf, 2800207, "ERROR: %s: bad features value: '%s'",
-			    hostp->hostname, t);
-		    fprint_message(client_outf, 2800208, "The amfeature in the reply packet is invalid");
+		    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800207, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"features", t)));
 		    remote_errors++;
 		    hostp->up = HOST_DONE;
 		}
@@ -2379,13 +2483,18 @@ handle_result(
 	}
 
 	if (client_verbose && !printed_hostname) {
-	    fprintf_message(client_outf, 2800209, "HOST %s", hostp->hostname);
+	    delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800209, MSG_INFO, 1,
+					"hostname", hostp->hostname)));
 	    printed_hostname = TRUE;
 	}
 
 	if(strncmp_const(line, "OK ") == 0) {
 	    if (client_verbose) {
-		fprintf_message(client_outf, 2800210, "%s", line);
+		delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800210, MSG_INFO, 2,
+					"hostname", hostp->hostname,
+					"ok_line", line)));
 	    }
 	    continue;
 	}
@@ -2401,18 +2510,21 @@ handle_result(
 	    if(!((hostp->features == NULL) && (pkt->type == P_NAK)
 	       && ((g_str_equal(t - 1, "unknown service: noop"))
 		   || (g_str_equal(t - 1, "noop: invalid service"))))) {
-		fprintf_message(client_outf, 2800211, "ERROR: %s%s: %s",
-			(pkt->type == P_NAK) ? "NAK " : "",
-			hostp->hostname,
-			t - 1);
+		delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800211, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"type", (pkt->type == P_NAK) ? "NAK " : "",
+					"errstr", t - 1)));
 		remote_errors++;
 		hostp->up = HOST_DONE;
 	    }
 	    continue;
 	}
 
-	fprintf_message(client_outf, 2800212, "ERROR: %s: unknown response: %s",
-		hostp->hostname, line);
+	delete_message(amcheck_fprint_message(client_outf, build_message(
+					__FILE__, __LINE__, 2800212, MSG_ERROR, 3,
+					"hostname", hostp->hostname,
+					"errstr", line)));
 	remote_errors++;
 	hostp->up = HOST_DONE;
     }

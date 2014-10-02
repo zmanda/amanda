@@ -24,6 +24,12 @@
  */
 
 typedef struct message_s message_t;
+#define MSG_ERROR	32
+#define MSG_CRITICAL	16
+#define MSG_WARNING	8
+#define MSG_MESSAGE	4
+#define MSG_INFO	2
+#define MSG_DEBUG	1
 
 void
 delete_message(
@@ -38,22 +44,29 @@ build_message(
     int   nb,
     ...);
 
-char * sprint_message(
+char *
+get_message(
     message_t *message);
-void print_message(
+
+char *
+get_hint(
     message_t *message);
-void fprint_message(
+
+char *
+sprint_message(
+    message_t *message);
+
+message_t *
+print_message(
+    message_t *message);
+
+message_t *
+fprint_message(
     FILE      *stream,
     message_t *message);
-void fdprint_message(
-    int        fd,
-    message_t *message);
-void print_message_free(
-    message_t *message);
-void fprint_message_free(
-    FILE      *stream,
-    message_t *message);
-void fdprint_message_free(
+
+message_t *
+fdprint_message(
     int        fd,
     message_t *message);
 
