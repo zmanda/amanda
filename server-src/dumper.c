@@ -2564,7 +2564,7 @@ bad_nak:
 	}
 
 	extra = g_strdup_printf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
-			  tok ? tok : "(null)");
+			  tok);
 	goto parse_error;
     }
 

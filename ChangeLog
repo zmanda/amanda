@@ -1,4 +1,13 @@
 2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Fix loop.
+	* common-src/bsdtcp-security.c: Free res.
+	* common-src/bsdudp-security.c: Free res.
+	* recover-src/extract_list.c: Remove duplicate code.
+	* server-src/amindexd.c: Remove unused allocation.
+	* server-src/dumper.c: Remove always TRUE check.
+	* server-src/tapefile.c: Remove unused allocation.
+
+2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cleanup.pm: Add it.
 
 2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>

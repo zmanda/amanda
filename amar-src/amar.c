@@ -356,10 +356,10 @@ amar_new_file(
 
 	/* see if this fileid is already in use */
 	filenum = archive->maxfilenum;
-	if (g_hash_table_lookup(archive->files, &filenum))
-	    continue;
+	if (!g_hash_table_lookup(archive->files, &filenum))
+	    break;
 
-    } while (0);
+    } while (1);
 
     file = g_new0(amar_file_t, 1);
     if (!file) {

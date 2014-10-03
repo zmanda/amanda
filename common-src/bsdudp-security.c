@@ -140,6 +140,7 @@ bsdudp_connect(
 	security_seterror(&bh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
+	if (res) freeaddrinfo(res);
        return;
     }
     if (res == NULL) {
@@ -224,6 +225,7 @@ bsdudp_connect(
 		(*fn)(arg, &bh->sech, S_ERROR);
 		freeaddrinfo(res);
 		amfree(canonname);
+		if (res) freeaddrinfo(res);
 		return;
 	    }
 	    not_init4 = 0;
@@ -237,8 +239,9 @@ bsdudp_connect(
 	security_seterror(&bh->sech,
 	        _("Can't bind a socket to connect to %s"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
-       amfree(canonname);
-       return;
+	amfree(canonname);
+	if (res) freeaddrinfo(res);
+	return;
     }
 
 #ifdef WORKING_IPV6

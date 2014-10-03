@@ -2969,13 +2969,8 @@ read_amidxtaped_data(
 
 	/* call backup_support_option */
 	if (g_str_equal(ctl_data->file.program, "APPLICATION")) {
-	    if (dump_dle) {
-	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
-						      &errarray);
-	    } else {
-	        ctl_data->bsu = backup_support_option(ctl_data->file.application,
-						      &errarray);
-	    }
+	    ctl_data->bsu = backup_support_option(ctl_data->file.application,
+						  &errarray);
 	    if (!ctl_data->bsu) {
 		guint  i;
 		for (i=0; i < errarray->len; i++) {

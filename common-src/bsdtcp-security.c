@@ -137,6 +137,7 @@ bsdtcp_connect(
 	security_seterror(&rh->sech, _("resolve_hostname(%s): %s"), hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
+	if (res) freeaddrinfo(res);
 	return;
     }
     if (canonname == NULL) {

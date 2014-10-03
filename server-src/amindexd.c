@@ -275,7 +275,7 @@ process_ls_dump(
 		    while(ch && ch != '/')
 			ch = *s++;/* find end of the file name */
 		    if(ch == '/') {
-			ch = *s++;
+			s++;
 		    }
 		    s[-1] = '\0';
 		}
