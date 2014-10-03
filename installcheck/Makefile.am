@@ -47,7 +47,6 @@ server_tests = \
 	Amanda_Recovery_Planner \
 	Amanda_Recovery_Scan \
 	Amanda_Report \
-	Amanda_Rest_Amcheck \
 	Amanda_Rest_Changers \
 	Amanda_Rest_Configs \
 	Amanda_Rest_Dles \
@@ -75,6 +74,7 @@ all_tests += $(server_tests)
 
 full_tests = \
 	0_setupcache \
+	Amanda_Rest_Amcheck \
 	amadmin \
 	amcheck \
 	amcheckdump \
