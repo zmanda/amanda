@@ -26,6 +26,7 @@ use Amanda::Amdump;
 use Amanda::Amflush;
 use Amanda::CheckDump;
 use Amanda::FetchDump;
+use Amanda::Cleanup;
 use Amanda::Vault;
 use Amanda::Rest::Configs;
 use Amanda::Process;
@@ -382,6 +383,19 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
 
 
   ]
+
+=item kill a run (amcleanup)
+
+ request:
+  DELETE localhost:5000/amanda/v1.0/configs/:CONFIG/runs
+    query arguments:
+        trace_log=LOG_FILE
+        kill=0|1
+        alive=0|1
+        clean_holding=0|1
+
+ reply:
+  HTTP status: 200 Ok
 
 =back
 
@@ -938,6 +952,23 @@ sub list {
 	    }
 	}
     }
+
+    return \@result_messages;
+}
+
+sub kill {
+    my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Runs");
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    my $cleanup = Amanda::Cleanup->new(trace_log     => $params{'trace_log'},
+				       kill          => $params{'kill'},
+				       process_alive => $params{'alive'},
+				       verbose       => $params{'verbose'},
+				       clean_holding => $params{'clean_holding'});
+
+    @result_messages = $cleanup->cleanup();
 
     return \@result_messages;
 }

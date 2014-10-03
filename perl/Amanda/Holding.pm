@@ -229,7 +229,7 @@ sub _walk {
 	    }
 
 	    while (defined(my $dirent = $dirh->read)) {
-		next if $dirent eq '.' or $dirent eq '..';
+		next if $dirent eq '.' or $dirent eq '..' or $dirent eq 'pid';
 
 		my $filename = File::Spec->catfile($disk, $datestr, $dirent);
 		if (!-f $filename) {

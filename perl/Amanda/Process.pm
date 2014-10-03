@@ -17,6 +17,29 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
+package Amanda::Process::Message;
+use strict;
+use warnings;
+
+use Amanda::Message;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Message );
+
+sub local_message {
+    my $self = shift;
+
+    if ($self->{'code'} == 3500000) {
+	return "pid $self->{'pid'} doesn't match: $self->{'pname'} != $self->{'ps_pname'}";
+    } elsif ($self->{'code'} == 3500001) {
+	return "Sendding $self->{'signal'} signal to process '$self->{'process'}' (pid $self->{'pid'})";
+    } elsif ($self->{'code'} == 3500002) {
+	return "pid $self->{'pid'} is done";
+    } elsif ($self->{'code'} == 3500003) {
+	return "pid $self->{'pid'} is dead";
+    } else {
+	return "no message for code $self->{'code'}";
+    }
+}
 package Amanda::Process;
 
 use strict;
@@ -127,11 +150,13 @@ Return 1 if the process is still alive.
 sub new {
     my $class = shift;
     my ($verbose) = shift;
+    my ($user_message) = shift;
 
     my $self = {
 	verbose => $verbose,
 	master_name => "",
 	master_pid => "",
+	user_message => $user_message,
 	pids => {},
 	pstable => {},
 	ppid => {},
@@ -235,14 +260,26 @@ sub scan_log($) {
 	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /perl/) {
 		# We can get 'perl' for a perl script.
 		$self->{pids}->{$pid} = $pname;
+	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /^$pname\d*$/) {
+		$self->{pids}->{$pid} = $pname;
 	    } elsif (defined $self->{pstable}->{$pid}) {
-		debug("pid $pid doesn't match: " . $pname . " != " . $self->{pstable}->{$pid});
-		print "pid $pid doesn't match: ", $pname, " != ", $self->{pstable}->{$pid}, "\n" if $self->{verbose};
+		$self->{'user_message'}(Amanda::Process::Message->new(
+			source_filename	=> __FILE__,
+                        source_line	=> __LINE__,
+                        code		=> 3500000,
+                        severity	=> $Amanda::Message::WARNING,
+			pname		=> $pname,
+			ps_pname	=> $self->{pstable}->{$pid},
+			pid		=> $pid)) if $self->{verbose};;
 	    }
 	} elsif ($line =~ /^INFO .* pid-done (\d*)$/) {
 	    my $pid = $1;
-	    print "pid $pid is done\n" if $self->{verbose};
-	    delete $self->{pids}->{$pid};
+	    $self->{'user_message'}(Amanda::Process::Message->new(
+			source_filename	=> __FILE__,
+                        source_line	=> __LINE__,
+                        code		=> 3500002,
+                        severity	=> $Amanda::Message::INFO,
+			pid		=> $pid)) if $self->{verbose};;
 	}
     }
     close(LOGFILE);
@@ -251,7 +288,12 @@ sub scan_log($) {
     if ($self->{verbose}) {
 	for my $pid (keys %{$self->{pids}}) {
 	    if (!defined $self->{pstable}->{$pid}) {
-		print "pid $pid is dead\n";
+	        $self->{'user_message'}(Amanda::Process::Message->new(
+			source_filename	=> __FILE__,
+                        source_line	=> __LINE__,
+                        code		=> 3500003,
+                        severity	=> $Amanda::Message::INFO,
+			pid		=> $pid));
 	    }
 	}
     }
@@ -361,7 +403,14 @@ sub kill_process($) {
     my $signal = shift;
 
     foreach my $pid (keys %{$self->{amprocess}}) {
-	print "Sendding $signal signal to pid $pid\n" if $self->{verbose};
+	$self->{'user_message'}(Amanda::Process::Message->new(
+			source_filename	=> __FILE__,
+                        source_line	=> __LINE__,
+                        code		=> 3500001,
+                        severity	=> $Amanda::Message::INFO,
+			signal		=> $signal,
+			process		=> $self->{'pids'}->{$pid},
+			pid		=> $pid));
 	kill $signal, $pid;
     }
 }

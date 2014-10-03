@@ -1,3 +1,16 @@
+2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cleanup.pm: new perl module for amcleanup
+	  functionnality.
+	* perl/Makefile.am: Add Amanda/Cleanup.pm.
+	* server-src/amcleanup.pl: Use Amanda::Cleanup
+	* perl/Amanda/Holding.pm (_walk): Do not list 'pid' file.
+	* perl/Amanda/Message.pm: Add Amanda::Cleanup::Message and
+	  Amanda::Process::Message.
+	* perl/Amanda/Process.pm: Send Amanda::Message.
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add
+	  DELETE /amanda/v1.0/config/:CONF/runs
+	* perl/Amanda/Rest/Runs.pm: Add kill functionnality.
+
 2014-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Fix type casting.
 

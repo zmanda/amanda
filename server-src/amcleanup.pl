@@ -31,6 +31,7 @@ use Amanda::Process;
 use Amanda::Logfile;
 use Amanda::Holding;
 use Amanda::Debug qw( debug );
+use Amanda::Cleanup;
 my $kill_enable=0;
 my $process_alive=0;
 my $verbose=0;
@@ -88,124 +89,30 @@ if ( ! -d "$CONFIG_DIR/$config_name" ) {
     die "Configuration directory '$CONFIG_DIR/$config_name' is not a directory\n";
 }
 
-my $Amanda_process = Amanda::Process->new($verbose);
-$Amanda_process->load_ps_table();
+my $cleanup = Amanda::Cleanup->new(kill          => $kill_enable,
+				   process_alive => $process_alive,
+				   verbose	 => $verbose,
+				   clean_holding => $clean_holding,
+				   user_message  => \&user_message);
+my @result_messages = $cleanup->cleanup();
+print "result_messages: " . Data::Dumper::Dumper(\@result_messages);
 
-if (-f "$logfile") {
-    $Amanda_process->scan_log($logfile);
-} elsif (!$process_alive) {
-    $Amanda_process->set_master_process($config_name, "amdump", "amflush", "amvault");
-}
-
-$Amanda_process->add_child();
-
-my $nb_amanda_process = $Amanda_process->count_process();
-#if amanda processes are running
-if ($nb_amanda_process > 0) {
-    if ($process_alive) {
-	exit 0;
-    } elsif (!$kill_enable) {
-	print "amcleanup: ", $Amanda_process->{master_pname}, " Process is running at PID ", $Amanda_process->{master_pid}, " for $config_name configuration.\n";
+foreach my $message (@result_messages) {
+    print "amcleanup: ", $message->message(), "\n";
+    if ($message->{'code'} == 3400000) {
 	print "amcleanup: Use -k option to stop all the process...\n";
 	print "Usage: amcleanup [-k] conf\n";
-	exit 0;
-    } else { #kill the processes
-	Amanda::Debug::debug("Killing amanda process");
-	$Amanda_process->kill_process("SIGTERM");
-	my $count = 5;
-	my $pp;
-	while ($count > 0) {
-	   $pp = $Amanda_process->process_running();
-	   if ($pp > 0) {
-		$count--;
-		sleep 1;
-	   } else {
-		$count = 0;
-	   }
-	}
-	if ($pp > 0) {
-	    $Amanda_process->kill_process("SIGKILL");
-	    sleep 2;
-	    $pp = $Amanda_process->process_running();
-	}
-	print "amcleanup: ", $nb_amanda_process, " Amanda processes were found running.\n";
-	print "amcleanup: $pp processes failed to terminate.\n";
-	Amanda::Debug::debug("$nb_amanda_process Amanda processes were found running");
-	Amanda::Debug::debug("$pp processes failed to terminate");
     }
 }
-
-sub run_system {
-    my $check_code = shift;
-    my @cmd = @_;
-    my $pgm = $cmd[0];
-
-    system @cmd;
-    my $err = $?;
-    my $res = $!;
-
-    if ($err == -1) {
-	Amanda::Debug::debug("failed to execute $pgm: $res");
-	print "failed to execute $pgm: $res\n";
-    } elsif ($err & 127) {
-	Amanda::Debug::debug(sprintf("$pgm died with signal %d, %s coredump",
-		      ($err & 127), ($err & 128) ? 'with' : 'without'));
-	printf "$pgm died with signal %d, %s coredump\n",
-		($err & 127), ($err & 128) ? 'with' : 'without';
-    } elsif ($check_code && $err > 0) {
-	Amanda::Debug::debug(sprintf("$pgm exited with value %d", $err >> 8));
-	printf "$pgm exited with value %d %d\n", $err >> 8, $err;
-    }
-}
-
-# rotate log
-if (-f $logfile) {
-    Amanda::Debug::debug("Processing log file");
-    run_system(0, $amreport, $config_name, "--from-amdump");
-
-    my $ts = Amanda::Logfile::get_current_log_timestamp();
-    Amanda::Logfile::log_rename($ts);
-
-    run_system(1, $amtrmidx, $config_name);
-} else {
-    print "amcleanup: no unprocessed logfile to clean up.\n";
-}
-
-my $tapecycle = getconf($CNF_TAPECYCLE);
-
-# cleanup logfiles
-chdir "$CONFIG_DIR/$config_name";
-foreach my $pname ("amdump", "amflush") {
-    my $errfile = "$logdir/$pname";
-    if (-f $errfile) {
-	print "amcleanup: $errfile exists, renaming it.\n";
-	Amanda::Debug::debug("$errfile exists, renaming it");
-
-	# Keep debug log through the tapecycle plus a couple days
-	my $maxdays=$tapecycle + 2;
-
-	my $days=1;
-	# First, find out the last existing errfile,
-	# to avoid ``infinite'' loops if tapecycle is infinite
-	while ($days < $maxdays  && -f "$errfile.$days") {
-	    $days++;
-	}
-
-	# Now, renumber the existing log files
-	while ($days >= 2) {
-	    my $ndays = $days - 1;
-	    rename("$errfile.$ndays", "$errfile.$days");
-	    $days=$ndays;
-	}
-	rename($errfile, "$errfile.1");
-    }
-}
-
-my @amcleanupdisk;
-push @amcleanupdisk, $amcleanupdisk;
-push @amcleanupdisk, "-v" if $verbose;
-push @amcleanupdisk, "-r" if $clean_holding;
-push @amcleanupdisk, $config_name;
-system @amcleanupdisk;
 
 Amanda::Util::finish_application();
+
+sub user_message {
+    my $message = shift;
+
+    print "AA: amcleanup: ", $message->message(), "\n";
+    if ($message->{'code'} == 3400000) {
+        print "amcleanup: Use -k option to stop all the process...\n";
+        print "Usage: amcleanup [-k] conf\n";
+    }
+}

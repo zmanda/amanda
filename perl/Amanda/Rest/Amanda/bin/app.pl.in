@@ -251,6 +251,11 @@ get '/amanda/v1.0/configs/:CONF/runs/messages' => sub {
 	my $r = Amanda::Rest::Runs::messages(%p);
 	return $r;
 };
+del '/amanda/v1.0/configs/:CONF/runs' => sub {
+	my %p = params;
+	my $r = Amanda::Rest::Runs::kill(%p);
+	return $r;
+};
 post '/amanda/v1.0/configs/:CONF/amcheck' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Amcheck::check(%p);

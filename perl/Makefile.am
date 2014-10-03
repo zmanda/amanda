@@ -309,6 +309,12 @@ endif
 EXTRA_DIST += Amanda/JSON.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Cleanup
+Amanda_DATA += Amanda/Cleanup.pm
+endif
+EXTRA_DIST += Amanda/Cleanup.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::Amdump
 Amanda_DATA += Amanda/Amdump.pm
 endif

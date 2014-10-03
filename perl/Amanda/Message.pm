@@ -91,6 +91,8 @@ not handled by Amanda::Message):
  3100000  Amanda::Service::Message
  3200000  amanda-extensions
  3300000  Amanda::Fetchdump::Message
+ 3400000  Amanda::Cleanup::Message
+ 3500000  Amanda::Process::Message
 
 general keys:
   code            =>
