@@ -1,4 +1,7 @@
 2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cleanup.pm: Add it.
+
+2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cleanup.pm: new perl module for amcleanup
 	  functionnality.
 	* perl/Makefile.am: Add Amanda/Cleanup.pm.
