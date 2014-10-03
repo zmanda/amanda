@@ -423,7 +423,6 @@ parse_tapeline(
     tp->reuse = 1;
     if(strncmp_const(s - 1, "reuse") == 0) {
 	tp->reuse = 1;
-	s1 = s - 1;
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 	skip_whitespace(s, ch);

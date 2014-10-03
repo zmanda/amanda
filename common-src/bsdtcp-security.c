@@ -145,7 +145,8 @@ bsdtcp_connect(
 	security_seterror(&rh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
-       return;
+	if (res) freeaddrinfo(res);
+	return;
     }
 
     rh->hostname = canonname;	/* will be replaced */

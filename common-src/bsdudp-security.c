@@ -225,7 +225,6 @@ bsdudp_connect(
 		(*fn)(arg, &bh->sech, S_ERROR);
 		freeaddrinfo(res);
 		amfree(canonname);
-		if (res) freeaddrinfo(res);
 		return;
 	    }
 	    not_init4 = 0;
@@ -264,6 +263,7 @@ bsdudp_connect(
         security_seterror(&bh->sech, _("%s/udp unknown protocol"), service);
         (*fn)(arg, &bh->sech, S_ERROR);
         amfree(canonname);
+	if (res) freeaddrinfo(res);
         return;
     }
 
