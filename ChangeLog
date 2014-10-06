@@ -1,3 +1,6 @@
+2014-10-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Fix perl format.
+
 2014-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am: Amanda_Rest_Amcheck must be run only if
 	  client and sewrver are installed.

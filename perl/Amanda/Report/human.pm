@@ -91,8 +91,9 @@ sub divzero_col
 sub swrite
 {
     my ( $format, @args ) = @_;
+    my @copy_args = @args;
     local $^A = "";
-    formline( $format, @args );
+    formline( $format, @copy_args );
     return $^A;
 }
 
@@ -392,7 +393,7 @@ sub print_header
       unless ($report->{flags}{got_finish});
 
     my $header_format = <<EOF;
-@<<<<<<<: @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<...
+@<<<<<<<: ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<...
 EOF
 
     if ($hostname) {
