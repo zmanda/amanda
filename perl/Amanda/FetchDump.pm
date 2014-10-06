@@ -109,7 +109,7 @@ sub local_message {
     } elsif ($self->{'code'} == 3300032) {
 	return "'leave' is incompatible with 'client-decompress'"
     } elsif ($self->{'code'} == 3300033) {
-	return "Both 'directotry' and 'extract' must be set"
+	return "Both 'directory' and 'extract' must be set"
     } elsif ($self->{'code'} == 3300034) {
 	return "'server-decrypt' or 'client-decrypt' is incompatible with 'extract'";
     } elsif ($self->{'code'} == 3300035) {
