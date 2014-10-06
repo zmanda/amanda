@@ -109,7 +109,7 @@ sub local_message {
     } elsif ($self->{'code'} == 3300032) {
 	return "'leave' is incompatible with 'client-decompress'"
     } elsif ($self->{'code'} == 3300033) {
-	return "Both 'directorty' and 'extract' must be set"
+	return "Both 'directotry' and 'extract' must be set"
     } elsif ($self->{'code'} == 3300034) {
 	return "'server-decrypt' or 'client-decrypt' is incompatible with 'extract'";
     } elsif ($self->{'code'} == 3300035) {
@@ -293,7 +293,8 @@ sub restore {
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300021));
+			code            => 3300021,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
 
@@ -302,7 +303,8 @@ sub restore {
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300022));
+			code            => 3300022,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
     if (defined $params{'leave'} and defined $params{'compress-best'}) {
@@ -310,7 +312,8 @@ sub restore {
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300023));
+			code            => 3300023,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
     if (defined $params{'leave'} and defined $params{'no-reassembly'}) {
@@ -318,7 +321,8 @@ sub restore {
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300024));
+			code            => 3300024,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
     if (defined $params{'header'} and (defined $params{'header-file'} or
@@ -327,7 +331,8 @@ sub restore {
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300025));
+			code            => 3300025,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
 
@@ -339,7 +344,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300026));
+			code            => 3300026,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
     }
@@ -350,7 +356,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300027));
+			code            => 3300027,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'server-decrypt'}) {
@@ -358,7 +365,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300028));
+			code            => 3300028,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'client-decrypt'}) {
@@ -366,7 +374,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300029));
+			code            => 3300029,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'decompress'}) {
@@ -374,7 +383,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300030));
+			code            => 3300030,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'server-decompress'}) {
@@ -382,7 +392,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300031));
+			code            => 3300031,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if ($params{'client-decompress'}) {
@@ -390,7 +401,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300032));
+			code            => 3300032,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
     }
@@ -401,7 +413,8 @@ sub restore {
 	    Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300033));
+			code            => 3300033,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
 
@@ -412,7 +425,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300034));
+			code            => 3300034,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 
@@ -422,7 +436,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300035));
+			code            => 3300035,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if (defined($params{'leave'}) +
@@ -432,7 +447,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300036));
+			code            => 3300036,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if (defined $params{'pipe'}) {
@@ -440,7 +456,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300037));
+			code            => 3300037,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
 	if (defined $params{'header'}) {
@@ -448,7 +465,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300038));
+			code            => 3300038,
+			severity	=> $Amanda::Message::ERROR));
 	    $params{'finished_cb'}->();
 	}
     }
@@ -460,7 +478,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300039));
+			code            => 3300039,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
     if (defined($params{'decompress'}) +
@@ -470,7 +489,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300040));
+			code            => 3300040,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
 
@@ -482,7 +502,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300041));
+			code            => 3300041,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
 
@@ -494,7 +515,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300042));
+			code            => 3300042,
+			severity	=> $Amanda::Message::ERROR));
 	$params{'finished_cb'}->();
     }
 
@@ -578,6 +600,7 @@ sub restore {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code            => 3300043,
+			severity	=> $Amanda::Message::ERROR,
 			dir		=> $destdir,
 			errno		=> $!));
 	}
@@ -659,7 +682,8 @@ sub restore {
 		Amanda::FetchDump::Message-> new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300044));
+			code            => 3300044,
+			severity	=> $Amanda::Message::ERROR));
 	}
 
 	# if we are doing a -p operation, only keep the first dump
@@ -668,7 +692,8 @@ sub restore {
 		Amanda::FetchDump::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300001)) if @{$plan->{'dumps'}} > 1;
+			code            => 3300001,
+			severity	=> $Amanda::Message::INFO)) if @{$plan->{'dumps'}} > 1;
 	    @{$plan->{'dumps'}} = ($plan->{'dumps'}[0]);
 	}
 	if ($params{'init'}) {
@@ -747,6 +772,7 @@ sub restore {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code            => 3300002,
+			severity	=> $Amanda::Message::SUCCESS,
 			needed_labels   => \@needed_labels,
 			needed_holding	=> \@needed_holding));
 
@@ -806,6 +832,7 @@ sub restore {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code            => 3300045,
+			severity	=> $Amanda::Message::ERROR,
 			errs		=> $errs)) if $errs;
 
 	my $dle_str = $hdr->{'dle_str'};
@@ -819,6 +846,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300016,
+				severity	=> $Amanda::Message::ERROR,
 				dle_str		=> $dle_str,
 				xml_error       => $@));
 	    }
@@ -864,6 +892,7 @@ sub restore {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code            => 3300046,
+			severity	=> $Amanda::Message::ERROR,
 			errs		=> $filename,
 			errno		=> $!));
 	    }
@@ -900,6 +929,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300047,
+				severity	=> $Amanda::Message::ERROR,
 				header_file	=> $params{'header-file'},
 				errno		=> $!));
 		syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
@@ -912,6 +942,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300048,
+				severity	=> $Amanda::Message::ERROR,
 				header_fd	=> $params{'header-fd'},
 				errno		=> $!));
 		syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
@@ -926,7 +957,8 @@ sub restore {
 		    Amanda::FetchDump::Message-> new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300049));
+			code            => 3300049,
+			severity	=> $Amanda::Message::ERROR));
 	}
 
 	$directtcp_supported = 0 if defined $params{'data-path'} and $params{'data-path'} eq 'amanda';
@@ -954,6 +986,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300050,
+				severity	=> $Amanda::Message::ERROR,
 				program		=> $program));
 		}
 		@argv = @{$validation_programs{$program}};
@@ -963,7 +996,8 @@ sub restore {
 			Amanda::FetchDump::Message-> new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 3300051));
+				code            => 3300051,
+				severity	=> $Amanda::Message::ERROR));
 		}
 		my $program_path = $Amanda::Paths::APPLICATION_DIR . "/" .
 				   $hdr->{application};
@@ -973,6 +1007,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300052,
+				severity	=> $Amanda::Message::ERROR,
 				application	=> $hdr->{'application'},
 				program_path	=> $program_path));
 		}
@@ -989,7 +1024,8 @@ sub restore {
 			Amanda::FetchDump::Message-> new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 3300053));
+				code            => 3300053,
+				severity	=> $Amanda::Message::ERROR));
 		}
 		if ($directtcp_supported and !$bsu->{'data-path-directtcp'}) {
 		    # application do not support directtcp
@@ -1108,6 +1144,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300000,
+				severity	=> $Amanda::Message::INFO,
 				size            => $size));
 	    }
 	});
@@ -1132,7 +1169,8 @@ sub restore {
 			Amanda::FetchDump::Message-> new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 3300054));
+				code            => 3300054,
+				severity	=> $Amanda::Message::INFO));
 	    }
 
 	    $hdr->{'encrypted'} = 0;
@@ -1170,7 +1208,8 @@ sub restore {
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 3300017));
+				code            => 3300017,
+				severity	=> $Amanda::Message::ERROR));
 	    } elsif ($hdr->{'srvcompprog'}) {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
 		push @filters,
@@ -1254,6 +1293,7 @@ sub restore {
 					source_filename => __FILE__,
 					source_line     => __LINE__,
 					code            => 3300018,
+					severity	=> $Amanda::Message::ERROR,
 					line		=> $line));
 			    }
 			    debug("filter stderr: $line");
@@ -1315,6 +1355,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300019,
+				severity	=> $Amanda::Message::INFO,
 				line		=> $line));
 	    });
 	    $amndmp_stderr_src->set_callback( sub {
@@ -1334,6 +1375,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300020,
+				severity	=> $Amanda::Message::ERROR,
 				line		=> $line));
 	    });
 	} elsif ($directtcp_supported) {
@@ -1399,6 +1441,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300012,
+				severity	=> $Amanda::Message::INFO,
 				size            => $recovery_params{'bytes_read'}));
 	if ($xfer_dest && $xfer_dest->isa("Amanda::Xfer::Dest::Buffer")) {
 	    my $buf = $xfer_dest->get();
@@ -1409,6 +1452,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300013,
+				severity	=> $Amanda::Message::INFO,
 				application_stdout => \@lines));
 	    }
 	}
@@ -1420,12 +1464,14 @@ sub restore {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code            => 3300055,
+			severity	=> $Amanda::Message::ERROR,
 			xfer_errs	=> \@xfer_errs)) if @xfer_errs;
 	return $steps->{'failure'}->(
 		Amanda::FetchDump::Message-> new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
-			code            => 3300056)) if $recovery_params{'result'} ne 'DONE';
+			code            => 3300056,
+			severity	=> $Amanda::Message::ERROR)) if $recovery_params{'result'} ne 'DONE';
 
 	if ($check_crc) {
 	    my $msg;
@@ -1437,6 +1483,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300014,
+				severity	=> $Amanda::Message::ERROR,
 				header_native_crc => $hdr->{'native_crc'},
 				log_native_crc	=> $current_dump->{'native_crc'}));
 	    }
@@ -1448,6 +1495,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300015,
+				severity	=> $Amanda::Message::ERROR,
 				header_client_crc => $hdr->{'client_crc'},
 				log_client_crc	=> $current_dump->{'client_crc'}));
 	    }
@@ -1478,6 +1526,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300005,
+				severity	=> $Amanda::Message::ERROR,
 				header_server_crc => $hdr->{'server_crc'},
 				log_server_crc	=> $current_dump->{'server_crc'}));
 	    }
@@ -1490,6 +1539,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300006,
+				severity	=> $Amanda::Message::ERROR,
 				log_server_crc	=> $current_dump->{'server_crc'},
 				source_crc	=> $source_crc));
 	    }
@@ -1501,6 +1551,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300007,
+				severity	=> $Amanda::Message::ERROR,
 				log_native_crc	=> $current_dump->{'native_crc'},
 				restore_native_crc => $restore_native_crc));
 	    }
@@ -1511,6 +1562,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300008,
+				severity	=> $Amanda::Message::ERROR,
 				log_client_crc	=> $current_dump->{'client_crc'},
 				restore_client_crc => $restore_client_crc));
 	    }
@@ -1524,6 +1576,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300009,
+				severity	=> $Amanda::Message::ERROR,
 				dest_crc	=> $dest_crc,
 				restore_native_crc => $restore_native_crc));
 	    }
@@ -1533,6 +1586,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300010,
+				severity	=> $Amanda::Message::ERROR,
 				dest_crc	=> $dest_crc,
 				restore_client_crc => $restore_client_crc));
 	    }
@@ -1542,6 +1596,7 @@ sub restore {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 3300011,
+				severity	=> $Amanda::Message::ERROR,
 				dest_crc	=> $dest_crc,
 				source_crc	=> $source_crc));
 	    }

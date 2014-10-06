@@ -808,7 +808,7 @@ sub fetchdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 3300059,
-		message_filename => $fetchdump->{'checkdump_log_filename'},
+		message_filename => $fetchdump->{'fetchdump_log_filename'},
 		severity         => $Amanda::Message::INFO);
     } else {
 	push @result_messages, Amanda::FetchDump::Message->new(
