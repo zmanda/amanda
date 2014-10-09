@@ -1,3 +1,13 @@
+2014-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Fix some messages.
+	* perl/Amanda/CheckDump.pm: Use errnostr. Decode use base64 xml encoding
+	* perl/Amanda/FetchDump.pm: Use errnostr. Decode use base64 xml encoding
+	* perl/Amanda/Label.pm: Use errnostr.
+	* perl/Amanda/Message.pm: Set errnostr.
+	* perl/Amanda/Rest/Runs.pm: Fix open.
+	* server-src/amreindex.pl: Decode use base64 xml encoding.
+	* installcheck/Amanda_Rest_Configs.pl: Add errnostr.
+
 2014-10-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/FetchDump.pm: Set severity on many message.
 	* perl/Amanda/Rest/Runs.pm: Fix setting message_filename.

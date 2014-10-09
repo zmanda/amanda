@@ -838,7 +838,7 @@ sub messages {
     }
     my $message_path =  getconf($CNF_LOGDIR) . "/" . $params{'message_filename'};
     my $message_fh;
-    if (open ($message_fh, "<$message_path") == 0) {
+    if (!open ($message_fh, "<$message_path")) {
 	push @result_messages, Amanda::CheckDump::Message->new(
 		source_filename  => __FILE__,
 		source_line      => __LINE__,

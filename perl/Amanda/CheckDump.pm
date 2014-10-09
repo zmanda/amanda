@@ -79,11 +79,11 @@ sub local_message {
     } elsif ($self->{'code'} == 2700020) {
 	return "The message filename is '$self->{'message_filename'}'";
     } elsif ($self->{'code'} == 2700021) {
-	return "Can't open message file '$self->{'message_filename'}' for writting: $self->{'errno'}";
+	return "Can't open message file '$self->{'message_filename'}' for writting: $self->{'errnostr'}";
     } elsif ($self->{'code'} == 2700022) {
 	return "No 'message_filename' specified";
     } elsif ($self->{'code'} == 2700023) {
-	return "Can't open message file '$self->{'message_filename'}' for reading: $self->{'errno'}";
+	return "Can't open message file '$self->{'message_filename'}' for reading: $self->{'errnostr'}";
     } elsif ($self->{'code'} == 2700024) {
     } elsif ($self->{'code'} == 2700025) {
     } elsif ($self->{'code'} == 2700026) {
@@ -123,6 +123,7 @@ use Amanda::Paths;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full
 			log_rename $amanda_log_trace_log make_stats );
 use Amanda::Util qw ( match_datestamp match_level );
+use MIME::Base64 ();
 
 use base qw(
     Amanda::Recovery::Clerk::Feedback
@@ -167,7 +168,7 @@ sub new {
     $self->{'checkdump_log_pathname'} = "$logdir/checkdump.$run_timestamp";
 
     # Must be opened in append so that all subprocess can write to it.
-    if (open($self->{'message_file'}, ">>", $self->{'checkdump_log_pathname'}) == 0) {
+    if (!open($self->{'message_file'}, ">>", $self->{'checkdump_log_pathname'})) {
 	push @result_messages, Amanda::CheckDump::Message->new(
                 source_filename  => __FILE__,
                 source_line      => __LINE__,
@@ -281,6 +282,9 @@ sub find_validation_command {
 				source_line     => __LINE__,
 				code            => 2700015));
 		    debug("XML Error: $@\n$dle_str");
+		}
+		if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
+		    $dle->{'diskdevice'} = MIME::Base64::decode($dle->{'diskdevice'}->{'raw'});
 		}
 	    }
 	    my @argv;

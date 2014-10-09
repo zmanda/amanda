@@ -625,7 +625,7 @@ set_message(
     } else if (message->code == 2800034) {
 	msg  = "ERROR: storage '%{storage}': no tapetype specified; you must give a value for the 'tapetype' parameter or the storage";
     } else if (message->code == 2800035) {
-	msg  = "ERROR: storage '%{storage}': runtapes is larger or equal to policy '%{policy'}' retention-tapes";
+	msg  = "ERROR: storage '%{storage}': runtapes is larger or equal to policy '%{policy}' retention-tapes";
     } else if (message->code == 2800036) {
 	msg  = "ERROR: system has %{size:kb_avail} memory, but device-output-buffer-size needs {size:kb_needed}";
     } else if (message->code == 2800037) {
@@ -748,7 +748,7 @@ set_message(
     } else if (message->code == 2800089) {
 	msg  = "NOTE: skipping tape checks";
     } else if (message->code == 2800090) {
-	msg  = "WARNING: tapecycle (%{tapecycle}) <= runspercycle (%{runspercycle)";
+	msg  = "WARNING: tapecycle (%{tapecycle}) <= runspercycle (%{runspercycle}";
     } else if (message->code == 2800091) {
 	msg  = "WARNING: tapecycle (%{tapecycle}) <= runtapes (%{runtapes})";
     } else if (message->code == 2800092) {
@@ -854,7 +854,7 @@ set_message(
     } else if (message->code == 2800133) {
 	msg  = "NOTE: it will be created on the next run.";
     } else if (message->code == 2800134) {
-	msg  = "ERROR: index dir '%{diskindexdir}' (%{'errnostr'})";
+	msg  = "ERROR: index dir '%{diskindexdir}' (%{errnostr})";
 	hint = "       check permissions";
     } else if (message->code == 2800135) {
 	msg  = "ERROR: index dir '%{diskindexdir}': not a directory";

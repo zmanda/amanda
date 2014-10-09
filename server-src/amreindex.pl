@@ -44,6 +44,7 @@ use Amanda::Cmdline;
 use Amanda::MainLoop;
 use Amanda::Xfer qw( :constants );
 use XML::Simple;
+use MIME::Base64 ();
 
 sub usage {
     print <<EOF;
@@ -254,6 +255,10 @@ sub find_index_command {
 		    print "ERROR: XML error\n";
 		    debug("XML Error: $@\n$dle_str");
 		}
+		if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
+		    $dle->{'diskdevice'} = MIME::Base64::decode($dle->{'diskdevice'}->{'raw'});
+		}
+
 	    }
 	    my @argv;
 

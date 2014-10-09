@@ -129,17 +129,17 @@ sub local_message {
     } elsif ($self->{'code'} == 3300042) {
 	return "Can't specify 'compress-best' with one of 'decompress', 'no-decompress', 'server-decompress' or 'client-decompress'";
     } elsif ($self->{'code'} == 3300043) {
-	return "Cannot chdir to $self->{'dir'}: $self->{'errno'}";
+	return "Cannot chdir to $self->{'dir'}: $self->{'errnostr'}";
     } elsif ($self->{'code'} == 3300044) {
 	return "No matching dumps found";
     } elsif ($self->{'code'} == 3300045) {
 	return join("; ", @{$self->{'errs'}});
     } elsif ($self->{'code'} == 3300046) {
-	return "Could not open '$self->{'filename'}' for writing: $self->{'errno'}";
+	return "Could not open '$self->{'filename'}' for writing: $self->{'errnostr'}";
     } elsif ($self->{'code'} == 3300047) {
-	return "could not open '$self->{'header_file'}': $self->('errno'}";
+	return "could not open '$self->{'header_file'}': $self->('errnostr'}";
     } elsif ($self->{'code'} == 3300048) {
-	return "could not open fd '$self->{'header_fd'}': $self->('errno'}";
+	return "could not open fd '$self->{'header_fd'}': $self->('errnostr'}";
     } elsif ($self->{'code'} == 3300049) {
 	return "The device can't do directtcp";
     } elsif ($self->{'code'} == 3300050) {
@@ -210,7 +210,7 @@ use Amanda::Recovery::Scan;
 use Amanda::Extract;
 use Amanda::Feature;
 use Amanda::Logfile qw( :logtype_t log_add log_add_full );
-
+use MIME::Base64 ();
 
 my $NEVER = 0;
 my $ALWAYS = 1;
@@ -246,7 +246,7 @@ sub new {
     $self->{'fetchdump_log_pathname'} = "$logdir/fetchdump.$timestamp";
 
     # Must be opened in append so that all subprocess can write to it.
-    if (open($self->{'message_file'}, ">>", $self->{'fetchdump_log_pathname'}) == 0) {
+    if (!open($self->{'message_file'}, ">>", $self->{'fetchdump_log_pathname'})) {
 	push @result_messages, Amanda::CheckDump::Message->new(
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
@@ -850,6 +850,9 @@ sub restore {
 				dle_str		=> $dle_str,
 				xml_error       => $@));
 	    }
+	    if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
+		$dle->{'diskdevice'} = MIME::Base64::decode($dle->{'diskdevice'}->{'raw'});
+            }
 	}
 
 	# and set up the destination..

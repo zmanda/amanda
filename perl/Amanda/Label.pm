@@ -138,9 +138,9 @@ sub local_message {
     } elsif ($self->{'code'} == 1000053) {
 	return "Failed to erase volume with label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000054) {
-	return "amtrmlog exited with non-zero while scrubbing logs: $self->{'errno'} $self->{'child_error'}.";
+	return "amtrmlog exited with non-zero while scrubbing logs: $self->{'errnostr'} $self->{'child_error'}.";
     } elsif ($self->{'code'} == 1000055) {
-	return "amtrmidx exited with non-zero while scrubbing logs: $self->{'errno'} $self->{'child_error'}.";
+	return "amtrmidx exited with non-zero while scrubbing logs: $self->{'errnostr'} $self->{'child_error'}.";
     } elsif ($self->{'code'} == 1000056) {
 	return "Failed to rewrite label '$self->{'label'}' to volume: $self->{'dev_error'}.";
     } elsif ($self->{'code'} == 1000057) {
