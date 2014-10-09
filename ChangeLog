@@ -1,3 +1,6 @@
+2014-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Decode use base64 xml encoding.
+
 2014-10-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Fix perl format.
 

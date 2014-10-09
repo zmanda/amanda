@@ -26,6 +26,7 @@ use Getopt::Long;
 use File::Basename;
 use XML::Simple;
 use IPC::Open3;
+use MIME::Base64 ();
 
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -530,6 +531,10 @@ sub main {
 		print "ERROR: XML error\n";
 		debug("XML Error: $@\n$dle_str");
 	    }
+	    if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
+		$dle->{'diskdevice'} = MIME::Base64::decode($dle->{'diskdevice'}->{'raw'});
+	    }
+
 	}
 
 	# and set up the destination..
