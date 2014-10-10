@@ -135,6 +135,7 @@ Amanda::Rest::Amcheck -- Rest interface to Amanda::Amcheck
 
 sub check {
     my %params = @_;
+    Amanda::Util::set_pname("Amanda::Rest::Amcheck");
 
     my @amcheck_args;
     my @result_messages = Amanda::Rest::Configs::config_init(@_);

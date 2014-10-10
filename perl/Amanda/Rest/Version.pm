@@ -56,9 +56,9 @@ Amanda::Rest::Version - Get the amande version.
 
 sub version {
     my %params = @_;
-    my @result_messages;
 
     Amanda::Util::set_pname("Amanda::Rest::Version");
+    my @result_messages;
     push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

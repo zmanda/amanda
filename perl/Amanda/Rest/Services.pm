@@ -70,6 +70,7 @@ Amanda::Rest::Services -- Rest interface to amservice
 sub discover {
     my %params = @_;
 
+    Amanda::Util::set_pname("Amanda::Rest::Services");
     my @amservice_args;
     my @result_messages;
 #    my @result_messages = Amanda::Rest::Configs::config_init(@_);

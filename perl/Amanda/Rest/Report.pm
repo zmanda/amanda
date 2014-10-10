@@ -72,6 +72,8 @@ See perldoc Amanda::Report::json for the report format.
 
 sub report {
     my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Report");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
