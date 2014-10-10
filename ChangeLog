@@ -1,4 +1,7 @@
 2014-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Config.swg: Fix message.
+
+2014-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Tag 'File removed before we read it' as
 	  GOOD.
 

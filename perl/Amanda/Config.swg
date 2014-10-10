@@ -1154,7 +1154,7 @@ sub local_message {
 	return "INVALID ERROR CODE '1500005': " . Data::Dumper::Dumper($self);
 	return "no such '$self->{'config'}' config";
     } elsif ($self->{'code'} == 1500006) {
-	return "Can't open config directory '$self->{'dir'}': $self->{'errno'}";
+	return "Can't open config directory '$self->{'dir'}': $self->{'errnostr'}";
     } elsif ($self->{'code'} == 1500007) {
 	return "Not existant parameters";
     } elsif ($self->{'code'} == 1500008) {
