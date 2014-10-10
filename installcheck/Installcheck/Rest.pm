@@ -26,6 +26,11 @@ use WWW::Curl::Easy;
 use JSON;
 use Test::More;
 
+eval { require Dancer; };
+if ($@) {
+    die("Can't load Dancer");
+}
+
 =head1 NAME
 
 Installcheck::Rest - utilities to start/stop the Rest server.
