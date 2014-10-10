@@ -1,3 +1,7 @@
+2014-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Tag 'File removed before we read it' as
+	  GOOD.
+
 2014-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Fix some messages.
 	* perl/Amanda/CheckDump.pm: Use errnostr. Decode use base64 xml encoding
