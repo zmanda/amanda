@@ -545,6 +545,10 @@ sub _run_tar_totals {
 	    chomp $l;
 	    $self->print_to_server($l, $Amanda::Script_App::GOOD);
 	    debug("TAR_ERR: $l");
+        } elsif ($l =~ /File removed before we read it/) {
+	    chomp $l;
+	    $self->print_to_server($l, $Amanda::Script_App::GOOD);
+	    debug("TAR_ERR: $l");
         } else {
 	    chomp $l;
 	    $self->print_to_server($l, $Amanda::Script_App::ERROR);
