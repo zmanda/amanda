@@ -29,6 +29,8 @@ AC_DEFUN([AMANDA_CHECK_DEVICES], [
     else
 	missing_devices="$missing_devices (no S3)";
     fi
+    AMANDA_DEVICES=$amanda_devices
+    AC_SUBST(AMANDA_DEVICES)
 ])
 
 

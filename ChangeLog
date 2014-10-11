@@ -1,3 +1,9 @@
+2014-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/device.m4: AC_SUBST(AMANDA_DEVICES)
+	* perl/Amanda/Constants.pm.in.src: Add AMANDA_DEVICES.
+	* installcheck/Amanda_Device.pl: Do not check dvdrw device if it is
+	  not compiled in.
+
 2014-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Rest.pm: Check if Dancer is installed.
 

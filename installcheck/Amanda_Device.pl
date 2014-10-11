@@ -749,33 +749,38 @@ ok($dev->finish(),
 
 ## dvdrw device
 
-$vtape1 = mkvtape(1);
-$dev_name = "dvdrw:$vtape1:/dev/scd0";
+SKIP: {
+    skip "not built with ndmp and server", 7 unless
+	$Amanda::Constants::AMANDA_DEVICES =~ /dvdrw/;
 
-$dev = Amanda::Device->new($dev_name);
-is($dev->status(), $DEVICE_STATUS_SUCCESS,
-    "$dev_name: create successful")
-    or diag($dev->error_or_status());
+    $vtape1 = mkvtape(1);
+    $dev_name = "dvdrw:$vtape1:/dev/scd0";
 
-properties_include([ $dev->property_list() ],
-    [ @common_properties, 'max_volume_usage' ],
-    "necessary properties listed on vfs device");
+    $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+        "$dev_name: create successful")
+        or diag($dev->error_or_status());
 
-# play with properties a little bit
-ok($dev->property_set("DVDRW_GROWISOFS_COMMAND", "/path/to/growisofs"),
-    "set DVDRW_GROWISOFS_COMMAND");
+    properties_include([ $dev->property_list() ],
+        [ @common_properties, 'max_volume_usage' ],
+        "necessary properties listed on vfs device");
 
-ok($dev->property_set("dvdrw_mount_command", "/path/to/mount"),
-    "set dvdrw_mount_command");
+    # play with properties a little bit
+    ok($dev->property_set("DVDRW_GROWISOFS_COMMAND", "/path/to/growisofs"),
+        "set DVDRW_GROWISOFS_COMMAND");
 
-ok($dev->property_set("dvdrw_umount_command", "/path/to/umount"),
-    "set dvdrw_umount_command");
+    ok($dev->property_set("dvdrw_mount_command", "/path/to/mount"),
+        "set dvdrw_mount_command");
 
-ok($dev->property_set("block_size", 32768),
-    "set an integer property to an integer");
+    ok($dev->property_set("dvdrw_umount_command", "/path/to/umount"),
+        "set dvdrw_umount_command");
 
-ok(!($dev->property_set("invalid-property-name", 32768)),
-    "set an invalid-property-name");
+    ok($dev->property_set("block_size", 32768),
+        "set an integer property to an integer");
+
+    ok(!($dev->property_set("invalid-property-name", 32768)),
+        "set an invalid-property-name");
+}
 
 ####
 ## Test a RAIT device of two vfs devices.

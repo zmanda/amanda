@@ -116,6 +116,7 @@ $XFSRESTORE = "@XFSRESTORE@";
 $NC = "@NC@";
 $NC6 = "@NC6@";
 $NETCAT = "@NETCAT@";
+$AMANDA_DEVICES = "@AMANDA_DEVICES@";
 
 # non-AC_SUBST'd constants
 
