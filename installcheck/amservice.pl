@@ -26,6 +26,7 @@ use Installcheck;
 use Installcheck::Run qw( run run_get );
 use Amanda::Paths;
 use Amanda::Constants;
+use Amanda::Feature;
 
 my $input_filename = "$Installcheck::TMP/amservice_input.txt";
 my $testconf = Installcheck::Run::setup();
@@ -56,6 +57,10 @@ sub all_lines_ok {
     return $ok;
 }
 
+my $features = Amanda::Feature::Set->mine();
+$features->remove($Amanda::Feature::fe_selfcheck_message);
+my $features_str = $features->as_string();
+
 # a simple run of amservice to begin with
 like(run_get('amservice', '-f', '/dev/null', 'localhost', 'local', 'noop'),
     qr/^OPTIONS features=/,
@@ -72,7 +77,7 @@ SKIP: {
     skip "GNUTAR not installed", 1 unless $Amanda::Constants::GNUTAR;
     write_input_file($input);
     ok(all_lines_ok(
-	run_get('amservice', '-f', $input_filename, 'localhost', 'local', 'selfcheck')),
+	run_get('amservice', '-f', $input_filename, '--features', $features_str, 'localhost', 'local', 'selfcheck')),
 	"GNUTAR program selfchecks successfully");
 }
 
@@ -92,7 +97,7 @@ SKIP: {
     skip "GNUTAR not installed", 1 unless $Amanda::Constants::GNUTAR;
     write_input_file($input);
     ok(all_lines_ok(
-	run_get('amservice', '-f', $input_filename, 'localhost', 'local', 'selfcheck')),
+	run_get('amservice', '-f', $input_filename, '--features', $features_str, 'localhost', 'local', 'selfcheck')),
 	"amgtar application selfchecks successfully");
 }
 

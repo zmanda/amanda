@@ -1,3 +1,23 @@
+2014-10-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c: Add fe_selfcheck_message.
+	* common-src/amfeatures.h: Add fe_selfcheck_message.
+	* client-src/client_util.c (check_access_message, check_file_message,
+	  check_dir_message, check_suid_message): New function that return a
+	  message_t.
+	* client-src/client_util.h: Add prototype.
+	* client-src/selfcheck.c: Return message to server.
+	* common-src/ammessage.c: Many improvement.
+	* common-src/ammessage.c (delete_message_gpointer,
+	  get_quoted_message, message_get_code, message_get_severity,
+	  message_get_argument, message_add_argument, parse_json_message):
+	  New function.
+	* common-src/ammessage.h: Add prototype.
+	* common-src/amservice.c: Take a --features argument.
+	* perl/Amanda/Message.pm: selfcheck message are 3600000
+	* server-src/amcheck.c: Parse message from selfcheck.
+	* installcheck/Amanda_Rest_Amcheck.pl: Fix message.
+	* installcheck/amservice.pl: Test --features argument.
+
 2014-10-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/device.m4: AC_SUBST(AMANDA_DEVICES)
 	* perl/Amanda/Constants.pm.in.src: Add AMANDA_DEVICES.

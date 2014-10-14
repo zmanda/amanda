@@ -111,20 +111,15 @@ encode_json(
 }
 
 static message_t *
+amcheck_fprint_message(
+    FILE      *file,
+    message_t *message);
+
+static message_t *
 amcheck_print_message(
     message_t *message)
 {
-    char *hint;
-
-    if (opt_message)
-	print_message(message);
-    else {
-	g_printf("%s\n", get_message(message));
-	if ((hint = get_hint(message)) != NULL) {
-	    g_printf("%s\n", hint);
-	}
-    }
-    return message;
+    return amcheck_fprint_message(stdout, message);
 }
 
 static message_t *
@@ -132,45 +127,58 @@ amcheck_fprint_message(
     FILE      *file,
     message_t *message)
 {
-    if (opt_message)
+    char *hint;
+
+    if (opt_message) {
 	fprint_message(file, message);
-    else
-	g_fprintf(file, "%s\n", get_message(message));
+    } else {
+	char *prefix;
+	int severity = message_get_severity(message);
+	char *dle_hostname = message_get_argument(message, "dle_hostname");
+	if (dle_hostname && *dle_hostname) {
+	    if (severity == MSG_SUCCESS) {
+		prefix = g_strdup_printf("HOST %s OK: ", dle_hostname);
+	    } else if (severity == MSG_INFO) {
+		prefix = g_strdup_printf("HOST %s OK: ", dle_hostname);
+	    } else if (severity == MSG_MESSAGE) {
+		prefix = g_strdup_printf("HOST %s OK: ", dle_hostname);
+	    } else if (severity == MSG_WARNING) {
+		prefix = g_strdup_printf("HOST %s WARNING: ", dle_hostname);
+	    } else if (severity == MSG_ERROR) {
+		prefix = g_strdup_printf("HOST %s ERROR: ", dle_hostname);
+	    } else if (severity == MSG_CRITICAL) {
+		prefix = g_strdup_printf("HOST %s CRITICAL: ", dle_hostname);
+	    } else {
+		prefix = g_strdup_printf("HOST %s BAD: ", dle_hostname);
+	    }
+	} else {
+	    if (severity == MSG_SUCCESS) {
+		prefix = g_strdup_printf("NOTE: ");
+	    } else if (severity == MSG_INFO) {
+		prefix = g_strdup_printf("NOTE: ");
+	    } else if (severity == MSG_MESSAGE) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
+		prefix = g_strdup_printf("");
+#pragma GCC diagnostic pop
+	    } else if (severity == MSG_WARNING) {
+		prefix = g_strdup_printf("WARNING: ");
+	    } else if (severity == MSG_ERROR) {
+		prefix = g_strdup_printf("ERROR: ");
+	    } else if (severity == MSG_CRITICAL) {
+		prefix = g_strdup_printf("CRITICAL: ");
+	    } else {
+		prefix = g_strdup_printf("BAD: ");
+	    }
+	}
+	g_fprintf(file, "%s%s\n", prefix, get_message(message));
+	if ((hint = message_get_hint(message)) != NULL) {
+	    int len = strlen(prefix);
+	    g_fprintf(file, "%*c%s\n", len, ' ', hint);
+	}
+	g_free(prefix);
+    }
     return message;
-}
-
-#define Xfprint_message(file, code, msg) if (opt_message) g_fprintf(file, \
-"  {\n" \
-"    \"source_filename\" : \"" __FILE__ "\",\n" \
-"    \"source_line\" : \"%d\",\n" \
-"    \"severity\" : \"16\",\n" \
-"    \"process\" : \"%s\",\n" \
-"    \"running_on\" : \"%s\",\n" \
-"    \"component\" : \"%s\",\n" \
-"    \"module\" : \"%s\",\n" \
-"    \"code\" : \"%d\",\n" \
-"    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, get_pname(), get_running_on(), get_pcomponent(), get_pmodule(), code, encode_json(msg)); else \
-g_fprintf(file, "%s\n", msg);
-
-#define Yamcheck_fprintf_message(file, msg) if (opt_message) fprintf_message(file, msg) else g_fprintf(file, "%s\n", msg);
-
-#define Xfprintf_message(file, code, msg, ...) { \
-  char *msg1 = g_strdup_printf(msg, __VA_ARGS__); \
-  if (opt_message) g_fprintf(file, \
-"  {\n" \
-"    \"source_filename\" : \"" __FILE__ "\",\n" \
-"    \"source_line\" : \"%d\",\n" \
-"    \"severity\" : \"16\",\n" \
-"    \"process\" : \"%s\",\n" \
-"    \"running_on\" : \"%s\",\n" \
-"    \"component\" : \"%s\",\n" \
-"    \"module\" : \"%s\",\n" \
-"    \"code\" : \"%d\",\n" \
-"    \"message\" : \"%s\"\n" \
-"  },\n", __LINE__, get_pname(), get_running_on(), get_pcomponent(), get_pmodule(), code, encode_json(msg1)); else \
-g_fprintf(file, "%s\n", msg1); \
-g_free(msg1); \
 }
 
 void
@@ -184,7 +192,7 @@ void
 usage(void)
 {
     delete_message(amcheck_print_message(build_message(
-		__FILE__, __LINE__, 2800000, MSG_ERROR, 0)));
+		__FILE__, __LINE__, 2800000, MSG_MESSAGE, 0)));
 
     amcheck_exit(1);
     /*NOTREACHED*/
@@ -273,7 +281,7 @@ main(
 	case 1:		client_verbose = TRUE;
 			break;
 	case 2:		delete_message(amcheck_print_message(build_message(
-				__FILE__, __LINE__, 2800001, MSG_INFO, 1,
+				__FILE__, __LINE__, 2800001, MSG_MESSAGE, 1,
 				"version", VERSION)));
 			return(0);
 			break;
@@ -283,13 +291,13 @@ main(
 			break;
 	case 'M':	if (mailto) {
 			    delete_message(amcheck_print_message(build_message(
-				__FILE__, __LINE__, 2800002, MSG_INFO, 0)));
+				__FILE__, __LINE__, 2800002, MSG_ERROR, 0)));
 			    amcheck_exit(1);
 			}
 			mailto=g_strdup(optarg);
 			if(!validate_mailto(mailto)){
 			    delete_message(amcheck_print_message(build_message(
-				__FILE__, __LINE__, 2800003, MSG_INFO, 0)));
+				__FILE__, __LINE__, 2800003, MSG_ERROR, 0)));
 			   amcheck_exit(1);
 			}
 			/*FALLTHROUGH*/
@@ -345,7 +353,7 @@ main(
 	}
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800228, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800228, MSG_ERROR, 0)));
 	    exit(1);
 	    //g_critical("errors processing config file");
 	}
@@ -355,25 +363,23 @@ main(
     if ((!mailer || *mailer == '\0') && mailout == 1) {
 	if (alwaysmail == 1) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800004, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800004, MSG_ERROR, 0)));
 	} else {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800005, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800005, MSG_ERROR, 0)));
 	}
 	amcheck_exit(1);
     }
     if(mailout && !mailto &&
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800006, MSG_WARNING, 0)));
-	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800007, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800006, MSG_ERROR, 0)));
         if (alwaysmail) {
 	    delete_message(amcheck_print_message(build_message(
 			__FILE__, __LINE__, 2800008, MSG_ERROR, 0)));
 	} else {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800009, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800009, MSG_ERROR, 0)));
 	}
 	amcheck_exit(1);
     }
@@ -395,10 +401,10 @@ main(
 			__FILE__, __LINE__, 2800012, MSG_ERROR, 0)));
           if (alwaysmail) {
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800013, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800013, MSG_ERROR, 0)));
 	  } else {
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800014, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800014, MSG_ERROR, 0)));
 	  }
 	  amcheck_exit(1);
       }
@@ -412,7 +418,7 @@ main(
 	    char *errstr = g_ptr_array_index(err_array, i);
 	    g_debug("%s", errstr);
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800015, MSG_INFO, 1,
+			__FILE__, __LINE__, 2800015, MSG_MESSAGE, 1,
 			"errstr", errstr)));
 	}
     }
@@ -547,7 +553,7 @@ main(
 		/*NOTREACHED*/
 	    }
 
-	    if (opt_message) fprintf(mainfd,",");
+	    if (opt_message) fprintf(mainfd,",\n");
 	    while (fgets(line, 1024, tempfdr)) {
 		fprintf(mainfd, "%s", line);
 	    }
@@ -558,9 +564,9 @@ main(
 	amfree(tempfname);
     }
 
-    if (opt_message) printf(",");
+    if (opt_message) printf(",\n");
     delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800016, MSG_INFO, 1,
+			__FILE__, __LINE__, 2800016, MSG_MESSAGE, 1,
 			"version", VERSION)));
 
     amfree(our_feature_string);
@@ -725,9 +731,10 @@ main(
 	}
     }
 
+    printf("\n");
+    g_debug("server_probs: %d", server_probs);
+    g_debug("client_probs: %d", client_probs);
     dbclose();
-//printf("server_probs %d\n", server_probs);
-//printf("client_probs %d\n", client_probs);
     return (server_probs || client_probs);
 }
 
@@ -875,7 +882,7 @@ static gboolean test_tape_status(FILE * outf) {
 		    }
 		} else {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 123, MSG_ERROR, 1,
+					__FILE__, __LINE__, 123, MSG_MESSAGE, 1,
 					"errstr", line)));
 		}
 		g_free(line);
@@ -948,7 +955,7 @@ start_server_check(
     set_root_privs(-1);
 
     delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800027, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800027, MSG_MESSAGE, 0)));
     if (!opt_message) {
 	fprintf(outf, "-----------------------------\n");
     }
@@ -1175,7 +1182,7 @@ start_server_check(
 	holdfile = config_dir_relative("hold");
 	if(access(holdfile, F_OK) != -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800048, MSG_INFO, 1,
+			__FILE__, __LINE__, 2800048, MSG_WARNING, 1,
 			"holdfile", holdfile)));
 	}
 	amfree(tapefile);
@@ -1457,15 +1464,11 @@ start_server_check(
     } else if (do_tapechk) {
 	delete_message(amcheck_fprint_message(outf, build_message(
 			__FILE__, __LINE__, 2800085, MSG_WARNING, 0)));
-	delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800086, MSG_WARNING, 0)));
 	dev_amanda_data_path = TRUE;
 	dev_directtcp_data_path = TRUE;
     } else if (logbad == 2) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800087, MSG_INFO, 0)));
-	delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800088, MSG_INFO, 0)));
+			__FILE__, __LINE__, 2800087, MSG_MESSAGE, 0)));
 
 	/* we skipped the tape checks, but this is just a NOTE and
 	 * should not result in a nonzero exit status, so reset logbad to 0 */
@@ -1908,7 +1911,7 @@ start_server_check(
     amfree(datestamp);
 
      delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800160, MSG_INFO, 1,
+					__FILE__, __LINE__, 2800160, MSG_MESSAGE, 1,
 					"seconds", walltime_str(curclock()))));
 
     fflush(outf);
@@ -2358,9 +2361,9 @@ start_client_checks(
 
 //    fprint_message(outf, 2800214, "\n");
     delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800202, MSG_INFO, 0)));
+					__FILE__, __LINE__, 2800202, MSG_MESSAGE, 0)));
     delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800203, MSG_INFO, 0)));
+					__FILE__, __LINE__, 2800203, MSG_MESSAGE, 0)));
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
@@ -2387,17 +2390,53 @@ start_client_checks(
     run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name());
 
     delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800204, MSG_INFO, 3,
+					__FILE__, __LINE__, 2800204, MSG_MESSAGE, 3,
 					"hostcount", g_strdup_printf("%d", hostcount),
 					"remote_errors", g_strdup_printf("%d", remote_errors),
 					"seconds", walltime_str(curclock()))));
     fflush(outf);
 
-g_debug("userbad: %d", userbad);
-g_debug("remote_errors: %d", remote_errors);
+    g_debug("userbad: %d", userbad);
+    g_debug("remote_errors: %d", remote_errors);
     amcheck_exit(userbad || remote_errors > 0);
     /*NOTREACHED*/
     return 0;
+}
+
+static void print_array_message(gpointer data, gpointer user_data);
+static void
+print_array_message(
+    gpointer data,
+    gpointer user_data)
+{
+    FILE *stream = (FILE *)user_data;
+    message_t *message = data;
+    int severity = message_get_severity(message);
+
+    if ((severity == MSG_SUCCESS ||
+	 severity == MSG_INFO) &&
+	client_verbose) {
+	//if (!opt_message) fprintf(stream, "HOST %s: OK ", message_get_argument(message, "hostname"));
+	amcheck_fprint_message(stream, message);
+    } else if (severity > MSG_INFO) {
+	remote_errors++;
+	//if (!opt_message) fprintf(stream, "HOST %s: ERROR ", message_get_argument(message, "hostname"));
+	amcheck_fprint_message(stream, message);
+    }
+
+    delete_message(message);
+}
+
+static void add_hostname_message(gpointer data, gpointer user_data);
+static void
+add_hostname_message(
+    gpointer data,
+    gpointer user_data)
+{
+    char *dle_hostname = (char *)user_data;
+    message_t *message = data;
+
+    message_add_argument(message, "dle_hostname", dle_hostname);
 }
 
 static void
@@ -2414,6 +2453,7 @@ handle_result(
     int ch;
     int tch;
     gboolean printed_hostname = FALSE;
+    char *message_buffer = NULL;
 
     hostp = (am_host_t *)datap;
     hostp->up = HOST_READY;
@@ -2432,6 +2472,7 @@ handle_result(
     ch = *s++;
     while(ch) {
 	line = s - 1;
+
 	skip_quoted_line(s, ch);
 	if (s[-2] == '\n') {
 	    s[-2] = '\0';
@@ -2464,16 +2505,21 @@ handle_result(
 	if (client_verbose && !printed_hostname) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
 					__FILE__, __LINE__, 2800209, MSG_INFO, 1,
-					"hostname", hostp->hostname)));
+					"dle_hostname", hostp->hostname)));
 	    printed_hostname = TRUE;
+	}
+
+	if (strncmp_const(line, "MESSAGE") == 0) {
+	    message_buffer = g_strdup(line+8);
+	    break;
 	}
 
 	if(strncmp_const(line, "OK ") == 0) {
 	    if (client_verbose) {
 		delete_message(amcheck_fprint_message(client_outf, build_message(
 					__FILE__, __LINE__, 2800210, MSG_INFO, 2,
-					"hostname", hostp->hostname,
-					"ok_line", line)));
+					"dle_hostname", hostp->hostname,
+					"ok_line", line+3)));
 	    }
 	    continue;
 	}
@@ -2501,12 +2547,26 @@ handle_result(
 	}
 
 	delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800212, MSG_ERROR, 3,
+					__FILE__, __LINE__, 2800212, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"errstr", line)));
 	remote_errors++;
 	hostp->up = HOST_DONE;
     }
+
+    if (message_buffer) {
+	/* parse message_buffer into a message_t array */
+	GPtrArray *message_array = parse_json_message(message_buffer);
+
+	/* add hostname to all messages */
+	g_ptr_array_foreach(message_array, add_hostname_message, hostp->hostname);
+
+	/* print and delete the messages */
+	g_ptr_array_foreach(message_array, print_array_message, client_outf);
+
+	g_free(message_buffer);
+    }
+
     if(hostp->up == HOST_READY && hostp->features == NULL) {
 	/*
 	 * The client does not support the features list, so give it an

@@ -42,6 +42,7 @@
 #include "client_util.h"
 #include "conffile.h"
 #include "amandad.h"
+#include "ammessage.h"
 #include "amxml.h"
 #include "base64.h"
 
@@ -80,6 +81,27 @@ static void check_overall(void);
 static int check_file_exist(char *filename);
 static void check_space(char *dir, off_t kbytes);
 static void print_platform(void);
+
+static message_t *
+selfcheck_print_message(
+    message_t *message)
+{
+    if (message == NULL)
+	return NULL;
+
+    if (am_has_feature(g_options->features, fe_selfcheck_message)) {
+	print_message(message);
+    } else {
+	if (message_get_code(message) == 3600004) {
+	    printf("%s\n", get_quoted_message(message));
+	} else if (message_get_severity(message) == MSG_INFO) {
+	    printf("OK %s\n", get_quoted_message(message));
+	} else if (message_get_severity(message) == MSG_ERROR) {
+	    printf("ERROR [%s]\n", get_quoted_message(message));
+	}
+    }
+    return message;
+}
 
 int
 main(
@@ -127,10 +149,7 @@ main(
     add_amanda_log_handler(amanda_log_syslog);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(_("version %s\n"), VERSION);
-    g_printf("OK version %s\n", VERSION);
 
-    print_platform();
     if(argc > 2 && g_str_equal(argv[1], "amandad")) {
 	amandad_auth = g_strdup(argv[2]);
     }
@@ -153,8 +172,9 @@ main(
 
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    if (g_options) {
-		g_printf(_("ERROR [Multiple OPTIONS line in selfcheck input]\n"));
-		error(_("Multiple OPTIONS line in selfcheck input\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600003, MSG_ERROR, 0)));
+		exit(1);
 		/*NOTREACHED*/
 	    }
 	    g_options = parse_g_options(line+8, 1);
@@ -164,15 +184,18 @@ main(
 		g_options->hostname[MAX_HOSTNAME_LENGTH] = '\0';
 	    }
 
-	    g_printf("OPTIONS ");
-	    if(am_has_feature(g_options->features, fe_rep_options_features)) {
-		g_printf("features=%s;", our_feature_string);
-	    }
-	    if(am_has_feature(g_options->features, fe_rep_options_hostname)) {
-		g_printf("hostname=%s;", g_options->hostname);
-	    }
-	    g_printf("\n");
-	    fflush(stdout);
+	    if (am_has_feature(g_options->features, fe_selfcheck_message))
+		printf("MESSAGE\n");
+	    delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600000, MSG_INFO, 2,
+		"version", VERSION,
+		"hostname", g_options->hostname)));
+	    print_platform();
+
+	    delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600004, MSG_INFO, 2,
+		"features", our_feature_string,
+		"hostname", g_options->hostname)));
 
 	    if (g_options->config) {
 		/* overlay this configuration on the existing (nameless) configuration */
@@ -185,7 +208,10 @@ main(
 	    /* check for any config errors now */
 	    if (config_errors(&errlist) >= CFGERR_ERRORS) {
 		char *errstr = config_errors_to_error_string(errlist);
-		g_printf("%s\n", errstr);
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600005, MSG_ERROR, 2,
+			"errstr", errstr,
+			"hostname", g_options->hostname)));
 		amfree(errstr);
 		amfree(line);
 		dbclose();
@@ -317,8 +343,10 @@ main(
 	dle = NULL;
     }
     if (g_options == NULL) {
-	g_printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
-	error(_("Missing OPTIONS line in selfcheck input\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600006, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
+	exit(1);
 	/*NOTREACHED*/
     }
 
@@ -370,11 +398,14 @@ checkoverall:
 
  err:
     if (err_extra) {
-	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET %s]\n"), err_extra);
-	dbprintf(_("REQ packet is bogus: %s\n"), err_extra);
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600007, MSG_ERROR, 2,
+			"err_extra", err_extra,
+			"hostname", g_options->hostname)));
     } else {
-	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET]\n"));
-	dbprintf(_("REQ packet is bogus\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600008, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
     }
     amfree(err_extra);
     amfree(line);
@@ -397,18 +428,34 @@ check_options(
 	need_gnutar=1;
         if (dle->device[0] == '/' && dle->device[1] == '/') {
 	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
-		g_printf(_("ERROR [samba support only one exclude file]\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600009, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    }
 	    if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
 	        dle->exclude_optional==0) {
-		g_printf(_("ERROR [samba does not support exclude list]\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600010, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    }
 	    if (dle->include_file && dle->include_file->nb_element > 0) {
-		g_printf(_("ERROR [samba does not support include file]\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600011, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    }
 	    if (dle->include_list && dle->include_list->nb_element > 0 &&
 	        dle->include_optional==0) {
-		g_printf(_("ERROR [samba does not support include list]\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600012, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    }
 	    need_samba=1;
 	} else {
@@ -434,16 +481,32 @@ check_options(
 
     if (g_str_equal(dle->program, "DUMP")) {
 	if (dle->exclude_file && dle->exclude_file->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support exclude file]\n"));
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600013, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
 	if (dle->exclude_list && dle->exclude_list->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support exclude list]\n"));
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600014, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
 	if (dle->include_file && dle->include_file->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support include file]\n"));
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600015, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
 	if (dle->include_list && dle->include_list->nb_element > 0) {
-	    g_printf(_("ERROR [DUMP does not support include list]\n"));
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600016, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
 #ifdef USE_RUNDUMP
 	need_rundump=1;
@@ -508,16 +571,26 @@ check_options(
     }
     if (dle->auth && amandad_auth) {
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
-	    g_fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
-		    amandad_auth, dle->auth);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600017, MSG_ERROR, 5,
+			"auth", amandad_auth,
+			"auth-requested", dle->auth,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    if (g_str_equal(dle->auth, "ssh"))  {
-		g_fprintf(stderr, _("ERROR [The auth in ~/.ssh/authorized_keys "
-				  "should be \"--auth=ssh\", or use another auth "
-				  " for the DLE]\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600018, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    }
 	    else {
-		g_fprintf(stderr, _("ERROR [The auth in the inetd/xinetd configuration "
-				  " must be the same as the DLE]\n"));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600019, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	    }
 	}
     }
@@ -528,7 +601,6 @@ check_disk(
     dle_t *dle)
 {
     char *device = NULL;
-    char *err = NULL;
     char *user_and_password = NULL;
     char *domain = NULL;
     char *share = NULL, *subdir = NULL;
@@ -540,6 +612,8 @@ check_disk(
     char *qdisk = NULL;
     char *qamdevice = NULL;
     char *qdevice = NULL;
+    char *err = NULL;
+    int nb_error = 0;
 
     if (dle->disk) {
 	need_global_check=1;
@@ -549,16 +623,19 @@ check_disk(
 	dbprintf(_("checking disk %s\n"), qdisk);
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	    if (dle->device[0] == '/' && dle->device[1] == '/') {
-		err = g_strdup_printf(
-		    _("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
-		    dle->device);
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600020, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		nb_error++;
 		goto common_exit;
 	    }
 	}
 
 	if (g_str_equal(dle->program, "GNUTAR")) {
             if(dle->device[0] == '/' && dle->device[1] == '/') {
-		#ifdef SAMBA_CLIENT
+#ifdef SAMBA_CLIENT
 		int nullfd, checkerr;
 		int passwdfd;
 		char *pwtext;
@@ -575,39 +652,63 @@ check_disk(
 
 		parsesharename(dle->device, &share, &subdir);
 		if (!share) {
-		    err = g_strdup_printf(
-			      _("cannot parse for share/subdir disk entry %s"),
-			      dle->device);
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600021, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 		if ((subdir) && (SAMBA_VERSION < 2)) {
-		    err = g_strdup_printf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
-				     dle->device);
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600022, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 		if ((user_and_password = findpass(share, &domain)) == NULL) {
-		    err = g_strdup_printf(_("cannot find password for %s"),
-				     dle->device);
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600023, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 		lpass = strlen(user_and_password);
 		if ((pwtext = strchr(user_and_password, '%')) == NULL) {
-		    err = g_strdup_printf(
-				_("password field not \'user%%pass\' for %s"),
-				dle->device);
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600024, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 		*pwtext++ = '\0';
 		pwtext_len = (size_t)strlen(pwtext);
 		amfree(device);
 		if ((device = makesharename(share, 0)) == NULL) {
-		    err = g_strdup_printf(_("cannot make share name of %s"), share);
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600025, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 
 		if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	            err = g_strdup_printf(_("Cannot access /dev/null : %s"),
-				     strerror(errno));
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600026, MSG_ERROR, 4,
+			"errno", errno,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 
@@ -639,8 +740,13 @@ check_disk(
 		/*@ignore@*/
 		if ((pwtext_len > 0) &&
 		    full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
-		    err = g_strdup_printf(_("password write failed: %s: %s"),
-				     dle->device, strerror(errno));
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600027, MSG_ERROR, 4,
+			"errno", errno,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
 		    aclose(passwdfd);
 		    goto common_exit;
 		}
@@ -650,8 +756,14 @@ check_disk(
 		aclose(passwdfd);
 		ferr = fdopen(checkerr, "r");
 		if (!ferr) {
-		    g_printf(_("ERROR [Can't fdopen ferr: %s]\n"), strerror(errno));
-		    error(_("Can't fdopen ferr: %s"), strerror(errno));
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600028, MSG_ERROR, 4,
+			"errno", errno,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
+		    exit(1);
 		    /*NOTREACHED*/
 		}
 		sep = "";
@@ -695,9 +807,12 @@ check_disk(
 		    err = tmpbuf;
 		}
 #else
-		err = g_strdup_printf(
-			      _("This client is not configured for samba: %s"),
-			      qdisk);
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600030, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		nb_error++;
 #endif
 		goto common_exit;
 	    }
@@ -706,9 +821,12 @@ check_disk(
 	    device = amname_to_dirname(dle->device);
 	} else if (g_str_equal(dle->program, "DUMP")) {
 	    if(dle->device[0] == '/' && dle->device[1] == '/') {
-		err = g_strdup_printf(
-		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
-		  qdisk);
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600031, MSG_ERROR, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		nb_error++;
 		goto common_exit;
 	    }
 #ifdef VDUMP								/* { */
@@ -737,6 +855,7 @@ check_disk(
     if (dle->program_is_application_api) {
 	pid_t                    application_api_pid;
 	backup_support_option_t *bsu;
+	int                      app_out[2];
 	int                      app_err[2];
 	GPtrArray               *errarray;
 
@@ -747,69 +866,150 @@ check_disk(
 	    guint  i;
 	    for (i=0; i < errarray->len; i++) {
 		line = g_ptr_array_index(errarray, i);
-		fprintf(stdout, _("ERROR Application '%s': %s\n"),
-			dle->program, line);
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600032, MSG_ERROR, 5,
+			"application", dle->program,
+			"errstr", line,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		nb_error++;
 	    }
 	    g_ptr_array_free_full(errarray);
-	    err = g_strdup_printf(_("Application '%s': can't run support command"),
-			     dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600033, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	    goto common_exit;
 	}
 
 	if (dle->data_path == DATA_PATH_AMANDA &&
 	    (bsu->data_path_set & DATA_PATH_AMANDA)==0) {
-	    g_printf("ERROR application %s doesn't support amanda data-path\n",
-		     dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600034, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->data_path == DATA_PATH_DIRECTTCP &&
 	    (bsu->data_path_set & DATA_PATH_DIRECTTCP)==0) {
-	    g_printf("ERROR application %s doesn't support directtcp data-path\n",
-		     dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600034, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
 			    !bsu->calcsize) {
-	    g_printf("ERROR application %s doesn't support calcsize estimate\n",
-		     dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600036, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->include_file && dle->include_file->nb_element > 0 &&
 	    !bsu->include_file) {
-	    g_printf("ERROR application %s doesn't support include-file\n",
-		   dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600037, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->include_list && dle->include_list->nb_element > 0 &&
 	    !bsu->include_list) {
-	    g_printf("ERROR application %s doesn't support include-list\n",
-		   dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600038, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->include_optional && !bsu->include_optional) {
-	    g_printf("ERROR application %s doesn't support optional include\n",
-		   dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600039, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->exclude_file && dle->exclude_file->nb_element > 0 &&
 	    !bsu->exclude_file) {
-	    g_printf("ERROR application %s doesn't support exclude-file\n",
-		   dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600040, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
 	    !bsu->exclude_list) {
-	    g_printf("ERROR application %s doesn't support exclude-list\n",
-		   dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600041, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	if (dle->exclude_optional && !bsu->exclude_optional) {
-	    g_printf("ERROR application %s doesn't support optional exclude\n",
-		   dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600042, MSG_ERROR, 4,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	}
 	fflush(stdout);fflush(stderr);
 
+	if (pipe(app_out) < 0) {
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600043, MSG_ERROR, 5,
+			"errno", errno,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
+	    goto common_exit;
+	}
+
 	if (pipe(app_err) < 0) {
-	    err = g_strdup_printf(_("Application '%s': can't create pipe"),
-			     dle->program);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600043, MSG_ERROR, 5,
+			"errno", errno,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	    goto common_exit;
 	}
 
 	switch (application_api_pid = fork()) {
 	case -1:
-	    err = g_strdup_printf(_("fork failed: %s"), strerror(errno));
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600044, MSG_ERROR, 5,
+			"errno", errno,
+			"application", dle->program,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+	    nb_error++;
 	    goto common_exit;
 
 	case 0: /* child */
@@ -825,6 +1025,8 @@ check_disk(
 
 		aclose(app_err[0]);
 		dup2(app_err[1], 2);
+		aclose(app_out[0]);
+		dup2(app_out[1], 1);
 
 		g_ptr_array_add(argv_ptr, g_strdup(dle->program));
 		g_ptr_array_add(argv_ptr, g_strdup("selfcheck"));
@@ -855,7 +1057,7 @@ check_disk(
 		if (dle->record && bsu->record == 1) {
 		    g_ptr_array_add(argv_ptr, g_strdup("--record"));
 		}
-		
+
 		for (el = dle->estimatelist; el != NULL; el=el->next) {
 		    estimate_t estimate = (estimate_t)GPOINTER_TO_INT(el->data);
 		    if (estimate == ES_CALCSIZE && bsu->calcsize == 1) {
@@ -898,42 +1100,124 @@ check_disk(
 		safe_fd(-1, 0);
 		execve(cmd, args, safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
+		/* if the application support message
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600045, MSG_ERROR, 5,
+			"errno", errno,
+			"cmd", cmd.
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		*/
 		exit(127);
 	    }
 	default: /* parent */
 	    {
 		int   status;
+		FILE *app_stdout;
 		FILE *app_stderr;
 		char *line;
 
+		aclose(app_out[1]);
 		aclose(app_err[1]);
+		app_stdout = fdopen(app_out[0], "r");
 		app_stderr = fdopen(app_err[0], "r");
-		if (!app_stderr) {
-		    g_printf(_("ERROR [Can't fdopen app_stderr: %s]\n"),
-			     strerror(errno));
-		    error(_("Can't fdopen app_stderr: %s"), strerror(errno));
+		if (!app_stdout) {
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600055, MSG_ERROR, 4,
+			"errno", errno,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
+		    exit(1);
 		    /*NOTREACHED*/
 		}
-		while((line = agets(app_stderr)) != NULL) {
+		if (!app_stderr) {
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600046, MSG_ERROR, 4,
+			"errno", errno,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+		    nb_error++;
+		    exit(1);
+		    /*NOTREACHED*/
+		}
+		while((line = agets(app_stdout)) != NULL) {
 		    if (strlen(line) > 0) {
-			fprintf(stdout, "ERROR Application '%s': %s\n",
-				dle->program, line);
-			dbprintf("ERROR %s\n", line);
+g_debug("app_stdout %s", line);
+			if (strncmp(line, "OK ", 3) == 0) {
+			    delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600056, MSG_INFO, 5,
+				"application", dle->program,
+				"ok_line", line+3,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+			} else if (strncmp(line, "ERROR ", 6) == 0) {
+			    delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600057, MSG_ERROR, 5,
+				"application", dle->program,
+				"error_line", line+6,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+			} else {
+			    delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600058, MSG_ERROR, 5,
+				"application", dle->program,
+				"errstr", line,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+			}
 		    }
 		    amfree(line);
 		}
+		while((line = agets(app_stderr)) != NULL) {
+		    if (strlen(line) > 0) {
+			delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600047, MSG_ERROR, 5,
+				"application", dle->program,
+				"errstr", line,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+			nb_error++;
+		    }
+		    amfree(line);
+		}
+		fclose(app_stdout);
 		fclose(app_stderr);
 		if (waitpid(application_api_pid, &status, 0) < 0) {
-		    err = g_strdup_printf(_("waitpid failed: %s"),
-					 strerror(errno));
+		    delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600048, MSG_ERROR, 4,
+				"errno", errno,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		} else if (!WIFEXITED(status)) {
-		    err = g_strdup_printf(_("Application '%s': exited with signal %d"),
-				     dle->program, WTERMSIG(status));
+		    delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600049, MSG_ERROR, 5,
+				"signal", g_strdup_printf("%d", WTERMSIG(status)),
+				"application", dle->program,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		} else if (WEXITSTATUS(status) != 0) {
-		    err = g_strdup_printf(_("Application '%s': exited with status %d"),
-				     dle->program, WEXITSTATUS(status));
+		    delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600050, MSG_ERROR, 5,
+				"exit_status", g_strdup_printf("%d", WEXITSTATUS(status)),
+				"application", dle->program,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+		    nb_error++;
 		    goto common_exit;
 		}
 	    }
@@ -960,8 +1244,14 @@ check_disk(
 	    access_type = "access";
 #endif
 	    if(access_result == -1) {
-		err = g_strdup_printf(_("Could not %s %s (%s): %s"),
-				 access_type, qdevice, qdisk, strerror(errno));
+		delete_message(selfcheck_print_message(build_message(
+				__FILE__, __LINE__, 3600051, MSG_ERROR, 5,
+				"errno", errno,
+				"type", access_type,
+				"hostname", g_options->hostname,
+				"device", dle->device,
+				"disk", dle->disk )));
+		nb_error++;
 	    }
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
 	    aclose(access_result);
@@ -982,22 +1272,28 @@ common_exit:
     }
     amfree(domain);
 
-    if(err) {
-	g_printf(_("ERROR %s\n"), err);
-	dbprintf(_("%s\n"), err);
-	amfree(err);
-    } else {
+    if (nb_error == 0) {
 	if (dle->disk) {
-	    g_printf("OK %s\n", qdisk);
-	    dbprintf(_("disk %s OK\n"), qdisk);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600052, MSG_INFO, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
 	if (dle->device) {
-	    g_printf("OK %s\n", qamdevice);
-	    dbprintf(_("amdevice %s OK\n"), qamdevice);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600053, MSG_INFO, 4,
+			"amdevice", dle->device,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
 	if (device) {
-	    g_printf("OK %s\n", qdevice);
-	    dbprintf(_("device %s OK\n"), qdevice);
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600054, MSG_INFO, 3,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
 	}
     }
     if(extra_info) {
@@ -1024,95 +1320,113 @@ check_overall(void)
     if( need_runtar )
     {
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
-	check_file(cmd,X_OK);
-	check_suid(cmd);
+	delete_message(selfcheck_print_message(check_file_message(cmd,X_OK)));
+	delete_message(selfcheck_print_message(check_suid_message(cmd)));
 	amfree(cmd);
     }
 
     if( need_rundump )
     {
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "rundump", NULL);
-	check_file(cmd,X_OK);
-	check_suid(cmd);
+	delete_message(selfcheck_print_message(check_file_message(cmd,X_OK)));
+	delete_message(selfcheck_print_message(check_suid_message(cmd)));
 	amfree(cmd);
     }
 
     if( need_dump ) {
 #ifdef DUMP
-	check_file(DUMP, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(DUMP, X_OK)));
 #else
-	g_printf(_("ERROR [DUMP program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600072, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if( need_restore ) {
 #ifdef RESTORE
-	check_file(RESTORE, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(RESTORE, X_OK)));
 #else
-	g_printf(_("ERROR [RESTORE program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600073, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if ( need_vdump ) {
 #ifdef VDUMP
-	check_file(VDUMP, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(VDUMP, X_OK)));
 #else
-	g_printf(_("ERROR [VDUMP program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600074, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if ( need_vrestore ) {
 #ifdef VRESTORE
-	check_file(VRESTORE, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(VRESTORE, X_OK)));
 #else
-	g_printf(_("ERROR [VRESTORE program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600075, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if( need_xfsdump ) {
 #ifdef XFSDUMP
-	check_file(XFSDUMP, F_OK);
+	delete_message(selfcheck_print_message(check_file_message(XFSDUMP, F_OK)));
 #else
-	g_printf(_("ERROR [XFSDUMP program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600076, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if( need_xfsrestore ) {
 #ifdef XFSRESTORE
-	check_file(XFSRESTORE, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(XFSRESTORE, X_OK)));
 #else
-	g_printf(_("ERROR [XFSRESTORE program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600077, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if( need_vxdump ) {
 #ifdef VXDUMP
-	check_file(VXDUMP, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(VXDUMP, X_OK)));
 #else
-	g_printf(_("ERROR [VXDUMP program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600078, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if( need_vxrestore ) {
 #ifdef VXRESTORE
-	check_file(VXRESTORE, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(VXRESTORE, X_OK)));
 #else
-	g_printf(_("ERROR [VXRESTORE program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600079, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
     }
 
     if( need_gnutar ) {
 #ifdef GNUTAR
-	check_file(GNUTAR, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(GNUTAR, X_OK)));
 #else
-	g_printf(_("ERROR [GNUTAR program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600080, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
 	gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
 	if (strlen(gnutar_list_dir) == 0)
 	    gnutar_list_dir = NULL;
 	if (gnutar_list_dir) {
 	    /* make sure our listed-incremental dir is ready */
-	    check_dir(gnutar_list_dir, R_OK|W_OK);
+	    delete_message(selfcheck_print_message(check_dir_message(gnutar_list_dir, R_OK|W_OK)));
 	} else {
 	    /* no listed-incremental dir, so check that amandates is ready */
 	    need_amandates = 1;
@@ -1124,7 +1438,7 @@ check_overall(void)
 
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 
-	check_file(cmd, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(cmd, X_OK)));
 
 	amfree(cmd);
 
@@ -1135,50 +1449,63 @@ check_overall(void)
     if (need_amandates) {
 	char *amandates_file;
 	amandates_file = getconf_str(CNF_AMANDATES);
-	check_file(amandates_file, R_OK|W_OK);
+	delete_message(selfcheck_print_message(check_file_message(amandates_file, R_OK|W_OK)));
     }
 
     if( need_samba ) {
 #ifdef SAMBA_CLIENT
-	check_file(SAMBA_CLIENT, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(SAMBA_CLIENT, X_OK)));
 #else
-	g_printf(_("ERROR [SMBCLIENT program not available]\n"));
+	delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600081, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 #endif
 	testfd = open("/etc/amandapass", R_OK);
 	if (testfd >= 0) {
 	    if(fstat(testfd, &buf) == 0) {
 		if ((buf.st_mode & 0x7) != 0) {
-		    g_printf(_("ERROR [/etc/amandapass is world readable!]\n"));
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600082, MSG_ERROR, 1,
+			"hostname", g_options->hostname)));
 		} else {
-		    g_printf(_("OK [/etc/amandapass is readable, but not by all]\n"));
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600083, MSG_INFO, 1,
+			"hostname", g_options->hostname)));
 		}
 	    } else {
-		g_printf(_("OK [unable to stat /etc/amandapass: %s]\n"),
-		       strerror(errno));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600084, MSG_ERROR, 2,
+			"errno", errno,
+			"hostname", g_options->hostname)));
 	    }
 	    aclose(testfd);
 	} else {
-	    g_printf(_("ERROR [unable to open /etc/amandapass: %s]\n"),
-		   strerror(errno));
+	    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600085, MSG_ERROR, 2,
+			"errno", errno,
+			"hostname", g_options->hostname)));
 	}
     }
 
     if (need_compress_path )
-	check_file(COMPRESS_PATH, X_OK);
+	delete_message(selfcheck_print_message(check_file_message(COMPRESS_PATH, X_OK)));
 
     if (need_dump || need_xfsdump ) {
 	if (check_file_exist("/etc/dumpdates")) {
-	    check_file("/etc/dumpdates",
+	    delete_message(selfcheck_print_message(check_file_message("/etc/dumpdates",
 #ifdef USE_RUNDUMP
 		       F_OK
 #else
 		       R_OK|W_OK
 #endif
-		      );
+		      )));
 	} else {
 #ifndef USE_RUNDUMP
 	    if (access("/etc", R_OK|W_OK) == -1) {
-		g_printf(_("ERROR [dump will not be able to create the /etc/dumpdates file: %s]\n"), strerror(errno));
+		delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600086, MSG_ERROR, 2,
+			"errno", errno,
+			"hostname", g_options->hostname)));
 	    }
 #endif
 	}
@@ -1186,12 +1513,12 @@ check_overall(void)
 
     if (need_vdump) {
 	if (check_file_exist("/etc/vdumpdates")) {
-            check_file("/etc/vdumpdates", F_OK);
+            delete_message(selfcheck_print_message(check_file_message("/etc/vdumpdates", F_OK)));
 	}
     }
 
     if (need_global_check) {
-    check_access("/dev/null", R_OK|W_OK);
+    delete_message(selfcheck_print_message(check_access_message("/dev/null", R_OK|W_OK)));
     check_space(AMANDA_TMPDIR, (off_t)64);	/* for amandad i/o */
 
 #ifdef AMANDA_DBGDIR
@@ -1208,12 +1535,14 @@ check_space(
     off_t	kbytes)
 {
     struct fs_usage fsusage;
-    char *quoted = quote_string(dir);
     intmax_t kb_avail;
 
-    if(get_fs_usage(dir, NULL, &fsusage) == -1) {
-	g_printf(_("ERROR [cannot get filesystem usage for %s: %s]\n"), quoted, strerror(errno));
-	amfree(quoted);
+    if (get_fs_usage(dir, NULL, &fsusage) == -1) {
+        delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600068, MSG_ERROR, 3,
+		"errno", errno,
+		"dirname", dir,
+		"hostname", g_options->hostname)));
 	return;
     }
 
@@ -1221,17 +1550,25 @@ check_space(
     kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
 
     if (fsusage.fsu_bavail_top_bit_set || fsusage.fsu_bavail == 0) {
-	g_printf(_("ERROR [dir %s needs %lldKB, has nothing available.]\n"), quoted,
-		(long long)kbytes);
+        delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600069, MSG_ERROR, 3,
+		"required", g_strdup_printf("%jd", (intmax_t)kbytes),
+		"dirname", dir,
+		"hostname", g_options->hostname)));
     } else if (kb_avail < kbytes) {
-	g_printf(_("ERROR [dir %s needs %lldKB, only has %lldKB available.]\n"), quoted,
-		(long long)kbytes,
-		(long long)kb_avail);
+        delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600070, MSG_ERROR, 4,
+		"required", g_strdup_printf("%jd", (intmax_t)kbytes),
+		"avail", g_strdup_printf("%jd", kb_avail),
+		"dirname", dir,
+		"hostname", g_options->hostname)));
     } else {
-	g_printf(_("OK %s has more than %lldKB available.\n"),
-		quoted, (long long)kbytes);
+        delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600071, MSG_INFO, 3,
+		"avail", g_strdup_printf("%jd", kb_avail),
+		"dirname", dir,
+		"hostname", g_options->hostname)));
     }
-    amfree(quoted);
 }
 
 static int
@@ -1388,8 +1725,14 @@ print_platform_out:
     if (platform[strlen(platform) -1] == '\n') {
 	platform[strlen(platform) -1] = '\0';
     }
-    g_fprintf(stdout, "OK distro %s\n", distro);
-    g_fprintf(stdout, "OK platform %s\n", platform);
+    delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600001, MSG_INFO, 2,
+		"distro", distro,
+		"hostname", g_options->hostname)));
+    delete_message(selfcheck_print_message(build_message(
+		__FILE__, __LINE__, 3600002, MSG_INFO, 2,
+		"platform", platform,
+		"hostname", g_options->hostname)));
 
     amfree(distro);
     amfree(platform);

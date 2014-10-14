@@ -39,6 +39,7 @@
 #include "amutil.h"		/* for bstrncmp() */
 #include "amandad.h"		/* for g_option_t */
 #include "amxml.h"		/* for dle_t	  */
+#include "ammessage.h"		/* message_t      */
 
 typedef enum {
     RECOVER_PATH_CWD    = 0,
@@ -145,6 +146,10 @@ void run_calcsize(char *config, char *program, char *disk,
                   char *dirname, GSList *levels,
                   char *file_exclude, char *file_include);
 
+message_t *check_access_message(char *filename, int mode);
+message_t *check_file_message(char *filename, int mode);
+message_t *check_dir_message(char *dirname, int mode);
+message_t *check_suid_message(char *filename);
 gboolean check_access(char *filename, int mode);
 gboolean check_file(char *filename, int mode);
 gboolean check_dir(char *dirname, int mode);

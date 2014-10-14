@@ -35,6 +35,10 @@ void
 delete_message(
     message_t *message);
 
+void
+delete_message_gpointer(
+    gpointer data);
+
 message_t *
 build_message(
     char *file,
@@ -49,8 +53,31 @@ get_message(
     message_t *message);
 
 char *
-get_hint(
+get_quoted_message(
     message_t *message);
+
+char *
+message_get_hint(
+    message_t *message);
+
+int
+message_get_code(
+    message_t *message);
+
+int
+message_get_severity(
+    message_t *message);
+
+char *
+message_get_argument(
+    message_t *message,
+    char *key);
+
+void
+message_add_argument(
+    message_t *message,
+    char *key,
+    char *value);
 
 char *
 sprint_message(
@@ -69,4 +96,6 @@ message_t *
 fdprint_message(
     int        fd,
     message_t *message);
+
+GPtrArray *parse_json_message(char *s);
 

@@ -93,6 +93,7 @@ not handled by Amanda::Message):
  3300000  Amanda::Fetchdump::Message
  3400000  Amanda::Cleanup::Message
  3500000  Amanda::Process::Message
+ 3600000  selfcheck
 
 general keys:
   code            =>

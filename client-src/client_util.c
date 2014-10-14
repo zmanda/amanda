@@ -40,6 +40,7 @@
 #include "amxml.h"
 #include "glob.h"
 #include "clock.h"
+#include "ammessage.h"
 #include "amandates.h"
 
 #define MAXMAXDUMPS 16
@@ -1651,8 +1652,8 @@ check_access(
 
 gboolean
 check_file(
-    char *	filename,
-    int		mode)
+    char *      filename,
+    int         mode)
 {
     struct stat stat_buf;
     char *quoted;
@@ -1678,8 +1679,8 @@ check_file(
 
 gboolean
 check_dir(
-    char *	dirname,
-    int		mode)
+    char *      dirname,
+    int         mode)
 {
     struct stat stat_buf;
     char *quoted;
@@ -1738,6 +1739,125 @@ check_suid(
     (void)filename;	/* Quiet unused parameter warning */
 #endif
     return TRUE;
+}
+
+message_t *
+check_access_message(
+    char *	filename,
+    int		mode)
+{
+    char *noun, *adjective;
+
+    if(mode == F_OK)
+        noun = "find", adjective = "exists";
+    else if((mode & X_OK) == X_OK)
+	noun = "execute", adjective = "executable";
+    else if((mode & (W_OK|R_OK)) == (W_OK|R_OK))
+	noun = "read/write", adjective = "read/writable";
+    else
+	noun = "access", adjective = "accessible";
+
+    if(EUIDACCESS(filename, mode) == -1) {
+	return build_message(
+		__FILE__, __LINE__, 3600063, MSG_ERROR, 5,
+		"errno", errno,
+		"noun", noun,
+		"filename", filename,
+		"ruid", g_strdup_printf("%d", getuid()),
+		"euid", g_strdup_printf("%d", geteuid()));
+    } else {
+	return build_message(
+		__FILE__, __LINE__, 3600064, MSG_INFO, 5,
+		"noun", noun,
+		"adjective", adjective,
+		"filename", filename,
+		"ruid", g_strdup_printf("%d", getuid()),
+		"euid", g_strdup_printf("%d", geteuid()));
+    }
+}
+
+message_t *
+check_file_message(
+    char *	filename,
+    int		mode)
+{
+    struct stat stat_buf;
+
+    if(!stat(filename, &stat_buf)) {
+	if(!S_ISREG(stat_buf.st_mode)) {
+	    return build_message(
+		__FILE__, __LINE__, 3600059, MSG_ERROR, 1,
+		"filename", filename);
+	}
+    } else {
+	return build_message(
+		__FILE__, __LINE__, 3600060, MSG_ERROR, 2,
+		"errno", errno,
+		"filename", filename);
+    }
+
+    return check_access_message(filename, mode);
+}
+
+message_t *
+check_dir_message(
+    char *	dirname,
+    int		mode)
+{
+    struct stat stat_buf;
+    char *dir;
+    message_t *result;
+
+    if(!stat(dirname, &stat_buf)) {
+	if(!S_ISDIR(stat_buf.st_mode)) {
+	    return build_message(
+		__FILE__, __LINE__, 3600061, MSG_ERROR, 1,
+		"dirname", dirname);
+	    return FALSE;
+	}
+    } else {
+	return build_message(
+		__FILE__, __LINE__, 3600062, MSG_ERROR, 2,
+		"errno", errno,
+		"dirname", dirname);
+	return FALSE;
+    }
+
+    dir = g_strconcat(dirname, "/.", NULL);
+    result = check_access_message(dir, mode);
+    amfree(dir);
+    return result;
+}
+
+message_t *
+check_suid_message(
+    char *	filename)
+{
+#ifndef SINGLE_USERID
+    struct stat stat_buf;
+
+    if(!stat(filename, &stat_buf)) {
+	if(stat_buf.st_uid != 0 ) {
+	    return build_message(
+		__FILE__, __LINE__, 3600065, MSG_ERROR, 1,
+		"filename", filename);
+	}
+	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
+	    return build_message(
+		__FILE__, __LINE__, 3600066, MSG_ERROR, 1,
+		"filename", filename);
+	}
+    }
+    else {
+	return build_message(
+		__FILE__, __LINE__, 3600067, MSG_ERROR, 2,
+		"errno", errno,
+		"filename", filename);
+    }
+#else
+    (void)filename;	/* Quiet unused parameter warning */
+#endif
+    return NULL;
 }
 
 /*

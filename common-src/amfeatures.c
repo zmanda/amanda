@@ -179,6 +179,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_sendbackup_retry_delay);
 	am_add_feature(f, fe_sendbackup_retry_level);
 	am_add_feature(f, fe_sendbackup_retry_message);
+	am_add_feature(f, fe_selfcheck_message);
     }
     return f;
 }

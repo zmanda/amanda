@@ -40,6 +40,7 @@
 
 static struct option long_options[] = {
     {"version"         , 0, NULL,  1},
+    {"features"        , 1, NULL,  2},
     {NULL, 0, NULL, 0}
 };
 
@@ -128,6 +129,11 @@ main(
 	switch(opt) {
 	case 1:		printf("amservice-%s\n", VERSION);
 			return(0);
+			break;
+	case 2:		g_free(our_feature_string);
+			g_free(our_features);
+			our_feature_string = g_strdup(optarg);
+			our_features = am_string_to_feature(our_feature_string);
 			break;
 	case 'o':	add_config_override_opt(cfg_ovr, optarg);
 			break;
