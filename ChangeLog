@@ -1,4 +1,7 @@
 2014-10-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c (rfc3339_date): Use full_write and fill_read.
+
+2014-10-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.c: Add fe_selfcheck_message.
 	* common-src/amfeatures.h: Add fe_selfcheck_message.
 	* client-src/client_util.c (check_access_message, check_file_message,

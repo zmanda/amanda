@@ -677,12 +677,12 @@ rfc3339_date(
 		    tzset();
 		    a = mktime(&tm);
 		    g_snprintf(buf, 100, "%d", (int)a);
-		    size = write(fd[1], buf, strlen(buf));
+		    full_write(fd[1], buf, strlen(buf));
 		    close(fd[1]);
 		    exit(0);
 		default:
 		    close(fd[1]);
-		    size = read(fd[0], buf, 100);
+		    size = full_read(fd[0], buf, 100);
 		    if (size < 0) size = 0;
 		    close(fd[0]);
 		    buf[size] = '\0';
