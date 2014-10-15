@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef AMMESSAGE_H
+#define AMMESSAGE_H
+
 typedef struct message_s message_t;
 #define MSG_CRITICAL	32
 #define MSG_ERROR	16
@@ -99,3 +102,4 @@ fdprint_message(
 
 GPtrArray *parse_json_message(char *s);
 
+#endif /* AMMESSAGE_H */

@@ -1,4 +1,7 @@
 2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.h: #ifndef AMMESSAGE_H
+
+2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Do not use g_ptr_array_new_full.
 	* server-src/amcheck.c: g_ptr_array_free(message_array, TRUE);
 
