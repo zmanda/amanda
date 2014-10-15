@@ -211,6 +211,7 @@ sub clerk_notif_part {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700003,
+		                severity         => $Amanda::Message::INFO,
 				label           => $label,
 				filenum         => "$filenum"+0));
 }
@@ -223,6 +224,7 @@ sub clerk_notif_holding {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700004,
+		                severity         => $Amanda::Message::INFO,
 				filename        => $filename));
 }
 
@@ -280,7 +282,8 @@ sub find_validation_command {
 		    user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2700015));
+				code            => 2700015,
+		                severity         => $Amanda::Message::ERROR));
 		    debug("XML Error: $@\n$dle_str");
 		}
 		if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
@@ -397,7 +400,8 @@ sub run {
 	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2700000));
+				code            => 2700000,
+		                severity         => $Amanda::Message::ERROR));
 	    return $steps->{'quit'}->();
 	}
 
@@ -406,6 +410,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700001,
+				severity	=> $Amanda::Message::INFO,
 				labels          => \@tapes));
 	}
 	if (@holding) {

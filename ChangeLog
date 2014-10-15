@@ -1,4 +1,7 @@
 2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/CheckDump.pm: Set severity on Message.
+
+2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Use g_strdup.
 
 2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
