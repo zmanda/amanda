@@ -88,28 +88,6 @@ static struct option long_options[] = {
     {NULL, 0, NULL, 0}
 };
 
-char *encode_json(char *str);
-
-static char encoded_json[4096];
-char *
-encode_json(
-    char *str)
-{
-    int i = 0;
-    char *s = str;
-    char *e = encoded_json;
-    while(*s != '\0') {
-	if (i++ >= 4094) {
-	    error("encode_json: str is too long: %s", str);
-	}
-	if (*s == '\\' || *s == '"')
-	    *e++ = '\\';
-	*e++ = *s++;
-    }
-    *e = '\0';
-    return encoded_json;
-}
-
 static message_t *
 amcheck_fprint_message(
     FILE      *file,
@@ -2403,9 +2381,9 @@ start_client_checks(
     return 0;
 }
 
-static void print_array_message(gpointer data, gpointer user_data);
+static void amcheck_print_array_message(gpointer data, gpointer user_data);
 static void
-print_array_message(
+amcheck_print_array_message(
     gpointer data,
     gpointer user_data)
 {
@@ -2416,11 +2394,9 @@ print_array_message(
     if ((severity == MSG_SUCCESS ||
 	 severity == MSG_INFO) &&
 	client_verbose) {
-	//if (!opt_message) fprintf(stream, "HOST %s: OK ", message_get_argument(message, "hostname"));
 	amcheck_fprint_message(stream, message);
     } else if (severity > MSG_INFO) {
 	remote_errors++;
-	//if (!opt_message) fprintf(stream, "HOST %s: ERROR ", message_get_argument(message, "hostname"));
 	amcheck_fprint_message(stream, message);
     }
 
@@ -2509,8 +2485,9 @@ handle_result(
 	    printed_hostname = TRUE;
 	}
 
-	if (strncmp_const(line, "MESSAGE") == 0) {
-	    message_buffer = g_strdup(line+8);
+	if (strncmp_const(line, "MESSAGE JSON") == 0) {
+	    // line+13 is the complete buffer
+	    message_buffer = g_strdup(line+13);
 	    break;
 	}
 
@@ -2562,7 +2539,7 @@ handle_result(
 	g_ptr_array_foreach(message_array, add_hostname_message, hostp->hostname);
 
 	/* print and delete the messages */
-	g_ptr_array_foreach(message_array, print_array_message, client_outf);
+	g_ptr_array_foreach(message_array, amcheck_print_array_message, client_outf);
 
 	g_free(message_buffer);
 	g_ptr_array_free(message_array, TRUE);

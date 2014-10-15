@@ -29,6 +29,9 @@ use File::Path;
 use Installcheck::Application;
 use IO::File;
 
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
+
 unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
     SKIP: {
         skip("GNU tar is not available", Test::More->builder->expected_tests);
@@ -120,7 +123,7 @@ $app->add_property('gnutar-listdir', $list_dir);
 # GNU tar on Solaris doesn't support this, so avoid it
 $app->add_property('atime-preserve', 'no');
 
-my $selfcheck = $app->selfcheck('device' => $back_dir, 'level' => 0, 'index' => 'line');
+my $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
 ok(!@{$selfcheck->{'errors'}}, "no errors during selfcheck");
 

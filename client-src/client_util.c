@@ -958,6 +958,9 @@ backup_support_option(
 	} else if (g_str_has_prefix(line, "MESSAGE-LINE ")) {
 	    if (g_str_equal(line + 13, "YES"))
 		bsu->message_line = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-JSON ")) {
+	    if (g_str_equal(line + 13, "YES"))
+		bsu->message_json = 1;
 	} else if (g_str_has_prefix(line, "MESSAGE-XML ")) {
 	    if (g_str_equal(line + 12, "YES"))
 		bsu->message_xml = 1;

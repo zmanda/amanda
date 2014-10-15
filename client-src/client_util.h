@@ -54,6 +54,7 @@ typedef struct backup_support_option_s {
     int index_line;
     int index_xml;
     int message_line;
+    int message_json;
     int message_xml;
     int record;
     int include_file;

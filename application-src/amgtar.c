@@ -298,6 +298,11 @@ main(
     char *command;
     application_argument_t argument;
     int i;
+    char *gnutar_onefilesystem_value = NULL;
+    char *gnutar_sparse_value = NULL;
+    char *gnutar_atimepreserve_value = NULL;
+    char *gnutar_checkdevice_value = NULL;
+    char *gnutar_no_unquote_value = NULL;
 
 #ifdef GNUTAR
     gnutar_path = g_strdup(GNUTAR);
@@ -368,6 +373,9 @@ main(
     /* parse argument */
     command = argv[1];
 
+    if (strcasecmp(command,"selfcheck") == 0) {
+	fprintf(stdout, "MESSAGE JSON\n");
+    }
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -385,7 +393,7 @@ main(
 
     while (1) {
 	int option_index = 0;
-    	c = getopt_long (argc, argv, "", long_options, &option_index);
+	c = getopt_long (argc, argv, "", long_options, &option_index);
 	if (c == -1) {
 	    break;
 	}
@@ -423,29 +431,37 @@ main(
 		     gnutar_onefilesystem = 0;
 		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_onefilesystem = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
+		 else if (strcasecmp(command, "selfcheck") == 0) {
+		     gnutar_onefilesystem = 2;
+		     gnutar_onefilesystem_value = g_strdup(optarg);
+		 }
 		 break;
 	case 13: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_sparse = 0;
 		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_sparse = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
+		 else if (strcasecmp(command, "selfcheck") == 0) {
+		     gnutar_sparse = 2;
+		     gnutar_sparse_value = g_strdup(optarg);
+		 }
 		 break;
 	case 14: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_atimepreserve = 0;
 		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_atimepreserve = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ATIME-PRESERVE property value (%s)]\n"), get_pname(), optarg);
+		 else if (strcasecmp(command, "selfcheck") == 0) {
+		     gnutar_atimepreserve = 2;
+		     gnutar_atimepreserve_value = g_strdup(optarg);
+		 }
 		 break;
 	case 15: if (strcasecmp(optarg, "NO") == 0)
 		     gnutar_checkdevice = 0;
 		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_checkdevice = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n"), get_pname(), optarg);
+		 else if (strcasecmp(command, "selfcheck") == 0) {
+		     gnutar_checkdevice = 2;
+		     gnutar_checkdevice_value = g_strdup(optarg);
+		 }
 		 break;
 	case 16: argument.dle.include_file =
 			 append_sl(argument.dle.include_file, optarg);
@@ -487,8 +503,10 @@ main(
 		     gnutar_no_unquote = 0;
 		 else if (strcasecmp(optarg, "YES") == 0)
 		     gnutar_no_unquote = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad No_UNQUOTE property value (%s)]\n"), get_pname(), optarg);
+		 else if (strcasecmp(command, "selfcheck") == 0) {
+		     gnutar_no_unquote = 2;
+		     gnutar_no_unquote_value = g_strdup(optarg);
+		 }
 		 break;
         case 30: if (strcasecmp(optarg, "YES") == 0)
                    gnutar_acls = 1;
@@ -525,6 +543,51 @@ main(
 	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
 	argument.dle.device = g_strdup(argument.dle.disk);
+
+    if (gnutar_onefilesystem == 2) {
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700007, MSG_ERROR, 4,
+			"value", gnutar_onefilesystem_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+    }
+
+    if (gnutar_sparse == 2) {
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700008, MSG_ERROR, 4,
+			"value", gnutar_sparse_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+    }
+
+    if (gnutar_atimepreserve == 2) {
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700009, MSG_ERROR, 4,
+			"value", gnutar_atimepreserve_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+    }
+
+    if (gnutar_checkdevice == 2) {
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700010, MSG_ERROR, 4,
+			"value", gnutar_checkdevice_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+    }
+
+    if (gnutar_no_unquote == 2) {
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700011, MSG_ERROR, 4,
+			"value", gnutar_no_unquote_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+    }
 
     argument.argc = argc - optind;
     argument.argv = argv + optind;
@@ -648,6 +711,7 @@ amgtar_support(
     fprintf(stdout, "INDEX-LINE YES\n");
     fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");
+    fprintf(stdout, "MESSAGE-JSON YES\n");
     fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
@@ -669,17 +733,29 @@ amgtar_selfcheck(
     application_argument_t *argument)
 {
     if (argument->dle.disk) {
-	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK disk %s\n", qdisk);
-	amfree(qdisk);
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700000, MSG_INFO, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
-    printf("OK amgtar version %s\n", VERSION);
+    delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700001, MSG_INFO, 4,
+			"version", VERSION,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
-    printf("OK amgtar\n");
+    delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700004, MSG_INFO, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     if (gnutar_path) {
-	if (check_file(gnutar_path, X_OK)) {
+	message_t *message = check_file_message(gnutar_path, X_OK);
+	if (message && message_get_severity(message) <= MSG_INFO) {
 	    char *gtar_version;
 	    GPtrArray *argv_ptr = g_ptr_array_new();
 
@@ -691,36 +767,54 @@ amgtar_selfcheck(
 	    if (gtar_version) {
 		char *gv;
 		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
-		printf("OK amgtar gtar-version %s\n", gv);
+		delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700002, MSG_INFO, 4,
+			"gtar-version", gv,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 	    } else {
-		printf(_("ERROR [Can't get %s version]\n"), gnutar_path);
+		delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700003, MSG_ERROR, 4,
+			"gtar-path", gnutar_path,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 	    }
 
 	    g_ptr_array_free(argv_ptr, TRUE);
 	    amfree(gtar_version);
 	}
     } else {
-	printf(_("ERROR [GNUTAR program not available]\n"));
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700005, MSG_ERROR, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
     if (gnutar_listdir && strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
     if (gnutar_listdir) {
-	check_dir(gnutar_listdir, R_OK|W_OK);
+	delete_message(print_message(check_dir_message(gnutar_listdir, R_OK|W_OK)));
     } else {
-	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
+	delete_message(print_message(build_message(
+			__FILE__, __LINE__, 3700006, MSG_ERROR, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
     set_root_privs(1);
     if (gnutar_directory) {
-	check_dir(gnutar_directory, R_OK);
+	delete_message(print_message(check_dir_message(gnutar_directory, R_OK)));
     } else if (argument->dle.device) {
-	check_dir(argument->dle.device, R_OK);
+	delete_message(print_message(check_dir_message(argument->dle.device, R_OK)));
     }
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	check_file(calcsize, X_OK);
-	check_suid(calcsize);
+	delete_message(print_message(check_file_message(calcsize, X_OK)));
+	delete_message(print_message(check_suid_message(calcsize)));
 	amfree(calcsize);
     }
     set_root_privs(0);

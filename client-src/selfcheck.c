@@ -185,7 +185,7 @@ main(
 	    }
 
 	    if (am_has_feature(g_options->features, fe_selfcheck_message))
-		printf("MESSAGE\n");
+		printf("MESSAGE JSON\n");
 	    delete_message(selfcheck_print_message(build_message(
 		__FILE__, __LINE__, 3600000, MSG_INFO, 2,
 		"version", VERSION,
@@ -594,6 +594,17 @@ check_options(
 	    }
 	}
     }
+}
+
+static void selfcheck_print_array_message(gpointer data, gpointer user_data);
+static void
+selfcheck_print_array_message(
+    gpointer data,
+    gpointer user_data G_GNUC_UNUSED)
+{
+    message_t *message = data;
+
+    delete_message(selfcheck_print_message(message));
 }
 
 static void
@@ -1030,7 +1041,10 @@ check_disk(
 
 		g_ptr_array_add(argv_ptr, g_strdup(dle->program));
 		g_ptr_array_add(argv_ptr, g_strdup("selfcheck"));
-		if (bsu->message_line == 1) {
+		if (bsu->message_json == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--message"));
+		    g_ptr_array_add(argv_ptr, g_strdup("json"));
+		} else if (bsu->message_line == 1) {
 		    g_ptr_array_add(argv_ptr, g_strdup("--message"));
 		    g_ptr_array_add(argv_ptr, g_strdup("line"));
 		}
@@ -1117,6 +1131,7 @@ check_disk(
 		FILE *app_stdout;
 		FILE *app_stderr;
 		char *line;
+		GString *json_message = NULL;
 
 		aclose(app_out[1]);
 		aclose(app_err[1]);
@@ -1146,8 +1161,15 @@ check_disk(
 		}
 		while((line = agets(app_stdout)) != NULL) {
 		    if (strlen(line) > 0) {
-g_debug("app_stdout %s", line);
-			if (strncmp(line, "OK ", 3) == 0) {
+			if (strncmp(line, "MESSAGE JSON", 12) == 0) {
+			    g_free(line);
+			    json_message = g_string_sized_new(1024);
+			    while((line = agets(app_stdout)) != NULL) {
+				g_string_append(json_message, line);
+				g_free(line);
+			    }
+			    break;
+			} else if (strncmp(line, "OK ", 3) == 0) {
 			    delete_message(selfcheck_print_message(build_message(
 				__FILE__, __LINE__, 3600056, MSG_INFO, 5,
 				"application", dle->program,
@@ -1190,6 +1212,18 @@ g_debug("app_stdout %s", line);
 		}
 		fclose(app_stdout);
 		fclose(app_stderr);
+		if (json_message) {
+		    /* parse json_message into a message_t array */
+		    GPtrArray *message_array = parse_json_message(json_message->str);
+		    g_debug("json_message: %s", json_message->str);
+
+		    /* print and delete the messages */
+		    g_ptr_array_foreach(message_array, selfcheck_print_array_message, NULL);
+
+		    g_ptr_array_free(message_array, TRUE);
+		    g_string_free(json_message, TRUE);
+		}
+
 		if (waitpid(application_api_pid, &status, 0) < 0) {
 		    delete_message(selfcheck_print_message(build_message(
 				__FILE__, __LINE__, 3600048, MSG_ERROR, 4,

@@ -27,6 +27,7 @@ use Fcntl;
 use IO::Handle;
 use POSIX qw( :errno_h :fcntl_h );
 use POSIX qw( EAGAIN );
+use JSON;
 
 use strict;
 use warnings;
@@ -644,6 +645,45 @@ sub selfcheck {
     }
 
     {'oks' => \@oks, 'errors' => \@errors, 'exit_status' => $exit_status};
+}
+
+sub selfcheck_message {
+    my $self = shift @_;
+    my %nargs = @_;
+
+    foreach my $k ( qw(device) ) {
+        confess "$k required" unless defined($nargs{$k});
+    }
+    $nargs{'disk'} ||=  $nargs{'device'};
+
+    my @args = map {my $k = $_; ("--$k", $nargs{$k}) } keys(%nargs);
+
+    my $msg_str;
+    push @args, '--message', 'json';
+    my $exit_status = _exec($self, 'selfcheck', \@args,
+        {
+            1 => {'child_mode' => 'w', 'save_to' => \$msg_str},
+        }
+    );
+
+    my $json = JSON->new->allow_nonref;
+    my (@oks, @errors, $messages);
+    if ($msg_str =~ /^MESSAGE JSON/) {
+	$msg_str = substr $msg_str, 13;
+	$msg_str = '[ ' . $msg_str . ' ]';
+	$messages = $json->decode($msg_str);
+	foreach my $message (@{$messages}) {
+	    if ($message->{'severity'} eq "success" ||
+		$message->{'severity'} eq "info") {
+		push @oks, $message;
+	    } else {
+		push @errors, $message;
+	    }
+	}
+    } else {
+	confess "invalid message: $msg_str, expecting 'MESSAGE JSON'";
+    }
+    { 'oks' => \@oks, 'errors' => \@errors, 'messages' => $messages, 'exit_status' => $exit_status};
 }
 
 # XXX: print?

@@ -508,7 +508,7 @@ ammessage_encode_json(
     char *e = encoded;
     while(*s != '\0') {
 	if (i++ >= len) {
-	    error("encode_json: str is too long: %s", str);
+	    error("ammessage_encode_json: str is too long: %s", str);
 	}
 	if (*s == '\\' || *s == '"')
 	    *e++ = '\\';
@@ -1301,13 +1301,13 @@ set_message(
     } else if (message->code == 3600062) {
 	msg = "can not stat '%{dirname}': %{errnostr}";
     } else if (message->code == 3600063) {
-	msg = "can not %{noun} '%{ilename}': %{errnostr} (ruid:%{ruid} euid:%{euid}";
+	msg = "can not %{noun} '%{ilename}': %{errnostr} (ruid:%{ruid} euid:%{euid})";
     } else if (message->code == 3600064) {
-	msg = "'%{filename} %{adjective} (ruid:%{ruid} euid:%{euid}";
+	msg = "%{filename} %{adjective} (ruid:%{ruid} euid:%{euid})";
     } else if (message->code == 3600065) {
-	msg = "'%{filename} is not owned by root";
+	msg = "%{filename} is not owned by root";
     } else if (message->code == 3600066) {
-	msg = "'%{filename} is not SUID root";
+	msg = "%{filename} is not SUID root";
     } else if (message->code == 3600067) {
 	msg = "can not stat '%{filename}': %{errnostr}";
     } else if (message->code == 3600068) {
@@ -1348,6 +1348,46 @@ set_message(
 	msg = "unable to open /etc/amandapass: %{errnostr}";
     } else if (message->code == 3600086) {
 	msg = "dump will not be able to create the /etc/dumpdates file: %{errnostr}";
+    } else if (message->code == 3700000) {
+	msg = "%{disk}";
+    } else if (message->code == 3700001) {
+	msg = "amgtar version %{version}";
+    } else if (message->code == 3700002) {
+	msg = "amgtar gtar-version %{gtar-version}";
+    } else if (message->code == 3700003) {
+	msg = "Can't get %{gtar-path} version";
+    } else if (message->code == 3700004) {
+	msg = "amgtar";
+    } else if (message->code == 3700005) {
+	msg = "GNUTAR program not available";
+    } else if (message->code == 3700006) {
+	msg = "No GNUTAR-LISTDIR";
+    } else if (message->code == 3700007) {
+	msg = "bad ONE-FILE-SYSTEM property value '%{value}'";
+    } else if (message->code == 3700008) {
+	msg = "bad SPARSE property value '%{value}'";
+    } else if (message->code == 3700009) {
+	msg = "bad ATIME-PRESERVE property value '%{value}'";
+    } else if (message->code == 3700010) {
+	msg = "bad CHECK-DEVICE property value '%{value}'";
+    } else if (message->code == 3700011) {
+	msg = "bad NO-UNQUOTE property value '%{value}'";
+    } else if (message->code == 3700012) {
+	msg = "";
+    } else if (message->code == 3700013) {
+	msg = "";
+    } else if (message->code == 3700014) {
+	msg = "";
+    } else if (message->code == 3700015) {
+	msg = "";
+    } else if (message->code == 3700016) {
+	msg = "";
+    } else if (message->code == 3700017) {
+	msg = "";
+    } else if (message->code == 3700018) {
+	msg = "";
+    } else if (message->code == 3700019) {
+	msg = "";
     } else {
 	msg = "no message for code '%{code}'";
     }

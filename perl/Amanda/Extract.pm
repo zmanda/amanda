@@ -79,6 +79,7 @@ sub BSU {
 	    $name eq 'index-line' ||
 	    $name eq 'index-xml' ||
 	    $name eq 'message-line' ||
+	    $name eq 'message-json' ||
 	    $name eq 'message-xml' ||
 	    $name eq 'record' ||
 	    $name eq 'include-file' ||
