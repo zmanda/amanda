@@ -131,22 +131,19 @@ amcheck_fprint_message(
 	    }
 	} else {
 	    if (severity == MSG_SUCCESS) {
-		prefix = g_strdup_printf("NOTE: ");
+		prefix = g_strdup("NOTE: ");
 	    } else if (severity == MSG_INFO) {
-		prefix = g_strdup_printf("NOTE: ");
+		prefix = g_strdup("NOTE: ");
 	    } else if (severity == MSG_MESSAGE) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-zero-length"
-		prefix = g_strdup_printf("");
-#pragma GCC diagnostic pop
+		prefix = g_strdup("");
 	    } else if (severity == MSG_WARNING) {
-		prefix = g_strdup_printf("WARNING: ");
+		prefix = g_strdup("WARNING: ");
 	    } else if (severity == MSG_ERROR) {
-		prefix = g_strdup_printf("ERROR: ");
+		prefix = g_strdup("ERROR: ");
 	    } else if (severity == MSG_CRITICAL) {
-		prefix = g_strdup_printf("CRITICAL: ");
+		prefix = g_strdup("CRITICAL: ");
 	    } else {
-		prefix = g_strdup_printf("BAD: ");
+		prefix = g_strdup("BAD: ");
 	    }
 	}
 	g_fprintf(file, "%s%s\n", prefix, get_message(message));

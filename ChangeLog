@@ -1,4 +1,7 @@
 2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Use g_strdup.
+
+2014-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Output message for selfcheck
 	* client-src/client_util.c (backup_support_option): Parse
 	  "MESSAGE-JSON".
