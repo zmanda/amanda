@@ -2565,6 +2565,7 @@ handle_result(
 	g_ptr_array_foreach(message_array, print_array_message, client_outf);
 
 	g_free(message_buffer);
+	g_ptr_array_free(message_array, TRUE);
     }
 
     if(hostp->up == HOST_READY && hostp->features == NULL) {

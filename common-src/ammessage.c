@@ -1714,7 +1714,7 @@ parse_json_message(
 {
     int i;
     int len = strlen(s);
-    GPtrArray *message_array = g_ptr_array_new_full(100, &delete_message_gpointer);
+    GPtrArray *message_array = g_ptr_array_sized_new(100);
     char *token;
     message_t *message = NULL;
     gboolean expect_key = TRUE;
