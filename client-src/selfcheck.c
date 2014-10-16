@@ -623,7 +623,6 @@ check_disk(
     char *qdisk = NULL;
     char *qamdevice = NULL;
     char *qdevice = NULL;
-    char *err = NULL;
     int nb_error = 0;
 
     if (dle->disk) {
@@ -660,6 +659,7 @@ check_disk(
 		FILE *ferr;
 		char *pw_fd_env;
 		int errdos;
+		char *err = NULL;
 
 		parsesharename(dle->device, &share, &subdir);
 		if (!share) {
@@ -805,17 +805,21 @@ check_disk(
 		    }
 		}
 		if (errdos != 0 || rc != 0) {
-		    char *tmpbuf;
+		    char *errmsg;
 		    if (extra_info) {
-                        tmpbuf = g_strdup_printf( _("samba access error: %s: %s %s"),
-                            dle->device, extra_info, err);
-			amfree(extra_info);
+			errmsg = g_strdup_printf("%s %s", extra_info, err);
 		    } else {
-			tmpbuf = g_strdup_printf(_("samba access error: %s: %s"),
-                            dle->device, err);
+			errmsg = g_strdup(err);
 		    }
+		    delete_message(selfcheck_print_message(build_message(
+			__FILE__, __LINE__, 3600087, MSG_ERROR, 4,
+			"errmsg", errmsg,
+			"hostname", g_options->hostname,
+			"device", dle->device,
+			"disk", dle->disk )));
+
+		    g_free(errmsg);
 		    g_free(err);
-		    err = tmpbuf;
 		}
 #else
 		delete_message(selfcheck_print_message(build_message(
