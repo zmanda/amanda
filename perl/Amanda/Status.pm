@@ -134,11 +134,13 @@ Amanda::Status -- Get the status of a running job.
 		  {'real_stat'}      =>
 		  {'estimated_size'} =>
 		  {'estimated_stat'} =>
+		  {'write_size'}     =>
 		  {'name'}           => To print to user
  stat->{'taped'}->{'storage'}->{$storage}->{'real_size'}      =>
 					   {'real_stat'}      =>
 					   {'estimated_size'} =>
 					   {'estimated_stat'} =>
+					   {'write_size'}     =>
 					   {'nb'}             =>
 
 
@@ -909,7 +911,7 @@ sub parse {
 			$self->{'busy_time'}->{$taper} += ($self->{'current_time'} - $dlet->{'taper_time'});
 			$dlet->{'taper_time'} = $self->{'current_time'};
 			$dlet->{'size'} = $size;
-			if (!defined $dle->{'size'}) {
+			if (!defined $dle->{'size'} or $dle->{'size'} == 0) {
 			    $dle->{'size'} = $size;
 			}
 			my $ntape = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
@@ -1232,6 +1234,7 @@ sub set_summary {
 		    $self->{'stat'}->{'dumping_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping to tape";
 		    $self->_set_taper_size($dle);
+		    $self->{'stat'}->{'dumping_to_tape'}->{'write_size'} += $dle->{'wsize'};
 		} elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;
@@ -1240,6 +1243,7 @@ sub set_summary {
 		    $self->{'stat'}->{'dumping_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'message'} = "dumping to tape";
 		    $self->_set_taper_size($dle);
+		    $self->{'stat'}->{'dumping_to_tape'}->{'write_size'} += $dle->{'wsize'};
 		} elsif ($dle->{'status'} == $DUMP_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;
@@ -1330,37 +1334,44 @@ sub set_summary {
 			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
 			    $dlet->{'message'} = "flushing";
 			    $self->_set_taper_size($dle, $dlet);
+			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dlet->{'wsize'};
 			} elsif ($dlet->{'status'} == $WRITING) {
 			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
-			    if (!$dle->{'writing_to_tape'}) {
-				$self->{'stat'}->{'writing_to_tape'}->{'estimated_size'} += $dle->{'esize'};
-				$dle->{'writing_to_tape'} = 1;
-			    }
 			    $dlet->{'message'} = "writing";
 			    $self->_set_taper_size($dle, $dlet);
+			    if (!$dle->{'writing_to_tape'}) {
+				$self->{'stat'}->{'writing_to_tape'}->{'estimated_size'} += $dle->{'esize'};
+				$self->{'stat'}->{'writing_to_tape'}->{'write_size'} += $dlet->{'wsize'};
+				$dle->{'writing_to_tape'} = 1;
+			    }
+			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dlet->{'wsize'};
 			} elsif ($dlet->{'status'} == $DUMPING_TO_TAPE) {
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dle->{'wsize'};
 			    $dlet->{'message'} = "dumping to tape";
-			    $dlet->{'wsize'} = $dle->{'size'}
+			    $dlet->{'wsize'} = $dle->{'wsize'};
 			} elsif ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dle->{'wsize'};
 			    $dlet->{'message'} = "dumping to tape";
-			    $dlet->{'wsize'} = $dle->{'size'}
+			    $dlet->{'wsize'} = $dle->{'wsize'};
 			} elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dle->{'wsize'};
 			    if (!$dle->{'failed_to_tape'}) {
 				$self->{'stat'}->{'failed_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 				$dle->{'failed_to_tape'} = 1;
 			    }
 			    $dlet->{'message'} = "dump to tape failed";
+			    $dlet->{'wsize'} = $dle->{'wsize'};
 			    $self->{'exit_status'} |= $STATUS_FAILED;
 			    $self->{'exit_status'} |= $STATUS_TAPE;
 			} elsif ($dlet->{'status'} == $WRITE_FAILED) {
@@ -1396,6 +1407,7 @@ sub set_summary {
 			    }
 			    #$dlet->{'wsize'} = $dle->{'size'};
 			    $dlet->{'dsize'} = $dle->{'size'};
+			    $dle->{'dsize'} = $dle->{'size'};
 			} elsif ($dlet->{'status'} == $WRITE_DONE) {
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
@@ -1411,6 +1423,7 @@ sub set_summary {
 			    }
 			    #$dlet->{'wsize'} = $dle->{'size'};
 			    $dlet->{'dsize'} = $dle->{'size'};
+			    $dle->{'dsize'} = $dle->{'size'};
 			} elsif ($dlet->{'status'} == $DUMP_TO_TAPE_DONE) {
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
@@ -1422,6 +1435,7 @@ sub set_summary {
 			    $dlet->{'message'} = "dump to tape done";
 			    #$dlet->{'wsize'} = $dle->{'size'};
 			    $dlet->{'dsize'} = $dle->{'size'};
+			    $dle->{'dsize'} = $dle->{'size'};
 			} elsif ($dlet->{'status'} == $CONFIG_ERROR) {
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};

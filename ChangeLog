@@ -1,4 +1,7 @@
 2014-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Set write_size, and $dle->{'dsize'}.
+
+2014-10-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcleanup.pl: Some fixes.
 
 2014-10-16  Jean-Louis Martineau <martineau@zmanda.com>
