@@ -94,10 +94,9 @@ my $cleanup = Amanda::Cleanup->new(kill          => $kill_enable,
 				   verbose	 => $verbose,
 				   clean_holding => $clean_holding,
 				   user_message  => \&user_message);
-my @result_messages = $cleanup->cleanup();
-print "result_messages: " . Data::Dumper::Dumper(\@result_messages);
+my $result_messages = $cleanup->cleanup();
 
-foreach my $message (@result_messages) {
+foreach my $message (@{$result_messages}) {
     print "amcleanup: ", $message->message(), "\n";
     if ($message->{'code'} == 3400000) {
 	print "amcleanup: Use -k option to stop all the process...\n";
@@ -110,7 +109,7 @@ Amanda::Util::finish_application();
 sub user_message {
     my $message = shift;
 
-    print "AA: amcleanup: ", $message->message(), "\n";
+    print "amcleanup: ", $message->message(), "\n";
     if ($message->{'code'} == 3400000) {
         print "amcleanup: Use -k option to stop all the process...\n";
         print "Usage: amcleanup [-k] conf\n";

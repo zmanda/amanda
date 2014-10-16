@@ -1,4 +1,7 @@
 2014-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanup.pl: Some fixes.
+
+2014-10-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: Fix compilation if SAMBA_CLIENT is not
 	  defined.
 	* common-src/ammessage.c: Add Message 3600087.
