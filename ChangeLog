@@ -1,4 +1,9 @@
 2014-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/FetchDump.pm: $self->{'message_file'}->autoflush,
+	  Return $params{'finished_cb'}->(1);
+	* perl/Amanda/Rest/Runs.pm: Add '=' to dumpspec argument.
+
+2014-10-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm, server-src/amstatus.pl: Fix perl warning.
 
 2014-10-17  Jean-Louis Martineau <martineau@zmanda.com>

@@ -679,8 +679,10 @@ use base 'Amanda::Recovery::Clerk::Feedback';
 
 sub new {
     my $class = shift;
+    my $fetchdump = shift;
 
     my $self = bless {
+	fetchdump => $fetchdump,
     }, $class;
 
     return $self;
@@ -700,7 +702,7 @@ sub clerk_notif_part {
     my $self = shift;
     my ($label, $filenum, $header) = @_;
 
-    $self->user_message(Amanda::FetchDump::Message->new(
+    $self->{'fetchdump'}->user_message(Amanda::FetchDump::Message->new(
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 3300003,
@@ -714,7 +716,7 @@ sub clerk_notif_holding {
     my $self = shift;
     my ($filename, $header) = @_;
 
-    $self->user_message(Amanda::FetchDump::Message->new(
+    $self->{'fetchdump'}->user_message(Amanda::FetchDump::Message->new(
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 3300004,
@@ -758,11 +760,21 @@ sub fetchdump {
 
     my $pid = POSIX::fork();
     if ($pid == 0) {
+	my $host;
+	my $disk;
+	my $timestamp;
+	my $level;
+	my $write_timestamp;
+	$host = "=".$params{'host'} if defined $params{'host'};
+	$disk = "=".$params{'disk'} if defined $params{'disk'};
+	$timestamp = "=".$params{'timestamp'} if defined $params{'timestamp'};
+	$level = "=".$params{'level'} if defined $params{'level'};
+	$write_timestamp = "=".$params{'write_timestamp'} if defined $params{'write_timestamp'};
+	my $spec = Amanda::Cmdline::dumpspec_t->new($host, $disk, $timestamp, $level, $write_timestamp);
 
-	my $spec = Amanda::Cmdline::dumpspec_t->new($params{'host'}, $params{'disk'}, $params{'timestamp'}, $params{'level'}, $params{'write_timestamp'});
 	my @dumpspecs;
 	push @dumpspecs, $spec;
-	my $fetchfeedback = Amanda::Rest::Runs::FetchFeedback->new();
+	my $fetchfeedback = Amanda::Rest::Runs::FetchFeedback->new($fetchdump);
 	my $finished_cb = sub { $exit_status = shift;
 				$fetchdump->user_message(
 				    Amanda::FetchDump::Message->new(

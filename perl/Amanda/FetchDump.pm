@@ -190,6 +190,7 @@ use POSIX qw(strftime);
 use File::Basename;
 use XML::Simple;
 use IPC::Open3;
+use IO::Handle;
 
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
@@ -255,6 +256,7 @@ sub new {
 		errno            => $!,
 		severity         => $Amanda::Message::ERROR);
     } else {
+	$self->{'message_file'}->autoflush;
 	log_add($L_INFO, "message file $self->{'fetchdump_log_filename'}");
     }
 
@@ -295,7 +297,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300021,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
 
     if (defined $params{'leave'} and defined $params{'compress'}) {
@@ -305,7 +307,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300022,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
     if (defined $params{'leave'} and defined $params{'compress-best'}) {
 	$self->user_message(
@@ -314,7 +316,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300023,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
     if (defined $params{'leave'} and defined $params{'no-reassembly'}) {
 	$self->user_message(
@@ -323,7 +325,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300024,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
     if (defined $params{'header'} and (defined $params{'header-file'} or
 				       defined $params{'header-fd'})) {
@@ -333,7 +335,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300025,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
 
     if (defined $params{'data-path'}) {
@@ -346,7 +348,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300026,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
     }
 
@@ -358,7 +360,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300027,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if ($params{'server-decrypt'}) {
 	    $self->user_message(
@@ -367,7 +369,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300028,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if ($params{'client-decrypt'}) {
 	    $self->user_message(
@@ -376,7 +378,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300029,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if ($params{'decompress'}) {
 	    $self->user_message(
@@ -385,7 +387,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300030,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if ($params{'server-decompress'}) {
 	    $self->user_message(
@@ -394,7 +396,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300031,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if ($params{'client-decompress'}) {
 	    $self->user_message(
@@ -403,7 +405,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300032,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
     }
 
@@ -415,7 +417,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300033,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
 
     if (defined $params{'directory'} and defined $params{'extract'}) {
@@ -427,7 +429,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300034,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 
 	$params{'decompress'} = 1;
@@ -438,7 +440,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300035,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if (defined($params{'leave'}) +
 	    defined($params{'compress'}) +
@@ -449,7 +451,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300036,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if (defined $params{'pipe'}) {
 	    $self->user_message(
@@ -458,7 +460,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300037,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
 	if (defined $params{'header'}) {
 	    $self->user_message(
@@ -467,7 +469,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300038,
 			severity	=> $Amanda::Message::ERROR));
-	    $params{'finished_cb'}->();
+	    return $params{'finished_cb'}->(1);
 	}
     }
 
@@ -480,7 +482,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300039,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
     if (defined($params{'decompress'}) +
 	defined($params{'server-decompress'}) +
@@ -491,7 +493,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300040,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
 
     if (defined($params{'compress'}) and
@@ -504,7 +506,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300041,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
 
     if (defined($params{'compress-best'}) and
@@ -517,7 +519,7 @@ sub restore {
 			source_line     => __LINE__,
 			code            => 3300042,
 			severity	=> $Amanda::Message::ERROR));
-	$params{'finished_cb'}->();
+	return $params{'finished_cb'}->(1);
     }
 
     my $decompress = $ALWAYS;
