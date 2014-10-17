@@ -1,4 +1,7 @@
 2014-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm, server-src/amstatus.pl: Fix perl warning.
+
+2014-10-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Runs.pm, perl/Amanda/CheckDump.pm,
 	  perl/Amanda/Device.swg, perl/Amanda/Cleanup.pm,
 	  perl/Amanda/Changer/diskflat.pm, perl/Amanda/Changer.pm,

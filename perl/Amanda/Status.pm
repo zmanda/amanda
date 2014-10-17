@@ -1711,6 +1711,8 @@ sub _set_taper_size {
     my $dle = shift;
     my $dlet = shift;
 
+    $dle->{'wsize'} = 0;
+    $dlet->{'wsize'} = 0 if defined $dlet;
     if ($dle->{'taper_status_file'} and -f $dle->{'taper_status_file'} and
 	open FF, "<$dle->{'taper_status_file'}") {
 	my $line = <FF>;

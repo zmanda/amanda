@@ -128,9 +128,9 @@ my $errfile="$logdir/amdump";
 my $nb_options = defined($opt_detail) +
 		 defined($opt_summary) +
 		 defined($opt_stats);
-my $set_options = $opt_detail +
-		  $opt_summary +
-		  $opt_stats;
+my $set_options = (defined($opt_detail) ? $opt_detail : 0 ) +
+		  (defined($opt_summary) ? $opt_summary : 0 )  +
+		  (defined($opt_stats) ? $opt_stats : 0 );
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
