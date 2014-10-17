@@ -157,7 +157,7 @@ sub cleanup {
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
 			code		=> 3400002,
-			severity	=> $pp == 0 ? $Amanda::Message::INFO: $Amanda::Message::ERROR,
+			severity	=> $pp == 0 ? $Amanda::Message::INFO : $Amanda::Message::ERROR,
 			nb_processes	=> $pp));
 	}
     }

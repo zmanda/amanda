@@ -959,7 +959,8 @@ sub new {
 		my $error = Amanda::Changer::Error->new('fatal',
 			source_filename => __FILE__,
 	                source_line     => __LINE__,
-	                code            => 1100030);
+	                code            => 1100030,
+			severity	=> $Amanda::Message::ERROR);
 		Amanda::Util::pop_component_module();
 		return $error;
 	    }
@@ -1045,7 +1046,8 @@ sub _changer_alias_to_uri {
 	    return Amanda::Changer::Error->new('fatal',
 		source_filename => __FILE__,
 	        source_line     => __LINE__,
-	        code            => 1100030);
+	        code            => 1100030,
+		severity	=> $Amanda::Message::ERROR);
 	}
 	if (!$seen_tpchanger and !$seen_tapedev) {
 	    return Amanda::Changer::Error->new('fatal',

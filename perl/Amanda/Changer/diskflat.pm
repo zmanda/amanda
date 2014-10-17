@@ -390,6 +390,7 @@ sub _load_by_slot {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100031,
+		severity => $Amanda::Message::ERROR,
 		relative_slot => $params{relative_slot},
 		reason => "invalid");
 	}
@@ -402,6 +403,7 @@ sub _load_by_slot {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100032,
+		severity => $Amanda::Message::ERROR,
 		reason => "notfound");
     }
 
@@ -420,6 +422,7 @@ sub _load_by_slot {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100034,
+		severity => $Amanda::Message::ERROR,
 		reason => "volinuse",
 		slot => $slot,
 		drive => $drive,
@@ -456,6 +459,7 @@ sub _load_by_label {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100036,
+		severity => $Amanda::Message::ERROR,
 		slot  => $slot,
 		label => $label,
 		drive => $drive,
@@ -482,6 +486,7 @@ sub _make_res {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100037,
+		severity => $Amanda::Message::ERROR,
 		reason => "device",
 		slot   => $slot);
     }
@@ -508,6 +513,7 @@ sub _make_res {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100038,
+		severity => $Amanda::Message::ERROR,
 		reason => "device",
 		device => $device_name,
 		device_error =>  $device->error_or_status());
@@ -749,6 +755,7 @@ sub _validate() {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100039,
+		severity => $Amanda::Message::ERROR,
 		dir     => $dir);
     }
     if (!-w $dir) {
@@ -756,6 +763,7 @@ sub _validate() {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100040,
+		severity => $Amanda::Message::ERROR,
 		dir     => $dir,
 		error   => $!);
     }
@@ -775,6 +783,7 @@ sub _validate() {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100041,
+		severity => $Amanda::Message::ERROR,
 		reason => "notfound",
 		dir     => $dir);
 	}
@@ -793,6 +802,7 @@ sub _validate() {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code    => 1100044,
+				severity => $Amanda::Message::ERROR,
 				slot_file => $slot_file,
 				error     => $!);
 	    }
@@ -802,7 +812,8 @@ sub _validate() {
 	    return $self->make_error("fatal", undef,
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code    => 1100045);
+				code    => 1100045,
+				severity => $Amanda::Message::ERROR);
 	}
     }
     return undef;
@@ -843,12 +854,14 @@ sub try_lock {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100046,
+		severity => $Amanda::Message::ERROR,
 		lock_file => $self->{'umount_lockfile'});
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code    => 1100047,
+		severity => $Amanda::Message::ERROR,
 		lock_file => $self->{'umount_lockfile'});
 	} elsif ($rv == 0) {
 	    if (defined $self->{'umount_src'}) {

@@ -29,44 +29,44 @@ use vars qw( @ISA );
 sub local_message {
     my $self = shift;
 
-    if ($self->{'code'} == 2400000) {
+    if ($self->{'code'} == 2500000) {
 	return "The trace log file is '$self->{'trace_log'}'";
-    } elsif ($self->{'code'} == 2400001) {
+    } elsif ($self->{'code'} == 2500001) {
 	return "The amdump log file is '$self->{'amdump_log'}'";
-    } elsif ($self->{'code'} == 2400002) {
+    } elsif ($self->{'code'} == 2500002) {
 	return "No dumps to vault";
-    } elsif ($self->{'code'} == 2400003) {
+    } elsif ($self->{'code'} == 2500003) {
 	return "Running a vault";
-    } elsif ($self->{'code'} == 2400004) {
+    } elsif ($self->{'code'} == 2500004) {
         return "Running a vault";
-    } elsif ($self->{'code'} == 2400005) {
+    } elsif ($self->{'code'} == 2500005) {
 	return ($self->{'label'} || $self->{'holding_file'}) . " " .
 	       ($self->{'filenum'} || '') . " " .
 	       $self->{'hostname'} . " " .
 	       $self->{'diskname'} . " " .
 	       $self->{'dump_timestamp'} . " " .
 	       $self->{'level'};
-    } elsif ($self->{'code'} == 2400006) {
+    } elsif ($self->{'code'} == 2500006) {
         return "Total Size: $self->{'total_size_kb'} KB";
-    } elsif ($self->{'code'} == 2400007) {
+    } elsif ($self->{'code'} == 2500007) {
 	return "No dumps found";
-    } elsif ($self->{'code'} == 2400008) {
+    } elsif ($self->{'code'} == 2500008) {
 	return "$self->{'bytes_written'} KB";
-    } elsif ($self->{'code'} == 2400010) {
+    } elsif ($self->{'code'} == 2500010) {
 	return "No import/export slots available; skipping export";
-    } elsif ($self->{'code'} == 2400011) {
+    } elsif ($self->{'code'} == 2500011) {
 	return "Could not find the just-written tape; skipping export";
-    } elsif ($self->{'code'} == 2400012) {
+    } elsif ($self->{'code'} == 2500012) {
 	return "Using latest timestamp: $self->{'timestamp'}";
-    } elsif ($self->{'code'} == 2400013) {
+    } elsif ($self->{'code'} == 2500013) {
 	return "WARNING: dumpspec $self->{'dumpspec_format'} specifies non-full dumps, contradicting --fulls-only; ignoring dumpspec";
-    } elsif ($self->{'code'} == 2400014) {
+    } elsif ($self->{'code'} == 2500014) {
 	return "WARNING: dumpspec $self->{'dumpspec_format'} specifies full dumps, contradicting --incrs-only; ignoring dumpspec";
-    } elsif ($self->{'code'} == 2400015) {
+    } elsif ($self->{'code'} == 2500015) {
 	return "Wrote $self->{'label'}:$self->{'fileno'}: $self->{'header_summary'}";
-    } elsif ($self->{'code'} == 2400016) {
+    } elsif ($self->{'code'} == 2500016) {
 	return "Reading $self->{'label'}:$self->{'fileno'}: $self->{'header_summary'}";
-    } elsif ($self->{'code'} == 2400017) {
+    } elsif ($self->{'code'} == 2500017) {
 	return "Reading '$self->{'holding_filename'}': $self->{'header_summary'}";
     }
 }
@@ -177,13 +177,13 @@ sub new {
 	push @result_messages, Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code        => 2400001,
+				code        => 2500001,
 				severity    => $Amanda::Message::INFO,
 				amdump_log  => $self->{'amdump_log_pathname'});
 	push @result_messages, Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
-				code        => 2400000,
+				code        => 2500000,
 				severity    => $Amanda::Message::INFO,
 				trace_log   => $self->{'trace_log_filename'});
 
@@ -260,7 +260,7 @@ sub create_status_file {
 		$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400008,
+				code            => 2500008,
 				severity	=> $Amanda::Message::INFO,
 				bytes_written   => $size));
 	    }
@@ -333,14 +333,14 @@ sub setup_src {
 	    return $self->failure(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400007,
+				code            => 2500007,
 				severity	=> $Amanda::Message::ERROR));
 	}
 
 	$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400012,
+				code            => 2500012,
 				severity	=> $Amanda::Message::INFO,
 				timestamp       => $ts));
     }
@@ -377,7 +377,7 @@ sub setup_src {
 			$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400013,
+				code            => 2500013,
 				severity	=> $Amanda::Message::WARNING,
 				dumpspec_format => $ds->format()));
 			next;
@@ -387,7 +387,7 @@ sub setup_src {
 			$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400014,
+				code            => 2500014,
 				severity	=> $Amanda::Message::WARNING,
 				dumpspec_format => $ds->format()));
 			next;
@@ -415,7 +415,7 @@ sub setup_src {
 	return $self->failure(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400002,
+				code            => 2500002,
 				severity	=> $Amanda::Message::ERROR));
     }
 
@@ -470,7 +470,7 @@ sub plan_cb {
 		$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400005,
+				code            => 2500005,
 				severity        => $Amanda::Message::INFO,
 				label           => $part->{'label'},
 				holding_file    => $part->{'holding_file'},
@@ -486,7 +486,7 @@ sub plan_cb {
 	$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400006,
+				code            => 2500006,
 				severity        => $Amanda::Message::INFO,
 				total_size_kb   => $total_kb));
 
@@ -508,7 +508,7 @@ Amanda::Debug::debug("qwe " . @{$plan->{'dumps'}});
 	return $self->failure(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400002,
+				code            => 2500002,
 				severity	=> $Amanda::Message::ERROR));
     }
 
@@ -962,7 +962,7 @@ sub scribe_notif_part_done {
 	$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400015,
+				code            => 2500015,
 				severity	=> $Amanda::Message::INFO,
 				label           => $self->{dst}->{label},
 				fileno          => $params{'fileno'},
@@ -1028,13 +1028,15 @@ sub scribe_notif_tape_done {
 	    $self->user_msg(Amanda::Vault::Message(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400010));
+				code            => 2500010,
+				severity => $Amanda::Message::ERROR));
 	    return $steps->{'done'}->();
 	} elsif (!$from_slot) {
 	    $self->user_msg(Amanda::Vault::Message(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400011));
+				code            => 2500011,
+				severity => $Amanda::Message::ERROR));
 	    return $steps->{'done'}->();
 	} else {
 	    return $steps->{'do_move'}->($ie_slot, $from_slot);
@@ -1090,7 +1092,7 @@ sub clerk_notif_part {
     $self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400016,
+				code            => 2500016,
 				severity	=> $Amanda::Message::INFO,
 				label           => $label,
 				fileno          => $fileno,
@@ -1105,7 +1107,7 @@ sub clerk_notif_holding {
     $self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2400017,
+				code            => 2500017,
 				severity	=> $Amanda::Message::INFO,
 				holding_filename => $filename,
 				header_summary  => $header->summary()));

@@ -132,6 +132,7 @@ sub get_header_buffer() {
 			source_filename => __FILE__,
                         source_line => __LINE__,
                         code        => 2400000,
+			severity => $Amanda::Message::ERROR,
                         filename    => $filename);
     }
     if (!-e $filename) {
@@ -139,6 +140,7 @@ sub get_header_buffer() {
 			source_filename => __FILE__,
                         source_line => __LINE__,
                         code        => 2400001,
+			severity => $Amanda::Message::ERROR,
                         filename    => $filename);
     }
     if (!-f _) {
@@ -146,6 +148,7 @@ sub get_header_buffer() {
 			source_filename => __FILE__,
                         source_line => __LINE__,
                         code        => 2400002,
+			severity => $Amanda::Message::ERROR,
                         filename    => $filename);
     }
     open my $fh, "<", $filename ||
@@ -153,6 +156,7 @@ sub get_header_buffer() {
 			source_filename => __FILE__,
                         source_line => __LINE__,
                         code        => 2400003,
+			severity => $Amanda::Message::ERROR,
 			error       => $!,
                         filename    => $filename);
     my $buffer;

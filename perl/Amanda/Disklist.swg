@@ -308,6 +308,7 @@ sub match_disklist {
 					source_filename => __FILE__,
 					source_line     => __LINE__,
 					code  => 1400000,
+					severity => $Amanda::Message::ERROR,
 					arg   => $arg));
 		} else {
 		    if ($disk->{'todo'} == -1) {
@@ -340,6 +341,7 @@ sub match_disklist {
 					source_filename => __FILE__,
 					source_line     => __LINE__,
 					code  => 1400001,
+					severity => $Amanda::Message::WARNING,
 					host  => $prevhost));
 		    }
 		}
@@ -351,6 +353,7 @@ sub match_disklist {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1400002,
+				severity => $Amanda::Message::WARNING,
 				arg   => $arg,
 				host  => $prevhost,
 				incorrect_quoting => $incorrect_quoting));
@@ -363,12 +366,14 @@ sub match_disklist {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1400003,
+				severity => $Amanda::Message::WARNING,
 				arg   => $arg));
 	    } else {
 		$user_msg->(Amanda::Disklist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1400004,
+				severity => $Amanda::Message::WARNING,
 				arg   => $arg));
 	    }
 	    $prev_match = 0;
@@ -389,6 +394,7 @@ sub match_disklist {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1400005,
+				severity => $Amanda::Message::WARNING,
 				host   => $prevhost));
 	}
     }

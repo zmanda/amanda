@@ -844,6 +844,7 @@ sub to_message {
 		source_filename => __FILE__,
 		source_line     => __LINE__,
 		code        => 1700000,
+		severity    => $dev->status == $DEVICE_SUCCESS ? $Amanda::Message::INFO : $Amanda::Message::ERROR,
 		device_name => $dev->device_name,
 		dev_status  => $dev->status,
 		dev_error   => $dev->error_or_status);

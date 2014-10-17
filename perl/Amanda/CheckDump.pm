@@ -418,6 +418,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700002,
+				severity	=> $Amanda::Message::INFO,
 				holdings        => \@holding));
 	}
 
@@ -446,6 +447,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700005,
+				severity	=> $Amanda::Message::INFO,
 				hostname        => $dump->{hostname},
 				diskname        => $dump->{diskname},
 				dump_timestamp  => $dump->{dump_timestamp},
@@ -506,7 +508,8 @@ sub run {
 		return $steps->quit(Amanda::CheckDump::Message->new(
 					source_filename => __FILE__,
 					source_line     => __LINE__,
-					code            => 2700017));
+					code            => 2700017,
+					severity        => $Amanda::Message::ERROR));
 	    }
 
 	    $hdr->{'encrypted'} = 0;
@@ -587,6 +590,7 @@ sub run {
 					source_filename => __FILE__,
 					source_line     => __LINE__,
 					code            => 2700016,
+					severity        => $Amanda::Message::ERROR,
 					line            => $line));
 			$buffer = "";
 		    }
@@ -641,6 +645,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700008,
+				severity        => $Amanda::Message::ERROR,
 				errors		=> $recovery_params{'errors'}));
 	    return $steps->{'quit'}->("validation aborted");
 	}
@@ -650,6 +655,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700009,
+				severity        => $Amanda::Message::ERROR,
 				errors		=> \@xfer_errs));
 	    $all_success = 0;
 	}
@@ -661,6 +667,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700010,
+				severity        => $Amanda::Message::ERROR,
 				hdr_native_crc  => $hdr->{'native_crc'},
 				log_native_crc  => $current_dump->{'native_crc'}));
         }
@@ -671,6 +678,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700011,
+				severity        => $Amanda::Message::ERROR,
 				hdr_client_crc  => $hdr->{'client_crc'},
 				log_client_crc  => $current_dump->{'client_crc'}));
         }
@@ -700,6 +708,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700012,
+				severity        => $Amanda::Message::ERROR,
 				hdr_server_crc  => $hdr->{'server_crc'},
 				log_server_crc  => $current_dump->{'server_crc'}));
         }
@@ -711,6 +720,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700013,
+				severity        => $Amanda::Message::ERROR,
 				log_server_crc  => $current_dump->{'server_crc'},
 				source_crc      => $source_crc));
         }
@@ -721,6 +731,7 @@ sub run {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2700014,
+				severity        => $Amanda::Message::ERROR,
 				log_native_crc  => $current_dump->{'native_crc'},
 				dest_native_crc => $dest_native_crc));
         }
@@ -743,12 +754,14 @@ sub run {
 	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2700006));
+				code            => 2700006,
+				severity        => $Amanda::Message::SUCCESS));
 	} else {
 	    $self->user_msg(Amanda::CheckDump::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code            => 2700007));
+				code            => 2700007,
+				severity        => $Amanda::Message::ERROR));
 	    $self->{'exit_code'} = 1;
 	}
 

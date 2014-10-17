@@ -496,7 +496,7 @@ sub amvault {
     push @result_messages, Amanda::Vault::Message->new(
 	source_filename => __FILE__,
 	source_line     => __LINE__,
-	code         => 2400003,
+	code         => 2500003,
 	severity     => $Amanda::Message::SUCCESS);
     Dancer::status(202);
 
