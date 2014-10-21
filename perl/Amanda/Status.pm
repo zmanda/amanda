@@ -539,6 +539,7 @@ sub parse {
 			}
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = 1;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+			$self->{'taper'}->{$taper}->{'nb_tape'} = 0;
 			$self->{'storage'}->{$storage}->{'taper'} = $taper;
 		    } elsif ($line[6] eq "START-SCAN") {
 			#7:name 8:handle

@@ -1,3 +1,8 @@
+2014-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Set nb_tape to 0.
+	* server-src/amanda-rest-server.pl: print "Stoped the Amanda Rest
+	  Server".
+
 2014-10-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/FetchDump.pm: $self->{'message_file'}->autoflush,
 	  Return $params{'finished_cb'}->(1);
