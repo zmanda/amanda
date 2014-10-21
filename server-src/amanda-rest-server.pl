@@ -107,7 +107,7 @@ if ($command eq 'start') {
 } elsif ($command eq 'stop') {
     if (defined $pid) {
 	kill 'SIGTERM', $pid;
-	print "Stoped the Amanda Rest Server\n";
+	print "Stopped the Amanda Rest Server\n";
     } else {
 	print "The Amanda Rest Server is not running\n";
     }
