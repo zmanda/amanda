@@ -288,4 +288,90 @@ sub setting {
     return \@result_messages;
 }
 
+sub info {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Dles");
+    my @result_messages = Amanda::Rest::Configs::config_init(@_);
+    return \@result_messages if @result_messages;
+
+    if (defined $params{'DISK'} and !defined $params{'disk'}) {
+	$params{'disk'} = uri_unescape($params{'DISK'});
+    }
+
+    if (!defined $params{'disk'}) {
+	push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400009,
+			severity     => $Amanda::Message::ERROR);
+	Dancer::status(404);
+	return \@result_messages;
+    }
+
+    my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+    Amanda::Disklist::unload_disklist();
+    my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400006,
+			severity     => $Amanda::Message::ERROR,
+			diskfile     => $diskfile,
+			cfgerr_level => $cfgerr_level);
+	return \@result_messages;
+    }
+
+    my $curinfodir = getconf($CNF_INFOFILE);;
+    my $ci = Amanda::Curinfo->new($curinfodir);
+    my $host = Amanda::Disklist::get_host($params{'HOST'});
+    if (!$host) { # $host->isa("Amanda::Message");
+	push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400007,
+			severity     => $Amanda::Message::ERROR,
+			diskfile     => $diskfile,
+			host         => $params{'HOST'});
+	return \@result_messages;
+    }
+    my @dles;
+    if ($params{'disk'}) {
+	my $disk = $host->get_disk($params{'disk'});
+	if (!$disk) {  # $disk->isa("Amanda::Message");
+	    push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400008,
+			severity     => $Amanda::Message::ERROR,
+			diskfile     => $diskfile,
+			host         => $params{'HOST'},
+			disk         => $params{'disk'});
+	    return \@result_messages;
+	}
+	push @dles, $disk;
+    } else {
+	@dles = $host->all_disks();
+    }
+
+    for my $dle (@dles) {
+	my $info = $ci->get_dle_info($dle);
+	return $info if $info->isa("Amanda::Message");
+	$info->{'force-full'}    = 1 if $info->isset($Amanda::Curinfo::Info::FORCE_FULL);
+	$info->{'force-level-1'} = 1 if $info->isset($Amanda::Curinfo::Info::FORCE_LEVEL_1);
+	$info->{'force-bump'}    = 1 if $info->isset($Amanda::Curinfo::Info::FORCE_BUMP);
+	$info->{'force-no-bump'}    = 1 if $info->isset($Amanda::Curinfo::Info::FORCE_NO_BUMP);
+	push @result_messages, Amanda::Curinfo::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1300033,
+			severity     => $Amanda::Message::SUCCESS,
+			host         => $dle->{'host'}->{'hostname'},
+			disk         => $dle->{'name'},
+			info	     => $info);
+    }
+    return \@result_messages;
+}
+
 1;

@@ -175,7 +175,7 @@ get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/estimate' => sub {
 	my $r = Amanda::Rest::Dles::estimate(%p);
 	return $r
 };
-get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/info' => sub {
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
 	my %p = params;
 	my $r = Amanda::Rest::Dles::info(%p);
 	return $r

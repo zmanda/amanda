@@ -1,3 +1,9 @@
+2014-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Curinfo.pm (get_dle_info): New method.
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Add
+	  get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST'
+	* perl/Amanda/Rest/Dles.pm (info): New method.
+
 2014-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amanda-rest-server.pl: Typo.
 	* perl/Amanda/Status.pm: Fix.

@@ -92,6 +92,10 @@ sub local_message {
 	return "No command specified: force, force_level_1, force_bump, force_no_bump.";
     } elsif ($self->{'code'} == 1300031) {
 	return "Only one command allowed.";
+    } elsif ($self->{'code'} == 1300032) {
+	return "No info for host '$self->{'host'}' and disk '$self->{'disk'}'";
+    } elsif ($self->{'code'} == 1300033) {
+	return "Info for host '$self->{'host'}' and disk '$self->{'disk'}'";
     }
 }
 
@@ -227,6 +231,18 @@ sub get_info
     my $infofile = "$infodir/$host_q/$disk_q/info";
 
     return Amanda::Curinfo::Info->new($infofile);
+}
+
+sub get_dle_info
+{
+    my ($self, $dle) = @_;
+
+    my @result_messages;
+    my $host = $dle->{'host'}->{'hostname'};
+    my $disk = $dle->{'name'};
+
+    my $info = $self->get_info($host, $disk);
+    return $info;
 }
 
 sub put_info
