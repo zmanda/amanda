@@ -1,4 +1,7 @@
 2014-10-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: Add Amanda::Extensions::Message
+
+2014-10-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/FetchDump.pm: log pid-done line.
 	* perl/Amanda/Rest/Runs.pm: Handle fork from rest server.
 	* server-src/logfile.c: log pid line with pname.

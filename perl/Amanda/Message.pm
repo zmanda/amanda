@@ -95,6 +95,7 @@ not handled by Amanda::Message):
  3500000  Amanda::Process::Message
  3600000  selfcheck
  3700000  amgtar
+ 3800000  Amanda::Extensions::Message
 
 general keys:
   code            =>
