@@ -683,8 +683,8 @@ sub from_line
         csize   => $3,
         secs    => $4,
         date    => $5,
-        filenum => $6,
-        label   => $7,
+        filenum => $6 || "",
+        label   => $7 || "",
     };
     return bless $self, $class;
 }

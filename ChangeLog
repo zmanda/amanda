@@ -1,4 +1,7 @@
 2014-10-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Curinfo/Info.pm: Fix perl warning.
+
+2014-10-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix perl warning.
 
 2014-10-27  Jean-Louis Martineau <martineau@zmanda.com>
