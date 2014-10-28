@@ -1366,7 +1366,6 @@ sub set_summary {
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
-			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dle->{'wsize'};
 			    if (!$dle->{'failed_to_tape'}) {
 				$self->{'stat'}->{'failed_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 				$dle->{'failed_to_tape'} = 1;
