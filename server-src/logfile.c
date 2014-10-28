@@ -216,7 +216,7 @@ make_logname(
 	    file = fdopen(fd, "w");
 	    if (file) {
 		gchar *text = g_strdup_printf("INFO %s %s pid %ld\n",
-				 process, process, (long)getpid());
+				 get_pname(), process, (long)getpid());
 		fprintf(file, "%s", text);
 		fclose(file);
 		file = fopen(logfile, "r");

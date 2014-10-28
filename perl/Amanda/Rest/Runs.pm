@@ -30,6 +30,7 @@ use Amanda::Cleanup;
 use Amanda::Vault;
 use Amanda::Rest::Configs;
 use Amanda::Process;
+use Amanda::Logfile qw( :logtype_t log_add );
 use Symbol;
 use Data::Dumper;
 
@@ -758,6 +759,7 @@ sub fetchdump {
 
     my $exit_status = 0;
 
+    my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid == 0) {
 	my $host;
@@ -765,6 +767,7 @@ sub fetchdump {
 	my $timestamp;
 	my $level;
 	my $write_timestamp;
+	log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
 	$host = "=".$params{'host'} if defined $params{'host'};
 	$disk = "=".$params{'disk'} if defined $params{'disk'};
 	$timestamp = "=".$params{'timestamp'} if defined $params{'timestamp'};
@@ -906,6 +909,7 @@ sub list {
 	}
 	next if length($timestamp) != 14;
 	my $run_type;
+	my $pname;
 	my $pid;
 	my $status = "running";
 	my $tracefile = "$logdir/log.$timestamp.0";
@@ -914,31 +918,39 @@ sub list {
 
 	open (TRACE, "<", $tracefile);
 	while (my $line = <TRACE>) {
-	    if ($line =~ /^INFO amdump amdump pid (\d*)$/) {
+	    if ($line =~ /^INFO (.*) amdump pid (\d*)$/) {
 		$run_type = "amdump";
-		$pid = $1;
-	    } elsif ($line =~ /^INFO amflush amflush pid (\d*)$/) {
+		$pname = $1;
+		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) amflush pid (\d*)$/) {
 		$run_type = "amflush";
-		$pid = $1;
-	    } elsif ($line =~ /^INFO amvault amvault pid (\d*)$/) {
+		$pname = $1;
+		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) amvault pid (\d*)$/) {
 		$run_type = "amvault";
-		$pid = $1;
-	    } elsif ($line =~ /^INFO checkdump checkdump pid (\d*)$/) {
+		$pname = $1;
+		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) checkdump pid (\d*)$/) {
 		$run_type = "checkdump";
-		$pid = $1;
-	    } elsif ($line =~ /^INFO fetchdump fetchdump pid (\d*)$/) {
+		$pname = $1;
+		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) fetchdump pid (\d*)$/) {
 		$run_type = "fetchdump";
-		$pid = $1;
+		$pname = $1;
+		$pid = $2;
 	    } elsif ($line =~ /^INFO .* message_file (.*)$/) {
 		$message_file = $1;
+	    } elsif ($line =~ /^INFO .* fork .* (\d*) (\d*)$/) {
+		$pid = $2 if $pid == $1;
 	    }
 	    if (defined $run_type and
-		$line =~ /^INFO $run_type pid-done $pid/) {
+		$line =~ /^INFO $pname pid-done $pid/) {
 		$status = "done";
 	    }
 	}
 	if ($status eq "running" and $pid) {
-	    $status = "aborted" if !$Amanda_process->process_alive($pid, $run_type);
+	    #$status = "aborted" if !$Amanda_process->process_alive($pid, $pname);
+	    $status = "aborted" if !$Amanda_process->process_alive($pid);
 	}
 	if ((!defined($params{'status'}) or
 	     $params{'status'} eq $status) and

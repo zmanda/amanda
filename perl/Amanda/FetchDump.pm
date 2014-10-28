@@ -582,6 +582,7 @@ sub restore {
 	finalize => sub { foreach my $name (keys %storage) {
 			    $storage{$name}->quit();
 			  }
+			  log_add($L_INFO, "pid-done $$");
 			};
 
     step start => sub {
