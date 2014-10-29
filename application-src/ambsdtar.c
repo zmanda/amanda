@@ -862,6 +862,7 @@ typedef struct filter_s {
     gint64 size;		/* number of byte use in the buffer */
     gint64 allocated_size;	/* allocated size of the buffer     */
     event_handle_t *event;
+    int    out;
 } filter_t;
 
 static off_t dump_size = -1;
@@ -1192,18 +1193,152 @@ ambsdtar_backup(
     amfree(errmsg);
 }
 
+static ssize_t
+read_filter_buffer(
+    filter_t *filter)
+{
+    ssize_t nread;
+
+    if (filter->buffer == NULL) {
+	/* allocate initial buffer */
+	filter->buffer = g_malloc(2048);
+	filter->first = 0;
+	filter->size = 0;
+	filter->allocated_size = 2048;
+    } else if (filter->first > 0) {
+	if (filter->allocated_size - filter->size - filter->first < 1024) {
+	    memmove(filter->buffer, filter->buffer + filter->first,
+				    filter->size);
+	    filter->first = 0;
+	}
+    } else if (filter->allocated_size - filter->size < 1024) {
+	/* double the size of the buffer */
+	filter->allocated_size *= 2;
+	filter->buffer = g_realloc(filter->buffer, filter->allocated_size);
+    }
+
+    nread = read(filter->fd, filter->buffer + filter->first + filter->size,
+		 filter->allocated_size - filter->first - filter->size - 2);
+
+    if (nread <= 0) {
+	event_release(filter->event);
+	aclose(filter->fd);
+	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
+	    /* Add a '\n' at end of buffer */
+	    filter->buffer[filter->first + filter->size] = '\n';
+	    filter->size++;
+	}
+    } else {
+	filter->size += nread;
+    }
+
+    return nread;
+}
+
+static void
+handle_restore_stdin(
+    void *cookie)
+{
+    filter_t *filter = cookie;
+    ssize_t   nread;
+
+    if (filter->buffer == NULL) {
+	/* allocate initial buffer */
+	filter->buffer = g_malloc(65536);
+	filter->first = 0;
+	filter->size = 0;
+	filter->allocated_size = 65536;
+    }
+    nread = read(filter->fd, filter->buffer, filter->allocated_size);
+
+    if (nread > 0) {
+	/* process the complete buffer */
+	full_write(filter->out , filter->buffer, nread);
+    } else {
+	event_release(filter->event);
+	aclose(filter->fd);
+	g_free(filter->buffer);
+	aclose(filter->out);
+    }
+}
+
+static void
+handle_restore_stdout(
+    void *cookie)
+{
+    filter_t *filter = cookie;
+    ssize_t   nread;
+    char     *b, *p;
+    gint64    len;
+
+    nread = read_filter_buffer(filter);
+
+    /* process all complete lines */
+    b = filter->buffer + filter->first;
+    b[filter->size] = '\0';
+    while (b < filter->buffer + filter->first + filter->size &&
+	   (p = strchr(b, '\n')) != NULL) {
+	*p = '\0';
+	g_fprintf(stdout, "%s\n", b);
+	len = p - b + 1;
+	filter->first += len;
+	filter->size -= len;
+	b = p + 1;
+    }
+
+    if (nread <= 0) {
+	g_free(filter->buffer);
+    }
+}
+
+static void
+handle_restore_stderr(
+    void *cookie)
+{
+    filter_t *filter = cookie;
+    ssize_t   nread;
+    char     *b, *p;
+    gint64    len;
+
+    nread = read_filter_buffer(filter);
+
+    /* process all complete lines */
+    b = filter->buffer + filter->first;
+    b[filter->size] = '\0';
+    while (b < filter->buffer + filter->first + filter->size &&
+	   (p = strchr(b, '\n')) != NULL) {
+	*p = '\0';
+	if (*b == 'x' && *(b+1) == ' ') {
+	    g_fprintf(stdout, "%s\n", b+2);
+	} else {
+	    g_fprintf(stderr, "%s\n", b);
+	}
+	len = p - b + 1;
+	filter->first += len;
+	filter->size -= len;
+	b = p + 1;
+    }
+
+    if (nread <= 0) {
+	g_free(filter->buffer);
+    }
+}
+
 static void
 ambsdtar_restore(
     application_argument_t *argument)
 {
     char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
-    char      **env;
     int         j;
-    char       *e;
     char       *include_filename = NULL;
     char       *exclude_filename = NULL;
     int         tarpid;
+    filter_t    in_buf;
+    filter_t    out_buf;
+    filter_t    err_buf;
+    int         tarin, tarout, tarerr;
+
 
     if (!bsdtar_path) {
 	error(_("BSDTAR-PATH not defined"));
@@ -1369,19 +1504,39 @@ ambsdtar_restore(
 
     debug_executing(argv_ptr);
 
-    tarpid = fork();
-    switch (tarpid) {
-    case -1: error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
-    case 0:
-	env = safe_env();
-	become_root();
-	execve(cmd, (char **)argv_ptr->pdata, env);
-	execv(cmd, (char **)argv_ptr->pdata);
-	e = strerror(errno);
-	error(_("error [exec %s: %s]"), cmd, e);
-	break;
-    default: break;
-    }
+    tarpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
+			&tarin, &tarout, &tarerr, (char **)argv_ptr->pdata);
+
+    in_buf.fd = 0;
+    in_buf.out = tarin;
+    in_buf.name = "stdin";
+    in_buf.buffer = NULL;
+    in_buf.first = 0;
+    in_buf.size = 0;
+    in_buf.allocated_size = 0;
+
+    out_buf.fd = tarout;
+    out_buf.name = "stdout";
+    out_buf.buffer = NULL;
+    out_buf.first = 0;
+    out_buf.size = 0;
+    out_buf.allocated_size = 0;
+
+    err_buf.fd = tarerr;
+    err_buf.name = "stderr";
+    err_buf.buffer = NULL;
+    err_buf.first = 0;
+    err_buf.size = 0;
+    err_buf.allocated_size = 0;
+
+    in_buf.event = event_register((event_id_t)0, EV_READFD,
+			    handle_restore_stdin, &in_buf);
+    out_buf.event = event_register((event_id_t)tarout, EV_READFD,
+			    handle_restore_stdout, &out_buf);
+    err_buf.event = event_register((event_id_t)tarerr, EV_READFD,
+			    handle_restore_stderr, &err_buf);
+
+    event_loop(0);
 
     waitpid(tarpid, NULL, 0);
     if (argument->verbose == 0) {
