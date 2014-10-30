@@ -1472,9 +1472,7 @@ set_message(
 	message->quoted_msg = g_string_free(result, FALSE);
 	g_free(hint);
     } else {
-	msg = g_string_free(result, FALSE);
-	message->msg = ammessage_encode_json(msg);
-	g_free(msg);
+	message->msg = g_string_free(result, FALSE);
 	message->hint = hint;
     }
 }
@@ -1605,6 +1603,13 @@ sprint_message(
     static int first_message = 1;
     GString *result;
 
+    char *json_file = ammessage_encode_json(message->file);
+    char *json_process = ammessage_encode_json(message->process);
+    char *json_running_on = ammessage_encode_json(message->running_on);
+    char *json_component = ammessage_encode_json(message->component);
+    char *json_module = ammessage_encode_json(message->module);
+    char *json_msg;
+
     if (message == NULL)
 	return NULL;
 
@@ -1624,24 +1629,36 @@ sprint_message(
         "    \"component\" : \"%s\",\n" \
         "    \"module\" : \"%s\",\n" \
         "    \"code\" : \"%d\",\n" \
-        , message->file, message->line, severity_name(message->severity), message->process, message->running_on, message->component, message->module, message->code);
+        , json_file, message->line, severity_name(message->severity), json_process, json_running_on, json_component, json_module, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
+	char *json_key = ammessage_encode_json(message->arg_array[i].key);
+	char *json_value = ammessage_encode_json(message->arg_array[i].value);
 	g_string_append_printf(result,
-	"    \"%s\" : \"%s\",\n", message->arg_array[i].key, message->arg_array[i].value);
+	"    \"%s\" : \"%s\",\n", json_key, json_value);
     }
     if (!message->msg) {
 	set_message(message, 0);
     }
+    json_msg = ammessage_encode_json(message->msg);
     g_string_append_printf(result,
         "    \"message\" : \"%s\"" \
-        , message->msg);
+        , json_msg);
     if (message->hint) {
+	char *json_hint = ammessage_encode_json(message->hint);
 	g_string_append_printf(result,
-	",\n    \"hint\" : \"%s\"" \
-        , message->hint);
+			",\n    \"hint\" : \"%s\"" \
+		        , message->hint);
+	g_free(json_hint);
     }
     g_string_append_printf(result,
 	"\n  }");
+
+    g_free(json_file);
+    g_free(json_process);
+    g_free(json_running_on);
+    g_free(json_component);
+    g_free(json_module);
+    g_free(json_msg);
 
     return g_string_free(result, FALSE);
 }

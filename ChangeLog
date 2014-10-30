@@ -1,3 +1,6 @@
+2014-10-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Improve JSON escaping code.
+
 2014-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c: Handle 'x ' lines on stderr for bsdtar
 	  restore.
