@@ -1,3 +1,6 @@
+2014-10-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Always set argument.host
+
 2014-10-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Improve JSON escaping code.
 

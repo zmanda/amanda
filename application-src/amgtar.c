@@ -543,6 +543,12 @@ main(
 	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
 	argument.dle.device = g_strdup(argument.dle.disk);
+    if (!argument.dle.disk && !argument.dle.device) {
+	argument.dle.disk = g_strdup("no disk");
+	argument.dle.device = g_strdup("no device");
+    }
+    if (!argument.host)
+	argument.host = g_strdup("no host");
 
     if (gnutar_onefilesystem == 2) {
 	delete_message(print_message(build_message(
