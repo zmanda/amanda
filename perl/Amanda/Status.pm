@@ -1351,21 +1351,21 @@ sub set_summary {
 			} elsif ($dlet->{'status'} == $DUMPING_TO_TAPE) {
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
-			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'wsize'};
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dle->{'wsize'};
 			    $dlet->{'message'} = "dumping to tape";
 			    $dlet->{'wsize'} = $dle->{'wsize'};
 			} elsif ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
-			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'wsize'};
 			    $self->{'stat'}->{'dumping_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dle->{'wsize'};
 			    $dlet->{'message'} = "dumping to tape";
 			    $dlet->{'wsize'} = $dle->{'wsize'};
 			} elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
-			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    #$self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'esize'};
 			    if (!$dle->{'failed_to_tape'}) {
 				$self->{'stat'}->{'failed_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 				$dle->{'failed_to_tape'} = 1;
