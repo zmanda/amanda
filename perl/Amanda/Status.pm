@@ -30,6 +30,8 @@ sub local_message {
 
     if ($self->{'code'} == 1800000) {
         return "The status";
+    } elsif ($self->{'code'} == 1800001) {
+        return "failed to open the amdump_log file '$self->{'amdump_log'}: $self->{'errnostr'}";
     }
 }
 
@@ -213,7 +215,16 @@ sub new {
 	}
     }
     my $fd;
-    open ($fd, "<", "$filename");
+    if (!open ($fd, "<", "$filename")) {
+	return Amanda::Status::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code   => 1800001,
+		severity => $Amanda::Message::ERROR,
+		amdump_log => $filename,
+		errno => $!);
+
+    } ;
     my $self = {
 	filename => $filename,
 	fd       => $fd,

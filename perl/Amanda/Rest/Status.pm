@@ -77,7 +77,11 @@ sub current {
 
     $params{'filename'} = $params{'amdump_log'} if defined $params{'amdump_log'};
     my $status = Amanda::Status->new(%params);
-    push @result_messages, $status->current();
+    if ($status->isa("Amanda::Message")) {
+	push @result_messages, $status;
+    } else {
+	push @result_messages, $status->current();
+    }
 
     return \@result_messages;
 }

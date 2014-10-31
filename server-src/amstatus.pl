@@ -198,7 +198,10 @@ else {
 print "Using: $errfile\n";
 debug("Using: $errfile");
 my $status = Amanda::Status->new(filename => $errfile);
-
+if ($status->isa("Amanda::Message")) {
+    print $status, "\n";
+    exit 1;
+}
 $status->current(user_msg => sub {});
 if ($opt_locale_independent_date_format) {
     print "From $status->{'starttime-locale-independent'}\n";
