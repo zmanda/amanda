@@ -222,7 +222,7 @@ chmod 0700, $config_dir;
 
 
 #CODE 1500007 and 1500008
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=foobar,tapecycle");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=foobar&fields=tapecycle");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
@@ -252,7 +252,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "Get invalid fields (foobar,tapecycle)");
 
 #CODE 1500008
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=runtapes,tapecycle");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=runtapes&fields=tapecycle");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",

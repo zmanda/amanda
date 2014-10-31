@@ -202,14 +202,13 @@ sub fields {
 		    $values{$name} = $result;
 		}
 	    }
-	} else {
-	    foreach my $name (split ',', $params{'fields'}) {
-		my $result = Amanda::Config::getconf_byname($name);
-		if (!defined $result) {
-		    push @no_parameters, $name;
-		} else {
-		    $values{$name} = $result;
-		}
+	} elsif (!defined $type and defined $params{'fields'} and $params{'fields'} ne '') {
+	    my $name = $params{'fields'};
+	    my $result = Amanda::Config::getconf_byname($name);
+	    if (!defined $result) {
+		push @no_parameters, $name;
+	    } else {
+		$values{$name} = $result;
 	    }
 	}
     }

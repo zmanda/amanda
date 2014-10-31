@@ -130,7 +130,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields=tpchanger,runtapes,pool,tapepool");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields=tpchanger&fields=runtapes&fields=pool&fields=tapepool");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",

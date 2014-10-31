@@ -132,7 +132,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields=tpchanger,changerfile,pool");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields=tpchanger&fields=changerfile&fields=pool");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Changers.pm",

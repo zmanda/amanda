@@ -1,4 +1,12 @@
 2014-10-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Changers.pm, perl/Amanda/Rest/Configs.pm,
+	  perl/Amanda/Rest/Storages.pm: Do not accept comma in fields.
+	* perl/Amanda/Rest/Storages/Labels.pm: Do not accept comma in labels.
+	* installcheck/Amanda_Rest_Changers.pl,
+	  installcheck/Amanda_Rest_Configs.pl,
+	  installcheck/Amanda_Rest_Storages.pl: Do not use comma.
+
+2014-10-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm (new): Return error if it can't open the
 	  amdump_log file.
 	* perl/Amanda/Rest/Status.pm, server-src/amstatus.pl: Handle error.

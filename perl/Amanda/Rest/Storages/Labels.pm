@@ -33,6 +33,7 @@ use Amanda::Util qw( match_datestamp );
 use Amanda::Rest::Configs;
 use Symbol;
 use Data::Dumper;
+use Scalar::Util;
 use vars qw(@ISA);
 
 =head1 NAME
@@ -204,7 +205,7 @@ You can use the /amanda/v1.0/configs/:CONF/labels endpoint and filter with the s
   DELETE /amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL
     query arguments:
         remove_no_retention
-        labels=LABEL1,LABEL2
+        labels=LABEL1   # can be repeated
         cleanup
         dry_run
         erase
@@ -324,10 +325,16 @@ sub erase {
 	    if (exists $params{'remove_no_retention'}) {
 		@labels = Amanda::Tapelist::list_no_retention();
 	    } elsif ($params{'labels'}){
-		@labels = split ',', $params{'labels'};
+		my $type = Scalar::Util::reftype($params{'labels'});
+		if (defined $type and $type eq "ARRAY") {
+		    @labels = @{$params{'labels'}};
+		} elsif (!defined $type and defined $params{'labels'} and $params{'labels'} ne '') {
+		    @labels = ($params{'labels'});
+		}
 	    } elsif ($params{'LABEL'}){
 		@labels = ($params{'LABEL'});
-	    } else {
+	    }
+	    if (!@labels) {
 		push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
