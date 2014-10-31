@@ -33,6 +33,7 @@ use Amanda::Process;
 use Amanda::Logfile qw( :logtype_t log_add );
 use Symbol;
 use Data::Dumper;
+use Scalar::Util;
 
 use vars qw(@ISA);
 
@@ -390,7 +391,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
  request:
   DELETE localhost:5000/amanda/v1.0/configs/:CONFIG/runs
     query arguments:
-        trace_log=LOG_FILE
+        trace_log=LOG_FILE  # can be repeated
         kill=0|1
         alive=0|1
         clean_holding=0|1
@@ -994,13 +995,35 @@ sub kill {
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
-    my $cleanup = Amanda::Cleanup->new(trace_log     => $params{'trace_log'},
-				       kill          => $params{'kill'},
-				       process_alive => $params{'alive'},
-				       verbose       => $params{'verbose'},
-				       clean_holding => $params{'clean_holding'});
-
-    @result_messages = $cleanup->cleanup();
+    my @trace_logs;
+    if (defined $params{'trace_log'}) {
+	my $type = Scalar::Util::reftype($params{'trace_log'});
+	if (defined $type and $type eq "ARRAY") {
+	    @trace_logs = @{$params{'trace_log'}};
+	} elsif (!defined $type and defined $params{'trace_log'} and $params{'trace_log'} ne '') {
+	    push @trace_logs, $params{'trace_log'};
+	}
+    }
+    if (!@trace_logs) {
+	push @result_messages, Amanda::Amdump::Message->new(
+			source_filename  => __FILE__,
+			source_line      => __LINE__,
+			code             => 3400010,
+			severity         => $Amanda::Message::ERROR);
+    } else {
+	foreach my $trace_log (@trace_logs) {
+	    my $cleanup = Amanda::Cleanup->new(
+				trace_log     => $trace_log,
+				kill          => $params{'kill'},
+				process_alive => $params{'alive'},
+				verbose       => $params{'verbose'},
+				clean_holding => $params{'clean_holding'});
+	    my $result = $cleanup->cleanup();
+	    if ($result) {
+		push @result_messages, @{$result};
+	    }
+	}
+    }
 
     return \@result_messages;
 }

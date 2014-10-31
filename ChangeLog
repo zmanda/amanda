@@ -1,4 +1,9 @@
 2014-10-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cleanup.pm: Add message 34000010.
+	* perl/Amanda/Process.pm: Return Message if can't open the trace_log.
+	* perl/Amanda/Rest/Runs.pm: Accept multiple trace_log.
+
+2014-10-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Changers.pm, perl/Amanda/Rest/Configs.pm,
 	  perl/Amanda/Rest/Storages.pm: Do not accept comma in fields.
 	* perl/Amanda/Rest/Storages/Labels.pm: Do not accept comma in labels.

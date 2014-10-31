@@ -49,6 +49,8 @@ sub local_message {
         return "$self->{'program'} stdout: $self->{'line'}";
     } elsif ($self->{'code'} == 3400009) {
         return "$self->{'program'} stderr: $self->{'line'}";
+    } elsif ($self->{'code'} == 3400010) {
+        return "no trace_log";
     } else {
 	return "no message for code $self->{'code'}";
     }
@@ -221,7 +223,7 @@ sub cleanup {
     $self->run_system(0, @amcleanupdisk);
 
     if (defined $self->{'result_messages'}) {
-	return @{$self->{'result_messages'}};
+	return \@{$self->{'result_messages'}};
     } else {
 	return;
     }

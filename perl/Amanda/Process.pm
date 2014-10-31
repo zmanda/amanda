@@ -36,6 +36,8 @@ sub local_message {
 	return "pid $self->{'pid'} is done";
     } elsif ($self->{'code'} == 3500003) {
 	return "pid $self->{'pid'} is dead";
+    } elsif ($self->{'code'} == 3500004) {
+	return "Can't open trace_log file '$self->{'trace_log'}': $self->{'errnostr'}";
     } else {
 	return "no message for code $self->{'code'}";
     }
@@ -51,6 +53,7 @@ use vars qw( @ISA @EXPORT_OK );
 use File::Basename;
 use Amanda::Constants;
 use Amanda::Debug qw( debug );
+use Amanda::Config qw( :getconf );
 @ISA = qw( Exporter );
 
 =head1 NAME
@@ -246,7 +249,20 @@ sub scan_log($) {
     my $first = 1;
     my($line);
 
-    open(LOGFILE, "<", $logfile) || die("$logfile: $!");
+    if ($logfile !~ /^\//) {
+	$logfile = Amanda::Config::getconf($CNF_LOGDIR) . '/' . $logfile;
+    }
+    if (!open(LOGFILE, "<", $logfile)) {
+	$self->{'user_message'}(Amanda::Process::Message->new(
+			source_filename	=> __FILE__,
+                        source_line	=> __LINE__,
+                        code		=> 3500004,
+                        severity	=> $Amanda::Message::ERROR,
+			trace_log	=> $logfile,
+			errno		=> $!));
+	return;
+    }
+
     while($line = <LOGFILE>) {
 	if ($line =~ /^INFO .* (.*) pid (\d*)$/) {
 	    my ($pname, $pid) = ($1, $2);
@@ -261,6 +277,8 @@ sub scan_log($) {
 		# We can get 'perl' for a perl script.
 		$self->{pids}->{$pid} = $pname;
 	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /^$pname\d*$/) {
+		$self->{pids}->{$pid} = $pname;
+	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /^am$pname\d*$/) {
 		$self->{pids}->{$pid} = $pname;
 	    } elsif (defined $self->{pstable}->{$pid}) {
 		$self->{'user_message'}(Amanda::Process::Message->new(
