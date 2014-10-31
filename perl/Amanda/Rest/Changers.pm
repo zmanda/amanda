@@ -61,7 +61,7 @@ Amanda::Rest::Changers -- Rest interface to Amanda::Changer
 =item Get parameters values of a changer
 
  request:
-  GET /amanda/v1.0/configs/:CONF/changers/:CHANGER?fields=runtapes,foo
+  GET /amanda/v1.0/configs/:CONF/changers/:CHANGER?fields=runtapes&fields=foo
 
  reply:
   HTTP status: 200 OK
@@ -115,13 +115,27 @@ sub fields {
 
     my @no_parameters;
     my %values;
-    foreach my $name (split ',', $params{'fields'}) {
-        my $result = Amanda::Config::getconf_byname("changer:$changer_name:$name");
-        if (!defined $result) {
-            push @no_parameters, $name;
-        } else {
-            $values{$name} = $result;
-        }
+    if (defined $params{'fields'}) {
+	my $type = Scalar::Util::reftype($params{'fields'});
+	if (defined $type and $type eq "ARRAY") {
+	    foreach my $name (@{$params{'fields'}}) {
+		my $result = Amanda::Config::getconf_byname("changer:$changer_name:$name");
+		if (!defined $result) {
+		    push @no_parameters, $name;
+		} else {
+		    $values{$name} = $result;
+		}
+	    }
+	} else {
+	    foreach my $name (split ',', $params{'fields'}) {
+	        my $result = Amanda::Config::getconf_byname("changer:$changer_name:$name");
+	        if (!defined $result) {
+	            push @no_parameters, $name;
+	        } else {
+	            $values{$name} = $result;
+	        }
+	    }
+	}
     }
     if (@no_parameters) {
         push @result_messages, Amanda::Config::Message->new(

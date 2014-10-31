@@ -18,6 +18,9 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 package Amanda::Rest::Configs;
+use strict;
+use warnings;
+
 use Amanda::Config qw( :getconf config_dir_relative );
 use Symbol;
 use Data::Dumper;
@@ -83,7 +86,7 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
 =item Get the value of global parameters
 
  request:
-  GET /amanda/v1.0/configs/:CONF?fields=runtapes,foo,tapecycle,bar
+  GET /amanda/v1.0/configs/:CONF?fields=runtapes&fields=foo&fields=tapecycle&fields=bar
 
  result:
   [
@@ -189,12 +192,24 @@ sub fields {
     my @no_parameters;
     my %values;
     if (defined $params{'fields'}) {
-	foreach my $name (split ',', $params{'fields'}) {
-	    my $result = Amanda::Config::getconf_byname($name);
-	    if (!defined $result) {
-		push @no_parameters, $name;
-	    } else {
-		$values{$name} = $result;
+	my $type = Scalar::Util::reftype($params{'fields'});
+	if (defined $type and $type eq "ARRAY") {
+	    foreach my $name (@{$params{'fields'}}) {
+		my $result = Amanda::Config::getconf_byname($name);
+		if (!defined $result) {
+		    push @no_parameters, $name;
+		} else {
+		    $values{$name} = $result;
+		}
+	    }
+	} else {
+	    foreach my $name (split ',', $params{'fields'}) {
+		my $result = Amanda::Config::getconf_byname($name);
+		if (!defined $result) {
+		    push @no_parameters, $name;
+		} else {
+		    $values{$name} = $result;
+		}
 	    }
 	}
     }
