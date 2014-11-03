@@ -1,3 +1,6 @@
+2014-11-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Fix hang on eof.
+
 2014-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c: Handle 'x ' lines on stderr for bsdtar
 	  restore.

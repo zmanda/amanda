@@ -1238,8 +1238,11 @@ amar_read_cb(
 	hp->buf_offset = 0;
     }
 
-    if (count == -1 ||
-	(count == 0 && hp->buf_len == 0)) {
+    if (count == -1 || count == 0) {
+	if (count == 0 && hp->buf_len != 0) {
+	    g_set_error(hp->error, amar_error_quark(), EINVAL,
+			    "Archive ended with a partial record");
+	}
 	hp->got_eof = TRUE;
 	amar_stop_read(archive);
 
