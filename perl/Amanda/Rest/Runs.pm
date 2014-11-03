@@ -1005,7 +1005,7 @@ sub kill {
 	}
     }
     if (!@trace_logs) {
-	push @result_messages, Amanda::Amdump::Message->new(
+	push @result_messages, Amanda::Cleanup::Message->new(
 			source_filename  => __FILE__,
 			source_line      => __LINE__,
 			code             => 3400010,

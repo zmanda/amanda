@@ -242,6 +242,7 @@ sub run_system {
     $pid = open3($wtr, $rdr, $err, @cmd);
     close $wtr;
     while (my $line = <$rdr>) {
+	chomp;
 	$self->user_message(Amanda::Cleanup::Message->new(
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
@@ -252,6 +253,7 @@ sub run_system {
     }
     close $rdr;
     while (my $line = <$err>) {
+	chomp;
 	$self->user_message(Amanda::Cleanup::Message->new(
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,

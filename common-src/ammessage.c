@@ -503,16 +503,57 @@ ammessage_encode_json(
 {
     int i = 0;
     int len = strlen(str)*2;
-    char *s = str;
+    unsigned char *s = (unsigned char *)str;
     char *encoded = g_malloc(len+1);
     char *e = encoded;
     while(*s != '\0') {
 	if (i++ >= len) {
 	    error("ammessage_encode_json: str is too long: %s", str);
 	}
-	if (*s == '\\' || *s == '"')
+	if (*s == '\\' || *s == '"') {
 	    *e++ = '\\';
-	*e++ = *s++;
+	    *e++ = *s++;
+	} else if (*s == '\b') {
+	    *e++ = '\\';
+	    *e++ = 'b';
+	    s++;
+	} else if (*s == '\f') {
+	    *e++ = '\\';
+	    *e++ = 'f';
+	    s++;
+	} else if (*s == '\n') {
+	    *e++ = '\\';
+	    *e++ = 'n';
+	    s++;
+	} else if (*s == '\r') {
+	    *e++ = '\\';
+	    *e++ = 'r';
+	    s++;
+	} else if (*s == '\t') {
+	    *e++ = '\\';
+	    *e++ = 't';
+	    s++;
+	} else if (*s == '\v') {
+	    *e++ = '\\';
+	    *e++ = 'v';
+	    s++;
+	} else if (*s < 32) {
+	    *e++ = '\\';
+	    *e++ = 'u';
+	    *e++ = '0';
+	    *e++ = '0';
+	    if ((*s>>4) <= 9)
+		*e++ = '0' + (*s>>4);
+	    else
+		*e++ = 'A' + (*s>4) - 10;
+	    if ((*s & 0x0F) <= 9)
+		*e++ = '0' + (*s & 0x0F);
+	    else
+		*e++ = 'A' + (*s & 0x0F) - 10;
+	    s++;
+	} else {
+	    *e++ = *s++;
+	}
     }
     *e = '\0';
     return encoded;
@@ -1603,15 +1644,21 @@ sprint_message(
     static int first_message = 1;
     GString *result;
 
-    char *json_file = ammessage_encode_json(message->file);
-    char *json_process = ammessage_encode_json(message->process);
-    char *json_running_on = ammessage_encode_json(message->running_on);
-    char *json_component = ammessage_encode_json(message->component);
-    char *json_module = ammessage_encode_json(message->module);
+    char *json_file;
+    char *json_process;
+    char *json_running_on;
+    char *json_component;
+    char *json_module;
     char *json_msg;
 
     if (message == NULL)
 	return NULL;
+
+    json_file = ammessage_encode_json(message->file);
+    json_process = ammessage_encode_json(message->process);
+    json_running_on = ammessage_encode_json(message->running_on);
+    json_component = ammessage_encode_json(message->component);
+    json_module = ammessage_encode_json(message->module);
 
     result = g_string_sized_new(512);
     if (first_message) {

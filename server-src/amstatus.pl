@@ -48,6 +48,9 @@ sub usage() {
 	exit 0;
 }
 
+my $pwd = `pwd`;
+chomp $pwd;
+
 Amanda::Util::setup_application("amstatus", "server", $CONTEXT_CMDLINE, "amanda", "amanda");
 
 my $config_overrides = new_config_overrides($#ARGV+1);
@@ -116,10 +119,6 @@ if ( ! -d "$confdir/$conf" ) {
     exit 1;
  }
 
-
-my $pwd = `pwd`;
-chomp $pwd;
-#chdir "$confdir/$conf";
 
 my $logdir = getconf($CNF_LOGDIR);
 chomp $logdir;

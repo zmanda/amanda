@@ -1,3 +1,11 @@
+2014-11-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c: Fix hang on eof.
+	* common-src/ammessage (ammessage_encode_json): Improve encoding.
+	* perl/Amanda/Cleanup.pm: Remove trailing '\n'.
+	* perl/Amanda/Rest/Runs.pm: Fix Message module
+	* perl/Amanda/Status.pm: Fix.
+	* server-src/amstatus.pl: Set $pwd before changing the cwd.
+
 2014-10-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cleanup.pm: Add message 34000010.
 	* perl/Amanda/Process.pm: Return Message if can't open the trace_log.
