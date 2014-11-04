@@ -1,4 +1,8 @@
 2014-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/logfile.c: Do no create the log symlink for a
+	  checkdump or fetchdump run.
+
+2014-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Parse checkdump and fetchdump line. new
 	  return an Amanda::Message on error.
 	* perl/Amanda/Rest/Report.pm: Handle Amanda::Report->new returning an
