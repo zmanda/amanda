@@ -596,6 +596,10 @@ debug("using logfile: $logfile" . ($historical? " (historical)" : ""));
 ## Parse the report & set output
 
 $report = Amanda::Report->new($logfile, $historical);
+if ($report->isa("Amanda::Message")) {
+    print $report, "\n";
+    exit(1);
+}
 my $exit_status = $report->get_flag("exit_status");
 
 if ($mode == MODE_CMDLINE) {

@@ -32,6 +32,10 @@ sub local_message {
 	return "Failed to make report: $self->{'error'}";
     } elsif ($self->{'code'} == 1900001) {
 	return "The report";
+    } elsif ($self->{'code'} == 1900002) {
+	return "Log file is for a checkdump run";
+    } elsif ($self->{'code'} == 1900003) {
+	return "Log file is for a fetchdump run";
     }
 }
 
@@ -456,7 +460,10 @@ sub new
     };
     bless $self, $class;
 
-    $self->read_file();
+    my $result = $self->read_file();
+    if (defined $result and $result->isa("Amanda::Message")) {
+	return $result;
+    }
     return $self;
 }
 
@@ -484,6 +491,20 @@ sub read_file
 
     while ( my ( $type, $prog, $str ) = Amanda::Logfile::get_logline($logfh) ) {
         $self->read_line( $type, $prog, $str );
+    }
+    if (defined $self->get_program_info("checkdump")) {
+	return Amanda::Report::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code   => 1900002,
+		severity => $Amanda::Message::ERROR);
+    }
+    if (defined $self->get_program_info("fetchdump")) {
+	return Amanda::Report::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code   => 1900003,
+		severity => $Amanda::Message::ERROR);
     }
 
     ## set post-run flags
@@ -583,6 +604,12 @@ sub read_line
 
     } elsif ( $prog == $P_AMDUMP ) {
         return $self->_handle_amdump_line( $type, $str );
+
+    } elsif ( $prog == $P_AMCHECKDUMP ) {
+        return $self->_handle_checkdump_line( $type, $str );
+
+    } elsif ( $prog == $P_AMFETCHDUMP ) {
+        return $self->_handle_fetchdump_line( $type, $str );
 
     } elsif ( $prog == $P_REPORTER ) {
         return $self->_handle_reporter_line( $type, $str );
@@ -1211,6 +1238,46 @@ sub _handle_amdump_line
 
     } elsif ( $type == $L_ERROR ) {
         $self->_handle_error_line("amdump", $str);
+    }
+}
+
+sub _handle_checkdump_line
+{
+    my $self = shift;
+    my ( $type, $str ) = @_;
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $programs = $data->{programs};
+    my $amdump = $programs->{checkdump} ||= {};
+
+    if ( $type == $L_INFO ) {
+        $self->_handle_info_line("checkdump", $str);
+
+    } elsif ( $type == $L_ERROR ) {
+        $self->_handle_error_line("checkdump", $str);
+
+    } else {
+        return $self->_handle_bogus_line( $P_AMFETCHDUMP, $type, $str );
+    }
+}
+
+sub _handle_fetchdump_line
+{
+    my $self = shift;
+    my ( $type, $str ) = @_;
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $programs = $data->{programs};
+    my $amdump = $programs->{fetchdump} ||= {};
+
+    if ( $type == $L_INFO ) {
+        $self->_handle_info_line("fetchdump", $str);
+
+    } elsif ( $type == $L_ERROR ) {
+        $self->_handle_error_line("fetchdump", $str);
+
+    } else {
+        return $self->_handle_bogus_line( $P_AMCHECKDUMP, $type, $str );
     }
 }
 

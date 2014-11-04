@@ -1,3 +1,12 @@
+2014-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Parse checkdump and fetchdump line. new
+	  return an Amanda::Message on error.
+	* perl/Amanda/Rest/Report.pm: Handle Amanda::Report->new returning an
+	  Amanda::Message.
+	* server-src/amreport.pl: Handle Amanda::Report->new returning an
+	  Amanda::Message.
+	* server-src/logfile.c: Parse checkdump and fetchdump line.
+
 2014-11-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: Fix hang on eof.
 	* common-src/ammessage (ammessage_encode_json): Improve encoding.

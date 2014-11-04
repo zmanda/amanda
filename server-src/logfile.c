@@ -433,6 +433,11 @@ get_logline(
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
 
+    if (strcmp(progstr,"checkdump") == 0) {
+	progstr = "amcheckdump";
+    } else if (strcmp(progstr,"fetchdump") == 0) {
+	progstr = "amfetchdump";
+    }
     /* rest of line is logtype dependent string */
 
     skip_whitespace(s, ch);

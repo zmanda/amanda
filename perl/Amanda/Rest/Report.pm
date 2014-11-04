@@ -79,11 +79,16 @@ sub report {
 
     my $config_name = $params{'CONF'};
     my $logfile = $params{'trace_log'} || $params{'logfile'};
+    $logfile = "log" if !defined $logfile;
 
     my $logdir = getconf($CNF_LOGDIR);
     $logfile = "$logdir/$logfile" if $logfile !~ /^\//;
 
     my $report = Amanda::Report->new($logfile);
+    if ($report->isa("Amanda::Message")) {
+	push @result_messages, $report;
+	return \@result_messages;
+    }
 
     my $rep = eval {Amanda::Report::json->new($report, $config_name,
 					      $logfile);};
