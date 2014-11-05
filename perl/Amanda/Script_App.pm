@@ -183,6 +183,8 @@ sub do {
 	$self->{action} = 'restore';
     } elsif ($action eq 'validate') {
 	$self->{action} = 'validate';
+    } else {
+	$self->{action} = $action;
     }
 
     if ($action eq 'backup') {
