@@ -1,4 +1,7 @@
 2014-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Generate an error if fopen of config fail.
+
+2014-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtrmidx.c: Do not delete index file newer than 7 days.
 	* installcheck/amrmtape.pl: Fix check.
 
