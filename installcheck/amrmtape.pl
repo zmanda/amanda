@@ -112,6 +112,7 @@ ok($dev->finish(),
 # test --cleanup
 
 Installcheck::Dumpcache::load("notimestamps");
+system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/_tmp_amanda_installchecks_backmeup/*");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 

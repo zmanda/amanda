@@ -131,6 +131,10 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
+my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
+my $logfile = "$logdir/log";
+my $logfile_exists = -e $logfile;
+
 # amadmin may later try to load this and will die if it has errors
 # load it now to catch the problem sooner (before we might erase data)
 my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
@@ -242,7 +246,7 @@ my $scrub_db = sub {
     unlink $tmp_curinfo_file;
     unlink $backup_tapelist_file;
 
-    if ($cleanup && !$dry_run) {
+    if ($cleanup && !$dry_run && !$logfile_exists && !-e $logfile) {
         if (system($amtrmlog, $config_name)) {
             die "$amtrmlog exited with non-zero while scrubbing logs: $! $?";
         }

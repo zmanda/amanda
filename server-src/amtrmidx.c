@@ -282,13 +282,19 @@ main(
 		    }
 		}
 		if (!matching) {
+		    struct stat sbuf;
 		    char *path, *qpath;
+
 		    path = stralloc2(indexdir, names[i]);
 		    qpath = quote_string(path);
-		    dbprintf("rm %s\n", qpath);
-		    if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			dbprintf(_("Error removing %s: %s\n"),
-				  qpath, strerror(errno));
+		    if(lstat(path, &sbuf) != -1
+			&& ((sbuf.st_mode & S_IFMT) == S_IFREG)
+			&& ((time_t)sbuf.st_mtime < tmp_time)) {
+			dbprintf("rm %s\n", qpath);
+		        if(amtrmidx_debug == 0 && unlink(path) == -1) {
+			    dbprintf(_("Error removing %s: %s\n"),
+				      qpath, strerror(errno));
+		        }
 		    }
 		    amfree(qpath);
 		    amfree(path);
