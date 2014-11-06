@@ -1861,8 +1861,8 @@ read_conffile(
     amfree(filename);
 
     if ((current_file = fopen(current_filename, "r")) == NULL) {
-	if (!missing_ok)
-	    conf_parserror(_("could not open conf file \"%s\": %s"), 
+	if (!missing_ok || errno != ENOENT)
+	    conf_parserror(_("could not open conf file \"%s\": %s"),
 		    current_filename, strerror(errno));
 	goto finish;
     }
