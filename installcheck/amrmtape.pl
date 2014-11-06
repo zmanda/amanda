@@ -112,6 +112,7 @@ ok($dev->finish(),
 # test --cleanup
 
 Installcheck::Dumpcache::load("basic");
+system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/_tmp_amanda_installchecks_backmeup/*");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -247,6 +248,7 @@ is($dev->volume_label, 'TESTCONF01', "label is correct");
 # test --dryrun --erase --cleanup
 
 Installcheck::Dumpcache::load("basic");
+system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/_tmp_amanda_installchecks_backmeup/*");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
