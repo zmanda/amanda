@@ -27,6 +27,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Device qw( :constants );
 use Amanda::Paths;
 use Amanda::Tapelist;
+use Amanda::Util;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname);
 use Installcheck::Dumpcache;
@@ -112,7 +113,8 @@ ok($dev->finish(),
 # test --cleanup
 
 Installcheck::Dumpcache::load("notimestamps");
-system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/_tmp_amanda_installchecks_backmeup/*");
+my $diskpath = Amanda::Util::sanitise_filename($Installcheck::Run::diskname);
+system ("touch -mt 201401020304.05 " . getconf($CNF_INDEXDIR) . "/localhost/$diskpath/*");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 

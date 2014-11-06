@@ -1,4 +1,7 @@
 2014-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amrmtape.pl: Fix diskpath.
+
+2014-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Generate an error if fopen of config fail.
 
 2014-11-06  Jean-Louis Martineau <martineau@zmanda.com>
