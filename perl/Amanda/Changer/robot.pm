@@ -243,6 +243,7 @@ sub new {
 	return Amanda::Changer->make_error("fatal", undef,
 	    message => "invalid 'broken-drive-loaded-slot' value");
     }
+    $self->{'broken_drive_loaded_slot'} = $broken_drive_loaded_slot;
 
     # load-poll
     {
@@ -2105,12 +2106,14 @@ sub _get_state {
 		next;
 	    }
 
-	    if ($old_drive->{'orig_slot'} ne $info->{'orig_slot'}) {
-		debug("orig_slot from state file ($old_drive->{'orig_slot'}) differ from mtx output ($info->{'orig_slot'})");
+	if (defined $old_drive->{'orig_slot'} and
+	     defined $info->{'orig_slot'} and
+	    $old_drive->{'orig_slot'} ne $info->{'orig_slot'}) {
+		debug("WARNING: orig_slot from state file ($old_drive->{'orig_slot'}) differ from mtx output ($info->{'orig_slot'})");
 	    }
 
 	    my ($orig_slot, $label);
-	    if ($self->{'broken-drive-loaded-slot'}) {
+	    if ($self->{'broken_drive_loaded_slot'}) {
 		# trust our own orig_slot over that from the changer, if possible,
 		# as some changers do not report this information accurately
 		if (defined $old_drive->{'orig_slot'}) {
@@ -2145,7 +2148,7 @@ sub _get_state {
 	    # but if there's a tape in that slot, then we've got a problem
 	    if (defined $orig_slot
 		    and $state->{'slots'}->{$orig_slot}->{'state'} != Amanda::Changer::SLOT_EMPTY) {
-		warning("mtx indicates tape in drive $drv should go to slot $orig_slot, " .
+		warning("WARNING: mtx indicates tape in drive $drv should go to slot $orig_slot, " .
 		        "but that slot is not empty.");
 		$orig_slot = undef;
 		# assign an allowed slot
@@ -2168,7 +2171,7 @@ sub _get_state {
 		    }
 		}
 		if (!defined $orig_slot) {
-		    warning("cannot find an empty slot for the tape in drive $drv");
+		    warning("WARNING: cannot find an empty slot for the tape in drive $drv");
 		}
 	    }
 
@@ -2184,7 +2187,7 @@ sub _get_state {
 		}
 
 		if (defined $label and defined $tl_label) {
-		    debug("MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
+		    debug("WARNING: MISMATCH drive label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
 		    $label = $tl_label;

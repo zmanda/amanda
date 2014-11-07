@@ -77,8 +77,10 @@ sub check_inventory {
 	    }
 	}
 
-	is_deeply($inv, $expected, $msg)
-	    or diag("Got:\n" . Dumper($inv));
+	if (!is_deeply($inv, $expected, $msg)) {
+	    diag("Got:\n" . Dumper($inv));
+	    exit(1);
+	}
 
 	$next_step->();
     }));
@@ -417,6 +419,9 @@ sub test_changer {
 	my @ignore_barcodes = ( property => "\"ignore-barcodes\" \"y\"")
 	    if ($mtx_config->{'barcodes'} == -1);
 
+	my @broken_drive_loaded_slot = ( property => "\"broken-drive-loaded-slot\" \"y\"")
+	    if ($mtx_config->{'track_orig'} != 1);
+
 	my $testconf = Installcheck::Config->new();
 	$testconf->add_changer('robo', [
 	    tpchanger => "\"chg-robot:$mtx_state_file\"",
@@ -427,6 +432,7 @@ sub test_changer {
 	    property => "append \"tape-device\" \"1=file:$vtape_root/drive1\"",
 	    property => "\"use-slots\" \"1-5\"",
 	    property => "\"mtx\" \"$mock_mtx_path\"",
+	    @broken_drive_loaded_slot,
 	    @ignore_barcodes,
 	]);
 	$testconf->write();
