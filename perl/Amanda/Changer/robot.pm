@@ -146,6 +146,7 @@ sub new {
 	load_poll => [0, 2, 120], # delay, poll, until
 	eject_delay => 0, # in seconds
 	unload_delay => 0, # in seconds
+	broken_drive_loaded_slot => 0,
 	class_name => $class_name,
     };
     bless ($self, $class);
@@ -234,6 +235,14 @@ sub new {
 		message => "invalid 'drive-choice' value '$pval'");
 	}
 	$self->{'drive_choice'} = $pval;
+    }
+
+    # broken-drive-loaded-slot
+    my $broken_drive_loaded_slot = $self->{'config'}->get_boolean_property(
+					    "broken-drive-loaded-slot", 0);
+    if (!defined $broken_drive_loaded_slot) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "invalid 'broken-drive-loaded-slot' value");
     }
 
     # load-poll
@@ -1990,24 +1999,40 @@ sub _get_state {
 		next;
 	    }
 
-	    # trust our own orig_slot over that from the changer, if possible,
-	    # as some changers do not report this information accurately
+	    if ($old_drive->{'orig_slot'} ne $info->{'orig_slot'}) {
+		debug("orig_slot from state file ($old_drive->{'orig_slot'}) differ from mtx output ($info->{'orig_slot'})");
+	    }
+
 	    my ($orig_slot, $label);
-	    if (defined $old_drive->{'orig_slot'}) {
-		$orig_slot = $old_drive->{'orig_slot'};
-                $label = $old_drive->{'label'};
-	    }
+	    if ($self->{'broken-drive-loaded-slot'}) {
+		# trust our own orig_slot over that from the changer, if possible,
+		# as some changers do not report this information accurately
+		if (defined $old_drive->{'orig_slot'}) {
+		    $orig_slot = $old_drive->{'orig_slot'};
+                    $label = $old_drive->{'label'};
+		}
 
-	    # but don't trust it if the barcode has changed
-	    if (defined $info->{'barcode'}
-		    and defined $old_drive->{'barcode'}
-		    and $info->{'barcode'} ne $old_drive->{'barcode'}) {
-		$orig_slot = undef;
-                $label = undef;
-	    }
+		# but don't trust it if the barcode has changed
+		if (defined $info->{'barcode'}
+		        and defined $old_drive->{'barcode'}
+		        and $info->{'barcode'} ne $old_drive->{'barcode'}) {
+		    $orig_slot = undef;
+                    $label = undef;
+		}
 
-	    # get the robot's notion of the original slot if we don't know ourselves
-	    if (!defined $orig_slot) {
+		# get the robot's notion of the original slot if we don't know ourselves
+		if (!defined $orig_slot) {
+		    $orig_slot = $info->{'orig_slot'};
+		}
+
+		# use robot slot if our slot is not empty and the changer slot is empty
+		if (defined $orig_slot and defined $info->{'orig_slot'} and $orig_slot ne $info->{'orig_slot'}
+		    and $state->{'slots'}->{$orig_slot}->{'state'} != Amanda::Changer::SLOT_EMPTY
+		    and $state->{'slots'}->{$info->{'orig_slot'}}->{'state'} == Amanda::Changer::SLOT_EMPTY) {
+		    $orig_slot = $info->{'orig_slot'};
+		}
+	    } else {
+		# use robot's slot
 		$orig_slot = $info->{'orig_slot'};
 	    }
 
@@ -2017,10 +2042,23 @@ sub _get_state {
 		warning("mtx indicates tape in drive $drv should go to slot $orig_slot, " .
 		        "but that slot is not empty.");
 		$orig_slot = undef;
-		for my $slot (keys %{ $state->{'slots'} }) {
-		    if ($state->{'slots'}->{$slot}->{'state'} == Amanda::Changer::SLOT_EMPTY) {
-			$orig_slot = $slot;
-			last;
+		# assign an allowed slot
+		if (defined $info->{'orig_slot'} and $self->_is_slot_allowed($info->{'orig_slot'})) {
+		    for my $slot (keys %{ $state->{'slots'} }) {
+		        if ($state->{'slots'}->{$slot}->{'state'} == Amanda::Changer::SLOT_EMPTY and
+			    $self->_is_slot_allowed($slot)) {
+			    $orig_slot = $slot;
+			    last;
+			}
+		    }
+		}
+		# assign any empty slot
+		if (!defined $orig_slot) {
+		    for my $slot (keys %{ $state->{'slots'} }) {
+		        if ($state->{'slots'}->{$slot}->{'state'} == Amanda::Changer::SLOT_EMPTY) {
+			    $orig_slot = $slot;
+			    last;
+			}
 		    }
 		}
 		if (!defined $orig_slot) {
