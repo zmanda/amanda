@@ -1,3 +1,8 @@
+2014-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Add a BROKEN-DRIVE-LOADED-SLOT
+	  property.
+	* man/xml-source/amanda-changers.7.xml: Document it.
+
 2014-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amrmtape.pl: Fix diskpath.
 

@@ -451,6 +451,11 @@ In this case, the changer marks the stated slots as an unknown state.
 
 <variablelist>
 <!-- ==== -->
+<varlistentry><term>BROKEN-DRIVE-LOADED-SLOT</term><listitem>
+Set this boolean property to true if mtx doesn't return correctly which slot
+is loaded in a drive.
+</listitem></varlistentry>
+<!-- ==== -->
 <varlistentry><term>DRIVE-CHOICE</term><listitem>
 This property controls the algorithm used to select a drive in which to load a
 tape.  If set to the default ("lru"), the changer attempts to use the least
