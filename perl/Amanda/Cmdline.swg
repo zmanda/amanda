@@ -31,6 +31,7 @@
 #include "amanda.h"
 #include "cmdline.h"
 #include "fileheader.h"
+#include "match.h"
 %}
 
 /* Add a few methods to make this type act like a class */

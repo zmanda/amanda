@@ -354,7 +354,6 @@ xfer_filter_process(
     return elt;
 }
 
-int get_err_fd(XferElement *elt);
 int get_err_fd(
     XferElement *elt)
 {
