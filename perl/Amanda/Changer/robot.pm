@@ -2037,6 +2037,11 @@ sub _get_state {
 	    } else {
 		# use robot's slot
 		$orig_slot = $info->{'orig_slot'};
+                if (defined $orig_slot and
+                    defined $old_drive->{'orig_slot'} and
+                    $orig_slot eq $old_drive->{'orig_slot'}) {
+                    $label = $old_drive->{'label'};
+                }
 	    }
 
 	    # but if there's a tape in that slot, then we've got a problem
