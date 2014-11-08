@@ -1,3 +1,7 @@
+2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Script_App.pm (print_to_server): Print enssage to debug
+	  file.
+
 2014-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix BROKEN-DRIVE-LOADED-SLOT.
 	* installcheck/Amanda_Changer_robot.pl: Fix test.
