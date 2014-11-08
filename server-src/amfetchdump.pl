@@ -140,6 +140,7 @@ sub clerk_notif_part {
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 3300003,
+		severity	=> $Amanda::Message::INFO,
 		label		=> $label,
 		filenum		=> $filenum,
 		header_summary	=> $header->summary()));
@@ -154,6 +155,7 @@ sub clerk_notif_holding {
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 3300004,
+		severity	=> $Amanda::Message::INFO,
 		holding_file	=> $filename,
 		header_summary	=> $header->summary()));
 }

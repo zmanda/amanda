@@ -101,6 +101,8 @@ sub new {
 sub print_to_server {
     my $self = shift;
     my($msg, $status) = @_;
+    Amanda::Debug::debug($msg);
+
     if ($status != 0) {
         $self->{error_status} = $status;
     }
