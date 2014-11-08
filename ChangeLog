@@ -1,4 +1,9 @@
 2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/filter-process.c (get_err_fd): Remove prototype.
+	* xfer-src/xfer-element.h (get_err_fd): Add prototype.
+	* perl/Amanda/Cmdline.swg: #include "match.h"
+
+2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix BROKEN-DRIVE-LOADED-SLOT.
 
 2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>

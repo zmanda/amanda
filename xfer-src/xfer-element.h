@@ -548,4 +548,6 @@ XferElement * xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
  */
 XferElement * xfer_dest_directtcp_listen(void);
 
+int get_err_fd(XferElement *elt);
+
 #endif
