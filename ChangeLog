@@ -1,4 +1,7 @@
 2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Fix BROKEN-DRIVE-LOADED-SLOT.
+
+2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm (print_to_server): Print enssage to debug
 	  file.
 	* server-src/amfetchdump.pl: Add severity to messages.
