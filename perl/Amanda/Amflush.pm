@@ -283,12 +283,13 @@ sub run {
     my $catch_ctrl_c = shift;
     my $to_flushs = shift;
 
+    $self->{'pid'} = $$;
+
     # wait for $confdir/hold to disappear
     $self->wait_for_hold();
 
     if ($catch_ctrl_c) {
 	$SIG{INT} = \&_interrupt;
-
     }
 
     # amstatus needs a lot of forms of the time, I guess

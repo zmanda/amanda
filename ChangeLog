@@ -1,4 +1,13 @@
 2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amdump.pm (run): set $self->{'pid'}
+	* perl/Amanda/Amflush.pm (run): set $self->{'pid'}
+	* perl/Amanda/CheckDump.pm (run): set $self->{'pid'}
+	* perl/Amanda/Rest/Runs.pm: Log "fork" line.
+	* perl/Amanda/Vault.pm: Small fix.
+	* server-src/amflush.pl: Log "fork" line.
+	* server-src/amvault.pl: s/config_name/config/g
+
+2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix perl warning.
 
 2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>

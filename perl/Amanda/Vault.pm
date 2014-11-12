@@ -110,6 +110,10 @@ sub new {
 
     my @result_messages;
 
+    if (!exists $params{'dst_write_timestamp'}) {
+	$params{'dst_write_timestamp'} = Amanda::Util::generate_timestamp();
+    }
+
     my $self = bless {
 	quiet => $params{'quiet'},
 	fulls_only => $params{'fulls_only'},
@@ -118,7 +122,7 @@ sub new {
 	opt_export => $params{'opt_export'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
-	config_name => $params{'config_name'},
+	config => $params{'config'},
 	user_msg => $params{'user_msg'},
 	is_tty => $params{'is_tty'},
 	delay => $params{'delay'},
@@ -164,6 +168,7 @@ sub new {
 	$self->{'amdump_log_pathname'} = "$logdir/amdump.$timestamp";
 	$self->{'amdump_log_filename'} = "amdump.$timestamp";
 	$self->{'dst_write_timestamp'} = Amanda::Logfile::make_logname("amvault", $self->{'dst_write_timestamp'});
+	$self->{'timestamp'} = $self->{'dst_write_timestamp'};
 	$self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
 	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
 	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
@@ -864,7 +869,7 @@ sub quit {
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
 	    log_add($L_INFO, "pid-done $$");
 
-	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config_name'},
+	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config'},
 				"--from-amdump",
 				"-l", $self->{'trace_log_filename'},
 				@{$self->{'config_overrides_opts'}});

@@ -424,7 +424,7 @@ sub amdump {
 		    push @hostdisk, $params{'host'}, $disk;
 		}
 	    } else {
-		push @hostdisk, $params{'host'}, ${'disk'};
+		push @hostdisk, $params{'host'}, $params{'disk'};
 	    }
 	} else {
 	    push @hostdisk, $params{'host'};
@@ -437,8 +437,10 @@ sub amdump {
     push @result_messages, @{$messages};
 
     # fork the amdump process and detach
+    my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid == 0) {
+	log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
 	my $exit_code = $amdump->run(0);
 	Amanda::Debug::debug("exiting with code $exit_code");
 	exit($exit_code);
@@ -483,14 +485,23 @@ sub amvault {
 	$params{'hostdisk'} = \@hostdisk;
     }
     $params{'config'} = $params{'CONF'};
-    $params{'exact_match'} = $params{'CONF'};
+    $params{'exact_match'} = 1;
     my ($vault, $messages) = Amanda::Vault->new(%params, user_msg => $user_msg);
     push @result_messages, @{$messages};
 
+    my $exit_code = 0;
+    my $exit_cb = sub {
+	($exit_code) = @_;
+	Amanda::MainLoop::quit();
+    };
+
     # fork the vault process and detach
+    my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid == 0) {
-	my $exit_code = $vault->run(0);
+	log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
+	Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
+	Amanda::MainLoop::run();
 	Amanda::Debug::debug("exiting with code $exit_code");
 	exit($exit_code);
     }
@@ -595,8 +606,10 @@ sub amflush {
     }
 
     # fork the amdump process and detach
+    my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid == 0) {
+	log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
 	my $to_flushs = $amflush->get_flush(datestamps => \@datestamps);
 	my $exit_code = $amflush->run(0, $to_flushs);
 	Amanda::Debug::debug("exiting with code $exit_code");
@@ -647,8 +660,10 @@ sub checkdump {
 	Amanda::MainLoop::quit();
     };
 
+    my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid == 0) {
+	log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
 	Amanda::MainLoop::call_later(sub { $checkdump->run($exit_cb) });
 	Amanda::MainLoop::run();
 	exit;

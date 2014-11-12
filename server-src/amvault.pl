@@ -252,7 +252,7 @@ sub user_msg {
 
 my @messages;
 (my $vault, @messages) = Amanda::Vault->new(
-    config_name => $config_name,
+    config => $config_name,
     src_write_timestamp => $opt_src_write_timestamp,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
     opt_dumpspecs => @opt_dumpspecs? \@opt_dumpspecs : undef,

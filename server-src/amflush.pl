@@ -284,6 +284,7 @@ if (!$to_flushs || !@$to_flushs) {
 }
 
 if (!$opt_foreground) {
+    my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid != 0) {
 	print STDOUT "Running in background, you can log off now.\n";
@@ -291,6 +292,7 @@ if (!$opt_foreground) {
 	# parent exit;
 	exit(0);
     }
+    log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
     open STDIN, '/dev/null';
     open STDOUT, ">>&", $amflush->{'amdump_log'} || die("stdout: $!");
     POSIX::setsid();

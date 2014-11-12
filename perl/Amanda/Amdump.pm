@@ -309,6 +309,8 @@ sub run {
     my $self = shift;
     my $catch_ctrl_c = shift;
 
+    $self->{'pid'} = $$;
+
     # wait for $confdir/hold to disappear
     $self->wait_for_hold();
 

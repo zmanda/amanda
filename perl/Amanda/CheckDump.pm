@@ -330,6 +330,8 @@ sub run {
     my $dest_crc;
     my $dest_native_crc;
 
+    $self->{'pid'} = $$;
+
     my $steps = define_steps
 	cb_ref => \$finished_cb,
 	finalize => sub { foreach my $name (keys %storage) {
