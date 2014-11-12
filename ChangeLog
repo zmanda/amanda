@@ -1,4 +1,7 @@
 2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* autogen: Add "-I /usr/share/aclocal" to includes
+
+2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix perl warning.
 
 2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
