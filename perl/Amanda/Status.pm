@@ -1524,6 +1524,7 @@ sub set_summary {
     delete $self->{'busy_dumper'};
 
     if (defined $self->{'current_time'} and
+	defined $self->{'start_time'} and
 	$self->{'current_time'} != $self->{'start_time'}) {
 	my $total_time = $self->{'current_time'} - $self->{'start_time'};
 
