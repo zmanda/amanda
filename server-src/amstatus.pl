@@ -1474,7 +1474,8 @@ if (defined $opt_summary) {
 }
 
 if(defined $opt_stats) {
-	if(defined($current_time) && $current_time != $start_time) {
+	if(defined($current_time) and defined($start_time) and
+	   $current_time != $start_time) {
 		$total_time=$current_time-$start_time;
 		foreach $key (sort byprocess keys %busy_time) {
 			printf "%8s busy   : %8s  (%6.2f%%)\n",

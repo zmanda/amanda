@@ -1,3 +1,6 @@
+2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix perl warning.
+
 2014-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* xfer-src/filter-process.c (get_err_fd): Remove prototype.
 	* xfer-src/xfer-element.h (get_err_fd): Add prototype.
