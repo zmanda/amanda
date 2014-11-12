@@ -1,4 +1,7 @@
 2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* autogen: Add "-I /usr/share/aclocal" to includes
+
+2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Amdump.pm (run): set $self->{'pid'}
 	* perl/Amanda/Amflush.pm (run): set $self->{'pid'}
 	* perl/Amanda/CheckDump.pm (run): set $self->{'pid'}
