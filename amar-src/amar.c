@@ -634,8 +634,15 @@ amar_attr_add_data_fd(
 
 	size = read_fully(fd, buf, MAX_RECORD_DATA_SIZE, &read_error);
 
-	if (size == 0)
+	if (size == 0) {
+	    if (eoa && !attribute->wrote_eoa) {
+		if (!write_record(archive, file, attribute->attrid,
+				  1, buf, size, error)) {
+		    filesize = -1;
+		}
+	    }
 	    break;
+	}
 
 	short_read = (size < MAX_RECORD_DATA_SIZE);
 

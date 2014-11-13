@@ -1,3 +1,6 @@
+2014-11-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c (amar_attr_add_data_fd): write eoa on size==0.
+
 2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* autogen: Add "-I /usr/share/aclocal" to includes
 
