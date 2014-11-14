@@ -1,3 +1,8 @@
+2014-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Process.pm: '<defunct>' process are dead, process can be
+	  "starman".
+	* perl/Amanda/Rest/Runs.pm: Call process_alive with the $pname.
+
 2014-11-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_attr_add_data_fd): write eoa on size==0.
 

@@ -965,8 +965,7 @@ sub list {
 	    }
 	}
 	if ($status eq "running" and $pid) {
-	    #$status = "aborted" if !$Amanda_process->process_alive($pid, $pname);
-	    $status = "aborted" if !$Amanda_process->process_alive($pid);
+	    $status = "aborted" if !$Amanda_process->process_alive($pid, $pname);
 	}
 	if ((!defined($params{'status'}) or
 	     $params{'status'} eq $status) and

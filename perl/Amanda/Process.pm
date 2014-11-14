@@ -207,6 +207,7 @@ sub load_ps_table() {
 	my $psline = <PSTABLE>; #header line
 	while($psline = <PSTABLE>) {
 	    chomp $psline;
+	    next if $psline =~ /\<defunct\>/;
 	    my ($pid, $ppid, $pname, $arg1, $arg2) = split " ", $psline;
 	    $pname = basename($pname);
 	    if ($pname =~ /^perl/ && defined $arg1) {
@@ -485,7 +486,8 @@ sub process_alive() {
     my $pname = shift;
 
     if (defined $pname && defined $self->{pstable}->{$pid}) {
-	return $self->{pstable}->{$pid} eq $pname;
+	return $self->{pstable}->{$pid} eq $pname ||
+	       $self->{pstable}->{$pid} eq "starman";
     } else {
 	return defined $self->{pstable}->{$pid};
     }
