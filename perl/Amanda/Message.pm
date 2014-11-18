@@ -89,13 +89,14 @@ not handled by Amanda::Message):
  2900000  senddiscover
  3000000  Amanda::Amvmware::Message
  3100000  Amanda::Service::Message
- 3200000  amanda-extensions
+ 3200000  Amanda::Appliance
  3300000  Amanda::Fetchdump::Message
  3400000  Amanda::Cleanup::Message
  3500000  Amanda::Process::Message
  3600000  selfcheck
  3700000  amgtar
  3800000  Amanda::Extensions::Message
+   3801000  Amanda::Extensions::Rest::Application::Amvmware
 
 general keys:
   code            =>

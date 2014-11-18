@@ -1,4 +1,7 @@
 2014-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: Fix code number attribution.
+
+2014-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amservice.c: Set remote_errors on "ERROR" from the
 	  client. To get an exit code with error.
 
