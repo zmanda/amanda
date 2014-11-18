@@ -267,7 +267,6 @@ handle_result(
     char *s;
     int ch;
     int port_num = 0;
-    int has_error = 0;
 
     if (pkt == NULL) {
 	g_fprintf(stdout,
@@ -302,11 +301,11 @@ handle_result(
 	    if (copy_stream) {
 		fprintf(stdout, "%s\n", line);
 	    }
-	    has_error++;
+	    remote_errors++;
 	}
     }
 
-    if (has_error)
+    if (remote_errors)
 	return;
 
     if (copy_stream) {

@@ -1,4 +1,8 @@
 2014-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c: Set remote_errors on "ERROR" from the
+	  client. To get an exit code with error.
+
+2014-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Services.pm: Add a waitpid of the amservice
 	  process.
 	* perl/Amanda/Service.pm: Add messages code.
