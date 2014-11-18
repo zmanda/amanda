@@ -41,6 +41,14 @@ sub local_message {
         return "No application argument specified";
     } elsif ($self->{'code'} == 3100005) {
         return "senddiscover result";
+    } elsif ($self->{'code'} == 3100006) {
+        return "No output from amservice";
+    } elsif ($self->{'code'} == 3100007) {
+        return "$self->{'program'} exited with value $self->{'exit_code'}";
+    } elsif ($self->{'code'} == 3100008) {
+        return "failed to execute $self->{'program'}: $self->{'errornostr'}";
+    } elsif ($self->{'code'} == 3100009) {
+        return "$self->{'program'} died with signal $self->{'signal'}";
     } else {
 	return "no message for code $self->{'code'}";
     }

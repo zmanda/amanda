@@ -1,3 +1,8 @@
+2014-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Services.pm: Add a waitpid of the amservice
+	  process.
+	* perl/Amanda/Service.pm: Add messages code.
+
 2014-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Process.pm: '<defunct>' process are dead, process can be
 	  "starman".

@@ -117,9 +117,10 @@ sub discover {
 	}
     }
 
+    Amanda::Debug::debug("Running: $Amanda::Paths::sbindir/amservice " . join(' ', @amservice_args));
     # fork the amservice process
     my($wtr, $rdr);
-    open3($wtr, $rdr, undef, "$Amanda::Paths::sbindir/amservice", @amservice_args);
+    my $pid = open3($wtr, $rdr, undef, "$Amanda::Paths::sbindir/amservice", @amservice_args);
     print $wtr "<dle>\n";
     if (defined $params{'diskdevice'}) {
 	print $wtr "  <diskdevice>$params{'diskdevice'}</diskdevice>\n";
@@ -143,9 +144,16 @@ sub discover {
     while (my $line = <$rdr>) {
 	$buf .= $line;
     }
+    close($rdr);
     my $ret;
 
-    if ($first_line =~ /OPTIONS /) {
+    if (!defined $first_line) {
+	push @{$ret}, Amanda::Service::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code     => 3100006,
+			severity => $Amanda::Message::ERROR);
+    } elsif ($first_line =~ /OPTIONS /) {
 	#convert JSON buffer to perl object
 	eval { $ret = decode_json $buf };
 	if ($@) {
@@ -166,7 +174,36 @@ sub discover {
 			severity => $Amanda::Message::ERROR,
 			errmsg   => $first_line . "\n" . $buf);
     }
-    close($rdr);
+
+    waitpid($pid, 0);
+    my $child_error = $?;
+    my $exit_code = $? >> 8;
+    my $errno = $!;
+    if ($child_error == -1) {
+	push @{$ret}, Amanda::Service::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3100008,
+			severity        => $Amanda::Message::ERROR,
+			program		=> "$Amanda::Paths::sbindir/amservice",
+			errno		=> $errno);
+    } elsif ($child_error & 127) {
+	push @{$ret}, Amanda::Service::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3100009,
+			severity        => $Amanda::Message::ERROR,
+			program		=> "$Amanda::Paths::sbindir/amservice",
+			signal          => ($child_error & 127));
+    } elsif ($child_error > 0) {
+	push @{$ret}, Amanda::Service::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3100007,
+			severity        => $exit_code == 0 ? $Amanda::Message::SUCCESS : $Amanda::Message::ERROR,
+			program		=> "$Amanda::Paths::sbindir/amservice",
+			exit_code       => $exit_code);
+    }
 
     #return perl object
     return $ret
