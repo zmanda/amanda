@@ -1,3 +1,6 @@
+2014-11-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am: Add '-I /usr/share/aclocal' to ACLOCAL_AMFLAGS
+
 2014-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* autogen: Add "-I /usr/share/aclocal" to includes
 
