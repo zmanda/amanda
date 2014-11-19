@@ -1,4 +1,10 @@
 2014-11-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/test-driver: New file for automake-1.14
+	* config/missing, config/ylwrap, config/install-sh,
+	  config/mkinstalldirs, config/depcomp, config/compile,
+	  config/config.guess, config/config.sub: Update to automake-1.14
+
+2014-11-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am: Add '-I /usr/share/aclocal' to ACLOCAL_AMFLAGS
 
 2014-11-18  Jean-Louis Martineau <martineau@zmanda.com>
