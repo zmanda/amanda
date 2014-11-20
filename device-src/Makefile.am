@@ -10,7 +10,7 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/ndmp-src \
 		-I$(top_srcdir)/gnulib
 
-AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 if GCC_COMPILER
 # ndmp-device.c includes files with old-skool prototypes, so:
 AM_CFLAGS += -Wno-strict-prototypes

@@ -552,7 +552,7 @@ main(
 
     if (gnutar_onefilesystem == 2) {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700007, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3700007, MSG_ERROR, 4,
 			"value", gnutar_onefilesystem_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
@@ -561,7 +561,7 @@ main(
 
     if (gnutar_sparse == 2) {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700008, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3700008, MSG_ERROR, 4,
 			"value", gnutar_sparse_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
@@ -570,7 +570,7 @@ main(
 
     if (gnutar_atimepreserve == 2) {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700009, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3700009, MSG_ERROR, 4,
 			"value", gnutar_atimepreserve_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
@@ -579,7 +579,7 @@ main(
 
     if (gnutar_checkdevice == 2) {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700010, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3700010, MSG_ERROR, 4,
 			"value", gnutar_checkdevice_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
@@ -588,7 +588,7 @@ main(
 
     if (gnutar_no_unquote == 2) {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700011, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3700011, MSG_ERROR, 4,
 			"value", gnutar_no_unquote_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
@@ -740,14 +740,14 @@ amgtar_selfcheck(
 {
     if (argument->dle.disk) {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700000, MSG_INFO, 3,
+			AMANDA_FILE, __LINE__, 3700000, MSG_INFO, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
     }
 
     delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700001, MSG_INFO, 4,
+			AMANDA_FILE, __LINE__, 3700001, MSG_INFO, 4,
 			"version", VERSION,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
@@ -755,7 +755,7 @@ amgtar_selfcheck(
     amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
     delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700004, MSG_INFO, 3,
+			AMANDA_FILE, __LINE__, 3700004, MSG_INFO, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
@@ -774,14 +774,14 @@ amgtar_selfcheck(
 		char *gv;
 		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
 		delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700002, MSG_INFO, 4,
+			AMANDA_FILE, __LINE__, 3700002, MSG_INFO, 4,
 			"gtar-version", gv,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 	    } else {
 		delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700003, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3700003, MSG_ERROR, 4,
 			"gtar-path", gnutar_path,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
@@ -793,7 +793,7 @@ amgtar_selfcheck(
 	}
     } else {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700005, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3700005, MSG_ERROR, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
@@ -805,7 +805,7 @@ amgtar_selfcheck(
 	delete_message(print_message(check_dir_message(gnutar_listdir, R_OK|W_OK)));
     } else {
 	delete_message(print_message(build_message(
-			__FILE__, __LINE__, 3700006, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3700006, MSG_ERROR, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));

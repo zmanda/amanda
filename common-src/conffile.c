@@ -9923,7 +9923,7 @@ config_print_errors_as_message(void)
 "     \"severity\" : \"16\",\n" \
 "     \"code\" : \"%d\",\n" \
 "     \"message\" : \"%s\"\n" \
-"  },\n", __FILE__, __LINE__, 1500016 , (char *)iter->data);
+"  },\n", AMANDA_FILE, __LINE__, 1500016 , (char *)iter->data);
     }
 }
 

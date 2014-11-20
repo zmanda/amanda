@@ -1762,7 +1762,7 @@ check_access_message(
 
     if(EUIDACCESS(filename, mode) == -1) {
 	return build_message(
-		__FILE__, __LINE__, 3600063, MSG_ERROR, 5,
+		AMANDA_FILE, __LINE__, 3600063, MSG_ERROR, 5,
 		"errno", errno,
 		"noun", noun,
 		"filename", filename,
@@ -1770,7 +1770,7 @@ check_access_message(
 		"euid", g_strdup_printf("%d", geteuid()));
     } else {
 	return build_message(
-		__FILE__, __LINE__, 3600064, MSG_INFO, 5,
+		AMANDA_FILE, __LINE__, 3600064, MSG_INFO, 5,
 		"noun", noun,
 		"adjective", adjective,
 		"filename", filename,
@@ -1789,12 +1789,12 @@ check_file_message(
     if(!stat(filename, &stat_buf)) {
 	if(!S_ISREG(stat_buf.st_mode)) {
 	    return build_message(
-		__FILE__, __LINE__, 3600059, MSG_ERROR, 1,
+		AMANDA_FILE, __LINE__, 3600059, MSG_ERROR, 1,
 		"filename", filename);
 	}
     } else {
 	return build_message(
-		__FILE__, __LINE__, 3600060, MSG_ERROR, 2,
+		AMANDA_FILE, __LINE__, 3600060, MSG_ERROR, 2,
 		"errno", errno,
 		"filename", filename);
     }
@@ -1814,13 +1814,13 @@ check_dir_message(
     if(!stat(dirname, &stat_buf)) {
 	if(!S_ISDIR(stat_buf.st_mode)) {
 	    return build_message(
-		__FILE__, __LINE__, 3600061, MSG_ERROR, 1,
+		AMANDA_FILE, __LINE__, 3600061, MSG_ERROR, 1,
 		"dirname", dirname);
 	    return FALSE;
 	}
     } else {
 	return build_message(
-		__FILE__, __LINE__, 3600062, MSG_ERROR, 2,
+		AMANDA_FILE, __LINE__, 3600062, MSG_ERROR, 2,
 		"errno", errno,
 		"dirname", dirname);
 	return FALSE;
@@ -1842,18 +1842,18 @@ check_suid_message(
     if(!stat(filename, &stat_buf)) {
 	if(stat_buf.st_uid != 0 ) {
 	    return build_message(
-		__FILE__, __LINE__, 3600065, MSG_ERROR, 1,
+		AMANDA_FILE, __LINE__, 3600065, MSG_ERROR, 1,
 		"filename", filename);
 	}
 	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
 	    return build_message(
-		__FILE__, __LINE__, 3600066, MSG_ERROR, 1,
+		AMANDA_FILE, __LINE__, 3600066, MSG_ERROR, 1,
 		"filename", filename);
 	}
     }
     else {
 	return build_message(
-		__FILE__, __LINE__, 3600067, MSG_ERROR, 2,
+		AMANDA_FILE, __LINE__, 3600067, MSG_ERROR, 2,
 		"errno", errno,
 		"filename", filename);
     }

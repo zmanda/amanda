@@ -78,7 +78,7 @@ INCLUDES =	-I$(top_builddir)/common-src \
 # TODO: tests!
 
 # add the Amanda version to the ndmjoblib version info
-AM_CFLAGS = -DNDMOS_CONST_NDMJOBLIB_REVISION='"amanda-$(VERSION)"'
+AM_CFLAGS = -DNDMOS_CONST_NDMJOBLIB_REVISION='"amanda-$(VERSION)"' $(AMANDA_FILE_CFLAGS)
 # note that this directory is compiled *without* the usual Amanda warnings,
 # because the rpcgen-generated code (including header files) generates copious
 # warnings and cannot be changed, and cannot be ignored in older versions of

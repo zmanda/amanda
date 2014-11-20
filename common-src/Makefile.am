@@ -7,7 +7,7 @@ include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =      -I$(top_srcdir)/gnulib
 
-AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 amlib_LTLIBRARIES =	libamanda.la

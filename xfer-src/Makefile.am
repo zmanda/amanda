@@ -8,7 +8,7 @@ INCLUDES =      -I$(top_srcdir)/gnulib \
 		-I$(top_srcdir)/device-src \
 		-I$(top_srcdir)/common-src
 
-AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
 amlib_LTLIBRARIES =	libamxfer.la

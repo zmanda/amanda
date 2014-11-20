@@ -161,7 +161,7 @@ main(
 	g_printf("OPTIONS \n");
 	g_printf("[\n");
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900004, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900004, 16, 0)));
 	goto err;
     }
     g_printf("OPTIONS ");
@@ -185,30 +185,30 @@ main(
 	dle = amxml_parse_node_FILE(stdin, &errmsg);
 	if (errmsg) {
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900013, 16, 1,
+			AMANDA_FILE, __LINE__, 2900013, 16, 1,
 			"errmsg", errmsg)));
 	    goto err;
 	}
 	if (!dle) {
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900014, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900014, 16, 0)));
 	    goto err;
 	} else if (dle->next) {
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900015, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900015, 16, 0)));
 	    goto err;
 	}
 
     } else {
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900007, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900007, 16, 0)));
 	goto err;
     }
     gdle = dle;
 
     if (dle->program   == NULL) {
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900008, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900008, 16, 0)));
 	goto err;
     }
 
@@ -216,14 +216,14 @@ main(
 
     if (dle->program_is_application_api == 0) {
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900003, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900003, 16, 0)));
 	goto err;
     }
 
     if (dle->auth && amandad_auth) {
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900009, 16, 2,
+			AMANDA_FILE, __LINE__, 2900009, 16, 2,
 			"amandad_auth", amandad_auth,
 			"dle_auth", dle->auth)));
 	    goto err;
@@ -232,7 +232,7 @@ main(
 
     if (merge_dles_properties(dle, 0) == 0) {
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900003, 16, 0)));
+			AMANDA_FILE, __LINE__, 2900003, 16, 0)));
 	goto err;
     }
     if (dle->program_is_application_api == 1) {
@@ -252,13 +252,13 @@ main(
 	    for (i=0; i < errarray->len; i++) {
 		errmsg = g_ptr_array_index(errarray, i);
 		delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900000, 16, 2,
+			AMANDA_FILE, __LINE__, 2900000, 16, 2,
 			"application", dle->program,
 			"errmsg", errmsg)));
 	    }
 	    if (i == 0) { /* no errarray */
 		delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900000, 16, 1,
+			AMANDA_FILE, __LINE__, 2900000, 16, 1,
 			"application", dle->program)));
 	    }
 	    g_ptr_array_free_full(errarray);
@@ -267,13 +267,13 @@ main(
 
 	if (!bsu->discover) {
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900002, 16, 1,
+			AMANDA_FILE, __LINE__, 2900002, 16, 1,
 			"application", dle->program)));
 	    goto err;
 	}
 	if (pipe(errfd) < 0) {
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900005, 16, 1,
+			AMANDA_FILE, __LINE__, 2900005, 16, 1,
 			"application", dle->program)));
 	    goto err;
 	}
@@ -310,14 +310,14 @@ main(
 	    if (dup2(errfd[1], 2) == -1) {
 		int save_errno = errno;
 	        delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900006, 16, 1,
+			AMANDA_FILE, __LINE__, 2900006, 16, 1,
 			"errno", save_errno)));
 		goto err;
 	    }
 	    if (dup2(1, 3) == -1) {
 		int save_errno = errno;
 	        delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900006, 16, 1,
+			AMANDA_FILE, __LINE__, 2900006, 16, 1,
 			"errno", save_errno)));
 		goto err;
 	    }
@@ -331,7 +331,7 @@ main(
 	case -1: {
 	    int save_errno = errno;
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900010, 16, 2,
+			AMANDA_FILE, __LINE__, 2900010, 16, 2,
 			"application", dle->program,
 			"errno", save_errno)));
 	    goto err;
@@ -343,7 +343,7 @@ main(
 	if (!dumperr) {
 	    int save_errno = errno;
 	    delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900011, 16, 1,
+			AMANDA_FILE, __LINE__, 2900011, 16, 1,
 			"errno", save_errno)));
 	    goto err;
 	}
@@ -352,7 +352,7 @@ main(
 	while ((line = agets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
 		delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900012, 16, 2,
+			AMANDA_FILE, __LINE__, 2900012, 16, 2,
 			"application", dle->program,
 			"errmsg", line)));
 		result = 1;
@@ -430,13 +430,13 @@ check_status(
 
     if (ret == 0) {
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900016, 16, 3,
+			AMANDA_FILE, __LINE__, 2900016, 16, 3,
 			"application", str,
 			"pid", g_strdup_printf("%d", (int)pid),
 			"signal", g_strdup_printf("%d", (int)sig))));
     } else {
 	delete_message(fprint_message(stdout, build_message(
-			__FILE__, __LINE__, 2900017, 16, 3,
+			AMANDA_FILE, __LINE__, 2900017, 16, 3,
 			"application", str,
 			"pid", g_strdup_printf("%d", (int)pid),
 			"return_code", g_strdup_printf("%d", (int)ret))));

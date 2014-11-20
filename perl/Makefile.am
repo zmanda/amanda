@@ -14,7 +14,7 @@ SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
 # to trigger warnings.
-AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS)
+AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS) $(AMANDA_FILE_CFLAGS)
 
 # Appropriate INCLUDES depends on which components (server or client) are
 # being built

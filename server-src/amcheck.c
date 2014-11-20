@@ -167,7 +167,7 @@ void
 usage(void)
 {
     delete_message(amcheck_print_message(build_message(
-		__FILE__, __LINE__, 2800000, MSG_MESSAGE, 0)));
+		AMANDA_FILE, __LINE__, 2800000, MSG_MESSAGE, 0)));
 
     amcheck_exit(1);
     /*NOTREACHED*/
@@ -256,7 +256,7 @@ main(
 	case 1:		client_verbose = TRUE;
 			break;
 	case 2:		delete_message(amcheck_print_message(build_message(
-				__FILE__, __LINE__, 2800001, MSG_MESSAGE, 1,
+				AMANDA_FILE, __LINE__, 2800001, MSG_MESSAGE, 1,
 				"version", VERSION)));
 			return(0);
 			break;
@@ -266,13 +266,13 @@ main(
 			break;
 	case 'M':	if (mailto) {
 			    delete_message(amcheck_print_message(build_message(
-				__FILE__, __LINE__, 2800002, MSG_ERROR, 0)));
+				AMANDA_FILE, __LINE__, 2800002, MSG_ERROR, 0)));
 			    amcheck_exit(1);
 			}
 			mailto=g_strdup(optarg);
 			if(!validate_mailto(mailto)){
 			    delete_message(amcheck_print_message(build_message(
-				__FILE__, __LINE__, 2800003, MSG_ERROR, 0)));
+				AMANDA_FILE, __LINE__, 2800003, MSG_ERROR, 0)));
 			   amcheck_exit(1);
 			}
 			/*FALLTHROUGH*/
@@ -328,7 +328,7 @@ main(
 	}
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800228, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800228, MSG_ERROR, 0)));
 	    exit(1);
 	    //g_critical("errors processing config file");
 	}
@@ -338,23 +338,23 @@ main(
     if ((!mailer || *mailer == '\0') && mailout == 1) {
 	if (alwaysmail == 1) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800004, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800004, MSG_ERROR, 0)));
 	} else {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800005, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800005, MSG_ERROR, 0)));
 	}
 	amcheck_exit(1);
     }
     if(mailout && !mailto &&
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800006, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800006, MSG_ERROR, 0)));
         if (alwaysmail) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800008, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800008, MSG_ERROR, 0)));
 	} else {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800009, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800009, MSG_ERROR, 0)));
 	}
 	amcheck_exit(1);
     }
@@ -364,22 +364,22 @@ main(
           strlen(getconf_str(CNF_MAILTO)) > 0) {
           if(!validate_mailto(getconf_str(CNF_MAILTO))){
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800010, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800010, MSG_ERROR, 1,
 			"mailto", getconf_str(CNF_MAILTO))));
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800011, MSG_INFO, 0)));
+			AMANDA_FILE, __LINE__, 2800011, MSG_INFO, 0)));
                 mailout = 0;
           }
        }
        else {
 	  delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800012, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800012, MSG_ERROR, 0)));
           if (alwaysmail) {
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800013, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800013, MSG_ERROR, 0)));
 	  } else {
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800014, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800014, MSG_ERROR, 0)));
 	  }
 	  amcheck_exit(1);
       }
@@ -393,7 +393,7 @@ main(
 	    char *errstr = g_ptr_array_index(err_array, i);
 	    g_debug("%s", errstr);
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800015, MSG_MESSAGE, 1,
+			AMANDA_FILE, __LINE__, 2800015, MSG_MESSAGE, 1,
 			"errstr", errstr)));
 	}
     }
@@ -407,7 +407,7 @@ main(
     dumpuser = getconf_str(CNF_DUMPUSER);
     if ((pw = getpwnam(dumpuser)) == NULL) {
 	delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800215, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800215, MSG_ERROR, 1,
 			"dumpuser"	, dumpuser)));
 	exit(1);
 	/*NOTREACHED*/
@@ -416,7 +416,7 @@ main(
     if (getpwuid(uid_me) == NULL) {
 	// leak memory
 	delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800216, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800216, MSG_ERROR, 1,
 			"uid"	, g_strdup_printf("%ld", (long)uid_me))));
 	exit(1);
 	/*NOTREACHED*/
@@ -424,7 +424,7 @@ main(
 #ifdef CHECK_USERID
     if (uid_me != uid_dumpuser) {
 	delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800217, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800217, MSG_ERROR, 2,
 			"running_user"	, pw->pw_name,
 			"expected_user" , dumpuser)));
 	exit(1);
@@ -448,7 +448,7 @@ main(
 	tempfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.temp.", pid_str, NULL);
 	if((tempfd = fopen(tempfname, "w+")) == NULL) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800218, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800218, MSG_ERROR, 2,
 			"filename", tempfname,
 			"errno"   , errno)));
 	    exit(1);
@@ -461,7 +461,7 @@ main(
 	mainfname = g_strjoin(NULL, AMANDA_TMPDIR, "/amcheck.main.", pid_str, NULL);
 	if((mainfd = fopen(mainfname, "w+")) == NULL) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800219, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800219, MSG_ERROR, 2,
 			"filename", tempfname,
 			"errno"   , errno)));
 	    exit(1);
@@ -503,7 +503,7 @@ main(
 	    serverchk_pid = 0;
 	} else {
 	    delete_message(amcheck_fprint_message(mainfd, build_message(
-					__FILE__, __LINE__, 2800021, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800021, MSG_ERROR, 1,
 					"pid", g_strdup_printf("%ld", (long)pid))));
 	}
     }
@@ -516,13 +516,13 @@ main(
 	tempfdr = fopen(tempfname, "r");
 	if (!tempfdr) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800228, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800228, MSG_ERROR, 2,
 			"filename", tempfname,
 			"errno"   , errno)));
 	} else {
 	    if(fseek(tempfdr, (off_t)0, 0) == (off_t)-1) {
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800220, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800220, MSG_ERROR, 2,
 			"errno"   , errno)));
 		exit(1);
 		/*NOTREACHED*/
@@ -541,7 +541,7 @@ main(
 
     if (opt_message) printf(",\n");
     delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800016, MSG_MESSAGE, 1,
+			AMANDA_FILE, __LINE__, 2800016, MSG_MESSAGE, 1,
 			"version", VERSION)));
 
     amfree(our_feature_string);
@@ -570,7 +570,7 @@ main(
 	fflush(stdout);
 	if (fseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800221, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800221, MSG_ERROR, 2,
 			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
@@ -593,14 +593,14 @@ main(
 	    a = split_quoted_strings(getconf_str(CNF_MAILTO));
 	    if (!a) {
 		 delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800017, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800017, MSG_ERROR, 1,
 			"mailto", getconf_str(CNF_MAILTO))));
 		amcheck_exit(1);
 	    }
 	}
 	if((nullfd = open("/dev/null", O_RDWR)) < 0) {
 		delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800227, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800227, MSG_ERROR, 2,
 			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
@@ -620,7 +620,7 @@ main(
 	g_ptr_array_add(pipeargs, NULL);
 	if (!valid_mailto) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800017, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800017, MSG_ERROR, 1,
 			"mailto", getconf_str(CNF_MAILTO))));
 	    amcheck_exit(1);
 	}
@@ -648,14 +648,14 @@ main(
 		    break;
 		} else if(errno != 0) {
 		    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800222, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800222, MSG_ERROR, 2,
 			"errno"   , errno)));
 		    exit(1);
 		    /*NOTREACHED*/
 		} else {
 		    // the 2 g_strdup_printf leak memory.
 		    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800223, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800223, MSG_ERROR, 2,
 			"write_size"	, g_strdup_printf("%zd", w),
 			"expected_size"	, g_strdup_printf("%zd", r))));
 		    exit(1);
@@ -667,7 +667,7 @@ main(
 	ferr = fdopen(errfd, "r");
 	if (!ferr) {
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800224, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800224, MSG_ERROR, 1,
 			"errno"   , errno)));
 	    exit(1);
 	    /*NOTREACHED*/
@@ -696,7 +696,7 @@ main(
 		amfree(extra_info);
 	    }
 	    delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800225, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800225, MSG_ERROR, 2,
 			"mailer"   , mailer,
 			"errmsg"   , err?err:"(unknown)")));
 	    exit(1);
@@ -727,18 +727,18 @@ int check_tapefile(
     if (stat(tapefile, &statbuf) == 0) {
 	if (!S_ISREG(statbuf.st_mode)) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800018, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800018, MSG_ERROR, 1,
 			"tapelist" , tapefile)));
 	    tapebad = 1;
 	} else if (access(tapefile, F_OK) != 0) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800019, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800019, MSG_ERROR, 2,
 			"errno"	   , errno,
 			"tapelist" , tapefile)));
 	    tapebad = 1;
 	} else if (access(tapefile, W_OK) != 0) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800020, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800020, MSG_ERROR, 2,
 			"errno"	   , errno,
 			"tapelist" , tapefile)));
 	    tapebad = 1;
@@ -761,17 +761,17 @@ test_server_pgm(
     pgm = g_strjoin(NULL, dir, "/", pgm, NULL);
     if(stat(pgm, &statbuf) == -1) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800022, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800022, MSG_ERROR, 1,
 					"program", pgm)));
 	pgmbad = 1;
     } else if (!S_ISREG(statbuf.st_mode)) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800023, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800023, MSG_ERROR, 1,
 					"program", pgm)));
 	pgmbad = 1;
     } else if (access(pgm, X_OK) == -1) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800024, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800024, MSG_ERROR, 1,
 					"program", pgm)));
 	pgmbad = 1;
 #ifndef SINGLE_USERID
@@ -779,7 +779,7 @@ test_server_pgm(
 	       && dumpuid != 0
 	       && (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800025, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800025, MSG_ERROR, 1,
 					"program", pgm)));
 	pgmbad = 1;
 #else
@@ -857,7 +857,7 @@ static gboolean test_tape_status(FILE * outf) {
 		    }
 		} else {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 123, MSG_MESSAGE, 1,
+					AMANDA_FILE, __LINE__, 123, MSG_MESSAGE, 1,
 					"errstr", line)));
 		}
 		g_free(line);
@@ -870,7 +870,7 @@ static gboolean test_tape_status(FILE * outf) {
 
 	if (WIFSIGNALED(wait_status)) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800026, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800026, MSG_ERROR, 1,
 					"signal", g_strdup_printf("%d", WTERMSIG(wait_status)))));
 	    success = FALSE;
 	} else if (WIFEXITED(wait_status)) {
@@ -909,7 +909,7 @@ start_server_check(
     switch(pid = fork()) {
     case -1:
 	delete_message(amcheck_print_message(build_message(
-			__FILE__, __LINE__, 2800226, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800226, MSG_ERROR, 1,
 			"errno"	, errno)));
 	exit(1);
         g_assert_not_reached();
@@ -930,7 +930,7 @@ start_server_check(
     set_root_privs(-1);
 
     delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800027, MSG_MESSAGE, 0)));
+			AMANDA_FILE, __LINE__, 2800027, MSG_MESSAGE, 0)));
     if (!opt_message) {
 	fprintf(outf, "-----------------------------\n");
     }
@@ -952,7 +952,7 @@ start_server_check(
 		lbl_templ = config_dir_relative(lbl_templ);
 		if (access(lbl_templ, R_OK) == -1) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800029, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 2800029, MSG_ERROR, 3,
 			"errno",	errno,
 			"storage",	storage_n,
 			"filename",	lbl_templ)));
@@ -961,7 +961,7 @@ start_server_check(
 		amfree(lbl_templ);
 #if !defined(HAVE_LPR_CMD)
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800030, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800030, MSG_ERROR, 1,
 			"storage",	storage_n)));
 		confbad = 1;
 #endif
@@ -970,7 +970,7 @@ start_server_check(
 	    if (storage_get_flush_threshold_scheduled(storage)
 		< storage_get_flush_threshold_dumped(storage)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800031, MSG_WARNING, 3,
+			AMANDA_FILE, __LINE__, 2800031, MSG_WARNING, 3,
 			"storage",	storage_n,
 			"flush_threshold_dumped", g_strdup_printf("%d",storage_get_flush_threshold_dumped(storage)),
 			"flush_threshold_scheduled", g_strdup_printf("%d",storage_get_flush_threshold_scheduled(storage)))));
@@ -979,7 +979,7 @@ start_server_check(
 	    if (storage_get_flush_threshold_scheduled(storage)
 		< storage_get_taperflush(storage)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800032, MSG_WARNING, 3,
+			AMANDA_FILE, __LINE__, 2800032, MSG_WARNING, 3,
 			"storage",	storage_n,
 			"taperflush", g_strdup_printf("%d",storage_get_taperflush(storage)),
 			"flush_threshold_scheduled", g_strdup_printf("%d",storage_get_flush_threshold_scheduled(storage)))));
@@ -988,14 +988,14 @@ start_server_check(
 	    if (storage_get_taperflush(storage) &&
 	        !storage_get_autoflush(storage)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800033, MSG_WARNING, 3,
+			AMANDA_FILE, __LINE__, 2800033, MSG_WARNING, 3,
 			"storage",	storage_n,
 			"taperflush", g_strdup_printf("%d",storage_get_taperflush(storage)))));
 	    }
 
 	    if (!storage_seen(storage, STORAGE_TAPETYPE)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800034, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800034, MSG_ERROR, 1,
 			"storage",	storage_n)));
 		confbad = 1;
 	    }
@@ -1004,7 +1004,7 @@ start_server_check(
 	    policy = lookup_policy(policy_n);
 	    if (policy_get_retention_tapes(policy) <= storage_get_runtapes(storage)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800035, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800035, MSG_ERROR, 2,
 			"storage",	storage_n,
 			"policy",	policy_n)));
 	    }
@@ -1014,7 +1014,7 @@ start_server_check(
 		uintmax_t kb_needed = storage_get_device_output_buffer_size(storage) / 1024;
 		if (kb_avail < kb_needed) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800036, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800036, MSG_ERROR, 2,
 			"kb_avail",	g_strdup_printf("%ju", kb_avail),
 			"kb_needed",	g_strdup_printf("%ju", kb_needed))));
 		}
@@ -1024,7 +1024,7 @@ start_server_check(
 	/* Double-check that 'localhost' resolves properly */
 	if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800037, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800037, MSG_ERROR, 1,
 			"gai_strerror",	gai_strerror(res))));
 	    confbad = 1;
 	}
@@ -1040,7 +1040,7 @@ start_server_check(
 	 */
 	if(access(amlibexecdir, X_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800038, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800038, MSG_ERROR, 2,
 			"dir",	amlibexecdir,
 			"errno", errno)));
 	    pgmbad = 1;
@@ -1060,7 +1060,7 @@ start_server_check(
 	}
 	if(access(sbindir, X_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800040, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800040, MSG_ERROR, 2,
 			"dir",	sbindir,
 			"errno", errno)));
 	    pgmbad = 1;
@@ -1076,7 +1076,7 @@ start_server_check(
 	}
 	if(access(COMPRESS_PATH, X_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800042, MSG_WARNING, 2,
+			AMANDA_FILE, __LINE__, 2800042, MSG_WARNING, 2,
 			"program", COMPRESS_PATH,
 			"errno",   errno)));
 	}
@@ -1114,7 +1114,7 @@ start_server_check(
 	}
 	if(access(tape_dir, W_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800044, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800044, MSG_ERROR, 2,
 			"tape_dir", tape_dir,
 			"errno",   errno)));
 	    tapebad = 1;
@@ -1122,19 +1122,19 @@ start_server_check(
 	else if(stat(tapefile, &statbuf) == -1) {
 	    if (errno != ENOENT) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800045, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800045, MSG_ERROR, 2,
 			"tapefile", tapefile,
 			"errno",   errno)));
 		tapebad = 1;
 	    } else {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800046, MSG_INFO, 0)));
+			AMANDA_FILE, __LINE__, 2800046, MSG_INFO, 0)));
 	    }
 	} else {
 	    tapebad |= check_tapefile(outf, tapefile);
 	    if (tapebad == 0 && read_tapelist(tapefile)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800047, MSG_INFO, 1,
+			AMANDA_FILE, __LINE__, 2800047, MSG_INFO, 1,
 			"tapefile", tapefile)));
 		tapebad = 1;
 	    }
@@ -1157,7 +1157,7 @@ start_server_check(
 	holdfile = config_dir_relative("hold");
 	if(access(holdfile, F_OK) != -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800048, MSG_WARNING, 1,
+			AMANDA_FILE, __LINE__, 2800048, MSG_WARNING, 1,
 			"holdfile", holdfile)));
 	}
 	amfree(tapefile);
@@ -1168,7 +1168,7 @@ start_server_check(
 	    if (getconf_str(CNF_TPCHANGER) == NULL &&
 		getconf_identlist(CNF_STORAGE) == NULL) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800051, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800051, MSG_WARNING, 0)));
 		testtape = 0;
 		do_tapechk = 0;
 	    }
@@ -1183,17 +1183,17 @@ start_server_check(
 	if (!tapetype_seen(tp, TAPETYPE_PART_SIZE)) {
 	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_TYPE)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800052, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800052, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800053, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800053, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 	    if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800054, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800054, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 	} else {
@@ -1202,12 +1202,12 @@ start_server_check(
 		if (!tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)
 			    || !part_cache_dir || !*part_cache_dir) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800055, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800055, MSG_ERROR, 0)));
 		    tapebad = 1;
 		} else {
 		    if(get_fs_usage(part_cache_dir, NULL, &fsusage) == -1) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800056, MSG_ERROR, 2,
+				AMANDA_FILE, __LINE__, 2800056, MSG_ERROR, 2,
 				"errno", errno,
 				"part-cache-dir", part_cache_dir)));
 			tapebad = 1;
@@ -1220,7 +1220,7 @@ start_server_check(
 			}
 			if (kb_avail < kb_needed) {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800057, MSG_ERROR, 2,
+				AMANDA_FILE, __LINE__, 2800057, MSG_ERROR, 2,
 				"kb_avail", kb_avail,
 				"kb_needed", kb_needed)));
 			    tapebad = 1;
@@ -1237,7 +1237,7 @@ start_server_check(
 		}
 		if (kb_avail < kb_needed) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800058, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800058, MSG_ERROR, 2,
 			"kb_avail", kb_avail,
 			"kb_needed", kb_needed)));
 		    tapebad = 1;
@@ -1248,7 +1248,7 @@ start_server_check(
 	    case PART_CACHE_TYPE_NONE:
 		if (tapetype_seen(tp, TAPETYPE_PART_CACHE_DIR)) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800059, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800059, MSG_ERROR, 0)));
 		    tapebad = 1;
 		}
 		break;
@@ -1258,41 +1258,41 @@ start_server_check(
 	if (tapetype_seen(tp, TAPETYPE_PART_SIZE) && part_size == 0
 		&& part_cache_type != PART_CACHE_TYPE_NONE) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800060, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800060, MSG_ERROR, 0)));
 	    tapebad = 1;
 	}
 
 	if (tapetype_seen(tp, TAPETYPE_PART_CACHE_MAX_SIZE)) {
 	    if (part_cache_type == PART_CACHE_TYPE_NONE) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800061, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 2800061, MSG_ERROR, 0)));
 		tapebad = 1;
 	    }
 
 	    if (part_cache_max_size > part_size) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800062, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800062, MSG_WARNING, 0)));
 	    }
 	}
 
 	tape_size = tapetype_get_length(tp);
 	if (part_size && part_size * 1000 < tape_size) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800063, MSG_WARNING, 1,
+			AMANDA_FILE, __LINE__, 2800063, MSG_WARNING, 1,
 			"part-size", g_strdup_printf("%ju", (uintmax_t)part_size))));
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800064, MSG_WARNING, 0)));
 	    }
 	} else if (part_cache_max_size && part_cache_max_size * 1000 < tape_size) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800065, MSG_WARNING, 1,
+			AMANDA_FILE, __LINE__, 2800065, MSG_WARNING, 1,
 			"part_size_max_size", part_cache_max_size)));
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800064, MSG_WARNING, 0)));
 	    }
 	}
     }
@@ -1309,7 +1309,7 @@ start_server_check(
 	    hdp = lookup_holdingdisk(il->data);
 	    if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800066, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800066, MSG_ERROR, 2,
 			"errno", errno,
 			"holding_dir", holdingdisk_get_diskdir(hdp))));
 		disklow = 1;
@@ -1324,14 +1324,14 @@ start_server_check(
 
 	    if(access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800067, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800067, MSG_ERROR, 2,
 			"errno", errno,
 			"holding_dir", holdingdisk_get_diskdir(hdp))));
 		disklow = 1;
 	    }
 	    else if(access(holdingdisk_get_diskdir(hdp), X_OK) == -1) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800069, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800069, MSG_ERROR, 2,
 			"errno", errno,
 			"holding_dir", holdingdisk_get_diskdir(hdp))));
 		disklow = 1;
@@ -1339,14 +1339,14 @@ start_server_check(
 	    else if(holdingdisk_get_disksize(hdp) > (off_t)0) {
 		if(kb_avail == 0) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800071, MSG_WARNING, 2,
+			AMANDA_FILE, __LINE__, 2800071, MSG_WARNING, 2,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
 			"size", holdingdisk_get_disksize(hdp))));
 		    disklow = 1;
 		}
 		else if(kb_avail < holdingdisk_get_disksize(hdp)) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800072, MSG_WARNING, 3,
+			AMANDA_FILE, __LINE__, 2800072, MSG_WARNING, 3,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
 			"avail", g_strdup_printf("%jd", kb_avail),
 			"requested", g_strdup_printf("%jd", holdingdisk_get_disksize(hdp)))));
@@ -1354,7 +1354,7 @@ start_server_check(
 		}
 		else {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800073, MSG_INFO, 3,
+			AMANDA_FILE, __LINE__, 2800073, MSG_INFO, 3,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
 			"avail", g_strdup_printf("%jd", kb_avail),
 			"requested", g_strdup_printf("%jd", holdingdisk_get_disksize(hdp)))));
@@ -1363,16 +1363,16 @@ start_server_check(
 	    else {
 		if(kb_avail < -holdingdisk_get_disksize(hdp)) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800074, MSG_WARNING, 2,
+			AMANDA_FILE, __LINE__, 2800074, MSG_WARNING, 2,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
 			"avail", g_strdup_printf("%jd", kb_avail))));
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800075, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800075, MSG_WARNING, 0)));
 		    disklow = 1;
 		}
 		else {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800076, MSG_INFO, 3,
+			AMANDA_FILE, __LINE__, 2800076, MSG_INFO, 3,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
 			"avail", g_strdup_printf("%jd", kb_avail),
 			"using", g_strdup_printf("%jd", kb_avail + holdingdisk_get_disksize(hdp)))));
@@ -1393,14 +1393,14 @@ start_server_check(
 
 	if(stat(conf_logdir, &statbuf) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800077, MSG_INFO, 2,
+			AMANDA_FILE, __LINE__, 2800077, MSG_INFO, 2,
 			"errno", errno,
 			"logdir", conf_logdir)));
 	    disklow = 1;
 	}
 	else if(access(conf_logdir, W_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800078, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800078, MSG_ERROR, 2,
 			"errno", errno,
 			"logdir", conf_logdir)));
 	    logbad = 1;
@@ -1410,13 +1410,13 @@ start_server_check(
 	if (logbad == 0 && stat(olddir,&stat_old) == 0) { /* oldlog exist */
 	    if(!(S_ISDIR(stat_old.st_mode))) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800079, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800079, MSG_ERROR, 2,
 			"oldlogdir", olddir)));
 		logbad = 1;
 	    }
 	    if(logbad == 0 && access(olddir, W_OK) == -1) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800081, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800081, MSG_ERROR, 2,
 			"errno", errno,
 			"oldlogdir", olddir)));
 		logbad = 1;
@@ -1424,7 +1424,7 @@ start_server_check(
 	}
 	else if(logbad == 0 && lstat(olddir,&stat_old) == 0) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800083, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800083, MSG_ERROR, 2,
 			"errno", errno,
 			"oldlogdir", olddir)));
 	    logbad = 1;
@@ -1438,12 +1438,12 @@ start_server_check(
         tapebad = !test_tape_status(outf);
     } else if (do_tapechk) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800085, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800085, MSG_WARNING, 0)));
 	dev_amanda_data_path = TRUE;
 	dev_directtcp_data_path = TRUE;
     } else if (logbad == 2) {
 	delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800087, MSG_MESSAGE, 0)));
+			AMANDA_FILE, __LINE__, 2800087, MSG_MESSAGE, 0)));
 
 	/* we skipped the tape checks, but this is just a NOTE and
 	 * should not result in a nonzero exit status, so reset logbad to 0 */
@@ -1452,7 +1452,7 @@ start_server_check(
 	dev_directtcp_data_path = TRUE;
     } else {
 	delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800089, MSG_INFO, 0)));
+			AMANDA_FILE, __LINE__, 2800089, MSG_INFO, 0)));
 	dev_amanda_data_path = TRUE;
 	dev_directtcp_data_path = TRUE;
     }
@@ -1487,14 +1487,14 @@ start_server_check(
 
 	if (conf_tapecycle <= conf_runspercycle) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800090, MSG_INFO, 2,
+			AMANDA_FILE, __LINE__, 2800090, MSG_INFO, 2,
 			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
 			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
 	}
 
 	if (conf_tapecycle <= conf_runtapes) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800091, MSG_INFO, 2,
+			AMANDA_FILE, __LINE__, 2800091, MSG_INFO, 2,
 			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
 			"runtapes", g_strdup_printf("%d", conf_runtapes))));
 	}
@@ -1505,11 +1505,11 @@ start_server_check(
 	if(stat(conf_infofile, &statbuf) == -1) {
 	    if (errno == ENOENT) {
 	        delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800092, MSG_INFO, 1,
+			AMANDA_FILE, __LINE__, 2800092, MSG_INFO, 1,
 			"infodir", conf_infofile)));
 	    } else {
 	        delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800094, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 2800094, MSG_ERROR, 2,
 			"errno", errno,
 			"infodir", conf_infofile)));
 		infobad = 1;
@@ -1517,13 +1517,13 @@ start_server_check(
 	    amfree(conf_infofile);
 	} else if (!S_ISDIR(statbuf.st_mode)) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800095, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800095, MSG_ERROR, 1,
 			"infodir", conf_infofile)));
 	    amfree(conf_infofile);
 	    infobad = 1;
 	} else if (access(conf_infofile, W_OK) == -1) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800097, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800097, MSG_ERROR, 1,
 			"infodir", conf_infofile)));
 	    amfree(conf_infofile);
 	    infobad = 1;
@@ -1531,7 +1531,7 @@ start_server_check(
 	    char *errmsg = NULL;
 	    if (check_infofile(conf_infofile, &origq, &errmsg) == -1) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			__FILE__, __LINE__, 2800099, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 2800099, MSG_ERROR, 1,
 			"errmsg", errmsg)));
 		infobad = 1;
 		amfree(errmsg);
@@ -1548,11 +1548,11 @@ start_server_check(
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800100, MSG_INFO, 1,
+				AMANDA_FILE, __LINE__, 2800100, MSG_INFO, 1,
 				"hostinfodir", hostinfodir)));
 		    } else {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800102, MSG_ERROR, 2,
+				AMANDA_FILE, __LINE__, 2800102, MSG_ERROR, 2,
 				"errno", errno,
 				"hostinfodir", hostinfodir)));
 			infobad = 1;
@@ -1560,13 +1560,13 @@ start_server_check(
 		    amfree(hostinfodir);
 		} else if (!S_ISDIR(statbuf.st_mode)) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800103, MSG_ERROR, 1,
+				AMANDA_FILE, __LINE__, 2800103, MSG_ERROR, 1,
 				"hostinfodir", hostinfodir)));
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else if (access(hostinfodir, W_OK) == -1) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800105, MSG_ERROR, 1,
+				AMANDA_FILE, __LINE__, 2800105, MSG_ERROR, 1,
 				"hostinfodir", hostinfodir)));
 		    amfree(hostinfodir);
 		    infobad = 1;
@@ -1584,45 +1584,45 @@ start_server_check(
 		    if(stat(diskdir, &statbuf) == -1) {
 			if (errno == ENOENT) {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800107, MSG_INFO, 1,
+				AMANDA_FILE, __LINE__, 2800107, MSG_INFO, 1,
 				"diskdir", diskdir)));
 			} else {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800109, MSG_ERROR, 2,
+				AMANDA_FILE, __LINE__, 2800109, MSG_ERROR, 2,
 				"errno", errno,
 				"diskdir", diskdir)));
 			    infobad = 1;
 			}
 		    } else if (!S_ISDIR(statbuf.st_mode)) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800110, MSG_ERROR, 1,
+				AMANDA_FILE, __LINE__, 2800110, MSG_ERROR, 1,
 				"diskdir", diskdir)));
 			infobad = 1;
 		    } else if (access(diskdir, W_OK) == -1) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800112, MSG_ERROR, 1,
+				AMANDA_FILE, __LINE__, 2800112, MSG_ERROR, 1,
 				"diskdir", diskdir)));
 			infobad = 1;
 		    } else if(stat(infofile, &statbuf) == -1) {
 			if (errno == ENOENT) {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800114, MSG_INFO, 1,
+				AMANDA_FILE, __LINE__, 2800114, MSG_INFO, 1,
 				"infofile", infofile)));
 			} else {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800116, MSG_INFO, 2,
+				AMANDA_FILE, __LINE__, 2800116, MSG_INFO, 2,
 				"errno", errno,
 				"diskdir", diskdir)));
 			    infobad = 1;
 			}
 		    } else if (!S_ISREG(statbuf.st_mode)) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800117, MSG_ERROR, 1,
+				AMANDA_FILE, __LINE__, 2800117, MSG_ERROR, 1,
 				"infofile", infofile)));
 			infobad = 1;
 		    } else if (access(infofile, R_OK) == -1) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-				__FILE__, __LINE__, 2800119, MSG_ERROR, 1,
+				AMANDA_FILE, __LINE__, 2800119, MSG_ERROR, 1,
 				"infofile", infofile)));
 			infobad = 1;
 		    }
@@ -1633,11 +1633,11 @@ start_server_check(
 			if(stat(conf_indexdir, &statbuf) == -1) {
 			    if (errno == ENOENT) {
 				delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800120, MSG_INFO, 1,
+					AMANDA_FILE, __LINE__, 2800120, MSG_INFO, 1,
 					"indexdir", conf_indexdir)));
 			    } else {
 				delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800122, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800122, MSG_ERROR, 2,
 					"errno", errno,
 					"indexdir", conf_indexdir)));
 				indexbad = 1;
@@ -1645,13 +1645,13 @@ start_server_check(
 			    amfree(conf_indexdir);
 			} else if (!S_ISDIR(statbuf.st_mode)) {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800123, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800123, MSG_ERROR, 1,
 					"indexdir", conf_indexdir)));
 			    amfree(conf_indexdir);
 			    indexbad = 1;
 			} else if (access(conf_indexdir, W_OK) == -1) {
 			    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800125, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800125, MSG_ERROR, 1,
 					"indexdir", conf_indexdir)));
 			    amfree(conf_indexdir);
 			    indexbad = 1;
@@ -1666,11 +1666,11 @@ start_server_check(
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
 				    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800126, MSG_INFO, 1,
+					AMANDA_FILE, __LINE__, 2800126, MSG_INFO, 1,
 					"hostindexdir", hostindexdir)));
 			        } else {
 				    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800128, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800128, MSG_ERROR, 2,
 					"errno", errno,
 					"hostindexdir", hostindexdir)));
 				    indexbad = 1;
@@ -1678,13 +1678,13 @@ start_server_check(
 			        amfree(hostindexdir);
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
 				delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800129, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800129, MSG_ERROR, 1,
 					"hostindexdir", hostindexdir)));
 			        amfree(hostindexdir);
 			        indexbad = 1;
 			    } else if (access(hostindexdir, W_OK) == -1) {
 				delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800131, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800131, MSG_ERROR, 1,
 					"hostindexdir", hostindexdir)));
 			        amfree(hostindexdir);
 			        indexbad = 1;
@@ -1699,24 +1699,24 @@ start_server_check(
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
 				    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800132, MSG_INFO, 1,
+					AMANDA_FILE, __LINE__, 2800132, MSG_INFO, 1,
 					"diskindexdir", diskdir)));
 				} else {
 				    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800132, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800132, MSG_ERROR, 2,
 					"errno", errno,
 					"diskindexdir", diskdir)));
 				    indexbad = 1;
 				}
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
 				delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800135, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800135, MSG_ERROR, 2,
 					"errno", errno,
 					"diskindexdir", diskdir)));
 				indexbad = 1;
 			    } else if (access(diskdir, W_OK) == -1) {
 				delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800137, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800137, MSG_ERROR, 1,
 					"diskindexdir", diskdir)));
 				indexbad = 1;
 			    }
@@ -1727,14 +1727,14 @@ start_server_check(
 		if ( dp->encrypt == ENCRYPT_SERV_CUST ) {
 		  if ( dp->srv_encrypt[0] == '\0' ) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800138, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800138, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    pgmbad = 1;
 		  }
 		  else if(access(dp->srv_encrypt, X_OK) == -1) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800140, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800140, MSG_ERROR, 1,
 					"program", dp->srv_encrypt)));
 		    pgmbad = 1;
 		  }
@@ -1742,13 +1742,13 @@ start_server_check(
 		if ( dp->compress == COMP_SERVER_CUST ) {
 		  if ( dp->srvcompprog[0] == '\0' ) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800142, MSG_ERROR, 0)));
+					AMANDA_FILE, __LINE__, 2800142, MSG_ERROR, 0)));
 		    pgmbad = 1;
 		  }
 		  else if(access(dp->srvcompprog, X_OK) == -1) {
 
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800144, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800144, MSG_ERROR, 1,
 					"program", dp->srvcompprog)));
 		    pgmbad = 1;
 		  }
@@ -1761,21 +1761,21 @@ start_server_check(
 		    tape_size = tapetype_get_length(tp);
 		    if (dp->tape_splitsize > tape_size) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800145, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800145, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->tape_splitsize && dp->fallback_splitsize * 1024 > physmem_total()) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800147, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800147, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->tape_splitsize && dp->fallback_splitsize > tape_size) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800148, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800148, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			pgmbad = 1;
@@ -1784,14 +1784,14 @@ start_server_check(
 		    /* also check for part sizes that are too small */
 		    if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800149, MSG_WARNING, 3,
+					AMANDA_FILE, __LINE__, 2800149, MSG_WARNING, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"tape_splitsize", g_strdup_printf("%jd", (intmax_t)dp->tape_splitsize))));
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
 			    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
+					AMANDA_FILE, __LINE__, 2800064, MSG_WARNING, 0)));
 			}
 		    }
 
@@ -1801,14 +1801,14 @@ start_server_check(
 			     dp->split_diskbuffer[0] == '\0') &&
 			    dp->fallback_splitsize * 1000 < tape_size) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800151, MSG_WARNING, 3,
+					AMANDA_FILE, __LINE__, 2800151, MSG_WARNING, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"fallback_splitsize", g_strdup_printf("%jd", (intmax_t)dp->fallback_splitsize))));
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
 			    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800064, MSG_WARNING, 0)));
+					AMANDA_FILE, __LINE__, 2800064, MSG_WARNING, 0)));
 			}
 		    }
 		}
@@ -1816,21 +1816,21 @@ start_server_check(
 		if (dp->data_path == DATA_PATH_DIRECTTCP) {
 		    if (dp->compress != COMP_NONE) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800153, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800153, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->encrypt != ENCRYPT_NONE) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800154, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800154, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			pgmbad = 1;
 		    }
 		    if (dp->to_holdingdisk == HOLD_REQUIRED) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800155, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800155, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			pgmbad = 1;
@@ -1838,14 +1838,14 @@ start_server_check(
 		}
 		if (dp->data_path == DATA_PATH_DIRECTTCP && !dev_directtcp_data_path) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800156, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800156, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    pgmbad = 1;
 		}
 		if (dp->data_path == DATA_PATH_AMANDA && !dev_amanda_data_path) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800157, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800157, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    pgmbad = 1;
@@ -1858,13 +1858,13 @@ start_server_check(
 		    if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_PRE_HOST_BACKUP) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800158, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800158, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    } else if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_POST_HOST_BACKUP) {
 			delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800159, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800159, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    }
@@ -1886,7 +1886,7 @@ start_server_check(
     amfree(datestamp);
 
      delete_message(amcheck_fprint_message(outf, build_message(
-					__FILE__, __LINE__, 2800160, MSG_MESSAGE, 1,
+					AMANDA_FILE, __LINE__, 2800160, MSG_MESSAGE, 1,
 					"seconds", walltime_str(curclock()))));
 
     fflush(outf);
@@ -1965,35 +1965,35 @@ start_host(
 	if(!am_has_feature(hostp->features, fe_selfcheck_req) &&
 	   !am_has_feature(hostp->features, fe_selfcheck_req_device)) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800161, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800161, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_selfcheck_rep)) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800163, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800163, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendsize_req_options) &&
 	   !am_has_feature(hostp->features, fe_sendsize_req_no_options) &&
 	   !am_has_feature(hostp->features, fe_sendsize_req_device)) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800165, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800165, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendsize_rep)) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800167, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800167, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendbackup_req) &&
 	   !am_has_feature(hostp->features, fe_sendbackup_req_device)) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800169, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800169, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 	}
 	if(!am_has_feature(hostp->features, fe_sendbackup_rep)) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800171, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800171, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 	}
 
@@ -2039,7 +2039,7 @@ start_host(
                 gchar **ptr;
                 for (ptr = errors; *ptr; ptr++)
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800173, MSG_ERROR, 3,
+					AMANDA_FILE, __LINE__, 2800173, MSG_ERROR, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"errstr"  , *ptr)));
@@ -2061,7 +2061,7 @@ start_host(
 		(dp->device && qdevice[0] == '"')) {
 		if(!am_has_feature(hostp->features, fe_interface_quoted_text)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800174, MSG_ERROR, 3,
+					AMANDA_FILE, __LINE__, 2800174, MSG_ERROR, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"device"  , dp->device)));
@@ -2071,21 +2071,21 @@ start_host(
 	    if(dp->device) {
 		if(!am_has_feature(hostp->features, fe_selfcheck_req_device)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800176, MSG_ERROR, 3,
+					AMANDA_FILE, __LINE__, 2800176, MSG_ERROR, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"device"  , dp->device)));
 		}
 		if(!am_has_feature(hostp->features, fe_sendsize_req_device)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800178, MSG_ERROR, 3,
+					AMANDA_FILE, __LINE__, 2800178, MSG_ERROR, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"device"  , dp->device)));
 		}
 		if(!am_has_feature(hostp->features, fe_sendbackup_req_device)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800180, MSG_ERROR, 3,
+					AMANDA_FILE, __LINE__, 2800180, MSG_ERROR, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
 					"device"  , dp->device)));
@@ -2094,13 +2094,13 @@ start_host(
 		if (dp->data_path != DATA_PATH_AMANDA &&
 		    !am_has_feature(hostp->features, fe_xml_data_path)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800182, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800182, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"data-path", data_path_to_string(dp->data_path))));
 		} else if (dp->data_path == DATA_PATH_DIRECTTCP &&
 		    !am_has_feature(hostp->features, fe_xml_directtcp_list)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800183, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800183, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 		}
 	    }
@@ -2110,14 +2110,14 @@ start_host(
 		if(g_str_equal(dp->program, "DUMP") &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800184, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800184, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		}
 		if(g_str_equal(dp->program, "GNUTAR") &&
 		   !am_has_feature(hostp->features, fe_program_gnutar)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800186, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800186, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		}
@@ -2125,7 +2125,7 @@ start_host(
 		if(estimate == ES_CALCSIZE &&
 		   !am_has_feature(hostp->features, fe_calcsize_estimate)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800188, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800188, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    estimate = ES_CLIENT;
@@ -2139,20 +2139,20 @@ start_host(
 		if(dp->compress == COMP_CUST &&
 		   !am_has_feature(hostp->features, fe_options_compress_cust)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800190, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800190, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 		}
 		if(dp->encrypt == ENCRYPT_CUST ) {
 		  if ( !am_has_feature(hostp->features, fe_options_encrypt_cust)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800193, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800193, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 		    remote_errors++;
 		  } else if ( dp->compress == COMP_SERVER_FAST ||
 			      dp->compress == COMP_SERVER_BEST ||
 			      dp->compress == COMP_SERVER_CUST ) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800195, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800195, MSG_ERROR, 1,
 					"hostname", hostp->hostname)));
 		    remote_errors++;
 		  }
@@ -2195,7 +2195,7 @@ start_host(
 		if (!am_has_feature(hostp->features, fe_program_application_api) ||
 		    !am_has_feature(hostp->features, fe_req_xml)) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800196, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800196, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    remote_errors++;
@@ -2207,7 +2207,7 @@ start_host(
 
 			if (!application) {
 			    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800198, MSG_ERROR, 1,
+					AMANDA_FILE, __LINE__, 2800198, MSG_ERROR, 1,
 					"application", dp->application)));
 			} else {
 			    char *xml_app = xml_application(dp, application, hostp->features);
@@ -2215,7 +2215,7 @@ start_host(
 			    if (client_name && strlen(client_name) > 0 &&
 				!am_has_feature(hostp->features, fe_application_client_name)) {
 				delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800199, MSG_WARNING, 2,
+					AMANDA_FILE, __LINE__, 2800199, MSG_WARNING, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			    }
@@ -2227,7 +2227,7 @@ start_host(
 		    if (dp->pp_scriptlist) {
 			if (!am_has_feature(hostp->features, fe_pp_script)) {
 			   delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800200, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800200, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 			} else {
@@ -2239,7 +2239,7 @@ start_host(
 				if (client_name && strlen(client_name) > 0 &&
 				    !am_has_feature(hostp->features, fe_script_client_name)) {
 				   delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800201, MSG_WARNING, 2,
+					AMANDA_FILE, __LINE__, 2800201, MSG_WARNING, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 				}
@@ -2293,7 +2293,7 @@ start_host(
     secdrv = security_getdriver(hostp->disks->auth);
     if (secdrv == NULL) {
 	delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800213, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800213, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"auth", hostp->disks->auth)));
     } else {
@@ -2336,9 +2336,9 @@ start_client_checks(
 
 //    fprint_message(outf, 2800214, "\n");
     delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800202, MSG_MESSAGE, 0)));
+					AMANDA_FILE, __LINE__, 2800202, MSG_MESSAGE, 0)));
     delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800203, MSG_MESSAGE, 0)));
+					AMANDA_FILE, __LINE__, 2800203, MSG_MESSAGE, 0)));
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
@@ -2365,7 +2365,7 @@ start_client_checks(
     run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name());
 
     delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800204, MSG_MESSAGE, 3,
+					AMANDA_FILE, __LINE__, 2800204, MSG_MESSAGE, 3,
 					"hostcount", g_strdup_printf("%d", hostcount),
 					"remote_errors", g_strdup_printf("%d", remote_errors),
 					"seconds", walltime_str(curclock()))));
@@ -2433,7 +2433,7 @@ handle_result(
 
     if (pkt == NULL) {
 	delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800206, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800206, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"errstr", security_geterror(sech))));
 	remote_errors++;
@@ -2462,7 +2462,7 @@ handle_result(
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
 		    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800207, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800207, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"features", t)));
 		    remote_errors++;
@@ -2477,7 +2477,7 @@ handle_result(
 
 	if (client_verbose && !printed_hostname) {
 	    delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800209, MSG_INFO, 1,
+					AMANDA_FILE, __LINE__, 2800209, MSG_INFO, 1,
 					"dle_hostname", hostp->hostname)));
 	    printed_hostname = TRUE;
 	}
@@ -2491,7 +2491,7 @@ handle_result(
 	if(strncmp_const(line, "OK ") == 0) {
 	    if (client_verbose) {
 		delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800210, MSG_INFO, 2,
+					AMANDA_FILE, __LINE__, 2800210, MSG_INFO, 2,
 					"dle_hostname", hostp->hostname,
 					"ok_line", line+3)));
 	    }
@@ -2510,7 +2510,7 @@ handle_result(
 	       && ((g_str_equal(t - 1, "unknown service: noop"))
 		   || (g_str_equal(t - 1, "noop: invalid service"))))) {
 		delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800211, MSG_ERROR, 3,
+					AMANDA_FILE, __LINE__, 2800211, MSG_ERROR, 3,
 					"hostname", hostp->hostname,
 					"type", (pkt->type == P_NAK) ? "NAK " : "",
 					"errstr", t - 1)));
@@ -2521,7 +2521,7 @@ handle_result(
 	}
 
 	delete_message(amcheck_fprint_message(client_outf, build_message(
-					__FILE__, __LINE__, 2800212, MSG_ERROR, 2,
+					AMANDA_FILE, __LINE__, 2800212, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"errstr", line)));
 	remote_errors++;

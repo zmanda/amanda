@@ -173,7 +173,7 @@ main(
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    if (g_options) {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600003, MSG_ERROR, 0)));
+			AMANDA_FILE, __LINE__, 3600003, MSG_ERROR, 0)));
 		exit(1);
 		/*NOTREACHED*/
 	    }
@@ -187,13 +187,13 @@ main(
 	    if (am_has_feature(g_options->features, fe_selfcheck_message))
 		printf("MESSAGE JSON\n");
 	    delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600000, MSG_INFO, 2,
+		AMANDA_FILE, __LINE__, 3600000, MSG_INFO, 2,
 		"version", VERSION,
 		"hostname", g_options->hostname)));
 	    print_platform();
 
 	    delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600004, MSG_INFO, 2,
+		AMANDA_FILE, __LINE__, 3600004, MSG_INFO, 2,
 		"features", our_feature_string,
 		"hostname", g_options->hostname)));
 
@@ -209,7 +209,7 @@ main(
 	    if (config_errors(&errlist) >= CFGERR_ERRORS) {
 		char *errstr = config_errors_to_error_string(errlist);
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600005, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 3600005, MSG_ERROR, 2,
 			"errstr", errstr,
 			"hostname", g_options->hostname)));
 		amfree(errstr);
@@ -344,7 +344,7 @@ main(
     }
     if (g_options == NULL) {
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600006, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600006, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 	exit(1);
 	/*NOTREACHED*/
@@ -399,12 +399,12 @@ checkoverall:
  err:
     if (err_extra) {
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600007, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 3600007, MSG_ERROR, 2,
 			"err_extra", err_extra,
 			"hostname", g_options->hostname)));
     } else {
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600008, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600008, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
     }
     amfree(err_extra);
@@ -429,7 +429,7 @@ check_options(
         if (dle->device[0] == '/' && dle->device[1] == '/') {
 	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600009, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600009, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -437,14 +437,14 @@ check_options(
 	    if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
 	        dle->exclude_optional==0) {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600010, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600010, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
 	    }
 	    if (dle->include_file && dle->include_file->nb_element > 0) {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600011, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600011, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -452,7 +452,7 @@ check_options(
 	    if (dle->include_list && dle->include_list->nb_element > 0 &&
 	        dle->include_optional==0) {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600012, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600012, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -482,28 +482,28 @@ check_options(
     if (g_str_equal(dle->program, "DUMP")) {
 	if (dle->exclude_file && dle->exclude_file->nb_element > 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600013, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600013, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
 	}
 	if (dle->exclude_list && dle->exclude_list->nb_element > 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600014, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600014, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
 	}
 	if (dle->include_file && dle->include_file->nb_element > 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600015, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600015, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
 	}
 	if (dle->include_list && dle->include_list->nb_element > 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600016, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600016, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -572,7 +572,7 @@ check_options(
     if (dle->auth && amandad_auth) {
 	if (strcasecmp(dle->auth, amandad_auth) != 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600017, MSG_ERROR, 5,
+			AMANDA_FILE, __LINE__, 3600017, MSG_ERROR, 5,
 			"auth", amandad_auth,
 			"auth-requested", dle->auth,
 			"hostname", g_options->hostname,
@@ -580,14 +580,14 @@ check_options(
 			"disk", dle->disk )));
 	    if (g_str_equal(dle->auth, "ssh"))  {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600018, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600018, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
 	    }
 	    else {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600019, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600019, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -634,7 +634,7 @@ check_disk(
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	    if (dle->device[0] == '/' && dle->device[1] == '/') {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600020, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600020, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -664,7 +664,7 @@ check_disk(
 		parsesharename(dle->device, &share, &subdir);
 		if (!share) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600021, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600021, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -673,7 +673,7 @@ check_disk(
 		}
 		if ((subdir) && (SAMBA_VERSION < 2)) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600022, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600022, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -682,7 +682,7 @@ check_disk(
 		}
 		if ((user_and_password = findpass(share, &domain)) == NULL) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600023, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600023, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -692,7 +692,7 @@ check_disk(
 		lpass = strlen(user_and_password);
 		if ((pwtext = strchr(user_and_password, '%')) == NULL) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600024, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600024, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -704,7 +704,7 @@ check_disk(
 		amfree(device);
 		if ((device = makesharename(share, 0)) == NULL) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600025, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600025, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -714,7 +714,7 @@ check_disk(
 
 		if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600026, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600026, MSG_ERROR, 4,
 			"errno", errno,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -752,7 +752,7 @@ check_disk(
 		if ((pwtext_len > 0) &&
 		    full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600027, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600027, MSG_ERROR, 4,
 			"errno", errno,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -768,7 +768,7 @@ check_disk(
 		ferr = fdopen(checkerr, "r");
 		if (!ferr) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600028, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600028, MSG_ERROR, 4,
 			"errno", errno,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -812,7 +812,7 @@ check_disk(
 			errmsg = g_strdup(err);
 		    }
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600087, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600087, MSG_ERROR, 4,
 			"errmsg", errmsg,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -823,7 +823,7 @@ check_disk(
 		}
 #else
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600030, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600030, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -837,7 +837,7 @@ check_disk(
 	} else if (g_str_equal(dle->program, "DUMP")) {
 	    if(dle->device[0] == '/' && dle->device[1] == '/') {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600031, MSG_ERROR, 3,
+			AMANDA_FILE, __LINE__, 3600031, MSG_ERROR, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -882,7 +882,7 @@ check_disk(
 	    for (i=0; i < errarray->len; i++) {
 		line = g_ptr_array_index(errarray, i);
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600032, MSG_ERROR, 5,
+			AMANDA_FILE, __LINE__, 3600032, MSG_ERROR, 5,
 			"application", dle->program,
 			"errstr", line,
 			"hostname", g_options->hostname,
@@ -892,7 +892,7 @@ check_disk(
 	    }
 	    g_ptr_array_free_full(errarray);
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600033, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600033, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -904,7 +904,7 @@ check_disk(
 	if (dle->data_path == DATA_PATH_AMANDA &&
 	    (bsu->data_path_set & DATA_PATH_AMANDA)==0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600034, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600034, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -914,7 +914,7 @@ check_disk(
 	if (dle->data_path == DATA_PATH_DIRECTTCP &&
 	    (bsu->data_path_set & DATA_PATH_DIRECTTCP)==0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600034, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600034, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -924,7 +924,7 @@ check_disk(
 	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
 			    !bsu->calcsize) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600036, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600036, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -934,7 +934,7 @@ check_disk(
 	if (dle->include_file && dle->include_file->nb_element > 0 &&
 	    !bsu->include_file) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600037, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600037, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -944,7 +944,7 @@ check_disk(
 	if (dle->include_list && dle->include_list->nb_element > 0 &&
 	    !bsu->include_list) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600038, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600038, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -953,7 +953,7 @@ check_disk(
 	}
 	if (dle->include_optional && !bsu->include_optional) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600039, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600039, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -963,7 +963,7 @@ check_disk(
 	if (dle->exclude_file && dle->exclude_file->nb_element > 0 &&
 	    !bsu->exclude_file) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600040, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600040, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -973,7 +973,7 @@ check_disk(
 	if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
 	    !bsu->exclude_list) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600041, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600041, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -982,7 +982,7 @@ check_disk(
 	}
 	if (dle->exclude_optional && !bsu->exclude_optional) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600042, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600042, MSG_ERROR, 4,
 			"application", dle->program,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -993,7 +993,7 @@ check_disk(
 
 	if (pipe(app_out) < 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600043, MSG_ERROR, 5,
+			AMANDA_FILE, __LINE__, 3600043, MSG_ERROR, 5,
 			"errno", errno,
 			"application", dle->program,
 			"hostname", g_options->hostname,
@@ -1005,7 +1005,7 @@ check_disk(
 
 	if (pipe(app_err) < 0) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600043, MSG_ERROR, 5,
+			AMANDA_FILE, __LINE__, 3600043, MSG_ERROR, 5,
 			"errno", errno,
 			"application", dle->program,
 			"hostname", g_options->hostname,
@@ -1018,7 +1018,7 @@ check_disk(
 	switch (application_api_pid = fork()) {
 	case -1:
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600044, MSG_ERROR, 5,
+			AMANDA_FILE, __LINE__, 3600044, MSG_ERROR, 5,
 			"errno", errno,
 			"application", dle->program,
 			"hostname", g_options->hostname,
@@ -1120,7 +1120,7 @@ check_disk(
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		/* if the application support message
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600045, MSG_ERROR, 5,
+			AMANDA_FILE, __LINE__, 3600045, MSG_ERROR, 5,
 			"errno", errno,
 			"cmd", cmd.
 			"hostname", g_options->hostname,
@@ -1143,7 +1143,7 @@ check_disk(
 		app_stderr = fdopen(app_err[0], "r");
 		if (!app_stdout) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600055, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600055, MSG_ERROR, 4,
 			"errno", errno,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -1154,7 +1154,7 @@ check_disk(
 		}
 		if (!app_stderr) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600046, MSG_ERROR, 4,
+			AMANDA_FILE, __LINE__, 3600046, MSG_ERROR, 4,
 			"errno", errno,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -1175,7 +1175,7 @@ check_disk(
 			    break;
 			} else if (strncmp(line, "OK ", 3) == 0) {
 			    delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600056, MSG_INFO, 5,
+				AMANDA_FILE, __LINE__, 3600056, MSG_INFO, 5,
 				"application", dle->program,
 				"ok_line", line+3,
 				"hostname", g_options->hostname,
@@ -1183,7 +1183,7 @@ check_disk(
 				"disk", dle->disk )));
 			} else if (strncmp(line, "ERROR ", 6) == 0) {
 			    delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600057, MSG_ERROR, 5,
+				AMANDA_FILE, __LINE__, 3600057, MSG_ERROR, 5,
 				"application", dle->program,
 				"error_line", line+6,
 				"hostname", g_options->hostname,
@@ -1191,7 +1191,7 @@ check_disk(
 				"disk", dle->disk )));
 			} else {
 			    delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600058, MSG_ERROR, 5,
+				AMANDA_FILE, __LINE__, 3600058, MSG_ERROR, 5,
 				"application", dle->program,
 				"errstr", line,
 				"hostname", g_options->hostname,
@@ -1204,7 +1204,7 @@ check_disk(
 		while((line = agets(app_stderr)) != NULL) {
 		    if (strlen(line) > 0) {
 			delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600047, MSG_ERROR, 5,
+				AMANDA_FILE, __LINE__, 3600047, MSG_ERROR, 5,
 				"application", dle->program,
 				"errstr", line,
 				"hostname", g_options->hostname,
@@ -1230,7 +1230,7 @@ check_disk(
 
 		if (waitpid(application_api_pid, &status, 0) < 0) {
 		    delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600048, MSG_ERROR, 4,
+				AMANDA_FILE, __LINE__, 3600048, MSG_ERROR, 4,
 				"errno", errno,
 				"hostname", g_options->hostname,
 				"device", dle->device,
@@ -1239,7 +1239,7 @@ check_disk(
 		    goto common_exit;
 		} else if (!WIFEXITED(status)) {
 		    delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600049, MSG_ERROR, 5,
+				AMANDA_FILE, __LINE__, 3600049, MSG_ERROR, 5,
 				"signal", g_strdup_printf("%d", WTERMSIG(status)),
 				"application", dle->program,
 				"hostname", g_options->hostname,
@@ -1249,7 +1249,7 @@ check_disk(
 		    goto common_exit;
 		} else if (WEXITSTATUS(status) != 0) {
 		    delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600050, MSG_ERROR, 5,
+				AMANDA_FILE, __LINE__, 3600050, MSG_ERROR, 5,
 				"exit_status", g_strdup_printf("%d", WEXITSTATUS(status)),
 				"application", dle->program,
 				"hostname", g_options->hostname,
@@ -1283,7 +1283,7 @@ check_disk(
 #endif
 	    if(access_result == -1) {
 		delete_message(selfcheck_print_message(build_message(
-				__FILE__, __LINE__, 3600051, MSG_ERROR, 5,
+				AMANDA_FILE, __LINE__, 3600051, MSG_ERROR, 5,
 				"errno", errno,
 				"type", access_type,
 				"hostname", g_options->hostname,
@@ -1313,14 +1313,14 @@ common_exit:
     if (nb_error == 0) {
 	if (dle->disk) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600052, MSG_INFO, 3,
+			AMANDA_FILE, __LINE__, 3600052, MSG_INFO, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
 	}
 	if (dle->device) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600053, MSG_INFO, 4,
+			AMANDA_FILE, __LINE__, 3600053, MSG_INFO, 4,
 			"amdevice", dle->device,
 			"hostname", g_options->hostname,
 			"device", dle->device,
@@ -1328,7 +1328,7 @@ common_exit:
 	}
 	if (device) {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600054, MSG_INFO, 3,
+			AMANDA_FILE, __LINE__, 3600054, MSG_INFO, 3,
 			"hostname", g_options->hostname,
 			"device", dle->device,
 			"disk", dle->disk )));
@@ -1376,7 +1376,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(DUMP, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600072, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600072, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1386,7 +1386,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(RESTORE, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600073, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600073, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1396,7 +1396,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(VDUMP, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600074, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600074, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1406,7 +1406,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(VRESTORE, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600075, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600075, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1416,7 +1416,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(XFSDUMP, F_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600076, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600076, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1426,7 +1426,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(XFSRESTORE, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600077, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600077, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1436,7 +1436,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(VXDUMP, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600078, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600078, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1446,7 +1446,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(VXRESTORE, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600079, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600079, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
     }
@@ -1456,7 +1456,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(GNUTAR, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600080, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600080, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
 	gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
@@ -1495,7 +1495,7 @@ check_overall(void)
 	delete_message(selfcheck_print_message(check_file_message(SAMBA_CLIENT, X_OK)));
 #else
 	delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600081, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600081, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 #endif
 	testfd = open("/etc/amandapass", R_OK);
@@ -1503,23 +1503,23 @@ check_overall(void)
 	    if(fstat(testfd, &buf) == 0) {
 		if ((buf.st_mode & 0x7) != 0) {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600082, MSG_ERROR, 1,
+			AMANDA_FILE, __LINE__, 3600082, MSG_ERROR, 1,
 			"hostname", g_options->hostname)));
 		} else {
 		    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600083, MSG_INFO, 1,
+			AMANDA_FILE, __LINE__, 3600083, MSG_INFO, 1,
 			"hostname", g_options->hostname)));
 		}
 	    } else {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600084, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 3600084, MSG_ERROR, 2,
 			"errno", errno,
 			"hostname", g_options->hostname)));
 	    }
 	    aclose(testfd);
 	} else {
 	    delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600085, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 3600085, MSG_ERROR, 2,
 			"errno", errno,
 			"hostname", g_options->hostname)));
 	}
@@ -1541,7 +1541,7 @@ check_overall(void)
 #ifndef USE_RUNDUMP
 	    if (access("/etc", R_OK|W_OK) == -1) {
 		delete_message(selfcheck_print_message(build_message(
-			__FILE__, __LINE__, 3600086, MSG_ERROR, 2,
+			AMANDA_FILE, __LINE__, 3600086, MSG_ERROR, 2,
 			"errno", errno,
 			"hostname", g_options->hostname)));
 	    }
@@ -1577,7 +1577,7 @@ check_space(
 
     if (get_fs_usage(dir, NULL, &fsusage) == -1) {
         delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600068, MSG_ERROR, 3,
+		AMANDA_FILE, __LINE__, 3600068, MSG_ERROR, 3,
 		"errno", errno,
 		"dirname", dir,
 		"hostname", g_options->hostname)));
@@ -1589,20 +1589,20 @@ check_space(
 
     if (fsusage.fsu_bavail_top_bit_set || fsusage.fsu_bavail == 0) {
         delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600069, MSG_ERROR, 3,
+		AMANDA_FILE, __LINE__, 3600069, MSG_ERROR, 3,
 		"required", g_strdup_printf("%jd", (intmax_t)kbytes),
 		"dirname", dir,
 		"hostname", g_options->hostname)));
     } else if (kb_avail < kbytes) {
         delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600070, MSG_ERROR, 4,
+		AMANDA_FILE, __LINE__, 3600070, MSG_ERROR, 4,
 		"required", g_strdup_printf("%jd", (intmax_t)kbytes),
 		"avail", g_strdup_printf("%jd", kb_avail),
 		"dirname", dir,
 		"hostname", g_options->hostname)));
     } else {
         delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600071, MSG_INFO, 3,
+		AMANDA_FILE, __LINE__, 3600071, MSG_INFO, 3,
 		"avail", g_strdup_printf("%jd", kb_avail),
 		"dirname", dir,
 		"hostname", g_options->hostname)));
@@ -1764,11 +1764,11 @@ print_platform_out:
 	platform[strlen(platform) -1] = '\0';
     }
     delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600001, MSG_INFO, 2,
+		AMANDA_FILE, __LINE__, 3600001, MSG_INFO, 2,
 		"distro", distro,
 		"hostname", g_options->hostname)));
     delete_message(selfcheck_print_message(build_message(
-		__FILE__, __LINE__, 3600002, MSG_INFO, 2,
+		AMANDA_FILE, __LINE__, 3600002, MSG_INFO, 2,
 		"platform", platform,
 		"hostname", g_options->hostname)));
 

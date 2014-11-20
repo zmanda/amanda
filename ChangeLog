@@ -1,4 +1,19 @@
 2014-11-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/flags.m4: subst AMANDA_FILE_CFLAGS do that in generate
+	  the basename of the file.
+	* amandad-src/Makefile.am, amar-src/Makefile.am,
+	  application-src/Makefile.am, client-src/Makefile.am,
+	  common-src/Makefile.am, device-src/Makefile.am,
+	  ndmp-src/Makefile.am, oldrecover-src/Makefile.am,
+	  perl/Makefile.am, recover-src/Makefile.am,
+	  server-src/Makefile.am, xfer-src/Makefile.am (AM_CFLAGS):
+	  Add $(AMANDA_FILE_CFLAGS)
+	* application-src/amgtar.c, client-src/client_util.c,
+	  client-src/selfcheck.c, client-src/senddiscover.c,
+	  common-src/conffile.c, server-src/amcheck.c: Use AMANDA_FILE in
+	  build_message
+
+2014-11-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/test-driver: New file for automake-1.14
 	* config/missing, config/ylwrap, config/install-sh,
 	  config/mkinstalldirs, config/depcomp, config/compile,
