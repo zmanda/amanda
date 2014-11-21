@@ -6,6 +6,9 @@ Dancer::ModuleLoader->load_with_params('JSON', '-support_by_pp', '-convert_bless
 use Dancer;
 #use Dancer::Plugin::REST;
 
+use Encode::Locale;
+use Encode;
+
 use Amanda::Debug;
 use Amanda::Changer;
 use Amanda::Config;
@@ -18,6 +21,7 @@ use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Interactivity;
 use Amanda::MainLoop;
+use Amanda::Message;
 use Amanda::Paths;
 use Amanda::Process;
 use Amanda::Util qw( :constants );
@@ -45,113 +49,135 @@ set serializer => 'JSON';
 
 get '/amanda/v1.0' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Version::version(%p);
 	return $r
 };
 get '/amanda/v1.0/configs' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Configs::list(%p);
 	return $r
 };
 
 get '/amanda/v1.0/configs/:CONF' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Configs::fields(%p);
 	return $r
 };
 
 get '/amanda/v1.0/configs/:CONF/storages' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::list(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/storages/:STORAGE' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::fields(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::inventory(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/show' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::show(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/reset' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::reset(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/update' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::update(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/eject' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::eject(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/clean' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::clean(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/create' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::create(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/verify' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::verify(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/load' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::load(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/label' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::label(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::Labels::list(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::Labels::list(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::Labels::add_label(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::Labels::update_label(%p);
 	return $r
 };
 del '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::Labels::erase(%p);
 	return $r
 };
 del '/amanda/v1.0/configs/:CONF/storages/:STORAGE/labels/:LABEL' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Storages::Labels::erase(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/labels' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Labels::list(%p);
 	return $r
 };
@@ -162,119 +188,141 @@ get '/amanda/v1.0/configs/:CONF/labels' => sub {
 #};
 post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dles::setting(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dles::setting(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/estimate' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dles::estimate(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dles::info(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/due' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dles::due(%p);
 	return $r
 };
 
 get '/amanda/v1.0/configs/:CONF/dumps' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dumps::list(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/dumps/hosts/:HOST' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dumps::list(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/dumps/hosts/:HOST/disks/:DISK' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Dumps::list(%p);
 	return $r
 };
 
 get '/amanda/v1.0/configs/:CONF/status' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Status::current(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/report' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Report::report(%p);
 	return $r
 };
 
 get '/amanda/v1.0/configs/:CONF/runs' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::list(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/runs/amdump' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::amdump(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/runs/amflush' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::amflush(%p);
 	return $r
 };
 post '/amanda/v1.0/configs/:CONF/runs/amvault' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::amvault(%p);
 	return $r
 };
 
 post '/amanda/v1.0/configs/:CONF/runs/checkdump' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::checkdump(%p);
 	return $r;
 };
 
 post '/amanda/v1.0/configs/:CONF/runs/fetchdump' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::fetchdump(%p);
 	return $r;
 };
 
 get '/amanda/v1.0/configs/:CONF/runs/messages' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::messages(%p);
 	return $r;
 };
 del '/amanda/v1.0/configs/:CONF/runs' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Runs::kill(%p);
 	return $r;
 };
 post '/amanda/v1.0/configs/:CONF/amcheck' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Amcheck::check(%p);
 	return $r;
 };
 
 get '/amanda/v1.0/services/discover' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Services::discover(%p);
 	return $r;
 };
 
 get '/amanda/v1.0/configs/:CONF/changers' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Changers::list(%p);
 	return $r
 };
 get '/amanda/v1.0/configs/:CONF/changers/:CHANGER' => sub {
 	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my $r = Amanda::Rest::Changers::fields(%p);
 	return $r
 };
