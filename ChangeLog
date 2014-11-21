@@ -1,3 +1,6 @@
+2014-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Message.pm: Convert reply from user locale  to  utf-8.
+
 2014-11-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/flags.m4: subst AMANDA_FILE_CFLAGS do that in generate
 	  the basename of the file.

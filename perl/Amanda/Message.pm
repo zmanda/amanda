@@ -18,6 +18,8 @@
 # Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
+use utf8;
+
 package Amanda::Message;
 
 
@@ -143,6 +145,12 @@ $SUCCESS  = "success";
 use strict;
 use warnings;
 
+use Encode::Locale;
+use Encode;
+use Scalar::Util qw(blessed refaddr readonly);
+
+use Amanda::Debug;
+
 sub new {
     my $class = shift @_;
     my %params = @_;
@@ -173,8 +181,54 @@ sub new {
 
     Amanda::Debug::debug("$params{'source_filename'}:$params{'source_line'}:$self->{'severity'}:$self->{'code'} $self->{'message'}");
 
+    foreach my $value (values %{$self}) {
+	_apply(sub { if (!utf8::is_utf8($_[0]) and
+			 !Scalar::Util::readonly($_[0])) {
+				$_[0] = decode(locale => $_[0]);
+		     }
+		   },
+	       {}, $value);
+    }
     return $self;
 }
+
+#does not works for blessed object.
+sub _apply {
+    my $code = shift;
+    my $seen = shift;
+
+    my @retval;
+    for my $arg (@_) {
+        if(my $ref = ref $arg){
+            my $refaddr = refaddr($arg);
+            my $proto;
+
+            if (defined($proto = $seen->{$refaddr})) {
+		#noop
+	    } elsif ($ref eq 'ARRAY') {
+                $proto = $seen->{$refaddr} = [];
+                @{$proto} = _apply($code, $seen, @{$arg});
+            } elsif ($ref eq 'HASH') {
+                $proto = $seen->{$refaddr} = {};
+                %{$proto} = _apply($code, $seen, %{$arg});
+            } elsif ($ref eq 'REF' or $ref eq 'SCALAR') {
+                $proto = $seen->{$refaddr} = \do{ my $scalar };
+                ${$proto} = _apply($code, $seen, ${$arg});
+            } else { # CODE, GLOB, IO, LVALUE etc.
+                $proto = $seen->{$refaddr} = $arg;
+            }
+
+            push @retval, $proto;
+        } else {
+	    my $arg1 = defined($arg) ? $code->($arg) : $arg;
+	    push @retval, $arg1;
+            #push @retval, defined($arg) ? $code->($arg) : $arg;
+        }
+    }
+
+    return wantarray ? @retval : $retval[0];
+}
+
 
 sub message {
     my $self = shift;
@@ -182,13 +236,20 @@ sub message {
     return $self->{'message'} if defined $self->{'message'};
 
     my $message = $self->local_message();
+    if (!utf8::is_utf8($message)) {
+	decode(locale => $message);
+    }
     return $message if $message;
 }
 
 sub full_message {
     my $self = shift;
 
-    return $self->local_full_message();
+    my $full_message = $self->local_full_message();
+    if (!utf8::is_utf8($full_message)) {
+        decode(locale => $full_message);
+    }
+    return $full_message;
 }
 
 # Should be overloaded
