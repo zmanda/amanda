@@ -1,4 +1,7 @@
 2014-11-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am: 'cp -av' => 'cp -fpR'  ,-av are not valid on solaris.
+
+2014-11-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_attr_add_data_fd_thread): Close the file
 	  descriptor when there is nothing more to read from.
 	* client-src/sendbackup.c (check_result): Fix a race bug. sendbackup

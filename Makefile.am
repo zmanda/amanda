@@ -142,7 +142,7 @@ endif
 	mkdir ${DESTDIR}/include/gnulib/sys
 	find . -name '*.h' -exec cp {} ${DESTDIR}/include/{} \;
 	mkdir ${DESTDIR}/config
-	cp -av config/amanda config/gnulib config/macro-archive ${DESTDIR}/config
+	cp -fpR config/amanda config/gnulib config/macro-archive ${DESTDIR}/config
 	echo "${CONFIGURE_ARGS}" > ${DESTDIR}/configure_args
 
 # ensure that configure gets the right arguments for distcheck; this keeps the
