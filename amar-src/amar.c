@@ -588,6 +588,7 @@ amar_attr_add_data_fd_thread(
     amar_attr_t *attribute = (amar_attr_t *)data;
 
     amar_attr_add_data_fd(attribute, attribute->fd, attribute->eoa, attribute->error);
+    close(attribute->fd);
     attribute->fd = -1;
     attribute->eoa = 0;
     attribute->error = NULL;
