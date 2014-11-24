@@ -1,3 +1,13 @@
+2014-11-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* amar-src/amar.c (amar_attr_add_data_fd_thread): Close the file
+	  descriptor when there is nothing more to read from.
+	* client-src/sendbackup.c (check_result): Fix a race bug. sendbackup
+	  do not always report the exit status of the application.
+	  Once amvmware close its socket, an immediate call to waitpid(-1,)
+	  might not trap it exited.
+	  The patch check all pid we forked until they exit (max 5 seconds),
+	   after that they are killed.
+
 2014-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Convert request from utf-8 to
 	  user locale.

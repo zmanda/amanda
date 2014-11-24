@@ -1209,20 +1209,66 @@ check_result(
     int goterror;
     pid_t wpid;
     amwait_t retstat;
+    int process_alive = 1;
+    int count = 0;
 
     goterror = 0;
 
+    while (process_alive && count < 6) {
+	process_alive = 0;
+	if (indexpid != -1) {
+	    if ((wpid = waitpid(indexpid, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    } else if (wpid == 0) {
+		process_alive = 1;
+	    }
+	}
+	if (comppid != -1) {
+	    if ((wpid = waitpid(comppid, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    } else if (wpid == 0) {
+		process_alive = 1;
+	    }
+	}
+	if (dumppid != -1) {
+	    if ((wpid = waitpid(dumppid, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    } else if (wpid == 0) {
+		process_alive = 1;
+	    }
+	}
+	if (tarpid != -1) {
+	    if ((wpid = waitpid(tarpid, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    } else if (wpid == 0) {
+		process_alive = 1;
+	    }
+	}
+	if (application_api_pid != -1) {
+	    if ((wpid = waitpid(application_api_pid, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    } else if (wpid == 0) {
+		process_alive = 1;
+	    }
+	}
 
-    while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
-	if(check_status(wpid, retstat, mesgfd)) goterror = 1;
-    }
+	while ((wpid = waitpid(-1, &retstat, WNOHANG)) > 0) {
+	    if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	}
+	if (wpid == 0)
+	    process_alive = 1;
 
-    if (dumppid != -1) {
-	sleep(5);
-	while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
-	    if(check_status(wpid, retstat, mesgfd)) goterror = 1;
+	if (process_alive) {
+	    sleep(1);
+	    count++;
 	}
     }
+
+    if (dumppid == -1 && tarpid != -1)
+	dumppid = tarpid;
+    if (dumppid == -1 && application_api_pid != -1)
+	dumppid = application_api_pid;
+
     if (dumppid != -1) {
 	dbprintf(_("Sending SIGHUP to dump process %d\n"),
 		  (int)dumppid);
