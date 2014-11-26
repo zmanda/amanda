@@ -899,6 +899,8 @@ sub parse {
 			    } elsif ($dle->{'status'} == $DUMP_FAILED) {
 			    } elsif ($dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
+			    } elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
+				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
@@ -907,6 +909,8 @@ sub parse {
 				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
 			    }
 			    if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				$dlet->{'status'} = $WAIT_FOR_DUMPING;
+			    } elsif ($dlet->{'status'} == $DUMPING_TO_TAPE) {
 				$dlet->{'status'} = $WAIT_FOR_DUMPING;
 			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dlet->{'status'} = $WAIT_FOR_DUMPING;
