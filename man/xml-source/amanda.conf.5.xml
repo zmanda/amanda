@@ -786,7 +786,7 @@ time. The changer must have as many drives.</para>
 </varlistentry>
 
 <varlistentry>
-  <term><amkeyword>eject-volume</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>eject-volume</amkeyword> <amtype>bool</amtype></term>
   <listitem>
     <para>Default: <amdefault>no</amdefault>.
 Set to <amkeyword>yes</amkeyword> if you want the volume to be ejected

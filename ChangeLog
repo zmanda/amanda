@@ -1,3 +1,6 @@
+2014-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Typo.
+
 2014-11-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c (amar_attr_add_data_fd_thread): Close the file
 	  descriptor when there is nothing more to read from.
