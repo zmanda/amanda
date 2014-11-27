@@ -1,3 +1,8 @@
+2014-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Check with getuid since we are not root
+	  there.
+	* common-src/krb5-security.c: Drop root privileges, fix typos.
+
 2014-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Typo.
 

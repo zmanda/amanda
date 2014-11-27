@@ -457,7 +457,7 @@ main(
     }
 
 #ifndef SINGLE_USERID
-    if (geteuid() == 0) {
+    if (getuid() == 0) {
 	if (strcasecmp(auth, "krb5") != 0) {
 	    struct passwd *pwd;
 	    /* lookup our local user name */
