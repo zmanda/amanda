@@ -334,6 +334,7 @@ krb5_accept(
     char hostname[NI_MAXHOST];
     int result;
     char *errmsg = NULL;
+    struct passwd *pw;
 
     krb5_init();
 
@@ -372,6 +373,12 @@ krb5_accept(
 	error("gss_server failed: %s\n", rc->errmsg);
     rc->accept_fn = fn;
     sec_tcp_conn_read(rc);
+
+    /* totally drop privileges at this point
+     *(making the userid equal to the dumpuser)
+     */
+    pw = getpwnam(CLIENT_LOGIN);
+    setreuid(pw->pw_uid, pw->pw_uid);
 }
 
 /*
@@ -712,7 +719,7 @@ krb5_init(void)
     beenhere = 1;
 
 #ifndef BROKEN_MEMORY_CCACHE
-    putenv(g_strdup("KRB5_ENV_CCNAME=MEMORY:amanda_ccache"));
+    putenv(g_strdup(KRB5_ENV_CCNAME"=MEMORY:amanda_ccache"));
 #else
     /*
      * MEMORY ccaches seem buggy and cause a lot of internal heap
@@ -727,7 +734,7 @@ krb5_init(void)
 	char *ccache;
 	ccache = malloc(128);
 	g_snprintf(ccache, sizeof(ccache),
-		 "KRB5_ENV_CCNAME=FILE:/tmp/amanda_ccache.%ld.%ld",
+		 KRB5_ENV_CCNAME"=FILE:/tmp/amanda_ccache.%ld.%ld",
 		 (long)geteuid(), (long)getpid());
 	putenv(ccache);
     }
