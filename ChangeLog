@@ -1,3 +1,7 @@
+2014-11-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c: Set errno.
+	* perl/Amanda/Changer.pm: Print error on lock error.
+
 2014-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Check with getuid since we are not root
 	  there.

@@ -1198,16 +1198,17 @@ sub with_locked_state {
 
     step lock => sub {
 	my $rv = $filelock->lock();
+	my $error = $!;
 	if ($rv == 1 && time() < $time) {
 	    # loop until we get the lock, increasing $poll to 10s
 	    $poll += 100 unless $poll >= 10000;
 	    return Amanda::MainLoop::call_after($poll, $steps->{'lock'});
 	} elsif ($rv == 1) {
 	    return $self->make_error("fatal", $cb,
-		    message => "Timeout trying to lock '$statefile'");
+		    message => "Timeout trying to lock '$statefile': $error");
 	} elsif ($rv == -1) {
 	    return $self->make_error("fatal", $cb,
-		    message => "Error locking '$statefile'");
+		    message => "Error locking '$statefile': $error");
 	}
 
 	$steps->{'read'}->();

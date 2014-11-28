@@ -103,6 +103,7 @@ file_lock_lock(
      * process has locked it */
     if (g_hash_table_lookup(locally_locked_files, lock->filename)) {
 	rv = 1;
+	errno = EBUSY;
 	goto done;
     }
 
