@@ -124,9 +124,9 @@ sub local_message {
     } elsif ($self->{'code'} == 1100045) {
 	return "property 'auto-create-slot' set but property 'num-slot' is not set";
     } elsif ($self->{'code'} == 1100046) {
-	return "Timeout trying to lock '$self->{'lock_file'}'";
+	return "Timeout trying to lock '$self->{'lock_file'}': $self->{'errno'}";
     } elsif ($self->{'code'} == 1100047) {
-	return "Error locking '$self->{'lock_file'}'";
+	return "Error locking '$self->{'lock_file'}': $self->{'errno'}";
     } elsif ($self->{'code'} == 1100048) {
 	return "'$self->{'chg_type'}' does not support $self->{'op'}";
     } elsif ($self->{'code'} == 1100049) {
@@ -1427,6 +1427,7 @@ sub with_locked_state {
 
     step lock => sub {
 	my $rv = $filelock->lock();
+	my $error = $!;
 	if ($rv == 1 && time() < $time) {
 	    # loop until we get the lock, increasing $poll to 10s
 	    $poll += 100 unless $poll >= 10000;
@@ -1436,6 +1437,7 @@ sub with_locked_state {
 		    source_file => __FILE__,
 		    source_line => __LINE__,
 		    code    => 1100046,
+		    errno => $error,
 		    severity => $Amanda::Message::ERROR,
 		    lock_file => $statefile);
 	} elsif ($rv == -1) {
@@ -1443,6 +1445,7 @@ sub with_locked_state {
 		    source_file => __FILE__,
 		    source_line => __LINE__,
 		    code    => 1100047,
+		    errno => $error,
 		    severity => $Amanda::Message::ERROR,
 		    lock_file => $statefile);
 	}
