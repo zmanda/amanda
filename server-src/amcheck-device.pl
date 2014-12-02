@@ -292,7 +292,7 @@ sub do_check {
 	    return $steps->{'release'}->();
 	}
 
-	print "Writing label '$label' to check writablility\n";
+	print "Writing label '$label' to check writability\n";
 	if (!$res->{'device'}->start($ACCESS_WRITE, $label, "X")) {
 	    print "ERROR: writing to volume: " . $res->{'device'}->error_or_status(), "\n";
 	    $exit_status = 1;
