@@ -1,3 +1,10 @@
+2014-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm: Keep an $self->{'oldsize'}.
+	* perl/Amanda/Taper/Scribe.pm (get_bytes_written): Return
+	  $self->{'oldsize'} if the xfer is done.
+	* perl/Amanda/Taper/Worker.pm: Truncate the status
+	  file after writting to it.
+
 2014-12-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck-device.pl: s/writablility/writability/.
 
