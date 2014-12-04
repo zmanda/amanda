@@ -662,6 +662,7 @@ sub get_xfer_dest {
 
     $self->{'xfer'} = undef;
     $self->{'xdt'} = undef;
+    $self->{'oldsize'} = 0;
     $self->{'size'} = 0;
     $self->{'crc_size'} = 0;
     $self->{'duration'} = 0.0;
@@ -824,12 +825,13 @@ sub get_bytes_written {
     my ($self) = @_;
 
     if (defined $self->{'xdt'}) {
-	return $self->{'size'} + $self->{'xdt'}->get_part_bytes_written();
+	$self->{'oldsize'} = $self->{'size'} + $self->{'xdt'}->get_part_bytes_written();
     } elsif ($self->{'crc_size'}) {
-	return $self->{'crc_size'};
-    } else {
-	return $self->{'size'};
+	$self->{'oldsize'} = return $self->{'crc_size'};
+    } elsif (defined $self->{'xfer'}) {
+	$self->{'oldsize'} = return $self->{'size'};
     }
+    return $self->{'oldsize'};
 }
 
 sub _start_part {
