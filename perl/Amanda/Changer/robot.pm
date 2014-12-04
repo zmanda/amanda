@@ -2045,8 +2045,10 @@ sub _get_state {
 		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
-		    $label = $tl_label;
-		    $state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
+		    if ($info->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
+			$label = $tl_label;
+			$state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
+		    }
 		}
 		$new_slots->{$slot} = {
                     state => Amanda::Changer::SLOT_FULL,
@@ -2184,7 +2186,8 @@ sub _get_state {
 	    if (!defined $label && defined $info->{'barcode'}) {
 		$label = $state->{'bc2lb'}->{$info->{'barcode'}};
 		my $tl_label;
-		if (defined $self->{'tapelist'}) {
+		if (defined $self->{'tapelist'} and
+		    $state->{'slots'}->{$orig_slot}->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
 		    my $tle = $self->{'tapelist'}->lookup_by_barcode($info->{'barcode'});
 		    if (defined $tle) {
 			$tl_label = $tle->{'label'};

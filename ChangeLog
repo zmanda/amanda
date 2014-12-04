@@ -1,4 +1,8 @@
 2014-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm: Use tapelist label only if the slot is
+	  in SLOT_UNKNOWN state.
+
+2014-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm: Keep an $self->{'oldsize'}.
 	* perl/Amanda/Taper/Scribe.pm (get_bytes_written): Return
 	  $self->{'oldsize'} if the xfer is done.
