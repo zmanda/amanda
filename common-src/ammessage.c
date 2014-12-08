@@ -502,10 +502,19 @@ ammessage_encode_json(
     char *str)
 {
     int i = 0;
-    int len = strlen(str)*2;
-    unsigned char *s = (unsigned char *)str;
-    char *encoded = g_malloc(len+1);
-    char *e = encoded;
+    int len;
+    unsigned char *s;
+    char *encoded;
+    char *e;
+
+    if (!str) {
+	return g_strdup("null");
+    }
+    len = strlen(str)*2;
+    s = (unsigned char *)str;
+    encoded = g_malloc(len+1);
+    e = encoded;
+
     while(*s != '\0') {
 	if (i++ >= len) {
 	    error("ammessage_encode_json: str is too long: %s", str);
@@ -1493,7 +1502,9 @@ set_message(
 			    g_string_append(result, "BAD-FORMAT");
 			}
 		    } else {
-			if (want_quoted) {
+			if (message->arg_array[i].value == NULL) {
+			    g_string_append(result, "null");
+			} else if (want_quoted) {
 			    quoted = quote_string(message->arg_array[i].value);
 			    g_string_append(result, quoted);
 			    g_free(quoted);
@@ -1622,7 +1633,6 @@ build_message(
 	} else {
             message->arg_array[j].key = g_strdup(key);
             message->arg_array[j].value = g_strdup(va_arg(marker, char *));
-g_debug("key: %s     value: %s", key, message->arg_array[j].value);
 	    j++;
 	}
    }
@@ -1679,9 +1689,14 @@ sprint_message(
         , json_file, message->line, severity_name(message->severity), json_process, json_running_on, json_component, json_module, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	char *json_key = ammessage_encode_json(message->arg_array[i].key);
-	char *json_value = ammessage_encode_json(message->arg_array[i].value);
-	g_string_append_printf(result,
-	"    \"%s\" : \"%s\",\n", json_key, json_value);
+	if (message->arg_array[i].value == NULL) {
+	    g_string_append_printf(result,
+		"    \"%s\" : null,\n", json_key);
+	} else {
+	    char *json_value = ammessage_encode_json(message->arg_array[i].value);
+	    g_string_append_printf(result,
+		"    \"%s\" : \"%s\",\n", json_key, json_value);
+	}
     }
     if (!message->msg) {
 	set_message(message, 0);
@@ -1762,12 +1777,17 @@ static char *
 parse_json_primitive(
     char *s,
     int  *i,
-    int   len)
+    int   len G_GNUC_UNUSED)
 {
-    s = s;
-    i = i;
-    len = len;
 
+    if (strncmp(&s[*i], "null", 4) == 0) {
+	*i += 4;
+	return NULL;
+    } else if (strncmp(&s[*i], "true", 4) == 0) {
+	*i += 4;
+    } else if (strncmp(&s[*i], "false", 5) == 0) {
+	*i += 5;
+    }
     return s;
 }
 
@@ -1784,7 +1804,6 @@ json_parse_string(
     (*i)++;
     for (; *i < len && s[*i] != '\0'; (*i)++) {
 	char c = s[*i];
-g_debug("i %d %c %c", *i, s[*i], c);
 
 	if (c == '"') {
 	    *sp = '\0';
@@ -1831,6 +1850,10 @@ parse_json_message(
 	char c =  s[i];
 
 	switch (c) {
+	    case '[':
+		break;
+	    case ']':
+		break;
 	    case '{':
 		message = g_new0(message_t, 1);
 		nb_arg = 0;
@@ -1925,7 +1948,22 @@ parse_json_message(
 		break;
 
 	    default:
-		parse_json_primitive(s, &i, len);
+		token = parse_json_primitive(s, &i, len);
+		if (expect_key) {
+		    expect_key = FALSE;
+		    key = token;
+		} else if (token == NULL) {
+		    message->arg_array[nb_arg].key = key;
+		    message->arg_array[nb_arg].value = NULL;
+		    nb_arg++;
+		    if (nb_arg >= message->argument_allocated) {
+			message->argument_allocated *=2;
+			message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
+		    }
+
+		    expect_key = TRUE;
+		}
+		token = NULL;
 		break;
 	}
     }

@@ -64,6 +64,19 @@ int check_status(pid_t pid, amwait_t w);
 
 int check_result(void);
 
+static void senddiscover_print_array_message(gpointer data, gpointer user_data);static void
+senddiscover_print_array_message(
+    gpointer data,
+    gpointer user_data)
+{
+    FILE *stream = (FILE *)user_data;
+    message_t *message = data;
+
+    fprint_message(stream, message);
+    delete_message(message);
+    //delete_message(fprint_message(stream, message));
+}
+
 int
 main(
     int		argc,
@@ -242,6 +255,7 @@ main(
 	backup_support_option_t *bsu;
 	int        result;
 	GPtrArray *errarray;
+	int        outfd[2];
 	int        errfd[2];
 	FILE      *dumperr;
 
@@ -268,6 +282,12 @@ main(
 	if (!bsu->discover) {
 	    delete_message(fprint_message(stdout, build_message(
 			AMANDA_FILE, __LINE__, 2900002, 16, 1,
+			"application", dle->program)));
+	    goto err;
+	}
+	if (pipe(outfd) < 0) {
+	    delete_message(fprint_message(stdout, build_message(
+			AMANDA_FILE, __LINE__, 2900005, 16, 1,
 			"application", dle->program)));
 	    goto err;
 	}
@@ -307,14 +327,14 @@ main(
 	    for (j = 1; j < argv_ptr->len - 1; j++)
 		g_debug(" %s", (char *)g_ptr_array_index(argv_ptr,j));
 	    g_debug("\"");
-	    if (dup2(errfd[1], 2) == -1) {
+	    if (dup2(outfd[1], 1) == -1) {
 		int save_errno = errno;
 	        delete_message(fprint_message(stdout, build_message(
 			AMANDA_FILE, __LINE__, 2900006, 16, 1,
 			"errno", save_errno)));
 		goto err;
 	    }
-	    if (dup2(1, 3) == -1) {
+	    if (dup2(errfd[1], 2) == -1) {
 		int save_errno = errno;
 	        delete_message(fprint_message(stdout, build_message(
 			AMANDA_FILE, __LINE__, 2900006, 16, 1,
@@ -339,6 +359,31 @@ main(
 	}
 
 	close(errfd[1]);
+	close(outfd[1]);
+
+	{
+	    GString *json_buffer = g_string_new("");
+	    char   *buf = g_malloc(32769);
+	    size_t  size;
+	    while ((size = read(outfd[0], buf, 32768)) > 0) {
+		buf[size] = '\0';
+		g_string_append(json_buffer, buf);
+	    }
+	    g_free(buf);
+	    close(outfd[0]);
+
+	    if (json_buffer && json_buffer->str) {
+		GPtrArray *message_array = parse_json_message(json_buffer->str);
+
+		/* print and delete the messages */
+		g_ptr_array_foreach(message_array, senddiscover_print_array_message, stdout);
+
+		g_string_free(json_buffer, TRUE);
+		g_ptr_array_free(message_array, TRUE);
+	    }
+	}
+
+
 	dumperr = fdopen(errfd[0],"r");
 	if (!dumperr) {
 	    int save_errno = errno;

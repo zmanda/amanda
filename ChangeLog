@@ -1,3 +1,7 @@
+2014-12-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: Parse application stdout
+	* common-src/ammessage.c: handle null in json message.
+
 2014-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Use tapelist label only if the slot is
 	  in SLOT_UNKNOWN state.
