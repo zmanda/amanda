@@ -151,15 +151,21 @@ sub cleanup {
 		}
 	    }
 	    if ($pp > 0) {
+		$count = 5;
 		$Amanda_process->kill_process("SIGKILL");
-		sleep 2;
-		$pp = $Amanda_process->process_running();
+		while ($count > 0 and $pp > 0) {
+		    $count--;
+		    sleep 1;
+		    $pp = $Amanda_process->process_running();
+		}
 	    }
+	    ($pp, my $pids) = $Amanda_process->which_process_running();
 	    $self->user_message(Amanda::Cleanup::Message->new(
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
 			code		=> 3400002,
 			severity	=> $pp == 0 ? $Amanda::Message::INFO : $Amanda::Message::ERROR,
+			pids		=> $pids,
 			nb_processes	=> $pp));
 	}
     }

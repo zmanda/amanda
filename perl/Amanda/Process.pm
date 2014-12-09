@@ -456,6 +456,22 @@ sub process_running() {
     return $count;
 }
 
+sub which_process_running() {
+    my $self = shift;
+
+    $self->load_ps_table();
+    my $count = 0;
+    my @pids;
+    foreach my $pid (keys %{$self->{amprocess}}) {
+	if (defined $self->{pstable}->{$pid}) {
+	    $count++;
+	    push @pids, $pid;
+	}
+    }
+
+    return ( $count, \@pids );
+}
+
 # Count the number of processes in %amprocess.
 #
 # Prerequisites:
