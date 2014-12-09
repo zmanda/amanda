@@ -1,3 +1,6 @@
+2014-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Fix status.
+
 2014-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/senddiscover.c: Parse application stdout
 	* common-src/ammessage.c: handle null in json message.
