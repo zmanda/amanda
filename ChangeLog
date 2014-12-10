@@ -1,4 +1,7 @@
 2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Change debuging level.
+
+2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Fix for older glib2.
 
 2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
