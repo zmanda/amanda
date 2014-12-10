@@ -416,7 +416,7 @@ main(
     free_g_options(g_options);
 
 err:
-    g_printf("]\n");
+    g_printf("\n]\n");
     dbclose();
     return 0;
 }

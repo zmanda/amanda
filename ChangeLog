@@ -1,3 +1,7 @@
+2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: fix json formating.
+	* common-src/ammessage.c: Parse hash and array in message.
+
 2014-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Process.pm (which_process_running): New method to return
 	  the list of pid of the running amanda processes.

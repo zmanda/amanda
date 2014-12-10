@@ -449,9 +449,27 @@ init_errcode(void)
 #endif
 }
 
+typedef enum {
+    MESSAGE_STRING,
+    MESSAGE_NULL,
+    MESSAGE_TRUE,
+    MESSAGE_FALSE,
+    MESSAGE_ARRAY,
+    MESSAGE_HASH
+} message_type_t;
+
+typedef struct json_value_s {
+    message_type_t type;
+    union {
+	char       *string;
+	GPtrArray  *array;
+	GHashTable *hash;
+    };
+} json_value_t;
+
 typedef struct message_arg_array_s {
     char *key;
-    char *value;
+    json_value_t value;
 } message_arg_array_t;
 
 struct message_s {
@@ -578,7 +596,8 @@ message_get_argument(
 
     while (message->arg_array[i].key != NULL) {
 	if (strcmp(key, message->arg_array[i].key) == 0)
-	    return message->arg_array[i].value;
+	    assert(message->arg_array[i].value.type == MESSAGE_STRING);
+	    return message->arg_array[i].value.string;
 	i++;
     }
     m_message = sprint_message(message);
@@ -597,8 +616,9 @@ message_add_argument(
 
     while (message->arg_array[i].key != NULL) {
 	if (strcmp(key, message->arg_array[i].key) == 0) {
-	    g_free(message->arg_array[i].value);
-	    message->arg_array[i].value = g_strdup(value);
+	    assert(message->arg_array[i].value.type == MESSAGE_STRING);
+	    g_free(message->arg_array[i].value.string);
+	    message->arg_array[i].value.string = g_strdup(value);
 	}
 	i++;
     }
@@ -607,10 +627,12 @@ message_add_argument(
 	message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
     }
     message->arg_array[i].key = g_strdup(key);
-    message->arg_array[i].value = g_strdup(value);
+    message->arg_array[i].value.type = MESSAGE_STRING;
+    message->arg_array[i].value.string = g_strdup(value);
     i++;
     message->arg_array[i].key = NULL;
-    message->arg_array[i].value = NULL;
+    message->arg_array[i].value.type = MESSAGE_NULL;
+    message->arg_array[i].value.string = NULL;
 }
 
 static void
@@ -1494,22 +1516,26 @@ set_message(
 		}
 		if (message->arg_array[i].key != NULL) {
 		    if (format) {
+			assert(message->arg_array[i].value.type == MESSAGE_STRING);
 			if (strcmp(format,"size") == 0) {
-			    long long llvalue = atoll(message->arg_array[i].value);
+			    long long llvalue = atoll(message->arg_array[i].value.string);
 			    g_string_append_printf(result, "%lld %sB", llvalue/getconf_unit_divisor(),
 								       getconf_str(CNF_DISPLAYUNIT));
 			} else {
 			    g_string_append(result, "BAD-FORMAT");
 			}
 		    } else {
-			if (message->arg_array[i].value == NULL) {
-			    g_string_append(result, "null");
-			} else if (want_quoted) {
-			    quoted = quote_string(message->arg_array[i].value);
-			    g_string_append(result, quoted);
-			    g_free(quoted);
-			} else {
-			    g_string_append(result, message->arg_array[i].value);
+			if (message->arg_array[i].value.type == MESSAGE_NULL) {
+			} else if (message->arg_array[i].value.type == MESSAGE_STRING) {
+			    if (message->arg_array[i].value.string == NULL) {
+				g_string_append(result, "null");
+			    } else if (want_quoted) {
+				quoted = quote_string(message->arg_array[i].value.string);
+				g_string_append(result, quoted);
+				g_free(quoted);
+			    } else {
+				g_string_append(result, message->arg_array[i].value.string);
+			    }
 			}
 		    }
 		} else {
@@ -1566,6 +1592,26 @@ message_get_severity(
     return message->severity;
 }
 
+static void free_message_value(gpointer);
+static void
+free_message_value(
+    gpointer pointer)
+{
+    json_value_t *value = pointer;
+
+    if (value->type == MESSAGE_STRING) {
+	g_free(value->string);
+	value->string = NULL;
+    } else if (value->type == MESSAGE_ARRAY) {
+	g_ptr_array_free(value->array, TRUE);
+	value->array = NULL;
+    } else if (value->type == MESSAGE_HASH) {
+	g_hash_table_destroy(value->hash);
+	value->hash = NULL;
+    }
+    value->type = MESSAGE_NULL;
+}
+
 void
 delete_message(
     message_t *message)
@@ -1580,8 +1626,8 @@ delete_message(
     g_free(message->quoted_msg);
     g_free(message->errnostr);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
-	g_free(message->arg_array[i].key);
-	g_free(message->arg_array[i].value);
+	//g_free(message->arg_array[i].key);
+	free_message_value(&(message->arg_array[i].value));
     }
     g_free(message->process);
     g_free(message->running_on);
@@ -1632,18 +1678,91 @@ build_message(
 	    message->errnostr = g_strdup(strerror(m_errno));
 	} else {
             message->arg_array[j].key = g_strdup(key);
-            message->arg_array[j].value = g_strdup(va_arg(marker, char *));
+	    message->arg_array[j].value.type = MESSAGE_STRING;
+            message->arg_array[j].value.string = g_strdup(va_arg(marker, char *));
 	    j++;
 	}
    }
    message->arg_array[j].key = NULL;
-   message->arg_array[j].value = NULL;
+   message->arg_array[j].value.type = MESSAGE_NULL;
+   message->arg_array[j].value.string = NULL;
    va_end( marker );
 
    set_message(message, 0);
 
    g_debug("new message: %s:%d:%d:%d %s", message->file, message->line, message->severity, message->code, message->msg);
    return message;
+}
+
+int message_indent = 4;
+static char *sprint_message_value(json_value_t *value);
+static char *
+sprint_message_value(
+    json_value_t *value)
+{
+    char *result = NULL;
+    GString *r;
+    guint i;
+
+    switch (value->type) {
+    case MESSAGE_TRUE :
+	result = g_strdup("true");
+	break;
+    case MESSAGE_FALSE :
+	result = g_strdup("false");
+	break;
+    case MESSAGE_NULL :
+	result = g_strdup("null");
+	break;
+    case MESSAGE_STRING :
+	result = g_strdup_printf("\"%s\"", ammessage_encode_json(value->string));
+	break;
+    case MESSAGE_HASH :
+	if (g_hash_table_size(value->hash) == 0) {
+	    result = g_strdup("{ }");
+	} else {
+	    GHashTableIter iter;
+	    gpointer ikey, ivalue;
+	    int first = 1;
+
+	    r = g_string_sized_new(512);
+	    g_string_append(r, "{\n");
+	    message_indent += 2;
+	    g_hash_table_iter_init(&iter, value->hash);
+	    while (g_hash_table_iter_next (&iter, &ikey, &ivalue)) {
+		if (!first) {
+		    g_string_append(r, ",\n");
+		}
+		first = 0;
+		g_string_append_printf(r,"%*c\"%s\" : %s", message_indent, ' ', (char *)ikey, sprint_message_value((json_value_t *)ivalue));
+	    }
+	    message_indent -= 2;
+	    g_string_append_printf(r, "\n%*c}", message_indent, ' ');
+	    result = g_string_free(r, FALSE);
+	}
+	break;
+    case MESSAGE_ARRAY :
+	if (value->array->len == 0) {
+	    result = g_strdup("[ ]");
+	} else {
+	    r = g_string_sized_new(512);
+	    g_string_append(r, "[\n");
+	    message_indent += 2;
+	    for (i = 0; i < value->array->len; i++) {
+		if (i>0) {
+		    g_string_append(r, ",\n");
+		}
+		g_string_append_printf(r, "%*c", message_indent, ' ');
+		g_string_append(r, sprint_message_value(g_ptr_array_index(value->array, i)));
+	    }
+	    message_indent -= 2;
+	    g_string_append_printf(r, "\n%*c]", message_indent, ' ');
+	    result = g_string_free(r, FALSE);
+	}
+	break;
+    }
+
+    return result;
 }
 
 char *
@@ -1664,6 +1783,7 @@ sprint_message(
     if (message == NULL)
 	return NULL;
 
+    message_indent = 4;
     json_file = ammessage_encode_json(message->file);
     json_process = ammessage_encode_json(message->process);
     json_running_on = ammessage_encode_json(message->running_on);
@@ -1689,14 +1809,8 @@ sprint_message(
         , json_file, message->line, severity_name(message->severity), json_process, json_running_on, json_component, json_module, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	char *json_key = ammessage_encode_json(message->arg_array[i].key);
-	if (message->arg_array[i].value == NULL) {
-	    g_string_append_printf(result,
-		"    \"%s\" : null,\n", json_key);
-	} else {
-	    char *json_value = ammessage_encode_json(message->arg_array[i].value);
-	    g_string_append_printf(result,
-		"    \"%s\" : \"%s\",\n", json_key, json_value);
-	}
+	g_string_append_printf(result,
+	    "    \"%s\" : %s,\n", json_key, sprint_message_value(&message->arg_array[i].value));
     }
     if (!message->msg) {
 	set_message(message, 0);
@@ -1833,6 +1947,176 @@ json_parse_string(
     return NULL;
 }
 
+static void parse_json_hash(char *s, int *i, GHashTable *hash);
+static void parse_json_array(char *s, int *i, GPtrArray *array);
+static void
+parse_json_array(
+    char *s,
+    int  *i,
+    GPtrArray *array)
+{
+    int len = strlen(s);
+    char *token;
+
+    (*i)++;
+    for (; *i < len && s[*i] != '\0'; (*i)++) {
+	char c =  s[*i];
+
+	switch (c) {
+	    case '[':
+		{
+		    json_value_t *value = g_new(json_value_t, 1);
+		    value->type = MESSAGE_HASH;
+		    value->array = g_ptr_array_sized_new(10);
+		    g_ptr_array_set_free_func(value->array, free_message_value);
+		    g_ptr_array_add(array, value);
+		    parse_json_hash(s, i, value->hash);
+		}
+		break;
+	    case ']':
+		return;
+		break;
+	    case '{':
+		{
+		    json_value_t *value = g_new(json_value_t, 1);
+		    value->type = MESSAGE_HASH;
+		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
+		    g_ptr_array_add(array, value);
+		    parse_json_hash(s, i, value->hash);
+		}
+		break;
+	    case '}':
+		assert(array);
+		return;
+	    case '"':
+		token = json_parse_string(s, i, len);
+		assert(token);
+		{
+		    json_value_t *value = g_new(json_value_t, 1);
+		    value->type = MESSAGE_STRING;
+		    value->string = token;
+		    g_ptr_array_add(array, value);
+		}
+		token = NULL;
+
+		break;
+	    case '\t':
+	    case '\r':
+	    case '\n':
+	    case ':':
+	    case ',':
+	    case ' ':
+		break;
+
+	    default:
+		token = parse_json_primitive(s, i, len);
+		if (token == NULL) {
+		    json_value_t *value = g_new(json_value_t, 1);
+		    value->type = MESSAGE_NULL;
+		    value->string = NULL;
+		    g_ptr_array_add(array, value);
+		}
+		token = NULL;
+		break;
+	}
+    }
+    s=s;
+
+    return;
+}
+
+static void
+parse_json_hash(
+    char *s,
+    int  *i,
+    GHashTable *hash)
+{
+    int len = strlen(s);
+    char *token;
+    gboolean expect_key = TRUE;
+    char *key = NULL;
+
+    (*i)++;
+    for (; *i < len && s[*i] != '\0'; (*i)++) {
+	char c =  s[*i];
+
+	switch (c) {
+	    case '[':
+		if (key) {
+		    json_value_t *value = g_new(json_value_t, 1);
+		    value->type = MESSAGE_ARRAY;
+		    value->array = g_ptr_array_sized_new(10);
+		    g_ptr_array_set_free_func(value->array, free_message_value);
+		    g_hash_table_insert(hash, key, value);
+		    parse_json_array(s, i, value->array);
+		    key = NULL;
+		    expect_key = TRUE;
+		}
+		break;
+	    case ']':
+		break;
+	    case '{':
+		if (key) {
+		    json_value_t *value = g_new(json_value_t, 1);
+		    value->type = MESSAGE_HASH;
+		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
+		    g_hash_table_insert(hash, key, value);
+		    parse_json_hash(s, i, value->hash);
+		    key = NULL;
+		    expect_key = TRUE;
+		} else {
+		}
+		break;
+	    case '}':
+		assert(hash);
+		return;
+	    case '"':
+		token = json_parse_string(s, i, len);
+		assert(token);
+		if (expect_key) {
+		    expect_key = FALSE;
+		    key = token;
+		} else {
+		    json_value_t *value = g_new(json_value_t, 1);
+		    expect_key = TRUE;
+		    value->type = MESSAGE_STRING;
+		    value->string = token;
+		    g_hash_table_insert(hash, key, value);
+		    expect_key = TRUE;
+		}
+		token = NULL;
+
+		break;
+	    case '\t':
+	    case '\r':
+	    case '\n':
+	    case ':':
+	    case ',':
+	    case ' ':
+		break;
+
+	    default:
+		token = parse_json_primitive(s, i, len);
+		if (expect_key) {
+		    expect_key = FALSE;
+		    key = token;
+		} else if (token == NULL) {
+		    json_value_t *value = g_new(json_value_t, 1);
+		    expect_key = TRUE;
+		    value->type = MESSAGE_NULL;
+		    value->string = NULL;
+		    g_hash_table_insert(hash, key, value);
+		    expect_key = TRUE;
+		}
+		token = NULL;
+		break;
+	}
+    }
+    s=s;
+
+    return;
+}
+
 GPtrArray *
 parse_json_message(
     char *s)
@@ -1851,14 +2135,48 @@ parse_json_message(
 
 	switch (c) {
 	    case '[':
+		if (message && key) {
+		    message->arg_array[nb_arg].key = key;
+		    message->arg_array[nb_arg].value.type = MESSAGE_ARRAY;
+		    message->arg_array[nb_arg].value.array = g_ptr_array_sized_new(10);
+		    g_ptr_array_set_free_func(message->arg_array[nb_arg].value.array, free_message_value);
+		    nb_arg++;
+		    if (nb_arg >= message->argument_allocated) {
+			message->argument_allocated *=2;
+			message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
+		    }
+		    message->arg_array[nb_arg].key = NULL;
+		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
+		    message->arg_array[nb_arg].value.string = NULL;
+		    parse_json_array(s, &i, message->arg_array[nb_arg-1].value.array);
+		    key = NULL;
+		    expect_key = TRUE;
+		}
 		break;
 	    case ']':
 		break;
 	    case '{':
-		message = g_new0(message_t, 1);
-		nb_arg = 0;
-		message->argument_allocated = 10;
-		message->arg_array = g_new0(message_arg_array_t, message->argument_allocated+1);
+		if (message && key) {
+		    message->arg_array[nb_arg].key = key;
+		    message->arg_array[nb_arg].value.type = MESSAGE_HASH;
+		    message->arg_array[nb_arg].value.hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
+		    nb_arg++;
+		    if (nb_arg >= message->argument_allocated) {
+			message->argument_allocated *=2;
+			message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
+		    }
+		    message->arg_array[nb_arg].key = NULL;
+		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
+		    message->arg_array[nb_arg].value.string = NULL;
+		    parse_json_hash(s, &i, message->arg_array[nb_arg-1].value.hash);
+		    key = NULL;
+		    expect_key = TRUE;
+		} else {
+		    message = g_new0(message_t, 1);
+		    nb_arg = 0;
+		    message->argument_allocated = 10;
+		    message->arg_array = g_new0(message_arg_array_t, message->argument_allocated+1);
+		}
 		break;
 	    case '}':
 		assert(message);
@@ -1875,7 +2193,6 @@ parse_json_message(
 		token = json_parse_string(s, &i, len);
 		assert(token);
 		assert(message);
-
 		if (expect_key) {
 		    expect_key = FALSE;
 		    key = token;
@@ -1925,15 +2242,16 @@ parse_json_message(
 			message->errnostr = token;
 		    } else {
 			message->arg_array[nb_arg].key = key;
-			message->arg_array[nb_arg].value = token;
+			message->arg_array[nb_arg].value.type = MESSAGE_STRING;
+			message->arg_array[nb_arg].value.string = token;
 			nb_arg++;
 			if (nb_arg >= message->argument_allocated) {
 			    message->argument_allocated *=2;
 			    message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
 			}
 			message->arg_array[nb_arg].key = NULL;
-			message->arg_array[nb_arg].value = NULL;
-
+			message->arg_array[nb_arg].value.type = MESSAGE_NULL;
+			message->arg_array[nb_arg].value.string = NULL;
 		    }
 		}
 		token = NULL;
@@ -1954,7 +2272,8 @@ parse_json_message(
 		    key = token;
 		} else if (token == NULL) {
 		    message->arg_array[nb_arg].key = key;
-		    message->arg_array[nb_arg].value = NULL;
+		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
+		    message->arg_array[nb_arg].value.string = NULL;
 		    nb_arg++;
 		    if (nb_arg >= message->argument_allocated) {
 			message->argument_allocated *=2;
