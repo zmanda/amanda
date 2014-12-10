@@ -315,7 +315,7 @@ tcpm_stream_write(
     assert(rs != NULL);
     assert(rs->rc != NULL);
 
-    auth_debug(1, _("sec: stream_write: writing %zu bytes to %s:%d %d\n"),
+    auth_debug(6, _("sec: stream_write: writing %zu bytes to %s:%d %d\n"),
 		   size, rs->rc->hostname, rs->handle,
 		   rs->rc->write);
 
@@ -436,7 +436,7 @@ tcpm_send_token(
         rc->logstamp = logtime;
     }
 
-    auth_debug(1, "tcpm_send_token: write %zd bytes to handle %d\n",
+    auth_debug(6, "tcpm_send_token: write %zd bytes to handle %d\n",
 	       len, handle);
     /*
      * Format is:
@@ -472,11 +472,11 @@ tcpm_send_token(
         nb_iov = 3;
     }
 
-    if (debug_auth >= 6) {
-	crc_t		crc;
+    if (debug_auth >= 3) {
+	crc_t crc;
 	crc32_init(&crc);
 	crc32_add((uint8_t *)buf, len, &crc);
-	g_debug("packet send CRC: %08x:%llu", crc32_finish(&crc), (long long)crc.size);
+	g_debug("packet send CRC: %d %08x:%llu", handle, crc32_finish(&crc), (long long)crc.size);
     }
     rval = full_writev(fd, iov, nb_iov);
     save_errno = errno;
@@ -621,7 +621,7 @@ tcpm_recv_token(
     rc->size_buffer_read = 0;
     rc->buffer = NULL;
 
-    auth_debug(1, _("tcpm_recv_token: read %zd bytes from %d\n"), *size, *handle);
+    auth_debug(6, _("tcpm_recv_token: read %zd bytes from %d\n"), *size, *handle);
 
     if (*size > 0 && rc->driver->data_decrypt != NULL) {
 	void *decbuf;
@@ -634,11 +634,11 @@ tcpm_recv_token(
 	*size = decsize;
     }
 
-    if (debug_auth >= 6) {
-	crc_t		crc;
+    if (debug_auth >= 3) {
+	crc_t crc;
 	crc32_init(&crc);
 	crc32_add((uint8_t *)*buf, *size, &crc);
-	g_debug("packet receive CRC: %08x:%llu", crc32_finish(&crc), (long long)crc.size);
+	g_debug("packet receive CRC: %d %08x:%llu", *handle, crc32_finish(&crc), (long long)crc.size);
     }
     return((*size));
 }
@@ -1673,7 +1673,7 @@ stream_read_sync_callback(
     struct sec_stream *rs = s;
     assert(rs != NULL);
 
-    auth_debug(1, _("sec: stream_read_callback_sync: handle %d\n"), rs->handle);
+    auth_debug(6, _("sec: stream_read_callback_sync: handle %d\n"), rs->handle);
 
     /*
      * Make sure this was for us.  If it was, then blow away the handle
@@ -1682,10 +1682,10 @@ stream_read_sync_callback(
      * If the handle is EOF, pass that up to our callback.
      */
     if (rs->rc->handle == rs->handle) {
-        auth_debug(1, _("sec: stream_read_callback_sync: it was for us\n"));
+        auth_debug(6, _("sec: stream_read_callback_sync: it was for us\n"));
         rs->rc->handle = H_TAKEN;
     } else if (rs->rc->handle != H_EOF) {
-        auth_debug(1, _("sec: stream_read_callback_sync: not for us\n"));
+        auth_debug(6, _("sec: stream_read_callback_sync: not for us\n"));
         return;
     }
 
@@ -1701,14 +1701,14 @@ stream_read_sync_callback(
     memcpy(sync_pkt, rs->rc->pkt, sync_pktlen);
 
     if (rs->rc->pktlen <= 0) {
-	auth_debug(1, _("sec: stream_read_sync_callback: %s\n"), rs->rc->errmsg);
+	auth_debug(6, _("sec: stream_read_sync_callback: %s\n"), rs->rc->errmsg);
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
 	    sec_tcp_conn_put(rs->rc);
 	rs->closed_by_network = 1;
 	return;
     }
-    auth_debug(1,
+    auth_debug(6,
 	    _("sec: stream_read_callback_sync: read %zd bytes from %s:%d\n"),
 	    rs->rc->pktlen, rs->rc->hostname, rs->handle);
 }
@@ -1730,7 +1730,7 @@ stream_read_callback(
 	g_debug("stream_read_callback: data is still flowing");
 	rs->rc->logstamp = logtime;
     }
-    auth_debug(1, _("sec: stream_read_callback: handle %d\n"), rs->handle);
+    auth_debug(6, _("sec: stream_read_callback: handle %d\n"), rs->handle);
 
     /*
      * Make sure this was for us.  If it was, then blow away the handle
@@ -1739,10 +1739,10 @@ stream_read_callback(
      * If the handle is EOF, pass that up to our callback.
      */
     if (rs->rc->handle == rs->handle) {
-	auth_debug(1, _("sec: stream_read_callback: it was for us\n"));
+	auth_debug(6, _("sec: stream_read_callback: it was for us\n"));
 	rs->rc->handle = H_TAKEN;
     } else if (rs->rc->handle != H_EOF) {
-	auth_debug(1, _("sec: stream_read_callback: not for us\n"));
+	auth_debug(6, _("sec: stream_read_callback: not for us\n"));
 	return;
     }
 
@@ -1753,7 +1753,7 @@ stream_read_callback(
      */
 
     if (rs->rc->pktlen <= 0) {
-	auth_debug(1, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
+	auth_debug(5, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
 	tcpm_stream_read_cancel(rs);
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
@@ -1762,10 +1762,10 @@ stream_read_callback(
 	(*rs->fn)(rs->arg, NULL, rs->rc->pktlen);
 	return;
     }
-    auth_debug(1, _("sec: stream_read_callback: read %zd bytes from %s:%d\n"),
+    auth_debug(6, _("sec: stream_read_callback: read %zd bytes from %s:%d\n"),
 		   rs->rc->pktlen, rs->rc->hostname, rs->handle);
     (*rs->fn)(rs->arg, rs->rc->pkt, rs->rc->pktlen);
-    auth_debug(1, _("sec: after callback stream_read_callback\n"));
+    auth_debug(6, _("sec: after callback stream_read_callback\n"));
 }
 
 /*
@@ -1785,12 +1785,12 @@ sec_tcp_conn_read_callback(
 
     assert(cookie != NULL);
 
-    auth_debug(1, _("sec: conn_read_callback %d %d\n"), (int)rc->event_id, rc->read);
+    auth_debug(6, _("sec: conn_read_callback %d %d\n"), (int)rc->event_id, rc->read);
 
     /* Read the data off the wire.  If we get errors, shut down. */
     rval = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
 				&rc->pktlen);
-    auth_debug(1, _("sec: conn_read_callback: tcpm_recv_token returned %zd\n"),
+    auth_debug(6, _("sec: conn_read_callback: tcpm_recv_token returned %zd\n"),
 		   rval);
 
     if (rval == -2) {
@@ -1801,7 +1801,7 @@ sec_tcp_conn_read_callback(
 	rc->pktlen = rval;
 	rc->handle = H_EOF;
 	revent = event_wakeup((event_id_t)rc->event_id);
-	auth_debug(1, _("sec: conn_read_callback: event_wakeup return %d\n"),
+	auth_debug(6, _("sec: conn_read_callback: event_wakeup return %d\n"),
 		       revent);
 	/* delete our 'accept' reference */
 	if (rc->accept_fn != NULL) {
@@ -1820,7 +1820,7 @@ sec_tcp_conn_read_callback(
     if(rval == 0) {
 	rc->pktlen = 0;
 	revent = event_wakeup((event_id_t)rc->event_id);
-	auth_debug(1,
+	auth_debug(6,
 		   _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
 	return;
     }
@@ -1828,7 +1828,7 @@ sec_tcp_conn_read_callback(
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
     revent = event_wakeup((event_id_t)rc->event_id);
-    auth_debug(1, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
+    auth_debug(6, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
 	if(rc->refcnt == 0) amfree(rc);
