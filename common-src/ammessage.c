@@ -1694,15 +1694,38 @@ build_message(
    return message;
 }
 
-int message_indent = 4;
+static int message_indent = 4;
+typedef struct message_hash_s {
+    GString *r;
+    int first;
+} message_hash_t;
+
+static void sprint_message_hash(gpointer key, gpointer value, gpointer user_data);
 static char *sprint_message_value(json_value_t *value);
+
+static void
+sprint_message_hash(
+    gpointer gkey,
+    gpointer gvalue,
+    gpointer user_data)
+{
+    char *key = gkey;
+    json_value_t *value = gvalue;
+    message_hash_t *mh = user_data;
+
+    if (!mh->first) {
+	g_string_append(mh->r, ",\n");
+    } else {
+	mh->first = 0;
+    }
+    g_string_append_printf(mh->r,"%*c\"%s\" : %s", message_indent, ' ', (char *)key, sprint_message_value((json_value_t *)value));
+}
+
 static char *
 sprint_message_value(
     json_value_t *value)
 {
     char *result = NULL;
-    GString *r;
-    guint i;
 
     switch (value->type) {
     case MESSAGE_TRUE :
@@ -1721,21 +1744,11 @@ sprint_message_value(
 	if (g_hash_table_size(value->hash) == 0) {
 	    result = g_strdup("{ }");
 	} else {
-	    GHashTableIter iter;
-	    gpointer ikey, ivalue;
-	    int first = 1;
-
-	    r = g_string_sized_new(512);
+	    GString *r = g_string_sized_new(512);
+	    message_hash_t mh = {r, 1};
 	    g_string_append(r, "{\n");
 	    message_indent += 2;
-	    g_hash_table_iter_init(&iter, value->hash);
-	    while (g_hash_table_iter_next (&iter, &ikey, &ivalue)) {
-		if (!first) {
-		    g_string_append(r, ",\n");
-		}
-		first = 0;
-		g_string_append_printf(r,"%*c\"%s\" : %s", message_indent, ' ', (char *)ikey, sprint_message_value((json_value_t *)ivalue));
-	    }
+	    g_hash_table_foreach(value->hash, sprint_message_hash, &mh);
 	    message_indent -= 2;
 	    g_string_append_printf(r, "\n%*c}", message_indent, ' ');
 	    result = g_string_free(r, FALSE);
@@ -1745,7 +1758,8 @@ sprint_message_value(
 	if (value->array->len == 0) {
 	    result = g_strdup("[ ]");
 	} else {
-	    r = g_string_sized_new(512);
+	    GString *r = g_string_sized_new(512);
+	    guint i;
 	    g_string_append(r, "[\n");
 	    message_indent += 2;
 	    for (i = 0; i < value->array->len; i++) {
