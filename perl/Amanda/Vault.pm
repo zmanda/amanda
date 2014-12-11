@@ -68,6 +68,8 @@ sub local_message {
 	return "Reading $self->{'label'}:$self->{'fileno'}: $self->{'header_summary'}";
     } elsif ($self->{'code'} == 2500017) {
 	return "Reading '$self->{'holding_filename'}': $self->{'header_summary'}";
+    } elsif ($self->{'code'} == 2500018) {
+	return "$self->{'errmsg'}";
     }
 }
 
@@ -208,6 +210,14 @@ sub user_msg {
     my $msg = shift;
 
     if (defined $self->{'user_msg'}) {
+	if (ref $msg eq "") {
+	   $msg = Amanda::Vault::Message->new(
+				source_filename => __FILE__,
+				source_line => __LINE__,
+				code        => 2500018,
+				severity    => $Amanda::Message::ERROR,
+				errmsg      => $msg);
+	}
 	$self->{'user_msg'}->($msg);
     }
 }
@@ -625,8 +635,21 @@ sub xfer_dumps {
         my ($errors, $header, $xfer_src_, $directtcp_supported) = @_;
 	$xfer_src = $xfer_src_;
 
-	return $finished_cb->(join("\n", @$errors))
-	    if $errors;
+	if ($errors) {
+	    my $msg = join("; ", @$errors);
+	    my $dump = $current->{'dump'};
+	    $self->amdump_log("Fail vaulting $self->{'id'} $msg");
+	    log_add_full($L_FAIL, "taper", sprintf("%s %s %s %s %s %s",
+		quote_string($dump->{'hostname'}.""), # " is required for SWIG..
+		quote_string($dump->{'diskname'}.""),
+		$dump->{'dump_timestamp'},
+		$dump->{'level'},
+                'error',
+                $msg));
+	    $self->user_msg($msg);
+	    # next dump
+	    return $steps->{'get_dump'}->();
+	}
 
 	$current->{'header'} = $header;
 
