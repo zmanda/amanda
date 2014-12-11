@@ -255,33 +255,38 @@ sub setting {
 	return \@result_messages;
     }
 
+    # remove setting
+    for my $disk (@disks) {
+	if ((defined $params{'force'}         and !$params{'force'}) or
+	    (defined $params{'force_level_1'} and !$params{'force_level_1'})) {
+	    push @result_messages, $ci->unforce($disk);
+	}
+	if ((defined $params{'force_bump'}    and !$params{'force_bump'}) or
+	    (defined $params{'force_no_bump'} and !$params{'force_no_bump'})) {
+	    push @result_messages, $ci->unforce_bump($disk);
+	}
+    }
+
+    # add new setting
     for my $disk (@disks) {
 	if (defined $params{'force'}) {
 	    if ($params{'force'}) {
 		push @result_messages, $ci->force($disk);
-	    } else {
-		push @result_messages, $ci->unforce($disk);
 	    }
 	}
 	if (defined $params{'force_level_1'}) {
 	    if ($params{'force_level_1'}) {
 		push @result_messages, $ci->force_level_1($disk);
-	    } else {
-		push @result_messages, $ci->unforce($disk);
 	    }
 	}
 	if (defined $params{'force_bump'}) {
 	    if ($params{'force_bump'}) {
 		push @result_messages, $ci->force_bump($disk);
-	    } else {
-		push @result_messages, $ci->unforce_bump($disk);
 	    }
 	}
 	if (defined $params{'force_no_bump'}) {
 	    if ($params{'force_no_bump'}) {
 		push @result_messages, $ci->force_no_bump($disk);
-	    } else {
-		push @result_messages, $ci->unforce_bump($disk);
 	    }
 	}
     }
