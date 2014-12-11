@@ -535,8 +535,21 @@ sub xfer_dumps {
         my ($errors, $header, $xfer_src_, $directtcp_supported) = @_;
 	$xfer_src = $xfer_src_;
 
-	return $finished_cb->(join("\n", @$errors))
-	    if $errors;
+	if ($errors) {
+	    my $msg = join("; ", @$errors);
+	    my $dump = $current->{'dump'};
+	    $self->amdump_log("Fail vaulting $self->{'id'} $msg");
+	    log_add_full($L_FAIL, "taper", sprintf("%s %s %s %s %s %s",
+		quote_string($dump->{'hostname'}.""), # " is required for SWIG..
+		quote_string($dump->{'diskname'}.""),
+		$dump->{'dump_timestamp'},
+		$dump->{'level'},
+                'error',
+                $msg));
+	    $self->user_msg($msg);
+	    # next dump
+	    return $steps->{'get_dump'}->();
+	}
 
 	$current->{'header'} = $header;
 
