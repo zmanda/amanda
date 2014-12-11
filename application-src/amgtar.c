@@ -760,7 +760,7 @@ amgtar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
     if (gnutar_path) {
-	message_t *message = check_file_message(gnutar_path, X_OK);
+	message_t *message = print_message(check_file_message(gnutar_path, X_OK));
 	if (message && message_get_severity(message) <= MSG_INFO) {
 	    char *gtar_version;
 	    GPtrArray *argv_ptr = g_ptr_array_new();
@@ -791,6 +791,8 @@ amgtar_selfcheck(
 	    g_ptr_array_free(argv_ptr, TRUE);
 	    amfree(gtar_version);
 	}
+	if (message)
+	    delete_message(message);
     } else {
 	delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700005, MSG_ERROR, 3,

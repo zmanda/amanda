@@ -1603,7 +1603,10 @@ free_message_value(
 	g_free(value->string);
 	value->string = NULL;
     } else if (value->type == MESSAGE_ARRAY) {
-	g_ptr_array_free(value->array, TRUE);
+	guint i;
+	for (i = 0; i < value->array->len; i++) {
+	    free_message_value(g_ptr_array_index(value->array, i));
+	}
 	value->array = NULL;
     } else if (value->type == MESSAGE_HASH) {
 	g_hash_table_destroy(value->hash);
@@ -1626,7 +1629,7 @@ delete_message(
     g_free(message->quoted_msg);
     g_free(message->errnostr);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
-	//g_free(message->arg_array[i].key);
+	g_free(message->arg_array[i].key);
 	free_message_value(&(message->arg_array[i].value));
     }
     g_free(message->process);
@@ -1712,13 +1715,15 @@ sprint_message_hash(
     char *key = gkey;
     json_value_t *value = gvalue;
     message_hash_t *mh = user_data;
+    char *result_value = sprint_message_value((json_value_t *)value);
 
     if (!mh->first) {
 	g_string_append(mh->r, ",\n");
     } else {
 	mh->first = 0;
     }
-    g_string_append_printf(mh->r,"%*c\"%s\" : %s", message_indent, ' ', (char *)key, sprint_message_value((json_value_t *)value));
+    g_string_append_printf(mh->r,"%*c\"%s\" : %s", message_indent, ' ', (char *)key, result_value);
+    g_free(result_value);
 }
 
 static char *
@@ -1738,7 +1743,11 @@ sprint_message_value(
 	result = g_strdup("null");
 	break;
     case MESSAGE_STRING :
-	result = g_strdup_printf("\"%s\"", ammessage_encode_json(value->string));
+	{
+	    char *encoded = ammessage_encode_json(value->string);
+	    result = g_strdup_printf("\"%s\"", encoded);
+	    g_free(encoded);
+	}
 	break;
     case MESSAGE_HASH :
 	if (g_hash_table_size(value->hash) == 0) {
@@ -1763,11 +1772,13 @@ sprint_message_value(
 	    g_string_append(r, "[\n");
 	    message_indent += 2;
 	    for (i = 0; i < value->array->len; i++) {
+		char *result_value = sprint_message_value(g_ptr_array_index(value->array, i));
 		if (i>0) {
 		    g_string_append(r, ",\n");
 		}
 		g_string_append_printf(r, "%*c", message_indent, ' ');
-		g_string_append(r, sprint_message_value(g_ptr_array_index(value->array, i)));
+		g_string_append(r, result_value);
+		g_free(result_value);
 	    }
 	    message_indent -= 2;
 	    g_string_append_printf(r, "\n%*c]", message_indent, ' ');
@@ -1823,8 +1834,11 @@ sprint_message(
         , json_file, message->line, severity_name(message->severity), json_process, json_running_on, json_component, json_module, message->code);
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	char *json_key = ammessage_encode_json(message->arg_array[i].key);
+	char *result_value = sprint_message_value(&message->arg_array[i].value);
 	g_string_append_printf(result,
-	    "    \"%s\" : %s,\n", json_key, sprint_message_value(&message->arg_array[i].value));
+	    "    \"%s\" : %s,\n", json_key, result_value);
+	g_free(json_key);
+	g_free(result_value);
     }
     if (!message->msg) {
 	set_message(message, 0);
@@ -1958,6 +1972,7 @@ json_parse_string(
 	    *sp++ = c;
 	}
     }
+    g_free(string);
     return NULL;
 }
 
@@ -1982,7 +1997,7 @@ parse_json_array(
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_HASH;
 		    value->array = g_ptr_array_sized_new(10);
-		    g_ptr_array_set_free_func(value->array, free_message_value);
+		    //g_ptr_array_set_free_func(value->array, free_message_value);
 		    g_ptr_array_add(array, value);
 		    parse_json_hash(s, i, value->hash);
 		}
@@ -2060,9 +2075,10 @@ parse_json_hash(
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_ARRAY;
 		    value->array = g_ptr_array_sized_new(10);
-		    g_ptr_array_set_free_func(value->array, free_message_value);
+		    //g_ptr_array_set_free_func(value->array, free_message_value);
 		    g_hash_table_insert(hash, key, value);
 		    parse_json_array(s, i, value->array);
+		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		}
@@ -2076,6 +2092,7 @@ parse_json_hash(
 		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
 		    g_hash_table_insert(hash, key, value);
 		    parse_json_hash(s, i, value->hash);
+		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		} else {
@@ -2153,7 +2170,6 @@ parse_json_message(
 		    message->arg_array[nb_arg].key = key;
 		    message->arg_array[nb_arg].value.type = MESSAGE_ARRAY;
 		    message->arg_array[nb_arg].value.array = g_ptr_array_sized_new(10);
-		    g_ptr_array_set_free_func(message->arg_array[nb_arg].value.array, free_message_value);
 		    nb_arg++;
 		    if (nb_arg >= message->argument_allocated) {
 			message->argument_allocated *=2;
@@ -2163,6 +2179,7 @@ parse_json_message(
 		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
 		    message->arg_array[nb_arg].value.string = NULL;
 		    parse_json_array(s, &i, message->arg_array[nb_arg-1].value.array);
+		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		}
@@ -2183,6 +2200,7 @@ parse_json_message(
 		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
 		    message->arg_array[nb_arg].value.string = NULL;
 		    parse_json_hash(s, &i, message->arg_array[nb_arg-1].value.hash);
+		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		} else {
@@ -2209,15 +2227,23 @@ parse_json_message(
 		assert(message);
 		if (expect_key) {
 		    expect_key = FALSE;
+assert(key == NULL);
 		    key = token;
 		} else {
+assert(key != NULL);
 		    expect_key = TRUE;
 		    if (strncmp_const(key, "source_filename") == 0) {
+			g_free(key);
+			key = NULL;
 			message->file = token;
 		    } else if (strncmp_const(key, "source_line") == 0) {
+			g_free(key);
+			key = NULL;
 			message->line = atoi(token);
 			g_free(token);
 		    } else if (strncmp_const(key, "severity") == 0) {
+			g_free(key);
+			key = NULL;
 			if (strncmp_const(token, "success") == 0) {
 			    message->severity = MSG_SUCCESS;
 			} else if (strncmp_const(token, "info") == 0) {
@@ -2233,29 +2259,52 @@ parse_json_message(
 			} else {
 			    message->severity = MSG_CRITICAL;
 			}
+			g_free(token);
 		    } else if (strncmp_const(key, "code") == 0) {
+			g_free(key);
+			key = NULL;
 			message->code = atoi(token);
 			g_free(token);
 		    } else if (strncmp_const(key, "message") == 0) {
+			g_free(key);
+			key = NULL;
 			message->msg = token;
 		    } else if (strncmp_const(key, "hint") == 0) {
+			g_free(key);
+			key = NULL;
 			message->hint = token;
 		    } else if (strncmp_const(key, "process") == 0) {
+			g_free(key);
+			key = NULL;
 			message->process = token;
 		    } else if (strncmp_const(key, "running_on") == 0) {
+			g_free(key);
+			key = NULL;
 			message->running_on = token;
 		    } else if (strncmp_const(key, "component") == 0) {
+			g_free(key);
+			key = NULL;
 			message->component = token;
 		    } else if (strncmp_const(key, "module") == 0) {
+			g_free(key);
+			key = NULL;
 			message->module = token;
 		    } else if (strncmp_const(key, "errno") == 0) {
+			g_free(key);
+			key = NULL;
 			message->merrno = atoi(token);
+			g_free(token);
 		    } else if (strncmp_const(key, "errnocode") == 0) {
+			g_free(key);
+			key = NULL;
 			message->errnocode = token;
 		    } else if (strncmp_const(key, "errnostr") == 0) {
+			g_free(key);
+			key = NULL;
 			message->errnostr = token;
 		    } else {
 			message->arg_array[nb_arg].key = key;
+			key = NULL;
 			message->arg_array[nb_arg].value.type = MESSAGE_STRING;
 			message->arg_array[nb_arg].value.string = token;
 			nb_arg++;
@@ -2283,7 +2332,7 @@ parse_json_message(
 		token = parse_json_primitive(s, &i, len);
 		if (expect_key) {
 		    expect_key = FALSE;
-		    key = token;
+		    key = g_strdup(token);
 		} else if (token == NULL) {
 		    message->arg_array[nb_arg].key = key;
 		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;

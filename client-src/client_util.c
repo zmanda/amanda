@@ -1750,6 +1750,11 @@ check_access_message(
     int		mode)
 {
     char *noun, *adjective;
+    char  ruid_str[NUM_STR_SIZE];
+    char  euid_str[NUM_STR_SIZE];
+
+    g_snprintf(ruid_str, sizeof(ruid_str), "%d", getuid());
+    g_snprintf(euid_str, sizeof(euid_str), "%d", geteuid());
 
     if(mode == F_OK)
         noun = "find", adjective = "exists";
@@ -1766,16 +1771,16 @@ check_access_message(
 		"errno", errno,
 		"noun", noun,
 		"filename", filename,
-		"ruid", g_strdup_printf("%d", getuid()),
-		"euid", g_strdup_printf("%d", geteuid()));
+		"ruid", ruid_str,
+		"euid", euid_str);
     } else {
 	return build_message(
 		AMANDA_FILE, __LINE__, 3600064, MSG_INFO, 5,
 		"noun", noun,
 		"adjective", adjective,
 		"filename", filename,
-		"ruid", g_strdup_printf("%d", getuid()),
-		"euid", g_strdup_printf("%d", geteuid()));
+		"ruid", ruid_str,
+		"euid", euid_str);
     }
 }
 
