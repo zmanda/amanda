@@ -32,6 +32,7 @@
 #include "logfile.h"
 #include "find.h"
 #include "diskfile.h" /* for the gross hack, below */
+#include "amindex.h"
 %}
 
 amglue_export_ok(

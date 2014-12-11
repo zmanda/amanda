@@ -1,4 +1,8 @@
 2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Fix.
+	* perl/Amanda/Logfile.swg: Include "amindex.h"
+
+2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Fix message memory leak.
 	* client-src/client_util.c: Fix message memory leak.
 	* common-src/ammessage.c: Fix memory leak, fix for older glib2.

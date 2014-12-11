@@ -595,9 +595,10 @@ message_get_argument(
     char *m_message;
 
     while (message->arg_array[i].key != NULL) {
-	if (strcmp(key, message->arg_array[i].key) == 0)
+	if (strcmp(key, message->arg_array[i].key) == 0) {
 	    assert(message->arg_array[i].value.type == MESSAGE_STRING);
 	    return message->arg_array[i].value.string;
+	}
 	i++;
     }
     m_message = sprint_message(message);
@@ -2227,10 +2228,10 @@ parse_json_message(
 		assert(message);
 		if (expect_key) {
 		    expect_key = FALSE;
-assert(key == NULL);
+		    assert(key == NULL);
 		    key = token;
 		} else {
-assert(key != NULL);
+		    assert(key != NULL);
 		    expect_key = TRUE;
 		    if (strncmp_const(key, "source_filename") == 0) {
 			g_free(key);
