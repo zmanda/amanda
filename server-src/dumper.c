@@ -1791,6 +1791,12 @@ read_datafd(
     }
 
     crc32_add(buf, size, &crc_data_in);
+    if (debug_auth >= 3) {
+	crc_data_in.crc  = crc32_finish(&crc_data_in);
+	g_debug("data in sum CRC: %08x:%lld",
+		crc_data_in.crc, (long long)crc_data_in.size);
+	crc_data_in.crc  = crc32_finish(&crc_data_in);
+    }
     /*
      * We read something.  Add it to the databuf and reschedule for
      * more data.

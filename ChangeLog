@@ -1,4 +1,7 @@
-2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+2014-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Print 'data in sum CRC' to debug file.
+
+2014-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Vault.pm: Continue to next dump if src device fail.
 
 2014-12-10  Jean-Louis Martineau <martineau@zmanda.com>
