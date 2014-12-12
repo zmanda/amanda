@@ -1593,6 +1593,7 @@ message_get_severity(
     return message->severity;
 }
 
+static void free_message_value_full(gpointer);
 static void free_message_value(gpointer);
 static void
 free_message_value(
@@ -1606,14 +1607,25 @@ free_message_value(
     } else if (value->type == MESSAGE_ARRAY) {
 	guint i;
 	for (i = 0; i < value->array->len; i++) {
-	    free_message_value(g_ptr_array_index(value->array, i));
+	    free_message_value_full(g_ptr_array_index(value->array, i));
 	}
+	g_ptr_array_free(value->array, TRUE);
 	value->array = NULL;
     } else if (value->type == MESSAGE_HASH) {
 	g_hash_table_destroy(value->hash);
 	value->hash = NULL;
     }
     value->type = MESSAGE_NULL;
+}
+
+static void
+free_message_value_full(
+    gpointer pointer)
+{
+    json_value_t *value = pointer;
+
+    free_message_value(pointer);
+    g_free(value);
 }
 
 void
@@ -1998,7 +2010,6 @@ parse_json_array(
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_HASH;
 		    value->array = g_ptr_array_sized_new(10);
-		    //g_ptr_array_set_free_func(value->array, free_message_value);
 		    g_ptr_array_add(array, value);
 		    parse_json_hash(s, i, value->hash);
 		}
@@ -2010,7 +2021,7 @@ parse_json_array(
 		{
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_HASH;
-		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
+		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value_full);
 		    g_ptr_array_add(array, value);
 		    parse_json_hash(s, i, value->hash);
 		}
@@ -2076,10 +2087,8 @@ parse_json_hash(
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_ARRAY;
 		    value->array = g_ptr_array_sized_new(10);
-		    //g_ptr_array_set_free_func(value->array, free_message_value);
 		    g_hash_table_insert(hash, key, value);
 		    parse_json_array(s, i, value->array);
-		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		}
@@ -2090,10 +2099,9 @@ parse_json_hash(
 		if (key) {
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_HASH;
-		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
+		    value->hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value_full);
 		    g_hash_table_insert(hash, key, value);
 		    parse_json_hash(s, i, value->hash);
-		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		} else {
@@ -2114,6 +2122,7 @@ parse_json_hash(
 		    value->type = MESSAGE_STRING;
 		    value->string = token;
 		    g_hash_table_insert(hash, key, value);
+		    key = NULL;
 		    expect_key = TRUE;
 		}
 		token = NULL;
@@ -2180,7 +2189,6 @@ parse_json_message(
 		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
 		    message->arg_array[nb_arg].value.string = NULL;
 		    parse_json_array(s, &i, message->arg_array[nb_arg-1].value.array);
-		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		}
@@ -2191,7 +2199,7 @@ parse_json_message(
 		if (message && key) {
 		    message->arg_array[nb_arg].key = key;
 		    message->arg_array[nb_arg].value.type = MESSAGE_HASH;
-		    message->arg_array[nb_arg].value.hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value);
+		    message->arg_array[nb_arg].value.hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_message_value_full);
 		    nb_arg++;
 		    if (nb_arg >= message->argument_allocated) {
 			message->argument_allocated *=2;
@@ -2201,7 +2209,6 @@ parse_json_message(
 		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
 		    message->arg_array[nb_arg].value.string = NULL;
 		    parse_json_hash(s, &i, message->arg_array[nb_arg-1].value.hash);
-		    g_free(key);
 		    key = NULL;
 		    expect_key = TRUE;
 		} else {
