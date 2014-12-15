@@ -130,6 +130,7 @@ typedef struct taper_s {
     wtaper_t       *last_started_wtaper;
     disklist_t      tapeq;
     gboolean        degraded_mode;
+    gboolean        down;
 } taper_t;
 
 /* holding disk reservation structure; this is built as a list parallel

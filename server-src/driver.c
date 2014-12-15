@@ -1275,7 +1275,7 @@ start_some_dumps(
 	directq_is_empty = empty(directq);
 	if (!empty(directq)) {  /* to the first allowed storage only */
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-		if (taper->degraded_mode)
+		if (taper->degraded_mode || taper->down)
 		    continue;
 		wtaper_accept = idle_taper(taper);
 		if (wtaper_accept) {
@@ -2140,6 +2140,7 @@ handle_taper_result(
                         _("going into degraded mode because of taper component error."));
 	    }
 
+	    taper->down = TRUE;
 	    for (wtaper = taper->wtapetable;
 		 wtaper < taper->wtapetable + taper->nb_worker;
                  wtaper++) {

@@ -841,12 +841,15 @@ sub parse {
 				    $dlet->{'status'} == $DUMP_TO_TAPE_FAILED ||
 				    $dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 				    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
+				    $dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 				} elsif ($dlet->{'status'} == $WRITING ||
 					 $dlet->{'status'} == $WRITE_FAILED) {
 				    $dlet->{'status'} = $WRITE_FAILED;
+				    $dle->{'status'} = $WRITE_FAILED;
 				} elsif ($dlet->{'status'} == $FLUSHING ||
 					 $dlet->{'status'} == $FLUSH_FAILED) {
 				    $dlet->{'status'} = $FLUSH_FAILED;
+				    $dle->{'status'} = $FLUSH_FAILED;
 				} else {
 				    die("bad status on taper eof: $dlet->{'status'}");
 				}

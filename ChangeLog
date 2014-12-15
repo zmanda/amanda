@@ -1,4 +1,12 @@
 2014-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Set $sle->{'status'} on taper eof.
+	* server-src/driverio.h (taper_t): Add down field.
+	* server-src/driverio.c (startup_tape_process): Set down to false.
+	* server-src/driver.c (start_some_dumps): Do not use a taper if it is
+	  down.
+	* server-src/driver.c (handle_taper_result): Set it to down on BOGUS.
+
+2014-12-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c (support): Output
 	  "MESSAGE-SELFCHECK-JSON YES".
 	* client-src/client_util.c (run_client_scripts): Output script output

@@ -156,6 +156,7 @@ startup_tape_process(
 	taper->tapeq.head = NULL;
 	taper->tapeq.tail = NULL;
 	taper->degraded_mode = no_taper;
+	taper->down = FALSE;
 
 	taper->wtapetable = g_new0(wtaper_t, tapetable[nb_taper].nb_worker + 1);
 	if (!taper->wtapetable) {
