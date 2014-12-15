@@ -1,3 +1,21 @@
+2014-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c (support): Output
+	  "MESSAGE-SELFCHECK-JSON YES".
+	* client-src/client_util.c (run_client_scripts): Output script output
+	  in meesage form.
+	* client-src/client_util.h (run_client_scripts): Change proptotype.
+	* client-src/selfcheck.c: Add  fprint_message argument to
+	  run_client_scripts.
+	* common-src/amfeatures.c: Add fe_sendsize_message,
+	  fe_sendbackup_message.
+	* common-src/amfeatures.h: Add fe_sendsize_message,
+	  fe_sendbackup_message.
+	* common-src/ammessage.c: Add error code 4600000 and 4600001.
+	* perl/Amanda/Message.pm: Add many code range.
+	* client-src/sendbackup.c: Add NULL argument to run_client_scripts.
+	* client-src/sendsize.c: Add NULL argument to run_client_scripts.
+	* recover-src/extract_list.c: Add NULL argument to run_client_scripts.
+
 2014-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Print 'data in sum CRC' to debug file.
 

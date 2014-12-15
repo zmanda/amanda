@@ -717,7 +717,7 @@ amgtar_support(
     fprintf(stdout, "INDEX-LINE YES\n");
     fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");
-    fprintf(stdout, "MESSAGE-JSON YES\n");
+    fprintf(stdout, "MESSAGE-SELFCHECK-JSON YES\n");
     fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");

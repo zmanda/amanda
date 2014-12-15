@@ -83,24 +83,37 @@ static void check_space(char *dir, off_t kbytes);
 static void print_platform(void);
 
 static message_t *
-selfcheck_print_message(
+selfcheck_fprint_message(
+    FILE *stream,
     message_t *message)
 {
     if (message == NULL)
 	return NULL;
 
     if (am_has_feature(g_options->features, fe_selfcheck_message)) {
-	print_message(message);
+	fprint_message(stream, message);
     } else {
 	if (message_get_code(message) == 3600004) {
-	    printf("%s\n", get_quoted_message(message));
+	    fprintf(stream, "%s\n", get_quoted_message(message));
 	} else if (message_get_severity(message) == MSG_INFO) {
-	    printf("OK %s\n", get_quoted_message(message));
+	    fprintf(stream, "OK %s\n", get_quoted_message(message));
 	} else if (message_get_severity(message) == MSG_ERROR) {
-	    printf("ERROR [%s]\n", get_quoted_message(message));
+	    fprintf(stream, "ERROR [%s]\n", get_quoted_message(message));
+	} else {
+	    fprintf(stream, "%s\n", get_message(message));
 	}
     }
     return message;
+}
+
+static message_t *
+selfcheck_print_message(
+    message_t *message)
+{
+    if (message == NULL)
+	return NULL;
+
+    return selfcheck_fprint_message(stdout, message);
 }
 
 int
@@ -364,19 +377,19 @@ main(
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    run_client_scripts(EXECUTE_ON_PRE_HOST_AMCHECK, g_options, dle,
-			       stdout);
+			       stdout, &selfcheck_fprint_message);
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    check_options(dle);
 	    run_client_scripts(EXECUTE_ON_PRE_DLE_AMCHECK, g_options, dle,
-			       stdout);
+			       stdout, &selfcheck_fprint_message);
 	    check_disk(dle);
 	    run_client_scripts(EXECUTE_ON_POST_DLE_AMCHECK, g_options, dle,
-			       stdout);
+			       stdout, &selfcheck_fprint_message);
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    run_client_scripts(EXECUTE_ON_POST_HOST_AMCHECK, g_options, dle,
-			       stdout);
+			       stdout, &selfcheck_fprint_message);
 	}
 	for (dle = dles; dle != NULL; dle = dle_next) {
 	    dle_next = dle->next;
@@ -1045,7 +1058,7 @@ check_disk(
 
 		g_ptr_array_add(argv_ptr, g_strdup(dle->program));
 		g_ptr_array_add(argv_ptr, g_strdup("selfcheck"));
-		if (bsu->message_json == 1) {
+		if (bsu->message_selfcheck_json == 1) {
 		    g_ptr_array_add(argv_ptr, g_strdup("--message"));
 		    g_ptr_array_add(argv_ptr, g_strdup("json"));
 		} else if (bsu->message_line == 1) {

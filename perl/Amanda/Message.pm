@@ -96,9 +96,24 @@ not handled by Amanda::Message):
  3400000  Amanda::Cleanup::Message
  3500000  Amanda::Process::Message
  3600000  selfcheck
- 3700000  amgtar
+ 3700000  applications
+  3700000  amgtar
+  3701000  amstar
+  3702000  ambsdtar
  3800000  Amanda::Extensions::Message
-   3801000  Amanda::Extensions::Rest::Application::Amvmware
+  3801000  Amanda::Extensions::Rest::Application::Amvmware
+ 3900000  planner
+ 4000000  sendsize
+ 4100000  dumper
+ 4200000  sendbackup
+ 4300000  Amanda::Chunker::Message
+ 4400000  Amanda::Taper::Message
+ 4500000  driver
+ 4600000  client-util
+ 4700000  scripts
+  4700000  script-email
+  4701000  amlog-script
+  4702000  amzfs-snapshot
 
 general keys:
   code            =>

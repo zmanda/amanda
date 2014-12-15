@@ -497,7 +497,7 @@ main(
 	g_debug("Failed to fdopen mesgfd (%d): %s", mesgfd, strerror(errno));
 	exit(1);
     }
-    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream);
+    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream, NULL);
     fflush(mesgstream);
 
     if (dle->program_is_application_api==1) {
@@ -893,7 +893,7 @@ main(
 	dbprintf(_("Parsed backup messages\n"));
     }
 
-    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream);
+    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, NULL);
     fflush(mesgstream);
 
     amfree(qdisk);

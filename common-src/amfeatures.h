@@ -208,6 +208,8 @@ typedef enum {
     fe_sendbackup_retry_level,
     fe_sendbackup_retry_message,
     fe_selfcheck_message,
+    fe_sendsize_message,
+    fe_sendbackup_message,
 
     /*
      * All new features must be inserted immediately *before* this entry.

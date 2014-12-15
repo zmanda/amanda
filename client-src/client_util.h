@@ -54,7 +54,12 @@ typedef struct backup_support_option_s {
     int index_line;
     int index_xml;
     int message_line;
-    int message_json;
+    int message_selfcheck_json;
+    int message_estimate_json;
+    int message_backup_json;
+    int message_restore_json;
+    int message_validate_json;
+    int message_index_json;
     int message_xml;
     int record;
     int include_file;
@@ -141,7 +146,8 @@ void run_client_script(script_t     *script,
 void run_client_scripts(execute_on_t  execute_on,
 			g_option_t   *g_options,
 			dle_t        *dle,
-			FILE         *streamout);
+			FILE         *streamout,
+			message_t    *(*fprint_message)(FILE *out, message_t *message));
 
 void run_calcsize(char *config, char *program, char *disk,
                   char *dirname, GSList *levels,

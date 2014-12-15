@@ -451,7 +451,7 @@ main(
     }
     for(est = est_list; est != NULL; est = est->next) {
 	run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle,
-			   stdout);
+			   stdout, NULL);
     }
 
     dumpsrunning = 0;
@@ -499,7 +499,7 @@ main(
 		est->child = 0;
 		dumpsrunning--;
 		run_client_scripts(EXECUTE_ON_POST_DLE_ESTIMATE, g_options,
-				   est->dle, stdout);
+				   est->dle, stdout, NULL);
 	    }
 	}
 	/*
@@ -550,7 +550,7 @@ main(
 	} else {
 	    done = 0;
 	    run_client_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE, g_options,
-			       est->dle, stdout);
+			       est->dle, stdout, NULL);
 
 	    if((est->child = fork()) == 0) {
 		calc_estimates(est);		/* child does the estimate */
@@ -565,7 +565,7 @@ main(
 
     for(est = est_list; est != NULL; est = est->next) {
 	run_client_scripts(EXECUTE_ON_POST_HOST_ESTIMATE, g_options, est->dle,
-			   stdout);
+			   stdout, NULL);
     }
 
     est_prev = NULL;

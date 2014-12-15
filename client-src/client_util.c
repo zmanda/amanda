@@ -958,9 +958,24 @@ backup_support_option(
 	} else if (g_str_has_prefix(line, "MESSAGE-LINE ")) {
 	    if (g_str_equal(line + 13, "YES"))
 		bsu->message_line = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-JSON ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->message_json = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-SELFCHECK-JSON ")) {
+	    if (g_str_equal(line + 23, "YES"))
+		bsu->message_selfcheck_json = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-ESTIMATE-JSON ")) {
+	    if (g_str_equal(line + 22, "YES"))
+		bsu->message_estimate_json = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-BACKUP-JSON ")) {
+	    if (g_str_equal(line + 20, "YES"))
+		bsu->message_backup_json = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-RESTORE-JSON ")) {
+	    if (g_str_equal(line + 21, "YES"))
+		bsu->message_restore_json = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-VALIDATE-JSON ")) {
+	    if (g_str_equal(line + 22, "YES"))
+		bsu->message_validate_json = 1;
+	} else if (g_str_has_prefix(line, "MESSAGE-INDEX-JSON ")) {
+	    if (g_str_equal(line + 19, "YES"))
+		bsu->message_index_json = 1;
 	} else if (g_str_has_prefix(line, "MESSAGE-XML ")) {
 	    if (g_str_equal(line + 12, "YES"))
 		bsu->message_xml = 1;
@@ -1286,6 +1301,7 @@ void run_client_script_err_recover(gpointer data, gpointer user_data);
 
 typedef struct script_output_s {
     FILE  *stream;
+    message_t *(*fprint_message)(FILE *out, message_t *message);
     dle_t *dle;
 } script_output_t;
 
@@ -1298,7 +1314,13 @@ run_client_script_output(
     script_output_t *so   = user_data;
 
     if (line && so->stream) {
-	g_fprintf(so->stream, "%s\n", line);
+	if (so->fprint_message) {
+	    delete_message(so->fprint_message(so->stream, build_message(
+			__FILE__, __LINE__, 4600000, MSG_ERROR, 1,
+			"errmsg", line)));
+	} else {
+	    g_fprintf(so->stream, "%s\n", line);
+	}
     }
 }
 
@@ -1324,7 +1346,13 @@ run_client_script_err_amcheck(
     script_output_t *so    = user_data;
 
     if (line && so->stream) {
-	g_fprintf(so->stream, "ERROR %s\n", line);
+	if (so->fprint_message) {
+	    delete_message(so->fprint_message(so->stream, build_message(
+			__FILE__, __LINE__, 4600001, MSG_ERROR, 1,
+			"errmsg", line)));
+	} else {
+	    g_fprintf(so->stream, "ERROR %s\n", line);
+	}
     }
 }
 
@@ -1374,13 +1402,14 @@ run_client_scripts(
     execute_on_t  execute_on,
     g_option_t   *g_options,
     dle_t	 *dle,
-    FILE         *streamout)
+    FILE         *streamout,
+    message_t    *(*fprint_message)(FILE *out, message_t *message))
 {
     GSList          *scriptlist;
     script_t        *script;
     GFunc            client_script_err = NULL;
     GFunc            client_script_out = NULL;
-    script_output_t  so = { streamout, dle };
+    script_output_t  so = { streamout, fprint_message, dle };
 
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {

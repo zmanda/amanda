@@ -1447,22 +1447,12 @@ set_message(
 	msg = "bad CHECK-DEVICE property value '%{value}'";
     } else if (message->code == 3700011) {
 	msg = "bad NO-UNQUOTE property value '%{value}'";
-    } else if (message->code == 3700012) {
-	msg = "";
-    } else if (message->code == 3700013) {
-	msg = "";
-    } else if (message->code == 3700014) {
-	msg = "";
-    } else if (message->code == 3700015) {
-	msg = "";
-    } else if (message->code == 3700016) {
-	msg = "";
-    } else if (message->code == 3700017) {
-	msg = "";
-    } else if (message->code == 3700018) {
-	msg = "";
-    } else if (message->code == 3700019) {
-	msg = "";
+
+    } else if (message->code == 4600000) {
+	msg = "%{errmsg}";
+    } else if (message->code == 4600001) {
+	msg = "ERROR %{errmsg}";
+
     } else {
 	msg = "no message for code '%{code}'";
     }
@@ -2051,6 +2041,7 @@ parse_json_array(
 
 	    default:
 		token = parse_json_primitive(s, i, len);
+		assert(token==NULL);
 		if (token == NULL) {
 		    json_value_t *value = g_new(json_value_t, 1);
 		    value->type = MESSAGE_NULL;
@@ -2138,6 +2129,7 @@ parse_json_hash(
 
 	    default:
 		token = parse_json_primitive(s, i, len);
+		assert(token==NULL);
 		if (expect_key) {
 		    expect_key = FALSE;
 		    key = token;
@@ -2338,6 +2330,7 @@ parse_json_message(
 
 	    default:
 		token = parse_json_primitive(s, &i, len);
+		assert(token==NULL);
 		if (expect_key) {
 		    expect_key = FALSE;
 		    key = g_strdup(token);
