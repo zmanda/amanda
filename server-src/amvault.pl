@@ -34,6 +34,11 @@ sub new {
     if (!-r STDIN) {
 	return undef;
     }
+    my $stdin;
+    if (!open $stdin, "<&STDIN") {
+     return undef;
+    }
+    close $stdin;
 
     my $self = {
 	input_src => undef};
@@ -132,6 +137,7 @@ sub new {
 	latest_fulls => $params{'latest_fulls'},
 	incrs_only => $params{'incrs_only'},
 	opt_export => $params{'opt_export'},
+	opt_interactivity => $params{'opt_interactivity'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
 	config_name => $params{'config_name'},
@@ -257,7 +263,9 @@ sub setup_src {
 
     $src->{'seen_labels'} = {};
 
-    $src->{'interactivity'} = main::Interactivity->new();
+    if ($self->{'opt_interactivity'}) {
+	$src->{'interactivity'} = main::Interactivity->new();
+    }
 
     $src->{'scan'} = Amanda::Recovery::Scan->new(
 	    chg => $src->{'chg'},
@@ -538,7 +546,6 @@ sub xfer_dumps {
 	if ($errors) {
 	    my $msg = join("; ", @$errors);
 	    my $dump = $current->{'dump'};
-	    $self->amdump_log("Fail vaulting $self->{'id'} $msg");
 	    log_add_full($L_FAIL, "taper", sprintf("%s %s %s %s %s %s",
 		quote_string($dump->{'hostname'}.""), # " is required for SWIG..
 		quote_string($dump->{'diskname'}.""),
@@ -546,7 +553,7 @@ sub xfer_dumps {
 		$dump->{'level'},
                 'error',
                 $msg));
-	    $self->user_msg($msg);
+	    $self->vlog($msg);
 	    # next dump
 	    return $steps->{'get_dump'}->();
 	}
@@ -1079,6 +1086,7 @@ sub usage {
 
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--fulls-only] [--latest-fulls] [--incrs-only] [--export]
+	   [--no-interactivity]
 	   [--src-timestamp src-timestamp] [--exact-match]
 	   --label-template label-template --dst-changer dst-changer
 	   [--autolabel autolabel-arg...]
@@ -1095,6 +1103,7 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --label-template: the template to use for new volume labels
     --dst-changer: the changer to which dumps should be written
     --autolabel: similar to the amanda.conf parameter; may be repeated (default: empty)
+    --no-interactivity: disable interactivity.
 
 Copies data from the run with timestamp <src-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
@@ -1125,6 +1134,7 @@ my $opt_autolabel = {};
 my $opt_autolabel_seen = 0;
 my $opt_src_write_timestamp;
 my $opt_dst_changer;
+my $opt_interactivity = 1;
 
 sub set_label_template {
     usage("only one --label-template allowed") if $opt_autolabel->{'template'};
@@ -1178,6 +1188,7 @@ GetOptions(
     'autolabel=s' => \&add_autolabel,
     'src-timestamp=s' => \$opt_src_write_timestamp,
     'dst-changer=s' => \$opt_dst_changer,
+    'interactivity!' => \$opt_interactivity,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage("usage error");
@@ -1240,6 +1251,7 @@ my $vault = Amvault->new(
     latest_fulls=> $opt_latest_fulls,
     incrs_only => $opt_incrs_only,
     opt_export => $opt_export,
+    opt_interactivity => $opt_interactivity,
     config_overrides_opts => \@config_overrides_opts);
 Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
 Amanda::MainLoop::run();
