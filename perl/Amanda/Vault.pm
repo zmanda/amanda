@@ -122,6 +122,7 @@ sub new {
 	latest_fulls => $params{'latest_fulls'},
 	incrs_only => $params{'incrs_only'},
 	opt_export => $params{'opt_export'},
+	interactivity => $params{'interactivity'},
 	opt_dumpspecs => $params{'opt_dumpspecs'},
 	opt_dry_run => $params{'opt_dry_run'},
 	config => $params{'config'},
@@ -328,7 +329,7 @@ sub setup_src {
 
     $src->{'seen_labels'} = {};
 
-#    $src->{'interactivity'} = main::Interactivity->new();
+    $src->{'interactivity'} = $self->{'interactivity'};
 
     $src->{'scan'} = Amanda::Recovery::Scan->new(
 	    chg => $src->{'chg'},

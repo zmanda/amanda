@@ -1,4 +1,9 @@
 2014-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Vault.pm: Get interactivity.
+	* server-src/amvault.pl: Add --no-interactivity
+	* man/xml-source/amvault.8.xml: Document --no-interactivity argument.
+
+2014-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Runs.pm (list): Do not fail on empty file.
 
 2014-12-15  Jean-Louis Martineau <martineau@zmanda.com>

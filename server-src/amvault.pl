@@ -34,6 +34,11 @@ sub new {
     if (!-r STDIN) {
 	return undef;
     }
+    my $stdin;
+    if (!open $stdin, "<&STDIN") {
+	return undef;
+    }
+    close $stdin;
 
     my $self = {
 	input_src => undef};
@@ -151,6 +156,7 @@ my $opt_incrs_only = 0;
 my $opt_exact_match = 0;
 my $opt_export = 0;
 my $opt_src_write_timestamp;
+my $opt_interactivity = 1;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{ bundling });
@@ -173,6 +179,7 @@ GetOptions(
     'dst-changer=s' => sub {
 	usage("--dst-changer is deprecated, use tpchanger from the 'amvault-storage'"); },
     'src-timestamp=s' => \$opt_src_write_timestamp,
+    'interactivity!' => \$opt_interactivity,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
 ) or usage("usage error");
@@ -250,6 +257,11 @@ sub user_msg {
     }
 }
 
+my $interactivity;
+if ($opt_interactivity) {
+    $interactivity = main::Interactivity->new();
+}
+
 my @messages;
 (my $vault, @messages) = Amanda::Vault->new(
     config => $config_name,
@@ -262,6 +274,7 @@ my @messages;
     latest_fulls=> $opt_latest_fulls,
     incrs_only => $opt_incrs_only,
     opt_export => $opt_export,
+    interactivity => $interactivity,
     config_overrides_opts => \@config_overrides_opts,
     user_msg => \&user_msg,
     delay => $delay,

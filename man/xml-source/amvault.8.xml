@@ -29,11 +29,12 @@
     &configoverride.synopsis;
     <group choice='opt'><arg choice='plain'>--dry-run</arg><arg choice='plain'>-n</arg></group>
     <group choice='opt'><arg choice='plain'>--quiet</arg><arg choice='plain'>-q</arg></group>
-    <arg choice='opt'>--fulls-only </arg>
-    <arg choice='opt'>--latest-fulls </arg>
-    <arg choice='opt'>--incrs-only </arg>
-    <arg choice='opt'>--exact-match </arg>
-    <arg choice='opt'>--export </arg>
+    <arg choice='opt'>--fulls-only</arg>
+    <arg choice='opt'>--latest-fulls</arg>
+    <arg choice='opt'>--incrs-only</arg>
+    <arg choice='opt'>--exact-match</arg>
+    <arg choice='opt'>--export</arg>
+    <arg choice='opt'>--no-interactivity</arg>
     <arg choice='opt'><option>--src-timestamp</option>
 	<replaceable>src-timestamp</replaceable></arg>
     <sbr/>
@@ -168,6 +169,13 @@ import/export slots, where they can be more easily removed by an operator.
   <term><option>--latest-fulls</option></term>
   <listitem>
 <para>The latest full of every DLE in the disklist that do not have the <amkeyword>skip</amkeyword> <amkeyword>strategy</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-interactivity</option></term>
+  <listitem>
+<para>Disable interactivity if a source volume is not found.</para>
   </listitem>
   </varlistentry>
 
