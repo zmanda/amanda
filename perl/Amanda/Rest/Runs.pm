@@ -964,6 +964,8 @@ sub list {
 		$status = "done";
 	    }
 	}
+	next if !$run_type;
+
 	if ($status eq "running" and $pid) {
 	    $status = "aborted" if !$Amanda_process->process_alive($pid, $pname);
 	}
