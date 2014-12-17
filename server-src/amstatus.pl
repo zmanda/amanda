@@ -202,7 +202,7 @@ $label = "";					# -w fodder
 $origsize = 0;					# -w fodder
 $idle_dumpers = 0;
 $status_driver = "";
-$status_taper = "Searching for a new tape";
+$status_taper->{0} = "Idle";
 $estimate_done = 0;
 $holding_space = 0;
 $start_time = 0;
@@ -452,32 +452,36 @@ while($lineX = <AMDUMP>) {
 			elsif($line[5] =~ /taper/) {
 				if($line[6] eq "START-TAPER") {
 					#7:name 8:timestamp
+					$worker = $line[7];
 					$gdatestamp=$line[8];
 					if(!defined $datestamp{$gdatestamp}) {
 						$datestamp{$gdatestamp} = 1;
 						push @datestamp, $gdatestamp;
 					}
-					$status_taper = "Searching for a new tape";
+					$status_taper{$worker} = "Searching for a new tape";
 				}
 				elsif($line[6] eq "NEW-TAPE") {
 					#7:name 8:handle
-					$status_taper = "Searching for a new tape";
+					$worker = $line[7];
+					$status_taper{$worker} = "Searching for a new tape";
 				}
 				elsif($line[6] eq "NO-NEW-TAPE") {
 					#7:name 8:handle 9:errmsg
+					$worker = $line[7];
 					$serial=$line[8];
 					$error=$line[9];
-					$status_taper = $error;
+					$status_taper{$worker} = $error;
 				}
 				elsif($line[6] eq "FILE-WRITE") {
 					#7:name 8:handle 9:filename 10:host 11:disk 12:level 13:datestamp 14:splitsize
+					$worker = $line[7];
 					$name=$line[7];
 					$serial=$line[8];
 					$host=$line[10];
 					$partition=$line[11];
 					$level=$line[12];
 					$ldatestamp=$line[13];
-					$status_taper = "Writing $host:$partition";
+					$status_taper{$worker} = "Writing $host:$partition";
 					if(!defined $datestamp{$ldatestamp}) {
 						$datestamp{$ldatestamp} = 1;
 						push @datestamp, $ldatestamp;
@@ -498,12 +502,13 @@ while($lineX = <AMDUMP>) {
 				elsif($line[6] eq "PORT-WRITE") {
 					#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
 					$name=$line[7];
+					$worker = $line[7];
 					$serial=$line[8];
 					$host=$line[9];
 					$partition=$line[10];
 					$level=$line[11];
 					$ldatestamp=$line[12];
-					$status_taper = "Writing $host:$partition";
+					$status_taper{$worker} = "Writing $host:$partition";
 					$hostpart=&make_hostpart($host,$partition,$ldatestamp);
 					$serial{$serial}=$hostpart;
 					$taper_started{$hostpart}=1;
@@ -517,8 +522,10 @@ while($lineX = <AMDUMP>) {
 				}
 				elsif($line[6] eq "TAKE-SCRIBE-FROM") {
 					#7:name1 #8:handle #9:name2
+					$worker1 = $line[7];
 					$name1=$line[7];
 					$serial=$line[8];
+					$worker2 = $line[7];
 					$name2=$line[9];
 					$hostpart=$serial{$serial};
 					$taper_nb{$name1} = $taper_nb{$name2};
@@ -526,6 +533,8 @@ while($lineX = <AMDUMP>) {
 					if (defined $hostpart) {
 						$error{$hostpart} = $olderror{$hostpart};
 					}
+					$status_taper{$worker1} = $status_taper{$worker2};
+					$status_taper{$worker2} = undef;
 				}
 			}
 		}
@@ -642,7 +651,9 @@ while($lineX = <AMDUMP>) {
 						if(defined $hostpart) {
 							$error= "taper CRASH";
 							$taper_finished{$hostpart} = -2;
-							$status_taper = $error;
+							foreach $worker (keys %status_taper) {
+								$status_taper{$worker} = $error;
+							}
 							$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
 							$taper_time{$hostpart}=$current_time;
 							$error{$hostpart}="$error";
@@ -656,7 +667,7 @@ while($lineX = <AMDUMP>) {
 					#PARTIAL: 7:handle 8:INPUT-* 9:TAPE-* 10:errstr 11:INPUT-MSG 12:TAPE-MSG
 					$serial=$line[7];
 
-					$status_taper = "Idle";
+					$status_taper{$worker} = "Idle";
 					$hostpart=$serial{$serial};
 					$line[10] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
 					if ($2 eq 'kb') {
@@ -701,9 +712,10 @@ while($lineX = <AMDUMP>) {
 				elsif($line[6] eq "REQUEST-NEW-TAPE") {
 					#7:serial
 					$serial=$line[7];
-					$old_status_taper = $status_taper;
-					$status_taper = "Asking for a new tape";
 					$hostpart=$serial{$serial};
+					$worker = $taper_name{$hostpart};
+					$old_status_taper{$worker} = $status_taper{$worker};
+					$status_taper{$worker} = "Asking for a new tape";
 					if (defined $hostpart and
 						!defined($olderror{$hostpart})) {
 						$olderror{$hostpart} = $error{$hostpart};
@@ -713,8 +725,9 @@ while($lineX = <AMDUMP>) {
 				elsif($line[6] eq "NEW-TAPE") {
 					#7:serial #8:label
 					$serial=$line[7];
-					$status_taper = $old_status_taper;
 					$hostpart=$serial{$serial};
+					$worker = $taper_name{$hostpart};
+					$status_taper{$worker} = $old_status_taper{$worker};
 					$nb_tape++;
 					$taper_nb{$taper_name{$hostpart}} = $nb_tape;
 					$label = $line[8];
@@ -728,12 +741,14 @@ while($lineX = <AMDUMP>) {
 				}
 				elsif($line[6] eq "TAPER-OK") {
 					#7:name #8:label
-					$status_taper = "Idle";
+					$worker = $line[7];
+					$status_taper{$worker} = "Idle";
 				}
 				elsif($line[6] eq "TAPE-ERROR") {
 					#7:name 8:errstr
+					$worker = $line[7];
 					$error=$line[8];
-					$status_taper = $error;
+					$status_taper{$worker} = $error;
 					$exit_status |= $STATUS_TAPE;
 					undef $taper_status_file{$hostpart};
 				}
@@ -741,22 +756,23 @@ while($lineX = <AMDUMP>) {
 					#7:handle 8:INPUT- 9:TAPE- 10:input_message 11:tape_message
 					$serial=$line[7];
 					$hostpart=$serial{$serial};
+					$worker = $taper_name{$hostpart};
 					if(defined $hostpart) {
 						if($line[9] eq "TAPE-ERROR") {
 							$error=$line[11];
 							$taper_finished{$hostpart} = -2;
-							$status_taper = $error;
+							$status_taper{$worker} = $error;
 						} elsif($line[9] eq "TAPE-CONFIG") {
 							$tape_config{$hostpart} = $error;
 							$error=$line[11];
 							$tape_config{$hostpart} = $error;
 							$taper_finished{$hostpart} = -2;
-							$status_taper = $error;
+							$status_taper{$worker} = $error;
 						} else { # INPUT-ERROR
 							$error = $line[10];
 							$error = $error{$hostpart} if defined $error{$hostpart};
 							$taper_finished{$hostpart} = -1;
-							$status_taper = "Idle";
+							$status_taper{$worker} = "Idle";
 						}
 						$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
 						$taper_time{$hostpart}=$current_time;
@@ -1456,7 +1472,12 @@ if (defined $opt_summary) {
 		printf "%d dumper%s idle%s %s: %s\n", $idle_dumpers, $c1, $c2, $c3, $status_driver;
 	}
 
-	printf "taper status: $status_taper\n";
+	foreach $worker (keys %status_taper) {
+		$num = $worker;
+	   $num =~ s/worker//g;
+		print "taper $num status: $status_taper{$worker}\n";
+   }
+	#printf "taper status: $status_taper\n";
 	if (defined $qlen{"tapeq"}) {
 		printf "taper qlen: %d\n", $qlen{"tapeq"};
 	}

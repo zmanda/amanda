@@ -1,3 +1,7 @@
+2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Print a 'taper status' line for each
+	  taper-parallel-write.
+
 2014-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Add --no-interactivity.
 	* man/xml-source/amvault.8.xml: Document --no-interactivity argument.
