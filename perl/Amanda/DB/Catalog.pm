@@ -681,6 +681,17 @@ sub get_parts_and_dumps {
 		    kb => -1,    # $find_result->{'kb'}
 		    sec => -1,   # $find_result->{'sec'}
 		};
+	    } elsif (defined $find_result->{'partnum'} and $find_result->{'partnum'} == 1) {
+		$dumps{$dumpkey}->{'orig_kb'} = $find_result->{'orig_kb'},
+		$dumps{$dumpkey}->{'native_crc'} = $find_result->{'native_crc'},
+		$dumps{$dumpkey}->{'client_crc'} = $find_result->{'client_crc'},
+		$dumps{$dumpkey}->{'server_crc'} = $find_result->{'server_crc'},
+		$dumps{$dumpkey}->{'status'} = $find_result->{'dump_status'};
+		$dumps{$dumpkey}->{'message'} = $find_result->{'message'};
+		$dumps{$dumpkey}->{'nparts'} = 0;
+		$dumps{$dumpkey}->{'bytes'} = -1;
+		$dumps{$dumpkey}->{'kb'} = -1;
+		$dumps{$dumpkey}->{'sec'} = -1;
 	    }
 
 	    # start setting up a part hash for this result
