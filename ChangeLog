@@ -1,4 +1,8 @@
 2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Curinfo/Info.pm (read_infofile_perfs): Report correct
+	  error if $skip_blanks fail.
+
+2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Curinfo/Info.pm (read_infofile): Handle empty file.
 
 2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>

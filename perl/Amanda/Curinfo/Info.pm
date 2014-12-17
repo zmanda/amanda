@@ -296,6 +296,7 @@ sub read_infofile_perfs
 
     # version not paid attention to right now
     my $line = $skip_blanks->(__LINE__);
+    return $line if $line->isa("Amanda::Message");
     ($line =~ /^version: ($numdot+)/) ? 1 : return $fail->($line, __LINE__);
 
     $line = $skip_blanks->(__LINE__);
