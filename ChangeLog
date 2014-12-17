@@ -1,4 +1,7 @@
 2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Curinfo/Info.pm (read_infofile): Handle empty file.
+
+2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: set $dumps{$dumpkey} on partnum==1.
 
 2014-12-16  Jean-Louis Martineau <martineau@zmanda.com>

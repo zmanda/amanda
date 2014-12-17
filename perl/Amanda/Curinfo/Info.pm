@@ -231,6 +231,10 @@ sub read_infofile
 			infofile    => $infofile,
 			error       => $!);
 
+    if (-z $infofile) {
+	return;
+    };
+
     ## read in the fixed-length data
     $err = $self->read_infofile_perfs($fh);
     if ($err) {
