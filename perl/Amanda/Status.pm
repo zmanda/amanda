@@ -747,6 +747,10 @@ sub parse {
 			    my $storage_name = $dle->{'dump_to_tape_storage'};
 			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMPING_TO_TAPE_DUMPER;
+			} elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
+			    my $storage_name = $dle->{'dump_to_tape_storage'};
+			    my $dlet = $dle->{'storage'}->{$storage_name};
+			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			} else {
 			    die("bad status on dumper DONE: $dle->{'status'}");
 			}
