@@ -1451,9 +1451,9 @@ do_dump(
 	if (indexfile_tmp) {
 	    unlink(indexfile_tmp);
 	}
-	log_add(L_RETRY, "%s %s %s %d delay %d level %d message %s %d",
+	log_add(L_RETRY, "%s %s %s %d delay %d level %d message %s",
 			 hostname, qdiskname, dumper_timestamp, level,
-			 retry_delay, retry_level, retry_message, L_RETRY);
+			 retry_delay, retry_level, retry_message);
 	putresult(RETRY, _("%s %d %d %s\n"), handle, retry_delay, retry_level,
 					     retry_message);
 
