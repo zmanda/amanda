@@ -227,7 +227,9 @@ sub calculate_stats
 	while( my ($timestamp, $tries) = each %$alldumps ) {
 	    foreach my $try ( @$tries ) {
 
-		next if exists $try->{'retry'};
+		if (exists $try->{'retry'}) {
+		    next;
+		}
 
 		my $level = exists $try->{dumper} ? $try->{dumper}{'level'} :
 			    exists $try->{taper} ? $try->{taper}{'level'} :
@@ -638,7 +640,12 @@ sub output_error_summaries
 	while( my ($timestamp, $tries) = each %$alldumps ) {
 	    my $failed = 0;
 	    foreach my $try (@$tries) {
-		next if exists $try->{'retry'};
+
+		if (exists $try->{'retry'}) {
+		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED [$try->{'retry_message'}: Will retry at level $try->{'retry_level'}]";
+		    next;
+		}
+
 		if (exists $try->{dumper} &&
 		    $try->{dumper}->{status} &&
 		    $try->{dumper}->{status} eq 'fail') {

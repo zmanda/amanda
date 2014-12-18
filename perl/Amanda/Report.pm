@@ -920,6 +920,9 @@ sub _handle_dumper_line
 
         my $dle    = $disklist->{$hostname}->{$disk};
         my $try    = $self->_get_try( $dle, "dumper", $timestamp );
+        my $dumper = $try->{dumper} ||= {};
+	$dumper->{date}      = $timestamp;
+	$dumper->{level}     = $level;
 	$try->{retry} = 1;
 	$try->{retry_delay} = $info[5];
 	$try->{retry_level} = $info[7];

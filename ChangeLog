@@ -1,4 +1,8 @@
 2014-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Set dumper filed on RETRY.
+	* perl/Amanda/Report/human.pm: Print RETRY line.
+
+2014-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix perl warning.
 
 2014-12-17  Jean-Louis Martineau <martineau@zmanda.com>
