@@ -1279,8 +1279,14 @@ sub get_summary_info
          $dle_info->{'planner'}->{'status'} eq 'fail') or
 	($dle_info->{'driver'} &&
          $dle_info->{'driver'}->{'status'} eq 'fail')) {
-	# Do not report driver error if we have a try
-	if (!exists $alldumps->{$report->{'run_timestamp'}}) {
+	# Do not report driver error if we have a try with dumper
+	my $tries = $alldumps->{$report->{'run_timestamp'}};
+	my $to_report = !defined @$tries;
+	foreach my $try ( @$tries ) {
+	    $to_report = 1 if !defined $try->{'dumper'};
+	}
+	#if (!exists $alldumps->{$report->{'run_timestamp'}}) {
+	if ($to_report) {
 	    my @rv;
 	    push @rv, 'nodump-FAILED';
 	    push @rv, $hostname;
@@ -1354,7 +1360,6 @@ sub get_summary_info
 		$out_size  = $try->{taper}{kb};
 		$tape_time = $try->{taper}{sec};
 		$tape_rate = $try->{taper}{kps};
-		$tape_failure_from = $try->{taper}{failure_from};
 	    } elsif ( exists $try->{taper} && defined $try->{taper}->{storage}
 		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& ( $try->{taper}{status} eq "partial" ) ) {
@@ -1364,15 +1369,18 @@ sub get_summary_info
 		$out_size  = $try->{taper}{kb};
 		$tape_time = $try->{taper}{sec} if !$tape_time;
 		$tape_rate = $try->{taper}{kps} if !$tape_rate;
-		$tape_failure_from = $try->{taper}{failure_from};
 	    } elsif (exists $try->{taper} && defined $try->{taper}->{storage}
 		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& ( $try->{taper}{status} eq "fail")) {
 		$tape_time = undef;
 		$tape_rate = undef;
-		$tape_failure_from = $try->{taper}{failure_from};
 	    }
 
+	    if (exists $try->{taper}->{failure_from}) {
+		$tape_failure_from = $try->{taper}->{failure_from};
+	    } else {
+		$tape_failure_from = '';
+	    }
 	    if (!$out_size &&
 		exists $try->{chunker} && defined $try->{chunker}->{status}
 		&& (   $try->{chunker}{status} eq "success"
@@ -1542,7 +1550,7 @@ sub get_summary_info
 	    foreach my $try ( @$tries ) {
 		next if !$try->{'taper'};
 		next if defined $taper_try and $try eq $taper_try;
-		next if $try->{taper}{status} ne "done";
+		next if !defined $try->{taper}{status} or $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
 
 		@rv = 'nodump-FLUSH';

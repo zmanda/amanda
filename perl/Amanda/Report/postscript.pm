@@ -139,7 +139,7 @@ sub _write_report_tape
 		my $taper = $try->{taper};
 
 		my $parts = $taper->{parts};
-		next unless @$parts > 0;
+		next unless defined $parts && @$parts > 0;
 
 		my $first_part = $parts->[0];
 		my $dlename = undef;
