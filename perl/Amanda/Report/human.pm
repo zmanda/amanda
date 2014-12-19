@@ -1197,8 +1197,14 @@ sub get_summary_info
          $dle_info->{'planner'}->{'status'} eq 'fail') or
 	($dle_info->{'driver'} &&
          $dle_info->{'driver'}->{'status'} eq 'fail')) {
-	# Do not report driver error if we have a try
-	if (!exists $alldumps->{$report->{'run_timestamp'}}) {
+
+	# Do not report driver error if we have a try with dumper
+	my $tries = $alldumps->{$report->{'run_timestamp'}};
+	my $to_report = !defined @$tries;
+	foreach my $try ( @$tries ) {
+	    $to_report = 1 if !defined $try->{'dumper'};
+	}
+	if ($to_report) {
 	    my @rv;
 	    push @rv, 'nodump-FAILED';
 	    push @rv, $hostname;

@@ -562,22 +562,22 @@ setup_config(catalog => 'normal');
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=::2'),
     "amreport with OrigKB=::2");
 results_match($out_filename, $cat->get_text('rpt2'),
-    "..result matches");
+    "..result matches 1");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=:5'),
     "amreport with OrigKB=:5");
 results_match($out_filename, $cat->get_text('rpt3'),
-    "..result matches");
+    "..result matches 2");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'columnspec=OrigKB=:5:6'),
     "amreport with OrigKB=:5:6");
 results_match($out_filename, $cat->get_text('rpt4'),
-    "..result matches");
+    "..result matches 3");
 
 ok(run($amreport, 'TESTCONF', '-f', $out_filename, '-o', 'displayunit=m'),
     "amreport with displayunit=m");
 results_match($out_filename, $cat->get_text('rpt5'),
-    "..result matches");
+    "..result matches 4");
 
 setup_config(catalog => 'doublefailure',
     want_mailer => 1, want_template => 1);
@@ -597,7 +597,7 @@ setup_config(catalog => 'strontium', want_template => 1);
 ok(run($amreport, 'TESTCONF', '-f', $out_filename),
     "amreport with strontium logfile (simple example with multiple levels)");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 5");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -607,7 +607,7 @@ setup_config(catalog => 'amflush', want_template => 1);
 ok(run($amreport, 'TESTCONF', '-f', $out_filename),
     "amreport with amflush logfile (regression check for flush-related DUMP STATUS)");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 6");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -618,7 +618,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 12,
     "amreport with resultsmissing logfile ('RESULTS MISSING') exit==12");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 7");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -629,7 +629,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 2,
     "amreport with shortstrange logfile exit==2");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 8");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -640,7 +640,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 2,
     "amreport with longstrange logfile exit==2");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 9");
 
 setup_config(catalog => 'doublefailure', want_template => 1);
 
@@ -648,7 +648,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with doublefailure logfile exit==4");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 10");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -659,7 +659,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with bigestimate logfile exit==0");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 11");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -670,7 +670,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with retried logfile exit==4");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 12");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -681,7 +681,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 6,
     "amreport with retried logfile, with strange exit==6");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 13");
 
 setup_config(catalog => 'retried-nofinish', want_template => 1);
 
@@ -689,7 +689,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with retried logfile where driver did not finish exit==4");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 14");
 
 setup_config(catalog => 'taperr', want_template => 1);
 
@@ -697,7 +697,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile exit==16");
 results_match($out_filename, $cat->get_text('report-holding'),
-    "..result matches");
+    "..result matches 15");
 ok((-f $printer_output and -z $printer_output),
     "..printer output exists but is empty");
 
@@ -708,7 +708,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename, '-l', $alternate_log_filename);
 is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile specified explicitly exit==16");
 results_match($out_filename, $cat->get_text('report-noholding'),
-    "..result matches");
+    "..result matches 16");
 
 setup_config(catalog => 'spanned', want_template => 1);
 
@@ -716,7 +716,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with spanned logfile");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 17");
 results_match($printer_output,
     $cat->get_text('postscript'),
     "..printer output matches");
@@ -727,7 +727,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 5,
     "amreport with fatal logfile");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 18");
 ok(-f $printer_output && -z $printer_output,
     "..printer output is empty (no dumps, no tapes)");
 
@@ -737,7 +737,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with flush-origsize");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 19");
 
 setup_config(catalog => 'flush-noorigsize', want_template => 1);
 
@@ -745,7 +745,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with flush-noorigsize");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 20");
 
 setup_config(catalog => 'plannerfail', want_template => 1);
 
@@ -753,7 +753,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 4,
     "amreport with a planner failure (failed)");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 21");
 
 setup_config(catalog => 'skipped', want_template => 1);
 
@@ -761,7 +761,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport with a planner skipped dump (success)");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 22");
 
 setup_config(catalog => 'filesystemstaped', want_template => 1, runtapes => 3, tapecycle => 5);
 
@@ -769,7 +769,7 @@ run($amreport, 'TESTCONF', '-f', $out_filename);
 is($Installcheck::Run::exit_code, 0,
     "amreport correctly report filesystem taped (success)");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 23");
 
 setup_config(catalog => 'multi-taper', want_template => 0);
 
@@ -780,6 +780,6 @@ run($amreport, 'TESTCONF', '-l', $logfile, '-f', $out_filename, '-o', 'TAPETYPE:
 is($Installcheck::Run::exit_code, 0,
     "amreport correctly report multi-taper (success)");
 results_match($out_filename, $cat->get_text('report'),
-    "..result matches");
+    "..result matches 24");
 
 cleanup();
