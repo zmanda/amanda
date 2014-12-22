@@ -464,7 +464,8 @@ cmdfile_holding_file(
     cmddata_t     *cmddata     = value;
     cmd_holding_t *cmd_holding = (cmd_holding_t *)user_data;
 
-    if (g_str_equal(cmddata->holding_file, cmd_holding->holding_file)) {
+    if (cmddata->operation == CMD_FLUSH &&
+	g_str_equal(cmddata->holding_file, cmd_holding->holding_file)) {
 	cmd_holding-> found = TRUE;
     }
 }
