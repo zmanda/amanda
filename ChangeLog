@@ -1,3 +1,7 @@
+2015-01-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Die if loading an extensions
+	  fail.
+
 2014-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/cmdfile.c (cmdfile_holding_file): Check it is a CMD_FLUSH
 

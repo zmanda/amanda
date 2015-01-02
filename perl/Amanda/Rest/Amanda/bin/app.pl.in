@@ -332,6 +332,10 @@ my $extensions_dir = $Amanda::Constants::REST_EXTENSIONS_DIR;
 if (-d $extensions_dir) {
     foreach my $file (<$extensions_dir/*>) {
         eval { require $file };
+	if ($@) {
+	    die($@);
+	}
+
     }
 }
 
