@@ -722,7 +722,8 @@ sub parse {
 			$dle->{'retry_level'} = $level;
 			if ($dle->{'status'} == $DUMPING) {
 			    $dle->{'status'} = $DUMP_RETRY;
-			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
+			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE ||
+				 $dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 			    $dle->{'status'} = $DUMP_TO_TAPE_RETRY;
 			    my $storage_name = $dle->{'dump_to_tape_storage'};
 			    my $dlet = $dle->{'storage'}->{$storage_name};
