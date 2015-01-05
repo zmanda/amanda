@@ -1,3 +1,6 @@
+2015-01-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: bumpdays can be 0.
+
 2015-01-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix bad status error.
 
