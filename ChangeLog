@@ -1,3 +1,6 @@
+2015-01-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: bumpdays can be 0.
+
 2014-12-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Report all FAIL.
 	* installcheck/amreport.pl: Change message.
