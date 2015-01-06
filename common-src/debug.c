@@ -809,7 +809,7 @@ void debug_printf(const char *format, ...)
 	char *text;
 
 	if (db_file != stderr)
-	    prefix = g_strdup_printf("%s: %s: %s:", msg_timestamp(), msg_thread(), get_pname());
+	    prefix = g_strdup_printf("%s: pid %d: %s: %s:", msg_timestamp(), (int)getpid(), msg_thread(), get_pname());
 	else 
 	    prefix = g_strdup_printf("%s:", get_pname());
 	arglist_start(argp, format);

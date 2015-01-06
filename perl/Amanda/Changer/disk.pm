@@ -395,7 +395,7 @@ sub _load_by_label {
 	return $self->make_error("failed", $params{'res_cb'},
 	    reason => "volinuse",
 	    message => "Slot $slot, containing '$label', is already " .
-			"in use by drive '$drive'");
+			"in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
     }
 
     $drive = $self->_alloc_drive($params{state});

@@ -1281,7 +1281,7 @@ sub get_summary_info
          $dle_info->{'driver'}->{'status'} eq 'fail')) {
 	# Do not report driver error if we have a try with dumper
 	my $tries = $alldumps->{$report->{'run_timestamp'}};
-	my $to_report = !defined @$tries;
+	my $to_report = !defined $tries || !@$tries;
 	foreach my $try ( @$tries ) {
 	    $to_report = 1 if !defined $try->{'dumper'};
 	}
