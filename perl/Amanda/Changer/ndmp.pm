@@ -426,7 +426,6 @@ sub _parse_read_element_status {
 	my $have_pvoltag = $flags & 0x80;
 	my $have_avoltag = $flags & 0x40;
 	confess unless $all_descrips_len % $descrip_len == 0;
-	confess unless $all_descrips_len >= $descrip_len;
 	confess (length($data)) unless $all_descrips_len <= length($data);
 	$data = substr($data, 8);
 

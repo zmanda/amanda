@@ -1,4 +1,7 @@
 2015-01-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/ndmp.pm: Remove bogus confess.
+
+2015-01-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: Add the pid of the process on each line.
 	* perl/Amanda/Changer/disk.pm: Print the pid of the process using the
 	  drive.
