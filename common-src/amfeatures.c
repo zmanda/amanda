@@ -182,6 +182,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_selfcheck_message);
 	//am_add_feature(f, fe_sendsize_message);
 	//am_add_feature(f, fe_sendbackup_message);
+	am_add_feature(f, fe_sendbackup_rep_retry);
     }
     return f;
 }

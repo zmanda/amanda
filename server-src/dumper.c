@@ -674,7 +674,14 @@ main(
 			      ssh_keys,
 			      auth,
 			      options);
-	    if (rc != 0) {
+
+	    if (rc == 3) {
+		log_add(L_RETRY, "%s %s %s %d delay %d level %d message %s",
+			hostname, qdiskname, dumper_timestamp, level,
+			retry_delay, retry_level, retry_message);
+		putresult(RETRY, _("%s %d %d %s\n"), handle, retry_delay,
+			  retry_level, retry_message);
+	    } else if (rc != 0) {
 		q = quote_string(errstr);
 		putresult(rc == 2? FAILED : TRYAGAIN, "%s %s\n",
 		    handle, q);
@@ -2537,6 +2544,41 @@ bad_nak:
 	}
 
 	/*
+	 * RETRY
+	 */
+	if (g_str_equal(tok, "RETRY")) {
+
+	    tok = strtok(NULL, " ");
+	    SET(status, GOT_RETRY);
+	    if (tok && g_str_equal(tok, "delay")) {
+		tok = strtok(NULL, " ");
+		if (tok) {
+		    retry_delay = atoi(tok);
+		}
+		tok = strtok(NULL, " ");
+	    }
+	    if (tok && g_str_equal(tok, "level")) {
+		tok = strtok(NULL, " ");
+		if (tok) {
+		    retry_level = atoi(tok);
+		}
+		tok = strtok(NULL, " ");
+	    }
+	    if (tok && g_str_equal(tok, "message")) {
+		tok = strtok(NULL, "\n");
+		if (tok) {
+		     retry_message = g_strdup(tok);
+		} else {
+		    retry_message = g_strdup("\"No message\"");
+		}
+	    } else {
+		retry_message = g_strdup("\"No message\"");
+	    }
+	    *response_error = 3;
+	    continue;
+	}
+
+	/*
 	 * OPTIONS [options string] '\n'
 	 */
 	if (g_str_equal(tok, "OPTIONS")) {
@@ -2572,6 +2614,10 @@ bad_nak:
 	extra = g_strdup_printf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
 			  tok);
 	goto parse_error;
+    }
+
+    if (ISSET(status, GOT_RETRY)) {
+	return;
     }
 
     if (dumper_kencrypt == KENCRYPT_WILL_DO)
