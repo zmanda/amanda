@@ -210,6 +210,9 @@ sub do {
 
     # it exists -- call it
     $self->$function_name();
+
+    Amanda::Util::finish_application();
+    exit($self->{'error_status'});
 }
 
 1;
