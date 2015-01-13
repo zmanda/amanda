@@ -143,6 +143,7 @@ sub new {
 	config_name => $params{'config_name'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
+	src_labelstr => $params{'src_labelstr'},
 
 	dst_changer => $params{'dst_changer'},
 	dst_autolabel => $params{'dst_autolabel'},
@@ -378,6 +379,7 @@ sub setup_src {
     Amanda::Recovery::Planner::make_plan(
 	    latest_fulls => $self->{'latest_fulls'},
 	    dumpspecs => \@dumpspecs,
+	    src_labelstr => $self->{'src_labelstr'},
 	    changer => $src->{'chg'},
 	    plan_cb => sub { $self->plan_cb(@_) });
 }
@@ -1133,6 +1135,7 @@ my $opt_export = 0;
 my $opt_autolabel = {};
 my $opt_autolabel_seen = 0;
 my $opt_src_write_timestamp;
+my $opt_src_labelstr;
 my $opt_dst_changer;
 my $opt_interactivity = 1;
 
@@ -1187,6 +1190,7 @@ GetOptions(
     'label-template=s' => \&set_label_template,
     'autolabel=s' => \&add_autolabel,
     'src-timestamp=s' => \$opt_src_write_timestamp,
+    'src-labelstr=s' => \$opt_src_labelstr,
     'dst-changer=s' => \$opt_dst_changer,
     'interactivity!' => \$opt_interactivity,
     'version' => \&Amanda::Util::version_opt,
@@ -1244,6 +1248,7 @@ my $vault = Amvault->new(
     dst_changer => $opt_dst_changer,
     dst_autolabel => $opt_autolabel,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
+    src_labelstr => $opt_src_labelstr,
     opt_dumpspecs => @opt_dumpspecs? \@opt_dumpspecs : undef,
     opt_dry_run => $opt_dry_run,
     quiet => $opt_quiet,

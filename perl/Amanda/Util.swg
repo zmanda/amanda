@@ -657,13 +657,23 @@ sub unmarshal_tapespec {
 %}
 
 amglue_export_ok(
-    match_host match_disk match_datestamp match_level
+    match_host match_disk match_datestamp match_level match_labelstr_expr
 );
 
 gboolean match_host(char *pat, char *value);
 gboolean match_disk(char *pat, char *value);
 gboolean match_datestamp(char *pat, char *value);
 gboolean match_level(char *pat, char *value);
+
+%perlcode %{
+sub match_labelstr_expr {
+    my $labelstr_expr = shift;
+    my $label = shift;
+
+    return $label =~ /$labelstr_expr/;
+}
+
+%}
 
 void make_crc_table(void);
 void crc32_init(crc_t *crc);

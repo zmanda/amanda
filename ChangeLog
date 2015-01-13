@@ -1,4 +1,12 @@
 2015-01-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Add --src-labelstr argument.
+	* perl/Amanda/DB/Catalog.pm: Match the labelstr.
+	* perl/Amanda/Recovery/Planner.pm: Match the labelstr.
+	* perl/Amanda/Util.swg (match_labelstr_expr): New method.
+	* perl/Amanda/Vault.pm: Match the labelstr.
+	* NEWS: Add new amvault --src-labelstr argument.
+
+2015-01-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm (do): Call finish_application and exit.
 
 2015-01-06  Jean-Louis Martineau <martineau@zmanda.com>

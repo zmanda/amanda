@@ -1,3 +1,7 @@
+Changes in release 3.3.7
+    * amvault
+        o new --src-labelstr argument.
+
 Changes in release 3.3.6
     * ambsdtar
         o new application that use BSD tar to do the backup.
