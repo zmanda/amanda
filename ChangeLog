@@ -1,4 +1,7 @@
 2015-01-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Vault.pm: Remove bogus print statement.
+
+2015-01-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Add --src-labelstr argument.
 	* perl/Amanda/DB/Catalog.pm: Match the labelstr.
 	* perl/Amanda/Recovery/Planner.pm: Match the labelstr.

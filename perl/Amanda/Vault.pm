@@ -459,7 +459,6 @@ sub setup_src {
 	}
     }
 
-print "src_labelstr $self->{'src_labelstr'}\n";
     Amanda::Recovery::Planner::make_plan(
 	    latest_fulls => $self->{'latest_fulls'},
 	    dumpspecs => \@dumpspecs,
