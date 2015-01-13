@@ -331,6 +331,10 @@ restrict to parts with exactly this level
 
 restrict to parts with this status
 
+=item labelstr
+
+restrict to parts on volume matching the labelstr.
+
 =item dumpspecs
 
 (arrayref of dumpspecs) restruct to parts matching one or more of these dumpspecs
@@ -420,7 +424,7 @@ TODO: add_dump
 use Amanda::Logfile qw( :constants );
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( quote_string weaken_ref match_disk match_host match_datestamp match_level);
+use Amanda::Util qw( quote_string weaken_ref match_disk match_host match_datestamp match_level match_labelstr_expr);
 use File::Glob qw( :glob );
 use warnings;
 use strict;
@@ -544,6 +548,13 @@ sub get_parts_and_dumps {
 	}
 	$params{'holding'} = 0;
     }
+    # specifying labelstr implies we won't check holding files
+    if ($params{'labelstr'}) {
+	if (defined $params{'holding'} and $params{'holding'}) {
+	    return [], []; # well, that's easy..
+	}
+	$params{'holding'} = 0;
+    }
 
     # Since we're working from logfiles, we have to pick the logfiles we'll use first.
     # Then we can use search_logfile.
@@ -641,6 +652,8 @@ sub get_parts_and_dumps {
 		and !exists($storages_hash{$find_result->{'storage'}}));
 	    next if (%labels_hash
 		and !exists($labels_hash{$find_result->{'label'}}));
+	    next if (defined $params{'labelstr'}
+		and !match_labelstr_expr($params{'labelstr'},$find_result->{'label'}));
 	    if ($get_what eq 'parts') {
 		next if (exists($params{'status'})
 		    and defined $find_result->{'status'}

@@ -131,8 +131,8 @@ sub new {
 	delay => $params{'delay'},
 
 	src_write_timestamp => $params{'src_write_timestamp'},
-
 	dst_write_timestamp => $params{'dst_write_timestamp'},
+	src_labelstr => $params{'src_labelstr'},
 
 	src => undef,
 	dst => undef,
@@ -459,9 +459,11 @@ sub setup_src {
 	}
     }
 
+print "src_labelstr $self->{'src_labelstr'}\n";
     Amanda::Recovery::Planner::make_plan(
 	    latest_fulls => $self->{'latest_fulls'},
 	    dumpspecs => \@dumpspecs,
+	    src_labelstr => $self->{'src_labelstr'},
 	    changer => $src->{'chg'},
 	    plan_cb => sub { $self->plan_cb(@_) });
 }

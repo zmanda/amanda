@@ -1,3 +1,11 @@
+2015-01-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Add --src-labelstr argument.
+	* perl/Amanda/DB/Catalog.pm: Match the labelstr.
+	* perl/Amanda/Recovery/Planner.pm: Match the labelstr.
+	* perl/Amanda/Util.swg (match_labelstr_expr): New method.
+	* perl/Amanda/Vault.pm: Match the labelstr.
+	* NEWS: Add new amvault --src-labelstr argument.
+
 2015-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h: Add fe_sendbackup_rep_retry.
 	* common-src/amfeatures.c: Add fe_sendbackup_rep_retry.

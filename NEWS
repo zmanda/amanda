@@ -70,6 +70,10 @@ Changes in release 4.0.0
        o include POOL, STORAGE and CONFIG
        o you can share the same tapelist file across multiple config.
 
+Changes in release 3.3.7
+    * amvault
+        o new --src-labelstr argument.
+
 Changes in release 3.3.6
     * ambsdtar
         o new application that use BSD tar to do the backup.

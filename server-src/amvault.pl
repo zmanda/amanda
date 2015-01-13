@@ -156,6 +156,7 @@ my $opt_incrs_only = 0;
 my $opt_exact_match = 0;
 my $opt_export = 0;
 my $opt_src_write_timestamp;
+my $opt_src_labelstr;
 my $opt_interactivity = 1;
 
 debug("Arguments: " . join(' ', @ARGV));
@@ -179,6 +180,7 @@ GetOptions(
     'dst-changer=s' => sub {
 	usage("--dst-changer is deprecated, use tpchanger from the 'amvault-storage'"); },
     'src-timestamp=s' => \$opt_src_write_timestamp,
+    'src-labelstr=s' => \$opt_src_labelstr,
     'interactivity!' => \$opt_interactivity,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
@@ -267,6 +269,7 @@ my @messages;
     config => $config_name,
     src_write_timestamp => $opt_src_write_timestamp,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
+    src_labelstr => $opt_src_labelstr,
     opt_dumpspecs => @opt_dumpspecs? \@opt_dumpspecs : undef,
     opt_dry_run => $opt_dry_run,
     quiet => $opt_quiet,

@@ -239,9 +239,10 @@ sub make_plan {
 	    unless exists $params{$rq_param};
     }
     my $dumpspecs = $params{'dumpspecs'};
+    my $src_labelstr = $params{'src_labelstr'};
 
     # first, get the set of dumps that match these dumpspecs
-    my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs);
+    my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs, labelstr => $src_labelstr);
 
     # Create a hash of the latest datestamp of each dle.
     my %datestamp;
