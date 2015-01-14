@@ -21,7 +21,6 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
     AC_REQUIRE([AMANDA_WITH_CLIENT_ONLY]) dnl deprecated
     AC_REQUIRE([AMANDA_WITH_SERVER_ONLY]) dnl deprecated
     AC_REQUIRE([AMANDA_WITHOUT_NDMP])
-    AC_REQUIRE([AMANDA_JSON_SERVER])
 
     # detect invalid combinations of components
     if ! ${WANT_SERVER-true} && ${WANT_RESTORE-true}; then
@@ -36,7 +35,6 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
     AM_CONDITIONAL(WANT_SERVER, $WANT_SERVER)
     AM_CONDITIONAL(WANT_RECOVER, $WANT_RECOVER)
     AM_CONDITIONAL(WANT_NDMP, $WANT_NDMP)
-    AM_CONDITIONAL(WANT_JSON_SERVER, $WANT_JSON_SERVER)
 
     AM_CONDITIONAL(WANT_TAPE, $WANT_SERVER || $WANT_RESTORE)
 
@@ -69,11 +67,6 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
 	AMANDA_COMPONENTS="$AMANDA_COMPONENTS ndmp";
     else
 	missing_components="$missing_components (no ndmp)";
-    fi
-    if $WANT_JSON_SERVER; then
-	AMANDA_COMPONENTS="$AMANDA_COMPONENTS json-server";
-    else
-	missing_components="$missing_components (no json-server)";
     fi
 
     AC_SUBST(AMANDA_COMPONENTS)
