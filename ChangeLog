@@ -1,3 +1,13 @@
+2015-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/components.m4: Remove AMANDA_JSON_SERVER and
+	  WANT_JSON_SERVER.
+	* config/amanda/json.m4: Remove file
+	* perl/Amanda/JSON/*: Remove directory.
+	* perl/Amanda/JSON.pm: Remove module.
+	* perl/Makefile.am: Remove Amanda/JSON.pm and Amanda/JSON/*
+	* server-src/Makefile.am: Remove amanda.psgi
+	* server-src/amanda.psgi.pl: Remove file.
+
 2015-01-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Vault.pm: Remove bogus print statement.
 
