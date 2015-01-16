@@ -1,3 +1,6 @@
+2015-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Fix perl warning.
+
 2015-01-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/components.m4: Remove AMANDA_JSON_SERVER and
 	  WANT_JSON_SERVER.

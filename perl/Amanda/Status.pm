@@ -860,6 +860,7 @@ sub parse {
 				}
 				$dlet->{'taper_time'} = $self->{'current_time'};
 				$dlet->{'error'} = "$error";
+				$dle->{'error'} = "$error" if !defined $dle->{'error'};
 				undef $worker_to_serial{$worker};
 			    }
 			}
@@ -1278,6 +1279,7 @@ sub set_summary {
 		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dump_failed'}->{'nb'}++;
 		    $self->{'stat'}->{'dump_failed'}->{'estimated_size'} += $dle->{'esize'};
+		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
 		    $dle->{'message'} = "dump failed: $dle->{'error'}";
 		    $dle->{'dsize'} = $dle->{'size'};
 		    $self->{'exit_status'} |= $STATUS_FAILED;
@@ -1287,6 +1289,7 @@ sub set_summary {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
+		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
 		    if ($dle->{'retry_level'} != -1) {
 			$dle->{'message'} = "will retry at level $dle->{'retry_level'}: $dle->{'error'}";
 		    } else {
@@ -1298,6 +1301,7 @@ sub set_summary {
 		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
 		    $self->{'stat'}->{'dump_to_tape_failed'}->{'nb'}++;
 		    $self->{'stat'}->{'dump_to_tape_failed'}->{'estimated_size'} += $dle->{'esize'};
+		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
 		    $dle->{'message'} = "dump to tape failed: $dle->{'error'}";
 		    $dle->{'dsize'} = $dle->{'size'};
 		    $self->{'exit_status'} |= $STATUS_FAILED;
