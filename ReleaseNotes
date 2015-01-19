@@ -1,3 +1,15 @@
+		Release Notes for amanda-3.3.7
+
+* amvault
+    o new --no-interactivity argument.
+    o new --src-labelstr argument.
+* amdump
+    o compute crc32 of the streams and write them to the debug files.
+* chg-robot
+    o Add a BROKEN-DRIVE-LOADED-SLOT. property.
+* Many bugs fix.
+
+
 		Release Notes for amanda-3.3.6
 
 * ambsdtar

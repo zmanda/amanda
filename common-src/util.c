@@ -1617,7 +1617,7 @@ debug_executing(
 	cmdline = vstrextend(&cmdline, " ", arg, NULL);
 	amfree(arg);
     }
-    g_debug("Executing: %s\n", cmdline);
+    g_debug("Executing: %s", cmdline);
     amfree(cmdline);
 }
 
