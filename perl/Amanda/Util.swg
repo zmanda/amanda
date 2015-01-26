@@ -459,7 +459,7 @@ set_blocking(int fd, gboolean blocking)
 /* SWIG prepends the struct name to the member function name, which
  * conflicts with the underlying function names */
 
-typedef struct file_lock {
+typedef struct {
     %extend {
 	%newobject file_lock;
 	file_lock(const char *filename) {

@@ -1,3 +1,8 @@
+2015-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cmdline.swg, perl/Amanda/Device.swg,
+	  perl/Amanda/MainLoop.swg, perl/Amanda/NDMP.swg,
+	  perl/Amanda/Util.swg: Fix linking issue.
+
 2015-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Change in 3.3.7
 	* ReleaseNotes: Change in 3.3.7

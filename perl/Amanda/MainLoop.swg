@@ -356,7 +356,7 @@ void quit(void) {
 %{ static void amglue_source_remove(amglue_Source *self); %}
 
 %rename(Source) amglue_Source;
-typedef struct amglue_Source {
+typedef struct {
     %extend {
 	/* Constructor: use one of the package-level functions, below */
 	amglue_Source() {
