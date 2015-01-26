@@ -1,4 +1,9 @@
 2015-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/compile, config/config.guess, config/config.sub,
+	  config/depcomp, config/install-sh, config/missing,
+	  config/mkinstalldirs, config/ylwrap: Upgrade to automake 1.14.1
+
+2015-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cmdline.swg, perl/Amanda/Device.swg,
 	  perl/Amanda/MainLoop.swg, perl/Amanda/NDMP.swg,
 	  perl/Amanda/Util.swg: Fix linking issue.
