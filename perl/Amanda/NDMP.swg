@@ -93,7 +93,7 @@ typedef guint ndmp_enum;
     SP -= argvi; argvi++;
 }
 
-typedef struct NDMPConnection {
+typedef struct {
     /* methods */
     %extend {
 	/* constructor */

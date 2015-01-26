@@ -35,7 +35,7 @@
 %}
 
 /* Add a few methods to make this type act like a class */
-typedef struct dumpspec_t {
+typedef struct {
     %immutable;
     char *host;
     char *disk;

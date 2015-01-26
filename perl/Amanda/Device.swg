@@ -243,7 +243,7 @@ set_gvalue_from_sv(SV *sv, GValue *value)
  * DirectTCPConnection object
  */
 
-typedef struct DirectTCPConnection {
+typedef struct {
     %extend {
 	~DirectTCPConnection() {
 	    g_object_unref(self);
@@ -262,7 +262,7 @@ typedef struct DirectTCPConnection {
 
 %name(unaliased_name) extern char *device_unaliased_name(char *);
 
-typedef struct Device {
+typedef struct {
 
     /* methods */
     %extend {
