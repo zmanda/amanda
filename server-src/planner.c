@@ -1802,8 +1802,6 @@ static void getsize(am_host_t *hostp)
             continue;
         }
 
-        estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
-
         estimate = ES_CLIENT;
         for (el = dp->estimatelist; el != NULL; el = el->next) {
             estimate = (estimate_t)GPOINTER_TO_INT(el->data);
