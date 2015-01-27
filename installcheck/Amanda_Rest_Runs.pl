@@ -235,7 +235,7 @@ my $starttime;
 my $datestamp;
 my $chunk_time;
 my $dump_time;
-my $logdir = getconf($CNF_LOGDIR);
+my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 $amdump_log = "$logdir/amdump";
 $trace_log = "$logdir/log";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");

@@ -873,7 +873,7 @@ sub messages {
 		severity         => $Amanda::Message::ERROR);
 	return \@result_messages;
     }
-    my $message_path =  getconf($CNF_LOGDIR) . "/" . $params{'message_filename'};
+    my $message_path =  config_dir_relative(getconf($CNF_LOGDIR)) . "/" . $params{'message_filename'};
     my $message_fh;
     if (!open ($message_fh, "<$message_path")) {
 	push @result_messages, Amanda::CheckDump::Message->new(
@@ -907,7 +907,7 @@ sub list {
     my $Amanda_process = Amanda::Process->new();
     $Amanda_process->load_ps_table();
 
-    my $logdir = Amanda::Config::getconf($CNF_LOGDIR);
+    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
     foreach my $logfile (<$logdir/amdump.*>, <$logdir/fetchdump.*>, <$logdir/checkdump.*> ) {
 	my $timestamp;
 	if ($logfile =~ /amdump\.(.*)$/) {

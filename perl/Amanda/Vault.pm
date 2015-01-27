@@ -141,7 +141,7 @@ sub new {
 	exporting => 0, # is an export in progress?
 	call_after_export => undef, # call this when export complete
 	config_overrides_opts => $params{'config_overrides_opts'},
-	trace_log_filename => getconf($CNF_LOGDIR) . "/log",
+	trace_log_filename => config_dir_relative(getconf($CNF_LOGDIR)) . "/log",
 
 	# called when the operation is complete, with the exit
 	# status
@@ -154,7 +154,7 @@ sub new {
 
     # open up a trace log file and put our imprimatur on it, unless dry_runing
     if (!$self->{'opt_dry_run'}) {
-	my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+	my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
 	my @now = localtime;
 	$self->{'longdate'} = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
 

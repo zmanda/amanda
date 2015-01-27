@@ -33,7 +33,7 @@ require Amanda::Script_App;
 use strict;
 use warnings;
 use IO::Handle;
-use Amanda::Config qw( :init :getconf  config_dir_relative );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 
 
 sub new {

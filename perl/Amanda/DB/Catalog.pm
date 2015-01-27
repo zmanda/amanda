@@ -489,7 +489,7 @@ sub get_run_type {
     my ($write_timestamp) = @_;
 
     # find all of the logfiles with that name
-    my $logdir = getconf($CNF_LOGDIR);
+    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
     my @matches = File::Glob::bsd_glob("$logdir/log.$write_timestamp.*", GLOB_NOSORT);
     if ($write_timestamp =~ /000000$/) {
 	my $write_datestamp = substr($write_timestamp, 0, 8);
@@ -1010,7 +1010,7 @@ sub add_part {
     my $logfh;
     my $logfile;
     my $find_result;
-    my $logdir = getconf($CNF_LOGDIR);
+    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
     my ($last_filenum, $last_secs, $last_kbs);
 
     # first order of business is to find out whether we need to make a new

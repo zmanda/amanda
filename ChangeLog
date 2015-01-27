@@ -1,4 +1,14 @@
 2015-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Runs.pl, installcheck/amreport.pl,
+	  perl/Amanda/Amdump.pm, perl/Amanda/Amflush.pm,
+	  perl/Amanda/CheckDump.pm, perl/Amanda/DB/Catalog.pm,
+	  perl/Amanda/FetchDump.pm, perl/Amanda/Logfile.swg,
+	  perl/Amanda/Process.pm, perl/Amanda/Rest/Report.pm,
+	  perl/Amanda/Rest/Runs.pm, perl/Amanda/Status.pm,
+	  perl/Amanda/Vault.pm, server-src/amstatus.pl,
+	  server-src/driver.c: CNF_LOGIDR can be relative.
+
+2015-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c (print_platform): Detect BSD variant.
 
 2015-01-27  Jean-Louis Martineau <martineau@zmanda.com>

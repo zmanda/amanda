@@ -81,7 +81,7 @@ sub report {
     my $logfile = $params{'trace_log'} || $params{'logfile'};
     $logfile = "log" if !defined $logfile;
 
-    my $logdir = getconf($CNF_LOGDIR);
+    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
     $logfile = "$logdir/$logfile" if $logfile !~ /^\//;
 
     my $report = Amanda::Report->new($logfile);

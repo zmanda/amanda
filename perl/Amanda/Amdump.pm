@@ -51,7 +51,7 @@ use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
 use File::Glob qw( :glob );
 
-use Amanda::Config qw( :init :getconf );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Debug qw( debug );
@@ -66,7 +66,7 @@ sub new {
     my $self = \%params;
     bless $self, $class;
 
-    my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
     my @now = localtime;
     $self->{'longdate'} = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
 

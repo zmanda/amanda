@@ -336,6 +336,9 @@ amglue_export_ok(
 
 %perlcode %{
 
+use Amanda::Config qw ( :init :getconf config_dir_relative );
+use Amanda::Debug;
+
 sub find_all_logs
 {
     my $logdir = shift @_ || config_dir_relative(getconf($CNF_LOGDIR));
@@ -353,13 +356,9 @@ sub find_latest_log
     return $logs[-1];
 }
 
-use Amanda::Config;
-use Amanda::Debug;
-
 sub get_current_log_timestamp
 {
-    my $logfile = Amanda::Config::config_dir_relative(
-		Amanda::Config::getconf($Amanda::Config::CNF_LOGDIR)) . "/log";
+    my $logfile = config_dir_relative(getconf($CNF_LOGDIR)) . "/log";
     if (! -f $logfile) {
 	Amanda::Debug::warning("no current logfile '$logfile'");
 	return undef;

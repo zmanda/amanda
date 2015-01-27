@@ -71,7 +71,7 @@ sub new {
     my $self = \%params;
     bless $self, $class;
 
-    my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
     my @now = localtime;
     $self->{'longdate'} = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
 

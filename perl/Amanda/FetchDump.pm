@@ -236,7 +236,7 @@ sub new {
     $self->{'exit_status'} = 0;
     $self->{'amlibexecdir'} = 0;
 
-    my $logdir = $self->{'logdir'} = getconf($CNF_LOGDIR);
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
     my @now = localtime;
     my $timestamp = strftime "%Y%m%d%H%M%S", @now;
     $self->{'pid'} = $$;

@@ -53,7 +53,7 @@ use vars qw( @ISA @EXPORT_OK );
 use File::Basename;
 use Amanda::Constants;
 use Amanda::Debug qw( debug );
-use Amanda::Config qw( :getconf );
+use Amanda::Config qw( :getconf config_dir_relative );
 @ISA = qw( Exporter );
 
 =head1 NAME
@@ -251,7 +251,7 @@ sub scan_log($) {
     my($line);
 
     if ($logfile !~ /^\//) {
-	$logfile = Amanda::Config::getconf($CNF_LOGDIR) . '/' . $logfile;
+	$logfile = config_dir_relative(Amanda::Config::getconf($CNF_LOGDIR)) . '/' . $logfile;
     }
     if (!open(LOGFILE, "<", $logfile)) {
 	$self->{'user_message'}(Amanda::Process::Message->new(

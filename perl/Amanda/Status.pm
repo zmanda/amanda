@@ -48,7 +48,7 @@ use Text::ParseWords;
 
 use Amanda::Paths;
 use Amanda::Util qw( match_labelstr );
-use Amanda::Config qw( :getconf );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( debug );
 use Amanda::MainLoop;
@@ -193,7 +193,7 @@ sub new {
 
     my $filename = $params{'filename'};
     my $dead_run;
-    my $logdir = Amanda::Config::getconf($CNF_LOGDIR);
+    my $logdir = config_dir_relative(Amanda::Config::getconf($CNF_LOGDIR));
     if (defined $filename) {
 	if ($filename =~ m,^/, ) {
 	} else {

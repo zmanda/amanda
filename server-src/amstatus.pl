@@ -120,7 +120,7 @@ if ( ! -d "$confdir/$conf" ) {
  }
 
 
-my $logdir = getconf($CNF_LOGDIR);
+my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 chomp $logdir;
 my $errfile="$logdir/amdump";
 
