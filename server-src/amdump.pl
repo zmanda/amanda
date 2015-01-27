@@ -26,7 +26,7 @@ use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
 use File::Glob qw( :glob );
 
-use Amanda::Config qw( :init :getconf );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
 use Amanda::Logfile qw( :logtype_t log_add );
 use Amanda::Debug qw( debug );
@@ -84,7 +84,7 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 # useful info for below
 my @hostdisk = @ARGV;
-my $logdir = getconf($CNF_LOGDIR);
+my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 my @now = localtime;
 my $longdate = strftime "%a %b %e %H:%M:%S %Z %Y", @now;
 my $timestamp = strftime "%Y%m%d%H%M%S", @now;

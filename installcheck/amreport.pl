@@ -32,7 +32,7 @@ use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Util qw( slurp burp );
 use Amanda::Debug;
-use Amanda::Config qw ( :init :getconf );
+use Amanda::Config qw ( :init :getconf config_dir_relative );
 
 # easy knob to twiddle to check amreport_new instead
 my $amreport = "amreport";
@@ -774,7 +774,7 @@ results_match($out_filename, $cat->get_text('report'),
 setup_config(catalog => 'multi-taper', want_template => 0);
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-my $logdir = getconf($CNF_LOGDIR);
+my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 my $logfile = $logdir . "/log.20100908110856.0";
 run($amreport, 'TESTCONF', '-l', $logfile, '-f', $out_filename, '-o', 'TAPETYPE:TEST-TAPE-TEMPLATE:length=41m');
 is($Installcheck::Run::exit_code, 0,

@@ -318,7 +318,7 @@ main(
     /* check that we don't do many dump in a day and usetimestamps is off */
     if(strlen(driver_timestamp) == 8) {
 	if (!nodump) {
-	    char *conf_logdir = getconf_str(CNF_LOGDIR);
+	    char *conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
 	    char *logfile    = vstralloc(conf_logdir, "/log.",
 					 driver_timestamp, ".0", NULL);
 	    char *oldlogfile = vstralloc(conf_logdir, "/oldlog/log.",
