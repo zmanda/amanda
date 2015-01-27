@@ -1736,6 +1736,7 @@ print_platform(void)
 	if (strncmp(uname, "SunOS", 5) == 0) {
 	    FILE *release = fopen("/etc/release", "r");
 	    distro = g_strdup("Solaris");
+	    g_free(uname);
 	    if (release) {
 		char *result;
 		result = fgets(line, 1024, release);
@@ -1745,6 +1746,17 @@ print_platform(void)
 		fclose(release);
 		goto print_platform_out;
 	    }
+	} else if (strlen(uname) >= 3 &&
+		   g_strcasecmp(uname+strlen(uname)-3, "bsd") == 0) {
+	    distro = uname;
+	    argv_ptr = g_ptr_array_new();
+	    g_ptr_array_add(argv_ptr, UNAME_PATH);
+	    g_ptr_array_add(argv_ptr, "-r");
+	    g_ptr_array_add(argv_ptr, NULL);
+	    platform = get_first_line(argv_ptr);
+	    g_ptr_array_free(argv_ptr, TRUE);
+	} else {
+	    g_free(uname);
 	}
     }
     argv_ptr = g_ptr_array_new();

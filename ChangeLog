@@ -1,4 +1,7 @@
 2015-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c (print_platform): Detect BSD variant.
+
+2015-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Remove useless line.
 
 2015-01-26  Jean-Louis Martineau <martineau@zmanda.com>
