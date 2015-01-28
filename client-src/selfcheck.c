@@ -1759,23 +1759,26 @@ print_platform(void)
 	    g_free(uname);
 	}
     }
-    argv_ptr = g_ptr_array_new();
-    g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
-    g_ptr_array_add(argv_ptr, "-productName");
-    g_ptr_array_add(argv_ptr, NULL);
-    productName = get_first_line(argv_ptr);
-    g_ptr_array_free(argv_ptr, TRUE);
-    argv_ptr = g_ptr_array_new();
-    g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
-    g_ptr_array_add(argv_ptr, "-productVersion");
-    g_ptr_array_add(argv_ptr, NULL);
-    productVersion = get_first_line(argv_ptr);
-    g_ptr_array_free(argv_ptr, TRUE);
-    if (productName && productVersion &&
-	!g_str_equal(productName, "unknown") &&
-	!g_str_equal( productVersion, "unknown")) {
-	distro = g_strdup("mac");
-	platform = g_strdup_printf("%s %s", productVersion, productVersion);
+    if (!stat("/usr/bin/sw_vers", &stat_buf)) {
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
+	g_ptr_array_add(argv_ptr, "-productName");
+	g_ptr_array_add(argv_ptr, NULL);
+	productName = get_first_line(argv_ptr);
+	g_ptr_array_free(argv_ptr, TRUE);
+	argv_ptr = g_ptr_array_new();
+	g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
+	g_ptr_array_add(argv_ptr, "-productVersion");
+	g_ptr_array_add(argv_ptr, NULL);
+	productVersion = get_first_line(argv_ptr);
+	g_ptr_array_free(argv_ptr, TRUE);
+	if (productName && productVersion &&
+	    !g_str_equal(productName, "unknown") &&
+	    !g_str_equal( productVersion, "unknown")) {
+	    distro = g_strdup("mac");
+	    platform = g_strdup_printf("%s %s", productVersion, productVersion);
+	    goto print_platform_out;
+	}
     }
 
 print_platform_out:

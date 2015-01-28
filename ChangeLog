@@ -1,3 +1,8 @@
+2015-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: (print_platform): Do not execute
+	  /usr/bin/sw_vers if it doesn't exists.
+	* common-src/amutil.c: Fix debugging statement.
+
 2015-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Runs.pl, installcheck/amreport.pl,
 	  perl/Amanda/Amdump.pm, perl/Amanda/Amflush.pm,

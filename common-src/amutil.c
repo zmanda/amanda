@@ -1707,7 +1707,7 @@ debug_executing(
 
     cmdline = g_string_free(strbuf, FALSE);
 
-    g_debug("Executing: %s\n", cmdline);
+    g_debug("Executing: %s", cmdline);
     g_free(cmdline);
 }
 
