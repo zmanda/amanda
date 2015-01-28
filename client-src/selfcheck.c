@@ -1314,9 +1314,16 @@ print_platform(void)
 		}
 		fclose(release);
 	    }
-	    amfree(uname);
-	} else {
-	    amfree(uname);
+	} else if (uname && strlen(uname) >= 3 &&
+		   g_strcasecmp(uname+strlen(uname)-3, "bsd") == 0) {
+	    distro = g_strdup(uname);
+	    argv_ptr = g_ptr_array_new();
+            g_ptr_array_add(argv_ptr, UNAME_PATH);
+            g_ptr_array_add(argv_ptr, "-r");
+            g_ptr_array_add(argv_ptr, NULL);
+            platform = get_first_line(argv_ptr);
+            g_ptr_array_free(argv_ptr, TRUE);
+	} else if (!stat("/usr/bin/sw_vers", &stat_buf)) {
 	    argv_ptr = g_ptr_array_new();
 	    g_ptr_array_add(argv_ptr, "/usr/bin/sw_vers");
 	    g_ptr_array_add(argv_ptr, "-productName");
@@ -1336,6 +1343,7 @@ print_platform(void)
 		platform = g_strdup_printf("%s %s", productVersion, productVersion);
 	    }
 	}
+	amfree(uname);
 
     }
 
