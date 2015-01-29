@@ -141,6 +141,14 @@ static char *retry_message = NULL;
 
 static dumpfile_t file;
 
+static int dump_result;
+static int status;
+#define	GOT_INFO_ENDLINE	(1 << 0)
+#define	GOT_SIZELINE		(1 << 1)
+#define	GOT_ENDLINE		(1 << 2)
+#define	HEADER_DONE		(1 << 3)
+#define	GOT_RETRY		(1 << 4)
+
 static struct {
     const char *name;
     security_stream_t *fd;
@@ -662,6 +670,14 @@ main(
 	    else
 		check_options(options); /* note: modifies globals */
 
+	    if (msg.buf) msg.buf[0] = '\0';	/* reset msg buffer */
+	    status = 0;
+	    dump_result = 0;
+	    retry_delay = -1;
+	    retry_level = -1;
+	    amfree(retry_message);
+	    dumpbytes = dumpsize = headersize = origsize = (off_t)0;
+
 	    rc = startup_dump(hostname,
 			      diskname,
 			      device,
@@ -825,15 +841,6 @@ databuf_flush(
     db->datain = db->dataout = db->buf;
     return 0;
 }
-
-static int dump_result;
-static int status;
-#define	GOT_INFO_ENDLINE	(1 << 0)
-#define	GOT_SIZELINE		(1 << 1)
-#define	GOT_ENDLINE		(1 << 2)
-#define	HEADER_DONE		(1 << 3)
-#define	GOT_RETRY		(1 << 4)
-
 
 static void
 process_dumpeof(void)
@@ -1353,12 +1360,6 @@ do_dump(
     startclock();
 
     if (msg.buf) msg.buf[0] = '\0';	/* reset msg buffer */
-    status = 0;
-    dump_result = 0;
-    retry_delay = -1;
-    retry_level = -1;
-    amfree(retry_message);
-    dumpbytes = dumpsize = headersize = origsize = (off_t)0;
     fh_init(&file);
 
     g_snprintf(level_str, sizeof(level_str), "%d", level);
