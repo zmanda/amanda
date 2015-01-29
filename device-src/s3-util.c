@@ -33,6 +33,8 @@
 #endif
 
 #include <glib.h>
+#include <openssl/hmac.h>
+#include <openssl/sha.h>
 #include <openssl/md5.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
@@ -170,3 +172,109 @@ s3_compute_md5_hash(const GByteArray *to_hash) {
 
     return ret;
 }
+
+char *
+s3_compute_sha256_hash_ba(
+    const GByteArray *to_hash)
+{
+    return s3_compute_sha256_hash(to_hash->data, to_hash->len);
+}
+
+char *
+s3_compute_sha256_hash(
+    const unsigned char *to_hash,
+    int len)
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    char *ret = malloc(64);
+    int i;
+
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, to_hash, len);
+    SHA256_Final(hash, &sha256);
+    for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(ret + (i * 2), "%02x", hash[i]);
+    }
+    ret[64] = 0;
+    return ret;
+}
+
+char *
+s3_uri_encode(
+    const char *s,
+    gboolean encodeSlash)
+{
+    GString *ret = g_string_new("");
+    int i;
+    int len_s = strlen(s);
+
+    for (i = 0; i < len_s; i++) {
+	unsigned char ch = s[i];
+	if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || ch == '~' || ch == '.') {
+	    g_string_append_c(ret, ch);
+	} else if (ch == '/') {
+	    if (encodeSlash) {
+		g_string_append(ret, "%2F");
+	    } else {
+		g_string_append_c(ret, ch);
+	    }
+	} else {
+	    g_string_append_printf(ret, "%02x", ch);
+	}
+    }
+    return g_string_free(ret, FALSE);
+}
+
+unsigned char *
+EncodeHMACSHA256(
+    unsigned char* key,
+    int keylen,
+    const char* data,
+    int datalen)
+{
+    unsigned char *hmachash = malloc(32);
+    const unsigned char *datatohash = (unsigned char *)data;
+
+    // Initialise HMACh
+    HMAC_CTX HMAC;
+    unsigned int hmaclength = 32;
+    memset(hmachash, 0, hmaclength);
+
+    if (keylen > 64 ) {
+	unsigned char tk[SHA256_DIGEST_LENGTH];
+	SHA256(key, keylen, tk);
+	key    = tk;
+	keylen = SHA256_DIGEST_LENGTH;
+    }
+
+    // Digest the key and message using SHA256
+    HMAC_CTX_init(&HMAC);
+    HMAC_Init_ex(&HMAC, key, keylen, EVP_sha256(),NULL);
+    HMAC_Update(&HMAC, datatohash, datalen);
+    HMAC_Final(&HMAC, hmachash, &hmaclength);
+    HMAC_CTX_cleanup(&HMAC);
+
+    return hmachash;
+}
+
+unsigned char *
+s3_tohex(
+    unsigned char *s,
+    int len_s)
+{
+    unsigned char *r = malloc(len_s*2+1);
+    unsigned char *t = r;
+    int   i;
+    gchar table[] = "0123456789abcdef";
+
+    for (i = 0; i < len_s; i++) {
+	/* most significant 4 bits */
+	*t++ = table[s[i] >> 4];
+	/* least significant 4 bits */
+	*t++ = table[s[i] & 0xf];
+    }
+    *t = '\0';
+    return r;
+}
+

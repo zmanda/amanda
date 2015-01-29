@@ -550,12 +550,14 @@ It can be "DURABLE_REDUCED_AVAILABILITY" for GOOGLE storage.
  <varlistentry><term>STORAGE_API</term><listitem>
  (read-write) Which API to use for the cloud:
 <programlisting>
-  S3            Amanzon S3 api
+  S3            Amazon S3 AWS Signature Version 2
+  AWS4          Amazon S3 AWS Signature Version 4
   SWIFT-1.0     Openstack swift v1.0
   SWIFT-2.0     Openstack swift v2.0
   OAUTH2        Google
   CASTOR        Caringo CAStor
 </programlisting>
+The default is AWS4 if S3-HOST end with '.amazonaws.com', otherwise it is S3.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TENANT_ID</term><listitem>

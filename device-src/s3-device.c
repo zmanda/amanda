@@ -1227,7 +1227,7 @@ s3_device_init(S3Device * self)
     Device * dself = DEVICE(self);
     GValue response;
 
-    self->s3_api = S3_API_S3;
+    self->s3_api = S3_API_UNKNOWN;
     self->volume_bytes = 0;
     self->volume_limit = 0;
     self->leom = TRUE;
@@ -1827,6 +1827,8 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
 	self->s3_api = S3_API_SWIFT_2;
     } else if (g_str_equal(storage_api, "OAUTH2")) {
 	self->s3_api = S3_API_OAUTH2;
+    } else if (g_str_equal(storage_api, "AWS4")) {
+	self->s3_api = S3_API_AWS4;
     } else if (g_str_equal(storage_api, "CASTOR")) {
 #if LIBCURL_VERSION_NUM >= 0x071301
         curl_version_info_data *info;
@@ -2227,7 +2229,7 @@ s3_device_open_device(Device *pself, char *device_name,
 
     /* default values */
     self->verbose = FALSE;
-    self->s3_api = S3_API_S3;
+    self->s3_api = S3_API_UNKNOWN;
 
     /* use SSL if available */
     self->use_ssl = s3_curl_supports_ssl();
@@ -2329,6 +2331,15 @@ static gboolean setup_handle(S3Device * self) {
     guint response_code;
     s3_error_code_t s3_error_code;
     CURLcode curl_code;
+
+    if (self->s3_api == S3_API_UNKNOWN) {
+	if (self->host && strlen(self->host) > 14 &&
+	    g_strncasecmp(self->host+strlen(self->host)-14, ".amazonaws.com", 14) == 0) {
+	    self->s3_api = S3_API_AWS4;
+	} else {
+	    self->s3_api = S3_API_S3;
+	}
+    }
 
     if (self->s3t == NULL) {
 	if (self->s3_api == S3_API_S3) {

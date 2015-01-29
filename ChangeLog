@@ -1,3 +1,14 @@
+2015-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: DParse new AWS4 STORAGE-API.
+	* device-src/s3-util.c (s3_compute_sha256_hash_ba,
+	  s3_compute_sha256_hash, EncodeHMACSHA256, s3_tohex): New function.
+	* device-src/s3-util.h (s3_compute_sha256_hash_ba,
+	  s3_compute_sha256_hash, EncodeHMACSHA256,
+	  s3_tohex): New prototypes.
+	* device-src/s3.c: Compute signature for AWS4.
+	* device-src/s3.h (S3_api): Add S3_API_UNKNOWN and S3_API_AWS4.
+	* man/xml-source/amanda-devices.7.xml (STORAGE_API): Document AWS4.
+
 2015-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c (print_platform): Detect BSD variant, Do not
 	  execute /usr/bin/sw_vers if it doesn't exists.
