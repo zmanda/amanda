@@ -122,4 +122,23 @@ s3_hex_encode(const GByteArray *to_enc);
 GByteArray*
 s3_compute_md5_hash(const GByteArray *to_hash);
 
+char *
+s3_compute_sha256_hash_ba(const GByteArray *to_hash);
+char *
+s3_compute_sha256_hash(const unsigned char *to_hash, int len);
+
+char *
+s3_uri_encode(const char *s, gboolean encodeSlash);
+
+unsigned char *
+EncodeHMACSHA256(
+    unsigned char* key,
+    int keylen,
+    const char* data,
+    int datalen);
+
+unsigned char *
+s3_tohex(unsigned char *s, int len_s);
+
 #endif
+

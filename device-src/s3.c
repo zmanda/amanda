@@ -94,6 +94,7 @@
 #define AMAZON_SERVER_SIDE_ENCRYPTION_HEADER "x-amz-server-side-encryption"
 
 #define AMAZON_WILDCARD_LOCATION "*"
+#define AMZ_QUOTA_CLOUD_URL ".s3.amazonaws.com"
 
 /* parameters for exponential backoff in the face of retriable errors */
 
@@ -351,7 +352,7 @@ build_url(
       const char *bucket,
       const char *key,
       const char *subresource,
-      const char *query);
+      const char **query);
 
 /* Create proper authorization headers for an Amazon S3 REST
  * request to C{headers}.
@@ -375,7 +376,9 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
+                     const char **query,
                      const char *md5_hash,
+                     const char *data_SHA256Hash,
                      const char *content_type,
                      const size_t content_length,
                      const char *project_id);
@@ -419,7 +422,7 @@ interpret_response(S3Handle *hdl,
  * @param bucket: the bucket to access, or NULL for none
  * @param key: the key to access, or NULL for none
  * @param subresource: the "sub-resource" to request (e.g. "acl") or NULL for none
- * @param query: the query string to send (not including th initial '?'),
+ * @param query: NULL terminated array of query string, the must be in alphabetid order
  * or NULL for none
  * @param read_func: the callback for reading data
  *   Will use s3_empty_read_func if NULL is passed in.
@@ -443,7 +446,7 @@ perform_request(S3Handle *hdl,
                 const char *bucket,
                 const char *key,
                 const char *subresource,
-                const char *query,
+                const char **query,
                 const char *content_type,
                 const char *project_id,
 		struct curl_slist *user_headers,
@@ -707,7 +710,7 @@ build_url(
       const char *bucket,
       const char *key,
       const char *subresource,
-      const char *query)
+      const char **query)
 {
     GString *url = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
@@ -791,8 +794,18 @@ build_url(
     if (subresource && query)
         g_string_append(url, "&");
 
-    if (query)
-        g_string_append(url, query);
+    if (query) {
+	const char **q;
+	gboolean first = TRUE;
+
+	for (q = query; *q != NULL; q++) {
+	    if (!first) {
+		g_string_append_c(url, '&');
+	    }
+            g_string_append(url, *q);
+	    first = FALSE;
+	}
+    }
 
     /* add CAStor tenant domain override query arg */
     if (hdl->s3_api == S3_API_CASTOR && hdl->tenant_name) {
@@ -813,7 +826,9 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
+                     const char **query,
                      const char *md5_hash,
+                     const char *data_SHA256Hash,
                      const char *content_type,
                      const size_t content_length,
                      const char *project_id)
@@ -821,6 +836,8 @@ authenticate_request(S3Handle *hdl,
     time_t t;
     struct tm tmp;
     char *date = NULL;
+    char *szS3Date = NULL;
+    char *zulu_date = NULL;
     char *buf = NULL;
     HMAC_CTX ctx;
     GByteArray *md = NULL;
@@ -852,6 +869,11 @@ authenticate_request(S3Handle *hdl,
         wkday[tmp.tm_wday], tmp.tm_mday, month[tmp.tm_mon], 1900+tmp.tm_year,
         tmp.tm_hour, tmp.tm_min, tmp.tm_sec);
 
+    szS3Date = g_strdup_printf("%04d%02d%02d",1900+tmp.tm_year,tmp.tm_mon+1,tmp.tm_mday);
+
+    zulu_date = g_strdup_printf("%04d%02d%02dT%02d%02d%02dZ",
+				1900+tmp.tm_year, tmp.tm_mon+1, tmp.tm_mday,
+				tmp.tm_hour, tmp.tm_min, tmp.tm_sec);
     if (hdl->s3_api == S3_API_SWIFT_1) {
 	if (!bucket) {
             buf = g_strdup_printf("X-Auth-User: %s", hdl->swift_account_id);
@@ -897,9 +919,170 @@ authenticate_request(S3Handle *hdl,
             g_free(buf);
             g_free(reps);
         }
-    } else {
+    } else if (hdl->s3_api == S3_API_AWS4) {
+	/* http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html */
+	/* http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html */
+
+	GString *strSignedHeaders = g_string_new("");
+	GString *string_to_sign;
+	char *canonical_hash = NULL;
+	unsigned char *strSecretKey = NULL;
+	unsigned char *signkey1 = NULL;
+	unsigned char *signkey2 = NULL;
+	unsigned char *signkey3 = NULL;
+	unsigned char *signingKey = NULL;
+	unsigned char *signature = NULL;
+	unsigned char *signatureHex = NULL;
+
+	/* verb */
+	auth_string = g_string_new(verb);
+	g_string_append(auth_string, "\n");
+
+	/* CanonicalizedResource */
+	g_string_append(auth_string, "/");
+
+	if (key) {
+	    char *esc_key = s3_uri_encode(key, 0);
+	    g_string_append(auth_string, esc_key);
+	    g_free(esc_key);
+	}
+	g_string_append(auth_string, "\n");
+
+	if (query) {
+	    gboolean sub_done = !subresource;
+	    gboolean first = TRUE;
+	    const char **q;
+	    for (q = query; *q != NULL; q++) {
+		if (!first) {
+		    g_string_append_c(auth_string, '&');
+		}
+		if (!sub_done && strcmp(subresource, *q) < 0) {
+		    g_string_append(auth_string, subresource);
+		    g_string_append_c(auth_string, '=');
+		    g_string_append_c(auth_string, '&');
+		    sub_done = TRUE;
+		}
+		g_string_append(auth_string, *q);
+		first = FALSE;
+	    }
+	    if (!sub_done) {
+		g_string_append_c(auth_string, '&');
+		g_string_append(auth_string, subresource);
+		g_string_append_c(auth_string, '=');
+	    }
+	} else if (subresource) {
+	    g_string_append(auth_string, subresource);
+	    g_string_append(auth_string, "=");
+	}
+	g_string_append(auth_string, "\n");
+
+        /* Header must be in alphebetic order */
+	g_string_append(auth_string, "host:");
+	g_string_append(auth_string, bucket);
+	g_string_append(auth_string, AMZ_QUOTA_CLOUD_URL);
+	g_string_append(auth_string, "\n");
+	g_string_append(strSignedHeaders, "host");
+
+	g_string_append(auth_string, "x-amz-content-sha256:");
+	g_string_append(auth_string, data_SHA256Hash);
+	g_string_append(auth_string, "\n");
+	g_string_append(strSignedHeaders, ";x-amz-content-sha256");
+
+	g_string_append(auth_string, "x-amz-date:");
+	g_string_append(auth_string, zulu_date);
+	g_string_append(auth_string, "\n");
+	g_string_append(strSignedHeaders, ";x-amz-date");
+
+	if (g_str_equal(verb,"PUT") && is_non_empty_string(hdl->server_side_encryption)) {
+	    g_string_append(auth_string, AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
+	    g_string_append(auth_string, ":");
+	    g_string_append(auth_string, hdl->server_side_encryption);
+	    g_string_append(auth_string, "\n");
+	    g_string_append(strSignedHeaders, ";"AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
+
+	    buf = g_strdup_printf(AMAZON_SERVER_SIDE_ENCRYPTION_HEADER ": %s",
+				  hdl->server_side_encryption);
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
+	}
+
+	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	    is_non_empty_string(hdl->storage_class)) {
+	    g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
+	    g_string_append(auth_string, ":");
+	    g_string_append(auth_string, hdl->storage_class);
+	    g_string_append(auth_string, "\n");
+	    g_string_append(strSignedHeaders, ";"AMAZON_STORAGE_CLASS_HEADER);
+
+	    buf = g_strdup_printf(AMAZON_STORAGE_CLASS_HEADER ": %s",
+				  hdl->storage_class);
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
+	}
+
+	/* no more header */
+	g_string_append(auth_string, "\n");
+
+	g_string_append(auth_string, strSignedHeaders->str);
+	g_string_append(auth_string, "\n");
+	g_string_append(auth_string, data_SHA256Hash);
+
+	canonical_hash = s3_compute_sha256_hash((unsigned char *)auth_string->str, auth_string->len);
+
+	if (!hdl->bucket_location) {
+	    hdl->bucket_location = g_strdup("us-east-1");
+	}
+	string_to_sign = g_string_new("AWS4-HMAC-SHA256\n");
+	g_string_append(string_to_sign, zulu_date);
+	g_string_append(string_to_sign, "\n");
+	g_string_append(string_to_sign, szS3Date);
+	g_string_append(string_to_sign, "/");
+	g_string_append(string_to_sign, hdl->bucket_location);
+	g_string_append(string_to_sign, "/s3/aws4_request");
+	g_string_append(string_to_sign, "\n");
+	g_string_append(string_to_sign, canonical_hash);
+
+	//Calculate the AWS Signature Version 4
+	strSecretKey = (unsigned char *)g_strdup_printf("AWS4%s", hdl->secret_key);
+
+	signkey1 = EncodeHMACSHA256(strSecretKey, strlen((char *)strSecretKey),
+				    szS3Date, strlen(szS3Date));
+
+	signkey2 = EncodeHMACSHA256(signkey1, 32, hdl->bucket_location, strlen(hdl->bucket_location));
+
+	signkey3 = EncodeHMACSHA256(signkey2, 32, "s3", 2);
+
+	signingKey = EncodeHMACSHA256(signkey3, 32, "aws4_request", 12);
+
+	signature = EncodeHMACSHA256(signingKey, 32, string_to_sign->str, (int)string_to_sign->len);
+	signatureHex = s3_tohex(signature, 32);
+
+        buf = g_strdup_printf("x-amz-content-sha256: %s", data_SHA256Hash);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+
+        buf = g_strdup_printf("x-amz-date: %s", zulu_date);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+
+        buf = g_strdup_printf("Authorization: AWS4-HMAC-SHA256 Credential=%s/%s/%s/s3/aws4_request,SignedHeaders=%s,Signature=%s", hdl->access_key, szS3Date, hdl->bucket_location, strSignedHeaders->str, signatureHex);
+        headers = curl_slist_append(headers, buf);
+        g_free(buf);
+
+	g_free(canonical_hash);
+	g_free(strSecretKey);
+	g_free(signkey1);
+	g_free(signkey2);
+	g_free(signkey3);
+	g_free(signingKey);
+	g_free(signature);
+	g_free(signatureHex);
+	md5_hash = NULL;
+
+    } else { /* hdl->s3_api == S3_API_S3 */
 	/* Build the string to sign, per the S3 spec.
 	 * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
+	 * http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
 	 */
 
 	/* verb */
@@ -1078,6 +1261,7 @@ authenticate_request(S3Handle *hdl,
 
 cleanup:
     g_free(date);
+    g_free(szS3Date);
     g_free(esc_bucket);
     g_free(esc_key);
     if (md) g_byte_array_free(md, TRUE);
@@ -1897,7 +2081,7 @@ perform_request(S3Handle *hdl,
                 const char *bucket,
                 const char *key,
                 const char *subresource,
-                const char *query,
+                const char **query,
                 const char *content_type,
                 const char *project_id,
 		struct curl_slist *user_headers,
@@ -1933,6 +2117,7 @@ perform_request(S3Handle *hdl,
     GByteArray *md5_hash = NULL;
     gchar *md5_hash_hex = NULL, *md5_hash_b64 = NULL;
     size_t request_body_size = 0;
+    char *data_SHA256Hash = NULL;
 
     g_assert(hdl != NULL && hdl->curl != NULL);
 
@@ -1973,8 +2158,14 @@ perform_request(S3Handle *hdl,
     if (size_func) {
         request_body_size = size_func(read_data);
     }
-    if (md5_func) {
 
+    if (hdl->s3_api == S3_API_AWS4) {
+	if (read_data) {
+	    data_SHA256Hash = s3_compute_sha256_hash_ba(read_data);
+	} else {
+	    data_SHA256Hash = s3_compute_sha256_hash((unsigned char *)"", 0);
+	}
+    } else if (md5_func) {
         md5_hash = md5_func(read_data);
         if (md5_hash) {
             md5_hash_b64 = s3_base64_encode(md5_hash);
@@ -2013,8 +2204,8 @@ perform_request(S3Handle *hdl,
         s3_internal_reset_func(&int_writedata);
 
         /* set up the request */
-        headers = authenticate_request(hdl, verb, bucket, key, subresource,
-            md5_hash_b64, content_type, request_body_size, project_id);
+        headers = authenticate_request(hdl, verb, bucket, key, subresource, query,
+            md5_hash_b64, data_SHA256Hash, content_type, request_body_size, project_id);
 
 	/* add user header to headers */
 	for (header = user_headers; header != NULL; header = header->next) {
@@ -2211,6 +2402,7 @@ cleanup:
     if (headers) curl_slist_free_all(headers);
     g_free(md5_hash_b64);
     g_free(md5_hash_hex);
+    g_free(data_SHA256Hash);
 
     /* we don't deallocate the response body -- we keep it for later */
     g_free(hdl->etag);
@@ -2601,6 +2793,13 @@ s3_open(const char *access_key,
     hdl->timeout = timeout;
 
     if (s3_api == S3_API_S3) {
+	g_assert(access_key);
+	hdl->access_key = g_strdup(access_key);
+	g_assert(secret_key);
+	hdl->secret_key = g_strdup(secret_key);
+	/* NULL is okay */
+	hdl->session_token = g_strdup(session_token);
+    } else if (s3_api == S3_API_AWS4) {
 	g_assert(access_key);
 	hdl->access_key = g_strdup(access_key);
 	g_assert(secret_key);
@@ -3259,26 +3458,21 @@ list_fetch(S3Handle *hdl,
         { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
         };
    const char* pos_parts[][2] = {
-        {"prefix", prefix},
         {"delimiter", delimiter},
         {"marker", marker},
         {"max-keys", max_keys},
+        {"prefix", prefix},
         {NULL, NULL}
         };
     char *esc_value;
-    GString *query;
+    char **query = g_new0(char *, 6);
+    char **q = query;
     guint i;
-    gboolean have_prev_part = FALSE;
 
     /* loop over possible parts to build query string */
-    query = g_string_new("");
     for (i = 0; pos_parts[i][0]; i++) {
 	if (pos_parts[i][1]) {
 	    const char *keyword;
-            if (have_prev_part)
-		g_string_append(query, "&");
-            else
-		have_prev_part = TRUE;
             esc_value = curl_escape(pos_parts[i][1], 0);
 	    keyword = pos_parts[i][0];
 	    if ((hdl->s3_api == S3_API_SWIFT_1 ||
@@ -3289,25 +3483,26 @@ list_fetch(S3Handle *hdl,
                 strcmp(keyword, "max-keys") == 0) {
                 keyword = "size";
             }
-            g_string_append_printf(query, "%s=%s", keyword, esc_value);
+	    *q++ = g_strdup_printf("%s=%s", keyword, esc_value);
             curl_free(esc_value);
 	}
     }
     if (hdl->s3_api == S3_API_SWIFT_1 ||
         hdl->s3_api == S3_API_SWIFT_2 ||
         hdl->s3_api == S3_API_CASTOR) {
-	if (have_prev_part)
-	    g_string_append(query, "&");
-	g_string_append(query, "format=xml");
+	*q++ = g_strdup("format=xml");
     }
 
     /* and perform the request on that URI */
-    result = perform_request(hdl, "GET", bucket, NULL, subresource, query->str, NULL,
+    result = perform_request(hdl, "GET", bucket, NULL, subresource,
+			     (const char **)query, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              S3_BUFFER_WRITE_FUNCS, buf, NULL, NULL,
                              result_handling, FALSE);
 
-    g_string_free(query, TRUE);
+    for (q = query; *q != NULL; q++) {
+	g_free(*q);
+    }
 
     return result;
 }
@@ -3692,6 +3887,7 @@ s3_make_bucket(S3Handle *hdl,
     }
     g_string_append(CreateBucketConfiguration, ">");
     if (is_non_empty_string(hdl->bucket_location) &&
+	strcmp(hdl->bucket_location, "us-east-1") != 0 &&
         !g_str_equal(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
         if (s3_bucket_location_compat(bucket)) {
 	    g_string_append_printf(CreateBucketConfiguration,
@@ -3882,7 +4078,8 @@ s3_is_bucket_exists(S3Handle *hdl,
 		    const char *project_id)
 {
     s3_result_t result = S3_RESULT_FAIL;
-    char *query;
+    char **query = g_new0(char *, 3);
+    char **q = query;
     static result_handling_t result_handling[] = {
         { 200,  0,                    0, S3_RESULT_OK },
         { 204,  0,                    0, S3_RESULT_OK },
@@ -3892,20 +4089,27 @@ s3_is_bucket_exists(S3Handle *hdl,
 
     if (hdl->s3_api == S3_API_SWIFT_1 ||
 	hdl->s3_api == S3_API_SWIFT_2) {
-	query = g_strdup("limit=1");
+	*q++ = g_strdup("limit=1");
     } else if (hdl->s3_api == S3_API_CASTOR) {
-        query = g_strdup("format=xml&size=0");
+        *q++ = g_strdup("format=xml");
+	*q++ = g_strdup("size=0");
     } else if (prefix) {
-	query = g_strdup_printf("prefix=%s&max-keys=1", prefix);
+        *q++ = g_strdup("max-keys=1");
+        *q++ = g_strdup_printf("prefix=%s", prefix);
     } else {
-        query = g_strdup("max-keys=1");
+        *q++ = g_strdup("max-keys=1");
     }
 
-    result = perform_request(hdl, "GET", bucket, NULL, NULL, query,
+    result = perform_request(hdl, "GET", bucket, NULL, NULL,
+			     (const char **)query,
 			     NULL, project_id, NULL,
                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              NULL, NULL, result_handling, FALSE);
-    g_free(query);
+
+    for (q = query; *q != NULL; q++) {
+	g_free(*q);
+    }
+
     return result == S3_RESULT_OK;
 }
 

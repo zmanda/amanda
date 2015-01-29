@@ -618,7 +618,7 @@ sub {
 	    print STDERR "Will $modestr label '$label' to '" . $res->{'device'}->volume_label() . "' labelled volume in slot $slot.\n";
 	} else {
 	    my $header = $res->{'device'}->volume_header();
-	    if ($header->{'type'} == $Amanda::Header::F_WEIRD) {
+	    if (!defined $header || $header->{'type'} == $Amanda::Header::F_WEIRD) {
 		print STDERR "Will $modestr label '$label' to non-Amanda volume in slot $slot.\n";
 	    } else {
 		print STDERR "Will $modestr label '$label' to new volume in slot $slot.\n";

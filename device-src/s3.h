@@ -29,11 +29,13 @@
  */
 
 typedef enum {
+   S3_API_UNKNOWN,
    S3_API_S3,
    S3_API_SWIFT_1,
    S3_API_SWIFT_2,
    S3_API_OAUTH2,
-   S3_API_CASTOR
+   S3_API_CASTOR,
+   S3_API_AWS4
 } S3_api;
 
 typedef enum {
