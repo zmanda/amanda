@@ -755,9 +755,7 @@ sub load_unlocked {
 			       "for '$params{label}'");
 	}
 
-	if (!$label and $params{'label'}) {
-	    $self->_debug("Expected label '$params{label}', but got an unlabeled tape");
-
+	if (!$label) {
 	    # update metadata with this new information
 	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
 	    $state->{'slots'}->{$slot}->{'device_status'} = $device->status;
@@ -776,10 +774,13 @@ sub load_unlocked {
 		delete $state->{'bc2lb'}->{$state->{'slots'}->{$slot}->{'barcode'}};
 	    }
 
-	    return $self->make_error("failed", $params{'res_cb'},
+	    if (defined $params{'label'}) {
+		$self->_debug("Expected label '$params{label}', but got an unlabeled tape");
+		return $self->make_error("failed", $params{'res_cb'},
 		    reason => "notfound",
 		    slot   => $slot,
 		    message => "Found unlabeled tape while looking for '$params{label}'");
+	    }
 	}
 
 	# update our state before returning
