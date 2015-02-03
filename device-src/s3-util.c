@@ -235,6 +235,7 @@ EncodeHMACSHA256(
 {
     unsigned char *hmachash = malloc(32);
     const unsigned char *datatohash = (unsigned char *)data;
+    unsigned char tk[SHA256_DIGEST_LENGTH];
 
     // Initialise HMACh
     HMAC_CTX HMAC;
@@ -242,7 +243,6 @@ EncodeHMACSHA256(
     memset(hmachash, 0, hmaclength);
 
     if (keylen > 64 ) {
-	unsigned char tk[SHA256_DIGEST_LENGTH];
 	SHA256(key, keylen, tk);
 	key    = tk;
 	keylen = SHA256_DIGEST_LENGTH;
