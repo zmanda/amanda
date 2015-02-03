@@ -125,7 +125,8 @@ static void amstar_restore(application_argument_t *argument);
 static void amstar_validate(application_argument_t *argument);
 static GPtrArray *amstar_build_argv(application_argument_t *argument,
 				int level,
-				int command);
+				int command,
+				FILE *mesgstream);
 static int check_device(application_argument_t *argument);
 
 static char *star_path;
@@ -164,6 +165,7 @@ static struct option long_options[] = {
     {"command-options" , 1, NULL, 22},
     {"exclude-file"    , 1, NULL, 23},
     {"acl"             , 1, NULL, 24},
+    {"include-file"    , 1, NULL, 25},
     { NULL, 0, NULL, 0}
 };
 
@@ -339,6 +341,10 @@ main(
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad ACL property value (%s)]\n"), get_pname(), optarg);
 		 break;
+	case 25: if (optarg)
+		     argument.dle.include_file =
+			 append_sl(argument.dle.include_file, optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -404,7 +410,7 @@ amstar_support(
     fprintf(stdout, "MESSAGE-LINE YES\n");
     fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
-    fprintf(stdout, "INCLUDE-FILE NO\n");
+    fprintf(stdout, "INCLUDE-FILE YES\n");
     fprintf(stdout, "INCLUDE-LIST YES\n");
     fprintf(stdout, "EXCLUDE-FILE YES\n");
     fprintf(stdout, "EXCLUDE-LIST YES\n");
@@ -438,9 +444,15 @@ amstar_selfcheck(
 	amfree(qdirectory);
     }
 
-    if (argument->dle.include_list &&
-	argument->dle.include_list->nb_element >= 0) {
-	fprintf(stdout, "ERROR include-list not supported for backup\n");
+    if (((argument->dle.include_list &&
+	  argument->dle.include_list->nb_element >= 0) ||
+         (argument->dle.include_file &&
+	  argument->dle.include_file->nb_element >= 0)) &&
+	((argument->dle.exclude_list &&
+	  argument->dle.exclude_list->nb_element >= 0) ||
+         (argument->dle.exclude_file &&
+	  argument->dle.exclude_file->nb_element >= 0))) {
+	fprintf(stdout, "ERROR Can't use include and exclude simultaneously\n");
     }
 
     if (!star_path) {
@@ -558,7 +570,7 @@ amstar_estimate(
 
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
-	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE);
+	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE, NULL);
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
@@ -719,7 +731,7 @@ amstar_backup(
 
     qdisk = quote_string(argument->dle.disk);
 
-    argv_ptr = amstar_build_argv(argument, level, CMD_BACKUP);
+    argv_ptr = amstar_build_argv(argument, level, CMD_BACKUP, mesgstream);
 
     cmd = stralloc(star_path);
 
@@ -957,7 +969,8 @@ pipe_to_null:
 static GPtrArray *amstar_build_argv(
     application_argument_t *argument,
     int   level,
-    int   command)
+    int   command,
+    FILE *mesgstream)
 {
     char      *dirname;
     char      *fsname;
@@ -1029,6 +1042,24 @@ static GPtrArray *amstar_build_argv(
     if (command == CMD_BACKUP && argument->dle.create_index)
 	g_ptr_array_add(argv_ptr, stralloc("-v"));
 
+    if (((argument->dle.include_file &&
+	  argument->dle.include_file->nb_element >= 1) ||
+	 (argument->dle.include_list &&
+	  argument->dle.include_list->nb_element >= 1)) &&
+	((argument->dle.exclude_file &&
+	  argument->dle.exclude_file->nb_element >= 1) ||
+	 (argument->dle.exclude_list &&
+	  argument->dle.exclude_list->nb_element >= 1))) {
+
+	if (mesgstream && command == CMD_BACKUP) {
+	    fprintf(mesgstream, "? include and exclude specified, disabling exclude\n");
+	}
+	free_sl(argument->dle.exclude_file);
+	argument->dle.exclude_file = NULL;
+	free_sl(argument->dle.exclude_list);
+	argument->dle.exclude_list = NULL;
+    }
+
     if ((argument->dle.exclude_file &&
 	 argument->dle.exclude_file->nb_element >= 1) ||
 	(argument->dle.exclude_list &&
@@ -1072,6 +1103,47 @@ static GPtrArray *amstar_build_argv(
 		    amfree(aexc);
 		}
 		fclose(exclude);
+	    }
+	    amfree(exclname);
+	}
+    }
+
+    if (argument->dle.include_file &&
+	argument->dle.include_file->nb_element >= 1) {
+	sle_t *excl;
+	for (excl = argument->dle.include_file->first; excl != NULL;
+	     excl = excl->next) {
+	    char *ex;
+	    if (g_str_equal(excl->name, "./")) {
+		ex = g_strdup_printf("pat=%s", excl->name+2);
+	    } else {
+		ex = g_strdup_printf("pat=%s", excl->name);
+	    }
+	    g_ptr_array_add(argv_ptr, ex);
+	}
+    }
+    if (argument->dle.include_list &&
+	argument->dle.include_list->nb_element >= 1) {
+	sle_t *excl;
+	for (excl = argument->dle.include_list->first; excl != NULL;
+	     excl = excl->next) {
+	    char *exclname = fixup_relative(excl->name, argument->dle.device);
+	    FILE *include;
+	    char *aexc;
+	    if ((include = fopen(exclname, "r")) != NULL) {
+		while ((aexc = agets(include)) != NULL) {
+		    if (aexc[0] != '\0') {
+			char *ex;
+			if (g_str_equal(aexc, "./")) {
+			    ex = g_strdup_printf("pat=%s", aexc+2);
+			} else {
+			    ex = g_strdup_printf("pat=%s", aexc);
+			}
+			g_ptr_array_add(argv_ptr, ex);
+		    }
+		    amfree(aexc);
+		}
+		fclose(include);
 	    }
 	    amfree(exclname);
 	}
