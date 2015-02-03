@@ -1,3 +1,6 @@
+2015-02-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: Support include in backup mode.
+
 2015-01-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm: Fix state file update.
 
