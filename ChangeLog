@@ -1,3 +1,7 @@
+2015-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ssh-security.c (ssh_connect): Use the name from the
+	  disklist, no need to find the canonical name.
+
 2015-02-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-util.c: Fix memory allocation issue.
 
