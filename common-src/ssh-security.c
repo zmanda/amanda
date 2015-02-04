@@ -111,7 +111,6 @@ ssh_connect(
     void *		arg,
     void *		datap)
 {
-    int result;
     struct sec_handle *rh;
     char *amandad_path=NULL, *client_username=NULL, *ssh_keys=NULL;
     char *client_port = NULL;
@@ -128,16 +127,7 @@ ssh_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    /* get the canonical hostname */
-    rh->hostname = NULL;
-    if ((result = resolve_hostname(hostname, 0, NULL, &rh->hostname)) != 0
-	 || rh->hostname == NULL) {
-	security_seterror(&rh->sech,
-	    _("ssh_security could not find canonical name for '%s': %s"),
-	    hostname, gai_strerror(result));
-	(*fn)(arg, &rh->sech, S_ERROR);
-	return;
-    }
+    rh->hostname = g_strdup(hostname);
     rh->rs = tcpma_stream_client(rh, newhandle++);
     rh->rc->conf_fn = conf_fn;
     rh->rc->datap = datap;
