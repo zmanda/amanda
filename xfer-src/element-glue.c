@@ -400,8 +400,8 @@ pull_and_write(XferElementGlue *self)
 		break;
 	    }
 	    elt->downstream->drain_mode = TRUE;
-	    crc32_add((uint8_t *)buf, len, &elt->crc);
 	}
+	crc32_add((uint8_t *)buf, len, &elt->crc);
 
 	amfree(buf);
     }
