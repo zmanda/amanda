@@ -226,8 +226,9 @@ sub new {
 
     } ;
     my $self = {
-	filename => $filename,
-	fd       => $fd,
+	filename    => $filename,
+	fd          => $fd,
+	second_read => 0,
     };
     $self->{'dead_run'} = $dead_run if $dead_run;
 
@@ -264,6 +265,7 @@ sub parse {
     my $self = shift;
     my %params = @_;
 
+REREAD:
     my $user_msg = $params{'user_msg'};
     my @datestamp;
     my %datestamp;
@@ -442,7 +444,24 @@ sub parse {
 	    if ($line[1] eq "pid") {
 		my $pid = $line[2];
 		if (!$Amanda_process->process_alive($pid, "driver")) {
-		    $self->{'dead_run'} = 1;
+		    if ($self->{'second_read'}) {
+			$self->{'dead_run'} = 1;
+		    } else {
+			$self->{'second_read'} = 1;
+			close $self->{'fd'};
+			my $fd;
+			if (!open ($fd, "<", $self->{'filename'})) {
+			    return Amanda::Status::Message->new(
+					source_filename => __FILE__,
+					source_line     => __LINE__,
+					code   => 1800001,
+					severity => $Amanda::Message::ERROR,
+					amdump_log => $self->{'filename'},
+					errno => $!);
+			}
+			$self->{'fd'} = $fd;
+			goto REREAD;
+		    }
 		}
 	    } elsif ($line[1] eq "to" && $line[2] eq "write") {
 		#1:to 2:write 3:host 4:$host 5:disk 6:$disk 7:date 8:$datestamp 9:on 10:storage 11:$storage
@@ -1674,7 +1693,9 @@ sub current {
     my $self = shift;
     my %params = @_;
 
-    $self->parse();
+    my $message = $self->parse();
+    return $message if defined $message;
+
     $self->set_summary();
 
     my $data = {
