@@ -1,3 +1,8 @@
+2015-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amdump.pm: Remove amdump file older than 30 days if
+	  there is no corresponding log file.
+	* server-src/amtrmlog.c: Remove amdump file when removing log file.
+
 2015-02-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am: Fix for Solaris find.
 

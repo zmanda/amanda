@@ -131,14 +131,17 @@ main(
 
     today = time((time_t *)NULL);
     dumpcycle = getconf_int(CNF_DUMPCYCLE);
-    if(dumpcycle > 5000)
-	dumpcycle = 5000;
+    if (dumpcycle > 30)
+	dumpcycle = 30;
     date_keep = today - (dumpcycle * 86400);
 
     output_find_log = find_log();
 
     /* determine how many log to keep */
     no_keep = getconf_int(CNF_TAPECYCLE) * 2;
+    if (no_keep > 30)
+	no_keep = 30;
+
     dbprintf(plural(_("Keeping %d log file\n"),
 		    _("Keeping %d log files\n"), no_keep),
 	     no_keep);
@@ -169,26 +172,30 @@ main(
 	/*NOTREACHED*/
     }
     while ((adir=readdir(dir)) != NULL) {
-	if(g_str_has_prefix(adir->d_name, "log.")) {
+	if (g_str_has_prefix(adir->d_name, "log.")) {
 	    useful=0;
-	    for (name=output_find_log;*name !=NULL; name++) {
+	    for (name=output_find_log; *name != NULL; name++) {
 		if ((strlen(adir->d_name) >= 13 &&
 		     strlen(*name) >= 13 &&
 		     adir->d_name[12] == '.' && (*name)[12] == '.' &&
-		     strncmp(adir->d_name, *name, 12)) ||
-		    strncmp(adir->d_name, *name, 18)) {
+		     strncmp(adir->d_name, *name, 12) == 0) ||
+		    strncmp(adir->d_name, *name, 18) == 0) {
 		    useful=1;
 		    break;
 		}
 	    }
 	    g_free(logname);
 	    logname = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
-	    if(stat(logname,&stat_log)==0) {
-		if((time_t)stat_log.st_mtime > date_keep) {
+	    if (stat(logname,&stat_log) == 0) {
+		if ((time_t)stat_log.st_mtime > date_keep) {
 		    useful = 1;
 		}
 	    }
-	    if(useful == 0) {
+	    if (useful == 0) {
+		char *d;
+		char *datestamp;
+		char *amdumpfile;
+
 		g_free(oldfile);
 		oldfile = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
 
@@ -198,7 +205,17 @@ main(
 		    error(_("could not rename \"%s\" to \"%s\": %s"),
 			  oldfile, newfile, strerror(errno));
 		    /*NOTREACHED*/
-	    	}
+		}
+
+		datestamp = g_strdup(adir->d_name);
+		d = strrchr(datestamp+4, '.');
+		if (*d) *d = '\0';
+		amdumpfile = g_strconcat(conf_logdir, "/amdump.", datestamp+4, NULL);
+		if (unlink(amdumpfile) != 0 && errno != ENOENT) {
+		    g_debug("Failed to unlink '%s': %s", amdumpfile, strerror(errno));
+		}
+		g_free(datestamp);
+		g_free(amdumpfile);
 	    }
 	}
     }
