@@ -298,15 +298,15 @@ sub roll_amdump_logs {
     unlink "$amdump_log_pathname_default.1";
     rename $amdump_log_pathname_default, "$amdump_log_pathname_default.1";
 
-    # keep the latest tapecycle files.
-    my @files = sort {-M $b <=> -M $a} grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;
-    my $days = getconf($CNF_TAPECYCLE) + 2;
-    for (my $i = $days-1; $i >= 1; $i--) {
-	my $a = pop @files;
-    }
-    foreach my $name (@files) {
-	unlink $name;
-	amdump_log("unlink $name");
+    my @files = grep { !/^\./ && -f "$_"} <$logdir/amdump.*>;
+    foreach my $file (@files) {
+	my $log = $file;
+	$log =~ s/amdump/log/;
+	$log .= ".0";
+	if ( -M $file > 30 and !-f $log) {
+	    unlink $file;
+	    debug("unlink $file");
+	}
     }
 }
 
