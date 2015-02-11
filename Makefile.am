@@ -140,7 +140,7 @@ endif
 	mkdir ${DESTDIR}/include/gnulib/arpa
 	mkdir ${DESTDIR}/include/gnulib/glthread
 	mkdir ${DESTDIR}/include/gnulib/sys
-	find . -name '*.h' -exec cp {} ${DESTDIR}/include/{} \;
+	find . -name '*.h' -exec ${SHELL} -c 'for i; do cp $$i ${DESTDIR}/include/$$i; done' foo {} +
 	mkdir ${DESTDIR}/config
 	cp -fpR config/amanda config/gnulib config/macro-archive ${DESTDIR}/config
 	echo "${CONFIGURE_ARGS}" > ${DESTDIR}/configure_args
