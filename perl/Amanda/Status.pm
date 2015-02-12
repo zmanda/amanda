@@ -1204,6 +1204,8 @@ REREAD:
 	    #print "Ignoring: $line\n";
 	}
     }
+
+    return undef;
 }
 
 sub set_summary {
