@@ -1,3 +1,7 @@
+2015-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/common/common_functions.sh: Use systemctl to restart
+	  xinetd.
+
 2015-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.pl: Remove amdump file older than 30 days if
 	  there is no corresponding log file.
@@ -20,7 +24,7 @@
 	* perl/Amanda/Changer/robot.pm: Fix state file update.
 
 2015-01-29  Jean-Louis Martineau <martineau@zmanda.com>
-	* device-src/s3-device.c: DParse new AWS4 STORAGE-API.
+	* device-src/s3-device.c: Parse new AWS4 STORAGE-API.
 	* device-src/s3-util.c (s3_compute_sha256_hash_ba,
 	  s3_compute_sha256_hash, EncodeHMACSHA256, s3_tohex): New function.
 	* device-src/s3-util.h (s3_compute_sha256_hash_ba,
