@@ -218,18 +218,34 @@ reload_xinetd() {
         ;;
     esac
 
-    if [ "$action" = "reload" ] ; then
-	logger "Reloading xinetd configuration..." 
-	log_output_of ${SYSCONFDIR}/init.d/xinetd $action # Don't exit!
-	if [ $? -ne 0 ] ; then
-	    logger "xinetd reload failed.  Attempting restart..."
-            action=restart
-	fi
-    fi
-    if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
-        logger "${action}ing xinetd."
-	log_output_of ${SYSCONFDIR}/init.d/xinetd $action || \
-	    { logger "WARNING:  $action failed." ; return 1; }
+    if [ -f ${SYSCONFDIR}/init.d/xinetd ]; then
+        if [ "$action" = "reload" ] ; then
+	    logger "Reloading xinetd configuration..." 
+	    log_output_of ${SYSCONFDIR}/init.d/xinetd $action # Don't exit!
+	    if [ $? -ne 0 ] ; then
+	        logger "xinetd reload failed.  Attempting restart..."
+                action=restart
+	    fi
+        fi
+        if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
+            logger "${action}ing xinetd."
+	    log_output_of ${SYSCONFDIR}/init.d/xinetd $action || \
+	        { logger "WARNING:  $action failed." ; return 1; }
+        fi
+    else
+        if [ "$action" = "reload" ] ; then
+	    logger "Reloading xinetd configuration..." 
+	    log_output_of systemctl $action xinetd.service # Don't exit!
+	    if [ $? -ne 0 ] ; then
+	        logger "xinetd reload failed.  Attempting restart..."
+                action=restart
+	    fi
+        fi
+        if [ "$action" = "restart" ] || [ "$action" = "start" ]; then
+            logger "${action}ing xinetd."
+	    log_output_of systemctl $action xinetd.service || \
+	        { logger "WARNING:  $action failed." ; return 1; }
+        fi
     fi
 }
 
