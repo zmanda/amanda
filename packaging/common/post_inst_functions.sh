@@ -117,18 +117,18 @@ create_amkey() {
         # TODO: don't write this stuff to disk!
         get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
 
-        GPG2=`which gpg2`
-        if [ x"$GPG2" = x"" ]; then
-           GPG=`which gpg`
-           if [ x"$GPG" = x"" ]; then
+        GPG2=`command -v gpg2 2>/dev/null`
+        if [ "$?" != "0" ]; then
+           GPG=`command -v gpg 2>/dev/null`
+           if [ "$?" != "0" ]; then
                 logger "Error: no gpg"
            else
-                GPG_EXTRA=--no-use-agent
+                GPG_EXTRA="--no-use-agent"
            fi
         else
-           GPG_AGENT=`which gpg-agent`
-           if [ x"$GPG_AGENT" = x"" ]; then
-              echo "Error: no gpg-agent"
+           GPG_AGENT=`command -v gpg-agent 2>/dev/null`
+           if [ "$?" != "0" ]; then
+              logger "Error: no gpg-agent"
            else
               GPG="$GPG_AGENT --daemon --no-use-standard-socket -- $GPG2"
            fi
@@ -168,18 +168,18 @@ check_gnupg() {
     # if they match!
     if [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ]; then
 
-        GPG2=`which gpg2`
-        if [ x"$GPG2" = x"" ]; then
-           GPG=`which gpg`
-           if [ x"$GPG" = x"" ]; then
+        GPG2=`command -v gpg2 2>/dev/null`
+        if [ "$?" != "0" ]; then
+           GPG=`command -v gpg 2>/dev/null`
+           if [ "$?" != "0" ]; then
                 logger "Error: no gpg"
            else
-                GPG_EXTRA=--no-use-agent
+                GPG_EXTRA="--no-use-agent"
            fi
         else
-           GPG_AGENT=`which gpg-agent`
-           if [ x"$GPG_AGENT" = x"" ]; then
-              echo "Error: no gpg-agent"
+           GPG_AGENT=`command -v gpg-agent 2>/dev/null`
+           if [ "$?" != "0" ]; then
+              logger "Error: no gpg-agent"
            else
               GPG="$GPG_AGENT --daemon --no-use-standard-socket -- $GPG2"
            fi
