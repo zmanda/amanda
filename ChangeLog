@@ -1,3 +1,6 @@
+2015-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/common/post_inst_functions.sh: fix for gpg2 and gpg-agent
+
 2015-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/common/common_functions.sh: Use systemctl to restart
 	  xinetd.

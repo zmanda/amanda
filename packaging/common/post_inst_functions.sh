@@ -116,12 +116,30 @@ create_amkey() {
     if [ ! -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ]; then
         # TODO: don't write this stuff to disk!
         get_random_lines 50 >${AMANDAHOMEDIR}/.gnupg/am_key || return 1
+
+        GPG2=`which gpg2`
+        if [ x"$GPG2" = x"" ]; then
+           GPG=`which gpg`
+           if [ x"$GPG" = x"" ]; then
+                logger "Error: no gpg"
+           else
+                GPG_EXTRA=--no-use-agent
+           fi
+        else
+           GPG_AGENT=`which gpg-agent`
+           if [ x"$GPG_AGENT" = x"" ]; then
+              echo "Error: no gpg-agent"
+           else
+              GPG="$GPG_AGENT --daemon --no-use-standard-socket -- $GPG2"
+           fi
+        fi
+
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
         # setting homedir prevents some errors, but creates a permissions
         # warning. perms are fixed in check_gnupg.
-        log_output_of gpg --homedir ${AMANDAHOMEDIR}/.gnupg \
+        log_output_of $GPG --homedir ${AMANDAHOMEDIR}/.gnupg \
                 --no-permission-warning \
-                --no-use-agent \
+                $GPG_EXTRA \
                 --armor \
                 --batch \
                 --symmetric \
@@ -149,11 +167,29 @@ check_gnupg() {
     # If am_key.gpg and .am_passphrase already existed, we should check
     # if they match!
     if [ -f ${AMANDAHOMEDIR}/.gnupg/am_key.gpg ] && [ -f ${AMANDAHOMEDIR}/.am_passphrase ]; then
+
+        GPG2=`which gpg2`
+        if [ x"$GPG2" = x"" ]; then
+           GPG=`which gpg`
+           if [ x"$GPG" = x"" ]; then
+                logger "Error: no gpg"
+           else
+                GPG_EXTRA=--no-use-agent
+           fi
+        else
+           GPG_AGENT=`which gpg-agent`
+           if [ x"$GPG_AGENT" = x"" ]; then
+              echo "Error: no gpg-agent"
+           else
+              GPG="$GPG_AGENT --daemon --no-use-standard-socket -- $GPG2"
+           fi
+        fi
+
         exec 3<${AMANDAHOMEDIR}/.am_passphrase
         # Perms warning will persist because we are not running as ${amanda_user}
-        log_output_of gpg --homedir ${AMANDAHOMEDIR}/.gnupg \
+        log_output_of $GPG --homedir ${AMANDAHOMEDIR}/.gnupg \
                 --no-permission-warning \
-                --no-use-agent\
+                $GPG_EXTRA \
                 --batch \
                 --decrypt \
                 --passphrase-fd 3 \
