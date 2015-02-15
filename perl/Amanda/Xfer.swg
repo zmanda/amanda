@@ -534,16 +534,16 @@ xfer_get_amglue_source(
 /* First, a few macros to generate decent Perl */
 
 %define PACKAGE(PKG)
-%perlcode {
+%perlcode %{
 package PKG;
-}
+%}
 %enddef
 
 %define XFER_ELEMENT_SUBCLASS_OF(PARENT)
-%perlcode {
+%perlcode %{
 use vars qw(@ISA);
 @ISA = qw( PARENT );
-}
+%}
 %enddef
 
 %define XFER_ELEMENT_SUBCLASS()
@@ -551,28 +551,28 @@ XFER_ELEMENT_SUBCLASS_OF(Amanda::Xfer::Element)
 %enddef
 
 %define DECLARE_CONSTRUCTOR(C_CONSTRUCTOR)
-%perlcode {
+%perlcode %{
 sub new { 
     my $pkg = shift;
     # The C function adds the proper blessing -- this function
     # just gets $pkg out of the way.
     C_CONSTRUCTOR(@_);
 }
-}
+%}
 %enddef
 
 %define OVERLOAD_REPR()
-%perlcode {
+%perlcode %{
 use overload '""' => sub { $_[0]->repr(); };
 # overload comparison, so users can ask if one obj == another
 use overload '==' => sub {     Amanda::Xfer::same_elements($_[0], $_[1]); };
 use overload '!=' => sub { not Amanda::Xfer::same_elements($_[0], $_[1]); };
-}
+%}
 %enddef
 
 %define DECLARE_METHOD(METHOD_NAME, C_FUNCTION)
-%perlcode {*METHOD_NAME = *C_FUNCTION;
-}
+%perlcode %{ *METHOD_NAME = *C_FUNCTION;
+%}
 %enddef
 
 /* And now define the required perl classes */

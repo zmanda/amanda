@@ -1,3 +1,6 @@
+2015-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Xfer.swg: Fox for swig-3.0.5
+
 2015-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/common/post_inst_functions.sh: Use 'command -v' instead of
 	  which.
