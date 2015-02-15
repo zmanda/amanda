@@ -1,3 +1,6 @@
+Changes in release 3.3.7p1
+    * fix build.
+
 Changes in release 3.3.7
     * amvault
 	o new --no-interactivity argument.
