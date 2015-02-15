@@ -1,3 +1,6 @@
+2015-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Xfer.swg: Fox for swig-3.0.5
+
 2015-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/common/common_functions.sh: Use systemctl to restart
 	  xinetd.
