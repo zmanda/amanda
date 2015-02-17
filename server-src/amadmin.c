@@ -759,7 +759,7 @@ tape(
 
 	tapes = list_new_tapes(storage_n, nb_days * runtapes);
 
-	if (*tapes) {
+	if (tapes && *tapes) {
 	    char **tape;
 	    int c = 0;
 	    for (tape = tapes; *tape != NULL; tape++) {

@@ -1,5 +1,8 @@
+2015-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Fix crash in tape command.
+
 2015-02-15  Jean-Louis Martineau <martineau@zmanda.com>
-	* perl/Amanda/Xfer.swg: Fox for swig-3.0.5
+	* perl/Amanda/Xfer.swg: Fix for swig-3.0.5
 
 2015-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/common/post_inst_functions.sh: Use 'command -v' instead of
