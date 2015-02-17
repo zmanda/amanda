@@ -129,6 +129,8 @@ ssh_connect(
 
     rh->hostname = g_strdup(hostname);
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    if (rh->rc == NULL)
+	goto error;
     rh->rc->conf_fn = conf_fn;
     rh->rc->datap = datap;
 

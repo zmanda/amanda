@@ -134,6 +134,8 @@ local_connect(
     }
     rh->hostname = g_strdup(hostname);
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    if (rh->rc == NULL)
+	goto error;
 
     if (rh->rs == NULL)
 	goto error;

@@ -255,6 +255,9 @@ krb5_connect(
     rh->hostname = canonname;        /* will be replaced */
     canonname = NULL; /* steal reference */
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    if (rh->rc == NULL)
+	goto error;
+
     rh->rc->conf_fn = conf_fn;
     rh->rc->datap = datap;
     rh->rc->recv_security_ok = NULL;

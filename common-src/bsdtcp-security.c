@@ -152,6 +152,9 @@ bsdtcp_connect(
     rh->hostname = canonname;	/* will be replaced */
     canonname = NULL; /* steal reference */
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    if (rh->rc == NULL)
+	goto error;
+
     rh->rc->recv_security_ok = &bsd_recv_security_ok;
     rh->rc->prefix_packet = &bsd_prefix_packet;
 
@@ -237,8 +240,9 @@ bsdtcp_fn_connect(
     if (status == S_OK) {
 	int so_errno;
 	socklen_t error_len = sizeof(so_errno);
-	getsockopt(rh->rc->write, SOL_SOCKET, SO_ERROR, &so_errno, &error_len);
-	if ( rh->next_res && so_errno == ECONNREFUSED) {
+	if (getsockopt(rh->rc->write, SOL_SOCKET, SO_ERROR, &so_errno, &error_len) == -1) {
+	    status = S_ERROR;
+	} else if (rh->next_res && so_errno == ECONNREFUSED) {
 	    status = S_ERROR;
 	}
     }

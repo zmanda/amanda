@@ -142,6 +142,8 @@ rsh_connect(
 	return;
     }
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    if (rh->rc == NULL)
+	goto error;
 
     if (rh->rs == NULL)
 	goto error;
