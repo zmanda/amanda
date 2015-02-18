@@ -1,3 +1,7 @@
+2015-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amadmin.8.xml: Document tape --days.
+	* server-src/amadmin.c: Fix --days intape command.
+
 2015-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsdtcp-security.c, common-src/krb5-security.c,
 	* common-src/local-security.c, common-src/rsh-security.c,

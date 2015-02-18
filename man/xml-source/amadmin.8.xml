@@ -286,7 +286,7 @@ file, Amanda will treat it as a new disk during the next run.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>tape</emphasis></term>
+  <term><emphasis remap='B'>tape</emphasis> [ <option>--days</option> <replaceable>&lt;num&gt;</replaceable> ]</term>
   <listitem>
 <para>Display the tape(s) Amanda expects to write to during the next run.
 See also
@@ -301,7 +301,7 @@ levels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>balance</emphasis> [ <option>--days</option> <replaceable>&lt;num&gt;</replaceable> ]<emphasis remap='B'></emphasis> <emphasis remap='I'></emphasis> <emphasis remap='I'></emphasis></term>
+  <term><emphasis remap='B'>balance</emphasis> [ <option>--days</option> <replaceable>&lt;num&gt;</replaceable> ]</term>
   <listitem>
 <para>Display the distribution of full backups throughout the dump schedule.</para>
   </listitem>

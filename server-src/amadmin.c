@@ -663,8 +663,8 @@ due(
 
 void
 tape(
-    int		argc,
-    char **	argv)
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
 {
     int     nb_days = 1;
     int     runtapes;
@@ -686,15 +686,16 @@ tape(
     int     nb_storage;
     char  **tapes;
 
-    if(argc > 4 && g_str_equal(argv[3], "--days")) {
-	nb_days = atoi(argv[4]);
-	if(nb_days < 1) {
-	    g_printf(_("days must be an integer bigger than 0\n"));
-	    return;
-	}
-	if (nb_days > 10000)
-	    nb_days = 10000;
+    nb_days = opt_days;
+    if (opt_days == 0 || opt_days == -1) {
+	nb_days = 1;
     }
+    if (nb_days < 1) {
+	g_printf(_("days must be an integer bigger than 0\n"));
+	return;
+    }
+    if (nb_days > 10000)
+	nb_days = 10000;
 
     il = getconf_identlist(CNF_STORAGE);
     nb_storage = g_slist_length(il);
@@ -749,6 +750,7 @@ tape(
 					       retention_days, retention_recover,
 					       retention_full, skip);
 	    }
+
 	    if (nb_new_tape > 0) {
 		if (nb_new_tape == 1)
 		    g_fprintf(stdout, _("1 new tape.\n"));
@@ -782,7 +784,6 @@ tape(
 	    }
 	}
 	g_free(tapes);
-	//print_new_tapes(stdout, storage_n, nb_days * runtapes);
     }
 }
 
