@@ -955,8 +955,8 @@ due(
 
 void
 tape(
-    int		argc,
-    char **	argv)
+    int		argc G_GNUC_UNUSED,
+    char **	argv G_GNUC_UNUSED)
 {
     int     nb_days = 1;
     int     runtapes;
@@ -964,6 +964,17 @@ tape(
     int     i, j;
     int     skip;
     int     nb_new_tape;
+
+    nb_days = opt_days;
+    if (opt_days == 0 || opt_days == -1) {
+       nb_days = 1;
+    }
+    if (nb_days < 1) {
+	g_printf(_("days must be an integer bigger than 0\n"));
+	return;
+     }
+    if (nb_days > 10000)
+	nb_days = 10000;
 
     if(argc > 4 && strcmp(argv[3],"--days") == 0) {
 	nb_days = atoi(argv[4]);
