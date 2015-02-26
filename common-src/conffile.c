@@ -9920,10 +9920,14 @@ config_print_errors_as_message(void)
 "  {\n" \
 "     \"source_filename\" : \"%s\",\n" \
 "     \"source_line\" : \"%d\",\n" \
-"     \"severity\" : \"16\",\n" \
+"     \"severity\" : \"error\",\n" \
 "     \"code\" : \"%d\",\n" \
 "     \"message\" : \"%s\"\n" \
-"  },\n", AMANDA_FILE, __LINE__, 1500016 , (char *)iter->data);
+"     \"process\" : \"%s\"\n" \
+"     \"running_on\" : \"%s\"\n" \
+"     \"component\" : \"%s\"\n" \
+"     \"module\" : \"%s\"\n" \
+"  },\n", AMANDA_FILE, __LINE__, 1500016 , get_pname(), get_running_on(), get_pcomponent(), get_pmodule(), (char *)iter->data);
     }
 }
 
