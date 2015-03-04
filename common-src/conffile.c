@@ -4043,13 +4043,7 @@ read_dump_selection(
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
-    if (tok == CONF_APPEND) {
-	get_conftoken(CONF_ANY);
-    } else {
-	free_val_t(val);
-	val->v.dump_selection = NULL;
-	ckseen(&val->seen);
-    }
+
     if (tok == CONF_STRING) {
 	ds->tag_type = TAG_NAME;
 	ds->tag = g_strdup(tokenval.v.s);
@@ -4057,6 +4051,11 @@ read_dump_selection(
 	ds->tag_type = TAG_ALL;
     } else if (tok == CONF_OTHER) {
 	ds->tag_type = TAG_OTHER;
+    } else if (tok == CONF_NL || tok == CONF_END) {
+	free_val_t(val);
+	val->v.dump_selection = NULL;
+	ckseen(&val->seen);
+	return;
     } else {
 	conf_parserror(_("string, ALL or OTHER expected"));
     }

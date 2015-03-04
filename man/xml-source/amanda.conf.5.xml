@@ -3268,7 +3268,7 @@ reused.</para>
   <term><amkeyword>retention-recover</amkeyword> <amtype>int</amtype></term>
   <listitem>
 <para>Default: 0. Keep all volumes needed to recover all files up to
-<amkeyword>retention-recover</amkeyword>ago,  if it was a level 2, also
+<amkeyword>retention-recover</amkeyword> days ago,  if it was a level 2, also
 keep previous level 1 and level 0.
 </para>
 
@@ -3278,7 +3278,7 @@ keep previous level 1 and level 0.
   <varlistentry>
   <term><amkeyword>retention-full</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: 0.</para>
+<para>Default: 0. A volume is kept if it contains a FULL not older then <amkeyword>retention-full</amkeyword> days.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -3347,7 +3347,7 @@ A comment string describing this storage.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>dump-selection</amkeyword> [<amkeyword>append</amkeyword>]
+  <term><amkeyword>dump-selection</amkeyword>
 	[<amtype>string</amtype> | <amkeyword>ALL</amkeyword>]
 	[ <amkeyword>ALL</amkeyword> | <amkeyword>FULL</amkeyword> | <amkeyword>INCR</amkeyword> ]</term>
   <listitem>
