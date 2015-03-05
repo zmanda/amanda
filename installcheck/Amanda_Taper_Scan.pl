@@ -210,7 +210,7 @@ $taperscan = Amanda::Taper::Scan->new(
     algorithm => "traditional",
     changer => undef, # (not used)
     tapelist => $tapelist,
-    retention_tapes => 3,
+    retention_tapes => 2,
     storage => $storage);
 $taperscan->read_tapelist();
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 1), " TEST-1 reusable");
@@ -219,7 +219,7 @@ ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 1), " TEST
 ok( $taperscan->is_reusable_volume(label => "TEST-4", new_label_ok => 1), " TEST-4 reusable");
 
 is($taperscan->oldest_reusable_volume(new_label_ok => 0), "TEST-1",
-   "newly labeled in tapelist, retention_tapes = 3, !new_label_ok: oldest_reusable_volume correct");
+   "newly labeled in tapelist, retention_tapes = 2, !new_label_ok: oldest_reusable_volume correct");
 ok( $taperscan->is_reusable_volume(label => "TEST-1", new_label_ok => 0), " TEST-1 reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-2", new_label_ok => 0), " TEST-2 not reusable");
 ok(!$taperscan->is_reusable_volume(label => "TEST-3", new_label_ok => 0), " TEST-3 not reusable");

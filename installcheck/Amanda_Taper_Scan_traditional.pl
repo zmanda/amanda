@@ -209,7 +209,7 @@ is_deeply([ @results ],
 $taperscan->quit();
 $storage->quit();
 
-$testconf->add_policy("test_policy", [ retention_tapes => 3 ]);
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->write();
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
@@ -255,7 +255,7 @@ is_deeply([ @results ],
 $taperscan->quit();
 $storage->quit();
 
-$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->add_policy("test_policy", [ retention_tapes => 1 ]);
 $testconf->write();
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
@@ -290,7 +290,7 @@ set_current_slot($chg, 3);
 $taperscan = Amanda::Taper::Scan->new(
     tapelist  => $tapelist,
     algorithm => "traditional",
-    retention_tapes => 2,
+    retention_tapes => 1,
     storage => $storage);
 @results = run_scan($taperscan);
 is_deeply([ @results ],

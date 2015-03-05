@@ -1,4 +1,14 @@
 2015-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, perl/Amanda/Policy.pm,
+	  perl/Amanda/Taper/Scan.pm,
+	  server-src/tapefile.c: retention_tapes default to tapecycle-1.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+	* installcheck/Amanda_Taper_Scan.pl,
+	  installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl: Fix.
+
+2015-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.c (list_retention, list_no_retention): Fix.
 
 2015-03-05  Jean-Louis Martineau <martineau@zmanda.com>

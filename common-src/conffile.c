@@ -6427,6 +6427,7 @@ update_derived_values(
 	    if (!policy_seen(po, POLICY_RETENTION_TAPES)) {
 		free_val_t(&po->value[POLICY_RETENTION_TAPES]);
 		copy_val_t(&po->value[POLICY_RETENTION_TAPES], &conf_data[CNF_TAPECYCLE]);
+		po->value[POLICY_RETENTION_TAPES].v.i--;
 	    }
 	}
 

@@ -264,10 +264,10 @@ lookup_last_reusable_tape(
      */
     compute_retention();
     tpsave = g_malloc((skip + 1) * sizeof(*tpsave));
-    for(s = 0; s <= skip; s++) {
+    for (s = 0; s <= skip; s++) {
 	tpsave[s] = NULL;
     }
-    for(tp = tape_list; tp != NULL; tp = tp->next) {
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
 	if (tp->reuse == 1 && !g_str_equal(tp->datestamp, "0") &&
 	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
 	    (!tp->storage || g_str_equal(tp->storage, storage)) &&
@@ -281,10 +281,13 @@ lookup_last_reusable_tape(
 	    tpsave[0] = tp;
 	}
     }
-    s = retention_tapes - count;
-    if(s < 0) s = 0;
-    if(count < retention_tapes - skip) tp = NULL;
-    else tp = tpsave[skip - s];
+    s = retention_tapes + 1 - count;
+    if (s < 0)
+	s = 0;
+    if (skip < s)
+	tp = NULL;
+    else
+	tp = tpsave[skip - s];
     amfree(tpsave);
     return tp;
 }

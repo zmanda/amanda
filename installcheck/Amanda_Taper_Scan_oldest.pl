@@ -212,7 +212,7 @@ is_deeply([ @results ],
 $taperscan->quit();
 $storage->quit();
 
-$testconf->add_policy("test_policy", [ retention_tapes => 3 ]);
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->write();
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {

@@ -392,7 +392,7 @@ sub oldest_reusable_volume {
 					$self->{'retention_full'},
 				        0);
 
-    my $tapecycle = $self->{'retention_tapes'};
+    my $retention_tapes = $self->{'retention_tapes'};
 
     my $best = undef;
     my $num_acceptable = 0;
@@ -414,7 +414,7 @@ sub oldest_reusable_volume {
     # if we didn't find at least $tapecycle reusable tapes, then
     # there is no oldest reusable tape
 
-    return undef unless $num_acceptable >= $tapecycle;
+    return undef unless $num_acceptable > $retention_tapes;
 
     return $best->{'label'};
 }
@@ -443,7 +443,6 @@ sub is_reusable_volume {
 	$vol_tle->{'datestamp'} eq $self->{'write_timestamp'}) {
 	return 0;
     }
-
 
     return Amanda::Tapelist::volume_is_reusable($params{'label'});
 }

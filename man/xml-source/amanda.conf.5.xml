@@ -3251,7 +3251,8 @@ A comment string describing this policy.</para>
   <varlistentry>
   <term><amkeyword>retention-tapes</amkeyword> <amtype>int</amtype></term>
   <listitem>
-<para>Default: same value as global tapecycle. The number of volumes used
+<para>Default: global tapecycle-1. The latest used <amkeyword>retention-tapes</amkeyword> volume can't be reused.
+You must have more than <amkeyword>retention-tapes</amkeyword> volumes
 before a volume can be re-used.</para>
   </listitem>
   </varlistentry>

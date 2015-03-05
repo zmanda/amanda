@@ -95,7 +95,7 @@ sub new {
 	$self = {
 	    policy_name   => "automatic",
 	};
-	$self->{'retention_tapes'} = getconf($CNF_TAPECYCLE);
+	$self->{'retention_tapes'} = getconf($CNF_TAPECYCLE) - 1;
 	$self->{'retention_days'} = 0;
 	$self->{'retention_recover'} = 0;
 	$self->{'retention_full'} = 0;
@@ -115,7 +115,7 @@ sub new {
 				if policy_seen($po, $POLICY_RETENTION_RECOVER);
 	$self->{'retention_full'} = policy_getconf($po, $POLICY_RETENTION_FULL)
 				if policy_seen($po, $POLICY_RETENTION_FULL);
-	$self->{'retention_tapes'} = getconf($CNF_TAPECYCLE)
+	$self->{'retention_tapes'} = getconf($CNF_TAPECYCLE) - 1
 				if !defined $self->{'retention_tapes'};
 	$self->{'retention_days'} = 0
 				if !defined $self->{'retention_days'};
