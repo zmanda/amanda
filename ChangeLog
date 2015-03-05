@@ -1,4 +1,7 @@
 2015-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c (list_retention, list_no_retention): Fix.
+
+2015-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Config.pl: Fix: Remove append keyword.
 
 2015-03-04  Jean-Louis Martineau <martineau@zmanda.com>

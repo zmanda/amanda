@@ -725,7 +725,7 @@ compute_storage_retention_nb(
 		 (!tp->pool && match_labelstr_template(l_template, tp->label,
 						       tp->barcode, tp->meta)))) {
 		count++;
-		if (count < retention_tapes) {
+		if (count <= retention_tapes) {
 		    /* Do not mark them, as it change when a tape is
 		     * overwritten */
 		    /* tp->retention = TRUE; */
@@ -858,13 +858,15 @@ gchar **list_retention(void)
         nb_tapes++;
     }
 
-    rv = g_new0(gchar *, nb_tapes++);
+    rv = g_new0(gchar *, nb_tapes+1);
     r = 0;
     for (tp = tape_list; tp != NULL; tp = tp->next) {
-        if (tp->retention || tp->retention_nb)
+        if ((tp->retention || tp->retention_nb) &&
+	    (!tp->config || g_str_equal(tp->config, get_config_name()))) {
 	    rv[r++] = tp->label;
+	}
     }
-    rv[r] = 0;
+    rv[r] = NULL;
     return rv;
 }
 
@@ -881,13 +883,15 @@ gchar **list_no_retention(void)
         nb_tapes++;
     }
 
-    rv = g_new0(gchar *, nb_tapes++);
+    rv = g_new0(gchar *, nb_tapes+1);
     r = 0;
     for (tp = tape_list; tp != NULL; tp = tp->next) {
-        if (!tp->retention && !tp->retention_nb)
+        if ((!tp->retention && !tp->retention_nb) &&
+	    (!tp->config || g_str_equal(tp->config, get_config_name()))) {
 	    rv[r++] = tp->label;
+	}
     }
-    rv[r] = 0;
+    rv[r++] = NULL;
     return rv;
 }
 
