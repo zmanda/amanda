@@ -1,3 +1,6 @@
+2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: sort worker.
+
 2015-02-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amadmin.8.xml: Document tape --days.
 	* server-src/amadmin.c: Fix --days intape command.

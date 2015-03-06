@@ -1472,7 +1472,7 @@ if (defined $opt_summary) {
 		printf "%d dumper%s idle%s %s: %s\n", $idle_dumpers, $c1, $c2, $c3, $status_driver;
 	}
 
-	foreach $worker (keys %status_taper) {
+	foreach $worker (sort keys %status_taper) {
 		$num = $worker;
 	   $num =~ s/worker//g;
 		print "taper $num status: $status_taper{$worker}\n";
