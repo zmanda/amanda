@@ -854,6 +854,7 @@ gchar **list_retention(void)
     tape_t *tp;
     gchar **rv;
     int r;
+    GHashTable* storage_hash = NULL;
 
     compute_retention();
 
@@ -861,15 +862,31 @@ gchar **list_retention(void)
         nb_tapes++;
     }
 
+    if (getconf_seen(CNF_STORAGE) == -2) {
+	identlist_t il;
+
+	storage_hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    char *storage_name = (char *)il->data;
+	    g_hash_table_insert(storage_hash, storage_name, GINT_TO_POINTER(1));
+	}
+    }
+
     rv = g_new0(gchar *, nb_tapes+1);
     r = 0;
     for (tp = tape_list; tp != NULL; tp = tp->next) {
         if ((tp->retention || tp->retention_nb) &&
-	    (!tp->config || g_str_equal(tp->config, get_config_name()))) {
+	    !g_str_equal(tp->datestamp, "0") &&
+	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
+	    (!storage_hash || !tp->storage || g_hash_table_lookup(storage_hash, tp->storage))) {
 	    rv[r++] = tp->label;
 	}
     }
     rv[r] = NULL;
+
+    if (storage_hash) {
+	g_hash_table_destroy(storage_hash);
+    }
     return rv;
 }
 
@@ -879,6 +896,7 @@ gchar **list_no_retention(void)
     tape_t *tp;
     gchar **rv;
     int r;
+    GHashTable* storage_hash = NULL;
 
     compute_retention();
 
@@ -886,15 +904,31 @@ gchar **list_no_retention(void)
         nb_tapes++;
     }
 
+    if (getconf_seen(CNF_STORAGE) == -2) {
+	identlist_t il;
+
+	storage_hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    char *storage_name = (char *)il->data;
+	    g_hash_table_insert(storage_hash, storage_name, GINT_TO_POINTER(1));
+	}
+    }
+
     rv = g_new0(gchar *, nb_tapes+1);
     r = 0;
     for (tp = tape_list; tp != NULL; tp = tp->next) {
         if ((!tp->retention && !tp->retention_nb) &&
-	    (!tp->config || g_str_equal(tp->config, get_config_name()))) {
+	    !g_str_equal(tp->datestamp, "0") &&
+	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
+	    (!storage_hash || !tp->storage || g_hash_table_lookup(storage_hash, tp->storage))) {
 	    rv[r++] = tp->label;
 	}
     }
-    rv[r++] = NULL;
+    rv[r] = NULL;
+
+    if (storage_hash) {
+	g_hash_table_destroy(storage_hash);
+    }
     return rv;
 }
 
