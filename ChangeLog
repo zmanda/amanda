@@ -1,4 +1,11 @@
 2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c (compute_storage_retention): Fix retentionfor
+	  retention_days.
+	* installcheck/Amanda_Tapelist.pl: Add many installcheck for
+	  list_retention, list_no_retention, list_new_tapes and
+	  volume_is_reusable
+
+2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: One line by worker.
 
 2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>

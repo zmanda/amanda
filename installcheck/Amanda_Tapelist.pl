@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 26;
+use Test::More tests => 53;
 use strict;
 use warnings;
 
@@ -26,6 +26,7 @@ use Installcheck::Config;
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use POSIX ":sys_wait_h";
+use POSIX qw( strftime );
 use Data::Dumper;
 
 # put the debug messages somewhere
@@ -287,3 +288,165 @@ is_deeply($tl, {
     'barcode' => undef, 'meta' => undef, 'comment' => undef },
 ] }, "reload works");
 
+# test retention_tapes
+$testconf = Installcheck::Config->new();
+$testconf->add_param("tapecycle", 1 );
+$testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
+$testconf->add_storage("STORAGE1", [ policy => "\"test_policy\"",
+				     tapepool => "\"POOL1\"" ]);
+$testconf->add_storage("STORAGE2", [ policy => "\"test_policy\"",
+				     tapepool => "\"POOL2\"" ]);
+$testconf->write();
+
+config_uninit();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+    or die("config_init failed");
+@lines = (
+    "20071121010002 TESTCONF1-001 reuse BARCODE:BAR1-001 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "20071122010002 TESTCONF1-002 reuse BARCODE:BAR1-002 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "20071123010002 TESTCONF1-003 reuse BARCODE:BAR1-003 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "20071124010002 TESTCONF1-004 reuse BARCODE:BAR1-004 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "0  TESTCONF1-005 reuse BARCODE:BAR1-005 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 #comment 2\n",
+    "0  TESTCONF1-006 reuse BARCODE:BAR1-006 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 #comment 2\n",
+    "20071021010002 TESTCONF2-001 reuse BARCODE:BAR2-001 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "20071022010002 TESTCONF2-002 reuse BARCODE:BAR2-002 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "20071023010002 TESTCONF2-003 reuse BARCODE:BAR2-003 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "20071024010002 TESTCONF2-004 reuse BARCODE:BAR2-004 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "0 TESTCONF2-005 reuse BARCODE:BAR2--005 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 #comment 2\n",
+    "20070921010002 TESTCONF2-011 reuse BARCODE:BAR2-011 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "20070922010002 TESTCONF2-012 reuse BARCODE:BAR2-012 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "20070923010002 TESTCONF2-013 reuse BARCODE:BAR2-013 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "20070928010002 TESTCONF2-014 reuse BARCODE:BAR2-014 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "0 TESTCONF2-015 reuse BARCODE:BAR2-015 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 #comment 2\n",
+);
+mktapelist($tapelist, @lines);
+$tl->reload();
+
+my @lr = Amanda::Tapelist::list_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF1-004', 'TESTCONF1-003', 'TESTCONF2-004', 'TESTCONF2-003' ],
+	  "list_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_no_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF1-002', 'TESTCONF1-001', 'TESTCONF2-002', 'TESTCONF2-001' ],
+	  "list_no_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_new_tapes("STORAGE1", 1);
+is_deeply(\@lr,
+          [ 'TESTCONF1-006' ],
+	  "list_new_tapes STORAGE1 1") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_new_tapes("STORAGE1", 2);
+is_deeply(\@lr,
+          [ 'TESTCONF1-006', 'TESTCONF1-005' ],
+	  "list_new_tapes STORAGE1 2") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_new_tapes("STORAGE2", 2);
+is_deeply(\@lr,
+          [ 'TESTCONF2-015', 'TESTCONF2-005' ],
+	  "list_new_tapes STORAGE2 2") || diag(Data::Dumper::Dumper(\@lr));
+
+
+config_uninit();
+my $config_overrides = new_config_overrides( 2 );
+add_config_override_opt( $config_overrides, 'storage=STORAGE2' );
+set_config_overrides($config_overrides);
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+	or die("config_init failed");
+
+@lr = Amanda::Tapelist::list_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF2-004', 'TESTCONF2-003' ],
+	  "list_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_no_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF2-002', 'TESTCONF2-001' ],
+	  "list_no_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+# test retention_days
+$testconf = Installcheck::Config->new();
+$testconf->add_param("tapecycle", 1 );
+$testconf->add_policy("test_policy", [ retention_days => 2 ]);
+$testconf->add_storage("STORAGE1", [ policy => "\"test_policy\"",
+				     tapepool => "\"POOL1\"" ]);
+$testconf->add_storage("STORAGE2", [ policy => "\"test_policy\"",
+				     tapepool => "\"POOL2\"" ]);
+$testconf->write();
+
+config_uninit();
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+    or die("config_init failed");
+
+my $epoc = time();
+my $today_0 = strftime("%Y%m%d%H%M%S", localtime($epoc -3600));
+my $today_1 = strftime("%Y%m%d%H%M%S", localtime($epoc - 1*24*60*60 - 3600));
+my $today_2 = strftime("%Y%m%d%H%M%S", localtime($epoc - 2*24*60*60 - 3600));
+my $today_3 = strftime("%Y%m%d%H%M%S", localtime($epoc - 3*24*60*60 - 3600));
+
+@lines = (
+    "$today_0 TESTCONF1-001 reuse BARCODE:BAR1-001 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "$today_1 TESTCONF1-002 reuse BARCODE:BAR1-002 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "$today_2 TESTCONF1-003 reuse BARCODE:BAR1-003 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "$today_3 TESTCONF1-004 reuse BARCODE:BAR1-004 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "0  TESTCONF1-005 reuse BARCODE:BAR1-005 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "0  TESTCONF1-006 reuse BARCODE:BAR1-006 META:META1 BLOCKSIZE:64 POOL:POOL1 STORAGE:STORAGE1 CONFIG:TESTCONF #comment 2\n",
+    "$today_0 TESTCONF2-001 reuse BARCODE:BAR2-001 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "$today_1 TESTCONF2-002 reuse BARCODE:BAR2-002 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "$today_2 TESTCONF2-003 reuse BARCODE:BAR2-003 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "$today_3 TESTCONF2-004 reuse BARCODE:BAR2-004 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "0 TESTCONF2-005 reuse BARCODE:BAR2-005 META:META2 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF #comment 2\n",
+    "$today_0 TESTCONF2-011 reuse BARCODE:BAR3-011 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "$today_1 TESTCONF2-012 reuse BARCODE:BAR3-012 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "$today_2 TESTCONF2-013 reuse BARCODE:BAR3-013 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "$today_3 TESTCONF2-014 reuse BARCODE:BAR3-014 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+    "0 TESTCONF2-015 reuse BARCODE:BAR3-015 META:META3 BLOCKSIZE:64 POOL:POOL2 STORAGE:STORAGE2 CONFIG:TESTCONF2 #comment 2\n",
+);
+mktapelist($tapelist, @lines);
+$tl->reload();
+
+@lr = Amanda::Tapelist::list_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF1-001', 'TESTCONF2-001', 'TESTCONF1-002', 'TESTCONF2-002' ],
+	  "list_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_no_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF1-003', 'TESTCONF2-003', 'TESTCONF1-004', 'TESTCONF2-004' ],
+	  "list_no_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+
+config_uninit();
+$config_overrides = new_config_overrides( 2 );
+add_config_override_opt( $config_overrides, 'storage=STORAGE2' );
+set_config_overrides($config_overrides);
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+	or die("config_init failed");
+
+@lr = Amanda::Tapelist::list_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF2-001', 'TESTCONF2-002' ],
+	  "list_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+@lr = Amanda::Tapelist::list_no_retention();
+is_deeply(\@lr,
+          [ 'TESTCONF2-003', 'TESTCONF2-004' ],
+	  "list_no_retention") || diag(Data::Dumper::Dumper(\@lr));
+
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF1-001"), 0, "volume_is_reusable TESTCONF1-001");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF1-002"), 0, "volume_is_reusable TESTCONF1-002");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF1-003"), 1, "volume_is_reusable TESTCONF1-003");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF1-004"), 1, "volume_is_reusable TESTCONF1-004");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF1-005"), 1, "volume_is_reusable TESTCONF1-005");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF1-006"), 1, "volume_is_reusable TESTCONF1-006");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-001"), 0, "volume_is_reusable TESTCONF2-001");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-002"), 0, "volume_is_reusable TESTCONF2-002");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-003"), 1, "volume_is_reusable TESTCONF2-003");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-004"), 1, "volume_is_reusable TESTCONF2-004");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-005"), 1, "volume_is_reusable TESTCONF2-005");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-011"), 0, "volume_is_reusable TESTCONF2-011");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-012"), 0, "volume_is_reusable TESTCONF2-012");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-013"), 0, "volume_is_reusable TESTCONF2-013");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-014"), 0, "volume_is_reusable TESTCONF2-014");
+is(Amanda::Tapelist::volume_is_reusable("TESTCONF2-015"), 1, "volume_is_reusable TESTCONF2-015");

@@ -299,6 +299,7 @@ reusable_tape(
     if (tp == NULL) return 0;
     if (tp->reuse == 0) return 0;
     if (g_str_equal(tp->datestamp, "0")) return 1;
+    if (tp->config && !g_str_equal(tp->config, get_config_name())) return 0;
     compute_retention();
 
     return (!tp->retention && !tp->retention_nb);
@@ -759,7 +760,7 @@ compute_storage_retention(
     if (retention_days) {
 	char *datestr = get_timestamp_from_time(time(NULL) -
 					retention_days*86400);
-	for(tp = tape_list; tp != NULL; tp = tp->prev) {
+	for(tp = tape_list; tp != NULL; tp = tp->next) {
 	    if (tp->reuse == 1 &&
 		g_ascii_strcasecmp(tp->datestamp, datestr) > 0 &&
 		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
