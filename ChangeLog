@@ -1,4 +1,7 @@
 2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: One line by worker.
+
+2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.c (list_retention, list_no_retention): Do not
 	  list datestamp==0 or not in a listed storage.
 

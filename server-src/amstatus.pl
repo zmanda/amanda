@@ -378,14 +378,23 @@ if ($opt_summary) {
 	    printf "%-11s qlen: %d\n", "$storage",
 				       $status->{'qlen'}->{'tapeq'}->{$taper};
 
-	    printf "%16s: ", "status";
 	    if (defined $status->{'taper'}->{$taper}->{'worker'}) {
 		my @worker_status;
 		for my $worker (sort keys %{$status->{'taper'}->{$taper}->{'worker'}}) {
-		    my $wstatus = $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
-		    push @worker_status, $status->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'};
+		    my $wworker = $status->{'taper'}->{$taper}->{'worker'}->{$worker};
+		    my $wstatus = $wworker->{'status'};
+		    my $wmessage = $wworker->{'message'};
+		    my $whost = $wworker->{'host'};
+		    my $wdisk = $wworker->{'disk'};
+		    $worker =~ /worker\d*-(\d*)/;
+		    my $wname = $1;
+		    printf "%16s: ", $wname;
+		    if ($wmessage eq "Idle") {
+			print  "$wmessage\n";
+		    } else {
+			print  "$wmessage ($whost:$wdisk)\n";
+		    }
 		}
-		print join ', ', @worker_status;
 	    } else {
 		print "Idle";
 	    }
