@@ -1,3 +1,6 @@
+2015-03-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Fix LISTHOST command.
+
 2015-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/tapefile.c (compute_storage_retention): Fix retentionfor
 	  retention_days.

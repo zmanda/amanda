@@ -1455,7 +1455,7 @@ main(
 		for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
 		    disk = dlist->data;
                     found = 0;
-		    for (dlistup = disk_list.head; dlistup != NULL; dlistup = dlistup->next) {
+		    for (dlistup = disk_list.head; dlistup->data != dlist->data; dlistup = dlistup->next) {
 			diskdup = dlistup->data;
 		        if(g_str_equal(diskdup->host->hostname,
                                        disk->host->hostname)) {
