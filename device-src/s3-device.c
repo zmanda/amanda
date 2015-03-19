@@ -4078,7 +4078,6 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	    pself->is_eof = TRUE;
 	    pself->in_file = FALSE;
 	    device_set_error(pself, g_strdup(_("EOF")), DEVICE_STATUS_SUCCESS);
-	    g_mutex_unlock(self->thread_idle_mutex);
 	    return -1;
 	}
 	*size_req = size;
