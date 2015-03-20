@@ -62,22 +62,68 @@ Amanda::Status -- Get the status of a running job.
 
     use Amanda::Status;
 
- filename      => $filename
- dead_run      => If the run is already finished/killed
+ filename      => The amdump file used for this status
+ dead_run      => 1 if the run is already finished/killed
+                  0 if the run is running
  datestamp     => $datestamp "20080618130147"
  idle_dumpers  => number of idle dumpers
  status_driver => status of the driver
+                    not-idle               working
+                    no-dumpers             all dumpers active
+                    start-wait             waiting for the startime of a dle
+                    no-hold                dle with no holding disk, taper busy
+                    client-constrained     can't open new connection to the client
+                                             because of maxdumps or spindle
+                    no-bandwidth           no bandwidth available
+                    no-diskspace	   no holding disk space
  free_kps      => free network bandwidth
  free_space    => free holding disk space
  holding_space => total holding disk space
- starttime     => The time at start of job (1213808507)
- current_time  => The current time since starttime (12.34)
+ starttime     => The time at start of job since epoc (1213808507)
+ current_time  => The current time since starttime in second (12.34)
  exit_status   => The exit status
+		  0  = success
+                  1  = error
+                  4  = a dle failed
+                  8  = Don't know the status of a dle (RESULT_MISSING in the report)
+                  16 = tape error or no more tape
  dles->{$host}->{$disk}->{$datestamp}->{'status'}            => $status
+                                                                  $IDLE                    default
+                                                                  $ESTIMATING              got no estimate result yet
+                                                                  $ESTIMATE_PARTIAL        got estimate for a few level
+                                                                  $ESTIMATE_FAILED         estimate failed
+                                                                  $ESTIMATE_DONE           got estimate for all levels
+                                                                  $WAIT_FOR_DUMPING        wait for dumping
+                                                                  $DUMPING_INIT            dumping initialization phase
+                                                                  $DUMPING                 dumping
+                                                                  $DUMPING_DUMPER          dumping ending phase
+                                                                  $DUMP_DONE		   dump done and succeeded
+                                                                  $DUMP_FAILED		   dump failed
+                                                                  $DUMPING_TO_TAPE_INIT    dumping to tape initialisation phase
+                                                                  $DUMPING_TO_TAPE         dumping to tape
+                                                                  $DUMPING_TO_TAPE_DUMPER  dumping to tape ending phase
+                                                                  $DUMP_TO_TAPE_DONE	   dump done and succeeded
+                                                                  $DUMP_TO_TAPE_FAILED     dump to tape failed
+                                                                  $DUMP_RETRY              dump failed (dumper tell us to retry)
+                                                                  $DUMP_TO_TAPE_RETRY      dump to tape failed (dumper tell us to retry)
+                                                                  $DUMP_WILL_RETRY         will retry the dump
 				       {'level'}             => $level
-				       {'error'}             => error message
+				       {'error'}             => latest error message for the dle
 				       {'storage'}           => $storage_name  # when dump to tape.
 				       {'message'}           => amstatus message
+                                                                  getting estimate
+                                                                  partial estimate
+                                                                  estimate done
+                                                                  estimate failed
+                                                                  wait for dumping
+                                                                  dumping
+                                                                  dumping to tape
+                                                                  dump failed: $error
+                                                                  will retry at level $retry_level: $error
+                                                                  will retry: $error
+                                                                  dump to tape failed: $error
+                                                                  dump done
+                                                                  dump to tape done
 				       {'holding_file'}      => holding disk file path
 				       {'size'}              => real size
 				       {'esize'}             => estimated size
@@ -92,7 +138,38 @@ Amanda::Status -- Get the status of a running job.
 				       {'writing_to_tape'}   #internal use
 				       {'wait_fo_writing'}   #internal use
  dles->{$host}->{$disk}->{$datestamp}->{'storage'}->{$storage_name}->{'status'}          => $status
+                                                                                              $IDLE
+                                                                                              $WAIT_FOR_FLUSHING
+                                                                                              $WAIT_FOR_WRITING
+                                                                                              $FLUSHING
+                                                                                              $WRITING
+                                                                                              $DUMPING_TO_TAPE
+                                                                                              $DUMPING_TO_TAPE_DUMPER
+                                                                                              $DUMP_TO_TAPE_FAILED
+                                                                                              $WRITE_FAILED
+                                                                                              $FLUSH_FAILED
+                                                                                              $FLUSH_DONE
+                                                                                              $WRITE_DONE
+                                                                                              $DUMP_TO_TAPE_DONE
+                                                                                              $CONFIG_ERROR
 						                     {'message'}         => amstatus message
+                                                                                              Idle
+                                                                                              wait for flushing
+                                                                                              wait for writing
+                                                                                              flushing
+                                                                                              writing
+                                                                                              dumping to tape
+                                                                                              dump to tape failed
+                                                                                              write failed
+                                                                                              flush failed
+                                                                                              partially flushed
+                                                                                              flushed
+                                                                                              partially written
+                                                                                              written
+                                                                                              dump to tape done
+                                                                                              $tape_config
+                                                                                              waiting for a tape
+                                                                                              searching for a tape
 						                     {'size'}            => real size
 						                     {'dsize'}           => taped size (when flush done)
 						                     {'wsize'}           => working size (when flushing)
@@ -102,8 +179,8 @@ Amanda::Status -- Get the status of a running job.
 						                     {'flushing'}        #internal use
 						                     {'wait_for_tape'}   => 1 if waiting for a tape
 						                     {'search_for_tape'} => 1 if searching for a tape
-						                     {'tape_error'}      => 1 if a tape error
-						                     {'tape_config'}     => 1 if a config error
+						                     {'tape_error'}      => tape error message
+						                     {'tape_config'}     => config error message
  taper->{$taper}->{'storage'}   => $storage
  taper->{$taper}->{'tape_size'} => tape size for the storage
  taper->{$taper}->{'nb_tape'} => number of tape used
@@ -115,7 +192,7 @@ Amanda::Status -- Get the status of a running job.
 					 {'disk'}              => disk actualy flushing
 					 {'datestamp'}         => datestamp actualy flushing
 					 {'wait_for_tape'}     => 1 if worker wait for a tape
-					 {'search_for_tape'}   => 1 if worker serach for a tape
+					 {'search_for_tape'}   => 1 if worker search for a tape
 					 {'no_tape'}           => index in {taper->{$taper}->{'stat'}[]} of actualy writting tape
  taper->{$taper}->{'stat'}[]->{'label'}   => label of the tape
 			      {'nb_dle'}  => number of dle
@@ -138,6 +215,20 @@ Amanda::Status -- Get the status of a running job.
 		  {'estimated_stat'} =>
 		  {'write_size'}     =>
 		  {'name'}           => To print to user
+    where $status can be  disk
+                          estimated
+                          wait_for_dumping
+                          dumping
+                          dumping_to_tape
+                          dump_failed
+                          dump_to_tape_failed
+                          dumped
+                          flush
+                          wait_to_flush
+                          wait_for_writing
+                          writing_to_tape
+                          failed_to_tape
+                          taped
  stat->{'taped'}->{'storage'}->{$storage}->{'real_size'}      =>
 					   {'real_stat'}      =>
 					   {'estimated_size'} =>
@@ -145,39 +236,97 @@ Amanda::Status -- Get the status of a running job.
 					   {'write_size'}     =>
 					   {'nb'}             =>
 
+ status
+   $IDLE			 =  0;
+   $ESTIMATING			 =  1;  # estimating the dle, got no estimate result yet
+   $ESTIMATE_PARTIAL		 =  2;  # estimating the dle, got the estimate result for at least one level
+   $ESTIMATE_DONE		 =  3;  # receive the estimate for all levels
+   $ESTIMATE_FAILED		 =  4;  # estimate for all levels failed
+   $WAIT_FOR_DUMPING		 =  5;  # wait for dumping
+   $DUMPING_INIT		 =  6;  # dumping initialization phase
+   $DUMPING			 =  7;  # dumping
+   $DUMPING_DUMPER		 =  8;  # dumping ending phase
+   $DUMPING_TO_TAPE_INIT	 =  9;  # dumping to tape initialisation phase
+   $DUMPING_TO_TAPE		 = 10;  # dumping to tape
+   $DUMPING_TO_TAPE_DUMPER	 = 11;  # dumping to tape ending phase
+   $DUMP_FAILED			 = 12;  # dump failed
+   $DUMP_TO_TAPE_FAILED		 = 13;  # dump to tape failed
+   $WAIT_FOR_WRITING		 = 14;  # wait for vaulting
+   $WRITING			 = 15;  # vaulting
+   $WRITE_FAILED		 = 16;  # vaulting failed
+   $WAIT_FOR_FLUSHING		 = 17;  # wait for flushing
+   $FLUSHING			 = 18;  # flushing
+   $FLUSH_FAILED		 = 19;  # flush failed
+   $DUMP_DONE			 = 20;  # dump done and succeeded
+   $DUMP_TO_TAPE_DONE		 = 21;  # dump to tape done and succeeded
+   $WRITE_DONE			 = 22;  # vault done and succeeded
+   $FLUSH_DONE			 = 23;  # flush done and succeeded
+   $DUMP_RETRY			 = 24;  # dump failed (dumper tell us to retry)
+   $DUMP_TO_TAPE_RETRY		 = 25;  # dump to tape failed (dumper tell us to retry)
+   $DUMP_WILL_RETRY		 = 26;  # will retry the dump
 
+ status only for worker
+   $TAPE_ERROR			 = 50;  # failed because of tape error
+   $CONFIG_ERROR		 = 51;  # failed because of config (runtapes, ...)
+
+ dle status
+  IDLE => ESTIMATING => ESTIMATE_FAILED
+                     => ESTIMATE_PARTIAL => ESTIMATE_DONE => WAIT_FOR_DUMPING
+
+  WAIT_FOR_DUMPING => DUMPING_INIT => DUMPING => DUMPING_DUMPER => DUMP_DONE
+                                                                => DUMP_FAILED
+                                                                => DUMP_RETRY => DUMP_WILL_RETRY
+
+  WAIT_FOR_DUMPING => DUMPING_TO_TAPE_INIT => DUMPING_TO_TAPE => DUMPING_TO_TAPE_DUMPER => DUMP_TO_TAPE_DONE
+                                                                                        => DUMP_TO_TAPE_FAILED
+                                                                                        => DUMP_TO_TAPE_RETYR => DUMP_WILL_RETRY
+
+ storage status
+  dump to tape
+   IDLE => DUMPING_TO_TAPE => DUMPING_TO_TAPE_DUMPER => DUMPING_TO_TAPE_DONE
+                                                     => DUMP_TO_TAPE_FAILED
+                                                     => CONFIG_ERROR
+  flush
+   IDLE => WAIT_FOR_FLUSHING => FLUSHING => FLUSH_DONE
+                                         => FLUSH_FAILED
+                                         => CONFIG_ERROR
+
+  vault
+   IDLE => WAIT_FOR_WRITING => WRITING => WRITE_DONE
+                                       => WRITE_FAILED
+                                       => CONFIG_ERROR
 =cut
 
 # status value:
 #no warnings;
 #no strict;
 my $IDLE			 =  0;
-my $ESTIMATING			 =  1;
-my $ESTIMATE_PARTIAL		 =  2;
-my $ESTIMATE_DONE		 =  3;
-my $ESTIMATE_FAILED		 =  4;
-my $WAIT_FOR_DUMPING		 =  5;
-my $DUMPING_INIT		 =  6;
-my $DUMPING			 =  7;
-my $DUMPING_DUMPER		 =  8;
-my $DUMPING_TO_TAPE_INIT	 =  9;
-my $DUMPING_TO_TAPE		 = 10;
-my $DUMPING_TO_TAPE_DUMPER	 = 11;
-my $DUMP_FAILED			 = 12;
-my $DUMP_TO_TAPE_FAILED		 = 13;
-my $WAIT_FOR_WRITING		 = 14;
-my $WRITING			 = 15;
-my $WRITE_FAILED		 = 16;
-my $WAIT_FOR_FLUSHING		 = 17;
-my $FLUSHING			 = 18;
-my $FLUSH_FAILED		 = 19;
-my $DUMP_DONE			 = 20;
-my $DUMP_TO_TAPE_DONE		 = 21;
-my $WRITE_DONE			 = 22;
-my $FLUSH_DONE			 = 23;
-my $DUMP_RETRY			 = 24;
-my $DUMP_TO_TAPE_RETRY		 = 25;
-my $DUMP_WILL_RETRY		 = 26;
+my $ESTIMATING			 =  1;  # estimating the dle, got no estimate result yet
+my $ESTIMATE_PARTIAL		 =  2;  # estimating the dle, got the estimate result for at least one level
+my $ESTIMATE_DONE		 =  3;  # receive the estimate for all levels
+my $ESTIMATE_FAILED		 =  4;  # estimate for all levels failed
+my $WAIT_FOR_DUMPING		 =  5;  # wait for dumping
+my $DUMPING_INIT		 =  6;  # dumping initialization phase
+my $DUMPING			 =  7;  # dumping
+my $DUMPING_DUMPER		 =  8;  # dumping ending phase
+my $DUMPING_TO_TAPE_INIT	 =  9;  # dumping to tape initialisation phase
+my $DUMPING_TO_TAPE		 = 10;  # dumping to tape
+my $DUMPING_TO_TAPE_DUMPER	 = 11;  # dumping to tape ending phase
+my $DUMP_FAILED			 = 12;  # dump failed
+my $DUMP_TO_TAPE_FAILED		 = 13;  # dump to tape failed
+my $WAIT_FOR_WRITING		 = 14;  # wait for vaulting
+my $WRITING			 = 15;  # vaulting
+my $WRITE_FAILED		 = 16;  # vaulting failed
+my $WAIT_FOR_FLUSHING		 = 17;  # wait for flushing
+my $FLUSHING			 = 18;  # flushing
+my $FLUSH_FAILED		 = 19;  # flush failed
+my $DUMP_DONE			 = 20;  # dump done and succeeded
+my $DUMP_TO_TAPE_DONE		 = 21;  # dump to tape done and succeeded
+my $WRITE_DONE			 = 22;  # vault done and succeeded
+my $FLUSH_DONE			 = 23;  # flush done and succeeded
+my $DUMP_RETRY			 = 24;  # dump failed (dumper tell us to retry)
+my $DUMP_TO_TAPE_RETRY		 = 25;  # dump to tape failed (dumper tell us to retry)
+my $DUMP_WILL_RETRY		 = 26;  # will retry the dump
 
 # status only for worker
 my $TAPE_ERROR			 = 50;
