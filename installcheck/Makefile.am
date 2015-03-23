@@ -15,8 +15,7 @@ common_tests = \
 	Amanda_Header \
 	Amanda_Util \
 	Amanda_Xfer \
-	amarchiver \
-	gnutar
+	amarchiver
 all_tests += $(common_tests)
 
 client_tests = \
