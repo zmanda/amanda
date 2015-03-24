@@ -1,3 +1,9 @@
+2015-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Runs.pl, perl/Amanda/Status.pm,
+	  server-src/amstatus.pl, server-src/driver.c:
+	  s/free_kps/network_free_kps/
+	  s/free_space/holding_free_space/
+
 2015-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am: Do not run the gnutar installcheck
 

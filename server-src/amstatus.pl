@@ -402,16 +402,16 @@ if ($opt_summary) {
 	}
     }
 
-    printf "%-16s: %d\n", "network free kps", $status->{'free_kps'};
+    printf "%-16s: %d\n", "network free kps", $status->{'network_free_kps'};
 
-    if (defined $status->{'free_space'}) {
+    if (defined $status->{'holding_free_space'}) {
 	my $hs;
-	if ($status->{'holding_space'}) {
-	    $hs = ($status->{'free_space'} * 1.0 / $status->{'holding_space'}) *100;
+	if ($status->{'holding_free_space'}) {
+	    $hs = ($status->{'holding_free_space'} * 1.0 / $status->{'holding_free_space'}) *100;
 	} else {
 	    $hs = 0.0;
 	}
-	printf "%-16s: %d$unit (%0.2f%%)\n", "holding space", dn($status->{'free_space'}), $hs;
+	printf "%-16s: %d$unit (%0.2f%%)\n", "holding space", dn($status->{'holding_free_space'}), $hs;
     }
 }
 

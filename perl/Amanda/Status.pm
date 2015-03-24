@@ -76,8 +76,8 @@ Amanda::Status -- Get the status of a running job.
                                              because of maxdumps or spindle
                     no-bandwidth           no bandwidth available
                     no-diskspace	   no holding disk space
- free_kps      => free network bandwidth
- free_space    => free holding disk space
+ network_free_kps   => free network bandwidth
+ holding_free_space => free holding disk space
  holding_space => total holding disk space
  starttime     => The time at start of job since epoc (1213808507)
  current_time  => The current time since starttime in second (12.34)
@@ -131,7 +131,7 @@ Amanda::Status -- Get the status of a running job.
 				       {'dsize'}             => dumped size (when dumping done)
 				       {'dump_time'}         => time the dump started or finished
 				       {'chunk_time'}        => time the dump started or finished
-				       {'wait_holding_disk'} => dump to holding disk wait for more space
+				       {'wait_holding_disk'} => 1 if dump to holding disk wait for more space
 				       {'failed_to_tape'}    #internal use
 				       {'taped'}             #internal use
 				       {'flush'}             #internal use
@@ -1286,8 +1286,8 @@ REREAD:
 		$self->{'current_time'} = $line[3];
 		$self->{'idle_dumpers'} = $line[12];
 
-		$self->{'free_kps'} = $line[6];
-		$self->{'free_space'} = $line[8];
+		$self->{'network_free_kps'} = $line[6];
+		$self->{'holding_free_space'} = $line[8];
 		my $i = 14;
 		delete $self->{'qlen'}->{'tapeq'};
 		while($line[$i] eq "tapeq") {
@@ -1860,8 +1860,8 @@ sub current {
 		 status_driver => $self->{'status_driver'},
 		 storage       => $self->{'storage'},
 		 qlen          => $self->{'qlen'},
-		 free_kps      => $self->{'free_kps'},
-		 free_space    => $self->{'free_space'},
+		 network_free_kps      => $self->{'network_free_kps'},
+		 holding_free_space    => $self->{'holding_free_space'},
 		 holding_space => $self->{'holding_space'},
 		 busy          => $self->{'busy'},
 		 busy_dumper   => $self->{'busy_dumper'},

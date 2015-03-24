@@ -112,8 +112,8 @@ static void deallocate_bandwidth(netif_t *ip, unsigned long kps);
 static void dump_schedule(disklist_t *qp, char *str);
 static assignedhd_t **find_diskspace(off_t size, int *cur_idle,
 					assignedhd_t *preferred);
-static unsigned long free_kps(netif_t *ip);
-static off_t free_space(void);
+static unsigned long network_free_kps(netif_t *ip);
+static off_t holding_free_space(void);
 static void dumper_chunker_result(job_t *job);
 static void dumper_taper_result(job_t *job);
 static void file_taper_result(job_t *job);
@@ -448,7 +448,7 @@ main(
     reserved_space = total_disksize * (off_t)(reserve / 100);
 
     g_printf(_("reserving %lld out of %lld for degraded-mode dumps\n"),
-	   (long long)reserved_space, (long long)free_space());
+	   (long long)reserved_space, (long long)holding_free_space());
 
     amfree(newdir);
 
@@ -505,7 +505,7 @@ main(
     log_add(L_STATS, _("startup time %s"), walltime_str(curclock()));
 
     g_printf(_("driver: start time %s inparallel %d bandwidth %lu diskspace %lld "), walltime_str(curclock()), inparallel,
-	   free_kps(NULL), (long long)free_space());
+	   network_free_kps(NULL), (long long)holding_free_space());
     g_printf(_(" dir %s datestamp %s driver: drain-ends tapeq %s big-dumpers %s\n"),
 	   "OBSOLETE", driver_timestamp, taperalgo2str(conf_taperalgo),
 	   getconf_str(CNF_DUMPORDER));
@@ -1111,7 +1111,7 @@ allow_dump_dle(
 	    sleep_time = diskp->start_t;
 	}
     } else if (diskp->host->netif->curusage > 0 &&
-	       sched(diskp)->est_kps > free_kps(diskp->host->netif)) {
+	       sched(diskp)->est_kps > network_free_kps(diskp->host->netif)) {
 	*cur_idle = max(*cur_idle, IDLE_NO_BANDWIDTH);
     } else if (!wtaper && sched(diskp)->no_space) {
 	*cur_idle = max(*cur_idle, IDLE_NO_DISKSPACE);
@@ -3636,7 +3636,7 @@ read_schedule(
 }
 
 static unsigned long
-free_kps(
+network_free_kps(
     netif_t *ip)
 {
     unsigned long res = 0;
@@ -3670,7 +3670,7 @@ interface_state(
     g_printf(_("driver: interface-state time %s"), time_str);
 
     for(ip = disklist_netifs(); ip != NULL; ip = ip->next) {
-	g_printf(_(" if %s: free %lu"), interface_name(ip->config), free_kps(ip));
+	g_printf(_(" if %s: free %lu"), interface_name(ip->config), network_free_kps(ip));
     }
     g_printf("\n");
 }
@@ -3694,7 +3694,7 @@ deallocate_bandwidth(
 
 /* ------------ */
 static off_t
-free_space(void)
+holding_free_space(void)
 {
     holdalloc_t *ha;
     off_t total_free;
@@ -4130,8 +4130,8 @@ short_dump_state(void)
 
     g_printf(_("driver: state time %s "), wall_time);
     g_printf(_("free kps: %lu space: %lld taper: "),
-	   free_kps(NULL),
-	   (long long)free_space());
+	   network_free_kps(NULL),
+	   (long long)holding_free_space());
     {
 	taper_t *taper;
 	int writing = 0;
@@ -4509,8 +4509,8 @@ dump_state(
     g_printf("================\n");
     g_printf(_("driver state at time %s: %s\n"), walltime_str(curclock()), str);
     g_printf(_("free kps: %lu, space: %lld\n"),
-	   free_kps(NULL),
-	   (long long)free_space());
+	   network_free_kps(NULL),
+	   (long long)holding_free_space());
     if(degraded_mode) g_printf(_("taper: DOWN\n"));
     else if(taper->status == TAPER_IDLE) g_printf(_("taper: idle\n"));
     else g_printf(_("taper: writing %s:%s.%d est size %lld\n"),

@@ -245,7 +245,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
                          'status' => {
-                                       'free_space' => '868352',
+                                       'holding_free_space' => '868352',
                                        'current_time' => '6.418',
                                        'taper' => {
                                                     'taper0' => {
@@ -274,7 +274,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'dead_run' => 1,
                                        'starttime' => $starttime,
                                        'holding_space' => 868352,
-                                       'free_kps' => '600',
+                                       'network_free_kps' => '600',
                                        'qlen' => {
                                                    'tapeq' => {
                                                                 'taper0' => 0
@@ -740,7 +740,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
                          'status' => {
-                                       'free_space' => '868352',
+                                       'holding_free_space' => '868352',
                                        'current_time' => '6.418',
                                        'taper' => {
                                                     'taper0' => {
@@ -769,7 +769,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'dead_run' => 1,
                                        'starttime' => $starttime,
                                        'holding_space' => 868352,
-                                       'free_kps' => '600',
+                                       'network_free_kps' => '600',
                                        'qlen' => {
                                                    'tapeq' => {
                                                                 'taper0' => 0
@@ -960,7 +960,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
                          'status' => {
-                                       'free_space' => '1215488',
+                                       'holding_free_space' => '1215488',
                                        'current_time' => '114.944',
                                        'taper' => {
                                                     'taper0' => {
@@ -989,7 +989,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'dead_run' => 1,
                                        'starttime' => $starttime,
                                        'holding_space' => 1215488,
-                                       'free_kps' => '8000',
+                                       'network_free_kps' => '8000',
                                        'qlen' => {
                                                    'tapeq' => {
                                                                 'taper0' => 0
@@ -1186,7 +1186,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        {
                          'source_filename' => "$amperldir/Amanda/Status.pm",
                          'status' => {
-                                       'free_space' => '0',
+                                       'holding_free_space' => '0',
                                        'current_time' => '82.698',
                                        'taper' => {
                                                     'taper0' => {
@@ -1236,7 +1236,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'dead_run' => 1,
                                        'starttime' => $starttime,
                                        'holding_space' => undef,
-                                       'free_kps' => '2000000',
+                                       'network_free_kps' => '2000000',
                                        'qlen' => {
                                                    'tapeq' => {
                                                                 'taper0' => 0

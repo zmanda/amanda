@@ -150,7 +150,7 @@ function do_state(){		# state line is printed out after driver
 				# it reports the state as seen be driver
 # fields in the state line 
 # $2 = "state" 		# $3 = "time" 		# $4 = time_val
-# $5 = "free"		# $6 = "kps:"		# $7 =  free_kps
+# $5 = "free"		# $6 = "kps:"		# $7 =  network_free_kps
 # $8 = "space:"		# $9 = space		# $10 = "taper:"
 # $11 = "writing"/"idle"# $12 = "idle-dumpers:"
 # $13 = #idle 		# $14 = "qlen"		# $15 = "tapeq:"
