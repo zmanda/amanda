@@ -29,6 +29,7 @@ Amanda::Report::json -- Generate an amanda report in json format.
  $report->{'head'}->{'config_name'} => $config;
                     {'org'}         => $org;
                     {'date'}        => "July 24, 2013";
+                    {'timestamp'}   => $run_timestamp;
                     {'hostname'}    => "localhost.localdomain"
  $report->{'tapeinfo'}->{'storage'}->{$storage}->{'use'}          => @labels  #label used for each storage
                                                  {'next'}         => @labels  #labels to use on next run
@@ -316,6 +317,7 @@ sub print_header
     my $config_name = $self->{config_name};
 
     my $hostname = $report->{hostname};
+    my $run_timestamp = $report->get_timestamp();
     my $org      = getconf($CNF_ORG);
 
     # TODO: this should be a shared method somewhere
@@ -332,6 +334,7 @@ sub print_header
 	$self->{'sections'}{'head'}{"org"} = $org;
 	$self->{'sections'}{'head'}{"config_name"} = $config_name;
 	$self->{'sections'}{'head'}{"date"} = $date;
+	$self->{'sections'}{'head'}{"timestamp"} = $run_timestamp;
     }
 
     return;

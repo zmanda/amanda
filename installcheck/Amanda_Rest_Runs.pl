@@ -530,7 +530,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'February 25, 2009',
-                                                   'hostname' => 'localhost.localdomain'
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090225080737'
                                                  },
                                        'summary' => [
                                                       {
@@ -1739,7 +1740,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'January 7, 2010',
-                                                   'hostname' => 'advantium'
+                                                   'hostname' => 'advantium',
+                                                   'timestamp' => '20100107111335'
                                                  },
                                        'summary' => [
                                                       {
@@ -1932,7 +1934,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'June 22, 2009',
-                                                   'hostname' => 'centralcity.zmanda.com'
+                                                   'hostname' => 'centralcity.zmanda.com',
+                                                   'timestamp' => '20090622075550'
                                                  },
                                        'summary' => [
                                                       {
@@ -2961,7 +2964,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'August 24, 2010',
-                                                   'hostname' => 'molybdenum.zmanda.com'
+                                                   'hostname' => 'molybdenum.zmanda.com',
+                                                   'timestamp' => '20100824181503'
                                                  },
                                        'tapeinfo' => {
                                                        'storage' => {
@@ -3345,7 +3349,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
-                                                   'hostname' => 'euclid'
+                                                   'hostname' => 'euclid',
+                                                   'timestamp' => '20100303133320'
                                                  },
                                        'summary' => [
                                                       {
@@ -3475,7 +3480,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
-                                                   'hostname' => 'euclid'
+                                                   'hostname' => 'euclid',
+                                                   'timestamp' => '20100303153307'
                                                  },
                                        'summary' => [
                                                       {
@@ -3630,7 +3636,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
-                                                   'hostname' => 'localhost.localdomain'
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20100303144314'
                                                  },
                                        'failure_summary' => [
                                                               '  planner: FATAL cannot fit anything on tape, bailing out',
@@ -3764,7 +3771,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
-                                                   'hostname' => 'localhost.localdomain'
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20100303132501'
                                                  },
                                        'summary' => [
                                                       {
@@ -3906,7 +3914,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
-                                                   'hostname' => 'localhost.localdomain'
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20100303132501'
                                                  },
                                        'summary' => [
                                                       {
@@ -4048,7 +4057,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 13, 2010',
-                                                   'hostname' => 'advantium'
+                                                   'hostname' => 'advantium',
+                                                   'timestamp' => '20100313212012'
                                                  },
                                        'failure_summary' => [
                                                               '  1.2.3.4 SystemState lev 0  FAILED [Request to 1.2.3.4 failed: recv error: Connection reset by peer]',
@@ -4366,7 +4376,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'July 13, 2010',
-                                                   'hostname' => 'localhost.localdomain'
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20100713120014'
                                                  },
                                        'summary' => [
                                                       {
@@ -4528,7 +4539,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'org' => 'DailySet1',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'September 8, 2010',
-                                                   'hostname' => 'localhost.localdomain'
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20100908110856'
                                                  },
                                        'summary' => [
                                                       {

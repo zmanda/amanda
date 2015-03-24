@@ -1,4 +1,8 @@
 2015-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/json.pm: Add a timestamp in the head section.
+	* installcheck/Amanda_Rest_Runs.pl: Add timestamp.
+
+2015-03-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Report all size as bytes.
 	* installcheck/Amanda_Rest_Runs.pl,
 	* server-src/amstatus.pl,
