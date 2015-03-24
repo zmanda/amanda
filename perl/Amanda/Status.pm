@@ -485,7 +485,7 @@ REREAD:
 			$dle->{'status'} = $ESTIMATE_DONE;
 			$dle->{'level'} = $line[10];
 			$line[12] =~ /(\d+)K/;
-			$dle->{'esize'} = $1;
+			$dle->{'esize'} = $1 * 1024;
 			#$getest{$hostpart} = "";
 		    } elsif($line[4] eq "partial") {
 			my $host = $line[8];
@@ -494,13 +494,13 @@ REREAD:
 			$dle->{'status'} = $ESTIMATE_PARTIAL;
 			my $level1 = $line[11];
 			$line[13] =~ /(-?\d+)K/;
-			my $size1 = $1;
+			my $size1 = $1 * 1024;
 			my $level2 = $line[14];
 			$line[16] =~ /(-?\d+)K/;
-			my $size2 = $1;
+			my $size2 = $1 * 1024;
 			my $level3 = $line[17];
 			$line[19] =~ /(-?\d+)K/;
-			my $size3 = $1;
+			my $size3 = $1 * 1024;
 			if ($size1 > 0 || $size2 > 0 || $size3 > 0) {
 			    my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
 			    $dle->{'level'} = $line[11];
@@ -553,15 +553,15 @@ REREAD:
 		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'status'} = $WAIT_FOR_DUMPING;
 		$dle->{'level'} = $line[6];
-		my $esize = $line[14]; #compressed size
-		$esize=32 if $esize<32;
+		my $esize = $line[14] * 1024; #compressed size
+		$esize=32768 if $esize<32768;
 		$dle->{'esize'} = $esize;
 		if (!defined($line[25])) {
 		    $dle->{'degr_level'} = -1;
 		} else {
 		    $dle->{'degr_level'} = $line[17];
-		    $esize=$line[25];   #compressed size
-		    $esize=32 if $esize<32;
+		    $esize=$line[25] * 1024;   #compressed size
+		    $esize=32768 if $esize<32768;
 		    $dle->{'degr_size'} = $esize;
 		}
 	    }
@@ -634,7 +634,7 @@ REREAD:
 		#2:taper 4:storage 5:"tape_size" 6:tape_size
 		my $taper = $line[2];
 		my $storage = $line[4];
-		my $tape_size = $line[6];
+		my $tape_size = $line[6] * 1024;
 		$self->{'taper'}->{$taper}->{'storage'} = $storage;
 		$self->{'taper'}->{$taper}->{'tape_size'} = $tape_size;
 		$self->{'storage'}->{$storage}->{'taper'} = $taper;
@@ -906,8 +906,8 @@ REREAD:
 		    } elsif ($line[6] eq "DONE") {
 			#7:handle 8:origsize 9:size ...
 			my $serial = $line[7];
-			my $origsize = $line[8];
-			my $outputsize = $line[9];
+			my $origsize = $line[8] * 1024;
+			my $outputsize = $line[9] * 1024;
 			my $dle = $dles{$serial};
 			if ($dle->{'status'} == $DUMPING) {
 			    $dle->{'status'} = $DUMPING_DUMPER;
@@ -955,7 +955,7 @@ REREAD:
 		    if ($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
 			#7:handle 8:size
 			my $serial = $line[7];
-			my $outputsize = $line[8];
+			my $outputsize = $line[8] * 1024;
 			my $dle = $dles{$serial};
 			if ($dle->{'status'} == $DUMPING_DUMPER) {
 			    $dle->{'status'} = $DUMP_DONE;
@@ -1042,9 +1042,9 @@ REREAD:
 			$line[12] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
 			my $size;
 			if ($2 eq 'kb') {
-			   $size = $3;
+			    $size = $3 * 1024;
 			} else {
-			    $size = $3/1024
+			    $size = $3;
 			}
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
@@ -1146,7 +1146,7 @@ REREAD:
 			my $worker = $line[7];
 			my $serial = $line[8];
 			my $dle = $dles{$serial};
-			my $size=$line[11];
+			my $size=$line[11] * 1024;
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			$dlet->{'taped_size'} += $size;
@@ -1348,7 +1348,7 @@ REREAD:
 		 $line[4] eq "at" &&
 		 $line[6] eq "after") {
 	    $line[7] =~ /(\d*)kb/;
-	    my $size = $1;
+	    my $size = $1 * 1024;
 	} else {
 	    #print "Ignoring: $line\n";
 	}
@@ -1907,7 +1907,7 @@ sub _dump_size() {
 	}
 	close(DUMP);
     }
-    return $dsize / 1024;
+    return $dsize;
 }
 
 sub _set_taper_size {
@@ -1922,7 +1922,7 @@ sub _set_taper_size {
 	my $line = <FF>;
 	if (defined $line) {
 	    chomp $line;
-	    my $value = $line /1024;
+	    my $value = $line;
 	    if ($value) {
 		if (defined $dlet) {
 		    $dlet->{'wsize'} = $value if (!defined $dlet->{'wsize'} || $value > $dlet->{'wsize'});

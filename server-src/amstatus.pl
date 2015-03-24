@@ -151,20 +151,20 @@ my $unit = getconf($CNF_DISPLAYUNIT);
 $unit =~ tr/A-Z/a-z/;
 my $unitdivisor=1;
 if($unit eq 'k') {
-  $unitdivisor = 1;
+  $unitdivisor = 1*1024;
 }
 elsif($unit eq 'm') {
-  $unitdivisor = 1024;
-}
-elsif($unit eq 'g') {
   $unitdivisor = 1024*1024;
 }
-elsif($unit eq 't') {
+elsif($unit eq 'g') {
   $unitdivisor = 1024*1024*1024;
+}
+elsif($unit eq 't') {
+  $unitdivisor = 1024*1024*1024*1024;
 }
 else {
   $unit = 'k';
-  $unitdivisor = 1;
+  $unitdivisor = 1024;
 }
 
 sub dn {

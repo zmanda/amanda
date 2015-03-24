@@ -1,4 +1,10 @@
 2015-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Report all size as bytes.
+	* installcheck/Amanda_Rest_Runs.pl,
+	* server-src/amstatus.pl,
+	  installcheck/Amanda_Rest_Runs.pl: Fix for bytes size.
+
+2015-03-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Runs.pl, perl/Amanda/Status.pm,
 	  server-src/amstatus.pl, server-src/driver.c:
 	  s/free_kps/network_free_kps/

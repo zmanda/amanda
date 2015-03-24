@@ -249,7 +249,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'current_time' => '6.418',
                                        'taper' => {
                                                     'taper0' => {
-                                                                  'tape_size' => '102400',
+                                                                  'tape_size' => '104857600',
                                                                   'worker' => {
                                                                                 'worker0-0' => {
                                                                                                  'status' => 0,
@@ -321,23 +321,23 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                           'name' => 'writing to tape'
                                                                         },
                                                    'taped' => {
-                                                                'estimated_size' => 100,
+                                                                'estimated_size' => 102400,
                                                                 'name' => 'taped',
                                                                 'storage' => {
                                                                                'TESTCONF' => {
-                                                                                               'real_size' => 100,
+                                                                                               'real_size' => 102400,
                                                                                                'nb' => 1,
                                                                                                'real_stat' => 100,
-                                                                                               'estimated_size' => 100,
+                                                                                               'estimated_size' => 102400,
                                                                                                'estimated_stat' => 100
                                                                                              }
                                                                              }
                                                               },
                                                    'dumped' => {
-                                                                 'real_size' => 100,
+                                                                 'real_size' => 102400,
                                                                  'nb' => 1,
                                                                  'real_stat' => 100,
-                                                                 'estimated_size' => 100,
+                                                                 'estimated_size' => 102400,
                                                                  'name' => 'dumped',
                                                                  'estimated_stat' => 100
                                                                },
@@ -360,7 +360,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'estimated' => {
                                                                     'real_size' => undef,
                                                                     'nb' => 1,
-                                                                    'estimated_size' => 100,
+                                                                    'estimated_size' => 102400,
                                                                     'name' => 'estimated'
                                                                   }
                                                  },
@@ -372,24 +372,24 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                             'status' => 20,
                                                                                                             'taped' => 1,
                                                                                                             'partial' => 0,
-                                                                                                            'size' => '100',
+                                                                                                            'size' => '102400',
                                                                                                             'message' => 'dump done',
-                                                                                                            'esize' => '100',
+                                                                                                            'esize' => '102400',
                                                                                                             'level' => '0',
                                                                                                             'flush' => 0,
                                                                                                             'holding_file' => '/holding/20080618130147/clienthost._some_dir.0',
                                                                                                             'error' => '',
                                                                                                             'chunk_time' => '6.408',
-                                                                                                            'dsize' => '100',
+                                                                                                            'dsize' => '102400',
                                                                                                             'storage' => {
                                                                                                                            'TESTCONF' => {
                                                                                                                                            'taped_size' => 0,
                                                                                                                                            'taper_time' => '6.415',
                                                                                                                                            'status' => 22,
                                                                                                                                            'error' => '',
-                                                                                                                                           'dsize' => '100',
+                                                                                                                                           'dsize' => '102400',
                                                                                                                                            'partial' => 0,
-                                                                                                                                           'size' => '100',
+                                                                                                                                           'size' => '102400',
                                                                                                                                            'message' => 'written'
                                                                                                                                          }
                                                                                                                          },
@@ -744,7 +744,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'current_time' => '6.418',
                                        'taper' => {
                                                     'taper0' => {
-                                                                  'tape_size' => '102400',
+                                                                  'tape_size' => '104857600',
                                                                   'worker' => {
                                                                                 'worker0-0' => {
                                                                                                  'status' => 0,
@@ -756,12 +756,12 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                   'storage' => 'TESTCONF',
                                                                   'stat' => [
                                                                               {
-                                                                                'esize' => 100,
+                                                                                'esize' => 102400,
                                                                                 'percent' => '0.09765625',
                                                                                 'nb_part' => 1,
                                                                                 'nb_dle' => 1,
                                                                                 'label' => 'Conf-001',
-                                                                                'size' => 100
+                                                                                'size' => 102400
                                                                               }
                                                                             ]
                                                                 }
@@ -816,23 +816,23 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                           'name' => 'writing to tape'
                                                                         },
                                                    'taped' => {
-                                                                'estimated_size' => 100,
+                                                                'estimated_size' => 102400,
                                                                 'name' => 'taped',
                                                                 'storage' => {
                                                                                'TESTCONF' => {
-                                                                                               'real_size' => 100,
+                                                                                               'real_size' => 102400,
                                                                                                'nb' => 1,
                                                                                                'real_stat' => 100,
-                                                                                               'estimated_size' => 100,
+                                                                                               'estimated_size' => 102400,
                                                                                                'estimated_stat' => 100
                                                                                              }
                                                                              }
                                                               },
                                                    'dumped' => {
-                                                                 'real_size' => 100,
+                                                                 'real_size' => 102400,
                                                                  'nb' => 1,
                                                                  'real_stat' => 100,
-                                                                 'estimated_size' => 100,
+                                                                 'estimated_size' => 102400,
                                                                  'name' => 'dumped',
                                                                  'estimated_stat' => 100
                                                                },
@@ -855,7 +855,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'estimated' => {
                                                                     'real_size' => undef,
                                                                     'nb' => 1,
-                                                                    'estimated_size' => 100,
+                                                                    'estimated_size' => 102400,
                                                                     'name' => 'estimated'
                                                                   }
                                                  },
@@ -867,24 +867,24 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                  'status' => 20,
                                                                                                                  'taped' => 1,
                                                                                                                  'partial' => 0,
-                                                                                                                 'size' => '100',
+                                                                                                                 'size' => '102400',
                                                                                                                  'message' => 'dump done',
-                                                                                                                 'esize' => '100',
+                                                                                                                 'esize' => '102400',
                                                                                                                  'level' => '0',
                                                                                                                  'flush' => 0,
                                                                                                                  'holding_file' => '/holding/20080618130147/clienthost._some_dir.0',
                                                                                                                  'error' => '',
                                                                                                                  'chunk_time' => '6.408',
-                                                                                                                 'dsize' => '100',
+                                                                                                                 'dsize' => '102400',
                                                                                                                  'storage' => {
                                                                                                                                 'TESTCONF' => {
-                                                                                                                                                'taped_size' => 100,
+                                                                                                                                                'taped_size' => 102400,
                                                                                                                                                 'taper_time' => '6.415',
                                                                                                                                                 'status' => 22,
                                                                                                                                                 'error' => '',
-                                                                                                                                                'dsize' => '100',
+                                                                                                                                                'dsize' => '102400',
                                                                                                                                                 'partial' => 0,
-                                                                                                                                                'size' => '100',
+                                                                                                                                                'size' => '102400',
                                                                                                                                                 'message' => 'written'
                                                                                                                                               }
                                                                                                                               },
@@ -964,7 +964,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'current_time' => '114.944',
                                        'taper' => {
                                                     'taper0' => {
-                                                                  'tape_size' => '122880',
+                                                                  'tape_size' => '125829120',
                                                                   'worker' => {
                                                                                 'worker0-0' => {
                                                                                                  'status' => 0,
@@ -976,12 +976,12 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                   'storage' => 'TESTCONF',
                                                                   'stat' => [
                                                                               {
-                                                                                'esize' => 80917,
+                                                                                'esize' => 82859008,
                                                                                 'percent' => '65.8504231770833',
                                                                                 'nb_part' => 1,
                                                                                 'nb_dle' => 1,
                                                                                 'label' => 'maitreyee-010',
-                                                                                'size' => 80917
+                                                                                'size' => 82859008
                                                                               }
                                                                             ]
                                                                 }
@@ -1019,7 +1019,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'dump_failed' => {
                                                                       'real_size' => undef,
                                                                       'nb' => 1,
-                                                                      'estimated_size' => 80822,
+                                                                      'estimated_size' => 82761728,
                                                                       'name' => 'dump failed',
                                                                       'estimated_stat' => 0
                                                                     },
@@ -1036,14 +1036,14 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                           'name' => 'writing to tape'
                                                                         },
                                                    'taped' => {
-                                                                'estimated_size' => 80822,
+                                                                'estimated_size' => 82761728,
                                                                 'name' => 'taped',
                                                                 'storage' => {
                                                                                'TESTCONF' => {
-                                                                                               'real_size' => 80917,
+                                                                                               'real_size' => 82859008,
                                                                                                'nb' => 1,
                                                                                                'real_stat' => '100.117542253347',
-                                                                                               'estimated_size' => 80822,
+                                                                                               'estimated_size' => 82761728,
                                                                                                'estimated_stat' => '100.117542253347'
                                                                                              }
                                                                              }
@@ -1075,7 +1075,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'estimated' => {
                                                                     'real_size' => undef,
                                                                     'nb' => 1,
-                                                                    'estimated_size' => 80822,
+                                                                    'estimated_size' => 82761728,
                                                                     'name' => 'estimated'
                                                                   }
                                                  },
@@ -1087,24 +1087,24 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                       'status' => 12,
                                                                                                       'taped' => 1,
                                                                                                       'partial' => 1,
-                                                                                                      'size' => '80917',
+                                                                                                      'size' => '82859008',
                                                                                                       'message' => 'dump failed: dumper: [/usr/sbin/tar returned error]',
-                                                                                                      'esize' => '80822',
+                                                                                                      'esize' => '82761728',
                                                                                                       'level' => '0',
                                                                                                       'flush' => 0,
                                                                                                       'holding_file' => '/var/lib/amanda/staging/20090410074759/localhost._etc.0',
                                                                                                       'error' => 'dumper: [/usr/sbin/tar returned error]',
                                                                                                       'chunk_time' => '84.745',
-                                                                                                      'dsize' => '80917',
+                                                                                                      'dsize' => '82859008',
                                                                                                       'storage' => {
                                                                                                                      'TESTCONF' => {
-                                                                                                                                     'taped_size' => 80917,
+                                                                                                                                     'taped_size' => 82859008,
                                                                                                                                      'taper_time' => '114.911',
                                                                                                                                      'status' => 22,
                                                                                                                                      'error' => '',
-                                                                                                                                     'dsize' => '80917',
+                                                                                                                                     'dsize' => '82859008',
                                                                                                                                      'partial' => 0,
-                                                                                                                                     'size' => '80917',
+                                                                                                                                     'size' => '82859008',
                                                                                                                                      'message' => 'written'
                                                                                                                                    }
                                                                                                                    },
@@ -1190,7 +1190,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                        'current_time' => '82.698',
                                        'taper' => {
                                                     'taper0' => {
-                                                                  'tape_size' => '2445312',
+                                                                  'tape_size' => '2503999488',
                                                                   'worker' => {
                                                                                 'worker0-1' => {
                                                                                                  'status' => 0,
@@ -1207,28 +1207,28 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                   'storage' => 'TESTCONF',
                                                                   'stat' => [
                                                                               {
-                                                                                'esize' => 715072,
+                                                                                'esize' => 732233728,
                                                                                 'percent' => '29.242567001675',
                                                                                 'nb_part' => 1,
                                                                                 'nb_dle' => 1,
                                                                                 'label' => 'amstatus_test_3-AA-001',
-                                                                                'size' => 715072
+                                                                                'size' => 732233728
                                                                               },
                                                                               {
-                                                                                'esize' => 35584,
+                                                                                'esize' => 36438016,
                                                                                 'percent' => '1.45519262981575',
                                                                                 'nb_part' => 1,
                                                                                 'nb_dle' => 1,
                                                                                 'label' => 'amstatus_test_3-AA-002',
-                                                                                'size' => 35584
+                                                                                'size' => 36438016
                                                                               },
                                                                               {
-                                                                                'esize' => 142336,
+                                                                                'esize' => 145752064,
                                                                                 'percent' => '5.82077051926298',
                                                                                 'nb_part' => 1,
                                                                                 'nb_dle' => 1,
                                                                                 'label' => 'amstatus_test_3-AA-003',
-                                                                                'size' => 142336
+                                                                                'size' => 145752064
                                                                               }
                                                                             ]
                                                                 }
@@ -1283,23 +1283,23 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                           'name' => 'writing to tape'
                                                                         },
                                                    'taped' => {
-                                                                'estimated_size' => 892929,
+                                                                'estimated_size' => 914359296,
                                                                 'name' => 'taped',
                                                                 'storage' => {
                                                                                'TESTCONF' => {
-                                                                                               'real_size' => 892992,
+                                                                                               'real_size' => 914423808,
                                                                                                'nb' => 3,
                                                                                                'real_stat' => '100.007055432179',
-                                                                                               'estimated_size' => 892929,
+                                                                                               'estimated_size' => 914359296,
                                                                                                'estimated_stat' => '100.007055432179'
                                                                                              }
                                                                              }
                                                               },
                                                    'dumped' => {
-                                                                 'real_size' => 892992,
+                                                                 'real_size' => 914423808,
                                                                  'nb' => 3,
                                                                  'real_stat' => '100.007055432179',
-                                                                 'estimated_size' => 892929,
+                                                                 'estimated_size' => 914359296,
                                                                  'name' => 'dumped',
                                                                  'estimated_stat' => '100.007055432179'
                                                                },
@@ -1322,7 +1322,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'estimated' => {
                                                                     'real_size' => undef,
                                                                     'nb' => 3,
-                                                                    'estimated_size' => 892929,
+                                                                    'estimated_size' => 914359296,
                                                                     'name' => 'estimated'
                                                                   }
                                                  },
@@ -1333,23 +1333,23 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                 'degr_level' => -1,
                                                                                                                                 'status' => 21,
                                                                                                                                 'taped' => 1,
-                                                                                                                                'size' => '142336',
+                                                                                                                                'size' => '145752064',
                                                                                                                                 'message' => 'dump to tape done',
-                                                                                                                                'esize' => '142298',
+                                                                                                                                'esize' => '145713152',
                                                                                                                                 'level' => '0',
                                                                                                                                 'flush' => 0,
                                                                                                                                 'error' => '',
-                                                                                                                                'dsize' => '142336',
+                                                                                                                                'dsize' => '145752064',
                                                                                                                                 'dump_to_tape_storage' => 'TESTCONF',
                                                                                                                                 'storage' => {
                                                                                                                                                'TESTCONF' => {
-                                                                                                                                                               'taped_size' => 142336,
+                                                                                                                                                               'taped_size' => 145752064,
                                                                                                                                                                'taper_time' => '82.694',
                                                                                                                                                                'status' => 21,
                                                                                                                                                                'error' => '',
-                                                                                                                                                               'dsize' => '142336',
+                                                                                                                                                               'dsize' => '145752064',
                                                                                                                                                                'partial' => 0,
-                                                                                                                                                               'size' => 142336,
+                                                                                                                                                               'size' => 145752064,
                                                                                                                                                                'message' => 'dump to tape done'
                                                                                                                                                              }
                                                                                                                                              },
@@ -1363,23 +1363,23 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                              'degr_level' => -1,
                                                                                                                              'status' => 21,
                                                                                                                              'taped' => 1,
-                                                                                                                             'size' => '35584',
+                                                                                                                             'size' => '36438016',
                                                                                                                              'message' => 'dump to tape done',
-                                                                                                                             'esize' => '35576',
+                                                                                                                             'esize' => '36429824',
                                                                                                                              'level' => '0',
                                                                                                                              'flush' => 0,
                                                                                                                              'error' => '',
-                                                                                                                             'dsize' => '35584',
+                                                                                                                             'dsize' => '36438016',
                                                                                                                              'dump_to_tape_storage' => 'TESTCONF',
                                                                                                                              'storage' => {
                                                                                                                                             'TESTCONF' => {
-                                                                                                                                                            'taped_size' => 35584,
+                                                                                                                                                            'taped_size' => 36438016,
                                                                                                                                                             'taper_time' => '6.243',
                                                                                                                                                             'status' => 21,
                                                                                                                                                             'error' => '',
-                                                                                                                                                            'dsize' => '35584',
+                                                                                                                                                            'dsize' => '36438016',
                                                                                                                                                             'partial' => 0,
-                                                                                                                                                            'size' => 35584,
+                                                                                                                                                            'size' => 36438016,
                                                                                                                                                             'message' => 'dump to tape done'
                                                                                                                                                           }
                                                                                                                                           },
@@ -1393,23 +1393,23 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                       'degr_level' => -1,
                                                                                                                       'status' => 21,
                                                                                                                       'taped' => 1,
-                                                                                                                      'size' => '715072',
+                                                                                                                      'size' => '732233728',
                                                                                                                       'message' => 'dump to tape done',
-                                                                                                                      'esize' => '715055',
+                                                                                                                      'esize' => '732216320',
                                                                                                                       'level' => '0',
                                                                                                                       'flush' => 0,
                                                                                                                       'error' => '',
-                                                                                                                      'dsize' => '715072',
+                                                                                                                      'dsize' => '732233728',
                                                                                                                       'dump_to_tape_storage' => 'TESTCONF',
                                                                                                                       'storage' => {
                                                                                                                                      'TESTCONF' => {
-                                                                                                                                                     'taped_size' => 715072,
+                                                                                                                                                     'taped_size' => 732233728,
                                                                                                                                                      'taper_time' => '42.944',
                                                                                                                                                      'status' => 21,
                                                                                                                                                      'error' => '',
-                                                                                                                                                     'dsize' => '715072',
+                                                                                                                                                     'dsize' => '732233728',
                                                                                                                                                      'partial' => 0,
-                                                                                                                                                     'size' => 715072,
+                                                                                                                                                     'size' => 732233728,
                                                                                                                                                      'message' => 'dump to tape done'
                                                                                                                                                    }
                                                                                                                                    },
