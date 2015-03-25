@@ -431,17 +431,13 @@ handle_device_regex(const char * user_name, char ** driver_name,
         regfree(&regex);
         return FALSE;
     } else if (reg_result == REG_NOMATCH) {
+        *driver_name = stralloc("tape");
+        *device = stralloc(user_name);
 #ifdef WANT_TAPE_DEVICE
 	g_warning(
 		"\"%s\" uses deprecated device naming convention; \n"
                 "using \"tape:%s\" instead.\n",
                 user_name, user_name);
-        *driver_name = stralloc("tape");
-        *device = stralloc(user_name);
-#else /* !WANT_TAPE_DEVICE */
-	*errmsg = newvstrallocf(*errmsg, "\"%s\" is not a valid device name.\n", user_name);
-	regfree(&regex);
-	return FALSE;
 #endif /* WANT_TAPE_DEVICE */
     } else {
         *driver_name = find_regex_substring(user_name, pmatch[1]);
