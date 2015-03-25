@@ -465,18 +465,17 @@ validate_device_name(const char *user_name, char **driver_name, char **device)
         goto out;
 
     if (!split_device) {
-#ifdef WANT_TAPE_DEVICE
         *driver_name = g_strdup("tape");
         *device = g_strdup(split_driver_name);
+#ifdef WANT_TAPE_DEVICE
         g_warning("\"%s\" uses deprecated device naming convention; \n"
             "using \"tape:%s\" instead.\n", user_name, user_name);
-        ret = TRUE;
 #endif /* WANT_TAPE_DEVICE */
-        goto out;
-    }
+    } else {
 
-    *driver_name = g_strdup(split_driver_name);
-    *device = g_strdup(split_device);
+	*driver_name = g_strdup(split_driver_name);
+	*device = g_strdup(split_device);
+    }
     ret = TRUE;
 
 out:

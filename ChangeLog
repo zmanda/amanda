@@ -1,3 +1,7 @@
+2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/tape.m4: Add include for bsd.
+	* device-src/device.c: Improve message
+
 2015-03-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/json.pm: Add a timestamp in the head section.
 	* installcheck/Amanda_Rest_Runs.pl: Add timestamp.
