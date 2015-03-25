@@ -619,6 +619,12 @@ sub read_line
     }
 }
 
+sub get_exit_status
+{
+    my $self = shift;
+    return $self->{'flags'}{'exit_status'};
+}
+
 sub get_timestamp
 {
     my $self = shift;

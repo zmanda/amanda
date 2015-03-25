@@ -1,4 +1,8 @@
 2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm (get_exit_status): New method
+	* perl/Amanda/Report/json.pm: Add {head}->{exit_status}
+
+2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/tape.m4: Add include for bsd.
 	* device-src/device.c: Improve message
 

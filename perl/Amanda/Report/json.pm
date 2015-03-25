@@ -26,11 +26,12 @@ Amanda::Report::json -- Generate an amanda report in json format.
 
 =item report format
 
- $report->{'head'}->{'config_name'} => $config;
-                    {'org'}         => $org;
-                    {'date'}        => "July 24, 2013";
-                    {'timestamp'}   => $run_timestamp;
+ $report->{'head'}->{'config_name'} => $config
+                    {'org'}         => $org
+                    {'date'}        => "July 24, 2013"
+                    {'timestamp'}   => $run_timestamp
                     {'hostname'}    => "localhost.localdomain"
+                    {'exit_status'} => $exit_status
  $report->{'tapeinfo'}->{'storage'}->{$storage}->{'use'}          => @labels  #label used for each storage
                                                  {'next'}         => @labels  #labels to use on next run
                                                  {'next_to_use'}  => $nb      #
@@ -316,9 +317,10 @@ sub print_header
     my $fh          = $self->{fh};
     my $config_name = $self->{config_name};
 
-    my $hostname = $report->{hostname};
+    my $hostname      = $report->{hostname};
     my $run_timestamp = $report->get_timestamp();
-    my $org      = getconf($CNF_ORG);
+    my $exit_status   = $report->get_exit_status();
+    my $org           = getconf($CNF_ORG);
 
     # TODO: this should be a shared method somewhere
     my $timestamp = $report->get_timestamp();
@@ -335,6 +337,7 @@ sub print_header
 	$self->{'sections'}{'head'}{"config_name"} = $config_name;
 	$self->{'sections'}{'head'}{"date"} = $date;
 	$self->{'sections'}{'head'}{"timestamp"} = $run_timestamp;
+	$self->{'sections'}{'head'}{"exit_status"} = $exit_status;
     }
 
     return;
