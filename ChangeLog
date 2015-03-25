@@ -1,4 +1,7 @@
 2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Makefile.am: Do not run the gnutar installcheck
+
+2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/tape.m4: Add include for bsd.
 	* device-src/device.c: Improve message.
 
