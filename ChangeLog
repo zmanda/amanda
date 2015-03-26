@@ -1,4 +1,7 @@
 2015-03-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Runs.pl: Check the {head}->{exit_status}
+
+2015-03-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Send QUIT to chunker after receiving
 	  ABORT-FINISHED.
 
