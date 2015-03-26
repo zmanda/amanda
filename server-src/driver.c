@@ -2967,7 +2967,7 @@ handle_chunker_result(
 	    h[activehd]->disk->allocated_dumpers--;
 	    h[activehd]->used = h[activehd]->reserved;
 	    if( h[++activehd] ) { /* There's still some allocated space left.
-				   * Tell the dumper about it. */
+				   * Tell the chunker about it. */
 		sched(dp)->activehd++;
 		chunker_cmd( chunker, CONTINUE, dp, NULL );
 	    } else { /* !h[++activehd] - must allocate more space */
@@ -3009,6 +3009,7 @@ handle_chunker_result(
 	    event_release(chunker->ev_read);
 
 	    chunker->result = cmd;
+	    chunker_cmd(chunker, QUIT, NULL, NULL);
 
 	    break;
 

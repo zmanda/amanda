@@ -1,3 +1,7 @@
+2015-03-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Send QUIT to chunker after receiving
+	  ABORT-FINISHED.
+
 2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm (get_exit_status): New method
 	* perl/Amanda/Report/json.pm: Add {head}->{exit_status}
