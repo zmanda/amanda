@@ -44,7 +44,7 @@ like($Installcheck::Run::stderr, qr/\AUSAGE:/i,
 
 Installcheck::Dumpcache::load("multi");
 
-like(run_get('amoverview', 'TESTCONF', '--diskwidth=40'),
+like(run_get('amoverview', 'TESTCONF', '--diskwidth=200'),
     # this pattern is pretty loose, but that's OK
     qr{
 	\s+date\s+\d\d\s+

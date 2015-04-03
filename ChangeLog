@@ -1,4 +1,8 @@
 2015-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Dumps.pl: Do not hardcoded path
+	* installcheck/amoverview.pl: Increase --diskwidth to 200
+
+2015-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix compilation
 
 2015-04-03  Jean-Louis Martineau <martineau@zmanda.com>
