@@ -60,7 +60,7 @@ define storage "amvault-test" {
     policy "amvault-policy"
     autolabel "TESTCONF%%" any
 }
-amvault-storage "amvault-test"
+vault-storage "amvault-test"
 EOF
 
 }
@@ -106,6 +106,7 @@ ok(run("$sbindir/amvault",
 		'TESTCONF'),
     "amvault runs!")
     or diag($Installcheck::Run::stderr);
+
 my @tert_files = glob("$vtape_root/slot1/0*");
 ok(@tert_files > 0,
     "..and files appear on the tertiary volume!");
@@ -224,7 +225,7 @@ EOF
     ok(run("$sbindir/amvault",
 		    '--export',
 		    '--src-timestamp', 'latest',
-		    '-oamvault-storage=tertiary-storage',
+		    '-ovault-storage=tertiary-storage',
 		    'TESTCONF'),
 	"amvault runs with an NDMP device as secondary and tertiary, with --export")
 	or diag($Installcheck::Run::stderr);

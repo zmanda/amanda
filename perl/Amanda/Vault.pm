@@ -520,7 +520,6 @@ sub plan_cb {
 		 . " " . quote_string($dump->{'diskname'}));
     }
 
-Amanda::Debug::debug("qwe " . @{$plan->{'dumps'}});
     if (@{$plan->{'dumps'}} == 0) {
 	return $self->failure(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
@@ -539,8 +538,10 @@ sub setup_dst {
     $dst->{'label'} = undef;
     $dst->{'tape_num'} = 0;
 
+    my $vault_storages = getconf($CNF_VAULT_STORAGE);
+    my $vault_storage = $vault_storages->[0];
     my $storage = Amanda::Storage->new(
-				storage_name => getconf($CNF_AMVAULT_STORAGE),
+				storage_name => $vault_storage,
 				tapelist     => $self->{'tapelist'});
     return $self->failure($storage)
 	if $storage->isa("Amanda::Changer::Error");

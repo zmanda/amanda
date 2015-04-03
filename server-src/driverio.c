@@ -56,11 +56,16 @@ static serial_t *stable;
 static int max_jobs;
 static job_t *jobs;
 
+static taper_t * start_one_tape_process(char *taper_program,
+					char *storage_name,
+					gboolean  no_taper,
+					int nb_taper);
+
 void
 init_driverio(
     int inparallel,
     int nb_storage,
-    int taper_parallel_write)
+    int sum_taper_parallel_write)
 {
     dumper_t *dumper;
 
@@ -71,9 +76,9 @@ init_driverio(
 	dumper->fd = -1;
     }
 
-    max_serial = inparallel + taper_parallel_write;
+    max_serial = inparallel + sum_taper_parallel_write;
     stable = g_new0(serial_t, max_serial);
-    max_jobs = inparallel + taper_parallel_write;
+    max_jobs = inparallel + sum_taper_parallel_write;
     jobs   = g_new0(job_t, max_jobs);
 }
 
@@ -110,27 +115,58 @@ startup_tape_process(
     char      *taper_program,
     gboolean   no_taper)
 {
+    identlist_t  il;
+    taper_t     *taper;
+    int          nb_taper = 0;
+
+    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next, nb_taper++) {
+	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
+	if (taper) {
+	    taper->flush_storage = TRUE;
+	}
+    }
+    for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next, nb_taper++) {
+	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
+	if (taper) {
+	    taper->vault_storage = TRUE;
+	}
+    }
+}
+
+static taper_t *
+start_one_tape_process(
+    char      *taper_program,
+    char      *storage_n,
+    gboolean   no_taper,
+    int        nb_taper)
+{
     int       fd[2];
-    int       nb_taper;
     int       nb_wtaper;
     int       nb_worker;
+    int       i;
     char    **config_options;
     char    **env;
     taper_t  *taper;
     wtaper_t *wtaper;
-    identlist_t il;
 
-    for (il = getconf_identlist(CNF_STORAGE), nb_taper = 0; il != NULL; il = il->next, nb_taper++) {
-        storage_t *storage = lookup_storage((char *)il->data);
-	char *tapetype;
-	tapetype_t *tape;
-	int   conf_flush_threshold_dumped;
-	int   conf_flush_threshold_scheduled;
-	int   conf_taperflush;
+    storage_t *storage = lookup_storage(storage_n);
+    char *tapetype;
+    tapetype_t *tape;
+    int   conf_flush_threshold_dumped;
+    int   conf_flush_threshold_scheduled;
+    int   conf_taperflush;
 
-	taper = &tapetable[nb_taper];
+    taper = &tapetable[nb_taper];
+    taper->pid = -1;
+    for (i=0; i<nb_taper; i++) {
+	if (tapetable[i].storage_name &&
+	    g_str_equal(storage_n, tapetable[i].storage_name)) {
+	    return NULL;
+	}
+    }
+
 	taper->name = g_strdup_printf("taper%d", nb_taper);
-	taper->storage_name = g_strdup((char *)il->data);
+	taper->storage_name = g_strdup(storage_n);
 	taper->ev_read = NULL;
 	taper->nb_wait_reply = 0;
 	nb_worker = storage_get_taper_parallel_write(storage);
@@ -155,6 +191,7 @@ startup_tape_process(
 	taper->max_dle_by_volume = storage_get_max_dle_by_volume(storage);
 	taper->tapeq.head = NULL;
 	taper->tapeq.tail = NULL;
+	taper->vaultqss = NULL;
 	taper->degraded_mode = no_taper;
 	taper->down = FALSE;
 
@@ -176,6 +213,10 @@ startup_tape_process(
 	    wtaper->state = TAPER_STATE_DEFAULT;
 	    wtaper->left = 0;
 	    wtaper->written = 0;
+	    wtaper->vaultqs.src_labels_str = NULL;
+	    wtaper->vaultqs.src_labels = NULL;
+	    wtaper->vaultqs.vaultq.head = NULL;
+	    wtaper->vaultqs.vaultq.tail = NULL;
 	    wtaper->taper = taper;
 
 	    /* jump right to degraded mode if there's no taper */
@@ -186,8 +227,9 @@ startup_tape_process(
 	}
 
 	/* don't start the taper if we're not supposed to */
+	taper->fd = -1;
 	if (no_taper)
-	    continue;
+	    return NULL;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	    error(_("taper pipe: %s"), strerror(errno));
@@ -232,7 +274,8 @@ startup_tape_process(
 	    taper->fd = fd[0];
 	}
 	g_fprintf(stderr, "driver: taper %s storage %s tape_size %lld\n", taper->name, taper->storage_name, (long long)taper->tape_length);
-    }
+
+    return taper;
 }
 
 void
@@ -364,7 +407,7 @@ getresult(
     cmd_t t;
     char *line;
 
-    if((line = areads(fd)) == NULL) {
+    if ((line = areads(fd)) == NULL) {
 	if(errno) {
 	    g_fprintf(stderr, _("reading result from %s: %s"), childstr(fd), strerror(errno));
 	}
@@ -375,24 +418,20 @@ getresult(
 	*result_argc = g_strv_length(*result_argv);
     }
 
-    if(show) {
-	g_printf(_("driver: result time %s from %s:"),
-	       walltime_str(curclock()),
-	       childstr(fd));
-	if(line) {
-	    g_printf(" %s", line);
-	    putchar('\n');
-	} else {
-	    g_printf(" (eof)\n");
-	}
+    if (show) {
+	gchar *msg;
+	msg = g_strdup_printf("driver: result time %s from %s: %s", walltime_str(curclock()), childstr(fd), line?line:"(eof)");
+	g_printf("%s\n", msg);
 	fflush(stdout);
+	g_debug("%s", msg);
+	g_free(msg);
     }
     amfree(line);
 
-    if(*result_argc < 1) return BOGUS;
+    if (*result_argc < 1) return BOGUS;
 
-    for(t = (cmd_t)(BOGUS+1); t < LAST_TOK; t++)
-	if(g_str_equal((*result_argv)[0], cmdstr[t])) return t;
+    for (t = (cmd_t)(BOGUS+1); t < LAST_TOK; t++)
+	if (g_str_equal((*result_argv)[0], cmdstr[t])) return t;
 
     return BOGUS;
 }
@@ -505,6 +544,7 @@ taper_cmd(
     char c_crc[NUM_STR_SIZE+11];
     char s_crc[NUM_STR_SIZE+11];
     char *data_path;
+    sched_t *sp;
     disk_t *dp;
     char *qname;
     char *qdest;
@@ -527,13 +567,20 @@ taper_cmd(
 			    " ", wtaper->name,
 			    "\n", NULL);
 	break;
-    case FILE_WRITE:
+    case CLOSE_SOURCE_VOLUME:
 	dp = (disk_t *) ptr;
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
+			    " ", wtaper->name,
+			    "\n", NULL);
+	break;
+    case FILE_WRITE:
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
         qname = quote_string(dp->name);
 	qdest = quote_string(destname);
 	g_snprintf(number, sizeof(number), "%d", level);
-	if (sched(dp)->origsize >= 0)
-	    origsize = sched(dp)->origsize;
+	if (sp->origsize >= 0)
+	    origsize = sp->origsize;
 	else
 	    origsize = 0;
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
@@ -555,7 +602,8 @@ taper_cmd(
 	break;
 
     case PORT_WRITE:
-	dp = (disk_t *) ptr;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
         qname = quote_string(dp->name);
 	g_snprintf(number, sizeof(number), "%d", level);
 	data_path = data_path_to_string(dp->data_path);
@@ -579,17 +627,47 @@ taper_cmd(
 	amfree(splitargs);
 	amfree(qname);
 	break;
+
+    case VAULT_WRITE:
+	sp = (sched_t *) ptr;
+	dp = sp->disk;
+        qname = quote_string(dp->name);
+	g_snprintf(number, sizeof(number), "%d", level);
+	if (sp->origsize >= 0)
+	    origsize = sp->origsize;
+	else
+	    origsize = 0;
+	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
+	splitargs = taper_splitting_args(dp);
+	cmdline = g_strjoin(NULL, cmdstr[cmd],
+			    " ", wtaper->name,
+			    " ", job2serial(wtaper->job),
+			    " ", sp->src_storage,
+			    " ", sp->src_pool,
+			    " ", sp->src_label,
+			    " ", dp->host->hostname,
+			    " ", qname,
+			    " ", number,
+			    " ", datestamp,
+			    " ", splitargs,
+				 orig_kb,
+			    "\n", NULL);
+	amfree(splitargs);
+	amfree(qname);
+	break;
+
     case DONE: /* handle */
-	dp = (disk_t *) ptr;
-	if (sched(dp)->origsize >= 0)
-	    origsize = sched(dp)->origsize;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
+	if (sp->origsize >= 0)
+	    origsize = sp->origsize;
 	else
 	    origsize = 0;
 	g_snprintf(number, sizeof(number), "%ju", origsize);
-	g_snprintf(n_crc, sizeof(n_crc), "%08x:%lld", sched(dp)->native_crc.crc,
-		   (long long)sched(dp)->native_crc.size);
-	g_snprintf(c_crc, sizeof(c_crc), "%08x:%lld", sched(dp)->client_crc.crc,
-		   (long long)sched(dp)->client_crc.size);
+	g_snprintf(n_crc, sizeof(n_crc), "%08x:%lld", sp->native_crc.crc,
+		   (long long)sp->native_crc.size);
+	g_snprintf(c_crc, sizeof(c_crc), "%08x:%lld", sp->client_crc.crc,
+		   (long long)sp->client_crc.size);
 	if (dp->compress == COMP_SERVER_FAST ||
 	    dp->compress == COMP_SERVER_BEST ||
 	    dp->compress == COMP_SERVER_CUST ||
@@ -599,8 +677,8 @@ taper_cmd(
 	} else {
 	    /* The server-crc should match the client-crc */
 	    g_snprintf(s_crc, sizeof(s_crc), "%08x:%lld",
-		       sched(dp)->client_crc.crc,
-		       (long long)sched(dp)->client_crc.size);
+		       sp->client_crc.crc,
+		       (long long)sp->client_crc.size);
 	}
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
@@ -612,14 +690,16 @@ taper_cmd(
 			    "\n", NULL);
 	break;
     case FAILED: /* handle */
-	dp = (disk_t *) ptr;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
 			    "\n", NULL);
 	break;
     case NO_NEW_TAPE:
-	dp = (disk_t *) ptr;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
 	q = quote_string(destname);	/* reason why no new tape */
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
@@ -629,21 +709,24 @@ taper_cmd(
 	amfree(q);
 	break;
     case NEW_TAPE:
-	dp = (disk_t *) ptr;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
 			    "\n", NULL);
 	break;
     case START_SCAN:
-	dp = (disk_t *) ptr;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
 			    "\n", NULL);
 	break;
     case TAKE_SCRIBE_FROM:
-	dp = (disk_t *) ptr;
+	sp = (sched_t *)ptr;
+	dp = sp->disk;
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
@@ -664,6 +747,7 @@ taper_cmd(
     g_printf(_("driver: send-cmd time %s to %s: %s"),
 	   walltime_str(curclock()), taper->name, cmdline);
     fflush(stdout);
+    g_debug("driver: send-cmd time %s to %s: %s", walltime_str(curclock()), taper->name, cmdline);
     if ((full_write(taper->fd, cmdline, strlen(cmdline))) < strlen(cmdline)) {
 	g_printf(_("writing taper command '%s' failed: %s\n"),
 		cmdline, strerror(errno));
@@ -680,11 +764,12 @@ int
 dumper_cmd(
     dumper_t *dumper,
     cmd_t cmd,
-    disk_t *dp,
+    sched_t *sp,
     char   *mesg)
 {
     char *cmdline;
     char *qmesg;
+    disk_t *dp;
 
     switch(cmd) {
     case START:
@@ -699,9 +784,10 @@ dumper_cmd(
         char *device, *plugin;
         char *tmp;
 
-        if (!dp)
-            error("PORT-DUMP without disk pointer\n");
+        if (!sp)
+            error("PORT-DUMP without sched pointer\n");
 
+	dp = sp->disk;
         array = g_ptr_array_new();
         features = dp->host->features;
 
@@ -721,8 +807,8 @@ dumper_cmd(
         g_ptr_array_add(array, am_feature_to_string(features));
         g_ptr_array_add(array, quote_string(dp->name));
         g_ptr_array_add(array, quote_string(device));
-        g_ptr_array_add(array, g_strdup_printf("%d", sched(dp)->level));
-        g_ptr_array_add(array, g_strdup(sched(dp)->dumpdate));
+        g_ptr_array_add(array, g_strdup_printf("%d", sp->level));
+        g_ptr_array_add(array, g_strdup(sp->dumpdate));
 
 
         /*
@@ -803,7 +889,7 @@ dumper_cmd(
     /*
      * Note: cmdline already has a '\n'.
      */
-    if(dumper->down) {
+    if (dumper->down) {
 	g_printf(_("driver: send-cmd time %s ignored to down dumper %s: %s"),
 	       walltime_str(curclock()), dumper->name, cmdline);
     } else {
@@ -826,7 +912,7 @@ int
 chunker_cmd(
     chunker_t *chunker,
     cmd_t cmd,
-    disk_t *dp,
+    sched_t *sp,
     char   *mesg)
 {
     char *cmdline = NULL;
@@ -840,22 +926,24 @@ chunker_cmd(
     char *features;
     char *qname;
     char *qdest;
+    disk_t *dp;
 
     switch(cmd) {
     case START:
 	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", mesg, "\n", NULL);
 	break;
     case PORT_WRITE:
-	if(dp && sched(dp) && sched(dp)->holdp) {
-	    h = sched(dp)->holdp;
-	    activehd = sched(dp)->activehd;
+	dp = sp->disk;
+	if(dp && sp && sp->holdp) {
+	    h = sp->holdp;
+	    activehd = sp->activehd;
 	}
 
 	if (dp && h) {
 	    qname = quote_string(dp->name);
-	    qdest = quote_string(sched(dp)->destname);
+	    qdest = quote_string(sp->destname);
 	    h[activehd]->disk->allocated_dumpers++;
-	    g_snprintf(number, sizeof(number), "%d", sched(dp)->level);
+	    g_snprintf(number, sizeof(number), "%d", sp->level);
 	    g_snprintf(chunksize, sizeof(chunksize), "%lld",
 		    (long long)holdingdisk_get_chunksize(h[0]->disk->hdisk));
 	    g_snprintf(use, sizeof(use), "%lld",
@@ -886,9 +974,10 @@ chunker_cmd(
 	}
 	break;
     case CONTINUE:
-	if(dp && sched(dp) && sched(dp)->holdp) {
-	    h = sched(dp)->holdp;
-	    activehd = sched(dp)->activehd;
+	dp = sp->disk;
+	if(dp && sp && sp->holdp) {
+	    h = sp->holdp;
+	    activehd = sp->activehd;
 	}
 
 	if(dp && h) {
@@ -922,8 +1011,9 @@ chunker_cmd(
 	}
 	break;
     case DONE:
+	dp = sp->disk;
 	if (dp) {
-	    if (sched(dp)->client_crc.crc == 0 ||
+	    if (sp->client_crc.crc == 0 ||
 		dp->compress == COMP_SERVER_FAST ||
 		dp->compress == COMP_SERVER_BEST ||
 		dp->compress == COMP_SERVER_CUST ||
@@ -931,8 +1021,8 @@ chunker_cmd(
 		g_snprintf(c_crc, sizeof(c_crc), "00000000:0");
 	    } else {
 		g_snprintf(c_crc, sizeof(c_crc), "%08x:%lld",
-			   sched(dp)->client_crc.crc,
-			   (long long)sched(dp)->client_crc.size);
+			   sp->client_crc.crc,
+			   (long long)sp->client_crc.size);
 	    }
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 				" ", job2serial(chunker->job),
@@ -943,6 +1033,7 @@ chunker_cmd(
 	}
 	break;
     case FAILED:
+	dp = sp->disk;
 	if( dp ) {
 	    cmdline = g_strjoin(NULL, cmdstr[cmd],
 				" ", job2serial(chunker->job),
@@ -992,10 +1083,26 @@ free_job(
     job_t *job)
 {
     job->in_use  = 0;
-    job->disk    = NULL;
+    job->sched   = NULL;
     job->dumper  = NULL;
     job->chunker = NULL;
     job->wtaper  = NULL;
+}
+
+void
+free_sched(
+    sched_t *sp)
+{
+g_debug("free_sched %p", sp);
+    g_free(sp->dumpdate);
+    g_free(sp->degr_dumpdate);
+    g_free(sp->destname);
+    g_free(sp->datestamp);
+    g_free(sp->degr_mesg);
+    g_free(sp->src_storage);
+    g_free(sp->src_pool);
+    g_free(sp->src_label);
+    g_free(sp);
 }
 
 job_t *
@@ -1110,7 +1217,7 @@ char *job2serial(
 
 void
 update_info_dumper(
-     disk_t *dp,
+     sched_t *sp,
      off_t origsize,
      off_t dumpsize,
      time_t dumptime)
@@ -1120,8 +1227,9 @@ update_info_dumper(
     stats_t *infp;
     perf_t *perfp;
     char *conf_infofile;
+    disk_t *dp = sp->disk;
 
-    level = sched(dp)->level;
+    level = sp->level;
 
     if (origsize == 0 || dumpsize == 0) {
 	g_debug("not updating because origsize or dumpsize is 0");
@@ -1155,10 +1263,10 @@ update_info_dumper(
     infp->size = origsize;
     infp->csize = dumpsize;
     infp->secs = dumptime;
-    if (sched(dp)->timestamp == 0) {
+    if (sp->timestamp == 0) {
 	infp->date = 0;
     } else {
-	infp->date = get_time_from_timestamp(sched(dp)->datestamp);
+	infp->date = get_time_from_timestamp(sp->datestamp);
     }
 
     if(level == 0) perfp = &info.full;
@@ -1194,10 +1302,10 @@ update_info_dumper(
 	info.history[0].level = level;
 	info.history[0].size  = origsize;
 	info.history[0].csize = dumpsize;
-	if (sched(dp)->timestamp == 0) {
+	if (sp->timestamp == 0) {
 	    info.history[0].date = 0;
 	} else {
-	    info.history[0].date = get_time_from_timestamp(sched(dp)->datestamp);
+	    info.history[0].date = get_time_from_timestamp(sp->datestamp);
 	}
 	info.history[0].secs  = dumptime;
     }
@@ -1218,7 +1326,7 @@ update_info_dumper(
 
 void
 update_info_taper(
-    disk_t *dp,
+    sched_t *sp,
     char *label,
     off_t filenum,
     int level)
@@ -1226,6 +1334,7 @@ update_info_taper(
     info_t info;
     stats_t *infp;
     int rc;
+    disk_t *dp = sp->disk;
 
     if (!label) {
 	log_add(L_ERROR, "update_info_taper without label");

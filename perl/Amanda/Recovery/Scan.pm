@@ -179,7 +179,7 @@ sub new {
 sub DESTROY {
     my $self = shift;
 
-    die("Recovery::Scan detroyed without quit") if defined $self->{'scan_conf'};
+    die("Recovery::Scan destroyed without quit") if defined $self->{'scan_conf'};
 }
 
 sub quit {

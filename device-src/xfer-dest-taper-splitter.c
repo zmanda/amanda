@@ -628,17 +628,17 @@ device_thread(
 	/* wait until the main thread un-pauses us, and check that we have
 	 * the relevant device info available (block_size) */
 	while (self->paused && !elt->cancelled) {
-	    DBG(9, "waiting to be unpaused");
+	    DBG(9, "device_thread waiting to be unpaused");
 	    g_cond_wait(self->state_cond, self->state_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "device_thread done waiting");
 
         if (elt->cancelled)
 	    break;
 
-	DBG(2, "beginning to write part");
+	DBG(2, "device_thread beginning to write part");
 	msg = device_thread_write_part(self);
-	DBG(2, "done writing part");
+	DBG(2, "device_thread done writing part");
 
 	if (!msg) /* cancelled */
 	    break;
@@ -659,7 +659,7 @@ device_thread(
     }
     g_mutex_unlock(self->state_mutex);
 
-    g_debug("sending XMSG_CRC message");
+    g_debug("device_thread sending XMSG_CRC message");
     DBG(2, "xfer-dest-taper-splitter CRC: %08x      size %lld",
 	   crc32_finish(&elt->crc), (long long)elt->crc.size);
     msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
@@ -710,10 +710,10 @@ push_buffer_impl(
 
 	/* wait for some space */
 	while (self->ring_count == self->ring_length && !elt->cancelled) {
-	    DBG(9, "waiting for any space to buffer pushed data");
+	    DBG(9, "push_buffer waiting for any space to buffer pushed data");
 	    g_cond_wait(self->ring_free_cond, self->ring_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "push_buffer done waiting");
 
 	if (elt->cancelled)
 	    goto unlock_and_free_and_finish;
@@ -803,7 +803,7 @@ start_part_impl(
     g_assert(!self->device->in_file);
     g_assert(header != NULL);
 
-    DBG(1, "start_part()");
+    DBG(1, "start_part() start_part_impl");
 
     /* we can only retry the part if we're getting slices via cache_inform's */
     if (retry_part) {

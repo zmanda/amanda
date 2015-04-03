@@ -21,7 +21,7 @@
 #include "cmdfile.h"
 
 static void free_cmddata(gpointer p);
-static cmddata_t *duplicate_cmddata(cmddata_t *cmddata);
+//static cmddata_t *duplicate_cmddata(cmddata_t *cmddata);
 
 static void
 free_cmddata(
@@ -29,17 +29,20 @@ free_cmddata(
 {
     cmddata_t *cmddata = p;
     g_free(cmddata->config);
-    g_free(cmddata->storage);
-    g_free(cmddata->pool);
-    g_free(cmddata->label);
+    g_free(cmddata->src_storage);
+    g_free(cmddata->src_pool);
+    g_free(cmddata->src_label);
+    g_free(cmddata->src_labels_str);
+    slist_free_full(cmddata->src_labels, g_free);
     g_free(cmddata->holding_file);
     g_free(cmddata->hostname);
     g_free(cmddata->diskname);
     g_free(cmddata->dump_timestamp);
-    g_free(cmddata->storage_dest);
+    g_free(cmddata->dst_storage);
     g_free(cmddata);
 }
 
+/*
 static cmddata_t *
 duplicate_cmddata(
     cmddata_t *cmddata)
@@ -56,13 +59,15 @@ duplicate_cmddata(
     new_cmddata->hostname = g_strdup(cmddata->hostname);
     new_cmddata->diskname = g_strdup(cmddata->diskname);
     new_cmddata->dump_timestamp = g_strdup(cmddata->dump_timestamp);
-    new_cmddata->storage_dest = g_strdup(cmddata->storage_dest);
+    new_cmddata->dst_storage = g_strdup(cmddata->dst_storage);
     new_cmddata->working_pid = cmddata->working_pid;
     new_cmddata->status = cmddata->status;
     new_cmddata->size = cmddata->size;
+    new_cmddata->start_time = cmddata->start_time;
 
     return new_cmddata;
 }
+*/
 
 void
 unlock_cmdfile(
@@ -151,22 +156,54 @@ read_cmdfile(
 	    s[-1] = '\0';
 	    cmddata->holding_file = unquote_string(fp);
 	} else if (g_str_equal(operation, "COPY")) {
+	    char *src_labels;
+	    char *slabels;
+	    char *a;
+
 	    cmddata->operation = CMD_COPY;
 	    skip_whitespace(s,ch);
 	    fp = s - 1;
 	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    cmddata->storage = unquote_string(fp);
+	    cmddata->src_storage = unquote_string(fp);
 	    skip_whitespace(s,ch);
 	    fp = s - 1;
 	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    cmddata->pool = unquote_string(fp);
+	    cmddata->src_pool = unquote_string(fp);
 	    skip_whitespace(s,ch);
 	    fp = s - 1;
 	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    cmddata->label = unquote_string(fp);
+	    cmddata->src_label = unquote_string(fp);
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_integer(s, ch);
+	    s[-1] = '\0';
+	    cmddata->src_fileno = atoi(fp);
+
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_quoted_string(s, ch);
+	    s[-1] = '\0';
+	    slabels = src_labels = unquote_string(fp);
+	    cmddata->src_labels_str = g_strdup(src_labels);
+	    a = strstr(slabels, " ;");
+	    if (a) {
+		slabels = a+2;
+		while ((a = strstr(slabels, " ;"))) {
+		    *a = '\0';
+		    cmddata->src_labels = g_slist_append(cmddata->src_labels, g_strdup(slabels));
+		    slabels = a+2;
+		}
+	    }
+	    g_free(src_labels);
+
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_integer(s, ch);
+	    s[-1] = '\0';
+	    cmddata->start_time = atoll(fp);
 	} else {
 	}
 	skip_whitespace(s, ch);
@@ -184,11 +221,16 @@ read_cmdfile(
 	skip_quoted_string(s, ch);
 	s[-1] = '\0';
 	cmddata->dump_timestamp = unquote_string(fp);
+	skip_whitespace(s,ch);
+	fp = s - 1;
+	skip_quoted_string(s, ch);
+	s[-1] = '\0';
+	cmddata->level = atoi(fp);
 	skip_whitespace(s, ch);
 	fp = s - 1;
 	skip_quoted_string(s, ch);
 	s[-1] = '\0';
-	cmddata->storage_dest = unquote_string(fp);
+	cmddata->dst_storage = unquote_string(fp);
 	skip_whitespace(s, ch);
 	fp = s - 1;
 	skip_non_whitespace(s, ch);
@@ -257,7 +299,7 @@ cmdfile_write(
     char *hostname;
     char *diskname;
     char *dump_timestamp;
-    char *storage_dest;
+    char *dst_storage;
     char *status;
 
     assert(id == cmddata->id);
@@ -269,7 +311,7 @@ cmdfile_write(
     hostname = quote_string(cmddata->hostname);
     diskname = quote_string(cmddata->diskname);
     dump_timestamp = quote_string(cmddata->dump_timestamp);
-    storage_dest = quote_string(cmddata->storage_dest);
+    dst_storage = quote_string(cmddata->dst_storage);
 
     switch (cmddata->status) {
         case CMD_DONE: status = g_strdup("DONE");
@@ -284,21 +326,28 @@ cmdfile_write(
     }
     if (cmddata->operation == CMD_FLUSH) {
 	char *holding_file = quote_string(cmddata->holding_file);
-	line = g_strdup_printf("%d FLUSH %s %s %s %s %s %s WORKING:%d %s\n",
+	line = g_strdup_printf("%d FLUSH %s %s %s %s %s %d %s WORKING:%d %s\n",
 		id, config, holding_file, hostname, diskname,
-		dump_timestamp, storage_dest, (int)cmddata->working_pid, status);
+		dump_timestamp, cmddata->level, dst_storage, (int)cmddata->working_pid, status);
 	g_free(holding_file);
 	g_ptr_array_add(lines, line);
     } else if (cmddata->operation == CMD_COPY) {
-	char *storage = quote_string(cmddata->storage);
-	char *pool = quote_string(cmddata->pool);
-	char *label = quote_string(cmddata->label);
-	line = g_strdup_printf("%d COPY %s %s %s %s %s %s %s %s WORKING:%d %s\n",
-		id, config, storage, pool, label, hostname, diskname,
-		dump_timestamp, storage_dest, (int)cmddata->working_pid, status);
-	g_free(storage);
-	g_free(pool);
-	g_free(label);
+	char *src_storage = quote_string(cmddata->src_storage);
+	char *src_pool = quote_string(cmddata->src_pool);
+	char *src_label = quote_string(cmddata->src_label);
+	char *src_labels_str = quote_string(cmddata->src_labels_str);
+
+	line = g_strdup_printf("%d COPY %s %s %s %s %d %s %lu %s %s %s %d %s WORKING:%d %s\n",
+		id, config, src_storage, src_pool, src_label, cmddata->src_fileno,
+		src_labels_str,
+		(unsigned long int) cmddata->start_time,
+		hostname, diskname, dump_timestamp, cmddata->level,
+		dst_storage,
+		(int)cmddata->working_pid, status);
+	g_free(src_storage);
+	g_free(src_pool);
+	g_free(src_label);
+	g_free(src_labels_str);
 	g_ptr_array_add(lines, line);
     } else {
     }
@@ -306,7 +355,7 @@ cmdfile_write(
     g_free(hostname);
     g_free(diskname);
     g_free(dump_timestamp);
-    g_free(storage_dest);
+    g_free(dst_storage);
     g_free(status);
 }
 
@@ -347,33 +396,30 @@ add_cmd_in_memory(
 		        GINT_TO_POINTER(cmddata->id), cmddata);
     return cmddata->id;
 }
-void
+
+cmddatas_t *
 add_cmd_in_cmdfile(
     cmddatas_t *cmddatas,
     cmddata_t  *cmddata)
 {
     cmddatas_t *new_cmddatas;
-    cmddata_t  *new_cmddata;
 
     // take the lock and read
     new_cmddatas = read_cmdfile(cmddatas->lock->filename);
 
-    // add the cmd to cmddatas and new_cmddatas
+    // add the cmd
     new_cmddatas->max_id++;
-    cmddatas->max_id = new_cmddatas->max_id;
     cmddata->id = new_cmddatas->max_id;
-    new_cmddata = duplicate_cmddata(cmddata);
     g_hash_table_insert(new_cmddatas->cmdfile,
-		        GINT_TO_POINTER(new_cmddatas->max_id), new_cmddata);
-    g_hash_table_insert(cmddatas->cmdfile,
-		        GINT_TO_POINTER(cmddatas->max_id), cmddata);
+		        GINT_TO_POINTER(new_cmddatas->max_id), cmddata);
 
     // write
     write_cmdfile(new_cmddatas);
-    close_cmdfile(new_cmddatas);
+    close_cmdfile(cmddatas);
+    return new_cmddatas;
 }
 
-void
+cmddatas_t *
 remove_cmd_in_cmdfile(
     cmddatas_t *cmddatas,
     int         id)
@@ -383,16 +429,16 @@ remove_cmd_in_cmdfile(
     // take the lock and read
     new_cmddatas = read_cmdfile(cmddatas->lock->filename);
 
-    // remove the cmd id from cmddatas and new_cmddatas
+    // remove the cmd id
     g_hash_table_remove(new_cmddatas->cmdfile, GINT_TO_POINTER(id));
-    g_hash_table_remove(cmddatas->cmdfile, GINT_TO_POINTER(id));
 
     // write
     write_cmdfile(new_cmddatas);
-    close_cmdfile(new_cmddatas);
+    close_cmdfile(cmddatas);
+    return new_cmddatas;
 }
 
-void
+cmddatas_t *
 change_cmd_in_cmdfile(
     cmddatas_t  *cmddatas,
     int          id,
@@ -401,23 +447,19 @@ change_cmd_in_cmdfile(
 {
     cmddatas_t *new_cmddatas;
     cmddata_t  *cmddata;
-    cmddata_t  *new_cmddata;
 
     // take the lock and read
     new_cmddatas = read_cmdfile(cmddatas->lock->filename);
 
     // update status for cmd id in cmddatas and new_cmddatas
-    new_cmddata = g_hash_table_lookup(new_cmddatas->cmdfile, GINT_TO_POINTER(id));
-    new_cmddata->status = status;
-    new_cmddata->size   = size;
-
-    cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(id));
+    cmddata = g_hash_table_lookup(new_cmddatas->cmdfile, GINT_TO_POINTER(id));
     cmddata->status = status;
     cmddata->size   = size;
 
     // write
     write_cmdfile(new_cmddatas);
-    close_cmdfile(new_cmddatas);
+    close_cmdfile(cmddatas);
+    return new_cmddatas;
 }
 
 static void
@@ -434,20 +476,23 @@ cmdfile_remove_working(
     }
 }
 
-void
+cmddatas_t *
 remove_working_in_cmdfile(
     cmddatas_t *cmddatas,
     pid_t       pid)
 {
     cmddatas_t *new_cmddatas;
 
-    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_remove_working, &pid);
-
+    // take the lock and read
     new_cmddatas = read_cmdfile(cmddatas->lock->filename);
+
+    // remove if same pid
     g_hash_table_foreach(new_cmddatas->cmdfile, &cmdfile_remove_working, &pid);
 
+    // write
     write_cmdfile(new_cmddatas);
-    close_cmdfile(new_cmddatas);
+    close_cmdfile(cmddatas);
+    return new_cmddatas;
 }
 
 typedef struct cmd_holding_s {
@@ -508,11 +553,11 @@ cmdfile_flush(
     if (cmddata->operation == CMD_FLUSH &&
         g_str_equal(data->holding_file, cmddata->holding_file)) {
         if (data->ids) {
-            char *ids = g_strdup_printf("%s,%d;%s", data->ids, id, cmddata->storage_dest);
+            char *ids = g_strdup_printf("%s,%d;%s", data->ids, id, cmddata->dst_storage);
             g_free(data->ids);
             data->ids = ids;
         } else {
-            data->ids = g_strdup_printf("%d;%s", id, cmddata->storage_dest);
+            data->ids = g_strdup_printf("%d;%s", id, cmddata->dst_storage);
         }
     }
     cmddata->working_pid = getpid();

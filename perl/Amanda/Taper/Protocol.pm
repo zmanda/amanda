@@ -58,6 +58,15 @@ use constant FILE_WRITE => message("FILE-WRITE",
 	    orig_kb) ],
 );
 
+use constant VAULT_WRITE => message("VAULT-WRITE",
+    format => [ qw( worker_name handle src_storage src_pool src_label
+		    hostname diskname level datestamp
+		    dle_tape_splitsize dle_split_diskbuffer
+		    dle_fallback_splitsize dle_allow_split
+		    part_size part_cache_type part_cache_dir part_cache_max_size
+		    orig_kb) ],
+);
+
 use constant START_SCAN => message("START-SCAN",
     format => [ qw( worker_name handle ) ],
 );
@@ -131,6 +140,22 @@ use constant DUMPER_STATUS => message("DUMPER-STATUS",
 );
 
 use constant CLOSE_VOLUME => message("CLOSE-VOLUME",
+    format => [ qw( worker_name ) ],
+);
+
+use constant CLOSED_VOLUME => message("CLOSED-VOLUME",
+    format => [ qw( worker_name ) ],
+);
+
+use constant OPENED_SOURCE_VOLUME => message("OPENED-SOURCE-VOLUME",
+    format => [ qw( worker_name handle label ) ],
+);
+
+use constant CLOSE_SOURCE_VOLUME => message("CLOSE-SOURCE-VOLUME",
+    format => [ qw( worker_name ) ],
+);
+
+use constant CLOSED_SOURCE_VOLUME => message("CLOSED-SOURCE-VOLUME",
     format => [ qw( worker_name ) ],
 );
 

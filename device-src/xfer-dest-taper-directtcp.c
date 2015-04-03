@@ -162,7 +162,7 @@ worker_thread(
 	    DBG(9, "waiting to be un-paused");
 	    g_cond_wait(self->paused_cond, self->state_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "worker_thread done waiting");
 
 	if (elt->cancelled)
 	    break;

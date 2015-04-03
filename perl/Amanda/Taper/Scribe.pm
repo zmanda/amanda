@@ -817,8 +817,31 @@ sub cancel_dump {
 
 sub close_volume {
     my $self = shift;
+    my %params = @_;
 
     $self->{'close_volume'} = 1;
+
+    if ($self->{'reservation'}) {
+	$self->_release_reservation(finished_cb => sub {
+	    my ($error) = @_;
+
+	    if ($error) {
+		$params{'close_volume_cb'}->($error);
+	    } else {
+		$params{'close_volume_cb'}->();
+	    }
+	});
+    } else {
+	$params{'close_volume_cb'}->();
+    }
+}
+
+sub close_source_volume {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'close_source_volume'} = 1;
+
 }
 
 sub get_bytes_written {
@@ -2147,6 +2170,7 @@ sub _maybe_callback {
 	$volume_cb->(@volume_cb_args);
     } elsif (!$self->{'volume_cb'}) {
 	$self->{'scan_finished'} = 0;
+    } else {
     }
 }
 

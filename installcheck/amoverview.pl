@@ -44,16 +44,15 @@ like($Installcheck::Run::stderr, qr/\AUSAGE:/i,
 
 Installcheck::Dumpcache::load("multi");
 
-like(run_get('amoverview', 'TESTCONF'),
+like(run_get('amoverview', 'TESTCONF', '--diskwidth=40'),
     # this pattern is pretty loose, but that's OK
     qr{
 	\s+date\s+\d\d\s+
 	host\s+disk\s+\d\d\s+
-	localhos\s+/.*\s+00\s+
-	localhos\s+/.*\s+01
+	localhos\s+/.*/installchecks/backmeup\s+00\s+
+	localhos\s+/.*/installchecks/backmeup/dir\s+01
     }mxs,
     "amoverview of the 'multi' dump looks good");
-
 Installcheck::Run::cleanup();
 
 ##

@@ -131,7 +131,7 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --src-timestamp: the timestamp of the Amanda run that should be vaulted
 
 Copies data from the run with timestamp <src-timestamp> onto volumes using
-the storage <amvault-storage>.  If <src-timestamp> is "latest", then the
+the storage <vault-storage>.  If <src-timestamp> is "latest", then the
 most recent run of amdump or amflush will be used.  If any dumpspecs are
 included (<host-expr> and so on), then only dumps matching those dumpspecs
 will be dumped.  At least one of --fulls-only, --src-timestamp, or a dumpspec
@@ -174,11 +174,11 @@ GetOptions(
     'exact-match' => \$opt_exact_match,
     'export' => \$opt_export,
     'label-template=s' => sub {
-	usage("--label-templaple is deprecated, use autolabel from the 'amvault-storage'"); },
+	usage("--label-templaple is deprecated, use autolabel from the 'vault-storage'"); },
     'autolabel=s' => sub {
-	usage("--autolabel is deprecated, use autolabel from the 'amvault-storage'"); },
+	usage("--autolabel is deprecated, use autolabel from the 'vault-storage'"); },
     'dst-changer=s' => sub {
-	usage("--dst-changer is deprecated, use tpchanger from the 'amvault-storage'"); },
+	usage("--dst-changer is deprecated, use tpchanger from the 'vault-storage'"); },
     'src-timestamp=s' => \$opt_src_write_timestamp,
     'src-labelstr=s' => \$opt_src_labelstr,
     'interactivity!' => \$opt_interactivity,

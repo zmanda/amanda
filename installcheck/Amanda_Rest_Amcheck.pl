@@ -167,17 +167,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 #6
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
-		'message' => ' volume \'\'',
-		'errstr' => ' volume \'\'',
-		'process' => 'amcheck-server',
-		'running_on' => 'amanda-server',
-		'component' => 'amanda',
-		'module' => 'amanda',
-		'code' => '123'
-	  },
-#7
-          {	'source_filename' => "amcheck.c",
-		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Taper scan algorithm did not find an acceptable volume.',
 		'errstr' => 'Taper scan algorithm did not find an acceptable volume.',
 		'process' => 'amcheck-server',
@@ -186,7 +175,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#8
+#7
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '    (expecting a new volume)',
@@ -197,7 +186,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#9
+#8
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'ERROR: No acceptable volumes found',
@@ -208,7 +197,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#10
+#9
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::INFO,
 		'message' => "host info dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/curinfo/localhost' does not exist",
@@ -220,7 +209,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800100'
 	  },
-#11
+#10
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::INFO,
 		'message' => "index dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/index/localhost' does not exist",
@@ -232,7 +221,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800126'
 	  },
-#12
+#11
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Server check took 1.00 seconds',
@@ -243,7 +232,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800160'
 	  },
-#13
+#12
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Amanda Backup Client Hosts Check',
@@ -253,7 +242,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800202'
 	  },
-#14
+#13
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '--------------------------------',
@@ -263,7 +252,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800203'
 	  },
-#15
+#14
           {	'source_filename' => "selfcheck.c",
 		'severity' => $Amanda::Message::ERROR,
 		'message' => Amanda::Util::built_with_component("client")
@@ -280,7 +269,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '3600051'
 	  },
-#16
+#15
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Client check: 1 host checked in 1.00 seconds.  1 problem found.',
@@ -293,7 +282,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800204'
 	  },
-#17
+#16
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '(brought to you by Amanda x.y.z)',

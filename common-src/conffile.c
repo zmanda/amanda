@@ -94,7 +94,7 @@ typedef enum {
     CONF_MAX_DLE_BY_VOLUME,    CONF_EJECT_VOLUME,	CONF_TMPDIR,
     CONF_REPORT_USE_MEDIA,     CONF_REPORT_NEXT_MEDIA,	CONF_REPORT_FORMAT,
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
-    CONF_POLICY,               CONF_STORAGE,		CONF_AMVAULT_STORAGE,
+    CONF_POLICY,               CONF_STORAGE,		CONF_VAULT_STORAGE,
     CONF_CMDFILE,              CONF_REST_API_PORT,
 
     /* storage setting */
@@ -222,6 +222,9 @@ typedef enum {
     /* dump_selection */
     CONF_DUMP_SELECTION,
     CONF_FULL,			CONF_INCR,		CONF_OTHER,
+
+    /* storage */
+    CONF_VAULT,
 
 } tok_t;
 
@@ -604,6 +607,7 @@ static void read_part_cache_type(conf_var_t *, val_t *);
 static void read_host_limit(conf_var_t *, val_t *);
 static void read_storage_identlist(conf_var_t *, val_t *);
 static void read_dump_selection(conf_var_t *, val_t *);
+static void read_vault_list(conf_var_t *np G_GNUC_UNUSED, val_t *val);
 
 static application_t *read_application(char *name, FILE *from, char *fname,
 				       int *linenum);
@@ -667,6 +671,9 @@ static void validate_tmpdir(conf_var_t *, val_t *);
 static void validate_deprecated_changerfile(conf_var_t *, val_t *);
 
 gint compare_pp_script_order(gconstpointer a, gconstpointer b);
+
+static void free_dump_selection(gpointer p);
+static void free_vault(gpointer p);
 
 /*
  * Initialization
@@ -791,6 +798,7 @@ static void conf_init_part_cache_type(val_t *val, part_cache_type_t i);
 static void conf_init_host_limit(val_t *val);
 static void conf_init_host_limit_server(val_t *val);
 static void conf_init_dump_selection(val_t *val);
+static void conf_init_vault_list(val_t *val);
 
 /*
  * Command-line Handling
@@ -958,7 +966,7 @@ keytab_t server_keytab[] = {
     { "AMRECOVER_CHANGER", CONF_AMRECOVER_CHANGER },
     { "AMRECOVER_CHECK_LABEL", CONF_AMRECOVER_CHECK_LABEL },
     { "AMRECOVER_DO_FSF", CONF_AMRECOVER_DO_FSF },
-    { "AMVAULT_STORAGE", CONF_AMVAULT_STORAGE },
+    { "VAULT_STORAGE", CONF_VAULT_STORAGE },
     { "ANY", CONF_ANY_VOLUME },
     { "APPEND", CONF_APPEND },
     { "AUTH", CONF_AUTH },
@@ -1194,6 +1202,7 @@ keytab_t server_keytab[] = {
     { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
     { "USE", CONF_USE },
     { "USETIMESTAMPS", CONF_USETIMESTAMPS },
+    { "VAULT", CONF_VAULT },
     { "VOLUME_ERROR", CONF_VOLUME_ERROR },
     { NULL, CONF_IDENT },
     { NULL, CONF_UNKNOWN }
@@ -1419,7 +1428,7 @@ conf_var_t server_var [] = {
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
    { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
    { CONF_STORAGE              , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_STORAGE         , NULL },
-   { CONF_AMVAULT_STORAGE      , CONFTYPE_STR      , read_str         , CNF_AMVAULT_STORAGE      , NULL },
+   { CONF_VAULT_STORAGE        , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_VAULT_STORAGE        , NULL },
    { CONF_CMDFILE              , CONFTYPE_STR      , read_str         , CNF_CMDFILE              , NULL },
    { CONF_REST_API_PORT        , CONFTYPE_INT      , read_int         , CNF_REST_API_PORT        , validate_positive },
    { CONF_COMPRESS_INDEX       , CONFTYPE_BOOLEAN  , read_bool        , CNF_COMPRESS_INDEX       , NULL },
@@ -1600,6 +1609,7 @@ conf_var_t storage_var [] = {
    { CONF_DUMP_SELECTION           , CONFTYPE_DUMP_SELECTION, read_dump_selection, STORAGE_DUMP_SELECTION           , NULL },
    { CONF_ERASE_ON_FAILURE         , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_ON_FAILURE         , NULL },
    { CONF_ERASE_ON_FULL            , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_ON_FULL            , NULL },
+   { CONF_VAULT                    , CONFTYPE_VAULT_LIST    , read_vault_list    , STORAGE_VAULT_LIST               , NULL },
    { CONF_UNKNOWN                  , CONFTYPE_INT           , NULL               , STORAGE_STORAGE                  , NULL }
 };
 
@@ -3475,6 +3485,7 @@ init_storage_defaults(
     conf_init_dump_selection(&stcur.value[STORAGE_DUMP_SELECTION]);
     conf_init_bool          (&stcur.value[STORAGE_ERASE_ON_FAILURE]         , 0);
     conf_init_bool          (&stcur.value[STORAGE_ERASE_ON_FULL]            , 0);
+    conf_init_vault_list    (&stcur.value[STORAGE_VAULT_LIST]);
 }
 
 static void
@@ -4981,6 +4992,34 @@ read_host_limit(
     }
 }
 
+static void
+read_vault_list(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    int nb_vault = 0;
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    while (tok == CONF_STRING || tok == CONF_IDENT) {
+	char *storage = g_strdup(tokenval.v.s);
+	int   days    = get_int(CONF_UNIT_NONE);
+
+	vault_el_t *vault = g_new(vault_el_t, 1);
+	nb_vault++;
+	vault->storage = storage;
+	vault->days = days;
+	val->v.vault_list = g_slist_append(val->v.vault_list, vault);
+	if (tok != CONF_NL && tok != CONF_END) {
+	    get_conftoken(CONF_ANY);
+	}
+    }
+    if (nb_vault == 0) {
+	slist_free_full(val->v.vault_list, free_vault);
+	val->v.vault_list =NULL;
+    }
+}
+
 /* get_* functions */
 
 /* these functions use precompiler conditionals to skip useless size checks
@@ -6108,7 +6147,7 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_SORT_INDEX]           , FALSE);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
-    conf_init_str      (&conf_data[CNF_AMVAULT_STORAGE]      , "");
+    conf_init_identlist(&conf_data[CNF_VAULT_STORAGE]        , NULL);
     conf_init_str      (&conf_data[CNF_CMDFILE]              , "command_file");
     conf_init_int      (&conf_data[CNF_REST_API_PORT]        , CONF_UNIT_NONE, 0);
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 1);
@@ -6427,7 +6466,7 @@ update_derived_values(
 	    if (!policy_seen(po, POLICY_RETENTION_TAPES)) {
 		free_val_t(&po->value[POLICY_RETENTION_TAPES]);
 		copy_val_t(&po->value[POLICY_RETENTION_TAPES], &conf_data[CNF_TAPECYCLE]);
-		po->value[POLICY_RETENTION_TAPES].v.i--;
+		po->value[POLICY_RETENTION_TAPES].v.i--;  // reduce by 1
 	    }
 	}
 
@@ -7020,6 +7059,15 @@ static void conf_init_dump_selection(val_t *val) {
     val->type = CONFTYPE_DUMP_SELECTION;
     val->unit = CONF_UNIT_NONE;
     val->v.dump_selection = NULL;
+}
+
+static void conf_init_vault_list(val_t *val) {
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->seen.block = NULL;
+    val->type = CONFTYPE_VAULT_LIST;
+    val->unit = CONF_UNIT_NONE;
+    val->v.vault_list = NULL;
 }
 
 
@@ -7945,6 +7993,18 @@ val_t_to_dump_selection(
     return val_t__dump_selection(val);
 }
 
+vault_list_t
+val_t_to_vault_list(
+    val_t *val)
+{
+    assert(config_initialized);
+    if (val->type != CONFTYPE_VAULT_LIST) {
+	error(_("val_t_to_vault_list: val.type is not CONFTYPE_VAULT_LIST"));
+	/*NOTREACHED*/
+    }
+    return val_t__vault_list(val);
+}
+
 dump_holdingdisk_t
 val_t_to_holding(
     val_t *val)
@@ -8279,6 +8339,18 @@ copy_val_t(
 		    g_slist_append(valdst->v.dump_selection, dst_dump_s);
 	    }
 	    break;
+
+	case CONFTYPE_VAULT_LIST:
+	    valdst->v.vault_list= NULL;
+	    for (ia = valsrc->v.vault_list; ia != NULL; ia = ia->next) {
+		vault_el_t *src_vault_s = ia->data;
+		vault_el_t *dst_vault_s = g_new0(vault_el_t, 1);
+		dst_vault_s->storage = g_strdup(src_vault_s->storage);
+		dst_vault_s->days = src_vault_s->days;
+		valdst->v.vault_list =
+		    g_slist_append(valdst->v.vault_list, dst_vault_s);
+	    }
+	    break;
 	}
 }
 
@@ -8348,6 +8420,14 @@ free_dump_selection(
 }
 
 static void
+free_vault(
+    gpointer p)
+{
+    vault_el_t *vault_s = p;
+    g_free(vault_s->storage);
+}
+
+static void
 free_val_t(
     val_t *val)
 {
@@ -8414,6 +8494,10 @@ free_val_t(
 
 	case CONFTYPE_DUMP_SELECTION:
 	    slist_free_full(val->v.dump_selection, free_dump_selection);
+	    break;
+
+	case CONFTYPE_VAULT_LIST:
+	    slist_free_full(val->v.vault_list, free_vault);
 	    break;
     }
     val->seen.linenum = 0;
@@ -9337,6 +9421,24 @@ val_t_display_strs(
 	}
 	break;
     }
+
+    case CONFTYPE_VAULT_LIST: {
+	int nb_selection = g_slist_length(val_t__vault_list(val));
+	vault_list_t vl;
+	int i = 0;
+
+	g_free(buf);
+	buf = malloc((nb_selection+1)*sizeof(char*));
+	buf[nb_selection] = NULL;
+	for (vl = val->v.vault_list ; vl != NULL ; vl = vl->next) {
+	    vault_el_t *v = vl->data;
+	    char *s = quote_string_always(v->storage);
+	    buf[i++] = g_strdup_printf("%s %d", s, v->days);
+	    g_free(s);
+	}
+	break;
+    }
+
     }
 
     /* add source */

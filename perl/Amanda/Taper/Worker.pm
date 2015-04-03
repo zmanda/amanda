@@ -56,9 +56,12 @@ use Amanda::Logfile qw( :logtype_t log_add make_stats );
 use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
 use Amanda::Tapelist;
+use Amanda::Recovery::Planner;
+use Amanda::Recovery::Scan;
+use Amanda::Recovery::Clerk;
 use File::Temp;
 
-use base qw( Amanda::Taper::Scribe::Feedback );
+use base qw( Amanda::Taper::Scribe::Feedback Amanda::Recovery::Clerk::Feedback);
 
 our $tape_num = 0;
 
@@ -157,6 +160,21 @@ sub PORT_WRITE {
     $self->_assert_in_state("idle") or return;
 
     $self->{'doing_port_write'} = 1;
+
+    $self->setup_and_start_dump($msgtype,
+	dump_cb => sub { $self->dump_cb(@_); },
+	%params);
+}
+
+sub VAULT_WRITE {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $read_cb;
+
+    $self->_assert_in_state("idle") or return;
+
+    $self->{'doing_port_write'} = 0;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -271,7 +289,29 @@ sub CLOSE_VOLUME {
 
     $self->_assert_in_state("idle") or return;
 
-    $self->{'scribe'}->close_volume();
+    $self->{'scribe'}->close_volume(close_volume_cb => sub {
+	    my %msg_params = (
+		worker_name => $self->{'worker_name'}
+	    );
+	    $msgtype = Amanda::Taper::Protocol::CLOSED_VOLUME;
+	    $self->{'controller'}->{'proto'}->send($msgtype, %msg_params);
+    });
+}
+
+sub CLOSE_SOURCE_VOLUME {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    $self->_assert_in_state("idle") or return;
+
+    $self->{'src'}->{'clerk'}->close_volume(close_volume_cb => sub {
+
+	    my %msg_params = (
+		worker_name => $self->{'worker_name'}
+	    );
+	    $msgtype = Amanda::Taper::Protocol::CLOSED_SOURCE_VOLUME;
+	    $self->{'controller'}->{'proto'}->send($msgtype, %msg_params);
+    }) if defined $self->{'src'}->{'clerk'};
 }
 
 sub result_cb {
@@ -344,6 +384,9 @@ sub result_cb {
 	undef $self->{status_filename};
     }
 
+    if (!defined $params{'device_errors'}) {
+	$params{'device_errors'} = [];
+    }
     # note that we use total_duration here, which is the total time between
     # start_dump and dump_cb, so the kps generated here is much less than the
     # actual tape write speed.  Think of this as the *taper* speed, rather than
@@ -537,6 +580,33 @@ sub scribe_notif_log_info {
 }
 
 ##
+# recovery feedback
+
+sub recovery_clerk_notif_open_volume {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'controller'}->{'proto'}->send(
+	Amanda::Taper::Protocol::OPENED_SOURCE_VOLUME,
+	worker_name => $self->{'worker_name'},
+	handle => $self->{'handle'},
+	label => $params{'label'}
+    );
+}
+
+sub recovery_clerk_notif_close_volume {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'controller'}->{'proto'}->send(
+	Amanda::Taper::Protocol::CLOSED_SOURCE_VOLUME,
+	worker_name => $self->{'worker_name'},
+	handle => $self->{'handle'},
+	label => $params{'label'}
+    );
+}
+
+##
 # Utilities
 
 sub _assert_in_state {
@@ -672,6 +742,8 @@ sub setup_and_start_dump {
     my ($msgtype, %params) = @_;
     my %splitting_args;
     my %get_xfer_dest_args;
+    my @dumper_cb_result;
+    my $wait_for_recovery_cb;
 
     $self->{'dump_cb'} = $params{'dump_cb'};
 
@@ -686,6 +758,9 @@ sub setup_and_start_dump {
 
     step setup => sub {
 	$self->{'handle'} = $params{'handle'};
+	$self->{'src_storage'} = $params{'src_storage'};
+	$self->{'src_pool'} = $params{'src_pool'};
+	$self->{'src_label'} = $params{'src_label'};
 	$self->{'hostname'} = $params{'hostname'};
 	$self->{'diskname'} = $params{'diskname'};
 	$self->{'datestamp'} = $params{'datestamp'};
@@ -726,9 +801,99 @@ sub setup_and_start_dump {
 		if (exists $splitting_args{$_});
 	}
 
+	if ($msgtype eq Amanda::Taper::Protocol::VAULT_WRITE) {
+
+	    my $src = $self->{'src'};
+
+	    if (defined $src and defined $src->{'storage'} and
+		$src->{'storage'}->{'storage_name'} ne $self->{'src_storage'}) {
+		return $src->{'clerk'}->quit(finished_cb => $steps->{'quit_clerk_finished'});
+	    } else {
+		return $steps->{'get_src_clerk'}->();
+	    }
+	}
+	$self->{'scribe'}->wait_device(finished_cb => $steps->{'got_device'});
+    };
+
+    step quit_clerk_finished => sub {
+	Amanda::Debug::debug("quit_clerk_finished");
+        $self->{'src'}->{'storage'}->quit();
+        delete $self->{'src'}->{'clerk'};
+        delete $self->{'src'}->{'scan'};
+        delete $self->{'src'}->{'storage'};
+        delete $self->{'src'}->{'chg'};
+	$steps->{'get_src_clerk'}->();
+    };
+
+    step get_src_clerk => sub {
+
+	my $src;
+	if (defined $self->{'src'}) {
+	    $src = $self->{'src'};
+	} else {
+	    $src = $self->{'src'} = {};
+	}
+	my $chg;
+	if (!defined $src->{'clerk'}) {
+	    my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	    my ($tl, $message) = Amanda::Tapelist->new($tlf);
+	    if (defined $message) {
+		return $self->failure($message);
+	    }
+
+	    my $storage = $self->{'storages'}->{$self->{'src_storage'}};
+	    if (!$storage) {
+		$storage = Amanda::Storage->new(
+				storage_name => $self->{'src_storage'},
+				tapelist => $tl);
+		return $self->failure($storage)
+		    if $storage->isa("Amanda::Changer::Error");
+		$self->{'storages'}->{$self->{'src_storage'}} = $storage;
+	    }
+
+	    $chg = $storage->{'chg'};
+	    if ($chg->isa('Amanda::Changer::Error')) {
+		$storage->quit();
+		return $self->failure($chg);
+	    }
+
+	    $src->{'storage'} = $storage;
+	    $src->{'chg'} = $chg;
+
+	    $src->{'scan'} = Amanda::Recovery::Scan->new(chg => $chg);
+
+	    $src->{'clerk'} = Amanda::Recovery::Clerk->new(
+		changer => $chg,
+		feedback => $self,
+		scan    => $src->{'scan'});
+	}
+
+	my @dumpspecs;
+	push @dumpspecs => Amanda::Cmdline::dumpspec_t->new(
+					$self->{'hostname'},
+					$self->{'diskname'},
+					$self->{'datestamp'},
+					$self->{'level'},
+					undef);
+	my @storage_list = ( $self->{'src_storage'} );
+	Amanda::Recovery::Planner::make_plan(
+			dumpspecs => \@dumpspecs,
+			changer => $chg,
+			storage_list => \@storage_list,
+			only_in_storage => 1,
+			plan_cb => sub { $steps->{'plan_cb'}->(@_) });
+	return;
+    };
+
+    step plan_cb => sub {
+	my ($err, $plan) = @_;
+
+	return $self->failure($err) if $err;
+
+	$self->{'src'}->{'plan'} = $plan;
+
 	# we've started the xfer now, but the destination won't actually write
 	# any data until we call start_dump.  And we'll need a device for that.
-
 	$self->{'scribe'}->wait_device(finished_cb => $steps->{'got_device'});
     };
 
@@ -753,7 +918,6 @@ sub setup_and_start_dump {
 		$get_xfer_dest_args{'max_memory'} = $block_size4;
 	    }
 	}
-	$device = undef;
 	$get_xfer_dest_args{'can_cache_inform'} = ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE and $get_xfer_dest_args{'allow_split'});
 
 	# if we're unable to fulfill the user's splitting needs, we can still give
@@ -772,17 +936,57 @@ sub setup_and_start_dump {
         $self->_assert_in_state("idle") or return;
         $self->{'state'} = 'making_xfer';
 
+	if ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE) {
+	    $self->{'xfer_source'} = Amanda::Xfer::Source::DirectTCPListen->new();
+	} elsif ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE) {
+	    $self->{'xfer_source'} = Amanda::Xfer::Source::Holding->new($params{'filename'});
+	} elsif ($msgtype eq Amanda::Taper::Protocol::VAULT_WRITE) {
+	    my $dump = $self->{'src'}->{'plan'}->shift_dump();
+	    return $self->{'src'}->{'clerk'}->get_xfer_src(
+		dump => $dump,
+		xfer_src_cb => $steps->{'got_xfer_src'});
+	} else {
+	    die("Bad msgtype: $msgtype");
+	}
+
+	if ($msgtype eq Amanda::Taper::Protocol::VAULT_WRITE) {
+	}
+	$steps->{'make_xfer_2'}->();
+    };
+
+    step got_xfer_src => sub {
+	my ($errors, $header, $xfer_src_, $directtcp_supported) = @_;
+
+	if ($errors) {
+	    push @{$self->{'input_errors'}}, @$errors;
+	    return $params{'dump_cb'}->(
+		result => "FAILED",
+		size => 0,
+		duration => 0.0,
+		total_duration => 0);
+	}
+
+	$self->{'xfer_source'} = $xfer_src_;
+	$self->{'header'} = $header;
+	    $self->{'native_crc'} = $self->{'header'}->{'native_crc'};
+	    $self->{'client_crc'} = $self->{'header'}->{'client_crc'};
+	    $self->{'server_crc'} = $self->{'header'}->{'server_crc'};
+	    Amanda::Debug::debug("header native_crc: $self->{'native_crc'}");
+	    Amanda::Debug::debug("header client_crc: $self->{'client_crc'}");
+	    Amanda::Debug::debug("header server_crc: $self->{'server_crc'}");
+
+	    if ($self->{'header'}->{'is_partial'}) {
+		$self->{'dumper_status'} = "FAILED";
+	    } else {
+		$self->{'dumper_status'} = "DONE";
+	    }
+	$steps->{'make_xfer_2'}->();
+    };
+
+    step make_xfer_2 => sub {
         $self->{'xfer_dest'} = $self->{'scribe'}->get_xfer_dest(%get_xfer_dest_args);
 
-	my $xfer_source;
-	if ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE) {
-	    $xfer_source = Amanda::Xfer::Source::DirectTCPListen->new();
-	} else {
-	    $xfer_source = Amanda::Xfer::Source::Holding->new($params{'filename'});
-	}
-	$self->{'xfer_source'} = $xfer_source;
-
-        $self->{'xfer'} = Amanda::Xfer->new([$xfer_source, $self->{'xfer_dest'}]);
+        $self->{'xfer'} = Amanda::Xfer->new([$self->{'xfer_source'}, $self->{'xfer_dest'}]);
         $self->{'xfer'}->start(sub {
 	    my ($src, $msg, $xfer) = @_;
 
@@ -793,6 +997,9 @@ sub setup_and_start_dump {
 		    $self->{'dest_server_crc'} = $msg->{'crc'}.":".$msg->{'size'};
 		} else {
 		}
+	    }
+	    if ($msgtype eq Amanda::Taper::Protocol::VAULT_WRITE) {
+		$self->{'src'}->{'clerk'}->handle_xmsg($src, $msg, $xfer);
 	    }
 	    $self->{'scribe'}->handle_xmsg($src, $msg, $xfer);
 
@@ -838,11 +1045,14 @@ sub setup_and_start_dump {
 	    }
 
 	    $steps->{'start_dump'}->(undef);
-	} else {
+	} elsif ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE) {
 	    # ..but quite a bit harder for PORT-WRITE; this method will send the
 	    # proper PORT command, then read the header from the dumper and parse
 	    # it, placing the result in $self->{'header'}
 	    $self->send_port_and_get_header($steps->{'start_dump'});
+	} else { # VAULT_WRITE
+	    # already done
+	    $steps->{'start_dump'}->(undef);
 	}
     };
 
@@ -881,10 +1091,33 @@ sub setup_and_start_dump {
         $hdr->{'totalparts'} = -1;
         $hdr->{'type'} = $Amanda::Header::F_SPLIT_DUMPFILE;
 
+	$wait_for_recovery_cb = 0;
+	if ($msgtype eq Amanda::Taper::Protocol::VAULT_WRITE) {
+	    $wait_for_recovery_cb = 1;
+	    $self->{'src'}->{'clerk'}->start_recovery(
+		xfer => $self->{'xfer'},
+		recovery_cb => $steps->{'recovery_cb'});
+	}
         $self->{'scribe'}->start_dump(
 	    xfer => $self->{'xfer'},
             dump_header => $hdr,
-            dump_cb => $params{'dump_cb'});
+	    dump_cb => $steps->{'dump_cb'});
+            #dump_cb => $params{'dump_cb'});
+    };
+
+    step recovery_cb => sub {
+	$wait_for_recovery_cb = 0;
+	return if @dumper_cb_result == 0;
+	Amanda::Debug::debug("quit_clerk_finished aa");
+	$params{'dump_cb'}->(@dumper_cb_result);
+    };
+
+    step dump_cb => sub {
+	my @paramsX = @_;
+	@dumper_cb_result = @paramsX;
+	if (!$wait_for_recovery_cb) {
+	    $params{'dump_cb'}->(@dumper_cb_result);
+	}
     };
 }
 

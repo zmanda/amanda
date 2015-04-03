@@ -524,7 +524,8 @@ sub read_file
                  && ( scalar %{ $self->get_program_info("amvault") } ) ) {
 	    debug("detected an amvault run");
 	    $self->{flags}{amvault_run} = 1;
-	    my $storage_name = getconf($CNF_AMVAULT_STORAGE);
+	    my $storage_names = getconf($CNF_VAULT_STORAGE);
+	    my $storage_name = $storage_names->[0] if defined $storage_names->[0];
 	    if (!$storage_name) {
 	         my $il = getconf($CNF_STORAGE);
 	         $storage_name = $il->[0];
@@ -535,6 +536,16 @@ sub read_file
 	$il = getconf($CNF_STORAGE);
     }
     $self->{'storage_list'} = $il;
+
+    my $i;
+    $il = getconf($CNF_VAULT_STORAGE);
+    foreach $i (@$il) {
+	$self->{'flush_or_vault'}->{$i} = "VAULT";
+    }
+    $il = getconf($CNF_STORAGE);
+    foreach $i (@$il) {
+	$self->{'flush_or_vault'}->{$i} = "FLUSH";
+    }
 
     # check for missing, fail and strange results
     $self->check_missing_fail_strange() if $self->get_flag('normal_run');

@@ -253,7 +253,7 @@ sub get_flush {
 		hostname       => $hdr->{'name'},
 		diskname       => $hdr->{'disk'},
 		dump_timestamp => $hdr->{'datestamp'},
-		storage_dest   => $storage_name,
+		dst_storage    => $storage_name,
 		working_pid    => $$,
 		status         => $Amanda::Cmdfile::CMD_TODO);
 	    my $id = $cmdfile->add_to_memory($cmddata);
@@ -316,10 +316,10 @@ sub run {
 	POSIX::close($driver_pipe);
 	POSIX::dup2(fileno($self->{'amdump_log'}), 1);
 	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
-	debug("exec: " . join(' ', $driver, $self->{'config'}, "nodump",
+	debug("exec: " . join(' ', $driver, $self->{'config'}, "nodump", "--no-vault",
 				   @log_filename, @config_overrides));
 	close($self->{'amdump_log'});
-	exec $driver, $self->{'config'}, "nodump", @log_filename,
+	exec $driver, $self->{'config'}, "nodump", "--no-vault", @log_filename,
 		      @config_overrides;
 	die "Could not exec $driver: $!";
     }

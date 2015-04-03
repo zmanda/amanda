@@ -133,9 +133,12 @@ sub DESTROY {
 sub quit {
     my $self = shift;
 
-    $self->force_unlock();
-    delete $self->{'fl'};
-    $self->SUPER::quit();
+    if (defined $self->{'dir'}) {
+	$self->force_unlock();
+	delete $self->{'fl'};
+	delete $self->{'dir'};
+	$self->SUPER::quit();
+    }
 }
 
 sub create {

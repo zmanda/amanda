@@ -1,3 +1,60 @@
+2015-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	driver can do vault.
+	* common-src/conffile.c: s/CONF_AMVAULT_STORAGE/CONF_VAULT_STORAGE/,
+	  add CONF_VAULT
+	* common-src/conffile.h: Add vault_list_t and CONFTYPE_VAULT_LIST
+	* device-src/xfer-dest-taper-cacher.c: Improve debugging statement
+	* device-src/xfer-dest-taper-directtcp.c: Improve debugging statement
+	* device-src/xfer-dest-taper-splitter.c: Improve debugging statement
+	* device-src/xfer-source-recovery.c: Improve debugging statement
+	* server-src/xfer-dest-holding.c: Improve debugging statement
+	* man/xml-source/amanda.conf.5.xml: Document storage and vault-storage
+	* perl/Amanda/Amflush.pm: s/storage_dest/dst_storage/
+	* perl/Amanda/Changer/disk.pm: Check $self->{'dir'} is defined
+	* perl/Amanda/Changer/robot.pm: Check $info->{'state'} is defined
+	* perl/Amanda/Cmdfile.swg: Change some field names.
+	* perl/Amanda/Config.swg: Add CONFTYPE_VAULT_LIST.
+	* perl/Amanda/DB/Catalog.pm (_load_tapelist): Always load.
+	* perl/Amanda/Recovery/Clerk.pm (close_volume): New method
+	* perl/Amanda/Recovery/Scan.pmA: Fix message
+	* perl/Amanda/Report.pm: Fix for vault.
+	* perl/Amanda/Report/human.pm: Fix for vault.
+	* perl/Amanda/Status.pm: Fix for vault.
+	* perl/Amanda/Taper/Controller.pm: Add msg_VAULT_WRITE and
+	  msg_CLOSE_SOURCE_VOLUME
+	* perl/Amanda/Taper/Protocol.pm: Add VAULT_WRITE, CLOSED_VOLUME,
+	  OPENED_SOURCE_VOLUME, CLOSE_SOURCE_VOLUME, CLOSED_SOURCE_VOLUME
+	* perl/Amanda/Taper/Scan.pm: Remove unused code
+	* perl/Amanda/Taper/Scribe.pm (close_volume): Fix
+	* perl/Amanda/Taper/Scribe.pm (close_source_volume): New method.
+	* perl/Amanda/Taper/Worker.pm: Add VAULT_WRITE, CLOSE_SOURCE_VOLUME,
+	  recovery_clerk_notif_open_volume, recovery_clerk_notif_close_volume.
+	* perl/Amanda/Taper/Worker.pm: Add vault operation.
+	* perl/Amanda/Vault.pm: Fix for multiple vault_storage.
+	* server-src/amcheck-device.pl: Fix.
+	* server-src/amcheck.c: s/up/status/
+	* server-src/amvault.pl: Fix message.
+	* server-src/cmdfile.c: Change a few names
+	* server-src/cmdfile.h: Change a few names, many fixes
+	* server-src/diskfile.c: Set status.
+	* server-src/diskfile.h: Remove up, add status.
+	* server-src/driver.c: Data struct change, handle vault command.
+	* server-src/driverio.c: Add new taper commands.
+	* server-src/driverio.h: Change many struct.
+	* server-src/planner.c: Change many struct.
+	* server-src/server_util.c: Add "VAULT-WRITE", "CLOSED-VOLUME",
+	  "OPENED-SOURCE-VOLUME", "CLOSE-SOURCE-VOLUME" and
+	  "CLOSED-SOURCE-VOLUME"
+	* server-src/server_util.h: Add VAULT_WRITE, CLOSED_VOLUME,
+	  OPENED_SOURCE_VOLUME, CLOSE_SOURCE_VOLUME, CLOSED_SOURCE_VOLUME.
+	* server-src/tapefile.c: Fix retention.
+	* installcheck/Amanda_Rest_Amcheck.pl: Fix
+	* installcheck/Amanda_Rest_Dumps.pl: Fix sort.
+	* installcheck/Installcheck/Dumpcache.pm: Force a FULL.
+	* installcheck/amoverview.pl: Fix.
+	* installcheck/amvault.pl: Fix.
+	* installcheck/pp-scripts.pl: Fix.
+
 2015-03-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Runs.pl: Check the {head}->{exit_status}
 

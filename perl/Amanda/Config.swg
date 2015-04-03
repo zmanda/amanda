@@ -152,7 +152,7 @@ APPLY(CNF_REPORT_USE_MEDIA) \
 APPLY(CNF_REPORT_NEXT_MEDIA) \
 APPLY(CNF_REPORT_FORMAT) \
 APPLY(CNF_STORAGE) \
-APPLY(CNF_AMVAULT_STORAGE) \
+APPLY(CNF_VAULT_STORAGE) \
 APPLY(CNF_CMDFILE) \
 APPLY(CNF_REST_API_PORT) \
 APPLY(CNF_COMPRESS_INDEX) \
@@ -685,6 +685,25 @@ val_t_to_sv(val_t *val, SV **results) {
 		    }
 		    hv_store(hv, "tag_type", strlen("tag_type"), newSViv(ds->tag_type), 0);
 		    hv_store(hv, "level", strlen("level"), newSViv(ds->level), 0);
+		    av_push(av, newRV_inc((SV*)hv));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)av));
+		return 1;
+	    }
+
+	    case CONFTYPE_VAULT_LIST: {
+		AV *av;
+		vault_list_t vl = val_t__vault_list(val);
+		av = newAV();
+		for (vl ; vl != NULL; vl = vl->next) {
+		    vault_el_t *v = vl->data;
+		    HV *hv;
+
+		    hv = (HV *)sv_2mortal((SV *)newHV());
+
+		    hv_store(hv, "storage", strlen("storage"), newSVpv(v->storage, 0), 0);
+		    hv_store(hv, "days", strlen("says"), newSViv(v->days), 0);
 		    av_push(av, newRV_inc((SV*)hv));
 		}
 

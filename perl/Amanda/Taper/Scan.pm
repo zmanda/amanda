@@ -391,32 +391,6 @@ sub oldest_reusable_volume {
 					$self->{'retention_recover'},
 					$self->{'retention_full'},
 				        0);
-
-    my $retention_tapes = $self->{'retention_tapes'};
-
-    my $best = undef;
-    my $num_acceptable = 0;
-    for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
-	next unless $tle->{'reuse'};
-	next if $tle->{'datestamp'} eq '0' and !$params{'new_label_ok'};
-	next if $tle->{'config'} and
-		$tle->{'config'} ne Amanda::Config::get_config_name();
-	next if $tle->{'pool'} and
-		$tle->{'pool'} ne $self->{'tapepool'};
-	next if !$tle->{'pool'} &&
-		!match_labelstr_template($self->{'labelstr'}->{'template'},
-				$tle->{'label'}, $tle->{'barcode'},
-				$tle->{'meta'});
-	$num_acceptable++;
-	$best = $tle;
-    }
-
-    # if we didn't find at least $tapecycle reusable tapes, then
-    # there is no oldest reusable tape
-
-    return undef unless $num_acceptable > $retention_tapes;
-
-    return $best->{'label'};
 }
 
 sub is_reusable_volume {

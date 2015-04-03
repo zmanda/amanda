@@ -662,6 +662,7 @@ sub output_error_summaries
 			|| (   $try->{taper}->{status} eq 'partial'))) {
 		    my $flush = "FLUSH";
 		    $flush = "VAULT" if $report->get_flag("amvault_run");
+		    $flush = "VAULT" if $try->{taper}->{vault};
 		    $flush = "FAILED" if exists $try->{dumper} && !exists $try->{chunker};
 		    if ($flush eq "FAILED" or !defined $try->{taper}->{failure_from}
 					   or $try->{taper}->{failure_from} ne 'config') {
@@ -1321,6 +1322,7 @@ sub get_summary_info
 
 	my $orig_size = undef;
 	my $storage = undef;
+	my $flush_or_vault = undef;
 
 	# find the try with the successful dumper entry
 	my $dumper = undef;
@@ -1408,6 +1410,11 @@ sub get_summary_info
 		$dump_time = $try->{dumper}{sec};
 		$dump_rate = $try->{dumper}{kps};
 	    }
+
+	    if ($try->{taper}->{storage}) {
+		$storage = $try->{taper}->{storage};
+		$flush_or_vault = $report->{'flush_or_vault'}->{$storage};
+	    }
 	}
 
 	# sometimes the driver logs an orig_size of -1, which makes the
@@ -1490,8 +1497,21 @@ sub get_summary_info
 		next if $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
 
-		@rv = 'nodump-FLUSH';
-		@rv = 'nodump-VAULT' if $report->get_flag("amvault_run");
+		if ($report->get_flag("amvault_run")) {
+		     @rv = 'nodump-VAULT';
+		} else {
+		    if ($try->{taper}->{storage}) {
+			$storage = $try->{taper}->{storage};
+			$flush_or_vault = $report->{'flush_or_vault'}->{$storage};
+		    }
+		    if (defined $flush_or_vault) {
+			@rv = "nodump-$flush_or_vault";
+		    } else {
+			@rv = 'nodump-FLUSH';
+		    }
+		}
+		#@rv = 'nodump-FLUSH';
+		#@rv = 'nodump-VAULT' if $report->get_flag("amvault_run");
 		push @rv, '';
 		push @rv, '';
 		push @rv, '';
@@ -1520,6 +1540,7 @@ sub get_summary_info
 			  : (defined $tape_failure_from and
 			     $tape_failure_from eq 'config') ? 'NOT FLUSHED'
 			  : $report->get_flag("amvault_run") ? 'VAULT'
+			  : defined $flush_or_vault          ? $flush_or_vault
 							     : 'FLUSH';
 	    push @rv, "nodump-$message";
 	    push @rv, $hostname;

@@ -122,8 +122,10 @@ sub _user_msg_fn {
 		    print STDERR " The volume is empty\n";
 		} elsif ($params{'not_success'}) {
 		    print STDERR " $params{'err'}\n";
-                } else {
+                } elsif (defined $volume_label) {
                     print STDERR " volume '$volume_label'\n";
+                } else {
+                    #print STDERR " volume '$volume_label'\n";
                 }
             } else { # res must be defined
 		my $directtcp = "";

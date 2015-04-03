@@ -54,21 +54,27 @@ typedef cmddata_t Cmddata;
 %}
 
 typedef struct {
+    /* change here must also be done to 'sub new_Cmddata' */
     int             id;
     cmdoperation_t  operation;
     char           *config;
-    char           *storage;
-    char           *pool;
-    char           *label;
+    char           *src_storage;
+    char           *src_pool;
+    char           *src_label;
+    int             src_fileno;
+    char           *src_labels_str;
+    GSList         *src_labels;
     char           *holding_file;
     char           *hostname;
     char           *diskname;
     char           *dump_timestamp;
-    char           *storage_dest;
+    int             level;
+    char           *dst_storage;
     pid_t           working_pid;
     cmdstatus_t     status;
     int             todo;
     off_t           size;
+    time_t          start_time;
 
     %extend {
 	/* disable destructor */
@@ -149,19 +155,24 @@ sub new_Cmddata {
 
     my $cmddata = Amanda::Cmdfile::Cmddata->new();
     $cmddata->{'operation'}      = $params{'operation'};
-    $cmddata->{'config'}         = $params{'config'};
-    $cmddata->{'storage'}        = $params{'storage'};
-    $cmddata->{'pool'}           = $params{'pool'};
-    $cmddata->{'label'}          = $params{'label'};
-    $cmddata->{'holding_file'}   = $params{'holding_file'};
-    $cmddata->{'hostname'}       = $params{'hostname'};
-    $cmddata->{'diskname'}       = $params{'diskname'};
-    $cmddata->{'dump_timestamp'} = $params{'dump_timestamp'};
-    $cmddata->{'storage_dest'}   = $params{'storage_dest'};
-    $cmddata->{'working_pid'}    = $params{'working_pid'};
-    $cmddata->{'status'}         = $params{'status'};
-    $cmddata->{'todo'}           = $params{'todo'};
-    $cmddata->{'size'}           = $params{'size'};
+    $cmddata->{'config'}         = $params{'config'} if defined $params{'config'};
+    $cmddata->{'src_storage'}    = $params{'src_storage'} if defined $params{'src_storage'};
+    $cmddata->{'src_pool'}       = $params{'src_pool'} if defined $params{'src_pool'};
+    $cmddata->{'src_label'}      = $params{'src_label'} if defined $params{'src_label'};
+    $cmddata->{'src_fileno'}     = $params{'src_fileno'} if defined $params{'src_fileno'};
+    $cmddata->{'src_labels_str'} = $params{'src_labels_str'} if defined $params{'src_labels_str'};
+    $cmddata->{'src_labels'}     = $params{'src_labels'} if defined $params{'src_labels'};
+    $cmddata->{'holding_file'}   = $params{'holding_file'} if defined $params{'holding_file'};
+    $cmddata->{'hostname'}       = $params{'hostname'} if defined $params{'hostname'};
+    $cmddata->{'diskname'}       = $params{'diskname'} if defined $params{'diskname'};
+    $cmddata->{'dump_timestamp'} = $params{'dump_timestamp'} if defined $params{'dump_timestamp'};
+    $cmddata->{'label'}          = $params{'label'} if defined $params{'label'};
+    $cmddata->{'dst_storage'}    = $params{'dst_storage'} if defined $params{'dst_storage'};
+    $cmddata->{'working_pid'}    = $params{'working_pid'} if defined $params{'working_pid'};
+    $cmddata->{'status'}         = $params{'status'} if defined $params{'status'};
+    $cmddata->{'todo'}           = $params{'todo'} if defined $params{'todo'};
+    $cmddata->{'size'}           = $params{'size'} if defined $params{'size'};
+    $cmddata->{'start_time'}     = $params{'start_time'} if defined $params{'start_time'};
 
     return $cmddata;
 };

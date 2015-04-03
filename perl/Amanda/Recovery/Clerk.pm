@@ -458,6 +458,7 @@ sub _maybe_start_part {
 	    return $steps->{'released'}->();
 	}
 
+	$self->{'feedback'}->recovery_clerk_notif_close_volume(label => $self->{'current_label'});
 	$self->{'current_dev'}->finish();
 	$self->{'current_res'}->release(
 		finished_cb => $steps->{'released'});
@@ -518,6 +519,7 @@ sub _maybe_start_part {
 		$self->{'current_label'} = $dev->volume_label;
 
 		# success!
+		$self->{'feedback'}->recovery_clerk_notif_open_volume(label => $dev->volume_label);
 		return $steps->{'seek_and_check'}->();
 	    }
 	}
@@ -644,6 +646,27 @@ sub _maybe_start_part {
     };
 }
 
+sub close_volume {
+    my $self = shift;
+    my %params = @_;
+
+    if (!$self->{'current_res'}) {
+	$params{'close_volume_cb'}->();
+	return;
+    }
+
+    $self->{'current_dev'}->finish();
+    $self->{'current_res'}->release(
+		finished_cb => sub {
+			$self->{'on_vol_hdr'} = undef;
+			$self->{'current_dev'} = undef;
+			$self->{'current_res'} = undef;
+			$self->{'current_label'} = undef;
+			$params{'close_volume_cb'}->();
+		}
+    );
+}
+
 sub _zeropad {
     my ($timestamp) = @_;
     if (length($timestamp) == 8) {
@@ -717,5 +740,9 @@ sub new {
 sub clerk_notif_part { }
 
 sub clerk_notif_holding { }
+
+sub recovery_clerk_notif_open_volume { }
+
+sub recovery_clerk_notif_close_volume { }
 
 1;

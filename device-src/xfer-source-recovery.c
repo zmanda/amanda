@@ -140,7 +140,7 @@ directtcp_common_thread(
     int result;
 
     /* send XMSG_READY to indicate it's OK to call start_part now */
-    DBG(2, "sending XMSG_READY");
+    DBG(2, "directtcp_common_thread sending XMSG_READY");
     xfer_queue_message(elt->xfer, xmsg_new(elt, XMSG_READY, 0));
 
     /* now we sit around waiting for signals to write a part */
@@ -149,10 +149,10 @@ directtcp_common_thread(
 	XMsg *msg;
 
 	while (self->paused && !elt->cancelled) {
-	    DBG(9, "waiting to be un-paused");
+	    DBG(9, "directtcp_common_thread waiting to be un-paused");
 	    g_cond_wait(self->start_part_cond, self->start_part_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "directtcp_common_thread done waiting");
 
 	if (elt->cancelled) {
 	    g_mutex_unlock(self->start_part_mutex);
@@ -167,7 +167,7 @@ directtcp_common_thread(
 	self->part_timer = g_timer_new();
 
 	while (1) {
-	    DBG(2, "reading part from %s", self->device->device_name);
+	    DBG(2, "directtcp_common_thread reading part from %s", self->device->device_name);
 	    result = device_read_to_connection(self->device, G_MAXUINT64,
 			&actual_size, &elt->cancelled,
 			self->start_part_mutex, self->abort_cond);

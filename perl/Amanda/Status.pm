@@ -327,6 +327,9 @@ my $FLUSH_DONE			 = 23;  # flush done and succeeded
 my $DUMP_RETRY			 = 24;  # dump failed (dumper tell us to retry)
 my $DUMP_TO_TAPE_RETRY		 = 25;  # dump to tape failed (dumper tell us to retry)
 my $DUMP_WILL_RETRY		 = 26;  # will retry the dump
+my $VAULTING			 = 27;  # vaulting
+my $VAULTING_DONE		 = 28;  # vaulting done and succeded
+my $VAULTING_FAILED		 = 29;  # vaulting failed
 
 # status only for worker
 my $TAPE_ERROR			 = 50;
@@ -831,6 +834,51 @@ REREAD:
 			$dlet->{'taped_size'} = 0;
 			$dlet->{'error'} = "";
 			$worker_to_serial{$worker} = $serial;
+		    } elsif ($line[6] eq "VAULT-WRITE") {
+			#7:name 8:handle 9:src_storage 10:src_pool 11:src_label 12:host 13:disk 14:level 15:datestamp 16:splitsize 17:diskbuffer 18:fallback_splitsize
+			my $worker = $line[7];
+			my $serial = $line[8];
+			my $src_storage = $line[9];
+			my $src_pool = $line[10];
+			my $src_label = $line[11];
+			my $host = $line[12];
+			my $disk = $line[13];
+			my $level = $line[14];
+			my $datestamp = $line[15];
+			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
+			$self->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+			$dle->{'level'} = $level;
+			$dles{$serial} = $dle;
+			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
+			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
+			my $dlet = $dle->{'storage'}->{$storage_name};
+			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
+			    $dle->{'status'} != $DUMP_WILL_RETRY and
+			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
+			    #die ("bad status on taper VAULT-WRITE (dumper): $dle->{'status'}");
+			}
+			if ($dlet->{'status'} and
+			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
+			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED and
+			    $dlet->{'status'} != $DUMP_WILL_RETRY) {
+			    die ("bad status on taper VAULT-WRITE (taper): $dlet->{'status'}");
+			}
+			#$dle->{'status'} = $VAULTING if !defined $dle->{'status'};
+			#$dle->{'status'} = $VAULTING;
+			$dlet->{'status'} = $VAULTING;
+			$dlet->{'taper_time'} = $self->{'current_time'};
+			$dlet->{'taped_size'} = 0;
+			$dlet->{'error'} = "";
+			$dle->{'storage'}->{$storage_name} = { status   => $VAULTING,
+							       vaulting => 1,
+							       src_storage => $src_storage,
+							       src_pool    => $src_pool,
+							       src_label   => $src_label };
+			$worker_to_serial{$worker} = $serial;
 		    } elsif ($line[6] eq "TAKE-SCRIBE-FROM") {
 			#7:name1 #8:handle #9:name2
 			my $worker1 = $line[7];
@@ -1058,6 +1106,8 @@ REREAD:
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
 				$dle->{'status'} = $DUMP_WILL_RETRY;
+			    } elsif ($dle->{'status'} == $VAULTING) {
+				$dle->{'status'} = $VAULTING_DONE;
 			    } else {
 				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
 			    }
@@ -1071,6 +1121,8 @@ REREAD:
 				$dlet->{'status'} = $WRITE_DONE;
 			    } elsif ($dlet->{'status'} == $FLUSHING) {
 				$dlet->{'status'} = $FLUSH_DONE;
+			    } elsif ($dlet->{'status'} == $VAULTING) {
+				$dlet->{'status'} = $VAULTING_DONE;
 			    } else {
 				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
 			    }
@@ -1495,6 +1547,20 @@ sub set_summary {
 		    $dle->{'message'} = "dump to tape done";
 		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
+		} elsif ($dle->{'status'} == $VAULTING) {
+		    $self->{'stat'}->{'vaulting'}->{'nb'}++;
+		    $self->{'stat'}->{'vaulting'}->{'estimated_size'} += $dle->{'esize'};
+		    $self->{'stat'}->{'vaulting'}->{'real_size'} += $dle->{'size'};
+		    $dle->{'message'} = "vaulting";
+		    #$dle->{'wsize'} = $dle->{'size'};
+		    $dle->{'dsize'} = $dle->{'size'};
+		} elsif ($dle->{'status'} == $VAULTING_DONE) {
+		    $self->{'stat'}->{'vaulted'}->{'nb'}++;
+		    $self->{'stat'}->{'vaulted'}->{'estimated_size'} += $dle->{'esize'};
+		    $self->{'stat'}->{'vaulted'}->{'real_size'} += $dle->{'size'};
+#		    $dle->{'message'} = "vaulting done" if !defined $dle->{'message'};
+		    #$dle->{'wsize'} = $dle->{'size'};
+		    $dle->{'dsize'} = $dle->{'size'};
 		} else {
 		    die("Bad dle status: $dle->{'status'}");
 		}
@@ -1547,6 +1613,18 @@ sub set_summary {
 				$self->{'stat'}->{'writing_to_tape'}->{'estimated_size'} += $dle->{'esize'};
 				$self->{'stat'}->{'writing_to_tape'}->{'write_size'} += $dlet->{'wsize'};
 				$dle->{'writing_to_tape'} = 1;
+			    }
+			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dlet->{'wsize'};
+			} elsif ($dlet->{'status'} == $VAULTING) {
+			    $self->{'stat'}->{'vaulting'}->{'storage'}->{$storage}->{'nb'}++;
+			    $self->{'stat'}->{'vaulting'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
+			    $self->{'stat'}->{'vaulting'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    $dlet->{'message'} = "vaulting";
+			    $self->_set_taper_size($dle, $dlet);
+			    if (!$dle->{'vaulting'}) {
+				$self->{'stat'}->{'vaulting'}->{'estimated_size'} += $dle->{'esize'};
+				$self->{'stat'}->{'vaulting'}->{'write_size'} += $dlet->{'wsize'};
+				$dle->{'vaulting'} = 1;
 			    }
 			    $self->{'stat'}->{'writing_to_tape'}->{'storage'}->{$storage}->{'write_size'} += $dlet->{'wsize'};
 			} elsif ($dlet->{'status'} == $DUMPING_TO_TAPE) {
@@ -1621,6 +1699,22 @@ sub set_summary {
 				$dlet->{'message'} = "partially written";
 			    } else {
 				$dlet->{'message'} = "written";
+			    }
+			    #$dlet->{'wsize'} = $dle->{'size'};
+			    $dlet->{'dsize'} = $dle->{'size'};
+			    $dle->{'dsize'} = $dle->{'size'};
+			} elsif ($dlet->{'status'} == $VAULTING_DONE) {
+			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'nb'}++;
+			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
+			    $self->{'stat'}->{'taped'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
+			    if (!$dle->{'taped'}) {
+				$self->{'stat'}->{'taped'}->{'estimated_size'} += $dle->{'esize'};
+				$dle->{'taped'} = 1;
+			    }
+			    if ($dlet->{'partial'}) {
+				$dlet->{'message'} = "partially vaulted";
+			    } else {
+				$dlet->{'message'} = "vaulted";
 			    }
 			    #$dlet->{'wsize'} = $dle->{'size'};
 			    $dlet->{'dsize'} = $dle->{'size'};

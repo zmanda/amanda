@@ -35,6 +35,7 @@
 #include "conffile.h"
 #include "timestamp.h"
 #include "find.h"
+#include "cmdfile.h"
 
 static tape_t *tape_list = NULL;
 static tape_t *tape_list_end = NULL;
@@ -268,7 +269,8 @@ lookup_last_reusable_tape(
 	tpsave[s] = NULL;
     }
     for (tp = tape_list; tp != NULL; tp = tp->next) {
-	if (tp->reuse == 1 && !g_str_equal(tp->datestamp, "0") &&
+	if (tp->reuse == 1 && !tp->retention &&
+	    !g_str_equal(tp->datestamp, "0") &&
 	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
 	    (!tp->storage || g_str_equal(tp->storage, storage)) &&
 	    ((tp->pool && g_str_equal(tp->pool, tapepool)) ||
@@ -676,11 +678,10 @@ compute_retention(void)
     if (retention_computed)
 	return;
 
-    retention_computed = TRUE;
     for (tp = tape_list; tp != NULL; tp = tp->next) {
 	tp->retention = !tp->reuse;
 	if (tp->config && !g_str_equal(tp->config, get_config_name())) {
-	    tp->retention = 1;
+	    tp->retention = TRUE;
 	}
     }
 
@@ -706,6 +707,8 @@ compute_retention(void)
 				  policy_get_retention_recover(policy),
 				  policy_get_retention_full(policy));
     }
+
+    retention_computed = TRUE;
 }
 
 
@@ -740,6 +743,42 @@ compute_storage_retention_nb(
     }
 }
 
+typedef struct cmdfile_add_retention_s {
+    const char *storage;
+    const char *pool;
+    const char *l_template;
+} cmdfile_add_retention_t;
+
+static void
+cmdfile_add_retention(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    cmddata_t *cmddata = value;
+    cmdfile_add_retention_t *data = user_data;
+    tape_t        *tp;
+    GSList        *sl;
+
+    if (cmddata->operation == CMD_COPY &&
+	cmddata->status != CMD_DONE &&
+	g_str_equal(cmddata->src_storage, data->storage) &&
+	g_str_equal(cmddata->src_pool, data->pool)) {
+	for (sl = cmddata->src_labels; sl != NULL; sl = sl->next) {
+	    char *label = (char *)sl->data;
+	    tp = lookup_tapelabel(label);
+	    if (tp &&
+		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
+	        (!tp->storage || g_str_equal(tp->storage, data->storage)) &&
+	        ((tp->pool && g_str_equal(tp->pool, data->pool)) ||
+	         (!tp->pool && match_labelstr_template(data->l_template, tp->label,
+	                                                   tp->barcode, tp->meta)))) {
+		tp->retention = TRUE;
+	    }
+	}
+    }
+}
+
 static void
 compute_storage_retention(
     find_result_t *output_find,
@@ -752,6 +791,9 @@ compute_storage_retention(
     int   retention_full)
 {
     tape_t        *tp;
+    char          *conf_cmdfile;
+    cmddatas_t    *cmddatas;
+    cmdfile_add_retention_t data;
 
     if (retention_tapes) {
 	/* done in compute_storage_retention_nb */
@@ -803,7 +845,7 @@ compute_storage_retention(
 			 (!tp->pool && match_labelstr_template(l_template, tp->label,
 							       tp->barcode, tp->meta)))) {
 			/* keep that label */
-			tp->retention = 1;
+			tp->retention = TRUE;
 		    }
 		}
 		level = ofr->level;
@@ -840,13 +882,26 @@ compute_storage_retention(
 			 (!tp->pool && match_labelstr_template(l_template, tp->label,
 							       tp->barcode, tp->meta)))) {
 			/* keep that label */
-			tp->retention = 1;
+			tp->retention = TRUE;
 			count++;
 		    }
 		}
 	    }
 	}
     }
+
+    conf_cmdfile = config_dir_relative(getconf_str(CNF_CMDFILE));
+    cmddatas = read_cmdfile(conf_cmdfile);
+    g_free(conf_cmdfile);
+    unlock_cmdfile(cmddatas);
+    data.storage  = storage;
+    data.pool = tapepool;
+    data.l_template = l_template;
+
+    // keep label if it have a command in cmdfile not yet executed.
+    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_add_retention, &data);
+
+    close_cmdfile(cmddatas);
 }
 
 gchar **list_retention(void)

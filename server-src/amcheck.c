@@ -1919,13 +1919,13 @@ FILE *client_outf;
 static void handle_result(void *, pkt_t *, security_handle_t *);
 void start_host(am_host_t *hostp);
 
-#define HOST_READY				((void *)0)	/* must be 0 */
-#define HOST_ACTIVE				((void *)1)
-#define HOST_DONE				((void *)2)
+#define HOST_READY				(0)	/* must be 0 */
+#define HOST_ACTIVE				(1)
+#define HOST_DONE				(2)
 
-#define DISK_READY				((void *)0)	/* must be 0 */
-#define DISK_ACTIVE				((void *)1)
-#define DISK_DONE				((void *)2)
+#define DISK_READY				(0)	/* must be 0 */
+#define DISK_ACTIVE				(1)
+#define DISK_DONE				(2)
 
 void
 start_host(
@@ -1940,7 +1940,7 @@ start_host(
     estimate_t estimate;
     GString *strbuf;
 
-    if(hostp->up != HOST_READY) {
+    if(hostp->status != HOST_READY) {
 	return;
     }
 
@@ -2028,7 +2028,7 @@ start_host(
 	    char *qdevice, *b64device = NULL;
 	    gchar **errors;
 
-	    if(dp->up != DISK_READY || dp->todo != 1) {
+	    if(dp->status != DISK_READY || dp->todo != 1) {
 		continue;
 	    }
 	    qname = quote_string(dp->name);
@@ -2266,7 +2266,7 @@ start_host(
 	    strappend(req, l);
 	    req_len += l_len;
 	    amfree(l);
-	    dp->up = DISK_ACTIVE;
+	    dp->status = DISK_ACTIVE;
 	    disk_count++;
 	}
     }
@@ -2277,7 +2277,7 @@ start_host(
 			"\n",
 			NULL);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-	    if(dp->up != DISK_READY || dp->todo != 1) {
+	    if(dp->status != DISK_READY || dp->todo != 1) {
 		continue;
 	    }
 	    disk_count++;
@@ -2286,7 +2286,7 @@ start_host(
 
     if(disk_count == 0) {
 	amfree(req);
-	hostp->up = HOST_DONE;
+	hostp->status = HOST_DONE;
 	return;
     }
 
@@ -2303,7 +2303,7 @@ start_host(
 
     amfree(req);
 
-    hostp->up = HOST_ACTIVE;
+    hostp->status = HOST_ACTIVE;
 }
 
 pid_t
@@ -2348,7 +2348,7 @@ start_client_checks(
     for(dlist = origq.head; dlist != NULL; dlist = dlist->next) {
 	dp = dlist->data;
 	hostp = dp->host;
-	if(hostp->up == HOST_READY && dp->todo == 1) {
+	if(hostp->status == HOST_READY && dp->todo == 1) {
 	    run_server_host_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,
 				    get_config_name(), hostp);
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
@@ -2429,7 +2429,7 @@ handle_result(
     char *message_buffer = NULL;
 
     hostp = (am_host_t *)datap;
-    hostp->up = HOST_READY;
+    hostp->status = HOST_READY;
 
     if (pkt == NULL) {
 	delete_message(amcheck_fprint_message(client_outf, build_message(
@@ -2437,7 +2437,7 @@ handle_result(
 					"hostname", hostp->hostname,
 					"errstr", security_geterror(sech))));
 	remote_errors++;
-	hostp->up = HOST_DONE;
+	hostp->status = HOST_DONE;
 	return;
     }
 
@@ -2466,7 +2466,7 @@ handle_result(
 					"hostname", hostp->hostname,
 					"features", t)));
 		    remote_errors++;
-		    hostp->up = HOST_DONE;
+		    hostp->status = HOST_DONE;
 		}
 		if (u)
 		   *u = ';';
@@ -2515,7 +2515,7 @@ handle_result(
 					"type", (pkt->type == P_NAK) ? "NAK " : "",
 					"errstr", t - 1)));
 		remote_errors++;
-		hostp->up = HOST_DONE;
+		hostp->status = HOST_DONE;
 	    }
 	    continue;
 	}
@@ -2525,7 +2525,7 @@ handle_result(
 					"hostname", hostp->hostname,
 					"errstr", line)));
 	remote_errors++;
-	hostp->up = HOST_DONE;
+	hostp->status = HOST_DONE;
     }
 
     if (message_buffer) {
@@ -2542,7 +2542,7 @@ handle_result(
 	g_ptr_array_free(message_array, TRUE);
     }
 
-    if(hostp->up == HOST_READY && hostp->features == NULL) {
+    if(hostp->status == HOST_READY && hostp->features == NULL) {
 	/*
 	 * The client does not support the features list, so give it an
 	 * empty one.
@@ -2551,12 +2551,12 @@ handle_result(
 	hostp->features = am_set_default_feature_set();
     }
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
-	if(dp->up == DISK_ACTIVE) {
-	    dp->up = DISK_DONE;
+	if(dp->status == DISK_ACTIVE) {
+	    dp->status = DISK_DONE;
 	}
     }
     start_host(hostp);
-    if(hostp->up == HOST_DONE) {
+    if(hostp->status == HOST_DONE) {
 	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_AMCHECK,

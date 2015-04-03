@@ -313,7 +313,7 @@ alloc_slab(
 	    DBG(9, "waiting for available slab");
 	    g_cond_wait(self->slab_free_cond, self->slab_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "alloc_slab done waiting");
 
         if (elt->cancelled)
             return NULL;
@@ -490,7 +490,7 @@ disk_cache_thread(
 	    DBG(9, "waiting for a disk slab");
 	    g_cond_wait(self->slab_cond, self->slab_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "disk_cache_thread done waiting");
 	g_mutex_unlock(self->slab_mutex);
 
 	if (elt->cancelled)
@@ -507,7 +507,7 @@ disk_cache_thread(
             DBG(9, "waiting for the disk slab to become current and un-paused");
             g_cond_wait(self->state_cond, self->state_mutex);
         }
-	DBG(9, "done waiting");
+	DBG(9, "disk_cache_thread done waiting");
 
 	stop_serial = self->part_stop_serial;
 	g_mutex_unlock(self->state_mutex);
@@ -524,7 +524,7 @@ disk_cache_thread(
 		DBG(9, "waiting for the next disk slab");
 		g_cond_wait(self->slab_cond, self->slab_mutex);
 	    }
-	    DBG(9, "done waiting");
+	    DBG(9, "disk_cache_thread done waiting");
 
             if (elt->cancelled)
                 break;
@@ -617,7 +617,7 @@ slab_source_prebuffer(
 	DBG(9, "prebuffering wait");
 	g_cond_wait(self->slab_cond, self->slab_mutex);
     }
-    DBG(9, "done waiting");
+    DBG(9, "slab_source_prebuffer done waiting");
 
     if (elt->cancelled) {
 	self->last_part_successful = FALSE;
@@ -693,7 +693,7 @@ slab_source_setup(
 		DBG(9, "waiting for disk_cache_thread to set disk_cache_read_fd");
 		g_cond_wait(self->state_cond, self->state_mutex);
 	    }
-	    DBG(9, "done waiting");
+	    DBG(9, "slab_source_setup done waiting");
 	    g_mutex_unlock(self->state_mutex);
 
 	    if (elt->cancelled) {
@@ -796,7 +796,7 @@ slab_source_get(
 	    DBG(9, "waiting for the next slab");
 	    g_cond_wait(self->slab_cond, self->slab_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "slab_source_get done waiting");
 
 	if (elt->cancelled)
 	    goto fatal_error;
@@ -1030,7 +1030,7 @@ device_thread(
 	    DBG(9, "waiting to be unpaused");
 	    g_cond_wait(self->state_cond, self->state_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "device_thread done waiting");
 
         if (elt->cancelled)
 	    break;

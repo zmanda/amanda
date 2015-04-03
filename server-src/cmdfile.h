@@ -29,22 +29,33 @@ typedef enum cmdstatus_e {
     CMD_PARTIAL
 } cmdstatus_t;
 
+typedef struct cmddata_label_s {
+    char *label;
+    int   file;
+} cmddata_label_t;
+
 typedef struct cmddata_s {
+    /* change here must also be done in Cmdfile.swg */
     int             id;
     cmdoperation_t  operation;
     char           *config;
-    char           *storage;
-    char           *pool;
-    char           *label;
+    char           *src_storage;
+    char           *src_pool;
+    char           *src_label;
+    int             src_fileno;
+    char           *src_labels_str;
+    GSList         *src_labels;
     char           *holding_file;
     char           *hostname;
     char           *diskname;
     char           *dump_timestamp;
-    char           *storage_dest;
+    int             level;
+    char           *dst_storage;
     pid_t           working_pid;
     cmdstatus_t     status;
     int             todo;
     off_t           size;
+    time_t          start_time;
 } cmddata_t;
 
 typedef GHashTable *cmdfile_t; /* hash where each element is a (cmddata_t *) */
@@ -61,10 +72,10 @@ cmddatas_t *read_cmdfile(char *filename);
 void close_cmdfile(cmddatas_t *cmddatas);
 void write_cmdfile(cmddatas_t *cmddatas);
 int add_cmd_in_memory(cmddatas_t *cmddatas, cmddata_t *cmddata);
-void add_cmd_in_cmdfile(cmddatas_t *cmddatas, cmddata_t *cmddata);
-void remove_cmd_in_cmdfile(cmddatas_t *cmddatas, int id);
-void change_cmd_in_cmdfile(cmddatas_t *cmddatas, int id, cmdstatus_t status, off_t size);
-void remove_working_in_cmdfile(cmddatas_t *cmddatas, pid_t pid);
+cmddatas_t *add_cmd_in_cmdfile(cmddatas_t *cmddatas, cmddata_t *cmddata);
+cmddatas_t *remove_cmd_in_cmdfile(cmddatas_t *cmddatas, int id);
+cmddatas_t *change_cmd_in_cmdfile(cmddatas_t *cmddatas, int id, cmdstatus_t status, off_t size);
+cmddatas_t *remove_working_in_cmdfile(cmddatas_t *cmddatas, pid_t pid);
 gboolean holding_in_cmdfile(cmddatas_t *cmddatas, char *holding_file);
 char *cmdfile_get_ids_for_holding(cmddatas_t *cmddatas, char *holding_file);
 

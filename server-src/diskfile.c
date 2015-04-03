@@ -211,7 +211,7 @@ add_disk(
     disk->name = g_strdup(diskname);
     disk->device = g_strdup(diskname);
     disk->spindle = -1;
-    disk->up = NULL;
+    disk->status = 0;
     disk->compress = COMP_NONE;
     disk->encrypt  = ENCRYPT_NONE;
     disk->start_t = 0;
@@ -236,7 +236,7 @@ add_disk(
 	host->maxdumps = 1;
 	host->netif = NULL;
 	host->start_t = 0;
-	host->up = NULL;
+	host->status = 0;
 	host->features = NULL;
 	host->pre_script = 0;
 	host->post_script = 0;
@@ -576,7 +576,7 @@ parse_diskline(
 	disk->name = diskname;
 	disk->device = diskdevice;
 	disk->spindle = -1;
-	disk->up = NULL;
+	disk->status = 0;
 	disk->inprogress = 0;
 	disk->application = NULL;
 	disk->pp_scriptlist = NULL;
@@ -871,7 +871,7 @@ parse_diskline(
 	host->maxdumps = 1;		/* will be overwritten */
 	host->netif = NULL;
 	host->start_t = 0;
-	host->up = NULL;
+	host->status = 0;
 	host->features = NULL;
 	host->pre_script = 0;
 	host->post_script = 0;
@@ -1932,7 +1932,8 @@ static void
 dump_disklist(
     const disklist_t *	lst)
 {
-    const disk_t *dp, *prev;
+    GList *dlist, *prev;
+    const disk_t *dp;
     const am_host_t *hp;
 
     if(hostlist == NULL) {
@@ -1959,11 +1960,12 @@ dump_disklist(
     g_printf(_("DISKLIST IN FILE ORDER:\n"));
 
     prev = NULL;
-    for(dp = lst->head; dp != NULL; prev = dp, dp = dp->next) {
+    for(dlist = lst->head; dlist != NULL; prev = dlist, dlist = dlist->next) {
+	dp = get_disk(dlist);
 	dump_disk(dp);
 	/* check pointers */
-	if(dp->prev != prev) g_printf(_("*** prev pointer mismatch!\n"));
-	if(dp->next == NULL && lst->tail != dp) g_printf(_("tail mismatch!\n"));
+	if(dlist->prev != prev) g_printf(_("*** prev pointer mismatch!\n"));
+	if(dlist->next == NULL && lst->tail != dlist) g_printf(_("tail mismatch!\n"));
     }
 }
 
@@ -1972,7 +1974,6 @@ main(
     int		argc,
     char **	argv)
 {
-  char *conffile;
   char *conf_diskfile;
   disklist_t lst;
   int result;
@@ -1998,7 +1999,7 @@ main(
   if (argc>1) {
     config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
   } else {
-    config_init_with_global(CONFIG_INIT_USE_CWD, NULL)
+    config_init_with_global(CONFIG_INIT_USE_CWD, NULL);
   }
 
   if (config_errors(NULL) >= CFGERR_WARNINGS) {
@@ -2016,8 +2017,6 @@ main(
     config_print_errors();
   }
   amfree(conf_diskfile);
-  amfree(conffile);
-  amfree(config_dir);
 
   return result;
 }

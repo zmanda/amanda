@@ -183,6 +183,7 @@ sub quit {
     my %params = @_;
     my @errors = ();
     my @worker = ();
+    my $worker;
 
     my $steps = define_steps
 	cb_ref => \$params{'finished_cb'};
@@ -194,17 +195,34 @@ sub quit {
     };
 
     step quit_scribe => sub {
-	my $worker = shift @worker;
-	if (defined $worker and defined $worker->{'scribe'}) {
-	    $worker->{'scribe'}->quit(finished_cb => sub {
-	        my ($err) = @_;
-	        push @errors, $err if ($err);
+	$worker = shift @worker;
+	if (defined $worker) {
+	    if (defined $worker->{'scribe'}) {
+		return $worker->{'scribe'}->quit(finished_cb => sub {
+	            my ($err) = @_;
+	            push @errors, $err if ($err);
 
-	        $steps->{'quit_scribe'}->();
-	    });
-	} else {
-	    $steps->{'stop_proto'}->();
+	            $steps->{'quit_clerk'}->();
+		});
+	    }
+	    $steps->{'quit_clerk'}->();
 	}
+	$steps->{'stop_proto'}->();
+    };
+
+    step quit_clerk => sub {
+	if (defined $worker->{'src'}->{'clerk'}) {
+	    return $worker->{'src'}->{'clerk'}->quit(finished_cb => sub {
+	            my ($err) = @_;
+	            push @errors, $err if ($err);
+		    if (defined $worker->{'src'}->{'storage'}) {
+			$worker->{'src'}->{'storage'}->quit();
+		    }
+
+	            $steps->{'quit_scribe'}->();
+	    });
+	}
+	$steps->{'quit_scribe'}->();
     };
 
     step stop_proto => sub {
@@ -259,6 +277,14 @@ sub msg_PORT_WRITE {
     $worker->PORT_WRITE(@_);
 }
 
+sub msg_VAULT_WRITE {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    $worker->VAULT_WRITE(@_);
+}
+
 sub msg_START_SCAN {
     my $self = shift;
     my ($msgtype, %params) = @_;
@@ -305,6 +331,14 @@ sub msg_CLOSE_VOLUME {
 
     my $worker = $self->{'worker'}->{$params{'worker_name'}};
     $worker->CLOSE_VOLUME(@_);
+}
+
+sub msg_CLOSE_SOURCE_VOLUME {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    $worker->CLOSE_SOURCE_VOLUME(@_);
 }
 
 sub msg_TAKE_SCRIBE_FROM {

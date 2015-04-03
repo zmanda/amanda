@@ -52,10 +52,10 @@ typedef struct amhost_s {
     int maxdumps;			/* maximum dumps in parallel */
     netif_t *netif;			/* network interface this host is on */
     time_t start_t;			/* time last dump was started on this host */
-    char *up;				/* generic user pointer */
     am_feature_t *features;		/* feature set */
     int	 pre_script;
     int  post_script;
+    int  status;
 } am_host_t;
 
 typedef struct disk_s {
@@ -128,12 +128,13 @@ typedef struct disk_s {
     host_limit_t *dump_limit;
     int		retry_dump;
     identlist_t tags;
-    void	*up;			/* generic user pointer */
+    int         status;			/* for amcheck */
 } disk_t;
 
 typedef struct disklist_s {
     GList *head, *tail;
 } disklist_t;
+#define get_disk(dlist)((disk_t *)((dlist)->data))
 
 #define empty(dlist)	((dlist).head == NULL)
 

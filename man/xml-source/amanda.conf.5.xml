@@ -667,12 +667,26 @@ the property to set, and the others contains its values.
   <varlistentry>
   <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: not set.  The tape changer to use.  In most cases, only one of
+<para>Default: not set.  (deprecated) The tape changer to use.  In most cases, only one of
 <amkeyword>tpchanger</amkeyword> or <amkeyword>tapedev</amkeyword> is
 specified, although for backward compatibility both may be specified if
 <amkeyword>tpchanger</amkeyword> gives the name of an old changer script.
 See <manref name="amanda-changers" vol="7" /> for more information on
 configuring changers.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>storage</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: Same as the config name.  The list of storages to use, the dump will go to theses storages.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>vault-storage</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.  The list of storages to vault to, vaulting to theses storages are automaticaly done.</para>
   </listitem>
   </varlistentry>
 
@@ -3289,9 +3303,9 @@ keep previous level 1 and level 0.
 <refsect1><title>STORAGE SECTION</title>
 <para>The
 <emphasis remap='B'>amanda.conf</emphasis>
-file may define multiple storage, the default storage it is set with the
-<amkeyword>storage</amkeyword> parameter. The amvault storage is set with
-the the <amkeyword>amvault-storage</amkeyword> parameter.
+file may define multiple storage, the default storages are set with the
+<amkeyword>storage</amkeyword> parameter. The vaulting storage are set with
+the the <amkeyword>vault-storage</amkeyword> parameter.
 A storage name CONFIG_NAME is created if the global
 <amkeyword>storage</amkeyword> is not set.
 The information is entered in a <amkeyword>storage</amkeyword>
@@ -3518,6 +3532,14 @@ a volume is marked as <amkeyword>no-reuse</amkeyword> after it is written.</para
   <term><amkeyword>tpchanger</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: value of the global <amkeyword>tpchanger</amkeyword>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>vault</amkeyword> <amtype>storage</amtype> <amtype>int</amtype></term>
+  <listitem>
+<para>Will vault all dumps from this storage to the new storage X days after the dumps.
+You can have multiple vault entry.</para>
   </listitem>
   </varlistentry>
 

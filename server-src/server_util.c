@@ -47,10 +47,13 @@ const char *cmdstr[] = {
     "ABORT-FINISHED", "BAD-COMMAND",			/* dumper results */
     "START-TAPER", "FILE-WRITE", "NEW-TAPE", "NO-NEW-TAPE",
 
-    "PARTDONE", "PORT-WRITE", "DUMPER-STATUS",		    /* taper cmds */
+    "PARTDONE", "PORT-WRITE", "VAULT-WRITE", "DUMPER-STATUS", /* taper cmds */
     "PORT", "TAPE-ERROR", "TAPER-OK",			 /* taper results */
     "REQUEST-NEW-TAPE", "DIRECTTCP-PORT", "TAKE-SCRIBE-FROM",
-    "START-SCAN", "CLOSE-VOLUME", "RETRY", "READY", "LAST_TOK",
+    "START-SCAN", "CLOSE-VOLUME", "CLOSED-VOLUME",
+    "OPENED-SOURCE-VOLUME",
+    "CLOSE-SOURCE-VOLUME", "CLOSED-SOURCE-VOLUME",
+    "RETRY", "READY", "LAST_TOK",
     NULL
 };
 

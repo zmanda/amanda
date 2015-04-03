@@ -147,6 +147,9 @@ $flavors{'multi'} = sub {
 
     # XXX note that Amanda will not bump $diskname to level 1 here; other installchecks
     # may depend on this behavior
+    ok(Installcheck::Run::run('amadmin', 'TESTCONF', 'force', 'localhost', "=$diskname"), "amadmin for 'multi' step 2"),
+	or amdump_diag("Amadmin run failed for 'multi' step 2");
+
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'multi' step 2"),
 	or amdump_diag("Amdump run failed for 'multi' step 2");
 

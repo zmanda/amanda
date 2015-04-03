@@ -56,16 +56,84 @@ typedef enum {
                                           //     NEW-TAPE received
    TAPER_STATE_TAPE_STARTED   = (1 << 8), // 256 taper already started to write
                                           //     to a tape.
-   TAPER_STATE_DONE           = (1 << 9),
+   TAPER_STATE_DONE           = (1 << 9), // 512
+   TAPER_STATE_WAIT_CLOSED_VOLUME = (1 << 10),		// 1024
+   TAPER_STATE_WAIT_CLOSED_SOURCE_VOLUME = ((unsigned int)1 << 11),	// 2048
+   TAPER_STATE_VAULT_TO_TAPE   = (1 << 12), //  4096 Doing a VAULT-WRITE
 } TaperState;
+
+typedef enum action_s {
+    ACTION_DUMP_TO_HOLDING,
+    ACTION_DUMP_TO_TAPE,
+    ACTION_FLUSH,
+    ACTION_VAULT
+} action_t;
 
 typedef struct job_s {
     int               in_use;
-    struct disk_s    *disk;
+    struct sched_s   *sched;
     struct chunker_s *chunker;
     struct dumper_s  *dumper;
     struct wtaper_s  *wtaper;
 } job_t;
+
+/* holding disk reservation structure; this is built as a list parallel
+ * to the configuration's linked list of holding disks. */
+
+typedef struct holdalloc_s {
+    struct holdalloc_s *next;
+    holdingdisk_t *hdisk;
+
+    off_t disksize;
+    int allocated_dumpers;
+    off_t allocated_space;
+} holdalloc_t;
+
+typedef struct assignedhd_s {
+    holdalloc_t		*disk;
+    off_t		used;
+    off_t		reserved;
+    char		*destname;
+} assignedhd_t;
+
+
+typedef struct sched_s {
+    disk_t *disk;
+    action_t action;
+    int dump_attempted;
+    int taper_attempted;
+    int  priority;
+    int level, degr_level;
+    unsigned long est_time, degr_time;
+    off_t est_nsize, est_csize, est_size;
+    off_t degr_nsize, degr_csize, act_size;
+    off_t origsize, dumpsize;
+    time_t dumptime;
+    char *dumpdate, *degr_dumpdate;
+    unsigned long est_kps, degr_kps;
+    char *destname;                             /* file/port name */
+    assignedhd_t **holdp;
+    time_t timestamp;
+    char *datestamp;
+    int activehd;
+    int no_space;
+    char *degr_mesg;
+    crc_t native_crc;
+    crc_t client_crc;
+    crc_t server_crc;
+    int   nb_flush;
+    int command_id;
+
+    char *src_storage;
+    char *src_pool;
+    char *src_label;
+    int   src_fileno;
+} sched_t;
+
+typedef struct schedlist_s {
+    GList *head, *tail;
+} schedlist_t;
+#define get_sched(slist) ((sched_t *)((slist)->data))
 
 /* chunker process structure */
 
@@ -93,8 +161,16 @@ typedef struct dumper_s {
     job_t *job;
 } dumper_t;
 
+typedef struct vaultqs_s {
+    char        *src_labels_str;	/* group of label that must be */
+					/* vaulted sequentially        */
+					/* "; LABEL; LABEL2; LABEL3; " */
+    GSList      *src_labels;
+    schedlist_t  vaultq;		/* list of schedlist_t */
+} vaultqs_t;
+
 typedef struct wtaper_s {
-    char       *name;                  /* name of this taper */
+    char       *name;			/* name of this taper */
     int         sendresult;
     char       *input_error;
     char       *tape_error;
@@ -102,11 +178,16 @@ typedef struct wtaper_s {
     job_t      *job;
     char       *first_label;
     off_t       first_fileno;
+    char       *current_source_label;
+    char       *current_dest_label;
+    char       *dst_labels_str;
+    GSList     *dst_labels;
     TaperState  state;
     off_t       left;
-    off_t       written;               // Number of kb already written to tape
-    int         nb_dle;                /* number of dle on the volume */
+    off_t       written;		// Number of kb already written to tape
+    int         nb_dle;			/* number of dle on the volume */
     gboolean    ready;
+    vaultqs_t   vaultqs;		/* to vault from another storage */
     struct taper_s *taper;
 } wtaper_t;
 
@@ -128,60 +209,16 @@ typedef struct taper_s {
     off_t           taperflush;
     wtaper_t       *wtapetable;
     wtaper_t       *last_started_wtaper;
-    disklist_t      tapeq;
+    schedlist_t     tapeq;		/* to flush fromholding disk     */
+    //schedlist_t     directq;		/* to dump direct to tape        */
+    GSList         *vaultqss;		/* schedlist_t of vaultq         */
+				        /* ordered			 */
+                                        /* to vault from another storage */
+    gboolean        flush_storage;
+    gboolean        vault_storage;
     gboolean        degraded_mode;
     gboolean        down;
 } taper_t;
-
-/* holding disk reservation structure; this is built as a list parallel
- * to the configuration's linked list of holding disks. */
-
-typedef struct holdalloc_s {
-    struct holdalloc_s *next;
-    holdingdisk_t *hdisk;
-
-    off_t disksize;
-    int allocated_dumpers;
-    off_t allocated_space;
-} holdalloc_t;
-
-typedef struct assignedhd_s {
-    holdalloc_t		*disk;
-    off_t		used;
-    off_t		reserved;
-    char		*destname;
-} assignedhd_t;
-
-/* schedule structure */
-
-typedef struct sched_s {
-    int dump_attempted;
-    int taper_attempted;
-    int  priority;
-    int level, degr_level;
-    unsigned long est_time, degr_time;
-    off_t est_nsize, est_csize, est_size;
-    off_t degr_nsize, degr_csize, act_size;
-    off_t origsize, dumpsize;
-    time_t dumptime;
-    char *dumpdate, *degr_dumpdate;
-    unsigned long est_kps, degr_kps;
-    char *destname;				/* file/port name */
-    assignedhd_t **holdp;
-    time_t timestamp;
-    char *datestamp;
-    int activehd;
-    int no_space;
-    char *degr_mesg;
-    crc_t native_crc;
-    crc_t client_crc;
-    crc_t server_crc;
-    int   nb_flush;
-    GHashTable *to_storage;
-} sched_t;
-
-#define sched(dp)	((sched_t *) (dp)->up)
-
 
 GLOBAL dumper_t  *dmptable;
 GLOBAL chunker_t *chktable;
@@ -201,13 +238,14 @@ cmd_t getresult(int fd, int show, int *result_argc, char ***result_argv);
 
 job_t * alloc_job(void);
 void free_job(job_t *job);
+void free_sched(sched_t *sp);
 
 job_t *serial2job(char *str);
 void free_serial(char *str);
 void free_serial_job(job_t *job);
 void check_unfree_serial(void);
 char *job2serial(job_t *job);
-void update_info_dumper(disk_t *dp, off_t origsize, off_t dumpsize, time_t dumptime);
-void update_info_taper(disk_t *dp, char *label, off_t filenum, int level);
+void update_info_dumper(sched_t *sp, off_t origsize, off_t dumpsize, time_t dumptime);
+void update_info_taper(sched_t *sp, char *label, off_t filenum, int level);
 void free_assignedhd(assignedhd_t **holdp);
 #endif	/* !DRIVERIO_H */

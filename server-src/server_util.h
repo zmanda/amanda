@@ -48,10 +48,13 @@ enum {
     FAILED, TRYAGAIN, NO_ROOM, RQ_MORE_DISK,		/* dumper results */
     ABORT_FINISHED, BAD_COMMAND,			/* dumper results */
     START_TAPER, FILE_WRITE, NEW_TAPE, NO_NEW_TAPE,     /* taper... */
-    PARTDONE, PORT_WRITE, DUMPER_STATUS,                /* ... cmds */
+    PARTDONE, PORT_WRITE, VAULT_WRITE, DUMPER_STATUS,   /* ... cmds */
     PORT, TAPE_ERROR, TAPER_OK,				/* taper results */
     REQUEST_NEW_TAPE, DIRECTTCP_PORT, TAKE_SCRIBE_FROM,
-    START_SCAN, CLOSE_VOLUME, RETRY, READY, LAST_TOK
+    START_SCAN, CLOSE_VOLUME, CLOSED_VOLUME,
+    OPENED_SOURCE_VOLUME,
+    CLOSE_SOURCE_VOLUME, CLOSED_SOURCE_VOLUME,
+    RETRY, READY, LAST_TOK
 };
 extern const char *cmdstr[];
 
@@ -71,13 +74,14 @@ struct wtaper_s;
 int taper_cmd(struct taper_s *taper, struct wtaper_s *wtaper, cmd_t cmd,
 	      void *ptr, char *destname, int level, char *datestamp);
 
+struct sched_s;
 struct disk_s;
 struct chunker_s;
-int chunker_cmd(struct chunker_s *chunker, cmd_t cmd, struct disk_s *dp,
+int chunker_cmd(struct chunker_s *chunker, cmd_t cmd, struct sched_s *sp,
 		char *mesg);
 
 struct dumper_s;
-int dumper_cmd(struct dumper_s *dumper, cmd_t cmd, struct disk_s *dp,
+int dumper_cmd(struct dumper_s *dumper, cmd_t cmd, struct sched_s *sp,
 	       char *mesg);
 
 char *amhost_get_security_conf(char *string, void *arg);

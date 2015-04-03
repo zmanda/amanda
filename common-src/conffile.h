@@ -245,6 +245,12 @@ typedef struct {
 } dump_selection_t;
 typedef GSList* dump_selection_list_t;
 
+typedef struct {
+    char *storage;
+    int  days;
+} vault_el_t;
+typedef GSList* vault_list_t;
+
 /* part_cache_types */
 typedef enum {
     PART_CACHE_TYPE_NONE,
@@ -294,6 +300,7 @@ typedef enum {
     CONFTYPE_NO_YES_ALL,
     CONFTYPE_STR_LIST,
     CONFTYPE_DUMP_SELECTION,
+    CONFTYPE_VAULT_LIST,
 } conftype_t;
 
 typedef enum {
@@ -322,6 +329,7 @@ typedef struct val_s {
         labelstr_t      labelstr;
 	host_limit_t    host_limit;
 	dump_selection_list_t   dump_selection;
+	vault_list_t    vault_list;
     } v;
     seen_t seen;
     conftype_t type;
@@ -363,6 +371,7 @@ labelstr_t           *val_t_to_labelstr(val_t *);
 part_cache_type_t     val_t_to_part_cache_type(val_t *);
 host_limit_t         *val_t_to_host_limit(val_t *);
 dump_selection_list_t val_t_to_dump_selection(val_t *);
+vault_list_t          val_t_to_vault_list(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -385,38 +394,39 @@ dump_selection_list_t val_t_to_dump_selection(val_t *);
  * (in the macro name) to the corresponding union field.  The macros work
  * as lvalues, too.
  */
-#define val_t__seen(val)          ((val)->seen)
-#define val_t__int(val)           ((val)->v.i)
-#define val_t__int64(val)         ((val)->v.int64)
-#define val_t__real(val)          ((val)->v.r)
-#define val_t__str(val)           ((val)->v.s)
-#define val_t__ident(val)         ((val)->v.s)
-#define val_t__identlist(val)     ((val)->v.identlist)
-#define val_t__time(val)          ((val)->v.t)
-#define val_t__size(val)          ((val)->v.size)
-#define val_t__boolean(val)       ((val)->v.i)
-#define val_t__no_yes_all(val)    ((val)->v.i)
-#define val_t__compress(val)      ((val)->v.i)
-#define val_t__encrypt(val)       ((val)->v.i)
-#define val_t__holding(val)       ((val)->v.i)
-#define val_t__estimatelist(val)  ((val)->v.estimatelist)
-#define val_t__strategy(val)      ((val)->v.i)
-#define val_t__taperalgo(val)     ((val)->v.i)
-#define val_t__send_amreport(val) ((val)->v.i)
-#define val_t__priority(val)      ((val)->v.i)
-#define val_t__rate(val)          ((val)->v.rate)
-#define val_t__exinclude(val)     ((val)->v.exinclude)
-#define val_t__intrange(val)      ((val)->v.intrange)
-#define val_t__proplist(val)      ((val)->v.proplist)
-#define val_t__application(val)   ((val)->v.application)
-#define val_t__execute_on(val)    ((val)->v.i)
-#define val_t__execute_where(val) ((val)->v.i)
-#define val_t__data_path(val)     ((val)->v.i)
-#define val_t__autolabel(val)     (&((val)->v.autolabel))
-#define val_t__labelstr(val)      (&((val)->v.labelstr))
+#define val_t__seen(val)            ((val)->seen)
+#define val_t__int(val)             ((val)->v.i)
+#define val_t__int64(val)           ((val)->v.int64)
+#define val_t__real(val)            ((val)->v.r)
+#define val_t__str(val)             ((val)->v.s)
+#define val_t__ident(val)           ((val)->v.s)
+#define val_t__identlist(val)       ((val)->v.identlist)
+#define val_t__time(val)            ((val)->v.t)
+#define val_t__size(val)            ((val)->v.size)
+#define val_t__boolean(val)         ((val)->v.i)
+#define val_t__no_yes_all(val)      ((val)->v.i)
+#define val_t__compress(val)        ((val)->v.i)
+#define val_t__encrypt(val)         ((val)->v.i)
+#define val_t__holding(val)         ((val)->v.i)
+#define val_t__estimatelist(val)    ((val)->v.estimatelist)
+#define val_t__strategy(val)        ((val)->v.i)
+#define val_t__taperalgo(val)       ((val)->v.i)
+#define val_t__send_amreport(val)   ((val)->v.i)
+#define val_t__priority(val)        ((val)->v.i)
+#define val_t__rate(val)            ((val)->v.rate)
+#define val_t__exinclude(val)       ((val)->v.exinclude)
+#define val_t__intrange(val)        ((val)->v.intrange)
+#define val_t__proplist(val)        ((val)->v.proplist)
+#define val_t__application(val)     ((val)->v.application)
+#define val_t__execute_on(val)      ((val)->v.i)
+#define val_t__execute_where(val)   ((val)->v.i)
+#define val_t__data_path(val)       ((val)->v.i)
+#define val_t__autolabel(val)       (&((val)->v.autolabel))
+#define val_t__labelstr(val)        (&((val)->v.labelstr))
 #define val_t__part_cache_type(val) ((val)->v.i)
-#define val_t__host_limit(val)    ((val)->v.host_limit)
-#define val_t__dump_selection(val) ((val)->v.dump_selection)
+#define val_t__host_limit(val)      ((val)->v.host_limit)
+#define val_t__dump_selection(val)  ((val)->v.dump_selection)
+#define val_t__vault_list(val)      ((val)->v.vault_list)
 
 /*
  * Parameters
@@ -536,7 +546,7 @@ typedef enum {
     CNF_REPORT_NEXT_MEDIA,
     CNF_REPORT_FORMAT,
     CNF_STORAGE,
-    CNF_AMVAULT_STORAGE,
+    CNF_VAULT_STORAGE,
     CNF_CMDFILE,
     CNF_COMPRESS_INDEX,
     CNF_SORT_INDEX,
@@ -1426,6 +1436,7 @@ typedef enum storage_e  {
     STORAGE_DUMP_SELECTION,
     STORAGE_ERASE_ON_FAILURE,
     STORAGE_ERASE_ON_FULL,
+    STORAGE_VAULT_LIST,
     STORAGE_STORAGE
 } storage_key;
 
@@ -1503,7 +1514,7 @@ char *storage_name(storage_t *app);
 #define storage_get_dump_selection(storage)  (val_t_to_dump_selection(storage_getconf((storage), STORAGE_DUMP_SELECTION)))
 #define storage_get_erase_on_failure(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FAILURE)))
 #define storage_get_erase_on_full(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FULL)))
-
+#define storage_get_vault_list(storage)  (val_t_to_vault_list(storage_getconf((storage), STORAGE_VAULT_LIST)))
 
 /*
  * Error Handling

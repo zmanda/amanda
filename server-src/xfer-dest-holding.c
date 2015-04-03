@@ -294,7 +294,7 @@ holding_thread(
 	    DBG(9, "waiting to be unpaused");
 	    g_cond_wait(self->state_cond, self->state_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "holding_thread done waiting");
 
         if (elt->cancelled)
 	    break;
@@ -451,7 +451,7 @@ push_buffer_impl(
 	    DBG(9, "waiting for any space to buffer pushed data");
 	    g_cond_wait(self->ring_free_cond, self->ring_mutex);
 	}
-	DBG(9, "done waiting");
+	DBG(9, "holding_thread done waiting");
 
 	if (elt->cancelled) {
 	    g_mutex_unlock(self->ring_mutex);

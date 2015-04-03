@@ -238,6 +238,5 @@ verify_log("amcheck invokes script in correct order",
     "check TESTCONF pre-host-amcheck client localhost diskname2 $diskname  60",
 );
 
-
 unlink $templog;
 Installcheck::Run::cleanup();
