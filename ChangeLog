@@ -1,4 +1,7 @@
 2015-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix compilation
+
+2015-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	driver can do vault.
 	* common-src/conffile.c: s/CONF_AMVAULT_STORAGE/CONF_VAULT_STORAGE/,
 	  add CONF_VAULT

@@ -1463,9 +1463,6 @@ start_some_dumps(
     int cur_idle;
     GList  *slist, *slist_next;
     sched_t *sp, *delayed_sp, *sp_accept;
-    //disk_t *diskp, *delayed_diskp, *diskp_accept;
-    //disk_t *diskp;
-    disk_t *dp;
     assignedhd_t **holdp=NULL, **holdp_accept;
     cmd_t cmd;
     int result_argc;
@@ -1613,8 +1610,7 @@ start_some_dumps(
 				   slist = slist_next) {
 		slist_next = slist->next;
 		sp = get_sched(slist);
-		dp = sp->disk;
-		assert(dp->host != NULL && sp != NULL);
+		assert(sp != NULL && sp->disk != NULL && sp->disk->host);
 
 		allow_dump_dle(sp, NULL, dumptype, rq, now,
 			       dumper_to_holding, &cur_idle, &delayed_sp,
