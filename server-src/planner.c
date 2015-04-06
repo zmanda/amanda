@@ -2851,7 +2851,8 @@ static void delay_dumps(void)
     delayed_ep = NULL;
     delayed_dp = NULL;
     do {
-	delayed_dp = 0;
+	delayed_ep = NULL;
+	delayed_dp = NULL;
 	timestamps = 0;
 	for (elist = schedq.tail;
 	     elist != NULL && total_size > tape_length;

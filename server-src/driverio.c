@@ -934,7 +934,7 @@ chunker_cmd(
 	break;
     case PORT_WRITE:
 	dp = sp->disk;
-	if(dp && sp && sp->holdp) {
+	if(sp->holdp) {
 	    h = sp->holdp;
 	    activehd = sp->activehd;
 	}
@@ -975,7 +975,7 @@ chunker_cmd(
 	break;
     case CONTINUE:
 	dp = sp->disk;
-	if(dp && sp && sp->holdp) {
+	if(sp->holdp) {
 	    h = sp->holdp;
 	    activehd = sp->activehd;
 	}
