@@ -1,3 +1,7 @@
+2015-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Do not send CLOSE_VOLUME request if the worker
+	  have no volume.
+
 2015-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c, server-src/planner.c: Fix bug found by
 	  coverity.

@@ -565,14 +565,17 @@ main(
 		for (wtaper = taper->wtapetable;
 		     wtaper < taper->wtapetable + taper->nb_worker;
 		     wtaper++) {
-		    if (taper->nb_wait_reply == 0) {
-			taper->ev_read = event_register(taper->fd, EV_READFD,
-							handle_taper_result, taper);
+		    if (wtaper->state & TAPER_STATE_RESERVATION) {
+			if (taper->nb_wait_reply == 0) {
+			    taper->ev_read = event_register(taper->fd,
+						EV_READFD,
+						handle_taper_result, taper);
+			}
+			taper->nb_wait_reply++;
+			wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
+			wtaper->state &= ~TAPER_STATE_IDLE;
+			taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
 		    }
-		    taper->nb_wait_reply++;
-		    wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
-		    wtaper->state &= ~TAPER_STATE_IDLE;
-		    taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
 		}
 	    }
 	}
@@ -2491,6 +2494,7 @@ handle_taper_result(
 		taper->nb_wait_reply--;
 	    }
 
+	    wtaper->state &= ~TAPER_STATE_RESERVATION;
 	    if (!(wtaper->state & TAPER_STATE_FILE_TO_TAPE) &&
 		!(wtaper->state & TAPER_STATE_DUMP_TO_TAPE) &&
 		!(wtaper->state & TAPER_STATE_VAULT_TO_TAPE)) {
