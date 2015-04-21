@@ -1,4 +1,7 @@
 2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Retry on 429 or 503 error.
+
+2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Set $dumper->{status} to 'retry' on L_RETRY
 
 2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>

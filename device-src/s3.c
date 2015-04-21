@@ -120,9 +120,13 @@
         { 403,  S3_ERROR_RequestTimeTooSkewed,0,                          S3_RESULT_RETRY }, \
         { 409,  S3_ERROR_OperationAborted,   0,                          S3_RESULT_RETRY }, \
         { 412,  S3_ERROR_PreconditionFailed, 0,                          S3_RESULT_RETRY }, \
+        { 429,  0,                           0,                          S3_RESULT_RETRY }, \
         { 500,  S3_ERROR_None,               0,                          S3_RESULT_RETRY }, \
         { 500,  S3_ERROR_InternalError,      0,                          S3_RESULT_RETRY }, \
         { 501,  S3_ERROR_NotImplemented,     0,                          S3_RESULT_RETRY }, \
+        { 503,  S3_ERROR_ServiceUnavailable, 0,                          S3_RESULT_RETRY }, \
+        { 503,  S3_ERROR_SlowDown,           0,                          S3_RESULT_RETRY }, \
+        { 503,  0,                           0,                          S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_COULDNT_CONNECT,      S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_COULDNT_RESOLVE_HOST, S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_PARTIAL_FILE,         S3_RESULT_RETRY }, \
