@@ -940,6 +940,7 @@ sub _handle_dumper_line
         my $dumper = $try->{dumper} ||= {};
 	$dumper->{date}      = $timestamp;
 	$dumper->{level}     = $level;
+	$dumper->{status}    = 'retry';
 	$try->{retry} = 1;
 	$try->{retry_delay} = $info[5];
 	$try->{retry_level} = $info[7];

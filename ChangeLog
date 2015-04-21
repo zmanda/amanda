@@ -1,4 +1,7 @@
 2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report.pm: Set $dumper->{status} to 'retry' on L_RETRY
+
+2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm: Use --no-taper
 
 2015-04-20  Jean-Louis Martineau <martineau@zmanda.com>
