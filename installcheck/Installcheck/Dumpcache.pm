@@ -155,7 +155,7 @@ $flavors{'multi'} = sub {
 
     $append_stuff->();
 
-    ok(!Installcheck::Run::run('amdump', 'TESTCONF', '-otpchanger=', '-otapedev='),
+    ok(Installcheck::Run::run('amdump', 'TESTCONF', '-otpchanger=', '-otapedev=', '--no-taper'),
 	"amdump for 'multi' step 3 (degraded mode)"),
 	or amdump_diag("Amdump run failed for 'multi' step 3 (degraded mode)");
 
