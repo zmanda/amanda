@@ -1,3 +1,6 @@
+2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3.c: Retry on 429 or 503 error.
+
 2015-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am: Do not run the gnutar installcheck
 
