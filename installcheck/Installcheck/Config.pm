@@ -87,6 +87,7 @@ sub new {
 
 	    # These dirs are under CONFIG_DIR just for ease of destruction.
 	    # This is not a recommended layout!
+	    'inparallel' => "2",
 	    'infofile' => "\"$infofile\"",
 	    'logdir' => "\"$logdir\"",
 	    'indexdir' => "\"$indexdir\"",

@@ -67,9 +67,9 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=a
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'cfgerror' => "'$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 10: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'severity' => $Amanda::Message::WARNING,
-		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 9: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
+		'message' => "config warning: '$Amanda::Paths::CONFIG_DIR/TESTCONF/amanda.conf', line 10: warning: Keyword AMRECOVER_DO_FSF is deprecated.",
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
