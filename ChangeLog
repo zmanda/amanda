@@ -1,4 +1,8 @@
 2015-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amflock.c: Cleanup
+	* server-src/cmdfile.c: Retry lock on 1.
+
+2015-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Config.pm: Set inparallel to 2.
 	* installcheck/Amanda_Rest_Configs.pl: Fix for inparallel value.
 

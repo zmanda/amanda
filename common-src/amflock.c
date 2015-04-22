@@ -87,7 +87,7 @@ file_lock_lock(
 {
     int rv = -2;
     int fd = -1;
-    int saved_errno;
+    int saved_errno = 0;
     struct flock lock_buf;
     struct stat stat_buf;
 
@@ -104,6 +104,7 @@ file_lock_lock(
     if (g_hash_table_lookup(locally_locked_files, lock->filename)) {
 	rv = 1;
 	errno = EBUSY;
+	saved_errno = errno;
 	goto done;
     }
 
@@ -111,7 +112,13 @@ file_lock_lock(
      * taken. */
     lock->fd = fd = open(lock->filename, O_CREAT|O_RDWR, 0666);
     if (fd < 0) {
-	rv = -1;
+	saved_errno = errno;
+	g_debug("file_lock_lock open failed: %s", strerror(saved_errno));
+	if (saved_errno == EACCES || saved_errno == EAGAIN) {
+	    rv = 1;
+	} else {
+	    rv = -1;
+	}
 	goto done;
     }
 
@@ -121,15 +128,20 @@ file_lock_lock(
     lock_buf.l_whence = SEEK_SET;
     lock_buf.l_len = 0; /* to EOF */
     if (fcntl(fd, F_SETLK, &lock_buf) < 0) {
-	if (errno == EACCES || errno == EAGAIN)
+	saved_errno = errno;
+	g_debug("file_lock_lock fcntl failed: %s", strerror(saved_errno));
+	if (saved_errno == EACCES || saved_errno == EAGAIN) {
 	    rv = 1;
-	else
+	} else {
 	    rv = -1;
+	}
 	goto done;
     }
 
     /* and read the file in its entirety */
     if (fstat(fd, &stat_buf) < 0) {
+	saved_errno = errno;
+	g_debug("file_lock_lock fstat failed: %s", strerror(saved_errno));
 	rv = -1;
 	goto done;
     }
@@ -137,6 +149,8 @@ file_lock_lock(
     if (!(stat_buf.st_mode & S_IFREG)) {
 	rv = -1;
 	errno = EINVAL;
+	saved_errno = errno;
+	g_debug("file_lock_lock !S_IFREG");
 	goto done;
     }
 
@@ -144,6 +158,8 @@ file_lock_lock(
 	lock->data = g_malloc(stat_buf.st_size+1);
 	lock->len = stat_buf.st_size;
 	if (read_fully(fd, lock->data, lock->len, NULL) < lock->len) {
+            saved_errno = errno;
+            g_debug("file_lock_lock read_fully failed: %s", strerror(saved_errno));
 	    rv = -1;
 	    goto done;
 	}
@@ -159,7 +175,6 @@ file_lock_lock(
     rv = 0;
 
 done:
-    saved_errno = errno;
     g_static_mutex_unlock(&lock_lock);
     if (fd >= 0) /* close and unlock if an error occurred */
 	close(fd);

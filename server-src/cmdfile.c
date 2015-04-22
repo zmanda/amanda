@@ -102,12 +102,17 @@ read_cmdfile(
     pid_t  pids[NB_PIDS];
     pid_t  new_pids[NB_PIDS];
     int    nb_pids = 0;
+    int    result;
 
     cmddatas->lock = file_lock_new(filename);
     cmddatas->cmdfile = g_hash_table_new_full(g_direct_hash, g_direct_equal,
 					      NULL, &free_cmddata);
     // open
-    if (file_lock_lock(cmddatas->lock) != 0) {
+    while ((result = file_lock_lock(cmddatas->lock)) == 1) {
+        sleep(1);
+    }
+    if (result != 0) {
+        g_debug("read_cmdfile open failed: %s", strerror(errno));
     }
 
     if (!cmddatas->lock->data) {
