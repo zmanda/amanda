@@ -80,7 +80,7 @@ if ($command eq 'start') {
 	$Amanda_process->load_ps_table();
 	if ($Amanda_process->process_alive($pid, undef)) {
 	    print "The Amanda Rest Server is already running\n";
-	    exit;
+	    exit 0;
 	}
     }
 
@@ -88,11 +88,11 @@ if ($command eq 'start') {
     if ($port == 0) {
 	debug("The REST-API-PORT must be defined in the global amanda.conf (" . $Amanda::Paths::CONFIG_DIR . "/amanda.conf) and be larger than 1024");
 	print "The REST-API-PORT must be defined in the global amanda.conf (" . $Amanda::Paths::CONFIG_DIR . "/amanda.conf) and be larger than 1024\n";
-	exit;
+	exit 1;
     } elsif ($port < 1024) {
 	debug("The REST-API-PORT must be larger than 1024");
 	print "The REST-API-PORT must be larger than 1024\n";
-	exit;
+	exit 1;
     }
     my @command = ('starman',
 		   '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl',
