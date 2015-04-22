@@ -1,3 +1,6 @@
+2015-04-22  Xu Han <xhan@zmanda.com>
+	* server-src/amanda-rest-server.pl: exit code 1 when start fails
+	
 2015-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amflock.c: Cleanup
 	* server-src/cmdfile.c: Retry lock on 1.

@@ -103,6 +103,11 @@ if ($command eq 'start') {
 		   '--pid', $pid_file);
     debug("running: " . join(' ', @command));
     system(@command);
+    if ($? != 0) {
+        debug("Unable to start Amanda REST server");
+        print "Unable to start Amanda REST server\n";
+        exit 1;
+    }
     print "Started the Amanda Rest Server\n";
 } elsif ($command eq 'stop') {
     if (defined $pid) {
