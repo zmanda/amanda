@@ -438,6 +438,9 @@ REREAD:
 	chomp $line;
 	$line =~ s/[:\s]+$//g; #remove separator at end of line
 	my @line = &quotewords('[:\s]+', 0, $line);
+	if (!defined $line[0]) {
+	    @line = split(/[:\s]+/, $line);
+	}
 	next if !defined $line[0];
 
 	if ($line[0] eq "amdump" || $line[0] eq "amflush" || $line[0] eq "amvault") {
