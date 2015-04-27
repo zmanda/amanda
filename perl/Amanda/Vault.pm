@@ -264,24 +264,26 @@ sub create_status_file {
     print {$self->{status_fh}} "0";
 
     # create timer callback, firing every 5s (=5000msec)
-    $self->{timer} = Amanda::MainLoop::timeout_source($self->{'delay'});
-    $self->{timer}->set_callback(sub {
-	if ($self->{'dst'}{scribe}) {
-	    my $size = $self->{'dst'}->{scribe}->get_bytes_written();
-	    seek $self->{status_fh}, 0, 0;
-	    print {$self->{status_fh}} $size, '     ';
-	    $self->{status_fh}->flush();
+    if (!$self->{'timer'}) {
+	$self->{timer} = Amanda::MainLoop::timeout_source($self->{'delay'});
+	$self->{timer}->set_callback(sub {
+	    if ($self->{'dst'}{scribe}) {
+		my $size = $self->{'dst'}->{scribe}->get_bytes_written();
+		seek $self->{status_fh}, 0, 0;
+		print {$self->{status_fh}} $size, '     ';
+		$self->{status_fh}->flush();
 
-	    if ($self->{'is_tty'}) {
-		$self->user_msg(Amanda::Vault::Message->new(
+		if ($self->{'is_tty'}) {
+		    $self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2500008,
 				severity	=> $Amanda::Message::INFO,
 				bytes_written   => $size));
+	        }
 	    }
-	}
-    });
+	});
+    }
 }
 
 my $ctrl_c = 0;
