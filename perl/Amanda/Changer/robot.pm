@@ -352,6 +352,27 @@ sub _set_current {
     #$state->{'current_slot'}{get_config_name()} = $slot;
 }
 
+sub set_error_to_unknown {
+    my $self  = shift;
+    my %params = @_;
+    my $state;
+    $self->with_locked_state($self->{'state_filename'},
+			     $params{'set_to_unknown_cb'}, sub {
+	my ($state, $set_to_unknown_cb) = @_;
+	for my $slot (keys %{ $state->{'slots'} }) {
+	    if (defined $state->{slots}->{$slot}->{'device_error'} and
+		$state->{slots}->{$slot}->{'device_error'} eq
+		$params{'error_message'}) {
+		$state->{slots}->{$slot}->{'device_status'} = undef;
+		$state->{slots}->{$slot}->{'device_error'} = undef;
+		$state->{slots}->{$slot}->{'label'} = undef;
+		$state->{slots}->{$slot}->{'f_type'} = undef;
+	    }
+	}
+	$set_to_unknown_cb->();
+    });
+}
+
 sub load_unlocked {
     my $self = shift;
     my %params = @_;
