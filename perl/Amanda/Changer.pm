@@ -70,15 +70,15 @@ sub local_message {
     } elsif ($self->{'code'} == 1100018) {
 	return  "Update completed";
     } elsif ($self->{'code'} == 1100019) {
-	return "scanning slot $self->{'slot'}";
+	return "slot $self->{'slot'}: ";
     } elsif ($self->{'code'} == 1100020) {
-	return "Recording volume '$self->{'label'}' in slot $self->{'slot'}";
+	return "Recording label '$self->{'label'}'";
     } elsif ($self->{'code'} == 1100021) {
-	return "Removing entry for slot $self->{'slot'}";
+	return "Slot $self->{'slot'}: Now in unknown state";
     } elsif ($self->{'code'} == 1100022) {
 	return "Slot $self->{'slot'} is already in use";
     } elsif ($self->{'code'} == 1100023) {
-	return "recording device error '$self->{'dev_status'}' in slot $self->{'slot'}";
+	return "Recording device error '$self->{'dev_status'}' in slot $self->{'slot'}";
     } elsif ($self->{'code'} == 1100024) {
 	return "Drive $self->{'drive'}: no such drive in changer";
     } elsif ($self->{'code'} == 1100025) {
@@ -166,6 +166,14 @@ sub local_message {
     } elsif ($self->{'code'} == 1100066) {
 	return "label '$self->{'label'}' already in tapelist and slot file '$self->{'slot_file'}' do not exists";
     } elsif ($self->{'code'} == 1100067) {
+	return "slot '$self->{'slot'}': Does not exist";
+    } elsif ($self->{'code'} == 1100068) {
+	return "slot '$self->{'slot'}': Invalid slot";
+    } elsif ($self->{'code'} == 1100069) {
+	return "slot '$self->{'slot'}': Invalid slots range";
+    } elsif ($self->{'code'} == 1100070) {
+	return "slot '$self->{'slot'}': No slot in error";
+    } elsif ($self->{'code'} == 1100071) {
 	return "";
 
     } elsif ($self->{'code'} == 1150000) {

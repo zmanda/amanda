@@ -1311,6 +1311,18 @@ sub update_unlocked {
 	    $params{'changed'} = $1;
 	    $set_to_unknown = 1;
 	    $steps->{'calculate_slots'}->($steps->{'set_to_unknown'});
+	} elsif (!defined $params{'changed'}) {
+	    $steps->{'calculate_slots'}->($steps->{'update_slot'});
+	} elsif ($params{'changed'} and
+		 $params{'changed'} =~ /^.+=.+$/) {
+	    my ($slot, $label) = ($params{'changed'} =~ /^(.+)=(.+)$/);
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100068,
+			severity => $Amanda::Message::ERROR,
+			slot => $slot));
+	    return $params{'finished_cb'}->(undef);
 	} else {
 	    $steps->{'calculate_slots'}->($steps->{'update_slot'});
 	}
@@ -1322,10 +1334,41 @@ sub update_unlocked {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
 	    for my $range (split ',', $params{'changed'}) {
-		my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
-		$last = $first unless defined($last);
-		for ($first .. $last) {
-		    $changed{$_} = undef;
+		if ($range eq 'error') {
+		    my $error_range;
+		    while (my ($sl, $inf) = each %{$state->{'slots'}}) {
+			if (defined $inf->{'device_status'} &&
+			    $inf->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
+			    $error_range++;
+			    $changed{$sl} = undef;
+			}
+		    }
+
+		    if (!defined $error_range) {
+			$user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100070,
+				severity => $Amanda::Message::SUCCESS,
+				reason => "unknown",
+				slot => $range));
+		    }
+		} else {
+		    my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
+		    $last = $first unless defined($last);
+		    if (defined $first and
+			$first =~ /^\d+$/ and $last =~ /^\d+$/) {
+			for ($first .. $last) {
+			    $changed{$_} = undef;
+			}
+		    } else {
+			$user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => ($range =~ /\-/ ? 1100069 : 1100068),
+				severity => $Amanda::Message::ERROR,
+				slot => $range));
+		    }
 		}
 	    }
 
@@ -1341,6 +1384,10 @@ sub update_unlocked {
 	@slots_to_check = grep { $state->{'slots'}->{$_}->{'state'} == Amanda::Changer::SLOT_FULL} @slots_to_check;
 	@slots_to_check = sort { $a <=> $b } @slots_to_check;
 
+	if (@slots_to_check == 0) {
+	    return $steps->{'done'}->() if (!@slots_to_check);
+	}
+
 	$update_slot_cb->();
     };
 
@@ -1352,21 +1399,19 @@ sub update_unlocked {
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code  => 1100021,
-			severity => $Amanda::Message::INFO,
+			severity => $Amanda::Message::SUCCESS,
 			slot  => $slot));
-	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
-	    $state->{'slots'}->{$slot}->{'label'} = undef;
-	    $state->{'slots'}->{$slot}->{'device_status'} = undef;
-	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
-	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
-	    if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
-		my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
-		$state->{'drives'}->{$drive}->{'label'} = undef;
-		$state->{'drives'}->{$drive}->{'state'} =
+	$state->{'slots'}->{$slot}->{'label'} = undef;
+	$state->{'slots'}->{$slot}->{'device_status'} = undef;
+	$state->{'slots'}->{$slot}->{'device_error'} = undef;
+	$state->{'slots'}->{$slot}->{'f_type'} = undef;
+	if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
+	    my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
+	    $state->{'drives'}->{$drive}->{'label'} = undef;
+	    $state->{'drives'}->{$drive}->{'state'} =
 					Amanda::Changer::SLOT_FULL;
-	    }
 	}
-	$steps->{'set_to_unknown'}->();
+	return $steps->{'set_to_unknown'}->();
     };
 
     # TODO: parallelize this if multiple drives are available
@@ -1397,6 +1442,28 @@ sub update_unlocked {
 
 	# load() already fixed up the metadata, so just release; but we have to
 	# be careful to do an unlocked release.
+	my $slot = $res->{'this_slot'};
+	my $dev = $res->{device};
+	if ($dev->status() == $DEVICE_STATUS_SUCCESS) {
+	    my $label = $dev->volume_label;
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100020,
+			severity => $Amanda::Message::SUCCESS,
+			slot  => $slot,
+			label => $label));
+	} else {
+	    my $status = $dev->error_or_status;
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100023,
+			severity => $Amanda::Message::SUCCESS,
+			slot  => $slot,
+			dev_status => $status));
+	}
+
 	$res->release(
 	    finished_cb => $steps->{'released'},
 	    unlocked => 1,

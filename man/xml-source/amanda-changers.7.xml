@@ -309,6 +309,10 @@ load the tape.
 amtape CONFIG update 1-3,9=
 </programlisting>
 In this case, the changer marks the stated slots as an unknown state.
+<programlisting>
+amtape CONFIG update error=
+</programlisting>
+In this case, the changer marks all slot in error as an unknown state.
 </para>
 
 </refsect3>
@@ -442,6 +446,10 @@ load the tape.
 amtape CONFIG update 1-3,9=
 </programlisting>
 In this case, the changer marks the stated slots as an unknown state.
+<programlisting>
+amtape CONFIG update error=
+</programlisting>
+In this case, the changer marks all slot in error as an unknown state.
 </para>
 
 </refsect3>

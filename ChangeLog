@@ -1,4 +1,14 @@
 2015-04-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Add new messages.
+	* perl/Amanda/Changer/multi.pm (update): Allow 'error' for the slot
+	  range.
+	* perl/Amanda/Changer/robot.pm (update): Allow 'error' for the slot
+	  range.
+	* installcheck/Amanda_Changer_robot.pl: Fix.
+	* server-src/amtape.pl: Fix for new messages.
+	* man/xml-source/amanda-changers.7.xml: Add error keyword.
+
+2015-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm (set_error_to_unknown): New function
 	  that allow the tapescan to reset all slots with given error.
 

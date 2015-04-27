@@ -644,6 +644,8 @@ subcommand("update", "update [WHAT]", "update the changer's state; see changer d
 sub {
     my ($finished_cb, @args) = @_;
     my @changed_args;
+    my $got_success;
+    my $got_error;
 
     my ($storage, $chg) = load_changer($finished_cb) or return;
 
@@ -652,7 +654,13 @@ sub {
     }
     $chg->update(@changed_args,
 	user_msg_fn => sub {
-	    print STDERR "$_[0]\n";
+	    if ($_[0]->{'code'} == 1100019) {
+		print STDERR "$_[0]";
+	    } else {
+		print STDERR "$_[0]\n";
+	    }
+	    $got_success++ if $_[0]->{'severity'} eq $Amanda::Message::SUCCESS;
+	    $got_error++ if $_[0]->{'severity'} eq $Amanda::Message::ERROR;
 	},
 	finished_cb => sub {
 	    my ($err) = @_;
@@ -660,7 +668,8 @@ sub {
 	    $chg->quit();
 	    return failure($err, $finished_cb) if $err;
 
-	    print STDERR "update complete\n";
+	    print STDERR "update complete\n" if $got_success;
+	    print STDERR "update failed\n" if !$got_success;
 	    $finished_cb->();
 	});
 });

@@ -320,19 +320,19 @@ sub update {
     step handle_assignment => sub {
 	$state = $params{state};
 	# check for the SL=LABEL format, and handle it here
-	if (defined $params{'changed'} and
-	    $params{'changed'} =~ /^\d+=\S+$/) {
+	if (defined $params{'changed'} and $params{'changed'} =~ /^\d+=\S+$/) {
 	    my ($slot, $label) = ($params{'changed'} =~ /^(\d+)=(\S+)$/);
 
 	    # let's list the reasons we *can't* do what the user has asked
-	    my $whynot;
 	    if (!exists $self->{unaliased}->{$slot}) {
-		$whynot = "slot $slot does not exist";
-	    }
-
-	    if ($whynot) {
-		return $self->make_error("failed", $params{'finished_cb'},
-			reason => "unknown", message => $whynot);
+		$user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100067,
+			severity => $Amanda::Message::ERROR,
+			reason => "unknown",
+			slot => $slot));
+		return $params{'finished_cb'}->();
 	    }
 
 	    $user_msg_fn->(Amanda::Changer::Message->new(
@@ -360,6 +360,18 @@ sub update {
 	    $params{'changed'} = $1;
 	    $set_to_unknown = 1;
 	    $steps->{'calculate_slots'}->();
+	} elsif (!defined $params{'changed'}) {
+	    $steps->{'calculate_slots'}->();
+	} elsif ($params{'changed'} and
+		 $params{'changed'} =~ /^.+=.+$/) {
+	    my ($slot, $label) = ($params{'changed'} =~ /^(.+)=(.+)$/);
+	    $user_msg_fn->(Amanda::Changer::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code  => 1100068,
+			severity => $Amanda::Message::ERROR,
+			slot => $slot));
+	    return $params{'finished_cb'}->(undef);
 	} else {
 	    $steps->{'calculate_slots'}->();
 	}
@@ -370,10 +382,43 @@ sub update {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
 	    for my $range (split ',', $params{'changed'}) {
-		my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
-		$last = $first unless defined($last);
-		for ($first .. $last) {
-		    $changed{$_} = undef;
+		if ($range eq 'error') {
+		    my $error_range;
+		    foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
+			my $slot = "$_";
+			my $unaliased = $self->{unaliased}->{$slot};
+			if (defined $state->{slots}->{$unaliased} and
+			    defined $state->{slots}->{$unaliased}->{device_status} and
+			    $state->{slots}->{$unaliased}->{device_status} != $DEVICE_STATUS_SUCCESS) {
+			    $error_range++;
+			    $changed{$slot} = undef;
+			}
+		    }
+		    if (!defined $error_range) {
+			$user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => 1100070,
+				severity => $Amanda::Message::SUCCESS,
+				reason => "unknown",
+				slot => $range));
+		    }
+		} else {
+		    my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
+		    $last = $first unless defined($last);
+		    if (defined $first and
+			$first =~ /^\d+$/ and $last =~ /^\d+$/) {
+			for ($first .. $last) {
+			    $changed{$_} = undef;
+			}
+		    } else {
+			$user_msg_fn->(Amanda::Changer::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code  => ($range =~ /\-/ ? 1100069 : 1100068),
+				severity => $Amanda::Message::ERROR,
+				slot => $range));
+		    }
 		}
 	    }
 
@@ -384,7 +429,7 @@ sub update {
 	}
 
 	# sort them so we don't confuse the user with a "random" order
-	@slots_to_check = sort @slots_to_check;
+	@slots_to_check = sort { $a <=> $b } @slots_to_check;
 
 	$steps->{'update_slot'}->();
     };
@@ -409,7 +454,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100021,
-				severity => $Amanda::Message::INFO,
+				severity => $Amanda::Message::SUCCESS,
 				slot  => $slot));
 	    my $unaliased = $self->{unaliased}->{$slot};
 	    delete $state->{slots}->{$unaliased};
@@ -442,7 +487,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100020,
-				severity => $Amanda::Message::INFO,
+				severity => $Amanda::Message::SUCCESS,
 				slot  => $slot,
 				label => $label));
 	} else {
@@ -451,7 +496,7 @@ sub update {
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code  => 1100023,
-				severity => $Amanda::Message::INFO,
+				severity => $Amanda::Message::SUCCESS,
 				slot  => $slot,
 				dev_status => $status));
 	}
