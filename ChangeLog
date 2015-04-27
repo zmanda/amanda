@@ -1,4 +1,7 @@
 2015-04-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Fix status.
+
+2015-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer.pm: Add new messages.
 	* perl/Amanda/Changer/multi.pm (update): Allow 'error' for the slot
 	  range.

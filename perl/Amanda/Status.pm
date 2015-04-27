@@ -822,11 +822,13 @@ REREAD:
 			my $dlet = $dle->{'storage'}->{$storage_name};
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_WILL_RETRY and
+			    $dle->{'status'} != $DUMP_FAILED and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    die ("bad status on taper PORT-WRITE (dumper): $dle->{'status'}");
 			}
 			if ($dlet->{'status'} and
 			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
+			    $dlet->{'status'} != $DUMP_FAILED and
 			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED and
 			    $dlet->{'status'} != $DUMP_WILL_RETRY) {
 			    die ("bad status on taper PORT-WRITE (taper): $dlet->{'status'}");
