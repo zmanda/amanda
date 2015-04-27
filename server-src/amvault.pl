@@ -609,19 +609,21 @@ sub xfer_dumps {
 	$size = $current->{'dump'}->{'bytes'} if exists $current->{'dump'}->{'bytes'};
 	$xfer->start($steps->{'handle_xmsg'}, 0, $size);
 
-	$self->{'timer'} = Amanda::MainLoop::timeout_source($self->{'delay'});
-	$self->{'timer'}->set_callback(sub {
-	    my $size = $dst->{'scribe'}->get_bytes_written();
-	    if ($self->{'is_tty'}) {
-		if (!$self->{'last_is_size'}) {
-		    print STDERR "\n";
-		    $self->{'last_is_size'} = 1;
+	if (!$self->{'timer'}) {
+	    $self->{'timer'} = Amanda::MainLoop::timeout_source($self->{'delay'});
+	    $self->{'timer'}->set_callback(sub {
+		my $size = $dst->{'scribe'}->get_bytes_written();
+		if ($self->{'is_tty'}) {
+		    if (!$self->{'last_is_size'}) {
+			print STDERR "\n";
+			$self->{'last_is_size'} = 1;
+		    }
+	            print STDERR "\r" . int($size/1024) . " kb ";
+		} else {
+		    debug("WRITTEN SIZE: " . int($size/1024) . " kb");
 		}
-	        print STDERR "\r" . int($size/1024) . " kb ";
-	    } else {
-		debug("WRITTEN SIZE: " . int($size/1024) . " kb");
-	    }
-	});
+	    });
+	}
 
 	# count the "threads" running here (clerk and scribe)
 	$n_threads = 2;

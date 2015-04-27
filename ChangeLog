@@ -1,4 +1,7 @@
 2015-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Create timer once.
+
+2015-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Abort a restore if application fail.
 
 2015-04-21  Jean-Louis Martineau <martineau@zmanda.com>
