@@ -2919,6 +2919,8 @@ read_amidxtaped_data(
     void *	buf,
     ssize_t	size)
 {
+    size_t count;
+
     ctl_data_t *ctl_data = (ctl_data_t *)cookie;
     assert(cookie != NULL);
 
@@ -3027,10 +3029,12 @@ read_amidxtaped_data(
 	}
 
 	/* Only the data is sent to the child */
-	/*
-	 * We ignore errors while writing to the index file.
-	 */
-	(void)full_write(ctl_data->child_in[1], buf, (size_t)size);
+	count = full_write(ctl_data->child_in[1], buf, (size_t)size);
+	if (count != (size_t)size) {
+	    g_debug("Failed to write to application: %s", strerror(errno));
+	    g_printf("Failed to write to application: %s\n", strerror(errno));
+	    stop_amidxtaped();
+	}
 	crc32_add((uint8_t *)buf, size, &crc_in);
     }
 }

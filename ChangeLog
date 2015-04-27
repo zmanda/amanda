@@ -1,4 +1,7 @@
 2015-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Abort a restore if application fail.
+
+2015-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Improve parsing if a line is misquoted.
 
 2015-04-22  Xu Han <xhan@zmanda.com>
