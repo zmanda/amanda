@@ -319,10 +319,22 @@ sub update {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
 	    for my $range (split ',', $params{'changed'}) {
-		my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
-		$last = $first unless defined($last);
-		for ($first .. $last) {
-		    $changed{$_} = undef;
+		if ($range eq 'error') {
+		    foreach ($self->{first_slot} .. ($self->{last_slot} - 1)) {
+			my $slot = "$_";
+			my $unaliased = $self->{unaliased}->{$slot};
+			if (defined $state->{slots}->{$unaliased} and
+			    defined $state->{slots}->{$unaliased}->{device_status} and
+			    $state->{slots}->{$unaliased}->{device_status} != $DEVICE_STATUS_SUCCESS) {
+			    $changed{$slot} = undef;
+			}
+		    }
+		} else {
+		    my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
+		    $last = $first unless defined($last);
+		    for ($first .. $last) {
+			$changed{$_} = undef;
+		    }
 		}
 	    }
 

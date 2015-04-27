@@ -1267,10 +1267,19 @@ sub update_unlocked {
 	    # parse the string just like use-slots, using a hash for uniqueness
 	    my %changed;
 	    for my $range (split ',', $params{'changed'}) {
-		my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
-		$last = $first unless defined($last);
-		for ($first .. $last) {
-		    $changed{$_} = undef;
+		if ($range eq 'error') {
+		    while (my ($sl, $inf) = each %{$state->{'slots'}}) {
+			if (defined $inf->{'device_status'} &&
+			    $inf->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
+			    $changed{$sl} = undef;
+			}
+		    }
+		} else {
+		   my ($first, $last) = ($range =~ /(\d+)(?:-(\d+))?/);
+		   $last = $first unless defined($last);
+		   for ($first .. $last) {
+			$changed{$_} = undef;
+		    }
 		}
 	    }
 
@@ -1294,17 +1303,15 @@ sub update_unlocked {
 
 	my $slot = shift @slots_to_check;
 	$user_msg_fn->("Removing entry for slot $slot");
-	if (!defined $state->{'slots'}->{$slot}->{'barcode'}) {
-	    $state->{'slots'}->{$slot}->{'label'} = undef;
-	    $state->{'slots'}->{$slot}->{'device_status'} = undef;
-	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
-	    $state->{'slots'}->{$slot}->{'f_type'} = undef;
-	    if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
-		my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
-		$state->{'drives'}->{$drive}->{'label'} = undef;
-		$state->{'drives'}->{$drive}->{'state'} =
+	$state->{'slots'}->{$slot}->{'label'} = undef;
+	$state->{'slots'}->{$slot}->{'device_status'} = undef;
+	$state->{'slots'}->{$slot}->{'device_error'} = undef;
+	$state->{'slots'}->{$slot}->{'f_type'} = undef;
+	if (defined $state->{'slots'}->{$slot}->{'loaded_in'}) {
+	    my $drive = $state->{'slots'}->{$slot}->{'loaded_in'};
+	    $state->{'drives'}->{$drive}->{'label'} = undef;
+	    $state->{'drives'}->{$drive}->{'state'} =
 					Amanda::Changer::SLOT_FULL;
-	    }
 	}
 	$steps->{'set_to_unknown'}->();
     };
