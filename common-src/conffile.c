@@ -6561,7 +6561,7 @@ update_derived_values(
 
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	    if (!lookup_storage(il->data)) {
-		conf_parserror(_("storage '%s' is not defined"), tokenval.v.s);
+		conf_parserror(_("storage '%s' is not defined"), (char *)il->data);
 	    }
 	}
 

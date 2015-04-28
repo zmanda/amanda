@@ -1,4 +1,7 @@
 2015-04-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix wrong variable.
+
+2015-04-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl (backup): Create an archive directory
 	  with the same permission as the data directory.
 
