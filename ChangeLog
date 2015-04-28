@@ -1,3 +1,7 @@
+2015-04-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl (backup): Create an archive directory
+	  with the same permission as the data directory.
+
 2015-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/multi.pm (update): Allow 'error' for the slot
 	  range.

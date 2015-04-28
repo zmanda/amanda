@@ -810,6 +810,10 @@ sub _base_backup {
 	   '--directory', $self->{'props'}->{'pg-archivedir'},
 	   '--transform', "s,^,$_ARCHIVE_DIR_RESTORE/,S",
 	   @wal_files);
+       $size += _run_tar_totals($self, '--file', "-",
+	   '--directory', $self->{'props'}->{'pg-archivedir'},
+	   '--transform', "s,^,$_ARCHIVE_DIR_RESTORE/,S",
+	   '--no-recursion', '.');
    } else {
        my $dummydir = $self->_make_dummy_dir_base();
        $self->{'done_cb'}->(_run_tar_totals($self, '--file', '-',
