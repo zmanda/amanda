@@ -1,3 +1,8 @@
+2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c (progress_function): Fail on timeout.
+	* device-src/s3.c (RESULT_HANDLING_ALWAYS_RETRY): Add
+	  CURLE_ABORTED_BY_CALLBACK.
+
 2015-04-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl (backup): Create an archive directory
 	  with the same permission as the data directory.

@@ -81,6 +81,7 @@ struct _S3_by_thread {
     char volatile * volatile     errmsg;	/* device error message */
     GMutex			*now_mutex;
     guint64			 dlnow, ulnow;
+    time_t			 timeout;
 };
 
 struct _S3Device {
@@ -2591,13 +2592,28 @@ static int progress_func(
     double ulnow)
 {
     S3_by_thread *s3t = (S3_by_thread *)thread_data;
+    time_t now = time(NULL);
+    int ret = 0;
+    guint64 lnow;
 
     g_mutex_lock(s3t->now_mutex);
-    s3t->dlnow = dlnow;
-    s3t->ulnow = ulnow;
+    lnow = dlnow;
+    if (s3t->dlnow != lnow) {
+	s3t->dlnow = lnow;
+	s3t->timeout = now;
+    }
+    lnow = ulnow;
+    if (s3t->ulnow != lnow) {
+	s3t->ulnow = lnow;
+	s3t->timeout = now;
+    }
+    if (s3t->timeout> 0 && now > s3t->timeout) {
+	g_debug("progress_func timeout");
+	ret = -1;
+    }
     g_mutex_unlock(s3t->now_mutex);
 
-    return 0;
+    return ret;
 }
 
 static DeviceStatusFlags
@@ -3002,6 +3018,9 @@ s3_thread_write_block(
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
 
+    g_mutex_lock(s3t->now_mutex);
+    s3t->timeout = time(NULL) + 300;
+    g_mutex_unlock(s3t->now_mutex);
     result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
 		       S3_BUFFER_READ_FUNCS, (CurlBuffer *)&s3t->curl_buffer,
 		       progress_func, s3t);
@@ -3404,6 +3423,9 @@ s3_thread_read_block(
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
 
+    g_mutex_lock(s3t->now_mutex);
+    s3t->timeout = time(NULL) + 300;
+    g_mutex_unlock(s3t->now_mutex);
     result = s3_read(s3t->s3, self->bucket, (char *)s3t->filename,
 	S3_BUFFER_WRITE_FUNCS,
 	(CurlBuffer *)&s3t->curl_buffer, progress_func, s3t);
