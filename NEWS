@@ -1,3 +1,7 @@
+Changes in release 3.3.8
+    * s3 device
+	o new NEARLINE S3-STORAGE-CLASS for Google storage.
+
 Changes in release 3.3.7
     * amvault
 	o new --no-interactivity argument.

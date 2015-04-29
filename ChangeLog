@@ -1,4 +1,8 @@
 2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: ADD NEARLINE storage.
+	* man/xml-source/amanda-devices.7.xml: Document NEARLINE storage.
+
+2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c (progress_function): Fail on timeout.
 	* device-src/s3.c (RESULT_HANDLING_ALWAYS_RETRY): Add
 	  CURLE_ABORTED_BY_CALLBACK.

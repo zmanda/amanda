@@ -528,11 +528,24 @@ for the most up-to-date list.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_STORAGE_CLASS</term><listitem>
-(read-write) Storage class for new objects, currently one of "STANDARD" (the default)
-or "REDUCED_REDUNDANCY" (cheaper, but less redundant).  See
-<ulink url="http://docs.amazonwebservices.com/AmazonS3/latest/dev/index.html?DataDurability.html" />
-for the most up-to-date list.
-It can be "DURABLE_REDUCED_AVAILABILITY" for GOOGLE storage.
+(read-write) Storage class for new objects.
+<variablelist remap='TP'>
+<varlistentry>
+<term>S3 compatible</term>
+<programlisting>
+    STANDARD
+    REDUCED_REDUNDANCY
+</programlisting>
+</varlistentry>
+<varlistentry>
+<term>Google storage</term>
+<programlisting>
+    STANDARD
+    DURABLE_REDUCED_AVAILABILITY
+    NEARLINE
+</programlisting>
+</varlistentry>
+</variablelist>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_SSL</term><listitem>
