@@ -1,4 +1,7 @@
 2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c: Fix progress_func and set timeout to 0.
+
+2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: ADD NEARLINE storage.
 	* man/xml-source/amanda-devices.7.xml: Document NEARLINE storage.
 

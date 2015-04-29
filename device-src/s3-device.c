@@ -2650,6 +2650,7 @@ setup_handle(S3Device * self) {
 	    self->s3t[thread].filename = NULL;
 	    self->s3t[thread].curl_buffer.buffer = NULL;
 	    self->s3t[thread].curl_buffer.buffer_len = 0;
+	    self->s3t[thread].timeout = 0;
 	    self->s3t[thread].now_mutex = g_mutex_new();
             self->s3t[thread].s3 = s3_open(self->access_key, self->secret_key,
 					   self->session_token,
@@ -2821,14 +2822,18 @@ static int progress_func(
     lnow = dlnow;
     if (s3t->dlnow != lnow) {
 	s3t->dlnow = lnow;
-	s3t->timeout = now;
+        if (s3t->timeout > 0) {
+	    s3t->timeout = now + 300;
+        }
     }
     lnow = ulnow;
     if (s3t->ulnow != lnow) {
 	s3t->ulnow = lnow;
-	s3t->timeout = now;
+        if (s3t->timeout > 0) {
+	    s3t->timeout = now + 300;
+        }
     }
-    if (s3t->timeout> 0 && now > s3t->timeout) {
+    if (s3t->timeout > 0 && now > s3t->timeout) {
 	g_debug("progress_func timeout");
 	ret = -1;
     }
@@ -3378,6 +3383,9 @@ s3_thread_write_block(
 				S3_BUFFER_READ_FUNCS,
 				(CurlBuffer *)&s3t->curl_buffer,
 				progress_func, s3t);
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = 0;
+	g_mutex_unlock(s3t->now_mutex);
     } else {
 	g_mutex_lock(s3t->now_mutex);
 	s3t->timeout = time(NULL) + 300;
@@ -3387,6 +3395,9 @@ s3_thread_write_block(
 			   S3_BUFFER_READ_FUNCS,
 			   (CurlBuffer *)&s3t->curl_buffer,
 			   progress_func, s3t);
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = 0;
+	g_mutex_unlock(s3t->now_mutex);
     }
     g_free((void *)s3t->filename);
     g_free((void *)s3t->uploadId);
@@ -4209,6 +4220,9 @@ s3_thread_read_block(
 			       s3_buffer_write_func, s3_buffer_reset_func,
 			       (CurlBuffer *)&s3t->curl_buffer,
 			       progress_func, s3t);
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = 0;
+	g_mutex_unlock(s3t->now_mutex);
     } else {
 	g_mutex_lock(s3t->now_mutex);
 	s3t->timeout = time(NULL) + 300;
@@ -4217,6 +4231,9 @@ s3_thread_read_block(
 			 s3_buffer_write_func, s3_buffer_reset_func,
 			 (CurlBuffer *)&s3t->curl_buffer,
 			 progress_func, s3t);
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = 0;
+	g_mutex_unlock(s3t->now_mutex);
     }
 
     if (s3t->curl_buffer.mutex) {
