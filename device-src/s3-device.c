@@ -2813,13 +2813,28 @@ static int progress_func(
     double ulnow)
 {
     S3_by_thread *s3t = (S3_by_thread *)thread_data;
+    time_t now = time(NULL);
+    int ret = 0;
+    guint64 lnow;
 
     g_mutex_lock(s3t->now_mutex);
-    s3t->dlnow = dlnow;
-    s3t->ulnow = ulnow;
+    lnow = dlnow;
+    if (s3t->dlnow != lnow) {
+	s3t->dlnow = lnow;
+	s3t->timeout = now;
+    }
+    lnow = ulnow;
+    if (s3t->ulnow != lnow) {
+	s3t->ulnow = lnow;
+	s3t->timeout = now;
+    }
+    if (s3t->timeout> 0 && now > s3t->timeout) {
+	g_debug("progress_func timeout");
+	ret = -1;
+    }
     g_mutex_unlock(s3t->now_mutex);
 
-    return 0;
+    return ret;
 }
 
 static DeviceStatusFlags
@@ -3355,12 +3370,18 @@ s3_thread_write_block(
     char *etag = NULL;
 
     if (s3t->uploadId) {
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = time(NULL) + 300;
+	g_mutex_unlock(s3t->now_mutex);
 	result = s3_part_upload(s3t->s3, self->bucket, (char *)s3t->filename,
 				(char *)s3t->uploadId, s3t->partNumber, &etag,
 				S3_BUFFER_READ_FUNCS,
 				(CurlBuffer *)&s3t->curl_buffer,
 				progress_func, s3t);
     } else {
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = time(NULL) + 300;
+	g_mutex_unlock(s3t->now_mutex);
 	result = s3_upload(s3t->s3, self->bucket, (char *)s3t->filename,
 			   self->chunked,
 			   S3_BUFFER_READ_FUNCS,
@@ -4180,12 +4201,18 @@ s3_thread_read_block(
     gboolean result;
 
     if (s3t->range_max > 0) {
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = time(NULL) + 300;
+	g_mutex_unlock(s3t->now_mutex);
 	result = s3_read_range(s3t->s3, self->bucket, (char *)s3t->filename,
 			       s3t->range_min, s3t->range_max,
 			       s3_buffer_write_func, s3_buffer_reset_func,
 			       (CurlBuffer *)&s3t->curl_buffer,
 			       progress_func, s3t);
     } else {
+	g_mutex_lock(s3t->now_mutex);
+	s3t->timeout = time(NULL) + 300;
+	g_mutex_unlock(s3t->now_mutex);
 	result = s3_read(s3t->s3, self->bucket, (char *)s3t->filename,
 			 s3_buffer_write_func, s3_buffer_reset_func,
 			 (CurlBuffer *)&s3t->curl_buffer,

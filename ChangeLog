@@ -1,3 +1,9 @@
+2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c (progress_function): Fail on timeout.
+	* device-src/s3-device.h (_S3_by_thread): Add tiemout.
+	* device-src/s3.c (RESULT_HANDLING_ALWAYS_RETRY): Add
+	  CURLE_ABORTED_BY_CALLBACK.
+
 2015-04-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix wrong variable.
 

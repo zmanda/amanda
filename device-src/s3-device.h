@@ -68,6 +68,7 @@ struct _S3_by_thread {
     char                *errmsg;	/* device error message */
     GMutex		*now_mutex;
     guint64		 dlnow, ulnow;
+    time_t		 timeout;
 };
 
 struct _S3Device {

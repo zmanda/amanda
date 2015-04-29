@@ -134,6 +134,7 @@
         { 0,    0,                           CURLE_SSL_CONNECT_ERROR,    S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_SEND_ERROR,           S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_RECV_ERROR,           S3_RESULT_RETRY }, \
+        { 0,    0,                           CURLE_ABORTED_BY_CALLBACK,  S3_RESULT_RETRY }, \
         { 0,    0,                           CURLE_GOT_NOTHING,          S3_RESULT_RETRY }, \
         { 0,    0,                           AMAMDA_CURLE_SSL_CACERT_BADFILE,   S3_RESULT_RETRY }
 
