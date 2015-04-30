@@ -33,6 +33,7 @@
     <arg choice='opt'><option>-p</option></arg>
     <arg choice='opt'><option>-r</option></arg>
     <arg choice='opt'><option>-v</option></arg>
+    <arg choice='opt'><option>--note <replaceable>string</replaceable></option></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -86,6 +87,13 @@ child.</para>
   <term><option>-v</option></term>
   <listitem>
    <para>Generate verbose output.  This options is passed to amcleanupdisk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--note</option> <replaceable>string</replaceable></term>
+  <listitem>
+   <para>Add the <replaceable>string</replaceable> to the log files, it
+will show up in the NOTES section of the report.</para>
   </listitem>
   </varlistentry>
 </variablelist>

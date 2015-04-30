@@ -50,7 +50,7 @@ use constant COLSPEC_FORMAT    => 5;    # sprintf format
 use constant COLSPEC_TITLE     => 6;    # column title
 
 use constant PROGRAM_ORDER =>
-  qw(amdump planner amflush amvault driver dumper chunker taper reporter);
+  qw(amcleanup amdump planner amflush amvault driver dumper chunker taper reporter);
 
 
 ## helper functions

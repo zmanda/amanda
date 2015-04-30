@@ -36,9 +36,10 @@ my $kill_enable=0;
 my $process_alive=0;
 my $verbose=0;
 my $clean_holding=0;
+my @notes;
 
 sub usage() {
-    print "Usage: amcleanup [-k] [-v] [-p] [-r] conf\n";
+    print "Usage: amcleanup [-k] [-v] [-p] [-r] [--note 'STRING']* conf\n";
     exit 1;
 }
 
@@ -55,6 +56,7 @@ GetOptions(
     'v' => \$verbose,
     'r' => \$clean_holding,
     'help|usage' => \&usage,
+    'note=s'     => \@notes,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
@@ -89,11 +91,15 @@ if ( ! -d "$CONFIG_DIR/$config_name" ) {
     die "Configuration directory '$CONFIG_DIR/$config_name' is not a directory\n";
 }
 
+if (!@notes) {
+    @notes = ("Aborted by amcleanup");
+}
 my $cleanup = Amanda::Cleanup->new(kill          => $kill_enable,
 				   process_alive => $process_alive,
 				   verbose	 => $verbose,
 				   clean_holding => $clean_holding,
-				   user_message  => \&user_message);
+				   user_message  => \&user_message,
+				   notes         => \@notes);
 my $result_messages = $cleanup->cleanup();
 
 foreach my $message (@{$result_messages}) {

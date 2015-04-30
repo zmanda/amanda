@@ -625,6 +625,9 @@ sub read_line
     } elsif ( $prog == $P_REPORTER ) {
         return $self->_handle_reporter_line( $type, $str );
 
+    } elsif ( $prog == $P_AMCLEANUP ) {
+        return $self->_handle_amcleanup_line( $type, $str );
+
     } else {
         return $self->_handle_bogus_line( $prog, $type, $str );
     }
@@ -1299,6 +1302,27 @@ sub _handle_fetchdump_line
 
     } else {
         return $self->_handle_bogus_line( $P_AMCHECKDUMP, $type, $str );
+    }
+}
+
+
+sub _handle_amcleanup_line
+{
+    my $self = shift;
+    my ( $type, $str ) = @_;
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $programs = $data->{programs};
+    my $amdump = $programs->{amcleanup} ||= {};
+
+    if ( $type == $L_INFO ) {
+        $self->_handle_info_line("amcleanup", $str);
+
+    } elsif ( $type == $L_ERROR ) {
+        $self->_handle_error_line("amcleanup", $str);
+
+    } else {
+        return $self->_handle_bogus_line( $P_AMCLEANUP, $type, $str );
     }
 }
 

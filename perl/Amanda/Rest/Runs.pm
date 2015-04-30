@@ -396,6 +396,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
         kill=0|1
         alive=0|1
         clean_holding=0|1
+	note=note1          # can be repeated
 
  reply:
   HTTP status: 200 Ok
@@ -1008,7 +1009,7 @@ sub list {
 sub kill {
     my %params = @_;
 
-    Amanda::Util::set_pname("Amanda::Rest::Runs");
+    Amanda::Util::set_pname("amcleanup");
     my @result_messages = Amanda::Rest::Configs::config_init(@_);
     return \@result_messages if @result_messages;
 
@@ -1028,13 +1029,25 @@ sub kill {
 			code             => 3400010,
 			severity         => $Amanda::Message::ERROR);
     } else {
+	my @notes;
+	if (defined $params{'notes'}) {
+	    if (ref($params{'notes'}) eq 'ARRAY') {
+	        @notes = @{$params{'notes'}};
+	    } else {
+		@notes = ( $params{'notes'} );
+	    }
+	}
+	if (!@notes) {
+	    @notes = ("Aborted by deleting the run from the REST API");
+	}
 	foreach my $trace_log (@trace_logs) {
 	    my $cleanup = Amanda::Cleanup->new(
 				trace_log     => $trace_log,
 				kill          => $params{'kill'},
 				process_alive => $params{'alive'},
 				verbose       => $params{'verbose'},
-				clean_holding => $params{'clean_holding'});
+				clean_holding => $params{'clean_holding'},
+				notes         => \@notes);
 	    my $result = $cleanup->cleanup();
 	    if ($result) {
 		push @result_messages, @{$result};

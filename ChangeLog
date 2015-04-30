@@ -1,3 +1,14 @@
+2015-04-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Cleanup.pm: Log the notes
+	* perl/Amanda/Report.pm: Parse amcleanup log line
+	* perl/Amanda/Report/human.pm (PROGRAM_ORDER): Add amcleanup
+	* perl/Amanda/Rest/Runs.pmi (kill): Accept notes argument
+	* server-src/amcleanup.pl: Add --note argument
+	* server-src/logfile.h (logtype_e): Add P_AMCLEANUP
+	* server-src/logfile.c (logtype_str): Add "amcleanup"
+	* perl/Amanda/Logfile.swg: Add P_AMCLEANUP
+	* man/xml-source/amcleanup.8.xml: Document --note argument
+
 2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix progress_func and set timeout to 0.
 

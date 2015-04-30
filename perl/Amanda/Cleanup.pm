@@ -68,7 +68,9 @@ use Amanda::Process;
 use Amanda::Logfile;
 use Amanda::Holding;
 use Amanda::Debug qw( debug );
+use Amanda::Logfile qw( :logtype_t log_add $amanda_log_trace_log );
 use IPC::Open3;
+use File::Basename;
 
 sub new {
     my $class = shift;
@@ -104,6 +106,11 @@ sub cleanup {
     $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
     $self->{'logfile'} = "$self->{'logdir'}/log";
     $self->{'logfile'} = $self->{'trace_log'} if defined $self->{'trace_log'};
+    if (-l $self->{'logfile'}) {
+	my $dirname = dirname $self->{'logfile'};
+	my $target = readlink $self->{'logfile'};
+	$self->{'logfile'} = "$dirname/$target";
+    }
     $self->{'amreport'} = "$sbindir/amreport";
     $self->{'amtrmidx'} = "$amlibexecdir/amtrmidx";
     $self->{'amcleanupdisk'} = "$sbindir/amcleanupdisk";
@@ -116,6 +123,25 @@ sub cleanup {
     $Amanda_process->scan_log($self->{'logfile'});
     $Amanda_process->add_child();
 
+    if ($self->{'kill'}) {
+	# Add the notes to the log file
+	Amanda::Logfile::set_logname($self->{'logfile'});
+	foreach my $note (@{$self->{'notes'}}) {
+	    log_add($L_INFO, $note);
+	}
+
+	# Add a line the the amdump file
+	my $amdump_log = $self->{'logfile'};
+	$amdump_log =~ s/log\.(\d\d\d\d\d\d\d\d\d\d\d\d\d\d)\.0/amdump.$1/;
+	if (-e $amdump_log) {
+	    open(my $amdump_log_file, ">>", $amdump_log)
+		or die("could not open amdump log file '$amdump_log'}': $!");
+	    print {$amdump_log_file} "amcleanup: aborted by amcleanup\n";
+	    close($amdump_log_file);
+	} else {
+	    debug("amdump log '$amdump_log' does not exists");
+	}
+    }
     my $nb_amanda_process = $Amanda_process->count_process();
     if ($nb_amanda_process > 0) {
 	if ($self->{'process_alive'}) {
