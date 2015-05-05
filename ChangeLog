@@ -1,3 +1,6 @@
+2015-05-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Cleanup.
+
 2015-04-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Cleanup.pm: Log the notes
 	* perl/Amanda/Report.pm: Parse amcleanup log line

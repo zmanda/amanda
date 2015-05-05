@@ -1218,6 +1218,7 @@ check_result(
 	process_alive = 0;
 	if (indexpid != -1) {
 	    if ((wpid = waitpid(indexpid, &retstat, WNOHANG)) > 0) {
+		indexpid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
@@ -1225,6 +1226,7 @@ check_result(
 	}
 	if (comppid != -1) {
 	    if ((wpid = waitpid(comppid, &retstat, WNOHANG)) > 0) {
+		comppid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
@@ -1232,6 +1234,7 @@ check_result(
 	}
 	if (dumppid != -1) {
 	    if ((wpid = waitpid(dumppid, &retstat, WNOHANG)) > 0) {
+		dumppid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
@@ -1239,12 +1242,14 @@ check_result(
 	}
 	if (tarpid != -1) {
 	    if ((wpid = waitpid(tarpid, &retstat, WNOHANG)) > 0) {
+		tarpid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
 	    }
 	}
 	if (application_api_pid != -1) {
+	    application_api_pid = -1;
 	    if ((wpid = waitpid(application_api_pid, &retstat, WNOHANG)) > 0) {
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
 	    } else if (wpid == 0) {
