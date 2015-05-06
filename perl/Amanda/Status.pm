@@ -104,9 +104,6 @@ Amanda::Status -- Get the status of a running job.
                                                                   $DUMPING_TO_TAPE_DUMPER  dumping to tape ending phase
                                                                   $DUMP_TO_TAPE_DONE	   dump done and succeeded
                                                                   $DUMP_TO_TAPE_FAILED     dump to tape failed
-                                                                  $DUMP_RETRY              dump failed (dumper tell us to retry)
-                                                                  $DUMP_TO_TAPE_RETRY      dump to tape failed (dumper tell us to retry)
-                                                                  $DUMP_WILL_RETRY         will retry the dump
 				       {'level'}             => $level
 				       {'error'}             => latest error message for the dle
 				       {'storage'}           => $storage_name  # when dump to tape.
@@ -131,6 +128,9 @@ Amanda::Status -- Get the status of a running job.
 				       {'dsize'}             => dumped size (when dumping done)
 				       {'dump_time'}         => time the dump started or finished
 				       {'chunk_time'}        => time the dump started or finished
+				       {'retry'}             => if dumper tell us to retry (from application)
+				       {'retry_level'}       => the level of the retry
+				       {'will_retry'}        => if that dump will be retried
 				       {'wait_holding_disk'} => 1 if dump to holding disk wait for more space
 				       {'failed_to_tape'}    #internal use
 				       {'taped'}             #internal use
@@ -251,19 +251,19 @@ Amanda::Status -- Get the status of a running job.
    $DUMPING_TO_TAPE_DUMPER	 = 11;  # dumping to tape ending phase
    $DUMP_FAILED			 = 12;  # dump failed
    $DUMP_TO_TAPE_FAILED		 = 13;  # dump to tape failed
-   $WAIT_FOR_WRITING		 = 14;  # wait for vaulting
-   $WRITING			 = 15;  # vaulting
-   $WRITE_FAILED		 = 16;  # vaulting failed
+   $WAIT_FOR_WRITING		 = 14;  # wait for writing
+   $WRITING			 = 15;  # writing a dump from holding disk
+   $WRITE_FAILED		 = 16;  # writing failed
    $WAIT_FOR_FLUSHING		 = 17;  # wait for flushing
    $FLUSHING			 = 18;  # flushing
    $FLUSH_FAILED		 = 19;  # flush failed
    $DUMP_DONE			 = 20;  # dump done and succeeded
    $DUMP_TO_TAPE_DONE		 = 21;  # dump to tape done and succeeded
-   $WRITE_DONE			 = 22;  # vault done and succeeded
+   $WRITE_DONE			 = 22;  # write done and succeeded
    $FLUSH_DONE			 = 23;  # flush done and succeeded
-   $DUMP_RETRY			 = 24;  # dump failed (dumper tell us to retry)
-   $DUMP_TO_TAPE_RETRY		 = 25;  # dump to tape failed (dumper tell us to retry)
-   $DUMP_WILL_RETRY		 = 26;  # will retry the dump
+   $VAULTING			 = 27;  # vaulting
+   $VAULTING_DONE		 = 28;  # vaulting done and succeded
+   $VAULTING_FAILED		 = 29;  # vaulting failed
 
  status only for worker
    $TAPE_ERROR			 = 50;  # failed because of tape error
@@ -275,11 +275,9 @@ Amanda::Status -- Get the status of a running job.
 
   WAIT_FOR_DUMPING => DUMPING_INIT => DUMPING => DUMPING_DUMPER => DUMP_DONE
                                                                 => DUMP_FAILED
-                                                                => DUMP_RETRY => DUMP_WILL_RETRY
 
   WAIT_FOR_DUMPING => DUMPING_TO_TAPE_INIT => DUMPING_TO_TAPE => DUMPING_TO_TAPE_DUMPER => DUMP_TO_TAPE_DONE
                                                                                         => DUMP_TO_TAPE_FAILED
-                                                                                        => DUMP_TO_TAPE_RETYR => DUMP_WILL_RETRY
 
  storage status
   dump to tape
@@ -314,19 +312,16 @@ my $DUMPING_TO_TAPE		 = 10;  # dumping to tape
 my $DUMPING_TO_TAPE_DUMPER	 = 11;  # dumping to tape ending phase
 my $DUMP_FAILED			 = 12;  # dump failed
 my $DUMP_TO_TAPE_FAILED		 = 13;  # dump to tape failed
-my $WAIT_FOR_WRITING		 = 14;  # wait for vaulting
-my $WRITING			 = 15;  # vaulting
-my $WRITE_FAILED		 = 16;  # vaulting failed
+my $WAIT_FOR_WRITING		 = 14;  # wait for writing
+my $WRITING			 = 15;  # writing a dump from holding disk
+my $WRITE_FAILED		 = 16;  # writing failed
 my $WAIT_FOR_FLUSHING		 = 17;  # wait for flushing
 my $FLUSHING			 = 18;  # flushing
 my $FLUSH_FAILED		 = 19;  # flush failed
 my $DUMP_DONE			 = 20;  # dump done and succeeded
 my $DUMP_TO_TAPE_DONE		 = 21;  # dump to tape done and succeeded
-my $WRITE_DONE			 = 22;  # vault done and succeeded
+my $WRITE_DONE			 = 22;  # write done and succeeded
 my $FLUSH_DONE			 = 23;  # flush done and succeeded
-my $DUMP_RETRY			 = 24;  # dump failed (dumper tell us to retry)
-my $DUMP_TO_TAPE_RETRY		 = 25;  # dump to tape failed (dumper tell us to retry)
-my $DUMP_WILL_RETRY		 = 26;  # will retry the dump
 my $VAULTING			 = 27;  # vaulting
 my $VAULTING_DONE		 = 28;  # vaulting done and succeded
 my $VAULTING_FAILED		 = 29;  # vaulting failed
@@ -644,6 +639,20 @@ REREAD:
 		$self->{'taper'}->{$taper}->{'storage'} = $storage;
 		$self->{'taper'}->{$taper}->{'tape_size'} = $tape_size;
 		$self->{'storage'}->{$storage}->{'taper'} = $taper;
+	    } elsif ($line[1] eq "requeue" && $line[2] eq "dump" && $line[3] eq "time") {
+		#1:requeue #2:dump #3:time #4:$time #5:$host #6:$disk #7:$datestamp
+		my $host = $line[5];
+		my $disk = $line[6];
+		my $datestamp = $line[7];
+		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		$dle->{'will_retry'} = 1;
+	    } elsif ($line[1] eq "requeue" && $line[2] eq "dump_to_tape" && $line[3] eq "time") {
+		#1:requeue #2:dump_to_tape #3:time #4:$time #5:$host #6:$disk #7:$datestamp
+		my $host = $line[5];
+		my $disk = $line[6];
+		my $datestamp = $line[7];
+		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		$dle->{'will_retry'} = 1;
 	    } elsif ($line[1] eq "send-cmd" && $line[2] eq "time") {
 		$self->{'current_time'} = $line[3];
 		if ($line[5] =~ /dumper\d*/) {
@@ -655,6 +664,9 @@ REREAD:
 			my $serial=$line[7];
 			$dumper_to_serial{$line[5]} = $serial;
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
+			$dle->{'retry'} = 0;
+			$dle->{'retry_level'} = -1;
+			$dle->{'will_retry'} = 0;
 			$dle->{'dump_time'} = $self->{'current_time'};
 			if (      $dle->{'level'} != $line[15] &&
 			     $dle->{'degr_level'} == $line[15]) {
@@ -693,12 +705,14 @@ REREAD:
 			$chunker_to_serial{$line[5]} = $serial;
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
 			$dles{$serial} = $dle;
+			$dle->{'retry'} = 0;
+			$dle->{'retry_level'} = -1;
+			$dle->{'will_retry'} = 0;
 			$dle->{'holding_file'} = $line[8];
 			$dle->{'chunk_time'} = $self->{'current_time'};
 			$dle->{'size'} = 0;
 			$dle->{'level'} = $level;
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
-			    $dle->{'status'} != $DUMP_WILL_RETRY and
 			    $dle->{'status'} != $DUMP_FAILED) {
 			    die ("bad status on chunker PORT-WRITE: $dle->{'status'}");
 			}
@@ -816,12 +830,14 @@ REREAD:
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 			$dle->{'level'} = $level;
 			$dles{$serial} = $dle;
+			$dle->{'retry'} = 0;
+			$dle->{'retry_level'} = -1;
+			$dle->{'will_retry'} = 0;
 			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
 			$dle->{'dump_to_tape_storage'} = $storage_name;
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
-			    $dle->{'status'} != $DUMP_WILL_RETRY and
 			    $dle->{'status'} != $DUMP_FAILED and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    die ("bad status on taper PORT-WRITE (dumper): $dle->{'status'}");
@@ -829,8 +845,7 @@ REREAD:
 			if ($dlet->{'status'} and
 			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
 			    $dlet->{'status'} != $DUMP_FAILED and
-			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED and
-			    $dlet->{'status'} != $DUMP_WILL_RETRY) {
+			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    die ("bad status on taper PORT-WRITE (taper): $dlet->{'status'}");
 			}
 			$dle->{'status'} = $DUMPING_TO_TAPE_INIT;
@@ -862,14 +877,12 @@ REREAD:
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
-			    $dle->{'status'} != $DUMP_WILL_RETRY and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    #die ("bad status on taper VAULT-WRITE (dumper): $dle->{'status'}");
 			}
 			if ($dlet->{'status'} and
 			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
-			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED and
-			    $dlet->{'status'} != $DUMP_WILL_RETRY) {
+			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    die ("bad status on taper VAULT-WRITE (taper): $dlet->{'status'}");
 			}
 			#$dle->{'status'} = $VAULTING if !defined $dle->{'status'};
@@ -940,15 +953,17 @@ REREAD:
 			my $error = $line[10];
 			my $dle = $dles{$serial};
 			$dle->{'error'} = $error;
+			$dle->{'retry'} = 1;
 			$dle->{'retry_level'} = $level;
-			if ($dle->{'status'} == $DUMPING) {
-			    $dle->{'status'} = $DUMP_RETRY;
+			if ($dle->{'status'} == $DUMPING ||
+			    $dle->{'status'} == $DUMP_FAILED) {
+			    $dle->{'status'} = $DUMP_FAILED;
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE ||
 				 $dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
-			    $dle->{'status'} = $DUMP_TO_TAPE_RETRY;
+			    $dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    my $storage_name = $dle->{'dump_to_tape_storage'};
 			    my $dlet = $dle->{'storage'}->{$storage_name};
-			    $dlet->{'status'} = $DUMP_TO_TAPE_RETRY;
+			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			} else {
 			    die ("bad status on dumper RETRY: $dle->{'status'}");
 			}
@@ -1032,16 +1047,11 @@ REREAD:
 			my $dle = $dles{$serial};
 			if ($dle->{'status'} != $DUMPING &&
 			    $dle->{'status'} != $DUMPING_DUMPER &&
-			    $dle->{'status'} != $DUMP_RETRY &&
 			    $dle->{'status'} != $DUMP_FAILED) {
 			    die("bad status on chunker FAILED: $dle->{'status'}");
 			}
-			if ($dle->{'status'} != $DUMP_RETRY) {
-			    $dle->{'status'} = $DUMP_WILL_RETRY;
-			} else {
-			    $dle->{'status'} = $DUMP_FAILED;
-			    $dle->{'error'} = "chunker: " .$line[8] if $dle->{'error'} eq "";
-			}
+			$dle->{'status'} = $DUMP_FAILED;
+			$dle->{'error'} = "chunker: " .$line[8] if $dle->{'error'} eq "";
 			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'chunk_time'});
 			$running_dumper{$line[5]} = "0";
 			$dle->{'chunk_time'} = $self->{'current_time'};
@@ -1109,8 +1119,6 @@ REREAD:
 				$dle->{'status'} = $DUMP_TO_TAPE_DONE;
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
-			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
-				$dle->{'status'} = $DUMP_WILL_RETRY;
 			    } elsif ($dle->{'status'} == $VAULTING) {
 				$dle->{'status'} = $VAULTING_DONE;
 			    } else {
@@ -1120,8 +1128,6 @@ REREAD:
 				$dlet->{'status'} = $DUMP_TO_TAPE_DONE;
 			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
-			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_RETRY) {
-				$dlet->{'status'} = $DUMP_WILL_RETRY;
 			    } elsif ($dlet->{'status'} == $WRITING) {
 				$dlet->{'status'} = $WRITE_DONE;
 			    } elsif ($dlet->{'status'} == $FLUSHING) {
@@ -1141,8 +1147,6 @@ REREAD:
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
-			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
-				$dle->{'status'} = $DUMP_WILL_RETRY;
 			    } else {
 				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
 			    }
@@ -1152,8 +1156,6 @@ REREAD:
 				$dlet->{'status'} = $WAIT_FOR_DUMPING;
 			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dlet->{'status'} = $WAIT_FOR_DUMPING;
-			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_RETRY) {
-				$dlet->{'status'} = $DUMP_WILL_RETRY;
 			    } elsif ($dlet->{'status'} == $WRITING) {
 				$dlet->{'status'} = $WAIT_FOR_WRITING;
 			    } elsif ($dlet->{'status'} == $FLUSHING) {
@@ -1281,8 +1283,6 @@ REREAD:
 				$dle->{'status'} == $DUMPING_TO_TAPE_DUMPER ||
 				$dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
-			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_RETRY) {
-				$dle->{'status'} = $DUMP_WILL_RETRY;
 			    } else {
 				die ("bad status on dle taper FAILED: $dle->{'status'}");
 			    }
@@ -1293,8 +1293,6 @@ REREAD:
 				$dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER ||
 				$dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
-			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_RETRY) {
-				$dlet->{'status'} = $DUMP_WILL_RETRY;
 			    } elsif ($dlet->{'status'} == $WRITING ||
 				     $dlet->{'status'} == $WRITE_FAILED) {
 				$dlet->{'status'} = $WRITE_FAILED;
@@ -1507,21 +1505,18 @@ sub set_summary {
 		    $self->{'stat'}->{'dump_failed'}->{'nb'}++;
 		    $self->{'stat'}->{'dump_failed'}->{'estimated_size'} += $dle->{'esize'};
 		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
-		    $dle->{'message'} = "dump failed: $dle->{'error'}";
 		    $dle->{'dsize'} = $dle->{'size'};
-		    $self->{'exit_status'} |= $STATUS_FAILED;
-		} elsif ($dle->{'status'} == $DUMP_RETRY ||
-			 $dle->{'status'} == $DUMP_TO_TAPE_RETRY ||
-			 $dle->{'status'} == $DUMP_WILL_RETRY) {
-		    $self->{'stat'}->{'disk'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'nb'}++;
-		    $self->{'stat'}->{'estimated'}->{'estimated_size'} += $dle->{'esize'};
-		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
-		    if ($dle->{'retry_level'} != -1) {
-			$dle->{'message'} = "will retry at level $dle->{'retry_level'}: $dle->{'error'}";
+		    if ($dle->{'will_retry'}) {
+			if (defined $dle->{'retry'} and $dle->{'retry'} and
+			    defined $dle->{'retry_level'} and $dle->{'retry_level'} != -1) {
+			    $dle->{'message'} = "dump failed: $dle->{'error'}; will retry at level $dle->{'retry_level'}";
+			} else {
+			    $dle->{'message'} = "dump failed: $dle->{'error'}; will retry";
+			}
 		    } else {
-			$dle->{'message'} = "will retry: $dle->{'error'}";
+			$dle->{'message'} = "dump failed: $dle->{'error'}";
 		    }
+		    $self->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;

@@ -1399,19 +1399,21 @@ allow_dump_dle(
 	find_diskspace(sp->est_size, cur_idle, NULL)) == NULL) {
 	*cur_idle = max(*cur_idle, IDLE_NO_DISKSPACE);
 	if (all_tapeq_empty() && dumper_to_holding == 0 && rq != &directq && no_taper_flushing()) {
+	    char *qname = quote_string(diskp->name);
 	    remove_sched(rq, sp);
 	    if (diskp->to_holdingdisk == HOLD_REQUIRED) {
-		char *qname = quote_string(diskp->name);
 		log_add(L_FAIL, "%s %s %s %d [%s]",
 			diskp->host->hostname, qname, sp->datestamp,
 			sp->level,
 			_("can't dump required holdingdisk when no holdingdisk space available "));
-		amfree(qname);
 	    } else {
+		char *wall_time = walltime_str(curclock());
 		sp->action = ACTION_DUMP_TO_TAPE;
+		g_printf("driver: requeue dump_to_tape time %s %s %s %s\n", wall_time, diskp->host->hostname, qname, sp->datestamp);
 		enqueue_sched(&directq, sp);
 		diskp->to_holdingdisk = HOLD_NEVER;
 	    }
+	    amfree(qname);
 	    if (empty(*rq) && active_dumper() == 0) { force_flush = 1;}
 	}
     } else if (client_constrained(diskp)) {
@@ -1704,6 +1706,12 @@ start_some_dumps(
 		free_serial_job(job);
 		free_job(job);
 		if (sp->dump_attempted < sp->disk->retry_dump) {
+		    char *wall_time = walltime_str(curclock());
+		    if( rq == &directq) {
+			g_printf("driver: requeue dump_to_tape time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
+		    } else {
+			g_printf("driver: requeue dump time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
+		    }
 		    enqueue_sched(rq, sp);
 		}
 	    } else {
@@ -2970,11 +2978,13 @@ dumper_taper_result(
 	sp->taper_attempted += 1;
     }
 
-    if((dumper->result != DONE || wtaper->result != DONE) &&
+    if ((dumper->result != DONE || wtaper->result != DONE) &&
 	sp->dump_attempted < dp->retry_dump &&
 	sp->taper_attempted < dp->retry_dump) {
+	char *wall_time = walltime_str(curclock());
 	sp->action = ACTION_DUMP_TO_TAPE;
 	enqueue_sched(&directq, sp);
+	g_printf("driver: requeue dump_to_tape time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
     }
 
     if (dumper->result == DONE && wtaper->result == DONE) {
@@ -3152,14 +3162,19 @@ dumper_chunker_result(
 
     if ((dumper->result != DONE || chunker->result != DONE) &&
         sp->dump_attempted < dp->retry_dump) {
+	char *wall_time = walltime_str(curclock());
+	char *qname = quote_string(sp->disk->name);
 	delete_diskspace(sp);
 	if (sp->no_space) {
 	    sp->action = ACTION_DUMP_TO_TAPE;
+	    g_printf("driver: requeue dump_to_tape time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
 	    enqueue_sched(&directq, sp);
 	} else {
 	    sp->action = ACTION_DUMP_TO_HOLDING;
+	    g_printf("driver: requeue dump time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
 	    enqueue_sched(&runq, sp);
 	}
+	g_free(qname);
     } else if (size > (off_t)DISK_BLOCK_KB) {
 	sp->nb_flush = 0;
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
