@@ -80,24 +80,27 @@ start_amandates(
     g_amandates_file = g_strdup(amandates_file);
     /* open the file */
 
-    if (access(amandates_file,F_OK))
-	/* not yet existing */
-	if ( (rc = open(amandates_file,(O_CREAT|O_RDWR),0644)) != -1 )
-	    /* open/create successfull */
-	    aclose(rc);
+//    if (access(amandates_file,F_OK))
+//	/* not yet existing */
+//	if ( (rc = open(amandates_file,(O_CREAT|O_RDWR),0644)) != -1 )
+//	    /* open/create successfull */
+//	    aclose(rc);
 
-    if(open_readwrite)
+    if (open_readwrite)
 	amdf = fopen(amandates_file, "r+");
     else
 	amdf = fopen(amandates_file, "r");
 
     /* create it if we need to */
-
-    if(amdf == NULL && (errno == EINTR || errno == ENOENT) && open_readwrite)
-	amdf = fopen(amandates_file, "w");
-
-    if(amdf == NULL)
+    if (amdf == NULL) {
+	if (errno == ENOENT) {
+	    amdf = fopen(amandates_file, "w+");
+	}
+    }
+    if (amdf == NULL) {
+	// errno is set
 	return 0;
+    }
 
     if(open_readwrite)
 	rc = amflock(fileno(amdf), amandates_file);

@@ -1,3 +1,8 @@
+2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/amandates.c, client-src/sendsize.c,
+	  common-src/ammessage.c: Fix bug found by coverity.
+	* device-src/ndmp-device.c (ndmp_device_eject): Call open_connection.
+
 2015-05-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Cleanup.
 

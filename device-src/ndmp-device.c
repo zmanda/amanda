@@ -722,6 +722,11 @@ ndmp_device_eject(
     NdmpDevice *self = NDMP_DEVICE(dself);
     if (device_in_error(dself)) return FALSE;
 
+    if (!open_connection(self)) {
+	/* error was set by open_connection */
+	return FALSE;
+    }
+
     if (!single_ndmp_mtio(self, NDMP9_MTIO_OFF)) {
 	/* error was set by single_ndmp_mtio */
 	return FALSE;

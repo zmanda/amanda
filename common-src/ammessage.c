@@ -115,7 +115,9 @@ init_errcode(void)
   errcode[EDEADLK] = "EDEADLK";
 #endif
 #ifdef EDEADLOCK
-  errcode[EDEADLOCK] = "EDEADLOCK";
+  #if !defined EDEADLK || EDEADLK != EDEADLOCK
+    errcode[EDEADLOCK] = "EDEADLOCK";
+  #endif
 #endif
 #ifdef EDESTADDRREQ
   errcode[EDESTADDRREQ] = "EDESTADDRREQ";

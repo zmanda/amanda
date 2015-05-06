@@ -1040,6 +1040,7 @@ generic_calc_estimates(
     char *errmsg = NULL, *qerrmsg;
     char tmppath[PATH_MAX];
     int len;
+    int n;
 
     cmd = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 
@@ -1089,6 +1090,7 @@ generic_calc_estimates(
      * NULL.
      */
     g_ptr_array_add(argv_ptr, NULL);
+    n = argv_ptr->len;
     args = (gchar **)g_ptr_array_free(argv_ptr, FALSE);
 
     command = args[0];
@@ -1097,7 +1099,7 @@ generic_calc_estimates(
     dbprintf(_("running: \"%s\"\n"), cmdline);
     g_free(cmdline);
 
-    argv_ptr = g_ptr_array_sized_new(G_N_ELEMENTS(args));
+    argv_ptr = g_ptr_array_sized_new(n);
 
     for (ptr = args; *ptr; ptr++)
         g_ptr_array_add(argv_ptr, *ptr);
