@@ -1,4 +1,10 @@
 2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, client-src/rundump.c,
+	  client-src/runtar.c, client-src/selfcheck.c,
+	  client-src/sendbackup.c, client-src/senddiscover.c,
+	  xfer-src/filter-process.c: Always free the result of safe_env.
+
+2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/amandates.c, client-src/sendsize.c,
 	  common-src/ammessage.c: Fix bug found by coverity.
 	* device-src/ndmp-device.c (ndmp_device_eject): Call open_connection.

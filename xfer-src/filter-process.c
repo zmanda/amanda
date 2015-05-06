@@ -195,6 +195,7 @@ start_impl(
 	    }
 
 	    execve(self->argv[0], self->argv, env);
+	    free_env(env);
 	    errmsg = g_strdup_printf("exec of '%s' failed: %s\n", self->argv[0], strerror(errno));
 	    full_write(STDERR_FILENO, errmsg, strlen(errmsg));
 	    exit(1);

@@ -85,6 +85,7 @@ main(
     dle_t *dle = NULL;
     char *line = NULL;
     GSList *errlist;
+    char **env;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("senddiscover-%s\n", VERSION);
@@ -342,7 +343,9 @@ main(
 		goto err;
 	    }
 	    safe_fd(3, 1);
-	    execve(cmd, (char **)argv_ptr->pdata, safe_env());
+	    env = safe_env();
+	    execve(cmd, (char **)argv_ptr->pdata, env);
+	    free_env(env);
 	    goto err;
 	    break;
 

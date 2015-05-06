@@ -1449,6 +1449,7 @@ amgtar_restore(
 	env = safe_env();
 	become_root();
 	execve(cmd, (char **)argv_ptr->pdata, env);
+	free_env(env);
 	e = strerror(errno);
 	error(_("error [exec %s: %s]"), cmd, e);
 	break;

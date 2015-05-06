@@ -134,6 +134,7 @@ main(
     GSList *errlist;
     FILE   *mesgstream;
     am_level_t *alevel;
+    char  **env;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("sendbackup-%s\n", VERSION);
@@ -781,7 +782,9 @@ main(
 	    } else {
 		safe_fd(3, 1);
 	    }
-	    execve(cmd, (char **)argv_ptr->pdata, safe_env());
+	    env = safe_env();
+	    execve(cmd, (char **)argv_ptr->pdata, env);
+	    free_env(env);
 	    exit(1);
 	    break;
 

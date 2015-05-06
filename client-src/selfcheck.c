@@ -637,6 +637,7 @@ check_disk(
     char *qamdevice = NULL;
     char *qdevice = NULL;
     int nb_error = 0;
+    char **env;
 
     if (dle->disk) {
 	need_global_check=1;
@@ -1129,7 +1130,9 @@ check_disk(
 		amfree(cmdline);
 
 		safe_fd(-1, 0);
-		execve(cmd, args, safe_env());
+		env = safe_env();
+		execve(cmd, args, env);
+		free_env(env);
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		/* if the application support message
 		    delete_message(selfcheck_print_message(build_message(

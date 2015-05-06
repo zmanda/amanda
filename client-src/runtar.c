@@ -53,6 +53,7 @@ main(
     GPtrArray *array = g_ptr_array_new();
     gchar **strings;
     char **new_argv;
+    char **env;
 #endif
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
@@ -167,7 +168,9 @@ main(
     }
     dbclose();
 
-    execve(GNUTAR, new_argv, safe_env());
+    env = safe_env();
+    execve(GNUTAR, new_argv, env);
+    free_env(env);
 
     e = strerror(errno);
     dbreopen(dbf, "more");

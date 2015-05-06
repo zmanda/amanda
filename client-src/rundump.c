@@ -67,6 +67,7 @@ main(
     char *cmdline;
     GPtrArray *array = g_ptr_array_new();
     gchar **strings;
+    char  **env;
 #endif /* ERRMSG */
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
@@ -187,7 +188,9 @@ main(
     dbprintf(_("running: %s\n"), cmdline);
     amfree(cmdline);
 
-    execve(dump_program, argv, safe_env());
+    env = safe_env();
+    execve(dump_program, argv, env);
+    free_env(env);
 
     e = strerror(errno);
     dbprintf(_("failed (%s)\n"), e);
