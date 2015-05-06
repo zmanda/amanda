@@ -873,6 +873,9 @@ REREAD:
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 			$dle->{'level'} = $level;
 			$dles{$serial} = $dle;
+			$dle->{'retry'} = 0;
+			$dle->{'retry_level'} = -1;
+			$dle->{'will_retry'} = 0;
 			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};

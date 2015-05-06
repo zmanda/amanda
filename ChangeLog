@@ -1,4 +1,7 @@
 2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: VAULT-WRITE must reset the retry flag.
+
+2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Add a 'requeue' line to the amdump log file.
 	* perl/Amanda/Status.pm: Better handling of retry.
 
