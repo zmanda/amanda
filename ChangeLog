@@ -1,4 +1,7 @@
 2015-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: check ARCHIVEDIR is not inside DATADIR.
+
+2015-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amanda-rest-server.pl: Add a --development option
 	* man/xml-source/amanda-rest-server.8.xml: Document --development
 
