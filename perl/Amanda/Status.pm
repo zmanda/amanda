@@ -1050,6 +1050,7 @@ REREAD:
 			my $dle = $dles{$serial};
 			if ($dle->{'status'} != $DUMPING &&
 			    $dle->{'status'} != $DUMPING_DUMPER &&
+			    $dle->{'status'} != $DUMPING_INIT &&
 			    $dle->{'status'} != $DUMP_FAILED) {
 			    die("bad status on chunker FAILED: $dle->{'status'}");
 			}
@@ -1284,6 +1285,7 @@ REREAD:
 			    } elsif ($dle->{'status'} == $DUMP_DONE) {
 			    } elsif ($dle->{'status'} == $DUMPING_TO_TAPE ||
 				$dle->{'status'} == $DUMPING_TO_TAPE_DUMPER ||
+				$dle->{'status'} == $DUMPING_TO_TAPE_INIT ||
 				$dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } else {
@@ -1294,6 +1296,7 @@ REREAD:
 			    delete $dlet->{'search_for_tape'};
 			    if ($dlet->{'status'} == $DUMPING_TO_TAPE ||
 				$dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER ||
+				$dle->{'status'} == $DUMPING_TO_TAPE_INIT ||
 				$dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dlet->{'status'} == $WRITING ||
