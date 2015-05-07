@@ -312,7 +312,7 @@ sub command_selfcheck {
        exit(1);
    };
 
-    $self->print_to_server("disk " . quote_string($self->{args}->{disk}));
+    $self->print_to_server("disk " . quote_string($self->{args}->{disk}), $Amanda::Script_App::GOOD);
 
     $self->print_to_server("ampgsql version " . $Amanda::Constants::VERSION,
 			   $Amanda::Script_App::GOOD);
@@ -380,6 +380,12 @@ sub command_selfcheck {
 		   "is executable", "is NOT executable",
 		   sub {-x $_[0]}, $self->{'props'}->{'pg-archivedir'});
 	    _check_parent_dirs($self->{'props'}->{'pg-archivedir'});
+	}
+
+	if (defined $self->{'props'}->{'pg-datadir'} and
+	    defined $self->{'props'}->{'pg-archivedir'}) {
+	    _check("ARCHIVEDIR", "is not inside DATADIR", "is inside DATADIR",
+	           sub {$self->{'props'}->{'pg-datadir'} ne substr($self->{'props'}->{'pg-archivedir'}, 0, length($self->{'props'}->{'pg-datadir'}))});
 	}
 
 	$try_connect &&=

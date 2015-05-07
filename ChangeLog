@@ -1,3 +1,6 @@
+2015-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: check ARCHIVEDIR is not inside DATADIR.
+
 2015-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Fix progress_func and set timeout to 0.
 
