@@ -27,9 +27,10 @@
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
-  <command>amanda-rest-server</command>    
+  <command>amanda-rest-server</command>
     <arg choice='opt'>--help</arg>
     <arg choice='opt'>--version</arg>
+    <arg choice='opt'>--development</arg>
     <arg choice='opt'>start | stop</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -43,6 +44,13 @@ start the Amanda Rest Server.  </para>
 
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
+
+  <varlistentry>
+  <term>--development</term>
+  <listitem>
+<para>Help debugging server error.</para>
+  </listitem>
+  </varlistentry>
 
   <varlistentry>
   <term>start</term>

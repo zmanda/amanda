@@ -1,4 +1,8 @@
-2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+2015-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amanda-rest-server.pl: Add a --development option
+	* man/xml-source/amanda-rest-server.8.xml: Document --development
+
+2015-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: More fix.
 
 2015-05-06  Jean-Louis Martineau <martineau@zmanda.com>

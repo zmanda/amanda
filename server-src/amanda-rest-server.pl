@@ -50,14 +50,13 @@ Amanda::Util::setup_application("amanda-rest-server", "server", $CONTEXT_DAEMON,
 my $config_overrides = new_config_overrides($#ARGV+1);
 my @config_overrides_opts;
 
-my $opt_no_taper = 0;
-my $opt_from_client = 0;
-my $opt_exact_match = 0;
+my $opt_development = 0;
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
+    'development' => \$opt_development,
     'help|usage|?' => \&usage,
 ) or usage();
 
@@ -98,8 +97,12 @@ if ($command eq 'start') {
 		   '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl',
 		   '--listen', '127.0.0.1:' . $port,
 		   '--preload-app',
+		   $opt_development ? '--env' : '',
+		   $opt_development ? 'development' : '',
 		   '--max-requests', '1',
+		   #$opt_development ? '' : '--daemonize',
 		   '--daemonize',
+		   $opt_development ? '' : '--daemonize',
 		   '--pid', $pid_file);
     debug("running: " . join(' ', @command));
     system(@command);
