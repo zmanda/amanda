@@ -82,25 +82,28 @@ sub discover {
     };
 
     if (!defined $params{'application'} or !$params{'application'}) {
-	return Amanda::Service::Message->new(
+	return (-1,
+		Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100004,
-			severity => $Amanda::Message::ERROR);
+			severity => $Amanda::Message::ERROR));
     }
     if (!defined $params{'host'} or !$params{'host'}) {
-	return Amanda::Service::Message->new(
+	return (-1,
+		Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100000,
-			severity => $Amanda::Message::ERROR);
+			severity => $Amanda::Message::ERROR));
     }
     if (!defined $params{'auth'} or !$params{'auth'}) {
-	return Amanda::Service::Message->new(
+	return (-1,
+		Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100001,
-			severity => $Amanda::Message::ERROR);
+			severity => $Amanda::Message::ERROR));
     }
     push @amservice_args, $params{'host'};
     push @amservice_args, $params{'auth'};
@@ -206,7 +209,7 @@ sub discover {
     }
 
     #return perl object
-    return $ret
+    return (-1, $ret);
 }
 
 1;

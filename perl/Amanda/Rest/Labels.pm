@@ -89,31 +89,29 @@ sub init {
 
     my ($tl, $message) = Amanda::Tapelist->new($filename);
     if (defined $message) {
-	Dancer::status(405);
-	return $message;
+	return (405, $message);
     } elsif (!defined $tl) {
-	Dancer::status(405);
-	return Amanda::Tapelist::Message->new(
+	return (405, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1600000,
 				severity => $Amanda::Message::ERROR,
-				tapefile => $filename);
+				tapefile => $filename));
     }
-    return $tl;
+    return (-1, $tl);
 }
 
 sub list {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Labels");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return (status, \@result_messages) if @result_messages;
 
     my $tl = Amanda::Rest::Labels::init();
     if ($tl->isa("Amanda::Message")) {
 	push @result_messages, $tl;
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
     @tles = @{$tl->{'tles'}};
     @tles = grep {defined $_->{'config'}    and $_->{'config'}  eq $params{'config'}}                     @tles if defined $params{'config'};
@@ -128,7 +126,7 @@ sub list {
 				code => 1600001,
 				severity => $Amanda::Message::SUCCESS,
 				tles => \@tles);
-    return \@result_messages;
+    return (-1, \@result_messages);
 }
 
 1;

@@ -285,4 +285,6 @@ sub local_full_message {
     return $self->{'message'};
 }
 
+sub TO_JSON { return { %{ shift() } }; }
+
 1;

@@ -409,8 +409,8 @@ sub amdump {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     Amanda::Util::set_pname("amdump");
     my $user_msg = sub {
@@ -453,17 +453,16 @@ sub amdump {
 	source_line     => __LINE__,
 	code         => 2000002,
 	severity     => $Amanda::Message::SUCCESS);
-    Dancer::status(202);
 
-    return \@result_messages;
+    return (202, \@result_messages);
 }
 
 sub amvault {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     Amanda::Util::set_pname("amvault");
     my $user_msg = sub {
@@ -513,29 +512,29 @@ sub amvault {
 	source_line     => __LINE__,
 	code         => 2500003,
 	severity     => $Amanda::Message::SUCCESS);
-    Dancer::status(202);
 
-    return \@result_messages;
+    return (202, \@result_messages);
 }
 
 sub amflush {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
     Amanda::Disklist::unload_disklist();
     my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
     if ($cfgerr_level >= $CFGERR_ERRORS) {
-	return Amanda::Disklist::Message->new(
+	return (-1,
+		Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
-			cfgerr_level => $cfgerr_level);
+			cfgerr_level => $cfgerr_level));
     }
 
     Amanda::Util::set_pname("amflush");
@@ -604,7 +603,7 @@ sub amflush {
 			source_line     => __LINE__,
 			code         => $code,
 			severity     => $Amanda::Message::WARNING);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     # fork the amdump process and detach
@@ -622,29 +621,29 @@ sub amflush {
 			source_line     => __LINE__,
 			code         => 2200005,
 			severity     => $Amanda::Message::SUCCESS);
-    Dancer::status(202);
 
-    return \@result_messages;
+    return (202, \@result_messages);
 }
 
 sub checkdump {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
     Amanda::Disklist::unload_disklist();
     my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
     if ($cfgerr_level >= $CFGERR_ERRORS) {
-	return Amanda::Disklist::Message->new(
+	return (-1,
+		Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
-			cfgerr_level => $cfgerr_level);
+			cfgerr_level => $cfgerr_level));
     }
 
     Amanda::Util::set_pname("checkdump");
@@ -653,7 +652,7 @@ sub checkdump {
     push @result_messages, @{$messages};
 
     if (!$checkdump) {
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $exit_status = 0;
@@ -688,9 +687,8 @@ sub checkdump {
 		code             => 2700019,
 		severity         => $Amanda::Message::ERROR);
     }
-    Dancer::status(202);
 
-    return \@result_messages;
+    return (202, \@result_messages);
 }
 
 package Amanda::Rest::Runs::FetchFeedback;
@@ -750,20 +748,21 @@ sub fetchdump {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
     Amanda::Disklist::unload_disklist();
     my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
     if ($cfgerr_level >= $CFGERR_ERRORS) {
-	return Amanda::Disklist::Message->new(
+	return (-1,
+		Amanda::Disklist::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code         => 1400006,
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
-			cfgerr_level => $cfgerr_level);
+			cfgerr_level => $cfgerr_level));
     }
 
     Amanda::Util::set_pname("fetchdump");
@@ -772,7 +771,7 @@ sub fetchdump {
     push @result_messages, @{$messages};
 
     if (!$fetchdump) {
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $exit_status = 0;
@@ -855,17 +854,16 @@ sub fetchdump {
 		code             => 3300058,
 		severity         => $Amanda::Message::ERROR);
     }
-    Dancer::status(202);
 
-    return \@result_messages;
+    return (202, \@result_messages);
 }
 
 sub messages {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     if (!$params{'message_filename'}) {
 	push @result_messages, Amanda::CheckDump::Message->new(
@@ -873,7 +871,7 @@ sub messages {
 		source_line      => __LINE__,
 		code             => 2700022,
 		severity         => $Amanda::Message::ERROR);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
     my $message_path =  config_dir_relative(getconf($CNF_LOGDIR)) . "/" . $params{'message_filename'};
     my $message_fh;
@@ -885,7 +883,7 @@ sub messages {
 		severity         => $Amanda::Message::ERROR,
 		message_filename => $params{'message_filename'},
 		errno            => $!);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $data;
@@ -896,15 +894,15 @@ sub messages {
 
     my @MESSAGES;
     eval $data;
-    return \@MESSAGES;
+    return ($status, \@MESSAGES);
 }
 
 sub list {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Runs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $Amanda_process = Amanda::Process->new();
     $Amanda_process->load_ps_table();
@@ -1003,15 +1001,15 @@ sub list {
 	}
     }
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub kill {
     my %params = @_;
 
     Amanda::Util::set_pname("amcleanup");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my @trace_logs;
     if (defined $params{'trace_log'}) {
@@ -1055,7 +1053,7 @@ sub kill {
 	}
     }
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

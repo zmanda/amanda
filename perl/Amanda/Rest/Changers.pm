@@ -98,8 +98,8 @@ sub fields {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Changers");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $changer_name = $params{'CHANGER'};
     my $st = Amanda::Config::lookup_changer_config($changer_name);
@@ -110,7 +110,7 @@ sub fields {
 				code      => 1500017,
 				severity  => $Amanda::Message::ERROR,
 				changer   => $changer_name);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my @no_parameters;
@@ -162,15 +162,15 @@ sub fields {
 				code      => 1500009,
 				severity  => $Amanda::Message::ERROR);
     }
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub list {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Changers");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my @changer = Amanda::Config::get_changer_list();
     if (!@changer) {
@@ -188,7 +188,7 @@ sub list {
 				changer    => \@changer);
     }
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

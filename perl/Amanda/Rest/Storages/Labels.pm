@@ -237,31 +237,30 @@ sub init {
 
     my ($tl, $message) = Amanda::Tapelist->new($filename);
     if (defined $message) {
-	Dancer::Status(404);
-	return $message;
+	return (404, $message);
     } elsif (!defined $tl) {
-	Dancer::Status(404);
-	return Amanda::Tapelist::Message->new(
+	return (404,
+		Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code => 1600000,
 				severity => $Amanda::Message::ERROR,
-				tapefile => $filename);
+				tapefile => $filename))
     }
-    return $tl;
+    return (-1, $tl);
 }
 
 sub label {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return @result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, @result_messages) if @result_messages;
 
     my $tl = Amanda::Rest::Labels::init();
     if ($tl->isa("Amanda::Message")) {
 	push @result_messages, $tl;
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my @tles = grep {$_->{'label'} eq $params{'LABEL'}} @{$tl->{'tles'}};
@@ -277,14 +276,14 @@ sub label {
 				code => 1600001,
 				severity => $Amanda::Message::SUCCESS,
 				tles => \@tles);
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub erase {
     my %params = @_;
     Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, @result_messages) if @result_messages;
 
     my $user_msg = sub {
 	my $msg = shift;
@@ -369,14 +368,14 @@ sub erase {
     Amanda::MainLoop::run();
     $main = undef;
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub add_label {
     my %params = @_;
     Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, @result_messages) if @result_messages;
 
     my $user_msg = sub {
         my $msg = shift;
@@ -434,14 +433,14 @@ sub add_label {
     Amanda::MainLoop::run();
     $main = undef;
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub update_label {
     my %params = @_;
     Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, @result_messages) if @result_messages;
 
     my $user_msg = sub {
 	my $msg = shift;
@@ -526,20 +525,20 @@ sub update_label {
     Amanda::MainLoop::run();
     $main = undef;
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub list {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Storages::Labels");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return @result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, @result_messages) if @result_messages;
 
     my $tl = Amanda::Rest::Labels::init();
     if ($tl->isa("Amanda::Message")) {
 	push @result_messages, $tl;
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
     my @tles = @{$tl->{'tles'}};
     @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'STORAGE'}}                    @tles if $params{'STORAGE'};
@@ -556,7 +555,7 @@ sub list {
 				code => 1600001,
 				severity => $Amanda::Message::SUCCESS,
 				tles => \@tles);
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

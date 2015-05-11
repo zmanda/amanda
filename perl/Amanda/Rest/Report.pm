@@ -74,8 +74,8 @@ sub report {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Report");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $config_name = $params{'CONF'};
     my $logfile = $params{'trace_log'} || $params{'logfile'};
@@ -87,7 +87,7 @@ sub report {
     my $report = Amanda::Report->new($logfile);
     if ($report->isa("Amanda::Message")) {
 	push @result_messages, $report;
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $rep = eval {Amanda::Report::json->new($report, $config_name,
@@ -110,7 +110,7 @@ sub report {
 			report => $rep->{'sections'});
     }
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

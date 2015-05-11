@@ -68,7 +68,7 @@ sub version {
 				BUILT_DATE => $Amanda::Constants::BUILT_DATE,
 				BUILT_REV => $Amanda::Constants::BUILT_REV,
 				BUILT_BRANCH => $Amanda::Constants::BUILT_BRANCH);
-    return \@result_messages;
+    return (-1, \@result_messages);
 }
 
 

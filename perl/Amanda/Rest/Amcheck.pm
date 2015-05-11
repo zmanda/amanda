@@ -138,8 +138,8 @@ sub check {
     Amanda::Util::set_pname("Amanda::Rest::Amcheck");
 
     my @amcheck_args;
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my $user_msg = sub {
 	my $msg = shift;
@@ -217,7 +217,7 @@ sub check {
     unshift @{$ret}, $exit_message;
 
     #return perl object
-    return $ret
+    return ($status, $ret);
 }
 
 1;

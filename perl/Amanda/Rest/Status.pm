@@ -72,18 +72,18 @@ sub current {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Status");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     $params{'filename'} = $params{'amdump_log'} if defined $params{'amdump_log'};
-    my $status = Amanda::Status->new(%params);
-    if ($status->isa("Amanda::Message")) {
-	push @result_messages, $status;
+    my $Astatus = Amanda::Status->new(%params);
+    if ($Astatus->isa("Amanda::Message")) {
+	push @result_messages, $Astatus;
     } else {
-	push @result_messages, $status->current();
+	push @result_messages, $Astatus->current();
     }
 
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

@@ -109,8 +109,8 @@ sub list {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Dumps");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     if ($params{'HOST'}) {
 	$params{'hostname'} = $params{'HOST'}
@@ -142,7 +142,7 @@ sub list {
 				code            => 2600000,
 				severity => $Amanda::Message::SUCCESS,
 				dumps           => \@dumps);
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

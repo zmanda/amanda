@@ -166,8 +166,8 @@ sub setting {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Dles");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     if (defined $params{'DISK'} and !defined $params{'disk'}) {
 	$params{'disk'} = uri_unescape($params{'DISK'});
@@ -179,8 +179,7 @@ sub setting {
 			source_line     => __LINE__,
 			code         => 1400009,
 			severity     => $Amanda::Message::ERROR);
-	Dancer::status(404);
-	return \@result_messages;
+	return (404, \@result_messages);
     }
 
     my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
@@ -194,7 +193,7 @@ sub setting {
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $curinfodir = getconf($CNF_INFOFILE);;
@@ -208,7 +207,7 @@ sub setting {
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			host         => $params{'HOST'});
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
     my @disks;
     if ($params{'disk'}) {
@@ -222,7 +221,7 @@ sub setting {
 			diskfile     => $diskfile,
 			host         => $params{'HOST'},
 			disk         => $params{'disk'});
-	    return \@result_messages;
+	    return (-1, \@result_messages);
 	}
 	push @disks, $disk;
     } else {
@@ -238,7 +237,7 @@ sub setting {
 			source_line     => __LINE__,
 			code         => 1300030,
 			severity     => $Amanda::Message::ERROR);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $a = 0;
@@ -252,7 +251,7 @@ sub setting {
 			source_line     => __LINE__,
 			code         => 1300031,
 			severity     => $Amanda::Message::ERROR);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     # remove setting
@@ -290,15 +289,15 @@ sub setting {
 	    }
 	}
     }
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 sub info {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Dles");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     if (defined $params{'DISK'} and !defined $params{'disk'}) {
 	$params{'disk'} = uri_unescape($params{'DISK'});
@@ -310,8 +309,7 @@ sub info {
 			source_line     => __LINE__,
 			code         => 1400009,
 			severity     => $Amanda::Message::ERROR);
-	Dancer::status(404);
-	return \@result_messages;
+	return (404, \@result_messages);
     }
 
     my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
@@ -325,7 +323,7 @@ sub info {
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			cfgerr_level => $cfgerr_level);
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
 
     my $curinfodir = getconf($CNF_INFOFILE);;
@@ -339,7 +337,7 @@ sub info {
 			severity     => $Amanda::Message::ERROR,
 			diskfile     => $diskfile,
 			host         => $params{'HOST'});
-	return \@result_messages;
+	return (-1, \@result_messages);
     }
     my @dles;
     if ($params{'disk'}) {
@@ -353,7 +351,7 @@ sub info {
 			diskfile     => $diskfile,
 			host         => $params{'HOST'},
 			disk         => $params{'disk'});
-	    return \@result_messages;
+	    return (-1, \@result_messages);
 	}
 	push @dles, $disk;
     } else {
@@ -376,7 +374,7 @@ sub info {
 			disk         => $dle->{'name'},
 			info	     => $info);
     }
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 1;

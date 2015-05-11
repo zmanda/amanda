@@ -137,9 +137,11 @@ sub config_init {
     my $config_name      = $params{'CONF'};
     my $config_overrides = $params{'config_overrides'};
 
+    my $status = -1;
     my @result_messages;
 
     if (!defined $config_name) {
+	$status = 404;
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -179,15 +181,15 @@ sub config_init {
 	}
     }
 
-    return @result_messages;
+    return ($status, @result_messages);
 }
 
 sub fields {
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Configs");
-    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-    return \@result_messages if @result_messages;
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
 
     my @no_parameters;
     my %values;
@@ -235,12 +237,13 @@ sub fields {
 				code      => 1500009,
 				severity => $Amanda::Message::ERROR);
     }
-    return \@result_messages;
+    return (-1, \@result_messages);
 }
 
 sub list {
     my %params = @_;
     my @result_messages;
+    my $status = -1;
 
     Amanda::Util::set_pname("Amanda::Rest::Configs");
     if (!opendir(my $dh, $Amanda::Paths::CONFIG_DIR)) {
@@ -251,7 +254,7 @@ sub list {
 				severity => $Amanda::Message::ERROR,
 				errno    => $!,
 				dir      => $Amanda::Paths::CONFIG_DIR);
-	Dancer::status(404);
+	$status = 404;
     } else {
 	my @conf = grep { !/^\./ && -f "$Amanda::Paths::CONFIG_DIR/$_/amanda.conf" } readdir($dh);
 	closedir($dh);
@@ -268,10 +271,10 @@ sub list {
 				source_line     => __LINE__,
 				code     => 1500004,
 				severity => $Amanda::Message::ERROR);
-	    Dancer::status(404);
+	    $status = 404;
 	}
     }
-    return \@result_messages;
+    return ($status, \@result_messages);
 }
 
 
