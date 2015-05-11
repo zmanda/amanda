@@ -69,7 +69,7 @@
 #
 # This file uses config.status to substitute @foo@ in those scripts while
 # converting them. It also adds the executable bits (a+x) to extensionless
-# files.  The substitution works even though the files are not listed in 
+# files.  The substitution works even though the files are not listed in
 # configure.in
 
 # Perl
@@ -78,7 +78,7 @@
 	chmod a+x $@
 if SYNTAX_CHECKS
 	@if test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
-		R=`expr match "$@" ".*$(SCRIPTS_PERL_NO_CHECK).*"`; \
+		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$@.*"`; \
 		if [ -z "$(SCRIPTS_PERL_NO_CHECK)" -o $$R -eq 0 ]; then \
 			sed "s,^use lib ['\"]$(amperldir)['\"],# use lib '$(amperldir)' # nouselib," < $@ > $@.nouselib; \
 			$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w $@.nouselib || exit 1; \
@@ -125,7 +125,7 @@ check-perl: $(SCRIPTS_PERL)
 	if test x"$(SKIP_CHECKS)" = x"" && \
 	    test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
 	    for perlobj in $$SCRIPTS_PERL; do \
-		R=`expr match "$$perlobj" ".*$(SCRIPTS_PERL_NO_CHECK).*"`; \
+		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$$perlobj.*"`; \
 		if [ -z "$(SCRIPTS_PERL_NO_CHECK)" -o $$R -eq 0 ]; then \
 		    sed "s,^use lib ['\"]$(amperldir)['\"],# use lib '$(amperldir)' # nouselib," < $$perlobj > $$perlobj.nouselib; \
 		    $(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w $$perlobj.nouselib || exit 1; \

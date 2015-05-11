@@ -9,7 +9,8 @@ include $(top_srcdir)/config/automake/scripts.am
 SUBDIRS = amglue .
 
 amlibexec_SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app
-SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app
+SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app \
+			Amanda/Rest.pm
 
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
@@ -728,10 +729,13 @@ check-pm:
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 	    for perlobj in $$MODULES_TO_CHECK; do \
-		if test -f $$perlobj; then \
-		    $(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
-		else \
-		    $(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $(top_srcdir)/perl/$$perlobj || exit 1; \
+		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$@.*"`; \
+		if [ -z "$(SCRIPTS_PERL_NO_CHECK)" -o $$R -eq 0 ]; then \
+		    if test -f $$perlobj; then \
+			$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
+		    else \
+			$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $(top_srcdir)/perl/$$perlobj || exit 1; \
+		    fi \
 		fi \
 	    done; \
         fi
