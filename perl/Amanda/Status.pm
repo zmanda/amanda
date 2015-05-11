@@ -1178,10 +1178,12 @@ REREAD:
 			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_dle'} += 1;
 			delete $dle->{'taper_status_file'};
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
+			if ($line[6] eq "DONE") {
+			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
+			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
+			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
+			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
+			}
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
 
 			if ($line[6] eq "PARTIAL") {
@@ -1272,10 +1274,6 @@ REREAD:
 			my $dle = $dles{$serial};
 			delete $dle->{'taper_status_file'};
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
 			if (defined $dle) {
 			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
