@@ -643,11 +643,16 @@ AmandaRestAmandaviews_DATA = Amanda/Rest/Amanda/views/index.tt
 AmandaRestAmandaviewslayoutsdir = $(amperldir)/Amanda/Rest/Amanda/views/layout
 AmandaRestAmandaviewslayouts_DATA = Amanda/Rest/Amanda/views/layouts/main.tt
 AmandaRestAmandabindir = $(amperldir)/Amanda/Rest/Amanda/bin
-AmandaRestAmandabin_DATA = Amanda/Rest/Amanda/bin/app.pl
+AmandaRestAmandabin_DATA = Amanda/Rest/Amanda/bin/app.pl \
+			   Amanda/Rest/Amanda/bin/app-dancer2.pl
 
 endif
-EXTRA_DIST += Amanda/Rest.pm Amanda/Rest/Amanda/bin/app.pl.in
-DISTCLEANFILES += Amanda/Rest/Amanda/bin/app.pl
+EXTRA_DIST += Amanda/Rest.pm.in \
+	      Amanda/Rest/Amanda/bin/app.pl.in \
+	      Amanda/Rest/Amanda/bin/app-dancer2.pl.in
+DISTCLEANFILES += Amanda/Rest.pm \
+		  Amanda/Rest/Amanda/bin/app.pl \
+		  Amanda/Rest/Amanda/bin/app-dancer2.pl
 
 # PACKAGE: Amanda::Rest::Config
 if WANT_SERVER

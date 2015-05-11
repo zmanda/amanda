@@ -26,9 +26,19 @@ use WWW::Curl::Easy;
 use JSON;
 use Test::More;
 
-eval { require Dancer; };
-if ($@) {
-    die("Can't load Dancer");
+my $dance_name;
+eval { require Dancer2; };
+if (!$@) {
+    $dance_name = "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app-dancer2.pl";
+} else {
+    Amanda::Debug::debug("Failed to load Dancer2: $@");
+    eval { require Dancer; };
+    if (!$@) {
+	$dance_name = "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl";
+    } else {
+	Amanda::Debug::debug("Failed to load Dancer: $@");
+	die("Can't load dancer or Dancer2");
+    }
 }
 
 =head1 NAME
@@ -66,7 +76,7 @@ sub new {
     my $pid = fork;
     if ($pid == 0) {
 	Amanda::Debug::debug_dup_stderr_to_debug();
-	exec("starman", "--env", "development", "--port", "5001", "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl");
+	exec("starman", "--env", "development", "--port", "5001", $dance_name);
 	exit(-1);
     } elsif ($pid < 0) {
 	die("Can't fork for rest server");

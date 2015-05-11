@@ -1,4 +1,14 @@
 2015-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest.pm: Remove
+	* perl/Amanda/Rest.pm.in: Server for Dancer2
+	* perl/Amanda/Rest/Amanda/bin/app-dancer2.pl.in: Start script for
+	  using Dancer2
+	* perl/Amanda/Rest/Amanda/config.yml: Add config for Dancer2
+	* perl/Makefile.am: Install new files
+	* server-src/amanda-rest-server.pl: Use Dancer2 if available
+	* installcheck/Installcheck/Rest.pm: Use Dancer2 if available
+
+2015-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Message.pm (TO_JSON): New method.
 	* perl/Amanda/Rest/Amanda/bin/app.pl.in: Expect a status in function
 	  result.

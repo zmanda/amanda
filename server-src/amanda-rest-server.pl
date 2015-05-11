@@ -93,8 +93,15 @@ if ($command eq 'start') {
 	print "The REST-API-PORT must be larger than 1024\n";
 	exit 1;
     }
+    my $dance_name;
+    eval "use Dancer2;";
+    if (!$@) {
+	$dance_name = '@amperldir@' . '/Amanda/Rest/Amanda/bin/app-dancer2.pl';
+    } else {
+	$dance_name = '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl';
+    }
     my @command = ('starman',
-		   '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl',
+		   $dance_name,
 		   '--listen', '127.0.0.1:' . $port,
 		   '--preload-app',
 		   $opt_development ? '--env' : '',
