@@ -1,4 +1,7 @@
 2015-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Typo
+
+2015-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/automake/scripts.am: Fix checking SCRIPTS_PERL_NO_CHECK.
 	* perl/Makefile.am (SCRIPTS_PERL_NO_CHECK): Add Amanda/Rest.pm
 

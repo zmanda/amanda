@@ -729,7 +729,7 @@ check-pm:
 	@MODULES_TO_CHECK="$(PM_FILES)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 	    for perlobj in $$MODULES_TO_CHECK; do \
-		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$@.*"`; \
+		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$$perlobj.*"`; \
 		if [ -z "$(SCRIPTS_PERL_NO_CHECK)" -o $$R -eq 0 ]; then \
 		    if test -f $$perlobj; then \
 			$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
