@@ -5832,7 +5832,9 @@ config_init(
 	g_free(config_dir);
 	config_dir = g_strconcat(CONFIG_DIR, "/", arg_config_name, NULL);
     } else if (flags & CONFIG_INIT_USE_CWD) {
-        char * cwd;
+	char *cwd;
+	char *filename;
+	struct stat  statbuf;
 
         cwd = get_original_cwd();
 	if (!cwd) {
@@ -5841,10 +5843,17 @@ config_init(
 	    /* NOTREACHED */
 	}
 
-	config_dir = g_strconcat(cwd, "/", NULL);
-	if ((config_name = strrchr(cwd, '/')) != NULL) {
-	    config_name = g_strdup(config_name + 1);
+	filename = g_strconcat(cwd, "/amanda.conf", NULL);
+	if (stat(filename, &statbuf) == 0) {
+	    config_dir = g_strconcat(cwd, "/", NULL);
+	    if ((config_name = strrchr(cwd, '/')) != NULL) {
+		config_name = g_strdup(config_name + 1);
+	    }
+	} else {
+	    amfree(config_name);
+	    amfree(config_dir);
 	}
+	g_free(filename);
 
     } else {
 	/* ok, then, we won't read anything (for e.g., amrestore) */

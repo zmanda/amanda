@@ -352,7 +352,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
-if ($execute_where != $CONFIG_INIT_CLIENT) {
+if ($execute_where != $CONFIG_INIT_CLIENT && defined $config_name) {
     my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
     $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
     if ($cfgerr_level >= $CFGERR_ERRORS) {

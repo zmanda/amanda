@@ -1,3 +1,8 @@
+2015-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amgetconf.pl: Do not load the disklist if a config is not
+	  set.
+	* common-src/conffile.c: load the cwd amanda.conf only if it exist.
+
 2015-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Amanda/config.yml: Remove Dancer2 setting.
 
