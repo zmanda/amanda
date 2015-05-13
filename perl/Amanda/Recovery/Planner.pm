@@ -183,7 +183,7 @@ sub make_plan {
 
     my $plan = Amanda::Recovery::Planner::Plan->new({
 	algo => $params{'algorithm'},
-	chg => $params{'changer'},
+	storage => $params{'storage'},
 	debug => $params{'debug'},
 	one_dump_per_part => $params{'one_dump_per_part'},
 	all_copy => $params{'all_copy'},
@@ -234,7 +234,7 @@ sub make_plan {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param (qw(changer plan_cb dumpspecs)) {
+    for my $rq_param (qw(plan_cb dumpspecs)) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
@@ -242,7 +242,8 @@ sub make_plan {
     my $src_labelstr = $params{'src_labelstr'};
 
     # first, get the set of dumps that match these dumpspecs
-    my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs, labelstr => $src_labelstr);
+    my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs,
+					       labelstr  => $src_labelstr);
 
     # Create a hash of the latest datestamp of each dle.
     my %datestamp;

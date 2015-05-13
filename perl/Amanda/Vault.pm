@@ -70,6 +70,10 @@ sub local_message {
 	return "Reading '$self->{'holding_filename'}': $self->{'header_summary'}";
     } elsif ($self->{'code'} == 2500018) {
 	return "$self->{'errmsg'}";
+    #} elsif ($self->{'code'} == 2500019) {
+    #	return "No src_storage defined";
+    } elsif ($self->{'code'} == 2500020) {
+	return "No dest_storage defined";
     }
 }
 
@@ -133,6 +137,8 @@ sub new {
 	src_write_timestamp => $params{'src_write_timestamp'},
 	dst_write_timestamp => $params{'dst_write_timestamp'},
 	src_labelstr => $params{'src_labelstr'},
+	src_storage_name => $params{'src_storage_name'},
+	dest_storage_name => $params{'dest_storage_name'},
 
 	src => undef,
 	dst => undef,
@@ -147,6 +153,24 @@ sub new {
 	# status
 	exit_cb => undef,
     }, $class;
+
+    if (!defined($self->{'dest_storage_name'})) {
+	if (getconf_seen($CNF_VAULT_STORAGE)) {
+	    my $storages = getconf($CNF_VAULT_STORAGE);
+	    $self->{'dest_storage_name'} = $storages->[0];
+	} else {
+	    push @result_messages, Amanda::Vault::Message->new(
+				source_filename => __FILE__,
+				source_line => __LINE__,
+				code        => 2500020,
+				severity    => $Amanda::Message::ERROR,
+				amdump_log  => $self->{'amdump_log_pathname'});
+	}
+    }
+
+    if (@result_messages) {
+	return undef, \@result_messages;
+    }
 
     $self->{'delay'} = 15000 if !defined $self->{'delay'};
     $self->{'exit_code'} = 0;
@@ -317,7 +341,8 @@ sub setup_src {
     $self->{'tapelist'} = $tl;
     # put together a clerk, which of course requires a changer, scan,
     # interactivity, and feedback
-    my $storage = Amanda::Storage->new(tapelist => $self->{'tapelist'});
+    my $storage = Amanda::Storage->new(storage_name => $self->{'src_storage_name'},
+				       tapelist => $self->{'tapelist'});
     return $self->failure($storage)
 	if $storage->isa("Amanda::Changer::Error");
     my $chg = $storage->{'chg'};
@@ -461,11 +486,18 @@ sub setup_src {
 	}
     }
 
+    my @storage_list;
+    my $only_in_storage;
+    if ($self->{'src_storage_name'}) {
+	push @storage_list, $self->{'src_storage_name'};
+	$only_in_storage = 1;
+    }
     Amanda::Recovery::Planner::make_plan(
 	    latest_fulls => $self->{'latest_fulls'},
 	    dumpspecs => \@dumpspecs,
 	    src_labelstr => $self->{'src_labelstr'},
-	    changer => $src->{'chg'},
+	    storage_list => \@storage_list,
+	    only_in_storage => $only_in_storage,
 	    plan_cb => sub { $self->plan_cb(@_) });
 }
 
@@ -543,7 +575,7 @@ sub setup_dst {
     my $vault_storages = getconf($CNF_VAULT_STORAGE);
     my $vault_storage = $vault_storages->[0];
     my $storage = Amanda::Storage->new(
-				storage_name => $vault_storage,
+				storage_name => $self->{'dest_storage_name'},
 				tapelist     => $self->{'tapelist'});
     return $self->failure($storage)
 	if $storage->isa("Amanda::Changer::Error");

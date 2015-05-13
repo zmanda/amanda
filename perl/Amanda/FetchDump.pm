@@ -670,7 +670,6 @@ sub restore {
 		labelstr => $storage->{'labelstr'},
 		storage_list => $storage_list,
 		only_in_storage => $only_in_storage,
-		changer => $chg,
 		plan_cb => $steps->{'plan_cb'},
 		$params{'no-reassembly'}? (one_dump_per_part => 1) : ());
 	}

@@ -119,6 +119,7 @@ sub usage {
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--fulls-only] [--latest-fulls] [--incrs-only] [--export]
 	   [--src-timestamp src-timestamp] [--exact-match]
+	   [--src-storage storage] [--dest-storage storage]
 	   config
 	   [hostname [ disk [ date [ level [ hostname [...] ] ] ] ]]
 
@@ -130,10 +131,10 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --export: move completed destination volumes to import/export slots
     --src-timestamp: the timestamp of the Amanda run that should be vaulted
 
-Copies data from the run with timestamp <src-timestamp> onto volumes using
-the storage <vault-storage>.  If <src-timestamp> is "latest", then the
-most recent run of amdump or amflush will be used.  If any dumpspecs are
-included (<host-expr> and so on), then only dumps matching those dumpspecs
+Copies data on storage src-storage from the run with timestamp <src-timestamp>
+onto volumes on the storage <dest-storage>.  If <src-timestamp> is "latest",
+then the most recent run of amdump or amflush will be used.  If any dumpspecs
+are included (<host-expr> and so on), then only dumps matching those dumpspecs
 will be dumped.  At least one of --fulls-only, --src-timestamp, or a dumpspec
 must be specified.
 
@@ -157,6 +158,8 @@ my $opt_exact_match = 0;
 my $opt_export = 0;
 my $opt_src_write_timestamp;
 my $opt_src_labelstr;
+my $opt_src_storage_name;
+my $opt_dest_storage_name;
 my $opt_interactivity = 1;
 
 debug("Arguments: " . join(' ', @ARGV));
@@ -174,13 +177,15 @@ GetOptions(
     'exact-match' => \$opt_exact_match,
     'export' => \$opt_export,
     'label-template=s' => sub {
-	usage("--label-templaple is deprecated, use autolabel from the 'vault-storage'"); },
+	usage("--label-templaple is deprecated, use autolabel from the 'dest-storage'"); },
     'autolabel=s' => sub {
-	usage("--autolabel is deprecated, use autolabel from the 'vault-storage'"); },
+	usage("--autolabel is deprecated, use autolabel from the 'dest-storage'"); },
     'dst-changer=s' => sub {
-	usage("--dst-changer is deprecated, use tpchanger from the 'vault-storage'"); },
+	usage("--dst-changer is deprecated, use tpchanger from the 'dest-storage'"); },
     'src-timestamp=s' => \$opt_src_write_timestamp,
     'src-labelstr=s' => \$opt_src_labelstr,
+    'src-storage=s' => \$opt_src_storage_name,
+    'dest-storage=s' => \$opt_dest_storage_name,
     'interactivity!' => \$opt_interactivity,
     'version' => \&Amanda::Util::version_opt,
     'help' => \&usage,
@@ -222,7 +227,7 @@ if ($cfgerr_level >= $CFGERR_ERRORS) {
     exit(1);
 }
 
-my $exit_status;
+my $exit_status = 0;
 my $exit_cb = sub {
     ($exit_status) = @_;
     Amanda::MainLoop::quit();
@@ -264,8 +269,8 @@ if ($opt_interactivity) {
     $interactivity = main::Interactivity->new();
 }
 
-my @messages;
-(my $vault, @messages) = Amanda::Vault->new(
+my $messages;
+(my $vault, $messages) = Amanda::Vault->new(
     config => $config_name,
     src_write_timestamp => $opt_src_write_timestamp,
     dst_write_timestamp => Amanda::Util::generate_timestamp(),
@@ -281,12 +286,20 @@ my @messages;
     config_overrides_opts => \@config_overrides_opts,
     user_msg => \&user_msg,
     delay => $delay,
-    is_tty => $is_tty
+    is_tty => $is_tty,
+    src_storage_name => $opt_src_storage_name,
+    dest_storage_name => $opt_dest_storage_name,
 );
 
-
-Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
-Amanda::MainLoop::run();
+if (!$vault) {
+    foreach my $message (@$messages) {
+	print $message, "\n";
+    }
+    $exit_status = 1;
+} else {
+    Amanda::MainLoop::call_later(sub { $vault->run($exit_cb) });
+    Amanda::MainLoop::run();
+}
 
 Amanda::Util::finish_application();
 exit($exit_status);

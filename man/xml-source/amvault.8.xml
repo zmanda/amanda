@@ -38,8 +38,10 @@
     <arg choice='opt'><option>--src-timestamp</option>
 	<replaceable>src-timestamp</replaceable></arg>
     <sbr/>
-    <arg choice='plain'><option>--dst-storage</option>
-	    <replaceable>dst-storage</replaceable></arg>
+    <arg choice='opt'><option>--src-storage</option>
+	    <replaceable>src-storage</replaceable></arg>
+    <arg choice='opt'><option>--dest-storage</option>
+	    <replaceable>dest-storage</replaceable></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>
       <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -79,9 +81,9 @@ encouraged!</para>
 <para>Amvault is conceptually equivalent to "amfetchdump | taper".  That is, it reads
 specified dumps from secondary media and re-writes them on tertiary media.</para>
 
-<para><emphasis remap='B'>Amvault</emphasis> Copies data from the run with
+<para><emphasis remap='B'>Amvault</emphasis> Copies data on <option>src-storage</option> from the run with
 timestamp <option>src-timestamp</option> onto volumes using the storage
-<option>dst-storage</option>.</para>
+<option>dest-storage</option>.</para>
 
 <refsect2><title>Secondary Media</title>
 
@@ -127,6 +129,13 @@ parameters there.  Then reference that tapetype in the amvault invocation:
 
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
+  <varlistentry>
+  <term><option>--dest-storage</option> <replaceable>dest-storage</replaceable></term>
+  <listitem>
+<para>Dumps are written to that storage</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><option>--dry-run</option></term><term><option>-n</option></term>
   <listitem>
@@ -184,6 +193,13 @@ import/export slots, where they can be more easily removed by an operator.
   <listitem>
 <para>Eliminate non-error messages, and is useful when running amvault from
 cron.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--src-storage</option> <replaceable>src-storage</replaceable></term>
+  <listitem>
+<para>Dumps are read only from that storage</para>
   </listitem>
   </varlistentry>
 

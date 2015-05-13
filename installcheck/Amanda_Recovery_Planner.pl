@@ -115,17 +115,13 @@ sub is_plan {
 	or diag("got:\n" . Dumper(\@got_abbrev));
 }
 
-my $changer = undef; # not needed yet
-
 is_plan(make_plan_sync(
-	    dumpspec => ds("no-box-at-all"),
-	    changer => $changer),
+	    dumpspec => ds("no-box-at-all")),
     [ ],
     "empty plan for nonexistent host");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("oldbox", "^/opt"),
-	    changer => $changer),
+	    dumpspec => ds("oldbox", "^/opt")),
     [
 	[   "oldbox", "/opt", "20080414144444", 0, [
 		'20080414144444/oldbox._opt',
@@ -135,8 +131,7 @@ is_plan(make_plan_sync(
     "simple plan for a dump on holding disk");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("somebox", "^/lib", "200801"),
-	    changer => $changer),
+	    dumpspec => ds("somebox", "^/lib", "200801")),
     [
 	[   "somebox", "/lib", "20080111000000", 0, [
 		'Conf-001' => 1,
@@ -146,8 +141,7 @@ is_plan(make_plan_sync(
     "simple plan for just one dump");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("somebox", "^/usr/bin"),
-	    changer => $changer),
+	    dumpspec => ds("somebox", "^/usr/bin")),
     [
         [   'somebox', '/usr/bin', '20080313133333', 1, [
 		'Conf-003' => 1,
@@ -165,8 +159,7 @@ is_plan(make_plan_sync(
     "plan for three dumps, in order by tape write time");
 
 is_plan(make_plan_sync(
-	    dumpspec => ds("otherbox", "^/lib"),
-	    changer => $changer),
+	    dumpspec => ds("otherbox", "^/lib")),
     [
 	[   "otherbox", "/lib", "20080414144444", 1, [
 		'20080414144444/otherbox._lib',
@@ -187,8 +180,7 @@ is_plan(make_plan_sync(
 	    dumpspecs => [
 		ds("somebox", "^/lib", "20080111"),
 		ds("somebox", "^/lib", "20080222"),
-	    ],
-	    changer => $changer),
+	    ]),
     [
 	[   "somebox", "/lib", "20080111000000", 0, [
 		'Conf-001' => 1,
@@ -204,8 +196,7 @@ is_plan(make_plan_sync(
 
 is_plan(make_plan_sync(
 	    dumpspec => ds("somebox", "^/lib", "200803"),
-	    one_dump_per_part => 1,
-	    changer => $changer),
+	    one_dump_per_part => 1),
     [
 	[   "somebox", "/lib", "20080313133333", 0, [
 		'Conf-003' => 2,
@@ -276,8 +267,7 @@ is_plan(make_plan_sync(
 	    filelist => [
 		'TESTCONF', 'Conf-006', [2, 3, 4, 5,       8, 9, 10, 11],
 		#  (make_plan should fill in files 6 and 7)
-	    ],
-	    changer => $changer),
+	    ]),
     [
 	[   'somebox', '/lib', '20080515155555', 0, [
 		'Conf-006' => 2,
@@ -299,8 +289,7 @@ is_plan(make_plan_sync(
 	    filelist => [
 		'TESTCONF', 'Conf-006', [2, 3, 4, 5,       8, 9, 10, 11],
 		#  (make_plan should fill in files 6 and 7)
-	    ],
-	    changer => $changer),
+	    ]),
     [
 	[   'somebox', '/lib', '20080515155555', 0, [
 		'Conf-006' => 2,

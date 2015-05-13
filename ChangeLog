@@ -1,4 +1,15 @@
 2015-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/FetchDump.pm: Do not pass a changer
+	* perl/Amanda/Recovery/Planner.pm (make_plan): Accept storage instead
+	  of changer
+	* perl/Amanda/Vault.pm: Use src_storage_name and dest_storage_name
+	* server-src/amvault.pl: Add --src-storage and --dest-storage
+	  arguments
+	* man/xml-source/amvault.8.xml: Document --src-storage and
+	  --dest-storage
+	* installcheck/Amanda_Recovery_Planner.pl: Fix for new api
+
+2015-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Parse 'requeue write' line, set storage
 	  will_retry.
 	* server-src/driver.c: Write 'requeue write' line.
