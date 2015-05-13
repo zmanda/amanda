@@ -496,7 +496,7 @@ main(
 	sum_taper_parallel_write = storage_get_taper_parallel_write(storage);
     }
     init_driverio(inparallel, nb_storage, sum_taper_parallel_write);
-    startup_tape_process(taper_program, no_taper);
+    nb_storage = startup_dump_tape_process(taper_program, no_taper);
 
     /* fire up the dumpers now while we are waiting */
     if(!nodump) startup_dump_processes(dumper_program, inparallel, driver_timestamp);
@@ -558,39 +558,6 @@ main(
     event_loop(0);
     short_dump_state();
 
-    if (!novault) {
-	/* close device for storage */
-	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    if (!taper->degraded_mode && !taper->vault_storage && taper->storage_name) {
-		for (wtaper = taper->wtapetable;
-		     wtaper < taper->wtapetable + taper->nb_worker;
-		     wtaper++) {
-		    if (wtaper->state & TAPER_STATE_RESERVATION) {
-			if (taper->nb_wait_reply == 0) {
-			    taper->ev_read = event_register(taper->fd,
-						EV_READFD,
-						handle_taper_result, taper);
-			}
-			taper->nb_wait_reply++;
-			wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
-			wtaper->state &= ~TAPER_STATE_IDLE;
-			taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
-		    }
-		}
-	    }
-	}
-
-	short_dump_state();
-	/* wait for the device to be closed */
-	event_loop(0);
-
-	set_vaultqs();
-	short_dump_state();
-
-	start_a_vault();
-	event_loop(0);
-    }
-
     force_flush = 1;
 
     /* mv runq to directq */
@@ -645,6 +612,63 @@ main(
 
     short_dump_state();				/* for amstatus */
 
+    /* close device for storage */
+    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	if (!taper->degraded_mode && !taper->vault_storage && taper->storage_name) {
+	    for (wtaper = taper->wtapetable;
+		 wtaper < taper->wtapetable + taper->nb_worker;
+		 wtaper++) {
+		if (wtaper->state & TAPER_STATE_RESERVATION) {
+		    if (taper->nb_wait_reply == 0) {
+			taper->ev_read = event_register(taper->fd,
+						EV_READFD,
+						handle_taper_result, taper);
+		    }
+		    taper->nb_wait_reply++;
+		    wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
+		    wtaper->state &= ~TAPER_STATE_IDLE;
+		    taper_cmd(taper, wtaper, CLOSE_VOLUME, NULL, NULL, 0, NULL);
+		}
+	    }
+	}
+    }
+
+    short_dump_state();
+    /* wait for the device to be closed */
+    event_loop(0);
+    short_dump_state();
+
+    if (!novault) {
+	/* close device for storage */
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    if (taper->fd >= 0 && !taper->vault_storage) {
+		taper_cmd(taper, NULL, QUIT, NULL, NULL, 0, NULL);
+	    }
+	}
+
+	nb_storage = startup_vault_tape_process(taper_program, no_taper);
+
+	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    if (taper->storage_name) {
+		wtaper = taper->wtapetable;
+		wtaper->state = TAPER_STATE_INIT;
+		taper->nb_wait_reply++;
+		taper->nb_scan_volume++;
+		taper->ev_read = event_register(taper->fd, EV_READFD,
+						handle_taper_result, taper);
+		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
+	    }
+	}
+
+	set_vaultqs();
+	short_dump_state();
+
+	start_a_vault();
+	event_loop(0);
+    }
+
+    short_dump_state();				/* for amstatus */
+
     g_printf(_("driver: QUITTING time %s telling children to quit\n"),
            walltime_str(curclock()));
     fflush(stdout);
@@ -656,7 +680,7 @@ main(
 	}
     }
 
-    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+    for (taper = tapetable; taper < tapetable+nb_storage; taper++) {
 	if (taper->fd >= 0) {
 	    taper_cmd(taper, NULL, QUIT, NULL, NULL, 0, NULL);
 	}
@@ -732,7 +756,7 @@ wait_children(int count)
 			break;
 		    }
 		}
-		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		for (taper = tapetable; taper < tapetable+nb_storage; taper++) {
 		    if (pid == taper->pid) {
 			who = g_strdup(taper->name);
 			taper->pid = -1;
@@ -787,7 +811,7 @@ kill_children(int signal)
         }
     }
 
-    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+    for (taper = tapetable; taper < tapetable+nb_storage; taper++) {
 	if (taper->pid > 1) {
 	    g_printf(_("driver: sending signal %d to %s pid %u\n"), signal,
 		     taper->name, (unsigned)taper->pid);
@@ -815,7 +839,7 @@ wait_for_children(void)
 	}
     }
 
-    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+    for (taper = tapetable; taper < tapetable+nb_storage; taper++) {
 	if (taper->pid > 1 && taper->fd > 0) {
 	    taper_cmd(taper, NULL, QUIT, NULL, NULL, 0, NULL);
 	}
@@ -1552,11 +1576,12 @@ start_some_dumps(
 	wtaper = NULL;
 	directq_is_empty = empty(directq);
 	if (!empty(directq)) {  /* to the first allowed storage only */
-	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+	    for (taper = tapetable; taper < tapetable+nb_storage && !sp_accept; taper++) {
 		if (!taper->storage_name || !taper->flush_storage ||
 		    taper->degraded_mode || taper->down) {
 		    continue;
 		}
+		sp_accept = NULL;
 		wtaper_accept = idle_taper(taper);
 		if (wtaper_accept) {
 		    TapeAction result_tape_action;
@@ -2185,9 +2210,9 @@ handle_taper_result(
 	    if (wtaper->job->dumper &&
 		wtaper->job->dumper->result != LAST_TOK) {
 		if( wtaper->job->dumper->result == DONE) {
-		    taper_cmd(taper, wtaper, DONE, dp, NULL, 0, NULL);
+		    taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 		} else {
-		    taper_cmd(taper, wtaper, FAILED, dp, NULL, 0, NULL);
+		    taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
 		}
 	    }
 	    break;
@@ -2418,9 +2443,9 @@ handle_taper_result(
 		wtaper->sendresult = 1;
 	    } else {
 		if( wtaper->job->dumper->result == DONE) {
-		    taper_cmd(taper, wtaper, DONE, dp, NULL, 0, NULL);
+		    taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 		} else {
-		    taper_cmd(taper, wtaper, FAILED, dp, NULL, 0, NULL);
+		    taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
 		}
 	    }
 	    break;
@@ -2853,11 +2878,13 @@ file_taper_result(
 		sp = NULL;
 	    }
 	} else {
+	    char *wall_time = walltime_str(curclock());
 	    g_printf("driver: taper will retry %s %s\n",
 		   dp->host->hostname, qname);
 	    /* Re-insert into taper queue. */
 	    sp->action = ACTION_FLUSH;
 	    sp->nb_flush++;
+	    g_printf("driver: requeue write time %s %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp, wtaper->taper->storage_name);
 	    headqueue_sched(&wtaper->taper->tapeq, sp);
 	}
     } else if (wtaper->result != DONE) {
@@ -2984,7 +3011,7 @@ dumper_taper_result(
 	char *wall_time = walltime_str(curclock());
 	sp->action = ACTION_DUMP_TO_TAPE;
 	enqueue_sched(&directq, sp);
-	g_printf("driver: requeue dump_to_tape time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
+	g_printf("driver: requeue dump_to_tape time %s %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp, wtaper->taper->storage_name);
     }
 
     if (dumper->result == DONE && wtaper->result == DONE) {

@@ -1,3 +1,17 @@
+2015-05-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Parse 'requeue write' line, set storage
+	  will_retry.
+	* server-src/driver.c: Write 'requeue write' line.
+	* server-src/driver.c: Fix vaulting.
+	* server-src/driverio.c (startup_dump_tape_process,
+	  startup_vault_tape_process): New function to replace
+	   startup_tape_process.
+	* server-src/driverio.h (startup_dump_tape_process,
+	  startup_vault_tape_process): Add prototype.
+	* installcheck/Amanda_Rest_Runs.pl: Add 'will_retry' in status result.
+	* installcheck/Installcheck/Dumpcache.pm: Force level when doing
+	  backup.
+
 2015-05-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amgetconf.pl: Do not load the disklist if a config is not
 	  set.

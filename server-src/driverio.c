@@ -110,8 +110,8 @@ childstr(
 }
 
 
-void
-startup_tape_process(
+int
+startup_dump_tape_process(
     char      *taper_program,
     gboolean   no_taper)
 {
@@ -119,18 +119,33 @@ startup_tape_process(
     taper_t     *taper;
     int          nb_taper = 0;
 
-    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next, nb_taper++) {
+    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
 	if (taper) {
 	    taper->flush_storage = TRUE;
+	    nb_taper++;
 	}
     }
-    for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next, nb_taper++) {
+    return nb_taper;
+}
+
+int
+startup_vault_tape_process(
+    char      *taper_program,
+    gboolean   no_taper)
+{
+    identlist_t  il;
+    taper_t     *taper;
+    int          nb_taper = 0;
+
+    for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next) {
 	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
 	if (taper) {
 	    taper->vault_storage = TRUE;
+	    nb_taper++;
 	}
     }
+    return nb_taper;
 }
 
 static taper_t *

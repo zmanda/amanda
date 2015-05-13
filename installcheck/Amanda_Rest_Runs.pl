@@ -393,7 +393,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                            'dsize' => '102400',
                                                                                                                                            'partial' => 0,
                                                                                                                                            'size' => '102400',
-                                                                                                                                           'message' => 'written'
+                                                                                                                                           'message' => 'written',
+                                                                                                                                           'will_retry' => 0
                                                                                                                                          }
                                                                                                                          },
                                                                                                             'dump_time' => '6.408'
@@ -893,7 +894,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                                 'dsize' => '102400',
                                                                                                                                                 'partial' => 0,
                                                                                                                                                 'size' => '102400',
-                                                                                                                                                'message' => 'written'
+                                                                                                                                                'message' => 'written',
+                                                                                                                                                'will_retry' => 0
                                                                                                                                               }
                                                                                                                               },
                                                                                                                  'dump_time' => '6.408'
@@ -1116,7 +1118,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                      'dsize' => '82859008',
                                                                                                                                      'partial' => 0,
                                                                                                                                      'size' => '82859008',
-                                                                                                                                     'message' => 'written'
+                                                                                                                                     'message' => 'written',
+                                                                                                                                     'will_retry' => 0
                                                                                                                                    }
                                                                                                                    },
                                                                                                       'dump_time' => '84.740'
@@ -1364,7 +1367,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                                                'dsize' => '145752064',
                                                                                                                                                                'partial' => 0,
                                                                                                                                                                'size' => 145752064,
-                                                                                                                                                               'message' => 'dump to tape done'
+                                                                                                                                                               'message' => 'dump to tape done',
+                                                                                                                                                               'will_retry' => 0
                                                                                                                                                              }
                                                                                                                                              },
                                                                                                                                 'dump_time' => '82.692'
@@ -1397,7 +1401,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                                             'dsize' => '36438016',
                                                                                                                                                             'partial' => 0,
                                                                                                                                                             'size' => 36438016,
-                                                                                                                                                            'message' => 'dump to tape done'
+                                                                                                                                                            'message' => 'dump to tape done',
+                                                                                                                                                            'will_retry' => 0
                                                                                                                                                           }
                                                                                                                                           },
                                                                                                                              'dump_time' => '6.226'
@@ -1430,7 +1435,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                                                                                      'dsize' => '732233728',
                                                                                                                                                      'partial' => 0,
                                                                                                                                                      'size' => 732233728,
-                                                                                                                                                     'message' => 'dump to tape done'
+                                                                                                                                                     'message' => 'dump to tape done',
+                                                                                                                                                     'will_retry' => 0
                                                                                                                                                    }
                                                                                                                                    },
                                                                                                                       'dump_time' => '42.900'

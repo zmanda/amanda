@@ -181,6 +181,7 @@ Amanda::Status -- Get the status of a running job.
 						                     {'search_for_tape'} => 1 if searching for a tape
 						                     {'tape_error'}      => tape error message
 						                     {'tape_config'}     => config error message
+								     {'will_retry'}      => if that dump_to_tape/flush/write/vault will be retried
  taper->{$taper}->{'storage'}   => $storage
  taper->{$taper}->{'tape_size'} => tape size for the storage
  taper->{$taper}->{'nb_tape'} => number of tape used
@@ -647,12 +648,26 @@ REREAD:
 		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'will_retry'} = 1;
 	    } elsif ($line[1] eq "requeue" && $line[2] eq "dump_to_tape" && $line[3] eq "time") {
-		#1:requeue #2:dump_to_tape #3:time #4:$time #5:$host #6:$disk #7:$datestamp
+		#1:requeue #2:dump_to_tape #3:time #4:$time #5:$host #6:$disk #7:$datestamp [#8:$storage]
 		my $host = $line[5];
 		my $disk = $line[6];
 		my $datestamp = $line[7];
+		my $storage = $line[8];
 		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'will_retry'} = 1;
+		if ($storage) {
+		    my $dlet = $dle->{'storage'}->{$storage};
+		    $dlet->{'will_retry'} = 1;
+		}
+	    } elsif ($line[1] eq "requeue" && $line[2] eq "write" && $line[3] eq "time") {
+		#1:requeue #2:write #3:time #4:$time #5:$host #6:$disk #7:$datestamp #8:$storage
+		my $host = $line[5];
+		my $disk = $line[6];
+		my $datestamp = $line[7];
+		my $storage = $line[8];
+		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		my $dlet = $dle->{'storage'}->{$storage};
+		$dlet->{'will_retry'} = 1;
 	    } elsif ($line[1] eq "send-cmd" && $line[2] eq "time") {
 		$self->{'current_time'} = $line[3];
 		if ($line[5] =~ /dumper\d*/) {
@@ -800,13 +815,17 @@ REREAD:
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			$dle->{'storage'}->{$storage} = {} if !defined $dle->{'storage'}->{$storage};
 			my $dlet = $dle->{'storage'}->{$storage};
+			$dlet->{'will_retry'} = 0;
 			if (defined $dlet->{'flushing'}) {
-			    if ($dlet->{'status'} != $WAIT_FOR_FLUSHING) {
+			    if ($dlet->{'status'} != $WAIT_FOR_FLUSHING &&
+				$dlet->{'status'} != $FLUSH_FAILED) {
 				die ("bad status on taper FILE-WRITE (flushing): $dlet->{'status'}");
 			    }
 			    $dlet->{'status'} = $FLUSHING;
 			} else {
-			    if (defined $dlet->{'status'} and $dlet->{'status'} != $WAIT_FOR_WRITING) {
+			    if (defined $dlet->{'status'} and 
+				($dlet->{'status'} != $WAIT_FOR_WRITING &&
+				 $dlet->{'status'} != $WRITE_FAILED)) {
 				die ("bad status on taper FILE-WRITE (writing): $dlet->{'status'}");
 			    }
 			    $dlet->{'status'} = $WRITING;
@@ -837,6 +856,7 @@ REREAD:
 			$dle->{'dump_to_tape_storage'} = $storage_name;
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
+			$dlet->{'will_retry'} = 0;
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_FAILED and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
@@ -879,6 +899,7 @@ REREAD:
 			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
+			$dlet->{'will_retry'} = 0;
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
 			    #die ("bad status on taper VAULT-WRITE (dumper): $dle->{'status'}");
@@ -1155,15 +1176,15 @@ REREAD:
 				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
 			    }
 			    if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
-				$dlet->{'status'} = $WAIT_FOR_DUMPING;
+				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dlet->{'status'} == $DUMPING_TO_TAPE) {
-				$dlet->{'status'} = $WAIT_FOR_DUMPING;
+				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_FAILED) {
-				$dlet->{'status'} = $WAIT_FOR_DUMPING;
+				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dlet->{'status'} == $WRITING) {
-				$dlet->{'status'} = $WAIT_FOR_WRITING;
+				$dlet->{'status'} = $WRITE_FAILED;
 			    } elsif ($dlet->{'status'} == $FLUSHING) {
-				$dlet->{'status'} = $WAIT_FOR_FLUSHING;
+				$dlet->{'status'} = $FLUSH_FAILED;
 			    } else {
 				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
 			    }
@@ -1666,6 +1687,9 @@ sub set_summary {
 				$dle->{'failed_to_tape'} = 1;
 			    }
 			    $dlet->{'message'} = "write failed";
+			    if ($dlet->{'will_retry'}) {
+				$dlet->{'message'} .= " (will retry)";
+			    }
 			    $self->{'exit_status'} |= $STATUS_TAPE;
 			} elsif ($dlet->{'status'} == $FLUSH_FAILED) {
 			    $self->{'stat'}->{'flush'}->{'storage'}->{$storage}->{'nb'}++;
@@ -1675,6 +1699,9 @@ sub set_summary {
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'real_size'} += $dle->{'size'};
 			    $dlet->{'message'} = "flush failed";
+			    if ($dlet->{'will_retry'}) {
+				$dlet->{'message'} .= " (will retry)";
+			    }
 			    $self->{'exit_status'} |= $STATUS_TAPE;
 			} elsif ($dlet->{'status'} == $FLUSH_DONE) {
 			    $self->{'stat'}->{'flush'}->{'storage'}->{$storage}->{'nb'}++;

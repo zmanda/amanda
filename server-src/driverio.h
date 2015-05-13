@@ -229,7 +229,8 @@ GLOBAL taper_t   *tapetable;
 GLOBAL char *log_filename;
 
 void init_driverio(int inparallel, int nb_storage, int taper_parallel_write);
-void startup_tape_process(char *taper_program, gboolean no_taper);
+int  startup_dump_tape_process(char *taper_program, gboolean no_taper);
+int  startup_vault_tape_process(char *taper_program, gboolean no_taper);
 void startup_dump_process(dumper_t *dumper, char *dumper_program);
 void startup_dump_processes(char *dumper_program, int inparallel, char *timestamp);
 void startup_chunk_process(chunker_t *chunker, char *chunker_program);

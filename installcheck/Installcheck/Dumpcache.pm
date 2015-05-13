@@ -149,12 +149,18 @@ $flavors{'multi'} = sub {
     # may depend on this behavior
     ok(Installcheck::Run::run('amadmin', 'TESTCONF', 'force', 'localhost', "=$diskname"), "amadmin for 'multi' step 2"),
 	or amdump_diag("Amadmin run failed for 'multi' step 2");
+    ok(Installcheck::Run::run('amadmin', 'TESTCONF', 'force-level-1', 'localhost', "=$diskname/dir"), "amadmin for 'multi' step 2a"),
+	or amdump_diag("Amadmin run failed for 'multi' step 2a");
 
     ok(Installcheck::Run::run('amdump', 'TESTCONF'), "amdump for 'multi' step 2"),
 	or amdump_diag("Amdump run failed for 'multi' step 2");
 
     $append_stuff->();
 
+    ok(Installcheck::Run::run('amadmin', 'TESTCONF', 'force-level-1', 'localhost', "=$diskname"), "amadmin for 'multi' step 3"),
+	or amdump_diag("Amadmin run failed for 'multi' step 3");
+    ok(Installcheck::Run::run('amadmin', 'TESTCONF', 'force-level-1', 'localhost', "=$diskname/dir"), "amadmin for 'multi' step 3a"),
+	or amdump_diag("Amadmin run failed for 'multi' step 3a");
     ok(Installcheck::Run::run('amdump', 'TESTCONF', '-otpchanger=', '-otapedev=', '--no-taper'),
 	"amdump for 'multi' step 3 (degraded mode)"),
 	or amdump_diag("Amdump run failed for 'multi' step 3 (degraded mode)");
