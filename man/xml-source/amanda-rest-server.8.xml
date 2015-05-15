@@ -69,6 +69,34 @@ start the Amanda Rest Server.  </para>
 </variablelist>
 </refsect1>
 
+<refsect1><title>CONFIGURATIONS</title>
+<para>The configurationmust be in the <emphasis remap='B'>/etc/amanda/amanda.conf</emphasis> file.</para>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><amkeyword>rest-api-port</amkeyword> <amtype>port</amtype></term>
+  <listitem>
+<para>The port the rest server is listening.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>rest-ssl-cert</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>The path to the certicate file for ssl connection.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>rest-ssl-key</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>The path to the key file for ssl connection.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
 <seealso>
 <manref name="amanda" vol="8"/>,
 </seealso>

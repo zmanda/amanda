@@ -1,3 +1,13 @@
+2015-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h: Add CNF_REST_SSL_CERT and CNF_REST_SSL_KEY
+	* common-src/conffile.c: Parse rest-ssl-cert and rest-ssl-key
+	* perl/Amanda/Config.swg: Add CNF_REST_SSL_CERT and CNF_REST_SSL_KEY
+	* server-src/amanda-rest-server.pl: Start the REST server with
+	  '--enable-ssl --ssl-cert $ssl_cert --ssl-key $ssl_key' if
+	  CNF_REST_SSL_CERT and CNF_REST_SSL_KEY are set.
+	* man/xml-so: Document the rest-api-port, rest-ssl-cert and
+	  rest-ssl-key setting form /etc/amanda/amanda.conf
+
 2015-05-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/FetchDump.pm: Do not pass a changer
 	* perl/Amanda/Recovery/Planner.pm (make_plan): Accept storage instead

@@ -39,7 +39,7 @@ use Amanda::Amdump;
 sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
-Usage: amanda-rest-server [--version] [--help] [ start | stop ]
+Usage: amanda-rest-server [--version] [--help] [--development] [ start | stop ]
 EOF
     print STDERR "$msg\n" if $msg;
     exit 1;
@@ -57,7 +57,7 @@ Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'development' => \$opt_development,
-    'help|usage|?' => \&usage,
+    'help|usage|?' => sub { usage(); },
 ) or usage();
 
 usage("'start' or 'stop' must be specified.") if (@ARGV < 1);
@@ -93,6 +93,14 @@ if ($command eq 'start') {
 	print "The REST-API-PORT must be larger than 1024\n";
 	exit 1;
     }
+
+    my $ssl_cert = getconf($CNF_REST_SSL_CERT);
+    my $ssl_key = getconf($CNF_REST_SSL_KEY);
+    my @ssl;
+    if ($ssl_cert && $ssl_key) {
+	@ssl = ('--enable-ssl', '--ssl-cert', $ssl_cert, '--ssl-key', $ssl_key);
+    }
+
     my $dance_name;
     eval "use Dancer2;";
     if (!$@) {
@@ -107,9 +115,8 @@ if ($command eq 'start') {
 		   $opt_development ? '--env' : '',
 		   $opt_development ? 'development' : '',
 		   '--max-requests', '1',
-		   #$opt_development ? '' : '--daemonize',
-		   '--daemonize',
 		   $opt_development ? '' : '--daemonize',
+		   @ssl,
 		   '--pid', $pid_file);
     debug("running: " . join(' ', @command));
     system(@command);
