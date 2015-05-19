@@ -139,8 +139,11 @@ sub print_to_server {
 #$_[1] status: GOOD or ERROR
 sub print_to_server_and_die {
     my $self = shift;
+    my($msg, $status) = @_;
 
-    $self->print_to_server( @_ );
+    $status = $Amanda::Script_App::FAILURE;
+
+    $self->print_to_server($msg, $status);
     if (!defined $self->{die} && $self->can("check_for_backup_failure")) {
 	$self->{die} = 1;
 	$self->check_for_backup_failure();
