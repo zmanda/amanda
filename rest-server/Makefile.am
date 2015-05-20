@@ -60,7 +60,7 @@ RestServerlibAmanda_DATA = lib/Amanda/Rest.pm
 endif
 EXTRA_DIST += $(RestServer_DATA) \
 	      $(RestServerconfigdancer_DATA) \
-	      $(RestServer_DATARestServerEnvironments_DATA) \
+	      $(RestServerEnvironments_DATA) \
 	      $(RestServerpublic_DATA) \
 	      $(RestServerpubliccss_DATA) \
 	      $(RestServerpublicimages_DATA) \
