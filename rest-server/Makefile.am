@@ -26,7 +26,6 @@ PM_FILES=
 # PACKAGE: Amanda::Rest
 if WANT_SERVER
 RestServerdir = $(amlibdir)/rest-server
-AmandaRestAmandadir = $(amperldir)/Amanda/Rest/Amanda
 RestServer_DATA = config.yml
 RestServerconfigdancerdir = $(RestServerdir)/config-dancer
 RestServerconfigdancer_DATA = config-dancer/config.yml
@@ -46,7 +45,7 @@ RestServerpubliccss_DATA = public/css/error.css \
 RestServerpublicimagesdir = $(RestServerdir)/public/images
 RestServerpublicimages_DATA = public/images/perldancer-bg.jpg \
 			      public/images/perldancer.jpg
-RestAmandapublicjavascriptsdir = $(RestServerdir)public/javascripts
+RestAmandapublicjavascriptsdir = $(RestServerdir)/public/javascripts
 RestAmandapublicjavascripts_DATA = public/javascripts/jquery.js
 RestServerviewsdir = $(RestServerdir)/views
 RestServerviews_DATA = views/index.tt
@@ -59,9 +58,17 @@ RestServerlibAmandadir = $(RestServerdir)/lib/Amanda
 RestServerlibAmanda_DATA = lib/Amanda/Rest.pm
 
 endif
-EXTRA_DIST += lib/Amanda/Rest.pm.in \
-	      bin/app.pl.in \
-	      bin/app-dancer2.pl.in
+EXTRA_DIST += $(RestServer_DATA) \
+	      $(RestServerconfigdancer_DATA) \
+	      $(RestServer_DATARestServerEnvironments_DATA) \
+	      $(RestServerpublic_DATA) \
+	      $(RestServerpubliccss_DATA) \
+	      $(RestServerpublicimages_DATA) \
+	      $(RestAmandapublicjavascripts_DATA) \
+	      $(RestServerviews_DATA) \
+	      $(RestServerviewslayouts_DATA) \
+	      $(RestServerbin_DATA) \
+	      $(RestServerlibAmanda_DATA)
 DISTCLEANFILES += lib/Amanda/Rest.pm \
 		  bin/app.pl \
 		  bin/app-dancer2.pl

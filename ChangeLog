@@ -1,4 +1,7 @@
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* rest-server/Makefile.am (EXTRA_DIST): Add rest server.
+
+2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/Makefile.am: Missing \
 
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
