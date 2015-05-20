@@ -633,7 +633,7 @@ AmandaRestStoragesdir = $(amperldir)/Amanda/Rest/Storages
 AmandaRestStorages_DATA = Amanda/Rest/Storages/Labels.pm
 PM_FILES += $(AmandaRest_DATA) $(AmandaRestStorages_DATA)
 endif
-EXTRA_DIST += $(AmandaRest_DATA) $(AmandaRestStorages_DATA) Amanda/Rest/Amanda
+EXTRA_DIST += $(AmandaRest_DATA) $(AmandaRestStorages_DATA)
 
 if WANT_CLIENT
 # PACKAGE: Amanda::Application

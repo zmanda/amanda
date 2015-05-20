@@ -1,4 +1,7 @@
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Fix.
+
+2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/*: Moved the rest-server
 	* Makefile.am (SUBDIRS): Add rest-server
 	* configure.in (AC_CONFIG_FILES): add rest-server/Makefile
