@@ -62,7 +62,7 @@ endif
 EXTRA_DIST += lib/Amanda/Rest.pm.in \
 	      bin/app.pl.in \
 	      bin/app-dancer2.pl.in
-DISTCLEANFILES += lib/Amanda/Rest.pm
+DISTCLEANFILES += lib/Amanda/Rest.pm \
 		  bin/app.pl \
 		  bin/app-dancer2.pl
 
