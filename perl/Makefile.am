@@ -8,10 +8,6 @@ include $(top_srcdir)/config/automake/scripts.am
 # build amglue *first*
 SUBDIRS = amglue .
 
-amlibexec_SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app
-SCRIPTS_PERL_NO_CHECK = Amanda/Rest/Amanda/bin/app \
-			Amanda/Rest.pm
-
 # add the SWIG symbol to avoid conflicts with perl definitions.
 # $AMANDA_WARNING_CFLAGS is omitted because SWIG-generated files tend
 # to trigger warnings.
@@ -617,61 +613,22 @@ EXTRA_DIST += Amanda/Label.pm
 Amanda_DATA += Amanda/Message.pm
 EXTRA_DIST += Amanda/Message.pm
 
-# PACKAGE: Amanda::Rest
-if WANT_SERVER
-Amanda_DATA += Amanda/Rest.pm
-AmandaRestAmandadir = $(amperldir)/Amanda/Rest/Amanda
-AmandaRestAmanda_DATA = Amanda/Rest/Amanda/config.yml
-AmandaRestAmandaEnvironmentsdir = $(amperldir)/Amanda/Rest/Amanda/environments
-AmandaRestAmandaEnvironments_DATA = Amanda/Rest/Amanda/environments/development.yml \
-			        Amanda/Rest/Amanda/environments/production.yml
-AmandaRestAmandapublicdir = $(amperldir)/Amanda/Rest/Amanda/public
-AmandaRestAmandapublic_DATA = Amanda/Rest/Amanda/public/404.html \
-			      Amanda/Rest/Amanda/public/500.html \
-			      Amanda/Rest/Amanda/public/dispatch.cgi \
-			      Amanda/Rest/Amanda/public/dispatch.fcgi \
-			      Amanda/Rest/Amanda/public/favicon.ico
-AmandaRestAmandapubliccssdir = $(amperldir)/Amanda/Rest/Amanda/public/css
-AmandaRestAmandapubliccss_DATA = Amanda/Rest/Amanda/public/css/error.css \
-				 Amanda/Rest/Amanda/public/css/style.css
-AmandaRestAmandapublicimagesdir = $(amperldir)/Amanda/Rest/Amanda/public/images
-AmandaRestAmandapublicimages_DATA = Amanda/Rest/Amanda/public/images/perldancer-bg.jpg \
-				    Amanda/Rest/Amanda/public/images/perldancer.jpg
-AmandaRestAmandapublicjavascriptsdir = $(amperldir)/Amanda/Rest/Amanda/public/javascripts
-AmandaRestAmandapublicjavascripts_DATA = Amanda/Rest/Amanda/public/javascripts/jquery.js
-AmandaRestAmandaviewsdir = $(amperldir)/Amanda/Rest/Amanda/views
-AmandaRestAmandaviews_DATA = Amanda/Rest/Amanda/views/index.tt
-AmandaRestAmandaviewslayoutsdir = $(amperldir)/Amanda/Rest/Amanda/views/layout
-AmandaRestAmandaviewslayouts_DATA = Amanda/Rest/Amanda/views/layouts/main.tt
-AmandaRestAmandabindir = $(amperldir)/Amanda/Rest/Amanda/bin
-AmandaRestAmandabin_DATA = Amanda/Rest/Amanda/bin/app.pl \
-			   Amanda/Rest/Amanda/bin/app-dancer2.pl
-
-endif
-EXTRA_DIST += Amanda/Rest.pm.in \
-	      Amanda/Rest/Amanda/bin/app.pl.in \
-	      Amanda/Rest/Amanda/bin/app-dancer2.pl.in
-DISTCLEANFILES += Amanda/Rest.pm \
-		  Amanda/Rest/Amanda/bin/app.pl \
-		  Amanda/Rest/Amanda/bin/app-dancer2.pl
-
-# PACKAGE: Amanda::Rest::Config
 if WANT_SERVER
 # PACKAGE: Amanda::Rest::*
 AmandaRestdir = $(amperldir)/Amanda/Rest
 AmandaRest_DATA = \
-	Amanda/Rest/Amcheck.pm \
-	Amanda/Rest/Changers.pm \
-	Amanda/Rest/Configs.pm \
-	Amanda/Rest/Dles.pm \
-	Amanda/Rest/Dumps.pm \
-	Amanda/Rest/Labels.pm \
-	Amanda/Rest/Report.pm \
-	Amanda/Rest/Runs.pm \
-	Amanda/Rest/Services.pm \
-	Amanda/Rest/Status.pm \
-	Amanda/Rest/Storages.pm \
-	Amanda/Rest/Version.pm
+       Amanda/Rest/Amcheck.pm \
+       Amanda/Rest/Changers.pm \
+       Amanda/Rest/Configs.pm \
+       Amanda/Rest/Dles.pm \
+       Amanda/Rest/Dumps.pm \
+       Amanda/Rest/Labels.pm \
+       Amanda/Rest/Report.pm \
+       Amanda/Rest/Runs.pm \
+       Amanda/Rest/Services.pm \
+       Amanda/Rest/Status.pm \
+       Amanda/Rest/Storages.pm \
+       Amanda/Rest/Version.pm
 AmandaRestStoragesdir = $(amperldir)/Amanda/Rest/Storages
 AmandaRestStorages_DATA = Amanda/Rest/Storages/Labels.pm
 PM_FILES += $(AmandaRest_DATA) $(AmandaRestStorages_DATA)

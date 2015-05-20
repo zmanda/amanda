@@ -41,6 +41,9 @@ A REST server for amanda.
     Amanda::Rest::Version
 
 =cut
+use lib '/amanda/h1/linux/lib/amanda/perl';
+use strict;
+use warnings;
 
 package Amanda::Rest;
 use Dancer2;
@@ -78,12 +81,13 @@ use Amanda::Rest::Status;
 use Amanda::Rest::Storages;
 use Amanda::Rest::Version;
 
-setting log_path => "@AMANDA_DBGDIR@/amanda-rest-server-log";
-mkdir "@AMANDA_DBGDIR@/amanda-rest-server-log";
+setting log_path => "/tmp/amanda/amanda-rest-server-log";
+mkdir "/tmp/amanda/amanda-rest-server-log";
 
 Amanda::Util::setup_application("amrest-server", "server", $CONTEXT_CMDLINE, "rest-server", "amanda");
 
 set serializer => 'JSON';
+
 #prepare_serializer_for_format;
 
 get '/amanda/v1.0' => sub {
@@ -91,6 +95,7 @@ get '/amanda/v1.0' => sub {
 	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
 	my ($status, $r) = Amanda::Rest::Version::version(%p);
 	status $status if $status > 0;
+print Data::Dumper::Dumper($r);
 	return $r;
 };
 

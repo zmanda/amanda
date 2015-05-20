@@ -23,20 +23,15 @@ charset: "UTF-8"
 
 template: "simple"
 
-engines:
-    JSON:
-        allow_nonref:    '1'
-        allow_blessed:   '1'
-        pretty:          '1'
-        convert_blessed: '1'
+serializer: "JSON"
 
-#serializer: "JSON"
-#serializer:
-    #JSON:
-        #allow_nonref:    '1'
-        #allow_blessed:   '1'
-        #pretty:          '1'
-        #convert_blessed: '1'
+engines:
+    serializer:
+        JSON:
+            allow_nonref:    '1'
+            allow_blessed:   '1'
+            pretty:          '1'
+            convert_blessed: '1'
 
 #        canonical:       '1'
 

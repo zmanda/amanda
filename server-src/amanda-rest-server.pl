@@ -50,6 +50,8 @@ Amanda::Util::setup_application("amanda-rest-server", "server", $CONTEXT_DAEMON,
 my $config_overrides = new_config_overrides($#ARGV+1);
 my @config_overrides_opts;
 
+my $opt_dancer = 0;
+my $opt_dancer2 = 0;
 my $opt_development = 0;
 
 debug("Arguments: " . join(' ', @ARGV));
@@ -57,6 +59,8 @@ Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'development' => \$opt_development,
+    'dancer' => \$opt_dancer,
+    'dancer2' => \$opt_dancer2,
     'help|usage|?' => sub { usage(); },
 ) or usage();
 
@@ -103,10 +107,14 @@ if ($command eq 'start') {
 
     my $dance_name;
     eval "use Dancer2;";
-    if (!$@) {
-	$dance_name = '@amperldir@' . '/Amanda/Rest/Amanda/bin/app-dancer2.pl';
+    if ((!$@ || $opt_dancer2) && !$opt_dancer) {
+	if (-f '@amlibdir@' . '/rest-server/bin/app-extensions-dancer2.pl') {
+	    $dance_name = '@amlibdir@' . '/rest-server/bin/app-extensions-dancer2.pl';
+	} else {
+	    $dance_name = '@amlibdir@' . '/rest-server/bin/app-dancer2.pl';
+	}
     } else {
-	$dance_name = '@amperldir@' . '/Amanda/Rest/Amanda/bin/app.pl';
+	$dance_name = '@amlibdir@' . '/rest-server/bin/app.pl';
     }
     my @command = ('starman',
 		   $dance_name,

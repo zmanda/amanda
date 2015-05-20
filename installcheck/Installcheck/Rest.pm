@@ -29,12 +29,12 @@ use Test::More;
 my $dance_name;
 eval { require Dancer2; };
 if (!$@) {
-    $dance_name = "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app-dancer2.pl";
+    $dance_name = "$Amanda::Paths::amlibdir/rest-server/bin/app-dancer2.pl";
 } else {
     Amanda::Debug::debug("Failed to load Dancer2: $@");
     eval { require Dancer; };
     if (!$@) {
-	$dance_name = "$Amanda::Paths::amperldir/Amanda/Rest/Amanda/bin/app.pl";
+	$dance_name = "$Amanda::Paths::amlibdir/rest-server/bin/app.pl";
     } else {
 	Amanda::Debug::debug("Failed to load Dancer: $@");
 	die("Can't load dancer or Dancer2");

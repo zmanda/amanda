@@ -52,6 +52,7 @@ AC_CONFIG_FILES([
     perl/Makefile
     po/Makefile
     recover-src/Makefile
+    rest-server/Makefile
     server-src/Makefile
     xfer-src/Makefile
 ])

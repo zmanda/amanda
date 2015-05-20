@@ -37,6 +37,7 @@ SUBDIRS = . \
 	$(RECOVER_SUBDIRS) \
 	$(PLOT_SUBDIRS) \
 	perl \
+	rest-server \
 	po \
 	man \
 	example \

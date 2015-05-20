@@ -48,6 +48,7 @@ use Exporter;
     $exec_prefix
     $bindir
     $sbindir
+    $amlibdir
     $libexecdir
     $amlibexecdir
     $mandir
@@ -74,6 +75,7 @@ $prefix = "@prefix@";
 $exec_prefix = "@exec_prefix@";
 $bindir = "@bindir@";
 $sbindir = "@sbindir@";
+$amlibdir = "@amlibdir@";
 $libexecdir = "@libexecdir@";
 $amlibexecdir = "@amlibexecdir@";
 $mandir = "@mandir@";
