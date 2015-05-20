@@ -67,8 +67,9 @@ EXTRA_DIST += $(RestServer_DATA) \
 	      $(RestAmandapublicjavascripts_DATA) \
 	      $(RestServerviews_DATA) \
 	      $(RestServerviewslayouts_DATA) \
-	      $(RestServerbin_DATA) \
-	      $(RestServerlibAmanda_DATA)
+	      bin/app.pl.in \
+	      bin/app-dancer2.pl.in \
+	      lib/Amanda/Rest.pm.in
 DISTCLEANFILES += lib/Amanda/Rest.pm \
 		  bin/app.pl \
 		  bin/app-dancer2.pl

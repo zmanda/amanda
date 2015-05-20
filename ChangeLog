@@ -1,4 +1,7 @@
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* rest-server/Makefile.am (EXTRA_DIST): Add the *.in files
+
+2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/Makefile.am: typo.
 
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
