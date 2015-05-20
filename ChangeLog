@@ -1,4 +1,9 @@
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* rest-server/Makefile.in, rest-server/Makefile,
+	  rest-server/lib/Amanda/Rest.pm, rest-server/bin/app-dancer2.pl,
+	  rest-server/bin/app.pl: Remove files.
+
+2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Fix.
 
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
