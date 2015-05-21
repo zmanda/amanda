@@ -45,7 +45,7 @@ mkdir "@AMANDA_DBGDIR@/amanda-rest-server-log";
 Amanda::Util::setup_application("amrest-server", "server", $CONTEXT_CMDLINE, "rest-server", "amanda");
 
 set serializer => 'JSON';
-set confdir => '@amlibdir@/rest-server/config-dancer';
+set confdir => '@amlibexecdir@/rest-server/config-dancer';
 #prepare_serializer_for_format;
 
 get '/amanda/v1.0' => sub {
