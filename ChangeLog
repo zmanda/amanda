@@ -1,3 +1,8 @@
+2015-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* rest-server/Makefile.am: Install the rest-server in amlibexecdir.
+	* server-src/amanda-rest-server.pl, installcheck/Installcheck/Rest.pm:
+	  rest-server installed in amlibexecdir.
+
 2015-05-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/Makefile.am (EXTRA_DIST): Add the *.in files
 

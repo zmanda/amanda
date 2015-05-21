@@ -108,13 +108,13 @@ if ($command eq 'start') {
     my $dance_name;
     eval "use Dancer2;";
     if ((!$@ || $opt_dancer2) && !$opt_dancer) {
-	if (-f '@amlibdir@' . '/rest-server/bin/app-extensions-dancer2.pl') {
-	    $dance_name = '@amlibdir@' . '/rest-server/bin/app-extensions-dancer2.pl';
+	if (-f '@amlibexecdir@' . '/rest-server/bin/app-extensions-dancer2.pl') {
+	    $dance_name = '@amlibexecdir@' . '/rest-server/bin/app-extensions-dancer2.pl';
 	} else {
-	    $dance_name = '@amlibdir@' . '/rest-server/bin/app-dancer2.pl';
+	    $dance_name = '@amlibexecdir@' . '/rest-server/bin/app-dancer2.pl';
 	}
     } else {
-	$dance_name = '@amlibdir@' . '/rest-server/bin/app.pl';
+	$dance_name = '@amlibexecdir@' . '/rest-server/bin/app.pl';
     }
     my @command = ('starman',
 		   $dance_name,

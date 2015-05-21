@@ -25,7 +25,7 @@ PM_FILES=
 
 # PACKAGE: Amanda::Rest
 if WANT_SERVER
-RestServerdir = $(amlibdir)/rest-server
+RestServerdir = $(amlibexecdir)/rest-server
 RestServer_DATA = config.yml
 RestServerconfigdancerdir = $(RestServerdir)/config-dancer
 RestServerconfigdancer_DATA = config-dancer/config.yml
