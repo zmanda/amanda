@@ -394,7 +394,7 @@ sub result_cb {
     my $stats = make_stats($params{'size'}, $params{'total_duration'}, $self->{'orig_kb'});
 
     # consider this a config-derived failure only if there were no errors
-    my $failure_from = (@{$params{'device_errors'}})?  'error' : 'config';
+    my $failure_from = (defined $params{'config_denial_message'})?  'config' : 'error';
 
     my @all_messages = (@{$params{'device_errors'}}, @{$self->{'input_errors'}});
     push @all_messages, $params{'config_denial_message'} if $params{'config_denial_message'};
