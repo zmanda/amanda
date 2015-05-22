@@ -935,6 +935,25 @@ start_server_check(
 	fprintf(outf, "-----------------------------\n");
     }
 
+    if (do_localchk) {
+	am_host_t *p;
+	disk_t *dp;
+
+	for (p = get_hostlist(); p != NULL; p = p->next) {
+	    for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
+		if (dp->strategy == DS_SKIP) continue;
+		if (strcmp(dp->auth, p->disks->auth) != 0) {
+		    delete_message(amcheck_fprint_message(outf, build_message(
+					AMANDA_FILE, __LINE__, 2800231, MSG_WARNING, 3,
+					"hostname", p->hostname,
+					"auth1", p->disks->auth,
+					"auth2", dp->auth)));
+		    break;
+		}
+	    }
+	}
+    }
+
     if (do_localchk || testtape) {
 	identlist_t il;
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {

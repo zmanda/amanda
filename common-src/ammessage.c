@@ -1213,6 +1213,8 @@ set_message(
 	msg = "Invalid mailto address '%{mailto}'";
     } else if (message->code == 2800230) {
 	msg = "Can't open '%{filename}' for reading: %{errnostr}";
+    } else if (message->code == 2800231) {
+	msg = "Host '%{hostname}' use multiple auth (%{auth1} and %{auth2})";
     } else if (message->code == 2900000) {
 	msg = "The Application '%{application}' failed: %{errmsg}";
     } else if (message->code == 2900001) {

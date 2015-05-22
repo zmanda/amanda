@@ -1,4 +1,8 @@
 2015-05-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Check all dles of a host have the same auth.
+	* common-src/ammessage.c: Add message 2800231.
+
+2015-05-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Worker.pm: Fix $failure_from.
 
 2015-05-21  Jean-Louis Martineau <martineau@zmanda.com>
