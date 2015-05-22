@@ -762,6 +762,22 @@ start_server_check(
         tp = lookup_tapetype(getconf_str(CNF_TAPETYPE));
     }
 
+    if (do_localchk) {
+        am_host_t *p;
+        disk_t *dp;
+
+	for (p = get_hostlist(); p != NULL; p = p->next) {
+	    for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
+		if (dp->strategy == DS_SKIP) continue;
+		if (strcmp(dp->auth, p->disks->auth) != 0) {
+		    g_fprintf(outf, "WARNING: Host '%s' use multiple auth (%s and %s)\n",
+			      p->hostname, p->disks->auth, dp->auth);
+		    break;
+		}
+	    }
+	}
+    }
+
     /*
      * Check various server side config file settings.
      */
