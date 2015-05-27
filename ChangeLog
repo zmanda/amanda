@@ -1,4 +1,7 @@
 2015-05-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Fix previous patch.
+
+2015-05-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: Call ndmp_connection_mover_read with the
 	  header size as the offset.
 

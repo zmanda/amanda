@@ -1138,8 +1138,8 @@ listen_impl(
 	 * mover will pause immediately when it wants to read the first mover
 	 * record. */
 	if (!ndmp_connection_mover_set_window(self->ndmp,
-		    DEVICE(self)->block_size,
-		    DEVICE(self)->block_size)) {
+		    2*DEVICE(self)->block_size,
+		    2*DEVICE(self)->block_size)) {
 	    set_error_from_ndmp(self);
 	    return FALSE;
 	}
@@ -1743,8 +1743,8 @@ read_to_connection_impl(
     g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
 
     if (!ndmp_connection_mover_set_window(self->ndmp,
-		nconn->offset,
-		size? size : G_MAXUINT64 - nconn->offset)) {
+		nconn->offset+32768,
+		size? size : G_MAXUINT64 - (nconn->offset+32768))) {
 	set_error_from_ndmp(self);
 	return 1;
     }
