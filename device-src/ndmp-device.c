@@ -78,6 +78,7 @@ struct NdmpDevice_ {
     GCond	*abort_cond;
     gboolean	 cancel;
     int         *cancelled;
+    guint64	header_size;
 };
 
 /*
@@ -900,7 +901,6 @@ ndmp_device_seek_file(
     gint delta;
     guint resid;
     gpointer buf;
-    guint64 buf_size;
     dumpfile_t *header;
     gsize read_block_size = 0;
 
@@ -985,7 +985,7 @@ incomplete_bsf:
 	return NULL;
     }
     if (!ndmp_connection_tape_read(self->ndmp,
-		buf, read_block_size, &buf_size)) {
+		buf, read_block_size, &self->header_size)) {
 	switch (ndmp_connection_err_code(self->ndmp)) {
 	    case NDMP9_EOF_ERR:
 	    case NDMP9_EOM_ERR:
@@ -1000,7 +1000,7 @@ incomplete_bsf:
 
     header = g_new(dumpfile_t, 1);
     fh_init(header);
-    parse_file_header(buf, header, buf_size);
+    parse_file_header(buf, header, self->header_size);
     g_free(buf);
 
     return header;
@@ -1267,7 +1267,7 @@ accept_impl(
 	 * usual empty window. Note that this means the whole dump will be read
 	 * in one MOVER_READ operation, even if it does not begin at the
 	 * beginning of a part. */
-	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
+	if (!ndmp_connection_mover_read(self->ndmp, self->header_size, G_MAXUINT64 - self->header_size)) {
 	    set_error_from_ndmp(self);
 	    result = 1;
 	    goto accept_failed;
@@ -1412,7 +1412,7 @@ connect_impl(
 	 * it to do something else.  The thing we want to is for it to start
 	 * reading data from the tape, which will immediately trigger an EOW or
 	 * SEEK pause. */
-	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
+	if (!ndmp_connection_mover_read(self->ndmp, self->header_size, G_MAXUINT64 - self->header_size)) {
 	    set_error_from_ndmp(self);
 	    return 1;
 	}
@@ -2075,6 +2075,7 @@ ndmp_device_init(NdmpDevice *self)
     dself->block_size = 32768;
     dself->min_block_size = 32768;
     dself->max_block_size = SIZE_MAX;
+    self->header_size = 0;
 
     bzero(&response, sizeof(response));
 
