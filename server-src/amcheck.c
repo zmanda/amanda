@@ -944,7 +944,8 @@ start_server_check(
 		if (dp->strategy == DS_SKIP) continue;
 		if (strcmp(dp->auth, p->disks->auth) != 0) {
 		    delete_message(amcheck_fprint_message(outf, build_message(
-					AMANDA_FILE, __LINE__, 2800231, MSG_WARNING, 3,
+					AMANDA_FILE, __LINE__,
+					2800231, MSG_ERROR, 3,
 					"hostname", p->hostname,
 					"auth1", p->disks->auth,
 					"auth2", dp->auth)));

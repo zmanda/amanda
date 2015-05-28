@@ -1,3 +1,7 @@
+2015-05-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Improve message 2800231.
+	* server-src/amcheck.c: message 2800231 is an MSG_ERROR.
+
 2015-05-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: Fix previous patch.
 
