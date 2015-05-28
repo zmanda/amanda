@@ -770,8 +770,9 @@ start_server_check(
 	    for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
 		if (dp->strategy == DS_SKIP) continue;
 		if (strcmp(dp->auth, p->disks->auth) != 0) {
-		    g_fprintf(outf, "WARNING: Host '%s' use multiple auth (%s and %s)\n",
-			      p->hostname, p->disks->auth, dp->auth);
+		    g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different auth methods\n",
+			      p->hostname);
+		    g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method\n");
 		    break;
 		}
 	    }
