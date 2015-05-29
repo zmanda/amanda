@@ -59,6 +59,8 @@ static int overwrite;
 static disklist_t origq;
 
 static uid_t uid_dumpuser;
+static gboolean who_check_auth = TRUE;//  TRUE => local check auth
+                                      // FALSE => clent check auth
 
 /* local functions */
 
@@ -68,6 +70,7 @@ pid_t start_server_check(int fd, int do_localchk, int do_tapechk);
 int main(int argc, char **argv);
 int check_tapefile(FILE *outf, char *tapefile);
 int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
+static void check_auth(FILE *outf);
 
 void
 usage(void)
@@ -350,6 +353,8 @@ main(
     else
 	/* just use stdout */
 	mainfd = 1;
+
+    who_check_auth = do_localchk;
 
     /* start server side checks */
 
@@ -762,21 +767,8 @@ start_server_check(
         tp = lookup_tapetype(getconf_str(CNF_TAPETYPE));
     }
 
-    if (do_localchk) {
-        am_host_t *p;
-        disk_t *dp;
-
-	for (p = get_hostlist(); p != NULL; p = p->next) {
-	    for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
-		if (dp->strategy == DS_SKIP) continue;
-		if (strcmp(dp->auth, p->disks->auth) != 0) {
-		    g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different auth methods\n",
-			      p->hostname);
-		    g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method\n");
-		    break;
-		}
-	    }
-	}
+    if (who_check_auth) {
+	check_auth(outf);
     }
 
     /*
@@ -2168,6 +2160,10 @@ start_client_checks(
     g_fprintf(outf, _("\nAmanda Backup Client Hosts Check\n"));
     g_fprintf(outf,   "--------------------------------\n");
 
+    if (!who_check_auth) {
+	check_auth(outf);
+    }
+
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
 
@@ -2333,4 +2329,24 @@ handle_result(
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
     while(waitpid(-1, NULL, WNOHANG)> 0);
+}
+
+static void
+check_auth(
+    FILE *outf)
+{
+    am_host_t *p;
+    disk_t *dp;
+
+    for (p = get_hostlist(); p != NULL; p = p->next) {
+	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
+	    if (dp->strategy == DS_SKIP) continue;
+	    if (strcmp(dp->auth, p->disks->auth) != 0) {
+		g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different auth methods\n",
+			  p->hostname);
+		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method\n");
+		break;
+	    }
+	}
+    }
 }
