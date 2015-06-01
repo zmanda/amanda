@@ -1,4 +1,7 @@
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Tests.swg: #include "glib-util.h"
+
+2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmpconnobj.c: #include "glib-util.h",
 	* ndmp-src/ndmpconnobj.c (ndmp_connection_mover_connect):  return a
 	  gboolean.
