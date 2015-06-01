@@ -1963,8 +1963,8 @@ extract_files_child(
     /* form the arguments to restore */
     files_off_tape = length_of_tape_list(ctl_data->elist);
     switch(dumptype) {
-    case IS_SAMBA:
 #ifdef SAMBA_CLIENT
+    case IS_SAMBA:
 	g_ptr_array_add(argv_ptr, g_strdup("smbclient"));
 	smbpass = findpass(ctl_data->file.disk, &domain);
 	if (smbpass) {
@@ -2108,10 +2108,10 @@ extract_files_child(
     g_ptr_array_add(argv_ptr, NULL);
 
     switch (dumptype) {
-    case IS_SAMBA:
 #ifdef SAMBA_CLIENT
-    	cmd = g_strdup(SAMBA_CLIENT);
-    	break;
+    case IS_SAMBA:
+	cmd = g_strdup(SAMBA_CLIENT);
+	break;
 #else
 	/* fall through to ... */
 #endif

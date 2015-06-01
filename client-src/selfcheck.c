@@ -625,14 +625,16 @@ check_disk(
     dle_t *dle)
 {
     char *device = NULL;
+#ifdef SAMBA_CLIENT
     char *user_and_password = NULL;
     char *domain = NULL;
     char *share = NULL, *subdir = NULL;
     size_t lpass = 0;
+    char *extra_info = NULL;
+#endif
     int amode = R_OK;
     int access_result;
     char *access_type;
-    char *extra_info = NULL;
     char *qdisk = NULL;
     char *qamdevice = NULL;
     char *qdevice = NULL;
@@ -1318,6 +1320,7 @@ common_exit:
     if (!qdevice)
 	qdevice = quote_string(device);
 
+#ifdef SAMBA_CLIENT
     amfree(share);
     amfree(subdir);
     if(user_and_password) {
@@ -1325,6 +1328,7 @@ common_exit:
 	amfree(user_and_password);
     }
     amfree(domain);
+#endif
 
     if (nb_error == 0) {
 	if (dle->disk) {
@@ -1350,10 +1354,12 @@ common_exit:
 			"disk", dle->disk )));
 	}
     }
+#ifdef SAMBA_CLIENT
     if(extra_info) {
 	dbprintf(_("extra info: %s\n"), extra_info);
 	amfree(extra_info);
     }
+#endif
     amfree(qdisk);
     amfree(qdevice);
     amfree(qamdevice);

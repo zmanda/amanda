@@ -3011,7 +3011,9 @@ dumper_taper_result(
 	char *wall_time = walltime_str(curclock());
 	sp->action = ACTION_DUMP_TO_TAPE;
 	enqueue_sched(&directq, sp);
+	qname = quote_string(dp->name); /*quote to take care of spaces*/
 	g_printf("driver: requeue dump_to_tape time %s %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp, wtaper->taper->storage_name);
+	amfree(qname);
     }
 
     if (dumper->result == DONE && wtaper->result == DONE) {

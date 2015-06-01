@@ -2259,9 +2259,7 @@ parse_json_message(
 			    message->severity = MSG_WARNING;
 			} else if (strncmp_const(token, "error") == 0) {
 			    message->severity = MSG_ERROR;
-			} else if (strncmp_const(token, "critical") == 0) {
-			    message->severity = MSG_CRITICAL;
-			} else {
+			} else { /* critical or any other value */
 			    message->severity = MSG_CRITICAL;
 			}
 			g_free(token);
