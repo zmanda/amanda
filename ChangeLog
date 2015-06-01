@@ -1,4 +1,8 @@
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/extract_list.c: More fix if SAMBA_CLIENT is not
+	  defined.
+
+2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: More fix if SAMBA_CLIENT is not defined.
 
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
