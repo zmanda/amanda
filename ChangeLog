@@ -1,4 +1,12 @@
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmpconnobj.c: #include "glib-util.h",
+	* ndmp-src/ndmpconnobj.c (ndmp_connection_mover_connect):  return a
+	  gboolean.
+	* perl/Amanda/Tests.swg: #include "glib-init.h"
+	* perl/Amanda/Util.swg: #include "match.h"
+	* perl/Amanda/Util.swg:  rename crc32 to crc32_add.
+
+2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/compile, config/config.guess, config/config.sub,
 	  config/depcomp, config/install-sh, config/missing,
 	  config/test-driver, config/ylwrap: Newer version of files.

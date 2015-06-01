@@ -27,6 +27,7 @@
 
 %{
 #include "simpleprng.h"
+#include "glib-init.h"
 %}
 
 %inline %{
