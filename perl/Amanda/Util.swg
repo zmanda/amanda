@@ -37,6 +37,7 @@
 #include "../common-src/util.h"
 #include "file.h"
 #include "sockaddr-util.h"
+#include "match.h"
 %}
 
 void glib_init(void);
@@ -677,7 +678,7 @@ sub match_labelstr_expr {
 
 void make_crc_table(void);
 void crc32_init(crc_t *crc);
-void crc32(uint8_t *buf, size_t len, crc_t *crc);
+void crc32_add(uint8_t *buf, size_t len, crc_t *crc);
 uint32_t crc32_finish(crc_t *crc);
 
 /* -------------------------------------------------------------------------

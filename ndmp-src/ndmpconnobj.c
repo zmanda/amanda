@@ -22,6 +22,7 @@
 #include "amanda.h"
 #include "event.h"
 #include "sockaddr-util.h"
+#include "glib-util.h"
 #include "ndmpconnobj.h"
 
 /*
@@ -493,6 +494,7 @@ ndmp_connection_mover_listen(
     return TRUE;
 }
 
+gboolean
 ndmp_connection_mover_connect(
 	NDMPConnection *self,
 	ndmp9_mover_mode mode,
