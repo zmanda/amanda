@@ -1619,7 +1619,9 @@ enum dumptypes {
 	IS_DUMP,
 	IS_GNUTAR,
 	IS_TAR,
+#ifdef SAMBA_CLIENT
 	IS_SAMBA,
+#endif
 	IS_SAMBA_TAR
 };
 
@@ -1690,8 +1692,8 @@ extract_files_child(
     /* form the arguments to restore */
     files_off_tape = length_of_tape_list(elist);
     switch(dumptype) {
-    case IS_SAMBA:
 #ifdef SAMBA_CLIENT
+    case IS_SAMBA:
 	g_ptr_array_add(argv_ptr, g_strdup("smbclient"));
 	smbpass = findpass(file.disk, &domain);
 	if (smbpass) {
@@ -1753,7 +1755,9 @@ extract_files_child(
 	case IS_TAR:
 	case IS_GNUTAR:
 	case IS_SAMBA_TAR:
+#ifdef SAMBA_CLIENT
 	case IS_SAMBA:
+#endif
 	    if (g_str_equal(fn->path, "/"))
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
@@ -1785,8 +1789,8 @@ extract_files_child(
     g_ptr_array_add(argv_ptr, NULL);
 
     switch (dumptype) {
-    case IS_SAMBA:
 #ifdef SAMBA_CLIENT
+    case IS_SAMBA:
 	cmd = g_strdup(SAMBA_CLIENT);
 	break;
 #else
