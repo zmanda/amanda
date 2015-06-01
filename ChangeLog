@@ -1,4 +1,7 @@
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: More fix if SAMBA_CLIENT is not defined.
+
+2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Tests.swg: #include "glib-util.h"
 	* client-src/selfcheck.c, common-src/ammessage.c,
 	  recover-src/extract_list.c, server-src/driver.c: Fix bug found by

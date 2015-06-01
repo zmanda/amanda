@@ -1881,7 +1881,9 @@ enum dumptypes {
 	IS_DUMP,
 	IS_GNUTAR,
 	IS_TAR,
+#ifdef SAMBA_CLIENT
 	IS_SAMBA,
+#endif
 	IS_SAMBA_TAR,
 	IS_APPLICATION_API
 };
@@ -2072,10 +2074,12 @@ extract_files_child(
     {
 	switch (dumptype) {
 	case IS_APPLICATION_API:
-    	case IS_TAR:
-    	case IS_GNUTAR:
-    	case IS_SAMBA_TAR:
-    	case IS_SAMBA:
+	case IS_TAR:
+	case IS_GNUTAR:
+	case IS_SAMBA_TAR:
+#ifdef SAMBA_CLIENT
+	case IS_SAMBA:
+#endif
 	    if (g_str_equal(fn->path, "/"))
 		g_ptr_array_add(argv_ptr, g_strdup("."));
 	    else
@@ -2097,7 +2101,7 @@ extract_files_child(
 	    g_ptr_array_add(argv_ptr, g_strdup(fn->path));
 	    }
 	    break;
-  	}
+	}
     }
 #if defined(XFSDUMP)
     if (g_str_equal(ctl_data->file.program, XFSDUMP)) {
