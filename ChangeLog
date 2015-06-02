@@ -1,4 +1,7 @@
 2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Time::HiRes is not available everywhere.
+
+2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report.pm: Set total_time to the time of amvault
 	  on an amvault run.
 	* perl/Amanda/Report/human.pm: Parse amvault FINISH line.

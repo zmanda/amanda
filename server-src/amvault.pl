@@ -102,8 +102,6 @@ sub user_request {
 
 package Amvault;
 
-use Time::HiRes qw/ time /;
-
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Disklist;
 use Amanda::Debug qw( :logging debug );
@@ -128,6 +126,8 @@ use base qw(
     Amanda::Recovery::Clerk::Feedback
     Amanda::Taper::Scribe::Feedback
 );
+
+eval "require Time::HiRes qw / time /;";
 
 sub new {
     my $class = shift;
