@@ -1,3 +1,6 @@
+2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Improve message.
+
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/extract_list.c: More fix if SAMBA_CLIENT is not
 	  defined.

@@ -2344,7 +2344,7 @@ check_auth(
 	    if (strcmp(dp->auth, p->disks->auth) != 0) {
 		g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different auth methods\n",
 			  p->hostname);
-		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method\n");
+		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method, including skipped ones\n");
 		break;
 	    }
 	}
