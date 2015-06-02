@@ -1215,7 +1215,7 @@ set_message(
 	msg = "Can't open '%{filename}' for reading: %{errnostr}";
     } else if (message->code == 2800231) {
 	msg = "Multiple DLE's for host '%{hostname}' use different auth methods";
-	hint = "Please ensure that all DLE's for the host use the same auth method";
+	hint = "Please ensure that all DLE's for the host use the same auth method, including skipped ones";
     } else if (message->code == 2900000) {
 	msg = "The Application '%{application}' failed: %{errmsg}";
     } else if (message->code == 2900001) {

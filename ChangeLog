@@ -1,3 +1,6 @@
+2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Improve hint on message 2800231.
+
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/extract_list.c: More fix if SAMBA_CLIENT is not
 	  defined.
