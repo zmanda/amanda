@@ -102,6 +102,8 @@ sub user_request {
 
 package Amvault;
 
+use Time::HiRes qw/ time /;
+
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Disklist;
 use Amanda::Debug qw( :logging debug );
@@ -242,6 +244,7 @@ sub run {
 	    return $self->bail_already_running();
 	}
 	close($tl);
+	$self->{'start_time'} = time;
 	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
 	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 	$self->{'cleanup'}{'roll_trace_log'} = 1;
@@ -808,6 +811,8 @@ sub quit {
 	}
 	if ($self->{'cleanup'}{'roll_trace_log'}) {
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
+	    $self->{'end_time'} = time;
+	    log_add_full($L_FINISH, "amvault", "date $self->{'dst_write_timestamp'} time " . ($self->{'end_time'} - $self->{'start_time'}));
 	    log_add($L_INFO, "pid-done $$");
 
 	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config_name'}, "--from-amdump",

@@ -294,7 +294,8 @@ sub calculate_stats
     if ($report->get_flag("got_finish")) {
         $total_stats->{total_time} =
              $report->get_program_info("driver",  "time", 0)
-          || $report->get_program_info("amflush", "time", 0);
+          || $report->get_program_info("amflush", "time", 0)
+          || $report->get_program_info("amvault", "time", 0);
     } else {
         $total_stats->{total_time} =
           $total_stats->{taper_time} + $total_stats->{planner_time};

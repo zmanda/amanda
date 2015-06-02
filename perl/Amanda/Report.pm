@@ -1062,6 +1062,11 @@ sub _handle_amflush_line
     } elsif ( $type == $L_INFO ) {
         return $self->_handle_info_line( "amflush", $str );
 
+    } elsif ( $type == $L_FINISH ) {
+        my @info = Amanda::Util::split_quoted_strings($str);
+        $self->{flags}{got_finish} = 1;
+        return $amflush_p->{time} = $info[3];
+
     } else {
         return $self->_handle_bogus_line( $P_AMFLUSH, $type, $str );
     }
@@ -1090,6 +1095,11 @@ sub _handle_amvault_line
 
     } elsif ( $type == $L_DISK ) {
         return $self->_handle_disk_line( "amvault", $str );
+
+    } elsif ( $type == $L_FINISH ) {
+        my @info = Amanda::Util::split_quoted_strings($str);
+        $self->{flags}{got_finish} = 1;
+        return $amvault_p->{time} = $info[3];
 
     } else {
         return $self->_handle_bogus_line( $P_AMFLUSH, $type, $str );
