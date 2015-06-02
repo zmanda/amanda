@@ -1,4 +1,10 @@
 2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Set total_time to the time of amvault
+	  on an amvault run.
+	* perl/Amanda/Report.pm: Parse amvault FINISH line.
+	* perl/Amanda/Vault.pm: Log a FINISH line.
+
+2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Improve hint on message 2800231.
 
 2015-06-01  Jean-Louis Martineau <martineau@zmanda.com>

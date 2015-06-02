@@ -84,6 +84,7 @@ use warnings;
 
 use POSIX qw(strftime);
 use File::Temp;
+use Time::Hires qw / time /;
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Disklist;
 use Amanda::Debug qw( :logging debug );
@@ -197,6 +198,7 @@ sub new {
 	$self->{'dst_write_timestamp'} = Amanda::Logfile::make_logname("amvault", $self->{'dst_write_timestamp'});
 	$self->{'timestamp'} = $self->{'dst_write_timestamp'};
 	$self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+	$self->{'start_time'} = time;
 	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
 	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 	$self->{'cleanup'}{'created_log'} = 1;
@@ -927,6 +929,8 @@ sub quit {
 	if ($self->{'cleanup'}{'created_log'}) {
 	    $self->roll_amdump_logs();
 	    log_add_full($L_FINISH, "driver", "fake driver finish");
+	    $self->{'end_time'} = time;
+	    log_add_full($L_FINISH, "amvault", "date $self->{'dst_write_timestamp'} time " . ($self->{'end_time'} - $self->{'start_time'}));
 	    log_add($L_INFO, "pid-done $$");
 
 	    my @amreport_cmd = ("$sbindir/amreport", $self->{'config'},
