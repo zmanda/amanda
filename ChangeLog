@@ -1,3 +1,7 @@
+2015-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* rest-server/bin/app-dancer2.pl.in,
+	  rest-server/bin/app.pl.in: Use @PERL@
+
 2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Vault.pm: Time::HiRes is not available everywhere.
 
