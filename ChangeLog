@@ -1,3 +1,6 @@
+2015-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amrmtape.pl: Check return value of Amanda::Changer->new
+
 2015-06-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Time::HiRes is not available everywhere.
 

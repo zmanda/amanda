@@ -261,6 +261,7 @@ my $scrub_db = sub {
 my $erase_volume = make_cb('erase_volume' => sub {
     if ($erase) {
 	my $chg = Amanda::Changer->new($changer_name, tapelist => $tapelist);
+	die $chg if $chg->isa("Amanda::Changer::Error");
 	$chg->load(
 	    'label' => $label,
 	    'res_cb' => sub {
