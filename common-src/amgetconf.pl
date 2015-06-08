@@ -155,18 +155,6 @@ my %build_info = (
     'compress_best_opt' => $Amanda::Constants::COMPRESS_BEST_OPT,
     'uncompress_opt' => $Amanda::Constants::UNCOMPRESS_OPT,
 
-    # kerberos information
-
-    'ticket_lifetime' => $Amanda::Constants::TICKET_LIFETIME,
-    'server_host_principal' => $Amanda::Constants::SERVER_HOST_PRINCIPAL,
-    'server_host_instance' => $Amanda::Constants::SERVER_HOST_INSTANCE,
-    'server_host_key_file' => $Amanda::Constants::SERVER_HOST_KEY_FILE,
-    'client_host_principal' => $Amanda::Constants::CLIENT_HOST_PRINCIPAL,
-    'client_host_instance' => $Amanda::Constants::CLIENT_HOST_INSTANCE,
-    'client_host_key_file' => $Amanda::Constants::CLIENT_HOST_KEY_FILE,
-    # (historical typos:)
-    'server_host_principle' => $Amanda::Constants::SERVER_HOST_PRINCIPAL,
-    'client_host_principle' => $Amanda::Constants::CLIENT_HOST_PRINCIPAL,
     # (for testing purposes)
     '__empty' => '',
 

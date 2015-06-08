@@ -1,4 +1,3 @@
-#! @PERL@
 # Copyright (c) 2008-2012 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or

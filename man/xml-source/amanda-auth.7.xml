@@ -61,16 +61,9 @@ Authentication	  Configure option(s)
 
 <para>See <emphasis remap='B'>PORT USAGE</emphasis> below for more information.</para>
 
-<para>There are additional configure options for Kerberos if you so desire.  All but the last option are for Kerberos 4.  Defaults shown in square brackets.
+<para>There are additional configure options for Kerberos 5 if you so desire.
 
 <programlisting>
-   --with-server-principal=ARG    server host principal  [amanda]
-   --with-server-instance=ARG     server host instance   []
-   --with-server-keyfile=ARG      server host key file   [/.amanda]
-   --with-client-principal=ARG    client host principal  [rcmd]
-   --with-client-instance=ARG     client host instance   [HOSTNAME_INSTANCE]
-   --with-client-keyfile=ARG      client host key file   [KEYFILE]
-   --with-ticket-lifetime=ARG     ticket lifetime        [128]
    --with-krb5-security=DIR       where libkrb.a lives   [see below]
 </programlisting>
 </para>

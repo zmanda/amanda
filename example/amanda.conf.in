@@ -451,7 +451,7 @@ define tapetype SEAGATE-ULTRIUM-LTO {
 #                 or "GNUTAR".  Default: [program "DUMP"].
 #   record	- record the backup in the time-stamp-database of the backup
 #		  program (e.g. /etc/dumpdates for DUMP or
-#		  @GNUTAR_LISTED_INCREMENTAL_DIRX@ for GNUTAR.).
+#		  @GNUTAR_LISTED_INCREMENTAL_DIR@ for GNUTAR.).
 #		  Default: [record yes]
 #   skip-full	- skip the disk when a level 0 is due, to allow full backups
 #		  outside Amanda, eg when the machine is in single-user mode.

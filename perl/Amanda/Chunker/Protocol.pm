@@ -31,7 +31,6 @@ used by the chunker.
 
 =cut
 
-use lib '@amperldir@';
 use strict;
 use warnings;
 

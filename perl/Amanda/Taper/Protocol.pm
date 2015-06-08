@@ -31,7 +31,6 @@ used by L<Amanda::Taper::Controller> and L<Amanda::Taper::Worker>
 
 =cut
 
-use lib '@amperldir@';
 use strict;
 use warnings;
 

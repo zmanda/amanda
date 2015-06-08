@@ -1,3 +1,15 @@
+2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* example/amanda.conf.in: Fix typo.
+	* common-src/amgetconf.pl, man/xml-source/amanda-auth.7.xml,
+	  man/xml-source/amgetconf.8.xml, perl/Amanda/Constants.pm.in.src:
+	  Remove krb4 setting.
+	* perl/Amanda/Amdump.pm, perl/Amanda/Amflush.pm,
+	  perl/Amanda/CheckDump.pm, perl/Amanda/Chunker/Controller.pm,
+	  perl/Amanda/Chunker/Protocol.pm, perl/Amanda/FetchDump.pm,
+	  perl/Amanda/Label.pm, perl/Amanda/Message.pm,
+	  perl/Amanda/Taper/Controller.pm: Remove useles @PERL@ and
+	  @amperldir@;
+
 2015-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/bin/app-dancer2.pl.in,
 	  rest-server/bin/app.pl.in: Use @PERL@

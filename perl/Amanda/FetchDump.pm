@@ -1,4 +1,3 @@
-#! @PERL@
 # Copyright (c) 2009-2014 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
@@ -18,7 +17,6 @@
 # Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use lib '@amperldir@';
 use strict;
 use warnings;
 

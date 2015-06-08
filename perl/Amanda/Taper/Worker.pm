@@ -33,7 +33,6 @@ received from the L<Amanda::Taper::Controller>.
 
 =cut
 
-use lib '@amperldir@';
 use strict;
 use warnings;
 

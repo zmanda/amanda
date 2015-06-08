@@ -31,7 +31,6 @@ The controller use an L<Amanda::Chunker::Scribe> object to execute the request.
 
 =cut
 
-use lib '@amperldir@';
 use strict;
 use warnings;
 use Carp;

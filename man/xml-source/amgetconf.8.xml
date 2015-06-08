@@ -201,15 +201,6 @@ below (the difference is historical).</para>
   <listitem><para>Command-line options for the compression program.</para></listitem>
  </varlistentry>
 
- <varlistentry><term><literal>TICKET_LIFETIME</literal></term>
-               <term><literal>SERVER_HOST_PRINCIPAL</literal></term>
-               <term><literal>SERVER_HOST_INSTANCE</literal></term>
-               <term><literal>SERVER_HOST_KEY_FILE</literal></term>
-               <term><literal>CLIENT_HOST_PRINCIPAL</literal></term>
-               <term><literal>CLIENT_HOST_INSTANCE</literal></term>
-               <term><literal>CLIENT_HOST_KEY_FILE</literal></term>
-  <listitem><para>Kerberos parameters.</para></listitem>
- </varlistentry>
 </variablelist>
 
 </refsect2>

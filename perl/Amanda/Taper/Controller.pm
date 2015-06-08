@@ -35,7 +35,6 @@ to the correct worker.
 
 =cut
 
-use lib '@amperldir@';
 use strict;
 use warnings;
 
