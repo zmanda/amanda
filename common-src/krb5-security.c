@@ -166,7 +166,7 @@ static int k5_encrypt(void *cookie, void *buf, ssize_t buflen,
 static int k5_decrypt(void *cookie, void *buf, ssize_t buflen,
 		      void **encbuf, ssize_t *encbuflen);
 
-static ssize_t krb5_tcpm_recv_token(struct tcp_conn *rc, int fd, int *handle,
+static ssize_t krb5_tcpm_recv_token(struct tcp_conn *rc, int *handle,
 				    char **errmsg, char **buf, ssize_t *size,
 				    int timeout);
 /*
@@ -534,7 +534,7 @@ gss_client(
 	if (maj_stat != (OM_uint32)GSS_S_CONTINUE_NEEDED)
 	    break;
 
-        rvalue = krb5_tcpm_recv_token(rc, rc->read, &rc->handle,
+        rvalue = krb5_tcpm_recv_token(rc, &rc->handle,
 				 &rc->errmsg,
 				 (void *)&recv_tok.value,
 				 (ssize_t *)&recv_tok.length, 60);
@@ -623,7 +623,7 @@ gss_server(
 
     for (recv_tok.length = 0;;) {
 	recv_tok.value = NULL;
-        rvalue = krb5_tcpm_recv_token(rc, rc->read, &rc->handle,
+        rvalue = krb5_tcpm_recv_token(rc, &rc->handle,
 				 &rc->errmsg,
 				 /* (void *) is to avoid type-punning warning */
 				 (char **)(void *)&recv_tok.value,
@@ -1218,7 +1218,6 @@ common_exit:
 static ssize_t
 krb5_tcpm_recv_token(
     struct tcp_conn    *rc,
-    int		fd,
     int *	handle,
     char **	errmsg,
     char **	buf,
@@ -1229,7 +1228,7 @@ krb5_tcpm_recv_token(
 
     assert(sizeof(netint) == 8);
 
-    switch (net_read(fd, &netint, sizeof(netint), timeout)) {
+    switch (net_read(rc->read, &netint, sizeof(netint), timeout)) {
     case -1:
 	if (errmsg) {
 	    g_free(*errmsg);
@@ -1272,7 +1271,7 @@ krb5_tcpm_recv_token(
 	    s[7] = (*handle      ) & 0xFF;
 	    i = 8; s[i] = ' ';
 	    while(i<100 && isprint((int)s[i]) && s[i] != '\n') {
-		switch(net_read(fd, &s[i], 1, 0)) {
+		switch(net_read(rc->read, &s[i], 1, 0)) {
 		case -1: s[i] = '\0'; break;
 		case  0: s[i] = '\0'; break;
 		default:
@@ -1302,7 +1301,7 @@ krb5_tcpm_recv_token(
 	*errmsg = g_strdup("EOF");
 	return 0;
     }
-    switch (net_read(fd, *buf, (size_t)*size, timeout)) {
+    switch (net_read(rc->read, *buf, (size_t)*size, timeout)) {
     case -1:
 	if (errmsg) {
 	    g_free(*errmsg);

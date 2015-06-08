@@ -1,4 +1,8 @@
 2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c (krb5_tcpm_recv_token): Remove the fd
+	  argument.
+
+2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am: Typo.
 
 2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
