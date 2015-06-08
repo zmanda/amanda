@@ -32,8 +32,9 @@
 
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
+#endif
 
-#ifdef LIBCURL_USE_OPENSSL
+#if defined LIBCURL_USE_OPENSSL || defined SSL_SECURITY
 #include <openssl/crypto.h>
 static GMutex **openssl_mutex_array;
 static void openssl_lock_callback(int mode, int type, const char *file, int line)
@@ -49,7 +50,7 @@ static void openssl_lock_callback(int mode, int type, const char *file, int line
 }
 
 static void
-init_ssl(void)
+init_openssl(void)
 {
     int i;
 
@@ -62,7 +63,8 @@ init_ssl(void)
 
 }
 
-#else /* LIBCURL_USE_OPENSSL */
+#endif /* LIBCURL_USE_OPENSSL */
+
 #if defined LIBCURL_USE_GNUTLS
 
 #include <gcrypt.h>
@@ -70,7 +72,7 @@ init_ssl(void)
 
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 static void
-init_ssl(void)
+init_gnutls(void)
 {
     gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 
@@ -81,21 +83,19 @@ init_ssl(void)
     gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
 }
 
-#else	/* LIBCURL_USE_GNUTLS  */
-
-static void
-init_ssl(void)
-{
-}
-#endif	/* LIBCURL_USE_GNUTLS  */
 #endif  /* LIBCURL_USE_OPENSSL */
 
-#else	/* HAVE_LIBCURL */
 static void
 init_ssl(void)
 {
+
+#if defined LIBCURL_USE_OPENSSL || defined SSL_SECURITY
+    init_openssl();
+#endif
+#if defined LIBCURL_USE_GNUTLS
+    init_gnutls();
+#endif
 }
-#endif /* HAVE_LIBCURL */
 
 void
 glib_init(void) {

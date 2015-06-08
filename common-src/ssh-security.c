@@ -88,7 +88,9 @@ const security_driver_t ssh_security_driver = {
     tcpm_stream_read_cancel,
     tcpm_close_connection,
     NULL,
-    NULL
+    NULL,
+    generic_data_write,
+    generic_data_read
 };
 
 static int newhandle = 1;

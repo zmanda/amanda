@@ -141,35 +141,69 @@ void putresult(cmd_t result, const char *format, ...)
 
 char *
 amhost_get_security_conf(
-    char *	string,
-    void *	arg)
+    char *string,
+    void *arg G_GNUC_UNUSED)
 {
+    char *result = NULL;
+
     if(!string || !*string)
 	return(NULL);
 
-    if(g_str_equal(string, "krb5principal"))
-	return(getconf_str(CNF_KRB5PRINCIPAL));
-    else if(g_str_equal(string, "krb5keytab"))
-	return(getconf_str(CNF_KRB5KEYTAB));
+    if (g_str_equal(string, "krb5principal"))
+	result = getconf_str(CNF_KRB5PRINCIPAL);
+    else if (g_str_equal(string, "krb5keytab"))
+	result = getconf_str(CNF_KRB5KEYTAB);
+    if (result) {
+	if (strlen(result) == 0)
+	    result = NULL;
+	return result;
+    }
 
-    if(!arg || !((am_host_t *)arg)->disks) return(NULL);
+    if (!arg || !((am_host_t *)arg)->disks) return(NULL);
 
-    if(g_str_equal(string, "amandad_path"))
-	return ((am_host_t *)arg)->disks->amandad_path;
-    else if(g_str_equal(string, "client_username"))
-	return ((am_host_t *)arg)->disks->client_username;
-    else if(g_str_equal(string, "client_port"))
-	return ((am_host_t *)arg)->disks->client_port;
-    else if(g_str_equal(string, "src_ip")) {
-	char *src_ip = interface_get_src_ip(((am_host_t *)arg)->netif->config);
-	if (g_str_equal(src_ip, "NULL"))
-	    return NULL;
-	else
-	    return src_ip;
+    if (g_str_equal(string, "amandad_path"))
+	result =  ((am_host_t *)arg)->disks->amandad_path;
+    else if (g_str_equal(string, "client_username"))
+	result =  ((am_host_t *)arg)->disks->client_username;
+    else if (g_str_equal(string, "client_port"))
+	result =  ((am_host_t *)arg)->disks->client_port;
+    else if (g_str_equal(string, "src_ip")) {
+	char *result = interface_get_src_ip(((am_host_t *)arg)->netif->config);
+	if (g_str_equal(result, "NULL"))
+	    result = NULL;
     } else if(g_str_equal(string, "ssh_keys"))
-	return ((am_host_t *)arg)->disks->ssh_keys;
+	result =  ((am_host_t *)arg)->disks->ssh_keys;
+    else if (g_str_equal(string, "ssl_fingerprint_file"))
+	result =  ((am_host_t *)arg)->disks->ssl_fingerprint_file;
+    else if (g_str_equal(string, "ssl_cert_file"))
+	result =  ((am_host_t *)arg)->disks->ssl_cert_file;
+    else if (g_str_equal(string, "ssl_key_file"))
+	result =  ((am_host_t *)arg)->disks->ssl_key_file;
+    else if (g_str_equal(string, "ssl_ca_cert_file"))
+	result =  ((am_host_t *)arg)->disks->ssl_ca_cert_file;
+    else if (g_str_equal(string, "ssl_cipher_list"))
+	result =  ((am_host_t *)arg)->disks->ssl_cipher_list;
+    else if (g_str_equal(string, "ssl_check_certificate_host")) {
+	if (((am_host_t *)arg)->disks->ssl_check_certificate_host)
+	    result = "1";
+	else
+	    result = "0";
+    } else if (g_str_equal(string, "ssl_check_host")) {
+	if (((am_host_t *)arg)->disks->ssl_check_host)
+	    result = "1";
+	else
+	    result = "0";
+    } else if (g_str_equal(string, "ssl_check_fingerprint")) {
+	if (((am_host_t *)arg)->disks->ssl_check_fingerprint)
+	    result = "1";
+	else
+	    result = "0";
+    }
 
-    return(NULL);
+    if (result && strlen(result) == 0)
+	result = NULL;
+
+    return(result);
 }
 
 int check_infofile(

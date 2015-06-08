@@ -95,6 +95,7 @@ AMANDA_BSDUDP_SECURITY
 AMANDA_RSH_SECURITY
 AMANDA_SSH_SECURITY
 AMANDA_KRB5_SECURITY
+AMANDA_SSL_SECURITY
 
 #
 # Dumpers
@@ -355,6 +356,8 @@ ICE_CHECK_DECL(eaccess,unistd.h)
 
 #
 # Devices
+#
+# libcurl must be done at the end.
 #
 AMANDA_CHECK_DEVICES
 

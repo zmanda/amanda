@@ -29,7 +29,7 @@
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
-<para>Amanda offers 7 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).</para>
+<para>Amanda offers 8 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).</para>
 </refsect1>
 
 <refsect1><title>COMPILATION AND GENERAL INFORMATION</title>
@@ -47,6 +47,7 @@ Authentication	  Configure option(s)
  local		 (always included)
  rsh			--with-rsh-security
  ssh			--with-ssh-security
+ ssl			--with-ssl-security
 </programlisting>
   </para>
  
@@ -565,7 +566,14 @@ identity are weaker and depend on the integrity of the DNS.</para>
 
 </refsect1>
 
+<refsect1><title>SSL COMMUNICATION AND AUTHENTICATION</title>
+
+<para>See <manref name="amanda-auth-ssl" vol="7" /></para>
+
+</refsect1>
+
 <seealso>
+<manref name="amanda-auth-ssl" vol="7" />
 <manref name="amanda.conf" vol="5" />
 <manref name="amanda-client.conf" vol="5" />
 <manref name="disklist" vol="5" />

@@ -308,7 +308,7 @@ if ($parameter =~ /^build(?:\..*)?/) {
     build_param($parameter, $opt_list);
     Amanda::Util::finish_application();
     exit(0);
-} 
+}
 
 if ($parameter =~ /^db(open|close)\./) {
     config_init($CONFIG_INIT_GLOBAL|$execute_where, undef);

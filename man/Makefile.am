@@ -12,9 +12,12 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda-scripts.7 \
 		    amanda-archive-format.5 \
 		    amanda-auth.7 \
+		    amanda-auth-ssl.7 \
 		    amanda-match.7 \
 		    amarchiver.8 \
+		    amgetconf.8 \
 		    amservice.8 \
+		    amsssl.8 \
 		    script-email.8
 
 CLIENT_MAN_PAGES = \
@@ -52,7 +55,6 @@ SERVER_MAN_PAGES =  \
     amdevcheck.8 \
     amdump.8 \
     amflush.8 \
-    amgetconf.8 \
     amgpgcrypt.8 \
     amlabel.8 \
     amoverview.8 \

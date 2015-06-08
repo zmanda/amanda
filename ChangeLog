@@ -1,4 +1,58 @@
 2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
+	Add ssl auth.
+	* config/amanda/amanda_configure.m4: Load AMANDA_SSL_SECURITY
+	* config/amanda/ssl-security.m4 (AMANDA_SSL_SECURITY): Add
+	  --with-ssl-security
+	* amandad-src/amandad.c: Add code to support ssl auth,
+	* common-src/Makefile.am (libamanda_la_SOURCES): Add ssl-security.c
+	* common-src/Makefile.am (sbin_SCRIPTS_PERL): Add amssl
+	* common-src/amgetconf.pl: Remove useless space
+	* common-src/amssl.pl: New amssl program
+	* common-src/conffile.c: Add CONF_SSL_FINGERPRINT_FILE,
+	  CONF_SSL_CERT_FILE, CONF_SSL_KEY_FILE, CONF_SSL_CA_CERT_FILE,
+	  CONF_SSL_CIPHER_LIST, CONF_SSL_CHECK_HOST,
+	  CONF_SSL_CHECK_CERTIFICATE_HOST, CONF_SSL_CHECK_FINGERPRINT and
+	  CONF_SSL_DIR
+	* common-src/conffile.h: Add CNF_SSL_FINGERPRINT_FILE,
+	  CNF_SSL_CERT_FILE, CNF_SSL_KEY_FILE, CNF_SSL_CA_CERT_FILE,
+	  CNF_SSL_CIPHER_LIST, CNF_SSL_CHECK_HOST,
+	  CNF_SSL_CHECK_CERTIFICATE_HOST, CNF_SSL_DIR and
+	  DUMPTYPE_SSL_FINGERPRINT_FILE, DUMPTYPE_SSL_CERT_FILE,
+	  DUMPTYPE_SSL_KEY_FILE, DUMPTYPE_SSL_CA_CERT_FILE,
+	  DUMPTYPE_SSL_CIPHER_LIST, DUMPTYPE_SSL_CHECK_HOST,
+	  DUMPTYPE_SSL_CHECK_CERTIFICATE_HOST, DUMPTYPE_SSL_CHECK_FINGERPRINT
+	* common-src/glib-util.c: Load openssl.
+	* common-src/security-util.c (generic_data_write, generic_data_read):
+	  New functions.
+	* common-src/security-util.h (generic_data_write, generic_data_read):
+	  Add prototypes.
+	* common-src/security.c: Load ssl_security_driver.
+	* common-src/security.h (struct security_driver): Add data_write and
+	data_read method.
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb5-security.c,
+	  common-src/local-security.c, common-src/rsh-security.c,
+	  common-src/ssh-security.c: Add generic_data_write and
+	  generic_data_read
+	* common-src/ssl-security.c: New ssl auth code
+	* man/Makefile.am (COMMON_MAN_PAGES): Add amanda-auth-ssl.7 and
+	  amssl.8
+	* man/xml-source/amanda-auth-ssl.7.xml: New man page
+	* man/xml-source/amanda-auth.7.xml: Link to amanda-auth-ssl
+	* man/xml-source/amanda.8.xml: Link to amanda-auth-ssl
+	* man/xml-source/amssl.8.xml: New man page
+	* perl/Amanda/Config.swg: Add CNF_SSL_FINGERPRINT_FILE,
+	  CNF_SSL_CERT_FILE, CNF_SSL_KEY_FILE, CNF_SSL_CA_CERT_FILE,
+	  CNF_SSL_CIPHER_LIST, CNF_SSL_CHECK_HOST,
+	  CNF_SSL_CHECK_CERTIFICATE_HOST, CNF_SSL_DIR
+	* server-src/diskfile.h (struct disk_s): Add ssl setting
+	* server-src/diskfile.c: Load ssl setting
+	* server-src/driverio.c: Pass ssl setting.
+	* server-src/dumper.c: Use ssl specific setting.
+	* server-src/server_util.c (amhost_get_security_conf): Add
+	  ssl setting.
+
+2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* example/amanda.conf.in: Fix typo.
 	* common-src/amgetconf.pl, man/xml-source/amanda-auth.7.xml,
 	  man/xml-source/amgetconf.8.xml, perl/Amanda/Constants.pm.in.src:

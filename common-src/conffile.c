@@ -139,6 +139,10 @@ typedef enum {
     CONF_SRV_DECRYPT_OPT,	CONF_CLNT_DECRYPT_OPT,	CONF_AMANDAD_PATH,
     CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,	CONF_ALLOW_SPLIT,
     CONF_MAX_WARNINGS,		CONF_TAG,
+    CONF_SSL_FINGERPRINT_FILE,	CONF_SSL_CERT_FILE,	CONF_SSL_KEY_FILE,
+    CONF_SSL_CA_CERT_FILE,	CONF_SSL_CIPHER_LIST,	CONF_SSL_CHECK_HOST,
+    CONF_SSL_CHECK_CERTIFICATE_HOST,			CONF_SSL_DIR,
+    CONF_SSL_CHECK_FINGERPRINT,
 
     /* tape type */
     /*COMMENT,*/		CONF_BLOCKSIZE,
@@ -887,6 +891,15 @@ keytab_t client_keytab[] = {
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "CTIMEOUT", CONF_CTIMEOUT },
+    { "SSL_DIR", CONF_SSL_DIR },
+    { "SSL_CHECK_FINGERPRINT", CONF_SSL_CHECK_FINGERPRINT },
+    { "SSL_FINGERPRINT_FILE", CONF_SSL_FINGERPRINT_FILE },
+    { "SSL_CERT_FILE", CONF_SSL_CERT_FILE },
+    { "SSL_CHECK_HOST", CONF_SSL_CHECK_HOST },
+    { "SSL_CHECK_CERTIFICATE_HOST", CONF_SSL_CHECK_CERTIFICATE_HOST },
+    { "SSL_CIPHER_LIST", CONF_SSL_CIPHER_LIST },
+    { "SSL_KEY_FILE", CONF_SSL_KEY_FILE },
+    { "SSL_CA_CERT_FILE", CONF_SSL_CA_CERT_FILE },
     { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
     { "AMANDATES", CONF_AMANDATES },
     { "KRB5KEYTAB", CONF_KRB5KEYTAB },
@@ -992,6 +1005,7 @@ keytab_t server_keytab[] = {
     { "CLIENT_DECRYPT_OPTION", CONF_CLNT_DECRYPT_OPT },
     { "CLIENT_ENCRYPT", CONF_CLNT_ENCRYPT },
     { "CLIENT_NAME", CONF_CLIENT_NAME },
+    { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "COLUMNSPEC", CONF_COLUMNSPEC },
     { "COMMAND_FILE", CONF_CMDFILE },
@@ -1165,7 +1179,6 @@ keytab_t server_keytab[] = {
     { "SCRIPT", CONF_SCRIPT },
     { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "SEND_AMREPORT_ON", CONF_SEND_AMREPORT_ON },
-    { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
@@ -1181,6 +1194,16 @@ keytab_t server_keytab[] = {
     { "SPLIT_DISKBUFFER", CONF_SPLIT_DISKBUFFER },
     { "SRC_IP", CONF_SRC_IP },
     { "SSH_KEYS", CONF_SSH_KEYS },
+    { "SSL_CA_CERT_FILE", CONF_SSL_CA_CERT_FILE },
+    { "SSL_CERT_FILE", CONF_SSL_CERT_FILE },
+    { "SSL_CHECK_CERTIFICATE_HOST", CONF_SSL_CHECK_CERTIFICATE_HOST },
+    { "SSL_CIPHER_LIST", CONF_SSL_CIPHER_LIST },
+    { "SSL_DIR", CONF_SSL_DIR },
+    { "SSL_FINGERPRINT_FILE", CONF_SSL_FINGERPRINT_FILE },
+    { "SSL_CHECK_HOST", CONF_SSL_CHECK_HOST },
+    { "SSL_CHECK_CERTIFICATE_HOST", CONF_SSL_CHECK_CERTIFICATE_HOST },
+    { "SSL_CHECK_FINGERPRINT", CONF_SSL_CHECK_FINGERPRINT },
+    { "SSL_KEY_FILE", CONF_SSL_KEY_FILE },
     { "STANDARD", CONF_STANDARD },
     { "STARTTIME", CONF_STARTTIME },
     { "STORAGE", CONF_STORAGE },
@@ -1306,6 +1329,15 @@ conf_var_t client_var [] = {
    { CONF_CLIENT_USERNAME    , CONFTYPE_STR     , read_str     , CNF_CLIENT_USERNAME    , NULL },
    { CONF_CLIENT_PORT        , CONFTYPE_STR     , read_int_or_str, CNF_CLIENT_PORT      , NULL },
    { CONF_CTIMEOUT           , CONFTYPE_INT     , read_int     , CNF_CTIMEOUT           , validate_positive },
+   { CONF_SSL_DIR            , CONFTYPE_STR     , read_str     , CNF_SSL_DIR            , NULL },
+   { CONF_SSL_CHECK_FINGERPRINT, CONFTYPE_BOOLEAN, read_bool   , CNF_SSL_CHECK_FINGERPRINT   , NULL },
+   { CONF_SSL_FINGERPRINT_FILE, CONFTYPE_STR    , read_str     , CNF_SSL_FINGERPRINT_FILE    , NULL },
+   { CONF_SSL_CERT_FILE      , CONFTYPE_STR     , read_str     , CNF_SSL_CERT_FILE      , NULL },
+   { CONF_SSL_KEY_FILE       , CONFTYPE_STR     , read_str     , CNF_SSL_KEY_FILE       , NULL },
+   { CONF_SSL_CA_CERT_FILE   , CONFTYPE_STR     , read_str     , CNF_SSL_CA_CERT_FILE   , NULL },
+   { CONF_SSL_CIPHER_LIST    , CONFTYPE_STR     , read_str     , CNF_SSL_CIPHER_LIST    , NULL },
+   { CONF_SSL_CHECK_HOST     , CONFTYPE_BOOLEAN , read_bool    , CNF_SSL_CHECK_HOST     , NULL },
+   { CONF_SSL_CHECK_CERTIFICATE_HOST, CONFTYPE_BOOLEAN, read_bool, CNF_SSL_CHECK_CERTIFICATE_HOST     , NULL },
    { CONF_GNUTAR_LIST_DIR    , CONFTYPE_STR     , read_str     , CNF_GNUTAR_LIST_DIR    , NULL },
    { CONF_AMANDATES          , CONFTYPE_STR     , read_str     , CNF_AMANDATES          , NULL },
    { CONF_MAILER             , CONFTYPE_STR     , read_str     , CNF_MAILER             , NULL },
@@ -1436,6 +1468,7 @@ conf_var_t server_var [] = {
    { CONF_REST_API_PORT        , CONFTYPE_INT      , read_int         , CNF_REST_API_PORT        , validate_positive },
    { CONF_REST_SSL_CERT        , CONFTYPE_STR      , read_str         , CNF_REST_SSL_CERT        , NULL },
    { CONF_REST_SSL_KEY         , CONFTYPE_STR      , read_str         , CNF_REST_SSL_KEY         , NULL },
+   { CONF_SSL_DIR              , CONFTYPE_STR      , read_str         , CNF_SSL_DIR              , NULL },
    { CONF_COMPRESS_INDEX       , CONFTYPE_BOOLEAN  , read_bool        , CNF_COMPRESS_INDEX       , NULL },
    { CONF_SORT_INDEX           , CONFTYPE_BOOLEAN  , read_bool        , CNF_SORT_INDEX           , NULL },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL             , CNF_CNF                  , NULL }
@@ -1457,56 +1490,64 @@ conf_var_t tapetype_var [] = {
 };
 
 conf_var_t dumptype_var [] = {
-   { CONF_COMMENT           , CONFTYPE_STR         , read_str         , DUMPTYPE_COMMENT           , NULL },
-   { CONF_AUTH              , CONFTYPE_STR         , read_str         , DUMPTYPE_AUTH              , NULL },
-   { CONF_BUMPDAYS          , CONFTYPE_INT         , read_int         , DUMPTYPE_BUMPDAYS          , validate_nonnegative },
-   { CONF_BUMPMULT          , CONFTYPE_REAL        , read_real        , DUMPTYPE_BUMPMULT          , validate_bumpmult },
-   { CONF_BUMPSIZE          , CONFTYPE_INT64       , read_int64       , DUMPTYPE_BUMPSIZE          , validate_positive },
-   { CONF_BUMPPERCENT       , CONFTYPE_INT         , read_int         , DUMPTYPE_BUMPPERCENT       , validate_bumppercent },
-   { CONF_COMPRATE          , CONFTYPE_REAL        , read_rate        , DUMPTYPE_COMPRATE          , NULL },
-   { CONF_COMPRESS          , CONFTYPE_INT         , read_compress    , DUMPTYPE_COMPRESS          , NULL },
-   { CONF_ENCRYPT           , CONFTYPE_INT         , read_encrypt     , DUMPTYPE_ENCRYPT           , NULL },
-   { CONF_DUMPCYCLE         , CONFTYPE_INT         , read_int         , DUMPTYPE_DUMPCYCLE         , validate_nonnegative },
-   { CONF_EXCLUDE           , CONFTYPE_EXINCLUDE   , read_exinclude   , DUMPTYPE_EXCLUDE           , NULL },
-   { CONF_INCLUDE           , CONFTYPE_EXINCLUDE   , read_exinclude   , DUMPTYPE_INCLUDE           , NULL },
-   { CONF_IGNORE            , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_IGNORE            , NULL },
-   { CONF_HOLDING           , CONFTYPE_HOLDING     , read_holding     , DUMPTYPE_HOLDINGDISK       , NULL },
-   { CONF_INDEX             , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_INDEX             , NULL },
-   { CONF_KENCRYPT          , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_KENCRYPT          , NULL },
-   { CONF_MAXDUMPS          , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXDUMPS          , validate_positive },
-   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXPROMOTEDAY     , validate_nonnegative },
-   { CONF_PRIORITY          , CONFTYPE_PRIORITY    , read_priority    , DUMPTYPE_PRIORITY          , NULL },
-   { CONF_PROGRAM           , CONFTYPE_STR         , read_str         , DUMPTYPE_PROGRAM           , validate_program },
-   { CONF_PROPERTY          , CONFTYPE_PROPLIST    , read_property    , DUMPTYPE_PROPERTY          , NULL },
-   { CONF_RECORD            , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_RECORD            , NULL },
-   { CONF_SKIP_FULL         , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_FULL         , NULL },
-   { CONF_SKIP_INCR         , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_INCR         , NULL },
-   { CONF_STARTTIME         , CONFTYPE_TIME        , read_time        , DUMPTYPE_STARTTIME         , NULL },
-   { CONF_STRATEGY          , CONFTYPE_INT         , read_strategy    , DUMPTYPE_STRATEGY          , NULL },
-   { CONF_TAPE_SPLITSIZE    , CONFTYPE_INT64       , read_int64       , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
-   { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STR         , read_str         , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
-   { CONF_ESTIMATE          , CONFTYPE_ESTIMATELIST, read_estimatelist, DUMPTYPE_ESTIMATELIST      , NULL },
-   { CONF_SRV_ENCRYPT       , CONFTYPE_STR         , read_str         , DUMPTYPE_SRV_ENCRYPT       , NULL },
-   { CONF_CLNT_ENCRYPT      , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNT_ENCRYPT      , NULL },
-   { CONF_AMANDAD_PATH      , CONFTYPE_STR         , read_str         , DUMPTYPE_AMANDAD_PATH      , NULL },
-   { CONF_CLIENT_USERNAME   , CONFTYPE_STR         , read_str         , DUMPTYPE_CLIENT_USERNAME   , NULL },
-   { CONF_CLIENT_PORT       , CONFTYPE_STR         , read_int_or_str  , DUMPTYPE_CLIENT_PORT       , NULL },
-   { CONF_SSH_KEYS          , CONFTYPE_STR         , read_str         , DUMPTYPE_SSH_KEYS          , NULL },
-   { CONF_SRVCOMPPROG       , CONFTYPE_STR         , read_str         , DUMPTYPE_SRVCOMPPROG       , NULL },
-   { CONF_CLNTCOMPPROG      , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNTCOMPPROG      , NULL },
-   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_INT64       , read_int64       , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
-   { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR         , read_str         , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
-   { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
-   { CONF_APPLICATION       , CONFTYPE_STR         , read_dapplication, DUMPTYPE_APPLICATION       , NULL },
-   { CONF_SCRIPT            , CONFTYPE_STR         , read_dpp_script  , DUMPTYPE_SCRIPTLIST        , NULL },
-   { CONF_DATA_PATH         , CONFTYPE_DATA_PATH   , read_data_path   , DUMPTYPE_DATA_PATH         , NULL },
-   { CONF_ALLOW_SPLIT       , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_ALLOW_SPLIT       , NULL },
-   { CONF_MAX_WARNINGS      , CONFTYPE_INT         , read_int         , DUMPTYPE_MAX_WARNINGS      , validate_nonnegative },
-   { CONF_RECOVERY_LIMIT    , CONFTYPE_HOST_LIMIT  , read_host_limit  , DUMPTYPE_RECOVERY_LIMIT    , NULL },
-   { CONF_DUMP_LIMIT        , CONFTYPE_HOST_LIMIT  , read_host_limit  , DUMPTYPE_DUMP_LIMIT        , validate_dump_limit },
-   { CONF_RETRY_DUMP        , CONFTYPE_INT         , read_int         , DUMPTYPE_RETRY_DUMP        , validate_positive },
-   { CONF_TAG               , CONFTYPE_STR_LIST    , read_str_list    , DUMPTYPE_TAG               , NULL },
-   { CONF_UNKNOWN           , CONFTYPE_INT         , NULL             , DUMPTYPE_DUMPTYPE          , NULL }
+   { CONF_COMMENT                   , CONFTYPE_STR         , read_str         , DUMPTYPE_COMMENT                   , NULL },
+   { CONF_AUTH                      , CONFTYPE_STR         , read_str         , DUMPTYPE_AUTH                      , NULL },
+   { CONF_BUMPDAYS                  , CONFTYPE_INT         , read_int         , DUMPTYPE_BUMPDAYS                  , validate_nonnegative },
+   { CONF_BUMPMULT                  , CONFTYPE_REAL        , read_real        , DUMPTYPE_BUMPMULT                  , validate_bumpmult },
+   { CONF_BUMPSIZE                  , CONFTYPE_INT64       , read_int64       , DUMPTYPE_BUMPSIZE                  , validate_positive },
+   { CONF_BUMPPERCENT               , CONFTYPE_INT         , read_int         , DUMPTYPE_BUMPPERCENT               , validate_bumppercent },
+   { CONF_COMPRATE                  , CONFTYPE_REAL        , read_rate        , DUMPTYPE_COMPRATE                  , NULL },
+   { CONF_COMPRESS                  , CONFTYPE_INT         , read_compress    , DUMPTYPE_COMPRESS                  , NULL },
+   { CONF_ENCRYPT                   , CONFTYPE_INT         , read_encrypt     , DUMPTYPE_ENCRYPT                   , NULL },
+   { CONF_DUMPCYCLE                 , CONFTYPE_INT         , read_int         , DUMPTYPE_DUMPCYCLE                 , validate_nonnegative },
+   { CONF_EXCLUDE                   , CONFTYPE_EXINCLUDE   , read_exinclude   , DUMPTYPE_EXCLUDE                   , NULL },
+   { CONF_INCLUDE                   , CONFTYPE_EXINCLUDE   , read_exinclude   , DUMPTYPE_INCLUDE                   , NULL },
+   { CONF_IGNORE                    , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_IGNORE                    , NULL },
+   { CONF_HOLDING                   , CONFTYPE_HOLDING     , read_holding     , DUMPTYPE_HOLDINGDISK               , NULL },
+   { CONF_INDEX                     , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_INDEX                     , NULL },
+   { CONF_KENCRYPT                  , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_KENCRYPT                  , NULL },
+   { CONF_MAXDUMPS                  , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXDUMPS                  , validate_positive },
+   { CONF_MAXPROMOTEDAY             , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXPROMOTEDAY             , validate_nonnegative },
+   { CONF_PRIORITY                  , CONFTYPE_PRIORITY    , read_priority    , DUMPTYPE_PRIORITY                  , NULL },
+   { CONF_PROGRAM                   , CONFTYPE_STR         , read_str         , DUMPTYPE_PROGRAM                   , validate_program },
+   { CONF_PROPERTY                  , CONFTYPE_PROPLIST    , read_property    , DUMPTYPE_PROPERTY                  , NULL },
+   { CONF_RECORD                    , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_RECORD                    , NULL },
+   { CONF_SKIP_FULL                 , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_FULL                 , NULL },
+   { CONF_SKIP_INCR                 , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_INCR                 , NULL },
+   { CONF_STARTTIME                 , CONFTYPE_TIME        , read_time        , DUMPTYPE_STARTTIME                 , NULL },
+   { CONF_STRATEGY                  , CONFTYPE_INT         , read_strategy    , DUMPTYPE_STRATEGY                  , NULL },
+   { CONF_TAPE_SPLITSIZE            , CONFTYPE_INT64       , read_int64       , DUMPTYPE_TAPE_SPLITSIZE            , validate_nonnegative },
+   { CONF_SPLIT_DISKBUFFER          , CONFTYPE_STR         , read_str         , DUMPTYPE_SPLIT_DISKBUFFER          , NULL },
+   { CONF_ESTIMATE                  , CONFTYPE_ESTIMATELIST, read_estimatelist, DUMPTYPE_ESTIMATELIST              , NULL },
+   { CONF_SRV_ENCRYPT               , CONFTYPE_STR         , read_str         , DUMPTYPE_SRV_ENCRYPT               , NULL },
+   { CONF_CLNT_ENCRYPT              , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNT_ENCRYPT              , NULL },
+   { CONF_AMANDAD_PATH              , CONFTYPE_STR         , read_str         , DUMPTYPE_AMANDAD_PATH              , NULL },
+   { CONF_CLIENT_USERNAME           , CONFTYPE_STR         , read_str         , DUMPTYPE_CLIENT_USERNAME           , NULL },
+   { CONF_CLIENT_PORT               , CONFTYPE_STR         , read_int_or_str  , DUMPTYPE_CLIENT_PORT               , NULL },
+   { CONF_SSH_KEYS                  , CONFTYPE_STR         , read_str         , DUMPTYPE_SSH_KEYS                  , NULL },
+   { CONF_SRVCOMPPROG               , CONFTYPE_STR         , read_str         , DUMPTYPE_SRVCOMPPROG               , NULL },
+   { CONF_CLNTCOMPPROG              , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNTCOMPPROG              , NULL },
+   { CONF_FALLBACK_SPLITSIZE        , CONFTYPE_INT64       , read_int64       , DUMPTYPE_FALLBACK_SPLITSIZE        , NULL },
+   { CONF_SRV_DECRYPT_OPT           , CONFTYPE_STR         , read_str         , DUMPTYPE_SRV_DECRYPT_OPT           , NULL },
+   { CONF_CLNT_DECRYPT_OPT          , CONFTYPE_STR         , read_str         , DUMPTYPE_CLNT_DECRYPT_OPT          , NULL },
+   { CONF_APPLICATION               , CONFTYPE_STR         , read_dapplication, DUMPTYPE_APPLICATION               , NULL },
+   { CONF_SCRIPT                    , CONFTYPE_STR         , read_dpp_script  , DUMPTYPE_SCRIPTLIST                , NULL },
+   { CONF_DATA_PATH                 , CONFTYPE_DATA_PATH   , read_data_path   , DUMPTYPE_DATA_PATH                 , NULL },
+   { CONF_ALLOW_SPLIT               , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_ALLOW_SPLIT               , NULL },
+   { CONF_MAX_WARNINGS              , CONFTYPE_INT         , read_int         , DUMPTYPE_MAX_WARNINGS              , validate_nonnegative },
+   { CONF_RECOVERY_LIMIT            , CONFTYPE_HOST_LIMIT  , read_host_limit  , DUMPTYPE_RECOVERY_LIMIT            , NULL },
+   { CONF_DUMP_LIMIT                , CONFTYPE_HOST_LIMIT  , read_host_limit  , DUMPTYPE_DUMP_LIMIT                , validate_dump_limit },
+   { CONF_RETRY_DUMP                , CONFTYPE_INT         , read_int         , DUMPTYPE_RETRY_DUMP                , validate_positive },
+   { CONF_TAG                       , CONFTYPE_STR_LIST    , read_str_list    , DUMPTYPE_TAG                       , NULL },
+   { CONF_SSL_FINGERPRINT_FILE      , CONFTYPE_STR         , read_str         , DUMPTYPE_SSL_FINGERPRINT_FILE      , NULL },
+   { CONF_SSL_CERT_FILE             , CONFTYPE_STR         , read_str         , DUMPTYPE_SSL_CERT_FILE             , NULL },
+   { CONF_SSL_KEY_FILE              , CONFTYPE_STR         , read_str         , DUMPTYPE_SSL_KEY_FILE              , NULL },
+   { CONF_SSL_CA_CERT_FILE          , CONFTYPE_STR         , read_str         , DUMPTYPE_SSL_CA_CERT_FILE          , NULL },
+   { CONF_SSL_CIPHER_LIST           , CONFTYPE_STR         , read_str         , DUMPTYPE_SSL_CIPHER_LIST           , NULL },
+   { CONF_SSL_CHECK_HOST            , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SSL_CHECK_HOST            , NULL },
+   { CONF_SSL_CHECK_CERTIFICATE_HOST, CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SSL_CHECK_CERTIFICATE_HOST, NULL },
+   { CONF_SSL_CHECK_FINGERPRINT     , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SSL_CHECK_FINGERPRINT     , NULL },
+   { CONF_UNKNOWN                   , CONFTYPE_INT         , NULL             , DUMPTYPE_DUMPTYPE                  , NULL }
 };
 
 conf_var_t holding_var [] = {
@@ -2564,6 +2605,14 @@ init_dumptype_defaults(void)
     conf_init_str   (&dpcur.value[DUMPTYPE_AMANDAD_PATH]      , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_USERNAME]   , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_PORT]       , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_SSL_FINGERPRINT_FILE], "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_SSL_CERT_FILE]     , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_SSL_KEY_FILE]      , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_SSL_CA_CERT_FILE]  , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_SSL_CIPHER_LIST]   , "");
+    conf_init_bool  (&dpcur.value[DUMPTYPE_SSL_CHECK_HOST], 1);
+    conf_init_bool  (&dpcur.value[DUMPTYPE_SSL_CHECK_CERTIFICATE_HOST], 1);
+    conf_init_bool  (&dpcur.value[DUMPTYPE_SSL_CHECK_FINGERPRINT], 1);
     conf_init_str   (&dpcur.value[DUMPTYPE_SSH_KEYS]          , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_AUTH]   , "BSDTCP");
     conf_init_exinclude(&dpcur.value[DUMPTYPE_EXCLUDE]);
@@ -6101,6 +6150,15 @@ init_defaults(
     conf_init_str(&conf_data[CNF_AMANDAD_PATH], "");
     conf_init_str(&conf_data[CNF_CLIENT_USERNAME], "");
     conf_init_str(&conf_data[CNF_CLIENT_PORT], "");
+    conf_init_str(&conf_data[CNF_SSL_DIR], CONFIG_DIR "/ssl");
+    conf_init_bool(&conf_data[CNF_SSL_CHECK_FINGERPRINT], 1);
+    conf_init_str(&conf_data[CNF_SSL_FINGERPRINT_FILE], "");
+    conf_init_str(&conf_data[CNF_SSL_CERT_FILE]     , "");
+    conf_init_str(&conf_data[CNF_SSL_KEY_FILE]      , "");
+    conf_init_str(&conf_data[CNF_SSL_CA_CERT_FILE]  , "");
+    conf_init_str(&conf_data[CNF_SSL_CIPHER_LIST]   , "");
+    conf_init_bool(&conf_data[CNF_SSL_CHECK_HOST]   , 1);
+    conf_init_bool(&conf_data[CNF_SSL_CHECK_CERTIFICATE_HOST], 1);
     conf_init_str(&conf_data[CNF_GNUTAR_LIST_DIR], GNUTAR_LISTED_INCREMENTAL_DIR);
     conf_init_str(&conf_data[CNF_AMANDATES], DEFAULT_AMANDATES_FILE);
     conf_init_str(&conf_data[CNF_MAILTO], "");
@@ -8344,7 +8402,6 @@ copy_val_t(
 
 	case CONFTYPE_DUMP_SELECTION:
 	    valdst->v.dump_selection= NULL;
-	    valdst->v.host_limit.match_pats = NULL;
 	    for (ia = valsrc->v.dump_selection; ia != NULL; ia = ia->next) {
 		dump_selection_t *src_dump_s = ia->data;
 		dump_selection_t *dst_dump_s = g_new0(dump_selection_t, 1);
@@ -8528,60 +8585,95 @@ free_val_t(
 char *
 generic_get_security_conf(
 	char *string,
-	void *arg)
+	void *arg G_GNUC_UNUSED)
 {
-	arg = arg;
+	char *result = NULL;
 	if(!string || !*string)
 		return(NULL);
 
-	if(g_str_equal(string, "krb5principal")) {
-		return(getconf_str(CNF_KRB5PRINCIPAL));
-	} else if(g_str_equal(string, "krb5keytab")) {
-		return(getconf_str(CNF_KRB5KEYTAB));
+	if (g_str_equal(string, "krb5principal")) {
+		result = getconf_str(CNF_KRB5PRINCIPAL);
+	} else if (g_str_equal(string, "krb5keytab")) {
+		result = getconf_str(CNF_KRB5KEYTAB);
 	}
-	return(NULL);
+
+	if (result && strlen(result) == 0)
+	    result = NULL;
+
+	return(result);
 }
 
 char *
 generic_client_get_security_conf(
-    char *	string,
-    void *	arg)
+    char *string,
+    void *arg G_GNUC_UNUSED)
 {
-	(void)arg;	/* Quiet unused parameter warning */
+	char *result = NULL;
 
 	if(!string || !*string)
 		return(NULL);
 
-	if(g_str_equal(string, "conf")) {
-		return(getconf_str(CNF_CONF));
-	} else if(g_str_equal(string, "amdump_server")) {
-		return(getconf_str(CNF_AMDUMP_SERVER));
-	} else if(g_str_equal(string, "index_server")) {
-		return(getconf_str(CNF_INDEX_SERVER));
-	} else if(g_str_equal(string, "tape_server")) {
-		return(getconf_str(CNF_TAPE_SERVER));
-	} else if(g_str_equal(string, "tapedev")) {
-		return(getconf_str(CNF_TAPEDEV));
-        } else if(g_str_equal(string, "auth")) {
-		return(getconf_str(CNF_AUTH));
-	} else if(g_str_equal(string, "ssh_keys")) {
-		return(getconf_str(CNF_SSH_KEYS));
-	} else if(g_str_equal(string, "amandad_path")) {
-		return(getconf_str(CNF_AMANDAD_PATH));
-	} else if(g_str_equal(string, "client_username")) {
-		return(getconf_str(CNF_CLIENT_USERNAME));
-	} else if(g_str_equal(string, "client_port")) {
-		return(getconf_str(CNF_CLIENT_PORT));
-	} else if(g_str_equal(string, "gnutar_list_dir")) {
-		return(getconf_str(CNF_GNUTAR_LIST_DIR));
-	} else if(g_str_equal(string, "amandates")) {
-		return(getconf_str(CNF_AMANDATES));
-	} else if(g_str_equal(string, "krb5principal")) {
-		return(getconf_str(CNF_KRB5PRINCIPAL));
-	} else if(g_str_equal(string, "krb5keytab")) {
-		return(getconf_str(CNF_KRB5KEYTAB));
+	if (g_str_equal(string, "conf")) {
+		result = getconf_str(CNF_CONF);
+	} else if (g_str_equal(string, "amdump_server")) {
+		result = getconf_str(CNF_AMDUMP_SERVER);
+	} else if (g_str_equal(string, "index_server")) {
+		result = getconf_str(CNF_INDEX_SERVER);
+	} else if (g_str_equal(string, "tape_server")) {
+		result = getconf_str(CNF_TAPE_SERVER);
+	} else if (g_str_equal(string, "tapedev")) {
+		result = getconf_str(CNF_TAPEDEV);
+        } else if (g_str_equal(string, "auth")) {
+		result = getconf_str(CNF_AUTH);
+	} else if (g_str_equal(string, "ssh_keys")) {
+		result = getconf_str(CNF_SSH_KEYS);
+	} else if (g_str_equal(string, "amandad_path")) {
+		result = getconf_str(CNF_AMANDAD_PATH);
+	} else if (g_str_equal(string, "client_username")) {
+		result = getconf_str(CNF_CLIENT_USERNAME);
+	} else if (g_str_equal(string, "client_port")) {
+		result = getconf_str(CNF_CLIENT_PORT);
+	} else if (g_str_equal(string, "gnutar_list_dir")) {
+		result = getconf_str(CNF_GNUTAR_LIST_DIR);
+	} else if (g_str_equal(string, "amandates")) {
+		result = getconf_str(CNF_AMANDATES);
+	} else if (g_str_equal(string, "krb5principal")) {
+		result = getconf_str(CNF_KRB5PRINCIPAL);
+	} else if (g_str_equal(string, "krb5keytab")) {
+		result = getconf_str(CNF_KRB5KEYTAB);
+	} else if (g_str_equal(string, "ssl_dir")) {
+		result = getconf_str(CNF_SSL_DIR);
+	} else if (g_str_equal(string, "ssl_fingerprint_file")) {
+		result = getconf_str(CNF_SSL_FINGERPRINT_FILE);
+	} else if (g_str_equal(string, "ssl_cert_file")) {
+		result = getconf_str(CNF_SSL_CERT_FILE);
+	} else if (g_str_equal(string, "ssl_key_file")) {
+		result = getconf_str(CNF_SSL_KEY_FILE);
+	} else if (g_str_equal(string, "ssl_ca_cert_file")) {
+		result = getconf_str(CNF_SSL_CA_CERT_FILE);
+	} else if (g_str_equal(string, "ssl_cipher_list")) {
+		result = getconf_str(CNF_SSL_CIPHER_LIST);
+	} else if (g_str_equal(string, "ssl_check_host")) {
+		if (getconf_boolean(CNF_SSL_CHECK_HOST))
+		    result = "1";
+		else
+		    result = "0";
+	} else if (g_str_equal(string, "ssl_check_certificate_host")) {
+		if (getconf_boolean(CNF_SSL_CHECK_CERTIFICATE_HOST))
+		    result = "1";
+		else
+		    result = "0";
+	} else if (g_str_equal(string, "ssl_check_fingerprint")) {
+		if (getconf_boolean(CNF_SSL_CHECK_FINGERPRINT))
+		    result = "1";
+		else
+		    result = "0";
 	}
-	return(NULL);
+
+	if (result && strlen(result) == 0)
+	    result = NULL;
+
+	return(result);
 }
 
 void

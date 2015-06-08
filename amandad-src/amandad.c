@@ -454,7 +454,8 @@ main(
     if(strcasecmp(auth, "rsh") == 0 ||
        strcasecmp(auth, "ssh") == 0 ||
        strcasecmp(auth, "local") == 0 ||
-       strcasecmp(auth, "bsdtcp") == 0) {
+       strcasecmp(auth, "bsdtcp") == 0 ||
+       strcasecmp(auth, "ssl") == 0) {
 	exit_on_qlength = 1;
     }
 
@@ -2017,20 +2018,24 @@ action2str(
 
 static char *
 amandad_get_security_conf(
-    char *      string,
-    void *      arg)
+    char *string,
+    void *arg G_GNUC_UNUSED)
 {
-    (void)arg;      /* Quiet unused parameter warning */
+    char *result = NULL;
 
     if (!string || !*string)
 	return(NULL);
 
     if (g_str_equal(string, "kencrypt")) {
 	if (amandad_kencrypt == KENCRYPT_YES)
-	    return ("yes");
-	else
-	    return (NULL);
+	    result = "yes";
+    } else {
+	result =  generic_client_get_security_conf(string, arg);
     }
-    return(NULL);
+
+    if (result && strlen(result) == 0)
+	result = NULL;
+
+    return(result);
 }
 

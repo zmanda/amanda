@@ -83,7 +83,9 @@ const security_driver_t bsdtcp_security_driver = {
     tcpm_stream_read_cancel,
     tcpm_close_connection,
     NULL,
-    NULL
+    NULL,
+    generic_data_write,
+    generic_data_read
 };
 
 static int newhandle = 1;
@@ -157,6 +159,7 @@ bsdtcp_connect(
 
     rh->rc->recv_security_ok = &bsd_recv_security_ok;
     rh->rc->prefix_packet = &bsd_prefix_packet;
+    rh->rc->need_priv_port = 1;
 
     if (rh->rs == NULL)
 	goto error;
@@ -319,6 +322,7 @@ bsdtcp_accept(
     rc = sec_tcp_conn_get(hostname, 0);
     rc->recv_security_ok = &bsd_recv_security_ok;
     rc->prefix_packet = &bsd_prefix_packet;
+    rc->need_priv_port = 1;
     copy_sockaddr(&rc->peer, &sin);
     rc->read = in;
     rc->write = out;

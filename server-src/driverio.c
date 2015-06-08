@@ -782,7 +782,7 @@ dumper_cmd(
     sched_t *sp,
     char   *mesg)
 {
-    char *cmdline;
+    char *cmdline = NULL;
     char *qmesg;
     disk_t *dp;
 
@@ -875,6 +875,12 @@ dumper_cmd(
         g_ptr_array_add(array, quote_string(plugin));
         g_ptr_array_add(array, quote_string(dp->amandad_path));
         g_ptr_array_add(array, quote_string(dp->client_username));
+        g_ptr_array_add(array, quote_string(dp->ssl_fingerprint_file));
+        g_ptr_array_add(array, quote_string(dp->ssl_cert_file));
+        g_ptr_array_add(array, quote_string(dp->ssl_key_file));
+        g_ptr_array_add(array, quote_string(dp->ssl_ca_cert_file));
+        g_ptr_array_add(array, quote_string(dp->ssl_cipher_list));
+        g_ptr_array_add(array, g_strdup_printf("%d", dp->ssl_check_certificate_host));
         g_ptr_array_add(array, quote_string(dp->client_port));
         g_ptr_array_add(array, quote_string(dp->ssh_keys));
         g_ptr_array_add(array, g_strdup(dp->auth));

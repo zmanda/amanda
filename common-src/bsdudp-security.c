@@ -81,7 +81,9 @@ const security_driver_t bsdudp_security_driver = {
     tcpm_stream_read_cancel,
     sec_close_connection_none,
     NULL,
-    NULL
+    NULL,
+    generic_data_write,
+    generic_data_read
 };
 
 /*
@@ -175,6 +177,7 @@ bsdudp_connect(
 	    netfd6.pkt.body = NULL;
 	    netfd6.recv_security_ok = &bsd_recv_security_ok;
 	    netfd6.prefix_packet = &bsd_prefix_packet;
+	    netfd6.need_priv_port = 1;
 	    /*
 	     * We must have a reserved port.  Bomb if we didn't get one.
 	     */
@@ -215,6 +218,7 @@ bsdudp_connect(
 	    netfd4.pkt.body = NULL;
 	    netfd4.recv_security_ok = &bsd_recv_security_ok;
 	    netfd4.prefix_packet = &bsd_prefix_packet;
+	    netfd4.need_priv_port = 1;
 	    /*
 	     * We must have a reserved port.  Bomb if we didn't get one.
 	     */
@@ -321,6 +325,7 @@ bsdudp_accept(
     netfd4.accept_fn = fn;
     netfd4.recv_security_ok = &bsd_recv_security_ok;
     netfd4.prefix_packet = &bsd_prefix_packet;
+    netfd4.need_priv_port = 1;
     netfd4.driver = &bsdudp_security_driver;
 
 

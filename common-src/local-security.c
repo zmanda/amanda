@@ -54,6 +54,8 @@ static void local_connect(const char *, char *(*)(char *, void *),
 			void (*)(void *, security_handle_t *, security_status_t),
 			void *, void *);
 
+static char *local_get_authenticated_peer_name_hostname(security_handle_t *hdl);
+
 /*
  * This is our interface to the outside world.
  */
@@ -61,7 +63,7 @@ const security_driver_t local_security_driver = {
     "LOCAL",
     local_connect,
     sec_accept,
-    sec_get_authenticated_peer_name_gethostname,
+    local_get_authenticated_peer_name_hostname,
     sec_close,
     stream_sendpkt,
     stream_recvpkt,
@@ -78,7 +80,9 @@ const security_driver_t local_security_driver = {
     tcpm_stream_read_cancel,
     tcpm_close_connection,
     NULL,
-    NULL
+    NULL,
+    generic_data_write,
+    generic_data_read
 };
 
 static int newhandle = 1;
@@ -273,4 +277,19 @@ runlocal(
 
     /* should never go here, shut up compiler warning */
     return(-1);
+}
+
+static char *
+local_get_authenticated_peer_name_hostname(
+    security_handle_t *hdl G_GNUC_UNUSED)
+{
+    char *server_hostname;
+    server_hostname = malloc(1024);
+    if (gethostname(server_hostname, 1024) == 0) {
+	server_hostname[1023] = '\0';
+	return server_hostname;
+    }
+    amfree(server_hostname);
+    return g_strdup("localhost");
+
 }

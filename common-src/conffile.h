@@ -553,6 +553,15 @@ typedef enum {
     CNF_REST_API_PORT,
     CNF_REST_SSL_CERT,
     CNF_REST_SSL_KEY,
+    CNF_SSL_FINGERPRINT_FILE,
+    CNF_SSL_CERT_FILE,
+    CNF_SSL_KEY_FILE,
+    CNF_SSL_CA_CERT_FILE,
+    CNF_SSL_CIPHER_LIST,
+    CNF_SSL_CHECK_HOST,
+    CNF_SSL_CHECK_CERTIFICATE_HOST,
+    CNF_SSL_DIR,
+    CNF_SSL_CHECK_FINGERPRINT,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -786,6 +795,14 @@ typedef enum {
     DUMPTYPE_MAX_WARNINGS,
     DUMPTYPE_RETRY_DUMP,
     DUMPTYPE_TAG,
+    DUMPTYPE_SSL_FINGERPRINT_FILE,
+    DUMPTYPE_SSL_CERT_FILE,
+    DUMPTYPE_SSL_KEY_FILE,
+    DUMPTYPE_SSL_CA_CERT_FILE,
+    DUMPTYPE_SSL_CIPHER_LIST,
+    DUMPTYPE_SSL_CHECK_HOST,
+    DUMPTYPE_SSL_CHECK_CERTIFICATE_HOST,
+    DUMPTYPE_SSL_CHECK_FINGERPRINT,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -880,6 +897,14 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_max_warnings(dtyp)        (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_MAX_WARNINGS)))
 #define dumptype_get_retry_dump(dtyp)          (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_RETRY_DUMP)))
 #define dumptype_get_tags(dtyp)                (val_t_to_str_list(dumptype_getconf((dtyp), DUMPTYPE_TAG)))
+#define dumptype_get_ssl_fingerprint_file(dtyp) (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SSL_FINGERPRINT_FILE)))
+#define dumptype_get_ssl_cert_file(dtyp)        (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SSL_CERT_FILE)))
+#define dumptype_get_ssl_key_file(dtyp)         (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SSL_KEY_FILE)))
+#define dumptype_get_ssl_ca_cert_file(dtyp)     (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SSL_CA_CERT_FILE)))
+#define dumptype_get_ssl_cipher_list(dtyp)      (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SSL_CIPHER_LIST)))
+#define dumptype_get_ssl_check_host(dtyp)       (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_SSL_CHECK_HOST)))
+#define dumptype_get_ssl_check_certificate_host(dtyp) (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_SSL_CHECK_CERTIFICATE_HOST)))
+#define dumptype_get_ssl_check_fingerprint(dtyp)(val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_SSL_CHECK_FINGERPRINT)))
 
 /*
  * Interface parameter access
