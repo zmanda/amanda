@@ -1,4 +1,7 @@
 2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/Makefile.am: Typo.
+
+2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
 	Add ssl auth.
 	* config/amanda/amanda_configure.m4: Load AMANDA_SSL_SECURITY
 	* config/amanda/ssl-security.m4 (AMANDA_SSL_SECURITY): Add

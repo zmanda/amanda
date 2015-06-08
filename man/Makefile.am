@@ -17,7 +17,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amarchiver.8 \
 		    amgetconf.8 \
 		    amservice.8 \
-		    amsssl.8 \
+		    amssl.8 \
 		    script-email.8
 
 CLIENT_MAN_PAGES = \
