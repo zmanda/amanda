@@ -107,7 +107,6 @@ struct tcp_conn {
     ssize_t             size_buffer_read;
     GSource            *child_watch;
 #ifdef SSL_SECURITY
-    const SSL_METHOD   *meth;
     SSL_CTX            *ctx;
     SSL                *ssl;
 #endif

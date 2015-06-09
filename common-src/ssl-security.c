@@ -387,7 +387,6 @@ ssl_accept(
     char *str;
     X509_NAME *x509_name;
     char *cert_hostname;
-    const SSL_METHOD   *meth;
     SSL_CTX            *ctx;
     SSL                *ssl;
     int loc;
@@ -447,11 +446,8 @@ ssl_accept(
     len = sizeof(sin);
     init_ssl();
 
-    /* Create a SSL_METHOD structure (choose a SSL/TLS protocol version) */
-    meth = SSLv3_method();
-
     /* Create a SSL_CTX structure */
-    ctx = SSL_CTX_new(meth);
+    ctx = SSL_CTX_new(SSLv3_server_method());
     if (!ctx) {
 	g_debug(_("SSL_CTX_new failed: %s"),
 		 ERR_error_string(ERR_get_error(), NULL));
@@ -595,7 +591,6 @@ ssl_accept(
     rc->driver = driver;
     rc->conf_fn = conf_fn;
     rc->datap = datap;
-    rc->meth = meth;
     rc->ctx = ctx;
     rc->ssl = ssl;
     strncpy(rc->hostname, cert_hostname, sizeof(rc->hostname)-1);
@@ -665,11 +660,8 @@ runssl(
 
     init_ssl();
 
-    /* Create an SSL_METHOD structure (choose an SSL/TLS protocol version) */
-    rc->meth = SSLv3_method();
-
     /* Create an SSL_CTX structure */
-    rc->ctx = SSL_CTX_new(rc->meth);
+    rc->ctx = SSL_CTX_new(SSLv3_client_method());
     if (!rc->ctx) {
 	security_seterror(&rh->sech, "%s",
 			  ERR_error_string(ERR_get_error(), NULL));
