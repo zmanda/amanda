@@ -1,3 +1,8 @@
+2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: s/check_auth/check_host_setting/g, check
+	  maxdumps is the same for all DLEs of a host
+	* common-src/ammessage.c: Add message 2800232
+
 2015-06-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c (krb5_tcpm_recv_token): Remove the fd
 	  argument.

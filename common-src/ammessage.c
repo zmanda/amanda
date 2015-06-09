@@ -1216,6 +1216,9 @@ set_message(
     } else if (message->code == 2800231) {
 	msg = "Multiple DLE's for host '%{hostname}' use different auth methods";
 	hint = "Please ensure that all DLE's for the host use the same auth method, including skipped ones";
+    } else if (message->code == 2800232) {
+	msg = "Multiple DLE's for host '%{hostname}' use different maxdumps values";
+	hint = "Please ensure that all DLE's for the host use the same maxdumps value, including skipped ones";
     } else if (message->code == 2900000) {
 	msg = "The Application '%{application}' failed: %{errmsg}";
     } else if (message->code == 2900001) {

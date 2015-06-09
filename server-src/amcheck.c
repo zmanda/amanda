@@ -59,7 +59,7 @@ static int overwrite;
 static disklist_t origq;
 
 static uid_t uid_dumpuser;
-static gboolean who_check_auth = TRUE;//  TRUE => local check auth
+static gboolean who_check_host_setting = TRUE;//  TRUE => local check auth
                                       // FALSE => clent check auth
 
 /* local functions */
@@ -71,7 +71,7 @@ pid_t start_server_check(FILE *fd, int do_localchk, int do_tapechk);
 int main(int argc, char **argv);
 int check_tapefile(FILE *outf, char *tapefile);
 int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
-static void check_auth(FILE *outf);
+static void check_host_setting(FILE *outf);
 
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
@@ -477,7 +477,7 @@ main(
 	/* just use stdout */
 	mainfd = stdout;
 
-    who_check_auth = do_localchk;
+    who_check_host_setting = do_localchk;
 
     /* start server side checks */
 
@@ -940,8 +940,8 @@ start_server_check(
 	fprintf(outf, "-----------------------------\n");
     }
 
-    if (who_check_auth) {
-	check_auth(outf);
+    if (who_check_host_setting) {
+	check_host_setting(outf);
     }
 
     if (do_localchk || testtape) {
@@ -2349,8 +2349,8 @@ start_client_checks(
     delete_message(amcheck_fprint_message(client_outf, build_message(
 					AMANDA_FILE, __LINE__, 2800203, MSG_MESSAGE, 0)));
 
-    if (!who_check_auth) {
-	check_auth(client_outf);
+    if (!who_check_host_setting) {
+	check_host_setting(client_outf);
     }
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
@@ -2584,7 +2584,7 @@ handle_result(
 }
 
 static void
-check_auth(
+check_host_setting(
     FILE *outf)
 {
     am_host_t *p;
@@ -2592,7 +2592,6 @@ check_auth(
 
     for (p = get_hostlist(); p != NULL; p = p->next) {
 	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
-	    if (dp->strategy == DS_SKIP) continue;
 	    if (strcmp(dp->auth, p->disks->auth) != 0) {
 		delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__,
@@ -2600,6 +2599,15 @@ check_auth(
 					"hostname", p->hostname,
 					"auth1", p->disks->auth,
 					"auth2", dp->auth)));
+		break;
+	    }
+	}
+	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
+	    if (dp->maxdumps != p->disks->maxdumps) {
+		delete_message(amcheck_fprint_message(outf, build_message(
+					AMANDA_FILE, __LINE__,
+					2800232, MSG_ERROR, 1,
+					"hostname", p->hostname)));
 		break;
 	    }
 	}
