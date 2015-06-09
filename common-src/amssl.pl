@@ -181,7 +181,7 @@ if ($opt_init) {
 	# where to connect
 	PeerHost => $opt_server,
 	PeerPort => "$opt_port",
-	SSL_verify_mode => SSL_VERIFY_NONE,
+	SSL_verify_mode => 0,
 	) or die "failed connect or ssl handshake: $!,$SSL_ERROR";
 
     print "  connected!\n";
@@ -272,7 +272,7 @@ if ($opt_init) {
 	Listen => 10,
 	SSL_cert_file => "$SSL_DIR/me/crt.pem",
 	SSL_key_file => "$SSL_DIR/me/private/key.pem",
-	SSL_verify_mode => SSL_VERIFY_NONE,
+	SSL_verify_mode => 0,
 	) or die "failed connect or ssl handshake: $!,$SSL_ERROR";
 
     my $fd = $srv->accept or

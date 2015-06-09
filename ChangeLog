@@ -1,4 +1,8 @@
 2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amssl.pl: SSL_VERIFY_NONE is not defined on older
+	  IO::Socket::SSL
+
+2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.h (struct tcp_conn): Remove meth.
 	* common-src/ssl-security.c: Do not use temporary variable for the
 	  method.
