@@ -1,4 +1,7 @@
 2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: Set initial window correctly on recovery
+
+2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: s/check_auth/check_host_setting/g, check
 	maxdumps is the same for all DLEs of a host
 

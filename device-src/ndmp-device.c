@@ -1124,8 +1124,8 @@ listen_impl(
 	 * mover will pause immediately when it wants to read the first mover
 	 * record. */
 	if (!ndmp_connection_mover_set_window(self->ndmp,
-					      2*dself->block_size,
-					      2*dself->block_size)) {
+					      dself->block_size,
+					      (((G_MAXINT64 - dself->block_size)/dself->block_size)*dself->block_size))) {
 	    set_error_from_ndmp(self);
 	    return FALSE;
 	}
@@ -1262,45 +1262,46 @@ accept_impl(
     } else {
 	/* when writing, the mover will pause as soon as the first byte comes
 	 * in, so there's no need to do anything to trigger the pause. */
-    }
 
-    if (self->indirecttcp_sock == -1) {
-	/* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to
-	 * write outside the window, while the standard specifies .._EOW,
-	 * instead.  When reading to a connection, we get the appropriate
-	 * .._SEEK.  It's easy enough to handle both. */
-	result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
+	if (self->indirecttcp_sock == -1) {
+	    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to
+	     * write outside the window, while the standard specifies .._EOW,
+	     * instead.  When reading to a connection, we get the appropriate
+	     * .._SEEK.  It's easy enough to handle both. */
+	    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
 			NULL,
 			&mover_halt_reason,
 			&mover_pause_reason, &seek_position,
 			cancelled,
 			abort_mutex, abort_cond);
 
-	if (result == 2) {
-	    goto accept_failed;
-	}
+	    if (result == 2) {
+		goto accept_failed;
+	    }
 
-	err = NULL;
-	if (mover_pause_reason) {
-	    switch (mover_pause_reason) {
-		case NDMP9_MOVER_PAUSE_SEEK:
-		case NDMP9_MOVER_PAUSE_EOW:
+	    err = NULL;
+	    if (mover_pause_reason) {
+		switch (mover_pause_reason) {
+		    case NDMP9_MOVER_PAUSE_SEEK:
+		    case NDMP9_MOVER_PAUSE_EOW:
+		    case NDMP9_MOVER_PAUSE_EOF:
 			break;
-		default:
+		    default:
 			err = "got NOTIFY_MOVER_PAUSED, but not because of EOW or SEEK";
 			break;
+		}
+	    } else if (mover_halt_reason) {
+		err = "unexpected NOTIFY_MOVER_HALT";
 	    }
-	} else if (mover_halt_reason) {
-	    err = "unexpected NOTIFY_MOVER_HALT";
-	}
 
-	if (err) {
-	    device_set_error(DEVICE(self),
-		g_strdup_printf("waiting NDMP_MOVER_PAUSE_SEEK: %s", err),
-		DEVICE_STATUS_DEVICE_ERROR);
-	    result = 1;
-	    goto accept_failed;
+	    if (err) {
+	        device_set_error(DEVICE(self),
+			g_strdup_printf("waiting NDMP_MOVER_PAUSE_SEEK: %s", err),
+			DEVICE_STATUS_DEVICE_ERROR);
+	        result = 1;
+	        goto accept_failed;
 
+	    }
 	}
     }
 
@@ -1722,19 +1723,22 @@ read_to_connection_impl(
 	return 1;
     }
 
-    /* the mover had best be PAUSED right now */
-    g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
+    if (self->for_writing) {
+	/* the mover had best be PAUSED right now */
 
-    if (!ndmp_connection_mover_set_window(self->ndmp,
+	g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
+
+	if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset+32768,
 		size? size : G_MAXUINT64 - (nconn->offset+32768))) {
-	set_error_from_ndmp(self);
-	return 1;
-    }
+	    set_error_from_ndmp(self);
+	    return 1;
+	}
 
-    if (!ndmp_connection_mover_continue(self->ndmp)) {
-	set_error_from_ndmp(self);
-	return 1;
+	if (!ndmp_connection_mover_continue(self->ndmp)) {
+	    set_error_from_ndmp(self);
+	    return 1;
+	}
     }
 
     /* now wait for the mover to pause itself again, or halt on EOF or an error */
