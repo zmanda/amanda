@@ -1,3 +1,7 @@
+2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: s/check_auth/check_host_setting/g, check
+	maxdumps is the same for all DLEs of a host
+
 2015-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Check return value of Amanda::Changer->new
 

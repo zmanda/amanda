@@ -59,7 +59,7 @@ static int overwrite;
 static disklist_t origq;
 
 static uid_t uid_dumpuser;
-static gboolean who_check_auth = TRUE;//  TRUE => local check auth
+static gboolean who_check_host_setting = TRUE;//  TRUE => local check auth
                                       // FALSE => clent check auth
 
 /* local functions */
@@ -70,7 +70,7 @@ pid_t start_server_check(int fd, int do_localchk, int do_tapechk);
 int main(int argc, char **argv);
 int check_tapefile(FILE *outf, char *tapefile);
 int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
-static void check_auth(FILE *outf);
+static void check_host_setting(FILE *outf);
 
 void
 usage(void)
@@ -354,7 +354,7 @@ main(
 	/* just use stdout */
 	mainfd = 1;
 
-    who_check_auth = do_localchk;
+    who_check_host_setting = do_localchk;
 
     /* start server side checks */
 
@@ -767,8 +767,8 @@ start_server_check(
         tp = lookup_tapetype(getconf_str(CNF_TAPETYPE));
     }
 
-    if (who_check_auth) {
-	check_auth(outf);
+    if (who_check_host_setting) {
+	check_host_setting(outf);
     }
 
     /*
@@ -2160,8 +2160,8 @@ start_client_checks(
     g_fprintf(outf, _("\nAmanda Backup Client Hosts Check\n"));
     g_fprintf(outf,   "--------------------------------\n");
 
-    if (!who_check_auth) {
-	check_auth(outf);
+    if (!who_check_host_setting) {
+	check_host_setting(outf);
     }
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
@@ -2332,7 +2332,7 @@ handle_result(
 }
 
 static void
-check_auth(
+check_host_setting(
     FILE *outf)
 {
     am_host_t *p;
@@ -2340,11 +2340,19 @@ check_auth(
 
     for (p = get_hostlist(); p != NULL; p = p->next) {
 	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
-	    if (dp->strategy == DS_SKIP) continue;
 	    if (strcmp(dp->auth, p->disks->auth) != 0) {
 		g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different auth methods\n",
 			  p->hostname);
 		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method, including skipped ones\n");
+		break;
+	    }
+	}
+
+	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
+	    if (dp->maxdumps != p->disks->maxdumps) {
+		g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different maxdumps values\n",
+			  p->hostname);
+		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same maxdumps value, including skipped ones\n");
 		break;
 	    }
 	}
