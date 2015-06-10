@@ -1,3 +1,7 @@
+2015-06-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: On recovery, set initial window to (0, -1)
+	* installcheck/Installcheck/Mock.pm: Set verbose to YES
+
 2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: Set initial window correctly on recovery
 

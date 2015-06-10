@@ -78,7 +78,6 @@ struct NdmpDevice_ {
     GCond	*abort_cond;
     gboolean	 cancel;
     int         *cancelled;
-    guint64	header_size;
 };
 
 /*
@@ -482,6 +481,7 @@ ndmp_device_read_label(
     guint64 buf_size = 0;
     gsize read_block_size = 0;
 
+    if (self->verbose) g_debug("ndmp_device_read_label");
     amfree(dself->volume_label);
     amfree(dself->volume_time);
     dumpfile_free(dself->volume_header);
@@ -594,6 +594,7 @@ ndmp_device_start(
     dumpfile_t *header;
     char       *header_buf;
 
+    if (self->verbose) g_debug("ndmp_device_start");
     if (device_in_error(self)) return FALSE;
 
     if (!open_tape_agent(self)) {
@@ -747,6 +748,7 @@ ndmp_device_start_file(
     NdmpDevice *self = NDMP_DEVICE(dself);
     char *header_buf;
 
+    if (self->verbose) g_debug("ndmp_device_start_file");
     if (device_in_error(self)) return FALSE;
 
     dself->is_eof = FALSE;
@@ -901,9 +903,11 @@ ndmp_device_seek_file(
     gint delta;
     guint resid;
     gpointer buf;
+    guint64 buf_size;
     dumpfile_t *header;
     gsize read_block_size = 0;
 
+    if (self->verbose) g_debug("ndmp_device_seek_file %d", file);
     if (device_in_error(dself)) return FALSE;
 
     /* file 0 is the tape header, and isn't seekable as a distinct
@@ -985,7 +989,7 @@ incomplete_bsf:
 	return NULL;
     }
     if (!ndmp_connection_tape_read(self->ndmp,
-		buf, read_block_size, &self->header_size)) {
+		buf, read_block_size, &buf_size)) {
 	switch (ndmp_connection_err_code(self->ndmp)) {
 	    case NDMP9_EOF_ERR:
 	    case NDMP9_EOM_ERR:
@@ -1000,7 +1004,7 @@ incomplete_bsf:
 
     header = g_new(dumpfile_t, 1);
     fh_init(header);
-    parse_file_header(buf, header, self->header_size);
+    parse_file_header(buf, header, buf_size);
     g_free(buf);
 
     return header;
@@ -1068,6 +1072,7 @@ indirecttcp_listen(
 {
     in_port_t port;
 
+    if (self->verbose) g_debug("indirecttcp_listen");
     self->indirecttcp_sock = stream_server(AF_INET, &port, 0, STREAM_BUFSIZE, 0);
     if (self->indirecttcp_sock < 0) {
 	device_set_error(DEVICE(self),
@@ -1093,6 +1098,7 @@ listen_impl(
 {
     NdmpDevice *self = NDMP_DEVICE(dself);
 
+    if (self->verbose) g_debug("listen_impl");
     if (device_in_error(self)) return FALSE;
 
     /* check status */
@@ -1137,9 +1143,7 @@ listen_impl(
 	/* For reading, set the window to the second mover record, so that the
 	 * mover will pause immediately when it wants to read the first mover
 	 * record. */
-	if (!ndmp_connection_mover_set_window(self->ndmp,
-		    dself->block_size,
-		    (((G_MAXINT64 - dself->block_size)/dself->block_size)*dself->block_size))) {
+	if (!ndmp_connection_mover_set_window(self->ndmp, 0, -1)) {
 	    set_error_from_ndmp(self);
 	    return FALSE;
 	}
@@ -1169,6 +1173,7 @@ accept_wait_cond(
     guint64 bytes_moved;
 
     gulong backoff = G_USEC_PER_SEC/20; /* 5 msec */
+    if (self->verbose) g_debug("accept_wait_cond");
     g_mutex_lock(self->abort_mutex);
     while (1) {
 	g_mutex_unlock(self->abort_mutex);
@@ -1220,6 +1225,7 @@ accept_impl(
     int      result;
     char    *err;
 
+    if (self->verbose) g_debug("accept_impl");
     if (device_in_error(self)) return 1;
 
     self->abort_mutex = abort_mutex;
@@ -1267,7 +1273,7 @@ accept_impl(
 	 * usual empty window. Note that this means the whole dump will be read
 	 * in one MOVER_READ operation, even if it does not begin at the
 	 * beginning of a part. */
-	if (!ndmp_connection_mover_read(self->ndmp, self->header_size, G_MAXUINT64 - self->header_size)) {
+	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
 	    set_error_from_ndmp(self);
 	    result = 1;
 	    goto accept_failed;
@@ -1282,7 +1288,8 @@ accept_impl(
 	    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to
 	     * write outside the window, while the standard specifies .._EOW,
 	     * instead.  When reading to a connection, we get the appropriate
-	     * .._SEEK.  It's easy enough to handle both. */
+	     * .._SEEK.  It's easy enough to handle both.
+	    */
 	    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
 			NULL,
 			&mover_halt_reason,
@@ -1299,7 +1306,6 @@ accept_impl(
 		switch (mover_pause_reason) {
 		    case NDMP9_MOVER_PAUSE_SEEK:
 		    case NDMP9_MOVER_PAUSE_EOW:
-		    case NDMP9_MOVER_PAUSE_EOF:
 			break;
 		    default:
 			err = "got NOTIFY_MOVER_PAUSED, but not because of EOW or SEEK";
@@ -1310,12 +1316,11 @@ accept_impl(
 	    }
 
 	    if (err) {
-	        device_set_error(DEVICE(self),
-			g_strdup_printf("waiting NDMP_MOVER_PAUSE_SEEK: %s", err),
-			DEVICE_STATUS_DEVICE_ERROR);
-	        result = 1;
-	        goto accept_failed;
-
+		device_set_error(DEVICE(self),
+		    g_strdup_printf("waiting NDMP_MOVER_PAUSE_SEEK: %s", err),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		result = 1;
+		goto accept_failed;
 	    }
 	}
     }
@@ -1373,6 +1378,7 @@ connect_impl(
     guint64 seek_position;
     int result;
 
+    if (self->verbose) g_debug("connect_impl");
     g_assert(!self->listen_addrs);
 
     *dtcpconn = NULL;
@@ -1393,15 +1399,19 @@ connect_impl(
 	return 1;
     }
 
-    if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
-	set_error_from_ndmp(self);
-	return 1;
-    }
-
-    if (self->for_writing)
+    if (self->for_writing) {
 	mode = NDMP9_MOVER_MODE_READ;
-    else
+	if (!ndmp_connection_mover_set_window(self->ndmp, 0, 0)) {
+	    set_error_from_ndmp(self);
+	    return 1;
+	}
+    } else {
 	mode = NDMP9_MOVER_MODE_WRITE;
+	if (!ndmp_connection_mover_set_window(self->ndmp, 0, -1)) {
+	    set_error_from_ndmp(self);
+	    return 1;
+	}
+    }
 
     if (!ndmp_connection_mover_connect(self->ndmp, mode, addrs)) {
 	set_error_from_ndmp(self);
@@ -1413,45 +1423,46 @@ connect_impl(
 	 * it to do something else.  The thing we want to is for it to start
 	 * reading data from the tape, which will immediately trigger an EOW or
 	 * SEEK pause. */
-	if (!ndmp_connection_mover_read(self->ndmp, self->header_size, G_MAXUINT64 - self->header_size)) {
+	if (!ndmp_connection_mover_read(self->ndmp, 0, G_MAXUINT64)) {
 	    set_error_from_ndmp(self);
 	    return 1;
 	}
 
-	/* now we should expect a notice that the mover has paused */
     } else {
 	/* when writing, the mover will pause as soon as the first byte comes
-	 * in, so there's no need to do anything to trigger the pause. */
-    }
+	 * in, so there's no need to do anything to trigger the pause.
+	 */
 
-    /* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to write
-     * outside the window, while the standard specifies .._EOW, instead.  When
-     * reading to a connection, we get the appropriate .._SEEK.  It's easy
-     * enough to handle both. */
+	/* NDMJOB sends NDMP9_MOVER_PAUSE_SEEK to indicate that it wants to
+	 * write outside the window, while the standard specifies .._EOW,
+	 * instead.  When reading to a connection, we get the appropriate
+	 * .._SEEK.  It's easy enough to handle both.
+	 */
 
-    result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
-	    NULL,
-	    &mover_halt_reason,
-	    &mover_pause_reason, &seek_position,
-	    cancelled,
-	    abort_mutex, abort_cond);
+	result = ndmp_connection_wait_for_notify_with_cond(self->ndmp,
+		NULL,
+		&mover_halt_reason,
+		&mover_pause_reason, &seek_position,
+		cancelled,
+		abort_mutex, abort_cond);
 
-    if (result == 2) {
-	return 2;
-    }
+	if (result == 2) {
+	    return 2;
+	}
 
-    if (mover_halt_reason != NDMP9_MOVER_HALT_NA) {
-	device_set_error(DEVICE(self),
-	    g_strdup_printf("got NDMP9_MOVER_HALT"),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return 1;
-    }
-    if (mover_pause_reason != NDMP9_MOVER_PAUSE_SEEK &&
-	mover_pause_reason != NDMP9_MOVER_PAUSE_EOW) {
-	device_set_error(DEVICE(self),
+	if (mover_halt_reason != NDMP9_MOVER_HALT_NA) {
+	    device_set_error(DEVICE(self),
+		g_strdup_printf("got NDMP9_MOVER_HALT"),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return 1;
+	}
+	if (mover_pause_reason != NDMP9_MOVER_PAUSE_SEEK &&
+	    mover_pause_reason != NDMP9_MOVER_PAUSE_EOW) {
+	    device_set_error(DEVICE(self),
 	    g_strdup_printf("got NOTIFY_MOVER_PAUSED, but not because of EOW or SEEK"),
 	    DEVICE_STATUS_DEVICE_ERROR);
-	return 1;
+	    return 1;
+	}
     }
 
     if (self->listen_addrs) {
@@ -1724,6 +1735,7 @@ read_to_connection_impl(
     if (actual_size)
 	*actual_size = 0;
 
+    g_debug("read_to_connection_impl");
     if (device_in_error(self)) return 1;
 
     /* read_to_connection does not support IndirectTCP */
@@ -1740,14 +1752,13 @@ read_to_connection_impl(
 	return 1;
     }
 
-    if (self->for_writing) {
+    if (mover_state == NDMP9_MOVER_STATE_PAUSED) {
 	/* the mover had best be PAUSED right now */
-
 	g_assert(mover_state == NDMP9_MOVER_STATE_PAUSED);
 
 	if (!ndmp_connection_mover_set_window(self->ndmp,
-		nconn->offset+32768,
-		size? size : G_MAXUINT64 - (nconn->offset+32768))) {
+		nconn->offset,
+		size? size : G_MAXUINT64 - nconn->offset)) {
 	    set_error_from_ndmp(self);
 	    return 1;
 	}
@@ -1849,6 +1860,7 @@ use_connection_impl(
     NdmpDevice *self = NDMP_DEVICE(dself);
     DirectTCPConnectionNDMP *nconn;
 
+    if (self->verbose) g_debug("read_to_connection_impl");
     /* the device_use_connection_impl wrapper already made sure we're in
      * ACCESS_NULL, but we may have opened the tape service already to read
      * a label - so close it to be sure */
@@ -2079,7 +2091,6 @@ ndmp_device_init(NdmpDevice *self)
     dself->block_size = 32768;
     dself->min_block_size = 32768;
     dself->max_block_size = SIZE_MAX;
-    self->header_size = 0;
 
     bzero(&response, sizeof(response));
 
