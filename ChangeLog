@@ -1,4 +1,8 @@
 2015-06-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/ndmp-device.c: On recovery, set initial window to (0, -1)
+	* installcheck/Installcheck/Mock.pm: Set verbose to YES
+
+2015-06-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amvault.pl: Vault dle not in the disklist, revert patch
 	  committed on 2014-01-09
 
