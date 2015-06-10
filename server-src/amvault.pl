@@ -396,14 +396,6 @@ sub plan_cb {
 
     $src->{'plan'} = $plan;
 
-    @{$plan->{'dumps'}} = grep {
-	    Amanda::Disklist::get_disk($_->{'hostname'}, $_->{'diskname'})
-	} @{$plan->{'dumps'}};
-    if (!@{$plan->{'dumps'}}) {
-	return $self->failure("No dumps to vault");
-    }
-
-
     if ($self->{'opt_dry_run'}) {
 	my $total_kb = Math::BigInt->new(0);
 

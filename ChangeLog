@@ -1,3 +1,7 @@
+2015-06-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amvault.pl: Vault dle not in the disklist, revert patch
+	  committed on 2014-01-09
+
 2015-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: Set initial window correctly on recovery
 
