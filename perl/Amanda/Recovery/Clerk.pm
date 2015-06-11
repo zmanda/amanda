@@ -215,6 +215,7 @@ sub new {
 	feedback => $params{'feedback'}
 	    || Amanda::Recovery::Clerk::Feedback->new(),
 
+	on_vol_hdr => undef,
 	current_label => undef,
 	current_dev => undef,
 	current_res => undef,
@@ -349,6 +350,7 @@ sub _xmsg_part_done {
     shift @{$xfer_state->{'remaining_plan'}};
     $xfer_state->{'next_part_idx'}++;
     $xfer_state->{'next_part'} = undef;
+    $self->{'on_vol_hdr'} = undef;
 
     $self->_maybe_start_part();
 }
@@ -427,8 +429,12 @@ sub _maybe_start_part {
 	    return $finished_cb->();
 	}
 
-	$xfer_state->{'next_part'} =
-	    $xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}];
+	if (!defined $xfer_state->{'next_part'} or
+	    $xfer_state->{'next_part'} != $xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}]) {
+	    $self->{'on_vol_hdr'} = undef;
+	    $xfer_state->{'next_part'} =
+		$xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}];
+	}
 
 	# short-circuit for a holding disk
 	if ($xfer_state->{'is_holding'}) {
@@ -465,6 +471,7 @@ sub _maybe_start_part {
 	    return $steps->{'handle_error'}->();
 	}
 
+	$self->{'on_vol_hdr'} = undef;
 	$self->{'current_dev'} = undef;
 	$self->{'current_res'} = undef;
 	$self->{'current_label'} = undef;
@@ -506,6 +513,7 @@ sub _maybe_start_part {
 		$err = "expected volume label '$next_label', but found volume " .
 		       "label '" . $dev->volume_label . "'";
 	    } else {
+		$self->{'on_vol_hdr'} = undef;
 		$self->{'current_dev'} = $dev;
 		$self->{'current_label'} = $dev->volume_label;
 
@@ -532,16 +540,18 @@ sub _maybe_start_part {
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
 	my $next_filenum = $xfer_state->{'next_part'}->{'filenum'};
 	my $dev = $self->{'current_dev'};
-	my $on_vol_hdr = $dev->seek_file($next_filenum);
+	if (!$self->{'on_vol_hdr'}) {
+	    $self->{'on_vol_hdr'} = $dev->seek_file($next_filenum);
 
-	if (!$on_vol_hdr) {
-	    push @{$xfer_state->{'errors'}}, $dev->error_or_status();
-	    return $steps->{'handle_error'}->();
-	}
+	    if (!$self->{'on_vol_hdr'}) {
+		push @{$xfer_state->{'errors'}}, $dev->error_or_status();
+		return $steps->{'handle_error'}->();
+	    }
 
-	if (!$self->_header_expected($on_vol_hdr)) {
-	    # _header_expected already pushed an error message or two
-	    return $steps->{'handle_error'}->();
+	    if (!$self->_header_expected($self->{'on_vol_hdr'})) {
+		# _header_expected already pushed an error message or two
+		return $steps->{'handle_error'}->();
+	    }
 	}
 
 	# now, either start the part, or invoke the xfer_src_cb.
@@ -555,12 +565,12 @@ sub _maybe_start_part {
 
 	    # invoke the xfer_src_cb
 	    $self->dbg("successfully located first part for recovery");
-	    $cb->(undef, $on_vol_hdr, $xfer_state->{'xfer_src'},
+	    $cb->(undef, $self->{'on_vol_hdr'}, $xfer_state->{'xfer_src'},
 			    $dev->directtcp_supported());
 
 	} else {
 	    # notify caller of the part
-	    $self->{'feedback'}->clerk_notif_part($next_label, $next_filenum, $on_vol_hdr);
+	    $self->{'feedback'}->clerk_notif_part($next_label, $next_filenum, $self->{'on_vol_hdr'});
 
 	    # start the part
 	    $self->dbg("reading file $next_filenum on '$next_label'");
