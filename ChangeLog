@@ -1,3 +1,7 @@
+2015-06-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Take another tar of ./pg_tblspc by
+	  keeping the symlink.
+
 2015-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Fix perl warning
 
