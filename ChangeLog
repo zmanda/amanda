@@ -1,3 +1,7 @@
+2015-06-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Take another tar of ./pg_tblspc by
+	  keeping the symlink.
+
 2015-06-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/ndmp-device.c: On recovery, set initial window to (0, -1)
 	* installcheck/Installcheck/Mock.pm: Set verbose to YES

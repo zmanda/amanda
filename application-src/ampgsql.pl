@@ -532,7 +532,7 @@ sub _run_tar_totals {
 
     my @cmd;
     @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR, '--create', '--dereference', '--totals', @other_args);
+        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
     debug("running: " . join(" ", @cmd));
 
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
@@ -764,19 +764,25 @@ sub _base_backup {
        }
        $old_die_cb->($msg);
    };
-   my $size = _run_tar_totals($self, '--file', "-",
+   my $size = _run_tar_totals($self, '--dereference', '--file', "-",
        '--directory', $self->{'props'}->{'pg-datadir'},
        '--exclude', 'postmaster.pid',
        '--exclude', 'pg_xlog/*', # contains WAL files; will be handled below
-       '--transform', "s,^,$_DATA_DIR_RESTORE/,S",
+       '--transform', "s,^./pg_tblspc,./pg_tblspc_data,S;s,^,$_DATA_DIR_RESTORE/,S",
        ".");
-   $self->{'die_cb'} = $old_die_cb;
+
+   # tar the symlink in pg_tblspc
+   $size += _run_tar_totals($self, '--file', "-",
+		'--directory', "$self->{'props'}->{'pg-datadir'}",
+		'--transform', "s,^,$_DATA_DIR_RESTORE/,S",
+                "./pg_tblspc");
 
    if ($self->{'action'} eq 'backup') {
        unless (_run_psql_command($self, "SELECT pg_stop_backup()")) {
            $self->{'die_cb'}->("Failed to call pg_stop_backup");
        }
    }
+   $self->{'die_cb'} = $old_die_cb;
 
    # determine WAL files and append and create their tar file
    my $start_wal;
@@ -812,17 +818,18 @@ sub _base_backup {
    $adir->close();
 
    if (@wal_files) {
-       $size += _run_tar_totals($self, '--file', "-",
+       $size += _run_tar_totals($self, '--dereference', '--file', "-",
 	   '--directory', $self->{'props'}->{'pg-archivedir'},
 	   '--transform', "s,^,$_ARCHIVE_DIR_RESTORE/,S",
 	   @wal_files);
-       $size += _run_tar_totals($self, '--file', "-",
+       #take the directory itself
+       $size += _run_tar_totals($self, '--dereference', '--file', "-",
 	   '--directory', $self->{'props'}->{'pg-archivedir'},
 	   '--transform', "s,^,$_ARCHIVE_DIR_RESTORE/,S",
 	   '--no-recursion', '.');
    } else {
        my $dummydir = $self->_make_dummy_dir_base();
-       $self->{'done_cb'}->(_run_tar_totals($self, '--file', '-',
+       $self->{'done_cb'}->(_run_tar_totals($self, '--dereference', '--file', '-',
            '--directory', $dummydir, "$_ARCHIVE_DIR_RESTORE"));
        rmtree($dummydir);
    }
@@ -866,15 +873,18 @@ sub _incr_backup {
 
    $self->{'state_cb'}->($self, $max_wal ? $max_wal : $end_wal);
 
+   my $size;
    if (@wal_files) {
-       $self->{'done_cb'}->(_run_tar_totals($self, '--file', '-',
-           '--directory', $self->{'props'}->{'pg-archivedir'}, @wal_files));
+       $size = _run_tar_totals($self, '--dereference', '--file', '-',
+           '--directory', $self->{'props'}->{'pg-archivedir'}, @wal_files);
    } else {
        my $dummydir = $self->_make_dummy_dir();
-       $self->{'done_cb'}->(_run_tar_totals($self, '--file', '-',
-           '--directory', $dummydir, "empty-incremental"));
+       $size = _run_tar_totals($self, '--dereference', '--file', '-',
+           '--directory', $dummydir, "empty-incremental");
        rmtree($dummydir);
    }
+
+   $self->{'done_cb'}->($size);
 }
 
 sub command_backup {
