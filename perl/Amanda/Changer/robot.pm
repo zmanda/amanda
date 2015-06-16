@@ -1686,9 +1686,10 @@ sub verify_unlocked {
     step verify_all_unloaded => sub {
 	my ($newstate) = @_;
 
-	if (UNIVERSAL::isa($state, 'Amanda::Changer::Error')) {
+	if (UNIVERSAL::isa($newstate, 'Amanda::Changer::Error')) {
 	    return $params{'finished_cb'}->($newstate);
 	}
+	$state = $newstate;
 
 	my @loaded_drive;
 
@@ -1855,10 +1856,32 @@ sub verify_unlocked {
     };
 
     step unload => sub {
-	$self->{'interface'}->unload($drive, $slot, $steps->{'unload_done'});
+	$state->{'last_status'} = 0;
+	$state->{'last_operation_time'} = 0;
+	$params{'finished_get_state_cb'} = $steps->{'unload_new_state'};
+	return $self->_get_state(\%params);
+    };
+
+    step unload_new_state => sub {
+	my ($newstate) = @_;
+
+	if (UNIVERSAL::isa($newstate, 'Amanda::Changer::Error')) {
+	    return $params{'finished_cb'}->($newstate);
+	}
+	$state = $newstate;
+
+	return $self->eject_unlocked(drive => $drive,
+			      state => $state,
+			      finished_cb => $steps->{'unload_done'});
     };
 
     step unload_done => sub {
+	my ($err) = @_;
+
+	if ($err) {
+	    debug("ERROR: $err");
+	    push @results, "ERROR: $err";
+	}
 	return $steps->{'verify_a_drive'}->();
     };
 
