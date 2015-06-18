@@ -68,10 +68,8 @@ setup_impl(
     XferElement *elt G_GNUC_UNUSED)
 {
     XferSourceFile *self = XFER_SOURCE_FILE(elt);
-    int a;
 
-    a = xfer_element_swap_output_fd(elt, dup(self->fd));
-    assert(a == -1);
+    g_assert(xfer_element_swap_output_fd(elt, dup(self->fd)) == -1);
 
     return TRUE;
 }
