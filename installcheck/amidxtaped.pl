@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 105;
+use Test::More tests => 153;
 
 use strict;
 use warnings;
@@ -43,28 +43,30 @@ Installcheck::log_test_output();
 my $debug = !exists $ENV{'HARNESS_ACTIVE'};
 
 # parameters:
-#   emulate - inetd or amandad (default)
-#   datapath -
+#   emulate        - inetd or amandad (default)
+#   datapath       -
 #	none: do not send fe_amidxtaped_datapath
 #	amanda: send fe_amidxtaped_datapath and do datapath negotiation, but send AMANDA
 #	directtcp: send fe_amidxtaped_datapath and do datapath negotiation and send both
 #		(expects an answer of AMANDA, too)
-#   header - send HEADER and expect a header
-#   splits - send fe_recover_splits (value is 0, 'basic' (one part; default), or 'parts' (multiple))
-#   digit_end - end command with digits instead of 'END'
-#   dumpspec - include DISK=, HOST=, (but not DATESTAMP=) that match the dump (default 1)
-#   feedme - send a bad device initially, and expect FEEDME response
-#   holding - filename of holding file to recover from
-#   bad_auth - send incorrect auth in OPTIONS (amandad only)
-#   holding_err - 'could not open' error from bogus holding file
+#   header         - send HEADER and expect a header
+#   splits         - send fe_recover_splits (value is 0, 'basic' (one part; default), or 'parts' (multiple))
+#   digit_end      - end command with digits instead of 'END'
+#   dumpspec       - include DISK=, HOST=, (but not DATESTAMP=) that match the dump (default 1)
+#   feedme         - send a bad device initially, and expect FEEDME response
+#   holding        - filename of holding file to recover from
+#   state          - connect to the STATE stream
+#   dar            - use dar
+#   bad_auth       - send incorrect auth in OPTIONS (amandad only)
+#   holding_err    - 'could not open' error from bogus holding file
 #   holding_no_colon_zero - do not append a :0 to the holding filename in DEVICE=
-#   no_tapespec - do not send a tapespec in LABEL=, and send the first partnum in FSF=
-#	no_fsf - or don't send the first partnum in FSF= and leave amidxtaped to guess
-#   ndmp - using NDMP device (so expect directtcp connection)
-#   bad_cmd - send a bogus command line and expect an error
-#   bad_quoting - send a bogus DISK= without fe_amrecover_correct_disk_quoting
+#   no_tapespec    - do not send a tapespec in LABEL=, and send the first partnum in FSF=
+#   no_fsf         - or don't send the first partnum in FSF= and leave amidxtaped to guess
+#   ndmp           - using NDMP device (so expect directtcp connection)
+#   bad_cmd        - send a bogus command line and expect an error
+#   bad_quoting    - send a bogus DISK= without fe_amrecover_correct_disk_quoting
 #   recovery_limit - set a non-matching recovery-limit config
-#   no_peer_name - do not set AMANDA_AUTHENTICATED_PEER
+#   no_peer_name   - do not set AMANDA_AUTHENTICATED_PEER
 sub run_amidxtaped {
     my %params = @_;
     my $service;
@@ -99,6 +101,14 @@ sub run_amidxtaped {
 	$params{'dumpspec'} = 1 unless exists $params{'dumpspec'};
 
 	# ignore some incompatible combinations
+	return $params{'finished_cb'}->()
+	    if ($params{'emulate'} eq 'inetd' and $params{'datapath'} ne 'none');
+	return $params{'finished_cb'}->()
+	    if ($params{'emulate'} eq 'inetd' and $params{'state'});
+	return $params{'finished_cb'}->()
+	    if ($params{'emulate'} eq 'inetd' and $params{'dar'});
+	return $params{'finished_cb'}->()
+	    if ($params{'dar'} and not $params{'state'});
 	return $params{'finished_cb'}->()
 	    if ($params{'datapath'} ne 'none' and not $params{'splits'});
 	return $params{'finished_cb'}->()
@@ -135,6 +145,8 @@ sub run_amidxtaped {
 	$testmsg .= "datapath($params{'datapath'}) ";
 	$testmsg .= $params{'splits'}? "fe-splits($params{splits}) " : "!fe-splits ";
 	$testmsg .= $params{'feedme'}? "feedme " : "!feedme ";
+	$testmsg .= $params{'state'}? "state " : "!state ";
+	$testmsg .= $params{'dar'}? "dar " : "!dar ";
 	$testmsg .= $params{'holding'}? "holding " : "media ";
 	$testmsg .= $params{'dumpspec'}? "dumpspec " : "";
 	$testmsg .= $params{'digit_end'}? "digits " : "";
@@ -179,7 +191,14 @@ sub run_amidxtaped {
 	    $steps->{'send_cmd1'}->();
 	} else {
 	    # send REQ packet
-	    my $featstr = Amanda::Feature::Set->mine()->as_string();
+	    my $features = Amanda::Feature::Set->mine();
+	    if (!$params{'state'}) {
+		$features->remove($Amanda::Feature::fe_amrecover_stream_state);
+	    }
+	    if (!$params{'dar'}) {
+		$features->remove($Amanda::Feature::fe_amidxtaped_dar);
+            }
+	    my $featstr = $features->as_string();
 	    my $auth = $params{'bad_auth'}? 'bogus' : 'bsdtcp';
 	    $service->send('main', "OPTIONS features=$featstr;auth=$auth;");
 	    $service->close('main', 'w');
@@ -191,12 +210,22 @@ sub run_amidxtaped {
     step expect_rep => sub {
 	my $ctl_hdl = DATA_FD_OFFSET;
 	my $data_hdl = DATA_FD_OFFSET+1;
-	$service->expect('main',
-	    [ re => qr/^CONNECT CTL $ctl_hdl DATA $data_hdl\n\n/, $steps->{'got_rep'} ],
-	    [ re => qr/^ERROR .*\n/, $steps->{'got_rep_err'} ]);
+	my $state_hdl = DATA_FD_OFFSET+2;
+	diag("expect_rep") if $debug;
+	if ($params{'state'}) {
+	    $service->expect('main',
+	        [ re => qr/^CONNECT CTL $ctl_hdl DATA $data_hdl STATE $state_hdl\n\n/, $steps->{'got_rep'} ],
+	        [ re => qr/^ERROR .*\n/, $steps->{'got_rep_err'} ]);
+	} else {
+	    $service->expect('main',
+	        [ re => qr/^CONNECT CTL $ctl_hdl DATA $data_hdl\n\n/, $steps->{'got_rep'} ],
+	        [ re => qr/^ERROR .*\n/, $steps->{'got_rep_err'} ]);
+	}
+	diag("expect_rep done") if $debug;
     };
 
     step got_rep => sub {
+	diag("got_rep") if $debug;
 	$event->('GOT-REP');
 	$cmd_stream = 'stream1';
 	$service->expect('main',
@@ -204,11 +233,13 @@ sub run_amidxtaped {
     };
 
     step got_rep_err => sub {
+	diag("got_rep_err") if $debug;
 	die "$_[0]" unless $expect_error;
 	$event->('GOT-REP-ERR');
     };
 
     step send_cmd1 => sub {
+	diag("send_cmd1") if $debug;
 	# note that the earlier features are ignored..
 	my $sendfeat = Amanda::Feature::Set->mine();
 	if ($params{'datapath'} eq 'none') {
@@ -216,6 +247,12 @@ sub run_amidxtaped {
 	}
 	if ($params{'bad_quoting'}) {
 	    $sendfeat->remove($Amanda::Feature::fe_amrecover_correct_disk_quoting);
+	}
+	if (!$params{'state'}) {
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_stream_state);
+	}
+	if (!$params{'dar'}) {
+	    $sendfeat->remove($Amanda::Feature::fe_amidxtaped_dar);
 	}
 	unless ($params{'splits'}) {
 	    $sendfeat->remove($Amanda::Feature::fe_recover_splits);
@@ -263,6 +300,7 @@ sub run_amidxtaped {
     };
 
     step got_feat => sub {
+	diag("got_feat") if $debug;
 	$event->("GOT-FEAT");
 
 	# continue sending the command
@@ -303,6 +341,7 @@ sub run_amidxtaped {
     };
 
     step expect_connect => sub {
+	diag("expect_connect") if $debug;
 	if ($params{'splits'}) {
 	    if ($params{'emulate'} eq 'inetd') {
 		$service->expect($cmd_stream,
@@ -319,6 +358,7 @@ sub run_amidxtaped {
     };
 
     step got_connect => sub {
+	diag("got_connect") if $debug;
 	my ($port) = ($_[0] =~ /CONNECT (\d+)/);
 	$event->("GOT-CONNECT");
 
@@ -331,6 +371,7 @@ sub run_amidxtaped {
     };
 
     step expect_feedme => sub  {
+	diag("expect_feedme") if $debug;
 	Amanda::Debug::debug("HERE");
 	if ($params{'feedme'}) {
 	    $service->expect($cmd_stream,
@@ -344,6 +385,7 @@ sub run_amidxtaped {
     };
 
     step got_message => sub {
+	diag("got_message") if $debug;
 	# this is usually an error message
 	$event->('GOT-MESSAGE');
 	# loop back to expect a feedme..
@@ -351,6 +393,7 @@ sub run_amidxtaped {
     };
 
     step got_feedme => sub {
+	diag("got_feedme") if $debug;
 	$event->('GOT-FEEDME');
 	my $dev_name = "file:" . Installcheck::Run::vtape_dir();
 	$service->send($cmd_stream, "TAPE $dev_name\r\n");
@@ -358,6 +401,7 @@ sub run_amidxtaped {
     };
 
     step expect_header => sub {
+	diag("expect_header") if $debug;
 	if ($params{'header'}) {
 	    $service->expect($data_stream,
 		[ bytes => 32768, $steps->{'got_header'} ]);
@@ -367,6 +411,7 @@ sub run_amidxtaped {
     };
 
     step got_header => sub {
+	diag("got_header") if $debug;
 	my ($buf) = @_;
 	$event->("GOT-HEADER");
 
@@ -379,11 +424,16 @@ sub run_amidxtaped {
     };
 
     step got_early_bytes => sub {
+	diag("got_early_bytes") if $debug;
 	$event->("GOT-EARLY-BYTES");
     };
 
     step expect_datapath => sub {
-	if ($params{'datapath'} ne 'none') {
+	if ($params{'dar'}) {
+	    $service->send($cmd_stream, "USE-DAR NO\r\n");
+	    $event->("SENT-USE-DAR-NO");
+	}
+	if ($params{'datapath'} ne 'none' and $params{'emulate'} ne 'inetd') {
 	    my $dp = ($params{'datapath'} eq 'amanda')? 'AMANDA' : 'AMANDA DIRECT-TCP';
 	    $service->send($cmd_stream, "AVAIL-DATAPATH $dp\r\n");
 	    $event->("SENT-DATAPATH");
@@ -520,7 +570,8 @@ sub run_amidxtaped {
 	    }
 	}
 
-	if ($ok) {
+	my @exp_events;
+	{
 	    my $inetd = $params{'emulate'} eq 'inetd';
 
 	    my @sec_evts = $inetd? ('MAIN-SECURITY') : ('SENT-REQ', 'GOT-REP'),
@@ -533,12 +584,13 @@ sub run_amidxtaped {
 		@datapath_evts = ('SENT-DATAPATH', 'GOT-DP-DIRECT-TCP', 'SENT-DATAPATH-OK');
 	    }
 
-	    my @exp_events = (
+	    @exp_events = (
 			@sec_evts,
 			'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
 			($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
 			$params{'feedme'}? ('GOT-MESSAGE', 'GOT-FEEDME') : (),
 			$params{'header'}? ('GOT-HEADER') : (),
+			$params{'dar'} ? 'SENT-USE-DAR-NO' : (),
 			@datapath_evts,
 			'DATA-TO-EOF', 'EXIT-0', );
 	    # handle a few error conditions differently
@@ -566,6 +618,7 @@ sub run_amidxtaped {
 	}
 
 	diag(Dumper([@events])) if not $ok;
+	diag(Dumper([@exp_events])) if not $ok;
 
 	$params{'finished_cb'}->();
     };
@@ -634,6 +687,8 @@ for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
 	for my $datapath ('none', 'amanda', 'directtcp') {
 	    for my $header (0, 1) {
 		for my $feedme (0, 1) {
+		  for my $state (0, 1) {
+		   for my $dar (0, 1) {
 		    for my $holding (0, 1) {
 			if ($holding and (!$holdingfile or ! -e $holdingfile)) {
 			    $holdingfile = make_holding_file();
@@ -644,9 +699,13 @@ for my $splits (0, 'basic', 'parts') { # two flavors of 'true'
 			    header => $header,
 			    splits => $splits,
 			    feedme => $feedme,
+			    state  => $state,
+			    dar    => $dar,
 			    $holding? (holding => $holdingfile):(),
 			);
 		    }
+		   }
+		  }
 		}
 	    }
 	}

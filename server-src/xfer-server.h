@@ -38,6 +38,10 @@
 XferElement *xfer_source_holding(
     const char *filename);
 
+void
+xfer_source_holding_start_recovery(
+    XferElement *elt);
+
 guint64
 xfer_source_holding_get_bytes_read(
     XferElement *elt);

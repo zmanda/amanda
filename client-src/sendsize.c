@@ -1776,7 +1776,7 @@ getsize_dump(
 		goto terminated;
 	}
     }
-    
+
     /*
      * First, try to kill the dump process nicely.  If it ignores us
      * for several seconds, hit it harder.
@@ -2041,7 +2041,7 @@ getsize_smbtar(
 	      level,
 	      (long long)size);
 
-    kill(-dumppid, SIGTERM);
+    (void)kill(-dumppid, SIGTERM);
 
     dbprintf(_("waiting for %s \"%s\" child\n"), SAMBA_CLIENT, qdisk);
     waitpid(dumppid, &wait_status, 0);
@@ -2344,7 +2344,7 @@ getsize_gnutar(
 	      level,
 	      (long long)size);
 
-    kill(-dumppid, SIGTERM);
+    (void)kill(-dumppid, SIGTERM);
 
     dbprintf(_("waiting for %s \"%s\" child\n"),
 	     command, qdisk);
@@ -2627,7 +2627,7 @@ getsize_application_api(
 		 walltime_str(timessub(curclock(), start_time)));
     }
 
-    kill(-dumppid, SIGTERM);
+    (void)kill(-dumppid, SIGTERM);
 
     dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
     waitpid(dumppid, &wait_status, 0);

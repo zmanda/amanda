@@ -211,6 +211,9 @@ typedef enum {
     fe_sendsize_message,
     fe_sendbackup_message,
     fe_sendbackup_rep_retry,
+    fe_sendbackup_stream_state,
+    fe_amrecover_stream_state,
+    fe_amidxtaped_dar,
 
     /*
      * All new features must be inserted immediately *before* this entry.

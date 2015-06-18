@@ -17,6 +17,7 @@ LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
 libamxfer_la_SOURCES = \
+	dest-application.c \
 	dest-fd.c \
 	dest-null.c \
 	dest-buffer.c \
@@ -28,6 +29,7 @@ libamxfer_la_SOURCES = \
 	filter-process.c \
 	source-random.c \
 	source-fd.c \
+	source-file.c \
 	source-pattern.c \
 	source-directtcp-connect.c \
 	source-directtcp-listen.c \

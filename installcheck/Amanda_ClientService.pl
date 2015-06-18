@@ -39,7 +39,7 @@ Amanda::Debug::dbopen('installcheck');
 {
     # that these tests assume that DATA_FD_OFFSET and DATA_FD_COUNT have these values
     is($Amanda::Constants::DATA_FD_OFFSET, 50, "DATA_FD_OFFSET is what I think it is");
-    is($Amanda::Constants::DATA_FD_COUNT, 3, "DATA_FD_COUNT is what I think it is");
+    is($Amanda::Constants::DATA_FD_COUNT, 4, "DATA_FD_COUNT is what I think it is");
 
     sub test_connect_streams {
 	my ($args, $exp_line, $exp_closed_fds, $exp_streams, $msg) = @_;
@@ -69,28 +69,28 @@ Amanda::Debug::dbopen('installcheck');
     test_connect_streams(
 	[ 'DATA' => 'rw' ],
 	'CONNECT DATA 50',
-	[ 52, 53, 54, 55 ],
+	[ 52, 53, 54, 55, 56, 57 ],
 	{ 'DATA' => [ 51, 50 ] },
 	"simple read/write DATA stream");
 
     test_connect_streams(
 	[ 'DATA' => 'r' ],
 	'CONNECT DATA 50',
-	[ 50, 52, 53, 54, 55 ],
+	[ 50, 52, 53, 54, 55, 56, 57 ],
 	{ 'DATA' => [ 51, -1 ] },
 	"read-only stream");
 
     test_connect_streams(
 	[ 'DATA' => 'w' ],
 	'CONNECT DATA 50',
-	[ 51, 52, 53, 54, 55 ],
+	[ 51, 52, 53, 54, 55, 56, 57 ],
 	{ 'DATA' => [ -1, 50 ] },
 	"write-only stream");
 
     test_connect_streams(
 	[ 'DATA' => 'rw', 'RD' => 'r', 'WR' => 'w' ],
 	'CONNECT DATA 50 RD 51 WR 52',
-	[ 52, 55 ],
+	[ 52, 55, 56, 57 ],
 	{ 'DATA' => [ 51, 50 ],
 	  'RD' => [ 53, -1 ],
 	  'WR' => [ -1, 54 ] },

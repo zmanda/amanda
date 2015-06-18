@@ -152,6 +152,8 @@ typedef struct XferElement {
     char *repr;
 
     /* maximum size to transfer */
+    gint64 offset;
+    gint64 orig_size;
     gint64 size;
 
     /* for crc computation */
@@ -210,7 +212,11 @@ typedef struct {
      * @param size: the size of data to transfer
      * @return: TRUE
      */
+    gboolean (*set_offset)(XferElement *elt, gint64 offset);
     gboolean (*set_size)(XferElement *elt, gint64 size);
+    off_t (*get_offset)(XferElement *elt);
+    off_t (*get_orig_size)(XferElement *elt);
+    off_t (*get_size)(XferElement *elt);
 
     /* Start transferring data.  The element downstream of this one will
      * already be started, while the upstream element will not, so data will
@@ -322,7 +328,11 @@ void xfer_element_unref(XferElement *elt);
 gboolean xfer_element_link_to(XferElement *elt, XferElement *successor);
 char *xfer_element_repr(XferElement *elt);
 gboolean xfer_element_setup(XferElement *elt);
+gboolean xfer_element_set_offset(XferElement *elt, gint64 offset);
 gboolean xfer_element_set_size(XferElement *elt, gint64 size);
+off_t xfer_element_get_offset(XferElement *elt);
+off_t xfer_element_get_orig_size(XferElement *elt);
+off_t xfer_element_get_size(XferElement *elt);
 gboolean xfer_element_start(XferElement *elt);
 void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
 gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);
@@ -414,6 +424,9 @@ XferElement *xfer_source_pattern(guint64 length, void * pattern,
 XferElement * xfer_source_fd(
     int fd);
 
+XferElement *xfer_source_file(
+     char *filename);
+
 /* A transfer source that exposes its listening DirectTCPAddrs (via
  * elt->input_listen_addrs) for external use
  *
@@ -433,7 +446,7 @@ XferElement * xfer_source_directtcp_listen(void);
  */
 XferElement * xfer_source_directtcp_connect(DirectTCPAddr *addrs);
 
-/* A transfer filter that copy its input to its output but contimue to read
+/* A transfer filter that copy its input to its output but continue to read
  *  the input if it get a Broken pipe to the output.
  *
  * Implemented in filter-drain.c
@@ -459,6 +472,10 @@ XferElement *xfer_filter_process(gchar **argv,
     gboolean must_drain,
     gboolean cancel_on_success,
     gboolean ignore_broken_pipe);
+
+/* return the stderr of the filter */
+
+int filter_process_get_err_fd(XferElement *elt);
 
 /* A transfer filter that just applies a bytewise XOR transformation to the data
  * that passes through it.
@@ -549,5 +566,28 @@ XferElement * xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
 XferElement * xfer_dest_directtcp_listen(void);
 
 int get_err_fd(XferElement *elt);
+/* A transfer dest that execute an application,
+ * It can be used for restore, index and validate
+ *
+ * Implemented in dest-application.c
+ *
+ * @return: new element
+ */
+XferElement * xfer_dest_application(
+    gchar **argv,
+    gboolean need_root,
+    gboolean must_drain,
+    gboolean cancel_on_success,
+    gboolean ignore_broken_pipe);
+
+/* return the stderr of the application */
+int dest_application_get_err_fd(XferElement *elt);
+
+/* return the stdout of the application */
+int dest_application_get_out_fd(XferElement *elt);
+
+/* return the dar fd of the application */
+int dest_application_get_dar_fd(XferElement *elt);
+
 
 #endif

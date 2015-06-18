@@ -34,7 +34,7 @@ use Amanda::Util qw( :constants :quoting );
 use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
-use Amanda::MainLoop;
+use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Cmdline;
@@ -121,6 +121,7 @@ sub user_request {
 package amfetchdump;
 
 use base 'Amanda::Recovery::Clerk::Feedback';
+use Amanda::MainLoop qw( :GIOCondition );
 
 sub set_feedback {
     my $self = shift;
@@ -158,6 +159,48 @@ sub clerk_notif_holding {
 		severity	=> $Amanda::Message::INFO,
 		holding_file	=> $filename,
 		header_summary	=> $header->summary()));
+}
+
+sub start_read_dar
+{
+    my $self = shift;
+    my $xfer_dest = shift;
+    my $cb_data = shift;
+    my $cb_done = shift;
+    my $text = shift;
+
+    my $fd = $xfer_dest->get_dar_fd();
+    $fd.="";
+    $fd = int($fd);
+    my $src = Amanda::MainLoop::fd_source($fd,
+                                          $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $buffer = "";
+    $self->{'fetchdump'}->{'all_filter'}->{$src} = 1;
+    $src->set_callback( sub {
+	my $b;
+	my $n_read = POSIX::read($fd, $b, 1);
+	if (!defined $n_read) {
+	    return;
+	} elsif ($n_read == 0) {
+	    delete $self->{'fetchdump'}->{'all_filter'}->{$src};
+	    $cb_data->("DAR -1:0");
+	    $src->remove();
+	    POSIX::close($fd);
+	    if (!%{$self->{'fetchdump'}->{'all_filter'}} and $self->{'recovery_done'}) {
+		$cb_done->();
+	    }
+	} else {
+	    $buffer .= $b;
+	    if ($b eq "\n") {
+		my $line = $buffer;
+		chomp $line;
+		if (length($line) > 1) {
+		    $cb_data->($line);
+		}
+	    $buffer = "";
+	    }
+	}
+    });
 }
 
 package main;

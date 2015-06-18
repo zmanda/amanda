@@ -123,6 +123,11 @@ typedef enum {
      */
     XMSG_NO_SPACE = 9,
 
+    /* XMSG_SEGMENT_DONE
+     * - a segment of the xfer is done (offset, size)
+     */
+    XMSG_SEGMENT_DONE = 10,
+
 } xmsg_type;
 
 /*

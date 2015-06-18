@@ -184,7 +184,7 @@ xfer_repr(
 void
 xfer_start(
     Xfer *xfer,
-    gint64 offset G_GNUC_UNUSED,
+    gint64 offset,
     gint64 size)
 {
     unsigned int len;
@@ -192,9 +192,8 @@ xfer_start(
     gboolean setup_ok;
 
     g_assert(xfer != NULL);
-    g_assert(xfer->status == XFER_INIT);
+    g_assert(xfer->status == XFER_INIT || xfer->status == XFER_DONE);
     g_assert(xfer->elements->len >= 2);
-    g_assert(offset == 0);
 
     g_debug("Starting %s", xfer_repr(xfer));
     /* set the status to XFER_START and add a reference to our count, so that
@@ -236,9 +235,10 @@ xfer_start(
 		elt->downstream = g_ptr_array_index(xfer->elements, i+1);
 	}
 
-	/* Set size for first element */
-	if (size) {
+	/* Set offset and size for first element */
+	{
 	    XferElement *xe = (XferElement *)g_ptr_array_index(xfer->elements, 0);
+	    xfer_element_set_offset(xe, offset);
 	    xfer_element_set_size(xe, size);
 	}
 
@@ -269,6 +269,18 @@ xfer_start(
 }
 
 void
+xfer_set_offset_and_size(
+    Xfer *xfer,
+    gint64 offset,
+    gint64 size)
+{
+    /* Set offset for first element */
+    XferElement *xe = (XferElement *)g_ptr_array_index(xfer->elements, 0);
+    xfer_element_set_offset(xe, offset);
+    xfer_element_set_size(xe, size);
+}
+
+void
 xfer_cancel(
     Xfer *xfer)
 {
@@ -293,7 +305,7 @@ xfer_set_status(
     /* check that this state transition is valid */
     switch (status) {
     case XFER_START:
-        g_assert(xfer->status == XFER_INIT);
+        g_assert(xfer->status == XFER_INIT || xfer->status == XFER_DONE);
         break;
     case XFER_RUNNING:
         g_assert(xfer->status == XFER_START);

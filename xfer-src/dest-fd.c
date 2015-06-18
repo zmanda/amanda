@@ -47,6 +47,8 @@ static GObjectClass *parent_class = NULL;
 
 typedef struct XferDestFd {
     XferElement __parent__;
+
+    gint fd;
 } XferDestFd;
 
 /*
@@ -61,15 +63,50 @@ typedef struct {
  * Implementation
  */
 
+static gboolean
+setup_impl(
+    XferElement *elt)
+{
+    XferDestFd *self = XFER_DEST_FD(elt);
+
+    /* We keep a *copy* of this fd, because our caller will close it to
+     * indicate EOF */
+    g_assert(xfer_element_swap_input_fd(elt, dup(self->fd)) == -1);
+
+    return TRUE;
+}
+
+static void
+finalize_impl(
+    GObject * obj_self)
+{
+    XferDestFd *self = XFER_DEST_FD(obj_self);
+
+    close(self->fd);
+    self->fd = -1;
+}
+
+static void
+instance_init(
+    XferElement *elt)
+{
+    make_crc_table();
+    crc32_init(&elt->crc);
+}
+
 static void
 class_init(
     XferDestFdClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
+    GObjectClass *goc = G_OBJECT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_WRITEFD, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0) },
     };
+
+    klass->setup = setup_impl;
+    goc->finalize = finalize_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Fd";
     klass->mech_pairs = mech_pairs;
@@ -92,7 +129,7 @@ xfer_dest_fd_get_type (void)
             NULL /* class_data */,
             sizeof (XferDestFd),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) NULL,
+            (GInstanceInitFunc) instance_init,
             NULL
         };
 
@@ -111,10 +148,7 @@ xfer_dest_fd(
     XferElement *elt = XFER_ELEMENT(self);
 
     g_assert(fd >= 0);
-
-    /* We keep a *copy* of this fd, because our caller will close it to
-     * indicate EOF */
-    g_assert(xfer_element_swap_input_fd(elt, dup(fd)) == -1);
+    self->fd = dup(fd);
 
     return elt;
 }

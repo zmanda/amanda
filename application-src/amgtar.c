@@ -112,21 +112,25 @@ static amregex_t *re_table;
 int main(int argc, char **argv);
 
 typedef struct application_argument_s {
-    char      *config;
-    char      *host;
-    int        message;
-    int        collection;
-    int        calcsize;
-    char      *tar_blocksize;
-    GSList    *level;
-    GSList    *command_options;
-    char      *include_list_glob;
-    char      *exclude_list_glob;
-    dle_t      dle;
-    int        argc;
-    char     **argv;
-    int        verbose;
-    int        ignore_zeros;
+    char         *config;
+    char         *host;
+    int           message;
+    int           collection;
+    int           calcsize;
+    char         *tar_blocksize;
+    GSList       *level;
+    GSList       *command_options;
+    char         *include_list_glob;
+    char         *exclude_list_glob;
+    dle_t         dle;
+    int           argc;
+    char        **argv;
+    int           verbose;
+    int           ignore_zeros;
+    am_feature_t *amfeatures;
+    char         *recover_dump_state_file;
+    gboolean      dar;
+    int 	  state_stream;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -202,6 +206,10 @@ static struct option long_options[] = {
     {"exclude-list-glob", 1, NULL, 35},
     {"verbose"          , 1, NULL, 36},
     {"ignore-zeros"     , 1, NULL, 37},
+    {"amfeatures"       , 1, NULL, 38},
+    {"recover-dump-state-file", 1, NULL, 39},
+    {"dar"                    , 1, NULL, 40},
+    {"state-stream"           , 1, NULL, 41},
     {NULL, 0, NULL, 0}
 };
 
@@ -345,8 +353,6 @@ main(
 	error(_("amgtar must be run setuid root"));
     }
 
-    safe_fd(3, 2);
-
     set_pname("amgtar");
     set_pcomponent("application");
     set_pmodule("amgtar");
@@ -388,6 +394,10 @@ main(
     argument.exclude_list_glob = NULL;
     argument.verbose = 0;
     argument.ignore_zeros = 1;
+    argument.amfeatures = NULL;
+    argument.recover_dump_state_file = NULL;
+    argument.dar        = FALSE;
+    argument.state_stream = -1;
     init_dle(&argument.dle);
     argument.dle.record = 0;
 
@@ -533,10 +543,33 @@ main(
 	case 37: if (strcasecmp(optarg, "YES") != 0)
 		     argument.ignore_zeros = 0;
 		 break;
+	case 38: amfree(argument.amfeatures);
+		 argument.amfeatures = am_string_to_feature(optarg);
+		 break;
+	case 39: amfree(argument.recover_dump_state_file);
+		 argument.recover_dump_state_file = g_strdup(optarg);
+		 break;
+	case 40: if (strcasecmp(optarg, "NO") == 0)
+		     argument.dar = FALSE;
+		 else if (strcasecmp(optarg, "YES") == 0)
+		     argument.dar = TRUE;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad DAR property value (%s)]\n"), get_pname(), optarg);
+		 break;
+	case 41: argument.state_stream = atoi(optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
 	}
+    }
+
+    if ((g_str_equal(command, "backup") ||
+	 g_str_equal(command, "restore")) && argument.state_stream >= 0) {
+	g_debug("state_stream: %d", argument.state_stream);
+	safe_fd3(3, 2, dbfd(), argument.state_stream);
+    } else {
+	safe_fd2(3, 2, dbfd());
     }
 
     if (!argument.dle.disk && argument.dle.device)
@@ -732,6 +765,10 @@ amgtar_support(
     fprintf(stdout, "MULTI-ESTIMATE YES\n");
     fprintf(stdout, "CALCSIZE YES\n");
     fprintf(stdout, "CLIENT-ESTIMATE YES\n");
+    fprintf(stdout, "AMFEATURES YES\n");
+    fprintf(stdout, "RECOVER-DUMP-STATE-FILE YES\n");
+    fprintf(stdout, "DAR YES\n");
+    fprintf(stdout, "STATE-STREAM YES\n");
 }
 
 static void
@@ -978,7 +1015,7 @@ amgtar_estimate(
 		 level,
 		 (long long)size);
 
-	kill(-tarpid, SIGTERM);
+	(void)kill(-tarpid, SIGTERM);
 
 	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
@@ -1133,9 +1170,31 @@ amgtar_backup(
 	    /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
 	}
-	if (*line == '.' && *(line+1) == '/') { /* filename */
-	    if (argument->dle.create_index) {
-		fprintf(indexstream, "%s\n", &line[1]); /* remove . */
+	if (strncmp(line, "block ", 6) == 0) { /* filename */
+	    off_t block_no = g_ascii_strtoll(line+6, NULL, 0);
+	    char *filename = strchr(line, ':');
+	    if (filename) {
+		filename += 2;
+		if (*filename == '.' && *(filename+1) == '/') {
+		    if (argument->dle.create_index) {
+			fprintf(indexstream, "%s\n", &filename[1]); /* remove . */
+		    }
+		    if (argument->state_stream != -1) {
+			char *s = g_strdup_printf("%lld %s\n",
+					 (long long)block_no, &filename[1]);
+			guint a = full_write(argument->state_stream, s, strlen(s));
+			if (a < strlen(s)) {
+			    g_debug("Failed to write to the state stream: %s",
+				    strerror(errno));
+			}
+			g_free(s);
+		    } else if (argument->amfeatures &&
+			       am_has_feature(argument->amfeatures,
+					      fe_sendbackup_state)) {
+			fprintf(mesgstream, "sendbackup: state %lld %s\n",
+			        (long long)block_no, &filename[1]);
+		    }
+		}
 	    }
 	} else { /* message */
 	    for(rp = re_table; rp->regex != NULL; rp++) {
@@ -1250,6 +1309,7 @@ amgtar_restore(
 {
     char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
+    GPtrArray  *include_array = g_ptr_array_new();
     char      **env;
     int         j;
     char       *e;
@@ -1259,6 +1319,7 @@ amgtar_restore(
     amwait_t    wait_status;
     int         exit_status = 0;
     char       *errmsg = NULL;
+    FILE       *dar_file;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
@@ -1288,7 +1349,8 @@ amgtar_restore(
     if (gnutar_directory) {
 	struct stat stat_buf;
 	if(stat(gnutar_directory, &stat_buf) != 0) {
-	    fprintf(stderr,"can not stat directory %s: %s\n", gnutar_directory, strerror(errno));
+	    fprintf(stderr, "can not stat directory %s: %s\n",
+		    gnutar_directory, strerror(errno));
 	    exit(1);
 	}
 	if (!S_ISDIR(stat_buf.st_mode)) {
@@ -1296,7 +1358,8 @@ amgtar_restore(
 	    exit(1);
 	}
 	if (access(gnutar_directory, W_OK) != 0) {
-	    fprintf(stderr, "Can't write to %s: %s\n", gnutar_directory, strerror(errno));
+	    fprintf(stderr, "Can't write to %s: %s\n",
+		    gnutar_directory, strerror(errno));
 	    exit(1);
 	}
 	g_ptr_array_add(argv_ptr, g_strdup("--directory"));
@@ -1318,7 +1381,8 @@ amgtar_restore(
 	} else {
 	    sdisk = g_strdup_printf("no_dle-%d", (int)getpid());
 	}
-	exclude_filename= g_strjoin(NULL, AMANDA_TMPDIR, "/", "exclude-", sdisk,  NULL);
+	exclude_filename= g_strjoin(NULL, AMANDA_TMPDIR, "/", "exclude-",
+				    sdisk,  NULL);
 	exclude_list = fopen(argument->dle.exclude_list->first->name, "r");
 	if (!exclude_list) {
 	    fprintf(stderr, "Cannot open exclude file '%s': %s\n",
@@ -1400,6 +1464,7 @@ amgtar_restore(
 		char *escaped;
 		line[strlen(line)-1] = '\0'; /* remove '\n' */
 		escaped = escape_tar_glob(line, &in_argv);
+		g_ptr_array_add(include_array, g_strdup(escaped));
 		if (in_argv) {
 		    g_ptr_array_add(argv_include, escaped);
 		} else {
@@ -1411,8 +1476,25 @@ amgtar_restore(
 	    fclose(include_list);
 	}
 
+	if (argument->dle.include_file) {
+	    sle_t *slif;
+
+	    for (slif = argument->dle.include_file->first; slif != NULL; slif = slif->next) {
+		char *escaped = escape_tar_glob(slif->name, &in_argv);
+		g_ptr_array_add(include_array, g_strdup(escaped));
+		if (in_argv) {
+		    g_ptr_array_add(argv_include, escaped);
+		} else {
+		    fprintf(include,"%s\n", escaped);
+		    entry_in_include++;
+		    amfree(escaped);
+		}
+	    }
+	}
+
 	for (j=1; j< argument->argc; j++) {
 	    char *escaped = escape_tar_glob(argument->argv[j], &in_argv);
+	    g_ptr_array_add(include_array, g_strdup(escaped));
 	    if (in_argv) {
 		g_ptr_array_add(argv_include, escaped);
 	    } else {
@@ -1439,6 +1521,86 @@ amgtar_restore(
 	amfree(sdisk);
     }
     g_ptr_array_add(argv_ptr, NULL);
+
+    if (argument->dar) {
+	int dar_fd = argument->state_stream;
+	if (dar_fd == -1) dar_fd = 3;
+	dar_file = fdopen(dar_fd, "w");
+	if (!dar_file) {
+	    int save_errno = errno;
+	    fprintf(stderr, "Can't fdopen the DAR file (fd %d): %s\n",
+		    dar_fd, strerror(save_errno));
+	    g_debug("Can't fdopen the DAR file (fd %d): %s",
+		    dar_fd, strerror(save_errno));
+	   exit(1);
+	}
+	if (argument->recover_dump_state_file) {
+	    char  line[32768];
+	    FILE *recover_state_file = fopen(argument->recover_dump_state_file,
+					     "r");
+	    int   previous_block = -1;
+
+	    while (fgets(line, 32768, recover_state_file) != NULL) {
+		off_t     block_no = g_ascii_strtoll(line, NULL, 0);
+		gboolean  match    = FALSE;
+		char     *filename = strchr(line, ' ');
+		char     *ii;
+		guint     i;
+
+		if (!filename)
+		    continue;
+
+		filename++;
+		if (filename[strlen(filename)-1] == '\n')
+		    filename[strlen(filename)-1] = '\0';
+
+		g_debug("recover_dump_state_file: %lld %s", (long long)block_no, filename);
+		for (i = 0; i < include_array->len; i++) {
+		    size_t strlenii;
+
+		    ii = g_ptr_array_index(include_array, i);
+		    ii++; // remove leading '.'
+		    //g_debug("check %s : %s :", filename, ii);
+		    strlenii = strlen(ii);
+		    if (g_str_equal(filename, ii) == 1 ||
+			(strlenii < strlen(filename) &&
+			 strncmp(filename, ii, strlenii) == 0 &&
+			 filename[strlenii] == '/')) {
+			//g_debug("match %s", ii);
+			match = TRUE;
+			break;
+		    }
+		}
+
+		if (match) {
+		    if (previous_block < 0)
+			previous_block = block_no;
+		} else if (previous_block >= 0) {
+		    g_debug("restore block %lld (%lld) to %lld (%lld)",
+			    (long long)previous_block * 512,
+			    (long long)previous_block,
+			    (long long)block_no * 512 - 1,
+			    (long long)block_no);
+		    fprintf(dar_file, "DAR %lld:%lld\n",
+			    (long long)previous_block * 512,
+			    (long long)block_no * 512- 1);
+		    previous_block = -1;
+		}
+	    }
+	    fclose(recover_state_file);
+	    if (previous_block >= 0) {
+		g_debug("restore block %lld (%lld) to END\n",
+			(long long)previous_block * 512,
+			(long long)previous_block);
+		fprintf(dar_file, "DAR %lld:-1\n",
+			(long long)previous_block * 512);
+	    }
+	} else {
+	    fprintf(dar_file,"DAR 0:-1\n");
+	}
+	fflush(dar_file);
+	fclose(dar_file);
+    }
 
     debug_executing(argv_ptr);
 
@@ -1864,8 +2026,10 @@ GPtrArray *amgtar_build_argv(
     g_ptr_array_add(argv_ptr, g_strdup(gnutar_path));
 
     g_ptr_array_add(argv_ptr, g_strdup("--create"));
-    if (command == CMD_BACKUP && argument->dle.create_index)
+    if (command == CMD_BACKUP && argument->dle.create_index) {
         g_ptr_array_add(argv_ptr, g_strdup("--verbose"));
+        g_ptr_array_add(argv_ptr, g_strdup("--block-number"));
+    }
     g_ptr_array_add(argv_ptr, g_strdup("--file"));
     if (command == CMD_ESTIMATE) {
         g_ptr_array_add(argv_ptr, g_strdup("/dev/null"));

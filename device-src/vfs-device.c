@@ -71,7 +71,7 @@ static Device * vfs_device_factory(char * device_name, char * device_type, char 
 static DeviceStatusFlags vfs_device_read_label(Device * dself);
 static DeviceWriteResult vfs_device_write_block(Device * self, guint size,
 						gpointer data);
-static int vfs_device_read_block(Device * self, gpointer data, int * size_req);
+static int vfs_device_read_block(Device * self, gpointer data, int * size_req, int max_block);
 
 /* Various helper functions. */
 static gboolean vfs_clear_and_prepare_label(Device *dself, char *label,
@@ -998,7 +998,8 @@ static int
 vfs_device_read_block(
     Device   *dself,
     gpointer  data,
-    int      *size_req)
+    int      *size_req,
+    int       max_dump G_GNUC_UNUSED)
 {
     VfsDevice * self;
     int size;

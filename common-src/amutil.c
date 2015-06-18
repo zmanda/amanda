@@ -1836,6 +1836,7 @@ void
 crc32_init(
     crc_t *crc)
 {
+    make_crc_table();
     crc->crc = 0xFFFFFFFF;
     crc->size = 0;
 }

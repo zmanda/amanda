@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 46;
+use Test::More tests => 47;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -77,19 +77,22 @@ Amanda::Debug::disable_die_override();
 	}
     });
     Amanda::MainLoop::run();
+    $xfer = undef;
     pass("A simple transfer runs to completion");
     is($got_msg, "Is this thing on?",
 	"XMSG_INFO from Amanda::Xfer::Dest::Null has correct message");
 }
 
+my $xfer1;
+my $xfer2;
 {
     my $RANDOM_SEED = 0xDEADBEEF;
 
-    my $xfer1 = Amanda::Xfer->new([
+    $xfer1 = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
     ]);
-    my $xfer2 = Amanda::Xfer->new([
+    $xfer2 = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Random->new(1024*1024*3, $RANDOM_SEED),
 	Amanda::Xfer::Filter::Xor->new(0xf0),
 	Amanda::Xfer::Filter::Xor->new(0xf0),
@@ -114,6 +117,8 @@ Amanda::Debug::disable_die_override();
 # let the already-started transfers go out of scope before they 
 # complete, as a memory management test..
 Amanda::MainLoop::run();
+$xfer1 = undef;
+$xfer2 = undef;
 pass("Two simultaneous transfers run to completion");
 
 {
@@ -145,6 +150,7 @@ pass("Two simultaneous transfers run to completion");
     $xfer->start($cb);
 
     Amanda::MainLoop::run();
+    $xfer = undef;
     pass("One 10-element transfer runs to completion");
 }
 
@@ -182,20 +188,74 @@ pass("Two simultaneous transfers run to completion");
     };
 
     $xfer->start($cb);
-
     Amanda::MainLoop::run();
+    $xfer = undef;
 
-    close($wfh);
     close($rfh);
+    close($wfh);
 
     # now verify the file contents are identical
     open($rfh, "<", $read_filename);
     my $src = do { local $/; <$rfh> };
+    close($rfh);
 
     open($rfh, "<", $write_filename);
     my $dest = do { local $/; <$rfh> };
+    close($rfh);
 
-    is($src, $dest, "Source::Fd and Dest::Fd read and write files");
+    is($src,$dest,"read from Source::Fd identical");
+
+    unlink($read_filename);
+    unlink($write_filename);
+}
+
+{
+    my $read_filename = "$Installcheck::TMP/xfer-junk-src.tmp";
+    my $write_filename = "$Installcheck::TMP/xfer-junk-dest.tmp";
+    my ($rfh, $wfh);
+
+    mkdir($Installcheck::TMP) unless (-e $Installcheck::TMP);
+
+    # fill the file with some stuff
+    open($wfh, ">", $read_filename) or die("Could not open '$read_filename' for writing");
+    for my $i (1 .. 100) { print $wfh "line $i\n"; }
+    close($wfh);
+
+    open($wfh, ">", "$write_filename") or die("Could not open '$write_filename' for writing");
+
+    # now run a transfer out of it
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::File->new($read_filename),
+	Amanda::Xfer::Filter::Xor->new(0xde),
+	Amanda::Xfer::Filter::Xor->new(0xde),
+	Amanda::Xfer::Dest::Fd->new(fileno($wfh)),
+    ]);
+
+    my $cb = sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    Amanda::MainLoop::quit();
+	}
+    };
+
+    $xfer->start($cb);
+    Amanda::MainLoop::run();
+    $xfer = undef;
+
+    close($wfh);
+
+    # now verify the file contents are identical
+    open($rfh, "<", $read_filename);
+    my $src = do { local $/; <$rfh> };
+    close($rfh);
+
+    open($rfh, "<", $write_filename);
+    my $dest = do { local $/; <$rfh> };
+    close($rfh);
+
+    is($src,$dest,"read from Source::File identical");
 
     unlink($read_filename);
     unlink($write_filename);
@@ -228,6 +288,7 @@ pass("Two simultaneous transfers run to completion");
 	}
     });
     Amanda::MainLoop::run();
+    $xfer = undef;
     ok($got_timeout, "A neverending transfer finishes after being cancelled");
     # (note that this does not test all of the cancellation possibilities)
 }
@@ -258,6 +319,7 @@ pass("Two simultaneous transfers run to completion");
 	}
     });
     Amanda::MainLoop::run();
+    $xfer = undef;
     ok($got_error, "A transfer with an error cancels itself after sending an error");
 
     unlink($read_filename);
@@ -287,6 +349,7 @@ pass("Two simultaneous transfers run to completion");
     });
     $xfer->start();
     Amanda::MainLoop::run();
+    $xfer = undef;
     pass("compress | uncompress gets back the original stream");
 }
 
@@ -324,6 +387,7 @@ pass("Two simultaneous transfers run to completion");
     });
     $xfer->start();
     Amanda::MainLoop::run();
+    $xfer = undef;
     ok($got_timeout, "Amanda::Xfer::Filter::Process can be cancelled");
     # (note that this does not test all of the cancellation possibilities)
 }
@@ -347,6 +411,7 @@ pass("Two simultaneous transfers run to completion");
     });
     $xfer->start();
     Amanda::MainLoop::run();
+    $xfer = undef;
 
     is($dest->get(), 'ABCDEFGH' x 128,
 	"buffer captures the right bytes");
@@ -372,6 +437,7 @@ pass("Two simultaneous transfers run to completion");
     });
     $xfer->start();
     Amanda::MainLoop::run();
+    $xfer = undef;
 
     ok($got_err, "buffer stops the xfer if it doesn't have space");
 }
@@ -434,6 +500,7 @@ SKIP: {
 	$xfer->start($quit_cb);
 
 	Amanda::MainLoop::run();
+	$xfer = undef;
 	pass("write to a device (completed succesfully; data may not be correct)");
 
 	# finish up the file and device
@@ -452,9 +519,11 @@ SKIP: {
 	$xfer->start($quit_cb);
 
 	Amanda::MainLoop::run();
+	$xfer = undef;
 
 	$res->release(finished_cb => sub { Amanda::MainLoop::quit() });
 	Amanda::MainLoop::run();
+	$xfer = undef;
 	$chg->quit();
 
 	pass("read from a device succeeded, too, and data was correct");
@@ -578,12 +647,16 @@ SKIP: {
 	    }
 	});
 
+	if ($src->isa("Amanda::Xfer::Source::Holding")) {
+            $src->start_recovery();
+	}
 	Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
 	Amanda::MainLoop::run();
 
 	$res->release(finished_cb => sub { Amanda::MainLoop::quit() });
 	Amanda::MainLoop::run();
 	$chg->quit();
+	$xfer = undef;
 
 	is_deeply([@messages],
 	    $expected_messages,
@@ -603,6 +676,7 @@ SKIP: {
 	my $res;
 
 	my $steps = define_steps
+	    finalize => sub { $xfer = undef; },
 	    cb_ref => \$finished_cb;
 
 	step setup => sub {
@@ -984,8 +1058,9 @@ SKIP: {
 
     $holding_file = make_holding_files(3);
 
+    my $xfer_source_holding = Amanda::Xfer::Source::Holding->new($holding_file);
     test_taper_dest(
-	Amanda::Xfer::Source::Holding->new($holding_file),
+	$xfer_source_holding,
 	sub {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
@@ -1028,6 +1103,7 @@ SKIP: {
 	    }
 	});
 	Amanda::MainLoop::run();
+	$xfer = undef;
 	close($fh);
 
 	# create a list of holding chunks, some slab-aligned, some part-aligned,
@@ -1166,6 +1242,7 @@ SKIP: {
 
 	Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
 	Amanda::MainLoop::run();
+	$xfer = undef;
 
 	unlink($cache_file);
 
@@ -1292,6 +1369,7 @@ SKIP: {
 	};
 
 	Amanda::MainLoop::run();
+	$xfer = undef;
 
 	$dev->finish();
 
@@ -1386,6 +1464,9 @@ SKIP: {
     # let the already-started transfers go out of scope before they 
     # complete, as a memory management test..
     Amanda::MainLoop::run();
+    $xferA = undef;
+    $xferB = undef;
+    $xferC = undef;
     pass("Three xfers interlinked via DirectTCP complete successfully");
 }
 
@@ -1413,6 +1494,7 @@ SKIP: {
     $xfer->cancel();
 
     Amanda::MainLoop::run();
+    $xfer = undef;
     pass("A DirectTCP accept operation can be cancelled");
 }
 

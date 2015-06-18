@@ -220,7 +220,7 @@ s3_uri_encode(
 		g_string_append_c(ret, ch);
 	    }
 	} else {
-	    g_string_append_printf(ret, "%02x", ch);
+	    g_string_append_printf(ret, "%%%02X", ch);
 	}
     }
     return g_string_free(ret, FALSE);

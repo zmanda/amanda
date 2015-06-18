@@ -153,7 +153,7 @@ ndmda_data_start_backup (struct ndm_session *sess)
 	ndmp9_error		error = NDMP9_NO_ERR;
 	char			cmd[NDMDA_MAX_CMD];
 
-	strcpy (cmd, "wrap_");
+	strcpy (cmd, "/amanda/h1/linux/libexec/amanda/application/wrap_");
 	strcat (cmd, da->bu_type);
 
 	if (sess->param.log_level > 0) {
@@ -188,7 +188,7 @@ ndmda_data_start_recover (struct ndm_session *sess)
 	ndmp9_error		error = NDMP9_NO_ERR;
 	char			cmd[NDMDA_MAX_CMD];
 
-	strcpy (cmd, "wrap_");
+	strcpy (cmd, "/amanda/h1/linux/libexec/amanda/application/wrap_");
 	strcat (cmd, da->bu_type);
 
 	if (sess->param.log_level > 0) {
@@ -224,7 +224,7 @@ ndmda_data_start_recover_fh (struct ndm_session *sess)
 	ndmp9_error		error = NDMP9_NO_ERR;
 	char			cmd[NDMDA_MAX_CMD];
 
-	strcpy (cmd, "wrap_");
+	strcpy (cmd, "/amanda/h1/linux/libexec/amanda/application/wrap_");
 	strcat (cmd, da->bu_type);
 	ndmda_add_to_cmd (cmd, "-t");
 	ndmda_add_to_cmd (cmd, "-I#3");

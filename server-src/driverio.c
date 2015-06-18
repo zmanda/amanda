@@ -110,6 +110,7 @@ childstr(
 }
 
 
+static int nb_taper = 0;
 int
 startup_dump_tape_process(
     char      *taper_program,
@@ -117,7 +118,6 @@ startup_dump_tape_process(
 {
     identlist_t  il;
     taper_t     *taper;
-    int          nb_taper = 0;
 
     for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
@@ -136,7 +136,6 @@ startup_vault_tape_process(
 {
     identlist_t  il;
     taper_t     *taper;
-    int          nb_taper = 0;
 
     for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next) {
 	taper = start_one_tape_process(taper_program, (char *)il->data, no_taper, nb_taper);
@@ -770,7 +769,11 @@ taper_cmd(
 	amfree(cmdline);
 	return 0;
     }
-    if(cmd == QUIT) aclose(taper->fd);
+    if (cmd == QUIT) {
+	aclose(taper->fd);
+	amfree(taper->name);
+	amfree(taper->storage_name);
+    }
     amfree(cmdline);
     return 1;
 }
@@ -1114,7 +1117,6 @@ void
 free_sched(
     sched_t *sp)
 {
-g_debug("free_sched %p", sp);
     g_free(sp->dumpdate);
     g_free(sp->degr_dumpdate);
     g_free(sp->destname);

@@ -569,9 +569,10 @@ s3_device_seek_block(Device *pself,
                      guint64 block);
 
 static int
-s3_device_read_block(Device * pself,
-                     gpointer data,
-                     int *size_req);
+s3_device_read_block(Device   *pself,
+                     gpointer  data,
+                     int      *size_req,
+                     int       max_block);
 
 static gboolean
 s3_device_recycle_file(Device *pself,
@@ -3201,7 +3202,9 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
 
     self->volume_bytes += header_size;
 
-    if (self->use_s3_multi_part_upload) {
+    if (self->chunked) {
+	self->filename = file_to_multi_part_key(self, pself->file);
+    } else if (self->use_s3_multi_part_upload) {
 	self->filename = file_to_multi_part_key(self, pself->file);
 	self->uploadId = g_strdup(s3_initiate_multi_part_upload(self->s3t[0].s3,
 						self->bucket, self->filename));
@@ -3236,6 +3239,8 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     }
 
     if (self->use_s3_multi_part_upload && self->uploadId) {
+	filename = g_strdup(self->filename);
+    } else if (self->chunked) {
 	filename = g_strdup(self->filename);
     } else {
 	filename = file_and_block_to_key(self, pself->file, pself->block);
@@ -3954,6 +3959,7 @@ s3_device_seek_block(Device *pself, guint64 block) {
 static void
 s3_start_read_ahead(
     Device * pself,
+    int max_block,
     int size_req)
 {
     S3Device * self = S3_DEVICE(pself);
@@ -3972,18 +3978,30 @@ s3_start_read_ahead(
 	S3_by_thread *s3t = &self->s3t[thread];
 	if (s3t->idle) {
 	    if (self->filename) {
+		if (max_block >= 0 &&
+		    self->next_byte_to_read > self->last_byte_read + max_block * size_req)
+		    break;
 		range_min = self->next_byte_to_read;
 		if (range_min >= self->object_size) {
 		    break;
 		}
-		range_max = range_min + size_req - 1;
+		if (self->chunked && max_block > 0) {
+		    range_max = range_min + max_block * size_req - 1;
+		} else if (self->chunked && max_block < 0) {
+		    range_max = self->object_size-1;
+		} else {
+		    range_max = range_min + size_req - 1;
+		}
 		if (range_max >= self->object_size) {
-		    range_max = self->object_size;
+		    range_max = self->object_size-1;
 		}
 		key = g_strdup(self->filename);
 	    } else {
+		if (max_block >= 0 &&
+		    self->next_block_to_read >= (gint64)pself->block + max_block)
+		    break;
 		key = file_and_block_to_key(self, pself->file,
-		self->next_block_to_read);
+					    self->next_block_to_read);
 	    }
 
 	    s3t->filename = key;
@@ -4036,7 +4054,7 @@ s3_start_read_ahead(
 }
 
 static int
-s3_device_read_block (Device * pself, gpointer data, int *size_req) {
+s3_device_read_block (Device * pself, gpointer data, int *size_req, int max_block G_GNUC_UNUSED) {
     S3Device * self = S3_DEVICE(pself);
     char *key;
     int thread;
@@ -4051,7 +4069,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     g_mutex_lock(self->thread_idle_mutex);
 
     /* start a read ahead for each thread */
-    s3_start_read_ahead(pself, *size_req);
+    s3_start_read_ahead(pself, max_block, *size_req);
     if (device_in_error(self)) {
 	g_mutex_unlock(self->thread_idle_mutex);
 	return -1;
@@ -4113,6 +4131,14 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	    return -1;
 	}
 	*size_req = size;
+	pself->block++;
+
+	/* disable read_ahead thread if the complete chunk is read */
+	if (self->chunked && max_block == 1) {
+	    S3_by_thread *s3t = &self->s3t[0];
+	    s3t->idle = TRUE;
+	    s3t->curl_buffer.end_of_buffer = FALSE;
+	}
 	return size;
     }
 
@@ -4189,13 +4215,9 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     }
 
     /* start a read ahead for each thread */
-    s3_start_read_ahead(pself, *size_req);
+    s3_start_read_ahead(pself, max_block-1, *size_req);
 
     g_mutex_unlock(self->thread_idle_mutex);
-
-    if (device_in_error(self)) {
-	return -1;
-    }
 
     return *size_req;
 

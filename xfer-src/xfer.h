@@ -55,7 +55,7 @@ struct XMsg;
  * "Class" declaration
  */
 
-struct Xfer {
+typedef struct Xfer {
     /* The current status of this transfer.  This is read-only, and 
      * must only be accessed from the main thread or with status_mutex
      * held. */
@@ -93,9 +93,7 @@ struct Xfer {
     GMutex *fd_mutex;
 
     int cancelled;
-};
-
-typedef struct Xfer Xfer;
+} Xfer;
 
 /* Note that all functions must be called from the main thread unless
  * otherwise noted */
@@ -165,6 +163,8 @@ char *xfer_repr(Xfer *xfer);
  * @param size: the Xfer object: the number of bytes to transfer.
  */
 void xfer_start(Xfer *xfer, gint64 offset, gint64 size);
+
+void xfer_set_offset_and_size(Xfer *xfer, gint64 offset, gint64 size);
 
 /* Abort a running transfer.  This essentially tells the source to stop
  * producing data and allows the remainder of the transfer to "drain".  Thus

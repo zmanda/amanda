@@ -1011,7 +1011,9 @@ authenticate_request(S3Handle *hdl,
 	    g_free(buf);
 	}
 
-	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	if ((subresource && !g_strstr_len(subresource, -1, "uploadId")) &&
+	    (query && query[0] && !g_strstr_len(query[0], -1, "uploadId")) &&
+	    (query && query[1] && !g_strstr_len(query[1], -1, "uploadId")) &&
 	    is_non_empty_string(hdl->storage_class)) {
 	    g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
 	    g_string_append(auth_string, ":");
@@ -2217,6 +2219,10 @@ perform_request(S3Handle *hdl,
 	    headers = curl_slist_append(headers, header->data);
 	}
 
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 ))) {
+	    goto curl_error;
+
+	}
 	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOSIGNAL, TRUE)))
 	    goto curl_error;
 
@@ -3176,6 +3182,7 @@ s3_part_upload(S3Handle *hdl,
           gpointer progress_data)
 {
     char *subresource = NULL;
+    char **query = NULL;
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0, 0, S3_RESULT_OK },
@@ -3186,17 +3193,30 @@ s3_part_upload(S3Handle *hdl,
     g_assert(hdl != NULL);
 
     if (uploadId) {
-	subresource = g_strdup_printf("partNumber=%d&uploadId=%s",
+	if (hdl->s3_api == S3_API_AWS4) {
+	    query = g_new0(char *, 3);
+	    query[0] = g_strdup_printf("partNumber=%d", partNumber);
+	    query[1] = g_strdup_printf("uploadId=%s", uploadId);
+	    query[2] = NULL;
+	} else {
+	    subresource = g_strdup_printf("partNumber=%d&uploadId=%s",
 				partNumber, uploadId);
+	}
     }
 
-    result = perform_request(hdl, "PUT", bucket, key, subresource, NULL, NULL, NULL,
+    result = perform_request(hdl, "PUT", bucket, key, subresource,
+		 (const char **)query, NULL, NULL,
 		 NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
                  result_handling, FALSE);
 
     g_free(subresource);
+    if (query) {
+	g_free(query[0]);
+	g_free(query[1]);
+	g_free(query);
+    }
     if (etag) {
 	*etag = hdl->etag;
 	hdl->etag = NULL;
@@ -3248,7 +3268,8 @@ s3_complete_multi_part_upload(
     s3_md5_func md5_func,
     gpointer read_data)
 {
-    char *subresource;
+    char *subresource = NULL;
+    char **query = NULL;
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0, 0, S3_RESULT_OK },
@@ -3256,9 +3277,16 @@ s3_complete_multi_part_upload(
         { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
         };
 
-    subresource = g_strdup_printf("uploadId=%s", uploadId);
-    result = perform_request(hdl, "POST", bucket, key, subresource, NULL,
-		 NULL, NULL, NULL,
+    if (hdl->s3_api == S3_API_AWS4) {
+	query = g_new0(char *, 2);
+	query[0] = g_strdup_printf("uploadId=%s", uploadId);
+	query[1] = NULL;
+    } else {
+	subresource = g_strdup_printf("uploadId=%s", uploadId);
+    }
+    result = perform_request(hdl, "POST", bucket, key, subresource,
+		 (const char **)query,
+		 "application/xml", NULL, NULL,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, NULL, NULL,
                  result_handling, FALSE);
@@ -3286,7 +3314,8 @@ s3_abort_multi_part_upload(
     const char *key,
     const char *uploadId)
 {
-    char *subresource;
+    char *subresource = NULL;
+    char **query = NULL;
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0, 0, S3_RESULT_OK },
@@ -3295,13 +3324,27 @@ s3_abort_multi_part_upload(
         { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
         };
 
-    subresource = g_strdup_printf("uploadId=%s", uploadId);
-    result = perform_request(hdl, "DELETE", bucket, key, subresource, NULL, NULL, NULL, NULL,
+    if (hdl->s3_api == S3_API_AWS4) {
+	query = g_new0(char *, 2);
+	query[0] = g_strdup_printf("uploadId=%s", uploadId);
+	query[1] = NULL;
+    } else {
+	subresource = g_strdup_printf("uploadId=%s", uploadId);
+    }
+
+    result = perform_request(hdl, "DELETE", bucket, key, subresource,
+		 (const char **)query,
+		 "application/xml", NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
                  result_handling, FALSE);
 
-    g_free(subresource);
+    if (hdl->s3_api == S3_API_AWS4) {
+	g_free(query[0]);
+	g_free(query);
+    } else {
+	g_free(subresource);
+    }
 
     return (result == S3_RESULT_OK);
 
@@ -3628,8 +3671,8 @@ s3_init_restore(
     data.mutex = NULL;
     data.cond = NULL;
 
-    result = perform_request(hdl, "POST", bucket, key, "restore", NULL, NULL,
-	NULL, NULL,
+    result = perform_request(hdl, "POST", bucket, key, "restore", NULL,
+	"application/xml", NULL, NULL,
 	s3_buffer_read_func, s3_buffer_reset_func,
 	s3_buffer_size_func, s3_buffer_md5_func,
 	&data,
@@ -3789,7 +3832,8 @@ s3_delete(S3Handle *hdl,
 
     g_assert(hdl != NULL);
 
-    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL, NULL, NULL, NULL,
+    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL,
+		 "application/xml", NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                  result_handling, FALSE);
 

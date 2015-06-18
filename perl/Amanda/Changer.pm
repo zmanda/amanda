@@ -1490,6 +1490,7 @@ sub with_locked_state {
 	$dumper->Purity(1);
 	$filelock->write($dumper->Dump);
 	$filelock->unlock();
+	$filelock = undef;
 
 	# call through to the original callback with the original
 	# arguments

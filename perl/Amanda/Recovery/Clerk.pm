@@ -235,7 +235,9 @@ sub get_xfer_src {
 	    unless exists $params{$rq_param};
     }
 
-    confess "Clerk is already busy" if $self->{'xfer_state'};
+    confess "Clerk is already busy" if defined $self->{'xfer_state'} and
+				       !$self->{'xfer_state'}->{'done'};
+    $self->{'xfer_state'} = undef;
 
     # set up a new xfer_state
     my $xfer_state = $self->{'xfer_state'} = {
@@ -252,6 +254,7 @@ sub get_xfer_src {
 	xfer_src_cb => $params{'xfer_src_cb'},
 
 	writing_part => 0,
+	done => 0,
 
 	errors => [],
     };
@@ -259,7 +262,7 @@ sub get_xfer_src {
     $self->_maybe_start_part();
 }
 
-sub start_recovery {
+sub init_recovery {
     my $self = shift;
     my %params = @_;
 
@@ -276,8 +279,35 @@ sub start_recovery {
     my $xfer_state = $self->{'xfer_state'};
     $xfer_state->{'recovery_cb'} = $params{'recovery_cb'};
     $xfer_state->{'xfer'} = $params{'xfer'};
+}
 
+sub do_recovery {
+    my $self = shift;
+    my %params = @_;
+
+    my $xfer_state = $self->{'xfer_state'};
+    if (defined $params{'offset'} and defined $params{'size'} and
+	$xfer_state->{'xfer'} and
+	$xfer_state->{'xfer'}->can('set_offset_and_size')) {
+	$xfer_state->{'xfer'}->set_offset_and_size($params{'offset'},
+						   $params{'size'});
+    }
     $self->_maybe_start_part();
+}
+
+sub stop_recovery {
+    my $self = shift;
+    my %params = @_;
+
+    my $xfer_state = $self->{'xfer_state'};
+    $xfer_state->{'xfer'}->cancel();
+}
+
+sub start_recovery {
+    my $self = shift;
+
+    $self->init_recovery(@_);
+    $self->do_recovery(@_);
 }
 
 sub handle_xmsg {
@@ -287,6 +317,8 @@ sub handle_xmsg {
     if ($msg->{'elt'} == $self->{'xfer_state'}->{'xfer_src'}) {
 	if ($msg->{'type'} == $XMSG_PART_DONE) {
 	    $self->_xmsg_part_done($src, $msg, $xfer);
+	} elsif ($msg->{'type'} == $XMSG_SEGMENT_DONE) {
+	    $self->_xmsg_segment_done($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_ERROR) {
 	    $self->_xmsg_error($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_READY) {
@@ -305,11 +337,13 @@ sub quit {
     my $finished_cb = $params{'finished_cb'};
 
     confess "Cannot quit a Clerk while a transfer is in progress"
-	if $self->{'xfer_state'} and $self->{'xfer_state'}->{'xfer'};
+	if $self->{'xfer_state'} and !$self->{'xfer_state'}->{'done'} and
+	   $self->{'xfer_state'}->{'xfer'};
 
-    my $steps = define_steps 
+    my $steps = define_steps
 	cb_ref => \$finished_cb,
-	finalize => sub { $self->{'scan'}->quit() if defined $self->{'scan'} };
+	finalize => sub { $self->{'scan'}->quit() if defined $self->{'scan'};
+			  $self->{'xfer_state'} = undef; };
 
     step release => sub {
 	# if we have a reservation, we need to release it; otherwise, we can
@@ -342,7 +376,7 @@ sub _xmsg_part_done {
     my $next_label = $xfer_state->{'next_part'}->{'label'};
     my $next_filenum = $xfer_state->{'next_part'}->{'filenum'};
 
-    confess "read incorrect filenum"
+    confess "read incorrect filenum $next_filenum != $msg->{'fileno'}"
 	unless $next_filenum == $msg->{'fileno'};
     $self->dbg("done reading file $next_filenum on '$next_label'");
 
@@ -353,6 +387,17 @@ sub _xmsg_part_done {
     $self->{'on_vol_hdr'} = undef;
 
     $self->_maybe_start_part();
+}
+
+sub _xmsg_segment_done {
+    my $self = shift;
+    my ($src, $msg, $xfer) = @_;
+    my $xfer_state = $self->{'xfer_state'};
+
+    $self->dbg("done reading segment from file");
+
+    # fix up the accounting, and then see if we can do something else
+    shift @{$xfer_state->{'remaining_plan'}};
 }
 
 sub _xmsg_error {
@@ -369,7 +414,7 @@ sub _xmsg_done {
     my $xfer_state = $self->{'xfer_state'};
 
     # eliminate the transfer's state, since it's done
-    $self->{'xfer_state'} = undef;
+    $self->{'xfer_state'}->{'done'} = 1;
 
     # note that this does not release the reservation, in case the next
     # transfer is from the same volume
@@ -413,10 +458,23 @@ sub _maybe_start_part {
 	return $finished_cb->()
 	    if $xfer_state->{'xfer_src'} and not $xfer_state->{'recovery_cb'};
 
-	$steps->{'check_next'}->();
+	return $steps->{'check_next'}->();
     };
 
     step check_next => sub {
+	# if size bytes are already transferred
+	if ($xfer_state->{'xfer_src'} and
+	    $xfer_state->{'xfer_src'}->get_orig_size() != 0 and
+	    $xfer_state->{'xfer_src'}->get_size() == 0) {
+
+	    # tell the source to generate EOF
+	    if (!$xfer_state->{'is_holding'}) {
+		$xfer_state->{'xfer_src'}->start_part(undef);
+	    }
+
+	    return $finished_cb->();
+	}
+
 	# first, see if anything remains to be done
 	if (!exists $xfer_state->{'dump'}{'parts'}[$xfer_state->{'next_part_idx'}]) {
 	    # this should not happen until the xfer is started..
@@ -441,15 +499,38 @@ sub _maybe_start_part {
 	    return $steps->{'holding_recovery'}->();
 	}
 
+	# find the correct part
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
-	# load the next label, if necessary
-	if ($self->{'current_label'} and
-	     $self->{'current_label'} eq $next_label) {
-	    # jump to the seek_file call
-	    return $steps->{'seek_and_check'}->();
+	if (defined $xfer_state->{'xfer_src'}) {
+	    my $offset = $xfer_state->{'xfer_src'}->get_offset();
+	    if ($offset > 0) {
+		my $partnum = 1;
+		my $partsize = $xfer_state->{'dump'}->{'parts'}[$partnum]->{'kb'} * 1024;
+		while ($offset >= $partsize) {
+		    $offset -= $partsize;
+		    $partnum++;
+		    $partsize = $xfer_state->{'dump'}->{'parts'}[$partnum]->{'kb'} * 1024
+		}
+		$next_label = $xfer_state->{'dump'}->{'parts'}[$partnum]->{'label'};
+		$xfer_state->{'next_part'} = $xfer_state->{'dump'}->{'parts'}[$partnum];
+		$xfer_state->{'next_part_idx'} = $partnum;
+		$xfer_state->{'xfer_src'}->set_offset($offset);
+	    }
 	}
 
-	# need to get a new tape
+	# same volume
+	if ($self->{'current_label'} and
+	     $self->{'current_label'} eq $next_label) {
+	    if ($self->{'current_part'} and
+		$self->{'current_part'} eq $xfer_state->{'next_part'}) { # same label, same part
+		return $steps->{'seek_record'}->();
+	    } else { # same label, new part
+		# jump to the seek_file call
+		return $steps->{'seek_and_check'}->();
+	    }
+	}
+
+	# need to get a new volume
 	return $steps->{'release'}->();
     };
 
@@ -459,6 +540,9 @@ sub _maybe_start_part {
 	}
 
 	$self->{'feedback'}->recovery_clerk_notif_close_volume(label => $self->{'current_label'});
+	$self->{'current_dev'}->finish();
+	$self->{'current_dev'}->finish();
+	$self->{'current_dev'}->finish();
 	$self->{'current_dev'}->finish();
 	$self->{'current_res'}->release(
 		finished_cb => $steps->{'released'});
@@ -542,7 +626,7 @@ sub _maybe_start_part {
 	my $next_label = $xfer_state->{'next_part'}->{'label'};
 	my $next_filenum = $xfer_state->{'next_part'}->{'filenum'};
 	my $dev = $self->{'current_dev'};
-	if (!$self->{'on_vol_hdr'}) {
+	if (!$self->{'on_vol_hdr'} || $self->{'previous_filenum'} != $next_filenum) {
 	    $self->{'on_vol_hdr'} = $dev->seek_file($next_filenum);
 
 	    if (!$self->{'on_vol_hdr'}) {
@@ -554,6 +638,7 @@ sub _maybe_start_part {
 		# _header_expected already pushed an error message or two
 		return $steps->{'handle_error'}->();
 	    }
+	    $self->{'previous_filenum'} = $next_filenum;
 	}
 
 	# now, either start the part, or invoke the xfer_src_cb.
@@ -571,15 +656,36 @@ sub _maybe_start_part {
 			    $dev->directtcp_supported());
 
 	} else {
+	    $self->{'current_part'} = $xfer_state->{'next_part'};
 	    # notify caller of the part
 	    $self->{'feedback'}->clerk_notif_part($next_label, $next_filenum, $self->{'on_vol_hdr'});
 
-	    # start the part
-	    $self->dbg("reading file $next_filenum on '$next_label'");
-	    $xfer_state->{'xfer_src'}->start_part($dev);
+	    return $steps->{'seek_record'}->();
 	}
 
 	# inform the caller that we're done
+	$finished_cb->();
+    };
+
+    step seek_record => sub {
+	my $offset = $xfer_state->{'xfer_src'}->get_offset();
+
+	if ($offset > 0) {
+	    my $blocksize = $self->{'current_dev'}->block_size;
+	    my $nb_block = int($offset / $blocksize);
+
+	    $self->{'current_dev'}->seek_block($nb_block);
+	    $offset -= $nb_block * $blocksize;
+
+	    $xfer_state->{'xfer_src'}->set_offset($offset);
+	}
+
+	# start the part
+	my $next_label = $xfer_state->{'next_part'}->{'label'};
+	my $next_filenum = $xfer_state->{'next_part'}->{'filenum'};
+	$self->dbg("reading file $next_filenum on '$next_label'");
+	$xfer_state->{'xfer_src'}->start_part($self->{'current_dev'});
+
 	$finished_cb->();
     };
 
@@ -620,6 +726,7 @@ sub _maybe_start_part {
 	    $self->dbg("successfully located holding file for recovery");
 	    $cb->(undef, $on_disk_hdr, $xfer_state->{'xfer_src'}, 0);
 	}
+	$xfer_state->{'xfer_src'}->start_recovery();
 
 	# (nothing else to do until the xfer is done)
 	$finished_cb->();

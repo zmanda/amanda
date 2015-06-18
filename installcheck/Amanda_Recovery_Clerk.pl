@@ -69,6 +69,7 @@ sub setup_changer {
     my $chg;
     my $label;
     my ($slot, $xfer_info, $partnum);
+    my $xfer;
 
     my $steps = define_steps
 	cb_ref => \$finished_cb,
@@ -148,10 +149,10 @@ sub setup_changer {
 
 	my $xsrc = Amanda::Xfer::Source::Random->new($len, $key);
 	my $xdst = Amanda::Xfer::Dest::Device->new($dev, 0);
-	my $xfer = Amanda::Xfer->new([$xsrc, $xdst]);
+	$xfer = Amanda::Xfer->new([$xsrc, $xdst]);
 
 	$xfer->start(sub {
-	    my ($src, $msg, $xfer) = @_;
+	    my ($src, $msg, $xfer1) = @_;
 
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
@@ -192,6 +193,7 @@ sub setup_changer {
     };
 
     step done_released => sub {
+	$xfer = undef;
 	$finished_cb->();
     };
 }
@@ -331,6 +333,7 @@ sub try_recovery {
     my $clerk = $params{'clerk'};
     my $result;
     my $running_xfers = 0;
+    my $xfer;
 
     my $finished_cb = \&Amanda::MainLoop::quit;
     my $steps = define_steps
@@ -362,7 +365,6 @@ sub try_recovery {
 	die if $params{'expect_directtcp_supported'} and !$dtcp_supp;
 	die if !$params{'expect_directtcp_supported'} and $dtcp_supp;
 
-	my $xfer;
 	my $xfer_dest;
 	if ($params{'directtcp'}) {
 	    $xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();
@@ -440,6 +442,7 @@ sub try_recovery {
     };
 
     Amanda::MainLoop::run();
+    $xfer = undef;
 }
 
 sub quit_clerk {

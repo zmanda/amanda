@@ -488,12 +488,12 @@ main(
     for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	storage_t *storage = lookup_storage((char *)il->data);
 	nb_storage++;
-	sum_taper_parallel_write = storage_get_taper_parallel_write(storage);
+	sum_taper_parallel_write += storage_get_taper_parallel_write(storage);
     }
     for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next) {
 	storage_t *storage = lookup_storage((char *)il->data);
 	nb_storage++;
-	sum_taper_parallel_write = storage_get_taper_parallel_write(storage);
+	sum_taper_parallel_write += storage_get_taper_parallel_write(storage);
     }
     init_driverio(inparallel, nb_storage, sum_taper_parallel_write);
     nb_storage = startup_dump_tape_process(taper_program, no_taper);

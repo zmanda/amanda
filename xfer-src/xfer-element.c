@@ -55,13 +55,46 @@ xfer_element_setup_impl(
 }
 
 static gboolean
-xfer_element_set_size_impl(
-    XferElement *elt G_GNUC_UNUSED,
-    gint64       size G_GNUC_UNUSED)
+xfer_element_set_offset_impl(
+    XferElement *elt,
+    gint64       offset)
 {
+
+    elt->offset = offset;
+
+    return TRUE; /* success */
+}
+
+static gboolean
+xfer_element_set_size_impl(
+    XferElement *elt,
+    gint64       size)
+{
+    elt->orig_size = size;
     elt->size = size;
 
     return TRUE; /* success */
+}
+
+static off_t
+xfer_element_get_offset_impl(
+    XferElement *elt)
+{
+    return elt->offset;
+}
+
+static off_t
+xfer_element_get_orig_size_impl(
+    XferElement *elt)
+{
+    return elt->orig_size;
+}
+
+static off_t
+xfer_element_get_size_impl(
+    XferElement *elt)
+{
+    return elt->size;
 }
 
 static gboolean
@@ -148,7 +181,11 @@ xfer_element_class_init(
 
     klass->repr = xfer_element_repr_impl;
     klass->setup = xfer_element_setup_impl;
+    klass->set_offset = xfer_element_set_offset_impl;
     klass->set_size = xfer_element_set_size_impl;
+    klass->get_offset = xfer_element_get_offset_impl;
+    klass->get_orig_size = xfer_element_get_orig_size_impl;
+    klass->get_size = xfer_element_get_size_impl;
     klass->start = xfer_element_start_impl;
     klass->cancel = xfer_element_cancel_impl;
     klass->pull_buffer = xfer_element_pull_buffer_impl;
@@ -215,11 +252,40 @@ xfer_element_setup(
 }
 
 gboolean
+xfer_element_set_offset(
+    XferElement *elt,
+    gint64       offset)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->set_offset(elt, offset);
+}
+
+gboolean
 xfer_element_set_size(
     XferElement *elt,
     gint64       size)
 {
     return XFER_ELEMENT_GET_CLASS(elt)->set_size(elt, size);
+}
+
+off_t
+xfer_element_get_offset(
+    XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->get_offset(elt);
+}
+
+off_t
+xfer_element_get_orig_size(
+    XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->get_orig_size(elt);
+}
+
+off_t
+xfer_element_get_size(
+    XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->get_size(elt);
 }
 
 gboolean

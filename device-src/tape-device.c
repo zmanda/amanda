@@ -196,7 +196,7 @@ static DeviceStatusFlags tape_device_read_label(Device * self);
 static DeviceWriteResult tape_device_write_block(Device * self, guint size,
 						 gpointer data);
 static int tape_device_read_block(Device * self,  gpointer buf,
-                                       int * size_req);
+                                       int * size_req, int max_block);
 static gboolean tape_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean tape_device_start_file (Device * self, dumpfile_t * ji);
@@ -1071,7 +1071,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 }
 
 static int tape_device_read_block (Device * pself, gpointer buf,
-                                   int * size_req) {
+                                   int * size_req, int max_dump G_GNUC_UNUSED) {
     TapeDevice * self;
     int size;
     IoResult result;

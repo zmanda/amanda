@@ -83,6 +83,7 @@ typedef struct ctl_data_s {
   int                      child_out[2];
   int                      child_err[2];
   int                      crc_pipe[2];
+  int                      dar_pipe[2];
   int                      pid;
   EXTRACT_LIST            *elist;
   dumpfile_t               file;
@@ -94,6 +95,7 @@ typedef struct ctl_data_s {
   cdata_t		   decompress_cdata;
   cdata_t		   child_out_cdata;
   cdata_t		   child_err_cdata;
+  cdata_t		   dar_cdata;
 } ctl_data_t;
 
 #define SKIP_TAPE 2
@@ -107,6 +109,8 @@ static struct {
     { "CTL", NULL },
 #define DATAFD  1
     { "DATA", NULL },
+#define STATEFD  2
+    { "STATE", NULL },
 };
 
 typedef struct send_crc_s {
@@ -132,6 +136,7 @@ static gboolean  last_is_size;
 static crc_t crc_in;
 static send_crc_t native_crc;
 static crc_t network_crc;
+static char *state_filename = NULL;
 
 
 /* global pid storage for interrupt handler */
@@ -182,6 +187,7 @@ static void send_to_tape_server(security_stream_t *stream, char *cmd);
 int writer_intermediary(EXTRACT_LIST *elist);
 int get_amidxtaped_line(void);
 static void handle_child_out(void *);
+static void handle_dar_command(void *);
 static void read_amidxtaped_data(void *, void *, ssize_t);
 static char *merge_path(char *path1, char *path2);
 static gboolean ask_file_overwrite(ctl_data_t *ctl_data);
@@ -2045,6 +2051,17 @@ extract_files_child(
 	    g_ptr_array_add(argv_ptr, g_strdup("--recover-mode"));
 	    g_ptr_array_add(argv_ptr, g_strdup("smb"));
 	}
+	if (ctl_data->bsu && ctl_data->bsu->recover_dump_state_file &&
+	    state_filename) {
+	    if (ctl_data->bsu->dar) {
+		g_ptr_array_add(argv_ptr, g_strdup("--dar"));
+		g_ptr_array_add(argv_ptr, g_strdup("YES"));
+		g_ptr_array_add(argv_ptr, g_strdup("--state-stream"));
+		g_ptr_array_add(argv_ptr, g_strdup_printf("%d", ctl_data->dar_pipe[1]));
+	    }
+	    g_ptr_array_add(argv_ptr, g_strdup("--recover-dump-state-file"));
+	    g_ptr_array_add(argv_ptr, g_strdup(state_filename));
+	}
 	g_ptr_array_add(argv_ptr, g_strdup("--level"));
 	g_ptr_array_add(argv_ptr, g_strdup_printf("%d", ctl_data->elist->level));
 	if (dump_dle) {
@@ -2170,7 +2187,11 @@ extract_files_child(
 	    else
 		dbprintf(_("\t%s\n"), (char *)g_ptr_array_index(argv_ptr, j));
 	}
-	safe_fd(-1, 0);
+	if (ctl_data->dar_pipe[1] >= 0) {
+	    safe_fd2(-1, 3, ctl_data->dar_pipe[1]);
+	} else {
+	    safe_fd(-1, 3);
+	}
         (void)execv(cmd, (char **)argv_ptr->pdata);
 	/* only get here if exec failed */
 	save_errno = errno;
@@ -2282,7 +2303,8 @@ writer_intermediary(
     g_debug("crc_in    : %08x:%lld", crc32_finish(&crc_in), (long long)crc_in.size);
     g_debug("crc_native: %08x:%lld", crc32_finish(&native_crc.crc), (long long)native_crc.crc.size);
 
-    if (network_crc.crc > 0 && network_crc.crc != crc32_finish(&crc_in)) {
+    if (network_crc.crc > 0 && network_crc.crc != crc32_finish(&crc_in) &&
+	network_crc.size == crc_in.size) {
 	g_fprintf(stderr,
 		"Network-crc (%08x:%lld) and data-in-crc (%08x:%lld) differ\n",
 		network_crc.crc, (long long)network_crc.size,
@@ -2290,7 +2312,8 @@ writer_intermediary(
     }
 
     if (ctl_data.file.native_crc.crc > 0 &&
-	ctl_data.file.native_crc.crc != crc32_finish(&native_crc.crc)) {
+	ctl_data.file.native_crc.crc != crc32_finish(&native_crc.crc) &&
+	ctl_data.file.native_crc.size == native_crc.crc.size) {
 	g_fprintf(stderr,
 		"dump-native-crc (%08x:%lld) and native-crc (%08x:%lld) differ\n",
 		ctl_data.file.native_crc.crc,
@@ -2529,6 +2552,56 @@ extract_files(void)
 	    return;
 	}
 	g_free(etapelist);
+
+	g_free(state_filename);
+	state_filename = NULL;
+	/* download the recover-state-file */
+	if (amidxtaped_streams[STATEFD].fd != NULL) {
+	    ssize_t size;
+	    void *buf;
+	    char *host = sanitise_filename(dump_hostname);
+	    char *disk = sanitise_filename(disk_name);
+	    int fd_state;
+	    struct passwd *pwd;
+	    state_filename = g_strdup_printf("%s/%s.%s.%s.state",
+					     AMANDA_TMPDIR,
+					     host, disk, dump_datestamp);
+	    if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
+		g_debug("Failed to getpwnam(%s): %s", CLIENT_LOGIN,
+			strerror(errno));
+	    }
+	    g_debug("state_filename: %s", state_filename);
+	    g_free(host);
+	    g_free(disk);
+	    unlink(state_filename);
+	    if ((fd_state = open(state_filename, O_WRONLY | O_CREAT | O_EXCL, 0600)) == -1) {
+		g_debug("Failed to open the state file '%s': %s", state_filename, strerror(errno));
+		g_free(state_filename);
+		state_filename = NULL;
+	    } else {
+		fchown(fd_state, pwd->pw_uid, pwd->pw_gid);
+		if (fd_state < 0) {
+		    g_debug("Failed to open '%s': %s", state_filename,
+			    strerror(errno));
+		}
+		while (1) {
+		    buf = NULL;
+		    size = security_stream_read_sync(
+				amidxtaped_streams[STATEFD].fd,
+				&buf);
+		    if (size < 0) {
+			break;
+		    } else if (size == 0) {
+			break;
+		    } else {
+			full_write(fd_state, buf, size);
+			g_free(buf);
+		    }
+		}
+		aclose(fd_state);
+	    }
+	}
+
 	if (dump_dle) {
 	    am_level_t *level;
 
@@ -2653,15 +2726,15 @@ bad_nak:
 
 
         /*
-         * Regular packets have CONNECT followed by three streams
+         * Regular packets have CONNECT followed by 2 or 3 streams
          */
         if (g_str_equal(tok, "CONNECT")) {
-
 	    /*
-	     * Parse the three stream specifiers out of the packet.
+	     * Parse the 2 or 3 stream specifiers out of the packet.
 	     */
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
+		if (tok != NULL && strcmp(tok, "\n") == 0) break;
 		if (tok == NULL || !g_str_equal(tok,
                                                 amidxtaped_streams[i].name)) {
 		    extra = g_strdup_printf(_("CONNECT token is \"%s\": expected \"%s\""),
@@ -2913,9 +2986,71 @@ handle_child_out(
         g_free(cdata->name);
         g_free(cdata->buffer);
     }
-
-
 }
+
+static void
+handle_dar_command(
+    void *cookie)
+{
+    cdata_t  *cdata = cookie;
+    ssize_t   nread;
+    char     *b, *p;
+    gint64    len;
+
+    if (cdata->buffer == NULL) {
+	/* allocate initial buffer */
+	cdata->buffer = g_malloc(2048);
+	cdata->first = 0;
+	cdata->size = 0;
+	cdata->allocated_size = 2048;
+    } else if (cdata->first > 0) {
+	if (cdata->allocated_size - cdata->size - cdata->first < 1024) {
+	    memmove(cdata->buffer, cdata->buffer + cdata->first,
+	                            cdata->size);
+	    cdata->first = 0;
+	}
+    } else if (cdata->allocated_size - cdata->size < 1024) {
+	/* double the size of the buffer */
+	cdata->allocated_size *= 2;
+	cdata->buffer = g_realloc(cdata->buffer, cdata->allocated_size);
+    }
+
+    nread = read(cdata->fd, cdata->buffer + cdata->first + cdata->size,
+		 cdata->allocated_size - cdata->first - cdata->size - 2);
+
+    if (nread <= 0) {
+	event_release(cdata->event);
+	aclose(cdata->fd);
+	if (cdata->size > 0 && cdata->buffer[cdata->first + cdata->size - 1] != '\n') {
+	    /* Add a '\n' at end of buffer */
+	    cdata->buffer[cdata->first + cdata->size] = '\n';
+	    cdata->size++;
+	}
+    } else {
+	cdata->size += nread;
+    }
+
+    /* process all complete lines */
+    b = cdata->buffer + cdata->first;
+    b[cdata->size] = '\0';
+    while (b < cdata->buffer + cdata->first + cdata->size &&
+           (p = strchr(b, '\n')) != NULL) {
+        *p = '\0';
+	g_debug("dar: %s", b);
+	send_to_tape_server(amidxtaped_streams[CTLFD].fd, b);
+        len = p - b + 1;
+        cdata->first += len;
+        cdata->size -= len;
+        b = p + 1;
+    }
+
+    if (nread <= 0) {
+        g_free(cdata->name);
+        g_free(cdata->buffer);
+	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DAR-DONE");
+    }
+}
+
 
 static void
 read_amidxtaped_data(
@@ -2998,6 +3133,14 @@ read_amidxtaped_data(
 	    }
 	    stop_amidxtaped();
 	    return;
+	}
+
+	if (am_has_feature(tapesrv_features, fe_amidxtaped_dar)) {
+	    /* send USE-DAR request */
+            char *msg = g_strdup_printf("USE-DAR %s",
+                (state_filename && ctl_data->bsu->dar) ? "YES" : "NO");
+	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
+	    g_free(msg);
 	}
 
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
@@ -3210,6 +3353,16 @@ start_processing_data(
 	native_crc.thread = NULL;
     }
 
+    ctl_data->dar_pipe[0] = -1;
+    ctl_data->dar_pipe[1] = -1;
+    if (state_filename) {
+	if (pipe(ctl_data->dar_pipe) == -1) {
+	    error(_("extract_list - error setting up dar pipe: %s\n"),
+		  strerror(errno));
+	    /*NOTREACHED*/
+	}
+    }
+
     /* okay, ready to extract. fork a child to do the actual work */
     if ((ctl_data->pid = fork()) == 0) {
 	/* this is the child process */
@@ -3217,6 +3370,7 @@ start_processing_data(
 	aclose(ctl_data->child_in[1]);
 	aclose(ctl_data->child_out[0]);
 	aclose(ctl_data->child_err[0]);
+	aclose(ctl_data->dar_pipe[0]);
 	extract_files_child(ctl_data);
 	/*NOTREACHED*/
     }
@@ -3233,6 +3387,7 @@ start_processing_data(
     aclose(ctl_data->child_in[0]);
     aclose(ctl_data->child_out[1]);
     aclose(ctl_data->child_err[1]);
+    aclose(ctl_data->dar_pipe[1]);
     security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data,
 			 ctl_data);
 
@@ -3270,6 +3425,16 @@ start_processing_data(
 
     if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATAPATH-OK");
+    }
+
+    if (state_filename && ctl_data->bsu->dar) {
+	ctl_data->dar_cdata.fd = ctl_data->dar_pipe[0];
+	ctl_data->dar_cdata.name = g_strdup("DAR");
+	ctl_data->dar_cdata.buffer = NULL;
+	ctl_data->dar_cdata.event = event_register(
+				(event_id_t)ctl_data->dar_pipe[0],
+				EV_READFD, handle_dar_command,
+				&ctl_data->dar_cdata);
     }
 }
 

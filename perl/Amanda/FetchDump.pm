@@ -262,6 +262,53 @@ sub new {
 }
 
 
+sub start_reading
+{
+    my $self = shift;
+    my $fd   = shift;
+    my $cb   = shift;
+    my $text = shift;
+
+    $fd.="";
+    $fd = int($fd);
+    my $src = Amanda::MainLoop::fd_source($fd,
+				  $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $buffer = "";
+    $self->{'all_filter'}->{$src} = 1;
+    $src->set_callback( sub {
+	my $b;
+	my $n_read = POSIX::read($fd, $b, 1);
+	if (!defined $n_read) {
+	    return;
+	} elsif ($n_read == 0) {
+	    delete $self->{'all_filter'}->{$src};
+	    $src->remove();
+	    POSIX::close($fd);
+	    if (!%{$self->{'all_filter'}} and $self->{'recovery_done'}) {
+		$cb->();
+	    }
+	} else {
+	    $buffer .= $b;
+	    if ($b eq "\n") {
+		my $line = $buffer;
+		chomp $line;
+		if (length($line) > 1) {
+#		    if (!$app_success || $app_error) {
+			$self->user_message(
+			    Amanda::FetchDump::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 3300018,
+				severity	=> $Amanda::Message::ERROR,
+				line		=> $line));
+#		    }
+		}
+		$buffer = "";
+	    }
+	}
+    });
+}
+
 sub user_message {
     my $self = shift;
     my $msg = shift;
@@ -543,12 +590,11 @@ sub restore {
     my $current_dump;
     my $plan;
     my @xfer_errs;
-    my %all_filter;
-    my $recovery_done;
     my %recovery_params;
     my $timer;
     my $is_tty;
     my $last_is_size;
+    my $directtcp = 0;
     my @directtcp_command;
     my @init_needed_labels;
     my $init_label;
@@ -574,6 +620,11 @@ sub restore {
     my $app_error;
     my $check_crc;
     my $tl;
+    my $offset;
+    my $size;
+    my $xfer;
+    my $use_dar = $params{'use_dar'} || 0;
+    my $xfer_waiting_dar;
 
     my $steps = define_steps
 	cb_ref => \$params{'finished_cb'},
@@ -786,7 +837,8 @@ sub restore {
 	    return $steps->{'finished'}->();
 	}
 
-	$recovery_done = 0;
+	$self->{'recovery_done'} = 0;
+	$use_dar = 0;
 	%recovery_params = ();
 	$app_success = 0;
 	$app_error = 0;
@@ -855,6 +907,9 @@ sub restore {
             }
 	}
 
+	if ($self->{'feedback'}->can('send_state_file')) {
+	    $self->{'feedback'}->send_state_file($hdr);
+	}
 	# and set up the destination..
 	my $dest_fh;
 	my @filters;
@@ -872,7 +927,6 @@ sub restore {
             $hdr->{'server_crc'} =~ /^00000000:/) {
             $hdr->{'server_crc'} = $current_dump->{'server_crc'};
 	}
-
 	if (!$params{'extract'} and !$params{'pipe-fd'}) {
 	    my $filename = sprintf("%s.%s.%s.%d",
 		    $hdr->{'name'},
@@ -919,6 +973,14 @@ sub restore {
 			    Amanda::Disklist::clean_dle_str_for_client($hdr->{'dle_str'},
 				Amanda::Feature::am_features($params{'their_features'}));
 		    }
+		    if (!$params{'their_features'}->has($Amanda::Feature::fe_amrecover_origsize_in_header)) {
+			$hdr->{'orig_size'} = 0;
+		    }
+		    if (!$params{'their_features'}->has($Amanda::Feature::fe_amrecover_crc_in_header)) {
+			$hdr->{'native_crc'} = undef;
+			$hdr->{'client_crc'} = undef;
+			$hdr->{'server_crc'} = undef;
+		    }
 		}
 		#syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
 		Amanda::Util::full_write($hdr_fh, $hdr->to_string(32768, 32768), 32768);
@@ -951,8 +1013,20 @@ sub restore {
 		syswrite $hdr_fh, $hdr->to_string(32768, 32768), 32768;
 		#Amanda::Util::full_write($hdr_fh, $hdr->to_string(32768, 32768), 32768);
 		close($hdr_fh);
-	    } else {
 	    }
+	}
+
+	if ($params{'feedback'}->can("expect_dar")) {
+	    $use_dar = $params{'feedback'}->expect_dar();
+	    $self->{'ignore_dar'} =  $use_dar &&
+				    ($hdr->{'compressed'} ||
+				     $hdr->{'encrypted'});
+	}
+
+	$self->{'feedback'}->{'xfer_src_supports_directtcp'} = $directtcp_supported;
+	if ($params{'feedback'}->can("expect_datapath")) {
+	    $params{'feedback'}->expect_datapath();
+	    $params{'data-path'} = $params{'feedback'}->{'datapath'};
 	}
 
 	if (defined $params{'data-path'} and $params{'data-path'} eq 'directtcp' and !$directtcp_supported) {
@@ -965,6 +1039,7 @@ sub restore {
 	}
 
 	$directtcp_supported = 0 if defined $params{'data-path'} and $params{'data-path'} eq 'amanda';
+	$self->{'feedback'}->{'xfer_src_supports_directtcp'} = $directtcp_supported;
 
 	if ($params{'extract'}) {
 	    my $program = uc(basename($hdr->{program}));
@@ -1042,6 +1117,12 @@ sub restore {
 		push @argv, "--device", $dle->{'diskdevice'} if defined ($dle->{'diskdevice'});
 		push @argv, "--level", $hdr->{'dumplevel'};
 		push @argv, "--directory", $params{'directory'};
+		$use_dar = ($bsu->{'dar'} and
+			    !$hdr->{'compressed'} and
+			    !$hdr->{'encrypted'});
+		if ($use_dar) {
+		    push @argv, "--dar", "YES";
+		}
 
 		if ($bsu->{'recover-dump-state-file'}) {
 		    my $host = sanitise_filename("".$hdr->{'name'});
@@ -1102,6 +1183,8 @@ sub restore {
 		    }
 		}
 	    }
+
+	    $directtcp = $directtcp_supported;
 	    if ($directtcp_supported) {
 		$xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();
 		@directtcp_command = @argv;
@@ -1109,10 +1192,10 @@ sub restore {
 		# set up the extraction command as a filter element, since
 		# we need its stderr.
 		debug("Running: ". join(' ',@argv));
-		$xfer_app = Amanda::Xfer::Filter::Process->new(\@argv, 0, 0, 1, 1);
+		$xfer_dest = Amanda::Xfer::Dest::Application->new(\@argv, 0, 0, 0, 1);
 
 		$dest_fh = \*STDOUT;
-		$xfer_dest = Amanda::Xfer::Dest::Buffer->new(1048576);
+		#$xfer_dest = Amanda::Xfer::Dest::Buffer->new(1048576);
 	    }
 	} elsif ($params{'pipe-fd'}) {
 	    $params{'feedback'}->{'xfer_src_supports_directtcp'} = $directtcp_supported;
@@ -1266,45 +1349,24 @@ sub restore {
 	foreach my $filter (@filters) {
 	    next if !$filter->can('get_stderr_fd');
 	    my $fd = $filter->get_stderr_fd();
-	    $fd.="";
-	    $fd = int($fd);
-	    my $src = Amanda::MainLoop::fd_source($fd,
-						 $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-	    my $buffer = "";
-	    $all_filter{$src} = 1;
-	    $src->set_callback( sub {
-		my $b;
-		my $n_read = POSIX::read($fd, $b, 1);
-		if (!defined $n_read) {
-		    return;
-		} elsif ($n_read == 0) {
-		    delete $all_filter{$src};
-		    $src->remove();
-		    POSIX::close($fd);
-		    if (!%all_filter and $recovery_done) {
-			$steps->{'filter_done'}->();
-		    }
-		} else {
-		    $buffer .= $b;
-		    if ($b eq "\n") {
-			my $line = $buffer;
-			chomp $line;
-			if (length($line) > 1) {
-			    if (!$app_success || $app_error) {
-				$self->user_message(
-				    Amanda::FetchDump::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code            => 3300018,
-					severity	=> $Amanda::Message::ERROR,
-					line		=> $line));
-			    }
-			    debug("filter stderr: $line");
-			}
-			$buffer = "";
-		    }
-		}
-	    });
+	    $self->start_reading($fd, $steps->{'filter_done'}, 'filter stderr');
+	}
+
+	# start reading application stdout, stderr and dar
+	if ($xfer_dest->can('get_stdout_fd')) {
+	    my $fd = $xfer_dest->get_stdout_fd();
+	    $self->start_reading($fd, $steps->{'filter_done'}, 'application stdout');
+	}
+	if ($xfer_dest->can('get_stderr_fd')) {
+	    my $fd = $xfer_dest->get_stderr_fd();
+	    $self->start_reading($fd, $steps->{'filter_done'}, 'application stderr');
+	}
+
+	if ($use_dar) {
+	    $self->{'feedback'}->start_read_dar($xfer_dest, $steps->{'dar_data'}, $steps->{'filter_done'}, 'application dar');
+	    $xfer_waiting_dar = 1;
+	} else {
+	    push @{$current_dump->{'range'}}, "0:-1";
 	}
 
 	my $xfer;
@@ -1314,18 +1376,62 @@ sub restore {
 	    $xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dest ]);
 	}
 	$self->{'xfer_dest'} = $xfer_dest;
-	$xfer->start($steps->{'handle_xmsg'}, 0, $current_dump->{'bytes'});
-	if ($directtcp_supported and $params{'feedback'}->can('send_directtcp_datapath')) {
+	$xfer->start($steps->{'handle_xmsg'}, 0, 0);
+	# JLM to verify
+	if ($params{'feedback'}->can('send_directtcp_datapath')) {
 	    my $err = $params{'feedback'}->send_directtcp_datapath();
 	    return $steps->{'failure'}->($err) if $err;
 	}
-	$clerk->start_recovery(
+	$clerk->init_recovery(
+		xfer => $xfer,
+		recovery_cb => $steps->{'recovery_cb'});
+
+		$steps->{'xfer_range'}->();
+	if ($self->{'feedback'}->can('start_msg')) {
+	    $self->{'feedback'}->start_msg($steps->{'dar_data'});
+	}
+    };
+
+    step dar_data => sub {
+	my $line = shift;
+
+	# check EOF
+	if (!defined $line) {
+	    return;
+	}
+	my ($DAR, $range) = split ' ', $line;
+	my ($offset, $size) = split ':', $range;
+	push @{$current_dump->{'range'}}, "$offset:$size";
+	$steps->{'xfer_range'}->() if $xfer_waiting_dar;
+    };
+
+    step xfer_range => sub {
+	#return if !$xfer_waiting_dar;
+	my $range = shift @{$current_dump->{'range'}};
+	if (defined $range) {
+	    ($offset, my $range1) = split ':', $range;
+	    if ($offset == -1) {
+		$xfer_src->cancel(0);
+		return;
+	    }
+	    $size = -1;
+	    $size = $range1 - $offset + 1 if $range1 >= 0;;
+	} elsif ($use_dar) {
+	    $xfer_waiting_dar = 1;
+	    return;
+	} else {
+	    $offset = 0;
+	    $size = $current_dump->{'bytes'};
+	    $size = -1 if $size == 0;
+	}
+	$xfer_waiting_dar = 0;
+
+	$clerk->do_recovery(
 	    xfer => $xfer,
-	    recovery_cb => $steps->{'recovery_cb'});
-	if ($directtcp_supported and $params{'feedback'}->can('send_directtcp_datapath')) {
-	    #my $err = $params{'feedback'}->send_directtcp_datapath();
-	    #failure($err) if $err;
-	} elsif ($params{'extract'} and $directtcp_supported) {
+	    offset => $offset,
+	    size   => $size);
+
+	if ($directtcp) {
 	    my $addr = $xfer_dest->get_addrs();
 	    push @directtcp_command, "--data-path", "DIRECTTCP";
 	    push @directtcp_command, "--direct-tcp", "$addr->[0]->[0]:$addr->[0]->[1]";
@@ -1353,35 +1459,26 @@ sub restore {
 		    return;
 		}
 		chomp $line;
-		$self->user_message(
-		    Amanda::FetchDump::Message->new(
-				source_filename => __FILE__,
-				source_line     => __LINE__,
-				code            => 3300019,
-				severity	=> $Amanda::Message::INFO,
-				line		=> $line));
+		debug("amndmp stdout: $line");
+		print "$line\n";
 	    });
+
 	    $amndmp_stderr_src->set_callback( sub {
 		my $line = <$err>;
 		if (!defined $line) {
-                    $file_to_close--;
-                    $amndmp_stderr_src->remove();
-                    if ($file_to_close == 0) {
+		    $file_to_close--;
+		    $amndmp_stderr_src->remove();
+		    if ($file_to_close == 0) {
 			#abort the xfer
 			$xfer->cancel() if $xfer->get_status != $XFER_DONE;
-                    }
-                    return;
+		    }
+		    return;
 		}
 		chomp $line;
-		$self->user_message(
-		    Amanda::FetchDump::Message->new(
-				source_filename => __FILE__,
-				source_line     => __LINE__,
-				code            => 3300020,
-				severity	=> $Amanda::Message::ERROR,
-				line		=> $line));
+		debug("amndmp stderr: $line");
+		print STDERR "$line\n";
+		$last_is_size = 0;
 	    });
-	} elsif ($directtcp_supported) {
 	}
     };
 
@@ -1428,14 +1525,24 @@ sub restore {
 		push @xfer_errs, $msg->{'message'};
 		$check_crc = 0;
 	    }
+
+	    if ($msg->{'elt'} == $xfer_src) {
+		if ($msg->{'type'} == $XMSG_SEGMENT_DONE) {
+		    $xfer_waiting_dar = 1;
+		    $steps->{'xfer_range'}->();
+		}
+	    }
 	}
     };
 
     step recovery_cb => sub {
 	%recovery_params = @_;
-	$recovery_done = 1;
+	$self->{'recovery_done'} = 1;
 
-	$steps->{'filter_done'}->() if !%all_filter;
+	if (!defined $self->{'all_filter'} or
+	    !%{$self->{'all_filter'}}) {
+	    $steps->{'filter_done'}->();
+	}
     };
 
     step filter_done => sub {

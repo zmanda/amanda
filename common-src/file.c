@@ -240,6 +240,62 @@ safe_fd(
     int		fd_start,
     int		fd_count)
 {
+    safe_fd3(fd_start, fd_count, 0, 0);
+}
+
+/*
+ *=====================================================================
+ * Close all file descriptors except stdin, stdout and stderr.  Make
+ * sure they are open.
+ *
+ * void safe_fd2 (fd_start, fd_count, fd1)
+ *
+ * entry:	fd_start - start of fd-s to leave alone (or -1)
+ *		fd_count - count of fd-s to leave alone
+ *		fd1      - do not close
+ * exit:	none
+ *
+ * On exit, all three standard file descriptors will be open and pointing
+ * someplace (either what we were handed or /dev/null) and all other
+ * file descriptors (up to FD_SETSIZE) will be closed.
+ *=====================================================================
+ */
+
+void
+safe_fd2(
+    int		fd_start,
+    int		fd_count,
+    int		fd1)
+{
+    safe_fd3(fd_start, fd_count, fd1, 0);
+}
+
+/*
+ *=====================================================================
+ * Close all file descriptors except stdin, stdout and stderr.  Make
+ * sure they are open.
+ *
+ * void safe_fd3 (fd_start, fd_count, fd1, fd2)
+ *
+ * entry:	fd_start - start of fd-s to leave alone (or -1)
+ *		fd_count - count of fd-s to leave alone
+ *		fd1      - do not close
+ *		fd2      - do not close
+ * exit:	none
+ *
+ * On exit, all three standard file descriptors will be open and pointing
+ * someplace (either what we were handed or /dev/null) and all other
+ * file descriptors (up to FD_SETSIZE) will be closed.
+ *=====================================================================
+ */
+
+void
+safe_fd3(
+    int		fd_start,
+    int		fd_count,
+    int		fd1,
+    int		fd2)
+{
     int			fd;
 
     for(fd = 0; fd < (int)FD_SETSIZE; fd++) {
@@ -267,7 +323,9 @@ safe_fd(
 	     * descriptor, which in turn might be used as an index into
 	     * an array (e.g. an fd_set).
 	     */
-	    if (fd < fd_start || fd >= fd_start + fd_count) {
+	    if ((fd < fd_start || fd >= fd_start + fd_count) &&
+		(fd != fd1) &&
+		(fd != fd2)) {
 		close(fd);
 	    }
 	}

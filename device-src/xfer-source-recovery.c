@@ -86,7 +86,7 @@ typedef struct XferSourceRecovery {
     /* timer for the duration; NULL while paused or cancelled */
     GTimer *part_timer;
 
-    gint64   size;
+    gboolean done;
 
     GCond *abort_cond; /* condition to trigger to abort ndmp command */
 } XferSourceRecovery;
@@ -382,7 +382,64 @@ pull_buffer_impl(
     XMsg *msg;
 
     g_assert(elt->output_mech == XFER_MECH_PULL_BUFFER);
+
     g_mutex_lock(self->start_part_mutex);
+
+    if (elt->size == 0) {
+	if (elt->offset == 0 && elt->orig_size == 0) {
+	    self->paused = TRUE;
+	} else {
+	    DBG(2, "xfer-source-recovery sending XMSG_CRC message");
+	    DBG(2, "xfer-source-recovery CRC: %08x     size %lld",
+		crc32_finish(&elt->crc), (long long)elt->crc.size);
+	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+	    msg->crc = crc32_finish(&elt->crc);
+	    msg->size = elt->crc.size;
+	    xfer_queue_message(elt->xfer, msg);
+
+	    /* the device has signalled EOF (really end-of-part), so clean up instance
+	     * variables and report the EOP to the caller in the form of an xmsg */
+	    DBG(2, "pull_buffer hit EOF; sending XMSG_SEGMENT_DONE");
+	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_SEGMENT_DONE, 0);
+	    msg->size = self->part_size;
+	    if (self->part_timer) {
+		msg->duration = g_timer_elapsed(self->part_timer, NULL);
+		g_timer_destroy(self->part_timer);
+		self->part_timer = NULL;
+	    }
+	    msg->partnum = 0;
+	    msg->fileno = self->device->file;
+	    msg->successful = TRUE;
+	    msg->eof = FALSE;
+
+	    self->paused = TRUE;
+	    device_clear_bytes_read(self->device);
+	    self->bytes_read += self->part_size;
+	    self->part_size = 0;
+	    self->block_size = 0;
+
+	    /* don't queue the XMSG_PART_DONE until we've adjusted all of our
+	     * instance variables appropriately */
+	    xfer_queue_message(elt->xfer, msg);
+
+	    if (self->device->is_eof) {
+		DBG(2, "pull_buffer hit EOF; sending XMSG_PART_DONE");
+		msg = xmsg_new(XFER_ELEMENT(self), XMSG_PART_DONE, 0);
+		msg->size = self->part_size;
+		if (self->part_timer) {
+		    msg->duration = g_timer_elapsed(self->part_timer, NULL);
+		    g_timer_destroy(self->part_timer);
+		    self->part_timer = NULL;
+		}
+		msg->partnum = 0;
+		msg->fileno = self->device->file;
+		msg->successful = TRUE;
+		msg->eof = FALSE;
+
+		xfer_queue_message(elt->xfer, msg);
+	    }
+	}
+    }
 
     while (1) {
 	/* make sure we have a device */
@@ -390,41 +447,72 @@ pull_buffer_impl(
 	    g_cond_wait(self->start_part_cond, self->start_part_mutex);
 
 	/* indicate EOF on an cancel or when there are no more parts */
-	if (elt->cancelled || !self->device) {
+	if (elt->cancelled) {
             goto error;
 	}
+	if (self->done)
+	    goto error;
 
 	/* start the timer if this is the first pull_buffer of this part */
 	if (!self->part_timer) {
 	    DBG(2, "first pull_buffer of new part");
 	    self->part_timer = g_timer_new();
 	}
+	if (elt->size == 0) {
+	    result = -1;
+	} else {
+	    /* loop until we read a full block, in case the blocks are larger
+	     * than  expected */
+	    if (self->block_size == 0)
+		self->block_size = (size_t)self->device->block_size;
 
-	/* loop until we read a full block, in case the blocks are larger than
-	 * expected */
-	if (self->block_size == 0)
-	    self->block_size = (size_t)self->device->block_size;
+	    do {
+		int max_block;
+		buf = g_malloc(self->block_size);
+		if (buf == NULL) {
+		    xfer_cancel_with_error(elt,
+				_("%s: cannot allocate memory"),
+				self->device->device_name);
+		    g_mutex_unlock(self->start_part_mutex);
+		    wait_until_xfer_cancelled(elt->xfer);
+		    goto error_unlocked;
+		}
+		devsize = (int)self->block_size;
+		if (elt->size < 0)
+		    max_block = -1;
+		else
+		    max_block = (elt->size+self->block_size-1)/self->block_size;
+		result = device_read_block(self->device, buf, &devsize, max_block);
+		*size = devsize;
 
-	do {
-	    buf = g_malloc(self->block_size);
-	    if (buf == NULL) {
-		xfer_cancel_with_error(elt,
-			_("%s: cannot allocate memory"),
-			self->device->device_name);
-		g_mutex_unlock(self->start_part_mutex);
-		wait_until_xfer_cancelled(elt->xfer);
-		goto error_unlocked;
+		if (result == 0) {
+		    g_assert(*size > self->block_size);
+		    self->block_size = devsize;
+		    amfree(buf);
+		}
+	    } while (result == 0);
+
+	    if (result > 0 &&
+		(elt->offset ||
+		 (elt->size > 0 && (long long unsigned)elt->size < *size))) {
+		gpointer buf1 = g_malloc(self->block_size);
+		if ((long long unsigned)elt->offset > *size) {
+		    g_debug("offset > *size");
+		} else if ((long long unsigned)elt->offset == *size) {
+		    g_debug("offset == *size");
+		}
+		*size -= elt->offset;
+		if (elt->size > 0 && (size_t)elt->size < *size)
+		    *size = elt->size;
+		memmove(buf1, buf + elt->offset, *size);
+		elt->offset = 0;
+		g_free(buf);
+		buf = buf1;
 	    }
-	    devsize = (int)self->block_size;
-	    result = device_read_block(self->device, buf, &devsize);
-	    *size = devsize;
+	    if (result > 0)
+		elt->size -= *size;
 
-	    if (result == 0) {
-		g_assert(*size > self->block_size);
-		self->block_size = devsize;
-		amfree(buf);
-	    }
-	} while (result == 0);
+	}
 
 	/* if this block was successful, return it */
 	if (result > 0) {
@@ -436,7 +524,7 @@ pull_buffer_impl(
 	    amfree(buf);
 
 	    /* if we're not at EOF, it's an error */
-	    if (!self->device->is_eof) {
+	    if (!self->device->is_eof && elt->size != 0) {
 		xfer_cancel_with_error(elt,
 		    _("error reading from %s: %s"),
 		    self->device->device_name,
@@ -446,7 +534,7 @@ pull_buffer_impl(
                 goto error_unlocked;
 	    }
 
-	    g_debug("xfer-source-recovery sending XMSG_CRC message");
+	    DBG(2, "xfer-source-recovery sending XMSG_CRC message");
 	    DBG(2, "xfer-source-recovery CRC: %08x     size %lld",
 		crc32_finish(&elt->crc), (long long)elt->crc.size);
 	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
@@ -466,9 +554,8 @@ pull_buffer_impl(
 	    msg->eof = FALSE;
 
 	    self->paused = TRUE;
-	    g_object_unref(self->device);
-	    self->device = NULL;
 	    self->bytes_read += self->part_size;
+	    device_clear_bytes_read(self->device);
 	    self->part_size = 0;
 	    self->block_size = 0;
 	    if (self->part_timer) {
@@ -479,30 +566,14 @@ pull_buffer_impl(
 	    /* don't queue the XMSG_PART_DONE until we've adjusted all of our
 	     * instance variables appropriately */
 	    xfer_queue_message(elt->xfer, msg);
+	    if (elt->size == 0) {
+		g_mutex_unlock(self->start_part_mutex);
+		return NULL;
+	    }
 	}
     }
 
     g_mutex_unlock(self->start_part_mutex);
-
-    if (elt->size > 0) {
-	/* initialize on first pass */
-	if (self->size == 0)
-	    self->size = elt->size;
-
-	if (self->size == -1) {
-	    *size = 0;
-	    amfree(buf);
-	    return NULL;
-	}
-
-	if (*size > (guint64)self->size) {
-	    /* return only self->size bytes */
-	    *size = self->size;
-	    self->size = -1;
-	} else {
-	    self->size -= *size;
-	}
-    }
 
     if (buf) {
 	crc32_add(buf, *size, &elt->crc);
@@ -538,6 +609,8 @@ start_part_impl(
     XferSourceRecovery *self,
     Device *device)
 {
+    XferElement *elt = XFER_ELEMENT(self);
+
     g_assert(!device || device->in_file);
 
     DBG(2, "start_part called");
@@ -551,21 +624,35 @@ start_part_impl(
     g_mutex_lock(self->start_part_mutex);
 
     /* make sure we're ready to go */
-    g_assert(self->paused);
+    g_assert(self->paused || self->done);
+    self->done = FALSE;
     if (XFER_ELEMENT(self)->output_mech == XFER_MECH_DIRECTTCP_CONNECT
      || XFER_ELEMENT(self)->output_mech == XFER_MECH_DIRECTTCP_LISTEN) {
 	g_assert(self->conn != NULL);
     }
 
     /* if we already have a device, it should have been given to use_device */
-    if (device && self->device)
+    if (device && self->device) {
 	g_assert(self->device == device);
-
-    if (self->device)
-	g_object_unref(self->device);
-    if (device)
+    } else if (device) {
+	self->device = device;
 	g_object_ref(device);
-    self->device = device;
+    }
+
+    if (!device)
+	self->done = TRUE;
+
+    if (elt->offset == 0 && elt->orig_size == 0) {
+	self->done = TRUE;
+	g_mutex_unlock(self->start_part_mutex);
+	return;
+    }
+
+    if (elt->size == 0) {
+	self->done = TRUE;
+	g_mutex_unlock(self->start_part_mutex);
+	return;
+    }
 
     self->paused = FALSE;
 
@@ -724,6 +811,18 @@ xfer_source_recovery_start_part(
 
     klass = XFER_SOURCE_RECOVERY_GET_CLASS(elt);
     klass->start_part(XFER_SOURCE_RECOVERY(elt), device);
+}
+
+gboolean
+xfer_source_recovery_cancel(
+    XferElement *elt,
+    gboolean expect_eof G_GNUC_UNUSED)
+{
+    XferElementClass *klass;
+    g_assert(IS_XFER_SOURCE_RECOVERY(elt));
+
+    klass = XFER_ELEMENT_GET_CLASS(elt);
+    return klass->cancel(XFER_ELEMENT(elt), 0);
 }
 
 /* create an element of this class; prototype is in xfer-device.h */

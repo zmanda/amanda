@@ -148,4 +148,9 @@ guint64
 xfer_source_recovery_get_bytes_read(
     XferElement *elt);
 
+gboolean
+xfer_source_recovery_cancel(
+    XferElement *elt,
+    gboolean expect_eof);
+
 #endif

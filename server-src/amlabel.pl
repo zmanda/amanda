@@ -140,7 +140,8 @@ sub main {
     my $steps = define_steps
 	cb_ref => \$finished_cb,
 	finalize => sub { $storage->quit() if defined $storage;
-			  $chg->quit() if defined $chg };
+			  $chg->quit() if defined $chg;
+    };
 
     step start => sub {
 	$tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));

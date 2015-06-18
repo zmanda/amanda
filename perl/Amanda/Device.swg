@@ -260,7 +260,8 @@ typedef struct {
  * Device struct, %extend-ed into a Perl class
  */
 
-%name(unaliased_name) extern char *device_unaliased_name(char *);
+%rename(unaliased_name) device_unaliased_name;
+char *device_unaliased_name(char *device_name);
 
 typedef struct {
 
@@ -315,6 +316,10 @@ typedef struct {
 	    return device_finish(self);
 	}
 
+	void
+	clear_bytes_read() {
+	    return device_clear_bytes_read(self);
+	}
 	guint64
 	get_bytes_read() {
 	    return device_get_bytes_read(self);
@@ -356,8 +361,8 @@ typedef struct {
 	}
 
 	int
-	read_block(gpointer buffer, int *size) {
-	    return device_read_block(self, buffer, size);
+	read_block(gpointer buffer, int *size, int max_block) {
+	    return device_read_block(self, buffer, size, max_block);
 	}
 
 	gboolean
@@ -700,7 +705,7 @@ verify_random_from_device(guint32 seed, size_t length, Device *device) {
 	int bytes_read;
 	int size = block_size;
 
-	bytes_read = device_read_block(device, buf, &size);
+	bytes_read = device_read_block(device, buf, &size, 0);
 	if (bytes_read == 0 && size > block_size) {
 	    g_free(buf);
 	    block_size = size;

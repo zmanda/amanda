@@ -98,7 +98,7 @@ pull_buffer_impl(
 	    return NULL;
 	}
 	devsize = (int)self->block_size;
-	result = device_read_block(self->device, buf, &devsize);
+	result = device_read_block(self->device, buf, &devsize, 0);
 	*size = devsize;
 
 	/* if the buffer was too small, loop around again */

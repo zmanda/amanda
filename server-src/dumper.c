@@ -141,6 +141,8 @@ static crc_t native_crc;
 static crc_t client_crc;
 static char *log_filename = NULL;
 static char *state_filename = NULL;
+static FILE *statefile_in_mesg = NULL;
+static int   statefile_in_stream = -1;
 static int   retry_delay;
 static int   retry_level;
 static char *retry_message = NULL;
@@ -165,6 +167,8 @@ static struct {
     { "MESG", NULL },
 #define	INDEXFD	2
     { "INDEX", NULL },
+#define	STATEFD	3
+    { "STATE", NULL },
 };
 #define NSTREAMS G_N_ELEMENTS(streams)
 
@@ -209,6 +213,7 @@ static void	stop_dump(void);
 
 static void	read_indexfd(void *, void *, ssize_t);
 static void	read_datafd(void *, void *, ssize_t);
+static void	read_statefd(void *, void *, ssize_t);
 static void	read_mesgfd(void *, void *, ssize_t);
 static void	timeout(time_t);
 static void	timeout_callback(void *);
@@ -1024,18 +1029,23 @@ process_dumpline(
 	}
 
 	if (g_str_equal(tok, "state")) {
-	    FILE *statefile;
-	    tok = strtok(NULL, "");
-	    if (tok) {
-		statefile = fopen(state_filename, "a");
-		if (statefile) {
-		    fprintf(statefile, "%s\n", tok);
-		    fclose(statefile);
-		} else {
-		    g_debug("Can't open statefile '%s': %s", state_filename, strerror(errno));
-		}
+	    if (statefile_in_stream != -1) {
+		g_debug("state in stream when state in vstream already open");
 	    } else {
-		g_debug("Invalid state");
+		tok = strtok(NULL, "");
+		if (tok) {
+		    if (!statefile_in_mesg) {
+			statefile_in_mesg = fopen(state_filename, "w");
+			if (!statefile_in_mesg) {
+			    g_debug("Can't open statefile '%s': %s", state_filename, strerror(errno));
+			}
+		    }
+		    if (statefile_in_mesg) {
+			fprintf(statefile_in_mesg, "%s\n", tok);
+		    }
+		} else {
+		    g_debug("Invalid state");
+		}
 	    }
 	    amfree(buf);
 	    return;
@@ -1813,6 +1823,66 @@ failed:
 }
 
 /*
+ * Callback for reads on the statefile stream
+ */
+static void
+read_statefd(
+    void *	cookie,
+    void *	buf,
+    ssize_t     size)
+{
+    struct databuf *db = cookie;
+
+    assert(db != NULL);
+
+    switch (size) {
+    case -1:
+	if (statefile_in_stream) {
+	    close(statefile_in_stream);
+	    statefile_in_stream = -1;
+	}
+
+	g_free(errstr);
+	errstr = g_strdup_printf(_("state read: %s"),
+                                 security_stream_geterror(streams[STATEFD].fd));
+	dump_result = 2;
+	stop_dump();
+	return;
+
+    case 0:
+	/*
+	 * EOF.  Just shut down the state stream.
+	 */
+	if (statefile_in_stream) {
+	    close(statefile_in_stream);
+	    statefile_in_stream = -1;
+	}
+	security_stream_close(streams[STATEFD].fd);
+	streams[STATEFD].fd = NULL;
+
+	/*
+	 * If the data fd and index fd has also shut down, then we're done.
+	 */
+	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
+	    streams[INDEXFD].fd == NULL &&
+	    streams[MESGFD].fd == NULL)
+	    stop_dump();
+	return;
+
+    default:
+	assert(buf != NULL);
+	if (statefile_in_stream == -1) {
+	    statefile_in_stream = open(state_filename,
+				       O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	}
+	if (statefile_in_stream != -1) {
+	    full_write(statefile_in_stream, buf, size);
+	}
+	break;
+    }
+}
+
+/*
  * Callback for reads on the mesgfd stream
  */
 static void
@@ -1841,11 +1911,16 @@ read_mesgfd(
 	process_dumpeof();
 	security_stream_close(streams[MESGFD].fd);
 	streams[MESGFD].fd = NULL;
+	if (statefile_in_mesg) {
+	    fclose(statefile_in_mesg);
+	    statefile_in_mesg = NULL;
+	}
 	/*
 	 * If the data fd and index fd has also shut down, then we're done.
 	 */
-	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) && 
-	    streams[INDEXFD].fd == NULL)
+	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
+	    streams[INDEXFD].fd == NULL &&
+	    streams[STATEFD].fd == NULL)
 	    stop_dump();
 	return;
 
@@ -1976,6 +2051,7 @@ read_mesgfd(
 	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	    set_datafd = 1;
 	}
+	security_stream_read(streams[STATEFD].fd, read_statefd, db);
     }
 
     /*
@@ -2035,7 +2111,8 @@ read_datafd(
 	/*
 	 * If the mesg fd and index fd has also shut down, then we're done.
 	 */
-	if (streams[MESGFD].fd == NULL && streams[INDEXFD].fd == NULL)
+	if (streams[MESGFD].fd == NULL && streams[INDEXFD].fd == NULL &&
+	    streams[STATEFD].fd == NULL)
 	    stop_dump();
 	return;
     }
@@ -2100,7 +2177,8 @@ read_indexfd(
 	 * If the mesg fd has also shut down, then we're done.
 	 */
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
-	     streams[MESGFD].fd == NULL)
+	     streams[MESGFD].fd == NULL &&
+	     streams[STATEFD].fd == NULL)
 	    stop_dump();
 	aclose(indexout);
 	return;
@@ -2581,11 +2659,17 @@ bad_nak:
 	 * Regular packets have CONNECT followed by three streams
 	 */
 	if (g_str_equal(tok, "CONNECT")) {
+	    guint nstreams;
 
+	    if (am_has_feature(their_features, fe_sendbackup_stream_state)) {
+		nstreams = NSTREAMS;
+	    } else {
+		nstreams = NSTREAMS - 1;
+	    }
 	    /*
-	     * Parse the three stream specifiers out of the packet.
+	     * Parse the three or four stream specifiers out of the packet.
 	     */
-	    for (i = 0; i < NSTREAMS; i++) {
+	    for (i = 0; i < nstreams; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || !g_str_equal(tok, streams[i].name)) {
 		    extra = g_strdup_printf(

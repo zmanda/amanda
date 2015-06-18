@@ -273,7 +273,7 @@ if ($opt_detail) {
 		    my @storage = keys %{$dle->{'storage'}};
 		    my $storage = $storage[0];
 		    my $dlet = $dle->{'storage'}->{$storage};
-		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'}) {
+		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
 			printf " (%d$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }
@@ -281,7 +281,7 @@ if ($opt_detail) {
 			print " (",  $status->show_time($dlet->{'taper_time'}), ")";
 		    }
 		} else {
-		    if (defined $dle->{'wsize'} && defined $dle->{'esize'}) {
+		    if (defined $dle->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
 			printf " (%d$unit done (%0.2f%%))", dn($dle->{'wsize'}),
 				 100.0 * $dle->{'wsize'} / $dle->{'esize'};
 		    }
@@ -313,7 +313,7 @@ if ($opt_detail) {
 			print "($storage) $taper_status";
 		    }
 		    $first++;
-		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'}) {
+		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
 			printf " (%d$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }
@@ -323,7 +323,7 @@ if ($opt_detail) {
 		}
 	    } else {
 		print $dump_status;
-		if (defined $dle->{'wsize'} && defined $dle->{'esize'}) {
+		if (defined $dle->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
 		    printf " (%d$unit done (%0.2f%%))", dn($dle->{'wsize'}),
 				 100.0 * $dle->{'wsize'} / $dle->{'esize'};
 		}

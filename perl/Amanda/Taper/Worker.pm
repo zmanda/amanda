@@ -1043,6 +1043,7 @@ sub setup_and_start_dump {
 		$self->{'dumper_status'} = "DONE";
 	    }
 
+	    $self->{'xfer_source'}->start_recovery();
 	    $steps->{'start_dump'}->(undef);
 	} elsif ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE) {
 	    # ..but quite a bit harder for PORT-WRITE; this method will send the

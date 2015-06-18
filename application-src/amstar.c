@@ -670,7 +670,7 @@ amstar_estimate(
 		 level,
 		 (long long)size);
 
-	kill(-starpid, SIGTERM);
+	(void)kill(-starpid, SIGTERM);
 
 	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(starpid, &wait_status, 0);

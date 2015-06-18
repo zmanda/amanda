@@ -975,10 +975,8 @@ amtext(
 	last_element2_name = last_element2->data;
 	if (g_str_equal(last_element2_name, "backup-program")) {
 	    dle->application_client_name = tt;
-g_debug("set dle->application_client_name: %s", dle->application_client_name);
 	} else if (g_str_equal(last_element2_name, "script")) {
 	    data_user->script->client_name = tt;
-g_debug("set data_user->script->client_name: %s", data_user->script->client_name);
 	} else {
 	    error("client_name outside of script or backup-program");
 	}

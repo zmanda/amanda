@@ -1037,11 +1037,17 @@ backup_support_option(
 	    if (g_str_equal(line + 11, "YES"))
 		bsu->features = 1;
 	} else if (g_str_has_prefix(line, "RECOVER-DUMP-STATE-FILE ")) {
-	    if (g_str_equal(line + 19, "YES"))
+	    if (g_str_equal(line + 24, "YES"))
 		bsu->recover_dump_state_file = 1;
 	} else if (g_str_has_prefix(line, "DISCOVER ")) {
 	    if (g_str_equal(line + 9, "YES"))
 		bsu->discover = 1;
+	} else if (g_str_has_prefix(line, "DAR ")) {
+	    if (g_str_equal(line + 4, "YES"))
+		bsu->dar = 1;
+	} else if (g_str_has_prefix(line, "STATE-STREAM ")) {
+	    if (g_str_equal(line + 13, "YES"))
+		bsu->state_stream = 1;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}

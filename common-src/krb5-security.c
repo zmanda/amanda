@@ -738,11 +738,9 @@ krb5_init(void)
      */
     atexit(cleanup);
     {
-	char *ccache;
-	ccache = malloc(128);
-	g_snprintf(ccache, sizeof(ccache),
-		 KRB5_ENV_CCNAME"=FILE:/tmp/amanda_ccache.%ld.%ld",
-		 (long)geteuid(), (long)getpid());
+	char *ccache = g_strdup_printf(
+		KRB5_ENV_CCNAME"=FILE:/tmp/amanda_ccache.%ld.%ld",
+		(long)geteuid(), (long)getpid());
 	putenv(ccache);
     }
 #endif
@@ -1093,6 +1091,7 @@ krb5_checkuser( char *	host,
 
     if((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
 	result = g_strdup_printf(_("can not find user %s"), CLIENT_LOGIN);
+	return result;
     }
     localuid = pwd->pw_uid;
 
@@ -1105,27 +1104,24 @@ krb5_checkuser( char *	host,
     if(!ptmp) {
 	result = g_strdup_printf(_("could not find home directory for %s"), CLIENT_LOGIN);
 	goto common_exit;
-   }
-
-   /*
-    * check to see if the ptmp file does nto exist.
-    */
-   if(access(ptmp, R_OK) == -1 && errno == ENOENT) {
-	/*
-	 * in this case we check to see if the principal matches
-	 * the destination user mimicing the .k5login functionality.
-	 */
-	 if(!g_str_equal(name, CLIENT_LOGIN)) {
-		result = g_strdup_printf(_("%s does not match %s"),
-			name, CLIENT_LOGIN);
-		return result;
-	}
-	result = NULL;
-	goto common_exit;
     }
 
     auth_debug(1, _("opening ptmp: %s\n"), (ptmp)?ptmp: "NULL!");
-    if((fp = fopen(ptmp, "r")) == NULL) {
+    if ((fp = fopen(ptmp, "r")) == NULL) {
+	/* check to see if the ptmp file does nto exist. */
+	if (errno == ENOENT) {
+	    /*
+	     * in this case we check to see if the principal matches
+	     * the destination user mimicing the .k5login functionality.
+	     */
+	     if (!g_str_equal(name, CLIENT_LOGIN)) {
+		result = g_strdup_printf(_("%s does not match %s"),
+					 name, CLIENT_LOGIN);
+		return result;
+	    }
+	    result = NULL;
+	    goto common_exit;
+	}
 	result = g_strdup_printf(_("can not open %s"), ptmp);
 	return result;
     }

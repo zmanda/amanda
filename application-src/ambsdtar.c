@@ -784,7 +784,7 @@ ambsdtar_estimate(
 		 level,
 		 (long long)size);
 
-	kill(-tarpid, SIGTERM);
+	(void)kill(-tarpid, SIGTERM);
 
 	g_debug(_("waiting for %s \"%s\" child"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);

@@ -6217,7 +6217,7 @@ init_defaults(
     conf_init_str_list (&conf_data[CNF_REPORT_FORMAT]        , NULL);
     conf_init_bool     (&conf_data[CNF_COMPRESS_INDEX]       , TRUE);
     conf_init_bool     (&conf_data[CNF_SORT_INDEX]           , FALSE);
-    conf_init_str      (&conf_data[CNF_TMPDIR]               , "");
+    conf_init_str      (&conf_data[CNF_TMPDIR]               , AMANDA_TMPDIR);
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_identlist(&conf_data[CNF_VAULT_STORAGE]        , NULL);
     conf_init_str      (&conf_data[CNF_CMDFILE]              , "command_file");

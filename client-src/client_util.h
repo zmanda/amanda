@@ -76,6 +76,8 @@ typedef struct backup_support_option_s {
     int multi_estimate;
     int smb_recover_mode;
     int features;
+    gboolean dar;
+    int state_stream;
     data_path_t data_path_set;  /* bitfield of all allowed data-path */
     recover_path_t recover_path;
     int recover_dump_state_file;

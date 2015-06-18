@@ -360,7 +360,7 @@ xfer_filter_process(
     return elt;
 }
 
-int get_err_fd(
+int filter_process_get_err_fd(
     XferElement *elt)
 {
     XferFilterProcessClass *klass;

@@ -42,6 +42,8 @@ void canonicalize_pathname(char *pathname, char *result_buf);
 extern char  *sanitise_filename(char *inp);
 char  *old_sanitise_filename(char *inp);
 void    safe_fd(int fd_start, int fd_count);
+void    safe_fd2(int fd_start, int fd_count, int fd1);
+void    safe_fd3(int fd_start, int fd_count, int fd1, int fd2);
 void	safe_cd(void);
 void	save_core(void);
 

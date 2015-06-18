@@ -496,10 +496,11 @@ sub _add_stream {
 
 	$async_read_cb = sub {
 	    my ($err, $data) = @_;
+	    return $self->{'got_eof'}{$name} = 1 if $err;
 	    die "on stream $name: $err" if $err;
 
 	    # log it
-	    $self->_log_data("<<", $name, $data);
+	    $self->_log_data("<<", "$name:$rfd", $data);
 
 	    # prep for next time
 	    if ($data) {

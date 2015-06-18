@@ -269,6 +269,7 @@ sub main {
 	# set up the source..
 	if ($opt_holding) {
 	    $src = Amanda::Xfer::Source::Holding->new($opt_restore_src);
+	    $src->start_recovery();
 	} else {
 	    $src = Amanda::Xfer::Source::Device->new($dev);
 	}

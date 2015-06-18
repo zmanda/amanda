@@ -629,6 +629,11 @@ sub run {
 	    } elsif ($msg->{'type'} == $XMSG_ERROR) {
 		push @xfer_errs, $msg->{'message'};
 	    }
+	    if ($msg->{'elt'} == $xfer_src) {
+		if ($msg->{'type'} == $XMSG_SEGMENT_DONE) {
+		    $xfer_src->cancel(0);
+		}
+	    }
 	}
     };
 

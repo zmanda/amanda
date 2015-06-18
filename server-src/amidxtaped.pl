@@ -173,6 +173,7 @@ sub setup_streams {
 	}
 	$self->{'ctl_stream'} = 'main';
 	$self->{'data_stream'} = undef; # no data stream yet
+	$self->{'state_stream'} = undef; # no state stream yet
     } else {
 	my $req = $self->get_req();
 
@@ -192,11 +193,17 @@ sub setup_streams {
 	    $self->{'their_features'} = $req->{'features'};
 	}
 
-	$self->send_rep(['CTL' => 'rw', 'DATA' => 'w'], $errors);
+	if (defined $self->{'their_features'} and
+	    $self->{'their_features'}->has($Amanda::Feature::fe_amrecover_stream_state)) {
+	    $self->send_rep(['CTL' => 'rw', 'DATA' => 'w', 'STATE' => 'rw'], $errors);
+	} else {
+	    $self->send_rep(['CTL' => 'rw', 'DATA' => 'w'], $errors);
+	}
 	return $self->quit() if (@$errors);
 
 	$self->{'ctl_stream'} = 'CTL';
 	$self->{'data_stream'} = 'DATA';
+	$self->{'state_stream'} = 'STATE';
     }
 
     $self->read_command();
@@ -242,11 +249,18 @@ sub read_command {
 
 	    $self->senddata($ctl_stream, $featreply);
 	}
+	$_ =~ s/\r?\n$//g;
     }
 
     # process some info from the command
     if ($command->{'FEATURES'}) {
 	$self->{'their_features'} = Amanda::Feature::Set->from_string($command->{'FEATURES'});
+    }
+
+    if($self->{'their_features'}->has($Amanda::Feature::fe_amrecover_stream_state)) {
+	debug("their_features have fe_amrecover_stream_state");
+    } else {
+	debug("their_features do not have fe_amrecover_stream_state");
     }
 
     # load the configuration
@@ -560,28 +574,94 @@ sub plan_cb {
 		'their_features' => $self->{'their_features'},
 		'finished_cb'	=> sub {
 					$main::exit_status = shift;
-					Amanda::MainLoop::quit();
+					$self->quit();
 				       });
 
     return;
 }
 
-sub check_datapath {
+sub send_state_file {
+    my $self = shift;
+    my $header = shift;
+
+    if ($self->{'state_stream'} &&
+	$self->{'their_features'}->has($Amanda::Feature::fe_amrecover_stream_state)) {
+        my $host = Amanda::Util::sanitise_filename("" . $header->{'name'});
+        my $disk = Amanda::Util::sanitise_filename("" . $header->{'disk'});
+        my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
+                '/' . $disk . '/' . $header->{'datestamp'} . '_' .
+                $header->{'dumplevel'} . '.state';
+        if (-e $state_filename) {
+            open STATEFILE, '<', $state_filename;
+            my $block;
+            my $length;
+            while ($length = sysread(STATEFILE, $block, 32768)) {
+                Amanda::Util::full_write($self->wfd($self->{'state_stream'}),
+                                     $block, $length)
+                    or die "writing to $self->{state_stream}: $!";
+            }
+        }
+        $self->close($self->{'state_stream'}, 'w');
+    }
+}
+
+sub expect_dar {
     my $self = shift;
 
-    $self->{'datapath'} = 'none';
+    $self->{'use_dar'} = 0;
+    $self->{'ignore_dar'} = 0;
 
-    # short-circuit this if amrecover doesn't support datapaths
-    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amidxtaped_datapath)) {
-	return undef;
+    if ($self->from_inetd()) {
+	return;
+    }
+    # short-circuit this if amrecover doesn't support dar
+    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amidxtaped_dar)) {
+	return;
     }
 
     my $line = $self->getline($self->{'ctl_stream'});
     if ($line eq "ABORT\r\n") {
-	return "ABORT";
+	return Amanda::MainLoop::quit();
+    }
+    my $darspec = ($line =~ /^USE-DAR (.*)\r\n$/);
+    return ($1 eq 'YES');
+
+    $self->{'use_dar'} = ($1 eq 'YES');
+    $self->{'ignore_dar'} =  $self->{'use_dar'} &&
+			    ($self->{'header'}->{'compressed'} ||
+			     $self->{'header'}->{'encrypted'});
+}
+
+sub start_read_dar {
+    my $self = shift;
+    my $xfer_dest = shift;
+    my $cb_data = shift;
+    my $cb_done = shift;
+    my $text = shift;
+
+    $self->{'dar_cb'} = $cb_data;
+    return;
+}
+
+sub expect_datapath {
+    my $self = shift;
+
+    $self->{'datapath'} = 'none';
+
+    if ($self->from_inetd()) {
+	return;
+    }
+    # short-circuit this if amrecover doesn't support datapaths
+    if (!$self->{'their_features'}->has($Amanda::Feature::fe_amidxtaped_datapath)) {
+	return;
+    }
+
+    my $line = $self->getline($self->{'ctl_stream'});
+    if ($line eq "ABORT\r\n") {
+	return Amanda::MainLoop::quit();
     }
     my ($dpspec) = ($line =~ /^AVAIL-DATAPATH (.*)\r\n$/);
-    return "bad AVAIL-DATAPATH line" unless $dpspec;
+    die "bad AVAIL-DATAPATH line" unless $dpspec;
     my @avail_dps = split / /, $dpspec;
 
     if (grep /^DIRECT-TCP$/, @avail_dps) {
@@ -593,10 +673,15 @@ sub check_datapath {
 	}
     } else {
 	# remote can at least handle AMANDA
-	return "remote cannot handle AMANDA datapath??"
+	die "remote cannot handle AMANDA datapath??"
 	    unless grep /^AMANDA$/, @avail_dps;
 	$self->{'datapath'} = 'amanda';
     }
+}
+
+sub check_datapath {
+    my $self = shift;
+
 
     if ($self->{'datapath'} eq 'amanda') {
 	$self->sendctlline("USE-DATAPATH AMANDA\r\n");
@@ -622,6 +707,46 @@ sub send_directtcp_datapath {
 	    return "expected DATAPATH-OK";
 	}
     }
+}
+
+sub start_msg {
+    my $self = shift;
+    my $dar_data_cb = shift;
+
+    return if !defined $self->{'ctl_stream'};
+    $self->{'ctl_src'} = Amanda::MainLoop::fd_source(
+				$self->rfd($self->{'ctl_stream'}),
+				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $ctl_buffer;
+    $self->{'ctl_src'}->set_callback( sub {
+	my $b;
+	my $n_read = POSIX::read($self->rfd($self->{'ctl_stream'}), $b, 1);
+	if (!defined $n_read) {
+	    debug("Failure to read ctl_stream: $!");
+	    $self->{'ctl_src'}->remove();
+	    $self->{'ctl_src'} = undef;
+	    $ctl_buffer = undef;
+	    return;
+	} elsif ($n_read == 0) {
+	    $dar_data_cb->("DAR 0:-1");
+	} else {
+	    $ctl_buffer .= $b;
+	    if ($b eq "\n") {
+		my $line = $ctl_buffer;
+		chomp $line;
+		chop $line; # remove '\r'
+		debug("ctl line: $line");
+		if ($line =~ /^OK$/) {
+		} elsif ($line =~ /^TAPE (.*)$/) {
+		} elsif ($line =~ /^DAR .*$/) {
+		    $dar_data_cb->($line);
+		} elsif ($line =~ /^DAR-DONE$/) {
+		    $dar_data_cb->("DAR -1:0");
+		}
+		$ctl_buffer = "";
+	    }
+	}
+    });
 }
 
 
@@ -890,14 +1015,8 @@ use Amanda::Config qw( :init );
 
 our $exit_status = 0;
 
-sub fetchdump_done {
-    $exit_status = shift;
-    Amanda::MainLoop::quit();
-}
-
 Amanda::Util::setup_application("amidxtaped", "server", $CONTEXT_DAEMON, "amanda", "amanda");
 config_init($CONFIG_INIT_GLOBAL, undef);
-Amanda::Debug::debug_dup_stderr_to_debug();
 
 my $amidxtaped = amidxtaped->new();
 Amanda::MainLoop::call_later(sub { $amidxtaped->run(); });

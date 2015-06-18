@@ -756,8 +756,15 @@ sub xfer_dumps {
     };
 
     step handle_xmsg => sub {
+	my ($xmsg_src, $msg, $xfer) = @_;
 	$src->{'clerk'}->handle_xmsg(@_);
 	$dst->{'scribe'}->handle_xmsg(@_);
+
+	if ($msg->{'elt'} == $xfer_src) {
+	    if ($msg->{'type'} == $XMSG_SEGMENT_DONE) {
+		$xfer_src->cancel(0);
+	    }
+	}
     };
 
     step recovery_cb => sub {
@@ -1094,14 +1101,14 @@ sub scribe_notif_tape_done {
 	}
 
 	if (!$ie_slot) {
-	    $self->user_msg(Amanda::Vault::Message(
+	    $self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2500010,
 				severity => $Amanda::Message::ERROR));
 	    return $steps->{'done'}->();
 	} elsif (!$from_slot) {
-	    $self->user_msg(Amanda::Vault::Message(
+	    $self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 2500011,

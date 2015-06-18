@@ -137,7 +137,7 @@ Amanda::Rest::Storages -- Rest interface to Amanda::Storage
               "device_error" : null,
               "device_status" : 0,
               "f_type" : 1,
-              "label" : "JLM-robot-E01001L4",
+              "label" : "robot-E01001L4",
               "slot" : "1",
               "state" : 1
            },
@@ -145,7 +145,7 @@ Amanda::Rest::Storages -- Rest interface to Amanda::Storage
               "device_error" : null,
               "device_status" : 0,
               "f_type" : 1,
-              "label" : "JLM-robot-E01002L4",
+              "label" : "robot-E01002L4",
               "slot" : "2",
               "state" : 1
            },

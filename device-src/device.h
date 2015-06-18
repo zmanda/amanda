@@ -199,7 +199,7 @@ struct _DeviceClass {
     gboolean (* init_seek_file) (Device * self, guint file);
     dumpfile_t* (* seek_file) (Device * self, guint file);
     gboolean (* seek_block) (Device * self, guint64 block);
-    int (* read_block) (Device * self, gpointer buf, int * size);
+    int (* read_block) (Device * self, gpointer buf, int * size, int max_block);
     gboolean (* property_get_ex) (Device * self, DevicePropertyId id,
 				  GValue * val,
 				  PropertySurety *surety,
@@ -214,6 +214,7 @@ struct _DeviceClass {
     gboolean (* eject) (Device * self);
     gboolean (* finish) (Device * self);
     guint64  (* get_bytes_read) (Device * self);
+    guint64  (* clear_bytes_read) (Device * self);
     guint64  (* get_bytes_written) (Device * self);
 
     gboolean (* listen)(Device *self, gboolean for_writing, DirectTCPAddr **addrs);
@@ -339,6 +340,7 @@ gboolean 	device_start	(Device * self,
                                  DeviceAccessMode mode, char * label,
                                  char * timestamp);
 gboolean 	device_finish	(Device * self);
+void		device_clear_bytes_read	(Device * self);
 guint64 	device_get_bytes_read	(Device * self);
 guint64 	device_get_bytes_written(Device * self);
 gboolean        device_start_file       (Device * self,
@@ -353,7 +355,7 @@ dumpfile_t* 	device_seek_file	(Device * self,
 					guint file);
 gboolean 	device_seek_block	(Device * self,
 					guint64 block);
-int 	device_read_block	(Device * self, gpointer buffer, int * size);
+int 	device_read_block	(Device * self, gpointer buffer, int * size, int max_block);
 const GSList *	device_property_get_list	(Device * self);
 gboolean 	device_property_get_ex	(Device * self,
                                          DevicePropertyId id,

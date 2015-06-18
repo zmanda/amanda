@@ -1169,6 +1169,24 @@ device_finish (Device * self) {
     return (klass->finish)(self);
 }
 
+void
+device_clear_bytes_read (Device * self) {
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+
+    g_mutex_lock(self->device_mutex);
+    if (self->in_file) {
+	klass = DEVICE_GET_CLASS(self);
+	if (klass->clear_bytes_read) {
+	    (klass->clear_bytes_read)(self);
+	} else {
+	    self->bytes_read = 0;
+	}
+    }
+    g_mutex_unlock(self->device_mutex);
+}
+
 guint64
 device_get_bytes_read (Device * self) {
     DeviceClass *klass;
@@ -1355,7 +1373,7 @@ device_seek_block (Device * self, guint64 block)
 }
 
 int
-device_read_block (Device * self, gpointer buffer, int * size)
+device_read_block (Device * self, gpointer buffer, int * size, int max_block)
 {
     DeviceClass *klass;
 
@@ -1369,7 +1387,7 @@ device_read_block (Device * self, gpointer buffer, int * size)
 
     klass = DEVICE_GET_CLASS(self);
     g_assert(klass->read_block);
-    return (klass->read_block)(self,buffer,size);
+    return (klass->read_block)(self,buffer,size,max_block);
 }
 
 gboolean

@@ -42,6 +42,16 @@
 
 void glib_init(void);
 
+void setenv_init(void);
+
+%{
+
+void
+setenv_init(void) {
+    PL_use_safe_putenv = 1;
+}
+%}
+
 %perlcode %{
 
 use Amanda::Debug qw(:init);
@@ -60,6 +70,8 @@ my $_pcontext;
 
 sub setup_application {
     my ($name, $type, $context, $component, $module) = @_;
+
+    setenv_init();
 
     # sanity check
     croak("no name given") unless ($name);
@@ -471,10 +483,6 @@ typedef struct {
 	}
 
 	~file_lock() {
-	    file_lock_free(self);
-	}
-
-	~locked_data() {
 	    file_lock_free(self);
 	}
 

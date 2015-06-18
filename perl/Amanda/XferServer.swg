@@ -48,6 +48,9 @@ XferElement *xfer_dest_device(
 XferElement * xfer_source_holding(
     const char *filename);
 
+void xfer_source_holding_start_recovery(
+    XferElement *self);
+
 guint64 xfer_source_holding_get_bytes_read(
     XferElement *self);
 
@@ -120,6 +123,10 @@ void xfer_source_recovery_use_device(
 guint64 xfer_source_recovery_get_bytes_read(
     XferElement *self);
 
+gboolean xfer_source_recovery_cancel(
+    XferElement *self,
+    gboolean expect_eof);
+
 
 /* ---- */
 
@@ -138,6 +145,7 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_device)
 PACKAGE(Amanda::Xfer::Source::Holding)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_holding)
+DECLARE_METHOD(start_recovery, Amanda::XferServer::xfer_source_holding_start_recovery)
 DECLARE_METHOD(get_bytes_read, Amanda::XferServer::xfer_source_holding_get_bytes_read)
 
 /* ---- */
@@ -184,4 +192,5 @@ DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_recovery)
 DECLARE_METHOD(start_part, Amanda::XferServer::xfer_source_recovery_start_part)
 DECLARE_METHOD(use_device, Amanda::XferServer::xfer_source_recovery_use_device)
 DECLARE_METHOD(get_bytes_read, Amanda::XferServer::xfer_source_recovery_get_bytes_read)
+DECLARE_METHOD(cancel, Amanda::XferServer::xfer_source_recovery_cancel)
 

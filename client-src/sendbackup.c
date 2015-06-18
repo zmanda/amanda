@@ -67,6 +67,7 @@ char *errorstr = NULL;
 int datafd;
 int mesgfd;
 int indexfd;
+int statefd;
 
 g_option_t *g_options = NULL;
 
@@ -434,6 +435,7 @@ main(
 	datafd = DATA_FD_OFFSET + 0;
 	mesgfd = DATA_FD_OFFSET + 2;
 	indexfd = DATA_FD_OFFSET + 4;
+	statefd = DATA_FD_OFFSET + 6;
     }
     if (!dle->create_index)
 	indexfd = -1;
@@ -450,9 +452,17 @@ main(
 	g_printf("KENCRYPT\n");
     }
 
-    g_printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
-	   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
-	   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);
+    if (am_has_feature(g_options->features, fe_sendbackup_stream_state)) {
+	g_printf(_("CONNECT DATA %d MESG %d INDEX %d STATE %d\n"),
+		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
+		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2,
+		   DATA_FD_OFFSET+3);
+    } else {
+	g_printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
+		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
+		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);
+	statefd = -1;
+    }
     g_printf(_("OPTIONS "));
     if(am_has_feature(g_options->features, fe_rep_options_features)) {
 	g_printf("features=%s;", our_feature_string);
@@ -739,6 +749,10 @@ main(
 		g_ptr_array_add(argv_ptr, g_strdup("--index"));
 		g_ptr_array_add(argv_ptr, g_strdup("line"));
 	    }
+	    if (statefd != -1 && bsu->state_stream == 1) {
+		g_ptr_array_add(argv_ptr, g_strdup("--state-stream"));
+		g_ptr_array_add(argv_ptr, g_strdup_printf("%d", statefd));
+	    }
 	    if (dle->record && bsu->record == 1) {
 		g_ptr_array_add(argv_ptr, g_strdup("--record"));
 	    }
@@ -778,9 +792,9 @@ main(
 		fcntl(indexfd, F_SETFD, 0);
 	    }
 	    if (indexfd != 0) {
-		safe_fd(3, 2);
+		safe_fd2(3, 2, statefd);
 	    } else {
-		safe_fd(3, 1);
+		safe_fd2(3, 1, statefd);
 	    }
 	    env = safe_env();
 	    execve(cmd, (char **)argv_ptr->pdata, env);

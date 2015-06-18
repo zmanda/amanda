@@ -183,6 +183,9 @@ am_init_feature_set(void)
 	//am_add_feature(f, fe_sendsize_message);
 	//am_add_feature(f, fe_sendbackup_message);
 	am_add_feature(f, fe_sendbackup_rep_retry);
+	am_add_feature(f, fe_sendbackup_stream_state);
+	am_add_feature(f, fe_amrecover_stream_state);
+	am_add_feature(f, fe_amidxtaped_dar);
     }
     return f;
 }

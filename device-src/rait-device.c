@@ -164,7 +164,7 @@ static gboolean rait_device_finish_file (Device * self);
 static dumpfile_t * rait_device_seek_file (Device * self, guint file);
 static gboolean rait_device_seek_block (Device * self, guint64 block);
 static int      rait_device_read_block (Device * self, gpointer buf,
-                                        int * size);
+                                        int * size, int max_dump G_GNUC_UNUSED);
 static gboolean rait_device_recycle_file (Device * self, guint filenum);
 static gboolean rait_device_finish (Device * self);
 static DeviceStatusFlags rait_device_read_label(Device * dself);
@@ -1811,6 +1811,7 @@ typedef struct {
     gpointer buffer; /* IN */
     int read_size;      /* IN/OUT -- note not a pointer */
     int desired_read_size; /* bookkeeping */
+    int max_block;
 } ReadBlockOp;
 
 /* a GFunc. */
@@ -1819,7 +1820,7 @@ static void read_block_do_op(gpointer data,
     ReadBlockOp * op = data;
     op->base.result =
         GINT_TO_POINTER(device_read_block(op->base.child, op->buffer,
-                                          &(op->read_size)));
+                                          &(op->read_size), op->max_block));
     if (op->read_size > op->desired_read_size) {
 	g_warning("child device %s tried to return an oversized block, which the RAIT device does not support",
 		  op->base.child->device_name);
@@ -1953,7 +1954,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
 }
 
 static int
-rait_device_read_block (Device * dself, gpointer buf, int * size) {
+rait_device_read_block (Device * dself, gpointer buf, int * size, int max_block) {
     GPtrArray * ops;
     guint i;
     gboolean success;
@@ -1987,6 +1988,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
         op->base.child_index = i;
         op->buffer = g_malloc(child_blocksize);
         op->desired_read_size = op->read_size = child_blocksize;
+        op->max_block = max_block;
         g_ptr_array_add(ops, op);
     }
 

@@ -380,9 +380,9 @@ pull_and_write(XferElementGlue *self)
     XferElement *elt = XFER_ELEMENT(self);
     int fd = get_write_fd(self);
     XMsg *msg;
+    size_t written;
 
     self->write_fdp = NULL;
-    crc32_init(&elt->crc);
 
     while (!elt->cancelled) {
 	size_t len;
@@ -394,22 +394,25 @@ pull_and_write(XferElementGlue *self)
 	    break;
 
 	/* write it */
-	if (!elt->downstream->drain_mode && full_write(fd, buf, len) < len) {
-	    if (elt->downstream->must_drain) {
-		g_debug("Error writing to fd %d: %s", fd, strerror(errno));
-	    } else if (elt->downstream->ignore_broken_pipe && errno == EPIPE) {
-	    } else {
-		if (!elt->cancelled) {
-		    xfer_cancel_with_error(elt,
-			_("Error writing to fd %d: %s"), fd, strerror(errno));
-		    xfer_cancel(elt->xfer);
-		    wait_until_xfer_cancelled(elt->xfer);
+	if (!elt->downstream->drain_mode) {
+	    written = full_write(fd, buf, len);
+	    if (written < len) {
+		if (elt->downstream->must_drain) {
+		    g_debug("Error writing to fd %d: %s", fd, strerror(errno));
+		} else if (elt->downstream->ignore_broken_pipe && errno == EPIPE) {
+		} else {
+		    if (!elt->cancelled) {
+			xfer_cancel_with_error(elt,
+			    _("Error writing to fd %d: %s"), fd, strerror(errno));
+			xfer_cancel(elt->xfer);
+			wait_until_xfer_cancelled(elt->xfer);
+		    }
+		    amfree(buf);
+		    break;
 		}
-		amfree(buf);
-		break;
+		elt->downstream->drain_mode = TRUE;
 	    }
-	    elt->downstream->drain_mode = TRUE;
-	}
+        }
 	crc32_add((uint8_t *)buf, len, &elt->crc);
 
 	amfree(buf);

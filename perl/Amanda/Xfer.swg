@@ -91,6 +91,7 @@ amglue_add_constant(XMSG_READY, xmsg_type);
 amglue_add_constant(XMSG_CHUNK_DONE, xmsg_type);
 amglue_add_constant(XMSG_CRC, xmsg_type);
 amglue_add_constant(XMSG_NO_SPACE, xmsg_type);
+amglue_add_constant(XMSG_SEGMENT_DONE, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*
@@ -250,6 +251,7 @@ void xfer_unref(Xfer *);
 xfer_status xfer_get_status(Xfer *xfer);
 char *xfer_repr(Xfer *xfer);
 void xfer_start(Xfer *xfer, gint64 offset, gint64 size);
+void xfer_set_offset_and_size(Xfer *xfer, gint64 offset, gint64 size);
 void xfer_cancel(Xfer *xfer);
 /* xfer_get_source is implemented below */
 
@@ -261,22 +263,38 @@ void xfer_cancel(Xfer *xfer);
 /* upgrade the start method to optionally take a callback, which is
  * passed to the GSource's set_callback */
 %perlcode %{
+use Scalar::Util;
 sub xfer_start_with_callback {
     my ($xfer, $cb, $offset, $size) = @_;
+
+    Scalar::Util::weaken($cb);
     if (defined $cb) {
 	my $releasing_cb = sub {
-	    my ($src, $msg, $xfer) = @_;
+	    my ($src, $msg, $xfer1) = @_;
 	    my $done = $msg->{'type'} == $XMSG_DONE;
-	    $src->remove() if $done;
 	    $cb->(@_);
-	    $cb = undef if $done; # break potential reference loop
+	    $xfer = undef if $done; # break potential reference loop
 	};
-	$xfer->get_source()->set_callback($releasing_cb);
+	$xfer->{'xfer'}->get_source()->set_callback($releasing_cb);;
+	$xfer->{'src'} = $xfer->{'xfer'}->get_source();
+	$xfer->{'cb'} = $cb;
+
     }
     $offset = 0 if !defined $offset;
-    $size = 0 if !defined $size;
-    xfer_start($xfer, $offset, $size);
+    $size = -1 if !defined $size;
+    $xfer->{'offset'} = $offset;
+    $xfer->{'size'} = $size;
+    xfer_start($xfer->{'xfer'}, $offset, $size);
 }
+
+sub xfer_set_offset_and_size {
+    my ($xfer, $offset, $size) = @_;
+
+    $xfer->{'offset'} = $offset if !defined $offset;
+    $xfer->{'size'} = $size if !defined $size;
+    xfer_set_offset_and_size($xfer->{'xfer'}, $offset, $size);
+}
+
 %}
 
 /* Change the callback */
@@ -287,11 +305,12 @@ sub xfer_set_callback {
 	my $releasing_cb = sub {
 	    my ($src, $msg, $xfer) = @_;
 	    my $done = $msg->{'type'} == $XMSG_DONE;
-	    $src->remove() if $done;
 	    $cb->(@_);
-	    $cb = undef if $done; # break potential reference loop
+	    $xfer = undef if $done; # break potential reference loop
        };
 	$xfer->get_source()->set_callback($releasing_cb);
+	$xfer->{'src'} = $xfer->{'xfer'}->get_source();
+	$xfer->{'cb'} = $cb;
     } else {
 	$xfer->get_source()->set_callback(undef);
     }
@@ -308,7 +327,11 @@ sub xfer_set_callback {
 void xfer_element_unref(XferElement *elt); /* (wrap the macro, above) */
 /* xfer_element_link_to -- private */
 char *xfer_element_repr(XferElement *elt);
-/* xfer_element_set_size -- private */
+gboolean xfer_element_set_offset(XferElement *elt, gint64 offset);
+gboolean xfer_element_set_size(XferElement *elt, gint64 size);
+off_t xfer_element_get_offset(XferElement *elt);
+off_t xfer_element_get_orig_size(XferElement *elt);
+off_t xfer_element_get_size(XferElement *elt);
 /* xfer_element_start -- private */
 /* xfer_element_cancel -- private */
 
@@ -381,6 +404,10 @@ XferElement *xfer_source_pattern(
 XferElement *xfer_source_fd(
     int fd);
 
+%newobject xfer_source_file;
+XferElement *xfer_source_file(
+    char *filename);
+
 %newobject xfer_source_directtcp_listen;
 XferElement *xfer_source_directtcp_listen(void);
 
@@ -408,7 +435,7 @@ XferElement *xfer_filter_process(
     gboolean must_drain,
     gboolean cancel_on_success,
     gboolean ignore_broken_pipe);
-int get_err_fd(
+int filter_process_get_err_fd(
     XferElement *elt);
 
 %newobject xfer_dest_null;
@@ -441,6 +468,20 @@ xfer_dest_directtcp_listen_get_addrs(XferElement *elt) {
 
 %newobject xfer_dest_directtcp_connect;
 XferElement *xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
+
+%newobject xfer_dest_application;
+XferElement *xfer_dest_application(
+    gchar **argv,
+    gboolean need_root,
+    gboolean must_drain,
+    gboolean cancel_on_success,
+    gboolean ignore_broken_pipe);
+int dest_application_get_err_fd(
+    XferElement *elt);
+int dest_application_get_out_fd(
+    XferElement *elt);
+int dest_application_get_dar_fd(
+    XferElement *elt);
 
 /*
  * Callback handling
@@ -585,6 +626,7 @@ DECLARE_METHOD(repr, Amanda::Xfer::xfer_repr);
 DECLARE_METHOD(get_status, Amanda::Xfer::xfer_get_status);
 DECLARE_METHOD(get_source, Amanda::Xfer::xfer_get_amglue_source);
 DECLARE_METHOD(start, Amanda::Xfer::xfer_start_with_callback);
+DECLARE_METHOD(set_offset_and_size, Amanda::Xfer::xfer_set_offset_and_size);
 DECLARE_METHOD(set_callback, Amanda::Xfer::xfer_set_callback);
 DECLARE_METHOD(cancel, Amanda::Xfer::xfer_cancel);
 
@@ -594,6 +636,11 @@ PACKAGE(Amanda::Xfer::Element)
 DECLARE_METHOD(DESTROY, Amanda::Xfer::xfer_element_unref);
 OVERLOAD_REPR()
 DECLARE_METHOD(repr, Amanda::Xfer::xfer_element_repr);
+DECLARE_METHOD(set_offset, Amanda::Xfer::xfer_element_set_offset);
+DECLARE_METHOD(set_size, Amanda::Xfer::xfer_element_set_size);
+DECLARE_METHOD(get_offset, Amanda::Xfer::xfer_element_get_offset);
+DECLARE_METHOD(get_orig_size, Amanda::Xfer::xfer_element_get_orig_size);
+DECLARE_METHOD(get_size, Amanda::Xfer::xfer_element_get_size);
 
 /* ---- */
 
@@ -606,6 +653,12 @@ XFER_ELEMENT_SUBCLASS()
 PACKAGE(Amanda::Xfer::Source::Fd)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_fd)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Source::File)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_file)
 
 /* ---- */
 
@@ -650,7 +703,7 @@ DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_crc)
 PACKAGE(Amanda::Xfer::Filter::Process)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_process)
-DECLARE_METHOD(get_stderr_fd, Amanda::Xfer::get_err_fd)
+DECLARE_METHOD(get_stderr_fd, Amanda::Xfer::filter_process_get_err_fd)
 
 /* ---- */
 
@@ -677,6 +730,15 @@ PACKAGE(Amanda::Xfer::Dest::DirectTCPListen)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_directtcp_listen)
 DECLARE_METHOD(get_addrs, Amanda::Xfer::xfer_dest_directtcp_listen_get_addrs)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Application)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_application)
+DECLARE_METHOD(get_dar_fd, Amanda::Xfer::dest_application_get_dar_fd)
+DECLARE_METHOD(get_stderr_fd, Amanda::Xfer::dest_application_get_err_fd)
+DECLARE_METHOD(get_stdout_fd, Amanda::Xfer::dest_application_get_out_fd)
 
 /* ---- */
 
@@ -717,9 +779,54 @@ sub repr {
 
 PACKAGE(Amanda::Xfer)
 %perlcode %{
-# make Amanda::Xfer->new equivalent to Amanda::Xfer::Xfer->new (don't
-# worry, the blessings work out just fine)
-*new = *Amanda::Xfer::Xfer::new;
+sub new {
+    my $class = shift;
+
+    my $self = {
+        xfer => Amanda::Xfer::Xfer->new(@_),
+        src  => undef,
+	cb   => undef,
+    };
+
+    bless $self, $class;
+    return $self;
+}
+
+sub DESTROY {
+    my $self = shift;
+
+    if (defined $self->{'src'}) {
+        $self->{'src'}->remove();
+	$self->{'src'} = undef;
+    }
+    $self->{'cb'} = undef;
+    $self->{'xfer'} = undef;
+}
+
+sub start {
+    my $self = shift;
+    $self->xfer_start_with_callback(@_);
+}
+
+sub set_offset_and_size {
+    my $self = shift;
+    $self->{'xfer'}->set_offset_and_size(@_);
+}
+
+sub get_source {
+    my $self = shift;
+    $self->{'xfer'}->get_source(@_);
+}
+
+sub get_status {
+    my $self = shift;
+    $self->{'xfer'}->get_status(@_);
+}
+
+sub cancel {
+    my $self = shift;
+    $self->{'xfer'}->cancel(@_);
+}
 
 # try to load Amanda::XferServer, which is server-only.  If it's not found, then
 # its classes just remain undefined.

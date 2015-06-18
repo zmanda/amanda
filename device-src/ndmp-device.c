@@ -1024,7 +1024,7 @@ ndmp_device_seek_block(
 }
 
 static int
-ndmp_device_read_block (Device * dself, gpointer data, int *size_req) {
+ndmp_device_read_block (Device * dself, gpointer data, int *size_req, int max_block G_GNUC_UNUSED) {
     NdmpDevice *self = NDMP_DEVICE(dself);
     guint64 requested, actual;
     gsize read_block_size = ndmp_device_read_size(self);
