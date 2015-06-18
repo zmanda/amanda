@@ -1,4 +1,7 @@
 2015-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/dest-application.c, xfer-src/source-file.c: Add files
+
+2015-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* Implement DAR (Direct Access Recovery)
 
 2015-06-16  Jean-Louis Martineau <martineau@zmanda.com>
