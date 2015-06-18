@@ -1827,13 +1827,11 @@ failed:
  */
 static void
 read_statefd(
-    void *	cookie,
+    void *	cookie G_GNUC_UNUSED,
     void *	buf,
     ssize_t     size)
 {
-    struct databuf *db = cookie;
-
-    assert(db != NULL);
+    assert(cookie == NULL);
 
     switch (size) {
     case -1:
@@ -2051,7 +2049,7 @@ read_mesgfd(
 	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	    set_datafd = 1;
 	}
-	security_stream_read(streams[STATEFD].fd, read_statefd, db);
+	security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
     }
 
     /*

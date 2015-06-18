@@ -1,4 +1,7 @@
 2015-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fix compilation
+
+2015-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* xfer-src/source-file.c: Fix compilation
 
 2015-06-18  Jean-Louis Martineau <martineau@zmanda.com>
