@@ -3135,11 +3135,15 @@ read_amidxtaped_data(
 	}
 
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_dar)) {
-	    /* send USE-DAR request */
-            char *msg = g_strdup_printf("USE-DAR %s",
-                (state_filename && ctl_data->bsu->dar) ? "YES" : "NO");
-	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
-	    g_free(msg);
+	    if (!ctl_data->bsu || !ctl_data->bsu->dar || !state_filename) {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "USE-DAR NO");
+		if (state_filename) {
+		    unlink(state_filename);
+		    amfree(state_filename);
+		}
+	    } else {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "USE-DAR YES");
+	    }
 	}
 
 	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
@@ -3426,7 +3430,7 @@ start_processing_data(
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATAPATH-OK");
     }
 
-    if (state_filename && ctl_data->bsu->dar) {
+    if (state_filename && ctl_data->bsu && ctl_data->bsu->dar) {
 	ctl_data->dar_cdata.fd = ctl_data->dar_pipe[0];
 	ctl_data->dar_cdata.name = g_strdup("DAR");
 	ctl_data->dar_cdata.buffer = NULL;
