@@ -602,6 +602,12 @@ sub send_state_file {
             }
         }
         $self->close($self->{'state_stream'}, 'w');
+
+	# amandad can mix packet from multiple stream
+	# but amrecover except this close before the next packet (header)
+	# temporary fix until the protocol is enhanced or amrecover fixed.
+	# delay sending the header packet
+	sleep(1);
     }
 }
 

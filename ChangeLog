@@ -1,4 +1,7 @@
 2015-06-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amidxtaped.pl: Temporary fix for protocol bug.
+
+2015-06-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Fix if not an application
 
 2015-06-19  Jean-Louis Martineau <martineau@zmanda.com>
