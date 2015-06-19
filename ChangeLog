@@ -1,3 +1,7 @@
+2015-06-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_data.c: Undo patch.
+	* recover-src/extract_list.c: Fix compilation
+
 2015-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fix compilation
 

@@ -2579,9 +2579,8 @@ extract_files(void)
 		g_free(state_filename);
 		state_filename = NULL;
 	    } else {
-		fchown(fd_state, pwd->pw_uid, pwd->pw_gid);
-		if (fd_state < 0) {
-		    g_debug("Failed to open '%s': %s", state_filename,
+		if (fchown(fd_state, pwd->pw_uid, pwd->pw_gid) == -1) {
+		    g_debug("Failed to fchown '%s': %s", state_filename,
 			    strerror(errno));
 		}
 		while (1) {
