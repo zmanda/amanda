@@ -273,7 +273,11 @@ sub xfer_start_with_callback {
 	    my ($src, $msg, $xfer1) = @_;
 	    my $done = $msg->{'type'} == $XMSG_DONE;
 	    $cb->(@_);
-	    $xfer = undef if $done; # break potential reference loop
+	    if ($done) { # break potential reference loop
+		$xfer->{'src'} = undef;
+		$xfer->{'cb'} = undef;
+		$xfer = undef;
+	    }
 	};
 	$xfer->{'xfer'}->get_source()->set_callback($releasing_cb);;
 	$xfer->{'src'} = $xfer->{'xfer'}->get_source();
@@ -306,7 +310,11 @@ sub xfer_set_callback {
 	    my ($src, $msg, $xfer) = @_;
 	    my $done = $msg->{'type'} == $XMSG_DONE;
 	    $cb->(@_);
-	    $xfer = undef if $done; # break potential reference loop
+	    if ($done) { # break potential reference loop
+		$xfer->{'src'} = undef;
+		$xfer->{'cb'} = undef;
+		$xfer = undef;
+	    }
        };
 	$xfer->get_source()->set_callback($releasing_cb);
 	$xfer->{'src'} = $xfer->{'xfer'}->get_source();
@@ -796,7 +804,7 @@ sub DESTROY {
     my $self = shift;
 
     if (defined $self->{'src'}) {
-        $self->{'src'}->remove();
+        #$self->{'src'}->remove();
 	$self->{'src'} = undef;
     }
     $self->{'cb'} = undef;

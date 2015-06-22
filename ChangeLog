@@ -1,3 +1,6 @@
+2015-06-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Xfer.swg: break potential reference loop
+
 2015-06-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amidxtaped.pl: Temporary fix for protocol bug.
 
