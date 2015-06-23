@@ -1,4 +1,7 @@
 2015-06-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Util.swg: disable setenv_init.
+
+2015-06-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/xfer-source-device.c (pull_buffer_impl): Call
 	  device_read_block with a goot max_block value
 	* perl/Amanda/Device.swg (verify_random_from_device): Call
