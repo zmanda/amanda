@@ -76,6 +76,7 @@ pull_buffer_impl(
     gpointer buf = NULL;
     int result;
     int devsize;
+    int max_block;
 
     /* indicate EOF on an cancel */
     if (elt->cancelled) {
@@ -98,7 +99,11 @@ pull_buffer_impl(
 	    return NULL;
 	}
 	devsize = (int)self->block_size;
-	result = device_read_block(self->device, buf, &devsize, 0);
+	if (elt->size < 0)
+	    max_block = -1;
+	else
+	    max_block = (elt->size+self->block_size-1)/self->block_size;
+	result = device_read_block(self->device, buf, &devsize, max_block);
 	*size = devsize;
 
 	/* if the buffer was too small, loop around again */

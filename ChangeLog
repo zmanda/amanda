@@ -1,4 +1,10 @@
 2015-06-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/xfer-source-device.c (pull_buffer_impl): Call
+	  device_read_block with a goot max_block value
+	* perl/Amanda/Device.swg (verify_random_from_device): Call
+	  device_read_block with a max_block of -1
+
+2015-06-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Use g_ascii_strtoull.
 
 2015-06-22  Jean-Louis Martineau <martineau@zmanda.com>
