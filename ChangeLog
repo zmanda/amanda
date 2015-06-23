@@ -1,3 +1,6 @@
+2015-06-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Use g_ascii_strtoull.
+
 2015-06-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Xfer.swg: break potential reference loop
 

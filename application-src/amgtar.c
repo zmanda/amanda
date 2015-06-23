@@ -1171,7 +1171,7 @@ amgtar_backup(
 	    line[strlen(line)-1] = '\0';
 	}
 	if (strncmp(line, "block ", 6) == 0) { /* filename */
-	    off_t block_no = g_ascii_strtoll(line+6, NULL, 0);
+	    off_t block_no = g_ascii_strtoull(line+6, NULL, 0);
 	    char *filename = strchr(line, ':');
 	    if (filename) {
 		filename += 2;
@@ -1541,7 +1541,7 @@ amgtar_restore(
 	    int   previous_block = -1;
 
 	    while (fgets(line, 32768, recover_state_file) != NULL) {
-		off_t     block_no = g_ascii_strtoll(line, NULL, 0);
+		off_t     block_no = g_ascii_strtoull(line, NULL, 0);
 		gboolean  match    = FALSE;
 		char     *filename = strchr(line, ' ');
 		char     *ii;
