@@ -48,7 +48,7 @@ void setenv_init(void);
 
 void
 setenv_init(void) {
-    /* Th efollwoing lime break on sles 11 and perl-5.10.0
+    /* The follwoing line break on sles 11 and perl-5.10.0 */
     // PL_use_safe_putenv = 1;
 }
 %}
