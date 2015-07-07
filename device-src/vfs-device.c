@@ -999,7 +999,7 @@ vfs_device_read_block(
     Device   *dself,
     gpointer  data,
     int      *size_req,
-    int       max_dump G_GNUC_UNUSED)
+    int       max_block G_GNUC_UNUSED)
 {
     VfsDevice * self;
     int size;

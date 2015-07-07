@@ -164,7 +164,7 @@ static gboolean rait_device_finish_file (Device * self);
 static dumpfile_t * rait_device_seek_file (Device * self, guint file);
 static gboolean rait_device_seek_block (Device * self, guint64 block);
 static int      rait_device_read_block (Device * self, gpointer buf,
-                                        int * size, int max_dump G_GNUC_UNUSED);
+                                        int * size, int max_block);
 static gboolean rait_device_recycle_file (Device * self, guint filenum);
 static gboolean rait_device_finish (Device * self);
 static DeviceStatusFlags rait_device_read_label(Device * dself);

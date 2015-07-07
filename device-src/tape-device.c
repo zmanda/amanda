@@ -1071,7 +1071,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 }
 
 static int tape_device_read_block (Device * pself, gpointer buf,
-                                   int * size_req, int max_dump G_GNUC_UNUSED) {
+                                   int * size_req, int max_block G_GNUC_UNUSED) {
     TapeDevice * self;
     int size;
     IoResult result;

@@ -1,3 +1,7 @@
+2015-07-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/rait-device.c, device-src/tape-device.c,
+	  device-src/vfs-device.c: Typo.
+
 2015-06-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Util.swg: disable setenv_init.
 
