@@ -74,11 +74,12 @@ sub new {
     $self->{'props'} = {
         'pg-cleanupwal' => 'yes',
 	'pg-max-wal-wait' => 60,
+	'pg-full-wal' => 'incr',
     };
 
     my @PROP_NAMES = qw(pg-host pg-port pg-db pg-user pg-password pg-passfile
 			psql-path pg-datadir pg-archivedir pg-cleanupwal
-			pg-max-wal-wait);
+			pg-max-wal-wait  pg-full-wal);
 
     # config is loaded by Amanda::Application (and Amanda::Script_App)
     my $conf_props = getconf($CNF_PROPERTY);
@@ -143,6 +144,8 @@ if defined $self->{'args'}->{$pdumpname};
 	$self->{'props'}->{'pg-datadir'} =  $self->{'args'}->{'device'};
     }
 
+    $self->{'props'}->{'pg-full-wal'} ||= 'incr';
+    $self->{'props'}->{'pg-full-wal'} = lc($self->{'props'}->{'pg-full-wal'});
     $self->{'args'}->{'verbose'} ||= "no";
     $self->{'args'}->{'verbose'} = string_to_boolean($self->{'args'}->{'verbose'});
 
@@ -317,6 +320,12 @@ sub command_selfcheck {
     $self->print_to_server("ampgsql version " . $Amanda::Constants::VERSION,
 			   $Amanda::Script_App::GOOD);
 
+    if ($self->{'props'}->{'pg-full-wal'} ne "no" &&
+	$self->{'props'}->{'pg-full-wal'} ne "full" &&
+	$self->{'props'}->{'pg-full-wal'} ne "incr") {
+	$self->print_to_server("FULL-WAL property must be set to 'NO', 'FULL' or 'INCR'",
+			       $Amanda::Script_App::ERROR);
+    }
     for my $k (keys %{$self->{'args'}}) {
         print "OK application property: $k = $self->{'args'}->{$k}\n";
     }
@@ -783,6 +792,7 @@ sub _base_backup {
    $self->{'die_cb'} = $old_die_cb;
 
    # determine WAL files and append and create their tar file
+   my $last_end_wal;
    my $start_wal;
    my $end_wal;
 
@@ -792,6 +802,11 @@ sub _base_backup {
 		or $self->{'die_cb'}->("A .backup file was never found in the archive "
 				    . "dir $self->{'props'}->{'pg-archivedir'}");
 	$self->_wait_for_wal($end_wal);
+	if ($self->{'props'}->{'pg-full-wal'} eq "full") {
+	    $last_end_wal = _get_prev_state($self, 0);
+	} elsif ($self->{'props'}->{'pg-full-wal'} eq "incr") {
+	    $last_end_wal = _get_prev_state($self, 10);
+	}
    } else {
 	$start_wal = undef;
 	$end_wal = _get_prev_state($self, 0);
@@ -800,12 +815,14 @@ sub _base_backup {
    # now grab all of the WAL files, *inclusive* of $start_wal
    my @wal_files;
    my $adir = new IO::Dir($self->{'props'}->{'pg-archivedir'});
+   $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
    while (defined(my $fname = $adir->read())) {
        if ($fname =~ /^$_WAL_FILE_PAT$/) {
            if (!defined $end_wal ||
 	       (!defined $start_wal and ($fname le $end_wal)) ||
 	       (defined $start_wal and ($fname ge $start_wal) and
-		($fname le $end_wal))) {
+		($fname le $end_wal)) ||
+	       (defined $last_end_wal and ($fname gt $last_end_wal) and ($fname le $end_wal))) {
                push @wal_files, $fname;
                debug("will store: $fname");
            } elsif (defined $start_wal and $fname lt $start_wal) {
@@ -832,9 +849,25 @@ sub _base_backup {
        rmtree($dummydir);
    }
 
-   $self->{'state_cb'}->($self, $end_wal);
+    $self->{'state_cb'}->($self, $end_wal);
 
-   $self->{'done_cb'}->($size);
+    # remove older WAL files.
+    # should be done only on confirmation the backup succeeded from the server
+    if (defined $start_wal || defined $last_end_wal) {
+	my $adir = new IO::Dir($self->{'props'}->{'pg-archivedir'});
+	$adir or $self->{'die_cb'}->("Could not open archive WAL directory");
+	while (defined(my $fname = $adir->read())) {
+	    if ($fname =~ /^$_WAL_FILE_PAT$/) {
+		if ((defined $start_wal and $fname lt $start_wal) ||
+		    (defined $last_end_wal and $fname le $last_end_wal)) {
+		    $self->{'unlink_cb'}->("$self->{'props'}->{'pg-archivedir'}/$fname");
+		}
+            }
+	}
+	$adir->close();
+    }
+
+    $self->{'done_cb'}->($size);
 }
 
 sub _incr_backup {
@@ -1100,6 +1133,7 @@ GetOptions(
     'cleanupwal=s',
     'archivedir=s',
     'db=s',
+    'full-wal=s',
     'host=s',
     'max-wal-wait=s',
     'passfile=s',

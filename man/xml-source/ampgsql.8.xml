@@ -110,6 +110,22 @@ default).</para>
 Must be a unix path.</para>
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>FULL-WAL</term><listitem>
+<para>Which WAL files to archive when doing a full backup.</para>
+<variablelist>
+  <varlistentry><term>FULL</term>
+<listitem><para>Backup all WAL files since the previous full backup.</para>
+</listitem> </varlistentry>
+  <varlistentry><term>INCR</term>
+<listitem><para>Backup all WAL files since the previous backup (incr or full).</para>
+</listitem> </varlistentry>
+  <varlistentry><term>NO</term>
+<listitem><para>Backup all WAL files required for that full backup</para>
+</listitem> </varlistentry>
+</variablelist>
+<para>The default is "INCR".</para>
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
 <para>Path to the GNU tar executable. This option only has an effect
 during restore.  The default is set when Amanda is built by the
