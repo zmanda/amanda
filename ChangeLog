@@ -1,3 +1,7 @@
+2015-07-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Add 'File shrank by \d* bytes; padding
+	  with zeros' as normal message from tar.
+
 2015-06-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm (verify_unlocked): Reload the state and
 	  use eject_unload

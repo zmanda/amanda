@@ -547,11 +547,9 @@ sub _run_tar_totals {
     while (my $l = <TAR_ERR>) {
         if ($l =~ /^Total bytes written: (\d+)/) {
             $size = $1;
-        } elsif ($l =~ /file changed as we read it/) {
-	    chomp $l;
-	    $self->print_to_server($l, $Amanda::Script_App::GOOD);
-	    debug("TAR_ERR: $l");
-        } elsif ($l =~ /File removed before we read it/) {
+        } elsif ($l =~ /file changed as we read it/ ||
+		 $l =~ /File removed before we read it/ ||
+		 $l =~ /File shrank by \d* bytes; padding with zeros/) {
 	    chomp $l;
 	    $self->print_to_server($l, $Amanda::Script_App::GOOD);
 	    debug("TAR_ERR: $l");
