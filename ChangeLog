@@ -1,3 +1,7 @@
+2015-07-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Add 'File shrank by \d* bytes; padding
+	  with zeros' as normal message from tar.
+
 2015-07-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/rait-device.c, device-src/tape-device.c,
 	  device-src/vfs-device.c: Typo.
