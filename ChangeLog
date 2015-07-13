@@ -1,4 +1,8 @@
 2015-07-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Start backup event if tape is not ready in
+	  CNF_RESERVE == 0;
+
+2015-07-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Add FULL-WAL property.
 	* man/xml-source/ampgsql.8.xml: Document FULL-WAL property.
 

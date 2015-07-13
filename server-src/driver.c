@@ -83,6 +83,7 @@ static int conf_taperalgo;
 static int conf_taper_parallel_write;
 static int conf_runtapes;
 static char *conf_cmdfile;
+static unsigned long conf_reserve = 100;
 static time_t sleep_time;
 static int idle_reason;
 static char *driver_timestamp;
@@ -208,7 +209,6 @@ main(
     struct fs_usage fsusage;
     holdingdisk_t *hdp;
     identlist_t    il;
-    unsigned long reserve = 100;
     char *conf_diskfile;
     char *taper_program;
     char *line;
@@ -396,7 +396,7 @@ main(
 
     inparallel	= getconf_int(CNF_INPARALLEL);
 
-    reserve = (unsigned long)getconf_int(CNF_RESERVE);
+    conf_reserve = (unsigned long)getconf_int(CNF_RESERVE);
 
     total_disksize = (off_t)0;
     ha_last = NULL;
@@ -474,7 +474,7 @@ main(
 	total_disksize += ha->disksize;
     }
 
-    reserved_space = total_disksize * (off_t)(reserve / 100);
+    reserved_space = total_disksize * (off_t)(conf_reserve / 100);
 
     g_printf(_("reserving %lld out of %lld for degraded-mode dumps\n"),
 	   (long long)reserved_space, (long long)holding_free_space());
@@ -1507,7 +1507,7 @@ start_some_dumps(
     gboolean state_changed = FALSE;
 
     /* don't start any actual dumps until the taper is started */
-    if (!taper_started) return;
+    if (!taper_started && conf_reserve > 0) return;
 
     idle_reason = IDLE_NO_DUMPERS;
     sleep_time = 0;
