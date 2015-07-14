@@ -3307,10 +3307,14 @@ dump_match_selection(
 	    ok = TRUE;
 	} else if (ds->tag_type == TAG_NAME) {
 	    identlist_t tags;
-	    for (tags = sp->disk->tags; tags != NULL ; tags = tags->next) {
-		if (g_str_equal(ds->tag, tags->data)) {
-		    ok = TRUE;
-		    break;
+	    if (!sp->disk->tags) {
+		ok = TRUE;
+	    } else {
+		for (tags = sp->disk->tags; tags != NULL ; tags = tags->next) {
+		    if (g_str_equal(ds->tag, tags->data)) {
+			ok = TRUE;
+			break;
+		    }
 		}
 	    }
 	} else if (ds->tag_type == TAG_OTHER) {

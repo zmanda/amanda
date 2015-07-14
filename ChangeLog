@@ -1,4 +1,8 @@
 2015-07-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (dump_match_selection): A dle without tag must
+	  go on all storages
+
+2015-07-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: chown of archive dir when restoring an
 	  incr.
 
