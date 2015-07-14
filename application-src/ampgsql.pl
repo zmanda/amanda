@@ -1006,6 +1006,19 @@ sub command_restore {
 		'--ignore-zeros',
 		'--exclude', 'empty-incremental',
 		'--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
+	my $uid = (stat $_ARCHIVE_DIR_RESTORE)[4];
+	if ($uid == 0) {
+	    opendir(my $dh, $_ARCHIVE_DIR_RESTORE) || die;
+	    while (my $name = readdir $dh) {
+		next if $name == '.';
+		next if $name == '..';
+		my $uid = (stat "$_ARCHIVE_DIR_RESTORE/$name")[4];
+		my $gid = (stat "$_ARCHIVE_DIR_RESTORE/$name")[5];
+		chown $uid, $gid, $_ARCHIVE_DIR_RESTORE;
+		last;
+	    }
+	    closedir $dh;
+	}
 	(0 == $status) or die("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
     } else {
 	debug("extracting base of full backup to $cur_dir/$_DATA_DIR_RESTORE");
