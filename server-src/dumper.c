@@ -1049,9 +1049,12 @@ process_dumpline(
 			}
 		    }
 		    if (statefile_in_mesg != -1) {
-			int len = strlen(tok);
+			size_t len = strlen(tok);
 			tok[len] = '\n';
-			write(statefile_in_mesg, tok, len+1);
+			if (full_write(statefile_in_mesg, tok, len+1) < len+1) {
+			    g_debug("Failed to write to state file: %s",
+				    strerror(errno));
+			}
 			tok[len] = '\0';
 		    }
 		} else {

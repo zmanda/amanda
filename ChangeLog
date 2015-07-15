@@ -1,4 +1,8 @@
 2015-07-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c (process_dumpline): Use full_write instead of
+	  write and check the result.
+
+2015-07-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Add krb5 to exit_on_qlength
 	* application-src/amgtar.c: Improve debugging
 	* perl/Amanda/FetchDump.pm: Uncompress the state file
