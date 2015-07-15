@@ -72,6 +72,7 @@ struct databuf {
     pid_t compresspid;		/* valid if fd is pipe to compress */
     pid_t encryptpid;		/* valid if fd is pipe to encrypt */
 };
+pid_t statepid = -1;
 
 struct databuf *g_databuf = NULL;
 
@@ -141,7 +142,8 @@ static crc_t native_crc;
 static crc_t client_crc;
 static char *log_filename = NULL;
 static char *state_filename = NULL;
-static FILE *statefile_in_mesg = NULL;
+static char *state_filename_gz = NULL;
+static int   statefile_in_mesg = -1;
 static int   statefile_in_stream = -1;
 static int   retry_delay;
 static int   retry_level;
@@ -1034,14 +1036,23 @@ process_dumpline(
 	    } else {
 		tok = strtok(NULL, "");
 		if (tok) {
-		    if (!statefile_in_mesg) {
-			statefile_in_mesg = fopen(state_filename, "w");
-			if (!statefile_in_mesg) {
-			    g_debug("Can't open statefile '%s': %s", state_filename, strerror(errno));
+		    if (statefile_in_mesg == -1) {
+			statefile_in_mesg = open(state_filename_gz,
+					O_WRONLY | O_CREAT | O_TRUNC, 0600);
+			if (statefile_in_mesg == -1) {
+			    g_debug("Can't open statefile '%s': %s",
+				    state_filename_gz, strerror(errno));
+			} else {
+			    if (runcompress(statefile_in_mesg, &statepid, COMP_BEST, "state compress") < 0) {
+				aclose(statefile_in_mesg);
+			    }
 			}
 		    }
-		    if (statefile_in_mesg) {
-			fprintf(statefile_in_mesg, "%s\n", tok);
+		    if (statefile_in_mesg != -1) {
+			int len = strlen(tok);
+			tok[len] = '\n';
+			write(statefile_in_mesg, tok, len+1);
+			tok[len] = '\0';
 		    }
 		} else {
 		    g_debug("Invalid state");
@@ -1470,6 +1481,8 @@ do_dump(
     state_filename = g_strdup_printf("%s/%s/%s/%s_%d.state",
 		 getconf_str(CNF_INDEXDIR), shostname,
 		 sdiskname, dumper_timestamp, level);
+    state_filename_gz = g_strdup_printf("%s%s", state_filename,
+						COMPRESS_SUFFIX);
     amfree(shostname);
     amfree(sdiskname);
 
@@ -1732,6 +1745,7 @@ do_dump(
 	aclose(db->fd);
 
     amfree(state_filename);
+    amfree(state_filename_gz);
     amfree(errstr);
     dumpfile_free_data(&file);
 
@@ -1836,8 +1850,7 @@ read_statefd(
     switch (size) {
     case -1:
 	if (statefile_in_stream) {
-	    close(statefile_in_stream);
-	    statefile_in_stream = -1;
+	    aclose(statefile_in_stream);
 	}
 
 	g_free(errstr);
@@ -1852,8 +1865,7 @@ read_statefd(
 	 * EOF.  Just shut down the state stream.
 	 */
 	if (statefile_in_stream) {
-	    close(statefile_in_stream);
-	    statefile_in_stream = -1;
+	    aclose(statefile_in_stream);
 	}
 	security_stream_close(streams[STATEFD].fd);
 	streams[STATEFD].fd = NULL;
@@ -1870,8 +1882,16 @@ read_statefd(
     default:
 	assert(buf != NULL);
 	if (statefile_in_stream == -1) {
-	    statefile_in_stream = open(state_filename,
+	    statefile_in_stream = open(state_filename_gz,
 				       O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	    if (statefile_in_stream == -1) {
+		g_debug("Can't open statefile '%s': %s", state_filename_gz,
+					       strerror(errno));
+	    } else {
+		if (runcompress(statefile_in_stream, &statepid, COMP_BEST, "state compress") < 0) {
+		    aclose(statefile_in_stream);
+		}
+	    }
 	}
 	if (statefile_in_stream != -1) {
 	    full_write(statefile_in_stream, buf, size);
@@ -1909,9 +1929,8 @@ read_mesgfd(
 	process_dumpeof();
 	security_stream_close(streams[MESGFD].fd);
 	streams[MESGFD].fd = NULL;
-	if (statefile_in_mesg) {
-	    fclose(statefile_in_mesg);
-	    statefile_in_mesg = NULL;
+	if (statefile_in_mesg != -1) {
+	    aclose(statefile_in_mesg);
 	}
 	/*
 	 * If the data fd and index fd has also shut down, then we're done.

@@ -107,7 +107,7 @@ child_watch_callback(
 
     if (errmsg) {
 	msg = xmsg_new(XFER_ELEMENT(self), XMSG_INFO, 0);
-	msg->message = g_strdup("ERROR");
+	msg->message = g_strdup(errmsg);
 	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
     } else {
 	msg = xmsg_new(XFER_ELEMENT(self), XMSG_INFO, 0);

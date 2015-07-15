@@ -1,3 +1,12 @@
+2015-07-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Add krb5 to exit_on_qlength
+	* application-src/amgtar.c: Improve debugging
+	* perl/Amanda/FetchDump.pm: Uncompress the state file
+	* server-src/amidxtaped.pl: Uncompress the state file
+	* server-src/dumper.c: Compress the state file
+	* xfer-src/dest-application.c: Improve XMSG
+	* xfer-src/filter-process.c: Improve XMSG
+
 2015-07-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (dump_match_selection): A dle without tag must
 	  go on all storages

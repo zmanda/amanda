@@ -119,6 +119,7 @@ use Amanda::Recovery::Clerk;
 @ISA = qw( Amanda::ClientService Amanda::Recovery::Clerk::Feedback);
 
 use Sys::Hostname;
+use IPC::Open2;
 
 use Amanda::Debug qw( debug info warning );
 use Amanda::MainLoop qw( :GIOCondition );
@@ -591,8 +592,17 @@ sub send_state_file {
         my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
                 '/' . $disk . '/' . $header->{'datestamp'} . '_' .
                 $header->{'dumplevel'} . '.state';
-        if (-e $state_filename) {
-            open STATEFILE, '<', $state_filename;
+        my $state_filename_gz = $state_filename . $Amanda::Constants::COMPRESS_SUFFIX;
+	if (-e $state_filename || -e $state_filename_gz) {
+	    my $pid;
+	    if (-e $state_filename_gz) {
+		$pid = open2(\*STATEFILE, undef,
+			     $Amanda::Constants::UNCOMPRESS_PATH,
+			     $Amanda::Constants::UNCOMPRESS_OPT,
+			     $state_filename_gz);
+	    } elsif (-e $state_filename) {
+		open STATEFILE, '<', $state_filename;
+	    }
             my $block;
             my $length;
             while ($length = sysread(STATEFILE, $block, 32768)) {
@@ -600,6 +610,10 @@ sub send_state_file {
                                      $block, $length)
                     or die "writing to $self->{state_stream}: $!";
             }
+	    if ($pid) {
+		waitpid($pid, 0);
+	    }
+	    close(STATEFILE);
         }
         $self->close($self->{'state_stream'}, 'w');
 

@@ -1534,7 +1534,8 @@ amgtar_restore(
 		    dar_fd, strerror(save_errno));
 	   exit(1);
 	}
-	if (argument->recover_dump_state_file) {
+	if (argument->recover_dump_state_file &&
+		   include_array->len > 0) {
 	    char  line[32768];
 	    FILE *recover_state_file = fopen(argument->recover_dump_state_file,
 					     "r");
@@ -1589,7 +1590,7 @@ amgtar_restore(
 	    }
 	    fclose(recover_state_file);
 	    if (previous_block >= 0) {
-		g_debug("restore block %lld (%lld) to END\n",
+		g_debug("restore block %lld (%lld) to END",
 			(long long)previous_block * 512,
 			(long long)previous_block);
 		fprintf(dar_file, "DAR %lld:-1\n",
@@ -1597,6 +1598,7 @@ amgtar_restore(
 	    }
 	} else {
 	    fprintf(dar_file,"DAR 0:-1\n");
+	    g_debug("full dar: 0:-1");
 	}
 	fflush(dar_file);
 	fclose(dar_file);

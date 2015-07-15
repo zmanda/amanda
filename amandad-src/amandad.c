@@ -453,6 +453,7 @@ main(
 
     if(strcasecmp(auth, "rsh") == 0 ||
        strcasecmp(auth, "ssh") == 0 ||
+       strcasecmp(auth, "krb5") == 0 ||
        strcasecmp(auth, "local") == 0 ||
        strcasecmp(auth, "bsdtcp") == 0 ||
        strcasecmp(auth, "ssl") == 0) {

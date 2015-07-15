@@ -77,11 +77,11 @@ sub local_message {
     } elsif ($self->{'code'} == 3300017) {
         return "Not decompressing because the backup image is not decrypted";
     } elsif ($self->{'code'} == 3300018) {
-        return "filter stderr: $self->{'line'}\n";
+        return "filter stderr: $self->{'line'}";
     } elsif ($self->{'code'} == 3300019) {
-        return "amndmp stdout: $self->{'line'}\n";
+        return "amndmp stdout: $self->{'line'}";
     } elsif ($self->{'code'} == 3300020) {
-        return "amndmp stderr: $self->{'line'}\n";
+        return "amndmp stderr: $self->{'line'}";
     } elsif ($self->{'code'} == 3300021) {
 	return "'compress' is not compatible with 'compress-best'";
     } elsif ($self->{'code'} == 3300022) {
@@ -188,6 +188,7 @@ use POSIX qw(strftime);
 use File::Basename;
 use XML::Simple;
 use IPC::Open3;
+use IPC::Open2;
 use IO::Handle;
 
 use Amanda::Device qw( :constants );
@@ -624,7 +625,7 @@ sub restore {
     my $size;
     my $xfer;
     my $use_dar = $params{'use_dar'} || 0;
-    my $xfer_waiting_dar;
+    my $xfer_waiting_dar = 0;
 
     my $steps = define_steps
 	cb_ref => \$params{'finished_cb'},
@@ -1134,6 +1135,19 @@ sub restore {
 		    if (-e $state_filename) {
 			push @argv, "--recover-dump-state-file",
 				    $state_filename;
+		    } else {
+			my $state_filename_gz = $state_filename . $Amanda::Constants::COMPRESS_SUFFIX;
+			if (-e $state_filename_gz) {
+			    open STATEFILE, '>', $state_filename;
+			    my $pid = open2(">&STATEFILE", undef,
+					    $Amanda::Constants::UNCOMPRESS_PATH,
+					    $Amanda::Constants::UNCOMPRESS_OPT,
+					    $state_filename_gz);
+			    close STATEFILE;
+			    waitpid($pid, 0);
+			    push @argv, "--recover-dump-state-file",
+					$state_filename;
+			}
 		    }
 		}
 
@@ -1386,7 +1400,8 @@ sub restore {
 		xfer => $xfer,
 		recovery_cb => $steps->{'recovery_cb'});
 
-		$steps->{'xfer_range'}->();
+	$xfer_waiting_dar = 1;
+	$steps->{'xfer_range'}->();
 	if ($self->{'feedback'}->can('start_msg')) {
 	    $self->{'feedback'}->start_msg($steps->{'dar_data'});
 	}
@@ -1406,7 +1421,7 @@ sub restore {
     };
 
     step xfer_range => sub {
-	#return if !$xfer_waiting_dar;
+	return if !$xfer_waiting_dar;
 	my $range = shift @{$current_dump->{'range'}};
 	if (defined $range) {
 	    ($offset, my $range1) = split ':', $range;
