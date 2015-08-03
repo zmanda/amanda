@@ -59,8 +59,8 @@ static int overwrite;
 static disklist_t origq;
 
 static uid_t uid_dumpuser;
-static gboolean who_check_host_setting = TRUE;//  TRUE => local check auth
-                                      // FALSE => clent check auth
+static gboolean who_check_host_setting = TRUE;//  TRUE =>  local check auth
+	                                      // FALSE => client check auth
 
 /* local functions */
 
@@ -1874,6 +1874,54 @@ start_server_check(
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_POST_HOST_BACKUP) {
 			delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800159, MSG_ERROR, 2,
+					"hostname", hostp->hostname,
+					"diskname", dp->name)));
+		    }
+		}
+
+		// check TAG match one of the storage
+		{
+		    identlist_t tags;
+		    int count = 0;
+		    int match_all = 0;
+		    int match_full = 0;
+		    int match_incr = 0;
+		    for (tags = dp->tags; tags != NULL ; tags = tags->next) {
+			gboolean found = FALSE;
+			count++;
+			for (storage = get_first_storage(); storage != NULL;
+			     storage = get_next_storage(storage)) {
+			    dump_selection_list_t dsl = storage_get_dump_selection(storage);
+			    if (!dsl)
+				continue;
+			    for (; dsl != NULL ; dsl = dsl->next) {
+				dump_selection_t *ds = dsl->data;
+				if (ds->tag_type == TAG_NAME) {
+				    if (g_str_equal(ds->tag, tags->data)) {
+					found = TRUE;
+					if (ds->level == LEVEL_ALL)
+					    match_all++;
+					else if (ds->level == LEVEL_FULL)
+					    match_full++;
+					else if (ds->level == LEVEL_INCR)
+					    match_incr++;
+				    }
+				}
+			    }
+			}
+			if (!found) {
+			    delete_message(amcheck_fprint_message(outf, build_message(
+					AMANDA_FILE, __LINE__, 2800233, MSG_WARNING, 3,
+					"hostname", hostp->hostname,
+					"diskname", dp->name,
+					"tag", tags->data)));
+			}
+		    }
+		    if (dp->to_holdingdisk == HOLD_NEVER &&
+			(match_all+match_full > 1 ||
+			 match_all+match_incr > 1)) {
+			delete_message(amcheck_fprint_message(outf, build_message(
+					AMANDA_FILE, __LINE__, 2800234, MSG_WARNING, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
 		    }

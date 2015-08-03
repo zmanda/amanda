@@ -573,14 +573,13 @@ main(
     while(!empty(directq)) {
 	sched_t *sp = dequeue_sched(&directq);
 	disk_t *dp = sp->disk;
+	char *qname = quote_string(dp->name);
 
 	if (dp->orig_holdingdisk == HOLD_REQUIRED) {
-	    char *qname = quote_string(dp->name);
 	    log_add(L_FAIL, "%s %s %s %d [%s]",
 		dp->host->hostname, qname, sp->datestamp,
 		sp->level,
 		_("can't dump required holdingdisk"));
-	    amfree(qname);
 	} else {
 	    gboolean dp_degraded_mode = FALSE;
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
@@ -589,14 +588,46 @@ main(
 		}
 	    }
 	    if (!dp_degraded_mode) {
-		char *qname = quote_string(dp->name);
-		log_add(L_FAIL, "%s %s %s %d [%s]",
+		identlist_t tags;
+		int count = 0;
+		for (tags = dp->tags; tags != NULL ; tags = tags->next) {
+		    identlist_t il;
+		    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+			char *storage_n = il->data;
+			storage_t *storage = lookup_storage(storage_n);
+			if (storage) {
+			    dump_selection_list_t dsl = storage_get_dump_selection(storage);
+			    if (!dsl)
+			    continue;
+			    for (; dsl != NULL ; dsl = dsl->next) {
+				dump_selection_t *ds = dsl->data;
+				if (ds->tag_type == TAG_ALL) {
+				    count++;
+				} else if (ds->tag_type == TAG_NAME) {
+				    if (g_str_equal(ds->tag, tags->data)) {
+					if (ds->level == LEVEL_ALL ||
+					    (ds->level == LEVEL_FULL && sp->level == 0) ||
+					    (ds->level == LEVEL_INCR && sp->level > 0)) {
+					    count++;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+		if (count == 0) {
+		    log_add(L_FAIL, "%s %s %s %d [%s]",
+			dp->host->hostname, qname, sp->datestamp,
+			sp->level,
+			_("The tags matches none of the active storage"));
+		} else {
+		    log_add(L_FAIL, "%s %s %s %d [%s]",
 			dp->host->hostname, qname, sp->datestamp,
 			sp->level,
 			_("can't dump in non degraded mode"));
-		amfree(qname);
+		}
 	    } else {
-		char *qname = quote_string(dp->name);
 		log_add(L_FAIL, "%s %s %s %d [%s]",
 			dp->host->hostname, qname, sp->datestamp,
 			sp->level,
@@ -605,9 +636,9 @@ main(
 			    dp->orig_holdingdisk != HOLD_NEVER ?
 				_("out of holding space in degraded mode") :
 				_("can't dump 'holdingdisk never' dle in degraded mode"));
-		amfree(qname);
 	    }
 	}
+	amfree(qname);
     }
 
     short_dump_state();				/* for amstatus */

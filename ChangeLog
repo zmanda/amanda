@@ -1,3 +1,8 @@
+2015-08-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Add message 2800233 and 2800234
+	* server-src/amcheck.c: Validate tag
+	* server-src/driver.c: Validate tag
+
 2015-07-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c (process_dumpline): Use full_write instead of
 	  write and check the result.

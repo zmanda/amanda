@@ -1219,6 +1219,10 @@ set_message(
     } else if (message->code == 2800232) {
 	msg = "Multiple DLE's for host '%{hostname}' use different maxdumps values";
 	hint = "Please ensure that all DLE's for the host use the same maxdumps value, including skipped ones";
+    } else if (message->code == 2800233) {
+	msg = "%{hostname} %{diskname}: The tag '%{tag}' match none of the storage dump_selection";
+    } else if (message->code == 2800234) {
+	msg = "%{hostname} %{diskname}: holdingdisk NEVER with tags matching more than one storage, will be dumped to only one storage";
     } else if (message->code == 2900000) {
 	msg = "The Application '%{application}' failed: %{errmsg}";
     } else if (message->code == 2900001) {
