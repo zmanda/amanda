@@ -35,6 +35,8 @@
     <arg choice='opt'>--exact-match</arg>
     <arg choice='opt'>--export</arg>
     <arg choice='opt'>--no-interactivity</arg>
+    <arg choice='opt'><option>--src-labelstr</option>
+	<replaceable>labelstr</replaceable></arg>
     <arg choice='opt'><option>--src-timestamp</option>
 	<replaceable>src-timestamp</replaceable></arg>
     <sbr/>
@@ -233,6 +235,14 @@ tertiary volumes.</para>
   <listitem>
 <para>Eliminate non-error messages, and is useful when running amvault from
 cron.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--src-labelstr</option> <replaceable>labelstr</replaceable></term>
+  <listitem>
+<para>Vault from volume with label matching this
+<emphasis remap='B'>labelstr</emphasis>.</para>
   </listitem>
   </varlistentry>
 

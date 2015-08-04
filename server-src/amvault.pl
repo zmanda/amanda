@@ -1087,7 +1087,7 @@ sub usage {
 
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
 	   [--fulls-only] [--latest-fulls] [--incrs-only] [--export]
-	   [--no-interactivity]
+	   [--no-interactivity] [--src-labelstr labelstr]
 	   [--src-timestamp src-timestamp] [--exact-match]
 	   --label-template label-template --dst-changer dst-changer
 	   [--autolabel autolabel-arg...]
@@ -1104,7 +1104,8 @@ Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
     --label-template: the template to use for new volume labels
     --dst-changer: the changer to which dumps should be written
     --autolabel: similar to the amanda.conf parameter; may be repeated (default: empty)
-    --no-interactivity: disable interactivity.
+    --no-interactivity: disable interactivity
+    --str-labelstr: vault from volume with label matching this labelstr
 
 Copies data from the run with timestamp <src-timestamp> onto volumes using
 the changer <dst-changer>, labeling new volumes with <label-template>.  If
