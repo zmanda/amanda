@@ -281,7 +281,7 @@ main(
 	diskarg_offset += 1;
     }
     if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
-                                                 "--exact_match")) {
+                                                 "--exact-match")) {
 	exact_match = TRUE;
 	diskarg_offset += 1;
     }

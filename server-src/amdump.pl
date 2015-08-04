@@ -231,9 +231,10 @@ sub planner_driver_pipeline {
 	POSIX::close($wpipe);
 	POSIX::dup2(fileno($amdump_log), 2);
 	close($amdump_log);
-	exec $planner,
-	    # note that @no_taper must follow --starttime
-	    $config_name, '--starttime', $timestamp, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk;
+	# note that @no_taper must follow --starttime
+	my @args = ($config_name, '--starttime', $timestamp, @no_taper, @from_client, @exact_match, @config_overrides_opts, @hostdisk);
+	debug("exec $planner " . join(' ', @args));
+	exec $planner, @args;
 	die "Could not exec $planner: $!";
     }
     debug(" planner: $pl_pid");
@@ -249,8 +250,9 @@ sub planner_driver_pipeline {
 	POSIX::close($null);
 	POSIX::dup2(fileno($amdump_log), 2);
 	close($amdump_log);
-	exec $driver,
-	    $config_name, @no_taper, @from_client, @config_overrides_opts;
+	my @args = ($config_name, @no_taper, @from_client, @config_overrides_opts);
+	debug("exec $driver " . join(' ', @args));
+	exec $driver, @args;
 	die "Could not exec $driver: $!";
     }
     debug(" driver: $dr_pid");
