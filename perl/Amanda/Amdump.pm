@@ -215,9 +215,10 @@ sub planner_driver_pipeline {
 	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
 	debug("exec: " .join(' ', $planner, $self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk));
 	close($self->{'amdump_log'});
-	exec $planner,
-	    # note that @no_taper must follow --starttime
-	    $self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk;
+	# note that @no_taper must follow --starttime
+	my @args = ($self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk);
+	debug("exec $planner " . join(' ', @args));
+	exec $planner, @args;
 	die "Could not exec $planner: $!";
     }
     debug(" planner: $pl_pid");
@@ -234,8 +235,9 @@ sub planner_driver_pipeline {
 	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
 	debug("exec: " . join(' ', $driver, $self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides));
 	close($self->{'amdump_log'});
-	exec $driver,
-	    $self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides;
+	my @args = ($self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides);
+	debug("exec $driver " . join(' ', @args));
+	exec $driver, @args;
 	die "Could not exec $driver: $!";
     }
     debug(" driver: $dr_pid");

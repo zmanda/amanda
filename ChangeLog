@@ -1,4 +1,7 @@
 2015-08-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amdump.pm: Improve debugging.
+
+2015-08-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Add message 2800233 and 2800234
 	* server-src/amcheck.c: Validate tag
 	* server-src/driver.c: Validate tag
