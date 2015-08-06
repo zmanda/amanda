@@ -137,6 +137,7 @@ struct _S3Device {
     gboolean enforce_volume_limit;
     gboolean use_subdomain;
     gboolean use_s3_multi_delete;
+    gboolean set_s3_multi_delete;
     char        *uploadId;
     GTree       *part_etag;
     char        *filename;

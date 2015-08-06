@@ -1,3 +1,8 @@
+2015-08-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c, device-src/s3-device.h: Change default value
+	  for S3-MULTI-DELETE
+	* man/xml-source/amanda-devices.7.xml: Document it
+
 2015-08-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Amdump.pm: Improve debugging.
 

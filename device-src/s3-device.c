@@ -1219,6 +1219,7 @@ s3_device_init(S3Device * self)
     self->thread_idle_cond = NULL;
     self->thread_idle_mutex = NULL;
     self->use_s3_multi_delete = 1;
+    self->set_s3_multi_delete = 0;
     self->reps = NULL;
     self->reps_bucket = NULL;
     self->transition_to_glacier = -1;
@@ -1861,17 +1862,29 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
     const char *storage_api = g_value_get_string(val);
     if (g_str_equal(storage_api, "S3")) {
 	self->s3_api = S3_API_S3;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 1;
     } else if (g_str_equal(storage_api, "SWIFT-1.0")) {
 	self->s3_api = S3_API_SWIFT_1;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 0;
     } else if (g_str_equal(storage_api, "SWIFT-2.0")) {
 	self->s3_api = S3_API_SWIFT_2;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 0;
     } else if (g_str_equal(storage_api, "OAUTH2")) {
 	self->s3_api = S3_API_OAUTH2;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 0;
     } else if (g_str_equal(storage_api, "AWS4")) {
 	self->s3_api = S3_API_AWS4;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 1;
     } else if (g_str_equal(storage_api, "CASTOR")) {
 #if LIBCURL_VERSION_NUM >= 0x071301
         curl_version_info_data *info;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 0;
         /* check the runtime version too */
         info = curl_version_info(CURLVERSION_NOW);
         if (info->version_num >= 0x071301) {
