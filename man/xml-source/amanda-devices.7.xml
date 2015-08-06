@@ -454,7 +454,8 @@ writing long enough to bring the average below this value.
  <!-- ==== -->
  <varlistentry><term>S3_MULTI_DELETE</term><listitem>
 (read-write) If the server support the multi delete protocol (only Amazon S3),
-default is "YES". If it fail, it revert to single delete.
+default is "YES" for "S3" and "AWS4" STORAGE_API, default in "NO" for all
+others STORAGE_API.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>NB_THREADS_BACKUP</term><listitem>
