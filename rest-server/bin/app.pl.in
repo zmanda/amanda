@@ -26,7 +26,6 @@ use Amanda::Paths;
 use Amanda::Process;
 use Amanda::Util qw( :constants );
 use Amanda::Rest::Amcheck;
-use Amanda::Rest::Changers;
 use Amanda::Rest::Configs;
 use Amanda::Rest::Dles;
 use Amanda::Rest::Dumps;
@@ -732,21 +731,6 @@ get '/amanda/v1.0/services/discover' => sub {
 	my ($status, $r) = Amanda::Rest::Services::discover(%p);
 	status $status if $status > 0;
 	return $r;
-};
-
-get '/amanda/v1.0/configs/:CONF/changers' => sub {
-	my %p = params;
-	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
-	my ($status, $r) = Amanda::Rest::Changers::list(%p);
-	status $status if $status > 0;
-	return $r
-};
-get '/amanda/v1.0/configs/:CONF/changers/:CHANGER' => sub {
-	my %p = params;
-	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
-	my ($status, $r) = Amanda::Rest::Changers::fields(%p);
-	status $status if $status > 0;
-	return $r
 };
 
 my $extensions_dir = $Amanda::Constants::REST_EXTENSIONS_DIR;
