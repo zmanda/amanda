@@ -204,7 +204,7 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
      {
         "code" : "1500058",
         "message" : "invalid 'FOO' field specified",
-        "filed" : "FOO",
+        "field" : "FOO",
         "severity" : "error",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
         "source_line" : "263"
@@ -344,7 +344,8 @@ sub _fields {
     foreach my $key (@keys) {
 	my $name = &$func_key_to_name($key);
 	$name =~ s/_/-/g;
-	if (!defined $params{'fields'} || $fields{$name} == 1) {
+	if ((!defined $params{'fields'}) ||
+	    ((defined $fields{$name}) && ($fields{$name} == 1))) {
 	    my $data =  &$func_getconf_human($DATA, $key);
 	    $values{$name} = $data;
 	    delete $fields{$name};
@@ -444,7 +445,8 @@ sub fields {
 	my $name = Amanda::Config::confparm_key_to_name($key);
 	if ($name) {
 	    $name =~ s/_/-/g;
-	    if (!defined $params{'fields'} || $fields{$name} == 1) {
+	    if ((!defined $params{'fields'}) ||
+		((defined $fields{$name}) && ($fields{$name} == 1))) {
 		my $data = getconf_human($key);
 		$values{$name} = $data;
 		delete $fields{$name};

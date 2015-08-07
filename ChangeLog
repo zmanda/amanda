@@ -1,4 +1,8 @@
 2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Rest/Configs.pm: Typo.
+	* installcheck/Amanda_Rest_Configs.pl: Fix check.
+
+2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c, common-src/amanda.h, common-src/match.c,
 	  common-src/security-util.c, server-src/driver.c,
 	  server-src/dumper.c: Coverity cleanup.

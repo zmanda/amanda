@@ -220,7 +220,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "Get config list error (Permission denied)");
 chmod 0700, $config_dir;
 
-
+config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 #CODE 1500007 and 1500008
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=foobar&fields=tapecycle");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
@@ -249,7 +249,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
         ],
       http_code => 200,
     },
-    "Get invalid fields (foobar,tapecycle)");
+    "Get invalid fields (foobar,tapecycle)") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 #CODE 1500008
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF?fields=runtapes&fields=tapecycle");
@@ -270,7 +270,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
         ],
       http_code => 200,
     },
-    "Get valid fields (runtapes,tapecycle)");
+    "Get valid fields (runtapes,tapecycle)") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 #CODE 1500009
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
@@ -283,7 +283,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'BUMPMULT' => '1.5',
 			'DEBUG-PROTOCOL' => 0,
 			'KRB5KEYTAB' => '/.amanda-v5-keytab',
-			'INDEXDIR' => '/amanda/h1/etc/amanda/TESTCONF/index',
 			'COLUMNSPEC' => '',
 			'AMRECOVER-DO-FSF' => 'YES',
 			'LABEL-NEW-TAPES' => '',
@@ -303,12 +302,10 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			],
 			'TAPECYCLE' => 3,
 			'DEBUG-RECOVERY' => 1,
-			'LOGDIR' => '/amanda/h1/etc/amanda/TESTCONF/log',
 			'ETIMEOUT' => 300,
 			'DEBUG-SENDBACKUP' => 0,
 			'REPORT-USE-MEDIA' => 'YES',
 			'DEBUG-AMINDEXD' => 0,
-			'DUMPUSER' => 'martinea',
 			'MAILER' => '/usr/bin/Mail',
 			'INTERACTIVITY' => undef,
 			'AMRECOVER-CHECK-LABEL' => 'YES',
@@ -319,7 +316,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'DEBUG-SENDSIZE' => 0,
 			'MAX-DLE-BY-VOLUME' => 1000000000,
 			'RUNTAPES' => 1,
-			'TPCHANGER' => 'chg-disk:/tmp/amanda/installchecks/vtapes',
 			'DEBUG-DRIVER' => 0,
 			'INPARALLEL' => 2,
 			'BUMPSIZE' => 10240,
@@ -346,12 +342,11 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 				'template' => undef,
 				'volume_error' => 'NO'
 			},
-			'TMPDIR' => '/tmp/amanda',
 			'STORAGE' => [
 				'TESTCONF'
 			],
 			'RECOVERY-LIMIT' => [],
-			'TAPEDEV' => '/dev/nst3',
+			'TAPEDEV' => getconf($CNF_TAPEDEV),
 			'TAPELIST' => 'tapelist',
 			'META-AUTOLABEL' => undef,
 			'MAILTO' => '',
@@ -377,7 +372,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'BUMPPERCENT' => 0,
 			'DEBUG-HOLDING' => 0,
 			'DEBUG-DUMPER' => 0,
-			'SSL-DIR' => '/amanda/h1/etc/amanda/ssl',
 			'CHANGERFILE' => 'changer',
 			'DEBUG-SELFCHECK' => 0,
 			'MAXDUMPS' => 1,
@@ -389,14 +383,21 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'SEND-AMREPORT-ON' => 'ALL',
 			'DISKFILE' => 'disklist',
 			'TAPERFLUSH' => 0,
-			'INFOFILE' => '/amanda/h1/etc/amanda/TESTCONF/curinfo',
 			'SORT-INDEX' => 'NO',
 			'REST-SSL-KEY' => undef,
+			'REST-SSL-CERT' => undef,
 			'CTIMEOUT' => 30,
 			'REQ-TRIES' => 3,
-			'REST-SSL-CERT' => undef,
 			'AMRECOVER-CHANGER' => '',
-			'DEBUG-AMANDAD' => 0},
+			'DEBUG-AMANDAD' => 0,
+			'TPCHANGER' => getconf($CNF_TPCHANGER),
+			'SSL-DIR' => getconf($CNF_SSL_DIR),
+			'INFOFILE' => getconf($CNF_INFOFILE),
+			'TMPDIR' => getconf($CNF_TMPDIR),
+			'INDEXDIR' => getconf($CNF_INDEXDIR),
+			'LOGDIR' => getconf($CNF_LOGDIR),
+			'DUMPUSER' => getconf($CNF_DUMPUSER),
+                },
 
 		'message' => 'Parameters values',
 		'process' => 'Amanda::Rest::Configs',
@@ -408,7 +409,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
         ],
       http_code => 200,
     },
-    "Get no fields");
+    "Get all fields") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 # set up and load a simple config
 $testconf = Installcheck::Run::setup();
