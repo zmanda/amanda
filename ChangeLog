@@ -1,4 +1,9 @@
 2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c, common-src/amanda.h, common-src/match.c,
+	  common-src/security-util.c, server-src/driver.c,
+	  server-src/dumper.c: Coverity cleanup.
+
+2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/bin/app.pl.in, rest-server/lib/Amanda/Rest.pm.in:
 	  Remove 'use Amanda::Rest::Changers;'
 

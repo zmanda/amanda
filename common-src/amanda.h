@@ -521,6 +521,7 @@ time_t	unctime(char *timestr);
  *  strncmp_const (str, const_str)
  *    -- compare str to const_str, a string constant
  *  strncmp_const_skip (str, const_var, ptr, var)
+ *  strncmp_const_skip_no_var(str, const_var, ptr)
  *    -- like strncmp_const, but skip the string if a match is
  *       found; this macro only tests for equality, discarding
  *       ordering information.
@@ -646,6 +647,12 @@ time_t	unctime(char *timestr);
 #define strncmp_const_skip(str, cnst, ptr, var)				\
 	((g_str_has_prefix((str), (cnst)))?		\
 		 ((ptr)+=sizeof((cnst))-1, (var)=(ptr)[-1], 0)		\
+		:1)
+
+/* (have to roll this up in an expression, so it can be used in if()) */
+#define strncmp_const_skip_no_var(str, cnst, ptr)				\
+	((g_str_has_prefix((str), (cnst)))?		\
+		 ((ptr)+=sizeof((cnst))-1, 0)		\
 		:1)
 
 /* from old bsd-security.c */

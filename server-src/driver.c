@@ -220,7 +220,6 @@ main(
     find_result_t *holding_files;
     disklist_t holding_disklist = { NULL, NULL };
     int no_taper = FALSE;
-    int from_client = FALSE;
     char *storage_n;
     int sum_taper_parallel_write;
     char *argv0;
@@ -301,8 +300,7 @@ main(
 
     if (argc > 2) {
 	if (g_str_equal(argv[2], "--from-client")) {
-	    from_client = TRUE;
-	    from_client = from_client;
+	    //driver do nothing with --from-client
 	    argv++;
 	    argc--;
 	}

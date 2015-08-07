@@ -2755,11 +2755,9 @@ bad_nak:
 	    }
 
 	    while((p = strchr(tok, ';')) != NULL) {
-		char ch;
 		*p++ = '\0';
-		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
+		if(strncmp_const_skip_no_var(tok, "features=", tok) == 0) {
 		    char *u = strchr(tok, ';');
-		    ch = ch;
 		    if (u)
 		       *u = '\0';
 		    am_release_feature_set(their_features);

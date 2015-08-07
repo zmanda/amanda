@@ -1198,12 +1198,10 @@ make_template(
 		    }
 		}
 		at++;
-	    } else if (*at == '$') {
+	    } else if (*at == '$' || *at == '\0') {
 		/* two $, copy one */
-		*t++ = *at++;
-	    } else if (*at == '\0') {
 		/* $ at end, copy it */
-		*t++ = *at;
+		*t++ = *at++;
 	    } else {
 		/* Copy the $ and continue withthe next character */
 		*t++ = *at;

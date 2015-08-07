@@ -975,7 +975,7 @@ bsd_recv_security_ok(
     char *tok, *security, *body, *result;
     char *service = NULL, *serviceX, *serviceY;
     char *security_line;
-    char *s, ch;
+    char *s;
     size_t len;
     in_port_t port;
 
@@ -1011,8 +1011,7 @@ bsd_recv_security_ok(
      * into an argv.
      */
     s = body;
-    if (strncmp_const_skip(s, "SERVICE ", s, ch) == 0) {
-	ch = ch;
+    if (strncmp_const_skip_no_var(s, "SERVICE ", s) == 0) {
 	serviceX = g_strdup(s);
 	serviceY = strtok(serviceX, "\n");
 	if (serviceY)

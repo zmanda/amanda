@@ -668,7 +668,6 @@ check_disk(
 		size_t pwtext_len;
 		pid_t checkpid;
 		amwait_t retstat;
-		pid_t wpid;
 		int rc;
 		char *line;
 		char *sep;
@@ -761,7 +760,6 @@ check_disk(
 #endif
 				     "-c", "quit",
 				     NULL);
-		checkpid = checkpid;
 		amfree(domain);
 		aclose(nullfd);
 		/*@ignore@*/
@@ -809,16 +807,15 @@ check_disk(
 		checkerr = -1;
 		rc = 0;
 		sep = "";
-		while ((wpid = wait(&retstat)) != -1) {
-		    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
-			char *exitstr = str_exit_status("smbclient", retstat);
-			strappend(err, sep);
-			strappend(err, exitstr);
-			sep = "\n";
-			amfree(exitstr);
+		waitpid(checkpid, &retstat, 0);
+		if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
+		    char *exitstr = str_exit_status("smbclient", retstat);
+		    strappend(err, sep);
+		    strappend(err, exitstr);
+		    sep = "\n";
+		    amfree(exitstr);
 
-			rc = 1;
-		    }
+		    rc = 1;
 		}
 		if (errdos != 0 || rc != 0) {
 		    char *errmsg;
