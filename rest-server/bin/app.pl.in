@@ -522,7 +522,7 @@ get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
 	status $status if $status > 0;
 	return $r
 };
-post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/info' => sub {
+post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
 	my %options;
 	my %p;
 	if (request->body) {
