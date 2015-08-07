@@ -625,9 +625,9 @@ parse_diskline(
 	    }
 	    return (-1);
 	}
-	dtype = read_dumptype(g_strjoin(NULL, "custom(", hostname,
+	dtype = read_dumptype(custom_escape(g_strjoin(NULL, "custom(", hostname,
 					":", disk->name, ")",
-					".", anonymous_value(), NULL),
+					".", anonymous_value(), NULL)),
 			      diskf, (char*)filename, line_num_p);
 	if (dtype == NULL || dup) {
 	    disk_parserror(filename, line_num,

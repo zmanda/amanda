@@ -72,20 +72,198 @@ get '/amanda/v1.0/configs/:CONF' => sub {
 	return $r
 };
 
+get '/amanda/v1.0/configs/:CONF/dumptypes' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::dumptypes_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/dumptypes/:DUMPTYPE' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::dumptype_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/tapetypes' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::tapetypes_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/tapetypes/:TAPETYPE' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::tapetype_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/holdingdisks' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::holdingdisks_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/holdingdisks/:HOLDINGDISK' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::holdingdisk_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/interfaces' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::interfaces_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/interfaces/:INTERFACE' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::interface_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/applications' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::applications_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/applications/:APPLICATION' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::application_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/scripts' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::scripts_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/scripts/:SCRIPT' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::script_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/devices' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::devices_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/devices/:DEVICE' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::device_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/changers' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::changers_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/changers/:CHANGER' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::changer_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/interactivitys' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::interactivitys_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/interactivitys/:INTERACTIVITY' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::interactivity_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/taperscans' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::taperscans_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/taperscans/:TAPERSCAN' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::taperscan_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/policys' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::policys_list(%p);
+	status $status if $status > 0;
+	return $r
+};
+
+get '/amanda/v1.0/configs/:CONF/policys/:POLICY' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r)  = Amanda::Rest::Configs::policy_fields(%p);
+	status $status if $status > 0;
+	return $r
+};
+
 get '/amanda/v1.0/configs/:CONF/storages' => sub {
 	my %p = params;
 	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
-	my ($status, $r) = Amanda::Rest::Storages::list(%p);
+	my ($status, $r)  = Amanda::Rest::Configs::storages_list(%p);
 	status $status if $status > 0;
 	return $r
 };
+
 get '/amanda/v1.0/configs/:CONF/storages/:STORAGE' => sub {
 	my %p = params;
 	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
-	my ($status, $r) = Amanda::Rest::Storages::fields(%p);
+	my ($status, $r)  = Amanda::Rest::Configs::storage_fields(%p);
 	status $status if $status > 0;
 	return $r
 };
+
 post '/amanda/v1.0/configs/:CONF/storages/:STORAGE/inventory' => sub {
 	my %options;
 	my %p;
@@ -303,11 +481,49 @@ get '/amanda/v1.0/configs/:CONF/labels' => sub {
 	return $r
 };
 
-#get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
-#};
-#get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
-#};
-post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
+get '/amanda/v1.0/configs/:CONF/dles' => sub {
+	my %options;
+	my %p;
+	if (request->body) {
+	    my $rp = from_json(request->body, \%options);
+	    %p = (params, %$rp);
+	} else {
+	    %p = params;
+	}
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r) = Amanda::Rest::Dles::list(%p);
+	status $status if $status > 0;
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST' => sub {
+	my %options;
+	my %p;
+	if (request->body) {
+	    my $rp = from_json(request->body, \%options);
+	    %p = (params, %$rp);
+	} else {
+	    %p = params;
+	}
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r) = Amanda::Rest::Dles::list(%p);
+	status $status if $status > 0;
+	return $r
+};
+get '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK' => sub {
+	my %options;
+	my %p;
+	if (request->body) {
+	    my $rp = from_json(request->body, \%options);
+	    %p = (params, %$rp);
+	} else {
+	    %p = params;
+	}
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r) = Amanda::Rest::Dles::list(%p);
+	status $status if $status > 0;
+	return $r
+};
+post '/amanda/v1.0/configs/:CONF/dles/hosts/:HOST/info' => sub {
 	my %options;
 	my %p;
 	if (request->body) {

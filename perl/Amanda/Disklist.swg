@@ -559,6 +559,8 @@ sub local_message {
 	return "No such disk '$self->{'disk'}' for host '$self->{'host'}' in disklist.";
     } elsif ($self->{'code'} == 1400009) {
 	return "Required 'disk' argument is not provided.";
+    } elsif ($self->{'code'} == 1400010) {
+	return "List of DLEs.";
     }
 }
 %}

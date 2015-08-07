@@ -45,9 +45,69 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 
 =over
 
-=item Changed setting on Dles
+=item Get a list (and setting) of all Dles
 
  request:
+  GET /amanda/v1.0/configs/:CONF/dles
+
+ reply:
+  HTTP status: 200 OK
+  [
+   {
+      "module" : "amanda",
+      "source_line" : "242",
+      "severity" : "info",
+      "process" : "Amanda::Rest::Dles",
+      "diskfile" : "/amanda/h1/etc/amanda/test/disklist",
+      "source_filename" : "/amanda/h1/linux/lib/amanda/perl/Amanda/Rest/Dles.pm",
+      "component" : "rest-server",
+      "message" : "List of DLEs.",
+      "running_on" : "amanda-server",
+      "code" : "1400010",
+      "result" : [
+         {
+            "disk" : "/boot",
+            "dumptype" : "custom(10.5.15.56:_boot).114",
+            "host" : "10.5.15.56",
+            "spindle" : "-1",
+            "device" : "/boot"
+         },
+         {
+            "host" : "127.0.0.1",
+            "spindle" : "-1",
+            "device" : "/boot",
+            "disk" : "/bootAMGTAR",
+            "dumptype" : "custom(127.0.0.1:_bootAMGTAR).78"
+         }
+      ]
+   }
+  ]
+
+=item Get a list (and setting) of all Dles for a host
+
+ request:
+  GET /amanda/v1.0/configs/:CONF/dles/hosts/:HOST
+
+ reply:
+
+=item Get a list (and setting) of a Dle
+
+ request:
+  GET /amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disk/:DISK
+   each '/' in the :DISK must be encoded as '%252F'
+
+ reply:
+
+=item Change setting on Dles
+
+ request:
+  POST /amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disks/:DISK
+    each '/' in the :DISK must be encoded as '%252F'
+        force=0|1
+        force_level_1=0|1
+        force_bump=0|1
+        force_no_bump=0|1
+
   POST /amanda/v1.0/configs/:CONF/dles/hosts/:HOST
     query arguments:
         disk=DISK
@@ -161,6 +221,92 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 =back
 
 =cut
+
+sub list {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Dles");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    if (defined $params{'DISK'} and !defined $params{'disk'}) {
+	$params{'disk'} = uri_unescape($params{'DISK'});
+    }
+
+    my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+    Amanda::Disklist::unload_disklist();
+    my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400006,
+			severity     => $Amanda::Message::ERROR,
+			diskfile     => $diskfile,
+			cfgerr_level => $cfgerr_level);
+	return (-1, \@result_messages);
+    }
+
+    my @hosts;
+    if (defined $params{'HOST'}) {
+	my $host = Amanda::Disklist::get_host($params{'HOST'});
+	if (!$host) {
+	    push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400007,
+			severity     => $Amanda::Message::ERROR,
+			diskfile     => $diskfile,
+			host         => $params{'HOST'});
+	    return (-1, \@result_messages);
+	}
+	@hosts = ( $host );
+    } else {
+	@hosts = Amanda::Disklist::all_hosts();
+    }
+    my @result;
+    foreach my $host (@hosts) {
+	my @disks;
+	if (defined $params{'disk'}) {
+	    my $disk = $host->get_disk($params{'disk'});
+	    if (!$disk) {
+		push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400008,
+			severity     => $Amanda::Message::ERROR,
+			diskfile     => $diskfile,
+			host         => $host->{'hostname'},
+			disk         => $params{'disk'});
+		next;
+	    }
+	    @disks = ( $disk );
+	} else {
+	    @disks = $host->all_disks($host);
+	}
+	foreach my $disk (@disks) {
+
+	    my $result = {
+			host         => $host->{'hostname'},
+			disk         => $disk->{'name'},
+			device => $disk->{'device'},
+			spindle => $disk->{'spindle'},
+			dumptype => dumptype_name($disk->{'config'}),
+		};
+	    push @result, $result;
+	}
+    }
+    if (@result) {
+	push @result_messages, Amanda::Disklist::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code         => 1400010,
+			severity     => $Amanda::Message::INFO,
+			diskfile     => $diskfile,
+			result       => \@result);
+    }
+    return (-1, \@result_messages);
+}
 
 sub setting {
     my %params = @_;

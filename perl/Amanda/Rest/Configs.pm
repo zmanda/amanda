@@ -83,7 +83,28 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
      }
   ]
 
-=item Get the value of global parameters
+=item Get the values of all global parameters
+
+ request:
+  GET /amanda/v1.0/configs/:CONF
+
+ result:
+  [
+     {
+        "code" : "1500008",
+        "message" : "Parameters values",
+        "result" : {
+           "RUNTAPES" : 3,
+           "TAPECYCLE" : 50
+	   ...
+        },
+        "severity" : "16",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "151"
+     }
+  ]
+
+=item Get the value of one or more qqglobal parameters
 
  request:
   GET /amanda/v1.0/configs/:CONF?fields=runtapes&fields=foo&fields=tapecycle&fields=bar
@@ -105,8 +126,8 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
         "code" : "1500008",
         "message" : "Parameters values",
         "result" : {
-           "runtapes" : 3,
-           "tapecycle" : 50
+           "RUNTAPES" : 3,
+           "TAPECYCLE" : 50
         },
         "severity" : "16",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
@@ -114,17 +135,89 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
      }
   ]
 
+=item Get a list of all item in a section
+
  request:
-  GET /amanda/v1.0/configs/:CONF
+  GET /amanda/v1.0/configs/:CONF/SECTION
+  eg. /amanda/v1.0/configs/:CONF/dumptypes
+
+ where SECTION is applications
+                  changers
+                  devices
+                  dumptypes
+                  holdingdisks
+                  interfaces
+                  interactivitys
+                  policys
+                  taperscans
+                  tapetypes
+                  scripts
+                  storages
+
+ reply:
+  HTTP status: 200 OK
+  [
+     {
+        "code" : "1500022", #code differ for each section
+        "dumptypes_list" : [
+	  "name1",
+	  "name2",
+	  ...
+        ],
+        "message" : "Dumptype list",
+        "severity" : "success",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "397"
+     }
+  ]
+
+
+=item Get the values of all parameters of a section
+
+ request:
+  GET /amanda/v1.0/configs/:CONF/SECTION/:SECTION
+  eg. /amanda/v1.0/configs/:CONF/dumptypes/global
+ result:
+  [
+     {
+        "code" : "1500037", #code differ for each section
+        "message" : "Dumptype 'global' parameters values",
+        "result" : {
+           "RUNTAPES" : 3,
+           "TAPECYCLE" : 50
+	   ...
+        },
+        "severity" : "success",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "271"
+     }
+  ]
+
+=item Get the value of one or more parametes of a section
+
+ request:
+  GET /amanda/v1.0/configs/:CONF/SECTION/:SECTION?fields=index&fields=foo
+  eg. /amanda/v1.0/configs/:CONF/dumptypes/global?fields=index&fields=foo'
 
  result:
   [
      {
-        "code" : "1500009",
-        "message" : "No fields specified",
-        "severity" : "16",
+        "code" : "1500058",
+        "message" : "invalid 'FOO' field specified",
+        "filed" : "FOO",
+        "severity" : "error",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
-        "source_line" : "194"
+        "source_line" : "263"
+     },
+     {
+        "code" : "1500037", #code differ for each section
+        "message" : "Dumptype 'global' parameters values",
+        "result" : {
+           "INDEX" : "YES",
+        },
+        "severity" : "success",
+        "source_filename" : "/usr/lib/amanda/perl/Amanda/Rest/Configs.pm",
+        "source_line" : "271"
      }
   ]
 
@@ -184,58 +277,103 @@ sub config_init {
     return ($status, @result_messages);
 }
 
-sub fields {
+sub config_read_disklist {
+    my %params = @_;
+
+    my $status = -1;
+    my @result_messages;
+
+    my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+    Amanda::Disklist::unload_disklist();
+    my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+    if ($cfgerr_level >= $Amanda::Config::CFGERR_WARNINGS) {
+	push @result_messages, Amanda::Disklist::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code         => 1400006,
+				severity     => $Amanda::Message::ERROR,
+				diskfile     => $diskfile,
+				cfgerr_level => $cfgerr_level);
+    }
+    return ($status, @result_messages);
+}
+
+sub _fields {
+    my $NAME = shift;
+    my $key = shift;
+    my $func_lookup = shift;
+    my $func_key_list = shift;
+    my $func_key_to_name = shift;
+    my $func_getconf_human = shift;
+    my $code_success = shift;
+    my $code_no = shift;
     my %params = @_;
 
     Amanda::Util::set_pname("Amanda::Rest::Configs");
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my @no_parameters;
+    my $DATA = &$func_lookup($params{$NAME});
+    if (!$DATA) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code         => $code_no,
+				severity     => $Amanda::Message::ERROR,
+				$key         => $params{$NAME});
+	return (-1, \@result_messages);
+    }
+    my %fields;
     my %values;
     if (defined $params{'fields'}) {
 	my $type = Scalar::Util::reftype($params{'fields'});
 	if (defined $type and $type eq "ARRAY") {
 	    foreach my $name (@{$params{'fields'}}) {
-		my $result = Amanda::Config::getconf_byname($name);
-		if (!defined $result) {
-		    push @no_parameters, $name;
-		} else {
-		    $values{$name} = $result;
-		}
+		$name = uc($name);
+		$name =~ s/_/-/g;
+		$fields{$name} = 1;
 	    }
 	} elsif (!defined $type and defined $params{'fields'} and $params{'fields'} ne '') {
 	    my $name = $params{'fields'};
-	    my $result = Amanda::Config::getconf_byname($name);
-	    if (!defined $result) {
-		push @no_parameters, $name;
-	    } else {
-		$values{$name} = $result;
-	    }
+	    $name = uc($name);
+	    $name =~ s/_/-/g;
+	    $fields{$name} = 1;
 	}
     }
-    if (@no_parameters) {
+    my @keys = &$func_key_list();
+    foreach my $key (@keys) {
+	my $name = &$func_key_to_name($key);
+	$name =~ s/_/-/g;
+	if (!defined $params{'fields'} || $fields{$name} == 1) {
+	    my $data =  &$func_getconf_human($DATA, $key);
+	    $values{$name} = $data;
+	    delete $fields{$name};
+	}
+    }
+    for my $field (keys %fields) {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code      => 1500007,
+				code      => 1500058,
+				$key      => $params{$NAME},
 				severity => $Amanda::Message::ERROR,
-				parameters => \@no_parameters);
+				field => $field);
     }
     if (%values) {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
-				code      => 1500008,
-				severity => $Amanda::Message::SUCCESS,
+				code      => $code_success,
+				$key      => $params{$NAME},
+				severity  => $Amanda::Message::SUCCESS,
 				result    => \%values);
-    }
-    if (!@no_parameters and !%values) {
+    } else {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code      => 1500009,
-				severity => $Amanda::Message::ERROR);
+				$key      => $params{$NAME},
+				severity => $Amanda::Message::WARNING);
     }
     return (-1, \@result_messages);
 }
@@ -277,5 +415,463 @@ sub list {
     return ($status, \@result_messages);
 }
 
+sub fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my %fields;
+    my %values;
+    if (defined $params{'fields'}) {
+	my $type = Scalar::Util::reftype($params{'fields'});
+	if (defined $type and $type eq "ARRAY") {
+	    foreach my $name (@{$params{'fields'}}) {
+		$name = uc($name);
+		$name =~ s/_/-/g;
+		$fields{$name} = 1;
+	    }
+	} elsif (!defined $type and defined $params{'fields'} and $params{'fields'} ne '') {
+	    my $name = $params{'fields'};
+	    $name = uc($name);
+	    $name =~ s/_/-/g;
+	    $fields{$name} = 1;
+	}
+    }
+    my @keys = Amanda::Config::confparm_key_list();
+    foreach my $key (@keys) {
+	my $name = Amanda::Config::confparm_key_to_name($key);
+	if ($name) {
+	    $name =~ s/_/-/g;
+	    if (!defined $params{'fields'} || $fields{$name} == 1) {
+		my $data = getconf_human($key);
+		$values{$name} = $data;
+		delete $fields{$name};
+	    }
+	}
+    }
+
+    for my $field (keys %fields) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500058,
+				severity => $Amanda::Message::ERROR,
+				field => $field);
+    }
+
+    if (%values) {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500008,
+				severity => $Amanda::Message::SUCCESS,
+				result    => \%values);
+    } else {
+	push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code      => 1500009,
+				severity => $Amanda::Message::WARNING);
+    }
+    return (-1, \@result_messages);
+}
+
+sub dumptypes_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("dumptype");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500022,
+				severity => $Amanda::Message::SUCCESS,
+				dumptypes_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub dumptype_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("DUMPTYPE", "dumptype",
+		   \&Amanda::Config::lookup_dumptype,
+		   \&Amanda::Config::dumptype_key_list,
+		   \&Amanda::Config::dumptype_key_to_name,
+		   \&Amanda::Config::dumptype_getconf_human,
+		   1500037, 1500034, @_);
+}
+
+sub tapetypes_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("tapetype");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500023,
+				severity => $Amanda::Message::SUCCESS,
+				tapetypes_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub tapetype_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("TAPETYPE", "tapetype",
+		   \&Amanda::Config::lookup_tapetype,
+		   \&Amanda::Config::tapetype_key_list,
+		   \&Amanda::Config::tapetype_key_to_name,
+		   \&Amanda::Config::tapetype_getconf_human,
+		   1500038, 1500035, @_);
+}
+
+sub applications_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("application");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500024,
+				severity => $Amanda::Message::SUCCESS,
+				applications_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub application_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("APPLICATION", "application",
+		   \&Amanda::Config::lookup_application,
+		   \&Amanda::Config::application_key_list,
+		   \&Amanda::Config::application_key_to_name,
+		   \&Amanda::Config::application_getconf_human,
+		   1500039, 1500049, @_);
+}
+
+sub devices_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("device");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500025,
+				severity => $Amanda::Message::SUCCESS,
+				devices_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub device_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("DEVICE", "device",
+		   \&Amanda::Config::lookup_device_config,
+		   \&Amanda::Config::device_config_key_list,
+		   \&Amanda::Config::device_config_key_to_name,
+		   \&Amanda::Config::device_config_getconf_human,
+		   1500040, 1500050, @_);
+}
+
+sub changers_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("changer");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500026,
+				severity => $Amanda::Message::SUCCESS,
+				changers_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub changer_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("CHANGER", "changer",
+		   \&Amanda::Config::lookup_changer_config,
+		   \&Amanda::Config::changer_config_key_list,
+		   \&Amanda::Config::changer_config_key_to_name,
+		   \&Amanda::Config::changer_config_getconf_human,
+		   1500041, 1500051, @_);
+}
+
+sub storages_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("storage");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500027,
+				severity => $Amanda::Message::SUCCESS,
+				storages_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub storage_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("STORAGE", "storage",
+		   \&Amanda::Config::lookup_storage,
+		   \&Amanda::Config::storage_key_list,
+		   \&Amanda::Config::storage_key_to_name,
+		   \&Amanda::Config::storage_getconf_human,
+		   1500036, 1500048, @_);
+}
+
+sub scripts_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("script");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500028,
+				severity => $Amanda::Message::SUCCESS,
+				scripts_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub script_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    ($status, @result_messages) = Amanda::Rest::Configs::config_read_disklist(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("SCRIPT", "script",
+		   \&Amanda::Config::lookup_pp_script,
+		   \&Amanda::Config::pp_script_key_list,
+		   \&Amanda::Config::pp_script_key_to_name,
+		   \&Amanda::Config::pp_script_getconf_human,
+		   1500042, 1500052, @_);
+}
+
+sub holdingdisks_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("holdingdisk");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500029,
+				severity => $Amanda::Message::SUCCESS,
+				holdingdisks_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub holdingdisk_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("HOLDINGDISK", "holdingdisk",
+		   \&Amanda::Config::lookup_holdingdisk,
+		   \&Amanda::Config::holdingdisk_key_list,
+		   \&Amanda::Config::holdingdisk_key_to_name,
+		   \&Amanda::Config::holdingdisk_getconf_human,
+		   1500043, 1500053, @_);
+}
+
+sub interfaces_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("interface");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500030,
+				severity => $Amanda::Message::SUCCESS,
+				interfaces_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub interface_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("INTERFACE", "interface",
+		   \&Amanda::Config::lookup_interface,
+		   \&Amanda::Config::interface_key_list,
+		   \&Amanda::Config::interface_key_to_name,
+		   \&Amanda::Config::interface_getconf_human,
+		   1500044, 1500054, @_);
+}
+
+sub interactivitys_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("interactivity");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500031,
+				severity => $Amanda::Message::SUCCESS,
+				interactivitys_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub interactivity_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("INTERACTIVITY", "interactivity",
+		   \&Amanda::Config::lookup_interactivity,
+		   \&Amanda::Config::interactivity_key_list,
+		   \&Amanda::Config::interactivity_key_to_name,
+		   \&Amanda::Config::interactivity_getconf_human,
+		   1500045, 1500055, @_);
+}
+
+sub taperscans_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("taperscan");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500032,
+				severity => $Amanda::Message::SUCCESS,
+				taperscans_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub taperscan_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("TAPERSCAN", "taperscan",
+		   \&Amanda::Config::lookup_taperscan,
+		   \&Amanda::Config::taperscan_key_list,
+		   \&Amanda::Config::taperscan_key_to_name,
+		   \&Amanda::Config::taperscan_getconf_human,
+		   1500046, 1500056, @_);
+}
+
+sub policys_list {
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    my @list = Amanda::Config::getconf_list("policy");
+    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1500033,
+				severity => $Amanda::Message::SUCCESS,
+				policys_list   => \@list);
+
+    return (-1, \@result_messages);
+}
+
+sub policy_fields {
+    my %params = @_;
+
+    Amanda::Util::set_pname("Amanda::Rest::Configs");
+    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+    return ($status, \@result_messages) if @result_messages;
+
+    return _fields("POLICY", "policy",
+		   \&Amanda::Config::lookup_policy,
+		   \&Amanda::Config::policy_key_list,
+		   \&Amanda::Config::policy_key_to_name,
+		   \&Amanda::Config::policy_getconf_human,
+		   1500047, 1500057, @_);
+}
 
 1;

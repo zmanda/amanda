@@ -173,6 +173,7 @@ APPLY(CNF_SSL_CHECK_CERTIFICATE_HOST)
 amglue_add_enum_tag_fns(confparm_key);
 amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
 amglue_copy_to_tag(confparm_key, getconf);
+amglue_add_enum_list(confparm_key);
 constant_pod(Global Parameters, FOR_ALL_CONFPARM_KEY)
 
 #define FOR_ALL_TAPETYPE_KEY(APPLY)\
@@ -191,6 +192,7 @@ APPLY(TAPETYPE_PART_CACHE_MAX_SIZE)
 amglue_add_enum_tag_fns(tapetype_key);
 amglue_add_constants(FOR_ALL_TAPETYPE_KEY, tapetype_key);
 amglue_copy_to_tag(tapetype_key, getconf);
+amglue_add_enum_list(tapetype_key);
 constant_pod(Tapetype Parameters, FOR_ALL_TAPETYPE_KEY)
 
 #define FOR_ALL_DUMPTYPE_KEY(APPLY)\
@@ -247,6 +249,7 @@ APPLY(DUMPTYPE_TAG)
 amglue_add_enum_tag_fns(dumptype_key);
 amglue_add_constants(FOR_ALL_DUMPTYPE_KEY, dumptype_key);
 amglue_copy_to_tag(dumptype_key, getconf);
+amglue_add_enum_list(dumptype_key);
 constant_pod(Dumptype Parameters, FOR_ALL_DUMPTYPE_KEY)
 
 #define FOR_ALL_INTERFACE_KEY(APPLY)\
@@ -256,7 +259,8 @@ APPLY(INTER_MAXUSAGE)
 amglue_add_enum_tag_fns(interface_key);
 amglue_add_constants(FOR_ALL_INTERFACE_KEY, interface_key);
 amglue_copy_to_tag(interface_key, getconf);
-constant_pod(Dumptype Parameters, FOR_ALL_INTERFACE_KEY)
+amglue_add_enum_list(interface_key);
+constant_pod(Interface Parameters, FOR_ALL_INTERFACE_KEY)
 
 #define FOR_ALL_HOLDINGDISK_KEY(APPLY)\
 APPLY(HOLDING_COMMENT)\
@@ -267,6 +271,7 @@ APPLY(HOLDING_CHUNKSIZE)
 amglue_add_enum_tag_fns(holdingdisk_key);
 amglue_add_constants(FOR_ALL_HOLDINGDISK_KEY, holdingdisk_key);
 amglue_copy_to_tag(holdingdisk_key, getconf);
+amglue_add_enum_list(holdingdisk_key);
 constant_pod(Holdingdisk Parameters, FOR_ALL_HOLDINGDISK_KEY)
 
 #define FOR_ALL_APPLICATION_KEY(APPLY)\
@@ -278,6 +283,7 @@ APPLY(APPLICATION_CLIENT_NAME)
 amglue_add_enum_tag_fns(application_key);
 amglue_add_constants(FOR_ALL_APPLICATION_KEY, application_key);
 amglue_copy_to_tag(application_key, getconf);
+amglue_add_enum_list(application_key);
 constant_pod(Application Parameters, FOR_ALL_APPLICATION_KEY)
 
 #define FOR_ALL_PP_SCRIPT_KEY(APPLY)\
@@ -293,6 +299,7 @@ APPLY(PP_SCRIPT_CLIENT_NAME)
 amglue_add_enum_tag_fns(pp_script_key);
 amglue_add_constants(FOR_ALL_PP_SCRIPT_KEY, pp_script_key);
 amglue_copy_to_tag(pp_script_key, getconf);
+amglue_add_enum_list(pp_script_key);
 constant_pod(Pre/Post-Script Parameters, FOR_ALL_PP_SCRIPT_KEY)
 
 #define FOR_ALL_DEVICE_CONFIG_KEY(APPLY)\
@@ -303,6 +310,7 @@ APPLY(DEVICE_CONFIG_DEVICE_PROPERTY)
 amglue_add_enum_tag_fns(device_config_key);
 amglue_add_constants(FOR_ALL_DEVICE_CONFIG_KEY, device_config_key);
 amglue_copy_to_tag(device_config_key, getconf);
+amglue_add_enum_list(device_config_key);
 constant_pod(Pre/Post-Script Parameters, FOR_ALL_DEVICE_CONFIG_KEY)
 
 #define FOR_ALL_CHANGER_CONFIG_KEY(APPLY)\
@@ -317,6 +325,7 @@ APPLY(CHANGER_CONFIG_DEVICE_PROPERTY)
 amglue_add_enum_tag_fns(changer_config_key);
 amglue_add_constants(FOR_ALL_CHANGER_CONFIG_KEY, changer_config_key);
 amglue_copy_to_tag(changer_config_key, getconf);
+amglue_add_enum_list(changer_config_key);
 constant_pod(Pre/Post-Script Parameters, FOR_ALL_CHANGER_CONFIG_KEY)
 
 #define FOR_ALL_INTERACTIVITY_KEY(APPLY)\
@@ -327,6 +336,7 @@ APPLY(INTERACTIVITY_PROPERTY)
 amglue_add_enum_tag_fns(interactivity_key);
 amglue_add_constants(FOR_ALL_INTERACTIVITY_KEY, interactivity_key);
 amglue_copy_to_tag(interactivity_key, getconf);
+amglue_add_enum_list(interactivity_key);
 constant_pod(Interactivity Parameters, FOR_ALL_INTERACTIVITY_KEY)
 
 #define FOR_ALL_TAPERSCAN_KEY(APPLY)\
@@ -337,6 +347,7 @@ APPLY(TAPERSCAN_PROPERTY)
 amglue_add_enum_tag_fns(taperscan_key);
 amglue_add_constants(FOR_ALL_TAPERSCAN_KEY, taperscan_key);
 amglue_copy_to_tag(taperscan_key, getconf);
+amglue_add_enum_list(taperscan_key);
 constant_pod(Taperscan Parameters, FOR_ALL_TAPERSCAN_KEY)
 
 #define FOR_ALL_POLICY_KEY(APPLY)\
@@ -349,6 +360,7 @@ APPLY(POLICY_RETENTION_FULL)
 amglue_add_enum_tag_fns(policy_key);
 amglue_add_constants(FOR_ALL_POLICY_KEY, policy_key);
 amglue_copy_to_tag(policy_key, getconf);
+amglue_add_enum_list(policy_key);
 constant_pod(Policy Parameters, FOR_ALL_POLICY_KEY)
 
 #define FOR_ALL_STORAGE_KEY(APPLY)\
@@ -383,6 +395,7 @@ APPLY(STORAGE_ERASE_ON_FULL)
 amglue_add_enum_tag_fns(storage_key);
 amglue_add_constants(FOR_ALL_STORAGE_KEY, storage_key);
 amglue_copy_to_tag(storage_key, getconf);
+amglue_add_enum_list(storage_key);
 constant_pod(Storage Parameters, FOR_ALL_STORAGE_KEY)
 
 /*
@@ -779,6 +792,445 @@ fail:
 }
 %}
 
+/* Typemap to convert a val_t to an SV for a human readable format, using a static function
+ * since it's huge.  This converts:
+ *  - CONFTYPE_SIZE, CONFTYPE_INT, CONFTYPE_INT64 -> IV
+ *  - CONFTYPE_NO_YES_ALL -> PV,
+ *  - CONFTYPE_BOOLEAN -> PV
+ *  - CONFTYPE_REAL -> NV
+ *  - CONFTYPE_STR, CONFTYPE_IDENT -> PV
+ *  - CONFTYPE_APPLICATION -> PV
+ *  - CONFTYPE_TIME -> IV (epoch timestamp)
+ *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATELIST, CONFTYPE_STRATEGY,
+ *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
+ *    CONFTYPE_EXECUTE_WHERE, CONFTYPE_SEND_AMREPORT_ON,
+ *    CONFTYPE_DATA_PATH, CONFTYPE_PART_CACHE_TYPE -> PV (string of the enum)
+ *  - CONFTYPE_RATE -> list of two NVs
+ *  - CONFTYPE_INTRANGE -> list of two IVs
+ *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref),
+ *    and 'optional' (int)
+ *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
+ *							'values' (listref)
+ *  - CONFTYPE_HOST_LIMIT -> listref of match expressions;
+ *           "SAMEHOST-SAMEHOST-SAMEHOST" in list is taken to mean 'same-host'
+ *           "SERVER-SERVER-SERVER" in list is taken to mean 'server'
+ *  - CONFTYPE_DUMP_SELECTION -> listref of hashref with keys 'tag' (PV), tag_type (IV),
+							      'level' (IV)
+ */
+
+%{
+static int
+val_t_to_print(val_t *val, SV **results) {
+    if (!val) {
+	results[0] = &PL_sv_undef;
+	return 1;
+    } else {
+	switch (val->type) {
+	    case CONFTYPE_RATE: {
+		AV *rlist = newAV();
+		av_push(rlist, newSVuv(val_t__rate(val)[0]));
+		av_push(rlist, newSVuv(val_t__rate(val)[1]));
+		results[0] = sv_2mortal(newRV_noinc((SV *)rlist));
+		return 1;
+	    }
+
+	    case CONFTYPE_INTRANGE: {
+		AV *ilist = newAV();
+		av_push(ilist, newSVuv(val_t__intrange(val)[0]));
+		av_push(ilist, newSVuv(val_t__intrange(val)[1]));
+		results[0] = sv_2mortal(newRV_noinc((SV *)ilist));
+		return 1;
+	    }
+
+	    case CONFTYPE_EXINCLUDE: {
+		/* exincludes are represented in perl as {
+		 *	'list' : [ 'list1', 'list2', ..],
+		 *	'file' : [ 'file1', 'file2', ..],
+		 *	'optional' : 1,
+		 * }
+		 */
+		exinclude_t *ei = &val_t__exinclude(val);
+		AV *list_entries = (AV *)sv_2mortal((SV *)newAV());
+		AV *file_entries = (AV *)sv_2mortal((SV *)newAV());
+		SV *optional = sv_newmortal();
+		HV *hv;
+		sle_t *iter;
+
+		/* first set up each of the hash values */
+
+		if (ei->sl_list) {
+		    for (iter = ei->sl_list->first; iter != NULL; iter = iter->next) {
+			av_push(list_entries, newSVpv(iter->name, 0));
+		    }
+		}
+
+		if(ei->sl_file) {
+		    for (iter = ei->sl_file->first; iter != NULL; iter = iter->next) {
+			av_push(file_entries, newSVpv(iter->name, 0));
+		    }
+		}
+
+		sv_setiv(optional, ei->optional);
+
+		/* now build the hash */
+		hv = (HV *)sv_2mortal((SV *)newHV());
+
+		hv_store(hv, "file", 4, newRV((SV *)file_entries), 0);
+		hv_store(hv, "list", 4, newRV((SV *)list_entries), 0);
+		hv_store(hv, "optional", 8, optional, 0);
+		SvREFCNT_inc(optional);
+
+		results[0] = sv_2mortal(newRV((SV *)hv));
+		return 1;
+	    }
+
+	    case CONFTYPE_PROPLIST:
+		results[0] = sv_2mortal(g_hash_table_to_hashref_property(val_t__proplist(val)));
+		return 1;
+
+	    case CONFTYPE_SIZE:
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__size(val)));
+		return 1;
+
+	    case CONFTYPE_INT64:
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__int64(val)));
+		return 1;
+
+	    case CONFTYPE_BOOLEAN:
+		results[0] = sv_newmortal();
+		sv_setpv(results[0], val_t__boolean(val)==0?"NO":"YES");
+		return 1;
+
+	    case CONFTYPE_NO_YES_ALL:
+		results[0] = sv_newmortal();
+		switch val_t__no_yes_all(val) {
+			case 0: sv_setpv(results[0], "NO"); break;
+			case 1: sv_setpv(results[0], "YES"); break;
+			case 2: sv_setpv(results[0], "ALL"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_COMPRESS:
+		results[0] = sv_newmortal();
+		switch val_t__compress(val) {
+			case COMP_NONE: sv_setpv(results[0], "NONE"); break;
+			case COMP_FAST: sv_setpv(results[0], "CLIENT FAST"); break;
+			case COMP_BEST: sv_setpv(results[0], "CLIENT BEST"); break;
+			case COMP_CUST: sv_setpv(results[0], "CLIENT CUSTOM"); break;
+			case COMP_SERVER_FAST: sv_setpv(results[0], "SERVER FAST"); break;
+			case COMP_SERVER_BEST: sv_setpv(results[0], "SERVER BEST"); break;
+			case COMP_SERVER_CUST: sv_setpv(results[0], "SERVER CUSTOM"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_ENCRYPT:
+		results[0] = sv_newmortal();
+		switch val_t__encrypt(val) {
+			case ENCRYPT_NONE: sv_setpv(results[0], "NONE"); break;
+			case ENCRYPT_CUST: sv_setpv(results[0], "CLIENT"); break;
+			case ENCRYPT_SERV_CUST: sv_setpv(results[0], "SERVER"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_STRATEGY:
+		results[0] = sv_newmortal();
+		switch val_t__strategy(val) {
+			case DS_SKIP: sv_setpv(results[0], "SKIP"); break;
+			case DS_STANDARD: sv_setpv(results[0], "STANDARD"); break;
+			case DS_NOFULL: sv_setpv(results[0], "NOFULL"); break;
+			case DS_NOINC: sv_setpv(results[0], "NOINC"); break;
+			case DS_4: sv_setpv(results[0], "DS4"); break;
+			case DS_5: sv_setpv(results[0], "DS5"); break;
+			case DS_HANOI: sv_setpv(results[0], "HANOI"); break;
+			case DS_INCRONLY: sv_setpv(results[0], "INCRONLY"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_TAPERALGO:
+		results[0] = sv_newmortal();
+		switch val_t__taperalgo(val) {
+			case ALGO_FIRST: sv_setpv(results[0], "FIRST"); break;
+			case ALGO_FIRSTFIT: sv_setpv(results[0], "FIRSTFIT"); break;
+			case ALGO_LARGEST: sv_setpv(results[0], "LARGEST"); break;
+			case ALGO_LARGESTFIT: sv_setpv(results[0], "LARGESTFIT"); break;
+			case ALGO_SMALLEST: sv_setpv(results[0], "SMALLEST"); break;
+			case ALGO_SMALLESTFIT: sv_setpv(results[0], "SMALLESTFIT"); break;
+			case ALGO_LAST: sv_setpv(results[0], "LAST"); break;
+			case ALGO_LASTFIT: sv_setpv(results[0], "LASTFIT"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_PRIORITY:
+		results[0] = sv_newmortal();
+		switch val_t__priority(val) {
+			case 0: sv_setpv(results[0], "LOW"); break;
+			case 1: sv_setpv(results[0], "MEDIUM"); break;
+			case 2: sv_setpv(results[0], "HIGH"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_HOLDING:
+		results[0] = sv_newmortal();
+		switch val_t__holding(val) {
+			case HOLD_NEVER: sv_setpv(results[0], "NEVER"); break;
+			case HOLD_AUTO: sv_setpv(results[0], "AUTO"); break;
+			case HOLD_REQUIRED: sv_setpv(results[0], "REQUIRED"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_EXECUTE_ON: {
+		AV *elist = newAV();
+		execute_on_t execute_on = val_t__execute_on(val);
+		if (execute_on & EXECUTE_ON_PRE_AMCHECK)
+			av_push(elist, newSVpv("PRE-AMCHECK", 0));
+		if (execute_on & EXECUTE_ON_PRE_DLE_AMCHECK)
+			av_push(elist, newSVpv("PRE-DLE-AMCHECK", 0));
+		if (execute_on & EXECUTE_ON_PRE_HOST_AMCHECK)
+			av_push(elist, newSVpv("PRE-HOST-AMCHECK", 0));
+		if (execute_on & EXECUTE_ON_POST_AMCHECK)
+			av_push(elist, newSVpv("POST-AMCHECK", 0));
+		if (execute_on & EXECUTE_ON_POST_DLE_AMCHECK)
+			av_push(elist, newSVpv("POST-DLE-AMCHECK", 0));
+		if (execute_on & EXECUTE_ON_POST_HOST_AMCHECK)
+			av_push(elist, newSVpv("POST-HOST-AMCHECK", 0));
+		if (execute_on & EXECUTE_ON_PRE_ESTIMATE)
+			av_push(elist, newSVpv("PRE-ESTIMATE", 0));
+		if (execute_on & EXECUTE_ON_PRE_DLE_ESTIMATE)
+			av_push(elist, newSVpv("PRE-DLE-ESTIMATE", 0));
+		if (execute_on & EXECUTE_ON_PRE_HOST_ESTIMATE)
+			av_push(elist, newSVpv("PRE-HOST-ESTIMATE", 0));
+		if (execute_on & EXECUTE_ON_POST_ESTIMATE)
+			av_push(elist, newSVpv("POST-ESTIMATE", 0));
+		if (execute_on & EXECUTE_ON_POST_DLE_ESTIMATE)
+			av_push(elist, newSVpv("POST-DLE-ESTIMATE", 0));
+		if (execute_on & EXECUTE_ON_POST_HOST_ESTIMATE)
+			av_push(elist, newSVpv("POST-HOST-ESTIMATE", 0));
+		if (execute_on & EXECUTE_ON_PRE_BACKUP)
+			av_push(elist, newSVpv("PRE-BACKUP", 0));
+		if (execute_on & EXECUTE_ON_PRE_DLE_BACKUP)
+			av_push(elist, newSVpv("PRE-DLE-BACKUP", 0));
+		if (execute_on & EXECUTE_ON_PRE_HOST_BACKUP)
+			av_push(elist, newSVpv("PRE-HOST-BACKUP", 0));
+		if (execute_on & EXECUTE_ON_POST_BACKUP)
+			av_push(elist, newSVpv("POST-BACKUP", 0));
+		if (execute_on & EXECUTE_ON_POST_DLE_BACKUP)
+			av_push(elist, newSVpv("POST-DLE-BACKUP", 0));
+		if (execute_on & EXECUTE_ON_POST_HOST_BACKUP)
+			av_push(elist, newSVpv("POST-HOST-BACKUP", 0));
+		if (execute_on & EXECUTE_ON_PRE_RECOVER)
+			av_push(elist, newSVpv("PRE-RECOVER", 0));
+		if (execute_on & EXECUTE_ON_POST_RECOVER)
+			av_push(elist, newSVpv("POST-RECOVER", 0));
+		if (execute_on & EXECUTE_ON_PRE_LEVEL_RECOVER)
+			av_push(elist, newSVpv("PRE-LEVEL-RECOVER", 0));
+		if (execute_on & EXECUTE_ON_POST_LEVEL_RECOVER)
+			av_push(elist, newSVpv("POST-LEVEL-RECOVER", 0));
+		if (execute_on & EXECUTE_ON_INTER_LEVEL_RECOVER)
+			av_push(elist, newSVpv("INTER-LEVEL-RECOVER", 0));
+		results[0] = sv_2mortal(newRV_noinc((SV *)elist));
+		return 1;
+	    }
+
+	    case CONFTYPE_EXECUTE_WHERE:
+		results[0] = sv_newmortal();
+		switch val_t__execute_where(val) {
+			case ES_CLIENT: sv_setpv(results[0], "CLIENT"); break;
+			case ES_SERVER: sv_setpv(results[0], "SERVER"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_SEND_AMREPORT_ON:
+		results[0] = sv_newmortal();
+		switch val_t__send_amreport(val) {
+			case SEND_AMREPORT_ALL: sv_setpv(results[0], "ALL"); break;
+			case SEND_AMREPORT_STRANGE: sv_setpv(results[0], "STRANGE"); break;
+			case SEND_AMREPORT_ERROR: sv_setpv(results[0], "ERROR"); break;
+			case SEND_AMREPORT_NEVER: sv_setpv(results[0], "NEVER"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_DATA_PATH:
+		results[0] = sv_newmortal();
+		switch val_t__data_path(val) {
+			case DATA_PATH_AMANDA: sv_setpv(results[0], "AMANDA"); break;
+			case DATA_PATH_DIRECTTCP: sv_setpv(results[0], "DIRECTTCP"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_PART_CACHE_TYPE:
+		results[0] = sv_newmortal();
+		switch val_t__part_cache_type(val) {
+			case PART_CACHE_TYPE_NONE: sv_setpv(results[0], "NONE"); break;
+			case PART_CACHE_TYPE_MEMORY: sv_setpv(results[0], "MEMORY"); break;
+			case PART_CACHE_TYPE_DISK: sv_setpv(results[0], "DISK"); break;
+		}
+		return 1;
+
+	    case CONFTYPE_INT:
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__int(val)));
+		return 1;
+
+           case CONFTYPE_ESTIMATELIST: {
+		AV *elist = newAV();
+		estimatelist_t el;
+		for (el=val_t__estimatelist(val); el != NULL; el = el->next) {
+		    int estimate = GPOINTER_TO_INT(el->data);
+		    switch (estimate) {
+			case ES_CALCSIZE: av_push(elist, newSVpv("CALCSIZE", 0)); break;
+			case ES_CLIENT: av_push(elist, newSVpv("CLIENT", 0)); break;
+			case ES_SERVER: av_push(elist, newSVpv("SERVER", 0)); break;
+		    }
+		}
+		results[0] = sv_2mortal(newRV_noinc((SV *)elist));
+		return 1;
+	    }
+
+	    case CONFTYPE_TIME:
+		results[0] = sv_2mortal(amglue_newSVi64(val_t__time(val)));
+		return 1;
+
+	    case CONFTYPE_REAL:
+		results[0] = sv_newmortal();
+		sv_setnv(results[0], val_t__real(val));
+		return 1;
+
+	    case CONFTYPE_IDENT:	    /* same as STRING */
+	    case CONFTYPE_STR:
+	    case CONFTYPE_APPLICATION:
+		results[0] = sv_newmortal();
+		sv_setpv(results[0], val_t__str(val));
+		return 1;
+
+	    case CONFTYPE_IDENTLIST:
+	    case CONFTYPE_STR_LIST: {
+		AV *ilist = newAV();
+
+		identlist_t il;
+		for (il=val_t__identlist(val); il != NULL; il = il->next) {
+		    av_push(ilist, newSVpv((char *)il->data, 0));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)ilist));
+		return 1;
+	    }
+
+	    case CONFTYPE_HOST_LIMIT: {
+		AV *av;
+		GSList *iter;
+		host_limit_t *rl = &val_t__host_limit(val);
+
+		av = newAV();
+		if (rl->same_host)
+		    av_push(av, newSVpv("SAMEHOST-SAMEHOST-SAMEHOST", 0));
+		if (rl->server)
+		    av_push(av, newSVpv("SERVER-SERVER-SERVER", 0));
+		for (iter=rl->match_pats; iter != NULL; iter = iter->next) {
+		    av_push(av, newSVpv((char *)iter->data, 0));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)av));
+		return 1;
+	    }
+
+	    case CONFTYPE_DUMP_SELECTION: {
+		AV *av;
+		dump_selection_list_t dsl = val_t__dump_selection(val);
+		av = newAV();
+		for (dsl ; dsl != NULL; dsl = dsl->next) {
+		    dump_selection_t *ds = dsl->data;
+		    HV *hv;
+
+		    hv = (HV *)sv_2mortal((SV *)newHV());
+
+		    if (ds->tag) {
+			hv_store(hv, "tag", strlen("tag"), newSVpv(ds->tag, 0), 0);
+		    }
+		    switch (ds->tag_type) {
+			case TAG_NAME: hv_store(hv, "tag_type", strlen("tag_type"), newSVpv("TAG",0), 0); break;
+			case TAG_ALL: hv_store(hv, "tag_type", strlen("tag_type"), newSVpv("ALL",0), 0); break;
+			case TAG_OTHER: hv_store(hv, "tag_type", strlen("tag_type"), newSVpv("OTHER",0), 0); break;
+		    }
+		    switch (ds->level) {
+			case LEVEL_ALL : hv_store(hv, "level", strlen("level"), newSVpv("ALL",0), 0); break;
+			case LEVEL_FULL: hv_store(hv, "level", strlen("level"), newSVpv("FULL",0), 0); break;
+			case LEVEL_INCR: hv_store(hv, "level", strlen("level"), newSVpv("INCR",0), 0); break;
+		    }
+		    av_push(av, newRV_inc((SV*)hv));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)av));
+		return 1;
+	    }
+
+	    case CONFTYPE_VAULT_LIST: {
+		AV *av;
+		vault_list_t vl = val_t__vault_list(val);
+		av = newAV();
+		for (vl ; vl != NULL; vl = vl->next) {
+		    vault_el_t *v = vl->data;
+		    HV *hv;
+
+		    hv = (HV *)sv_2mortal((SV *)newHV());
+
+		    hv_store(hv, "storage", strlen("storage"), newSVpv(v->storage, 0), 0);
+		    hv_store(hv, "days", strlen("says"), newSViv(v->days), 0);
+		    av_push(av, newRV_inc((SV*)hv));
+		}
+
+		results[0] = sv_2mortal(newRV_noinc((SV *)av));
+		return 1;
+	    }
+
+	    case CONFTYPE_AUTOLABEL: {
+		autolabel_t *autolabel = val_t__autolabel(val);
+		HV *hv;
+
+		/* now build the hash */
+		hv = (HV *)sv_2mortal((SV *)newHV());
+		hv_store(hv, "template", 8,
+			(autolabel->template)? newSVpv(autolabel->template, 0) : newSV(0), 0);
+		hv_store(hv, "other_config", 12,
+			newSVpv((autolabel->autolabel & AL_OTHER_CONFIG)? "YES" : "NO", 0), 0);
+		hv_store(hv, "non_amanda", 10,
+			newSVpv((autolabel->autolabel & AL_NON_AMANDA)? "YES" : "NO", 0), 0);
+		hv_store(hv, "volume_error", 12,
+			newSVpv((autolabel->autolabel & AL_VOLUME_ERROR)? "YES" : "NO", 0), 0);
+		hv_store(hv, "empty", 5,
+			newSVpv((autolabel->autolabel & AL_EMPTY)? "YES" : "NO", 0), 0);
+
+		results[0] = sv_2mortal(newRV((SV *)hv));
+		return 1;
+	    }
+
+	    case CONFTYPE_LABELSTR: {
+		labelstr_t *labelstr = val_t__labelstr(val);
+		HV *hv;
+
+		/* now build the hash */
+		hv = (HV *)sv_2mortal((SV *)newHV());
+		hv_store(hv, "template", 8,
+			(labelstr->template)? newSVpv(labelstr->template, 0) : newSV(0),
+			0);
+		hv_store(hv, "match_autolabel", 15,
+			newSVpv((labelstr->match_autolabel)? "YES" : "NO", 0), 0);
+		results[0] = sv_2mortal(newRV((SV *)hv));
+		return 1;
+	    }
+
+	    /* No match yet -> not one of the "complex" types */
+	    default:
+		SWIG_exception(SWIG_TypeError, "Unknown val_t conftype");
+		break;
+	}
+    }
+
+    return 0;
+
+fail:
+    SWIG_croak_null();
+}
+%}
+
 %typemap (out) val_t * {
     SV *results[3], **iter;
     int nresults;
@@ -841,6 +1293,7 @@ val_t *getconf(confparm_key key);
 gboolean getconf_seen(confparm_key key);
 int getconf_linenum(confparm_key key);
 val_t *getconf_byname(char *key);
+char *confparm_key_to_name(int token);
 GSList *getconf_list(char *listname);
 %inline %{
 typedef char **val_t_strs;
@@ -854,72 +1307,79 @@ val_t_strs getconf_byname_strs(char *key, int str_needs_quotes) {
 amglue_export_tag(getconf,
     getconf getconf_seen getconf_linenum
     getconf_byname getconf_byname_strs
-    getconf_list
+    getconf_list confparm_key_to_name
 );
 
 tapetype_t *lookup_tapetype(char *identifier);
 val_t *tapetype_getconf(tapetype_t *ttyp, tapetype_key key);
 char *tapetype_name(tapetype_t *ttyp);
+char *tapetype_key_to_name(int token);
 gboolean tapetype_seen(tapetype_t *ttyp, tapetype_key key);
 amglue_export_tag(getconf,
     lookup_tapetype tapetype_getconf tapetype_name
-    tapetype_seen tapetype_seen
+    tapetype_key_to_name tapetype_seen
 );
 
 dumptype_t *lookup_dumptype(char *identifier);
 val_t *dumptype_getconf(dumptype_t *dtyp, dumptype_key key);
 char *dumptype_name(dumptype_t *dtyp);
+char *dumptype_key_to_name(int token);
 gboolean dumptype_seen(dumptype_t *dtyp, dumptype_key key);
 amglue_export_tag(getconf,
     lookup_dumptype dumptype_getconf dumptype_name
-    dumptype_seen dumptype_seen
+    dumptype_key_to_name dumptype_seen
 );
 
 interface_t *lookup_interface(char *identifier);
 val_t *interface_getconf(interface_t *iface, interface_key key);
 char *interface_name(interface_t *iface);
+char *interface_key_to_name(int token);
 gboolean interface_seen(interface_t *iface, interface_key key);
 amglue_export_tag(getconf,
     lookup_interface interface_getconf interface_name
-    interface_seen interface_seen
+    interface_key_to_name interface_seen
 );
 
 holdingdisk_t *lookup_holdingdisk(char *identifier);
 GSList *getconf_holdingdisks(void);
 val_t *holdingdisk_getconf(holdingdisk_t *hdisk, holdingdisk_key key);
 char *holdingdisk_name(holdingdisk_t *hdisk);
+char *holdingdisk_key_to_name(int token);
 gboolean holdingdisk_seen(holdingdisk_t *hdisk, holdingdisk_key key);
 amglue_export_tag(getconf,
     lookup_holdingdisk holdingdisk_getconf holdingdisk_name
     getconf_holdingdisks
-    holdingdisk_seen holdingdisk_seen
+    holdingdisk_key_to_name holdingdisk_seen
 );
 
 application_t *lookup_application(char *identifier);
 val_t *application_getconf(application_t *app, application_key key);
 char *application_name(application_t *app);
+char *application_key_to_name(int token);
 gboolean application_seen(application_t *app, application_key key);
 amglue_export_tag(getconf,
     lookup_application application_getconf application_name
-    application_seen application_seen
+    application_key_to_name application_seen
 );
 
 pp_script_t *lookup_pp_script(char *identifier);
 val_t *pp_script_getconf(pp_script_t *pps, pp_script_key key);
 char *pp_script_name(pp_script_t *pps);
+char *pp_script_key_to_name(int token);
 gboolean pp_script_seen(pp_script_t *app, pp_script_key key);
 amglue_export_tag(getconf,
     lookup_pp_script pp_script_getconf pp_script_name
-    pp_script_seen pp_script_seen
+    pp_script_key_to_name pp_script_seen
 );
 
 device_config_t *lookup_device_config(char *identifier);
 val_t *device_config_getconf(device_config_t *pps, device_config_key key);
 char *device_config_name(device_config_t *pps);
+char *device_config_key_to_name(int token);
 gboolean device_config_seen(device_config_t *app, device_config_key key);
 amglue_export_tag(getconf,
     lookup_device_config device_config_getconf device_config_name
-    device_config_seen device_config_seen
+    device_config_key_to_name device_config_seen
 );
 
 %typemap(out) char ** {
@@ -947,37 +1407,41 @@ char **get_changer_list();
 changer_config_t *lookup_changer_config(char *identifier);
 val_t *changer_config_getconf(changer_config_t *pps, changer_config_key key);
 char *changer_config_name(changer_config_t *pps);
+char *changer_config_key_to_name(int token);
 gboolean changer_config_seen(changer_config_t *app, changer_config_key key);
 amglue_export_tag(getconf,
     lookup_changer_config changer_config_getconf changer_config_name
-    changer_config_seen changer_config_seen
+    changer_config_key_to_name changer_config_seen
 );
 
 interactivity_t *lookup_interactivity(char *identifier);
 val_t *interactivity_getconf(interactivity_t *app, interactivity_key key);
 char *interactivity_name(interactivity_t *app);
+char *interactivity_key_to_name(int token);
 gboolean interactivity_seen(interactivity_t *app, interactivity_key key);
 amglue_export_tag(getconf,
     lookup_interactivity interactivity_getconf interactivity_name
-    interactivity_seen interactivity_seen
+    interactivity_key_to_name interactivity_seen
 );
 
 taperscan_t *lookup_taperscan(char *identifier);
 val_t *taperscan_getconf(taperscan_t *app, taperscan_key key);
 char *taperscan_name(taperscan_t *app);
+char *taperscan_key_to_name(int token);
 gboolean taperscan_seen(taperscan_t *app, taperscan_key key);
 amglue_export_tag(getconf,
     lookup_taperscan taperscan_getconf taperscan_name
-    taperscan_seen taperscan_seen
+    taperscan_key_to_name taperscan_seen
 );
 
 policy_t *lookup_policy(char *identifier);
 val_t *policy_getconf(policy_t *app, policy_key key);
 char *policy_name(policy_t *app);
+char *policy_key_to_name(int token);
 gboolean policy_seen(policy_t *app, policy_key key);
 amglue_export_tag(getconf,
     lookup_policy policy_getconf policy_name
-    policy_seen policy_seen
+    policy_key_to_name policy_seen
 );
 
 %typemap(out) char ** {
@@ -1005,10 +1469,11 @@ char **get_storage_list();
 storage_t *lookup_storage(char *identifier);
 val_t *storage_getconf(storage_t *app, storage_key key);
 char *storage_name(storage_t *app);
+char *storage_key_to_name(int token);
 gboolean storage_seen(storage_t *app, storage_key key);
 amglue_export_tag(getconf,
     lookup_storage storage_getconf storage_name
-    storage_seen storage_seen
+    storage_key_to_name storage_seen
 );
 
 %perlcode %{
@@ -1159,6 +1624,44 @@ amglue_export_ok(string_to_boolean);
 gchar * amandaify_property_name(const gchar *name);
 amglue_export_ok(amandaify_property_name);
 
+%typemap (out) val_t * {
+    SV *results[3], **iter;
+    int nresults;
+
+    /* save the stack, since val_t_to_sv may invoke arbitrary Perl code */
+    SP += argvi; PUTBACK;
+    nresults = val_t_to_print($1, results);
+    SPAGAIN; SP -= argvi;
+    EXTEND(SP, nresults);
+
+    /* add val_t_to_sv's results to the stack */
+    for (iter = results; nresults; iter++, nresults--) {
+	$result = *iter;
+	argvi++;
+    }
+}
+
+val_t *getconf_human(confparm_key key);
+val_t *dumptype_getconf_human(dumptype_t *typ, dumptype_key key);
+val_t *tapetype_getconf_human(tapetype_t *typ, tapetype_key key);
+val_t *application_getconf_human(application_t *typ, application_key key);
+val_t *device_config_getconf_human(device_config_t *typ, device_config_key key);
+val_t *changer_config_getconf_human(changer_config_t *typ, changer_config_key key);
+val_t *storage_getconf_human(storage_t *typ, storage_key key);
+val_t *pp_script_getconf_human(pp_script_t *typ, pp_script_key key);
+val_t *holdingdisk_getconf_human(holdingdisk_t *typ, holdingdisk_key key);
+val_t *interface_getconf_human(interface_t *typ, interface_key key);
+val_t *interactivity_getconf_human(interactivity_t *typ, interactivity_key key);
+val_t *taperscan_getconf_human(taperscan_t *typ, taperscan_key key);
+val_t *policy_getconf_human(policy_t *typ, policy_key key);
+amglue_export_tag(getconf,
+	getconf_human
+	dumptype_getconf_human tapetype_getconf_human application_getconf_human
+	device_config_getconf_human changer_config_getconf_human storage_getconf_human
+	pp_script_getconf_human holdingdisk_getconf_human interface_getconf_human
+	interactivity_getconf_human taperscan_getconf_human policy_getconf_human);
+
+
 %perlcode %{
 package Amanda::Config::Message;
 use strict;
@@ -1216,9 +1719,84 @@ sub local_message {
 	return "No changer defined";
     } elsif ($self->{'code'} == 1500021) {
 	return "Defined changer";
+    } elsif ($self->{'code'} == 1500022) {
+	return "Dumptype list";
+    } elsif ($self->{'code'} == 1500023) {
+	return "Tapetype list";
+    } elsif ($self->{'code'} == 1500024) {
+	return "Application list";
+    } elsif ($self->{'code'} == 1500025) {
+	return "Device list";
+    } elsif ($self->{'code'} == 1500026) {
+	return "Changer list";
+    } elsif ($self->{'code'} == 1500027) {
+	return "Storage list";
+    } elsif ($self->{'code'} == 1500028) {
+	return "Script list";
+    } elsif ($self->{'code'} == 1500029) {
+	return "Holdingdisk list";
+    } elsif ($self->{'code'} == 1500030) {
+	return "Interface list";
+    } elsif ($self->{'code'} == 1500031) {
+	return "Interactivity list";
+    } elsif ($self->{'code'} == 1500032) {
+	return "Taperscan list";
+    } elsif ($self->{'code'} == 1500033) {
+	return "Policy list";
+    } elsif ($self->{'code'} == 1500034) {
+	return "No '$self->{'dumptype'}' dumptype";
+    } elsif ($self->{'code'} == 1500035) {
+	return "No '$self->{'tapetype'}' tapetype";
+    } elsif ($self->{'code'} == 1500036) {
+	return "Storage '$self->{'storage'}' parameters values";
+    } elsif ($self->{'code'} == 1500037) {
+	return "Dumptype '$self->{'dumptype'}' parameters values";
+    } elsif ($self->{'code'} == 1500038) {
+	return "Tapetype '$self->{'tapetype'}' parameters values";
+    } elsif ($self->{'code'} == 1500039) {
+	return "Application '$self->{'application'}' parameters values";
+    } elsif ($self->{'code'} == 1500040) {
+	return "Device '$self->{'device'}' parameters values";
+    } elsif ($self->{'code'} == 1500041) {
+	return "Changers '$self->{'changer'}' parameters values";
+    } elsif ($self->{'code'} == 1500042) {
+	return "Script '$self->{'script'}' parameters values";
+    } elsif ($self->{'code'} == 1500043) {
+	return "Holding disk '$self->{'holdingdisk'}' parameters values";
+    } elsif ($self->{'code'} == 1500044) {
+	return "Interface '$self->{'interface'}' parameters values";
+    } elsif ($self->{'code'} == 1500045) {
+	return "Interactivity '$self->{'interactivity'}' parameters values";
+    } elsif ($self->{'code'} == 1500046) {
+	return "Taperscan '$self->{'taperscan'}' parameters values";
+    } elsif ($self->{'code'} == 1500047) {
+	return "Policy '$self->{'policy'}' parameters values";
+    } elsif ($self->{'code'} == 1500048) {
+	return "No '$self->{'storage'}' storage";
+    } elsif ($self->{'code'} == 1500049) {
+	return "No '$self->{'application'}' application";
+    } elsif ($self->{'code'} == 1500050) {
+	return "No '$self->{'device'}' device";
+    } elsif ($self->{'code'} == 1500051) {
+	return "No '$self->{'changer'}' changer";
+    } elsif ($self->{'code'} == 1500052) {
+	return "No '$self->{'script'}' script";
+    } elsif ($self->{'code'} == 1500053) {
+	return "No '$self->{'holdingdisk'}' holdingdisk";
+    } elsif ($self->{'code'} == 1500054) {
+	return "No '$self->{'interface'}' interface";
+    } elsif ($self->{'code'} == 1500055) {
+	return "No '$self->{'interactivity'}' interactivity";
+    } elsif ($self->{'code'} == 1500056) {
+	return "No '$self->{'taperscan'}' taperscan";
+    } elsif ($self->{'code'} == 1500057) {
+	return "No '$self->{'policy'}' policy";
+    } elsif ($self->{'code'} == 1500058) {
+	return "invalid '$self->{'field'}' field specified";
     } elsif ($self->{'code'} == 1550000) {
 	return "The version";
     }
 }
 %}
+
 

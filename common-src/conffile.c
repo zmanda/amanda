@@ -4647,9 +4647,9 @@ read_dapplication(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	application = read_application(g_strjoin(NULL, "custom(DUMPTYPE:",
+	application = read_application(custom_escape(g_strjoin(NULL, "custom(DUMPTYPE:",
 						 dpcur.name, ")", ".",
-						 anonymous_value(),NULL),
+						 anonymous_value(),NULL)),
 				       NULL, NULL, NULL);
 	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
@@ -4677,9 +4677,9 @@ read_dinteractivity(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	interactivity = read_interactivity(g_strjoin(NULL, "custom(iv)", ".",
-						     anonymous_value(),NULL),
-				       NULL, NULL, NULL);
+	interactivity = read_interactivity(custom_escape(g_strjoin(NULL, "custom(iv)", ".",
+						anonymous_value(),NULL)),
+					NULL, NULL, NULL);
 	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
 	interactivity = lookup_interactivity(tokenval.v.s);
@@ -4706,8 +4706,8 @@ read_dtaperscan(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	taperscan = read_taperscan(g_strjoin(NULL, "custom(ts)", ".",
-				   anonymous_value(),NULL),
+	taperscan = read_taperscan(custom_escape(g_strjoin(NULL, "custom(ts)", ".",
+					   anonymous_value(),NULL)),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
@@ -4735,8 +4735,8 @@ read_dpolicy(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	policy = read_policy(g_strjoin(NULL, "custom(po)", ".",
-				   anonymous_value(),NULL),
+	policy = read_policy(custom_escape(g_strjoin(NULL, "custom(po)", ".",
+					   anonymous_value(),NULL)),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
@@ -4765,8 +4765,8 @@ read_dstorage(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	storage = read_storage(g_strjoin(NULL, "custom(po)", ".",
-				   anonymous_value(),NULL),
+	storage = read_storage(custom_escape(g_strjoin(NULL, "custom(po)", ".",
+					   anonymous_value(),NULL)),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
@@ -4794,8 +4794,8 @@ read_dpp_script(
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
-	pp_script = read_pp_script(g_strjoin(NULL, "custom(DUMPTYPE:", dpcur.name,
-					     ")", ".", anonymous_value(),NULL),
+	pp_script = read_pp_script(custom_escape(g_strjoin(NULL, "custom(DUMPTYPE:", dpcur.name,
+					     ")", ".", anonymous_value(),NULL)),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
 	val->v.identlist = g_slist_insert_sorted(val->v.identlist,
@@ -7244,6 +7244,25 @@ getconf_byname(
     return rv;
 }
 
+char *
+confparm_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = server_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 tapetype_t *
 lookup_tapetype(
     char *str)
@@ -7296,6 +7315,25 @@ tapetype_name(
     return ttyp->name;
 }
 
+char *
+tapetype_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = tapetype_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 dumptype_t *
 lookup_dumptype(
     char *str)
@@ -7326,6 +7364,25 @@ dumptype_name(
     return dtyp->name;
 }
 
+char *
+dumptype_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = dumptype_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 interface_t *
 lookup_interface(
     char *str)
@@ -7354,6 +7411,25 @@ interface_name(
 {
     assert(iface != NULL);
     return iface->name;
+}
+
+char *
+interface_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = interface_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
 }
 
 holdingdisk_t *
@@ -7395,6 +7471,25 @@ holdingdisk_name(
     return hdisk->name;
 }
 
+char *
+holdingdisk_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = holding_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 application_t *
 lookup_application(
     char *str)
@@ -7423,6 +7518,25 @@ application_name(
 {
     assert(ap != NULL);
     return ap->name;
+}
+
+char *
+application_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = application_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
 }
 
 interactivity_t *
@@ -7455,6 +7569,25 @@ interactivity_name(
     return iv->name;
 }
 
+char *
+interactivity_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = interactivity_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 taperscan_t *
 lookup_taperscan(
     char *str)
@@ -7485,6 +7618,25 @@ taperscan_name(
     return ts->name;
 }
 
+char *
+taperscan_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = taperscan_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 policy_t *
 lookup_policy(
     char *str)
@@ -7513,6 +7665,25 @@ policy_name(
 {
     assert(po != NULL);
     return po->name;
+}
+
+char *
+policy_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = policy_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
 }
 
 storage_t *
@@ -7577,6 +7748,25 @@ storage_name(
     return st->name;
 }
 
+char *
+storage_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = storage_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 pp_script_t *
 lookup_pp_script(
     char *str)
@@ -7607,6 +7797,25 @@ pp_script_name(
     return pps->name;
 }
 
+char *
+pp_script_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = pp_script_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
+}
+
 device_config_t *
 lookup_device_config(
     char *str)
@@ -7635,6 +7844,25 @@ device_config_name(
 {
     assert(devconf != NULL);
     return devconf->name;
+}
+
+char *
+device_config_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = device_config_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
 }
 
 char **
@@ -7685,6 +7913,25 @@ changer_config_name(
 {
     assert(devconf != NULL);
     return devconf->name;
+}
+
+char *
+changer_config_key_to_name(
+    int parm)
+{
+    conf_var_t *np;
+    keytab_t *kt;
+
+    for (np = changer_config_var; np->token != CONF_UNKNOWN; np++) {
+	if (np->parm == parm) {
+	    for (kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
+		if (kt->token == np->token) {
+		    return kt->keyword;
+		}
+	    }
+	}
+    }
+    return NULL;
 }
 
 long int
@@ -10315,5 +10562,120 @@ char *execute_on_to_string(int flags, char *separator)
     g_free(strings);
 
     return ret;
+}
+
+char *
+custom_escape(
+    char *str)
+{
+    char *s;
+
+    for (s = str; *s != '\0'; s++) {
+	if (*s == '/') *s = '_';
+    }
+    return str;
+}
+
+val_t *
+getconf_human(
+    confparm_key key)
+{
+    return getconf(key);
+}
+
+val_t *
+dumptype_getconf_human(
+    dumptype_t *dtyp,
+    dumptype_key key)
+{
+    return dumptype_getconf(dtyp, key);
+}
+
+val_t *
+tapetype_getconf_human(
+    tapetype_t  *typ,
+    tapetype_key key)
+{
+    return tapetype_getconf(typ, key);
+}
+
+val_t *
+application_getconf_human(
+    application_t *typ,
+    application_key key)
+{
+    return application_getconf(typ, key);
+}
+
+val_t *
+device_config_getconf_human(
+    device_config_t *typ,
+    device_config_key key)
+{
+    return device_config_getconf(typ, key);
+}
+
+val_t *
+changer_config_getconf_human(
+    changer_config_t *typ,
+    changer_config_key key)
+{
+    return changer_config_getconf(typ, key);
+}
+
+val_t *
+storage_getconf_human(
+    storage_t *typ,
+    storage_key key)
+{
+    return storage_getconf(typ, key);
+}
+
+val_t *
+pp_script_getconf_human(
+    pp_script_t *typ,
+    pp_script_key key)
+{
+    return pp_script_getconf(typ, key);
+}
+
+val_t *
+holdingdisk_getconf_human(
+    holdingdisk_t *typ,
+    holdingdisk_key key)
+{
+    return holdingdisk_getconf(typ, key);
+}
+
+val_t *
+interface_getconf_human(
+    interface_t *typ,
+    interface_key key)
+{
+    return interface_getconf(typ, key);
+}
+
+val_t *
+interactivity_getconf_human(
+    interactivity_t *typ,
+    interactivity_key key)
+{
+    return interactivity_getconf(typ, key);
+}
+
+val_t *
+taperscan_getconf_human(
+    taperscan_t *typ,
+    taperscan_key key)
+{
+    return taperscan_getconf(typ, key);
+}
+
+val_t *
+policy_getconf_human(
+    policy_t *typ,
+    policy_key key)
+{
+    return policy_getconf(typ, key);
 }
 

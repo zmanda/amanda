@@ -47,7 +47,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 21;
+plan tests => 16;
 
 my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 
@@ -57,111 +57,6 @@ $testconf->write();
 
 my $reply;
 my $amperldir = $Amanda::Paths::amperldir;
-
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => $Amanda::Message::SUCCESS,
-                'message' => "Defined storage",
-		'storage' => ['TESTCONF'],
-		'process' => 'Amanda::Rest::Storages',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500014'
-          },
-        ],
-      http_code => 200,
-    },
-    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
-
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TEST");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => $Amanda::Message::ERROR,
-                'message' => 'Storage \'TEST\' not found',
-		'storage' => 'TEST',
-		'process' => 'Amanda::Rest::Storages',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500010'
-          },
-        ],
-      http_code => 200,
-    },
-    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
-
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TEST?fields");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => $Amanda::Message::ERROR,
-                'message' => 'Storage \'TEST\' not found',
-		'storage' => 'TEST',
-		'process' => 'Amanda::Rest::Storages',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500010'
-          },
-        ],
-      http_code => 200,
-    },
-    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
-
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => $Amanda::Message::WARNING,
-                'message' => 'No fields specified',
-		'storage' => 'TESTCONF',
-		'process' => 'Amanda::Rest::Storages',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500009'
-          },
-        ],
-      http_code => 200,
-    },
-    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
-
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields=tpchanger&fields=runtapes&fields=pool&fields=tapepool");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => $Amanda::Message::ERROR,
-                'message' => 'Not existant parameters in storage \'TESTCONF\'',
-		'storage' => 'TESTCONF',
-		'parameters' => [ 'pool' ],
-		'process' => 'Amanda::Rest::Storages',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500011'
-          },
-          {     'source_filename' => "$amperldir/Amanda/Rest/Storages.pm",
-                'severity' => $Amanda::Message::SUCCESS,
-                'message' => 'Parameters values for storage \'TESTCONF\'',
-		'storage' => 'TESTCONF',
-		'result' => { 'tapepool' => 'TESTCONF',
-			      'runtapes' => 1,
-			      'tpchanger' => "chg-disk:$Installcheck::TMP/vtapes"
-			    },
-		'process' => 'Amanda::Rest::Storages',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500012'
-          },
-        ],
-      http_code => 200,
-    },
-    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
 is_deeply (Installcheck::Rest::remove_source_line($reply),

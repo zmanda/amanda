@@ -629,6 +629,8 @@ GSList *getconf_list(char *listname);
  */
 val_t *getconf_byname(char *key);
 
+char *confparm_key_to_name(int parm);
+
 /*
  * Derived values
  *
@@ -712,6 +714,8 @@ val_t *tapetype_getconf(tapetype_t *ttyp, tapetype_key key);
  * @returns: name of the tapetype
  */
 char *tapetype_name(tapetype_t *ttyp);
+
+char *tapetype_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this tapetype?  This
  * applies to the specific parameter *within* the tapetype.
@@ -832,6 +836,8 @@ val_t *dumptype_getconf(dumptype_t *dtyp, dumptype_key key);
  */
 char *dumptype_name(dumptype_t *dtyp);
 
+char *dumptype_key_to_name(int parm);
+
 /* (convenience macro) has this parameter been seen in this dumptype?  This
  * applies to the specific parameter *within* the dumptype.
  *
@@ -943,6 +949,8 @@ val_t *interface_getconf(interface_t *iface, interface_key key);
  */
 char *interface_name(interface_t *iface);
 
+char *interface_key_to_name(int parm);
+
 /* (convenience macro) has this parameter been seen in this interface?  This
  * applies to the specific parameter *within* the interface.
  *
@@ -1005,6 +1013,8 @@ val_t *holdingdisk_getconf(holdingdisk_t *hdisk, holdingdisk_key key);
  */
 char *holdingdisk_name(holdingdisk_t *hdisk);
 
+char *holdingdisk_key_to_name(int parm);
+
 /* (convenience macro) has this parameter been seen in this holdingdisk?  This
  * applies to the specific parameter *within* the holdingdisk.
  *
@@ -1059,6 +1069,8 @@ val_t *application_getconf(application_t *app, application_key key);
  * @returns: name of the application
  */
 char *application_name(application_t *app);
+
+char *application_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this application?  This
  * applies to the specific parameter *within* the application.
@@ -1118,6 +1130,8 @@ val_t *pp_script_getconf(pp_script_t *pps, pp_script_key key);
  * @returns: name of the pp_script
  */
 char *pp_script_name(pp_script_t *pps);
+
+char *pp_script_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this pp_script?  This
  * applies to the specific parameter *within* the pp_script.
@@ -1179,6 +1193,8 @@ val_t *device_config_getconf(device_config_t *devconf, device_config_key key);
  * @returns: name of the device_config
  */
 char *device_config_name(device_config_t *devconf);
+
+char *device_config_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this device_config?  This
  * applies to the specific parameter *within* the device_config.
@@ -1242,6 +1258,8 @@ val_t *changer_config_getconf(changer_config_t *devconf, changer_config_key key)
  */
 char *changer_config_name(changer_config_t *devconf);
 
+char *changer_config_key_to_name(int parm);
+
 /* (convenience macro) has this parameter been seen in this changer_config?  This
  * applies to the specific parameter *within* the changer_config.
  *
@@ -1301,6 +1319,8 @@ val_t *interactivity_getconf(interactivity_t *app, interactivity_key key);
  */
 char *interactivity_name(interactivity_t *app);
 
+char *interactivity_key_to_name(int parm);
+
 /* (convenience macro) has this parameter been seen in this interactivity?
  * This applies to the specific parameter *within* the interactivity.
  *
@@ -1354,6 +1374,8 @@ val_t *taperscan_getconf(taperscan_t *app, taperscan_key key);
  * @returns: name of the taperscan
  */
 char *taperscan_name(taperscan_t *app);
+
+char *taperscan_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this taperscan?
  * This applies to the specific parameter *within* the taperscan.
@@ -1412,6 +1434,8 @@ val_t *policy_getconf(policy_t *app, policy_key key);
  * @returns: name of the policy
  */
 char *policy_name(policy_t *app);
+
+char *policy_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this policy?
  * This applies to the specific parameter *within* the policy.
@@ -1499,6 +1523,8 @@ val_t *storage_getconf(storage_t *app, storage_key key);
  * @returns: name of the storage
  */
 char *storage_name(storage_t *app);
+
+char *storage_key_to_name(int parm);
 
 /* (convenience macro) has this parameter been seen in this storage?
  * This applies to the specific parameter *within* the storage.
@@ -1868,5 +1894,21 @@ gchar *amandaify_property_name(const gchar *name);
  */
 
 char *execute_on_to_string(int flags, char *separator);
+
+char *custom_escape(char *str);
+
+val_t *getconf_human(confparm_key key);
+val_t *dumptype_getconf_human(dumptype_t *typ, dumptype_key key);
+val_t *tapetype_getconf_human(tapetype_t *typ, tapetype_key key);
+val_t *application_getconf_human(application_t *typ, application_key key);
+val_t *device_config_getconf_human(device_config_t *typ, device_config_key key);
+val_t *changer_config_getconf_human(changer_config_t *typ, changer_config_key key);
+val_t *storage_getconf_human(storage_t *typ, storage_key key);
+val_t *pp_script_getconf_human(pp_script_t *typ, pp_script_key key);
+val_t *holdingdisk_getconf_human(holdingdisk_t *typ, holdingdisk_key key);
+val_t *interface_getconf_human(interface_t *typ, interface_key key);
+val_t *interactivity_getconf_human(interactivity_t *typ, interactivity_key key);
+val_t *taperscan_getconf_human(taperscan_t *typ, taperscan_key key);
+val_t *policy_getconf_human(policy_t *typ, policy_key key);
 
 #endif /* ! CONFFILE_H */

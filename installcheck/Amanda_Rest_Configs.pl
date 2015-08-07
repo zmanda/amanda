@@ -51,7 +51,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 9;
+plan tests => 19;
 
 my $reply;
 
@@ -227,18 +227,18 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::ERROR,
-		'parameters' => [ 'foobar' ],
-		'message' => 'Not existant parameters',
+		'field' => 'FOOBAR',
+		'message' => 'invalid \'FOOBAR\' field specified',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
 		'module' => 'amanda',
-		'code' => '1500007'
+		'code' => '1500058'
 	  },
           {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::SUCCESS,
 		'result' => {
-			'tapecycle' => 3 },
+			'TAPECYCLE' => 3 },
 		'message' => 'Parameters values',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -258,8 +258,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
 		'severity' => $Amanda::Message::SUCCESS,
 		'result' => {
-			'tapecycle' => 3,
-			'runtapes' => 1},
+			'TAPECYCLE' => 3,
+			'RUNTAPES' => 1},
 		'message' => 'Parameters values',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
@@ -277,26 +277,365 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-		'severity' => $Amanda::Message::ERROR,
-		'message' => 'No fields specified',
+		'severity' => $Amanda::Message::SUCCESS,
+		'result' => {
+			'DEBUG-CHUNKER' => 0,
+			'BUMPMULT' => '1.5',
+			'DEBUG-PROTOCOL' => 0,
+			'KRB5KEYTAB' => '/.amanda-v5-keytab',
+			'INDEXDIR' => '/amanda/h1/etc/amanda/TESTCONF/index',
+			'COLUMNSPEC' => '',
+			'AMRECOVER-DO-FSF' => 'YES',
+			'LABEL-NEW-TAPES' => '',
+			'HOLDINGDISK' => [
+				'hd1'
+			],
+			'REST-API-PORT' => 0,
+			'MAXDUMPSIZE' => -1,
+			'DEBUG-TAPER' => 0,
+			'REPORT-FORMAT' => [],
+			'TAPETYPE' => 'TEST-TAPE',
+			'DEVICE-PROPERTY' => {},
+			'VAULT-STORAGE' => [],
+			'RESERVED-TCP-PORT' => [
+				'512',
+				'1023'
+			],
+			'TAPECYCLE' => 3,
+			'DEBUG-RECOVERY' => 1,
+			'LOGDIR' => '/amanda/h1/etc/amanda/TESTCONF/log',
+			'ETIMEOUT' => 300,
+			'DEBUG-SENDBACKUP' => 0,
+			'REPORT-USE-MEDIA' => 'YES',
+			'DEBUG-AMINDEXD' => 0,
+			'DUMPUSER' => 'martinea',
+			'MAILER' => '/usr/bin/Mail',
+			'INTERACTIVITY' => undef,
+			'AMRECOVER-CHECK-LABEL' => 'YES',
+			'UNRESERVED-TCP-PORT' => [
+				'1024',
+				'65535'
+			],
+			'DEBUG-SENDSIZE' => 0,
+			'MAX-DLE-BY-VOLUME' => 1000000000,
+			'RUNTAPES' => 1,
+			'TPCHANGER' => 'chg-disk:/tmp/amanda/installchecks/vtapes',
+			'DEBUG-DRIVER' => 0,
+			'INPARALLEL' => 2,
+			'BUMPSIZE' => 10240,
+			'DEBUG-AMIDXTAPED' => 0,
+			'FLUSH-THRESHOLD-SCHEDULED' => 0,
+			'TAPER-PARALLEL-WRITE' => 1,
+			'NETUSAGE' => 80000,
+			'ORG' => 'DailySet1',
+			'CHANGERDEV' => undef,
+			'FLUSH-THRESHOLD-DUMPED' => 0,
+			'RESERVED-UDP-PORT' => [
+				'512',
+				'1023'
+			],
+			'REPORT-NEXT-MEDIA' => 'YES',
+			'DUMPCYCLE' => 10,
+			'DEVICE-OUTPUT-BUFFER-SIZE' => 1310720,
+			'DEBUG-AUTH' => 0,
+			'TAPERSCAN' => undef,
+			'AUTOLABEL' => {
+				'empty' => 'NO',
+				'other_config' => 'NO',
+				'non_amanda' => 'NO',
+				'template' => undef,
+				'volume_error' => 'NO'
+			},
+			'TMPDIR' => '/tmp/amanda',
+			'STORAGE' => [
+				'TESTCONF'
+			],
+			'RECOVERY-LIMIT' => [],
+			'TAPEDEV' => '/dev/nst3',
+			'TAPELIST' => 'tapelist',
+			'META-AUTOLABEL' => undef,
+			'MAILTO' => '',
+			'COMPRESS-INDEX' => 'YES',
+			'USETIMESTAMPS' => 'YES',
+			'DEBUG-PLANNER' => 0,
+			'COMMAND-FILE' => 'command_file',
+			'DEBUG-AMRECOVER' => 0,
+			'DTIMEOUT' => 1800,
+			'PRINTER' => '',
+			'EJECT-VOLUME' => 'NO',
+			'DUMPORDER' => 'ttt',
+			'LABELSTR' => {
+				'template' => 'TESTCONF[0-9][0-9]',
+				'match_autolabel' => 'NO'
+			},
+			'RESERVE' => 100,
+			'DEBUG-EVENT' => 0,
+			'TAPERALGO' => 'FIRST',
+			'DISPLAYUNIT' => 'k',
+			'PROPERTY' => {},
+			'REP-TRIES' => 5,
+			'BUMPPERCENT' => 0,
+			'DEBUG-HOLDING' => 0,
+			'DEBUG-DUMPER' => 0,
+			'SSL-DIR' => '/amanda/h1/etc/amanda/ssl',
+			'CHANGERFILE' => 'changer',
+			'DEBUG-SELFCHECK' => 0,
+			'MAXDUMPS' => 1,
+			'AUTOFLUSH' => 'NO',
+			'CONNECT-TRIES' => 3,
+			'RUNSPERCYCLE' => 0,
+			'KRB5PRINCIPAL' => 'service/amanda',
+			'BUMPDAYS' => 2,
+			'SEND-AMREPORT-ON' => 'ALL',
+			'DISKFILE' => 'disklist',
+			'TAPERFLUSH' => 0,
+			'INFOFILE' => '/amanda/h1/etc/amanda/TESTCONF/curinfo',
+			'SORT-INDEX' => 'NO',
+			'REST-SSL-KEY' => undef,
+			'CTIMEOUT' => 30,
+			'REQ-TRIES' => 3,
+			'REST-SSL-CERT' => undef,
+			'AMRECOVER-CHANGER' => '',
+			'DEBUG-AMANDAD' => 0},
+
+		'message' => 'Parameters values',
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
 		'module' => 'amanda',
-		'code' => '1500009'
+		'code' => '1500008'
 	  },
         ],
       http_code => 200,
     },
     "Get no fields");
 
-#CODE 1500002  # no way with Rest API
-#CODE 1500005  # invalid error code
-#CODE 1500010  # Checked in Amanda_Rest_Storages
-#CODE 1500011  # Checked in Amanda_Rest_Storages
-#CODE 1500012  # Checked in Amanda_Rest_Storages
-#CODE 1500013  # Checked in Amanda_Rest_Storages
-#CODE 1500014  # Checked in Amanda_Rest_Storages
-#CODE 1500015  # Checked in Amanda_Rest_Storages and/or Amanda_Rest_Storages_Label
+# set up and load a simple config
+$testconf = Installcheck::Run::setup();
+$testconf->add_changer("DISKFLAT", [
+    tpchanger => '"chg-disk:/amanda/h1/vtapes"',
+    changerfile => '"/tmp/changerfile"'
+]);
+$testconf->write();
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::SUCCESS,
+                'message' => "Changer list",
+		'changers_list' => ['DISKFLAT'],
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500026'
+          },
+        ],
+      http_code => 200,
+    },
+    "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/TEST");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::ERROR,
+                'message' => 'No \'TEST\' changer',
+		'changer' => 'TEST',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500051'
+          },
+        ],
+      http_code => 200,
+    },
+    "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/TEST?fields");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::ERROR,
+                'message' => 'No \'TEST\' changer',
+		'changer' => 'TEST',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500051'
+          },
+        ],
+      http_code => 200,
+    },
+    "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::WARNING,
+                'message' => 'No fields specified',
+		'changer' => 'DISKFLAT',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500009'
+          },
+        ],
+      http_code => 200,
+    },
+    "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields=tpchanger&fields=changerfile&fields=pool");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::ERROR,
+                'message' => 'invalid \'POOL\' field specified',
+		'changer' => 'DISKFLAT',
+		'field' => 'POOL',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500058'
+          },
+          {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::SUCCESS,
+                'message' => 'Changers \'DISKFLAT\' parameters values',
+		'changer' => 'DISKFLAT',
+		'result' => { 'TPCHANGER' => 'chg-disk:/amanda/h1/vtapes',
+			      'CHANGERFILE' => '/tmp/changerfile'
+			    },
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500041'
+          },
+        ],
+      http_code => 200,
+    },
+    "List changer") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
+
+# set up and load a simple config
+ $testconf = Installcheck::Run::setup();
+$testconf->write();
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::SUCCESS,
+                'message' => "Storage list",
+		'storages_list' => ['TESTCONF'],
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500027'
+          },
+        ],
+      http_code => 200,
+    },
+    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TEST");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::ERROR,
+                'message' => 'No \'TEST\' storage',
+		'storage' => 'TEST',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500048'
+          },
+        ],
+      http_code => 200,
+    },
+    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TEST?fields");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::ERROR,
+                'message' => 'No \'TEST\' storage',
+		'storage' => 'TEST',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500048'
+          },
+        ],
+      http_code => 200,
+    },
+    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::WARNING,
+                'message' => 'No fields specified',
+		'storage' => 'TESTCONF',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500009'
+          },
+        ],
+      http_code => 200,
+    },
+    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/TESTCONF?fields=tpchanger&fields=runtapes&fields=pool&fields=tapepool");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::ERROR,
+                'message' => 'invalid \'POOL\' field specified',
+		'storage' => 'TESTCONF',
+		'field' => 'POOL',
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500058'
+          },
+          {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+                'severity' => $Amanda::Message::SUCCESS,
+                'message' => 'Storage \'TESTCONF\' parameters values',
+		'storage' => 'TESTCONF',
+		'result' => { 'TAPEPOOL' => 'TESTCONF',
+			      'RUNTAPES' => 1,
+			      'TPCHANGER' => "chg-disk:$Installcheck::TMP/vtapes"
+			    },
+		'process' => 'Amanda::Rest::Configs',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'module' => 'amanda',
+                'code' => '1500036'
+          },
+        ],
+      http_code => 200,
+    },
+    "List storage") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$rest->stop();
+
+rmtree $taperoot;
+
 
 $rest->stop();

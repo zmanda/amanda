@@ -1,3 +1,32 @@
+2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (*_key_to_name, *getconf_human,
+	  custom_escape): New function
+	* common-src/conffile.h (*_key_to_name, *getconf_human,
+	  custom_escape): Add prototypes
+	* perl/Amanda/Config.swg: Add amglue_add_enum_list(*_key)
+	* perl/Amanda/Config.swg (val_t_to_print): Function to convert a
+	  val_t to a printable format for human
+	* perl/Amanda/Config.swg (*_key_to_name): Add declarations
+	* perl/Amanda/Config.swg (*_getconf_human): Similar to *_getconf but
+	  use val_t_to_print to return a human printable structure
+	* perl/Amanda/Config.swg: Add messages 1500022 to 1500058
+	* perl/Amanda/Disklist.swg: Add message 1400010
+	* perl/Amanda/Rest/Configs.pm: Add API to return the list of section
+	  and all fields of a named section
+	* perl/Amanda/Rest/Dles.pm: Add API to return the list and setting
+	  of Dles
+	* perl/Amanda/Rest/Changers.pm: Remove file (API moved to Configs.pm).
+	* perl/Amanda/Rest/Storages.pm: Remove some API (moved to Configs.pm).
+	* perl/amglue/constants.swg (amglue_add_enum_list): New macro to
+	  return an array of values
+	* rest-server/bin/app.pl.in: Add new API
+	* rest-server/lib/Amanda/Rest.pm.in: Add new API
+	* server-src/diskfile.c: Use custom_escape to create custom name.
+	* installcheck/Amanda_Rest_Changers.pl: Remove file
+	* installcheck/Amanda_Rest_Configs.pl: Add many checks
+	* installcheck/Amanda_Rest_Storages.pl: Remove some checks
+	* installcheck/Makefile.am: Remove Amanda_Rest_Changers.pl
+
 2015-08-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c, device-src/s3-device.h: Change default value
 	  for S3-MULTI-DELETE

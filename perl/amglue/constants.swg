@@ -121,6 +121,16 @@ sub TAG ## _to_string {
 %}
 %enddef
 
+%define amglue_add_enum_list(TAG)
+typedef int TAG;
+amglue_export_tag(TAG, TAG ## _list);
+%perlcode %{
+sub TAG ## _list {
+    return values %_ ## TAG ## _VALUES;
+}
+%}
+%enddef
+
 /* Add the given constant, assuming the constant name is the 
  * short name
  *
