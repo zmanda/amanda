@@ -1,4 +1,7 @@
 2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am (AmandaRest_DATA): Remove Amanda/Rest/Changers.pm
+
+2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (*_key_to_name, *getconf_human,
 	  custom_escape): New function
 	* common-src/conffile.h (*_key_to_name, *getconf_human,
