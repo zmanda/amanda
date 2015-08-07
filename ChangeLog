@@ -1,4 +1,7 @@
 2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Configs.pl: Take MAILER form config
+
+2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/bin/app.pl.in: Undo bad change.
 
 2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>

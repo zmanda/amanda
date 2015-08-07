@@ -306,7 +306,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'DEBUG-SENDBACKUP' => 0,
 			'REPORT-USE-MEDIA' => 'YES',
 			'DEBUG-AMINDEXD' => 0,
-			'MAILER' => '/usr/bin/Mail',
+			'MAILER' => getconf($CNF_MAILER),
 			'INTERACTIVITY' => undef,
 			'AMRECOVER-CHECK-LABEL' => 'YES',
 			'UNRESERVED-TCP-PORT' => [
