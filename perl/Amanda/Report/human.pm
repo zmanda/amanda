@@ -1425,7 +1425,8 @@ sub get_summary_info
 	# pre-format the compression column, with '--' replacing 100% (i.e.,
 	# no compression)
 	my $compression;
-	if (!defined $orig_size || ($orig_size - $out_size) >= -32768) {
+	if (!defined $orig_size ||
+	    ($out_size/$orig_size > 0.99  && $out_size/$orig_size < 1.01)) {
 	    $compression = '--';
 	    $compression = $self->divzero(0, 0);
 	} else {
