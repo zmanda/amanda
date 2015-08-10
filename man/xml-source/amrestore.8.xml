@@ -165,7 +165,7 @@ header can be read by another application or utility (see
 <term><option>-r</option></term>
 <listitem>
 <para>Output raw files.  This is similar to <option>-h</option>, but also
-disables any automatic decompression.  Output file names will have a
+disables any automatic decompression and/or decryption.  Output file names will have a
 <filename>.RAW</filename> extension.</para>
 </listitem>
 </varlistentry>

@@ -1,4 +1,7 @@
 2015-08-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amrestore.8.xml: Document that -r do not decrypt dump
+
+2015-08-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Fix compression computation.
 
 2015-08-10  Jean-Louis Martineau <martineau@zmanda.com>
