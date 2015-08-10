@@ -1,3 +1,6 @@
+2015-08-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Fix compression computation.
+
 2015-08-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Configs.pl: Take MAILER form config
 
