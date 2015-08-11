@@ -83,6 +83,7 @@ sub encrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
     my $gpg = which_gpg();
     system "$gpg_agent_cmd $gpg --batch -z 0 --no-secmem-warning --disable-mdc --symmetric --cipher-algo AES256 --passphrase-fd 3  3<$AM_PASS";
+    sleep(2); # allow gpg-agent the time to exit
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);
@@ -99,6 +100,7 @@ sub decrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
     my $gpg = which_gpg();
     system "$gpg_agent_cmd $gpg --batch --quiet --no-mdc-warning --decrypt --passphrase-fd 3  3<$AM_PASS";
+    sleep(2); # allow gpg-agent the time to exit
     if ($? == -1) {
 	print STDERR "failed to execute gpg: $!\n";
 	exit (1);

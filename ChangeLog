@@ -1,3 +1,9 @@
+2015-08-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcryptsimple.pl, common-src/amgpgcrypt.pl: Add sleep to
+	  allow gpg-agent to exit
+	* server-src/amrestore.pl: Add a --continue-on-filter-error option
+	* man/xml-source/amrestore.8.xml: Document --continue-on-filter-error
+
 2015-08-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amrestore.8.xml: Document that -r do not decrypt dump
 
