@@ -309,11 +309,9 @@ sub _fields {
     my $code_no = shift;
     my %params = @_;
 
-    Amanda::Util::set_pname("Amanda::Rest::Configs");
-    my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
-    return ($status, \@result_messages) if @result_messages;
+    my @result_messages;
 
-    my $DATA = &$func_lookup($params{$NAME});
+    my $DATA = $func_lookup->($params{$NAME});
     if (!$DATA) {
 	push @result_messages, Amanda::Config::Message->new(
 				source_filename => __FILE__,
@@ -340,13 +338,13 @@ sub _fields {
 	    $fields{$name} = 1;
 	}
     }
-    my @keys = &$func_key_list();
+    my @keys = $func_key_list->();
     foreach my $key (@keys) {
-	my $name = &$func_key_to_name($key);
+	my $name = $func_key_to_name->($key);
 	$name =~ s/_/-/g;
 	if ((!defined $params{'fields'}) ||
 	    ((defined $fields{$name}) && ($fields{$name} == 1))) {
-	    my $data =  &$func_getconf_human($DATA, $key);
+	    my $data =  $func_getconf_human->($DATA, $key);
 	    $values{$name} = $data;
 	    delete $fields{$name};
 	}
