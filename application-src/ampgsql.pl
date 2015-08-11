@@ -1010,8 +1010,8 @@ sub command_restore {
 	if ($uid == 0) {
 	    opendir(my $dh, $_ARCHIVE_DIR_RESTORE) || die;
 	    while (my $name = readdir $dh) {
-		next if $name == '.';
-		next if $name == '..';
+		next if $name eq '.';
+		next if $name eq '..';
 		my $uid = (stat "$_ARCHIVE_DIR_RESTORE/$name")[4];
 		my $gid = (stat "$_ARCHIVE_DIR_RESTORE/$name")[5];
 		chown $uid, $gid, $_ARCHIVE_DIR_RESTORE;

@@ -1,4 +1,7 @@
 2015-08-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Use 'eq' instead of '==' for filename
+
+2015-08-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl, common-src/amgpgcrypt.pl: Add sleep to
 	  allow gpg-agent to exit
 	* server-src/amrestore.pl: Add a --continue-on-filter-error option
