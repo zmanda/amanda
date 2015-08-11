@@ -49,6 +49,11 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 
  request:
   GET /amanda/v1.0/configs/:CONF/dles
+ query arguments:
+  expand_application=1
+  expand_dumptype=1
+  expand_interface=1
+  expand_script=1
 
  reply:
   HTTP status: 200 OK
@@ -87,6 +92,11 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
 
  request:
   GET /amanda/v1.0/configs/:CONF/dles/hosts/:HOST
+ query arguments:
+  expand_application=1
+  expand_dumptype=1
+  expand_interface=1
+  expand_script=1
 
  reply:
 
@@ -95,6 +105,11 @@ Amanda::Rest::Dles -- Rest interface to Amanda::Curinfo and other
  request:
   GET /amanda/v1.0/configs/:CONF/dles/hosts/:HOST/disk/:DISK
    each '/' in the :DISK must be encoded as '%252F'
+ query arguments:
+  expand_application=1
+  expand_dumptype=1
+  expand_interface=1
+  expand_script=1
 
  reply:
 
@@ -291,8 +306,12 @@ sub list {
 			disk         => $disk->{'name'},
 			device => $disk->{'device'},
 			spindle => $disk->{'spindle'},
-			dumptype => dumptype_name($disk->{'config'}),
+			dumptype_name => dumptype_name($disk->{'config'}),
 		};
+	    if ($params{'expand_dumptype'}) {
+		$result->{'dumptype'} = Amanda::Rest::Configs::dumptype_object($disk->{'config'}, %params);
+	    }
+
 	    push @result, $result;
 	}
     }

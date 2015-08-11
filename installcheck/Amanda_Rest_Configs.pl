@@ -272,7 +272,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "Get valid fields (runtapes,tapecycle)") || diag("reply: " . Data::Dumper::Dumper($reply));
 
-#CODE 1500009
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
@@ -477,14 +476,15 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-                'severity' => $Amanda::Message::WARNING,
-                'message' => 'No fields specified',
+                'severity' => $Amanda::Message::SUCCESS,
+                'message' => 'Changers \'DISKFLAT\' parameters values',
 		'changer' => 'DISKFLAT',
+		'result'  => {},
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
 		'module' => 'amanda',
-                'code' => '1500009'
+                'code' => '1500041'
           },
         ],
       http_code => 200,
@@ -494,18 +494,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/changers/DISKFLAT?fields=tpchanger&fields=changerfile&fields=pool");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-                'severity' => $Amanda::Message::ERROR,
-                'message' => 'invalid \'POOL\' field specified',
-		'changer' => 'DISKFLAT',
-		'field' => 'POOL',
-		'process' => 'Amanda::Rest::Configs',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500058'
-          },
-          {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
+       [  {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'Changers \'DISKFLAT\' parameters values',
 		'changer' => 'DISKFLAT',
@@ -587,14 +576,15 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-                'severity' => $Amanda::Message::WARNING,
-                'message' => 'No fields specified',
+                'severity' => $Amanda::Message::SUCCESS,
+                'message' => 'Storage \'TESTCONF\' parameters values',
 		'storage' => 'TESTCONF',
+		'result'  => {},
 		'process' => 'Amanda::Rest::Configs',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
 		'module' => 'amanda',
-                'code' => '1500009'
+                'code' => '1500036'
           },
         ],
       http_code => 200,
@@ -605,17 +595,6 @@ $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
-                'severity' => $Amanda::Message::ERROR,
-                'message' => 'invalid \'POOL\' field specified',
-		'storage' => 'TESTCONF',
-		'field' => 'POOL',
-		'process' => 'Amanda::Rest::Configs',
-		'running_on' => 'amanda-server',
-		'component' => 'rest-server',
-		'module' => 'amanda',
-                'code' => '1500058'
-          },
-          {     'source_filename' => "$amperldir/Amanda/Rest/Configs.pm",
                 'severity' => $Amanda::Message::SUCCESS,
                 'message' => 'Storage \'TESTCONF\' parameters values',
 		'storage' => 'TESTCONF',
