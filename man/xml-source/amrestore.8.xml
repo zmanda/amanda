@@ -38,6 +38,7 @@
     <arg choice='opt'>-p</arg>
     <arg choice='opt'>-h</arg>
     <arg choice='opt'>--exact-match</arg>
+    <arg choice='opt'>--continue-on-filter-error</arg>
     &configoverride.synopsis;
     <group>
       <arg choice='req'><replaceable>changerspec</replaceable></arg>
@@ -173,7 +174,15 @@ disables any automatic decompression and/or decryption.  Output file names will 
 <varlistentry>
 <term><option>--exact-match</option></term>
 <listitem>
-<para>The host and disk are parsed as exact values</para>
+<para>The host and disk are parsed as exact values.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--continue-on-filter-error</option></term>
+<listitem>
+<para>continue to the next dump if a filter (decompression/decryption) fail.
+</para>
 </listitem>
 </varlistentry>
 

@@ -72,12 +72,14 @@ sub encrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
     my $gpg = which_gpg();
     system "$gpg_agent_cmd $gpg  --batch --disable-mdc --encrypt --cipher-algo AES256 --recipient $AMANDA";
+    sleep(2); # allow gpg-agent the time to exit
 }
 
 sub decrypt() {
     my $gpg_agent_cmd = do_gpg_agent();
     my $gpg = which_gpg();
     system "$gpg_agent_cmd $gpg --batch --quiet --no-mdc-warning --secret-keyring $AM_PRIV --decrypt --passphrase-fd 3  3<$AM_PASS";
+    sleep(2); # allow gpg-agent the time to exit
 }
 
 sub my_sig_catcher {
