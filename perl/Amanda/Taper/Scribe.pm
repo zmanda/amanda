@@ -1935,7 +1935,12 @@ sub _maybe_callback {
 	my $cb = $self->{'start_finished_cb'};
 	$self->{'start_finished_cb'} = undef;
 
-	$cb->($self->{'scan_error'});
+	if ($self->{'device'}) {
+	    my $allow_take_scribe_from = $self->{'device'}->allow_take_scribe_from();
+	    $cb->($self->{'scan_error'}, $allow_take_scribe_from);
+	} else {
+	    $cb->($self->{'scan_error'}, 0);
+	}
     }
 
     # if the volume_cb is good to get called, call it and reset to the ground state

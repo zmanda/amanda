@@ -139,6 +139,7 @@ typedef struct Device {
     gsize max_block_size;
     gsize block_size;
     gsize header_block_size;
+    gboolean allow_take_scribe_from;
 
     guint64 bytes_read;
     guint64 bytes_written;
@@ -368,6 +369,7 @@ int device_read_to_connection(Device *self, guint64 size,
 			guint64 *actual_size, int *cancelled,
 			GMutex *abort_mutex, GCond *abort_cond);
 gboolean device_use_connection(Device *self, DirectTCPConnection *conn);
+gboolean device_allow_take_scribe_from(Device *self);
 
 /* Protected methods. Don't call these except in subclass implementations. */
 

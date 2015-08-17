@@ -1,4 +1,26 @@
 2015-08-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c (device_allow_take_scribe_from): New function
+	  to return the allow_take_scribe_from setting.
+	* device-src/device.h (struct Device): Add a gboolean
+	  allow_take_scribe_from
+	* device-src/device.h (device_allow_take_scribe_from): Add new
+	  prototype
+	* device-src/ndmp-device.c: allow_take_scribe_from is FALSE
+	* perl/Amanda/Device.swg (device_allow_take_scribe_from): swig it
+	* perl/Amanda/Taper/Protocol.pm (TAPER_OK): add allow_take_scribe_from
+	* perl/Amanda/Taper/Scribe.pm: Pass the allow_take_scribe_from value
+	  to the callback
+	* perl/Amanda/Taper/Worker.pm (_scribe_started_cb): Include the
+	  allow_take_scribe_from in the TAPER_OK reply
+	* server-src/driver.c (handle_taper_result): Parse the
+	  *-TAKE-SCRIBE-FROM in the TAPER_OK reply
+	* server-src/driver.c (tape_action): Do not return TAPE_ACTION_MOVE if
+	  the taper do not handle allow_take_scribe_from
+	* server-src/driverio.h (struct taper_s): Add a gboolean
+	  allow_take_scribe_from
+	* installcheck/taper.pl: Fix for *-TAKE-SCRIBE-FROM in TAPER-OK reply
+
+2015-08-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (interruptible_accept): Take a timeout as
 	  argument
 	* common-src/util.h (interruptible_accept): New prototype

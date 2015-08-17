@@ -2074,6 +2074,7 @@ ndmp_device_init(NdmpDevice *self)
     dself->block_size = 32768;
     dself->min_block_size = 32768;
     dself->max_block_size = SIZE_MAX;
+    dself->allow_take_scribe_from = FALSE;
 
     bzero(&response, sizeof(response));
 

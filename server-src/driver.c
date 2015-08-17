@@ -1627,8 +1627,8 @@ handle_taper_result(
 	switch(cmd) {
 
 	case TAPER_OK:
-	    if(result_argc != 2) {
-		error(_("error: [taper FAILED result_argc != 2: %d"), result_argc);
+	    if(result_argc != 3) {
+		error(_("error: [taper FAILED result_argc != 3: %d"), result_argc);
 		/*NOTREACHED*/
 	    }
 
@@ -1645,6 +1645,11 @@ handle_taper_result(
 	    taper->state &= ~TAPER_STATE_INIT;
 	    taper->state |= TAPER_STATE_RESERVATION;
 	    taper->state |= TAPER_STATE_IDLE;
+	    if (g_str_equal(result_argv[2], "ALLOW-TAKE-SCRIBE-FROM")) {
+		taper->allow_take_scribe_from = TRUE;
+	    } else {
+		taper->allow_take_scribe_from = FALSE;
+	    }
 	    amfree(taper->first_label);
 	    taper_nb_wait_reply--;
 	    taper_nb_scan_volume--;
@@ -3811,6 +3816,7 @@ tape_action(
     int   dump_to_disk_terminated;
     int   nb_taper_active = nb_sent_new_tape;
     int   nb_taper_flushing = 0;
+    int   nb_taper_waiting = 0;
     int   dle_free = 0;		/* number of dle that fit on started tape */
     int   new_dle = 0;		/* number of dle that doesn't fit on started tape */
     off_t new_data = 0;		/* size of dle that doesn't fit on started tape */
@@ -3851,6 +3857,10 @@ tape_action(
 	if (taper1->state & TAPER_STATE_FILE_TO_TAPE ||
 	    taper1->state & TAPER_STATE_DUMP_TO_TAPE) {
 	    nb_taper_flushing++;
+	}
+	if (taper1->state & TAPER_STATE_TAPE_STARTED &&
+	    taper1->state & TAPER_STATE_IDLE) {
+	    nb_taper_waiting++;
 	}
     }
 
@@ -3971,12 +3981,13 @@ tape_action(
 		   taper_nb_scan_volume == 0 &&
 		   (flush_criteria ||
 		    (data_lost > data_lost_next_tape) ||
+		    !taper->allow_take_scribe_from ||
 		    nb_taper_active == 0) &&
 		   (last_started_taper == NULL ||
 		    last_started_taper == taper)) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_SCAN\n");
 	    result |= TAPE_ACTION_SCAN;
-	} else {
+	} else if (nb_taper_waiting && taper->allow_take_scribe_from) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_MOVE\n");
 	    result |= TAPE_ACTION_MOVE;
 	}

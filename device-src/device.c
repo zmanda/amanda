@@ -289,6 +289,7 @@ device_init (Device * self)
     self->min_block_size = 1;
     self->max_block_size = SIZE_MAX; /* subclasses *really* should choose something smaller */
     self->block_size = DISK_BLOCK_BYTES;
+    self->allow_take_scribe_from = TRUE;
     selfp->errmsg = NULL;
     selfp->statusmsg = NULL;
     selfp->last_status = 0;
@@ -1535,6 +1536,13 @@ device_use_connection(
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
+}
+
+gboolean
+device_allow_take_scribe_from(
+    Device *self)
+{
+    return self->allow_take_scribe_from;
 }
 
 /* Property handling */
