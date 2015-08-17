@@ -534,7 +534,7 @@ while($lineX = <AMDUMP>) {
 						$error{$hostpart} = $olderror{$hostpart};
 					}
 					$status_taper{$worker1} = $status_taper{$worker2};
-					$status_taper{$worker2} = undef;
+					$status_taper{$worker2} = "Idle";
 				}
 			}
 		}
@@ -667,8 +667,9 @@ while($lineX = <AMDUMP>) {
 					#PARTIAL: 7:handle 8:INPUT-* 9:TAPE-* 10:errstr 11:INPUT-MSG 12:TAPE-MSG
 					$serial=$line[7];
 
-					$status_taper{$worker} = "Idle";
 					$hostpart=$serial{$serial};
+					$worker = $taper_name{$hostpart};
+					$status_taper{$worker} = "Idle";
 					$line[10] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
 					if ($2 eq 'kb') {
 						$size=$3 / $unitdivisor;

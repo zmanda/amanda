@@ -1,3 +1,6 @@
+2015-08-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Correctly set taper_status
+
 2015-08-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl, common-src/amgpgcrypt.pl: Add sleep to
 	  allow gpg-agent to exit
