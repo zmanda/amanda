@@ -451,6 +451,11 @@ typedef struct {
 	    return device_create(self);
 	}
 
+	gboolean
+	allow_take_scribe_from() {
+	    return device_allow_take_scribe_from(self);
+	}
+
 	%typemap(out) const GSList * {
 	    GSList *iter;
 

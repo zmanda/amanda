@@ -187,6 +187,7 @@ typedef struct wtaper_s {
     off_t       written;		// Number of kb already written to tape
     int         nb_dle;			/* number of dle on the volume */
     gboolean    ready;
+    gboolean    allow_take_scribe_from;
     vaultqs_t   vaultqs;		/* to vault from another storage */
     struct taper_s *taper;
 } wtaper_t;

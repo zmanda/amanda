@@ -103,7 +103,7 @@ use constant QUIT => message("QUIT",
 );
 
 use constant TAPER_OK => message("TAPER-OK",
-    format => [ qw( worker_name ) ],
+    format => [ qw( worker_name allow_take_scribe_from ) ],
 );
 
 use constant TAPE_ERROR => message("TAPE-ERROR",

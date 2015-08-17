@@ -2138,8 +2138,8 @@ handle_taper_result(
 	switch(cmd) {
 
 	case TAPER_OK:
-	    if(result_argc != 2) {
-		error(_("error: [taper FAILED result_argc != 2: %d"), result_argc);
+	    if(result_argc != 3) {
+		error(_("error: [taper FAILED result_argc != 3: %d"), result_argc);
 		/*NOTREACHED*/
 	    }
 
@@ -2157,6 +2157,11 @@ handle_taper_result(
 	    wtaper->state &= ~TAPER_STATE_INIT;
 	    wtaper->state |= TAPER_STATE_RESERVATION;
 	    wtaper->state |= TAPER_STATE_IDLE;
+	    if (g_str_equal(result_argv[2], "ALLOW-TAKE-SCRIBE-FROM")) {
+		wtaper->allow_take_scribe_from = TRUE;
+	    } else {
+		wtaper->allow_take_scribe_from = FALSE;
+	    }
 	    amfree(wtaper->first_label);
 	    amfree(wtaper->dst_labels_str);
 	    slist_free_full(wtaper->dst_labels, g_free);
@@ -5143,6 +5148,7 @@ tape_action(
     int   dump_to_disk_terminated;
     int   nb_wtaper_active = nb_sent_new_tape;
     int   nb_wtaper_flushing = 0;
+    int   nb_taper_waiting = 0;
     int   dle_free = 0;		/* number of dle that fit on started tape */
     int   new_dle = 0;		/* number of dle that doesn't fit on started tape */
     off_t new_data = 0;		/* size of dle that doesn't fit on started tape */
@@ -5203,6 +5209,10 @@ tape_action(
 	    wtaper1->state & TAPER_STATE_DUMP_TO_TAPE ||
 	    wtaper1->state & TAPER_STATE_VAULT_TO_TAPE) {
 	    nb_wtaper_flushing++;
+	}
+	if (wtaper1->state & TAPER_STATE_TAPE_STARTED &&
+	    wtaper1->state & TAPER_STATE_IDLE) {
+	    nb_taper_waiting++;
 	}
     }
 
@@ -5329,12 +5339,13 @@ driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUEST
 		   taper->nb_scan_volume == 0 &&
 		   (flush_criteria ||
 		    (data_lost > data_lost_next_tape) ||
+		    !wtaper->allow_take_scribe_from ||
 		    nb_wtaper_active == 0) &&
 		   (taper->last_started_wtaper == NULL ||
 		    taper->last_started_wtaper == wtaper)) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_SCAN\n");
 	    result |= TAPE_ACTION_SCAN;
-	} else {
+	} else if (nb_taper_waiting && wtaper->allow_take_scribe_from) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_MOVE\n");
 	    result |= TAPE_ACTION_MOVE;
 	}

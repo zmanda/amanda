@@ -119,7 +119,8 @@ sub new {
 # called when the scribe is fully started up and ready to go
 sub _scribe_started_cb {
     my $self = shift;
-    my ($err) = @_;
+    my $err  = shift;
+    my $allow_take_scribe_from = shift;
 
     if ($err) {
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::TAPE_ERROR,
@@ -132,7 +133,8 @@ sub _scribe_started_cb {
 
     } else {
 	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::TAPER_OK,
-		worker_name => $self->{'worker_name'});
+		worker_name => $self->{'worker_name'},
+		allow_take_scribe_from => $allow_take_scribe_from?"ALLOW-TAKE-SCRIBE-FROM":"NO-TAKE-SCRIBE-FROM");
 	$self->{'state'} = "idle";
     }
 }

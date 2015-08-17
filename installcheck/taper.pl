@@ -321,7 +321,7 @@ sub write_to_port {
 $handle = "11-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "single-part and multipart FILE-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /home 0 $datestamp \"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" 12");
@@ -426,7 +426,7 @@ check_logs([
 $handle = '11-22223';
 $datestamp = "20070102030406";
 run_taper(4096, "multipart partial FILE-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/usr", 1);
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 524288 \"\" \"\" 1 \"\" \"\" \"\" \"\" 512");
@@ -464,7 +464,7 @@ check_logs([
 $handle = "11-33333";
 $datestamp = "19780615010203";
 run_taper(4096, "multipart PORT-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /var 0 $datestamp 524288 \"\" 393216 1 0 \"\" \"\" 0 AMANDA");
 like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
@@ -516,7 +516,7 @@ check_logs([
 $handle = "11-44444";
 $datestamp = "19411207000000";
 run_taper(4096, "testing NO-NEW-TAPE from the driver on 1st request");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /home 0 $datestamp 0 \"\" 0 1 0 \"\" \"\" 0 912");
@@ -540,7 +540,7 @@ check_logs([
 $handle = "11-55555";
 $datestamp = "19750711095836";
 run_taper(1024, "PORT-WRITE retry on EOT (mem cache)");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /usr/local 0 $datestamp 786432 \"\" 786432 1 0 \"\" \"\" 0 AMANDA");
 like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
@@ -594,7 +594,7 @@ check_logs([
 $handle = "11-66666";
 $datestamp = "19470815000000";
 run_taper(1024, "FILE-WRITE retry on EOT");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1575936, "localhost", "/usr");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp \"\" \"\" \"\" 1 786432 \"\" \"\" \"\" 1112");
@@ -643,7 +643,7 @@ check_logs([
 $handle = "11-77777";
 $datestamp = "20090427212500";
 run_taper(1024, "PORT-WRITE retry on EOT (disk cache)");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /usr/local 0 $datestamp 786432 \"$Installcheck::TMP\" 786432 1 0 \"\" \"\" 0 AMANDA");
 like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
@@ -698,7 +698,7 @@ check_logs([
 $handle = "11-88888";
 $datestamp = "20090424173000";
 run_taper(1024, "PORT-WRITE failure on EOT (no cache)");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /var/log 0 $datestamp 0 \"\" 0 0 0 \"\" \"\" 0 AMANDA");
 like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
@@ -755,7 +755,7 @@ check_logs([
 $handle = "11-99999";
 $datestamp = "20100101000000";
 run_taper(512, "FILE-WRITE runs out of tapes");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(512*1024, "localhost", "/music");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /music 0 $datestamp \"\" \"\" \"\" 1 262144 \"none\" \"\" 10240 1312");
@@ -793,7 +793,7 @@ check_logs([
 $handle = "22-00000";
 $datestamp = "20200202222222";
 run_taper(4096, "multipart PORT-WRITE");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("PORT-WRITE worker0-0 $handle localhost /sbin 0 $datestamp 999999 \"\" 655360 1 \"\" \"\" \"\" \"\" AMANDA");
 like(taper_reply, qr/^PORT worker0-0 $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
@@ -839,7 +839,7 @@ check_logs([
 $handle = "33-11111";
 $datestamp = "20090101010000";
 run_taper(1024, "first in a sequence");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1412");
@@ -899,7 +899,7 @@ cleanup_log();
 $handle = "33-33333";
 $datestamp = "20090202020000";
 run_taper(1024, "second in a sequence", keep_config => 1);
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
@@ -964,7 +964,7 @@ cleanup_log();
 $handle = "33-55555";
 $datestamp = "20090303030000";
 run_taper(1024, "failure to overwrite a volume", keep_config => 1);
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(32768, "localhost", "/u03");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u03 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1812");
@@ -1008,10 +1008,10 @@ my $handle0 = "66-00000";
 my $handle1 = "66-11111";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
-like(taper_reply, qr/^TAPER-OK worker0-1$/,
+like(taper_reply, qr/^TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM$/,
        "got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
@@ -1070,10 +1070,10 @@ cleanup_log();
 $handle = "66-22222";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers and a take_scribe");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
-like(taper_reply, qr/^TAPER-OK worker0-1$/,
+like(taper_reply, qr/^TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1000000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
@@ -1138,7 +1138,7 @@ SKIP : {
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE",
 	ndmp_server => $ndmp);
-    like(taper_reply, qr/^TAPER-OK worker0-0$/,
+    like(taper_reply, qr/^TAPER-OK worker0-0 NO-TAKE-SCRIBE-FROM$/,
 	    "got TAPER-OK") or die;
     # note that, with the addition of the new splitting params, this does the "sensible"
     # thing and uses the tape_splitsize, not the fallback_splitsize (this is a change from
@@ -1213,7 +1213,7 @@ SKIP : {
     $datestamp = "19780615010305";
     run_taper(4096, "multipart directtcp PORT-WRITE, with a zero-byte part",
 	ndmp_server => $ndmp);
-    like(taper_reply, qr/^TAPER-OK worker0-0$/,
+    like(taper_reply, qr/^TAPER-OK worker0-0 NO-TAKE-SCRIBE-FROM$/,
 	    "got TAPER-OK") or die;
     # use a different part size this time, to hit EOM "on the head"
     taper_cmd("PORT-WRITE worker0-0 $handle localhost /var 0 $datestamp 425984 \"\" 327680 \"\" \"\" \"\" \"\" \"\" DIRECTTCP");
@@ -1275,7 +1275,7 @@ $handle = "77-11111";
 $datestamp = "20090302020000";
 run_taper(1024, "without LEOM and without allow-split");
 make_holding_file(1024*1024, "localhost", "/usr");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
 like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
@@ -1305,7 +1305,7 @@ $handle = "77-11112";
 $datestamp = "20090303020000";
 run_taper(1024, "with LEOM and without allow-split", leom => 1);
 make_holding_file(1024*1024, "localhost", "/usr");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /usr 0 $datestamp 262144 \"\" \"\" \"0\" \"\" \"\" \"\" \"\" 1612");
 like(taper_reply, qr/^REQUEST-NEW-TAPE worker0-0 $handle$/,
@@ -1338,7 +1338,7 @@ cleanup_log();
 $handle = "11-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "single-part and multipart FILE-WRITE", taperscan => "lexical");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(1024*1024, "localhost", "/home");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /home 0 $datestamp \"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" 12");
@@ -1391,7 +1391,7 @@ check_logs([
 $handle = "33-11111";
 $datestamp = "20090101010000";
 run_taper(1024, "first in a sequence", taperscan => "lexical");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(500000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1412");
@@ -1451,7 +1451,7 @@ cleanup_log();
 $handle = "33-33333";
 $datestamp = "20090202020000";
 run_taper(1024, "second in a sequence", keep_config => 1);
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
@@ -1524,10 +1524,10 @@ $handle0 = "66-00000";
 $handle1 = "66-11111";
 $datestamp = "20090202020000";
 run_taper(1024, "with 2 workers", taperscan => "lexical");
-like(taper_reply, qr/^TAPER-OK worker0-0$/,
+like(taper_reply, qr/^TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM$/,
 	"got TAPER-OK") or die;
 taper_cmd("START-TAPER taper0 worker0-1 TESTCONF $datestamp");
-like(taper_reply, qr/^TAPER-OK worker0-1$/,
+like(taper_reply, qr/^TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM$/,
        "got TAPER-OK") or die;
 make_holding_file(300000, "localhost", "/u01");
 taper_cmd("FILE-WRITE worker0-0 $handle0 \"$test_filename\" localhost /u01 0 $datestamp 262144 \"\" \"\" \"\" \"\" \"\" \"\" \"\" 1612");
