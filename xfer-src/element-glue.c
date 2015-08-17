@@ -178,10 +178,11 @@ do_directtcp_accept(
     int *socketp)
 {
     int sock;
+    time_t timeout_time = time(NULL) + 60;
     g_assert(*socketp != -1);
 
     if ((sock = interruptible_accept(*socketp, NULL, NULL,
-				     prolong_accept, self)) == -1) {
+				     prolong_accept, self, timeout_time)) == -1) {
 	/* if the accept was interrupted due to a cancellation, then do not
 	 * add a further error message */
 	if (errno == 0 && XFER_ELEMENT(self)->cancelled)

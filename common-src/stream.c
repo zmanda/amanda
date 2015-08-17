@@ -370,14 +370,6 @@ stream_client(
 static sockaddr_union addr;
 static socklen_t_equiv addrlen;
 
-static gboolean
-stream_accept_prolong(
-    gpointer data)
-{
-    time_t *tp = data;
-    return time(NULL) <= *tp;
-}
-
 int
 stream_accept(
     int server_socket,
@@ -399,8 +391,8 @@ stream_accept(
 	addrlen = (socklen_t_equiv)sizeof(sockaddr_union);
 	connected_socket = interruptible_accept(server_socket,
 				  (struct sockaddr *)&addr,
-				  &addrlen, stream_accept_prolong,
-				  &timeout_time);
+				  &addrlen, NULL,
+				  NULL, timeout_time);
 	if(connected_socket < 0) {
 	    if (errno == 0) {
 		g_debug(plural(_("stream_accept: timeout after %d second"),

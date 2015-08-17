@@ -70,7 +70,7 @@ int	bind_portrange(int, sockaddr_union *, in_port_t, in_port_t,
  * Other arguments are just like for accept(2).
  */
 int	interruptible_accept(int sock, struct sockaddr *addr, socklen_t *addrlen,
-	    gboolean (*prolong)(gpointer data), gpointer prolong_data);
+	    gboolean (*prolong)(gpointer data), gpointer prolong_data, time_t timeout);
 
 ssize_t	full_writev(int, struct iovec *, int);
 
