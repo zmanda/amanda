@@ -1,3 +1,12 @@
+2015-08-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c (interruptible_accept): Take a timeout as
+	  argument
+	* common-src/amutil.h (interruptible_accept): New prototype
+	* common-src/stream.c (stream_client): Call interruptible_accept with
+	  the timeout argument
+	* xfer-src/element-glue.c (do_directtcp_accept): Call
+	  interruptible_accept with the timeout argument
+
 2015-08-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Rest/Configs.pm: Allow 'expand_*' in query parameter
 	* perl/Amanda/Rest/Dles.pm: Allow 'expand_*' in query parameter

@@ -344,7 +344,8 @@ interruptible_accept(
     struct sockaddr *addr,
     socklen_t *addrlen,
     gboolean (*prolong)(gpointer data),
-    gpointer prolong_data)
+    gpointer prolong_data,
+    time_t timeout)
 {
     SELECT_ARG_TYPE readset;
     struct timeval tv;
@@ -358,8 +359,12 @@ interruptible_accept(
     memset(&readset, 0, sizeof(readset));
 
     while (1) {
-	if (!prolong(prolong_data)) {
+	if (prolong && !prolong(prolong_data)) {
 	    errno = 0;
+	    return -1;
+	}
+	if (time(NULL) > timeout) {
+	    errno = ETIMEDOUT;
 	    return -1;
 	}
 
@@ -368,7 +373,7 @@ interruptible_accept(
 
 	/* try accepting for 1s */
 	memset(&tv, 0, sizeof(tv));
-    	tv.tv_sec = 1;
+	tv.tv_sec = 1;
 
 	nfound = select(sock+1, &readset, NULL, NULL, &tv);
 	if (nfound < 0) {
