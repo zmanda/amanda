@@ -36,31 +36,42 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
     if test "x$GNUTAR" = "xno"; then
 	GNUTAR=
     else
-	OLD_GNUTAR=$GNUTAR
-	for gnutar_name in gtar gnutar tar; do
-	    AC_PATH_PROGS(GNUTAR, $gnutar_name, , $LOCSYSPATH)
-	    if test -n "$GNUTAR"; then
-	      case `"$GNUTAR" --version 2>&1` in
-	       *GNU*tar* | *Free*paxutils* )
+        if test "x$GNUTAR" != "x"; then
+	    case `"$GNUTAR" --version 2>&1` in
+	      *GNU*tar* | *Free*paxutils* )
 			    # OK, it is GNU tar
 			    break
 			    ;;
 	       *)
-			    if test -n "$OLD_GNUTAR"; then
-				    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, it will be used.])
-			    else 
-				    # warning..
-				    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, so it will not be used.])
-				    # reset the cache for GNUTAR so AC_PATH_PROGS will search again
-				    GNUTAR=''
-				    unset ac_cv_path_GNUTAR
-			    fi
+			    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, it will be used.])
 			    ;;
-	      esac
-	    fi
-	done
+	    esac
+        else
+	    OLD_GNUTAR=$GNUTAR
+	    for gnutar_name in gtar gnutar tar; do
+	        AC_PATH_PROGS(GNUTAR, $gnutar_name, , $LOCSYSPATH)
+	        if test -n "$GNUTAR"; then
+	            case `"$GNUTAR" --version 2>&1` in
+	              *GNU*tar* | *Free*paxutils* )
+			    # OK, it is GNU tar
+			    break
+			    ;;
+	              *)
+			    # warning..
+			    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, so it will not be used.])
+			    # reset the cache for GNUTAR so AC_PATH_PROGS will search again
+			    GNUTAR=''
+			    unset ac_cv_path_GNUTAR
+			    ;;
+	            esac
+	        fi
+	    done
+        fi
     fi
 
+    if test "x$GNUTAR" = "x"; then
+	GNUTAR='/usr/bin/tar'
+    fi
     if test "x$GNUTAR" != "x"; then
 	# define unquoted
 	AC_DEFINE_UNQUOTED(GNUTAR, "$GNUTAR", [Location of the GNU 'tar' binary])
@@ -127,6 +138,9 @@ AC_DEFUN([AMANDA_PROG_STAR],
 	fi
     fi
 
+    if test "x$STAR" = "x"; then
+	STAR='/usr/bin/star'
+    fi
     if test "x$STAR" != "x"; then
 	# define unquoted
 	AC_DEFINE_UNQUOTED(STAR, "$STAR", [Location of the 'star' binary])
@@ -171,7 +185,9 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 	BSDTAR=
     else
 	OLD_BSDTAR=$BSDTAR
-	AC_PATH_PROGS(BSDTAR, bsdtar, , $LOCSYSPATH)
+	if test "x$BSDTAR" = "x"; then
+	    AC_PATH_PROGS(BSDTAR, bsdtar, , $LOCSYSPATH)
+	fi
 	if test -n "$BSDTAR"; then
 	    case `"$BSDTAR" --version 2>/dev/null` in
 	     *bsdtar*)
@@ -179,7 +195,12 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 		    break
 		    ;;
 	     *)
-		    BSDTAR=''
+		    if test "x$OLD_BSDTAR" = "x"; then
+		        AMANDA_MSG_WARN([using $OLDBSDTAR for the ambsdtar application even if it is not bsdtar.])
+			BSDTAR=$OLD_BSDTAR
+		    else
+			AMANDA_MSG_WARN([Not using $BSDTAR for the ambsdtar application as it is not bsdtar.])
+		    fi
 		    ;;
 	    esac
 	fi
@@ -191,22 +212,14 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 			# OK, it is bsdtar
 			break;
 			;;
-		 *)
-		    if test -n "$OLD_BSDTAR"; then
-			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, it will be used by the ambsdtar application.])
-		    else
-			# warning..
-			AMANDA_MSG_WARN([$BSDTAR is not bsdtar, so it will not be used by the ambsdtar application.])
-			# reset the cache for BSDTAR so AC_PATH_PROGS will search again
-			BSDTAR=''
-			unset ac_cv_path_BSDTAR
-		    fi
-		    ;;
 		esac
 	    fi
 	fi
     fi
 
+    if test "x$BSDTAR" = "x"; then
+	BSDTAR='/usr/bin/bsdtar'
+    fi
     if test "x$BSDTAR" != "x"; then
 	# define unquoted
 	AC_DEFINE_UNQUOTED(BSDTAR, "$BSDTAR", [Location of the 'bsdtar' binary])
@@ -246,7 +259,7 @@ AC_DEFUN([AMANDA_PROG_SUNTAR],
 	    # done
 	],
 	[
-	    if test "x$SUNTAR" == "x"; then
+	    if test "x$SUNTAR" = "x"; then
 		SUNTAR="/usr/sbin/tar"
 	    fi
 	]
@@ -315,16 +328,19 @@ AC_DEFUN([AMANDA_PROG_SAMBA_CLIENT],
 		      smbversion=2
 		      ;;
         *)
-		      AMANDA_MSG_WARN([$SAMBA_CLIENT does not seem to be smbclient, so it will not be used.])
-		      SAMBA_CLIENT=
+		      AMANDA_MSG_WARN([$SAMBA_CLIENT does not seem to be smbclient.])
+		      smbversion=2
 		      ;;
         esac
-        if test -n "$SAMBA_CLIENT"; then
-	  AC_DEFINE_UNQUOTED(SAMBA_CLIENT,"$SAMBA_CLIENT",
-		  [Define the location of smbclient for backing up Samba PC clients. ])
-	  AC_DEFINE_UNQUOTED(SAMBA_VERSION, $smbversion,
-		  [Not the actual samba version, just a number that should be increased whenever we start to rely on a new samba feature. ])
-        fi
+      else
+	  SAMBA_CLIENT='/usr/bin/smbclient'
+	  smbversion=2
+      fi
+      if test -n "$SAMBA_CLIENT"; then
+	AC_DEFINE_UNQUOTED(SAMBA_CLIENT,"$SAMBA_CLIENT",
+		[Define the location of smbclient for backing up Samba PC clients. ])
+	AC_DEFINE_UNQUOTED(SAMBA_VERSION, $smbversion,
+		[Not the actual samba version, just a number that should be increased whenever we start to rely on a new samba feature. ])
       fi
     fi
 
