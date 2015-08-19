@@ -1,3 +1,7 @@
+2015-08-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (tape_action): Fix to not send
+	  TAPE_ACTION_START_A_FLUSH if we can't guarantee a tape
+
 2015-08-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (device_allow_take_scribe_from): New function
 	  to return the allow_take_scribe_from setting.
