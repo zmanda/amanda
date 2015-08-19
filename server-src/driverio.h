@@ -210,6 +210,7 @@ typedef struct taper_s {
     off_t           taperflush;
     wtaper_t       *wtapetable;
     wtaper_t       *last_started_wtaper;
+    wtaper_t       *sent_first_write;
     schedlist_t     tapeq;		/* to flush fromholding disk     */
     //schedlist_t     directq;		/* to dump direct to tape        */
     GSList         *vaultqss;		/* schedlist_t of vaultq         */
