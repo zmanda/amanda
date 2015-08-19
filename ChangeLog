@@ -1,4 +1,11 @@
 2015-08-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Default GNUTAR to /usr/bin/tar, STAR to
+	  /usr/bin/star, BSDTAR to /usr/bin/bsdtar, SUNTAR to
+	  /usr/sbin/tar, SAMBA_CLIENT to /usr/bin/smbclient.
+	* config/amanda/progs.m4: Default SSH to /usr/bin/ssh
+	* config/amanda/ssh-security.m4: Use AMANDA_PROG_SSH
+
+2015-08-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): Fix to not send
 	  TAPE_ACTION_START_A_FLUSH if we can't guarantee a tape
 

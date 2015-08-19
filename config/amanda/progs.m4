@@ -365,6 +365,9 @@ AC_DEFUN([AMANDA_PROG_SSH],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
     AC_PATH_PROGS(SSH, ssh, , $LOCSYSPATH)
+    if test x"$SSH" = x""; then
+	SSH='/usr/bin/ssh'
+    fi
     AC_DEFINE_UNQUOTED(SSH, "$SSH", [Path to the SSH binary])
 ])
 

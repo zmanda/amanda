@@ -26,7 +26,7 @@ AC_DEFUN([AMANDA_SSH_SECURITY],
 
     if test "x$SSH_SECURITY" = "xyes"; then
         # find the SSH binary
-        AC_PATH_PROGS(SSH, ssh, , $LOCSYSPATH)
+        AMANDA_PROG_SSH
 
         # see what options we should use
         AC_ARG_WITH(ssh-options,
