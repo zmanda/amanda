@@ -71,7 +71,7 @@ pid_t start_server_check(FILE *fd, int do_localchk, int do_tapechk);
 int main(int argc, char **argv);
 int check_tapefile(FILE *outf, char *tapefile);
 int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
-static void check_host_setting(FILE *outf);
+static int check_host_setting(FILE *outf);
 
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
@@ -2397,14 +2397,14 @@ start_client_checks(
     delete_message(amcheck_fprint_message(client_outf, build_message(
 					AMANDA_FILE, __LINE__, 2800203, MSG_MESSAGE, 0)));
 
+    hostcount = remote_errors = 0;
+
     if (!who_check_host_setting) {
-	check_host_setting(client_outf);
+	remote_errors = check_host_setting(client_outf);
     }
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
-
-    hostcount = remote_errors = 0;
 
     for(dlist = origq.head; dlist != NULL; dlist = dlist->next) {
 	dp = dlist->data;
@@ -2631,12 +2631,13 @@ handle_result(
     while(waitpid(-1, NULL, WNOHANG)> 0);
 }
 
-static void
+static int
 check_host_setting(
     FILE *outf)
 {
     am_host_t *p;
     disk_t *dp;
+    int count = 0;
 
     for (p = get_hostlist(); p != NULL; p = p->next) {
 	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
@@ -2647,6 +2648,7 @@ check_host_setting(
 					"hostname", p->hostname,
 					"auth1", p->disks->auth,
 					"auth2", dp->auth)));
+		count++;
 		break;
 	    }
 	}
@@ -2656,8 +2658,10 @@ check_host_setting(
 					AMANDA_FILE, __LINE__,
 					2800232, MSG_ERROR, 1,
 					"hostname", p->hostname)));
+		count++;
 		break;
 	    }
 	}
     }
+    return count;
 }
