@@ -70,7 +70,7 @@ pid_t start_server_check(int fd, int do_localchk, int do_tapechk);
 int main(int argc, char **argv);
 int check_tapefile(FILE *outf, char *tapefile);
 int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
-static void check_host_setting(FILE *outf);
+static int check_host_setting(FILE *outf);
 
 void
 usage(void)
@@ -2160,14 +2160,14 @@ start_client_checks(
     g_fprintf(outf, _("\nAmanda Backup Client Hosts Check\n"));
     g_fprintf(outf,   "--------------------------------\n");
 
+    hostcount = remote_errors = 0;
+
     if (!who_check_host_setting) {
-	check_host_setting(outf);
+	remote_errors = check_host_setting(outf);
     }
 
     run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
     protocol_init();
-
-    hostcount = remote_errors = 0;
 
     for(dp = origq.head; dp != NULL; dp = dp->next) {
 	hostp = dp->host;
@@ -2331,12 +2331,13 @@ handle_result(
     while(waitpid(-1, NULL, WNOHANG)> 0);
 }
 
-static void
+static int
 check_host_setting(
     FILE *outf)
 {
     am_host_t *p;
     disk_t *dp;
+    int count = 0;
 
     for (p = get_hostlist(); p != NULL; p = p->next) {
 	for(dp = p->disks; dp != NULL; dp = dp->hostnext) {
@@ -2344,6 +2345,7 @@ check_host_setting(
 		g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different auth methods\n",
 			  p->hostname);
 		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same auth method, including skipped ones\n");
+		count++;
 		break;
 	    }
 	}
@@ -2353,8 +2355,10 @@ check_host_setting(
 		g_fprintf(outf, "ERROR: Multiple DLE's for host '%s' use different maxdumps values\n",
 			  p->hostname);
 		g_fprintf(outf, "       Please ensure that all DLE's for the host use the same maxdumps value, including skipped ones\n");
+		count++;
 		break;
 	    }
 	}
     }
+    return count;
 }
