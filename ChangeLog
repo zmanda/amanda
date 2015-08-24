@@ -1,3 +1,6 @@
+2015-08-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-sendrecv.pl: Fix compratio parsing.
+
 2015-08-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Add the check_host_setting count in the
 	  remote_errros when doing only the client check
