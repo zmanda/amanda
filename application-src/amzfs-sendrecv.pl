@@ -288,7 +288,7 @@ sub estimate_snapshot
     }
     if ($level == 0) {
 	my $compratio = $self->get_compratio();
-	chop($compratio);
+	$compratio =~ s/x$//;
 	$msg *= $compratio;
     }
 
@@ -307,7 +307,9 @@ sub get_compratio
     $pid = open3($wtr, $rdr, $err, $cmd);
     close $wtr;
     my ($msg) = <$rdr>;
+    chomp($msg) if defined $msg;
     my ($errmsg) = <$err>;
+    chomp($errmsg) if defined $errmsg;
     waitpid $pid, 0;
     close $rdr;
     close $err;
