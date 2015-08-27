@@ -1174,7 +1174,7 @@ setup_estimate(
 		} else {
 		    ep->degr_mesg = _("Skipping: new disk can't be dumped in degraded mode");
 		}
-	    else
+	    else if (dp->strategy == DS_NOINC)
 		ep->degr_mesg = _("Skipping: strategy NOINC can't be dumped in degraded mode");
 	    if(dp->skip_full) {
 		log_add(L_INFO, _("Ignoring skip-full for %s:%s "
@@ -2729,6 +2729,7 @@ static void delay_dumps(void)
     bi_t  *	nbi;
     gint64	new_total;		/* New total_size */
     char	est_kb[20];		/* Text formatted dump size */
+    char	tape_kb[20];		/* Text formatted tape size */
     int		nb_forced_level_0;
     info_t	info;
     int		delete;
@@ -2782,8 +2783,10 @@ static void delay_dumps(void)
 	}
 
 	/* Format dumpsize for messages */
-	g_snprintf(est_kb, 20, "%lld KB,",
+	g_snprintf(est_kb, 20, "%lld KB",
                    (long long)ep->dump_est->csize);
+	g_snprintf(tape_kb, 20, "%lld KB",
+                   (long long)tapetype_get_length(tape) * (gint64)avail_tapes);
 
 	if(ep->dump_est->level == 0) {
 	    if(dp->skip_incr) {
@@ -2811,8 +2814,9 @@ static void delay_dumps(void)
 	    delete = 1;
 	    message = _("skipping incremental");
 	}
-	delay_one_dump(ep, delete, _("dump larger than available tape space,"),
-		       est_kb, message, NULL);
+	delay_one_dump(ep, delete, "dump estimate (", est_kb,
+		       ") is larger than available tape space (", tape_kb,
+		       "), ", message, NULL);
     }
 
     /*
