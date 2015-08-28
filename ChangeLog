@@ -1,4 +1,7 @@
 2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/disk.pm: Trap mkdir failure.
+
+2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): More improvement.
 
 2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>

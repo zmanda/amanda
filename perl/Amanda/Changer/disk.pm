@@ -28,6 +28,7 @@ use vars qw( @ISA );
 use File::Glob qw( :glob );
 use File::Path;
 use File::Basename;
+use Errno;
 use Amanda::Config qw( :getconf string_to_boolean );
 use Amanda::Debug qw( debug warning );
 use Amanda::Changer;
@@ -346,7 +347,9 @@ sub _load_by_slot {
 	    message => "Slot $slot is already in use by drive '$drive' and process '$params{state}->{drives}->{$drive}->{pid}'");
     }
 
-    $drive = $self->_alloc_drive();
+    $drive = $self->_alloc_drive($params{'res_cb'});
+    return if $drive->isa("Amanda::Changer::Error");
+
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
 
@@ -374,7 +377,9 @@ sub _load_by_label {
 			"in use by drive '$drive'");
     }
 
-    $drive = $self->_alloc_drive();
+    $drive = $self->_alloc_drive($params{'res_cb'});
+    return if $drive->isa("Amanda::Changer::Error");
+
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
 
@@ -409,7 +414,8 @@ sub _make_res {
 # Internal function to find an unused (nonexistent) driveN subdirectory and
 # create it.  Note that this does not add a 'data' symlink inside the directory.
 sub _alloc_drive {
-    my ($self) = @_;
+    my $self = shift;
+    my $res_cb = shift;
     my $n = 0;
 
     while (1) {
@@ -418,9 +424,13 @@ sub _alloc_drive {
 
 	warn "$drive is not a directory; please remove it" if (-e $drive and ! -d $drive);
 	next if (-e $drive);
-	next if (!mkdir($drive)); # TODO probably not a very effective locking mechanism..
-
-	return $drive;
+	if (mkdir($drive)) { # TODO probably not a very effective locking mechanism..
+	    return $drive;
+	}
+	next if ($! == &Errno::EEXIST);
+	return $self->make_error("failed", $res_cb,
+		reason => "device",
+		message => "Can't make directory '$drive': $!");
     }
 }
 
