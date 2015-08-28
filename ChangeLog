@@ -1,4 +1,7 @@
 2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (tape_action): More improvement.
+
+2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Improve message.
 
 2015-08-24  Jean-Louis Martineau <martineau@zmanda.com>
