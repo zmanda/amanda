@@ -1657,6 +1657,7 @@ sub restore {
 	    }
 
 	    if (defined $current_dump->{'server_crc'} and $current_dump->{'server_crc'} !~ /^00000000:/ and
+		defined $source_crc_size and
 		$current_dump_server_crc_size == $source_crc_size and
 		$current_dump->{'server_crc'} ne $source_crc) {
 		$self->user_message(
@@ -1715,7 +1716,9 @@ sub restore {
 				dest_crc	=> $dest_crc,
 				restore_client_crc => $restore_client_crc));
 	    }
-	    if ($dest_is_server and $source_crc ne $dest_crc) {
+	    if ($dest_is_server and
+		defined $source_crc and defined $dest_crc and
+		$source_crc ne $dest_crc) {
 		$self->user_message(
 			Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,

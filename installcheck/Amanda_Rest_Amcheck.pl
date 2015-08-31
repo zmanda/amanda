@@ -164,6 +164,17 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
+#55555
+          {	'source_filename' => "amcheck.c",
+		'severity' => $Amanda::Message::MESSAGE,
+		'message' => 'all slots have been loaded',
+		'errstr' => 'all slots have been loaded',
+		'process' => 'amcheck-server',
+		'running_on' => 'amanda-server',
+		'component' => 'amanda',
+		'module' => 'amanda',
+		'code' => '123'
+	  },
 #6
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,

@@ -1,3 +1,8 @@
+2015-08-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* patching file perl/Amanda/FetchDump.pm: Fix perl warning
+	* patching file server-src/amcheck-device.pl: Fix
+	* installcheck/Amanda_Rest_Amcheck.pl: Fix
+
 2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): More improvement.
 
