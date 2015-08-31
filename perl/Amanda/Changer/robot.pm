@@ -1991,7 +1991,8 @@ sub _get_state {
 		    debug("MISMATCH label for barcode  state ($label)   tapelist ($tl_label) for barcode $info->{'barcode'}");
 		}
 		if (!defined $label && defined $tl_label) {
-		    if ($info->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
+		    if (!defined $info->{'state'} ||
+			$info->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
 			$label = $tl_label;
 			$state->{'bc2lb'}->{$info->{'barcode'}} = $tl_label;
 		    }

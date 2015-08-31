@@ -348,7 +348,7 @@ sub _load_by_slot {
     }
 
     $drive = $self->_alloc_drive($params{'res_cb'});
-    return if $drive->isa("Amanda::Changer::Error");
+    return if ref($drive) ne '';
 
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
@@ -378,7 +378,7 @@ sub _load_by_label {
     }
 
     $drive = $self->_alloc_drive($params{'res_cb'});
-    return if $drive->isa("Amanda::Changer::Error");
+    return if ref($drive) ne '';
 
     $self->_load_drive($drive, $slot);
     $self->_set_current($slot) if ($params{'set_current'});
