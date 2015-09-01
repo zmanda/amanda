@@ -108,11 +108,7 @@ if ($command eq 'start') {
     my $dance_name;
     eval "use Dancer2;";
     if ((!$@ || $opt_dancer2) && !$opt_dancer) {
-	if (-f '@amlibexecdir@' . '/rest-server/bin/app-extensions-dancer2.pl') {
-	    $dance_name = '@amlibexecdir@' . '/rest-server/bin/app-extensions-dancer2.pl';
-	} else {
-	    $dance_name = '@amlibexecdir@' . '/rest-server/bin/app-dancer2.pl';
-	}
+	$dance_name = '@amlibexecdir@' . '/rest-server/bin/app-dancer2.pl';
     } else {
 	$dance_name = '@amlibexecdir@' . '/rest-server/bin/app.pl';
     }

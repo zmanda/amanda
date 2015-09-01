@@ -6,6 +6,21 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 
+BEGIN {
+    opendir(DIR, "$FindBin::Bin/../lib/Amanda") or die $!;
+    while (my $file = readdir(DIR)) {
+        next if $file eq '.';
+        next if $file eq '..';
+        if (-e "$FindBin::Bin/../lib/Amanda/$file/Rest.pm") {
+            my $module = "Amanda::${file}::Rest";
+            eval "require $module;";
+            print $@ if $@;
+        }
+    }
+}
+
 use Amanda::Rest;
-Amanda::Rest->dance;
+
+use Dancer2;
+dance;
 

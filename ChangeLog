@@ -1,3 +1,9 @@
+2015-09-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* rest-server/bin/app-dancer2.pl.in: Correctly load multiple
+	  applications.
+	* server-src/amanda-rest-server.pl: Always load the same Dancer2
+	  script.
+
 2015-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* patching file perl/Amanda/FetchDump.pm: Fix perl warning
 	* patching file server-src/amcheck-device.pl: Fix
