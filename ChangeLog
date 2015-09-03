@@ -1,3 +1,8 @@
+2015-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_comm_dispatch.c: Send all LOG_MESSAGE
+	* ndmp-src/ndmjob_main_util.c: Quote LOG_MESSAGE
+	* perl/Amanda/Report/human.pm: Fix output
+
 2015-08-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/disk.pm: Fix Trap mkdir failure
 	* patching file perl/Amanda/Changer/robot.pm: Fix perl warning

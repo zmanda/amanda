@@ -2981,7 +2981,8 @@ ndmp_sxa_log_message (struct ndm_session *sess,
 
 		sprintf (prefix, "%cLM%s", ref_conn->chan.name[1], tag);
 
-		ndmalogf (sess, prefix, lev, "LOG_MESSAGE: '%s'", request->entry);
+		//ndmalogf (sess, prefix, lev, "LOG_MESSAGE: '%s'", request->entry);
+		ndmalogf (sess, prefix, 0, "%s", request->entry);
 	NDMS_ENDWITH
 
 	return 0;

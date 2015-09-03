@@ -1663,6 +1663,8 @@ sub print_if_def
 
     @$msgs or return;    # do not print section if no messages
 
+    $self->zsprint("\n");
+    $self->zsprint("\n");
     $self->zsprint("$header\n");
     foreach my $msg (@$msgs) {
         $self->zprint("  $msg\n");
