@@ -1,3 +1,8 @@
+2015-09-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_comm_dispatch.c: Send all LOG_MESSAGE
+	* ndmp-src/ndmjob_main_util.c: Quote LOG_MESSAGE
+	* perl/Amanda/Report/human.pm: Fix output
+
 2015-09-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* rest-server/bin/app-dancer2.pl.in: Correctly load multiple
 	  applications.

@@ -35,6 +35,7 @@
  */
 
 #include "ndmjob.h"
+#include "amutil.h"
 
 #ifndef NDMOS_OPTION_NO_CONTROL_AGENT
 int
@@ -118,8 +119,10 @@ ndmjob_log_deliver (struct ndmlog *log, char *tag, int lev, char *msg)
 	}
 
 	if (v_verbose >= lev) {
-		printf ("'%s'\n", msg);
+		char *quoted = quote_string(msg);
+		printf ("%s '%s'\n", tag, quoted);
 		fflush (stdout);
+		g_free(quoted);
 	}
 }
 
