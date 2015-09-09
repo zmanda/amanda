@@ -1,5 +1,8 @@
 2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/dumper.c: Fix hang on failure.
+	* server-src/driver.c (tape_action): Improvement
+
+2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fix hang on failure
 
 2015-09-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_comm_dispatch.c: Send all LOG_MESSAGE

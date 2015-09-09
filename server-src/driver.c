@@ -5171,6 +5171,7 @@ tape_action(
     int   nb_wtaper_active = nb_sent_new_tape;
     int   nb_wtaper_flushing = 0;
     int   nb_wtaper_waiting = 0;
+    int   nb_wtaper_init = 0;
     int   dle_free = 0;		/* number of dle that fit on started tape */
     int   new_dle = 0;		/* number of dle that doesn't fit on started tape */
     off_t new_data = 0;		/* size of dle that doesn't fit on started tape */
@@ -5232,6 +5233,11 @@ tape_action(
 	if (wtaper1->state & TAPER_STATE_TAPE_STARTED &&
 	    wtaper1->state & TAPER_STATE_IDLE) {
 	    nb_wtaper_waiting++;
+	}
+	if (wtaper1->state & TAPER_STATE_RESERVATION &&
+	    wtaper1->state & TAPER_STATE_IDLE &&
+	    wtaper->nb_dle == 0) {
+	    nb_wtaper_init++;
 	}
     }
 
@@ -5352,6 +5358,9 @@ driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUEST
 		taper->runtapes);
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_NO_NEW_TAPE\n");
 	    result |= TAPE_ACTION_NO_NEW_TAPE;
+	} else if (nb_wtaper_init > 0) {
+	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_MOVE (nb_wtaper_init > 0)\n");
+	    result |= TAPE_ACTION_MOVE;
 	} else if (taper->current_tape < taper->runtapes &&
 		   taper->nb_scan_volume == 0 &&
 		    (taper->sent_first_write == wtaper ||
