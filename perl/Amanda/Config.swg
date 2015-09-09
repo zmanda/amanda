@@ -402,111 +402,161 @@ constant_pod(Storage Parameters, FOR_ALL_STORAGE_KEY)
  * Various enumerated conftypes
  */
 
-amglue_add_enum_tag_fns(dump_holdingdisk_t);
-amglue_add_constant(HOLD_NEVER, dump_holdingdisk_t);
-amglue_add_constant(HOLD_AUTO, dump_holdingdisk_t);
-amglue_add_constant(HOLD_REQUIRED, dump_holdingdisk_t);
-amglue_copy_to_tag(dump_holdingdisk_t, getconf);
+amglue_add_enum_and_string_tag_fns(holdingdisk);
+amglue_add_constant_and_string(HOLD_NEVER, "NEVER", holdingdisk);
+amglue_add_constant_and_string(HOLD_AUTO,  "AUTO", holdingdisk);
+amglue_add_constant_and_string(HOLD_REQUIRED, "REQUIRED", holdingdisk);
+amglue_copy_to_tag(holdingdisk, getconf);
 
-amglue_add_enum_tag_fns(comp_t);
-amglue_add_constant(COMP_NONE, comp_t);
-amglue_add_constant(COMP_FAST, comp_t);
-amglue_add_constant(COMP_BEST, comp_t);
-amglue_add_constant(COMP_CUST, comp_t);
-amglue_add_constant(COMP_SERVER_FAST, comp_t);
-amglue_add_constant(COMP_SERVER_BEST, comp_t);
-amglue_add_constant(COMP_SERVER_CUST, comp_t);
-amglue_copy_to_tag(comp_t, getconf);
+amglue_add_enum_and_string_tag_fns(comp);
+amglue_add_constant_and_string(COMP_NONE, "NONE", comp);
+amglue_add_constant_and_string(COMP_FAST, "FAST", comp);
+amglue_add_constant_and_string(COMP_BEST, "BEST", comp);
+amglue_add_constant_and_string(COMP_CUST, "CUSTOM", comp);
+amglue_add_constant_and_string(COMP_SERVER_FAST, "SERVER FAST", comp);
+amglue_add_constant_and_string(COMP_SERVER_BEST, "SERVER BEST", comp);
+amglue_add_constant_and_string(COMP_SERVER_CUST, "SERVER CUSTOM", comp);
+amglue_copy_to_tag(comp, getconf);
 
-amglue_add_enum_tag_fns(encrypt_t);
-amglue_add_constant(ENCRYPT_NONE, encrypt_t);
-amglue_add_constant(ENCRYPT_CUST, encrypt_t);
-amglue_add_constant(ENCRYPT_SERV_CUST, encrypt_t);
-amglue_copy_to_tag(encrypt_t, getconf);
+amglue_add_enum_and_string_tag_fns(encrypt);
+amglue_add_constant_and_string(ENCRYPT_NONE, "NONE", encrypt);
+amglue_add_constant_and_string(ENCRYPT_CUST, "CUSTOM", encrypt);
+amglue_add_constant_and_string(ENCRYPT_SERV_CUST, "SERVER CUSTOM", encrypt);
+amglue_copy_to_tag(encrypt, getconf);
 
-amglue_add_enum_tag_fns(strategy_t);
-amglue_add_constant(DS_SKIP, strategy_t);
-amglue_add_constant(DS_STANDARD, strategy_t);
-amglue_add_constant(DS_NOFULL, strategy_t);
-amglue_add_constant(DS_NOINC, strategy_t);
-amglue_add_constant(DS_4, strategy_t);
-amglue_add_constant(DS_5, strategy_t);
-amglue_add_constant(DS_HANOI, strategy_t);
-amglue_add_constant(DS_INCRONLY, strategy_t);
-amglue_copy_to_tag(strategy_t, getconf);
+amglue_add_enum_and_string_tag_fns(strategy);
+amglue_add_constant_and_string(DS_SKIP, "SKIP", strategy);
+amglue_add_constant_and_string(DS_STANDARD, "STANDARD", strategy);
+amglue_add_constant_and_string(DS_NOFULL, "NOFULL", strategy);
+amglue_add_constant_and_string(DS_NOINC, "NOINC", strategy);
+amglue_add_constant_and_string(DS_4, "DS4", strategy);
+amglue_add_constant_and_string(DS_5, "DS5", strategy);
+amglue_add_constant_and_string(DS_HANOI, "HANOI", strategy);
+amglue_add_constant_and_string(DS_INCRONLY, "INCRONLY", strategy);
+amglue_copy_to_tag(strategy, getconf);
 
-amglue_add_enum_tag_fns(estimate_t);
-amglue_add_constant(ES_CLIENT, estimate_t);
-amglue_add_constant(ES_SERVER, estimate_t);
-amglue_add_constant(ES_CALCSIZE, estimate_t);
-amglue_copy_to_tag(estimate_t, getconf);
+amglue_add_enum_and_string_tag_fns(estimate);
+amglue_add_constant_and_string(ES_CLIENT, "CLIENT", estimate);
+amglue_add_constant_and_string(ES_SERVER, "SERVER", estimate);
+amglue_add_constant_and_string(ES_CALCSIZE, "CALCSIZE", estimate);
 
-amglue_add_enum_tag_fns(autolabel_enum_t);
-amglue_add_constant(AL_OTHER_CONFIG, autolabel_enum_t);
-amglue_add_constant(AL_NON_AMANDA, autolabel_enum_t);
-amglue_add_constant(AL_VOLUME_ERROR, autolabel_enum_t);
-amglue_add_constant(AL_EMPTY, autolabel_enum_t);
-amglue_copy_to_tag(autolabel_enum_t, getconf);
+%perlcode %{
+sub estimate_list_to_values {
+    my $estimates = shift;
+    my @estimate_list_value;
 
-amglue_add_enum_tag_fns(taperalgo_t);
-amglue_add_constant(ALGO_FIRST, taperalgo_t);
-amglue_add_constant(ALGO_FIRSTFIT, taperalgo_t);
-amglue_add_constant(ALGO_LARGEST, taperalgo_t);
-amglue_add_constant(ALGO_LARGESTFIT, taperalgo_t);
-amglue_add_constant(ALGO_SMALLEST, taperalgo_t);
-amglue_add_constant(ALGO_LAST, taperalgo_t);
-amglue_copy_to_tag(taperalgo_t, getconf);
+    foreach my $estimate_string ( split(' ', $estimates)) {
+	push @estimate_list_value, estimate_to_value($estimate_string);
+    }
+    return @estimate_list_value;
+}
+push @EXPORT_OK, qw(estimate_list_to_values);
+push @{$EXPORT_TAGS{"estimate"}}, qw(estimate_list_to_values);
+%}
+amglue_copy_to_tag(estimate, getconf);
 
-amglue_add_enum_tag_fns(execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_AMCHECK, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_DLE_AMCHECK, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_HOST_AMCHECK, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_AMCHECK, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_DLE_AMCHECK, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_HOST_AMCHECK, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_ESTIMATE, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_DLE_ESTIMATE, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_HOST_ESTIMATE, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_ESTIMATE, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_DLE_ESTIMATE, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_HOST_ESTIMATE, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_BACKUP, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_DLE_BACKUP, execute_on_t);
-amglue_add_constant(EXECUTE_ON_PRE_HOST_BACKUP, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_BACKUP, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_DLE_BACKUP, execute_on_t);
-amglue_add_constant(EXECUTE_ON_POST_HOST_BACKUP, execute_on_t);
-amglue_copy_to_tag(execute_on_t, getconf);
+amglue_add_enum_and_string_tag_fns(autolabel_enum);
+amglue_add_constant_and_string(AL_OTHER_CONFIG, "OTHER-CONFIG", autolabel_enum);
+amglue_add_constant_and_string(AL_NON_AMANDA, "NON-AMANDA", autolabel_enum);
+amglue_add_constant_and_string(AL_VOLUME_ERROR, "VOLUME-ERROR", autolabel_enum);
+amglue_add_constant_and_string(AL_EMPTY, "EMPTY", autolabel_enum);
+%perlcode %{
+sub autolabel_to_value {
+    my $autolabel = shift;
+    my $new_autolabel;
 
-amglue_add_enum_tag_fns(send_amreport_on_t);
-amglue_add_constant(SEND_AMREPORT_ALL, send_amreport_on_t);
-amglue_add_constant(SEND_AMREPORT_STRANGE, send_amreport_on_t);
-amglue_add_constant(SEND_AMREPORT_ERROR, send_amreport_on_t);
-amglue_add_constant(SEND_AMREPORT_NEVER, send_amreport_on_t);
-amglue_copy_to_tag(send_amreport_on_t, getconf);
+    $new_autolabel->{'template'} = $autolabel->{'template'};
+    $new_autolabel->{'autolabel'} = 0;
+    $new_autolabel->{'autolabel'} |= $AL_OTHER_CONFIG if $autolabel->{'other_config'};
+    $new_autolabel->{'autolabel'} |= $AL_NON_AMANDA   if $autolabel->{'non_amanda'};
+    $new_autolabel->{'autolabel'} |= $AL_VOLUME_ERROR if $autolabel->{'volume_error'};
+    $new_autolabel->{'autolabel'} |= $AL_EMPTY        if $autolabel->{'empty'};
+    return $new_autolabel;
+}
+push @EXPORT_OK, qw(autolabel_to_value);
+push @{$EXPORT_TAGS{"autolabel_enum"}}, qw(autolabel_to_value);
+%}
+amglue_copy_to_tag(autolabel_enum, getconf);
 
-amglue_add_enum_tag_fns(data_path_t);
-amglue_add_constant(DATA_PATH_AMANDA, data_path_t);
-amglue_add_constant(DATA_PATH_DIRECTTCP, data_path_t);
-amglue_copy_to_tag(data_path_t, getconf);
+amglue_add_enum_and_string_tag_fns(taperalgo);
+amglue_add_constant_and_string(ALGO_FIRST, "FIRST", taperalgo);
+amglue_add_constant_and_string(ALGO_FIRSTFIT, "FIRSTFIT", taperalgo);
+amglue_add_constant_and_string(ALGO_LARGEST, "LARGEST", taperalgo);
+amglue_add_constant_and_string(ALGO_LARGESTFIT, "LARGESTFIT", taperalgo);
+amglue_add_constant_and_string(ALGO_SMALLEST, "SMALLEST", taperalgo);
+amglue_add_constant_and_string(ALGO_SMALLESTFIT, "SMALLESTFIT", taperalgo);
+amglue_add_constant_and_string(ALGO_LAST, "LAST", taperalgo);
+amglue_add_constant_and_string(ALGO_LASTFIT, "LASTFIT", taperalgo);
+amglue_copy_to_tag(taperalgo, getconf);
 
-amglue_add_enum_tag_fns(part_cache_type_t);
-amglue_add_constant(PART_CACHE_TYPE_NONE, part_cache_type_t);
-amglue_add_constant(PART_CACHE_TYPE_DISK, part_cache_type_t);
-amglue_add_constant(PART_CACHE_TYPE_MEMORY, part_cache_type_t);
-amglue_copy_to_tag(part_cache_type_t, getconf);
+amglue_add_enum_and_string_tag_fns(execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_AMCHECK,        "EXECUTE-ON-PRE-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_AMCHECK,    "EXECUTE-ON-PRE-DLE-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_AMCHECK,   "EXECUTE-ON-PRE-HOST-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_AMCHECK,       "EXECUTE-ON-POST-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_AMCHECK,   "EXECUTE-ON-POST-DLE-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_AMCHECK,  "EXECUTE-ON-POST-HOST-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_ESTIMATE,       "EXECUTE-ON-PRE-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_ESTIMATE,   "EXECUTE-ON-PRE-DLE-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_ESTIMATE,  "EXECUTE-ON-PRE-HOST-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_ESTIMATE,      "EXECUTE-ON-POST-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_ESTIMATE,  "EXECUTE-ON-POST-DLE-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_ESTIMATE, "EXECUTE-ON-POST-HOST-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_BACKUP,         "EXECUTE-ON-PRE-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_BACKUP,     "EXECUTE-ON-PRE-DLE-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_BACKUP,    "EXECUTE-ON-PRE-HOST-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_BACKUP,        "EXECUTE-ON-POST-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_BACKUP,    "EXECUTE-ON-POST-DLE-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_BACKUP,   "EXECUTE-ON-POST-HOST-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_RECOVER,        "EXECUTE-ON-PRE-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_RECOVER,       "EXECUTE-ON-POST-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_LEVEL_RECOVER,  "EXECUTE-ON-PRE-LEVEL-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_LEVEL_RECOVER, "EXECUTE-ON-POST-LEVEL-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_INTER_LEVEL_RECOVER,"EXECUTE-ON-INTER-LEVEL-RECOVER", execute_on);
+%perlcode %{
+sub execute_on_list{
+    my $execute_on = shift;
+    my $new_execute_on;
 
-amglue_add_enum_tag_fns(dumptype_tag_t);
-amglue_add_constant(TAG_NAME, dumptype_tag_t);
-amglue_add_constant(TAG_ALL, dumptype_tag_t);
-amglue_add_constant(TAG_OTHER, dumptype_tag_t);
-amglue_copy_to_tag(dumptype_tag_t, getconf);
+    foreach my $execute_on_string ( split(' ', $execute_on)) {
+	$new_execute_on |= execute_on_to_value($execute_on_string);
+    }
+    return $new_execute_on;
+}
+push @EXPORT_OK, qw(execute_on_list);
+push @{$EXPORT_TAGS{"execute_on"}}, qw(execute_on_list);
+%}
+amglue_copy_to_tag(execute_on, getconf);
 
-amglue_add_enum_tag_fns(level_type_t);
-amglue_add_constant(LEVEL_ALL, level_type_t);
-amglue_add_constant(LEVEL_FULL, level_type_t);
-amglue_add_constant(LEVEL_INCR, level_type_t);
-amglue_copy_to_tag(level_type_t, getconf);
+amglue_add_enum_and_string_tag_fns(send_amreport_on);
+amglue_add_constant_and_string(SEND_AMREPORT_ALL, "ALL", send_amreport_on);
+amglue_add_constant_and_string(SEND_AMREPORT_STRANGE, "STRANGE", send_amreport_on);
+amglue_add_constant_and_string(SEND_AMREPORT_ERROR, "ERROR", send_amreport_on);
+amglue_add_constant_and_string(SEND_AMREPORT_NEVER, "NEVER", send_amreport_on);
+amglue_copy_to_tag(send_amreport_on, getconf);
+
+amglue_add_enum_and_string_tag_fns(data_path);
+amglue_add_constant_and_string(DATA_PATH_AMANDA, "AMANDA", data_path);
+amglue_add_constant_and_string(DATA_PATH_DIRECTTCP, "DIRECTTCP", data_path);
+amglue_copy_to_tag(data_path, getconf);
+
+amglue_add_enum_and_string_tag_fns(part_cache_type);
+amglue_add_constant_and_string(PART_CACHE_TYPE_NONE, "NONE", part_cache_type);
+amglue_add_constant_and_string(PART_CACHE_TYPE_DISK, "DISK", part_cache_type);
+amglue_add_constant_and_string(PART_CACHE_TYPE_MEMORY, "MEMORY", part_cache_type);
+amglue_copy_to_tag(part_cache_type, getconf);
+
+amglue_add_enum_and_string_tag_fns(dumptype_tag);
+amglue_add_constant_and_string(TAG_NAME, "NAME", dumptype_tag);
+amglue_add_constant_and_string(TAG_ALL, "ALL", dumptype_tag);
+amglue_add_constant_and_string(TAG_OTHER, "OTHER", dumptype_tag);
+amglue_copy_to_tag(dumptype_tag, getconf);
+
+amglue_add_enum_and_string_tag_fns(level_type);
+amglue_add_constant_and_string(LEVEL_ALL, "ALL", level_type);
+amglue_add_constant_and_string(LEVEL_FULL, "FULL", level_type);
+amglue_add_constant_and_string(LEVEL_INCR, "INCR", level_type);
+amglue_copy_to_tag(level_type, getconf);
 
 /*
  * val_t typemaps
@@ -1173,7 +1223,7 @@ val_t_to_print(val_t *val, SV **results) {
 		    hv = (HV *)sv_2mortal((SV *)newHV());
 
 		    hv_store(hv, "storage", strlen("storage"), newSVpv(v->storage, 0), 0);
-		    hv_store(hv, "days", strlen("says"), newSViv(v->days), 0);
+		    hv_store(hv, "days", strlen("days"), newSViv(v->days), 0);
 		    av_push(av, newRV_inc((SV*)hv));
 		}
 
@@ -1661,6 +1711,81 @@ amglue_export_tag(getconf,
 	pp_script_getconf_human holdingdisk_getconf_human interface_getconf_human
 	interactivity_getconf_human taperscan_getconf_human policy_getconf_human);
 
+%perlcode %{
+
+#sub boolean_to_value {
+#    my $string = shift;
+#    if ($string eq "YES") {
+#	return 1;
+#    } elsif ($string eq "NO") {
+#	return 0;
+#    } else {
+#	die("Invalid boolean string: $string");
+#    }
+#}
+#
+#sub no_yes_all_to_value {
+#    my $string = shift;
+#    if ($string eq "YES") {
+#	return 1;
+#    } elsif ($string eq "NO") {
+#	return 0;
+#    } elsif ($string eq "ALL") {
+#	return 2;
+#    } else {
+#	die("Invalid no_yes_all string: $string");
+#    }
+#}
+#
+#sub priority_to_value {
+#    my $string = shift;
+#    if ($string eq "LOW") {
+#	return 0;
+#    } elsif ($string eq "MEDIUM") {
+#	return 1;
+#    } elsif ($string eq "HIGH") {
+#	return 2;
+#    } else {
+#	die("Invalid priority string: $string");
+#    }
+#}
+#
+#sub execute_where_to_value {
+#    my $string = shift;
+#    if ($string eq "CLIENT") {
+#	return $Amanda::Config::ES_CLIENT;
+#    } elsif ($string eq "SERVER") {
+#	return $Amanda::Config::ES_SERVER;
+#    } else {
+#	die("Invalid execute_where string: $string");
+#    }
+#}
+#
+#sub host_limit_to_value {
+#    my $string = shift;
+#    die("Invalid host_limit string: $string");
+#}
+#
+#sub dump_selection_to_value {
+#    my $string = shift;
+#    die("Invalid dump_selection string: $string");
+#}
+#
+#sub vault_list_to_value {
+#    my $string = shift;
+#    die("Invalid vault_list string: $string");
+#}
+#
+#sub labelstr_to_value {
+#    my $labelstr = shift;
+#    my $new_labelstr;
+#
+#    $new_labelstr->{'template'} = $labelstr->{'template'};
+#    $new_labelstr->{'match_autolabel'} = (($labelstr->{'match_autolabel'} eq 'YES') ? 1 : 0);
+#    return $new_labelstr;
+#}
+
+%}
 
 %perlcode %{
 package Amanda::Config::Message;
@@ -1797,6 +1922,6 @@ sub local_message {
 	return "The version";
     }
 }
-%}
 
+%}
 

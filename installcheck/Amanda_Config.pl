@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 280;
+use Test::More tests => 357;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -1254,3 +1254,102 @@ is_deeply($ds,
 	  { 'tag_type' => $Amanda::Config::TAG_ALL , 'level' => $Amanda::Config::LEVEL_ALL },
         ],
 	"lookup_storage");
+
+is (holdingdisk_to_string(holdingdisk_to_value("NEVER")), "NEVER", "dump_holdingdisk NEVER");
+is (holdingdisk_to_string(holdingdisk_to_value("AUTO")), "AUTO", "dump_holdingdisk AUTO");
+is (holdingdisk_to_string(holdingdisk_to_value("REQUIRED")), "REQUIRED", "dump_holdingdisk REQUIRED");
+
+is (comp_to_string(comp_to_value("NONE")), "NONE", "comp NONE");
+is (comp_to_string(comp_to_value("FAST")), "FAST", "comp FAST");
+is (comp_to_string(comp_to_value("BEST")), "BEST", "comp BEST");
+is (comp_to_string(comp_to_value("CUSTOM")), "CUSTOM", "comp CUSTOM");
+is (comp_to_string(comp_to_value("SERVER FAST")), "SERVER FAST", "comp SERVER FAST");
+is (comp_to_string(comp_to_value("SERVER BEST")), "SERVER BEST", "comp SERVER BEST");
+is (comp_to_string(comp_to_value("SERVER CUSTOM")), "SERVER CUSTOM", "comp SERVER CUSTOM");
+
+is (encrypt_to_string(encrypt_to_value("NONE")), "NONE", "encrypt NONE");
+is (encrypt_to_string(encrypt_to_value("CUSTOM")), "CUSTOM", "encrypt CUSTOM");
+is (encrypt_to_string(encrypt_to_value("SERVER CUSTOM")), "SERVER CUSTOM", "encrypt SERVER CUSTOM");
+
+is (strategy_to_string(strategy_to_value("SKIP")), "SKIP", "strategy SKIP");
+is (strategy_to_string(strategy_to_value("STANDARD")), "STANDARD", "strategy STANDARD");
+is (strategy_to_string(strategy_to_value("NOFULL")), "NOFULL", "strategy NOFULL");
+is (strategy_to_string(strategy_to_value("NOINC")), "NOINC", "strategy NOINC");
+is (strategy_to_string(strategy_to_value("DS4")), "DS4", "strategy DS4");
+is (strategy_to_string(strategy_to_value("DS5")), "DS5", "strategy DS5");
+is (strategy_to_string(strategy_to_value("HANOI")), "HANOI", "strategy HANOI");
+is (strategy_to_string(strategy_to_value("INCRONLY")), "INCRONLY", "strategy INCRONLY");
+
+is (estimate_to_string(estimate_to_value("CLIENT")), "CLIENT", "estimate CLIENT");
+is (estimate_to_string(estimate_to_value("SERVER")), "SERVER", "estimate SERVER");
+is (estimate_to_string(estimate_to_value("CALCSIZE")), "CALCSIZE", "estimate CALCSIZE");
+my @estimates_list = estimate_list_to_values("SERVER CLIENT CALCSIZE");
+my @expected_result = ( $ES_SERVER, $ES_CLIENT, $ES_CALCSIZE );
+is_deeply(\@estimates_list, \@expected_result, "estimate list");
+
+is (autolabel_enum_to_string(autolabel_enum_to_value("OTHER-CONFIG")), "OTHER-CONFIG", "autolabel_enum OTHER-CONFIG");
+is (autolabel_enum_to_string(autolabel_enum_to_value("NON-AMANDA")), "NON-AMANDA", "autolabel_enum NON-AMANDA");
+is (autolabel_enum_to_string(autolabel_enum_to_value("VOLUME-ERROR")), "VOLUME-ERROR", "autolabel_enum VOLUME-ERROR");
+is (autolabel_enum_to_string(autolabel_enum_to_value("EMPTY")), "EMPTY", "autolabel_enum EMPTY");
+my $autolabel = { 'template' => 'toto', 'other_config' => 1, 'non_amanda' => 1, 'volume_error' => 1, 'empty' => 1 };
+my $new_autolabel = autolabel_to_value($autolabel);
+my $expected_result = { template => 'toto', autolabel => $AL_OTHER_CONFIG|$AL_NON_AMANDA|$AL_VOLUME_ERROR|$AL_EMPTY };
+is_deeply($new_autolabel, $expected_result, "autolabel");
+
+is (taperalgo_to_string(taperalgo_to_value("FIRST")), "FIRST", "taperalgo FIRST");
+is (taperalgo_to_string(taperalgo_to_value("FIRSTFIT")), "FIRSTFIT", "taperalgo FIRSTFIT");
+is (taperalgo_to_string(taperalgo_to_value("LARGEST")), "LARGEST", "taperalgo LARGEST");
+is (taperalgo_to_string(taperalgo_to_value("LARGESTFIT")), "LARGESTFIT", "taperalgo LARGESTFIT");
+is (taperalgo_to_string(taperalgo_to_value("SMALLEST")), "SMALLEST", "taperalgo SMALLEST");
+is (taperalgo_to_string(taperalgo_to_value("SMALLESTFIT")), "SMALLESTFIT", "taperalgo SMALLESTFIT");
+is (taperalgo_to_string(taperalgo_to_value("LAST")), "LAST", "taperalgo LAST");
+is (taperalgo_to_string(taperalgo_to_value("LASTFIT")), "LASTFIT", "taperalgo LASTFIT");
+
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-AMCHECK")), "EXECUTE-ON-PRE-AMCHECK", "execute_on EXECUTE-ON-PRE-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-DLE-AMCHECK")), "EXECUTE-ON-PRE-DLE-AMCHECK", "execute_on EXECUTE-ON-PRE-DLE-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-HOST-AMCHECK")), "EXECUTE-ON-PRE-HOST-AMCHECK", "execute_on EXECUTE-ON-PRE-HOST-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-AMCHECK")), "EXECUTE-ON-POST-AMCHECK", "execute_on EXECUTE-ON-POST-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-DLE-AMCHECK")), "EXECUTE-ON-POST-DLE-AMCHECK", "execute_on EXECUTE-ON-POST-DLE-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-HOST-AMCHECK")), "EXECUTE-ON-POST-HOST-AMCHECK", "execute_on EXECUTE-ON-POST-HOST-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-ESTIMATE")), "EXECUTE-ON-PRE-ESTIMATE", "execute_on EXECUTE-ON-PRE-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-DLE-ESTIMATE")), "EXECUTE-ON-PRE-DLE-ESTIMATE", "execute_on EXECUTE-ON-PRE-DLE-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-HOST-ESTIMATE")), "EXECUTE-ON-PRE-HOST-ESTIMATE", "execute_on EXECUTE-ON-PRE-HOST-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-ESTIMATE")), "EXECUTE-ON-POST-ESTIMATE", "execute_on EXECUTE-ON-POST-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-DLE-ESTIMATE")), "EXECUTE-ON-POST-DLE-ESTIMATE", "execute_on EXECUTE-ON-POST-DLE-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-HOST-ESTIMATE")), "EXECUTE-ON-POST-HOST-ESTIMATE", "execute_on EXECUTE-ON-POST-HOST-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-BACKUP")), "EXECUTE-ON-PRE-BACKUP", "execute_on EXECUTE-ON-PRE-BACKUP");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-DLE-BACKUP")), "EXECUTE-ON-PRE-DLE-BACKUP", "execute_on EXECUTE-ON-PRE-DLE-BACKUP");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-HOST-BACKUP")), "EXECUTE-ON-PRE-HOST-BACKUP", "execute_on EXECUTE-ON-PRE-HOST-BACKUP");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-BACKUP")), "EXECUTE-ON-POST-BACKUP", "execute_on EXECUTE-ON-POST-BACKUP");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-DLE-BACKUP")), "EXECUTE-ON-POST-DLE-BACKUP", "execute_on EXECUTE-ON-POST-DLE-BACKUP");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-HOST-BACKUP")), "EXECUTE-ON-POST-HOST-BACKUP", "execute_on EXECUTE-ON-POST-HOST-BACKUP");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-RECOVER")), "EXECUTE-ON-PRE-RECOVER", "execute_on EXECUTE-ON-PRE-RECOVER");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-RECOVER")), "EXECUTE-ON-POST-RECOVER", "execute_on EXECUTE-ON-POST-RECOVER");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-LEVEL-RECOVER")), "EXECUTE-ON-PRE-LEVEL-RECOVER", "execute_on EXECUTE-ON-PRE-LEVEL-RECOVER");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-LEVEL-RECOVER")), "EXECUTE-ON-POST-LEVEL-RECOVER", "execute_on EXECUTE-ON-POST-LEVEL-RECOVER");
+is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-INTER-LEVEL-RECOVER")), "EXECUTE-ON-INTER-LEVEL-RECOVER", "execute_on EXECUTE-ON-INTER-LEVEL-RECOVER");
+my $execute_on_list = "EXECUTE-ON-PRE-AMCHECK EXECUTE-ON-PRE-DLE-AMCHECK EXECUTE-ON-PRE-HOST-AMCHECK EXECUTE-ON-POST-AMCHECK EXECUTE-ON-POST-DLE-AMCHECK EXECUTE-ON-POST-HOST-AMCHECK EXECUTE-ON-PRE-ESTIMATE EXECUTE-ON-PRE-DLE-ESTIMATE EXECUTE-ON-PRE-HOST-ESTIMATE EXECUTE-ON-POST-ESTIMATE EXECUTE-ON-POST-DLE-ESTIMATE EXECUTE-ON-POST-HOST-ESTIMATE EXECUTE-ON-PRE-BACKUP EXECUTE-ON-PRE-DLE-BACKUP EXECUTE-ON-PRE-HOST-BACKUP EXECUTE-ON-POST-BACKUP EXECUTE-ON-POST-DLE-BACKUP EXECUTE-ON-POST-HOST-BACKUP EXECUTE-ON-PRE-RECOVER EXECUTE-ON-POST-RECOVER EXECUTE-ON-PRE-LEVEL-RECOVER EXECUTE-ON-POST-LEVEL-RECOVER EXECUTE-ON-INTER-LEVEL-RECOVER";
+my @new_execute_on_list = execute_on_list($execute_on_list);
+@expected_result = ($EXECUTE_ON_PRE_AMCHECK | $EXECUTE_ON_PRE_DLE_AMCHECK | $EXECUTE_ON_PRE_HOST_AMCHECK | $EXECUTE_ON_POST_AMCHECK | $EXECUTE_ON_POST_DLE_AMCHECK | $EXECUTE_ON_POST_HOST_AMCHECK | $EXECUTE_ON_PRE_ESTIMATE | $EXECUTE_ON_PRE_DLE_ESTIMATE |$EXECUTE_ON_PRE_HOST_ESTIMATE | $EXECUTE_ON_POST_ESTIMATE | $EXECUTE_ON_POST_DLE_ESTIMATE | $EXECUTE_ON_POST_HOST_ESTIMATE | $EXECUTE_ON_PRE_BACKUP | $EXECUTE_ON_PRE_DLE_BACKUP | $EXECUTE_ON_PRE_HOST_BACKUP | $EXECUTE_ON_POST_BACKUP | $EXECUTE_ON_POST_DLE_BACKUP | $EXECUTE_ON_POST_HOST_BACKUP | $EXECUTE_ON_PRE_RECOVER | $EXECUTE_ON_POST_RECOVER | $EXECUTE_ON_PRE_LEVEL_RECOVER | $EXECUTE_ON_POST_LEVEL_RECOVER | $EXECUTE_ON_INTER_LEVEL_RECOVER);
+is_deeply(\@new_execute_on_list, \@expected_result, execute_on_list);
+
+is (send_amreport_on_to_string(send_amreport_on_to_value("ALL")), "ALL", "send_amreport_on ALL");
+is (send_amreport_on_to_string(send_amreport_on_to_value("STRANGE")), "STRANGE", "send_amreport_on STRANGE");
+is (send_amreport_on_to_string(send_amreport_on_to_value("ERROR")), "ERROR", "send_amreport_on ERROR");
+is (send_amreport_on_to_string(send_amreport_on_to_value("NEVER")), "NEVER", "send_amreport_on NEVER");
+
+is (data_path_to_string(data_path_to_value("AMANDA")), "AMANDA", "data_path AMANDA");
+is (data_path_to_string(data_path_to_value("DIRECTTCP")), "DIRECTTCP", "data_path DIRECTTCP");
+
+is (part_cache_type_to_string(part_cache_type_to_value("NONE")), "NONE", "part_cache_type NONE");
+is (part_cache_type_to_string(part_cache_type_to_value("DISK")), "DISK", "part_cache_type DISK");
+is (part_cache_type_to_string(part_cache_type_to_value("MEMORY")), "MEMORY", "part_cache_type MEMORY");
+
+is (dumptype_tag_to_string(dumptype_tag_to_value("NAME")), "NAME", "dumptype_tag NAME");
+is (dumptype_tag_to_string(dumptype_tag_to_value("ALL")), "ALL", "dumptype_tag ALL");
+is (dumptype_tag_to_string(dumptype_tag_to_value("OTHER")), "OTHER", "dumptype_tag OTHER");
+
+is (level_type_to_string(level_type_to_value("ALL")), "ALL", "level_type ALL");
+is (level_type_to_string(level_type_to_value("FULL")), "FULL", "level_type FULL");
+is (level_type_to_string(level_type_to_value("INCR")), "INCR", "level_type INCR");
+

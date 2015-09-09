@@ -1,4 +1,11 @@
 2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/amglue/constants.swg (amglue_add_enum_and_string_tag_fns,
+	  amglue_add_constant_and_string): New macro
+	* perl/Amanda/Config.swg: Add functions to return enum value from a
+	  string
+	* installcheck/Amanda_Config.pl: Add tests
+
+2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): Improvement
 
 2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>

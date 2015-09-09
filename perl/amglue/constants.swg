@@ -118,6 +118,54 @@ sub TAG ## _to_string {
     # default, just return the number
     return $enumval;
 }
+
+# Convert an string to a enum value
+sub TAG ## _to_value {
+    my ($stringvalue) = @_;
+
+    if (defined $_ ## TAG ## _VALUES{$stringvalue}) {
+	return $_ ## TAG ## _VALUES{$stringvalue}
+    }
+
+    # default, just return the string
+    return $stringvalue;
+}
+%}
+%enddef
+
+%define amglue_add_enum_and_string_tag_fns(TAG)
+typedef int TAG;
+amglue_export_tag(TAG, TAG ## _to_string);
+amglue_export_tag(TAG, TAG ## _to_value);
+%perlcode %{
+my %_ ## TAG ## _VALUES;
+my %_ ## TAG ## _CONST_VALUES;
+my %_ ## TAG ## _STRING;
+
+# Convert an enum value to a single string
+sub TAG ## _to_string {
+    my ($enumval) = @_;
+
+    if (defined  $_ ## TAG ## _STRING{$enumval}) {
+	return $_ ## TAG ## _STRING{$enumval};
+    }
+
+    # default, just return the number
+    return $enumval;
+
+}
+
+# Convert an string to a enum value
+sub TAG ## _to_value {
+    my ($stringvalue) = @_;
+
+    if (defined $_ ## TAG ## _CONST_VALUES{$stringvalue}) {
+	return $_ ## TAG ## _CONST_VALUES{$stringvalue}
+    }
+
+    # default, just return the string
+    return $stringvalue;
+}
 %}
 %enddef
 
@@ -142,6 +190,22 @@ enum { CONSTNAME }; /* pass the constant to SWIG */
 amglue_export_tag(TAG, $CONSTNAME);
 %perlcode %{
 $_ ## TAG ## _VALUES{`CONSTNAME`} = $CONSTNAME;
+%}
+%enddef
+
+/* Add the given constant, assuming the constant name is the 
+ * short name
+ *
+ * @param CONSTNAME: the name of the constant, as used in C code
+ * @param TAG: the tag for this constant (enum name, etc.)
+ */
+%define amglue_add_constant_and_string(CONSTNAME, STRING, TAG)
+enum { CONSTNAME }; /* pass the constant to SWIG */
+amglue_export_tag(TAG, $CONSTNAME);
+%perlcode %{
+$_ ## TAG ## _VALUES{`CONSTNAME`} = STRING;
+$_ ## TAG ## _CONST_VALUES{STRING} = $CONSTNAME;
+$_ ## TAG ## _STRING{$CONSTNAME} = STRING;
 %}
 %enddef
 
