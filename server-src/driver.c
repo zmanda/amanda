@@ -531,6 +531,14 @@ main(
 		_("can't dump required holdingdisk"));
 	    amfree(qname);
 	}
+	else if (current_tape >= conf_runtapes) {
+	    char *qname = quote_string(diskp->name);
+	    log_add(L_FAIL, "%s %s %s %d [%d tapes filled; runtapes=%d does not allow additional tapes]",
+		diskp->host->hostname, qname, sched(diskp)->datestamp,
+		sched(diskp)->level,
+                current_tape, conf_runtapes);
+	    amfree(qname);
+	}
 	else if (!degraded_mode) {
 	    char *qname = quote_string(diskp->name);
 	    log_add(L_FAIL, "%s %s %s %d [%s]",
@@ -2274,7 +2282,7 @@ idle_taper(void)
 	    (taper->state & TAPER_STATE_TAPE_STARTED) &&
 	    !(taper->state & TAPER_STATE_DONE) &&
 	    !(taper->state & TAPER_STATE_FILE_TO_TAPE) &&
-	    !(taper->state & TAPER_STATE_FILE_TO_TAPE))
+	    !(taper->state & TAPER_STATE_DUMP_TO_TAPE))
 	    return taper;
     }
     for (taper = tapetable; taper < tapetable + conf_taper_parallel_write;
@@ -2283,7 +2291,7 @@ idle_taper(void)
 	    (taper->state & TAPER_STATE_RESERVATION) &&
 	    !(taper->state & TAPER_STATE_DONE) &&
 	    !(taper->state & TAPER_STATE_FILE_TO_TAPE) &&
-	    !(taper->state & TAPER_STATE_FILE_TO_TAPE))
+	    !(taper->state & TAPER_STATE_DUMP_TO_TAPE))
 	    return taper;
     }
     return NULL;
@@ -3837,6 +3845,7 @@ tape_action(
     int   nb_taper_active = nb_sent_new_tape;
     int   nb_taper_flushing = 0;
     int   nb_taper_waiting = 0;
+    int   nb_init = 0;
     int   dle_free = 0;		/* number of dle that fit on started tape */
     int   new_dle = 0;		/* number of dle that doesn't fit on started tape */
     off_t new_data = 0;		/* size of dle that doesn't fit on started tape */
@@ -3878,6 +3887,11 @@ tape_action(
 	if (taper1->state & TAPER_STATE_TAPE_STARTED &&
 	    taper1->state & TAPER_STATE_IDLE) {
 	    nb_taper_waiting++;
+	}
+	if (taper1->state & TAPER_STATE_RESERVATION &&
+	    taper1->state & TAPER_STATE_IDLE &&
+	    taper1->nb_dle == 0) {
+	    nb_init++;
 	}
     }
 
@@ -3993,6 +4007,9 @@ tape_action(
 		"does not allow additional tapes"), current_tape, conf_runtapes);
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_NO_NEW_TAPE\n");
 	    result |= TAPE_ACTION_NO_NEW_TAPE;
+	} else if (nb_init > 0) {
+	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_MOVE (nb_init > 0)\n");
+	    result |= TAPE_ACTION_MOVE;
 	} else if (current_tape < conf_runtapes &&
 		   taper_nb_scan_volume == 0 &&
 		   (taper_sent_first_write == taper ||
