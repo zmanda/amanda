@@ -1,3 +1,6 @@
+2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fix hang on failure.
+
 2015-09-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_comm_dispatch.c: Send all LOG_MESSAGE
 	* ndmp-src/ndmjob_main_util.c: Quote LOG_MESSAGE

@@ -2380,6 +2380,9 @@ stop_dump(void)
 	    streams[i].fd = NULL;
 	}
     }
+
+    aclose(statefile_in_stream);
+    aclose(statefile_in_mesg);
     aclose(indexout);
     aclose(g_databuf->fd);
     timeout(0);
