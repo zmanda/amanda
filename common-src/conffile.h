@@ -91,6 +91,20 @@ typedef struct seen_s {
     int linenum;
 } seen_t;
 
+/* boolean and no_yes_all */
+typedef enum {
+    VALUE_NO,
+    VALUE_YES,
+    VALUE_ALL
+} no_yes_all_t;
+
+/* priority types */
+typedef enum {
+    PRIORITY_LOW,               /* Always direct to tape  */
+    PRIORITY_MEDIUM,            /* If possible            */
+    PRIORITY_HIGH               /* Always to holding disk */
+} priority_t;
+
 /* holdingdisk types */
 typedef enum {
     HOLD_NEVER,                 /* Always direct to tape  */
@@ -195,7 +209,10 @@ typedef enum {
 #define EXECUTE_ON_INTER_LEVEL_RECOVER (1 << 22)
 typedef int execute_on_t;
 
-typedef int execute_where_t;
+typedef enum {
+    EXECUTE_WHERE_CLIENT,
+    EXECUTE_WHERE_SERVER,
+} execute_where_t;
 
 typedef enum {
     SEND_AMREPORT_ALL,
@@ -356,7 +373,7 @@ dump_holdingdisk_t    val_t_to_holding  (val_t *);
 estimatelist_t        val_t_to_estimatelist (val_t *);
 strategy_t            val_t_to_strategy (val_t *);
 taperalgo_t           val_t_to_taperalgo(val_t *);
-int                   val_t_to_priority (val_t *);
+int                   val_t_to_priority (val_t *); /* priority_t or int */
 float                *val_t_to_rate     (val_t *); /* array of two floats */
 exinclude_t           val_t_to_exinclude(val_t *);
 int                  *val_t_to_intrange (val_t *); /* array of two ints */

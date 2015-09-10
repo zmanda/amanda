@@ -402,6 +402,18 @@ constant_pod(Storage Parameters, FOR_ALL_STORAGE_KEY)
  * Various enumerated conftypes
  */
 
+amglue_add_enum_and_string_tag_fns(no_yes_all);
+amglue_add_constant_and_string(VALUE_NO , "NO" , no_yes_all);
+amglue_add_constant_and_string(VALUE_YES, "YES", no_yes_all);
+amglue_add_constant_and_string(VALUE_ALL, "ALL", no_yes_all);
+amglue_copy_to_tag(no_yes_all, getconf);
+
+amglue_add_enum_and_string_tag_fns(priority);
+amglue_add_constant_and_string(PRIORITY_LOW, "LOW", priority);
+amglue_add_constant_and_string(PRIORITY_MEDIUM, "MEDIUM", priority);
+amglue_add_constant_and_string(PRIORITY_HIGH, "HIGH", priority);
+amglue_copy_to_tag(priority, getconf);
+
 amglue_add_enum_and_string_tag_fns(holdingdisk);
 amglue_add_constant_and_string(HOLD_NEVER, "NEVER", holdingdisk);
 amglue_add_constant_and_string(HOLD_AUTO,  "AUTO", holdingdisk);
@@ -490,29 +502,29 @@ amglue_add_constant_and_string(ALGO_LASTFIT, "LASTFIT", taperalgo);
 amglue_copy_to_tag(taperalgo, getconf);
 
 amglue_add_enum_and_string_tag_fns(execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_AMCHECK,        "EXECUTE-ON-PRE-AMCHECK", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_AMCHECK,    "EXECUTE-ON-PRE-DLE-AMCHECK", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_AMCHECK,   "EXECUTE-ON-PRE-HOST-AMCHECK", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_AMCHECK,       "EXECUTE-ON-POST-AMCHECK", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_AMCHECK,   "EXECUTE-ON-POST-DLE-AMCHECK", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_AMCHECK,  "EXECUTE-ON-POST-HOST-AMCHECK", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_ESTIMATE,       "EXECUTE-ON-PRE-ESTIMATE", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_ESTIMATE,   "EXECUTE-ON-PRE-DLE-ESTIMATE", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_ESTIMATE,  "EXECUTE-ON-PRE-HOST-ESTIMATE", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_ESTIMATE,      "EXECUTE-ON-POST-ESTIMATE", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_ESTIMATE,  "EXECUTE-ON-POST-DLE-ESTIMATE", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_ESTIMATE, "EXECUTE-ON-POST-HOST-ESTIMATE", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_BACKUP,         "EXECUTE-ON-PRE-BACKUP", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_BACKUP,     "EXECUTE-ON-PRE-DLE-BACKUP", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_BACKUP,    "EXECUTE-ON-PRE-HOST-BACKUP", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_BACKUP,        "EXECUTE-ON-POST-BACKUP", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_BACKUP,    "EXECUTE-ON-POST-DLE-BACKUP", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_BACKUP,   "EXECUTE-ON-POST-HOST-BACKUP", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_RECOVER,        "EXECUTE-ON-PRE-RECOVER", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_RECOVER,       "EXECUTE-ON-POST-RECOVER", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_PRE_LEVEL_RECOVER,  "EXECUTE-ON-PRE-LEVEL-RECOVER", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_POST_LEVEL_RECOVER, "EXECUTE-ON-POST-LEVEL-RECOVER", execute_on);
-amglue_add_constant_and_string(EXECUTE_ON_INTER_LEVEL_RECOVER,"EXECUTE-ON-INTER-LEVEL-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_AMCHECK,        "PRE-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_AMCHECK,    "PRE-DLE-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_AMCHECK,   "PRE-HOST-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_AMCHECK,       "POST-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_AMCHECK,   "POST-DLE-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_AMCHECK,  "POST-HOST-AMCHECK", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_ESTIMATE,       "PRE-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_ESTIMATE,   "PRE-DLE-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_ESTIMATE,  "PRE-HOST-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_ESTIMATE,      "POST-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_ESTIMATE,  "POST-DLE-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_ESTIMATE, "POST-HOST-ESTIMATE", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_BACKUP,         "PRE-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_DLE_BACKUP,     "PRE-DLE-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_HOST_BACKUP,    "PRE-HOST-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_BACKUP,        "POST-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_DLE_BACKUP,    "POST-DLE-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_HOST_BACKUP,   "POST-HOST-BACKUP", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_RECOVER,        "PRE-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_RECOVER,       "POST-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_PRE_LEVEL_RECOVER,  "PRE-LEVEL-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_POST_LEVEL_RECOVER, "POST-LEVEL-RECOVER", execute_on);
+amglue_add_constant_and_string(EXECUTE_ON_INTER_LEVEL_RECOVER,"INTER-LEVEL-RECOVER", execute_on);
 %perlcode %{
 sub execute_on_list{
     my $execute_on = shift;
@@ -527,6 +539,11 @@ push @EXPORT_OK, qw(execute_on_list);
 push @{$EXPORT_TAGS{"execute_on"}}, qw(execute_on_list);
 %}
 amglue_copy_to_tag(execute_on, getconf);
+
+amglue_add_enum_and_string_tag_fns(execute_where);
+amglue_add_constant_and_string(EXECUTE_WHERE_CLIENT, "CLIENT", execute_where);
+amglue_add_constant_and_string(EXECUTE_WHERE_SERVER, "SERVER", execute_where);
+amglue_copy_to_tag(execute_where, getconf);
 
 amglue_add_enum_and_string_tag_fns(send_amreport_on);
 amglue_add_constant_and_string(SEND_AMREPORT_ALL, "ALL", send_amreport_on);
@@ -557,6 +574,70 @@ amglue_add_constant_and_string(LEVEL_ALL, "ALL", level_type);
 amglue_add_constant_and_string(LEVEL_FULL, "FULL", level_type);
 amglue_add_constant_and_string(LEVEL_INCR, "INCR", level_type);
 amglue_copy_to_tag(level_type, getconf);
+
+%perlcode %{
+sub host_limit_to_value {
+    my $limits = shift;
+    my $new_limits;
+
+    $new_limits->{'server'} = 0;
+    $new_limits->{'same_host'} = 0;
+    $new_limits->{'match_pats'} = ();
+    foreach my $limit (@$limits) {
+	if ($limit eq "SERVER-SERVER-SERVER") {
+	   $new_limits->{'server'} = 1;
+	} elsif ($limit eq "SAMEHOST-SAMEHOST-SAMEHOST") {
+	   $new_limits->{'same_host'} = 1;
+	} else {
+	    push @{$new_limits->{'match_pats'}}, $limit;
+	}
+    }
+    return $new_limits;
+}
+push @EXPORT_OK, qw(host_limit_to_value);
+push @{$EXPORT_TAGS{"getconf"}}, qw(host_limit_to_value);
+%}
+
+%perlcode %{
+sub labelstr_to_value {
+    my $labelstr = shift;
+    my $new_labelstr;
+
+    $new_labelstr->{'template'} = $labelstr->{'template'};
+    $new_labelstr->{'match_autolabel'} = string_to_boolean($labelstr->{'match_autolabel'});
+    return $new_labelstr;
+}
+push @EXPORT_OK, qw(labelstr_to_value);
+push @{$EXPORT_TAGS{"getconf"}}, qw(labelstr_to_value);
+%}
+
+%perlcode %{
+sub dump_selection_to_value {
+    my $dump_selections = shift;
+    my $new_dump_selections;
+
+    foreach my $dump_selection (@$dump_selections) {
+	my $new_dump_selection;
+	$new_dump_selection->{'tag'} = $dump_selection->{'tag'};
+	$new_dump_selection->{'tag_type'} = dumptype_tag_to_value($dump_selection->{'tag_type'});
+	$new_dump_selection->{'level'} = level_type_to_value($dump_selection->{'level'});
+	push @$new_dump_selections, $new_dump_selection;
+    }
+    return $new_dump_selections;
+}
+push @EXPORT_OK, qw(dump_selection_to_value);
+push @{$EXPORT_TAGS{"getconf"}}, qw(dump_selection_to_value);
+%}
+
+%perlcode %{
+sub vault_list_to_value {
+    my $vault_list = shift;
+    return $vault_list;
+}
+push @EXPORT_OK, qw(vault_list_to_value);
+push @{$EXPORT_TAGS{"getconf"}}, qw(vault_list_to_value);
+
+%}
 
 /*
  * val_t typemaps
@@ -948,15 +1029,15 @@ val_t_to_print(val_t *val, SV **results) {
 
 	    case CONFTYPE_BOOLEAN:
 		results[0] = sv_newmortal();
-		sv_setpv(results[0], val_t__boolean(val)==0?"NO":"YES");
+		sv_setpv(results[0], val_t__boolean(val)==VALUE_NO?"NO":"YES");
 		return 1;
 
 	    case CONFTYPE_NO_YES_ALL:
 		results[0] = sv_newmortal();
 		switch val_t__no_yes_all(val) {
-			case 0: sv_setpv(results[0], "NO"); break;
-			case 1: sv_setpv(results[0], "YES"); break;
-			case 2: sv_setpv(results[0], "ALL"); break;
+			case VALUE_NO : sv_setpv(results[0], "NO" ); break;
+			case VALUE_YES: sv_setpv(results[0], "YES"); break;
+			case VALUE_ALL: sv_setpv(results[0], "ALL"); break;
 		}
 		return 1;
 
@@ -1013,9 +1094,10 @@ val_t_to_print(val_t *val, SV **results) {
 	    case CONFTYPE_PRIORITY:
 		results[0] = sv_newmortal();
 		switch val_t__priority(val) {
-			case 0: sv_setpv(results[0], "LOW"); break;
-			case 1: sv_setpv(results[0], "MEDIUM"); break;
-			case 2: sv_setpv(results[0], "HIGH"); break;
+			case PRIORITY_LOW: sv_setpv(results[0], "LOW"); break;
+			case PRIORITY_MEDIUM: sv_setpv(results[0], "MEDIUM"); break;
+			case PRIORITY_HIGH: sv_setpv(results[0], "HIGH"); break;
+			default: results[0] = sv_2mortal(amglue_newSVi64(val_t__size(val))); break;
 		}
 		return 1;
 
@@ -1084,8 +1166,8 @@ val_t_to_print(val_t *val, SV **results) {
 	    case CONFTYPE_EXECUTE_WHERE:
 		results[0] = sv_newmortal();
 		switch val_t__execute_where(val) {
-			case ES_CLIENT: sv_setpv(results[0], "CLIENT"); break;
-			case ES_SERVER: sv_setpv(results[0], "SERVER"); break;
+			case EXECUTE_WHERE_CLIENT: sv_setpv(results[0], "CLIENT"); break;
+			case EXECUTE_WHERE_SERVER: sv_setpv(results[0], "SERVER"); break;
 		}
 		return 1;
 
@@ -1710,82 +1792,6 @@ amglue_export_tag(getconf,
 	device_config_getconf_human changer_config_getconf_human storage_getconf_human
 	pp_script_getconf_human holdingdisk_getconf_human interface_getconf_human
 	interactivity_getconf_human taperscan_getconf_human policy_getconf_human);
-
-%perlcode %{
-
-#sub boolean_to_value {
-#    my $string = shift;
-#    if ($string eq "YES") {
-#	return 1;
-#    } elsif ($string eq "NO") {
-#	return 0;
-#    } else {
-#	die("Invalid boolean string: $string");
-#    }
-#}
-#
-#sub no_yes_all_to_value {
-#    my $string = shift;
-#    if ($string eq "YES") {
-#	return 1;
-#    } elsif ($string eq "NO") {
-#	return 0;
-#    } elsif ($string eq "ALL") {
-#	return 2;
-#    } else {
-#	die("Invalid no_yes_all string: $string");
-#    }
-#}
-#
-#sub priority_to_value {
-#    my $string = shift;
-#    if ($string eq "LOW") {
-#	return 0;
-#    } elsif ($string eq "MEDIUM") {
-#	return 1;
-#    } elsif ($string eq "HIGH") {
-#	return 2;
-#    } else {
-#	die("Invalid priority string: $string");
-#    }
-#}
-#
-#sub execute_where_to_value {
-#    my $string = shift;
-#    if ($string eq "CLIENT") {
-#	return $Amanda::Config::ES_CLIENT;
-#    } elsif ($string eq "SERVER") {
-#	return $Amanda::Config::ES_SERVER;
-#    } else {
-#	die("Invalid execute_where string: $string");
-#    }
-#}
-#
-#sub host_limit_to_value {
-#    my $string = shift;
-#    die("Invalid host_limit string: $string");
-#}
-#
-#sub dump_selection_to_value {
-#    my $string = shift;
-#    die("Invalid dump_selection string: $string");
-#}
-#
-#sub vault_list_to_value {
-#    my $string = shift;
-#    die("Invalid vault_list string: $string");
-#}
-#
-#sub labelstr_to_value {
-#    my $labelstr = shift;
-#    my $new_labelstr;
-#
-#    $new_labelstr->{'template'} = $labelstr->{'template'};
-#    $new_labelstr->{'match_autolabel'} = (($labelstr->{'match_autolabel'} eq 'YES') ? 1 : 0);
-#    return $new_labelstr;
-#}
-
-%}
 
 %perlcode %{
 package Amanda::Config::Message;

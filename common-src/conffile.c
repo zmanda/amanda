@@ -3673,7 +3673,7 @@ init_pp_script_defaults(
     conf_init_str(&pscur.value[PP_SCRIPT_PLUGIN]  , "");
     conf_init_proplist(&pscur.value[PP_SCRIPT_PROPERTY]);
     conf_init_execute_on(&pscur.value[PP_SCRIPT_EXECUTE_ON], 0);
-    conf_init_execute_where(&pscur.value[PP_SCRIPT_EXECUTE_WHERE], ES_CLIENT);
+    conf_init_execute_where(&pscur.value[PP_SCRIPT_EXECUTE_WHERE], EXECUTE_WHERE_CLIENT);
     conf_init_int(&pscur.value[PP_SCRIPT_ORDER], CONF_UNIT_NONE, 5000);
     conf_init_bool(&pscur.value[PP_SCRIPT_SINGLE_EXECUTION], 0);
     conf_init_str(&pscur.value[PP_SCRIPT_CLIENT_NAME], "");
@@ -4436,9 +4436,9 @@ read_priority(
 
     get_conftoken(CONF_ANY);
     switch(tok) {
-    case CONF_LOW: pri = 0; break;
-    case CONF_MEDIUM: pri = 1; break;
-    case CONF_HIGH: pri = 2; break;
+    case CONF_LOW: pri = PRIORITY_LOW; break;
+    case CONF_MEDIUM: pri = PRIORITY_MEDIUM; break;
+    case CONF_HIGH: pri = PRIORITY_HIGH; break;
     case CONF_INT: pri = tokenval.v.i; break;
     default:
 	conf_parserror(_("LOW, MEDIUM, HIGH or integer expected"));
@@ -4873,8 +4873,8 @@ read_execute_where(
 
     get_conftoken(CONF_ANY);
     switch(tok) {
-    case CONF_CLIENT:      val->v.i = ES_CLIENT;   break;
-    case CONF_SERVER:      val->v.i = ES_SERVER;   break;
+    case CONF_CLIENT:      val->v.i = EXECUTE_WHERE_CLIENT;   break;
+    case CONF_SERVER:      val->v.i = EXECUTE_WHERE_SERVER;   break;
     default:
 	conf_parserror(_("CLIENT or SERVER expected"));
     }
@@ -9585,11 +9585,11 @@ val_t_display_strs(
 
     case CONFTYPE_EXECUTE_WHERE:
 	switch(val->v.i) {
-	case ES_CLIENT:
+	case EXECUTE_WHERE_CLIENT:
 	    buf[0] = g_strdup("CLIENT");
 	    break;
 
-	case ES_SERVER:
+	case EXECUTE_WHERE_SERVER:
 	    buf[0] = g_strdup("SERVER");
 	    break;
 	}
@@ -9691,16 +9691,20 @@ val_t_display_strs(
 
      case CONFTYPE_PRIORITY:
 	switch(val_t__priority(val)) {
-	case 0:
+	case PRIORITY_LOW:
 	    buf[0] = g_strdup("LOW");
 	    break;
 
-	case 1:
+	case PRIORITY_MEDIUM:
 	    buf[0] = g_strdup("MEDIUM");
 	    break;
 
-	case 2:
+	case PRIORITY_HIGH:
 	    buf[0] = g_strdup("HIGH");
+	    break;
+
+	default:
+	    buf[0] = g_strdup_printf("%d", val_t__priority(val));
 	    break;
 	}
 	break;
@@ -9821,7 +9825,7 @@ val_t_to_execute_on(
     return val_t__execute_on(val);
 }
 
-int
+execute_where_t
 val_t_to_execute_where(
     val_t *val)
 {

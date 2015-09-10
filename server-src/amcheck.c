@@ -1864,13 +1864,13 @@ start_server_check(
 		     pp_scriptlist = pp_scriptlist->next) {
 		    pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
 		    g_assert(pp_script != NULL);
-		    if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
+		    if (pp_script_get_execute_where(pp_script) == EXECUTE_WHERE_CLIENT &&
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_PRE_HOST_BACKUP) {
 			delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800158, MSG_ERROR, 2,
 					"hostname", hostp->hostname,
 					"diskname", dp->name)));
-		    } else if (pp_script_get_execute_where(pp_script) == ES_CLIENT &&
+		    } else if (pp_script_get_execute_where(pp_script) == EXECUTE_WHERE_CLIENT &&
 			pp_script_get_execute_on(pp_script) & EXECUTE_ON_POST_HOST_BACKUP) {
 			delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800159, MSG_ERROR, 2,

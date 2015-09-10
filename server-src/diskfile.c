@@ -1695,10 +1695,10 @@ xml_scripts(
         g_string_append(strbuf, "    <execute_where>");
 
 	switch (execute_where) {
-            case ES_CLIENT:
+            case EXECUTE_WHERE_CLIENT:
                 g_string_append(strbuf, "CLIENT");
                 break;
-            case ES_SERVER:
+            case EXECUTE_WHERE_SERVER:
                 g_string_append(strbuf, "SERVER");
                 break;
 	}

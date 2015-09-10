@@ -1,3 +1,11 @@
+2015-09-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h (no_yes_all_t, priority_t, execute_where_t):
+	  New enum
+	* common-src/conffile.c, server-src/amcheck.c, server-src/diskfile.c,
+	  server-src/server_util.c: Use ne enum constants.
+	* perl/Amanda/Config.swg: Add more function to return enum value
+	* installcheck/Amanda_Config.pl: Add tests
+
 2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/amglue/constants.swg (amglue_add_enum_and_string_tag_fns,
 	  amglue_add_constant_and_string): New macro

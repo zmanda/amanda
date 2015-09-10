@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 357;
+use Test::More tests => 373;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -1255,6 +1255,15 @@ is_deeply($ds,
         ],
 	"lookup_storage");
 
+is (priority_to_string(priority_to_value("LOW")), "LOW", "priority LOW");
+is (priority_to_string(priority_to_value("MEDIUM")), "MEDIUM", "priority MEDIUM");
+is (priority_to_string(priority_to_value("HIGH")), "HIGH", "priority HIGH");
+is (priority_to_value(4), 4, "priority value 4");
+is (priority_to_string(4), 4, "priority string 4");
+is (priority_to_value("4"), 4, "priority value 4");
+is (priority_to_string("4"), 4, "priority string 4");
+is (priority_to_string(priority_to_value("4")), 4, "priority 4");
+
 is (holdingdisk_to_string(holdingdisk_to_value("NEVER")), "NEVER", "dump_holdingdisk NEVER");
 is (holdingdisk_to_string(holdingdisk_to_value("AUTO")), "AUTO", "dump_holdingdisk AUTO");
 is (holdingdisk_to_string(holdingdisk_to_value("REQUIRED")), "REQUIRED", "dump_holdingdisk REQUIRED");
@@ -1305,33 +1314,36 @@ is (taperalgo_to_string(taperalgo_to_value("SMALLESTFIT")), "SMALLESTFIT", "tape
 is (taperalgo_to_string(taperalgo_to_value("LAST")), "LAST", "taperalgo LAST");
 is (taperalgo_to_string(taperalgo_to_value("LASTFIT")), "LASTFIT", "taperalgo LASTFIT");
 
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-AMCHECK")), "EXECUTE-ON-PRE-AMCHECK", "execute_on EXECUTE-ON-PRE-AMCHECK");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-DLE-AMCHECK")), "EXECUTE-ON-PRE-DLE-AMCHECK", "execute_on EXECUTE-ON-PRE-DLE-AMCHECK");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-HOST-AMCHECK")), "EXECUTE-ON-PRE-HOST-AMCHECK", "execute_on EXECUTE-ON-PRE-HOST-AMCHECK");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-AMCHECK")), "EXECUTE-ON-POST-AMCHECK", "execute_on EXECUTE-ON-POST-AMCHECK");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-DLE-AMCHECK")), "EXECUTE-ON-POST-DLE-AMCHECK", "execute_on EXECUTE-ON-POST-DLE-AMCHECK");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-HOST-AMCHECK")), "EXECUTE-ON-POST-HOST-AMCHECK", "execute_on EXECUTE-ON-POST-HOST-AMCHECK");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-ESTIMATE")), "EXECUTE-ON-PRE-ESTIMATE", "execute_on EXECUTE-ON-PRE-ESTIMATE");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-DLE-ESTIMATE")), "EXECUTE-ON-PRE-DLE-ESTIMATE", "execute_on EXECUTE-ON-PRE-DLE-ESTIMATE");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-HOST-ESTIMATE")), "EXECUTE-ON-PRE-HOST-ESTIMATE", "execute_on EXECUTE-ON-PRE-HOST-ESTIMATE");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-ESTIMATE")), "EXECUTE-ON-POST-ESTIMATE", "execute_on EXECUTE-ON-POST-ESTIMATE");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-DLE-ESTIMATE")), "EXECUTE-ON-POST-DLE-ESTIMATE", "execute_on EXECUTE-ON-POST-DLE-ESTIMATE");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-HOST-ESTIMATE")), "EXECUTE-ON-POST-HOST-ESTIMATE", "execute_on EXECUTE-ON-POST-HOST-ESTIMATE");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-BACKUP")), "EXECUTE-ON-PRE-BACKUP", "execute_on EXECUTE-ON-PRE-BACKUP");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-DLE-BACKUP")), "EXECUTE-ON-PRE-DLE-BACKUP", "execute_on EXECUTE-ON-PRE-DLE-BACKUP");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-HOST-BACKUP")), "EXECUTE-ON-PRE-HOST-BACKUP", "execute_on EXECUTE-ON-PRE-HOST-BACKUP");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-BACKUP")), "EXECUTE-ON-POST-BACKUP", "execute_on EXECUTE-ON-POST-BACKUP");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-DLE-BACKUP")), "EXECUTE-ON-POST-DLE-BACKUP", "execute_on EXECUTE-ON-POST-DLE-BACKUP");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-HOST-BACKUP")), "EXECUTE-ON-POST-HOST-BACKUP", "execute_on EXECUTE-ON-POST-HOST-BACKUP");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-RECOVER")), "EXECUTE-ON-PRE-RECOVER", "execute_on EXECUTE-ON-PRE-RECOVER");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-RECOVER")), "EXECUTE-ON-POST-RECOVER", "execute_on EXECUTE-ON-POST-RECOVER");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-PRE-LEVEL-RECOVER")), "EXECUTE-ON-PRE-LEVEL-RECOVER", "execute_on EXECUTE-ON-PRE-LEVEL-RECOVER");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-POST-LEVEL-RECOVER")), "EXECUTE-ON-POST-LEVEL-RECOVER", "execute_on EXECUTE-ON-POST-LEVEL-RECOVER");
-is (execute_on_to_string(execute_on_to_value("EXECUTE-ON-INTER-LEVEL-RECOVER")), "EXECUTE-ON-INTER-LEVEL-RECOVER", "execute_on EXECUTE-ON-INTER-LEVEL-RECOVER");
-my $execute_on_list = "EXECUTE-ON-PRE-AMCHECK EXECUTE-ON-PRE-DLE-AMCHECK EXECUTE-ON-PRE-HOST-AMCHECK EXECUTE-ON-POST-AMCHECK EXECUTE-ON-POST-DLE-AMCHECK EXECUTE-ON-POST-HOST-AMCHECK EXECUTE-ON-PRE-ESTIMATE EXECUTE-ON-PRE-DLE-ESTIMATE EXECUTE-ON-PRE-HOST-ESTIMATE EXECUTE-ON-POST-ESTIMATE EXECUTE-ON-POST-DLE-ESTIMATE EXECUTE-ON-POST-HOST-ESTIMATE EXECUTE-ON-PRE-BACKUP EXECUTE-ON-PRE-DLE-BACKUP EXECUTE-ON-PRE-HOST-BACKUP EXECUTE-ON-POST-BACKUP EXECUTE-ON-POST-DLE-BACKUP EXECUTE-ON-POST-HOST-BACKUP EXECUTE-ON-PRE-RECOVER EXECUTE-ON-POST-RECOVER EXECUTE-ON-PRE-LEVEL-RECOVER EXECUTE-ON-POST-LEVEL-RECOVER EXECUTE-ON-INTER-LEVEL-RECOVER";
+is (execute_on_to_string(execute_on_to_value("PRE-AMCHECK")),         "PRE-AMCHECK",         "execute_on PRE-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("PRE-DLE-AMCHECK")),     "PRE-DLE-AMCHECK",     "execute_on PRE-DLE-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("PRE-HOST-AMCHECK")),    "PRE-HOST-AMCHECK",    "execute_on PRE-HOST-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("POST-AMCHECK")),        "POST-AMCHECK",        "execute_on POST-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("POST-DLE-AMCHECK")),    "POST-DLE-AMCHECK",    "execute_on POST-DLE-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("POST-HOST-AMCHECK")),   "POST-HOST-AMCHECK",   "execute_on POST-HOST-AMCHECK");
+is (execute_on_to_string(execute_on_to_value("PRE-ESTIMATE")),        "PRE-ESTIMATE",        "execute_on PRE-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("PRE-DLE-ESTIMATE")),    "PRE-DLE-ESTIMATE",    "execute_on PRE-DLE-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("PRE-HOST-ESTIMATE")),   "PRE-HOST-ESTIMATE",   "execute_on PRE-HOST-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("POST-ESTIMATE")),       "POST-ESTIMATE",       "execute_on POST-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("POST-DLE-ESTIMATE")),   "POST-DLE-ESTIMATE",   "execute_on POST-DLE-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("POST-HOST-ESTIMATE")),  "POST-HOST-ESTIMATE",  "execute_on POST-HOST-ESTIMATE");
+is (execute_on_to_string(execute_on_to_value("PRE-BACKUP")),          "PRE-BACKUP",          "execute_on PRE-BACKUP");
+is (execute_on_to_string(execute_on_to_value("PRE-DLE-BACKUP")),      "PRE-DLE-BACKUP",      "execute_on PRE-DLE-BACKUP");
+is (execute_on_to_string(execute_on_to_value("PRE-HOST-BACKUP")),     "PRE-HOST-BACKUP",     "execute_on PRE-HOST-BACKUP");
+is (execute_on_to_string(execute_on_to_value("POST-BACKUP")),         "POST-BACKUP",         "execute_on POST-BACKUP");
+is (execute_on_to_string(execute_on_to_value("POST-DLE-BACKUP")),     "POST-DLE-BACKUP",     "execute_on POST-DLE-BACKUP");
+is (execute_on_to_string(execute_on_to_value("POST-HOST-BACKUP")),    "POST-HOST-BACKUP",    "execute_on POST-HOST-BACKUP");
+is (execute_on_to_string(execute_on_to_value("PRE-RECOVER")),         "PRE-RECOVER",         "execute_on PRE-RECOVER");
+is (execute_on_to_string(execute_on_to_value("POST-RECOVER")),        "POST-RECOVER",        "execute_on POST-RECOVER");
+is (execute_on_to_string(execute_on_to_value("PRE-LEVEL-RECOVER")),   "PRE-LEVEL-RECOVER",   "execute_on PRE-LEVEL-RECOVER");
+is (execute_on_to_string(execute_on_to_value("POST-LEVEL-RECOVER")),  "POST-LEVEL-RECOVER",  "execute_on POST-LEVEL-RECOVER");
+is (execute_on_to_string(execute_on_to_value("INTER-LEVEL-RECOVER")), "INTER-LEVEL-RECOVER", "execute_on INTER-LEVEL-RECOVER");
+my $execute_on_list = "PRE-AMCHECK PRE-DLE-AMCHECK PRE-HOST-AMCHECK POST-AMCHECK POST-DLE-AMCHECK POST-HOST-AMCHECK PRE-ESTIMATE PRE-DLE-ESTIMATE PRE-HOST-ESTIMATE POST-ESTIMATE POST-DLE-ESTIMATE POST-HOST-ESTIMATE PRE-BACKUP PRE-DLE-BACKUP PRE-HOST-BACKUP POST-BACKUP POST-DLE-BACKUP POST-HOST-BACKUP PRE-RECOVER POST-RECOVER PRE-LEVEL-RECOVER POST-LEVEL-RECOVER INTER-LEVEL-RECOVER";
 my @new_execute_on_list = execute_on_list($execute_on_list);
 @expected_result = ($EXECUTE_ON_PRE_AMCHECK | $EXECUTE_ON_PRE_DLE_AMCHECK | $EXECUTE_ON_PRE_HOST_AMCHECK | $EXECUTE_ON_POST_AMCHECK | $EXECUTE_ON_POST_DLE_AMCHECK | $EXECUTE_ON_POST_HOST_AMCHECK | $EXECUTE_ON_PRE_ESTIMATE | $EXECUTE_ON_PRE_DLE_ESTIMATE |$EXECUTE_ON_PRE_HOST_ESTIMATE | $EXECUTE_ON_POST_ESTIMATE | $EXECUTE_ON_POST_DLE_ESTIMATE | $EXECUTE_ON_POST_HOST_ESTIMATE | $EXECUTE_ON_PRE_BACKUP | $EXECUTE_ON_PRE_DLE_BACKUP | $EXECUTE_ON_PRE_HOST_BACKUP | $EXECUTE_ON_POST_BACKUP | $EXECUTE_ON_POST_DLE_BACKUP | $EXECUTE_ON_POST_HOST_BACKUP | $EXECUTE_ON_PRE_RECOVER | $EXECUTE_ON_POST_RECOVER | $EXECUTE_ON_PRE_LEVEL_RECOVER | $EXECUTE_ON_POST_LEVEL_RECOVER | $EXECUTE_ON_INTER_LEVEL_RECOVER);
-is_deeply(\@new_execute_on_list, \@expected_result, execute_on_list);
+is_deeply(\@new_execute_on_list, \@expected_result, "execute_on_list");
+
+is (execute_where_to_string(execute_where_to_value("CLIENT")), "CLIENT", "execute_where CLIENT");
+is (execute_where_to_string(execute_where_to_value("SERVER")), "SERVER", "execute_where SERVER");
 
 is (send_amreport_on_to_string(send_amreport_on_to_value("ALL")), "ALL", "send_amreport_on ALL");
 is (send_amreport_on_to_string(send_amreport_on_to_value("STRANGE")), "STRANGE", "send_amreport_on STRANGE");
@@ -1352,4 +1364,26 @@ is (dumptype_tag_to_string(dumptype_tag_to_value("OTHER")), "OTHER", "dumptype_t
 is (level_type_to_string(level_type_to_value("ALL")), "ALL", "level_type ALL");
 is (level_type_to_string(level_type_to_value("FULL")), "FULL", "level_type FULL");
 is (level_type_to_string(level_type_to_value("INCR")), "INCR", "level_type INCR");
+
+my $host_limits = host_limit_to_value(["HOST1", "SERVER-SERVER-SERVER", "HOST2", "SAMEHOST-SAMEHOST-SAMEHOST", "HOST3"]);
+$expected_result = { server => 1, same_host => 1, match_pats => [ "HOST1","HOST2","HOST3" ]};
+is_deeply($host_limits, $expected_result, "host_limit_to_value");
+
+my $labelstr = labelstr_to_value({ template => 'TESTCONF-%%%', match_autolabel => "YES" });
+$expected_result = { template => 'TESTCONF-%%%', match_autolabel => 1 };
+is_deeply($labelstr, $expected_result, "labelstr_to_value");
+
+is (no_yes_all_to_value("NO") , $VALUE_NO , "no_yes_all NO");
+is (no_yes_all_to_value("YES"), $VALUE_YES, "no_yes_all YES");
+is (no_yes_all_to_value("ALL"), $VALUE_ALL, "no_yes_all ALL");
+
+my @dump_selection = dump_selection_to_value(
+	[ { tag => "tag1", tag_type => "NAME" , level => "INCR" },
+	  { tag => "tag2", tag_type => "ALL"  , level => "FULL" },
+	  { tag => "tag3", tag_type => "OTHER", level => "ALL" } ]);
+@expected_result =
+	[ { tag => "tag1", tag_type => $TAG_NAME , level => $LEVEL_INCR },
+	  { tag => "tag2", tag_type => $TAG_ALL  , level => $LEVEL_FULL },
+	  { tag => "tag3", tag_type => $TAG_OTHER, level => $LEVEL_ALL } ];
+is_deeply(\@dump_selection, \@expected_result, "dump_selection_to_value");
 

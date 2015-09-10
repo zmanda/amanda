@@ -316,7 +316,7 @@ run_server_script(
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
-    if (pp_script_get_execute_where(pp_script) != ES_SERVER)
+    if (pp_script_get_execute_where(pp_script) != EXECUTE_WHERE_SERVER)
 	return;
 
     plugin = pp_script_get_plugin(pp_script);
