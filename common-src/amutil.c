@@ -1878,11 +1878,12 @@ crc32_add_16bytes(
      crc_t *crc)
 {
     uint32_t *buf32 = (uint32_t *)buf;
+    size_t i;
     crc->size += len;
 
     while (len >= 256) {
 	PREFETCH(((const char*) buf) + 256);
-	for (size_t i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 #ifdef WORDS_BIGENDIAN
 	    uint32_t one   = *buf32++ ^ swap(crc->crc);
 	    uint32_t two   = *buf32++;
