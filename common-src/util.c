@@ -1735,6 +1735,7 @@ make_crc_table(void)
 {
     int i;
     int j;
+    int slice;
 
     if (!crc_initialized) {
 	for (i = 0; i < 256; i++) {
@@ -1745,7 +1746,7 @@ make_crc_table(void)
 	    crc_table[0][i] = c;
 	}
 	for (i = 0; i < 256; i++) {
-	    for (int slice = 1; slice < 16; slice++) {
+	    for (slice = 1; slice < 16; slice++) {
 		crc_table[slice][i] = (crc_table[slice - 1][i] >> 8) ^ crc_table[0][crc_table[slice - 1][i] & 0xFF];
 	    }
 

@@ -1,4 +1,7 @@
 2015-09-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: Fix compilation
+
+2015-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (crc32_add_16bytes): New faster algorith to
 	  compute crc 32
 	* common-src/util.c (crc32_add): Call crc32_add_1byte or
