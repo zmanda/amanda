@@ -1,3 +1,8 @@
+2015-09-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c (debug_ressource_usage): New function to write
+	  the system ressource utilization to the debug file
+	* common-src/debug.c (debug_close): Call debug_ressource_usage
+
 2015-09-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (tape_action): Improvement
 

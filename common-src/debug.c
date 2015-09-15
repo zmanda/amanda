@@ -745,6 +745,32 @@ debug_rename(
     debug_setup_2(s, fd, "rename");
 }
 
+void debug_ressource_usage(void);
+void
+debug_ressource_usage(void)
+{
+    struct rusage usage;
+
+    getrusage(RUSAGE_SELF, &usage);
+
+    g_debug("ru_utime   : %ld", usage.ru_utime.tv_sec);
+    g_debug("ru_stime   : %ld", usage.ru_stime.tv_sec);
+    g_debug("ru_maxrss  : %ld", usage.ru_maxrss  );
+    g_debug("ru_ixrss   : %ld", usage.ru_ixrss   );
+    g_debug("ru_idrss   : %ld", usage.ru_idrss   );
+    g_debug("ru_isrss   : %ld", usage.ru_isrss   );
+    g_debug("ru_minflt  : %ld", usage.ru_minflt  );
+    g_debug("ru_majflt  : %ld", usage.ru_majflt  );
+    g_debug("ru_nswap   : %ld", usage.ru_nswap   );
+    g_debug("ru_inblock : %ld", usage.ru_inblock );
+    g_debug("ru_oublock : %ld", usage.ru_oublock );
+    g_debug("ru_msgsnd  : %ld", usage.ru_msgsnd  );
+    g_debug("ru_msgrcv  : %ld", usage.ru_msgrcv  );
+    g_debug("ru_nsignals: %ld", usage.ru_nsignals);
+    g_debug("ru_nvcsw   : %ld", usage.ru_nvcsw   );
+    g_debug("ru_nivcsw  : %ld", usage.ru_nivcsw  );
+}
+
 void
 debug_close(void)
 {
@@ -753,6 +779,8 @@ debug_close(void)
     if (get_pcontext() == CONTEXT_SCRIPTUTIL) {
 	return;
     }
+
+    debug_ressource_usage();
 
     debug_unlink_old();
 
