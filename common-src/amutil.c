@@ -1816,23 +1816,29 @@ make_amanda_tmpdir(void)
     }
 }
 
-static uint32_t crc_table[256];
+#define POLY 0xEDB88320
+static uint32_t crc_table[16][256];
 static gboolean crc_initialized = FALSE;
 /* Run this function previously */
 void
 make_crc_table(void)
 {
-    uint32_t i;
-    int      j;
+    int i;
+    int j;
 
     if (!crc_initialized) {
         for (i = 0; i < 256; i++) {
             uint32_t c = i;
             for (j = 0; j < 8; j++) {
-                c = (c & 1) ? (0xEDB88320 ^ (c >> 1)) : (c >> 1);
+                c = (c & 1) ? (POLY ^ (c >> 1)) : (c >> 1);
             }
-            crc_table[i] = c;
+            crc_table[0][i] = c;
         }
+	for (i = 0; i < 256; i++) {
+	    for (int slice = 1; slice < 16; slice++) {
+		crc_table[slice][i] = (crc_table[slice - 1][i] >> 8) ^ crc_table[0][crc_table[slice - 1][i] & 0xFF];
+	    }
+	}
         crc_initialized = TRUE;
     }
 }
@@ -1846,19 +1852,102 @@ crc32_init(
     crc->size = 0;
 }
 
+#ifdef __GNUC__
+  #define PREFETCH(location) __builtin_prefetch(location)
+#else
+  #define PREFETCH(location)
+#endif
+
+void
+crc32_add_1byte(
+    uint8_t *buf,
+    size_t len,
+    crc_t *crc)
+{
+    crc->size += len;
+    while (len-- > 0) {
+	crc->crc = crc_table[0][(crc->crc ^ *buf++) & 0xFF] ^ (crc->crc >> 8);
+     }
+}
+
+void
+crc32_add_16bytes(
+     uint8_t *buf,
+     size_t len,
+     crc_t *crc)
+{
+    uint32_t *buf32 = (uint32_t *)buf;
+    crc->size += len;
+
+    while (len >= 256) {
+	PREFETCH(((const char*) buf) + 256);
+	for (size_t i = 0; i < 4; i++) {
+#ifdef WORDS_BIGENDIAN
+	    uint32_t one   = *buf32++ ^ swap(crc->crc);
+	    uint32_t two   = *buf32++;
+	    uint32_t three = *buf32++;
+	    uint32_t four  = *buf32++;
+	    crc->crc  = crc_table[ 0][ four         & 0xFF] ^
+			crc_table[ 1][(four  >>  8) & 0xFF] ^
+			crc_table[ 2][(four  >> 16) & 0xFF] ^
+			crc_table[ 3][(four  >> 24) & 0xFF] ^
+			crc_table[ 4][ three        & 0xFF] ^
+			crc_table[ 5][(three >>  8) & 0xFF] ^
+			crc_table[ 6][(three >> 16) & 0xFF] ^
+			crc_table[ 7][(three >> 24) & 0xFF] ^
+			crc_table[ 8][ two          & 0xFF] ^
+			crc_table[ 9][(two   >>  8) & 0xFF] ^
+			crc_table[10][(two   >> 16) & 0xFF] ^
+			crc_table[11][(two   >> 24) & 0xFF] ^
+			crc_table[12][ one          & 0xFF] ^
+			crc_table[13][(one   >>  8) & 0xFF] ^
+			crc_table[14][(one   >> 16) & 0xFF] ^
+			crc_table[15][(one   >> 24) & 0xFF];
+#else
+	    uint32_t one   = *buf32++ ^ crc->crc;
+	    uint32_t two   = *buf32++;
+	    uint32_t three = *buf32++;
+	    uint32_t four  = *buf32++;
+	    crc->crc  = crc_table[ 0][(four  >> 24) & 0xFF] ^
+			crc_table[ 1][(four  >> 16) & 0xFF] ^
+			crc_table[ 2][(four  >>  8) & 0xFF] ^
+			crc_table[ 3][ four         & 0xFF] ^
+			crc_table[ 4][(three >> 24) & 0xFF] ^
+			crc_table[ 5][(three >> 16) & 0xFF] ^
+			crc_table[ 6][(three >>  8) & 0xFF] ^
+			crc_table[ 7][ three        & 0xFF] ^
+			crc_table[ 8][(two   >> 24) & 0xFF] ^
+			crc_table[ 9][(two   >> 16) & 0xFF] ^
+			crc_table[10][(two   >>  8) & 0xFF] ^
+			crc_table[11][ two          & 0xFF] ^
+			crc_table[12][(one   >> 24) & 0xFF] ^
+			crc_table[13][(one   >> 16) & 0xFF] ^
+			crc_table[14][(one   >>  8) & 0xFF] ^
+			crc_table[15][ one          & 0xFF];
+#endif
+	}
+	len -= 4*16;
+    }
+    buf = (uint8_t *)buf32;
+
+    while (len-- > 0) {
+	       crc->crc = crc_table[0][(crc->crc ^ *buf++) & 0xFF] ^ (crc->crc >> 8);
+    }
+}
+
 void
 crc32_add(
     uint8_t *buf,
     size_t len,
     crc_t *crc)
 {
-    size_t i;
-
-    for (i = 0; i < len; i++) {
-        crc->crc = crc_table[(crc->crc ^ buf[i]) & 0xFF] ^ (crc->crc >> 8);
-    }
-    crc->size += len;
-}
+#ifdef WORDS_BIGENDIAN
+    crc32_add_1byte(buf, len, crc);
+#else
+    crc32_add_16bytes(buf, len, crc);
+#endif
+    return;
+ }
 
 uint32_t
 crc32_finish(

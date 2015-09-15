@@ -431,6 +431,8 @@ typedef struct crc_s {
 
 void make_crc_table(void);
 void crc32_init(crc_t *crc);
+void crc32_add_1byte(uint8_t *buf, size_t len, crc_t *crc);
+void crc32_add_16bytes(uint8_t *buf, size_t len, crc_t *crc);
 void crc32_add(uint8_t *buf, size_t len, crc_t *crc);
 uint32_t crc32_finish(crc_t *crc);
 void parse_crc(char *s, crc_t *crc);
