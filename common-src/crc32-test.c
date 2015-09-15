@@ -87,4 +87,5 @@ main(int argc, char **argv)
     } else {
 	g_fprintf(stderr, " PASS CRC\n");
     }
+    return 0;
 }
