@@ -1857,11 +1857,7 @@ crc32_add(
     size_t len,
     crc_t *crc)
 {
-#ifdef WORDS_BIGENDIAN
-    crc32_add_1byte(buf, len, crc);
-#else
     crc32_add_16bytes(buf, len, crc);
-#endif
     return;
 }
 

@@ -1,3 +1,7 @@
+2015-09-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (crc32_add): Use software improvement on big
+	  endian machine.
+
 2015-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Fix compilation
 
