@@ -1,3 +1,6 @@
+2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c: Chagre the crc32 POLY to 0x82F63B78
+
 2015-09-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c (crc32_add): Use software improvement on big
 	  endian machine.

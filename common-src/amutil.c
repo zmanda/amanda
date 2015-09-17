@@ -1816,7 +1816,7 @@ make_amanda_tmpdir(void)
     }
 }
 
-#define POLY 0xEDB88320
+#define POLY 0x82F63B78
 static uint32_t crc_table[16][256];
 static gboolean crc_initialized = FALSE;
 /* Run this function previously */
