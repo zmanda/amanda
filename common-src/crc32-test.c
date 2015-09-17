@@ -61,8 +61,12 @@ test_size(
     crc32_add_1byte(test_buf, size, &crc1);
     crc32_add_16bytes(test_buf, size, &crc16);
 #if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
-    crc32c_add_hw(test_buf, size, &crchw);
+    if (have_sse42) {
+	crc32c_add_hw(test_buf, size, &crchw);
+    }
 #endif
+
+g_fprintf(stderr, " %08x:%lld  %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size, crc32_finish(&crchw), (long long)crchw.size);
 
     if (crc1.crc != crc16.crc ||
 	crc1.size != crc16.size) {
@@ -70,13 +74,14 @@ test_size(
 	return FALSE;
     }
 #if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
-    if (crc1.crc != crchw.crc ||
-	crc1.size != crchw.size) {
-	g_fprintf(stderr, " CRChw %zu %08x:%lld != %08x:%lld\n", size, crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crchw), (long long)crchw.size);
-	return FALSE;
+    if (have_sse42) {
+	if (crc1.crc != crchw.crc ||
+	    crc1.size != crchw.size) {
+	    g_fprintf(stderr, " CRChw %zu %08x:%lld != %08x:%lld\n", size, crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crchw), (long long)crchw.size);
+	    return FALSE;
+	}
     }
 #endif
-g_fprintf(stderr, " %08x:%lld  %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size, crc32_finish(&crchw), (long long)crchw.size);
     return TRUE;
 }
 
