@@ -429,6 +429,7 @@ typedef struct crc_s {
     off_t    size;
 } crc_t;
 
+extern int have_sse42;
 void make_crc_table(void);
 void crc32_init(crc_t *crc);
 void crc32_add_1byte(uint8_t *buf, size_t len, crc_t *crc);

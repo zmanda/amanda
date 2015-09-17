@@ -1830,7 +1830,7 @@ make_amanda_tmpdir(void)
 
 static uint32_t crc_table[16][256];
 static gboolean crc_initialized = FALSE;
-static int have_sse42 = 0;
+int have_sse42 = 0;
 void (* crc32_function)(uint8_t *buf, size_t len, crc_t *crc);
 
 #if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
