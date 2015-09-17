@@ -1,4 +1,7 @@
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am (noinst_HEADERS): Add amcrc32chw.h
+
+2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcrc32chw.c: New file to compute crc32c with sse4.2
 	  instruction
 	* common-src/amcrc32chw.h: New prototype file
