@@ -179,7 +179,7 @@ AC_DEFUN([AMANDA_SWIG_ERROR],
 	[
 	    case "$enableval" in
 	    "" | y | ye | yes)
-		AMANDA_SWIG_PERL_CFLAGS=-Werror -Wno-deprecated-declarations
+		AMANDA_SWIG_PERL_CFLAGS="-Werror -Wno-deprecated-declarations"
 		;;
 	    *n | no)
 		AMANDA_SWIG_PERL_CFLAGS=
@@ -313,6 +313,24 @@ AC_DEFUN([AMANDA_DISABLE_GCC_WARNING],
     [
 	AMANDA_ADD_WARNING_CFLAG(-Wno-$1)
     ])
+])
+
+# SYNOPSIS
+#
+#   AMANDA_CHECK_SS42(warning)
+#
+# OVERVIEW
+#
+#   Check if gcc support -msse4.2
+#
+AC_DEFUN([AMANDA_CHECK_SSE42],
+[
+    # test for -msse4.2
+    AMANDA_TEST_GCC_FLAG(-msse4.2,
+    [
+	SSE42_CFLAGS=-msse4.2
+    ])
+    AC_SUBST(SSE42_CFLAGS)
 ])
 
 # SYNOPSIS

@@ -346,14 +346,14 @@ write_to_port($last_chunker_reply, 700*1024, "ghost", "/boot", 0);
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle 654c92c6:716800");
-like(chunker_reply, qr/^DONE $handle 700 \"654c92c6:716800\" "\[sec [\d.]+ kb 700 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle 46d2ab13:716800");
+like(chunker_reply, qr/^DONE $handle 700 \"46d2ab13:716800\" "\[sec [\d.]+ kb 700 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker ghost /boot $datestamp 0 654c92c6:716800 \[sec [\d.]+ kb 700 kps [\d.]+\]$),
+    qr(^SUCCESS chunker ghost /boot $datestamp 0 46d2ab13:716800 \[sec [\d.]+ kb 700 kps [\d.]+\]$),
 ], "logs correct");
 
 check_holding_chunks($test_hfile, [ 480, 220 ], "ghost", "/boot", $datestamp, 0);
@@ -372,13 +372,13 @@ wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
 chunker_cmd("FAILED $handle");
-like(chunker_reply, qr/^PARTIAL $handle 768 \"2b153864:786432\" "\[sec [\d.]+ kb 768 kps [\d.]+\]"$/,
+like(chunker_reply, qr/^PARTIAL $handle 768 \"f4617f2f:786432\" "\[sec [\d.]+ kb 768 kps [\d.]+\]"$/,
 	"got PARTIAL") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^PARTIAL chunker ghost /root $datestamp 0 2b153864:786432 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
+    qr(^PARTIAL chunker ghost /root $datestamp 0 f4617f2f:786432 \[sec [\d.]+ kb 768 kps [\d.]+\]$),
 ], "logs correct");
 
 check_holding_chunks($test_hfile, [ 480, 288 ], "ghost", "/root", $datestamp, 0);
@@ -428,14 +428,14 @@ chunker_cmd("CONTINUE $handle $test_hfile-u2 10240 512");
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle 654c92c6:716800");
-like(chunker_reply, qr/^DONE $handle 700 \"654c92c6:716800\" "\[sec [\d.]+ kb 700 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle 46d2ab13:716800");
+like(chunker_reply, qr/^DONE $handle 700 \"46d2ab13:716800\" "\[sec [\d.]+ kb 700 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker ghost /var $datestamp 0 654c92c6:716800 \[sec [\d.]+ kb 700 kps [\d.]+\]$),
+    qr(^SUCCESS chunker ghost /var $datestamp 0 46d2ab13:716800 \[sec [\d.]+ kb 700 kps [\d.]+\]$),
 ], "logs correct");
 
 check_holding_chunks($test_hfile, [ 480, 220 ], "ghost", "/var", $datestamp, 0);
@@ -457,14 +457,14 @@ chunker_cmd("CONTINUE $handle $test_hfile-u2 128 10240");
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle 0b8199b0:409600");
-like(chunker_reply, qr/^DONE $handle 400 \"0b8199b0:409600\" "\[sec [\d.]+ kb 400 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle 6afb2189:409600");
+like(chunker_reply, qr/^DONE $handle 400 \"6afb2189:409600\" "\[sec [\d.]+ kb 400 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker ghost /var $datestamp 0 0b8199b0:409600 \[sec [\d.]+ kb 400 kps [\d.]+\]$),
+    qr(^SUCCESS chunker ghost /var $datestamp 0 6afb2189:409600 \[sec [\d.]+ kb 400 kps [\d.]+\]$),
 ], "logs correct");
 
 check_holding_chunks($test_hfile, [ 64, 32, 96, 96, 96, 16 ],
@@ -489,14 +489,14 @@ chunker_cmd("CONTINUE $handle $test_hfile 10240 10240");
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle 09bec4be:71680");
-like(chunker_reply, qr/^DONE $handle 70 \"09bec4be:71680\" "\[sec [\d.]+ kb 70 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle 0001e3df:71680");
+like(chunker_reply, qr/^DONE $handle 70 \"0001e3df:71680\" "\[sec [\d.]+ kb 70 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker ghost /var/lib $datestamp 0 09bec4be:71680 \[sec [\d.]+ kb 70 kps [\d.]+\]$),
+    qr(^SUCCESS chunker ghost /var/lib $datestamp 0 0001e3df:71680 \[sec [\d.]+ kb 70 kps [\d.]+\]$),
 ], "logs correct");
 
 check_holding_chunks($test_hfile, [ 70 ],
@@ -521,14 +521,14 @@ chunker_cmd("CONTINUE $handle $test_hfile-u2 128 10240");
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle 0b8199b0:409600");
-like(chunker_reply, qr/^DONE $handle 400 \"0b8199b0:409600\" "\[sec [\d.]+ kb 400 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle 6afb2189:409600");
+like(chunker_reply, qr/^DONE $handle 400 \"6afb2189:409600\" "\[sec [\d.]+ kb 400 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker ghost /u01 $datestamp 0 0b8199b0:409600 \[sec [\d.]+ kb 400 kps [\d.]+\]$),
+    qr(^SUCCESS chunker ghost /u01 $datestamp 0 6afb2189:409600 \[sec [\d.]+ kb 400 kps [\d.]+\]$),
 ], "logs for more-than-use-and-chunks PORT-WRITE");
 
 check_holding_chunks($test_hfile, [ 64, 96, 96, 96, 48 ],
@@ -553,14 +553,14 @@ chunker_cmd("CONTINUE $handle $test_hfile-u2 10240 10240");
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle a07770fa:102400");
-like(chunker_reply, qr/^DONE $handle 100 \"a07770fa:102400\" "\[sec [\d.]+ kb 100 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle f954d6fc:102400");
+like(chunker_reply, qr/^DONE $handle 100 \"f954d6fc:102400\" "\[sec [\d.]+ kb 100 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker roast /boot $datestamp 0 a07770fa:102400 \[sec [\d.]+ kb 100 kps [\d.]+\]$),
+    qr(^SUCCESS chunker roast /boot $datestamp 0 f954d6fc:102400 \[sec [\d.]+ kb 100 kps [\d.]+\]$),
 ], "logs for simple PORT-WRITE");
 
 check_holding_chunks($test_hfile, [ 32, 68 ], "roast", "/boot", $datestamp, 0);
@@ -585,14 +585,14 @@ chunker_cmd("CONTINUE $handle $test_hfile-u2 300 128");
 wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
-chunker_cmd("DONE $handle e28c8df2:131072");
-like(chunker_reply, qr/^DONE $handle 128 \"e28c8df2:131072\" "\[sec [\d.]+ kb 128 kps [\d.]+\]"$/,
+chunker_cmd("DONE $handle 3988403d:131072");
+like(chunker_reply, qr/^DONE $handle 128 \"3988403d:131072\" "\[sec [\d.]+ kb 128 kps [\d.]+\]"$/,
 	"got DONE") or die;
 chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^SUCCESS chunker roast /boot $datestamp 0 e28c8df2:131072 \[sec [\d.]+ kb 128 kps [\d.]+\]$),
+    qr(^SUCCESS chunker roast /boot $datestamp 0 3988403d:131072 \[sec [\d.]+ kb 128 kps [\d.]+\]$),
 ], "logs for simple PORT-WRITE");
 
 check_holding_chunks($test_hfile, [ 96, 32 ], "roast", "/boot", $datestamp, 0);

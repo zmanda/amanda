@@ -42,6 +42,10 @@
 
 #include "amflock.h"
 
+#define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+
 /*
  * Varargs/ellipsis handling: some broken systems DO NOT declare STDC_HEADERS,
  * which means va_start behaves differently :/ So, use our own
