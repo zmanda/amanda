@@ -108,6 +108,7 @@ libamanda_la_LDFLAGS =  -release $(VERSION) $(AS_NEEDED_FLAGS)
 
 noinst_HEADERS =		\
 	amanda.h		\
+	amcrc32chw.h		\
 	amfeatures.h		\
 	ammessage.h		\
 	ipc-binary.h		\
