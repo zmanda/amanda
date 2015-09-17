@@ -24,6 +24,7 @@
 #include "amanda.h"
 #include "testutils.h"
 #include "util.h"
+#include "amcrc32chw.h"
 
 /* Utilities */
 
@@ -47,18 +48,35 @@ test_size(
 {
     crc_t crc1;
     crc_t crc16;
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+    crc_t crchw;
+#endif
 
     crc32_init(&crc1);
     crc32_init(&crc16);
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+    crc32_init(&crchw);
+#endif
 
     crc32_add_1byte(test_buf, size, &crc1);
     crc32_add_16bytes(test_buf, size, &crc16);
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+    crc32c_add_hw(test_buf, size, &crchw);
+#endif
 
     if (crc1.crc != crc16.crc ||
 	crc1.size != crc16.size) {
-	g_fprintf(stderr, " CRC %08x:%lld != %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size);
+	g_fprintf(stderr, " CRC16 %zu %08x:%lld != %08x:%lld\n", size, crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size);
 	return FALSE;
     }
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+    if (crc1.crc != crchw.crc ||
+	crc1.size != crchw.size) {
+	g_fprintf(stderr, " CRChw %zu %08x:%lld != %08x:%lld\n", size, crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crchw), (long long)crchw.size);
+	return FALSE;
+    }
+#endif
+g_fprintf(stderr, " %08x:%lld  %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size, crc32_finish(&crchw), (long long)crchw.size);
     return TRUE;
 }
 
@@ -75,6 +93,7 @@ main(int argc, char **argv)
     argc =argc;
     argv =argv;
 
+    make_crc_table();
     init_test_buf();
 
     for (i=0; size_of_test[i] != 0; i++) {
@@ -87,5 +106,5 @@ main(int argc, char **argv)
     } else {
 	g_fprintf(stderr, " PASS CRC\n");
     }
-    return 0;
+    return nb_error;
 }

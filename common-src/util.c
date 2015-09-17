@@ -1727,8 +1727,26 @@ make_amanda_tmpdir(void)
 }
 
 #define POLY 0x82F63B78
+#define SSE42(have) \
+    do { \
+        uint32_t eax, ecx; \
+        eax = 1; \
+        __asm__("cpuid" \
+                : "=c"(ecx) \
+                : "a"(eax) \
+                : "%ebx", "%edx"); \
+        (have) = (ecx >> 20) & 1; \
+    } while (0)
+
 static uint32_t crc_table[16][256];
 static gboolean crc_initialized = FALSE;
+static int have_sse42 = 0;
+void (* crc32_function)(uint8_t *buf, size_t len, crc_t *crc);
+
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+  #include "amcrc32chw.h"
+#endif
+
 /* Run this function previously */
 void
 make_crc_table(void)
@@ -1736,6 +1754,15 @@ make_crc_table(void)
     int i;
     int j;
     int slice;
+
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+    SSE42(have_sse42);
+    if (have_sse42) {
+	crc32c_init_hw();
+	crc32_function = &crc32c_add_hw;
+    } else
+#endif
+        crc32_function = &crc32_add_16bytes;
 
     if (!crc_initialized) {
 	for (i = 0; i < 256; i++) {
@@ -1759,6 +1786,7 @@ void
 crc32_init(
     crc_t *crc)
 {
+    make_crc_table();
     crc->crc = 0xFFFFFFFF;
     crc->size = 0;
 }
@@ -1857,7 +1885,7 @@ crc32_add(
     size_t len,
     crc_t *crc)
 {
-    crc32_add_16bytes(buf, len, crc);
+    crc32_function(buf, len, crc);
     return;
 }
 

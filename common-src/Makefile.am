@@ -46,6 +46,11 @@ libamanda_la_SOURCES =		\
 	tapelist.c		\
 	timestamp.c		\
 	util.c
+
+libamanda_la_SOURCES += amcrc32chw.c
+amcrc32chw.o: CFLAGS = $(SSE42_CFLAGS)
+amcrc32chw.lo: CFLAGS = $(SSE42_CFLAGS)
+
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
 

@@ -1,4 +1,16 @@
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcrc32chw.c: New file to compute crc32c with sse4.2
+	  instruction
+	* common-src/amcrc32chw.h: New prototype file
+	* common-src/Makefile.am: Code to build amcrc32chw
+	* common-src/amanda.h: Define GCC_VERSION
+	* common-src/crc32-test.c: Add test for hw version
+	* common-src/util.c: Detect if processor hace sse4.2 and use it
+	* config/amanda/flags.m4 (AMANDA_CHECK_SSE42) New macro to detext if
+	  gcc have -msse4.2
+	* configure.in: Call AMANDA_CHECK_SSE42
+
+2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Chanre the crc32 POLY to 0x82F63B78
 
 2015-09-16  Jean-Louis Martineau <martineau@zmanda.com>
