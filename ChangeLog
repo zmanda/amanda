@@ -1,4 +1,7 @@
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c: Use better asm code to detect sse4.2
+
+2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (have_sse42): Do not declare static
 	* common-src/util.h (have_sse42): Add extern declaration
 	* common-src/crc32-test.c: Do not run hardware crc32 test if the cpu
