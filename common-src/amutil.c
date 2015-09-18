@@ -1865,7 +1865,6 @@ make_crc_table(void)
 #if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
 	have_sse42 = get_sse42();
 	if (have_sse42) {
-fprintf(stderr,"We havce sse4.2\n");
 	    crc32c_init_hw();
 	    crc32_function = &crc32c_add_hw;
 	} else

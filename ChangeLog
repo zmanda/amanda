@@ -1,8 +1,11 @@
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c (make_crc_table): Remove a bogus fprintf
+
+2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcrc32chw.c: Fix for 32 bits
 
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
-	* common-src/amcrc32chw.c: Qulify crc32vc_add_hw argument as
+	* common-src/amcrc32chw.c: Qualify crc32vc_add_hw argument as
 	  G_GNUC_UNUSED
 	* common-src/amutil.c: Define get_sse42 only if we use it
 	* common-src/crc32-test.c: Fix if not in 64 bits mode
