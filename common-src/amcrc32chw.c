@@ -186,7 +186,7 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
     }
 
 #ifdef __x86_64__
-    /* compute the crc on sets of LONG*3 bytes, executing three independent crc
+    /* compute the crc on sets of LONG*4 bytes, executing three independent crc
      * instructions, each on LONG bytes -- this is optimized for the Nehalem,
      * Westmere, Sandy Bridge, and Ivy Bridge architectures, which have a
      * throughput of one crc per cycle, but a latency of three cycles */
@@ -212,8 +212,8 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
 	next.b.b64 = next64_3;
     }
 
-    /* do the same thing, but now on SHORT*3 blocks for the remaining data less
-     * than a LONG*3 block */
+    /* do the same thing, but now on SHORT*4 blocks for the remaining data less
+     * than a LONG*4 block */
     while (len >= SHORT*4) {
         crc64_1 = 0;
         crc64_2 = 0;
@@ -245,7 +245,7 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
     crc32_0 = (uint32_t)crc64_0;
 
 #else
-    /* compute the crc on sets of LONG*3 bytes, executing three independent crc
+    /* compute the crc on sets of LONG*4 bytes, executing three independent crc
      * instructions, each on LONG bytes -- this is optimized for the Nehalem,
      * Westmere, Sandy Bridge, and Ivy Bridge architectures, which have a
      * throughput of one crc per cycle, but a latency of three cycles */
@@ -267,11 +267,11 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
         crc32_0 = crc32c_shift(crc32c_long, crc32_0) ^ crc32_2;
         crc32_0 = crc32c_shift(crc32c_long, crc32_0) ^ crc32_3;
         len -= LONG*4;
-	next.b.b32 = next32_2;
+	next.b.b32 = next32_3;
     }
 
-    /* do the same thing, but now on SHORT*3 blocks for the remaining data less
-     * than a LONG*3 block */
+    /* do the same thing, but now on SHORT*4 blocks for the remaining data less
+     * than a LONG*4 block */
     while (len >= SHORT*4) {
         crc32_1 = 0;
         crc32_2 = 0;
@@ -290,7 +290,7 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
         crc32_0 = crc32c_shift(crc32c_short, crc32_0) ^ crc32_2;
         crc32_0 = crc32c_shift(crc32c_short, crc32_0) ^ crc32_3;
         len -= SHORT*4;
-	next.b.b32 = next32_2;
+	next.b.b32 = next32_3;
     }
 
     /* compute the crc on the remaining eight-byte units less than a SHORT*3
