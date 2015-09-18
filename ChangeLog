@@ -1,5 +1,8 @@
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
-	* common-src/amutil.c: Use better asm code to detect sse4.2
+	* common-src/util.c: Fix asm code on i386
+
+2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: Use better asm code to detect sse4.2
 
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (have_sse42): Do not declare static

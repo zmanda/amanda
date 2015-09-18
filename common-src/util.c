@@ -1729,20 +1729,26 @@ make_amanda_tmpdir(void)
 #define POLY 0x82F63B78
 static int get_sse42(void)
 {
-    uint32_t eax, ecx, edx; \
-    eax = 1; \
+    uint32_t op, eax, ebx, ecx, edx;
+    op = 1;
+#ifdef __i386__
     __asm__ volatile(
-#if HAVE_I386 && defined(__PIC__)
-		"push ebx\n"
-		"cpuid\n"
-		"pop ebx\n"
-#else
-		"cpuid\n"
-#endif
-                : "=a" (eax), "=c" (ecx), "=d" (edx)
-		: "a" (1), "2" (0)
-		: "%ebx"
+		"pushl %%ebx;\n\t"
+		"cpuid;\n\t"
+		"movl %%ebx, %1;\n\t"
+		"popl %%ebx;\n\t"
+                : "=a" (eax), "=r" (ebx), "=c" (ecx), "=d" (edx)
+		: "a" (op)
+		: "cc"
     );
+#else
+    __asm__ volatile(
+		"cpuid;\n\t"
+                : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+		: "a" (op)
+		: "cc"
+    );
+#endif
     return (ecx >> 20) & 1;
 }
 
