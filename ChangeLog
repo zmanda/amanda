@@ -1,4 +1,10 @@
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcrc32chw.c: Qulify crc32vc_add_hw argument as
+	  G_GNUC_UNUSED
+	* common-src/util.c: Define get_sse42 only if we use it
+	* common-src/crc32-test.c: Fix if not in 64 bits mode
+
+2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Fix compiler warning
 	* config/amanda/flags.m4: Fix egrep expresion for solaris
 
