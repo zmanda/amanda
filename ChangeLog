@@ -1,3 +1,6 @@
+2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c: Fix asm code on i386
+
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c: Use better asm code to detect sse4.2
 
