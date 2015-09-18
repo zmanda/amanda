@@ -1,4 +1,8 @@
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Fix compiler warning
+	* config/amanda/flags.m4: Fix egrep expresion for solaris
+
+2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c: Fix asm code on i386
 
 2015-09-17  Jean-Louis Martineau <martineau@zmanda.com>

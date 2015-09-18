@@ -1677,11 +1677,11 @@ check_access(
 
     if(EUIDACCESS(filename, mode) == -1) {
 	g_printf(_("ERROR [can not %s %s: %s (ruid:%d euid:%d)\n"), noun, quoted, strerror(errno),
-	    getuid(), geteuid());
+	    (int)getuid(), (int)geteuid());
 	result = FALSE;
     } else {
 	g_printf(_("OK %s %s (ruid:%d euid:%d)\n"), quoted, adjective,
-	    getuid(), geteuid());
+	    (int)getuid(), (int)geteuid());
 	result = TRUE;
     }
     amfree(quoted);
