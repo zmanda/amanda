@@ -97,7 +97,7 @@ AC_DEFUN([AMANDA_INIT_FLAGS],
 
     # Warn for just about everything
     AMANDA_ENABLE_GCC_WARNING(all)
-    
+
     # And add any extra warnings too
     AMANDA_TEST_GCC_FLAG(-Wextra, [
 	AMANDA_ADD_WARNING_CFLAG(-Wextra)
@@ -105,6 +105,9 @@ AC_DEFUN([AMANDA_INIT_FLAGS],
 	AMANDA_TEST_GCC_FLAG(-W, [
 	    AMANDA_ADD_WARNING_CFLAG(-W)
 	])
+    ])
+    AMANDA_TEST_GCC_FLAG(-Wno-int, [AMANDA_ADD_WARNING_CFLAG(-Wno-int)
+    ], [
     ])
     AC_SUBST([AMANDA_WARNING_CFLAGS])
 ])
@@ -350,7 +353,7 @@ AC_DEFUN([AMANDA_TEST_GCC_FLAG],
 	changequote(,)dnl
 	(gcc --help={target,optimizers,warnings,undocumented,params,c} 2>&1 || 
            $CC -v --help 2>&1) | 
-         $EGREP -- '[^[:alnum:]]$1[^[:alnum:]-]' 2>&1 > /dev/null
+         $EGREP -- '[^0-9A-Za-z]$1[^0-9A-Za-z]' 2>&1 > /dev/null
 	changequote([,])dnl
 	if test $? -eq 0; then
 	    found_warning=yes
