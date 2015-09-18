@@ -66,7 +66,11 @@ test_size(
     }
 #endif
 
-g_fprintf(stderr, " %08x:%lld  %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size, crc32_finish(&crchw), (long long)crchw.size);
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+    g_fprintf(stderr, " %08x:%lld  %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size, crc32_finish(&crchw), (long long)crchw.size);
+#else
+    g_fprintf(stderr, " %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size);
+#endif
 
     if (crc1.crc != crc16.crc ||
 	crc1.size != crc16.size) {

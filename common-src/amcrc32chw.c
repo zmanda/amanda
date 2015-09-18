@@ -341,7 +341,10 @@ void crc32c_init_hw(void)
    g_error("crc32c_init_hw is not defined");
 }
 
-void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
+void crc32c_add_hw(
+    uint8_t *buf G_GNUC_UNUSED,
+    size_t len G_GNUC_UNUSED,
+    crc_t *crc G_GNUC_UNUSED)
 {
    g_error("crc32c_add_hw is not defined");
 }

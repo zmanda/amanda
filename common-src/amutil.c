@@ -1817,6 +1817,7 @@ make_amanda_tmpdir(void)
 }
 
 #define POLY 0x82F63B78
+#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
 static int get_sse42(void)
 {
     uint32_t op, eax, ebx, ecx, edx;
@@ -1841,6 +1842,7 @@ static int get_sse42(void)
 #endif
     return (ecx >> 20) & 1;
 }
+#endif
 
 static uint32_t crc_table[16][256];
 static gboolean crc_initialized = FALSE;
