@@ -1788,8 +1788,8 @@ check_access_message(
     char  ruid_str[NUM_STR_SIZE];
     char  euid_str[NUM_STR_SIZE];
 
-    g_snprintf(ruid_str, sizeof(ruid_str), "%d", getuid());
-    g_snprintf(euid_str, sizeof(euid_str), "%d", geteuid());
+    g_snprintf(ruid_str, sizeof(ruid_str), "%d", (int)getuid());
+    g_snprintf(euid_str, sizeof(euid_str), "%d", (int)geteuid());
 
     if(mode == F_OK)
         noun = "find", adjective = "exists";

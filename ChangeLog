@@ -1,4 +1,7 @@
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Fix compiler error
+
+2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c (make_crc_table): Remove a bogus fprintf
 
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
