@@ -354,7 +354,7 @@ AC_DEFUN([AMANDA_TEST_GCC_FLAG],
     AC_MSG_CHECKING(for gcc flag $1)
     if test "x$GCC" = "xyes"; then
 	changequote(,)dnl
-	(gcc --help={target,optimizers,warnings,undocumented,params,c} 2>&1 || 
+	($CC --help={target,optimizers,warnings,undocumented,params,c} 2>&1 || 
            $CC -v --help 2>&1) | 
          $EGREP -- '[^0-9A-Za-z]$1[^0-9A-Za-z]' 2>&1 > /dev/null
 	changequote([,])dnl

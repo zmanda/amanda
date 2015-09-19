@@ -1,3 +1,6 @@
+2015-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/flags.m4: s/gcc/$CC/
+
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Fix compiler error
 
