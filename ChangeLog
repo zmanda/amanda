@@ -1,3 +1,6 @@
+2015-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: Fix CFLAGS for compiling amcrc32c.c
+
 2015-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcrc32chw.c: Fix for 32 bits
 
