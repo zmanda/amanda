@@ -1,3 +1,6 @@
+2015-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: Fix CFLAGS for compiling amcrc32c.c
+
 2015-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/flags.m4: s/gcc/$CC/
 
