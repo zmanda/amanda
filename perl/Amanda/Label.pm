@@ -152,6 +152,8 @@ sub local_message {
 	return "Can't remove the config of label '$self->{'label'}'.";
     } elsif ($self->{'code'} == 1000061) {
 	return "No label matching '$self->{'label'}' in the tapelist file";
+    } elsif ($self->{'code'} == 1000062) {
+	return "$self->{'dev_error'}";
     }
 }
 
@@ -1032,6 +1034,15 @@ sub erase {
 	}
 
 	my $dev = $res->{'device'};
+	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	    $self->user_msg(Amanda::Label::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code      => 1000062,
+					severity  => $Amanda::Message::ERROR,
+					dev_error => $dev->error_or_status()));
+	    return $steps->{'releasing'}->();
+	}
 	if (!$dev->property_get('full_deletion')) {
 	    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
