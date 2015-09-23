@@ -1,3 +1,6 @@
+2015-09-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amrmtape.pl: Fix if the device can't be opened
+
 2015-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/Makefile.am: Fix CFLAGS for compiling amcrc32c.c
 

@@ -269,6 +269,7 @@ my $erase_volume = make_cb('erase_volume' => sub {
 		die $err if $err;
 
                 my $dev = $resv->{'device'};
+		die $dev->error_or_status() if $dev->status != $DEVICE_STATUS_SUCCESS;
                 die "Can not erase $label because the device doesn't support this feature"
                     unless $dev->property_get('full_deletion');
 
