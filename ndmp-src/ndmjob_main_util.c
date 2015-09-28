@@ -119,8 +119,8 @@ ndmjob_log_deliver (struct ndmlog *log, char *tag, int lev, char *msg)
 	}
 
 	if (v_verbose >= lev) {
-		char *quoted = quote_string(msg);
-		printf ("%s '%s'\n", tag, quoted);
+		char *quoted = quote_string_always(msg);
+		printf ("%s %s\n", tag, quoted);
 		fflush (stdout);
 		g_free(quoted);
 	}
