@@ -1,3 +1,6 @@
+2015-09-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndmjob_main_util.c: Always quote log message.
+
 2015-09-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amrmtape.pl: Fix if the device can't be opened
 
