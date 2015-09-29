@@ -30,7 +30,7 @@
 <refsect1><title>DESCRIPTION</title>
 
 <para>The <emphasis remap='I'>tapelist</emphasis> file contains the list of
-tapes in active use.  This file is not ordinarily ordinarily edited or examined
+tapes in active use.  This file is not ordinarily edited or examined
 manually.  Its format may change, or it may be removed altogether, in future
 versions of Amanda.  It contains lines of the form:</para>
 
