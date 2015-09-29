@@ -1,3 +1,7 @@
+2015-09-29  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Orion Poplawski
+	* man/xml-source/tapelist.5.xml: Fix duplicate word
+
 2015-09-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndmjob_main_util.c: Always quote log message.
 
