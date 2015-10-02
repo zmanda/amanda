@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 47;
+use Test::More tests => 48;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -34,6 +34,7 @@ use Amanda::MainLoop;
 use Amanda::Paths;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Constants;
+use Fcntl 'SEEK_SET';
 
 # get Amanda::Device only when we're building for server
 BEGIN {
@@ -351,6 +352,64 @@ pass("Two simultaneous transfers run to completion");
     Amanda::MainLoop::run();
     $xfer = undef;
     pass("compress | uncompress gets back the original stream");
+}
+
+# test the Process filter (gzip exit code 2 is not an error)
+{
+    my $RANDOM_SEED = 0xD00D;
+
+    # create a compressed file
+    my $write_filename = "$Installcheck::TMP/xfer-junk-dest.tmp";
+    my $wfh;
+    open($wfh, ">", "$write_filename") or die("Could not open '$write_filename' for writing");
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
+	Amanda::Xfer::Filter::Process->new(
+	    [ $Amanda::Constants::COMPRESS_PATH, $Amanda::Constants::COMPRESS_BEST_OPT ], 0, 0, 0, 0),
+	Amanda::Xfer::Dest::Fd->new(fileno($wfh))
+    ]);
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    $xfer = undef;
+    close($wfh);
+
+    # add non-compressed random byte to the compressed file
+    open($wfh, ">>", "$write_filename") or die("Could not open '$write_filename' for writing");
+    print $wfh "abcdefghijklmnopqrstuvwxyzA";
+    close($wfh);
+
+    open($wfh, "<", "$write_filename") or die("Could not open '$write_filename' for writing");
+    # uncompress it.
+    $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Fd->new(fileno($wfh)),
+	Amanda::Xfer::Filter::Process->new(
+	    [ $Amanda::Constants::UNCOMPRESS_PATH, $Amanda::Constants::UNCOMPRESS_OPT ], 0, 0, 0, 0),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    ]);
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    $xfer = undef;
+    pass("uncompress with trailling bytes succeed");
 }
 
 {

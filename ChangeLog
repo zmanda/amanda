@@ -1,3 +1,7 @@
+2015-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/filter-process.c: gzip exit 2 is not an error
+	* installcheck/Amanda_Xfer.pl: test it
+
 2015-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Orion Poplawski
 	* man/xml-source/tapelist.5.xml: Fix duplicate word

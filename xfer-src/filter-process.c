@@ -82,12 +82,13 @@ child_watch_callback(
     XferElement *elt = (XferElement *)self;
     XMsg *msg;
     char *errmsg = NULL;
+    int exitcode = 0;
 
     g_assert(pid == self->child_pid);
     self->child_pid = -1; /* it's gone now.. */
 
     if (WIFEXITED(status)) {
-	int exitcode = WEXITSTATUS(status);
+	exitcode = WEXITSTATUS(status);
 	g_debug("%s: process exited with status %d", xfer_element_repr(elt), exitcode);
 	if (exitcode != 0) {
 	    errmsg = g_strdup_printf("%s exited with status %d",
@@ -113,7 +114,11 @@ child_watch_callback(
 
     /* if this is an error exit, send an XMSG_ERROR and cancel */
     if (!elt->cancelled) {
-	if (errmsg) {
+	if (errmsg &&
+	    (// gzip exit 2 is a warning, not an error
+	     !WIFEXITED(status) ||
+	     exitcode != 2 ||
+	     strstr(self->argv[0],"gzip") != self->argv[0]+strlen(self->argv[0])-4)) {
 	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_ERROR, 0);
 	    msg->message = errmsg;
 	    xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
