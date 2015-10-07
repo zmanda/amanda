@@ -522,7 +522,7 @@ main(
 	}
     } else {
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    if (taper->storage_name) {
+	    if (!taper->down && taper->storage_name) {
 		wtaper = taper->wtapetable;
 		wtaper->state = TAPER_STATE_INIT;
 		taper->nb_wait_reply++;
@@ -679,7 +679,7 @@ main(
 	nb_storage = startup_vault_tape_process(taper_program, no_taper);
 
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    if (taper->storage_name) {
+	    if (!taper->down && taper->storage_name) {
 		wtaper = taper->wtapetable;
 		wtaper->state = TAPER_STATE_INIT;
 		taper->nb_wait_reply++;
@@ -2442,7 +2442,8 @@ handle_taper_result(
 	    /* start a new worker */
 	    for (i = 0; i < taper->nb_worker ; i++) {
 		wtaper1 = &taper->wtapetable[i];
-		if (!taper->degraded_mode &&
+		if (!taper->down &&
+		    !taper->degraded_mode &&
 		    wtaper1->state == TAPER_STATE_DEFAULT) {
 		    wtaper1->state = TAPER_STATE_INIT;
 		    if (taper->nb_wait_reply == 0) {

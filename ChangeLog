@@ -1,4 +1,8 @@
 2015-10-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix for taper crash
+	* server-src/dumper.c: Fix compatibility issue
+
+2015-10-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/FetchDump.pm: Filter /trailing garbage ignored/
 
 2015-10-02  Jean-Louis Martineau <martineau@zmanda.com>

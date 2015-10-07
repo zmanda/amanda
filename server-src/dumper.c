@@ -2071,7 +2071,9 @@ read_mesgfd(
 	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	    set_datafd = 1;
 	}
-	security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
+	if (streams[STATEFD].fd != NULL) {
+	    security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
+	}
     }
 
     /*
