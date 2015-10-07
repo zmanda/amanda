@@ -1,3 +1,6 @@
+2015-10-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/flags.m4: Use $CC
+
 2015-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Orion Poplawski
 	* man/xml-source/tapelist.5.xml: Fix duplicate word
