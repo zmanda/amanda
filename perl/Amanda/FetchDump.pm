@@ -295,6 +295,7 @@ sub start_reading
 		chomp $line;
 		if (length($line) > 1) {
 #		    if (!$app_success || $app_error) {
+		    if ($line !~ /trailing garbage ignored/) {
 			$self->user_message(
 			    Amanda::FetchDump::Message->new(
 				source_filename => __FILE__,
@@ -302,7 +303,7 @@ sub start_reading
 				code            => 3300018,
 				severity	=> $Amanda::Message::ERROR,
 				line		=> $line));
-#		    }
+		    }
 		}
 		$buffer = "";
 	    }
