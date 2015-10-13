@@ -465,13 +465,55 @@ sub command_selfcheck {
     }
 }
 
+sub _filename_prefix {
+    my $self = shift;
+
+    my @parts = ("ampgsql", hexencode($self->{'args'}->{'host'}), hexencode($self->{'args'}->{'disk'}));
+    return $self->{'args'}->{'statedir'} . '/'  . join("-", @parts)
+}
+
 sub _state_filename {
     my ($self, $level) = @_;
 
-    my @parts = ("ampgsql", hexencode($self->{'args'}->{'host'}), hexencode($self->{'args'}->{'disk'}), $level);
-    my $statefile = $self->{'args'}->{'statedir'} . '/'  . join("-", @parts);
+    my $prefix = $self->_filename_prefix();
+    my $statefile = $prefix . "-$level";
     debug("statefile: $statefile");
     return $statefile;
+}
+
+sub _last_backup_filename {
+    my $self = shift;
+
+    my $prefix = $self->_filename_prefix();
+    my $lastfile = $prefix . "-last_backup";
+    debug("lastfile $lastfile");
+    return $lastfile
+}
+
+sub _get_last_backup {
+    my $self = shift;
+
+    my $h = new IO::File($self->_last_backup_filename(), "r");
+    $h or return undef;
+
+    my $line = <$h>;
+    $line =~ /LEVEL: (\d*)/;
+    my $level = $1;
+    $h->close();
+
+    return $level;
+}
+
+sub _write_last_backup {
+    my $self = shift;
+    my $level = shift;
+
+    my $h = new IO::File($self->_last_backup_filename(), "w");
+    $h or return undef;
+
+    debug("writing last file");
+    $h->print("LEVEL: $level\n");
+    $h->close;
 }
 
 sub _write_state_file {
@@ -805,7 +847,8 @@ sub _base_backup {
 	if ($self->{'props'}->{'pg-full-wal'} eq "full") {
 	    $last_end_wal = _get_prev_state($self, 0);
 	} elsif ($self->{'props'}->{'pg-full-wal'} eq "incr") {
-	    $last_end_wal = _get_prev_state($self, 10);
+	    my $level = $self->_get_last_backup();
+	    $last_end_wal = _get_prev_state($self, $level);
 	}
    } else {
 	$start_wal = undef;
@@ -949,6 +992,7 @@ sub command_backup {
    $self->{'state_cb'} = sub {
        my ($self, $end_wal) = @_;
        _write_state_file($self, $end_wal) or $self->{'die_cb'}->("Failed to write state file");
+       $self->_write_last_backup($self->{'args'}->{'level'});
    };
    my $cleanup_wal_val = $self->{'props'}->{'pg-cleanupwal'} || 'yes';
    my $cleanup_wal = string_to_boolean($cleanup_wal_val);

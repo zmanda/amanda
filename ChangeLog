@@ -1,3 +1,7 @@
+2015-10-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Remember the level of the last
+	  backup and use it to find the corresponding statefile.
+
 2015-10-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/flags.m4: Use $CC
 
