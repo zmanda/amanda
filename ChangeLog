@@ -1,3 +1,7 @@
+2015-10-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Remember the level of the last
+	  backup and use it to find the corresponding statefile.
+
 2015-10-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix for taper crash
 	* server-src/dumper.c: Fix compatibility issue
