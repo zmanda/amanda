@@ -1855,6 +1855,13 @@ sec_tcp_conn_read_callback(
 	g_warning(
 	  _("sec: conn_read_callback: %zd bytes for handle %d went unclaimed!"),
 	  rc->pktlen, rc->handle);
+	if (rc->pktlen<100) {
+	    char *badbuf = g_malloc(rc->pktlen+1);
+	    memcpy(badbuf, rc->pkt, rc->pktlen);
+	    badbuf[rc->pktlen] = '\0';
+	    g_debug("packet: %s", badbuf);
+	    g_free(badbuf);
+	}
 	return;
     }
 

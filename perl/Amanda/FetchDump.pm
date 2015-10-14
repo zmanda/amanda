@@ -684,7 +684,7 @@ sub restore {
 
 	my $scan;
 	if (defined $params{'scan'}) {
-	    $scan = $params{'scan'}
+	    $scan = $params{'scan'};
 	} else {
 	    $scan = Amanda::Recovery::Scan->new(
 			storage       => $storage,
@@ -839,6 +839,10 @@ sub restore {
 	    return $steps->{'finished'}->();
 	}
 
+	if ($self->{'feedback'}->can('send_state_file')) {
+	    $self->{'feedback'}->send_state_file($hdr);
+	}
+
 	$self->{'recovery_done'} = 0;
 	$use_dar = 0;
 	%recovery_params = ();
@@ -851,17 +855,17 @@ sub restore {
 	if (!$storage{$storage_name}) {
 	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
 						 tapelist => $tl);
-	    #return  $steps->{'quit'}->($storage) if $storage->isa("Amanda::Changer::Error");
-	    $storage{$storage_name} = $storage;
+	    return  $steps->{'failure'}->($storage) if $storage->isa("Amanda::Changer::Error");
 	};
 
 	my $chg = $storage{$storage_name}->{'chg'};
+	return  $steps->{'failure'}->($chg) if $chg->isa("Amanda::Changer::Error");
+
 	if (!$scan{$storage_name}) {
 	    my $scan = Amanda::Recovery::Scan->new(chg => $chg,
 						   interactivity => $interactivity);
-	    #return $steps->{'quit'}->($scan)
-	    #    if $scan{$storage->{"storage_name"}}->isa("Amanda::Changer::Error");
-	    $scan{$storage_name} = $scan;
+	    return $steps->{'failure'}->($scan)
+	        if $scan->isa("Amanda::Changer::Error");
 	};
 
 	if (!$clerk{$storage_name}) {
@@ -909,9 +913,6 @@ sub restore {
             }
 	}
 
-	if ($self->{'feedback'}->can('send_state_file')) {
-	    $self->{'feedback'}->send_state_file($hdr);
-	}
 	# and set up the destination..
 	my $dest_fh;
 	my @filters;
