@@ -1,3 +1,7 @@
+2015-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/FetchDump.pm: Do not look for storage when recovery is
+	  from a holding disk
+
 2015-10-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Add debugging
 	* perl/Amanda/FetchDump.pm: Send the statefile earlier, trap error

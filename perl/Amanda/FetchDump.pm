@@ -852,21 +852,31 @@ sub restore {
 	$xfer_app = undef;
 
 	my $storage_name = $current_dump->{'storage'};
-	if (!$storage{$storage_name}) {
-	    my ($storage) = Amanda::Storage->new(storage_name => $storage_name,
-						 tapelist => $tl);
-	    return  $steps->{'failure'}->($storage) if $storage->isa("Amanda::Changer::Error");
-	};
+	my $chg;
 
-	my $chg = $storage{$storage_name}->{'chg'};
-	return  $steps->{'failure'}->($chg) if $chg->isa("Amanda::Changer::Error");
+	if ($storage_name ne 'HOLDING') {
+	    if (!$storage{$storage_name}) {
+		my ($storage) = Amanda::Storage->new(
+						storage_name => $storage_name,
+						tapelist => $tl);
+		return  $steps->{'failure'}->($storage)
+		    if $storage->isa("Amanda::Changer::Error");
+		$storage{$storage_name} = $storage;
+	    };
 
-	if (!$scan{$storage_name}) {
-	    my $scan = Amanda::Recovery::Scan->new(chg => $chg,
-						   interactivity => $interactivity);
-	    return $steps->{'failure'}->($scan)
-	        if $scan->isa("Amanda::Changer::Error");
-	};
+	    $chg = $storage{$storage_name}->{'chg'};
+	    return  $steps->{'failure'}->($chg)
+		if $chg->isa("Amanda::Changer::Error");
+
+	    if (!$scan{$storage_name}) {
+		my $scan = Amanda::Recovery::Scan->new(
+					chg => $chg,
+					interactivity => $interactivity);
+		return $steps->{'failure'}->($scan)
+	            if $scan->isa("Amanda::Changer::Error");
+		$scan{$storage_name} = $scan;
+	    };
+	}
 
 	if (!$clerk{$storage_name}) {
 	    if ($params{'feedback'}) {
