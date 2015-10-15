@@ -1,3 +1,7 @@
+2015-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c, server-src/amcheck.c: Change the
+	  "running as user \"%s\" instead of \"%s\""" message
+
 2015-10-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Remember the level of the last
 	  backup and use it to find the corresponding statefile.

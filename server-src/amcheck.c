@@ -311,9 +311,9 @@ main(
     }
 #ifdef CHECK_USERID
     if (uid_me != uid_dumpuser) {
-	error(_("running as user \"%s\" instead of \"%s\".\n"
-		"Change user to \"%s\" or change dump user to \"%s\" in amanda.conf"),
-	      pw->pw_name, dumpuser, dumpuser, pw->pw_name);
+	error("must be executed as the \"%s\" user instead of the \"%s\" user.\n"
+		"Change user to \"%s\" or change dumpuser to \"%s\" in amanda.conf",
+	      dumpuser, pw->pw_name, dumpuser, pw->pw_name);
         /*NOTREACHED*/
     }
 #endif
