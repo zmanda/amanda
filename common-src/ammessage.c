@@ -496,6 +496,7 @@ struct message_s {
 static char *ammessage_encode_json(char *str);
 static void set_message(message_t *message, int want_quoted);
 static char *severity_name(int severity);
+static GString *fix_message_string(message_t *message, gboolean want_quoted, char *msg);
 
 static char *
 severity_name(
@@ -646,12 +647,6 @@ set_message(
     char *msg = NULL;
     char *hint = NULL;
     GString *result;
-    char *m;
-    char  num[NUM_STR_SIZE];
-    char  code[100];
-    char *c;
-    int   i;
-    char *quoted;
 
     init_errcode();
 
@@ -1183,8 +1178,8 @@ set_message(
     } else if (message->code == 2800216) {
 	msg  = "cannot get username for running user, uid %{uid} is not in your user database";
     } else if (message->code == 2800217) {
-	msg  = "running as user '%{running_user}' instead of '%{expected_user}'";
-	hint = "Change user to '%{expected_user}' or change dump user to '%{running_user}' in amanda.conf";
+	msg  = "must be executed as the '%{expected_user}' user instead of the '%{running_user}' user";
+	hint = "Change user to '%{expected_user}' or change dumpuser to '%{running_user}' in amanda.conf";
     } else if (message->code == 2800218) {
 	msg  = "could not open temporary amcheck output file %{filename}: %{errnostr}";
 	hint = "Check permissions";
@@ -1468,8 +1463,41 @@ set_message(
     } else {
 	msg = "no message for code '%{code}'";
     }
-    result = g_string_sized_new(strlen(msg)*2);
 
+    result = fix_message_string(message, want_quoted, msg);
+    if (want_quoted) {
+	if (result) {
+	    message->quoted_msg = g_string_free(result, FALSE);
+	}
+    } else {
+	if (result) {
+	    message->msg = g_string_free(result, FALSE);
+	}
+	result = fix_message_string(message, FALSE, hint);
+	if (result) {
+	    message->hint = g_string_free(result, FALSE);
+	}
+    }
+}
+
+static GString *
+fix_message_string(
+    message_t *message,
+    gboolean want_quoted,
+    char *msg)
+{
+    char *m;
+    char  num[NUM_STR_SIZE];
+    char  code[100];
+    char *c;
+    int   i;
+    char *quoted;
+    GString *result;
+
+    if (!msg)
+	return NULL;
+
+    result = g_string_sized_new(strlen(msg)*2);
     for (m = msg; *m != '\0'; m++) {
 	c = code;
 	if (*m == '%' && *(m+1) == '%') {
@@ -1549,13 +1577,8 @@ set_message(
 	    g_string_append_c(result, *m);
 	}
     }
-    if (want_quoted) {
-	message->quoted_msg = g_string_free(result, FALSE);
-	g_free(hint);
-    } else {
-	message->msg = g_string_free(result, FALSE);
-	message->hint = hint;
-    }
+
+    return result;
 }
 
 char *

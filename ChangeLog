@@ -1,4 +1,11 @@
 2015-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Change message for 2800217. Allow
+	  substitution in the hint field
+	* common-src/amutil.c: Change the
+	          "running as user \"%s\" instead of \"%s\""" message
+	* server-src/amcheck.c: Fix for running user
+
+2015-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/FetchDump.pm: Do not look for storage when recovery is
 	  from a holding disk
 

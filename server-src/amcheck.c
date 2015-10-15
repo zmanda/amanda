@@ -416,7 +416,7 @@ main(
 	/*NOTREACHED*/
     }
     uid_dumpuser = pw->pw_uid;
-    if (getpwuid(uid_me) == NULL) {
+    if ((pw = getpwuid(uid_me)) == NULL) {
 	// leak memory
 	delete_message(amcheck_print_message(build_message(
 			AMANDA_FILE, __LINE__, 2800216, MSG_ERROR, 1,

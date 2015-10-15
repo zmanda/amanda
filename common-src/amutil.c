@@ -1435,7 +1435,7 @@ check_running_as(running_as_flags who)
     }
 
     if (uid_me != uid_target) {
-	error(_("running as user \"%s\" instead of \"%s\""), uname_me, uname_target);
+	error("must be executed as the \"%s\" user instead of the \"%s\" user", uname_target, uname_me);
 	/*NOTREACHED*/
     }
     amfree(uname_me);
