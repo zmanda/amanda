@@ -1,3 +1,7 @@
+2015-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Use '--blocking-factor 64' when creating
+	  a tar file
+
 2015-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c, server-src/amcheck.c: Change the
 	  "running as user \"%s\" instead of \"%s\""" message
