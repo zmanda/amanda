@@ -583,7 +583,9 @@ sub _run_tar_totals {
 
     my @cmd;
     @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
+        $Amanda::Constants::GNUTAR, '--create', '--totals',
+				    '--blocking-factor', '64',
+				    @other_args);
     debug("running: " . join(" ", @cmd));
 
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);

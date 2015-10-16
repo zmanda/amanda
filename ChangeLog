@@ -1,3 +1,7 @@
+2015-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Use '--blocking-factor 64' when creating
+	  a tar file
+
 2015-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Change message for 2800217. Allow
 	  substitution in the hint field
