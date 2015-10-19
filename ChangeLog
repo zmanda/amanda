@@ -1,3 +1,6 @@
+2015-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c Default SPARSE value is NO if tar < 1.28
+
 2015-10-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ampgsql.pl: Use '--blocking-factor 64' when creating
 	  a tar file
