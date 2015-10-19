@@ -157,6 +157,7 @@ static int gnutar_xattrs;
 static int gnutar_checkdevice;
 static int gnutar_no_unquote;
 static int gnutar_sparse;
+static int gnutar_sparse_set = 0;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
@@ -417,7 +418,8 @@ main(
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 13: if (optarg && strcasecmp(optarg, "NO") == 0)
+	case 13: gnutar_sparse_set = 1;
+		 if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_sparse = 0;
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_sparse = 1;
@@ -1585,8 +1587,44 @@ GPtrArray *amgtar_build_argv(
 	g_ptr_array_add(argv_ptr, stralloc("--xattrs"));
     g_ptr_array_add(argv_ptr, stralloc("--listed-incremental"));
     g_ptr_array_add(argv_ptr, stralloc(incrname));
-    if (gnutar_sparse)
-	g_ptr_array_add(argv_ptr, stralloc("--sparse"));
+    if (gnutar_sparse) {
+	if (!gnutar_sparse_set) {
+	    char  *gtar_version;
+	    char  *minor_version;
+	    char  *sminor_version;
+	    char  *gv;
+	    int    major;
+	    int    minor;
+	    GPtrArray *version_ptr = g_ptr_array_new();
+
+	    g_ptr_array_add(version_ptr, gnutar_path);
+	    g_ptr_array_add(version_ptr, "--version");
+	    g_ptr_array_add(version_ptr, NULL);
+	    gtar_version = get_first_line(version_ptr);
+	    if (gtar_version) {
+		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
+		minor_version = index(gtar_version, '.');
+		if (minor_version) {
+		    *minor_version++ = '\0';
+		    sminor_version = index(minor_version, '.');
+		    if (sminor_version) {
+			*sminor_version = '\0';
+		    }
+		    major = atoi(gv);
+		    minor = atoi(minor_version);
+		    if (major < 1 ||
+			(major == 1 && minor < 28)) {
+			gnutar_sparse = 0;
+		    }
+		}
+	    }
+	    g_ptr_array_free(version_ptr, TRUE);
+	    amfree(gtar_version);
+	}
+	if (gnutar_sparse) {
+	    g_ptr_array_add(argv_ptr, g_strdup("--sparse"));
+	}
+    }
     if (argument->tar_blocksize) {
 	g_ptr_array_add(argv_ptr, stralloc("--blocking-factor"));
 	g_ptr_array_add(argv_ptr, stralloc(argument->tar_blocksize));
