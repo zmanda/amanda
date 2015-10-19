@@ -40,6 +40,7 @@ typedef enum {
 
 typedef enum {
    S3_SC_STANDARD,
+   S3_SC_STANDARD_IA,
    S3_SC_REDUCED_REDUNDANCY,
    S3_SC_GLACIER
 } StorageClass;

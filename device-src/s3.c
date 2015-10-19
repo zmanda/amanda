@@ -1011,9 +1011,9 @@ authenticate_request(S3Handle *hdl,
 	    g_free(buf);
 	}
 
-	if ((subresource && !g_strstr_len(subresource, -1, "uploadId")) &&
-	    (query && query[0] && !g_strstr_len(query[0], -1, "uploadId")) &&
-	    (query && query[1] && !g_strstr_len(query[1], -1, "uploadId")) &&
+	if ((!subresource || !g_strstr_len(subresource, -1, "uploadId")) &&
+	    (!query || !query[0] || !g_strstr_len(query[0], -1, "uploadId")) &&
+	    (!query || !query[1] || !g_strstr_len(query[1], -1, "uploadId")) &&
 	    is_non_empty_string(hdl->storage_class)) {
 	    g_string_append(auth_string, AMAZON_STORAGE_CLASS_HEADER);
 	    g_string_append(auth_string, ":");
@@ -3461,6 +3461,8 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
     } else if (g_ascii_strcasecmp(element_name, "storageclass") == 0) {
 	if (g_str_equal(thunk->text, "STANDARD")) {
 	    thunk->object->storage_class = S3_SC_STANDARD;
+	} else if (g_str_equal(thunk->text, "STANDARD_IA")) {
+	    thunk->object->storage_class = S3_SC_STANDARD_IA;
 	} else if (g_str_equal(thunk->text, "REDUCED_REDUNDANCY")) {
 	    thunk->object->storage_class = S3_SC_REDUCED_REDUNDANCY;
 	} else if (g_str_equal(thunk->text, "GLACIER")) {

@@ -1288,7 +1288,7 @@ start_server_check(
 	if (part_size && part_size * 1000 < tape_size) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800063, MSG_WARNING, 1,
-			"part-size", g_strdup_printf("%ju", (uintmax_t)part_size))));
+			"part_size", g_strdup_printf("%ju", (uintmax_t)part_size))));
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
 		delete_message(amcheck_fprint_message(outf, build_message(
