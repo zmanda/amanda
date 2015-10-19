@@ -532,19 +532,20 @@ for the most up-to-date list.
 (read-write) Storage class for new objects.
 <variablelist remap='TP'>
 <varlistentry>
-<term>S3 compatible</term>
+<term>S3 compatible</term><listitem>
 <programlisting>
     STANDARD
+    STANDARD_IA
     REDUCED_REDUNDANCY
-</programlisting>
+</programlisting></listitem>
 </varlistentry>
 <varlistentry>
-<term>Google storage</term>
+<term>Google storage</term><listitem>
 <programlisting>
     STANDARD
     DURABLE_REDUCED_AVAILABILITY
     NEARLINE
-</programlisting>
+</programlisting></listitem>
 </varlistentry>
 </variablelist>
 </listitem></varlistentry>
