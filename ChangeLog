@@ -1,7 +1,10 @@
-2015-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+2015-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Do not free current_block
+
+2015-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Add STANDARD_IA storage_class
 
-2015-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+2015-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3.h (StorageClass): Add S3_SC_STANDARD_IA.
 	* device-src/s3.c: Fix for STANDARD_IA
 	* server-src/amcheck.c: Fix message argument name.

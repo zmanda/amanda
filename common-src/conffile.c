@@ -2117,7 +2117,6 @@ read_confline(
 	    else if(tok == CONF_POLICY) get_policy();
 	    else if(tok == CONF_STORAGE) get_storage();
 	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY, TAPERSCAN, POLICY or STORAGE expected"));
-	    g_free(current_block);
 	    current_block = NULL;
 	}
 	break;
@@ -2463,7 +2462,6 @@ get_holdingdisk(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
 }
 
@@ -2571,7 +2569,6 @@ read_dumptype(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
 
     if (linenum)
@@ -2744,7 +2741,6 @@ get_tapetype(void)
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
 }
 
@@ -2841,7 +2837,6 @@ get_interface(void)
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
 
     return;
@@ -2955,7 +2950,6 @@ read_application(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3088,7 +3082,6 @@ read_interactivity(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3220,7 +3213,6 @@ read_taperscan(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3352,7 +3344,6 @@ read_policy(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3486,7 +3477,6 @@ read_storage(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3643,7 +3633,6 @@ read_pp_script(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3781,7 +3770,6 @@ read_device_config(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
@@ -3913,7 +3901,6 @@ read_changer_config(
 
     allow_overwrites = save_overwrites;
 
-    g_free(current_block);
     current_block = saved_block;
     if (linenum)
 	*linenum = current_line_num;
