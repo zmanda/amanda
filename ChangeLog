@@ -1,4 +1,7 @@
 2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (swap): Add missing function
+
+2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm (inventory_unlocked): Can returen all
 	  slot (even those not in use-slot)
 	* perl/Amanda/Recovery/Scan.pm (find_volume): Use only allowed slot

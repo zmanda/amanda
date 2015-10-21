@@ -1828,6 +1828,25 @@ crc32_add_1byte(
      }
 }
 
+#ifdef WORDS_BIGENDIAN
+static inline uint32_t swap(uint32_t data);
+static inline uint32_t
+swap(
+    uint32_t data)
+{
+/* __builtin_bswap32 is not defined on the sparc machine
+#if defined(__GNUC__)
+    return __builtin_bswap32(data);
+#else
+*/
+    return (data >> 24) |
+          ((data >> 8) & 0x0000FF00) |
+          ((data << 8) & 0x00FF0000) |
+           (data << 24);
+// #endif
+}
+#endif
+
 void
 crc32_add_16bytes(
     uint8_t *buf,
