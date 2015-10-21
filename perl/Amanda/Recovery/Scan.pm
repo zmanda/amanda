@@ -222,9 +222,8 @@ sub find_volume {
 
     step get_first_inventory => sub {
 	Amanda::Debug::debug("find_volume labeled '$label'");
-
 	$scan_running = 1;
-	$self->{'chg'}->inventory(inventory_cb => $steps->{'got_first_inventory'});
+	$self->{'chg'}->inventory(all_slots => 1, inventory_cb => $steps->{'got_first_inventory'});
     };
 
     step got_first_inventory => sub {
@@ -268,7 +267,7 @@ sub find_volume {
 	    Amanda::Debug::debug("update the changer");
 	    $self->{'chg'}->update();
 	}
-	$self->{'chg'}->inventory(inventory_cb => $steps->{'parse_inventory'});
+	$self->{'chg'}->inventory(all_slots => 1, inventory_cb => $steps->{'parse_inventory'});
     };
 
     step parse_inventory => sub {
@@ -311,12 +310,14 @@ sub find_volume {
 				  res_cb => $steps->{'slot_loaded'},
 				  set_current => $params{'set_current'});
 	    }
+	    $inventory->[$i] = undef if defined $sl->{'allowed'} && !$sl->{'allowed'};
 	}
 
 	# Remove from seen all slot that have state == SLOT_UNKNOWN
 	# It is done when as scan is restarted from interactivity object.
 	if ($remove_undef_state) {
 	    for my $i (0..(scalar(@$inventory)-1)) {
+		next if !defined $inventory->[$i];
 		my $slot = $inventory->[$i]->{slot};
 		if (exists($seen{$slot}) &&
 		    !defined($inventory->[$i]->{state})) {
@@ -329,6 +330,7 @@ sub find_volume {
 	# remove any slots where the state has changed from the list of seen slots
 	for my $i (0..(scalar(@$inventory)-1)) {
 	    my $sl = $inventory->[$i];
+	    next if !defined $sl;
 	    my $slot = $sl->{slot};
 	    if ($seen{$slot} &&
 		defined($sl->{'state'}) &&
@@ -348,6 +350,7 @@ sub find_volume {
 	# scan any unseen slot already in a drive, if configured to do so
 	if ($self->{'scan_conf'}->{'scan_drive'}) {
 	    for my $sl (@$inventory) {
+		next if !defined $sl;
 		my $slot = $sl->{'slot'};
 		if (defined $sl->{'loaded_in'} &&
 		    !$sl->{'reserved'} &&
@@ -370,6 +373,7 @@ sub find_volume {
 	    #find index for current slot
 	    my $current_index = undef;
 	    for my $i (0..(scalar(@$inventory)-1)) {
+		next if !defined $inventory->[$i];
 		my $slot = $inventory->[$i]->{slot};
 		if ($slot eq $current) {
                     $current_index = $i;
@@ -380,6 +384,7 @@ sub find_volume {
 	    $current_index = 0 if !defined $current_index;
 	    for my $i ($current_index..(scalar(@$inventory)-1), 0..($current_index-1)) {
 		my $sl = $inventory->[$i];
+		next if !$sl;
 		my $slot = $sl->{slot};
 		# skip slots we've seen
 		next if defined($seen{$slot});
@@ -411,9 +416,6 @@ sub find_volume {
 	if ($last_err) {
 	    return $steps->{'handle_error'}->($last_err, undef);
 	} else {
-Amanda::Debug::debug("notfound 1");
-Amanda::Debug::debug("label $label");
-Amanda::Debug::debug("inventory: " . Data::Dumper::Dumper($inventory));
 	    return $steps->{'handle_error'}->(
 		    Amanda::Changer::Error->new('failed',
 			    reason => 'notfound',
@@ -472,6 +474,10 @@ Amanda::Debug::debug("inventory: " . Data::Dumper::Dumper($inventory));
 	    $last_err = $err if $err->fatal || !$err->notfound;
 	    if ($load_for_label == 1 && $err->failed && $err->volinuse) {
 		# volinuse is an error
+		return $steps->{'handle_error'}->($err, $steps->{'load_released'});
+	    }
+	    if ($load_for_label == 1 && $err->failed && $err->invalid) {
+		# invalid is an error
 		return $steps->{'handle_error'}->($err, $steps->{'load_released'});
 	    }
 	    return $steps->{'load_released'}->();
@@ -739,6 +745,7 @@ sub new {
     $self->{'unknown'} = Amanda::Recovery::Scan::SCAN_FAIL;
     $self->{'notimpl'} = Amanda::Recovery::Scan::SCAN_FAIL;
     $self->{'invalid'} = Amanda::Recovery::Scan::SCAN_CONTINUE;
+    #$self->{'invalid'} = Amanda::Recovery::Scan::SCAN_ASK_POLL;
 
     return $self;
 }
