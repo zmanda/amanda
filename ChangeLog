@@ -1,4 +1,8 @@
 2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c (swap): __builtin_bswap32 is defined only for
+	  GCC >= 4.3.0
+
+2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c (swap): Add missing function
 
 2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
