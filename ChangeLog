@@ -1,3 +1,8 @@
+2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm (inventory_unlocked): Can returen all
+	  slot (even those not in use-slot)
+	* perl/Amanda/Recovery/Scan.pm (find_volume): Use only allowed slot
+
 2015-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Do not free current_block
 
@@ -9,7 +14,7 @@
 	* device-src/s3.c: Fix for STANDARD_IA
 	* server-src/amcheck.c: Fix message argument name.
 
-2015-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+2015-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c Default SPARSE value is NO if tar < 1.28
 
 2015-10-16  Jean-Louis Martineau <martineau@zmanda.com>

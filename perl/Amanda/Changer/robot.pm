@@ -1503,9 +1503,11 @@ sub inventory_unlocked {
     my @inv;
     for my $slot_name (@slot_names) {
 	my $i = {};
-	next unless $self->_is_slot_allowed($slot_name);
+	my $allowed = $self->_is_slot_allowed($slot_name);
+	next if !$allowed && !$params{'all_slots'};
 	my $slot = $state->{'slots'}->{$slot_name};
 
+	$i->{'allowed'} = $allowed if $params{'all_slots'};
 	$i->{'slot'} = $slot_name;
 	$i->{'state'} = $slot->{'state'};
 	$i->{'device_status'} = $slot->{'device_status'};
