@@ -137,6 +137,7 @@ enum { CMD_ESTIMATE, CMD_BACKUP };
 
 static void amgtar_support(application_argument_t *argument);
 static void amgtar_selfcheck(application_argument_t *argument);
+static void amgtar_discover(application_argument_t *argument);
 static void amgtar_estimate(application_argument_t *argument);
 static void amgtar_backup(application_argument_t *argument);
 static void amgtar_restore(application_argument_t *argument);
@@ -722,6 +723,8 @@ main(
 	amgtar_validate(&argument);
     } else if (g_str_equal(command, "index")) {
 	amgtar_index(&argument);
+    } else if (g_str_equal(command, "discover")) {
+       amgtar_discover(&argument);
     } else {
 	dbprintf("Unknown command `%s'.\n", command);
 	fprintf(stderr, "Unknown command `%s'.\n", command);
@@ -767,10 +770,94 @@ amgtar_support(
     fprintf(stdout, "MULTI-ESTIMATE YES\n");
     fprintf(stdout, "CALCSIZE YES\n");
     fprintf(stdout, "CLIENT-ESTIMATE YES\n");
+    fprintf(stdout, "DISCOVER YES\n");
     fprintf(stdout, "AMFEATURES YES\n");
     fprintf(stdout, "RECOVER-DUMP-STATE-FILE YES\n");
     fprintf(stdout, "DAR YES\n");
     fprintf(stdout, "STATE-STREAM YES\n");
+}
+
+static void
+amgtar_discover(
+    application_argument_t *argument )
+{
+    DIR *dir;
+    struct dirent *dp;
+    char *full_path;
+    size_t path_len;
+    size_t path_alloc;
+    struct stat stat_buf;
+    char *file_type;
+    gboolean reported_entries = FALSE;
+
+    if (argument->dle.disk) {
+	if ((dir = opendir(argument->dle.disk)) == NULL) {
+            delete_message(print_message(build_message(
+				AMANDA_FILE, __LINE__, 3700012, MSG_ERROR, 2,
+				"diskname", argument->dle.disk,
+				"errno", errno)));
+	    return;
+	}
+
+	path_len = strlen(argument->dle.disk);
+	path_alloc = path_len + 258;
+	full_path = g_malloc(path_alloc);
+	strcpy(full_path, argument->dle.disk);
+	if (full_path[path_len-1] != '/')  {
+	    strcat(full_path, "/");
+            path_len++;
+	}
+
+        while ((dp = readdir (dir)) != NULL) {
+            if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+                continue;
+
+            while (path_len + strlen(dp->d_name) + 1 > path_alloc) {
+                path_alloc *= 2;
+                full_path = g_realloc(full_path, path_alloc);
+            }
+            strcpy(full_path + path_len, dp->d_name);
+
+            if (lstat(full_path, &stat_buf) != 0) {
+                delete_message(print_message(build_message(
+				AMANDA_FILE, __LINE__, 3700013, MSG_ERROR, 2,
+				"diskname", argument->dle.disk,
+				"errno", errno)));
+                continue;
+            }
+            file_type = "unknown";
+            if (S_ISDIR(stat_buf.st_mode)) {
+                file_type = "dir";
+            } else if (S_ISCHR(stat_buf.st_mode)) {
+                file_type = "char";
+            } else if (S_ISBLK(stat_buf.st_mode)) {
+                file_type = "block";
+            } else if (S_ISREG(stat_buf.st_mode)) {
+                file_type = "regular";
+            } else if (S_ISSOCK(stat_buf.st_mode)) {
+                file_type = "socket";
+            } else if (S_ISLNK(stat_buf.st_mode)) {
+                file_type = "link";
+            } else if (S_ISFIFO(stat_buf.st_mode)) {
+                file_type = "fifo";
+            }
+            delete_message(print_message(build_message(
+                               AMANDA_FILE, __LINE__, 3100005, MSG_INFO, 4,
+                               "file_type", file_type,
+                               "full_path", full_path,
+                               "diskname", argument->dle.disk,
+			       "dle_name", dp->d_name)));
+	    reported_entries = TRUE;
+         }
+         closedir(dir);
+	 g_free(full_path);
+    }
+
+    if (!reported_entries) {
+        delete_message(print_message(build_message(
+                               AMANDA_FILE, __LINE__, 3100006, MSG_ERROR, 1,
+                               "diskname", argument->dle.disk)));
+    }
 }
 
 static void

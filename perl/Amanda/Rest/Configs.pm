@@ -235,6 +235,12 @@ Amanda::Rest::Configs -- Rest interface to Amanda::Config
      }
   ]
 
+=item Configure overrides
+
+ The way to add configuration overrides is by using %3D in the override
+
+   config_overrides=ctimeout%3D1000
+
 =back
 
 =cut

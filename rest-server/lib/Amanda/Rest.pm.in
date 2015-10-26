@@ -766,6 +766,14 @@ post '/amanda/v1.0/configs/:CONF/amcheck' => sub {
 	return $r;
 };
 
+get '/amanda/v1.0/configs/:CONF/services/discover' => sub {
+	my %p = params;
+	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);
+	my ($status, $r) = Amanda::Rest::Services::discover(%p);
+	status $status if $status > 0;
+	return $r;
+};
+
 get '/amanda/v1.0/services/discover' => sub {
 	my %p = params;
 	Amanda::Message::_apply(sub { $_[0] = encode(locale => $_[0]); }, {}, %p);

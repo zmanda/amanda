@@ -1254,6 +1254,10 @@ set_message(
 	msg = "Application '%{application}' (pid %{pid}) got signal %{signal}";
     } else if (message->code == 2900017) {
 	msg = "Application '%{application}' (pid %{pid}) returned %{return_code}";
+    } else if (message->code == 3100005) {
+	msg = "senddiscover result";
+    } else if (message->code == 3100006) {
+	msg = "no senddiscover result to list";
     } else if (message->code == 3600000) {
 	msg = "version '%{version}";
     } else if (message->code == 3600001) {
@@ -1454,6 +1458,10 @@ set_message(
 	msg = "bad CHECK-DEVICE property value '%{value}'";
     } else if (message->code == 3700011) {
 	msg = "bad NO-UNQUOTE property value '%{value}'";
+    } else if (message->code == 3700012) {
+	msg = "Can't open disk '%{diskname}': %{errnostr}";
+    } else if (message->code == 3700013) {
+	msg = "Cannot stat the disk '%{diskname}': %{errnostr}";
 
     } else if (message->code == 4600000) {
 	msg = "%{errmsg}";

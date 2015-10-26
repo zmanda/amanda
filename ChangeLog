@@ -1,3 +1,23 @@
+2015-10-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c (amgtar_discover): Implement the discover
+	  API.
+	* client-src/senddiscover.c: Pass --device only if device is provided.
+	* common-src/ammessage.c: Add message for code 3100005, 3100006,
+	  3700012 and 3700013
+	* perl/Amanda/Rest/Configs.pm: Improve documentation
+	* perl/Amanda/Rest/Services.pm (discover): Many fixes
+	* rest-server/bin/app.pl.in: discover service can be called for a
+	  config
+	* rest-server/lib/Amanda/Rest.pm.in: discover service can be called
+	  for a config
+	* installcheck/Amanda_Rest_Services_senddiscover.pl: Test the REST
+	  senddiscover service
+	* installcheck/Amanda_Rest_Services_senddiscover_amgtar.pl: Test the
+	  amgtar REST senddiscover service
+	* installcheck/Makefile.am (server_tests): Add
+	  Amanda_Rest_Services_senddiscover and
+	  Amanda_Rest_Services_senddiscover_amgtar
+
 2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c (swap): __builtin_bswap32 is defined only for
 	  GCC >= 4.3.0

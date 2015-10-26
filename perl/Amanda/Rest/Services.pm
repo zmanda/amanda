@@ -44,11 +44,13 @@ Amanda::Rest::Services -- Rest interface to amservice
 =item Run amservice
 
  request:
-  GET localhost:5000/amanda/v1.0/configs/:CONFIG/service/discover
+  GET localhost:5000/amanda/v1.0/services/discover
     query arguments:
         host=HOST
         application=APPLICATION
         auth=AUTH
+	config=CONFIG
+	diskdevice=DISK
 
  reply:
   HTTP status: 200 Ok
@@ -73,8 +75,11 @@ sub discover {
     Amanda::Util::set_pname("Amanda::Rest::Services");
     my @amservice_args;
     my @result_messages;
-#    my @result_messages = Amanda::Rest::Configs::config_init(@_);
-#    return \@result_messages if @result_messages;
+    if ($params{'CONF'}) {
+	my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
+	return ($status, \@result_messages) if @result_messages;
+    }
+    my $ret;
 
     my $user_msg = sub {
 	my $msg = shift;
@@ -82,28 +87,32 @@ sub discover {
     };
 
     if (!defined $params{'application'} or !$params{'application'}) {
-	return (-1,
-		Amanda::Service::Message->new(
+	push @result_messages, Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100004,
-			severity => $Amanda::Message::ERROR));
+			severity => $Amanda::Message::ERROR);
+	return (-1, \@result_messages);
     }
     if (!defined $params{'host'} or !$params{'host'}) {
-	return (-1,
-		Amanda::Service::Message->new(
+	push @result_messages, Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100000,
-			severity => $Amanda::Message::ERROR));
+			severity => $Amanda::Message::ERROR);
+	return (-1, \@result_messages);
     }
     if (!defined $params{'auth'} or !$params{'auth'}) {
-	return (-1,
-		Amanda::Service::Message->new(
+	push @result_messages, Amanda::Service::Message->new(
 			source_filename => __FILE__,
 			source_line     => __LINE__,
 			code     => 3100001,
-			severity => $Amanda::Message::ERROR));
+			severity => $Amanda::Message::ERROR);
+	return (-1, \@result_messages);
+    }
+    if ($params{'CONF'}) {
+	push @amservice_args, '--config';
+	push @amservice_args, $params{'CONF'};
     }
     push @amservice_args, $params{'host'};
     push @amservice_args, $params{'auth'};
@@ -148,7 +157,10 @@ sub discover {
 	$buf .= $line;
     }
     close($rdr);
-    my $ret;
+
+    my $buffer = $first_line;
+    $buffer .= "\n:" . $buf .":" if $buf;
+    chomp $buffer;
 
     if (!defined $first_line) {
 	push @{$ret}, Amanda::Service::Message->new(
@@ -158,6 +170,7 @@ sub discover {
 			severity => $Amanda::Message::ERROR);
     } elsif ($first_line =~ /OPTIONS /) {
 	#convert JSON buffer to perl object
+	Amanda::Debug::debug("buf: $buf");
 	eval { $ret = decode_json $buf };
 	if ($@) {
 	    $ret = undef;
@@ -167,7 +180,7 @@ sub discover {
 			code     => 3100003,
 			severity => $Amanda::Message::ERROR,
 			errmsg   => $@,
-			buffer   => $first_line . "\n" . $buf);
+			buffer   => $buffer);
 	}
     }  else {
 	push @{$ret}, Amanda::Service::Message->new(
@@ -175,7 +188,7 @@ sub discover {
 			source_line     => __LINE__,
 			code     => 3100002,
 			severity => $Amanda::Message::ERROR,
-			errmsg   => $first_line . "\n" . $buf);
+			errmsg   => $buffer);
     }
 
     waitpid($pid, 0);

@@ -51,6 +51,8 @@ server_tests = \
 	Amanda_Rest_Dumps \
 	Amanda_Rest_Labels \
 	Amanda_Rest_Runs \
+	Amanda_Rest_Services_senddiscover \
+	Amanda_Rest_Services_senddiscover_amgtar \
 	Amanda_Rest_Storages \
 	Amanda_Rest_Storages_Labels \
 	Amanda_Rest_Version \

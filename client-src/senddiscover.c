@@ -314,8 +314,10 @@ main(
 		g_ptr_array_add(argv_ptr, g_strdup("--config"));
 		g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
 	    }
-	    g_ptr_array_add(argv_ptr, g_strdup("--device"));
-	    g_ptr_array_add(argv_ptr, g_strdup(dle->device));
+	    if (dle->device) {
+		g_ptr_array_add(argv_ptr, g_strdup("--device"));
+		g_ptr_array_add(argv_ptr, g_strdup(dle->device));
+	    }
 	    if (g_options->hostname && bsu->host == 1) {
 		g_ptr_array_add(argv_ptr, g_strdup("--host"));
 		g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
