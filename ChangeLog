@@ -1,3 +1,7 @@
+2015-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Services_senddiscover_amgtar.pl: Fix for
+	  maximumm length f a socket path.
+
 2015-10-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c (amgtar_discover): Implement the discover
 	  API.

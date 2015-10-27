@@ -24,6 +24,7 @@ use warnings;
 
 use POSIX;
 use Socket;
+use IO::Socket::UNIX;
 use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Dumpcache;
@@ -64,16 +65,19 @@ $testconf = Installcheck::Run::setup();
 $testconf->write();
 
 #CODE 3700012
-my $test_dir = "$Installcheck::TMP/test_amgtar_discover";
-rmtree($test_dir);
+#my $test_dir = "$Installcheck::TMP/test_amgtar_discover";
+# Using /tmp because socket path length are limited to 108
+my $test_dir = File::Temp->newdir('test_amgtar_discoverXXXXXX',
+                                  DIR      => '/tmp',
+                                  CLEANUP  => 1);
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir/does_not_exists");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
         [ {	'source_filename' => "amgtar.c",
 		'severity' => $Amanda::Message::ERROR,
-		'message' => "Can't open disk '$test_dir': No such file or directory",
-		'diskname' => "$test_dir",
+		'message' => "Can't open disk '$test_dir/does_not_exists': No such file or directory",
+		'diskname' => "$test_dir/does_not_exists",
 		'process' => 'amgtar',
 		'running_on' => 'amanda-client',
 		'component' => 'application',
@@ -85,7 +89,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "test_dir do not exists") || diag("reply: " . Data::Dumper::Dumper($reply));
 
-mkdir $test_dir;
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
@@ -120,7 +123,6 @@ my $server = IO::Socket::UNIX->new(
 
 socket(my $socket, PF_UNIX, SOCK_STREAM, 0);
 bind $socket, sockaddr_un("$test_dir/socket");
-
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir");
 
@@ -365,6 +367,9 @@ foreach my $message (@{$reply->{'body'}}) {
 
 is($bad_block, 0, "found bad block");
 is($bad_char, 0, "found bad char");
+
+close($socket);
+rmtree $test_dir;
 
 $rest->stop();
 
