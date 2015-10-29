@@ -1,3 +1,16 @@
+2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ambsdtar.c (restore): Exit with 1 if BSDTAR-PATH
+	  can't be executed
+	* application-src/amgtar.c (amgtar_restore): Exit code of 1 is an
+	  error
+	* config/amanda/dumpers.m4 (AMANDA_PROG_BSDTAR): Fix BSDTAR default
+	  value
+	* installcheck/Installcheck/Application.pm (restore): Return the
+	stderr of the application
+	* installcheck/Makefile.am (client_tests): Add ambsdtar
+	* installcheck/amgtar.pl: Add check
+	* installcheck/ambsdtar.pl: New file to check ambsdtar behavior
+
 2015-10-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (swap): __builtin_bswap32 is defined only for
 	  GCC >= 4.3.0

@@ -20,6 +20,7 @@ all_tests += $(common_tests)
 
 client_tests = \
         noop \
+	ambsdtar \
 	amgtar \
 	ampgsql \
 	amraw

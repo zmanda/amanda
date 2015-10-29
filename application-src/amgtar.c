@@ -1119,7 +1119,6 @@ amgtar_restore(
     char       *e;
     char       *include_filename = NULL;
     char       *exclude_filename = NULL;
-    int         tarpid;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
@@ -1269,26 +1268,11 @@ amgtar_restore(
 
     debug_executing(argv_ptr);
 
-    tarpid = fork();
-    switch (tarpid) {
-    case -1: error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
-    case 0:
-	env = safe_env();
-	become_root();
-	execve(cmd, (char **)argv_ptr->pdata, env);
-	e = strerror(errno);
-	error(_("error [exec %s: %s]"), cmd, e);
-	break;
-    default: break;
-    }
-
-    waitpid(tarpid, NULL, 0);
-    if (argument->verbose == 0) {
-	if (exclude_filename)
-	    unlink(exclude_filename);
-	if (include_filename)
-	    unlink(include_filename);
-    }
+    env = safe_env();
+    become_root();
+    execve(cmd, (char **)argv_ptr->pdata, env);
+    e = strerror(errno);
+    error(_("error [exec %s: %s]"), cmd, e);
 }
 
 static void
