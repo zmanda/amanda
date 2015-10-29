@@ -189,8 +189,8 @@ sub new {
 	$self->{'errno'} = $self->{'errno'}+0;
 	#$self->{'errnocode'} = "EXXX";
     }
-    $self->{'message'} = "" if $self->{'code'} == 1 and !defined $self->{'message'};
-    $self->{'message'} = "" if $self->{'code'} == 2 and !defined $self->{'message'};
+#    $self->{'message'} = "" if $self->{'code'} == 1 and !defined $self->{'message'};
+#    $self->{'message'} = "" if $self->{'code'} == 2 and !defined $self->{'message'};
     $self->{'message'} = $self->message() if !defined $self->{'message'};
 
     Amanda::Debug::debug("$params{'source_filename'}:$params{'source_line'}:$self->{'severity'}:$self->{'code'} $self->{'message'}");
@@ -272,8 +272,10 @@ sub local_message {
 
     if ($self->{'code'} == 2850000) {
 	return "Amcheck exit code is '$self->{'exit_code'}'";
-    } else {
+    } elsif (defined $self->{'message'}) {
 	return $self->{'message'};
+    } else {
+	return "no message for code $self->{'code'}";
     }
 }
 

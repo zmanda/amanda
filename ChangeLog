@@ -1,4 +1,9 @@
 2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Label.pm: Fix severity
+	* perl/Amanda/Message.pm: Fix for code 1 or 2
+	* server-src/amlabel.pl: Severity of ERROR is always a failure
+
+2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amgtar.pl: Fix
 
 2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>

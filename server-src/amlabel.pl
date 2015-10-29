@@ -55,8 +55,12 @@ sub usage {
 sub user_msg {
     my $msg = shift;
 
-    if ($msg->isa("Amanda::Changer")) {
+    if ($msg->isa("Amanda::Message")) {
 	print STDOUT $msg->message() . "\n";
+	if ($msg->{'severity'} eq $Amanda::Message::ERROR ||
+	    $msg->{'severity'} eq $Amanda::Message::CRITICAL) {
+	    $exit_status = 1;
+	}
     } else {
 	print STDOUT "$msg\n";
     }
@@ -184,19 +188,16 @@ sub main {
     };
 
     step assign_finished => sub {
-	my $err = @_;
+	my $err = shift;
 
 	if ($err) {
-	    $exit_status = 1;
-            if ($err != 1) {
-		print $err;
-	    }
+	    print "$err\n";
 	};
 	$finished_cb->();
     };
 
     step label_finished => sub {
-	my ($err) = @_;
+	my $err = shift;
 
 	return failure($err, $finished_cb) if $err;
 

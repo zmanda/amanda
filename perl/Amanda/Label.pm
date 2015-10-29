@@ -154,6 +154,8 @@ sub local_message {
 	return "No label matching '$self->{'label'}' in the tapelist file";
     } elsif ($self->{'code'} == 1000062) {
 	return "$self->{'dev_error'}";
+    } else {
+	return "no message for code $self->{'code'}";
     }
 }
 
@@ -452,11 +454,7 @@ sub assign {
 	    }
 	}
 	if ($exit_status == 1) {
-	    return $finished_cb->(Amanda::Message->new(
-					source_filename => __FILE__,
-					source_line => __LINE__,
-					code   => 2,
-					severity => $Amanda::Message::ERROR));
+	    return $finished_cb->();
 	} elsif ($changed) {
 	    $self->{'tapelist'}->write();
 	} elsif ($matched) {
@@ -636,7 +634,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code   => 1000010,
-					severity    => $Amanda::Message::INFO));
+					severity    => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR));
 		$dev_ok = 0 unless ($params{'force'});
 	    }
 	} elsif ($dev->status & $DEVICE_STATUS_VOLUME_ERROR) {
@@ -645,7 +643,7 @@ sub label {
 				source_filename => __FILE__,
 				source_line => __LINE__,
 				code      => 1000011,
-				severity  => $Amanda::Message::ERROR,
+				severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
 				dev_error => $dev->error_or_status()));
 	    $dev_ok = 0 unless ($params{'force'});
 	} elsif ($dev->status != $DEVICE_STATUS_SUCCESS) {
@@ -710,7 +708,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000017,
-					severity  => $Amanda::Message::ERROR,
+					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
 					label     => $label));
 		    if ($params{'force'}) {
 			# if -f, then the user should clean things up..
@@ -731,7 +729,7 @@ sub label {
 					source_filename => __FILE__,
 					source_line => __LINE__,
 					code      => 1000019,
-					severity  => $Amanda::Message::ERROR,
+					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
 					label     => $label));
 		$dev_ok = 0 if !$params{'force'};
 	    }
