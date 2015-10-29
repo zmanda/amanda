@@ -255,7 +255,7 @@ sub main {
 	my ($err, $meta) = @_;
 
 	if (defined $meta && defined $opt_meta && $meta ne $opt_meta) {
-	    return failure();
+	    return failure("Device meta '$meta' is not the same as the --meta argument '$opt_meta'", $finished_cb);
 	}
 	$meta = $opt_meta if !defined $meta;
 	($meta, my $merr) = $res->make_new_meta_label() if !defined $meta;
@@ -347,7 +347,7 @@ sub main {
 	    if (defined $meta) {
 		if (defined($tle->{'meta'}) && $meta ne $tle->{'meta'} &&
 		    !$opt_force) {
-		    return failure("Can't change meta-label with --force, old meta-label is '$tle->{'meta'}'");
+		    return failure("Can't change meta-label with --force, old meta-label is '$tle->{'meta'}'", $finished_cb);
 		}
 	    } else {
 		$meta = $tle->{'meta'};
@@ -357,7 +357,7 @@ sub main {
 		if (defined($tle->{'barcode'}) &&
 		    $barcode ne $tle->{'barcode'} &&
 		    !$opt_force) {
-		    return failure("Can't change barcode with --force, old barcode is '$tle->{'barcode'}'");
+		    return failure("Can't change barcode with --force, old barcode is '$tle->{'barcode'}'", $finished_cb);
 		}
 	    } else {
 		$barcode = $tle->{'barcode'};

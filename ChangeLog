@@ -1,4 +1,7 @@
 2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amlabel.pl: Add missign callback to failure()
+
+2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c (restore): Exit with 1 if BSDTAR-PATH
 	  can't be executed
 	* application-src/amgtar.c (amgtar_restore): Exit code of 1 is an
