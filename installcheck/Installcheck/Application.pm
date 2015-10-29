@@ -27,6 +27,7 @@ use Fcntl;
 use IO::Handle;
 use POSIX qw( :errno_h :fcntl_h );
 use POSIX qw( EAGAIN );
+use Test::More;
 use JSON;
 
 use strict;
@@ -348,6 +349,11 @@ sub _exec {
         }
     }
 
+    Amanda::Debug::debug("cmd: $APPLICATION_DIR/$self->{'app_name'}");
+    foreach my $arg (@args) {
+	Amanda::Debug::debug("arg: $arg");
+    }
+
     my $pid = fork();
     if ($pid) { # in parent
         # parent shouldn't use child_fd
@@ -575,12 +581,14 @@ sub restore {
     $args{'level'} ||= 0;
 
     my $msgs;
+    my $errs;
     my $exit_status = _exec($self, 'restore', ['--level', $args{'level'}, @{$args{'objects'}}], {
         0 => {'child_mode' => 'r', 'write' => $args{'data'}},
         1 => {'child_mode' => 'w', 'save_to' => \$msgs},
+        2 => {'child_mode' => 'w', 'save_to' => \$errs},
     });
 
-    {'msgs' => $msgs, 'exit_status' => $exit_status};
+    {'msgs' => $msgs, 'errs' => $errs, 'exit_status' => $exit_status};
 }
 
 # XXX: index?

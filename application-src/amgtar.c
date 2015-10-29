@@ -1715,7 +1715,7 @@ amgtar_restore(
                                  cmd, WTERMSIG(wait_status), dbfn());
 	exit_status = 1;
     } else if (WIFEXITED(wait_status)) {
-	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
+	if (WEXITSTATUS(wait_status) > 0) {
 	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				     cmd, WEXITSTATUS(wait_status), dbfn());
 	    exit_status = 1;

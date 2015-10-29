@@ -195,11 +195,12 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 		    break
 		    ;;
 	     *)
-		    if test "x$OLD_BSDTAR" = "x"; then
+		    if test "x$OLD_BSDTAR" != "x"; then
 		        AMANDA_MSG_WARN([using $OLDBSDTAR for the ambsdtar application even if it is not bsdtar.])
 			BSDTAR=$OLD_BSDTAR
 		    else
 			AMANDA_MSG_WARN([Not using $BSDTAR for the ambsdtar application as it is not bsdtar.])
+			BSDTAR=
 		    fi
 		    ;;
 	    esac
@@ -211,6 +212,8 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 		 *bsdtar*)
 			# OK, it is bsdtar
 			break;
+			;;
+		 *)	BSDTAR=
 			;;
 		esac
 	    fi

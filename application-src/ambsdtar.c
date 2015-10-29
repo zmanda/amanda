@@ -142,6 +142,8 @@ static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
 static char   *exit_handling;
 static int    exit_value[256];
+static int    exit_status = 0;
+static off_t  gblocksize = 0;
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -421,6 +423,7 @@ main(
 		 break;
 	case 28: amfree(argument.tar_blocksize);
 		 argument.tar_blocksize = g_strdup(optarg);
+		 gblocksize = atoi(argument.tar_blocksize);
 		 break;
 	case 33: argument.command_options =
 			g_slist_append(argument.command_options,
@@ -465,7 +468,6 @@ main(
     for(i=0;i<256;i++)
 	exit_value[i] = 1; /* BAD  */
     exit_value[0] = 0;     /* GOOD */
-    exit_value[1] = 0;     /* GOOD */
     if (exit_handling) {
 	char *s = exit_handling;
 	while (s) {
@@ -539,7 +541,7 @@ main(
 
     dbclose();
 
-    return 0;
+    return exit_status;
 }
 
 static void
@@ -751,9 +753,16 @@ ambsdtar_estimate(
 	    for(rp = re_table; rp->regex != NULL; rp++) {
 		if(match(rp->regex, line)) {
 		    if (rp->typ == DMP_SIZE) {
+			off_t blocksize = gblocksize;
 			size = ((the_num(line, rp->field)*rp->scale+1023.0)/1024.0);
 			if(size < 0.0)
 			    size = 1.0;             /* found on NeXT -- sigh */
+			if (!blocksize) {
+			    blocksize = 20;
+			}
+			blocksize /= 2;
+			size = (size+blocksize-1) / blocksize;
+			size *= blocksize;
 		    }
 		    break;
 		}
@@ -794,6 +803,7 @@ ambsdtar_estimate(
                 cmd, WTERMSIG(wait_status), dbfn());
 	    g_free(errmsg);
             errmsg = g_string_free(strbuf, FALSE);
+	    exit_status = 1;
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
                 strbuf = g_string_new(errmsg);
@@ -801,12 +811,14 @@ ambsdtar_estimate(
                     cmd, WEXITSTATUS(wait_status), dbfn());
 		g_free(errmsg);
                 errmsg = g_string_free(strbuf, FALSE);
+		exit_status = 1;
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 				cmd, dbfn());
+	    exit_status = 1;
 	}
 	g_debug(_("after %s %s wait"), cmd, qdisk);
 
@@ -846,6 +858,7 @@ common_error:
     amfree(qdisk);
     g_debug("%s", errmsg);
     fprintf(stdout, "ERROR %s\n", qerrmsg);
+    exit_status = 1;
     amfree(file_exclude);
     amfree(file_include);
     amfree(errmsg);
@@ -980,7 +993,16 @@ read_text(
 		}
 	    }
 	    if(rp->typ == DMP_SIZE) {
+		off_t blocksize = gblocksize;
 		dump_size = (off_t)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
+		if(dump_size < 0.0)
+		    dump_size = 1.0;             /* found on NeXT -- sigh */
+		if (!blocksize) {
+		    blocksize = 20;
+		}
+		blocksize /= 2;
+		dump_size = (dump_size+blocksize-1) / blocksize;
+		dump_size *= blocksize;
 	    }
 	    switch(rp->typ) {
 	    case DMP_NORMAL:
@@ -1129,32 +1151,38 @@ ambsdtar_backup(
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    cmd, WTERMSIG(wait_status), dbfn());
+	exit_status = 1;
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				cmd, WEXITSTATUS(wait_status), dbfn());
+	    exit_status = 1;
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    cmd, dbfn());
+	exit_status = 1;
     }
     if (argument->dle.create_index) {
 	waitpid(indexpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = g_strdup_printf(_("'%s index' terminated with signal %d: see %s"),
 			    cmd, WTERMSIG(wait_status), dbfn());
+	    exit_status = 1;
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 		errmsg = g_strdup_printf(_("'%s index' exited with status %d: see %s"),
 				cmd, WEXITSTATUS(wait_status), dbfn());
+		exit_status = 1;
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("'%s index' got bad exit: see %s"),
 			    cmd, dbfn());
+	    exit_status = 1;
 	}
     }
     g_debug(_("after %s %s wait"), cmd, qdisk);
@@ -1162,6 +1190,7 @@ ambsdtar_backup(
     if (errmsg) {
 	g_debug("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
+	exit_status = 1;
     } else if (argument->dle.record) {
 	ambsdtar_set_timestamps(argument,
 				GPOINTER_TO_INT(argument->level->data),
@@ -1253,11 +1282,23 @@ handle_restore_stdin(
 
     if (nread > 0) {
 	/* process the complete buffer */
-	full_write(filter->out , filter->buffer, nread);
+	int nwrite = full_write(filter->out , filter->buffer, nread);
+	if (nwrite < nread) {
+	    exit_status = 1;
+	    g_debug("wrote only %d bytes", nwrite);
+	    event_release(filter->event);
+	    filter->event = NULL;
+	    aclose(filter->fd);
+	    g_free(filter->buffer);
+	    filter->buffer = NULL;
+	    aclose(filter->out);
+	}
     } else {
 	event_release(filter->event);
+	filter->event = NULL;
 	aclose(filter->fd);
 	g_free(filter->buffer);
+	filter->buffer = NULL;
 	aclose(filter->out);
     }
 }
@@ -1338,7 +1379,8 @@ ambsdtar_restore(
     filter_t    out_buf;
     filter_t    err_buf;
     int         tarin, tarout, tarerr;
-
+    char       *errmsg = NULL;
+    amwait_t    wait_status;
 
     if (!bsdtar_path) {
 	error(_("BSDTAR-PATH not defined"));
@@ -1538,7 +1580,23 @@ ambsdtar_restore(
 
     event_loop(0);
 
-    waitpid(tarpid, NULL, 0);
+    waitpid(tarpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+				 cmd, WTERMSIG(wait_status), dbfn());
+	exit_status = 1;
+    } else if (WIFEXITED(wait_status) && WEXITSTATUS(wait_status) > 0) {
+	errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+				 cmd, WEXITSTATUS(wait_status), dbfn());
+	exit_status = 1;
+    }
+
+    g_debug(_("ambsdtar: %s: pid %ld"), cmd, (long)tarpid);
+    if (errmsg) {
+	g_debug("%s", errmsg);
+	fprintf(stderr, "error [%s]\n", errmsg);
+    }
+
     if (argument->verbose == 0) {
 	if (exclude_filename)
 	    unlink(exclude_filename);
@@ -1547,6 +1605,8 @@ ambsdtar_restore(
     amfree(cmd);
     amfree(include_filename);
     amfree(exclude_filename);
+
+    g_free(errmsg);
 }
 
 static void

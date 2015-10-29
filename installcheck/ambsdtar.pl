@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2009-2013 Zmanda, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,9 +17,9 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 23;
+use Test::More tests => 24;
 
-use lib '@amperldir@';
+use lib "@amperldir@";
 use strict;
 use warnings;
 use Installcheck;
@@ -29,11 +29,9 @@ use File::Path;
 use Installcheck::Application;
 use IO::File;
 use Data::Dumper;
+use Amanda::Debug;
 
-Amanda::Debug::dbopen("installcheck");
-Installcheck::log_test_output();
-
-unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
+unless ($Amanda::Constants::BSDTAR and -x $Amanda::Constants::BSDTAR) {
     SKIP: {
         skip("GNU tar is not available", Test::More->builder->expected_tests);
     }
@@ -43,14 +41,14 @@ unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
-my $app = Installcheck::Application->new('amgtar');
+my $app = Installcheck::Application->new('ambsdtar');
 
 my $support = $app->support();
 is($support->{'INDEX-LINE'}, 'YES', "supports indexing");
 is($support->{'MESSAGE-LINE'}, 'YES', "supports messages");
 is($support->{'CALCSIZE'}, 'YES', "supports calcsize");
 
-my $root_dir = "$Installcheck::TMP/installcheck-amgtar";
+my $root_dir = "$Installcheck::TMP/installcheck-ambsdtar";
 my $back_dir = "$root_dir/to_backup";
 my $rest_dir = "$root_dir/restore";
 my $list_dir = "$root_dir/list";
@@ -123,11 +121,7 @@ ok_foreach(
     "create directory structure",
     @dir_struct);
 
-$app->add_property('gnutar-listdir', $list_dir);
-# GNU tar on Solaris doesn't support this, so avoid it
-$app->add_property('atime-preserve', 'no');
-
-my $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+my $selfcheck = $app->selfcheck('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
 ok(!@{$selfcheck->{'errors'}}, "no errors during selfcheck");
 
@@ -155,20 +149,21 @@ ok($orig_cur_dir, "got current directory");
 
 ok(chdir($rest_dir), "changed working directory (for restore)");
 
-my $restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'});
+my $restore = $app->restore('objects' => ['./hard', './foo', './bar'], 'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 0, "error status ok");
 
 ok(chdir($orig_cur_dir), "changed working directory (back to original)");
 
+ok(-f "$rest_dir/hard", "hard restored");
 ok(-f "$rest_dir/foo", "foo restored");
 ok(-d "$rest_dir/bar", "bar/ restored");
 ok(-d "$rest_dir/bar", "bar/baz/bat/ restored");
 
-$app->add_property('GNUTAR-PATH' => '/do/not/exists');
-$restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'});
-is($restore->{'exit_status'}, 256, "error status of 1 if GNUTAR-PATH does not exists");
+$app->add_property('BSDTAR-PATH' => '/do/not/exists');
+$restore = $app->restore('objects' => ['./hard', './foo', './bar'], 'data' => $backup->{'data'});
+is($restore->{'exit_status'}, 256, "error status of 1 if BSDTAR-PATH does not exists");
 chomp $restore->{'errs'};
-is($restore->{'errs'}, 'amgtar: error [exec /do/not/exists: No such file or directory]', "correct error for No such file or directory");
+ok($restore->{'errs'} =~ /ambsdtar: error \[exec \/do\/not\/exists: No such file or directory\]\nerror \[\/do\/not\/exists exited with status 1: see.*/, "correct error for No such file or directory") || diag($restore->{'errs'});
 
 # cleanup
 rmtree($root_dir);
