@@ -1,3 +1,7 @@
+2015-11-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm (_volume_cb): Release the old
+	  reservation when changing scribe
+
 2015-10-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Label.pm: Fix severity
 	* perl/Amanda/Message.pm: Fix for code 1 or 2

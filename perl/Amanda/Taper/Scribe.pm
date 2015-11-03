@@ -1387,11 +1387,20 @@ sub _volume_cb  {
 	$self->{'dump_start_time'} = undef;
 	$self->{'started_writing'} = 0;
 	$self->{'feedback'} = undef;
-	if (defined $new_scribe->{'device'}) {
-	    $new_scribe->{'xdt'}->use_device($new_scribe->{'device'});
+
+	my $released_cb = make_cb(released_cb => sub {
+		if (defined $new_scribe->{'device'}) {
+		    $new_scribe->{'xdt'}->use_device($new_scribe->{'device'});
+		}
+		# start it
+		$new_scribe->_start_part();
+	});
+
+	if (defined $reservation) {
+	    $reservation->release(finished_cb => $released_cb);
+	} else {
+	    $released_cb->();
 	}
-	# start it
-	$new_scribe->_start_part();
 
 	return;
     }
