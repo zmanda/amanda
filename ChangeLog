@@ -1,3 +1,7 @@
+2015-11-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Taper/Scribe.pm (_volume_cb): Release the old
+	  reservation when changing scribe
+
 2015-11-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Taper/Scribe.pm (set_dump_cb): New method
 	* perl/Amanda/Taper/Worker.pm: return FAILED if
