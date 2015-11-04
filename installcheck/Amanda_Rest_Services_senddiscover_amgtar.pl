@@ -67,9 +67,17 @@ $testconf->write();
 #CODE 3700012
 #my $test_dir = "$Installcheck::TMP/test_amgtar_discover";
 # Using /tmp because socket path length are limited to 108
-my $test_dir = File::Temp->newdir('test_amgtar_discoverXXXXXX',
-                                  DIR      => '/tmp',
-                                  CLEANUP  => 1);
+my $test_dir;
+
+if (File::Temp->can('newdir')) {
+    $test_dir = File::Temp->newdir('test_amgtar_discoverXXXXXX',
+                                   DIR      => '/tmp',
+                                   CLEANUP  => 1);
+} else {
+    $test_dir = "/tmp/test_amgtar_discover$$";
+    rmtree $test_dir;
+    mkdir $test_dir;
+}
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/services/discover?host=localhost&auth=local&application=amgtar&diskdevice=$test_dir/does_not_exists");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
