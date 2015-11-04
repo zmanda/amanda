@@ -44,7 +44,8 @@ sub local_message {
 	       $self->{'hostname'} . " " .
 	       $self->{'diskname'} . " " .
 	       $self->{'dump_timestamp'} . " " .
-	       $self->{'level'};
+	       $self->{'level'} . " " .
+	       $self->{'kb'};
     } elsif ($self->{'code'} == 2500006) {
         return "Total Size: $self->{'total_size_kb'} KB";
     } elsif ($self->{'code'} == 2500007) {
@@ -531,7 +532,8 @@ sub plan_cb {
 				hostname        => $dump->{'hostname'},
 				diskname        => $dump->{'diskname'},
 				dump_timestamp  => $dump->{'dump_timestamp'},
-				level           => $dump->{'level'}));
+				level           => $dump->{'level'},
+				kb		=> $dump->{'kb'}));
 	    }
 	    $total_kb += int $dump->{'kb'};
 	}

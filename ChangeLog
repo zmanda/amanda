@@ -1,3 +1,7 @@
+2015-11-04  Orion Poplawski
+	* perl/Amanda/Vault.pm: Output the size of each dump
+	* installcheck/amvault.pl: Fix for new output
+
 2015-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Rest_Services_senddiscover_amgtar.pl:
 	  Workaround for File::Temp without newdir function
