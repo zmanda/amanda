@@ -33,6 +33,11 @@ use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
 
+if (!Amanda::Util::built_with_component("client")) {
+    plan skip_all => "Not build with client";
+    exit 1;
+}
+
 eval 'use Installcheck::Rest;';
 if ($@) {
     plan skip_all => "Can't load Installcheck::Rest: $@";
