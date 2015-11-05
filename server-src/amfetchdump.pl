@@ -294,7 +294,7 @@ usage("The -b option is no longer supported; set readblocksize in the tapetype s
 usage("-l is not compatible with -c or -C")
     if ($opt_leave and $opt_compress);
 usage("-p is not compatible with -n")
-    if ($opt_leave and $opt_no_reassembly);
+    if ($opt_pipe and $opt_no_reassembly);
 usage("-h, --header-file, and --header-fd are mutually incompatible")
     if (($opt_header and ($opt_header_file or $opt_header_fd))
 	    or ($opt_header_file and $opt_header_fd));

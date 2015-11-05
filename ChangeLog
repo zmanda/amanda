@@ -1,4 +1,8 @@
 2015-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: Fix argument check
+	* man/xml-source/amfetchdump.8.xml: Fix spacing
+
+2015-11-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amgtar.pl: Ignore SIGPIPE
 	* installcheck/Installcheck/Application.pm: Do not fail on SIGPIPE if
 	  allowed

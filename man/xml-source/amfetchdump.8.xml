@@ -257,8 +257,7 @@ the client.</para></listitem>
     <term><option>-l</option></term>
 <listitem><para>Leave dumps in the compressed/uncompressed and
 encrypted/unencrypted state in which they were found on tape.
-It is a synonym for <option>--no-decompression</option>
-<option>--no-decryption</option></para></listitem>
+It is a synonym for <option>--no-decompression</option> and <option>--no-decryption</option></para></listitem>
   </varlistentry>
   <varlistentry>
     <term><option>-a</option></term>
