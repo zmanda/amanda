@@ -434,7 +434,9 @@ sub _make_write_cb {
 
         my $rv = $fd->{'handle'}->syswrite($data, $BYTES_TO_WRITE, $offset);
         if (!defined($rv)) {
-            confess "Error writing: $!" unless $! == EAGAIN;
+	    if ($! != EAGAIN && ($! != EPIPE || !$fd->{'sigpipe'})) {
+		confess "Error writing: $!";
+	    }
         }
         $offset += $rv;
 
@@ -582,7 +584,7 @@ sub restore {
     my $msgs;
     my $errs;
     my $exit_status = _exec($self, 'restore', ['--level', $args{'level'}, @{$args{'objects'}}], {
-        0 => {'child_mode' => 'r', 'write' => $args{'data'}},
+        0 => {'child_mode' => 'r', 'write' => $args{'data'}, sigpipe => $args{'data_sigpipe'}},
         1 => {'child_mode' => 'w', 'save_to' => \$msgs},
         2 => {'child_mode' => 'w', 'save_to' => \$errs},
     });
