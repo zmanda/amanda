@@ -1,4 +1,8 @@
 2015-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amvault.pl: Do not check the size, it varies on
+	  different machines
+
+2015-11-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix argument check
 	* man/xml-source/amfetchdump.8.xml: Fix spacing
 

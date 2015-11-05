@@ -155,7 +155,7 @@ sub get_dry_run {
 	my ($tape, $file, $host, $disk, $datestamp, $level, $kb) =
 	    ($line =~ /^(\S+) (\d*) (\S+) (.+) (\d+) (\d+) (\d+)$/);
 	$tape = 'holding' if $file eq '';
-	push @rv, [$tape, $file, $host, $disk,   $level, $kb]; # note: no datestamp
+	push @rv, [$tape, $file, $host, $disk,   $level]; # note: no datestamp, no kb
     }
     return @rv;
 }
@@ -164,17 +164,17 @@ is_deeply([ get_dry_run("$sbindir/amvault",
 		'--dry-run',
 		'--fulls-only',
 		'TESTCONF') ], [
-    [ "TESTCONF01", "1", "localhost", "$diskname/dir", "0", "20" ],
-    [ "TESTCONF01", "2", "localhost", "$diskname",     "0", "1050" ],
-    [ "TESTCONF02", "2", "localhost", "$diskname",     "0", "1080" ]
+    [ "TESTCONF01", "1", "localhost", "$diskname/dir", "0" ],
+    [ "TESTCONF01", "2", "localhost", "$diskname",     "0" ],
+    [ "TESTCONF02", "2", "localhost", "$diskname",     "0" ]
     ], "amvault with --fulls-only only dumps fulls");
 
 is_deeply([ get_dry_run("$sbindir/amvault",
 		'--dry-run',
 		'TESTCONF', "localhost", "$diskname/dir") ], [
-    [ "holding", "",     "localhost", "$diskname/dir",     "1", "30" ],
-    [ "TESTCONF01", "1", "localhost", "$diskname/dir",     "0", "20" ],
-    [ "TESTCONF02", "1", "localhost", "$diskname/dir",     "1", "20" ]
+    [ "holding", "",     "localhost", "$diskname/dir",     "1" ],
+    [ "TESTCONF01", "1", "localhost", "$diskname/dir",     "0" ],
+    [ "TESTCONF02", "1", "localhost", "$diskname/dir",     "1" ]
     ], "amvault with a disk expression dumps only that disk");
 
 # Test NDMP-to-NDMP vaulting.  This will test all manner of goodness:
