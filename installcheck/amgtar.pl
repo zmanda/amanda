@@ -40,6 +40,7 @@ unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
     exit 0;
 }
 
+$SIG{'PIPE'} = 'IGNORE';
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
 
@@ -165,7 +166,7 @@ ok(-d "$rest_dir/bar", "bar/ restored");
 ok(-d "$rest_dir/bar", "bar/baz/bat/ restored");
 
 $app->add_property('GNUTAR-PATH' => '/do/not/exists');
-$restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'});
+$restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'}, data_sigpipe => 1);
 is($restore->{'exit_status'}, 256, "error status of 1 if GNUTAR-PATH does not exists");
 chomp $restore->{'errs'};
 ok($restore->{'errs'} =~ /amgtar: error \[exec \/do\/not\/exists: No such file or directory\]\nERROR \/do\/not\/exists exited with status 1: see.*/, "correct error for No such file or directory") || diag($restore->{'errs'});

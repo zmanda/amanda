@@ -1,3 +1,8 @@
+2015-11-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amgtar.pl: Ignore SIGPIPE
+	* installcheck/Installcheck/Application.pm: Do not fail on SIGPIPE if
+	  allowed
+
 2015-11-04  Orion Poplawski
 	* perl/Amanda/Vault.pm: Output the size of each dump
 	* installcheck/amvault.pl: Fix for new output
