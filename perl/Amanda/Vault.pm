@@ -429,7 +429,7 @@ sub setup_src {
 			next;
 		    }
 		    if ($self->{'incrs_only'} &&
-			$ds_level eq '0' || $ds_level eq '=0') {
+			($ds_level eq '0' || $ds_level eq '=0')) {
 			$self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
