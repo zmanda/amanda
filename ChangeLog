@@ -1,3 +1,7 @@
+2015-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amcryptsimple.pl: Use 'gpg-agent --use-standard-socket-p'
+	  to find if gpg-agent must be used
+
 2015-11-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: Fix argument check
 	* man/xml-source/amfetchdump.8.xml: Fix spacing

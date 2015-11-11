@@ -57,13 +57,19 @@ $ENV{'GNUPGHOME'} = "$AMANDA_HOME/.gnupg";
 sub do_gpg_agent() {
     my $path=`which gpg-agent 2>/dev/null`;
     chomp $path;
+
     if ($path =~ /^no gpg-agent/) {
 	return "";
     }
 
-    if (-x $path) {
-	return "gpg-agent --daemon --";
+    if (!-x $path) {
+	return "";
     }
+
+    if (system("$path --use-standard-socket-p 2>/dev/null")) {
+	return "$path --daemon --";
+    }
+
     return ""
 }
 
