@@ -1,3 +1,8 @@
+2015-11-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (handle_taper_result): Set job to NULL
+	* server-src/driverio.c: Improve debugging
+	* file server-src/planner.c (est_dump_queue): Fix crash
+
 2015-11-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl: Use 'gpg-agent --use-standard-socket-p'
 	  to find if gpg-agent must be used

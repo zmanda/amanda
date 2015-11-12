@@ -2592,6 +2592,7 @@ handle_taper_result(
 		    free_serial_job(wtaper->job);
 		    free_job(wtaper->job);
 		    wtaper->job = NULL;
+		    job = NULL;
 		    start_vault_on_same_wtaper(wtaper);
 		}
 	    }
@@ -2632,6 +2633,7 @@ handle_taper_result(
 		    free_serial_job(wtaper->job);
 		    free_job(wtaper->job);
 		    wtaper->job = NULL;
+		    job = NULL;
 		    start_vault_on_same_wtaper(wtaper);
 		}
 	    }
@@ -2719,7 +2721,7 @@ handle_taper_result(
 	    } else if (job->sched->action == ACTION_VAULT) {
 		vault_taper_result(job);
 	    } else {
-		g_critical("Invalid job->sched->action %d", job->sched->action);
+		g_critical("Invalid job->sched->action %s %s %d", job->sched->disk->host->hostname, job->sched->disk->name, job->sched->action);
 	    }
 	}
 

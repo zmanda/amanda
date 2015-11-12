@@ -1144,8 +1144,8 @@ serial2job(
 	/*NOTREACHED*/
     }
     if(gen != stable[s].gen)
-	g_printf(_("driver: serial2job error time %s serial gen mismatch %s\n"),
-	       walltime_str(curclock()), str);
+	g_printf("driver: serial2job error time %s serial gen mismatch %s %d %ld %ld\n",
+	       walltime_str(curclock()), str, s, gen, stable[s].gen);
     return stable[s].job;
 }
 
@@ -1181,7 +1181,7 @@ free_serial_job(
 
     for(s = 0; s < max_serial; s++) {
 	if(stable[s].job == job) {
-	    //g_printf("free serial %02d-%05ld for disk %s", s, stable[s].gen, dp->name);
+	    //g_printf("free serial %02d-%05ld for disk\n", s, stable[s].gen);
 	    stable[s].gen = 0;
 	    stable[s].job = NULL;
 	    return;

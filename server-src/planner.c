@@ -3577,13 +3577,14 @@ est_dump_queue(
     }
     if(pos > npr) {
 	if(pos > npr+2) g_fprintf(f, "  ...\n");
+	pl = q.tail;
 	if(pos > npr+1) {
 	    dl = pl->prev;
-	    d = dl->data;
+	    d = ((est_t *)dl->data)->disk;
 	    g_fprintf(f, "%3d: %-10s %-4s\n", pos-2, d->host->hostname, d->name);
 	}
 	dl = pl;
-	d = dl->data;
+	d = ((est_t *)dl->data)->disk;
 	g_fprintf(f, "%3d: %-10s %-4s\n", pos-1, d->host->hostname, d->name);
     }
 
