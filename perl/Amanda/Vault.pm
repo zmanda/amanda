@@ -501,6 +501,7 @@ sub setup_src {
 	    src_labelstr => $self->{'src_labelstr'},
 	    storage_list => \@storage_list,
 	    only_in_storage => $only_in_storage,
+	    status => 'OK',
 	    plan_cb => sub { $self->plan_cb(@_) });
 }
 

@@ -655,9 +655,13 @@ sub get_parts_and_dumps {
 	    next if (defined $params{'labelstr'}
 		and !match_labelstr_expr($params{'labelstr'},$find_result->{'label'}));
 	    if ($get_what eq 'parts') {
-		next if (exists($params{'status'})
+		next if (exists($params{'status'}) and defined $params{'status'}
 		    and defined $find_result->{'status'}
 		    and $find_result->{'status'} ne $params{'status'});
+	    } elsif ($get_what eq 'dumps') {
+		next if (    exists($params{'status'}) and defined $params{'status'}
+			 and defined $find_result->{'dump_status'}
+			 and $find_result->{'dump_status'} ne $params{'status'});
 	    }
 
 	    # filter each result against dumpspecs, to avoid dumps_match_dumpspecs'
@@ -739,7 +743,7 @@ sub get_parts_and_dumps {
 		    partnum => 1,
 		);
 		# and fix up the dump, too
-		$dump->{'status'} = $find_result->{'status'} || 'FAILED';
+		$dump->{'status'} = $find_result->{'dump_status'} || 'FAILED';
 		$dump->{'bytes'} = $find_result->{'bytes'};
 		$dump->{'kb'} = $find_result->{'kb'};
 		$dump->{'sec'} = $find_result->{'sec'};
@@ -937,7 +941,7 @@ sub get_dumps {
     my ($dumps, $parts) = get_parts_and_dumps("dumps", @_);
     my @dumps = @$dumps;
 
-    if (exists $params{'status'}) {
+    if (exists $params{'status'} and defined $params{'status'}) {
 	@dumps = grep { $_->{'status'} eq $params{'status'} } @dumps;
     }
 

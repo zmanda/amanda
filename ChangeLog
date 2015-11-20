@@ -1,3 +1,12 @@
+2015-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: Filter with the status
+	* perl/Amanda/Recovery/Planner.pm: Pass the status to
+	  Amanda::DB::Catalog::get_dumps
+	* perl/Amanda/FetchDump.pm, perl/Amanda/CheckDump.pm,
+	  perl/Amanda/Taper/Worker.pm, perl/Amanda/Vault.pm,
+	  server-src/amreindex.pl: Call Amanda::Recovery::Planner::make_plan
+	  with a "status => 'OK'" argument
+
 2015-11-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (handle_taper_result): Set job to NULL
 	* server-src/driverio.c: Improve debugging

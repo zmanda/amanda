@@ -722,6 +722,7 @@ sub restore {
 		storage_list => $storage_list,
 		only_in_storage => $only_in_storage,
 		plan_cb => $steps->{'plan_cb'},
+		status => 'OK',
 		$params{'no-reassembly'}? (one_dump_per_part => 1) : ());
 	}
     };

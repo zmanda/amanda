@@ -882,6 +882,7 @@ sub setup_and_start_dump {
 			changer => $chg,
 			storage_list => \@storage_list,
 			only_in_storage => 1,
+			status => 'OK',
 			plan_cb => sub { $steps->{'plan_cb'}->(@_) });
 	return;
     };

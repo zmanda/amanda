@@ -388,6 +388,7 @@ sub run {
 	    only_in_storage => $only_in_storage,
             changer => $chg,
 	    all_copy => 1,
+	    status => 'OK',
             plan_cb => $steps->{'plan_cb'});
     };
 

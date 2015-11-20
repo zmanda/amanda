@@ -238,11 +238,13 @@ sub make_plan {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
+    my $status = $params{'status'};
     my $dumpspecs = $params{'dumpspecs'};
     my $src_labelstr = $params{'src_labelstr'};
 
     # first, get the set of dumps that match these dumpspecs
     my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs,
+					       status => $status,
 					       labelstr  => $src_labelstr);
 
     # Create a hash of the latest datestamp of each dle.
