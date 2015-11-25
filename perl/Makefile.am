@@ -471,11 +471,21 @@ Amanda_DATA += Amanda/Report.pm
 EXTRA_DIST += Amanda/Report.pm
 endif
 
-if WANT_SERVER
-# PACKAGE: Amanda::Report
+# PACKAGE: Amanda::Service
 Amanda_DATA += Amanda/Service.pm
 EXTRA_DIST += Amanda/Service.pm
-endif
+
+# PACKAGE: Amanda::Service::*
+AmandaServicedir = $(amperldir)/Amanda/Service
+AmandaService_DATA =
+if WANT_SERVER
+AmandaService_DATA += Amanda/Service/Amidxtaped.pm
+#endif
+if WANT_CLIENT
+AmandaService_DATA += Amanda/Service/Restore.pm
+#endif
+PM_FILES += $(AmandaService_DATA)
+EXTRA_DIST += $(AmandaService_DATA)
 
 if WANT_SERVER
 # PACKAGE: Amanda::Report::*

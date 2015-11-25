@@ -21,13 +21,14 @@ amlib_LTLIBRARIES =	libamclient.la
 amlibexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup senddiscover sendsize
 
 amlibexec_SCRIPTS_SHELL = patch-system
+amlibexec_SCRIPTS_PERL = restore
 
 sbin_SCRIPTS_PERL = amdump_client
 
-SCRIPTS_PERL = $(sbin_SCRIPTS_PERL)
+SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL)
-amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_SHELL)
+amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_PERL)
 
 libamclient_la_SOURCES=	amandates.c		getfsent.c	\
 			unctime.c		client_util.c

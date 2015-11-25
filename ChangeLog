@@ -1,4 +1,10 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/restore.pl: New client service to restore on the client
+	* client-src/Makefile.am: add restore.pl
+	* perl/Amanda/Service/Restore.pm: Core of service, use Amanda::Restore
+	* perl/Makefile.am: Add Amanda/Service/Restore.pm
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/CheckDump.pm: Use Amanda::Restore module
 	* server-src/amcheckdump.pl: Use Amanda::CheckDump
 
