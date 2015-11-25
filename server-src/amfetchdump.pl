@@ -43,7 +43,10 @@ use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
 use Amanda::Recovery::Scan;
 use Amanda::Extract;
-use Amanda::FetchDump;
+use Amanda::FetchDump::Local;
+use Amanda::FetchDump::Application;
+use Amanda::FetchDump::ClientApplication;
+
 
 # Interactivity package
 package Amanda::Interactivity::amfetchdump;
@@ -60,7 +63,8 @@ sub new {
     }
 
     my $self = {
-	input_src => undef};
+	input_src => undef
+    };
     return bless ($self, $class);
 }
 
@@ -118,91 +122,6 @@ sub user_request {
     return;
 };
 
-package amfetchdump;
-
-use base 'Amanda::Recovery::Clerk::Feedback';
-use Amanda::MainLoop qw( :GIOCondition );
-
-sub set_feedback {
-    my $self = shift;
-    my %params = @_;
-
-    $self->{'chg'} = $params{'chg'} if exists $params{'chg'};
-    $self->{'dev_name'} = $params{'dev_name'} if exists $params{'dev_name'};
-
-    return $self;
-}
-
-sub clerk_notif_part {
-    my $self = shift;
-    my ($label, $filenum, $header) = @_;
-
-    $self->user_message(Amanda::FetchDump::Message->new(
-		source_filename	=> __FILE__,
-		source_line	=> __LINE__,
-		code		=> 3300003,
-		severity	=> $Amanda::Message::INFO,
-		label		=> $label,
-		filenum		=> $filenum,
-		header_summary	=> $header->summary()));
-}
-
-sub clerk_notif_holding {
-    my $self = shift;
-    my ($filename, $header) = @_;
-
-    # this used to give the fd from which the holding file was being read.. why??
-    $self->user_message(Amanda::FetchDump::Message->new(
-		source_filename	=> __FILE__,
-		source_line	=> __LINE__,
-		code		=> 3300004,
-		severity	=> $Amanda::Message::INFO,
-		holding_file	=> $filename,
-		header_summary	=> $header->summary()));
-}
-
-sub start_read_dar
-{
-    my $self = shift;
-    my $xfer_dest = shift;
-    my $cb_data = shift;
-    my $cb_done = shift;
-    my $text = shift;
-
-    my $fd = $xfer_dest->get_dar_fd();
-    $fd.="";
-    $fd = int($fd);
-    my $src = Amanda::MainLoop::fd_source($fd,
-                                          $G_IO_IN|$G_IO_HUP|$G_IO_ERR);
-    my $buffer = "";
-    $self->{'fetchdump'}->{'all_filter'}->{$src} = 1;
-    $src->set_callback( sub {
-	my $b;
-	my $n_read = POSIX::read($fd, $b, 1);
-	if (!defined $n_read) {
-	    return;
-	} elsif ($n_read == 0) {
-	    delete $self->{'fetchdump'}->{'all_filter'}->{$src};
-	    $cb_data->("DAR -1:0");
-	    $src->remove();
-	    POSIX::close($fd);
-	    if (!%{$self->{'fetchdump'}->{'all_filter'}} and $self->{'recovery_done'}) {
-		$cb_done->();
-	    }
-	} else {
-	    $buffer .= $b;
-	    if ($b eq "\n") {
-		my $line = $buffer;
-		chomp $line;
-		if (length($line) > 1) {
-		    $cb_data->($line);
-		}
-	    $buffer = "";
-	    }
-	}
-    });
-}
-
 package main;
 
 sub usage {
@@ -212,8 +131,9 @@ Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
     [-h|--header-file file|--header-fd fd]
     [-decrypt|--no-decrypt|--server-decrypt|--client-decrypt]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
-    [--extract --directory directory [--data-path (amanda|directtcp)]
-    [--application-property='NAME=VALUE']*]
+    [(--extract | --extract-client=HOSTNAME) --directory directory
+     [--data-path (amanda|directtcp)]
+     [--application-property='NAME=VALUE']*]
     [--init] [--restore]
     [-o configoption]* [--exact-match] config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
@@ -235,8 +155,9 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_decrypt, $opt_server_decrypt, $opt_client_decrypt,
     $opt_decompress, $opt_server_decompress, $opt_client_decompress,
     $opt_init, $opt_restore,
-    $opt_extract, $opt_directory, $opt_data_path, %application_property,
-    $opt_exact_match);
+    $opt_extract, $opt_extract_client, $opt_directory, $opt_data_path,
+    %application_property,
+    $opt_exact_match, $opt_run_client_scripts);
 
 my $NEVER = 0;
 my $ALWAYS = 1;
@@ -266,6 +187,7 @@ GetOptions(
     'server-decompress' => \$opt_server_decompress,
     'client-decompress' => \$opt_client_decompress,
     'extract' => \$opt_extract,
+    'extract-client:s' => \$opt_extract_client,
     'directory=s' => \$opt_directory,
     'data-path=s' => \$opt_data_path,
     'application-property=s' => sub {
@@ -273,6 +195,7 @@ GetOptions(
 	    push @{$application_property{$name}}, $value;
 	},
     'exact-match' => \$opt_exact_match,
+    'run-client-scripts' => \$opt_run_client_scripts,
     'init' => \$opt_init,
     'restore!' => \$opt_restore,
     'b=s' => \$opt_blocksize,
@@ -330,22 +253,51 @@ if (defined $opt_leave) {
     }
 }
 
-if (( defined $opt_directory and !defined $opt_extract) or
-    (!defined $opt_directory and  defined $opt_extract)) {
-    print STDERR "Both --directorty and --extract must be set\n";
+if (defined $opt_extract and defined $opt_extract_client) {
+    print STDERR "Can;t set both --extract and --extract-client\n";
     usage();
 }
-if (defined $opt_directory and defined $opt_extract) {
-    $opt_decrypt = 1;
-    if (defined $opt_server_decrypt or defined $opt_client_decrypt) {
-	print STDERR "--server_decrypt or --client-decrypt is incompatible with --extract\n";
-	usage();
+
+if (defined $opt_directory and !defined $opt_extract and
+    !defined $opt_extract_client) {
+    print STDERR "--directorty set but neither --extract or --extract-client\n";
+    usage();
+}
+
+if (!defined $opt_directory and
+    defined $opt_extract) {
+    print STDERR "--directorty must be set when --extract is set\n";
+} elsif (!defined $opt_directory and
+	 defined $opt_extract_client) {
+    print STDERR "--directorty must be set when --extract_client is set\n";
+    usage();
+}
+if (defined $opt_directory and (defined $opt_extract ||
+				defined $opt_extract_client)) {
+    if (!$opt_decompress && !$opt_client_decompress && !$opt_server_decompress) {
+	if (defined $opt_extract) {
+	    $opt_decompress = 1;
+	} elsif (defined $opt_extract_client) {
+	    $opt_server_decompress = 1;
+	}
     }
-    $opt_decompress = 1;
-    if (defined $opt_server_decompress || defined $opt_client_decompress) {
-	print STDERR "--server-decompress r --client-decompress is incompatible with --extract\n";
-	usage();
+    if (!$opt_decrypt && !$opt_client_decrypt && !$opt_server_decrypt) {
+	if (defined $opt_extract) {
+	    $opt_decrypt = 1;
+	} elsif (defined $opt_extract_client) {
+	    $opt_server_decrypt = 1;
+	}
     }
+#    $opt_decrypt = 1;
+#    if (defined $opt_server_decrypt or defined $opt_client_decrypt) {
+#	print STDERR "--server_decrypt or --client-decrypt is incompatible with --extract\n";
+#	usage();
+#    }
+#    $opt_decompress = 1;
+#    if (defined $opt_server_decompress || defined $opt_client_decompress) {
+#	print STDERR "--server-decompress r --client-decompress is incompatible with --extract\n";
+#	usage();
+#    }
     if (defined($opt_leave) +
 	defined($opt_compress) +
 	defined($opt_compress_best)) {
@@ -425,61 +377,35 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-package amfetchdump;
-
-sub new {
-    my $class = shift;
-
-    my $self = bless {
-	is_tty => -t STDERR
-    }, $class;
-
-    return $self;
+# read the tapelist
+my $tl_file = config_dir_relative(getconf($CNF_TAPELIST));
+(my $tl, my $message) = Amanda::Tapelist->new($tl_file);
+if (defined $message) {
+    debug("Could not read the tapelist: $message");
 }
 
-sub user_message {
-    my $self = shift;
-    my $message = shift;
+# read the disklist
+my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+$cfgerr_level += Amanda::Disklist::read_disklist('filename' => $diskfile);
+($cfgerr_level < $CFGERR_ERRORS) || die "Errors processing disklist";
 
-    if ($message->{'code'} == 3300000) { #SIZE
-	if ($self->{'is_tty'}) {
-	    #print STDERR "\n" if !$self->{'last_is_size'};
-	    print STDERR "\r$message    ";
-	    $self->{'last_is_size'} = 1;
-	} else {
-	    print STDERR "READ SIZE: $message\n";
-	}
-    } elsif ($message->{'code'} == 3300012) { #READ SIZE
-	#if ($self->{'is_tty'}) {
-	#    print STDERR "A\n" if !$self->{'last_is_size'};
-	#}
-	print STDERR "\r$message\n";
-    } else {
-	if ($message->{'code'} == 3300003 || $message->{'code'} == 3300004) {
-	    print "\n";
-	}
-	print STDERR "\n" if $self->{'is_tty'} and $self->{'last_is_size'};
-	print STDERR "$message\n";
-	$self->{'last_is_size'} = 0;
-
-	if ($message->{'code'} == 3300002 and !$opt_assume) {
-	    print STDERR "Press enter when ready\n";
-	    my $resp = <STDIN>;
-	}
-    }
-}
-
-package amfetchdump;
-
-use Amanda::MainLoop qw( :GIOCondition );
 sub main {
-    my $self = shift;
     my ($finished_cb) = @_;
 
-    my $interactivity = Amanda::Interactivity::amfetchdump->new();
-    my ($fetchdump, $result_message) = Amanda::FetchDump->new();
+    my $fetchdump;
 
-    $fetchdump->restore(
+    if ($opt_extract) {
+	$fetchdump = Amanda::FetchDump::Application->new();
+    } elsif ($opt_extract_client) {
+	$fetchdump = Amanda::FetchDump::ClientApplication->new();
+    } else {
+	$fetchdump = Amanda::FetchDump::Local->new();
+    }
+    return $finished_cb->(1) if !defined $fetchdump;
+
+    my $interactivity = Amanda::Interactivity::amfetchdump->new();
+
+    $fetchdump->run(
 		'application_property'	=> \%application_property,
 		'assume'		=> $opt_assume,
 		'chdir'			=> $opt_chdir,
@@ -495,6 +421,7 @@ sub main {
 		'dumpspecs'		=> \@opt_dumpspecs,
 		'exact-match'		=> $opt_exact_match,
 		'extract'		=> $opt_extract,
+		'extract-client'	=> $opt_extract_client,
 		'header'		=> $opt_header,
 		'header-fd'		=> $opt_header_fd,
 		'header-file'		=> $opt_header_file,
@@ -505,21 +432,22 @@ sub main {
 		'restore'		=> $opt_restore,
 		'server-decompress'	=> $opt_server_decompress,
 		'server-decrypt'	=> $opt_server_decrypt,
+		'run-client-scripts'	=> $opt_run_client_scripts,
 		'finished_cb'		=> $finished_cb,
-		'interactivity'		=> $interactivity,
-		'feedback'		=> $self);
+		'interactivity'		=> $interactivity);
 }
 
 package main;
 
-my $exit_status;
+my $exit_status = 0;
 sub fetchdump_done {
-    $exit_status = shift;
+    my $lexit_status = shift;
+
+    $exit_status = $lexit_status if defined $lexit_status;
     Amanda::MainLoop::quit();
 }
 
-my $amfetchdump = amfetchdump->new();
-$amfetchdump->main(\&fetchdump_done);
+Amanda::MainLoop::call_later(sub { main(\&fetchdump_done); });
 Amanda::MainLoop::run();
 Amanda::Util::finish_application();
 exit $exit_status;

@@ -1,4 +1,12 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfetchdump.pl: use Amanda::Fetchdump subclass
+	* perl/Amanda/FetchDump.pm: Generic class
+	* perl/Amanda/FetchDump/Application.pm,
+	  perl/Amanda/FetchDump/ClientApplication.pm,
+	  perl/Amanda/FetchDump/Local.pm: Specific module for different
+	  destination, use Amanda::Restore
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/restore.pl: New client service to restore on the client
 	* client-src/Makefile.am: add restore.pl
 	* perl/Amanda/Service/Restore.pm: Core of service, use Amanda::Restore
