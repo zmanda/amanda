@@ -1,4 +1,8 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.c: Add new message
+	* perl/Amanda/Message.pm: Add new message
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.c, common-src/amfeatures.h: Add new amfeatures
 	  for amrecover/amidxtaped protocol change and for the new restore
 	  service

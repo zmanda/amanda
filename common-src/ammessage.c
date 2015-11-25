@@ -1223,21 +1223,21 @@ set_message(
     } else if (message->code == 2900001) {
 	msg = "Can't execute application '%{application}'";
     } else if (message->code == 2900002) {
-	msg = "The application '%{application}' does not support the 'discover' method";
+	msg = "The application '%{application}' does not support the '%{method}' method";
     } else if (message->code == 2900003) {
-	msg = "senddiscover only works with application";
+	msg = "%{service} only works with application";
     } else if (message->code == 2900004) {
-	msg = "Missing OPTIONS line in senddiscover request";
+	msg = "Missing OPTIONS line in %{service} request";
     } else if (message->code == 2900005) {
 	msg = "Application '%{application}': can't create pipe";
     } else if (message->code == 2900006) {
 	msg = "Can't dup2: %{errno} %{errnocode} %{errnostr}";
     } else if (message->code == 2900007) {
-	msg = "senddiscover require fe_req_xml";
+	msg = "%{service} require fe_req_xml";
     } else if (message->code == 2900008) {
-	msg = "no valid senddiscover request";
+	msg = "no valid %{service} request";
     } else if (message->code == 2900009) {
-	msg = "no valid senddiscover request";
+	msg = "no valid %{service} request";
     } else if (message->code == 2900010) {
 	msg = "fork of '%{application} failed: %{errno} %{errnocode} %{errnostr}";
     } else if (message->code == 2900011) {
@@ -1254,10 +1254,14 @@ set_message(
 	msg = "Application '%{application}' (pid %{pid}) got signal %{signal}";
     } else if (message->code == 2900017) {
 	msg = "Application '%{application}' (pid %{pid}) returned %{return_code}";
+    } else if (message->code == 2900018) {
+	msg = "%{name}: %{errmsg}";
+
     } else if (message->code == 3100005) {
 	msg = "senddiscover result";
     } else if (message->code == 3100006) {
 	msg = "no senddiscover result to list";
+
     } else if (message->code == 3600000) {
 	msg = "version '%{version}";
     } else if (message->code == 3600001) {

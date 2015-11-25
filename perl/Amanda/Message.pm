@@ -25,6 +25,7 @@ package Amanda::Message;
 use Data::Dumper;
 
 require Amanda::Debug;
+use JSON;
 
 use overload
     '""'  => sub { $_[0]->full_message(); },
@@ -87,11 +88,12 @@ not handled by Amanda::Message):
  2600000  Amanda::DB::Message
  2700000  Amanda::CheckDump::Message
  2800000  amcheck
- 2900000  senddiscover
+ 2900000  client service - senddiscover, restore, ...
  3000000  Amanda::Amvmware::Message
  3100000  Amanda::Service::Message
+ 3101000    Amanda::Service::Restore::Message
  3200000  Amanda::Appliance
- 3300000  Amanda::Fetchdump::Message
+ 3300000  Amanda::FetchDump::Message
  3400000  Amanda::Cleanup::Message
  3500000  Amanda::Process::Message
  3600000  selfcheck
@@ -113,6 +115,8 @@ not handled by Amanda::Message):
   4700000  script-email
   4701000  amlog-script
   4702000  amzfs-snapshot
+ 4800000  Amanda::Extract::Message
+ 4900000  Amanda::Restore::Message
 
 general keys:
   code            =>
@@ -206,6 +210,16 @@ sub new {
     return $self;
 }
 
+sub new_from_json_text {
+    my $class = shift;
+    my $text = shift;
+
+    my $json = JSON->new->allow_nonref;
+    my $self = $json->decode($text);
+    bless $self, $class;
+
+    return $self;
+}
 #does not works for blessed object.
 sub _apply {
     my $code = shift;
