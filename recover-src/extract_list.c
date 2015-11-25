@@ -78,7 +78,7 @@ typedef struct cdata_s {
 } cdata_t;
 
 typedef struct ctl_data_s {
-  int                      header_done;
+  gboolean                 header_done;
   int                      child_in[2];
   int                      child_out[2];
   int                      child_err[2];
@@ -97,6 +97,12 @@ typedef struct ctl_data_s {
   cdata_t		   child_err_cdata;
   cdata_t		   dar_cdata;
 } ctl_data_t;
+
+typedef struct ctl_state_s {
+  int		fd;
+  gboolean      state_done;
+  gint64        bytes_read;
+} ctl_state_t;
 
 #define SKIP_TAPE 2
 #define RETRY_TAPE 3
@@ -130,6 +136,7 @@ static char *amidxtaped_line = NULL;
 extern char *localhost;
 static char header_buf[32768];
 static int  header_size = 0;
+static int  header_send_size = 0;
 static int  stderr_isatty;
 static time_t last_time = 0;
 static gboolean  last_is_size;
@@ -137,6 +144,12 @@ static crc_t crc_in;
 static send_crc_t native_crc;
 static crc_t network_crc;
 static char *state_filename = NULL;
+static int use_dar = 0;
+static int got_use_dar = 0;
+static int send_use_dar = 0;
+static ctl_data_t  ctl_data;
+static ctl_state_t ctl_state;
+static data_path_t data_path_set;
 
 
 /* global pid storage for interrupt handler */
@@ -188,11 +201,13 @@ int writer_intermediary(EXTRACT_LIST *elist);
 int get_amidxtaped_line(void);
 static void handle_child_out(void *);
 static void handle_dar_command(void *);
+static void read_amidxtaped_state(void *, void *, ssize_t);
 static void read_amidxtaped_data(void *, void *, ssize_t);
 static char *merge_path(char *path1, char *path2);
 static gboolean ask_file_overwrite(ctl_data_t *ctl_data);
 static void start_processing_data(ctl_data_t *ctl_data);
 static gpointer handle_crc_thread(gpointer data);
+void try_send_use_dar(void);
 
 /*
  * Function:  ssize_t read_buffer(datafd, buffer, buflen, timeout_s)
@@ -2214,10 +2229,16 @@ int
 writer_intermediary(
     EXTRACT_LIST *	elist)
 {
-    ctl_data_t ctl_data;
-    amwait_t   extractor_status;
+    amwait_t    extractor_status;
 
-    ctl_data.header_done   = 0;
+    data_path_set = DATA_PATH_AMANDA;
+    got_use_dar           = 0;
+    send_use_dar           = 0;
+    ctl_state.bytes_read  = 0;
+    ctl_state.fd          = -1;
+    ctl_state.state_done  = FALSE;
+
+    ctl_data.header_done  = FALSE;
     ctl_data.child_in[0]  = -1;
     ctl_data.child_in[1]  = -1;
     ctl_data.child_out[0] = -1;
@@ -2233,10 +2254,23 @@ writer_intermediary(
     ctl_data.bytes_read    = 0;
 
     header_size = 0;
+    header_send_size = DISK_BLOCK_BYTES;
     crc32_init(&crc_in);
     crc32_init(&native_crc.crc);
-    security_stream_read(amidxtaped_streams[DATAFD].fd,
-			 read_amidxtaped_data, &ctl_data);
+
+    if (amidxtaped_streams[STATEFD].fd != NULL) {
+g_debug("waiting for STATE");
+	security_stream_read(amidxtaped_streams[STATEFD].fd,
+			 read_amidxtaped_state, &ctl_state);
+    } else {
+	ctl_state.state_done = TRUE;
+    }
+
+    if (!am_has_feature(tapesrv_features, fe_amrecover_header_send_size)) {
+g_debug("waiting for DATA");
+	security_stream_read(amidxtaped_streams[DATAFD].fd,
+			     read_amidxtaped_data, &ctl_data);
+    }
 
     while(get_amidxtaped_line() >= 0) {
 	char desired_tape[MAX_TAPE_LABEL_BUF];
@@ -2263,6 +2297,14 @@ writer_intermediary(
 		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ERROR");
 		break;
 	    }
+	} else if (strncmp_const(amidxtaped_line, "USE-DAR ") == 0) {
+	    if (strncmp_const(amidxtaped_line+8, "YES") == 0) {
+		use_dar = 1;
+	    } else {
+		use_dar = 0;
+	    }
+	    got_use_dar = 1;
+	    try_send_use_dar();
 	} else if (strncmp_const(amidxtaped_line, "USE-DATAPATH ") == 0) {
 	    if (strncmp_const(amidxtaped_line+13, "AMANDA") == 0) {
 		ctl_data.data_path = DATA_PATH_AMANDA;
@@ -2274,11 +2316,32 @@ writer_intermediary(
 	    }
 	    start_processing_data(&ctl_data);
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
+	    if (last_is_size) {
+		g_printf("\n");
+		last_is_size = 0;
+	    }
 	    g_printf("%s\n",&amidxtaped_line[8]);
 	} else if(strncmp_const(amidxtaped_line, "DATA-STATUS ") == 0) {
 	    //g_printf("status: %s\n",&amidxtaped_line[12]);
 	} else if(strncmp_const(amidxtaped_line, "DATA-CRC ") == 0) {
 	    parse_crc(&amidxtaped_line[9], &network_crc);
+	} else if(strncmp_const(amidxtaped_line, "HEADER-SEND-SIZE ") == 0) {
+	    header_send_size = atoi(amidxtaped_line+17);
+	    security_stream_read(amidxtaped_streams[DATAFD].fd,
+			         read_amidxtaped_data, &ctl_data);
+	    if (am_has_feature(tapesrv_features, fe_amrecover_header_ready)) {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "HEADER-READY");
+	    }
+	} else if(strncmp_const(amidxtaped_line, "STATE-SEND") == 0) {
+	    // We are already waiting for the state file
+	    if (am_has_feature(tapesrv_features, fe_amrecover_state_ready)) {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "STATE-READY");
+	    }
+	} else if(strncmp_const(amidxtaped_line, "DATA-SEND") == 0) {
+	    // We are already waiting for the data
+	    if (am_has_feature(tapesrv_features, fe_amrecover_data_ready)) {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATA-READY");
+	    }
 	} else {
 	    g_fprintf(stderr, _("Strange message from tape server: %s\n"),
 		    amidxtaped_line);
@@ -2330,7 +2393,7 @@ writer_intermediary(
     if (ctl_data.child_err[0] != -1)
 	aclose(ctl_data.child_err[0]);
 
-    if (ctl_data.header_done == 0) {
+    if (!ctl_data.header_done) {
 	g_printf(_("Got no header and data from server, check in amidxtaped.*.debug and amandad.*.debug files on server\n"));
     }
 
@@ -2553,54 +2616,6 @@ extract_files(void)
 	}
 	g_free(etapelist);
 
-	g_free(state_filename);
-	state_filename = NULL;
-	/* download the recover-state-file */
-	if (amidxtaped_streams[STATEFD].fd != NULL) {
-	    ssize_t size;
-	    void *buf;
-	    char *host = sanitise_filename(dump_hostname);
-	    char *disk = sanitise_filename(disk_name);
-	    int fd_state;
-	    struct passwd *pwd;
-	    state_filename = g_strdup_printf("%s/%s.%s.%s.state",
-					     AMANDA_TMPDIR,
-					     host, disk, dump_datestamp);
-	    if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
-		g_debug("Failed to getpwnam(%s): %s", CLIENT_LOGIN,
-			strerror(errno));
-	    }
-	    g_debug("state_filename: %s", state_filename);
-	    g_free(host);
-	    g_free(disk);
-	    unlink(state_filename);
-	    if ((fd_state = open(state_filename, O_WRONLY | O_CREAT | O_EXCL, 0600)) == -1) {
-		g_debug("Failed to open the state file '%s': %s", state_filename, strerror(errno));
-		g_free(state_filename);
-		state_filename = NULL;
-	    } else {
-		if (fchown(fd_state, pwd->pw_uid, pwd->pw_gid) == -1) {
-		    g_debug("Failed to fchown '%s': %s", state_filename,
-			    strerror(errno));
-		}
-		while (1) {
-		    buf = NULL;
-		    size = security_stream_read_sync(
-				amidxtaped_streams[STATEFD].fd,
-				&buf);
-		    if (size < 0) {
-			break;
-		    } else if (size == 0) {
-			break;
-		    } else {
-			full_write(fd_state, buf, size);
-			g_free(buf);
-		    }
-		}
-		aclose(fd_state);
-	    }
-	}
-
 	if (dump_dle) {
 	    am_level_t *level;
 
@@ -2640,6 +2655,38 @@ extract_files(void)
     }
 }
 
+void
+try_send_use_dar(void)
+{
+    if (am_has_feature(tapesrv_features, fe_amidxtaped_dar)) {
+	if (!send_use_dar && got_use_dar && ctl_data.header_done && ctl_state.state_done) {
+	    if (use_dar && ctl_data.bsu && ctl_data.bsu->dar && state_filename) {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "USE-DAR YES");
+	    } else {
+		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "USE-DAR NO");
+		if (state_filename) {
+		    unlink(state_filename);
+		    amfree(state_filename);
+		}
+	    }
+	    send_use_dar = 1;
+	}
+    } else {
+	send_use_dar = 1;
+    }
+
+    if (send_use_dar && ctl_data.header_done && ctl_state.state_done) {
+	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
+	    /* send DATA-PATH request */
+	    char *msg = g_strdup_printf("AVAIL-DATAPATH%s%s",
+			   (data_path_set & DATA_PATH_AMANDA) ? " AMANDA" : "",
+			   (data_path_set & DATA_PATH_DIRECTTCP) ? " DIRECT-TCP" : "");
+	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
+	    g_free(msg);
+	}
+    }
+}
+
 static void
 amidxtaped_response(
     void *		datap,
@@ -2663,7 +2710,7 @@ amidxtaped_response(
 	*response_error = 1;
 	return;
     }
-    security_close_connection(sech, dump_hostname);
+    //security_close_connection(sech, dump_hostname);
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
@@ -3051,6 +3098,82 @@ handle_dar_command(
 }
 
 
+int fd_state = -1;
+off_t size_of_state = 0;
+
+static void
+read_amidxtaped_state(
+    void *	cookie,
+    void *	buf,
+    ssize_t	size)
+{
+    ctl_state_t *ctl_state = (ctl_state_t *)cookie;
+    assert(cookie != NULL);
+
+    if (size < 0) {
+	g_free(errstr);
+	errstr = g_strconcat(_("amidxtaped read: "),
+                             security_stream_geterror(amidxtaped_streams[STATEFD].fd),
+                             NULL);
+	return;
+    }
+
+    /*
+     * EOF.  Stop and return.
+     */
+    if (size == 0) {
+	security_stream_close(amidxtaped_streams[STATEFD].fd);
+	amidxtaped_streams[STATEFD].fd = NULL;
+
+	aclose(ctl_state->fd);
+	if (ctl_state->bytes_read == 0) {
+	    unlink(state_filename);
+	    g_free(state_filename);
+	    state_filename = NULL;
+	}
+	ctl_state->state_done = TRUE;
+	if (am_has_feature(tapesrv_features, fe_amrecover_state_done)) {
+	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, "STATE-DONE");
+	}
+	try_send_use_dar();
+	return;
+    }
+
+    assert(buf != NULL);
+
+    if (ctl_state->fd == -1) {
+	char *host = sanitise_filename(dump_hostname);
+	char *disk = sanitise_filename(disk_name);
+	struct passwd *pwd;
+	state_filename = g_strdup_printf("%s/%s.%s.%s.state",
+					 AMANDA_TMPDIR,
+					 host, disk, dump_datestamp);
+	if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
+	    g_debug("Failed to getpwnam(%s): %s", CLIENT_LOGIN,
+		    strerror(errno));
+	}
+
+	g_debug("state_filename: %s", state_filename);
+	g_free(host);
+	g_free(disk);
+	unlink(state_filename);
+
+	if ((ctl_state->fd = open(state_filename, O_WRONLY | O_CREAT | O_EXCL, 0600)) == -1) {
+	    g_debug("Failed to open the state file '%s': %s", state_filename, strerror(errno));
+	    g_free(state_filename);
+	    state_filename = NULL;
+	    return;
+	}
+	if (pwd && fchown(ctl_state->fd, pwd->pw_uid, pwd->pw_gid) == -1) {
+	    g_debug("Failed to fchown '%s': %s", state_filename,
+		    strerror(errno));
+	}
+    }
+
+    full_write(ctl_state->fd, buf, size);
+    ctl_state->bytes_read += size;
+}
+
 static void
 read_amidxtaped_data(
     void *	cookie,
@@ -3077,6 +3200,9 @@ read_amidxtaped_data(
 	security_stream_close(amidxtaped_streams[DATAFD].fd);
 	amidxtaped_streams[DATAFD].fd = NULL;
 	aclose(ctl_data->child_in[1]);
+	//if (am_has_feature(tapesrv_features, fe_amrecover_data_done)) {
+	//    send_to_tape_server(amidxtaped_streams[CTLFD].fd, "DATA-DONE");
+	//}
 	/*
 	 * If the mesg fd has also shut down, then we're done.
 	 */
@@ -3085,20 +3211,19 @@ read_amidxtaped_data(
 
     assert(buf != NULL);
 
-    if (ctl_data->header_done == 0) {
+    if (!ctl_data->header_done) {
 	GPtrArray  *errarray;
-	data_path_t data_path_set = DATA_PATH_AMANDA;
 	int to_move;
 
-	to_move = MIN(32768-header_size, size);
+	to_move = MIN(header_send_size-header_size, size);
 	memcpy(header_buf+header_size, buf, to_move);
 	header_size += to_move;
 
-	g_debug("read header %zd => %d", size, header_size);
-	if (header_size < 32768) {
+	g_debug("read header %zd => %d (%d)", size, header_size, header_send_size);
+	if (header_size < header_send_size) {
 	    /* wait to read more data */
 	    return;
-	} else if (header_size > 32768) {
+	} else if (header_size > header_send_size) {
 	    error("header_size is %d\n", header_size);
 	}
 	assert (to_move == size);
@@ -3125,7 +3250,7 @@ read_amidxtaped_data(
 	}
 	/* handle backup_support_option failure */
 
-	ctl_data->header_done = 1;
+	ctl_data->header_done = TRUE;
 	if (!ask_file_overwrite(ctl_data)) {
 	    if (am_has_feature(tapesrv_features, fe_amidxtaped_abort)) {
 		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ABORT");
@@ -3134,26 +3259,13 @@ read_amidxtaped_data(
 	    return;
 	}
 
-	if (am_has_feature(tapesrv_features, fe_amidxtaped_dar)) {
-	    if (!ctl_data->bsu || !ctl_data->bsu->dar || !state_filename) {
-		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "USE-DAR NO");
-		if (state_filename) {
-		    unlink(state_filename);
-		    amfree(state_filename);
-		}
-	    } else {
-		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "USE-DAR YES");
-	    }
+	if (am_has_feature(tapesrv_features, fe_amrecover_header_done)) {
+	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, "HEADER-DONE");
 	}
 
-	if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
-	    /* send DATA-PATH request */
-            char *msg = g_strdup_printf("AVAIL-DATAPATH%s%s",
-                (data_path_set & DATA_PATH_AMANDA) ? " AMANDA" : "",
-                (data_path_set & DATA_PATH_DIRECTTCP) ? " DIRECT-TCP" : "");
-	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, msg);
-	    g_free(msg);
-	} else {
+	try_send_use_dar();
+
+	if (!am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
 	    start_processing_data(ctl_data);
 	}
     } else {

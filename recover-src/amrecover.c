@@ -86,6 +86,7 @@ proplist_t proplist = NULL;
 static char *errstr = NULL;
 char *authopt;
 int amindexd_alive = 0;
+security_handle_t *gsech;
 
 static struct {
     const char *name;
@@ -652,6 +653,8 @@ amindexd_response(
 
     assert(response_error != NULL);
     assert(sech != NULL);
+
+    gsech = sech;
 
     if (pkt == NULL) {
 	g_free(errstr);

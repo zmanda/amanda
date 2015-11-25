@@ -1,4 +1,11 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Service/Amidxtaped.pm: New amidxtaped perl module, it
+	  use Amanda::Restore
+	* server-src/amidxtaped.pl: Use Amanda::Service::Amidxtaped
+	* recover-src/amrecover.c, recover-src/extract_list.c: improve
+	  amrecover-amidxtaped protocol
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Restore.pm: New module to to do a recovery, all program
 	  will use it.
 	* perl/Makefile.am: Add Amanda/Restore.pm
