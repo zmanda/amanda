@@ -1,4 +1,9 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c, common-src/amfeatures.h: Add new amfeatures
+	  for amrecover/amidxtaped protocol change and for the new restore
+	  service
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/senddiscover.c: use MSG_ERROR instead of 16
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>

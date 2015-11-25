@@ -186,6 +186,28 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_sendbackup_stream_state);
 	am_add_feature(f, fe_amrecover_stream_state);
 	am_add_feature(f, fe_amidxtaped_dar);
+	am_add_feature(f, fe_restore_mesg_json);
+	am_add_feature(f, fe_restore_state_stream);
+	am_add_feature(f, fe_amrecover_header_send_size);
+	am_add_feature(f, fe_amrecover_header_ready);
+	am_add_feature(f, fe_amrecover_header_done);
+	am_add_feature(f, fe_amrecover_state_send);
+	am_add_feature(f, fe_amrecover_state_ready);
+	am_add_feature(f, fe_amrecover_state_done);
+	am_add_feature(f, fe_amrecover_data_send);
+	am_add_feature(f, fe_amrecover_data_ready);
+	//am_add_feature(f, fe_amrecover_data_done);
+	am_add_feature(f, fe_restore_header_send_size);
+	am_add_feature(f, fe_restore_header_ready);
+	am_add_feature(f, fe_restore_header_done);
+	am_add_feature(f, fe_restore_state_send);
+	am_add_feature(f, fe_restore_state_ready);
+	am_add_feature(f, fe_restore_state_done);
+	am_add_feature(f, fe_restore_data_send);
+	am_add_feature(f, fe_restore_data_ready);
+	//am_add_feature(f, fe_amrecover_data_done);
+	am_add_feature(f, fe_restore_dar);
+	am_add_feature(f, fe_restore_datapath);
     }
     return f;
 }

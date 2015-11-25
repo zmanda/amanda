@@ -215,6 +215,31 @@ typedef enum {
     fe_amrecover_stream_state,
     fe_amidxtaped_dar,
 
+    fe_restore_mesg_json,
+    fe_restore_state_stream,
+
+    fe_amrecover_header_send_size,
+    fe_amrecover_header_ready,
+    fe_amrecover_header_done,
+    fe_amrecover_state_send,
+    fe_amrecover_state_ready,
+    fe_amrecover_state_done,
+    fe_amrecover_data_send,
+    fe_amrecover_data_ready,
+    fe_amrecover_data_done,
+
+    fe_restore_header_send_size,
+    fe_restore_header_ready,
+    fe_restore_header_done,
+    fe_restore_state_send,
+    fe_restore_state_ready,
+    fe_restore_state_done,
+    fe_restore_data_send,
+    fe_restore_data_ready,
+    fe_restore_data_done,
+    fe_restore_dar,
+    fe_restore_datapath,
+
     /*
      * All new features must be inserted immediately *before* this entry.
      */
