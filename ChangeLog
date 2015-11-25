@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Disklist.swg: Add all auth option to the host class
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Add new message
 	* perl/Amanda/Message.pm: Add new message
 

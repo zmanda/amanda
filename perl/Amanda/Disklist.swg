@@ -125,7 +125,16 @@ get_host(
 	hv_store_const(h, "hostname", safe_newSVpv(dp->hostname));
 	hv_store_const(h, "amandad_path", safe_newSVpv(dp->amandad_path));
 	hv_store_const(h, "client_username", safe_newSVpv(dp->client_username));
+	hv_store_const(h, "client_port", safe_newSVpv(dp->client_port));
 	hv_store_const(h, "ssh_keys", safe_newSVpv(dp->ssh_keys));
+	hv_store_const(h, "ssl_fingerprint_file", safe_newSVpv(dp->ssl_fingerprint_file));
+	hv_store_const(h, "ssl_cert_file", safe_newSVpv(dp->ssl_cert_file));
+	hv_store_const(h, "ssl_key_file", safe_newSVpv(dp->ssl_key_file));
+	hv_store_const(h, "ssl_ca_cert_file", safe_newSVpv(dp->ssl_ca_cert_file));
+	hv_store_const(h, "ssl_cipher_list", safe_newSVpv(dp->ssl_cipher_list));
+	hv_store_const(h, "ssl_check_certificate_host", newSViv(dp->ssl_check_certificate_host));
+	hv_store_const(h, "ssl_check_host", newSViv(dp->ssl_check_host));
+	hv_store_const(h, "ssl_check_fingerprint", newSViv(dp->ssl_check_fingerprint));
 	hv_store_const(h, "auth", safe_newSVpv(dp->auth));
 	hv_store_const(h, "maxdumps", newSViv(dp->host->maxdumps));
 	hv_store_const(h, "disks", newRV_noinc((SV *)newAV()));
