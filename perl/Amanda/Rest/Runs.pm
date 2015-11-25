@@ -767,8 +767,12 @@ sub fetchdump {
 
     Amanda::Util::set_pname("fetchdump");
 
-    my ($fetchdump, $messages) = Amanda::FetchDump->new(%params);
-    push @result_messages, @{$messages};
+    my $fetchdump;
+    if ($params{'extract-client'}) {
+	#$fetchdump = Amanda::FetchDump::ClientApplication->new();
+    } else {
+	$fetchdump = Amanda::FetchDump::Application->new();
+    }
 
     if (!$fetchdump) {
 	return (-1, \@result_messages);
@@ -800,19 +804,13 @@ sub fetchdump {
 				    Amanda::FetchDump::Message->new(
 					source_filename	=> __FILE__,
 					source_line	=> __LINE__,
-					code		=> 3300060,
+					code		=> 3300062,
 					severity	=> $exit_status == 0 ? $Amanda::Message::SUCCESS : $Amanda::Message::ERROR,
 					exit_status	=> $exit_status));
 				Amanda::MainLoop::quit(); };
 	Amanda::MainLoop::call_later(sub { $fetchdump->restore(
                 'application_property'  => $params{'application_property'},
-#                'assume'                => $opt_assume,
-#                'chdir'                 => $opt_chdir,
-#                'client-decompress'     => $opt_client_decompress,
-#                'client-decrypt'        => $opt_client_decrypt,
-#                'compress'              => $opt_compress,
-#                'compress-best'         => $opt_compress_best,
-#                'data-path'             => $opt_data_path,
+                'assume'                => 1,
                 'decompress'            => 1,
                 'decrypt'               => 1,
                 'device'                => $params{'device'},
@@ -820,18 +818,8 @@ sub fetchdump {
                 'dumpspecs'             => \@dumpspecs,
                 'exact-match'           => 1,
                 'extract'               => 1,
-#                'header'                => $opt_header,
-#                'header-fd'             => $opt_header_fd,
-#                'header-file'           => $opt_header_file,
-#                'init'                  => $opt_init,
-#                'leave'                 => $opt_leave,
-#                'no-reassembly'         => $opt_no_reassembly,
-#                'pipe-fd'               => $opt_pipe ? 1 : undef,
                 'restore'               => 1,
-#                'server-decompress'     => 1,
-#                'server-decrypt'        => 1,
                 'finished_cb'           => $finished_cb,
-#                'interactivity'         => $interactivity,
                 'feedback'              => $fetchfeedback) });
 	Amanda::MainLoop::run();
 	exit;
