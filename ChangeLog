@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/senddiscover.c: use MSG_ERROR instead of 16
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Add the restore service
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
