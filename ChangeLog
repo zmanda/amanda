@@ -1,4 +1,8 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Extract.pm: Correctly check if program_path is an
+	  Amanda::Message
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Service/Restore.pm: Remove unused code
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>

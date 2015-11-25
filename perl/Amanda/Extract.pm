@@ -268,7 +268,7 @@ sub set_argv {
     my $config = Amanda::Config::get_config_name();
     my $program_path = $self->_set_program_path();
 
-    return $program_path if $program_path->isa('Amanda::Message');
+    return $program_path if ref $program_path eq "HASH" && $program_path->isa('Amanda::Message');
 
     if (!$self->{'program_is_application'}) {
 	my $program = uc(basename($self->{'hdr'}->{program}));
