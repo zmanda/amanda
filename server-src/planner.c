@@ -2111,7 +2111,7 @@ static void handle_result(
 
 	    /*
 	     * If the "error" is that the "noop" service is unknown, it
-	     * just means the client is "old" (does not support the servie).
+	     * just means the client is "old" (does not support the service).
 	     * We can ignore this.
 	     */
 	    if(hostp->features == NULL
@@ -2215,8 +2215,6 @@ static void handle_result(
 	hostp->features = am_set_default_feature_set();
     }
 
-    security_close_connection(sech, hostp->hostname);
-
     /* XXX what about disks that only got some estimates...  do we care? */
     /* XXX amanda 2.1 treated that case as a bad msg */
 
@@ -2319,6 +2317,8 @@ static void handle_result(
 
     if(hostp->status == HOST_DONE) {
 	if (pkt->type == P_REP) {
+	    security_close_connection(sech, hostp->hostname);
+
 	    run_server_host_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
 				    get_config_name(), hostp);
 	}
@@ -3568,17 +3568,17 @@ est_dump_queue(
 	return;
     }
     g_fprintf(f, _("%s QUEUE:\n"), st);
-    for (pos = 0, dl = q.head, pl = NULL; dl != NULL; pl = dl, dl = dl->next, pos++) {
+    for (pos = 0, dl = q.head; dl != NULL; dl = dl->next, pos++) {
 	d = ((est_t *)dl->data)->disk;
 	qname = quote_string(d->name);
-	if(pos < npr) g_fprintf(f, "%3d: %-10s %-4s\n",
-                              pos, d->host->hostname, qname);
+	if (pos < npr) g_fprintf(f, "%3d: %-10s %-4s\n",
+                                 pos, d->host->hostname, qname);
 	amfree(qname);
     }
     if(pos > npr) {
-	if(pos > npr+2) g_fprintf(f, "  ...\n");
+	if (pos > npr+2) g_fprintf(f, "  ...\n");
 	pl = q.tail;
-	if(pos > npr+1) {
+	if (pos > npr+1) {
 	    dl = pl->prev;
 	    d = ((est_t *)dl->data)->disk;
 	    g_fprintf(f, "%3d: %-10s %-4s\n", pos-2, d->host->hostname, d->name);
@@ -3587,7 +3587,6 @@ est_dump_queue(
 	d = ((est_t *)dl->data)->disk;
 	g_fprintf(f, "%3d: %-10s %-4s\n", pos-1, d->host->hostname, d->name);
     }
-
 }
 
 

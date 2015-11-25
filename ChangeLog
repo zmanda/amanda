@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix for security API fix
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfetchdump.pl: use Amanda::Fetchdump subclass
 	* perl/Amanda/FetchDump.pm: Generic class
 	* perl/Amanda/FetchDump/Application.pm,
