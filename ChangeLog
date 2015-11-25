@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Extract.pm (set_validate_argv): New function
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Disklist.swg: Add all auth option to the host class
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
