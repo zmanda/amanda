@@ -213,19 +213,6 @@ sub get_header {
 			line            => $line);
 	}
 	$self->{'header-size'} = 0 + $1;
-    } elsif ($self->{'their_features'}->has($Amanda::Feature::fe_restore_header_send)) {
-	my $line = $self->getline('CTL');
-	if ($line ne "HEADER-SEND\r\n") {
-	    chomp $line;
-	    chop $line;
-	    return Amanda::FetchDump::Message->new(
-			source_filename => __FILE__,
-			source_line     => __LINE__,
-			code            => 3300064,
-			severity        => $Amanda::Message::ERROR,
-			expect          => "HEADER-SEND",
-			line            => $line);
-	}
     }
     if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_header_ready)) {
 	$self->sendctlline("HEADER-READY\r\n");
