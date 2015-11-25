@@ -1,3 +1,6 @@
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Report/human.pm: Fix crash if orig_size == 0
+
 2015-11-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amcryptsimple.pl: Use 'gpg-agent --use-standard-socket-p'
 	  to find if gpg-agent must be used
