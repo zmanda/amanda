@@ -1,4 +1,10 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Rest_Services_senddiscover.pl,
+	  installcheck/ambsdtar.pl, installcheck/amcheckdump.pl,
+	  installcheck/amfetchdump.pl,
+	  installcheck/amidxtaped.pl: Fix for  changes
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Fix for security API fix
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>

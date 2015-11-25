@@ -54,9 +54,9 @@ like(run_err('amcheckdump', 'this-probably-doesnt-exist'), qr(could not open con
 $testconf = Installcheck::Run::setup();
 $testconf->write();
 
-ok(run('amcheckdump', 'TESTCONF'),
+ok(!run('amcheckdump', 'TESTCONF'),
     "amcheckdump with a new config succeeds");
-like($Installcheck::Run::stdout, qr(could not find)i,
+like($Installcheck::Run::stdout, qr(No matching dumps found)i,
      "..but finds no dumps.");
 
 ##

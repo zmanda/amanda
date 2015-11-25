@@ -142,8 +142,8 @@ $exp->expect(60,
     }, ],
 );
 is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
-	  "simple restore follows the correct steps");
-got_files(1, "..and restored file is present in testdir");
+	  "simple restore follows the correct steps") || diag(join(' ', @results) . "\n");;
+got_files(1, "A ..and restored file is present in testdir");
 
 ##
 # -a (assume)
@@ -153,7 +153,7 @@ cleandir();
 ok(run('amfetchdump', '-a', '-l', 'TESTCONF', 'localhost'),
     "run with -a and -l successful");
 
-got_files(1, "..and restored file is present in testdir ($last_file_size bytes)");
+got_files(1, "B ..and restored file is present in testdir ($last_file_size bytes)");
 my $uncomp_size = $last_file_size;
 
 ##
@@ -164,7 +164,7 @@ cleandir();
 ok(run('amfetchdump', '-a', '-C', 'TESTCONF', 'localhost'),
     "run with -a and -C successful");
 
-got_files(1, "..and restored file is present in testdir");
+got_files(1, "C ..and restored file is present in testdir");
 
 ok($last_file_size < $uncomp_size,
     "..and is smaller than previous run ($last_file_size bytes)");
@@ -209,7 +209,7 @@ is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading"
 	  "restore with -O follows the correct steps");
 
 chdir($testdir);
-got_files(1, "..and restored file is present in testdir");
+got_files(1, "D ..and restored file is present in testdir");
 
 ##
 # -h
@@ -249,7 +249,7 @@ $exp->expect(60,
 is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	  "restore with -h follows the correct steps");
 
-$fok = got_files(1, "..and restored file is present in testdir");
+$fok = got_files(1, "E ..and restored file is present in testdir");
 
 # check that it starts with a header
 if ($fok) {
@@ -303,7 +303,7 @@ $exp->expect(60,
 is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	  "restore with --header-file follows the correct steps");
 
-$fok = got_files(1, "..and restored file is present in testdir");
+$fok = got_files(1, "F ..and restored file is present in testdir");
 
 # check that it starts with a header
 if ($fok) {
@@ -365,7 +365,7 @@ $exp->expect(60,
 is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter",
 			  "insert-tape", "reading", "restoring", "eof" ],
 	  "restore with an explicit device follows the correct steps, prompting for each");
-got_files(1, "..and restored file is present in testdir");
+got_files(1, "G ..and restored file is present in testdir");
 
 ##
 # -n (using a multipart dump)
@@ -407,7 +407,7 @@ is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading"
 			  ("restoring",)x9, "eof" ],
 	  "restore with -n follows the correct steps");
 
-got_files(9, "..and restored file is present in testdir");
+got_files(9, "H ..and restored file is present in testdir");
 
 ##
 # -l, no options, and -c for compressed dumps
@@ -418,7 +418,7 @@ cleandir();
 ok(run('amfetchdump', '-a', 'TESTCONF', 'localhost'),
     "run with -a successful (should uncompress)");
 
-got_files(1, "..and restored file is present in testdir ($last_file_size bytes)");
+got_files(1, "I ..and restored file is present in testdir ($last_file_size bytes)");
 $uncomp_size = $last_file_size;
 
 cleandir();
@@ -426,7 +426,7 @@ cleandir();
 ok(run('amfetchdump', '-a', '-l', 'TESTCONF', 'localhost'),
     "run with -a and -l successful (should not uncompress)");
 
-got_files(1, "..and restored file is present in testdir");
+got_files(1, "J ..and restored file is present in testdir");
 
 ok($last_file_size < $uncomp_size,
     "..and is smaller than previous run ($last_file_size bytes)");
@@ -436,7 +436,7 @@ cleandir();
 ok(run('amfetchdump', '-a', '-c', 'TESTCONF', 'localhost'),
     "run with -a and -c successful (should not uncompress)");
 
-got_files(1, "..and restored file is present in testdir");
+got_files(1, "K ..and restored file is present in testdir");
 
 ok($last_file_size < $uncomp_size,
     "..and is smaller than previous run ($last_file_size bytes)");
@@ -528,7 +528,7 @@ SKIP: {
     is_deeply([ @results ], [ "tape-count", "tapes-needed", "press-enter", "reading", "restoring", "eof" ],
 	      "ndmp restore follows the correct steps");
 
-    got_files(1, "..and restored file is present in testdir");
+    got_files(1, "L ..and restored file is present in testdir");
 }
 
 chdir("$testdir/..");

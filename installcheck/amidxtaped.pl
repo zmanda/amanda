@@ -72,13 +72,17 @@ sub run_amidxtaped {
     my $service;
     my $datasize = -1; # -1 means EOF never arrived
     my $hdr;
+    my $state;
     my $expect_error;
     my $chg_name;
     my $testmsg;
-    my ($data_stream, $cmd_stream);
+    my ($data_stream, $cmd_stream, $state_stream);
     my @events;
     my $old_disklist;
     my $disklist_file = "$CONFIG_DIR/TESTCONF/disklist";
+    my $sendfeat = Amanda::Feature::Set->mine();
+    my $datapath;
+    my $header_size;
 
     my $event = sub {
 	my ($evt) = @_;
@@ -241,16 +245,29 @@ sub run_amidxtaped {
     step send_cmd1 => sub {
 	diag("send_cmd1") if $debug;
 	# note that the earlier features are ignored..
-	my $sendfeat = Amanda::Feature::Set->mine();
+	if (!$params{'header'} || $params{'emulate'} eq 'inetd') {
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_header_send_size);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_header_ready);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_header_done);
+	}
 	if ($params{'datapath'} eq 'none') {
 	    $sendfeat->remove($Amanda::Feature::fe_amidxtaped_datapath);
 	}
 	if ($params{'bad_quoting'}) {
 	    $sendfeat->remove($Amanda::Feature::fe_amrecover_correct_disk_quoting);
 	}
-	if (!$params{'state'}) {
+	if (!$params{'state'} || $params{'emulate'} eq 'inetd') {
 	    $sendfeat->remove($Amanda::Feature::fe_amrecover_stream_state);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_state_send);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_state_ready);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_state_done);
 	}
+	if ($params{'emulate'} eq 'inetd') {
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_data_send);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_data_ready);
+	    $sendfeat->remove($Amanda::Feature::fe_amrecover_data_done);
+	}
+	$sendfeat->remove($Amanda::Feature::fe_amrecover_data_done);
 	if (!$params{'dar'}) {
 	    $sendfeat->remove($Amanda::Feature::fe_amidxtaped_dar);
 	}
@@ -348,6 +365,7 @@ sub run_amidxtaped {
 		    [ re => qr/^CONNECT \d+\n/, $steps->{'got_connect'} ]);
 	    } else {
 		$data_stream = 'stream2';
+		$state_stream = 'stream3';
 		$steps->{'expect_feedme'}->();
 	    }
 	} else {
@@ -380,7 +398,7 @@ sub run_amidxtaped {
 	} elsif ($params{'holding_err'} || $params{'recovery_limit'}) {
 	    $steps->{'expect_err_message'}->();
 	} else {
-	    $steps->{'expect_header'}->();
+	    $steps->{'expect_header_send_size'}->();
 	}
     };
 
@@ -397,29 +415,115 @@ sub run_amidxtaped {
 	$event->('GOT-FEEDME');
 	my $dev_name = "file:" . Installcheck::Run::vtape_dir();
 	$service->send($cmd_stream, "TAPE $dev_name\r\n");
+	$steps->{'expect_header_send_size'}->();
+    };
+
+    step expect_header_send_size => sub {
+	$header_size = 32768;
+	if (!$params{'header'}) {
+	    return $steps->{'expect_state_send'}->();
+	}
+	if (!$sendfeat->has($Amanda::Feature::fe_amrecover_header_send_size)) {
+	    return $steps->{'send_header_ready'}->();
+	}
+	diag("expect_header_send_size") if $debug;
+	$service->expect($cmd_stream, [ re => qr/^HEADER-SEND-SIZE (\d*)\r\n/, $steps->{'got_header_send_size'} ]);
+    };
+
+    step got_header_send_size => sub {
+	my $line = shift;
+	$line =~ /^HEADER-SEND-SIZE (\d*)\r\n/;
+	$header_size = $1;
+        diag("got_header_send_size $header_size") if $debug;
+	$event->('GOT-HEADER-SEND-SIZE');
+	$steps->{'send_header_ready'}->();
+    };
+
+    step send_header_ready => sub {
+	if ($sendfeat->has($Amanda::Feature::fe_amrecover_header_ready)) {
+	    $service->send($cmd_stream, "HEADER-READY\r\n");
+	}
 	$steps->{'expect_header'}->();
     };
 
     step expect_header => sub {
 	diag("expect_header") if $debug;
-	if ($params{'header'}) {
-	    $service->expect($data_stream,
-		[ bytes => 32768, $steps->{'got_header'} ]);
-	} else {
-	    $steps->{'expect_datapath'}->();
-	}
+	$service->expect($data_stream,
+		[ bytes => $header_size, $steps->{'got_header'} ]);
     };
 
     step got_header => sub {
 	diag("got_header") if $debug;
 	my ($buf) = @_;
 	$event->("GOT-HEADER");
-
-	if ($params{'datapath'} ne 'none') {
-	    $service->expect($data_stream,
-		[ bytes => 1, $steps->{'got_early_bytes'} ]);
+	if ($sendfeat->has($Amanda::Feature::fe_amrecover_header_done)) {
+	    $service->send($cmd_stream, "HEADER-DONE\r\n");
 	}
 	$hdr = Amanda::Header->from_string($buf);
+	$steps->{'expect_state_send'}->();
+    };
+
+    step expect_state_send => sub {
+	if (!$params{'state'}) {
+	    return $steps->{'expect_dar'}->();
+	}
+	if (!$sendfeat->has($Amanda::Feature::fe_amrecover_state_send)) {
+	    return $steps->{'send_state_ready'}->();
+	}
+	diag("expect_state_send") if $debug;
+	$service->expect($cmd_stream,
+		[ re => qr/^STATE-SEND\r\n/, $steps->{'got_state_send'} ]);
+    };
+
+    step got_state_send => sub {
+	diag("got_state_send") if $debug;
+	$event->('GOT-STATE-SEND');
+	$steps->{'send_state_ready'}->();
+    };
+
+    step send_state_ready => sub {
+	if ($sendfeat->has($Amanda::Feature::fe_amrecover_state_ready)) {
+	    $service->send($cmd_stream, "STATE-READY\r\n");
+	}
+	$steps->{'expect_state'}->();
+    };
+
+    step expect_state => sub {
+        diag("expect_state") if $debug;
+        $service->expect($state_stream,
+                [ bytes_to_eof => $steps->{'got_state'} ]);
+    };
+
+    step got_state => sub {
+	diag("got_state") if $debug;
+	my ($buf) = @_;
+	$state = $buf;
+	$event->("GOT-STATE");
+	$steps->{'send_state_done'}->();
+    };
+
+    step send_state_done => sub {
+	if ($sendfeat->has($Amanda::Feature::fe_amrecover_state_done)) {
+	    $service->send($cmd_stream, "STATE-DONE\r\n");
+	}
+	$steps->{'expect_dar'}->();
+    };
+
+    step expect_dar => sub {
+	diag("expect_dar") if $debug;
+	if ($params{'dar'}) {
+	    $service->expect($cmd_stream,
+		[ re => qr/^USE-DAR .*\r\n/, $steps->{'got_dar'} ]);
+	} else{
+	    $steps->{'expect_datapath'}->();
+	}
+    };
+
+    step got_dar => sub {
+	my ($dar, $addrs) = ($_[0] =~ /USE-DAR (\S+)(.*)\r\n/);
+	$event->("GOT-DAR-$dar");
+	$service->send($cmd_stream, "USE-DAR NO\r\n");
+	$event->("SENT-USE-DAR-NO");
 	$steps->{'expect_datapath'}->();
     };
 
@@ -429,10 +533,6 @@ sub run_amidxtaped {
     };
 
     step expect_datapath => sub {
-	if ($params{'dar'}) {
-	    $service->send($cmd_stream, "USE-DAR NO\r\n");
-	    $event->("SENT-USE-DAR-NO");
-	}
 	if ($params{'datapath'} ne 'none' and $params{'emulate'} ne 'inetd') {
 	    my $dp = ($params{'datapath'} eq 'amanda')? 'AMANDA' : 'AMANDA DIRECT-TCP';
 	    $service->send($cmd_stream, "AVAIL-DATAPATH $dp\r\n");
@@ -441,12 +541,13 @@ sub run_amidxtaped {
 	    $service->expect($cmd_stream,
 		[ re => qr/^USE-DATAPATH .*\r\n/, $steps->{'got_dp'} ]);
 	} else {
-	    $steps->{'expect_data'}->();
+	    $steps->{'expect_data_send'}->();
 	}
     };
 
     step got_dp => sub {
 	my ($dp, $addrs) = ($_[0] =~ /USE-DATAPATH (\S+)(.*)\r\n/);
+	$datapath = $dp;
 	$event->("GOT-DP-$dp");
 
 	# if this is a direct-tcp connection, then we need to connect to
@@ -461,14 +562,10 @@ sub run_amidxtaped {
 	    $service->connect('directtcp', $port);
 	    $data_stream = 'directtcp';
 	}
-
-	$steps->{'expect_data'}->();
+	$steps->{'expect_data_send'}->();
     };
 
-    step do_nothing => sub {
-    };
-
-    step expect_data => sub {
+    step expect_data_send => sub {
 	$service->expect($data_stream,
 	    [ bytes_to_eof => $steps->{'got_data'} ]);
 	# note that we ignore EOF on the control connection,
@@ -479,6 +576,31 @@ sub run_amidxtaped {
 	    $event->("SENT-DATAPATH-OK");
 	}
 
+	if (!$sendfeat->has($Amanda::Feature::fe_amrecover_data_send)) {
+	    return $steps->{'send_data_ready'}->();
+	}
+	$service->expect($cmd_stream,
+		[ re => qr/^DATA-SEND\r\n/, $steps->{'got_data_send'} ]);
+    };
+
+    step got_data_send => sub {
+	diag("got_data_send") if $debug;
+	$event->('GOT-DATA-SEND');
+	$steps->{'send_data_ready'}->();
+    };
+
+    step send_data_ready => sub {
+	if ($sendfeat->has($Amanda::Feature::fe_amrecover_data_ready) ||
+	    $params{'datapath'} eq 'directtcp') {
+	    $service->send($cmd_stream, "DATA-READY\r\n");
+	}
+	$steps->{'expect_data'}->();
+    };
+
+    step do_nothing => sub {
+    };
+
+    step expect_data => sub {
     };
 
     step got_data => sub {
@@ -486,6 +608,9 @@ sub run_amidxtaped {
 
 	$datasize = $bytes;
 	$event->("DATA-TO-EOF");
+	#if ($sendfeat->has($Amanda::Feature::fe_amrecover_data_done)) {
+	#    $service->send($cmd_stream, "DATA-DONE\r\n");
+	#}
     };
 
     # expected errors jump right to this
@@ -589,9 +714,13 @@ sub run_amidxtaped {
 			'SEND-FEAT', 'GOT-FEAT', 'SENT-CMD',
 			($inetd and $params{'splits'})? ('GOT-CONNECT', 'DATA-SECURITY') : (),
 			$params{'feedme'}? ('GOT-MESSAGE', 'GOT-FEEDME') : (),
+			$params{'header'}&$sendfeat->has($Amanda::Feature::fe_amrecover_header_send_size)? ('GOT-HEADER-SEND-SIZE') : (),
 			$params{'header'}? ('GOT-HEADER') : (),
-			$params{'dar'} ? 'SENT-USE-DAR-NO' : (),
+			$params{'state'}&$sendfeat->has($Amanda::Feature::fe_amrecover_state_send)? ('GOT-STATE-SEND') : (),
+			$params{'state'}? ('GOT-STATE') : (),
+			$params{'dar'} ? ('GOT-DAR-YES', 'SENT-USE-DAR-NO') : (),
 			@datapath_evts,
+			$sendfeat->has($Amanda::Feature::fe_amrecover_data_send)? ('GOT-DATA-SEND') : (),
 			'DATA-TO-EOF', 'EXIT-0', );
 	    # handle a few error conditions differently
 	    if ($params{'bad_cmd'}) {
