@@ -373,6 +373,8 @@ amglue_export_tag(encoding, hexencode hexdecode);
 char *sanitise_filename(char *inp);
 %newobject quote_string;
 char *quote_string(char *);
+%newobject quote_string_always;
+char *quote_string_always(char *);
 %newobject unquote_string;
 char *unquote_string(char *);
 GPtrArray *expand_braced_alternates(char *);
@@ -380,7 +382,7 @@ GPtrArray *expand_braced_alternates(char *);
 char *collapse_braced_alternates(GPtrArray *source);
 %newobject split_quoted_strings;
 gchar **split_quoted_strings(const gchar *string);
-amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string
+amglue_export_tag(quoting, quote_string quote_string_always unquote_string skip_quoted_string
 		sanitise_filename split_quoted_strings split_quoted_strings_friendly);
 amglue_export_tag(alternates, expand_braced_alternates collapse_braced_alternates);
 
