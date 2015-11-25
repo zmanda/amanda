@@ -487,6 +487,12 @@ PM_FILES += $(AmandaReport_DATA)
 EXTRA_DIST += $(AmandaReport_DATA)
 endif
 
+if WANT_SERVER
+# PACKAGE: Amanda::Amservice
+Amanda_DATA += Amanda/Amservice.pm
+endif
+EXTRA_DIST += Amanda/Amservice.pm
+
 # PACKAGE: Amanda::BigIntCompat
 Amanda_DATA += Amanda/BigIntCompat.pm
 EXTRA_DIST += Amanda/BigIntCompat.pm
