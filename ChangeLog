@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Install perl/Amanda/FetchDump files
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Extract.pm: Correctly check if program_path is an
 	  Amanda::Message
 

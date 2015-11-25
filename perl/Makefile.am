@@ -335,8 +335,14 @@ EXTRA_DIST +=  Amanda/Restore.pm
 if WANT_SERVER
 # PACKAGE: Amanda::FetchDump
 Amanda_DATA += Amanda/FetchDump.pm
+# PACKAGE: Amanda::FetchDump::*
+AmandaFetchDumpdir = $(amperldir)/Amanda/FetchDump
+AmandaFetchDump_DATA = \
+	Amanda/FetchDump/Application.pm \
+	Amanda/FetchDump/ClientApplication.pm \
+	Amanda/FetchDump/Local.pm
 endif
-EXTRA_DIST += Amanda/FetchDump.pm
+EXTRA_DIST += Amanda/FetchDump.pm $(AmandaFetchDump_DATA)
 
 if WANT_SERVER
 # PACKAGE: Amanda::Curinfo
