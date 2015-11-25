@@ -2060,6 +2060,7 @@ read_conffile(
 		    current_filename, strerror(errno));
 	goto finish;
     }
+    g_debug("reading config file %s", current_filename);
 
     current_line_num = 0;
 

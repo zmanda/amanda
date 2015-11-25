@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Log which conffile is read
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Typo
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
