@@ -30,6 +30,9 @@
 <cmdsynopsis>
   <command>amservice</command>    
     <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg><arg choice='opt'>-s</arg></arg>
+    <arg choice='opt'><arg choice='plain'>--config</arg><arg choice='plain'><replaceable>CONFIG</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--features</arg><arg choice='plain'><replaceable>FEATURES-STRING</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--stream</arg><arg choice='plain'><replaceable>NAME,IN,OUT</replaceable></arg></arg>*
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
     <arg choice='plain'><replaceable>auth</replaceable></arg>
@@ -81,6 +84,27 @@ The client must be configured with this auth.</para>
   <term><option>-s</option></term>
   <listitem>
 <para>Redirect the first connected stream to stdin/stdout. The -f argument is required for the REQ packet, the REP packet is not printed on stdout.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--config</option></term>
+  <listitem>
+<para>The amanda configuration.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--features</option><arg choice='plain'><replaceable>FEATURES-STRING</replaceable></arg></term>
+  <listitem>
+<para>The features of the remote client.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--stream</option><arg choice='plain'><replaceable>NAME,IN,OUT</replaceable></arg></term>
+  <listitem>
+<para>The vstream to open, their name and the two file descriptors.</para>
   </listitem>
   </varlistentry>
 
