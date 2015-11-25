@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Typo
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Util.swg: swig quote_string_always
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>

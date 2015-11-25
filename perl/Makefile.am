@@ -329,8 +329,8 @@ Amanda_DATA += Amanda/CheckDump.pm
 endif
 EXTRA_DIST += Amanda/CheckDump.pm
 
-Amanda_DATA += Amanda/restore.pm
-EXTRA_DIST +=  Amanda/restore.pm
+Amanda_DATA += Amanda/Restore.pm
+EXTRA_DIST +=  Amanda/Restore.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::FetchDump
@@ -480,10 +480,10 @@ AmandaServicedir = $(amperldir)/Amanda/Service
 AmandaService_DATA =
 if WANT_SERVER
 AmandaService_DATA += Amanda/Service/Amidxtaped.pm
-#endif
+endif
 if WANT_CLIENT
 AmandaService_DATA += Amanda/Service/Restore.pm
-#endif
+endif
 PM_FILES += $(AmandaService_DATA)
 EXTRA_DIST += $(AmandaService_DATA)
 
