@@ -1,4 +1,7 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Add the restore service
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amservice.8.xml: Document new amservice options
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>

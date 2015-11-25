@@ -84,7 +84,8 @@ typedef enum {
     SERVICE_AMINDEXD,
     SERVICE_AMIDXTAPED,
     SERVICE_AMDUMPD,
-    SERVICE_SENDDISCOVER
+    SERVICE_SENDDISCOVER,
+    SERVICE_RESTORE
 } service_t;
 
 static struct services {
@@ -99,7 +100,8 @@ static struct services {
    { "amindexd", 0, SERVICE_AMINDEXD },
    { "amidxtaped", 0, SERVICE_AMIDXTAPED },
    { "amdumpd", 0, SERVICE_AMDUMPD },
-   { "senddiscover", 1, SERVICE_SENDDISCOVER }
+   { "senddiscover", 1, SERVICE_SENDDISCOVER },
+   { "restore", 1, SERVICE_RESTORE }
 };
 #define NSERVICES G_N_ELEMENTS(services)
 
@@ -1456,10 +1458,8 @@ process_readnetfd(
     if (n == 0) {
 	event_release(dh->ev_read);
 	dh->ev_read = NULL;
-	if(dh->ev_write == NULL) {
-	    security_stream_close(dh->netfd);
-	    dh->netfd = NULL;
-	}
+	security_stream_close(dh->netfd);
+	dh->netfd = NULL;
 	for (dh = &as->data[0]; dh < &as->data[DATA_FD_COUNT]; dh++) {
 	    if (dh->netfd != NULL)
 		return;
