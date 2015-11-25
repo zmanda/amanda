@@ -166,6 +166,11 @@ typedef struct security_driver {
     void (*stream_close)(void *);
 
     /*
+     * Close a stream opened with stream_server or stream_client
+     */
+    void (*stream_close_async)(void *, void (*fn)(void *, ssize_t, void *, ssize_t), void *arg);
+
+    /*
      * Authenticate a stream.
      */
     int (*stream_auth)(void *);
@@ -180,6 +185,11 @@ typedef struct security_driver {
      * Write to a stream.
      */
     int (*stream_write)(void *, const void *, size_t);
+
+    /*
+     * Write to a stream.
+     */
+    int (*stream_write_async)(void *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
 
     /*
      * Read asyncronously from a stream.  Only one request can exist
@@ -203,6 +213,7 @@ typedef struct security_driver {
     int (*data_decrypt)(void *, void *, ssize_t, void **, ssize_t *);
 
     ssize_t (*data_write)(void *, struct iovec *iov, int iovcnt);
+    ssize_t (*data_write_non_blocking)(void *, struct iovec *iov, int iovcnt);
     ssize_t (*data_read)(void *, void *, size_t, int timeout);
 } security_driver_t;
 
@@ -394,6 +405,9 @@ void security_stream_seterror(security_stream_t *, const char *, ...)
 /* Closes a security stream and frees up resources associated with it. */
 void security_stream_close(security_stream_t *);
 
+/* Closes a security stream and frees up resources associated with it. */
+void security_stream_close_async(security_stream_t *, void (*fn)(void *, ssize_t, void *, ssize_t), void *arg);
+
 /* int security_stream_auth(security_stream_t *);
  *
  * Authenticate a connected security stream.  This should be called by the
@@ -424,9 +438,21 @@ void security_stream_close(security_stream_t *);
 #define	security_stream_write(stream, buf, size)	\
     (*(stream)->driver->stream_write)(stream, buf, size)
 
+/* int security_stream_write_async(security_stream_t *, void *, size_t,
+ *                                 void (*fn)(void *, ssize_t, void *, size_t),
+ *                                 void *arg);
+ *
+ * Writes a chunk of data to the security stream. Returns 0 if the write is queued, or
+ * negative on error. Error messages can be obtained by calling
+ * security_stream_geterror().
+ * The buffer is automacaly freed, the caller should not use of free it.
+ */
+#define	security_stream_write_async(stream, buf, size, fn, arg)	\
+    (*(stream)->driver->stream_write_async)(stream, buf, size, fn, arg)
+
 /* void security_stream_read(
  *  security_stream_t *stream,
- *  void (*fn)(void *, void *, size_t),
+ *  void (*fn)(void *, size_t),
  *  void *arg);
 
  * Requests that when data is ready to be read on this stream, the given

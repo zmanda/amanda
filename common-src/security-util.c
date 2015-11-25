@@ -59,6 +59,11 @@ static void stream_read_sync_callback(void *);
 static void sec_tcp_conn_read_cancel(struct tcp_conn *);
 static void sec_tcp_conn_read_callback(void *);
 
+static void tcpm_send_token_helper(struct tcp_conn *rc, int handle,
+			           const void *buf, size_t len,
+				   struct iovec **iov, int *nb_iov,
+				   char **envbuf, ssize_t *encsize);
+static void tcpm_send_token_callback(void *cookie);
 
 /*
  * Authenticate a stream
@@ -102,7 +107,7 @@ sec_accept(
 {
     struct tcp_conn *rc;
 
-    rc = sec_tcp_conn_get("",0); /* no hostname yet */
+    rc = sec_tcp_conn_get("localhost",0); /* no hostname yet */
     rc->read = in;
     rc->write = out;
     rc->accept_fn = fn;
@@ -146,8 +151,8 @@ sec_connect_callback(
 {
     struct sec_handle *rh = cookie;
 
-    event_release(rh->rs->ev_read);
-    rh->rs->ev_read = NULL;
+    event_release(rh->rs->rc->ev_write);
+    rh->rs->rc->ev_write = NULL;
     event_release(rh->ev_timeout);
     rh->ev_timeout = NULL;
 
@@ -327,6 +332,32 @@ tcpm_stream_write(
 }
 
 /*
+ * Write a chunk of data to a stream.
+ */
+int
+tcpm_stream_write_async(
+    void *	s,
+    void *	buf,
+    size_t	size,
+    void        (*fn)(void *, ssize_t, void *, ssize_t),
+    void *      arg)
+{
+    struct sec_stream *rs = s;
+    int stack_size;
+
+    assert(rs != NULL);
+    assert(rs->rc != NULL);
+
+    auth_debug(6, _("sec: stream_write: writing %zu bytes to %s:%d %d\n"),
+		   size, rs->rc->hostname, rs->handle,
+		   rs->rc->write);
+
+    stack_size = tcpm_send_token_async(rs, buf, size, fn, arg);
+
+    return (stack_size);
+}
+
+/*
  * Submit a request to read some data.  Calls back with the given
  * function and arg when completed.
  */
@@ -357,7 +388,7 @@ static ssize_t  sync_pktlen;
 static void    *sync_pkt;
 
 /*
- * Write a chunk of data to a stream.  Blocks until completion.
+ * Read a chunk of data from a stream.  Blocks until completion.
  */
 ssize_t
 tcpm_stream_read_sync(
@@ -376,6 +407,10 @@ tcpm_stream_read_sync(
     }
     sync_pktlen = 0;
     sync_pkt = NULL;
+    if (rs->closed_by_network) {
+	security_stream_seterror(&rs->secstr, "Failed to read from handle %d because server already closed it", rs->handle);
+	return -1;
+    }
     rs->ev_read = event_register((event_id_t)rs->rc->event_id, EV_WAIT,
         stream_read_sync_callback, rs);
     sec_tcp_conn_read(rs->rc);
@@ -408,25 +443,22 @@ tcpm_stream_read_cancel(
  * Transmits a chunk of data over a rsh_handle, adding
  * the necessary headers to allow the remote end to decode it.
  */
-ssize_t
-tcpm_send_token(
+static void
+tcpm_send_token_helper(
     struct tcp_conn *rc,
-    int		handle,
-    char **	errmsg,
-    const void *buf,
-    size_t	len)
+    int		     handle,
+    const void      *buf,
+    size_t	     len,
+    struct iovec   **iov,
+    int             *nb_iov,
+    char           **encbuf,
+    ssize_t         *encsize)
 {
-    guint32		nethandle;
-    guint32		netlength;
-    struct iovec	iov[3];
-    int			nb_iov = 3;
-    int			rval;
-    char		*encbuf;
-    ssize_t		encsize;
-    int			save_errno;
+    guint32		*nethandle = g_malloc(sizeof(guint32));
+    guint32		*netlength = g_malloc(sizeof(guint32));
     time_t		logtime;
 
-    assert(sizeof(netlength) == 4);
+    assert(sizeof(*netlength) == 4);
 
     logtime = time(NULL);
     if (logtime > rc->logstamp + 10) {
@@ -442,32 +474,34 @@ tcpm_send_token(
      *   32 bit handle (network byte order)
      *   data
      */
-    netlength = htonl(len);
-    iov[0].iov_base = (void *)&netlength;
-    iov[0].iov_len = sizeof(netlength);
+    *netlength = htonl(len);
+    (*iov)[0].iov_base = (void *)netlength;
+    (*iov)[0].iov_len = sizeof(*netlength);
 
-    nethandle = htonl((guint32)handle);
-    iov[1].iov_base = (void *)&nethandle;
-    iov[1].iov_len = sizeof(nethandle);
+    *nethandle = htonl((guint32)handle);
+    (*iov)[1].iov_base = (void *)nethandle;
+    (*iov)[1].iov_len = sizeof(*nethandle);
 
-    encbuf = (char *)buf;
-    encsize = len;
+    *encbuf = (char *)buf;
+    *encsize = len;
 
     if(len == 0) {
-	nb_iov = 2;
+	(*iov)[2].iov_base = NULL;
+	(*iov)[2].iov_len = 0;
+	*nb_iov = 2;
     }
     else {
 	if (rc->driver->data_encrypt == NULL) {
-	    iov[2].iov_base = (void *)buf;
-	    iov[2].iov_len = len;
+	    (*iov)[2].iov_base = (void *)buf;
+	    (*iov)[2].iov_len = len;
 	} else {
 	    /* (the extra (void *) cast is to quiet type-punning warnings) */
-	    rc->driver->data_encrypt(rc, (void *)buf, len, (void **)(void *)&encbuf, &encsize);
-	    iov[2].iov_base = (void *)encbuf;
-	    iov[2].iov_len = encsize;
-	    netlength = htonl(encsize);
+	    rc->driver->data_encrypt(rc, (void *)buf, len, (void **)(void *)encbuf, encsize);
+	    (*iov)[2].iov_base = (void *)*encbuf;
+	    (*iov)[2].iov_len = *encsize;
+	    *netlength = htonl(*encsize);
 	}
-        nb_iov = 3;
+        *nb_iov = 3;
     }
 
     if (debug_auth >= 3) {
@@ -476,9 +510,32 @@ tcpm_send_token(
 	crc32_add((uint8_t *)buf, len, &crc);
 	g_debug("packet send CRC: %d %08x:%llu", handle, crc32_finish(&crc), (long long)crc.size);
     }
+}
 
-    rval = rc->driver->data_write(rc, iov, nb_iov);
+ssize_t
+tcpm_send_token(
+    struct tcp_conn *rc,
+    int		handle,
+    char **	errmsg,
+    const void *buf,
+    size_t	len)
+{
+    struct iovec  iov[3];
+    struct iovec  iov_copy[3];
+    struct iovec  *iovx = iov;
+    int           nb_iov = 3;
+    char         *encbuf;
+    ssize_t       encsize;
+    int           rval;
+    int           save_errno;
+
+    tcpm_send_token_helper(rc, handle, buf, len, &iovx, &nb_iov, &encbuf, &encsize);
+    /* copy iov because data_write modify it */
+    memcpy(iov_copy, iov, 3*sizeof(struct iovec));
+    rval = rc->driver->data_write(rc, iov_copy, nb_iov);
     save_errno = errno;
+    g_free(iov[0].iov_base);
+    g_free(iov[1].iov_base);
     if (len != 0 && rc->driver->data_encrypt != NULL && buf != encbuf) {
 	amfree(encbuf);
     }
@@ -492,6 +549,112 @@ tcpm_send_token(
         return (-1);
     }
     return (0);
+}
+
+ssize_t
+tcpm_send_token_async(
+    struct sec_stream *rs,
+    void *	buf,
+    size_t	len,
+    void        (*fn)(void *, ssize_t, void *, ssize_t),
+    void *      arg)
+{
+    struct iovec  iov[3];
+    struct iovec  *iovx = iov;
+    int           nb_iov = 3;
+    char         *encbuf;
+    ssize_t       encsize;
+    async_write_data *awd;
+
+    int	handle = rs->handle;
+
+    tcpm_send_token_helper(rs->rc, handle, buf, len, &iovx, &nb_iov, &encbuf, &encsize);
+
+    awd = g_new0(struct async_write_data, 1);
+    memcpy(awd->iov, iov, 3*sizeof(struct iovec));
+    awd->nb_iov = nb_iov;
+    memcpy(awd->copy_iov, iov, 3*sizeof(struct iovec));
+    awd->copy_nb_iov = nb_iov;
+    awd->buf = encbuf;
+    awd->written = 0;
+    awd->fn = fn;
+    awd->arg = arg;
+    if (encbuf != buf)
+	amfree(buf);
+    rs->rc->async_write_data_list = g_list_append(rs->rc->async_write_data_list, awd);
+    rs->rc->async_write_data_size += 8 + len;
+
+    if(!rs->rc->ev_write) {
+	rs->rc->ev_write = event_register(
+			(event_id_t)(rs->rc->write),
+			EV_WRITEFD, tcpm_send_token_callback, rs);
+    }
+    return (rs->rc->async_write_data_size);
+}
+
+static void
+tcpm_send_token_callback(
+    void *      cookie)
+{
+    struct sec_stream *rs = cookie;
+    gboolean done = FALSE;
+    async_write_data *awd = NULL;
+
+    if (rs->rc->async_write_data_list) {
+	int rval;
+	int save_errno;
+	awd = (async_write_data *)rs->rc->async_write_data_list->data;
+	rval = rs->rc->driver->data_write_non_blocking(rs->rc, awd->copy_iov, awd->copy_nb_iov);
+	save_errno = errno;
+	if (rval < 0) {
+	    security_stream_seterror(&rs->secstr, "write error to: %s", strerror(save_errno));
+	    if (awd->fn) {
+		(*awd->fn)(awd->arg, rs->rc->async_write_data_size, NULL, -1);
+	    }
+            return;
+	}
+
+	awd->written += rval;
+	rs->rc->async_write_data_size -= rval;
+	/* if completely written */
+	if (awd->copy_iov[0].iov_len == 0 &&
+	    awd->copy_iov[1].iov_len == 0 &&
+	    (awd->nb_iov < 2 || awd->copy_iov[2].iov_len == 0)) {
+	    if (awd->fn) {
+		(*awd->fn)(awd->arg, rs->rc->async_write_data_size, awd->buf, awd->written);
+	    }
+	    g_free(awd->iov[0].iov_base);
+	    g_free(awd->iov[1].iov_base);
+	    rs->rc->async_write_data_list = g_list_remove(rs->rc->async_write_data_list,
+						      awd);
+	    done = TRUE;
+	}
+    }
+
+    /* unschedule us */
+    if (!rs->rc->async_write_data_list) {
+	event_release(rs->rc->ev_write);
+	rs->rc->ev_write = NULL;
+    }
+
+    if (done && !awd->buf) { /* closing */
+
+	if (rs->handle < 10000 || rs->closed_by_network == 1) {
+	    security_stream_read_cancel(&rs->secstr);
+	    rs->closed_by_network = 1;
+	    sec_tcp_conn_put(rs->rc);
+	}
+	rs->closed_by_me = 1;
+	if (rs->closed_by_network) {
+	    amfree(((security_stream_t *)rs)->error);
+	    amfree(rs);
+	}
+
+    }
+    if (done) {
+	g_free(awd);
+    }
+    return;
 }
 
 /*
@@ -660,7 +823,7 @@ tcpm_close_connection(
 
     (void)hostname;
 
-    if (rh && rh->rc && rh->rc->read >= 0 && rh->rc->toclose == 0) {
+    if (rh && rh->rc && rh->rc->read >= 0) {
 	rh->rc->toclose = 1;
 	sec_tcp_conn_put(rh->rc);
     }
@@ -783,13 +946,38 @@ tcpma_stream_close(
 
     auth_debug(1, _("sec: tcpma_stream_close: closing stream %d\n"), rs->handle);
 
-    if(rs->closed_by_network == 0 && rs->rc->write != -1)
+    if (rs->rc->write != -1)
 	tcpm_stream_write(rs, &buf, 0);
-    security_stream_read_cancel(&rs->secstr);
-    if(rs->closed_by_network == 0)
+    if (rs->handle < 10000 || rs->closed_by_network == 1) {
+	security_stream_read_cancel(&rs->secstr);
+	rs->closed_by_network = 1;
 	sec_tcp_conn_put(rs->rc);
-    amfree(((security_stream_t *)rs)->error);
-    amfree(rs);
+    }
+    rs->closed_by_me = 1;
+    if (rs->closed_by_network) {
+	amfree(((security_stream_t *)rs)->error);
+	amfree(rs);
+    }
+}
+
+/*
+ * Close and unallocate resources for a stream.
+ */
+void
+tcpma_stream_close_async(
+    void *	s,
+    void        (*fn)(void *, ssize_t, void *, ssize_t),
+    void *      arg)
+{
+    struct sec_stream *rs = s;
+    //char buf = 0;
+
+    assert(rs != NULL);
+
+    auth_debug(1, _("sec: tcpma_stream_close_async: closing stream %d\n"), rs->handle);
+
+    if (rs->rc->write != -1)
+	tcpm_stream_write_async(rs, NULL, 0, fn, arg);
 }
 
 /*
@@ -932,6 +1120,22 @@ tcp_stream_write(
         return (-1);
     }
     return (0);
+}
+
+/*
+ * Write a chunk of data to a stream.  Blocks until completion.
+ */
+int
+tcp_stream_write_async(
+    void *	s,
+    void *	buf,
+    size_t	size,
+    void        (*fn)(void *, ssize_t, void *, ssize_t),
+    void *      arg)
+{
+    int r = tcp_stream_write(s, buf, size);
+    (*fn)(arg, 0, buf, r);
+    return 0;
 }
 
 char *
@@ -1685,7 +1889,7 @@ stream_read_sync_callback(
     struct sec_stream *rs = s;
     assert(rs != NULL);
 
-    auth_debug(6, _("sec: stream_read_callback_sync: handle %d\n"), rs->handle);
+    auth_debug(6, _("sec: stream_read_sync_callback: handle %d\n"), rs->handle);
 
     /*
      * Make sure this was for us.  If it was, then blow away the handle
@@ -1694,10 +1898,10 @@ stream_read_sync_callback(
      * If the handle is EOF, pass that up to our callback.
      */
     if (rs->rc->handle == rs->handle) {
-        auth_debug(6, _("sec: stream_read_callback_sync: it was for us\n"));
+        auth_debug(6, _("stream_read_sync_callback: stream_read_sync_callback: it was for us\n"));
         rs->rc->handle = H_TAKEN;
     } else if (rs->rc->handle != H_EOF) {
-        auth_debug(6, _("sec: stream_read_callback_sync: not for us\n"));
+        auth_debug(6, _("stream_read_sync_callback: stream_read_sync_callback: not for us\n"));
         return;
     }
 
@@ -1715,13 +1919,14 @@ stream_read_sync_callback(
     if (rs->rc->pktlen <= 0) {
 	auth_debug(6, _("sec: stream_read_sync_callback: %s\n"), rs->rc->errmsg);
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
-	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
+	if(rs->closed_by_me == 1 && rs->closed_by_network == 0) {
 	    sec_tcp_conn_put(rs->rc);
+	}
 	rs->closed_by_network = 1;
 	return;
     }
     auth_debug(6,
-	    _("sec: stream_read_callback_sync: read %zd bytes from %s:%d\n"),
+	    _("sec: stream_read_sync_callback: read %zd bytes from %s:%d\n"),
 	    rs->rc->pktlen, rs->rc->hostname, rs->handle);
 }
 
@@ -1769,8 +1974,9 @@ stream_read_callback(
 	auth_debug(5, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
 	tcpm_stream_read_cancel(rs);
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
-	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
+	if(rs->closed_by_me == 1 && rs->closed_by_network == 0) {
 	    sec_tcp_conn_put(rs->rc);
+	}
 	rs->closed_by_network = 1;
 	(*rs->fn)(rs->arg, NULL, rs->rc->pktlen);
 	return;
@@ -1822,10 +2028,11 @@ sec_tcp_conn_read_callback(
 	    if(rc->refcnt != 1) {
 		dbprintf(_("STRANGE, rc->refcnt should be 1, it is %d\n"),
 			  rc->refcnt);
-		rc->refcnt=1;
 	    }
 	    rc->accept_fn = NULL;
-	    sec_tcp_conn_put(rc);
+	    while (rc->refcnt > 0) {
+		sec_tcp_conn_put(rc);
+	    }
 	}
 	return;
     }
@@ -1835,6 +2042,9 @@ sec_tcp_conn_read_callback(
 	revent = event_wakeup((event_id_t)rc->event_id);
 	auth_debug(6,
 		   _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
+	if (rc->handle != H_TAKEN) {
+	    g_debug("ignoring close stream %d", rc->handle);
+	}
 	return;
     }
 
@@ -1843,7 +2053,11 @@ sec_tcp_conn_read_callback(
     revent = event_wakeup((event_id_t)rc->event_id);
     auth_debug(6, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
     rc->donotclose = 0;
-    if (rc->handle == H_TAKEN || rc->pktlen == 0) {
+    if (rc->handle == H_TAKEN) {
+	if(rc->refcnt == 0) amfree(rc);
+	return;
+    }
+    if (rc->pktlen == 0) {
 	if(rc->refcnt == 0) amfree(rc);
 	return;
     }
@@ -2729,6 +2943,39 @@ generic_data_write(
 {
     struct tcp_conn *rc = cookie;
     return full_writev(rc->write, iov, iovcnt);
+}
+
+ssize_t
+generic_data_write_non_blocking(
+    void         *cookie,
+    struct iovec *iov,
+    int           iovcnt)
+{
+    struct tcp_conn *rc = cookie;
+    ssize_t r;
+    ssize_t n;
+    ssize_t delta;
+
+    int flags = fcntl(rc->write, F_GETFL, 0);
+    flags = fcntl(rc->write, F_SETFL, flags|O_NONBLOCK);
+
+    while(iovcnt>0 && iov->iov_len == 0) {
+	iov++;
+	iovcnt--;
+    }
+
+    r = writev(rc->write, iov, iovcnt);
+    n = r;
+
+    for (; n > 0; iovcnt--, iov++) {
+	delta = ((size_t)n < (size_t)iov->iov_len) ? n : (ssize_t)iov->iov_len;
+	n -= delta;
+	iov->iov_len -= delta;
+	iov->iov_base = (char *)iov->iov_base + delta;
+	if (iov->iov_len > 0)
+	    break;
+    }
+    return r;
 }
 
 ssize_t

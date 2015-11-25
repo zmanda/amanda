@@ -185,9 +185,11 @@ const security_driver_t krb5_security_driver = {
     tcpma_stream_accept,
     tcpma_stream_client,
     tcpma_stream_close,
+    tcpma_stream_close_async,
     sec_stream_auth,
     sec_stream_id,
     tcpm_stream_write,
+    tcpm_stream_write_async,
     tcpm_stream_read,
     tcpm_stream_read_sync,
     tcpm_stream_read_cancel,
@@ -195,6 +197,7 @@ const security_driver_t krb5_security_driver = {
     k5_encrypt,
     k5_decrypt,
     generic_data_write,
+    generic_data_write_non_blocking,
     generic_data_read
 };
 
@@ -308,7 +311,7 @@ krb5_connect(
      */
     rh->fn.connect = fn;
     rh->arg = arg;
-    rh->rs->ev_read = event_register((event_id_t)(rh->rs->rc->write),
+    rh->rs->rc->ev_write = event_register((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
     rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);

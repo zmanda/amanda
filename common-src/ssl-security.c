@@ -63,6 +63,7 @@ static void ssl_connect(const char *,
     char *(*)(char *, void *),
     void (*)(void *, security_handle_t *, security_status_t), void *, void *);
 static ssize_t ssl_data_write(void *c, struct iovec *iov, int iovcnt);
+static ssize_t ssl_data_write_non_blocking(void *c, struct iovec *iov, int iovcnt);
 static ssize_t ssl_data_read(void *c, void *bug, size_t size, int timeout);
 static void init_ssl(void);
 
@@ -82,9 +83,11 @@ const security_driver_t ssl_security_driver = {
     tcpma_stream_accept,
     tcpma_stream_client,
     tcpma_stream_close,
+    tcpma_stream_close_async,
     sec_stream_auth,
     sec_stream_id,
     tcpm_stream_write,
+    tcpm_stream_write_async,
     tcpm_stream_read,
     tcpm_stream_read_sync,
     tcpm_stream_read_cancel,
@@ -92,6 +95,7 @@ const security_driver_t ssl_security_driver = {
     NULL,
     NULL,
     ssl_data_write,
+    ssl_data_write_non_blocking,
     ssl_data_read
 };
 
@@ -244,7 +248,7 @@ ssl_connect(
      */
     rh->fn.connect = fn;
     rh->arg = arg;
-    rh->rs->ev_read = event_register((event_id_t)(rh->rs->rc->write),
+    rh->rs->rc->ev_write = event_register((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
     rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
@@ -839,10 +843,47 @@ ssl_data_write(
 
     size = 0;
     for (i=0; i < iovcnt; i++) {
-	size += SSL_write(rc->ssl, iov[i].iov_base, iov[i].iov_len);
+	size += SSL_write(rc->ssl, iov[i].iov_base, iov[i].iov_len); /* JLM check ERROR */
     }
     return size;
-    //return full_writev(rc->write, iov, iovcnt);
+}
+
+static ssize_t
+ssl_data_write_non_blocking(
+    void         *c,
+    struct iovec *iov,
+    int           iovcnt)
+{
+    struct tcp_conn *rc = c;
+    int              i;
+    int              size;
+    int              r;
+
+    int flags = fcntl(rc->write, F_GETFL, 0);
+    flags = fcntl(rc->write, F_SETFL, flags|O_NONBLOCK);
+
+    while(iovcnt>0 && iov->iov_len == 0) {
+        iov++;
+        iovcnt--;
+    }
+
+    size = 0;
+    for (i=0; i < iovcnt; i++) {
+	r = SSL_write(rc->ssl, iov[i].iov_base, iov[i].iov_len);
+	if (r < 0) {
+	    return size; /* JLM check ERROR */
+	} else if (r == 0) {
+	    return size; /* JLM check ERROR */
+	} else if ((unsigned int)r < iov[i].iov_len) {
+	    iov[i].iov_len -= r;
+	    size += r;
+	    return size;
+	} else {
+	    iov[i].iov_len = 0;
+	    size += r;
+	}
+    }
+    return size;
 }
 
 static ssize_t

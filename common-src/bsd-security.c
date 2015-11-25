@@ -61,6 +61,7 @@ static void *	bsd_stream_server(void *);
 static int	bsd_stream_accept(void *);
 static void *	bsd_stream_client(void *, int);
 static void	bsd_stream_close(void *);
+static void	bsd_stream_close_async(void *s, void (*fn)(void *, ssize_t, void *, ssize_t), void *arg);
 static int	bsd_stream_auth(void *);
 static int	bsd_stream_id(void *);
 static void	bsd_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
@@ -83,9 +84,11 @@ const security_driver_t bsd_security_driver = {
     bsd_stream_accept,
     bsd_stream_client,
     bsd_stream_close,
+    bsd_stream_close_async,
     bsd_stream_auth,
     bsd_stream_id,
     tcp_stream_write,
+    tcp_stream_write_async,
     bsd_stream_read,
     bsd_stream_read_sync,
     bsd_stream_read_cancel,
@@ -93,6 +96,7 @@ const security_driver_t bsd_security_driver = {
     NULL,
     NULL,
     generic_data_write,
+    generic_data_write_non_blocking,
     generic_data_read
 };
 
@@ -503,6 +507,28 @@ bsd_stream_close(
     if (bs->socket != -1)
 	aclose(bs->socket);
     bsd_stream_read_cancel(bs);
+    amfree(bs);
+}
+
+/*
+ * Close and unallocate resources for a stream
+ */
+static void
+bsd_stream_close_async(
+    void *	s,
+    void (*fn)(void *, ssize_t, void *, ssize_t),
+    void *arg)
+{
+    struct sec_stream *bs = s;
+
+    assert(bs != NULL);
+
+    if (bs->fd != -1)
+	aclose(bs->fd);
+    if (bs->socket != -1)
+	aclose(bs->socket);
+    bsd_stream_read_cancel(bs);
+    (*fn)(arg, 0, NULL, 0);
     amfree(bs);
 }
 

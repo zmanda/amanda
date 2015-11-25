@@ -1,3 +1,13 @@
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb5-security.c,
+	  common-src/local-security.c, common-src/rsh-security.c,
+	  common-src/security-util.c, common-src/security-util.h,
+	  common-src/security.c, common-src/security.h,
+	  common-src/ssh-security.c,
+	  common-src/ssl-security.c: Fix security API and add
+	  security_stream_write_async and security_stream_close_async
+
 2015-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/DB/Catalog.pm: Filter with the status
 	* perl/Amanda/Recovery/Planner.pm: Pass the status to

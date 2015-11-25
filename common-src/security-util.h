@@ -67,6 +67,17 @@
 #include <openssl/err.h>
 #endif
 
+typedef struct async_write_data {
+    struct iovec  iov[3];
+    int           nb_iov;
+    struct iovec  copy_iov[3];
+    int           copy_nb_iov;
+    void	 *buf;
+    ssize_t	  written;
+    void          (*fn)(void *, ssize_t, void *, ssize_t);
+    void	 *arg;
+} async_write_data;
+
 struct sec_handle;
 
 /*
@@ -80,7 +91,10 @@ struct tcp_conn {
     char *		pkt;			/* last pkt read */
     ssize_t		pktlen;			/* len of above */
     event_handle_t *	ev_read;		/* read (EV_READFD) handle */
+    event_handle_t *	ev_write;		/* write (EV_WRITEFD) handle */
     int			ev_read_refcnt;		/* number of readers */
+    GList	       *async_write_data_list;  /* list of block to write */
+    ssize_t		async_write_data_size;
     char		hostname[MAX_HOSTNAME_LENGTH+1];
 						/* host we're talking to */
     char *		errmsg;			/* error passed up */
@@ -236,10 +250,12 @@ void	stream_recvpkt_timeout(void *);
 void	stream_recvpkt_cancel(void *);
 
 int	tcpm_stream_write(void *, const void *, size_t);
+int	tcpm_stream_write_async(void *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
 void	tcpm_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
 ssize_t	tcpm_stream_read_sync(void *, void **);
 void	tcpm_stream_read_cancel(void *);
 ssize_t	tcpm_send_token(struct tcp_conn *, int, char **, const void *, size_t);
+ssize_t	tcpm_send_token_async(struct sec_stream *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
 ssize_t	tcpm_recv_token(struct tcp_conn *, int *, char **, char **, ssize_t *);
 void	tcpm_close_connection(void *, char *);
 
@@ -247,12 +263,14 @@ int	tcpma_stream_accept(void *);
 void *	tcpma_stream_client(void *, int);
 void *	tcpma_stream_server(void *);
 void	tcpma_stream_close(void *);
+void    tcpma_stream_close_async(void *s, void (*fn)(void *, ssize_t, void *, ssize_t), void *arg);
 
 void *	tcp1_stream_server(void *);
 int	tcp1_stream_accept(void *);
 void *	tcp1_stream_client(void *, int);
 
 int	tcp_stream_write(void *, const void *, size_t);
+int	tcp_stream_write_async(void *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
 
 char *	bsd_prefix_packet(void *, pkt_t *);
 int	bsd_recv_security_ok(struct sec_handle *, pkt_t *, int);
@@ -294,6 +312,7 @@ in_port_t find_port_for_service(char *service, char *proto);
 char	*sec_get_authenticated_peer_name_gethostname(security_handle_t *);
 char	*sec_get_authenticated_peer_name_hostname(security_handle_t *);
 ssize_t generic_data_write(void *, struct iovec *iov, int iovcnt);
+ssize_t generic_data_write_non_blocking(void *, struct iovec *iov, int iovcnt);
 ssize_t generic_data_read(void *, void *vbuf, size_t sizebuf, int timeout);
 
 #endif /* _SECURITY_INFO_H */

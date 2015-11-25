@@ -180,3 +180,14 @@ security_stream_close(
     amfree(stream->error);
     (*stream->driver->stream_close)(stream);
 }
+
+void
+security_stream_close_async(
+    security_stream_t *	stream,
+    void (*fn)(void *, ssize_t, void *, ssize_t),
+    void *arg)
+{
+    dbprintf(_("security_stream_close_async(%p)\n"), stream);
+    amfree(stream->error);
+    (*stream->driver->stream_close_async)(stream, fn, arg);
+}
