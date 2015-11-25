@@ -1,4 +1,8 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/CheckDump.pm: Use Amanda::Restore module
+	* server-src/amcheckdump.pl: Use Amanda::CheckDump
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* xfer-src/dest-fd.c, xfer-src/filter-crc.c,
 	  xfer-src/filter-process.c, xfer-src/source-fd.c,
 	  xfer-src/xfer-element.h: Small fix

@@ -57,6 +57,7 @@ my $exit_code = 0;
 
 my $opt_timestamp;
 my $opt_verbose = 0;
+my $opt_assume = 0;
 my $config_overrides = new_config_overrides($#ARGV+1);
 
 debug("Arguments: " . join(' ', @ARGV));
@@ -65,13 +66,12 @@ GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'timestamp|t=s' => \$opt_timestamp,
     'verbose|v'     => \$opt_verbose,
+    'assume=s'      => \$opt_assume,
     'help|usage|?'  => \&usage,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
 ) or usage();
 
 usage() if (@ARGV < 1);
-
-my $timestamp = $opt_timestamp;
 
 my $config_name = shift @ARGV;
 set_config_overrides($config_overrides);
@@ -94,32 +94,50 @@ if ($cfgerr_level >= $CFGERR_ERRORS) {
     exit(1);
 }
 
-my $exit_status = 0;
-my $exit_cb = sub {
-    ($exit_status) = @_;
-    Amanda::MainLoop::quit();
-};
-
-my $is_tty = -t STDOUT;
-
 sub user_msg {
     my $msg = shift;
 
     print STDOUT $msg . "\n";
 }
 
-my @messages;
-(my $checkdump, @messages) = Amanda::CheckDump->new(
-    config_name => $config_name,
-    timestamp   => $opt_timestamp,
-    verbose     => $opt_verbose,
-    user_msg    => \&user_msg,
-    is_tty      => $is_tty
-);
+my $checkdump;
+sub main {
+    my ($finished_cb) = @_;
+    $checkdump = Amanda::CheckDump->new();
 
-Amanda::MainLoop::call_later(sub { $checkdump->run($exit_cb) });
+    return $finished_cb->(1) if !defined $checkdump;
+
+    $checkdump->run(
+	assume    => $opt_assume,
+	timestamp => $opt_timestamp,
+	verbose   => $opt_verbose,
+	finished_cb => $finished_cb);
+}
+
+my $exit_status = 0;
+sub checkdump_done {
+    my $lexit_status = shift;
+
+    $exit_status = $lexit_status if defined $lexit_status;
+    Amanda::MainLoop::quit();
+}
+
+Amanda::MainLoop::call_later(sub { main(\&checkdump_done); });
 Amanda::MainLoop::run();
 
+if ($exit_status == 0) {
+    $checkdump->user_message(Amanda::CheckDump::Message->new(
+                    source_filename => __FILE__,
+                    source_line     => __LINE__,
+                    code            => 2700006,
+                    severity        => $Amanda::Message::SUCCESS));
+} else {
+    $checkdump->user_message(Amanda::CheckDump::Message->new(
+                    source_filename => __FILE__,
+                    source_line     => __LINE__,
+                    code            => 2700007,
+                    severity        => $Amanda::Message::ERROR));
+}
 Amanda::Util::finish_application();
 exit($exit_status);
 
