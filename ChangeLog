@@ -1,4 +1,8 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amservice.c: Add --stream and --config option, use
+	  security_stream_write_async
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c, common-src/krb5-security.c,
 	  common-src/local-security.c, common-src/rsh-security.c,
