@@ -329,6 +329,9 @@ Amanda_DATA += Amanda/CheckDump.pm
 endif
 EXTRA_DIST += Amanda/CheckDump.pm
 
+Amanda_DATA += Amanda/restore.pm
+EXTRA_DIST +=  Amanda/restore.pm
+
 if WANT_SERVER
 # PACKAGE: Amanda::FetchDump
 Amanda_DATA += Amanda/FetchDump.pm

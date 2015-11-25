@@ -1,5 +1,10 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
-	* perl/Amanda/Amservice.pm: New perl module to execute amservive.
+	* perl/Amanda/Restore.pm: New module to to do a recovery, all program
+	  will use it.
+	* perl/Makefile.am: Add Amanda/Restore.pm
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Amservice.pm: New perl module to execute amservive
 	* perl/Makefile.am: Add Amanda/Amservice.pm
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
