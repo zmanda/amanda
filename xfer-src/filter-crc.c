@@ -112,7 +112,6 @@ push_buffer_impl(
     if (elt->cancelled) {
 	/* send EOF to downstream */
 	xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, 0);
-	amfree(buf);
 	return;
     }
 

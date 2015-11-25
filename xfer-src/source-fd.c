@@ -109,12 +109,14 @@ xfer_source_fd(
 {
     XferSourceFd *self = (XferSourceFd *)g_object_new(XFER_SOURCE_FD_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
+    int old_fd;
 
     g_assert(fd >= 0);
 
     /* we read from a *copy* of this file descriptor, as the downstream element
      * will close output_fd on EOF */
-    g_assert(xfer_element_swap_output_fd(elt, dup(fd)) == -1);
+    old_fd = xfer_element_swap_output_fd(elt, dup(fd));
+    g_assert(old_fd == -1);
 
     return elt;
 }

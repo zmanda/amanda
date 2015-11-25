@@ -214,6 +214,7 @@ start_impl(
     close(rfd);
     close(wfd);
     close(self->pipe_err[1]);
+    self->pipe_err[1] = -1;
 
     /* watch for child death */
     self->child_watch = new_child_watch_source(self->child_pid);

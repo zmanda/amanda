@@ -566,6 +566,7 @@ XferElement * xfer_dest_directtcp_connect(DirectTCPAddr *addrs);
 XferElement * xfer_dest_directtcp_listen(void);
 
 int get_err_fd(XferElement *elt);
+
 /* A transfer dest that execute an application,
  * It can be used for restore, index and validate
  *
@@ -588,6 +589,5 @@ int dest_application_get_out_fd(XferElement *elt);
 
 /* return the dar fd of the application */
 int dest_application_get_dar_fd(XferElement *elt);
-
 
 #endif

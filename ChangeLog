@@ -1,4 +1,9 @@
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/dest-fd.c, xfer-src/filter-crc.c,
+	  xfer-src/filter-process.c, xfer-src/source-fd.c,
+	  xfer-src/xfer-element.h: Small fix
+
+2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Service/Amidxtaped.pm: New amidxtaped perl module, it
 	  use Amanda::Restore
 	* server-src/amidxtaped.pl: Use Amanda::Service::Amidxtaped
