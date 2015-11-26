@@ -1,6 +1,10 @@
+2015-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Remove define of _LARGEFILE64_SOURCE
+
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/syshacks.m4: Define _XOPEN_SOURCE and
-	  _XOPEN_SOURCE_EXTENDED on solaris
+	  _XOPEN_SOURCE_EXTENDED on solaris to get correct type for
+	  'struct iovec'
 
 2015-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Fix crash if orig_size == 0
