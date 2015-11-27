@@ -1985,13 +1985,13 @@ sub restore {
 
     step failure => sub {
 	my ($msg) = @_;
-	if (ref $msg ne "HASH" || !$msg->isa('Amanda::Message') {
+	if (ref $msg ne "HASH" || !$msg->isa('Amanda::Message')) {
 	    $msg = Amanda::Restore::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
 				code            => 4900068,
 				severity	=> $Amanda::Message::ERROR,
-				msg		=> $msg));
+				msg		=> $msg);
 	}
 	$self->user_message($msg);
 	$self->{'exit_status'} = 1;
