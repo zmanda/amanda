@@ -422,6 +422,10 @@ sub local_message {
 	return "Exit status: $self->{'exit_status'}";
     } elsif ($self->{'code'} == 4900066) {
 	return "Can't open message file '$self->{'message_filename'}' for writing: $self->{'errnostr'}";
+    } elsif ($self->{'code'} == 4900067) {
+	return "Storage $self->{'storage'} have no changer";
+    } elsif ($self->{'code'} == 4900068) {
+	return "$self->{'msg'}";
     } else {
 	return "No mesage for code '$self->{'code'}'";
     }
@@ -1186,7 +1190,14 @@ sub restore {
 	    };
 
 	    $chg = $storage{$storage_name}->{'chg'};
-	    return  $steps->{'failure'}->("nochanger") if !defined $chg;
+	    return  $steps->{'failure'}->(
+		Amanda::Restore::Message-> new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 4900067,
+			severity	=> $Amanda::Message::ERROR,
+			storage		=> $storage_name))
+		if !defined $chg;
 	    return  $steps->{'failure'}->($chg)
 		if $chg->isa("Amanda::Changer::Error");
 
@@ -1974,6 +1985,14 @@ sub restore {
 
     step failure => sub {
 	my ($msg) = @_;
+	if (ref $msg ne "HASH" || !$msg->isa('Amanda::Message') {
+	    $msg = Amanda::Restore::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code            => 4900068,
+				severity	=> $Amanda::Message::ERROR,
+				msg		=> $msg));
+	}
 	$self->user_message($msg);
 	$self->{'exit_status'} = 1;
 	$steps->{'quit2'}->();

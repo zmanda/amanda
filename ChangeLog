@@ -1,4 +1,7 @@
 2015-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Restore.pm: Fix Message handling
+
+2015-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindex.c (getstatefname): New functionto return the name
 	  of the state file
 	* server-src/amindex.h (getstatefname): Add prototype
