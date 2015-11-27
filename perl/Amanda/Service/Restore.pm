@@ -81,6 +81,7 @@ use Amanda::Recovery::Scan;
 use Amanda::DB::Catalog;
 use Amanda::Disklist;
 use Amanda::Restore;
+use Amanda::FetchDump;  # for Amanda::FetchDump::Message
 
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
@@ -346,7 +347,8 @@ sub transmit_dar {
     return 0 if !$self->{'their_features'}->has($Amanda::Feature::fe_restore_dar);
 
     my $line = $self->getline($self->{'ctl_stream'});
-    my $darspec = ($line =~ /^USE-DAR (.*)\r?\n$/);
+    $line =~ /^USE-DAR (.*)\r\n$/;
+    my $darspec = $1;
     if ($darspec ne "YES" && $darspec ne "NO") {
 	chomp $line;
 	chop $line;
@@ -358,7 +360,7 @@ sub transmit_dar {
 			expect          => "USE-DAR [YES|NO]",
 			line            => $line);
     }
-    $use_dar &= ($1 eq 'YES');
+    $use_dar &= ($darspec eq 'YES');
     $use_dar &= $self->{'bsu'}->{'dar'};
 
     if ($use_dar) {
@@ -367,6 +369,7 @@ sub transmit_dar {
 	$self->sendctlline("USE-DAR NO\r\n");
     }
 
+    $self->{'use_dar'} = $use_dar;
     return $use_dar;
 }
 

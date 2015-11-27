@@ -771,11 +771,9 @@ sub transmit_state_file {
 	    }
 	}
 
-        my $host = Amanda::Util::sanitise_filename("" . $header->{'name'});
-        my $disk = Amanda::Util::sanitise_filename("" . $header->{'disk'});
-        my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
-                '/' . $disk . '/' . $header->{'datestamp'} . '_' .
-                $header->{'dumplevel'} . '.state';
+	my $state_filename = Amanda::Logfile::getstatefname(
+			$header->{'name'}, $header->{'disk'},
+			$header->{'datestamp'}, $header->{'dumplevel'});
         my $state_filename_gz = $state_filename . $Amanda::Constants::COMPRESS_SUFFIX;
 	if (-e $state_filename || -e $state_filename_gz) {
 	    my $pid;
@@ -844,8 +842,9 @@ sub transmit_dar {
     }
 
     my $line = $self->getline($self->{'ctl_stream'});
-    my $darspec = ($line =~ /^USE-DAR (.*)\r\n$/);
-    if ($1 ne "YES" && $1 ne "NO") {
+    $line =~ /^USE-DAR (.*)\r\n$/;
+    my $darspec = $1;
+    if ($darspec ne "YES" && $darspec ne "NO") {
 	chomp $line;
 	chop $line;
 	return Amanda::FetchDump::Message->new(
@@ -856,7 +855,7 @@ sub transmit_dar {
 			expect          => "USE-DAR [YES|NO]",
 			line            => $line);
     }
-    $use_dar = ($1 eq 'YES');
+    $use_dar = ($darspec eq 'YES');
 
     return $use_dar;
 }

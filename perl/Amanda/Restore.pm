@@ -1577,15 +1577,6 @@ sub restore {
 	    my $fd = $xfer_dest->get_stderr_fd();
 	    $self->start_reading($fd, $steps->{'filter_done'}, 'application stderr');
 	}
-	if ($use_dar) {
-	    if ($self->{'feedback'}->can('start_read_dar')) {
-		$self->{'feedback'}->start_read_dar($xfer_dest, $steps->{'dar_data'}, $steps->{'filter_done'}, 'application dar');
-	    }
-	    $xfer_waiting_dar = 1;
-	} else {
-	    push @{$current_dump->{'range'}}, "0:-1";
-	}
-
 	if (@filters) {
 	    $xfer = Amanda::Xfer->new([ $xfer_src, @filters, $xfer_dest ]);
 	} else {
@@ -1611,6 +1602,15 @@ sub restore {
 	    my $result = $self->{'feedback'}->notify_start_backup();
 	    return $steps->{'failure'}->($result) if defined $result;
 	}
+	if ($use_dar) {
+	    if ($self->{'feedback'}->can('start_read_dar')) {
+		$self->{'feedback'}->start_read_dar($xfer_dest, $steps->{'dar_data'}, $steps->{'filter_done'}, 'application dar');
+	    }
+	    $xfer_waiting_dar = 1;
+	} else {
+	    push @{$current_dump->{'range'}}, "0:-1";
+	}
+
 	$xfer_waiting_dar = 1;
 	if ($self->{'feedback'}->can('start_msg')) {
 	    $self->{'feedback'}->start_msg($steps->{'dar_data'});

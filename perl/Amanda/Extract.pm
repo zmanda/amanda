@@ -294,32 +294,10 @@ sub set_argv {
     push @argv, "--directory", $params{'directory'} if $params{'directory'};
     push @argv, "--dar", "YES" if $params{'use_dar'};
 
-   if ($self->{'bsu'}->{'recover-dump-state-file'} &&
+    if ($action eq "restore" &&
+	$self->{'bsu'}->{'recover-dump-state-file'} &&
 	$params{'state_filename'}) {
 	push @argv, "--recover-dump-state-file", $params{'state_filename'};
-   } else {
-	my $host = Amanda::Util::sanitise_filename("".$self->{'hdr'}->{'name'});
-	my $disk = Amanda::Util::sanitise_filename("".$self->{'hdr'}->{'disk'});
-	my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
-			'/' . $disk . '/' . $self->{'hdr'}->{'datestamp'} .
-			'_' .  $self->{'hdr'}->{'dumplevel'} . '.state';
-	if (-e $state_filename) {
-	    push @argv, "--recover-dump-state-file",
-	    $state_filename;
-	} else {
-	    my $state_filename_gz = $state_filename . $Amanda::Constants::COMPRESS_SUFFIX;
-	    if (-e $state_filename_gz) {
-		open STATEFILE, '>', $state_filename;
-		my $pid = open2(">&STATEFILE", undef,
-				$Amanda::Constants::UNCOMPRESS_PATH,
-				$Amanda::Constants::UNCOMPRESS_OPT,
-				$state_filename_gz);
-		close STATEFILE;
-		waitpid($pid, 0);
-		push @argv, "--recover-dump-state-file",
-		$state_filename;
-	    }
-	}
     }
 
     # add application_property

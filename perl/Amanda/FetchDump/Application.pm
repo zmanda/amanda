@@ -26,6 +26,15 @@ use base 'Amanda::FetchDump';
 
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Xfer qw( :constants );
+use IPC::Open2;
+
+sub DESTROY {
+    my $self = shift;
+
+    if ($self->{'uncompressed_state_filename'}) {
+#	unlink $self->{'state_filename'};
+    }
+}
 
 sub set {
     my $self = shift;
@@ -44,7 +53,7 @@ sub set {
 	die("BSU err " . join("\n", @$err));
     }
 
-    return $self->{'bsu'};
+    return undef;
 }
 
 sub start_read_dar
@@ -122,6 +131,31 @@ sub get_xfer_dest {
     }
 
     return $self->{'xfer_dest'};
+}
+
+sub transmit_state_file {
+    my $self = shift;
+    my $header = shift;
+
+    my $state_filename = Amanda::Logfile::getstatefname(
+		"".$header->{'name'}, "".$header->{'disk'},
+		$header->{'datestamp'}, $header->{'dumplevel'});
+    my $state_filename_gz = $state_filename . $Amanda::Constants::COMPRESS_SUFFIX;
+    if (-e $state_filename) {
+	$self->{'state_filename'} = $state_filename;
+    } elsif (-e $state_filename_gz) {
+	my $pid;
+	open STATEFILE, '>', $state_filename;
+	$pid = open2(">&STATEFILE", undef,
+			$Amanda::Constants::UNCOMPRESS_PATH,
+			$Amanda::Constants::UNCOMPRESS_OPT,
+			$state_filename_gz);
+	close STATEFILE;
+	waitpid($pid, 0);
+	$self->{'state_filename'} = $state_filename;
+	$self->{'uncompressed_state_filename'} = 1;
+    }
+    return undef;
 }
 
 sub run_server_scripts {

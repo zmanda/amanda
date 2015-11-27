@@ -36,6 +36,7 @@
 #include "amanda.h"
 #include "conffile.h"
 
+char *getstatefname(char *host, char *disk, char *date, int level);
 char *getindexfname(char *host, char *disk, char *date, int level);
 char *getindex_unsorted_fname(char *host, char *disk, char *date, int level);
 char *getindex_unsorted_gz_fname(char *host, char *disk, char *date, int level);

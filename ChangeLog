@@ -1,3 +1,18 @@
+2015-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindex.c (getstatefname): New functionto return the name
+	  of the state file
+	* server-src/amindex.h (getstatefname): Add prototype
+	* perl/Amanda/Logfile.swg: swig getstatefname
+	* perl/Amanda/Extract.pm: Get the state file name as argument
+	* perl/Amanda/FetchDump/Application.pm (transmit_state_file):
+	  Uncompress de state file is required
+	* perl/Amanda/FetchDump/ClientApplication.pm: Use getstatefname and
+	  some fix
+	* perl/Amanda/Restore.pm: Call start_read_dar after
+	  notify_start_backup
+	* perl/Amanda/Service/Amidxtaped.pm: Use getstatefname
+	* perl/Amanda/Service/Restore.pm (transmit_dar): Fix
+
 2015-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Remove define of _LARGEFILE64_SOURCE
 

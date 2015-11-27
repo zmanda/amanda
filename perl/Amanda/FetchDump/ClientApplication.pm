@@ -165,11 +165,9 @@ sub transmit_state_file {
     my $header = shift;
 
     if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_state_stream)) {
-	my $host = Amanda::Util::sanitise_filename("" . $header->{'name'});
-	my $disk = Amanda::Util::sanitise_filename("" . $header->{'disk'});
-	my $state_filename = getconf($CNF_INDEXDIR) . '/' . $host .
-		'/' . $disk . '/' . $header->{'datestamp'} . '_' .
-		$header->{'dumplevel'} . '.state';
+	my $state_filename = Amanda::Logfile::getstatefname(
+		"".$header->{'name'}, "".$header->{'disk'},
+		$header->{'datestamp'}, $header->{'dumplevel'});
 	my $state_filename_gz = $state_filename . $Amanda::Constants::COMPRESS_SUFFIX;
 	if (-e $state_filename || -e $state_filename_gz) {
 	    if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_state_send)) {
@@ -278,7 +276,7 @@ sub start_read_dar
     my $cb_done = shift;
     my $text = shift;
 
-    my $fd = $xfer_dest->get_dar_fd();
+    my $fd = $self->{'service'}->rfd_fileno('CTL');
     $fd.="";
     $fd = int($fd);
     my $src = Amanda::MainLoop::fd_source($fd,
@@ -326,8 +324,9 @@ sub transmit_dar {
     }
 
     my $line = $self->getline('CTL');
-    my $darspec = ($line =~ /^USE-DAR (.*)\r\n$/);
-    if ($1 ne "YES" && $1 ne "NO") {
+    $line =~ /^USE-DAR (.*)\r\n$/;
+    my $darspec = $1;
+    if ($darspec ne "YES" && $darspec ne "NO") {
 	chomp $line;
 	chop $line;
 	return Amanda::FetchDump::Message->new(
@@ -338,7 +337,7 @@ sub transmit_dar {
 			expect		=> "USE-DAR [YES|NO]",
 			line		=> $line);
     }
-    $use_dar = ($1 eq 'YES');
+    $use_dar = ($darspec eq 'YES');
 
     return $use_dar;
 }

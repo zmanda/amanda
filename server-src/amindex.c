@@ -36,6 +36,63 @@
 #include "amindex.h"
 
 char *
+getstatefname(
+    char *	host,
+    char *	disk,
+    char *	date,
+    int		level)
+{
+  char *conf_indexdir;
+  char *buf;
+  char level_str[NUM_STR_SIZE];
+  char datebuf[14 + 1];
+  char *dc = NULL;
+  char *pc;
+  int ch;
+
+  if (date != NULL) {
+    dc = date;
+    pc = datebuf;
+    while (pc < datebuf + sizeof(datebuf)) {
+      ch = *dc++;
+      *pc++ = (char)ch;
+      if (ch == '\0') {
+        break;
+      } else if (! isdigit (ch)) {
+        pc--;
+      }
+    }
+    datebuf[sizeof(datebuf)-1] = '\0';
+    dc = datebuf;
+
+    g_snprintf(level_str, sizeof(level_str), "%d", level);
+  }
+
+  host = sanitise_filename(host);
+  if (disk != NULL) {
+    disk = sanitise_filename(disk);
+  }
+
+  conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
+  /*
+   * Note: g_strjoin(NULL, ) will stop at the first NULL, which might be
+   * "disk" or "dc" (datebuf) rather than the full file name.
+   */
+  buf = g_strjoin(NULL, conf_indexdir, "/",
+		  host, "/",
+		  disk, "/",
+		  dc, "_",
+		  level_str, ".state",
+		  NULL);
+
+  amfree(conf_indexdir);
+  amfree(host);
+  amfree(disk);
+
+  return buf;
+}
+
+char *
 getindexfname(
     char *	host,
     char *	disk,
