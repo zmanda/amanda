@@ -30,6 +30,25 @@ use warnings;
   header (size:data)	 =>
 			    <= HEADER-DONE		# fe_restore_header_done
 			       run application support command
+
+  INCLUDE-SEND size	 =>				# fe_restore_include
+			    <= INCLUDE-READY		# fe_restore_include
+  include (size:data)					# fe_restore_include
+			    <= INCLUDE-DONE		# fe_restore_include
+  INCLUDE-GLOB-SEND size =>				# fe_restore_include_glob
+			    <= INCLUDE-GLOB-READY	# fe_restore_include_glob
+  include-glob (size:data)				# fe_restore_include_glob
+			    <= INCLUDE-GLOB-DONE	# fe_restore_include_glob
+  EXCLUDE-SEND size	 =>				# fe_restore_exclude
+			    <= EXCLUDE-READY		# fe_restore_exclude
+  exclude (size:data)					# fe_restore_exclude
+			    <= EXCLUDE-DONE		# fe_restore_exclude
+  EXCLUDE-GLOB-SEND size =>				# fe_restore_exclude_glob
+			    <= EXCLUDE-GLOB-READY	# fe_restore_exclude_glob
+  exclude-glob (size:data)				# fe_restore_exclude_glob
+			    <= EXCLUDE-GLOB-DONE	# fe_restore_exclude_glob
+  INCLUDE-EXCLUDE-DONE   =>
+
   STATE-SEND		 =>				# fe_restore_state_send
 			    <= STATE-READY		# fe_restore_state_ready
   statefile (EOF:state)	 =>
@@ -66,6 +85,7 @@ use IPC::Open2;
 use JSON -convert_blessed_universally;
 
 use Amanda::Debug qw( debug info warning );
+use Amanda::Paths;
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Util qw( :constants match_disk match_host );
 use Amanda::Feature;
@@ -228,6 +248,60 @@ sub get_header {
     # parse header
     $self->{'hdr'} = Amanda::Header->from_string($header);
 
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_include) ||
+	$self->{'their_features'}->has($Amanda::Feature::fe_restore_include_glob) ||
+	$self->{'their_features'}->has($Amanda::Feature::fe_restore_exclude) ||
+	$self->{'their_features'}->has($Amanda::Feature::fe_restore_exclude_glob)) {
+
+	my $line = $self->getline('CTL');
+	$line =~ s/\r?\n$//g;
+	while ($line ne "INCLUDE-EXCLUDE-DONE") {
+	    if ($line =~ /^INCLUDE-SEND (\d*)$/) {
+		my $size = $1;
+		$self->sendctlline("INCLUDE-READY\r\n");
+		my $include = Amanda::Util::full_read($self->rfd($self->{'data_stream'}), $size);
+		$self->{'include-name'} = "$AMANDA_TMPDIR/restore-include-$$";
+		$self->{'include-list'} =  [ $self->{'include-name'} ];
+		open INCLUDE, ">$self->{'include-name'}";
+		print INCLUDE $include;
+		close INCLUDE;
+		$self->sendctlline("INCLUDE-DONE\r\n");
+	    } elsif ($line =~ /^INCLUDE-GLOB-SEND (\d*)$/) {
+		my $size = $1;
+		$self->sendctlline("INCLUDE-GLOB-READY\r\n");
+		my $include_glob = Amanda::Util::full_read($self->rfd($self->{'data_stream'}), $size);
+		$self->{'include-glob-name'} = "$AMANDA_TMPDIR/restore-include-globi-$$";
+		$self->{'include-glob-list'} =  [ $self->{'include-glob-name'} ];
+		open INCLUDE, ">$self->{'include-glob-name'}";
+		print INCLUDE $include_glob;
+		close INCLUDE;
+		$self->sendctlline("INCLUDE-GLOB-DONE\r\n");
+	    } elsif ($line =~ /^EXCLUDE-SEND (\d*)$/) {
+		my $size = $1;
+		$self->sendctlline("EXCLUDE-READY\r\n");
+		my $exclude = Amanda::Util::full_read($self->rfd($self->{'data_stream'}), $size);
+		$self->{'exclude-name'} = "$AMANDA_TMPDIR/restore-exclude-$$";
+		$self->{'exclude-list'} =  [ $self->{'exclude-name'} ];
+		open EXCLUDE, ">$self->{'exclude-name'}";
+		print EXCLUDE $exclude;
+		close EXCLUDE;
+		$self->sendctlline("EXCLUDE-DONE\r\n");
+	    } elsif ($line =~ /^EXCLUDE-GLOB-SEND (\d*)$/) {
+		my $size = $1;
+		$self->sendctlline("EXCLUDE-GLOB-READY\r\n");
+		my $exclude_glob = Amanda::Util::full_read($self->rfd($self->{'data_stream'}), $size);
+		$self->{'exclude-glob-name'} = "$AMANDA_TMPDIR/restore-exclude-glob-$$";
+		$self->{'exclude-glob-list'} =  [ $self->{'exclude-glob-name'} ];
+		open EXCLUDE, ">$self->{'exclude-glob-name'}";
+		print EXCLUDE $exclude_glob;
+		close EXCLUDE;
+		$self->sendctlline("EXCLUDE-GLOB-DONE\r\n");
+	    }
+	    $line = $self->getline('CTL');
+	    $line =~ s/\r?\n$//g;
+	}
+    }
+
     return $self->{'hdr'};
 }
 
@@ -306,7 +380,13 @@ sub set {
     $self->{'dle'} = $dle;
     $self->{'application_property'} = $application_property;
 
-    $self->{'extract'} = Amanda::Extract->new(hdr => $hdr, dle => $dle);
+    $self->{'extract'} = Amanda::Extract->new(
+		hdr => $hdr,
+		dle => $dle,
+		'include-list' => $self->{'include-list'},
+		'include-list-glob' => $self->{'include-list-glob'},
+		'exclude-list' => $self->{'exclude-list'},
+		'exclude-list-glob' => $self->{'exclude-list-glob'});
     die("$self->{'extract'}") if $self->{'extract'}->isa('Amanda::Message');
     ($self->{'bsu'}, my $err) = $self->{'extract'}->BSU();
     if (@$err) {

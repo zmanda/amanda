@@ -81,7 +81,12 @@ sub run {
 
     $self->{'directory'} = $params{'directory'};
     $self->{'extract-client'} = $params{'extract-client'};
-    $self->{'assume'} = $params{'assume'};
+    $self->{'include-file'} = $params{'include-file'};
+    $self->{'include-list'} = $params{'include-list'};
+    $self->{'include-list-glob'} = $params{'include-list-glob'};
+    $self->{'exclude-file'} = $params{'exclude-file'};
+    $self->{'exclude-list'} = $params{'exclude-list'};
+    $self->{'exclude-list-glob'} = $params{'exclude-list-glob'};
 
     ($self->{'restore'}, my $result_message) = Amanda::Restore->new();
     if (@$result_message) {

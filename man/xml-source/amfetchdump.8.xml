@@ -51,11 +51,20 @@
       <arg choice='plain'>--server-decompress</arg>
       <arg choice='plain'>--client-decompress</arg>
     </group>
-    <arg>
-	<arg choice='plain'>--extract</arg>
+    <arg choice='opt'>
+	<group choice='req'>
+	  <arg choice='plain'>--extract</arg>
+	  <arg choice='plain'>--extract-client=<replaceable>HOSTNAME</replaceable></arg>
+	</group>
 	<arg choice='plain'>--directory<replaceable> directory</replaceable></arg>
 	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
 	<arg choice='opt'>--application-property <replaceable>NAME=VALUE</replaceable></arg>*
+	<arg choice='opt'>--include-file <replaceable>file</replaceable></arg>*
+	<arg choice='opt'>--include-list <replaceable>filename</replaceable></arg>*
+	<arg choice='opt'>--include-list-glob <replaceable>filename</replaceable></arg>*
+	<arg choice='opt'>--exclude-file <replaceable>file</replaceable></arg>*
+	<arg choice='opt'>--exclude-list <replaceable>filename</replaceable></arg>*
+	<arg choice='opt'>--exclude-list-glob <replaceable>filename</replaceable></arg>*
     </arg>
     <arg choice='opt'>--init</arg>
     <arg choice='opt'>--restore</arg>
@@ -250,6 +259,48 @@ the client.</para></listitem>
   <listitem>
 <para>Application property to send to the application with
 <option>--extract.</option></para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--include-file</option> <replaceable>file</replaceable></term>
+  <listitem>
+<para>The name of a file to restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--include-list</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--include-list-glob</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to restore using --include-list-glob of the application.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exclude-file</option> <replaceable>file</replaceable></term>
+  <listitem>
+<para>The name of a file to exclude from the restore list.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exclude-list</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to exclude from the restore list.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--exclude-list-glob</option> <replaceable>filename</replaceable></term>
+  <listitem>
+<para>The name of a file containing file to exclude from the restore list using --exclude-list-glob of the application.</para>
   </listitem>
   </varlistentry>
 

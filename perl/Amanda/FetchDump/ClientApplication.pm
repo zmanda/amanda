@@ -25,6 +25,7 @@ package Amanda::FetchDump::ClientApplication;
 use base 'Amanda::FetchDump';
 
 use IPC::Open2;
+use Fcntl;
 
 use Amanda::Config qw( :getconf );
 use Amanda::MainLoop qw( :GIOCondition );
@@ -156,6 +157,176 @@ sub send_header {
 		expect		=> "HEADER-DONE",
 		line		=> $line);
 	}
+    }
+
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_include) ||
+        $self->{'their_features'}->has($Amanda::Feature::fe_restore_include_list) ||
+        $self->{'their_features'}->has($Amanda::Feature::fe_restore_exclude) ||
+        $self->{'their_features'}->has($Amanda::Feature::fe_restore_exclude_list)) {
+
+	if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_include)) {
+	    my $include;
+	    foreach my $inc (@{$self->{'include-file'}}) {
+		$include .= "$inc\n";
+	    }
+	    foreach my $inclist (@{$self->{'include-list'}}) {
+		my $fh;
+		sysopen($fh, $inclist, O_RDONLY); #JLM check error
+		my $read_cnt = sysread($fh, my $buf, -s _); #JLM check error
+		close($fh);
+		$include .= $buf;
+	    }
+	    if ($include) {
+		$self->sendctlline("INCLUDE-SEND " . length($include) . "\r\n");
+		my $line = $self->getline('CTL');
+		if ($line ne "INCLUDE-READY\r\n") {
+		    chomp $line;
+		    chop $line;
+		    return Amanda::FetchDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3300064,
+			severity        => $Amanda::Message::ERROR,
+			expect		=> "INCLUDE-READY",
+			line		=> $line);
+		}
+		$self->senddata('DATA', $include);
+		$line = $self->getline('CTL');
+	        if ($line !~ /^INCLUDE-DONE/) {
+	            chomp $line;
+	            chop $line;
+	            return Amanda::FetchDump::Message->new(
+	                source_filename => __FILE__,
+	                source_line     => __LINE__,
+	                code            => 3300064,
+	                severity        => $Amanda::Message::ERROR,
+	                expect          => "INCLUDE-DONE",
+	                line            => $line);
+	        }
+	    }
+	}
+
+	if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_include_glob)) {
+	    my $include;
+	    foreach my $inclist (@{$self->{'include-list-glob'}}) {
+		my $fh;
+		sysopen($fh, $inclist, O_RDONLY); #JLM check error
+		my $read_cnt = sysread($fh, my $buf, -s _); #JLM check error
+		close($fh);
+		$include .= $buf;
+	    }
+	    if ($include) {
+		$self->sendctlline("INCLUDE-GLOB-SEND " . length($include) . "\r\n");
+		my $line = $self->getline('CTL');
+		if ($line ne "INCLUDE-GLOB-READY\r\n") {
+		    chomp $line;
+		    chop $line;
+		    return Amanda::FetchDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3300064,
+			severity        => $Amanda::Message::ERROR,
+			expect		=> "INCLUDE-GLOB-READY",
+			line		=> $line);
+		}
+		$self->senddata('DATA', $include);
+		$line = $self->getline('CTL');
+	        if ($line !~ /^INCLUDE-GLOB-DONE/) {
+	            chomp $line;
+	            chop $line;
+	            return Amanda::FetchDump::Message->new(
+	                source_filename => __FILE__,
+	                source_line     => __LINE__,
+	                code            => 3300064,
+	                severity        => $Amanda::Message::ERROR,
+	                expect          => "INCLUDE-GLOB-DONE",
+	                line            => $line);
+	        }
+	    }
+	}
+
+	if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_exclude)) {
+	    my $exclude;
+	    foreach my $exc (@{$self->{'exclude-file'}}) {
+		$exclude .= "$exc\n";
+	    }
+	    foreach my $exclist (@{$self->{'exclude-list'}}) {
+		my $fh;
+		sysopen($fh, $exclist, O_RDONLY); #JLM check error
+		my $read_cnt = sysread($fh, my $buf, -s _); #JLM check error
+		close($fh);
+		$exclude .= $buf;
+	    }
+	    if ($exclude) {
+		$self->sendctlline("EXCLUDE-SEND " . length($exclude) . "\r\n");
+		my $line = $self->getline('CTL');
+		if ($line ne "EXCLUDE-READY\r\n") {
+		    chomp $line;
+		    chop $line;
+		    return Amanda::FetchDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3300064,
+			severity        => $Amanda::Message::ERROR,
+			expect		=> "EXCLUDE-READY",
+			line		=> $line);
+		}
+		$self->senddata('DATA', $exclude);
+		$line = $self->getline('CTL');
+	        if ($line !~ /^EXCLUDE-DONE/) {
+	            chomp $line;
+	            chop $line;
+	            return Amanda::FetchDump::Message->new(
+	                source_filename => __FILE__,
+	                source_line     => __LINE__,
+	                code            => 3300064,
+	                severity        => $Amanda::Message::ERROR,
+	                expect          => "EXCLUDE-DONE",
+	                line            => $line);
+	        }
+	    }
+	}
+
+	if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_exclude_glob)) {
+	    my $exclude;
+	    foreach my $exclist (@{$self->{'exclude-list-glob'}}) {
+		my $fh;
+		sysopen($fh, $exclist, O_RDONLY); #JLM check error
+		my $read_cnt = sysread($fh, my $buf, -s _); #JLM check error
+		close($fh);
+		$exclude .= $buf;
+	    }
+	    if ($exclude) {
+		$self->sendctlline("EXCLUDE-GLOB-SEND " . length($exclude) . "\r\n");
+		my $line = $self->getline('CTL');
+		if ($line ne "EXCLUDE-GLOB-READY\r\n") {
+		    chomp $line;
+		    chop $line;
+		    return Amanda::FetchDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3300064,
+			severity        => $Amanda::Message::ERROR,
+			expect		=> "EXCLUDE-GLOB-READY",
+			line		=> $line);
+		}
+		$self->senddata('DATA', $exclude);
+		$line = $self->getline('CTL');
+	        if ($line !~ /^EXCLUDE-GLOB-DONE/) {
+	            chomp $line;
+	            chop $line;
+	            return Amanda::FetchDump::Message->new(
+	                source_filename => __FILE__,
+	                source_line     => __LINE__,
+	                code            => 3300064,
+	                severity        => $Amanda::Message::ERROR,
+	                expect          => "EXCLUDE-GLOB-DONE",
+	                line            => $line);
+	        }
+	    }
+	}
+
+	$self->sendctlline("INCLUDE-EXCLUDE-DONE\r\n");
     }
     return undef;
 }

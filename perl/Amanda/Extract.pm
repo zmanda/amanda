@@ -120,7 +120,13 @@ sub new {
 
     my $self = bless {
 	hdr => $params{'hdr'},
-	dle => $params{'dle'}
+	dle => $params{'dle'},
+	'include-file' => $params{'include-file'},
+	'include-list' => $params{'include-list'},
+	'include-list-glob' => $params{'include-list-glob'},
+	'exclude-file' => $params{'exclude-file'},
+	'exclude-list' => $params{'exclude-list'},
+	'exclude-list-glob' => $params{'exclude-list-glob'},
     }, $class;
 
    return $self;
@@ -293,6 +299,27 @@ sub set_argv {
     push @argv, "--level", $self->{'hdr'}->{'dumplevel'};
     push @argv, "--directory", $params{'directory'} if $params{'directory'};
     push @argv, "--dar", "YES" if $params{'use_dar'};
+
+    if ($action eq "restore") {
+	foreach my $inc (@{$self->{'include-file'}}) {
+	    push @argv, '--include-file', $inc;
+	}
+	foreach my $inc (@{$self->{'include-list'}}) {
+	    push @argv, '--include-list', $inc;
+	}
+	foreach my $inc (@{$self->{'include-list-glob'}}) {
+	    push @argv, '--include-list-glob', $inc;
+	}
+	foreach my $exc (@{$self->{'exclude-file'}}) {
+	    push @argv, '--exclude-file', $exc;
+	}
+	foreach my $exc (@{$self->{'exclude-list'}}) {
+	    push @argv, '--exclude-list', $exc;
+	}
+	foreach my $exc (@{$self->{'exclude-list-glob'}}) {
+	    push @argv, '--exclude-list-glob', $exc;
+	}
+    }
 
     if ($action eq "restore" &&
 	$self->{'bsu'}->{'recover-dump-state-file'} &&

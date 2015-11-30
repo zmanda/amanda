@@ -133,7 +133,13 @@ Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
     [(--extract | --extract-client=HOSTNAME) --directory directory
      [--data-path (amanda|directtcp)]
-     [--application-property='NAME=VALUE']*]
+     [--application-property='NAME=VALUE']*
+     [--include-file file]*
+     [--include-list filename]*
+     [--include-list-glob filename]*
+     [--exclude-file file]*
+     [--exclude-list filename]*
+     [--exclude-list-glob filename]*]
     [--init] [--restore]
     [-o configoption]* [--exact-match] config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
@@ -157,6 +163,8 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_init, $opt_restore,
     $opt_extract, $opt_extract_client, $opt_directory, $opt_data_path,
     %application_property,
+    $opt_include_file, $opt_include_list, $opt_include_list_glob,
+    $opt_exclude_file, $opt_exclude_list, $opt_exclude_list_glob,
     $opt_exact_match, $opt_run_client_scripts);
 
 my $NEVER = 0;
@@ -194,6 +202,12 @@ GetOptions(
 	    my ($name, $value) = split '=', $_[1];
 	    push @{$application_property{$name}}, $value;
 	},
+    'include-file|ifile=s@' => \$opt_include_file,
+    'include-list|ilist=s@' => \$opt_include_list,
+    'include-list-glob|ilglob=s@' => \$opt_include_list_glob,
+    'exclude-file|efile=s@' => \$opt_exclude_file,
+    'exclude-list|elist=s@' => \$opt_exclude_list,
+    'exclude-list-glob|elglob=s@' => \$opt_exclude_list_glob,
     'exact-match' => \$opt_exact_match,
     'run-client-scripts' => \$opt_run_client_scripts,
     'init' => \$opt_init,
@@ -420,11 +434,17 @@ sub main {
 		'directory'		=> $opt_directory,
 		'dumpspecs'		=> \@opt_dumpspecs,
 		'exact-match'		=> $opt_exact_match,
+		'exclude-file'		=> $opt_exclude_file,
+		'exclude-list'		=> $opt_exclude_list,
+		'exclude-list-glob'	=> $opt_exclude_list_glob,
 		'extract'		=> $opt_extract,
 		'extract-client'	=> $opt_extract_client,
 		'header'		=> $opt_header,
 		'header-fd'		=> $opt_header_fd,
 		'header-file'		=> $opt_header_file,
+		'include-file'		=> $opt_include_file,
+		'include-list'		=> $opt_include_list,
+		'include-list-glob'	=> $opt_include_list_glob,
 		'init'			=> $opt_init,
 		'leave'			=> $opt_leave,
 		'no-reassembly'		=> $opt_no_reassembly,

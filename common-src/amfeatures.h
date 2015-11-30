@@ -239,6 +239,10 @@ typedef enum {
     fe_restore_data_done,
     fe_restore_dar,
     fe_restore_datapath,
+    fe_restore_include,
+    fe_restore_include_glob,
+    fe_restore_exclude,
+    fe_restore_exclude_glob,
 
     /*
      * All new features must be inserted immediately *before* this entry.

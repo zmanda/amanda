@@ -38,15 +38,23 @@ sub DESTROY {
 
 sub set {
     my $self = shift;
-    my $hdr = shift;;
-    my $dle = shift;;
+    my $hdr = shift;
+    my $dle = shift;
     my $application_property = shift;
 
     $self->{'hdr'} = $hdr;
     $self->{'dle'} = $dle;
     $self->{'application_property'} = $application_property;
 
-    $self->{'extract'} = Amanda::Extract->new(hdr => $hdr, dle => $dle);
+    $self->{'extract'} = Amanda::Extract->new(
+		hdr			=> $hdr,
+		dle			=> $dle,
+		'include-file'		=> $self->{'include-file'},
+		'include-list'		=> $self->{'include-list'},
+		'include-list-glob'	=> $self->{'include-list-glob'},
+		'exclude-file'		=> $self->{'exclude-file'},
+		'exclude-list'		=> $self->{'exclude-list'},
+		'exclude-list-glob'	=> $self->{'exclude-list-glob'});
     die("$self->{'extract'}") if $self->{'extract'}->isa('Amanda::Message');
     ($self->{'bsu'}, my $err) = $self->{'extract'}->BSU();
     if (@$err) {

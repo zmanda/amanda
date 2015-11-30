@@ -1,3 +1,24 @@
+2015-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h (fe_restore_include,
+	  fe_restore_include_glob, fe_restore_exclude,
+	  fe_restore_exclude_glob): New amfeature to send include/exclude to
+	  the restore service
+	* common-src/amfeatures.c: Add new amfeature
+	* server-src/amfetchdump.pl: New arguments: --include-file,
+	  --include-list, --include-list-glob, --exclude-file, --exclude-list,
+	  --exclude-list-glob
+	* man/xml-source/amfetchdump.8.xml: Document new arguments.
+	* perl/Amanda/Extract.pm: Add the various include/exclude arguments to
+	  the restore_argv
+	* perl/Amanda/FetchDump.pm: Keep local copy of the include/exclude
+	  arguments
+	* perl/Amanda/FetchDump/Application.pm: Pass the include/exclude
+	  arguments to the Extract module
+	* perl/Amanda/FetchDump/ClientApplication.pm: Send include/exclude
+	  arguments to the restore service
+	* perl/Amanda/Service/Restore.pm: Get include/exclude from the server,
+	  Pass them to the Extract module
+
 2015-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Restore.pm: Fix typo
 

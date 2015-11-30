@@ -208,6 +208,10 @@ am_init_feature_set(void)
 	//am_add_feature(f, fe_amrecover_data_done);
 	am_add_feature(f, fe_restore_dar);
 	am_add_feature(f, fe_restore_datapath);
+	am_add_feature(f, fe_restore_include);
+	am_add_feature(f, fe_restore_include_glob);
+	am_add_feature(f, fe_restore_exclude);
+	am_add_feature(f, fe_restore_exclude_glob);
     }
     return f;
 }
