@@ -212,6 +212,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_restore_include_glob);
 	am_add_feature(f, fe_restore_exclude);
 	am_add_feature(f, fe_restore_exclude_glob);
+	am_add_feature(f, fe_restore_prev_next_level);
     }
     return f;
 }

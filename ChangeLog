@@ -1,3 +1,20 @@
+2015-12-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: Add fe_restore_prev_next_level
+	* common-src/amfeatures.c: Add fe_restore_prev_next_level
+	* server-src/amfetchdump.pl: Add --prev-level and --next-level
+	  arguments
+	* man/xml-source/amfetchdump.8.xml: Document --prev-level and
+	  --next-level argument
+	* perl/Amanda/Extract.pm (run_scripts): New method to run scripts
+	* perl/Amanda/FetchDump.pm: Keep copy of prev-level and next-level
+	* perl/Amanda/FetchDump/Application.pm: Fix race
+	* perl/Amanda/FetchDump/ClientApplication.pm: Send PREV-NEXT-LEVEL to
+	  client, fix race
+	* perl/Amanda/Restore.pm: Call feedback run_pre_scripts and
+	  run_post_scripts
+	* perl/Amanda/Service/Restore.pm: Get PREV-NEXT-LEVEL from server,
+	  call $extract->run_scripts() to run the scrips
+
 2015-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h (fe_restore_include,
 	  fe_restore_include_glob, fe_restore_exclude,

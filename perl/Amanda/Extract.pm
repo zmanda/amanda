@@ -390,4 +390,80 @@ sub set_validate_argv {
     $self->{'validate_argv'} = $self->set_argv('validate', %params);
 }
 
+sub script_argv {
+    my $self = shift;
+    my $execute_on_str = shift;
+    my $script = shift;
+
+    my $config = Amanda::Config::get_config_name();
+    my @argv;
+
+    push @argv, $Amanda::Paths::APPLICATION_DIR . '/' . $script->{'plugin'};
+    push @argv, $execute_on_str;
+    push @argv, "--execute-where", "client";
+    push @argv, "--config", $config if defined $config;
+    push @argv, "--host", $self->{'hdr'}->{'name'};
+    push @argv, "--disk", $self->{'hdr'}->{'disk'};
+    push @argv, "--device", $self->{'dle'}->{'diskdevice'} if defined ($self->{'dle'}->{'diskdevice'});
+    if ($execute_on_str eq 'INTER-LEVEL-RECOVER' &&
+	defined $self->{'prev-level'}) {
+	push @argv, "--level", $self->{'prev-level'};
+    }
+    push @argv, "--level", $self->{'hdr'}->{'dumplevel'};
+
+    while (my($prop_name, $prop_value) = each %{$script->{'property'}}) {
+	my $values = $prop_value->{'value'};
+	if (ref $values eq 'ARRAY') {
+	    foreach my $value (@{$values}) {
+		push @argv, '--'.$prop_name, $value;
+	    }
+	} else {
+	    push @argv, '--'.$prop_name, $values;
+	}
+    }
+
+    return \@argv;
+}
+
+sub run_a_script {
+    my $self = shift;
+    my $execute_on_str = shift;
+    my $script = shift;
+
+    my $argv = $self->script_argv($execute_on_str, $script);
+#JLM Must parse stdout and stderr
+    local *SCRIPT;
+    Amanda::Debug::debug("Executing: " . join(' ', @{$argv}));
+    my $pid = open(SCRIPT, '-|', @{$argv});
+    my @result;
+    while(<SCRIPT>) {
+	Amanda::Debug::debug("script stdout: $_");
+	push @result, $_;
+    }
+    waitpid($pid, 0);
+#JLM Check pid status
+}
+
+sub run_scripts {
+    my $self = shift;
+    my $execute_on = shift;
+    my %params = @_;
+
+    $self->{'prev-level'} = $params{'prev-level'};
+    my $scripts;
+    if (ref $self->{'dle'}->{'script'} eq 'ARRAY') {
+	$scripts = $self->{'dle'}->{'script'};
+    } else {
+	push @{$scripts}, $self->{'dle'}->{'script'};
+    }
+    my $execute_on_str = Amanda::Config::execute_on_to_string($execute_on);
+
+    foreach my $script (@{$scripts}) {
+	next if index($script->{'execute_on'}, $execute_on_str) == -1;
+
+	$self->run_a_script($execute_on_str, $script);
+    }
+    delete $self->{'prev-level'};
+}
+
 1;

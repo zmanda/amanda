@@ -58,6 +58,8 @@
 	</group>
 	<arg choice='plain'>--directory<replaceable> directory</replaceable></arg>
 	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
+	<arg choice='opt'>--prev-level <replaceable>level</replaceable></arg>
+	<arg choice='opt'>--next-level <replaceable>level</replaceable></arg>
 	<arg choice='opt'>--application-property <replaceable>NAME=VALUE</replaceable></arg>*
 	<arg choice='opt'>--include-file <replaceable>file</replaceable></arg>*
 	<arg choice='opt'>--include-list <replaceable>filename</replaceable></arg>*
@@ -251,6 +253,23 @@ the client.</para></listitem>
   <listitem>
 <para>The data path to use with <option>--extract</option>, the default is
  to use the fatest data path.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--prev-level</option> <replaceable>level</replaceable></term>
+  <listitem>
+<para>The previous level that was restored for this dle.
+If not set, run the pre-recover script.
+If set, run the inter-level-recover script.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--next-level</option> <replaceable>level</replaceable></term>
+  <listitem>
+<para>The next level we will restore for this dle.
+If not set, run the post-recover script.</para>
   </listitem>
   </varlistentry>
 

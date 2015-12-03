@@ -243,6 +243,7 @@ typedef enum {
     fe_restore_include_glob,
     fe_restore_exclude,
     fe_restore_exclude_glob,
+    fe_restore_prev_next_level,
 
     /*
      * All new features must be inserted immediately *before* this entry.

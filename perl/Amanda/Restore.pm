@@ -288,13 +288,13 @@ A function to send a 'DAR offset:length' line
 
 A function to run an applicationwith directtcp datapath
 
-=head2 $feedback->run_server_scripts
+=head2 $feedback->run_pre_scripts
 
-TODO
+A function to run the PRE-*-RECOVER scripts
 
-=head2 $feedback->run_client_scripts
+=head2 $feedback->run_post_scripts
 
-TODO
+A function to run the POST-*-RECOVER scripts
 
 =cut
 
@@ -1257,7 +1257,7 @@ sub restore {
 	my $p1 = XML::Simple->new();
 	my $dle;
 	if (defined $dle_str) {
-	    eval { $dle = $p1->XMLin($dle_str); };
+	    eval { $dle = $p1->XMLin($dle_str, ForceArray => ['property']); };
 	    if ($@) {
 		$self->user_message(
 			Amanda::Restore::Message->new(
@@ -1513,12 +1513,8 @@ sub restore {
 	}
 
 	if ($params{'extract'}) {
-	    if ($self->{'feedback'}->can('run_server_scripts')) {
-		$self->{'feedback'}->run_server_scripts();
-	    }
-	    if ($params{'run-client-scripts'} &&
-		$self->{'feedback'}->can('run_client_scripts')) {
-		$self->{'feedback'}->run_client_scripts();
+	    if ($self->{'feedback'}->can('run_pre_scripts')) {
+		$self->{'feedback'}->run_pre_scripts();
 	    }
 	    $xfer_dest = $self->{'feedback'}->get_xfer_dest();
 	    return $steps->{'failure'}->($xfer_dest) if ref $xfer_dest eq "HASH" && $xfer_dest->isa('Amanda::Message');
@@ -1529,8 +1525,8 @@ sub restore {
 		}
 	    }
 	} elsif ($params{'extract-client'}) {
-	    if ($self->{'feedback'}->can('run_server_scripts')) {
-		$self->{'feedback'}->run_server_scripts();
+	    if ($self->{'feedback'}->can('run_pre_scripts')) {
+		$self->{'feedback'}->run_pre_scripts();
 	    }
 	    $xfer_dest = $self->{'feedback'}->get_xfer_dest();
 	    return $steps->{'failure'}->($xfer_dest) if ref $xfer_dest eq "HASH" && $xfer_dest->isa('Amanda::Message');
@@ -1656,7 +1652,8 @@ sub restore {
 	my $range = shift @{$current_dump->{'range'}};
 	if (defined $range) {
 	    ($offset, my $range1) = split ':', $range;
-	    if ($offset == -1  && $xfer_src->can('cancel')) {
+	    if ($offset == -1 &&
+		defined $xfer_src && $xfer_src->can('cancel')) {
 		$xfer_src->cancel(0);
 		return;
 	    }
@@ -1753,6 +1750,11 @@ sub restore {
 				code            => 4900012,
 				severity	=> $Amanda::Message::INFO,
 				size            => $recovery_params{'bytes_read'}));
+
+	if ($self->{'feedback'}->can('run_post_scripts')) {
+	    $self->{'feedback'}->run_post_scripts();
+	}
+
 	if ($xfer_dest && $xfer_dest->isa("Amanda::Xfer::Dest::Buffer")) {
 	    my $buf = $xfer_dest->get();
 	    if ($buf) {
@@ -1941,6 +1943,7 @@ sub restore {
 		$self->{'exit_status'} = 1;
 	    }
 	}
+
 	$hdr = undef;
 	$xfer_src = undef;
 	$xfer_dest = undef;

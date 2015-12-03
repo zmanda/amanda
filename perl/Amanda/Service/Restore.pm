@@ -48,6 +48,7 @@ use warnings;
   exclude-glob (size:data)				# fe_restore_exclude_glob
 			    <= EXCLUDE-GLOB-DONE	# fe_restore_exclude_glob
   INCLUDE-EXCLUDE-DONE   =>
+  PREV-NEXT-LEVEL p n	 =>				# fe_restore_prev_next_level
 
   STATE-SEND		 =>				# fe_restore_state_send
 			    <= STATE-READY		# fe_restore_state_ready
@@ -301,6 +302,22 @@ sub get_header {
 	    $line =~ s/\r?\n$//g;
 	}
     }
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_prev_next_level)) {
+	my $line = $self->getline('CTL');
+	if ($line !~ /^PREV-NEXT-LEVEL (\-?\d*) (\-?\d*)\r\n/) {
+	    chomp $line;
+	    chop $line;
+	    return Amanda::FetchDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 3300064,
+			severity        => $Amanda::Message::ERROR,
+			expect          => "PREV-NEXT-LEVEL",
+			line            => $line);
+	}
+	$self->{'prev-level'} = $1 if $1 >= 0;
+	$self->{'next-level'} = $2 if $2 >= 0;
+    }
 
     return $self->{'hdr'};
 }
@@ -393,6 +410,30 @@ sub set {
         die("BSU err " . join("\n", @$err));
     }
     return undef;
+}
+
+sub run_pre_scripts {
+    my $self = shift;
+
+    if (!defined $self->{'prev-level'}) {
+	$self->{'extract'}->run_scripts($Amanda::Config::EXECUTE_ON_PRE_RECOVER);
+    } else {
+	$self->{'extract'}->run_scripts($Amanda::Config::EXECUTE_ON_INTER_LEVEL_RECOVER,
+			'prev-level' => $self->{'prev-level'});
+    }
+
+    $self->{'extract'}->run_scripts($Amanda::Config::EXECUTE_ON_PRE_LEVEL_RECOVER);
+}
+
+sub run_post_scripts {
+    my $self = shift;
+
+    # run post-level-recover scripts
+    $self->{'extract'}->run_scripts($Amanda::Config::EXECUTE_ON_POST_LEVEL_RECOVER);
+
+    if (!defined $self->{'next-level'}) {
+	$self->{'extract'}->run_scripts($Amanda::Config::EXECUTE_ON_POST_RECOVER);
+    }
 }
 
 sub get_xfer_dest {

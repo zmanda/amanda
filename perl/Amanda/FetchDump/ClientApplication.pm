@@ -328,6 +328,13 @@ sub send_header {
 
 	$self->sendctlline("INCLUDE-EXCLUDE-DONE\r\n");
     }
+    if ($self->{'their_features'}->has($Amanda::Feature::fe_restore_prev_next_level)) {
+	my $prev_level = $self->{'prev-level'};
+	my $next_level = $self->{'next-level'};
+	$prev_level = -1 if !defined $prev_level;
+	$next_level = -1 if !defined $next_level;
+	$self->sendctlline("PREV-NEXT-LEVEL $prev_level $next_level\r\n");
+    }
     return undef;
 }
 
@@ -446,6 +453,7 @@ sub start_read_dar
     my $cb_data = shift;
     my $cb_done = shift;
     my $text = shift;
+    my $dar_end = 0;
 
     my $fd = $self->{'service'}->rfd_fileno('CTL');
     $fd.="";
@@ -461,7 +469,8 @@ sub start_read_dar
 	    return;
 	} elsif ($n_read == 0) {
 	    delete $self->{'fetchdump'}->{'all_filter'}->{$src};
-	    $cb_data->("DAR -1:0");
+	    $cb_data->("DAR -1:0") if $dar_end == 0;
+	    $dar_end = 1;
 	    $src->remove();
 	    POSIX::close($fd);
 	    if (!%{$self->{'fetchdump'}->{'all_filter'}} and $self->{'recovery_done'}) {
@@ -472,7 +481,9 @@ sub start_read_dar
 	    if ($b eq "\n") {
 		my $line = $buffer;
 		chomp $line;
+		chop $line;
 		if (length($line) > 1) {
+		    $dar_end = 1 if $line eq "DAR -1:0";
 		    $cb_data->($line);
 		}
 	    $buffer = "";

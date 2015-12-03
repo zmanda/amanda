@@ -140,6 +140,8 @@ Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
      [--exclude-file file]*
      [--exclude-list filename]*
      [--exclude-list-glob filename]*]
+     [--prev-level level]
+     [--next-level level]
     [--init] [--restore]
     [-o configoption]* [--exact-match] config
     hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]
@@ -165,6 +167,7 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     %application_property,
     $opt_include_file, $opt_include_list, $opt_include_list_glob,
     $opt_exclude_file, $opt_exclude_list, $opt_exclude_list_glob,
+    $opt_prev_level, $opt_next_level,
     $opt_exact_match, $opt_run_client_scripts);
 
 my $NEVER = 0;
@@ -208,6 +211,8 @@ GetOptions(
     'exclude-file|efile=s@' => \$opt_exclude_file,
     'exclude-list|elist=s@' => \$opt_exclude_list,
     'exclude-list-glob|elglob=s@' => \$opt_exclude_list_glob,
+    'prev-level=i' => \$opt_prev_level,
+    'next-level=i' => \$opt_next_level,
     'exact-match' => \$opt_exact_match,
     'run-client-scripts' => \$opt_run_client_scripts,
     'init' => \$opt_init,
@@ -447,6 +452,8 @@ sub main {
 		'include-list-glob'	=> $opt_include_list_glob,
 		'init'			=> $opt_init,
 		'leave'			=> $opt_leave,
+		'next-level'		=> $opt_next_level,
+		'prev-level'		=> $opt_prev_level,
 		'no-reassembly'		=> $opt_no_reassembly,
 		'pipe-fd'		=> $opt_pipe ? 1 : undef,
 		'restore'		=> $opt_restore,

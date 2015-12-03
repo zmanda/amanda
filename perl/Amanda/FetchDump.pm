@@ -87,6 +87,8 @@ sub run {
     $self->{'exclude-file'} = $params{'exclude-file'};
     $self->{'exclude-list'} = $params{'exclude-list'};
     $self->{'exclude-list-glob'} = $params{'exclude-list-glob'};
+    $self->{'prev-level'} = $params{'prev-level'};
+    $self->{'next-level'} = $params{'next-level'};
 
     ($self->{'restore'}, my $result_message) = Amanda::Restore->new();
     if (@$result_message) {

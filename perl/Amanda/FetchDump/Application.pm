@@ -71,6 +71,7 @@ sub start_read_dar
     my $cb_data = shift;
     my $cb_done = shift;
     my $text = shift;
+    my $dar_end = 0;
 
     my $fd = $xfer_dest->get_dar_fd();
     $fd.="";
@@ -86,7 +87,8 @@ sub start_read_dar
 	    return;
 	} elsif ($n_read == 0) {
 	    delete $self->{'fetchdump'}->{'all_filter'}->{$src};
-	    $cb_data->("DAR -1:0");
+	    $cb_data->("DAR -1:0") if $dar_end == 0;;
+	    $dar_end = 1;
 	    $src->remove();
 	    POSIX::close($fd);
 	    if (!%{$self->{'fetchdump'}->{'all_filter'}} and $self->{'recovery_done'}) {
@@ -98,6 +100,7 @@ sub start_read_dar
 		my $line = $buffer;
 		chomp $line;
 		if (length($line) > 1) {
+		    $dar_end = 1 if $line eq "DAR -1:0";
 		    $cb_data->($line);
 		}
 	    $buffer = "";
@@ -164,14 +167,6 @@ sub transmit_state_file {
 	$self->{'uncompressed_state_filename'} = 1;
     }
     return undef;
-}
-
-sub run_server_scripts {
-    my $self = shift;
-}
-
-sub run_client_scripts {
-    my $self = shift;
 }
 
 sub new_dest_fh {
