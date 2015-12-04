@@ -437,6 +437,9 @@ main(
     our_features = am_init_feature_set();
     our_features_string = am_feature_to_string(our_features);
 
+    if (!starting_hostname && getconf_seen(CNF_HOSTNAME)) {
+	starting_hostname = g_strdup(getconf_str(CNF_HOSTNAME));
+    }
     if (!starting_hostname) {
 	starting_hostname = g_malloc(MAX_HOSTNAME_LENGTH+1);
 	if (gethostname(starting_hostname, MAX_HOSTNAME_LENGTH) != 0) {

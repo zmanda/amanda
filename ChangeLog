@@ -1,4 +1,7 @@
 2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c: Use the amanda-client.conf hostname setting
+
+2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add amanda-client 'hostname' global setting
 	* common-src/conffile.h: Add CNF_HOSTNAME
 	* perl/Amanda/Config.swg: Add CNF_HOSTNAME
