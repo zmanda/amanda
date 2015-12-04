@@ -152,7 +152,7 @@ typedef enum {
     /* client conf */
     CONF_CONF,			CONF_INDEX_SERVER,	CONF_TAPE_SERVER,
     CONF_SSH_KEYS,		CONF_GNUTAR_LIST_DIR,	CONF_AMANDATES,
-    CONF_AMDUMP_SERVER,
+    CONF_AMDUMP_SERVER,		CONF_HOSTNAME,
 
     /* protocol config */
     CONF_REP_TRIES,		CONF_CONNECT_TRIES,	CONF_REQ_TRIES,
@@ -929,6 +929,7 @@ keytab_t client_keytab[] = {
     { "DEBUG_SENDBACKUP", CONF_DEBUG_SENDBACKUP },
     { "EXECUTE_ON", CONF_EXECUTE_ON },
     { "EXECUTE_WHERE", CONF_EXECUTE_WHERE },
+    { "HOSTNAME", CONF_HOSTNAME },
     { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
     { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
     { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
@@ -1370,6 +1371,7 @@ conf_var_t client_var [] = {
    { CONF_PROPERTY           , CONFTYPE_PROPLIST, read_property, CNF_PROPERTY           , NULL },
    { CONF_APPLICATION        , CONFTYPE_STR     , read_dapplication, DUMPTYPE_APPLICATION, NULL },
    { CONF_SCRIPT             , CONFTYPE_STR     , read_dpp_script, DUMPTYPE_SCRIPTLIST, NULL },
+   { CONF_HOSTNAME           , CONFTYPE_STR     , read_str     , CNF_HOSTNAME           , NULL },
    { CONF_UNKNOWN            , CONFTYPE_INT     , NULL         , CNF_CNF                , NULL }
 };
 
@@ -6256,6 +6258,7 @@ init_defaults(
     conf_init_host_limit(&conf_data[CNF_RECOVERY_LIMIT]);
     conf_init_str(&conf_data[CNF_INTERACTIVITY], NULL);
     conf_init_str(&conf_data[CNF_TAPERSCAN], NULL);
+    conf_init_str(&conf_data[CNF_HOSTNAME], NULL);
 
     /* reset internal variables */
     config_clear_errors();

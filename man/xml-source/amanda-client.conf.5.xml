@@ -293,6 +293,15 @@ Debug level of the sendbackup process</para>
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>hostname</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default:
+<amdefault>`hostname`</amdefault>.
+The hostname (in the DLE) of the client machine</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>reserved-udp-port</amkeyword> <amtype>int</amtype>,<amtype>int</amtype></term>
   <listitem>
 <para>Default: --with-udpportrange or 

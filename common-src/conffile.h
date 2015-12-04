@@ -579,6 +579,7 @@ typedef enum {
     CNF_SSL_CHECK_CERTIFICATE_HOST,
     CNF_SSL_DIR,
     CNF_SSL_CHECK_FINGERPRINT,
+    CNF_HOSTNAME,
     CNF_CNF /* sentinel */
 } confparm_key;
 
