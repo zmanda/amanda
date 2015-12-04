@@ -1439,8 +1439,6 @@ do_dump(
     pid_t indexpid = -1;
     char *m;
     int to_unlink = 1;
-    char *shostname;
-    char *sdiskname;
 
     startclock();
 
@@ -1479,15 +1477,9 @@ do_dump(
 	goto failed;
     }
 
-    shostname = sanitise_filename(hostname);
-    sdiskname = sanitise_filename(diskname);
-    state_filename = g_strdup_printf("%s/%s/%s/%s_%d.state",
-		 getconf_str(CNF_INDEXDIR), shostname,
-		 sdiskname, dumper_timestamp, level);
+    state_filename = getstatefname(hostname, diskname, dumper_timestamp, level);
     state_filename_gz = g_strdup_printf("%s%s", state_filename,
 						COMPRESS_SUFFIX);
-    amfree(shostname);
-    amfree(sdiskname);
 
     if (streams[INDEXFD].fd != NULL) {
 	if (getconf_boolean(CNF_COMPRESS_INDEX)) {

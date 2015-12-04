@@ -1,4 +1,7 @@
 2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Use getstatefname()
+
+2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c (get_fsusage): New function to the filesystem
 	  usage
 	* common-src/amutil.h (get_fsusage): Add prototype.
