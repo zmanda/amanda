@@ -37,7 +37,7 @@
 
 amglue_export_ok(
     open_logfile get_logline close_logfile
-    log_add log_add_full
+    log_add log_add_full log_start_multiline log_end_multiline
 );
 
 
@@ -137,6 +137,8 @@ char *make_logname(char *process, char *datestamp);
 char *get_logname(void);
 void set_logname(char *filename);
 void log_rename(char *datestamp);
+void log_start_multiline(void);
+void log_end_multiline(void);
 
 %typemap(in) crc_t {
     parse_crc(SvPV_nolen($input), &$1);
@@ -415,3 +417,4 @@ sub make_chunker_stats {
 }
 
 %}
+

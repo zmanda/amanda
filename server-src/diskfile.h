@@ -175,10 +175,15 @@ char *optionstr(disk_t *dp);
  */
 gchar **validate_optionstr(disk_t *dp);
 char *xml_optionstr(disk_t *dp, int to_server);
+char *xml_optionstr_disk(char *hostname, char *diskname);
 char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
+char *xml_estimate_disk(char *hostname, char *diskname,
+			am_feature_t *their_features);
 char *clean_dle_str_for_client(char *dle_str, am_feature_t *their_features);
 char *xml_application(disk_t *dp, application_t *application,
 		      am_feature_t *their_features);
+char *xml_application_disk(char *hostname, char *diskname,
+			   am_feature_t *their_features);
 char *xml_scripts(identlist_t pp_scriptlist, am_feature_t *their_features);
 char *xml_dumptype_properties(disk_t *dp);
 

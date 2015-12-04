@@ -40,6 +40,7 @@
 #include "pipespawn.h"
 #include <glib.h>
 #include <string.h>
+#include "fsusage.h"
 
 static int make_socket(sa_family_t family);
 static int connect_port(sockaddr_union *addrp, in_port_t port, char *proto,
@@ -2026,5 +2027,25 @@ parse_crc(
         crc->crc = c;
         crc->size = size;
     }
+}
+
+gint64
+get_fsusage(
+   char *dir)
+{
+    gint64 avail = 0;
+    struct fs_usage fsusage;
+
+    if (get_fs_usage(dir, NULL, &fsusage) == -1) {
+	return 0;
+    }
+
+    if (fsusage.fsu_bavail_top_bit_set)
+	avail = 0;
+    else {
+        avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
+    }
+
+    return avail;
 }
 

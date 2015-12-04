@@ -438,4 +438,6 @@ void crc32_add(uint8_t *buf, size_t len, crc_t *crc);
 uint32_t crc32_finish(crc_t *crc);
 void parse_crc(char *s, crc_t *crc);
 
+gint64 get_fsusage(char *dir);
+
 #endif	/* AMUTIL_H */

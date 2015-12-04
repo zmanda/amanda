@@ -1308,6 +1308,16 @@ static void xml_property(
     xml_app->result = g_string_free(strbuf, FALSE);
 }
 
+char *xml_optionstr_disk(
+    char *hostname,
+    char *diskname)
+{
+    disk_t *dp = lookup_disk(hostname, diskname);
+
+    return xml_optionstr(dp, 0);
+}
+
+
 char * xml_optionstr(disk_t *dp, int to_server)
 {
     GPtrArray *array = g_ptr_array_new();
@@ -1497,6 +1507,17 @@ xml_dumptype_properties(
 }
 
 char *
+xml_estimate_disk(
+    char          *hostname,
+    char          *diskname,
+    am_feature_t  *their_features)
+{
+    disk_t        *dp  = lookup_disk(hostname, diskname);
+
+    return xml_estimate(dp->estimatelist, their_features);
+}
+
+char *
 xml_estimate(
     estimatelist_t estimatelist,
     am_feature_t *their_features)
@@ -1608,6 +1629,18 @@ clean_dle_str_for_client(
 #undef SC_LEN
 
     return rval_dle_str;
+}
+
+char *
+xml_application_disk(
+    char          *hostname,
+    char          *diskname,
+    am_feature_t  *their_features)
+{
+    disk_t        *dp  = lookup_disk(hostname, diskname);
+    application_t *app = lookup_application(dp->application);
+
+    return xml_application(dp, app, their_features);
 }
 
 char *

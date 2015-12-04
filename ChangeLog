@@ -1,4 +1,20 @@
-2015-12-03  Jean-Louis Martineau <martineau@zmanda.com>
+2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c (get_fsusage): New function to the filesystem
+	  usage
+	* common-src/amutil.h (get_fsusage): Add prototype.
+	 common-src/amxml.c: Cleanup
+	* server-src/diskfile.c (xml_optionstr_disk, xml_estimate_disk,
+	  xml_application_disk): New functions to return anxnl string
+	* server-src/diskfile.h (xml_optionstr_disk, xml_estimate_disk,
+	  xml_application_disk): Add prototypes
+	* perl/Amanda/Disklist.swg (xml_optionstr_disk, xml_application_disk,
+	  xml_estimate_disk): Swig these functions
+	* perl/Amanda/Logfile.swg (log_start_multiline, log_end_multiline):
+	  Swig these functions
+	* perl/Amanda/Util.swg (amxml_format_tag, get_fsusage,
+	  get_time_from_timestamp): Swig these functions
+
+2015-12-ouis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h: Add fe_restore_prev_next_level
 	* common-src/amfeatures.c: Add fe_restore_prev_next_level
 	* server-src/amfetchdump.pl: Add --prev-level and --next-level

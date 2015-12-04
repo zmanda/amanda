@@ -38,6 +38,8 @@
 #include "file.h"
 #include "sockaddr-util.h"
 #include "match.h"
+#include "amxml.h"
+#include "timestamp.h"
 %}
 
 void glib_init(void);
@@ -850,3 +852,10 @@ sub check_std_fds {
 }
 
 %}
+
+%newobject amxml_format_tag;
+char *amxml_format_tag(char *tag, char *value);
+
+gint64 get_fsusage(char *dir);
+gint64 get_time_from_timestamp(char *timestamp);
+

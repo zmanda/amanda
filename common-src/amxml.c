@@ -72,7 +72,7 @@ alloc_dle(void)
 {
     dle_t *dle;
 
-    dle = malloc(sizeof(dle_t));
+    dle = g_new0(dle_t, 1);
     init_dle(dle);
     return dle;
 }
@@ -82,6 +82,9 @@ free_dle(
     dle_t *dle)
 {
     scriptlist_t scriptlist;
+
+    if (!dle)
+	return;
 
     amfree(dle->disk);
     amfree(dle->device);

@@ -437,8 +437,44 @@ sub do_on_match_disklist {
 %perlcode %{
 
 package Amanda::Disklist::Disk;
-
 # methods
+use Amanda::Config qw( :getconf);
+
+%}
+
+%newobject xml_optionstr_disk;
+char *xml_optionstr_disk(char *hostname, char *diskname);
+
+%newobject xml_application_disk;
+char *xml_application_disk(char *hostname, char *diskname, am_feature_t *their_features);
+
+%newobject xml_estimate_disk;
+char *xml_estimate_disk(char *hostname, char *diskname, am_feature_t *their_features);
+
+%perlcode %{
+
+sub xml_optionstr {
+    my $disk = shift;
+
+    return Amanda::Disklist::xml_optionstr_disk($disk->{'host'}->{'hostname'},
+			      $disk->{'name'});
+}
+
+sub xml_application {
+    my $disk = shift;
+    my $their_features = shift;
+
+    return Amanda::Disklist::xml_application_disk($disk->{'host'}->{'hostname'},
+			      $disk->{'name'}, $their_features->am_features());
+}
+
+sub xml_estimate {
+    my $disk = shift;
+    my $their_features = shift;
+
+    return Amanda::Disklist::xml_estimate_disk($disk->{'host'}->{'hostname'},
+			      $disk->{'name'}, $their_features->am_features());
+}
 
 package Amanda::Disklist::Host;
 
