@@ -1,4 +1,7 @@
 2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Change message
+
+2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.c: Use the amanda-client.conf hostname setting
 
 2015-12-04  Jean-Louis Martineau <martineau@zmanda.com>

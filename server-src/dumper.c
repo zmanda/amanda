@@ -1032,7 +1032,7 @@ process_dumpline(
 
 	if (g_str_equal(tok, "state")) {
 	    if (statefile_in_stream != -1) {
-		g_debug("state in stream when state in vstream already open");
+		g_debug("state in mesg when state in stream already open");
 	    } else {
 		tok = strtok(NULL, "");
 		if (tok) {
