@@ -209,6 +209,8 @@ my $opt_collection;
 my $opt_record;
 my @opt_mailto;
 
+my @orig_argv = @ARGV;
+
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'execute-where=s' => \$opt_execute_where,
@@ -225,6 +227,8 @@ GetOptions(
 ) or usage();
 
 my $script = Amanda::Script::Script_email->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_mailto);
+
+Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
 $script->do($ARGV[0]);
 

@@ -291,6 +291,8 @@ my @opt_include_list;
 my @opt_exclude_list;
 my $opt_directory;
 
+my @orig_argv = @ARGV;
+
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'            => \$opt_version,
@@ -315,5 +317,7 @@ if (defined $opt_version) {
 }
 
 my $application = Amanda::Application::Amraw->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_directory);
+
+Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
 $application->do($ARGV[0]);

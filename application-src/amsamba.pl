@@ -988,6 +988,8 @@ my $opt_allow_anonymous;
 my $opt_directory;
 my $opt_regex_match;
 
+my @orig_argv = @ARGV;
+
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'            => \$opt_version,
@@ -1022,5 +1024,7 @@ if (defined $opt_version) {
 }
 
 my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_directory, $opt_regex_match);
+
+Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
 $application->do($ARGV[0]);
