@@ -1,4 +1,8 @@
 2015-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* ndmp-src/ndma_tape.c (ndmta_read_quantum): Fix setting
+	  ta->mover_state.record_num
+
+2015-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Fir debugging message
 	* common-src/glib-util.c: Improve error message
 
