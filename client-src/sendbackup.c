@@ -558,7 +558,7 @@ main(
 		fdprintf(mesgfd,
 			  _("sendbackup: error [Application '%s': %s]\n"),
 			  dle->program, errmsg);
-		dbprintf("aa: %s\n",qerrmsg);
+		dbprintf("ERROR %s\n",qerrmsg);
 		amfree(qerrmsg);
 	    }
 	    if (i == 0) { /* no errarray */
