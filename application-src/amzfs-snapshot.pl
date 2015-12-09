@@ -192,6 +192,8 @@ my $zfs_path = 'zfs';
 my $pfexec_path = 'pfexec';
 my $pfexec = "NO";
 
+my @orig_argv = @ARGV;
+
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'	       => \$opt_version,
@@ -217,6 +219,8 @@ if (defined $opt_version) {
 }
 
 my $script = Amanda::Script::Amzfs_snapshot->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $df_path, $zfs_path, $pfexec_path, $pfexec);
+
+Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
 $script->do($ARGV[0]);
 # NOTREACHED

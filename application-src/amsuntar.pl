@@ -591,6 +591,8 @@ my $opt_lang;
 my $opt_directory;
 my $opt_suntar_path;
 
+my @orig_argv = @ARGV;
+
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'version'		  => \$opt_version,
@@ -629,6 +631,8 @@ if (defined $opt_lang) {
 }
 
 my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_directory, $opt_suntar_path);
+
+Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
 $application->do($ARGV[0]);
 # NOTREACHED

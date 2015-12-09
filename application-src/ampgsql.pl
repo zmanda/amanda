@@ -1166,6 +1166,8 @@ EOF
     exit(1);
 }
 
+my @orig_argv = @ARGV;
+
 my $opts = {};
 my $opt_version;
 
@@ -1208,6 +1210,8 @@ if (defined $opt_version) {
 }
 
 my $application = Amanda::Application::ampgsql->new($opts);
+
+Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
 $application->do($ARGV[0]);
 # NOTREACHED
