@@ -121,8 +121,9 @@ glib_init(void) {
 						  GLIB_MINOR_VERSION,
 						  GLIB_MICRO_VERSION);
 	if (glib_err) {
-	    error(_("%s: Amanda was compiled with glib-%d.%d.%d"), glib_err,
-		    GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+	    error(_("%s: Amanda was compiled with glib-%d.%d.%d, but linking with %d.%d.%d"), glib_err,
+		    GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION,
+		    glib_major_version, glib_minor_version, glib_micro_version);
 	    exit(1); /* glib_init may be called before error handling is set up */
 	}
     }

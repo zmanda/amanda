@@ -180,7 +180,7 @@ sub BSU {
     my $program_path = $self->_set_program_path();
 
     return undef if !$self->{'program_is_application'};
-    return $program_path if $program_path->isa('Amanda::Message');
+    return $program_path if ref $program_path eq "HASH" && $program_path->isa('Amanda::Message');
 
     my %bsu;
     my @err;

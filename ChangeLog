@@ -1,4 +1,9 @@
 2015-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Fir debugging message
+	* common-src/glib-util.c: Improve error message
+	* perl/Amanda/Extract.pm: Fix in error path
+
+2015-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amlog-script.pl, application-src/ampgsql.pl,
 	  application-src/amraw.pl, application-src/amsamba.pl,
 	  application-src/amsuntar.pl, application-src/amzfs-sendrecv.pl,
