@@ -1,4 +1,10 @@
 2015-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer/robot.pm (slot_can_have_label): New function to
+	  tell if a slot can have a label, ths function check the barcode
+	* perl/Amanda/Recovery/Scan.pm: Do not scan a slot if
+	  slot_can_have_label return 0
+
+2015-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Recovery/Scan.pm: Set a user_msg_fn in new
 	* server-src/amfetchdump.pl: Add a user_msg_fn to print scan error to
 	  stdout

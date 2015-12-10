@@ -300,7 +300,7 @@ sub find_volume {
 				message => "Volume '$label' in slot $slot_scanned is reserved"),
 			    undef);
 		}
-		Amanda::Debug::debug("parse_inventory: load slot $slot_scanned with label '$label'");
+		Amanda::Debug::debug("Xparse_inventory: load slot $slot_scanned with label '$label'");
 		$user_msg_fn->(scan_slot => 1,
 			       slot      => $slot_scanned,
 			       label     => $label);
@@ -398,11 +398,17 @@ sub find_volume {
 		next if defined $sl->{'f_type'} &&
 			$sl->{'f_type'} == $Amanda::Header::F_TAPESTART;
 		next if defined $sl->{'label'};
+		# skip slots with known barcode
+		next if $self->{'chg'}->can('slot_can_have_label') &&
+			!$self->{'chg'}->slot_can_have_label($slot, $label);
+		#next if defined $sl->{'barcode'} &&
+		#        $sl->{'barcode'} eq "";
+
 
 		# found a slot to check - reset our current slot
 		$current = $slot;
 		$slot_scanned = $current;
-		Amanda::Debug::debug("parse_inventory: load slot $current");
+		Amanda::Debug::debug("Yparse_inventory: load slot $current");
 		$user_msg_fn->(scan_slot => 1, slot => $slot_scanned);
 		$seen{$slot_scanned} = { device_status => $sl->{'device_status'},
 					 f_type        => $sl->{'f_type'},

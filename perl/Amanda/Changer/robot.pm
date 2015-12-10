@@ -319,6 +319,25 @@ sub new {
     return $self;
 }
 
+sub slot_can_have_label {
+    my $self = shift;
+    my $slot = shift;
+    my $label = shift;
+
+    return 1 if !$self->{'state'};
+    my $search_barcode;
+    while (my($barcode, $blabel) = each %{$self->{'state'}->{'bc2lb'}}) {
+	$search_barcode = $barcode if $blabel eq $label;
+    }
+    my $slot_barcode = $self->{'state'}->{'slots'}->{$slot}->{'barcode'};
+    return 1 if !$search_barcode;
+    return 1 if !$slot_barcode;
+    return 0 if $search_barcode ne $slot_barcode;
+    return 1 if $search_barcode eq $slot_barcode;
+
+    return 0;
+}
+
 sub load {
     my $self = shift;
     my %params = @_;
@@ -1887,6 +1906,8 @@ sub _with_updated_state {
 	}
 
 	$params{'state'} = $state;
+	# keep a copy of the latest state
+	$self->{'state'} = $state;
 	# finally, call through to the user's method; $params{$cbname} has been
 	# properly patched to release the state lock when this method is done.
 	$sub->(%params);
