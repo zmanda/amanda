@@ -160,6 +160,7 @@ sub new {
     my $scan_conf = $params{'scan_conf'};
     my $chg = $params{'chg'};
     my $interactivity = $params{'interactivity'};
+    my $user_msg_fn = $params{'user_msg_fn'};
 
     #until we have a config for it.
     $scan_conf = Amanda::Recovery::Scan::Config->new();
@@ -169,6 +170,7 @@ sub new {
     my $self = {
 	initial_chg   => $chg,
 	chg           => $chg,
+	user_msg_fn   => $user_msg_fn,
 	scan_conf     => $scan_conf,
         interactivity => $interactivity,
     };
@@ -197,7 +199,7 @@ sub find_volume {
     my %params = @_;
 
     my $label = $params{'label'};
-    my $user_msg_fn = $params{'user_msg_fn'} || \&_user_msg_fn;
+    my $user_msg_fn = $params{'user_msg_fn'} || $self->{'user_msg_fn'} || \&_user_msg_fn;
     my $res;
     my %seen = ();
     my $inventory;

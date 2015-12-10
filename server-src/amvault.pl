@@ -105,6 +105,7 @@ package Amvault;
 use Amanda::Config qw( :getconf config_dir_relative );
 use Amanda::Disklist;
 use Amanda::Debug qw( :logging debug );
+use Amanda::Device qw( :constants );;
 use Amanda::Xfer qw( :constants );
 use Amanda::Header qw( :constants );
 use Amanda::MainLoop;
@@ -271,8 +272,31 @@ sub setup_src {
 	$src->{'interactivity'} = main::Interactivity->new();
     }
 
+    my $_user_msg_fn = sub {
+	my %params = @_;
+            
+	if (exists($params{'slot_result'})) {
+	    if (defined($params{'err'})) {
+		print "slot $params{'slot'}: $params{'err'}\n";
+		log_add($L_INFO, "slot $params{'slot'}: $params{'err'}");
+	    } else { # res must be defined
+		my $res = $params{'res'};
+		my $dev = $res->{'device'};
+		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+		    #my $volume_label = $res->{device}->volume_label;
+		    #print "slot $params{'slot'}: $volume_label\n";
+		} else {
+		    my $errmsg = $res->{device}->error_or_status();
+		    print "slot $params{'slot'}: $errmsg\n";
+		    log_add($L_INFO, "slot $params{'slot'}: $errmsg");
+		}
+	    }
+	}
+    };
+
     $src->{'scan'} = Amanda::Recovery::Scan->new(
 	    chg => $src->{'chg'},
+	    user_msg_fn => $_user_msg_fn,
 	    interactivity => $src->{'interactivity'});
 
     $src->{'clerk'} = Amanda::Recovery::Clerk->new(

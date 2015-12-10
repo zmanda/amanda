@@ -432,6 +432,26 @@ sub main {
 	    $delay = 5000; # 5 seconds
 	}
 
+	my $_user_msg_fn = sub {
+	    my %params = @_;
+
+	    if (exists($params{'slot_result'})) {
+		if (defined($params{'err'})) {
+		    print "slot $params{'slot'}: $params{'err'}\n";
+		} else { # res must be defined
+		    my $res = $params{'res'};
+		    my $dev = $res->{'device'};
+		    if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+			#my $volume_label = $res->{device}->volume_label;
+			#print "slot $params{'slot'}: $volume_label\n";
+		    } else {
+			my $errmsg = $res->{device}->error_or_status();
+			print "slot $params{'slot'}: $errmsg\n";
+		    }
+		}
+	    }
+	};
+
 	my $interactivity = Amanda::Interactivity::amfetchdump->new();
 	# if we have an explicit device, then the clerk doesn't get a changer --
 	# we operate the changer via Amanda::Recovery::Scan
@@ -440,6 +460,7 @@ sub main {
 	    return failure($chg, $finished_cb) if $chg->isa("Amanda::Changer::Error");
 	    my $scan = Amanda::Recovery::Scan->new(
 				chg => $chg,
+				user_msg_fn => $_user_msg_fn,
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 	    $clerk = Amanda::Recovery::Clerk->new(
@@ -447,6 +468,7 @@ sub main {
 		scan     => $scan);
 	} else {
 	    my $scan = Amanda::Recovery::Scan->new(
+				user_msg_fn => $_user_msg_fn,
 				interactivity => $interactivity);
 	    return failure($scan, $finished_cb) if $scan->isa("Amanda::Changer::Error");
 
