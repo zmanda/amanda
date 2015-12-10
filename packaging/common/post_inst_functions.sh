@@ -213,9 +213,9 @@ create_amandahosts() {
 }
 
 check_amandahosts_entry() {
-	# Entries for client and server differ slightly 
+	# Entries for client and server differ slightly
 	# $1 username (root, ${amanda_user})
-	# subsequent parameters are a list of programs to check (amindexd 
+	# subsequent parameters are a list of programs to check (amindexd
 	# amidxtaped, or amdump)
 	logger "Checking '${AMANDAHOMEDIR}/.amandahosts' for '${@}' entries."
 	# Generate our grep expression
@@ -303,7 +303,7 @@ check_profile(){
     fi
     case $os in
       SunOS)
-        sun_paths=/opt/csw/bin:/usr/ucb
+        sun_paths=/opt/csw/bin:/usr/ucb:${AMANDAHOMEDIR}/sbin
         if [ -z "`grep PATH ${AMANDAHOMEDIR}/.profile | grep ${sun_paths}`" ] ; then
             echo "PATH=\"$PATH:${SBINDIR}:${sun_paths}\"" >>${AMANDAHOMEDIR}/.profile
         fi

@@ -1,3 +1,7 @@
+2015-12-10  Xu Han <xhan@carbonite.com>
+	* packaging/common/post_inst_functions.sh: Adding the correct
+	  Amanda sbin path to Solaris Amandabackup user profile file
+
 2015-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* ndmp-src/ndma_tape.c (ndmta_read_quantum): Fix setting
 	  ta->mover_state.record_num
