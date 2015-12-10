@@ -1,3 +1,7 @@
+2015-12-10  Xu Han <xhan@carbonite.com>
+	* packaging/common/post_inst_functions.sh: Adding the correct
+	  Amanda sbin path to Solaris Amandabackup user profile file
+
 2015-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Changer/robot.pm (slot_can_have_label): New function to
 	  tell if a slot can have a label, ths function check the barcode
