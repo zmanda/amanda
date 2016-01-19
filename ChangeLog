@@ -1,4 +1,8 @@
 2016-01-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/set_commands.c (set_host): Correctly setdump_hostname
+	  when the input is quoted with double quote
+
+2016-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/set_full_version: Fix for new URL path
 
 2016-01-19  Jean-Louis Martineau <martineau@zmanda.com>

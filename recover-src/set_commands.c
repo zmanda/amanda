@@ -108,8 +108,11 @@ set_host(
     cmd = g_strconcat("HOST ", uqhost, NULL);
     if (converse(cmd) == -1)
 	exit(1);
-    if (server_happy())
+    if (server_happy()) {
 	found_host = 1;
+	host = uqhost;
+	uqhost = NULL;
+    }
 
     /*
      * Try converting the given host to a fully qualified, canonical
