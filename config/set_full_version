@@ -25,7 +25,7 @@ if test -d .svn && ( grep Revision: conftemp.svn > /dev/null; ); then
 #if grep Revision: conftemp.svn > /dev/null ; then
     SVN_REV=`grep Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
     SVN_URL=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
-    SVN_PATH=`grep URL: conftemp.svn|cut -d "/" -f 7-`
+    SVN_PATH=`grep URL: conftemp.svn|cut -d "/" -f 8-`
     SVN_TYPE=`echo ${SVN_PATH} |cut -d "/" -f 1`
     SVN_BRANCH=`echo "${SVN_PATH}"| cut -d "/" -f 2`
     url=`grep URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
