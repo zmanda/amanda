@@ -5,7 +5,7 @@ Changes in release 4.0.0
    * Add letter based sequence to autolabel and meta-autolabel.
    * And 'includefile' directive for the disklist.
    * tapepool, tape are in pool
-   * index file can be kept sort, compressed or uncompressed.
+   * index file can be kept sorted, compressed or uncompressed.
    * amanda.conf (interface section)
        o add a src-ip setting.
    * amanda.conf (dumptype section)
@@ -72,7 +72,20 @@ Changes in release 4.0.0
 
 Changes in release 3.3.8
     * s3 device
-       o new NEARLINE S3-STORAGE-CLASS for Google storage.
+	o New NEARLINE S3-STORAGE-CLASS for Google storage.
+	o New AWS4 STORAGE-API
+    * amcryptsimple
+	o Works with nwere gpg2.
+    * compute crc32c of data stream using hardware functions
+	o The crc are printed on the debug files.
+    * amgtar
+	o Default SPARSE value is NO if tar < 1.28.
+	o Because a bug in tar and some filesystem.
+    * amstar
+	o support include n backup mode
+    * ampgsql
+	o Add FULL-WAL property.
+    * Many bugs fix.
 
 Changes in release 3.3.7
     * amvault

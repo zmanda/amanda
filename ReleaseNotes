@@ -1,3 +1,22 @@
+                Release Notes for amanda-3.3.8
+
+* s3 device
+    o New NEARLINE S3-STORAGE-CLASS for Google storage.
+    o New AWS4 STORAGE-API
+* amcryptsimple
+    o Works with nwere gpg2.
+* compute crc32c of data stream using hardware functions
+    o The crc are printed on the debug files.
+* amgtar
+    o Default SPARSE value is NO if tar < 1.28.
+    o Because a bug in tar and some filesystem.
+* amstar
+    o support include n backup mode
+* ampgsql
+    o Add FULL-WAL property.
+* Many bugs fix.
+
+
                 Release Notes for amanda-3.3.7
 
 * amvault
