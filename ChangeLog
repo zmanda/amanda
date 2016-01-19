@@ -1,4 +1,7 @@
 2016-01-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/set_full_version: Fix for new URL path
+
+2016-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Typo
 	* ReleaseNotes: Typo
 
