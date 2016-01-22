@@ -55,6 +55,7 @@ main(
     char **new_argv;
     char **env;
 #endif
+    int good_option;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("runtar-%s\n", VERSION);
@@ -148,9 +149,50 @@ main(
 
     new_argv[0] = g_strdup_printf("%s", argv[0]);
     g_ptr_array_add(array, g_strdup(GNUTAR));
+    good_option = 0;
     for (i = 1; argv[i]; i++) {
+	if (good_option <= 0) {
+	    if (g_str_has_prefix(argv[i],"--rsh-command") ||
+		g_str_has_prefix(argv[i],"--to-command") ||
+		g_str_has_prefix(argv[i],"--info-script") ||
+		g_str_has_prefix(argv[i],"--new-volume-script") ||
+		g_str_has_prefix(argv[i],"--rmt-command") ||
+		g_str_has_prefix(argv[i],"--use-compress-program")) {
+		/* Filter potential malicious option */
+		good_option = 0;
+	    } else if (g_str_has_prefix(argv[i],"--create") ||
+		g_str_has_prefix(argv[i],"--totals") ||
+		g_str_has_prefix(argv[i],"--dereference") ||
+		g_str_has_prefix(argv[i],"--no-recursion") ||
+		g_str_has_prefix(argv[i],"--one-file-system") ||
+		g_str_has_prefix(argv[i],"--incremental") ||
+		g_str_has_prefix(argv[i],"--atime-preserve") ||
+		g_str_has_prefix(argv[i],"--sparse") ||
+		g_str_has_prefix(argv[i],"--ignore-failed-read") ||
+		g_str_has_prefix(argv[i],"--numeric-owner")) {
+		/* Accept theses options */
+		good_option++;
+	    } else if (g_str_has_prefix(argv[i],"--blocking-factor") ||
+		g_str_has_prefix(argv[i],"--file") ||
+		g_str_has_prefix(argv[i],"--directory") ||
+		g_str_has_prefix(argv[i],"--exclude") ||
+		g_str_has_prefix(argv[i],"--transform") ||
+		g_str_has_prefix(argv[i],"--listed-incremental") ||
+		g_str_has_prefix(argv[i],"--newer") ||
+		g_str_has_prefix(argv[i],"--exclude-from") ||
+		g_str_has_prefix(argv[i],"--files-from")) {
+		/* Accept theses options with the following argument */
+		good_option += 2;
+	    } else if (argv[i][0] != '-') {
+		good_option++;
+	    }
+	}
+	if (good_option <= 0) {
+	    error("error [%s invalid option: %s]", get_pname(), argv[i]);
+	}
         g_ptr_array_add(array, quote_string(argv[i]));
 	new_argv[i] = g_strdup_printf("%s", argv[i]);
+	good_option--;
     }
 
     g_ptr_array_add(array, NULL);
