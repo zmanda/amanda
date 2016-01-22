@@ -743,6 +743,27 @@ main(
     return 0;
 }
 
+static char *validate_command_options(
+    application_argument_t *argument)
+{
+    GSList    *copt;
+
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	char *opt = (char *)copt->data;
+
+	if (g_str_has_prefix(opt, "--rsh-command") ||
+	    g_str_has_prefix(opt,"--to-command") ||
+	    g_str_has_prefix(opt,"--info-script") ||
+	    g_str_has_prefix(opt,"--new-volume-script") ||
+	    g_str_has_prefix(opt,"--rmt-command") ||
+	    g_str_has_prefix(opt,"--use-compress-program")) {
+	    return opt;
+	}
+    }
+
+    return NULL;
+}
+
 static void
 amgtar_support(
     application_argument_t *argument)
@@ -864,6 +885,8 @@ static void
 amgtar_selfcheck(
     application_argument_t *argument)
 {
+    char *option;
+
     if (argument->dle.disk) {
 	delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700000, MSG_INFO, 3,
@@ -885,12 +908,21 @@ amgtar_selfcheck(
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
+
+    if ((option = validate_command_options(argument))) {
+	delete_message(print_message(build_message(
+		AMANDA_FILE, __LINE__, 3700014, MSG_ERROR, 4,
+		"disk", argument->dle.disk,
+		"device", argument->dle.device,
+		"hostname", argument->host,
+		"command-options", option)));
+    }
+
     if (gnutar_path) {
 	message_t *message;
 	if ((message = check_exec_for_suid_message(gnutar_path))) {
 	    delete_message(print_message(message));
 	} else {
-
 	    message = print_message(check_file_message(gnutar_path, X_OK));
 	    if (message && message_get_severity(message) <= MSG_INFO) {
 		char *gtar_version;
@@ -984,6 +1016,7 @@ amgtar_estimate(
     char      *file_exclude = NULL;
     char      *file_include = NULL;
     GString   *strbuf;
+    char      *option;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -996,6 +1029,11 @@ amgtar_estimate(
     if (!argument->dle.device) {
         fprintf(stderr, "ERROR No device argument\n");
         error(_("No device argument"));
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stderr, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
     if (argument->calcsize) {
@@ -1221,6 +1259,7 @@ amgtar_backup(
     int        tarpid;
     char      *file_exclude;
     char      *file_include;
+    char      *option;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1250,6 +1289,11 @@ amgtar_backup(
     if (!check_exec_for_suid(gnutar_path, FALSE)) {
         fprintf(mesgstream, "? '%s' binary is not secure", gnutar_path);
         error("'%s' binary is not secure", gnutar_path);
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stderr, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
     qdisk = quote_string(argument->dle.disk);

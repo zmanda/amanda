@@ -1,4 +1,9 @@
 2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ambsdtar.c, application-src/amgtar.c,
+	  application-src/amstar.c: Filter option from COMMAND-OPTIONS
+	* common-src/ammessage.c: Add message.
+
+2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c (check_exec_for_suid_message,
 	  check_exec_for_suid): New functions to verify a binary is secure
 	* client-src/client_util.h(check_exec_for_suid_message,

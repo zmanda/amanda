@@ -1472,6 +1472,8 @@ set_message(
 	msg = "Can't open disk '%{diskname}': %{errnostr}";
     } else if (message->code == 3700013) {
 	msg = "Cannot stat the disk '%{diskname}': %{errnostr}";
+    } else if (message->code == 3700014) {
+	msg = "Invalid '%{command-options}' COMMAND-OPTIONS";
 
     } else if (message->code == 4600000) {
 	msg = "%{errmsg}";

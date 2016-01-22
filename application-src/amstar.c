@@ -424,6 +424,22 @@ main(
     return 0;
 }
 
+static char *validate_command_options(
+    application_argument_t *argument)
+{
+    GSList    *copt;
+
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	char *opt = (char *)copt->data;
+
+	if (g_str_has_prefix(opt, "--compress-command")) {
+	   return opt;
+	}
+    }
+
+    return NULL;
+}
+
 static void
 amstar_support(
     application_argument_t *argument)
@@ -452,6 +468,8 @@ static void
 amstar_selfcheck(
     application_argument_t *argument)
 {
+    char *option;
+
     if (argument->dle.disk) {
 	char *qdisk = quote_string(argument->dle.disk);
 	fprintf(stdout, "OK disk %s\n", qdisk);
@@ -481,6 +499,10 @@ amstar_selfcheck(
          (argument->dle.exclude_file &&
 	  argument->dle.exclude_file->nb_element >= 0))) {
 	fprintf(stdout, "ERROR Can't use include and exclude simultaneously\n");
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
     }
 
     if (!star_path) {
@@ -553,6 +575,7 @@ amstar_estimate(
     times_t     start_time;
     int         level = 0;
     GSList     *levels = NULL;
+    char       *option;
 
     if (!argument->level) {
 	fprintf(stderr, "ERROR No level argument\n");
@@ -574,6 +597,11 @@ amstar_estimate(
 
     if (check_device(argument) == 0) {
 	return;
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
     if (argument->calcsize) {
@@ -772,6 +800,7 @@ amstar_backup(
     regex_t    regex_special;
     regex_t    regex_symbolic;
     regex_t    regex_hard;
+    char      *option;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -794,6 +823,11 @@ amstar_backup(
     if (!check_exec_for_suid(star_path, FALSE)) {
 	fprintf(mesgstream, "? '%s' binary is not secure", star_path);
 	error("'%s' binary is not secure", star_path);
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS\n", option);
     }
 
     if (argument->dle.include_list &&
