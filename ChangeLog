@@ -1,3 +1,8 @@
+2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/runtar.c: Filter tar arguments
+	* installcheck/runtar.pl: Check runtar errorr
+	* installcheck/Makefile.am: Add runtar.pl
+
 2016-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/set_full_version: Fix for new URL path
 

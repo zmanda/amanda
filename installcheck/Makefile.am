@@ -55,6 +55,7 @@ server_tests = \
 	Amanda_Taper_Scribe \
 	bigint \
 	taper \
+	runtar \
 	amcheck-device \
 	amgetconf \
         amtape \
