@@ -542,6 +542,22 @@ main(
     return exit_status;
 }
 
+static char *validate_command_options(
+    application_argument_t *argument)
+{
+    GSList    *copt;
+
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	char *opt = (char *)copt->data;
+
+	if (g_str_has_prefix(opt, "--use-compress-program")) {
+	    return opt;
+	}
+    }
+
+    return NULL;
+}
+
 static void
 ambsdtar_support(
     application_argument_t *argument)
@@ -572,6 +588,8 @@ static void
 ambsdtar_selfcheck(
     application_argument_t *argument)
 {
+    char *option;
+
     if (argument->dle.disk) {
 	char *qdisk = quote_string(argument->dle.disk);
 	fprintf(stdout, "OK disk %s\n", qdisk);
@@ -582,6 +600,11 @@ ambsdtar_selfcheck(
     ambsdtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
     printf("OK ambsdtar\n");
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+    }
+
     if (bsdtar_path) {
 	if (check_file(bsdtar_path, X_OK)) {
 	    if (check_exec_for_suid(bsdtar_path, TRUE)) {
@@ -660,6 +683,7 @@ ambsdtar_estimate(
     char      *file_exclude = NULL;
     char      *file_include = NULL;
     GString   *strbuf;
+    char      *option;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -672,6 +696,11 @@ ambsdtar_estimate(
     if (!argument->dle.device) {
         fprintf(stderr, "ERROR No device argument\n");
         error(_("No device argument"));
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
     if (argument->calcsize) {
@@ -1088,6 +1117,7 @@ ambsdtar_backup(
     char      *file_exclude;
     char      *file_include;
     char       new_timestamps[64];
+    char      *option;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1100,6 +1130,11 @@ ambsdtar_backup(
 
     if (!check_exec_for_suid(bsdtar_path, FALSE)) {
 	error("'%s' binary is not secure", bsdtar_path);
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
     if (!state_dir) {

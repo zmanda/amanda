@@ -625,6 +625,27 @@ main(
     return 0;
 }
 
+static char *validate_command_options(
+    application_argument_t *argument)
+{
+    GSList    *copt;
+
+    for (copt = argument->command_options; copt != NULL; copt = copt->next) {
+	char *opt = (char *)copt->data;
+
+	if (g_str_has_prefix(opt, "--rsh-command") ||
+	    g_str_has_prefix(opt,"--to-command") ||
+	    g_str_has_prefix(opt,"--info-script") ||
+	    g_str_has_prefix(opt,"--new-volume-script") ||
+	    g_str_has_prefix(opt,"--rmt-command") ||
+	    g_str_has_prefix(opt,"--use-compress-program")) {
+	    return opt;
+	}
+    }
+
+    return NULL;
+}
+
 static void
 amgtar_support(
     application_argument_t *argument)
@@ -657,6 +678,8 @@ static void
 amgtar_selfcheck(
     application_argument_t *argument)
 {
+    char *option;
+
     if (argument->dle.disk) {
 	char *qdisk = quote_string(argument->dle.disk);
 	fprintf(stdout, "OK disk %s\n", qdisk);
@@ -667,6 +690,12 @@ amgtar_selfcheck(
     amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
     printf("OK amgtar\n");
+
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stdout, "ERROR [Invalid '%s' COMMAND-OPTIONS\n", option);
+    }
+
     if (gnutar_path) {
 	if (check_file(gnutar_path, X_OK) &&
 	    check_exec_for_suid(gnutar_path, TRUE)) {
@@ -739,6 +768,7 @@ amgtar_estimate(
     GSList    *levels;
     char      *file_exclude;
     char      *file_include;
+    char      *option;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -754,6 +784,11 @@ amgtar_estimate(
     }
 
     qdisk = quote_string(argument->dle.disk);
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stderr, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
+    }
 
     if (argument->calcsize) {
 	char *dirname;
@@ -959,6 +994,7 @@ amgtar_backup(
     int        tarpid;
     char      *file_exclude;
     char      *file_include;
+    char      *option;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -988,6 +1024,11 @@ amgtar_backup(
     if (!check_exec_for_suid(gnutar_path, FALSE)) {
 	fprintf(mesgstream, "? '%s' binary is not secure\n", gnutar_path);
 	error("'%s' binary is not secure", gnutar_path);
+    }
+
+    if ((option = validate_command_options(argument))) {
+	fprintf(stderr, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
     qdisk = quote_string(argument->dle.disk);
