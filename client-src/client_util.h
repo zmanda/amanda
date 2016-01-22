@@ -159,10 +159,12 @@ message_t *check_access_message(char *filename, int mode);
 message_t *check_file_message(char *filename, int mode);
 message_t *check_dir_message(char *dirname, int mode);
 message_t *check_suid_message(char *filename);
+message_t *check_exec_for_suid_message(char *filename);
 gboolean check_access(char *filename, int mode);
 gboolean check_file(char *filename, int mode);
 gboolean check_dir(char *dirname, int mode);
 gboolean check_suid(char *filename);
+gboolean check_exec_for_suid(char *filename, gboolean verbose);
 double the_num(char * str, int pos);
 
 /* Convert a GSList returned from config_errors into an "ERROR "

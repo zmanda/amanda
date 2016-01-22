@@ -1,4 +1,16 @@
 2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c (check_exec_for_suid_message,
+	  check_exec_for_suid): New functions to verify a binary is secure
+	* client-src/client_util.h(check_exec_for_suid_message,
+	  check_exec_for_suid): Add prototypes
+	* application-src/ambsdtar.c, application-src/amgtar.c,
+	  application-src/amstar.c, client-src/runtar.c: Call
+	  check_exec_for_suid* before running a binary as root
+	* common-src/ammessage.c: Add messages
+	* installcheck/ambsdtar.pl: Fix check
+	* installcheck/amgtar.pl: Fix check
+
+2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/runtar.c: Filter tar arguments
 	* installcheck/runtar.pl: Check runtar errorr
 	* installcheck/Makefile.am: Add runtar.pl

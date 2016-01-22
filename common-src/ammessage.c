@@ -1438,6 +1438,12 @@ set_message(
 	msg = "dump will not be able to create the /etc/dumpdates file: %{errnostr}";
     } else if (message->code == 3600087) {
 	msg = "%{device}: samba access error: %{errmsg}";
+    } else if (message->code == 3600088) {
+	msg = "file/dir '%{filename}' is not owned by root";
+    } else if (message->code == 3600089) {
+	msg = "file/dir '%{filename}' is writable by everyone";
+    } else if (message->code == 3600090) {
+	msg = "file/dir '%{filename}' is writable by the group";
     } else if (message->code == 3700000) {
 	msg = "%{disk}";
     } else if (message->code == 3700001) {

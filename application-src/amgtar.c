@@ -886,39 +886,45 @@ amgtar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
     if (gnutar_path) {
-	message_t *message = print_message(check_file_message(gnutar_path, X_OK));
-	if (message && message_get_severity(message) <= MSG_INFO) {
-	    char *gtar_version;
-	    GPtrArray *argv_ptr = g_ptr_array_new();
+	message_t *message;
+	if ((message = check_exec_for_suid_message(gnutar_path))) {
+	    delete_message(print_message(message));
+	} else {
 
-	    g_ptr_array_add(argv_ptr, gnutar_path);
-	    g_ptr_array_add(argv_ptr, "--version");
-	    g_ptr_array_add(argv_ptr, NULL);
+	    message = print_message(check_file_message(gnutar_path, X_OK));
+	    if (message && message_get_severity(message) <= MSG_INFO) {
+		char *gtar_version;
+		GPtrArray *argv_ptr = g_ptr_array_new();
 
-	    gtar_version = get_first_line(argv_ptr);
-	    if (gtar_version) {
-		char *gv;
-		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
-		delete_message(print_message(build_message(
+		g_ptr_array_add(argv_ptr, gnutar_path);
+		g_ptr_array_add(argv_ptr, "--version");
+		g_ptr_array_add(argv_ptr, NULL);
+
+		gtar_version = get_first_line(argv_ptr);
+		if (gtar_version) {
+		    char *gv;
+		    for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
+		    delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700002, MSG_INFO, 4,
 			"gtar-version", gv,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
-	    } else {
-		delete_message(print_message(build_message(
+		} else {
+		    delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700003, MSG_ERROR, 4,
 			"gtar-path", gnutar_path,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
-	    }
+		}
 
-	    g_ptr_array_free(argv_ptr, TRUE);
-	    amfree(gtar_version);
+		g_ptr_array_free(argv_ptr, TRUE);
+		amfree(gtar_version);
+	    }
+	    if (message)
+		delete_message(message);
 	}
-	if (message)
-	    delete_message(message);
     } else {
 	delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700005, MSG_ERROR, 3,
@@ -926,7 +932,6 @@ amgtar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
     }
-
     if (gnutar_listdir && strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
     if (gnutar_listdir) {
@@ -947,6 +952,7 @@ amgtar_selfcheck(
     }
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
+	delete_message(print_message(check_exec_for_suid_message(calcsize)));
 	delete_message(print_message(check_file_message(calcsize, X_OK)));
 	delete_message(print_message(check_suid_message(calcsize)));
 	amfree(calcsize);
@@ -996,12 +1002,21 @@ amgtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
+	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
+
+	if (!check_exec_for_suid(calcsize, FALSE)) {
+	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
+	    g_free(calcsize);
+	    goto common_error;
+	}
+	g_free(calcsize);
 
 	if (gnutar_directory) {
 	    dirname = gnutar_directory;
 	} else {
 	    dirname = argument->dle.device;
 	}
+
 	amgtar_build_exinclude(&argument->dle, 1,
 			       &nb_exclude, &file_exclude,
 			       &nb_include, &file_include);
@@ -1017,7 +1032,6 @@ amgtar_estimate(
         }
 	amfree(file_exclude);
 	amfree(file_include);
-	amfree(qdisk);
 	return;
     }
 
@@ -1028,6 +1042,11 @@ amgtar_estimate(
 
     if (!gnutar_listdir) {
 	errmsg = g_strdup(_("GNUTAR-LISTDIR not defined"));
+	goto common_error;
+    }
+
+    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+	errmsg = g_strdup_printf("'%s' binary is not secure", gnutar_path);
 	goto common_error;
     }
 
@@ -1228,6 +1247,11 @@ amgtar_backup(
         error(_("No device argument"));
     }
 
+    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+        fprintf(mesgstream, "? '%s' binary is not secure", gnutar_path);
+        error("'%s' binary is not secure", gnutar_path);
+    }
+
     qdisk = quote_string(argument->dle.disk);
 
     incrname = amgtar_get_incrname(argument,
@@ -1412,6 +1436,10 @@ amgtar_restore(
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
+    }
+
+    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+	error("'%s' binary is not secure", gnutar_path);
     }
 
     cmd = g_strdup(gnutar_path);

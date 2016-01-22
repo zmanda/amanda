@@ -1780,6 +1780,106 @@ check_suid(
 }
 
 message_t *
+check_exec_for_suid_message(
+    char *filename)
+{
+    struct stat stat_buf;
+
+    if(!stat(filename, &stat_buf)) {
+	char *copy_filename;
+	char *s;
+
+	if (stat_buf.st_uid != 0 ) {
+	    return build_message(
+		AMANDA_FILE, __LINE__, 3600088, MSG_ERROR, 1,
+		"filename", filename);
+	}
+	if (stat_buf.st_mode & S_IWOTH) {
+	    return build_message(
+		AMANDA_FILE, __LINE__, 3600089, MSG_ERROR, 1,
+		"filename", filename);
+	}
+	if (stat_buf.st_mode & S_IWGRP) {
+	    return build_message(
+		AMANDA_FILE, __LINE__, 3600090, MSG_ERROR, 1,
+		"filename", filename);
+	}
+	copy_filename = g_strdup(filename);
+	if ((s = strchr(copy_filename, '/'))) {
+	    *s = '\0';
+	    if (*copy_filename && !check_exec_for_suid_message(copy_filename)) {
+		amfree(copy_filename);
+		return FALSE;
+	    }
+	}
+	amfree(copy_filename);
+    }
+    else {
+	return build_message(
+		AMANDA_FILE, __LINE__, 3600067, MSG_ERROR, 2,
+		"errno", errno,
+		"filename", filename);
+    }
+    return NULL;
+}
+
+gboolean
+check_exec_for_suid(
+    char *filename,
+    gboolean verbose)
+{
+    struct stat stat_buf;
+    char *quoted = quote_string(filename);
+
+    if(!stat(filename, &stat_buf)) {
+	char *copy_filename;
+	char *s;
+
+	if (stat_buf.st_uid != 0 ) {
+	    if (verbose)
+		g_printf(_("ERROR [%s is not owned by root]\n"), quoted);
+	    g_debug("Error: %s is not owned by root", quoted);
+	    amfree(quoted);
+	    return FALSE;
+	}
+	if (stat_buf.st_mode & S_IWOTH) {
+	    if (verbose)
+		g_printf(_("ERROR [%s is writable by everyone]\n"), quoted);
+	    g_debug("Error: %s is writable by everyone", quoted);
+	    amfree(quoted);
+	    return FALSE;
+	}
+	if (stat_buf.st_mode & S_IWGRP) {
+	    if (verbose)
+		g_printf(_("ERROR [%s is writable by the group]\n"), quoted);
+	    g_debug("Error: %s is writable by the group", quoted);
+	    amfree(quoted);
+	    return FALSE;
+	}
+	copy_filename = g_strdup(filename);
+	if ((s = strchr(copy_filename, '/'))) {
+	    *s = '\0';
+	    if (*copy_filename && !check_exec_for_suid(copy_filename, verbose)) {
+		amfree(quoted);
+		amfree(copy_filename);
+		return FALSE;
+	    }
+	}
+	amfree(copy_filename);
+    }
+    else {
+	if (verbose)
+	    g_printf(_("ERROR [can not stat %s: %s]\n"), quoted, strerror(errno));
+	g_debug("Error: can not stat %s: %s", quoted, strerror(errno));
+	amfree(quoted);
+	return FALSE;
+    }
+    amfree(quoted);
+    return TRUE;
+}
+
+
+message_t *
 check_access_message(
     char *	filename,
     int		mode)

@@ -37,6 +37,7 @@
 #include "amanda.h"
 #include "amutil.h"
 #include "conffile.h"
+#include "client_util.h"
 
 int main(int argc, char **argv);
 
@@ -147,6 +148,10 @@ main(
 
     new_argv = g_new0(char *, argc+1);
 
+    if (!check_exec_for_suid(GNUTAR, TRUE)) {
+	dbclose();
+	exit(1);
+    }
     new_argv[0] = g_strdup_printf("%s", argv[0]);
     g_ptr_array_add(array, g_strdup(GNUTAR));
     good_option = 0;
