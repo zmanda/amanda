@@ -668,7 +668,8 @@ amgtar_selfcheck(
 
     printf("OK amgtar\n");
     if (gnutar_path) {
-	if (check_file(gnutar_path, X_OK)) {
+	if (check_file(gnutar_path, X_OK) &&
+	    check_exec_for_suid(gnutar_path, TRUE)) {
 	    char *gtar_version;
 	    GPtrArray *argv_ptr = g_ptr_array_new();
 
@@ -691,7 +692,6 @@ amgtar_selfcheck(
     } else {
 	printf(_("ERROR [GNUTAR program not available]\n"));
     }
-
     if (gnutar_listdir && strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
     if (gnutar_listdir) {
@@ -710,6 +710,7 @@ amgtar_selfcheck(
 	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
+	check_exec_for_suid(calcsize, TRUE);
 	amfree(calcsize);
     }
     set_root_privs(0);
@@ -758,12 +759,21 @@ amgtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
+	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
+
+	if (!check_exec_for_suid(calcsize, FALSE)) {
+	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
+	    g_free(calcsize);
+	    goto common_error;
+	}
+	g_free(calcsize);
 
 	if (gnutar_directory) {
 	    dirname = gnutar_directory;
 	} else {
 	    dirname = argument->dle.device;
 	}
+
 	amgtar_build_exinclude(&argument->dle, 1,
 			       &nb_exclude, &file_exclude,
 			       &nb_include, &file_include);
@@ -782,6 +792,11 @@ amgtar_estimate(
 
     if (!gnutar_path) {
 	errmsg = vstrallocf(_("GNUTAR-PATH not defined"));
+	goto common_error;
+    }
+
+    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+	errmsg = g_strdup_printf("'%s' binary is not secure", gnutar_path);
 	goto common_error;
     }
 
@@ -970,6 +985,11 @@ amgtar_backup(
         error(_("No device argument"));
     }
 
+    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+	fprintf(mesgstream, "? '%s' binary is not secure\n", gnutar_path);
+	error("'%s' binary is not secure", gnutar_path);
+    }
+
     qdisk = quote_string(argument->dle.disk);
 
     incrname = amgtar_get_incrname(argument,
@@ -1122,6 +1142,10 @@ amgtar_restore(
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
+    }
+
+    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+        error("'%s' binary is not secure", gnutar_path);
     }
 
     cmd = stralloc(gnutar_path);

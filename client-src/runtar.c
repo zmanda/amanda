@@ -37,6 +37,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "conffile.h"
+#include "client_util.h"
 
 int main(int argc, char **argv);
 
@@ -140,6 +141,11 @@ main(
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
     argv++;
+
+    if (!check_exec_for_suid(GNUTAR, TRUE)) {
+	dbclose();
+	exit(1);
+    }
 
     cmdline = stralloc(GNUTAR);
     good_option = 0;

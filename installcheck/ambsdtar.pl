@@ -163,7 +163,7 @@ $app->add_property('BSDTAR-PATH' => '/do/not/exists');
 $restore = $app->restore('objects' => ['./hard', './foo', './bar'], 'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 256, "error status of 1 if BSDTAR-PATH does not exists");
 chomp $restore->{'errs'};
-ok($restore->{'errs'} =~ /ambsdtar: error \[exec \/do\/not\/exists: No such file or directory\]\nerror \[\/do\/not\/exists exited with status 1: see.*/, "correct error for No such file or directory") || diag($restore->{'errs'});
+ok($restore->{'errs'} =~ /ambsdtar: '\/do\/not\/exists' binary is not secure/, "correct error for No such file or directory") || diag($restore->{'errs'});
 
 # cleanup
 rmtree($root_dir);

@@ -459,32 +459,34 @@ amstar_selfcheck(
 	fprintf(stdout, "ERROR STAR-PATH not defined\n");
     } else {
 	if (check_file(star_path, X_OK)) {
-	    char *star_version;
-	    GPtrArray *argv_ptr = g_ptr_array_new();
+	    if (check_exec_for_suid(star_path, TRUE)) {
+		char *star_version;
+		GPtrArray *argv_ptr = g_ptr_array_new();
 
-	    g_ptr_array_add(argv_ptr, star_path);
-	    g_ptr_array_add(argv_ptr, "--version");
-	    g_ptr_array_add(argv_ptr, NULL);
+		g_ptr_array_add(argv_ptr, star_path);
+		g_ptr_array_add(argv_ptr, "--version");
+		g_ptr_array_add(argv_ptr, NULL);
 
-	    star_version = get_first_line(argv_ptr);
+		star_version = get_first_line(argv_ptr);
 
-	    if (star_version) {
-		char *sv, *sv1;
-		for (sv = star_version; *sv && !g_ascii_isdigit(*sv); sv++);
-		for (sv1 = sv; *sv1 && *sv1 != ' '; sv1++);
-		*sv1 = '\0';
-		printf("OK amstar star-version %s\n", sv);
-	    } else {
-		printf(_("ERROR [Can't get %s version]\n"), star_path);
+		if (star_version) {
+		    char *sv, *sv1;
+		    for (sv = star_version; *sv && !g_ascii_isdigit(*sv); sv++);
+		    for (sv1 = sv; *sv1 && *sv1 != ' '; sv1++);
+		    *sv1 = '\0';
+		    printf("OK amstar star-version %s\n", sv);
+		} else {
+		    printf(_("ERROR [Can't get %s version]\n"), star_path);
+		}
+		g_ptr_array_free(argv_ptr, TRUE);
+		amfree(star_version);
 	    }
-	    g_ptr_array_free(argv_ptr, TRUE);
-	    amfree(star_version);
-
 	}
     }
 
     if (argument->calcsize) {
 	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
+	check_exec_for_suid(calcsize, TRUE);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);
@@ -549,6 +551,12 @@ amstar_estimate(
     qdisk = quote_string(argument->dle.disk);
     if (argument->calcsize) {
 	char *dirname;
+	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
+	if (!check_exec_for_suid(calcsize, FALSE)) {
+	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
+	    goto common_error;
+	    return;
+	}
 
 	if (star_directory) {
 	    dirname = star_directory;
@@ -564,6 +572,11 @@ amstar_estimate(
 	errmsg = vstrallocf(_("STAR-PATH not defined"));
 	goto common_error;
     }
+    if (!check_exec_for_suid(star_path, FALSE)) {
+	errmsg = g_strdup_printf("'%s' binary is not secure", star_path);
+	goto common_error;
+    }
+
     cmd = stralloc(star_path);
 
     start_time = curclock();
@@ -722,6 +735,11 @@ amstar_backup(
 	error(_("No device argument"));
     }
 
+    if (!check_exec_for_suid(star_path, FALSE)) {
+	fprintf(mesgstream, "? '%s' binary is not secure", star_path);
+	error("'%s' binary is not secure", star_path);
+    }
+
     if (argument->dle.include_list &&
 	argument->dle.include_list->nb_element >= 0) {
 	fprintf(mesgstream, "? include-list not supported for backup\n");
@@ -861,6 +879,9 @@ amstar_restore(
 
     if (!star_path) {
 	error(_("STAR-PATH not defined"));
+    }
+    if (!check_exec_for_suid(star_path, FALSE)) {
+	error("'%s' binary is not secure", star_path);
     }
 
     cmd = stralloc(star_path);

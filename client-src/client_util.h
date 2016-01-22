@@ -150,6 +150,7 @@ gboolean check_access(char *filename, int mode);
 gboolean check_file(char *filename, int mode);
 gboolean check_dir(char *dirname, int mode);
 gboolean check_suid(char *filename);
+gboolean check_exec_for_suid(char *filename, gboolean verbose);
 double the_num(char * str, int pos);
 
 /* Convert a GSList returned from config_errors into an "ERROR "
