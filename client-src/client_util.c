@@ -1780,7 +1780,9 @@ check_suid(
     return TRUE;
 }
 
+#ifndef SINGLE_USERID
 static message_t *check_exec_for_suid_message_recursive(char *filename);
+#endif
 
 message_t *
 check_exec_for_suid_message(
@@ -1811,6 +1813,7 @@ check_exec_for_suid_message(
 #endif
 }
 
+#ifndef SINGLE_USERID
 static message_t *
 check_exec_for_suid_message_recursive(
     char *filename)
@@ -1854,8 +1857,11 @@ check_exec_for_suid_message_recursive(
     }
     return NULL;
 }
+#endif
 
+#ifndef SINGLE_USERID
 gboolean check_exec_for_suid_recursive(char *filename, FILE *verbose);
+#endif
 
 gboolean
 check_exec_for_suid(
@@ -1890,6 +1896,7 @@ check_exec_for_suid(
 #endif
 }
 
+#ifndef SINGLE_USERID
 gboolean
 check_exec_for_suid_recursive(
     char *filename,
@@ -1944,7 +1951,7 @@ check_exec_for_suid_recursive(
     amfree(quoted);
     return TRUE;
 }
-
+#endif
 
 message_t *
 check_access_message(

@@ -187,7 +187,7 @@ EXTRA_DIST += amanda-security.conf
 amanda-security.conf: make_security_file
 	./make_security_file
 
-etcamandadir = /etc/amanda
+etcamandadir = ${CONFIG_DIR}
 etcamanda_FILE = amanda-security.conf
 etcamanda_DATA = ${etcamanda_FILE}
 
