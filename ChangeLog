@@ -1,4 +1,9 @@
 2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Check for SINGLE_USERID
+	* common-src/Makefile.am: Install example amanda-security.conf in
+	  CONFIG_DIR
+
+2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* Add a /etc/amanda-security.conf file
 
 2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>

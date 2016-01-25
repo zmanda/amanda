@@ -1727,7 +1727,9 @@ check_suid(
     return TRUE;
 }
 
+#ifndef SINGLE_USERID
 gboolean check_exec_for_suid_recursive(char *filename, FILE *verbose);
+#endif
 
 gboolean
 check_exec_for_suid(
@@ -1762,6 +1764,7 @@ check_exec_for_suid(
 #endif
 }
 
+#ifndef SINGLE_USERID
 gboolean
 check_exec_for_suid_recursive(
     char *filename,
@@ -1844,7 +1847,7 @@ the_num(
     str[-1] = (char)ch;
     return d;
 }
-
+#endif
 
 char *
 config_errors_to_error_string(
