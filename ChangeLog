@@ -1,4 +1,8 @@
 2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-file.c: Fix security
+	* installcheck/ambsdtar.pl, installcheck/amgtar.pl: Fix for non-root
+
+2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Check for SINGLE_USERID
 	* common-src/Makefile.am: Install example amanda-security.conf in
 	  CONFIG_DIR

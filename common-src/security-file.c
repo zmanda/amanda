@@ -156,6 +156,13 @@ check_security_file_permission(
 {
     struct stat stat_buf;
     char *quoted = quote_string(SECURITY_FILE);
+    uid_t ruid = getuid();
+    uid_t euid = geteuid();
+
+    if (ruid != 0 && euid != 0 && ruid == euid) {
+	amfree(quoted);
+	return TRUE;
+    }
 
     if (!stat(SECURITY_FILE, &stat_buf)) {
         if (stat_buf.st_uid != 0 ) {
@@ -208,6 +215,12 @@ message_t *
 check_security_file_permission_message(void)
 {
     struct stat stat_buf;
+    uid_t ruid = getuid();
+    uid_t euid = geteuid();
+
+    if (ruid != 0 && euid != 0 && ruid == euid) {
+	return NULL;
+    }
 
     if (!stat(SECURITY_FILE, &stat_buf)) {
         if (stat_buf.st_uid != 0 ) {
@@ -257,7 +270,16 @@ security_allow_program_as_root(
     char *path)
 {
     gboolean r;
-    char *prefix = g_strdup_printf("%s:%s", get_pname(), name);
+    char *prefix;
+    uid_t ruid = getuid();
+    uid_t euid = geteuid();
+
+    /* non-root can execute the program as non-root */
+    if (ruid != 0 && euid != 0 && ruid == euid) {
+	return TRUE;
+    }
+
+    prefix = g_strdup_printf("%s:%s", get_pname(), name);
 
     r = security_file_check_path(prefix, path);
     g_free(prefix);
@@ -271,10 +293,13 @@ security_allow_to_restore(void)
     uid_t euid = geteuid();
     struct passwd *pw;
 
-    if (ruid == euid)
+    /* non-root can do restore as non-root */
+    if (ruid != 0 && euid != 0 && ruid == euid) {
 	return TRUE;
+    }
 
-    if (euid == 0)
+    /* root can do a restore */
+    if (ruid == 0 && euid == 0)
 	return TRUE;
 
     if ((pw = getpwnam(CLIENT_LOGIN)) == NULL) {
