@@ -44,6 +44,7 @@
 #include "amandad.h"
 #include "amxml.h"
 #include "base64.h"
+#include "security-file.h"
 
 #ifdef SAMBA_CLIENT
 #include "findpass.h"
@@ -348,6 +349,8 @@ main(
     }
 
 checkoverall:
+    check_security_file_permission(stdout);
+
     check_overall();
 
     amfree(line);

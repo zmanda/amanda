@@ -127,7 +127,7 @@ $app->add_property('atime-preserve', 'no');
 
 my $selfcheck = $app->selfcheck('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
-ok(!@{$selfcheck->{'errors'}}, "no errors during selfcheck");
+ok(!@{$selfcheck->{'errors'}}, "no errors during selfcheck") || diag(Data::Dumper::Dumper($selfcheck->{'errors'}));
 
 my $backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($backup->{'exit_status'}, 0, "error status ok");

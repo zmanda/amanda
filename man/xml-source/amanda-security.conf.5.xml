@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-security.conf.5'>
+
+<refmeta>
+<refentrytitle>amanda-security.conf</refentrytitle>
+<manvolnum>5</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.5;
+</refmeta>
+<refnamediv>
+<refname>amanda-security.conf</refname>
+<refpurpose>Client configuration file for Amanda</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+<para>&amsecurityconf; is the security configuration file for Amanda. This manpage lists the
+relevant sections and parameters of this file.</para>
+<para>The file must be installed at <emphasis remap='B'>/etc/amanda-security.conf</emphasis> and only root must be able to write to it.</para>
+<para>An example file should be installed at <emphasis remap='B'>/etc/amanda/amanda-security.conf</emphasis>.</para>
+<para>All lines with '#' as the first character ar comment line.</para>
+</refsect1>
+
+<refsect1><title>SECURE BINARIES</title>
+<para>The list of all executables amanda can execute as root.
+The format is as follow:
+<programlisting>
+   AMANDA_PROGRAM:SYMBOLIC_NAME=REALPATH_TO_BINARY
+</programlisting></para>
+<para>This file must contains realpath to executable, with all symbolic links resolved.
+You can use the 'realpath' command to find them.</para>
+<para>Multiple line can be added for the same 'AMANDA_PROGRAM:SYMBOLIC_NAME' if you are using multiple binaries.</para>
+<para>The 'AMANDA_PROGRAM:SYMBOLIC_NAME' can be any of the following:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>runtar:gnutar_path</term>
+  <listitem>
+<para>The gnutar binary runtar is allowed to run. The default is `amgetconf build.gnutar_path`</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>amgtar:gnutar_path</term>
+  <listitem>
+<para>The gnutar binary amgtar is allowed to run. The default is `amgetconf build.gnutar_path`</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>amstar:star_path</term>
+  <listitem>
+<para>The star binary amstar is allowed to run. The default is `amgetconf build.star_path`</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>ambsdtar:bsdtar_path</term>
+  <listitem>
+<para>The bsdtar binary ambsdtar is allowed to run. The default is `amgetconf build.bsdtar_path`</para></listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1>
+<title>OTHERS SECURITY PARAMETERS</title>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>restore_by_amanda_user=[yes|no]</term>
+  <listitem>
+<para>Default: no. Set to 'yes' if you want the amanda use to restore file as root, required only if you run amgtar, amstar or ambsdtar as the amanda backup for recovery.</para></listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+</seealso>
+
+</refentry>
+

@@ -71,6 +71,7 @@
 #include "client_util.h"
 #include "conffile.h"
 #include "getopt.h"
+#include "security-file.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -143,7 +144,8 @@ static void amgtar_build_exinclude(dle_t *dle, int verbose,
 static char *amgtar_get_incrname(application_argument_t *argument, int level,
 				 FILE *mesgstream, int command);
 static void check_no_check_device(void);
-static GPtrArray *amgtar_build_argv(application_argument_t *argument,
+static GPtrArray *amgtar_build_argv(char *gnutar_realpath,
+				application_argument_t *argument,
 				char *incrname, char **file_exclude,
 				char **file_include, int command);
 static char *gnutar_path;
@@ -697,12 +699,13 @@ amgtar_selfcheck(
     }
 
     if (gnutar_path) {
+	char *gnutar_realpath = NULL;
 	if (check_file(gnutar_path, X_OK) &&
-	    check_exec_for_suid(gnutar_path, TRUE)) {
+	    check_exec_for_suid("GNUTAR_PATH", gnutar_path, stdout, &gnutar_realpath)) {
 	    char *gtar_version;
 	    GPtrArray *argv_ptr = g_ptr_array_new();
 
-	    g_ptr_array_add(argv_ptr, gnutar_path);
+	    g_ptr_array_add(argv_ptr, gnutar_realpath);
 	    g_ptr_array_add(argv_ptr, "--version");
 	    g_ptr_array_add(argv_ptr, NULL);
 
@@ -712,12 +715,13 @@ amgtar_selfcheck(
 		for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
 		printf("OK amgtar gtar-version %s\n", gv);
 	    } else {
-		printf(_("ERROR [Can't get %s version]\n"), gnutar_path);
+		printf(_("ERROR [Can't get %s version]\n"), gnutar_realpath);
 	    }
 
 	    g_ptr_array_free(argv_ptr, TRUE);
 	    amfree(gtar_version);
 	}
+	amfree(gnutar_realpath);
     } else {
 	printf(_("ERROR [GNUTAR program not available]\n"));
     }
@@ -739,7 +743,6 @@ amgtar_selfcheck(
 	char *calcsize = vstralloc(amlibexecdir, "/", "calcsize", NULL);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
-	check_exec_for_suid(calcsize, TRUE);
 	amfree(calcsize);
     }
     set_root_privs(0);
@@ -751,7 +754,6 @@ amgtar_estimate(
 {
     char      *incrname = NULL;
     GPtrArray *argv_ptr;
-    char      *cmd = NULL;
     int        nullfd = -1;
     int        pipefd = -1;
     FILE      *dumpout = NULL;
@@ -769,6 +771,7 @@ amgtar_estimate(
     char      *file_exclude;
     char      *file_include;
     char      *option;
+    char      *gnutar_realpath = NULL;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -794,14 +797,6 @@ amgtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
-	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-
-	if (!check_exec_for_suid(calcsize, FALSE)) {
-	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
-	    g_free(calcsize);
-	    goto common_error;
-	}
-	g_free(calcsize);
 
 	if (gnutar_directory) {
 	    dirname = gnutar_directory;
@@ -830,7 +825,7 @@ amgtar_estimate(
 	goto common_error;
     }
 
-    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, stderr, &gnutar_realpath)) {
 	errmsg = g_strdup_printf("'%s' binary is not secure", gnutar_path);
 	goto common_error;
     }
@@ -843,8 +838,8 @@ amgtar_estimate(
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
 	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
-	cmd = stralloc(gnutar_path);
-	argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
+	argv_ptr = amgtar_build_argv(gnutar_realpath,
+				     argument, incrname, &file_exclude,
 				     &file_include, CMD_ESTIMATE);
 
 	start_time = curclock();
@@ -855,7 +850,7 @@ amgtar_estimate(
 	    goto common_exit;
 	}
 
-	tarpid = pipespawnv(cmd, STDERR_PIPE, 1,
+	tarpid = pipespawnv(gnutar_realpath, STDERR_PIPE, 1,
 			    &nullfd, &nullfd, &pipefd,
 			    (char **)argv_ptr->pdata);
 
@@ -897,12 +892,12 @@ amgtar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = vstrallocf(_("no size line match in %s output"), cmd);
+	    errmsg = vstrallocf(_("no size line match in %s output"), gnutar_realpath);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		     cmd, argument->dle.disk);
+		     gnutar_realpath, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
 	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -912,23 +907,23 @@ amgtar_estimate(
 
 	kill(-tarpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+	dbprintf(_("waiting for %s \"%s\" child\n"), gnutar_realpath, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-				cmd, WTERMSIG(wait_status), dbfn());
+				gnutar_realpath, WTERMSIG(wait_status), dbfn());
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-				    cmd, WEXITSTATUS(wait_status), dbfn());
+				    gnutar_realpath, WEXITSTATUS(wait_status), dbfn());
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    errmsg = vstrallocf(_("%s got bad exit: see %s"),
-				cmd, dbfn());
+				gnutar_realpath, dbfn());
 	}
-	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+	dbprintf(_("after %s %s wait\n"), gnutar_realpath, qdisk);
 
 common_exit:
 	if (errmsg) {
@@ -948,7 +943,6 @@ common_exit:
         }
 
 	g_ptr_array_free_full(argv_ptr);
-	amfree(cmd);
 
 	aclose(nullfd);
 	afclose(dumpout);
@@ -956,6 +950,7 @@ common_exit:
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
     amfree(qdisk);
+    amfree(gnutar_realpath);
     return;
 
 common_error:
@@ -965,6 +960,7 @@ common_error:
     fprintf(stdout, "ERROR %s\n", qerrmsg);
     amfree(errmsg);
     amfree(qerrmsg);
+    amfree(gnutar_realpath);
     return;
 }
 
@@ -973,7 +969,6 @@ amgtar_backup(
     application_argument_t *argument)
 {
     int         dumpin;
-    char      *cmd = NULL;
     char      *qdisk;
     char      *incrname;
     char       line[32768];
@@ -995,6 +990,7 @@ amgtar_backup(
     char      *file_exclude;
     char      *file_include;
     char      *option;
+    char      *gnutar_realpath = NULL;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1021,7 +1017,7 @@ amgtar_backup(
         error(_("No device argument"));
     }
 
-    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, NULL, &gnutar_realpath)) {
 	fprintf(mesgstream, "? '%s' binary is not secure\n", gnutar_path);
 	error("'%s' binary is not secure", gnutar_path);
     }
@@ -1036,11 +1032,11 @@ amgtar_backup(
     incrname = amgtar_get_incrname(argument,
 				   GPOINTER_TO_INT(argument->level->data),
 				   mesgstream, CMD_BACKUP);
-    cmd = stralloc(gnutar_path);
-    argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
+    argv_ptr = amgtar_build_argv(gnutar_realpath,
+				 argument, incrname, &file_exclude,
 				 &file_include, CMD_BACKUP);
 
-    tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
+    tarpid = pipespawnv(gnutar_realpath, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
     /* close the write ends of the pipes */
 
@@ -1105,20 +1101,20 @@ amgtar_backup(
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			    cmd, WTERMSIG(wait_status), dbfn());
+			    gnutar_realpath, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-				cmd, WEXITSTATUS(wait_status), dbfn());
+				gnutar_realpath, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			    cmd, dbfn());
+			    gnutar_realpath, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), cmd, qdisk);
-    dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
+    dbprintf(_("after %s %s wait\n"), gnutar_realpath, qdisk);
+    dbprintf(_("amgtar: %s: pid %ld\n"), gnutar_realpath, (long)tarpid);
     if (errmsg) {
 	dbprintf("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
@@ -1165,7 +1161,7 @@ amgtar_backup(
 
     amfree(incrname);
     amfree(qdisk);
-    amfree(cmd);
+    amfree(gnutar_realpath);
     g_ptr_array_free_full(argv_ptr);
 }
 
@@ -1173,24 +1169,23 @@ static void
 amgtar_restore(
     application_argument_t *argument)
 {
-    char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
     char      **env;
     int         j;
     char       *e;
     char       *include_filename = NULL;
     char       *exclude_filename = NULL;
+    char       *gnutar_realpath = NULL;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, NULL, &gnutar_realpath)) {
         error("'%s' binary is not secure", gnutar_path);
     }
 
-    cmd = stralloc(gnutar_path);
-    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    g_ptr_array_add(argv_ptr, stralloc(gnutar_realpath));
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
     if (gnutar_no_unquote)
 	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
@@ -1335,9 +1330,9 @@ amgtar_restore(
 
     env = safe_env();
     become_root();
-    execve(cmd, (char **)argv_ptr->pdata, env);
+    execve(gnutar_realpath, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
-    error(_("error [exec %s: %s]"), cmd, e);
+    error(_("error [exec %s: %s]"), gnutar_realpath, e);
 }
 
 static void
@@ -1582,6 +1577,7 @@ check_no_check_device(void)
 }
 
 GPtrArray *amgtar_build_argv(
+    char *gnutar_realpath,
     application_argument_t *argument,
     char  *incrname,
     char **file_exclude,
@@ -1606,7 +1602,7 @@ GPtrArray *amgtar_build_argv(
 	dirname = argument->dle.device;
     }
 
-    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    g_ptr_array_add(argv_ptr, stralloc(gnutar_realpath));
 
     g_ptr_array_add(argv_ptr, stralloc("--create"));
     if (command == CMD_BACKUP && argument->dle.create_index)

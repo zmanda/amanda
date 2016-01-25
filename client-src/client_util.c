@@ -41,6 +41,7 @@
 #include "glob.h"
 #include "clock.h"
 #include "amandates.h"
+#include "security-file.h"
 
 #define MAXMAXDUMPS 16
 
@@ -1726,35 +1727,70 @@ check_suid(
     return TRUE;
 }
 
+gboolean check_exec_for_suid_recursive(char *filename, FILE *verbose);
+
 gboolean
 check_exec_for_suid(
+    char *type,
     char *filename,
-    gboolean verbose)
+    FILE *verbose,
+    char **my_realpath)
+{
+#ifndef SINGLE_USERID
+    *my_realpath = realpath(filename, NULL);
+    if (!*my_realpath) {
+	int saved_errno = errno;
+	char *quoted = quote_string(filename);
+	if (verbose)
+	     g_fprintf(verbose, "ERROR [Can't find realpath for '%s': %s\n", quoted, strerror(saved_errno));
+	g_debug("ERROR [Can't find realpath for '%s': %s", quoted, strerror(saved_errno));
+	return FALSE;
+    }
+    if (!security_allow_program_as_root(type, *my_realpath)) {
+	char *quoted = quote_string(filename);
+	if (verbose)
+	     g_fprintf(verbose, "ERROR [amanda-security.conf do not allow to run '%s' as root for %s:%s]\n", quoted, get_pname(), type);
+	g_debug("Error: amanda-security.conf do not allow to run '%s' as root for %s:%s", quoted, get_pname(), type);
+	return FALSE;
+    }
+    return check_exec_for_suid_recursive(*my_realpath, verbose);
+#else
+    (void)type;
+    *my_realpath = g_strdup(filename);
+    (void)verbose;
+    return TRUE;
+#endif
+}
+
+gboolean
+check_exec_for_suid_recursive(
+    char *filename,
+    FILE *verbose)
 {
     struct stat stat_buf;
     char *quoted = quote_string(filename);
 
-    if(!stat(filename, &stat_buf)) {
+    if (lstat(filename, &stat_buf) == 0) {
 	char *copy_filename;
 	char *s;
 
 	if (stat_buf.st_uid != 0 ) {
 	    if (verbose)
-		g_printf(_("ERROR [%s is not owned by root]\n"), quoted);
+		g_fprintf(verbose, "ERROR [%s is not owned by root]\n", quoted);
 	    g_debug("Error: %s is not owned by root", quoted);
 	    amfree(quoted);
 	    return FALSE;
 	}
 	if (stat_buf.st_mode & S_IWOTH) {
 	    if (verbose)
-		g_printf(_("ERROR [%s is writable by everyone]\n"), quoted);
+		g_fprintf(verbose, "ERROR [%s is writable by everyone]\n", quoted);
 	    g_debug("Error: %s is writable by everyone", quoted);
 	    amfree(quoted);
 	    return FALSE;
 	}
 	if (stat_buf.st_mode & S_IWGRP) {
 	    if (verbose)
-		g_printf(_("ERROR [%s is writable by the group]\n"), quoted);
+		g_fprintf(verbose, "ERROR [%s is writable by the group]\n", quoted);
 	    g_debug("Error: %s is writable by the group", quoted);
 	    amfree(quoted);
 	    return FALSE;
@@ -1762,7 +1798,7 @@ check_exec_for_suid(
 	copy_filename = g_strdup(filename);
 	if ((s = strchr(copy_filename, '/'))) {
 	    *s = '\0';
-	    if (*copy_filename && !check_exec_for_suid(copy_filename, verbose)) {
+	    if (*copy_filename && !check_exec_for_suid_recursive(copy_filename, verbose)) {
 		amfree(quoted);
 		amfree(copy_filename);
 		return FALSE;
@@ -1772,7 +1808,7 @@ check_exec_for_suid(
     }
     else {
 	if (verbose)
-	    g_printf(_("ERROR [can not stat %s: %s]\n"), quoted, strerror(errno));
+	    g_fprintf(verbose, "ERROR [can not stat %s: %s]\n", quoted, strerror(errno));
 	g_debug("Error: can not stat %s: %s", quoted, strerror(errno));
 	amfree(quoted);
 	return FALSE;

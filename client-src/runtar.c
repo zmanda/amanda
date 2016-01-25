@@ -51,6 +51,7 @@ main(
     char *e;
     char *dbf;
     char *cmdline;
+    char *my_realpath = NULL;
 #endif
     int good_option;
 
@@ -142,12 +143,12 @@ main(
     argc--;
     argv++;
 
-    if (!check_exec_for_suid(GNUTAR, TRUE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", GNUTAR, stderr, &my_realpath)) {
 	dbclose();
 	exit(1);
     }
 
-    cmdline = stralloc(GNUTAR);
+    cmdline = stralloc(my_realpath);
     good_option = 0;
     for (i = 1; argv[i]; i++) {
 	char *quoted;
@@ -206,15 +207,15 @@ main(
     }
     dbclose();
 
-    execve(GNUTAR, argv, safe_env());
+    execve(my_realpath, argv, safe_env());
 
     e = strerror(errno);
     dbreopen(dbf, "more");
     amfree(dbf);
-    dbprintf(_("execve of %s failed (%s)\n"), GNUTAR, e);
+    dbprintf(_("execve of %s failed (%s)\n"), my_realpath, e);
     dbclose();
 
-    g_fprintf(stderr, _("runtar: could not exec %s: %s\n"), GNUTAR, e);
+    g_fprintf(stderr, _("runtar: could not exec %s: %s\n"), my_realpath, e);
     return 1;
 #endif
 }

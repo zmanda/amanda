@@ -58,6 +58,7 @@
 #include "conffile.h"
 #include "getopt.h"
 #include "event.h"
+#include "security-file.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -129,7 +130,8 @@ static void ambsdtar_set_timestamps(application_argument_t *argument,
 				    int                     level,
 				    char                   *timestamps,
 				    FILE                   *mesgstream);
-static GPtrArray *ambsdtar_build_argv(application_argument_t *argument,
+static GPtrArray *ambsdtar_build_argv(char *bsdtar_realpath,
+				      application_argument_t *argument,
 				      char *timestamps,
 				      char **file_exclude, char **file_include,
 				      int command);
@@ -607,11 +609,12 @@ ambsdtar_selfcheck(
 
     if (bsdtar_path) {
 	if (check_file(bsdtar_path, X_OK)) {
-	    if (check_exec_for_suid(bsdtar_path, TRUE)) {
+	    char *bsdtar_realpath;
+	    if (check_exec_for_suid("BSDTAR_PATH", bsdtar_path, stdout, &bsdtar_realpath)) {
 		char *bsdtar_version;
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
-		g_ptr_array_add(argv_ptr, bsdtar_path);
+		g_ptr_array_add(argv_ptr, bsdtar_realpath);
 		g_ptr_array_add(argv_ptr, "--version");
 		g_ptr_array_add(argv_ptr, NULL);
 
@@ -629,6 +632,7 @@ ambsdtar_selfcheck(
 		g_ptr_array_free(argv_ptr, TRUE);
 		amfree(bsdtar_version);
 	    }
+	    amfree(bsdtar_realpath);
 	}
     } else {
 	printf(_("ERROR [BSDTAR program not available]\n"));
@@ -651,7 +655,6 @@ ambsdtar_selfcheck(
 
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	check_exec_for_suid(calcsize, TRUE);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);
@@ -665,7 +668,6 @@ ambsdtar_estimate(
 {
     char      *incrname = NULL;
     GPtrArray *argv_ptr;
-    char      *cmd = NULL;
     int        nullfd = -1;
     int        pipefd = -1;
     FILE      *dumpout = NULL;
@@ -684,6 +686,7 @@ ambsdtar_estimate(
     char      *file_include = NULL;
     GString   *strbuf;
     char      *option;
+    char      *bsdtar_realpath;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -707,13 +710,6 @@ ambsdtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
-	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-
-	if (!check_exec_for_suid(calcsize, FALSE)) {
-	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
-	    goto common_error;
-	    return;
-	}
 
 	if (bsdtar_directory) {
 	    dirname = bsdtar_directory;
@@ -744,7 +740,7 @@ ambsdtar_estimate(
 	goto common_error;
     }
 
-    if (!check_exec_for_suid(bsdtar_path, FALSE)) {
+    if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
 	errmsg = g_strdup_printf("'%s' binary is not secure", bsdtar_path);
 	goto common_error;
     }
@@ -759,8 +755,8 @@ ambsdtar_estimate(
 	char *timestamps;
 	level = GPOINTER_TO_INT(levels->data);
 	timestamps = ambsdtar_get_timestamps(argument, level, stdout, CMD_ESTIMATE);
-	cmd = g_strdup(bsdtar_path);
-	argv_ptr = ambsdtar_build_argv(argument, timestamps, &file_exclude,
+	argv_ptr = ambsdtar_build_argv(bsdtar_realpath,
+				       argument, timestamps, &file_exclude,
 				       &file_include, CMD_ESTIMATE);
 	amfree(timestamps);
 
@@ -772,7 +768,7 @@ ambsdtar_estimate(
 	    goto common_exit;
 	}
 
-	tarpid = pipespawnv(cmd, STDERR_PIPE, 1,
+	tarpid = pipespawnv(bsdtar_path, STDERR_PIPE, 1,
 			    &nullfd, &nullfd, &pipefd,
 			    (char **)argv_ptr->pdata);
 
@@ -823,12 +819,12 @@ ambsdtar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = g_strdup_printf(_("no size line match in %s output"), cmd);
+	    errmsg = g_strdup_printf(_("no size line match in %s output"), bsdtar_path);
 	    g_debug(_("%s for %s"), errmsg, qdisk);
 	    g_debug(".....");
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    g_debug(_("possible %s problem -- is \"%s\" really empty?"),
-		     cmd, argument->dle.disk);
+		     bsdtar_path, argument->dle.disk);
 	    g_debug(".....");
 	}
 	g_debug(_("estimate size for %s level %d: %lld KB"),
@@ -838,12 +834,12 @@ ambsdtar_estimate(
 
 	kill(-tarpid, SIGTERM);
 
-	g_debug(_("waiting for %s \"%s\" child"), cmd, qdisk);
+	g_debug(_("waiting for %s \"%s\" child"), bsdtar_path, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    strbuf = g_string_new(errmsg);
 	    g_string_append_printf(strbuf, "%s terminated with signal %d: see %s",
-                cmd, WTERMSIG(wait_status), dbfn());
+                bsdtar_path, WTERMSIG(wait_status), dbfn());
 	    g_free(errmsg);
             errmsg = g_string_free(strbuf, FALSE);
 	    exit_status = 1;
@@ -851,7 +847,7 @@ ambsdtar_estimate(
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
                 strbuf = g_string_new(errmsg);
                 g_string_append_printf(strbuf, "%s exited with status %d: see %s",
-                    cmd, WEXITSTATUS(wait_status), dbfn());
+                    bsdtar_path, WEXITSTATUS(wait_status), dbfn());
 		g_free(errmsg);
                 errmsg = g_string_free(strbuf, FALSE);
 		exit_status = 1;
@@ -860,10 +856,10 @@ ambsdtar_estimate(
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
-				cmd, dbfn());
+				bsdtar_path, dbfn());
 	    exit_status = 1;
 	}
-	g_debug(_("after %s %s wait"), cmd, qdisk);
+	g_debug(_("after %s %s wait"), bsdtar_path, qdisk);
 
 common_exit:
 	if (errmsg) {
@@ -880,7 +876,7 @@ common_exit:
         }
 
 	g_ptr_array_free_full(argv_ptr);
-	amfree(cmd);
+	amfree(bsdtar_path);
 	amfree(incrname);
 
 	aclose(nullfd);
@@ -1099,7 +1095,6 @@ ambsdtar_backup(
     application_argument_t *argument)
 {
     int         dumpin;
-    char      *cmd = NULL;
     char      *qdisk;
     char      *timestamps;
     int        mesgf = 3;
@@ -1118,6 +1113,7 @@ ambsdtar_backup(
     char      *file_include;
     char       new_timestamps[64];
     char      *option;
+    char      *bsdtar_realpath;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1128,7 +1124,7 @@ ambsdtar_backup(
 	error(_("BSDTAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid(bsdtar_path, FALSE)) {
+    if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
 	error("'%s' binary is not secure", bsdtar_path);
     }
 
@@ -1162,12 +1158,12 @@ ambsdtar_backup(
     timestamps = ambsdtar_get_timestamps(argument,
 				   GPOINTER_TO_INT(argument->level->data),
 				   mesgstream, CMD_BACKUP);
-    cmd = g_strdup(bsdtar_path);
-    argv_ptr = ambsdtar_build_argv(argument, timestamps, &file_exclude,
+    argv_ptr = ambsdtar_build_argv(bsdtar_realpath,
+				   argument, timestamps, &file_exclude,
 				   &file_include, CMD_BACKUP);
 
     if (argument->dle.create_index) {
-	tarpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
+	tarpid = pipespawnv(bsdtar_path, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
 			&dumpin, &data_out, &outf, (char **)argv_ptr->pdata);
 	g_ptr_array_free_full(argv_ptr);
 	argv_ptr = g_ptr_array_new();
@@ -1175,7 +1171,7 @@ ambsdtar_backup(
 	g_ptr_array_add(argv_ptr, g_strdup("tf"));
 	g_ptr_array_add(argv_ptr, g_strdup("-"));
 	g_ptr_array_add(argv_ptr, NULL);
-	indexpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
+	indexpid = pipespawnv(bsdtar_path, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
 			  &index_in, &index_out, &index_err,
 			  (char **)argv_ptr->pdata);
 	g_ptr_array_free_full(argv_ptr);
@@ -1191,7 +1187,7 @@ ambsdtar_backup(
 	read_fd(index_out, "index out", &read_text);
 	read_fd(index_err, "index_err", &read_text);
     } else {
-	tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
+	tarpid = pipespawnv(bsdtar_path, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
 	g_ptr_array_free_full(argv_ptr);
 	aclose(dumpin);
@@ -1204,43 +1200,43 @@ ambsdtar_backup(
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
-			    cmd, WTERMSIG(wait_status), dbfn());
+			    bsdtar_path, WTERMSIG(wait_status), dbfn());
 	exit_status = 1;
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
-				cmd, WEXITSTATUS(wait_status), dbfn());
+				bsdtar_path, WEXITSTATUS(wait_status), dbfn());
 	    exit_status = 1;
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
-			    cmd, dbfn());
+			    bsdtar_path, dbfn());
 	exit_status = 1;
     }
     if (argument->dle.create_index) {
 	waitpid(indexpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = g_strdup_printf(_("'%s index' terminated with signal %d: see %s"),
-			    cmd, WTERMSIG(wait_status), dbfn());
+			    bsdtar_path, WTERMSIG(wait_status), dbfn());
 	    exit_status = 1;
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 		errmsg = g_strdup_printf(_("'%s index' exited with status %d: see %s"),
-				cmd, WEXITSTATUS(wait_status), dbfn());
+				bsdtar_path, WEXITSTATUS(wait_status), dbfn());
 		exit_status = 1;
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("'%s index' got bad exit: see %s"),
-			    cmd, dbfn());
+			    bsdtar_path, dbfn());
 	    exit_status = 1;
 	}
     }
-    g_debug(_("after %s %s wait"), cmd, qdisk);
-    g_debug(_("ambsdtar: %s: pid %ld"), cmd, (long)tarpid);
+    g_debug(_("after %s %s wait"), bsdtar_path, qdisk);
+    g_debug(_("ambsdtar: %s: pid %ld"), bsdtar_path, (long)tarpid);
     if (errmsg) {
 	g_debug("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
@@ -1274,7 +1270,7 @@ ambsdtar_backup(
     amfree(file_include);
     amfree(timestamps);
     amfree(qdisk);
-    amfree(cmd);
+    amfree(bsdtar_path);
     amfree(errmsg);
 }
 
@@ -1425,7 +1421,6 @@ static void
 ambsdtar_restore(
     application_argument_t *argument)
 {
-    char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
     int         j;
     char       *include_filename = NULL;
@@ -1437,17 +1432,21 @@ ambsdtar_restore(
     int         tarin, tarout, tarerr;
     char       *errmsg = NULL;
     amwait_t    wait_status;
+    char       *bsdtar_realpath;
 
     if (!bsdtar_path) {
 	error(_("BSDTAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid(bsdtar_path, FALSE)) {
+    if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
 	error("'%s' binary is not secure", bsdtar_path);
     }
 
-    cmd = g_strdup(bsdtar_path);
-    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
+    if (!security_allow_to_restore()) {
+	error("The user is not allowed to restore files");
+    }
+
+    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_realpath));
     g_ptr_array_add(argv_ptr, g_strdup("--numeric-owner"));
     /* ignore trailing zero blocks on input (this was the default until tar-1.21) */
     if (argument->tar_blocksize) {
@@ -1606,7 +1605,7 @@ ambsdtar_restore(
 
     debug_executing(argv_ptr);
 
-    tarpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
+    tarpid = pipespawnv(bsdtar_path, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
 			&tarin, &tarout, &tarerr, (char **)argv_ptr->pdata);
 
     in_buf.fd = 0;
@@ -1643,15 +1642,15 @@ ambsdtar_restore(
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
-				 cmd, WTERMSIG(wait_status), dbfn());
+				 bsdtar_path, WTERMSIG(wait_status), dbfn());
 	exit_status = 1;
     } else if (WIFEXITED(wait_status) && WEXITSTATUS(wait_status) > 0) {
 	errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
-				 cmd, WEXITSTATUS(wait_status), dbfn());
+				 bsdtar_path, WEXITSTATUS(wait_status), dbfn());
 	exit_status = 1;
     }
 
-    g_debug(_("ambsdtar: %s: pid %ld"), cmd, (long)tarpid);
+    g_debug(_("ambsdtar: %s: pid %ld"), bsdtar_path, (long)tarpid);
     if (errmsg) {
 	g_debug("%s", errmsg);
 	fprintf(stderr, "error [%s]\n", errmsg);
@@ -1662,7 +1661,7 @@ ambsdtar_restore(
 	    unlink(exclude_filename);
 	unlink(include_filename);
     }
-    amfree(cmd);
+    amfree(bsdtar_path);
     amfree(include_filename);
     amfree(exclude_filename);
 
@@ -1969,6 +1968,7 @@ ambsdtar_set_timestamps(
 
 static GPtrArray *
 ambsdtar_build_argv(
+    char  *bsdtar_realpath,
     application_argument_t *argument,
     char  *timestamps,
     char **file_exclude,
@@ -1992,7 +1992,7 @@ ambsdtar_build_argv(
 	dirname = argument->dle.device;
     }
 
-    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_path));
+    g_ptr_array_add(argv_ptr, g_strdup(bsdtar_realpath));
 
     g_ptr_array_add(argv_ptr, g_strdup("--create"));
     g_ptr_array_add(argv_ptr, g_strdup("--file"));

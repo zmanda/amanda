@@ -9,6 +9,7 @@ AMPLOT_MAN_PAGES =  amplot.8
 COMMON_MAN_PAGES =  amanda.8 \
 		    amanda.conf.5 \
 		    amanda-client.conf.5 \
+		    amanda-security.conf.5 \
 		    amanda-scripts.7 \
 		    amanda-archive-format.5 \
 		    amanda-auth.7 \
