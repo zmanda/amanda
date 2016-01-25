@@ -58,6 +58,7 @@
 #include "conffile.h"
 #include "getopt.h"
 #include "sendbackup.h"
+#include "security-file.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -124,7 +125,8 @@ static void amstar_backup(application_argument_t *argument);
 static void amstar_restore(application_argument_t *argument);
 static void amstar_validate(application_argument_t *argument);
 static void amstar_index(application_argument_t *argument);
-static GPtrArray *amstar_build_argv(application_argument_t *argument,
+static GPtrArray *amstar_build_argv(char *star_realpath,
+				application_argument_t *argument,
 				int level,
 				int command,
 				FILE *mesgstream);
@@ -509,11 +511,12 @@ amstar_selfcheck(
 	fprintf(stdout, "ERROR STAR-PATH not defined\n");
     } else {
 	if (check_file(star_path, X_OK)) {
-	    if (check_exec_for_suid(star_path, TRUE)) {
+	    char *star_realpath = NULL;
+	    if (check_exec_for_suid("STAR_PATH", star_path, stdout, &star_realpath)) {
 		char *star_version;
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
-		g_ptr_array_add(argv_ptr, star_path);
+		g_ptr_array_add(argv_ptr, star_realpath);
 		g_ptr_array_add(argv_ptr, "--version");
 		g_ptr_array_add(argv_ptr, NULL);
 
@@ -531,12 +534,12 @@ amstar_selfcheck(
 		g_ptr_array_free(argv_ptr, TRUE);
 		amfree(star_version);
 	    }
+	    amfree(star_realpath);
 	}
     }
 
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	check_exec_for_suid(calcsize, TRUE);
 	check_file(calcsize, X_OK);
 	check_suid(calcsize);
 	amfree(calcsize);
@@ -560,7 +563,6 @@ amstar_estimate(
     application_argument_t *argument)
 {
     GPtrArray  *argv_ptr;
-    char       *cmd = NULL;
     int         nullfd;
     int         pipefd;
     FILE       *dumpout = NULL;
@@ -576,6 +578,7 @@ amstar_estimate(
     int         level = 0;
     GSList     *levels = NULL;
     char       *option;
+    char       *star_realpath = NULL;
 
     if (!argument->level) {
 	fprintf(stderr, "ERROR No level argument\n");
@@ -606,12 +609,6 @@ amstar_estimate(
 
     if (argument->calcsize) {
 	char *dirname;
-	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	if (!check_exec_for_suid(calcsize, FALSE)) {
-	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
-	    goto common_error;
-	    return;
-	}
 
 	if (star_directory) {
 	    dirname = star_directory;
@@ -628,18 +625,17 @@ amstar_estimate(
 	errmsg = g_strdup(_("STAR-PATH not defined"));
 	goto common_error;
     }
-    if (!check_exec_for_suid(star_path, FALSE)) {
+    if (!check_exec_for_suid("STAR_PATH", star_path, NULL, &star_realpath)) {
 	errmsg = g_strdup_printf("'%s' binary is not secure", star_path);
 	goto common_error;
     }
-    cmd = g_strdup(star_path);
 
     start_time = curclock();
 
     qdisk = quote_string(argument->dle.disk);
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
-	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE, NULL);
+	argv_ptr = amstar_build_argv(star_realpath, argument, level, CMD_ESTIMATE, NULL);
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 	    errmsg = g_strdup_printf(_("Cannot access /dev/null : %s"),
@@ -647,7 +643,7 @@ amstar_estimate(
 	    goto common_error;
 	}
 
-	starpid = pipespawnv(cmd, STDERR_PIPE, 1,
+	starpid = pipespawnv(star_realpath, STDERR_PIPE, 1,
 			     &nullfd, &nullfd, &pipefd,
 			     (char **)argv_ptr->pdata);
 
@@ -693,7 +689,7 @@ amstar_estimate(
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
 	    errmsg = g_strdup_printf(_("no size line match in %s output"),
-				cmd);
+				star_realpath);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);
@@ -702,7 +698,7 @@ amstar_estimate(
 	    amfree(qerrmsg);
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		     cmd, argument->dle.disk);
+		     star_realpath, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
 	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -712,12 +708,12 @@ amstar_estimate(
 
 	(void)kill(-starpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+	dbprintf(_("waiting for %s \"%s\" child\n"), star_realpath, qdisk);
 	waitpid(starpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    amfree(errmsg);
 	    errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
-				cmd, WTERMSIG(wait_status), dbfn());
+				star_realpath, WTERMSIG(wait_status), dbfn());
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);
@@ -728,7 +724,7 @@ amstar_estimate(
 	    if (WEXITSTATUS(wait_status) != 0) {
 		amfree(errmsg);
 		errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
-				    cmd, WEXITSTATUS(wait_status), dbfn());
+				    star_realpath, WEXITSTATUS(wait_status), dbfn());
 		dbprintf(_("%s for %s\n"), errmsg, qdisk);
 		dbprintf(".....\n");
 		qerrmsg = quote_string(errmsg);
@@ -740,7 +736,7 @@ amstar_estimate(
 	    }
 	} else {
 	    amfree(errmsg);
-	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"), cmd, dbfn());
+	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"), star_realpath, dbfn());
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	    qerrmsg = quote_string(errmsg);
@@ -748,7 +744,7 @@ amstar_estimate(
 	    amfree(errmsg);
 	    amfree(qerrmsg);
 	}
-	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+	dbprintf(_("after %s %s wait\n"), star_realpath, qdisk);
 
 	g_ptr_array_free_full(argv_ptr);
 
@@ -758,7 +754,7 @@ amstar_estimate(
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
     amfree(qdisk);
-    amfree(cmd);
+    amfree(star_realpath);
     return;
 
 common_error:
@@ -769,7 +765,7 @@ common_error:
     fprintf(stdout, "ERROR %s\n", qerrmsg);
     amfree(errmsg);
     amfree(qerrmsg);
-    amfree(cmd);
+    amfree(star_realpath);
 }
 
 static void
@@ -777,7 +773,6 @@ amstar_backup(
     application_argument_t *argument)
 {
     int        dumpin;
-    char      *cmd = NULL;
     char      *qdisk;
     char       line[32768];
     amregex_t *rp;
@@ -801,6 +796,7 @@ amstar_backup(
     regex_t    regex_symbolic;
     regex_t    regex_hard;
     char      *option;
+    char      *star_realpath = NULL;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -820,7 +816,7 @@ amstar_backup(
 	error(_("No device argument"));
     }
 
-    if (!check_exec_for_suid(star_path, FALSE)) {
+    if (!check_exec_for_suid("STAR_PATH", star_path, NULL, &star_realpath)) {
 	fprintf(mesgstream, "? '%s' binary is not secure", star_path);
 	error("'%s' binary is not secure", star_path);
     }
@@ -839,11 +835,9 @@ amstar_backup(
 
     qdisk = quote_string(argument->dle.disk);
 
-    argv_ptr = amstar_build_argv(argument, level, CMD_BACKUP, mesgstream);
+    argv_ptr = amstar_build_argv(star_realpath, argument, level, CMD_BACKUP, mesgstream);
 
-    cmd = g_strdup(star_path);
-
-    starpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
+    starpid = pipespawnv(star_realpath, STDIN_PIPE|STDERR_PIPE, 1,
 			 &dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
 
     g_ptr_array_free_full(argv_ptr);
@@ -945,7 +939,7 @@ amstar_backup(
     regfree(&regex_symbolic);
     regfree(&regex_hard);
 
-    dbprintf(_("gnutar: %s: pid %ld\n"), cmd, (long)starpid);
+    dbprintf(_("gnutar: %s: pid %ld\n"), star_realpath, (long)starpid);
 
     dbprintf("sendbackup: size %lld\n", (long long)dump_size);
     fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
@@ -955,30 +949,32 @@ amstar_backup(
 	fclose(indexstream);
 
     amfree(qdisk);
-    amfree(cmd);
+    amfree(star_realpath);
 }
 
 static void
 amstar_restore(
     application_argument_t *argument)
 {
-    char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
     char      **env;
     int         j;
     char       *e;
+    char       *star_realpath = NULL;
 
     if (!star_path) {
 	error(_("STAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid(star_path, FALSE)) {
+    if (!check_exec_for_suid("STAR_PATH", star_path, NULL, &star_realpath)) {
 	error("'%s' binary is not secure", star_path);
     }
 
-    cmd = g_strdup(star_path);
+    if (!security_allow_to_restore()) {
+	error("The user is not allowed to restore files");
+    }
 
-    g_ptr_array_add(argv_ptr, g_strdup(star_path));
+    g_ptr_array_add(argv_ptr, g_strdup(star_realpath));
     if (star_directory) {
 	struct stat stat_buf;
 	if(stat(star_directory, &stat_buf) != 0) {
@@ -1039,9 +1035,9 @@ amstar_restore(
     debug_executing(argv_ptr);
     env = safe_env();
     become_root();
-    execve(cmd, (char **)argv_ptr->pdata, env);
+    execve(star_realpath, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
-    error(_("error [exec %s: %s]"), cmd, e);
+    error(_("error [exec %s: %s]"), star_realpath, e);
 
 }
 
@@ -1158,6 +1154,7 @@ amstar_index(
 }
 
 static GPtrArray *amstar_build_argv(
+    char *star_realpath,
     application_argument_t *argument,
     int   level,
     int   command,
@@ -1191,7 +1188,7 @@ static GPtrArray *amstar_build_argv(
 	tardumpfile = g_strdup(star_tardumps);
     }
 
-    g_ptr_array_add(argv_ptr, g_strdup(star_path));
+    g_ptr_array_add(argv_ptr, g_strdup(star_realpath));
 
     g_ptr_array_add(argv_ptr, g_strdup("-c"));
     g_ptr_array_add(argv_ptr, g_strdup("-f"));

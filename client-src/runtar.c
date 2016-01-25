@@ -55,6 +55,7 @@ main(
     gchar **strings;
     char **new_argv;
     char **env;
+    char *my_realpath = NULL;
 #endif
     int good_option;
 
@@ -148,12 +149,12 @@ main(
 
     new_argv = g_new0(char *, argc+1);
 
-    if (!check_exec_for_suid(GNUTAR, TRUE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", GNUTAR, stderr, &my_realpath)) {
 	dbclose();
 	exit(1);
     }
     new_argv[0] = g_strdup_printf("%s", argv[0]);
-    g_ptr_array_add(array, g_strdup(GNUTAR));
+    g_ptr_array_add(array, g_strdup(my_realpath));
     good_option = 0;
     for (i = 1; argv[i]; i++) {
 	if (good_option <= 0) {
@@ -216,16 +217,17 @@ main(
     dbclose();
 
     env = safe_env();
-    execve(GNUTAR, new_argv, env);
+    execve(my_realpath, new_argv, env);
     free_env(env);
 
     e = strerror(errno);
     dbreopen(dbf, "more");
     amfree(dbf);
-    dbprintf(_("execve of %s failed (%s)\n"), GNUTAR, e);
+    dbprintf(_("execve of %s failed (%s)\n"), my_realpath, e);
     dbclose();
 
-    g_fprintf(stderr, _("runtar: could not exec %s: %s\n"), GNUTAR, e);
+    g_fprintf(stderr, _("runtar: could not exec %s: %s\n"), my_realpath, e);
+    g_free(my_realpath);
     return 1;
 #endif
 }

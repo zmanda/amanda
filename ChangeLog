@@ -1,3 +1,6 @@
+2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* Add a /etc/amanda-security.conf file
+
 2016-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c, application-src/amgtar.c,
 	  application-src/amstar.c: Filter option from COMMAND-OPTIONS

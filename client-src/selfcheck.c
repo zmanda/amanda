@@ -45,6 +45,7 @@
 #include "ammessage.h"
 #include "amxml.h"
 #include "base64.h"
+#include "security-file.h"
 
 #ifdef SAMBA_CLIENT
 #include "findpass.h"
@@ -398,6 +399,8 @@ main(
     }
 
 checkoverall:
+    delete_message(selfcheck_print_message(check_security_file_permission_message()));
+
     check_overall();
 
     amfree(line);

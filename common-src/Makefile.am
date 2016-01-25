@@ -39,6 +39,7 @@ libamanda_la_SOURCES =		\
 	protocol.c		\
 	amsemaphore.c		\
 	security.c		\
+	security-file.c		\
 	security-util.c		\
 	simpleprng.c		\
 	sockaddr-util.c		\
@@ -129,6 +130,7 @@ noinst_HEADERS =		\
 	protocol.h		\
 	amsemaphore.h		\
 	security.h		\
+	security-file.h		\
 	security-util.h		\
 	simpleprng.h		\
 	am_sl.h			\
@@ -174,10 +176,25 @@ version.c: genversion$(EXEEXT)
 
 BUILT_SOURCES += genversion.h version.c
 
+make_security_file_SOURCES = make_security_file.c
+make_security_file_LDADD = $(libamanda_la_LIBADD) \
+	../gnulib/libgnu.la
+
+make_security_file: $(make_security_file_SOURCES) ../config/config.h
+
+EXTRA_DIST += amanda-security.conf
+
+amanda-security.conf: make_security_file
+	./make_security_file
+
+etcamandadir = /etc/amanda
+etcamanda_FILE = amanda-security.conf
+etcamanda_DATA = ${etcamanda_FILE}
+
 # these are used for testing only:
 TEST_PROGS = file bsdsecurity
 
-DISTCLEANFILES += version.c genversion genversion.h config.log
+DISTCLEANFILES += version.c genversion genversion.h config.log amanda-security.conf
 
 # used for testing only
 

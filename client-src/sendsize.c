@@ -2306,20 +2306,55 @@ getsize_gnutar(
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
-	size = handle_dumpline(line);
-	if(size > (off_t)-1) {
-	    amfree(line);
-	    while ((line = agets(dumpout)) != NULL) {
-		if (line[0] != '\0') {
+
+	if (g_str_has_prefix(line, "ERROR ")) {
+	    char *errmsg, *qerrmsg;
+	    if (g_str_has_prefix(line, "ERROR [")) {
+		int len;
+		errmsg = g_strdup(line+7);
+		len = strlen(errmsg);
+		errmsg[len-1] = '\0';
+	    } else {
+		errmsg = g_strdup(line+6);
+	    }
+	    qerrmsg = quote_string(errmsg);
+	    dbprintf(_("errmsg is %s\n"), errmsg);
+	    g_printf(_("%s %d ERROR %s\n"), dle->disk, 0, qerrmsg);
+	    amfree(qerrmsg);
+	    amfree(errmsg);
+	    continue;
+	} else if (g_str_has_prefix(line, "runtar: error ")) {
+	    char *errmsg, *qerrmsg;
+	    if (g_str_has_prefix(line, "runtar: error [")) {
+		int len;
+		errmsg = g_strdup(line+15);
+		len = strlen(errmsg);
+		errmsg[len-1] = '\0';
+	    } else {
+		errmsg = g_strdup(line+14);
+	    }
+	    qerrmsg = quote_string(errmsg);
+	    dbprintf(_("errmsg is %s\n"), errmsg);
+	    g_printf(_("%s %d ERROR %s\n"), dle->disk, 0, qerrmsg);
+	    amfree(qerrmsg);
+	    amfree(errmsg);
+	    continue;
+	} else {
+	    size = handle_dumpline(line);
+	    if(size > (off_t)-1) {
+		amfree(line);
+		while ((line = agets(dumpout)) != NULL) {
+		    if (line[0] != '\0') {
+			break;
+		    }
+		    amfree(line);
+		}
+		if (line != NULL) {
+		    dbprintf("%s\n", line);
 		    break;
 		}
-		amfree(line);
-	    }
-	    if (line != NULL) {
-		dbprintf("%s\n", line);
 		break;
 	    }
-	    break;
 	}
     }
     amfree(line);

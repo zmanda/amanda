@@ -1389,7 +1389,7 @@ set_message(
     } else if (message->code == 3600062) {
 	msg = "can not stat '%{dirname}': %{errnostr}";
     } else if (message->code == 3600063) {
-	msg = "can not %{noun} '%{ilename}': %{errnostr} (ruid:%{ruid} euid:%{euid})";
+	msg = "can not %{noun} '%{filename}': %{errnostr} (ruid:%{ruid} euid:%{euid})";
     } else if (message->code == 3600064) {
 	msg = "%{filename} %{adjective} (ruid:%{ruid} euid:%{euid})";
     } else if (message->code == 3600065) {
@@ -1444,6 +1444,10 @@ set_message(
 	msg = "file/dir '%{filename}' is writable by everyone";
     } else if (message->code == 3600090) {
 	msg = "file/dir '%{filename}' is writable by the group";
+    } else if (message->code == 3600091) {
+	msg = "Can't find real path for '%{filename}': %{errnostr}";
+    } else if (message->code == 3600092) {
+	msg = "security file do not allow to run '%{filename}' as root for %{pname}:%{type}";
     } else if (message->code == 3700000) {
 	msg = "%{disk}";
     } else if (message->code == 3700001) {

@@ -91,6 +91,7 @@
 <!-- IDs for AMANDA files-->
 <!ENTITY amconf '<manref name="amanda.conf" vol="5"/>'>
 <!ENTITY amclientconf '<manref name="amanda-client.conf" vol="5"/>'>
+<!ENTITY amsecurityconf '<manref name="amanda-security.conf" vol="5"/>'>
 <!ENTITY amandahosts '<filename>.amandahosts</filename>'>
 <!ENTITY disklist '<manref name="disklist" vol="5"/>'>
 <!ENTITY amandapass '<filename>/etc/amandapass</filename>'>

@@ -71,6 +71,7 @@
 #include "client_util.h"
 #include "conffile.h"
 #include "getopt.h"
+#include "security-file.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -149,7 +150,8 @@ static void amgtar_build_exinclude(dle_t *dle, int verbose,
 static char *amgtar_get_incrname(application_argument_t *argument, int level,
 				 FILE *mesgstream, int command);
 static void check_no_check_device(void);
-static GPtrArray *amgtar_build_argv(application_argument_t *argument,
+static GPtrArray *amgtar_build_argv(char *gnutar_realpath,
+				application_argument_t *argument,
 				char *incrname, char **file_exclude,
 				char **file_include, int command);
 static char *gnutar_path;
@@ -920,7 +922,8 @@ amgtar_selfcheck(
 
     if (gnutar_path) {
 	message_t *message;
-	if ((message = check_exec_for_suid_message(gnutar_path))) {
+	char *gnutar_realpath = NULL;
+	if ((message = check_exec_for_suid_message("GNUTAR_PATH", gnutar_path, &gnutar_realpath))) {
 	    delete_message(print_message(message));
 	} else {
 	    message = print_message(check_file_message(gnutar_path, X_OK));
@@ -957,6 +960,7 @@ amgtar_selfcheck(
 	    if (message)
 		delete_message(message);
 	}
+	if (gnutar_realpath) g_free(gnutar_realpath);
     } else {
 	delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700005, MSG_ERROR, 3,
@@ -984,7 +988,6 @@ amgtar_selfcheck(
     }
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	delete_message(print_message(check_exec_for_suid_message(calcsize)));
 	delete_message(print_message(check_file_message(calcsize, X_OK)));
 	delete_message(print_message(check_suid_message(calcsize)));
 	amfree(calcsize);
@@ -998,7 +1001,6 @@ amgtar_estimate(
 {
     char      *incrname = NULL;
     GPtrArray *argv_ptr;
-    char      *cmd = NULL;
     int        nullfd = -1;
     int        pipefd = -1;
     FILE      *dumpout = NULL;
@@ -1017,6 +1019,7 @@ amgtar_estimate(
     char      *file_include = NULL;
     GString   *strbuf;
     char      *option;
+    char      *gnutar_realpath = NULL;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -1040,14 +1043,6 @@ amgtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
-	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-
-	if (!check_exec_for_suid(calcsize, FALSE)) {
-	    errmsg = g_strdup_printf("'%s' binary is not secure", calcsize);
-	    g_free(calcsize);
-	    goto common_error;
-	}
-	g_free(calcsize);
 
 	if (gnutar_directory) {
 	    dirname = gnutar_directory;
@@ -1083,7 +1078,7 @@ amgtar_estimate(
 	goto common_error;
     }
 
-    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, stderr, &gnutar_realpath)) {
 	errmsg = g_strdup_printf("'%s' binary is not secure", gnutar_path);
 	goto common_error;
     }
@@ -1092,8 +1087,8 @@ amgtar_estimate(
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
 	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
-	cmd = g_strdup(gnutar_path);
-	argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
+	argv_ptr = amgtar_build_argv(gnutar_realpath,
+				     argument, incrname, &file_exclude,
 				     &file_include, CMD_ESTIMATE);
 
 	start_time = curclock();
@@ -1104,7 +1099,7 @@ amgtar_estimate(
 	    goto common_exit;
 	}
 
-	tarpid = pipespawnv(cmd, STDERR_PIPE, 1,
+	tarpid = pipespawnv(gnutar_realpath, STDERR_PIPE, 1,
 			    &nullfd, &nullfd, &pipefd,
 			    (char **)argv_ptr->pdata);
 
@@ -1148,12 +1143,12 @@ amgtar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = g_strdup_printf(_("no size line match in %s output"), cmd);
+	    errmsg = g_strdup_printf(_("no size line match in %s output"), gnutar_realpath);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		     cmd, argument->dle.disk);
+		     gnutar_realpath, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
 	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -1163,19 +1158,19 @@ amgtar_estimate(
 
 	(void)kill(-tarpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
+	dbprintf(_("waiting for %s \"%s\" child\n"), gnutar_realpath, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    strbuf = g_string_new(errmsg);
 	    g_string_append_printf(strbuf, "%s terminated with signal %d: see %s",
-                cmd, WTERMSIG(wait_status), dbfn());
+                gnutar_realpath, WTERMSIG(wait_status), dbfn());
 	    g_free(errmsg);
             errmsg = g_string_free(strbuf, FALSE);
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
                 strbuf = g_string_new(errmsg);
                 g_string_append_printf(strbuf, "%s exited with status %d: see %s",
-                    cmd, WEXITSTATUS(wait_status), dbfn());
+                    gnutar_realpath, WEXITSTATUS(wait_status), dbfn());
 		g_free(errmsg);
                 errmsg = g_string_free(strbuf, FALSE);
 	    } else {
@@ -1183,9 +1178,9 @@ amgtar_estimate(
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
-				cmd, dbfn());
+				gnutar_realpath, dbfn());
 	}
-	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
+	dbprintf(_("after %s %s wait\n"), gnutar_realpath, qdisk);
 
 common_exit:
 	if (errmsg) {
@@ -1204,7 +1199,6 @@ common_exit:
         }
 
 	g_ptr_array_free_full(argv_ptr);
-	amfree(cmd);
 	amfree(incrname);
 
 	aclose(nullfd);
@@ -1218,6 +1212,7 @@ common_exit:
     amfree(errmsg);
     amfree(qerrmsg);
     amfree(incrname);
+    amfree(gnutar_realpath);
     return;
 
 common_error:
@@ -1230,6 +1225,7 @@ common_error:
     amfree(errmsg);
     amfree(qerrmsg);
     amfree(incrname);
+    amfree(gnutar_realpath);
     return;
 }
 
@@ -1238,7 +1234,6 @@ amgtar_backup(
     application_argument_t *argument)
 {
     int         dumpin;
-    char      *cmd = NULL;
     char      *qdisk;
     char      *incrname;
     char       line[32768];
@@ -1260,6 +1255,7 @@ amgtar_backup(
     char      *file_exclude;
     char      *file_include;
     char      *option;
+    char      *gnutar_realpath = NULL;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1286,7 +1282,7 @@ amgtar_backup(
         error(_("No device argument"));
     }
 
-    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, NULL, &gnutar_realpath)) {
         fprintf(mesgstream, "? '%s' binary is not secure", gnutar_path);
         error("'%s' binary is not secure", gnutar_path);
     }
@@ -1301,11 +1297,11 @@ amgtar_backup(
     incrname = amgtar_get_incrname(argument,
 				   GPOINTER_TO_INT(argument->level->data),
 				   mesgstream, CMD_BACKUP);
-    cmd = g_strdup(gnutar_path);
-    argv_ptr = amgtar_build_argv(argument, incrname, &file_exclude,
+    argv_ptr = amgtar_build_argv(gnutar_realpath,
+				 argument, incrname, &file_exclude,
 				 &file_include, CMD_BACKUP);
 
-    tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
+    tarpid = pipespawnv(gnutar_realpath, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
     /* close the write ends of the pipes */
 
@@ -1395,20 +1391,20 @@ amgtar_backup(
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
-			    cmd, WTERMSIG(wait_status), dbfn());
+			    gnutar_realpath, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
-				cmd, WEXITSTATUS(wait_status), dbfn());
+				gnutar_realpath, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
-			    cmd, dbfn());
+			    gnutar_realpath, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), cmd, qdisk);
-    dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
+    dbprintf(_("after %s %s wait\n"), gnutar_realpath, qdisk);
+    dbprintf(_("amgtar: %s: pid %ld\n"), gnutar_realpath, (long)tarpid);
     if (errmsg) {
 	dbprintf("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
@@ -1455,8 +1451,8 @@ amgtar_backup(
     amfree(file_include);
     amfree(incrname);
     amfree(qdisk);
-    amfree(cmd);
     amfree(errmsg);
+    amfree(gnutar_realpath);
     g_ptr_array_free_full(argv_ptr);
 }
 
@@ -1464,7 +1460,6 @@ static void
 amgtar_restore(
     application_argument_t *argument)
 {
-    char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
     GPtrArray  *include_array = g_ptr_array_new();
     char      **env;
@@ -1477,17 +1472,21 @@ amgtar_restore(
     int         exit_status = 0;
     char       *errmsg = NULL;
     FILE       *dar_file;
+    char       *gnutar_realpath = NULL;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid(gnutar_path, FALSE)) {
+    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, NULL, &gnutar_realpath)) {
 	error("'%s' binary is not secure", gnutar_path);
     }
 
-    cmd = g_strdup(gnutar_path);
-    g_ptr_array_add(argv_ptr, g_strdup(gnutar_path));
+    if (!security_allow_to_restore()) {
+	error("The user is not allowed to restore files");
+    }
+
+    g_ptr_array_add(argv_ptr, g_strdup(gnutar_realpath));
     g_ptr_array_add(argv_ptr, g_strdup("--numeric-owner"));
     if (gnutar_no_unquote)
 	g_ptr_array_add(argv_ptr, g_strdup("--no-unquote"));
@@ -1773,10 +1772,10 @@ amgtar_restore(
     case 0:
 	env = safe_env();
 	become_root();
-	execve(cmd, (char **)argv_ptr->pdata, env);
+	execve(gnutar_realpath, (char **)argv_ptr->pdata, env);
 	free_env(env);
 	e = strerror(errno);
-	error(_("error [exec %s: %s]"), cmd, e);
+	error(_("error [exec %s: %s]"), gnutar_realpath, e);
 	break;
     default: break;
     }
@@ -1784,12 +1783,12 @@ amgtar_restore(
     waitpid(tarpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
-                                 cmd, WTERMSIG(wait_status), dbfn());
+                                 gnutar_realpath, WTERMSIG(wait_status), dbfn());
 	exit_status = 1;
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) > 0) {
 	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
-				     cmd, WEXITSTATUS(wait_status), dbfn());
+				     gnutar_realpath, WEXITSTATUS(wait_status), dbfn());
 	    exit_status = 1;
 	} else {
 	    /* Normal exit */
@@ -1797,7 +1796,7 @@ amgtar_restore(
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
-				 cmd, dbfn());
+				 gnutar_realpath, dbfn());
 	exit_status = 1;
     }
     if (errmsg) {
@@ -1811,9 +1810,9 @@ amgtar_restore(
 	    unlink(exclude_filename);
 	unlink(include_filename);
     }
-    amfree(cmd);
     amfree(include_filename);
     amfree(exclude_filename);
+    amfree(gnutar_realpath);
     exit(exit_status);
 }
 
@@ -2162,6 +2161,7 @@ check_no_check_device(void)
 }
 
 GPtrArray *amgtar_build_argv(
+    char *gnutar_realpath,
     application_argument_t *argument,
     char  *incrname,
     char **file_exclude,
@@ -2186,7 +2186,7 @@ GPtrArray *amgtar_build_argv(
 	dirname = argument->dle.device;
     }
 
-    g_ptr_array_add(argv_ptr, g_strdup(gnutar_path));
+    g_ptr_array_add(argv_ptr, g_strdup(gnutar_realpath));
 
     g_ptr_array_add(argv_ptr, g_strdup("--create"));
     if (command == CMD_BACKUP && argument->dle.create_index) {

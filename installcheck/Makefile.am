@@ -23,7 +23,8 @@ client_tests = \
 	ambsdtar \
 	amgtar \
 	ampgsql \
-	amraw
+	amraw \
+	runtar
 all_tests += $(client_tests)
 
 server_tests = \
@@ -65,7 +66,6 @@ server_tests = \
 	Amanda_Taper_Scribe \
 	bigint \
 	taper \
-	runtar \
 	amcheck-device \
 	amgetconf \
         amtape \

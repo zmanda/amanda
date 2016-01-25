@@ -100,6 +100,7 @@ AMANDA_SSL_SECURITY
 #
 # Dumpers
 #
+AMANDA_PROG_REALPATH
 AMANDA_PROG_XFSDUMP_XFSRESTORE
 AMANDA_PROG_VXDUMP_VXRESTORE
 AMANDA_PROG_VDUMP_VRESTORE
@@ -288,6 +289,7 @@ ICE_CHECK_DECL(fseek,stdio.h)
 ICE_CHECK_DECL(fwrite,stdio.h stdlib.h)
 AC_CHECK_FUNCS(getgrgid_r)
 AC_CHECK_FUNCS(getpwuid_r)
+AC_CHECK_FUNCS(realpath)
 ICE_CHECK_DECL(gethostname,unistd.h)
 ICE_CHECK_DECL(getopt,stdlib.h unistd.h libc.h)
 ICE_CHECK_DECL(getpeername,sys/types.h sys/socket.h)
