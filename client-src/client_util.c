@@ -1819,6 +1819,7 @@ check_exec_for_suid_recursive(
     amfree(quoted);
     return TRUE;
 }
+#endif
 
 /*
  * Returns the value of the first integer in a string.
@@ -1847,7 +1848,6 @@ the_num(
     str[-1] = (char)ch;
     return d;
 }
-#endif
 
 char *
 config_errors_to_error_string(
