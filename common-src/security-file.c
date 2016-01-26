@@ -44,6 +44,11 @@ security_file_check_path(
     char line[LINE_SIZE];
     gboolean found = FALSE;
 
+    if (!prefix)
+	return FALSE;
+    if (!path)
+	return FALSE;
+
     sec_file = open_security_file();
     if (!sec_file) {
 	return FALSE;
@@ -75,14 +80,14 @@ security_file_check_path(
     }
 
     if (!found) { /* accept the configured path */
-	if ((g_strcmp0(iprefix,"amgtar:gnutar_path") == 0 &&
-	     g_strcmp0(path,GNUTAR) == 0) ||
-	    (g_strcmp0(iprefix,"ambsdtar:bsdtar_path") == 0 &&
-	     g_strcmp0(path,BSDTAR) == 0) ||
-	    (g_strcmp0(iprefix,"amstar:star_path") == 0 &&
-	     g_strcmp0(path,STAR) == 0) ||
-	    (g_strcmp0(iprefix,"runtar:gnutar_path") == 0 &&
-	     g_strcmp0(path,GNUTAR) == 0)) {
+	if ((strcmp(iprefix,"amgtar:gnutar_path") == 0 &&
+	     strcmp(path,GNUTAR) == 0) ||
+	    (strcmp(iprefix,"ambsdtar:bsdtar_path") == 0 &&
+	     strcmp(path,BSDTAR) == 0) ||
+	    (strcmp(iprefix,"amstar:star_path") == 0 &&
+	     strcmp(path,STAR) == 0) ||
+	    (strcmp(iprefix,"runtar:gnutar_path") == 0 &&
+	     strcmp(path,GNUTAR) == 0)) {
 	    g_free(iprefix);
 	    fclose(sec_file);
 	    return TRUE;
