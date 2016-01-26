@@ -5,7 +5,7 @@ include $(top_srcdir)/config/automake/scripts.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =      -I$(top_srcdir)/gnulib
+INCLUDES =      -I$(top_srcdir)/gnulib -I$(top_builddir)/common-src
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
@@ -141,7 +141,7 @@ noinst_HEADERS =		\
 	amutil.h			\
 	version.h
 
-EXTRA_PROGRAMS = genversion $(TEST_PROGS)
+EXTRA_PROGRAMS = genversion $(TEST_PROGS) make_security_file
 
 # Version-building steps:
 #
@@ -176,13 +176,7 @@ version.c: genversion$(EXEEXT)
 
 BUILT_SOURCES += genversion.h version.c
 
-make_security_file_SOURCES = make_security_file.c
-make_security_file_LDADD = $(libamanda_la_LIBADD) \
-	../gnulib/libgnu.la
-
-make_security_file: $(make_security_file_SOURCES) ../config/config.h
-
-EXTRA_DIST += amanda-security.conf
+EXTRA_DIST += amanda-security.conf make_security_file.c
 
 amanda-security.conf: make_security_file
 	./make_security_file

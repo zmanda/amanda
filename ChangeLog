@@ -1,4 +1,8 @@
 2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am (EXTRA_DIST): Add make_security_file.c
+	* common-src/make_security_file.c: Typo
+
+2016-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-file.c: Fix security
 	* installcheck/ambsdtar.pl, installcheck/amgtar.pl: Fix for non-root
 
