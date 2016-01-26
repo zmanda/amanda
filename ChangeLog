@@ -1,4 +1,8 @@
 2016-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/runtar.pl: Do not test for --transform as older gnutar
+	  do not have it
+
+2016-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-file.c: s/g_strcmp0/strcmp/
 	* man/xml-source/amanda.8.xml: Add amanda-security.conf
 
