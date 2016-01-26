@@ -77,5 +77,7 @@ int main(void)
     fprintf(sec_file,"\n");
     fprintf(sec_file,"#restore_by_amanda_user=no\n");
     fclose(sec_file);
+
+    return 0;
 }
 
