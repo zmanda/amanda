@@ -176,6 +176,9 @@ configuration files for quick reference.</para>
 <manref name="amanda-client.conf" vol="5"/>,
 </listitem>
 <listitem>
+<manref name="amanda-security.conf" vol="5"/>,
+</listitem>
+<listitem>
 <manref name="disklist" vol="5"/>,
 </listitem>
 <listitem>
