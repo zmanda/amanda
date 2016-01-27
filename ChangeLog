@@ -1,3 +1,7 @@
+2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am (EXTRA_DIST): Remove
+	* recover-src/Makefile.am (EXTRA_DIST): Add uscan.c
+
 2016-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/runtar.pl: Do not test for --transform as older gnutar
 	  do not have it
