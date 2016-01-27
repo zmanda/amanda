@@ -404,11 +404,11 @@ fi
 make -s -j1 LIBTOOLFLAGS=--silent DESTDIR=%{buildroot} install
 
 rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
-mkdir %{buildroot}/{etc,var/log}
-mkdir %{ROOT_LOCALSTATEDIR}/amanda 
-mkdir %{ROOT_SYSCONFDIR}/amanda
-mkdir %{ROOT_AMANDAHOMEDIR}/gnutar-lists
-mkdir %{ROOT_LOGDIR}
+mkdir -p %{buildroot}/{etc,var/log}
+mkdir -p %{ROOT_LOCALSTATEDIR}/amanda
+mkdir -p %{ROOT_SYSCONFDIR}/amanda
+mkdir -p %{ROOT_AMANDAHOMEDIR}/gnutar-lists
+mkdir -p %{ROOT_LOGDIR}
 
 echo "%{amanda_version_info}" >%{ROOT_AMANDAHOMEDIR}/amanda-release
 
