@@ -1,4 +1,7 @@
 2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/rpm/amanda.spec.src: Use 'mkdirp -p'
+
+2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/Makefile.am (EXTRA_DIST): Remove
 	* recover-src/Makefile.am (EXTRA_DIST): Add uscan.c
 
