@@ -53,6 +53,8 @@ my $back_dir = "$root_dir/to_backup";
 my $rest_dir = "$root_dir/restore";
 my $list_dir = "$root_dir/list";
 
+mkpath("$Amanda::Paths::amdatadir/bsdtar");
+
 sub ok_foreach {
     my $code = shift @_;
     my $stringify = shift @_;

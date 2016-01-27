@@ -1,4 +1,8 @@
 2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/ambsdtar.pl:
+	  mkpath("$Amanda::Paths::amdatadir/bsdtar");
+
+2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/rpm/amanda.spec.src: Use 'mkdirp -p'
 
 2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
