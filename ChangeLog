@@ -1,3 +1,7 @@
+2016-01-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am (EXTRA_DIST): Remove
+	* recover-src/Makefile.am (EXTRA_DIST): Add uscan.c
+
 2016-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-file.c: s/g_strcmp0/strcmp/
 	* man/xml-source/amanda.8.xml: Add amanda-security.conf

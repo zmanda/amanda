@@ -176,8 +176,6 @@ version.c: genversion$(EXEEXT)
 
 BUILT_SOURCES += genversion.h version.c
 
-EXTRA_DIST += amanda-security.conf make_security_file.c
-
 amanda-security.conf: make_security_file
 	./make_security_file
 
@@ -188,7 +186,7 @@ etcamanda_DATA = ${etcamanda_FILE}
 # these are used for testing only:
 TEST_PROGS = file bsdsecurity
 
-DISTCLEANFILES += version.c genversion genversion.h config.log amanda-security.conf
+DISTCLEANFILES += version.c genversion genversion.h config.log amanda-security.conf make_security_file
 
 # used for testing only
 

@@ -37,7 +37,9 @@ amrecover_CSRC =	amrecover.c					\
 
 amrecover_SOURCES =	$(amrecover_CSRC)	uparse.y	uscan.l
 
-noinst_HEADERS = 	amrecover.h uparse.h
+noinst_HEADERS =	amrecover.h uparse.h
+
+EXTRA_DIST = uscan.c
 
 AM_YFLAGS =		-d
 
