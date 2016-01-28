@@ -1,3 +1,35 @@
+Changes in release 3.3.9
+    * security-fix
+        - All previous release of amanda allow the 'amanda' user to execute
+          any code as root, and to execute an interactive shell as root.
+        - This is a security vulnerability if you do not trust the 'amanda'
+          user.
+        - There is no need to upgrade if you trust the 'amanda' user and the
+          account is secure.
+            - good password
+            - secure xinetd.conf setting
+            - securae .amandahosts setting
+        - The 'amanda' user can read all files in the machine, it is what a
+          backup program do.
+        - The set of fix disable the abilities to run unwanted code as root
+          or to write file anywhere in the filesystem.
+    * /etc/amanda-security.conf
+        - A file that contains security setting.
+        - It list all binaries amanda can execute as root
+        - restore_by_amanda_user
+            - It tell if the 'amanda' user can do restore as root.
+	    - It allow the 'amanda' user to write files anywhere in the
+	      filesystem
+        - see: man amanda-security.conf
+    * amgtar/amstar/ambsdtar/runtar
+        - Disable arguments that can fork program.
+        - Verify the realpath (with symbolic link resolved) is in the
+          amanda-security.conf file.
+        - Verify the tar/star/bsdtar realpath program is secure
+            - owned by root and modifiable only by root.
+        - On restore, check the restore_by_amanda_user setting if not run
+          by root.
+
 Changes in release 3.3.8
     * s3 device
 	o New NEARLINE S3-STORAGE-CLASS for Google storage.
