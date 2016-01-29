@@ -57,21 +57,21 @@ int main(void)
     fprintf(sec_file,"############################################################\n");
 
 #ifdef GNUTAR
-    fprintf(sec_file,"#runtar:gnutar_path:%s\n", GNUTAR);
-    fprintf(sec_file,"#amgtar:gnutar_path:%s\n", GNUTAR);
+    fprintf(sec_file,"#runtar:gnutar_path=%s\n", GNUTAR);
+    fprintf(sec_file,"#amgtar:gnutar_path=%s\n", GNUTAR);
 #else
-    fprintf(sec_file,"#runtar:gnutar_path:/no/default/gnutar/path\n");
-    fprintf(sec_file,"#amgtar:gnutar_path:/no/default/gnutar/path\n");
+    fprintf(sec_file,"#runtar:gnutar_path=/no/default/gnutar/path\n");
+    fprintf(sec_file,"#amgtar:gnutar_path=/no/default/gnutar/path\n");
 #endif
 #ifdef STAR
-    fprintf(sec_file,"#amstar:star_path:%s\n", STAR);
+    fprintf(sec_file,"#amstar:star_path=%s\n", STAR);
 #else
-    fprintf(sec_file,"#amstar:star_path:/no/default/star/path\n");
+    fprintf(sec_file,"#amstar:star_path=/no/default/star/path\n");
 #endif
 #ifdef BSDTAR
-    fprintf(sec_file,"#ambsdtar:bsdtar_path:%s\n", BSDTAR);
+    fprintf(sec_file,"#ambsdtar:bsdtar_path=%s\n", BSDTAR);
 #else
-    fprintf(sec_file,"#ambsdtar:bsdtar_path:/no/default/bsdtar/path\n");
+    fprintf(sec_file,"#ambsdtar:bsdtar_path=/no/default/bsdtar/path\n");
 #endif
 
     fprintf(sec_file,"\n");
