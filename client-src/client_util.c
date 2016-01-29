@@ -1790,7 +1790,9 @@ check_exec_for_suid_message(
     char *filename,
     char **my_realpath)
 {
+
 #ifndef SINGLE_USERID
+    message_t *message;
     *my_realpath = realpath(filename, NULL);
     if (!*my_realpath) {
 	return build_message(
@@ -1798,12 +1800,8 @@ check_exec_for_suid_message(
 		"filename", filename,
 		"errno", errno);
     }
-    if (!security_allow_program_as_root(type, *my_realpath)) {
-	return build_message(
-		AMANDA_FILE, __LINE__, 3600092, MSG_ERROR, 3,
-		"type", type,
-		"filename", filename,
-		"pname", get_pname());
+    if ((message = security_allow_program_as_root(type, *my_realpath))) {
+	return message;
     }
     return check_exec_for_suid_message_recursive(filename);
 #else
@@ -1871,6 +1869,7 @@ check_exec_for_suid(
     char **my_realpath)
 {
 #ifndef SINGLE_USERID
+    message_t *message;
     *my_realpath = realpath(filename, NULL);
     if (!*my_realpath) {
 	int saved_errno = errno;
@@ -1878,13 +1877,12 @@ check_exec_for_suid(
 	if (verbose)
 	     g_fprintf(verbose, "ERROR [Can't find realpath for '%s': %s\n", quoted, strerror(saved_errno));
 	g_debug("ERROR [Can't find realpath for '%s': %s", quoted, strerror(saved_errno));
+	amfree(quoted);
 	return FALSE;
     }
-    if (!security_allow_program_as_root(type, *my_realpath)) {
-	char *quoted = quote_string(filename);
+    if ((message = security_allow_program_as_root(type, *my_realpath))) {
 	if (verbose)
-	     g_fprintf(verbose, "ERROR [amanda-security.conf do not allow to run '%s' as root for %s:%s]\n", quoted, get_pname(), type);
-	g_debug("Error: amanda-security.conf do not allow to run '%s' as root for %s:%s", quoted, get_pname(), type);
+	    g_fprintf(verbose, "%s\n", get_message(message));
 	return FALSE;
     }
     return check_exec_for_suid_recursive(*my_realpath, verbose);

@@ -25,17 +25,27 @@
 #define LINE_SIZE 1024
 
 static
-FILE *open_security_file(void)
+message_t *
+open_security_file(FILE **file)
 {
     message_t *message;
     if ((message = check_security_file_permission_message())) {
-	return NULL;
+	return message;
     }
 
-    return fopen(SECURITY_FILE, "r");
+    *file = fopen(SECURITY_FILE, "r");
+    if (!*file) {
+	return build_message(
+		AMANDA_FILE, __LINE__, 3600095, MSG_ERROR, 2,
+		"security_file", SECURITY_FILE,
+		"errno"        , errno);
+    }
+
+    return NULL;
 }
 
-static gboolean
+static
+message_t *
 security_file_check_path(
     char *prefix,
     char *path)
@@ -45,16 +55,22 @@ security_file_check_path(
     char *p, *l;
     char line[LINE_SIZE];
     gboolean found = FALSE;
+    message_t *message;
 
-    if (!prefix)
-	return FALSE;
-    if (!path)
-	return FALSE;
-
-    sec_file = open_security_file();
-    if (!sec_file) {
-	return FALSE;
+    if (!prefix) {
+	return build_message(
+		AMANDA_FILE, __LINE__, 3600093, MSG_ERROR, 0);
     }
+    if (!path) {
+	return build_message(
+		AMANDA_FILE, __LINE__, 3600094, MSG_ERROR, 0);
+    }
+
+    message = open_security_file(&sec_file);
+    if (message) {
+	return message;
+    }
+
 
     iprefix = g_strdup(prefix);
     for (p = iprefix; *p; ++p) *p = tolower(*p);
@@ -75,7 +91,7 @@ security_file_check_path(
 		if (g_str_equal(path, p)) {
 		    g_free(iprefix);
 		    fclose(sec_file);
-		    return TRUE;
+		    return NULL;
 		}
 	    }
 	}
@@ -92,13 +108,16 @@ security_file_check_path(
 	     strcmp(path,GNUTAR) == 0)) {
 	    g_free(iprefix);
 	    fclose(sec_file);
-	    return TRUE;
+	    return NULL;
 	}
     }
 
+    return build_message(
+		AMANDA_FILE, __LINE__, 3600096, MSG_ERROR, 2,
+		"prefix", iprefix,
+		"path"  , path);
     g_free(iprefix);
     fclose(sec_file);
-    return FALSE;
 }
 
 static gboolean
@@ -110,8 +129,13 @@ security_file_get_boolean(
     char *n, *l;
     char line[LINE_SIZE];
     char oline[LINE_SIZE];
+    message_t *message;
 
-    sec_file = open_security_file();
+    message = open_security_file(&sec_file);
+    if (message) {
+	return FALSE;
+    }
+
     if (!sec_file) {
 	return FALSE;
     }
@@ -161,6 +185,8 @@ check_security_file_permission(
 {
     struct stat stat_buf;
     char *quoted = quote_string(SECURITY_FILE);
+
+#ifdef SINGLE_USERID
     uid_t ruid = getuid();
     uid_t euid = geteuid();
 
@@ -168,6 +194,7 @@ check_security_file_permission(
 	amfree(quoted);
 	return TRUE;
     }
+#endif
 
     if (!stat(SECURITY_FILE, &stat_buf)) {
         if (stat_buf.st_uid != 0 ) {
@@ -220,12 +247,15 @@ message_t *
 check_security_file_permission_message(void)
 {
     struct stat stat_buf;
+
+#ifdef SINGLE_USERID
     uid_t ruid = getuid();
     uid_t euid = geteuid();
 
     if (ruid != 0 && euid != 0 && ruid == euid) {
 	return NULL;
     }
+#endif
 
     if (!stat(SECURITY_FILE, &stat_buf)) {
         if (stat_buf.st_uid != 0 ) {
@@ -269,26 +299,19 @@ check_security_file_permission_message(void)
     return NULL;
 }
 
-gboolean
+message_t *
 security_allow_program_as_root(
     char *name,
     char *path)
 {
-    gboolean r;
+    message_t *message;
     char *prefix;
-    uid_t ruid = getuid();
-    uid_t euid = geteuid();
-
-    /* non-root can execute the program as non-root */
-    if (ruid != 0 && euid != 0 && ruid == euid) {
-	return TRUE;
-    }
 
     prefix = g_strdup_printf("%s:%s", get_pname(), name);
 
-    r = security_file_check_path(prefix, path);
+    message = security_file_check_path(prefix, path);
     g_free(prefix);
-    return r;
+    return message;
 }
 
 gboolean

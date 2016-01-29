@@ -1379,10 +1379,21 @@ check_overall(void)
 
     if( need_runtar )
     {
+#ifdef GNUTAR
+	char *my_pname = g_strdup(get_pname());
+	char *gnutar_realpath = NULL;
+#endif
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
 	delete_message(selfcheck_print_message(check_file_message(cmd,X_OK)));
 	delete_message(selfcheck_print_message(check_suid_message(cmd)));
 	amfree(cmd);
+
+#ifdef GNUTAR
+	set_pname("runtar");
+	delete_message(selfcheck_print_message(check_exec_for_suid_message("GNUTAR_PATH", GNUTAR, &gnutar_realpath)));
+	set_pname(my_pname);
+	amfree(gnutar_realpath);
+#endif
     }
 
     if( need_rundump )
