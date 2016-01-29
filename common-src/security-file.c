@@ -24,19 +24,31 @@
 #define LINE_SIZE 1024
 
 static
-FILE *open_security_file(void)
+FILE *open_security_file(FILE *verbose)
 {
-    if (!check_security_file_permission(NULL)) {
+    FILE *sec_file;
+
+    if (!check_security_file_permission(verbose)) {
 	return NULL;
     }
 
-    return fopen(SECURITY_FILE, "r");
+    sec_file = fopen(SECURITY_FILE, "r");
+    if (!sec_file) {
+	if (verbose) {
+	    g_fprintf(verbose,"ERROR [Can't open '%s': %s\n", SECURITY_FILE, strerror(errno));
+	}
+	g_debug("ERROR [Can't open '%s': %s", SECURITY_FILE, strerror(errno));
+	return NULL;
+    }
+
+    return sec_file;
 }
 
 static gboolean
 security_file_check_path(
     char *prefix,
-    char *path)
+    char *path,
+    FILE *verbose)
 {
     FILE *sec_file;
     char *iprefix;
@@ -44,12 +56,14 @@ security_file_check_path(
     char line[LINE_SIZE];
     gboolean found = FALSE;
 
-    if (!prefix)
+    if (!prefix) {
 	return FALSE;
-    if (!path)
+    }
+    if (!path) {
 	return FALSE;
+    }
 
-    sec_file = open_security_file();
+    sec_file = open_security_file(verbose);
     if (!sec_file) {
 	return FALSE;
     }
@@ -94,6 +108,10 @@ security_file_check_path(
 	}
     }
 
+    if (verbose) {
+	g_fprintf(verbose, "[ERROR: security file do not allow to run '%s' as root for '%s']\n", path, iprefix);
+    }
+    g_debug("ERROR: security file do not allow to run '%s' as root for '%s'", path, iprefix);
     g_free(iprefix);
     fclose(sec_file);
     return FALSE;
@@ -101,7 +119,8 @@ security_file_check_path(
 
 static gboolean
 security_file_get_boolean(
-    char *name)
+    char *name,
+    FILE *verbose)
 {
     FILE *sec_file;
     char *iname;
@@ -109,7 +128,7 @@ security_file_get_boolean(
     char line[LINE_SIZE];
     char oline[LINE_SIZE];
 
-    sec_file = open_security_file();
+    sec_file = open_security_file(verbose);
     if (!sec_file) {
 	return FALSE;
     }
@@ -159,6 +178,8 @@ check_security_file_permission(
 {
     struct stat stat_buf;
     char *quoted = quote_string(SECURITY_FILE);
+
+#ifdef SINGLE_USERID
     uid_t ruid = getuid();
     uid_t euid = geteuid();
 
@@ -166,6 +187,7 @@ check_security_file_permission(
 	amfree(quoted);
 	return TRUE;
     }
+#endif
 
     if (!stat(SECURITY_FILE, &stat_buf)) {
         if (stat_buf.st_uid != 0 ) {
@@ -217,27 +239,22 @@ check_security_file_permission(
 gboolean
 security_allow_program_as_root(
     char *name,
-    char *path)
+    char *path,
+    FILE *verbose)
 {
     gboolean r;
     char *prefix;
-    uid_t ruid = getuid();
-    uid_t euid = geteuid();
-
-    /* non-root can execute the program as non-root */
-    if (ruid != 0 && euid != 0 && ruid == euid) {
-	return TRUE;
-    }
 
     prefix = g_strdup_printf("%s:%s", get_pname(), name);
 
-    r = security_file_check_path(prefix, path);
+    r = security_file_check_path(prefix, path, verbose);
     g_free(prefix);
     return r;
 }
 
 gboolean
-security_allow_to_restore(void)
+security_allow_to_restore(
+    FILE *verbose)
 {
     uid_t ruid = getuid();
     uid_t euid = geteuid();
@@ -256,7 +273,7 @@ security_allow_to_restore(void)
 	return FALSE;
     }
     if (euid == pw->pw_uid) {
-	return security_file_get_boolean("restore_by_amanda_user");
+	return security_file_get_boolean("restore_by_amanda_user", verbose);
     } else {
 	return FALSE;
     }

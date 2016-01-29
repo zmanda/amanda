@@ -1,3 +1,6 @@
+2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* Improve reporting of security message
+
 2016-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Change in 3.3.9
 	* ReleaseNotes: Change in 3.3.9

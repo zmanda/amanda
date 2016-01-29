@@ -913,6 +913,10 @@ amstar_restore(
 	error("'%s' binary is not secure", star_path);
     }
 
+    if (!security_allow_to_restore(NULL)) {
+        error("The user is not allowed to restore files");
+    }
+
     g_ptr_array_add(argv_ptr, stralloc(star_realpath));
     if (star_directory) {
 	struct stat stat_buf;

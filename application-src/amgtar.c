@@ -1185,6 +1185,10 @@ amgtar_restore(
         error("'%s' binary is not secure", gnutar_path);
     }
 
+    if (!security_allow_to_restore(NULL)) {
+	error("The user is not allowed to restore files");
+    }
+
     g_ptr_array_add(argv_ptr, stralloc(gnutar_realpath));
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
     if (gnutar_no_unquote)

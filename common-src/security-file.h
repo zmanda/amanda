@@ -20,6 +20,6 @@
 
 gboolean check_security_file_permission(FILE *verbose);
 
-gboolean security_allow_program_as_root(char *name, char *path);
-gboolean security_allow_to_restore(void);
+gboolean security_allow_program_as_root(char *name, char *path, FILE *verbose);
+gboolean security_allow_to_restore(FILE *verbose);
 

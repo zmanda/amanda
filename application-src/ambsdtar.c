@@ -1442,7 +1442,7 @@ ambsdtar_restore(
 	error("'%s' binary is not secure", bsdtar_path);
     }
 
-    if (!security_allow_to_restore()) {
+    if (!security_allow_to_restore(NULL)) {
 	error("The user is not allowed to restore files");
     }
 

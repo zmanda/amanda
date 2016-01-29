@@ -997,6 +997,16 @@ check_overall(void)
 
     if( need_runtar )
     {
+#ifdef GNUTAR
+	char *my_pname = g_strdup(get_pname());
+	char *gnutar_realpath = NULL;
+
+	set_pname("runtar");
+	check_exec_for_suid("GNUTAR_PATH", GNUTAR, stdout, &gnutar_realpath);
+	set_pname(my_pname);
+	amfree(gnutar_realpath);
+#endif
+
 	cmd = vstralloc(amlibexecdir, "/", "runtar", NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);

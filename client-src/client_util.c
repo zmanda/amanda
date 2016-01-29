@@ -1738,6 +1738,7 @@ check_exec_for_suid(
     FILE *verbose,
     char **my_realpath)
 {
+
 #ifndef SINGLE_USERID
     *my_realpath = realpath(filename, NULL);
     if (!*my_realpath) {
@@ -1746,13 +1747,10 @@ check_exec_for_suid(
 	if (verbose)
 	     g_fprintf(verbose, "ERROR [Can't find realpath for '%s': %s\n", quoted, strerror(saved_errno));
 	g_debug("ERROR [Can't find realpath for '%s': %s", quoted, strerror(saved_errno));
+	amfree(quoted);
 	return FALSE;
     }
-    if (!security_allow_program_as_root(type, *my_realpath)) {
-	char *quoted = quote_string(filename);
-	if (verbose)
-	     g_fprintf(verbose, "ERROR [amanda-security.conf do not allow to run '%s' as root for %s:%s]\n", quoted, get_pname(), type);
-	g_debug("Error: amanda-security.conf do not allow to run '%s' as root for %s:%s", quoted, get_pname(), type);
+    if (!security_allow_program_as_root(type, *my_realpath, verbose)) {
 	return FALSE;
     }
     return check_exec_for_suid_recursive(*my_realpath, verbose);
