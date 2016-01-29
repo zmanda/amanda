@@ -76,6 +76,9 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    GNUTAR=`$REALPATH $GNUTAR 2>&1`
+	else if test "x$READLINK" != "x"; then
+	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	fi
 	fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(GNUTAR, "$GNUTAR", [Location of the GNU 'tar' binary])
@@ -149,6 +152,9 @@ AC_DEFUN([AMANDA_PROG_STAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    STAR=`$REALPATH $STAR 2>&1`
+	else if test "x$READLINK" != "x"; then
+	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	fi
 	fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(STAR, "$STAR", [Location of the 'star' binary])
@@ -235,6 +241,9 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    BSDTAR=`$REALPATH $BSDTAR 2>&1`
+	else if test "x$READLINK" != "x"; then
+	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	fi
 	fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(BSDTAR, "$BSDTAR", [Location of the 'bsdtar' binary])
@@ -288,6 +297,9 @@ AC_DEFUN([AMANDA_PROG_SUNTAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    SUNTAR=`$REALPATH $SUNTAR 2>&1`
+	else if test "x$READLINK" != "x"; then
+	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	fi
 	fi
 	# define unquoted
 	AC_DEFINE_UNQUOTED(SUNTAR, "$SUNTAR", [Location of the 'suntar' binary])
