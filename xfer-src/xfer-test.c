@@ -760,13 +760,13 @@ dest_readfd_thread(
     char buf[TEST_XFER_SIZE];
     size_t remaining;
     int fd = xfer_element_swap_output_fd(elt->upstream, -1);
+    ssize_t nread;
 
     /* this shouldn't happen, although non-test elements handle it gracefully */
     g_assert(fd != -1);
 
     remaining = sizeof(buf);
     while (remaining) {
-	ssize_t nread;
 	if ((nread = read(fd, buf+sizeof(buf)-remaining, remaining)) <= 0) {
 	    error("error in read(): %s", strerror(errno));
 	}
@@ -774,7 +774,7 @@ dest_readfd_thread(
     }
 
     /* we should be at EOF here */
-    if (read(fd, buf, 10) != 0)
+    if ((nread = read(fd, buf, 10)) != 0)
 	g_critical("too much data entering XferDestReadfd");
 
     if (!simpleprng_verify_buffer(&self->prng, buf, TEST_XFER_SIZE))
@@ -869,18 +869,18 @@ dest_writefd_thread(
     char buf[TEST_XFER_SIZE];
     size_t remaining;
     int fd = self->read_fd;
+    ssize_t nread;
 
     remaining = sizeof(buf);
     while (remaining) {
-	ssize_t nwrite;
-	if ((nwrite = read(fd, buf+sizeof(buf)-remaining, remaining)) <= 0) {
+	if ((nread = read(fd, buf+sizeof(buf)-remaining, remaining)) <= 0) {
 	    error("error in read(): %s", strerror(errno));
 	}
-	remaining -= nwrite;
+	remaining -= nread;
     }
 
     /* we should be at EOF here */
-    if (read(fd, buf, 10) != 0)
+    if ((nread = read(fd, buf, 10)) != 0)
 	g_critical("too much data entering XferDestWritefd");
 
     if (!simpleprng_verify_buffer(&self->prng, buf, TEST_XFER_SIZE))

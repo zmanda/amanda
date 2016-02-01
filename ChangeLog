@@ -1,4 +1,8 @@
-2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+2016-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c, common-src/amutil.c,
+	  xfer-src/xfer-test.c: Fix bug found by coverity
+
+2016-02-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-file.c: Fix small memory leak
 
 2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>

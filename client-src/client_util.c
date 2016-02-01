@@ -722,7 +722,6 @@ application_property_add_to_argv(
 						  directtcp = directtcp->next) {
 		g_ptr_array_add(argv_ptr, g_strdup("--direct-tcp"));
 		g_ptr_array_add(argv_ptr, g_strdup(directtcp->data));
-		break; /* XXX temporary; apps only support one ip:port pair */
 	    }
 	}
     }

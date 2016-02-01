@@ -1796,25 +1796,34 @@ make_amanda_tmpdir(void)
 {
     struct stat stat_buf;
 
-    if (stat(AMANDA_TMPDIR, &stat_buf) != 0) {
-        if (errno != ENOENT) {
-	    g_debug("Error doing a stat of AMANDA_TMPDIR (%s): %s", AMANDA_TMPDIR, strerror(errno));
-            return FALSE;
-        }
-	/* create it */
-	if (mkdir(AMANDA_TMPDIR,0700) != 0) {
+    if (mkdir(AMANDA_TMPDIR, 0700) != 0) {
+	if (errno != EEXIST) {
 	    g_debug("Error mkdir of AMANDA_TMPDIR (%s): %s", AMANDA_TMPDIR, strerror(errno));
-	   return FALSE;
+	    return FALSE;
 	}
+    } else {
 	if (chown(AMANDA_TMPDIR, (int)get_client_uid(), (int)get_client_gid()) < 0) {
 	    g_debug("Error chown of AMANDA_TMPDIR (%s): %s", AMANDA_TMPDIR, strerror(errno));
 	    return FALSE;
 	}
-	return TRUE;
-    } else {
-	/* check permission */
-	return TRUE;
     }
+
+    if (stat(AMANDA_TMPDIR, &stat_buf) != 0) {
+	g_debug("Error doing a stat of AMANDA_TMPDIR (%s): %s", AMANDA_TMPDIR, strerror(errno));
+        return FALSE;
+    }
+
+    if (stat_buf.st_uid != get_client_uid()) {
+	g_debug("Error: Owner of AMANDA_TMPDIR (%s) is not %s\n", AMANDA_TMPDIR, CLIENT_LOGIN);
+	return FALSE;
+    }
+
+    if (stat_buf.st_mode & S_IWGRP || stat_buf.st_mode & S_IWOTH) {
+	g_debug("Error: AMANDA_TMPDIR (%s) must not be writable by group/other\n", AMANDA_TMPDIR);
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 #define POLY 0x82F63B78
