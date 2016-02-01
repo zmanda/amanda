@@ -1,4 +1,7 @@
 2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-file.c: Fix small memory leak
+
+2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/amanda_configure.m4: Invoke AMANDA_PROG_READLINK
 	* config/amanda/dumpers.m4: use READLINK if REALPATH is not available
 	* config/amanda/progs.m4: Find readlink

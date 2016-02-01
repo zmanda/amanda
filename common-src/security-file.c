@@ -112,12 +112,13 @@ security_file_check_path(
 	}
     }
 
-    return build_message(
+    message = build_message(
 		AMANDA_FILE, __LINE__, 3600096, MSG_ERROR, 2,
 		"prefix", iprefix,
 		"path"  , path);
     g_free(iprefix);
     fclose(sec_file);
+    return message;
 }
 
 static gboolean
