@@ -1813,13 +1813,15 @@ make_amanda_tmpdir(void)
         return FALSE;
     }
 
+#ifdef CHECK_USERID
     if (stat_buf.st_uid != get_client_uid()) {
 	g_debug("Error: Owner of AMANDA_TMPDIR (%s) is not %s\n", AMANDA_TMPDIR, CLIENT_LOGIN);
 	return FALSE;
     }
+#endif
 
-    if (stat_buf.st_mode & S_IWGRP || stat_buf.st_mode & S_IWOTH) {
-	g_debug("Error: AMANDA_TMPDIR (%s) must not be writable by group/other\n", AMANDA_TMPDIR);
+    if (stat_buf.st_mode & S_IWOTH) {
+	g_debug("Error: AMANDA_TMPDIR (%s) must not be writable by other\n", AMANDA_TMPDIR);
 	return FALSE;
     }
 

@@ -1,4 +1,7 @@
 2016-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c: Fix for automatic test
+
+2016-02-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c, common-src/amutil.c,
 	  xfer-src/xfer-test.c: Fix bug found by coverity
 
