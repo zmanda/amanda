@@ -1740,7 +1740,8 @@ check_exec_for_suid(
 {
 
 #ifndef SINGLE_USERID
-    *my_realpath = realpath(filename, NULL);
+    char tmp_realpath[PATH_MAX];
+    *my_realpath = realpath(filename, tmp_realpath);
     if (!*my_realpath) {
 	int saved_errno = errno;
 	char *quoted = quote_string(filename);
@@ -1750,6 +1751,7 @@ check_exec_for_suid(
 	amfree(quoted);
 	return FALSE;
     }
+    *my_realpath = g_strdup(tmp_realpath);
     if (!security_allow_program_as_root(type, *my_realpath, verbose)) {
 	return FALSE;
     }
