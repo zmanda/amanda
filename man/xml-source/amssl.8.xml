@@ -70,7 +70,7 @@ It can create self-signed CA, server certificate and client certificates.</para>
   </varlistentry>
 
   <varlistentry>
-    <term><option>--create-client-cert</option> <replaceable>HOSTNAME</replaceable></term>
+    <term><option>--create-client-cert</option> <replaceable>CLIENT-HOSTNAME</replaceable></term>
 <listitem><para>Create a client certificate.</para></listitem>
   </varlistentry>
 
@@ -175,7 +175,7 @@ to enter them at every invocation.</para>
   <command>amssl</command>
     <arg choice='plain'>--create-ca</arg>
     <arg choice='opt'>--batch</arg>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
 </cmdsynopsis>
 
 <para>You can also provide all options of the initialization step</para>
@@ -185,8 +185,8 @@ to enter them at every invocation.</para>
 
 <para>Create
 <programlisting>
-     <emphasis remap='B'>$SSL_DIR/CA/crt.pem</emphasis>
-     <emphasis remap='B'>$SSL_DIR/CA/private/key.pem</emphasis>
+     $SSL_DIR/CA/crt.pem
+     $SSL_DIR/CA/private/key.pem
 </programlisting>
 </para>
 
@@ -199,7 +199,7 @@ to enter them at every invocation.</para>
   <command>amssl</command>
     <arg choice='plain'>--create-server-cert <replaceable>HOSTNAME</replaceable></arg>
     <arg choice='opt'>--batch</arg>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
 </cmdsynopsis>
 
 <para>You can also provide all options of the initialization step</para>
@@ -208,10 +208,10 @@ to enter them at every invocation.</para>
 
 <para>Create
 <programlisting>
-     <emphasis remap='B'>$SSL_DIR/me/crt.pem</emphasis>
-     <emphasis remap='B'>$SSL_DIR/me/fingerprint</emphasis>
-     <emphasis remap='B'>$SSL_DIR/me/private/key.pem</emphasis>
-     <emphasis remap='B'>$SSL_DIR/remote/HOSTNAME -> ../me</emphasis>
+     $SSL_DIR/me/crt.pem
+     $SSL_DIR/me/fingerprint
+     $SSL_DIR/me/private/key.pem
+     $SSL_DIR/remote/<replaceable>HOSTNAME</replaceable> -> ../me
 </programlisting>
 </para>
 
@@ -221,6 +221,7 @@ to enter them at every invocation.</para>
 
 <para>Create a client certificate, sign it by the CA certicate on the server and both server and client learn the remore fingerprint.</para>
 
+<para>DO NOT RUN IT ON SERVER.  This will detroy the server certificate</para>
 <para>It require to run amssl on the server and client at the same time</para>
 
 <para><amkeyword>ssl-dir</amkeyword> must be set in amanda-client.conf on the client.</para>
@@ -230,31 +231,32 @@ to enter them at every invocation.</para>
 <cmdsynopsis>
   <command>amssl</command>
     <arg choice='plain'>--create-client-cert <replaceable>client-host</replaceable></arg>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
 </cmdsynopsis>
 <para>It wait for the client to connect and then sign the client certificate,
 The CA passphrase is asked.</para>
 <para>Run on the client:</para>
 <cmdsynopsis>
   <command>amssl</command>
-    <arg choice='plain'>--create-client-cert <replaceable>client-host</replaceable></arg>
-    <arg choice='plain'>--server <replaceable>server-host</replaceable></arg>
+    <arg choice='plain'>--client</arg>
+    <arg choice='plain'>--create-client-cert <replaceable>CLIENT-HOST</replaceable></arg>
+    <arg choice='plain'>--server <replaceable>SERVER-HOST</replaceable></arg>
     <arg choice='opt'>--batch</arg>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'>--config <replaceable>CONFIG</replaceable></arg>
 </cmdsynopsis>
 
 <para>Create on server
 <programlisting>
-     <emphasis remap='B'>$SSL_DIR/remote/HOSTNAME/fingerprint</emphasis>
+     $SSL_DIR/remote/<replaceable>CLIENT-HOST</replaceable>/fingerprint
 </programlisting>
 </para>
 
 <para>Create on client
 <programlisting>
-     <emphasis remap='B'>$SSL_DIR/me/crt.pem</emphasis>
-     <emphasis remap='B'>$SSL_DIR/me/fingerprint</emphasis>
-     <emphasis remap='B'>$SSL_DIR/me/private/key.pem</emphasis>
-     <emphasis remap='B'>$SSL_DIR/remote/HOSTNAME/fingerprint</emphasis>
+     $SSL_DIR/me/crt.pem
+     $SSL_DIR/me/fingerprint
+     $SSL_DIR/me/private/key.pem
+     $SSL_DIR/remote/<replaceable>SERVER-HOST</replaceable>/fingerprint
 </programlisting>
 </para>
 

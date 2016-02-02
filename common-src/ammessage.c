@@ -1730,6 +1730,8 @@ build_message(
    va_list marker;
    int     i, j;
 
+   init_errcode();
+
    message->file = g_strdup(file);
    message->line = line;
    message->process = g_strdup(get_pname());
@@ -1902,6 +1904,21 @@ sprint_message(
         "    \"module\" : \"%s\",\n" \
         "    \"code\" : \"%d\",\n" \
         , json_file, message->line, severity_name(message->severity), json_process, json_running_on, json_component, json_module, message->code);
+
+    if (message->merrno) {
+	g_string_append_printf(result,
+	"    \"merrno\" : \"%d\",\n", message->merrno);
+    }
+    if (message->errnocode) {
+	g_string_append_printf(result,
+	"    \"errnocode\" : \"%s\",\n", message->errnocode);
+    }
+    if (message->errnostr) {
+	char *result_value = ammessage_encode_json(message->errnostr);
+	g_string_append_printf(result,
+	"    \"errnostr\" : \"%s\",\n", result_value);
+	g_free(result_value);
+    }
     for (i = 0; message->arg_array[i].key != NULL; i++) {
 	char *json_key = ammessage_encode_json(message->arg_array[i].key);
 	char *result_value = sprint_message_value(&message->arg_array[i].value);
@@ -1992,12 +2009,12 @@ parse_json_primitive(
     int   len G_GNUC_UNUSED)
 {
 
-    if (strncmp(&s[*i], "null", 4) == 0) {
+    if (strcmp(&s[*i], "null") == 0) {
 	*i += 4;
 	return NULL;
-    } else if (strncmp(&s[*i], "true", 4) == 0) {
+    } else if (strcmp(&s[*i], "true") == 0) {
 	*i += 4;
-    } else if (strncmp(&s[*i], "false", 5) == 0) {
+    } else if (strcmp(&s[*i], "false") == 0) {
 	*i += 5;
     }
     return s;
@@ -2299,71 +2316,71 @@ parse_json_message(
 		} else {
 		    assert(key != NULL);
 		    expect_key = TRUE;
-		    if (strncmp_const(key, "source_filename") == 0) {
+		    if (strcmp(key, "source_filename") == 0) {
 			g_free(key);
 			key = NULL;
 			message->file = token;
-		    } else if (strncmp_const(key, "source_line") == 0) {
+		    } else if (strcmp(key, "source_line") == 0) {
 			g_free(key);
 			key = NULL;
 			message->line = atoi(token);
 			g_free(token);
-		    } else if (strncmp_const(key, "severity") == 0) {
+		    } else if (strcmp(key, "severity") == 0) {
 			g_free(key);
 			key = NULL;
-			if (strncmp_const(token, "success") == 0) {
+			if (strcmp(token, "success") == 0) {
 			    message->severity = MSG_SUCCESS;
-			} else if (strncmp_const(token, "info") == 0) {
+			} else if (strcmp(token, "info") == 0) {
 			    message->severity = MSG_INFO;
-			} else if (strncmp_const(token, "message") == 0) {
+			} else if (strcmp(token, "message") == 0) {
 			    message->severity = MSG_MESSAGE;
-			} else if (strncmp_const(token, "warning") == 0) {
+			} else if (strcmp(token, "warning") == 0) {
 			    message->severity = MSG_WARNING;
-			} else if (strncmp_const(token, "error") == 0) {
+			} else if (strcmp(token, "error") == 0) {
 			    message->severity = MSG_ERROR;
 			} else { /* critical or any other value */
 			    message->severity = MSG_CRITICAL;
 			}
 			g_free(token);
-		    } else if (strncmp_const(key, "code") == 0) {
+		    } else if (strcmp(key, "code") == 0) {
 			g_free(key);
 			key = NULL;
 			message->code = atoi(token);
 			g_free(token);
-		    } else if (strncmp_const(key, "message") == 0) {
+		    } else if (strcmp(key, "message") == 0) {
 			g_free(key);
 			key = NULL;
 			message->msg = token;
-		    } else if (strncmp_const(key, "hint") == 0) {
+		    } else if (strcmp(key, "hint") == 0) {
 			g_free(key);
 			key = NULL;
 			message->hint = token;
-		    } else if (strncmp_const(key, "process") == 0) {
+		    } else if (strcmp(key, "process") == 0) {
 			g_free(key);
 			key = NULL;
 			message->process = token;
-		    } else if (strncmp_const(key, "running_on") == 0) {
+		    } else if (strcmp(key, "running_on") == 0) {
 			g_free(key);
 			key = NULL;
 			message->running_on = token;
-		    } else if (strncmp_const(key, "component") == 0) {
+		    } else if (strcmp(key, "component") == 0) {
 			g_free(key);
 			key = NULL;
 			message->component = token;
-		    } else if (strncmp_const(key, "module") == 0) {
+		    } else if (strcmp(key, "module") == 0) {
 			g_free(key);
 			key = NULL;
 			message->module = token;
-		    } else if (strncmp_const(key, "errno") == 0) {
+		    } else if (strcmp(key, "errno") == 0) {
 			g_free(key);
 			key = NULL;
 			message->merrno = atoi(token);
 			g_free(token);
-		    } else if (strncmp_const(key, "errnocode") == 0) {
+		    } else if (strcmp(key, "errnocode") == 0) {
 			g_free(key);
 			key = NULL;
 			message->errnocode = token;
-		    } else if (strncmp_const(key, "errnostr") == 0) {
+		    } else if (strcmp(key, "errnostr") == 0) {
 			g_free(key);
 			key = NULL;
 			message->errnostr = token;

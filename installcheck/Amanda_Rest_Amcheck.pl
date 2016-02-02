@@ -164,7 +164,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#55555
+#6
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'all slots have been loaded',
@@ -175,7 +175,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#6
+#7
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Taper scan algorithm did not find an acceptable volume.',
@@ -186,7 +186,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#7
+#8
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '    (expecting a new volume)',
@@ -197,7 +197,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#8
+#9
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'ERROR: No acceptable volumes found',
@@ -208,7 +208,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '123'
 	  },
-#9
+#10
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::INFO,
 		'message' => "host info dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/curinfo/localhost' does not exist",
@@ -220,7 +220,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800100'
 	  },
-#10
+#11
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::INFO,
 		'message' => "index dir '$Amanda::Paths::CONFIG_DIR/TESTCONF/index/localhost' does not exist",
@@ -232,7 +232,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800126'
 	  },
-#11
+#12
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Server check took 1.00 seconds',
@@ -243,7 +243,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800160'
 	  },
-#12
+#13
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Amanda Backup Client Hosts Check',
@@ -253,7 +253,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800202'
 	  },
-#13
+#14
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '--------------------------------',
@@ -263,7 +263,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800203'
 	  },
-#14
+#15
           {	'source_filename' => "selfcheck.c",
 		'severity' => $Amanda::Message::ERROR,
 		'message' => Amanda::Util::built_with_component("client")
@@ -271,6 +271,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                             : "ERROR: NAK localhost: execute access to '$Amanda::Paths::amlibexecdir/amanda/noop' denied",
 		'dle_hostname' => 'localhost',
 		'hostname' => 'localhost',
+		'merrno' => '2',
+		'errnocode' => 'ENOENT',
+		'errnostr' => 'No such file or directory',
 		'disk' => '/home-incronly',
 		'device' => '/home-incronly',
 		'type' => 'access',
@@ -280,7 +283,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '3600051'
 	  },
-#15
+#16
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => 'Client check: 1 host checked in 1.00 seconds.  1 problem found.',
@@ -293,7 +296,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'module' => 'amanda',
 		'code' => '2800204'
 	  },
-#16
+#17
           {	'source_filename' => "amcheck.c",
 		'severity' => $Amanda::Message::MESSAGE,
 		'message' => '(brought to you by Amanda x.y.z)',
