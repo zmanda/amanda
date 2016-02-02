@@ -1,4 +1,7 @@
 2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix for 32 bits perl
+
+2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.c: Fix for errno in message
 	* installcheck/Amanda_Rest_Services_senddiscover_amgtar.pl,
 	  installcheck/Amanda_Rest_Amcheck.pl: Fix

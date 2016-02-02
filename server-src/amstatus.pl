@@ -169,7 +169,7 @@ else {
 
 sub dn {
     my $number = shift;
-    return $number/$unitdivisor;
+    return int($number/$unitdivisor);
 }
 
 my $dead_run = 0;
@@ -251,9 +251,9 @@ if ($opt_detail) {
 	    my $qdisk = Amanda::Util::quote_string($disk);
 	    printf "%-${maxnamelength}s $datestamp %-${maxlevellength}s ","$host:$qdisk", $dle->{'level'};
 	    if (defined $dle->{'dsize'}) {
-		printf "%9d$unit ", dn($dle->{'dsize'});
+		printf "%9s$unit ", dn($dle->{'dsize'});
 	    } elsif (defined $dle->{'esize'}) {
-		printf "%9d$unit ", dn($dle->{'esize'});
+		printf "%9s$unit ", dn($dle->{'esize'});
 	    } else {
 		printf "%9s  ", "";
 	    }
@@ -274,7 +274,7 @@ if ($opt_detail) {
 		    my $storage = $storage[0];
 		    my $dlet = $dle->{'storage'}->{$storage};
 		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
-			printf " (%d$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
+			printf " (%s$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }
 		    if (defined $dlet->{'taper_time'}) {
@@ -282,7 +282,7 @@ if ($opt_detail) {
 		    }
 		} else {
 		    if (defined $dle->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
-			printf " (%d$unit done (%0.2f%%))", dn($dle->{'wsize'}),
+			printf " (%s$unit done (%0.2f%%))", dn($dle->{'wsize'}),
 				 100.0 * $dle->{'wsize'} / $dle->{'esize'};
 		    }
 		    if (defined $dle->{'dump_time'}) {
@@ -314,7 +314,7 @@ if ($opt_detail) {
 		    }
 		    $first++;
 		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
-			printf " (%d$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
+			printf " (%s$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }
 		    if (defined $dlet->{'taper_time'}) {
@@ -324,7 +324,7 @@ if ($opt_detail) {
 	    } else {
 		print $dump_status;
 		if (defined $dle->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
-		    printf " (%d$unit done (%0.2f%%))", dn($dle->{'wsize'}),
+		    printf " (%s$unit done (%0.2f%%))", dn($dle->{'wsize'}),
 				 100.0 * $dle->{'wsize'} / $dle->{'esize'};
 		}
 		if (defined $dle->{'dump_time'}) {
@@ -411,7 +411,7 @@ if ($opt_summary) {
 	} else {
 	    $hs = 0.0;
 	}
-	printf "%-16s: %d$unit (%0.2f%%)\n", "holding space", dn($status->{'holding_free_space'}), $hs;
+	printf "%-16s: %s$unit (%0.2f%%)\n", "holding space", dn($status->{'holding_free_space'}), $hs;
     }
 }
 
@@ -516,9 +516,9 @@ sub summary {
 
     my $nb = $status->{'stat'}->{$key}->{'nb'};
     my $rsize = "";
-       $rsize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'real_size'};
+       $rsize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'real_size'};
     my $esize = "";
-       $esize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'estimated_size'};
+       $esize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'estimated_size'};
 
     my $rstat = "";
        $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'real_stat'};
@@ -557,9 +557,9 @@ sub summary_storage {
 	}
 	my $nb = $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'nb'};
 	my $rsize = "";
-	$rsize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'};
+	$rsize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'};
 	my $esize = "";
-	$esize = sprintf "%8d$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
+	$esize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
 
 	my $rstat = "";
 	    $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'};
@@ -593,7 +593,7 @@ sub summary_taped {
 	my $label = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'label'};
 	my $nb_part = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'nb_part'};
 	my $tape = "tape " . ($i+1);
-	printf "    %-12s:%4d %9d$unit %9d$unit (%6.2f%%) %s (%d parts)\n", $tape, $nb, dn($real_size), dn($estimated_size), $percent, $label, $nb_part;
+	printf "    %-12s:%4d %9s$unit %9s$unit (%6.2f%%) %s (%d parts)\n", $tape, $nb, dn($real_size), dn($estimated_size), $percent, $label, $nb_part;
 	$i++;
     }
 }
