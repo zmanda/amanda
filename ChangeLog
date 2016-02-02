@@ -1,3 +1,6 @@
+2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix for 32 bits perl
+
 2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Invoke AMANDA_PROG_READLINK
 	* config/amanda/dumpers.m4: use READLINK if REALPATH is not available
