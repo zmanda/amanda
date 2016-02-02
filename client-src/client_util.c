@@ -1792,13 +1792,15 @@ check_exec_for_suid_message(
 
 #ifndef SINGLE_USERID
     message_t *message;
-    *my_realpath = realpath(filename, NULL);
+    char tmp_realpath[PATH_MAX];
+    *my_realpath = realpath(filename, tmp_realpath);
     if (!*my_realpath) {
 	return build_message(
 		AMANDA_FILE, __LINE__, 3600091, MSG_ERROR, 3,
 		"filename", filename,
 		"errno", errno);
     }
+    *my_realpath = g_strdup(tmp_realpath);
     if ((message = security_allow_program_as_root(type, *my_realpath))) {
 	return message;
     }
@@ -1869,7 +1871,8 @@ check_exec_for_suid(
 {
 #ifndef SINGLE_USERID
     message_t *message;
-    *my_realpath = realpath(filename, NULL);
+    char tmp_realpath[PATH_MAX];
+    *my_realpath = realpath(filename, tmp_realpath);
     if (!*my_realpath) {
 	int saved_errno = errno;
 	char *quoted = quote_string(filename);
@@ -1879,6 +1882,7 @@ check_exec_for_suid(
 	amfree(quoted);
 	return FALSE;
     }
+    *my_realpath = g_strdup(tmp_realpath);
     if ((message = security_allow_program_as_root(type, *my_realpath))) {
 	if (verbose)
 	    g_fprintf(verbose, "%s\n", get_message(message));

@@ -1,4 +1,7 @@
 2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Do not use gnuish of realpath
+
+2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dumpers.m4: Use AM_READLINK
 	* config/amanda/progs.m4: Verify that $READLINK is what we want and
 	  set AM_READLINK
