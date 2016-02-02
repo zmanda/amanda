@@ -76,8 +76,8 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    GNUTAR=`$REALPATH $GNUTAR 2>&1`
-	else if test "x$READLINK" != "x"; then
-	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	else if test "x$AM_READLINK" != "x"; then
+	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
 	fi
 	fi
 	# define unquoted
@@ -152,8 +152,8 @@ AC_DEFUN([AMANDA_PROG_STAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    STAR=`$REALPATH $STAR 2>&1`
-	else if test "x$READLINK" != "x"; then
-	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	else if test "x$AM_READLINK" != "x"; then
+	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
 	fi
 	fi
 	# define unquoted
@@ -241,8 +241,8 @@ AC_DEFUN([AMANDA_PROG_BSDTAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    BSDTAR=`$REALPATH $BSDTAR 2>&1`
-	else if test "x$READLINK" != "x"; then
-	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	else if test "x$AM_READLINK" != "x"; then
+	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
 	fi
 	fi
 	# define unquoted
@@ -297,8 +297,8 @@ AC_DEFUN([AMANDA_PROG_SUNTAR],
 	# find the realpath
 	if test "x$REALPATH" != "x"; then
 	    SUNTAR=`$REALPATH $SUNTAR 2>&1`
-	else if test "x$READLINK" != "x"; then
-	    GNUTAR=`$READLINK -e $GNUTAR 2>&1`
+	else if test "x$AM_READLINK" != "x"; then
+	    GNUTAR=`$AM_READLINK -e $GNUTAR 2>&1`
 	fi
 	fi
 	# define unquoted

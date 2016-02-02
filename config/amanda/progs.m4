@@ -417,4 +417,14 @@ AC_DEFUN([AMANDA_PROG_REALPATH],
 AC_DEFUN([AMANDA_PROG_READLINK],
 [
     AC_PATH_PROG(READLINK,readlink,,$LOCSYSPATH)
+    AM_READLINK=
+    # Check the readlink is the one we want
+    if test x"$READLINK" != x""; then
+	READLINK=`$READLINK -e $READLINK`
+	if test x"$READLINK" != x""; then
+	    AM_READLINK=$READLINK
+	    AC_DEFINE_UNQUOTED(AM_READLINK, "$AM_READLINK", [Location of the readlink binary])
+	fi
+    fi
+    AC_SUBST(AM_READLINK)
 ])
