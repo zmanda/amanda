@@ -1,4 +1,9 @@
 2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Use AM_READLINK
+	* config/amanda/progs.m4: Verify that $READLINK is what we want and
+	  set AM_READLINK
+
+2016-02-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix for 32 bits perl
 
 2016-01-29  Jean-Louis Martineau <martineau@zmanda.com>
