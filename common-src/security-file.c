@@ -20,7 +20,6 @@
 #include "util.h"
 #include "security-file.h"
 
-#define SECURITY_FILE "/etc/amanda-security.conf"
 #define LINE_SIZE 1024
 
 static
@@ -32,12 +31,12 @@ FILE *open_security_file(FILE *verbose)
 	return NULL;
     }
 
-    sec_file = fopen(SECURITY_FILE, "r");
+    sec_file = fopen(DEFAULT_SECURITY_FILE, "r");
     if (!sec_file) {
 	if (verbose) {
-	    g_fprintf(verbose,"ERROR [Can't open '%s': %s\n", SECURITY_FILE, strerror(errno));
+	    g_fprintf(verbose,"ERROR [Can't open '%s': %s\n", DEFAULT_SECURITY_FILE, strerror(errno));
 	}
-	g_debug("ERROR [Can't open '%s': %s", SECURITY_FILE, strerror(errno));
+	g_debug("ERROR [Can't open '%s': %s", DEFAULT_SECURITY_FILE, strerror(errno));
 	return NULL;
     }
 
@@ -172,12 +171,16 @@ security_file_get_boolean(
     return FALSE;
 }
 
+static gboolean check_security_file_permission_recursive(
+		FILE *verbose, char *security_real_path, char *quote_orig);
+
 gboolean
 check_security_file_permission(
     FILE *verbose)
 {
-    struct stat stat_buf;
-    char *quoted = quote_string(SECURITY_FILE);
+    char *quoted = quote_string(DEFAULT_SECURITY_FILE);
+    char  security_real_path[PATH_MAX];
+    char *sec_real_path;
 
 #ifdef SINGLE_USERID
     uid_t ruid = getuid();
@@ -189,50 +192,83 @@ check_security_file_permission(
     }
 #endif
 
-    if (!stat(SECURITY_FILE, &stat_buf)) {
+    sec_real_path = realpath(DEFAULT_SECURITY_FILE, security_real_path);
+    if (!sec_real_path) {
+	if (verbose)
+	    g_fprintf(verbose, "ERROR [Can't get realpath of the security file '%s': %s]\n", quoted, strerror(errno));
+	g_debug("ERROR [Can't get realpath of the security file '%s': %s]", quoted, strerror(errno));
+	amfree(quoted);
+	return FALSE;
+    }
+
+    if (EUIDACCESS(security_real_path, R_OK) == -1) {
+	char  ruid_str[NUM_STR_SIZE];
+	char  euid_str[NUM_STR_SIZE];
+
+	g_snprintf(ruid_str, sizeof(ruid_str), "%d", (int)getuid());
+	g_snprintf(euid_str, sizeof(euid_str), "%d", (int)geteuid());
+
+	if (verbose)
+	    g_fprintf(verbose, "ERROR [can not access '%s': %s (ruid:%s euid:%s)]\n", quoted, strerror(errno), ruid_str, euid_str);
+	g_debug("ERROR [can not access '%s': %s (ruid:%s euid:%s)]", quoted, strerror(errno), ruid_str, euid_str);
+	amfree(quoted);
+	return FALSE;
+    }
+    return check_security_file_permission_recursive(verbose, security_real_path, quoted);
+    amfree(quoted);
+}
+
+static
+gboolean
+check_security_file_permission_recursive(
+    FILE *verbose,
+    char *security_real_path,
+    char *quoted_orig)
+{
+    struct stat stat_buf;
+    char *s;
+    char *quoted = quote_string(security_real_path);
+
+
+    if (!stat(security_real_path, &stat_buf)) {
         if (stat_buf.st_uid != 0 ) {
             if (verbose)
-		g_fprintf(verbose, "ERROR [%s is not owned by root]\n", quoted);
-	    g_debug("ERROR [%s is not owned by root]", quoted);
+		g_fprintf(verbose, "ERROR [%s (%s) is not owned by root]\n", quoted, quoted_orig);
+	    g_debug("ERROR [%s (%s) is not owned by root]", quoted, quoted_orig);
             amfree(quoted);
             return FALSE;
         }
         if (stat_buf.st_mode & S_IWOTH) {
             if (verbose)
-		g_fprintf(verbose, "ERROR [%s is writable by everyone]\n", quoted);
-	    g_debug("ERROR [%s is writable by everyone]", quoted);
+		g_fprintf(verbose, "ERROR [%s (%s) is writable by everyone]\n", quoted, quoted_orig);
+	    g_debug("ERROR [%s (%s) is writable by everyone]", quoted, quoted_orig);
             amfree(quoted);
             return FALSE;
         }
         if (stat_buf.st_mode & S_IWGRP) {
             if (verbose)
-		g_fprintf(verbose, "ERROR [%s is writable by the group]\n", quoted);
-	    g_debug("ERROR [%s is writable by the group]", quoted);
+		g_fprintf(verbose, "ERROR [%s (%s) is writable by the group]\n", quoted, quoted_orig);
+	    g_debug("ERROR [%s (%s) is writable by the group]", quoted, quoted_orig);
             amfree(quoted);
             return FALSE;
         }
-	if (EUIDACCESS(SECURITY_FILE, R_OK) == -1) {
-	    char  ruid_str[NUM_STR_SIZE];
-	    char  euid_str[NUM_STR_SIZE];
-
-	    g_snprintf(ruid_str, sizeof(ruid_str), "%d", (int)getuid());
-	    g_snprintf(euid_str, sizeof(euid_str), "%d", (int)geteuid());
-
-	    if (verbose)
-		g_fprintf(verbose, "ERROR [can not access '%s': %s (ruid:%s euid:%s)]\n", quoted, strerror(errno), ruid_str, euid_str);
-	    g_debug("ERROR [can not access '%s': %s (ruid:%s euid:%s)]", quoted, strerror(errno), ruid_str, euid_str);
-	    amfree(quoted);
-	    return FALSE;
-	}
     }
     else {
         if (verbose)
-	    g_fprintf(verbose, "ERROR [can not stat %s: %s]\n", quoted, strerror(errno));
-	g_debug("ERROR [can not stat %s: %s]", quoted, strerror(errno));
+	    g_fprintf(verbose, "ERROR [can not stat %s (%s): %s]\n", quoted, quoted_orig, strerror(errno));
+	g_debug("ERROR [can not stat %s (%s): %s]", quoted, quoted_orig, strerror(errno));
         amfree(quoted);
         return FALSE;
     }
+
     amfree(quoted);
+    if ((s = strrchr(security_real_path, '/'))) {
+	*s = '\0';
+	if (*security_real_path) {
+	    return check_security_file_permission_recursive(
+					verbose, security_real_path, quoted_orig);
+	}
+    }
     return TRUE;
 }
 
