@@ -1439,11 +1439,11 @@ set_message(
     } else if (message->code == 3600087) {
 	msg = "%{device}: samba access error: %{errmsg}";
     } else if (message->code == 3600088) {
-	msg = "file/dir '%{filename}' is not owned by root";
+	msg = "file/dir '%{filename}' (%{security_orig}) is not owned by root";
     } else if (message->code == 3600089) {
-	msg = "file/dir '%{filename}' is writable by everyone";
+	msg = "file/dir '%{filename}' (%{security_orig}) is writable by everyone";
     } else if (message->code == 3600090) {
-	msg = "file/dir '%{filename}' is writable by the group";
+	msg = "file/dir '%{filename}' (%{security_orig}) is writable by the group";
     } else if (message->code == 3600091) {
 	msg = "Can't find real path for '%{filename}': %{errnostr}";
     } else if (message->code == 3600092) {
@@ -1456,6 +1456,10 @@ set_message(
 	msg = "Can't open security_file (%{security_file}): %{errnostr}";
     } else if (message->code == 3600096) {
 	msg = "security file do not allow to run '%{path}' as root for '%{prefix}'";
+    } else if (message->code == 3600097) {
+	msg = "Can't get realpath of the security file '%{security_file}': %{errnostr}";
+    } else if (message->code == 3600098) {
+	msg = "can not stat '%{filename}' (%{security_orig}): %{errnostr}";
     } else if (message->code == 3700000) {
 	msg = "%{disk}";
     } else if (message->code == 3700001) {

@@ -71,6 +71,9 @@ Changes in release 4.0.0
        o you can share the same tapelist file across multiple config.
 
 Changes in release 3.3.9
+    * new --with-security-file configure option
+	- It set the default security file
+	- default to /etc/amanda-security.conf
     * security-fix
         - All previous release of amanda allow the 'amanda' user to execute
           any code as root, and to execute an interactive shell as root.

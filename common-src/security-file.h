@@ -19,7 +19,6 @@
 #include "amanda.h"
 #include "ammessage.h"
 
-gboolean check_security_file_permission(FILE *verbose);
 message_t *check_security_file_permission_message(void);
 
 message_t *security_allow_program_as_root(char *name, char *path);

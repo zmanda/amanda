@@ -11,6 +11,8 @@
 #	    define and substitute DEFAULT_TAPE_DEVICE; substitue EXAMPLE_TAPEDEV
 #	--with-amandates
 #	    define and substitute DEFAULT_AMANDATES_FILE
+#	--with-security-file
+#	    define and substitute DEFAULT_SECURITY_FILE
 #
 AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 [
@@ -120,6 +122,22 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 
     AC_DEFINE_DIR([DEFAULT_AMANDATES_FILE], [amandates],
         [Default location for 'amandates'])
+
+    AC_ARG_WITH(security-file,
+        AS_HELP_STRING([--with-security-file],
+            [Full path of the security file (default: /etc/amanda-security.conf)]),
+	    [
+	    case "$withval" in
+	        n | no) AC_MSG_ERROR([*** --without-security-file is not allowed.]);;
+	        y |  ye | yes) security_file='/etc/amanda-security.conf' ;;
+	        *) security_file="$withval";;
+	    esac
+	    ],
+	    [security_file='/etc/amanda-security.conf']
+    )
+
+    AC_DEFINE_DIR([DEFAULT_SECURITY_FILE], [security_file],
+        [Default full path for 'amanda-security.conf'])
 
     DEFAULT_FSF_AFTER_FILEMARK="FALSE"
     case "$host" in
