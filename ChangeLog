@@ -1,4 +1,7 @@
 2016-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: s/CFLAGS/AM_CFLAGS/
+
+2016-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Add --run-client-scripts
 
 2016-02-04  Jean-Louis Martineau <martineau@zmanda.com>
