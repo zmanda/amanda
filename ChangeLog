@@ -1,4 +1,7 @@
 2016-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: s/CFLAGS/AM_CFLAGS/
+
+2016-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/defaults.m4: Add --with-security-file configure option
 	* common-src/security-file.c: Use DEFAULT_SECURITY_FILE, check the
 	  path is secure

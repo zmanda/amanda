@@ -49,8 +49,8 @@ libamanda_la_SOURCES =		\
 	util.c
 
 libamanda_la_SOURCES += amcrc32chw.c
-amcrc32chw.o: CFLAGS += $(SSE42_CFLAGS)
-amcrc32chw.lo: CFLAGS += $(SSE42_CFLAGS)
+amcrc32chw.o: AM_CFLAGS += $(SSE42_CFLAGS)
+amcrc32chw.lo: AM_CFLAGS += $(SSE42_CFLAGS)
 
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
