@@ -58,6 +58,7 @@
 	</group>
 	<arg choice='plain'>--directory<replaceable> directory</replaceable></arg>
 	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
+	<arg choice='opt'>--run-client-scripts</arg>
 	<arg choice='opt'>--prev-level <replaceable>level</replaceable></arg>
 	<arg choice='opt'>--next-level <replaceable>level</replaceable></arg>
 	<arg choice='opt'>--application-property <replaceable>NAME=VALUE</replaceable></arg>*
@@ -253,6 +254,13 @@ the client.</para></listitem>
   <listitem>
 <para>The data path to use with <option>--extract</option>, the default is
  to use the fatest data path.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--run-client-scripts</option></term>
+  <listitem>
+<para>Run the client script if it is set.</para>
   </listitem>
   </varlistentry>
 
