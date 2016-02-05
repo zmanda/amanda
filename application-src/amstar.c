@@ -766,7 +766,7 @@ amstar_backup(
     }
 
     if ((option = validate_command_options(argument))) {
-	fprintf(stdout, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	fprintf(mesgstream, "? Invalid '%s' COMMAND-OPTIONS\n", option);
 	error("Invalid '%s' COMMAND-OPTIONS\n", option);
     }
 
