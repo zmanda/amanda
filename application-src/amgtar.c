@@ -1263,9 +1263,11 @@ amgtar_backup(
     }
 
     if (!gnutar_path) {
+        fprintf(mesgstream, "? GNUTAR-PATH not defined\n");
 	error(_("GNUTAR-PATH not defined"));
     }
     if (!gnutar_listdir) {
+        fprintf(mesgstream, "? GNUTAR-LISTDIR not defined\n");
 	error(_("GNUTAR-LISTDIR not defined"));
     }
 
@@ -1288,7 +1290,7 @@ amgtar_backup(
     }
 
     if ((option = validate_command_options(argument))) {
-	fprintf(stderr, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	fprintf(mesgstream, "? Invalid '%s' COMMAND-OPTIONS\n", option);
 	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 

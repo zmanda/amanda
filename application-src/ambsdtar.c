@@ -1123,15 +1123,17 @@ ambsdtar_backup(
     }
 
     if (!bsdtar_path) {
+	fprintf(mesgstream, "? BSDTAR-PATH not defined");
 	error(_("BSDTAR-PATH not defined"));
     }
 
     if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
+	fprintf(mesgstream, "? '%s' binary is not secure\n", bsdtar_path);
 	error("'%s' binary is not secure", bsdtar_path);
     }
 
     if ((option = validate_command_options(argument))) {
-	fprintf(stdout, "? Invalid '%s' COMMAND-OPTIONS\n", option);
+	fprintf(mesgstream, "? Invalid '%s' COMMAND-OPTIONS\n", option);
 	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
