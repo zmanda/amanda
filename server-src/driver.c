@@ -580,12 +580,14 @@ main(
 		_("can't dump required holdingdisk"));
 	} else {
 	    gboolean dp_degraded_mode = FALSE;
+	    gboolean reach_runtapes = FALSE;
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		if (dump_match_selection(taper->storage_name, sp)) {
 		    dp_degraded_mode |= taper->degraded_mode;
+		    reach_runtapes |= taper->current_tape >= taper->runtapes;
 		}
 	    }
-	    if (!dp_degraded_mode) {
+	    if (!dp_degraded_mode && !reach_runtapes) {
 		identlist_t tags;
 		int count = 0;
 		for (tags = dp->tags; tags != NULL ; tags = tags->next) {
@@ -633,7 +635,9 @@ main(
 			    _("can't do degraded dump without holding disk") :
 			    dp->orig_holdingdisk != HOLD_NEVER ?
 				_("out of holding space in degraded mode") :
-				_("can't dump 'holdingdisk never' dle in degraded mode"));
+				reach_runtapes ?
+				    _("can't dump 'holdingdisk never' dle after runtapes tapes are used") :
+				    _("can't dump 'holdingdisk never' dle in degraded mode"));
 	    }
 	}
 	amfree(qname);
@@ -2208,6 +2212,11 @@ handle_taper_result(
 		   walltime_str(curclock()), taper->name, wtaper->name, dp->host->hostname, qname);
 	    fflush(stdout);
 
+	    if (taper->sent_first_write == wtaper) {
+		taper->sent_first_write = NULL;
+	    }
+
+	    wtaper->nb_dle--;
 	    wtaper->result = cmd;
 	    if (job->dumper && !dp->dataport_list) {
 		job->dumper->result = FAILED;
@@ -3145,7 +3154,7 @@ idle_taper(taper_t *taper)
 {
     wtaper_t *wtaper;
 
-    /* Use an already started taper first */
+    /* Use an already started wtaper first */
     for (wtaper = taper->wtapetable;
 	 wtaper < taper->wtapetable + taper->nb_worker;
 	 wtaper++) {
@@ -3157,11 +3166,25 @@ idle_taper(taper_t *taper)
 	    !(wtaper->state & TAPER_STATE_VAULT_TO_TAPE))
 	    return wtaper;
     }
+
+    /* Then use one with a reservation */
     for (wtaper = taper->wtapetable;
 	 wtaper < taper->wtapetable + taper->nb_worker;
 	 wtaper++) {
 	if ((wtaper->state & TAPER_STATE_IDLE) &&
 	    (wtaper->state & TAPER_STATE_RESERVATION) &&
+	    !(wtaper->state & TAPER_STATE_DONE) &&
+	    !(wtaper->state & TAPER_STATE_FILE_TO_TAPE) &&
+	    !(wtaper->state & TAPER_STATE_DUMP_TO_TAPE) &&
+	    !(wtaper->state & TAPER_STATE_VAULT_TO_TAPE))
+	    return wtaper;
+    }
+
+    /* Then use any idle wtaper */
+    for (wtaper = taper->wtapetable;
+	 wtaper < taper->wtapetable + taper->nb_worker;
+	 wtaper++) {
+	if ((wtaper->state & TAPER_STATE_IDLE) &&
 	    !(wtaper->state & TAPER_STATE_DONE) &&
 	    !(wtaper->state & TAPER_STATE_FILE_TO_TAPE) &&
 	    !(wtaper->state & TAPER_STATE_DUMP_TO_TAPE) &&

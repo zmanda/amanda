@@ -775,15 +775,6 @@ sub setup_and_start_dump {
 	$self->{'dest_server_crc'} = undef;
 	$self->{'input_errors'} = [];
 
-	if ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE &&
-	    (my $err = $self->{'scribe'}->check_data_path($params{'data_path'}))) {
-	    return $params{'dump_cb'}->(
-		result => "FAILED",
-		device_errors => [ 'error', "$err" ],
-		size => 0,
-		duration => 0.0,
-		total_duration => 0);
-	}
 	$steps->{'process_args'}->();
     };
 
@@ -903,12 +894,29 @@ sub setup_and_start_dump {
 	my ($err) = @_;
 
 	if ($err) {
-	    debug("got_device failed: $err");
+	    return $params{'dump_cb'}->(
+		result => "FAILED",
+		device_errors => [ 'error', "got_device failed: $err" ],
+		size => 0,
+		duration => 0.0,
+		total_duration => 0);
 	}
+
 	my $device = $self->{'scribe'}->get_device();
 	if (!defined $device) {
 	    confess "no device is available to create an xfer_dest";
 	}
+
+	if ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE &&
+	    (my $err = $self->{'scribe'}->check_data_path($params{'data_path'}))) {
+	    return $params{'dump_cb'}->(
+		result => "FAILED",
+		device_errors => [ 'error', "$err" ],
+		size => 0,
+		duration => 0.0,
+		total_duration => 0);
+	}
+
 	$splitting_args{'leom_supported'} = $device->property_get("leom");
 	# and convert those to get_xfer_dest args
         %get_xfer_dest_args = get_splitting_args_from_config(

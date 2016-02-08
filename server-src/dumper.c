@@ -157,7 +157,8 @@ static int status;
 #define	GOT_SIZELINE		(1 << 1)
 #define	GOT_ENDLINE		(1 << 2)
 #define	HEADER_DONE		(1 << 3)
-#define	GOT_RETRY		(1 << 4)
+#define	HEADER_SENT		(1 << 4)
+#define	GOT_RETRY		(1 << 5)
 
 static struct {
     const char *name;
@@ -217,6 +218,7 @@ static void	read_indexfd(void *, void *, ssize_t);
 static void	read_datafd(void *, void *, ssize_t);
 static void	read_statefd(void *, void *, ssize_t);
 static void	read_mesgfd(void *, void *, ssize_t);
+static gboolean header_sent(struct databuf *db);
 static void	timeout(time_t);
 static void	timeout_callback(void *);
 
@@ -1609,7 +1611,7 @@ do_dump(
     }
 
     /* copy the header in a file on the index dir */
-    if (ISSET(status, HEADER_DONE)) {
+    if (ISSET(status, HEADER_SENT)) {
 	FILE *a;
 	char *s;
 	char *f = getheaderfname(hostname, diskname, dumper_timestamp, level);
@@ -1934,6 +1936,8 @@ read_mesgfd(
 	    streams[INDEXFD].fd == NULL &&
 	    streams[STATEFD].fd == NULL)
 	    stop_dump();
+	if (!ISSET(status, GOT_INFO_ENDLINE))
+	    stop_dump();
 	return;
 
     default:
@@ -1943,6 +1947,72 @@ read_mesgfd(
     }
 
     if (ISSET(status, GOT_INFO_ENDLINE) && !ISSET(status, HEADER_DONE)) {
+	SET(status, HEADER_DONE);
+	if (data_path == DATA_PATH_AMANDA) {
+	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
+	    set_datafd = 1;
+	} else {
+	    if (!header_sent(db)) {
+		return;
+	    }
+	}
+	if (streams[STATEFD].fd != NULL) {
+	    security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
+	}
+    }
+
+    /*
+     * Reset the timeout for future reads
+     */
+    if (!ISSET(status, GOT_RETRY)) {
+	timeout(conf_dtimeout);
+    }
+}
+
+static gboolean header_sent(struct databuf *db) {
+	SET(status, HEADER_SENT);
+	finish_tapeheader(&file);
+	if (write_tapeheader(db->fd, &file)) {
+	    g_free(errstr);
+	    errstr = g_strdup_printf("write_tapeheader: %s",
+				     strerror(errno));
+	    dump_result = 2;
+	    aclose(db->fd);
+	    stop_dump();
+	    return FALSE;
+	}
+	aclose(db->fd);
+    return TRUE;
+}
+
+/*
+ * Callback for reads on the datafd stream
+ */
+static void
+read_datafd(
+    void *	cookie,
+    void *	buf,
+    ssize_t	size)
+{
+    struct databuf *db = cookie;
+
+    assert(db != NULL);
+
+    /*
+     * The read failed.  Error out
+     */
+    if (size < 0) {
+	g_free(errstr);
+	errstr = g_strdup_printf(_("data read: %s"),
+                                 security_stream_geterror(streams[DATAFD].fd));
+	dump_result = 2;
+	aclose(db->fd);
+	stop_dump();
+	return;
+    }
+
+    /* write the header on the first bytes */
+    if (ISSET(status, HEADER_DONE) && !ISSET(status, HEADER_SENT) && size > 0) {
 	/* Use the first in the dataport_list */
 	in_port_t data_port;
 	char *data_host = g_strdup(dataport_list);
@@ -1963,19 +2033,9 @@ read_mesgfd(
 	s++;
 	data_port = atoi(s);
 
-	SET(status, HEADER_DONE);
-	/* time to do the header */
-	finish_tapeheader(&file);
-	if (write_tapeheader(db->fd, &file)) {
-	    g_free(errstr);
-	    errstr = g_strdup_printf(_("write_tapeheader: %s"),
-                                     strerror(errno));
-	    dump_result = 2;
-	    amfree(data_host);
-	    stop_dump();
+	if (!header_sent(db)) {
 	    return;
 	}
-	aclose(db->fd);
 	if (data_path == DATA_PATH_AMANDA) {
 	    /* do indirecttcp */
 	    if (g_str_equal(data_host,"255.255.255.255")) {
@@ -1983,7 +2043,7 @@ read_mesgfd(
 		char *s;
 		int size;
 
-		g_debug(_("Sendingd indirect data output stream: %s:%d\n"), data_host, data_port);
+		g_debug(_("Sending indirect data output stream: %s:%d\n"), data_host, data_port);
 		db->fd = stream_client(NULL, "localhost", data_port,
 				       STREAM_BUFSIZE, 0, NULL, 0);
 		if (db->fd == -1) {
@@ -2059,51 +2119,7 @@ read_mesgfd(
 		return;
 	    }
 	}
-	if (data_path == DATA_PATH_AMANDA) {
-	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
-	    set_datafd = 1;
-	}
-	if (streams[STATEFD].fd != NULL) {
-	    security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
-	}
     }
-
-    /*
-     * Reset the timeout for future reads
-     */
-    if (!ISSET(status, GOT_RETRY)) {
-	timeout(conf_dtimeout);
-    }
-}
-
-/*
- * Callback for reads on the datafd stream
- */
-static void
-read_datafd(
-    void *	cookie,
-    void *	buf,
-    ssize_t	size)
-{
-    struct databuf *db = cookie;
-
-    assert(db != NULL);
-
-    /*
-     * The read failed.  Error out
-     */
-    if (size < 0) {
-	g_free(errstr);
-	errstr = g_strdup_printf(_("data read: %s"),
-                                 security_stream_geterror(streams[DATAFD].fd));
-	dump_result = 2;
-	aclose(db->fd);
-	stop_dump();
-	return;
-    }
-
-    /* The header had better be written at this point */
-    assert(ISSET(status, HEADER_DONE));
 
     /*
      * EOF.  Stop and return.
@@ -2185,7 +2201,8 @@ read_indexfd(
      * EOF.  Stop and return.
      */
     if (size == 0) {
-	security_stream_close(streams[INDEXFD].fd);
+	if (streams[INDEXFD].fd)
+	    security_stream_close(streams[INDEXFD].fd);
 	streams[INDEXFD].fd = NULL;
 	/*
 	 * If the mesg fd has also shut down, then we're done.

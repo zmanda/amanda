@@ -1296,6 +1296,10 @@ REREAD:
 			delete $dle->{'taper_status_file'};
 			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
+			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
+			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
+			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
 			if (defined $dle) {
 			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			    delete $dle->{'wait_for_tape'};

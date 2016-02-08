@@ -1,3 +1,12 @@
+2016-02-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm: Fix for taper FAILED
+	* perl/Amanda/Taper/Worker.pm: Wait to get the device before checking
+	  if it support the requested data_path
+	* server-src/driver.c: Fix reporting
+	* server-src/driver.c: Use any idle wtaper
+	* server-src/dumper.c: Do not send the header to the taper until some
+	  data is received
+
 2016-02-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/libtool.m4, config/ltmain.sh, config/ltoptions.m4,
 	  config/ltsugar.m4, config/ltversion.m4,
