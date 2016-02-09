@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 86;
+use Test::More tests => 88;
 use strict;
 use warnings;
 
@@ -353,3 +353,7 @@ is(run_get('amgetconf', 'TESTCONF', "property:prop3"), "value3",
 is(run_get('amgetconf', 'TESTCONF', "property"), "\"prop1\" \"value1\"\n\"prop2\" \"value2\"\n\"prop3\" \"value3\"", 
     "correctly returns all propertiss from the file");
 
+isnt(run_get('amgetconf', '--platform'), "unknown",
+    "correctly returns then platform");
+isnt(run_get('amgetconf', '--distro'), "unknown",
+    "correctly returns then distro");

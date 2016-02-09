@@ -1,4 +1,8 @@
 2016-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amgetconf.pl: Test the result of 'amgetconf --platform'
+	  and 'amgetconf --distro' are not "unknown"
+
+2016-02-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amutil.c (get_platform_and_distro, get_platform,
 	  get_distro): New functions toreturn platform and distro
 	* common-src/amutil.h (get_platform_and_distro, get_platform,
