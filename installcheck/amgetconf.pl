@@ -353,7 +353,7 @@ is(run_get('amgetconf', 'TESTCONF', "property:prop3"), "value3",
 is(run_get('amgetconf', 'TESTCONF', "property"), "\"prop1\" \"value1\"\n\"prop2\" \"value2\"\n\"prop3\" \"value3\"", 
     "correctly returns all propertiss from the file");
 
-isnt(run_get('amgetconf', '--platform'), "unknown",
+isnt(run_get('amgetconf', '--platform'), "Unknown",
     "correctly returns then platform");
-isnt(run_get('amgetconf', '--distro'), "unknown",
+isnt(run_get('amgetconf', '--distro'), "Unknown",
     "correctly returns then distro");

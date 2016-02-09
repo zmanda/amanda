@@ -1,4 +1,7 @@
 2016-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amgetconf.pl: s/unknown/Unknown/
+
+2016-02-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amgetconf.pl: Test the result of 'amgetconf --platform'
 	  and 'amgetconf --distro' are not "unknown"
 
