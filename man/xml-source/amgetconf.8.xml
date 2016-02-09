@@ -29,6 +29,8 @@
 <cmdsynopsis>
   <command>amgetconf</command>    
     <arg choice='opt'><replaceable>-l|--list</replaceable></arg>
+    <arg choice='opt'><replaceable>--platform</replaceable></arg>
+    <arg choice='opt'><replaceable>--distro</replaceable></arg>
     <arg choice='opt'><replaceable>--client</replaceable></arg>
     <arg choice='opt'><replaceable>--execute-where client|server</replaceable></arg>
     &configoverride.synopsis;
@@ -269,6 +271,18 @@ AIX_BACKUP
 AMANDA_DBGDIR
 AMANDA_DEBUG_DAYS
 ...
+</programlisting>
+
+<para>On which platform we are running</para>
+<programlisting remap='.nf'>
+% amgetconf --platform
+Fedora release 22 (Twenty Two)
+</programlisting>
+
+<para>On which distro we are running</para>
+<programlisting remap='.nf'>
+% amgetconf --distro
+Fedora
 </programlisting>
 
 <para>Create, use and close a debug file in a script:</para>

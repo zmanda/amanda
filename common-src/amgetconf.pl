@@ -32,20 +32,20 @@ use Getopt::Long;
 # Implementation note: this application is a bit funny, because it does not
 # set up Amanda fully until some time into processing.  This lets it respond
 # with build configuration information without a config file, and lets it set
-# up debugging for the caller.  
+# up debugging for the caller.
 #
 # The most obvious consequence is that, rather than calling die (which interfaces
-# with Amanda::Debug), this file uses a locally defined 'fail' to print error 
+# with Amanda::Debug), this file uses a locally defined 'fail' to print error
 # messages.
 
 sub usage {
     print <<EOF;
-Usage: amgetconf [--client] [--execute-where client|server] [-l|--list] [-o configoption]* <config> <paramname>
+Usage: amgetconf [--platform] [--distro] [--client] [--execute-where client|server] [-l|--list] [-o configoption]* <config> <paramname>
   (any ordering of options and arguments is acceptable)
 
 --client is equivalent to --execute-where client
 
---execute-where tells amgetconf whether to operate on the client or the 
+--execute-where tells amgetconf whether to operate on the client or the
 server; the server is the default.
 
 paramname can be one of
@@ -141,7 +141,7 @@ my %build_info = (
     'use_amandahosts' => $Amanda::Constants::USE_AMANDAHOSTS,
 
     # build-time constants
-    
+
     'amanda_debug_days' => $Amanda::Constants::AMANDA_DEBUG_DAYS,
     'default_server' => $Amanda::Constants::DEFAULT_SERVER,
     'default_amandates_file' => $Amanda::Constants::DEFAULT_AMANDATES_FILE,
@@ -253,7 +253,7 @@ sub conf_param {
 	no_such_param($parameter)
 	    unless defined(getconf_byname($parameter));
 	my @strs = getconf_byname_strs($parameter, 0);
-	
+
 	for my $str (@strs) {
 	    print "$str\n";
 	}
@@ -267,6 +267,8 @@ Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL, "ama
 my $opt_list = '';
 my $config_overrides = new_config_overrides($#ARGV+1);
 my $execute_where = undef;
+my $opt_platform,
+my $opt_distro,
 
 debug("Arguments: " . join(' ', @ARGV));
 Getopt::Long::Configure(qw{bundling});
@@ -274,6 +276,8 @@ GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'list|l' => \$opt_list,
     'o=s' => sub { add_config_override_opt($config_overrides, $_[1]); },
+    'platform' => \$opt_platform,
+    'distro' => \$opt_distro,
     'execute-where=s' => sub {
         my $where = lc($_[1]);
         fail("Invalid value ($_[1]) for --execute-where. Must be client or server.") 
@@ -293,6 +297,17 @@ GetOptions(
 
 my $config_name;
 my $parameter;
+
+if (defined $opt_platform) {
+    my $platform = Amanda::Util::get_platform();
+    print "$platform\n";
+    exit 0;
+}
+if (defined $opt_distro) {
+    my $distro = Amanda::Util::get_distro();
+    print "$distro\n";
+    exit 0;
+}
 
 if (@ARGV == 1) {
     $parameter = $ARGV[0];

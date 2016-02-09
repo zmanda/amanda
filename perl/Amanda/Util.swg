@@ -859,3 +859,8 @@ char *amxml_format_tag(char *tag, char *value);
 gint64 get_fsusage(char *dir);
 gint64 get_time_from_timestamp(char *timestamp);
 
+%newobject get_platform;
+char *get_platform();
+%newobject get_distro;
+char *get_distro();
+

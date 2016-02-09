@@ -439,5 +439,8 @@ uint32_t crc32_finish(crc_t *crc);
 void parse_crc(char *s, crc_t *crc);
 
 gint64 get_fsusage(char *dir);
+void get_platform_and_distro(char **r_platform, char **r_distro);
+char *get_platform(void);
+char *get_distro(void);
 
 #endif	/* AMUTIL_H */

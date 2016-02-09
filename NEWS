@@ -69,6 +69,9 @@ Changes in release 4.0.0
    * tapelist file
        o include POOL, STORAGE and CONFIG
        o you can share the same tapelist file across multiple config.
+   * amgetconf
+       o New --platform argument
+       o New --distro argument
 
 Changes in release 3.3.9
     * new --with-security-file configure option

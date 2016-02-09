@@ -1,3 +1,14 @@
+2016-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amutil.c (get_platform_and_distro, get_platform,
+	  get_distro): New functions toreturn platform and distro
+	* common-src/amutil.h (get_platform_and_distro, get_platform,
+	  get_distro): Add prototypes
+	* client-src/selfcheck.c: Use get_platform_and_distro()
+	* common-src/amgetconf.pl: Add --platform and --distro arguments
+	* man/xml-source/amgetconf.8.xml: Document --platform and --distro
+	* perl/Amanda/Util.swg: Swig get_platform and get_distro
+	* NEWS: Add new --platform and --distro argument of amgetconf
+
 2016-02-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm: Fix for taper FAILED
 	* perl/Amanda/Taper/Worker.pm: Wait to get the device before checking
