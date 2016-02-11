@@ -144,7 +144,7 @@ sub set {
         die("BSU err " . join("\n", @$err));
     }
 
-    return $self->{'bsu'};
+    return undef;
 }
 
 sub transmit_dar {

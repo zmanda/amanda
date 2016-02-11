@@ -109,8 +109,8 @@ typedef struct regex_s {
 #define AM_SIZE_RE(re,s,f)	{(re), __LINE__, (s), (f), DMP_SIZE}
 #define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}
 
-char *build_exclude(dle_t *dle, int verbose);
-char *build_include(dle_t *dle, int verbose);
+char *build_exclude(dle_t *dle, messagelist_t *mlist);
+char *build_include(dle_t *dle, messagelist_t *mlist);
 void parse_options(char *str,
 		   dle_t *dle,
 		   am_feature_t *features,

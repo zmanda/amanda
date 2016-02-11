@@ -144,16 +144,18 @@ static void amgtar_backup(application_argument_t *argument);
 static void amgtar_restore(application_argument_t *argument);
 static void amgtar_validate(application_argument_t *argument);
 static void amgtar_index(application_argument_t *argument);
-static void amgtar_build_exinclude(dle_t *dle, int verbose,
+static void amgtar_build_exinclude(dle_t *dle,
 				   int *nb_exclude, char **file_exclude,
-				   int *nb_include, char **file_include);
+				   int *nb_include, char **file_includei,
+				   messagelist_t *mlist);
 static char *amgtar_get_incrname(application_argument_t *argument, int level,
 				 FILE *mesgstream, int command);
 static void check_no_check_device(void);
 static GPtrArray *amgtar_build_argv(char *gnutar_realpath,
 				application_argument_t *argument,
 				char *incrname, char **file_exclude,
-				char **file_include, int command);
+				char **file_include, int command,
+				messagelist_t *mlist);
 static char *gnutar_path;
 static char *gnutar_listdir;
 static char *gnutar_directory;
@@ -888,6 +890,8 @@ amgtar_selfcheck(
     application_argument_t *argument)
 {
     char *option;
+    messagelist_t mlist = NULL;
+    messagelist_t mesglist = NULL;
 
     if (argument->dle.disk) {
 	delete_message(print_message(build_message(
@@ -903,7 +907,14 @@ amgtar_selfcheck(
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
-    amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
+    amgtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL, &mlist);
+    for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	message_t *message = mesglist->data;
+	if (message_get_severity(message) > MSG_INFO)
+	    print_message(message);
+	delete_message(message);
+    }
+    g_slist_free(mlist);
 
     delete_message(print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700004, MSG_INFO, 3,
@@ -1043,6 +1054,8 @@ amgtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
+	messagelist_t mlist = NULL;
+	messagelist_t mesglist = NULL;
 
 	if (gnutar_directory) {
 	    dirname = gnutar_directory;
@@ -1050,9 +1063,17 @@ amgtar_estimate(
 	    dirname = argument->dle.device;
 	}
 
-	amgtar_build_exinclude(&argument->dle, 1,
+	amgtar_build_exinclude(&argument->dle,
 			       &nb_exclude, &file_exclude,
-			       &nb_include, &file_include);
+			       &nb_include, &file_include, &mlist);
+	for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	    message_t *message = mesglist->data;
+	    if (message_get_severity(message) > MSG_INFO)
+		fprintf(stdout, "ERROR %s\n", get_message(message));
+	    delete_message(message);
+	}
+	g_slist_free(mlist);
+	mlist = NULL;
 
 	run_calcsize(argument->config, "GNUTAR", argument->dle.disk, dirname,
 		     argument->level, file_exclude, file_include);
@@ -1085,11 +1106,21 @@ amgtar_estimate(
 
     qdisk = quote_string(argument->dle.disk);
     for (levels = argument->level; levels != NULL; levels = levels->next) {
+	messagelist_t mlist = NULL;
+	messagelist_t mesglist = NULL;
 	level = GPOINTER_TO_INT(levels->data);
 	incrname = amgtar_get_incrname(argument, level, stdout, CMD_ESTIMATE);
 	argv_ptr = amgtar_build_argv(gnutar_realpath,
 				     argument, incrname, &file_exclude,
-				     &file_include, CMD_ESTIMATE);
+				     &file_include, CMD_ESTIMATE, &mlist);
+	for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	    message_t *message = mesglist->data;
+	    if (message_get_severity(message) > MSG_INFO)
+		fprintf(stdout, "ERROR %s\n", get_message(message));
+	    delete_message(message);
+	}
+	g_slist_free(mlist);
+	mlist = NULL;
 
 	start_time = curclock();
 
@@ -1256,6 +1287,8 @@ amgtar_backup(
     char      *file_include;
     char      *option;
     char      *gnutar_realpath = NULL;
+    messagelist_t mlist = NULL;
+    messagelist_t mesglist = NULL;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1301,7 +1334,17 @@ amgtar_backup(
 				   mesgstream, CMD_BACKUP);
     argv_ptr = amgtar_build_argv(gnutar_realpath,
 				 argument, incrname, &file_exclude,
-				 &file_include, CMD_BACKUP);
+				 &file_include, CMD_BACKUP, &mlist);
+    for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	message_t *message = mesglist->data;
+	if (message_get_severity(message) <= MSG_INFO) {
+	    fprintf(mesgstream, "| %s\n", get_message(message));
+	} else {
+	    fprintf(mesgstream, "? %s\n", get_message(message));
+	}
+	delete_message(message);
+    }
+    g_slist_free(mlist);
 
     tarpid = pipespawnv(gnutar_realpath, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
@@ -1938,11 +1981,11 @@ amgtar_index(
 static void
 amgtar_build_exinclude(
     dle_t  *dle,
-    int     verbose,
     int    *nb_exclude,
     char  **file_exclude,
     int    *nb_include,
-    char  **file_include)
+    char  **file_include,
+    messagelist_t *mlist)
 {
     int n_exclude = 0;
     int n_include = 0;
@@ -1954,8 +1997,8 @@ amgtar_build_exinclude(
     if (dle->include_file) n_include += dle->include_file->nb_element;
     if (dle->include_list) n_include += dle->include_list->nb_element;
 
-    if (n_exclude > 0) exclude = build_exclude(dle, verbose);
-    if (n_include > 0) include = build_include(dle, verbose);
+    if (n_exclude > 0) exclude = build_exclude(dle, mlist);
+    if (n_include > 0) include = build_include(dle, mlist);
 
     if (nb_exclude)
 	*nb_exclude = n_exclude;
@@ -2174,7 +2217,8 @@ GPtrArray *amgtar_build_argv(
     char  *incrname,
     char **file_exclude,
     char **file_include,
-    int    command)
+    int    command,
+    messagelist_t *mlist)
 {
     int    nb_exclude;
     int    nb_include;
@@ -2184,9 +2228,9 @@ GPtrArray *amgtar_build_argv(
     GSList    *copt;
 
     check_no_check_device();
-    amgtar_build_exinclude(&argument->dle, 1,
+    amgtar_build_exinclude(&argument->dle,
 			   &nb_exclude, file_exclude,
-			   &nb_include, file_include);
+			   &nb_include, file_include, mlist);
 
     if (gnutar_directory) {
 	dirname = gnutar_directory;

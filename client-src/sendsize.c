@@ -1041,6 +1041,7 @@ generic_calc_estimates(
     char tmppath[PATH_MAX];
     int len;
     int n;
+    messagelist_t mlist = NULL;
 
     cmd = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
 
@@ -1066,9 +1067,10 @@ generic_calc_estimates(
 	nb_include += est->dle->include_list->nb_element;
 
     if (nb_exclude > 0)
-	file_exclude = build_exclude(est->dle, 0);
+	file_exclude = build_exclude(est->dle, &mlist);
     if (nb_include > 0)
-	file_include = build_include(est->dle, 0);
+	file_include = build_include(est->dle, &mlist);
+    g_slist_free(mlist); // MUST also free the message
 
     if(file_exclude) {
 	g_ptr_array_add(argv_ptr, g_strdup("-X"));
@@ -2111,6 +2113,7 @@ getsize_gnutar(
     char *gnutar_list_dir;
     amwait_t wait_status;
     char tmppath[PATH_MAX];
+    messagelist_t mlist;
 
     if (level > 9) {
 	return -2; /* planner will not even consider this level */
@@ -2122,8 +2125,9 @@ getsize_gnutar(
     if(dle->include_file) nb_include += dle->include_file->nb_element;
     if(dle->include_list) nb_include += dle->include_list->nb_element;
 
-    if(nb_exclude > 0) file_exclude = build_exclude(dle, 0);
-    if(nb_include > 0) file_include = build_include(dle, 0);
+    if(nb_exclude > 0) file_exclude = build_exclude(dle, &mlist);
+    if(nb_include > 0) file_include = build_include(dle, &mlist);
+    g_slist_free(mlist); // MUST also free the message
 
     gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_list_dir) == 0)

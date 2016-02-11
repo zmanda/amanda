@@ -46,9 +46,11 @@
 
 #define MAXMAXDUMPS 16
 
-static int add_exclude(FILE *file_exclude, char *aexc, int verbose);
-static int add_include(char *disk, char *device, FILE *file_include, char *ainc, int verbose);
-static char *build_name(char *disk, char *exin, int verbose);
+static int add_exclude(FILE *file_exclude, char *aexc, gboolean optional,
+		       messagelist_t *mlist);
+static int add_include(char *disk, char *device, FILE *file_include,
+		       char *ainc, gboolean optional, messagelist_t *mlist);
+static char *build_name(char *disk, char *exin, messagelist_t *mlist);
 static char *get_name(char *diskname, char *exin, time_t t, int n);
 
 
@@ -103,9 +105,9 @@ get_name(
 
 static char *
 build_name(
-    char *	disk,
-    char *	exin,
-    int		verbose)
+    char          *disk,
+    char          *exin,
+    messagelist_t *mlist)
 {
     int n;
     int fd;
@@ -119,7 +121,6 @@ build_name(
     struct dirent *entry;
     char *test_name;
     size_t match_len, d_name_len;
-    char *quoted;
 
     time(&curtime);
     diskname = sanitise_filename(disk);
@@ -172,13 +173,10 @@ build_name(
 	filename = get_name(diskname, exin, curtime, 0);
 	g_free(afilename);
 	afilename = g_strconcat(dbgdir, filename, NULL);
-	quoted = quote_string(afilename);
-	dbprintf(_("Cannot create %s (%s)\n"), quoted, strerror(errno));
-	if(verbose) {
-	    g_printf(_("ERROR [cannot create %s (%s)]\n"),
-			quoted, strerror(errno));
-	}
-	amfree(quoted);
+	*mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600004, MSG_ERROR, 2,
+				"filename", g_strdup(afilename),
+				errno     , errno));
 	amfree(afilename);
 	amfree(filename);
     }
@@ -192,14 +190,16 @@ build_name(
 
 static int
 add_exclude(
-    FILE *	file_exclude,
-    char *	aexc,
-    int		verbose)
+    FILE          *file_exclude,
+    char          *aexc,
+    gboolean       optional,
+    messagelist_t *mlist)
 {
     size_t l;
     char *quoted, *file;
 
-    (void)verbose;	/* Quiet unused parameter warning */
+    (void)optional;	/* Quiet unused parameter warning */
+    (void)mlist;	/* Quiet unused parameter warning */
 
     l = strlen(aexc);
     if(aexc[l-1] == '\n') {
@@ -218,11 +218,12 @@ add_exclude(
 
 static int
 add_include(
-    char *	disk,
-    char *	device,
-    FILE *	file_include,
-    char *	ainc,
-    int		verbose)
+    char          *disk,
+    char          *device,
+    FILE          *file_include,
+    char          *ainc,
+    int            optional,
+    messagelist_t *mlist)
 {
     size_t l;
     int nb_exp=0;
@@ -237,12 +238,10 @@ add_include(
 	l--;
     }
     if (strncmp(ainc, "./", 2) != 0) {
-        quoted = quote_string(ainc);
-        dbprintf(_("include must start with './' (%s)\n"), quoted);
-	if(verbose) {
-	    g_printf(_("ERROR [include must start with './' (%s)]\n"), quoted);
-	}
-	amfree(quoted);
+	*mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600005,
+				optional ? MSG_INFO :  MSG_ERROR, 1,
+				"include", g_strdup(ainc)));
     }
     else {
 	char *incname = ainc+2;
@@ -296,8 +295,8 @@ add_include(
 
 char *
 build_exclude(
-    dle_t   *dle,
-    int	     verbose)
+    dle_t         *dle,
+    messagelist_t *mlist)
 {
     char *filename;
     FILE *file_exclude;
@@ -305,21 +304,21 @@ build_exclude(
     char *aexc;
     sle_t *excl;
     int nb_exclude = 0;
-    char *quoted;
 
     if (dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
     if (dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
 
     if (nb_exclude == 0) return NULL;
 
-    if ((filename = build_name(dle->disk, "exclude", verbose)) != NULL) {
+g_debug("build_exclude optional: %d", dle->exclude_optional);
+    if ((filename = build_name(dle->disk, "exclude", mlist)) != NULL) {
 	if ((file_exclude = fopen(filename,"w")) != NULL) {
 
 	    if (dle->exclude_file) {
 		for(excl = dle->exclude_file->first; excl != NULL;
 		    excl = excl->next) {
 		    add_exclude(file_exclude, excl->name,
-				verbose && dle->exclude_optional == 0);
+				dle->exclude_optional, mlist);
 		}
 	    }
 
@@ -334,35 +333,28 @@ build_exclude(
 				continue;
 			    }
 			    add_exclude(file_exclude, aexc,
-				        verbose && dle->exclude_optional == 0);
+				        dle->exclude_optional, mlist);
 			    amfree(aexc);
 			}
 			fclose(exclude);
 		    }
 		    else {
-			quoted = quote_string(exclname);
-			dbprintf(_("Can't open exclude file %s (%s)\n"),
-				  quoted, strerror(errno));
-			if(verbose && (dle->exclude_optional == 0 ||
-				       errno != ENOENT)) {
-			    g_printf(_("ERROR [Can't open exclude file %s (%s)]\n"),
-				   quoted, strerror(errno));
-			}
-			amfree(quoted);
+			*mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600002,
+				dle->exclude_optional && errno == ENOENT ? MSG_INFO : MSG_ERROR,
+				2,
+				"exclude", g_strdup(exclname),
+				"errno"  , errno));
 		    }
 		    amfree(exclname);
 		}
 	    }
             fclose(file_exclude);
 	} else {
-	    quoted = quote_string(filename);
-	    dbprintf(_("Can't create exclude file %s (%s)\n"),
-		      quoted, strerror(errno));
-	    if (verbose) {
-		g_printf(_("ERROR [Can't create exclude file %s (%s)]\n"),
-			quoted, strerror(errno));
-	    }
-	    amfree(quoted);
+	    *mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600003, MSG_ERROR, 2,
+				"exclude", g_strdup(filename),
+				"errno"  , errno));
 	}
     }
 
@@ -371,8 +363,8 @@ build_exclude(
 
 char *
 build_include(
-    dle_t   *dle,
-    int	     verbose)
+    dle_t         *dle,
+    messagelist_t *mlist)
 {
     char *filename;
     FILE *file_include;
@@ -381,22 +373,20 @@ build_include(
     sle_t *incl;
     int nb_include = 0;
     int nb_exp = 0;
-    char *quoted;
 
     if (dle->include_file) nb_include += dle->include_file->nb_element;
     if (dle->include_list) nb_include += dle->include_list->nb_element;
 
     if (nb_include == 0) return NULL;
 
-    if ((filename = build_name(dle->disk, "include", verbose)) != NULL) {
+    if ((filename = build_name(dle->disk, "include", mlist)) != NULL) {
 	if ((file_include = fopen(filename,"w")) != NULL) {
 
 	    if (dle->include_file) {
 		for (incl = dle->include_file->first; incl != NULL;
 		    incl = incl->next) {
 		    nb_exp += add_include(dle->disk, dle->device, file_include,
-				  incl->name,
-				  verbose && dle->include_optional == 0);
+				  incl->name, dle->include_optional, mlist);
 		}
 	    }
 
@@ -412,45 +402,35 @@ build_include(
 			    }
 			    nb_exp += add_include(dle->disk, dle->device,
 						  file_include, ainc,
-						  verbose && dle->include_optional == 0);
+						  dle->include_optional, mlist);
 			    amfree(ainc);
 			}
 			fclose(include);
 		    }
 		    else {
-			quoted = quote_string(inclname);
-			dbprintf(_("Can't open include file %s (%s)\n"),
-				  quoted, strerror(errno));
-			if (verbose && (dle->include_optional == 0 ||
-				       errno != ENOENT)) {
-			    g_printf(_("ERROR [Can't open include file %s (%s)]\n"),
-				   quoted, strerror(errno));
-			}
-			amfree(quoted);
+			*mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600006,
+				dle->include_optional && errno == ENOENT ? MSG_INFO : MSG_ERROR,
+				2,
+				"include", g_strdup(inclname),
+				"errno"  , errno));
 		   }
 		   amfree(inclname);
 		}
 	    }
             fclose(file_include);
 	} else {
-	    quoted = quote_string(filename);
-	    dbprintf(_("Can't create include file %s (%s)\n"),
-		      quoted, strerror(errno));
-	    if (verbose) {
-		g_printf(_("ERROR [Can't create include file %s (%s)]\n"),
-			quoted, strerror(errno));
-	    }
-	    amfree(quoted);
+	    *mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600007, MSG_ERROR, 2,
+				"include", g_strdup(filename),
+				"errno"  , errno));
 	}
     }
-	
+
     if (nb_exp == 0) {
-	quoted = quote_string(dle->disk);
-	dbprintf(_("Nothing found to include for disk %s\n"), quoted);
-	if (verbose && dle->include_optional == 0) {
-	    g_printf(_("ERROR [Nothing found to include for disk %s]\n"), quoted);
-	}
-	amfree(quoted);
+	*mlist = g_slist_append(*mlist, build_message(
+				__FILE__, __LINE__, 4600008, MSG_ERROR, 1,
+				"disk", dle->disk));
     }
 
     return filename;

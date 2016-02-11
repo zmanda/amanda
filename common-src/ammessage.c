@@ -1495,6 +1495,20 @@ set_message(
 	msg = "%{errmsg}";
     } else if (message->code == 4600001) {
 	msg = "ERROR %{errmsg}";
+    } else if (message->code == 4600002) {
+	msg = "Can't open exclude file '%{exclude}': %{errnostr}";
+    } else if (message->code == 4600003) {
+	msg = "Can't create exclude file '%{exclude}': %{errnostr}";
+    } else if (message->code == 4600004) {
+	msg = "Can't create '%{filename}': %{errnostr}";
+    } else if (message->code == 4600005) {
+	msg = "include must start with './' (%{include})";
+    } else if (message->code == 4600006) {
+	msg = "Can't open include file '%{include}': %{errnostr}";
+    } else if (message->code == 4600007) {
+	msg = "Can't create include file '%{include}': %{errnostr}";
+    } else if (message->code == 4600008) {
+	msg = "Nothing found to include for disk '%{disk}'";
 
     } else {
 	msg = "no message for code '%{code}'";

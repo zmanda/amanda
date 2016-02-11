@@ -120,9 +120,10 @@ static void ambsdtar_backup(application_argument_t *argument);
 static void ambsdtar_restore(application_argument_t *argument);
 static void ambsdtar_validate(application_argument_t *argument);
 static void ambsdtar_index(application_argument_t *argument);
-static void ambsdtar_build_exinclude(dle_t *dle, int verbose,
+static void ambsdtar_build_exinclude(dle_t *dle,
 				     int *nb_exclude, char **file_exclude,
-				     int *nb_include, char **file_include);
+				     int *nb_include, char **file_include,
+				     messagelist_t *mlist);
 static char *ambsdtar_get_timestamps(application_argument_t *argument,
 				     int level,
 				     FILE *mesgstream, int command);
@@ -134,7 +135,7 @@ static GPtrArray *ambsdtar_build_argv(char *bsdtar_realpath,
 				      application_argument_t *argument,
 				      char *timestamps,
 				      char **file_exclude, char **file_include,
-				      int command);
+				      int command, messagelist_t *mlist);
 static char *bsdtar_path;
 static char *state_dir;
 static char *bsdtar_directory;
@@ -593,6 +594,8 @@ ambsdtar_selfcheck(
     application_argument_t *argument)
 {
     char *option;
+    messagelist_t mlist = NULL;
+    messagelist_t mesglist = NULL;
 
     if (argument->dle.disk) {
 	char *qdisk = quote_string(argument->dle.disk);
@@ -601,7 +604,15 @@ ambsdtar_selfcheck(
     }
 
     printf("OK ambsdtar version %s\n", VERSION);
-    ambsdtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
+    ambsdtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL, &mlist);
+    for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	message_t *message = mesglist->data;
+	if (message_get_severity(message) > MSG_INFO)
+	    fprintf(stdout, "ERROR %s\n", get_message(message));
+	delete_message(message);
+    }
+    g_slist_free(mlist);
+
 
     printf("OK ambsdtar\n");
 
@@ -712,15 +723,25 @@ ambsdtar_estimate(
 	char *dirname;
 	int   nb_exclude;
 	int   nb_include;
+	messagelist_t mlist = NULL;
+	messagelist_t mesglist = NULL;
 
 	if (bsdtar_directory) {
 	    dirname = bsdtar_directory;
 	} else {
 	    dirname = argument->dle.device;
 	}
-	ambsdtar_build_exinclude(&argument->dle, 1,
+	ambsdtar_build_exinclude(&argument->dle,
 				 &nb_exclude, &file_exclude,
-				 &nb_include, &file_include);
+				 &nb_include, &file_include, &mlist);
+	for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	    message_t *message = mesglist->data;
+	    if (message_get_severity(message) > MSG_INFO)
+		fprintf(stdout, "ERROR %s\n", get_message(message));
+	    delete_message(message);
+	}
+	g_slist_free(mlist);
+	mlist = NULL;
 
 	run_calcsize(argument->config, "BSDTAR", argument->dle.disk, dirname,
 		     argument->level, file_exclude, file_include);
@@ -755,11 +776,23 @@ ambsdtar_estimate(
     qdisk = quote_string(argument->dle.disk);
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	char *timestamps;
+	messagelist_t mlist = NULL;
+	messagelist_t mesglist = NULL;
+
 	level = GPOINTER_TO_INT(levels->data);
 	timestamps = ambsdtar_get_timestamps(argument, level, stdout, CMD_ESTIMATE);
 	argv_ptr = ambsdtar_build_argv(bsdtar_realpath,
 				       argument, timestamps, &file_exclude,
-				       &file_include, CMD_ESTIMATE);
+				       &file_include, CMD_ESTIMATE, &mlist);
+	for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	    message_t *message = mesglist->data;
+	    if (message_get_severity(message) > MSG_INFO)
+		fprintf(stdout, "ERROR %s\n", get_message(message));
+	    delete_message(message);
+	}
+	g_slist_free(mlist);
+	mlist = NULL;
+
 	amfree(timestamps);
 
 	start_time = curclock();
@@ -1116,6 +1149,8 @@ ambsdtar_backup(
     char       new_timestamps[64];
     char      *option;
     char      *bsdtar_realpath;
+    messagelist_t mlist = NULL;
+    messagelist_t mesglist = NULL;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -1164,7 +1199,18 @@ ambsdtar_backup(
 				   mesgstream, CMD_BACKUP);
     argv_ptr = ambsdtar_build_argv(bsdtar_realpath,
 				   argument, timestamps, &file_exclude,
-				   &file_include, CMD_BACKUP);
+				   &file_include, CMD_BACKUP, &mlist);
+    for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+	message_t *message = mesglist->data;
+	if (message_get_severity(message) <= MSG_INFO) {
+	    fprintf(mesgstream, "| %s\n", get_message(message));
+	} else {
+	    fprintf(mesgstream, "? %s\n", get_message(message));
+	}
+	delete_message(message);
+    }
+    g_slist_free(mlist);
+    mlist = NULL;
 
     if (argument->dle.create_index) {
 	tarpid = pipespawnv(bsdtar_path, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 1,
@@ -1783,11 +1829,11 @@ ambsdtar_index(
 static void
 ambsdtar_build_exinclude(
     dle_t  *dle,
-    int     verbose,
     int    *nb_exclude,
     char  **file_exclude,
     int    *nb_include,
-    char  **file_include)
+    char  **file_include,
+    messagelist_t *mlist)
 {
     int n_exclude = 0;
     int n_include = 0;
@@ -1799,8 +1845,8 @@ ambsdtar_build_exinclude(
     if (dle->include_file) n_include += dle->include_file->nb_element;
     if (dle->include_list) n_include += dle->include_list->nb_element;
 
-    if (n_exclude > 0) exclude = build_exclude(dle, verbose);
-    if (n_include > 0) include = build_include(dle, verbose);
+    if (n_exclude > 0) exclude = build_exclude(dle, mlist);
+    if (n_include > 0) include = build_include(dle, mlist);
 
     if (nb_exclude)
 	*nb_exclude = n_exclude;
@@ -1976,7 +2022,8 @@ ambsdtar_build_argv(
     char  *timestamps,
     char **file_exclude,
     char **file_include,
-    int    command)
+    int    command,
+    messagelist_t *mlist)
 {
     int        nb_exclude = 0;
     int        nb_include = 0;
@@ -1985,9 +2032,9 @@ ambsdtar_build_argv(
     GPtrArray *argv_ptr = g_ptr_array_new();
     GSList    *copt;
 
-    ambsdtar_build_exinclude(&argument->dle, 1,
+    ambsdtar_build_exinclude(&argument->dle,
 			     &nb_exclude, file_exclude,
-			     &nb_include, file_include);
+			     &nb_include, file_include, mlist);
 
     if (bsdtar_directory) {
 	dirname = bsdtar_directory;

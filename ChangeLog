@@ -1,4 +1,18 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ammessage.h (messagelist_t): New typedef for a GSList of
+	  messages
+	* common-src/ammessage.c: Add messages
+	* client-src/client_util.c (build_exclude, build_include): return a
+	  messagelist_t instead of printing error
+	* client-src/client_util.c (build_exclude, build_include): Change
+	  prototype
+	* application-src/ambsdtar.c, application-src/amgtar.c,
+	  client-src/selfcheck.c, client-src/sendbackup-gnutar.c,
+	  client-src/sendsize.c: Print messages from build_exclude and
+	  build_include.
+	* perl/Amanda/CheckDump.pm (); return undef on success
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* gnulib/Makefile.am: Remove regenerate.swp
 
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>

@@ -479,15 +479,23 @@ check_options(
 	    int nb_include = 0;
 	    char *file_exclude = NULL;
 	    char *file_include = NULL;
+	    messagelist_t mlist = NULL;
+	    messagelist_t mesglist = NULL;
 
 	    if (dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
 	    if (dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
 	    if (dle->include_file) nb_include += dle->include_file->nb_element;
 	    if (dle->include_list) nb_include += dle->include_list->nb_element;
 
-	    if (nb_exclude > 0) file_exclude = build_exclude(dle, 1);
-	    if (nb_include > 0) file_include = build_include(dle, 1);
-
+	    if (nb_exclude > 0) file_exclude = build_exclude(dle, &mlist);
+	    if (nb_include > 0) file_include = build_include(dle, &mlist);
+	    for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
+		message_t *message = mesglist->data;
+		if (message_get_severity(message) > MSG_INFO)
+		    selfcheck_print_message(message);
+		delete_message(message);
+	    }
+	    g_slist_free(mlist);
 	    amfree(file_exclude);
 	    amfree(file_include);
 

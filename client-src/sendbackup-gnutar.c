@@ -513,14 +513,16 @@ start_backup(
 	GPtrArray *argv_ptr = g_ptr_array_new();
 	char *file_exclude = NULL;
 	char *file_include = NULL;
+	messagelist_t mlist;
 
 	if (dle->exclude_file) nb_exclude+=dle->exclude_file->nb_element;
 	if (dle->exclude_list) nb_exclude+=dle->exclude_list->nb_element;
 	if (dle->include_file) nb_include+=dle->include_file->nb_element;
 	if (dle->include_list) nb_include+=dle->include_list->nb_element;
 
-	if (nb_exclude > 0) file_exclude = build_exclude(dle, 0);
-	if (nb_include > 0) file_include = build_include(dle, 0);
+	if (nb_exclude > 0) file_exclude = build_exclude(dle, &mlist);
+	if (nb_include > 0) file_include = build_include(dle, &mlist);
+	g_slist_free(mlist); // MUST also free the message
 
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
 	info_tapeheader(dle);

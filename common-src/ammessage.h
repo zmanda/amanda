@@ -27,6 +27,8 @@
 #define AMMESSAGE_H
 
 typedef struct message_s message_t;
+typedef GSList *messagelist_t;
+
 #define MSG_CRITICAL	32
 #define MSG_ERROR	16
 #define MSG_WARNING	8
