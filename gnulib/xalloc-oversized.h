@@ -1,6 +1,6 @@
 /* xalloc-oversized.h -- memory allocation size checking
 
-   Copyright (C) 1990-2000, 2003-2004, 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2000, 2003-2004, 2006-2016 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,9 +16,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef XALLOC_OVERSIZED_H_
-# define XALLOC_OVERSIZED_H_
+#define XALLOC_OVERSIZED_H_
 
-# include <stddef.h>
+#include <stddef.h>
+
+#ifndef __has_builtin
+# define __has_builtin(x) 0
+#endif
 
 /* Return 1 if an array of N objects, each of size S, cannot exist due
    to size arithmetic overflow.  S must be positive and N must be
@@ -32,7 +36,12 @@
    sizeof (ptrdiff_t) <= sizeof (size_t), so do not bother to test for
    exactly-SIZE_MAX allocations on such hosts; this avoids a test and
    branch when S is known to be 1.  */
+#if 5 <= __GNUC__ || __has_builtin (__builtin_mul_overflow)
+# define xalloc_oversized(n, s) \
+    ({ size_t __xalloc_size; __builtin_mul_overflow (n, s, &__xalloc_size); })
+#else
 # define xalloc_oversized(n, s) \
     ((size_t) (sizeof (ptrdiff_t) <= sizeof (size_t) ? -1 : -2) / (s) < (n))
+#endif
 
 #endif /* !XALLOC_OVERSIZED_H_ */

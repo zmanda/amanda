@@ -1,9 +1,9 @@
-# serial 18
+# serial 19
 
 dnl From Jim Meyering.
 dnl A wrapper around AC_FUNC_GETGROUPS.
 
-# Copyright (C) 1996-1997, 1999-2004, 2008-2013 Free Software Foundation, Inc.
+# Copyright (C) 1996-1997, 1999-2004, 2008-2016 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -87,7 +87,9 @@ AC_DEFUN([gl_FUNC_GETGROUPS],
         [AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
           [[int size = getgroups (0, 0);
             gid_t *list = malloc (size * sizeof *list);
-            return getgroups (-1, list) != -1;]])],
+            int result = getgroups (-1, list) != -1;
+            free (list);
+            return result;]])],
           [gl_cv_func_getgroups_works=yes],
           [gl_cv_func_getgroups_works=no],
           [case "$host_os" in

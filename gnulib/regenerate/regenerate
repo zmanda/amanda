@@ -2,10 +2,9 @@
 
 # Gnulib files in zmanda repo are from gnulib GIT.  To check out the
 # same version as was used to generate the source in the repository,
-# run the following in your git repository:
+# run the following in your gnulib git repository:
 #
-#   git checkout 09b8fa6cb737f6e091931c494cbd56d12b3ad08d
-#   git checkout 3fe906e98202a591a6a14010aec1538adfd821b6
+#   git checkout cd9ecca8812571fc443688d11148f2768ededfa4
 
 # get to the project root
 cd `dirname $0`/../..

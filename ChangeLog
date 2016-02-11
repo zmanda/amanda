@@ -1,4 +1,8 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/gnulib/*, config/snipset/*, gnulib/*: Upgrade to gnulib
+	  cd9ecca8812571fc443688d11148f2768ededfa4
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, server-src/amindexd.c: Check result of
 	  fopen()
 

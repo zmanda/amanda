@@ -1,5 +1,5 @@
 # physmem.m4 serial 11
-dnl Copyright (C) 2002-2003, 2005-2006, 2008-2013 Free Software Foundation,
+dnl Copyright (C) 2002-2003, 2005-2006, 2008-2016 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -40,6 +40,7 @@ AC_DEFUN([gl_PHYSMEM],
      #endif
     ])
 
-  AC_CHECK_FUNCS([pstat_getstatic pstat_getdynamic sysmp getsysinfo sysctl table])
+  AC_CHECK_FUNCS([pstat_getstatic pstat_getdynamic sysmp getsysinfo sysctl table sysinfo])
+  AC_CHECK_MEMBERS([struct sysinfo.mem_unit],,, [[#include <sys/sysinfo.h>]])
   AC_REQUIRE([gl_SYS__SYSTEM_CONFIGURATION])
 ])

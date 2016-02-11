@@ -1,5 +1,5 @@
 /* Extended regular expression matching and search library.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Isamu Hasegawa <isamu@yamato.ibm.com>.
 
@@ -228,9 +228,7 @@ regexec (preg, string, nmatch, pmatch, eflags)
 {
   reg_errcode_t err;
   Idx start, length;
-#ifdef _LIBC
   re_dfa_t *dfa = preg->buffer;
-#endif
 
   if (eflags & ~(REG_NOTBOL | REG_NOTEOL | REG_STARTEND))
     return REG_BADPAT;
@@ -246,14 +244,14 @@ regexec (preg, string, nmatch, pmatch, eflags)
       length = strlen (string);
     }
 
-  __libc_lock_lock (dfa->lock);
+  lock_lock (dfa->lock);
   if (preg->no_sub)
     err = re_search_internal (preg, string, length, start, length,
 			      length, 0, NULL, eflags);
   else
     err = re_search_internal (preg, string, length, start, length,
 			      length, nmatch, pmatch, eflags);
-  __libc_lock_unlock (dfa->lock);
+  lock_unlock (dfa->lock);
   return err != REG_NOERROR;
 }
 
@@ -421,9 +419,7 @@ re_search_stub (struct re_pattern_buffer *bufp,
   Idx nregs;
   regoff_t rval;
   int eflags = 0;
-#ifdef _LIBC
   re_dfa_t *dfa = bufp->buffer;
-#endif
   Idx last_start = start + range;
 
   /* Check for out-of-range.  */
@@ -434,7 +430,7 @@ re_search_stub (struct re_pattern_buffer *bufp,
   else if (BE (last_start < 0 || (range < 0 && start <= last_start), 0))
     last_start = 0;
 
-  __libc_lock_lock (dfa->lock);
+  lock_lock (dfa->lock);
 
   eflags |= (bufp->not_bol) ? REG_NOTBOL : 0;
   eflags |= (bufp->not_eol) ? REG_NOTEOL : 0;
@@ -498,7 +494,7 @@ re_search_stub (struct re_pattern_buffer *bufp,
     }
   re_free (pmatch);
  out:
-  __libc_lock_unlock (dfa->lock);
+  lock_unlock (dfa->lock);
   return rval;
 }
 
@@ -3780,6 +3776,10 @@ group_nodes_into_DFAstates (const re_dfa_t *dfa, const re_dfastate_t *state,
    one collating element like '.', '[a-z]', opposite to the other nodes
    can only accept one byte.  */
 
+# ifdef _LIBC
+#  include <locale/weight.h>
+# endif
+
 static int
 internal_function
 check_node_accept_bytes (const re_dfa_t *dfa, Idx node_idx,
@@ -3899,8 +3899,6 @@ check_node_accept_bytes (const re_dfa_t *dfa, Idx node_idx,
 	  const int32_t *table, *indirect;
 	  const unsigned char *weights, *extra;
 	  const char *collseqwc;
-	  /* This #include defines a local function!  */
-#  include <locale/weight.h>
 
 	  /* match with collating_symbol?  */
 	  if (cset->ncoll_syms)
@@ -3957,7 +3955,7 @@ check_node_accept_bytes (const re_dfa_t *dfa, Idx node_idx,
 		_NL_CURRENT (LC_COLLATE, _NL_COLLATE_EXTRAMB);
 	      indirect = (const int32_t *)
 		_NL_CURRENT (LC_COLLATE, _NL_COLLATE_INDIRECTMB);
-	      int32_t idx = findidx (&cp, elem_len);
+	      int32_t idx = findidx (table, indirect, extra, &cp, elem_len);
 	      if (idx > 0)
 		for (i = 0; i < cset->nequiv_classes; ++i)
 		  {
