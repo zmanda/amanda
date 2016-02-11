@@ -1,4 +1,7 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/ar-lib: Add file
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/ammessage.h (messagelist_t): New typedef for a GSList of
 	  messages
 	* common-src/ammessage.c: Add messages
