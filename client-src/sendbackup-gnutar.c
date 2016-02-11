@@ -513,7 +513,7 @@ start_backup(
 	GPtrArray *argv_ptr = g_ptr_array_new();
 	char *file_exclude = NULL;
 	char *file_include = NULL;
-	messagelist_t mlist;
+	messagelist_t mlist = NULL;
 
 	if (dle->exclude_file) nb_exclude+=dle->exclude_file->nb_element;
 	if (dle->exclude_list) nb_exclude+=dle->exclude_list->nb_element;

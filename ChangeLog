@@ -1,4 +1,8 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup-gnutar.c, client-src/sendsize.c: Init mlist
+	  to NULL
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/amanda_configure.m4 (AM_INIT_AUTOMAKE): Add
 	  subdir-objects
 	* amandad-src/Makefile.am, amar-src/Makefile.am,

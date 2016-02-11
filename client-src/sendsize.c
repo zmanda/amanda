@@ -2113,7 +2113,7 @@ getsize_gnutar(
     char *gnutar_list_dir;
     amwait_t wait_status;
     char tmppath[PATH_MAX];
-    messagelist_t mlist;
+    messagelist_t mlist = NULL;
 
     if (level > 9) {
 	return -2; /* planner will not even consider this level */
