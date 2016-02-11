@@ -1,4 +1,8 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, server-src/amindexd.c: Check result of
+	  fopen()
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.ac: Renamed from configure.in
 	* configure.in: Renamed to configure.ac
 	* config/amanda/i18n.m4, config/amanda/progs.m4,

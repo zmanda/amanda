@@ -1701,62 +1701,68 @@ amgtar_restore(
 	    char  line[32768];
 	    FILE *recover_state_file = fopen(argument->recover_dump_state_file,
 					     "r");
-	    int   previous_block = -1;
+	    if (!recover_state_file) {
+		fprintf(dar_file,"DAR 0:-1\n");
+		g_debug("full dar: 0:-1");
+	    } else {
+		int   previous_block = -1;
 
-	    while (fgets(line, 32768, recover_state_file) != NULL) {
-		off_t     block_no = g_ascii_strtoull(line, NULL, 0);
-		gboolean  match    = FALSE;
-		char     *filename = strchr(line, ' ');
-		char     *ii;
-		guint     i;
+		while (fgets(line, 32768, recover_state_file) != NULL) {
+		    off_t     block_no = g_ascii_strtoull(line, NULL, 0);
+		    gboolean  match    = FALSE;
+		    char     *filename = strchr(line, ' ');
+		    char     *ii;
+		    guint     i;
 
-		if (!filename)
-		    continue;
+		    if (!filename)
+			continue;
 
-		filename++;
-		if (filename[strlen(filename)-1] == '\n')
-		    filename[strlen(filename)-1] = '\0';
+		    filename++;
+		    if (filename[strlen(filename)-1] == '\n')
+			filename[strlen(filename)-1] = '\0';
 
-		g_debug("recover_dump_state_file: %lld %s", (long long)block_no, filename);
-		for (i = 0; i < include_array->len; i++) {
-		    size_t strlenii;
+		    g_debug("recover_dump_state_file: %lld %s",
+					 (long long)block_no, filename);
+		    for (i = 0; i < include_array->len; i++) {
+			size_t strlenii;
 
-		    ii = g_ptr_array_index(include_array, i);
-		    ii++; // remove leading '.'
-		    //g_debug("check %s : %s :", filename, ii);
-		    strlenii = strlen(ii);
-		    if (g_str_equal(filename, ii) == 1 ||
-			(strlenii < strlen(filename) &&
-			 strncmp(filename, ii, strlenii) == 0 &&
-			 filename[strlenii] == '/')) {
-			//g_debug("match %s", ii);
-			match = TRUE;
-			break;
+			ii = g_ptr_array_index(include_array, i);
+			ii++; // remove leading '.'
+			//g_debug("check %s : %s :", filename, ii);
+			strlenii = strlen(ii);
+			if (g_str_equal(filename, ii) == 1 ||
+			    (strlenii < strlen(filename) &&
+			     strncmp(filename, ii, strlenii) == 0 &&
+			     filename[strlenii] == '/')) {
+			    //g_debug("match %s", ii);
+			    match = TRUE;
+			    break;
+			}
+		    }
+
+		    if (match) {
+			if (previous_block < 0)
+			    previous_block = block_no;
+		    } else if (previous_block >= 0) {
+			g_debug("restore block %lld (%lld) to %lld (%lld)",
+				(long long)previous_block * 512,
+				(long long)previous_block,
+				(long long)block_no * 512 - 1,
+				(long long)block_no);
+			fprintf(dar_file, "DAR %lld:%lld\n",
+				(long long)previous_block * 512,
+				(long long)block_no * 512- 1);
+			previous_block = -1;
 		    }
 		}
-
-		if (match) {
-		    if (previous_block < 0)
-			previous_block = block_no;
-		} else if (previous_block >= 0) {
-		    g_debug("restore block %lld (%lld) to %lld (%lld)",
+		fclose(recover_state_file);
+		if (previous_block >= 0) {
+		    g_debug("restore block %lld (%lld) to END",
 			    (long long)previous_block * 512,
-			    (long long)previous_block,
-			    (long long)block_no * 512 - 1,
-			    (long long)block_no);
-		    fprintf(dar_file, "DAR %lld:%lld\n",
-			    (long long)previous_block * 512,
-			    (long long)block_no * 512- 1);
-		    previous_block = -1;
+			    (long long)previous_block);
+		    fprintf(dar_file, "DAR %lld:-1\n",
+			    (long long)previous_block * 512);
 		}
-	    }
-	    fclose(recover_state_file);
-	    if (previous_block >= 0) {
-		g_debug("restore block %lld (%lld) to END",
-			(long long)previous_block * 512,
-			(long long)previous_block);
-		fprintf(dar_file, "DAR %lld:-1\n",
-			(long long)previous_block * 512);
 	    }
 	} else {
 	    fprintf(dar_file,"DAR 0:-1\n");

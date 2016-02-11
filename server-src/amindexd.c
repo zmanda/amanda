@@ -255,7 +255,7 @@ process_ls_dump(
 	return -1;
     }
 
-    if((fp = fopen(filename,"r"))==0) {
+    if((fp = fopen(filename,"r")) == NULL) {
 	g_ptr_array_add(*emsg, g_strdup_printf("%s", strerror(errno)));
 	amfree(dir_slash);
         amfree(filename);
