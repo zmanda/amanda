@@ -1984,7 +1984,7 @@ ambsdtar_build_argv(
     GPtrArray *argv_ptr = g_ptr_array_new();
     GSList    *copt;
 
-    ambsdtar_build_exinclude(&argument->dle, 1,
+    ambsdtar_build_exinclude(&argument->dle, 0,
 			     &nb_exclude, file_exclude,
 			     &nb_include, file_include);
 

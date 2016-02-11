@@ -1598,7 +1598,7 @@ GPtrArray *amgtar_build_argv(
     GSList    *copt;
 
     check_no_check_device();
-    amgtar_build_exinclude(&argument->dle, 1,
+    amgtar_build_exinclude(&argument->dle, 0,
 			   &nb_exclude, file_exclude,
 			   &nb_include, file_include);
 
