@@ -7,7 +7,7 @@
 #   of those macros has been omitted.
 #
 #   All of these macros indicate their requirements using AC_REQUIRE, so the order in
-#   which they are called in configure.in is inconsequential.
+#   which they are called in configure.ac is inconsequential.
 
 # SYNOPSIS
 #

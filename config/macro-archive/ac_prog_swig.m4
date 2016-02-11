@@ -20,7 +20,7 @@
 #   If the version argument is given (e.g. 1.3.17), AC_PROG_SWIG checks
 #   that the swig package is this version number or higher.
 #
-#   In configure.in, use as:
+#   In configure.ac, use as:
 #
 #     AC_PROG_SWIG(1.3.17)
 #     SWIG_ENABLE_CXX

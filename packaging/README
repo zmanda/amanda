@@ -22,7 +22,7 @@ script will actually build the package with Zmanda's defaults for you.
 Notes:
     -deb package changelog is non-standard when checked out.  either use 
      packaging/deb/buildpkg to build the package, or replace %%VERSION%% with
-     the correct number supplied in configure.in at approximately line 10:
+     the correct number supplied in configure.ac at approximately line 10:
      AM_INIT_AUTOMAKE( ... )
 
 See http://wiki.zmanda.com/index.php/Installation for more information.

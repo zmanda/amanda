@@ -4,7 +4,7 @@
 #
 # OVERVIEW
 #
-#   Set up Amanda's internationalization support.  Note that configure.in
+#   Set up Amanda's internationalization support.  Note that configure.ac
 #   itself must contain (not indented):
 #
 #   AM_GNU_GETTEXT_VERSION([0.15])

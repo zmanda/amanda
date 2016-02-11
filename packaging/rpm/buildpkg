@@ -21,7 +21,7 @@
 
 # This is useful for debugging
  set -x
-# Check for $AMVER, or pull it from configure.in
+# Check for $AMVER, or pull it from configure.ac
 if [ -z $AMVER ]; then
     VER=`cat FULL_VERSION`
     AMVER=amanda-${VER}

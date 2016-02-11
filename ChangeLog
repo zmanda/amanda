@@ -1,3 +1,11 @@
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.ac: Renamed from configure.in
+	* configure.in: Renamed to configure.ac
+	* config/amanda/i18n.m4, config/amanda/progs.m4,
+	  config/compile, config/config.guess,
+	  config/macro-archive/ac_prog_swig.m4, packaging/README,
+	  packaging/rpm/buildpkg: s/configure.in/configure.ac/
+
 2016-02-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amgetconf.pl: s/unknown/Unknown/
 
