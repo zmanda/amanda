@@ -12,7 +12,7 @@ AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS)
 
 # Appropriate INCLUDES depends on which components (server or client) are
 # being built
-INCLUDES =  \
+AM_CPPFLAGS =  \
             -I$(top_builddir)/common-src \
             -I$(top_srcdir)/common-src \
             -I$(top_srcdir)/xfer-src \

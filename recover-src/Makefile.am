@@ -4,7 +4,7 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =	-I$(top_builddir)/common-src \
+AM_CPPFLAGS =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/client-src   \
 		-I$(top_srcdir)/amandad-src   \
@@ -39,7 +39,7 @@ amrecover_SOURCES =	$(amrecover_CSRC)	uparse.y	uscan.l
 
 noinst_HEADERS =	amrecover.h uparse.h
 
-EXTRA_DIST = uscan.c
+EXTRA_DIST += uscan.c
 
 AM_YFLAGS =		-d
 
@@ -50,10 +50,10 @@ uscan.c: uparse.h
 # these two commands are specially defined to omit $(AMANDA_WARNING_CFLAGS)
 # since we don't want warnings for generated code
 uscan.$(OBJEXT): uscan.c ../common-src/amanda.h uparse.h
-	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
+	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) -c $<
 
 uparse.$(OBJEXT): uparse.c ../common-src/amanda.h amrecover.h
-	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
+	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) -c $<
 
 lint:
 	@f="$(amrecover_CSRC)";							\
@@ -62,7 +62,7 @@ lint:
 	(cd ../server-src; make listlibsrc);					\
 	f="$$f "`cat ../server-src/listlibsrc.output`;				\
 	echo $(LINT) $$f;							\
-	$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $$f;\
+	$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(AM_CPPFLAGS) $$f;\
 	if [ $$? -ne 0 ]; then							\
 	    exit 1;								\
 	fi;									\

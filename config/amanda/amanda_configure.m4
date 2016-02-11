@@ -8,7 +8,7 @@
 #
 AC_DEFUN([AMANDA_CONFIGURE],[
 
-AM_INIT_AUTOMAKE(tar-ustar 1.10)
+AM_INIT_AUTOMAKE([tar-ustar 1.10 subdir-objects])
 AC_CONFIG_HEADERS([config/config.h])
 
 dnl Minimum Autoconf version required.

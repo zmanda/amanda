@@ -4,7 +4,7 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =	-I$(top_builddir)/common-src \
+AM_CPPFLAGS =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/xfer-src \
 		-I$(top_srcdir)/ndmp-src \
@@ -24,7 +24,7 @@ SCRIPTS_PERL = \
 	amtapetype
 sbin_SCRIPTS = $(SCRIPTS_PERL)
 
-CLEANFILES = $(SCRIPTS_PERL) config.log
+CLEANFILES += $(SCRIPTS_PERL) config.log
 
 ## libamdevice.la
 

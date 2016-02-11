@@ -4,7 +4,7 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =	-I$(top_builddir)/common-src \
+AM_CPPFLAGS =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/gnulib
 
@@ -46,7 +46,7 @@ lint:
 		f="$$f "`cat ../server-src/listlibsrc.output`;			\
 		echo $(LINT) $$f;						\
 		$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config	\
-		    $(INCLUDES) $$f;						\
+		    $(AM_CPPFLAGS) $$f;						\
 		if [ $$? -ne 0 ]; then						\
 		    exit 1;							\
 		fi;								\

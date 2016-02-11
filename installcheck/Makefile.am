@@ -245,7 +245,7 @@ clobber_my_config_is_ok:
 # test scripts, so this rule chmod a-x's them first
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"
-	$(mkdir_p) "$(AMANDA_TMPDIR)/installchecks"
+	$(MKDIR_P) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
 	fi

@@ -4,7 +4,7 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =      -I$(top_srcdir)/gnulib \
+AM_CPPFLAGS =      -I$(top_srcdir)/gnulib \
 		-I$(top_srcdir)/device-src \
 		-I$(top_srcdir)/common-src
 
@@ -62,9 +62,9 @@ xfer_test_LDADD = \
 
 lint:
 	@echo $(LINT) $(libamxfer_la_SOURCES)
-	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $(libamxfer_la_SOURCES)
+	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(AM_CPPFLAGS) $(libamxfer_la_SOURCES)
 	@echo $(LINT) $(genversion_SOURCES)
-	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $(genversion_SOURCES)
+	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(AM_CPPFLAGS) $(genversion_SOURCES)
 
 listlibsrc:
 	@ for p in $(libamxfer_la_SOURCES); do	\

@@ -5,7 +5,7 @@ include $(top_srcdir)/config/automake/scripts.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
-INCLUDES =      -I$(top_srcdir)/gnulib -I$(top_builddir)/common-src
+AM_CPPFLAGS = -I$(top_srcdir)/gnulib -I$(top_builddir)/common-src
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
@@ -302,9 +302,9 @@ CLEANFILES += *.test.c $(SCRIPTS_PERL) $(SCRIPTS_SHELL) $(SCRIPTS_INCLUDE)
 
 lint:
 	@echo $(LINT) $(libamanda_la_SOURCES)
-	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $(libamanda_la_SOURCES)
+	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(AM_CPPFLAGS) $(libamanda_la_SOURCES)
 	@echo $(LINT) $(genversion_SOURCES)
-	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $(genversion_SOURCES)
+	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(AM_CPPFLAGS) $(genversion_SOURCES)
 
 listlibsrc:
 	@ for p in $(libamanda_la_SOURCES) $(REGEXCSRC); do	\

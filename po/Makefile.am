@@ -117,7 +117,7 @@ install-data-hook: $(MOFILES)
 	  cat=`basename $$cat`; \
 	  lang=`echo $$cat | sed -e 's/\.mo$$//'`; \
 	  dir=$(localedir)/$$lang/LC_MESSAGES; \
-	  $(mkdir_p) $(DESTDIR)$$dir; \
+	  $(MKDIR_P) $(DESTDIR)$$dir; \
 	  if test -r $$cat; then realcat=$$cat; else realcat=$(srcdir)/$$cat; fi; \
 	  $(INSTALL) $$realcat $(DESTDIR)$$dir/amanda.mo; \
 	  echo "installing $$realcat as $(DESTDIR)$$dir/amanda.mo"; \

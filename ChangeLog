@@ -1,4 +1,18 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/amanda_configure.m4 (AM_INIT_AUTOMAKE): Add
+	  subdir-objects
+	* amandad-src/Makefile.am, amar-src/Makefile.am,
+	  application-src/Makefile.am, client-src/Makefile.am,
+	  common-src/Makefile.am, device-src/Makefile.am,
+	  installcheck/Makefile.am, ndmp-src/Makefile.am,
+	  oldrecover-src/Makefile.am, perl/Makefile.am,
+	  perl/amglue/Makefile.am, po/Makefile.am,
+	  recover-src/Makefile.am, server-src/Makefile.am,
+	  xfer-src/Makefile.am: Cleanup
+	  s/INCLUDES/AM_CPPFLAGS/
+	  s/mkdir_p/MKDIR_P/
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/ar-lib: Add file
 
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>

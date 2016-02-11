@@ -13,9 +13,9 @@ SUBDIRS = amglue .
 # to trigger warnings.
 AM_CFLAGS = -DSWIG $(AMANDA_SWIG_PERL_CFLAGS) $(AMANDA_FILE_CFLAGS)
 
-# Appropriate INCLUDES depends on which components (server or client) are
+# Appropriate AM_CPPFLAGS depends on which components (server or client) are
 # being built
-INCLUDES =  \
+AM_CPPFLAGS =  \
             -I$(top_builddir)/common-src \
             -I$(top_srcdir)/common-src \
             -I$(top_srcdir)/amandad-src \
@@ -27,16 +27,16 @@ INCLUDES =  \
             $(PERL_INC)
 
 if WANT_SERVER
-INCLUDES += -I$(top_srcdir)/device-src \
+AM_CPPFLAGS += -I$(top_srcdir)/device-src \
 	    -I$(top_srcdir)/server-src
 endif
 
 if WANT_CLIENT
-INCLUDES += -I$(top_srcdir)/client-src
+AM_CPPFLAGS += -I$(top_srcdir)/client-src
 endif
 
 if WANT_RECOVER
-INCLUDES += -I$(top_srcdir)/recover-src
+AM_CPPFLAGS += -I$(top_srcdir)/recover-src
 endif
 
 # (amplot has a conditional, but doesn't have any header files)
@@ -93,7 +93,7 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 # file in the event of a syntax error.  .i files are pre-processor output;
 # they are only used during development.
 %.c : %.swg $(AMGLUE_SWG) %.pod
-	$(mkdir_p) `dirname $@`
+	$(MKDIR_P) `dirname $@`
 	$(SWIG) $(SWIG_OPTIONS) -o $@ $(top_srcdir)/perl/$< || { rm -f $@; false; }
 %.pm : %.c
 	@echo "$@ was produced as a side-effect of creating $<"
