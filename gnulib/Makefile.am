@@ -2239,4 +2239,4 @@ mostlyclean-local: mostlyclean-generic
 	:
 
 # Make sure regenerate/* are in the distribution tarball
-EXTRA_DIST += regenerate/fsusage-no-bool.patch regenerate/no-error.patch regenerate/regenerate regenerate/.regenerate.swp
+EXTRA_DIST += regenerate/fsusage-no-bool.patch regenerate/no-error.patch regenerate/regenerate

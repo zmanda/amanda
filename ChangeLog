@@ -1,4 +1,7 @@
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib/Makefile.am: Remove regenerate.swp
+
+2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/gnulib/*, config/snipset/*, gnulib/*: Upgrade to gnulib
 	  cd9ecca8812571fc443688d11148f2768ededfa4
 
