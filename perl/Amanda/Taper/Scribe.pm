@@ -1279,7 +1279,7 @@ sub _release_reservation {
 
 		# rewrite the label
 		if (!$self->{'device'}->start($ACCESS_WRITE, $label, "X")) {
-		    debug("Error writting label after erase: " . $self->{'device'}->error_or_status());
+		    debug("Error writing label after erase: " . $self->{'device'}->error_or_status());
 		} elsif (!$self->{'device'}->finish()) {
 		    debug("Error finishing the device after erase: " . $self->{'device'}->error_or_status());
 		}

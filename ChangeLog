@@ -1,3 +1,7 @@
+2016-02-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Status.pm, perl/Amanda/Taper/Scribe.pm,
+	  server-src/driver.c: s/writting/writing/g
+
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup-gnutar.c, client-src/sendsize.c: Init mlist
 	  to NULL

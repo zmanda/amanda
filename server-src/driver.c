@@ -5373,7 +5373,7 @@ tape_action(
 driver_debug(2, "%d  R%d W%d D%d I%d\n", wtaper->state, TAPER_STATE_TAPE_REQUESTED, TAPER_STATE_WAIT_FOR_TAPE, TAPER_STATE_DUMP_TO_TAPE, TAPER_STATE_IDLE);
     // Changing conditionals can produce a driver hang, take care.
     //
-    // when to start writting to a new tape
+    // when to start writing to a new tape
     if (wtaper->state & TAPER_STATE_TAPE_REQUESTED) {
 	driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED\n");
 	if (taper->current_tape >= taper->runtapes &&

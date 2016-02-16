@@ -194,7 +194,7 @@ Amanda::Status -- Get the status of a running job.
 					 {'datestamp'}         => datestamp actualy flushing
 					 {'wait_for_tape'}     => 1 if worker wait for a tape
 					 {'search_for_tape'}   => 1 if worker search for a tape
-					 {'no_tape'}           => index in {taper->{$taper}->{'stat'}[]} of actualy writting tape
+					 {'no_tape'}           => index in {taper->{$taper}->{'stat'}[]} of actualy writing tape
  taper->{$taper}->{'stat'}[]->{'label'}   => label of the tape
 			      {'nb_dle'}  => number of dle
 			      {'nb_part'} => number of part
@@ -1801,7 +1801,7 @@ sub set_summary {
 		    } elsif ($wstatus == $CONFIG_ERROR) {
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "config error: $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'}";
 		    } elsif ($wstatus == $WRITING) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "writting";
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "writing";
 		    } elsif ($wstatus == $FLUSHING) {
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "flushing";
 		    } elsif ($wstatus == $DUMPING_TO_TAPE_INIT) {
