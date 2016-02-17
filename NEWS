@@ -72,6 +72,10 @@ Changes in release 4.0.0
    * amgetconf
        o New --platform argument
        o New --distro argument
+   * ambackup/ambackupd
+       o New client ambackup program to start a backup of the client
+       o New server service ambackupd
+       o This protocol works even if the client is behind a NAT
 
 Changes in release 3.3.9
     * new --with-security-file configure option

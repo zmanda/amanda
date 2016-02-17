@@ -512,6 +512,7 @@ sub read_file
     $self->{flags}{historical} = $self->{_historical};
     $self->{flags}{amflush_run} = 0;
     $self->{flags}{amvault_run} = 0;
+    $self->{flags}{ambackupd_run} = 0;
     my $il;
     if (!$self->get_flag("normal_run")) {
         if (   ( defined $self->get_program_info("amflush") )
@@ -531,6 +532,12 @@ sub read_file
 	         $storage_name = $il->[0];
 	    }
 	    $il = [ $storage_name ];
+	} elsif (   ( defined $self->get_program_info("ambackupd") )
+                 && ( scalar %{ $self->get_program_info("ambackupd") } ) ) {
+	    debug("detected an ambackupd run");
+	    $self->{flags}{ambackupd_run} = 1;
+	} else {
+	    #$il = getconf($CNF_STORAGE);
 	}
     } else {
 	$il = getconf($CNF_STORAGE);
@@ -627,6 +634,9 @@ sub read_line
 
     } elsif ( $prog == $P_AMCLEANUP ) {
         return $self->_handle_amcleanup_line( $type, $str );
+
+    } elsif ( $prog == $P_AMBACKUPD ) {
+        return $self->_handle_ambackupd_line( $type, $str );
 
     } else {
         return $self->_handle_bogus_line( $prog, $type, $str );
@@ -1282,7 +1292,7 @@ sub _handle_checkdump_line
     my $data     = $self->{data};
     my $disklist = $data->{disklist};
     my $programs = $data->{programs};
-    my $amdump = $programs->{checkdump} ||= {};
+    my $checkdump = $programs->{checkdump} ||= {};
 
     if ( $type == $L_INFO ) {
         $self->_handle_info_line("checkdump", $str);
@@ -1302,7 +1312,7 @@ sub _handle_fetchdump_line
     my $data     = $self->{data};
     my $disklist = $data->{disklist};
     my $programs = $data->{programs};
-    my $amdump = $programs->{fetchdump} ||= {};
+    my $fetchdump = $programs->{amcleanup} ||= {};
 
     if ( $type == $L_INFO ) {
         $self->_handle_info_line("fetchdump", $str);
@@ -1323,13 +1333,51 @@ sub _handle_amcleanup_line
     my $data     = $self->{data};
     my $disklist = $data->{disklist};
     my $programs = $data->{programs};
-    my $amdump = $programs->{amcleanup} ||= {};
+    my $amcleanup = $programs->{amcleanup} ||= {};
 
     if ( $type == $L_INFO ) {
         $self->_handle_info_line("amcleanup", $str);
 
     } elsif ( $type == $L_ERROR ) {
         $self->_handle_error_line("amcleanup", $str);
+
+    } else {
+        return $self->_handle_bogus_line( $P_AMCLEANUP, $type, $str );
+    }
+}
+
+
+sub _handle_ambackupd_line
+{
+    my $self = shift;
+    my ( $type, $str ) = @_;
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $programs = $data->{programs};
+    my $ambackupd = $programs->{amcleanup} ||= {};
+
+    if ( $type == $L_INFO ) {
+        $self->_handle_info_line("ambackupd", $str);
+
+    } elsif ( $type == $L_START ) {
+        $self->_handle_start_line("ambackupd", $str);
+
+    } elsif ( $type == $L_FINISH ) {
+        my @info = Amanda::Util::split_quoted_strings($str);
+        $self->{flags}{got_finish} = 1;
+        return $ambackupd->{time} = $info[3];
+
+    } elsif ( $type == $L_STATS ) {
+        my @info = Amanda::Util::split_quoted_strings($str);
+        if ( $info[0] eq "hostname" ) {
+            return $self->{hostname} = $info[1];
+	}
+
+    } elsif ( $type == $L_DISK ) {
+        return $self->_handle_disk_line( "ambackupd", $str );
+
+    } elsif ( $type == $L_ERROR ) {
+        $self->_handle_error_line("ambackupd", $str);
 
     } else {
         return $self->_handle_bogus_line( $P_AMCLEANUP, $type, $str );

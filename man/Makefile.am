@@ -23,6 +23,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 
 CLIENT_MAN_PAGES = \
     amanda-applications.7 \
+    ambackup.8 \
     ambsdtar.8 \
     amdump_client.8 \
     amgtar.8 \

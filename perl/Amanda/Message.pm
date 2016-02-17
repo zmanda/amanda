@@ -117,6 +117,7 @@ not handled by Amanda::Message):
   4702000  amzfs-snapshot
  4800000  Amanda::Extract::Message
  4900000  Amanda::Restore::Message
+ 5000000  ambackupd
 
 general keys:
   code            =>

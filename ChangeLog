@@ -1,4 +1,20 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Add SERVICE_AMBACKUPD
+	* client-src/Makefile.am: Add ambackup
+	* client-src/ambackup.pl: New client program to start a backup
+	* man/Makefile.am: Add ambackup.8
+	* man/xml-source/ambackup.8.xml: New man page
+	* perl/Amanda/Logfile.swg: Add P_AMBACKUPD
+	* perl/Amanda/Message.pm: Add message id for ambackupd
+	* perl/Amanda/Report.pm: Handle ambackupd run
+	* server-src/Makefile.am: Add ambackupd
+	* server-src/ambackupd.pl: New server service to allow ambackup to run
+	  a backup
+	* server-src/amreport.pl: Handle ambackupd run
+	* server-src/logfile.c: Add ambackupd
+	* server-src/logfile.h: Add P_AMBACKUPD
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Curinfo/Info.pm (update_dumper): New function
 
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>

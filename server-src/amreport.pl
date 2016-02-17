@@ -380,8 +380,9 @@ sub open_mail_output
 
     my $datestamp =
       $report->get_program_info(
-        $report->get_flag("amflush_run") ? "amflush" : 
-	$report->get_flag("amvault_run") ? "amvault" : "planner", "start" );
+        $report->get_flag("amflush_run") ? "amflush" :
+	$report->get_flag("amvault_run") ? "amvault" :
+	$report->get_flag("ambackupd_run") ? "ambackupd" : "planner", "start" );
 
     $datestamp /= 1000000 if $datestamp > 99999999;
     $datestamp = int($datestamp);
@@ -404,7 +405,8 @@ sub open_mail_output
     my $subj_str =
         getconf($CNF_ORG) . $done
       . ( $report->get_flag("amflush_run") ? " AMFLUSH" :
-	  $report->get_flag("amvault_run") ? " AMVAULT" : " AMANDA" )
+	  $report->get_flag("amvault_run") ? " AMVAULT" :
+	  $report->get_flag("ambackupd_run") ? " AMBACKUPD" : " AMANDA" )
       . " MAIL REPORT FOR "
       . $date;
 
@@ -423,7 +425,7 @@ sub open_mail_output
         } else {
             error($errstr, 1);
         }
-	
+
     } else {
 	eval { $pid = open3($fh, ">&2", ">&2", @cmd) } or do {
             ($pid, $fh) = (0, undef);

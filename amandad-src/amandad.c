@@ -85,7 +85,8 @@ typedef enum {
     SERVICE_AMIDXTAPED,
     SERVICE_AMDUMPD,
     SERVICE_SENDDISCOVER,
-    SERVICE_RESTORE
+    SERVICE_RESTORE,
+    SERVICE_AMBACKUPD
 } service_t;
 
 static struct services {
@@ -101,7 +102,8 @@ static struct services {
    { "amidxtaped", 0, SERVICE_AMIDXTAPED },
    { "amdumpd", 0, SERVICE_AMDUMPD },
    { "senddiscover", 1, SERVICE_SENDDISCOVER },
-   { "restore", 1, SERVICE_RESTORE }
+   { "restore", 1, SERVICE_RESTORE },
+   { "ambackupd", 0, SERVICE_AMBACKUPD }
 };
 #define NSERVICES G_N_ELEMENTS(services)
 

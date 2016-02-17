@@ -23,7 +23,7 @@ amlibexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup 
 amlibexec_SCRIPTS_SHELL = patch-system
 amlibexec_SCRIPTS_PERL = restore
 
-sbin_SCRIPTS_PERL = amdump_client
+sbin_SCRIPTS_PERL = amdump_client ambackup
 
 SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS_SHELL)
