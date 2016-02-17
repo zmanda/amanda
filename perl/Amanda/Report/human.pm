@@ -399,13 +399,11 @@ sub print_header
 @<<<<<<<: ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<...
 EOF
 
-    if ($hostname) {
-	$self->zprint(swrite($header_format, "Hostname", $hostname));
-	$self->zprint(swrite($header_format, "Org",      $org));
-	$self->zprint(swrite($header_format, "Config",   $config_name));
-	$self->zprint(swrite($header_format, "Date",     $date));
-	$self->zprint("\n");
-    }
+    $self->zprint(swrite($header_format, "Hostname", $hostname)) if $hostname;
+    $self->zprint(swrite($header_format, "Org",      $org)) if $org;
+    $self->zprint(swrite($header_format, "Config",   $config_name)) if $config_name;
+    $self->zprint(swrite($header_format, "Date",     $date)) if $date;
+    $self->zprint("\n");
 
     return;
 }
@@ -756,16 +754,18 @@ EOF
     my $total_stats = $self->{total_stats};
 
     my ($tapesize, $marksize );
-    my $st = Amanda::Config::lookup_storage($report->{'storage_list'}[0]);
-    if (!$st) {
-    }
-    my $tapetype_name = storage_getconf($st, $STORAGE_TAPETYPE);
-    my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
 
-    if ( $tapetype_name && $tt ) {
+    if ($report->{'storage_list'}[0]) {
+	my $st = Amanda::Config::lookup_storage($report->{'storage_list'}[0]);
+	if (!$st) {
+	}
+	my $tapetype_name = storage_getconf($st, $STORAGE_TAPETYPE);
+	my $tt = lookup_tapetype($tapetype_name) if $tapetype_name;
 
-        $tapesize = "".tapetype_getconf( $tt, $TAPETYPE_LENGTH );
-        $marksize = "".tapetype_getconf( $tt, $TAPETYPE_FILEMARK );
+	if ( $tapetype_name && $tt ) {
+            $tapesize = "".tapetype_getconf( $tt, $TAPETYPE_LENGTH );
+            $marksize = "".tapetype_getconf( $tt, $TAPETYPE_FILEMARK );
+	}
     }
 
     # these values should never be zero; assign defaults

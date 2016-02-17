@@ -30,6 +30,9 @@ DONE taper bsdfw.slikon.local / 20090326001503 1 0 [sec 157.123731 kb 2293470 kp
 FINISH driver date 20090326001503 time 77506.015
 
 %T report
+Org : DailySet1
+Config : TESTCONF
+Date : March 26, 2009
 These dumps were to tape Daily-36.
 The next tape Amanda expects to use is: 1 new tape.
 

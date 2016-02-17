@@ -15,6 +15,9 @@ FINISH driver date 20090326001503 time 77506.015
 INFO driver pid-done 22043
 
 %T report
+Org : DailySet1
+Config : TESTCONF
+Date : March 26, 2009
 These dumps were to tape Daily-36.
 The next tape Amanda expects to use is: 1 new tape.
 

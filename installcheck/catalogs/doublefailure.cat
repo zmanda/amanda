@@ -38,6 +38,10 @@ PARTIAL taper ns-new.slikon.local /opt/var 20090326001503 1 0 [sec 3.555085 kb 5
 FINISH driver date 20090326001503 time 77506.015
 
 %T report
+Org : DailySet1
+Config : TESTCONF
+Date : March 26, 2009
+
 These dumps were to tape Daily-13.
 The next tape Amanda expects to use is: 1 new tape.
 
