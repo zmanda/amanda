@@ -1,4 +1,9 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c (server_warning): New function
+	* recover-src/amrecover.h (server_warning): Add prototype
+	* recover-src/set_commands.c: Use server_warning()
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Fix
 	* client-src/selfcheck.c: Fix
 

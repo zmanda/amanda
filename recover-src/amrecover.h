@@ -77,6 +77,7 @@ extern void free_dir_item(DIR_ITEM *item);
 extern int converse(char *cmd);
 extern int exchange(char *cmd);
 extern int server_happy(void);
+extern int server_warning(void);
 extern int send_command(char *cmd);
 extern int get_reply_line(void);
 extern char *reply_line(void);

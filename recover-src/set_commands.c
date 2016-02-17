@@ -118,7 +118,7 @@ set_host(
      * Try converting the given host to a fully qualified, canonical
      * name.
      */
-    if (!found_host) {
+    if (!found_host && !server_warning()) {
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
 	    g_printf(_("Trying host %s ...\n"), host);
@@ -135,7 +135,7 @@ set_host(
      * Since we have them, try any CNAMEs that were traversed from uqhost
      * to the canonical name (this assumes gethostbyname was called above)
      */
-    if (!found_host) {
+    if (!found_host && !server_warning()) {
 	if (hp) {
 	    for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	    {
@@ -154,7 +154,7 @@ set_host(
     }
 
     /* Try looking up the canonical name of the host */
-    if (!found_host) {
+    if (!found_host && !server_warning()) {
 	char *canonname;
 	int result;
 

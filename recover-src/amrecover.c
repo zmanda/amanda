@@ -206,6 +206,14 @@ server_happy(void)
     return server_line[0] != '5';
 }
 
+int
+server_warning(void)
+{
+    return server_line[0] == '5' &&
+	   server_line[1] == '0' &&
+	   server_line[2] == '2';
+}
+
 
 int
 send_command(
