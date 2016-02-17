@@ -1,4 +1,7 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Check recovery-limit
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.c (server_warning): New function
 	* recover-src/amrecover.h (server_warning): Add prototype
 	* recover-src/set_commands.c: Use server_warning()

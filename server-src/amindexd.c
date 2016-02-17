@@ -1431,13 +1431,24 @@ main(
 	    am_host_t *lhost;
 	    /* set host we are restoring */
 	    s[-1] = '\0';
-	    if ((lhost = is_dump_host_valid(arg)) != NULL)
-	    {
-		g_free(dump_hostname);
-		dump_hostname = g_strdup(lhost->hostname);
-		reply(200, _("Dump host set to %s."), dump_hostname);
-		amfree(qdisk_name);		/* invalidate any value */
-		amfree(disk_name);		/* invalidate any value */
+	    if ((lhost = is_dump_host_valid(arg)) != NULL) {
+		GList  *dlist;
+		disk_t *disk;
+		gboolean allowed = FALSE;
+		for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
+		    disk = dlist->data;
+		    if (g_str_equal(lhost->hostname, disk->host->hostname))
+			allowed |= is_disk_allowed(disk);
+		}
+		if (allowed) {
+		    g_free(dump_hostname);
+		    dump_hostname = g_strdup(lhost->hostname);
+		    reply(200, _("Dump host set to %s."), dump_hostname);
+		    amfree(qdisk_name);		/* invalidate any value */
+		    amfree(disk_name);		/* invalidate any value */
+		} else {
+		    reply(502, _("Can't recover hosts '%s'"), lhost->hostname);
+		}
 	    }
 	    s[-1] = (char)ch;
 	} else if (g_str_equal(cmd, "LISTHOST")) {
@@ -1449,24 +1460,26 @@ main(
 	    s[-1] = '\0';
 	    if (get_config_name() == NULL) {
 		reply(501, _("Must set config before listhost"));
-	    }
-	    else {
+	    } else {
 		lreply(200, _(" List hosts for config %s"), get_config_name());
 		for (dlist = disk_list.head; dlist != NULL; dlist = dlist->next) {
 		    disk = dlist->data;
-                    found = 0;
-		    for (dlistup = disk_list.head; dlistup->data != dlist->data; dlistup = dlistup->next) {
-			diskdup = dlistup->data;
-		        if(g_str_equal(diskdup->host->hostname,
-                                       disk->host->hostname)) {
-                          found = 1;
-                          break;
-		        }
-                    }
-                    if(!found){
-	                fast_lreply(201, " %s", disk->host->hostname);
-                        nbhost++;
-                    }
+		    if (is_disk_allowed(disk)) {
+			found = 0;
+			for (dlistup = disk_list.head; dlistup->data != dlist->data; dlistup = dlistup->next) {
+			    diskdup = dlistup->data;
+			    if (g_str_equal(diskdup->host->hostname,
+					    disk->host->hostname) &&
+				is_disk_allowed(diskdup)) {
+				found = 1;
+				break;
+			    }
+			}
+			if (!found) {
+			    fast_lreply(201, " %s", disk->host->hostname);
+			    nbhost++;
+			}
+		    }
 		}
 		if(nbhost > 0) {
 		    reply(200, _(" List hosts for config %s"), get_config_name());
