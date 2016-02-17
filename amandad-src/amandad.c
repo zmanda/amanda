@@ -157,9 +157,10 @@ struct active_service {
 GSList *serviceq = NULL;
 
 static event_handle_t *exit_event;
-static int exit_on_qlength = 1;
+static int exit_on_qlength = 0;
 static char *auth = NULL;
 static kencrypt_type amandad_kencrypt = KENCRYPT_NONE;
+static char *global_error = NULL;
 
 int main(int argc, char **argv);
 
@@ -287,6 +288,7 @@ main(
     in = 0; out = 1;		/* default to stdin/stdout */
     have_services = 0;
     for (i = 1; i < argc; i++) {
+	g_debug("argc[%d] = %s", i, argv[i]);
 	/*
 	 * Get a driver for a security type specified after -auth=
 	 */
@@ -433,8 +435,8 @@ main(
 		    if (g_str_equal(services[j].name, argv[i]))
 			break;
 		if (j == NSERVICES) {
-		    dbprintf(_("%s: invalid service\n"), argv[i]);
-		    exit(1);
+		    global_error = g_strdup_printf("invalid '%s' service as argument to amandad", argv[i]);
+		    g_debug("%s\n", global_error);
 		}
 		services[j].active = 1;
 	    }
@@ -584,6 +586,18 @@ protocol_accept(
 	    event_release(exit_event);
 	    exit_event = NULL;
 	}
+	return;
+    }
+
+    /* If we have global errors, let the remote system know immediately.
+     * Unfortunately, we only get one ERROR line, so if there
+     * are multiple errors, we just show the first.
+     */
+    if (global_error) {
+	pkt_init(&pkt_out, P_NAK, "ERROR %s", global_error);
+	do_sendpkt(handle, &pkt_out);
+	amfree(pkt_out.body);
+	security_close(handle);
 	return;
     }
 
@@ -1911,7 +1925,7 @@ service_delete(
     amfree(as->rep_pkt.body);
     amfree(as);
 
-    if(exit_on_qlength == 0 && g_slist_length(serviceq) == 0) {
+    if (exit_on_qlength == 0 && g_slist_length(serviceq) == 0) {
 	dbclose();
 	exit(0);
     }

@@ -1,4 +1,7 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Send P_NAK with ERRIR message on some error
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Holding.pm (filetmp_chunks): Renamed from
 	  file_tmp_chunks
 
