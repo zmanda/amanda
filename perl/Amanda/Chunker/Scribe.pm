@@ -146,7 +146,8 @@ parameters.
 
   $dump_cb->(
         result => $result,
-        size => $size,
+        header_size => $header_size,
+        data_size => $data_size,
         total_duration => $total_duration);
 
 All parameters will be present on every call, although the order is not

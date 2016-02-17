@@ -1,4 +1,7 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Chunker/Scribe.pm: Fix pod
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Check recovery-limit
 
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
