@@ -460,6 +460,76 @@ sub write_to_file
     return 1;
 }
 
+sub update_dumper {
+    my $self = shift;
+    my $orig_size = shift;
+    my $dump_size = shift;
+    my $dump_time = shift;
+    my $level = shift;
+    my $timestamp = shift;
+
+    #$orig_size is already in kb.
+    $dump_size /= 1024;
+
+    # Clean up information about this and higher-level dumps. This
+    # assumes that update_dumper is always run before update_taper.
+    splice @{$self->{'inf'}}, $level;
+
+    #now store information about this dump
+    $self->{'inf'}[$level] = Amanda::Curinfo::Stats->new($level, $orig_size,
+			$dump_size, $dump_time,
+			Amanda::Util::get_time_from_timestamp($timestamp),
+			undef, undef);
+
+    my $perf;
+    if ($level == 0) {
+	$perf = $self->{'full'};
+    } else {
+	$perf = $self->{'incr'};
+    }
+
+    if ($orig_size != $dump_size and $orig_size != 0) {
+	shift @{$perf->{'comp'}} if @{$perf->{'comp'}} > 2;
+	my $idx = @{$perf->{'comp'}};
+	$perf->{'comp'}[$idx] = "$dump_size." / $orig_size;
+    }
+
+    if ($dump_time > 0) {
+	shift @{$perf->{'rate'}} if @{$perf->{'rate'}} > 2;
+	my $idx = @{$perf->{'rate'}};
+	if ($dump_time >= $dump_size) {
+	    $perf->{'rate'}[$idx] = 1;
+	} else {
+	    $perf->{'rate'}[$idx] = "$dump_size.0" / $dump_time;
+	}
+    }
+
+    if ($orig_size >= 0 and getconf($CNF_RESERVE) < 100) {
+	$self->{'command'} = $NO_COMMAND;
+    }
+
+    if ($orig_size >= 0) {
+	if ($level == $self->{'last_level'}) {
+	    $self->{'consecutive_runs'}++;
+	} else {
+	    $self->{'last_level'} = $level;
+	    $self->{'consecutive_runs'} = 1;
+	}
+    }
+
+    if ($orig_size >= 0 and $dump_size >= 0) {
+	pop @{$self->{'history'}} if @{$self->{'history'}} > 99;
+	my $ctime;
+	if ($timestamp == 0) {
+	    $ctime = 0;
+	} else {
+	    $ctime = Amanda::Util::get_time_from_timestamp($timestamp),
+	}
+	unshift @{$self->{'history'}}, Amanda::Curinfo::History->new(
+			$level, $orig_size, $dump_size, $ctime, $dump_time);
+    }
+}
+
 
 #
 #
