@@ -180,7 +180,7 @@ ssl_connect(
 
     ssl_dir = getconf_str(CNF_SSL_DIR);
     if (conf_fn) {
-	service = conf_fn("remote_port", datap);
+	service = conf_fn("client_port", datap);
 	if (!service || strlen(service) <= 1)
 	    service = AMANDA_SERVICE_NAME;
 	g_debug("Connecting to service '%s'", service);

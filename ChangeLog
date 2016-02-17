@@ -1,4 +1,7 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/ssl-security.c: s/remote_port/client_port/
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/amdump_client.pl: Remove printing the config
 	* installcheck/amdump_client.pl: Fix
 
