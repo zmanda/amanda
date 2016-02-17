@@ -183,7 +183,7 @@ main(
     /*@end@*/
 	if (line[0] == '\0')
 	    continue;
-
+	dle = NULL;
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    if (g_options) {
 		delete_message(selfcheck_print_message(build_message(
@@ -249,6 +249,7 @@ main(
 	dle->program = s - 1;
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';				/* terminate the program name */
+	dle->program = g_strdup(dle->program);
 
 	dle->program_is_application_api = 0;
 	if(g_str_equal(dle->program, "APPLICATION")) {
@@ -257,9 +258,11 @@ main(
 	    if (ch == '\0') {
 		goto err;			/* no program */
 	    }
+	    g_free(dle->program);
 	    dle->program = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';			/* terminate the program name */
+	    dle->program = g_strdup(dle->program);
 	}
 
 	if(strncmp_const(dle->program, "CALCSIZE") == 0) {

@@ -437,8 +437,9 @@ main(
 	indexfd = DATA_FD_OFFSET + 4;
 	statefd = DATA_FD_OFFSET + 6;
     }
-    if (!dle->create_index)
+    if (!dle->create_index) {
 	indexfd = -1;
+    }
 
     if (dle->auth && amandad_auth) {
 	if(strcasecmp(dle->auth, amandad_auth) != 0) {
@@ -650,6 +651,12 @@ main(
 	    }
 	    g_ptr_array_free_full(errarray);
 	    return 0;
+	}
+
+	if (statefd >= 0 && !bsu->state_stream) {
+	    close(statefd);
+	    close(statefd+1);
+	    statefd = -1;
 	}
 
 	if (pipe(errfd) < 0) {
@@ -1115,19 +1122,19 @@ application_api_info_tapeheader(
 
     g_snprintf(line, 1024, "%s: info BACKUP=APPLICATION\n", get_pname());
     if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	return;
     }
 
     g_snprintf(line, 1024, "%s: info APPLICATION=%s\n", get_pname(), prog);
     if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	return;
     }
 
     g_snprintf(line, 1024, "%s: info RECOVER_CMD=", get_pname());
     if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	return;
     }
 
@@ -1140,14 +1147,14 @@ application_api_info_tapeheader(
 #endif
 		 );
 	if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	    dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	    return;
 	}
     }
     g_snprintf(line, 1024, "%s/%s restore [./file-to-restore]+\n",
 	       APPLICATION_DIR, prog);
     if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	return;
     }
 
@@ -1155,14 +1162,14 @@ application_api_info_tapeheader(
 	g_snprintf(line, 1024, "%s: info COMPRESS_SUFFIX=%s\n",
 		 get_pname(), COMPRESS_SUFFIX);
 	if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	    dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	    return;
 	}
     }
 
     g_snprintf(line, 1024, "%s: info end\n", get_pname());
     if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
-	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
+	dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	return;
     }
 }
