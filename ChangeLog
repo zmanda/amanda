@@ -1,4 +1,8 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* xfer-src/source-file.c: Cleanup
+	* xfer-src/xmsg.h: Fix comment
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix hang if receive partial packet from
 	  network
 

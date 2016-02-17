@@ -64,38 +64,12 @@ typedef struct {
  */
 
 static gboolean
-setup_impl(
-    XferElement *elt G_GNUC_UNUSED)
-{
-    XferSourceFile *self = XFER_SOURCE_FILE(elt);
-
-    g_assert(xfer_element_swap_output_fd(elt, dup(self->fd)) == -1);
-
-    return TRUE;
-}
-
-static gboolean
 start_impl(
     XferElement *elt)
 {
-    XferSourceFile *self = XFER_SOURCE_FILE(elt);
-
-    lseek(self->fd, (off_t)0, SEEK_SET);
-
-    /* We keep a *copy* of this fd, because our caller will close it to
-     * indicate EOF */
+    lseek(elt->_output_fd, (off_t)0, SEEK_SET);
 
     return FALSE;
-}
-
-static void
-finalize_impl(
-    GObject * obj_self)
-{
-    XferSourceFile *self = XFER_SOURCE_FILE(obj_self);
-
-    close(self->fd);
-    self->fd = -1;
 }
 
 static void
@@ -111,15 +85,12 @@ class_init(
     XferSourceFileClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
-    GObjectClass *goc = G_OBJECT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_NONE, XFER_MECH_READFD, XFER_NROPS(0), XFER_NTHREADS(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0) },
     };
 
     klass->start = start_impl;
-    klass->setup = setup_impl;
-    goc->finalize = finalize_impl;
 
     klass->perl_class = "Amanda::Xfer::Source::File";
     klass->mech_pairs = mech_pairs;
@@ -159,10 +130,13 @@ xfer_source_file(
 {
     XferSourceFile *self = (XferSourceFile *)g_object_new(XFER_SOURCE_FILE_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
+    gint fd;
 
     g_assert(filename);
 
-    self->fd = open(filename, O_RDONLY);
+    fd = open(filename, O_RDONLY);
+    g_assert(fd != -1);
+    g_assert(xfer_element_swap_output_fd(elt, fd) == -1);
 
     return elt;
 }

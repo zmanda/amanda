@@ -115,6 +115,7 @@ typedef enum {
 
     /* XMSG_CRC:
      *  - crc
+     *  - size
      */
     XMSG_CRC = 8,
 
