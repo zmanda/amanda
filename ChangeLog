@@ -1,3 +1,7 @@
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix hang if receive partial packet from
+  network
+
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c, application-src/amgtar.c: Do not send
 	  logging stetement in the data stream

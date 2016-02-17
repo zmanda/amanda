@@ -607,6 +607,7 @@ tcpm_recv_token(
 	return (-1);
     } else if (rval == 0) {
 	*size = 0;
+	*handle = H_EOF;
 	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
 	auth_debug(1, _("tcpm_recv_token: B return(0)\n"));
 	return (0);
