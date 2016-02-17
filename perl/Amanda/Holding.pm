@@ -360,7 +360,7 @@ sub file_chunks {
     return @results;
 }
 
-sub file_tmp_chunks {
+sub filetmp_chunks {
     my ($filename) = @_;
     my @results;
 
@@ -386,7 +386,7 @@ sub rename_tmp {
     my ($filename) = shift;
     my ($complete) = shift;
 
-    my @files = file_tmp_chunks($filename);
+    my @files = filetmp_chunks($filename.".tmp");
     while (my $tmp_filename = pop @files) {
 	my $hdr = get_header($tmp_filename);
 	if ($hdr->{'is_partial'} == 0 and $complete == 0) {

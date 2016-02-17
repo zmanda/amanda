@@ -1,4 +1,8 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Holding.pm (filetmp_chunks): Renamed from
+	  file_tmp_chunks
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Chunker/Scribe.pm: Fix pod
 
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
