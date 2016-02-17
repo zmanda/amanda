@@ -1,4 +1,8 @@
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/amdump_client.pl: Remove printing the config
+	* installcheck/amdump_client.pl: Fix
+
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Report/human.pm: Improve output
 	* installcheck/catalogs/bigestimate.cat,
 	  installcheck/catalogs/doublefailure.cat,

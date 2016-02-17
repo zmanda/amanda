@@ -58,7 +58,6 @@ my $cmd = $ARGV[0];
 set_config_overrides($config_overrides);
 config_init($CONFIG_INIT_CLIENT|$CONFIG_INIT_GLOBAL, undef);
 $config = getconf($CNF_CONF) if !defined $config;
-print "config: $config\n";
 config_init($CONFIG_INIT_CLIENT | $CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_OVERLAY, $config);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {

@@ -56,7 +56,7 @@ $testconf->write();
 
 ok(run('amdump_client', '--config', 'TESTCONF', 'list'), "'amdump_client list' runs successfully");
 is($Installcheck::Run::stdout,
-    "config: TESTCONF\ndiskname\n",
+    "diskname\n",
     "'amdump_client list' list diskname");
 ok(run('amdump_client', '--config', 'TESTCONF', 'dump'), "'amdump_client dump' runs successfully")
     or amdump_diag();
