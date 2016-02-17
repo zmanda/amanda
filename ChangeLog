@@ -1,3 +1,7 @@
+2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix hang if receive partial packet from
+	  network
+
 2016-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Status.pm, perl/Amanda/Taper/Scribe.pm,
 	  server-src/driver.c: s/writting/writing/g

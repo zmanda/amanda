@@ -777,6 +777,7 @@ tcpm_recv_token(
 	return (-1);
     } else if (rval == 0) {
 	*size = 0;
+	*handle = H_EOF;
 	g_free(*errmsg);
 	*errmsg = g_strdup("SOCKET_EOF");
 	auth_debug(1, "tcpm_recv_token: B return(0)\n");
