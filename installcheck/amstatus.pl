@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 12;
+use Test::More tests => 26;
 use strict;
 use warnings;
 
@@ -31,6 +31,56 @@ use Amanda::Constants;
 my $cat;
 my $testconf = Installcheck::Run::setup();
 $testconf->write();
+
+## try number formating
+
+$cat = Installcheck::Catalogs::load('number');
+$cat->install();
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=k'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{localhost.localdomain:/bootAMGTAR\s*1\s*30k\s*flushed\s*\(9:25:57\)\nlocalhost.localdomain:/bootAMGTAR\s*0\s*155530k\s*finished\s*\(9:26:16\)\nlocalhost.localdomain:1g\s*0\s*1048580k\s*finished\s*\(9:26:23\)},
+    "output is reasonable");
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=m'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{localhost.localdomain:/bootAMGTAR\s*1\s*0m\s*flushed\s*\(9:25:57\)\nlocalhost.localdomain:/bootAMGTAR\s*0\s*151m\s*finished\s*\(9:26:16\)\nlocalhost.localdomain:1g\s*0\s*1024m\s*finished\s*\(9:26:23\)},
+    "output is reasonable");
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=g'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{localhost.localdomain:/bootAMGTAR\s*1\s*0g\s*flushed\s*\(9:25:57\)\nlocalhost.localdomain:/bootAMGTAR\s*0\s*0g\s*finished\s*\(9:26:16\)\nlocalhost.localdomain:1g\s*0\s*1g\s*finished\s*\(9:26:23\)},
+    "output is reasonable");
+
+$cat = Installcheck::Catalogs::load('number2');
+$cat->install();
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=k'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{foo:home-j\s*0\s*14756352k\s*dump done\s*\(4\+4:17:20\), process terminated while waiting for writing to tape\nfoo:home-l\s*0\s*3163846144k\s*dump done\s*\(5\+13:24:41\), process terminated while waiting for writing to tape\nfoo:home-srdas-main\s*0\s*1379592000k\s*dump done\s*\(4\+18:10:44\), process terminated while waiting for writing to tape},
+    "output is reasonable");
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=m'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{foo:home-j\s*0\s*14410m\s*dump done\s*\(4\+4:17:20\), process terminated while waiting for writing to tape\nfoo:home-l\s*0\s*3089693m\s*dump done\s*\(5\+13:24:41\), process terminated while waiting for writing to tape\nfoo:home-srdas-main\s*0\s*1347257m\s*dump done\s*\(4\+18:10:44\), process terminated while waiting for writing to tape},
+    "output is reasonable");
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=g'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{foo:home-j\s*0\s*14g\s*dump done\s*\(4\+4:17:20\), process terminated while waiting for writing to tape\nfoo:home-l\s*0\s*3017g\s*dump done\s*\(5\+13:24:41\), process terminated while waiting for writing to tape\nfoo:home-srdas-main\s*0\s*1315g\s*dump done\s*\(4\+18:10:44\), process terminated while waiting for writing to tape},
+    "output is reasonable");
+
+ok(run('amstatus', 'TESTCONF', '-odisplayunit=t'),
+    "plain amstatus runs without error");
+like($Installcheck::Run::stdout,
+    qr{foo:home-j\s*0\s*0t\s*dump done\s*\(4\+4:17:20\), process terminated while waiting for writing to tape\nfoo:home-l\s*0\s*2t\s*dump done\s*\(5\+13:24:41\), process terminated while waiting for writing to tape\nfoo:home-srdas-main\s*0\s*1t\s*dump done\s*\(4\+18:10:44\), process terminated while waiting for writing to tape},
+    "output is reasonable");
 
 ## try a few various options with a pretty normal logfile
 

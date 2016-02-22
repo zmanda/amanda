@@ -980,7 +980,7 @@ foreach $host (sort @hosts) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s", "$host:$qpartition";
 							printf "%2d ",  $level{$hostpart};
-							printf "%9s$unit", $esize{$hostpart};
+							printf "%9s$unit", &print_size($esize{$hostpart});
 							if($partialestimate{$hostpart} == 1) {
 								if ($dead_run) {
 									print " failed: killed while";
@@ -1025,7 +1025,7 @@ foreach $host (sort @hosts) {
 						if(defined $opt_failed) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $esize{$hostpart};
+							printf "%9s$unit", &print_size($esize{$hostpart});
 							print " dump to tape failed: " . $error{$hostpart};
 							print "\n";
 						}
@@ -1040,7 +1040,7 @@ foreach $host (sort @hosts) {
 							 defined $opt_failed && $dead_run != 0) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $esize{$hostpart};
+							printf "%9s$unit", &print_size($esize{$hostpart});
 							if ($dead_run) {
 								print " failed: killed while";
 								$exit_status |= $STATUS_FAILED;
@@ -1060,7 +1060,7 @@ foreach $host (sort @hosts) {
 								close FF;
 							}
 							if(defined($size)) {
-								printf " (%s$unit done (%0.2f%%))", $size, 100.0 * $size/$esize{$hostpart};
+								printf " (%s$unit done (%0.2f%%))", &print_size($size), 100.0 * $size/$esize{$hostpart};
 								$dtsize += $size;
 							}
 							if( defined $starttime ) {
@@ -1076,7 +1076,7 @@ foreach $host (sort @hosts) {
 							 defined $opt_failed && $dead_run != 0) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $size{$hostpart};
+							printf "%9s$unit", &print_size($size{$hostpart});
 							if ($dead_run) {
 								print " failed: killed while";
 								$exit_status |= $STATUS_FAILED;
@@ -1111,7 +1111,7 @@ foreach $host (sort @hosts) {
 								close FF;
 							}
 							if(defined($size) and defined($size{$hostpart}) and $size{$hostpart} > 0) {
-								printf " (%s$unit done (%0.2f%%))", $size, 100.0 * $size/$size{$hostpart};
+								printf " (%s$unit done (%0.2f%%))", &print_size($size), 100.0 * $size/$size{$hostpart};
 							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
@@ -1163,7 +1163,7 @@ foreach $host (sort @hosts) {
 							 (defined $opt_waittaper && ($taper_finished{$hostpart} == -1))) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $xsize;
+							printf "%9s$unit", &print_size($xsize);
 							print " dump done," if defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1;
 							if($in_flush == 0) {
 								if ($tape_config{$hostpart}) {
@@ -1216,7 +1216,7 @@ foreach $host (sort @hosts) {
 						if( defined $opt_finished ) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $size{$hostpart};
+							printf "%9s$unit", &print_size($size{$hostpart});
 							if($in_flush == 0) {
 								if (defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == -3) {
 									$exit_status |= $STATUS_FAILED;
@@ -1279,7 +1279,7 @@ foreach $host (sort @hosts) {
 							if( defined $opt_waitdumping ) {
 								printf "%8s ", $datestamp if defined $opt_date;
 								printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-								printf "%9s$unit", $esize{$hostpart};
+								printf "%9s$unit", &print_size($esize{$hostpart});
 								if ($dead_run) {
 									print " failed: process terminated while";
 									$exit_status |= $STATUS_FAILED;
@@ -1315,7 +1315,7 @@ foreach $host (sort @hosts) {
 							 defined $opt_failed && $dead_run != 0) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $esize{$hostpart};
+							printf "%9s$unit", &print_size($esize{$hostpart});
 							if ($dead_run) {
 								print " failed: killed while";
 								$exit_status |= $STATUS_FAILED;
@@ -1341,7 +1341,7 @@ foreach $host (sort @hosts) {
 						if( defined $opt_waittaper ) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf "%9s$unit", $size{$hostpart};
+							printf "%9s$unit", &print_size($size{$hostpart});
 							print " dump done";
 							if( defined $starttime ) {
 								print " (", &showtime($dump_time{$hostpart}), ")";
@@ -1374,7 +1374,7 @@ foreach $host (sort @hosts) {
 					if( defined $opt_waittaper ) {
 						printf "%8s ", $datestamp if defined $opt_date;
 						printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-						printf "%9s$unit", $size{$hostpart};
+						printf "%9s$unit", &print_size($size{$hostpart});
 						if ($dead_run) {
 							print " process terminated while";
 						}
@@ -1417,7 +1417,7 @@ if (defined $opt_summary) {
 			$dtsize ? ($dtsize * 1.0 / $dtesize) * 100 : 0.0,
 			$estsize ? ($dtesize * 1.0 / $estsize) * 100 : 0.0;
 	} else {
-		printf "dumping to tape : %3d %20dsunit           (%6.2f%%)\n",
+		printf "dumping to tape : %3d %20d$unit           (%6.2f%%)\n",
 			$dtpartition, int($dtesize),
 			$estsize ? ($dtesize * 1.0 / $estsize) * 100 : 0.0;
 	}
@@ -1586,6 +1586,24 @@ sub dump_size() {
 		close(DUMP);
 	}
 	return $dsize;
+}
+
+sub print_size() {
+	local $size = shift;
+
+	if ($size >= 1) {
+		return int($size);
+	} else {
+		return "0";
+		my $x = 10;
+		my $new_size;
+		do {
+			$x *= 10;
+			return "0" if $x > 1000;
+			$new_size = int($size*$x)/$x;
+		} while ($new_size == 0);
+		return $new_size;
+	}
 }
 
 sub unctime() {

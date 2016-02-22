@@ -183,6 +183,8 @@ catalogs = \
 	catalogs/longstrange.cat \
 	catalogs/multi-taper.cat \
 	catalogs/normal.cat \
+	catalogs/number.cat \
+	catalogs/number2.cat \
 	catalogs/plannerfail.cat \
 	catalogs/quoted.cat \
 	catalogs/resultsmissing.cat \

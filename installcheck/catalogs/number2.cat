@@ -1,0 +1,251 @@
+%F log/amdump
+amdump: start at Tue Dec  8 16:17:57 EST 2015
+amdump: datestamp 20151208
+amdump: starttime 20151208161757
+amdump: starttime-locale-independent 2015-12-08 16:17:57 EST
+planner: pid 23404 executable /usr/lib/amanda/planner version 3.3.7
+planner: build: VERSION="Amanda-3.3.7"
+planner:        BUILT_DATE="Wed Jan 21 15:35:49 PST 2015" BUILT_MACH=""
+planner:        BUILT_REV="6078" BUILT_BRANCH="tags" CC="gcc"
+planner: paths: bindir="/usr/bin" sbindir="/usr/sbin"
+planner:        libexecdir="/usr/libexec" amlibexecdir="/usr/lib/amanda"
+planner:        mandir="/usr/share/man" AMANDA_TMPDIR="/tmp/amanda"
+planner:        AMANDA_DBGDIR="/var/log/amanda" CONFIG_DIR="/etc/amanda"
+planner:        DEV_PREFIX="/dev/" RDEV_PREFIX="/dev/r"
+planner:        DUMP="/sbin/dump" RESTORE="/sbin/restore" VDUMP=UNDEF
+planner:        VRESTORE=UNDEF XFSDUMP=UNDEF XFSRESTORE=UNDEF VXDUMP=UNDEF
+planner:        VXRESTORE=UNDEF SAMBA_CLIENT="/usr/bin/smbclient"
+planner:        GNUTAR="/bin/gtar" COMPRESS_PATH="/bin/gzip"
+planner:        UNCOMPRESS_PATH="/bin/gzip"  LPRCMD=UNDEF  MAILER=UNDEF
+planner:        listed_incr_dir="/var/lib/amanda/gnutar-lists"
+planner: defs:  DEFAULT_SERVER="localhost" DEFAULT_CONFIG="DailySet1"
+planner:        DEFAULT_TAPE_SERVER="localhost" DEFAULT_TAPE_DEVICE=""
+planner:        NEED_STRSTR AMFLOCK_POSIX AMFLOCK_FLOCK AMFLOCK_LOCKF
+planner:        AMFLOCK_LNLOCK SETPGRP_VOID ASSERTIONS AMANDA_DEBUG_DAYS=4
+planner:        BSD_SECURITY USE_AMANDAHOSTS CLIENT_LOGIN="amandabackup"
+planner:        CHECK_USERID HAVE_GZIP COMPRESS_SUFFIX=".gz"
+planner:        COMPRESS_FAST_OPT="--fast" COMPRESS_BEST_OPT="--best"
+planner:        UNCOMPRESS_OPT="-dc"
+planner:        CONFIGURE_ARGS=" 'CFLAGS=-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i686 -mtune=atom -fasynchronous-unwind-tables -g -pipe' 'CXXFLAGS=-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i686 -mtune=atom -fasynchronous-unwind-tables' 'CPPFLAGS=-I/opt/zmanda/amanda/common/include -I/usr/include' 'LDFLAGS=-Wl,-rpath=/opt/zmanda/amanda/common/lib -L/opt/zmanda/amanda/common/lib ' 'PERL=/opt/zmanda/amanda/perl/bin/perl' '--enable-as-needed' '--prefix=/usr' '--libdir=/usr/lib' '--sysconfdir=/etc' '--sharedstatedir=/var' '--localstatedir=/var' '--with-amdatadir=/var/lib/amanda' '--with-amperldir=/usr/lib/amanda/perl' '--with-amlibdir=/usr/lib' '--with-amlibexecdir=/usr/lib/amanda' '--with-gnuplot=/usr/bin/gnuplot' '--with-gnutar-listdir=/var/lib/amanda/gnutar-lists' '--with-amandates=/etc/amandates' '--with-index-server=localhost' '--with-tape-server=localhost' '--with-user=amandabackup' '--with-group=disk' '--with-owner=buildslave' '--with-fqdn' '--with-bsd-security' '--with-bsdtcp-security' '--with-bsdudp-security' '--with-ssh-security' '--with-udpportrange=800,840' '--with-tcpportrange=11000,11040' '--with-low-tcpportrange=800,840' '--with-debugging=/var/log/amanda' '--with-assertions' '--with-libcurl=/opt/zmanda/amanda/common' '--with-readline' '--enable-s3-device' '--disable-installperms' '--disable-syntax-checks' 'PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/share/pkgconfig'"
+READING CONF INFO...
+driver: pid 23405 executable /usr/lib/amanda/driver version 3.3.7
+planner: timestamp 20151208161757
+driver: tape size 2684354560
+driver: adding holding disk 0 dir /mnt/amanda-holding/TESTCONF size 7299510272 chunksize 2096128
+reserving 7299510272 out of 7299510272 for degraded-mode dumps
+driver: started dumper0 pid 23407
+driver: send-cmd time 0.072 to dumper0: START 20151208161757
+driver: started dumper1 pid 23408
+driver: send-cmd time 0.072 to dumper1: START 20151208161757
+planner: tape_length is set from tape length (2684354560 KB) * runtapes (20) == 53687091200 KB
+planner: time 0.004: startup took 0.004 secs
+
+SENDING FLUSHES...
+Cleaning up holding disk '/mnt/amanda-holding/TESTCONF'
+..skipping running directory '20151208161757'
+driver: started dumper2 pid 23409
+driver: send-cmd time 0.073 to dumper2: START 20151208161757
+ENDFLUSH
+
+SETTING UP FOR ESTIMATES...
+driver: started dumper3 pid 23410
+driver: send-cmd time 0.073 to dumper3: START 20151208161757
+driver: send-cmd time 0.073 to taper: START-TAPER worker0 20151208161757
+driver: start time 0.073 inparallel 4 bandwidth 2000000 diskspace 7299510272  dir OBSOLETE datestamp 20151208161757 driver: drain-ends tapeq FIRST big-dumpers sSsS
+driver: state time 0.073 free kps: 2000000 space: 7299510272 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 0.073 if default: free 2000000
+driver: hdisk-state time 0.073 hdisk 0: free 7299510272 dumpers 0
+dumper: pid 23410 executable dumper3 version 3.3.7
+dumper: pid 23409 executable dumper2 version 3.3.7
+dumper: pid 23407 executable dumper0 version 3.3.7
+dumper: pid 23408 executable dumper1 version 3.3.7
+foo:home-j overdue 32 days for level 0
+setup_estimate: foo:home-j: command 0, options: none    last_level 1 next_level0 -32 level_days 2    getting estimates 0 (-3) 1 (-3) -1 (-3)
+planner: time 0.069: setting up estimates for foo:home-l
+foo:home-l overdue 5 days for level 0
+setup_estimate: foo:home-l: command 0, options: none    last_level 0 next_level0 -5 level_days 1    getting estimates 0 (-3) 1 (-3) -1 (-3)
+planner: time 0.086: setting up estimates for foo:home-srdas-main
+foo:home-srdas-main overdue 5 days for level 0
+setup_estimate: foo:home-srdas-main: command 0, options: none    last_level 0 next_level0 -5 level_days 1    getting estimates 0 (-3) 1 (-3) -1 (-3)
+planner: time 0.134: setting up estimates took 0.130 secs
+
+GETTING ESTIMATES...
+planner time 1.306: got result for host foo disk home-srdas-main: 0 -> 1379287104K, 1 -> 100000K, -1 -> -3K
+planner time 1.310: got result for host foo disk home-l: 0 -> 3770179776K, 1 -> 100000K, -1 -> -3K
+planner time 1.311: got result for host foo disk home-j: 0 -> 1283115584K, 1 -> 57792K, -1 -> -3K
+planner: time 1.658: got result for host foo disk home-srdas-main: 0 -> 1379287104K, 1 -> 100000K, -1 -> -3K
+planner: time 1.658: got result for host foo disk home-l: 0 -> 3770179776K, 1 -> 100000K, -1 -> -3K
+planner: time 1.658: got result for host foo disk home-j: 0 -> 1283115584K, 1 -> 57792K, -1 -> -3K
+planner: time 1.659: getting estimates took 1.524 secs
+FAILED QUEUE: empty
+DONE QUEUE:
+  0: foo home-srdas-main
+  1: foo home-l
+  2: foo home-j
+
+ANALYZING ESTIMATES...
+pondering foo:home-srdas-main... next_level0 -5 last_level 0 (due for level 0) (picking inclevel for degraded mode)   picklev: last night 0, so tonight level 1
+
+  curr level 0 nsize 1379287104 csize 1379287104 total size 11275917696 total_lev0 11275902912 balanced-lev0size 150345365
+pondering foo:home-l... next_level0 -5 last_level 0 (due for level 0) (picking inclevel for degraded mode)   picklev: last night 0, so tonight level 1
+
+  curr level 0 nsize 3770179776 csize 3770179776 total size 22029035968 total_lev0 22029008512 balanced-lev0size 293720100
+pondering foo:home-j... next_level0 -32 last_level 1 (due for level 0) (picking inclevel for degraded mode)   pick: size 57792 level 1 days 2 (thresh 256623116K, 1 days)
+
+  curr level 0 nsize 1283115584 csize 1283115584 total size 23666776480 total_lev0 23666745856 balanced-lev0size 315556596
+INITIAL SCHEDULE (size 28712158464):
+  foo home-j pri 33 lev 0 nsize 1283115584 csize 1283115584
+  foo home-l pri 6 lev 0 nsize 3770179776 csize 3770179776
+  foo home-srdas-main pri 6 lev 0 nsize 1379287104 csize 1379287104
+
+DELAYING DUMPS IF NEEDED, total_size 28712158464, tape length 53687091200 mark 1024
+  delay: Total size now 28712158464.
+
+PROMOTING DUMPS IF NEEDED, total_lev0 28712114112, balanced_size 382828165...
+planner: time 1.664: analysis took 0.005 secs
+
+GENERATING SCHEDULE:
+--------
+DUMP foo ffffffff9efefbffffffffff3f home-j 20151208161757 33 0 1970:1:1:0:0:0 1283115584 1283115584 34089 37639 1 2015:7:29:21:48:35 57792 57792 319 181
+DUMP foo ffffffff9efefbffffffffff3f home-l 20151208161757 6 0 1970:1:1:0:0:0 3770179776 3770179776 486849 7744 1 2015:8:25:20:35:28 100000 100000 12 8121
+DUMP foo ffffffff9efefbffffffffff3f home-srdas-main 20151208161757 6 0 1970:1:1:0:0:0 1379287104 1379287104 61162 22551 1 2015:8:25:20:35:28 100000 100000 97 1024
+--------
+driver: flush size 0
+driver: state time 108.049 free kps: 2000000 space: 7299510272 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 40 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 108.049 if default: free 2000000
+driver: hdisk-state time 108.049 hdisk 0: free 7299510272 dumpers 0
+driver: result time 108.049 from taper: TAPER-OK worker0
+
+driver: send-cmd time 301646.314 to chunker1: START 20151208161757
+driver: send-cmd time 301646.314 to chunker1: PORT-WRITE 01-00070 /mnt/amanda-holding/TESTCONF/20151208161757/foo.home-srdas-main.0 foo ffffffff9efefbffffffffff3f home-srdas-main 0 1970:1:1:0:0:0 2096128 APPLICATION 1379308224 |;auth=bsdtcp;index;exclude-file=./srdas/wd/ADNI2;exclude-file=./srdas/wd/7T;include-file=./srdas;
+chunker: pid 13592 executable chunker1 version 3.3.7
+driver: result time 301646.361 from chunker1: PORT 11019 127.0.0.1:11020
+driver: send-cmd time 301646.376 to dumper1: PORT-DUMP 01-00070 11019 2 foo ffffffff9efefbffffffffff3f home-srdas-main /export/home 0 1970:1:1:0:0:0 amgtar "" "" "" "" bsdtcp AMANDA 127.0.0.1:11020 20 |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n  <exclude>\n    <file>./srdas/wd/ADNI2</file>\n    <file>./srdas/wd/7T</file>\n  </exclude>\n  <include>\n    <file>./srdas</file>\n  </include>\n    <property>\n      <name>zmc-show-advanced</name>\n      <value>on</value>\n    </property>\n    <property>\n      <name>zmc-amanda-app</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-version</name>\n      <value>3.3.7</value>\n    </property>\n    <property>\n      <name>zmc-disklist</name>\n      <value>TESTCONF</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-app</name>\n      <value>1.23</value>\n    </property>\n    <property>\n      <name>zmc-version</name>\n      <value>3</value>\n    </property>\n    <property>\n      <name>zmc-extended-attributes</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>last-modified-time</name>\n      <value encoding=\"raw\" raw=\"MjAxNS0wMy0wNSAxNzo0MjoyMQ==\">2015-03-05_17:42:21</value>\n    </property>\n    <property>\n      <name>zmc-type</name>\n      <value>unix</value>\n    </property>\n    <property>\n      <name>last-modified-by</name>\n      <value>admin</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-platform</name>\n      <value encoding=\"raw\" raw=\"Q2VudE9TICA2LjMgKEZpbmFsKQ==\">CentOS__6.3_(Final)</value>\n    </property>\n    <property>\n      <name>creation-time</name>\n      <value encoding=\"raw\" raw=\"MjAxNS0wMy0wNSAxNjo0OTo0MQ==\">2015-03-05_16:49:41</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-date</name>\n      <value>20150515161226</value>\n    </property>\n    <property>\n      <name>zmc-occ</name>\n      <value>55953419764</value>\n    </property>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>sparse</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>one-file-system</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>xattrs</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>acls</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>selinux</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n  </backup-program>\n"
+driver: state time 301646.376 free kps: 1935006 space: 1987477088 taper: idle idle-dumpers: 2 qlen tapeq: 4 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 301646.376 if default: free 1935006
+driver: hdisk-state time 301646.376 hdisk 0: free 1987477088 dumpers 2
+driver: started chunker0 pid 13623
+driver: send-cmd time 301756.138 to chunker0: START 20151208161757
+driver: send-cmd time 301756.138 to chunker0: PORT-WRITE 00-00072 /mnt/amanda-holding/TESTCONF/20151208161757/foo.home-j.0 foo ffffffff9efefbffffffffff3f home-j 0 1970:1:1:0:0:0 2096128 APPLICATION 1283135232 |;auth=bsdtcp;index;exclude-file=./jtduda;include-file=./[Jj]*;include-optional;
+chunker: pid 13623 executable chunker0 version 3.3.7
+driver: result time 301756.171 from chunker0: PORT 11037 127.0.0.1:11038
+driver: send-cmd time 301756.172 to dumper0: PORT-DUMP 00-00072 11037 2 foo ffffffff9efefbffffffffff3f home-j /export/home 0 1970:1:1:0:0:0 amgtar "" "" "" "" bsdtcp AMANDA 127.0.0.1:11038 20 |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n  <exclude>\n    <file>./jtduda</file>\n  </exclude>\n  <include>\n    <file>./[Jj]*</file>\n    <optional>YES</optional>\n  </include>\n    <property>\n      <name>zmc-show-advanced</name>\n      <value>on</value>\n    </property>\n    <property>\n      <name>zmc-amanda-app</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-version</name>\n      <value>3.3.7</value>\n    </property>\n    <property>\n      <name>zmc-disklist</name>\n      <value>TESTCONF</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-app</name>\n      <value>1.23</value>\n    </property>\n    <property>\n      <name>zmc-version</name>\n      <value>3</value>\n    </property>\n    <property>\n      <name>zmc-extended-attributes</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>last-modified-time</name>\n      <value encoding=\"raw\" raw=\"MjAxNS0wMy0wNSAxNzo0MjoyMQ==\">2015-03-05_17:42:21</value>\n    </property>\n    <property>\n      <name>zmc-type</name>\n      <value>unix</value>\n    </property>\n    <property>\n      <name>last-modified-by</name>\n      <value>admin</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-platform</name>\n      <value encoding=\"raw\" raw=\"Q2VudE9TICA2LjMgKEZpbmFsKQ==\">CentOS__6.3_(Final)</value>\n    </property>\n    <property>\n      <name>creation-time</name>\n      <value encoding=\"raw\" raw=\"MjAxNS0wMy0wNSAxNjo0OTo0MQ==\">2015-03-05_16:49:41</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-date</name>\n      <value>20150515161226</value>\n    </property>\n    <property>\n      <name>zmc-occ</name>\n      <value>55953419764</value>\n    </property>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>sparse</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>one-file-system</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>xattrs</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>acls</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>selinux</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n  </backup-program>\n"
+driver: state time 301756.172 free kps: 1939810 space: 697493728 taper: writing idle-dumpers: 2 qlen tapeq: 4 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 301756.172 if default: free 1939810
+driver: hdisk-state time 301756.172 hdisk 0: free 697493728 dumpers 2
+driver: state time 302363.286 free kps: 1939810 space: 697493728 taper: writing idle-dumpers: 2 qlen tapeq: 4 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 302363.286 if default: free 1939810
+driver: hdisk-state time 302363.286 hdisk 0: free 697493728 dumpers 2
+driver: result time 302363.286 from dumper0: DONE 00-00072 14756352 14756352 607 "[sec 607.063 kb 14756352 kps 24307.7 orig-kb 14756352]"
+driver: finished-cmd time 302363.286 dumper0 dumped foo:home-j
+driver: send-cmd time 302363.286 to chunker0: DONE 00-00072
+driver: state time 302363.286 free kps: 1939810 space: 697493728 taper: writing idle-dumpers: 2 qlen tapeq: 4 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 302363.286 if default: free 1939810
+driver: hdisk-state time 302363.286 hdisk 0: free 697493728 dumpers 2
+driver: result time 302363.286 from chunker0: DONE 00-00072 14756352 "[sec 607.098 kb 14756352 kps 24306.8]"
+driver: finished-cmd time 302363.286 chunker0 chunked foo:home-j
+driver: state time 307080.350 free kps: 1977449 space: 1965872352 taper: writing idle-dumpers: 3 qlen tapeq: 5 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-diskspace
+driver: interface-state time 307080.350 if default: free 1977449
+driver: hdisk-state time 307080.350 hdisk 0: free 1965872352 dumpers 1
+driver: started chunker0 pid 23335
+driver: send-cmd time 336669.382 to chunker0: START 20151208161757
+driver: send-cmd time 336669.382 to chunker0: PORT-WRITE 00-00075 /mnt/amanda-holding/TESTCONF/20151208161757/foo.home-l.0 foo ffffffff9efefbffffffffff3f home-l 0 1970:1:1:0:0:0 2096128 APPLICATION 3770237376 |;auth=bsdtcp;index;include-file=./[Ll]*;include-optional;
+chunker: pid 23335 executable chunker0 version 3.3.7
+driver: result time 336669.399 from chunker0: PORT 11013 127.0.0.1:11014
+driver: send-cmd time 336669.417 to dumper0: PORT-DUMP 00-00075 11013 2 foo ffffffff9efefbffffffffff3f home-l /export/home 0 1970:1:1:0:0:0 amgtar "" "" "" "" bsdtcp AMANDA 127.0.0.1:11014 20 |"  <auth>bsdtcp</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n  <include>\n    <file>./[Ll]*</file>\n    <optional>YES</optional>\n  </include>\n    <property>\n      <name>zmc-show-advanced</name>\n      <value>on</value>\n    </property>\n    <property>\n      <name>zmc-amanda-app</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-version</name>\n      <value>3.3.7</value>\n    </property>\n    <property>\n      <name>zmc-disklist</name>\n      <value>TESTCONF</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-app</name>\n      <value>1.23</value>\n    </property>\n    <property>\n      <name>zmc-version</name>\n      <value>3</value>\n    </property>\n    <property>\n      <name>zmc-extended-attributes</name>\n      <value>gtar</value>\n    </property>\n    <property>\n      <name>last-modified-time</name>\n      <value encoding=\"raw\" raw=\"MjAxNS0wMy0wNSAxNzo0MjoyMQ==\">2015-03-05_17:42:21</value>\n    </property>\n    <property>\n      <name>zmc-type</name>\n      <value>unix</value>\n    </property>\n    <property>\n      <name>last-modified-by</name>\n      <value>admin</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-platform</name>\n      <value encoding=\"raw\" raw=\"Q2VudE9TICA2LjMgKEZpbmFsKQ==\">CentOS__6.3_(Final)</value>\n    </property>\n    <property>\n      <name>creation-time</name>\n      <value encoding=\"raw\" raw=\"MjAxNS0wMy0wNSAxNjo0OTo0MQ==\">2015-03-05_16:49:41</value>\n    </property>\n    <property>\n      <name>zmc-amcheck-date</name>\n      <value>20150515161226</value>\n    </property>\n    <property>\n      <name>zmc-occ</name>\n      <value>55953419764</value>\n    </property>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>sparse</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>one-file-system</name>\n      <value>yes</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>xattrs</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>acls</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>selinux</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>no</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n  </backup-program>\n"
+driver: state time 336669.417 free kps: 1969705 space: 346431232 taper: idle idle-dumpers: 2 qlen tapeq: 3 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 336669.417 if default: free 1969705
+driver: hdisk-state time 336669.417 hdisk 0: free 346431232 dumpers 2
+driver: send-cmd time 343847.191 to taper: FILE-WRITE worker0 02-00077 /mnt/amanda-holding/TESTCONF/20151208161757/foo.home-srdas-wd-7T.0 foo home-srdas-wd-7T 0 20151208161757 "" "" "" "" "" "" "" "" 1333952128
+driver: startaflush: FIRST foo home-srdas-wd-7T 1333972512 410507584
+driver: state time 343847.191 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 343847.191 if default: free 1969705
+driver: hdisk-state time 343847.191 hdisk 0: free 801235552 dumpers 2
+taper: status file foo home-srdas-wd-7T:/tmp/amanda/taper_status_file__SAQKJ
+driver: state time 343847.210 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 343847.210 if default: free 1969705
+driver: hdisk-state time 343847.210 hdisk 0: free 801235552 dumpers 2
+driver: result time 343847.210 from taper: READY 02-00077
+driver: result time 307121.522 from taper: REQUEST-NEW-TAPE 02-00077
+driver: send-cmd time 307121.538 to taper: START-SCAN worker0 02-00077
+driver: send-cmd time 307121.538 to taper: NEW-TAPE worker0 02-00077
+taper: wrote label 'TESTCONF-000036'
+driver: result time 307230.472 from taper: NEW-TAPE 02-00077 TESTCONF-000036
+driver: state time 349652.206 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 349652.206 if default: free 1969705
+driver: hdisk-state time 349652.206 hdisk 0: free 801235552 dumpers 2
+driver: result time 349652.206 from taper: PARTDONE 02-00077 TESTCONF-000036 5 334208832 "[sec 5804.946201 bytes 342229843968 kps 57573.114449 orig-kb 1333952128]"
+driver: state time 349668.501 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 349668.501 if default: free 1969705
+driver: hdisk-state time 349668.501 hdisk 0: free 801235552 dumpers 2
+driver: result time 349668.501 from taper: REQUEST-NEW-TAPE 02-00077
+driver: send-cmd time 349668.502 to taper: TAKE-SCRIBE-FROM worker0 02-00077 worker1
+driver: state time 349668.502 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 349668.502 if default: free 1969705
+driver: hdisk-state time 349668.502 hdisk 0: free 801235552 dumpers 2
+driver: state time 349668.521 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 349668.521 if default: free 1969705
+driver: hdisk-state time 349668.521 hdisk 0: free 801235552 dumpers 2
+driver: result time 349668.521 from taper: READY 02-00077
+driver: result time 4564.714 from taper: REQUEST-NEW-TAPE 02-00077
+driver: send-cmd time 4564.714 to taper: START-SCAN worker0 02-00077
+driver: send-cmd time 4564.715 to taper: NEW-TAPE worker0 02-00077
+taper: wrote label 'TESTCONF-000031'
+driver: result time 4570.156 from taper: NEW-TAPE 02-00077 TESTCONF-000031
+driver: state time 350969.730 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 350969.730 if default: free 1969705
+driver: hdisk-state time 350969.730 hdisk 0: free 801235552 dumpers 2
+driver: result time 350969.730 from taper: PARTDONE 02-00077 TESTCONF-000031 11 78545984 "[sec 1301.150498 bytes 80431087616 kps 60366.563377 orig-kb 1333952128]"
+driver: state time 350988.962 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 350988.962 if default: free 1969705
+driver: hdisk-state time 350988.962 hdisk 0: free 801235552 dumpers 2
+driver: result time 350988.962 from taper: REQUEST-NEW-TAPE 02-00077
+driver: send-cmd time 350988.978 to taper: START-SCAN worker0 02-00077
+driver: send-cmd time 350988.978 to taper: NEW-TAPE worker0 02-00077
+driver: state time 351175.385 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 351175.385 if default: free 1969705
+driver: hdisk-state time 351175.385 hdisk 0: free 801235552 dumpers 2
+driver: result time 351175.385 from taper: NO-NEW-TAPE 02-00077
+driver: state time 351175.417 free kps: 1969705 space: 801235552 taper: writing idle-dumpers: 2 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 351175.417 if default: free 1969705
+driver: hdisk-state time 351175.417 hdisk 0: free 801235552 dumpers 2
+driver: result time 351175.417 from taper: PARTIAL 02-00077 INPUT-GOOD TAPE-ERROR "[sec 7328.000000 bytes 422660931584 kps 56325.711790 orig-kb 1333952128]" "" "error from mtx: SCSI error; Sense Key=Not Ready"
+driver: finished-cmd time 351175.417 taper wrote foo:home-srdas-wd-7T
+driver: taper failed foo home-srdas-wd-7T with tape error: error from mtx: SCSI error; Sense Key=Not Ready
+driver: taper will retry foo home-srdas-wd-7T
+driver: state time 352338.815 free kps: 1969705 space: 801235552 taper: idle idle-dumpers: 2 qlen tapeq: 2 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 352338.815 if default: free 1969705
+driver: hdisk-state time 352338.815 hdisk 0: free 801235552 dumpers 2
+driver: state time 352367.303 free kps: 1969705 space: 732270144 taper: idle idle-dumpers: 2 qlen tapeq: 2 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 352367.303 if default: free 1969705
+driver: hdisk-state time 352367.303 hdisk 0: free 732270144 dumpers 2
+driver: result time 352367.303 from dumper1: DONE 01-00070 1379592000 1379592000 50721 "[sec 50720.749 kb 1379592000 kps 27199.8 orig-kb 1379592000]"
+driver: finished-cmd time 352367.303 dumper1 dumped foo:home-srdas-main
+driver: send-cmd time 352367.303 to chunker1: DONE 01-00070
+driver: state time 352367.303 free kps: 1969705 space: 732270144 taper: idle idle-dumpers: 2 qlen tapeq: 2 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 352367.303 if default: free 1969705
+driver: hdisk-state time 352367.303 hdisk 0: free 732270144 dumpers 2
+driver: result time 352367.304 from chunker1: DONE 01-00070 1379592000 "[sec 50720.903 kb 1379592000 kps 27200.1]"
+driver: finished-cmd time 352367.304 chunker1 chunked foo:home-srdas-main
+driver: state time 421604.845 free kps: 1992256 space: 800930688 taper: idle idle-dumpers: 3 qlen tapeq: 3 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 421604.845 if default: free 1992256
+driver: hdisk-state time 421604.845 hdisk 0: free 800930688 dumpers 1
+driver: result time 421604.846 from dumper0: DONE 00-00075 3163846144 3163846144 84935 "[sec 84935.308 kb 3163846144 kps 37250.1 orig-kb 3163846144]"
+driver: finished-cmd time 421604.846 dumper0 dumped foo:home-l
+driver: send-cmd time 421604.846 to chunker0: DONE 00-00075
+driver: state time 421604.846 free kps: 1992256 space: 800930688 taper: idle idle-dumpers: 3 qlen tapeq: 3 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 421604.846 if default: free 1992256
+driver: hdisk-state time 421604.846 hdisk 0: free 800930688 dumpers 1
+driver: result time 421604.846 from chunker0: DONE 00-00075 3163846144 "[sec 84935.387 kb 3163846144 kps 37250.6]"
+driver: finished-cmd time 421604.846 chunker0 chunked foo:home-l
+driver: state time 421605.770 free kps: 2000000 space: 1407273600 taper: idle idle-dumpers: 4 qlen tapeq: 4 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 421605.770 if default: free 2000000
+driver: hdisk-state time 421605.770 hdisk 0: free 1407273600 dumpers 0
+driver: QUITTING time 421605.771 telling children to quit
+driver: send-cmd time 421605.771 to dumper0: QUIT ""
+driver: send-cmd time 421605.777 to dumper1: QUIT ""
+driver: send-cmd time 421605.778 to dumper2: QUIT ""
+driver: send-cmd time 421605.778 to dumper3: QUIT ""
+driver: send-cmd time 421605.778 to taper: QUIT
+driver: FINISHED time 421625.647
+amdump: end at Sun Dec 13 13:25:03 EST 2015

@@ -1,0 +1,743 @@
+%F log/amdump
+amdump: start at Mon Feb 22 09:25:57 EST 2016
+amdump: datestamp 20160222
+amdump: starttime 20160222092557
+amdump: starttime-locale-independent 2016-02-22 09:25:57 EST
+planner: pid 16192 executable /amanda/h1/linux-3.3/libexec/amanda/planner version 3.3.9.git.384bfcee
+planner: build: VERSION="Amanda-3.3.9.git.384bfcee"
+planner:        BUILT_DATE="Fri Feb 5 17:41:54 EST 2016" BUILT_MACH=""
+planner:        BUILT_REV=UNDEF BUILT_BRANCH=UNDEF CC="gcc"
+planner: paths: bindir="/amanda/h1/linux-3.3/bin"
+planner:        sbindir="/amanda/h1/linux-3.3/sbin"
+planner:        libexecdir="/amanda/h1/linux-3.3/libexec"
+planner:        amlibexecdir="/amanda/h1/linux-3.3/libexec/amanda"
+planner:        mandir="/amanda/h1/man" AMANDA_TMPDIR="/tmp/amanda"
+planner:        AMANDA_DBGDIR="/tmp/amanda"
+planner:        CONFIG_DIR="/amanda/h1/etc/amanda" DEV_PREFIX="/dev/"
+planner:        RDEV_PREFIX="/dev/" DUMP=UNDEF RESTORE=UNDEF VDUMP=UNDEF
+planner:        VRESTORE=UNDEF XFSDUMP=UNDEF XFSRESTORE=UNDEF VXDUMP=UNDEF
+planner:        VXRESTORE=UNDEF SAMBA_CLIENT="/usr/bin/smbclient"
+planner:        GNUTAR="/usr/bin/tar" COMPRESS_PATH="/usr/bin/gzip"
+planner:        UNCOMPRESS_PATH="/usr/bin/gzip"  LPRCMD=UNDEF  MAILER=UNDEF
+planner:        listed_incr_dir="/var/gnutar-lists"
+planner: defs:  DEFAULT_SERVER="localhost.localdomain"
+planner:        DEFAULT_CONFIG="test"
+planner:        DEFAULT_TAPE_SERVER="localhost.localdomain"
+planner:        DEFAULT_TAPE_DEVICE="/dev/nst3" NEED_STRSTR AMFLOCK_POSIX
+planner:        AMFLOCK_FLOCK AMFLOCK_LOCKF AMFLOCK_LNLOCK SETPGRP_VOID
+planner:        ASSERTIONS AMANDA_DEBUG_DAYS=4 BSD_SECURITY RSH_SECURITY
+planner:        USE_AMANDAHOSTS CLIENT_LOGIN="martinea" CHECK_USERID
+planner:        HAVE_GZIP COMPRESS_SUFFIX=".gz" COMPRESS_FAST_OPT="--fast"
+planner:        COMPRESS_BEST_OPT="--best" UNCOMPRESS_OPT="-dc"
+planner:        CONFIGURE_ARGS=" '--prefix=/amanda/h1/linux-3.3' '--exec-prefix=/amanda/h1/linux-3.3' '--disable-installperms' '--with-smbclient=/usr/bin/smbclient' '--with-configdir=/amanda/h1/etc/amanda' '--with-gnutar-listdir=/var/gnutar-lists' '--with-gnutar=/bin/tar' '--without-amperldir' '--with-bsd-security' '--with-bsdtcp-security' '--with-bsdudp-security' '--with-rsh-security' '--with-ssh-security' '--without-krb5-security' '--with-user=martinea' '--with-group=martinea' '--with-config=test' '--with-tape-device=/dev/nst3' '--with-assertions' '--enable-manpage-build' '--mandir=/amanda/h1/man' '--enable-werror' '--enable-swig-error' '--enable-syntax-checks'"
+READING CONF INFO...
+driver: pid 16193 executable /amanda/h1/linux-3.3/libexec/amanda/driver version 3.3.9.git.384bfcee
+planner: timestamp 20160222092557
+planner: tape_length is set from maxdumpsize (209715200 KB)
+planner: time 0.000: startup took 0.000 secs
+
+SENDING FLUSHES...
+Cleaning up holding disk '/amanda/h1/hdisk-3.3'
+ ..cleaning up holding directory '20160222084606'
+driver: tape size 3145728
+driver: adding holding disk 0 dir /amanda/h1/hdisk-3.3 size 53207040 chunksize 1048576
+reserving 53207040 out of 53207040 for degraded-mode dumps
+FLUSH localhost.localdomain /bootAMGTAR 20160222084606 1 /amanda/h1/hdisk-3.3/20160222084606/localhost.localdomain._bootAMGTAR.1
+ENDFLUSH
+
+SETTING UP FOR ESTIMATES...
+planner: time 0.001: setting up estimates for localhost.localdomain:1g
+localhost.localdomain:1g overdue 70 days for level 0
+setup_estimate: localhost.localdomain:1g: command 1, options: none    last_level -1 next_level0 -70 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.001: setting up estimates for localhost.localdomain:/bootAMGTAR
+driver: started dumper0 pid 16195
+driver: send-cmd time 0.006 to dumper0: START 20160222092557
+localhost.localdomain:/bootAMGTAR overdue 70 days for level 0
+setup_estimate: localhost.localdomain:/bootAMGTAR: command 1, options: none    last_level -1 next_level0 -70 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.001: setting up estimates took 0.000 secs
+
+GETTING ESTIMATES...
+driver: started dumper1 pid 16196
+driver: send-cmd time 0.006 to dumper1: START 20160222092557
+driver: started dumper2 pid 16198
+driver: send-cmd time 0.006 to dumper2: START 20160222092557
+driver: started dumper3 pid 16199
+driver: send-cmd time 0.007 to dumper3: START 20160222092557
+driver: send-cmd time 0.007 to taper: START-TAPER worker0 20160222092557
+driver: start time 0.007 inparallel 4 bandwidth 800000000 diskspace 53207040  dir OBSOLETE datestamp 20160222092557 driver: drain-ends tapeq LARGESTFIT big-dumpers sssS
+driver: state time 0.007 free kps: 800000000 space: 53207040 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 0.007 if default: free 800000000
+driver: hdisk-state time 0.007 hdisk 0: free 53207040 dumpers 0
+dumper: pid 16198 executable dumper2 version 3.3.9.git.384bfcee
+dumper: pid 16195 executable dumper0 version 3.3.9.git.384bfcee
+dumper: pid 16199 executable dumper3 version 3.3.9.git.384bfcee
+dumper: pid 16196 executable dumper1 version 3.3.9.git.384bfcee
+driver: state time 0.376 free kps: 800000000 space: 53207040 taper: idle idle-dumpers: 4 qlen tapeq: 1 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 0.376 if default: free 800000000
+driver: hdisk-state time 0.376 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.376 from taper: TAPER-OK worker0 ALLOW-TAKE-SCRIBE-FROM
+driver: send-cmd time 0.376 to taper: FILE-WRITE worker0 00-00001 /amanda/h1/hdisk-3.3/20160222084606/localhost.localdomain._bootAMGTAR.1 localhost.localdomain /bootAMGTAR 1 20160222084606 "" "" "" 1 10485760 memory "" "" 30
+driver: startaflush: LARGESTFIT localhost.localdomain /bootAMGTAR 62 3145728
+driver: state time 0.376 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.376 if default: free 800000000
+driver: hdisk-state time 0.376 hdisk 0: free 53207040 dumpers 0
+taper: status file localhost.localdomain /bootAMGTAR:/tmp/amanda/taper_status_file_o3ZmwO
+driver: state time 0.378 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.378 if default: free 800000000
+driver: hdisk-state time 0.378 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.378 from taper: REQUEST-NEW-TAPE 00-00001
+driver: send-cmd time 0.378 to taper: START-SCAN worker0 00-00001
+driver: send-cmd time 0.378 to taper: NEW-TAPE worker0 00-00001
+taper: wrote label 'test-3.3-ORG-02-vtapes-059'
+driver: state time 0.400 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.400 if default: free 800000000
+driver: hdisk-state time 0.400 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.400 from taper: NEW-TAPE 00-00001 test-3.3-ORG-02-vtapes-059
+driver: send-cmd time 0.400 to taper: START-TAPER worker1 20160222092557
+driver: state time 0.400 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.400 if default: free 800000000
+driver: hdisk-state time 0.400 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.400 from taper: READY 00-00001
+driver: state time 0.476 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.476 if default: free 800000000
+driver: hdisk-state time 0.476 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.477 from taper: TAPER-OK worker1 ALLOW-TAKE-SCRIBE-FROM
+driver: state time 0.477 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.477 if default: free 800000000
+driver: hdisk-state time 0.477 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.477 from taper: PARTDONE 00-00001 test-3.3-ORG-02-vtapes-059 1 30 "[sec 0.000206 bytes 30720 kps 145631.067961 orig-kb 30]"
+driver: state time 0.478 free kps: 800000000 space: 53207040 taper: writing idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.478 if default: free 800000000
+driver: hdisk-state time 0.478 hdisk 0: free 53207040 dumpers 0
+driver: result time 0.478 from taper: DONE 00-00001 INPUT-GOOD TAPE-GOOD "[sec 0.100000 bytes 30720 kps 300.000000 orig-kb 30]" "" ""
+driver: finished-cmd time 0.478 taper wrote localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 0.478 to taper: CLOSE-VOLUME worker0
+planner time 1.084: got result for host localhost.localdomain disk /bootAMGTAR: 0 -> 155530K, -1 -> -3K, -1 -> -3K
+planner time 1.084: got result for host localhost.localdomain disk 1g: 0 -> 1048580K, -1 -> -3K, -1 -> -3K
+planner: time 1.091: got partial result for host localhost.localdomain disk /bootAMGTAR: 0 -> 155530K, -1 -> -3K, -1 -> -3K
+planner: time 1.188: got partial result for host localhost.localdomain disk 1g: 0 -> 1048580K, -1 -> -3K, -1 -> -3K
+planner: time 1.188: got partial result for host localhost.localdomain disk /bootAMGTAR: 0 -> 155530K, -1 -> -3K, -1 -> -3K
+planner: time 1.188: got partial result for host localhost.localdomain disk 1g: 0 -> 1048579K, -1 -> -3K, -1 -> -3K
+planner: time 1.188: got partial result for host localhost.localdomain disk /bootAMGTAR: 0 -> 155516K, -1 -> -3K, -1 -> -3K
+planner: time 1.188: got partial result for host localhost.localdomain disk 1g: 0 -> 1048579K, -1 -> -3K, -1 -> -3K
+planner: time 2.168: got result for host localhost.localdomain disk /bootAMGTAR: 0 -> 155516K, -1 -> -3K, -1 -> -3K
+planner: time 2.168: got result for host localhost.localdomain disk 1g: 0 -> 1048579K, -1 -> -3K, -1 -> -3K
+planner: time 2.168: getting estimates took 2.167 secs
+FAILED QUEUE: empty
+DONE QUEUE:
+  0: localhost.localdomain /bootAMGTAR
+  1: localhost.localdomain 1g  
+
+ANALYZING ESTIMATES...
+pondering localhost.localdomain:/bootAMGTAR... next_level0 -70 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 155516 csize 155516 total size 155912 total_lev0 155516 balanced-lev0size 12959
+pondering localhost.localdomain:1g... next_level0 -70 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 1048579 csize 1048579 total size 1204623 total_lev0 1204095 balanced-lev0size 100340
+INITIAL SCHEDULE (size 1204623):
+  localhost.localdomain 1g pri 71 lev 0 nsize 1048579 csize 1048579
+  localhost.localdomain /bootAMGTAR pri 71 lev 0 nsize 155516 csize 155516
+
+DELAYING DUMPS IF NEEDED, total_size 1204623, tape length 209715200 mark 100
+  delay: Total size now 1204623.
+
+PROMOTING DUMPS IF NEEDED, total_lev0 1204095, balanced_size 100340...
+planner: time 2.169: analysis took 0.000 secs
+
+GENERATING SCHEDULE:
+--------
+DUMP localhost.localdomain ffffffff9efefbffffffffff3f 1g 20160222092557 71 0 1970:1:1:0:0:0 1048579 1048579 39 26498 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbffffffffff3f /bootAMGTAR 20160222092557 71 0 1970:1:1:0:0:0 155516 155516 11 13783 "Skipping: Can't bump a 'force' dle in degraded mode"
+--------
+driver: flush size 0
+driver: send-cmd time 2.175 to taper: PORT-WRITE worker0 00-00002 localhost.localdomain 1g 0 20160222092557 "" "" "" 1 10485760 memory "" "" AMANDA
+driver: state time 2.180 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.180 if default: free 799973502
+driver: hdisk-state time 2.180 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.180 from taper: PORT worker0 00-00002 38935 "127.0.0.1:53648"
+driver: send-cmd time 2.180 to dumper0: PORT-DUMP 00-00002 38935 10 localhost.localdomain ffffffff9efefbffffffffff3f 1g /amanda/h1/1g 0 1970:1:1:0:0:0 amgtar "" "" "" /home/martinea/.ssh/id_rsa local AMANDA 127.0.0.1:53648 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file localhost.localdomain 1g:/tmp/amanda/taper_status_file_9qtpE6
+driver: state time 2.263 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.263 if default: free 799973502
+driver: hdisk-state time 2.263 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.263 from taper: REQUEST-NEW-TAPE 00-00002
+driver: send-cmd time 2.263 to taper: TAKE-SCRIBE-FROM worker0 00-00002 worker1
+driver: state time 2.263 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.263 if default: free 799973502
+driver: hdisk-state time 2.263 hdisk 0: free 53207102 dumpers 0
+driver: state time 2.263 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.263 if default: free 799973502
+driver: hdisk-state time 2.263 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.263 from taper: REQUEST-NEW-TAPE 00-00002
+driver: send-cmd time 2.263 to taper: START-SCAN worker0 00-00002
+driver: send-cmd time 2.263 to taper: NEW-TAPE worker0 00-00002
+taper: wrote label 'test-3.3-ORG-02-vtapes-060'
+driver: state time 2.270 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.270 if default: free 799973502
+driver: hdisk-state time 2.270 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.270 from taper: NEW-TAPE 00-00002 test-3.3-ORG-02-vtapes-060
+driver: send-cmd time 2.270 to taper: START-TAPER worker1 20160222092557
+driver: state time 2.270 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.270 if default: free 799973502
+driver: hdisk-state time 2.270 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.270 from taper: READY 00-00002
+driver: state time 2.369 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.369 if default: free 799973502
+driver: hdisk-state time 2.369 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.369 from taper: TAPER-OK worker1 ALLOW-TAKE-SCRIBE-FROM
+driver: state time 2.369 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.369 if default: free 799973502
+driver: hdisk-state time 2.369 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.369 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 1 10240 "[sec 0.079674 bytes 10485760 kps 128523.734217]"
+driver: state time 2.436 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.436 if default: free 799973502
+driver: hdisk-state time 2.436 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.436 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 2 10240 "[sec 0.065648 bytes 10485760 kps 155983.426761]"
+driver: state time 2.521 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.521 if default: free 799973502
+driver: hdisk-state time 2.521 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.521 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 3 10240 "[sec 0.083873 bytes 10485760 kps 122089.349373]"
+driver: state time 2.615 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 5 driver-idle: start-wait
+driver: interface-state time 2.615 if default: free 799973502
+driver: hdisk-state time 2.615 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.615 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 4 10240 "[sec 0.091970 bytes 10485760 kps 111340.654561]"
+driver: state time 2.700 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 2.700 if default: free 799973502
+driver: hdisk-state time 2.700 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.700 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 5 10240 "[sec 0.083275 bytes 10485760 kps 122966.076253]"
+driver: state time 2.785 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 2.785 if default: free 799973502
+driver: hdisk-state time 2.785 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.785 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 6 10240 "[sec 0.083111 bytes 10485760 kps 123208.720867]"
+driver: state time 2.870 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 2.870 if default: free 799973502
+driver: hdisk-state time 2.870 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.870 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 7 10240 "[sec 0.083421 bytes 10485760 kps 122750.866089]"
+driver: state time 2.951 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 2.951 if default: free 799973502
+driver: hdisk-state time 2.951 hdisk 0: free 53207102 dumpers 0
+driver: result time 2.951 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 8 10240 "[sec 0.079606 bytes 10485760 kps 128633.520086]"
+driver: state time 3.034 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.034 if default: free 799973502
+driver: hdisk-state time 3.034 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.034 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 9 10240 "[sec 0.081847 bytes 10485760 kps 125111.488509]"
+driver: state time 3.117 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.117 if default: free 799973502
+driver: hdisk-state time 3.117 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.118 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 10 10240 "[sec 0.081344 bytes 10485760 kps 125885.129819]"
+driver: state time 3.199 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.199 if default: free 799973502
+driver: hdisk-state time 3.199 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.199 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 11 10240 "[sec 0.079893 bytes 10485760 kps 128171.429287]"
+driver: state time 3.282 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.282 if default: free 799973502
+driver: hdisk-state time 3.282 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.282 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 12 10240 "[sec 0.081029 bytes 10485760 kps 126374.507892]"
+driver: state time 3.365 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.365 if default: free 799973502
+driver: hdisk-state time 3.365 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.365 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 13 10240 "[sec 0.080883 bytes 10485760 kps 126602.623543]"
+driver: state time 3.447 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.447 if default: free 799973502
+driver: hdisk-state time 3.447 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.447 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 14 10240 "[sec 0.079848 bytes 10485760 kps 128243.662960]"
+driver: state time 3.529 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.529 if default: free 799973502
+driver: hdisk-state time 3.529 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.529 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 15 10240 "[sec 0.080846 bytes 10485760 kps 126660.564530]"
+driver: state time 3.610 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 4 driver-idle: start-wait
+driver: interface-state time 3.610 if default: free 799973502
+driver: hdisk-state time 3.610 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.610 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 16 10240 "[sec 0.080227 bytes 10485760 kps 127637.827664]"
+driver: state time 3.702 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 3.702 if default: free 799973502
+driver: hdisk-state time 3.702 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.702 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 17 10240 "[sec 0.090541 bytes 10485760 kps 113097.933533]"
+driver: state time 3.783 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 3.783 if default: free 799973502
+driver: hdisk-state time 3.783 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.783 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 18 10240 "[sec 0.080364 bytes 10485760 kps 127420.237917]"
+driver: state time 3.867 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 3.867 if default: free 799973502
+driver: hdisk-state time 3.867 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.867 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 19 10240 "[sec 0.081905 bytes 10485760 kps 125022.892375]"
+driver: state time 3.950 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 3.950 if default: free 799973502
+driver: hdisk-state time 3.950 hdisk 0: free 53207102 dumpers 0
+driver: result time 3.950 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 20 10240 "[sec 0.081080 bytes 10485760 kps 126295.017267]"
+driver: state time 4.031 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.031 if default: free 799973502
+driver: hdisk-state time 4.031 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.031 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 21 10240 "[sec 0.079712 bytes 10485760 kps 128462.464874]"
+driver: state time 4.113 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.113 if default: free 799973502
+driver: hdisk-state time 4.113 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.113 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 22 10240 "[sec 0.080305 bytes 10485760 kps 127513.853434]"
+driver: state time 4.192 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.192 if default: free 799973502
+driver: hdisk-state time 4.192 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.192 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 23 10240 "[sec 0.077825 bytes 10485760 kps 131577.256666]"
+driver: state time 4.271 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.271 if default: free 799973502
+driver: hdisk-state time 4.271 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.271 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 24 10240 "[sec 0.077693 bytes 10485760 kps 131800.805735]"
+driver: state time 4.351 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.351 if default: free 799973502
+driver: hdisk-state time 4.351 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.351 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 25 10240 "[sec 0.079092 bytes 10485760 kps 129469.478582]"
+driver: state time 4.430 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.430 if default: free 799973502
+driver: hdisk-state time 4.430 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.430 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 26 10240 "[sec 0.077927 bytes 10485760 kps 131405.032915]"
+driver: state time 4.509 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.509 if default: free 799973502
+driver: hdisk-state time 4.509 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.509 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 27 10240 "[sec 0.077769 bytes 10485760 kps 131672.002983]"
+driver: state time 4.590 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 4.590 if default: free 799973502
+driver: hdisk-state time 4.590 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.590 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 28 10240 "[sec 0.079120 bytes 10485760 kps 129423.660263]"
+driver: state time 4.668 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 4.668 if default: free 799973502
+driver: hdisk-state time 4.668 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.668 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 29 10240 "[sec 0.077067 bytes 10485760 kps 132871.397615]"
+driver: state time 4.756 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 4.756 if default: free 799973502
+driver: hdisk-state time 4.756 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.756 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 30 10240 "[sec 0.085981 bytes 10485760 kps 119096.079366]"
+driver: state time 4.835 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 4.835 if default: free 799973502
+driver: hdisk-state time 4.835 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.835 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 31 10240 "[sec 0.077548 bytes 10485760 kps 132047.248156]"
+driver: state time 4.915 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 4.915 if default: free 799973502
+driver: hdisk-state time 4.915 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.915 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 32 10240 "[sec 0.079020 bytes 10485760 kps 129587.446216]"
+driver: state time 4.994 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 4.994 if default: free 799973502
+driver: hdisk-state time 4.994 hdisk 0: free 53207102 dumpers 0
+driver: result time 4.994 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 33 10240 "[sec 0.077908 bytes 10485760 kps 131437.079632]"
+driver: state time 5.073 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.073 if default: free 799973502
+driver: hdisk-state time 5.073 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.073 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 34 10240 "[sec 0.077774 bytes 10485760 kps 131663.537943]"
+driver: state time 5.153 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.153 if default: free 799973502
+driver: hdisk-state time 5.153 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.153 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 35 10240 "[sec 0.079010 bytes 10485760 kps 129603.847614]"
+driver: state time 5.232 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.232 if default: free 799973502
+driver: hdisk-state time 5.232 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.232 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 36 10240 "[sec 0.077700 bytes 10485760 kps 131788.931789]"
+driver: state time 5.318 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.318 if default: free 799973502
+driver: hdisk-state time 5.318 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.318 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 37 10240 "[sec 0.084737 bytes 10485760 kps 120844.495321]"
+driver: state time 5.412 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.412 if default: free 799973502
+driver: hdisk-state time 5.412 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.412 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 38 10240 "[sec 0.091941 bytes 10485760 kps 111375.773594]"
+driver: state time 5.497 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.497 if default: free 799973502
+driver: hdisk-state time 5.497 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.497 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 39 10240 "[sec 0.083768 bytes 10485760 kps 122242.383726]"
+driver: state time 5.580 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 5.580 if default: free 799973502
+driver: hdisk-state time 5.580 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.581 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 40 10240 "[sec 0.081991 bytes 10485760 kps 124891.756412]"
+driver: state time 5.665 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 5.665 if default: free 799973502
+driver: hdisk-state time 5.665 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.665 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 41 10240 "[sec 0.083711 bytes 10485760 kps 122325.620289]"
+driver: state time 5.760 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 5.760 if default: free 799973502
+driver: hdisk-state time 5.760 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.760 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 42 10240 "[sec 0.093037 bytes 10485760 kps 110063.738083]"
+driver: state time 5.845 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 5.845 if default: free 799973502
+driver: hdisk-state time 5.845 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.845 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 43 10240 "[sec 0.083945 bytes 10485760 kps 121984.632795]"
+driver: state time 5.930 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 5.930 if default: free 799973502
+driver: hdisk-state time 5.930 hdisk 0: free 53207102 dumpers 0
+driver: result time 5.930 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 44 10240 "[sec 0.083961 bytes 10485760 kps 121961.386834]"
+driver: state time 6.015 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.015 if default: free 799973502
+driver: hdisk-state time 6.015 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.015 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 45 10240 "[sec 0.083888 bytes 10485760 kps 122067.518596]"
+driver: state time 6.100 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.100 if default: free 799973502
+driver: hdisk-state time 6.100 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.100 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 46 10240 "[sec 0.083388 bytes 10485760 kps 122799.443565]"
+driver: state time 6.185 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.185 if default: free 799973502
+driver: hdisk-state time 6.185 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.185 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 47 10240 "[sec 0.083619 bytes 10485760 kps 122460.206412]"
+driver: state time 6.269 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.269 if default: free 799973502
+driver: hdisk-state time 6.269 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.269 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 48 10240 "[sec 0.082609 bytes 10485760 kps 123957.438052]"
+driver: state time 6.354 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.354 if default: free 799973502
+driver: hdisk-state time 6.354 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.354 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 49 10240 "[sec 0.083477 bytes 10485760 kps 122668.519472]"
+driver: state time 6.439 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.439 if default: free 799973502
+driver: hdisk-state time 6.439 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.440 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 50 10240 "[sec 0.083793 bytes 10485760 kps 122205.912188]"
+driver: state time 6.525 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.525 if default: free 799973502
+driver: hdisk-state time 6.525 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.525 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 51 10240 "[sec 0.083674 bytes 10485760 kps 122379.711738]"
+driver: state time 6.607 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 6.607 if default: free 799973502
+driver: hdisk-state time 6.607 hdisk 0: free 53207102 dumpers 0
+driver: result time 6.607 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 52 10240 "[sec 0.081724 bytes 10485760 kps 125299.789536]"
+driver: started chunker1 pid 16227
+driver: send-cmd time 6.608 to chunker1: START 20160222092557
+driver: send-cmd time 6.608 to chunker1: PORT-WRITE 01-00003 /amanda/h1/hdisk-3.3/20160222092557/localhost.localdomain._bootAMGTAR.0 localhost.localdomain ffffffff9efefbffffffffff3f /bootAMGTAR 0 1970:1:1:0:0:0 1048576 APPLICATION 155584 |;auth=local;index;exclude-list=/df/sdf/sd/sdf/sd;
+chunker: pid 16227 executable chunker1 version 3.3.9.git.384bfcee
+driver: result time 6.639 from chunker1: PORT 2682 127.0.0.1:2693
+driver: send-cmd time 6.714 to dumper1: PORT-DUMP 01-00003 2682 10 localhost.localdomain ffffffff9efefbffffffffff3f /bootAMGTAR /boot 0 1970:1:1:0:0:0 amgtar "" "" "" /home/martinea/.ssh/id_rsa local AMANDA 127.0.0.1:2693 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n  <exclude>\n    <list>/df/sdf/sd/sdf/sd</list>\n  </exclude>\n  <script>\n    <plugin>amlog-script</plugin>\n    <execute_where>SERVER</execute_where>\n    <execute_on>PRE-DLE-AMCHECK,POST-DLE-AMCHECK,PRE-DLE-ESTIMATE,POST-DLE-ESTIMATE,PRE-DLE-BACKUP,POST-DLE-BACKUP</execute_on>\n    <property>\n      <name>logfile</name>\n      <value>/tmp/amanda/installchecks/check-script.3693333</value>\n    </property>\n  </script>\n  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>gnutar-path</name>\n      <value>/usr/bin/gtar</value>\n    </property>\n  </backup-program>\n"
+driver: state time 6.714 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.714 if default: free 799959719
+driver: hdisk-state time 6.714 hdisk 0: free 53051518 dumpers 1
+driver: state time 6.714 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 6.714 if default: free 799959719
+driver: hdisk-state time 6.714 hdisk 0: free 53051518 dumpers 1
+driver: result time 6.714 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 53 10240 "[sec 0.080149 bytes 10485760 kps 127762.043195]"
+driver: state time 7.118 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 7.118 if default: free 799959719
+driver: hdisk-state time 7.118 hdisk 0: free 53051518 dumpers 1
+driver: result time 7.118 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 54 10240 "[sec 0.428109 bytes 10485760 kps 23919.142088]"
+driver: state time 9.088 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.088 if default: free 799959719
+driver: hdisk-state time 9.088 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.088 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 55 10240 "[sec 1.967924 bytes 10485760 kps 5203.452979]"
+driver: state time 9.170 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.170 if default: free 799959719
+driver: hdisk-state time 9.170 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.170 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 56 10240 "[sec 0.081005 bytes 10485760 kps 126411.949880]"
+driver: state time 9.253 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.253 if default: free 799959719
+driver: hdisk-state time 9.253 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.253 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 57 10240 "[sec 0.081487 bytes 10485760 kps 125664.216378]"
+driver: state time 9.334 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.334 if default: free 799959719
+driver: hdisk-state time 9.334 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.334 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 58 10240 "[sec 0.080079 bytes 10485760 kps 127873.724697]"
+driver: state time 9.417 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.417 if default: free 799959719
+driver: hdisk-state time 9.417 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.417 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 59 10240 "[sec 0.081641 bytes 10485760 kps 125427.175071]"
+driver: state time 9.499 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.499 if default: free 799959719
+driver: hdisk-state time 9.499 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.499 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 60 10240 "[sec 0.080506 bytes 10485760 kps 127195.488535]"
+driver: state time 9.807 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.807 if default: free 799959719
+driver: hdisk-state time 9.807 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.807 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 61 10240 "[sec 0.306802 bytes 10485760 kps 33376.575120]"
+driver: state time 9.890 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.890 if default: free 799959719
+driver: hdisk-state time 9.890 hdisk 0: free 53051518 dumpers 1
+driver: result time 9.890 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 62 10240 "[sec 0.081147 bytes 10485760 kps 126190.740262]"
+driver: state time 10.288 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 10.288 if default: free 799959719
+driver: hdisk-state time 10.288 hdisk 0: free 53051518 dumpers 1
+driver: result time 10.288 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 63 10240 "[sec 0.396638 bytes 10485760 kps 25816.991816]"
+driver: state time 11.813 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 11.813 if default: free 799959719
+driver: hdisk-state time 11.813 hdisk 0: free 53051518 dumpers 1
+driver: result time 11.813 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 64 10240 "[sec 1.523295 bytes 10485760 kps 6722.269816]"
+driver: state time 11.895 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 11.895 if default: free 799959719
+driver: hdisk-state time 11.895 hdisk 0: free 53051518 dumpers 1
+driver: result time 11.895 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 65 10240 "[sec 0.080589 bytes 10485760 kps 127064.487709]"
+driver: state time 11.976 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 11.976 if default: free 799959719
+driver: hdisk-state time 11.976 hdisk 0: free 53051518 dumpers 1
+driver: result time 11.976 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 66 10240 "[sec 0.079226 bytes 10485760 kps 129250.498574]"
+driver: state time 12.063 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.063 if default: free 799959719
+driver: hdisk-state time 12.063 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.063 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 67 10240 "[sec 0.085828 bytes 10485760 kps 119308.384210]"
+driver: state time 12.301 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.301 if default: free 799959719
+driver: hdisk-state time 12.301 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.301 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 68 10240 "[sec 0.235652 bytes 10485760 kps 43453.906608]"
+driver: state time 12.381 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.381 if default: free 799959719
+driver: hdisk-state time 12.381 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.381 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 69 10240 "[sec 0.078724 bytes 10485760 kps 130074.691327]"
+driver: state time 12.460 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.460 if default: free 799959719
+driver: hdisk-state time 12.460 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.460 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 70 10240 "[sec 0.077746 bytes 10485760 kps 131710.956191]"
+driver: state time 12.831 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.831 if default: free 799959719
+driver: hdisk-state time 12.831 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.831 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 71 10240 "[sec 0.369495 bytes 10485760 kps 27713.500859]"
+driver: state time 12.911 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.911 if default: free 799959719
+driver: hdisk-state time 12.911 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.911 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 72 10240 "[sec 0.078387 bytes 10485760 kps 130633.906132]"
+driver: state time 12.990 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.990 if default: free 799959719
+driver: hdisk-state time 12.990 hdisk 0: free 53051518 dumpers 1
+driver: result time 12.990 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 73 10240 "[sec 0.077265 bytes 10485760 kps 132530.900149]"
+driver: state time 13.069 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.069 if default: free 799959719
+driver: hdisk-state time 13.069 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.069 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 74 10240 "[sec 0.077814 bytes 10485760 kps 131595.856787]"
+driver: state time 13.149 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.149 if default: free 799959719
+driver: hdisk-state time 13.149 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.149 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 75 10240 "[sec 0.078822 bytes 10485760 kps 129912.968461]"
+driver: state time 13.228 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.228 if default: free 799959719
+driver: hdisk-state time 13.228 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.228 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 76 10240 "[sec 0.077840 bytes 10485760 kps 131551.901336]"
+driver: state time 13.307 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.307 if default: free 799959719
+driver: hdisk-state time 13.307 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.307 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 77 10240 "[sec 0.077852 bytes 10485760 kps 131531.624107]"
+driver: state time 13.386 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.386 if default: free 799959719
+driver: hdisk-state time 13.386 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.386 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 78 10240 "[sec 0.077704 bytes 10485760 kps 131782.147637]"
+driver: state time 13.466 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.466 if default: free 799959719
+driver: hdisk-state time 13.466 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.466 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 79 10240 "[sec 0.079067 bytes 10485760 kps 129510.415217]"
+driver: state time 13.596 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.596 if default: free 799959719
+driver: hdisk-state time 13.596 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.596 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 80 10240 "[sec 0.128679 bytes 10485760 kps 79577.864298]"
+driver: state time 13.681 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.681 if default: free 799959719
+driver: hdisk-state time 13.681 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.681 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 81 10240 "[sec 0.084039 bytes 10485760 kps 121848.189531]"
+driver: state time 13.766 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.766 if default: free 799959719
+driver: hdisk-state time 13.766 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.766 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 82 10240 "[sec 0.083850 bytes 10485760 kps 122122.838402]"
+driver: state time 13.851 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.851 if default: free 799959719
+driver: hdisk-state time 13.851 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.851 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 83 10240 "[sec 0.084040 bytes 10485760 kps 121846.739648]"
+driver: state time 13.936 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 13.936 if default: free 799959719
+driver: hdisk-state time 13.936 hdisk 0: free 53051518 dumpers 1
+driver: result time 13.936 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 84 10240 "[sec 0.082937 bytes 10485760 kps 123467.210051]"
+driver: state time 14.020 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.020 if default: free 799959719
+driver: hdisk-state time 14.020 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.020 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 85 10240 "[sec 0.083346 bytes 10485760 kps 122861.325079]"
+driver: state time 14.106 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.106 if default: free 799959719
+driver: hdisk-state time 14.106 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.106 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 86 10240 "[sec 0.084006 bytes 10485760 kps 121896.055044]"
+driver: state time 14.191 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.191 if default: free 799959719
+driver: hdisk-state time 14.191 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.191 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 87 10240 "[sec 0.083729 bytes 10485760 kps 122299.322815]"
+driver: state time 14.276 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.276 if default: free 799959719
+driver: hdisk-state time 14.276 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.276 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 88 10240 "[sec 0.084061 bytes 10485760 kps 121816.300068]"
+driver: state time 14.361 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.361 if default: free 799959719
+driver: hdisk-state time 14.361 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.361 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 89 10240 "[sec 0.083699 bytes 10485760 kps 122343.158222]"
+driver: state time 14.755 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.755 if default: free 799959719
+driver: hdisk-state time 14.755 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.755 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 90 10240 "[sec 0.392554 bytes 10485760 kps 26085.583130]"
+driver: state time 14.840 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.840 if default: free 799959719
+driver: hdisk-state time 14.840 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.840 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 91 10240 "[sec 0.083183 bytes 10485760 kps 123102.076145]"
+driver: state time 14.925 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.925 if default: free 799959719
+driver: hdisk-state time 14.925 hdisk 0: free 53051518 dumpers 1
+driver: result time 14.925 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 92 10240 "[sec 0.083535 bytes 10485760 kps 122583.348297]"
+driver: state time 15.017 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.017 if default: free 799959719
+driver: hdisk-state time 15.017 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.017 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 93 10240 "[sec 0.091162 bytes 10485760 kps 112327.504881]"
+driver: state time 15.103 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.103 if default: free 799959719
+driver: hdisk-state time 15.103 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.103 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 94 10240 "[sec 0.083842 bytes 10485760 kps 122134.491067]"
+driver: state time 15.188 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.188 if default: free 799959719
+driver: hdisk-state time 15.188 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.188 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 95 10240 "[sec 0.083514 bytes 10485760 kps 122614.172474]"
+driver: state time 15.270 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.270 if default: free 799959719
+driver: hdisk-state time 15.270 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.270 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 96 10240 "[sec 0.081095 bytes 10485760 kps 126271.656699]"
+driver: state time 15.352 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.352 if default: free 799959719
+driver: hdisk-state time 15.352 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.352 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 97 10240 "[sec 0.080262 bytes 10485760 kps 127582.168398]"
+driver: state time 15.435 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.435 if default: free 799959719
+driver: hdisk-state time 15.435 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.435 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 98 10240 "[sec 0.081542 bytes 10485760 kps 125579.455986]"
+driver: state time 15.517 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.517 if default: free 799959719
+driver: hdisk-state time 15.517 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.517 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 99 10240 "[sec 0.080283 bytes 10485760 kps 127548.796134]"
+driver: state time 15.599 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.599 if default: free 799959719
+driver: hdisk-state time 15.599 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.599 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 100 10240 "[sec 0.081470 bytes 10485760 kps 125690.438198]"
+driver: state time 15.682 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.682 if default: free 799959719
+driver: hdisk-state time 15.682 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.682 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 101 10240 "[sec 0.081425 bytes 10485760 kps 125759.901750]"
+driver: state time 15.764 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 15.764 if default: free 799959719
+driver: hdisk-state time 15.764 hdisk 0: free 53051518 dumpers 1
+driver: result time 15.764 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 102 10240 "[sec 0.080568 bytes 10485760 kps 127097.606990]"
+driver: state time 17.278 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 17.278 if default: free 799959719
+driver: hdisk-state time 17.278 hdisk 0: free 53051518 dumpers 1
+driver: result time 17.278 from dumper1: DONE 01-00003 155530 155530 11 "[sec 10.523 kb 155530 kps 14779.4 orig-kb 155530]"
+driver: finished-cmd time 17.278 dumper1 dumped localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 17.699 to chunker1: DONE 01-00003
+driver: state time 17.699 free kps: 799959719 space: 53051518 taper: writing idle-dumpers: 2 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 17.699 if default: free 799959719
+driver: hdisk-state time 17.699 hdisk 0: free 53051518 dumpers 1
+driver: result time 17.699 from chunker1: DONE 01-00003 155530 "[sec 10.531 kb 155530 kps 14771.4]"
+driver: finished-cmd time 17.699 chunker1 chunked localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 17.700 to taper: FILE-WRITE worker1 01-00004 /amanda/h1/hdisk-3.3/20160222092557/localhost.localdomain._bootAMGTAR.0 localhost.localdomain /bootAMGTAR 0 20160222092557 "" "" "" 1 10485760 memory "" "" 155530
+driver: startaflush: LARGESTFIT localhost.localdomain /bootAMGTAR 155562 3145728
+driver: state time 17.700 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 17.700 if default: free 799973502
+driver: hdisk-state time 17.700 hdisk 0: free 53051540 dumpers 0
+taper: status file localhost.localdomain /bootAMGTAR:/tmp/amanda/taper_status_file_Jws5Qx
+driver: state time 17.703 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 17.703 if default: free 799973502
+driver: hdisk-state time 17.703 hdisk 0: free 53051540 dumpers 0
+driver: result time 17.703 from taper: REQUEST-NEW-TAPE 01-00004
+driver: send-cmd time 17.703 to taper: START-SCAN worker1 01-00004
+driver: send-cmd time 17.703 to taper: NEW-TAPE worker1 01-00004
+taper: wrote label 'test-3.3-ORG-02-vtapes-061'
+driver: state time 19.107 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.107 if default: free 799973502
+driver: hdisk-state time 19.107 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.108 from taper: NEW-TAPE 01-00004 test-3.3-ORG-02-vtapes-061
+driver: send-cmd time 19.108 to taper: START-TAPER worker2 20160222092557
+driver: state time 19.108 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.108 if default: free 799973502
+driver: hdisk-state time 19.108 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.108 from taper: READY 01-00004
+driver: state time 19.241 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.241 if default: free 799973502
+driver: hdisk-state time 19.241 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.241 from taper: TAPER-OK worker2 ALLOW-TAKE-SCRIBE-FROM
+driver: state time 19.241 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.241 if default: free 799973502
+driver: hdisk-state time 19.241 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.241 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 1 10240 "[sec 0.013039 bytes 10485760 kps 785336.298796 orig-kb 155530]"
+driver: state time 19.257 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.257 if default: free 799973502
+driver: hdisk-state time 19.257 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.257 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 2 10240 "[sec 0.014610 bytes 10485760 kps 700889.801506 orig-kb 155530]"
+driver: state time 19.270 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.270 if default: free 799973502
+driver: hdisk-state time 19.270 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.270 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 3 10240 "[sec 0.011798 bytes 10485760 kps 867943.719274 orig-kb 155530]"
+driver: state time 19.281 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.281 if default: free 799973502
+driver: hdisk-state time 19.281 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.281 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 4 10240 "[sec 0.009167 bytes 10485760 kps 1117050.289080 orig-kb 155530]"
+driver: state time 19.290 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.290 if default: free 799973502
+driver: hdisk-state time 19.290 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.290 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 5 10240 "[sec 0.008604 bytes 10485760 kps 1190144.119014 orig-kb 155530]"
+driver: state time 19.301 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.301 if default: free 799973502
+driver: hdisk-state time 19.301 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.301 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 6 10240 "[sec 0.009249 bytes 10485760 kps 1107146.718564 orig-kb 155530]"
+driver: state time 19.310 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.310 if default: free 799973502
+driver: hdisk-state time 19.310 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.310 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 7 10240 "[sec 0.007780 bytes 10485760 kps 1316195.372751 orig-kb 155530]"
+driver: state time 19.318 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.318 if default: free 799973502
+driver: hdisk-state time 19.318 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.318 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 8 10240 "[sec 0.007408 bytes 10485760 kps 1382289.416847 orig-kb 155530]"
+driver: state time 19.327 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.327 if default: free 799973502
+driver: hdisk-state time 19.327 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.327 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 9 10240 "[sec 0.007194 bytes 10485760 kps 1423408.395885 orig-kb 155530]"
+driver: state time 19.335 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.335 if default: free 799973502
+driver: hdisk-state time 19.335 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.335 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 10 10240 "[sec 0.007201 bytes 10485760 kps 1422024.718789 orig-kb 155530]"
+driver: state time 19.344 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.344 if default: free 799973502
+driver: hdisk-state time 19.344 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.344 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 11 10240 "[sec 0.007058 bytes 10485760 kps 1450835.930859 orig-kb 155530]"
+driver: state time 19.352 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.352 if default: free 799973502
+driver: hdisk-state time 19.352 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.352 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 12 10240 "[sec 0.006926 bytes 10485760 kps 1478486.861103 orig-kb 155530]"
+driver: state time 19.360 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.360 if default: free 799973502
+driver: hdisk-state time 19.360 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.360 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 13 10240 "[sec 0.006772 bytes 10485760 kps 1512108.682812 orig-kb 155530]"
+driver: state time 19.368 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.368 if default: free 799973502
+driver: hdisk-state time 19.368 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.368 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 14 10240 "[sec 0.006547 bytes 10485760 kps 1564075.148923 orig-kb 155530]"
+driver: state time 19.375 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.375 if default: free 799973502
+driver: hdisk-state time 19.375 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.376 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 15 10240 "[sec 0.006604 bytes 10485760 kps 1550575.408843 orig-kb 155530]"
+driver: state time 19.378 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.378 if default: free 799973502
+driver: hdisk-state time 19.378 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.378 from taper: PARTDONE 01-00004 test-3.3-ORG-02-vtapes-061 16 1930 "[sec 0.001271 bytes 1976320 kps 1518489.378442 orig-kb 155530]"
+driver: state time 19.378 free kps: 799973502 space: 53051540 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 19.378 if default: free 799973502
+driver: hdisk-state time 19.378 hdisk 0: free 53051540 dumpers 0
+driver: result time 19.378 from taper: DONE 01-00004 INPUT-GOOD TAPE-GOOD "[sec 1.000000 bytes 159262720 kps 155530.000000 orig-kb 155530]" "" ""
+driver: finished-cmd time 19.378 taper wrote localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 19.378 to taper: CLOSE-VOLUME worker1
+driver: state time 26.837 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.837 if default: free 799973502
+driver: hdisk-state time 26.837 hdisk 0: free 53207102 dumpers 0
+driver: result time 26.837 from dumper0: DONE 00-00002 1048580 1048580 25 "[sec 24.584 kb 1048580 kps 42652.8 orig-kb 1048580]"
+driver: finished-cmd time 26.837 dumper0 dumped localhost.localdomain:1g
+driver: send-cmd time 26.837 to taper: DONE worker0 00-00002 1048580
+driver: state time 26.838 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.838 if default: free 799973502
+driver: hdisk-state time 26.838 hdisk 0: free 53207102 dumpers 0
+driver: result time 26.838 from taper: PARTDONE 00-00002 test-3.3-ORG-02-vtapes-060 103 4100 "[sec 11.071931 bytes 4198400 kps 370.305776]"
+driver: state time 26.838 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.838 if default: free 799973502
+driver: hdisk-state time 26.838 hdisk 0: free 53207102 dumpers 0
+driver: result time 26.838 from taper: DUMPER-STATUS 00-00002
+driver: send-cmd time 26.838 to taper: DONE worker0 00-00002 1048580
+driver: state time 26.839 free kps: 799973502 space: 53207102 taper: writing idle-dumpers: 3 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.839 if default: free 799973502
+driver: hdisk-state time 26.839 hdisk 0: free 53207102 dumpers 0
+driver: result time 26.839 from taper: DONE 00-00002 INPUT-GOOD TAPE-GOOD "[sec 25.000000 bytes 1073745920 kps 41943.200000 orig-kb 1048580]" "" ""
+driver: finished-cmd time 26.839 taper wrote localhost.localdomain:1g
+driver: send-cmd time 26.839 to taper: CLOSE-VOLUME worker0
+driver: state time 26.840 free kps: 800000000 space: 53207102 taper: idle idle-dumpers: 4 qlen tapeq: 0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.840 if default: free 800000000
+driver: hdisk-state time 26.840 hdisk 0: free 53207102 dumpers 0
+driver: QUITTING time 26.840 telling children to quit
+driver: send-cmd time 26.840 to dumper0: QUIT ""
+driver: send-cmd time 26.840 to dumper1: QUIT ""
+driver: send-cmd time 26.840 to dumper2: QUIT ""
+driver: send-cmd time 26.840 to dumper3: QUIT ""
+driver: send-cmd time 26.840 to taper: QUIT
+driver: FINISHED time 27.840
+amdump: end at Mon Feb 22 09:26:25 EST 2016
+
