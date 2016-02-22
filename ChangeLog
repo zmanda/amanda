@@ -1,6 +1,9 @@
+2016-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-security.conf.5.xml: Document permissions
+
 2016-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix hang if receive partial packet from
-  network
+	  network
 
 2016-02-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/ambsdtar.c, application-src/amgtar.c: Do not send
