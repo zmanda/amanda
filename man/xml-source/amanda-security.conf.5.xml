@@ -28,7 +28,13 @@
 <refsect1><title>DESCRIPTION</title>
 <para>&amsecurityconf; is the security configuration file for Amanda. This manpage lists the
 relevant sections and parameters of this file.</para>
-<para>The file must be installed at <emphasis remap='B'>/etc/amanda-security.conf</emphasis> and only root must be able to write to it.</para>
+<para>The file must be installed at <emphasis remap='B'>/etc/amanda-security.conf</emphasis> and only root must be able to write to it. Good permission are:</para>
+<para>It must be readable by the amanda user and owned by root. Good permissions are:</para>
+<programlisting>
+$ ls -l /etc/amanda-security.conf
+-rw-r--r--. 1 root root 1994 Jan 29 13:45 /etc/amanda-security.conf
+</programlisting>
+
 <para>An example file should be installed at <emphasis remap='B'>/etc/amanda/amanda-security.conf</emphasis>.</para>
 <para>All lines with '#' as the first character ar comment line.</para>
 </refsect1>
