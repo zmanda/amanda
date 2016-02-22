@@ -1,4 +1,10 @@
 2016-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amstatus.pl: Test number printing
+	* installcheck/Makefile.am: Add catalogs/number.cat
+	* installcheck/catalogs/number.cat: New catalog file for testing
+	  number
+
+2016-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c: Give and error if MAX-RECV-SPEED or
 	  MAX-SEND-SPEED is below 5120.
 	* man/xml-source/amanda-devices.7.xml: Document the minimum value for

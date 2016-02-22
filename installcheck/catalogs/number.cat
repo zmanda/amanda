@@ -1,0 +1,854 @@
+%F log/amdump
+amdump: start at Mon Feb 22 11:41:56 EST 2016
+amdump: datestamp 20160222
+amdump: starttime 20160222114156
+amdump: starttime-locale-independent 2016-02-22 11:41:56 EST
+planner: pid 2518 executable /amanda/h1/linux/libexec/amanda/planner version 4.0.0alpha.git.0b3a378d
+planner: build: VERSION="Amanda-4.0.0alpha.git.0b3a378d"
+planner:        BUILT_DATE="Mon Feb 15 10:09:46 EST 2016" BUILT_MACH=""
+planner:        BUILT_REV=UNDEF BUILT_BRANCH=UNDEF CC="gcc"
+planner: paths: bindir="/amanda/h1/linux/bin"
+planner:        sbindir="/amanda/h1/linux/sbin"
+planner:        libexecdir="/amanda/h1/linux/libexec"
+planner:        amlibexecdir="/amanda/h1/linux/libexec/amanda"
+planner:        mandir="/amanda/h1/man" AMANDA_TMPDIR="/tmp/amanda"
+planner:        AMANDA_DBGDIR="/tmp/amanda"
+planner:        CONFIG_DIR="/amanda/h1/etc/amanda" DEV_PREFIX="/dev/"
+planner:        DUMP=UNDEF RESTORE=UNDEF VDUMP=UNDEF VRESTORE=UNDEF
+planner:        XFSDUMP=UNDEF XFSRESTORE=UNDEF VXDUMP=UNDEF VXRESTORE=UNDEF
+planner:        SAMBA_CLIENT="/usr/local/samba/bin/smbclient"
+planner:        GNUTAR="/usr/bin/tar" COMPRESS_PATH="/usr/bin/gzip"
+planner:        UNCOMPRESS_PATH="/usr/bin/gzip"  LPRCMD=UNDEF  MAILER=UNDEF
+planner:        listed_incr_dir="/var/gnutar-lists"
+planner: defs:  DEFAULT_SERVER="bozo.localdomain" DEFAULT_CONFIG="test"
+planner:        DEFAULT_TAPE_SERVER="bozo.localdomain"
+planner:        DEFAULT_TAPE_DEVICE="/dev/nst3" NEED_STRSTR AMFLOCK_POSIX
+planner:        AMFLOCK_FLOCK AMFLOCK_LOCKF AMFLOCK_LNLOCK SETPGRP_VOID
+planner:        ASSERTIONS AMANDA_DEBUG_DAYS=4 BSD_SECURITY KRB5_SECURITY
+planner:        RSH_SECURITY USE_AMANDAHOSTS CLIENT_LOGIN="martinea"
+planner:        CHECK_USERID HAVE_GZIP COMPRESS_SUFFIX=".gz"
+planner:        COMPRESS_FAST_OPT="--fast" COMPRESS_BEST_OPT="--best"
+planner:        UNCOMPRESS_OPT="-dc"
+planner:        CONFIGURE_ARGS=" 'AMANDA_BUILD_DEPENDENCIES=/home/martinea/src/AMANDA_BUILD_DEPENDENCIES' '--prefix=/amanda/h1/linux' '--exec-prefix=/amanda/h1/linux' '--disable-installperms' '--with-smbclient=/usr/local/samba/bin/smbclient' '--with-configdir=/amanda/h1/etc/amanda' '--with-gnutar-listdir=/var/gnutar-lists' '--with-gnutar=/bin/tar' '--without-amperldir' '--with-bsd-security' '--with-bsdtcp-security' '--with-bsdudp-security' '--with-rsh-security' '--with-ssh-security' '--with-krb5-security' '--with-user=martinea' '--with-group=martinea' '--with-index-server=bozo.localdomain' '--with-config=test' '--with-tape-server=bozo.localdomain' '--with-tape-device=/dev/nst3' '--with-assertions' '--mandir=/amanda/h1/man' '--enable-werror' '--enable-swig-error' '--enable-syntax-checks' '--enable-manpage-build'"
+READING CONF INFO...
+planner: timestamp 20160222114156
+planner: tape_length is set from maxdumpsize (209715200 KB)
+planner: time 0.005: startup took 0.005 secs
+
+SENDING FLUSHES...
+Cleaning up holding disk '/amanda/h1/hdisk'
+ ..cleaning up holding directory '20160222113647'
+FLUSH 1301;my_vtapes localhost.localdomain 100m 20160222113647 0 /amanda/h1/hdisk/20160222113647/localhost.localdomain.100m.0
+FLUSH 1302;my_vtapes localhost.localdomain /bootAMGTAR 20160222113647 0 /amanda/h1/hdisk/20160222113647/localhost.localdomain._bootAMGTAR.0
+ENDFLUSH
+
+SETTING UP FOR ESTIMATES...
+planner: time 0.006: setting up estimates for localhost.localdomain:/bootAMGTAR
+localhost.localdomain:/bootAMGTAR overdue 7 days for level 0
+setup_estimate: localhost.localdomain:/bootAMGTAR: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:10m
+localhost.localdomain:10m overdue 7 days for level 0
+setup_estimate: localhost.localdomain:10m: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:100m
+localhost.localdomain:100m overdue 7 days for level 0
+setup_estimate: localhost.localdomain:100m: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:1g
+localhost.localdomain:1g overdue 7 days for level 0
+setup_estimate: localhost.localdomain:1g: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:100g
+localhost.localdomain:100g overdue 7 days for level 0
+setup_estimate: localhost.localdomain:100g: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:1000g
+localhost.localdomain:1000g overdue 7 days for level 0
+setup_estimate: localhost.localdomain:1000g: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:2ga
+localhost.localdomain:2ga overdue 7 days for level 0
+setup_estimate: localhost.localdomain:2ga: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.007: setting up estimates for localhost.localdomain:10g
+localhost.localdomain:10g overdue 7 days for level 0
+setup_estimate: localhost.localdomain:10g: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.008: setting up estimates for localhost.localdomain:10t
+localhost.localdomain:10t overdue 7 days for level 0
+setup_estimate: localhost.localdomain:10t: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.008: setting up estimates for localhost.localdomain:100t
+localhost.localdomain:100t overdue 7 days for level 0
+setup_estimate: localhost.localdomain:100t: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.008: setting up estimates for localhost.localdomain:5ga
+localhost.localdomain:5ga overdue 7 days for level 0
+setup_estimate: localhost.localdomain:5ga: command 1, options: none    last_level -1 next_level0 -7 level_days 0    getting estimates 0 (-3) -1 (-3) -1 (-3)
+planner: time 0.008: setting up estimates took 0.001 secs
+
+GETTING ESTIMATES...
+driver: pid 2519 executable /amanda/h1/linux/libexec/amanda/driver version 4.0.0alpha.git.0b3a378d
+driver: adding holding disk 0 dir /amanda/h1/hdisk size 51949568 chunksize 31457280
+reserving 0 out of 51949568 for degraded-mode dumps
+driver: taper taper0 storage my_vtapes tape_size 104857600
+driver: started dumper0 pid 2524
+driver: send-cmd time 0.017 to dumper0: START 20160222114156
+driver: send-cmd time 0.017 to taper0: START-TAPER taper0 worker0-0 my_vtapes 20160222114156
+driver: start time 0.017 inparallel 1 bandwidth 800000000 diskspace 51949568  dir OBSOLETE datestamp 20160222114156 driver: drain-ends tapeq LARGEST big-dumpers sssS
+driver: state time 0.017 free kps: 800000000 space: 51949568 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 0.017 if default: free 800000000
+driver: hdisk-state time 0.017 hdisk 0: free 51949568 dumpers 0
+planner time 0.025: got result for host localhost.localdomain disk 5ga: 0 -> 5242890K, -1 -> -3K, -1 -> -3K
+planner time 0.025: got result for host localhost.localdomain disk 100t: 0 -> 104857700000K, -1 -> -3K, -1 -> -3K
+planner time 0.025: got result for host localhost.localdomain disk 10t: 0 -> 10485770000K, -1 -> -3K, -1 -> -3K
+planner time 0.025: got result for host localhost.localdomain disk 10g: 0 -> 10486016K, -1 -> -3K, -1 -> -3K
+planner time 0.025: got result for host localhost.localdomain disk 2ga: 0 -> 2097160K, -1 -> -3K, -1 -> -3K
+planner time 0.026: got result for host localhost.localdomain disk 1000g: 0 -> 1048580000K, -1 -> -3K, -1 -> -3K
+planner time 0.026: got result for host localhost.localdomain disk 100g: 0 -> 104858000K, -1 -> -3K, -1 -> -3K
+planner time 0.026: got result for host localhost.localdomain disk 1g: 0 -> 1048580K, -1 -> -3K, -1 -> -3K
+planner time 0.026: got result for host localhost.localdomain disk 100m: 0 -> 102410K, -1 -> -3K, -1 -> -3K
+planner time 0.026: got result for host localhost.localdomain disk 10m: 0 -> 10250K, -1 -> -3K, -1 -> -3K
+dumper: pid 2524 executable dumper0 version 4.0.0alpha.git.0b3a378d
+planner: time 0.196: got result for host localhost.localdomain disk 5ga: 0 -> 5242885K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 100t: 0 -> 104857670000K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 10t: 0 -> 10485767000K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 10g: 0 -> 10485767K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 2ga: 0 -> 2097155K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 1000g: 0 -> 1048579000K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 100g: 0 -> 104857900K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 1g: 0 -> 1048579K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 100m: 0 -> 102403K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk 10m: 0 -> 10243K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: got result for host localhost.localdomain disk /bootAMGTAR: 0 -> 155516K, -1 -> -3K, -1 -> -3K
+planner: time 0.196: getting estimates took 0.188 secs
+FAILED QUEUE: empty
+DONE QUEUE:
+  0: localhost.localdomain 5ga 
+  1: localhost.localdomain 100t
+  2: localhost.localdomain 10t
+  3: localhost.localdomain 10g 
+  4: localhost.localdomain 2ga 
+  5: localhost.localdomain 1000g 
+  6: localhost.localdomain 100g 
+  7: localhost.localdomain 1g  
+  8: localhost.localdomain 100m
+  9: localhost.localdomain 10m 
+ 10: localhost.localdomain /bootAMGTAR
+
+ANALYZING ESTIMATES...
+pondering localhost.localdomain:5ga... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 5242885 csize 5242885 total size 5243569 total_lev0 5242885 balanced-lev0size 655360
+pondering localhost.localdomain:100t... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 104857670000 csize 104857670000 total size 15729564 total_lev0 15728652 balanced-lev0size 1966080
+pondering localhost.localdomain:10t... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 10485767000 csize 10485767000 total size 26215559 total_lev0 26214419 balanced-lev0size 3276800
+pondering localhost.localdomain:10g... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 10485767 csize 10485767 total size 36701554 total_lev0 36700186 balanced-lev0size 4587520
+pondering localhost.localdomain:2ga... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 2097155 csize 2097155 total size 38798937 total_lev0 38797341 balanced-lev0size 4849664
+pondering localhost.localdomain:1000g... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 1048579 csize 1048579 total size 39847744 total_lev0 39845920 balanced-lev0size 4980736
+pondering localhost.localdomain:100g... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 104857900 csize 104857900 total size 40896551 total_lev0 40894499 balanced-lev0size 5111808
+pondering localhost.localdomain:1g... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 1048579 csize 1048753 total size 41945532 total_lev0 41943252 balanced-lev0size 5242902
+pondering localhost.localdomain:100m... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 102403 csize 102403 total size 42048163 total_lev0 42045655 balanced-lev0size 5255702
+pondering localhost.localdomain:10m... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 10243 csize 10243 total size 42058634 total_lev0 42055898 balanced-lev0size 5256982
+pondering localhost.localdomain:/bootAMGTAR... next_level0 -7 last_level -1 (due for level 0) (new disk, can't switch to degraded mode)
+  curr level 0 nsize 155516 csize 155516 total size 42214378 total_lev0 42211414 balanced-lev0size 5256982
+INITIAL SCHEDULE (size 42214378):
+  localhost.localdomain 100t pri 8 lev 0 nsize 104857670000 csize 104857670000
+  localhost.localdomain 10t pri 8 lev 0 nsize 10485767000 csize 10485767000
+  localhost.localdomain 10g pri 8 lev 0 nsize 10485767 csize 10485767
+  localhost.localdomain 5ga pri 8 lev 0 nsize 5242885 csize 5242885
+  localhost.localdomain 2ga pri 8 lev 0 nsize 2097155 csize 2097155
+  localhost.localdomain 1g pri 8 lev 0 nsize 1048579 csize 1048753
+  localhost.localdomain 1000g pri 8 lev 0 nsize 1048579000 csize 1048579000
+  localhost.localdomain 100g pri 8 lev 0 nsize 104857900 csize 104857900
+  localhost.localdomain /bootAMGTAR pri 8 lev 0 nsize 155516 csize 155516
+  localhost.localdomain 100m pri 8 lev 0 nsize 102403 csize 102403
+  localhost.localdomain 10m pri 8 lev 0 nsize 10243 csize 10243
+
+DELAYING DUMPS IF NEEDED, total_size 42214378, tape length 209715200 mark 100
+  delay: Total size now 42214378.
+
+PROMOTING DUMPS IF NEEDED, total_lev0 42211414, balanced_size 5256982...
+planner: time 0.197: analysis took 0.000 secs
+
+GENERATING SCHEDULE:
+--------
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100t 20160222114156 8 0 1970:1:1:0:0:0 104857670000 104857670000 286 36572 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10t 20160222114156 8 0 1970:1:1:0:0:0 10485767000 10485767000 455 23041 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10g 20160222114156 8 0 1970:1:1:0:0:0 10485767 10485767 37 275982 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 5ga 20160222114156 8 0 1970:1:1:0:0:0 5242885 5242885 129 40360 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 2ga 20160222114156 8 0 1970:1:1:0:0:0 2097155 2097155 32 64423 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1g 20160222114156 8 0 1970:1:1:0:0:0 1048579 1048753 35 29485 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1000g 20160222114156 8 0 1970:1:1:0:0:0 1048579000 1048579000 1 589535 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100g 20160222114156 8 0 1970:1:1:0:0:0 104857900 104857900 9 107771 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 /bootAMGTAR 20160222114156 8 0 1970:1:1:0:0:0 155516 155516 1 116688 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100m 20160222114156 8 0 1970:1:1:0:0:0 102403 102403 1 68273 "Skipping: Can't bump a 'force' dle in degraded mode"
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10m 20160222114156 8 0 1970:1:1:0:0:0 10243 10243 10 1024 "Skipping: Can't bump a 'force' dle in degraded mode"
+--------
+driver: flush size 0
+driver: started chunker0 pid 2573
+driver: send-cmd time 0.198 to chunker0: START 20160222114156
+driver: send-cmd time 0.198 to chunker0: PORT-WRITE 00-00001 /amanda/h1/hdisk/20160222114156/localhost.localdomain.10m.0 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10m 0 20160222114156 31457280 APPLICATION 10336 |auth=local;index;
+driver: result time 0.361 from chunker0: PORT 00-00001 47180 "127.0.0.1:38111"
+driver: send-cmd time 0.362 to dumper0: PORT-DUMP 00-00001 47180 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10m /amanda/h1/10m 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:38111 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+driver: state time 0.362 free kps: 799998976 space: 51939232 taper: idle idle-dumpers: 0 qlen tapeq taper0: 2:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.362 if default: free 799998976
+driver: hdisk-state time 0.362 hdisk 0: free 51939232 dumpers 1
+driver: state time 0.472 free kps: 799998976 space: 51939232 taper: idle idle-dumpers: 0 qlen tapeq taper0: 2:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.472 if default: free 799998976
+driver: hdisk-state time 0.472 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.472 from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM
+driver: send-cmd time 0.472 to taper0: FILE-WRITE worker0-0 01-00002 /amanda/h1/hdisk/20160222113647/localhost.localdomain._bootAMGTAR.0 localhost.localdomain /bootAMGTAR 0 20160222113647 "" "" "" 1 "" "" "" "" 155584
+driver: state time 0.472 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 1:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.472 if default: free 799998976
+driver: hdisk-state time 0.472 hdisk 0: free 51939232 dumpers 1
+taper: status file taper0 worker0-0 localhost.localdomain /bootAMGTAR:/tmp/amanda/taper_status_file_qa6KwM
+driver: state time 0.474 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 1:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.474 if default: free 799998976
+driver: hdisk-state time 0.474 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.474 from taper0: REQUEST-NEW-TAPE worker0-0 01-00002
+driver: send-cmd time 0.474 to taper0: START-SCAN worker0-0 01-00002
+driver: send-cmd time 0.474 to taper0: NEW-TAPE worker0-0 01-00002
+taper: wrote label 'test-ORG-AA-vtapes-013'
+driver: state time 0.496 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 1:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.496 if default: free 799998976
+driver: hdisk-state time 0.496 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.496 from taper0: NEW-TAPE worker0-0 01-00002 test-ORG-AA-vtapes-013
+driver: send-cmd time 0.496 to taper0: START-TAPER taper0 worker0-1 my_vtapes 20160222114156
+driver: state time 0.496 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 1:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.496 if default: free 799998976
+driver: hdisk-state time 0.496 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.496 from taper0: READY worker0-0 01-00002
+driver: state time 0.528 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 1:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.528 if default: free 799998976
+driver: hdisk-state time 0.528 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.528 from chunker0: DUMPER-STATUS 00-00001
+driver: state time 0.706 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 1:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.706 if default: free 799998976
+driver: hdisk-state time 0.706 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.706 from taper0: TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM
+driver: send-cmd time 0.706 to taper0: FILE-WRITE worker0-1 02-00003 /amanda/h1/hdisk/20160222113647/localhost.localdomain.100m.0 localhost.localdomain 100m 0 20160222113647 "" "" "" 1 "" "" "" "" 102410
+driver: state time 0.706 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.706 if default: free 799998976
+driver: hdisk-state time 0.706 hdisk 0: free 51939232 dumpers 1
+driver: state time 0.707 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.707 if default: free 799998976
+driver: hdisk-state time 0.707 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.707 from taper0: PARTDONE worker0-0 01-00002 test-ORG-AA-vtapes-013 1 155584 "[sec 0.106122 bytes 159318016 kps 1466086.202672 orig-kb 155584]"
+driver: state time 0.716 free kps: 799998976 space: 51939232 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.716 if default: free 799998976
+driver: hdisk-state time 0.716 hdisk 0: free 51939232 dumpers 1
+driver: result time 0.716 from taper0: DONE worker0-0 01-00002 INPUT-GOOD TAPE-GOOD "fdabc779:159318016" "[sec 1.000000 bytes 159318016 kps 155584.000000 orig-kb 155584]" "" ""
+driver: finished-cmd time 0.716 taper taper0 worker worker0-0 wrote localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 0.716 to taper0: CLOSE-VOLUME worker0-0
+taper: status file taper0 worker0-1 localhost.localdomain 100m:/tmp/amanda/taper_status_file_KpstKo
+driver: state time 0.735 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.735 if default: free 799998976
+driver: hdisk-state time 0.735 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.735 from taper0: REQUEST-NEW-TAPE worker0-1 02-00003
+driver: send-cmd time 0.735 to taper0: START-SCAN worker0-1 02-00003
+driver: state time 0.735 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.735 if default: free 799998976
+driver: hdisk-state time 0.735 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.735 from taper0: CLOSED-VOLUME worker0-0
+driver: send-cmd time 0.735 to taper0: NEW-TAPE worker0-1 02-00003
+taper: wrote label 'test-ORG-AA-vtapes-014'
+driver: state time 0.748 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.748 if default: free 799998976
+driver: hdisk-state time 0.748 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.748 from taper0: NEW-TAPE worker0-1 02-00003 test-ORG-AA-vtapes-014
+driver: send-cmd time 0.749 to taper0: START-TAPER taper0 worker0-2 my_vtapes 20160222114156
+driver: state time 0.749 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.749 if default: free 799998976
+driver: hdisk-state time 0.749 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.749 from taper0: READY worker0-1 02-00003
+driver: state time 0.925 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.925 if default: free 799998976
+driver: hdisk-state time 0.925 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.925 from taper0: TAPER-OK worker0-2 ALLOW-TAKE-SCRIBE-FROM
+driver: state time 0.926 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.926 if default: free 799998976
+driver: hdisk-state time 0.926 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.926 from taper0: PARTDONE worker0-1 02-00003 test-ORG-AA-vtapes-014 1 102410 "[sec 0.065651 bytes 104867840 kps 1559915.309744 orig-kb 102410]"
+driver: state time 0.933 free kps: 799998976 space: 52094848 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.933 if default: free 799998976
+driver: hdisk-state time 0.933 hdisk 0: free 52094848 dumpers 1
+driver: result time 0.933 from taper0: DONE worker0-1 02-00003 INPUT-GOOD TAPE-GOOD "b75e26b5:104867840" "[sec 0.100000 bytes 104867840 kps 1024100.000000 orig-kb 102410]" "" ""
+driver: finished-cmd time 0.933 taper taper0 worker worker0-1 wrote localhost.localdomain:100m
+driver: send-cmd time 0.933 to taper0: CLOSE-VOLUME worker0-1
+driver: state time 0.944 free kps: 799998976 space: 52197290 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 0.944 if default: free 799998976
+driver: hdisk-state time 0.944 hdisk 0: free 52197290 dumpers 1
+driver: result time 0.944 from taper0: CLOSED-VOLUME worker0-1
+driver: state time 1.564 free kps: 799998976 space: 52197290 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.564 if default: free 799998976
+driver: hdisk-state time 1.564 hdisk 0: free 52197290 dumpers 1
+driver: result time 1.564 from dumper0: DONE 00-00001 10250 10250 1 5ea92b9d:10496000 5ea92b9d:10496000 "[sec 1.163 kb 10250 kps 8809.1 orig-kb 10250]"
+driver: finished-cmd time 1.564 dumper0 dumped localhost.localdomain:10m
+driver: send-cmd time 1.564 to chunker0: DONE 00-00001 5ea92b9d:10496000
+driver: state time 1.565 free kps: 799998976 space: 52197290 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.565 if default: free 799998976
+driver: hdisk-state time 1.565 hdisk 0: free 52197290 dumpers 1
+driver: result time 1.565 from chunker0: DONE 00-00001 10250 "5ea92b9d:10496000" "[sec 0.100000 kb 10250 kps 102500.000000]"
+driver: finished-cmd time 1.565 chunker0 chunked localhost.localdomain:10m
+driver: send-cmd time 1.565 to chunker0: QUIT
+driver: to write host localhost.localdomain disk 10m date 20160222114156 on storage my_vtapes
+driver: send-cmd time 1.570 to taper0: FILE-WRITE worker0-0 00-00004 /amanda/h1/hdisk/20160222114156/localhost.localdomain.10m.0 localhost.localdomain 10m 0 20160222114156 "" "" "" 1 "" "" "" "" 10250
+driver: state time 1.570 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 1.570 if default: free 800000000
+driver: hdisk-state time 1.570 hdisk 0: free 52197344 dumpers 0
+taper: status file taper0 worker0-0 localhost.localdomain 10m:/tmp/amanda/taper_status_file_AU0qJK
+driver: state time 1.879 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 1.879 if default: free 800000000
+driver: hdisk-state time 1.879 hdisk 0: free 52197344 dumpers 0
+driver: result time 1.879 from taper0: REQUEST-NEW-TAPE worker0-0 00-00004
+driver: send-cmd time 1.879 to taper0: START-SCAN worker0-0 00-00004
+driver: send-cmd time 1.879 to taper0: NEW-TAPE worker0-0 00-00004
+taper: wrote label 'test-ORG-AA-vtapes-072'
+driver: state time 1.919 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 1.919 if default: free 800000000
+driver: hdisk-state time 1.919 hdisk 0: free 52197344 dumpers 0
+driver: result time 1.919 from taper0: NEW-TAPE worker0-0 00-00004 test-ORG-AA-vtapes-072
+driver: send-cmd time 1.919 to taper0: START-TAPER taper0 worker0-3 my_vtapes 20160222114156
+driver: state time 1.919 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 1.919 if default: free 800000000
+driver: hdisk-state time 1.919 hdisk 0: free 52197344 dumpers 0
+driver: result time 1.919 from taper0: READY worker0-0 00-00004
+driver: state time 2.091 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 2.091 if default: free 800000000
+driver: hdisk-state time 2.091 hdisk 0: free 52197344 dumpers 0
+driver: result time 2.091 from taper0: TAPER-OK worker0-3 ALLOW-TAKE-SCRIBE-FROM
+driver: state time 2.092 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 2.092 if default: free 800000000
+driver: hdisk-state time 2.092 hdisk 0: free 52197344 dumpers 0
+driver: result time 2.092 from taper0: PARTDONE worker0-0 00-00004 test-ORG-AA-vtapes-072 1 10250 "[sec 0.006629 bytes 10496000 kps 1546236.234726 orig-kb 10250]"
+driver: state time 2.093 free kps: 800000000 space: 52197344 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 2.093 if default: free 800000000
+driver: hdisk-state time 2.093 hdisk 0: free 52197344 dumpers 0
+driver: result time 2.093 from taper0: DONE worker0-0 00-00004 INPUT-GOOD TAPE-GOOD "5ea92b9d:10496000" "[sec 0.100000 bytes 10496000 kps 102500.000000 orig-kb 10250]" "" ""
+driver: finished-cmd time 2.093 taper taper0 worker worker0-0 wrote localhost.localdomain:10m
+driver: send-cmd time 2.093 to taper0: CLOSE-VOLUME worker0-0
+driver: state time 2.096 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 2 directq: 8 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 2.096 if default: free 800000000
+driver: hdisk-state time 2.096 hdisk 0: free 52207626 dumpers 0
+driver: result time 2.096 from taper0: CLOSED-VOLUME worker0-0
+driver: send-cmd time 5.098 to taper0: PORT-WRITE worker0-2 00-00005 localhost.localdomain 1000g 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 5.098 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 5.098 if default: free 799410465
+driver: hdisk-state time 5.098 hdisk 0: free 52207626 dumpers 0
+driver: state time 5.100 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 5.100 if default: free 799410465
+driver: hdisk-state time 5.100 hdisk 0: free 52207626 dumpers 0
+driver: result time 5.100 from taper0: PORT worker0-2 00-00005 47781 "127.0.0.1:36235"
+driver: send-cmd time 5.100 to dumper0: PORT-DUMP 00-00005 47781 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1000g /amanda/h1/1g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:36235 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-2 localhost.localdomain 1000g:/tmp/amanda/taper_status_file_q3Bxve
+driver: state time 5.141 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 5.141 if default: free 799410465
+driver: hdisk-state time 5.141 hdisk 0: free 52207626 dumpers 0
+driver: result time 5.142 from taper0: REQUEST-NEW-TAPE worker0-2 00-00005
+driver: send-cmd time 5.142 to taper0: START-SCAN worker0-2 00-00005
+driver: send-cmd time 5.142 to taper0: NEW-TAPE worker0-2 00-00005
+taper: wrote label 'test-ORG-AA-vtapes-015'
+driver: state time 5.163 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 5.163 if default: free 799410465
+driver: hdisk-state time 5.163 hdisk 0: free 52207626 dumpers 0
+driver: result time 5.163 from taper0: NEW-TAPE worker0-2 00-00005 test-ORG-AA-vtapes-015
+driver: state time 5.163 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 5.163 if default: free 799410465
+driver: hdisk-state time 5.163 hdisk 0: free 52207626 dumpers 0
+driver: result time 5.163 from taper0: READY worker0-2 00-00005
+driver: state time 9.851 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 9.851 if default: free 799410465
+driver: hdisk-state time 9.851 hdisk 0: free 52207626 dumpers 0
+driver: result time 9.851 from dumper0: DONE 00-00005 1048580000 1048580000 5 41e03d1d:1073745920000 41e03d1d:1073745920000 "[sec 473.0 kb 1048580000 kps 221645.7 orig-kb 1048580000]"
+driver: finished-cmd time 9.851 dumper0 dumped localhost.localdomain:1000g
+driver: send-cmd time 9.851 to taper0: DONE worker0-2 00-00005 1048580000 41e03d1d:1073745920000 41e03d1d:1073745920000 41e03d1d:1073745920000
+driver: state time 11.661 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 11.661 if default: free 799410465
+driver: hdisk-state time 11.661 hdisk 0: free 52207626 dumpers 0
+driver: result time 11.661 from taper0: PARTDONE worker0-2 00-00005 test-ORG-AA-vtapes-015 1 1048580000 "[sec 6495.359 bytes 1073745920000 kps 161435.264779 orig-kb 1048580000]"
+driver: state time 11.684 free kps: 799410465 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 7 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 11.684 if default: free 799410465
+driver: hdisk-state time 11.684 hdisk 0: free 52207626 dumpers 0
+driver: result time 11.684 from taper0: DONE worker0-2 00-00005 INPUT-GOOD TAPE-GOOD "41e03d1d:1073745920000" "[sec 7000.000 bytes 1073745920000 kps 149797.142857 orig-kb 1048580000]" "" ""
+driver: finished-cmd time 11.684 taper taper0 worker worker0-2 wrote localhost.localdomain:1000g
+driver: send-cmd time 11.684 to taper0: CLOSE-VOLUME worker0-2
+driver: send-cmd time 12.044 to taper0: PORT-WRITE worker0-3 01-00006 localhost.localdomain 100g 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 12.044 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.044 if default: free 799892229
+driver: hdisk-state time 12.044 hdisk 0: free 52207626 dumpers 0
+driver: state time 12.044 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.044 if default: free 799892229
+driver: hdisk-state time 12.044 hdisk 0: free 52207626 dumpers 0
+driver: result time 12.044 from taper0: CLOSED-VOLUME worker0-2
+driver: state time 12.046 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.046 if default: free 799892229
+driver: hdisk-state time 12.046 hdisk 0: free 52207626 dumpers 0
+driver: result time 12.046 from taper0: PORT worker0-3 01-00006 37980 "127.0.0.1:54139"
+driver: send-cmd time 12.046 to dumper0: PORT-DUMP 01-00006 37980 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100g /amanda/h1/1g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:54139 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-3 localhost.localdomain 100g:/tmp/amanda/taper_status_file_vDJqmc
+driver: state time 12.077 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 12.077 if default: free 799892229
+driver: hdisk-state time 12.077 hdisk 0: free 52207626 dumpers 0
+driver: result time 12.078 from taper0: REQUEST-NEW-TAPE worker0-3 01-00006
+driver: send-cmd time 12.078 to taper0: START-SCAN worker0-3 01-00006
+driver: send-cmd time 12.078 to taper0: NEW-TAPE worker0-3 01-00006
+taper: wrote label 'test-ORG-AA-vtapes-110'
+driver: state time 14.712 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.712 if default: free 799892229
+driver: hdisk-state time 14.712 hdisk 0: free 52207626 dumpers 0
+driver: result time 14.712 from taper0: NEW-TAPE worker0-3 01-00006 test-ORG-AA-vtapes-110
+driver: state time 14.712 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 14.712 if default: free 799892229
+driver: hdisk-state time 14.712 hdisk 0: free 52207626 dumpers 0
+driver: result time 14.713 from taper0: READY worker0-3 01-00006
+driver: state time 23.065 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 23.065 if default: free 799892229
+driver: hdisk-state time 23.065 hdisk 0: free 52207626 dumpers 0
+driver: result time 23.065 from dumper0: DONE 01-00006 104858000 104858000 11 41e03d1d:107374592000 41e03d1d:107374592000 "[sec 1100.1 kb 104858000 kps 95308.9 orig-kb 104858000]"
+driver: finished-cmd time 23.065 dumper0 dumped localhost.localdomain:100g
+driver: send-cmd time 23.065 to taper0: DONE worker0-3 01-00006 104858000 41e03d1d:107374592000 41e03d1d:107374592000 41e03d1d:107374592000
+driver: state time 26.111 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.111 if default: free 799892229
+driver: hdisk-state time 26.111 hdisk 0: free 52207626 dumpers 0
+driver: result time 26.111 from taper0: PARTDONE worker0-3 01-00006 test-ORG-AA-vtapes-110 1 104858000 "[sec 1139.6343 bytes 107374592000 kps 92010.217664 orig-kb 104858000]"
+driver: state time 26.137 free kps: 799892229 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 6 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.137 if default: free 799892229
+driver: hdisk-state time 26.137 hdisk 0: free 52207626 dumpers 0
+driver: result time 26.137 from taper0: DONE worker0-3 01-00006 INPUT-GOOD TAPE-GOOD "41e03d1d:107374592000" "[sec 1400.0000 bytes 107374592000 kps 74898.571429 orig-kb 104858000]" "" ""
+driver: finished-cmd time 26.137 taper taper0 worker worker0-3 wrote localhost.localdomain:100g
+driver: send-cmd time 26.137 to taper0: CLOSE-VOLUME worker0-3
+driver: send-cmd time 26.138 to taper0: PORT-WRITE worker0-0 00-00007 localhost.localdomain 1g 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 26.138 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.138 if default: free 799970515
+driver: hdisk-state time 26.138 hdisk 0: free 52207626 dumpers 0
+driver: state time 26.140 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.140 if default: free 799970515
+driver: hdisk-state time 26.140 hdisk 0: free 52207626 dumpers 0
+driver: result time 26.140 from taper0: CLOSED-VOLUME worker0-3
+driver: state time 26.546 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.546 if default: free 799970515
+driver: hdisk-state time 26.546 hdisk 0: free 52207626 dumpers 0
+driver: result time 26.546 from taper0: PORT worker0-0 00-00007 38411 "127.0.0.1:40263"
+driver: send-cmd time 26.546 to dumper0: PORT-DUMP 00-00007 38411 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 1g /amanda/h1/1g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:40263 20 |"  <auth>local</auth>\n  <compress>FAST</compress>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-0 localhost.localdomain 1g:/tmp/amanda/taper_status_file_8tWETi
+driver: state time 26.577 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 26.577 if default: free 799970515
+driver: hdisk-state time 26.577 hdisk 0: free 52207626 dumpers 0
+driver: result time 26.577 from taper0: REQUEST-NEW-TAPE worker0-0 00-00007
+driver: send-cmd time 26.577 to taper0: START-SCAN worker0-0 00-00007
+driver: send-cmd time 26.577 to taper0: NEW-TAPE worker0-0 00-00007
+taper: wrote label 'test-ORG-AA-vtapes-111'
+driver: state time 32.112 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 32.112 if default: free 799970515
+driver: hdisk-state time 32.112 hdisk 0: free 52207626 dumpers 0
+driver: result time 32.112 from taper0: NEW-TAPE worker0-0 00-00007 test-ORG-AA-vtapes-111
+driver: state time 32.112 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 32.112 if default: free 799970515
+driver: hdisk-state time 32.112 hdisk 0: free 52207626 dumpers 0
+driver: result time 32.112 from taper0: READY worker0-0 00-00007
+driver: state time 58.255 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.255 if default: free 799970515
+driver: hdisk-state time 58.255 hdisk 0: free 52207626 dumpers 0
+driver: result time 58.255 from taper0: PARTDONE worker0-0 00-00007 test-ORG-AA-vtapes-111 1 1048754 "[sec 26.141892 bytes 1073924397 kps 40117.754293]"
+driver: state time 58.256 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.256 if default: free 799970515
+driver: hdisk-state time 58.256 hdisk 0: free 52207626 dumpers 0
+driver: result time 58.256 from taper0: DUMPER-STATUS worker0-0 00-00007
+driver: state time 58.270 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.270 if default: free 799970515
+driver: hdisk-state time 58.270 hdisk 0: free 52207626 dumpers 0
+driver: result time 58.270 from dumper0: DONE 00-00007 1048580 1048755 32 41e03d1d:1073745920 8cab8265:1073924397 "[sec 31.708 kb 1048755 kps 33075.3 orig-kb 1048580]"
+driver: finished-cmd time 58.270 dumper0 dumped localhost.localdomain:1g
+driver: send-cmd time 58.270 to taper0: DONE worker0-0 00-00007 1048580 41e03d1d:1073745920 8cab8265:1073924397 8cab8265:1073924397
+driver: state time 58.287 free kps: 799970515 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 5 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.287 if default: free 799970515
+driver: hdisk-state time 58.287 hdisk 0: free 52207626 dumpers 0
+driver: result time 58.287 from taper0: DONE worker0-0 00-00007 INPUT-GOOD TAPE-GOOD "8cab8265:1073924397" "[sec 31.000000 bytes 1073924397 kps 33830.774194 orig-kb 1048580]" "" ""
+driver: finished-cmd time 58.287 taper taper0 worker worker0-0 wrote localhost.localdomain:1g
+driver: send-cmd time 58.287 to taper0: CLOSE-VOLUME worker0-0
+driver: send-cmd time 58.573 to taper0: PORT-WRITE worker0-1 01-00008 localhost.localdomain 2ga 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 58.573 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.573 if default: free 799935577
+driver: hdisk-state time 58.573 hdisk 0: free 52207626 dumpers 0
+driver: state time 58.573 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.573 if default: free 799935577
+driver: hdisk-state time 58.573 hdisk 0: free 52207626 dumpers 0
+driver: result time 58.573 from taper0: CLOSED-VOLUME worker0-0
+driver: state time 58.906 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 58.906 if default: free 799935577
+driver: hdisk-state time 58.906 hdisk 0: free 52207626 dumpers 0
+driver: result time 58.906 from taper0: PORT worker0-1 01-00008 45519 "127.0.0.1:54959"
+driver: send-cmd time 58.906 to dumper0: PORT-DUMP 01-00008 45519 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 2ga /amanda/h1/2g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:54959 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-1 localhost.localdomain 2ga:/tmp/amanda/taper_status_file_YVNW5P
+driver: state time 59.078 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 59.078 if default: free 799935577
+driver: hdisk-state time 59.078 hdisk 0: free 52207626 dumpers 0
+driver: result time 59.078 from taper0: REQUEST-NEW-TAPE worker0-1 01-00008
+driver: send-cmd time 59.078 to taper0: START-SCAN worker0-1 01-00008
+driver: send-cmd time 59.078 to taper0: NEW-TAPE worker0-1 01-00008
+taper: wrote label 'test-ORG-AA-vtapes-112'
+driver: state time 63.991 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 63.991 if default: free 799935577
+driver: hdisk-state time 63.991 hdisk 0: free 52207626 dumpers 0
+driver: result time 63.991 from taper0: NEW-TAPE worker0-1 01-00008 test-ORG-AA-vtapes-112
+driver: state time 63.991 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 63.991 if default: free 799935577
+driver: hdisk-state time 63.991 hdisk 0: free 52207626 dumpers 0
+driver: result time 63.991 from taper0: READY worker0-1 01-00008
+driver: state time 96.600 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 96.600 if default: free 799935577
+driver: hdisk-state time 96.600 hdisk 0: free 52207626 dumpers 0
+driver: result time 96.600 from dumper0: DONE 01-00008 2097160 2097160 38 b4327a28:2147491840 b4327a28:2147491840 "[sec 37.679 kb 2097160 kps 55658.2 orig-kb 2097160]"
+driver: finished-cmd time 96.600 dumper0 dumped localhost.localdomain:2ga
+driver: send-cmd time 96.600 to taper0: DONE worker0-1 01-00008 2097160 b4327a28:2147491840 b4327a28:2147491840 b4327a28:2147491840
+driver: state time 99.679 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 99.679 if default: free 799935577
+driver: hdisk-state time 99.679 hdisk 0: free 52207626 dumpers 0
+driver: result time 99.679 from taper0: PARTDONE worker0-1 01-00008 test-ORG-AA-vtapes-112 1 2097160 "[sec 35.685935 bytes 2147491840 kps 58767.130524 orig-kb 2097160]"
+driver: state time 99.702 free kps: 799935577 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 4 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 99.702 if default: free 799935577
+driver: hdisk-state time 99.702 hdisk 0: free 52207626 dumpers 0
+driver: result time 99.702 from taper0: DONE worker0-1 01-00008 INPUT-GOOD TAPE-GOOD "b4327a28:2147491840" "[sec 41.000000 bytes 2147491840 kps 51150.243902 orig-kb 2097160]" "" ""
+driver: finished-cmd time 99.703 taper taper0 worker worker0-1 wrote localhost.localdomain:2ga
+driver: send-cmd time 99.703 to taper0: CLOSE-VOLUME worker0-1
+driver: send-cmd time 100.013 to taper0: PORT-WRITE worker0-0 00-00009 localhost.localdomain 5ga 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 100.013 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 100.013 if default: free 799959640
+driver: hdisk-state time 100.013 hdisk 0: free 52207626 dumpers 0
+driver: state time 100.013 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 100.013 if default: free 799959640
+driver: hdisk-state time 100.013 hdisk 0: free 52207626 dumpers 0
+driver: result time 100.013 from taper0: CLOSED-VOLUME worker0-1
+driver: state time 100.485 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 100.485 if default: free 799959640
+driver: hdisk-state time 100.485 hdisk 0: free 52207626 dumpers 0
+driver: result time 100.485 from taper0: PORT worker0-0 00-00009 57323 "127.0.0.1:34492"
+driver: send-cmd time 100.485 to dumper0: PORT-DUMP 00-00009 57323 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 5ga /amanda/h1/5g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:34492 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-0 localhost.localdomain 5ga:/tmp/amanda/taper_status_file_YgeIQv
+driver: state time 100.554 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 100.554 if default: free 799959640
+driver: hdisk-state time 100.554 hdisk 0: free 52207626 dumpers 0
+driver: result time 100.554 from taper0: REQUEST-NEW-TAPE worker0-0 00-00009
+driver: send-cmd time 100.554 to taper0: START-SCAN worker0-0 00-00009
+driver: send-cmd time 100.554 to taper0: NEW-TAPE worker0-0 00-00009
+taper: wrote label 'test-ORG-AA-vtapes-113'
+driver: state time 105.960 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 105.960 if default: free 799959640
+driver: hdisk-state time 105.960 hdisk 0: free 52207626 dumpers 0
+driver: result time 105.960 from taper0: NEW-TAPE worker0-0 00-00009 test-ORG-AA-vtapes-113
+driver: state time 105.960 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 105.960 if default: free 799959640
+driver: hdisk-state time 105.960 hdisk 0: free 52207626 dumpers 0
+driver: result time 105.960 from taper0: READY worker0-0 00-00009
+driver: state time 217.679 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 217.679 if default: free 799959640
+driver: hdisk-state time 217.679 hdisk 0: free 52207626 dumpers 0
+driver: result time 217.679 from dumper0: DONE 00-00009 5242890 5242890 117 de3c9c61:5368719360 de3c9c61:5368719360 "[sec 117.175 kb 5242890 kps 44744.0 orig-kb 5242890]"
+driver: finished-cmd time 217.679 dumper0 dumped localhost.localdomain:5ga
+driver: send-cmd time 217.679 to taper0: DONE worker0-0 00-00009 5242890 de3c9c61:5368719360 de3c9c61:5368719360 de3c9c61:5368719360
+driver: state time 220.906 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 220.906 if default: free 799959640
+driver: hdisk-state time 220.906 hdisk 0: free 52207626 dumpers 0
+driver: result time 220.906 from taper0: PARTDONE worker0-0 00-00009 test-ORG-AA-vtapes-113 1 5242890 "[sec 114.944659 bytes 5368719360 kps 45612.297654 orig-kb 5242890]"
+driver: state time 220.931 free kps: 799959640 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 3 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 220.931 if default: free 799959640
+driver: hdisk-state time 220.931 hdisk 0: free 52207626 dumpers 0
+driver: result time 220.931 from taper0: DONE worker0-0 00-00009 INPUT-GOOD TAPE-GOOD "de3c9c61:5368719360" "[sec 120.000000 bytes 5368719360 kps 43690.750000 orig-kb 5242890]" "" ""
+driver: finished-cmd time 220.931 taper taper0 worker worker0-0 wrote localhost.localdomain:5ga
+driver: send-cmd time 220.931 to taper0: CLOSE-VOLUME worker0-0
+driver: send-cmd time 221.281 to taper0: PORT-WRITE worker0-1 01-00010 localhost.localdomain 100t 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 221.281 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 221.281 if default: free 799963428
+driver: hdisk-state time 221.281 hdisk 0: free 52207626 dumpers 0
+driver: state time 221.281 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 221.281 if default: free 799963428
+driver: hdisk-state time 221.281 hdisk 0: free 52207626 dumpers 0
+driver: result time 221.281 from taper0: CLOSED-VOLUME worker0-0
+driver: state time 221.621 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 221.621 if default: free 799963428
+driver: hdisk-state time 221.621 hdisk 0: free 52207626 dumpers 0
+driver: result time 221.621 from taper0: PORT worker0-1 01-00010 48672 "127.0.0.1:32967"
+driver: send-cmd time 221.621 to dumper0: PORT-DUMP 01-00010 48672 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100t /amanda/h1/10g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:32967 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-1 localhost.localdomain 100t:/tmp/amanda/taper_status_file_XlGo8P
+driver: state time 221.685 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 221.685 if default: free 799963428
+driver: hdisk-state time 221.685 hdisk 0: free 52207626 dumpers 0
+driver: result time 221.685 from taper0: REQUEST-NEW-TAPE worker0-1 01-00010
+driver: send-cmd time 221.685 to taper0: START-SCAN worker0-1 01-00010
+driver: send-cmd time 221.685 to taper0: NEW-TAPE worker0-1 01-00010
+taper: wrote label 'test-ORG-AA-vtapes-114'
+driver: state time 226.931 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 226.931 if default: free 799963428
+driver: hdisk-state time 226.931 hdisk 0: free 52207626 dumpers 0
+driver: result time 226.931 from taper0: NEW-TAPE worker0-1 01-00010 test-ORG-AA-vtapes-114
+driver: state time 226.931 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 226.931 if default: free 799963428
+driver: hdisk-state time 226.931 hdisk 0: free 52207626 dumpers 0
+driver: result time 226.931 from taper0: READY worker0-1 01-00010
+driver: state time 443.291 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 443.291 if default: free 799963428
+driver: hdisk-state time 443.291 hdisk 0: free 52207626 dumpers 0
+driver: result time 443.291 from dumper0: DONE 01-00010 104857700000 104857700000 222 6feb8771:107374284800000 6feb8771:107374284800000 "[sec 2216560 kb 104857700000 kps 47306.4 orig-kb 104857700000]"
+driver: finished-cmd time 443.291 dumper0 dumped localhost.localdomain:100t
+driver: send-cmd time 443.291 to taper0: DONE worker0-1 01-00010 104857700000 6feb8771:107374284800000 6feb8771:107374284800000 6feb8771:107374284800000
+driver: state time 446.476 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 446.476 if default: free 799963428
+driver: hdisk-state time 446.476 hdisk 0: free 52207626 dumpers 0
+driver: result time 446.476 from taper0: PARTDONE worker0-1 01-00010 test-ORG-AA-vtapes-114 1 104857700000 "[sec 2195433.67 bytes 107374284800000 kps 47761.725363 orig-kb 104857700000]"
+driver: state time 446.494 free kps: 799963428 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 2 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 446.494 if default: free 799963428
+driver: hdisk-state time 446.494 hdisk 0: free 52207626 dumpers 0
+driver: result time 446.494 from taper0: DONE worker0-1 01-00010 INPUT-GOOD TAPE-GOOD "6feb8771:107374284800000" "[sec 224.000000 bytes 107374284800000 kps 468114732.14 orig-kb 104857700000]" "" ""
+driver: finished-cmd time 446.494 taper taper0 worker worker0-1 wrote localhost.localdomain:100t
+driver: send-cmd time 446.494 to taper0: CLOSE-VOLUME worker0-1
+driver: send-cmd time 446.641 to taper0: PORT-WRITE worker0-0 00-00011 localhost.localdomain 10t 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 446.641 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 446.641 if default: free 799976959
+driver: hdisk-state time 446.641 hdisk 0: free 52207626 dumpers 0
+driver: state time 446.641 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 446.641 if default: free 799976959
+driver: hdisk-state time 446.641 hdisk 0: free 52207626 dumpers 0
+driver: result time 446.641 from taper0: CLOSED-VOLUME worker0-1
+driver: state time 446.980 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 446.980 if default: free 799976959
+driver: hdisk-state time 446.980 hdisk 0: free 52207626 dumpers 0
+driver: result time 446.980 from taper0: PORT worker0-0 00-00011 55496 "127.0.0.1:47303"
+driver: send-cmd time 446.980 to dumper0: PORT-DUMP 00-00011 55496 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10t /amanda/h1/10g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:47303 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-0 localhost.localdomain 10t:/tmp/amanda/taper_status_file_3Fex1e
+driver: state time 447.048 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 447.048 if default: free 799976959
+driver: hdisk-state time 447.048 hdisk 0: free 52207626 dumpers 0
+driver: result time 447.048 from taper0: REQUEST-NEW-TAPE worker0-0 00-00011
+driver: send-cmd time 447.048 to taper0: START-SCAN worker0-0 00-00011
+driver: send-cmd time 447.048 to taper0: NEW-TAPE worker0-0 00-00011
+taper: wrote label 'test-ORG-AA-vtapes-115'
+driver: state time 451.866 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 451.866 if default: free 799976959
+driver: hdisk-state time 451.866 hdisk 0: free 52207626 dumpers 0
+driver: result time 451.866 from taper0: NEW-TAPE worker0-0 00-00011 test-ORG-AA-vtapes-115
+driver: state time 451.866 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 451.866 if default: free 799976959
+driver: hdisk-state time 451.866 hdisk 0: free 52207626 dumpers 0
+driver: result time 451.866 from taper0: READY worker0-0 00-00011
+driver: state time 674.702 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 674.702 if default: free 799976959
+driver: hdisk-state time 674.702 hdisk 0: free 52207626 dumpers 0
+driver: result time 674.702 from dumper0: DONE 00-00011 10485770000 10485770000 228 cc61a29c:10737428480000 cc61a29c:10737428480000 "[sec 227704.0 kb 10485770000 kps 46050.0 orig-kb 10485770000]"
+driver: finished-cmd time 674.702 dumper0 dumped localhost.localdomain:10t
+driver: send-cmd time 674.702 to taper0: DONE worker0-0 00-00011 10485770000 cc61a29c:10737428480000 cc61a29c:10737428480000 cc61a29c:10737428480000
+driver: state time 678.350 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 678.350 if default: free 799976959
+driver: hdisk-state time 678.350 hdisk 0: free 52207626 dumpers 0
+driver: result time 678.350 from taper0: PARTDONE worker0-0 00-00011 test-ORG-AA-vtapes-115 1 10485770000 "[sec 226481.654 bytes 10737428480000 kps 46298.540367 orig-kb 10485770000]"
+driver: state time 678.381 free kps: 799976959 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 1 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 678.381 if default: free 799976959
+driver: hdisk-state time 678.381 hdisk 0: free 52207626 dumpers 0
+driver: result time 678.381 from taper0: DONE worker0-0 00-00011 INPUT-GOOD TAPE-GOOD "cc61a29c:10737428480000" "[sec 231000.000 bytes 10737428480000 kps 45392.943723 orig-kb 10485770000]" "" ""
+driver: finished-cmd time 678.381 taper taper0 worker worker0-0 wrote localhost.localdomain:10t
+driver: send-cmd time 678.381 to taper0: CLOSE-VOLUME worker0-0
+driver: send-cmd time 678.574 to taper0: PORT-WRITE worker0-1 01-00012 localhost.localdomain 10g 0 20160222114156 "" "" "" 1 "" "" "" "" AMANDA
+driver: state time 678.574 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 678.574 if default: free 799724018
+driver: hdisk-state time 678.574 hdisk 0: free 52207626 dumpers 0
+driver: state time 678.575 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 678.575 if default: free 799724018
+driver: hdisk-state time 678.575 hdisk 0: free 52207626 dumpers 0
+driver: result time 678.575 from taper0: CLOSED-VOLUME worker0-0
+driver: state time 679.124 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 679.124 if default: free 799724018
+driver: hdisk-state time 679.124 hdisk 0: free 52207626 dumpers 0
+driver: result time 679.124 from taper0: PORT worker0-1 01-00012 56822 "127.0.0.1:53596"
+driver: send-cmd time 679.124 to dumper0: PORT-DUMP 01-00012 56822 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 10g /home/martinea/10g 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:53596 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>512</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-1 localhost.localdomain 10g:/tmp/amanda/taper_status_file_gDUZpQ
+driver: state time 679.151 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 679.151 if default: free 799724018
+driver: hdisk-state time 679.151 hdisk 0: free 52207626 dumpers 0
+driver: result time 679.151 from taper0: REQUEST-NEW-TAPE worker0-1 01-00012
+driver: send-cmd time 679.151 to taper0: START-SCAN worker0-1 01-00012
+driver: send-cmd time 679.151 to taper0: NEW-TAPE worker0-1 01-00012
+taper: wrote label 'test-ORG-AA-vtapes-116'
+driver: state time 679.626 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 679.626 if default: free 799724018
+driver: hdisk-state time 679.626 hdisk 0: free 52207626 dumpers 0
+driver: result time 679.626 from taper0: NEW-TAPE worker0-1 01-00012 test-ORG-AA-vtapes-116
+driver: state time 679.626 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 679.626 if default: free 799724018
+driver: hdisk-state time 679.626 hdisk 0: free 52207626 dumpers 0
+driver: result time 679.626 from taper0: READY worker0-1 01-00012
+driver: state time 781.085 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 781.085 if default: free 799724018
+driver: hdisk-state time 781.085 hdisk 0: free 52207626 dumpers 0
+driver: result time 781.085 from dumper0: DONE 01-00012 10486016 10486016 102 0aa6974d:10737680384 0aa6974d:10737680384 "[sec 101.948 kb 10486016 kps 102856.2 orig-kb 10486016]"
+driver: finished-cmd time 781.086 dumper0 dumped localhost.localdomain:10g
+driver: send-cmd time 781.086 to taper0: DONE worker0-1 01-00012 10486016 0aa6974d:10737680384 0aa6974d:10737680384 0aa6974d:10737680384
+driver: state time 783.779 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 783.779 if default: free 799724018
+driver: hdisk-state time 783.779 hdisk 0: free 52207626 dumpers 0
+driver: result time 783.779 from taper0: PARTDONE worker0-1 01-00012 test-ORG-AA-vtapes-116 1 10486016 "[sec 104.149712 bytes 10737680384 kps 100682.141109 orig-kb 10486016]"
+driver: state time 783.806 free kps: 799724018 space: 52207626 taper: writing idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 2 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 783.806 if default: free 799724018
+driver: hdisk-state time 783.806 hdisk 0: free 52207626 dumpers 0
+driver: result time 783.806 from taper0: DONE worker0-1 01-00012 INPUT-GOOD TAPE-GOOD "0aa6974d:10737680384" "[sec 105.000000 bytes 10737680384 kps 99866.819048 orig-kb 10486016]" "" ""
+driver: finished-cmd time 783.806 taper taper0 worker worker0-1 wrote localhost.localdomain:10g
+driver: send-cmd time 783.806 to taper0: CLOSE-VOLUME worker0-1
+driver: started chunker0 pid 4543
+driver: send-cmd time 784.902 to chunker0: START 20160222114156
+driver: send-cmd time 784.902 to chunker0: PORT-WRITE 00-00013 /amanda/h1/hdisk/20160222114156/localhost.localdomain.100m.0 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100m 0 20160222114156 31457280 APPLICATION 102496 |auth=local;index;
+driver: result time 785.535 from chunker0: PORT 00-00013 37406 "127.0.0.1:45823"
+driver: send-cmd time 785.535 to dumper0: PORT-DUMP 00-00013 37406 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 100m /amanda/h1/100m 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:45823 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+driver: state time 785.535 free kps: 799931727 space: 52105130 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 785.535 if default: free 799931727
+driver: hdisk-state time 785.535 hdisk 0: free 52105130 dumpers 1
+driver: state time 785.535 free kps: 799931727 space: 52105130 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 785.535 if default: free 799931727
+driver: hdisk-state time 785.535 hdisk 0: free 52105130 dumpers 1
+driver: result time 785.535 from taper0: CLOSED-VOLUME worker0-1
+driver: state time 786.779 free kps: 799931727 space: 52105130 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 786.779 if default: free 799931727
+driver: hdisk-state time 786.779 hdisk 0: free 52105130 dumpers 1
+driver: result time 786.779 from chunker0: DUMPER-STATUS 00-00013
+driver: state time 786.795 free kps: 799931727 space: 52105130 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 786.795 if default: free 799931727
+driver: hdisk-state time 786.795 hdisk 0: free 52105130 dumpers 1
+driver: result time 786.795 from dumper0: DONE 00-00013 102410 102410 1 4756a007:104867840 4756a007:104867840 "[sec 1.240 kb 102410 kps 82556.3 orig-kb 102410]"
+driver: finished-cmd time 786.795 dumper0 dumped localhost.localdomain:100m
+driver: send-cmd time 786.795 to chunker0: DONE 00-00013 4756a007:104867840
+driver: state time 786.795 free kps: 799931727 space: 52105130 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 786.795 if default: free 799931727
+driver: hdisk-state time 786.795 hdisk 0: free 52105130 dumpers 1
+driver: result time 786.795 from chunker0: DONE 00-00013 102410 "4756a007:104867840" "[sec 0.100000 kb 102410 kps 1024100.000000]"
+driver: finished-cmd time 786.795 chunker0 chunked localhost.localdomain:100m
+driver: send-cmd time 786.795 to chunker0: QUIT
+driver: to write host localhost.localdomain disk 100m date 20160222114156 on storage my_vtapes
+driver: send-cmd time 787.097 to taper0: FILE-WRITE worker0-0 00-00014 /amanda/h1/hdisk/20160222114156/localhost.localdomain.100m.0 localhost.localdomain 100m 0 20160222114156 "" "" "" 1 "" "" "" "" 102410
+driver: state time 787.097 free kps: 800000000 space: 52105184 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 787.097 if default: free 800000000
+driver: hdisk-state time 787.097 hdisk 0: free 52105184 dumpers 0
+taper: status file taper0 worker0-0 localhost.localdomain 100m:/tmp/amanda/taper_status_file_iClhRC
+driver: state time 787.535 free kps: 800000000 space: 52105184 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 3 driver-idle: start-wait
+driver: interface-state time 787.535 if default: free 800000000
+driver: hdisk-state time 787.535 hdisk 0: free 52105184 dumpers 0
+driver: result time 787.535 from taper0: REQUEST-NEW-TAPE worker0-0 00-00014
+driver: send-cmd time 787.535 to taper0: START-SCAN worker0-0 00-00014
+driver: send-cmd time 787.535 to taper0: NEW-TAPE worker0-0 00-00014
+taper: wrote label 'test-ORG-AA-vtapes-117'
+driver: state time 787.887 free kps: 800000000 space: 52105184 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 787.887 if default: free 800000000
+driver: hdisk-state time 787.887 hdisk 0: free 52105184 dumpers 0
+driver: result time 787.887 from taper0: NEW-TAPE worker0-0 00-00014 test-ORG-AA-vtapes-117
+driver: state time 787.887 free kps: 800000000 space: 52105184 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 787.887 if default: free 800000000
+driver: hdisk-state time 787.887 hdisk 0: free 52105184 dumpers 0
+driver: result time 787.888 from taper0: READY worker0-0 00-00014
+driver: state time 787.972 free kps: 800000000 space: 52105184 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 787.972 if default: free 800000000
+driver: hdisk-state time 787.972 hdisk 0: free 52105184 dumpers 0
+driver: result time 787.972 from taper0: PARTDONE worker0-0 00-00014 test-ORG-AA-vtapes-117 1 102410 "[sec 0.082856 bytes 104867840 kps 1235999.806894 orig-kb 102410]"
+driver: state time 787.980 free kps: 800000000 space: 52105184 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 2 driver-idle: start-wait
+driver: interface-state time 787.980 if default: free 800000000
+driver: hdisk-state time 787.980 hdisk 0: free 52105184 dumpers 0
+driver: result time 787.980 from taper0: DONE worker0-0 00-00014 INPUT-GOOD TAPE-GOOD "4756a007:104867840" "[sec 0.100000 bytes 104867840 kps 1024100.000000 orig-kb 102410]" "" ""
+driver: finished-cmd time 787.980 taper taper0 worker worker0-0 wrote localhost.localdomain:100m
+driver: send-cmd time 787.980 to taper0: CLOSE-VOLUME worker0-0
+driver: state time 789.204 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 1 directq: 0 roomq: 0 wakeup: 1 driver-idle: start-wait
+driver: interface-state time 789.204 if default: free 800000000
+driver: hdisk-state time 789.204 hdisk 0: free 52207626 dumpers 0
+driver: result time 789.204 from taper0: CLOSED-VOLUME worker0-0
+driver: started chunker0 pid 4574
+driver: send-cmd time 790.206 to chunker0: START 20160222114156
+driver: send-cmd time 790.206 to chunker0: PORT-WRITE 00-00015 /amanda/h1/hdisk/20160222114156/localhost.localdomain._bootAMGTAR.0 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 /bootAMGTAR 0 20160222114156 31457280 APPLICATION 155584 |auth=local;index;exclude-list=/t/v/s/w/d/s/;
+driver: result time 790.427 from chunker0: PORT 00-00015 45262 "127.0.0.1:38315"
+driver: send-cmd time 790.427 to dumper0: PORT-DUMP 00-00015 45262 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf707 /bootAMGTAR /boot 0 1970:1:1:0:0:0 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA 127.0.0.1:38315 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n  <exclude>\n    <list>/t/v/s/w/d/s/</list>\n  </exclude>\n  <script>\n    <plugin>script-email</plugin>\n    <execute_where>CLIENT</execute_where>\n    <execute_on>PRE-RECOVER,POST-RECOVER,PRE-LEVEL-RECOVER,POST-LEVEL-RECOVER,INTER-LEVEL-RECOVER</execute_on>\n    <property>\n      <name>mailto</name>\n      <value>martinea</value>      <value>toto</value>\n    </property>\n  </script>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>gnutar-path</name>\n      <value>/bin/tar</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>ignore</name>\n      <value encoding=\"raw\" raw=\"OiBEaXJlY3RvcnkgaGFzIGJlZW4gcmVuYW1lZA==\">:_Directory_has_been_renamed</value>      <value encoding=\"raw\" raw=\"V2FybmluZzogQ2Fubm90IHN0YXQ6IE5vIHN1Y2ggZmlsZSBvciBkaXJlY3Rvcnk=\">Warning:_Cannot_stat:_No_such_file_or_directory</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>normal</name>\n      <value>is.sparse</value>\n    </property>\n    <property>\n      <name>ignore-zeros</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+driver: state time 790.427 free kps: 799883312 space: 52052042 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 790.427 if default: free 799883312
+driver: hdisk-state time 790.427 hdisk 0: free 52052042 dumpers 1
+driver: state time 791.033 free kps: 799883312 space: 52052042 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 791.033 if default: free 799883312
+driver: hdisk-state time 791.033 hdisk 0: free 52052042 dumpers 1
+driver: result time 791.033 from chunker0: RQ-MORE-DISK 00-00015
+driver: send-cmd time 791.033 to chunker0: CONTINUE 00-00015 /amanda/h1/hdisk/20160222114156/localhost.localdomain._bootAMGTAR.0 31457280 7808
+driver: state time 791.035 free kps: 799883312 space: 52044234 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 791.035 if default: free 799883312
+driver: hdisk-state time 791.035 hdisk 0: free 52044234 dumpers 1
+driver: result time 791.035 from chunker0: DUMPER-STATUS 00-00015
+driver: state time 792.057 free kps: 799883312 space: 52044234 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 792.057 if default: free 799883312
+driver: hdisk-state time 792.057 hdisk 0: free 52044234 dumpers 1
+driver: result time 792.057 from dumper0: DONE 00-00015 155584 155584 2 fdabc779:159318016 fdabc779:159318016 "[sec 1.613 kb 155584 kps 96398.6 orig-kb 155584]"
+driver: finished-cmd time 792.057 dumper0 dumped localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 792.057 to chunker0: DONE 00-00015 fdabc779:159318016
+driver: state time 792.058 free kps: 799883312 space: 52044234 taper: idle idle-dumpers: 0 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 792.058 if default: free 799883312
+driver: hdisk-state time 792.058 hdisk 0: free 52044234 dumpers 1
+driver: result time 792.058 from chunker0: DONE 00-00015 155584 "fdabc779:159318016" "[sec 0.607037 kb 155584 kps 256300.686779]"
+driver: finished-cmd time 792.058 chunker0 chunked localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 792.058 to chunker0: QUIT
+driver: to write host localhost.localdomain disk /bootAMGTAR date 20160222114156 on storage my_vtapes
+driver: send-cmd time 792.491 to taper0: FILE-WRITE worker0-0 00-00016 /amanda/h1/hdisk/20160222114156/localhost.localdomain._bootAMGTAR.0 localhost.localdomain /bootAMGTAR 0 20160222114156 "" "" "" 1 "" "" "" "" 155584
+driver: state time 792.491 free kps: 800000000 space: 52052010 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 792.491 if default: free 800000000
+driver: hdisk-state time 792.491 hdisk 0: free 52052010 dumpers 0
+taper: status file taper0 worker0-0 localhost.localdomain /bootAMGTAR:/tmp/amanda/taper_status_file_Zd7OUF
+driver: state time 792.796 free kps: 800000000 space: 52052010 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 792.796 if default: free 800000000
+driver: hdisk-state time 792.796 hdisk 0: free 52052010 dumpers 0
+driver: result time 792.796 from taper0: REQUEST-NEW-TAPE worker0-0 00-00016
+driver: send-cmd time 792.796 to taper0: START-SCAN worker0-0 00-00016
+driver: send-cmd time 792.796 to taper0: NEW-TAPE worker0-0 00-00016
+taper: wrote label 'test-ORG-AA-vtapes-118'
+driver: state time 793.661 free kps: 800000000 space: 52052010 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.661 if default: free 800000000
+driver: hdisk-state time 793.661 hdisk 0: free 52052010 dumpers 0
+driver: result time 793.661 from taper0: NEW-TAPE worker0-0 00-00016 test-ORG-AA-vtapes-118
+driver: state time 793.661 free kps: 800000000 space: 52052010 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.661 if default: free 800000000
+driver: hdisk-state time 793.661 hdisk 0: free 52052010 dumpers 0
+driver: result time 793.661 from taper0: READY worker0-0 00-00016
+driver: state time 793.765 free kps: 800000000 space: 52052010 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.765 if default: free 800000000
+driver: hdisk-state time 793.765 hdisk 0: free 52052010 dumpers 0
+driver: result time 793.765 from taper0: PARTDONE worker0-0 00-00016 test-ORG-AA-vtapes-118 1 155584 "[sec 0.102257 bytes 159318016 kps 1521499.750628 orig-kb 155584]"
+driver: state time 793.783 free kps: 800000000 space: 52052010 taper: writing idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.783 if default: free 800000000
+driver: hdisk-state time 793.783 hdisk 0: free 52052010 dumpers 0
+driver: result time 793.783 from taper0: DONE worker0-0 00-00016 INPUT-GOOD TAPE-GOOD "fdabc779:159318016" "[sec 1.000000 bytes 159318016 kps 155584.000000 orig-kb 155584]" "" ""
+driver: finished-cmd time 793.783 taper taper0 worker worker0-0 wrote localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 793.783 to taper0: CLOSE-VOLUME worker0-0
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: result time 793.819 from taper0: CLOSED-VOLUME worker0-0
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: idle idle-dumpers: 1 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: send-cmd time 793.819 to taper0: QUIT
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: down idle-dumpers: 1 qlen runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: state time 793.819 free kps: 800000000 space: 52207626 taper: down idle-dumpers: 1 qlen runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 793.819 if default: free 800000000
+driver: hdisk-state time 793.819 hdisk 0: free 52207626 dumpers 0
+driver: QUITTING time 793.819 telling children to quit
+driver: send-cmd time 793.819 to dumper0: QUIT ""
+driver: FINISHED time 794.820
+amdump: end at Mon Feb 22 11:55:11 EST 2016
+Warning: no log files found for tape JLM-s3-006 written 2015-10-19 11:01:12
+Warning: no log files found for tape JLM-s3-005 written 2015-10-19 10:59:16
+Warning: no log files found for tape JLM-s3-004 written 2015-10-19 10:52:06
+Warning: no log files found for tape JLM-s3-003 written 2015-10-19 08:56:12
+Warning: no log files found for tape JLM-s3-002 written 2015-10-19 08:49:34
+Warning: no log files found for tape JLM-s3-001 written 2015-10-19 08:46:05
+Warning: no log files found for tape swift-2-003 written 2015-08-06 10:43:53
+Warning: no log files found for tape swift-2-002 written 2015-08-06 10:41:01
+Warning: no log files found for tape swift-2-001 written 2015-08-06 09:34:49
+Warning: no log files found for tape swift-2-006 written 2015-08-06 09:34:40
+Warning: no log files found for tape swift-2-005 written 2015-08-06 09:34:26
+Warning: no log files found for tape swift-2-004 written 2015-08-06 09:34:10
