@@ -1962,6 +1962,14 @@ s3_device_set_max_send_speed_fn(Device *p_self,
     int     thread;
 
     new_val = g_value_get_uint64(val);
+    if (new_val && new_val < 5120) {
+	for (thread = 0; thread < self->nb_threads; thread++) {
+	    device_set_error(p_self,
+			g_strdup("MAX-SEND-SPEED property is too low (minimum value is 5120)"),
+			DEVICE_STATUS_DEVICE_ERROR);
+	}
+	return FALSE;
+    }
     if (self->s3t) {
 	for (thread = 0; thread < self->nb_threads; thread++) {
 	    if (self->s3t[thread].s3 && !s3_set_max_send_speed(self->s3t[thread].s3, new_val)) {
@@ -1987,6 +1995,14 @@ s3_device_set_max_recv_speed_fn(Device *p_self,
     int     thread;
 
     new_val = g_value_get_uint64(val);
+    if (new_val && new_val < 5120) {
+	for (thread = 0; thread < self->nb_threads; thread++) {
+	    device_set_error(p_self,
+			g_strdup("MAX-RECV-SPEED property is too low (minimum value is 5120)"),
+			DEVICE_STATUS_DEVICE_ERROR);
+	}
+	return FALSE;
+    }
     if (self->s3t) {
 	for (thread = 0; thread < self->nb_threads; thread++) {
 	    if (self->s3t[thread].s3 &&
@@ -2505,6 +2521,12 @@ static gboolean setup_handle(S3Device * self) {
 		return FALSE;
 	    }
 
+	    if (self->max_send_speed && self->max_send_speed < 5120) {
+		device_set_error(d_self,
+			g_strdup("MAX-SEND-SPEED property is too low (minimum value is 5120)"),
+			DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
 	    if (self->max_send_speed &&
 		!s3_set_max_send_speed(self->s3t[thread].s3,
 				       self->max_send_speed)) {
@@ -2514,6 +2536,12 @@ static gboolean setup_handle(S3Device * self) {
 		return FALSE;
 	    }
 
+	    if (self->max_recv_speed && self->max_recv_speed < 5120) {
+		device_set_error(d_self,
+			g_strdup("MAX-RECV-SPEED property is too low (minimum value is 5120)"),
+			DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
 	    if (self->max_recv_speed &&
 		!s3_set_max_recv_speed(self->s3t[thread].s3,
 				       self->max_recv_speed)) {

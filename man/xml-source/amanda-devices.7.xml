@@ -444,12 +444,14 @@ device-property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
 (read-write) Maximum speed, in bytes per second, that this device will receive
 data from S3.  If the average speed exceeds this value, the device will stop
 reading long enough to bring the average below this value.
+Minimum value is 5120.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>MAX_SEND_SPEED</term><listitem>
 (read-write) Maximum speed, in bytes per second, that this device will send
 data to S3.  If the average speed exceeds this value, the device will stop
 writing long enough to bring the average below this value.
+Minimum value is 5120.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_MULTI_DELETE</term><listitem>
