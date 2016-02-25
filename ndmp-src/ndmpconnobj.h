@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +17,7 @@
  * 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
  * Contact information: Zmanda Inc., 465 N Mathlida Ave, Suite 300
- * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+ * Sunnyvale, CA 94085, or: http://www.zmanda.com
  */
 
 /* An interface for devices that support direct-tcp access to a the device */

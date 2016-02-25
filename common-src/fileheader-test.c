@@ -15,7 +15,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
- * Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
+ * Contact information: Carbonite Inc., 756 N Pastoria Ave
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 

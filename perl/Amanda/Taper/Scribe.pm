@@ -1,4 +1,5 @@
 # Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,7 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation,
 # Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
 #
-# Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
+# Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 =head1 NAME

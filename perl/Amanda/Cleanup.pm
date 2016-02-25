@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2014 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2014-2016 Carbonite, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,8 +14,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #
-# Contact information: Zmanda Inc., 465 S. Mathilda Ave., Suite 300
-# Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+# Contact information: Carbonite Inc., 756 N Pastoria Ave
+# Sunnyvale, CA 94085, or: http://www.zmanda.com
 
 
 package Amanda::Cleanup::Message;

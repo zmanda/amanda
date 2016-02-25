@@ -1,4 +1,5 @@
 # Copyright (c) 2009-2012 Zmanda, Inc.  All Rights Reserved.
+# Copyright (c) 2013-2016 Carbonite, Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
