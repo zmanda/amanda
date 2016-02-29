@@ -1,4 +1,7 @@
 2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: fix for last dle span two tapes
+
+2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Micheal Burk
 	* perl/Amanda/Report/json.pm: fixup
 
