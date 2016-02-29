@@ -256,8 +256,8 @@ sub output_stats
     };
 
     $self->{'sections'}{'statistic'}{'avg_compression'} = {
-		total => $comp_size->($incr_stats),
-		full  => $comp_size->($incr_stats),
+		total => $comp_size->($total_stats),
+		full  => $comp_size->($full_stats),
 		incr  => $comp_size->($incr_stats)
     };
 
@@ -535,9 +535,9 @@ sub output_summary
 		'dump_orig_kb' => $$record[4],
 		'dump_out_kb' => $$record[5],
 		'dump_comp' => $$record[6],
-		'dump_duration' => int($$record[7]),
+		'dump_duration' => $$record[7],
 		'dump_rate' => $$record[8],
-		'tape_duration' => int($$record[9]),
+		'tape_duration' => $$record[9],
 		'tape_rate' => $$record[10],
 		'dump_partial' => $$record[11],
 		'last_tape_label' => $$record[12]

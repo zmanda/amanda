@@ -1,3 +1,7 @@
+2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Micheal Burk
+	* perl/Amanda/Report/json.pm: fixup
+
 2016-02-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/libtool.m4: Fix for x86_64
 	* contrib/libtool-for-x86_64.diff: Copy of the patch
