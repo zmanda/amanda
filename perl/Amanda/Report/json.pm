@@ -543,8 +543,8 @@ sub output_stats
     };
 
     $self->{'sections'}{'statistic'}{'avg_compression'} = {
-		total => $comp_size->($incr_stats),
-		full  => $comp_size->($incr_stats),
+		total => $comp_size->($total_stats),
+		full  => $comp_size->($full_stats),
 		incr  => $comp_size->($incr_stats)
     };
 
