@@ -521,8 +521,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '73.5342772567593',
+                                                                               'full' => '73.5342772567593'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -2156,8 +2156,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '83.3188405797101',
+                                                                               'full' => '83.3188405797101'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -2362,8 +2362,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '42.4619346668543',
+                                                                               'full' => '42.4619346668543'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -2516,8 +2516,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '42.4619346668543',
+                                                                               'full' => '42.4619346668543'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -2763,8 +2763,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '69.76193947113',
+                                                                               'full' => '69.76193947113'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -2900,8 +2900,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '17.9763671135792',
+                                                                               'full' => '17.9763671135792'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -3068,8 +3068,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '86.4634221167044',
+                                                                               'full' => '86.4634221167044'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -3230,8 +3230,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '17.9763671135792',
+                                                                               'full' => '17.9763671135792'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -3364,8 +3364,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '100',
+                                                                               'full' => '100'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,
@@ -3496,8 +3496,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                          },
                                                         'avg_compression' => {
                                                                                'incr' => undef,
-                                                                               'total' => undef,
-                                                                               'full' => undef
+                                                                               'total' => '100',
+                                                                               'full' => '100'
                                                                              },
                                                         'avg_dump_rate' => {
                                                                              'incr' => undef,

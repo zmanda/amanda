@@ -1,4 +1,7 @@
 2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Rest_Runs.pl: Fix for Report/json.pm fix
+
+2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: fix for last dle span two tapes
 	* device-src/vfs-device.c: Add a SLOW-WRITE property (for testing)
 	* device-src/vfs-device.h: Add a SLOW-WRITE property (for testing)
