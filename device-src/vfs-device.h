@@ -71,6 +71,10 @@ typedef struct {
     /* when was that check performed? */
     time_t checked_fs_free_time;
 
+    /* for testing */
+    gboolean slow_write;
+    int      slow_count;
+
     /* and how many bytes have been written since the last check? */
     guint64 checked_bytes_used;
     gboolean (* clear_and_prepare_label)(Device *dself, char *label, char *timestamp);

@@ -25,6 +25,7 @@ use Amanda::Paths;
 use Amanda::Constants;
 use File::Path;
 use Carp;
+use Test::More;
 
 =head1 NAME
 
@@ -150,6 +151,33 @@ sub add_param {
     my ($param, $value) = @_;
 
     push @{$self->{'params'}}, $param, $value;
+}
+
+=item C<rm_param($param, $value)>
+
+Remove the given parameter from the configuration file.  Note that strings which
+should be quoted in the configuration file itself must be double-quoted here,
+If the value is not provided, it remove all params of that name.
+e.g.,
+
+  $testconf->rm_param('org' => '"MyOrganization"');
+
+=cut
+
+sub rm_param {
+    my $self = shift;
+    my ($rm_param, $rm_value) = @_;
+
+    my @new_params;
+
+    while (@{$self->{'params'}}) {
+	$param = shift @{$self->{'params'}};
+	$value = shift @{$self->{'params'}};
+	if ($param ne $rm_param || (defined $rm_value && $value ne $rm_value)) {
+	    push @new_params, $param, $value;
+	}
+    }
+    @{$self->{'params'}} = @new_params;
 }
 
 =item C<add_client_param($param, $value)>, C<add_client_config_param($param, $value)>

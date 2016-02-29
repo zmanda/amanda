@@ -163,6 +163,7 @@ require Exporter;
     cleanup
     $diskname $taperoot $holdingdir
     $stdout $stderr $exit_code
+    clean_taperoot
     load_vtape load_vtape_res vtape_dir
     amdump_diag run_expect );
 @EXPORT = qw(exp_continue exp_continue_timeout);
@@ -263,6 +264,20 @@ sub setup_backmeup {
     };
 
     $create->($diskname, $dir_structure);
+}
+
+sub clean_taperoot {
+    my $ntapes = shift;
+    if (-d $taperoot) {
+	rmtree($taperoot);
+	mkdir($taperoot);
+	# make each of the tape directories
+	for (my $i = 1; $i < $ntapes+1; $i++) {
+	    my $tapepath = "$taperoot/slot$i";
+	    mkpath("$tapepath");
+	}
+	load_vtape(1);
+    }
 }
 
 sub setup_new_vtapes {

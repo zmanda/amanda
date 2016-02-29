@@ -1,4 +1,14 @@
 2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: fix for last dle span two tapes
+	* device-src/vfs-device.c: Add a SLOW-WRITE property (for testing)
+	* device-src/vfs-device.h: Add a SLOW-WRITE property (for testing)
+	* installcheck/Installcheck/Config.pm (rm_param): New fucntion
+	* installcheck/Installcheck/Run.pm (clean_taperoot: New function
+	* installcheck/Makefile.am: Add tape_action
+	* installcheck/tape_action.pl: New installcheck script to check the
+	  tape_action function
+
+2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Micheal Burk
 	* perl/Amanda/Report/json.pm: fixup
 

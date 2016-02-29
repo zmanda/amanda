@@ -5330,6 +5330,8 @@ tape_action(
     driver_debug(2, _("new_data: %lld\n"), (long long)new_data);
     driver_debug(2, _("data_free: %lld\n"), (long long)data_free);
 ;
+    tapeq_size -= data_free;
+    tapeq_size += new_data;
     driver_debug(2, _("tapeq_size: %lld\n"), (long long)tapeq_size);
 
     sched_size = runq_size + tapeq_size + dumpers_size;

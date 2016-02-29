@@ -98,6 +98,12 @@ static gboolean property_get_monitor_free_space_fn(Device *dself,
 static gboolean property_set_monitor_free_space_fn(Device *dself,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety surety, PropertySource source);
+static gboolean property_get_slow_write_fn(Device *dself,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety *surety, PropertySource *source);
+static gboolean property_set_slow_write_fn(Device *dself,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety surety, PropertySource source);
 static gboolean property_get_use_data_fn(Device *dself,
 			    DevicePropertyBase *base, GValue *val,
 			    PropertySurety *surety, PropertySource *source);
@@ -138,6 +144,9 @@ static DeviceClass *parent_class = NULL;
 DevicePropertyBase device_property_monitor_free_space;
 #define PROPERTY_MONITOR_FREE_SPACE (device_property_monitor_free_space.ID)
 
+DevicePropertyBase device_property_slow_write;
+#define PROPERTY_SLOW_WRITE (device_property_slow_write.ID)
+
 DevicePropertyBase device_property_use_data;
 #define PROPERTY_USE_DATA (device_property_use_data.ID)
 
@@ -147,6 +156,9 @@ void vfs_device_register(void) {
     device_property_fill_and_register(&device_property_monitor_free_space,
                                       G_TYPE_BOOLEAN, "monitor_free_space",
       "Should VFS device monitor the filesystem's available free space?");
+    device_property_fill_and_register(&device_property_slow_write,
+                                      G_TYPE_BOOLEAN, "slow_write",
+      "Write 5 blocks by second, use for testing only");
     device_property_fill_and_register(&device_property_use_data,
                                       G_TYPE_STRING, "use_data",
       "Should VFS device use the data subdir?");
@@ -195,6 +207,8 @@ vfs_device_init (
     self->enforce_volume_limit = TRUE;
 
     self->monitor_free_space = TRUE;
+    self->slow_write = FALSE;
+    self->slow_count = 0;
     self->use_data = 2;
     self->checked_fs_free_bytes = G_MAXUINT64;
     self->checked_fs_free_time = 0;
@@ -299,6 +313,11 @@ vfs_device_base_init(
 	    property_get_monitor_free_space_fn,
 	    property_set_monitor_free_space_fn);
 
+    device_class_register_property(device_class, PROPERTY_SLOW_WRITE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
+	    property_get_slow_write_fn,
+	    property_set_slow_write_fn);
+
     device_class_register_property(device_class, PROPERTY_USE_DATA,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK,
 	    property_get_use_data_fn,
@@ -392,6 +411,44 @@ property_set_monitor_free_space_fn(
     VfsDevice *self = VFS_DEVICE(dself);
 
     self->monitor_free_space = g_value_get_boolean(val);
+
+    return device_simple_property_set_fn(dself, base, val, surety, source);
+}
+
+static gboolean
+property_get_slow_write_fn(
+    Device *dself,
+    DevicePropertyBase *base G_GNUC_UNUSED,
+    GValue *val,
+    PropertySurety *surety,
+    PropertySource *source)
+{
+    VfsDevice *self = VFS_DEVICE(dself);
+
+    g_value_unset_init(val, G_TYPE_BOOLEAN);
+    g_value_set_boolean(val, self->slow_write);
+
+    if (surety)
+	*surety = PROPERTY_SURETY_GOOD;
+
+    if (source)
+	*source = PROPERTY_SOURCE_DEFAULT;
+
+    return TRUE;
+}
+
+
+static gboolean
+property_set_slow_write_fn(
+    Device *dself,
+    DevicePropertyBase *base,
+    GValue *val,
+    PropertySurety surety,
+    PropertySource source)
+{
+    VfsDevice *self = VFS_DEVICE(dself);
+
+    self->slow_write = g_value_get_boolean(val);
 
     return device_simple_property_set_fn(dself, base, val, surety, source);
 }
@@ -958,6 +1015,14 @@ vfs_device_write_block(
 	    dwr = WRITE_FAILED;
 	}
 	return dwr;
+    }
+
+    if (self->slow_write) {
+	self->slow_count++;
+	if (self->slow_count >= 2) {
+	    sleep(1);
+	    self->slow_count = 0;
+	}
     }
 
     result = vfs_device_robust_write(self, data, size);

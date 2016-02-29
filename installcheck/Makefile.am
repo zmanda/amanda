@@ -92,7 +92,8 @@ full_tests = \
 	amstatus \
 	amvault \
 	example \
-	pp-scripts
+	pp-scripts \
+	tape_action
 all_tests += $(full_tests)
 
 restore_tests = \
