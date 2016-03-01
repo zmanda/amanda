@@ -17,7 +17,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 29;
+use Test::More tests => 30;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -689,6 +689,34 @@ $taperscan->quit();
 $storage->quit();
 
 rmtree($taperoot);
+unlink($tapelist);
+
+# test do not use no-reuse with a datestamp of 0
+reset_taperoot(5);
+$tapelist->clear_tapelist();
+$tapelist->write();
+label_slot(1, "TEST-1", "X", "no-reuse", 1);
+label_slot(2, "TEST-2", "X", "no-reuse", 1);
+label_slot(3, "TEST-3", "X", "reuse", 1);
+label_slot(4, "TEST-4", "X", "no-reuse", 1);
+label_slot(5, "TEST-5", "X", "no-reuse", 1);
+
+$storage = Amanda::Storage->new(storage_name => "disk", tapelist => $tapelist);
+set_current_slot(1);
+
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
+@results = run_scan($taperscan);
+is_deeply([ @results ],
+	  [ undef, "TEST-3", $ACCESS_WRITE ],
+	  "skips a no-reuse volume")
+	  or diag(Dumper(\@results));
+$taperscan->quit();
+
+rmtree($taperoot);
+unlink($tapelist);
 
 # test invalid because slot loaded in invalid drive
 my $chg_state_file = "$Installcheck::TMP/chg-robot-state";
@@ -811,3 +839,4 @@ Amanda::MainLoop::run();
 unlink($chg_state_file) if -f $chg_state_file;
 unlink($mtx_state_file) if -f $mtx_state_file;
 unlink($tapelist);
+

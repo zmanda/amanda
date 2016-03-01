@@ -608,6 +608,9 @@ sub volume_is_new_labelled {
     if ($tle->{'datestamp'} ne '0') {
 	return 0;
     }
+    if (!$tle->{'reuse'}) {
+	return 0;
+    }
     return 1;
 }
 
