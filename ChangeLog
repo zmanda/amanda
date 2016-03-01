@@ -1,3 +1,11 @@
+2016-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Scan/lexical.pm,
+	  perl/Amanda/Taper/Scan/oldest.pm: A no-reuse is not a new labelled
+	  tape
+	* installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl: Add check
+
 2016-02-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: fix for last dle span two tapes
 

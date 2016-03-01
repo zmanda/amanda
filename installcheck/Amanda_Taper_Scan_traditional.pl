@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 9;
+use Test::More tests => 10;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -294,3 +294,33 @@ $taperscan->quit();
 
 rmtree($taperoot);
 unlink($tapelist);
+
+# test do not use no-reuse with a datestamp of 0
+reset_taperoot(5);
+$tapelist->clear_tapelist();
+$tapelist->write();
+label_slot(1, "TEST-1", "X", "no-reuse", 1);
+label_slot(2, "TEST-2", "X", "no-reuse", 1);
+label_slot(3, "TEST-3", "X", "reuse", 1);
+label_slot(4, "TEST-4", "X", "no-reuse", 1);
+label_slot(5, "TEST-5", "X", "no-reuse", 1);
+
+$chg = Amanda::Changer->new("chg-disk:$taperoot", tapelist => $tapelist);
+set_current_slot(1);
+
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "traditional",
+    tapecycle => 2,
+    tapecycle => 1,
+    changer => $chg);
+@results = run_scan($taperscan);
+is_deeply([ @results ],
+	  [ undef, "TEST-3", $ACCESS_WRITE ],
+	  "skips a no-reuse volume")
+	  or diag(Dumper(\@results));
+$taperscan->quit();
+
+rmtree($taperoot);
+unlink($tapelist);
+
