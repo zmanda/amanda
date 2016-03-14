@@ -1427,6 +1427,7 @@ sub get_summary_info
 	# no compression)
 	my $compression;
 	if (!defined $orig_size || $orig_size == 0 ||
+	    $taper_partial ||
 	    ($out_size/$orig_size > 0.99  && $out_size/$orig_size < 1.01)) {
 	    $compression = '--';
 	    $compression = $self->divzero(0, 0);

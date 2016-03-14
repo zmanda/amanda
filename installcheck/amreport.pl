@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 167;
+use Test::More tests => 171;
 
 use strict;
 use warnings;
@@ -710,6 +710,22 @@ is($Installcheck::Run::exit_code, 16,
     "amreport with taperr logfile specified explicitly exit==16");
 results_match($out_filename, $cat->get_text('report-noholding'),
     "..result matches 16");
+
+setup_config(catalog => 'tapers', want_template => 1);
+burp($alternate_log_filename, $cat->get_file('log/log'));
+run($amreport, 'TESTCONF', '-f', $out_filename, '-l', $alternate_log_filename, '-odisplayunit=g');
+is($Installcheck::Run::exit_code, 16,
+    "amreport with tapers logfile exit==16");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 16s");
+
+setup_config(catalog => 'tapers1', want_template => 1);
+burp($alternate_log_filename, $cat->get_file('log/log'));
+run($amreport, 'TESTCONF', '-f', $out_filename, '-l', $alternate_log_filename);
+is($Installcheck::Run::exit_code, 16,
+    "amreport with taperss logfile exit==16");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 16s1");
 
 setup_config(catalog => 'spanned', want_template => 1);
 

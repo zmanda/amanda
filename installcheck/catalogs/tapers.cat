@@ -1,0 +1,83 @@
+# a log with a config error in it
+
+# this has two reports - one when this is the "current" logfile, and one when it
+# is a historical logfile
+
+%F log/log
+INFO amflush amflush pid 41294
+DISK amflush localhost dle1
+START amflush date 20160224152855
+INFO driver driver pid 41296
+START driver date 20160224152855
+STATS driver hostname localhost.localdomain
+STATS driver startup time 1.196
+INFO taper taper pid 41297
+INFO taper Slot 43 with label TESTCONF-000003 is usable
+START taper datestamp 20160224152855 label TESTCONF-000003 tape 1
+INFO taper Slot 44 with label TESTCONF-000004 is usable
+PART taper TESTCONF-000003 1 localhost dle1 20160219165740 1/-1 0 [sec 30024.754626 bytes 3738276593664 kps 121588.362052 orig-kb 5394945408]
+INFO taper tape TESTCONF-000003 kb 3650660736 fm 1 [OK]
+ERROR taper no-tape config [taperflush criteria not met]
+PARTIAL taper localhost dle1 20160219165740  0 [sec 30063.000000 bytes 3738276593664 kps 121433.680471 orig-kb 5394945408] "taperflush criteria not met"
+INFO taper pid-done 41297
+FINISH driver date 20160224152855 time 30082.980
+INFO driver pid-done 41296
+INFO amflush pid-done 41295
+
+%T report
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : February 24, 2016
+
+The dumps were flushed to tape TESTCONF-000003.
+Not using all tapes because taperflush criteria not met.
+Some dumps may have been left in the holding disk.
+The next tape Amanda expects to use is: 1 new tape.
+
+
+
+FAILURE DUMP SUMMARY:
+  localhost dle1 lev 0  partial taper: taperflush criteria not met
+
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          8:21
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)            0.0        0.0        0.0
+Original Size (meg)          0.0        0.0        0.0
+Avg Compressed Size (%)      --         --         --
+DLEs Dumped                    0          0          0
+Avg Dump Rate (k/s)          --         --         --
+
+Tape Time (hrs:min)         8:21       8:21       0:00
+Tape Size (meg)        3565098.4  3565098.4        0.0
+Tape Used (%)              #####      #####        0.0
+DLEs Taped                     1          1          0
+Parts Taped                    1          1          0
+Avg Tp Write Rate (k/s)   121434     121434        --
+
+USAGE BY TAPE:
+  Label               Time         Size      %  DLEs Parts
+  TESTCONF-000003     8:20        3482G  #####     1     1
+
+
+
+NOTES:
+  taper: Slot 43 with label TESTCONF-000003 is usable
+  taper: Slot 44 with label TESTCONF-000004 is usable
+  taper: tape TESTCONF-000003 kb 3650660736 fm 1 [OK]
+
+
+DUMP SUMMARY:
+                                                   DUMPER STATS   TAPER STATS
+HOSTNAME  DISK L           ORIG-GB  OUT-GB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+-------------------------- ---------------------- -------------- ---------------
+localhost dle1 0           5145    3482     --        FLUSH      501:03 121433.7 PARTIAL
+
+(brought to you by Amanda version x.y.z)
+
