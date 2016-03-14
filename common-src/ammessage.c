@@ -458,7 +458,8 @@ typedef enum {
     MESSAGE_TRUE,
     MESSAGE_FALSE,
     MESSAGE_ARRAY,
-    MESSAGE_HASH
+    MESSAGE_HASH,
+    MESSAGE_BAD
 } message_type_t;
 
 typedef struct json_value_s {
@@ -1876,6 +1877,9 @@ sprint_message_value(
 	    result = g_string_free(r, FALSE);
 	}
 	break;
+    case MESSAGE_BAD:
+	assert(0);
+	break;
     }
 
     return result;
@@ -2020,8 +2024,8 @@ fdprint_message(
     return message;
 }
 
-static char * parse_json_primitive( char *s, int  *i, int   len);
-static char *
+static message_type_t parse_json_primitive( char *s, int  *i, int   len);
+static message_type_t
 parse_json_primitive(
     char *s,
     int  *i,
@@ -2030,13 +2034,15 @@ parse_json_primitive(
 
     if (strcmp(&s[*i], "null") == 0) {
 	*i += 4;
-	return NULL;
+	return MESSAGE_NULL;
     } else if (strcmp(&s[*i], "true") == 0) {
 	*i += 4;
+	return MESSAGE_TRUE;
     } else if (strcmp(&s[*i], "false") == 0) {
 	*i += 5;
+	return MESSAGE_FALSE;
     }
-    return s;
+    return MESSAGE_BAD;
 }
 
 static char *json_parse_string(char *s, int *i, int len);
@@ -2092,6 +2098,7 @@ parse_json_array(
 {
     int len = strlen(s);
     char *token;
+    message_type_t message_token;
 
     (*i)++;
     for (; *i < len && s[*i] != '\0'; (*i)++) {
@@ -2143,11 +2150,10 @@ parse_json_array(
 		break;
 
 	    default:
-		token = parse_json_primitive(s, i, len);
-		assert(token==NULL);
-		if (token == NULL) {
+		message_token = parse_json_primitive(s, i, len);
+		if (message_token != MESSAGE_BAD) {
 		    json_value_t *value = g_new(json_value_t, 1);
-		    value->type = MESSAGE_NULL;
+		    value->type = message_token;
 		    value->string = NULL;
 		    g_ptr_array_add(array, value);
 		}
@@ -2168,6 +2174,7 @@ parse_json_hash(
 {
     int len = strlen(s);
     char *token;
+    message_type_t message_token;
     gboolean expect_key = TRUE;
     char *key = NULL;
 
@@ -2231,15 +2238,15 @@ parse_json_hash(
 		break;
 
 	    default:
-		token = parse_json_primitive(s, i, len);
-		assert(token==NULL);
+		message_token = parse_json_primitive(s, i, len);
 		if (expect_key) {
+		    assert(0);
 		    expect_key = FALSE;
 		    key = token;
-		} else if (token == NULL) {
+		} else if (message_token != MESSAGE_BAD) {
 		    json_value_t *value = g_new(json_value_t, 1);
 		    expect_key = TRUE;
-		    value->type = MESSAGE_NULL;
+		    value->type = message_token;
 		    value->string = NULL;
 		    g_hash_table_insert(hash, key, value);
 		    expect_key = TRUE;
@@ -2261,6 +2268,7 @@ parse_json_message(
     int len = strlen(s);
     GPtrArray *message_array = g_ptr_array_sized_new(100);
     char *token;
+    message_type_t message_token;
     message_t *message = NULL;
     gboolean expect_key = TRUE;
     char *key = NULL;
@@ -2430,14 +2438,14 @@ parse_json_message(
 		break;
 
 	    default:
-		token = parse_json_primitive(s, &i, len);
-		assert(token==NULL);
+		message_token = parse_json_primitive(s, &i, len);
 		if (expect_key) {
+		    assert(0);
 		    expect_key = FALSE;
 		    key = g_strdup(token);
-		} else if (token == NULL) {
+		} else if (message_token != MESSAGE_BAD) {
 		    message->arg_array[nb_arg].key = key;
-		    message->arg_array[nb_arg].value.type = MESSAGE_NULL;
+		    message->arg_array[nb_arg].value.type = message_token;
 		    message->arg_array[nb_arg].value.string = NULL;
 		    nb_arg++;
 		    if (nb_arg >= message->argument_allocated) {

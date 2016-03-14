@@ -1,4 +1,7 @@
 2016-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c: Fix parsing of NULL, true or false value
+
+2016-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Report/human.pm: Fix compression for partial result
 	* installcheck/amreport.pl: Check partial result
 	* installcheck/catalogs/tapers1.cat,
