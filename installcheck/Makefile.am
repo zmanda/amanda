@@ -210,6 +210,8 @@ catalogs = \
 	catalogs/spanned.cat \
 	catalogs/strontium.cat \
 	catalogs/taperr.cat \
+	catalogs/tapers.cat \
+	catalogs/tapers1.cat \
 	catalogs/taper-parallel-write.cat
 EXTRA_DIST += $(catalogs)
 

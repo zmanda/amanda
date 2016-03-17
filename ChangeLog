@@ -1,3 +1,7 @@
+2016-03-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Makefile.am (catalogs): Add catalogs/tapers.cat and
+	  catalogs/tapers1.cat
+
 2016-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c: Fix parsing of NULL, true or false value
 
