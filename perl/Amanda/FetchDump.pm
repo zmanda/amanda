@@ -128,6 +128,8 @@ sub run {
 		'server-decrypt'        => $params{'server-decrypt'},
 		'finished_cb'           => $params{'finished_cb'},
 		'interactivity'         => $params{'interactivity'},
+		'reserve-tapes'         => $params{'reserve-tapes'},
+		'release-tapes'         => $params{'release-tapes'},
 		'feedback'              => $self);
 }
 

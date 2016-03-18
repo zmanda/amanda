@@ -23,7 +23,7 @@ use warnings;
 
 =head1 NAME
 
-Amanda::Restore -- interface torestore backup
+Amanda::Restore -- interface to restore backup
 
 =head1 SYNOPSIS
 
@@ -65,6 +65,8 @@ Amanda::Restore -- interface torestore backup
                 'server-decrypt'        => $params{'server-decrypt'},
                 'finished_cb'           => $params{'finished_cb'},
                 'interactivity'         => $params{'interactivity'},
+                'reserve-tapes'         => $params{'reserve-tapes'},
+                'release-tapes'         => $params{'release-tapes'},
                 'feedback'              => $self);
 
 =head1 ARGUMENTS
@@ -166,6 +168,14 @@ Do not re-assemble split dump
 =head2 pipe-fd
 
 A fd where to send the dump
+
+=head2 release-tapes
+
+Release the tapes already reserved for the restore
+
+=head2 reserve-tapes
+
+Reserve the tapes needed for the restore
 
 =head2 restore
 
@@ -468,6 +478,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Header;
 use Amanda::Holding;
 use Amanda::Cmdline;
+use Amanda::Cmdfile;
 use Amanda::Xfer qw( :constants );
 use Amanda::Recovery::Planner;
 use Amanda::Recovery::Clerk;
@@ -1152,6 +1163,132 @@ sub restore {
     step list_volume => sub {
 	my @needed_labels = $plan->get_volume_list();
 	my @needed_holding = $plan->get_holding_file_list();
+
+	my $conf_cmdfile = config_dir_relative(getconf($CNF_CMDFILE));
+	my $cmdfile = Amanda::Cmdfile->new($conf_cmdfile);
+	my $cmd_added;
+	my $last_label;
+
+	if ($params{'reserve-tapes'}) {
+debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
+	    for my $dump (@{$plan->{'dumps'}}) {
+		for my $part (@{$dump->{'parts'}}) {
+		    next unless defined $part; # skip parts[0]
+		    if (defined $part->{'label'}) {
+			if (!defined $last_label ||
+			    $part->{'label'} ne $last_label) {
+			    $last_label = $part->{'label'};
+			    my $cmddata = Amanda::Cmdfile->new_Cmddata(
+				operation      => $Amanda::Cmdfile::CMD_RESTORE,
+				config         => get_config_name(),
+				hostname       => $dump->{'hostname'},
+				diskname       => $dump->{'diskname'},
+				dump_timestamp => $dump->{'dump_timestamp'},
+				src_storage    => $dump->{'storage'},
+				src_pool       => $dump->{'pool'},
+				src_label      => $part->{'label'},
+				#start_time     => time,
+				status         => $Amanda::Cmdfile::CMD_TODO);
+			    my $id = $cmdfile->add_to_memory($cmddata);
+			    $cmd_added++;
+			}
+		    } else {
+			my $cmddata = Amanda::Cmdfile->new_Cmddata(
+			    operation      => $Amanda::Cmdfile::CMD_RESTORE,
+			    config         => get_config_name(),
+			    hostname       => $dump->{'hostname'},
+			    diskname       => $dump->{'diskname'},
+			    dump_timestamp => $dump->{'dump_timestamp'},
+			    src_storage    => 'HOLDING',
+			    src_pool       => 'HOLDING',
+			    holding_file   => $part->{'holding_file'},
+			    #start_time     => time,
+			    status         => $Amanda::Cmdfile::CMD_TODO);
+			my $id = $cmdfile->add_to_memory($cmddata);
+			$cmd_added++;
+		    }
+		}
+	    }
+	}
+
+	if ($params{'release-tapes'}) {
+	    for my $dump (@{$plan->{'dumps'}}) {
+		for my $part (@{$dump->{'parts'}}) {
+		    next unless defined $part; # skip parts[0]
+		    if (defined $part->{'label'}) {
+			if (!defined $last_label ||
+			    $part->{'label'} ne $last_label) {
+			    $last_label = $part->{'label'};
+			    $cmdfile->remove_for_restore_label(get_config_name(),
+				$dump->{'hostname'},
+				$dump->{'diskname'},
+				$dump->{'dump_timestamp'},
+				$dump->{'storage'},
+				$dump->{'pool'},
+				$part->{'label'});
+			    $cmd_added++;
+			}
+		    } else {
+			$cmdfile->remove_for_restore_holding(get_config_name(),
+				$dump->{'hostname'},
+				$dump->{'diskname'},
+				$dump->{'dump_timestamp'},
+				$part->{'holding_file'});
+			$cmd_added++;
+		    }
+		}
+	    }
+	}
+
+	if ($cmd_added) {
+	    $cmdfile->write();
+	    return $steps->{'finished'}->();
+	}
+
+	#reserve the tapes
+	for my $dump (@{$plan->{'dumps'}}) {
+	    for my $part (@{$dump->{'parts'}}) {
+		next unless defined $part; # skip parts[0]
+		if (defined $part->{'label'}) {
+		    if (!defined $last_label ||
+			$part->{'label'} ne $last_label) {
+			$last_label = $part->{'label'};
+			my $cmddata = Amanda::Cmdfile->new_Cmddata(
+			    operation      => $Amanda::Cmdfile::CMD_RESTORE,
+			    config         => get_config_name(),
+			    hostname       => $dump->{'hostname'},
+			    diskname       => $dump->{'diskname'},
+			    dump_timestamp => $dump->{'dump_timestamp'},
+			    src_storage    => $part->{'storage'},
+			    src_pool       => $part->{'pool'},
+			    src_label      => $part->{'label'},
+			    working_pid    => $$,
+			    status         => $Amanda::Cmdfile::CMD_WORKING);
+			my $id = $cmdfile->add_to_memory($cmddata);
+			$cmd_added++;
+		    }
+		} else {
+		    my $cmddata = Amanda::Cmdfile->new_Cmddata(
+			operation      => $Amanda::Cmdfile::CMD_RESTORE,
+			config         => get_config_name(),
+			hostname       => $dump->{'hostname'},
+			diskname       => $dump->{'diskname'},
+			dump_timestamp => $dump->{'dump_timestamp'},
+			holding_file   => $part->{'holding_file'},
+			working_pid    => $$,
+			status         => $Amanda::Cmdfile::CMD_WORKING);
+		    my $id = $cmdfile->add_to_memory($cmddata);
+		    $cmd_added++;
+		}
+	    }
+	}
+
+	if ($cmd_added) {
+	    $cmdfile->write();
+	} else {
+	    $cmdfile->unlock();
+	}
+
 	$self->user_message(
 		Amanda::Restore::Message->new(
 			source_filename => __FILE__,

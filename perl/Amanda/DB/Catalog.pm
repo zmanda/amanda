@@ -684,6 +684,7 @@ sub get_parts_and_dumps {
 		    hostname => $find_result->{'hostname'},
 		    diskname => $find_result->{'diskname'},
 		    storage  => $find_result->{'storage'},
+		    pool => $find_result->{'pool'},
 		    level => $find_result->{'level'}+0,
 		    orig_kb => $find_result->{'orig_kb'},
 		    native_crc => $find_result->{'native_crc'},

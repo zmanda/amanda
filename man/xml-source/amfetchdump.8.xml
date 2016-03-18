@@ -46,6 +46,10 @@
       <arg choice='plain'>--header-fd <replaceable>fd</replaceable></arg>
     </group>
     <group choice='opt'>
+      <arg choice='plain'>--release-tapes</arg>
+      <arg choice='plain'>--reserve-tapes</arg>
+    </group>
+    <group choice='opt'>
       <arg choice='plain'>--decompress</arg>
       <arg choice='plain'>--no-decompress</arg>
       <arg choice='plain'>--server-decompress</arg>
@@ -328,6 +332,20 @@ If not set, run the post-recover script.</para>
   <term><option>--exclude-list-glob</option> <replaceable>filename</replaceable></term>
   <listitem>
 <para>The name of a file containing file to exclude from the restore list using --exclude-list-glob of the application.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--release-tapes</option></term>
+  <listitem>
+<para>Release the tapes already reserved for the restore.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--reserve-tapes</option></term>
+  <listitem>
+<para>Reserve the tapes needed for the restore.</para>
   </listitem>
   </varlistentry>
 

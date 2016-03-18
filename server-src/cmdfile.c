@@ -20,6 +20,9 @@
 #include "amutil.h"
 #include "cmdfile.h"
 
+#define EXPIRE_DELAY 24*60*60
+#define EXPIRE_ADJUST 23*60*60
+
 static void free_cmddata(gpointer p);
 //static cmddata_t *duplicate_cmddata(cmddata_t *cmddata);
 
@@ -88,6 +91,43 @@ close_cmdfile(
 static int checked_working_pid = 0;
 #define NB_PIDS 10
 
+static gboolean need_rewrite;
+
+static void
+cmdfile_set_expire(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data G_GNUC_UNUSED)
+{
+    cmddata_t *cmddata = value;
+
+    if (cmddata->operation == CMD_RESTORE &&
+	cmddata->status != CMD_DONE &&
+	cmddata->working_pid == 0) {
+	if (cmddata->expire < time(NULL) + EXPIRE_ADJUST) {
+	    need_rewrite = TRUE;
+	}
+	cmddata->expire = time(NULL) + EXPIRE_DELAY;
+    }
+}
+
+static void
+cmdfile_set_to_DONE(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data G_GNUC_UNUSED)
+{
+    cmddata_t *cmddata = value;
+
+    if (cmddata->operation == CMD_RESTORE &&
+	cmddata->status != CMD_DONE &&
+	cmddata->working_pid == 0 &&
+	cmddata->expire < time(NULL)) {
+	cmddata->status = CMD_DONE;
+	need_rewrite = TRUE;
+    }
+}
+
 cmddatas_t *
 read_cmdfile(
     char *filename)
@@ -103,10 +143,14 @@ read_cmdfile(
     pid_t  new_pids[NB_PIDS];
     int    nb_pids = 0;
     int    result;
+    gboolean generic_command_restore = FALSE;
+    gboolean specific_command_restore = FALSE;
 
     cmddatas->lock = file_lock_new(filename);
     cmddatas->cmdfile = g_hash_table_new_full(g_direct_hash, g_direct_equal,
 					      NULL, &free_cmddata);
+    need_rewrite = FALSE;
+
     // open
     while ((result = file_lock_lock(cmddatas->lock)) == 1) {
         sleep(1);
@@ -142,7 +186,8 @@ read_cmdfile(
         skip_non_whitespace(s, ch);
         s[-1] = '\0';
 	if (!g_str_equal(operation, "FLUSH") &&
-	    !g_str_equal(operation, "COPY")) {
+	    !g_str_equal(operation, "COPY") &&
+	    !g_str_equal(operation, "RESTORE")) {
 	    g_debug("BAD operation %s: %s", operation, s);
 	    continue;
 	}
@@ -209,6 +254,38 @@ read_cmdfile(
 	    skip_integer(s, ch);
 	    s[-1] = '\0';
 	    cmddata->start_time = atoll(fp);
+	} else if (g_str_equal(operation, "RESTORE")) {
+	    cmddata->operation = CMD_RESTORE;
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_quoted_string(s, ch);
+	    s[-1] = '\0';
+	    cmddata->src_storage = unquote_string(fp);
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_quoted_string(s, ch);
+	    s[-1] = '\0';
+	    cmddata->src_pool = unquote_string(fp);
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_quoted_string(s, ch);
+	    s[-1] = '\0';
+	    if (g_str_equal(cmddata->src_pool, "HOLDING")) {
+		cmddata->holding_file = unquote_string(fp);
+	    } else {
+		cmddata->src_label = unquote_string(fp);
+	    }
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_integer(s, ch);
+	    s[-1] = '\0';
+	    cmddata->src_fileno = atoi(fp);
+
+	    skip_whitespace(s,ch);
+	    fp = s - 1;
+	    skip_integer(s, ch);
+	    s[-1] = '\0';
+	    cmddata->expire = atoll(fp);
 	} else {
 	}
 	skip_whitespace(s, ch);
@@ -232,17 +309,25 @@ read_cmdfile(
 	s[-1] = '\0';
 	cmddata->level = atoi(fp);
 	skip_whitespace(s, ch);
-	fp = s - 1;
-	skip_quoted_string(s, ch);
-	s[-1] = '\0';
-	cmddata->dst_storage = unquote_string(fp);
-	skip_whitespace(s, ch);
+	if (cmddata->operation != CMD_RESTORE) {
+	    fp = s - 1;
+	    skip_quoted_string(s, ch);
+	    s[-1] = '\0';
+	    cmddata->dst_storage = unquote_string(fp);
+	    skip_whitespace(s, ch);
+	}
 	fp = s - 1;
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 	if (sscanf(fp, "WORKING:%d", &pid) != 1) {
 	}
 	cmddata->working_pid = pid;
+	if (cmddata->operation == CMD_RESTORE) {
+	    if (cmddata->working_pid == 0)
+		generic_command_restore = TRUE;
+	    else
+		specific_command_restore = TRUE;
+	}
 	skip_whitespace(s, ch);
 	fp = s - 1;
 	skip_non_whitespace(s, ch);
@@ -284,9 +369,22 @@ read_cmdfile(
 	g_hash_table_insert(cmddatas->cmdfile, GINT_TO_POINTER(cmddata->id), cmddata);
     }
 
+    if (generic_command_restore) {
+	if (specific_command_restore) {
+	    /* set expire to NOW+24h of all genric command_restore */
+	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_set_expire, NULL);
+	} else {
+	    /* check start_time of all generic command_restore and remove them */
+	    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_set_to_DONE, NULL);
+	}
+    }
     g_strfreev(xlines);
     checked_working_pid = 1;
 
+    if (need_rewrite) {
+	write_cmdfile(cmddatas);
+	return read_cmdfile(filename);
+    }
     return cmddatas;
 }
 
@@ -354,7 +452,32 @@ cmdfile_write(
 	g_free(src_label);
 	g_free(src_labels_str);
 	g_ptr_array_add(lines, line);
-    } else {
+    } else if (cmddata->operation == CMD_RESTORE) {
+	char *src_storage = quote_string(cmddata->src_storage);
+	char *src_pool = quote_string(cmddata->src_pool);
+
+	if (g_str_equal(src_pool, "HOLDING")) {
+	    char *holding_file = quote_string(cmddata->holding_file);
+
+	    line = g_strdup_printf("%d RESTORE %s %s %s %s %d %lu %s %s %s %d WORKING:%d %s\n",
+		id, config, src_storage, src_pool, holding_file, 0,
+		(unsigned long int) cmddata->expire,
+		hostname, diskname, dump_timestamp, cmddata->level,
+		(int)cmddata->working_pid, status);
+	    g_free(holding_file);
+	} else {
+	    char *src_label = quote_string(cmddata->src_label);
+
+	    line = g_strdup_printf("%d RESTORE %s %s %s %s %d %lu %s %s %s %d WORKING:%d %s\n",
+		id, config, src_storage, src_pool, src_label, cmddata->src_fileno,
+		(unsigned long int) cmddata->expire,
+		hostname, diskname, dump_timestamp, cmddata->level,
+		(int)cmddata->working_pid, status);
+	    g_free(src_label);
+	}
+	g_free(src_storage);
+	g_free(src_pool);
+	g_ptr_array_add(lines, line);
     }
     g_free(config);
     g_free(hostname);
@@ -397,6 +520,8 @@ add_cmd_in_memory(
     cmddatas->max_id++;
     cmddata->id = cmddatas->max_id;
 
+    if (cmddata->operation == CMD_RESTORE && cmddata->working_pid == 0)
+	cmddata->expire = time(NULL) + EXPIRE_DELAY;
     g_hash_table_insert(cmddatas->cmdfile,
 		        GINT_TO_POINTER(cmddata->id), cmddata);
     return cmddata->id;
@@ -415,6 +540,8 @@ add_cmd_in_cmdfile(
     // add the cmd
     new_cmddatas->max_id++;
     cmddata->id = new_cmddatas->max_id;
+    if (cmddata->operation == CMD_RESTORE && cmddata->working_pid == 0)
+	cmddata->expire = time(NULL) + EXPIRE_DELAY;
     g_hash_table_insert(new_cmddatas->cmdfile,
 		        GINT_TO_POINTER(new_cmddatas->max_id), cmddata);
 
@@ -477,6 +604,7 @@ cmdfile_remove_working(
     pid_t pid = *(pid_t *)user_data;
 
     if (cmddata->working_pid == pid) {
+	//cmddata->status = CMD_DONE;
 	cmddata->working_pid = 0;
     }
 }
@@ -580,4 +708,106 @@ cmdfile_get_ids_for_holding(
     return g_strdup(data.ids);
 }
 
+typedef struct cmdfile_remove_for_restore_label_s {
+    char *hostname;
+    char *diskname;
+    char *timestamp;
+    char *storage;
+    char *pool;
+    char *label;
+    GSList *ids;
+} cmdfile_remove_for_restore_label_t;
 
+static void
+cmdfile_remove_restore_label(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    int id = GPOINTER_TO_INT(key);
+    cmddata_t *cmddata = value;
+    cmdfile_remove_for_restore_label_t *data = user_data;
+
+    if (cmddata->operation == CMD_RESTORE &&
+	g_str_equal(data->hostname, cmddata->hostname) &&
+	g_str_equal(data->diskname, cmddata->diskname) &&
+	g_str_equal(data->timestamp, cmddata->dump_timestamp) &&
+	g_str_equal(data->storage, cmddata->src_storage) &&
+	g_str_equal(data->pool, cmddata->src_pool) &&
+	g_str_equal(data->label, cmddata->src_label)) {
+	data->ids = g_slist_prepend(data->ids, GINT_TO_POINTER(id));
+    }
+}
+
+void cmdfile_remove_for_restore_label(cmddatas_t *cmddatas, char *hostname,
+                                      char *diskname, char *timestamp,
+                                      char *storage, char *pool, char *label)
+{
+    cmdfile_remove_for_restore_label_t data;
+    GSList *ids;
+    data.hostname = hostname;
+    data.diskname = diskname;
+    data.timestamp = timestamp;
+    data.storage = storage;
+    data.pool = pool;
+    data.label = label;
+    data.ids = NULL;
+
+    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_remove_restore_label, &data);
+
+    for (ids = data.ids; ids != NULL; ids = ids->next) {
+	gpointer id = ids->data;
+        g_hash_table_remove(cmddatas->cmdfile, id);
+    }
+    g_slist_free(data.ids);
+}
+
+typedef struct cmdfile_remove_for_restore_holding_s {
+    char *hostname;
+    char *diskname;
+    char *timestamp;
+    char *storage;
+    char *pool;
+    char *holding_file;
+    GSList *ids;
+} cmdfile_remove_for_restore_holding_t;
+
+static void
+cmdfile_remove_restore_holding(
+    gpointer key G_GNUC_UNUSED,
+    gpointer value,
+    gpointer user_data)
+{
+    int id = GPOINTER_TO_INT(key);
+    cmddata_t *cmddata = value;
+    cmdfile_remove_for_restore_holding_t *data = user_data;
+
+    if (cmddata->operation == CMD_RESTORE &&
+	g_str_equal(data->hostname, cmddata->hostname) &&
+	g_str_equal(data->diskname, cmddata->diskname) &&
+	g_str_equal(data->timestamp, cmddata->dump_timestamp) &&
+	g_str_equal(data->holding_file, cmddata->holding_file)) {
+	data->ids = g_slist_prepend(data->ids, GINT_TO_POINTER(id));
+    }
+}
+
+void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
+                                        char *diskname, char *timestamp,
+                                        char *holding_file)
+{
+    cmdfile_remove_for_restore_holding_t data;
+    GSList *ids;
+    data.hostname = hostname;
+    data.diskname = diskname;
+    data.timestamp = timestamp;
+    data.holding_file = holding_file;
+    data.ids = NULL;
+
+    g_hash_table_foreach(cmddatas->cmdfile, &cmdfile_remove_restore_holding, &data);
+
+    for (ids = data.ids; ids != NULL; ids = ids->next) {
+	gpointer id = ids->data;
+        g_hash_table_remove(cmddatas->cmdfile, id);
+    }
+    g_slist_free(data.ids);
+}

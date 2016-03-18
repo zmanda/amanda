@@ -13,6 +13,7 @@ typedef struct find_result_s {
     char *diskname;
     char *storage;
     int   storage_id;
+    char *pool;
     int level;
     char *label;	/* holding filename for holding files */
     off_t filenum;

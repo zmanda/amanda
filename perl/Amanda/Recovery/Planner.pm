@@ -158,7 +158,7 @@ performed.  Callers should shift dumps off this list to present to the Clerk.
 To get a list of volumes that the plan requires, in order, use
 C<get_volume_list>.  Each volume is represented as a hash:
 
-  { label => 'DATA182', storage => 'STORAGE-1', available => 1 }
+  { label => 'DATA182', storage => 'STORAGE-1', pool => 'POOL-1', available => 1 }
 
 where C<available> is false if the planner did not find this volume in the
 changer.  Planners which do not consult the changer will have a false value for
@@ -644,7 +644,7 @@ sub get_volume_list {
 	    next unless defined $part->{'label'}; # skip holding parts
 	    if (!defined $last_label || $part->{'label'} ne $last_label) {
 		$last_label = $part->{'label'};
-		push @volumes, { label => $last_label, storage => $dump->{'storage'}, available => 0 };
+		push @volumes, { label => $last_label, storage => $dump->{'storage'}, pool => $dump->{'pool'}, available => 0 };
 	    }
 	}
     }

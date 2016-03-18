@@ -20,7 +20,8 @@
 
 typedef enum cmdoperation_e {
     CMD_COPY,
-    CMD_FLUSH
+    CMD_FLUSH,
+    CMD_RESTORE
 } cmdoperation_t;
 
 typedef enum cmdstatus_e {
@@ -56,6 +57,8 @@ typedef struct cmddata_s {
     int             todo;
     off_t           size;
     time_t          start_time;
+    time_t          expire;
+    int             count;	/* number of restore operation */
 } cmddata_t;
 
 typedef GHashTable *cmdfile_t; /* hash where each element is a (cmddata_t *) */
@@ -74,8 +77,14 @@ void write_cmdfile(cmddatas_t *cmddatas);
 int add_cmd_in_memory(cmddatas_t *cmddatas, cmddata_t *cmddata);
 cmddatas_t *add_cmd_in_cmdfile(cmddatas_t *cmddatas, cmddata_t *cmddata);
 cmddatas_t *remove_cmd_in_cmdfile(cmddatas_t *cmddatas, int id);
-cmddatas_t *change_cmd_in_cmdfile(cmddatas_t *cmddatas, int id, cmdstatus_t status, off_t size);
+cmddatas_t *change_cmd_in_cmdfile(cmddatas_t *cmddatas, int id,
+				  cmdstatus_t status, off_t size);
 cmddatas_t *remove_working_in_cmdfile(cmddatas_t *cmddatas, pid_t pid);
 gboolean holding_in_cmdfile(cmddatas_t *cmddatas, char *holding_file);
 char *cmdfile_get_ids_for_holding(cmddatas_t *cmddatas, char *holding_file);
-
+void cmdfile_remove_for_restore_label(cmddatas_t *cmddatas, char *hostname,
+				      char *diskname, char *timestamp,
+				      char *storage, char *pool, char *label);
+void cmdfile_remove_for_restore_holding(cmddatas_t *cmddatas, char *hostname,
+				        char *diskname, char *timestamp,
+				        char *holding_file);

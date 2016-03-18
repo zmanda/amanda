@@ -40,7 +40,8 @@ use Amanda::Util qw ( match_disk match_host );
 
 typedef enum cmdoperation_e {
     CMD_COPY,
-    CMD_FLUSH
+    CMD_FLUSH,
+    CMD_RESTORE
 } cmdoperation_t;
 
 typedef enum cmdstatus_e {
@@ -75,6 +76,8 @@ typedef struct {
     int             todo;
     off_t           size;
     time_t          start_time;
+    time_t          expire;
+    int             count;
 
     %extend {
 	/* disable destructor */
@@ -130,6 +133,21 @@ typedef struct {
 	char *get_ids_for_holding(char *holding_file) {
 	    return cmdfile_get_ids_for_holding(self, holding_file);
 	}
+
+	void remove_for_restore_label(char *hostname, char *diskname,
+				      char *timestamp, char *storage,
+				      char *pool, char *label) {
+	    cmdfile_remove_for_restore_label(self, hostname, diskname,
+					     timestamp, storage, pool, label);
+	}
+
+
+	void remove_for_restore_holding(char *hostname, char *diskname,
+					char *timestamp, char *holding_file) {
+	    cmdfile_remove_for_restore_holding(self, hostname, diskname,
+					       timestamp, holding_file);
+	}
+
     }
 } Cmdfile;
 
@@ -172,7 +190,9 @@ sub new_Cmddata {
     $cmddata->{'status'}         = $params{'status'} if defined $params{'status'};
     $cmddata->{'todo'}           = $params{'todo'} if defined $params{'todo'};
     $cmddata->{'size'}           = $params{'size'} if defined $params{'size'};
+debug("AA $params{'start_time'}");
     $cmddata->{'start_time'}     = $params{'start_time'} if defined $params{'start_time'};
+debug("BB");
 
     return $cmddata;
 };

@@ -778,6 +778,22 @@ cmdfile_add_retention(
 	    }
 	}
     }
+    if (cmddata->operation == CMD_RESTORE &&
+	cmddata->status != CMD_DONE &&
+	g_str_equal(cmddata->src_storage, data->storage) &&
+        g_str_equal(cmddata->src_pool, data->pool) &&
+	cmddata->src_label) {
+	char *label = cmddata->src_label;
+	tp = lookup_tapelabel(label);
+	if (tp &&
+	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
+	    (!tp->storage || g_str_equal(tp->storage, data->storage)) &&
+	    ((tp->pool && g_str_equal(tp->pool, data->pool)) ||
+	     (!tp->pool && match_labelstr_template(data->l_template, tp->label,
+	                                           tp->barcode, tp->meta)))) {
+	    tp->retention = TRUE;
+	}
+    }
 }
 
 static void

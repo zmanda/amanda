@@ -130,6 +130,7 @@ sub usage {
     print STDERR <<EOF;
 Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
     [-h|--header-file file|--header-fd fd]
+    [--reserve-tapes] [--release-tapes]
     [-decrypt|--no-decrypt|--server-decrypt|--client-decrypt]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
     [(--extract | --extract-client=HOSTNAME) --directory directory
@@ -169,7 +170,8 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_include_file, $opt_include_list, $opt_include_list_glob,
     $opt_exclude_file, $opt_exclude_list, $opt_exclude_list_glob,
     $opt_prev_level, $opt_next_level,
-    $opt_exact_match, $opt_run_client_scripts);
+    $opt_exact_match, $opt_run_client_scripts,
+    $opt_reserve_tapes, $opt_release_tapes);
 
 my $NEVER = 0;
 my $ALWAYS = 1;
@@ -216,6 +218,8 @@ GetOptions(
     'next-level=i' => \$opt_next_level,
     'exact-match' => \$opt_exact_match,
     'run-client-scripts' => \$opt_run_client_scripts,
+    'reserve-tapes' => \$opt_reserve_tapes,
+    'release-tapes' => \$opt_release_tapes,
     'init' => \$opt_init,
     'restore!' => \$opt_restore,
     'b=s' => \$opt_blocksize,
@@ -462,7 +466,9 @@ sub main {
 		'server-decrypt'	=> $opt_server_decrypt,
 		'run-client-scripts'	=> $opt_run_client_scripts,
 		'finished_cb'		=> $finished_cb,
-		'interactivity'		=> $interactivity);
+		'interactivity'		=> $interactivity,
+		'reserve-tapes'		=> $opt_reserve_tapes,
+		'release-tapes'		=> $opt_release_tapes);
 }
 
 package main;
