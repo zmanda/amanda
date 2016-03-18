@@ -186,7 +186,7 @@ do_directtcp_accept(
     int *socketp)
 {
     int sock;
-    time_t timeout_time = time(NULL) + 60;
+    time_t timeout_time = time(NULL) + 840;
     g_assert(*socketp != -1);
 
     if ((sock = interruptible_accept(*socketp, NULL, NULL,

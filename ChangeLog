@@ -1,4 +1,8 @@
 2016-03-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c (do_directtcp_accept): Increase timeout to
+	  840
+
+2016-03-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add RESTORE command in the cmdfile
 	* man/xml-source/amfetchdump.8.xml: Document new --reserve-tapes and
 	  --release-tapes options
