@@ -1469,48 +1469,62 @@ sub _volume_cb  {
 	    return $cbX->();
 	} elsif ($result == 0) {
 	    # try reading the label to see whether we erased the tape
-	    my $erased = 0;
-	    CHECK_READ_LABEL: {
-	    # don't worry about erasing new tapes
-		if ($is_new) {
-		    last CHECK_READ_LABEL;
-		}
+	    return $reservation->set_device_error(
+		finished_cb => sub {
+		    my $erased = 0;
+		    CHECK_READ_LABEL: {
+		    # don't worry about erasing new tapes
+			if ($is_new) {
+			    last CHECK_READ_LABEL;
+			}
 
-		$device->finish();
-		$device->read_label();
+			#$chg->set_slot_error()
+			$device->finish();
+			$device->read_label();
 
-		# does the device think something is broken now?
-		if (($device->status & ~$DEVICE_STATUS_VOLUME_UNLABELED)
-		    and !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
-		    $erased = 1;
-		    last CHECK_READ_LABEL;
-		}
+			# does the device think something is broken now?
+			if (($device->status & ~$DEVICE_STATUS_VOLUME_UNLABELED)
+			    and !($device->status & $DEVICE_STATUS_VOLUME_UNLABELED)) {
+			    $erased = 1;
+			    last CHECK_READ_LABEL;
+			}
 
-		# has the label changed?
-		my $vol_label = $device->volume_label;
-		if ((!defined $old_label and defined $vol_label)
-		    or (defined $old_label and !defined $vol_label)
-		    or (defined $old_label and $old_label ne $vol_label)) {
-		    $erased = 1;
-		    last CHECK_READ_LABEL;
-		}
+			# has the label changed?
+			my $vol_label = $device->volume_label;
+			if ((!defined $old_label and defined $vol_label)
+			    or (defined $old_label and !defined $vol_label)
+			    or (defined $old_label and $old_label ne $vol_label)) {
+			    $erased = 1;
+			    last CHECK_READ_LABEL;
+			}
 
-		# has the timestamp changed?
-		my $vol_timestamp = $device->volume_time;
-		if ((!defined $old_timestamp and defined $vol_timestamp)
-		    or (defined $old_timestamp and !defined $vol_timestamp)
-		    or (defined $old_timestamp and $old_timestamp ne $vol_timestamp)) {
-		    $erased = 1;
-		    last CHECK_READ_LABEL;
-		}
-	    }
+			# has the timestamp changed?
+			my $vol_timestamp = $device->volume_time;
+			if ((!defined $old_timestamp and defined $vol_timestamp)
+			    or (defined $old_timestamp and !defined $vol_timestamp)
+			    or (defined $old_timestamp and $old_timestamp ne $vol_timestamp)) {
+			    $erased = 1;
+			    last CHECK_READ_LABEL;
+			}
+		    }
 
-	    $self->{'feedback'}->scribe_notif_new_tape(
-		error => "while labeling new volume: " . $device->error_or_status(),
-		volume_label => $erased? $new_label : undef);
+		    if ($erased) {
+			return $reservation->set_device_error(
+			    finished_cb => sub {
+				    $self->{'feedback'}->scribe_notif_new_tape(
+					error => "while labeling new volume: " . $device->error_or_status(),
+					volume_label => $new_label);
 
-	    $self->_get_new_volume();
-	    return $cbX->();
+				    $self->_get_new_volume();
+				    return $cbX->();
+			    });
+		    }
+		    $self->{'feedback'}->scribe_notif_new_tape(
+			error => "while labeling new volume: " . $device->error_or_status(),
+			volume_label => undef);
+		    $self->_get_new_volume();
+		    return $cbX->();
+		});
 	}
 	$new_label = $device->volume_label;
 	$self->{'tape_labelled'} = 1;

@@ -130,13 +130,11 @@ sub analyze {
     my @new_volume;
     my $first_error;
     my $new_error;
-    my @new_error;
     my $first_unknown;
     my $unknown;
     my $current;
     my $label = $self->most_prefered();
     $self->{'most_prefered_label'} = $label;
-    $self->{'new-error'}= {};
     for my $i (0..(scalar(@$inventory)-1)) {
 	my $sl = $inventory->[$i];
 	if ($sl->{current}) {
@@ -149,7 +147,8 @@ sub analyze {
 	    $first_unknown = $sl if !$first_unknown;
 	    $unknown = $sl if $current && !$unknown;
 	} elsif ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
-	} elsif (defined $sl->{'label'}) {
+	} elsif (defined $sl->{'label'} &&
+		 $sl->{device_status} == $DEVICE_STATUS_SUCCESS) {
 	    if ($label && $sl->{'label'} eq $label) {
 		$most_prefered = $sl;
 	    } elsif ($self->is_reusable_volume(label => $sl->{'label'})) {
@@ -188,7 +187,6 @@ sub analyze {
 		 not exists $self->{'new_error'}->{$sl->{'device_error'}}) {
 	    $first_error = $sl if !$first_error;
 	    $new_error = $sl if $current && !$new_error;
-	    $self->{'slot-error-message'} = $new_error->{'device_error'};
 	} else {
 	}
     }
@@ -275,6 +273,8 @@ sub analyze {
 	$use = $new_labeled;
     } elsif ($new_volume and $self->{'scan_conf'}->{'new_volume'} eq 'last') {
 	$use = $new_volume;
+    } elsif ($unknown and $self->{'scan_conf'}->{'scan'}) {
+	$use = $unknown;
     } elsif ($new_error) {
 	$use = $new_error;
 	$self->{'handled-error'}->{$new_error->{'device_error'}} = 1;

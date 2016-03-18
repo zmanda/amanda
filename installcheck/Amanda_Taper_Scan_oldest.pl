@@ -396,6 +396,7 @@ is_deeply([ @results ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -404,6 +405,7 @@ is_deeply([ @results ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -451,6 +453,7 @@ is_deeply([ @results ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -459,6 +462,7 @@ is_deeply([ @results ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -467,6 +471,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -475,6 +480,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'soon';
 @results = run_scan($taperscan);
@@ -522,6 +528,7 @@ is_deeply([ @results ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -530,6 +537,7 @@ is_deeply([ @results ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -538,6 +546,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -546,6 +555,7 @@ is_deeply([ @results ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'soon';
 @results = run_scan($taperscan);
@@ -592,6 +602,7 @@ is_deeply([ @results ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -600,6 +611,7 @@ is_deeply([ @results ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -635,6 +647,7 @@ is_deeply([ @results ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -643,6 +656,7 @@ is_deeply([ @results ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
 
+$taperscan->{'seen'} = {};
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);

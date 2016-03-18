@@ -1,3 +1,16 @@
+2016-03-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm (Reservation::set_device_error): New method
+	* perl/Amanda/Changer/aggregate.pm (set_device_error): New method
+	* perl/Amanda/Changer/multi.pm (set_device_error): New method
+	* perl/Amanda/Changer/robot.pm (set_device_error): New method
+	* perl/Amanda/ScanInventory.pm: Use a global seen hash
+	* perl/Amanda/Taper/Scan/lexical.pm,
+	  perl/Amanda/Taper/Scan/oldest.pm: Samll fix
+	* perl/Amanda/Taper/Scribe.pm: Call $reservation->set_device_error
+	* installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl,
+	  installcheck/taper.pl: Fix test
+
 2016-03-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Makefile.am (catalogs): Add catalogs/tapers.cat and
 	  catalogs/tapers1.cat

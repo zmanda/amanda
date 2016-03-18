@@ -1567,7 +1567,6 @@ wait_for_exit();
 
 check_logs([
     qr(^INFO taper Slot 1 without label can be labeled$),
-    qr(^INFO taper Slot 1 is already in use by drive.*$),
     qr(^INFO taper Slot 2 without label can be labeled$),
     qr(^START taper datestamp $datestamp "ST:TESTCONF" label TESTCONF01 tape 1$),
     qr(^PART taper "ST:TESTCONF" TESTCONF01 1 localhost /u01 $datestamp 1/-1 0 \[sec [\d.]+ bytes 262144 kps [\d.]+ orig-kb 1612\]$),

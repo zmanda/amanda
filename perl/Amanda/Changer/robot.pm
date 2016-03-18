@@ -357,7 +357,7 @@ sub set_error_to_unknown {
     my $self  = shift;
     my %params = @_;
     my $state;
-    $self->with_locked_state($self->{'state_filename'},
+    $self->with_locked_state($self->{'statefile'},
 			     $params{'set_to_unknown_cb'}, sub {
 	my ($state, $set_to_unknown_cb) = @_;
 	for my $slot (keys %{ $state->{'slots'} }) {
@@ -1029,6 +1029,39 @@ sub _set_label_unlocked {
 	    $self->_debug("update barcode '$barcode' to label '$label', old label was '$old_label'");
 	}
 	$state->{'bc2lb'}->{$barcode} = $label;
+    }
+
+    $params{'finished_cb'}->(undef);
+}
+
+sub _set_device_error {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'finished_cb'});
+
+    $self->_with_updated_state(\%params, 'finished_cb',
+	sub { $self->_set_device_error_unlocked(@_); });
+}
+
+sub _set_device_error_unlocked {
+    my $self = shift;
+    my %params = @_;
+    my $state = $params{'state'};
+
+    # update all of the various pieces of cached information
+    my $drive = $params{'drive'};
+    my $slot = $state->{'drives'}->{$drive}->{'orig_slot'};
+    my $dev = $params{dev};
+
+    if (defined $slot) {
+	$state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
+	$state->{'slots'}->{$slot}->{'device_status'} = "".$dev->status;
+	if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+	    $state->{'slots'}->{$slot}->{'device_error'} = $dev->error;
+	} else {
+	    $state->{'slots'}->{$slot}->{'device_error'} = undef;
+	}
     }
 
     $params{'finished_cb'}->(undef);
@@ -2449,6 +2482,15 @@ sub set_label {
 			       dev => $self->{device}, %params);
 }
 
+sub set_device_error {
+    my $self = shift;
+    my %params = @_;
+
+    return unless $self->{'chg'};
+    $self->{'chg'}->_set_device_error(drive => $self->{'drive'},
+			       dev => $self->{device}, %params);
+}
+
 package Amanda::Changer::robot::Interface;
 
 # The physical interface to the changer is abstracted out to allow several
@@ -2575,6 +2617,7 @@ sub status {
 	    if ($exitstatus != 0) {
 		my $err = $output;
 		for my $line (split '\n', $output) {
+		    $line =~ s/\s*$//g;
 		    debug("mtx: $line");
 		}
 		# if it's a regular SCSI error, just show the sense key
@@ -2589,6 +2632,7 @@ sub status {
 	    } else {
 		my %status;
 		for my $line (split '\n', $output) {
+		    $line =~ s/\s*$//g;
 		    debug("mtx: $line");
 		    my ($slot, $ie, $slinfo);
 

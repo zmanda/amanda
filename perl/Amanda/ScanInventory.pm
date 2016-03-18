@@ -121,7 +121,6 @@ sub _scan {
     my $action_slot;
     my $res;
     my $label;
-    my %seen = ();
     my $inventory;
     my $current;
     my $new_slot;
@@ -205,9 +204,9 @@ sub _scan {
 	if ($remove_undef_state) {
 	    for my $i (0..(scalar(@$inventory)-1)) {
 		my $slot = $inventory->[$i]->{slot};
-		if (exists($seen{$slot}) &&
+		if (exists($self->{seen}->{$slot}) &&
 		    !defined($inventory->[$i]->{state})) {
-		    delete $seen{$slot}
+		    delete $self->{seen}->{$slot};
 		}
 	    }
 	    $remove_undef_state = 0;
@@ -217,24 +216,27 @@ sub _scan {
 	for my $i (0..(scalar(@$inventory)-1)) {
 	    my $sl = $inventory->[$i];
 	    my $slot = $sl->{slot};
-	    if ($seen{$slot} &&
-		!defined ($seen{$slot}->{'failed'}) &&
+	    if ($self->{seen}->{$slot} &&
+		!defined ($self->{seen}->{$slot}->{'failed'}) &&
 		defined($sl->{'state'}) &&
-		(($seen{$slot}->{'device_status'} != $sl->{'device_status'}) ||
-		 (defined $seen{$slot}->{'device_status'} &&
-		  $seen{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
-		  $seen{$slot}->{'f_type'} != $sl->{'f_type'}) ||
-		 (defined $seen{$slot}->{'device_status'} &&
-		  $seen{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
-		  defined $seen{$slot}->{'f_type'} &&
-		  $seen{$slot}->{'f_type'} == $Amanda::Header::F_TAPESTART &&
-		  $seen{$slot}->{'label'} ne $sl->{'label'}))) {
-		delete $seen{$slot};
+		!($self->{seen}->{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
+		  ($sl->{'device_status'} & $DEVICE_STATUS_DEVICE_ERROR ||
+		   $sl->{'device_status'} & $DEVICE_STATUS_VOLUME_ERROR)) &&
+		(($self->{seen}->{$slot}->{'device_status'} != $sl->{'device_status'}) ||
+		 (defined $self->{seen}->{$slot}->{'device_status'} &&
+		  $self->{seen}->{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
+		  $self->{seen}->{$slot}->{'f_type'} != $sl->{'f_type'}) ||
+		 (defined $self->{seen}->{$slot}->{'device_status'} &&
+		  $self->{seen}->{$slot}->{'device_status'} == $DEVICE_STATUS_SUCCESS &&
+		  defined $self->{seen}->{$slot}->{'f_type'} &&
+		  $self->{seen}->{$slot}->{'f_type'} == $Amanda::Header::F_TAPESTART &&
+		  $self->{seen}->{$slot}->{'label'} ne $sl->{'label'}))) {
+		delete $self->{seen}->{$slot};
 	    }
 	}
 
 	$self->{'slot-error-message'} = undef;
-	($action, $action_slot) = $self->analyze($inventory, \%seen, $res);
+	($action, $action_slot) = $self->analyze($inventory, $self->{seen}, $res);
 
 	if ($action == Amanda::ScanInventory::SCAN_DONE) {
 	    return $steps->{'call_result_cb'}->(undef, $res);
@@ -253,6 +255,8 @@ sub _scan {
 	    $slot_scanned = $action_slot;
 	    $self->_user_msg(scan_slot => 1,
 			     slot => $slot_scanned);
+	    $self->{'slot-error-message'} = $self->{seen}->{$slot_scanned}->{'device_error'};
+
 	    return $self->{'chg'}->load(
 			slot => $slot_scanned,
 			set_current => $params{'set_current'},
@@ -290,8 +294,10 @@ sub _scan {
 	    # mark all unseen slots with that error message as unknown state
 	    for my $i (0..(scalar(@$inventory)-1)) {
 		my $sl = $inventory->[$i];
-		next if $seen{$sl->{slot}};
-		next if $self->{'slot-error-message'} ne $sl->{'device_error'};
+		next if $self->{seen}->{$sl->{slot}};
+		next if !defined $self->{'slot-error-message'} ||
+			!defined $sl->{'device_error'} ||
+			$self->{'slot-error-message'} ne $sl->{'device_error'};
 		# mark the slot as unknown
 		$inventory->[$i] = { slot  => $sl->{'slot'},
 				     state => $sl->{'state'}};
@@ -330,8 +336,9 @@ sub _scan {
 
 	    # The slot did not contain the volume we wanted, so mark it
 	    # as seen and try again.
-	    $seen{$slot_scanned} = {
+	    $self->{seen}->{$slot_scanned} = {
 			device_status => $res->{device}->status,
+			device_error => $res->{device}->error_or_status,
 			f_type => $f_type,
 			label  => $res->{device}->volume_label
 	    };
@@ -344,7 +351,7 @@ sub _scan {
 				message => $res->{device}->error_or_status());
 	    }
 	} else {
-	    $seen{$slot_scanned} = { failed => 1 };
+	    $self->{seen}->{$slot_scanned} = { failed => 1 };
 	    if ($err->volinuse) {
 		# Scan semantics for volinuse is different than changer.
 		# If a slot with unknown label is loaded then we map
@@ -515,7 +522,7 @@ sub _scan {
 		return $steps->{'scan_interactivity'}->("$new_chg");
 	    }
 	    $restart_scan_changer = $new_chg;
-	    %seen = ();
+	    $self->{seen} = {};
 	} else {
 	    $remove_undef_state = 1;
 	}

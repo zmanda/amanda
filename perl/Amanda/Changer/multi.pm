@@ -981,6 +981,31 @@ sub set_label {
     });
 }
 
+sub set_device_error {
+    my $self = shift;
+    my %params = @_;
+
+    my $chg = $self->{chg};
+    $chg->with_locked_state($chg->{'state_filename'},
+			    $params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+	my $slot = $self->{'this_slot'};
+	my $unaliased = $chg->{unaliased}->{$slot};
+	my $dev = $self->{'device'};
+
+	if (defined $slot) {
+	    $state->{'slots'}->{$slot}->{'state'} = Amanda::Changer::SLOT_FULL;
+	    $state->{slots}->{$unaliased}->{device_status} = "".$dev->status;
+	    if ($dev->status != $DEVICE_STATUS_SUCCESS) {
+		$state->{slots}->{$unaliased}->{device_error} = $dev->error;
+	    } else {
+		$state->{slots}->{$unaliased}->{device_error} = undef;
+	    }
+	}
+	$finished_cb->();
+    });
+}
+
 sub do_release {
     my $self = shift;
     my %params = @_;

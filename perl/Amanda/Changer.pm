@@ -717,6 +717,13 @@ been (re-)labeled. Changers can keep a database of volume labels by slot or by
 barcode, or just ignore this function and call $cb immediately. Note that the
 reservation must still be held when this function is called.
 
+=head3 $res->set_device_error(finished_cb => $cb, errstr => $label)
+
+This is how Amanda indicates to the changer that the volume in the device is in
+error.  Changers can keep a database of volume error by slot or by
+barcode, or just ignore this function and call $cb immediately. Note that the
+reservation must still be held when this function is called.
+
 =head1 SUBCLASS HELPERS
 
 C<Amanda::Changer> implements some methods and attributes to help subclass
@@ -2163,6 +2170,16 @@ sub DESTROY {
 }
 
 sub set_label {
+    my $self = shift;
+    my %params = @_;
+
+    # nothing to do by default: just call the finished callback
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->(undef) if $params{'finished_cb'};
+    }
+}
+
+sub set_device_error {
     my $self = shift;
     my %params = @_;
 

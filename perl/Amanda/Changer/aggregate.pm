@@ -846,3 +846,16 @@ sub make_new_meta_label {
     return $self->{'kid_res'}->make_new_meta_label(%params);
 }
 
+sub set_label {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'kid_res'}->set_label(%params);
+}
+
+sub set_device_error {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'kid_res'}->set_device_error(%params);
+}
