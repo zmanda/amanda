@@ -403,8 +403,9 @@ sub result_cb {
 
     # write a DONE/PARTIAL/FAIL log line
     if ($logtype == $L_FAIL) {
-	log_add($L_FAIL, sprintf("%s %s %s %s %s %s %s",
+	log_add($L_FAIL, sprintf("%s %s %s %s %s %s %s %s",
 	    quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
+	    quote_string("POOL:" . $self->{'controller'}->{'storage'}->{'tapepool'}),
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
@@ -412,8 +413,9 @@ sub result_cb {
 	    $failure_from,
 	    $msg));
     } else {
-	log_add($logtype, sprintf("%s %s %s %s %s %s %s %s %s %s%s",
+	log_add($logtype, sprintf("%s %s %s %s %s %s %s %s %s %s %s%s",
 	    quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
+	    quote_string("POOL:" . $self->{'controller'}->{'storage'}->{'tapepool'}),
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
@@ -503,9 +505,10 @@ sub scribe_notif_new_tape {
 	$self->{'label'} = $params{'volume_label'};
 
 	# add to the trace log
-	log_add($L_START, sprintf("datestamp %s %s label %s tape %s",
+	log_add($L_START, sprintf("datestamp %s %s %s label %s tape %s",
 		$self->{'timestamp'},
 		quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
+		quote_string("POOL:" . $self->{'controller'}->{'storage'}->{'tapepool'}),
 		quote_string($self->{'label'}),
 		++$tape_num));
 
@@ -544,8 +547,9 @@ sub scribe_notif_part_done {
     my $stats = make_stats($params{'size'}, $params{'duration'}, $self->{'orig_kb'});
 
     # log the part, using PART or PARTPARTIAL
-    my $logbase = sprintf("%s %s %s %s %s %s %s/%s %s %s",
+    my $logbase = sprintf("%s %s %s %s %s %s %s %s/%s %s %s",
 	quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
+	quote_string("POOL:" . $self->{'controller'}->{'storage'}->{'tapepool'}),
 	quote_string($self->{'label'}),
 	$params{'fileno'},
 	quote_string($self->{'header'}->{'name'}.""), # " is required for SWIG..

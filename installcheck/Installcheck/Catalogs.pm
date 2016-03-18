@@ -212,6 +212,7 @@ sub _parse {
 
 	    my $dump = $self->{'dumps'}{$1} = {
 		storage => $2,
+		pool => $2,
 		dump_timestamp => $3,
 		hostname => $4,
 		diskname => $5,
@@ -246,6 +247,7 @@ sub _parse {
 	    die "dump tag $1 already exists" if exists $self->{'dumps'}{$1};
 	    my $dump = $self->{'dumps'}{$1} = {
 		storage => $2,
+		pool => $2,
 		dump_timestamp => $3,
 		write_timestamp => $4,
 		hostname => $5,

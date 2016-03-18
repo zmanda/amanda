@@ -45,8 +45,8 @@ int find_match(char *host, char *disk);
 static char *find_nicedate(char *datestamp);
 static int len_find_nicedate(char *datestamp);
 static int find_compare(const void *, const void *);
-static int parse_taper_datestamp_log(char *logline, char **datestamp, char **level,
-				     char **storage);
+static int parse_taper_datestamp_log(char *logline, char **datestamp,
+				     char **level, char **storage, char **pool);
 static gboolean logfile_has_tape(char * label, char * datestamp,
                                  char * logfile);
 
@@ -283,6 +283,7 @@ search_holding_disk(
 	    new_output_find->hostname = g_string_chunk_insert_const(string_chunk, file.name);
 	    new_output_find->diskname = g_string_chunk_insert_const(string_chunk, file.disk);
 	    new_output_find->storage = g_string_chunk_insert_const(string_chunk, "HOLDING");
+	    new_output_find->pool = g_string_chunk_insert_const(string_chunk, "HOLDING");
 	    new_output_find->level=file.dumplevel;
 	    new_output_find->label=g_string_chunk_insert_const(string_chunk, holding_file);
 	    new_output_find->partnum = -1;
@@ -444,6 +445,7 @@ print_find_result(
     int max_len_diskname  = 4;
     int max_len_level     = 2;
     int max_len_storage   = 7;
+    int max_len_pool      = 4;
     int max_len_label     =12;
     int max_len_filenum   = 4;
     int max_len_part      = 4;
@@ -479,6 +481,12 @@ print_find_result(
                 max_len_storage = (int)len;
         }
 
+        if (output_find_result->pool != NULL) {
+	    len = len_quote_string(output_find_result->pool);
+            if((int)len > max_len_pool)
+                max_len_pool = (int)len;
+        }
+
 	len=strlen(output_find_result->status) + 1 + strlen(output_find_result->dump_status);
 	if((int)len > max_len_status)
 	    max_len_status = (int)len;
@@ -502,12 +510,13 @@ print_find_result(
 	g_printf(_("\nNo dump to list\n"));
     }
     else {
-	g_printf(_("\ndate%*s host%*s disk%*s lv%*s storage%*s tape or file%*s file%*s part%*s status\n"),
+	g_printf(_("\ndate%*s host%*s disk%*s lv%*s storage%*s pool%*s tape or file%*s file%*s part%*s status\n"),
 	       max_len_datestamp-4,"",
 	       max_len_hostname-4 ,"",
 	       max_len_diskname-4 ,"",
 	       max_len_level-2    ,"",
 	       max_len_storage-7  ,"",
+	       max_len_pool-4     ,"",
 	       max_len_label-12   ,"",
 	       max_len_filenum-4  ,"",
 	       max_len_part-4  ,"");
@@ -538,13 +547,14 @@ print_find_result(
 	     * output from 'amadmin' */
 	    s = g_strdup_printf("%d/%d", output_find_result->partnum,
 					 output_find_result->totalparts);
-	    g_printf("%-*s %-*s %-*s %*d %-*s %-*s %*lld %*s %s %s\n",
+	    g_printf("%-*s %-*s %-*s %*d %-*s %-*s %-*s %*lld %*s %s %s\n",
                      max_len_datestamp,
                      find_nicedate(output_find_result->timestamp),
                      max_len_hostname,  output_find_result->hostname,
                      max_len_diskname,  qdiskname,
                      max_len_level,     output_find_result->level,
                      max_len_storage,   output_find_result->storage,
+                     max_len_pool,      output_find_result->pool,
                      max_len_label,     formatted_label,
                      max_len_filenum,   (long long)output_find_result->filenum,
                      max_len_part,      s,
@@ -638,11 +648,12 @@ parse_taper_datestamp_log(
     char *logline,
     char **datestamp,
     char **label,
-    char **storage)
+    char **storage,
+    char **pool)
 {
     char *s;
     int ch;
-    char *qstorage, *uqstorage;
+    char *qnext_token, *uqnext_token;
 
     s = logline;
     ch = *s++;
@@ -667,28 +678,53 @@ parse_taper_datestamp_log(
     if(ch == '\0') {
 	return 0;
     }
-    qstorage = s - 1;
+    qnext_token = s - 1;
     skip_quoted_string(s, ch);
     s[-1] = '\0';
 
-    uqstorage = unquote_string(qstorage);
-    if (strncmp(uqstorage, "ST:", 3) == 0) {
+    *storage = g_strdup(get_config_name());
+    uqnext_token = unquote_string(qnext_token);
+    if (strncmp(uqnext_token, "ST:", 3) == 0) {
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
 	    return 0;
 	}
-	if(strncmp_const_skip(s - 1, "label", s, ch) != 0) {
-	    g_free(uqstorage);
+	g_free(*storage);
+	*storage = g_strdup(uqnext_token+3);
+	g_free(uqnext_token);
+	skip_whitespace(s, ch);
+	if(ch == '\0') {
 	    return 0;
 	}
-	*storage = g_strdup(uqstorage+3);
-	g_free(uqstorage);
-    } else if (strcmp(uqstorage, "label") == 0) {
-	g_free(uqstorage);
-	*storage = g_strdup(get_config_name());
-    } else {
-	g_free(uqstorage);
-	*storage = NULL;
+	qnext_token = s - 1;
+	skip_quoted_string(s, ch);
+	s[-1] = '\0';
+
+	uqnext_token = unquote_string(qnext_token);
+    }
+
+    *pool = g_strdup(*storage);
+    if (strncmp(uqnext_token, "POOL:", 5) == 0) {
+	skip_whitespace(s, ch);
+	if(ch == '\0') {
+	    return 0;
+	}
+	g_free(*pool);
+	*pool = g_strdup(uqnext_token+5);
+	g_free(uqnext_token);
+	skip_whitespace(s, ch);
+	if(ch == '\0') {
+	    return 0;
+	}
+	qnext_token = s - 1;
+	skip_quoted_string(s, ch);
+	s[-1] = '\0';
+
+	uqnext_token = unquote_string(qnext_token);
+    }
+    *pool = g_strdup(*storage);
+
+    if (strncmp(uqnext_token, "label", 5) != 0) {
 	return 0;
     }
 
@@ -709,7 +745,7 @@ parse_taper_datestamp_log(
 static gboolean logfile_has_tape(char * label, char * datestamp,
                                  char * logfile) {
     FILE * logf;
-    char * ck_datestamp, *ck_label = NULL, *ck_storage = NULL;
+    char * ck_datestamp, *ck_label = NULL, *ck_storage = NULL, *ck_pool = NULL;
     if((logf = fopen(logfile, "r")) == NULL) {
 	error(_("could not open logfile %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
@@ -718,18 +754,20 @@ static gboolean logfile_has_tape(char * label, char * datestamp,
     while(get_logline(logf)) {
 	if(curlog == L_START && curprog == P_TAPER) {
 	    if(parse_taper_datestamp_log(curstr,
-					 &ck_datestamp, &ck_label, &ck_storage) == 0) {
+					 &ck_datestamp, &ck_label, &ck_storage, &ck_pool) == 0) {
 		g_printf(_("strange log line \"start taper %s\" curstr='%s'\n"),
                          logfile, curstr);
 	    } else if(g_str_equal(ck_datestamp, datestamp)
 		      && g_str_equal(ck_label, label)) {
 		amfree(ck_label);
 		amfree(ck_storage);
+		amfree(ck_pool);
                 afclose(logf);
                 return TRUE;
 	    }
 	    amfree(ck_label);
 	    amfree(ck_storage);
+	    amfree(ck_pool);
 	}
     }
 
@@ -782,9 +820,11 @@ search_logfile(
     int fileno;
     char *current_label;
     char *current_storage;
+    char *current_pool;
     char *rest, *rest_undo;
     char *ck_label=NULL;
     char *ck_storage=NULL;
+    char *ck_pool=NULL;
     int level = 0;
     off_t filenum;
     char *ck_datestamp=NULL;
@@ -813,6 +853,7 @@ search_logfile(
 
     current_label = g_strdup("");
     current_storage = g_strdup("");
+    current_pool = g_strdup("");
     if (string_chunk == NULL) {
 	string_chunk = g_string_chunk_new(32768);
     }
@@ -830,9 +871,10 @@ search_logfile(
 	if (curlog == L_START && curprog == P_TAPER) {
 	    amfree(ck_label);
 	    amfree(ck_storage);
+	    amfree(ck_pool);
 	    ck_datestamp = NULL;
 	    if(parse_taper_datestamp_log(curstr, &ck_datestamp,
-                                         &ck_label, &ck_storage) == 0) {
+                                         &ck_label, &ck_storage, &ck_pool) == 0) {
 		g_printf(_("strange log line in %s \"start taper %s\"\n"),
                          logfile, curstr);
                 continue;
@@ -860,6 +902,9 @@ search_logfile(
             amfree(current_storage);
             current_storage = ck_storage;
 	    ck_storage = NULL;
+            amfree(current_pool);
+            current_pool = ck_pool;
+	    ck_pool = NULL;
             if (datestamp == NULL) {
                 datestamp = g_strdup(ck_datestamp);
             }
@@ -895,14 +940,16 @@ search_logfile(
 	    if (curlog == L_PART || curlog == L_PARTPARTIAL ||
 		curlog == L_DONE || curlog == L_FAIL || curlog == L_PARTIAL) {
 		char *part_storage;
-		char *qpart_storage = s - 1;
+		char *qpart_storage;
+		char *part_pool;
 		char *part_label;
 		char *qnext_string;
 		char *next_string;
 		taper_part++;
+
+		qpart_storage = s - 1;
 		skip_quoted_string(s, ch);
 		s[-1] = '\0';
-
 		part_storage = unquote_string(qpart_storage);
 		if (strncmp(part_storage, "ST:", 3) == 0) {
 		    char *ps = part_storage;
@@ -918,17 +965,33 @@ search_logfile(
 		    part_storage = g_strdup(get_config_name());
 		}
 
+		if (strncmp(next_string, "POOL:", 5) == 0) {
+		    char *pp = next_string;
+		    part_pool = g_strdup(next_string+5);
+		    g_free(pp);
+		    skip_whitespace(s, ch);
+		    qnext_string = s - 1;
+		    skip_quoted_string(s, ch);
+		    s[-1] = '\0';
+		    next_string = unquote_string(qnext_string);
+		} else {
+		    part_pool = g_strdup(part_storage);
+		}
+
 		if (curlog == L_PART || curlog == L_PARTPARTIAL) {
 		    part_label = next_string;
 		    if (!g_hash_table_lookup(valid_label, part_label)) {
 			amfree(part_label);
 			amfree(part_storage);
+			amfree(part_pool);
 			continue;
 		    }
 		    amfree(current_label);
 		    current_label = part_label;
 		    amfree(current_storage);
 		    current_storage = part_storage;
+		    amfree(current_pool);
+		    current_pool = part_pool;
 
 		    skip_whitespace(s, ch);
 		    if (ch == '\0') {
@@ -958,6 +1021,7 @@ search_logfile(
 		    host = g_strdup(host);
 		} else {
 		    amfree(part_storage);
+		    amfree(part_pool);
 		    amfree(host);
 		    host = next_string;
 		}
@@ -1225,6 +1289,9 @@ search_logfile(
 		    if (current_storage) {
 			new_output_find->storage=g_string_chunk_insert_const(string_chunk, current_storage);
 		    }
+		    if (current_pool) {
+			new_output_find->pool=g_string_chunk_insert_const(string_chunk, current_pool);
+		    }
 		    new_output_find->status=NULL;
 		    new_output_find->dump_status=NULL;
 		    new_output_find->message="";
@@ -1350,6 +1417,9 @@ search_logfile(
 		    if (current_storage != NULL) {
 			new_output_find->storage=g_string_chunk_insert_const(string_chunk, current_storage);
 		    }
+		    if (current_pool != NULL) {
+			new_output_find->pool=g_string_chunk_insert_const(string_chunk, current_pool);
+		    }
 		    new_output_find->level=level;
 		    new_output_find->label=NULL;
 		    new_output_find->partnum=partnum;
@@ -1359,7 +1429,7 @@ search_logfile(
 		    new_output_find->kb=kb;
 		    new_output_find->bytes=bytes;
 		    new_output_find->orig_kb=orig_kb;
-		    status_failed = g_strjoin(NULL, 
+		    status_failed = g_strjoin(NULL,
 			 "FAILED (",
 			 program_str[(int)curprog],
 			 ") ",
@@ -1386,6 +1456,7 @@ search_logfile(
     amfree(datestamp);
     amfree(current_label);
     amfree(current_storage);
+    amfree(current_pool);
     amfree(disk);
 
     return found_something;

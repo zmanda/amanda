@@ -488,7 +488,8 @@ $LogfileData{taper} = {
                     kb      => "2016",
                     files   => "4",
                     dle     => "1",
-		    'storage' => "TESTCONF"
+		    'storage' => "TESTCONF",
+		    'pool' => "TESTCONF"
                 },
             },
             tape_labels => ['TESTCONF01'],
@@ -528,7 +529,8 @@ $LogfileData{taper} = {
                             status => "partial",
                             parts  => [
                                 {
-				    storage => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "1",
@@ -538,7 +540,8 @@ $LogfileData{taper} = {
                                     kps   => "135535.789920",
                                 },
                                 {
-				    storage => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "2",
@@ -548,7 +551,8 @@ $LogfileData{taper} = {
                                     kps   => "186154.741129",
                                 },
                                 {
-				    storage => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "3",
@@ -558,7 +562,8 @@ $LogfileData{taper} = {
                                     kps   => "218355.510065",
                                 },
                                 {
-				    storage => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "TESTCONF01",
                                     date  => "20080111",
                                     file  => "4",
@@ -575,6 +580,7 @@ $LogfileData{taper} = {
                             orig_kb => undef,
                             error   => '',
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                     },
                   ]
@@ -631,7 +637,8 @@ $LogfileData{simple} = {
                     'date'  => '20080111',
                     'kb'    => 419,
                     'dle'   => 1,
-		    'storage' => "TESTCONF"
+		    'storage' => "TESTCONF",
+		    'pool' => "TESTCONF"
                 },
             },
             tape_labels => ["Conf-001"],
@@ -665,7 +672,8 @@ $LogfileData{simple} = {
                             status => "done",
                             parts  => [
                                 {
-				    storage => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "Conf-001",
                                     date  => "20080111",
                                     file  => "1",
@@ -681,6 +689,7 @@ $LogfileData{simple} = {
                             kps     => "87.133307",
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                         chunker => {
                             status => "success",
@@ -808,6 +817,7 @@ $LogfileData{fullExample} = {
                     'kb'    => 57568922,
                     'dle'   => 6,
 		    'storage' => "TESTCONF",
+		    'pool' => "TESTCONF"
                 },
             },
             tape_labels => ["FullBackup-14"],
@@ -847,13 +857,15 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "4",
                                     kb    => "8392",
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "FullBackup-14"
                                 },
                             ],
                             kb      => '8392',
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                         dumper => {
                             kps     => "2771.1",
@@ -897,7 +909,8 @@ $LogfileData{fullExample} = {
                             status => "done",
                             parts  => [
                                 {
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => 'FullBackup-14',
                                     date  => '20081002040002',
                                     kps   => '77695.214669',
@@ -910,6 +923,7 @@ $LogfileData{fullExample} = {
                             kb      => "28776940",
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                     },
                   ],
@@ -922,7 +936,8 @@ $LogfileData{fullExample} = {
                             status => "done",
                             parts  => [
                                 {
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => 'FullBackup-14',
                                     date  => '20081002030002',
                                     kps   => '77695.214669',
@@ -935,6 +950,7 @@ $LogfileData{fullExample} = {
                             kb      => "28776940",
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
 		    },
 		  ]
@@ -972,13 +988,15 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "2",
                                     kb    => "10",
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "FullBackup-14"
                                 },
                             ],
                             'kb'    => '10',
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                         'dumper' => {
                             'kps'    => '250.8',
@@ -1025,13 +1043,15 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "3",
                                     kb    => "6630",
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "FullBackup-14"
                                 },
                             ],
                             kb      => "6630",
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                         dumper => {
                             kps     => "16013.4",
@@ -1078,13 +1098,15 @@ $LogfileData{fullExample} = {
                                     partnum  => "1",
                                     file  => "1",
                                     kb    => "10",
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     label => "FullBackup-14",
                                 },
                             ],
                             kb      => "10",
                             orig_kb => undef,
 			    storage => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                         dumper => {
                             kps     => "250.4",
@@ -1148,7 +1170,8 @@ $LogfileData{amflushExample} = {
                     'date'  => '20090622075550',
                     'kb'    => 37289,
                     'dle'   => 2,
-		    'storage' => "TESTCONF"
+		    'storage' => "TESTCONF",
+		    'pool' => "TESTCONF"
                 },
             },
             tape_labels => ["DailyTapeDataSet-017"],
@@ -1180,13 +1203,15 @@ $LogfileData{amflushExample} = {
                                     'partnum'  => '1',
                                     'file'  => '1',
                                     'kb'    => '36980',
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     'label' => 'DailyTapeDataSet-017'
                                 },
                             ],
                             'kb'     => '36980',
                             orig_kb  => undef,
 			    storage  => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                     },
 		  ]
@@ -1214,13 +1239,15 @@ $LogfileData{amflushExample} = {
                                     'partnum'  => '1',
                                     'file'  => '2',
                                     'kb'    => '309',
-                                    'storage' => undef,
+                                    'storage' => "TESTCONF",
+                                    'pool'  => "TESTCONF",
                                     'label' => 'DailyTapeDataSet-017'
                                 },
                             ],
                             'kb'     => '309',
                             orig_kb  => undef,
 			    storage  => "TESTCONF",
+			    'pool' => "TESTCONF"
                         },
                     }]
                 },
@@ -1324,13 +1351,15 @@ is_deeply(
                             partnum  => "1",
                             file  => "3",
                             kb    => "6630",
-                            'storage' => undef,
+                            'storage' => 'TESTCONF',
+                            'pool' => 'TESTCONF',
                             label => "FullBackup-14"
                         },
                     ],
                     kb      => "6630",
                     orig_kb => undef,
 		    storage => "TESTCONF",
+		    'pool' => "TESTCONF"
                 },
                 dumper => {
                     kps     => "16013.4",

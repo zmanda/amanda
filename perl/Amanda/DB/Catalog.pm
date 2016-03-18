@@ -790,15 +790,24 @@ sub get_parts_and_dumps {
 
 	    # now extract the appropriate info; luckily these log lines have the same
 	    # format, more or less
-	    my ($storage, $hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $bytes, $message);
+	    my ($storage, $pool, $hostname, $diskname, $dump_timestamp, $nparts, $level, $secs, $kb, $bytes, $message);
 	    ($storage, $str) = Amanda::Util::skip_quoted_string($str);
 	    $storage = Amanda::Util::unquote_string($storage);
 	    if ($storage =~ /^ST:/) {
 		$storage =~ s/^ST://;
-		($hostname, $str) = Amanda::Util::skip_quoted_string($str);
+		($pool, $str) = Amanda::Util::skip_quoted_string($str);
+		$pool = Amanda::Util::unquote_string($pool);
+		if ($pool =~ /^POOL/) {
+		    $pool =~ s/^POOL//;
+		    ($hostname, $str) = Amanda::Util::skip_quoted_string($str);
+		} else {
+		    $hostname = $pool;
+		    $pool = Amanda::Config::get_config_name();
+		}
 	    } else {
 		$hostname = $storage;
 		$storage = Amanda::Config::get_config_name();
+		$pool = $storage;
 	    }
 	    ($diskname, $str) = Amanda::Util::skip_quoted_string($str);
 	    ($dump_timestamp, $str) = Amanda::Util::skip_quoted_string($str);

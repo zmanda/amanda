@@ -170,6 +170,8 @@ typedef struct {
     char *hostname;
     char *diskname;
     char *storage;
+    int   storage_id;
+    char *pool;
     int level;
     char *label;
     off_t filenum;

@@ -1040,20 +1040,28 @@ sub _handle_taper_line
 
     if ( $type == $L_START ) {
         # format is:
-        # START taper [ST:Storage] datestamp <start> label <label> tape <tapenum>
+        # START taper [ST:storage [POOL:pool]] datestamp <start> label <label> tape <tapenum>
         my @info = Amanda::Util::split_quoted_strings($str);
-        my ($datestamp, $label, $tapenum, $storage);
+        my ($datestamp, $label, $tapenum, $storage, $pool);
 	$datestamp = $info[1];
 	if ($info[2] =~ /^ST:/) {
 	    $storage = $info[2];
 	    $storage =~ s/^ST://g;
-	    ($label, $tapenum) = @info[ 4, 6 ];
+	    if ($info[3] =~ /^POOL:/) {
+		$pool = $info[3];
+		($label, $tapenum) = @info[ 5, 7 ];
+	    } else {
+		($label, $tapenum) = @info[ 4, 6 ];
+		$pool = $storage;
+	    }
 	} else {
             ($label, $tapenum) = @info[ 3, 5 ];
 	    $storage = Amanda::Config::get_config_name();
+	    $pool = $storage;
 	}
         my $tape = $self->get_tape($label);
         $tape->{date} = $datestamp;
+        $tape->{pool} = $pool;
         $tape->{label} = $label;
         $tape->{storage} = $storage;
 
@@ -1065,15 +1073,23 @@ sub _handle_taper_line
     } elsif ( $type == $L_PART || $type == $L_PARTPARTIAL ) {
 
 # format is:
-# [ST:<storage>] <label> <tapefile> <hostname> <disk> <timestamp> <currpart>/<predparts> <level> [sec <sec> kb <kb> kps <kps>]
+# [ST:<storage> [POOL:<pool>]] <label> <tapefile> <hostname> <disk> <timestamp> <currpart>/<predparts> <level> [sec <sec> kb <kb> kps <kps>]
 #
 # format for $L_PARTPARTIAL is the same as $L_PART, plus <err> at the end
         my @info = Amanda::Util::split_quoted_strings($str);
 	my $storage = $info[0];
 	if ($storage =~ /^ST:/) {
+	    $storage =~ s/^ST://g;
 	    shift @info;
 	} else {
-	    $storage = undef;
+	    $storage = Amanda::Config::get_config_name();
+	}
+	my $pool = $info[0];
+	if ($pool =~ /^POOL:/) {
+	    $pool =~ s/^POOL://g;
+	    shift @info;
+	} else {
+	    $pool = $storage;
 	}
         my ($label, $tapefile, $hostname, $disk, $timestamp) = @info[ 0 .. 4 ];
 
@@ -1092,6 +1108,7 @@ sub _handle_taper_line
 
         my $part = {
             storage  => $storage,
+            pool     => $pool,
             label    => $label,
             date     => $timestamp,
             file     => $tapefile,
@@ -1116,7 +1133,7 @@ sub _handle_taper_line
 
 # format is:
 # $type = DONE | PARTIAL
-# $type taper [ST:<storage>] <hostname> <disk> <timestamp> <part> <level> [native-crc client-crc server-crc] [sec <sec> kb <kb> kps <kps>]
+# $type taper [ST:<storage> [POOL:<pool>]] <hostname> <disk> <timestamp> <part> <level> [native-crc client-crc server-crc] [sec <sec> kb <kb> kps <kps>]
         my @info = Amanda::Util::split_quoted_strings($str);
 	my $storage = $info[0];
 	if ($storage =~ /^ST:/) {
@@ -1124,6 +1141,13 @@ sub _handle_taper_line
 	    shift @info;
 	} else {
 	    $storage = Amanda::Config::get_config_name();
+	}
+	my $pool = $info[0];
+	if ($pool =~ /^POOL/) {
+	    $pool =~ s/^POOL://g;
+	    shift @info;
+	} else {
+	    $pool = $storage
 	}
 
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
@@ -1157,6 +1181,7 @@ sub _handle_taper_line
         }
 
         $taper->{storage} = $storage;
+        $taper->{pool}    = $pool;
         $taper->{level}   = $level;
         $taper->{sec}     = $sec;
         $taper->{kb}      = $kb;
@@ -1393,9 +1418,18 @@ sub _handle_fail_line
     my @info = Amanda::Util::split_quoted_strings($str);
     my $storage = $info[0];
     if ($storage =~ /^ST:/) {
+	$storage =~ s/^ST://;
 	shift @info;
     } else {
 	$storage = undef;
+    }
+
+    my $pool = $info[0];
+    if ($pool =~ /^POOL/) {
+	$pool =~ s/^POOL//;
+	shift @info;
+    } else {
+	$pool = undef;
     }
 
     my ($hostname, $disk, $timestamp, $level) = @info;
