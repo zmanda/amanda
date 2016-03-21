@@ -501,7 +501,7 @@ sub scribe_notif_new_tape {
     # (this will be a change to the protocol)
     log_add($L_INFO, "$params{'error'}") if defined $params{'error'};
 
-    if ($params{'volume_label'}) {
+    if ($params{'volume_label'} &&!$params{'error'}) {
 	$self->{'label'} = $params{'volume_label'};
 
 	# add to the trace log

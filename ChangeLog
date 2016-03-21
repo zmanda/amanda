@@ -1,4 +1,8 @@
 2016-03-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Worker.pm (scribe_notif_new_tape): Check for no
+	  error
+
+2016-03-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/vfs-device.c: Return some error instead of just logging a
 	  warning
 
