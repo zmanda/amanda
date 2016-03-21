@@ -771,7 +771,9 @@ delete_vfs_files_functor(
     gpointer user_data)
 {
     VfsDevice *self = VFS_DEVICE(user_data);
+    Device *dself = DEVICE(self);
     char *path_name;
+    gboolean ret = TRUE;
 
     /* Skip the volume lock. */
     if (g_str_equal(filename, VOLUME_LOCKFILE_NAME))
@@ -779,10 +781,13 @@ delete_vfs_files_functor(
 
     path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
     if (unlink(path_name) != 0) {
-	g_warning(_("Error unlinking %s: %s"), path_name, strerror(errno));
+	device_set_error(dself,
+	    g_strdup_printf("Error unlinking %s: %s", path_name, strerror(errno)),
+	    DEVICE_STATUS_DEVICE_ERROR || DEVICE_STATUS_VOLUME_ERROR);
+	ret = FALSE;
     }
     amfree(path_name);
-    return TRUE;
+    return ret;
 }
 
 /* delete_vfs_files deletes all VfsDevice files in the directory except the
@@ -803,6 +808,7 @@ delete_vfs_files(
 static gboolean check_dir_empty_functor(const char * filename,
                                         gpointer user_data) {
     VfsDevice * self = VFS_DEVICE(user_data);
+    Device *dself = DEVICE(self);
     char * path_name;
 
     if (g_str_equal(filename, VOLUME_LOCKFILE_NAME))
@@ -810,10 +816,12 @@ static gboolean check_dir_empty_functor(const char * filename,
 
     path_name = g_strjoin(NULL, self->dir_name, "/", filename, NULL);
 
-    g_warning(_("Found spurious storage file %s"), path_name);
+    device_set_error(dself,
+	    g_strdup_printf("Found spurious storage file %s", path_name),
+	    DEVICE_STATUS_DEVICE_ERROR || DEVICE_STATUS_VOLUME_ERROR);
 
     amfree(path_name);
-    return TRUE;
+    return FALSE;
 }
 
 /* This function is used to write volume and dump headers. */
@@ -859,10 +867,12 @@ vfs_clear_and_prepare_label(
 
     /* Delete any extant data, except our volume lock. */
     delete_vfs_files(self);
+    if (device_in_error(dself)) return FALSE;
 
     /* Print warnings about any remaining files. */
     search_vfs_directory(self, VFS_DEVICE_FILE_REGEX,
                          check_dir_empty_functor, self);
+    if (device_in_error(dself)) return FALSE;
 
     self->file_name = g_strdup_printf("%s/00000.%s", self->dir_name, label);
 
@@ -1733,6 +1743,7 @@ vfs_device_erase(
         return FALSE;
 
     delete_vfs_files(self);
+    if (device_in_error(dself)) return FALSE;
 
     self->release_file(dself);
 
