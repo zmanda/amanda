@@ -120,6 +120,8 @@ static const struct {
 	T_("\t\t\t\t\t# Show all distinct hosts in disklist.") },
     { "dles", dles,
 	T_("\t\t\t\t\t# Show all dles in disklist, one per line.") },
+    { "retention", call_amadmin_perl,
+	T_(" [<tapelabel> ...]\t # print retention.") },
     { "reuse", call_amadmin_perl,
 	T_(" <tapelabel> ...\t\t # re-use this tape.") },
     { "no-reuse", call_amadmin_perl,

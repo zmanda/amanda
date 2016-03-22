@@ -102,7 +102,9 @@ sub main {
 
     step start => sub {
 	if ($opt_command eq "reuse" or $opt_command eq "no-reuse") {
-	    $steps->{'reuse'}->();
+	    return $steps->{'reuse'}->();
+	} elsif ($opt_command eq "retention") {
+	    return $steps->{'retention'}->();
 	}
 
 	my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
@@ -176,6 +178,36 @@ sub main {
 	} else {
 	    print STDERR "Only 'reuse' and 'no-reuse' command\n";
 	    usage();
+	}
+	$finished_cb->();
+    };
+
+    step retention => sub {
+	my $tlf = Amanda::Config::config_dir_relative(getconf($CNF_TAPELIST));
+	my ($tl, $message) = Amanda::Tapelist->new($tlf);
+	if (defined $message) {
+            print STDERR "amadmin: Could not read the tapelist: $message";
+	    $exit_status = 1;
+	    $finished_cb->();
+        }
+	Amanda::Tapelist::compute_retention();
+	if (@ARGV) {
+	    foreach my $label (@ARGV) {
+		my $tle = $tl->lookup_tapelabel($label);
+		if ($tle) {
+		    my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+		    my $retention_name = $tl->get_retention_name($retention_type);
+		    print "$tle->{storage} $tle->{pool} $tle->{label} $retention_name\n";
+		} else {
+		    print "No '$label' label.\n";
+		}
+	    }
+	} else {
+	    foreach my $tle (@{$tl->{'tles'}}) {
+		my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+		my $retention_name = $tl->get_retention_name($retention_type);
+		print "$tle->{storage} $tle->{pool} $tle->{label} $retention_name\n";
+	    }
 	}
 	$finished_cb->();
     };

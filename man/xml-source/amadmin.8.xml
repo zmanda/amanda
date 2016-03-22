@@ -187,6 +187,12 @@ command.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>retention</emphasis> <emphasis remap='I'>[ tapelabel</emphasis> ... ]</term>
+  <listitem>
+<para>Print the retention for each tapes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>reuse</emphasis> <emphasis remap='I'>tapelabel</emphasis> [ ... ]</term>
   <listitem>
 <para>The tapes listed
