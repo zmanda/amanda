@@ -61,6 +61,10 @@ Changes in release 4.0.0
    * amrmtape
        o new --list-retention, --list-no-retention and --remove-no-retention
          options.
+   * amtape
+       o print the RetentionType in the inventory
+   * amadmin
+       o new 'retention' command'
    * amfetchdump
        o --init and --no-restore arguments.
    * s3 device
