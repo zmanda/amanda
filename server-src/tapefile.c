@@ -40,9 +40,11 @@
 
 static tape_t *tape_list = NULL;
 static tape_t *tape_list_end = NULL;
+static GHashTable *tape_table = NULL;
 static gboolean retention_computed = FALSE;
 
 /* local functions */
+static char *tape_hash_key(const char *pool, const char *label);
 static tape_t *parse_tapeline(int *status, char *line);
 static tape_t *insert(tape_t *list, tape_t *tp);
 static time_t stamp2time(char *datestamp);
@@ -59,6 +61,20 @@ static void compute_storage_retention(find_result_t *output_find,
 				      int   retention_recover,
 				      int   retention_full);
 
+static char *
+tape_hash_key(
+    const char *pool,
+    const char *label)
+{
+    char *tape_key;
+    if (pool) {
+	tape_key = g_strdup_printf("P:%s-L:%s", pool, label);
+    } else {
+	tape_key = g_strdup_printf("P:%s-L:%s", get_config_name(), label);
+    }
+    return tape_key;
+}
+
 int
 read_tapelist(
     char *tapefile)
@@ -70,6 +86,7 @@ read_tapelist(
     int status = 0;
 
     clear_tapelist();
+    tape_table = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, NULL);
     if((tapef = fopen(tapefile,"r")) == NULL) {
 	if (errno == ENOENT) {
 	    /* no tapelist is equivalent to an empty tapelist */
@@ -91,8 +108,11 @@ read_tapelist(
 	    afclose(tapef);
 	    return 1;
 	}
-	if (tp != NULL)
+	if (tp != NULL) {
+	    char *tape_key = tape_hash_key(tp->pool, tp->label);
 	    tape_list = insert(tape_list, tp);
+	    g_hash_table_insert(tape_table, tape_key, tp);
+	}
     }
     afclose(tapef);
 
@@ -157,6 +177,12 @@ clear_tapelist(void)
 {
     tape_t *tp, *next;
 
+    if (tape_table) {
+	g_hash_table_remove_all(tape_table);
+	g_hash_table_unref(tape_table);
+	tape_table = NULL;
+    }
+
     for(tp = tape_list; tp; tp = next) {
 	amfree(tp->label);
 	amfree(tp->datestamp);
@@ -185,6 +211,19 @@ lookup_tapelabel(
     return NULL;
 }
 
+
+tape_t *
+lookup_tapepoollabel(
+    const char *pool,
+    const char *label)
+{
+    tape_t *tp;
+    char *tape_key;
+
+    tape_key = tape_hash_key(pool, label);
+    tp = g_hash_table_lookup(tape_table, tape_key);
+    return tp;
+}
 
 
 tape_t *
@@ -323,7 +362,10 @@ remove_tapelabel(
     tape_t *tp, *prev, *next;
 
     tp = lookup_tapelabel(label);
-    if(tp != NULL) {
+    if (tp) {
+	char *tape_key = tape_hash_key(tp->pool, tp->label);
+	g_hash_table_remove(tape_table, tape_key);
+	g_free(tape_key);
 	prev = tp->prev;
 	next = tp->next;
 	/*@ignore@*/
@@ -665,6 +707,21 @@ compute_retention(void)
 	tp->retention_nb = FALSE;
     }
 
+    if (!retention_computed) {
+	for (tp = tape_list; tp != NULL; tp = tp->next) {
+	    if (!tp->reuse) {
+		tp->retention = TRUE;
+		tp->retention_type = RETENTION_NO_REUSE;
+	    }
+	    if (tp->reuse && !tp->retention &&
+		tp->config &&
+		!g_str_equal(tp->config, get_config_name())) {
+		tp->retention = TRUE;
+		tp->retention_type = RETENTION_OTHER_CONFIG;
+	    }
+	}
+    }
+
     for (storage = get_first_storage(); storage != NULL;
 	 storage = get_next_storage(storage)) {
 	char       *policy_name = storage_get_policy(storage);
@@ -678,13 +735,6 @@ compute_retention(void)
 
     if (retention_computed)
 	return;
-
-    for (tp = tape_list; tp != NULL; tp = tp->next) {
-	tp->retention = !tp->reuse;
-	if (tp->config && !g_str_equal(tp->config, get_config_name())) {
-	    tp->retention = TRUE;
-	}
-    }
 
     for (storage = get_first_storage(); storage != NULL;
 	 storage = get_next_storage(storage)) {
@@ -726,6 +776,7 @@ compute_storage_retention_nb(
 	int count = 0;
 	for (tp = tape_list; tp != NULL; tp = tp->next) {
 	    if (tp->reuse == 1 &&
+		!tp->retention &&
 		!g_str_equal(tp->datestamp, "0") &&
 		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
 		(!tp->storage || g_str_equal(tp->storage, storage)) &&
@@ -738,6 +789,7 @@ compute_storage_retention_nb(
 		     * overwritten */
 		    /* tp->retention = TRUE; */
 		    tp->retention_nb = TRUE;
+		    tp->retention_type = RETENTION_TAPES;
 		}
 	    }
 	}
@@ -768,13 +820,14 @@ cmdfile_add_retention(
 	for (sl = cmddata->src_labels; sl != NULL; sl = sl->next) {
 	    char *label = (char *)sl->data;
 	    tp = lookup_tapelabel(label);
-	    if (tp &&
+	    if (tp && !tp->retention && !tp->retention_nb &&
 		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
 	        (!tp->storage || g_str_equal(tp->storage, data->storage)) &&
 	        ((tp->pool && g_str_equal(tp->pool, data->pool)) ||
 	         (!tp->pool && match_labelstr_template(data->l_template, tp->label,
 	                                                   tp->barcode, tp->meta)))) {
 		tp->retention = TRUE;
+		tp->retention_type = RETENTION_CMD_COPY;
 	    }
 	}
     }
@@ -785,13 +838,14 @@ cmdfile_add_retention(
 	cmddata->src_label) {
 	char *label = cmddata->src_label;
 	tp = lookup_tapelabel(label);
-	if (tp &&
+	if (tp && !tp->retention && !tp->retention_nb &&
 	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
 	    (!tp->storage || g_str_equal(tp->storage, data->storage)) &&
 	    ((tp->pool && g_str_equal(tp->pool, data->pool)) ||
 	     (!tp->pool && match_labelstr_template(data->l_template, tp->label,
 	                                           tp->barcode, tp->meta)))) {
 	    tp->retention = TRUE;
+	    tp->retention_type = RETENTION_CMD_RESTORE;
 	}
     }
 }
@@ -821,6 +875,7 @@ compute_storage_retention(
 					retention_days*86400);
 	for(tp = tape_list; tp != NULL; tp = tp->next) {
 	    if (tp->reuse == 1 &&
+		!tp->retention && !tp->retention_nb &&
 		g_ascii_strcasecmp(tp->datestamp, datestr) > 0 &&
 		(!tp->config || g_str_equal(tp->config, get_config_name())) &&
 		(!tp->storage || g_str_equal(tp->storage, storage)) &&
@@ -828,6 +883,7 @@ compute_storage_retention(
 		 (!tp->pool && match_labelstr_template(l_template, tp->label,
 						       tp->barcode, tp->meta)))) {
 		tp->retention = TRUE;
+		tp->retention_type = RETENTION_DAYS;
 	    }
 	}
 	g_free(datestr);
@@ -856,13 +912,15 @@ compute_storage_retention(
 		g_ascii_strcasecmp(ofr->timestamp, datestr) > 0) {
 		if (ofr->label && ofr->label[0] != '/') {
 		    tp = lookup_tapelabel(ofr->label);
-		    if ((!tp->config || g_str_equal(tp->config, get_config_name())) &&
+		    if (!tp->retention && !tp->retention_nb &&
+			(!tp->config || g_str_equal(tp->config, get_config_name())) &&
 			(!tp->storage || g_str_equal(tp->storage, storage)) &&
 			((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 			 (!tp->pool && match_labelstr_template(l_template, tp->label,
 							       tp->barcode, tp->meta)))) {
 			/* keep that label */
 			tp->retention = TRUE;
+			tp->retention_type = RETENTION_RECOVER;
 		    }
 		}
 		level = ofr->level;
@@ -893,13 +951,15 @@ compute_storage_retention(
 		count < retention_full) {
 		if (ofr->label && ofr->label[0] != '/') {
 		    tp = lookup_tapelabel(ofr->label);
-		    if ((!tp->config || g_str_equal(tp->config, get_config_name())) &&
+		    if (!tp->retention && !tp->retention_nb &&
+			(!tp->config || g_str_equal(tp->config, get_config_name())) &&
 			(!tp->storage || g_str_equal(tp->storage, storage)) &&
 			((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 			 (!tp->pool && match_labelstr_template(l_template, tp->label,
 							       tp->barcode, tp->meta)))) {
 			/* keep that label */
 			tp->retention = TRUE;
+			tp->retention_type = RETENTION_FULL;
 			count++;
 		    }
 		}
@@ -1003,5 +1063,22 @@ gchar **list_no_retention(void)
 	g_hash_table_destroy(storage_hash);
     }
     return rv;
+}
+
+RetentionType
+get_retention_type(
+    char *pool,
+    char *label)
+{
+    tape_t *tp;
+
+    for(tp = tape_list; tp != NULL; tp = tp->next) {
+	if (g_str_equal(label, tp->label) &&
+	    ((!pool && !tp->pool) ||
+	     (pool && tp->pool && g_str_equal(pool, tp->pool))))
+	    return tp->retention_type;
+    }
+    return RETENTION_NO;
+
 }
 

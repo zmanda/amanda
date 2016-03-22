@@ -30,6 +30,23 @@
 #include "tapefile.h"
 %}
 
+/*
+ * Constants
+ */
+
+amglue_add_flag_tag_fns(RetentionType);
+amglue_add_constant_short(RETENTION_NO, "NO", RetentionType);
+amglue_add_constant_short(RETENTION_NO_REUSE, "no-reuse", RetentionType);
+amglue_add_constant_short(RETENTION_TAPES, "retention-tapes", RetentionType);
+amglue_add_constant_short(RETENTION_DAYS, "retention-days", RetentionType);
+amglue_add_constant_short(RETENTION_RECOVER, "retention-recover", RetentionType);
+amglue_add_constant_short(RETENTION_FULL, "retention-full", RetentionType);
+amglue_add_constant_short(RETENTION_CMD_COPY, "command copy", RetentionType);
+amglue_add_constant_short(RETENTION_CMD_FLUSH, "command flush", RetentionType);
+amglue_add_constant_short(RETENTION_CMD_RESTORE, "command restore", RetentionType);
+amglue_add_constant_short(RETENTION_OTHER_CONFIG, "other config", RetentionType);
+amglue_copy_to_tag(RetentionType, constants)
+
 %perlcode %{
 use Amanda::Debug qw(:logging);
 use Amanda::Config qw( config_dir_relative );
@@ -322,6 +339,35 @@ sub _update_positions {
     }
 }
 
+sub get_retention_name {
+    my $self = shift;
+    my $retention_type = shift;
+
+    if ($retention_type == $RETENTION_NO) {
+	return "NO";
+    } elsif ($retention_type == $RETENTION_NO_REUSE) {
+	return "no-reuse";
+    } elsif ($retention_type == $RETENTION_TAPES) {
+	return "retention-tapes";
+    } elsif ($retention_type == $RETENTION_DAYS) {
+	return "retention-days";
+    } elsif ($retention_type == $RETENTION_RECOVER) {
+	return "retention-recover";
+    } elsif ($retention_type == $RETENTION_FULL) {
+	return "retention-full";
+    } elsif ($retention_type == $RETENTION_CMD_COPY) {
+	return "command COPY";
+    } elsif ($retention_type == $RETENTION_CMD_FLUSH) {
+	return "command FLUSH";
+    } elsif ($retention_type == $RETENTION_CMD_RESTORE) {
+	return "command RESTORE";
+    } elsif ($retention_type == $RETENTION_OTHER_CONFIG) {
+	return "other config";
+    } else {
+	return "unknown retention $retention_type";
+    }
+}
+
 %}
 
 void compute_retention(void);
@@ -357,6 +403,8 @@ char *get_last_reusable_tape_label(const char *l_template, const char *tapepool,
 				   int retention_full, int skip);
 
 int volume_is_reusable(const char *label);
+
+RetentionType get_retention_type(char *pool, char *label);
 
 /* C functions -- should be called *only* from within this module */
 

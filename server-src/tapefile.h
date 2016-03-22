@@ -36,6 +36,19 @@
 
 #include "amanda.h"
 
+typedef enum {
+    RETENTION_NO           = 0,
+    RETENTION_NO_REUSE     = (1<<0),
+    RETENTION_TAPES        = (1<<1),
+    RETENTION_DAYS         = (1<<2),
+    RETENTION_RECOVER      = (1<<3),
+    RETENTION_FULL         = (1<<4),
+    RETENTION_CMD_COPY     = (1<<5),
+    RETENTION_CMD_FLUSH    = (1<<6),
+    RETENTION_CMD_RESTORE  = (1<<7),
+    RETENTION_OTHER_CONFIG = (1<<8)
+} RetentionType;
+
 typedef struct tape_s {
     struct tape_s *next, *prev;
     int position;
@@ -51,6 +64,7 @@ typedef struct tape_s {
     char *comment;
     gboolean   retention;	/* use internally */
     gboolean   retention_nb;	/* use internally */
+    RetentionType retention_type;
 } tape_t;
 
 void compute_retention(void);
@@ -60,6 +74,7 @@ gchar **list_no_retention(void);
 int read_tapelist(char *tapefile);
 int write_tapelist(char *tapefile);
 void clear_tapelist(void);
+tape_t *lookup_tapepoollabel(const char *pool, const char *label);
 tape_t *lookup_tapelabel(const char *label);
 tape_t *lookup_tapepos(int pos);
 tape_t *lookup_tapedate(char *datestamp);
@@ -82,5 +97,6 @@ int volume_is_reusable(const char *label);
 
 int guess_runs_from_tapelist(void);
 gchar **list_new_tapes(char *storage_n, int nb);
+RetentionType get_retention_type(char *pool, char *label);
 
 #endif /* !TAPEFILE_H */
