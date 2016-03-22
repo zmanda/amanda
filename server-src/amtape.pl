@@ -194,6 +194,8 @@ sub {
 	return usage($finished_cb);
     }
 
+    Amanda::Tapelist::compute_retention();
+
     # TODO -- support an --xml option
 
     my $inventory_cb = make_cb(inventory_cb => sub {
@@ -232,15 +234,9 @@ sub {
 		    }
 		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		    $line .= " blank";
-		} elsif ($sl->{'device_status'} != $DEVICE_STATUS_SUCCESS) {
-		    if (defined $sl->{'device_error'}) {
-			$line .= " " . $sl->{'device_error'};
-		    } else {
-			$line .= "device error";
-		    }
 		} elsif ($sl->{'f_type'} != $Amanda::Header::F_TAPESTART) {
 		    $line .= " blank";
-		} else {
+		} elsif (!defined $sl->{label}) {
 		    $line .= " unknown";
 		}
 	    }
@@ -259,7 +255,19 @@ sub {
 	    if ($sl->{'current'}) {
 		$line .= " (current)";
 	    }
+	    if ($sl->{'device_status'} != $DEVICE_STATUS_SUCCESS &&
+		$sl->{'device_status'} != $DEVICE_STATUS_VOLUME_UNLABELED) {
+		if (defined $sl->{'device_error'}) {
+		    $line .= " [" . $sl->{'device_error'} . "]";
+		} else {
+		    $line .= " [device error]";
+		}
+	    }
 	    if (defined $tle) {
+		my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+		if ($retention_type != $Amanda::Tapelist::RETENTION_NO) {
+		    $line .= " [" . $tl->get_retention_name($retention_type) . "]";
+		}
 		if (defined $sl->{'barcode'} and
 		    defined $tle->{'barcode'} and
 		    $sl->{'barcode'} ne $tle->{'barcode'}) {

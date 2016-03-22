@@ -1,4 +1,7 @@
 2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amtape.pl: Add the RetentionType in the inventory result
+
+2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amadmin.c: Add retention command
 	* server-src/amadmin_perl.pl: Implement retention command
 	* man/xml-source/amadmin.8.xml: Document retention command
