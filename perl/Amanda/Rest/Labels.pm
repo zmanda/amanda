@@ -114,6 +114,7 @@ sub list {
 	push @result_messages, $tl;
 	return (-1, \@result_messages);
     }
+    Amanda::Tapelist::compute_retention();
     @tles = @{$tl->{'tles'}};
     @tles = grep {defined $_->{'config'}    and $_->{'config'}  eq $params{'config'}}                     @tles if defined $params{'config'};
     @tles = grep {defined $_->{'storage'}   and $_->{'storage'} eq $params{'storage'}}                    @tles if defined $params{'storage'};
@@ -121,6 +122,12 @@ sub list {
     @tles = grep {defined $_->{'meta'}      and $_->{'meta'}    eq $params{'meta'}}                       @tles if defined $params{'meta'};
     @tles = grep {defined $_->{'reuse'}     and $_->{'reuse'}   eq $params{'reuse'}}                      @tles if defined $params{'reuse'};
     @tles = grep {defined $_->{'datestamp'} and match_datestamp($params{'datestamp'}, $_->{'datestamp'})} @tles if defined $params{'datestamp'};
+
+    foreach my $tle (@tles) {
+	my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
+	$tle->{'retention_type'} = $tl->get_retention_name($retention_type);
+    }
+
     push @result_messages, Amanda::Tapelist::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use Amanda::Config qw( :init :getconf config_dir_relative );;
+use Amanda::Debug qw( :logging );
 use Amanda::Device qw( :constants );
 use Amanda::Changer;
 use Amanda::Header;
@@ -428,6 +429,13 @@ sub inventory {
 
 	    push @result_messages, $err if $err;
 
+	    if (1) {
+		Amanda::Tapelist::compute_retention();
+		for my $inv (@$inventory) {
+		    my $retention_type = Amanda::Tapelist::get_retention_type($storage->{tapepool}, $inv->{label});
+		    $inv->{'retention_type'} = $tl->get_retention_name($retention_type);
+		}
+	    }
 	    push @result_messages, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,

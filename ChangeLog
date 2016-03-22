@@ -1,4 +1,10 @@
 2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Rest/Labels.pm: Add the RentetionType in result
+	* perl/Amanda/Rest/Storages.pm: Add the RentetionType in result
+	* installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Storages.pl: Fix for new result
+
+2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amtape.pl: Add the RetentionType in the inventory result
 
 2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
