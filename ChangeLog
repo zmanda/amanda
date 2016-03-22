@@ -1,4 +1,7 @@
 2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Worker.pm: Typo
+
+2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/tapefile.h (tape_t): Add the RetentionType
 	* server-src/tapefile.c: Comupte the RetentionType
 	* perl/Amanda/Tapelist.swg: Swig the RetentionType
