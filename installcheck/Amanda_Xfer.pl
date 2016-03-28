@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 48;
+use Test::More tests => 68;
 use File::Path;
 use Data::Dumper;
 use strict;
@@ -593,9 +593,10 @@ SKIP: {
     #   cancel_after_partnum - after this partnum is completed, cancel the xfer
     #   do_not_retry - do not retry a failed part - cancel the xfer instead
     sub test_taper_dest {
-	my ($src, $dest_sub, $expected_messages, $msg_prefix, %params) = @_;
+	my ($src, $dest_sub, $expected_messages, $expected_crcs, $msg_prefix, %params) = @_;
 	my $xfer;
 	my $vtape_num = 1;
+	my @crcs;
 	my @messages;
 
 	# set up vtapes
@@ -692,7 +693,7 @@ SKIP: {
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	    } elsif ($msg->{'type'} == $XMSG_PART_DONE) {
-		push @messages, "PART-" . $msg->{'partnum'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
+		push @messages, "PART-" . $msg->{'partnum'} . '-' . $msg->{'size'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
 		push @messages, "EOM" if $msg->{'eom'};
 		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'}, $msg->{'eom'});
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
@@ -701,7 +702,7 @@ SKIP: {
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    } elsif ($msg->{'type'} == $XMSG_CRC) {
-		#push @messages, "CRC";
+		push @crcs, "$msg->{'crc'}:$msg->{'size'}";
 	    } else {
 		push @messages, "$msg->{'type'}";
 	    }
@@ -722,12 +723,23 @@ SKIP: {
 	    $expected_messages,
 	    "$msg_prefix: element produces the correct series of messages")
 	or diag(Dumper([@messages]));
+
+
+	if ($expected_crcs) {
+	    #@crcs = sort @crcs;
+	    #@$expected_crcs = sort @$expected_crcs;
+	    is_deeply([@crcs],
+		$expected_crcs,
+		"$msg_prefix: element produces the correct crcs")
+	    or diag(Dumper([@crcs]));
+	}
     }
 
     sub run_recovery_source {
-	my ($dest, $files, $expected_messages, $finished_cb) = @_;
+	my ($dest, $files, $expected_messages, $expected_crcs, $finished_cb) = @_;
 	my $device;
 	my @filenums;
+	my @crcs;
 	my @messages;
 	my $xfer;
 	my $dev;
@@ -811,7 +823,7 @@ SKIP: {
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	    } elsif ($msg->{'type'} == $XMSG_PART_DONE) {
-		push @messages, "KB-" . ($msg->{'size'}/1024);
+		push @messages, "BYTES-" .  $msg->{'size'};
 		$steps->{'seek_file'}->();
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
@@ -822,7 +834,7 @@ SKIP: {
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    } elsif ($msg->{'type'} == $XMSG_CRC) {
-		#push @messages, "CRC";
+		push @crcs, "$msg->{'crc'}:$msg->{'size'}";
 	    }
 	};
 
@@ -831,6 +843,16 @@ SKIP: {
 		$expected_messages,
 		"files read back and verified successfully with Amanda::Xfer::Recovery::Source")
 	    or diag(Dumper([@messages]));
+
+	    if ($expected_crcs) {
+		#@crcs = sort @crcs;
+		#@$expected_crcs = sort @$expected_crcs;
+		is_deeply([@crcs],
+			$expected_crcs,
+			"element produces the correct crcs")
+		or diag(Dumper([@crcs]));
+	    }
+
 	    $chg->quit();
 	    $finished_cb->();
 	};
@@ -886,8 +908,9 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
 						     520*1024, 0);
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-OK", "PART-4-OK",
-	  "DONE" ],
+	[ "PART-1-557056-OK", "PART-2-557056-OK", "PART-3-557056-OK",
+	  "PART-4-326656-OK", "DONE" ],
+	[ 'e896f9b1:1997824' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - simple splitting");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -895,15 +918,21 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-544',
+	  'BYTES-557056',
 	  'PART',
-	  'KB-544',
+	  'BYTES-557056',
 	  'PART',
-	  'KB-544',
+	  'BYTES-557056',
 	  'PART',
-	  'KB-319',
+	  'BYTES-326656',
 	  'DONE'
-	]);
+	],
+	[ 'afce8b74:557056',
+	  'fe33b4e9:1114112',
+	  '869c563f:1671168',
+	  'e896f9b1:1997824',
+	  'e896f9b1:1997824' ]
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*3.1, $RANDOM_SEED),
@@ -912,9 +941,10 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
 						     1024*1024, 0);
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-OK", "EOM",
-	  "PART-4-OK",
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-294912-OK", "EOM",
+	  "PART-4-858521-OK",
 	  "DONE" ],
+	[ 'eda70336:3250585' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - splitting and spanning with LEOM");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -922,15 +952,21 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-288',
+	  'BYTES-294912',
 	  'PART',
-	  'KB-838',
+	  'BYTES-858521',
 	  'DONE'
-	]);
+	],
+	[ 'd4b66333:1048576',
+	  'ab6d231b:2097152',
+	  '0e0acec2:2392064',
+	  'eda70336:3250585',
+	  'eda70336:3250585' ],
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*1.5, $RANDOM_SEED),
@@ -939,8 +975,9 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
 						     0, 0);
 	},
-	[ "PART-1-OK",
+	[ "PART-1-1572864-OK",
 	  "DONE" ],
+	[ '102b1445:1572864' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - no splitting");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -948,9 +985,12 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-1536',
+	  'BYTES-1572864',
 	  'DONE'
-	]);
+	],
+	[ '102b1445:1572864',
+	  '102b1445:1572864' ],
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*3.1, $RANDOM_SEED),
@@ -959,9 +999,10 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
 						     2368*1024, 0);
 	},
-	[ "PART-1-OK", "PART-2-OK", "EOM",
-	  "PART-2-OK",
+	[ "PART-1-2424832-OK", "PART-2-0-OK", "EOM",
+	  "PART-2-825753-OK",
 	  "DONE" ],
+	[ 'eda70336:3250585' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - LEOM hits in file 2 header");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -969,13 +1010,18 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-2368',
+	  'BYTES-2424832',
 	  'PART',
-	  'KB-0', # this wouldn't be in the catalog, but it's on the vtape
+	  'BYTES-0', # this wouldn't be in the catalog, but it's on the vtape
 	  'PART',
-	  'KB-806',
+	  'BYTES-825753',
 	  'DONE'
-	]);
+	],
+	[ '96ff2746:2424832',
+	  '96ff2746:2424832',
+	  'eda70336:3250585',
+	  'eda70336:3250585' ],
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*3.1, $RANDOM_SEED),
@@ -984,8 +1030,9 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
 						     2368*1024, 0);
 	},
-	[ "PART-1-OK", "PART-2-FAILED", "EOM",
+	[ "PART-1-2424832-OK", "PART-2-98304-FAILED", "EOM",
 	  "NOT-RETRYING", "CANCELLED", "DONE" ],
+	[ '96ff2746:2424832' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - LEOM fails, PEOM => failure",
 	disable_leom => 1, do_not_retry => 1);
 
@@ -997,9 +1044,10 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 						     1024*1024, 1, undef),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
-	  "PART-3-OK", "PART-4-OK", "PART-5-OK",
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-393216-FAILED",
+	  "EOM", "PART-3-1048576-OK", "PART-4-1048576-OK", "PART-5-104857-OK",
 	  "DONE" ],
+	[ 'c201f5aa:4299161' ],
 	"Amanda::Xfer::Dest::Taper::Cacher - mem cache");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -1007,17 +1055,24 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-102',
+	  'BYTES-104857',
 	  'DONE'
-	]);
+	],
+	[ 'd4b66333:1048576',
+	  'ab6d231b:2097152',
+	  'ca8b7765:3145728',
+	  '8f6c1b34:4194304',
+	  'c201f5aa:4299161',
+	  'c201f5aa:4299161' ],
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
@@ -1026,9 +1081,10 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 					      1024*1024, 0, $disk_cache_dir),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
-	  "PART-3-OK", "PART-4-OK", "PART-5-OK",
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-393216-FAILED",
+	  "EOM", "PART-3-1048576-OK", "PART-4-1048576-OK", "PART-5-104857-OK",
 	  "DONE" ],
+	[ 'c201f5aa:4299161' ],
 	"Amanda::Xfer::Dest::Taper::Cacher - disk cache");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -1036,17 +1092,24 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-102',
+	  'BYTES-104857',
 	  'DONE'
-	]);
+	],
+	[ 'd4b66333:1048576',
+	  'ab6d231b:2097152',
+	  'ca8b7765:3145728',
+	  '8f6c1b34:4194304',
+	  'c201f5aa:4299161',
+	  'c201f5aa:4299161' ]
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
@@ -1055,8 +1118,9 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 						    1024*1024, 0, undef),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-OK",
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-0-OK",
 	  "DONE" ],
+	[ 'ab6d231b:2097152' ],
 	"Amanda::Xfer::Dest::Taper::Cacher - no cache (no failed parts; exact multiple of part size)");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -1064,13 +1128,18 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-1024',
+	  'BYTES-1048576',
 	  'PART',
-	  'KB-0',
+	  'BYTES-0',
 	  'DONE'
-	]);
+	],
+	[ 'd4b66333:1048576',
+	  'ab6d231b:2097152',
+	  'ab6d231b:2097152',
+	  'ab6d231b:2097152' ]
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
@@ -1078,7 +1147,8 @@ SKIP: {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024, 0, 0, undef),
 	},
-	[ "PART-1-OK", "DONE" ],
+	[ "PART-1-2097152-OK", "DONE" ],
+	[ 'ab6d231b:2097152' ],
 	"Amanda::Xfer::Dest::Taper::Cacher - no splitting (fits on volume)");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -1086,9 +1156,12 @@ SKIP: {
 	[
 	  'READY',
 	  'PART',
-	  'KB-2048',
+	  'BYTES-2097152',
 	  'DONE'
-	]);
+	],
+	[ 'ab6d231b:2097152',
+	  'ab6d231b:2097152' ]
+	);
 
     test_taper_dest(
 	Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
@@ -1096,8 +1169,9 @@ SKIP: {
 	    my ($first_dev) = @_;
 	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024, 0, 0, undef),
 	},
-	[ "PART-1-FAILED", "EOM",
+	[ "PART-1-2555904-FAILED", "EOM",
 	  "NOT-RETRYING", "CANCELLED", "DONE" ],
+	[ '00000000:0' ],
 	"Amanda::Xfer::Dest::Taper::Cacher - no splitting (doesn't fit on volume -> fails)",
 	do_not_retry => 1);
 
@@ -1108,9 +1182,10 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Cacher->new($first_dev, 128*1024,
 					    1024*1024, 0, $disk_cache_dir),
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
-	  "PART-3-OK", "PART-4-OK", "CANCEL",
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-393216-FAILED",
+	  "EOM", "PART-3-1048576-OK", "PART-4-1048576-OK", "CANCEL",
 	  "CANCELLED", "DONE" ],
+	[ '8f6c1b34:4194304' ],
 	"Amanda::Xfer::Dest::Taper::Cacher - cancellation after success",
 	cancel_after_partnum => 4);
 
@@ -1126,10 +1201,11 @@ SKIP: {
 	    Amanda::Xfer::Dest::Taper::Splitter->new($first_dev, 128*1024,
 					    1024*1024, 1);
 	},
-	[ "PART-1-OK", "PART-2-OK", "PART-3-FAILED", "EOM",
-	  "PART-3-OK", "PART-4-OK", "PART-5-FAILED", "EOM",
-	  "PART-5-OK", "PART-6-OK", "PART-7-OK",
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-393216-FAILED", "EOM",
+	  "PART-3-1048576-OK", "PART-4-1048576-OK", "PART-5-393216-FAILED", "EOM",
+	  "PART-5-1048576-OK", "PART-6-1048576-OK", "PART-7-0-OK",
 	  "DONE" ],
+	[ 'a27c85ce:6291456', 'a27c85ce:6291456' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - Amanda::Xfer::Source::Holding "
 	. "acts as a source and supplies cache_inform",
 	disable_leom => 1);
@@ -1146,6 +1222,7 @@ SKIP: {
 	my $file_size = $part_size * 4 + 100 * 1024;
 	my $cache_file = "$Installcheck::TMP/cache_file";
 	my $vtape_num = 1;
+	my @crcs;
 
 	# set up our "cache", cleverly using an Amanda::Xfer::Dest::Fd
 	open($fh, ">", "$cache_file") or die("Could not open '$cache_file' for writing");
@@ -1283,7 +1360,7 @@ SKIP: {
 	    if ($msg->{'type'} == $XMSG_ERROR) {
 		push @messages, "ERROR: $msg->{message}";
 	    } elsif ($msg->{'type'} == $XMSG_PART_DONE) {
-		push @messages, "PART-" . ($msg->{'successful'}? "OK" : "FAILED");
+		push @messages, "PART-" . $msg->{'partnum'} . '-' . $msg->{'size'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
 		$start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
 	    } elsif ($msg->{'type'} == $XMSG_DONE) {
 		push @messages, "DONE";
@@ -1294,7 +1371,7 @@ SKIP: {
 	    } elsif ($msg->{'type'} == $XMSG_CANCEL) {
 		push @messages, "CANCELLED";
 	    } elsif ($msg->{'type'} == $XMSG_CRC) {
-		#push @messages, "CRC";  # order can change
+		push @crcs, "$msg->{'crc'}:$msg->{'size'}";
 	    } else {
 		push @messages, $msg->{'type'};
 	    }
@@ -1306,13 +1383,13 @@ SKIP: {
 
 	unlink($cache_file);
 
-	return @messages;
+	return ( @messages, @crcs );
     }
 
     is_deeply([ test_taper_dest_splitter_cache_inform() ],
-	[ "PART-OK", "PART-OK", "PART-FAILED",
-	  "PART-OK", "PART-OK", "PART-OK",
-	  "DONE" ],
+	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-393216-FAILED",
+	  "PART-3-1048576-OK", "PART-4-1048576-OK", "PART-5-102400-OK",
+	  "DONE", '9548ff3c:4296704', '9548ff3c:4296704'],
 	"cache_inform: splitter element produces the correct series of messages");
 
     rmtree($holding_base);
@@ -1387,7 +1464,7 @@ SKIP: {
 
 		$start_new_part->(1, 0); # start first part
 	    } elsif ($msg->{'type'} == $XMSG_PART_DONE) {
-		push @messages, "PART-" . $msg->{'partnum'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
+		push @messages, "PART-" . $msg->{'partnum'} . '-' . $msg->{'size'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
 		if ($do_cancel and $msg->{'partnum'} == 2) {
 		    $xfer->cancel();
 		} else {
@@ -1435,7 +1512,8 @@ SKIP: {
 
 	if (!$do_cancel) {
 	    is_deeply([@messages],
-		[ 'READY', 'PART-1-OK', 'PART-2-OK', 'PART-3-OK', 'DONE' ],
+		[ 'READY', 'PART-1-524288-OK', 'PART-2-524288-OK',
+		  'PART-3-65536-OK', 'DONE' ],
 		"Amanda::Xfer::Dest::Taper::DirectTCP element produces the correct series of messages")
 	    or diag(Dumper([@messages]));
 	} elsif ($do_cancel eq 'in_setup') {
@@ -1445,7 +1523,8 @@ SKIP: {
 	    or diag(Dumper([@messages]));
 	} else {
 	    is_deeply([@messages],
-		[ 'READY', 'PART-1-OK', 'PART-2-OK', 'CANCELLED', 'DONE' ],
+		[ 'READY', 'PART-1-524288-OK', 'PART-2-524288-OK', 'CANCELLED',
+		  'DONE' ],
 		"Amanda::Xfer::Dest::Taper::DirectTCP element produces the correct series of messages when cancelled in mid-xfer")
 	    or diag(Dumper([@messages]));
 	}

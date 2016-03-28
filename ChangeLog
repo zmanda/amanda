@@ -1,3 +1,6 @@
+2016-03-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Xfer.pl: Validate CRC and part size
+
 2016-03-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS: Add new amadmin command and amtape inventory result
 
