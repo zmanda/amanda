@@ -1,6 +1,10 @@
+2016-03-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* recover-src/extract_list.c: Use property from header instead of from
+	  disklist
+
 2016-03-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* xfer-src/element-glue.c (do_directtcp_accept): Increase timeout to
-  840
+	  840
 
 2016-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Taper/Scan/lexical.pm,
