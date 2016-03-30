@@ -3252,6 +3252,11 @@ read_amidxtaped_data(
 	/* handle backup_support_option failure */
 
 	ctl_data->header_done = TRUE;
+	if (ctl_data->file.dle_str) {
+	    if (dump_dle) free_dle(dump_dle);
+	    dump_dle = amxml_parse_node_CHAR(ctl_data->file.dle_str, NULL);
+	}
+
 	if (!ask_file_overwrite(ctl_data)) {
 	    if (am_has_feature(tapesrv_features, fe_amidxtaped_abort)) {
 		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ABORT");
