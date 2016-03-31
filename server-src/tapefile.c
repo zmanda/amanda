@@ -633,7 +633,7 @@ gchar **list_new_tapes(
 {
     tape_t *last_tape, *iter;
     int c;
-    labelstr_t *labelstr;
+    labelstr_s *labelstr;
     char       *tapepool;
     GSList     *l_list = NULL;
     GSList     *list1;
@@ -725,8 +725,8 @@ compute_retention(void)
     for (storage = get_first_storage(); storage != NULL;
 	 storage = get_next_storage(storage)) {
 	char       *policy_name = storage_get_policy(storage);
-	policy_t   *policy = lookup_policy(policy_name);
-	labelstr_t *labelstr = storage_get_labelstr(storage);
+	policy_s   *policy = lookup_policy(policy_name);
+	labelstr_s *labelstr = storage_get_labelstr(storage);
 	compute_storage_retention_nb(storage_name(storage),
 				     storage_get_tapepool(storage),
 				     labelstr->template,
@@ -739,8 +739,8 @@ compute_retention(void)
     for (storage = get_first_storage(); storage != NULL;
 	 storage = get_next_storage(storage)) {
 	char       *policy_name = storage_get_policy(storage);
-	policy_t   *policy = lookup_policy(policy_name);
-	labelstr_t *labelstr = storage_get_labelstr(storage);
+	policy_s   *policy = lookup_policy(policy_name);
+	labelstr_s *labelstr = storage_get_labelstr(storage);
 
 	if (!output_find && (policy_get_retention_recover(policy) ||
 			     policy_get_retention_full(policy))) {

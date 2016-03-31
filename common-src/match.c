@@ -1252,7 +1252,7 @@ match_labelstr_template(
 
 int
 match_labelstr(
-    const labelstr_t *labelstr,
+    const labelstr_s *labelstr,
     const autolabel_t *autolabel,
     const char *label,
     const char *barcode,

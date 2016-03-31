@@ -557,7 +557,7 @@ static void init_taperscan_defaults(void);
 static void save_taperscan(void);
 static void copy_taperscan(void);
 
-static policy_t pocur;
+static policy_s pocur;
 static void get_policy(void);
 static void init_policy_defaults(void);
 static void save_policy(void);
@@ -627,7 +627,7 @@ static interactivity_t *read_interactivity(char *name, FILE *from,
 					   char *fname, int *linenum);
 static taperscan_t *read_taperscan(char *name, FILE *from, char *fname,
 				   int *linenum);
-static policy_t *read_policy(char *name, FILE *from, char *fname,
+static policy_s *read_policy(char *name, FILE *from, char *fname,
 			     int *linenum);
 static storage_t *read_storage(char *name, FILE *from, char *fname,
 			       int *linenum);
@@ -724,7 +724,7 @@ static device_config_t *device_config_list = NULL;
 static changer_config_t *changer_config_list = NULL;
 static interactivity_t *interactivity_list = NULL;
 static taperscan_t *taperscan_list = NULL;
-static policy_t *policy_list = NULL;
+static policy_s *policy_list = NULL;
 static storage_t *storage_list = NULL;
 
 /* storage for derived values */
@@ -3296,7 +3296,7 @@ copy_taperscan(void)
     }
 }
 
-static policy_t *
+static policy_s *
 read_policy(
     char *name,
     FILE *from,
@@ -3384,17 +3384,17 @@ static void
 save_policy(
     void)
 {
-    policy_t *po, *po1;
+    policy_s *po, *po1;
 
     po = lookup_policy(pocur.name);
 
-    if (po != (policy_t *)0) {
+    if (po != (policy_s *)0) {
 	conf_parserror(_("policy %s already defined at %s:%d"),
 		       po->name, po->seen.filename, po->seen.linenum);
 	return;
     }
 
-    po = g_malloc(sizeof(policy_t));
+    po = g_malloc(sizeof(policy_s));
     *po = pocur;
     po->next = NULL;
     /* add at end of list */
@@ -3412,7 +3412,7 @@ save_policy(
 static void
 copy_policy(void)
 {
-    policy_t *po;
+    policy_s *po;
     int i;
 
     po = lookup_policy(tokenval.v.s);
@@ -4721,7 +4721,7 @@ read_dpolicy(
     conf_var_t *np G_GNUC_UNUSED,
     val_t      *val)
 {
-    policy_t *policy;
+    policy_s *policy;
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
@@ -5977,7 +5977,7 @@ config_uninit(void)
     changer_config_t *cc, *ccnext;
     interactivity_t  *iv, *ivnext;
     taperscan_t      *ts, *tsnext;
-    policy_t         *po, *ponext;
+    policy_s         *po, *ponext;
     storage_t        *st, *stnext;
     int               i;
 
@@ -6386,9 +6386,9 @@ update_derived_values(
     interface_t   *ip;
     identlist_t    il;
     holdingdisk_t *hd;
-    policy_t      *po;
+    policy_s      *po;
     storage_t     *st;
-    labelstr_t    *labelstr;
+    labelstr_s    *labelstr;
     char          *conf_name;
     autolabel_t   *autolabel;
     char          *st_name;
@@ -7163,7 +7163,7 @@ getconf_list(
     changer_config_t *cc;
     interactivity_t  *iv;
     taperscan_t      *ts;
-    policy_t         *po;
+    policy_s         *po;
     storage_t        *st;
     GSList *rv = NULL;
 
@@ -7629,11 +7629,11 @@ taperscan_key_to_name(
     return NULL;
 }
 
-policy_t *
+policy_s *
 lookup_policy(
     char *str)
 {
-    policy_t *p;
+    policy_s *p;
 
     for(p = policy_list; p != NULL; p = p->next) {
 	if(strcasecmp(p->name, str) == 0) return p;
@@ -7643,7 +7643,7 @@ lookup_policy(
 
 val_t *
 policy_getconf(
-    policy_t *po,
+    policy_s *po,
     policy_key key)
 {
     assert(po != NULL);
@@ -7653,7 +7653,7 @@ policy_getconf(
 
 char *
 policy_name(
-    policy_t *po)
+    policy_s *po)
 {
     assert(po != NULL);
     return po->name;
@@ -8463,7 +8463,7 @@ val_t_to_autolabel(
     return val_t__autolabel(val);
 }
 
-labelstr_t *
+labelstr_s *
 val_t_to_labelstr(
     val_t *val)
 {
@@ -8931,7 +8931,7 @@ dump_configuration(
     changer_config_t *cc;
     interactivity_t  *iv;
     taperscan_t      *ts;
-    policy_t         *po;
+    policy_s         *po;
     storage_t        *st;
     int i;
     conf_var_t *np;
@@ -9970,7 +9970,7 @@ parm_key_info(
     device_config_t   *dc;
     changer_config_t   *cc;
     taperscan_t        *ts;
-    policy_t           *po;
+    policy_s           *po;
     storage_t          *st;
     interactivity_t    *iv;
     int success = FALSE;
@@ -10669,7 +10669,7 @@ taperscan_getconf_human(
 
 val_t *
 policy_getconf_human(
-    policy_t *typ,
+    policy_s *typ,
     policy_key key)
 {
     return policy_getconf(typ, key);

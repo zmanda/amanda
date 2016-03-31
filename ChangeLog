@@ -1,3 +1,11 @@
+2016-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/syshacks.m4: accept *-apple-darwin*
+	* common-src/conffile.c, common-src/conffile.h, common-src/match.c,
+	  common-src/match.h, perl/Amanda/Config.swg, perl/Amanda/Util.swg,
+	  server-src/amadmin.c, server-src/amcheck.c, server-src/planner.c,
+	  server-src/tapefile.c: s/labeltsr_t/labelstr_s/ and
+	  s/policy_t/policy_s/g because they are defined on OSX.
+
 2016-03-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* recover-src/extract_list.c: Use property from header instead of from
 	  disklist

@@ -157,7 +157,7 @@ typedef struct autolabel_s {
 typedef struct labelstr_s {
     char     *template;
     gboolean  match_autolabel;
-} labelstr_t;
+} labelstr_s;
 
 /* Dump strategies */
 typedef enum {
@@ -344,7 +344,7 @@ typedef struct val_s {
 	estimatelist_t  estimatelist;
 	identlist_t     identlist;
         autolabel_t     autolabel;
-        labelstr_t      labelstr;
+        labelstr_s      labelstr;
 	host_limit_t    host_limit;
 	dump_selection_list_t   dump_selection;
 	vault_list_t    vault_list;
@@ -385,7 +385,7 @@ execute_where_t       val_t_to_execute_where(val_t *);
 send_amreport_t       val_t_to_send_amreport(val_t *);
 data_path_t           val_t_to_data_path(val_t *);
 autolabel_t          *val_t_to_autolabel(val_t *);
-labelstr_t           *val_t_to_labelstr(val_t *);
+labelstr_s           *val_t_to_labelstr(val_t *);
 part_cache_type_t     val_t_to_part_cache_type(val_t *);
 host_limit_t         *val_t_to_host_limit(val_t *);
 dump_selection_list_t val_t_to_dump_selection(val_t *);
@@ -1427,7 +1427,7 @@ typedef enum policy_e  {
 
 
 /* opaque object */
-typedef struct policy_s policy_t;
+typedef struct policy_s policy_s;
 
 /* Given the name of the policy, return a policy object.
  *  Returns NULL if no matching policy exists.
@@ -1437,7 +1437,7 @@ typedef struct policy_s policy_t;
  * @returns: object or NULL
  */
 
-policy_t *lookup_policy(char *identifier);
+policy_s *lookup_policy(char *identifier);
 
 /* Given a policy and a key, return a pointer to the corresponding val_t.
  *
@@ -1445,14 +1445,14 @@ policy_t *lookup_policy(char *identifier);
  * @param key: policy (one of the TAPERSCAN_* constants)
  * @returns: pointer to value
  */
-val_t *policy_getconf(policy_t *app, policy_key key);
+val_t *policy_getconf(policy_s *app, policy_key key);
 
 /* Get the name of this policy.
  *
  * @param ttyp: the policy to examine
  * @returns: name of the policy
  */
-char *policy_name(policy_t *app);
+char *policy_name(policy_s *app);
 
 char *policy_key_to_name(int parm);
 
@@ -1928,6 +1928,6 @@ val_t *holdingdisk_getconf_human(holdingdisk_t *typ, holdingdisk_key key);
 val_t *interface_getconf_human(interface_t *typ, interface_key key);
 val_t *interactivity_getconf_human(interactivity_t *typ, interactivity_key key);
 val_t *taperscan_getconf_human(taperscan_t *typ, taperscan_key key);
-val_t *policy_getconf_human(policy_t *typ, policy_key key);
+val_t *policy_getconf_human(policy_s *typ, policy_key key);
 
 #endif /* ! CONFFILE_H */

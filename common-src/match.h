@@ -152,7 +152,7 @@ int	match_level(const char *levelexp, const char *level);
 
 int	match_labelstr_template(const char *template,
 		       const char *label, const char *barcode, const char *meta);
-int	match_labelstr(const labelstr_t *labelstr, const autolabel_t *autolabel,
+int	match_labelstr(const labelstr_s *labelstr, const autolabel_t *autolabel,
 		       const char *label, const char *barcode, const char *meta);
 
 #endif /* MATCH_H */

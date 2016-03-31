@@ -738,10 +738,10 @@ gboolean match_disk(char *pat, char *value);
 gboolean match_datestamp(char *pat, char *value);
 gboolean match_level(char *pat, char *value);
 
-%typemap (in) const labelstr_t * {
+%typemap (in) const labelstr_s * {
     HV *hv;
     SV *sv;
-    labelstr_t *labelstr = g_new0(labelstr_t, 1);
+    labelstr_s *labelstr = g_new0(labelstr_s, 1);
 
     if (!SvROK($input))
 	croak("Argument $argnum is not a reference.");
@@ -758,7 +758,7 @@ gboolean match_level(char *pat, char *value);
     $1 = labelstr;
 }
 
-%typemap (freearg) const labelstr_t * {
+%typemap (freearg) const labelstr_s * {
     g_free($1->template);
     g_free($1);
 }
@@ -805,7 +805,7 @@ gboolean match_level(char *pat, char *value);
 
 gboolean match_labelstr_template(const char *l_template,
 			const char *label, const char *barcode, const char *meta);
-gboolean match_labelstr(const labelstr_t *labelstr, const autolabel_t *autolabel,
+gboolean match_labelstr(const labelstr_s *labelstr, const autolabel_t *autolabel,
 			const char *label, const char *barcode, const char *meta);
 
 %perlcode %{

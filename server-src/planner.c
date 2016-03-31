@@ -231,7 +231,7 @@ main(
     gboolean from_client = FALSE;
     gboolean exact_match = FALSE;
     storage_t *storage;
-    policy_t  *policy;
+    policy_s  *policy;
     char *storage_name;
     identlist_t il;
     cmddatas_t *cmddatas;

@@ -894,7 +894,7 @@ val_t_to_sv(val_t *val, SV **results) {
 	    }
 
 	    case CONFTYPE_LABELSTR: {
-		labelstr_t *labelstr = val_t__labelstr(val);
+		labelstr_s *labelstr = val_t__labelstr(val);
 		HV *hv;
 
 		/* now build the hash */
@@ -1335,7 +1335,7 @@ val_t_to_print(val_t *val, SV **results) {
 	    }
 
 	    case CONFTYPE_LABELSTR: {
-		labelstr_t *labelstr = val_t__labelstr(val);
+		labelstr_s *labelstr = val_t__labelstr(val);
 		HV *hv;
 
 		/* now build the hash */
@@ -1566,11 +1566,11 @@ amglue_export_tag(getconf,
     taperscan_key_to_name taperscan_seen
 );
 
-policy_t *lookup_policy(char *identifier);
-val_t *policy_getconf(policy_t *app, policy_key key);
-char *policy_name(policy_t *app);
+policy_s *lookup_policy(char *identifier);
+val_t *policy_getconf(policy_s *app, policy_key key);
+char *policy_name(policy_s *app);
 char *policy_key_to_name(int token);
-gboolean policy_seen(policy_t *app, policy_key key);
+gboolean policy_seen(policy_s *app, policy_key key);
 amglue_export_tag(getconf,
     lookup_policy policy_getconf policy_name
     policy_key_to_name policy_seen
@@ -1785,7 +1785,7 @@ val_t *holdingdisk_getconf_human(holdingdisk_t *typ, holdingdisk_key key);
 val_t *interface_getconf_human(interface_t *typ, interface_key key);
 val_t *interactivity_getconf_human(interactivity_t *typ, interactivity_key key);
 val_t *taperscan_getconf_human(taperscan_t *typ, taperscan_key key);
-val_t *policy_getconf_human(policy_t *typ, policy_key key);
+val_t *policy_getconf_human(policy_s *typ, policy_key key);
 amglue_export_tag(getconf,
 	getconf_human
 	dumptype_getconf_human tapetype_getconf_human application_getconf_human

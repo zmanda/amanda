@@ -949,7 +949,7 @@ start_server_check(
 	identlist_t il;
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
 	    char *storage_n = il->data;
-	    policy_t *policy;
+	    policy_s *policy;
 	    char *policy_n;
 	    char *lbl_templ;
 
