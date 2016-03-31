@@ -768,7 +768,7 @@ ambsdtar_estimate(
 	    goto common_exit;
 	}
 
-	tarpid = pipespawnv(bsdtar_path, STDERR_PIPE, 1,
+	tarpid = pipespawnv(bsdtar_realpath, STDERR_PIPE, 1,
 			    &nullfd, &nullfd, &pipefd,
 			    (char **)argv_ptr->pdata);
 
@@ -876,7 +876,6 @@ common_exit:
         }
 
 	g_ptr_array_free_full(argv_ptr);
-	amfree(bsdtar_path);
 	amfree(incrname);
 
 	aclose(nullfd);

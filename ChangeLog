@@ -1,4 +1,7 @@
 2016-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: use bsdtar_realpath, remove an amfree()
+
+2016-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/syshacks.m4: accept *-apple-darwin*
 
 2016-03-30  Jean-Louis Martineau <JMartineau@carbonite.com>
