@@ -1,4 +1,7 @@
 2016-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: use bsdtar_realpath
+
+2016-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/syshacks.m4: accept *-apple-darwin*
 	* common-src/conffile.c, common-src/conffile.h, common-src/match.c,
 	  common-src/match.h, perl/Amanda/Config.swg, perl/Amanda/Util.swg,
