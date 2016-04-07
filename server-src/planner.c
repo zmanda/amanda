@@ -2219,6 +2219,8 @@ static void handle_result(
 		    remove_disk(&waitq, dp);
 		} else if(est(dp)->state == DISK_PARTIALY_DONE) {
 		    remove_disk(&pestq, dp);
+		} else {
+		    remove_disk(&startq, dp);
 		}
 		est(dp)->state = DISK_DONE;
 		enqueue_disk(&failq, dp);
