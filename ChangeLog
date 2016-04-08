@@ -1,4 +1,7 @@
 2016-04-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/event.c (fire): Allow for NULL callback
+
+2016-04-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/tape-device.c: improve error message on write fail
 
 2016-04-07  Jean-Louis Martineau <JMartineau@carbonite.com>

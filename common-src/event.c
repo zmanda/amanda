@@ -98,7 +98,7 @@ static const char *event_type2str(event_type_t type);
 /* "Fire" an event handle, by calling its callback function */
 #define	fire(eh) do { \
 	event_debug(1, "firing %p: %s/%jd\n", eh, event_type2str((eh)->type), (eh)->data); \
-	(*(eh)->fn)((eh)->arg); \
+	if (*(eh)->fn) { (*(eh)->fn)((eh)->arg); } \
 	(eh)->has_fired = TRUE; \
 } while(0)
 
