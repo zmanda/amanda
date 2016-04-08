@@ -1885,9 +1885,13 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errms
             }
 #endif
             return RESULT_NO_SPACE;
+	} else if (errno == EPERM) {
+	    *errmsg = g_strdup_printf("write to the '%s' device failed: %s, maybe the tab on the tape is set at the read-only possition?",
+			    self->private->device_filename, strerror(errno));
+	    return RESULT_ERROR;
         } else {
             /* WTF */
-	    *errmsg = vstrallocf(_("Kernel gave unexpected write() result of \"%s\" on device %s"),
+	    *errmsg = g_strdup_printf("write to the '%s' device failed: %s",
 			    strerror(errno), self->private->device_filename);
             return RESULT_ERROR;
         }
