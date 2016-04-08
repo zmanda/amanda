@@ -308,21 +308,25 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
     switch (len) {
         case 7:
             crc->crc = __builtin_ia32_crc32qi(crc->crc, *next.b.b8++);
+	    // fall through
         case 6:
             crc->crc = __builtin_ia32_crc32hi(crc->crc, *(uint16_t*) next.b.b8);
             next.b.b8 += 2;
+	    // fall through
         // case 5 is below: 4 + 1
         case 4:
             crc->crc = __builtin_ia32_crc32si(crc->crc, *(uint32_t*) next.b.b8);
             break;
         case 3:
             crc->crc = __builtin_ia32_crc32qi(crc->crc, *next.b.b8++);
+	    // fall through
         case 2:
             crc->crc = __builtin_ia32_crc32hi(crc->crc, *(uint16_t*) next.b.b8);
             break;
         case 5:
             crc->crc = __builtin_ia32_crc32si(crc->crc, *(uint32_t*) next.b.b8);
             next.b.b8 += 4;
+	    // fall through
         case 1:
             crc->crc = __builtin_ia32_crc32qi(crc->crc, *next.b.b8);
             break;

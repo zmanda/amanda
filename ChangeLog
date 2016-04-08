@@ -1,4 +1,7 @@
 2016-04-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amcrc32chw.c: Add fall through comment
+
+2016-04-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/event.c (fire): Allow for NULL callback
 
 2016-04-08  Jean-Louis Martineau <JMartineau@carbonite.com>
