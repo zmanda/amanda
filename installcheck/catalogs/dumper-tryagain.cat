@@ -123,4 +123,4 @@ localhost.localdomain /bootAMGTAR  1     128     128     --    0:11    11.5   0:
 localhost.localdomain /bootAMGTAR1                              FAILED                  
 localhost.localdomain /bootAMGTAR2 0  156630  156630     --    0:11 13814.6   0:12 13052.5
 
-(brought to you by Amanda x.y.z)
+(brought to you by Amanda version x.y.z)
