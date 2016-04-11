@@ -35,13 +35,6 @@ Not using all tapes because taperflush criteria not met.
 Some dumps may have been left in the holding disk.
 The next tape Amanda expects to use is: 1 new tape.
 
-
-
-FAILURE DUMP SUMMARY:
-  localhost dle1 lev 0  partial taper: taperflush criteria not met
-
-
-
 STATISTICS:
                           Total       Full      Incr.   Level:#
                         --------   --------   --------  --------

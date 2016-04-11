@@ -1,3 +1,11 @@
+2016-04-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report/human.pm: Remove multiple output line.
+	* server-src/driver.c: Fix after a TRY-AGAIN
+	* installcheck/Makefile.am: Add catalogs/dumper-tryagain.cat
+	* installcheck/amreport.pl: Add check for dumper-tryagain.cat
+	* installcheck/catalogs/tapers.cat: Fix for new output
+	* installcheck/catalogs/dumper-tryagain.cat: New test case
+
 2016-04-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amcrc32chw.c: Add fall through comment
 

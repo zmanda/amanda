@@ -1,0 +1,126 @@
+# an log file with duper TRY-AGAIN error
+
+%F log/log
+
+INFO amdump amdump pid 30084
+INFO driver driver pid 30086
+INFO planner planner pid 30085
+START planner date 20160411102219
+START driver date 20160411102219
+STATS driver hostname localhost.localdomain
+DISK planner localhost.localdomain /bootAMGTAR1
+DISK planner localhost.localdomain /bootAMGTAR
+DISK planner localhost.localdomain /bootAMGTAR2
+WARNING planner Last full dump of localhost.localdomain:/bootAMGTAR1 on tape test-3.3-ORG-02-vtapes-001 overwritten on this run.
+STATS driver startup time 0.035
+WARNING planner Last full dump of localhost.localdomain:/bootAMGTAR on tape test-3.3-ORG-02-vtapes-004 overwritten on this run.
+WARNING planner Last full dump of localhost.localdomain:/bootAMGTAR2 on tape test-3.3-ORG-02-vtapes-028 overwritten on this run.
+INFO dumper dumper pid 30089
+INFO dumper dumper pid 30090
+INFO dumper dumper pid 30088
+INFO dumper dumper pid 30096
+INFO dumper dumper pid 30091
+INFO dumper dumper pid 30094
+INFO dumper dumper pid 30092
+INFO dumper dumper pid 30097
+INFO dumper dumper pid 30095
+INFO dumper dumper pid 30093
+INFO taper taper pid 30087
+INFO taper Slot 29 without label can be labeled
+INFO planner Full dump of localhost.localdomain:/bootAMGTAR2 promoted from 70 days ahead.
+FINISH planner date 20160411102219 time 1.278
+INFO planner pid-done 30085
+INFO dumper gzip pid 30122
+START taper datestamp 20160411102219 label test-3.3-ORG-02-vtapes-029 tape 1
+INFO dumper pid-done 30122
+SUCCESS dumper localhost.localdomain /bootAMGTAR 20160411102219 1 [sec 11.131 kb 128 kps 11.5 orig-kb 128]
+PART taper test-3.3-ORG-02-vtapes-029 1 localhost.localdomain /bootAMGTAR 20160411102219 1/-1 1 [sec 11.116795 bytes 131072 kps 11.514110]
+DONE taper localhost.localdomain /bootAMGTAR 20160411102219 1 1 [sec 11.000000 bytes 131072 kps 11.636364 orig-kb 128]
+STATS driver estimate localhost.localdomain /bootAMGTAR 20160411102219 1 [sec 17 nkb 243 ckb 256 kps 12]
+FAIL taper localhost.localdomain /bootAMGTAR1 20160411102219 1 error "Got empty header"
+FAIL driver localhost.localdomain /bootAMGTAR1 20160411102219 1 [too many dumper retry: ERROR_MESSAGE]
+FAIL taper localhost.localdomain /bootAMGTAR1 20160411102219 1 error "Got empty header"
+INFO dumper gzip pid 30138
+INFO taper tape test-3.3-ORG-02-vtapes-029 kb 128 fm 1 [OK]
+INFO taper Slot 30 without label can be labeled
+START taper datestamp 20160411102219 label test-3.3-ORG-02-vtapes-030 tape 2
+INFO dumper pid-done 30138
+SUCCESS dumper localhost.localdomain /bootAMGTAR2 20160411102219 0 [sec 11.338 kb 156630 kps 13814.6 orig-kb 156630]
+PART taper test-3.3-ORG-02-vtapes-030 1 localhost.localdomain /bootAMGTAR2 20160411102219 1/-1 0 [sec 11.231616 bytes 160389120 kps 13945.455400]
+DONE taper localhost.localdomain /bootAMGTAR2 20160411102219 1 0 [sec 12.000000 bytes 160389120 kps 13052.500000 orig-kb 156630]
+STATS driver estimate localhost.localdomain /bootAMGTAR2 20160411102219 0 [sec 10 nkb 156642 ckb 156672 kps 15426]
+INFO dumper pid-done 30088
+INFO dumper pid-done 30089
+INFO dumper pid-done 30094
+INFO dumper pid-done 30092
+INFO dumper pid-done 30091
+INFO dumper pid-done 30093
+INFO dumper pid-done 30096
+INFO taper tape test-3.3-ORG-02-vtapes-030 kb 156630 fm 1 [OK]
+INFO dumper pid-done 30090
+INFO dumper pid-done 30095
+INFO dumper pid-done 30097
+INFO taper pid-done 30087
+FINISH driver date 20160411102219 time 34.867
+INFO driver pid-done 30086
+
+%T report
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : April 11, 2016
+
+These dumps were to tapes test-3.3-ORG-02-vtapes-029, test-3.3-ORG-02-vtapes-030.
+The next tape Amanda expects to use is: 1 new tape.
+
+FAILURE DUMP SUMMARY:
+  localhost.localdomain /bootAMGTAR1 lev 1  FAILED [too many dumper retry: ERROR_MESSAGE]
+
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:01
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)          153.1      153.0        0.1
+Original Size (meg)        153.1      153.0        0.1
+Avg Compressed Size (%)    100.0      100.0      100.0
+DLEs Dumped                    2          1          1  1:1
+Avg Dump Rate (k/s)       6976.6    13814.6       11.5
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)            153.1      153.0        0.1
+Tape Used (%)              510.3      509.9        0.4
+DLEs Taped                     2          1          1  1:1
+Parts Taped                    2          1          1  1:1
+Avg Tp Write Rate (k/s)   6815.6    13052.5       11.6
+
+USAGE BY TAPE:
+  Label                        Time         Size      %  DLEs Parts
+  test-3.3-ORG-02-vtapes-029   0:00         128k    0.4     1     1
+  test-3.3-ORG-02-vtapes-030   0:00      156630k  509.9     1     1
+
+
+
+NOTES:
+  planner: Last full dump of localhost.localdomain:/bootAMGTAR1 on tape test-3.3-ORG-02-vtapes-001 overwritten on this run.
+  planner: Last full dump of localhost.localdomain:/bootAMGTAR on tape test-3.3-ORG-02-vtapes-004 overwritten on this run.
+  planner: Last full dump of localhost.localdomain:/bootAMGTAR2 on tape test-3.3-ORG-02-vtapes-028 overwritten on this run.
+  planner: Full dump of localhost.localdomain:/bootAMGTAR2 promoted from 70 days ahead.
+  taper: Slot 29 without label can be labeled
+  taper: tape test-3.3-ORG-02-vtapes-029 kb 128 fm 1 [OK]
+  taper: Slot 30 without label can be labeled
+  taper: tape test-3.3-ORG-02-vtapes-030 kb 156630 fm 1 [OK]
+
+
+DUMP SUMMARY:
+                                                             DUMPER STATS    TAPER STATS
+HOSTNAME              DISK         L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s  MMM:SS   KB/s
+------------------------------------ ---------------------- --------------- --------------
+localhost.localdomain /bootAMGTAR  1     128     128     --    0:11    11.5   0:11   11.6
+localhost.localdomain /bootAMGTAR1                              FAILED                  
+localhost.localdomain /bootAMGTAR2 0  156630  156630     --    0:11 13814.6   0:12 13052.5
+
+(brought to you by Amanda version x.y.z)

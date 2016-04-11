@@ -2225,24 +2225,17 @@ handle_taper_result(
 	    if (g_str_equal(result_argv[3], "INPUT-ERROR")) {
 		g_free(wtaper->input_error);
 		wtaper->input_error = g_strdup(result_argv[5]);
-		amfree(qname);
-		break;
 	    } else if (!g_str_equal(result_argv[3], "INPUT-GOOD")) {
 		g_free(wtaper->tape_error);
 		wtaper->tape_error = g_strdup(_("Taper protocol error"));
 		log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		        dp->host->hostname, qname, sp->datestamp,
 		        sp->level, wtaper->tape_error);
-		amfree(qname);
-		break;
-	    }
-	    if (g_str_equal(result_argv[4], "TAPE-ERROR") ||
+	    } else if (g_str_equal(result_argv[4], "TAPE-ERROR") ||
 		g_str_equal(result_argv[4], "TAPE-CONFIG")) {
 		wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(wtaper->tape_error);
 		wtaper->tape_error = g_strdup(result_argv[6]);
-		amfree(qname);
-		break;
 	    } else if (!g_str_equal(result_argv[4], "TAPE-GOOD")) {
 		wtaper->state &= ~TAPER_STATE_TAPE_STARTED;
 		g_free(wtaper->tape_error);
@@ -2250,10 +2243,12 @@ handle_taper_result(
 		log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		        dp->host->hostname, qname, sp->datestamp,
 		        sp->level, wtaper->tape_error);
-		amfree(qname);
-		break;
 	    }
 
+	    taper->last_started_wtaper = NULL;
+	    if (taper->sent_first_write == wtaper) {
+		taper->sent_first_write = NULL;
+	    }
 	    amfree(qname);
 
 	    break;
