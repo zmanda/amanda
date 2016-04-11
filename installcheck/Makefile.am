@@ -191,7 +191,7 @@ catalogs = \
 	catalogs/bigestimate.cat \
 	catalogs/chunker-partial.cat \
 	catalogs/doublefailure.cat \
-	catalogs/dumper-tryagain.cat
+	catalogs/dumper-tryagain.cat \
 	catalogs/fatal.cat \
 	catalogs/filesystemstaped.cat \
 	catalogs/flush-noorigsize.cat \
