@@ -581,12 +581,12 @@ sub output_error_summaries
 		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED $try->{dumper}->{error}";
 		    $failed = 1;
 		}
-		if (exists $try->{chunker} &&
+		if (exists $try->{chunker} && exists $try->{dumper} && !exists $dle->{driver} &&
 		    $try->{chunker}->{status} eq 'fail') {
 		    push @dump_failures, "$hostname $qdisk lev $try->{chunker}->{level}  FAILED $try->{chunker}->{error}";
 		    $failed = 1;
 		}
-		if (   exists $try->{taper}
+		if (   exists $try->{taper} && exists $try->{dumper} && !exists $dle->{driver}
 		    && (   $try->{taper}->{status} eq 'fail'
 			|| (   $try->{taper}->{status} eq 'partial'))) {
 		    my $flush = "FLUSH";
@@ -622,7 +622,7 @@ sub output_error_summaries
 
 		# detect dumps re-flushed from holding
 		if (   $failed
-		    && !exists $try->{dumper}
+		    && !exists $try->{dumper} && !exists $dle->{driver}
 		    && !exists $try->{chunker}
 		    && exists $try->{taper}
 		    && $try->{taper}->{status} eq "done") {
@@ -1194,6 +1194,7 @@ sub get_summary_info
       : $tail_quote_trunc->($disk, $col_spec->[1]->[COLSPEC_WIDTH]);
 
     my $alldumps = $dle_info->{'dumps'};
+debug("aa:" . Data::Dumper::Dumper($dle_info));
     if (($dle_info->{'planner'} &&
          $dle_info->{'planner'}->{'status'} eq 'fail') or
 	($dle_info->{'driver'} &&
@@ -1251,6 +1252,8 @@ sub get_summary_info
 		last;
 	    }
 	}
+	# Do not report taper/chunker error if no dumper for this run and driver error
+	next if (!$dumper && $timestamp eq $report->get_timestamp() && $dle_info->{'driver'} && $dle_info->{'driver'}->{'status'} eq 'fail');
 	$orig_size = $dumper->{orig_kb}
 	    if defined $dumper;
 

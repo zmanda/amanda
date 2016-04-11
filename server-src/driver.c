@@ -1707,23 +1707,16 @@ handle_taper_result(
 
 	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
 		taper->input_error = newstralloc(taper->input_error, result_argv[4]);
-		amfree(qname);
-		break;
 	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
 		taper->tape_error = newstralloc(taper->tape_error,
 					       _("Taper protocol error"));
 		log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		        dp->host->hostname, qname, sched(dp)->datestamp,
 		        sched(dp)->level, taper->tape_error);
-		amfree(qname);
-		break;
-	    }
-	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0 ||
+	    } else if (strcmp(result_argv[3], "TAPE-ERROR") == 0 ||
 		strcmp(result_argv[3], "TAPE-CONFIG") == 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error, result_argv[5]);
-		amfree(qname);
-		break;
 	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
 		taper->state &= ~TAPER_STATE_TAPE_STARTED;
 		taper->tape_error = newstralloc(taper->tape_error,
@@ -1731,10 +1724,12 @@ handle_taper_result(
 		log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		        dp->host->hostname, qname, sched(dp)->datestamp,
 		        sched(dp)->level, taper->tape_error);
-		amfree(qname);
-		break;
 	    }
 
+	    last_started_taper = NULL;
+	    if (taper_sent_first_write == taper) {
+		taper_sent_first_write = NULL;
+	    }
 	    amfree(qname);
 
 	    break;
@@ -2268,6 +2263,7 @@ dumper_taper_result(
     sched(dp)->dumper = NULL;
     sched(dp)->taper = NULL;
     start_some_dumps(&runq);
+    startaflush();
 }
 
 

@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc, 465 S. Mathilda Ave., Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 167;
+use Test::More tests => 169;
 
 use strict;
 use warnings;
@@ -781,5 +781,14 @@ is($Installcheck::Run::exit_code, 0,
     "amreport correctly report multi-taper (success)");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches 24");
+
+setup_config(catalog => 'dumper-tryagain', want_template => 0);
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 4,
+    "amreport correctly report try-again (error)");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 25");
 
 cleanup();
