@@ -1,4 +1,8 @@
 2016-04-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/deb/amanda-backup-client.install,
+	  packaging/deb/amanda-backup-server.install: Add etc/amanda/*
+
+2016-04-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/catalogs/dumper-tryagain.cat: Typo
 
 2016-04-11  Jean-Louis Martineau <JMartineau@carbonite.com>

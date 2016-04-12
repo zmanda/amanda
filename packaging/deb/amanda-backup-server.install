@@ -1,3 +1,4 @@
+etc/amanda/*
 usr/lib/amanda/* 
 usr/lib/amanda/application/*
 usr/libexec/amanda/*
