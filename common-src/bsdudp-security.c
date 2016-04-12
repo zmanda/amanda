@@ -129,6 +129,7 @@ bsdudp_connect(
     assert(hostname != NULL);
 
     bh = g_new0(struct sec_handle, 1);
+    bh->dle_hostname = g_strdup(hostname);
     bh->proto_handle=NULL;
     bh->rc = NULL;
     security_handleinit(&bh->sech, &bsdudp_security_driver);

@@ -107,7 +107,7 @@ sec_accept(
 {
     struct tcp_conn *rc;
 
-    rc = sec_tcp_conn_get("localhost",0); /* no hostname yet */
+    rc = sec_tcp_conn_get("localhost", "localhost",0); /* no hostname yet */
     rc->read = in;
     rc->write = out;
     rc->accept_fn = fn;
@@ -876,7 +876,7 @@ tcpma_stream_client(
 	rh->rc->refcnt++;
     }
     else {
-	rs->rc = sec_tcp_conn_get(rh->hostname, 0);
+	rs->rc = sec_tcp_conn_get(rh->dle_hostname, rh->hostname, 0);
 	rs->rc->driver = rh->sech.driver;
 	rh->rc = rs->rc;
     }
@@ -908,7 +908,7 @@ tcpma_stream_server(
 	rs->rc->refcnt++;
     }
     else {
-	rs->rc = sec_tcp_conn_get(rh->hostname, 0);
+	rs->rc = sec_tcp_conn_get(rh->dle_hostname, rh->hostname, 0);
 	rs->rc->driver = rh->sech.driver;
 	rh->rc = rs->rc;
     }
@@ -1005,7 +1005,7 @@ tcp1_stream_server(
 	rs->socket = 0;		/* the socket is already opened */
     }
     else {
-	rh->rc = sec_tcp_conn_get(rh->hostname, 1);
+	rh->rc = sec_tcp_conn_get(rh->dle_hostname, rh->hostname, 1);
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
 	rs->socket = stream_server(SU_GET_FAMILY(&rh->udp->peer), &rs->port,
@@ -1078,7 +1078,7 @@ tcp1_stream_client(
 	rh->rc->refcnt++;
     }
     else {
-	rh->rc = sec_tcp_conn_get(rh->hostname, 1);
+	rh->rc = sec_tcp_conn_get(rh->dle_hostname, rh->hostname, 1);
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
 	rh->rc->read = stream_client(NULL, rh->hostname, (in_port_t)id,
@@ -1697,19 +1697,23 @@ udp_netfd_read_callback(
  */
 struct tcp_conn *
 sec_tcp_conn_get(
+    const char *dle_hostname,
     const char *hostname,
     int		want_new)
 {
     GSList *iter;
     struct tcp_conn *rc = NULL;
 
-    auth_debug(1, _("sec_tcp_conn_get: %s\n"), hostname);
+    auth_debug(1, _("sec_tcp_conn_get: %s %s\n"), dle_hostname, hostname);
 
     if (want_new == 0) {
 	for (iter = connq; iter != NULL; iter = iter->next) {
 	    rc = (struct tcp_conn *)iter->data;
-	    if (strcasecmp(hostname, rc->hostname) == 0)
+	    if (strcasecmp(hostname, rc->hostname) == 0 &&
+		((!dle_hostname && !rc->dle_hostname) ||
+		 (dle_hostname && rc->dle_hostname && strcasecmp(dle_hostname, rc->dle_hostname) == 0))) {
 		break;
+	    }
 	}
 
 	if (iter != NULL) {
@@ -1734,6 +1738,9 @@ sec_tcp_conn_get(
     rc->donotclose = 0;
     strncpy(rc->hostname, hostname, sizeof(rc->hostname) - 1);
     rc->hostname[sizeof(rc->hostname) - 1] = '\0';
+    if (dle_hostname) {
+	rc->dle_hostname = g_strdup(dle_hostname);
+    }
     rc->errmsg = NULL;
     rc->refcnt = 1;
     rc->handle = -1;

@@ -131,6 +131,7 @@ bsdtcp_connect(
 
     rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &bsdtcp_security_driver);
+    rh->dle_hostname = g_strdup(hostname);
     rh->hostname = NULL;
     rh->rs = NULL;
     rh->ev_timeout = NULL;
@@ -322,7 +323,7 @@ bsdtcp_accept(
 	return;
     }
 
-    rc = sec_tcp_conn_get(hostname, 0);
+    rc = sec_tcp_conn_get(NULL, hostname, 0);
     rc->recv_security_ok = &bsd_recv_security_ok;
     rc->prefix_packet = &bsd_prefix_packet;
     rc->need_priv_port = 1;

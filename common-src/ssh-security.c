@@ -127,6 +127,7 @@ ssh_connect(
 
     rh = g_new0(struct sec_handle, 1);
     security_handleinit(&rh->sech, &ssh_security_driver);
+    rh->dle_hostname = g_strdup(hostname);
     rh->hostname = NULL;
     rh->rs = NULL;
     rh->ev_timeout = NULL;
@@ -202,7 +203,7 @@ ssh_accept(
     void       *datap)
 {
     struct sec_handle *rh;
-    struct tcp_conn *rc = sec_tcp_conn_get("", 0);
+    struct tcp_conn *rc = sec_tcp_conn_get(NULL, "", 0);
     char *ssh_connection, *p;
     char *errmsg = NULL;
     sockaddr_union addr;

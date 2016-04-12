@@ -149,6 +149,7 @@ bsd_connect(
 
     bh = g_new0(struct sec_handle, 1);
     bh->proto_handle=NULL;
+    bh->dle_hostname = g_strdup(hostname);
     security_handleinit(&bh->sech, &bsd_security_driver);
 
     result = resolve_hostname(hostname, SOCK_DGRAM, &res, &canonname);

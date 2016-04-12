@@ -132,6 +132,7 @@ rsh_connect(
 
     rh = g_malloc(sizeof(*rh));
     security_handleinit(&rh->sech, &rsh_security_driver);
+    rh->dle_hostname = g_strdup(hostname);
     rh->hostname = NULL;
     rh->rs = NULL;
     rh->ev_timeout = NULL;

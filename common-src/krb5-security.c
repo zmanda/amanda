@@ -236,6 +236,7 @@ krb5_connect(
 
     rh = g_malloc(sizeof(*rh));
     security_handleinit(&rh->sech, &krb5_security_driver);
+    rh->dle_hostname = g_strdup(hostname);
     rh->hostname = NULL;
     rh->rs = NULL;
     rh->ev_timeout = NULL;
@@ -369,7 +370,7 @@ krb5_accept(
     }
 
 
-    rc = sec_tcp_conn_get(hostname, 0);
+    rc = sec_tcp_conn_get(NULL, hostname, 0);
     rc->conf_fn = conf_fn;
     rc->datap = datap;
     rc->recv_security_ok = NULL;

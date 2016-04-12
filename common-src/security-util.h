@@ -97,6 +97,7 @@ struct tcp_conn {
     ssize_t		async_write_data_size;
     char		hostname[MAX_HOSTNAME_LENGTH+1];
 						/* host we're talking to */
+    char               *dle_hostname;
     char *		errmsg;			/* error passed up */
     int			refcnt;			/* number of handles using */
     int			handle;			/* last proto handle read */
@@ -135,6 +136,7 @@ struct sec_stream;
 struct sec_handle {
     security_handle_t	sech;		/* MUST be first */
     char *		hostname;	/* ptr to rc->hostname */
+    char *		dle_hostname;	/* hostname from the dle */
     struct sec_stream *	rs;		/* virtual stream we xmit over */
     struct tcp_conn *	rc;		/* */
     union {
@@ -286,7 +288,7 @@ int	udp_inithandle(udp_handle_t *, struct sec_handle *, char *hostname,
 		       sockaddr_union *, in_port_t, char *, int);
 void	udp_netfd_read_callback(void *);
 
-struct tcp_conn *sec_tcp_conn_get(const char *, int);
+struct tcp_conn *sec_tcp_conn_get(const char *, const char *, int);
 void	sec_tcp_conn_put(struct tcp_conn *);
 void	sec_tcp_conn_read(struct tcp_conn *);
 void	parse_pkt(pkt_t *, const void *, size_t);
