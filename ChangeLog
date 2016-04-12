@@ -1,4 +1,7 @@
 2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Fix worker status
+
+2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* Allow multiple connections to a client with different auth
 
 2016-04-11  Jean-Louis Martineau <JMartineau@carbonite.com>

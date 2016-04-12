@@ -800,6 +800,7 @@ REREAD:
 			my $disk = $line[11];
 			my $level = $line[12];
 			my $datestamp = $line[13];
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $WRITING;
 			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
@@ -844,6 +845,7 @@ REREAD:
 			my $level = $line[11];
 			my $datestamp = $line[12];
 			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $DUMPING_TO_TAPE;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
