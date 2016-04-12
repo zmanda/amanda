@@ -5271,34 +5271,34 @@ tape_action(
 	 wtaper1++) {
 	if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
 	    dle_free += (taper->max_dle_by_volume - wtaper1->nb_dle);
-	}
-	if (wtaper1->job && wtaper1->job->sched) {
-	    off_t data_to_go;
-	    off_t t_size;
-	    if (wtaper1->job->dumper) {
-		t_size = wtaper1->job->sched->est_size;
-	    } else {
-		t_size = wtaper1->job->sched->act_size;
-	    }
-	    data_to_go =  t_size - wtaper1->written;
-	    if (data_to_go > wtaper1->left) {
-		if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
-		    dle_free -= (taper->max_dle_by_volume - wtaper1->nb_dle) + 1;
-		    new_data += data_to_go - wtaper1->left;
+	    if (wtaper1->job && wtaper1->job->sched) {
+		off_t data_to_go;
+		off_t t_size;
+		if (wtaper1->job->dumper) {
+		    t_size = wtaper1->job->sched->est_size;
 		} else {
-		    dle_free -= 2;
-		    new_data += data_to_go;
+		    t_size = wtaper1->job->sched->act_size;
+		}
+		data_to_go =  t_size - wtaper1->written;
+		if (data_to_go > wtaper1->left) {
+		    if (wtaper1->state & TAPER_STATE_TAPE_STARTED) {
+			dle_free -= (taper->max_dle_by_volume - wtaper1->nb_dle) + 1;
+			new_data += data_to_go - wtaper1->left;
+		    } else {
+			dle_free -= 2;
+			new_data += data_to_go;
+		    }
+		} else {
+		    if (!(wtaper1->state & TAPER_STATE_TAPE_STARTED)) {
+			dle_free--;
+			new_data += data_to_go;
+		    } else {
+			data_free += wtaper1->left - data_to_go;
+		    }
 		}
 	    } else {
-		if (!(wtaper1->state & TAPER_STATE_TAPE_STARTED)) {
-		    dle_free--;
-		    new_data += data_to_go;
-		} else {
-		    data_free += wtaper1->left - data_to_go;
-		}
+		data_free += wtaper1->left;
 	    }
-	} else {
-	    data_free += wtaper1->left;
 	}
     }
 
@@ -5345,8 +5345,8 @@ tape_action(
 	}
     }
 
-    taperflush_criteria = (taper->taperflush < tapeq_size &&
-			   (new_dle > 0 || new_data > 0 || force_flush == 1 || dump_to_disk_terminated));
+    taperflush_criteria = ((taper->taperflush < tapeq_size || new_dle > 0) &&
+			   (new_data > 0 || force_flush == 1 || dump_to_disk_terminated));
     flush_criteria = (taper->flush_threshold_dumped < tapeq_size &&
 		      taper->flush_threshold_scheduled < sched_size &&
 		      (new_dle > 0 || new_data > 0)) ||

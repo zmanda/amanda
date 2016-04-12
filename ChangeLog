@@ -1,4 +1,7 @@
 2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (tape_action): Fix for parallel taper.
+
+2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Fix worker status
 
 2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
