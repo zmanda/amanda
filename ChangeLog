@@ -1,4 +1,8 @@
 2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/deb/amanda-backup-client.install,
+	  packaging/deb/amanda-backup-server.install: Add etc/amanda/*
+
+2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (tape_action): Fix for parallel taper.
 
 2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>

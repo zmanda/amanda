@@ -1,4 +1,5 @@
-usr/lib/amanda/* 
+etc/amanda/*
+usr/lib/amanda/*
 usr/lib/amanda/application/*
 usr/libexec/amanda/*
 usr/libexec/amanda/application/*
