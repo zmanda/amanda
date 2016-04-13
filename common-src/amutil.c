@@ -695,6 +695,55 @@ split_quoted_strings(
     return result;
 }
 
+gchar **
+split_quoted_strings_for_amstatus(
+    const gchar *string)
+{
+    char *local;
+    char *start;
+    char *p;
+    char **result;
+    GPtrArray *strs;
+    int iq = 0;
+
+    if (!string)
+	return NULL;
+
+    p = start = local = g_strdup(string);
+    strs = g_ptr_array_new();
+
+    while (*p) {
+	if (!iq && (*p == ' ' || *p == ':')) {
+	    *p = '\0';
+	    if (start != p) {
+		g_ptr_array_add(strs, unquote_string(start));
+	    }
+	    start = p+1;
+	} else if (*p == '\\') {
+	    /* next character is taken literally; if it's a multicharacter
+	     * escape (e.g., \171), that doesn't bother us here */
+	    p++;
+	    if (!*p) break;
+	} else if (*p == '\"') {
+	    iq = ! iq;
+	}
+
+	p++;
+    }
+    if (start != string)
+	g_ptr_array_add(strs, unquote_string(start));
+
+    /* now convert strs into a strv, by stealing its references to the underlying
+     * strings */
+    result = g_new0(char *, strs->len + 1);
+    memmove(result, strs->pdata, sizeof(char *) * strs->len);
+
+    g_ptr_array_free(strs, TRUE); /* TRUE => free pdata, strings are not freed */
+    g_free(local);
+
+    return result;
+}
+
 char *
 strquotedstr(char **saveptr)
 {

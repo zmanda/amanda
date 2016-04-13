@@ -1,3 +1,11 @@
+2016-04-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c (split_quoted_strings_for_amstatus): New
+	  function to parse a line for Amanda::Status
+	* common-src/amutil.h (split_quoted_strings_for_amstatus): Add
+	  protoype
+	* perl/Amanda/Util.swg:Swig split_quoted_strings_for_amstatus
+	* perl/Amanda/Status.pm: Use split_quoted_strings_for_amstatus
+
 2016-04-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* packaging/deb/amanda-backup-client.install,
 	  packaging/deb/amanda-backup-server.install: Add etc/amanda/*

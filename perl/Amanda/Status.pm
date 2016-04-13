@@ -434,7 +434,7 @@ REREAD:
     while ($line = <$fd>) {
 	chomp $line;
 	$line =~ s/[:\s]+$//g; #remove separator at end of line
-	my @line = &quotewords('[:\s]+', 0, $line);
+	my @line = Amanda::Util::split_quoted_strings_for_amstatus($line);
 	if (!defined $line[0]) {
 	    @line = split(/[:\s]+/, $line);
 	}

@@ -99,6 +99,7 @@ char *	construct_timestamp(time_t *t);
  * g_strfreev.
  */
 gchar ** split_quoted_strings(const gchar *string);
+gchar ** split_quoted_strings_for_amstatus(const gchar *string);
 
 /* Like strtok_r, but consider a quoted string to be a single token.  Caller
  * must begin parsing with strtok_r first, then pass the saveptr to this function.
