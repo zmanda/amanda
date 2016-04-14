@@ -3172,6 +3172,10 @@ static int promote_highest_priority_incremental(void)
 	new_total = total_size - ep->dump_est->csize + level0_est->csize;
 	new_lev0 = (gint64)total_lev0 + level0_est->csize;
 
+	/* do not promote if overflow tape */
+	if(new_total > tape_length)
+	    continue;
+
 	nb_today = 0;
 	nb_same_day = 0;
 	nb_disk_today = 0;
@@ -3190,10 +3194,6 @@ static int promote_highest_priority_incremental(void)
 		    nb_same_day++;
 	    }
 	}
-
-	/* do not promote if overflow tape */
-	if(new_total > tape_length)
-	    continue;
 
 	/* do not promote if overflow balanced size and something today */
 	/* promote if nothing today */
@@ -3235,6 +3235,7 @@ static int promote_highest_priority_incremental(void)
     if (ep_promote) {
 	one_est_t *level0_est;
 	dp = dp_promote;
+	ep = ep_promote;
 	level0_est = est_for_level(ep, 0);
 
 	qname = quote_string(dp->name);

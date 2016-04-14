@@ -1,3 +1,7 @@
+2016-04-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c (promote_highest_priority_incremental): Was not
+	  promote the correct ep (possible infinite loop)
+
 2016-04-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c (split_quoted_strings_for_amstatus): New
 	  function to parse a line for Amanda::Status
