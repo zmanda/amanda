@@ -1,3 +1,6 @@
+2016-04-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/tape_action.pl: Fix test
+
 2016-04-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/planner.c (promote_highest_priority_incremental): Was not
 	  promote the correct ep (possible infinite loop)
