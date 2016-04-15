@@ -2062,11 +2062,17 @@ sec_tcp_conn_read_callback(
     auth_debug(6, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN) {
-	if(rc->refcnt == 0) amfree(rc);
+	if(rc->refcnt == 0) {
+	    // do not free, it stillcan be used
+	    //amfree(rc);
+	}
 	return;
     }
     if (rc->pktlen == 0) {
-	if(rc->refcnt == 0) amfree(rc);
+	if(rc->refcnt == 0) {
+	    // do not free, it stillcan be used
+	    //amfree(rc);
+	}
 	return;
     }
 

@@ -1,4 +1,8 @@
 2016-04-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c (sec_tcp_conn_read_callback): do not free
+	  rc
+
+2016-04-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/tape_action.pl: Fix test
 
 2016-04-14  Jean-Louis Martineau <JMartineau@carbonite.com>
