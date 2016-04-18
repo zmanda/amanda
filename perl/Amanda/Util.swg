@@ -364,8 +364,11 @@ GPtrArray *expand_braced_alternates(char *);
 char *collapse_braced_alternates(GPtrArray *source);
 %newobject split_quoted_strings;
 gchar **split_quoted_strings(const gchar *string);
+%newobject split_quoted_strings_for_amstatus;
+gchar **split_quoted_strings_for_amstatus(const gchar *string);
 amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string
-		sanitise_filename split_quoted_strings split_quoted_strings_friendly);
+		sanitise_filename split_quoted_strings split_quoted_strings_friendly
+		split_quoted_strings_for_amstatus);
 amglue_export_tag(alternates, expand_braced_alternates collapse_braced_alternates);
 
 %perlcode %{

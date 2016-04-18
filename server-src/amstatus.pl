@@ -219,7 +219,7 @@ while($lineX = <AMDUMP>) {
 	chomp $lineX;
 	$lineX =~ s/[:\s]+$//g; #remove separator at end of line
 	next if $lineX eq "";
-	@line = &quotewords('[:\s]+', 0, $lineX);
+	@line = Amanda::Util::split_quoted_strings_for_amstatus($lineX);
 	next if !defined $line[0];
 
 	if($line[0] eq "amdump" || $line[0] eq "amflush") {
