@@ -1,3 +1,7 @@
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (tape_action): Improvement
+	* server-src/dumper.c: Call security_stream_read_cancel
+
 2016-04-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c (split_quoted_strings_for_amstatus): New
 	  function to parse a line for Amanda::Status

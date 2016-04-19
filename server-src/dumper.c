@@ -2024,6 +2024,7 @@ stop_dump(void)
 
     for (i = 0; i < NSTREAMS; i++) {
 	if (streams[i].fd != NULL) {
+	    security_stream_read_cancel(streams[i].fd);
 	    security_stream_close(streams[i].fd);
 	    streams[i].fd = NULL;
 	}

@@ -816,10 +816,13 @@ startaflush_tape(
 	    taper_cmd(TAKE_SCRIBE_FROM, taper->disk, taper1->name, 0 , NULL);
 	    taper->state |= (taper1->state & TAPER_STATE_TAPE_STARTED);
 	    taper->left = taper1->left;
-	    taper->nb_dle++;
+	    taper->nb_dle += taper1->nb_dle;
 	    taper1->state = TAPER_STATE_DEFAULT;
-	    if (last_started_taper == taper1) {
-		last_started_taper = taper;
+	    if (last_started_taper == taper) {
+		last_started_taper = taper1;
+	    }
+	    if (taper_sent_first_write == taper) {
+		taper_sent_first_write = NULL;
 	    }
 	    *state_changed = TRUE;
 	}
@@ -3899,35 +3902,40 @@ tape_action(
 	 taper1++) {
 	if (taper1->state & TAPER_STATE_TAPE_STARTED) {
 	    dle_free += (conf_max_dle_by_volume - taper1->nb_dle);
-	}
-	if (taper1->disk) {
-	    off_t data_to_go;
-	    off_t t_size;
-	    if (taper1->dumper) {
-		t_size = sched(taper1->disk)->est_size;
-	    } else {
-		t_size = sched(taper1->disk)->act_size;
-	    }
-	    data_to_go =  t_size - taper1->written;
-	    if (data_to_go > taper1->left) {
-		if (taper1->state & TAPER_STATE_TAPE_STARTED) {
-		    dle_free -= (conf_max_dle_by_volume - taper1->nb_dle) + 1;
-		    new_data += data_to_go - taper1->left;
+	    if (taper1->disk) {
+		off_t data_to_go;
+		off_t t_size;
+		if (taper1->dumper) {
+		    t_size = sched(taper1->disk)->est_size;
 		} else {
-		    dle_free -= 2;
-		    new_data += data_to_go;
+		    t_size = sched(taper1->disk)->act_size;
+		}
+		data_to_go =  t_size - taper1->written;
+		if (data_to_go < 0) data_to_go = 0;
+		if (data_to_go > taper1->left) {
+		    if (taper1->state & TAPER_STATE_TAPE_STARTED) {
+			dle_free -= (conf_max_dle_by_volume - taper1->nb_dle) + 1;
+			data_free -= data_to_go - taper1->left;
+		    } else {
+			dle_free -= 2;
+			data_free -= data_to_go;
+		    }
+		} else {
+		    if (!(taper1->state & TAPER_STATE_TAPE_STARTED)) {
+			dle_free--;
+			data_free -= data_to_go;
+		    } else {
+			data_free += taper1->left - data_to_go;
+		    }
 		}
 	    } else {
-		if (!(taper1->state & TAPER_STATE_TAPE_STARTED)) {
-		    dle_free--;
-		    new_data += data_to_go;
-		} else {
-		    data_free += taper1->left - data_to_go;
-		}
+		data_free += taper1->left;
 	    }
-	} else {
-	    data_free += taper1->left;
 	}
+    }
+    if (data_free < 0) {
+	new_data = -data_free;
+	data_free = 0;
     }
 
     if (dle_free < 0) dle_free = 0;
@@ -3973,10 +3981,10 @@ tape_action(
     }
 
     taperflush_criteria = (taperflush < tapeq_size &&
-			   (new_dle > 0 || new_data > 0 || force_flush == 1 || dump_to_disk_terminated));
+			   (new_data > 0 || force_flush == 1 || dump_to_disk_terminated));
     flush_criteria = (flush_threshold_dumped < tapeq_size &&
 		      flush_threshold_scheduled < sched_size &&
-		      (new_dle > 0 || new_data > 0)) ||
+		      (new_data > 0 || force_flush == 1 || dump_to_disk_terminated)) ||
 		     taperflush_criteria;
 
     driver_debug(2, "taperflush %lld\n", (long long)taperflush);
@@ -4012,7 +4020,7 @@ tape_action(
 	} else if (current_tape < conf_runtapes &&
 		   taper_nb_scan_volume == 0 &&
 		   (taper_sent_first_write == taper ||
-		    flush_criteria ||
+		    flush_criteria || new_dle > 0 ||
 		    !taper->allow_take_scribe_from ||
 		    nb_taper_active == 0)) {
 	    driver_debug(2, "tape_action: TAPER_STATE_TAPE_REQUESTED return TAPE_ACTION_SCAN\n");
@@ -4034,6 +4042,7 @@ tape_action(
 	    result |= TAPE_ACTION_NEW_TAPE;
     // when to stop using new tape
 	} else if ((taperflush >= tapeq_size &&			// taperflush criteria
+		    new_dle == 0 &&
 	           (force_flush == 1 ||				//  if force_flush
 	            dump_to_disk_terminated))			//  or all dump to disk
 	          ) {
@@ -4065,9 +4074,7 @@ tape_action(
 	      (current_tape < conf_runtapes &&
 	       taper_nb_scan_volume == 0 &&
 	       taper_sent_first_write == NULL &&
-	       ((new_dle > 0 || new_data > 0) &&
-		(flush_criteria ||
-		 nb_taper_active == 0)))))) {
+	       (flush_criteria || new_dle > 0))))) {
 
 	    if (nb_taper_flushing == 0) {
 		driver_debug(2, "tape_action: TAPER_STATE_IDLE return TAPE_ACTION_START_A_FLUSH\n");
