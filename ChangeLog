@@ -1,3 +1,7 @@
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amgtar.c: Compare unescaped filename with the DAR
+	  state file
+
 2016-04-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c (sec_tcp_conn_read_callback): do not free
 	  rc

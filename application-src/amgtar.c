@@ -1670,7 +1670,7 @@ amgtar_restore(
 		char *escaped;
 		line[strlen(line)-1] = '\0'; /* remove '\n' */
 		escaped = escape_tar_glob(line, &in_argv);
-		g_ptr_array_add(include_array, g_strdup(escaped));
+		g_ptr_array_add(include_array, g_strdup(line));
 		if (in_argv) {
 		    g_ptr_array_add(argv_include, escaped);
 		} else {
@@ -1687,7 +1687,7 @@ amgtar_restore(
 
 	    for (slif = argument->dle.include_file->first; slif != NULL; slif = slif->next) {
 		char *escaped = escape_tar_glob(slif->name, &in_argv);
-		g_ptr_array_add(include_array, g_strdup(escaped));
+		g_ptr_array_add(include_array, slif->name);
 		if (in_argv) {
 		    g_ptr_array_add(argv_include, escaped);
 		} else {
@@ -1700,7 +1700,7 @@ amgtar_restore(
 
 	for (j=1; j< argument->argc; j++) {
 	    char *escaped = escape_tar_glob(argument->argv[j], &in_argv);
-	    g_ptr_array_add(include_array, g_strdup(escaped));
+	    g_ptr_array_add(include_array, argument->argv[j]);
 	    if (in_argv) {
 		g_ptr_array_add(argv_include, escaped);
 	    } else {
