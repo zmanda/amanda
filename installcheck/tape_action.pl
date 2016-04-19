@@ -29,6 +29,9 @@ use Amanda::Config qw( :init );
 use Amanda::Paths;
 use File::Path;
 
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
+
 my $testconf;
 
 # Just run amdump.
