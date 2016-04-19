@@ -39,6 +39,7 @@
 #include "amxml.h"
 
 static am_host_t *hostlist = NULL;
+static  disklist_t dlist = { NULL, NULL };
 static netif_t *all_netifs = NULL;
 
 /* local functions */
@@ -47,6 +48,12 @@ static int parse_diskline(disklist_t *, const char *, FILE *, int *, char **);
 static void disk_parserror(const char *, int, const char *, ...)
 			    G_GNUC_PRINTF(3, 4);
 
+
+disklist_t *
+get_disklist(void)
+{
+    return &dlist;
+}
 
 cfgerr_level_t
 read_diskfile(
@@ -88,6 +95,7 @@ read_diskfile(
 end:
     amfree(line);
     afclose(diskf);
+    dlist = *lst;
     return config_errors(NULL);
 }
 
@@ -333,6 +341,11 @@ void
 free_disklist(
     disklist_t* dl)
 {
+    if (dlist.head == dl->head &&
+	dlist.tail == dl->tail) {
+	dlist.head = NULL;
+	dlist.tail = NULL;
+    }
     while (dequeue_disk(dl));
 }
 
@@ -364,6 +377,8 @@ unload_disklist(void)
 	amfree(host);
     }
     hostlist=NULL;
+    dlist.head = NULL;
+    dlist.tail = NULL;
 
     for (netif = all_netifs; netif != NULL; netif = next_if) {
 	next_if = netif->next;
@@ -582,6 +597,7 @@ parse_diskline(
 	disk->application = NULL;
 	disk->pp_scriptlist = NULL;
 	disk->dataport_list = NULL;
+	disk->shm_name = NULL;
     }
 
     if (host) {

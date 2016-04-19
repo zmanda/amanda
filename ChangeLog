@@ -1,4 +1,8 @@
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/diskfile.c (get_disklist): New function
+	* server-src/diskfile.h (get_disklist): prototype
+
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/tapefile.c (compute_retention): Fix if a dle is not in
 	  the disklist
 

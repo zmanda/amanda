@@ -129,6 +129,7 @@ typedef struct disk_s {
     int		index;			/* produce an index ? */
     data_path_t	data_path;		/* defined data-path */
     char       *dataport_list;		/* list of address to send data */
+    char       *shm_name;		/* shm-ring name to put data to */
     int		spindle;		/* spindle # - for parallel dumps */
     int		inprogress;		/* being dumped now? */
     int		todo;
@@ -151,6 +152,7 @@ typedef struct disklist_s {
  * value just as you would the return of config_init() */
 cfgerr_level_t read_diskfile(const char *, disklist_t *);
 
+disklist_t * get_disklist(void);
 am_host_t *get_hostlist(void);
 am_host_t *lookup_host(const char *hostname);
 disk_t *lookup_disk(const char *hostname, const char *diskname);
