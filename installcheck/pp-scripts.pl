@@ -40,6 +40,7 @@ my $templog = $Installcheck::TMP . "/check-script." . $$;
 sub verify_log {
     my $msg = shift;
     my @exp = @_;
+    my @got;
     my ($exp, $got);
     my $logfile;
 
@@ -54,12 +55,18 @@ sub verify_log {
 	chomp $exp;
 	$got = <$logfile>;
 	chomp $got;
+	push @got, $got;
 	if (!$got) {
 	    fail($msg);
 	    diag("    Line: $linenum");
 	    diag("Expected: '$exp'");
 	    diag("     Got: EOF");
 	    diag($exp);
+	    for $got (<$logfile>) {
+		chomp $got;
+		push @got, $got;
+	    }
+	    diag("exp: " . join("\n     ",@exp) . "\ngot: " . join("\n     ", @got) . "\n");
 	    return;
 	}
 	$got =~ s/ *$//g;
@@ -68,17 +75,28 @@ sub verify_log {
 	    diag("    Line: $linenum");
 	    diag("Expected: '$exp'");
 	    diag("     Got: '$got'");
+	    for $got (<$logfile>) {
+		chomp $got;
+		push @got, $got;
+	    }
+	    diag("exp: " . join("\n     ",@exp) . "\ngot: " . join("\n     ", @got) . "\n");
 	    return;
 	}
 	$linenum++;
     }
     $got = <$logfile>;
     if ($got) {
+        chomp $got;
 	fail($msg);
 	diag("    Line: $linenum");
 	diag("Expected: EOF");
 	diag("     Got: '$got'");
-	diag($got);
+	push @got, $got;
+	for $got (<$logfile>) {
+	    chomp $got;
+	    push @got, $got;
+	}
+	diag("exp: " . join("\n     ",@exp) . "\ngot: " . join("\n     ", @got) . "\n");
 	return;
     }
     pass($msg);

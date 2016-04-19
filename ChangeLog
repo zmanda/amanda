@@ -1,4 +1,7 @@
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/pp-scripts.pl: Print more info on failure
+
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/tape_action.pl: Open a debug file
 
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
