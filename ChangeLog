@@ -1,4 +1,7 @@
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl: typo
+
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_ClientService.pl: Fix for new DATA_FD_OFFSET
 	  value
 

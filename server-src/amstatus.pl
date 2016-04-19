@@ -351,7 +351,7 @@ if ($opt_summary) {
     summary($status, 'dumping', 'dumping', 1, 1, 1, 1);
     summary($status, 'dumped', 'dumped', 1, 1, 1, 1);
     summary_storage($status, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1);
-    summary_storage($status, 'wait_to_flush'   , 'wait_to_flush'   , 1, 1, 1, 1);
+    summary_storage($status, 'wait_to_flush'   , 'wait to flush'   , 1, 1, 1, 1);
     summary_storage($status, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
     summary_storage($status, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
     summary_storage($status, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
