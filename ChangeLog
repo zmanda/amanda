@@ -1,4 +1,8 @@
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_ClientService.pl: Fix for new DATA_FD_OFFSET
+	  value
+
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amanda.h, perl/Amanda/Constants.pm.in.src:Increase
 	  DATA_FD_OFFSET to 150, it allow more paralled backup with bsd or
 	  bsdudp auth
