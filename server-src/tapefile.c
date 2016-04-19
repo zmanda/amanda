@@ -701,7 +701,7 @@ compute_retention(void)
 {
     tape_t     *tp;
     storage_t  *storage;
-    disklist_t  diskp;
+    disklist_t  *diskp;
 
     for (tp = tape_list; tp != NULL; tp = tp->next) {
 	tp->retention_nb = FALSE;
@@ -745,8 +745,12 @@ compute_retention(void)
 	if (!output_find && (policy_get_retention_recover(policy) ||
 			     policy_get_retention_full(policy))) {
 	    char *conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-	    read_diskfile(conf_diskfile, &diskp);
-	    output_find = find_dump(&diskp);
+	    diskp = get_disklist();
+	    if (!diskp) {
+		diskp = g_new0(disklist_t, 1);
+		read_diskfile(conf_diskfile, diskp);
+	    }
+	    output_find = find_dump(diskp);
 	    sort_find_result("hkDLpbfw", &output_find);
 	}
 

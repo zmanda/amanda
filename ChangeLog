@@ -1,4 +1,8 @@
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c (compute_retention): Fix if a dle is not in
+	  the disklist
+
+2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: typo
 
 2016-04-19  Jean-Louis Martineau <JMartineau@carbonite.com>
