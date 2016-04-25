@@ -2260,7 +2260,6 @@ writer_intermediary(
     crc32_init(&native_crc.crc);
 
     if (amidxtaped_streams[STATEFD].fd != NULL) {
-g_debug("waiting for STATE");
 	security_stream_read(amidxtaped_streams[STATEFD].fd,
 			 read_amidxtaped_state, &ctl_state);
     } else {
@@ -2268,7 +2267,6 @@ g_debug("waiting for STATE");
     }
 
     if (!am_has_feature(tapesrv_features, fe_amrecover_header_send_size)) {
-g_debug("waiting for DATA");
 	security_stream_read(amidxtaped_streams[DATAFD].fd,
 			     read_amidxtaped_data, &ctl_data);
     }
