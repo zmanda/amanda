@@ -1,4 +1,7 @@
 2016-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c (areads_dataready): Check fd < 0
+
+2016-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* recover-src/extract_list.c: Remove debugging statement
 
 2016-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>

@@ -616,7 +616,10 @@ areads_dataready(
     struct timeval  to;
     int             nfound;
 
-    if(fd >= 0 && fd < areads_bufcount && areads_buffer[fd].buffer != NULL) {
+    if (fd < 0)
+	return 0;
+
+    if (fd >= 0 && fd < areads_bufcount && areads_buffer[fd].buffer != NULL) {
 	r = (ssize_t) (areads_buffer[fd].endptr - areads_buffer[fd].buffer);
     }
     if (r) {
