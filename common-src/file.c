@@ -612,11 +612,29 @@ areads_dataready(
     int	fd)
 {
     ssize_t r = 0;
+    SELECT_ARG_TYPE ready;
+    struct timeval  to;
+    int             nfound;
 
     if(fd >= 0 && fd < areads_bufcount && areads_buffer[fd].buffer != NULL) {
 	r = (ssize_t) (areads_buffer[fd].endptr - areads_buffer[fd].buffer);
     }
-    return r;
+    if (r) {
+        return r;
+    }
+
+    FD_ZERO(&ready);
+    FD_SET(fd, &ready);
+    to.tv_sec = 0;
+    to.tv_usec = 0;
+
+    nfound = select(fd+1, &ready, NULL, NULL, &to);
+    if (nfound > 0 && FD_ISSET(fd, &ready)) {
+        return 1;
+    } else {
+	return 0;
+    }
+
 }
 
 /*

@@ -71,7 +71,7 @@ getcmd(void)
 	fflush(stdout);
         line = agets(stdin);
     } else {
-        line = agets(stdin);
+        line = areads(0);
     }
     if (line == NULL) {
 	line = g_strdup("QUIT");
@@ -100,21 +100,9 @@ getcmd(void)
 struct cmdargs *
 get_pending_cmd(void)
 {
-    SELECT_ARG_TYPE ready;
-    struct timeval  to;
-    int             nfound;
-
-    FD_ZERO(&ready);
-    FD_SET(0, &ready);
-    to.tv_sec = 0;
-    to.tv_usec = 0;
-
-    nfound = select(1, &ready, NULL, NULL, &to);
-    if (nfound && FD_ISSET(0, &ready)) {
-        return getcmd();
-    } else {
+    if (!areads_dataready(0))
 	return NULL;
-    }
+    return getcmd();
 }
 
 void
