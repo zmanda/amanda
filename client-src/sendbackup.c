@@ -654,12 +654,6 @@ main(
 	    return 0;
 	}
 
-	if (statefd >= 0 && !bsu->state_stream) {
-	    close(statefd);
-	    close(statefd+1);
-	    statefd = -1;
-	}
-
 	if (pipe(errfd) < 0) {
 	    char  *errmsg;
 	    char  *qerrmsg;
@@ -673,9 +667,10 @@ main(
 	    return 0;
 	}
 
+	application_api_info_tapeheader(mesgfd, dle->program, dle);
+
 	switch(application_api_pid=fork()) {
 	case 0:
-	    application_api_info_tapeheader(mesgfd, dle->program, dle);
 
 	    /* find directt-tcp address from indirect direct-tcp */
 	    if (dle->data_path == DATA_PATH_DIRECTTCP &&
@@ -835,6 +830,12 @@ main(
 	    client_crc.out = datafd;
 	    client_crc.thread = g_thread_create(handle_crc_thread,
 				 (gpointer)&client_crc, TRUE, NULL);
+	}
+
+	if (statefd >= 0 && !bsu->state_stream) {
+	    close(statefd);
+	    close(statefd+1);
+	    statefd = -1;
 	}
 
 	result = 0;

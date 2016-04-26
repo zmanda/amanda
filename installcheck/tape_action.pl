@@ -133,8 +133,8 @@ ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
     or amdump_diag();
 is($exit_code, 0, "exit code is not 0");
 is(check_logs("INFO taper tape TESTCONF01 kb 736 fm 1", "INFO taper tape TESTCONF02 kb 736 fm 1", "INFO taper tape TESTCONF03 kb 628 fm 2"), 3, "3 vtapes used");
-# 2 potential result, depending on which worker finish the first
-my $result1 = check_amdump(
+my $result = check_amdump(
+	[
 		"to taper0: START-TAPER taper0 worker0-0 TESTCONF",
 		"from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM",
 		"to taper0: FILE-WRITE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
@@ -142,41 +142,19 @@ my $result1 = check_amdump(
 		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
 		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01",
-		"to taper0: START-TAPER taper0 worker0-1 TESTCONF",
 		"from taper0: READY worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM",
-		"to taper0: FILE-WRITE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: REQUEST-NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
-		"to taper0: START-SCAN worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
-		"to taper0: NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d TESTCONF02",
-		"from taper0: READY worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01 1 736",
 		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
 		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
 		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF03",
-		"from taper0: PARTDONE worker0-1 \\d\\d-\\d\\d\\d\\d\\d TESTCONF02 1 736",
-		"from taper0: REQUEST-NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF03 1 314",
 		"from taper0: DONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
 		"to taper0: TAKE-SCRIBE-FROM worker0-1 \\d\\d-\\d\\d\\d\\d\\d worker0-0",
-		"from taper0: READY worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: PARTDONE worker0-1 \\d\\d-\\d\\d\\d\\d\\d TESTCONF03 2 314",
-		"from taper0: DONE worker0-1 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
-		"to taper0: CLOSE-VOLUME worker0-1",
-		"from taper0: CLOSED-VOLUME worker0-1",
-		"to taper0: QUIT");
-my $result2 = check_amdump(
-		"to taper0: START-TAPER taper0 worker0-0 TESTCONF",
-		"from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM",
-		"to taper0: FILE-WRITE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01",
+		"to taper0: QUIT"
+	],
+	[
 		"to taper0: START-TAPER taper0 worker0-1 TESTCONF",
-		"from taper0: READY worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM",
 		"to taper0: FILE-WRITE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: REQUEST-NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
@@ -184,13 +162,6 @@ my $result2 = check_amdump(
 		"to taper0: NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
 		"from taper0: NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d TESTCONF02",
 		"from taper0: READY worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01 1 736",
-		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
-		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF03",
-		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF03 1 314",
-		"from taper0: DONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
 		"from taper0: PARTDONE worker0-1 \\d\\d-\\d\\d\\d\\d\\d TESTCONF02 1 736",
 		"from taper0: REQUEST-NEW-TAPE worker0-1 \\d\\d-\\d\\d\\d\\d\\d",
 		"to taper0: TAKE-SCRIBE-FROM worker0-1 \\d\\d-\\d\\d\\d\\d\\d worker0-0",
@@ -199,10 +170,10 @@ my $result2 = check_amdump(
 		"from taper0: DONE worker0-1 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
 		"to taper0: CLOSE-VOLUME worker0-1",
 		"from taper0: CLOSED-VOLUME worker0-1",
-		"to taper0: QUIT");
-ok(($result1 == 32 && $result2 == 23) ||
-   ($result1 == 23 && $result2 == 32), "amdump is good") ||
-    dump_amdump($result1, $result2);
+		"to taper0: QUIT"
+	]);
+ok($result == 34, "amdump is good") ||
+    dump_amdump($result);
 
 Installcheck::Run::cleanup();
 
@@ -222,16 +193,18 @@ sub check_logs {
 }
 
 sub check_amdump {
-    my @lines = @_;
+    my @plines = @_;
     my $good = 0;
 
     open(my $amdump, "<", "$CONFIG_DIR/TESTCONF/log/amdump.1")
 	or die("opening amdump $!");
-    my $line = shift @lines;
     foreach my $logline (<$amdump>) {
-	if (defined $line && $logline =~ /$line/) {
-	    $good++;
-	    $line = shift @lines;
+	foreach my $lines (@plines) {
+	    my $line = @$lines[0];
+	    if (defined $line && $logline =~ /$line/) {
+		$good++;
+		shift @$lines;
+	    }
 	}
     }
     close($amdump);
@@ -241,7 +214,7 @@ sub check_amdump {
 sub dump_amdump {
     my $rline;
     for my $result (@_) {
-	$rline .= "result=$result";
+	$rline .= " result=$result";
     }
     diag("got $rline\n");
     open(my $amdump, "<", "$CONFIG_DIR/TESTCONF/log/amdump.1")

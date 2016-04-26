@@ -1,3 +1,10 @@
+2016-04-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c: Call application_api_info_tapeheader before
+	  closing statefd
+
+2016-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/tape_action.pl: Fix check
+
 2016-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (areads_dataready): Check fd < 0
 
