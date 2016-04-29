@@ -1,3 +1,6 @@
+2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Cmdfile.swg: Remove debugging statement
+
 2016-04-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: Call application_api_info_tapeheader before
 	  closing statefd

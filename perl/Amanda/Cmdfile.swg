@@ -190,9 +190,7 @@ sub new_Cmddata {
     $cmddata->{'status'}         = $params{'status'} if defined $params{'status'};
     $cmddata->{'todo'}           = $params{'todo'} if defined $params{'todo'};
     $cmddata->{'size'}           = $params{'size'} if defined $params{'size'};
-debug("AA $params{'start_time'}");
     $cmddata->{'start_time'}     = $params{'start_time'} if defined $params{'start_time'};
-debug("BB");
 
     return $cmddata;
 };
