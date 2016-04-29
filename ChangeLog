@@ -1,4 +1,7 @@
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amar-src/amarchiver.c: s/error/gerror/
+
+2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c: typo
 	* device-src/s3-util.c: Fix buffer overflow
 

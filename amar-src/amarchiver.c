@@ -44,9 +44,9 @@ usage(void)
 }
 
 static void
-error_exit(const char *action, GError *error)
+error_exit(const char *action, GError *gerror)
 {
-    const char *msg = error->message? error->message : "(unknown)";
+    const char *msg = gerror->message? gerror->message : "(unknown)";
     g_fprintf(stderr, "%s: %s\n", action, msg);
     exit(1);
 }
@@ -58,7 +58,7 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
     amar_t *archive;
     amar_file_t *file;
     amar_attr_t *attribute;
-    GError *error = NULL;
+    GError *gerror = NULL;
     int i, fd_out, fd_in;
     off_t filesize = 0;
 
@@ -71,9 +71,9 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
 	fd_out = fileno(stdout);
 	output = stderr;
     }
-    archive = amar_new(fd_out, O_WRONLY, &error);
+    archive = amar_new(fd_out, O_WRONLY, &gerror);
     if (!archive)
-	error_exit("amar_new", error);
+	error_exit("amar_new", gerror);
 
     i = 0;
     while (i<argc) {
@@ -84,21 +84,21 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
 	    continue;
 	}
 	filesize = 0;
-	file = amar_new_file(archive, argv[i], strlen(argv[i]), NULL, &error);
+	file = amar_new_file(archive, argv[i], strlen(argv[i]), NULL, &gerror);
 	if (!file)
-	    error_exit("amar_new_file", error);
-	attribute = amar_new_attr(file, AMAR_ATTR_GENERIC_DATA, &error);
+	    error_exit("amar_new_file", gerror);
+	attribute = amar_new_attr(file, AMAR_ATTR_GENERIC_DATA, &gerror);
 	if (!attribute)
-	    error_exit("amar_new_attr", error);
+	    error_exit("amar_new_attr", gerror);
 
-	filesize += amar_attr_add_data_fd(attribute, fd_in, 1, &error);
-	if (error)
-	    error_exit("amar_attr_add_data_fd", error);
+	filesize += amar_attr_add_data_fd(attribute, fd_in, 1, &gerror);
+	if (gerror)
+	    error_exit("amar_attr_add_data_fd", gerror);
 
-	if (!amar_attr_close(attribute, &error))
-	    error_exit("amar_attr_close", error);
-	if (!amar_file_close(file, &error))
-	    error_exit("amar_file_close", error);
+	if (!amar_attr_close(attribute, &gerror))
+	    error_exit("amar_attr_close", gerror);
+	if (!amar_file_close(file, &gerror))
+	    error_exit("amar_file_close", gerror);
 
 	if (opt_verbose == 1) {
 	    g_fprintf(output,"%s\n", argv[i]);
@@ -109,8 +109,8 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
 	i++;
     }
 
-    if (!amar_close(archive, &error))
-	error_exit("amar_close", error);
+    if (!amar_close(archive, &gerror))
+	error_exit("amar_close", gerror);
     close(fd_out);
 }
 
@@ -256,7 +256,7 @@ do_extract(
 	char **argv)
 {
     amar_t *archive;
-    GError *error = NULL;
+    GError *gerror = NULL;
     int fd_in;
     amar_attr_handling_t handling[] = {
 	{ 0, 0, extract_frag_cb, NULL },
@@ -276,24 +276,24 @@ do_extract(
 	fd_in = fileno(stdin);
     }
 
-    archive = amar_new(fd_in, O_RDONLY, &error);
+    archive = amar_new(fd_in, O_RDONLY, &gerror);
     if (!archive)
-	error_exit("amar_new", error);
+	error_exit("amar_new", gerror);
 
 //    if (!amar_read(archive, &ud, handling, extract_file_start_cb,
-//		   extract_file_finish_cb, NULL, &error)) {
-//	if (error)
-//	    error_exit("amar_read", error);
+//		   extract_file_finish_cb, NULL, &gerror)) {
+//	if (gerror)
+//	    error_exit("amar_read", gerror);
 //	else
 //	    /* one of the callbacks already printed an error message */
 //	    exit(1);
 //    }
 
     set_amar_read_cb(archive, &ud, handling, extract_file_start_cb,
-		      extract_file_finish_cb, NULL, &error);
+		      extract_file_finish_cb, NULL, &gerror);
     event_loop(0);
-    if (error) {
-	error_exit("amar_read", error);
+    if (gerror) {
+	error_exit("amar_read", gerror);
     }
 
     amar_close(archive, NULL);
@@ -320,7 +320,7 @@ do_list(
 	int opt_verbose G_GNUC_UNUSED)
 {
     amar_t *archive;
-    GError *error = NULL;
+    GError *gerror = NULL;
     int fd_in;
     amar_attr_handling_t handling[] = {
 	{ 0, 0, NULL, NULL },
@@ -335,14 +335,14 @@ do_list(
 	fd_in = fileno(stdin);
     }
 
-    archive = amar_new(fd_in, O_RDONLY, &error);
+    archive = amar_new(fd_in, O_RDONLY, &gerror);
     if (!archive)
-	error_exit("amar_new", error);
+	error_exit("amar_new", gerror);
 
     if (!amar_read(archive, NULL, handling, list_file_start_cb,
-		   NULL, NULL, &error)) {
-	if (error)
-	    error_exit("amar_read", error);
+		   NULL, NULL, &gerror)) {
+	if (gerror)
+	    error_exit("amar_read", gerror);
 	else
 	    /* one of the callbacks already printed an error message */
 	    exit(1);
