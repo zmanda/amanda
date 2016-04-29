@@ -187,7 +187,7 @@ s3_compute_sha256_hash(
     int len)
 {
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    char *ret = malloc(64);
+    char *ret = malloc(SHA256_DIGEST_LENGTH*2+1);
     int i;
 
     SHA256_CTX sha256;

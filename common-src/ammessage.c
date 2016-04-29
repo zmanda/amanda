@@ -2075,7 +2075,7 @@ json_parse_string(
 		    *sp++ = '\\';
 		    *sp++ = c;
 		    break;
-		case'u':
+		case 'u':
 		    break;
 		default:
 		    break;

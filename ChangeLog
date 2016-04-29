@@ -1,4 +1,8 @@
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c: typo
+	* device-src/s3-util.c: Fix buffer overflow
+
+2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Cmdfile.swg: Remove debugging statement
 
 2016-04-26  Jean-Louis Martineau <JMartineau@carbonite.com>
