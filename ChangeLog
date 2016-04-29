@@ -1,4 +1,8 @@
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/server_util.c (putresult): Print the complete line in the
+	  debug file
+
+2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amar-src/amarchiver.c: s/error/gerror/
 
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>

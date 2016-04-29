@@ -119,13 +119,15 @@ free_cmdargs(
 void putresult(cmd_t result, const char *format, ...)
 {
     va_list argp;
+    char *msg;
 
     arglist_start(argp, format);
-    dbprintf(_("putresult: %d %s\n"), result, cmdstr[result]);
-    g_printf("%s ", cmdstr[result]);
-    g_vprintf(format, argp);
-    fflush(stdout);
+    msg = g_strdup_vprintf(format, argp);
     arglist_end(argp);
+    g_debug("putresult: %d %s %s", result, cmdstr[result], msg);
+    g_printf("%s %s", cmdstr[result], msg);
+    fflush(stdout);
+    g_free(msg);
 }
 
 char *
