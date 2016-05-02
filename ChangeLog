@@ -1,3 +1,9 @@
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add a memory ring
+	* common-src/Makefile.am (libamanda_la_SOURCES): Add mem-ring.c
+	* common-src/mem-ring.c: New file
+	* common-src/mem-ring.h: New header
+
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/server_util.c (putresult): Print the complete line in the
 	  debug file

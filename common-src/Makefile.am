@@ -34,6 +34,7 @@ libamanda_la_SOURCES =		\
 	fileheader.c		\
 	glib-util.c		\
 	match.c			\
+	mem-ring.c		\
 	packet.c		\
 	pipespawn.c		\
 	protocol.c		\
@@ -125,6 +126,7 @@ noinst_HEADERS =		\
 	fileheader.h		\
 	glib-util.h		\
 	match.h			\
+	mem-ring.h		\
 	packet.h		\
 	pipespawn.h		\
 	protocol.h		\
