@@ -121,6 +121,41 @@ push_buffer_impl(
 }
 
 static void
+push_buffer_static_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t len)
+{
+    XferDestBuffer *self = (XferDestBuffer *)elt;
+
+    if (!buf)
+	return;
+
+    /* make sure this isn't too much data */
+    if (self->max_size && self->len + len > self->max_size) {
+	xfer_cancel_with_error(elt,
+	    _("illegal attempt to transfer more than %zd bytes"), self->max_size);
+	wait_until_xfer_cancelled(elt->xfer);
+	return;
+    }
+
+    /* expand the buffer if necessary */
+    if (self->len + len > self->allocated) {
+	gsize new_size = self->allocated * 2;
+	if (new_size < self->len+len)
+	    new_size = self->len+len;
+	if (self->max_size && new_size > self->max_size)
+	    new_size = self->max_size;
+
+	self->buf = g_realloc(self->buf, new_size);
+	self->allocated = new_size;
+    }
+
+    g_memmove(((guint8 *)self->buf)+self->len, buf, len);
+    self->len += len;
+}
+
+static void
 finalize_impl(
     GObject * obj_self)
 {
@@ -142,11 +177,13 @@ class_init(
     GObjectClass *goc = G_OBJECT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
+	{ XFER_MECH_PUSH_BUFFER_STATIC, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
     selfc->get = get_impl;
     klass->push_buffer = push_buffer_impl;
+    klass->push_buffer_static = push_buffer_static_impl;
     goc->finalize = finalize_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Buffer";

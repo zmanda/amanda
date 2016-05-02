@@ -100,6 +100,43 @@ pull_buffer_impl(
     return buf;
 }
 
+static gpointer
+pull_buffer_static_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t block_size,
+    size_t *size)
+{
+    XferFilterCrc *self = (XferFilterCrc *)elt;
+    XMsg *msg;
+
+    if (elt->cancelled) {
+	/* drain our upstream only if we're expecting an EOF */
+	if (elt->expect_eof) {
+	    xfer_element_drain_buffers(XFER_ELEMENT(self)->upstream);
+	}
+
+	/* return an EOF */
+	*size = 0;
+	return NULL;
+    }
+
+    /* get a buffer from upstream, crc it, and hand it back */
+    xfer_element_pull_buffer_static(XFER_ELEMENT(self)->upstream, buf, block_size, size);
+    if (size) {
+	crc32_add((uint8_t *)buf, *size, &elt->crc);
+    } else {
+	g_debug("sending XMSG_CRC message");
+	g_debug("crc pull_buffer CRC: %08x",
+		crc32_finish(&elt->crc));
+	msg = xmsg_new(elt, XMSG_CRC, 0);
+	msg->crc = crc32_finish(&elt->crc);
+	msg->size = elt->crc.size;
+	xfer_queue_message(elt->xfer, msg);
+    }
+    return buf;
+}
+
 static void
 push_buffer_impl(
     XferElement *elt,
@@ -132,6 +169,37 @@ push_buffer_impl(
 }
 
 static void
+push_buffer_static_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t len)
+{
+    XferFilterCrc *self = (XferFilterCrc *)elt;
+    XMsg *msg;
+
+    /* drop the buffer if we've been cancelled */
+    if (elt->cancelled) {
+	/* send EOF to downstream */
+	xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, 0);
+	return;
+    }
+
+    /* crc the given buffer and pass it downstream */
+    if (buf) {
+	crc32_add((uint8_t *)buf, len, &elt->crc);
+    } else {
+	g_debug("sending XMSG_CRC message to %p", elt);
+	g_debug("crc push_buffer CRC: %08x",
+		crc32_finish(&elt->crc));
+	msg = xmsg_new(elt, XMSG_CRC, 0);
+	msg->crc = crc32_finish(&elt->crc);
+	msg->size = elt->crc.size;
+	xfer_queue_message(elt->xfer, msg);
+    }
+    xfer_element_push_buffer_static(XFER_ELEMENT(self)->downstream, buf, len);
+}
+
+static void
 instance_init(
     XferElement *elt)
 {
@@ -147,11 +215,15 @@ class_init(
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PULL_BUFFER, XFER_MECH_PULL_BUFFER, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
 	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_PUSH_BUFFER, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
+	{ XFER_MECH_PULL_BUFFER_STATIC, XFER_MECH_PULL_BUFFER_STATIC, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
+	{ XFER_MECH_PUSH_BUFFER_STATIC, XFER_MECH_PUSH_BUFFER_STATIC, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
     klass->push_buffer = push_buffer_impl;
+    klass->push_buffer_static = push_buffer_static_impl;
     klass->pull_buffer = pull_buffer_impl;
+    klass->pull_buffer_static = pull_buffer_static_impl;
 
     klass->perl_class = "Amanda::Xfer::Filter::Crc";
     klass->mech_pairs = mech_pairs;

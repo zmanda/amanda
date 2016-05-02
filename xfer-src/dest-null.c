@@ -110,16 +110,56 @@ push_buffer_impl(
 }
 
 static void
+push_buffer_static_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t len)
+{
+    XferDestNull *self = (XferDestNull *)elt;
+
+    if (buf) {
+	crc32_add(buf, len, &elt->crc);
+    } else {
+	XMsg *msg = xmsg_new((XferElement *)self, XMSG_CRC, 0);
+	msg->crc = crc32_finish(&elt->crc);
+	msg->size = elt->crc.size;
+	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
+	return;
+    }
+
+    if (self->do_verify && !elt->cancelled) {
+	if (!simpleprng_verify_buffer(&self->prng, buf, len)) {
+	    xfer_cancel_with_error(elt,
+		"verification of incoming bytestream failed; see stderr for details"),
+	    wait_until_xfer_cancelled(elt->xfer);
+	    return;
+	}
+    }
+
+    self->byte_position += len;
+    if (!self->sent_info) {
+	/* send a superfluous message (this is a testing XferElement,
+	 * after all) */
+	XMsg *msg = xmsg_new((XferElement *)self, XMSG_INFO, 0);
+	msg->message = g_strdup("Is this thing on?");
+	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
+	self->sent_info = TRUE;
+    }
+}
+
+static void
 class_init(
     XferDestNullClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
+	{ XFER_MECH_PUSH_BUFFER_STATIC, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
     klass->push_buffer = push_buffer_impl;
+    klass->push_buffer_static = push_buffer_static_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Null";
     klass->mech_pairs = mech_pairs;

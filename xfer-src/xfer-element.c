@@ -98,6 +98,13 @@ xfer_element_get_size_impl(
     return elt->size;
 }
 
+static size_t
+xfer_element_get_block_size_impl(
+    XferElement *elt)
+{
+    return elt->block_size;
+}
+
 static gboolean
 xfer_element_start_impl(
     XferElement *elt G_GNUC_UNUSED)
@@ -120,11 +127,31 @@ xfer_element_pull_buffer_impl(
     XferElement *elt G_GNUC_UNUSED,
     size_t *size G_GNUC_UNUSED)
 {
+    *size = 0;
+    return NULL;
+}
+
+static gpointer
+xfer_element_pull_buffer_static_impl(
+    XferElement *elt G_GNUC_UNUSED,
+    gpointer buf G_GNUC_UNUSED,
+    size_t block_size G_GNUC_UNUSED,
+    size_t *size G_GNUC_UNUSED)
+{
+    *size = 0;
     return NULL;
 }
 
 static void
 xfer_element_push_buffer_impl(
+    XferElement *elt G_GNUC_UNUSED,
+    gpointer buf G_GNUC_UNUSED,
+    size_t size G_GNUC_UNUSED)
+{
+}
+
+static void
+xfer_element_push_buffer_static_impl(
     XferElement *elt G_GNUC_UNUSED,
     gpointer buf G_GNUC_UNUSED,
     size_t size G_GNUC_UNUSED)
@@ -187,10 +214,13 @@ xfer_element_class_init(
     klass->get_offset = xfer_element_get_offset_impl;
     klass->get_orig_size = xfer_element_get_orig_size_impl;
     klass->get_size = xfer_element_get_size_impl;
+    klass->get_block_size = xfer_element_get_block_size_impl;
     klass->start = xfer_element_start_impl;
     klass->cancel = xfer_element_cancel_impl;
     klass->pull_buffer = xfer_element_pull_buffer_impl;
+    klass->pull_buffer_static = xfer_element_pull_buffer_static_impl;
     klass->push_buffer = xfer_element_push_buffer_impl;
+    klass->push_buffer_static = xfer_element_push_buffer_static_impl;
     klass->get_mech_pairs = xfer_element_get_mech_pairs_impl;
 
     goc->finalize = xfer_element_finalize;
@@ -289,6 +319,13 @@ xfer_element_get_size(
     return XFER_ELEMENT_GET_CLASS(elt)->get_size(elt);
 }
 
+size_t
+xfer_element_get_block_size(
+    XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->get_block_size(elt);
+}
+
 gboolean
 xfer_element_start(
     XferElement *elt)
@@ -323,6 +360,27 @@ xfer_element_pull_buffer(
     return XFER_ELEMENT_GET_CLASS(elt)->pull_buffer(elt, size);
 }
 
+gpointer
+xfer_element_pull_buffer_static(
+    XferElement *elt,
+    gpointer buf,
+    size_t block_size,
+    size_t *size)
+{
+    xfer_status status;
+    /* Make sure that the xfer is running before calling upstream's
+     * pull_bufferi_static method; this avoids a race condition where upstream
+     * hasn't finished its xfer_element_start yet, and isn't ready for
+     * a pull */
+    g_mutex_lock(elt->xfer->status_mutex);
+    status = elt->xfer->status;
+    g_mutex_unlock(elt->xfer->status_mutex);
+    if (status == XFER_START)
+	wait_until_xfer_running(elt->xfer);
+
+    return XFER_ELEMENT_GET_CLASS(elt)->pull_buffer_static(elt, buf, block_size, size);
+}
+
 void
 xfer_element_push_buffer(
     XferElement *elt,
@@ -332,6 +390,17 @@ xfer_element_push_buffer(
     /* There is no race condition with push_buffer, because downstream
      * elements are started first. */
     XFER_ELEMENT_GET_CLASS(elt)->push_buffer(elt, buf, size);
+}
+
+void
+xfer_element_push_buffer_static(
+    XferElement *elt,
+    gpointer buf,
+    size_t size)
+{
+    /* There is no race condition with push_buffer, because downstream
+     * elements are started first. */
+    XFER_ELEMENT_GET_CLASS(elt)->push_buffer_static(elt, buf, size);
 }
 
 xfer_element_mech_pair_t *
@@ -368,6 +437,26 @@ xfer_element_drain_fd(
 	len = read_fully(fd, buf, sizeof(buf), NULL);
 	if (len < sizeof(buf))
 	    return;
+    }
+}
+
+mem_ring_t *
+xfer_element_get_mem_ring(
+    XferElement *elt)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->get_mem_ring(elt);
+}
+
+shm_ring_t *
+xfer_element_get_shm_ring(
+    XferElement *elt)
+{
+    if (elt->shm_ring) {
+	return elt->shm_ring;
+    } else if (elt->downstream) {
+	return xfer_element_get_shm_ring(elt->downstream);
+    } else {
+	return NULL;
     }
 }
 

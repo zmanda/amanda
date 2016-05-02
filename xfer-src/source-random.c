@@ -101,6 +101,33 @@ pull_buffer_impl(
     return buf;
 }
 
+static gpointer
+pull_buffer_static_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t block_size,
+    size_t *size)
+{
+    XferSourceRandom *self = (XferSourceRandom *)elt;
+
+    if (elt->cancelled || (self->limited_length && self->length == 0)) {
+	*size = 0;
+	return NULL;
+    }
+
+    if (self->limited_length) {
+        *size = MIN(10240, self->length);
+        *size = MIN(*size, block_size);
+        self->length -= *size;
+    } else {
+	*size = 10240;
+    }
+
+    simpleprng_fill_buffer(&self->prng, buf, *size);
+
+    return buf;
+}
+
 static void
 instance_init(
     XferElement *elt)
@@ -115,11 +142,13 @@ class_init(
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(1) },
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER_STATIC, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
     selfc->get_seed = get_seed_impl;
     klass->pull_buffer = pull_buffer_impl;
+    klass->pull_buffer_static = pull_buffer_static_impl;
 
     klass->perl_class = "Amanda::Xfer::Source::Random";
     klass->mech_pairs = mech_pairs;

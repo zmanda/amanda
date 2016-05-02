@@ -53,9 +53,17 @@ typedef enum {
      * pull a buffer.  EOF is indicated by returning a NULL buffer */
     XFER_MECH_PULL_BUFFER,
 
+    /* downstream element will call elt->upstream->pull_buffer_static() to
+     * pull a buffer.  EOF is indicated by returning a NULL buffer */
+    XFER_MECH_PULL_BUFFER_STATIC,
+
     /* upstream element will call elt->downstream->push_buffer(buf) to push
      * a buffer.  EOF is indicated by passing a NULL buffer. */
     XFER_MECH_PUSH_BUFFER,
+
+    /* upstream element will call elt->downstream->push_buffer_static(buf) to push
+     * a buffer.  EOF is indicated by passing a NULL buffer. */
+    XFER_MECH_PUSH_BUFFER_STATIC,
 
     /* DirectTCP: downstream sends an array of IP:PORT addresses to which a TCP
      * connection should be made, then upstream connects to one of the addreses
@@ -66,6 +74,12 @@ typedef enum {
      * TCP connection should be made, then connects to one of the addreses and
      * receives the data over that connection */
     XFER_MECH_DIRECTTCP_CONNECT,
+
+    /* MemRing: Use a memory ring between element */
+    XFER_MECH_MEM_RING,
+
+    /* MemRing: Use a shared memory ring between element */
+    XFER_MECH_SHM_RING,
 
     /* (sentinel value) */
     XFER_MECH_MAX,
@@ -159,6 +173,12 @@ typedef struct XferElement {
     gint64 orig_size;
     gint64 size;
 
+    /* required block_size, 0 for no requirement */
+    size_t block_size;
+
+    /* shm_ring */
+    shm_ring_t *shm_ring;
+
     /* for crc computation */
     crc_t crc;
 
@@ -221,6 +241,12 @@ typedef struct {
     off_t (*get_orig_size)(XferElement *elt);
     off_t (*get_size)(XferElement *elt);
 
+    /* the the required block_size for pull_buffer_static
+     */
+    size_t (*get_block_size)(XferElement *elt);
+
+    mem_ring_t *(*get_mem_ring)(XferElement *elt);
+
     /* Start transferring data.  The element downstream of this one will
      * already be started, while the upstream element will not, so data will
      * not begin flowing immediately.  It is safe to access attributes of
@@ -272,14 +298,25 @@ typedef struct {
 
     /* Get a buffer full of data from this element.  This function is called by
      * the downstream element under XFER_MECH_PULL_CALL.  It can block indefinitely,
-     * and must only return NULL on EOF.  Responsibility to free the buffer transfers
-     * to the caller.
+     * and must only return NULL on EOF. This function must allocate the buffer.
+     * Responsibility to free the buffer transfers to the caller.
      *
      * @param elt: the XferElement
      * @param size (output): size of resulting buffer
      * @returns: buffer pointer
      */
     gpointer (*pull_buffer)(XferElement *elt, size_t *size);
+
+    /* Get a buffer full of data from this element.  This function is called by
+     * the downstream element under XFER_MECH_PULL_STATIC_CALL.  It can block indefinitely,
+     * and must only return NULL on EOF. This function must use the pre-allocated buffer.
+     *
+     * @param elt: the XferElement
+     * @param buf (input-output): Where to put the buffer
+     * @param block_size (input): size of allocated buffer
+     * @param size (output): size of resulting buffer
+     */
+    gpointer (*pull_buffer_static)(XferElement *elt, gpointer buf, size_t block_size, size_t *size);
 
     /* A buffer full of data is being sent to this element for processing; this
      * function is called by the upstream element under XFER_MECH_PUSH_CALL.
@@ -292,6 +329,18 @@ typedef struct {
      * @param size: size of buffer
      */
     void (*push_buffer)(XferElement *elt, gpointer buf, size_t size);
+
+    /* Same as push_buffer, but the callee must not free the buffer
+     * A buffer full of data is being sent to this element for processing; this
+     * function is called by the upstream element under XFER_MECH_PUSH_CALL.
+     * It can block indefinitely if the data cannot be processed immediately.
+     * An EOF condition is signaled by call with a NULL buffer.
+     *
+     * @param elt: the XferElement
+     * @param buf: buffer
+     * @param size: size of buffer
+     */
+    void (*push_buffer_static)(XferElement *elt, gpointer buf, size_t size);
 
     /* Returns the mech_pairs that this element supports.  The default
      * implementation just returns the class attribute 'mech_pairs', but
@@ -336,11 +385,16 @@ gboolean xfer_element_set_size(XferElement *elt, gint64 size);
 off_t xfer_element_get_offset(XferElement *elt);
 off_t xfer_element_get_orig_size(XferElement *elt);
 off_t xfer_element_get_size(XferElement *elt);
+size_t xfer_element_get_block_size(XferElement *elt);
 gboolean xfer_element_start(XferElement *elt);
 void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
+void xfer_element_push_buffer_static(XferElement *elt, gpointer buf, size_t size);
 gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);
+gpointer xfer_element_pull_buffer_static(XferElement *elt, gpointer buf, size_t block_size, size_t *size);
 gboolean xfer_element_cancel(XferElement *elt, gboolean expect_eof);
 xfer_element_mech_pair_t *xfer_element_get_mech_pairs(XferElement *elt);
+mem_ring_t *xfer_element_get_mem_ring(XferElement *elt);
+shm_ring_t *xfer_element_get_shm_ring(XferElement *elt);
 
 /****
  * Subclass utilities
@@ -429,6 +483,14 @@ XferElement * xfer_source_fd(
 
 XferElement *xfer_source_file(
      char *filename);
+
+/* A transfer source that get the bytes from a shm-ring
+ *
+ * Implemented in source-shm-ring.c
+ *
+ * @return: new element
+ */
+XferElement * xfer_source_shm_ring(void);
 
 /* A transfer source that exposes its listening DirectTCPAddrs (via
  * elt->input_listen_addrs) for external use

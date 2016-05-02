@@ -25,6 +25,8 @@
 #ifndef AMXFER_H
 #define AMXFER_H
 
+#include "mem-ring.h"
+#include "shm-ring.h"
 #include "xfer.h"
 #include "xfer-element.h"
 #include "element-glue.h"

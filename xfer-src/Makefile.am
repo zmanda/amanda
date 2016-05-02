@@ -33,6 +33,7 @@ libamxfer_la_SOURCES = \
 	source-pattern.c \
 	source-directtcp-connect.c \
 	source-directtcp-listen.c \
+	source-shm-ring.c \
 	xfer-element.c \
 	xfer.c \
 	xmsg.c
