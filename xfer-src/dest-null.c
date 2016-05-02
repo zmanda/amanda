@@ -117,7 +117,7 @@ push_buffer_static_impl(
 {
     XferDestNull *self = (XferDestNull *)elt;
 
-    if (buf) {
+    if (buf && len != 0) {
 	crc32_add(buf, len, &elt->crc);
     } else {
 	XMsg *msg = xmsg_new((XferElement *)self, XMSG_CRC, 0);

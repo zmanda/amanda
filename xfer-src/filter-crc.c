@@ -185,7 +185,7 @@ push_buffer_static_impl(
     }
 
     /* crc the given buffer and pass it downstream */
-    if (buf) {
+    if (buf && len != 0) {
 	crc32_add((uint8_t *)buf, len, &elt->crc);
     } else {
 	g_debug("sending XMSG_CRC message to %p", elt);

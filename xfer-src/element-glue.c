@@ -1156,12 +1156,12 @@ pull_and_push_static(
 	xfer_element_pull_buffer_static(elt->upstream, buf, block_size, &len);
 
 	/* and push it downstream */
-	xfer_element_push_buffer_static(elt->downstream, buf, len);
-
-
 	if (len == 0) {
+	    xfer_element_push_buffer_static(elt->downstream, NULL, len);
 	    eof_sent = TRUE;
 	    break;
+	} else {
+	    xfer_element_push_buffer_static(elt->downstream, buf, len);
 	}
     }
     amfree(buf);

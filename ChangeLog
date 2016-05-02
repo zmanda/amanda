@@ -1,4 +1,12 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/xfer-dest-taper-cacher.c, xfer-src/dest-buffer.c,
+	  xfer-src/dest-null.c, xfer-src/filter-crc.c, xfer-src/filter-xor.c
+	  (push_buffer_static_impl): The end is determined by either a NULL
+	  buffer or a len of 0
+	* xfer-src/element-glue.c (pull_and_push_static): Call
+	  xfer_element_pull_buffer_static with a NULL buffer
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: Remove duplicate g_thread_join
 
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>

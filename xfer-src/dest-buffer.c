@@ -128,7 +128,7 @@ push_buffer_static_impl(
 {
     XferDestBuffer *self = (XferDestBuffer *)elt;
 
-    if (!buf)
+    if (!buf || len == 0)
 	return;
 
     /* make sure this isn't too much data */

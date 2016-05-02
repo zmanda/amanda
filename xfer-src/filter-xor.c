@@ -171,7 +171,7 @@ push_buffer_static_impl(
     }
 
     /* xor the given buffer and pass it downstream */
-    if (buf)
+    if (buf && len != 0)
 	apply_xor(buf, len, self->xor_key);
 
     xfer_element_push_buffer_static(XFER_ELEMENT(self)->downstream, buf, len);

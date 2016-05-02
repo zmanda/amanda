@@ -1141,7 +1141,7 @@ push_buffer_static_impl(
     }
 
     /* handle EOF */
-    if (G_UNLIKELY(buf == NULL)) {
+    if (G_UNLIKELY(buf == NULL) || size == 0) {
 	/* send off the last, probably partial slab */
 	g_mutex_lock(self->slab_mutex);
 
