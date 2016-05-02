@@ -1,4 +1,9 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amandad-src/amandad.c, server-src/amcheck.c, server-src/driver.c,
+	  server-src/dumper.c, server-src/planner.c,
+	  common-src/amservice.c: Call glib_init()
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.h (sec_stream): Add event_id
 	* common-src/security-util.c: Use event_id from sec_stream
 

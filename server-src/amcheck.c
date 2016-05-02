@@ -206,6 +206,8 @@ main(
     config_overrides_t *cfg_ovr;
     char *mailer;
 
+    glib_init();
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.

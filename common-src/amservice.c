@@ -120,6 +120,8 @@ main(
     int i;
     unsigned char gfd[32768];
 
+    glib_init();
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
