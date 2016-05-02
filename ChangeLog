@@ -1,4 +1,7 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/source-shm-ring.c: Add the file
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Fix for new shm-ring in protocol
 
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
