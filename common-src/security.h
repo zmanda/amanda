@@ -207,6 +207,11 @@ typedef struct security_driver {
     ssize_t (*stream_read_sync)(void *, void **);
 
     /*
+     * Read asyncronously from a stream and put the result in a shm_ring.
+     */
+    void (*stream_read_to_shm_ring)(void *, void (*)(void *, void *, ssize_t), struct shm_ring_t *, void *);
+
+    /*
      * Cancel a stream read request
      */
     void (*stream_read_cancel)(void *);
@@ -476,6 +481,18 @@ void security_stream_close_async(security_stream_t *, void (*fn)(void *, ssize_t
  * security_stream_geterror(). This function uses the event interface.  */
 #define	security_stream_read_sync(stream, buf)		\
     (*(stream)->driver->stream_read_sync)(stream, buf)
+
+/* void security_stream_read_to_shm_ring)(
+ * security_stream_t *stream,
+ * void (*fn)(void *, void *, ssize_t),
+ * shm_ring_t *,
+ * void *arg);
+ *
+ * Add a complete file to a shm_ring
+ * fn is called for each block
+ */
+#define security_stream_read_to_shm_ring(stream, fn, shm_ring, arg) \
+    (*(stream)->driver->stream_read_to_shm_ring)(stream, fn, shm_ring, arg)
 
 /* void security_stream_read_cancel(security_stream_t *);
  *

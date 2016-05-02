@@ -1,4 +1,23 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add a security_stream_read_to_shm_ring function, it require many
+	change in the internal structure of the security layer
+	* common-src/bsd-security.c (bsd_stream_read_to_shm_ring_callback,
+	  bsd_stream_read_to_shm_ring): New function to implement
+	  security_stream_read_to_shm_ring
+	* common-src/bsdtcp-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/bsdudp-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/krb5-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/local-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/rsh-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/ssh-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/ssl-security.c: Use tcpm_stream_read_to_shm_ring
+	* common-src/security-util.c (tcpm_stream_read_to_shm_ring) Add
+	  fucntion
+	* common-src/security-util.h (tcpm_stream_read_to_shm_ring) Add
+	  prototype
+	* common-src/security.h (security_driver): Add stream_read_to_shm_ring
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/xfer-dest-taper-cacher.c: Add the new push_buffer_static
 	  xfer mechanism
 

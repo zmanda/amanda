@@ -87,6 +87,7 @@ const security_driver_t ssh_security_driver = {
     tcpm_stream_write_async,
     tcpm_stream_read,
     tcpm_stream_read_sync,
+    tcpm_stream_read_to_shm_ring,
     tcpm_stream_read_cancel,
     tcpm_close_connection,
     NULL,
@@ -291,6 +292,9 @@ ssh_child_watch_callback(
     gpointer data)
 {
     struct tcp_conn *rc = (struct tcp_conn *)data;
+
+    if (pid != rc->pid)
+	return;
 
     g_assert(pid == rc->pid);
     rc->pid = -1 ; /* it's gone now.. */

@@ -92,6 +92,7 @@ const security_driver_t rsh_security_driver = {
     tcpm_stream_write_async,
     tcpm_stream_read,
     tcpm_stream_read_sync,
+    tcpm_stream_read_to_shm_ring,
     tcpm_stream_read_cancel,
     tcpm_close_connection,
     NULL,

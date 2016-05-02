@@ -37,6 +37,7 @@
 #include "amutil.h"
 #include "event.h"
 #include "packet.h"
+#include "shm-ring.h"
 #include "security.h"
 #include "security-util.h"
 #include "stream.h"
@@ -55,6 +56,7 @@ static int newevent = 1;
 static void recvpkt_callback(void *, void *, ssize_t);
 static void stream_read_callback(void *);
 static void stream_read_sync_callback(void *);
+static void stream_read_to_shm_ring_callback(void *);
 
 static void sec_tcp_conn_read_cancel(struct tcp_conn *);
 static void sec_tcp_conn_read_callback(void *);
@@ -168,8 +170,8 @@ sec_connect_timeout(
 {
     struct sec_handle *rh = cookie;
 
-    event_release(rh->rs->ev_read);
-    rh->rs->ev_read = NULL;
+    rh->rs->rc->reader_callbacks = g_slist_remove(rh->rs->rc->reader_callbacks,
+						  &rh->rs->r_callback);
     event_release(rh->ev_timeout);
     rh->ev_timeout = NULL;
 
@@ -308,6 +310,7 @@ stream_recvpkt_cancel(
 /*
  * Write a chunk of data to a stream.  Blocks until completion.
  */
+GMutex *stream_write_mutex = NULL;
 int
 tcpm_stream_write(
     void *	s,
@@ -319,6 +322,10 @@ tcpm_stream_write(
     assert(rs != NULL);
     assert(rs->rc != NULL);
 
+    if (!stream_write_mutex) {
+	stream_write_mutex = g_mutex_new();
+    }
+    g_mutex_lock(stream_write_mutex);
     auth_debug(6, _("sec: stream_write: writing %zu bytes to %s:%d %d\n"),
 		   size, rs->rc->hostname, rs->handle,
 		   rs->rc->write);
@@ -326,8 +333,10 @@ tcpm_stream_write(
     if (tcpm_send_token(rs->rc, rs->handle, &rs->rc->errmsg,
 			     buf, size)) {
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
+	g_mutex_unlock(stream_write_mutex);
 	return (-1);
     }
+    g_mutex_unlock(stream_write_mutex);
     return (0);
 }
 
@@ -348,7 +357,7 @@ tcpm_stream_write_async(
     assert(rs != NULL);
     assert(rs->rc != NULL);
 
-    auth_debug(6, _("sec: stream_write: writing %zu bytes to %s:%d %d\n"),
+    auth_debug(6, _("sec: stream_write_async: writing %zu bytes to %s:%d %d\n"),
 		   size, rs->rc->hostname, rs->handle,
 		   rs->rc->write);
 
@@ -374,9 +383,13 @@ tcpm_stream_read(
     /*
      * Only one read request can be active per stream.
      */
-    if (rs->ev_read == NULL) {
-	rs->ev_read = event_register((event_id_t)rs->rc->event_id, EV_WAIT,
-	    stream_read_callback, rs);
+    rs->r_callback.handle = rs->handle;
+    rs->r_callback.s = rs;
+    rs->r_callback.callback = stream_read_callback;
+    if (!rs->ev_read_callback) {
+	rs->ev_read_callback = TRUE;
+	rs->rc->reader_callbacks = g_slist_prepend(rs->rc->reader_callbacks,
+						   &rs->r_callback);
 	sec_tcp_conn_read(rs->rc);
     }
     rs->fn = fn;
@@ -390,6 +403,15 @@ static void    *sync_pkt;
 /*
  * Read a chunk of data from a stream.  Blocks until completion.
  */
+static void
+for_event_release(
+    void *      cookie)
+{
+    struct sec_stream *rs = cookie;
+
+   event_release(rs->ev_read_sync);
+}
+
 ssize_t
 tcpm_stream_read_sync(
     void *	s,
@@ -402,7 +424,7 @@ tcpm_stream_read_sync(
     /*
      * Only one read request can be active per stream.
      */
-    if (rs->ev_read != NULL) {
+    if (rs->ev_read_callback) {
 	return -1;
     }
     sync_pktlen = 0;
@@ -411,13 +433,52 @@ tcpm_stream_read_sync(
 	security_stream_seterror(&rs->secstr, "Failed to read from handle %d because server already closed it", rs->handle);
 	return -1;
     }
-    rs->ev_read = event_register((event_id_t)rs->rc->event_id, EV_WAIT,
-        stream_read_sync_callback, rs);
-    sec_tcp_conn_read(rs->rc);
-    event_wait(rs->ev_read);
+    rs->r_callback.handle = rs->handle;
+    rs->r_callback.s = rs;
+    rs->r_callback.callback = stream_read_sync_callback;
+    if (!rs->ev_read_callback) {
+	rs->ev_read_callback = TRUE;
+	rs->rc->reader_callbacks = g_slist_prepend(rs->rc->reader_callbacks,
+						   &rs->r_callback);
+	sec_tcp_conn_read(rs->rc);
+    }
+
+    rs->ev_read_sync = event_register((event_id_t)rs, EV_WAIT, for_event_release, rs);
+    event_wait(rs->ev_read_sync);
+    rs->ev_read_sync = NULL;
     /* Can't use rs or rc, they can be freed */
     *buf = sync_pkt;
     return (sync_pktlen);
+}
+
+void
+tcpm_stream_read_to_shm_ring(
+    void *s,
+    void (*fn)(void *, void *, ssize_t),
+    shm_ring_t *shm_ring,
+    void *arg)
+{
+    struct sec_stream *rs = s;
+
+    assert(rs != NULL);
+
+    /*
+     * Only one read request can be active per stream.
+     */
+    rs->r_callback.handle = rs->handle;
+    rs->r_callback.s = rs;
+    rs->r_callback.callback = stream_read_to_shm_ring_callback;
+    if (!rs->ev_read_callback) {
+	rs->ev_read_callback = TRUE;
+	rs->rc->reader_callbacks = g_slist_prepend(rs->rc->reader_callbacks,
+						   &rs->r_callback);
+	sec_tcp_conn_read(rs->rc);
+
+    }
+    rs->fn = fn;
+    rs->arg = arg;
+    rs->shm_ring = shm_ring;
+    rs->ring_init = FALSE;
 }
 
 /*
@@ -432,9 +493,10 @@ tcpm_stream_read_cancel(
 
     assert(rs != NULL);
 
-    if (rs->ev_read != NULL) {
-	event_release(rs->ev_read);
-	rs->ev_read = NULL;
+    if (rs->ev_read_callback) {
+	rs->rc->reader_callbacks = g_slist_remove(rs->rc->reader_callbacks,
+						  &rs->r_callback);
+	rs->ev_read_callback = FALSE;
 	sec_tcp_conn_read_cancel(rs->rc);
     }
 }
@@ -673,7 +735,9 @@ tcpm_recv_token(
     char **	buf,
     ssize_t *	size)
 {
-    ssize_t     rval;
+    ssize_t            rval;
+    struct sec_stream *rs = NULL;
+    GSList            *reader_callbacks;
 
     assert(sizeof(rc->netint) == 8);
     if (rc->size_header_read < (ssize_t)sizeof(rc->netint)) {
@@ -683,7 +747,7 @@ tcpm_recv_token(
 	if (rval == -1) {
 	    if (errmsg) {
 		g_free(*errmsg);
-		*errmsg = g_strdup_printf(_("recv error: %s"),
+		*errmsg = g_strdup_printf(_("Xrecv error: %s"),
                                           strerror(errno));
             }
 	    auth_debug(1, _("tcpm_recv_token: A return(-1)\n"));
@@ -753,13 +817,25 @@ tcpm_recv_token(
 	    *size = -1;
 	    return -1;
 	}
-        rc->buffer = g_malloc((size_t)*size);
 
 	if (*size == 0) {
 	    auth_debug(1, "tcpm_recv_token: read EOF from %d\n", *handle);
 	    g_free(*errmsg);
 	    *errmsg = g_strdup("EOF");
 	    rc->size_header_read = 0;
+	    rs = NULL;
+	    for (reader_callbacks = rc->reader_callbacks; reader_callbacks != NULL;
+		 reader_callbacks = reader_callbacks->next) {
+		reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
+		if (r_callback->s->handle == rc->handle) {
+		    rs = r_callback->s;
+		}
+	    }
+	    if (rs && rs->shm_ring) {
+		rs->shm_ring->mc->eof_flag = TRUE;
+		sem_post(rs->shm_ring->sem_read);
+		sem_post(rs->shm_ring->sem_read);
+	    }
 	    return 0;
 	}
 	return -2;
@@ -768,11 +844,180 @@ tcpm_recv_token(
     *size = (ssize_t)ntohl(rc->netint[0]);
     *handle = (int)ntohl(rc->netint[1]);
 
-    rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
-			         (size_t)*size - rc->size_buffer_read, 0);
+    if (!rs) {
+	for (reader_callbacks = rc->reader_callbacks; reader_callbacks != NULL;
+	     reader_callbacks = reader_callbacks->next) {
+	    reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
+	    if (r_callback->s->handle == rc->handle) {
+		rs = r_callback->s;
+	    }
+	}
+    }
+    if (!rs || !rs->shm_ring) {
+	if (!rc->buffer)
+	    rc->buffer = g_malloc((size_t)*size);
+	rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
+				     (size_t)*size - rc->size_buffer_read, 0);
+    } else {
+	size_t to_read;
+	uint64_t write_offset;
+	uint64_t readx;
+	uint64_t written;
+	uint64_t shm_ring_size;
+	void *decbuf;
+	ssize_t decsize;
+	char *buf = NULL;
+
+	if (!rs->ring_init) {
+	    shm_ring_producer_set_size(rs->shm_ring, NETWORK_BLOCK_BYTES*8, NETWORK_BLOCK_BYTES);
+	    rs->ring_init = TRUE;
+	}
+	to_read = (size_t)*size - rc->size_buffer_read;
+	write_offset = rs->shm_ring->mc->write_offset;
+	written = rs->shm_ring->mc->written;
+	shm_ring_size = rs->shm_ring->mc->ring_size;
+
+	if (rc->driver->data_decrypt) {
+
+	    // read to a buffer
+	    if (!rc->buffer)
+		rc->buffer = g_malloc((size_t)*size);
+	    rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
+				(size_t)*size - rc->size_buffer_read, 0);
+	    if (rval < 0) {
+		g_free(*errmsg);
+		*errmsg = g_strdup_printf("recv error: data_read failed");
+		auth_debug(1, _(" recv error: D return(-1)\n"));
+		return -1;
+	    }
+	    if (rval < (ssize_t)*size - rc->size_buffer_read) {
+		rc->size_buffer_read += rval;
+		return (-2);
+	    }
+
+	    // decrypt to another buffer
+	    buf = rc->buffer;
+	    rc->buffer = NULL;
+	    rc->driver->data_decrypt(rc, buf, *size, &decbuf, &decsize);
+	    if (buf != (char *)decbuf) {
+		amfree(buf);
+		buf = (char *)decbuf;
+	    }
+	    *size = decsize;
+	    to_read = *size;
+	} else {
+	    to_read = *size - rc->size_buffer_read;
+	}
+
+	rval = 1;
+	while (to_read > 0 && rval > 0) {
+	    size_t avail;
+	    size_t usable;
+
+	    /* wait for enough space in the ring to read the packet */
+	    while (!rs->shm_ring->mc->cancelled) {
+	        readx = rs->shm_ring->mc->readx;
+		avail = shm_ring_size - (written - readx);
+	        if (avail > to_read)
+		    break;
+	        if (avail > shm_ring_size/4)
+		    break;
+	        if (shm_ring_sem_wait(rs->shm_ring, rs->shm_ring->sem_write) != 0) {
+		    g_free(*errmsg);
+		    *errmsg = g_strdup_printf("recv error: sem_wait(sem_write) failed");
+		    return -1;
+		}
+	    }
+	    if (rs->shm_ring->mc->cancelled) {
+		g_free(*errmsg);
+		*errmsg = g_strdup_printf("recv error: shm_ring is cancelled");
+		auth_debug(1, _("tcpm_recv_token: D return(-1)\n"));
+		return -1;
+	    }
+	    usable = to_read;
+	    if (usable >= avail) {
+		usable = avail - 1;
+	    }
+
+	    if (rc->driver->data_decrypt) {
+		// copy from the decrypted buffer
+		if (write_offset + usable <= shm_ring_size) {
+		    memcpy(rs->shm_ring->data + write_offset , buf, usable);
+		} else {
+		    memcpy(rs->shm_ring->data + write_offset, buf, shm_ring_size - write_offset);
+		    memcpy(rs->shm_ring->data, buf + shm_ring_size - write_offset, usable -(shm_ring_size - write_offset));
+		}
+		rval = usable;
+	    } else {
+		if (usable > shm_ring_size - write_offset)
+		    usable = shm_ring_size - write_offset;
+		rval = rc->driver->data_read(rc, rs->shm_ring->data + write_offset,
+					     usable, 0);
+	    }
+	    if (rval > 0) {
+		if (rs->shm_ring->mc->written == 0 && rs->shm_ring->mc->need_sem_ready) {
+		    sem_post(rs->shm_ring->sem_ready);
+		    if (shm_ring_sem_wait(rs->shm_ring, rs->shm_ring->sem_start) != 0) {
+			g_free(*errmsg);
+			*errmsg = g_strdup_printf("recv error: sem_wait(sem_start) failed");
+			amfree(buf);
+			return -1;
+		    }
+		}
+		write_offset += rval;
+		if (write_offset >= shm_ring_size) {
+		    write_offset -= shm_ring_size;
+		}
+		rs->shm_ring->mc->write_offset = write_offset;
+		rs->shm_ring->mc->written += rval;
+		rs->shm_ring->data_avail += rval;
+		if (rs->shm_ring->data_avail >= rs->shm_ring->mc->consumer_block_size) {
+		    sem_post(rs->shm_ring->sem_read);
+		    rs->shm_ring->data_avail -= rs->shm_ring->mc->consumer_block_size;
+		}
+		rc->size_buffer_read += rval;
+		to_read -= rval;
+		if (rc->size_buffer_read < (ssize_t)*size && to_read == 0) {
+		    amfree(buf);
+		    return -2;
+		}
+	    }
+	}
+
+
+	if (rval < 0) {
+	    rs->shm_ring->mc->cancelled = TRUE;
+	    rs->shm_ring->mc->eof_flag = TRUE;
+	    sem_post(rs->shm_ring->sem_read);
+	    sem_post(rs->shm_ring->sem_read);
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf(_("Yrecv error: %s"), strerror(errno));
+	    auth_debug(1, _("tcpm_recv_token: C return(-1)\n"));
+	    amfree(buf);
+	    return (-1);
+	} else if (rval == 0) {
+	    *size = 0;
+	    *handle = H_EOF;
+	    rs->shm_ring->mc->eof_flag = TRUE;
+	    sem_post(rs->shm_ring->sem_read);
+	    sem_post(rs->shm_ring->sem_read);
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("SOCKET_EOF");
+	    auth_debug(1, "tcpm_recv_token: C return(0)\n");
+	    amfree(buf);
+	    return (0);
+	} else {
+	    *size = rval;
+	    rc->size_header_read = 0;
+	    rc->size_buffer_read = 0;
+	    amfree(buf);
+	    return (*size);
+	}
+    }
+
     if (rval == -1) {
 	g_free(*errmsg);
-	*errmsg = g_strdup_printf(_("recv error: %s"), strerror(errno));
+	*errmsg = g_strdup_printf(_("Zrecv error: %s"), strerror(errno));
 	auth_debug(1, _("tcpm_recv_token: B return(-1)\n"));
 	return (-1);
     } else if (rval == 0) {
@@ -868,7 +1113,7 @@ tcpma_stream_client(
     rs = g_new0(struct sec_stream, 1);
     security_streaminit(&rs->secstr, rh->sech.driver);
     rs->handle = id;
-    rs->ev_read = NULL;
+    rs->ev_read_callback = FALSE;
     rs->closed_by_me = 0;
     rs->closed_by_network = 0;
     if (rh->rc) {
@@ -928,7 +1173,7 @@ tcpma_stream_server(
      * we start at 500000 and work down
      */
     rs->handle = 500000 - newhandle++;
-    rs->ev_read = NULL;
+    rs->ev_read_callback = FALSE;
     auth_debug(1, _("sec: stream_server: created stream %d\n"), rs->handle);
     return (rs);
 }
@@ -1022,7 +1267,7 @@ tcp1_stream_server(
 	rs->handle = (int)rs->port;
     }
     rs->fd = -1;
-    rs->ev_read = NULL;
+    rs->ev_read_callback = FALSE;
     return (rs);
 }
 
@@ -1070,7 +1315,7 @@ tcp1_stream_client(
     rs = g_new0(struct sec_stream, 1);
     security_streaminit(&rs->secstr, rh->sech.driver);
     rs->handle = id;
-    rs->ev_read = NULL;
+    rs->ev_read_callback = FALSE;
     rs->closed_by_me = 0;
     rs->closed_by_network = 0;
     if (rh->rc) {
@@ -1641,6 +1886,8 @@ udp_netfd_read_callback(
      */
     if (udp->accept_fn == NULL) {
 	g_debug(_("Receive packet from unknown source"));
+	dump_sockaddr(&udp->peer);
+	//dump_sockaddr(&rh->peer);
 	return;
     }
 
@@ -1936,6 +2183,7 @@ stream_read_sync_callback(
     auth_debug(6,
 	    _("sec: stream_read_sync_callback: read %zd bytes from %s:%d\n"),
 	    rs->rc->pktlen, rs->rc->hostname, rs->handle);
+    event_wakeup((event_id_t)rs);
 }
 
 /*
@@ -1996,6 +2244,63 @@ stream_read_callback(
 }
 
 /*
+ * Callback for tcpm_stream_read_to_shm_ring
+ */
+static void
+stream_read_to_shm_ring_callback(
+    void *	arg)
+{
+    struct sec_stream *rs = arg;
+    time_t             logtime;
+
+    assert(rs != NULL);
+    assert(rs->rc != NULL);
+
+    logtime = time(NULL);
+    if (logtime > rs->rc->logstamp + 10) {
+	g_debug("stream_read_to_shm_ring_callback: data is still flowing");
+	rs->rc->logstamp = logtime;
+    }
+    auth_debug(6, _("sec: stream_read_to_shm_ring_callback: handle %d\n"), rs->handle);
+
+    /*
+     * Make sure this was for us.  If it was, then blow away the handle
+     * so it doesn't get claimed twice.  Otherwise, leave it alone.
+     *
+     * If the handle is EOF, pass that up to our callback.
+     */
+    if (rs->rc->handle == rs->handle) {
+	auth_debug(6, _("sec: stream_read_to_shm_ring_callback: it was for us\n"));
+	rs->rc->handle = H_TAKEN;
+    } else if (rs->rc->handle != H_EOF) {
+	auth_debug(6, _("sec: stream_read_to_shm_ring_callback: not for us\n"));
+	return;
+    }
+
+    /*
+     * Remove the event first, and then call the callback.
+     * We remove it first because we don't want to get in their
+     * way if they reschedule it.
+     */
+
+    if (rs->rc->pktlen <= 0) {
+	auth_debug(5, _("sec: stream_read_to_shm_ring_callback: %s\n"), rs->rc->errmsg);
+	tcpm_stream_read_cancel(rs);
+	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
+	if(rs->closed_by_me == 1 && rs->closed_by_network == 0) {
+	    sec_tcp_conn_put(rs->rc);
+	}
+	rs->closed_by_network = 1;
+	(*rs->fn)(rs->arg, NULL, rs->rc->pktlen);
+	return;
+    }
+    auth_debug(6, _("sec: stream_read_to_shm_ring_callback: read %zd bytes from %s:%d\n"),
+		   rs->rc->pktlen, rs->rc->hostname, rs->handle);
+    (*rs->fn)(rs->arg, rs->rc->pkt, rs->rc->pktlen);
+    auth_debug(6, _("sec: after callback stream_read_to_shm_ring_callback\n"));
+}
+
+/*
  * The callback for the netfd for the event handler
  * Determines if this packet is for this security handle,
  * and does the real callback if so.
@@ -2008,7 +2313,7 @@ sec_tcp_conn_read_callback(
     struct sec_handle *	rh;
     pkt_t		pkt;
     ssize_t		rval;
-    int			revent;
+    GSList		*reader_callbacks;
 
     assert(cookie != NULL);
 
@@ -2027,9 +2332,11 @@ sec_tcp_conn_read_callback(
     if (rval < 0 || rc->handle == H_EOF) {
 	rc->pktlen = rval;
 	rc->handle = H_EOF;
-	revent = event_wakeup((event_id_t)rc->event_id);
-	auth_debug(6, _("sec: conn_read_callback: event_wakeup return %d\n"),
-		       revent);
+	for (reader_callbacks = rc->reader_callbacks; reader_callbacks != NULL;
+	     reader_callbacks = reader_callbacks->next) {
+	    reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
+	    r_callback->callback(r_callback->s);
+	}
 	/* delete our 'accept' reference */
 	if (rc->accept_fn != NULL) {
 	    (*rc->accept_fn)(NULL, NULL);
@@ -2047,9 +2354,13 @@ sec_tcp_conn_read_callback(
 
     if(rval == 0) {
 	rc->pktlen = 0;
-	revent = event_wakeup((event_id_t)rc->event_id);
-	auth_debug(6,
-		   _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
+	for (reader_callbacks = rc->reader_callbacks; reader_callbacks != NULL;
+	     reader_callbacks = reader_callbacks->next) {
+	    reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
+	    if (r_callback->s->handle == rc->handle) {
+		r_callback->callback(r_callback->s);
+	    }
+	}
 	if (rc->handle != H_TAKEN) {
 	    g_debug("ignoring close stream %d", rc->handle);
 	}
@@ -2058,8 +2369,13 @@ sec_tcp_conn_read_callback(
 
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
-    revent = event_wakeup((event_id_t)rc->event_id);
-    auth_debug(6, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
+    for (reader_callbacks = rc->reader_callbacks; reader_callbacks != NULL;
+	 reader_callbacks = reader_callbacks->next) {
+	reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
+	if (r_callback->s->handle == rc->handle) {
+	    r_callback->callback(r_callback->s);
+	}
+    }
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN) {
 	if(rc->refcnt == 0) {

@@ -67,6 +67,8 @@ static int	bsd_stream_auth(void *);
 static int	bsd_stream_id(void *);
 static void	bsd_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
 static ssize_t	bsd_stream_read_sync(void *, void **);
+static void     bsd_stream_read_to_shm_ring(void *s, void (*fn)(void *, void *, ssize_t), shm_ring_t *shm_ring, void *arg);
+static void     bsd_stream_read_to_shm_ring_callback(void *arg);
 static void	bsd_stream_read_cancel(void *);
 
 /*
@@ -92,6 +94,7 @@ const security_driver_t bsd_security_driver = {
     tcp_stream_write_async,
     bsd_stream_read,
     bsd_stream_read_sync,
+    bsd_stream_read_to_shm_ring,
     bsd_stream_read_cancel,
     sec_close_connection_none,
     NULL,
@@ -646,6 +649,141 @@ stream_read_sync_callback(
     } else {
 	sync_pkt = NULL;
     }
+}
+
+static void
+bsd_stream_read_to_shm_ring_callback(
+    void *arg)
+{
+    struct sec_stream *bs = arg;
+    ssize_t n = -1;
+    size_t to_read;
+    uint64_t write_offset;
+    uint64_t readx;
+    uint64_t written;
+    uint64_t shm_ring_size;
+    char     *buf = NULL;
+
+
+    assert(bs != NULL);
+
+    if (!bs->ring_init) {
+	shm_ring_producer_set_size(bs->shm_ring, NETWORK_BLOCK_BYTES*8, NETWORK_BLOCK_BYTES);
+	bs->ring_init = TRUE;
+    }
+    to_read = NETWORK_BLOCK_BYTES;
+    write_offset = bs->shm_ring->mc->write_offset;
+    written = bs->shm_ring->mc->written;
+    shm_ring_size = bs->shm_ring->mc->ring_size;
+
+    /* wait for enough space in the ring to read the packet */
+    while (!bs->shm_ring->mc->cancelled) {
+	readx = bs->shm_ring->mc->readx;
+	if (shm_ring_size - (written - readx) > to_read)
+	    break;
+	if (shm_ring_sem_wait(bs->shm_ring, bs->shm_ring->sem_write) != 0) {
+	    auth_debug(1, _("bsd_stream_read_to_shm_ring_callback: A return(-1)\n"));
+	    goto ring_failed;
+	}
+    }
+    if (bs->shm_ring->mc->cancelled) {
+	auth_debug(1, _("bsd_stream_read_to_shm_ring_callback: B return(-1)\n"));
+	goto ring_failed;
+    }
+
+    buf = bs->shm_ring->data + write_offset;
+    if (write_offset + to_read <= shm_ring_size) {
+	do {
+	    n = read(bs->fd, bs->shm_ring->data + write_offset,
+			     to_read);
+	} while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
+    } else {
+	do {
+	    n = read(bs->fd, bs->shm_ring->data + write_offset,
+			     shm_ring_size - write_offset);
+	} while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
+	if (n == (int64_t)(shm_ring_size - write_offset)) {
+	    ssize_t rval1;
+	    do {
+		rval1 = read(bs->fd, bs->shm_ring->data,
+				to_read -(shm_ring_size - write_offset));
+	    } while ((rval1 < 0) && ((errno == EINTR) || (errno == EAGAIN)));
+	    if (rval1 > 0) {
+		n += rval1;
+	    }
+	}
+    }
+
+ring_failed:
+    if (n < 0) {
+	security_stream_seterror(&bs->secstr, "%s", strerror(errno));
+	bsd_stream_read_cancel(bs);
+	bs->shm_ring->mc->cancelled = TRUE;
+	bs->shm_ring->mc->eof_flag = TRUE;
+	sem_post(bs->shm_ring->sem_read);
+	sem_post(bs->shm_ring->sem_read);
+	sem_post(bs->shm_ring->sem_write);
+	auth_debug(1, _("bsd_stream_read_to_shm_ring_callback: C return(-1)\n"));
+    } else if (n == 0) {
+	bsd_stream_read_cancel(bs);
+	bs->shm_ring->mc->eof_flag = TRUE;
+	sem_post(bs->shm_ring->sem_read);
+	sem_post(bs->shm_ring->sem_read);
+    } else {
+	if (bs->shm_ring->mc->written == 0 && bs->shm_ring->mc->need_sem_ready) {
+	    sem_post(bs->shm_ring->sem_ready);
+	    if (shm_ring_sem_wait(bs->shm_ring, bs->shm_ring->sem_start) != 0) {
+		security_stream_seterror(&bs->secstr, "%s", strerror(errno));
+		bsd_stream_read_cancel(bs);
+		bs->shm_ring->mc->cancelled = TRUE;
+		bs->shm_ring->mc->eof_flag = TRUE;
+		sem_post(bs->shm_ring->sem_read);
+		sem_post(bs->shm_ring->sem_read);
+		sem_post(bs->shm_ring->sem_write);
+		auth_debug(1, _("bsd_stream_read_to_shm_ring_callback: D return(-1)\n"));
+		goto shm_failed;
+	    }
+	}
+	write_offset += n;
+	if (write_offset >= shm_ring_size) {
+	    write_offset -= shm_ring_size;
+	}
+	bs->shm_ring->mc->write_offset = write_offset;
+	bs->shm_ring->mc->written += n;
+	sem_post(bs->shm_ring->sem_read);
+    }
+
+shm_failed:
+    (*bs->fn)(bs->arg, buf, n);
+}
+
+static void
+bsd_stream_read_to_shm_ring(
+    void *s,
+    void (*fn)(void *, void *, ssize_t),
+    shm_ring_t *shm_ring,
+    void *arg)
+{
+    struct sec_stream *bs = s;
+
+    assert(bs != NULL);
+    auth_debug(1, _("bsd: stream_read_to_shm_ring: fd %d\n"), bs->fd);
+
+    /*
+     * Only one read request can be active per stream.
+     */
+    if (bs->ev_read != NULL)
+        event_release(bs->ev_read);
+
+    bs->r_callback.handle = bs->handle;
+    bs->r_callback.s = bs;
+    bs->r_callback.callback = bsd_stream_read_to_shm_ring_callback;
+
+    bs->ev_read = event_register((event_id_t)bs->fd, EV_READFD, bsd_stream_read_to_shm_ring_callback, bs);
+    bs->fn = fn;
+    bs->arg = arg;
+    bs->shm_ring = shm_ring;
+    bs->ring_init = FALSE;
 }
 
 /*

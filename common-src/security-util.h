@@ -35,6 +35,7 @@
 #include "stream.h"
 #include "dgram.h"
 #include "conffile.h"
+#include "shm-ring.h"
 #include "security.h"
 #include "event.h"
 
@@ -79,6 +80,13 @@ typedef struct async_write_data {
 } async_write_data;
 
 struct sec_handle;
+struct sec_stream;
+
+typedef struct reader_callback {
+    int          handle;
+    struct sec_stream  *s;
+    void       (*callback)(void *);
+} reader_callback;
 
 /*
  * This is a sec connection to a host.  We should only have
@@ -104,6 +112,7 @@ struct tcp_conn {
     int			event_id;		/* event ID fired when token read */
     void		(*accept_fn)(security_handle_t *, pkt_t *);
     sockaddr_union	peer;
+    GSList             *reader_callbacks;
     int			(*recv_security_ok)(struct sec_handle *, pkt_t *, int);
     int			need_priv_port;
     char *		(*prefix_packet)(void *, pkt_t *);
@@ -146,6 +155,7 @@ struct sec_handle {
 					/* func to call when connected */
     } fn;
     void *		arg;		/* argument to pass function */
+    shm_ring_t *	shm_ring;
     event_handle_t *	ev_timeout;	/* timeout handle for recv */
     sockaddr_union	peer;
     int			sequence;
@@ -171,7 +181,9 @@ struct sec_stream {
     security_stream_t	secstr;		/* MUST be first */
     struct tcp_conn *	rc;		/* physical connection */
     int			handle;		/* protocol handle */
-    event_handle_t *	ev_read;	/* read (EV_WAIT) event handle */
+    gboolean		ev_read_callback;	/* read */
+    event_handle_t *	ev_read;	/* read */
+    event_handle_t *	ev_read_sync;	/* read */
     void		(*fn)(void *, void *, ssize_t);	/* read event fn */
     void *		arg;		/* arg for previous */
     int			fd;
@@ -181,6 +193,9 @@ struct sec_stream {
     in_port_t		port;
     int			closed_by_me;
     int			closed_by_network;
+    reader_callback     r_callback;
+    shm_ring_t        *shm_ring;
+    gboolean            ring_init;
 };
 
 /*
@@ -255,6 +270,7 @@ int	tcpm_stream_write(void *, const void *, size_t);
 int	tcpm_stream_write_async(void *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
 void	tcpm_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
 ssize_t	tcpm_stream_read_sync(void *, void **);
+void	tcpm_stream_read_to_shm_ring(void *, void (*)(void *, void *, ssize_t), struct shm_ring_t *, void *);
 void	tcpm_stream_read_cancel(void *);
 ssize_t	tcpm_send_token(struct tcp_conn *, int, char **, const void *, size_t);
 ssize_t	tcpm_send_token_async(struct sec_stream *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
