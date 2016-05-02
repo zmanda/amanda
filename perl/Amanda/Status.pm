@@ -673,7 +673,8 @@ REREAD:
 		$self->{'current_time'} = $line[3];
 		if ($line[5] =~ /dumper\d*/) {
 		    my $dumper = $line[5];
-		    if ($line[6] eq "PORT-DUMP") {
+		    if ($line[6] eq "PORT-DUMP" ||
+			$line[6] eq "SHM-DUMP") {
 			#7:handle 8:port 9:interface 10:maxdumps 11:host 12:amfeatures 13:disk 14:device 15:level ...
 			my $host = $line[11];
 			my $disk = $line[13];
@@ -713,7 +714,8 @@ REREAD:
 			}
 		    }
 		} elsif ($line[5] =~ /chunker\d*/) {
-		    if ($line[6] eq "PORT-WRITE") {
+		    if ($line[6] eq "PORT-WRITE" ||
+			$line[6] eq "SHM-WRITE") {
 			my $serial=$line[7];
 			my $host = $line[9];
 			my $disk = $line[11];
@@ -836,7 +838,8 @@ REREAD:
 			$dlet->{'taped_size'} = 0;
 			$dlet->{'error'} = "";
 			$worker_to_serial{$worker} = $serial;
-		    } elsif ($line[6] eq "PORT-WRITE") {
+		    } elsif ($line[6] eq "PORT-WRITE" ||
+			     $line[6] eq "SHM-WRITE") {
 			#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
 			my $worker = $line[7];
 			my $serial = $line[8];
@@ -889,6 +892,7 @@ REREAD:
 			my $level = $line[14];
 			my $datestamp = $line[15];
 			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $VAULTING;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
 			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
@@ -937,6 +941,8 @@ REREAD:
 			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			    my $dlet = $dle->{'storage'}->{$storage};
 			}
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker1}->{'no_tape'} = $self->{'taper'}->{$taper}->{'worker'}->{$worker2}->{'no_tape'};
+			$self->{'taper'}->{$taper}->{'worker'}->{$worker2}->{'no_tape'} = 0;
 		    }
 		}
 	    } elsif($line[1] eq "result" && $line[2] eq "time") {
@@ -1593,6 +1599,10 @@ sub set_summary {
 #		    $dle->{'message'} = "vaulting done" if !defined $dle->{'message'};
 		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
+		} elsif ($dle->{'status'} == $FLUSH_FAILED) {
+# JLM
+		} elsif ($dle->{'status'} == $WRITE_FAILED) {
+# JLM
 		} else {
 		    die("Bad dle status: $dle->{'status'}");
 		}
