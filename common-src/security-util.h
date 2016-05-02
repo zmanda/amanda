@@ -196,6 +196,7 @@ struct sec_stream {
     reader_callback     r_callback;
     shm_ring_t        *shm_ring;
     gboolean            ring_init;
+    event_id_t          event_id;
 };
 
 /*

@@ -48,7 +48,7 @@
  */
 GSList *connq = NULL;
 static int newhandle = 1;
-static int newevent = 1;
+static event_id_t newevent = 1;
 
 /*
  * Local functions
@@ -443,7 +443,8 @@ tcpm_stream_read_sync(
 	sec_tcp_conn_read(rs->rc);
     }
 
-    rs->ev_read_sync = event_register((event_id_t)rs, EV_WAIT, for_event_release, rs);
+    rs->event_id = newevent++;
+    rs->ev_read_sync = event_register(rs->event_id, EV_WAIT, for_event_release, rs);
     event_wait(rs->ev_read_sync);
     rs->ev_read_sync = NULL;
     /* Can't use rs or rc, they can be freed */
@@ -1819,7 +1820,7 @@ udp_inithandle(
     udp->bh_last = rh;
 
     rh->sequence = sequence;
-    rh->event_id = (event_id_t)newevent++;
+    rh->event_id = newevent++;
     amfree(rh->proto_handle);
     rh->proto_handle = g_strdup(handle);
     rh->fn.connect = NULL;
@@ -2183,7 +2184,7 @@ stream_read_sync_callback(
     auth_debug(6,
 	    _("sec: stream_read_sync_callback: read %zd bytes from %s:%d\n"),
 	    rs->rc->pktlen, rs->rc->hostname, rs->handle);
-    event_wakeup((event_id_t)rs);
+    event_wakeup(rs->event_id);
 }
 
 /*
