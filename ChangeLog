@@ -1,4 +1,24 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add the number of memory allocation by block in the xfer cost metric
+	* xfer-src/xfer-element.h (XFER_NALLOC): New macro
+	* xfer-src/xfer.c (PAIR_COST) Compute the new cost
+	* device-src/xfer-dest-device.c, device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-directtcp.c,
+	  device-src/xfer-dest-taper-splitter.c,
+	  device-src/xfer-source-device.c, device-src/xfer-source-recovery.c,
+	  server-src/xfer-dest-holding.c, server-src/xfer-source-holding.c,
+	  xfer-src/dest-application.c, xfer-src/dest-buffer.c,
+	  xfer-src/dest-directtcp-connect.c, xfer-src/dest-directtcp-listen.c,
+	  xfer-src/dest-fd.c, xfer-src/dest-null.c,
+	  xfer-src/element-glue.c, xfer-src/filter-crc.c,
+	  xfer-src/filter-process.c, xfer-src/filter-xor.c,
+	  xfer-src/source-directtcp-connect.c,
+	  xfer-src/source-directtcp-listen.c, xfer-src/source-fd.c,
+	  xfer-src/source-file.c, xfer-src/source-pattern.c,
+	  xfer-src/source-random.c,
+	  xfer-src/xfer-test.c: Add the new cost value
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add a shared memory ring
 	* common-src/Makefile.am (libamanda_la_SOURCES): Add shm-ring.c
 	* common-src/security.h: include "shm-ring.h"

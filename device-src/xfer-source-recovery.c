@@ -526,11 +526,11 @@ pull_buffer_impl(
 
 	    /* if we're not at EOF, it's an error */
 	    if (!self->device->is_eof && elt->size != 0) {
+		g_mutex_unlock(self->start_part_mutex);
 		xfer_cancel_with_error(elt,
 		    _("error reading from %s: %s"),
 		    self->device->device_name,
 		    device_error_or_status(self->device));
-		g_mutex_unlock(self->start_part_mutex);
 		wait_until_xfer_cancelled(elt->xfer);
                 goto error_unlocked;
 	    }
@@ -702,18 +702,18 @@ get_mech_pairs_impl(
 {
     XferSourceRecovery *self = XFER_SOURCE_RECOVERY(elt);
     static xfer_element_mech_pair_t basic_mech_pairs[] = {
-	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 1, 0},
-	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
+	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
     static xfer_element_mech_pair_t directtcp_mech_pairs[] = {
-	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_CONNECT, 0, 1},
-	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_LISTEN, 0, 1},
+	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_CONNECT, XFER_NROPS(0), XFER_NTHREADS(1), XFER_NALLOC(0) },
+	{ XFER_MECH_NONE, XFER_MECH_DIRECTTCP_LISTEN, XFER_NROPS(0), XFER_NTHREADS(1), XFER_NALLOC(0) },
 	/* devices which support DirectTCP are usually not very efficient
 	 * at delivering data via device_read_block, so this counts an extra
 	 * byte operation in the cost metrics (2 here vs. 1 in basic_mech_pairs).
 	 * This is a hack, but it will do for now. */
-	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 2, 0},
-	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, XFER_NROPS(2), XFER_NTHREADS(0), XFER_NALLOC(0) },
+	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
     return device_directtcp_supported(self->device)?

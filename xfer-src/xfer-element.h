@@ -83,12 +83,14 @@ typedef enum {
 
 #define XFER_NROPS(x) (x)
 #define XFER_NTHREADS(x) (x)
+#define XFER_NALLOC(x) (x)
 
 typedef struct {
     xfer_mech input_mech;
     xfer_mech output_mech;
     guint8 ops_per_byte;	/* number of byte copies or other operations */
     guint8 nthreads;		/* number of additional threads created */
+    guint8 nalloc;		/* number of alloc for each block */
 } xfer_element_mech_pair_t;
 
 /***********************

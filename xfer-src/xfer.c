@@ -375,7 +375,7 @@ xfer_mech_name(
  *
  * PAIR will be evaluated multiple times.
  */
-#define PAIR_COST(pair) (((pair).ops_per_byte << 8) + (pair).nthreads)
+#define PAIR_COST(pair) (((pair).ops_per_byte << 16) + ((pair).nalloc << 8) + (pair).nthreads)
 
 /* maximum cost */
 #define MAX_COST 0xffffff

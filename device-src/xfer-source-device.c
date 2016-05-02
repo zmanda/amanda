@@ -147,8 +147,8 @@ class_init(
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
-	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 0, 1},
-	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, XFER_NROPS(0), XFER_NTHREADS(1), XFER_NALLOC(0) },
+	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
     klass->pull_buffer = pull_buffer_impl;
