@@ -41,19 +41,13 @@
 #include "conffile.h"
 #include "amandates.h"
 #include "stream.h"
+#include "shm-ring.h"
 
 #define sendbackup_debug(i, ...) do {	\
 	if ((i) <= debug_sendbackup) {	\
 	    dbprintf(__VA_LIST__);	\
 	}				\
 } while (0)
-
-typedef struct send_crc_s {
-    int      in;
-    int      out;
-    crc_t    crc;
-    GThread *thread;
-} send_crc_t;
 
 #define TIMEOUT 30
 
@@ -77,6 +71,12 @@ long dump_size = -1;
 backup_program_t *program = NULL;
 dle_t *gdle = NULL;
 
+char *shm_control_name = NULL;
+send_crc_t native_crc;
+send_crc_t client_crc;
+gboolean   have_filter = FALSE;
+shm_ring_t *shm_ring = NULL;
+
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static char *amandad_auth = NULL;
@@ -93,9 +93,6 @@ void parse_backup_messages(dle_t *dle, int mesgin);
 static void process_dumpline(char *str);
 static void save_fd(int *, int);
 void application_api_info_tapeheader(int mesgfd, char *prog, dle_t *dle);
-static gpointer handle_crc_thread(gpointer data);
-
-int fdprintf(int fd, char *format, ...) G_GNUC_PRINTF(2, 3);
 
 int
 fdprintf(
@@ -186,6 +183,14 @@ main(
 
     if(argc > 2 && g_str_equal(argv[1], "amandad")) {
 	amandad_auth = g_strdup(argv[2]);
+	argc -= 2;
+	argv += 2;
+    }
+
+    if (argc > 2 && g_str_equal(argv[1], "--shm-name")) {
+	shm_control_name = g_strdup(argv[2]);
+	argc -= 2;
+	argv += 2;
     }
 
     our_features = am_init_feature_set();
@@ -531,7 +536,6 @@ main(
 	FILE      *dumperr;
 	send_crc_t native_crc;
 	send_crc_t client_crc;
-	gboolean   have_filter = FALSE;
 	int        native_pipe[2];
 	int        client_pipe[2];
 	int        data_out = datafd;
@@ -776,20 +780,20 @@ main(
 		dbprintf(" %s\n", (char *)g_ptr_array_index(argv_ptr,j));
 	    dbprintf(_("\"\n"));
 	    if(dup2(native_pipe[1], 1) == -1) {
-		error(_("Can't dup2: %s"),strerror(errno));
+		error(_("native: Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if (dup2(errfd[1], 2) == -1) {
-		error(_("Can't dup2: %s"),strerror(errno));
+		error(_("errfd: Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(dup2(mesgfd, 3) == -1) {
-		error(_("Can't dup2: %s"),strerror(errno));
+		error(_("mesgfd: Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(indexfd > 0) {
 		if(dup2(indexfd, 4) == -1) {
-		    error(_("Can't dup2: %s"),strerror(errno));
+		    error(_("indexfd: Can't dup2: %s"),strerror(errno));
 		    /*NOTREACHED*/
 		}
 		fcntl(indexfd, F_SETFD, 0);
@@ -819,17 +823,40 @@ main(
 	}
 
 	close(native_pipe[1]);
-	native_crc.in  = native_pipe[0];
-	native_crc.out = dumpout;
-	native_crc.thread = g_thread_create(handle_crc_thread,
-				 (gpointer)&native_crc, TRUE, NULL);
-
-	if (have_filter) {
-	    close(client_pipe[1]);
-	    client_crc.in  = client_pipe[0];
-	    client_crc.out = datafd;
-	    client_crc.thread = g_thread_create(handle_crc_thread,
+	if (shm_control_name) {
+	    shm_ring = shm_ring_link(shm_control_name);
+	    shm_ring_producer_set_size(shm_ring, NETWORK_BLOCK_BYTES*16, NETWORK_BLOCK_BYTES*4);
+	    native_crc.in  = native_pipe[0];
+	    if (!have_filter) {
+		native_crc.shm_ring = shm_ring;
+		native_crc.out = dumpout;
+		native_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
+					 (gpointer)&native_crc, TRUE, NULL);
+	    } else {
+		native_crc.out = dumpout;
+		native_crc.thread = g_thread_create(handle_crc_thread,
+					 (gpointer)&native_crc, TRUE, NULL);
+		close(client_pipe[1]);
+		client_crc.shm_ring = shm_ring;
+		client_crc.in  = client_pipe[0];
+		client_crc.out = datafd;
+		client_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
 				 (gpointer)&client_crc, TRUE, NULL);
+	    }
+	} else {
+            native_crc.in  = native_pipe[0];
+	    native_crc.out = dumpout;
+	    native_crc.thread = g_thread_create(handle_crc_thread,
+				(gpointer)&native_crc, TRUE, NULL);
+
+	    if (have_filter) {
+		close(client_pipe[1]);
+		client_crc.in  = client_pipe[0];
+		client_crc.out = datafd;
+		client_crc.thread = g_thread_create(handle_crc_thread,
+		(gpointer)&client_crc, TRUE, NULL);
+	    }
+
 	}
 
 	if (statefd >= 0 && !bsu->state_stream) {
@@ -850,6 +877,11 @@ main(
 	g_thread_join(native_crc.thread);
 	if (have_filter) {
 	    g_thread_join(client_crc.thread);
+	}
+
+	if (shm_ring) {
+	    close_producer_shm_ring(shm_ring);
+	    shm_ring = NULL;
 	}
 
 	result |= check_result(mesgfd);
@@ -917,6 +949,10 @@ main(
 	dbprintf(_("Started backup\n"));
 	parse_backup_messages(dle, mesgpipe[0]);
 	dbprintf(_("Parsed backup messages\n"));
+	g_thread_join(native_crc.thread);
+	if (have_filter) {
+	    g_thread_join(client_crc.thread);
+	}
     }
 
     run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, NULL);
@@ -1363,8 +1399,35 @@ parse_backup_messages(
 	/*NOTREACHED*/
     }
 
-    program->end_backup(dle, goterror);
+    g_thread_join(native_crc.thread);
+    if (have_filter) {
+	g_thread_join(client_crc.thread);
+    }
 
+    if (shm_ring) {
+	close_producer_shm_ring(shm_ring);
+	shm_ring = NULL;
+    }
+
+    if (!have_filter)
+	client_crc.crc = native_crc.crc;
+
+    if (am_has_feature(g_options->features, fe_sendbackup_crc)) {
+	dbprintf("sendbackup: native-CRC %08x:%lld\n",
+		crc32_finish(&native_crc.crc),
+		(long long)native_crc.crc.size);
+	dbprintf("sendbackup: client-CRC %08x:%lld\n",
+		crc32_finish(&client_crc.crc),
+		(long long)client_crc.crc.size);
+	fdprintf(mesgfd, "sendbackup: native-CRC %08x:%lld\n",
+		crc32_finish(&native_crc.crc),
+		(long long)native_crc.crc.size);
+	fdprintf(mesgfd, "sendbackup: client-CRC %08x:%lld\n",
+		crc32_finish(&client_crc.crc),
+		(long long)client_crc.crc.size);
+    }
+
+    program->end_backup(dle, goterror);
     fdprintf(mesgfd, _("%s: size %ld\n"), get_pname(), dump_size);
     fdprintf(mesgfd, _("%s: end\n"), get_pname());
 }
@@ -1590,7 +1653,7 @@ start_index(
   exit(exitcode);
 }
 
-static gpointer
+gpointer
 handle_crc_thread(
     gpointer data)
 {
@@ -1603,6 +1666,21 @@ handle_crc_thread(
 	    crc32_add(buf, size, &crc->crc);
 	}
     }
+    close(crc->in);
+    close(crc->out);
+
+    return NULL;
+}
+
+
+gpointer
+handle_crc_to_shm_ring_thread(
+    gpointer data)
+{
+    send_crc_t *crc = (send_crc_t *)data;
+
+    fd_to_shm_ring(crc->in, crc->shm_ring, &crc->crc);
+
     close(crc->in);
     close(crc->out);
 

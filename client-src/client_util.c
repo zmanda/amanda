@@ -311,7 +311,6 @@ build_exclude(
 
     if (nb_exclude == 0) return NULL;
 
-g_debug("build_exclude optional: %d", dle->exclude_optional);
     if ((filename = build_name(dle->disk, "exclude", mlist)) != NULL) {
 	if ((file_exclude = fopen(filename,"w")) != NULL) {
 

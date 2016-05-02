@@ -37,6 +37,25 @@
 #include "pipespawn.h"
 #include "client_util.h"
 #include "amandad.h"
+#include "shm-ring.h"
+
+typedef struct send_crc_s {
+    int         in;
+    int         out;
+    crc_t       crc;
+    shm_ring_t *shm_ring;
+    GThread    *thread;
+} send_crc_t;
+
+extern char *shm_control_name;
+extern send_crc_t native_crc;
+extern send_crc_t client_crc;
+extern gboolean have_filter;
+extern shm_ring_t *shm_ring;
+
+int fdprintf(int fd, char *format, ...) G_GNUC_PRINTF(2, 3);
+gpointer handle_crc_thread(gpointer data);
+gpointer handle_crc_to_shm_ring_thread(gpointer data);
 
 void info_tapeheader(dle_t *dle);
 void start_index(int createindex, int input, int mesg, 

@@ -45,6 +45,7 @@
 #include "stream.h"
 #include "amutil.h"
 #include "conffile.h"
+#include "shm-ring.h"
 
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */
 #define	ACK_TIMEOUT  	10		/* XXX should be configurable */
@@ -138,6 +139,9 @@ struct active_service {
     int repretry;			/* times we'll retry sending the rep */
     int seen_info_end;			/* have we seen "sendbackup info end\n"? */
     char info_end_buf[INFO_END_LEN];	/* last few bytes read, used for scanning for info end */
+    char *data_shm_control_name;	/* from OPTIONS line */
+    shm_ring_t *shm_ring;
+    GThread *thread;
 
     /*
      * General user streams to the process, and their equivalent
@@ -149,6 +153,7 @@ struct active_service {
 	event_handle_t *ev_read;	/* it's read event handle */
 	event_handle_t *ev_write;	/* it's write event handle */
 	security_stream_t *netfd;	/* stream to amanda server */
+	shm_ring_t *shm_ring;		/* when reading from shm-ring */
 	struct active_service *as;	/* pointer back to our enclosure */
     } data[DATA_FD_COUNT];
     char databuf[NETWORK_BLOCK_BYTES];	/* buffer to relay netfd data in */
@@ -194,6 +199,7 @@ static char *amandad_get_security_conf (char *, void *);
 
 static const char *state2str(state_t);
 static const char *action2str(action_t);
+static gpointer shm_ring_thread(gpointer dh);
 
 int
 main(
@@ -1453,6 +1459,7 @@ process_readnetfd(
     struct datafd_handle *dh = cookie;
     struct active_service *as = dh->as;
     ssize_t n;
+    gboolean start_sendbackup_data = FALSE;
 
     nak.body = NULL;
 
@@ -1475,11 +1482,21 @@ process_readnetfd(
     if (n == 0) {
 	event_release(dh->ev_read);
 	dh->ev_read = NULL;
+	if (as->thread && dh->shm_ring) {
+	    g_thread_join(as->thread);
+	    close_consumer_shm_ring(dh->shm_ring);
+	    dh->shm_ring = NULL;
+	    as->thread = NULL;
+	}
 	security_stream_close(dh->netfd);
 	dh->netfd = NULL;
 	for (dh = &as->data[0]; dh < &as->data[DATA_FD_COUNT]; dh++) {
-	    if (dh->netfd != NULL)
-		return;
+	    if (dh->netfd != NULL &&
+		(as->service != SERVICE_SENDBACKUP ||
+		 as->seen_info_end ||
+		 dh != &as->data[1])) {
+		    return;
+	    }
 	}
 	service_delete(as);
 	return;
@@ -1504,10 +1521,7 @@ process_readnetfd(
 
 	/* if we did see info_end_str, start reading the data fd (fd 0) */
 	if (as->seen_info_end) {
-	    struct datafd_handle *dh = &as->data[0];
-	    amandad_debug(1, "Opening datafd to sendbackup (delayed until sendbackup sent header info)\n");
-	    dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
-					 process_readnetfd, dh);
+	    start_sendbackup_data = TRUE;
 	} else {
 	    amandad_debug(1, "sendbackup header info still not complete\n");
 	}
@@ -1520,12 +1534,35 @@ process_readnetfd(
 	    security_stream_geterror(dh->netfd));
 	goto sendnak;
     }
+
+    if (start_sendbackup_data) {
+	struct datafd_handle *dh = &as->data[0];
+	amandad_debug(1, "Opening datafd to sendbackup (delayed until sendbackup sent header info)\n");
+	dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
+					 process_readnetfd, dh);
+	dh->shm_ring = as->shm_ring;
+	if (dh->shm_ring) {
+	    as->thread = g_thread_create(shm_ring_thread, (gpointer)dh, TRUE, NULL);
+	}
+    }
+
     return;
 
 sendnak:
     do_sendpkt(as->security_handle, &nak);
     service_delete(as);
     amfree(nak.body);
+}
+
+static gpointer
+shm_ring_thread(
+    gpointer cookie)
+{
+    struct datafd_handle *dh = cookie;
+    shm_ring_consumer_set_size(dh->shm_ring, NETWORK_BLOCK_BYTES*8, NETWORK_BLOCK_BYTES);
+    shm_ring_to_security_stream(dh->shm_ring, dh->netfd, NULL);
+
+    return NULL;
 }
 
 /*
@@ -1618,6 +1655,7 @@ service_new(
     char *peer_name;
     char *amanda_remote_host_env[2];
     char **env;
+    char **service_argv;
 
     assert(security_handle != NULL);
     assert(cmd != NULL);
@@ -1646,6 +1684,41 @@ service_new(
 	/*NOTREACHED*/
     }
 
+    as = g_new0(struct active_service, 1);
+    as->cmd = g_strdup(cmd);
+    as->arguments = g_strdup(arguments);
+
+    if (service == SERVICE_SENDSIZE) {
+	g_option_t *g_options;
+	char *option_str, *p;
+
+	option_str = g_strdup(as->arguments+8);
+	p = strchr(option_str,'\n');
+	if (p) *p = '\0';
+
+	g_options = parse_g_options(option_str, 1);
+	if (am_has_feature(g_options->features, fe_partial_estimate)) {
+	    as->send_partial_reply = 1;
+	}
+	free_g_options(g_options);
+	amfree(option_str);
+    } else if (service == SERVICE_SENDBACKUP) {
+	g_option_t *g_options;
+	char *option_str, *p;
+
+	option_str = g_strdup(as->arguments+8);
+	p = strchr(option_str,'\n');
+	if (p) *p = '\0';
+
+	g_options = parse_g_options(option_str, 1);
+	as->data_shm_control_name = g_strdup(g_options->data_shm_control_name);
+	if (!as->data_shm_control_name) {
+	    as->shm_ring = shm_ring_create();
+	}
+	free_g_options(g_options);
+	amfree(option_str);
+    }
+
     switch(pid = fork()) {
     case -1:
 	error(_("could not fork service %s: %s\n"), cmd, strerror(errno));
@@ -1654,9 +1727,6 @@ service_new(
 	/*
 	 * The parent.  Close the far ends of our pipes and return.
 	 */
-	as = g_new0(struct active_service, 1);
-	as->cmd = g_strdup(cmd);
-	as->arguments = g_strdup(arguments);
 	as->security_handle = security_handle;
 	as->state = NULL;
 	as->service = service;
@@ -1665,22 +1735,6 @@ service_new(
 	as->seen_info_end = FALSE;
 	/* fill in info_end_buf with non-null characters */
 	memset(as->info_end_buf, '-', sizeof(as->info_end_buf));
-	if(service == SERVICE_SENDSIZE) {
-	    g_option_t *g_options;
-	    char *option_str, *p;
-
-	    option_str = g_strdup(as->arguments+8);
-	    p = strchr(option_str,'\n');
-	    if(p) *p = '\0';
-
-	    g_options = parse_g_options(option_str, 1);
-	    if(am_has_feature(g_options->features, fe_partial_estimate)) {
-		as->send_partial_reply = 1;
-	    }
-	    free_g_options(g_options);
-	    amfree(option_str);
-	}
-
 	/* write to the request pipe */
 	aclose(data_read[0][0]);
 	as->reqfd = data_read[0][1];
@@ -1823,6 +1877,27 @@ service_new(
 	    aclose(data_write[i + 1][0]);
 	}
 
+	service_argv = g_new0(char *, 6);
+	service_argv[0] = g_strdup(cmd);
+	service_argv[1] = g_strdup("amandad");
+	service_argv[2] = g_strdup(auth);
+	if (as->data_shm_control_name) {
+	    service_argv[3] = g_strdup("--shm-name");
+	    service_argv[4] = g_strdup(as->data_shm_control_name);
+	    service_argv[5] = (char *)NULL;
+	} else if (as->shm_ring && as->shm_ring->shm_control_name) {
+	    service_argv[3] = g_strdup("--shm-name");
+	    service_argv[4] = g_strdup(as->shm_ring->shm_control_name);
+	    service_argv[5] = (char *)NULL;
+	} else {
+	    service_argv[3] = (char *)NULL;
+	}
+	g_debug("service_argv[0] = %s\n", service_argv[0]);
+	g_debug("service_argv[1] = %s\n", service_argv[1]);
+	g_debug("service_argv[2] = %s\n", service_argv[2]);
+	g_debug("service_argv[3] = %s\n", service_argv[3]);
+	g_debug("service_argv[4] = %s\n", service_argv[4]);
+	g_debug("service_argv[5] = %s\n", service_argv[5]);
 	/* close all unneeded fd */
 	close(STDERR_FILENO);
 	dup2(data_write[STDERR_PIPE][1], 2);
@@ -1830,7 +1905,7 @@ service_new(
         aclose(data_write[STDERR_PIPE][1]);
 	safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
 	env = safe_env_full(amanda_remote_host_env);
-	execle(cmd, cmd, "amandad", auth, (char *)NULL, env);
+	execve(cmd, service_argv, env);
 	error(_("could not exec service %s: %s\n"), cmd, strerror(errno));
 	free_env(env);
 	/*NOTREACHED*/

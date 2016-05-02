@@ -246,6 +246,8 @@ typedef enum {
     fe_restore_exclude_glob,
     fe_restore_prev_next_level,
 
+    fe_sendbackup_req_options_data_shm_control_name,
+
     /*
      * All new features must be inserted immediately *before* this entry.
      */

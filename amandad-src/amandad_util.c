@@ -46,6 +46,7 @@ init_g_options(
     g_options->auth     = NULL;
     g_options->maxdumps = 0;
     g_options->config   = NULL;
+    g_options->data_shm_control_name   = NULL;
 }
 
 
@@ -154,6 +155,16 @@ parse_g_options(
 		}
 	    }
 	}
+	else if(g_str_has_prefix(tok, "data-shm-control-name=")) {
+	    if(g_options->data_shm_control_name != NULL) {
+		dbprintf(_("multiple data-shm-control-name option\n"));
+		if(verbose) {
+		    g_printf(_("ERROR [multiple data-shm-control-name option option]\n"));
+		}
+		amfree(g_options->data_shm_control_name);
+	    }
+	    g_options->data_shm_control_name = g_strdup(tok+22);
+	}
 	else {
 	    dbprintf(_("unknown option \"%s\"\n"), tok);
 	    if(verbose) {
@@ -181,6 +192,7 @@ free_g_options(
 	amfree(g_options->hostname);
 	amfree(g_options->auth);
 	amfree(g_options->config);
+	amfree(g_options->data_shm_control_name);
 	amfree(g_options);
     }
 }

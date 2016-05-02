@@ -73,6 +73,9 @@ struct databuf {
     pid_t compresspid;		/* valid if fd is pipe to compress */
     pid_t encryptpid;		/* valid if fd is pipe to encrypt */
     shm_ring_t *shm_ring_producer;
+    shm_ring_t *shm_ring_consumer;
+    shm_ring_t *shm_ring_direct;
+    crc_t      *crc;
 };
 pid_t statepid = -1;
 
@@ -151,6 +154,11 @@ static int   statefile_in_stream = -1;
 static int   retry_delay;
 static int   retry_level;
 static char *retry_message = NULL;
+static GThread *shm_thread = NULL;
+static GMutex  *shm_thread_mutex = NULL;
+static GCond   *shm_thread_cond = NULL;
+static shm_ring_t *shm_ring_consumer = NULL;
+static shm_ring_t *shm_ring_direct = NULL;
 
 static dumpfile_t file;
 
@@ -224,6 +232,8 @@ static void	read_mesgfd(void *, void *, ssize_t);
 static gboolean header_sent(struct databuf *db);
 static void	timeout(time_t);
 static void	timeout_callback(void *);
+static gpointer handle_shm_ring_to_fd_thread(gpointer data);
+static gpointer handle_shm_ring_direct(gpointer data);
 
 static void
 check_options(
@@ -735,6 +745,8 @@ main(
 		amfree(q);
 		break;
 	    }
+	    shm_ring_consumer = NULL;
+	    shm_ring_direct = NULL;
 	    databuf_init(&db, outfd);
 	    g_databuf = &db;
 
@@ -795,6 +807,16 @@ main(
 		close_producer_shm_ring(db.shm_ring_producer);
 		db.shm_ring_producer = NULL;
 	    }
+	    if (db.shm_ring_consumer) {
+		close_consumer_shm_ring(db.shm_ring_consumer);
+		db.shm_ring_consumer = NULL;
+	    }
+	    if (db.shm_ring_direct) {
+		close_producer_shm_ring(db.shm_ring_direct);
+		db.shm_ring_direct = NULL;
+	    }
+	    shm_ring_consumer = NULL;
+	    shm_ring_direct = NULL;
 	    aclose(statefile_in_stream);
 	    aclose(statefile_in_mesg);
 	    //aclose(indexout);
@@ -873,6 +895,8 @@ databuf_init(
     db->compresspid = -1;
     db->encryptpid = -1;
     db->shm_ring_producer = NULL;
+    db->shm_ring_consumer = NULL;
+    db->shm_ring_direct = NULL;
 }
 
 
@@ -1552,12 +1576,41 @@ do_dump(
     set_datafd = 0;
 
     if (data_path == DATA_PATH_AMANDA) {
-	if (shm_name) {
+	if (shm_name && !shm_ring_consumer) {
+	    if (g_str_equal(auth, "local") &&
+		am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name)) {
+		// shm_ring direct
+		db->shm_ring_direct = shm_ring_direct;
+		shm_ring_direct = NULL;
+		shm_thread = g_thread_create(handle_shm_ring_direct,
+				(gpointer)db, TRUE, NULL);
+		shm_thread_mutex = g_mutex_new();
+		shm_thread_cond  = g_cond_new();
+	    } else {
 		// stream to shm_ring
 		db->shm_ring_producer = shm_ring_link(shm_name);
+		//db->shm_ring_producer->mc->need_sem_ready++;
 		security_stream_read_to_shm_ring(streams[DATAFD].fd, read_datafd,
 						 db->shm_ring_producer, db);
 		set_datafd = 1;
+	    }
+	} else if (shm_ring_consumer) {
+	    if (g_str_equal(auth, "local") &&
+		am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name)) {
+		// ring to fd (server filter)
+		db->shm_ring_consumer = shm_ring_consumer;
+		db->crc = &crc_data_in;
+		shm_ring_consumer = NULL;
+		shm_ring_consumer_set_size(db->shm_ring_consumer,
+					   NETWORK_BLOCK_BYTES*4,
+					   NETWORK_BLOCK_BYTES);
+		shm_thread = g_thread_create(handle_shm_ring_to_fd_thread,
+				(gpointer)db, TRUE, NULL);
+		shm_thread_mutex = g_mutex_new();
+		shm_thread_cond  = g_cond_new();
+	    } else {
+		// stream to fd
+	    }
 	}
     }
 
@@ -1571,10 +1624,20 @@ do_dump(
     timeout(conf_dtimeout);
 
     /*
-     * Start the event loop.  This will exit when all three events
-     * (read the mesgfd, read the datafd, and timeout) are removed.
+     * Start the event loop.  This will exit when all five events
+     * (read the mesgfd, read the datafd, read the indexfd, read the statefd,
+     *  and timeout) are removed.
      */
     event_loop(0);
+
+    if (shm_thread) {
+	g_thread_join(shm_thread);
+	shm_thread = NULL;
+	g_mutex_free(shm_thread_mutex);
+	shm_thread_mutex = NULL;
+	g_cond_free(shm_thread_cond);
+	shm_thread_cond  = NULL;
+    }
 
     if (ISSET(status, GOT_RETRY)) {
 	if (indexfile_tmp) {
@@ -1617,14 +1680,34 @@ do_dump(
 
     dumpsize -= headersize;		/* don't count the header */
     if (shm_name) {
-	if (db && db->shm_ring_producer) {
-	    dumpsize = (long long)db->shm_ring_producer->mc->readx/1024;
+	if (db->shm_ring_producer) {
+	    if (db->shm_ring_producer->mc->written > 0 && db->shm_ring_producer->mc->written < 1024) {
+		dumpsize = 1;
+	    } else {
+		dumpsize = (long long)db->shm_ring_producer->mc->written/1024;
+	    }
+	} else if (db->shm_ring_direct) {
+	    if (db->shm_ring_direct->mc->written > 0 && db->shm_ring_direct->mc->written < 1024) {
+		dumpsize = 1;
+	    } else {
+		dumpsize = (long long)db->shm_ring_direct->mc->written/1024;
+	    }
 	} else {
-	    dumpsize = (long long)client_crc.size/1024;
+	    if (client_crc.size > 0 && client_crc.size < 1024) {
+		dumpsize = 1;
+	    } else {
+		dumpsize = (long long)client_crc.size/1024;
+	    }
 	}
+    } else if (db->shm_ring_consumer) {
+	    if (db->shm_ring_consumer->mc->written > 0 && db->shm_ring_consumer->mc->written < 1024) {
+		dumpsize = 1;
+	    } else {
+		dumpsize = (long long)db->shm_ring_consumer->mc->written/1024;
+	    }
     }
 
-    if (dumpsize <= (off_t)0 && (data_path == DATA_PATH_AMANDA && !shm_name)) {
+    if (dumpsize <= (off_t)0 && (data_path == DATA_PATH_AMANDA)) {
 	dumpsize = (off_t)0;
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = g_strdup(_("got no data"));
@@ -1878,6 +1961,244 @@ failed:
     return 0;
 }
 
+static gpointer
+handle_shm_ring_to_fd_thread(
+    gpointer data)
+{
+    struct databuf *db = (struct databuf *)data;
+    uint64_t     read_offset;
+    uint64_t     shm_ring_size;
+    gsize        usable = 0;
+    gboolean     eof_flag = FALSE;
+    shm_ring_size = db->shm_ring_consumer->mc->ring_size;
+
+    sem_post(db->shm_ring_consumer->sem_write);
+    while (!db->shm_ring_consumer->mc->cancelled) {
+	do {
+	    usable = db->shm_ring_consumer->mc->written - db->shm_ring_consumer->mc->readx;
+	    eof_flag = db->shm_ring_consumer->mc->eof_flag;
+	    if (shm_ring_sem_wait(db->shm_ring_consumer, db->shm_ring_consumer->sem_read) != 0)
+		break;
+	} while (!db->shm_ring_consumer->mc->cancelled &&
+		 usable < db->shm_ring_consumer->block_size && !eof_flag);
+	read_offset = db->shm_ring_consumer->mc->read_offset;
+
+	/* write the header on the first bytes */
+	if (usable > 0 && db->shm_ring_consumer->mc->readx == 0 && !ISSET(status, HEADER_SENT)) {
+	    in_port_t data_port;
+	    char *data_host = g_strdup(dataport_list);
+	    char *s;
+
+	    g_mutex_lock(shm_thread_mutex);
+	    while (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE)) {
+		g_debug("D sleep while waiting for HEADER_DONE");
+		g_cond_wait(shm_thread_cond, shm_thread_mutex);
+	    }
+	    if (dump_result > 0) return NULL;
+
+	    s = strchr(data_host, ',');
+	    if (s) *s = '\0';  /* use first data_port */
+	    s = strrchr(data_host, ':');
+	    if (!s) {
+		g_free(errstr);
+		errstr = g_strdup("write_tapeheader: no dataport_list");
+		dump_result = 2;
+		amfree(data_host);
+		stop_dump();
+		return NULL;
+	    }
+	    *s = '\0';
+	    s++;
+	    data_port = atoi(s);
+
+	    if (!header_sent(db)) {
+		dump_result = 2;
+		stop_dump();
+		return NULL;
+	    }
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+
+	    if (g_str_equal(data_host,"255.255.255.255")) {
+	    }
+	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
+	    db->fd = stream_client(NULL, data_host, data_port,
+				   STREAM_BUFSIZE, 0, NULL, 0);
+	    if (db->fd == -1) {
+		g_free(errstr);
+		errstr = g_strdup_printf("Can't open data output stream: %s",
+					 strerror(errno));
+		dump_result = 2;
+		amfree(data_host);
+		stop_dump();
+		return NULL;
+	    }
+	    amfree(data_host);
+	dumpsize += (off_t)DISK_BLOCK_KB;
+	headersize += (off_t)DISK_BLOCK_KB;
+
+	if (srvencrypt == ENCRYPT_SERV_CUST) {
+	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt) < 0) {
+		dump_result = 2;
+		aclose(db->fd);
+		stop_dump();
+		return NULL;
+	    }
+	}
+	/*
+	 * Now, setup the compress for the data output, and start
+	 * reading the datafd.
+	 */
+	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
+	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
+		dump_result = 2;
+		aclose(db->fd);
+		stop_dump();
+		return NULL;
+	    }
+	}
+	}
+	while (usable >= db->shm_ring_consumer->block_size || eof_flag) {
+	    gsize to_write = usable;
+	    if (to_write > db->shm_ring_consumer->block_size)
+		to_write = db->shm_ring_consumer->block_size;
+
+	    if (to_write + read_offset <= shm_ring_size) {
+		if (full_write(db->fd, db->shm_ring_consumer->data + read_offset, to_write) != to_write) {
+		    g_debug("full_write failed: %s", strerror(errno));
+		    db->shm_ring_consumer->mc->cancelled = TRUE;
+		    sem_post(db->shm_ring_consumer->sem_write);
+		    dump_result = 2;
+		    aclose(db->fd);
+		    stop_dump();
+		    return NULL;
+		}
+		if (db->crc) {
+		    crc32_add((uint8_t *)db->shm_ring_consumer->data + read_offset, to_write,
+			      db->crc);
+		}
+	    } else {
+		if (full_write(db->fd, db->shm_ring_consumer->data + read_offset,
+			   shm_ring_size - read_offset) != shm_ring_size - read_offset) {
+		    g_debug("full_write failed: %s", strerror(errno));
+		    db->shm_ring_consumer->mc->cancelled = TRUE;
+		    sem_post(db->shm_ring_consumer->sem_write);
+		    dump_result = 2;
+		    aclose(db->fd);
+		    stop_dump();
+		    return NULL;
+		}
+		if (full_write(db->fd, db->shm_ring_consumer->data,
+			   to_write - shm_ring_size + read_offset) != to_write - shm_ring_size + read_offset) {
+		    g_debug("full_write failed: %s", strerror(errno));
+		    db->shm_ring_consumer->mc->cancelled = TRUE;
+		    sem_post(db->shm_ring_consumer->sem_write);
+		    dump_result = 2;
+		    aclose(db->fd);
+		    stop_dump();
+		    return NULL;
+		}
+		if (db->crc) {
+		    crc32_add((uint8_t *)db->shm_ring_consumer->data + read_offset, shm_ring_size - read_offset, db->crc);
+		    crc32_add((uint8_t *)db->shm_ring_consumer->data, usable - shm_ring_size + read_offset, db->crc);
+		}
+	    }
+	    if (usable) {
+		read_offset += to_write;
+		if (read_offset >= shm_ring_size)
+		    read_offset -= shm_ring_size;
+		db->shm_ring_consumer->mc->read_offset = read_offset;
+		db->shm_ring_consumer->mc->readx += to_write;
+		sem_post(db->shm_ring_consumer->sem_write);
+		usable -= to_write;
+	    }
+	    if (db->shm_ring_consumer->mc->write_offset == db->shm_ring_consumer->mc->read_offset &&
+		db->shm_ring_consumer->mc->eof_flag) {
+		// notify the producer that everythinng is read
+		sem_post(db->shm_ring_consumer->sem_write);
+		goto shm_done;
+	    }
+	}
+    }
+
+shm_done:
+    aclose(db->fd);
+
+    return NULL;
+}
+
+static gpointer
+handle_shm_ring_direct(
+    gpointer data)
+{
+    struct databuf *db = (struct databuf *)data;
+
+    if (shm_ring_sem_wait(db->shm_ring_direct, db->shm_ring_direct->sem_ready) != 0) {
+	dump_result = 2;
+        stop_dump();
+        goto shm_done;
+    }
+
+//    s = strchr(data_host, ',');
+//    if (s) *s = '\0';  /* use first data_port */
+//    s = strrchr(data_host, ':');
+//    if (!s) {
+//	g_free(errstr);
+//	errstr = g_strdup("write_tapeheader: no dataport_list");
+//	dump_result = 2;
+//	amfree(data_host);
+//	stop_dump();
+//	goto shm_done;
+//    }
+//    *s = '\0';
+//    s++;
+//    data_port = atoi(s);
+
+    g_mutex_lock(shm_thread_mutex);
+    while (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE)) {
+	g_debug("D sleep while waiting for HEADER_DONE");
+	g_cond_wait(shm_thread_cond, shm_thread_mutex);
+    }
+    if (dump_result > 0) {
+	goto shm_done;
+    }
+
+    if (!header_sent(db)) {
+	dump_result = 2;
+	stop_dump();
+	goto shm_done;
+    }
+    g_cond_broadcast(shm_thread_cond);
+    g_mutex_unlock(shm_thread_mutex);
+
+//    if (g_str_equal(data_host,"255.255.255.255")) {
+//    }
+//    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
+//    db->fd = stream_client(NULL, data_host, data_port,
+//				   STREAM_BUFSIZE, 0, NULL, 0);
+//    if (db->fd == -1) {
+//	g_free(errstr);
+//	errstr = g_strdup_printf("Can't open data output stream: %s",
+//				 strerror(errno));
+//	dump_result = 2;
+//	amfree(data_host);
+//	stop_dump();
+//	goto shm_done;
+//    }
+//    amfree(data_host);
+    dumpsize += (off_t)DISK_BLOCK_KB;
+    headersize += (off_t)DISK_BLOCK_KB;
+
+shm_done:
+    db->shm_ring_direct->mc->need_sem_ready--;
+    if (db->shm_ring_direct->mc->need_sem_ready == 0) {
+	sem_post(db->shm_ring_direct->sem_start);
+    } else {
+	sem_post(db->shm_ring_direct->sem_ready);
+    }
+    return NULL;
+}
+
 /*
  * Callback for reads on the statefile stream
  */
@@ -2013,17 +2334,15 @@ read_mesgfd(
 		return;
 	    }
 	}
-//	if (db->shm_ring_producer) {
-//	    if (db->shm_ring_producer->mc->need_sem_ready) {
-//		if (shm_ring_sem_wait(db->shm_ring_producer, db->shm_ring_producer->sem_ready) != 0) {
-//		    dump_result = 2;
-//		    stop_dump();
-//		    return;
-//		}
-//		db->shm_ring_producer->mc->need_sem_ready--;
-//		sem_post(db->shm_ring_producer->sem_start);
-//	    }
-//	}
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	    g_cond_broadcast(shm_thread_cond);
+	    while (!ISSET(status, HEADER_SENT)) {
+		g_debug("D sleep while waiting for HEADER_SENT");
+		g_cond_wait(shm_thread_cond, shm_thread_mutex);
+	    }
+	    g_mutex_unlock(shm_thread_mutex);
+	}
     }
 
     /*
@@ -2454,7 +2773,7 @@ stop_dump(void)
     struct cmdargs *cmdargs = NULL;
 
     /* Check if I have a pending ABORT command */
-//    cmdargs = get_pending_cmd();
+    cmdargs = get_pending_cmd();
     if (cmdargs) {
 	if (cmdargs->cmd == QUIT) {
 	    g_debug("Got unexpected QUIT");
@@ -2487,6 +2806,24 @@ stop_dump(void)
 	    }
 	    sem_post(g_databuf->shm_ring_producer->sem_read);
 	    sem_post(g_databuf->shm_ring_producer->sem_write);
+	}
+	if (g_databuf->shm_ring_consumer) {
+	    g_databuf->shm_ring_consumer->mc->cancelled = TRUE;
+	    if (g_databuf->shm_ring_consumer->mc->need_sem_ready) {
+		g_databuf->shm_ring_consumer->mc->need_sem_ready--;
+		sem_post(g_databuf->shm_ring_consumer->sem_ready);
+	    }
+	    sem_post(g_databuf->shm_ring_consumer->sem_read);
+	    sem_post(g_databuf->shm_ring_consumer->sem_write);
+	}
+	if (g_databuf->shm_ring_direct) {
+	    g_databuf->shm_ring_direct->mc->cancelled = TRUE;
+	    if (g_databuf->shm_ring_direct->mc->need_sem_ready) {
+		g_databuf->shm_ring_direct->mc->need_sem_ready--;
+		sem_post(g_databuf->shm_ring_direct->sem_ready);
+	    }
+	    sem_post(g_databuf->shm_ring_direct->sem_read);
+	    sem_post(g_databuf->shm_ring_direct->sem_write);
 	}
     }
     aclose(statefile_in_stream);
@@ -3031,6 +3368,7 @@ startup_dump(
     int has_hostname;
     int has_device;
     int has_config;
+    int has_data_shm_control_name;
     GString *reqbuf;
     gboolean legacy_api;
 
@@ -3052,6 +3390,7 @@ startup_dump(
     has_hostname = am_has_feature(their_features, fe_req_options_hostname);
     has_config   = am_has_feature(their_features, fe_req_options_config);
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
+    has_data_shm_control_name = am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name);
     crc32_init(&crc_data_in);
     crc32_init(&crc_data_out);
     crc32_init(&native_crc);
@@ -3082,6 +3421,18 @@ startup_dump(
 
     if (has_config)
         g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+    if (has_data_shm_control_name && g_str_equal(auth,"local")) {
+	if (!shm_name) {
+	    shm_ring_consumer = shm_ring_create();
+	    shm_name = g_strdup(shm_ring_consumer->shm_control_name);
+	} else if (am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name)) {
+	    // shm_ring direct
+	    shm_ring_direct = shm_ring_link(shm_name);
+	    shm_ring_direct->mc->need_sem_ready++;
+	}
+        g_string_append_printf(reqbuf, "data-shm-control-name=%s;", shm_name);
+    }
 
     g_string_append_c(reqbuf, '\n');
 

@@ -127,6 +127,7 @@ time_t cur_dumptime;
 
 static char *gnutar_list_dir = NULL;
 static char *incrname = NULL;
+
 /*
  *  doing similar to $ gtar | compression | encryption 
  */
@@ -160,6 +161,52 @@ start_backup(
     char *amandates_file = NULL;
     am_level_t *alevel = (am_level_t *)dle->levellist->data;
     int      level  = alevel->level;
+    int        native_pipe[2];
+    int        client_pipe[2];
+    int        data_out;
+
+    have_filter = FALSE;
+    crc32_init(&native_crc.crc);
+    crc32_init(&client_crc.crc);
+
+    /* create pipes to compute the native CRC */
+    if (pipe(native_pipe) < 0) {
+	char  *errmsg;
+	char  *qerrmsg;
+	errmsg = g_strdup_printf(_("Program '%s': can't create pipe"),
+				 dle->program);
+	qerrmsg = quote_string(errmsg);
+	fdprintf(mesgf, _("sendbackup: error [%s]\n"), errmsg);
+	dbprintf(_("ERROR %s\n"), qerrmsg);
+	amfree(qerrmsg);
+	amfree(errmsg);
+	return;
+    }
+
+    if (dle->encrypt == ENCRYPT_CUST ||
+        dle->compress == COMP_FAST ||
+        dle->compress == COMP_BEST ||
+        dle->compress == COMP_CUST) {
+
+        have_filter = TRUE;
+
+        /* create pipes to compute the client CRC */
+        if (pipe(client_pipe) < 0) {
+            char  *errmsg;
+            char  *qerrmsg;
+            errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
+                                     dle->program);
+            qerrmsg = quote_string(errmsg);
+            fdprintf(mesgf, _("sendbackup: error [%s]\n"), errmsg);
+            dbprintf(_("ERROR %s\n"), qerrmsg);
+            amfree(qerrmsg);
+            amfree(errmsg);
+            return;
+        }
+        data_out = client_pipe[1];
+    } else {
+        data_out = dataf;
+    }
 
     error_pn = g_strconcat(get_pname(), "-smbclient", NULL);
 
@@ -171,17 +218,18 @@ start_backup(
 
      /*  apply client-side encryption here */
      if ( dle->encrypt == ENCRYPT_CUST ) {
-         encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0, 
-			&compout, &dataf, &mesgf, 
+        encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
+			&compout, &data_out, &mesgf,
 			dle->clnt_encrypt, encryptopt, NULL);
-         dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
+        dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
+	aclose(data_out);
     } else {
-       compout = dataf;
-       encpid = -1;
-    } 
-     /*  now do the client-side compression */
-    if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
-          compopt = skip_argument;
+        compout = data_out;
+        encpid = -1;
+    }
+    /*  now do the client-side compression */
+    if (dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
+        compopt = skip_argument;
 #if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
 	if(dle->compress == COMP_BEST) {
 	    compopt = COMPRESS_BEST_OPT;
@@ -199,6 +247,7 @@ start_backup(
 	} else {
 	    dbprintf(_("pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
 	}
+	aclose(compout);
      } else if (dle->compress == COMP_CUST) {
         compopt = skip_argument;
 	comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
@@ -210,8 +259,10 @@ start_backup(
 	} else {
 	    dbprintf(_("pid %ld: %s\n"), (long)comppid, dle->compprog);
 	}
+	aclose(compout);
     } else {
 	dumpout = compout;
+	compout = -1;
 	comppid = -1;
     }
 
@@ -456,7 +507,7 @@ start_backup(
 	cmd = g_strdup(program->backup_name);
 	info_tapeheader(dle);
 
-	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, native_pipe[1], mesgf, indexf, indexcmd);
 
 	if (pwtext_len > 0) {
 	    pw_fd_env = "PASSWD_FD";
@@ -464,7 +515,7 @@ start_backup(
 	    pw_fd_env = "dummy_PASSWD_FD";
 	}
 	dumppid = pipespawn(cmd, STDIN_PIPE|PASSWD_PIPE, 0,
-			    &dumpin, &dumpout, &mesgf,
+			    &dumpin, &native_pipe[1], &mesgf,
 			    pw_fd_env, &passwdf,
 			    "smbclient",
 			    sharename,
@@ -528,7 +579,7 @@ start_backup(
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
 	info_tapeheader(dle);
 
-	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, native_pipe[1], mesgf, indexf, indexcmd);
 
 	g_ptr_array_add(argv_ptr, g_strdup("runtar"));
 	if (g_options->config)
@@ -581,7 +632,7 @@ start_backup(
 	}
 	    g_ptr_array_add(argv_ptr, NULL);
 	dumppid = pipespawnv(cmd, STDIN_PIPE, 0,
-			     &dumpin, &dumpout, &mesgf,
+			     &dumpin, &native_pipe[1], &mesgf,
 			     (char **)argv_ptr->pdata);
 	tarpid = dumppid;
 	amfree(file_exclude);
@@ -599,12 +650,45 @@ start_backup(
     /* close the write ends of the pipes */
 
     aclose(dumpin);
-    aclose(dumpout);
-    //aclose(compout);
-    aclose(dataf);
+    aclose(native_pipe[1]);
     aclose(mesgf);
     if (dle->create_index)
 	aclose(indexf);
+
+    if (shm_control_name) {
+	shm_ring = shm_ring_link(shm_control_name);
+	shm_ring_producer_set_size(shm_ring, NETWORK_BLOCK_BYTES*16, NETWORK_BLOCK_BYTES*4);
+	native_crc.in  = native_pipe[0];
+	if (!have_filter) {
+	    native_crc.out = dumpout;
+	    native_crc.shm_ring = shm_ring;
+	    native_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
+					(gpointer)&native_crc, TRUE, NULL);
+	} else {
+	    native_crc.out = dumpout;
+	    native_crc.thread = g_thread_create(handle_crc_thread,
+					(gpointer)&native_crc, TRUE, NULL);
+	    close(client_pipe[1]);
+	    client_crc.in  = client_pipe[0];
+	    client_crc.out = dataf;
+	    client_crc.shm_ring = shm_ring;
+	    client_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
+					(gpointer)&client_crc, TRUE, NULL);
+	}
+    } else {
+	native_crc.in  = native_pipe[0];
+	native_crc.out = dumpout;
+	native_crc.thread = g_thread_create(handle_crc_thread,
+					(gpointer)&native_crc, TRUE, NULL);
+
+	if (have_filter) {
+	    close(client_pipe[1]);
+	    client_crc.in  = client_pipe[0];
+	    client_crc.out = dataf;
+	    client_crc.thread = g_thread_create(handle_crc_thread,
+					(gpointer)&client_crc, TRUE, NULL);
+	}
+    }
 }
 
 static void
@@ -617,7 +701,7 @@ end_backup(
     if(dle->record && !goterror) {
 	if (incrname != NULL && strlen(incrname) > 4) {
 	    char *nodotnew;
-	
+
 	    nodotnew = g_strdup(incrname);
 	    nodotnew[strlen(nodotnew)-4] = '\0';
 	    if (rename(incrname, nodotnew)) {

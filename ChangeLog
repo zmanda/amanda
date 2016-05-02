@@ -1,4 +1,25 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	client use shm-ring between sendbackup and amandad
+	shm-ring is use between client and server if using the local auth
+	* amandad-src/amandad.c: handle data stream in a shm-ring
+	* amandad-src/amandad.h (g_option_t): Add data_shm_control_name
+	* amandad-src/amandad_util.c (parse_g_options): Parse the shm-ring
+	  name
+	* client-src/client_util.c: Remove debugging statement
+	* client-src/sendbackup-dump.c: Compute crc, send data stream to a
+	  shm-ring
+	* client-src/sendbackup-gnutar.c: Compute crc, send data stream to a
+	  shm-ring
+	* client-src/sendbackup.c: send data stream to a shm-ring
+	* client-src/sendbackup.h (handle_crc_thread,
+	  handle_crc_to_shm_ring_thread): Add prototypes
+	* common-src/amfeatures.c: add
+	  fe_sendbackup_req_options_data_shm_control_name
+	* common-src/amfeatures.h: add
+	  fe_sendbackup_req_options_data_shm_control_name
+	* server-src/dumper.c: Can access data stream from a shm-ring
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	server use shm-ring beteeen dumper and chunker/taper
 	Add new protocol between driver and dumper/chunker/taper
 	* server-src/server_util.c (cmdstr): Add "SHM-WRITE", "SHM-DUMP",
