@@ -27,6 +27,7 @@
 #include "xfer-server.h"
 #include "conffile.h"
 #include "holding.h"
+#include "mem-ring.h"
 
 /* A transfer destination that writes an entire dumpfile to one or more files
  * on one or more holding disks */
@@ -62,18 +63,13 @@ typedef struct XferDestHolding {
      * blocksize), and serves as the interface between the holding_thread and
      * the thread calling push_buffer.  Ring_length is the total length of the
      * buffer in bytes, while ring_count is the number of data bytes currently
-     * in the buffer.  The ring_add_cond is signalled when data is added to the
-     * buffer, while ring_free_cond is signalled when data is removed.  Both
-     * are governed by ring_mutex, and both are signalled when the transfer is
+     * in the buffer.  The mem_ring->add_cond is signalled when data is added to the
+     * buffer, while mem_ring->free_cond is signalled when data is removed.  Both
+     * are governed by mem_ring->mutex, and both are signalled when the transfer is
      * cancelled.
      */
 
-    GMutex *ring_mutex;
-    GCond *ring_add_cond, *ring_free_cond;
-    gchar *ring_buffer;
-    gsize ring_length, ring_count;
-    gsize ring_head, ring_tail;
-    gboolean ring_head_at_eof;
+    mem_ring_t *mem_ring;
 
     /* Element State
      *
@@ -81,7 +77,7 @@ typedef struct XferDestHolding {
      * parameters).  Note that the holding_thread holdes this mutex for the
      * entire duration of writing a chunk.
      *
-     * state_mutex should always be locked before ring_mutex, if both are to be
+     * state_mutex should always be locked before mem_ring->mutex, if both are to be
      * held simultaneously.
      */
     GMutex     *state_mutex;
@@ -166,17 +162,17 @@ holding_thread_wait_for_block(
 	if (elt->cancelled)
 	    break;
 
-	if (self->ring_count >= bytes_needed)
+	if (self->mem_ring->written - self->mem_ring->readx > bytes_needed)
 	    break;
 
-	if (self->ring_head_at_eof)
+	if (self->mem_ring->eof_flag)
 	    break;
 
 	/* nope - so wait */
-	g_cond_wait(self->ring_add_cond, self->ring_mutex);
+	g_cond_wait(self->mem_ring->add_cond, self->mem_ring->mutex);
     }
 
-    usable = MIN(self->ring_count, bytes_needed);
+    usable = MIN(self->mem_ring->written - self->mem_ring->readx, bytes_needed);
 
     return usable;
 }
@@ -188,11 +184,11 @@ holding_thread_consume_block(
     XferDestHolding *self,
     gsize written)
 {
-    self->ring_count -= written;
-    self->ring_tail += written;
-    if (self->ring_tail >= self->ring_length)
-	self->ring_tail -= self->ring_length;
-    g_cond_broadcast(self->ring_free_cond);
+    self->mem_ring->readx += written;
+    self->mem_ring->read_offset += written;
+    if (self->mem_ring->read_offset >= self->mem_ring->ring_size)
+	self->mem_ring->read_offset -= self->mem_ring->ring_size;
+    g_cond_broadcast(self->mem_ring->free_cond);
 }
 
 /* Write an entire chunk.  Called with the state_mutex held */
@@ -204,7 +200,7 @@ holding_thread_write_chunk(
 
     self->chunk_status = CHUNK_OK;
 
-    g_mutex_lock(self->ring_mutex);
+    g_mutex_lock(self->mem_ring->mutex);
     while (1) {
 	gsize to_write;
 	size_t count;
@@ -227,23 +223,23 @@ holding_thread_write_chunk(
 
 	/* note that it's OK to reference these ring_* vars here, as they
 	 * are static at this point */
-	g_mutex_unlock(self->ring_mutex);
-	count = db_full_write(self->fd, self->ring_buffer + self->ring_tail,
+	g_mutex_unlock(self->mem_ring->mutex);
+	count = db_full_write(self->fd, self->mem_ring->buffer + self->mem_ring->read_offset,
 			      (guint)to_write);
-	g_mutex_lock(self->ring_mutex);
+	g_mutex_lock(self->mem_ring->mutex);
 
 	if (count != to_write) {
 	    if (count > 0) {
 		if (ftruncate(self->fd, self->chunk_offset) != 0) {
 		    g_debug("ftruncate failed: %s", strerror(errno));
-		    g_mutex_unlock(self->ring_mutex);
+		    g_mutex_unlock(self->mem_ring->mutex);
 		    return FALSE;
 		}
 	    }
 	    self->chunk_status = CHUNK_NO_ROOM;
 	    break;
 	}
-	crc32_add((uint8_t *)(self->ring_buffer + self->ring_tail),
+	crc32_add((uint8_t *)(self->mem_ring->buffer + self->mem_ring->read_offset),
 			 to_write, &elt->crc);
 	self->chunk_offset += count;
 
@@ -258,7 +254,7 @@ holding_thread_write_chunk(
 	     */
 	}
     }
-    g_mutex_unlock(self->ring_mutex);
+    g_mutex_unlock(self->mem_ring->mutex);
 
     /* if we write all of the blocks, but the finish_file fails, then likely
      * there was some buffering going on in the holding driver, and the blocks
@@ -283,6 +279,9 @@ holding_thread(
     GTimer *timer = g_timer_new();
 
     DBG(1, "(this is the holding thread)");
+
+    self->mem_ring = xfer_element_get_mem_ring(elt->upstream);
+    mem_ring_consumer_set_size(self->mem_ring, HOLDING_BLOCK_BYTES*32, HOLDING_BLOCK_BYTES);
 
     /* This is the outer loop, that loops once for each holding file or
      * CONTINUE command */
@@ -411,79 +410,266 @@ no_room:
 }
 
 /*
- * Class mechanics
+ * shm Holding Thread
  */
 
-static void
-push_buffer_impl(
-    XferElement *elt,
-    gpointer buf,
-    size_t size)
+/* Wait for at least one block, or EOF, to be available in the ring buffer. */
+static gsize
+shm_holding_thread_wait_for_block(
+    XferDestHolding *self)
 {
-    XferDestHolding *self = XFER_DEST_HOLDING(elt);
-    gchar *p = buf;
+    XferElement *elt = XFER_ELEMENT(self);
+    gsize usable;
 
-    DBG(3, "push_buffer(%p, %ju)", buf, (uintmax_t)size);
+    while (!elt->cancelled &&
+	   !elt->shm_ring->mc->cancelled &&
+	   !elt->shm_ring->mc->eof_flag &&
+	   !(elt->shm_ring->mc->written - elt->shm_ring->mc->readx > HOLDING_BLOCK_BYTES)) {
 
-    /* do nothing if cancelled */
-    if (G_UNLIKELY(elt->cancelled)) {
-        goto free_and_finish;
+	shm_ring_sem_wait(elt->shm_ring, elt->shm_ring->sem_read);
     }
 
-    /* handle EOF */
-    if (G_UNLIKELY(buf == NULL)) {
-	/* indicate EOF to the holding thread */
-	g_mutex_lock(self->ring_mutex);
-	self->ring_head_at_eof = TRUE;
-	g_cond_broadcast(self->ring_add_cond);
-	g_mutex_unlock(self->ring_mutex);
+    usable = MIN(elt->shm_ring->mc->written - elt->shm_ring->mc->readx, HOLDING_BLOCK_BYTES+1);
 
-	return;
-    }
+    return usable;
+}
 
-    /* push the block into the ring buffer, in pieces if necessary */
-    while (size > 0) {
-	gsize avail;
+/* Mark WRITTEN bytes as free in the ring buffer.  Called with the ring mutex
+ * held. */
+static void
+shm_holding_thread_consume_block(
+    XferDestHolding *self,
+    gsize written)
+{
+    XferElement *elt = XFER_ELEMENT(self);
 
-	g_mutex_lock(self->ring_mutex);
+    elt->shm_ring->mc->readx += written;
+    elt->shm_ring->mc->read_offset += written;
+    if (elt->shm_ring->mc->read_offset >= elt->shm_ring->mc->ring_size)
+	elt->shm_ring->mc->read_offset -= elt->shm_ring->mc->ring_size;
+    sem_post(elt->shm_ring->sem_write);
+}
 
-	/* wait for some space */
-	while (self->ring_count == self->ring_length && !elt->cancelled) {
-	    DBG(9, "waiting for any space to buffer pushed data");
-	    g_cond_wait(self->ring_free_cond, self->ring_mutex);
-	}
-	DBG(9, "holding_thread done waiting");
+/* Write an entire chunk.  Called with the state_mutex held */
+static gboolean
+shm_holding_thread_write_chunk(
+    XferDestHolding *self)
+{
+    XferElement *elt = XFER_ELEMENT(self);
 
-	if (elt->cancelled) {
-	    g_mutex_unlock(self->ring_mutex);
+    self->chunk_status = CHUNK_OK;
+
+    while (!elt->cancelled &&
+	   !elt->shm_ring->mc->cancelled) {
+	gsize to_write;
+	size_t count;
+
+	/* wait for at least one block, and (if necessary) prebuffer */
+	to_write = shm_holding_thread_wait_for_block(self);
+	if (elt->cancelled ||
+	    elt->shm_ring->mc->cancelled) {
 	    break;
 	}
 
-	/* only copy to the end of the buffer, if the available space wraps
-	 * around to the beginning */
-	avail = MIN(size, self->ring_length - self->ring_count);
-	avail = MIN(avail, self->ring_length - self->ring_head);
+	to_write = MIN(to_write, HOLDING_BLOCK_BYTES);
+	if (to_write == 0) {
+	    self->chunk_status = CHUNK_EOF;
+	    break;
+	}
+	if (self->chunk_status == CHUNK_EOC) {
+	    break;
+	}
+	to_write = MIN(to_write, self->use_bytes);
 
-	/* copy AVAIL bytes into the ring buf (knowing it's contiguous) */
-	memmove(self->ring_buffer + self->ring_head, p, avail);
+	DBG(8, "writing %ju bytes to holding", (uintmax_t)to_write);
 
-	/* reset the ring variables to represent this state */
-	self->ring_count += avail;
-	self->ring_head += avail; /* will, at most, hit ring_length */
-	if (self->ring_head == self->ring_length)
-	    self->ring_head = 0;
-	p = (gpointer)((guchar *)p + avail);
-	size -= avail;
+	count = db_full_write(self->fd, elt->shm_ring->data + elt->shm_ring->mc->read_offset,
+			      (guint)to_write);
 
-	/* and give the holding thread a notice that data is ready */
-	g_cond_broadcast(self->ring_add_cond);
+	if (count != to_write) {
+	    if (count > 0) {
+		if (ftruncate(self->fd, self->chunk_offset) != 0) {
+		    g_debug("ftruncate failed: %s", strerror(errno));
+		    return FALSE;
+		}
+	    }
+	    self->chunk_status = CHUNK_NO_ROOM;
+	    break;
+	}
+	crc32_add((uint8_t *)(elt->shm_ring->data + elt->shm_ring->mc->read_offset),
+			 to_write, &elt->crc);
+	self->chunk_offset += count;
 
-	g_mutex_unlock(self->ring_mutex);
+	self->data_bytes_written += count;
+	self->use_bytes -= count;
+	shm_holding_thread_consume_block(self, count);
+
+	if (self->use_bytes <= 0) {
+	    self->chunk_status = CHUNK_EOC;
+	    /* loop to see if more data is available
+	     * chunk_status might become CHUNK_EOF if at end of input file
+	     */
+	}
     }
 
+    /* if we write all of the blocks, but the finish_file fails, then likely
+     * there was some buffering going on in the holding driver, and the blocks
+     * did not all make it to permanent storage -- so it's a failed part.  Note
+     * that we try to finish_file even if the part failed, just to be thorough.
+     */
+    if (elt->cancelled) {
+	elt->shm_ring->mc->cancelled = TRUE;
+	sem_post(elt->shm_ring->sem_write);
+	return FALSE;
+    } else if (elt->shm_ring->mc->cancelled) {
+	xfer_cancel_with_error(elt, "shm_ring cancelled");
+	return FALSE;
+    }
 
-free_and_finish:
-    g_free(buf);
+    return TRUE;
+}
+
+static gpointer
+shm_holding_thread(
+    gpointer data)
+{
+    XferDestHolding *self = XFER_DEST_HOLDING(data);
+    XferElement *elt = XFER_ELEMENT(self);
+    XMsg *msg;
+    gchar *mesg = NULL;
+    GTimer *timer = g_timer_new();
+
+    DBG(1, "(this is the holding thread)");
+
+    shm_ring_consumer_set_size(elt->shm_ring, HOLDING_BLOCK_BYTES*32, HOLDING_BLOCK_BYTES);
+
+    /* This is the outer loop, that loops once for each holding file or
+     * CONTINUE command */
+    g_mutex_lock(self->state_mutex);
+    while (1) {
+	gboolean done;
+	/* wait until the main thread un-pauses us, and check that we have
+	 * the relevant holding info available */
+	while (self->paused && !elt->cancelled) {
+	    DBG(9, "waiting to be unpaused");
+	    g_cond_wait(self->state_cond, self->state_mutex);
+	}
+	DBG(9, "shm_holding_thread done waiting");
+
+        if (elt->cancelled)
+	    break;
+
+	self->data_bytes_written = 0;
+	self->header_bytes_written = 0;
+
+	/* new holding file */
+	if (self->filename == NULL ||
+	    strcmp(self->filename, self->new_filename) != 0) {
+	    char    *tmp_filename;
+	    char    *pc;
+	    int      fd;
+	    ssize_t  write_header_size;
+
+	    if (self->use_bytes < HEADER_BLOCK_BYTES) {
+		self->chunk_status = CHUNK_NO_ROOM;
+		goto no_room;
+	    }
+
+	    tmp_filename = g_strjoin(NULL, self->new_filename, ".tmp", NULL);
+	    pc = strrchr(tmp_filename, '/');
+	    g_assert(pc != NULL);
+	    *pc = '\0';
+	    mkholdingdir(tmp_filename);
+	    *pc = '/';
+
+	    fd = open(tmp_filename, O_RDWR|O_CREAT|O_TRUNC, 0600);
+	    if (fd < 0) {
+		self->chunk_status = CHUNK_NO_ROOM;
+		g_free(mesg);
+		mesg = g_strdup_printf("Failed to open '%s': %s",
+				       tmp_filename, strerror(errno));
+		g_free(tmp_filename);
+		goto no_room;
+	    }
+	    if (self->filename == NULL) {
+		self->chunk_header->type = F_DUMPFILE;
+	    } else {
+		self->chunk_header->type = F_CONT_DUMPFILE;
+	    }
+	    self->chunk_header->cont_filename[0] = '\0';
+
+	    write_header_size = write_header(self, fd);
+	    if (write_header_size != HEADER_BLOCK_BYTES) {
+		self->chunk_status = CHUNK_NO_ROOM;
+		mesg = g_strdup_printf("Failed to write header to '%s': %s",
+				       tmp_filename, strerror(errno));
+		close(fd);
+		unlink(tmp_filename);
+		g_free(tmp_filename);
+		goto no_room;
+	    }
+	    g_free(tmp_filename);
+	    self->use_bytes -= HEADER_BLOCK_BYTES;
+
+	    /* rewrite old_header */
+	    if (self->filename &&
+		strcmp(self->filename, self->new_filename) != 0) {
+		close_chunk(self, self->new_filename);
+	    }
+	    self->filename = self->new_filename;
+	    self->new_filename = NULL;
+	    self->fd = fd;
+	    self->header_bytes_written = HEADER_BLOCK_BYTES;
+	    self->chunk_offset = HEADER_BLOCK_BYTES;
+	}
+
+	DBG(2, "beginning to write chunk");
+	done = shm_holding_thread_write_chunk(self);
+	DBG(2, "done writing chunk");
+
+	if (!done) /* cancelled */
+	    break;
+
+no_room:
+	msg = xmsg_new(XFER_ELEMENT(self), XMSG_CHUNK_DONE, 0);
+	msg->header_size = self->header_bytes_written;
+	msg->data_size = self->data_bytes_written;
+	msg->no_room = (self->chunk_status == CHUNK_NO_ROOM);
+	if (mesg) {
+	    msg->message = mesg;
+	    mesg = NULL;
+	}
+
+	xfer_queue_message(elt->xfer, msg);
+
+	/* pause ourselves and await instructions from the main thread */
+	self->paused = TRUE;
+
+	/* if this is the last part, we're done with the chunk loop */
+	if (self->chunk_status == CHUNK_EOF) {
+	    break;
+	}
+    }
+    g_mutex_unlock(self->state_mutex);
+
+    // notify the producer that everythinng is read
+    sem_post(elt->shm_ring->sem_write);
+
+    g_debug("sending XMSG_CRC message");
+    g_debug("xfer-dest-holding CRC: %08x     size: %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0);
+    msg->duration = g_timer_elapsed(timer, NULL);
+    g_timer_destroy(timer);
+    /* tell the main thread we're done */
+    xfer_queue_message(elt->xfer, msg);
+
+    return NULL;
 }
 
 /*
@@ -497,7 +683,11 @@ start_impl(
     XferDestHolding *self = (XferDestHolding *)elt;
     GError *error = NULL;
 
-    self->holding_thread = g_thread_create(holding_thread, (gpointer)self, FALSE, &error);
+    if (elt->input_mech == XFER_MECH_SHM_RING) {
+        self->holding_thread = g_thread_create(shm_holding_thread, (gpointer)self, FALSE, &error);
+    } else {
+        self->holding_thread = g_thread_create(holding_thread, (gpointer)self, FALSE, &error);
+    }
     if (!self->holding_thread) {
         g_critical(_("Error creating new thread: %s (%s)"),
             error->message, errno? strerror(errno) : _("no error code"));
@@ -519,10 +709,19 @@ cancel_impl(
 
     /* then signal all of our condition variables, so that threads waiting on them
      * wake up and see elt->cancelled. */
-    g_mutex_lock(self->ring_mutex);
-    g_cond_broadcast(self->ring_add_cond);
-    g_cond_broadcast(self->ring_free_cond);
-    g_mutex_unlock(self->ring_mutex);
+    if (self->mem_ring) {
+	g_mutex_lock(self->mem_ring->mutex);
+	g_cond_broadcast(self->mem_ring->add_cond);
+	g_cond_broadcast(self->mem_ring->free_cond);
+	g_mutex_unlock(self->mem_ring->mutex);
+    }
+    if (elt->shm_ring) {
+	elt->shm_ring->mc->cancelled = TRUE;
+	sem_post(elt->shm_ring->sem_ready);
+	sem_post(elt->shm_ring->sem_start);
+	sem_post(elt->shm_ring->sem_read);
+	sem_post(elt->shm_ring->sem_write);
+    }
 
     g_mutex_lock(self->state_mutex);
     g_cond_broadcast(self->state_cond);
@@ -619,9 +818,6 @@ instance_init(
 
     self->state_mutex = g_mutex_new();
     self->state_cond = g_cond_new();
-    self->ring_mutex = g_mutex_new();
-    self->ring_add_cond = g_cond_new();
-    self->ring_free_cond = g_cond_new();
 
     self->fd = -1;
     self->use_bytes = 0;
@@ -635,21 +831,34 @@ instance_init(
     crc32_init(&elt->crc);
 }
 
+static gboolean
+setup_impl(
+    XferElement *elt)
+{
+    if (elt->input_mech == XFER_MECH_SHM_RING) {
+	elt->shm_ring = shm_ring_create();
+    }
+
+    return TRUE;
+}
+
 static void
 finalize_impl(
     GObject * obj_self)
 {
     XferDestHolding *self = XFER_DEST_HOLDING(obj_self);
+    XferElement *elt = XFER_ELEMENT(self);
 
     g_mutex_free(self->state_mutex);
     g_cond_free(self->state_cond);
 
-    g_mutex_free(self->ring_mutex);
-    g_cond_free(self->ring_add_cond);
-    g_cond_free(self->ring_free_cond);
+    if (elt->shm_ring) {
+	close_consumer_shm_ring(elt->shm_ring);
+	elt->shm_ring = NULL;
+    }
 
-    if (self->ring_buffer)
-	g_free(self->ring_buffer);
+    self->mem_ring = NULL;
+
     self->chunk_header = NULL;
 
     /* chain up */
@@ -665,12 +874,14 @@ class_init(
     GObjectClass *goc = G_OBJECT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_NONE, XFER_NROPS(2), XFER_NTHREADS(1), XFER_NALLOC(0) },
+	{ XFER_MECH_MEM_RING, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(1), XFER_NALLOC(0) },
+	{ XFER_MECH_SHM_RING, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(1), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
+    klass->setup = setup_impl;
     klass->start = start_impl;
     klass->cancel = cancel_impl;
-    klass->push_buffer = push_buffer_impl;
     xdh_klass->start_chunk = start_chunk_impl;
     xdh_klass->finish_chunk = finish_chunk_impl;
     xdh_klass->get_chunk_bytes_written = get_chunk_bytes_written_impl;
@@ -725,13 +936,6 @@ xfer_dest_holding(
 			/ HOLDING_BLOCK_BYTES) * HOLDING_BLOCK_BYTES;
 
     self->paused = TRUE;
-
-    /* set up a ring buffer of size max_memory */
-    self->ring_length = max_memory;
-    self->ring_buffer = g_malloc(max_memory);
-    self->ring_head = self->ring_tail = 0;
-    self->ring_count = 0;
-    self->ring_head_at_eof = 0;
 
     /* set up a fake ENOSPC for testing purposes.  Note that this counts
      * headers as well as data written to disk. */

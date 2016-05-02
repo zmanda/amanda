@@ -1,4 +1,8 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/xfer-dest-holding.c: Use the new mem-ring internally,
+	  Can use the new mem_ring and shm_ring as input
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/xfer-source-holding.c: Can use the new mem_ring and
 	  pull_buffer_static xfer mechanism
 
