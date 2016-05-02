@@ -1,4 +1,24 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	server use shm-ring beteeen dumper and chunker/taper
+	Add new protocol between driver and dumper/chunker/taper
+	* server-src/server_util.c (cmdstr): Add "SHM-WRITE", "SHM-DUMP",
+	  "SHM-NAME"
+	* server-src/server_util.h (cmd_t): Add SHM_WRITE, SHM_DUMP, SHM_NAME
+	* server-src/driver.c: Handle new protocol with dumper, chunker and
+	  taper
+	* server-src/driverio.c: Send new command
+	* server-src/dumper.c: Accept SHM_DUMP command
+	* server-src/driverio.h (job_s):Add do_port_write
+	* perl/Amanda/Chunker/Controller.pm: Accept SHM_WRITE command
+	* perl/Amanda/Chunker/Protocol.pm (SHM_WRITE): Define it
+	* perl/Amanda/Taper/Controller.pm: Accept SHM_WRITE command
+	* perl/Amanda/Taper/Protocol.pm (SHM_WRITE): Define it
+	* perl/Amanda/Taper/Scribe.pm: Various fix
+	* perl/Amanda/Taper/Worker.pm: Handle SHM_WRITE
+	* perl/Amanda/Xfer.swg: Add Amanda::Xfer::Source::ShmRing
+	* installcheck/tape_action.pl: use amrandom and lexical taperscan
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add a security_stream_read_to_shm_ring function, it require many
 	change in the internal structure of the security layer
 	* common-src/bsd-security.c (bsd_stream_read_to_shm_ring_callback,

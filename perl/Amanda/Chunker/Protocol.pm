@@ -49,6 +49,11 @@ use constant PORT_WRITE => message("PORT-WRITE",
 	    chunk_size progname use_bytes options ) ],
 );
 
+use constant SHM_WRITE => message("SHM-WRITE",
+    format => [ qw( handle filename hostname features diskname level datestamp
+	    chunk_size progname use_bytes options ) ],
+);
+
 use constant FAILED => message("FAILED",
     format => {
 	in => [ qw( handle ) ],
@@ -74,6 +79,10 @@ use constant PARTIAL => message("PARTIAL",
 
 use constant PORT => message("PORT",
     format => [ qw( handle port ipport ) ],
+);
+
+use constant SHM_NAME => message("SHM-NAME",
+    format => [ qw( handle port shm_name ) ],
 );
 
 use constant NO_ROOM => message("NO-ROOM",

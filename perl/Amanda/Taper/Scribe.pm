@@ -451,6 +451,7 @@ sub new {
     }
 
     my $self = {
+	worker => $params{'worker'},
 	taperscan => $params{'taperscan'},
 	feedback => $params{'feedback'},
 	debug => $decide_debug,
@@ -1043,7 +1044,11 @@ sub _xmsg_error {
     my ($src, $msg, $xfer) = @_;
 
     # XMSG_ERROR from the XDT is always fatal
-    $self->_operation_failed(device_error => $msg->{'message'});
+    if (!$self->{'device'} || $self->{'device'}->status() != $DEVICE_STATUS_SUCCESS) {
+	$self->_operation_failed(device_error => $msg->{'message'});
+    } else {
+	$self->_operation_failed(input_error => $msg->{'message'});
+    }
 }
 
 sub _xmsg_done {
@@ -1198,12 +1203,15 @@ sub _operation_failed {
 
     my $error_message = $params{'device_error'}
 		     || $params{'config_denial_message'}
+		     || $params{'input_error'}
 		     || 'input error';
     $self->dbg("operation failed: $error_message");
 
     # tuck the message away as desired
     push @{$self->{'device_errors'}}, $params{'device_error'}
 	if defined $params{'device_error'};
+    push @{$self->{'input_errors'}}, $params{'input_error'}
+	if defined $params{'input_error'};
     $self->{'config_denial_message'} = $params{'config_denial_message'}
 	if $params{'config_denial_message'};
 
@@ -1650,7 +1658,11 @@ sub _device_start {
 sub dbg {
     my ($self, $msg) = @_;
     if ($self->{'debug'}) {
-	debug("Amanda::Taper::Scribe: $msg");
+	if (exists $self->{'worker'}) {
+	    debug("$self->{'worker'}->{'handle'} Amanda::Taper::Scribe: $msg");
+	} else {
+	    debug("Amanda::Taper::Scribe: $msg");
+	}
     }
 }
 

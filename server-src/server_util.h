@@ -49,6 +49,7 @@ enum {
     FAILED, TRYAGAIN, NO_ROOM, RQ_MORE_DISK,		/* dumper results */
     ABORT_FINISHED, BAD_COMMAND,			/* dumper results */
     START_TAPER, FILE_WRITE, NEW_TAPE, NO_NEW_TAPE,     /* taper... */
+    SHM_WRITE, SHM_DUMP, SHM_NAME,
     PARTDONE, PORT_WRITE, VAULT_WRITE, DUMPER_STATUS,   /* ... cmds */
     PORT, TAPE_ERROR, TAPER_OK,				/* taper results */
     REQUEST_NEW_TAPE, DIRECTTCP_PORT, TAKE_SCRIBE_FROM,

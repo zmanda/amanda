@@ -617,6 +617,7 @@ taper_cmd(
 	break;
 
     case PORT_WRITE:
+    case SHM_WRITE:
 	sp = (sched_t *)ptr;
 	dp = sp->disk;
         qname = quote_string(dp->name);
@@ -794,7 +795,11 @@ dumper_cmd(
     case START:
         cmdline = g_strdup_printf("%s %s\n", cmdstr[cmd], mesg);
 	break;
-    case PORT_DUMP: {
+    case PORT_DUMP:
+        if (!sp)
+            error("PORT-DUMP without sched pointer\n");
+	// fall through
+    case SHM_DUMP: {
         application_t *application = NULL;
         GPtrArray *array;
         GString *strbuf;
@@ -804,7 +809,7 @@ dumper_cmd(
         char *tmp;
 
         if (!sp)
-            error("PORT-DUMP without sched pointer\n");
+            error("SHM-DUMP without sched pointer\n");
 
 	dp = sp->disk;
         array = g_ptr_array_new();
@@ -889,7 +894,11 @@ dumper_cmd(
         g_ptr_array_add(array, quote_string(dp->ssh_keys));
         g_ptr_array_add(array, g_strdup(dp->auth));
         g_ptr_array_add(array, g_strdup(data_path_to_string(dp->data_path)));
-        g_ptr_array_add(array, g_strdup(dp->dataport_list));
+	if (cmd == PORT_DUMP) {
+            g_ptr_array_add(array, g_strdup(dp->dataport_list));
+	} else {
+            g_ptr_array_add(array, g_strdup(dp->shm_name));
+	}
         g_ptr_array_add(array, g_strdup_printf("%d", dp->max_warnings));
         g_ptr_array_add(array, g_string_free(strbuf, FALSE));
         g_ptr_array_add(array, NULL);
@@ -958,6 +967,7 @@ chunker_cmd(
 	cmdline = g_strjoin(NULL, cmdstr[cmd], " ", mesg, "\n", NULL);
 	break;
     case PORT_WRITE:
+    case SHM_WRITE:
 	dp = sp->disk;
 	if(sp->holdp) {
 	    h = sp->holdp;

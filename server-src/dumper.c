@@ -72,6 +72,7 @@ struct databuf {
     char *datalimit;
     pid_t compresspid;		/* valid if fd is pipe to compress */
     pid_t encryptpid;		/* valid if fd is pipe to encrypt */
+    shm_ring_t *shm_ring_producer;
 };
 pid_t statepid = -1;
 
@@ -127,6 +128,7 @@ static char *ssh_keys=NULL;
 static char *auth=NULL;
 static data_path_t data_path=DATA_PATH_AMANDA;
 static char *dataport_list = NULL;
+static char *shm_name = NULL;
 static int level;
 static char *dumpdate = NULL;
 static char *dumper_timestamp = NULL;
@@ -477,8 +479,9 @@ main(
 	    break;
 
 	case PORT_DUMP:
+	case SHM_DUMP:
 	    /*
-	     * PORT-DUMP
+	     * PORT-DUMP or SHM-DUMP
 	     *   handle
 	     *   port
 	     *   src_ip
@@ -501,7 +504,7 @@ main(
 	     *   ssh_keys
 	     *   security_driver
 	     *   data_path
-	     *   dataport_list
+	     *   dataport_list (PORT-DUMP) or shm_name (SHM-DUMP)
 	     *   options
 	     */
 	    a = 1; /* skip "PORT-DUMP" */
@@ -660,14 +663,24 @@ main(
 	    }
 	    data_path = data_path_from_string(cmdargs->argv[a++]);
 
-	    if(a >= cmdargs->argc) {
-		error(_("error [dumper PORT-DUMP: not enough args: dataport_list]"));
+	    amfree(dataport_list);
+	    amfree(shm_name);
+	    if (cmdargs->cmd == PORT_DUMP) {
+		if(a >= cmdargs->argc) {
+		    error(_("error [dumper PORT-DUMP: not enough args: dataport_list]"));
+		}
+		dataport_list = g_strdup(cmdargs->argv[a++]);
+		if (data_path == DATA_PATH_DIRECTTCP && *dataport_list == '\0') {
+		    error(_("error [dumper PORT-DUMP: dataport_list empty for DIRECTTCP]"));
+		}
+	    } else { // SHM_DUMP
+		if(a >= cmdargs->argc) {
+		    error(_("error [dumper SHM-DUMP: not enough args: shm_name]"));
+		    /*NOTREACHED*/
+		}
+		shm_name = g_strdup(cmdargs->argv[a++]);
 	    }
-	    g_free(dataport_list);
-	    dataport_list = g_strdup(cmdargs->argv[a++]);
-	    if (data_path == DATA_PATH_DIRECTTCP && *dataport_list == '\0') {
-		error(_("error [dumper PORT-DUMP: dataport_list empty for DIRECTTCP]"));
-	    }
+
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: max_warnings]"));
@@ -778,6 +791,15 @@ main(
 		while(waitpid(-1, NULL, WNOHANG)> 0);
 	    }
 
+	    if (db.shm_ring_producer) {
+		close_producer_shm_ring(db.shm_ring_producer);
+		db.shm_ring_producer = NULL;
+	    }
+	    aclose(statefile_in_stream);
+	    aclose(statefile_in_mesg);
+	    //aclose(indexout);
+	    if (g_databuf) aclose(g_databuf->fd);
+	    amfree(shm_name);
 	    amfree(amandad_path);
 	    amfree(client_username);
 	    amfree(ssl_fingerprint_file);
@@ -808,6 +830,7 @@ main(
 	    aclose(outfd);
     } while(cmdargs->cmd != QUIT);
     free_cmdargs(cmdargs);
+    cmdargs = NULL;
 
     log_add(L_INFO, "pid-done %ld", (long)getpid());
 
@@ -829,6 +852,7 @@ main(
     amfree(srv_decrypt_opt);
     amfree(clnt_decrypt_opt);
     amfree(options);
+    amfree(log_filename);
 
     dbclose();
     return (0); /* exit */
@@ -848,6 +872,7 @@ databuf_init(
     db->datain = db->dataout = db->datalimit = NULL;
     db->compresspid = -1;
     db->encryptpid = -1;
+    db->shm_ring_producer = NULL;
 }
 
 
@@ -1526,6 +1551,20 @@ do_dump(
     security_stream_read(streams[MESGFD].fd, read_mesgfd, db);
     set_datafd = 0;
 
+    if (data_path == DATA_PATH_AMANDA) {
+	if (shm_name) {
+		// stream to shm_ring
+		db->shm_ring_producer = shm_ring_link(shm_name);
+		security_stream_read_to_shm_ring(streams[DATAFD].fd, read_datafd,
+						 db->shm_ring_producer, db);
+		set_datafd = 1;
+	}
+    }
+
+    if (streams[STATEFD].fd != NULL) {
+	security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
+    }
+
     /*
      * Setup a read timeout
      */
@@ -1556,15 +1595,17 @@ do_dump(
 	client_crc = crc_data_in;
     }
 
-    if (client_crc.crc != 0 &&
+    if (!shm_name &&
+	client_crc.crc != 0 &&
 	(client_crc.crc  != crc_data_in.crc ||
 	 client_crc.size != crc_data_in.size)) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = g_strdup_printf(_("client CRC (%08x:%lld) do not match data-in CRC (%08x:%lld)"), client_crc.crc, (long long)client_crc.size, crc_data_in.crc, (long long)crc_data_in.size);
     }
 
-    if (crc_data_in.crc  != crc_data_out.crc ||
-	crc_data_in.size != crc_data_out.size) {
+    if (!shm_name &&
+	(crc_data_in.crc  != crc_data_out.crc ||
+	 crc_data_in.size != crc_data_out.size)) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = g_strdup_printf(_("data-in CRC (%08x:%lld) do not match data-out CRC (%08x:%lld)"), crc_data_in.crc, (long long)crc_data_in.size, crc_data_out.crc, (long long)crc_data_out.size);
     }
@@ -1575,7 +1616,15 @@ do_dump(
     }
 
     dumpsize -= headersize;		/* don't count the header */
-    if (dumpsize <= (off_t)0 && data_path == DATA_PATH_AMANDA) {
+    if (shm_name) {
+	if (db && db->shm_ring_producer) {
+	    dumpsize = (long long)db->shm_ring_producer->mc->readx/1024;
+	} else {
+	    dumpsize = (long long)client_crc.size/1024;
+	}
+    }
+
+    if (dumpsize <= (off_t)0 && (data_path == DATA_PATH_AMANDA && !shm_name)) {
 	dumpsize = (off_t)0;
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = g_strdup(_("got no data"));
@@ -1588,11 +1637,6 @@ do_dump(
     if (!ISSET(status, HEADER_DONE)) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = g_strdup(_("got no header information"));
-    }
-
-    if (dumpsize == 0 && data_path == DATA_PATH_AMANDA) {
-	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no data"));
     }
 
     if (indexfile_tmp) {
@@ -1851,9 +1895,11 @@ read_statefd(
 	    aclose(statefile_in_stream);
 	}
 
-	g_free(errstr);
-	errstr = g_strdup_printf(_("state read: %s"),
-                                 security_stream_geterror(streams[STATEFD].fd));
+	if (streams[STATEFD].fd) {
+	    g_free(errstr);
+	    errstr = g_strdup_printf("state read: %s",
+                                     security_stream_geterror(streams[STATEFD].fd));
+	}
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1865,7 +1911,10 @@ read_statefd(
 	if (statefile_in_stream) {
 	    aclose(statefile_in_stream);
 	}
-	security_stream_close(streams[STATEFD].fd);
+	if (streams[STATEFD].fd) {
+	    security_stream_close(streams[STATEFD].fd);
+} else {
+	}
 	streams[STATEFD].fd = NULL;
 
 	/*
@@ -1873,8 +1922,9 @@ read_statefd(
 	 */
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
 	    streams[INDEXFD].fd == NULL &&
-	    streams[MESGFD].fd == NULL)
+	    streams[MESGFD].fd == NULL) {
 	    stop_dump();
+	}
 	return;
 
     default:
@@ -1913,9 +1963,11 @@ read_mesgfd(
 
     switch (size) {
     case -1:
-	g_free(errstr);
-	errstr = g_strdup_printf(_("mesg read: %s"),
-                                 security_stream_geterror(streams[MESGFD].fd));
+	if (streams[MESGFD].fd) {
+	    g_free(errstr);
+	    errstr = g_strdup_printf("mesg read: %s",
+                                     security_stream_geterror(streams[MESGFD].fd));
+	}
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1925,7 +1977,9 @@ read_mesgfd(
 	 * EOF.  Just shut down the mesg stream.
 	 */
 	process_dumpeof();
-	security_stream_close(streams[MESGFD].fd);
+	if (streams[MESGFD].fd) {
+	    security_stream_close(streams[MESGFD].fd);
+	}
 	streams[MESGFD].fd = NULL;
 	if (statefile_in_mesg != -1) {
 	    aclose(statefile_in_mesg);
@@ -1935,10 +1989,12 @@ read_mesgfd(
 	 */
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
 	    streams[INDEXFD].fd == NULL &&
-	    streams[STATEFD].fd == NULL)
+	    streams[STATEFD].fd == NULL) {
 	    stop_dump();
-	if (!ISSET(status, GOT_INFO_ENDLINE))
+	}
+	if (!ISSET(status, GOT_INFO_ENDLINE)) {
 	    stop_dump();
+	}
 	return;
 
     default:
@@ -1949,7 +2005,7 @@ read_mesgfd(
 
     if (ISSET(status, GOT_INFO_ENDLINE) && !ISSET(status, HEADER_DONE)) {
 	SET(status, HEADER_DONE);
-	if (data_path == DATA_PATH_AMANDA) {
+	if (data_path == DATA_PATH_AMANDA && set_datafd == 0) {
 	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	    set_datafd = 1;
 	} else {
@@ -1957,9 +2013,17 @@ read_mesgfd(
 		return;
 	    }
 	}
-	if (streams[STATEFD].fd != NULL) {
-	    security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
-	}
+//	if (db->shm_ring_producer) {
+//	    if (db->shm_ring_producer->mc->need_sem_ready) {
+//		if (shm_ring_sem_wait(db->shm_ring_producer, db->shm_ring_producer->sem_ready) != 0) {
+//		    dump_result = 2;
+//		    stop_dump();
+//		    return;
+//		}
+//		db->shm_ring_producer->mc->need_sem_ready--;
+//		sem_post(db->shm_ring_producer->sem_start);
+//	    }
+//	}
     }
 
     /*
@@ -1970,19 +2034,22 @@ read_mesgfd(
     }
 }
 
-static gboolean header_sent(struct databuf *db) {
-	SET(status, HEADER_SENT);
-	finish_tapeheader(&file);
-	if (write_tapeheader(db->fd, &file)) {
-	    g_free(errstr);
-	    errstr = g_strdup_printf("write_tapeheader: %s",
-				     strerror(errno));
-	    dump_result = 2;
-	    aclose(db->fd);
-	    stop_dump();
-	    return FALSE;
-	}
+static gboolean
+header_sent(
+    struct databuf *db)
+{
+    assert(!ISSET(status, HEADER_SENT));
+    SET(status, HEADER_SENT);
+    finish_tapeheader(&file);
+    if (write_tapeheader(db->fd, &file)) {
+	g_free(errstr);
+	errstr = g_strdup_printf("write_tapeheader: %s", strerror(errno));
+	dump_result = 2;
 	aclose(db->fd);
+	stop_dump();
+	return FALSE;
+    }
+    aclose(db->fd);
     return TRUE;
 }
 
@@ -2003,13 +2070,19 @@ read_datafd(
      * The read failed.  Error out
      */
     if (size < 0) {
-	g_free(errstr);
-	errstr = g_strdup_printf(_("data read: %s"),
-                                 security_stream_geterror(streams[DATAFD].fd));
+	if (streams[DATAFD].fd) {
+	    g_free(errstr);
+	    errstr = g_strdup_printf("data read: %s",
+                                     security_stream_geterror(streams[DATAFD].fd));
+	}
 	dump_result = 2;
 	aclose(db->fd);
 	stop_dump();
 	return;
+    }
+
+    if (!ISSET(status, HEADER_DONE)) {
+	g_critical("HEADER_DONE not set");
     }
 
     /* write the header on the first bytes */
@@ -2130,7 +2203,9 @@ read_datafd(
 	if (dumpbytes != (off_t)0) {
 	    dumpsize += (off_t)1;
 	}
-	security_stream_close(streams[DATAFD].fd);
+	if (streams[DATAFD].fd) {
+	    security_stream_close(streams[DATAFD].fd);
+	}
 	streams[DATAFD].fd = NULL;
 	aclose(db->fd);
 	crc_data_in.crc  = crc32_finish(&crc_data_in);
@@ -2143,30 +2218,36 @@ read_datafd(
 	 * If the mesg fd and index fd has also shut down, then we're done.
 	 */
 	if (streams[MESGFD].fd == NULL && streams[INDEXFD].fd == NULL &&
-	    streams[STATEFD].fd == NULL)
+	    streams[STATEFD].fd == NULL) {
 	    stop_dump();
+	}
 	return;
     }
 
-    crc32_add(buf, size, &crc_data_in);
+    if (!shm_name) {
+	crc32_add(buf, size, &crc_data_in);
+    }
     if (debug_auth >= 3) {
 	crc_data_in.crc  = crc32_finish(&crc_data_in);
 	g_debug("data in sum CRC: %08x:%lld",
 		crc_data_in.crc, (long long)crc_data_in.size);
 	crc_data_in.crc  = crc32_finish(&crc_data_in);
     }
+
     /*
      * We read something.  Add it to the databuf and reschedule for
      * more data.
      */
-    assert(buf != NULL);
-    if (databuf_write(db, buf, (size_t)size) < 0) {
-	int save_errno = errno;
-	g_free(errstr);
-	errstr = g_strdup_printf(_("data write2: %s"), strerror(save_errno));
-	dump_result = 2;
-	stop_dump();
-	return;
+    if (!shm_name) {
+	assert(buf != NULL);
+	if (databuf_write(db, buf, (size_t)size) < 0) {
+	    int save_errno = errno;
+	    g_free(errstr);
+	    errstr = g_strdup_printf(_("data write2: %s"), strerror(save_errno));
+	    dump_result = 2;
+	    stop_dump();
+	    return;
+	}
     }
 
     /*
@@ -2190,9 +2271,11 @@ read_indexfd(
     fd = *(int *)cookie;
 
     if (size < 0) {
-	g_free(errstr);
-	errstr = g_strdup_printf(_("index read: %s"),
-                                 security_stream_geterror(streams[INDEXFD].fd));
+	if (streams[INDEXFD].fd) {
+	    g_free(errstr);
+	    errstr = g_strdup_printf("index read: %s",
+                                     security_stream_geterror(streams[INDEXFD].fd));
+	}
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -2202,16 +2285,18 @@ read_indexfd(
      * EOF.  Stop and return.
      */
     if (size == 0) {
-	if (streams[INDEXFD].fd)
+	if (streams[INDEXFD].fd) {
 	    security_stream_close(streams[INDEXFD].fd);
+	}
 	streams[INDEXFD].fd = NULL;
 	/*
 	 * If the mesg fd has also shut down, then we're done.
 	 */
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
 	     streams[MESGFD].fd == NULL &&
-	     streams[STATEFD].fd == NULL)
+	     streams[STATEFD].fd == NULL) {
 	    stop_dump();
+}
 	aclose(indexout);
 	return;
     }
@@ -2369,7 +2454,7 @@ stop_dump(void)
     struct cmdargs *cmdargs = NULL;
 
     /* Check if I have a pending ABORT command */
-    cmdargs = get_pending_cmd();
+//    cmdargs = get_pending_cmd();
     if (cmdargs) {
 	if (cmdargs->cmd == QUIT) {
 	    g_debug("Got unexpected QUIT");
@@ -2393,6 +2478,17 @@ stop_dump(void)
 	}
     }
 
+    if (dump_result > 0) {
+	if (g_databuf->shm_ring_producer) {
+	    g_databuf->shm_ring_producer->mc->cancelled = TRUE;
+	    if (g_databuf->shm_ring_producer->mc->need_sem_ready) {
+		g_databuf->shm_ring_producer->mc->need_sem_ready--;
+		sem_post(g_databuf->shm_ring_producer->sem_ready);
+	    }
+	    sem_post(g_databuf->shm_ring_producer->sem_read);
+	    sem_post(g_databuf->shm_ring_producer->sem_write);
+	}
+    }
     aclose(statefile_in_stream);
     aclose(statefile_in_mesg);
     aclose(indexout);
@@ -2958,6 +3054,8 @@ startup_dump(
     has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
     crc32_init(&crc_data_in);
     crc32_init(&crc_data_out);
+    crc32_init(&native_crc);
+    crc32_init(&client_crc);
     native_crc.crc = 0;
     client_crc.crc = 0;
 

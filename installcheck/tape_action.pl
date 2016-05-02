@@ -39,26 +39,31 @@ my $testconf;
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 
-# one program "GNUTAR"
+# Two amrandom dle
 $testconf->add_dle(<<EODLE);
 localhost diskname1 $diskname {
     installcheck-test
-    program "GNUTAR"
+    program "APPLICATION"
+    application {
+	plugin "amrandom"
+	property "SIZE" "1075200"
+    }
 }
 EODLE
 
-# and one with the amgtar application
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
     installcheck-test
     program "APPLICATION"
     application {
-	plugin "amgtar"
-	property "ATIME-PRESERVE" "NO"
+	plugin "amrandom"
+	property "SIZE" "1075200"
     }
 }
 EODLE
 
+$testconf->add_taperscan("lexical", [ "plugin" => '"lexical"' ]);
+$testconf->add_param("taperscan", '"lexical"');
 $testconf->add_tapetype("tape-1500",
 			[ length => "1500k", filemark => "0k" ]);
 $testconf->rm_param("tapetype");

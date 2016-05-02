@@ -53,6 +53,7 @@ use Amanda::Xfer qw( :constants );
 use Amanda::Util qw( quote_string );
 use Amanda::Tapelist;
 use File::Temp;
+use Carp;
 
 use base qw( Amanda::Chunker::Scribe::Feedback );
 
@@ -152,6 +153,7 @@ sub msg_PORT_WRITE {
 
     $self->_assert_in_state("idle") or return;
 
+    $self->{'doing_port_write'} = 1 if !defined $self->{'doing_port_write'};
     # This function:
     # 1. creates and starts a transfer (make_xfer)
     # 2. gets the header
@@ -179,6 +181,7 @@ sub msg_PORT_WRITE {
         $self->{'use_bytes'} = $params{'use_bytes'};
         $self->{'options'} = $params{'options'};
         $self->{'header'} = undef; # no header yet
+        $self->{'cancelled'} = undef;
         $self->{'orig_kb'} = undef;
         $self->{'input_errors'} = [];
 	$steps->{'make_xfer'}->();
@@ -190,7 +193,11 @@ sub msg_PORT_WRITE {
 	$self->{'xfer_dest'} = $self->{'scribe'}->get_xfer_dest(
 				max_memory => $self->{'max_memory'});
 
-	$self->{'xfer_source'} = Amanda::Xfer::Source::DirectTCPListen->new();
+	if ($self->{'doing_port_write'}) {
+	    $self->{'xfer_source'} = Amanda::Xfer::Source::DirectTCPListen->new();
+	} else {
+	    $self->{'xfer_source'} = Amanda::Xfer::Source::ShmRing->new();
+	}
 
 	$self->{'xfer'} = Amanda::Xfer->new([$self->{'xfer_source'},
 					     $self->{'xfer_dest'}]);
@@ -267,6 +274,12 @@ sub msg_PORT_WRITE {
     };
 }
 
+sub msg_SHM_WRITE {
+    my $self = shift;
+    $self->{'doing_port_write'} = 0;
+    return $self->msg_PORT_WRITE(@_);
+}
+
 sub msg_CONTINUE {
     my $self = shift;
     my ($msgtype, %params) = @_;
@@ -321,7 +334,10 @@ sub msg_ABORT {
     my $self = shift;
     my ($msgtype, %params) = @_;
 
-    $self->_assert_in_state("writing") or return;
+#    $self->_assert_in_state("writing") or return;
+    if ($self->{'cancelled'} || !$self->{'handle'}) {
+	return;
+    }
 
     my $quit_cb = sub {
 	$self->{'proto'}->send(Amanda::Chunker::Protocol::ABORT_FINISHED,
@@ -363,13 +379,15 @@ sub result_cb {
 	$self->{'server_crc'} = '00000000:0';
     }
     if (defined $self->{'client_crc'} && $self->{'client_crc'} !~ /^00000000:/ &&
+	$self->{'source_server_crc'} ne '00000000:0' &&
 	$self->{'client_crc'} ne $self->{'source_server_crc'}) {
 	if ($params{'result'} ne 'FAILED') {
 	    $params{'result'} = 'FAILED';
 	    push @{$self->{'input_errors'}}, "client crc ($self->{'client_crc'}) differ from server crc ($self->{'source_server_crc'})";
 	}
     }
-    if ($self->{'source_server_crc'} ne $self->{'server_crc'}) {
+    if ($self->{'source_server_crc'} ne '00000000:0' &&
+	$self->{'source_server_crc'} ne $self->{'server_crc'}) {
 	if ($params{'result'} ne 'FAILED') {
 	    $params{'result'} = 'FAILED';
 	    push @{$self->{'input_errors'}}, "source server crc ($self->{'source_server_crc'}) differ from server crc ($self->{'server_crc'})";
@@ -467,7 +485,7 @@ cleanup:
     $self->{'level'} = undef;
     $self->{'header'} = undef;
     $self->{'state'} = 'idle';
-    $self->{'cancelled'} = undef;
+    $self->{'cancelled'} = 1;
     delete $self->{'result'};
     delete $self->{'dumper_status'};
     delete $self->{'dump_params'};
@@ -617,6 +635,39 @@ sub send_port_and_get_header {
 
     my $steps = define_steps
         cb_ref => \$finished_cb;
+
+    step start => sub {
+	if ($self->{'doing_port_write'}) {
+	    $steps->{'send_port'}->();
+	} else {
+	    $steps->{'send_shm_name'}->();
+	}
+    };
+
+    step send_shm_name => sub {
+        # get the shm_name
+        my $shm_name = $self->{'xfer_source'}->get_shm_name();
+
+        # and set up an xfer for the header, too, using DirectTCP as an easy
+        # way to implement a listen/accept/read process.  Note that this does
+        # not enforce a maximum size, so this portion of Amanda at least can
+        # handle any size header
+        ($xsrc, $xdst) = (
+            Amanda::Xfer::Source::DirectTCPListen->new(),
+            Amanda::Xfer::Dest::Buffer->new(0));
+        $header_xfer = Amanda::Xfer->new([$xsrc, $xdst]);
+        $header_xfer->start($steps->{'header_xfer_xmsg_cb'});
+
+        my $header_addrs = $xsrc->get_addrs();
+        my $header_port = $header_addrs->[0][1];
+
+        # and tell the driver which ports we're listening on
+        $self->{'proto'}->send(Amanda::Chunker::Protocol::SHM_NAME,
+            worker_name => $self->{'worker_name'},
+            handle => $self->{'handle'},
+            port => $header_port,
+            shm_name => $shm_name);
+    };
 
     step send_port => sub {
         # get the ip:port pairs for the data connection from the data xfer source,

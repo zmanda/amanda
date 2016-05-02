@@ -72,6 +72,7 @@ typedef enum action_s {
 
 typedef struct job_s {
     int               in_use;
+    gboolean          do_port_write;
     struct sched_s   *sched;
     struct chunker_s *chunker;
     struct dumper_s  *dumper;

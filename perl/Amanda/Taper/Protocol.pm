@@ -50,6 +50,13 @@ use constant PORT_WRITE => message("PORT-WRITE",
 	    data_path ) ],
 );
 
+use constant SHM_WRITE => message("SHM-WRITE",
+    format => [ qw( worker_name handle hostname diskname level datestamp
+	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
+	    part_size part_cache_type part_cache_dir part_cache_max_size
+	    data_path ) ],
+);
+
 use constant FILE_WRITE => message("FILE-WRITE",
     format => [ qw( worker_name handle filename hostname diskname level datestamp
 	    dle_tape_splitsize dle_split_diskbuffer dle_fallback_splitsize dle_allow_split
@@ -124,6 +131,10 @@ use constant REQUEST_NEW_TAPE => message("REQUEST-NEW-TAPE",
 
 use constant PORT => message("PORT",
     format => [ qw( worker_name handle port ipports ) ],
+);
+
+use constant SHM_NAME => message("SHM-NAME",
+    format => [ qw( worker_name handle port shm_name ) ],
 );
 
 use constant BAD_COMMAND => message("BAD-COMMAND",

@@ -276,6 +276,14 @@ sub msg_PORT_WRITE {
     $worker->PORT_WRITE(@_);
 }
 
+sub msg_SHM_WRITE {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $worker = $self->{'worker'}->{$params{'worker_name'}};
+    $worker->SHM_WRITE(@_);
+}
+
 sub msg_VAULT_WRITE {
     my $self = shift;
     my ($msgtype, %params) = @_;

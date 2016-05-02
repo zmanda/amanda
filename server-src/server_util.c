@@ -47,7 +47,7 @@ const char *cmdstr[] = {
     "FAILED", "TRY-AGAIN", "NO-ROOM", "RQ-MORE-DISK",	/* dumper results */
     "ABORT-FINISHED", "BAD-COMMAND",			/* dumper results */
     "START-TAPER", "FILE-WRITE", "NEW-TAPE", "NO-NEW-TAPE",
-
+    "SHM-WRITE", "SHM-DUMP", "SHM-NAME",
     "PARTDONE", "PORT-WRITE", "VAULT-WRITE", "DUMPER-STATUS", /* taper cmds */
     "PORT", "TAPE-ERROR", "TAPER-OK",			 /* taper results */
     "REQUEST-NEW-TAPE", "DIRECTTCP-PORT", "TAKE-SCRIBE-FROM",

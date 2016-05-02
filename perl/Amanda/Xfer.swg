@@ -413,6 +413,16 @@ XferElement *xfer_source_pattern(
 XferElement *xfer_source_fd(
     int fd);
 
+%newobject xfer_source_shm_ring;
+XferElement *xfer_source_shm_ring(void);
+
+%inline %{
+static char *
+xfer_source_shm_ring_get_shm_name(XferElement *elt) {
+    return elt->downstream->shm_ring->shm_control_name;
+}
+%}
+
 %newobject xfer_source_file;
 XferElement *xfer_source_file(
     char *filename);
@@ -662,6 +672,13 @@ XFER_ELEMENT_SUBCLASS()
 PACKAGE(Amanda::Xfer::Source::Fd)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_fd)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Source::ShmRing)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_shm_ring)
+DECLARE_METHOD(get_shm_name, Amanda::Xfer::xfer_source_shm_ring_get_shm_name)
 
 /* ---- */
 

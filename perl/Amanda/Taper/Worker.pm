@@ -90,6 +90,7 @@ sub new {
 	level => undef,
 	header => undef,
 	doing_port_write => undef,
+	doing_shm_write => undef,
 	input_errors => [],
 
 	# periodic status updates
@@ -105,6 +106,7 @@ sub new {
     }, $class;
 
     my $scribe = Amanda::Taper::Scribe->new(
+	worker => $self,
 	taperscan => $controller->{'taperscan'},
 	feedback => $self,
 	debug => $Amanda::Config::debug_taper);
@@ -146,6 +148,7 @@ sub FILE_WRITE {
     $self->_assert_in_state("idle") or return;
 
     $self->{'doing_port_write'} = 0;
+    $self->{'doing_shm_write'} = 0;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -161,6 +164,23 @@ sub PORT_WRITE {
     $self->_assert_in_state("idle") or return;
 
     $self->{'doing_port_write'} = 1;
+    $self->{'doing_shm_write'} = 0;
+
+    $self->setup_and_start_dump($msgtype,
+	dump_cb => sub { $self->dump_cb(@_); },
+	%params);
+}
+
+sub SHM_WRITE {
+    my $self = shift;
+    my ($msgtype, %params) = @_;
+
+    my $read_cb;
+
+    $self->_assert_in_state("idle") or return;
+
+    $self->{'doing_port_write'} = 0;
+    $self->{'doing_shm_write'} = 1;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -176,6 +196,7 @@ sub VAULT_WRITE {
     $self->_assert_in_state("idle") or return;
 
     $self->{'doing_port_write'} = 0;
+    $self->{'doing_shm_write'} = 0;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -220,7 +241,9 @@ sub TAKE_SCRIBE_FROM {
     my $scribe = $self->{'scribe'};
     my $scribe1 = $worker1->{'scribe'};
     $self->{'scribe'} = $scribe1;
+    $scribe1->{'worker'} = $self;
     $worker1->{'scribe'} = $scribe;
+    $scribe->{'worker'} = $worker1;
 
     $self->{'label'} = $worker1->{'label'};
     $self->{'perm_cb'}->(scribe => $scribe1);
@@ -663,6 +686,49 @@ sub send_port_and_get_header {
     my $steps = define_steps
 	cb_ref => \$finished_cb;
 
+    step start => sub {
+	if ($self->{'doing_port_write'}) {
+            $steps->{'send_port'}->();
+        } else {
+            $steps->{'send_shm_name'}->();
+        }
+    };
+
+    step send_shm_name => sub {
+	# get the shm_name
+	my $shm_name = $self->{'xfer_source'}->get_shm_name();
+
+	if (!$shm_name) {
+	    if (@{$self->{'scribe'}->{'device_errors'}}) {
+		$self->{'scribe'}->abort_setup(dump_cb => $self->{'dump_cb'});
+		return;
+	    }
+	    #An XMSG_ERROR will call the dump_cb
+	    $self->{'scribe'}->set_dump_cb(dump_cb => $self->{'dump_cb'});
+	    return;
+	}
+
+	# and set up an xfer for the header, too, using DirectTCP as an easy
+	# way to implement a listen/accept/read process.  Note that this does
+	# not enforce a maximum size, so this portion of Amanda at least can
+	# handle any size header
+	($xsrc, $xdst) = (
+	    Amanda::Xfer::Source::DirectTCPListen->new(),
+	    Amanda::Xfer::Dest::Buffer->new(0));
+	$self->{'header_xfer'} = Amanda::Xfer->new([$xsrc, $xdst]);
+	$self->{'header_xfer'}->start($steps->{'header_xfer_xmsg_cb'});
+
+	my $header_addrs = $xsrc->get_addrs();
+	my $header_port = $header_addrs->[0][1];
+
+	# and tell the driver which ports we're listening on
+	$self->{'controller'}->{'proto'}->send(Amanda::Taper::Protocol::SHM_NAME,
+	    worker_name => $self->{'worker_name'},
+	    handle => $self->{'handle'},
+	    port => $header_port,
+	    shm_name => $shm_name);
+    };
+
     step send_port => sub {
 	# get the ip:port pairs for the data connection from the data xfer source,
 	# which should be an Amanda::Xfer::Source::DirectTCPListen
@@ -952,6 +1018,8 @@ sub setup_and_start_dump {
 
 	if ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE) {
 	    $self->{'xfer_source'} = Amanda::Xfer::Source::DirectTCPListen->new();
+	} elsif ($msgtype eq Amanda::Taper::Protocol::SHM_WRITE) {
+	    $self->{'xfer_source'} = Amanda::Xfer::Source::ShmRing->new();
 	} elsif ($msgtype eq Amanda::Taper::Protocol::FILE_WRITE) {
 	    $self->{'xfer_source'} = Amanda::Xfer::Source::Holding->new($params{'filename'});
 	} elsif ($msgtype eq Amanda::Taper::Protocol::VAULT_WRITE) {
@@ -1060,7 +1128,8 @@ sub setup_and_start_dump {
 
 	    $self->{'xfer_source'}->start_recovery();
 	    $steps->{'start_dump'}->(undef);
-	} elsif ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE) {
+	} elsif ($msgtype eq Amanda::Taper::Protocol::PORT_WRITE ||
+		 $msgtype eq Amanda::Taper::Protocol::SHM_WRITE) {
 	    # ..but quite a bit harder for PORT-WRITE; this method will send the
 	    # proper PORT command, then read the header from the dumper and parse
 	    # it, placing the result in $self->{'header'}
@@ -1096,7 +1165,7 @@ sub setup_and_start_dump {
             or $hdr->{'name'} ne $params{'hostname'}
             or $hdr->{'disk'} ne $params{'diskname'}
 	    or $hdr->{'datestamp'} ne $params{'datestamp'}) {
-            confess("Header of dumpfile does not match command from driver");
+            confess("Header of dumpfile does not match command from driver $hdr->{'dumplevel'} $hdr->{'name'} $hdr->{'disk'} $hdr->{'datestamp'} ------ $params{'level'} $params{'hostname'} $params{'diskname'} $params{'datestamp'}");
         }
 
 	# start producing status
@@ -1147,7 +1216,7 @@ sub dump_cb {
     # connection from a normal EOF) and have not done so yet, then send a
     # DUMPER_STATUS message and re-call this method (dump_cb) with the result.
     if ($params{'result'} eq "DONE"
-	    and $self->{'doing_port_write'}
+	    and ($self->{'doing_port_write'} || $self->{'doing_shm_write'})
 	    and !exists $self->{'dumper_status'}) {
 	my $controller = $self->{'controller'};
 	my $proto = $controller->{'proto'};
