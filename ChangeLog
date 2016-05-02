@@ -1,4 +1,8 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/xfer-dest-taper-cacher.c: Add the new push_buffer_static
+	  xfer mechanism
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/xfer-dest-taper-splitter.c: Use the new mem-ring
 	  internally, Can use the new mem_ring and shm_ring as input
 	* installcheck/Amanda_Xfer.pl: Fix check

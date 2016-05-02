@@ -1125,7 +1125,7 @@ add_reader_slab_to_train(
 }
 
 static void
-push_buffer_impl(
+push_buffer_static_impl(
     XferElement *elt,
     gpointer buf,
     size_t size)
@@ -1133,7 +1133,7 @@ push_buffer_impl(
     XferDestTaperCacher *self = (XferDestTaperCacher *)elt;
     char *p;
 
-    DBG(3, "push_buffer(%p, %ju)", buf, (uintmax_t)size);
+    DBG(3, "push_buffer_static(%p, %ju)", buf, (uintmax_t)size);
 
     /* do nothing if cancelled */
     if (G_UNLIKELY(elt->cancelled)) {
@@ -1203,6 +1203,17 @@ push_buffer_impl(
     }
 
 free_and_finish:
+    return;
+}
+
+static void
+push_buffer_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t size)
+{
+    push_buffer_static_impl(elt, buf, size);
+
     if (buf)
         g_free(buf);
 }
@@ -1430,12 +1441,14 @@ class_init(
     GObjectClass *goc = G_OBJECT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(1), XFER_NALLOC(0) },
+	{ XFER_MECH_PUSH_BUFFER_STATIC, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(1), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
     klass->start = start_impl;
     klass->cancel = cancel_impl;
     klass->push_buffer = push_buffer_impl;
+    klass->push_buffer_static = push_buffer_static_impl;
     xdt_klass->start_part = start_part_impl;
     xdt_klass->use_device = use_device_impl;
     xdt_klass->get_part_bytes_written = get_part_bytes_written_impl;
