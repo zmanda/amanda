@@ -1,4 +1,11 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add a shared memory ring
+	* common-src/Makefile.am (libamanda_la_SOURCES): Add shm-ring.c
+	* common-src/security.h: include "shm-ring.h"
+	* common-src/shm-ring.c: New file
+	* common-src/shm-ring.h: New header
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add a memory ring
 	* common-src/Makefile.am (libamanda_la_SOURCES): Add mem-ring.c
 	* common-src/mem-ring.c: New file

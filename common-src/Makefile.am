@@ -42,6 +42,7 @@ libamanda_la_SOURCES =		\
 	security.c		\
 	security-file.c		\
 	security-util.c		\
+	shm-ring.c		\
 	simpleprng.c		\
 	sockaddr-util.c		\
 	stream.c		\
@@ -134,6 +135,7 @@ noinst_HEADERS =		\
 	security.h		\
 	security-file.h		\
 	security-util.h		\
+	shm-ring.h		\
 	simpleprng.h		\
 	am_sl.h			\
 	sockaddr-util.h		\

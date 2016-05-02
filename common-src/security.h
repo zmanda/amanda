@@ -33,7 +33,10 @@
 #ifndef SECURITY_H
 #define	SECURITY_H
 
+struct security_stream_t;
+
 #include "packet.h"
+#include "shm-ring.h"
 
 struct security_handle;
 
@@ -350,7 +353,7 @@ void security_handleinit(security_handle_t *, const security_driver_t *);
  * This structure is a handle to a stream connection to a host for
  * transmission of random data such as dumps or index data.
  */
-typedef struct security_stream {
+typedef struct security_stream_t {
     const security_driver_t *driver;
     char *error;
 } security_stream_t;
