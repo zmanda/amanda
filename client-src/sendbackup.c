@@ -949,10 +949,6 @@ main(
 	dbprintf(_("Started backup\n"));
 	parse_backup_messages(dle, mesgpipe[0]);
 	dbprintf(_("Parsed backup messages\n"));
-	g_thread_join(native_crc.thread);
-	if (have_filter) {
-	    g_thread_join(client_crc.thread);
-	}
     }
 
     run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, NULL);

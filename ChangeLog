@@ -1,4 +1,7 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c: Remove duplicate g_thread_join
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/amanda_configure.m4: AC_SEARCH_LIBS([shm_open], [rt])
 
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
