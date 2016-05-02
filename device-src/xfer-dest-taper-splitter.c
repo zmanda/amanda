@@ -93,24 +93,11 @@ typedef struct XferDestTaperSplitter {
      * for streaming */
     GThread *device_thread;
 
-    /* Ring Buffer
-     *
-     * This buffer holds MAX_MEMORY bytes of data (rounded up to the next
-     * blocksize), and serves as the interface between the device_thread and
-     * the thread calling push_buffer.  Ring_length is the total length of the
-     * buffer in bytes, while ring_count is the number of data bytes currently
-     * in the buffer.  The ring_add_cond is signalled when data is added to the
-     * buffer, while ring_free_cond is signalled when data is removed.  Both
-     * are governed by ring_mutex, and both are signalled when the transfer is
-     * cancelled.
-     */
-
+    /* Ring Buffer */
     GMutex *ring_mutex;
-    GCond *ring_add_cond, *ring_free_cond;
-    gchar *ring_buffer;
-    gsize ring_length, ring_count;
-    gsize ring_head, ring_tail;
-    gboolean ring_head_at_eof;
+    GCond *ring_cond;
+    mem_ring_t *mem_ring;
+    gboolean    ring_ready;
 
     /* Element State
      *
@@ -118,7 +105,7 @@ typedef struct XferDestTaperSplitter {
      * parameters).  Note that the device_thread holdes this mutex for the
      * entire duration of writing a part.
      *
-     * state_mutex should always be locked before ring_mutex, if both are to be
+     * state_mutex should always be locked before mem_ring->mutex, if both are to be
      * held simultaneously.
      */
     GMutex *state_mutex;
@@ -131,6 +118,7 @@ typedef struct XferDestTaperSplitter {
 
     /* bytes to read from cached slices before reading from the ring buffer */
     guint64 bytes_to_read_from_slices;
+    guint64 max_memory;
 
     /* part number in progress */
     volatile guint64 partnum;
@@ -320,7 +308,6 @@ iterator_get_block(
 	read_size = MIN(iter->slice_remaining, bytes_needed);
 	bytes_read = read_fully(iter->cur_fd, (gchar *)buf + buf_offset, read_size,
 	    NULL);
-
 	if (bytes_read < read_size) {
 	    xfer_cancel_with_error(elt, _("Error reading '%s': %s"),
 		iter->slice->filename,
@@ -369,56 +356,104 @@ iterator_free(
  * Called with the ring mutex held. */
 static gsize
 device_thread_wait_for_block(
-    XferDestTaperSplitter *self)
+    XferDestTaperSplitter *self,
+    gboolean *eof_flag)
 {
     XferElement *elt = XFER_ELEMENT(self);
     gsize bytes_needed = self->device->block_size;
-    gsize usable;
+    gsize usable = 0;
 
-    /* for any kind of streaming, we need to fill the entire buffer before the
-     * first byte */
-    if (self->part_bytes_written == 0 && self->streaming != STREAMING_REQUIREMENT_NONE)
-	bytes_needed = self->ring_length;
+    *eof_flag = FALSE;
 
-    while (1) {
-	/* are we ready? */
-	if (elt->cancelled)
-	    break;
+    if (self->mem_ring) {
+	/* for any kind of streaming, we need to fill the entire buffer before the
+	 * first byte */
+	if (self->part_bytes_written == 0 && self->streaming != STREAMING_REQUIREMENT_NONE)
+	    bytes_needed = self->mem_ring->ring_size;
 
-	if (self->ring_count >= bytes_needed)
-	    break;
+	while (1) {
+	    /* are we ready? */
+	    if (elt->cancelled)
+		break;
 
-	if (self->ring_head_at_eof)
-	    break;
+	    usable = self->mem_ring->written - self->mem_ring->readx;
+	    *eof_flag = self->mem_ring->eof_flag;
+	    if (self->mem_ring->written - self->mem_ring->readx > bytes_needed) {
+		break;
+	    }
 
-	/* nope - so wait */
-	g_cond_wait(self->ring_add_cond, self->ring_mutex);
+	    if (self->mem_ring->eof_flag)
+		break;
 
-	/* in STREAMING_REQUIREMENT_REQUIRED, once we decide to wait for more bytes,
-	 * we need to wait for the entire buffer to fill */
-	if (self->streaming == STREAMING_REQUIREMENT_REQUIRED)
-	    bytes_needed = self->ring_length;
+	    /* nope - so wait */
+	    g_cond_wait(self->mem_ring->add_cond, self->mem_ring->mutex);
+
+	    /* in STREAMING_REQUIREMENT_REQUIRED, once we decide to wait for more bytes,
+	     * we need to wait for the entire buffer to fill */
+	    if (self->streaming == STREAMING_REQUIREMENT_REQUIRED)
+		bytes_needed = self->mem_ring->ring_size;
+	}
+
+    } else { // shm_ring
+	if (self->part_bytes_written == 0 && self->streaming != STREAMING_REQUIREMENT_NONE)
+	    bytes_needed = elt->shm_ring->ring_size;
+
+	while (!elt->cancelled &&
+	       !elt->shm_ring->mc->cancelled) {
+
+	    usable = elt->shm_ring->mc->written - elt->shm_ring->mc->readx;
+	    *eof_flag = elt->shm_ring->mc->eof_flag;
+	    if (shm_ring_sem_wait(elt->shm_ring, elt->shm_ring->sem_read) != 0)
+		break;
+
+	    if (elt->cancelled || elt->shm_ring->mc->cancelled)
+		break;
+
+	    if (usable > bytes_needed)
+		break;
+
+	    if (*eof_flag)
+		break;
+
+
+	    if (self->streaming == STREAMING_REQUIREMENT_REQUIRED)
+		bytes_needed = elt->shm_ring->ring_size;
+	}
+	if (elt->shm_ring->mc->cancelled && !elt->cancelled) {
+	    xfer_cancel_with_error(elt, "shm_ring_cancelled");
+	}
     }
-
-    usable = MIN(self->ring_count, bytes_needed);
     if (self->part_size)
        usable = MIN(usable, self->part_size - self->part_bytes_written);
 
     return usable;
 }
 
-/* Mark WRITTEN bytes as free in the ring buffer.  Called with the ring mutex
+/* Mark readx bytes as free in the ring buffer.  Called with the ring mutex
  * held. */
 static void
 device_thread_consume_block(
     XferDestTaperSplitter *self,
-    gsize written)
+    gsize readx)
 {
-    self->ring_count -= written;
-    self->ring_tail += written;
-    if (self->ring_tail >= self->ring_length)
-	self->ring_tail -= self->ring_length;
-    g_cond_broadcast(self->ring_free_cond);
+    XferElement *elt = XFER_ELEMENT(self);
+    uint64_t read_offset;
+
+    if (self->mem_ring) {
+	read_offset = self->mem_ring->read_offset + readx;
+	if (read_offset >= self->mem_ring->ring_size)
+	    read_offset -= self->mem_ring->ring_size;
+	self->mem_ring->readx += readx;
+	self->mem_ring->read_offset = read_offset;
+	g_cond_broadcast(self->mem_ring->free_cond);
+    } else { // shm_ring
+	read_offset = elt->shm_ring->mc->read_offset + readx;
+	if (read_offset >= elt->shm_ring->ring_size)
+	    read_offset -= elt->shm_ring->ring_size;
+	elt->shm_ring->mc->readx += readx;
+	elt->shm_ring->mc->read_offset = read_offset;
+	sem_post(elt->shm_ring->sem_write);
+    }
 }
 
 /* Write an entire part.  Called with the state_mutex held */
@@ -432,6 +467,7 @@ device_thread_write_part(
     enum { PART_EOF, PART_LEOM, PART_EOP, PART_FAILED } part_status = PART_FAILED;
     int fileno = 0;
     XMsg *msg;
+    void *buf;
 
     self->part_bytes_written = 0;
     self->crc_before_part = elt->crc;
@@ -476,6 +512,7 @@ device_thread_write_part(
 	    /* note that it's OK to reference these ring_* vars here, as they
 	     * are static at this point */
 	    ok = device_write_block(self->device, (guint)to_write, buf);
+	    DBG(8, "writing %ju bytes from slice to device", (uintmax_t)to_write);
 
 	    if (ok == WRITE_SPACE)
 		ok = retry_write(self, to_write, buf);
@@ -517,63 +554,93 @@ device_thread_write_part(
 	    goto part_done;
     }
 
-    g_mutex_lock(self->ring_mutex);
-    while (1) {
-	gsize to_write;
+    if (self->mem_ring)
+	g_mutex_lock(self->mem_ring->mutex);
+    while (!elt->cancelled &&
+	   (!elt->shm_ring || !elt->shm_ring->mc->cancelled)) {
 	DeviceWriteResult ok;
+	gboolean eof_flag;
 
 	/* wait for at least one block, and (if necessary) prebuffer */
-	to_write = device_thread_wait_for_block(self);
-	to_write = MIN(to_write, self->device->block_size);
-	if (elt->cancelled)
+	gsize to_writeX = device_thread_wait_for_block(self, &eof_flag);
+	if (elt->cancelled || (elt->shm_ring && elt->shm_ring->mc->cancelled))
 	    break;
 
-	if (to_write == 0) {
-	    part_status = PART_EOF;
-	    break;
-	}
+	while (to_writeX >= self->device->block_size || eof_flag) {
+	    //crc_t block_crc;
+	    gsize to_write = MIN(to_writeX, self->device->block_size);
+	    if (elt->cancelled)
+		goto part_done_unlock;
 
-	g_mutex_unlock(self->ring_mutex);
-	DBG(8, "writing %ju bytes to device", (uintmax_t)to_write);
+	    if (to_write == 0) {
+		part_status = PART_EOF;
+		goto part_done_unlock;
+	    }
 
-	/* note that it's OK to reference these ring_* vars here, as they
-	 * are static at this point */
-	ok = device_write_block(self->device, (guint)to_write,
-		self->ring_buffer + self->ring_tail);
+	    if (self->mem_ring)
+		g_mutex_unlock(self->mem_ring->mutex);
+	    DBG(8, "writing %ju bytes to device", (uintmax_t)to_write);
 
-	if (ok == WRITE_SPACE)
-	    ok = retry_write(self, to_write,
-			     self->ring_buffer + self->ring_tail);
+	    /* note that it's OK to reference these ring_* vars here, as they
+	     * are static at this point */
+	    if (self->mem_ring) {
+		buf = self->mem_ring->buffer + self->mem_ring->read_offset;
+	    } else {
+		buf = elt->shm_ring->data + elt->shm_ring->mc->read_offset;
+	    }
+	    ok = device_write_block(self->device, (guint)to_write, buf);
 
-	g_mutex_lock(self->ring_mutex);
+	    if (ok == WRITE_SPACE)
+	    ok = retry_write(self, to_write, buf);
 
-	if (ok == WRITE_FAILED) {
-	    part_status = PART_FAILED;
-	    break;
-	} else if (ok == WRITE_FULL) {
-	    part_status = PART_EOP;
-	    break;
-	} else if (ok == WRITE_SPACE) {
-	    part_status = PART_EOP;
-	    break;
-	}
+	    if (self->mem_ring)
+		g_mutex_lock(self->mem_ring->mutex);
 
-	crc32_add((uint8_t *)(self->ring_buffer + self->ring_tail),
+	    if (ok == WRITE_FAILED) {
+		part_status = PART_FAILED;
+		goto part_done_unlock;
+	    } else if (ok == WRITE_FULL) {
+		part_status = PART_EOP;
+		goto part_done_unlock;
+	    } else if (ok == WRITE_SPACE) {
+		part_status = PART_EOP;
+		goto part_done_unlock;
+	    }
+
+	    crc32_add((uint8_t *)(buf),
 			 to_write, &elt->crc);
-	self->part_bytes_written += to_write;
-	device_thread_consume_block(self, to_write);
+	    self->part_bytes_written += to_write;
+	    device_thread_consume_block(self, to_write);
 
-	if (self->part_size && self->part_bytes_written >= self->part_size) {
-	    part_status = PART_EOP;
-	    break;
-	} else if (self->device->is_eom) {
-	    part_status = PART_LEOM;
-	    break;
+	    if (self->part_size && self->part_bytes_written >= self->part_size) {
+		part_status = PART_EOP;
+		goto part_done_unlock;
+	    } else if (self->device->is_eom) {
+		part_status = PART_LEOM;
+		goto part_done_unlock;
+	    }
+	    to_writeX -= to_write;
 	}
     }
-    g_mutex_unlock(self->ring_mutex);
-part_done:
+part_done_unlock:
+    if (self->mem_ring)
+	g_mutex_unlock(self->mem_ring->mutex);
 
+part_done:
+    if (elt->shm_ring) {
+	if (elt->cancelled) {
+	    if (elt->shm_ring) {
+		elt->shm_ring->mc->cancelled = TRUE;
+	    }
+	} else if (elt->shm_ring->mc->cancelled) {
+	    part_status = PART_FAILED;
+	    xfer_cancel_with_error(elt, "shm_ring cancelled");
+	}
+	sem_post(elt->shm_ring->sem_read);
+	sem_post(elt->shm_ring->sem_read);
+	sem_post(elt->shm_ring->sem_read);
+	sem_post(elt->shm_ring->sem_write);
+    }
     /* if we write all of the blocks, but the finish_file fails, then likely
      * there was some buffering going on in the device driver, and the blocks
      * did not all make it to permanent storage -- so it's a failed part.  Note
@@ -622,8 +689,23 @@ device_thread(
 
     DBG(1, "(this is the device thread)");
 
+    if (elt->input_mech == XFER_MECH_PUSH_BUFFER) {
+	self->mem_ring = create_mem_ring();
+	init_mem_ring(self->mem_ring, self->max_memory, self->device->block_size);
+    } else if (elt->input_mech == XFER_MECH_MEM_RING) {
+	self->mem_ring = xfer_element_get_mem_ring(elt->upstream);
+	mem_ring_consumer_set_size(self->mem_ring, self->max_memory, self->device->block_size);
+    } else if (elt->input_mech == XFER_MECH_SHM_RING) {
+	shm_ring_consumer_set_size(elt->shm_ring, self->max_memory, self->device->block_size);
+    }
+    crc32_init(&elt->crc);
+
     /* This is the outer loop, that loops once for each split part written to
      * tape. */
+    g_mutex_lock(self->ring_mutex);
+    self->ring_ready = TRUE;
+    g_cond_broadcast(self->ring_cond);
+    g_mutex_unlock(self->ring_mutex);
     g_mutex_lock(self->state_mutex);
     while (1) {
 	/* wait until the main thread un-pauses us, and check that we have
@@ -660,6 +742,11 @@ device_thread(
     }
     g_mutex_unlock(self->state_mutex);
 
+    // notify the producer that everythinng is read
+    if (elt->input_mech == XFER_MECH_SHM_RING) {
+	sem_post(elt->shm_ring->sem_write);
+    }
+
     g_debug("device_thread sending XMSG_CRC message");
     DBG(2, "xfer-dest-taper-splitter CRC: %08x      size %lld",
 	   crc32_finish(&elt->crc), (long long)elt->crc.size);
@@ -694,25 +781,35 @@ push_buffer_impl(
         goto free_and_finish;
     }
 
+    if (G_UNLIKELY(!self->ring_ready)) {
+	g_mutex_lock(self->ring_mutex);
+	while (!self->ring_ready && !elt->cancelled) {
+	    g_cond_wait(self->ring_cond, self->ring_mutex);
+	}
+	if (elt->cancelled)
+	    goto unlock_and_free_and_finish;
+	g_mutex_unlock(self->ring_mutex);
+    }
+
     /* handle EOF */
     if (G_UNLIKELY(buf == NULL)) {
 	/* indicate EOF to the device thread */
-	g_mutex_lock(self->ring_mutex);
-	self->ring_head_at_eof = TRUE;
-	g_cond_broadcast(self->ring_add_cond);
-	g_mutex_unlock(self->ring_mutex);
+	g_mutex_lock(self->mem_ring->mutex);
+	self->mem_ring->eof_flag = TRUE;
+	g_cond_broadcast(self->mem_ring->add_cond);
+	g_mutex_unlock(self->mem_ring->mutex);
 	goto free_and_finish;
     }
 
     /* push the block into the ring buffer, in pieces if necessary */
-    g_mutex_lock(self->ring_mutex);
+    g_mutex_lock(self->mem_ring->mutex);
     while (size > 0) {
 	gsize avail;
 
 	/* wait for some space */
-	while (self->ring_count == self->ring_length && !elt->cancelled) {
+	while (self->mem_ring->written - self->mem_ring->readx == self->mem_ring->ring_size && !elt->cancelled) {
 	    DBG(9, "push_buffer waiting for any space to buffer pushed data");
-	    g_cond_wait(self->ring_free_cond, self->ring_mutex);
+	    g_cond_wait(self->mem_ring->free_cond, self->mem_ring->mutex);
 	}
 	DBG(9, "push_buffer done waiting");
 
@@ -721,26 +818,26 @@ push_buffer_impl(
 
 	/* only copy to the end of the buffer, if the available space wraps
 	 * around to the beginning */
-	avail = MIN(size, self->ring_length - self->ring_count);
-	avail = MIN(avail, self->ring_length - self->ring_head);
+	avail = MIN(size, self->mem_ring->ring_size - (self->mem_ring->written - self->mem_ring->readx));
+	avail = MIN(avail, self->mem_ring->ring_size - self->mem_ring->write_offset);
 
 	/* copy AVAIL bytes into the ring buf (knowing it's contiguous) */
-	memmove(self->ring_buffer + self->ring_head, p, avail);
+	memmove(self->mem_ring->buffer + self->mem_ring->write_offset, p, avail);
 
 	/* reset the ring variables to represent this state */
-	self->ring_count += avail;
-	self->ring_head += avail; /* will, at most, hit ring_length */
-	if (self->ring_head == self->ring_length)
-	    self->ring_head = 0;
+	self->mem_ring->written += avail;
+	self->mem_ring->write_offset += avail; /* will, at most, hit mem_ring->ring_size */
+	if (self->mem_ring->write_offset == self->mem_ring->ring_size)
+	    self->mem_ring->write_offset = 0;
 	p = (gpointer)((guchar *)p + avail);
 	size -= avail;
 
 	/* and give the device thread a notice that data is ready */
-	g_cond_broadcast(self->ring_add_cond);
+	g_cond_broadcast(self->mem_ring->add_cond);
     }
 
 unlock_and_free_and_finish:
-    g_mutex_unlock(self->ring_mutex);
+    g_mutex_unlock(self->mem_ring->mutex);
 
 free_and_finish:
     if (buf)
@@ -781,9 +878,22 @@ cancel_impl(
     /* then signal all of our condition variables, so that threads waiting on them
      * wake up and see elt->cancelled. */
     g_mutex_lock(self->ring_mutex);
-    g_cond_broadcast(self->ring_add_cond);
-    g_cond_broadcast(self->ring_free_cond);
+    g_cond_broadcast(self->ring_cond);
     g_mutex_unlock(self->ring_mutex);
+
+    if (elt->shm_ring) {
+	elt->shm_ring->mc->cancelled = TRUE;
+	sem_post(elt->shm_ring->sem_ready);
+	sem_post(elt->shm_ring->sem_start);
+	sem_post(elt->shm_ring->sem_read);
+	sem_post(elt->shm_ring->sem_write);
+    }
+    if (self->mem_ring) {
+	g_mutex_lock(self->mem_ring->mutex);
+	g_cond_broadcast(self->mem_ring->add_cond);
+	g_cond_broadcast(self->mem_ring->free_cond);
+	g_mutex_unlock(self->mem_ring->mutex);
+    }
 
     g_mutex_lock(self->state_mutex);
     g_cond_broadcast(self->state_cond);
@@ -948,11 +1058,10 @@ instance_init(
     XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(elt);
     elt->can_generate_eof = FALSE;
 
+    self->ring_mutex = g_mutex_new();
+    self->ring_cond = g_cond_new();
     self->state_mutex = g_mutex_new();
     self->state_cond = g_cond_new();
-    self->ring_mutex = g_mutex_new();
-    self->ring_add_cond = g_cond_new();
-    self->ring_free_cond = g_cond_new();
     self->part_slices_mutex = g_mutex_new();
 
     self->device = NULL;
@@ -964,19 +1073,40 @@ instance_init(
     crc32_init(&elt->crc);
 }
 
+static gboolean
+setup_impl(
+    XferElement *elt)
+{
+    if (elt->input_mech == XFER_MECH_SHM_RING) {
+	elt->shm_ring = shm_ring_create();
+    }
+
+    return TRUE;
+}
+
 static void
 finalize_impl(
     GObject * obj_self)
 {
     XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(obj_self);
+    XferElement *elt = XFER_ELEMENT(self);
     FileSlice *slice, *next_slice;
 
+    g_mutex_free(self->ring_mutex);
+    g_cond_free(self->ring_cond);
     g_mutex_free(self->state_mutex);
     g_cond_free(self->state_cond);
 
-    g_mutex_free(self->ring_mutex);
-    g_cond_free(self->ring_add_cond);
-    g_cond_free(self->ring_free_cond);
+    if (self->mem_ring) {
+	g_mutex_free(self->mem_ring->mutex);
+	g_cond_free(self->mem_ring->add_cond);
+	g_cond_free(self->mem_ring->free_cond);
+    }
+
+    if (elt->shm_ring) {
+	close_consumer_shm_ring(elt->shm_ring);
+	elt->shm_ring = NULL;
+    }
 
     g_mutex_free(self->part_slices_mutex);
 
@@ -987,8 +1117,8 @@ finalize_impl(
 	g_free(slice);
     }
 
-    if (self->ring_buffer)
-	g_free(self->ring_buffer);
+    if (self->mem_ring && self->mem_ring->buffer)
+	g_free(self->mem_ring->buffer);
 
     if (self->part_header)
 	dumpfile_free(self->part_header);
@@ -1009,9 +1139,12 @@ class_init(
     GObjectClass *goc = G_OBJECT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_NONE, XFER_NROPS(2), XFER_NTHREADS(1), XFER_NALLOC(0) },
+	{ XFER_MECH_MEM_RING, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(2), XFER_NALLOC(1) },
+	{ XFER_MECH_SHM_RING, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(1), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
+    klass->setup = setup_impl;
     klass->start = start_impl;
     klass->cancel = cancel_impl;
     klass->push_buffer = push_buffer_impl;
@@ -1084,15 +1217,7 @@ xfer_dest_taper_splitter(
     self->paused = TRUE;
     self->no_more_parts = FALSE;
 
-    /* set up a ring buffer of size max_memory */
-    self->ring_length = max_memory;
-    self->ring_buffer = g_try_malloc(max_memory);
-    if (!self->ring_buffer) {
-	g_critical("Can't allocate %llu KB (device-output-buffer-size) of memory", (long long)max_memory/1024);
-    }
-    self->ring_head = self->ring_tail = 0;
-    self->ring_count = 0;
-    self->ring_head_at_eof = 0;
+    self->max_memory = max_memory;
 
     /* get this new device's streaming requirements */
     bzero(&val, sizeof(val));

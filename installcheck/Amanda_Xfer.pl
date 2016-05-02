@@ -910,7 +910,7 @@ SKIP: {
 	},
 	[ "PART-1-557056-OK", "PART-2-557056-OK", "PART-3-557056-OK",
 	  "PART-4-326656-OK", "DONE" ],
-	[ 'e896f9b1:1997824' ],
+	[ 'e896f9b1:1997824', 'e896f9b1:1997824' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - simple splitting");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -944,7 +944,7 @@ SKIP: {
 	[ "PART-1-1048576-OK", "PART-2-1048576-OK", "PART-3-294912-OK", "EOM",
 	  "PART-4-858521-OK",
 	  "DONE" ],
-	[ 'eda70336:3250585' ],
+	[ 'eda70336:3250585', 'eda70336:3250585' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - splitting and spanning with LEOM");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -977,7 +977,7 @@ SKIP: {
 	},
 	[ "PART-1-1572864-OK",
 	  "DONE" ],
-	[ '102b1445:1572864' ],
+	[ '102b1445:1572864', '102b1445:1572864' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - no splitting");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -1002,7 +1002,7 @@ SKIP: {
 	[ "PART-1-2424832-OK", "PART-2-0-OK", "EOM",
 	  "PART-2-825753-OK",
 	  "DONE" ],
-	[ 'eda70336:3250585' ],
+	[ 'eda70336:3250585', 'eda70336:3250585' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - LEOM hits in file 2 header");
     test_recovery_source(
 	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
@@ -1032,7 +1032,7 @@ SKIP: {
 	},
 	[ "PART-1-2424832-OK", "PART-2-98304-FAILED", "EOM",
 	  "NOT-RETRYING", "CANCELLED", "DONE" ],
-	[ '96ff2746:2424832' ],
+	[ '96ff2746:2424832', '626c1849:2621440' ],
 	"Amanda::Xfer::Dest::Taper::Splitter - LEOM fails, PEOM => failure",
 	disable_leom => 1, do_not_retry => 1);
 
