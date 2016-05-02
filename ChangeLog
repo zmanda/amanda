@@ -1,4 +1,8 @@
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/xfer-source-holding.c: Can use the new mem_ring and
+	  pull_buffer_static xfer mechanism
+
+2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add XFER_MECH_PULL_BUFFER_STATIC, XFER_MECH_PUSH_BUFFER_STATIC,
 	XFER_MECH_MEM_RING and XFER_MECH_SHM_RING as new xfer mechanism.
 	* xfer-src/Makefile.am (libamxfer_la_SOURCES): Add source-shm-ring.c

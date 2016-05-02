@@ -63,6 +63,13 @@ typedef struct XferSourceHolding {
     off_t fsize;
     gboolean paused;
 
+    GThread *holding_thread;
+    GMutex     *state_mutex;
+    GCond      *state_cond;
+
+    mem_ring_t *mem_ring;
+    gboolean mem_ring_ready;
+
     XferElement *dest_taper;
 } XferSourceHolding;
 
@@ -76,9 +83,161 @@ typedef struct {
     void (*start_recovery)(XferSourceHolding *self);
 } XferSourceHoldingClass;
 
+static gboolean start_new_chunk(XferSourceHolding *self);
+
 /*
  * Implementation
  */
+
+#define HOLDING_BLOCK_BYTES DISK_BLOCK_BYTES
+
+/*
+ * Debug logging
+ */
+
+#define DBG(LEVEL, ...) if (debug_chunker >= LEVEL) { _xsh_dbg(__VA_ARGS__); }
+static void
+_xsh_dbg(const char *fmt, ...)
+{
+    va_list argp;
+    gchar *msg;
+
+    arglist_start(argp, fmt);
+    msg = g_strdup_vprintf(fmt, argp);
+    arglist_end(argp);
+    g_debug("XSH: %s", msg);
+    g_free(msg);
+}
+
+
+static gpointer
+holding_thread(
+    gpointer data)
+{
+    XferSourceHolding *self = XFER_SOURCE_HOLDING(data);
+    XferElement *elt = XFER_ELEMENT(self);
+    XMsg *msg;
+    GTimer *timer = g_timer_new();
+    uint64_t read_offset;
+    uint64_t write_offset;
+    uint64_t producer_block_size;
+    uint64_t consumer_block_size;
+    uint64_t mem_ring_size;
+    ssize_t  to_read_size;
+    size_t   bytes_read;
+
+    DBG(1, "(this is the holding thread)");
+
+    g_mutex_lock(self->start_recovery_mutex);
+    g_mutex_lock(self->state_mutex);
+    self->mem_ring = create_mem_ring();
+    self->mem_ring_ready = TRUE;
+    g_cond_broadcast(self->state_cond);
+    g_mutex_unlock(self->state_mutex);
+    mem_ring_producer_set_size(self->mem_ring, HOLDING_BLOCK_BYTES*32, HOLDING_BLOCK_BYTES);
+    mem_ring_size = self->mem_ring->ring_size;
+    producer_block_size = self->mem_ring->producer_block_size;
+    consumer_block_size = self->mem_ring->consumer_block_size;
+
+    g_mutex_lock(self->state_mutex);
+    while (1) {
+	g_mutex_lock(self->mem_ring->mutex);
+	write_offset = self->mem_ring->write_offset;
+        read_offset = self->mem_ring->read_offset;
+        g_mutex_unlock(self->mem_ring->mutex);
+
+	// wait for mem_ring space;
+	while (!(write_offset == read_offset) &&
+	       !((write_offset < read_offset) &&
+		 (read_offset - write_offset > producer_block_size)) &&
+	       !((write_offset > read_offset) &&
+		 (mem_ring_size - write_offset + read_offset > producer_block_size))) {
+	    if (elt->cancelled) {
+		goto return_eof;
+	    }
+	    g_mutex_lock(self->mem_ring->mutex);
+	    g_cond_wait(self->mem_ring->free_cond, self->mem_ring->mutex);
+	    write_offset = self->mem_ring->write_offset;
+	    read_offset = self->mem_ring->read_offset;
+	    g_mutex_unlock(self->mem_ring->mutex);
+	}
+
+	if (self->fd == -1) {
+	   if (!start_new_chunk(self))
+		goto return_eof;
+	}
+
+	while (self->paused && !elt->cancelled)
+	    g_cond_wait(self->start_recovery_cond, self->start_recovery_mutex);
+	if (elt->cancelled) {
+	    goto return_eof;
+	}
+
+	//read to mem ring;
+	to_read_size = MIN(HOLDING_BLOCK_BYTES, self->mem_ring->ring_size - self->mem_ring->write_offset);
+	bytes_read = read_fully(self->fd, self->mem_ring->buffer + self->mem_ring->write_offset, to_read_size, NULL);
+	if (bytes_read > 0) {
+	    if (elt->size >= 0 && bytes_read > (guint64)elt->size) {
+		bytes_read = elt->size;
+	    }
+	    elt->size -= bytes_read;
+	    elt->offset += bytes_read;
+	    self->current_offset += bytes_read;
+	    self->bytes_read += bytes_read;
+	    crc32_add((uint8_t *)self->mem_ring->buffer + self->mem_ring->write_offset, bytes_read, &elt->crc);
+	    write_offset += bytes_read;
+	    write_offset %= mem_ring_size;
+	    self->mem_ring->data_avail += bytes_read;
+	    g_mutex_lock(self->mem_ring->mutex);
+	    self->mem_ring->written += bytes_read;
+	    self->mem_ring->write_offset = write_offset;
+	    if (self->mem_ring->data_avail >= consumer_block_size) {
+		g_cond_broadcast(self->mem_ring->add_cond);
+		self->mem_ring->data_avail -= consumer_block_size;
+	    }
+	    g_mutex_unlock(self->mem_ring->mutex);
+	} else {
+	    if (errno != 0) {
+		xfer_cancel_with_error(XFER_ELEMENT(self),
+			"while reading holding file: %s", strerror(errno));
+		wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
+		goto return_eof;
+	    }
+
+	    if (!start_new_chunk(self))
+		goto return_eof;
+
+	}
+    }
+
+return_eof:
+    g_mutex_unlock(self->state_mutex);
+
+    /* send an EOF indication downstream */
+    g_mutex_lock(self->mem_ring->mutex);
+    self->mem_ring->eof_flag = TRUE;
+    g_cond_broadcast(self->mem_ring->add_cond);
+    g_mutex_unlock(self->mem_ring->mutex);
+
+    g_debug("sending XMSG_CRC message");
+    g_debug("xfer-source-holding CRC: %08x     size: %lld",
+            crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
+    g_debug("xfer-source-holding sending XMSG_DONE message");
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0);
+    msg->duration = g_timer_elapsed(timer, NULL);
+    g_timer_destroy(timer);
+    /* tell the main thread we're done */
+    xfer_queue_message(elt->xfer, msg);
+
+    g_mutex_unlock(self->start_recovery_mutex);
+
+    return NULL;
+}
 
 static gboolean
 start_new_chunk(
@@ -212,9 +371,6 @@ start_new_chunk(
 
 	self->current_offset = self->offset_file += self->fsize;	/* fsize of previous chunk */
 	self->fsize = finfo.st_size - DISK_BLOCK_BYTES;
-//	if (elt->offset < self->current_offset + self->fsize) {
-//	    seek_done = TRUE;
-//	}
 
 	g_free(self->next_filename);
 	if (hdr.cont_filename[0]) {
@@ -239,6 +395,21 @@ start_new_chunk(
 
 /* pick an arbitrary block size for reading */
 #define HOLDING_BLOCK_SIZE (1024*128)
+
+static mem_ring_t *
+get_mem_ring_impl(
+    XferElement *elt)
+{
+    XferSourceHolding *self = XFER_SOURCE_HOLDING(elt);
+
+    g_mutex_lock(self->state_mutex);
+    while (!self->mem_ring_ready) {
+	g_cond_wait(self->state_cond, self->state_mutex);
+    }
+    g_mutex_unlock(self->state_mutex);
+
+    return self->mem_ring;
+}
 
 static gpointer
 pull_buffer_impl(
@@ -328,6 +499,113 @@ return_eof:
     return NULL;
 }
 
+static gpointer
+pull_buffer_static_impl(
+    XferElement *elt,
+    gpointer buf,
+    size_t block_size,
+    size_t *size)
+{
+    XferSourceHolding *self = XFER_SOURCE_HOLDING(elt);
+    XMsg *msg;
+    size_t bytes_read;
+    size_t to_read_size;
+
+    g_mutex_lock(self->start_recovery_mutex);
+
+    if (elt->cancelled)
+	goto return_eof;
+
+    if (elt->size == 0) {
+	if (elt->offset == 0 && elt->orig_size == 0) {
+	    self->paused = TRUE;
+	} else {
+	    g_debug("pull_buffer_static hit EOF; sending XMSG_SEGMENT_DONE");
+	    msg = xmsg_new(XFER_ELEMENT(self), XMSG_SEGMENT_DONE, 0);
+	    msg->successful = TRUE;
+	    msg->eof = FALSE;
+
+	    self->paused = TRUE;
+	    xfer_queue_message(elt->xfer, msg);
+	}
+    }
+
+    if (self->fd == -1) {
+	if (!start_new_chunk(self))
+	    goto return_eof;
+    }
+
+    if (elt->offset == 0 && elt->orig_size == 0) {
+    }
+
+    while (1) {
+	while (self->paused && !elt->cancelled)
+	   g_cond_wait(self->start_recovery_cond, self->start_recovery_mutex);
+	if (elt->cancelled) {
+	    goto return_eof;
+	}
+
+	to_read_size = MIN(block_size, HOLDING_BLOCK_SIZE);
+	bytes_read = read_fully(self->fd, buf, to_read_size, NULL);
+	if (bytes_read > 0) {
+	    if (elt->size >= 0 && bytes_read > (guint64)elt->size) {
+		bytes_read = elt->size;
+	    }
+	    elt->size -= bytes_read;
+	    elt->offset += bytes_read;
+	    self->current_offset += bytes_read;
+	    *size = bytes_read;
+	    self->bytes_read += bytes_read;
+	    crc32_add((uint8_t *)buf, bytes_read, &elt->crc);
+	    g_mutex_unlock(self->start_recovery_mutex);
+	    return buf;
+	}
+
+	/* did an error occur? */
+	if (errno != 0) {
+	    xfer_cancel_with_error(XFER_ELEMENT(self),
+		"while reading holding file: %s", strerror(errno));
+	    wait_until_xfer_cancelled(XFER_ELEMENT(self)->xfer);
+	    goto return_eof;
+	}
+
+	if (!start_new_chunk(self))
+	    goto return_eof;
+    }
+
+return_eof:
+    g_debug("sending XMSG_CRC message");
+    g_debug("xfer-source-holding CRC: %08x     size %lld",
+	    crc32_finish(&elt->crc), (long long)elt->crc.size);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_CRC, 0);
+    msg->crc = crc32_finish(&elt->crc);
+    msg->size = elt->crc.size;
+    xfer_queue_message(elt->xfer, msg);
+
+    g_mutex_unlock(self->start_recovery_mutex);
+    *size = 0;
+    return NULL;
+}
+
+static gboolean
+start_impl(
+    XferElement *elt)
+{
+    XferSourceHolding *self = (XferSourceHolding *)elt;
+    GError *error = NULL;
+
+    if (elt->output_mech == XFER_MECH_MEM_RING) {
+	self->holding_thread = g_thread_create(holding_thread, (gpointer)self, FALSE, &error);
+	if (!self->holding_thread) {
+            g_critical(_("Error creating new thread: %s (%s)"),
+	            error->message, errno? strerror(errno) : _("no error code"));
+	}
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 static gboolean
 cancel_impl(
     XferElement *elt,
@@ -335,6 +613,14 @@ cancel_impl(
 {
     XferSourceHolding *self = XFER_SOURCE_HOLDING(elt);
     elt->cancelled = TRUE;
+
+    if (elt->shm_ring) {
+	elt->shm_ring->mc->cancelled = TRUE;
+	sem_post(elt->shm_ring->sem_ready);
+	sem_post(elt->shm_ring->sem_start);
+	sem_post(elt->shm_ring->sem_read);
+	sem_post(elt->shm_ring->sem_write);
+    }
 
     /* trigger the condition variable, in case the thread is waiting on it */
     g_mutex_lock(self->start_recovery_mutex);
@@ -368,6 +654,9 @@ instance_init(
 {
     XferSourceHolding *self = XFER_SOURCE_HOLDING(elt);
 
+    self->state_mutex = g_mutex_new();
+    self->state_cond = g_cond_new();
+
     elt->can_generate_eof = TRUE;
     self->fd = -1;
     self->paused = TRUE;
@@ -385,12 +674,17 @@ finalize_impl(
 {
     XferSourceHolding *self = XFER_SOURCE_HOLDING(obj_self);
 
+    g_mutex_lock(self->start_recovery_mutex);
+    g_mutex_free(self->state_mutex);
+    g_cond_free(self->state_cond);
+
     if (self->first_filename)
 	g_free(self->first_filename);
     if (self->next_filename)
 	g_free(self->next_filename);
 
     g_cond_free(self->start_recovery_cond);
+    g_mutex_unlock(self->start_recovery_mutex);
     g_mutex_free(self->start_recovery_mutex);
     if (self->fd != -1)
 	close(self->fd); /* ignore error; we were probably already cancelled */
@@ -405,11 +699,16 @@ class_init(
     XferElementClass *klass = XFER_ELEMENT_CLASS(xsh_klass);
     GObjectClass *goc = G_OBJECT_CLASS(xsh_klass);
     static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER_STATIC, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(1) },
+	{ XFER_MECH_NONE, XFER_MECH_MEM_RING, XFER_NROPS(1), XFER_NTHREADS(1), XFER_NALLOC(0) },
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(1), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
+    klass->get_mem_ring = get_mem_ring_impl;
     klass->pull_buffer = pull_buffer_impl;
+    klass->pull_buffer_static = pull_buffer_static_impl;
+    klass->start = start_impl;
     klass->cancel = cancel_impl;
     klass->perl_class = "Amanda::Xfer::Source::Holding";
     klass->mech_pairs = mech_pairs;
