@@ -255,6 +255,11 @@ AMANDA_CHECK_GLIB
 AMANDA_CHECK_READLINE
 AC_CHECK_LIB(m,modf)
 AMANDA_GLIBC_BACKTRACE
+AC_SEARCH_LIBS([shm_open], [rt], [], [
+  AC_MSG_ERROR([unable to find the shm_open() function])
+])
+
+
 
 #
 # Declarations
