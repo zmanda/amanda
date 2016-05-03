@@ -726,8 +726,9 @@ SKIP: {
 
 
 	if ($expected_crcs) {
-	    #@crcs = sort @crcs;
-	    #@$expected_crcs = sort @$expected_crcs;
+	    # we sort because the crc can come in different order
+	    @crcs = sort @crcs;
+	    @$expected_crcs = sort @$expected_crcs;
 	    is_deeply([@crcs],
 		$expected_crcs,
 		"$msg_prefix: element produces the correct crcs")

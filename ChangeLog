@@ -1,4 +1,7 @@
 2016-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Xfer.pl: Sort the crcs
+
+2016-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/client_util.c (run_client_scripts): return the exit
 	  status of the scripts
 	* client-src/client_util.h (run_client_scripts): Change return type to
