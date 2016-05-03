@@ -3902,35 +3902,32 @@ tape_action(
 	 taper1++) {
 	if (taper1->state & TAPER_STATE_TAPE_STARTED) {
 	    dle_free += (conf_max_dle_by_volume - taper1->nb_dle);
-	    if (taper1->disk) {
-		off_t data_to_go;
-		off_t t_size;
-		if (taper1->dumper) {
-		    t_size = sched(taper1->disk)->est_size;
+	}
+	if (taper1->disk) {
+	    off_t data_to_go;
+	    off_t t_size;
+	    if (taper1->dumper) {
+		t_size = sched(taper1->disk)->est_size;
+	    } else {
+		t_size = sched(taper1->disk)->act_size;
+	    }
+	    data_to_go =  t_size - taper1->written;
+	    if (data_to_go < 0) data_to_go = 0;
+	    if (data_to_go > taper1->left) {
+		if (taper1->state & TAPER_STATE_TAPE_STARTED) {
+		    data_free -= data_to_go - taper1->left;
 		} else {
-		    t_size = sched(taper1->disk)->act_size;
-		}
-		data_to_go =  t_size - taper1->written;
-		if (data_to_go < 0) data_to_go = 0;
-		if (data_to_go > taper1->left) {
-		    if (taper1->state & TAPER_STATE_TAPE_STARTED) {
-			dle_free -= (conf_max_dle_by_volume - taper1->nb_dle) + 1;
-			data_free -= data_to_go - taper1->left;
-		    } else {
-			dle_free -= 2;
-			data_free -= data_to_go;
-		    }
-		} else {
-		    if (!(taper1->state & TAPER_STATE_TAPE_STARTED)) {
-			dle_free--;
-			data_free -= data_to_go;
-		    } else {
-			data_free += taper1->left - data_to_go;
-		    }
+		    data_free -= data_to_go;
 		}
 	    } else {
-		data_free += taper1->left;
+		if (!(taper1->state & TAPER_STATE_TAPE_STARTED)) {
+		    data_free -= data_to_go;
+		} else {
+		    data_free += taper1->left - data_to_go;
+		}
 	    }
+	} else if (taper1->state & TAPER_STATE_TAPE_STARTED) {
+	    data_free += taper1->left;
 	}
     }
     if (data_free < 0) {

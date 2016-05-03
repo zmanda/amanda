@@ -1,3 +1,6 @@
+2016-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (tape_action): Improvement
+
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-util.c: Fix buffer overflow
 
