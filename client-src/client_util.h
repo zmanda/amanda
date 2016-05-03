@@ -90,6 +90,7 @@ typedef struct client_script_result_s {
     proplist_t proplist;
     GPtrArray *output;
     GPtrArray *err;
+    int        exit_status;
 } client_script_result_t;
 
 typedef enum {
@@ -146,11 +147,11 @@ void run_client_script(script_t     *script,
 		       g_option_t   *g_options,
 		       dle_t        *dle);
 
-void run_client_scripts(execute_on_t  execute_on,
-			g_option_t   *g_options,
-			dle_t        *dle,
-			FILE         *streamout,
-			message_t    *(*fprint_message)(FILE *out, message_t *message));
+int run_client_scripts(execute_on_t  execute_on,
+		       g_option_t   *g_options,
+		       dle_t        *dle,
+		       FILE         *streamout,
+		       message_t    *(*fprint_message)(FILE *out, message_t *message));
 
 void run_calcsize(char *config, char *program, char *disk,
                   char *dirname, GSList *levels,

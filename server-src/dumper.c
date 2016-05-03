@@ -1633,6 +1633,10 @@ do_dump(
     event_loop(0);
 
     if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
+
 	g_thread_join(shm_thread);
 	shm_thread = NULL;
 	g_mutex_free(shm_thread_mutex);
@@ -1996,7 +2000,10 @@ handle_shm_ring_to_fd_thread(
 		g_debug("D sleep while waiting for HEADER_DONE");
 		g_cond_wait(shm_thread_cond, shm_thread_mutex);
 	    }
-	    if (dump_result > 0) return NULL;
+	    if (dump_result > 0) {
+		g_mutex_unlock(shm_thread_mutex);
+		return NULL;
+	    }
 
 	    s = strchr(data_host, ',');
 	    if (s) *s = '\0';  /* use first data_port */
@@ -2007,6 +2014,7 @@ handle_shm_ring_to_fd_thread(
 		dump_result = 2;
 		amfree(data_host);
 		stop_dump();
+		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
 	    }
 	    *s = '\0';
@@ -2016,6 +2024,7 @@ handle_shm_ring_to_fd_thread(
 	    if (!header_sent(db)) {
 		dump_result = 2;
 		stop_dump();
+		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
 	    }
 	    g_cond_broadcast(shm_thread_cond);
@@ -2157,17 +2166,22 @@ handle_shm_ring_direct(
 //    data_port = atoi(s);
 
     g_mutex_lock(shm_thread_mutex);
-    while (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE)) {
+    while (dump_result == 0 &&
+	   (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE))) {
 	g_debug("D sleep while waiting for HEADER_DONE");
 	g_cond_wait(shm_thread_cond, shm_thread_mutex);
     }
     if (dump_result > 0) {
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
 	goto shm_done;
     }
 
     if (!header_sent(db)) {
 	dump_result = 2;
 	stop_dump();
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
 	goto shm_done;
     }
     g_cond_broadcast(shm_thread_cond);

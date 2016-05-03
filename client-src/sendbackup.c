@@ -133,6 +133,7 @@ main(
     GSList *errlist;
     FILE   *mesgstream;
     am_level_t *alevel;
+    int scripts_exit_status;
     char  **env;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
@@ -515,440 +516,452 @@ main(
 	g_debug("Failed to fdopen mesgfd (%d): %s", mesgfd, strerror(errno));
 	exit(1);
     }
-    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream, NULL);
+    scripts_exit_status = run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream, NULL);
     fflush(mesgstream);
 
-    if (dle->program_is_application_api==1) {
-	guint j;
-	char *cmd=NULL;
-	GPtrArray *argv_ptr;
-	char levelstr[20];
-	backup_support_option_t *bsu;
-	char *compopt = NULL;
-	char *encryptopt = skip_argument;
-	int compout, dumpout;
-	GSList    *scriptlist;
-	script_t  *script;
-	time_t     cur_dumptime;
-	int        result;
-	GPtrArray *errarray;
-	int        errfd[2];
-	FILE      *dumperr;
-	send_crc_t native_crc;
-	send_crc_t client_crc;
-	int        native_pipe[2];
-	int        client_pipe[2];
-	int        data_out = datafd;
+    if (scripts_exit_status == 0) {
+	if (dle->program_is_application_api==1) {
+	    guint j;
+	    char *cmd=NULL;
+	    GPtrArray *argv_ptr;
+	    char levelstr[20];
+	    backup_support_option_t *bsu;
+	    char *compopt = NULL;
+	    char *encryptopt = skip_argument;
+	    int compout, dumpout;
+	    GSList    *scriptlist;
+	    script_t  *script;
+	    time_t     cur_dumptime;
+	    int        result;
+	    GPtrArray *errarray;
+	    int        errfd[2];
+	    FILE      *dumperr;
+	    send_crc_t native_crc;
+	    send_crc_t client_crc;
+	    int        native_pipe[2];
+	    int        client_pipe[2];
+	    int        data_out = datafd;
 
-	crc32_init(&native_crc.crc);
-	crc32_init(&client_crc.crc);
-	/* create pipes to compute the native CRC */
-	if (pipe(native_pipe) < 0) {
-	    char  *errmsg;
-	    char  *qerrmsg;
-	    errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
-				    dle->program);
-	    qerrmsg = quote_string(errmsg);
-	    fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
-	    dbprintf(_("ERROR %s\n"), qerrmsg);
-	    amfree(qerrmsg);
-	    amfree(errmsg);
-	    return 0;
-	}
-
-	if (dle->encrypt == ENCRYPT_CUST ||
-	    dle->compress == COMP_FAST ||
-	    dle->compress == COMP_BEST ||
-	    dle->compress == COMP_CUST) {
-
-	    have_filter = TRUE;
-
-	    /* create pipes to compute the client CRC */
-	    if (pipe(client_pipe) < 0) {
+	    crc32_init(&native_crc.crc);
+	    crc32_init(&client_crc.crc);
+	    /* create pipes to compute the native CRC */
+	    if (pipe(native_pipe) < 0) {
 		char  *errmsg;
 		char  *qerrmsg;
-		errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
+		errmsg = g_strdup_printf("Application '%s': can't create pipe",
 					 dle->program);
 		qerrmsg = quote_string(errmsg);
 		fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
-		dbprintf(_("ERROR %s\n"), qerrmsg);
+		g_debug("ERROR %s", qerrmsg);
 		amfree(qerrmsg);
 		amfree(errmsg);
 		return 0;
 	    }
-	    data_out = client_pipe[1];
-	} else {
-	    data_out = datafd;
-	}
+
+	    if (dle->encrypt == ENCRYPT_CUST ||
+		dle->compress == COMP_FAST ||
+		dle->compress == COMP_BEST ||
+		dle->compress == COMP_CUST) {
+
+		have_filter = TRUE;
+
+		/* create pipes to compute the client CRC */
+		if (pipe(client_pipe) < 0) {
+		    char  *errmsg;
+		    char  *qerrmsg;
+		    errmsg = g_strdup_printf("Application '%s': can't create pipe",
+					     dle->program);
+		    qerrmsg = quote_string(errmsg);
+		    fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
+		    g_debug("ERROR %s", qerrmsg);
+		    amfree(qerrmsg);
+		    amfree(errmsg);
+		    return 0;
+		}
+		data_out = client_pipe[1];
+	    } else {
+		data_out = datafd;
+	    }
 
 
-	/*  apply client-side encryption here */
-	if ( dle->encrypt == ENCRYPT_CUST ) {
-	    encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
-			       &compout, &data_out, &mesgfd,
-			       dle->clnt_encrypt, encryptopt, NULL);
-	    dbprintf(_("encrypt: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
-	} else {
-	    compout = data_out;
-	    encpid = -1;
-	}
+	    /*  apply client-side encryption here */
+	    if ( dle->encrypt == ENCRYPT_CUST ) {
+		encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
+				   &compout, &data_out, &mesgfd,
+				   dle->clnt_encrypt, encryptopt, NULL);
+		g_debug("encrypt: pid %ld: %s", (long)encpid, dle->clnt_encrypt);
+	    } else {
+		compout = data_out;
+		encpid = -1;
+	    }
 
-	/*  now do the client-side compression */
-	if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
-	    compopt = skip_argument;
+	    /*  now do the client-side compression */
+	    if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
+		compopt = skip_argument;
 #if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
-	    if(dle->compress == COMP_BEST) {
-		compopt = COMPRESS_BEST_OPT;
-	    } else {
-		compopt = COMPRESS_FAST_OPT;
-	    }
+		if(dle->compress == COMP_BEST) {
+		    compopt = COMPRESS_BEST_OPT;
+		} else {
+		    compopt = COMPRESS_FAST_OPT;
+		}
 #endif
-	    comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
-				&dumpout, &compout, &mesgfd,
-				COMPRESS_PATH, compopt, NULL);
-	    if(compopt != skip_argument) {
-		dbprintf(_("compress pid %ld: %s %s\n"),
-			 (long)comppid, COMPRESS_PATH, compopt);
-	    } else {
-		dbprintf(_("compress pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
-	    }
-	    aclose(compout);
-	} else if (dle->compress == COMP_CUST) {
-	    compopt = skip_argument;
-	    comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
+		comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
+				    &dumpout, &compout, &mesgfd,
+				    COMPRESS_PATH, compopt, NULL);
+		if(compopt != skip_argument) {
+		    g_debug("compress pid %ld: %s %s",
+			    (long)comppid, COMPRESS_PATH, compopt);
+		} else {
+		    g_debug("compress pid %ld: %s", (long)comppid, COMPRESS_PATH);
+		}
+		aclose(compout);
+	    } else if (dle->compress == COMP_CUST) {
+		compopt = skip_argument;
+		comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
 				&dumpout, &compout, &mesgfd,
 				dle->compprog, compopt, NULL);
-	    if(compopt != skip_argument) {
-		dbprintf(_("pid %ld: %s %s\n"),
-			 (long)comppid, dle->compprog, compopt);
+		if (compopt != skip_argument) {
+		    g_debug("pid %ld: %s %s",
+			    (long)comppid, dle->compprog, compopt);
+		} else {
+		    g_debug("pid %ld: %s", (long)comppid, dle->compprog);
+		}
+		aclose(compout);
 	    } else {
-		dbprintf(_("pid %ld: %s\n"), (long)comppid, dle->compprog);
+		dumpout = compout;
+		comppid = -1;
 	    }
-	    aclose(compout);
-	} else {
-	    dumpout = compout;
-	    comppid = -1;
-	}
 
-	cur_dumptime = time(0);
-	bsu = backup_support_option(dle->program, &errarray);
-	if (!bsu) {
-	    char  *errmsg;
-	    char  *qerrmsg;
-	    guint  i;
-	    for (i=0; i < errarray->len; i++) {
-		errmsg = g_ptr_array_index(errarray, i);
-		qerrmsg = quote_string(errmsg);
-		fdprintf(mesgfd,
-			  _("sendbackup: error [Application '%s': %s]\n"),
+	    cur_dumptime = time(0);
+	    bsu = backup_support_option(dle->program, &errarray);
+	    if (!bsu) {
+		char  *errmsg;
+		char  *qerrmsg;
+		guint  i;
+		for (i=0; i < errarray->len; i++) {
+		    errmsg = g_ptr_array_index(errarray, i);
+		    qerrmsg = quote_string(errmsg);
+		    fdprintf(mesgfd,
+			  "sendbackup: error [Application '%s': %s]\n",
 			  dle->program, errmsg);
-		dbprintf("ERROR %s\n",qerrmsg);
-		amfree(qerrmsg);
+		    g_debug("ERROR %s",qerrmsg);
+		    amfree(qerrmsg);
+		}
+		if (i == 0) { /* no errarray */
+		    errmsg = g_strdup_printf("Can't execute application '%s'",
+					     dle->program);
+		    qerrmsg = quote_string(errmsg);
+		    fdprintf(mesgfd, "sendbackup: error [%s]\n", errmsg);
+		    g_debug("ERROR %s", qerrmsg);
+		    amfree(qerrmsg);
+		    amfree(errmsg);
+		}
+		g_ptr_array_free_full(errarray);
+		return 0;
 	    }
-	    if (i == 0) { /* no errarray */
-		errmsg = g_strdup_printf(_("Can't execute application '%s'"),
-				    dle->program);
+
+	    if (pipe(errfd) < 0) {
+		char  *errmsg;
+		char  *qerrmsg;
+		errmsg = g_strdup_printf("Application '%s': can't create pipe",
+					 dle->program);
 		qerrmsg = quote_string(errmsg);
-		fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
-		dbprintf(_("ERROR %s\n"), qerrmsg);
+		fdprintf(mesgfd, "sendbackup: error [%s]\n", errmsg);
+		g_debug("ERROR %s", qerrmsg);
 		amfree(qerrmsg);
 		amfree(errmsg);
+		return 0;
 	    }
-	    g_ptr_array_free_full(errarray);
-	    return 0;
-	}
 
-	if (pipe(errfd) < 0) {
-	    char  *errmsg;
-	    char  *qerrmsg;
-	    errmsg = g_strdup_printf(_("Application '%s': can't create pipe"),
-				    dle->program);
-	    qerrmsg = quote_string(errmsg);
-	    fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
-	    dbprintf(_("ERROR %s\n"), qerrmsg);
-	    amfree(qerrmsg);
-	    amfree(errmsg);
-	    return 0;
-	}
+	    application_api_info_tapeheader(mesgfd, dle->program, dle);
 
-	application_api_info_tapeheader(mesgfd, dle->program, dle);
+	    switch(application_api_pid=fork()) {
+	    case 0:
 
-	switch(application_api_pid=fork()) {
-	case 0:
+		/* find directt-tcp address from indirect direct-tcp */
+		if (dle->data_path == DATA_PATH_DIRECTTCP &&
+		    bsu->data_path_set & DATA_PATH_DIRECTTCP &&
+		    strncmp(dle->directtcp_list->data, "255.255.255.255:", 16) == 0) {
+		    char *indirect_tcp;
+		    char *str_port;
+		    in_port_t port;
+		    int fd;
+		    char buffer[32770];
+		    int size;
+		    char *s, *s1;
 
-	    /* find directt-tcp address from indirect direct-tcp */
-	    if (dle->data_path == DATA_PATH_DIRECTTCP &&
-		bsu->data_path_set & DATA_PATH_DIRECTTCP &&
-		strncmp(dle->directtcp_list->data, "255.255.255.255:", 16) == 0) {
-		char *indirect_tcp;
-		char *str_port;
-		in_port_t port;
-		int fd;
-		char buffer[32770];
-		int size;
-		char *s, *s1;
-
-		indirect_tcp = g_strdup(dle->directtcp_list->data);
-		g_debug("indirecttcp: %s", indirect_tcp);
-		g_slist_free(dle->directtcp_list);
-		dle->directtcp_list = NULL;
-		str_port = strchr(indirect_tcp, ':');
-		if (str_port == NULL) {
-		    g_debug("Invalid indirect_tcp: %s", indirect_tcp);
-		    exit(1);
-		}
-		str_port++;
-		port = atoi(str_port);
-		fd = stream_client(NULL, "localhost", port, 32768, 32768, NULL, 0);
-		if (fd <= 0) {
-		    g_debug("Failed to connect to indirect-direct-tcp port: %s",
-			    strerror(errno));
-		    exit(1);
-		}
-		size = full_read(fd, buffer, 32768);
-		if (size <= 0) {
-		    g_debug("Failed to read from indirect-direct-tcp port: %s",
-			    strerror(errno));
+		    indirect_tcp = g_strdup(dle->directtcp_list->data);
+		    g_debug("indirecttcp: %s", indirect_tcp);
+		    g_slist_free(dle->directtcp_list);
+		    dle->directtcp_list = NULL;
+		    str_port = strchr(indirect_tcp, ':');
+		    if (str_port == NULL) {
+			g_debug("Invalid indirect_tcp: %s", indirect_tcp);
+			exit(1);
+		    }
+		    str_port++;
+		    port = atoi(str_port);
+		    fd = stream_client(NULL, "localhost", port, 32768, 32768, NULL, 0);
+		    if (fd <= 0) {
+			g_debug("Failed to connect to indirect-direct-tcp port: %s",
+				strerror(errno));
+			exit(1);
+		    }
+		    size = full_read(fd, buffer, 32768);
+		    if (size <= 0) {
+			g_debug("Failed to read from indirect-direct-tcp port: %s",
+				strerror(errno));
+			close(fd);
+			exit(1);
+		    }
 		    close(fd);
-		    exit(1);
+		    buffer[size++] = ' ';
+		    buffer[size] = '\0';
+		    s1 = buffer;
+		    while ((s = strchr(s1, ' ')) != NULL) {
+			*s++ = '\0';
+			g_debug("directtcp: %s", s1);
+			dle->directtcp_list = g_slist_append(dle->directtcp_list, g_strdup(s1));
+			s1 = s;
+		    }
+		    amfree(indirect_tcp);
 		}
-		close(fd);
-		buffer[size++] = ' ';
-		buffer[size] = '\0';
-		s1 = buffer;
-		while ((s = strchr(s1, ' ')) != NULL) {
-		    *s++ = '\0';
-		    g_debug("directtcp: %s", s1);
-		    dle->directtcp_list = g_slist_append(dle->directtcp_list, g_strdup(s1));
-		    s1 = s;
+
+		argv_ptr = g_ptr_array_new();
+		cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
+		g_ptr_array_add(argv_ptr, g_strdup(dle->program));
+		g_ptr_array_add(argv_ptr, g_strdup("backup"));
+		if (bsu->message_line == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--message"));
+		    g_ptr_array_add(argv_ptr, g_strdup("line"));
 		}
-		amfree(indirect_tcp);
-	    }
-
-	    argv_ptr = g_ptr_array_new();
-	    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", dle->program, NULL);
-	    g_ptr_array_add(argv_ptr, g_strdup(dle->program));
-	    g_ptr_array_add(argv_ptr, g_strdup("backup"));
-	    if (bsu->message_line == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--message"));
-		g_ptr_array_add(argv_ptr, g_strdup("line"));
-	    }
-	    if (g_options->config && bsu->config == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--config"));
-		g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
-	    }
-	    if (g_options->hostname && bsu->host == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--host"));
-		g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
-	    }
-	    if (dle->disk && bsu->disk == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--disk"));
-		g_ptr_array_add(argv_ptr, g_strdup(dle->disk));
-	    }
-	    g_ptr_array_add(argv_ptr, g_strdup("--device"));
-	    g_ptr_array_add(argv_ptr, g_strdup(dle->device));
-	    if (level <= bsu->max_level) {
-		g_ptr_array_add(argv_ptr, g_strdup("--level"));
-		g_snprintf(levelstr,19,"%d",level);
-		g_ptr_array_add(argv_ptr, g_strdup(levelstr));
-	    }
-	    if (indexfd != -1 && bsu->index_line == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--index"));
-		g_ptr_array_add(argv_ptr, g_strdup("line"));
-	    }
-	    if (statefd != -1 && bsu->state_stream == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--state-stream"));
-		g_ptr_array_add(argv_ptr, g_strdup_printf("%d", statefd));
-	    }
-	    if (dle->record && bsu->record == 1) {
-		g_ptr_array_add(argv_ptr, g_strdup("--record"));
-	    }
-	    application_property_add_to_argv(argv_ptr, dle, bsu,
-					     g_options->features);
-
-	    for (scriptlist = dle->scriptlist; scriptlist != NULL;
-		 scriptlist = scriptlist->next) {
-		script = (script_t *)scriptlist->data;
-		if (script->result && script->result->proplist) {
-		    property_add_to_argv(argv_ptr, script->result->proplist);
+		if (g_options->config && bsu->config == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--config"));
+		    g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
 		}
-	    }
+		if (g_options->hostname && bsu->host == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--host"));
+		    g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
+		}
+		if (dle->disk && bsu->disk == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--disk"));
+		    g_ptr_array_add(argv_ptr, g_strdup(dle->disk));
+		}
+		g_ptr_array_add(argv_ptr, g_strdup("--device"));
+		g_ptr_array_add(argv_ptr, g_strdup(dle->device));
+		if (level <= bsu->max_level) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--level"));
+		    g_snprintf(levelstr,19,"%d",level);
+		    g_ptr_array_add(argv_ptr, g_strdup(levelstr));
+		}
+		if (indexfd != -1 && bsu->index_line == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--index"));
+		    g_ptr_array_add(argv_ptr, g_strdup("line"));
+		}
+		if (statefd != -1 && bsu->state_stream == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--state-stream"));
+		    g_ptr_array_add(argv_ptr, g_strdup_printf("%d", statefd));
+		}
+		if (dle->record && bsu->record == 1) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--record"));
+		}
+		application_property_add_to_argv(argv_ptr, dle, bsu,
+						 g_options->features);
 
-	    g_ptr_array_add(argv_ptr, NULL);
-	    dbprintf(_("%s: running \"%s\n"), get_pname(), cmd);
-	    for (j = 1; j < argv_ptr->len - 1; j++)
-		dbprintf(" %s\n", (char *)g_ptr_array_index(argv_ptr,j));
-	    dbprintf(_("\"\n"));
-	    if(dup2(native_pipe[1], 1) == -1) {
-		error(_("native: Can't dup2: %s"),strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    if (dup2(errfd[1], 2) == -1) {
-		error(_("errfd: Can't dup2: %s"),strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    if(dup2(mesgfd, 3) == -1) {
-		error(_("mesgfd: Can't dup2: %s"),strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    if(indexfd > 0) {
-		if(dup2(indexfd, 4) == -1) {
-		    error(_("indexfd: Can't dup2: %s"),strerror(errno));
+		for (scriptlist = dle->scriptlist; scriptlist != NULL;
+		     scriptlist = scriptlist->next) {
+		    script = (script_t *)scriptlist->data;
+		    if (script->result && script->result->proplist) {
+			property_add_to_argv(argv_ptr, script->result->proplist);
+		    }
+		}
+
+		g_ptr_array_add(argv_ptr, NULL);
+		g_debug("%s: running \"%s", get_pname(), cmd);
+		for (j = 1; j < argv_ptr->len - 1; j++)
+		    g_debug(" %s", (char *)g_ptr_array_index(argv_ptr,j));
+		g_debug("\"");
+		if (dup2(native_pipe[1], 1) == -1) {
+		    error(_("native: Can't dup2: %s"),strerror(errno));
 		    /*NOTREACHED*/
 		}
-		fcntl(indexfd, F_SETFD, 0);
-	    }
-	    if (indexfd != 0) {
-		safe_fd2(3, 2, statefd);
-	    } else {
-		safe_fd2(3, 1, statefd);
-	    }
-	    env = safe_env();
-	    execve(cmd, (char **)argv_ptr->pdata, env);
-	    free_env(env);
-	    exit(1);
-	    break;
+		if (dup2(errfd[1], 2) == -1) {
+		    error(_("errfd: Can't dup2: %s"),strerror(errno));
+		    /*NOTREACHED*/
+		}
+		if (dup2(mesgfd, 3) == -1) {
+		    error(_("mesgfd: Can't dup2: %s"),strerror(errno));
+		    /*NOTREACHED*/
+		}
+		if (indexfd > 0) {
+		    if (dup2(indexfd, 4) == -1) {
+			error(_("indexfd: Can't dup2: %s"),strerror(errno));
+			/*NOTREACHED*/
+		    }
+		    fcntl(indexfd, F_SETFD, 0);
+		}
+		if (indexfd != 0) {
+		    safe_fd2(3, 2, statefd);
+		} else {
+		    safe_fd2(3, 1, statefd);
+		}
+		env = safe_env();
+		execve(cmd, (char **)argv_ptr->pdata, env);
+		free_env(env);
+		exit(1);
+		break;
 
 	default:
-	    break;
+		break;
 	case -1:
-	    error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
+		error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
 	}
 
-	close(errfd[1]);
-	dumperr = fdopen(errfd[0],"r");
-	if (!dumperr) {
-	    error(_("Can't fdopen: %s"), strerror(errno));
-	    /*NOTREACHED*/
-	}
+	    close(errfd[1]);
+	    dumperr = fdopen(errfd[0],"r");
+	    if (!dumperr) {
+		error(_("Can't fdopen: %s"), strerror(errno));
+		/*NOTREACHED*/
+	    }
 
-	close(native_pipe[1]);
-	if (shm_control_name) {
-	    shm_ring = shm_ring_link(shm_control_name);
-	    shm_ring_producer_set_size(shm_ring, NETWORK_BLOCK_BYTES*16, NETWORK_BLOCK_BYTES*4);
-	    native_crc.in  = native_pipe[0];
-	    if (!have_filter) {
-		native_crc.shm_ring = shm_ring;
-		native_crc.out = dumpout;
-		native_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
+	    close(native_pipe[1]);
+	    if (shm_control_name) {
+		shm_ring = shm_ring_link(shm_control_name);
+		shm_ring_producer_set_size(shm_ring, NETWORK_BLOCK_BYTES*16, NETWORK_BLOCK_BYTES*4);
+		native_crc.in  = native_pipe[0];
+		if (!have_filter) {
+		    native_crc.shm_ring = shm_ring;
+		    native_crc.out = dumpout;
+		    native_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
 					 (gpointer)&native_crc, TRUE, NULL);
+		} else {
+		    native_crc.out = dumpout;
+		    native_crc.thread = g_thread_create(handle_crc_thread,
+					 (gpointer)&native_crc, TRUE, NULL);
+		    close(client_pipe[1]);
+		    client_crc.shm_ring = shm_ring;
+		    client_crc.in  = client_pipe[0];
+		    client_crc.out = datafd;
+		    client_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
+					 (gpointer)&client_crc, TRUE, NULL);
+		}
 	    } else {
+		native_crc.in  = native_pipe[0];
 		native_crc.out = dumpout;
 		native_crc.thread = g_thread_create(handle_crc_thread,
-					 (gpointer)&native_crc, TRUE, NULL);
-		close(client_pipe[1]);
-		client_crc.shm_ring = shm_ring;
-		client_crc.in  = client_pipe[0];
-		client_crc.out = datafd;
-		client_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
-				 (gpointer)&client_crc, TRUE, NULL);
-	    }
-	} else {
-            native_crc.in  = native_pipe[0];
-	    native_crc.out = dumpout;
-	    native_crc.thread = g_thread_create(handle_crc_thread,
-				(gpointer)&native_crc, TRUE, NULL);
+					(gpointer)&native_crc, TRUE, NULL);
 
+		if (have_filter) {
+		    close(client_pipe[1]);
+		    client_crc.in  = client_pipe[0];
+		    client_crc.out = datafd;
+		    client_crc.thread = g_thread_create(handle_crc_thread,
+					(gpointer)&client_crc, TRUE, NULL);
+		}
+
+	    }
+
+	    if (statefd >= 0 && !bsu->state_stream) {
+		close(statefd);
+		close(statefd+1);
+		statefd = -1;
+	    }
+
+	    result = 0;
+	    while ((line = agets(dumperr)) != NULL) {
+		if (strlen(line) > 0) {
+		    fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
+		    g_debug("error: %s", line);
+		    result = 1;
+		}
+		amfree(line);
+	    }
+	    g_thread_join(native_crc.thread);
 	    if (have_filter) {
-		close(client_pipe[1]);
-		client_crc.in  = client_pipe[0];
-		client_crc.out = datafd;
-		client_crc.thread = g_thread_create(handle_crc_thread,
-		(gpointer)&client_crc, TRUE, NULL);
+		g_thread_join(client_crc.thread);
 	    }
 
-	}
-
-	if (statefd >= 0 && !bsu->state_stream) {
-	    close(statefd);
-	    close(statefd+1);
-	    statefd = -1;
-	}
-
-	result = 0;
-	while ((line = agets(dumperr)) != NULL) {
-	    if (strlen(line) > 0) {
-		fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
-		dbprintf("error: %s\n", line);
-		result = 1;
+	    if (shm_ring) {
+		close_producer_shm_ring(shm_ring);
+		shm_ring = NULL;
 	    }
-	    amfree(line);
-	}
-	g_thread_join(native_crc.thread);
-	if (have_filter) {
-	    g_thread_join(client_crc.thread);
-	}
 
-	if (shm_ring) {
-	    close_producer_shm_ring(shm_ring);
-	    shm_ring = NULL;
-	}
+	    result |= check_result(mesgfd);
+	    if (result == 0) {
+		char *amandates_file;
 
-	result |= check_result(mesgfd);
-	if (result == 0) {
-	    char *amandates_file;
-
-	    amandates_file = getconf_str(CNF_AMANDATES);
-	    if(start_amandates(amandates_file, 1)) {
-		amandates_updateone(dle->disk, level, cur_dumptime);
-		finish_amandates();
-		free_amandates();
-	    } else {
-		if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
+		amandates_file = getconf_str(CNF_AMANDATES);
+		if (start_amandates(amandates_file, 1)) {
+		    amandates_updateone(dle->disk, level, cur_dumptime);
+		    finish_amandates();
+		    free_amandates();
+		} else {
+		    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
 		    bsu->calcsize) {
 		    error(_("error [opening %s for writing: %s]"),
 			  amandates_file, strerror(errno));
-		} else {
+		    } else {
 		    g_debug(_("non-fatal error opening '%s' for writing: %s]"),
 			    amandates_file, strerror(errno));
+		    }
 		}
 	    }
-	}
 
-	if (!have_filter)
-	    client_crc.crc = native_crc.crc;
+	    if (!have_filter)
+		client_crc.crc = native_crc.crc;
 
-	if (am_has_feature(g_options->features, fe_sendbackup_crc)) {
-	    dbprintf("sendbackup: native-CRC %08x:%lld\n",
-		     crc32_finish(&native_crc.crc),
-		     (long long)native_crc.crc.size);
-	    dbprintf("sendbackup: client-CRC %08x:%lld\n",
-		     crc32_finish(&client_crc.crc),
-		     (long long)client_crc.crc.size);
-	    fprintf(mesgstream, "sendbackup: native-CRC %08x:%lld\n",
-		crc32_finish(&native_crc.crc),
-		(long long)native_crc.crc.size);
-	    fprintf(mesgstream, "sendbackup: client-CRC %08x:%lld\n",
-		crc32_finish(&client_crc.crc),
-		(long long)client_crc.crc.size);
-	}
-
-	dbprintf("sendbackup: end\n");
-	fprintf(mesgstream, "sendbackup: end\n");
-
-	amfree(bsu);
-     } else {
-	if(!interactive) {
-	    /* redirect stderr */
-	    if(dup2(mesgfd, 2) == -1) {
-		dbprintf(_("Error redirecting stderr to fd %d: %s\n"),
-			 mesgfd, strerror(errno));
-		dbclose();
-		exit(1);
+	    if (am_has_feature(g_options->features, fe_sendbackup_crc)) {
+		g_debug("sendbackup: native-CRC %08x:%lld",
+			crc32_finish(&native_crc.crc),
+			(long long)native_crc.crc.size);
+		g_debug("sendbackup: client-CRC %08x:%lld",
+			crc32_finish(&client_crc.crc),
+			(long long)client_crc.crc.size);
+		fprintf(mesgstream, "sendbackup: native-CRC %08x:%lld\n",
+			crc32_finish(&native_crc.crc),
+			(long long)native_crc.crc.size);
+		fprintf(mesgstream, "sendbackup: client-CRC %08x:%lld\n",
+			crc32_finish(&client_crc.crc),
+			(long long)client_crc.crc.size);
 	    }
-	}
 
-	if(pipe(mesgpipe) == -1) {
-	    s = strerror(errno);
-	    dbprintf(_("error [opening mesg pipe: %s]\n"), s);
-	    error(_("error [opening mesg pipe: %s]"), s);
-	}
+	    g_debug("sendbackup: end");
+	    fprintf(mesgstream, "sendbackup: end\n");
 
-	program->start_backup(dle, g_options->hostname,
-			      datafd, mesgpipe[1], indexfd);
-	dbprintf(_("Started backup\n"));
-	parse_backup_messages(dle, mesgpipe[0]);
-	dbprintf(_("Parsed backup messages\n"));
+	    amfree(bsu);
+	} else {
+	    if(!interactive) {
+		/* redirect stderr */
+		if (dup2(mesgfd, 2) == -1) {
+		    g_debug("Error redirecting stderr to fd %d: %s",
+			     mesgfd, strerror(errno));
+		    dbclose();
+		    exit(1);
+		}
+	    }
+
+	    if (pipe(mesgpipe) == -1) {
+		s = strerror(errno);
+			    dbprintf(_("error [opening mesg pipe: %s]\n"), s);
+			    error(_("error [opening mesg pipe: %s]"), s);
+	    }
+
+	    program->start_backup(dle, g_options->hostname,
+				  datafd, mesgpipe[1], indexfd);
+	    g_debug("Started backup");
+	    parse_backup_messages(dle, mesgpipe[0]);
+	    g_debug("Parsed backup messages");
+	}
+    } else {
+	if (shm_ring) {
+	    shm_ring->mc->cancelled = TRUE;
+	    sem_post(shm_ring->sem_ready);
+	    sem_post(shm_ring->sem_start);
+	    sem_post(shm_ring->sem_write);
+	    sem_post(shm_ring->sem_read);
+	    close_producer_shm_ring(shm_ring);
+	    shm_ring = NULL;
+	}
     }
 
     run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, NULL);
