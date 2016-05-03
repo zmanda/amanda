@@ -127,6 +127,7 @@ main(
     GSList *errlist;
     FILE   *mesgstream;
     am_level_t *alevel;
+    int scripts_exit_status;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("sendbackup-%s\n", VERSION);
@@ -479,9 +480,10 @@ main(
 	exit(1);
     }
     mesgstream = fdopen(mesgfd,"w");
-    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream);
+    scripts_exit_status = run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream);
     fflush(mesgstream);
 
+  if (scripts_exit_status == 0) {
     if (dle->program_is_application_api==1) {
 	guint j;
 	char *cmd=NULL;
@@ -780,6 +782,7 @@ main(
 	parse_backup_messages(dle, mesgpipe[0]);
 	dbprintf(_("Parsed backup messages\n"));
     }
+  }
 
     run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream);
     fflush(mesgstream);

@@ -1,4 +1,12 @@
 2016-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/client_util.c (run_client_scripts): return the exit
+	  status of the scripts
+	* client-src/client_util.h (run_client_scripts): Change return type to
+	  int
+	* client-src/sendbackup.c: Do not run the application if a
+	  PRE-DLE-BACKUP script failed
+
+2016-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (tape_action): Improvement
 
 2016-04-29  Jean-Louis Martineau <JMartineau@carbonite.com>

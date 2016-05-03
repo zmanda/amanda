@@ -1247,6 +1247,7 @@ run_client_script(
 					script->plugin, command,
 					WTERMSIG(wait_status),
 					dbfn()));
+	script->result->exit_status = 1;
     } else if (WIFEXITED(wait_status)) {
         if (WEXITSTATUS(wait_status) != 0) {
 	    g_ptr_array_add(script->result->err,
@@ -1254,6 +1255,7 @@ run_client_script(
 					    script->plugin, command,
 					    WEXITSTATUS(wait_status),
 					    dbfn()));
+	    script->result->exit_status = WEXITSTATUS(wait_status);
         } else {
             /* Normal exit */
         }
@@ -1272,6 +1274,7 @@ void run_client_script_err_recover(gpointer data, gpointer user_data);
 typedef struct script_output_s {
     FILE  *stream;
     dle_t *dle;
+    int    exit_status;
 } script_output_t;
 
 void
@@ -1337,7 +1340,11 @@ run_client_script_err_backup(
     script_output_t *so    = user_data;
 
     if (line && so->stream) {
-	g_fprintf(so->stream, "? %s\n", line);
+	if (so->exit_status == 0) {
+	    g_fprintf(so->stream, "? %s\n", line);
+	} else {
+	    g_fprintf(so->stream, "sendbackup: error [%s]\n", line);
+	}
     }
 }
 
@@ -1354,7 +1361,7 @@ run_client_script_err_recover(
     }
 }
 
-void
+int
 run_client_scripts(
     execute_on_t  execute_on,
     g_option_t   *g_options,
@@ -1365,7 +1372,8 @@ run_client_scripts(
     script_t        *script;
     GFunc            client_script_err = NULL;
     GFunc            client_script_out = NULL;
-    script_output_t  so = { streamout, dle };
+    script_output_t  so = { streamout, dle, 0 };
+    int              exit_status = 0;
 
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
@@ -1405,6 +1413,8 @@ run_client_scripts(
 		 client_script_out = run_client_script_output;
 		 client_script_err = run_client_script_err_recover;
 	    }
+	    so.exit_status = script->result->exit_status;
+	    exit_status |= script->result->exit_status;
 	    if (script->result->output) {
 		if (client_script_out) {
 		    g_ptr_array_foreach(script->result->output,
@@ -1425,6 +1435,8 @@ run_client_scripts(
 	    }
 	}
     }
+
+    return exit_status;
 }
 
 
