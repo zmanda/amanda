@@ -1,3 +1,6 @@
+2016-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Xfer.pl: 45 checks require the server
+
 2016-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amandad-src/amandad.c, server-src/amcheck.c, server-src/driver.c,
 	  server-src/dumper.c, server-src/planner.c,

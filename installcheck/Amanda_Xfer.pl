@@ -503,7 +503,7 @@ pass("Two simultaneous transfers run to completion");
 }
 
 SKIP: {
-    skip "not built with server", 25 unless Amanda::Util::built_with_component("server");
+    skip "not built with server", 45 unless Amanda::Util::built_with_component("server");
 
     my $disk_cache_dir = "$Installcheck::TMP";
     my $RANDOM_SEED = 0xFACADE;
