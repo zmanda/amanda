@@ -1,3 +1,11 @@
+2016-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Tapelist.swg: Change RETENTION_NO string to
+	  'retention-no'
+	* server-src/amtape.pl (inventory): Print the retention even if it is
+	  RETENTION_NO
+	* installcheck/Amanda_Rest_Labels.pl,
+	  installcheck/Amanda_Rest_Storages.pl: Fix for 'retention-no' string
+
 2016-05-04  Dustin J. Mitchell <dustin@mozilla.com>
 	* man/xml-source/amanda-auth.7.xml: Improve doc
 
