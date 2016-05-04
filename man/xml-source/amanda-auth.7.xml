@@ -483,41 +483,48 @@ define dumptype rsh_example {
 </refsect1>
 
 <refsect1><title>SSH COMMUNICATION AND AUTHENTICATION</title>
-For more detail, see http://wiki.zmanda.com/index.php/How_To:Set_up_transport_encryption_with_SSH.
+<para>For more detail, see http://wiki.zmanda.com/index.php/How_To:Set_up_transport_encryption_with_SSH.</para>
 
-Amanda client sends data to the server using SSH. SSH keys have to be set up so that Amanda server can communicate with its clients using SSH.
+<para>Amanda client sends data to the server using SSH. SSH keys have to be set up so that Amanda server can communicate with its clients using SSH.</para>
 
-General information including compilation is given above (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above).
+<para>General information including compilation is given above (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above).</para>
 
-SSH provides transport encryption and authentication. To set up an SSH authentication session, Amanda will run the equivalent of the following to start the backup process.
+<para>SSH provides transport encryption and authentication. To set up an SSH authentication session, Amanda will run the equivalent of the following to start the backup process.
 
-<emphasis remap='B'>   /path/to/ssh -l <emphasis remap='I'>user_name</emphasis> client.zmanda.com $libexecdir/amandad</emphasis>
+<emphasis remap='B'>   /path/to/ssh -l <emphasis remap='I'>user_name</emphasis> client.zmanda.com $libexecdir/amandad</emphasis></para>
 
-To use SSH, you need to set up SSH keys either by storing the passphrase in cleartext, using ssh-agent, or using no passphrase at all.  All of these options have security implications which should be carefully considered before adoption.
+<para>To use SSH, you need to set up SSH keys either by storing the passphrase in cleartext, using ssh-agent, or using no passphrase at all.  All of these options have security implications which should be carefully considered before adoption.</para>
 
-When you use a public key on the client to do data encryption (see http://wiki.zmanda.com/index.php/How_To:Set_up_data_encryption), you can lock away the private key in a secure place. Both, transport and storage will be encrypted with such a setup. See http://wiki.zmanda.com/index.php/Encryption for an overview of encryption options.
+<para>When you use a public key on the client to do data encryption (see http://wiki.zmanda.com/index.php/How_To:Set_up_data_encryption), you can lock away the private key in a secure place. Both, transport and storage will be encrypted with such a setup. See http://wiki.zmanda.com/index.php/Encryption for an overview of encryption options.</para>
 
-Enable SSH authentication and set the <amkeyword>ssh-keys</amkeyword> option in all DLEs for that host by adding the following to the DLE itself or to the corresponding dumptype in amanda.conf:
-
+<para>Enable SSH authentication and set the <amkeyword>ssh-keys</amkeyword> option in all DLEs for that host by adding the following to the DLE itself or to the corresponding dumptype in amanda.conf:
+<programlisting>
   auth "ssh"
   ssh-keys "/home/amandabackup/.ssh/id_rsa_amdump"
-
-<amkeyword>ssh-keys</amkeyword> is the path to the private key on the client. If the username to which Amanda should connect is different from the default, then you should also add
-
-  client-username "otherusername"
-
-If your server &amandad; path and client &amandad; path are different, you should also add
-
-  amandad-path "/client/amandad/path"
-
-<para>For a marginal increase in security, prepend the keys used for AMANDA in the clients' authorized_keys file with the following:
-
-<programlisting>
-  from="amanda_server.your.domain.com",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,command="/absolute/path/to/amandad -auth=ssh amdump"
 </programlisting>
 </para>
 
-<para>This will limit that key to connect only from Amanda server and only be able to execute &amandad;(8).</para>
+<para><amkeyword>ssh-keys</amkeyword> is the path to the private key on the client. If the username to which Amanda should connect is different from the default, then you should also add
+<programlisting>
+  client-username "otherusername"
+</programlisting>
+</para>
+
+<para>If your server &amandad; path and client &amandad; path are different, you should also add
+<programlisting>
+  amandad-path "/client/amandad/path"
+</programlisting>
+</para>
+
+<para>Include the keys used for AMANDA in the clients' authorized_keys file, prepended with the following options:
+
+<programlisting>
+  from="amanda_server.your.domain.com",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,command="/absolute/path/to/amandad -auth=ssh amdump" ssh-rsa AAAB3..
+</programlisting>
+</para>
+
+<para>This will limit that key to connect only from Amanda server and only be able to execute &amandad;(8).
+    This avoids several attacks that are possible if the no options are specified in the authorized_keys file.</para>
 
 <para>In the same way, prepend the key used for AMANDA in the server's authorized_keys file with:
 

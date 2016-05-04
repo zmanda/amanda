@@ -1,3 +1,6 @@
+2016-05-04  Dustin J. Mitchell <dustin@mozilla.com>
+	* man/xml-source/amanda-auth.7.xml: Improve doc
+
 2016-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c: Break after the first callback
 
