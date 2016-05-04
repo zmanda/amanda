@@ -178,8 +178,7 @@ clear_tapelist(void)
     tape_t *tp, *next;
 
     if (tape_table) {
-	g_hash_table_remove_all(tape_table);
-	g_hash_table_unref(tape_table);
+	g_hash_table_destroy(tape_table);
 	tape_table = NULL;
     }
 
