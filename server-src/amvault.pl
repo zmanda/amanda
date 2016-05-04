@@ -350,7 +350,7 @@ sub setup_src {
 			next;
 		    }
 		    if ($self->{'incrs_only'} &&
-			$ds_level eq '0' || $ds_level eq '=0') {
+			($ds_level eq '0' || $ds_level eq '=0')) {
 			$self->vlog("WARNING: dumpspec " . $ds->format() .
 			    " specifies full dumps, contradicting" .
 			    " --incrs-only; ignoring dumpspec");
