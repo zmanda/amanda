@@ -830,6 +830,7 @@ tcpm_recv_token(
 		reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
 		if (r_callback->s->handle == rc->handle) {
 		    rs = r_callback->s;
+		    break;
 		}
 	    }
 	    if (rs && rs->shm_ring) {
@@ -851,6 +852,7 @@ tcpm_recv_token(
 	    reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
 	    if (r_callback->s->handle == rc->handle) {
 		rs = r_callback->s;
+		break;
 	    }
 	}
     }
@@ -2360,6 +2362,7 @@ sec_tcp_conn_read_callback(
 	    reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
 	    if (r_callback->s->handle == rc->handle) {
 		r_callback->callback(r_callback->s);
+		break;
 	    }
 	}
 	if (rc->handle != H_TAKEN) {
@@ -2375,6 +2378,7 @@ sec_tcp_conn_read_callback(
 	reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
 	if (r_callback->s->handle == rc->handle) {
 	    r_callback->callback(r_callback->s);
+	    break;
 	}
     }
     rc->donotclose = 0;
