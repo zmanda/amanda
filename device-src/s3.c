@@ -972,7 +972,8 @@ authenticate_request(S3Handle *hdl,
         /* Header must be in alphebetic order */
 	g_string_append(auth_string, "host:");
 	g_string_append(auth_string, bucket);
-	g_string_append(auth_string, AMZ_QUOTA_CLOUD_URL);
+	g_string_append(auth_string, ".");
+	g_string_append(auth_string, hdl->host);
 	g_string_append(auth_string, "\n");
 	g_string_append(strSignedHeaders, "host");
 
