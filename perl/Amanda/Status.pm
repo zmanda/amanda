@@ -327,6 +327,12 @@ my $FLUSH_DONE			 = 23;  # flush done and succeeded
 my $VAULTING			 = 27;  # vaulting
 my $VAULTING_DONE		 = 28;  # vaulting done and succeded
 my $VAULTING_FAILED		 = 29;  # vaulting failed
+my $TERMINATED_ESTIMATE		 = 30;  # terminated while estimate
+my $TERMINATED_DUMPING		 = 31;  # terminated while dumping
+my $TERMINATED_DUMPING_TO_TAPE	 = 32;  # terminated while dumping to tape
+my $TERMINATED_WRITING		 = 33;  # terminated while writing
+my $TERMINATED_FLUSHING		 = 34;  # terminated while flushing
+my $TERMINATED_VAULTING		 = 35;  # terminated while vaulting
 
 # status only for worker
 my $TAPE_ERROR			 = 50;
@@ -1903,6 +1909,30 @@ sub set_summary {
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 			if ($dle->{'status'} == $WAIT_FOR_DUMPING) {
 			    $self->{'exit_status'} |= $STATUS_MISSING;
+			    $dle->{'message'} = "terminated while waiting for dumping";
+			} elsif ($dle->{'status'} == $ESTIMATING ||
+				 $dle->{'status'} == $ESTIMATE_PARTIAL) {
+			    $dle->{'status'} = $TERMINATED_ESTIMATE;
+			    $dle->{'message'} = "terminated while estimating";
+			} elsif ($dle->{'status'} == $DUMPING_INIT ||
+				 $dle->{'status'} == $DUMPING ||
+				 $dle->{'status'} == $DUMPING_DUMPER) {
+			    $dle->{'status'} = $TERMINATED_DUMPING;
+			    $dle->{'message'} = "terminated while dumping";
+			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE_INIT ||
+				 $dle->{'status'} == $DUMPING_TO_TAPE ||
+				 $dle->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+			    $dle->{'status'} = $TERMINATED_DUMPING_TO_TAPE;
+			    $dle->{'message'} = "terminated while dumping to tape";
+			} elsif ($dle->{'status'} == $WRITING) {
+			    $dle->{'status'} = $TERMINATED_WRITING;
+			    $dle->{'message'} = "terminated while writing to tape";
+			} elsif ($dle->{'status'} == $FLUSHING) {
+			    $dle->{'status'} = $TERMINATED_FLUSHING;
+			    $dle->{'message'} = "terminated while flushing to tape";
+			} elsif ($dle->{'status'} == $VAULTING) {
+			    $dle->{'status'} = $TERMINATED_VAULTING;
+			    $dle->{'message'} = "terminated while vaulting";
 			}
 		    }
 		}
