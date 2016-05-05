@@ -1,4 +1,13 @@
 2016-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Extract.pm (BSU): Fix for non-application
+	* perl/Amanda/FetchDump.pm: Add message 3300005
+	* perl/Amanda/FetchDump/Application.pm: Return a 3300005 message if it
+	  don't know how to extract the dump
+	* perl/Amanda/Restore.pm: Fix
+	* server-src/amfetchdump.pl: Check -O and --directory are not
+	  different
+
+2016-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Fix AWS4 auth-string
 
 2016-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>

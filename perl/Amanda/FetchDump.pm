@@ -33,6 +33,8 @@ sub local_message {
 	return "Reading label '$self->{'label'}' filenum $self->{'filenum'}\n$self->{'header_summary'}";
     } elsif ($self->{'code'} == 3300004) {
 	return "Reading '$self->{'holding_file'}'\n$self->{'header_summary'}";
+    } elsif ($self->{'code'} == 3300005) {
+	return "Don't know how to extract the dump";
     } elsif ($self->{'code'} == 3300057) {
 	return "Running a Fetchdump";
     } elsif ($self->{'code'} == 3300058) {

@@ -99,7 +99,6 @@ my %restore_programs = (
     "GTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
     "GNUTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -xf -) ],
     "SMBCLIENT" => [ $Amanda::Constants::GNUTAR, qw(-xf -) ],
-    "PKZIP" => undef,
 );
 
 my %validate_programs = (
@@ -112,7 +111,6 @@ my %validate_programs = (
     "GTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -tf -) ],
     "GNUTAR" => [ $Amanda::Constants::GNUTAR, qw(--ignore-zeros -tf -) ],
     "SMBCLIENT" => [ $Amanda::Constants::GNUTAR, qw(-tf -) ],
-    "PKZIP" => undef,
 );
 
 sub new {
@@ -180,7 +178,7 @@ sub BSU {
     my $config = Amanda::Config::get_config_name();
     my $program_path = $self->_set_program_path();
 
-    return undef if !$self->{'program_is_application'};
+    return ({}, []) if !$self->{'program_is_application'};
     return $program_path if ref $program_path eq "HASH" && $program_path->isa('Amanda::Message');
 
     my %bsu;

@@ -1655,7 +1655,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 		$self->{'feedback'}->run_pre_scripts();
 	    }
 	    $xfer_dest = $self->{'feedback'}->get_xfer_dest();
-	    return $steps->{'failure'}->($xfer_dest) if ref $xfer_dest eq "HASH" && $xfer_dest->isa('Amanda::Message');
+	    return $steps->{'failure'}->($xfer_dest) if $xfer_dest->isa('Amanda::Message');
 	    if ($self->{'feedback'}->can('new_dest_fh')) {
 		if (my $new_dest_fh = $self->{'feedback'}->new_dest_fh()) {
 		    return $steps->{'failure'}->($new_dest_fh) if ref $new_dest_fh eq "HASH" && $new_dest_fh->isa('Amanda::Message');
@@ -1667,7 +1667,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 		$self->{'feedback'}->run_pre_scripts();
 	    }
 	    $xfer_dest = $self->{'feedback'}->get_xfer_dest();
-	    return $steps->{'failure'}->($xfer_dest) if ref $xfer_dest eq "HASH" && $xfer_dest->isa('Amanda::Message');
+	    return $steps->{'failure'}->($xfer_dest) if $xfer_dest->isa('Amanda::Message');
 	} elsif ($params{'pipe-fd'}) {
 	    if ($directtcp_supported) {
 		$xfer_dest = Amanda::Xfer::Dest::DirectTCPListen->new();

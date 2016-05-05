@@ -366,6 +366,17 @@ if (defined($opt_compress_best) and
     usage();
 }
 
+if (defined $opt_chdir && defined $opt_directory) {
+    if ($opt_chdir ne $opt_directory) {
+	print STDERR("-O and --directory must be the same");
+	exit 1;
+    }
+} elsif (defined $opt_chdir) {
+    $opt_directory = $opt_chdir;
+} elsif (defined $opt_directory) {
+    $opt_chdir = $opt_directory;
+}
+
 #$decompress = $ALWAYS;
 #$decrypt = $ALWAYS;
 #$decrypt = $NEVER  if defined $opt_leave;

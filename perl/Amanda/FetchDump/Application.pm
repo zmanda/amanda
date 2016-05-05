@@ -58,7 +58,7 @@ sub set {
 		'exclude-list-glob'	=> $self->{'exclude-list-glob'});
     die("$self->{'extract'}") if $self->{'extract'}->isa('Amanda::Message');
     ($self->{'bsu'}, my $err) = $self->{'extract'}->BSU();
-    if (@$err) {
+    if ($err && @$err) {
 	die("BSU err " . join("\n", @$err));
     }
 
@@ -138,8 +138,15 @@ sub get_xfer_dest {
 
     if ($self->{'use_directtcp'}) {
 	$self->{'xfer_dest'} = Amanda::Xfer::Dest::DirectTCPListen->new();
-    } else {
+    } elsif ($self->{'extract'}->{'restore_argv'}) {
 	$self->{'xfer_dest'} = Amanda::Xfer::Dest::Application->new($self->{'extract'}->{'restore_argv'}, 0, 0, 0, 1);
+    } else {
+	return Amanda::FetchDump::Message->new(
+		source_filename => __FILE__,
+		source_line     => __LINE__,
+		code            => 3300005,
+		severity        => $Amanda::Message::ERROR);
+
     }
 
     return $self->{'xfer_dest'};
