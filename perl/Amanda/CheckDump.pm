@@ -168,7 +168,11 @@ sub get_xfer_dest {
 
     $self->{'extract'}->set_validate_argv();
 
-    $self->{'xfer_dest'} = Amanda::Xfer::Dest::Application->new($self->{'extract'}->{'validate_argv'}, 0, 0, 0, 1);
+    if ($self->{'extract'}->{'validate_argv'}) {
+	$self->{'xfer_dest'} = Amanda::Xfer::Dest::Application->new($self->{'extract'}->{'validate_argv'}, 0, 0, 0, 1);
+    } else {
+	$self->{'xfer_dest'} = Amanda::Xfer::Dest::Null->new(0);
+    }
     return $self->{'xfer_dest'};
 }
 
