@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 24;
+use Test::More tests => 36;
 
 use lib "@amperldir@";
 use strict;
@@ -34,7 +34,7 @@ use Amanda::Debug;
 
 unless ($Amanda::Constants::BSDTAR and -x $Amanda::Constants::BSDTAR) {
     SKIP: {
-        skip("GNU tar is not available", Test::More->builder->expected_tests);
+        skip("BSDtar is not available", Test::More->builder->expected_tests);
     }
     exit 0;
 }
@@ -124,7 +124,7 @@ ok_foreach(
     "create directory structure",
     @dir_struct);
 
-my $selfcheck = $app->selfcheck('device' => $back_dir, 'level' => 0, 'index' => 'line');
+my $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
 ok(!@{$selfcheck->{'errors'}}, "no errors during selfcheck");
 
@@ -166,8 +166,53 @@ $app->add_property('BSDTAR-PATH' => '/do/not/exists');
 $restore = $app->restore('objects' => ['./hard', './foo', './bar'], 'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 256, "error status of 1 if BSDTAR-PATH does not exists");
 chomp $restore->{'errs'};
-ok($restore->{'errs'} =~ /ambsdtar: '\/do\/not\/exists' binary is not secure/ ||
-   $restore->{'errs'} =~ /ambsdtar: error \[exec \/do\/not\/exists: No such file or directory\]/, "correct error for No such file or directory") || diag($restore->{'errs'});
+ok($restore->{'errs'} eq "Can't find real path for '/do/not/exists': No such file or directory", "correct error for No such file or directory") || diag($restore->{'errs'});
+
+my $pwd = `pwd`;
+my $bad_bsdtar = "$Installcheck::TMP/bsdtar-path";
+open TOTO, ">$bad_bsdtar";
+close TOTO;
+$app->add_property('BSDTAR-PATH', "$bad_bsdtar");
+
+$selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($selfcheck->{'exit_status'}, 0, "error status ok");
+ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
+   $selfcheck->{'errors'}[0]->{prefix} eq 'ambsdtar:bsdtar_path', "good error selfcheck ")
+    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+
+my $estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($estimate->{'exit_status'}, 256, "error status ok");
+is($estimate->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error estimate")
+    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+
+$backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($backup->{'exit_status'}, 256, "error status ok");
+is($backup->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error backup")
+    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+$app->delete_property('BSDTAR-PATH');
+unlink "$bad_bsdtar";
+
+my $state_dir = "$Installcheck::TMP/ambsdtar-state_dir";
+open XX, ">$state_dir";
+close XX;
+chmod(0000, $state_dir);
+$app->add_property('STATE-DIR', $state_dir);
+$selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($selfcheck->{'exit_status'}, 0, "error status ok");
+ok($selfcheck->{'errors'}[0]->{code} eq '3600061' &&
+   $selfcheck->{'errors'}[0]->{message} eq "$state_dir is not a directory", "good error selfcheck ")
+    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+
+$estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($estimate->{'exit_status'}, 256, "error status ok");
+is($estimate->{'errors'}[0], "$state_dir is not a directory", "good error estimate")
+    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+
+$backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($backup->{'exit_status'}, 256, "error status ok");
+is($backup->{'errors'}[0], "$state_dir is not a directory", "good error backup")
+    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+unlink $state_dir;
 
 # cleanup
 rmtree($root_dir);

@@ -60,6 +60,7 @@
 #include "getopt.h"
 #include "event.h"
 #include "security-file.h"
+#include "ammessage.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -137,6 +138,7 @@ static GPtrArray *ambsdtar_build_argv(char *bsdtar_realpath,
 				      char *timestamps,
 				      char **file_exclude, char **file_include,
 				      int command, messagelist_t *mlist);
+static char *command = NULL;
 static char *bsdtar_path;
 static char *state_dir;
 static char *bsdtar_directory;
@@ -146,8 +148,9 @@ static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
 static char   *exit_handling;
 static int    exit_value[256];
-static int    exit_status = 0;
 static off_t  gblocksize = 0;
+static int    ambsdtar_exit_value = 0;
+static FILE  *mesgstream;
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -180,6 +183,31 @@ static struct option long_options[] = {
     {"verbose"          , 1, NULL, 36},
     {NULL, 0, NULL, 0}
 };
+
+static message_t *
+ambsdtar_print_message(
+    message_t *message)
+{
+    if (strcasecmp(command, "selfcheck") == 0) {
+	return print_message(message);
+    }
+    if (message_get_severity(message) <= MSG_INFO) {
+	if (g_str_equal(command, "estimate")) {
+	    fprintf(stdout, "OK %s\n", get_message(message));
+	} else if (g_str_equal(command, "backup")) {
+	    fprintf(mesgstream, "| %s\n", get_message(message));
+	}
+    } else {
+	ambsdtar_exit_value = 1;
+	if (g_str_equal(command, "estimate")) {
+	    fprintf(stdout, "ERROR %s\n", get_message(message));
+	} else if (g_str_equal(command, "backup")) {
+	    fprintf(mesgstream, "sendbackup: error [%s]\n", get_message(message));
+	}
+    }
+    return message;
+}
+
 
 static char *
 escape_tar_glob(
@@ -271,9 +299,9 @@ main(
     char **	argv)
 {
     int c;
-    char *command;
     application_argument_t argument;
     int i;
+    char *bsdtar_onefilesystem_value = NULL;
 
 #ifdef BSDTAR
     bsdtar_path = g_strdup(BSDTAR);
@@ -337,6 +365,10 @@ main(
     /* parse argument */
     command = argv[1];
 
+    if (strcasecmp(command,"selfcheck") == 0) {
+	fprintf(stdout, "MESSAGE JSON\n");
+    }
+
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -385,12 +417,8 @@ main(
 	case 11: amfree(state_dir);
 		 state_dir = g_strdup(optarg);
 		 break;
-	case 12: if (strcasecmp(optarg, "NO") == 0)
-		     bsdtar_onefilesystem = 0;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     bsdtar_onefilesystem = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
+	case 12: amfree(bsdtar_onefilesystem_value);
+		 bsdtar_onefilesystem_value = g_strdup(optarg);
 		 break;
 	case 16: argument.dle.include_file =
 			 append_sl(argument.dle.include_file, optarg);
@@ -442,10 +470,32 @@ main(
 	}
     }
 
+    if (g_str_equal(command, "backup")) {
+	mesgstream = fdopen(3, "w");
+	if (!mesgstream) {
+	    error(_("error mesgstream(%d): %s\n"), 3, strerror(errno));
+	}
+    }
+
     if (!argument.dle.disk && argument.dle.device)
 	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
 	argument.dle.device = g_strdup(argument.dle.disk);
+
+    if (bsdtar_onefilesystem_value) {
+	if (strcasecmp(bsdtar_onefilesystem_value, "NO") == 0) {
+	    bsdtar_onefilesystem = 0;
+	} else if (strcasecmp(bsdtar_onefilesystem_value, "YES") == 0) {
+	    bsdtar_onefilesystem = 1;
+	} else {
+	    delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702007, MSG_ERROR, 4,
+			"value", bsdtar_onefilesystem_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+	}
+    }
 
     argument.argc = argc - optind;
     argument.argv = argv + optind;
@@ -495,7 +545,7 @@ main(
 	g_debug("BSDTAR-PATH is not set");
     }
     if (state_dir) {
-	    g_debug("STATE-DIR %s", state_dir);
+	g_debug("STATE-DIR %s", state_dir);
     } else {
 	g_debug("STATE-DIR is not set");
     }
@@ -545,7 +595,7 @@ main(
 
     dbclose();
 
-    return exit_status;
+    return ambsdtar_exit_value;
 }
 
 static char *validate_command_options(
@@ -576,6 +626,7 @@ ambsdtar_support(
     fprintf(stdout, "INDEX-LINE YES\n");
     fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");
+    fprintf(stdout, "MESSAGE-SELFCHECK-JSON YES\n");
     fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
@@ -599,32 +650,53 @@ ambsdtar_selfcheck(
     messagelist_t mesglist = NULL;
 
     if (argument->dle.disk) {
-	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK disk %s\n", qdisk);
-	amfree(qdisk);
+	delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702000, MSG_INFO, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
-    printf("OK ambsdtar version %s\n", VERSION);
+    delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702001, MSG_INFO, 4,
+			"version", VERSION,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
+
     ambsdtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL, &mlist);
     for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 	message_t *message = mesglist->data;
 	if (message_get_severity(message) > MSG_INFO)
-	    fprintf(stdout, "ERROR %s\n", get_message(message));
+	    ambsdtar_print_message(message);
 	delete_message(message);
     }
     g_slist_free(mlist);
 
-
-    printf("OK ambsdtar\n");
+    delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702004, MSG_INFO, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 
     if ((option = validate_command_options(argument))) {
-	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+	delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702014, MSG_ERROR, 4,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host,
+			"command-options", option)));
     }
 
     if (bsdtar_path) {
-	if (check_file(bsdtar_path, X_OK)) {
-	    char *bsdtar_realpath;
-	    if (check_exec_for_suid("BSDTAR_PATH", bsdtar_path, stdout, &bsdtar_realpath)) {
+	char *bsdtar_realpath;
+	message_t *message;
+	if ((message = check_exec_for_suid_message("BSDTAR_PATH", bsdtar_path, &bsdtar_realpath))) {
+	    delete_message(ambsdtar_print_message(message));
+	} else {
+	    message = ambsdtar_print_message(check_file_message(bsdtar_path, X_OK));
+	    if (message && message_get_severity(message) <= MSG_INFO) {
+	    } else {
 		char *bsdtar_version;
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
@@ -638,39 +710,59 @@ ambsdtar_selfcheck(
 		    for (tv = bsdtar_version; *tv && !g_ascii_isdigit(*tv); tv++);
 		    for (bv = tv; *bv && *bv != ' '; bv++);
 		    if (*bv) *bv = '\0';
-		    printf("OK ambsdtar bsdtar-version %s\n", tv);
+		    delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702002, MSG_INFO, 4,
+			"bsdtar-version", bv,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 		} else {
-		    printf(_("ERROR [Can't get %s version]\n"), bsdtar_path);
+		    delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702003, MSG_ERROR, 4,
+			"bsdtar-path", bsdtar_path,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 		}
 
 		g_ptr_array_free(argv_ptr, TRUE);
 		amfree(bsdtar_version);
 	    }
-	    amfree(bsdtar_realpath);
+	    if (message)
+		delete_message(message);
 	}
+	amfree(bsdtar_realpath);
     } else {
-	printf(_("ERROR [BSDTAR program not available]\n"));
+	delete_message(ambsdtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3702005, MSG_ERROR, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
     set_root_privs(1);
     if (state_dir && strlen(state_dir) == 0)
 	state_dir = NULL;
     if (state_dir) {
-	check_dir(state_dir, R_OK|W_OK);
+	delete_message(ambsdtar_print_message(check_dir_message(state_dir, R_OK|W_OK)));
     } else {
-	printf(_("ERROR [No STATE-DIR]\n"));
+	delete_message(ambsdtar_print_message(build_message(
+                        AMANDA_FILE, __LINE__, 3702020, MSG_ERROR, 3,
+                        "disk", argument->dle.disk,
+                        "device", argument->dle.device,
+                        "hostname", argument->host)));
     }
 
     if (bsdtar_directory) {
-	check_dir(bsdtar_directory, R_OK);
+	delete_message(ambsdtar_print_message(check_dir_message(bsdtar_directory, R_OK)));
     } else if (argument->dle.device) {
-	check_dir(argument->dle.device, R_OK);
+	delete_message(ambsdtar_print_message(check_dir_message(argument->dle.device, R_OK)));
     }
 
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	check_file(calcsize, X_OK);
-	check_suid(calcsize);
+	delete_message(ambsdtar_print_message(check_file_message(calcsize, X_OK)));
+	delete_message(ambsdtar_print_message(check_suid_message(calcsize)));
 	amfree(calcsize);
     }
     set_root_privs(0);
@@ -701,6 +793,7 @@ ambsdtar_estimate(
     GString   *strbuf;
     char      *option;
     char      *bsdtar_realpath;
+    message_t *message;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -718,6 +811,21 @@ ambsdtar_estimate(
     if ((option = validate_command_options(argument))) {
 	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
 	error("Invalid '%s' COMMAND-OPTIONS", option);
+    }
+
+    if (state_dir && strlen(state_dir) == 0)
+	state_dir = NULL;
+    if (state_dir) {
+	message = check_dir_message(state_dir, R_OK|W_OK);
+	if (message) {
+	    if (message_get_severity(message) > MSG_INFO) {
+		ambsdtar_print_message(message);
+	    }
+	    delete_message(message);
+	}
+    } else {
+        fprintf(mesgstream, "ERROR No STATE-DIR\n");
+        exit(1);
     }
 
     if (argument->calcsize) {
@@ -764,13 +872,9 @@ ambsdtar_estimate(
 	goto common_error;
     }
 
-    if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
-	errmsg = g_strdup_printf("'%s' binary is not secure", bsdtar_path);
-	goto common_error;
-    }
-
-    if (!state_dir) {
-	errmsg = g_strdup(_("STATE-DIR not defined"));
+    if ((message = check_exec_for_suid_message("BSDTAR_PATH", bsdtar_path, &bsdtar_realpath))) {
+	errmsg = g_strdup(get_message(message));
+	delete_message(message);
 	goto common_error;
     }
 
@@ -878,7 +982,7 @@ ambsdtar_estimate(
                 bsdtar_path, WTERMSIG(wait_status), dbfn());
 	    g_free(errmsg);
             errmsg = g_string_free(strbuf, FALSE);
-	    exit_status = 1;
+	    ambsdtar_exit_value = 1;
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
                 strbuf = g_string_new(errmsg);
@@ -886,14 +990,14 @@ ambsdtar_estimate(
                     bsdtar_path, WEXITSTATUS(wait_status), dbfn());
 		g_free(errmsg);
                 errmsg = g_string_free(strbuf, FALSE);
-		exit_status = 1;
+		ambsdtar_exit_value = 1;
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 				bsdtar_path, dbfn());
-	    exit_status = 1;
+	    ambsdtar_exit_value = 1;
 	}
 	g_debug(_("after %s %s wait"), bsdtar_path, qdisk);
 
@@ -933,7 +1037,7 @@ common_error:
     amfree(qdisk);
     g_debug("%s", errmsg);
     fprintf(stdout, "ERROR %s\n", qerrmsg);
-    exit_status = 1;
+    ambsdtar_exit_value = 1;
     amfree(file_exclude);
     amfree(file_include);
     amfree(errmsg);
@@ -956,7 +1060,6 @@ typedef struct filter_s {
 static off_t dump_size = -1;
 static int   dataf = 1;
 static int   index_in;
-static FILE *mesgstream;
 static FILE *indexstream = NULL;
 
 static void read_fd(int fd, char *name, event_fn_t fn);
@@ -1133,7 +1236,6 @@ ambsdtar_backup(
     int         dumpin;
     char      *qdisk;
     char      *timestamps;
-    int        mesgf = 3;
     int        indexf = 4;
     int        outf;
     int        data_out;
@@ -1152,42 +1254,49 @@ ambsdtar_backup(
     char      *bsdtar_realpath;
     messagelist_t mlist = NULL;
     messagelist_t mesglist = NULL;
-
-    mesgstream = fdopen(mesgf, "w");
-    if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
-    }
+    message_t *message;
 
     if (!bsdtar_path) {
-	fprintf(mesgstream, "? BSDTAR-PATH not defined");
-	error(_("BSDTAR-PATH not defined"));
+	fprintf(mesgstream, "sendbackup: error [BSDTAR-PATH not defined]\n");
+	exit(1);
     }
 
-    if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
-	fprintf(mesgstream, "? '%s' binary is not secure\n", bsdtar_path);
-	error("'%s' binary is not secure", bsdtar_path);
+    if ((message = check_exec_for_suid_message("BSDTAR_PATH", bsdtar_path, &bsdtar_realpath))) {
+	fprintf(mesgstream, "sendbackup: error [%s]", get_message(message));
+	exit(1);
     }
 
     if ((option = validate_command_options(argument))) {
-	fprintf(mesgstream, "? Invalid '%s' COMMAND-OPTIONS\n", option);
-	error("Invalid '%s' COMMAND-OPTIONS", option);
+	fprintf(mesgstream, "sendbackup: error [Invalid '%s' COMMAND-OPTIONS]\n", option);
+	exit(1);
     }
 
-    if (!state_dir) {
-	error(_("STATE-DIR not defined"));
+    if (state_dir && strlen(state_dir) == 0)
+	state_dir = NULL;
+    if (state_dir) {
+	message = check_dir_message(state_dir, R_OK|W_OK);
+	if (message) {
+	    if (message_get_severity(message) > MSG_INFO) {
+		ambsdtar_print_message(message);
+	    }
+	    delete_message(message);
+	}
+    } else {
+        fprintf(mesgstream, "sendbackup: error [STATE-DIR not defined]\n");
+        exit(1);
     }
 
     if (!argument->level) {
-        fprintf(mesgstream, "? No level argument\n");
-        error(_("No level argument"));
+        fprintf(mesgstream, "sendbackup: error [No level argument]\n");
+        exit(1);
     }
     if (!argument->dle.disk) {
-        fprintf(mesgstream, "? No disk argument\n");
-        error(_("No disk argument"));
+        fprintf(mesgstream, "sendbackup: error [No disk argument]\n");
+        exit(1);
     }
     if (!argument->dle.device) {
-        fprintf(mesgstream, "? No device argument\n");
-        error(_("No device argument"));
+        fprintf(mesgstream, "sendbackup: error [No device argument]\n");
+        exit(1);
     }
 
     qdisk = quote_string(argument->dle.disk);
@@ -1252,38 +1361,38 @@ ambsdtar_backup(
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 			    bsdtar_path, WTERMSIG(wait_status), dbfn());
-	exit_status = 1;
+	ambsdtar_exit_value = 1;
     } else if (WIFEXITED(wait_status)) {
 	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				bsdtar_path, WEXITSTATUS(wait_status), dbfn());
-	    exit_status = 1;
+	    ambsdtar_exit_value = 1;
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
 			    bsdtar_path, dbfn());
-	exit_status = 1;
+	ambsdtar_exit_value = 1;
     }
     if (argument->dle.create_index) {
 	waitpid(indexpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = g_strdup_printf(_("'%s index' terminated with signal %d: see %s"),
 			    bsdtar_path, WTERMSIG(wait_status), dbfn());
-	    exit_status = 1;
+	    ambsdtar_exit_value = 1;
 	} else if (WIFEXITED(wait_status)) {
 	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 		errmsg = g_strdup_printf(_("'%s index' exited with status %d: see %s"),
 				bsdtar_path, WEXITSTATUS(wait_status), dbfn());
-		exit_status = 1;
+		ambsdtar_exit_value = 1;
 	    } else {
 		/* Normal exit */
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("'%s index' got bad exit: see %s"),
 			    bsdtar_path, dbfn());
-	    exit_status = 1;
+	    ambsdtar_exit_value = 1;
 	}
     }
     g_debug(_("after %s %s wait"), bsdtar_path, qdisk);
@@ -1291,7 +1400,7 @@ ambsdtar_backup(
     if (errmsg) {
 	g_debug("%s", errmsg);
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
-	exit_status = 1;
+	ambsdtar_exit_value = 1;
     } else if (argument->dle.record) {
 	ambsdtar_set_timestamps(argument,
 				GPOINTER_TO_INT(argument->level->data),
@@ -1385,7 +1494,7 @@ handle_restore_stdin(
 	/* process the complete buffer */
 	int nwrite = full_write(filter->out , filter->buffer, nread);
 	if (nwrite < nread) {
-	    exit_status = 1;
+	    ambsdtar_exit_value = 1;
 	    g_debug("wrote only %d bytes", nwrite);
 	    event_release(filter->event);
 	    filter->event = NULL;
@@ -1482,13 +1591,16 @@ ambsdtar_restore(
     char       *errmsg = NULL;
     amwait_t    wait_status;
     char       *bsdtar_realpath;
+    message_t  *message;
 
     if (!bsdtar_path) {
 	error(_("BSDTAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid("BSDTAR_PATH", bsdtar_path, NULL, &bsdtar_realpath)) {
-	error("'%s' binary is not secure", bsdtar_path);
+    if ((message = check_exec_for_suid_message("BSDTAR_PATH", bsdtar_path, &bsdtar_realpath))) {
+	fprintf(stderr, "%s\n", get_message(message));
+	delete_message(message);
+	exit(1);
     }
 
     if (!security_allow_to_restore()) {
@@ -1692,11 +1804,11 @@ ambsdtar_restore(
     if (WIFSIGNALED(wait_status)) {
 	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
 				 bsdtar_path, WTERMSIG(wait_status), dbfn());
-	exit_status = 1;
+	ambsdtar_exit_value = 1;
     } else if (WIFEXITED(wait_status) && WEXITSTATUS(wait_status) > 0) {
 	errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
 				 bsdtar_path, WEXITSTATUS(wait_status), dbfn());
-	exit_status = 1;
+	ambsdtar_exit_value = 1;
     }
 
     g_debug(_("ambsdtar: %s: pid %ld"), bsdtar_path, (long)tarpid);
@@ -1923,7 +2035,7 @@ ambsdtar_get_timestamps(
 		    if (command == CMD_ESTIMATE) {
 			fprintf(mesgstream, "ERROR %s\n", errmsg);
 		    } else {
-			fprintf(mesgstream, "? %s\n", errmsg);
+			fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 		    }
 		    exit(1);
 		}
@@ -1942,7 +2054,7 @@ ambsdtar_get_timestamps(
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
 	    fclose(tt);
 	    exit(1);
@@ -1962,7 +2074,7 @@ ambsdtar_get_timestamps(
 	if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	} else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	}
 	exit(1);
     }
@@ -2011,7 +2123,7 @@ ambsdtar_set_timestamps(
     } else {
 	errmsg =  _("STATE-DIR is not defined");
 	g_debug("%s", errmsg);
-	fprintf(mesgstream, "? %s\n", errmsg);
+	fprintf(mesgstream, "sendabckup: error [%s]\n", errmsg);
 	exit(1);
     }
 }

@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 23;
+use Test::More tests => 47;
 
 use lib '@amperldir@';
 use strict;
@@ -172,6 +172,90 @@ is($restore->{'exit_status'}, 256, "error status of 1 if GNUTAR-PATH does not ex
 chomp $restore->{'errs'};
 ok($restore->{'errs'} =~ /amgtar: '\/do\/not\/exists' binary is not secure/ ||
    $restore->{'errs'} =~ /amgtar: error \[exec \/do\/not\/exists: No such file or directory\]/, "correct error for No such file or directory") || diag($restore->{'errs'});
+
+$selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($selfcheck->{'exit_status'}, 0, "error status ok");
+ok($selfcheck->{'errors'}[0]->{code} eq '3600091' &&
+   $selfcheck->{'errors'}[0]->{errnocode} eq 'ENOENT', "good error selfcheck ")
+    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+
+my $estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($estimate->{'exit_status'}, 0, "error status ok");
+is($estimate->{'errors'}[0], "Can't find real path for '/do/not/exists': No such file or directory", "good error estimate")
+    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+
+$backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($backup->{'exit_status'}, 256, "error status ok");
+is($backup->{'errors'}[0], "Can't find real path for '/do/not/exists': No such file or directory", "good error backup")
+    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+$app->delete_property('GNUTAR-PATH');
+
+my $bad_gnutar = "$Installcheck::TMP/bad-gnutar";
+open TOTO, ">$bad_gnutar";
+close TOTO;
+$app->add_property('GNUTAR-PATH', "$bad_gnutar");
+
+$selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($selfcheck->{'exit_status'}, 0, "error status ok");
+ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
+   $selfcheck->{'errors'}[0]->{path} eq "$bad_gnutar", "good error selfcheck ")
+    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+
+$estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($estimate->{'exit_status'}, 0, "error status ok");
+is($estimate->{'errors'}[0], "security file do not allow to run '$bad_gnutar' as root for 'amgtar:gnutar_path'", "good error estimate")
+    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+
+$backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($backup->{'exit_status'}, 256, "error status ok");
+is($backup->{'errors'}[0], "security file do not allow to run '$bad_gnutar' as root for 'amgtar:gnutar_path'", "good error backup")
+    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+$app->delete_property('GNUTAR-PATH');
+unlink "$bad_gnutar";
+
+chmod (0000, $list_dir);
+$selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($selfcheck->{'exit_status'}, 0, "error status ok");
+ok($selfcheck->{'errors'}[0]->{code} eq '3600063' &&
+   $selfcheck->{'errors'}[0]->{errnocode} eq 'EACCES', "good error selfcheck ")
+    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+
+$estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($estimate->{'exit_status'}, 256, "error status ok");
+is($estimate->{'errors'}[0], 'error opening /tmp/amanda/installchecks/installcheck-amgtar/list/no host_tmp_amanda_installchecks_installcheck-amgtar_to_backup_0.new: Permission denied', "good error estimate")
+    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+
+$backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($backup->{'exit_status'}, 256, "error status ok");
+is($backup->{'errors'}[0], 'error opening /tmp/amanda/installchecks/installcheck-amgtar/list/no host_tmp_amanda_installchecks_installcheck-amgtar_to_backup_0.new: Permission denied', "good error backup")
+    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+chmod(0700, $list_dir);
+
+$app->add_property('one-file-system', 'bad-one');
+$app->add_property('sparse', 'bad-sparse');
+$app->add_property('atime-preserve', 'bad-atime-preserve');
+$app->add_property('check-device', 'bad-check-device');
+$app->add_property('no-unquote', 'bad-no-unquote');
+$app->add_property('dar', 'bad-dar');
+$selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($selfcheck->{'exit_status'}, 0, "error status ok");
+ok($selfcheck->{'errors'}[0]->{code} eq '3700007' &&
+   $selfcheck->{'errors'}[1]->{code} eq '3700008' &&
+   $selfcheck->{'errors'}[2]->{code} eq '3700009' &&
+   $selfcheck->{'errors'}[3]->{code} eq '3700010' &&
+   $selfcheck->{'errors'}[4]->{code} eq '3700011' &&
+   $selfcheck->{'errors'}[5]->{code} eq '3700015', "good error selfcheck ")
+    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+
+$estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($estimate->{'exit_status'}, 256, "error status ok");
+is($estimate->{'errors'}[0], 'bad ONE-FILE-SYSTEM property value \'bad-one\'', "good error estimate")
+    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+
+$backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
+is($backup->{'exit_status'}, 256, "error status ok");
+is($backup->{'errors'}[0], 'bad ONE-FILE-SYSTEM property value \'bad-one\'', "good error backup")
+    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 
 # cleanup
 rmtree($root_dir);

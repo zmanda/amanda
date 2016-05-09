@@ -1320,7 +1320,6 @@ check_result(
 	    }
 	}
 	if (application_api_pid != -1) {
-	    application_api_pid = -1;
 	    if ((wpid = waitpid(application_api_pid, &retstat, WNOHANG)) > 0) {
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
 	    } else if (wpid == 0) {

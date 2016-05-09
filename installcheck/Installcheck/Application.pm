@@ -559,6 +559,8 @@ sub backup {
             my $rem = $1;
             if ($rem =~ /^size (\d+)$/i) {
                 $size = _parse_size($1);
+            } elsif ($rem =~ /error \[(.*)\]$/) {
+                push @errors, $1;
             } elsif (lc($rem) eq 'end') {
                 # do nothing
             } else {
@@ -599,6 +601,9 @@ sub restore {
 sub estimate {
     my $self = shift @_;
     my %nargs = @_;
+    my $level;
+    my $size;
+    my @errors;
 
     foreach my $k ( qw(device level) ) {
         confess "$k required" unless defined($nargs{$k});
@@ -616,12 +621,20 @@ sub estimate {
             1 => {'child_mode' => 'w', 'save_to' => \$est},
         }
     );
-    $est =~ /^(\d+) (\d+) 1\n$/;
-    my ($level, $size) = ($1, $2);
-    $level = 0 + $level;
-    $size = ($size eq '-1')? -1 : _parse_size($size);
+    if ($est =~ /ERROR "(.*)"$/m) {
+	push @errors, $1;
+    } elsif ($est =~ /ERROR \[(.*)\]$/m) {
+	push @errors, $1;
+    } elsif ($est =~ /ERROR (.*)$/m) {
+	push @errors, $1;
+    }
+    if ($est =~ /^(\d+) (\d+) 1\n$/m) {
+	($level, $size) = ($1, $2);
+	$level = 0 + $level;
+	$size = ($size eq '-1')? -1 : _parse_size($size);
+    }
 
-    {'level' => $level, 'size' => $size, 'exit_status' => $exit_status};
+    {'level' => $level, 'size' => $size, 'errors' => \@errors, 'exit_status' => $exit_status};
 }
 
 sub selfcheck {

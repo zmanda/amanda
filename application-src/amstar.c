@@ -60,6 +60,7 @@
 #include "getopt.h"
 #include "sendbackup.h"
 #include "security-file.h"
+#include "ammessage.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -133,6 +134,7 @@ static GPtrArray *amstar_build_argv(char *star_realpath,
 				FILE *mesgstream);
 static int check_device(application_argument_t *argument);
 
+static char *command;
 static char *star_path;
 static char *star_tardumps;
 static int   star_dle_tardumps;
@@ -143,6 +145,9 @@ static char *star_directory;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
+static FILE   *mesgstream = NULL;
+static int     amstar_exit_value = 0;
+
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -173,6 +178,35 @@ static struct option long_options[] = {
     { NULL, 0, NULL, 0}
 };
 
+static message_t *
+amstar_print_message(
+    message_t *message)
+{
+    if (strcasecmp(command, "selfcheck") == 0) {
+	return print_message(message);
+    }
+    if (message_get_severity(message) <= MSG_INFO) {
+	if (g_str_equal(command, "estimate")) {
+	    fprintf(stdout, "OK %s\n", get_message(message));
+	} else if (g_str_equal(command, "backup")) {
+	    fprintf(mesgstream, "| %s\n", get_message(message));
+	} else {
+	    fprintf(stdout, "%s\n", get_message(message));
+	}
+    } else {
+	amstar_exit_value = 1;
+	if (g_str_equal(command, "estimate")) {
+	    fprintf(stdout, "ERROR %s\n", get_message(message));
+	} else if (g_str_equal(command, "backup")) {
+	    fprintf(mesgstream, "sendbackup: error [%s]\n", get_message(message));
+	} else {
+	    fprintf(stdout, "%s\n", get_message(message));
+	}
+    }
+    return message;
+}
+
+
 
 int
 main(
@@ -180,8 +214,9 @@ main(
     char **	argv)
 {
     int c;
-    char *command;
     application_argument_t argument;
+    char *star_sparse_value = NULL;
+    char *star_acl_value = NULL;
 
 #ifdef STAR
     star_path = g_strdup(STAR);
@@ -247,6 +282,10 @@ main(
     /* parse argument */
     command = argv[1];
 
+    if (strcasecmp(command,"selfcheck") == 0) {
+	fprintf(stdout, "MESSAGE JSON\n");
+    }
+
     argument.config     = NULL;
     argument.host       = NULL;
     argument.message    = 0;
@@ -260,7 +299,7 @@ main(
     opterr = 0;
     while (1) {
 	int option_index = 0;
-    	c = getopt_long (argc, argv, "", long_options, &option_index);
+	c = getopt_long (argc, argv, "", long_options, &option_index);
 	if (c == -1)
 	    break;
 
@@ -320,12 +359,8 @@ main(
 		     /* star_onefilesystem = 0; */
 		 }
 		 break;
-	case 14: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     star_sparse = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     star_sparse = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
+	case 14: amfree(star_sparse_value);
+		 star_sparse_value = g_strdup(optarg);
 		 break;
 	case 15: argument.calcsize = 1;
 		 break;
@@ -363,12 +398,8 @@ main(
 		     argument.dle.exclude_file =
 			 append_sl(argument.dle.exclude_file, optarg);
 		 break;
-	case 24: if (optarg && strcasecmp(optarg, "NO") == 0)
-		     star_acl = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") == 0)
-		     star_acl = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad ACL property value (%s)]\n"), get_pname(), optarg);
+	case 24: amfree(star_acl_value);
+		 star_acl_value = g_strdup(optarg);
 		 break;
 	case 25: if (optarg)
 		     argument.dle.include_file =
@@ -380,10 +411,47 @@ main(
 	}
     }
 
+    if (g_str_equal(command, "backup")) {
+	mesgstream = fdopen(3, "w");
+	if (!mesgstream) {
+	    error(_("error mesgstream(%d): %s\n"), 3, strerror(errno));
+	}
+    }
+
     if (!argument.dle.disk && argument.dle.device)
 	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
 	argument.dle.device = g_strdup(argument.dle.disk);
+
+    if (star_sparse_value) {
+	if (strcasecmp(star_sparse_value, "NO") == 0) {
+	    star_sparse = 0;
+	} else if (strcasecmp(star_sparse_value, "YES") == 0) {
+	    star_sparse = 1;
+	} else {
+	    delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701008, MSG_ERROR, 4,
+			"value", star_sparse_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+	}
+    }
+
+    if (star_acl_value) {
+	if (strcasecmp(star_acl_value, "NO") == 0){
+	    star_acl = 0;
+	} else if (strcasecmp(star_acl_value, "YES") == 0){
+	    star_acl = 1;
+	} else {
+	    delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701009, MSG_ERROR, 4,
+			"value", star_acl_value,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+	}
+    }
 
     argument.argc = argc - optind;
     argument.argv = argv + optind;
@@ -424,7 +492,7 @@ main(
 
     dbclose();
 
-    return 0;
+    return amstar_exit_value;
 }
 
 static char *validate_command_options(
@@ -455,6 +523,7 @@ amstar_support(
     fprintf(stdout, "INDEX-LINE YES\n");
     fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");
+    fprintf(stdout, "MESSAGE-SELFCHECK-JSON YES\n");
     fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
@@ -474,23 +543,41 @@ amstar_selfcheck(
     char *option;
 
     if (argument->dle.disk) {
-	char *qdisk = quote_string(argument->dle.disk);
-	fprintf(stdout, "OK disk %s\n", qdisk);
-	amfree(qdisk);
+	delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701000, MSG_INFO, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
-    fprintf(stdout, "OK amstar version %s\n", VERSION);
-    fprintf(stdout, "OK amstar\n");
+    delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701001, MSG_INFO, 4,
+			"version", VERSION,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
+
+    delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701004, MSG_INFO, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 
     if (argument->dle.device) {
-	char *qdevice = quote_string(argument->dle.device);
-	fprintf(stdout, "OK %s\n", qdevice);
-	amfree(qdevice);
+	delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701019, MSG_INFO, 4,
+			"directory", star_directory,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
     if (star_directory) {
-	char *qdirectory = quote_string(star_directory);
-	fprintf(stdout, "OK %s\n", qdirectory);
-	amfree(qdirectory);
+	delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701018, MSG_INFO, 4,
+			"directory", star_directory,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
     if (((argument->dle.include_list &&
@@ -501,19 +588,30 @@ amstar_selfcheck(
 	  argument->dle.exclude_list->nb_element >= 0) ||
          (argument->dle.exclude_file &&
 	  argument->dle.exclude_file->nb_element >= 0))) {
-	fprintf(stdout, "ERROR Can't use include and exclude simultaneously\n");
+	delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701017, MSG_ERROR, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
 
     if ((option = validate_command_options(argument))) {
-	fprintf(stdout, "ERROR Invalid '%s' COMMAND-OPTIONS\n", option);
+	delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701014, MSG_ERROR, 4,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host,
+			"command-options", option)));
     }
 
-    if (!star_path) {
-	fprintf(stdout, "ERROR STAR-PATH not defined\n");
-    } else {
-	if (check_file(star_path, X_OK)) {
-	    char *star_realpath = NULL;
-	    if (check_exec_for_suid("STAR_PATH", star_path, stdout, &star_realpath)) {
+    if (star_path) {
+	char *star_realpath = NULL;
+	message_t *message;
+	if ((message = check_exec_for_suid_message("STAR_PATH", star_path, &star_realpath))) {
+	    delete_message(amstar_print_message(message));
+	} else {
+	    message = amstar_print_message(check_file_message(star_path, X_OK));
+	    if (message && message_get_severity(message) <= MSG_INFO) {
 		char *star_version;
 		GPtrArray *argv_ptr = g_ptr_array_new();
 
@@ -528,33 +626,55 @@ amstar_selfcheck(
 		    for (sv = star_version; *sv && !g_ascii_isdigit(*sv); sv++);
 		    for (sv1 = sv; *sv1 && *sv1 != ' '; sv1++);
 		    *sv1 = '\0';
-		    printf("OK amstar star-version %s\n", sv);
+		    delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701002, MSG_INFO, 4,
+			"star-version", sv,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 		} else {
-		    printf(_("ERROR [Can't get %s version]\n"), star_path);
+		    printf(_("ERROR Can't get %s version\n"), star_path);
+		    delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701003, MSG_INFO, 4,
+			"star-path", star_path,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
 		}
 		g_ptr_array_free(argv_ptr, TRUE);
 		amfree(star_version);
 	    }
-	    amfree(star_realpath);
+	    if (message)
+		delete_message(message);
 	}
+	if (star_realpath)
+	    g_free(star_realpath);
+    } else {
+	delete_message(amstar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3701005, MSG_ERROR, 3,
+			"disk", argument->dle.disk,
+			"device", argument->dle.device,
+			"hostname", argument->host)));
     }
+
+    delete_message(amstar_print_message(check_file_message(star_tardumps, W_OK)));
 
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	check_file(calcsize, X_OK);
-	check_suid(calcsize);
+	delete_message(amstar_print_message(check_file_message(calcsize, X_OK)));
+	delete_message(amstar_print_message(check_suid_message(calcsize)));
 	amfree(calcsize);
     }
 
     {
 	char *amandates_file;
 	amandates_file = getconf_str(CNF_AMANDATES);
-	check_file(amandates_file, R_OK|W_OK);
+	delete_message(amstar_print_message(check_file_message(amandates_file, R_OK|W_OK)));
     }
 
     set_root_privs(1);
     if (argument->dle.device) {
-	check_dir(argument->dle.device, R_OK);
+	delete_message(amstar_print_message(check_dir_message(argument->dle.device, R_OK)));
     }
     set_root_privs(0);
 }
@@ -580,6 +700,7 @@ amstar_estimate(
     GSList     *levels = NULL;
     char       *option;
     char       *star_realpath = NULL;
+    message_t  *message;
 
     if (!argument->level) {
 	fprintf(stderr, "ERROR No level argument\n");
@@ -626,9 +747,19 @@ amstar_estimate(
 	errmsg = g_strdup(_("STAR-PATH not defined"));
 	goto common_error;
     }
-    if (!check_exec_for_suid("STAR_PATH", star_path, NULL, &star_realpath)) {
-	errmsg = g_strdup_printf("'%s' binary is not secure", star_path);
+    if ((message = check_exec_for_suid_message("STAR_PATH", star_path, &star_realpath))) {
+	errmsg = g_strdup(get_message(message));
+	delete_message(message);
 	goto common_error;
+    }
+
+    if ((message = check_file_message(star_tardumps, W_OK))) {
+	if (message_get_severity(message) > MSG_INFO) {
+	    errmsg = g_strdup(get_message(message));
+	    delete_message(message);
+	    goto common_error;
+	}
+	delete_message(message);
     }
 
     start_time = curclock();
@@ -783,10 +914,8 @@ amstar_backup(
     GPtrArray *argv_ptr;
     int        starpid;
     int        dataf = 1;
-    int        mesgf = 3;
     int        indexf = 4;
     int        outf;
-    FILE      *mesgstream;
     FILE      *indexstream = NULL;
     FILE      *outstream;
     int        level;
@@ -798,38 +927,43 @@ amstar_backup(
     regex_t    regex_hard;
     char      *option;
     char      *star_realpath = NULL;
-
-    mesgstream = fdopen(mesgf, "w");
-    if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
-    }
+    message_t *message;
 
     if (!argument->level) {
-	fprintf(mesgstream, "? No level argument\n");
+	fprintf(mesgstream, "sendbackup: error [No level argument]\n");
 	error(_("No level argument"));
     }
     if (!argument->dle.disk) {
-	fprintf(mesgstream, "? No disk argument\n");
+	fprintf(mesgstream, "sendbackup: error [No disk argument]\n");
 	error(_("No disk argument"));
     }
     if (!argument->dle.device) {
-	fprintf(mesgstream, "? No device argument\n");
+	fprintf(mesgstream, "sendbackup: error [No device argument]\n");
 	error(_("No device argument"));
     }
 
-    if (!check_exec_for_suid("STAR_PATH", star_path, NULL, &star_realpath)) {
-	fprintf(mesgstream, "? '%s' binary is not secure", star_path);
-	error("'%s' binary is not secure", star_path);
+    if ((message = check_exec_for_suid_message("STAR_PATH", star_path, &star_realpath))) {
+	fprintf(mesgstream, "sendbackup: error [%s]", get_message(message));
+	exit(1);
+    }
+
+    if ((message = check_file_message(star_tardumps, W_OK))) {
+	if (message_get_severity(message) > MSG_INFO) {
+	    fprintf(mesgstream, "sendbackup: error [%s]", get_message(message));
+	    delete_message(message);
+	    exit(1);
+	}
+	delete_message(message);
     }
 
     if ((option = validate_command_options(argument))) {
-	fprintf(mesgstream, "? Invalid '%s' COMMAND-OPTIONS\n", option);
-	error("Invalid '%s' COMMAND-OPTIONS\n", option);
+	fprintf(mesgstream, "sendbackup: error [Invalid '%s' COMMAND-OPTIONS]\n", option);
+	exit(1);
     }
 
     if (argument->dle.include_list &&
 	argument->dle.include_list->nb_element >= 0) {
-	fprintf(mesgstream, "? include-list not supported for backup\n");
+	fprintf(mesgstream, "sendbackup: error [include-list not supported for backup]\n");
     }
 
     level = GPOINTER_TO_INT(argument->level->data);
@@ -848,11 +982,13 @@ amstar_backup(
     if (argument->dle.create_index) {
 	indexstream = fdopen(indexf, "w");
 	if (!indexstream) {
+	    fprintf(mesgstream, "sendbackup: error [error indexstream(%d): %s]\n", indexf, strerror(errno));
 	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
 	}
     }
     outstream = fdopen(outf, "r");
     if (!outstream) {
+	fprintf(mesgstream, "sendbackup: error [error outstream(%d): %s]\n", outf, strerror(errno));
 	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
     }
 
@@ -962,13 +1098,16 @@ amstar_restore(
     int         j;
     char       *e;
     char       *star_realpath = NULL;
+    message_t  *message;
 
     if (!star_path) {
 	error(_("STAR-PATH not defined"));
     }
 
-    if (!check_exec_for_suid("STAR_PATH", star_path, NULL, &star_realpath)) {
-	error("'%s' binary is not secure", star_path);
+    if ((message = check_exec_for_suid_message("STAR_PATH", star_path, &star_realpath))) {
+	fprintf(stderr, "%s\n", get_message(message));
+	delete_message(message);
+	exit(1);
     }
 
     if (!security_allow_to_restore()) {
@@ -1365,7 +1504,7 @@ check_device(
 
     qdevice = quote_string(argument->dle.device);
     set_root_privs(1);
-    if(!stat(argument->dle.device, &stat_buf)) { 
+    if (!stat(argument->dle.device, &stat_buf)) {
 	if (!S_ISDIR(stat_buf.st_mode)) {
 	    set_root_privs(0);
 	    g_fprintf(stderr, _("ERROR %s is not a directory\n"), qdevice);

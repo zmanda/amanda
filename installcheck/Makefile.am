@@ -24,6 +24,7 @@ client_tests = \
 	amgtar \
 	ampgsql \
 	amraw \
+	amstar \
 	runtar
 all_tests += $(client_tests)
 

@@ -1668,7 +1668,7 @@ check_access(
 	noun = "access", adjective = "accessible";
 
     if(EUIDACCESS(filename, mode) == -1) {
-	g_printf(_("ERROR [can not %s %s: %s (ruid:%d euid:%d)\n"), noun, quoted, strerror(errno),
+	g_printf(_("ERROR can not %s %s: %s (ruid:%d euid:%d)\n"), noun, quoted, strerror(errno),
 	    (int)getuid(), (int)geteuid());
 	result = FALSE;
     } else {
@@ -1788,7 +1788,7 @@ check_exec_for_suid_message(
     *my_realpath = realpath(filename, tmp_realpath);
     if (!*my_realpath) {
 	return build_message(
-		AMANDA_FILE, __LINE__, 3600091, MSG_ERROR, 3,
+		AMANDA_FILE, __LINE__, 3600091, MSG_ERROR, 2,
 		"filename", filename,
 		"errno", errno);
     }

@@ -157,6 +157,7 @@ static GPtrArray *amgtar_build_argv(char *gnutar_realpath,
 				char *incrname, char **file_exclude,
 				char **file_include, int command,
 				messagelist_t *mlist);
+static char *command = NULL;
 static char *gnutar_path;
 static char *gnutar_listdir;
 static char *gnutar_directory;
@@ -173,7 +174,9 @@ static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
 static char   *exit_handling;
-static int    exit_value[256];
+static int     exit_value[256];
+static FILE   *mesgstream = NULL;
+static int     amgtar_exit_value = 0;
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -219,6 +222,35 @@ static struct option long_options[] = {
     {"state-stream"           , 1, NULL, 41},
     {NULL, 0, NULL, 0}
 };
+
+static message_t *
+amgtar_print_message(
+    message_t *message)
+{
+    if (strcasecmp(command, "selfcheck") == 0 ||
+	strcasecmp(command, "discover") == 0) {
+	return print_message(message);
+    }
+    if (message_get_severity(message) <= MSG_INFO) {
+	if (g_str_equal(command, "estimate")) {
+	    fprintf(stdout, "OK %s\n", get_message(message));
+	} else if (g_str_equal(command, "backup")) {
+	    fprintf(mesgstream, "| %s\n", get_message(message));
+	} else {
+	    fprintf(stdout, "%s\n", get_message(message));
+	}
+    } else {
+	amgtar_exit_value = 1;
+	if (g_str_equal(command, "estimate")) {
+	    fprintf(stdout, "ERROR %s\n", get_message(message));
+	} else if (g_str_equal(command, "backup")) {
+	    fprintf(mesgstream, "sendbackup: error [%s]\n", get_message(message));
+	} else {
+	    fprintf(stdout, "%s\n", get_message(message));
+	}
+    }
+    return message;
+}
 
 static char *
 escape_tar_glob(
@@ -310,7 +342,6 @@ main(
     char **	argv)
 {
     int c;
-    char *command;
     application_argument_t argument;
     int i;
     char *gnutar_onefilesystem_value = NULL;
@@ -318,6 +349,7 @@ main(
     char *gnutar_atimepreserve_value = NULL;
     char *gnutar_checkdevice_value = NULL;
     char *gnutar_no_unquote_value = NULL;
+    char *gnutar_dar_value = NULL;
 
 #ifdef GNUTAR
     gnutar_path = g_strdup(GNUTAR);
@@ -444,42 +476,17 @@ main(
 	case 11: amfree(gnutar_listdir);
 		 gnutar_listdir = g_strdup(optarg);
 		 break;
-	case 12: if (strcasecmp(optarg, "NO") == 0)
-		     gnutar_onefilesystem = 0;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     gnutar_onefilesystem = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0) {
-		     gnutar_onefilesystem = 2;
-		     gnutar_onefilesystem_value = g_strdup(optarg);
-		 }
+	case 12: amfree(gnutar_onefilesystem_value);
+		 gnutar_onefilesystem_value = g_strdup(optarg);
 		 break;
-	case 13: gnutar_sparse_set = 1;
-		 if (strcasecmp(optarg, "NO") == 0)
-		     gnutar_sparse = 0;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     gnutar_sparse = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0) {
-		     gnutar_sparse = 2;
-		     gnutar_sparse_value = g_strdup(optarg);
-		 }
+	case 13: amfree(gnutar_sparse_value);
+		 gnutar_sparse_value = g_strdup(optarg);
 		 break;
-	case 14: if (strcasecmp(optarg, "NO") == 0)
-		     gnutar_atimepreserve = 0;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     gnutar_atimepreserve = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0) {
-		     gnutar_atimepreserve = 2;
-		     gnutar_atimepreserve_value = g_strdup(optarg);
-		 }
+	case 14: amfree(gnutar_atimepreserve_value);
+		 gnutar_atimepreserve_value = g_strdup(optarg);
 		 break;
-	case 15: if (strcasecmp(optarg, "NO") == 0)
-		     gnutar_checkdevice = 0;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     gnutar_checkdevice = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0) {
-		     gnutar_checkdevice = 2;
-		     gnutar_checkdevice_value = g_strdup(optarg);
-		 }
+	case 15: amfree(gnutar_checkdevice_value);
+		 gnutar_checkdevice_value = g_strdup(optarg);
 		 break;
 	case 16: argument.dle.include_file =
 			 append_sl(argument.dle.include_file, optarg);
@@ -517,14 +524,8 @@ main(
 	case 28: amfree(argument.tar_blocksize);
 		 argument.tar_blocksize = g_strdup(optarg);
 		 break;
-	case 29: if (strcasecmp(optarg, "NO") == 0)
-		     gnutar_no_unquote = 0;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     gnutar_no_unquote = 1;
-		 else if (strcasecmp(command, "selfcheck") == 0) {
-		     gnutar_no_unquote = 2;
-		     gnutar_no_unquote_value = g_strdup(optarg);
-		 }
+	case 29: amfree(gnutar_no_unquote_value);
+		 gnutar_no_unquote_value = g_strdup(optarg);
 		 break;
         case 30: if (strcasecmp(optarg, "YES") == 0)
                    gnutar_acls = 1;
@@ -557,12 +558,8 @@ main(
 	case 39: amfree(argument.recover_dump_state_file);
 		 argument.recover_dump_state_file = g_strdup(optarg);
 		 break;
-	case 40: if (strcasecmp(optarg, "NO") == 0)
-		     argument.dar = FALSE;
-		 else if (strcasecmp(optarg, "YES") == 0)
-		     argument.dar = TRUE;
-		 else if (strcasecmp(command, "selfcheck") == 0)
-		     printf(_("ERROR [%s: bad DAR property value (%s)]\n"), get_pname(), optarg);
+	case 40: amfree(gnutar_dar_value);
+		 gnutar_dar_value = g_strdup(optarg);
 		 break;
 	case 41: argument.state_stream = atoi(optarg);
 		 break;
@@ -580,6 +577,13 @@ main(
 	safe_fd2(3, 2, dbfd());
     }
 
+    if (g_str_equal(command, "backup")) {
+	mesgstream = fdopen(3, "w");
+	if (!mesgstream) {
+	    error(_("error mesgstream(%d): %s\n"), 3, strerror(errno));
+	}
+    }
+
     if (!argument.dle.disk && argument.dle.device)
 	argument.dle.disk = g_strdup(argument.dle.device);
     if (!argument.dle.device && argument.dle.disk)
@@ -591,49 +595,94 @@ main(
     if (!argument.host)
 	argument.host = g_strdup("no host");
 
-    if (gnutar_onefilesystem == 2) {
-	delete_message(print_message(build_message(
+    if (gnutar_onefilesystem_value) {
+	if (strcasecmp(gnutar_onefilesystem_value, "NO") == 0) {
+	    gnutar_onefilesystem = 0;
+	} else if (strcasecmp(gnutar_onefilesystem_value, "YES") == 0) {
+	    gnutar_onefilesystem = 1;
+	} else {
+	    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700007, MSG_ERROR, 4,
 			"value", gnutar_onefilesystem_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
 			"hostname", argument.host)));
+	}
     }
 
-    if (gnutar_sparse == 2) {
-	delete_message(print_message(build_message(
+    if (gnutar_sparse_value) {
+	if (strcasecmp(gnutar_sparse_value, "NO") == 0) {
+	    gnutar_sparse = 0;
+	} else if (strcasecmp(gnutar_sparse_value, "YES") == 0) {
+	    gnutar_sparse = 1;
+	} else {
+	    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700008, MSG_ERROR, 4,
 			"value", gnutar_sparse_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
 			"hostname", argument.host)));
+	}
     }
 
-    if (gnutar_atimepreserve == 2) {
-	delete_message(print_message(build_message(
+    if (gnutar_atimepreserve_value) {
+	if (strcasecmp(gnutar_atimepreserve_value, "NO") == 0) {
+	    gnutar_atimepreserve = 0;
+	} else if (strcasecmp(gnutar_atimepreserve_value, "YES") == 0) {
+	    gnutar_atimepreserve = 1;
+	} else {
+	    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700009, MSG_ERROR, 4,
 			"value", gnutar_atimepreserve_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
 			"hostname", argument.host)));
+	}
     }
 
-    if (gnutar_checkdevice == 2) {
-	delete_message(print_message(build_message(
+    if (gnutar_checkdevice_value) {
+	if (strcasecmp(gnutar_checkdevice_value, "NO") == 0) {
+	    gnutar_checkdevice = 0;
+	} else if (strcasecmp(gnutar_checkdevice_value, "YES") == 0) {
+	    gnutar_checkdevice = 1;
+	} else {
+	    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700010, MSG_ERROR, 4,
 			"value", gnutar_checkdevice_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
 			"hostname", argument.host)));
+	}
     }
 
-    if (gnutar_no_unquote == 2) {
-	delete_message(print_message(build_message(
+    if (gnutar_no_unquote_value) {
+	if (strcasecmp(gnutar_no_unquote_value, "NO") == 0) {
+	    gnutar_no_unquote = 0;
+	} else if (strcasecmp(gnutar_no_unquote_value, "YES") == 0) {
+	    gnutar_no_unquote = 1;
+	} else {
+	    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700011, MSG_ERROR, 4,
 			"value", gnutar_no_unquote_value,
 			"disk", argument.dle.disk,
 			"device", argument.dle.device,
 			"hostname", argument.host)));
+	}
+    }
+
+    if (gnutar_dar_value) {
+	if (strcasecmp(gnutar_dar_value, "NO") == 0) {
+	    argument.dar = FALSE;
+	} else if (strcasecmp(gnutar_dar_value, "YES") == 0) {
+	    argument.dar = TRUE;
+	} else {
+	    delete_message(amgtar_print_message(build_message(
+			AMANDA_FILE, __LINE__, 3700015, MSG_ERROR, 4,
+			"property_value", optarg,
+			"disk", argument.dle.disk,
+			"device", argument.dle.device,
+			"hostname", argument.host)));
+	}
     }
 
     argument.argc = argc - optind;
@@ -745,7 +794,7 @@ main(
 
     dbclose();
 
-    return 0;
+    return amgtar_exit_value;
 }
 
 static char *validate_command_options(
@@ -818,7 +867,7 @@ amgtar_discover(
 
     if (argument->dle.disk) {
 	if ((dir = opendir(argument->dle.disk)) == NULL) {
-            delete_message(print_message(build_message(
+            delete_message(amgtar_print_message(build_message(
 				AMANDA_FILE, __LINE__, 3700012, MSG_ERROR, 2,
 				"diskname", argument->dle.disk,
 				"errno", errno)));
@@ -845,7 +894,7 @@ amgtar_discover(
             strcpy(full_path + path_len, dp->d_name);
 
             if (lstat(full_path, &stat_buf) != 0) {
-                delete_message(print_message(build_message(
+                delete_message(amgtar_print_message(build_message(
 				AMANDA_FILE, __LINE__, 3700013, MSG_ERROR, 2,
 				"diskname", argument->dle.disk,
 				"errno", errno)));
@@ -867,7 +916,7 @@ amgtar_discover(
             } else if (S_ISFIFO(stat_buf.st_mode)) {
                 file_type = "fifo";
             }
-            delete_message(print_message(build_message(
+            delete_message(amgtar_print_message(build_message(
                                AMANDA_FILE, __LINE__, 3100005, MSG_INFO, 4,
                                "file_type", file_type,
                                "full_path", full_path,
@@ -880,7 +929,7 @@ amgtar_discover(
     }
 
     if (!reported_entries) {
-        delete_message(print_message(build_message(
+        delete_message(amgtar_print_message(build_message(
                                AMANDA_FILE, __LINE__, 3100006, MSG_ERROR, 1,
                                "diskname", argument->dle.disk)));
     }
@@ -895,14 +944,14 @@ amgtar_selfcheck(
     messagelist_t mesglist = NULL;
 
     if (argument->dle.disk) {
-	delete_message(print_message(build_message(
+	delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700000, MSG_INFO, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
     }
 
-    delete_message(print_message(build_message(
+    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700001, MSG_INFO, 4,
 			"version", VERSION,
 			"disk", argument->dle.disk,
@@ -912,19 +961,19 @@ amgtar_selfcheck(
     for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 	message_t *message = mesglist->data;
 	if (message_get_severity(message) > MSG_INFO)
-	    print_message(message);
+	    amgtar_print_message(message);
 	delete_message(message);
     }
     g_slist_free(mlist);
 
-    delete_message(print_message(build_message(
+    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700004, MSG_INFO, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 
     if ((option = validate_command_options(argument))) {
-	delete_message(print_message(build_message(
+	delete_message(amgtar_print_message(build_message(
 		AMANDA_FILE, __LINE__, 3700014, MSG_ERROR, 4,
 		"disk", argument->dle.disk,
 		"device", argument->dle.device,
@@ -933,12 +982,12 @@ amgtar_selfcheck(
     }
 
     if (gnutar_path) {
-	message_t *message;
 	char *gnutar_realpath = NULL;
+	message_t *message;
 	if ((message = check_exec_for_suid_message("GNUTAR_PATH", gnutar_path, &gnutar_realpath))) {
-	    delete_message(print_message(message));
+	    delete_message(amgtar_print_message(message));
 	} else {
-	    message = print_message(check_file_message(gnutar_path, X_OK));
+	    message = amgtar_print_message(check_file_message(gnutar_path, X_OK));
 	    if (message && message_get_severity(message) <= MSG_INFO) {
 		char *gtar_version;
 		GPtrArray *argv_ptr = g_ptr_array_new();
@@ -951,14 +1000,14 @@ amgtar_selfcheck(
 		if (gtar_version) {
 		    char *gv;
 		    for (gv = gtar_version; *gv && !g_ascii_isdigit(*gv); gv++);
-		    delete_message(print_message(build_message(
+		    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700002, MSG_INFO, 4,
 			"gtar-version", gv,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 		} else {
-		    delete_message(print_message(build_message(
+		    delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700003, MSG_ERROR, 4,
 			"gtar-path", gnutar_path,
 			"disk", argument->dle.disk,
@@ -974,7 +1023,7 @@ amgtar_selfcheck(
 	}
 	if (gnutar_realpath) g_free(gnutar_realpath);
     } else {
-	delete_message(print_message(build_message(
+	delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700005, MSG_ERROR, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
@@ -983,9 +1032,9 @@ amgtar_selfcheck(
     if (gnutar_listdir && strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
     if (gnutar_listdir) {
-	delete_message(print_message(check_dir_message(gnutar_listdir, R_OK|W_OK)));
+	delete_message(amgtar_print_message(check_dir_message(gnutar_listdir, R_OK|W_OK)));
     } else {
-	delete_message(print_message(build_message(
+	delete_message(amgtar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3700006, MSG_ERROR, 3,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
@@ -994,14 +1043,14 @@ amgtar_selfcheck(
 
     set_root_privs(1);
     if (gnutar_directory) {
-	delete_message(print_message(check_dir_message(gnutar_directory, R_OK)));
+	delete_message(amgtar_print_message(check_dir_message(gnutar_directory, R_OK)));
     } else if (argument->dle.device) {
-	delete_message(print_message(check_dir_message(argument->dle.device, R_OK)));
+	delete_message(amgtar_print_message(check_dir_message(argument->dle.device, R_OK)));
     }
     if (argument->calcsize) {
 	char *calcsize = g_strjoin(NULL, amlibexecdir, "/", "calcsize", NULL);
-	delete_message(print_message(check_file_message(calcsize, X_OK)));
-	delete_message(print_message(check_suid_message(calcsize)));
+	delete_message(amgtar_print_message(check_file_message(calcsize, X_OK)));
+	delete_message(amgtar_print_message(check_suid_message(calcsize)));
 	amfree(calcsize);
     }
     set_root_privs(0);
@@ -1032,6 +1081,7 @@ amgtar_estimate(
     GString   *strbuf;
     char      *option;
     char      *gnutar_realpath = NULL;
+    message_t *message;
 
     if (!argument->level) {
         fprintf(stderr, "ERROR No level argument\n");
@@ -1100,8 +1150,9 @@ amgtar_estimate(
 	goto common_error;
     }
 
-    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, stderr, &gnutar_realpath)) {
-	errmsg = g_strdup_printf("'%s' binary is not secure", gnutar_path);
+    if ((message = check_exec_for_suid_message("GNUTAR_PATH", gnutar_path, &gnutar_realpath))) {
+	errmsg = g_strdup(get_message(message));
+	delete_message(message);
 	goto common_error;
     }
 
@@ -1274,10 +1325,8 @@ amgtar_backup(
     char      *type;
     char       startchr;
     int        dataf = 1;
-    int        mesgf = 3;
     int        indexf = 4;
     int        outf;
-    FILE      *mesgstream;
     FILE      *indexstream = NULL;
     FILE      *outstream;
     char      *errmsg = NULL;
@@ -1290,37 +1339,34 @@ amgtar_backup(
     char      *gnutar_realpath = NULL;
     messagelist_t mlist = NULL;
     messagelist_t mesglist = NULL;
-
-    mesgstream = fdopen(mesgf, "w");
-    if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
-    }
+    message_t *message;
 
     if (!gnutar_path) {
-        fprintf(mesgstream, "? GNUTAR-PATH not defined\n");
-	error(_("GNUTAR-PATH not defined"));
+        fprintf(mesgstream, "sendbackup:: error [GNUTAR-PATH not defined]\n");
+	exit(1);
     }
     if (!gnutar_listdir) {
-        fprintf(mesgstream, "? GNUTAR-LISTDIR not defined\n");
-	error(_("GNUTAR-LISTDIR not defined"));
+        fprintf(mesgstream, "sendbackup:: error [GNUTAR-LISTDIR not defined]\n");
+	exit(1);
     }
 
     if (!argument->level) {
-        fprintf(mesgstream, "? No level argument\n");
-        error(_("No level argument"));
+        fprintf(mesgstream, "sendbackup:: error [No level argument]\n");
+	exit(1);
     }
     if (!argument->dle.disk) {
-        fprintf(mesgstream, "? No disk argument\n");
-        error(_("No disk argument"));
+        fprintf(mesgstream, "sendbackup:: error [No disk argument]\n");
+	exit(1);
     }
     if (!argument->dle.device) {
-        fprintf(mesgstream, "? No device argument\n");
-        error(_("No device argument"));
+        fprintf(mesgstream, "sendbackup:: error [No device argument]\n");
+	exit(1);
     }
 
-    if (!check_exec_for_suid("GNUTAR_PATH", gnutar_path, NULL, &gnutar_realpath)) {
-        fprintf(mesgstream, "? '%s' binary is not secure", gnutar_path);
-        error("'%s' binary is not secure", gnutar_path);
+    if ((message = check_exec_for_suid_message("GNUTAR_PATH", gnutar_path, &gnutar_realpath))) {
+        fprintf(mesgstream, "sendbackup: error [%s]\n", get_message(message));
+	delete_message(message);
+	exit(1);
     }
 
     if ((option = validate_command_options(argument))) {
@@ -2072,7 +2118,7 @@ amgtar_get_incrname(
 		    if (command == CMD_ESTIMATE) {
 			fprintf(mesgstream, "ERROR %s\n", errmsg);
 		    } else {
-			fprintf(mesgstream, "? %s\n", errmsg);
+			fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 		    }
 		    exit(1);
 		}
@@ -2090,7 +2136,7 @@ amgtar_get_incrname(
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
 	    exit(1);
 	}
@@ -2110,7 +2156,7 @@ amgtar_get_incrname(
 		if (command == CMD_ESTIMATE) {
 		    fprintf(mesgstream, "ERROR %s\n", errmsg);
 		} else {
-		    fprintf(mesgstream, "? %s\n", errmsg);
+		    fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 		}
 		amfree(errmsg);
 		exit(1);
@@ -2128,7 +2174,7 @@ amgtar_get_incrname(
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
 	    amfree(errmsg);
 	    exit(1);
@@ -2145,7 +2191,7 @@ amgtar_get_incrname(
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
 	    exit(1);
 	}
@@ -2159,7 +2205,7 @@ amgtar_get_incrname(
 	    if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	    } else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	    }
 	    exit(1);
 	}
@@ -2170,7 +2216,7 @@ amgtar_get_incrname(
 	if (command == CMD_ESTIMATE) {
 		fprintf(mesgstream, "ERROR %s\n", errmsg);
 	} else {
-		fprintf(mesgstream, "? %s\n", errmsg);
+		fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
 	}
 	exit(1);
     }

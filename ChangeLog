@@ -1,3 +1,18 @@
+2016-05-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: selfcheck output is JSON, improve error
+	  reporting
+	* application-src/amgtar.c: Improve error reporting
+	* application-src/amstar.c: selfcheck output is JSON, improve error
+	  reporting
+	* client-src/client_util.c: Fix error reporting
+	* client-src/sendbackup.c: Fix error reporting
+	* common-src/ammessage.c: Add messages from amstar and ambsdtar
+	* installcheck/Installcheck/Application.pm: Fix to get error
+	* installcheck/Makefile.am (client_tests): Add amstar
+	* installcheck/ambsdtar.pl: Add new checks
+	* installcheck/amgtar.pl: Add new checks
+	* installcheck/amstar.pl: New file to check amstar behaviour
+
 2016-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Extract.pm (BSU): Fix for non-application
 	* perl/Amanda/FetchDump.pm: Add message 3300005

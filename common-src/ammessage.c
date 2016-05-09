@@ -1492,6 +1492,52 @@ set_message(
 	msg = "Cannot stat the disk '%{diskname}': %{errnostr}";
     } else if (message->code == 3700014) {
 	msg = "Invalid '%{command-options}' COMMAND-OPTIONS";
+    } else if (message->code == 3700015) {
+	msg = "bad DAR property value '%{property_value}'";
+
+    } else if (message->code == 3701000) {
+	msg = "%{disk}";
+    } else if (message->code == 3701001) {
+	msg = "amstar version %{version}";
+    } else if (message->code == 3701002) {
+	msg = "amstar star-version %{star-version}";
+    } else if (message->code == 3701003) {
+	msg = "Can't get %{star-path} version";
+    } else if (message->code == 3701004) {
+	msg = "amstar";
+    } else if (message->code == 3701005) {
+	msg = "STAR program not available";
+    } else if (message->code == 3701008) {
+	msg = "bad SPARSE property value '%{value}'";
+    } else if (message->code == 3701014) {
+	msg = "Invalid '%{command-options}' COMMAND-OPTIONS";
+    } else if (message->code == 3701016) {
+	msg = "bad ACL property value '%{value}'";
+    } else if (message->code == 3701017) {
+	msg = "Can't use include and exclude simultaneously";
+    } else if (message->code == 3701018) {
+	msg = "%{directory}";
+    } else if (message->code == 3701019) {
+	msg = "%{device}";
+
+    } else if (message->code == 3702000) {
+	msg = "%{disk}";
+    } else if (message->code == 3702001) {
+	msg = "ambsdtar version %{version}";
+    } else if (message->code == 3702002) {
+	msg = "ambsdtar bsdtar-version %{bsdtar-version}";
+    } else if (message->code == 3702003) {
+	msg = "Can't get %{bsdtar-path} version";
+    } else if (message->code == 3702004) {
+	msg = "ambsdtar";
+    } else if (message->code == 3702005) {
+	msg = "BSDTAR program not available";
+    } else if (message->code == 3702007) {
+	msg = "bad ONE-FILE-SYSTEM property value '%{value}'";
+    } else if (message->code == 3702014) {
+        msg = "Invalid '%{command-options}' COMMAND-OPTIONS";
+    } else if (message->code == 3702020) {
+        msg = "No STATE-DIR";
 
     } else if (message->code == 4600000) {
 	msg = "%{errmsg}";
