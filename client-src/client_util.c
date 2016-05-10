@@ -2197,7 +2197,7 @@ build_re_table(
     nb ++;
 
     re_table =  new_re_table = malloc(nb * sizeof(amregex_t));
-    
+
     /* add SIZE from orig_re_table */
     add_type_table(DMP_SIZE, &re_table, orig_re_table,
 		   normal_message, ignore_message, strange_message);
@@ -2221,6 +2221,10 @@ build_re_table(
 
     /* add STRANGE from orig_re_table */
     add_type_table(DMP_STRANGE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add ERROR from orig_re_table */
+    add_type_table(DMP_ERROR, &re_table, orig_re_table,
 		   normal_message, ignore_message, strange_message);
 
     /* Add DMP_STRANGE with NULL regex,       */

@@ -166,23 +166,46 @@ $app->add_property('STAR-PATH' => '/do/not/exists');
 $restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'}, data_sigpipe => 1);
 is($restore->{'exit_status'}, 256, "error status of 1 if STAR-PATH does not exists");
 chomp $restore->{'errs'};
-ok($restore->{'errs'} eq "Can't find real path for '/do/not/exists': No such file or directory", "correct error for No such file or directory") || diag($restore->{'errs'});
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($restore->{'errs'} eq "amstar: error [exec /do/not/exists: No such file or directory]", "correct error for No such file or directory")
+	or diag($restore->{'errs'});
+} else {
+    ok($restore->{'errs'} eq "Can't find real path for '/do/not/exists': No such file or directory", "correct error for No such file or directory")
+	or diag($restore->{'errs'});
+}
 
 $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
-ok($selfcheck->{'errors'}[0]->{code} eq '3600091' &&
-   $selfcheck->{'errors'}[0]->{errnocode} eq 'ENOENT', "good error selfcheck ")
-    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($selfcheck->{'errors'}[0]->{code} eq '3600060' &&
+       $selfcheck->{'errors'}[0]->{errnocode} eq 'ENOENT', "good error selfcheck ")
+	or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+} else {
+    ok($selfcheck->{'errors'}[0]->{code} eq '3600091' &&
+       $selfcheck->{'errors'}[0]->{errnocode} eq 'ENOENT', "good error selfcheck ")
+	or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+}
 
 my $estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($estimate->{'exit_status'}, 0, "error status ok");
-ok($estimate->{'errors'}[0] eq 'Can\'t find real path for \'/do/not/exists\': No such file or directory', "good error estimate")
-    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($estimate->{'errors'}[0] eq 'no size line match in /do/not/exists output', "good error estimate")
+	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+} else {
+    ok($estimate->{'errors'}[0] eq 'Can\'t find real path for \'/do/not/exists\': No such file or directory', "good error estimate")
+	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+}
 
 $backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
-is($backup->{'exit_status'}, 256, "error status ok");
-is($backup->{'errors'}[0], "Can't find real path for '/do/not/exists': No such file or directory", "good error backup")
-    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    is($backup->{'exit_status'}, 0, "error status ok");
+    is($backup->{'errors'}[0], "amstar: error [exec /do/not/exists: No such file or directory]", "good error backup")
+	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+} else {
+    is($backup->{'exit_status'}, 256, "error status ok");
+    is($backup->{'errors'}[0], "Can't find real path for '/do/not/exists': No such file or directory", "good error backup")
+	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+}
 $app->delete_property('STAR-PATH');
 
 my $bad_star = "$Installcheck::TMP/bad-star";
@@ -192,19 +215,36 @@ $app->add_property('STAR-PATH', "$bad_star");
 
 $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
-ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
-   $selfcheck->{'errors'}[0]->{path} eq "$bad_star", "good error selfcheck ")
-    or diag("XX:". Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($selfcheck->{'errors'}[0]->{code} eq '3600063' &&
+       $selfcheck->{'errors'}[0]->{filename} eq "$bad_star", "good error selfcheck ")
+	or diag("XX:". Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+} else {
+    ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
+       $selfcheck->{'errors'}[0]->{path} eq "$bad_star", "good error selfcheck ")
+	or diag("XX:". Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+}
 
 $estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($estimate->{'exit_status'}, 0, "error status ok");
-is($estimate->{'errors'}[0], "security file do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error estimate")
-    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    is($estimate->{'errors'}[0], "no size line match in $bad_star output", "good error estimate")
+	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+} else {
+    is($estimate->{'errors'}[0], "security file do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error estimate")
+	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+}
 
 $backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
-is($backup->{'exit_status'}, 256, "error status ok");
-is($backup->{'errors'}[0], "security file do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error backup")
-    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    is($backup->{'exit_status'}, 0, "error status ok");
+    is($backup->{'errors'}[0], "amstar: error [exec $bad_star: Permission denied]", "good error backup")
+	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+} else {
+    is($backup->{'exit_status'}, 256, "error status ok");
+    is($backup->{'errors'}[0], "security file do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error backup")
+	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+}
 $app->delete_property('STAR-PATH');
 unlink "$bad_star";
 

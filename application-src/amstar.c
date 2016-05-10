@@ -97,6 +97,8 @@ static amregex_t init_re_table[] = {
 
   AM_STRANGE_RE("^Perform a level 0 dump first.*$"),
 
+  AM_ERROR_RE("amstar: error"),
+
   /* catch-all: DMP_STRANGE is returned for all other lines */
   AM_STRANGE_RE(NULL)
 };

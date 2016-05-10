@@ -111,6 +111,7 @@ $NC = "@NC@";
 $NC6 = "@NC6@";
 $NETCAT = "@NETCAT@";
 $AMANDA_DEVICES = "@AMANDA_DEVICES@";
+$SINGLE_USERID = "@SINGLE_USERID@";
 
 # non-AC_SUBST'd constants
 

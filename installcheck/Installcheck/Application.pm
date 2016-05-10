@@ -486,7 +486,7 @@ sub _make_done_cb {
 sub _parse_size {
     my $sstr = shift @_;
 
-    confess "failed to parse size" unless ($sstr =~ /^(\d+)(\D?)$/i);
+    confess "failed to parse size" unless ($sstr =~ /^[\-]?(\d+)(\D?)$/i);
     my $size = 0 + $1;
     my $suf = lc($2);
 
@@ -557,7 +557,7 @@ sub backup {
             }
         } elsif ($l =~ /^sendbackup: (.*)$/) {
             my $rem = $1;
-            if ($rem =~ /^size (\d+)$/i) {
+            if ($rem =~ /^size ([\-]?\d+)$/i) {
                 $size = _parse_size($1);
             } elsif ($rem =~ /error \[(.*)\]$/) {
                 push @errors, $1;

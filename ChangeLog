@@ -1,3 +1,13 @@
+2016-05-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c, application-src/amgtar.c
+	  application-src/amstar.c: Define a AM_ERROR_RE
+	* client-src/client_util.c (build_re_table): Keep DMP_ERROR
+	* config/amanda/userid.m4: AC_SUBST(SINGLE_USERID)
+	* perl/Amanda/Constants.pm.in.src: Add $SINGLE_USERID
+	* installcheck/Installcheck/Application.pm: Parse negative size
+	* installcheck/ambsdtar.pl, installcheck/amgtar.pl,
+	  installcheck/amstar.pl: Resultdifer if $SINGLE_USERID is set
+
 2016-05-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ambsdtar.c: selfcheck output is JSON, improve error
 	  reporting

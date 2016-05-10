@@ -90,6 +90,8 @@ static amregex_t init_re_table[] = {
   AM_NORMAL_RE(": Cannot add file .*: No such file or directory$"),
   AM_NORMAL_RE(": Error exit delayed from previous errors"),
 
+  AM_ERROR_RE("ambsdtar: error"),
+
   /* catch-all: DMP_STRANGE is returned for all other lines */
   AM_STRANGE_RE(NULL)
 };

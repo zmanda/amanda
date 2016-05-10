@@ -166,29 +166,51 @@ $app->add_property('BSDTAR-PATH' => '/do/not/exists');
 $restore = $app->restore('objects' => ['./hard', './foo', './bar'], 'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 256, "error status of 1 if BSDTAR-PATH does not exists");
 chomp $restore->{'errs'};
-ok($restore->{'errs'} eq "Can't find real path for '/do/not/exists': No such file or directory", "correct error for No such file or directory") || diag($restore->{'errs'});
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($restore->{'errs'} =~ /ambsdtar: error \[exec \/do\/not\/exists: No such file or directory\]\nerror \[\/do\/not\/exists exited with status 1: see .*/, "correct error for No such file or directory")
+	or diag($restore->{'errs'});
+} else {
+    ok($restore->{'errs'} eq "Can't find real path for '/do/not/exists': No such file or directory", "correct error for No such file or directory")
+	or diag($restore->{'errs'});
+}
 
 my $pwd = `pwd`;
-my $bad_bsdtar = "$Installcheck::TMP/bsdtar-path";
+my $bad_bsdtar = "$Installcheck::TMP/bad-bsdtar";
 open TOTO, ">$bad_bsdtar";
 close TOTO;
 $app->add_property('BSDTAR-PATH', "$bad_bsdtar");
 
 $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
-ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
-   $selfcheck->{'errors'}[0]->{prefix} eq 'ambsdtar:bsdtar_path', "good error selfcheck ")
-    or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($selfcheck->{'errors'}[0]->{code} eq '3600063' &&
+       $selfcheck->{'errors'}[0]->{errnocode} eq 'EACCES', "good error selfcheck ")
+	or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+} else {
+    ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
+       $selfcheck->{'errors'}[0]->{prefix} eq 'ambsdtar:bsdtar_path', "good error selfcheck ")
+	or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
+}
 
 my $estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($estimate->{'exit_status'}, 256, "error status ok");
-is($estimate->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error estimate")
-    or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    ok($estimate->{'errors'}[0] =~ /no size line match in $bad_bsdtar output$bad_bsdtar exited with status 1: see .*/, "good error estimate")
+	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+} else {
+    is($estimate->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error estimate")
+	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
+}
 
 $backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($backup->{'exit_status'}, 256, "error status ok");
-is($backup->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error backup")
-    or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+if ($Amanda::Constants::SINGLE_USERID) {
+    is($backup->{'errors'}[0], "ambsdtar: error [exec $bad_bsdtar: Permission denied]", "good error backup")
+	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+} else {
+    is($backup->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error backup")
+	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
+}
 $app->delete_property('BSDTAR-PATH');
 unlink "$bad_bsdtar";
 

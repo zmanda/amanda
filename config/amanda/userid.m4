@@ -187,5 +187,9 @@ AC_DEFUN([AMANDA_WITH_SINGLE_USERID],
     if test x"$SINGLE_USERID" = x"yes"; then
         AC_DEFINE(SINGLE_USERID, 1,
 	    [Define if all of Amanda will run as a single userid (e.g., on Cygwin or for installchecks)])
+	SINGLE_USERID=1
+    else
+	SINGLE_USERID=0
     fi
+    AC_SUBST(SINGLE_USERID)
 ])
