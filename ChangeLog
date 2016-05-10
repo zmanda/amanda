@@ -1,5 +1,8 @@
 2016-05-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/amgtar.pl: Fix path
+
+2016-05-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/amgtar.pl: Fix path
 	* installcheck/amstar.pl: Add a STAR-TARDUMP property
 
 2016-05-10  Jean-Louis Martineau <JMartineau@carbonite.com>
