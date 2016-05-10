@@ -125,6 +125,12 @@ ok_foreach(
     "create directory structure",
     @dir_struct);
 
+my $star_tardump = "$Installcheck::TMP/star_tardump";
+open XX, ">$star_tardump";
+close XX;
+chmod(0700, $star_tardump);
+$app->add_property('STAR-TARDUMP' => $star_tardump);
+
 my $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
 ok(!@{$selfcheck->{'errors'}}, "no errors during selfcheck") || diag(Data::Dumper::Dumper($selfcheck->{'errors'}));
@@ -163,6 +169,7 @@ ok(-d "$rest_dir/bar", "bar/ restored");
 ok(-d "$rest_dir/bar", "bar/baz/bat/ restored");
 
 $app->add_property('STAR-PATH' => '/do/not/exists');
+
 $restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'data'}, data_sigpipe => 1);
 is($restore->{'exit_status'}, 256, "error status of 1 if STAR-PATH does not exists");
 chomp $restore->{'errs'};
@@ -248,11 +255,10 @@ if ($Amanda::Constants::SINGLE_USERID) {
 $app->delete_property('STAR-PATH');
 unlink "$bad_star";
 
-my $star_tardump = "$Installcheck::TMP/star_tardump";
 open XX, ">$star_tardump";
 close XX;
 chmod(0000, $star_tardump);
-$app->add_property('STAR-TARDUMP', $star_tardump);
+
 $selfcheck = $app->selfcheck_message('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
 ok($selfcheck->{'errors'}[0]->{code} eq '3600063' &&
@@ -269,7 +275,6 @@ is($backup->{'exit_status'}, 256, "error status ok");
 ok($backup->{'errors'}[0] =~ /^can not access .*: Permission denied \(ruid:\d* euid:\d*\)$/, "good error backup")
     or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 chmod(0700, $star_tardump);
-$app->delete_property('STAR-TARDUMP');
 
 $app->add_property('sparse', 'bad-sparse');
 $app->add_property('acl', 'bad-acl');

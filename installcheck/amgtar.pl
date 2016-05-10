@@ -256,12 +256,12 @@ ok($selfcheck->{'errors'}[0]->{code} eq '3600063' &&
 
 $estimate = $app->estimate('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($estimate->{'exit_status'}, 256, "error status ok");
-is($estimate->{'errors'}[0], 'error opening /tmp/amanda/installchecks/installcheck-amgtar/list/no host_tmp_amanda_installchecks_installcheck-amgtar_to_backup_0.new: Permission denied', "good error estimate")
+is($estimate->{'errors'}[0], "error opening $list_dir/no host_tmp_amanda_installchecks_installcheck-amgtar_to_backup_0.new: Permission denied", "good error estimate")
     or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
 
 $backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($backup->{'exit_status'}, 256, "error status ok");
-is($backup->{'errors'}[0], 'error opening /tmp/amanda/installchecks/installcheck-amgtar/list/no host_tmp_amanda_installchecks_installcheck-amgtar_to_backup_0.new: Permission denied', "good error backup")
+is($backup->{'errors'}[0], "error opening $list_dir/no host_tmp_amanda_installchecks_installcheck-amgtar_to_backup_0.new: Permission denied", "good error backup")
     or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 chmod(0700, $list_dir);
 

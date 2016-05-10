@@ -1,4 +1,8 @@
 2016-05-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/amgtar.pl: Fix path
+	* installcheck/amstar.pl: Add a STAR-TARDUMP property
+
+2016-05-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ambsdtar.c, application-src/amgtar.c
 	  application-src/amstar.c: Define a AM_ERROR_RE
 	* client-src/client_util.c (build_re_table): Keep DMP_ERROR
