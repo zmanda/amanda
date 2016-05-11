@@ -1,4 +1,7 @@
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c: Fix delay in waiting for application
+
+2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/client_util.c: Improve parsing of estimate scripts
 	* client-src/sendsize.c: Fail estimate if script fail
 	* server-src/planner.c: continue parsing after ERROR line

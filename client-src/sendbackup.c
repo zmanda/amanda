@@ -1100,6 +1100,10 @@ check_status(
 	dumppid = tarpid = -1;
 	strX = "dump";
     } else if(pid == application_api_pid) {
+	if (ret == 1) {
+	    rc = 0;
+	}
+	application_api_pid = -1;
 	strX = "Application";
     } else {
 	strX = "unknown";
