@@ -278,7 +278,7 @@ static void holding_walk_dir(
             is_cruft = 1;
         }
 
-	if (dumpf.dumplevel < 0 || dumpf.dumplevel > 9) {
+	if (dumpf.dumplevel < 0 || dumpf.dumplevel >= DUMP_LEVELS) {
 	    is_cruft = 1;
 	}
 

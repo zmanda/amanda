@@ -1,4 +1,7 @@
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/holding.c: Accept level up to DUMP_LEVELS
+
+2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: Fix delay in waiting for application
 
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
