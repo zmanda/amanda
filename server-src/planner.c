@@ -1966,7 +1966,7 @@ static void handle_result(
 				   ": ",
 				   fp,
 				   NULL);
-	    goto error_return;
+	    goto next_line;
 	}
 
 	msg = t = line;
@@ -2036,6 +2036,7 @@ static void handle_result(
 
 	s = t;
 	ch = tch;
+next_line:
 	skip_quoted_line(s, ch);
     }
 
@@ -2160,6 +2161,8 @@ static void handle_result(
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
     while(waitpid(-1, NULL, WNOHANG)> 0);
+    if (errbuf)
+	goto error_return;
     return;
 
  NAK_parse_failed:

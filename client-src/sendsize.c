@@ -91,6 +91,7 @@ typedef struct disk_estimates_s {
     pid_t child;
     int done;
     dle_t *dle;
+    int dle_scripts_exit_status;
     level_estimate_t est[DUMP_LEVELS];
 } disk_estimates_t;
 
@@ -100,6 +101,7 @@ static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static g_option_t *g_options = NULL;
 static gboolean amandates_started = FALSE;
+static int host_scripts_exit_status = 0;
 
 /* local functions */
 int main(int argc, char **argv);
@@ -434,15 +436,20 @@ main(
 	    est_prev = est;
 	}
     }
-    for(est = est_list; est != NULL; est = est->next) {
-	run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle,
-			   stdout);
+    for (est = est_list; est != NULL; est = est->next) {
+	host_scripts_exit_status += run_client_scripts(
+			EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle,
+			stdout);
+    }
+    if (host_scripts_exit_status) {
+	dbclose();
+	return 1;
     }
 
     dumpsrunning = 0;
     need_wait = 0;
     done = 0;
-    while(! done) {
+    while (!done) {
 	done = 1;
 	/*
 	 * See if we need to wait for a child before we can do anything
@@ -483,8 +490,9 @@ main(
 		est->done = 1;
 		est->child = 0;
 		dumpsrunning--;
-		run_client_scripts(EXECUTE_ON_POST_DLE_ESTIMATE, g_options,
-				   est->dle, stdout);
+		est->dle_scripts_exit_status += run_client_scripts(
+			EXECUTE_ON_POST_DLE_ESTIMATE, g_options,
+			est->dle, stdout);
 	    }
 	}
 	/*
@@ -534,23 +542,29 @@ main(
 	    }
 	} else {
 	    done = 0;
-	    run_client_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE, g_options,
-			       est->dle, stdout);
+	    est->dle_scripts_exit_status += run_client_scripts(
+			EXECUTE_ON_PRE_DLE_ESTIMATE, g_options,
+			est->dle, stdout);
 
-	    if((est->child = fork()) == 0) {
-		calc_estimates(est);		/* child does the estimate */
-		exit(0);
-	    } else if(est->child == -1) {
-		error(_("calc_estimates fork failed: %s"), strerror(errno));
-		/*NOTREACHED*/
+	    if (est->dle_scripts_exit_status == 0) {
+		if ((est->child = fork()) == 0) {
+		    calc_estimates(est);		/* child does the estimate */
+		    exit(0);
+		} else if (est->child == -1) {
+		    error(_("calc_estimates fork failed: %s"), strerror(errno));
+		    /*NOTREACHED*/
+		}
+		dumpsrunning++;			/* parent */
+	    } else {
+		 est->done = 1;
 	    }
-	    dumpsrunning++;			/* parent */
 	}
     }
 
     for(est = est_list; est != NULL; est = est->next) {
-	run_client_scripts(EXECUTE_ON_POST_HOST_ESTIMATE, g_options, est->dle,
-			   stdout);
+	host_scripts_exit_status += run_client_scripts(
+			EXECUTE_ON_POST_HOST_ESTIMATE, g_options,
+			est->dle, stdout);
     }
 
     est_prev = NULL;

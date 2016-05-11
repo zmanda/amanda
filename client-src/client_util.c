@@ -1265,8 +1265,11 @@ run_client_script(
 }
 
 void run_client_script_output(gpointer data, gpointer user_data);
+void run_client_script_output_estimate(gpointer data, gpointer user_data);
+void run_client_script_output_host_estimate(gpointer data, gpointer user_data);
 void run_client_script_output_backup(gpointer data, gpointer user_data);
 void run_client_script_err_amcheck(gpointer data, gpointer user_data);
+void run_client_script_err_host_estimate(gpointer data, gpointer user_data);
 void run_client_script_err_estimate(gpointer data, gpointer user_data);
 void run_client_script_err_backup(gpointer data, gpointer user_data);
 void run_client_script_err_recover(gpointer data, gpointer user_data);
@@ -1317,7 +1320,7 @@ run_client_script_err_amcheck(
 }
 
 void
-run_client_script_err_estimate(
+run_client_script_output_estimate(
     gpointer data,
     gpointer user_data)
 {
@@ -1327,6 +1330,51 @@ run_client_script_err_estimate(
     if (line && so->stream) {
 	char *qdisk = quote_string(so->dle->disk);
 	g_fprintf(so->stream, "%s 0 WARNING \"%s\"\n", qdisk, line);
+	amfree(qdisk);
+    }
+}
+
+void
+run_client_script_output_host_estimate(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	char *qdisk = quote_string(so->dle->disk);
+	g_fprintf(so->stream, "WARNING \"%s\"\n", line);
+	amfree(qdisk);
+    }
+}
+
+void
+run_client_script_err_estimate(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	char *qdisk = quote_string(so->dle->disk);
+	g_fprintf(so->stream, "%s 0 ERROR \"%s\"\n", qdisk, line);
+	amfree(qdisk);
+    }
+}
+
+void
+run_client_script_err_host_estimate(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	char *qdisk = quote_string(so->dle->disk);
+	g_fprintf(so->stream, "ERROR \"%s\"\n", line);
 	amfree(qdisk);
     }
 }
@@ -1389,13 +1437,19 @@ run_client_scripts(
 		 client_script_err = run_client_script_err_amcheck;
 		 break;
 	    case EXECUTE_ON_PRE_DLE_ESTIMATE:
-	    case EXECUTE_ON_PRE_HOST_ESTIMATE:
 	    case EXECUTE_ON_POST_DLE_ESTIMATE:
-	    case EXECUTE_ON_POST_HOST_ESTIMATE:
-		 client_script_out = run_client_script_output;
+		 client_script_out = run_client_script_output_estimate;
 		 if (am_has_feature(g_options->features,
 				    fe_sendsize_rep_warning)) {
 		     client_script_err = run_client_script_err_estimate;
+		 }
+		 break;
+	    case EXECUTE_ON_PRE_HOST_ESTIMATE:
+	    case EXECUTE_ON_POST_HOST_ESTIMATE:
+		 client_script_out = run_client_script_output_host_estimate;
+		 if (am_has_feature(g_options->features,
+				    fe_sendsize_rep_warning)) {
+		     client_script_err = run_client_script_err_host_estimate;
 		 }
 		 break;
 	    case EXECUTE_ON_PRE_DLE_BACKUP:
