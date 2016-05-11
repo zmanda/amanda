@@ -17,7 +17,9 @@ LINTFLAGS=$(AMLINTFLAGS)
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS) $(AMANDA_FILE_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS) $(AS_NEEDED_FLAGS)
 
-SCRIPTS_PERL = script-email \
+applicationexec_SCRIPTS_SHELL = script-fail
+
+applicationexec_SCRIPTS_PERL = script-email \
 	     amlog-script \
 	     ampgsql \
 	     amzfs-sendrecv \
@@ -39,9 +41,12 @@ amlibexec_PROGRAMS = teecount
 applicationexecdir = $(APPLICATION_DIR)
 applicationdir = $(APPLICATION_DIR)
 applicationexec_PROGRAMS = ambsdtar amgtar amstar
-applicationexec_SCRIPTS = $(SCRIPTS_PERL)
+applicationexec_SCRIPTS = $(applicationexec_SCRIPTS_PERL) $(applicationexec_SCRIPTS_SHELL)
 
-CLEANFILES += $(SCRIPTS_PERL)
+SCRIPTS_SHELL = $(applicationexec_SCRIPTS_SHELL)
+SCRIPTS_PERL = $(applicationexec_SCRIPTS_PERL)
+
+CLEANFILES += $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 DISTCLEANFILES += config.log
 
 LDADD = ../common-src/libamanda.la \

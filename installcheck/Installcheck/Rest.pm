@@ -239,4 +239,48 @@ sub remove_source_line {
 
     return $reply;
 }
+
+sub cleanup_for_amdump {
+    my $reply = shift;
+    my $body = $reply->{'body'};
+
+    if ($body->[0]{report}{notes}[0] =~ /amdump: fork amdump/) {
+	shift @{$body->[0]{report}{notes}};
+    }
+    if ($body->[0]{report}{head}) {
+	$body->[0]{report}{head}->{date} = undef;
+    }
+    if ($body->[0]{report}{statistic}) {
+	$body->[0]{report}{statistic}{estimate_time} = undef;
+	$body->[0]{report}{statistic}{run_time} = undef;
+	$body->[0]{report}{statistic}{dump_time} = undef;
+	$body->[0]{report}{statistic}{tape_time} = undef;
+	$body->[0]{report}{statistic}{avg_dump_rate} = undef;
+	$body->[0]{report}{statistic}{Avg_tape_write_speed} = undef;
+    }
+
+    if (exists $body->[0]{report}{summary}) {
+	foreach my $summary (@{$body->[0]{report}{summary}}) {
+	    $summary->{dump_duration} = undef;
+	    $summary->{dump_rate} = undef;
+	    $summary->{tape_duration} = undef;
+	    $summary->{tape_rate} = undef;
+	}
+    }
+
+    if (exists $body->[0]{report}{usage_by_tape}) {
+	foreach my $usage_by_tape (@{$body->[0]{report}{usage_by_tape}}) {
+	    $usage_by_tape->{time_duration} = undef;
+	}
+    }
+
+    if (exists $body->[0]{report}{failure_details}) {
+	foreach my $failure_detail (@{$body->[0]{report}{failure_details}}) {
+	    $failure_detail =~ s/\.\d*\.debug/.DATESTAMP.debug/g;
+	}
+    }
+
+    return $reply;
+}
+
 1;

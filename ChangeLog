@@ -1,4 +1,13 @@
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/Makefile.am (applicationexec_SCRIPTS_SHELL): Add
+	  script-fail
+	* application-src/script-fail.sh: New script that always fail (for
+	  testing)
+	* installcheck/Installcheck/Rest.pm (cleanup_for_amdump): New function
+	  to cleanup result for a report
+	* installcheck/pp-scripts.pl: Check failing scripts
+
+2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/holding.c: Accept level up to DUMP_LEVELS
 
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
