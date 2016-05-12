@@ -1,4 +1,7 @@
 2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/pp-scripts.pl: Use $dbgdir
+
+2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Rest.pm (cleanup_for_amdump): Clean
 	  $body->[0]{report}{head}->{hostname}
 	* installcheck/pp-scripts.pl: hostname is undef

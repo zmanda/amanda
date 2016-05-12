@@ -38,6 +38,7 @@ Installcheck::log_test_output();
 my $reply;
 my $config_dir = $Amanda::Paths::CONFIG_DIR;
 my $amperldir = $Amanda::Paths::amperldir;
+my $dbgdir = $Amanda::Paths::AMANDA_DBGDIR;
 my $testconf;
 
 # Run amdump with client- and server-side scripts
@@ -857,11 +858,11 @@ EODLE
 				       'failure_details' => [
                                                              '  /-- localhost diskname2 lev 0 FAILED [Script \'script-fail\' command \'PRE-DLE-BACKUP\': stderr error:  PRE-DLE-BACKUP]',
                                                              '  sendbackup: error [Script \'script-fail\' command \'PRE-DLE-BACKUP\': stderr error:  PRE-DLE-BACKUP]',
-                                                             '  sendbackup: error [Script \'script-fail\' command \'PRE-DLE-BACKUP\' exited with status 1: see /tmp/amanda/client/TESTCONF/sendbackup.DATESTAMP.debug]',
+                                                             "  sendbackup: error [Script \'script-fail\' command \'PRE-DLE-BACKUP\' exited with status 1: see $dbgdir/client/TESTCONF/sendbackup.DATESTAMP.debug]",
                                                              '  \\--------',
                                                              '  /-- localhost diskname2 lev 0 FAILED [Script \'script-fail\' command \'PRE-DLE-BACKUP\': stderr error:  PRE-DLE-BACKUP]',
                                                              '  sendbackup: error [Script \'script-fail\' command \'PRE-DLE-BACKUP\': stderr error:  PRE-DLE-BACKUP]',
-                                                             '  sendbackup: error [Script \'script-fail\' command \'PRE-DLE-BACKUP\' exited with status 1: see /tmp/amanda/client/TESTCONF/sendbackup.DATESTAMP.debug]',
+                                                             "  sendbackup: error [Script \'script-fail\' command \'PRE-DLE-BACKUP\' exited with status 1: see $dbgdir/client/TESTCONF/sendbackup.DATESTAMP.debug]",
                                                              '  \\--------'
                                                             ],
                                        'head' => {
