@@ -249,6 +249,7 @@ sub cleanup_for_amdump {
     }
     if ($body->[0]{report}{head}) {
 	$body->[0]{report}{head}->{date} = undef;
+	$body->[0]{report}{head}->{hostname} = undef;
     }
     if ($body->[0]{report}{statistic}) {
 	$body->[0]{report}{statistic}{estimate_time} = undef;

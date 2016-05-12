@@ -336,7 +336,7 @@ EODLE
                          'process' => 'Amanda::Rest::Report',
                          'report' => {
                                        'head' => {
-                                                   'hostname' => 'localhost.localdomain',
+                                                   'hostname' => undef,
                                                    'org' => 'DailySet1',
                                                    'exit_status' => '5',
                                                    'config_name' => 'TESTCONF',
@@ -652,7 +652,7 @@ EODLE
                                                           ],
                                        'head' => {
                                                    'exit_status' => '4',
-                                                   'hostname' => 'localhost.localdomain',
+                                                   'hostname' => undef,
                                                    'date' => undef,
                                                    'timestamp' => $timestamp,
                                                    'config_name' => 'TESTCONF',
@@ -866,7 +866,7 @@ EODLE
                                                             ],
                                        'head' => {
                                                    'exit_status' => '4',
-                                                   'hostname' => 'localhost.localdomain',
+                                                   'hostname' => undef,
                                                    'date' => undef,
                                                    'timestamp' => $timestamp,
                                                    'config_name' => 'TESTCONF',

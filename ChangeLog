@@ -1,3 +1,8 @@
+2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Rest.pm (cleanup_for_amdump): Clean
+	  $body->[0]{report}{head}->{hostname}
+	* installcheck/pp-scripts.pl: hostname is undef
+
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/Makefile.am (applicationexec_SCRIPTS_SHELL): Add
 	  script-fail
