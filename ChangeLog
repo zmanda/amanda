@@ -1,4 +1,8 @@
 2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda-scripts.7.xml: Add notes on how to abort a
+	  backup with exit status != 0
+
+2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/pp-scripts.pl: Use $dbgdir
 
 2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>

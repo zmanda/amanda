@@ -65,6 +65,16 @@ If the output line matches "PROPERTY str1 str2", Amanda sets a property called
 
 </refsect1>
 
+<refsect1><title>SCRIPTS FAILURE (to abort a backup)</title>
+
+<para>A pre-host-estimate, pre-dle-estimate or pre-dle-backup executed on the
+client can abort a backup by writing an error message (single line) to STDERR
+and exit with != 0.</para>
+<para>A post-dle-backup executed on the client can make a backup a failure by writing an error message (single line) to STDERR
+and exit with != 0.</para>
+
+</refsect1>
+
 <seealso>
 <manref name="amanda.conf" vol="5"/>
 </seealso>
