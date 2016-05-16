@@ -49,6 +49,7 @@ typedef struct inames {
     gboolean index_sorted_gz;
     gboolean index_unsorted;
     gboolean index_unsorted_gz;
+    gboolean state_gz;
 } inames;
 
 static int sort_by_name_reversed(const void *a, const void *b);
@@ -315,6 +316,8 @@ main(
 		    iname->index_unsorted = TRUE;
 		} else if (strcmp(n, "unsorted.gz") == 0) {
 		    iname->index_unsorted_gz = TRUE;
+		} else if (strcmp(n, "state.gz") == 0) {
+		    iname->state_gz = TRUE;
 		} else {
 		    char *path, *qpath;
 
@@ -339,21 +342,23 @@ main(
 	     * Search for the first full dump past the minimum number
 	     * of index files to keep.
 	     */
-	    for(i = 0; i < name_count; i++) {
+	    for (i = 0; i < name_count; i++) {
 		char *datestamp;
 		int level;
 		size_t len_date;
 		int matching = 0;
 		GSList *mdp;
 
-		for(len_date = 0; len_date < sizeof("YYYYMMDDHHMMSS")-1; len_date++) {
-                    if(! isdigit((int)(names[i][len_date]))) {
+		for (len_date = 0; len_date < sizeof("YYYYMMDDHHMMSS")-1; len_date++) {
+                    if (!isdigit((int)(names[i][len_date]))) {
                         break;
                     }
                 }
 
+		iname = g_hash_table_lookup(hash_inames, names[i]);
 		datestamp = g_strdup(names[i]);
 		datestamp[len_date] = '\0';
+
 		if (sscanf(&names[i][len_date+1], "%d", &level) != 1)
 		    level = 0;
 		for (mdp = matching_dp; mdp != NULL; mdp = mdp->next) {
@@ -365,25 +370,126 @@ main(
 		}
 		if (!matching) {
 		    struct stat sbuf;
-		    char *path, *qpath;
+		    char *path;
 
 		    path = g_strconcat(indexdir, names[i], NULL);
-		    qpath = quote_string(path);
-		    if(lstat(path, &sbuf) != -1
-			&& ((sbuf.st_mode & S_IFMT) == S_IFREG)
-			&& ((time_t)sbuf.st_mtime < tmp_time)) {
-			dbprintf("rm %s\n", qpath);
-		        if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			    dbprintf(_("Error removing %s: %s\n"),
-				      qpath, strerror(errno));
+
+		    if (iname && iname->header) {
+			char *filepath = g_strconcat(path, ".header", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
 		        }
+			amfree(filepath);
 		    }
-		    amfree(qpath);
+
+		    if (iname && iname->index_gz) {
+			char *filepath = g_strconcat(path, ".gz", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
+		        }
+			amfree(filepath);
+		    }
+
+		    if (iname && iname->index_sorted) {
+			char *filepath = g_strconcat(path, "-sorted", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
+		        }
+			amfree(filepath);
+		    }
+
+		    if (iname && iname->index_sorted_gz) {
+			char *filepath = g_strconcat(path, "-sorted.gz", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
+		        }
+			amfree(filepath);
+		    }
+
+		    if (iname && iname->index_unsorted_gz) {
+			char *filepath = g_strconcat(path, "-unsorted.gz", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
+		        }
+			amfree(filepath);
+		    }
+
+		    if (iname && iname->index_unsorted) {
+			char *filepath = g_strconcat(path, "-unsorted", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
+		        }
+			amfree(filepath);
+		    }
+
+		    if (iname && iname->state_gz) {
+			char *filepath = g_strconcat(path, ".state.gz", NULL);
+			if (lstat(filepath, &sbuf) != -1 &&
+			    ((sbuf.st_mode & S_IFMT) == S_IFREG) &&
+			    ((time_t)sbuf.st_mtime < tmp_time)) {
+			    char *qfilepath = quote_string(filepath);
+			    g_debug("rm %s", qfilepath);
+		            if(amtrmidx_debug == 0 && unlink(filepath) == -1) {
+				g_debug("Error removing %s: %s",
+					 qfilepath, strerror(errno));
+			    }
+			    amfree(qfilepath);
+		        }
+			amfree(filepath);
+		    }
+
 		    amfree(path);
-		}
+		} else {
 
 		/* Did it require un/compression and/or sorting */
-		{
 		char *orig_name = getindexfname(host, disk, datestamp, level);
 		char *sorted_name = getindex_sorted_fname(host, disk, datestamp, level);
 		char *sorted_gz_name = getindex_sorted_gz_fname(host, disk, datestamp, level);
