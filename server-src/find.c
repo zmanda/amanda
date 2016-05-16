@@ -109,7 +109,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
                 logs ++;
             }
         }
-        
+
 	/* search old-style main log, if any */
 
 	g_free(logfile);
@@ -223,6 +223,27 @@ find_log(void)
     amfree(conf_logdir);
     *current_log = NULL;
     return(output_find_log);
+}
+
+GHashTable *
+hash_find_log(void)
+{
+    int tape, maxtape;
+    tape_t *tp;
+    char *prefix;
+    GHashTable *hash_output_find_log = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    maxtape = lookup_nb_tape();
+
+    for (tape = 1; tape <= maxtape; tape++) {
+
+	tp = lookup_tapepos(tape);
+	if (tp == NULL) continue;
+
+	prefix = g_strconcat("log.", tp->datestamp, NULL);
+	g_hash_table_insert(hash_output_find_log, prefix, prefix);
+    }
+    return hash_output_find_log;
 }
 
 void
@@ -862,6 +883,9 @@ search_logfile(
     datestamp = g_strdup(passed_datestamp);
 
     if((logf = fopen(logfile, "r")) == NULL) {
+	if (errno != ENOENT) {
+	    g_debug("could not open logfile %s: %s", logfile, strerror(errno));
+	}
 	error(_("could not open logfile %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
     }
@@ -1625,4 +1649,75 @@ dump_exist(
 	}
     }
     return(NULL);
+}
+
+GHashTable *
+make_dump_hash(
+    find_result_t *output_find)
+{
+    find_result_t *output_find_result;
+    GHashTable *dump_hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GDestroyNotify)g_hash_table_destroy);
+    GHashTable *host_hash;
+    GHashTable *disk_hash;
+    GHashTable *time_hash;
+
+    for (output_find_result=output_find;
+         output_find_result;
+         output_find_result=output_find_result->next) {
+
+	host_hash = g_hash_table_lookup(dump_hash, output_find_result->hostname);
+	if (!host_hash) {
+	    host_hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GDestroyNotify)g_hash_table_destroy);
+	    g_hash_table_insert(dump_hash, output_find_result->hostname, host_hash);
+	}
+
+	disk_hash = g_hash_table_lookup(dump_hash, output_find_result->diskname);
+	if (!disk_hash) {
+	    disk_hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GDestroyNotify)g_hash_table_destroy);
+	    g_hash_table_insert(host_hash, output_find_result->diskname, disk_hash);
+	}
+
+	time_hash = g_hash_table_lookup(disk_hash, output_find_result->timestamp);
+	if (!time_hash) {
+	    time_hash = g_hash_table_new(g_int_hash, g_int_equal);
+	    g_hash_table_insert(disk_hash, output_find_result->timestamp, time_hash);
+	}
+
+	g_hash_table_insert(time_hash, &output_find_result->level, output_find_result);
+    }
+
+    return dump_hash;
+}
+
+
+find_result_t *
+dump_hash_exist(
+    GHashTable *dump_hash,
+    char *hostname,
+    char *diskname,
+    char *timestamp,
+    int level)
+{
+    GHashTable *host_hash;
+    GHashTable *disk_hash;
+    GHashTable *time_hash;
+    find_result_t *output_find_result;
+
+    host_hash = g_hash_table_lookup(dump_hash, hostname);
+    if (!host_hash) return NULL;
+
+    disk_hash = g_hash_table_lookup(dump_hash, diskname);
+    if (!disk_hash) return NULL;
+
+    time_hash = g_hash_table_lookup(disk_hash, timestamp);
+    if (!time_hash) return NULL;
+
+    output_find_result = g_hash_table_lookup(time_hash, &level);
+
+    return output_find_result;
+}
+
+void free_dump_hash(GHashTable *dump_hash)
+{
+    g_hash_table_destroy(dump_hash);
 }

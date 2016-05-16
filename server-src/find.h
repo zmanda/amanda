@@ -45,6 +45,8 @@ find_result_t *find_dump(disklist_t* diskqp);
  * @returns: dynamically allocated, null-terminated strv
  */
 char **find_log(void);
+GHashTable *hash_find_log(void);
+
 
 void sort_find_result(char *sort_order, find_result_t **output_find);
 void sort_find_result_with_storage(char *sort_order, char **storage_list, find_result_t **output_find);
@@ -87,5 +89,11 @@ gboolean search_logfile(find_result_t **output_find, const char *volume_label,
 void search_holding_disk(
 	find_result_t **output_find,
 	disklist_t * dynamic_disklist);
+
+GHashTable *make_dump_hash(find_result_t *output_find);
+void free_dump_hash(GHashTable *dump_hash);
+find_result_t *dump_hash_exist(GHashTable *dump_hash, char *hostname, char *diskname,
+			       char *datestamp, int level);
+
 
 #endif	/* !FIND_H */

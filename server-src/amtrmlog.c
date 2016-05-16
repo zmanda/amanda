@@ -50,13 +50,12 @@ main(
 {
     disklist_t diskl;
     int no_keep;			/* files per system to keep */
-    char **output_find_log;
+    GHashTable *hash_output_find_log;
     DIR *dir;
     struct dirent *adir;
-    char **name;
     int useful;
     char *olddir;
-    char *oldfile = NULL, *newfile = NULL;
+    char *newfile = NULL;
     time_t today, date_keep;
     char *logname = NULL;
     struct stat stat_log;
@@ -136,7 +135,7 @@ main(
 	dumpcycle = 30;
     date_keep = today - (dumpcycle * 86400);
 
-    output_find_log = find_log();
+    hash_output_find_log = hash_find_log();
 
     /* determine how many log to keep */
     no_keep = getconf_int(CNF_TAPECYCLE) * 2;
@@ -174,20 +173,22 @@ main(
     }
     while ((adir=readdir(dir)) != NULL) {
 	if (g_str_has_prefix(adir->d_name, "log.")) {
+	    char *name = g_strdup(adir->d_name);
+	    char *dot;
 	    useful=0;
-	    for (name=output_find_log; *name != NULL; name++) {
-		if ((strlen(adir->d_name) >= 13 &&
-		     strlen(*name) >= 13 &&
-		     adir->d_name[12] == '.' && (*name)[12] == '.' &&
-		     strncmp(adir->d_name, *name, 12) == 0) ||
-		    strncmp(adir->d_name, *name, 18) == 0) {
-		    useful=1;
-		    break;
+	    dot = strchr(name, '.');
+	    if (dot) {
+		dot++;
+		dot = strchr(dot, '.');
+		if (dot)
+		    *dot = '\0';
+		if (g_hash_table_lookup(hash_output_find_log, name)) {
+		    useful = 1;
 		}
 	    }
-	    g_free(logname);
+	    g_free(name);
 	    logname = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
-	    if (stat(logname,&stat_log) == 0) {
+	    if (!useful && stat(logname,&stat_log) == 0) {
 		if ((time_t)stat_log.st_mtime > date_keep) {
 		    useful = 1;
 		}
@@ -197,14 +198,11 @@ main(
 		char *datestamp;
 		char *amdumpfile;
 
-		g_free(oldfile);
-		oldfile = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
-
 		g_free(newfile);
 		newfile = g_strconcat(olddir, "/", adir->d_name, NULL);
-		if (rename(oldfile,newfile) != 0) {
+		if (rename(logname, newfile) != 0) {
 		    error(_("could not rename \"%s\" to \"%s\": %s"),
-			  oldfile, newfile, strerror(errno));
+			  logname, newfile, strerror(errno));
 		    /*NOTREACHED*/
 		}
 
@@ -221,12 +219,8 @@ main(
 	}
     }
     closedir(dir);
-    for (name = output_find_log; *name != NULL; name++) {
-	amfree(*name);
-    }
-    amfree(output_find_log);
+    g_hash_table_destroy(hash_output_find_log);
     amfree(logname);
-    amfree(oldfile);
     amfree(newfile);
     amfree(olddir);
     amfree(conf_logdir);

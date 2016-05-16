@@ -1,4 +1,10 @@
 2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/find.c: Find the find result in a hash
+	* server-src/find.h (hash_find_log, make_dump_hash, free_dump_hash,
+	  dump_hash_exist): Add prototypes
+	* server-src/amtrmidx.c, server-src/amtrmlog.c: Use the hash
+
+2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driverio.h (chunker_t, wtaper_t): sendresult is a
 	  gboolean
 	* server-src/driver.c: Fix sending the result to taper twice

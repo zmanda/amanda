@@ -42,6 +42,15 @@
 #include "amindex.h"
 #include "pipespawn.h"
 
+typedef struct inames {
+    gboolean header;
+    gboolean index_gz;
+    gboolean index_sorted;
+    gboolean index_sorted_gz;
+    gboolean index_unsorted;
+    gboolean index_unsorted_gz;
+} inames;
+
 static int sort_by_name_reversed(const void *a, const void *b);
 static gboolean file_exists(char *filename);
 static pid_t run_compress(int fd_in, int *fd_out, int *fd_err,
@@ -80,6 +89,7 @@ main(
     char *conf_tapelist;
     char *conf_indexdir;
     find_result_t *output_find;
+    GHashTable *dump_hash;
     time_t tmp_time;
     int amtrmidx_debug = 0;
     config_overrides_t *cfg_ovr = NULL;
@@ -155,6 +165,7 @@ main(
     sort_index = getconf_boolean(CNF_SORT_INDEX);
 
     output_find = find_dump(&diskl);
+    dump_hash = make_dump_hash(output_find);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
 
@@ -180,9 +191,10 @@ main(
 	    size_t name_count;
 	    char *host;
 	    char *disk, *qdisk;
-	    size_t len_date;
 	    disk_t *dp;
 	    GSList *matching_dp = NULL;
+	    GHashTable *hash_inames = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &g_free);
+	    inames *iname;
 
 	    /* get listing of indices, newest first */
 	    host = sanitise_filename(diskp->host->hostname);
@@ -214,7 +226,7 @@ main(
 			qdisk, qindexdir);
 	    amfree(qdisk);
 	    if ((d = opendir(indexdir)) == NULL) {
-		dbprintf(_("could not open index directory %s\n"), qindexdir);
+		dbprintf(_("could not open index directory %s: %s\n"), qindexdir, strerror(errno));
 		amfree(host);
 		amfree(disk);
 		amfree(indexdir);
@@ -226,17 +238,23 @@ main(
 	    names = (char **)g_malloc(name_length * sizeof(char *));
 	    name_count = 0;
 	    while ((f = readdir(d)) != NULL) {
-		size_t l;
+		size_t  l;
+		char   *n;
+		size_t len_date = 0;
+		char *name;
+		gboolean is_new = FALSE;
 
-		if(is_dot_or_dotdot(f->d_name)) {
+		if (is_dot_or_dotdot(f->d_name)) {
 		    continue;
 		}
-		for(i = 0; i < sizeof("YYYYMMDDHHMMSS")-1; i++) {
-		    if(! isdigit((int)(f->d_name[i]))) {
-			break;
-		    }
+		name = g_strdup(f->d_name);
+		n = name;
+		while (((*n >= '0' && *n <= '9') || *n == '_')) {
+		    if (*n == '_')
+			len_date = n -name;
+		    n++;
 		}
-		len_date = i;
+
 		/* len_date=8  for YYYYMMDD       */
 		/* len_date=14 for YYYYMMDDHHMMSS */
 		if((len_date != 8 && len_date != 14)
@@ -277,7 +295,42 @@ main(
 		    names = new_names;
 		    name_length *= 2;
 		}
-		names[name_count++] = g_strdup(f->d_name);
+
+		*n = '\0';
+		n++;
+		iname = g_hash_table_lookup(hash_inames, name);
+		if (!iname) {
+		    iname = g_new0(struct inames, 1);
+		    is_new = TRUE;
+		}
+		if (strcmp(n, "header") == 0) {
+		    iname->header = TRUE;
+		} else if (strcmp(n, "gz") == 0) {
+		    iname->index_gz = TRUE;
+		} else if (strcmp(n, "sorted") == 0) {
+		    iname->index_sorted = TRUE;
+		} else if (strcmp(n, "sorted.gz") == 0) {
+		    iname->index_sorted_gz = TRUE;
+		} else if (strcmp(n, "unsorted") == 0) {
+		    iname->index_unsorted = TRUE;
+		} else if (strcmp(n, "unsorted.gz") == 0) {
+		    iname->index_unsorted_gz = TRUE;
+		} else {
+		    char *path, *qpath;
+
+		    path = g_strconcat(indexdir, f->d_name, NULL);
+		    qpath = quote_string(path);
+		    dbprintf("rm %s\n", qpath);
+		    if (amtrmidx_debug == 0 && unlink(path) == -1) {
+			dbprintf("Error removing %s: %s\n",
+				 qpath, strerror(errno));
+		     }
+		     continue;
+		}
+		if (is_new) {
+		    g_hash_table_insert(hash_inames, g_strdup(name), iname);
+		    names[name_count++] = g_strdup(name);
+		}
 	    }
 	    closedir(d);
 	    qsort(names, name_count, sizeof(char *), sort_by_name_reversed);
@@ -305,8 +358,8 @@ main(
 		    level = 0;
 		for (mdp = matching_dp; mdp != NULL; mdp = mdp->next) {
 		    dp = mdp->data;
-		    if (dump_exist(output_find, dp->host->hostname,
-				   dp->name, datestamp, level)) {
+		    if (dump_hash_exist(dump_hash, dp->host->hostname,
+					dp->name, datestamp, level)) {
 			matching = 1;
 		    }
 		}
@@ -352,11 +405,20 @@ main(
 		pid_t sort_pid = -1;
 		pid_t compress_pid = -1;
 
-		orig_exist = file_exists(orig_name);
-		sorted_exist = file_exists(sorted_name);
-		sorted_gz_exist = file_exists(sorted_gz_name);
-		unsorted_exist = file_exists(unsorted_name);
-		unsorted_gz_exist = file_exists(unsorted_gz_name);
+		iname = g_hash_table_lookup(hash_inames, names[i]);
+		if (iname) {
+		    orig_exist = iname->index_gz;
+		    sorted_exist = iname->index_sorted;
+		    sorted_gz_exist = iname->index_sorted_gz;
+		    unsorted_exist = iname->index_unsorted;
+		    unsorted_gz_exist = iname->index_unsorted_gz;
+		} else {
+		    orig_exist = file_exists(orig_name);
+		    sorted_exist = file_exists(sorted_name);
+		    sorted_gz_exist = file_exists(sorted_gz_name);
+		    unsorted_exist = file_exists(unsorted_name);
+		    unsorted_gz_exist = file_exists(unsorted_gz_name);
+		}
 
 		if (sort_index && compress_index) {
 		    if (!sorted_gz_exist) {
@@ -500,6 +562,7 @@ main(
 	    amfree(disk);
 	    amfree(indexdir);
 	    amfree(qindexdir);
+	    g_hash_table_destroy(hash_inames);
 	}
     }
 
@@ -509,6 +572,7 @@ lock_failed:
     amfree(conf_indexdir);
     amfree(lock_file);
     free_find_result(&output_find);
+    free_dump_hash(dump_hash);
     clear_tapelist();
     free_disklist(&diskl);
     unload_disklist();
