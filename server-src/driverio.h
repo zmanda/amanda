@@ -145,7 +145,7 @@ typedef struct chunker_s {
     int down;			/* state */
     int fd;			/* read/write */
     int result;
-    int sendresult;
+    gboolean sendresult;
     event_handle_t *ev_read;	/* read event handle */
     job_t *job;
 } chunker_t;
@@ -173,7 +173,7 @@ typedef struct vaultqs_s {
 
 typedef struct wtaper_s {
     char       *name;			/* name of this taper */
-    int         sendresult;
+    gboolean    sendresult;
     char       *input_error;
     char       *tape_error;
     int         result;

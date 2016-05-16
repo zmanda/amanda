@@ -1,3 +1,8 @@
+2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driverio.h (chunker_t, wtaper_t): sendresult is a
+	  gboolean
+	* server-src/driver.c: Fix sending the result to taper twice
+
 2016-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/xml-source/amanda-scripts.7.xml: Add notes on how to abort a
 	  backup with exit status != 0

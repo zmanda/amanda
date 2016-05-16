@@ -101,7 +101,6 @@ static int   schedule_done;			// 1 if we don't wait for a
 						//   schedule from the planner
 static int   force_flush;			// All dump are terminated, we
 						// must now respect taper_flush
-static int taper_nb_scan_volume = 0;
 static int nb_sent_new_tape = 0;
 static int taper_started = 0;
 static int nb_storage;
@@ -1188,7 +1187,7 @@ start_a_flush_wtaper(
 	    amfree(wtaper->input_error);
 	    amfree(wtaper->tape_error);
 	    wtaper->result = LAST_TOK;
-	    wtaper->sendresult = 0;
+	    wtaper->sendresult = FALSE;
 	    amfree(wtaper->first_label);
 	    amfree(wtaper->dst_labels_str);
 	    if (wtaper->dst_labels) {
@@ -1379,7 +1378,7 @@ start_a_vault_wtaper(
 	    amfree(wtaper->input_error);
 	    amfree(wtaper->tape_error);
 	    wtaper->result = LAST_TOK;
-	    wtaper->sendresult = 0;
+	    wtaper->sendresult = FALSE;
 	    amfree(wtaper->first_label);
 	    amfree(wtaper->dst_labels_str);
 	    slist_free_full(wtaper->dst_labels, g_free);
@@ -1764,7 +1763,7 @@ start_some_dumps(
 	    job->chunker = chunker;
 	    chunker->job = job;
 	    chunker->result = LAST_TOK;
-	    chunker->sendresult = 0;
+	    chunker->sendresult = FALSE;
 	    dumper->result = LAST_TOK;
 	    startup_chunk_process(chunker,chunker_program);
 	    chunker_cmd(chunker, START, NULL, driver_timestamp);
@@ -1944,7 +1943,7 @@ start_vault_on_same_wtaper(
 	amfree(wtaper->input_error);
 	amfree(wtaper->tape_error);
 	wtaper->result = LAST_TOK;
-	wtaper->sendresult = 0;
+	wtaper->sendresult = FALSE;
 	amfree(wtaper->first_label);
 	amfree(wtaper->dst_labels_str);
 	slist_free_full(wtaper->dst_labels, g_free);
@@ -2326,12 +2325,15 @@ handle_taper_result(
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
 	    wtaper->ready = TRUE;
 	    if (wtaper->job->dumper &&
-		wtaper->job->dumper->result != LAST_TOK) {
+		wtaper->job->dumper->result != LAST_TOK &&
+		wtaper->sendresult) {
 		if( wtaper->job->dumper->result == DONE) {
+printf("send DONE AA\n");
 		    taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 		} else {
 		    taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
 		}
+		wtaper->sendresult = FALSE;
 	    }
 	    break;
 
@@ -2539,7 +2541,7 @@ handle_taper_result(
 		/*NOTREACHED*/
             }
 	    nb_sent_new_tape--;
-	    taper_nb_scan_volume--;
+	    taper->nb_scan_volume--;
 
 	    job = serial2job(result_argv[2]);
 	    wtaper = wtaper_from_name(taper, result_argv[1]);
@@ -2569,9 +2571,10 @@ handle_taper_result(
 	    assert(wtaper == job->wtaper);
 
 	    if (wtaper->job->dumper->result == LAST_TOK) {
-		wtaper->sendresult = 1;
+		wtaper->sendresult = TRUE;
 	    } else {
 		if( wtaper->job->dumper->result == DONE) {
+printf("send DONE BB\n");
 		    taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 		} else {
 		    taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
@@ -3686,7 +3689,7 @@ handle_dumper_result(
 		    } else {
 			chunker_cmd(job->chunker, FAILED, sp, NULL);
 		    }
-			job->chunker->sendresult = 0;
+		    job->chunker->sendresult = FALSE;
 		}
 		if (dumper->result != LAST_TOK &&
 		    job->chunker->result != LAST_TOK)
@@ -3697,12 +3700,14 @@ handle_dumper_result(
 		    taper = wtaper->taper;
 		    if (cmd == TRYAGAIN) {
 			taper_cmd(taper, wtaper, ABORT, sp, NULL, 0, "dumper TRYAGAIN");
-		    } else if (cmd == DONE) {
+		    } else if (cmd == DONE && wtaper->sendresult) {
+printf("send DONE CC\n");
 			taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
-		    } else {
+			wtaper->sendresult = FALSE;
+		    } else if (wtaper->sendresult) {
 			taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
+			wtaper->sendresult = FALSE;
 		    }
-		    wtaper->sendresult = 0;
 		}
 		if (job->dumper && job->wtaper->result != LAST_TOK) {
 		    dumper_taper_result(job);
@@ -3806,7 +3811,7 @@ handle_chunker_result(
 
 	case DUMPER_STATUS: /* NO-ROOM <handle> */
 	    if (job->dumper->result == LAST_TOK) {
-		chunker->sendresult = 1;
+		chunker->sendresult = TRUE;
 	    } else {
 		if (job->dumper->result == DONE) {
 		    chunker_cmd(chunker, DONE, sp, NULL);
