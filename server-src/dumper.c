@@ -2727,7 +2727,7 @@ static void
 timeout(
     time_t seconds)
 {
-    timeout_time = time(NULL) + seconds;
+    timeout_time = time(NULL) + seconds + 1;
 
     /*
      * remove a timeout if seconds is 0
@@ -2766,7 +2766,7 @@ timeout_callback(
     }
 
     if (timeout_time > now) { /* not a data timeout yet */
-	ev_timeout = event_register((event_id_t)(timeout_time-now), EV_TIME,
+	ev_timeout = event_register((event_id_t)(timeout_time-now+1), EV_TIME,
 				    timeout_callback, NULL);
 	return;
     }
@@ -2808,6 +2808,7 @@ stop_dump(void)
 
     for (i = 0; i < NSTREAMS; i++) {
 	if (streams[i].fd != NULL) {
+	    security_stream_read_cancel(streams[i].fd);
 	    security_stream_close(streams[i].fd);
 	    streams[i].fd = NULL;
 	}

@@ -1,4 +1,7 @@
 2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c (stop_dump): Call security_stream_read_cancel
+
+2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/find.c: Find the find result in a hash
 	* server-src/find.h (hash_find_log, make_dump_hash, free_dump_hash,
 	  dump_hash_exist): Add prototypes
