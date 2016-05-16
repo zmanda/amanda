@@ -76,6 +76,8 @@ sub clear_tapelist {
     C_clear_tapelist();
 
     $self->{'tles'} = [];
+    $self->{'tle_hash_label'} = undef;
+    $self->{'tle_hash_barcode'} = undef;
 
     return $self;
 }
@@ -104,23 +106,14 @@ sub lookup_tapelabel {
     my $self = shift;
     my ($label) = @_;
 
-    for my $tle (@{$self->{'tles'}}) {
-	return $tle if ($tle->{'label'} eq $label);
-    }
-
-    return undef;
+    return $self->{'tle_hash_label'}{$label};
 }
 
 sub lookup_by_barcode {
     my $self = shift;
     my ($barcode) = @_;
 
-    for my $tle (@{$self->{'tles'}}) {
-	return $tle if (defined $tle->{'barcode'} and
-			$tle->{'barcode'} eq $barcode);
-    }
-
-    return undef;
+    return $self->{'tle_hash_barcode'}{$barcode};
 }
 
 sub lookup_tapepos {
@@ -135,6 +128,7 @@ sub lookup_tapedate {
     my $self = shift;
     my ($datestamp) = @_;
 
+    # no hash becasue only installcheck use it
     for my $tle (@{$self->{'tles'}}) {
 	return $tle if ($tle->{'datestamp'} eq $datestamp);
     }
@@ -146,8 +140,13 @@ sub remove_tapelabel {
     my $self = shift;
     my ($label) = @_;
 
+    delete $self->{'tle_hash_label'}{$label};
     for (my $i = 0; $i < @{$self->{tles}}; $i++) {
 	if ($self->{tles}->[$i]->{'label'} eq $label) {
+	    $barcode = $self->{tles}->[$i]->{'barcode'};
+	    if ($barcode) {
+		delete $self->{'tle_hash_barcode'}{$barcode};
+	    }
 	    splice @{$self->{tles}}, $i, 1;
 	    $self->_update_positions();
 	    return;
@@ -176,6 +175,10 @@ sub add_tapelabel {
         'config'    => $config,
         'comment'   => $comment,
     };
+    $self->{'tle_hash_label'}{$label} = $tle;
+    if ($barcode) {
+	$self->{'tle_hash_barcode'}{$barcode} = $tle;
+    }
     my $tles = $self->{'tles'};
     if (!defined $tles->[0] ||
 	$tles->[0]->{'datestamp'} le $datestamp) {
@@ -267,6 +270,8 @@ sub _read_tapelist {
     my $self = shift;
 
     my @tles;
+    $self->{'tle_hash_label'} = undef;
+    $self->{'tle_hash_barcode'} = undef;
     my $linenum = 0;
     open(my $fh, "<", $self->{'filename'}) or return undef;
     while (my $line = <$fh>) {
@@ -283,7 +288,7 @@ sub _read_tapelist {
 			linenum => $linenum,
 			line    => $line);
 	}
-	push @tles, {
+	my $tle = {
 	    'datestamp' => $datestamp,
 	    'label'     => $label,
 	    'reuse'     => (!defined $reuse || $reuse eq 'reuse')?1:0,
@@ -295,6 +300,11 @@ sub _read_tapelist {
 	    'config'    => $config,
 	    'comment'   => $comment,
 	};
+	$self->{'tle_hash_label'}{$label} = $tle;
+	if ($barcode) {
+	    $self->{'tle_hash_barcode'}{$barcode} = $tle;
+	}
+	push @tles, $tle;
     }
     close($fh);
 

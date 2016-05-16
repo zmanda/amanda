@@ -1,4 +1,9 @@
 2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Tapelist.swg: Keep hash by label and barcode for faster
+	  lookup
+	* installcheck/Amanda_Tapelist.pl: Fix for new hash
+
+2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amtrmidx.c: Fix
 
 2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
