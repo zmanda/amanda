@@ -1,3 +1,7 @@
+2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amxml.c (amxml_format_tag): The '#' character require raw
+	  format
+
 2016-05-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/holding.c: Accept level up to DUMP_LEVELS
 
