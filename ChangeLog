@@ -1,3 +1,16 @@
+2016-05-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c (debug_pgets): New function to read a complete
+	  line from a FILE*
+	* common-src/file.h (debug_pgets, pgets): Add prototypes
+	* common-src/amxml.c: Undo previous patch, use pgets instead of agets
+	* application-src/amstar.c, client-src/client_util.c,
+	  client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c, common-src/krb5-security.c,
+	   common-src/security-util.c,
+	  common-src/util.c, recover-src/extract_list.c,
+	  server-src/amcheck.c, server-src/amindexd.c,
+	  server-src/dumper.c: Use pgets instead of agets to read many files
+
 2016-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amxml.c (amxml_format_tag): The '#' character require raw
 	  format

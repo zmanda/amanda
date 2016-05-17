@@ -1031,7 +1031,8 @@ amxml_parse_node_FILE(
 
     context = g_markup_parse_context_new(&parser, flags, &amgxml, NULL);
 
-    while ((line = agets(file)) != NULL && !gerror) {
+    while ((line = pgets(file)) != NULL && !gerror) {
+g_debug("line: %s",line);
 	g_markup_parse_context_parse(context, line, strlen(line), &gerror);
 	amfree(line);
     }
@@ -1068,7 +1069,6 @@ amxml_format_tag(
 	    *c == '<' ||
 	    *c == '>' ||
 	    *c == '"' ||
-	    *c == '#' ||
 	    *c == '&' ||
 	    *c == '\\' ||
 	    *c == '\'' ||

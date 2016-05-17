@@ -1143,7 +1143,7 @@ static GPtrArray *amstar_build_argv(
 	    FILE *exclude;
 	    char *aexc;
 	    if ((exclude = fopen(exclname, "r")) != NULL) {
-		while ((aexc = agets(exclude)) != NULL) {
+		while ((aexc = pgets(exclude)) != NULL) {
 		    if (aexc[0] != '\0') {
 			char *ex;
 			if (strcmp(aexc, "./") == 0) {
@@ -1184,7 +1184,7 @@ static GPtrArray *amstar_build_argv(
 	    FILE *include;
 	    char *aexc;
 	    if ((include = fopen(exclname, "r")) != NULL) {
-		while ((aexc = agets(include)) != NULL) {
+		while ((aexc = pgets(include)) != NULL) {
 		    if (aexc[0] != '\0') {
 			char *ex;
 			if (g_str_equal(aexc, "./")) {

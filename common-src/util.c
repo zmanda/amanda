@@ -1179,7 +1179,7 @@ readline(
     g_printf("%s", prompt);
     fflush(stdout);
     fflush(stderr);
-    return agets(stdin);
+    return pgets(stdin);
 }
 
 void 
@@ -1734,13 +1734,13 @@ get_first_line(
     err = fdopen(errpipe[0],"r");
 
     if (out) {
-	output_string = agets(out);
+	output_string = pgets(out);
 	fclose(out);
     }
 
     if (err) {
 	if (!output_string)
-	    output_string = agets(err);
+	    output_string = pgets(err);
 	fclose(err);
     }
 

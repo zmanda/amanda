@@ -324,7 +324,7 @@ build_exclude(
 		    excl = excl->next) {
 		    char *exclname = fixup_relative(excl->name, dle->device);
 		    if((exclude = fopen(exclname, "r")) != NULL) {
-			while ((aexc = agets(exclude)) != NULL) {
+			while ((aexc = pgets(exclude)) != NULL) {
 			    if (aexc[0] == '\0') {
 				amfree(aexc);
 				continue;
@@ -401,7 +401,7 @@ build_include(
 		    incl = incl->next) {
 		    char *inclname = fixup_relative(incl->name, dle->device);
 		    if ((include = fopen(inclname, "r")) != NULL) {
-			while ((ainc = agets(include)) != NULL) {
+			while ((ainc = pgets(include)) != NULL) {
 			    if (ainc[0] == '\0') {
 				amfree(ainc);
 				continue;
@@ -944,7 +944,7 @@ backup_support_option(
 	error(_("Error opening pipe to child: %s"), strerror(errno));
 	/* NOTREACHED */
     }
-    while((line = agets(streamout)) != NULL) {
+    while((line = pgets(streamout)) != NULL) {
 	dbprintf(_("support line: %s\n"), line);
 	if (strncmp(line,"CONFIG ", 7) == 0) {
 	    if (strcmp(line+7, "YES") == 0)
@@ -1042,7 +1042,7 @@ backup_support_option(
 	error(_("Error opening pipe to child: %s"), strerror(errno));
 	/* NOTREACHED */
     }
-    while((line = agets(streamerr)) != NULL) {
+    while((line = pgets(streamerr)) != NULL) {
 	if (strlen(line) > 0) {
 	    g_ptr_array_add(*errarray, line);
 	    dbprintf("Application '%s': %s\n", program, line);
@@ -1195,7 +1195,7 @@ run_client_script(
 
     streamout = fdopen(scriptout, "r");
     if (streamout) {
-        while((line = agets(streamout)) != NULL) {
+        while((line = pgets(streamout)) != NULL) {
             dbprintf("script: %s\n", line);
             if (BSTRNCMP(line, "PROPERTY ") == 0) {
 		char *property_name, *property_value;
@@ -1232,7 +1232,7 @@ run_client_script(
 
     streamerr = fdopen(scripterr, "r");
     if (streamerr) {
-        while((line = agets(streamerr)) != NULL) {
+        while((line = pgets(streamerr)) != NULL) {
 	    g_ptr_array_add(script->result->err,
 			    g_strdup_printf(_("Script '%s' command '%s': %s"),
 					    script->plugin, command, line));
@@ -1614,7 +1614,7 @@ run_calcsize(
 
     match_expr = vstralloc(" %d SIZE %lld", NULL);
     len = strlen(qdisk);
-    for(; (line = agets(dumpout)) != NULL; free(line)) {
+    for(; (line = pgets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;

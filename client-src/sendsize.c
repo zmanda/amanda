@@ -1116,7 +1116,7 @@ generic_calc_estimates(
     }
     match_expr = vstralloc(" %d SIZE %lld", NULL);
     len = strlen(est->qamname);
-    for(; (line = agets(dumpout)) != NULL; free(line)) {
+    for(; (line = pgets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
 	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
@@ -1682,14 +1682,14 @@ getsize_dump(
 	/*NOTREACHED*/
     }
 
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(size = (off_t)-1; (line = pgets(dumpout)) != NULL; free(line)) {
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
 	size = handle_dumpline(line);
 	if(size > (off_t)-1) {
 	    amfree(line);
-	    while ((line = agets(dumpout)) != NULL) {
+	    while ((line = pgets(dumpout)) != NULL) {
 	        if (line[0] != '\0')
 		    break;
 		amfree(line);
@@ -1959,14 +1959,14 @@ getsize_smbtar(
 	/*NOTREACHED*/
     }
 
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(size = (off_t)-1; (line = pgets(dumpout)) != NULL; free(line)) {
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
 	size = handle_dumpline(line);
 	if(size > -1) {
 	    amfree(line);
-	    while ((line = agets(dumpout)) != NULL) {
+	    while ((line = pgets(dumpout)) != NULL) {
 	        if (line[0] != '\0')
 		    break;
 		amfree(line);
@@ -2251,7 +2251,7 @@ getsize_gnutar(
 	/*NOTREACHED*/
     }
 
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(size = (off_t)-1; (line = pgets(dumpout)) != NULL; free(line)) {
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
@@ -2292,7 +2292,7 @@ getsize_gnutar(
 	    size = handle_dumpline(line);
 	    if(size > (off_t)-1) {
 		amfree(line);
-		while ((line = agets(dumpout)) != NULL) {
+		while ((line = pgets(dumpout)) != NULL) {
 		    if (line[0] != '\0') {
 			break;
 		    }
@@ -2516,7 +2516,7 @@ getsize_application_api(
 	/*NOTREACHED*/
     }
 
-    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+    for(size = (off_t)-1; (line = pgets(dumpout)) != NULL; free(line)) {
 	long long size1_ = (long long)0;
 	long long size2_ = (long long)0;
 	int  level = 0;
@@ -2568,7 +2568,7 @@ getsize_application_api(
 	/*NOTREACHED*/
     }
 
-    while ((line = agets(dumperr)) != NULL) {
+    while ((line = pgets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
 	    char *err =  g_strdup_printf(_("Application '%s': %s"),
 					 dle->program, line);

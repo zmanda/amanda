@@ -516,7 +516,7 @@ main(
 	    error(_("Can't fdopen: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
-	for(; (line = agets(ferr)) != NULL; free(line)) {
+	for(; (line = pgets(ferr)) != NULL; free(line)) {
 	    if (line[0] == '\0')
 		continue;
 	    strappend(extra_info, line);
