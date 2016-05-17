@@ -1636,7 +1636,7 @@ okay_to_continue(
 	fputs(prompt, stdout);
 	fflush(stdout); fflush(stderr);
 	amfree(line);
-	if ((line = agets(stdin)) == NULL) {
+	if ((line = pgets(stdin)) == NULL) {
 	    putchar('\n');
 	    clearerr(stdin);
 	    if (get_device) {

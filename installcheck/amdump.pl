@@ -49,6 +49,7 @@ $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
     installcheck-test
     program "APPLICATION"
+    property "a#s" "5%#8"
     application {
 	plugin "amgtar"
 	property "ATIME-PRESERVE" "NO"

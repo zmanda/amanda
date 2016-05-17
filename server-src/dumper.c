@@ -1323,7 +1323,7 @@ log_msgout(
     if (fseeko(errf, 0L, SEEK_SET) < 0) {
 	dbprintf(_("log_msgout: warning - seek failed: %s\n"), strerror(errno));
     }
-    while ((line = agets(errf)) != NULL) {
+    while ((line = pgets(errf)) != NULL) {
 	if (max_warnings > 0 && errf_lines >= max_warnings && count >= max_warnings) {
 	    log_add(typ, "Look in the '%s' file for full error messages", errfname);
 	    to_unlink = 0;

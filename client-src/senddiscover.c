@@ -427,7 +427,7 @@ main(
 	}
 
 	result = 0;
-	while ((line = agets(dumperr)) != NULL) {
+	while ((line = pgets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
 		delete_message(fprint_message(stdout, build_message(
 			AMANDA_FILE, __LINE__, 2900012, MSG_ERROR, 3,

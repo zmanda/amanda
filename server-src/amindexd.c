@@ -1270,7 +1270,7 @@ main(
     }
     else {
 	/* read the REQ packet */
-	for(; (line = agets(stdin)) != NULL; free(line)) {
+	for(; (line = pgets(stdin)) != NULL; free(line)) {
 	    if(strncmp_const(line, "OPTIONS ") == 0) {
                 if (g_options != NULL) {
 		    dbprintf(_("REQ packet specified multiple OPTIONS.\n"));
@@ -1338,7 +1338,7 @@ main(
     {
 	/* get a line from the client */
 	while(1) {
-	    if((part = agets(cmdin)) == NULL) {
+	    if((part = pgets(cmdin)) == NULL) {
 		if(errno != 0) {
 		    dbprintf(_("? read error: %s\n"), strerror(errno));
 		} else {
@@ -1369,7 +1369,7 @@ main(
 		break;
 	    }
 	    /*
-	     * Hmmm.  We got a "line" from agets(), which means it saw
+	     * Hmmm.  We got a "line" from pgets(), which means it saw
 	     * a '\n' (or EOF, etc), but there was not a '\r' before it.
 	     * Put a '\n' back in the buffer and loop for more.
 	     */

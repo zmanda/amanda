@@ -545,6 +545,48 @@ debug_agets(
 }
 
 
+char *
+debug_pgets(
+    const char *sourcefile,
+    int		lineno,
+    FILE *	stream)
+{
+    char *line = g_malloc(AGETS_LINE_INCR);
+    char *cline;
+    size_t line_size = AGETS_LINE_INCR;
+    size_t loffset = 0;
+
+    (void)sourcefile;	/* Quiet unused parameter warning if not debugging */
+    (void)lineno;	/* Quiet unused parameter warning if not debugging */
+    line[0] = '\0';
+
+    cline = fgets(line, line_size, stream);
+    if (!cline) {
+	return cline;
+    }
+    loffset = strlen(line);
+g_debug("%p %zu %zu :%c:", cline, loffset, line_size, line[loffset-1]);
+    while (cline && loffset == line_size-1 && line[loffset-1] != '\n') {
+	char *tmpline;
+	char *pline;
+
+	line_size *= 2;
+	tmpline = g_malloc(line_size);
+	memcpy(tmpline, line, loffset+1);
+	amfree(line);
+	line = tmpline;
+
+	pline = line + loffset;
+	cline = fgets(pline, line_size-loffset, stream);
+	loffset += strlen(pline);
+    }
+
+    if (line[loffset-1] == '\n')
+	line[loffset-1] = '\0';
+    return line;
+}
+
+
 /*
  *=====================================================================
  * Find/create a buffer for a particular file descriptor for use with

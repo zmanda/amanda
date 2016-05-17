@@ -868,7 +868,7 @@ main(
 	    }
 
 	    result = 0;
-	    while ((line = agets(dumperr)) != NULL) {
+	    while ((line = pgets(dumperr)) != NULL) {
 		if (strlen(line) > 0) {
 		    fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
 		    g_debug("error: %s", line);

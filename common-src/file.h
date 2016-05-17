@@ -61,8 +61,10 @@ uid_t get_client_uid(void);
 gid_t get_client_gid(void);
 
 extern /*@only@*/ /*@null@*/ char *debug_agets(const char *c, int l, FILE *file);
+extern /*@only@*/ /*@null@*/ char *debug_pgets(const char *c, int l, FILE *file);
 extern /*@only@*/ /*@null@*/ char *debug_areads(const char *c, int l, int fd);
 #define agets(f)	      debug_agets(__FILE__,__LINE__,(f))
+#define pgets(f)	      debug_pgets(__FILE__,__LINE__,(f))
 #define areads(f)	      debug_areads(__FILE__,__LINE__,(f))
 
 ssize_t	areads_dataready(int fd);

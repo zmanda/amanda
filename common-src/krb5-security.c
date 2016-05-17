@@ -1148,7 +1148,7 @@ krb5_checkuser( char *	host,
 	goto common_exit;
     }
 
-    while ((line = agets(fp)) != NULL) {
+    while ((line = pgets(fp)) != NULL) {
 	if (line[0] == '\0') {
 	    amfree(line);
 	    continue;

@@ -2701,7 +2701,7 @@ check_user_ruserok(
     }
 
     result = NULL;
-    while ((es = agets(fError)) != NULL) {
+    while ((es = pgets(fError)) != NULL) {
 	if (*es == 0) {
 	    amfree(es);
 	    continue;
@@ -2799,7 +2799,7 @@ check_user_amandahosts(
      * Now, scan the file for the host/user/service.
      */
     found = 0;
-    while ((line = agets(fp)) != NULL) {
+    while ((line = pgets(fp)) != NULL) {
 	if (*line == 0) {
 	    amfree(line);
 	    continue;

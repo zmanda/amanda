@@ -808,7 +808,7 @@ check_disk(
 		}
 		sep = "";
 		errdos = 0;
-		for(sep = ""; (line = agets(ferr)) != NULL; free(line)) {
+		for(sep = ""; (line = pgets(ferr)) != NULL; free(line)) {
 		    if (line[0] == '\0')
 			continue;
 		    strappend(extra_info, sep);
@@ -1193,12 +1193,12 @@ check_disk(
 		    exit(1);
 		    /*NOTREACHED*/
 		}
-		while((line = agets(app_stdout)) != NULL) {
+		while((line = pgets(app_stdout)) != NULL) {
 		    if (strlen(line) > 0) {
 			if (strncmp(line, "MESSAGE JSON", 12) == 0) {
 			    g_free(line);
 			    json_message = g_string_sized_new(1024);
-			    while((line = agets(app_stdout)) != NULL) {
+			    while((line = pgets(app_stdout)) != NULL) {
 				g_string_append(json_message, line);
 				g_free(line);
 			    }
@@ -1231,7 +1231,7 @@ check_disk(
 		    }
 		    amfree(line);
 		}
-		while((line = agets(app_stderr)) != NULL) {
+		while((line = pgets(app_stderr)) != NULL) {
 		    if (strlen(line) > 0) {
 			delete_message(selfcheck_print_message(build_message(
 				AMANDA_FILE, __LINE__, 3600047, MSG_ERROR, 5,
