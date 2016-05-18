@@ -1,4 +1,9 @@
 2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amtrmlog.c: Use free_dump_hash()
+	* server-src/find.c (free_dump_hash): Put in comment because infailon
+	  some machine
+
+2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amrmtape.pl: Can remove multiple labels
 	* man/xml-source/amrmtape.8.xml: Document new feature
 

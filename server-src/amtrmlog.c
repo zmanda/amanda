@@ -219,7 +219,7 @@ main(
 	}
     }
     closedir(dir);
-    g_hash_table_destroy(hash_output_find_log);
+    free_dump_hash(hash_output_find_log);
     amfree(logname);
     amfree(newfile);
     amfree(olddir);

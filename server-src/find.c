@@ -1717,7 +1717,8 @@ dump_hash_exist(
     return output_find_result;
 }
 
-void free_dump_hash(GHashTable *dump_hash)
+void free_dump_hash(GHashTable *dump_hash G_GNUC_UNUSED)
 {
-    g_hash_table_destroy(dump_hash);
+    //It fail on some machine
+    //g_hash_table_destroy(dump_hash);
 }
