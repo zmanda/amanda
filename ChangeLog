@@ -1,4 +1,8 @@
 2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amrmtape.pl: Can remove multiple labels
+	* man/xml-source/amrmtape.8.xml: Document new feature
+
+2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c: Fix dtimeout when using shm-ring (local auth)
 
 2016-05-17  Jean-Louis Martineau <JMartineau@carbonite.com>

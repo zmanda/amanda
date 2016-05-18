@@ -44,7 +44,7 @@
     <arg choice='opt'>--verbose </arg>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><replaceable>label</replaceable></arg>
+    <arg choice='opt'><replaceable>label</replaceable></arg>*
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -173,13 +173,14 @@ Useful with <option>--keep-label</option> and/or <option>--erase</option>.
 
 <refsect1><title>EXAMPLE</title>
 <para>Remove tape labeled
-<emphasis remap='I'>DAILY034</emphasis>
+<emphasis remap='I'>DAILY034</emphasis> and
+<emphasis remap='I'>DAILY035</emphasis>
 from the
 <emphasis remap='I'>DailySet1</emphasis>
 configuration.</para>
 
 <programlisting>
-# amrmtape DailySet1 DAILY034
+# amrmtape DailySet1 DAILY034 DAILY035
 </programlisting>
 </refsect1>
 

@@ -57,7 +57,7 @@ my $remove_no_retention;
 
 sub usage() {
     print <<EOF
-$0 [-n] [-v] [-q] [-d] [config-overwrites] <config> [label]
+$0 [-n] [-v] [-q] [-d] [config-overwrites] <config> [label]*
 \t--changer changer-name
 \t\tSpecify the name of the changer to use (for --erase).
 \t--cleanup
@@ -132,7 +132,7 @@ if ($help) {
     exit 0;
 }
 
-if(scalar(@ARGV) < 0) {
+if(scalar(@ARGV) <= 0) {
     print STDERR "Specify a configuration.\n";
     usage();
     exit 1;
@@ -145,7 +145,7 @@ if ((!$list_retention && !$list_no_retention && !$remove_no_retention) &&
     exit 1;
 }
 
-my ($config_name, $label) = @ARGV;
+my ($config_name, @label) = @ARGV;
 
 set_config_overrides($config_overrides);
 my $cfg_ok = config_init_with_global( $CONFIG_INIT_EXPLICIT_NAME, $config_name );
@@ -205,7 +205,7 @@ sub main {
 	    if ($remove_no_retention) {
 		@list = Amanda::Tapelist::list_no_retention();
 	    } else {
-		@list = ($label);
+		@list = @label;
 	    }
 	    my $Label = Amanda::Label->new(tapelist => $tapelist,
 					   user_msg => \&user_msg);
