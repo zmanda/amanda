@@ -1,4 +1,7 @@
 2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/pp-scripts.pl: Use amrandom to get consistent size
+
+2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amtrmlog.c: Use free_dump_hash()
 	* server-src/find.c (free_dump_hash): Put in comment because infailon
 	  some machine

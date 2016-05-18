@@ -119,8 +119,8 @@ localhost diskname1 $diskname {
     installcheck-test
     program "APPLICATION"
     application {
-	plugin "amgtar"
-	property "atime_preserve" "no" # note underscore
+	plugin "amrandom"
+	property "size" "1075200"
     }
     script {
 	plugin "amlog-script"
@@ -162,8 +162,8 @@ localhost diskname2 $diskname {
     installcheck-test
     program "APPLICATION"
     application {
-	plugin "amgtar"
-	property "atime-preserve" "no"
+	plugin "amrandom"
+	property "size" "1075200"
     }
     script {
 	plugin "amlog-script"
@@ -179,8 +179,8 @@ localhost diskname3 $diskname {
     installcheck-test
     program "APPLICATION"
     application {
-	plugin "amgtar"
-	property "atime-preserve" "no"
+	plugin "amrandom"
+	property "size" "1075200"
     }
     script {
 	plugin "amlog-script"
@@ -224,8 +224,8 @@ localhost diskname2 $diskname {
     installcheck-test
     program "APPLICATION"
     application {
-	plugin "amgtar"
-	property "atime-preserve" "no"
+	plugin "amrandom"
+	property "size" "1075200"
     }
     script {
 	plugin "amlog-script"
@@ -284,8 +284,8 @@ localhost diskname2 $diskname {
   installcheck-test
   program "APPLICATION"
   application {
-    plugin "amgtar"
-    property "ATIME-PRESERVE" "NO"
+    plugin "amrandom"
+    property "size" "1075200"
   }
   script {
     plugin "script-fail"
@@ -299,8 +299,8 @@ localhost diskname3 $diskname {
   installcheck-test
   program "APPLICATION"
   application {
-    plugin "amgtar"
-    property "ATIME-PRESERVE" "NO"
+    plugin "amrandom"
+    property "size" "1075200"
   }
 }
 EODLE
@@ -472,8 +472,8 @@ localhost diskname2 $diskname {
   installcheck-test
   program "APPLICATION"
   application {
-    plugin "amgtar"
-    property "ATIME-PRESERVE" "NO"
+    plugin "amrandom"
+    property "size" "1075200"
   }
   script {
     plugin "script-fail"
@@ -487,8 +487,8 @@ localhost diskname3 $diskname {
   installcheck-test
   program "APPLICATION"
   application {
-    plugin "amgtar"
-    property "ATIME-PRESERVE" "NO"
+    plugin "amrandom"
+    property "size" "1075200"
   }
 }
 EODLE
@@ -673,8 +673,8 @@ localhost diskname2 $diskname {
   installcheck-test
   program "APPLICATION"
   application {
-    plugin "amgtar"
-    property "ATIME-PRESERVE" "NO"
+    plugin "amrandom"
+    property "size" "1075200"
   }
   script {
     plugin "script-fail"
@@ -688,8 +688,8 @@ localhost diskname3 $diskname {
   installcheck-test
   program "APPLICATION"
   application {
-    plugin "amgtar"
-    property "ATIME-PRESERVE" "NO"
+    plugin "amrandom"
+    property "size" "1075200"
   }
 }
 EODLE
