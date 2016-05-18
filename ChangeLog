@@ -1,3 +1,6 @@
+2016-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c: Fix dtimeout when using shm-ring (local auth)
+
 2016-05-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (debug_pgets): New function to read a complete
 	  line from a FILE*

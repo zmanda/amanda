@@ -75,6 +75,7 @@ struct databuf {
     shm_ring_t *shm_ring_producer;
     shm_ring_t *shm_ring_consumer;
     shm_ring_t *shm_ring_direct;
+    uint64_t    shm_readx;
     crc_t      *crc;
 };
 pid_t statepid = -1;
@@ -893,12 +894,14 @@ databuf_init(
 {
 
     db->fd = fd;
+    db->buf = NULL;
     db->datain = db->dataout = db->datalimit = NULL;
     db->compresspid = -1;
     db->encryptpid = -1;
     db->shm_ring_producer = NULL;
     db->shm_ring_consumer = NULL;
     db->shm_ring_direct = NULL;
+    db->shm_readx = 0;
 }
 
 
@@ -2283,6 +2286,8 @@ read_statefd(
 	}
 	break;
     }
+
+    timeout(conf_dtimeout);
 }
 
 /*
@@ -2727,7 +2732,7 @@ static void
 timeout(
     time_t seconds)
 {
-    timeout_time = time(NULL) + seconds + 1;
+    timeout_time = time(NULL) + seconds;
 
     /*
      * remove a timeout if seconds is 0
@@ -2744,7 +2749,7 @@ timeout(
      * schedule a timeout if it not already scheduled
      */
     if (ev_timeout == NULL) {
-	ev_timeout = event_register((event_id_t)seconds, EV_TIME,
+	ev_timeout = event_register((event_id_t)seconds+1, EV_TIME,
 				     timeout_callback, NULL);
     }
 }
@@ -2763,6 +2768,24 @@ timeout_callback(
     if (ev_timeout != NULL) {
 	event_release(ev_timeout);
 	ev_timeout = NULL;
+    }
+
+    if (g_databuf->shm_ring_direct &&
+	!g_databuf->shm_ring_direct->mc->cancelled &&
+	!g_databuf->shm_ring_direct->mc->eof_flag) {
+	if (g_databuf->shm_readx != g_databuf->shm_ring_direct->mc->readx) {
+	    g_databuf->shm_readx = g_databuf->shm_ring_direct->mc->readx;
+	    timeout_time = time(NULL) + conf_dtimeout;
+	}
+    }
+
+    if (g_databuf->shm_ring_consumer &&
+	!g_databuf->shm_ring_consumer->mc->cancelled &&
+	!g_databuf->shm_ring_consumer->mc->eof_flag) {
+	if (g_databuf->shm_readx != g_databuf->shm_ring_consumer->mc->readx) {
+	    g_databuf->shm_readx = g_databuf->shm_ring_consumer->mc->readx;
+	    timeout_time = time(NULL) + conf_dtimeout;
+	}
     }
 
     if (timeout_time > now) { /* not a data timeout yet */
