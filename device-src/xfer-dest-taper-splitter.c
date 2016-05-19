@@ -899,7 +899,7 @@ cancel_impl(
     g_mutex_unlock(self->ring_mutex);
 
     if (elt->shm_ring && !elt->shm_ring->mc->cancelled) {
-	if (!!elt->shm_ring->mc->cancelled) {
+	if (!elt->shm_ring->mc->cancelled) {
 	    g_debug("XDTS:cancel_impl: cancelling shm-ring because xfer is cancelled");
 	    elt->shm_ring->mc->cancelled = TRUE;
 	}

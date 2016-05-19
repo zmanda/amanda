@@ -1,4 +1,9 @@
 2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (shm_ring_sem_wait): Return -1 if the shm-ring
+	  is cancelled
+	* device-src/xfer-dest-taper-splitter.c: s/!!/!/
+
+2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c: Improve error message
 	* common-src/shm-ring.c (shm_ring_sem_wait): Faile only if the process
 	  do not exists (ESRCH)

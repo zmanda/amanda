@@ -101,6 +101,11 @@ shm_ring_sem_wait(
 	if (sem_timedwait(sem, &tv) == 0)
 	    return 0;
 
+	if (shm_ring->mc->cancelled) {
+	    g_debug("shm_ring_sem_wait: shm-ring is cancelled");
+	    return -1;
+	}
+
 	if (errno == EINTR)
 	    continue;
 
