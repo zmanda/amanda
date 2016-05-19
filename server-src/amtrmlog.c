@@ -199,7 +199,6 @@ main(
 		char *newfile;
 		char *oldfile;
 
-		g_free(newfile);
 		oldfile = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
 		newfile = g_strconcat(olddir, "/", adir->d_name, NULL);
 		if (rename(oldfile, newfile) != 0) {

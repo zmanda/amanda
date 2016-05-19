@@ -1,4 +1,7 @@
 2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amtrmlog.c: Remove bogus g_free
+
+2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (debug_pgets): Untaint the returned string
 	* server-src/amtrmlog.c: Fix coverity warning
 
