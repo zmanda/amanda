@@ -552,7 +552,10 @@ debug_pgets(
     FILE *	stream)
 {
     char *line = g_malloc(AGETS_LINE_INCR);
+    char *l;
     char *cline;
+    char *untainted_line;
+    char *ul;
     size_t line_size = AGETS_LINE_INCR;
     size_t loffset = 0;
 
@@ -565,7 +568,6 @@ debug_pgets(
 	return cline;
     }
     loffset = strlen(line);
-g_debug("%p %zu %zu :%c:", cline, loffset, line_size, line[loffset-1]);
     while (cline && loffset == line_size-1 && line[loffset-1] != '\n') {
 	char *tmpline;
 	char *pline;
@@ -583,7 +585,14 @@ g_debug("%p %zu %zu :%c:", cline, loffset, line_size, line[loffset-1]);
 
     if (line[loffset-1] == '\n')
 	line[loffset-1] = '\0';
-    return line;
+
+    untainted_line = ul = g_malloc(loffset+1);
+    for (l = line; *l != '\0'; l++) {
+	*ul++ = *l;
+    }
+    *ul = '\0';
+
+    return untainted_line;
 }
 
 

@@ -55,7 +55,6 @@ main(
     struct dirent *adir;
     int useful;
     char *olddir;
-    char *newfile = NULL;
     time_t today, date_keep;
     char *logname = NULL;
     struct stat stat_log;
@@ -197,14 +196,19 @@ main(
 		char *d;
 		char *datestamp;
 		char *amdumpfile;
+		char *newfile;
+		char *oldfile;
 
 		g_free(newfile);
+		oldfile = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
 		newfile = g_strconcat(olddir, "/", adir->d_name, NULL);
-		if (rename(logname, newfile) != 0) {
+		if (rename(oldfile, newfile) != 0) {
 		    error(_("could not rename \"%s\" to \"%s\": %s"),
 			  logname, newfile, strerror(errno));
 		    /*NOTREACHED*/
 		}
+		amfree(newfile);
+		amfree(oldfile);
 
 		datestamp = g_strdup(adir->d_name);
 		d = strrchr(datestamp+4, '.');
@@ -221,7 +225,6 @@ main(
     closedir(dir);
     free_dump_hash(hash_output_find_log);
     amfree(logname);
-    amfree(newfile);
     amfree(olddir);
     amfree(conf_logdir);
     clear_tapelist();
