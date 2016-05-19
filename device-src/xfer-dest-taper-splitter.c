@@ -630,6 +630,7 @@ part_done:
     if (elt->shm_ring) {
 	if (elt->cancelled) {
 	    if (elt->shm_ring) {
+		g_debug("device_thread_write_part: cancelling shm-ring because xfer is cancelled");
 		elt->shm_ring->mc->cancelled = TRUE;
 	    }
 	} else if (elt->shm_ring->mc->cancelled) {
@@ -697,6 +698,13 @@ device_thread(
 	mem_ring_consumer_set_size(self->mem_ring, self->max_memory, self->device->block_size);
     } else if (elt->input_mech == XFER_MECH_SHM_RING) {
 	shm_ring_consumer_set_size(elt->shm_ring, self->max_memory, self->device->block_size);
+	if (elt->input_mech == XFER_MECH_SHM_RING &&
+	    elt->shm_ring->mc->cancelled) {
+	    g_debug("shm_ring is cancelled");
+	    xfer_cancel_with_error(XFER_ELEMENT(self)->upstream,
+		_("failed to set shm-ring"));
+	    goto device_thread_done;
+	}
     }
     crc32_init(&elt->crc);
 
@@ -718,6 +726,14 @@ device_thread(
 
         if (elt->cancelled)
 	    break;
+
+	if (elt->input_mech == XFER_MECH_SHM_RING &&
+	    elt->shm_ring->mc->cancelled) {
+	    g_debug("shm_ring is cancelled");
+	    xfer_cancel_with_error(XFER_ELEMENT(self)->upstream,
+		_("shm-ring cancelled"));
+	    break;
+	}
 
 	DBG(2, "device_thread beginning to write part");
 	msg = device_thread_write_part(self);
@@ -755,6 +771,7 @@ device_thread(
     msg->size = elt->crc.size;
     xfer_queue_message(elt->xfer, msg);
 
+device_thread_done:
     /* tell the main thread we're done */
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
@@ -881,8 +898,11 @@ cancel_impl(
     g_cond_broadcast(self->ring_cond);
     g_mutex_unlock(self->ring_mutex);
 
-    if (elt->shm_ring) {
-	elt->shm_ring->mc->cancelled = TRUE;
+    if (elt->shm_ring && !elt->shm_ring->mc->cancelled) {
+	if (!!elt->shm_ring->mc->cancelled) {
+	    g_debug("XDTS:cancel_impl: cancelling shm-ring because xfer is cancelled");
+	    elt->shm_ring->mc->cancelled = TRUE;
+	}
 	sem_post(elt->shm_ring->sem_ready);
 	sem_post(elt->shm_ring->sem_start);
 	sem_post(elt->shm_ring->sem_read);

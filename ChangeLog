@@ -1,4 +1,15 @@
 2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c: Improve error message
+	* common-src/shm-ring.c (shm_ring_sem_wait): Faile only if the process
+	  do not exists (ESRCH)
+	* device-src/xfer-dest-taper-splitter.c: Improve debugging
+	* perl/Amanda/Taper/Scribe.pm: Set started_writing only when we wrote
+	  a part
+	* server-src/dumper.c: Improve debugging
+	* xfer-src/element-glue.c: Improve debugging
+	* xfer-src/xfer.c: Improve debugging
+
+2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amtrmlog.c: Remove bogus g_free
 
 2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>

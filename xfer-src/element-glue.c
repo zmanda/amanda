@@ -413,7 +413,6 @@ pull_and_write(XferElementGlue *self)
 		    if (!elt->cancelled) {
 			xfer_cancel_with_error(elt,
 			    _("Error writing to fd %d: %s"), fd, strerror(errno));
-			xfer_cancel(elt->xfer);
 			wait_until_xfer_cancelled(elt->xfer);
 		    }
 		    amfree(buf);
@@ -482,7 +481,6 @@ pull_static_and_write(XferElementGlue *self)
 		    if (!elt->cancelled) {
 			xfer_cancel_with_error(elt,
 			    _("Error writing to fd %d: %s"), fd, strerror(errno));
-			xfer_cancel(elt->xfer);
 			wait_until_xfer_cancelled(elt->xfer);
 		    }
 		    amfree(buf);
@@ -916,6 +914,7 @@ read_to_shm_ring(
 
     if (elt->cancelled) {
 	elt->shm_ring->mc->cancelled = TRUE;
+	g_debug("read_to_shm_ring: cancel shm-ring because elt cancelled");
     } else if (elt->shm_ring->mc->cancelled) {
 	xfer_cancel_with_error(elt, "shm_ring cancelled");
     }
@@ -1013,6 +1012,7 @@ pull_static_to_shm_ring(
 
     if (elt->cancelled) {
 	elt->shm_ring->mc->cancelled = TRUE;
+	g_debug("pull_static_to_shm_ring: cancel shm-ring because elt cancelled");
     } else if (elt->shm_ring->mc->cancelled) {
 	xfer_cancel_with_error(elt, "shm_ring cancelled");
     }

@@ -734,6 +734,8 @@ xfer_cancel_with_error(
     msg->message = g_strdup_vprintf(fmt, argp);
     arglist_end(argp);
 
+    g_debug("xfer_cancel_with_error: %s", msg->message);
+
     /* send the XMSG_ERROR */
     xfer_queue_message(elt->xfer, msg);
 

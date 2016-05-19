@@ -896,7 +896,6 @@ sub _start_part {
     }
 
     # and start writing this part
-    $self->{'started_writing'} = 1;
     $self->dbg("resuming transfer");
     if (!defined ($self->{'nparts'}) or $self->{'nparts'} == 0) {
 	$self->{'feedback'}->scribe_ready();
@@ -919,6 +918,7 @@ sub handle_xmsg {
     if ($msg->{'elt'} == $self->{'xdt'}) {
 	$self->dbg("got msg from xfer dest: $msg");
 	if ($msg->{'type'} == $XMSG_PART_DONE) {
+	    $self->{'started_writing'} = 1;
 	    $self->_xmsg_part_done($src, $msg, $xfer);
 	} elsif ($msg->{'type'} == $XMSG_READY) {
 	    $self->_xmsg_ready($src, $msg, $xfer);

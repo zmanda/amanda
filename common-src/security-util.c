@@ -989,23 +989,24 @@ tcpm_recv_token(
 
 
 	if (rval < 0) {
+	    g_free(*errmsg);
+	    *errmsg = g_strdup_printf(_("Yrecv error: %s"), strerror(errno));
+	    g_debug("tcpm_recv_token: cancelling shm-ring becasue rval < 0");
 	    rs->shm_ring->mc->cancelled = TRUE;
 	    rs->shm_ring->mc->eof_flag = TRUE;
 	    sem_post(rs->shm_ring->sem_read);
 	    sem_post(rs->shm_ring->sem_read);
-	    g_free(*errmsg);
-	    *errmsg = g_strdup_printf(_("Yrecv error: %s"), strerror(errno));
 	    auth_debug(1, _("tcpm_recv_token: C return(-1)\n"));
 	    amfree(buf);
 	    return (-1);
 	} else if (rval == 0) {
+	    g_free(*errmsg);
+	    *errmsg = g_strdup("SOCKET_EOF");
 	    *size = 0;
 	    *handle = H_EOF;
 	    rs->shm_ring->mc->eof_flag = TRUE;
 	    sem_post(rs->shm_ring->sem_read);
 	    sem_post(rs->shm_ring->sem_read);
-	    g_free(*errmsg);
-	    *errmsg = g_strdup("SOCKET_EOF");
 	    auth_debug(1, "tcpm_recv_token: C return(0)\n");
 	    amfree(buf);
 	    return (0);

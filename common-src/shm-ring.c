@@ -112,13 +112,16 @@ shm_ring_sem_wait(
 	for (i=0; i<SHM_RING_MAX_PID; i++) {
 	    if (shm_ring->mc->pids[i] != 0) {
 		if (kill(shm_ring->mc->pids[i], 0) == -1) {
-		    goto failed_sem_wait;
+		    if (errno == ESRCH) {
+			goto failed_sem_wait;
+		    }
 		}
 	    }
 	}
     }
 
 failed_sem_wait:
+    g_debug("shm_ring_sem_wait: failed_sem_wait: %s", strerror(errno));
     shm_ring->mc->cancelled = 1;
     sem_post(shm_ring->sem_read);
     sem_post(shm_ring->sem_write);
@@ -567,8 +570,17 @@ shm_ring_consumer_set_size(
     if (shm_ring_sem_wait(shm_ring, shm_ring->sem_read) == -1) {
 	return;
     }
+    if (shm_ring->mc->cancelled) {
+	return;
+    }
+
     if (shm_ring->mc->ring_size == 0) {
+	g_debug("shm_ring_consumer_set_size:ring_size == 0");
 	shm_ring->mc->cancelled = TRUE;
+	sem_post(shm_ring->sem_read);
+	sem_post(shm_ring->sem_write);
+	sem_post(shm_ring->sem_ready);
+	sem_post(shm_ring->sem_start);
 	return;
     }
     shm_ring->ring_size = shm_ring->mc->ring_size;

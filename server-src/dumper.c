@@ -2839,6 +2839,7 @@ stop_dump(void)
 
     if (dump_result > 0) {
 	if (g_databuf->shm_ring_producer) {
+	    g_debug("stop_dump: cancelling shm-ring");
 	    g_databuf->shm_ring_producer->mc->cancelled = TRUE;
 	    if (g_databuf->shm_ring_producer->mc->need_sem_ready) {
 		g_databuf->shm_ring_producer->mc->need_sem_ready--;
@@ -2848,6 +2849,7 @@ stop_dump(void)
 	    sem_post(g_databuf->shm_ring_producer->sem_write);
 	}
 	if (g_databuf->shm_ring_consumer) {
+	    g_debug("stop_dump: cancelling shm-ring");
 	    g_databuf->shm_ring_consumer->mc->cancelled = TRUE;
 	    if (g_databuf->shm_ring_consumer->mc->need_sem_ready) {
 		g_databuf->shm_ring_consumer->mc->need_sem_ready--;
@@ -2857,6 +2859,7 @@ stop_dump(void)
 	    sem_post(g_databuf->shm_ring_consumer->sem_write);
 	}
 	if (g_databuf->shm_ring_direct) {
+	    g_debug("stop_dump: cancelling shm-ring");
 	    g_databuf->shm_ring_direct->mc->cancelled = TRUE;
 	    if (g_databuf->shm_ring_direct->mc->need_sem_ready) {
 		g_databuf->shm_ring_direct->mc->need_sem_ready--;
