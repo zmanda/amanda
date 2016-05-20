@@ -840,7 +840,6 @@ tcpm_recv_token(
 	    }
 	    return 0;
 	}
-	return -2;
     }
 
     *size = (ssize_t)ntohl(rc->netint[0]);
@@ -870,6 +869,7 @@ tcpm_recv_token(
 	void *decbuf;
 	ssize_t decsize;
 	char *buf = NULL;
+	size_t size_read = 0;
 
 	if (!rs->ring_init) {
 	    shm_ring_producer_set_size(rs->shm_ring, NETWORK_BLOCK_BYTES*8, NETWORK_BLOCK_BYTES);
@@ -958,6 +958,7 @@ tcpm_recv_token(
 					     usable, 0);
 	    }
 	    if (rval > 0) {
+		size_read += rval;
 		if (rs->shm_ring->mc->written == 0 && rs->shm_ring->mc->need_sem_ready) {
 		    sem_post(rs->shm_ring->sem_ready);
 		    if (shm_ring_sem_wait(rs->shm_ring, rs->shm_ring->sem_start) != 0) {
@@ -991,7 +992,7 @@ tcpm_recv_token(
 	if (rval < 0) {
 	    g_free(*errmsg);
 	    *errmsg = g_strdup_printf(_("Yrecv error: %s"), strerror(errno));
-	    g_debug("tcpm_recv_token: cancelling shm-ring becasue rval < 0");
+	    g_debug("tcpm_recv_token: cancelling shm-ring because rval < 0");
 	    rs->shm_ring->mc->cancelled = TRUE;
 	    rs->shm_ring->mc->eof_flag = TRUE;
 	    sem_post(rs->shm_ring->sem_read);
@@ -1011,7 +1012,7 @@ tcpm_recv_token(
 	    amfree(buf);
 	    return (0);
 	} else {
-	    *size = rval;
+	    *size = size_read;
 	    rc->size_header_read = 0;
 	    rc->size_buffer_read = 0;
 	    amfree(buf);

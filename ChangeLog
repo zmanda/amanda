@@ -1,3 +1,6 @@
+2016-05-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c (tcpm_recv_token): Fix return value
+
 2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (shm_ring_sem_wait): Return -1 if the shm-ring
 	  is cancelled
