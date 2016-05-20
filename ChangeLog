@@ -1,4 +1,7 @@
 2016-05-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/stream.h (STREAM_BUFSIZE): Set to NETWORK_BLOCK_BYTES * 4
+
+2016-05-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c (tcpm_recv_token): Fix return value
 
 2016-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
