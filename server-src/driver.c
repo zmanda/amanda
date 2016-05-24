@@ -2283,7 +2283,7 @@ handle_taper_result(
 
 	    wtaper->nb_dle--;
 	    wtaper->result = cmd;
-	    if (job->dumper && !dp->dataport_list) {
+	    if (job->dumper && !dp->dataport_list && !dp->shm_name) {
 		job->dumper->result = FAILED;
 	    }
 	    if (g_str_equal(result_argv[3], "INPUT-ERROR")) {
