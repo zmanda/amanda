@@ -29,6 +29,7 @@
 #include "sockaddr-util.h"
 #include "stream.h"
 #include "debug.h"
+#include "conffile.h"
 #include "mem-ring.h"
 #include "shm-ring.h"
 

@@ -1,4 +1,7 @@
 2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c: #include "conffile.h"
+
+2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* xfer-src/element-glue.c (do_directtcp_accept): Use dtimeout for the
 	  timeout
 
