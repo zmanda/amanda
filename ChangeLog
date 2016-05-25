@@ -1,4 +1,7 @@
 2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c: #include "conffile.h"
+
+2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amxml.c, common-src/file.c: Remove superflous debugging
 	  statements
 

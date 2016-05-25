@@ -28,6 +28,7 @@
 #include "sockaddr-util.h"
 #include "stream.h"
 #include "debug.h"
+#include "conffile.h"
 
 /*
  * Instance definition
