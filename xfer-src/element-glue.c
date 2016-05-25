@@ -178,7 +178,10 @@ do_directtcp_accept(
     int *socketp)
 {
     int sock;
-    time_t timeout_time = time(NULL) + 840;
+    time_t timeout_time;
+    time_t dtimeout = (time_t)getconf_int(CNF_DTIMEOUT);
+
+    timeout_time = time(NULL) + dtimeout;
     g_assert(*socketp != -1);
 
     if ((sock = interruptible_accept(*socketp, NULL, NULL,

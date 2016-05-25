@@ -1,3 +1,7 @@
+2016-05-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c (do_directtcp_accept): Use dtimeout for the
+	  timeout
+
 2016-05-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (debug_pgets): New function to read a complete
 	  line from a FILE*
