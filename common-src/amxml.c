@@ -970,10 +970,8 @@ amtext(
 	last_element2_name = last_element2->data;
 	if (strcmp(last_element2_name, "backup-program") == 0) {
 	    dle->application_client_name = tt;
-g_debug("set dle->application_client_name: %s", dle->application_client_name);
 	} else if (strcmp(last_element2_name, "script") == 0) {
 	    data_user->script->client_name = tt;
-g_debug("set data_user->script->client_name: %s", data_user->script->client_name);
 	} else {
 	    error("client_name outside of script or backup-program");
 	}
@@ -1011,7 +1009,7 @@ amxml_parse_node_CHAR(
 	g_error_free(gerror);
     }
     return amgxml.dles;
-	
+
 }
 
 dle_t *
@@ -1032,7 +1030,6 @@ amxml_parse_node_FILE(
     context = g_markup_parse_context_new(&parser, flags, &amgxml, NULL);
 
     while ((line = pgets(file)) != NULL && !gerror) {
-g_debug("line: %s",line);
 	g_markup_parse_context_parse(context, line, strlen(line), &gerror);
 	amfree(line);
     }

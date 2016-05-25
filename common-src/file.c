@@ -523,7 +523,6 @@ debug_pgets(
 	return cline;
     }
     loffset = strlen(line);
-g_debug("%p %zu %zu :%c:", cline, loffset, line_size, line[loffset-1]);
     while (cline && loffset == line_size-1 && line[loffset-1] != '\n') {
 	char *tmpline;
 	char *pline;
