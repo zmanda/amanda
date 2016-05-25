@@ -32,7 +32,7 @@ use Amanda::Header;
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
-use Amanda::Config;
+use Amanda::Config qw( :init :getconf );
 use Amanda::Constants;
 
 # get Amanda::Device only when we're building for server
@@ -397,6 +397,13 @@ SKIP: {
 	# set up vtapes
 	my $testconf = Installcheck::Run::setup();
 	$testconf->write();
+	config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+	my ($cfgerr_level, @cfgerr_errors) = config_errors();
+	if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	    config_print_errors();
+	    BAIL_OUT("config errors");
+	}
+
 
 	# set up a device for slot 1
 	my $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape(1));

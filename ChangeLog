@@ -1,4 +1,7 @@
 2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Xfer.pl: Call config_init()
+
+2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* xfer-src/element-glue.c: #include "conffile.h"
 
 2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
