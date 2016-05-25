@@ -1,3 +1,7 @@
+2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c (do_directtcp_accept): Use dtimeout for the
+	  timeout
+
 2016-05-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Fix fro taper failure after SHM-NAME received
 
