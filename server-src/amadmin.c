@@ -569,7 +569,7 @@ info_one(
 	   info.incr.comp[0]*100, info.incr.comp[1]*100, info.incr.comp[2]*100);
 
     g_printf(_("  Dumps: lev datestmp  tape             file   origK   compK secs\n"));
-    for(lev = 0, sp = &info.inf[0]; lev < 9; lev++, sp++) {
+    for(lev = 0, sp = &info.inf[0]; lev < DUMP_LEVELS; lev++, sp++) {
 	if(sp->date < (time_t)0 && sp->label[0] == '\0') continue;
 	tm = localtime(&sp->date);
 	if (tm) {
@@ -1598,10 +1598,7 @@ import_db(
     int		argc,
     char **	argv)
 {
-    int vers_maj;
-    int vers_min;
-    int vers_patch;
-    int newer;
+    char *version;
     char *org;
     char *line = NULL;
     char *hdr;
@@ -1614,7 +1611,7 @@ import_db(
 
     /* process header line */
 
-    if((line = agets(stdin)) == NULL) {
+    if ((line = agets(stdin)) == NULL) {
 	g_fprintf(stderr, _("%s: empty input.\n"), get_pname());
 	return;
     }
@@ -1623,73 +1620,41 @@ import_db(
     ch = *s++;
 
     hdr = "version";
-    if(strncmp_const_skip(s - 1, "CURINFO Version", s, ch) != 0) {
+    if (strncmp_const_skip(s - 1, "CURINFO Version", s, ch) != 0) {
 	goto bad_header;
     }
     ch = *s++;
     skip_whitespace(s, ch);
-    if(ch == '\0'
-       || sscanf(s - 1, "%d.%d.%d", &vers_maj, &vers_min, &vers_patch) != 3) {
-	vers_patch = -1;
-	if (sscanf(s - 1, "%d.%d", &vers_maj, &vers_min) != 2) {
-	    goto bad_header;
-	}
-    }
+    version = s - 1;
 
-    skip_integer(s, ch);			/* skip over major */
-    if(ch != '.') {
-	goto bad_header;
-    }
-    ch = *s++;
-    skip_integer(s, ch);			/* skip over minor */
-    if (vers_patch != -1) {
-	if (ch != '.') {
-	    goto bad_header;
-	}
-	ch = *s++;
-	skip_integer(s, ch);			/* skip over patch */
-    } else {
-	vers_patch = 0;
-    }
-
-    hdr = "comment";
-    if(ch == '\0') {
-	goto bad_header;
-    }
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
 
     hdr = "CONF";
     skip_whitespace(s, ch);			/* find the org keyword */
-    if(ch == '\0' || strncmp_const_skip(s - 1, "CONF", s, ch) != 0) {
+    if (ch == '\0' || strncmp_const_skip(s - 1, "CONF", s, ch) != 0) {
 	goto bad_header;
     }
     ch = *s++;
 
     hdr = "org";
     skip_whitespace(s, ch);			/* find the org string */
-    if(ch == '\0') {
+    if (ch == '\0') {
 	goto bad_header;
     }
     org = s - 1;
 
-    /*@ignore@*/
-    newer = (vers_maj != VERSION_MAJOR)? vers_maj > VERSION_MAJOR :
-	    (vers_min != VERSION_MINOR)? vers_min > VERSION_MINOR :
-					 vers_patch > VERSION_PATCH;
-    if(newer)
-	g_fprintf(stderr,
-	     _("%s: WARNING: input is from newer Amanda version: %d.%d.%d.\n"),
-		get_pname(), vers_maj, vers_min, vers_patch);
-    /*@end@*/
-
-    if(!g_str_equal(org, getconf_str(CNF_ORG))) {
-	g_fprintf(stderr, _("%s: WARNING: input is from different org: %s\n"),
+    if  (!g_str_equal(version, VERSION)) {
+	g_fprintf(stderr, "%s: WARNING: input is from different version: %s\n",
+		get_pname(), version);
+    }
+    if (!g_str_equal(org, getconf_str(CNF_ORG))) {
+	g_fprintf(stderr, "%s: WARNING: input is from different org: %s\n",
 		get_pname(), org);
     }
 
     do {
-    	rc = import_one();
+	rc = import_one();
     } while (rc);
 
     amfree(line);
@@ -1881,7 +1846,7 @@ import_one(void)
 	    }
 	}
 
-	if(level < 0 || level > 9) goto parse_err;
+	if(level < 0 || level > DUMP_LEVELS) goto parse_err;
 
 	info.inf[level] = onestat;
     }
