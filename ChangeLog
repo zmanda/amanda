@@ -1,3 +1,7 @@
+2016-05-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amadmin.c (import_db): Fix version parsing
+	* server-src/amadmin.c: Fix for level > 9
+
 2016-05-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Xfer.pl: Call config_init()
 
