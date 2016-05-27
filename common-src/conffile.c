@@ -655,6 +655,7 @@ static void ckseen(seen_t *seen);
 /* validate_functions -- these fit into the validate_function slot in
  * a parser table entry.  They call conf_parserror if the value in their
  * second argument is invalid.  */
+static void validate_no_space(conf_var_t *, val_t *);
 static void validate_nonnegative(conf_var_t *, val_t *);
 static void validate_non_zero(conf_var_t *, val_t *);
 static void validate_positive(conf_var_t *, val_t *);
@@ -1388,7 +1389,7 @@ conf_var_t server_var [] = {
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
    { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , validate_deprecated_changerfile },
-   { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , NULL },
+   { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , validate_no_space },
    { CONF_TAPELIST             , CONFTYPE_STR      , read_str         , CNF_TAPELIST             , NULL },
    { CONF_DISKFILE             , CONFTYPE_STR      , read_str         , CNF_DISKFILE             , NULL },
    { CONF_INFOFILE             , CONFTYPE_STR      , read_str         , CNF_INFOFILE             , NULL },
@@ -1427,8 +1428,8 @@ conf_var_t server_var [] = {
    { CONF_KRB5KEYTAB           , CONFTYPE_STR      , read_str         , CNF_KRB5KEYTAB           , NULL },
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
-   { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , NULL },
-   { CONF_META_AUTOLABEL       , CONFTYPE_STR      , read_str         , CNF_META_AUTOLABEL       , NULL },
+   { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , validate_no_space },
+   { CONF_META_AUTOLABEL       , CONFTYPE_STR      , read_str         , CNF_META_AUTOLABEL       , validate_no_space },
    { CONF_EJECT_VOLUME         , CONFTYPE_BOOLEAN  , read_bool        , CNF_EJECT_VOLUME         , NULL },
    { CONF_TMPDIR               , CONFTYPE_STR      , read_str         , CNF_TMPDIR               , validate_tmpdir },
    { CONF_USETIMESTAMPS        , CONFTYPE_BOOLEAN  , read_bool        , CNF_USETIMESTAMPS        , NULL },
@@ -1634,10 +1635,10 @@ conf_var_t storage_var [] = {
    { CONF_COMMENT                  , CONFTYPE_STR           , read_str           , STORAGE_COMMENT                  , NULL },
    { CONF_POLICY                   , CONFTYPE_STR           , read_dpolicy       , STORAGE_POLICY                   , NULL },
    { CONF_TPCHANGER                , CONFTYPE_STR           , read_str           , STORAGE_TPCHANGER                , NULL },
-   { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , NULL },
-   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , NULL },
-   { CONF_META_AUTOLABEL           , CONFTYPE_STR           , read_str           , STORAGE_META_AUTOLABEL           , NULL },
-   { CONF_TAPEPOOL                 , CONFTYPE_STR           , read_str           , STORAGE_TAPEPOOL                 , NULL },
+   { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , validate_no_space },
+   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , validate_no_space },
+   { CONF_META_AUTOLABEL           , CONFTYPE_STR           , read_str           , STORAGE_META_AUTOLABEL           , validate_no_space },
+   { CONF_TAPEPOOL                 , CONFTYPE_STR           , read_str           , STORAGE_TAPEPOOL                 , validate_no_space },
    { CONF_RUNTAPES                 , CONFTYPE_INT           , read_int           , STORAGE_RUNTAPES                 , NULL },
    { CONF_TAPERSCAN                , CONFTYPE_STR           , read_str           , STORAGE_TAPERSCAN                , NULL },
    { CONF_TAPETYPE                 , CONFTYPE_STR           , read_str           , STORAGE_TAPETYPE                 , NULL },
@@ -5435,6 +5436,38 @@ ckseen(
 }
 
 /* Validation functions */
+
+static void
+validate_no_space(
+    struct conf_var_s *np,
+    val_t        *val)
+{
+    switch (val->type) {
+    case CONFTYPE_STR:
+      {
+	char *str = val_t__str(val);
+	if (str && strchr(str, ' '))
+	    conf_parserror("%s must not contains space", get_token_name(np->token));
+	break;
+      }
+    case CONFTYPE_AUTOLABEL:
+      {
+	autolabel_t *autolabel = val_t__autolabel(val);
+	if (autolabel->template && strchr(autolabel->template, ' '))
+	    conf_parserror("%s template must not contains space", get_token_name(np->token));
+	break;
+      }
+    case CONFTYPE_LABELSTR:
+      {
+	labelstr_s *labelstr = val_t__labelstr(val);
+	if (labelstr->template && strchr(labelstr->template, ' '))
+	    conf_parserror("%s template must not contains space", get_token_name(np->token));
+	break;
+      }
+    default:
+	conf_parserror("validate_no_space invalid type %d\n", val->type);
+    }
+}
 
 static void
 validate_nonnegative(
