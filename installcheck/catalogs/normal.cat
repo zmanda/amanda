@@ -285,7 +285,7 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094k  #####     9     9
+  DIRO-TEST-003       0:00 1371742094K  #####     9     9
 
 
 NOTES:
@@ -294,7 +294,7 @@ NOTES:
 
 DUMP SUMMARY:
                                           DUMPER STATS                    TAPER STATS
-HOSTNAME              DISK   L    ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+HOSTNAME              DISK   L    ORIG-KB     OUT-KB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 ----------------------------------- ---------------------------- --------------- ---------------
 localhost.localdomain /boot1 0         16         12   75.0    0:02 24748.4   0:00 156611.1
 localhost.localdomain /boot2 0        167        123   73.7    0:02 24748.4   0:00 156611.1
@@ -339,7 +339,7 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094k  #####     9     9
+  DIRO-TEST-003       0:00 1371742094K  #####     9     9
 
 
 NOTES:
@@ -348,7 +348,7 @@ NOTES:
 
 DUMP SUMMARY:
                                             DUMPER STATS                     TAPER STATS
-HOSTNAME              DISK        L       ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+HOSTNAME              DISK        L       ORIG-KB     OUT-KB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 ----------------------------------- ------------------------------- --------------- ---------------
 localhost.localdomain /boot1      0         16.00         12   75.0    0:02 24748.4   0:00 156611.1
 localhost.localdomain /boot2      0        167.00        123   73.7    0:02 24748.4   0:00 156611.1
@@ -393,7 +393,7 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094k  #####     9     9
+  DIRO-TEST-003       0:00 1371742094K  #####     9     9
 
 
 NOTES:
@@ -402,7 +402,7 @@ NOTES:
 
 DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
-HOSTNAME              DISK        L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+HOSTNAME              DISK        L ORIG-KB     OUT-KB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 ----------------------------------- ----------------------- --------------- ---------------
 localhost.localdomain /boot1      0    16         12   75.0    0:02 24748.4   0:00 156611.1
 localhost.localdomain /boot2      0   167        123   73.7    0:02 24748.4   0:00 156611.1
@@ -447,7 +447,7 @@ Avg Tp Write Rate (k/s) #######    #######        --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:00 1371742094k  #####     9     9
+  DIRO-TEST-003       0:00 1371742094K  #####     9     9
 
 
 NOTES:
@@ -456,7 +456,7 @@ NOTES:
 
 DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
-HOSTNAME         DISK             L ORIG-kB     OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+HOSTNAME         DISK             L ORIG-KB     OUT-KB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 ----------------------------------- ----------------------- --------------- ---------------
 localhost.localdomain /boot1      0 16.000000 12 75.0 0:02 24748.4 0:00 156611.1
 localhost.localdomain /boot2      0 167.000000 123 73.7 0:02 24748.4 0:00 156611.1

@@ -65,12 +65,12 @@ Avg Tp Write Rate (k/s) 23070.7    23070.7        --
 
 USAGE BY TAPE:
   Label          Time      Size      %  DLEs Parts
-  Daily-36       0:00    17246k   56.2     2     2
+  Daily-36       0:00    17246K   56.2     2     2
 
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME            DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+HOSTNAME            DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
 --------------------------------- ---------------------- -------------- --------------
 cnc.slikon.local    /             MISSING --------------------------------------------
 cnc.slikon.local    /boot       0   20670   17245   83.4    0:04 4052.7   0:01 23216.5

@@ -97,7 +97,7 @@ Avg Tp Write Rate (k/s)  143966    27624.3     151811
 
 USAGE BY TAPE:
   Label            Time      Size      %  DLEs Parts
-  metals-013       0:00     1650k    5.4     4     4
+  metals-013       0:00     1650K    5.4     4     4
 
 
 NOTES:
@@ -106,7 +106,7 @@ NOTES:
 
 DUMP SUMMARY:
                                                                           DUMPER STATS                TAPER STATS
-HOSTNAME                                                     DISK         L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+HOSTNAME                                                     DISK         L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
 --------------------------------------------------------------------------- ---------------------- -------------- ---------------
 strontium    /etc                                                         1     270     270    --     0:00 1146.3   0:00 140918.6
 strontium    /home/elantra                                                1      10      10    --     0:00   65.6   0:00   9033.4

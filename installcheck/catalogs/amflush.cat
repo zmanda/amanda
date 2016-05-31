@@ -54,12 +54,12 @@ Avg Tp Write Rate (k/s)  8920.8        --      8920.8
 
 USAGE BY TAPE:
   Label            Time      Size      %  DLEs Parts
-  Flushy-017       0:00    37289k  121.4     2     2
+  Flushy-017       0:00    37289K  121.4     2     2
 
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
 -------------------------- ---------------------- -------------- --------------
 localhost    /home         NOT FLUSHED
 localhost    /opt          NOT FLUSHED

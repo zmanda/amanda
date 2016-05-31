@@ -1,4 +1,11 @@
 2016-05-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: displayunit default ot 'K' (uppercase)
+	* installcheck/Amanda_Rest_Configs.pl: Fix for K uppercase
+	* installcheck/Amanda_Rest_Runs.pl: Fix for K uppercase
+	* xfer-src/xfer-test.c: Call config_init(0, NULL)
+	* installcheck/catalogs/*.cat: Fix for K uppercase
+
+2016-05-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm (make_new_tape_label): Can take meta
 	  from $self
 	* perl/Amanda/Changer/diskflat.pm: Use meta from state

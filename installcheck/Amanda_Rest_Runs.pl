@@ -2804,7 +2804,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                      },
                                        'notes' => [
                                                     '  big estimate: home.slikon.local /opt/public 0',
-                                                    '                  est: 80286112k    out 50917370k'
+                                                    '                  est: 80286112K    out 50917370K'
                                                   ],
                                        'usage_by_tape' => [
                                                             {

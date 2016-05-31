@@ -70,7 +70,7 @@ Avg Tp Write Rate (k/s)     --         --         --
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ---------------------- -------------- -------------
 euclid       /A/p/etc    0     100     100    --     0:00 2491.0
 
@@ -111,7 +111,7 @@ Avg Tp Write Rate (k/s)     --         --         --
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ---------------------- -------------- -------------
 euclid       /A/p/etc    0     100     100    --     0:00 2491.0
 

@@ -75,8 +75,8 @@ Avg Tp Write Rate (k/s)  244170     244170        --
 
 USAGE BY TAPE:
   Label          Time      Size      %  DLEs Parts
-  Conf-001       0:00    20320k   66.2     1     4
-  Conf-002       0:00     6470k   21.1     0     2
+  Conf-001       0:00    20320K   66.2     1     4
+  Conf-002       0:00     6470K   21.1     0     2
 
 
 NOTES:
@@ -87,7 +87,7 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS                 TAPER STATS
-HOSTNAME         DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+HOSTNAME         DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
 ------------------------------ ---------------------- --------------- ---------------
 euclid       /A/b/server-src 0   21830   21830    --     0:00 82641.8   0:00 244170.0
 

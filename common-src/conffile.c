@@ -6231,7 +6231,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_DUMPED]   , CONF_UNIT_NONE, 0);
     conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_SCHEDULED], CONF_UNIT_NONE, 0);
     conf_init_int      (&conf_data[CNF_TAPERFLUSH]               , CONF_UNIT_NONE, 0);
-    conf_init_str   (&conf_data[CNF_DISPLAYUNIT]          , "k");
+    conf_init_str   (&conf_data[CNF_DISPLAYUNIT]          , "K");
     conf_init_str   (&conf_data[CNF_KRB5KEYTAB]           , "/.amanda-v5-keytab");
     conf_init_str   (&conf_data[CNF_KRB5PRINCIPAL]        , "service/amanda");
     conf_init_str   (&conf_data[CNF_LABEL_NEW_TAPES]      , "");

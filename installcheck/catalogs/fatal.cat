@@ -83,7 +83,7 @@ NOTES:
 
 DUMP SUMMARY:
                                                    DUMPER STATS   TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 -------------------------- ---------------------- -------------- -------------
 localhost    /boot         FAILED
 

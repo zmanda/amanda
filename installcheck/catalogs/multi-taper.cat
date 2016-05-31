@@ -122,12 +122,12 @@ Avg Tp Write Rate (k/s)  44610.0        --     44610.0
 
 USAGE BY TAPE:
   Label               Time         Size      %  DLEs Parts
-  DIRO-TEST-002       0:00       41696k   99.4     1     5
-  DIRO-TEST-003       0:00       41696k   99.4     1     5
-  DIRO-TEST-004       0:00       41696k   99.4     1     5
-  DIRO-TEST-005       0:00       41666k   99.3     1     5
-  DIRO-TEST-006       0:00       41666k   99.3     1     5
-  DIRO-TEST-001       0:00       14630k   34.9     0     3
+  DIRO-TEST-002       0:00       41696K   99.4     1     5
+  DIRO-TEST-003       0:00       41696K   99.4     1     5
+  DIRO-TEST-004       0:00       41696K   99.4     1     5
+  DIRO-TEST-005       0:00       41666K   99.3     1     5
+  DIRO-TEST-006       0:00       41666K   99.3     1     5
+  DIRO-TEST-001       0:00       14630K   34.9     0     3
 
 NOTES:
   taper: tape DIRO-TEST-003 kb 41696 fm 5 [OK]
@@ -140,7 +140,7 @@ NOTES:
 
 DUMP SUMMARY:
                                       DUMPER STATS               TAPER STATS
- HOSTNAME              DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+ HOSTNAME              DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
  ----------------------------------- ---------------------- -------------- --------------
  localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0
  localhost.localdomain /bootAMGTAR 1   44610   44610     --     FLUSH        0:01 44610.0

@@ -63,7 +63,7 @@ Avg Tp Write Rate (k/s)   100.0      100.0       --
 
 USAGE BY TAPE:
   Label               Time        Size      %  DLEs Parts
-  DIRO-TEST-003       0:02 10000k  32.6     1     1
+  DIRO-TEST-003       0:02 10000K  32.6     1     1
 
 
 NOTES:
@@ -72,7 +72,7 @@ NOTES:
 
 DUMP SUMMARY:
                                           DUMPER STATS                    TAPER STATS
-HOSTNAME              DISK   L      ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
+HOSTNAME              DISK   L      ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 ----------------------------------- ---------------------- -------------- -------------
 localhost.localdomain /boot1 0      12000     10000     --    2:00  100.0   1:40  100.0 PARTIAL
 

@@ -49,7 +49,7 @@ Avg Tp Write Rate (k/s)   169010     169010        --
 
 USAGE BY TAPE:
   Label               Time         Size      %  DLEs Parts
-  TESTCONF02          0:00       83480k  271.8     1     1
+  TESTCONF02          0:00       83480K  271.8     1     1
 
 NOTES:
   taper: tape TESTCONF02 kb 83480 fm 9 [OK]
@@ -57,7 +57,7 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS                TAPER STATS
-HOSTNAME     DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
 -------------------------- ---------------------- -------------- ---------------
 localhost    /boot       0  148870   83480   56.1     FLUSH        0:00 169009.9
 

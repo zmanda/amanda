@@ -1703,5 +1703,6 @@ main(int argc, char **argv)
 
     glib_init();
 
+    config_init(0, NULL);
     return testutils_run_tests(argc, argv, tests);
 }

@@ -47,17 +47,17 @@ Avg Tp Write Rate (k/s) 27287.8    27287.8        --
 
 USAGE BY TAPE:
   Label          Time      Size      %  DLEs Parts
-  Daily-36       0:31 50917369k  #####     1     3
+  Daily-36       0:31 50917369K  #####     1     3
 
 
 NOTES:
   big estimate: home.slikon.local /opt/public 0
-                est: 80286112k    out 50917370k
+                est: 80286112K    out 50917370K
 
 
 DUMP SUMMARY:
                                         DUMPER STATS                 TAPER STATS
-HOSTNAME          DISK        L  ORIG-kB   OUT-kB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
+HOSTNAME          DISK        L  ORIG-KB   OUT-KB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
 ------------------------------- ------------------------ --------------- --------------
 home.slikon.local /opt/public 0 72987320 50917369   69.8   46:57 18078.1  31:06 27287.8
 

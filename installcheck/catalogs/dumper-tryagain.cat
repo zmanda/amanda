@@ -99,8 +99,8 @@ Avg Tp Write Rate (k/s)   6815.6    13052.5       11.6
 
 USAGE BY TAPE:
   Label                        Time         Size      %  DLEs Parts
-  test-3.3-ORG-02-vtapes-029   0:00         128k    0.4     1     1
-  test-3.3-ORG-02-vtapes-030   0:00      156630k  509.9     1     1
+  test-3.3-ORG-02-vtapes-029   0:00         128K    0.4     1     1
+  test-3.3-ORG-02-vtapes-030   0:00      156630K  509.9     1     1
 
 
 
@@ -117,7 +117,7 @@ NOTES:
 
 DUMP SUMMARY:
                                                              DUMPER STATS    TAPER STATS
-HOSTNAME              DISK         L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s  MMM:SS   KB/s
+HOSTNAME              DISK         L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s  MMM:SS   KB/s
 ------------------------------------ ---------------------- --------------- --------------
 localhost.localdomain /bootAMGTAR  1     128     128     --    0:11    11.5   0:11   11.6
 localhost.localdomain /bootAMGTAR1                              FAILED                  

@@ -58,7 +58,7 @@ Avg Tp Write Rate (k/s)   153600        --      153600
 
 USAGE BY TAPE:
   Label               Time         Size      %  DLEs Parts
-  DAILY-37            0:00       30720k  100.1     2     3
+  DAILY-37            0:00       30720K  100.1     2     3
 
 NOTES:
   taper: tape DAILY-37 kb 30720 fm 3 [OK]
@@ -66,7 +66,7 @@ NOTES:
 
 DUMP SUMMARY:
                                       DUMPER STATS                TAPER STATS
- HOSTNAME             DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
+ HOSTNAME             DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS     KB/s
  ----------------------------------- ---------------------- -------------- ---------------
  localhost.localdomain /boot       1   20480   20480    --      FLUSH        0:00 446100.0
  localhost.localdomain /boot       2   10240   10240    --      FLUSH        0:00 446100.0

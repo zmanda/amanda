@@ -1062,7 +1062,7 @@ Avg Tp Write Rate (k/s) 14596.6    14596.6        --
 
 USAGE BY TAPE:
   Label          Time      Size      %  DLEs Parts
-  Daily-36       0:03  2293470k   7466     1     1
+  Daily-36       0:03  2293470K   7466     1     1
 
 
 STRANGE DUMP DETAILS:
@@ -1180,7 +1180,7 @@ sendbackup: info end
 
 DUMP SUMMARY:
                                        DUMPER STATS               TAPER STATS
-HOSTNAME           DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+HOSTNAME           DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
 -------------------------------- ---------------------- -------------- --------------
 bsdfw.slikon.local /           0 5401240 2293470   42.5   29:36 1305.4   2:37 14596.6
 

@@ -104,7 +104,7 @@ Avg Tp Write Rate (k/s) 75156.3    75156.3        --
 
 USAGE BY TAPE:
   Label                      Time      Size      %    DLEs    Parts
-  metals-003-000105       0:57      258237053k  #####     1    13
+  metals-003-000105       0:57      258237053K  #####     1    13
 
 
 FAILED DUMP DETAILS:
@@ -134,7 +134,7 @@ NOTES:
 
 DUMP SUMMARY:
                                        DUMPER STATS                TAPER STATS
-HOSTNAME                  DISK        L ORIG-kB  OUT-kB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
+HOSTNAME                  DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS    KB/s MMM:SS    KB/s
 --------------------------------------- -------------------------- --------------- --------------
 lead.zmanda.com /tensile-measurements 0 539140000 258237053 47.9 817:48 10987.7 57:16 75156.3
 
