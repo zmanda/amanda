@@ -3893,6 +3893,16 @@ handle_chunker_result(
 		    chunker->name, (long)chunker->pid);
 
             /* if it was dumping something, zap it and try again */
+	    sp = chunker->job->sched;
+	    assert(sp != NULL);
+	    dp = sp->disk;
+	    assert(dp != NULL);
+	    assert(sp->destname != NULL);
+	    assert(dp != NULL && sp != NULL && sp->destname);
+	    if (sp->holdp) {
+		h = sp->holdp;
+		activehd = sp->activehd;
+	    }
             g_assert(h && activehd >= 0);
             qname = quote_string(dp->name);
             if (sp->dump_attempted >= dp->retry_dump-1) {

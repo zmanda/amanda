@@ -1,4 +1,11 @@
 2016-05-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (shm_ring_to_security_stream),
+	  device-src/xfer-dest-taper-splitter.c (device_thread_wait_for_block),
+	  server-src/dumper.c (handle_shm_ring_to_fd_thread): set usable after
+	  getting the semaphore
+	* server-src/driver.c (handle_chunker_result): Fix for BOGUS.
+
+2016-05-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: displayunit default ot 'K' (uppercase)
 	* installcheck/Amanda_Rest_Configs.pl: Fix for K uppercase
 	* installcheck/Amanda_Rest_Runs.pl: Fix for K uppercase

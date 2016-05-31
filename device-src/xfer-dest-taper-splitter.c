@@ -401,15 +401,15 @@ device_thread_wait_for_block(
 	while (!elt->cancelled &&
 	       !elt->shm_ring->mc->cancelled) {
 
-	    usable = elt->shm_ring->mc->written - elt->shm_ring->mc->readx;
-	    *eof_flag = elt->shm_ring->mc->eof_flag;
 	    if (shm_ring_sem_wait(elt->shm_ring, elt->shm_ring->sem_read) != 0)
 		break;
+	    usable = elt->shm_ring->mc->written - elt->shm_ring->mc->readx;
+	    *eof_flag = elt->shm_ring->mc->eof_flag;
 
 	    if (elt->cancelled || elt->shm_ring->mc->cancelled)
 		break;
 
-	    if (usable > bytes_needed)
+	    if (usable >= bytes_needed)
 		break;
 
 	    if (*eof_flag)

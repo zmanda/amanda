@@ -1984,10 +1984,10 @@ handle_shm_ring_to_fd_thread(
     sem_post(db->shm_ring_consumer->sem_write);
     while (!db->shm_ring_consumer->mc->cancelled) {
 	do {
-	    usable = db->shm_ring_consumer->mc->written - db->shm_ring_consumer->mc->readx;
-	    eof_flag = db->shm_ring_consumer->mc->eof_flag;
 	    if (shm_ring_sem_wait(db->shm_ring_consumer, db->shm_ring_consumer->sem_read) != 0)
 		break;
+	    usable = db->shm_ring_consumer->mc->written - db->shm_ring_consumer->mc->readx;
+	    eof_flag = db->shm_ring_consumer->mc->eof_flag;
 	} while (!db->shm_ring_consumer->mc->cancelled &&
 		 usable < db->shm_ring_consumer->block_size && !eof_flag);
 	read_offset = db->shm_ring_consumer->mc->read_offset;
