@@ -255,13 +255,13 @@ sub reset {
     my $self = shift;
     my %params = @_;
     my $slot;
-    my @slots = $self->_all_slots();
 
     return if $self->check_error($params{'finished_cb'});
 
     $self->with_disk_locked_state($params{'finished_cb'}, sub {
 	my ($state, $finished_cb) = @_;
 
+	my @slots = $self->_all_slots($state);
 	$slot = (scalar @slots)? $slots[0] : 0;
 	$self->_set_current($state, $slot);
 
@@ -279,13 +279,13 @@ sub inventory {
 	my ($state, $finished_cb) = @_;
 	my @inventory;
 
-	my @slots = $self->_all_slots();
+	my @slots = $self->_all_slots($state);
 	my $current = $self->_get_current($state);
 	for my $slot (@slots) {
 	    my $s = { slot => $slot, state => Amanda::Changer::SLOT_FULL };
 	    $s->{'reserved'} = $self->_is_slot_in_use($state, $slot);
 	    my ($label, $err) = $self->make_new_tape_label(slot => $slot,
-						meta => $self->{'meta'},
+						meta => $state->{'meta'},
 						label_exist => 1);
 	    if ($label) {
 		if (!-e "$self->{'dir'}/$label") {
@@ -352,7 +352,12 @@ sub with_disk_locked_state {
 		  $self->try_unlock();
 		  $cb->(@args);
 		},
-	    $sub);
+	    sub { my @args = @_;
+		  my $state = $args[0];
+		  $self->{'meta'} = $state->{'meta'} if exists $state->{'meta'};
+		  $sub->(@args);
+		}
+	);
     };
 }
 
@@ -384,7 +389,7 @@ sub _load_by_slot {
 	    } else {
 		$slot = $self->_get_current($params{'state'});
 	    }
-	    $slot = $self->_get_next($slot);
+	    $slot = $self->_get_next($slot, $params{'state'});
 	    $self->_set_current($params{'state'}, $slot) if ($params{'set_current'});
 	} else {
 	    return $self->make_error("failed", $params{'res_cb'},
@@ -408,7 +413,7 @@ sub _load_by_slot {
 		reason => "notfound");
     }
 
-    if (!$self->_slot_exists($slot)) {
+    if (!$self->_slot_exists($slot, $params{'state'})) {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
 		source_line     => __LINE__,
@@ -444,7 +449,7 @@ sub _load_by_label {
     my $slot;
     my $drive;
 
-    $slot = $self->_find_label($label);
+    $slot = $self->_find_label($label,$params{'state'});
     if (!defined $slot) {
 	return $self->make_error("failed", $params{'res_cb'},
 		source_filename => __FILE__,
@@ -555,7 +560,7 @@ sub _alloc_drive {
 # Internal function to enumerate all available slots.  Slots are described by
 # strings.
 sub _all_slots {
-    my ($self) = @_;
+    my ($self, $state) = @_;
     my $dir = _quote_glob($self->{'dir'});
     my $last_slot = 0;
 
@@ -565,7 +570,7 @@ sub _all_slots {
 	my $label = $1;
 	next if $label eq "state";
 	my ($slot, $err) = $self->label_to_slot(label => $label,
-						meta => $self->{'meta'});
+						meta => $state->{'meta'});
 	next if $err;	# skip files that do not match autolabel
 	$slot = $slot + 0;
 	$slots{$slot} = 1;
@@ -583,7 +588,7 @@ sub _all_slots {
 
 #    for my $slot (1..$self->{'num-slot'}) {
 #	my ($label, $err) = $self->make_new_tape_label(slot => $slot,
-#                                                   meta => $self->{'meta'},
+#                                                   meta => $state->{'meta'},
 #                                                   label_exist => 1);
 #	if ($self->{'tapelist'}->lookup_tapelabel($label)) {
 #	    $last_slot = $slot if $slot > $last_slot;
@@ -601,11 +606,11 @@ sub _all_slots {
 
 # Internal function to determine whether a slot exists.
 sub _slot_exists {
-    my ($self, $slot) = @_;
+    my ($self, $slot, $state) = @_;
 
     return ($slot >= 0 and $slot <= $self->{'num-slot'});
     my ($label, $err) = $self->make_new_tape_label(slot => $slot,
-					meta => $self->{'meta'},
+					meta => $state->{'meta'},
 					label_exist => 1);
     return 0 if (!$label);
     return (-f $self->{'dir'} . "/$label");
@@ -645,10 +650,10 @@ sub _is_slot_in_use {
 }
 
 sub _get_slot_label {
-    my ($self, $slot) = @_;
+    my ($self, $slot, $state) = @_;
 
     my ($label, $err) = $self->make_new_tape_label(slot => $slot,
-				meta => $self->{'meta'},
+				meta => $state>{'meta'},
 				label_exist => 1);
     return '' if $err;
 
@@ -669,29 +674,29 @@ sub _load_drive {
 # Internal function to return the slot containing a volume with the given
 # label.  This takes advantage of the naming convention used by vtapes.
 sub _find_label {
-    my ($self, $label) = @_;
+    my ($self, $label, $state) = @_;
 
     if (!-e "$self->{'dir'}/$label") {
 	return undef;
     }
 
-    my $slot = $self->label_to_slot(label => $label, meta => $self->{'meta'});
+    my $slot = $self->label_to_slot(label => $label, meta => $state->{'meta'});
     return $slot;
 }
 
 # Internal function to get the next slot after $slot.
 sub _get_next {
-    my ($self, $slot) = @_;
+    my ($self, $slot, $state) = @_;
     my $next_slot;
 
     # Try just incrementing the slot number
     $next_slot = $slot+1;
     my $next_label = $self->make_new_tape_label(slot => $next_slot,
-						meta => $self->{'meta'});
+						meta => $state->{'meta'});
     return $next_slot if (-f $self->{'dir'} . "/$next_label");
 
     # Otherwise, search through all slots
-    my @all_slots = $self->_all_slots();
+    my @all_slots = $self->_all_slots($state);
     my $prev = $all_slots[-1];
     for $next_slot (@all_slots) {
         return $next_slot if ($prev == $slot);
@@ -723,7 +728,7 @@ sub _get_current {
     }
 
     # get the first slot as a default
-    my @slots = $self->_all_slots();
+    my @slots = $self->_all_slots($state);
     return 0 unless (@slots);
     return $slots[0];
 }

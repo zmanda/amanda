@@ -1631,7 +1631,7 @@ sub make_new_tape_label {
     my $config = Amanda::Config::get_config_name();
     my $barcode = $params{'barcode'};
     $barcode = '' if !defined $barcode;
-    my $meta = $params{'meta'};
+    my $meta = $params{'meta'} || $self->{'meta'};
     my $slot = $params{'slot'};
     $slot = '' if !defined $slot;
     $meta = $self->make_new_meta_label(%params) if !defined $meta;

@@ -1,3 +1,9 @@
+2016-05-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm (make_new_tape_label): Can take meta
+	  from $self
+	* perl/Amanda/Changer/diskflat.pm: Use meta from state
+	* installcheck/Amanda_Changer_diskflat.pl: More meta check
+
 2016-05-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Check meta-autolabel, autolabel, labelstr and
 	  tapepool do not conatisna space

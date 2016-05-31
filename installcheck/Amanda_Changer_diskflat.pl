@@ -53,7 +53,7 @@ sub reset_taperoot {
     mkpath($taperoot);
 
     for my $slot (1 .. $nslots) {
-	my $file = sprintf("$taperoot/TESTCONF-%03s", $slot);
+	my $file = sprintf("$taperoot/AA-TESTCONF-%03s", $slot);
 	open AA, ">$file"
 	    or die("Could not open: $!");
 	close AA;
@@ -63,7 +63,7 @@ sub reset_taperoot {
 sub is_pointing_to {
     my ($res, $slot, $msg) = @_;
 
-    my $label = sprintf("TESTCONF-%03s", $slot);
+    my $label = sprintf("AA-TESTCONF-%03s", $slot);
     is($res->{'device'}->device_name, "diskflat:$taperoot/$label", $msg);
 
     # Should check the state file */
@@ -75,8 +75,9 @@ $testconf->add_changer('flat', [
 	tpchanger => "\"chg-diskflat:$taperoot\"",
 	property  => "\"num-slot\" \"5\"",
 ]);
-$testconf->add_param('labelstr', '"TESTCONF-[0-9][0-9][0-9]"');
-$testconf->add_param('autolabel', '"TESTCONF-$3s" any');
+$testconf->add_param('labelstr', 'MATCH-AUTOLABEL');
+$testconf->add_param('meta-autolabel', '"!!"');
+$testconf->add_param('autolabel', '"$m-TESTCONF-$3s" any');
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -360,7 +361,7 @@ Amanda::MainLoop::run();
     my ($get_info, $load_label, $check_load_cb) = @_;
 
     $get_info = make_cb('get_info' => sub {
-        $chg->info(info_cb => $load_label, info => [ 'num_slots', 'fast_search' ]);
+        $chg->info(info_cb => $load_label, info => [ 'num_slots', 'fast_search' , 'slots', 'vendor_string']);
     });
 
     $load_label = make_cb('load_label' => sub {
@@ -369,11 +370,15 @@ Amanda::MainLoop::run();
         die($err) if defined($err);
 
         is_deeply({ %results },
-	    { num_slots => 5, fast_search => 1 },
-	    "info() returns the correct num_slots and fast_search");
+	    { num_slots => 5,
+	      fast_search => 1,
+	      vendor_string => 'chg-diskflat',
+	      slots => [ '1', '2', '3', '4', '5' ] },
+	    "info() returns the correct num_slots and fast_search") ||
+	    diag("result: " . Data::Dumper::Dumper(\%results));
 
         # note use of a glob metacharacter in the label name
-        $chg->load(label => "TESTCONF-004", res_cb => $check_load_cb);
+        $chg->load(label => "AA-TESTCONF-004", res_cb => $check_load_cb);
     });
 
     $check_load_cb = make_cb('check_load_cb' => sub {
@@ -391,8 +396,8 @@ Amanda::MainLoop::run();
     });
 
     # label slot 4, using our own symlink
-    my $dev = Amanda::Device->new("diskflat:$taperoot/TESTCONF-004");
-    $dev->start($Amanda::Device::ACCESS_WRITE, "TESTCONF-004", undef)
+    my $dev = Amanda::Device->new("diskflat:$taperoot/AA-TESTCONF-004");
+    $dev->start($Amanda::Device::ACCESS_WRITE, "AA-TESTCONF-004", undef)
         or die $dev->error_or_status();
     $dev->finish()
         or die $dev->error_or_status();
@@ -424,7 +429,7 @@ Amanda::MainLoop::run();
 		reserved => 0 },
 	      { slot => 4, state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_SUCCESS,
-		f_type => $Amanda::Header::F_TAPESTART, label => "TESTCONF-004",
+		f_type => $Amanda::Header::F_TAPESTART, label => "AA-TESTCONF-004",
 		reserved => 0 },
 	      { slot => 5, state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
