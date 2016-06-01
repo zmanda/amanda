@@ -921,9 +921,9 @@ tcpm_recv_token(
 	    while (!rs->shm_ring->mc->cancelled) {
 	        readx = rs->shm_ring->mc->readx;
 		avail = shm_ring_size - (written - readx);
-	        if (avail > to_read)
+	        if (avail >= to_read)
 		    break;
-	        if (avail > shm_ring_size/4)
+	        if (avail >= shm_ring_size/4)
 		    break;
 	        if (shm_ring_sem_wait(rs->shm_ring, rs->shm_ring->sem_write) != 0) {
 		    g_free(*errmsg);
@@ -938,8 +938,8 @@ tcpm_recv_token(
 		return -1;
 	    }
 	    usable = to_read;
-	    if (usable >= avail) {
-		usable = avail - 1;
+	    if (usable > avail) {
+		usable = avail;
 	    }
 
 	    if (rc->driver->data_decrypt) {

@@ -118,8 +118,9 @@ holding_thread(
     XferElement *elt = XFER_ELEMENT(self);
     XMsg *msg;
     GTimer *timer = g_timer_new();
-    uint64_t read_offset;
     uint64_t write_offset;
+    uint64_t readx;
+    uint64_t written;
     uint64_t producer_block_size;
     uint64_t consumer_block_size;
     uint64_t mem_ring_size;
@@ -143,22 +144,20 @@ holding_thread(
     while (1) {
 	g_mutex_lock(self->mem_ring->mutex);
 	write_offset = self->mem_ring->write_offset;
-        read_offset = self->mem_ring->read_offset;
+	written = self->mem_ring->written;
+        readx = self->mem_ring->readx;
         g_mutex_unlock(self->mem_ring->mutex);
 
 	// wait for mem_ring space;
-	while (!(write_offset == read_offset) &&
-	       !((write_offset < read_offset) &&
-		 (read_offset - write_offset > producer_block_size)) &&
-	       !((write_offset > read_offset) &&
-		 (mem_ring_size - write_offset + read_offset > producer_block_size))) {
+	while (mem_ring_size - (written - readx) < producer_block_size) {
 	    if (elt->cancelled) {
 		goto return_eof;
 	    }
 	    g_mutex_lock(self->mem_ring->mutex);
 	    g_cond_wait(self->mem_ring->free_cond, self->mem_ring->mutex);
 	    write_offset = self->mem_ring->write_offset;
-	    read_offset = self->mem_ring->read_offset;
+	    written = self->mem_ring->written;
+            readx = self->mem_ring->readx;
 	    g_mutex_unlock(self->mem_ring->mutex);
 	}
 
@@ -174,8 +173,8 @@ holding_thread(
 	}
 
 	//read to mem ring;
-	to_read_size = MIN(HOLDING_BLOCK_BYTES, self->mem_ring->ring_size - self->mem_ring->write_offset);
-	bytes_read = read_fully(self->fd, self->mem_ring->buffer + self->mem_ring->write_offset, to_read_size, NULL);
+	to_read_size = MIN(HOLDING_BLOCK_BYTES, self->mem_ring->ring_size - write_offset);
+	bytes_read = read_fully(self->fd, self->mem_ring->buffer + write_offset, to_read_size, NULL);
 	if (bytes_read > 0) {
 	    if (elt->size >= 0 && bytes_read > (guint64)elt->size) {
 		bytes_read = elt->size;

@@ -378,7 +378,7 @@ device_thread_wait_for_block(
 
 	    usable = self->mem_ring->written - self->mem_ring->readx;
 	    *eof_flag = self->mem_ring->eof_flag;
-	    if (self->mem_ring->written - self->mem_ring->readx > bytes_needed) {
+	    if (usable >= bytes_needed) {
 		break;
 	    }
 

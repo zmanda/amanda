@@ -161,7 +161,7 @@ fd_to_shm_ring(
         written = shm_ring->mc->written;
 	while (!shm_ring->mc->cancelled) {
             readx = shm_ring->mc->readx;
-	    if (shm_ring_size - (written - readx) > shm_ring->block_size)
+	    if (shm_ring_size - (written - readx) >= shm_ring->block_size)
 		break;
             if (shm_ring_sem_wait(shm_ring, shm_ring->sem_write) != 0) {
 		break;
@@ -348,11 +348,11 @@ shm_ring_to_fd(
     sem_post(shm_ring->sem_write);
     while (!shm_ring->mc->cancelled) {
 	do {
-	    usable = shm_ring->mc->written - shm_ring->mc->readx;
-	    eof_flag = shm_ring->mc->eof_flag;
 	    if (shm_ring_sem_wait(shm_ring, shm_ring->sem_read) != 0) {
 		break;
 	    }
+	    usable = shm_ring->mc->written - shm_ring->mc->readx;
+	    eof_flag = shm_ring->mc->eof_flag;
 	} while (!shm_ring->mc->cancelled &&
 		 usable < shm_ring->block_size && !eof_flag);
 	read_offset = shm_ring->mc->read_offset;

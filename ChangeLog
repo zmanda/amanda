@@ -1,3 +1,8 @@
+2016-06-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c, common-src/shm-ring.c,
+	  device-src/xfer-dest-taper-splitter.c,
+	  server-src/xfer-source-holding.c: Allow to completely fill the ring
+
 2016-05-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (shm_ring_to_security_stream),
 	  device-src/xfer-dest-taper-splitter.c (device_thread_wait_for_block),
