@@ -455,8 +455,12 @@ alloc_shm_ring(
 
     if (shm_ring->mc->producer_ring_size > shm_ring->mc->consumer_ring_size) {
 	best_ring_size = shm_ring->mc->producer_ring_size;
+	if (best_ring_size < shm_ring->mc->producer_block_size * 2)
+	    best_ring_size = shm_ring->mc->producer_block_size * 2;
     } else {
 	best_ring_size =  shm_ring->mc->consumer_ring_size;
+	if (best_ring_size < shm_ring->mc->consumer_block_size * 2)
+	    best_ring_size = shm_ring->mc->consumer_block_size * 2;
     }
 
     if (best_ring_size % shm_ring->mc->producer_block_size != 0) {

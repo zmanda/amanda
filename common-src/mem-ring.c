@@ -125,8 +125,12 @@ alloc_mem_ring(
 
     if (mem_ring->producer_ring_size > mem_ring->consumer_ring_size) {
 	best_ring_size = mem_ring->producer_ring_size;
+	if (best_ring_size < mem_ring->producer_block_size * 2)
+	    best_ring_size = mem_ring->producer_block_size * 2;
     } else {
 	best_ring_size =  mem_ring->consumer_ring_size;
+	if (best_ring_size < mem_ring->consumer_block_size * 2)
+	    best_ring_size = mem_ring->consumer_block_size * 2;
     }
 
     if (best_ring_size % mem_ring->producer_block_size != 0) {
