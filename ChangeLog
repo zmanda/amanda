@@ -1,4 +1,7 @@
 2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amadmin.c: Fix out of bound
+
+2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: Use 'dsize' if available
 
 2016-06-01  Jean-Louis Martineau <JMartineau@carbonite.com>

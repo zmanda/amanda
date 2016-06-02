@@ -1846,7 +1846,7 @@ import_one(void)
 	    }
 	}
 
-	if(level < 0 || level > DUMP_LEVELS) goto parse_err;
+	if(level < 0 || level >= DUMP_LEVELS) goto parse_err;
 
 	info.inf[level] = onestat;
     }
