@@ -1,4 +1,7 @@
 2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c (set_message): Fix typo in mesage 2800036
+
+2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (cleanup_shm_ring): New function to remove
 	  unused semaphore and shared memory
 	* common-src/shm-ring.h (cleanup_shm_ring): Add prototype

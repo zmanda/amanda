@@ -735,7 +735,7 @@ set_message(
     } else if (message->code == 2800035) {
 	msg  = "storage '%{storage}': runtapes is larger or equal to policy '%{policy}' retention-tapes";
     } else if (message->code == 2800036) {
-	msg  = "system has %{size:kb_avail} memory, but device-output-buffer-size needs {size:kb_needed}";
+	msg  = "system has %{kb_avail} memory, but device-output-buffer-size needs %{kb_needed}";
     } else if (message->code == 2800037) {
 	msg  = "Cannot resolve `localhost': %{gai_strerror}";
     } else if (message->code == 2800038) {
