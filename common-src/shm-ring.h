@@ -96,6 +96,7 @@ void shm_ring_producer_set_size(shm_ring_t *shm_ring, ssize_t ring_size, ssize_t
 void close_producer_shm_ring(shm_ring_t *shm_ring);
 void close_consumer_shm_ring(shm_ring_t *shm_ring);
 void clean_shm_ring(void);
+void cleanup_shm_ring(void);
 void fd_to_shm_ring(int fd, shm_ring_t *shm_ring, crc_t *crc);
 void shm_ring_to_fd(shm_ring_t *shm_ring, int fd, crc_t *crc);
 

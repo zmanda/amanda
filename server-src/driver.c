@@ -52,6 +52,7 @@
 #include "amindex.h"
 #include "cmdfile.h"
 #include "tapefile.h"
+#include "shm-ring.h"
 
 #define driver_debug(i, ...) do {	\
 	if ((i) <= debug_driver) {	\
@@ -339,6 +340,8 @@ main(
     search_holding_disk(&holding_files, &holding_disklist);
     /* note that the dumps are added to the global disklist, so we need not consult
      * holding_files or holding_disklist after this */
+
+    cleanup_shm_ring();
 
     amfree(driver_timestamp);
     /* read timestamp from stdin */
@@ -747,6 +750,8 @@ main(
 
     amfree(dumper_program);
     amfree(taper_program);
+
+    cleanup_shm_ring();
 
     dbclose();
 
@@ -2945,6 +2950,7 @@ vault_taper_result(
     }
 
     /* continue with those dumps waiting for diskspace */
+    cleanup_shm_ring();
     continue_port_dumps();
     start_some_dumps(&runq);
     start_a_flush();
@@ -3109,6 +3115,7 @@ file_taper_result(
     }
 
     /* continue with those dumps waiting for diskspace */
+    cleanup_shm_ring();
     continue_port_dumps();
     start_some_dumps(&runq);
     start_a_flush();
@@ -3224,6 +3231,8 @@ dumper_taper_result(
     free_job(job);
     dumper->job = NULL;
     wtaper->job = NULL;
+
+    cleanup_shm_ring();
     start_some_dumps(&runq);
     start_a_flush();
     start_a_vault();
@@ -3440,6 +3449,7 @@ dumper_chunker_result(
     dp = NULL;
     if (chunker->result == ABORT_FINISHED)
 	pending_aborts--;
+    cleanup_shm_ring();
     continue_port_dumps();
     /*
      * Wakeup any dumpers that are sleeping because of network

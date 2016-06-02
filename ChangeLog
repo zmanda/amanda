@@ -1,4 +1,10 @@
 2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (cleanup_shm_ring): New function to remove
+	  unused semaphore and shared memory
+	* common-src/shm-ring.h (cleanup_shm_ring): Add prototype
+	* server-src/driver.c: Call cleanup_shm_ring
+
+2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (handle_chunker_result): Set job on BOGUS
 
 2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
