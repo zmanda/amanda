@@ -273,7 +273,10 @@ if ($opt_detail) {
 		    my @storage = keys %{$dle->{'storage'}};
 		    my $storage = $storage[0];
 		    my $dlet = $dle->{'storage'}->{$storage};
-		    if (defined $dlet->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
+		    if (defined $dlet->{'wsize'} && defined $dle->{'dsize'} && $dle->{'dsize'} != 0) {
+			printf " (%s$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
+				 100.0 * $dlet->{'wsize'} / $dle->{'dsize'};
+		    } elsif (defined $dlet->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
 			printf " (%s$unit done (%0.2f%%))", dn($dlet->{'wsize'}),
 				 100.0 * $dlet->{'wsize'} / $dle->{'esize'};
 		    }

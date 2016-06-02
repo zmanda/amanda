@@ -1,3 +1,6 @@
+2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl: Use 'dsize' if available
+
 2016-06-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/mem-ring.c, common-src/shm-ring.c: Make sure the ring
 	  size is at least twice the block size, otherwise the ring can hang
