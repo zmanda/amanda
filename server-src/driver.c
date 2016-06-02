@@ -3899,6 +3899,7 @@ handle_chunker_result(
 	    assert(dp != NULL);
 	    assert(sp->destname != NULL);
 	    assert(dp != NULL && sp != NULL && sp->destname);
+	    job = chunker->job;
 	    if (sp->holdp) {
 		h = sp->holdp;
 		activehd = sp->activehd;
