@@ -1,3 +1,8 @@
+2016-06-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/xfer-dest-taper-splitter.c: Do not cancel twice
+	* perl/Amanda/Taper/Worker.pm: Abort_setup on input_errors
+	* server-src/dumper.c: Improve debugging
+
 2016-06-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c (set_message): Fix typo in mesage 2800036
 

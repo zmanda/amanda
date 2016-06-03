@@ -2821,7 +2821,7 @@ stop_dump(void)
 	    exit(1);
 	}
 	if (cmdargs->cmd != ABORT) {
-	    g_debug("Expected an ABORT command");
+	    g_debug("Expected an ABORT command, got '%d': %s", cmdargs->cmd, cmdstr[cmdargs->cmd]);
 	    exit(1);
 	}
 	amfree(errstr);

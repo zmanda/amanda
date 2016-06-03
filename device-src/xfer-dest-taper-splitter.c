@@ -700,9 +700,11 @@ device_thread(
 	shm_ring_consumer_set_size(elt->shm_ring, self->max_memory, self->device->block_size);
 	if (elt->input_mech == XFER_MECH_SHM_RING &&
 	    elt->shm_ring->mc->cancelled) {
-	    g_debug("shm_ring is cancelled");
-	    xfer_cancel_with_error(XFER_ELEMENT(self)->upstream,
-		_("failed to set shm-ring"));
+	    g_debug("A shm_ring is cancelled");
+	    if (!elt->cancelled) {
+		xfer_cancel_with_error(XFER_ELEMENT(self)->upstream,
+			_("failed to set shm-ring"));
+	    }
 	    goto device_thread_done;
 	}
     }
@@ -729,9 +731,11 @@ device_thread(
 
 	if (elt->input_mech == XFER_MECH_SHM_RING &&
 	    elt->shm_ring->mc->cancelled) {
-	    g_debug("shm_ring is cancelled");
-	    xfer_cancel_with_error(XFER_ELEMENT(self)->upstream,
-		_("shm-ring cancelled"));
+	    g_debug("B shm_ring is cancelled");
+	    if (!elt->cancelled) {
+		xfer_cancel_with_error(XFER_ELEMENT(self)->upstream,
+		    _("shm-ring cancelled"));
+	    }
 	    break;
 	}
 
