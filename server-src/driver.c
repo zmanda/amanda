@@ -2011,7 +2011,6 @@ handle_taper_result(
 	    /* tell the dumper to dump to a port */
 	    dumper_cmd(dumper, PORT_DUMP, dp, NULL);
 	    dp->host->start_t = time(NULL) + 5;
-	    amfree(dp->dataport_list);
 
 	    taper->state |= TAPER_STATE_DUMP_TO_TAPE;
 

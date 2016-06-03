@@ -1,3 +1,8 @@
+2016-06-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Worker.pm: Abort_setup on input_errors
+	* server-src/driver.c: Do not free dp->dataport_list
+	* server-src/dumper.c: Improve debugging
+
 2016-05-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amadmin.c (import_db): Fix version parsing
 	* server-src/amadmin.c: Fix for level > 9

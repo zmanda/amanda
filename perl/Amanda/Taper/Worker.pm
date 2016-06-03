@@ -787,6 +787,11 @@ sub setup_and_start_dump {
 	    $self->{'scribe'}->abort_setup(dump_cb => $params{'dump_cb'});
 	    return;
 	}
+	# abort if we already got a input_errors
+	if (@{$self->{'input_errors'}}) {
+	    $self->{'scribe'}->abort_setup(dump_cb => $params{'dump_cb'});
+	    return;
+	}
         # if $err is set, cancel the dump, treating it as a input error
         if ($err) {
 	    push @{$self->{'input_errors'}}, $err;
