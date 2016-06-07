@@ -513,6 +513,8 @@ values:
     $s : slot number, can specify a minimun number of digit:
          $3s to get '001'
     $m : meta label
+    $r : storage name
+    $t : tpchanger
 </programlisting></para>
 <para>The template can contain some number of contiguous '%'
 characters, which will be replaced with a generated number (000-999),
@@ -583,6 +585,8 @@ values:
 <programlisting>
     $c : config name
     $o : org configuration
+    $r : storage name
+    $t : tpchanger
 </programlisting></para>
 <para>The template can contain some number of contiguous '%'
 characters, which will be replaced with a generated number (000-999),

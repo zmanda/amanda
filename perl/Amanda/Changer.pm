@@ -1621,6 +1621,8 @@ sub make_new_tape_label {
     $template =~ s/\$m/SUBSTITUTE_META/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
     $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+    $template =~ s/\$r/SUBSTITUTE_STORAGE/g;
+    $template =~ s/\$t/SUBSTITUTE_TPCHANGER/g;
     if ($template =~ /\$([0-9]*)s/) {
 	$slot_digit = $1;
 	$slot_digit = 1 if $slot_digit < 1;
@@ -1641,6 +1643,8 @@ sub make_new_tape_label {
     $template =~ s/SUBSTITUTE_ORG/$org/g;
     $template =~ s/SUBSTITUTE_CONFIG/$config/g;
     $template =~ s/SUBSTITUTE_META/$meta/g;
+    $template =~ s/SUBSTITUTE_TPCHANGER/$self->{'chg_name'}/g;
+    $template =~ s/SUBSTITUTE_STORAGE/$self->{'storage'}->{'storage_name'}/g;
     # Do not susbtitute the barcode and slot now
 
     (my $npercents =
