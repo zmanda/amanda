@@ -3131,6 +3131,8 @@ define changer <emphasis remap='I'>name</emphasis> {
 device. The remaining parameters are specific to the changer type selected.
 </para>
 
+<para>The tpchanger and changerfile can use '$t' to substitute the name of
+the changer.</para>
 <para>See <manref name="amanda-changers" vol="7" /> for more information on configuring changers.</para>
 
 </refsect1>

@@ -6421,6 +6421,7 @@ update_derived_values(
     holdingdisk_t *hd;
     policy_s      *po;
     storage_t     *st;
+    changer_config_t     *dc;
     labelstr_s    *labelstr;
     char          *conf_name;
     autolabel_t   *autolabel;
@@ -6566,6 +6567,38 @@ update_derived_values(
 		free_val_t(&po->value[POLICY_RETENTION_TAPES]);
 		copy_val_t(&po->value[POLICY_RETENTION_TAPES], &conf_data[CNF_TAPECYCLE]);
 		po->value[POLICY_RETENTION_TAPES].v.i--;  // reduce by 1
+	    }
+	}
+
+	/* Update many changer setting */
+	for (dc = changer_config_list; dc != NULL; dc = dc->next) {
+	    char *changern = changer_config_name(dc);
+	    if (changer_config_seen(dc, CHANGER_CONFIG_CHANGERFILE)) {
+		char *changerfile = changer_config_get_changerfile(dc);
+		char *tpchanger = changer_config_get_tpchanger(dc);
+		char *cf;
+		if ((cf = strstr(changerfile, "$t"))) {
+		    char *new_cf = g_malloc(strlen(changerfile)+strlen(changern)-1);
+		    int len = cf - changerfile;
+		    strncpy(new_cf, changerfile, len);
+		    strcpy(new_cf+len, changern);
+		    strcpy(new_cf+len+strlen(changern), cf+2);
+		    strncpy(new_cf+len+strlen(changern)+strlen(cf+2),"\0",1);
+		    free_val_t(&dc->value[CHANGER_CONFIG_CHANGERFILE]);
+		    conf_init_str(&dc->value[CHANGER_CONFIG_CHANGERFILE], new_cf);
+		    changerfile = new_cf;
+		}
+		if ((cf = strstr(tpchanger, "$t"))) {
+		    char *new_tp = g_malloc(strlen(tpchanger)+strlen(changern)-1);
+		    int len = cf - tpchanger;
+		    strncpy(new_tp, tpchanger, len);
+		    strcpy(new_tp+len, changern);
+		    strcpy(new_tp+len+strlen(changern), cf+2);
+		    strncpy(new_tp+len+strlen(changern)+strlen(cf+2),"\0",1);
+		    free_val_t(&dc->value[CHANGER_CONFIG_TPCHANGER]);
+		    conf_init_str(&dc->value[CHANGER_CONFIG_TPCHANGER], new_tp);
+		    tpchanger = new_tp;
+		}
 	    }
 	}
 
