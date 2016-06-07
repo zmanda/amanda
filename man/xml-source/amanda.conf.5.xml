@@ -3489,7 +3489,13 @@ a volume is marked as <amkeyword>no-reuse</amkeyword> after it is written.</para
   <varlistentry>
   <term><amkeyword>tapepool</amkeyword> <amtype>string</amtype></term>
   <listitem>
-<para>Default: CONFIG_NAME.</para>
+<para>Default: CONFIG_NAME.  Some characters are substituted:
+<programlisting>
+    $o : org configuration
+    $c : config name
+    $r : storage name
+    $t : tpchanger
+</programlisting></para>
   </listitem>
   </varlistentry>
 

@@ -6588,10 +6588,6 @@ update_derived_values(
 		free_val_t(&st->value[STORAGE_POLICY]);
 		conf_init_str(&st->value[STORAGE_POLICY], conf_name);
 	    }
-	    if (!storage_seen(st, STORAGE_TAPEPOOL)) {
-		free_val_t(&st->value[STORAGE_TAPEPOOL]);
-		conf_init_str(&st->value[STORAGE_TAPEPOOL], conf_name);
-	    }
 	    if (!storage_seen(st, STORAGE_TPCHANGER)) {
 		free_val_t(&st->value[STORAGE_TPCHANGER]);
 		copy_val_t(&st->value[STORAGE_TPCHANGER], &conf_data[CNF_TPCHANGER]);
@@ -6655,6 +6651,61 @@ update_derived_values(
 	    if (!storage_seen(st, STORAGE_INTERACTIVITY)) {
 		free_val_t(&st->value[STORAGE_INTERACTIVITY]);
 		copy_val_t(&st->value[STORAGE_INTERACTIVITY], &conf_data[CNF_INTERACTIVITY]);
+	    }
+
+	    if (!storage_seen(st, STORAGE_TAPEPOOL)) {
+		free_val_t(&st->value[STORAGE_TAPEPOOL]);
+		conf_init_str(&st->value[STORAGE_TAPEPOOL], conf_name);
+	    } else {
+		char *pool = storage_get_tapepool(st);
+		char *p;
+		if ((p = strstr(pool, "$o"))) {
+		    char *org = getconf_str(CNF_ORG);
+		    char *new_pool = g_malloc(strlen(pool)+strlen(org)-1);
+		    int len = p - pool;
+		    strncpy(new_pool, pool, len);
+		    strcpy(new_pool+len, org);
+		    strcpy(new_pool+len+strlen(org), p+2);
+		    strncpy(new_pool+len+strlen(org)+strlen(p+2),"\0",1);
+		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
+		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    pool = new_pool;
+		}
+		if ((p = strstr(pool, "$c"))) {
+		    char *new_pool = g_malloc(strlen(pool)+strlen(conf_name)-1);
+		    int len = p - pool;
+		    strncpy(new_pool, pool, len);
+		    strcpy(new_pool+len, conf_name);
+		    strcpy(new_pool+len+strlen(conf_name), p+2);
+		    strncpy(new_pool+len+strlen(conf_name)+strlen(p+2),"\0",1);
+		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
+		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    pool = new_pool;
+		}
+		if ((p = strstr(pool, "$r"))) {
+		    char *storagen = storage_name(st);
+		    char *new_pool = g_malloc(strlen(pool)+strlen(storagen)-1);
+		    int len = p - pool;
+		    strncpy(new_pool, pool, len);
+		    strcpy(new_pool+len, storagen);
+		    strcpy(new_pool+len+strlen(storagen), p+2);
+		    strncpy(new_pool+len+strlen(storagen)+strlen(p+2),"\0",1);
+		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
+		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    pool = new_pool;
+		}
+		if ((p = strstr(pool, "$t"))) {
+		    char *tpchanger_name = storage_get_tpchanger(st);
+		    char *new_pool = g_malloc(strlen(pool)+strlen(tpchanger_name)-1);
+		    int len = p - pool;
+		    strncpy(new_pool, pool, len);
+		    strcpy(new_pool+len, tpchanger_name);
+		    strcpy(new_pool+len+strlen(tpchanger_name), p+2);
+		    strncpy(new_pool+len+strlen(tpchanger_name)+strlen(p+2),"\0",1);
+		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
+		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    pool = new_pool;
+		}
 	    }
 	}
 

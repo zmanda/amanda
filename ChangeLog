@@ -1,3 +1,7 @@
+2016-06-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Allow $o, $c, $r and $t in tapepool
+	* man/xml-source/amanda.conf.5.xml: Document it
+
 2016-06-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/xfer-dest-taper-splitter.c: Do not cancel twice
 	* perl/Amanda/Taper/Worker.pm: Abort_setup on input_errors
