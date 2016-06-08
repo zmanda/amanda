@@ -1,3 +1,7 @@
+2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amflock.c (common-src/amflock.c): Create the parent
+	  directory
+
 2016-06-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Allow $t in changerfile and tpchanger from a
 	  changer section

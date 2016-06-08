@@ -112,6 +112,17 @@ file_lock_lock(
     /* The locks are advisory, so an error here never means the lock is already
      * taken. */
     lock->fd = fd = open(lock->filename, O_CREAT|O_RDWR, 0666);
+    if (fd < 0 && errno == ENOENT) { /* create the parent directory */
+	char *dirname = g_strdup(lock->filename);
+	char *p = strrchr(dirname, '/');
+	if (p) {
+	    *p = '\0';
+	    if (*dirname == '/') {
+		mkdir(dirname, 0700);
+	    }
+	}
+	lock->fd = fd = open(lock->filename, O_CREAT|O_RDWR, 0666);
+    }
     if (fd < 0) {
 	saved_errno = errno;
 	g_debug("file_lock_lock open failed: %s", strerror(saved_errno));
