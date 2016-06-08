@@ -859,7 +859,7 @@ set_message(
     } else if (message->code == 2800089) {
 	msg  = "skipping tape checks";
     } else if (message->code == 2800090) {
-	msg  = "tapecycle (%{tapecycle}) <= runspercycle (%{runspercycle}";
+	msg  = "tapecycle (%{tapecycle}) <= runspercycle (%{runspercycle})";
     } else if (message->code == 2800091) {
 	msg  = "tapecycle (%{tapecycle}) <= runtapes (%{runtapes})";
     } else if (message->code == 2800092) {

@@ -1,4 +1,7 @@
 2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c: typo
+
+2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm (label_to_slot): Fix for $r and $t
 	  substitution
 	* perl/Amanda/Changer/disk.pm: Do not create all num-slot directories,
