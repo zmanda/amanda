@@ -138,7 +138,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 rmtree $taperoot;
 $testconf->add_changer("DISKFLAT", [
 	tpchanger => "\"chg-diskflat:$taperoot\"",
-	property  => '"num-slot" "5"'
+	property  => '"num-slot" "5"',
+	property  => '"auto-create-slot" "yes"'
 ]);
 $testconf->write();
 

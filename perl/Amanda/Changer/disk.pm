@@ -103,7 +103,7 @@ sub new {
     }
     $self->{'lock-timeout'} = $config->get_property('lock-timeout');
 
-    $self->{'num-slot'} = $config->get_property('num-slot');
+    $self->{'num-slot'} = $config->get_property('num-slot') || 1;
     $self->{'auto-create-slot'} = $config->get_boolean_property(
 					'auto-create-slot', 0);
     $self->{'removable'} = $config->get_boolean_property('removable', 0);
@@ -114,6 +114,10 @@ sub new {
     if (defined $self->{'umount_lockfile'}) {
 	$self->{'fl'} = Amanda::Util::file_lock->new($self->{'umount_lockfile'})
     }
+
+    # the following are set in Changer.pm, but as _validate need them, they
+    # must be set here.
+    $self->{'runtapes'} = $params{'storage'}->{'runtapes'} || 1;
 
     if (!$params{'no_validate'}) {
 	$self->_validate();
@@ -256,6 +260,7 @@ sub inventory {
 	my ($state, $finished_cb) = @_;
 	my @inventory;
 
+	my $nb_empty = 0;
 	my @slots = $self->_all_slots();
 	my $current = $self->_get_current($state);
 	for my $slot (@slots) {
@@ -270,9 +275,25 @@ sub inventory {
 		$s->{'label'} = undef;
 		$s->{'f_type'} = "".$Amanda::Header::F_EMPTY;
 		$s->{'device_status'} = "".$DEVICE_STATUS_VOLUME_UNLABELED;
+		$nb_empty++;
 	    }
 	    $s->{'current'} = 1 if $slot eq $current;
 	    push @inventory, $s;
+	}
+	# Add up to runtapes slots
+	my $last_slot = $slots[-1];
+	if ($nb_empty < $self->{'runtapes'} && $self->{'num-slot'} &&
+	    $self->{'auto-create-slot'} && $last_slot < $self->{'num-slot'}) {
+	    my $to_add = $self->{'runtapes'} - $nb_empty;
+	    for (my $i = 1; $i <= $to_add; $i++) {
+		my $slot = $last_slot + $i;
+		last if $slot > $self->{'num-slot'};
+		push @inventory, { slot => $slot,
+				   state => Amanda::Changer::SLOT_FULL,
+				   label => undef,
+				   f_type => "".$Amanda::Header::F_EMPTY,
+				   device_status => "".$DEVICE_STATUS_VOLUME_UNLABELED };
+	    }
 	}
 	$finished_cb->(undef, \@inventory);
     });
@@ -474,6 +495,11 @@ sub _all_slots {
 # Internal function to determine whether a slot exists.
 sub _slot_exists {
     my ($self, $slot) = @_;
+
+    return 0 if $slot !~ /^\d*$/;
+    if ($self->{'num-slot'} && $slot <= $self->{'num-slot'} && $self->{'auto-create-slot'}) {
+	mkdir $self->{'dir'} . "/slot$slot";
+    }
     return (-d $self->{'dir'} . "/slot$slot");
 }
 
@@ -556,6 +582,7 @@ sub _get_next {
 
     # Try just incrementing the slot number
     $next_slot = $slot+1;
+    return $next_slot if $next_slot <= $self->{'num-slot'} && $self->{'auto-create-slot'};
     return $next_slot if (-d $self->{'dir'} . "/slot$next_slot");
 
     # Otherwise, search through all slots
@@ -665,22 +692,7 @@ sub _validate() {
 	}
     }
 
-    if ($self->{'num-slot'}) {
-	for my $i (1..$self->{'num-slot'}) {
-	    my $slot_dir = "$dir/slot$i";
-	    if (!-e $slot_dir) {
-		if ($self->{'auto-create-slot'}) {
-		    if (!mkdir ($slot_dir)) {
-			return $self->make_error("fatal", undef,
-			    message => "Can't create '$slot_dir': $!");
-		    }
-		} else {
-		    return $self->make_error("fatal", undef,
-			message => "slot $i doesn't exists '$slot_dir'");
-		}
-	    }
-	}
-    } else {
+    if (!$self->{'num-slot'}) {
 	if ($self->{'auto-create-slot'}) {
 	    return $self->make_error("fatal", undef,
 		message => "property 'auto-create-slot' set but property 'num-slot' is not set");

@@ -1548,6 +1548,8 @@ sub label_to_slot {
     $template =~ s/\$m/SUBSTITUTE_META/g;
     $template =~ s/\$o/SUBSTITUTE_ORG/g;
     $template =~ s/\$c/SUBSTITUTE_CONFIG/g;
+    $template =~ s/\$r/SUBSTITUTE_STORAGE/g;
+    $template =~ s/\$t/SUBSTITUTE_TPCHANGER/g;
     if ($template =~ /\$([0-9]*)s/) {
 	$slot_digit = $1;
 	$slot_digit = 1 if $slot_digit < 1;
@@ -1572,6 +1574,8 @@ sub label_to_slot {
     $template =~ s/SUBSTITUTE_ORG/$org/g;
     $template =~ s/SUBSTITUTE_CONFIG/$config/g;
     $template =~ s/SUBSTITUTE_META/$meta/g;
+    $template =~ s/SUBSTITUTE_TPCHANGER/$self->{'chg_name'}/g;
+    $template =~ s/SUBSTITUTE_STORAGE/$self->{'storage'}->{'storage_name'}/g;
     $template =~ s/SUBSTITUTE_BARCODE/$barcode/g;
     my $qtemplate = quotemeta($template);
     $qtemplate =~ s/SUBSTITUTE_SLOT/\(\[0-9\]*\)/g;

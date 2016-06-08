@@ -1,4 +1,13 @@
 2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm (label_to_slot): Fix for $r and $t
+	  substitution
+	* perl/Amanda/Changer/disk.pm: Do not create all num-slot directories,
+	  inventory return only the slot with a directory + runtapes new slots
+	* perl/Amanda/Changer/diskflat.pm: inventory return only the slot with
+	  a label + runtapes new slots
+	* installcheck/Amanda_Rest_Storages.pl: Set auto-create-slot
+
+2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amflock.c (common-src/amflock.c): Create the parent
 	  directory
 

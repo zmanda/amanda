@@ -563,6 +563,7 @@ sub _all_slots {
     my ($self, $state) = @_;
     my $dir = _quote_glob($self->{'dir'});
     my $last_slot = 0;
+    my $valid_slot = 0;
 
     my %slots;
     for my $slot_dir (bsd_glob("$dir/*")) {
@@ -575,6 +576,7 @@ sub _all_slots {
 	$slot = $slot + 0;
 	$slots{$slot} = 1;
 	$last_slot = $slot if $slot > $last_slot;
+	$valid_slot++;
     }
 
     foreach my $tle (@{$self->{'tapelist'}->{'tles'}}) {
@@ -595,8 +597,13 @@ sub _all_slots {
 #	}
 #    }
 
-    $last_slot += $self->{'runtapes'};
-    $last_slot = $self->{'num-slot'} if $last_slot > $self->{'num-slot'};
+    if ($last_slot < $self->{'num-slot'} && $self->{'auto-create-slot'}) {
+	my $to_add = $self->{'runtapes'} - ($last_slot - $valid_slot);
+	if ($to_add > 0) {
+	    $last_slot += $to_add;
+	    $last_slot = $self->{'num-slot'} if $last_slot > $self->{'num-slot'};
+	}
+    }
     for my $i (1..$last_slot) {
 	$slots{$i} = 1
     }
