@@ -1,3 +1,6 @@
+2016-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amsamba.pl: Fix for newer samba version
+
 2016-06-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Taper/Worker.pm: Abort_setup on input_errors
 	* server-src/driver.c: Do not free dp->dataport_list
