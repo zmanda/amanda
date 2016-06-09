@@ -310,6 +310,7 @@ sub findpass {
 		if ($password =~ /^6G\!dr(.*)/) {
 		    my $base64 = $1;
 		    $password = MIME::Base64::decode($base64);
+		    chomp($password);
 		}
 	        $self->{password} = $password;
 		$self->{password} = undef if (defined $password && $password eq "");
@@ -446,7 +447,8 @@ sub command_selfcheck {
     if (defined $self->{password}) {
         my $ff = $password_wtr->fileno;
         debug("password_wtr $ff");
-        $password_wtr->print($self->{password});
+        $password_wtr->print("$self->{password}\n");
+        $password_wtr->print("$self->{password}\n");
         $password_wtr->close();
         $password_rdr->close();
     } else {
@@ -458,6 +460,7 @@ sub command_selfcheck {
 	chomp;
 	debug("stderr: " . $_);
 	next if /^Domain=/;
+	next if /^WARNING/g;
 	# message if samba server is configured with 'security = share'
 	next if /Server not using user level security and no password supplied./;
 	$self->print_to_server("smbclient: $_",
@@ -523,8 +526,8 @@ sub command_estimate {
     if (defined $self->{password}) {
         my $ff = $password_wtr->fileno;
         debug("password_wtr $ff");
-        debug("password $self->{password}");
-        $password_wtr->print($self->{password});
+        $password_wtr->print("$self->{password}\n");
+        $password_wtr->print("$self->{password}\n");
         $password_wtr->close();
         $password_rdr->close();
     }
@@ -548,6 +551,7 @@ sub parse_estimate {
 	next if /^\s*$/;
 	next if /^Domain=/;
 	next if /dumped \d+ files and directories/;
+	next if /^WARNING/g;
 	# message if samba server is configured with 'security = share'
 	next if /Server not using user level security and no password supplied./;
 	debug("stderr: $_");
@@ -665,7 +669,8 @@ sub command_backup {
     if (defined $self->{password}) {
         my $ff = $password_wtr->fileno;
         debug("password_wtr $ff");
-        $password_wtr->print($self->{password});
+        $password_wtr->print("$self->{password}\n");
+        $password_wtr->print("$self->{password}\n");
         $password_wtr->close();
         $password_rdr->close();
     } else {
@@ -673,11 +678,12 @@ sub command_backup {
     }
     close($smbclient_wtr);
 
-    #index process 
-    my $index_rdr;
+    #index process
     my $index_wtr;
+    my $index_rdr;
+    my $index_err = Symbol::gensym;;
     debug("$self->{gnutar} -tf -");
-    my $pid_index1 = open2($index_rdr, $index_wtr, $self->{gnutar}, "-tf", "-");
+    my $pid_index1 = open3($index_wtr, $index_rdr, $index_err, $self->{gnutar}, "-tf", "-");
     my $size = -1;
     my $index_fd = $index_rdr->fileno;
     debug("index $index_fd");
@@ -694,6 +700,8 @@ sub command_backup {
     my $smbclient_stderr_src = Amanda::MainLoop::fd_source($smbclient_err,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
     my $index_tar_stdout_src = Amanda::MainLoop::fd_source($index_rdr,
+				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
+    my $index_tar_stderr_src = Amanda::MainLoop::fd_source($index_err,
 				$G_IO_IN|$G_IO_HUP|$G_IO_ERR);
 
     my $smbclient_stdout_done = 0;
@@ -743,16 +751,20 @@ sub command_backup {
 	}
 	chomp $line;
 	debug("stderr: " . $line);
-	return if $line =~ /^Domain=/;
-	return if $line =~ /^tarmode is now /;
-	return if $line =~ /^tar_re_search set/;
+	return if $line =~ /Domain=/;
+	return if $line =~ /tarmode is now /;
+	return if $line =~ /tar_re_search set/;
+	return if $line =~ /WARNING/g;
 	if ($line =~ /dumped (\d+) files and directories/) {
 	    $nb_files = $1;
 	    return;
 	}
 	# message if samba server is configured with 'security = share'
 	return if $line =~  /Server not using user level security and no password supplied./;
-	if ($line =~ /^Total bytes written: (\d*)/) {
+	if ($line =~ /Total bytes written: (\d*)/) {
+	    $size = $1;
+	    return;
+	} elsif ($line =~ /Total bytes received: (\d*)/) {
 	    $size = $1;
 	    return;
 	}
@@ -778,6 +790,27 @@ sub command_backup {
 	    }
 	} else {
 	    chomp $line;
+	    if ($line =~ /Ignoring unknown extended header keyword/) {
+		debug("tar stderr: $line");
+	    } else {
+		$self->print_to_server($line, $Amanda::Script_App::ERROR);
+	    }
+	}
+    });
+
+    $index_tar_stderr_src->set_callback(sub {
+	my $line = <$index_err>;
+	if (!defined $line) {
+	    $file_to_close--;
+	    $index_tar_stderr_src->remove();
+	    close($index_err);
+	    Amanda::MainLoop::quit() if $file_to_close == 0;
+	    return;
+	}
+	chomp $line;
+	if ($line =~ /Ignoring unknown extended header keyword/) {
+	    debug("tar stderr: $line");
+	} else {
 	    $self->print_to_server($line, $Amanda::Script_App::ERROR);
 	}
     });

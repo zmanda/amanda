@@ -1,3 +1,6 @@
+2016-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amsamba.pl: Fix for newer samba version
+
 2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c: typo
 
