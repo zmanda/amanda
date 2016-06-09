@@ -1,4 +1,8 @@
 2016-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/find.c (make_dump_hash, dump_hash_exist): Fix for
+	  host_hash
+
+2016-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amsamba.pl: Fix for newer samba version
 
 2016-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>

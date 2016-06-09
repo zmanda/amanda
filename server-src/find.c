@@ -1671,7 +1671,7 @@ make_dump_hash(
 	    g_hash_table_insert(dump_hash, output_find_result->hostname, host_hash);
 	}
 
-	disk_hash = g_hash_table_lookup(dump_hash, output_find_result->diskname);
+	disk_hash = g_hash_table_lookup(host_hash, output_find_result->diskname);
 	if (!disk_hash) {
 	    disk_hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GDestroyNotify)g_hash_table_destroy);
 	    g_hash_table_insert(host_hash, output_find_result->diskname, disk_hash);
@@ -1706,7 +1706,7 @@ dump_hash_exist(
     host_hash = g_hash_table_lookup(dump_hash, hostname);
     if (!host_hash) return NULL;
 
-    disk_hash = g_hash_table_lookup(dump_hash, diskname);
+    disk_hash = g_hash_table_lookup(host_hash, diskname);
     if (!disk_hash) return NULL;
 
     time_hash = g_hash_table_lookup(disk_hash, timestamp);
