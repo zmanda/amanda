@@ -1561,9 +1561,6 @@ start_some_dumps(
     GList  *slist, *slist_next;
     sched_t *sp, *delayed_sp, *sp_accept;
     assignedhd_t **holdp=NULL, **holdp_accept;
-    cmd_t cmd;
-    int result_argc;
-    char **result_argv;
     chunker_t *chunker;
     dumper_t *dumper;
     wtaper_t *wtaper;
@@ -1782,78 +1779,12 @@ start_some_dumps(
 		chunker_cmd(chunker, SHM_WRITE, sp, sp->datestamp);
 		job->do_port_write = FALSE;
 	    }
-	    cmd = getresult(chunker->fd, 1, &result_argc, &result_argv);
-	    if ((job->do_port_write && cmd != PORT) ||
-		(!job->do_port_write && cmd != SHM_NAME)) {
-		assignedhd_t **h=NULL;
-		int activehd;
-		char *qname = quote_string(sp->disk->name);
-
-		if (job->do_port_write) {
-		    g_printf(_("driver: did not get PORT from %s for %s:%s\n"),
-		       chunker->name, sp->disk->host->hostname, qname);
-		} else {
-		    g_printf(_("driver: did not get SHM-NAME from %s for %s:%s\n"),
-		       chunker->name, sp->disk->host->hostname, qname);
-		}
-		amfree(qname);
-		fflush(stdout);
-
-		deallocate_bandwidth(sp->disk->host->netif, sp->est_kps);
-		h = sp->holdp;
-		activehd = sp->activehd;
-		h[activehd]->used = 0;
-		h[activehd]->disk->allocated_dumpers--;
-		adjust_diskspace(sp, DONE);
-		delete_diskspace(sp);
-		sp->disk->host->inprogress--;
-		sp->disk->inprogress = 0;
-		dumper->busy = 0;
-		sp->dump_attempted++;
-		free_serial_job(job);
-		free_job(job);
-		if (sp->dump_attempted < sp->disk->retry_dump) {
-		    char *wall_time = walltime_str(curclock());
-		    if( rq == &directq) {
-			g_printf("driver: requeue dump_to_tape time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
-		    } else {
-			g_printf("driver: requeue dump time %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp);
-		    }
-		    enqueue_sched(rq, sp);
-		}
-	    } else {
-		dumper->ev_read = event_register((event_id_t)dumper->fd, EV_READFD,
-						 handle_dumper_result, dumper);
-		chunker->ev_read = event_register((event_id_t)chunker->fd, EV_READFD,
-						   handle_chunker_result, chunker);
-		amfree(sp->disk->dataport_list);
-		amfree(sp->disk->shm_name);
-		dumper->output_port = atoi(result_argv[2]);
-		if (job->do_port_write) {
-		    sp->disk->dataport_list = g_strdup(result_argv[3]);
-		} else {
-		    sp->disk->shm_name = g_strdup(result_argv[3]);
-		}
-
-		if (sp->disk->host->pre_script == 0) {
-		    run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-					    get_config_name(), sp->disk->host);
-		    sp->disk->host->pre_script = 1;
-		}
-		run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
-				   get_config_name(), sp->disk,
-				   sp->level);
-		if (job->do_port_write) {
-		    dumper_cmd(dumper, PORT_DUMP, sp, NULL);
-		} else {
-		    dumper_cmd(dumper, SHM_DUMP, sp, NULL);
-		}
-	    }
+	    chunker->ev_read = event_register((event_id_t)chunker->fd,
+					      EV_READFD,
+					      handle_chunker_result, chunker);
 	    sp->disk->host->start_t = now + HOST_DELAY;
 	    if (empty(*rq) && active_dumper() == 0) { force_flush = 1;}
 
-	    if (result_argv)
-		g_strfreev(result_argv);
 	    short_dump_state();
 	} else if (sp != NULL && wtaper != NULL) { /* dump to tape */
 	    job_t *job = alloc_job();
@@ -3733,6 +3664,7 @@ handle_chunker_result(
     void *	cookie)
 {
     chunker_t *chunker = cookie;
+    dumper_t *dumper;
     assignedhd_t **h=NULL;
     job_t    *job;
     sched_t  *sp;
@@ -3817,6 +3749,43 @@ handle_chunker_result(
 	    chunker->result = cmd;
 
 	    chunker_cmd(chunker, QUIT, NULL, NULL);
+	    break;
+
+	case PORT: /* PORT <handle> <port> <dataport_list> */
+	case SHM_NAME: /* SHM-NAME <handle> <port> <shm_name> */
+	    if (result_argc != 4) {
+                error(_("error [chunker %s result_argc != 4: %d]"), cmdstr[cmd],
+                      result_argc);
+                /*NOTREACHED*/
+            }
+	    dumper = job->dumper;
+	    amfree(sp->disk->dataport_list);
+	    amfree(sp->disk->shm_name);
+
+	    dumper->output_port = atoi(result_argv[2]);
+	    if (job->do_port_write) {
+		sp->disk->dataport_list = g_strdup(result_argv[3]);
+	    } else {
+		sp->disk->shm_name = g_strdup(result_argv[3]);
+	    }
+
+	    if (sp->disk->host->pre_script == 0) {
+		run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
+					get_config_name(), sp->disk->host);
+		sp->disk->host->pre_script = 1;
+	    }
+	    run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
+				   get_config_name(), sp->disk,
+				   sp->level);
+	    if (job->do_port_write) {
+		dumper_cmd(dumper, PORT_DUMP, sp, NULL);
+	    } else {
+		dumper_cmd(dumper, SHM_DUMP, sp, NULL);
+	    }
+	    dumper->ev_read = event_register(
+				(event_id_t)dumper->fd,
+				EV_READFD,
+				handle_dumper_result, dumper);
 	    break;
 
 	case DUMPER_STATUS: /* NO-ROOM <handle> */

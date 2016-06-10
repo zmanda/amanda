@@ -1,3 +1,9 @@
+2016-06-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (start_some_dumps): Do not wait for chunker PORT
+	  or SHM-NAME
+	* server-src/driver.c (handle_chunker_result): Handle PORT and
+	  SHM-NAME reply
+
 2016-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/find.c (make_dump_hash, dump_hash_exist): Fix for
 	  host_hash
