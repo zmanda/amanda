@@ -1,4 +1,8 @@
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/debug.c (msg_timestamp): Add sub-second time precision
+	  to the timestamp
+
+2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (start_a_flush_taper): Use
 	  TAPER_STATE_TAPE_STARTED or TAPER_STATE_RESERVATION
 

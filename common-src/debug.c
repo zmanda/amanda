@@ -494,12 +494,25 @@ debug_setup_2(
 static char *
 msg_timestamp(void)
 {
+    struct timespec spec;
+    struct tm    t;
     static char  timestamp[128];
     char        *r;
-    time_t       curtime;
+    int          len;
+    int          xlen;
 
-    time(&curtime);
-    ctime_r(&curtime, timestamp);
+    clock_gettime(CLOCK_REALTIME, &spec);
+    localtime_r(&spec.tv_sec, &t);
+
+    len = strftime(timestamp, 128, "%a %b %d %H:%M:%S", &t);
+
+    xlen = 128 - len;
+    snprintf(timestamp+len, xlen, ".%09ld", spec.tv_nsec);
+
+    len = strlen(timestamp);
+    xlen = 128 - len;
+    snprintf(timestamp+len, xlen, " %04d", 1900 + t.tm_year);
+
     r = strchr(timestamp, '\n');
     if (r)
 	*r = '\0';
