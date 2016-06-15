@@ -1,4 +1,8 @@
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (start_a_flush_taper): Use
+	  TAPER_STATE_TAPE_STARTED or TAPER_STATE_RESERVATION
+
+2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Taper/Scribe.pm: Fix perl warning
 
 2016-06-10  Jean-Louis Martineau <JMartineau@carbonite.com>

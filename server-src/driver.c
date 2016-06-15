@@ -928,6 +928,24 @@ start_a_flush_taper(
 	     wtaper < taper->wtapetable + taper->nb_worker;
 	     wtaper++) {
 	    if (!(wtaper->state & TAPER_STATE_DONE) &&
+		wtaper->state & TAPER_STATE_TAPE_STARTED) {
+		start_a_flush_wtaper(wtaper, &state_changed);
+	    }
+	}
+
+	for (wtaper = taper->wtapetable;
+	     wtaper < taper->wtapetable + taper->nb_worker;
+	     wtaper++) {
+	    if (!(wtaper->state & TAPER_STATE_DONE) &&
+		wtaper->state & TAPER_STATE_RESERVATION) {
+		start_a_flush_wtaper(wtaper, &state_changed);
+	    }
+	}
+
+	for (wtaper = taper->wtapetable;
+	     wtaper < taper->wtapetable + taper->nb_worker;
+	     wtaper++) {
+	    if (!(wtaper->state & TAPER_STATE_DONE) &&
 		wtaper->state & TAPER_STATE_WAIT_FOR_TAPE) {
 		start_a_flush_wtaper(wtaper, &state_changed);
 	    }
