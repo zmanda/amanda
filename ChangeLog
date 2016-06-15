@@ -1,4 +1,9 @@
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Taper_Scan_lexical.pl,
+	  installcheck/Amanda_Taper_Scan_oldest.pl,
+	  installcheck/Amanda_Taper_Scan_traditional.pl: Fix
+
+2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/tapefile.c: Check result of symlink call and log error
 
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>

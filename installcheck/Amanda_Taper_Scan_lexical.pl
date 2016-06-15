@@ -786,10 +786,11 @@ $testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
 				  policy => "\"test_policy\"",
 				  labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
+reset_taperoot(5);
 $tapelist->clear_tapelist();
 $tapelist->write();
+unlink $tapelist->{'last_write'};
 
-reset_taperoot(5);
 label_mtx_slot(1, "TEST-1", "20090424173001", "reuse", 1);
 label_mtx_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_mtx_slot(3, "TEST-3", "20090424173003", "reuse", 1);
@@ -833,7 +834,7 @@ sub test_robot {
 					tapelist => $tapelist);
         $taperscan = Amanda::Taper::Scan->new(
 	    tapelist  => $tapelist,
-	    algorithm => "traditional",
+	    algorithm => "lexical",
 	    storage => $storage);
         @results = run_scan($taperscan);
         is_deeply([ @results ],

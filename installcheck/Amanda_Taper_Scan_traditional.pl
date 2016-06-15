@@ -422,6 +422,8 @@ unlink($tapelist_filename);
 reset_taperoot(5);
 $tapelist->clear_tapelist();
 $tapelist->write();
+unlink $tapelist->{'last_write'};
+
 label_slot(1, "TEST-1", "X", "no-reuse", 1);
 label_slot(2, "TEST-2", "X", "no-reuse", 1);
 label_slot(3, "TEST-3", "X", "reuse", 1);
@@ -446,7 +448,7 @@ is_deeply([ @results ],
 $taperscan->quit();
 
 rmtree($taperoot);
-unlink($tapelist);
+unlink($tapelist_filename);
 
 # test invalid because slot loaded in invalid drive
 my $chg_state_file = "$Installcheck::TMP/chg-robot-state";
@@ -503,9 +505,10 @@ $testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
 				 labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
 $tapelist->clear_tapelist();
-$tapelist->write();
-
 reset_taperoot(5);
+$tapelist->write();
+unlink $tapelist->{'last_write'};
+
 label_mtx_slot(1, "TEST-1", "20090424173001", "reuse", 1);
 label_mtx_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_mtx_slot(3, "TEST-3", "20090424173003", "reuse", 1);
@@ -569,7 +572,7 @@ test_robot(\&Amanda::MainLoop::quit);
 Amanda::MainLoop::run();
 
 rmtree($taperoot);
-unlink($tapelist);
+unlink($tapelist_filename);
 
 unlink($chg_state_file) if -f $chg_state_file;
 unlink($mtx_state_file) if -f $mtx_state_file;
