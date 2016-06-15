@@ -172,7 +172,10 @@ write_tapelist(
     last_read_str = g_strdup_printf("%s.last_write", tapefile);
     unlink(last_read_str);
     rc = rename(newtapefile, tapefile);
-    symlink(pid_str, last_read_str);
+    if (symlink(pid_str, last_read_str) == -1) {
+	g_debug("failed to symlink %s to %s: %s", last_read_str, pid_str,
+		strerror(errno));
+    }
     amfree(newtapefile);
     amfree(pid_str);
     amfree(last_read_str);

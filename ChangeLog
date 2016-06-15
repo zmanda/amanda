@@ -1,8 +1,11 @@
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c: Check result of symlink call and log error
+
+2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amflock.c: Improve debugging
 
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
-	* perl/Amanda/Tapelist.swg:Do not reload the tapelist file if we
+	* perl/Amanda/Tapelist.swg: Do not reload the tapelist file if we
 	  already have the last state
 	* server-src/tapefile.c: Create the tapelist.last_write symlink
 	* installcheck/Amanda_Tapelist.pl: Fix
