@@ -1,4 +1,7 @@
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amflock.c: Improve debugging
+
+2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Tapelist.swg:Do not reload the tapelist file if we
 	  already have the last state
 	* server-src/tapefile.c: Create the tapelist.last_write symlink

@@ -125,7 +125,7 @@ file_lock_lock(
     }
     if (fd < 0) {
 	saved_errno = errno;
-	g_debug("file_lock_lock open failed: %s", strerror(saved_errno));
+	g_debug("file_lock_lock open failed (%s): %s", lock->filename, strerror(saved_errno));
 	if (saved_errno == EACCES || saved_errno == EAGAIN) {
 	    rv = 1;
 	} else {
@@ -141,7 +141,7 @@ file_lock_lock(
     lock_buf.l_len = 0; /* to EOF */
     if (fcntl(fd, F_SETLK, &lock_buf) < 0) {
 	saved_errno = errno;
-	g_debug("file_lock_lock fcntl failed: %s", strerror(saved_errno));
+	g_debug("file_lock_lock fcntl failed (%s): %s", lock->filename, strerror(saved_errno));
 	if (saved_errno == EACCES || saved_errno == EAGAIN) {
 	    rv = 1;
 	} else {
@@ -153,7 +153,7 @@ file_lock_lock(
     /* and read the file in its entirety */
     if (fstat(fd, &stat_buf) < 0) {
 	saved_errno = errno;
-	g_debug("file_lock_lock fstat failed: %s", strerror(saved_errno));
+	g_debug("file_lock_lock fstat failed (%s): %s", lock->filename, strerror(saved_errno));
 	rv = -1;
 	goto done;
     }
@@ -162,7 +162,7 @@ file_lock_lock(
 	rv = -1;
 	errno = EINVAL;
 	saved_errno = errno;
-	g_debug("file_lock_lock !S_IFREG");
+	g_debug("file_lock_lock (%s) !S_IFREG", lock->filename);
 	goto done;
     }
 
@@ -171,7 +171,7 @@ file_lock_lock(
 	lock->len = stat_buf.st_size;
 	if (read_fully(fd, lock->data, lock->len, NULL) < lock->len) {
             saved_errno = errno;
-            g_debug("file_lock_lock read_fully failed: %s", strerror(saved_errno));
+            g_debug("file_lock_lock read_fully failed (%s): %s", lock->filename, strerror(saved_errno));
 	    rv = -1;
 	    goto done;
 	}
@@ -290,21 +290,21 @@ file_lock_write(
 
     /* seek to position 0, rewrite, and truncate */
     if (lseek(fd, 0, SEEK_SET) < 0) {
-	g_debug("file_lock_write: failed to lseek: %s", strerror(errno));
+	g_debug("file_lock_write: failed to lseek (%s): %s", lock->filename, strerror(errno));
 	if (ftruncate(fd, 0) < 0) {};
 	return -1;
     }
 
     /* from here on out, any errors have corrupted the datafile.. */
     if (full_write(fd, data, len) < len) {
-	g_debug("file_lock_write: failed to write: %s", strerror(errno));
+	g_debug("file_lock_write: failed to write (%s): %s", lock->filename, strerror(errno));
 	if (ftruncate(fd, 0) < 0) {};
 	return -1;
     }
 
     if (lock->len > len) {
 	if (ftruncate(fd, len) < 0) {
-	    g_debug("file_lock_write: failed to ftruncate: %s", strerror(errno));
+	    g_debug("file_lock_write: failed to ftruncate (%s): %s", lock->filename, strerror(errno));
 	    if (ftruncate(fd, 0) < 0) {};
 	    return -1;
 	}
