@@ -255,26 +255,10 @@ sub inner_restore {
 	    $Amanda::Script_App::ERROR);
     }
 
-    my $dn = $self->{'options'}->{'device'};
-    $dn = 'amopaquetree-restored/' if !defined $dn;
-
-    if ( File::Spec->file_name_is_absolute($dn) ) {
-        $dn = File::Spec->abs2rel($dn, File::Spec->rootdir());
-	$dn = File::Spec->catfile($dn, ''); # force to look like a directory
-    }
-
-    my ( $volume, $directories, $file ) = File::Spec->splitpath($dn);
-    if ( '' ne $file ) {
-	$self->print_to_server_and_die("Has non-directory component: '$dn'",
-				       $Amanda::Script_App::ERROR);
-    }
+    my $dn = File::Spec->curdir();
 
     if ( 0 == $level ) {
-        make_path($dn);
 	remove_tree($dn, {keep_root => 1});
-    } elsif ( ! -d $dn ) {
-        $self->print_to_server_and_die("Not a directory: '$dn'",
-				       $Amanda::Script_App::ERROR);
     }
 
     my $rslt = system {$self->{'rsyncexecutable'}} (
