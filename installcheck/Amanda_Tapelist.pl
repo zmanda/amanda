@@ -83,6 +83,7 @@ mktapelist($tapelist, @lines);
 $tl_ok = is_deeply($tl,	{
  filename => $tapelist,
  lockname => $tapelist . ".lock",
+ last_write => $tapelist . ".last_write",
  tles => [
   { 'datestamp' => '20071111010002', 'label' => 'TESTCONF004',
     'reuse' => 1, 'position' => 1, 'blocksize' => undef,
@@ -314,6 +315,7 @@ mktapelist($tapelist, @lines);
 is_deeply($tl, {
   filename => $tapelist,
   lockname => $tapelist . ".lock",
+  last_write => $tapelist . ".last_write",
   tles => [
   { 'datestamp' => '2006123456', 'label' => 'FOO',
     'reuse' => 1, 'position' => 1, 'blocksize' => undef,
@@ -333,6 +335,7 @@ is_deeply($tl, {
 $tl->clear_tapelist();
 is_deeply($tl,	{ filename => $tapelist,
                   lockname => $tapelist . ".lock",
+		  last_write => $tapelist . ".last_write",
 		  tles => [],
 		  tle_hash_barcode => undef,
 		  tle_hash_label => undef }, "clear_tapelist returns an empty tapelist")  || diag(Data::Dumper::Dumper($tl));;
@@ -341,6 +344,7 @@ $tl->reload();
 is_deeply($tl, {
   filename => $tapelist,
   lockname => $tapelist . ".lock",
+  last_write => $tapelist . ".last_write",
   tles => [
   { 'datestamp' => '2006123456', 'label' => 'FOO',
     'reuse' => 1, 'position' => 1, 'blocksize' => undef,

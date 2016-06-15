@@ -62,10 +62,11 @@ sub new {
     my $self = {
 	filename => $filename,
 	lockname => $filename . '.lock',
+	last_write => $filename . '.last_write',
     };
     bless $self, $class;
 
-    my $message = $self->reload($lock);
+    my $message = $self->reload($lock, 1);
     return ($self, $message);
 }
 
@@ -78,6 +79,7 @@ sub clear_tapelist {
     $self->{'tles'} = [];
     $self->{'tle_hash_label'} = undef;
     $self->{'tle_hash_barcode'} = undef;
+    unlink($self->{'last_write'});
 
     return $self;
 }
@@ -86,7 +88,16 @@ sub clear_tapelist {
 
 sub reload {
     my $self = shift;
-    my ($lock) = @_;
+    my $lock = shift;
+    my $force = shift;
+
+    if (!$force) {
+	$last_write_pid = readlink($self->{'last_write'});
+	if (defined $last_write_pid &&
+	    $last_write_pid == $$) {
+	    return;
+	}
+    }
 
     if ($lock) {
 	$self->_take_lock();
@@ -227,9 +238,11 @@ sub write {
 
     return if (!$result);
 
+    unlink($self->{'last_write'});
     unless (move($new_tapelist_file, $filename)) {
 	die ("failed to rename '$new_tapelist_file' to '$filename': $!");
     }
+    symlink ("$$", $self->{'last_write'});
 
     # re-read from the C side to synchronize
     C_read_tapelist($filename);

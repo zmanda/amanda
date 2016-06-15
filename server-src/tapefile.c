@@ -131,7 +131,9 @@ write_tapelist(
     tape_t *tp;
     FILE *tapef;
     char *newtapefile;
-    int rc;
+    int   rc;
+    char *pid_str;
+    char *last_read_str;
 
     newtapefile = g_strconcat(tapefile, ".new", NULL);
 
@@ -166,8 +168,14 @@ write_tapelist(
 	amfree(newtapefile);
 	return 1;
     }
+    pid_str = g_strdup_printf("%d",getpid());
+    last_read_str = g_strdup_printf("%s.last_write", tapefile);
+    unlink(last_read_str);
     rc = rename(newtapefile, tapefile);
+    symlink(pid_str, last_read_str);
     amfree(newtapefile);
+    amfree(pid_str);
+    amfree(last_read_str);
 
     return(rc != 0);
 }
