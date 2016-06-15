@@ -1658,7 +1658,7 @@ sub _device_start {
 sub dbg {
     my ($self, $msg) = @_;
     if ($self->{'debug'}) {
-	if (exists $self->{'worker'}) {
+	if (defined $self->{'worker'}->{'handle'}) {
 	    debug("$self->{'worker'}->{'handle'} Amanda::Taper::Scribe: $msg");
 	} else {
 	    debug("Amanda::Taper::Scribe: $msg");
