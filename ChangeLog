@@ -1,4 +1,8 @@
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (start_a_flush_taper): Use
+	  TAPER_STATE_TAPE_STARTED && TAPER_STATE_RESERVATION
+
+2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amflock.c: Check the return status of mkdir
 
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
