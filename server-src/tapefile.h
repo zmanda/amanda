@@ -74,6 +74,7 @@ gchar **list_no_retention(void);
 int read_tapelist(char *tapefile);
 int write_tapelist(char *tapefile);
 void clear_tapelist(void);
+void reset_tapelist(void);
 tape_t *lookup_tapepoollabel(const char *pool, const char *label);
 tape_t *lookup_tapelabel(const char *label);
 tape_t *lookup_tapepos(int pos);
@@ -92,6 +93,16 @@ tape_t *lookup_last_reusable_tape(const char *l_template,
                                   int retention_days, int retention_recover,
                                   int retention_full, int skip);
 void remove_tapelabel(const char *label);
+tape_t * add_tapelabel(const char *datestamp,
+		       const char *label,
+		       const char *comment,
+		       gboolean    reuse,
+		       const char *meta,
+		       const char *barcode,
+		       guint64     blocksize,
+		       const char *pool,
+		       const char *storage,
+		       const char *config);
 int reusable_tape(tape_t *tp);
 int volume_is_reusable(const char *label);
 

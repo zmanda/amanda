@@ -102,9 +102,6 @@ sub label_slot {
 	$tapelist->add_tapelabel($stamp, $label, "", $reuse);
 	$tapelist->write();
 	$slot_label{$slot} = $label;
-	#open(my $fh, ">>", $tapelist_filename) or die("opening tapelist_filename: $!");
-	#print $fh "$stamp $label $reuse\n";
-	#close($fh);
     }
 }
 
@@ -131,11 +128,17 @@ sub label_mtx_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	if (exists $slot_label{$slot}) {
+	    $tapelist->remove_tapelabel($slot_label{$slot});
+	    delete $slot_label{$slot};
+	}
 	# tapelist uses '0' for new tapes; devices use 'X'..
 	$stamp = '0' if ($stamp eq 'X');
-	open(my $fh, ">>", $tapelist_filename) or die("opening tapelist_filename: $!");
-	print $fh "$stamp $label $reuse\n";
-	close($fh);
+	$reuse = $reuse ne 'no-reuse';
+	$tapelist->remove_tapelabel($label);
+	$tapelist->add_tapelabel($stamp, $label, "", $reuse);
+	$tapelist->write();
+	$slot_label{$slot} = $label;
     }
 }
 
@@ -187,8 +190,9 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 reset_taperoot(6);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-10", "20090424173011", "reuse", 1);
 label_slot(2, "TEST-20", "20090424173022", "reuse", 1);
 label_slot(3, "TEST-30", "20090424173033", "reuse", 1);
@@ -372,8 +376,9 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_labeled with autolabel
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-10", "20090424173011", "reuse", 1);
 label_slot(2, "TEST-20", "20090424173033", "reuse", 1);
 label_slot(4, "TEST-30", "20090424173022", "reuse", 1);
@@ -430,8 +435,9 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_labeled with autolabel
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-10", "20090424173011", "reuse", 1);
 label_slot(2, "TEST-20", "20090424173033", "reuse", 1);
 label_slot(4, "TEST-30", "20090424173022", "reuse", 1);
@@ -505,8 +511,9 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_labeled with autolabel
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-10", "20090424173011", "reuse", 1);
 label_slot(2, "TEST-20", "20090424173022", "reuse", 1);
 label_slot(4, "TEST-30", "20090424173033", "reuse", 1);
@@ -580,8 +587,9 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_volume with autolabel
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-10", "20090424173011", "reuse", 1);
 label_slot(2, "TEST-20", "20090424173033", "reuse", 1);
 label_slot(4, "TEST-30", "20090424173022", "reuse", 1);
@@ -680,8 +688,9 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test skipping no-reuse tapes
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-1", "20090424173001", "no-reuse", 1);
 label_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
@@ -707,8 +716,9 @@ unlink($tapelist);
 
 # test do not use no-reuse with a datestamp of 0
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
+
 label_slot(1, "TEST-1", "X", "no-reuse", 1);
 label_slot(2, "TEST-2", "X", "no-reuse", 1);
 label_slot(3, "TEST-3", "X", "reuse", 1);
@@ -728,6 +738,7 @@ is_deeply([ @results ],
 	  "skips a no-reuse volume")
 	  or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 rmtree($taperoot);
 unlink($tapelist);
@@ -787,9 +798,8 @@ $testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
 				  labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
-unlink $tapelist->{'last_write'};
 
 label_mtx_slot(1, "TEST-1", "20090424173001", "reuse", 1);
 label_mtx_slot(2, "TEST-2", "20090424173002", "reuse", 1);
@@ -799,6 +809,7 @@ label_mtx_slot(4, "TEST-4", "20090424173004", "reuse", 1);
 $testconf->remove_param("tpchanger");
 $testconf->add_param("storage", "\"robo2\"");
 $testconf->write();
+
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 if ($cfg_result != $CFGERR_OK) {
 	my ($level, @errors) = Amanda::Config::config_errors();

@@ -84,6 +84,20 @@ sub clear_tapelist {
     return $self;
 }
 
+sub reset_tapelist {
+    my $self = shift;
+
+    # reset the C version
+    C_reset_tapelist();
+
+    $self->{'tles'} = [];
+    $self->{'tle_hash_label'} = undef;
+    $self->{'tle_hash_barcode'} = undef;
+    unlink($self->{'last_write'});
+
+    return $self;
+}
+
 ## methods
 
 sub reload {
@@ -102,9 +116,6 @@ sub reload {
     if ($lock) {
 	$self->_take_lock();
     }
-
-    # clear the C copy
-    C_clear_tapelist();
 
     # let C read the file
     C_read_tapelist($self->{'filename'});
@@ -163,6 +174,7 @@ sub remove_tapelabel {
 	    return;
 	}
     }
+    C_remove_tapelabel($label);
 }
 
 sub add_tapelabel {
@@ -209,6 +221,9 @@ sub add_tapelabel {
 	push @{$tles}, $tle if !$added;
     }
     $self->_update_positions();
+    C_add_tapelabel($datestamp, $label, $comment, $reuse, $meta, $barcode,
+		    (defined $blocksize)? 0+$blocksize : 0,
+		    $pool, $storage, $config);
 }
 
 sub write {
@@ -245,7 +260,8 @@ sub write {
     symlink ("$$", $self->{'last_write'});
 
     # re-read from the C side to synchronize
-    C_read_tapelist($filename);
+    # C side should already be synchronized
+    #C_read_tapelist($filename);
 
     $self->unlock();
 
@@ -432,10 +448,28 @@ RetentionType get_retention_type(char *pool, char *label);
 /* C functions -- should be called *only* from within this module */
 
 %rename(C_read_tapelist) read_tapelist;
-int read_tapelist(char *tapefile);
+void read_tapelist(char *tapefile);
+
+%rename(C_add_tapelabel) add_tapelabel;
+tape_t *add_tapelabel(const char *datestamp,
+                      const char *label,
+                      const char *comment,
+                      gboolean    reuse,
+                      const char *meta,
+                      const char *barcode,
+                      guint64     blocksize,
+                      const char *pool,
+                      const char *storage,
+                      const char *config);
+
+%rename(C_remove_tapelabel) remove_tapelabel;
+void remove_tapelabel(char *label);
 
 %rename(C_clear_tapelist) clear_tapelist;
 void clear_tapelist(void);
+
+%rename(C_reset_tapelist) reset_tapelist;
+void reset_tapelist(void);
 
 %perlcode %{
 package Amanda::Tapelist::Message;

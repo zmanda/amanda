@@ -1,3 +1,19 @@
+2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Maintain the C tapelist instead of reloading it after a write
+	* device-src/diskflat-device.c (diskflat_device_seek_file): Return an
+	  F_EMPTY header on DEVICE_STATUS_VOLUME_UNLABELED
+	* perl/Amanda/Tapelist.swg (reset_tapelist): New method,
+	  (reload): Do not call C_clear_tapelist,
+	  (remove_tapelabel): Call C_remove_tapelabel,
+	  (add_tapelabel): Call C_add_tapelabel,
+	  (write): Do not call C_read_tapelist,
+	* perl/Amanda/Taper/Scan.pm (quit): Do not quit the changer
+	* server-src/tapefile.c (reset_tapelist, add_tapelabel): New function
+	* server-src/tapefile.h (reset_tapelist, add_tapelabel): Add prototype
+	* installcheck/Amanda_Taper_Scan_lexical.pl: Fix
+	* installcheck/Amanda_Taper_Scan_oldest.pl: Fix
+	* installcheck/Amanda_Taper_Scan_traditional.pl: Fix
+
 2016-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Taper_Scan_lexical.pl,
 	  installcheck/Amanda_Taper_Scan_oldest.pl,

@@ -288,12 +288,15 @@ diskflat_device_seek_file(
 		device_set_error(dself,
 		    g_strdup_printf(_("Couldn't open file %s: %s (unlabeled)"), self->filename, strerror(errno)),
 			DEVICE_STATUS_VOLUME_UNLABELED);
+		rval = g_new(dumpfile_t, 1);
+		fh_init(rval);
+		return rval;
 	    } else {
 		device_set_error(dself,
 		    g_strdup_printf(_("Couldn't open file %s: %s"), self->filename, strerror(errno)),
 			DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+		return NULL;
 	    }
-	    return NULL;
 	}
     }
 

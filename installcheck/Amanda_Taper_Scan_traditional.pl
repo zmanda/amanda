@@ -446,6 +446,7 @@ is_deeply([ @results ],
          "skips a no-reuse volume")
          or diag(Dumper(\@results));
 $taperscan->quit();
+$storage->quit();
 
 rmtree($taperoot);
 unlink($tapelist_filename);

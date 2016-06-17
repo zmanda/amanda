@@ -85,8 +85,7 @@ read_tapelist(
     char *line = NULL;
     int status = 0;
 
-    clear_tapelist();
-    tape_table = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, NULL);
+    reset_tapelist();
     if((tapef = fopen(tapefile,"r")) == NULL) {
 	if (errno == ENOENT) {
 	    /* no tapelist is equivalent to an empty tapelist */
@@ -207,6 +206,13 @@ clear_tapelist(void)
     }
     tape_list = NULL;
     tape_list_end = NULL;
+}
+
+void
+reset_tapelist(void)
+{
+    clear_tapelist();
+    tape_table = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, NULL);
 }
 
 tape_t *
@@ -402,6 +408,58 @@ remove_tapelabel(
 	amfree(tp->barcode);
 	amfree(tp);
     }
+}
+
+tape_t *
+add_tapelabel(
+    const char *datestamp,
+    const char *label,
+    const char *comment,
+    gboolean    reuse,
+    const char *meta,
+    const char *barcode,
+    guint64     blocksize,
+    const char *pool,
+    const char *storage,
+    const char *config)
+{
+    tape_t *cur, *new;
+    char *tape_key;
+
+    /* insert a new record to the front of the list */
+
+    new = g_new0(tape_t,1);
+
+    new->datestamp = g_strdup(datestamp);
+    new->position = 0;
+    new->reuse = reuse;
+    new->label = g_strdup(label);
+    new->comment = comment? g_strdup(comment) : NULL;
+    new->meta = meta? g_strdup(meta) : NULL;
+    new->barcode = barcode? g_strdup(barcode) : NULL;
+    new->blocksize = blocksize;
+    new->pool = pool? g_strdup(pool) : NULL;
+    new->storage = storage? g_strdup(storage) : NULL;
+    new->config = config? g_strdup(config) : NULL;
+    new->retention = FALSE;
+    new->retention_nb = FALSE;
+    new->retention_type = RETENTION_NO;
+
+    new->prev  = NULL;
+    new->next  = NULL;
+    tape_list = insert(tape_list, new);
+
+    /* scan list, updating positions */
+    cur = tape_list;
+    while(cur != NULL) {
+        cur->position++;
+        cur = cur->next;
+    }
+
+    tape_key = tape_hash_key(new->pool, new->label);
+    g_hash_table_insert(tape_table, tape_key, new);
+
+    return new;
 }
 
 int

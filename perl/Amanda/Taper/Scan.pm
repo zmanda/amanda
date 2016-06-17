@@ -350,10 +350,6 @@ sub DESTROY {
 sub quit {
     my $self = shift;
 
-    if (defined $self->{'chg'} && $self->{'chg'} != $self->{'initial_chg'}) {
-	$self->{'chg'}->quit();
-    }
-    $self->{'changer'}->quit() if defined $self->{'changer'};
     foreach (keys %$self) {
         delete $self->{$_};
     }
