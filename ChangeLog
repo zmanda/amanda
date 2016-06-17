@@ -1,4 +1,8 @@
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm, perl/Amanda/Taper/Scan/oldest.pm: Do
+	  not 'use Time::HiRes'
+
+2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer/robot.pm: Fix perl warning
 	* perl/Amanda/ScanInventory.pm: Use all slots returned by analyze
 	  before calling it again

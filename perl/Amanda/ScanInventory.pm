@@ -39,7 +39,6 @@ use POSIX ();
 use Data::Dumper;
 use vars qw( @ISA );
 use base qw(Exporter);
-use Time::HiRes qw(gettimeofday);
 our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
