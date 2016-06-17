@@ -837,7 +837,7 @@ sub load_unlocked {
 	    $self->_set_current(state => $state, slot => $slot);
 	}
 
-	if (defined $self->{'tapelist'}) {
+	if (defined $self->{'tapelist'} && $label) {
 	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
 	    if (defined $tle and defined $tle->{'barcode'} and
 		defined $state->{'slots'}->{$slot}->{'barcode'} and

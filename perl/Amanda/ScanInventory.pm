@@ -39,6 +39,7 @@ use POSIX ();
 use Data::Dumper;
 use vars qw( @ISA );
 use base qw(Exporter);
+use Time::HiRes qw(gettimeofday);
 our @EXPORT_OK = qw($DEFAULT_CHANGER);
 
 use Amanda::Paths;
@@ -82,11 +83,10 @@ sub new {
 	tapelist    => $tapelist,
         interactivity => $interactivity,
 	seen        => {},
-	scan_num    => 0
+	scan_num    => 0,
     };
     return bless ($self, $class);
 }
-
 
 sub scan {
     my $self = shift;
@@ -137,28 +137,22 @@ sub _scan {
     my $slot_scanned;
     my $remove_undef_state = 0;
     my $result_cb = $params{'result_cb'};
+    my $new_inventory = 0;
 
     my $steps = define_steps
 	cb_ref => \$result_cb;
 
-    step get_first_inventory => sub {
+    step init => sub {
 	$scan_running = 1;
-	$self->{'chg'}->inventory(inventory_cb => $steps->{'got_first_inventory'});
+	$steps->{'should_get_inventory'}->();
     };
 
-    step got_first_inventory => sub {
-	(my $err, $inventory) = @_;
-
-	if ($err && $err->notimpl) {
-	    #inventory not implemented
-	    die("no inventory");
-	} elsif ($err and $err->fatal) {
-	    #inventory fail
-	    return $steps->{'call_result_cb'}->($err, undef);
+    step should_get_inventory => sub {
+	$new_inventory = 0;
+	if ($res || ($self->{'slots'} && @{$self->{'slots'}} && defined $self->{'slots'}->[0])) {
+	    return $steps->{'action'}->();
 	}
-
-	# continue parsing the inventory
-	$steps->{'parse_inventory'}->($err, $inventory);
+	return $steps->{'get_inventory'}->();
     };
 
     step restart_scan => sub {
@@ -234,12 +228,58 @@ sub _scan {
 		delete $self->{seen}->{$slot};
 	    }
 	}
+	$new_inventory = 1;
+	$steps->{'action'}->();
+    };
 
+    step action => sub {
 	$self->{'slot-error-message'} = undef;
-	($action, $action_slot) = $self->analyze($inventory, $self->{seen}, $res);
 
-	if ($action == Amanda::ScanInventory::SCAN_DONE) {
-	    return $steps->{'call_result_cb'}->(undef, $res);
+	if ($res) {
+	    my $dev = $res->{'device'};
+	    if ($dev) {
+		my $volume_header = $dev->volume_header;
+		if ($dev->status == $DEVICE_STATUS_SUCCESS) {
+		    my $label = $volume_header->{'name'};
+		    if ($self->is_reusable_volume(label => $label, new_label_ok => 1)) {
+			    $action = Amanda::ScanInventory::SCAN_DONE;
+			    return $steps->{'call_result_cb'}->(undef, $res);
+		    } else {
+			my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($label);
+			if ($vol_tle) {
+			    if ($self->volume_is_new_labelled($vol_tle, {label => $label, barcode => $res->{barcode}})) {
+				$action = Amanda::ScanInventory::SCAN_DONE;
+				return $steps->{'call_result_cb'}->(undef, $res);
+			    }
+			}
+		   }
+		} else {
+		    if ($self->volume_is_labelable({ device_status => $dev->status,
+						     f_type  => $volume_header->{'type'},
+						     label   => $label,
+						     slot    => $res->{'this_slot'},
+						     barcode => $res->{'barcode'},
+						     meta    => $res->{'meta'} })) {
+			$action = Amanda::ScanInventory::SCAN_DONE;
+			return $steps->{'call_result_cb'}->(undef, $res);
+		    }
+		}
+	    }
+	}
+	delete $self->{'use_sl'};
+	if (!$self->{'slots'} || !@{$self->{'slots'}} || !defined $self->{'slots'}->[0]) {
+	    $self->{'slots'} = $self->analyze($inventory, $self->{seen});
+	}
+	if (@{$self->{'slots'}}) {
+	    $self->{'use_sl'} = shift @{$self->{'slots'}};
+	}
+	if ($self->{'use_sl'} && defined $self->{'use_sl'}->{'slot'}) {
+	    $action = Amanda::ScanInventory::SCAN_LOAD;
+	    $action_slot = $self->{'use_sl'}->{'slot'};
+	} elsif ($self->{'scan_conf'}->{'ask'}) {
+	    $action = Amanda::ScanInventory::SCAN_ASK_POLL;
+	} else {
+	    $action = Amanda::ScanInventory::SCAN_FAIL;
 	}
 
 	if (defined $res) {
@@ -261,6 +301,11 @@ sub _scan {
 			slot => $slot_scanned,
 			set_current => $params{'set_current'},
 			res_cb => $steps->{'slot_loaded'});
+	}
+
+	if (!$new_inventory) {
+	    delete $self->{'slots'};
+	    return $steps->{'get_inventory'}->();
 	}
 
 	my $err;
@@ -367,14 +412,13 @@ sub _scan {
 	my ($err) = @_;
 
 	# TODO: handle error
-
 	# throw out the inventory result and move on if the situation has
 	# changed while we were loading a volume
 	return $steps->{'abort_scan'}->() if $abort_scan;
 	return $steps->{'restart_scan'}->() if $restart_scan;
 
 	$new_slot = $current;
-	$steps->{'get_inventory'}->();
+	$steps->{'should_get_inventory'}->();
     };
 
     step handle_error => sub {

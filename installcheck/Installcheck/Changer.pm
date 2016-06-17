@@ -64,7 +64,6 @@ sub chg_err_like {
     my ($err, $expected, $msg) = @_;
 
     if (!defined($err) or !$err->isa("Amanda::Changer::Error")) {
-	fail($msg);
 	diag("Expected an Amanda::Changer::Error object; got\n" . Dumper($err));
 	return;
     }

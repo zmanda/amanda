@@ -176,7 +176,7 @@ sub set_current_slot {
 
 # set up and load a config
 my $testconf = Installcheck::Config->new();
-$testconf->add_param("tapelist", "\"$tapelist\"");
+$testconf->add_param("tapelist", "\"$tapelist_filename\"");
 $testconf->add_policy("test_policy", [ retention_tapes => 4 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
 				 policy    => "\"test_policy\"",
@@ -400,8 +400,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-25", $ACCESS_WRITE ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -409,8 +413,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-25", $ACCESS_WRITE ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -455,11 +463,15 @@ $taperscan->{'scan_conf'}->{'new_labeled'} = 'soon';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'soon';
 @results = run_scan($taperscan);
 is_deeply([ @results ],
-	  [ undef, "TEST-15", $ACCESS_WRITE ],
+	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -467,8 +479,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-30", $ACCESS_WRITE ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -476,8 +492,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-30", $ACCESS_WRITE ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -485,8 +505,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-30", $ACCESS_WRITE ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'soon';
 @results = run_scan($taperscan);
@@ -531,11 +555,15 @@ $taperscan->{'scan_conf'}->{'new_labeled'} = 'soon';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'soon';
 @results = run_scan($taperscan);
 is_deeply([ @results ],
-	  [ undef, "TEST-15", $ACCESS_WRITE ],
+	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -543,8 +571,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -552,8 +584,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-10", $ACCESS_WRITE ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -561,8 +597,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel last")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'soon';
 @results = run_scan($taperscan);
@@ -609,8 +649,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -618,8 +662,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-30", $ACCESS_WRITE ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);
@@ -654,8 +702,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel soon")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'order';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'order';
 @results = run_scan($taperscan);
@@ -663,8 +715,12 @@ is_deeply([ @results ],
 	  [ undef, "TEST-40", $ACCESS_WRITE ],
 	  "autolabel order")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
 
-$taperscan->{'seen'} = {};
+$taperscan = Amanda::Taper::Scan->new(
+    tapelist  => $tapelist,
+    algorithm => "lexical",
+    storage => $storage);
 $taperscan->{'scan_conf'}->{'new_labeled'} = 'last';
 $taperscan->{'scan_conf'}->{'new_volume'} = 'last';
 @results = run_scan($taperscan);

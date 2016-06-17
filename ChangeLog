@@ -1,4 +1,15 @@
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer/robot.pm: Fix perl warning
+	* perl/Amanda/ScanInventory.pm: Use all slots returned by analyze
+	  before calling it again
+	* perl/Amanda/Taper/Scan/lexical.pm (analyze),
+	  perl/Amanda/Taper/Scan/oldest.pm (analyze): Return an array of slots
+	* installcheck/Amanda_Taper_Scan_lexical.pl: Fix
+	* installcheck/Amanda_Taper_Scan_oldest.pl: Fix
+	* installcheck/Amanda_Taper_Scan_traditional.pl: Fix
+	* installcheck/Installcheck/Changer.pm: Fix
+
+2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm: Call $rv->_valide()
 	* perl/Amanda/Changer/disk.pm, perl/Amanda/Changer/diskflat.pm: Do not
 	  call $self->_validate()

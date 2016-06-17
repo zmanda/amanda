@@ -48,6 +48,7 @@ my $tapelist_filename = "$Installcheck::TMP/tapelist";
 my ($tapelist, $message) = Amanda::Tapelist->new($tapelist_filename);
 
 # vtape support
+my %slot_label;
 
 sub reset_taperoot {
     my ($nslots) = @_;
@@ -64,6 +65,7 @@ sub reset_taperoot {
 
     # clear out the tapefile
     open(my $fh, ">", $tapelist_filename) or die("opening tapelist_filename: $!");
+    %slot_label = ();
 }
 
 sub label_slot {
@@ -88,11 +90,19 @@ sub label_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	if (exists $slot_label{$slot}) {
+	    $tapelist->remove_tapelabel($slot_label{$slot});
+	    delete $slot_label{$slot};
+	}
 	# tapelist uses '0' for new tapes; devices use 'X'..
 	$stamp = '0' if ($stamp eq 'X');
-	open(my $fh, ">>", $tapelist_filename) or die("opening tapelist_filename: $!");
-	print $fh "$stamp $label $reuse\n";
-	close($fh);
+	$reuse = $reuse ne 'no-reuse';
+	if (defined $label) {
+	    $tapelist->remove_tapelabel($label);
+	    $tapelist->add_tapelabel($stamp, $label, "", $reuse);
+	    $tapelist->write();
+	    $slot_label{$slot} = $label;
+	}
     }
 }
 
@@ -119,11 +129,17 @@ sub label_mtx_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	if (exists $slot_label{$slot}) {
+	    $tapelist->remove_tapelabel($slot_label{$slot});
+	    delete $slot_label{$slot};
+	}
 	# tapelist uses '0' for new tapes; devices use 'X'..
 	$stamp = '0' if ($stamp eq 'X');
-	open(my $fh, ">>", $tapelist_filename) or die("opening tapelist_filename: $!");
-	print $fh "$stamp $label $reuse\n";
-	close($fh);
+	$reuse = $reuse ne 'no-reuse';
+	$tapelist->remove_tapelabel($label);
+	$tapelist->add_tapelabel($stamp, $label, "", $reuse);
+	$tapelist->write();
+	$slot_label{$slot} = $label;
     }
 }
 
@@ -186,6 +202,8 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 reset_taperoot(5);
+$tapelist->reset_tapelist();
+$tapelist->write();
 label_slot(1, "TEST-1", "20090424173001", "reuse", 1);
 label_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
@@ -377,15 +395,17 @@ is_deeply([ @results ],
 	  [ undef, "TEST-2", $ACCESS_WRITE ],
 	  "scans for volumes, even with a newly labeled volume available")
 	  or diag(Dumper(\@results));
+$taperscan->quit();
+$storage->quit();
 
 # test skipping no-reuse tapes
 reset_taperoot(5);
+$tapelist->reset_tapelist();
+$tapelist->write();
 label_slot(1, "TEST-1", "20090424173001", "no-reuse", 1);
 label_slot(2, "TEST-2", "20090424173002", "reuse", 1);
 label_slot(3, "TEST-3", "20090424173003", "reuse", 1);
 label_slot(4, "TEST-4", "20090424173004", "reuse", 1);
-$taperscan->quit();
-$storage->quit();
 
 $testconf->add_policy("test_policy", [ retention_tapes => 2 ]);
 $testconf->add_storage("disk", [ tpchanger => "\"chg-disk:$taperoot\"",
@@ -420,9 +440,8 @@ unlink($tapelist_filename);
 
 # test do not use no-reuse with a datestamp of 0
 reset_taperoot(5);
-$tapelist->clear_tapelist();
+$tapelist->reset_tapelist();
 $tapelist->write();
-unlink $tapelist->{'last_write'};
 
 label_slot(1, "TEST-1", "X", "no-reuse", 1);
 label_slot(2, "TEST-2", "X", "no-reuse", 1);
@@ -505,10 +524,9 @@ $testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
 				  policy => "\"test_policy\"",
 				 labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
-$tapelist->clear_tapelist();
 reset_taperoot(5);
+$tapelist->reset_tapelist();
 $tapelist->write();
-unlink $tapelist->{'last_write'};
 
 label_mtx_slot(1, "TEST-1", "20090424173001", "reuse", 1);
 label_mtx_slot(2, "TEST-2", "20090424173002", "reuse", 1);

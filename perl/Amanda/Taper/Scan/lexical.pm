@@ -70,44 +70,6 @@ sub new {
     return bless ($self, $class);
 }
 
-sub most_prefered {
-    my $self = shift;
-
-    my $last_label = $self->last_use_label();
-    my $same_label;
-    my $result;
-    for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
-	if (defined $last_label && $last_label eq $tle->{'label'}) {
-	    $same_label = $tle if $self->is_reusable_volume(label => $tle->{'label'});
-	} else {
-	    $result = $tle if $self->is_reusable_volume(label => $tle->{'label'}) and
-			      (!defined $result or
-			       (!defined $last_label and
-				$tle->{'label'} lt $result->{'label'}) or
-			       ($tle->{'label'} gt $last_label and
-			        $tle->{'label'} lt $result->{'label'}) or
-			       ($tle->{'label'} gt $last_label and
-			        $result->{'label'} lt $last_label) or
-			       ($result->{'label'} lt $last_label and
-			        $tle->{'label'} lt $result->{'label'}));
-	}
-    }
-    $result = $same_label if !defined $result;
-    return $result->{'label'} if $result;
-    return undef;
-}
-
-sub first_reusable_label {
-    my $self = shift;
-
-    my $label;
-
-    for my $tle (@{$self->{'tapelist'}->{'tles'}}) {
-	$label = $tle->{'label'} if $self->is_reusable_volume(label => $tle->{'label'});
-    }
-    return $label;
-}
-
 sub last_use_label {
     my $self = shift;
 
@@ -122,51 +84,53 @@ sub analyze {
     my $seen  = shift;
     my $res = shift;
 
-    my $most_prefered;
-    my @reusable;
-    my @new_labeled;
-    my $first_new_volume;
-    my $new_volume;
-    my @new_volume;
-    my $first_error;
-    my $new_error;
-    my $first_unknown;
-    my $unknown;
-    my $current;
-    my $label = $self->most_prefered();
-    $self->{'most_prefered_label'} = $label;
+    my @reusable_before;
+    my @reusable_after;
+    my @new_volume_before;
+    my @new_volume_after;
+    my @new_labeled_before;
+    my @new_labeled_after;
+    my @unknown;
+    my @error;
+
+    my $last_label = $self->last_use_label();
+
     for my $i (0..(scalar(@$inventory)-1)) {
 	my $sl = $inventory->[$i];
-	if ($sl->{current}) {
-	    $current = $sl;
-	}
-	next if $seen->{$sl->{slot}} and (!$res || $res->{'this_slot'} ne $sl->{'slot'});
+	next if $seen->{$sl->{slot}};
 
 	if (!defined $sl->{'state'} ||
 	    $sl->{'state'} == Amanda::Changer::SLOT_UNKNOWN) {
-	    $first_unknown = $sl if !$first_unknown;
-	    $unknown = $sl if $current && !$unknown;
+	    push @unknown, $sl
 	} elsif ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 	} elsif (defined $sl->{'label'} &&
 		 $sl->{device_status} == $DEVICE_STATUS_SUCCESS) {
-	    if ($label && $sl->{'label'} eq $label) {
-		$most_prefered = $sl;
-	    } elsif ($self->is_reusable_volume(label => $sl->{'label'})) {
-		push @reusable, $sl;
+	    if ($self->is_reusable_volume(label => $sl->{'label'})) {
+		if ($last_label && $sl->{'label'} gt $last_label) {
+		    push @reusable_after, $sl;
+		} else {
+		    push @reusable_before, $sl;
+		}
 	    } else {
 		my $vol_tle = $self->{'tapelist'}->lookup_tapelabel($sl->{'label'});
 		if ($vol_tle) {
 		    if ($self->volume_is_new_labelled($vol_tle, $sl)) {
-			push @new_labeled, $sl;
+			if ($last_label && $sl->{'label'} gt $last_label) {
+			    push @new_labeled_after, $sl;
+			} else {
+			    push @new_labeled_before, $sl;
+			}
 		    }
 		} elsif ($self->volume_is_labelable($sl)) {
 		    $sl->{'label'} = $self->{'chg'}->make_new_tape_label(
 					barcode => $sl->{'barcode'},
 					slot => $sl->{'slot'},
 					meta => $sl->{'meta'});
-		    $first_new_volume = $sl if !$first_new_volume;
-		    $new_volume = $sl if $current && !$new_volume;
-		    push @new_volume, $sl;
+		    if ($last_label && $sl->{'label'} gt $last_label) {
+			push @new_volume_after, $sl;
+		    } else {
+			push @new_volume_before, $sl;
+		    }
 		}
 	    }
 	} elsif ($self->volume_is_labelable($sl)) {
@@ -174,127 +138,94 @@ sub analyze {
 					barcode => $sl->{'barcode'},
 					slot => $sl->{'slot'},
 					meta => $sl->{'meta'});
-	    $first_new_volume = $sl if !$first_new_volume;
-	    $new_volume = $sl if $current && !$new_volume;
-	    push @new_volume, $sl;
+	    if ($last_label && $sl->{'label'} gt $last_label) {
+		push @new_volume_after, $sl;
+	    } else {
+		push @new_volume_before, $sl;
+	    }
 	} elsif (!defined($sl->{device_status}) && !defined($sl->{label})) {
-	    $first_unknown = $sl if !$first_unknown;
-	    $unknown = $sl if $current && !$unknown;
+	    push @unknown, $sl;
 	} elsif (defined($sl->{device_status}) and
 		 ($sl->{'device_status'} & $DEVICE_STATUS_DEVICE_ERROR or
 		  $sl->{'device_status'} & $DEVICE_STATUS_VOLUME_ERROR) and
 		 not exists $self->{'handled-error'}->{$sl->{'device_error'}} and
 		 not exists $self->{'new_error'}->{$sl->{'device_error'}}) {
-	    $first_error = $sl if !$first_error;
-	    $new_error = $sl if $current && !$new_error;
+	    push @error, $sl;
 	} else {
 	}
     }
-    $unknown = $first_unknown if !defined $unknown;
-    $new_volume = $first_new_volume if !defined $new_volume;
 
-    my $first_label = $self->first_reusable_label();
-    my $last_label = $self->last_use_label();
+    @reusable_before = sort { $a->{'label'} cmp $b->{'label'} } @reusable_before;
+    @reusable_after = sort { $a->{'label'} cmp $b->{'label'} } @reusable_after;
+    @new_labeled_before = sort { $a->{'label'} cmp $b->{'label'} } @new_labeled_before;
+    @new_labeled_after = sort { $a->{'label'} cmp $b->{'label'} } @new_labeled_after;
+    @new_volume_before = sort { $a->{'label'} cmp $b->{'label'} } @new_volume_before;
+    @new_volume_after = sort { $a->{'label'} cmp $b->{'label'} } @new_volume_after;
 
-    my $reusable;
-    for my $sl (@reusable) {
-	$reusable = $sl if !defined $reusable or
-			   ($sl->{'label'} gt $last_label and
-			    $sl->{'label'} lt $reusable->{'label'}) or
-			   ($sl->{'label'} gt $last_label and
-			    $reusable->{'label'} lt $last_label) or
-			   ($reusable->{'label'} lt $last_label and
-			    $sl->{'label'} lt $reusable->{'label'});
-    }
-
-    my $new_labeled;
-    for my $sl (@new_labeled) {
-	$new_labeled = $sl if !defined $new_labeled or
-			      (!$last_label and
-			       $sl->{'label'} lt $new_labeled->{'label'}) or
-			      ($last_label and
-			       $sl->{'label'} gt $last_label and
-			       $sl->{'label'} lt $new_labeled->{'label'}) or
-			      ($last_label and
-			       $sl->{'label'} gt $last_label and
-			       $new_labeled->{'label'} lt $last_label) or
-			      ($last_label and
-			       $new_labeled->{'label'} lt $last_label and
-			       $sl->{'label'} lt $new_labeled->{'label'});
-    }
-
-    for my $sl (@new_volume) {
-	$new_volume = $sl if defined $last_label and
-			     $new_volume->{'label'} ne $sl->{'label'} and
-			     (($sl->{'label'} gt $last_label and
-			       $sl->{'label'} lt $new_volume->{'label'}) or
-			      ($sl->{'label'} gt $last_label and
-			       $new_volume->{'label'} lt $last_label) or
-			      ($new_volume->{'label'} lt $last_label and
-			       $sl->{'label'} lt $new_volume->{'label'}));
-    }
-
+    my @result;
+    my @soon_before;
+    my @soon_after;
+    my @order_before;
+    my @order_after;
+    my @last_before;
+    my @last_after;
     my $use;
-    if ($new_labeled && $self->{'scan_conf'}->{'new_labeled'} eq 'soon') {
-	$use = $new_labeled;
-    } elsif ($new_volume && $self->{'scan_conf'}->{'new_volume'} eq 'soon') {
-	$use = $new_volume;
-    } elsif ($new_labeled &&
-	      $self->{'scan_conf'}->{'new_labeled'} eq 'order' and
-	      (!$label || !$first_label || !$last_label || !$most_prefered or
-	       ($last_label and $most_prefered and
-		$new_labeled->{'label'} gt $last_label and
-	        $new_labeled->{'label'} lt $most_prefered->{'label'}) or
-	       ($last_label and $most_prefered and
-		$new_labeled->{'label'} gt $last_label and
-	        $most_prefered->{'label'} lt $last_label) or
-	       ($first_label and $most_prefered and
-		$new_labeled->{'label'} lt $first_label and
-	        $new_labeled->{'label'} lt $most_prefered->{'label'}))) {
-	$use = $new_labeled;
-    } elsif ($new_volume and
-	     $self->{'scan_conf'}->{'new_volume'} eq 'order' and
-	     (!$label || !$first_label || !$last_label || !$most_prefered or
-	      ($last_label and $most_prefered and
-	       $new_volume->{'label'} gt $last_label and
-	       $new_volume->{'label'} lt $most_prefered->{'label'}) or
-	      ($last_label and $most_prefered and
-	       $new_volume->{'label'} gt $last_label and
-	       $most_prefered->{'label'} lt $last_label) or
-	      ($first_label and $most_prefered and
-	       $new_volume->{'label'} lt $first_label and
-	       $new_volume->{'label'} lt $most_prefered->{'label'}))) {
-	$use = $new_volume;
-    } elsif (defined $most_prefered) {
-	$use = $most_prefered;
-    } elsif (defined $reusable) {
-	$use = $reusable;
-    } elsif ($new_labeled and $self->{'scan_conf'}->{'new_labeled'} eq 'last') {
-	$use = $new_labeled;
-    } elsif ($new_volume and $self->{'scan_conf'}->{'new_volume'} eq 'last') {
-	$use = $new_volume;
-    } elsif ($unknown and $self->{'scan_conf'}->{'scan'}) {
-	$use = $unknown;
-    } elsif ($new_error) {
-	$use = $new_error;
-	$self->{'handled-error'}->{$new_error->{'device_error'}} = 1;
+
+    if (@new_labeled_after && $self->{'scan_conf'}->{'new_labeled'} eq 'soon') {
+	push @soon_after, @new_labeled_after;
+    }
+    if (@new_labeled_before && $self->{'scan_conf'}->{'new_labeled'} eq 'soon') {
+	push @soon_before, @new_labeled_before;
+    }
+    if (@new_volume_after && $self->{'scan_conf'}->{'new_volume'} eq 'soon') {
+	push @soon_after, @new_volume_after;
+    }
+    if (@new_volume_before && $self->{'scan_conf'}->{'new_volume'} eq 'soon') {
+	push @soon_before, @new_volume_before;
+    }
+    @soon_before = sort { $a->{'label'} cmp $b->{'label'} } @soon_before;
+    @soon_after = sort { $a->{'label'} cmp $b->{'label'} } @soon_after;
+
+    if (@new_labeled_before && $self->{'scan_conf'}->{'new_labeled'} eq 'order') {
+	push @order_before, @new_labeled_before;
+    }
+    if (@new_labeled_after && $self->{'scan_conf'}->{'new_labeled'} eq 'order') {
+	push @order_after, @new_labeled_after;
+    }
+    if (@new_volume_before && $self->{'scan_conf'}->{'new_volume'} eq 'order') {
+	push @order_before, @new_volume_before;
+    }
+    if (@new_volume_after && $self->{'scan_conf'}->{'new_volume'} eq 'order') {
+	push @order_after, @new_volume_after;
+    }
+    if (@reusable_after) {
+	push @order_after, @reusable_after;
+    }
+    if (@reusable_before) {
+	push @order_before, @reusable_before;
     }
 
-    if ($use) {
-	if (defined $res and $res->{'this_slot'} eq $use->{'slot'}) {
-	    return (Amanda::ScanInventory::SCAN_DONE);
-	} else {
-	    return (Amanda::ScanInventory::SCAN_LOAD,
-		    $use->{'slot'});
-	}
-    } elsif ($unknown and $self->{'scan_conf'}->{'scan'}) {
-	return (Amanda::ScanInventory::SCAN_LOAD,
-		$unknown->{'slot'});
-    } elsif ($self->{'scan_conf'}->{'ask'}) {
-	return (Amanda::ScanInventory::SCAN_ASK_POLL);
-    } else {
-	return (Amanda::ScanInventory::SCAN_FAIL);
+    @order_before = sort { $a->{'label'} cmp $b->{'label'} } @order_before;
+    @order_after = sort { $a->{'label'} cmp $b->{'label'} } @order_after;
+
+    if (@new_labeled_after && $self->{'scan_conf'}->{'new_labeled'} eq 'last') {
+	push @last_after, @new_labeled_after;
     }
+    if (@new_labeled_before && $self->{'scan_conf'}->{'new_labeled'} eq 'last') {
+	push @last_before, @new_labeled_before;
+    }
+    if (@new_volume_after && $self->{'scan_conf'}->{'new_volume'} eq 'last') {
+	push @last_after, @new_volume_after;
+    }
+    if (@new_volume_before && $self->{'scan_conf'}->{'new_volume'} eq 'last') {
+	push @last_before, @new_volume_before;
+    }
+    @last_before = sort { $a->{'label'} cmp $b->{'label'} } @last_before;
+    @last_after = sort { $a->{'label'} cmp $b->{'label'} } @last_after;
+
+    push @result, @soon_after, @soon_before, @order_after, @order_before, @last_after, @last_before, @unknown, @error;
+
+    return \@result;
 }
 
 1;
