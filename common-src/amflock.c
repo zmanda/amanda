@@ -118,7 +118,9 @@ file_lock_lock(
 	if (p) {
 	    *p = '\0';
 	    if (*dirname == '/') {
-		mkdir(dirname, 0700);
+		if (mkdir(dirname, 0700) == -1 && errno != EEXIST) {
+		    g_debug("Can'tmkdir (%s): %s", dirname, strerror(errno));
+		}
 	    }
 	}
 	lock->fd = fd = open(lock->filename, O_CREAT|O_RDWR, 0666);

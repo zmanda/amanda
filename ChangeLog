@@ -1,4 +1,7 @@
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amflock.c: Check the return status of mkdir
+
+2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Maintain the C tapelist instead of reloading it after a write
 	* device-src/diskflat-device.c (diskflat_device_seek_file): Return an
 	  F_EMPTY header on DEVICE_STATUS_VOLUME_UNLABELED
