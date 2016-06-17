@@ -119,9 +119,6 @@ sub new {
     # must be set here.
     $self->{'runtapes'} = $params{'storage'}->{'runtapes'} || 1;
 
-    if (!$params{'no_validate'}) {
-	$self->_validate();
-    }
     debug("chg-disk: Dir $dir");
     debug("chg-disk: Using statefile '$self->{state_filename}'");
     return $self->{'fatal_error'} if defined $self->{'fatal_error'};
@@ -747,8 +744,7 @@ sub try_lock {
     };
 
     step lock_done => sub {
-	my $err = $self->_validate();
-	$cb->($err);
+	$cb->(undef);
     };
 }
 

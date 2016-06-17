@@ -1,4 +1,9 @@
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm: Call $rv->_valide()
+	* perl/Amanda/Changer/disk.pm, perl/Amanda/Changer/diskflat.pm: Do not
+	  call $self->_validate()
+
+2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (start_a_flush_taper): Use
 	  TAPER_STATE_TAPE_STARTED && TAPER_STATE_RESERVATION
 

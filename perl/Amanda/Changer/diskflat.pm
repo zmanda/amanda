@@ -141,9 +141,6 @@ sub new {
     $self->{'meta_autolabel'} = getconf($CNF_META_AUTOLABEL)
 	if !defined $self->{'meta_autolabel'};
 
-    if (!$params{'no_validate'}) {
-	$self->_validate();
-    }
     debug("chg-diskflat: Dir $dir");
     debug("chg-diskflat: Using statefile '$self->{state_filename}'");
     return $self->{'fatal_error'} if defined $self->{'fatal_error'};
@@ -886,8 +883,7 @@ sub try_lock {
     };
 
     step lock_done => sub {
-	my $err = $self->_validate();
-	$cb->($err);
+	$cb->(undef);
     };
 }
 

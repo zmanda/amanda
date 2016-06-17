@@ -1194,6 +1194,11 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
 
     $rv->{'chg_name'} = $name;
 
+    if (!$params{'no_validate'} && $rv->can('_validate')) {
+        my $err = $rv->_validate();
+	return $err if $err;
+    }
+
     return $rv;
 }
 
