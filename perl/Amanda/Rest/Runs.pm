@@ -929,7 +929,6 @@ sub list {
 	push @result_messages, list_one($tracefile, $logfile, $timestamp, \%params);
     }
 
-    $status = $result_messages[-1]->{'status'};
     return ($status, \@result_messages);
 }
 

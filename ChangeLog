@@ -1,4 +1,7 @@
 2016-06-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Rest/Runs.pm (list): Do not set $status
+
+2016-06-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Amdump.pm (message 2000000): use logfile
 	* perl/Amanda/Amdump.pm (message 2000001): use tracefile
 	* perl/Amanda/Amflush.pm (message 2200000): use logfile
