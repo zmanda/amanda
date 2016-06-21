@@ -274,8 +274,8 @@ SKIP: {
     skip "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn(), 6 if $rest->{'error'};
 
     my $timestamp;
-    my $amdump_log;
-    my $trace_log;
+    my $tracefile;
+    my $logfile;
 
     $testconf = Installcheck::Run::setup();
     $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
@@ -313,10 +313,10 @@ EODLE
                 $timestamp = $message->{'timestamp'};
             }
             if ($message->{'code'} == 2000001) {
-                $amdump_log = $message->{'amdump_log'};
+                $tracefile = $message->{'tracefile'};
             }
             if ($message->{'code'} == 2000000) {
-                $trace_log = $message->{'trace_log'};
+                $logfile = $message->{'logfile'};
             }
         }
     }
@@ -325,11 +325,11 @@ EODLE
 
     #wait for the run to end
     do {
-        $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
+        $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs?logfile=$logfile");
         } while ($reply->{'body'}[0]->{'code'} == 2000004 and
                  $reply->{'body'}[0]->{'status'} ne 'done');
 
-    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
     is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Rest::remove_source_line($reply)),
     { body => [
 	{
@@ -340,6 +340,7 @@ EODLE
                                                    'hostname' => undef,
                                                    'org' => 'DailySet1',
                                                    'exit_status' => '5',
+                                                   'status' => 'done',
                                                    'config_name' => 'TESTCONF',
                                                    'date' => undef,
                                                    'timestamp' => $timestamp,
@@ -454,7 +455,7 @@ EODLE
                                      },
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'component' => 'rest-server',
-                         'logfile' =>  $trace_log,
+                         'logfile' =>  $logfile,
                          'code' => '1900001',
                          'severity' => 'success',
                          'running_on' => 'amanda-server',
@@ -501,10 +502,10 @@ EODLE
                 $timestamp = $message->{'timestamp'};
             }
             if ($message->{'code'} == 2000001) {
-                $amdump_log = $message->{'amdump_log'};
+                $tracefile = $message->{'tracefile'};
             }
             if ($message->{'code'} == 2000000) {
-                $trace_log = $message->{'trace_log'};
+                $logfile = $message->{'logfile'};
             }
         }
     }
@@ -517,7 +518,7 @@ EODLE
         } while ($reply->{'body'}[0]->{'code'} == 2000004 and
                  $reply->{'body'}[0]->{'status'} ne 'done');
 
-    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
     is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Rest::remove_source_line($reply)),
     { body => [
                        {
@@ -528,7 +529,7 @@ EODLE
                          'code' => '1900001',
                          'severity' => 'success',
                          'process' => 'Amanda::Rest::Report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'report' => {
                                        'notes' => [
@@ -653,6 +654,7 @@ EODLE
                                                           ],
                                        'head' => {
                                                    'exit_status' => '4',
+                                                   'status' => 'done',
                                                    'hostname' => undef,
                                                    'date' => undef,
                                                    'timestamp' => $timestamp,
@@ -702,10 +704,10 @@ EODLE
                 $timestamp = $message->{'timestamp'};
             }
             if ($message->{'code'} == 2000001) {
-                $amdump_log = $message->{'amdump_log'};
+                $tracefile = $message->{'tracefile'};
             }
             if ($message->{'code'} == 2000000) {
-                $trace_log = $message->{'trace_log'};
+                $logfile = $message->{'logfile'};
             }
         }
     }
@@ -718,7 +720,7 @@ EODLE
         } while ($reply->{'body'}[0]->{'code'} == 2000004 and
                  $reply->{'body'}[0]->{'status'} ne 'done');
 
-    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
     is_deeply (Installcheck::Rest::cleanup_for_amdump(Installcheck::Rest::remove_source_line($reply)),
     { body => [
                        {
@@ -729,7 +731,7 @@ EODLE
                          'code' => '1900001',
                          'severity' => 'success',
                          'process' => 'Amanda::Rest::Report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'report' => {
                                        'notes' => [
@@ -867,6 +869,7 @@ EODLE
                                                             ],
                                        'head' => {
                                                    'exit_status' => '4',
+                                                   'status' => 'done',
                                                    'hostname' => undef,
                                                    'date' => undef,
                                                    'timestamp' => $timestamp,

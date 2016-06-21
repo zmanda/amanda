@@ -47,7 +47,7 @@ Amanda::Rest::Status -- Rest interface to Amanda::Status
 =item Get the status
 
  request:
-  GET /amanda/v1.0/configs/:CONF/status?amdump_log=/path/to/amdump_log_file
+  GET /amanda/v1.0/configs/:CONF/status?tracefile=/path/to/amdump_log_file
 
  reply:
   HTTP status 200 OK
@@ -76,6 +76,7 @@ sub current {
     return ($status, \@result_messages) if @result_messages;
 
     $params{'filename'} = $params{'amdump_log'} if defined $params{'amdump_log'};
+    $params{'filename'} = $params{'tracefile'} if defined $params{'tracefile'};
     my $Astatus = Amanda::Status->new(%params);
     if ($Astatus->isa("Amanda::Message")) {
 	push @result_messages, $Astatus;

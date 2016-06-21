@@ -29,9 +29,9 @@ sub local_message {
     my $self = shift;
 
     if ($self->{'code'} == 2000000) {
-	return "The trace log file is '$self->{'trace_log'}'";
+	return "The log file is '$self->{'logfile'}'";
     } elsif ($self->{'code'} == 2000001) {
-	return "The amdump log file is '$self->{'amdump_log'}'";
+	return "The amdump trace file is '$self->{'tracefile'}'";
     } elsif ($self->{'code'} == 2000002) {
 	return "Running a dump";
     } elsif ($self->{'code'} == 2000003) {
@@ -101,13 +101,13 @@ sub new {
 			source_line => __LINE__,
 			code        => 2000001,
 			severity    => $Amanda::Message::INFO,
-			amdump_log  => $self->{'amdump_log_pathname'});
+			tracefile   => $self->{'amdump_log_pathname'});
     push @result_messages, Amanda::Amdump::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 2000000,
 			severity    => $Amanda::Message::INFO,
-			trace_log   => $self->{'trace_log_filename'});
+			logfile     => $self->{'trace_log_filename'});
     return $self, \@result_messages;
 }
 

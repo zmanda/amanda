@@ -65,6 +65,7 @@ INFO taper tape metals-013 kb 1650 fm 4 [OK]
 INFO taper pid-done 12946
 FINISH driver date 20100107111335 time 49.037
 INFO driver pid-done 12945
+INFO amdump pid-done 12920
 
 %T report
 Hostname: advantium

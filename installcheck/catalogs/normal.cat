@@ -108,6 +108,7 @@ INFO taper tape DIRO-TEST-003 kb 39240 fm 10 [OK]
 INFO taper pid-done 23685
 FINISH driver date 20090225080737 time 5.306
 INFO driver pid-done 23684
+INFO amdump pid-done 23649
 
 %F log/amdump
 amdump: start at Wed Jun 18 13:01:47 EDT 2008

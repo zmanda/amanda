@@ -1,3 +1,28 @@
+2016-06-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Amdump.pm (message 2000000): use logfile
+	* perl/Amanda/Amdump.pm (message 2000001): use tracefile
+	* perl/Amanda/Amflush.pm (message 2200000): use logfile
+	* perl/Amanda/Amflush.pm (message 2200001): use tracefile
+	* perl/Amanda/Report.pm: Set status to 'running', 'done' or
+	  'aborted'
+	* perl/Amanda/Report/json.pm: Report the status in head->status
+	* perl/Amanda/Rest/Runs.pm: Use tracefile and logfile
+	* perl/Amanda/Rest/Status.pm:use tracefile
+	* installcheck/Amanda_Report.pl: Add pids
+	* installcheck/Amanda_Rest_Runs.pl: Add pids
+	* installcheck/pp-scripts.pl: use tracefile and logfile
+	* installcheck/catalogs/amflush.cat,
+	  installcheck/catalogs/fatal.cat,
+	  installcheck/catalogs/flush-noorigsize.cat,
+	  installcheck/catalogs/flush-origsize.cat,
+	  installcheck/catalogs/normal.cat,
+	  installcheck/catalogs/plannerfail.cat,
+	  installcheck/catalogs/retried-strange.cat,
+	  installcheck/catalogs/skipped.cat,
+	  installcheck/catalogs/spanned.cat,
+	  installcheck/catalogs/strontium.cat,
+	  installcheck/catalogs/taperr.cat: Add pid lines
+
 2016-06-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm, perl/Amanda/Taper/Scan/oldest.pm: Do
 	  not 'use Time::HiRes'

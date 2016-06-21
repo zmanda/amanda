@@ -72,7 +72,8 @@ $LogfileFlags{planner} = {
 };
 
 $LogfileData{planner} = {
-    programs => { planner => { start => "20090728160530", }, },
+    programs => { planner => { start => "20090728160530",
+			       pid   => '12346' }, },
     disklist => {
         localhost => {
             "/root" => {
@@ -121,9 +122,11 @@ $LogfileFlags{driver} = {
 
 $LogfileData{driver} = {
     programs => {
-        planner => { start => "20090728122430", },
+        planner => { start => "20090728122430",
+		     pid   => '12346' },
         driver  => {
             start      => "20090728122430",
+	    pid        => '12347',
             start_time => "0.034",
             time       => "14.46",
         },
@@ -196,9 +199,11 @@ $LogfileFlags{dumper} = {
 
 $LogfileData{dumper} = {
     programs => {
-        planner => { start => "20090728122430", },
+        planner => { start => "20090728122430",
+		     pid   => '12346' },
         driver  => {
             start      => "20090728122430",
+	    pid        => '12345',
             start_time => "0.034",
             time       => "14.46",
         },
@@ -319,14 +324,16 @@ $LogfileFlags{chunker} = {
 
 $LogfileData{chunker} = {
     programs => {
-        planner => { start => "20090728122430", },
+        planner => { start => "20090728122430",
+		     pid   => '12346' },
         driver => {
             start      => "20090728122430",
+	    pid        => '12345',
             start_time => "0.034",
             time       => "14.46",
         },
         dumper  => {},
-        chunker => {}
+        chunker => { pid => '12350' }
     },
     disklist => {
         localhost => {
@@ -432,6 +439,7 @@ $LogfileData{chunker} = {
 
 
 $LogfileContents{taper} = <<EOF;
+INFO amdump amdump pid 28020
 DISK planner somebox /lib
 START planner date 20080111
 START driver date 20080111
@@ -451,6 +459,7 @@ PARTIAL taper somebox /lib 20080111 4 0 [sec 0.011669 kb 2016 kps 172765.446911]
 INFO taper tape TESTCONF01 kb 2016 fm 4 [OK]
 INFO taper pid-done 28023
 FINISH driver date 20080111 time 2167.581
+INFO amdump pid-done 28020
 EOF
 
 $LogfileFlags{taper} = {
@@ -473,10 +482,12 @@ $LogfileData{taper} = {
             start_time => "0.051",
             time       => "2167.581",
         },
+        amdump  => { pid => '28020' },
         dumper  => {},
         chunker => {},
         taper   => {
             start => '20080111',
+	    pid   => '28023',
             notes => [
                 "tape TESTCONF01 kb 2016 fm 4 [OK]"
             ],
@@ -592,6 +603,7 @@ $LogfileData{taper} = {
 
 
 $LogfileContents{simple} = <<EOF;
+INFO amdump amdump pid 28020
 DISK planner somebox /lib
 START planner date 20080111
 START driver date 20080111
@@ -605,6 +617,7 @@ STATS driver estimate somebox /lib 20080111 0 [sec 1 nkb 2002 ckb 480 kps 385]
 PART taper Conf-001 1 somebox /lib 20080111 1/1 0 [sec 4.813543 kb 419 kps 87.133307]
 DONE taper somebox /lib 20080111 1 0 [sec 4.813543 kb 419 kps 87.133307]
 FINISH driver date 20080111 time 2167.581
+INFO amdump pid-done 28020
 EOF
 
 $LogfileFlags{simple} = {
@@ -643,6 +656,7 @@ $LogfileData{simple} = {
             },
             tape_labels => ["Conf-001"],
         },
+        amdump  => { pid => '28020' },
         dumper  => {},
         chunker => {},
     },
@@ -780,6 +794,7 @@ INFO dumper pid-done 9318
 INFO taper pid-done 9314
 FINISH driver date 20081002040002 time 663.574
 INFO driver pid-done 9313
+INFO amdump pid-done 9291
 
 EOF
 
@@ -794,20 +809,23 @@ $LogfileFlags{fullExample} = {
 
 $LogfileData{fullExample} = {
     programs => {
-        amdump => {},
-        dumper => {},
+        amdump => { pid => '9291'},
+        dumper => { pid => '9317'},
         driver => {
             time       => "663.574",
             start      => "20081002040002",
             start_time => "0.043",
+	    pid        => '9313'
         },
         planner => {
             time  => "32.689",
             start => "20081002040002",
+	    pid   => '9312'
         },
-        chunker => {},
+        chunker => { pid => '11792' },
         taper   => {
             start => '20081002040002',
+	    pid   => '9314',
             tapes => {
                 "FullBackup-14" => {
                     'label' => 'FullBackup-14',
@@ -1147,6 +1165,7 @@ INFO taper pid-done 26077
 FINISH driver date 20090622075550 time 177.708
 INFO driver pid-done 26076
 INFO amflush pid-done 26075
+INFO amflush pid-done 26036
 EOF
 
 $LogfileFlags{amflushExample} = {
@@ -1162,6 +1181,7 @@ $LogfileData{amflushExample} = {
     'programs' => {
         'taper' => {
             'start' => '20090622075550',
+	    'pid'   => '26077',
             'tapes' => {
                 'DailyTapeDataSet-017' => {
                     'label' => 'DailyTapeDataSet-017',
@@ -1176,11 +1196,13 @@ $LogfileData{amflushExample} = {
             },
             tape_labels => ["DailyTapeDataSet-017"],
         },
-        'amflush' => { 'start' => '20090622075550' },
+        'amflush' => { 'start' => '20090622075550',
+		       'pid'   => '26036' },
         'driver'  => {
             'time'       => '177.708',
             'start_time' => '0.011',
-            'start'      => '20090622075550'
+            'start'      => '20090622075550',
+	    'pid'        => '26076'
         },
     },
     'disklist' => {
@@ -1394,6 +1416,7 @@ is_deeply(
     {
         time  => "32.689",
         start => "20081002040002",
+        pid   => '9312'
     },
     'check: Amanda::Report::get_program_info($program)'
 );

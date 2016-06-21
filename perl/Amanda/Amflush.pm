@@ -29,9 +29,9 @@ sub local_message {
     my $self = shift;
 
     if ($self->{'code'} == 2200000) {
-	return "The trace log file is '$self->{'trace_log'}'";
+	return "The log file is '$self->{'logfile'}'";
     } elsif ($self->{'code'} == 2200001) {
-	return "The amdump log file is '$self->{'amdump_log'}'";
+	return "The amdump trace file is '$self->{'tracefile'}'";
     } elsif ($self->{'code'} == 2200002) {
 	return "The Datestamp '$self->{'datestamp'} doesn't match a holding disk datestamps";
     } elsif ($self->{'code'} == 2200003) {
@@ -85,7 +85,9 @@ sub new {
     $self->{'starttime_locale_independent'} = strftime "%Y-%m-%d %H:%M:%S %Z", @now;
     $self->{'amdump_log_pathname_default'} = "$logdir/amdump";
     $self->{'amdump_log_pathname'} = "$logdir/amdump.$timestamp";
+    $self->{'tracefile_path'} = "$logdir/amdump.$timestamp";
     $self->{'amdump_log_filename'} = "amdump.$timestamp";
+    $self->{'tarcefile'} = "amdump.$timestamp";
     $self->{'exit_code'} = 0;
     $self->{'amlibexecdir'} = 0;
 
@@ -106,13 +108,13 @@ sub new {
 			source_line => __LINE__,
 			code        => 2200001,
 			severity    => $Amanda::Message::INFO,
-			amdump_log  => $self->{'amdump_log_pathname'});
+			tracefile   => $self->{'amdump_log_pathname'});
     push @result_messages, Amanda::Amflush::Message->new(
 			source_filename => __FILE__,
 			source_line => __LINE__,
 			code        => 2200000,
 			severity    => $Amanda::Message::INFO,
-			trace_log   => $self->{'trace_log_filename'});
+			logfile     => $self->{'trace_log_filename'});
     return $self, \@result_messages;
 }
 

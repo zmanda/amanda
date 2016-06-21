@@ -17,6 +17,7 @@ INFO taper pid-done 11756
 FINISH driver date 20100303132501 time 1.966
 INFO driver pid-done 11755
 INFO amflush pid-done 11754
+INFO amflush pid-done 11753
 
 %T report
 Hostname: localhost.localdomain

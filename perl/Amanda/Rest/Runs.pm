@@ -69,7 +69,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
         "source_line" : "96"
      },
      {
-        "amdump_log" : "/var/log/amanda/test/amdump.20140205112550",
+        "tracefile" : "/var/log/amanda/test/amdump.20140205112550",
         "code" : "2000001",
         "message" : "The amdump log file is '/var/log/amanda/test/amdump.20140205112550'",
         "severity" : "2",
@@ -82,7 +82,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amdump.pm",
         "source_line" : "108",
-        "trace_log" : "/var/log/amanda/test/log.20140205112550.0"
+        "logfile" : "/var/log/amanda/test/log.20140205112550.0"
      },
      {
         "code" : "2000002",
@@ -115,7 +115,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
         "source_line" : "101"
      },
      {
-        "amdump_log" : "/var/log/amanda/test/amdump.20140205120327",
+        "tracefile" : "/var/log/amanda/test/amdump.20140205120327",
         "code" : "2200001",
         "message" : "The amdump log file is '/var/log/amanda/test/amdump.20140205120327'",
         "severity" : "2",
@@ -124,11 +124,11 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
      },
      {
         "code" : "2200000",
-        "message" : "The trace log file is '/var/log/amanda/test/log.20140205120327.0'",
+        "message" : "The log file is '/var/log/amanda/test/log.20140205120327.0'",
         "severity" : "2",
         "source_filename" : "/usr/lib/amanda/perl/Amanda/Amflush.pm",
         "source_line" : "113",
-        "trace_log" : "/var/log/amanda/test/log.20140205120327.0"
+        "logfile" : "/var/log/amanda/test/log.20140205120327.0"
      },
      {
         "code" : "2200005",
@@ -331,12 +331,14 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
     optional query arguments:
 	status=STATUS
 	run_type=$RUN_TYPE
+	logfile=$LOGFILE      # log.DATESTAMP.0
+	tracefile=$TRACEFILE  # amdump.DATESTAMP
 
  reply:
   HTTP status 200 Ok
   [
    {
-      "amdump_log" : "/etc/amanda/TESTCONF/logs/amdump.20140527122705",
+      "tracefile" : "/etc/amanda/TESTCONF/logs/amdump.20140527122705",
       "code" : "2000004",
       "message" : "one run",
       "run_type" : "amdump",
@@ -345,10 +347,10 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
       "source_line" : "985",
       "status" : "aborted",
       "timestamp" : "20140527122705",
-      "trace_log" : "/etc/amanda/TESTCONF/logst/log.20140527122705.0"
+      "logfile" : "/etc/amanda/TESTCONF/logst/log.20140527122705.0"
    },
    {
-      "amdump_log" : "/etc/amanda/TESTCONF/logs/amdump.20140702163539",
+      "tracefile" : "/etc/amanda/TESTCONF/logs/amdump.20140702163539",
       "code" : "2000004",
       "message" : "one run",
       "run_type" : "amflush",
@@ -357,10 +359,10 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
       "source_line" : "985",
       "status" : "aborted",
       "timestamp" : "20140702163539",
-      "trace_log" : "/etc/amanda/TESTCONF/logs/log.20140702163539.0"
+      "logfile" : "/etc/amanda/TESTCONF/logs/log.20140702163539.0"
    },
    {
-      "amdump_log" : "/etc/amanda/TESTCONF/logs/amdump.20140708100915",
+      "tracefile" : "/etc/amanda/TESTCONF/logs/amdump.20140708100915",
       "code" : "2000004",
       "message" : "one run",
       "run_type" : "amvault",
@@ -369,7 +371,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
       "source_line" : "985",
       "status" : "done",
       "timestamp" : "20140708100915",
-      "trace_log" : "/etc/amanda/TESTCONF/logs/log.20140708100915.0"
+      "logfile" : "/etc/amanda/TESTCONF/logs/log.20140708100915.0"
    },
    {
       "code" : "2000004",
@@ -381,7 +383,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
       "source_line" : "995",
       "status" : "done",
       "timestamp" : "20140922151405",
-      "trace_log" : "/etc/amanda/TESTCONF/logs/log.20140922151405.0"
+      "logfile" : "/etc/amanda/TESTCONF/logs/log.20140922151405.0"
    },
 
 
@@ -392,7 +394,7 @@ Amanda::Rest::Runs -- Rest interface to Amanda::Amdump, Amanda::Amflush, Amanda:
  request:
   DELETE localhost:5000/amanda/v1.0/configs/:CONFIG/runs
     query arguments:
-        trace_log=LOG_FILE  # can be repeated
+        logfile=LOG_FILE  # can be repeated
         kill=0|1
         alive=0|1
         clean_holding=0|1
@@ -885,6 +887,9 @@ sub messages {
     return ($status, \@MESSAGES);
 }
 
+my $Amanda_process;
+my $logdir;
+
 sub list {
     my %params = @_;
 
@@ -892,56 +897,105 @@ sub list {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my $Amanda_process = Amanda::Process->new();
+    $Amanda_process = Amanda::Process->new();
     $Amanda_process->load_ps_table();
 
-    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
-    foreach my $logfile (<$logdir/amdump.*>, <$logdir/fetchdump.*>, <$logdir/checkdump.*> ) {
+    $logdir = config_dir_relative(getconf($CNF_LOGDIR));
+    my @tracefiles;
+    if ($params{'logfile'}) {
+	push @result_messages, list_one($params{'tracefile'}, $params{'logfile'}, undef, \%params);
+    } elsif ($params{'tracefile'}) {
+	push @tracefiles, $params{'tracefile'};
+    } else {
+	@tracefiles = (<$logdir/amdump.*>, <$logdir/fetchdump.*>, <$logdir/checkdump.*> );
+    }
+    foreach my $tracefile (@tracefiles) {
 	my $timestamp;
-	if ($logfile =~ /amdump\.(.*)$/) {
+	if ($tracefile =~ /amdump\.(.*)$/) {
 	    $timestamp = $1;
 	}
 	if (!defined $timestamp) {
-	    if ($logfile =~ /checkdump\.(.*)$/) {
+	    if ($tracefile =~ /checkdump\.(.*)$/) {
 		$timestamp = $1;
 	    }
 	}
 	if (!defined $timestamp) {
-	    if ($logfile =~ /fetchdump\.(.*)$/) {
+	    if ($tracefile =~ /fetchdump\.(.*)$/) {
 		$timestamp = $1;
 	    }
 	}
 	next if length($timestamp) != 14;
+	my $logfile = "$logdir/log.$timestamp.0";
+	push @result_messages, list_one($tracefile, $logfile, $timestamp, \%params);
+    }
+
+    $status = $result_messages[-1]->{'status'};
+    return ($status, \@result_messages);
+}
+
+sub list_one {
+    my $tracefile = shift;
+    my $logfile = shift;
+    my $timestamp = shift;
+    my $params = shift;
+
+    {
 	my $run_type;
 	my $pname;
 	my $pid;
 	my $status = "running";
-	my $tracefile = "$logdir/log.$timestamp.0";
 	my $message_file;
-	next if !-f $tracefile;
+	next if !-f $logfile;
 
-	open (TRACE, "<", $tracefile);
-	while (my $line = <TRACE>) {
-	    if ($line =~ /^INFO (.*) amdump pid (\d*)$/) {
+	open (LOG, "<", $logfile);
+	while (my $line = <LOG>) {
+	    if ($line =~ /^START planner date (\d*)$/) {
+		if (!defined $timestamp) {
+		    $timestamp = $1;
+		}
+		if (!defined $tracefile) {
+		    $tracefile = "$logdir/amdump.$timestamp";
+		}
+	    } elsif ($line =~ /^INFO (.*) amdump pid (\d*)$/) {
 		$run_type = "amdump";
 		$pname = $1;
 		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) fork amdump (\d*) (\d*)$/) {
+		$run_type = "amdump";
+		$pname = $1;
+		$pid = $3;
 	    } elsif ($line =~ /^INFO (.*) amflush pid (\d*)$/) {
 		$run_type = "amflush";
 		$pname = $1;
 		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) fork amflush (\d*) (\d*)$/) {
+		$run_type = "amflush";
+		$pname = $1;
+		$pid = $3;
 	    } elsif ($line =~ /^INFO (.*) amvault pid (\d*)$/) {
 		$run_type = "amvault";
 		$pname = $1;
 		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) fork amvault (\d*) (\d*)$/) {
+		$run_type = "amvault";
+		$pname = $1;
+		$pid = $3;
 	    } elsif ($line =~ /^INFO (.*) checkdump pid (\d*)$/) {
 		$run_type = "checkdump";
 		$pname = $1;
 		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) fork checkdump (\d*) (\d*)$/) {
+		$run_type = "checkdump";
+		$pname = $1;
+		$pid = $3;
 	    } elsif ($line =~ /^INFO (.*) fetchdump pid (\d*)$/) {
 		$run_type = "fetchdump";
 		$pname = $1;
 		$pid = $2;
+	    } elsif ($line =~ /^INFO (.*) fork fetchdump (\d*) (\d*)$/) {
+		$run_type = "fetchdump";
+		$pname = $1;
+		$pid = $3;
 	    } elsif ($line =~ /^INFO .* message_file (.*)$/) {
 		$message_file = $1;
 	    } elsif ($line =~ /^INFO .* fork .* (\d*) (\d*)$/) {
@@ -957,25 +1011,25 @@ sub list {
 	if ($status eq "running" and $pid) {
 	    $status = "aborted" if !$Amanda_process->process_alive($pid, $pname);
 	}
-	if ((!defined($params{'status'}) or
-	     $params{'status'} eq $status) and
-	    (!defined($params{'run_type'}) or
-	     $params{'run_type'} eq $run_type)) {
+	if ((!defined($params->{'status'}) or
+	     $params->{'status'} eq $status) and
+	    (!defined($params->{'run_type'}) or
+	     $params->{'run_type'} eq $run_type)) {
 	    if ($run_type eq "amdump" or
 		$run_type eq "amflush" or
 		$run_type eq "amvault") {
-		push @result_messages, Amanda::Amdump::Message->new(
+		return Amanda::Amdump::Message->new(
 			source_filename  => __FILE__,
 			source_line      => __LINE__,
 			code             => 2000004,
 			severity         => $Amanda::Message::INFO,
 			run_type         => $run_type,
 			timestamp        => $timestamp,
-			amdump_log       => $logfile,
-			trace_log        => $tracefile,
+			logfile          => $logfile,
+			tracefile        => $tracefile,
 			status           => $status);
 	    } else {
-		push @result_messages, Amanda::Amdump::Message->new(
+		return Amanda::Amdump::Message->new(
 			source_filename  => __FILE__,
 			source_line      => __LINE__,
 			code             => 2000004,
@@ -983,13 +1037,11 @@ sub list {
 			run_type         => $run_type,
 			timestamp        => $timestamp,
 			message_file     => $logfile,
-			trace_log        => $tracefile,
+			tracefile        => $tracefile,
 			status           => $status);
 	    }
 	}
     }
-
-    return ($status, \@result_messages);
 }
 
 sub kill {
@@ -999,16 +1051,24 @@ sub kill {
     my ($status, @result_messages) = Amanda::Rest::Configs::config_init(@_);
     return ($status, \@result_messages) if @result_messages;
 
-    my @trace_logs;
-    if (defined $params{'trace_log'}) {
-	my $type = Scalar::Util::reftype($params{'trace_log'});
+    my @logfiles;
+    if (defined $params{'logfile'}) {
+	my $type = Scalar::Util::reftype($params{'logfile'});
 	if (defined $type and $type eq "ARRAY") {
-	    @trace_logs = @{$params{'trace_log'}};
-	} elsif (!defined $type and defined $params{'trace_log'} and $params{'trace_log'} ne '') {
-	    push @trace_logs, $params{'trace_log'};
+	    @logfiles = @{$params{'trace_log'}};
+	} elsif (!defined $type and defined $params{'logfile'} and $params{'logfile'} ne '') {
+	    push @logfiles, $params{'logfile'};
 	}
     }
-    if (!@trace_logs) {
+    if (defined $params{'trace_log'}) { # deprecated
+	my $type = Scalar::Util::reftype($params{'trace_log'});
+	if (defined $type and $type eq "ARRAY") {
+	    @logfiles = @{$params{'trace_log'}};
+	} elsif (!defined $type and defined $params{'trace_log'} and $params{'trace_log'} ne '') {
+	    push @logfiles, $params{'logfile'};
+	}
+    }
+    if (!@logfiles) {
 	push @result_messages, Amanda::Cleanup::Message->new(
 			source_filename  => __FILE__,
 			source_line      => __LINE__,
@@ -1026,9 +1086,9 @@ sub kill {
 	if (!@notes) {
 	    @notes = ("Aborted by deleting the run from the REST API");
 	}
-	foreach my $trace_log (@trace_logs) {
+	foreach my $logfile (@logfiles) {
 	    my $cleanup = Amanda::Cleanup->new(
-				trace_log     => $trace_log,
+				logfile       => $logfile,
 				kill          => $params{'kill'},
 				process_alive => $params{'alive'},
 				verbose       => $params{'verbose'},

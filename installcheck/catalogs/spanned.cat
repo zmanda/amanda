@@ -42,6 +42,7 @@ INFO taper tape Conf-002 kb 6470 fm 2 [OK]
 INFO taper pid-done 30094
 FINISH driver date 20100303153307 time 7.391
 INFO driver pid-done 30092
+INFO amdump pid-done 30070
 
 %T report
 Hostname: euclid

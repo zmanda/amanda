@@ -1,6 +1,7 @@
 # a dump was retreid in this logfile
 
 %F log/log
+INFO amdump amdump pid 28953
 START planner date 20100824181503
 START driver date 20100824181503
 STATS driver hostname molybdenum.zmanda.com
@@ -64,6 +65,7 @@ INFO dumper pid-done 4942
 INFO taper pid-done 4941
 FINISH driver date 20100824181503 time 97784.977
 INFO driver pid-done 4940
+INFO amdump pid-done 28953
 
 %T report
 Hostname: molybdenum.zmanda.com

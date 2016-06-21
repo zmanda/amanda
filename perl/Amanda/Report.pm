@@ -51,6 +51,7 @@ use Amanda::Logfile qw/:logtype_t :program_t/;
 use Amanda::Util;
 use Amanda::Debug qw( debug warning );
 use Amanda::Storage;
+use Amanda::Process;
 
 =head1 NAME
 
@@ -489,6 +490,7 @@ sub read_file
     $self->{flags}{results_missing} = 0;
     $self->{flags}{dump_failed} = 0;
     $self->{flags}{dump_strange} = 0;
+    $self->{flags}{status} = "running";
 
     while ( my ( $type, $prog, $str ) = Amanda::Logfile::get_logline($logfh) ) {
         $self->read_line( $type, $prog, $str );
@@ -508,6 +510,9 @@ sub read_file
 		severity => $Amanda::Message::ERROR);
     }
 
+    my $Amanda_process = Amanda::Process->new();
+    $Amanda_process->load_ps_table();
+
     ## set post-run flags
 
     $self->{flags}{historical} = $self->{_historical};
@@ -522,6 +527,14 @@ sub read_file
 	    $self->{flags}{amflush_run} = 1;
 	    $il = getconf($CNF_STORAGE);
 	    $self->{'storage_list'} = $il;
+	    my $info = $self->get_program_info("amflush");
+	    my $pid = $info->{pid};
+	    if ($self->{pids}->{$pid} eq 'running') {
+		if (!$Amanda_process->process_alive($pid, "amflush")) {
+		    $self->{pids}->{$pid} = 'aborted';
+		}
+	    }
+	    $self->{flags}{status} = $self->{pids}->{$pid};
 	} elsif (   ( defined $self->get_program_info("amvault") )
                  && ( scalar %{ $self->get_program_info("amvault") } ) ) {
 	    debug("detected an amvault run");
@@ -533,14 +546,41 @@ sub read_file
 	         $storage_name = $il->[0];
 	    }
 	    $il = [ $storage_name ];
+	    my $info = $self->get_program_info("amvault");
+	    my $pid = $info->{pid};
+	    if ($self->{pids}->{$pid} eq 'running') {
+		if (!$Amanda_process->process_alive($pid, "amvault")) {
+		    $self->{pids}->{$pid} = 'aborted';
+		}
+	    }
+	    $self->{flags}{status} = $self->{pids}->{$pid};
 	} elsif (   ( defined $self->get_program_info("ambackupd") )
                  && ( scalar %{ $self->get_program_info("ambackupd") } ) ) {
 	    debug("detected an ambackupd run");
 	    $self->{flags}{ambackupd_run} = 1;
+	    my $info = $self->get_program_info("ambackupd");
+	    my $pid = $info->{pid};
+	    if ($self->{pids}->{$pid} eq 'running') {
+		if (!$Amanda_process->process_alive($pid, "ambackupd")) {
+		    $self->{pids}->{$pid} = 'aborted';
+		}
+	    }
+	    $self->{flags}{status} = $self->{pids}->{$pid};
 	} else {
+	    debug("detected an unknown run");
 	    #$il = getconf($CNF_STORAGE);
 	}
     } else {
+	    debug("detected an amdump run");
+	    $self->{flags}{amdump_run} = 1;
+	    my $info = $self->get_program_info("amdump");
+	    my $pid = $info->{pid};
+	    if ($self->{pids}->{$pid} eq 'running') {
+		if (!$Amanda_process->process_alive($pid, "amdump")) {
+		    $self->{pids}->{$pid} = 'aborted';
+		}
+	    }
+	    $self->{flags}{status} = $self->{pids}->{$pid};
 	$il = getconf($CNF_STORAGE);
     }
     $self->{'storage_list'} = $il;
@@ -648,6 +688,12 @@ sub get_exit_status
 {
     my $self = shift;
     return $self->{'flags'}{'exit_status'};
+}
+
+sub get_status
+{
+    my $self = shift;
+    return $self->{'flags'}{'status'};
 }
 
 sub get_timestamp
@@ -1590,11 +1636,29 @@ sub _handle_info_line
 
     my $program_p = $programs->{$program} ||= {};
 
-    if ( $str =~ m/^\w+ pid \d+/ || $str =~ m/^pid-done \d+/ ) {
-
+    if ( $str =~ m/^(\w+) pid (\d+)/ ) {
+	my $pp = $1;
+	my $pid = $2;
+	if ($pp eq $program) {
+	    $program_p->{pid} = $pid;
+	}
         #do not report pid lines
+        $self->{'pids'}->{$pid} = 'running';
         return;
-
+    } elsif ( $str =~ m/^fork (\w+) (\d+) (\d+)/ ) {
+	my $pp = $1;
+	my $pid = $3;
+	if ($pp eq $program) {
+	    $program_p->{pid} = $pid;
+	}
+        #do not report pid lines
+        $self->{'pids'}->{$pid} = 'running';
+        return;
+    } elsif ( $str =~ m/^pid-done (\d+)/ ) {
+	my $pid = $1;
+        #do not report pid-done lines
+        $self->{'pids'}->{$pid} = 'done';
+        return;
     } else {
         my $notes = $program_p->{notes} ||= [];
         push @$notes, $str;

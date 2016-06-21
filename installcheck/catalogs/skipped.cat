@@ -1,6 +1,7 @@
 # planner skips a dump
 
 %F log/log
+INFO amdump amdump pid 28953
 START planner date 20090326001503
 START driver date 20090326001503
 INFO amdump amdump pid 22014
@@ -13,6 +14,7 @@ START taper datestamp 20090326001503 label Daily-36 tape 1
 INFO dumper pid-done 7337
 FINISH driver date 20090326001503 time 77506.015
 INFO driver pid-done 22043
+INFO amdump pid-done 28953
 
 %T report
 Org : DailySet1

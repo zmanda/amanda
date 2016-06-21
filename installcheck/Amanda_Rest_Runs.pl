@@ -105,8 +105,8 @@ my $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 my $infodir = getconf($CNF_INFOFILE);
 
 my $timestamp;
-my $amdump_log;
-my $trace_log;
+my $logfile;
+my $tracefile;
 
 #CODE 2000000, 2000001, 2000002, 2000003
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump","");
@@ -116,10 +116,10 @@ foreach my $message (@{$reply->{'body'}}) {
 	    $timestamp = $message->{'timestamp'};
 	}
 	if ($message->{'code'} == 2000001) {
-	    $amdump_log = $message->{'amdump_log'};
+	    $tracefile = $message->{'tracefile'};
 	}
 	if ($message->{'code'} == 2000000) {
-	    $trace_log = $message->{'trace_log'};
+	    $logfile = $message->{'logfile'};
 	}
     }
 }
@@ -139,8 +139,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 	  },
           {	'source_filename' => "$amperldir/Amanda/Amdump.pm",
 		'severity' => $Amanda::Message::INFO,
-		'message' => "The amdump log file is '$amdump_log'",
-		'amdump_log' => $amdump_log,
+		'message' => "The amdump trace file is '$tracefile'",
+		'tracefile' => $tracefile,
 		'process' => 'amdump',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
@@ -151,8 +151,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 	  },
           {	'source_filename' => "$amperldir/Amanda/Amdump.pm",
 		'severity' => $Amanda::Message::INFO,
-		'message' => "The trace log file is '$trace_log'",
-		'trace_log' => $trace_log,
+		'message' => "The log file is '$logfile'",
+		'logfile' => $logfile,
 		'process' => 'amdump',
 		'running_on' => 'amanda-server',
 		'component' => 'rest-server',
@@ -209,8 +209,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'message' => "one run",
 		'run_type' => "amdump",
 		'timestamp' => $timestamp,
-		'amdump_log' => $amdump_log,
-		'trace_log' => $trace_log,
+		'logfile' => $logfile,
+		'tracefile' => $tracefile,
 		'status' => 'done',
 		'process' => 'Amanda::Rest::Runs',
 		'running_on' => 'amanda-server',
@@ -236,9 +236,9 @@ my $datestamp;
 my $chunk_time;
 my $dump_time;
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
-$amdump_log = "$logdir/amdump";
-$trace_log = "$logdir/log";
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$tracefile = "$logdir/amdump";
+$logfile = "$logdir/log";
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
@@ -402,7 +402,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                     }
                                                                    },
                                                  },
-                                       'filename' => $amdump_log,
+                                       'filename' => $tracefile,
                                        'busy_dumper' => {
                                                           '1' => {
                                                                    'time' => 0,
@@ -458,7 +458,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "status") || diag("reply: " . Data::Dumper::Dumper($reply));
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -535,6 +535,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'February 25, 2009',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'localhost.localdomain',
                                                    'timestamp' => '20090225080737',
                                                  },
@@ -723,7 +724,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -738,8 +739,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # now test a file with spaces and other funny characters in filenames
 $cat = Installcheck::Catalogs::load('quoted');
 $cat->install();
-$amdump_log = "$logdir/amdump";
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$tracefile = "$logdir/amdump";
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
@@ -903,7 +904,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                          }
                                                                    }
                                                  },
-                                       'filename' => $amdump_log,
+                                       'filename' => $tracefile,
                                        'busy_dumper' => {
                                                           '1' => {
                                                                    'time' => 0,
@@ -962,8 +963,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # now test a chunker partial result
 $cat = Installcheck::Catalogs::load('chunker-partial');
 $cat->install();
-$amdump_log = "$logdir/amdump";
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$tracefile = "$logdir/amdump";
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
@@ -1127,7 +1128,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                               }
                                                                   }
                                                  },
-                                       'filename' => $amdump_log,
+                                       'filename' => $tracefile,
                                        'busy_dumper' => {
                                                           '1' => {
                                                                    'time' => '81.442',
@@ -1192,8 +1193,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # now test a taper-parallel-write > 1
 $cat = Installcheck::Catalogs::load('taper-parallel-write');
 $cat->install();
-$amdump_log = "$logdir/amdump";
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?amdump_log=$amdump_log");
+$tracefile = "$logdir/amdump";
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 $starttime = $reply->{body}[0]{status}{starttime};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
@@ -1444,7 +1445,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                                               }
                                                                   }
                                                  },
-                                       'filename' => $amdump_log,
+                                       'filename' => $tracefile,
                                        'busy_dumper' => {
                                                           '1' => {
                                                                    'time' => '44.543',
@@ -1520,7 +1521,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('doublefailure');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?tracefile=$tracefile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -1674,7 +1675,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -1689,7 +1690,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('strontium');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -1766,6 +1767,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'January 7, 2010',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'advantium',
                                                    'timestamp' => '20100107111335'
                                                  },
@@ -1869,7 +1871,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -1884,7 +1886,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('amflush');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -1961,6 +1963,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'June 22, 2009',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'centralcity.zmanda.com',
                                                    'timestamp' => '20090622075550'
                                                  },
@@ -2078,7 +2081,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -2093,7 +2096,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('resultsmissing');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -2284,7 +2287,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -2299,7 +2302,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('shortstrange');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -2438,7 +2441,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -2453,7 +2456,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('longstrange');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -2685,7 +2688,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -2700,7 +2703,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('bigestimate');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -2822,7 +2825,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -2837,7 +2840,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('retried');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -2967,7 +2970,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -2982,7 +2985,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('retried-strange');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -2992,6 +2995,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'August 24, 2010',
                                                    'exit_status' => '2',
+                                                   'status' => 'done',
                                                    'hostname' => 'molybdenum.zmanda.com',
                                                    'timestamp' => '20100824181503'
                                                  },
@@ -3137,7 +3141,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -3152,7 +3156,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('retried-nofinish');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -3285,7 +3289,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -3301,7 +3305,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('taperr');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -3378,6 +3382,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
                                                    'exit_status' => '16',
+                                                   'status' => 'done',
                                                    'hostname' => 'euclid',
                                                    'timestamp' => '20100303133320'
                                                  },
@@ -3418,7 +3423,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -3433,7 +3438,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('spanned');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -3510,6 +3515,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'euclid',
                                                    'timestamp' => '20100303153307'
                                                  },
@@ -3575,7 +3581,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -3590,7 +3596,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('fatal');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -3667,6 +3673,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
                                                    'exit_status' => '5',
+                                                   'status' => 'done',
                                                    'hostname' => 'localhost.localdomain',
                                                    'timestamp' => '20100303144314'
                                                  },
@@ -3711,7 +3718,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -3726,7 +3733,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('flush-origsize');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -3803,6 +3810,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'localhost.localdomain',
                                                    'timestamp' => '20100303132501'
                                                  },
@@ -3855,7 +3863,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -3870,7 +3878,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('flush-noorigsize');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -3947,6 +3955,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 3, 2010',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'localhost.localdomain',
                                                    'timestamp' => '20100303132501'
                                                  },
@@ -3999,7 +4008,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4014,7 +4023,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('plannerfail');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -4091,6 +4100,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'March 13, 2010',
                                                    'exit_status' => '4',
+                                                   'status' => 'done',
                                                    'hostname' => 'advantium',
                                                    'timestamp' => '20100313212012'
                                                  },
@@ -4186,7 +4196,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4201,7 +4211,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('skipped');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -4319,7 +4329,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4334,7 +4344,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $cat = Installcheck::Catalogs::load('filesystemstaped');
 $cat->install();
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -4411,6 +4421,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'July 13, 2010',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'localhost.localdomain',
                                                    'timestamp' => '20100713120014'
                                                  },
@@ -4482,7 +4493,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4496,9 +4507,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 $cat = Installcheck::Catalogs::load('multi-taper');
 $cat->install();
-$trace_log = "$logdir/log.20100908110856.0";
+$logfile = "$logdir/log.20100908110856.0";
 
-$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$trace_log");
+$reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -4575,6 +4586,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'config_name' => 'TESTCONF',
                                                    'date' => 'September 8, 2010',
                                                    'exit_status' => '0',
+                                                   'status' => 'done',
                                                    'hostname' => 'localhost.localdomain',
                                                    'timestamp' => '20100908110856'
                                                  },
@@ -4755,7 +4767,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                          'source_filename' => "$amperldir/Amanda/Rest/Report.pm",
                          'severity' => $Amanda::Message::SUCCESS,
                          'message' => 'The report',
-                         'logfile' => $trace_log,
+                         'logfile' => $logfile,
 			 'process' => 'Amanda::Rest::Report',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4783,10 +4795,10 @@ foreach my $message (@{$reply->{'body'}}) {
 	    $timestamp = $message->{'timestamp'};
 	}
 	if ($message->{'code'} == 2200001) {
-	    $amdump_log = $message->{'amdump_log'};
+	    $tracefile = $message->{'tracefile'};
 	}
 	if ($message->{'code'} == 2200000) {
-	    $trace_log = $message->{'trace_log'};
+	    $logfile = $message->{'logfile'};
 	}
     }
 }
@@ -4805,9 +4817,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        },
 		       {
                          'source_filename' => "$amperldir/Amanda/Amflush.pm",
-                         'amdump_log' => $amdump_log,
                          'severity' => $Amanda::Message::INFO,
-                         'message' => "The amdump log file is '$amdump_log'",
+                         'tracefile' => $tracefile,
+                         'message' => "The amdump trace file is '$tracefile'",
 			 'process' => 'amflush',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4816,9 +4828,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                        },
                        {
                          'source_filename' => "$amperldir/Amanda/Amflush.pm",
-                         'trace_log' => $trace_log,
+                         'logfile' => $logfile,
                          'severity' => $Amanda::Message::INFO,
-                         'message' => "The trace log file is '$trace_log'",
+                         'message' => "The log file is '$logfile'",
 			 'process' => 'amflush',
 			 'running_on' => 'amanda-server',
 			 'component' => 'rest-server',
@@ -4852,8 +4864,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 		'message' => "one run",
 		'run_type' => "amflush",
 		'timestamp' => $timestamp,
-		'amdump_log' => $amdump_log,
-		'trace_log' => $trace_log,
+		'logfile' => $logfile,
+		'tracefile' => $tracefile,
 		'status' => 'done',
 		'process' => 'Amanda::Rest::Runs',
 		'running_on' => 'amanda-server',

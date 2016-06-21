@@ -1,6 +1,7 @@
 # A complete planner failure
 
 %F log/log
+INFO amdump amdump pid 28953
 START planner date 20100313212012
 START driver date 20100313212012
 DISK planner 1.2.3.4 SystemState
@@ -22,6 +23,7 @@ FAIL planner 1.2.3.4 SystemState 20100313212012 0 "[Request to 1.2.3.4 failed: r
 FINISH planner date 20100313212012 time 2113.308
 WARNING driver WARNING: got empty schedule from planner
 FINISH driver date 20100313212012 time 2114.332
+INFO amdump pid-done 28953
 
 %T report
 Hostname: advantium

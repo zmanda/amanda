@@ -34,6 +34,7 @@ INFO dumper pid-done 32331
 INFO taper pid-done 32326
 FINISH driver date 20100303133320 time 2.247
 INFO driver pid-done 32324
+INFO amdump pid-done 32302
 
 %T report-holding
 Hostname: euclid

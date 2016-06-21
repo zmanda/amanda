@@ -39,6 +39,7 @@ INFO dumper pid-done 14599
 INFO taper pid-done 14590
 FINISH driver date 20100303144314 time 8.150
 INFO driver pid-done 14588
+INFO amdump pid-done 14564
 
 %T report
 Hostname: localhost.localdomain
