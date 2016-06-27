@@ -845,7 +845,11 @@ authenticate_request(S3Handle *hdl,
     char *szS3Date = NULL;
     char *zulu_date = NULL;
     char *buf = NULL;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     HMAC_CTX ctx;
+#else
+    HMAC_CTX *ctx;
+#endif
     GByteArray *md = NULL;
     char *auth_base64 = NULL;
     struct curl_slist *headers = NULL;
@@ -1178,12 +1182,22 @@ authenticate_request(S3Handle *hdl,
 
 	/* run HMAC-SHA1 on the canonicalized string */
 	md = g_byte_array_sized_new(EVP_MAX_MD_SIZE+1);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	HMAC_CTX_init(&ctx);
 	HMAC_Init_ex(&ctx, hdl->secret_key, (int) strlen(hdl->secret_key),
 		     EVP_sha1(), NULL);
 	HMAC_Update(&ctx, (unsigned char*) auth_string->str, auth_string->len);
 	HMAC_Final(&ctx, md->data, &md->len);
 	HMAC_CTX_cleanup(&ctx);
+#else
+	ctx = HMAC_CTX_new();
+	HMAC_CTX_reset(ctx);
+	HMAC_Init_ex(ctx, hdl->secret_key, (int) strlen(hdl->secret_key),
+		     EVP_sha1(), NULL);
+	HMAC_Update(ctx, (unsigned char*) auth_string->str, auth_string->len);
+	HMAC_Final(ctx, md->data, &md->len);
+	HMAC_CTX_free(ctx);
+#endif
 	auth_base64 = s3_base64_encode(md);
 	/* append the new headers */
 	if (is_non_empty_string(hdl->user_token)) {

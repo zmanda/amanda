@@ -239,7 +239,11 @@ EncodeHMACSHA256(
     unsigned char tk[SHA256_DIGEST_LENGTH];
 
     // Initialise HMACh
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     HMAC_CTX HMAC;
+#else
+    HMAC_CTX *HMAC;
+#endif
     unsigned int hmaclength = 32;
     memset(hmachash, 0, hmaclength);
 
@@ -250,11 +254,20 @@ EncodeHMACSHA256(
     }
 
     // Digest the key and message using SHA256
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     HMAC_CTX_init(&HMAC);
     HMAC_Init_ex(&HMAC, key, keylen, EVP_sha256(),NULL);
     HMAC_Update(&HMAC, datatohash, datalen);
     HMAC_Final(&HMAC, hmachash, &hmaclength);
     HMAC_CTX_cleanup(&HMAC);
+#else
+    HMAC = HMAC_CTX_new();
+    HMAC_CTX_reset(HMAC);
+    HMAC_Init_ex(HMAC, key, keylen, EVP_sha256(),NULL);
+    HMAC_Update(HMAC, datatohash, datalen);
+    HMAC_Final(HMAC, hmachash, &hmaclength);
+    HMAC_CTX_free(HMAC);
+#endif
 
     return hmachash;
 }

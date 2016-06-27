@@ -453,7 +453,11 @@ ssl_accept(
     init_ssl();
 
     /* Create a SSL_CTX structure */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     ctx = SSL_CTX_new(SSLv3_server_method());
+#else
+    ctx = SSL_CTX_new(TLS_server_method());
+#endif
     if (!ctx) {
 	g_debug(_("SSL_CTX_new failed: %s"),
 		 ERR_error_string(ERR_get_error(), NULL));
@@ -667,7 +671,11 @@ runssl(
     init_ssl();
 
     /* Create an SSL_CTX structure */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     rc->ctx = SSL_CTX_new(SSLv3_client_method());
+#else
+    rc->ctx = SSL_CTX_new(TLS_client_method());
+#endif
     if (!rc->ctx) {
 	security_seterror(&rh->sech, "%s",
 			  ERR_error_string(ERR_get_error(), NULL));
