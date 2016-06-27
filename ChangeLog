@@ -1,3 +1,9 @@
+2016-06-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/libs.m4 (AMANDA_CHECK_LIBCURL): Check for
+	  HMAC_CTX_init or HMAC_CTX_reset
+	* common-src/glib-util.c, device-src/s3-util.c, device-src/s3.c
+	  device-src/s3-util.c: Fix for openssl 1.1
+
 2016-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amsamba.pl: Fix for newer samba version
 
