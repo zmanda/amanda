@@ -213,8 +213,7 @@ sub command_backup {
 	debug("writting $block_size bytes");
 	my $n = POSIX::write($out, $buffer, $block_size);
 	if ($n ne $block_size) {
-	    $self->print_to_server("Bad write $n != $block_size",
-				   $Amanda::Script_App::ERROR);
+	    debug("Bad write $n != $block_size");
 	}
 	$size -= $block_size
     }

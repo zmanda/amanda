@@ -1,4 +1,8 @@
 2016-06-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amrandom.pl: Improve debugging
+	* common-src/shm-ring.c: Improve debugging
+
+2016-06-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/gettext-macros/gettext.m4,
 	  config/gettext-macros/po.m4: s/AM_PROG_MKDIR_P/AC_PROG_MKDIR_P/
 

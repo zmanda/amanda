@@ -211,6 +211,11 @@ shm_ring_sem_wait(
 	    return -1;
 	}
 
+	if (shm_ring->mc->cancelled) {
+	    g_debug("shm_ring_sem_wait: shm-ring is cancelled");
+	    return -1;
+	}
+
 	if (errno == EINTR)
 	    continue;
 
@@ -682,14 +687,16 @@ shm_ring_consumer_set_size(
     shm_ring->mc->consumer_block_size = block_size;
     sem_post(shm_ring->sem_write);
     if (shm_ring_sem_wait(shm_ring, shm_ring->sem_read) == -1) {
+	g_debug("shm_ring_consumer_set_size: fail shm_ring_sem_wait");
 	return;
     }
     if (shm_ring->mc->cancelled) {
+	g_debug("shm_ring_consumer_set_size: cancelled");
 	return;
     }
 
     if (shm_ring->mc->ring_size == 0) {
-	g_debug("shm_ring_consumer_set_size:ring_size == 0");
+	g_debug("shm_ring_consumer_set_size: ring_size == 0");
 	shm_ring->mc->cancelled = TRUE;
 	sem_post(shm_ring->sem_read);
 	sem_post(shm_ring->sem_write);
