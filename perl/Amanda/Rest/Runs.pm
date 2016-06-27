@@ -903,7 +903,8 @@ sub list {
     $logdir = config_dir_relative(getconf($CNF_LOGDIR));
     my @tracefiles;
     if ($params{'logfile'}) {
-	push @result_messages, list_one($params{'tracefile'}, $params{'logfile'}, undef, \%params);
+	my $list = list_one($params{'tracefile'}, $params{'logfile'}, undef, \%params);
+	push @result_messages, $list if defined $list;
     } elsif ($params{'tracefile'}) {
 	push @tracefiles, $params{'tracefile'};
     } else {
@@ -926,7 +927,8 @@ sub list {
 	}
 	next if length($timestamp) != 14;
 	my $logfile = "$logdir/log.$timestamp.0";
-	push @result_messages, list_one($tracefile, $logfile, $timestamp, \%params);
+	my $list = list_one($tracefile, $logfile, $timestamp, \%params);
+	push @result_messages, $list if defined $list;
     }
 
     return ($status, \@result_messages);
@@ -1041,6 +1043,7 @@ sub list_one {
 	    }
 	}
     }
+    return undef;
 }
 
 sub kill {
