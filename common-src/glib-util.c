@@ -73,14 +73,14 @@ init_openssl(void)
 
 #endif /* LIBCURL_USE_OPENSSL */
 
-#if defined LIBCURL_USE_GNUTLS
+#if defined LIBCURL_USE_GNUTLS_GCRYPT
 
 #include <gcrypt.h>
 #include <errno.h>
 
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
 static void
-init_gnutls(void)
+init_gnutls_gcrypt(void)
 {
     gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 
@@ -90,8 +90,7 @@ init_gnutls(void)
 
     gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
 }
-
-#endif  /* LIBCURL_USE_OPENSSL */
+#endif /* LIBCURL_USE_GNUTLS_GCRYPT */
 
 static void
 init_ssl(void)
@@ -100,8 +99,8 @@ init_ssl(void)
 #if defined LIBCURL_USE_OPENSSL || defined SSL_SECURITY
     init_openssl();
 #endif
-#if defined LIBCURL_USE_GNUTLS
-    init_gnutls();
+#if defined LIBCURL_USE_GNUTLS_GCRYPT
+    init_gnutls_gcrypt();
 #endif
 }
 

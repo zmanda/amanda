@@ -1,4 +1,11 @@
 2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/libs.m4: Set LIBCURL_USE_GNUTLS_NETTLE or
+	  LIBCURL_USE_GNUTLS_GCRYPT depending on which crypto library
+	  gnutls use
+	* common-src/glib-util.c: Initialize gcrypt only if
+	  LIBCURL_USE_GNUTLS_GCRYPT
+
+2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/xfer-dest-taper-splitter.c: Fix error path
 	* perl/Amanda/Report.pm: Fix exit_status
 	* perl/Amanda/Report/human.pm: Fix line spacing
