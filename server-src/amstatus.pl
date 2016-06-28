@@ -452,8 +452,8 @@ if ($opt_stats) {
 		my $l = sprintf "%2d dumper%s busy%s : %8s  (%6.2f%%)", $d,
 			($d == 1) ? "" : "s",
 			($d == 1) ? " " : "",
-		&busytime($status->{'busy_dumper'}->{$d}->{'time'}),
-		$status->{'busy_dumper'}->{$d}->{'percent'};
+			&busytime($status->{'busy_dumper'}->{$d}->{'time'}),
+			$status->{'busy_dumper'}->{$d}->{'percent'};
 		print "$l";
 		my $s1 = "";
 		my $s2 = " " x length($l);

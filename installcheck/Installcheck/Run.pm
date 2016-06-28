@@ -589,6 +589,8 @@ sub check_amstatus
     $status =~ s/\(/\\(/g;
     $status =~ s/\)/\\)/g;
     $status =~ s/0:00:00/\\d*:\\d\\d:\\d\\d/g;
+    $status =~ s/^(.*dumpers busy[^\)]*\))/$1.*/mg;
+    $status =~ s/^(.*dumper busy[^\)]*\))/$1.*/mg;
 
     ok(run("amstatus", 'TESTCONF', '--file', $tracefile),
 	"$text: run amstatus")

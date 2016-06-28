@@ -1,4 +1,9 @@
 2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl:Fix indentation
+	* installcheck/Installcheck/Run.pm (check_amstatus): Do not check
+	  dumper busy stat
+
+2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm: Subtitute hostname
 	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
 	  installcheck/success-dumper-chunker+taper-flush.pl,
