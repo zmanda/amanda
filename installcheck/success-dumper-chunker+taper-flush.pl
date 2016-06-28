@@ -65,9 +65,12 @@ my $infodir;
 my $timestamp;
 my $tracefile;
 my $logfile;
+my $hostname = `hostname`;
+chomp $hostname;
 
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
+$testconf->add_param('columnspec', '"Dumprate=1:-8:1,TapeRate=1:-8:1"');
 # one AMGTAR dle
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
@@ -89,6 +92,7 @@ $infodir = getconf($CNF_INFOFILE);
 # dumper-chunker-success
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
+$testconf->add_param('columnspec', '"Dumprate=1:-8:1,TapeRate=1:-8:1"');
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
     installcheck-test
@@ -130,7 +134,7 @@ do {
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is($reply->{'body'}->[0]->{'severity'}, 'success', 'severity is success');
 is($reply->{'body'}->[0]->{'code'}, '1900001', 'code is 1900001');
-is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, 'localhost.localdomain' , 'hostname is correct');
+is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, $hostname , 'hostname is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'exit_status'}, '0' , 'exit_status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
@@ -194,7 +198,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'level' => '0',
 				'dump_time' => undef,
 				'error' => '',
-				'holding_file' => "/tmp/amanda/installchecks/holding/$timestamp/localhost.diskname2.0",
+				'holding_file' => "$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0",
 				'degr_level' => '-1',
 				'flush' => '0',
 				'will_retry' => '0'
@@ -303,7 +307,7 @@ Output Size (meg)            1.0        1.0        0.0
 Original Size (meg)          1.0        1.0        0.0
 Avg Compressed Size (%)    100.0      100.0        --
 DLEs Dumped                    1          1          0
-Avg Dump Rate (k/s)      99999.9    99999.9        --
+Avg Dump Rate (k/s)     999999.9   999999.9        --
 
 Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)              0.0        0.0        0.0
@@ -319,15 +323,15 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                                   DUMPER STATS    TAPER STATS
-HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS    KB/s MMM:SS   KB/s
--------------------------- ---------------------- --------------- -------------
-localhost    diskname2   0    1050    1050    --     0:00 99999.9              
+                                                    DUMPER STATS     TAPER STATS
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
+-------------------------- ---------------------- ---------------- ---------------
+localhost    diskname2   0    1050    1050    --     0:00 999999.9                
 
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
-check_amreport($report, $timestamp);
+check_amreport($report, $timestamp, "amreport first amdump");
 
 #amstatus
 
@@ -364,7 +368,7 @@ dumper0 busy    :  0:00:00  ( 12.11%)
  1 dumper busy  :  0:00:00  (  0.45%)
 END_STATUS
 
-check_amstatus($status, $tracefile);
+check_amstatus($status, $tracefile, "amstatus first amdump");
 
 # taper-success (flush)
 
@@ -406,7 +410,7 @@ do {
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is($reply->{'body'}->[0]->{'severity'}, 'success', 'severity is success');
 is($reply->{'body'}->[0]->{'code'}, '1900001', 'code is 1900001');
-is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, 'localhost.localdomain' , 'hostname is correct');
+is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, $hostname , 'hostname is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'exit_status'}, '0' , 'exit_status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
@@ -470,7 +474,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				#'partial' => '0',
 				'level' => '0',
 				#'error' => '',
-				'holding_file' => "/tmp/amanda/installchecks/holding/$dump_timestamp/localhost.diskname2.0",
+				'holding_file' => "$Installcheck::TMP/holding/$dump_timestamp/localhost.diskname2.0",
 				'storage' => {
 					'TESTCONF' => {
 						'will_retry' => '0',
@@ -638,7 +642,7 @@ Tape Size (meg)              1.0        1.0        0.0
 Tape Used (%)                3.4        3.4        0.0
 DLEs Taped                     1          1          0
 Parts Taped                    1          1          0
-Avg Tp Write Rate (k/s)  99999.9    99999.9        --
+Avg Tp Write Rate (k/s) 999999.9   999999.9        --
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts
@@ -651,13 +655,13 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                                   DUMPER STATS   TAPER STATS
-HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
--------------------------- ---------------------- -------------- --------------
-localhost    diskname2   0    1050    1050    --      FLUSH        0:00 99999.9
+                                                    DUMPER STATS     TAPER STATS
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
+-------------------------- ---------------------- ---------------- ---------------
+localhost    diskname2   0    1050    1050    --       FLUSH         0:00 999999.9
 END_REPORT
 
-check_amreport($report, $timestamp);
+check_amreport($report, $timestamp, "amreport second amdump");
 
 # amstatus
 
@@ -696,7 +700,7 @@ TESTCONF busy   :  0:00:00  (  3.43%)
  0 dumpers busy :  0:00:00  (100.00%)
 END_STATUS
 
-check_amstatus($status, $tracefile);
+check_amstatus($status, $tracefile, "amstatus second amdump");
 
 #diag("reply: " . Data::Dumper::Dumper($reply));
 $rest->stop();

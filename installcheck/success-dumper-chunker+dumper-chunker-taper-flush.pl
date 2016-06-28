@@ -65,6 +65,8 @@ my $infodir;
 my $timestamp;
 my $tracefile;
 my $logfile;
+my $hostname = `hostname`;
+chomp $hostname;
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
@@ -74,6 +76,7 @@ $infodir = getconf($CNF_INFOFILE);
 # dumper-chunker-success
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
+$testconf->add_param('columnspec', '"Dumprate=1:-8:1,TapeRate=1:-8:1"');
 $testconf->add_param('autoflush', 'yes');
 $testconf->add_param('runtapes', '2');
 $testconf->add_param('max-dle-by-volume', '1');
@@ -119,7 +122,7 @@ do {
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is($reply->{'body'}->[0]->{'severity'}, 'success', 'severity is success');
 is($reply->{'body'}->[0]->{'code'}, '1900001', 'code is 1900001');
-is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, 'localhost.localdomain' , 'hostname is correct');
+is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, $hostname , 'hostname is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'exit_status'}, '0' , 'exit_status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
@@ -184,7 +187,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'level' => '0',
 				'dump_time' => undef,
 				'error' => '',
-				'holding_file' => "/tmp/amanda/installchecks/holding/$timestamp/localhost.diskname2.0",
+				'holding_file' => "$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0",
 				'degr_level' => '-1',
 				'flush' => '0',
 				'will_retry' => '0'
@@ -292,7 +295,7 @@ Output Size (meg)            1.0        1.0        0.0
 Original Size (meg)          1.0        1.0        0.0
 Avg Compressed Size (%)    100.0      100.0        --
 DLEs Dumped                    1          1          0
-Avg Dump Rate (k/s)      99999.9    99999.9        --
+Avg Dump Rate (k/s)     999999.9   999999.9        --
 
 Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)              0.0        0.0        0.0
@@ -308,10 +311,10 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                                   DUMPER STATS    TAPER STATS
-HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS    KB/s MMM:SS   KB/s
--------------------------- ---------------------- --------------- -------------
-localhost    diskname2   0    1050    1050    --     0:00 99999.9              
+                                                    DUMPER STATS     TAPER STATS
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
+-------------------------- ---------------------- ---------------- ---------------
+localhost    diskname2   0    1050    1050    --     0:00 999999.9                
 
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
@@ -395,7 +398,7 @@ do {
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
 is($reply->{'body'}->[0]->{'severity'}, 'success', 'severity is success');
 is($reply->{'body'}->[0]->{'code'}, '1900001', 'code is 1900001');
-is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, 'localhost.localdomain' , 'hostname is correct');
+is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, $hostname , 'hostname is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'exit_status'}, '0' , 'exit_status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
@@ -475,7 +478,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				#'partial' => '0',
 				'level' => '0',
 				#'error' => '',
-				'holding_file' => "/tmp/amanda/installchecks/holding/$dump_timestamp/localhost.diskname2.0",
+				'holding_file' => "$Installcheck::TMP/holding/$dump_timestamp/localhost.diskname2.0",
 				'storage' => {
 					'TESTCONF' => {
 						'will_retry' => '0',
@@ -508,7 +511,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'chunk_time' => undef,
 				'degr_level' => '-1',
 				'error' => '',
-				'holding_file' => "/tmp/amanda/installchecks/holding/$timestamp/localhost.diskname2.1",
+				'holding_file' => "$Installcheck::TMP/holding/$timestamp/localhost.diskname2.1",
 				'storage' => {
 					'TESTCONF' => {
 						'will_retry' => '0',
@@ -675,14 +678,14 @@ Output Size (meg)            0.0        0.0        0.0
 Original Size (meg)          0.0        0.0        0.0
 Avg Compressed Size (%)    100.0        --       100.0
 DLEs Dumped                    1          0          1  1:1
-Avg Dump Rate (k/s) 99999.9        -- 99999.9
+Avg Dump Rate (k/s) 999999.9        -- 999999.9
 
 Tape Time (hrs:min)         0:00       0:00       0:00
 Tape Size (meg)              1.0        1.0        0.0
 Tape Used (%)                3.5        3.4        0.1
 DLEs Taped                     2          1          1  1:1
 Parts Taped                    2          1          1  1:1
-Avg Tp Write Rate (k/s) 99999.9 99999.9 99999.9
+Avg Tp Write Rate (k/s) 999999.9 999999.9 999999.9
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts
@@ -699,11 +702,11 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                                   DUMPER STATS   TAPER STATS
-HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
--------------------------- ---------------------- -------------- --------------
-localhost    diskname2   0    1050    1050    --      FLUSH        0:00 99999.9
-localhost    diskname2   1      10      10    --     0:00 99999.9   0:00 99999.9
+                                                    DUMPER STATS     TAPER STATS
+HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
+-------------------------- ---------------------- ---------------- ---------------
+localhost    diskname2   0    1050    1050    --       FLUSH         0:00 999999.9
+localhost    diskname2   1      10      10    --     0:00 999999.9   0:00 999999.9
 
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT

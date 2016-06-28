@@ -554,10 +554,13 @@ sub check_amreport
     $report =~ s/\[/\\[/g;
     $report =~ s/\]/\\]/g;
     $report =~ s/0:00/\\d:\\d\\d/g;
-    $report =~ s/99999\.9/\[ \\d\]*\\.\\d/g;
+    $report =~ s/999999\.9/\[ \\d\]*\\.\\d/g;
     my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
     my $date  = POSIX::strftime('%B %e, %Y', 0, 0, 0, $day, $month - 1, $year - 1900);
     $report =~ s/Date    : .*$/Date    : $date/mg;
+    my $hostname = `hostname`;
+    chomp $hostname;
+    $report =~ s/Hostname: .*$/Hostname: $hostname/mg;
     $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $Amanda::Constants::VERSION\\/g;
 
     ok(run("amreport", 'TESTCONF'),

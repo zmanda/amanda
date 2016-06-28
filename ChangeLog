@@ -1,4 +1,11 @@
 2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Run.pm: Subtitute hostname
+	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
+	  installcheck/success-dumper-chunker+taper-flush.pl,
+	  installcheck/success-dumper-chunker-taper.pl,
+	  installcheck/success-dumper-taper.pl: Increase time length
+
+2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/libs.m4: Set LIBCURL_USE_GNUTLS_NETTLE or
 	  LIBCURL_USE_GNUTLS_GCRYPT depending on which crypto library
 	  gnutls use
