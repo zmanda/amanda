@@ -462,6 +462,9 @@ sub new
     };
     bless $self, $class;
 
+    $self->{'Amanda_process'} = Amanda::Process->new();
+    $self->{'Amanda_process'}->load_ps_table();
+
     my $result = $self->read_file();
     if (defined $result and $result->isa("Amanda::Message")) {
 	return $result;
@@ -510,9 +513,6 @@ sub read_file
 		severity => $Amanda::Message::ERROR);
     }
 
-    my $Amanda_process = Amanda::Process->new();
-    $Amanda_process->load_ps_table();
-
     ## set post-run flags
 
     $self->{flags}{historical} = $self->{_historical};
@@ -530,7 +530,7 @@ sub read_file
 	    my $info = $self->get_program_info("amflush");
 	    my $pid = $info->{pid};
 	    if ($self->{pids}->{$pid} eq 'running') {
-		if (!$Amanda_process->process_alive($pid, "amflush")) {
+		if (!$self->{'Amanda_process'}->process_alive($pid, "amflush")) {
 		    $self->{pids}->{$pid} = 'aborted';
 		}
 	    }
@@ -549,7 +549,7 @@ sub read_file
 	    my $info = $self->get_program_info("amvault");
 	    my $pid = $info->{pid};
 	    if ($self->{pids}->{$pid} eq 'running') {
-		if (!$Amanda_process->process_alive($pid, "amvault")) {
+		if (!$self->{'Amanda_process'}->process_alive($pid, "amvault")) {
 		    $self->{pids}->{$pid} = 'aborted';
 		}
 	    }
@@ -561,7 +561,7 @@ sub read_file
 	    my $info = $self->get_program_info("ambackupd");
 	    my $pid = $info->{pid};
 	    if ($self->{pids}->{$pid} eq 'running') {
-		if (!$Amanda_process->process_alive($pid, "ambackupd")) {
+		if (!$self->{'Amanda_process'}->process_alive($pid, "ambackupd")) {
 		    $self->{pids}->{$pid} = 'aborted';
 		}
 	    }
@@ -576,7 +576,7 @@ sub read_file
 	    my $info = $self->get_program_info("amdump");
 	    my $pid = $info->{pid};
 	    if ($self->{pids}->{$pid} eq 'running') {
-		if (!$Amanda_process->process_alive($pid, "amdump")) {
+		if (!$self->{'Amanda_process'}->process_alive($pid, "amdump")) {
 		    $self->{pids}->{$pid} = 'aborted';
 		}
 	    }

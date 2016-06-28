@@ -1,3 +1,6 @@
+2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report.pm: Fix race by loading the ps_table early
+
 2016-06-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amrandom.pl: Improve debugging
 	* common-src/shm-ring.c: Improve debugging
