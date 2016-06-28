@@ -4882,4 +4882,3 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 $rest->stop();
 
 Installcheck::Run::cleanup();
-exit;

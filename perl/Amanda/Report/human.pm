@@ -498,14 +498,15 @@ sub output_tapeinfo
               "There are $h_size_u of dumps left in the holding disk.\n");
 
             (getconf($CNF_AUTOFLUSH))
-              ? $self->zprint("They will be flushed on the next run.\n\n")
-              : $self->zprint("Run amflush to flush them to tape.\n\n");
+              ? $self->zprint("They will be flushed on the next run.\n")
+              : $self->zprint("Run amflush to flush them to tape.\n");
 
         } elsif ($report->get_flag("degraded_mode")) {
-            $self->zprint("No dumps are left in the holding disk.\n\n");
+            $self->zprint("No dumps are left in the holding disk.\n");
         }
     }
 
+    my $first = 1;
     for my $storage_n (@{$report->{'storage_list'}}) {
 	my $st = Amanda::Config::lookup_storage($storage_n);
 	if (!$st) {
@@ -536,7 +537,6 @@ sub output_tapeinfo
 	    my $retention_recover = $policy->{'retention_recover'};
 	    my $retention_full = $policy->{'retention_full'};
 
-	    my $first = 1;
 	    foreach my $i ( 0 .. ( $run_tapes - 1 ) ) {
 
 		if ( my $tape_label =
@@ -930,7 +930,6 @@ EOF
         ""
     ));
 
-    $self->zprint("\n");
     return;
 }
 
@@ -965,6 +964,7 @@ sub output_tape_stats
       . '<' x ($label_length - 1)
       . " @>>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
+    $self->zprint("\n");
     $self->zsprint("USAGE BY TAPE:\n");
     $self->zprint(swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts"));
 
@@ -993,7 +993,6 @@ sub output_tape_stats
             int($tape->{files})                       # # of parts
         ));
     }
-    $self->zprint("\n");
     return;
 }
 
@@ -1101,7 +1100,6 @@ sub output_details
                 && ($est->{ckb} - $outsize > 1.0e5));
         }
     }
-
     $self->print_if_def(\@failed_dump_details,  "FAILED DUMP DETAILS:");
     $self->print_if_def(\@strange_dump_details, "STRANGE DUMP DETAILS:");
     $self->print_if_def($notes,                 "NOTES:");

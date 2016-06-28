@@ -165,7 +165,8 @@ require Exporter;
     $stdout $stderr $exit_code
     clean_taperoot
     load_vtape load_vtape_res vtape_dir
-    amdump_diag run_expect );
+    amdump_diag run_expect
+    check_amreport check_amstatus );
 @EXPORT = qw(exp_continue exp_continue_timeout);
 
 # global variables
@@ -521,4 +522,77 @@ bail:
     }
 }
 
+sub diag_diff
+{
+    my ( $a, $b, $msg ) = @_;
+
+
+    my @a = split /\n/, $a;
+    my @b = split /\n/, $b;
+    foreach my $la (@a) {
+	my $lb = shift @b;
+
+	if ($la !~ /^$lb$/){
+	    diag("-$la");
+	    diag("+$lb");
+	}
+    }
+    foreach my $lb (@b) {
+	diag("+$lb");
+    }
+
+}
+
+sub check_amreport
+{
+    my $report = shift;
+    my $timestamp = shift;
+    my $text = shift || 'amreport';
+
+    $report =~ s/\(/\\(/g;
+    $report =~ s/\)/\\)/g;
+    $report =~ s/\[/\\[/g;
+    $report =~ s/\]/\\]/g;
+    $report =~ s/0:00/\\d:\\d\\d/g;
+    $report =~ s/99999\.9/\[ \\d\]*\\.\\d/g;
+    my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
+    my $date  = POSIX::strftime('%B %e, %Y', 0, 0, 0, $day, $month - 1, $year - 1900);
+    $report =~ s/Date    : .*$/Date    : $date/mg;
+    $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $Amanda::Constants::VERSION\\/g;
+
+    ok(run("amreport", 'TESTCONF'),
+	"$text: run amreport")
+      or diag($Installcheck::Run::stderr);
+
+    ok($Installcheck::Run::stdout =~ $report, "$text: match") || diag_diff($Installcheck::Run::stdout, $report);
+#diag("stdout::::${Installcheck::Run::stdout}::::\n");
+#diag("report::::${report}::::\n");
+
+}
+
+sub check_amstatus
+{
+    my $status = shift;
+    my $tracefile = shift;
+    my $text = shift || 'amstatus';
+
+    $status =~ s/\[/\\[/g;
+    $status =~ s/\]/\\]/g;
+    $status =~ s/Using: .*$/Using: $tracefile/mg;
+    $status =~ s/From .*$/From .*/mg;
+    $status =~ s/localhost:diskname2 (\d{14} 0 .*)\(.*\)/localhost:diskname2 $1\(\\d*:\\d\\d:\\d\\d\)/;
+    $status =~ s/localhost:diskname2 (\d{14} 1 .*)\(.*\)/localhost:diskname2 $1\(\\d*:\\d\\d:\\d\\d\)/;
+    $status =~ s/\([ \d.]{6,8}%\)/\([ \\d\.]{6,8}%\)/g;
+    $status =~ s/\(/\\(/g;
+    $status =~ s/\)/\\)/g;
+    $status =~ s/0:00:00/\\d*:\\d\\d:\\d\\d/g;
+
+    ok(run("amstatus", 'TESTCONF', '--file', $tracefile),
+	"$text: run amstatus")
+      or diag($Installcheck::Run::stderr);
+
+    ok($Installcheck::Run::stdout =~ $status, "$text: match") || diag_diff($Installcheck::Run::stdout, $status);
+#diag("stdout $Installcheck::Run::stdout");
+#diag("status: $status");
+}
 1;

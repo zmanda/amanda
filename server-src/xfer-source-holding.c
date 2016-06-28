@@ -621,6 +621,14 @@ cancel_impl(
 	sem_post(elt->shm_ring->sem_write);
     }
 
+    if (self->mem_ring) {
+	g_mutex_lock(self->mem_ring->mutex);
+	self->mem_ring->eof_flag = TRUE;
+	g_cond_broadcast(self->mem_ring->add_cond);
+        g_cond_broadcast(self->mem_ring->free_cond);
+        g_mutex_unlock(self->mem_ring->mutex);
+    }
+
     /* trigger the condition variable, in case the thread is waiting on it */
     g_mutex_lock(self->start_recovery_mutex);
     g_cond_broadcast(self->start_recovery_cond);

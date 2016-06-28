@@ -1,0 +1,402 @@
+%F log/log
+INFO amdump amdump pid 11634
+INFO driver driver pid 11636
+INFO planner planner pid 11635
+START planner date 20160527131237
+START driver date 20160527131237
+STATS driver hostname localhost.localdomain
+DISK planner localhost.localdomain /bootAMGTAR
+WARNING planner tapecycle (1) <= runspercycle (8)
+INFO dumper dumper pid 11638
+INFO dumper dumper pid 11640
+INFO dumper dumper pid 11644
+INFO dumper dumper pid 11641
+INFO dumper dumper pid 11639
+INFO dumper dumper pid 11642
+INFO dumper dumper pid 11643
+INFO dumper dumper pid 11647
+INFO dumper dumper pid 11652
+INFO dumper dumper pid 11648
+INFO dumper dumper pid 11650
+WARNING planner Last full dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-027 overwritten in 1 run.
+WARNING planner Last level 1 dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-050 overwritten in 1 run.
+INFO dumper dumper pid 11653
+INFO dumper dumper pid 11646
+INFO dumper dumper pid 11656
+INFO dumper dumper pid 11645
+INFO dumper dumper pid 11655
+INFO dumper dumper pid 11649
+INFO dumper dumper pid 11654
+INFO dumper dumper pid 11657
+INFO dumper dumper pid 11651
+FINISH planner date 20160527131237 time 0.102
+INFO planner pid-done 11635
+INFO taper taper pid 11637
+INFO taper Slot 1 without label can be labeled
+STATS driver startup time 1.131
+INFO dumper gzip pid 11679
+INFO dumper gzip pid 11686
+START taper datestamp 20160527131237 "ST:Smy_vtapes" "POOL:Pmy_vtapes" label test-ORG-AA-vtapes-01 tape 1
+INFO taper Slot 2 without label can be labeled
+PART taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" test-ORG-AA-vtapes-01 1 localhost.localdomain /bootAMGTAR 20160527131237 1/-1 11 [sec 0.007360 bytes 10485760 kps 1391304.347826]
+PART taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" test-ORG-AA-vtapes-01 2 localhost.localdomain /bootAMGTAR 20160527131237 2/-1 11 [sec 0.008252 bytes 10485760 kps 1240911.294232]
+PART taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" test-ORG-AA-vtapes-01 3 localhost.localdomain /bootAMGTAR 20160527131237 3/-1 11 [sec 0.008152 bytes 10485760 kps 1256133.464181]
+PART taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" test-ORG-AA-vtapes-01 4 localhost.localdomain /bootAMGTAR 20160527131237 4/-1 11 [sec 0.006097 bytes 10485760 kps 1679514.515335]
+PART taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" test-ORG-AA-vtapes-01 5 localhost.localdomain /bootAMGTAR 20160527131237 5/-1 11 [sec 0.005814 bytes 10485760 kps 1761265.909873]
+PART taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" test-ORG-AA-vtapes-01 6 localhost.localdomain /bootAMGTAR 20160527131237 6/-1 11 [sec 0.001571 bytes 3014656 kps 1873965.626989]
+INFO dumper pid-done 11679
+SUCCESS dumper localhost.localdomain /bootAMGTAR 20160527131237 11 b996390c:55443456 b996390c:55443456 [sec 0.655 kb 54144 kps 82621.0 orig-kb 54144]
+DONE taper "ST:Smy_vtapes" "POOL:Pmy_vtapes" localhost.localdomain /bootAMGTAR 20160527131237 6 11 b996390c:55443456 b996390c:55443456 00000000:0 [sec 0.100000 bytes 55443456 kps 541440.000000 orig-kb 54144]
+INFO taper tape test-ORG-AA-vtapes-01 kb 54144 fm 6 [OK]
+STATS driver estimate localhost.localdomain /bootAMGTAR 20160527131237 11 [sec 3 nkb 54176 ckb 54176 kps 14890]
+INFO taper pid-done 11637
+INFO dumper pid-done 11638
+INFO dumper pid-done 11643
+INFO dumper pid-done 11641
+INFO dumper pid-done 11639
+INFO dumper pid-done 11642
+INFO dumper pid-done 11640
+INFO dumper pid-done 11644
+INFO dumper pid-done 11648
+INFO dumper pid-done 11646
+INFO dumper pid-done 11647
+INFO dumper pid-done 11649
+INFO dumper pid-done 11651
+INFO dumper pid-done 11650
+INFO dumper pid-done 11655
+INFO dumper pid-done 11652
+INFO dumper pid-done 11653
+INFO dumper pid-done 11657
+INFO dumper pid-done 11645
+INFO dumper pid-done 11654
+INFO dumper pid-done 11656
+FINISH driver date 20160527131237 time 2.998
+INFO driver pid-done 11636
+INFO amdump pid-done 11634
+
+%F log/amdump
+amdump: start at Fri May 27 13:12:37 EDT 2016
+amdump: datestamp 20160527
+amdump: starttime 20160527131237
+amdump: starttime-locale-independent 2016-05-27 13:12:37 EDT
+driver: pid 11636 executable /amanda/h1/linux/libexec/amanda/driver version 4.0.0alpha.git.0b3a378d
+planner: pid 11635 executable /amanda/h1/linux/libexec/amanda/planner version 4.0.0alpha.git.0b3a378d
+planner: build: VERSION="Amanda-4.0.0alpha.git.0b3a378d"
+planner:        BUILT_DATE="Wed May 11 12:42:52 EDT 2016" BUILT_MACH=""
+planner:        BUILT_REV=UNDEF BUILT_BRANCH=UNDEF CC="gcc"
+planner: paths: bindir="/amanda/h1/linux/bin"
+planner:        sbindir="/amanda/h1/linux/sbin"
+planner:        libexecdir="/amanda/h1/linux/libexec"
+planner:        amlibexecdir="/amanda/h1/linux/libexec/amanda"
+planner:        mandir="/amanda/h1/man" AMANDA_TMPDIR="/tmp/amanda"
+planner:        AMANDA_DBGDIR="/tmp/amanda"
+planner:        CONFIG_DIR="/amanda/h1/etc/amanda" DEV_PREFIX="/dev/"
+planner:        DUMP="/sbin/dump" RESTORE="/sbin/restore" VDUMP=UNDEF
+planner:        VRESTORE=UNDEF XFSDUMP=UNDEF XFSRESTORE=UNDEF VXDUMP=UNDEF
+planner:        VXRESTORE=UNDEF
+planner:        SAMBA_CLIENT="/usr/local/samba/bin/smbclient"
+planner:        GNUTAR="/usr/bin/tar" COMPRESS_PATH="/usr/bin/gzip"
+planner:        UNCOMPRESS_PATH="/usr/bin/gzip"  LPRCMD=UNDEF  MAILER=UNDEF
+planner:        listed_incr_dir="/var/gnutar-lists"
+planner: defs:  DEFAULT_SERVER="bozo.localdomain" DEFAULT_CONFIG="test"
+planner:        DEFAULT_TAPE_SERVER="bozo.localdomain"
+planner:        DEFAULT_TAPE_DEVICE="/dev/nst3" NEED_STRSTR AMFLOCK_POSIX
+planner:        AMFLOCK_FLOCK AMFLOCK_LOCKF AMFLOCK_LNLOCK SETPGRP_VOID
+planner:        ASSERTIONS AMANDA_DEBUG_DAYS=4 BSD_SECURITY KRB5_SECURITY
+planner:        RSH_SECURITY USE_AMANDAHOSTS CLIENT_LOGIN="martinea"
+planner:        CHECK_USERID HAVE_GZIP COMPRESS_SUFFIX=".gz"
+planner:        COMPRESS_FAST_OPT="--fast" COMPRESS_BEST_OPT="--best"
+planner:        UNCOMPRESS_OPT="-dc"
+planner:        CONFIGURE_ARGS=" 'AMANDA_BUILD_DEPENDENCIES=/home/martinea/src/AMANDA_BUILD_DEPENDENCIES' '--prefix=/amanda/h1/linux' '--exec-prefix=/amanda/h1/linux' '--disable-installperms' '--with-smbclient=/usr/local/samba/bin/smbclient' '--with-configdir=/amanda/h1/etc/amanda' '--with-gnutar-listdir=/var/gnutar-lists' '--with-gnutar=/bin/tar' '--without-amperldir' '--with-bsd-security' '--with-bsdtcp-security' '--with-bsdudp-security' '--with-rsh-security' '--with-ssh-security' '--with-krb5-security' '--with-user=martinea' '--with-group=martinea' '--with-index-server=bozo.localdomain' '--with-config=test' '--with-tape-server=bozo.localdomain' '--with-tape-device=/dev/nst3' '--with-assertions' '--mandir=/amanda/h1/man' '--enable-werror' '--enable-swig-error' '--enable-syntax-checks' '--enable-manpage-build'"
+READING CONF INFO...
+planner: timestamp 20160527131237
+driver: adding holding disk 0 dir /amanda/h1/hdisk size 104857600 chunksize 31457280
+reserving 0 out of 104857600 for degraded-mode dumps
+driver: taper taper0 storage Smy_vtapes tape_size 30720
+planner: tape_length is set from maxdumpsize (209715200 KB)
+planner: time 0.002: startup took 0.002 secs
+
+SENDING FLUSHES...
+driver: started dumper0 pid 11638
+driver: send-cmd time 0.090 to dumper0: START 20160527131237
+driver: started dumper1 pid 11639
+driver: send-cmd time 0.090 to dumper1: START 20160527131237
+driver: started dumper2 pid 11640
+driver: send-cmd time 0.091 to dumper2: START 20160527131237
+driver: started dumper3 pid 11641
+driver: send-cmd time 0.091 to dumper3: START 20160527131237
+driver: started dumper4 pid 11642
+driver: send-cmd time 0.092 to dumper4: START 20160527131237
+driver: started dumper5 pid 11643
+driver: send-cmd time 0.092 to dumper5: START 20160527131237
+driver: started dumper6 pid 11644
+driver: send-cmd time 0.093 to dumper6: START 20160527131237
+driver: started dumper7 pid 11645
+driver: send-cmd time 0.093 to dumper7: START 20160527131237
+driver: started dumper8 pid 11646
+driver: send-cmd time 0.094 to dumper8: START 20160527131237
+driver: started dumper9 pid 11647
+driver: send-cmd time 0.094 to dumper9: START 20160527131237
+driver: started dumper10 pid 11648
+driver: send-cmd time 0.095 to dumper10: START 20160527131237
+driver: started dumper11 pid 11649
+driver: send-cmd time 0.095 to dumper11: START 20160527131237
+driver: started dumper12 pid 11650
+driver: send-cmd time 0.095 to dumper12: START 20160527131237
+driver: started dumper13 pid 11651
+driver: send-cmd time 0.096 to dumper13: START 20160527131237
+driver: started dumper14 pid 11652
+driver: send-cmd time 0.096 to dumper14: START 20160527131237
+driver: started dumper15 pid 11653
+driver: send-cmd time 0.097 to dumper15: START 20160527131237
+driver: started dumper16 pid 11654
+driver: send-cmd time 0.097 to dumper16: START 20160527131237
+driver: started dumper17 pid 11655
+driver: send-cmd time 0.098 to dumper17: START 20160527131237
+driver: started dumper18 pid 11656
+driver: send-cmd time 0.098 to dumper18: START 20160527131237
+driver: started dumper19 pid 11657
+driver: send-cmd time 0.098 to dumper19: START 20160527131237
+driver: send-cmd time 0.099 to taper0: START-TAPER taper0 worker0-0 Smy_vtapes 20160527131237
+dumper: pid 11638 executable dumper0 version 4.0.0alpha.git.0b3a378d
+Cleaning up holding disk '/amanda/h1/hdisk'
+..skipping running directory '20160527131237'
+dumper: pid 11640 executable dumper2 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11644 executable dumper6 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11641 executable dumper3 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11639 executable dumper1 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11642 executable dumper4 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11643 executable dumper5 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11647 executable dumper9 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11652 executable dumper14 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11648 executable dumper10 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11650 executable dumper12 version 4.0.0alpha.git.0b3a378d
+ENDFLUSH
+
+SETTING UP FOR ESTIMATES...
+planner: time 0.050: setting up estimates for localhost.localdomain:/bootAMGTAR
+setup_estimate: localhost.localdomain:/bootAMGTAR: command 0, options: none    last_level 11 next_level0 99970 level_days 22    getting estimates 0 (-3) 11 (-3) -1 (-3)
+planner: time 0.051: setting up estimates took 0.000 secs
+
+GETTING ESTIMATES...
+dumper: pid 11653 executable dumper15 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11646 executable dumper8 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11656 executable dumper18 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11645 executable dumper7 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11655 executable dumper17 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11649 executable dumper11 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11654 executable dumper16 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11657 executable dumper19 version 4.0.0alpha.git.0b3a378d
+dumper: pid 11651 executable dumper13 version 4.0.0alpha.git.0b3a378d
+planner: time 0.102: got result for host localhost.localdomain disk /bootAMGTAR: 0 -> 156736K, 11 -> 54144K, -1 -> -3K
+planner: time 0.102: getting estimates took 0.051 secs
+FAILED QUEUE: empty
+DONE QUEUE:
+  0: localhost.localdomain /bootAMGTAR
+
+ANALYZING ESTIMATES...
+pondering localhost.localdomain:/bootAMGTAR... next_level0 99970 last_level 11 (not due for a full dump, picking an incr level)
+   pick: size 54144 level 11 days 22 (thresh 32869921587K, 1 days)
+  curr level 11 nsize 54144 csize 54144 total size 54828 total_lev0 0 balanced-lev0size 0
+INITIAL SCHEDULE (size 54828):
+  localhost.localdomain /bootAMGTAR pri 1 lev 11 nsize 54144 csize 54144
+
+DELAYING DUMPS IF NEEDED, total_size 54828, tape length 209715200 mark 100
+  delay: Total size now 54828.
+
+PROMOTING DUMPS IF NEEDED, total_lev0 0, balanced_size 0...
+planner: time 0.102: analysis took 0.000 secs
+
+GENERATING SCHEDULE:
+--------
+DUMP localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf70f /bootAMGTAR 20160527131237 1 11 2016:5:11:17:22:37 54144 54144 3 14890 "Skipping: a full is not planned, so can't dump in degraded mode"
+--------
+driver: start time 1.131 inparallel 20 bandwidth 800000000 diskspace 104857600  dir OBSOLETE datestamp 20160527131237 driver: drain-ends tapeq LARGEST big-dumpers sssS
+driver: state time 1.131 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 1.131 if default: free 800000000
+driver: hdisk-state time 1.131 hdisk 0: free 104857600 dumpers 0
+driver: state time 1.131 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: not-idle
+driver: interface-state time 1.131 if default: free 800000000
+driver: hdisk-state time 1.131 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.131 from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM
+driver: flush size 0
+driver: send-cmd time 1.162 to taper0: SHM-WRITE worker0-0 00-00001 localhost.localdomain /bootAMGTAR 11 20160527131237 "" "" "" 1 10485760 memory "" "" AMANDA
+driver: state time 1.162 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.162 if default: free 799985110
+driver: hdisk-state time 1.162 hdisk 0: free 104857600 dumpers 0
+driver: state time 1.165 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.165 if default: free 799985110
+driver: hdisk-state time 1.165 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.165 from taper0: SHM-NAME worker0-0 00-00001 46152 /amanda_shm_control-11637-0
+driver: send-cmd time 1.165 to dumper0: SHM-DUMP 00-00001 46152 NULL 10 localhost.localdomain ffffffff9efefbfffffffffffffff3fffbf70f /bootAMGTAR /boot 11 2016:5:11:17:22:37 amgtar "" "" "" "" "" "" "" 1 "" "" local AMANDA /amanda_shm_control-11637-0 20 |"  <auth>local</auth>\n  <record>YES</record>\n  <index>YES</index>\n  <datapath>AMANDA</datapath>\n""""  <backup-program>\n    <plugin>amgtar</plugin>\n    <property>\n      <name>gnutar-path</name>\n      <value>/bin/tar</value>\n    </property>\n    <property>\n      <name>atime-preserve</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>ignore</name>\n      <value encoding=\"raw\" raw=\"OiBEaXJlY3RvcnkgaGFzIGJlZW4gcmVuYW1lZA==\">:_Directory_has_been_renamed</value>      <value encoding=\"raw\" raw=\"V2FybmluZzogQ2Fubm90IHN0YXQ6IE5vIHN1Y2ggZmlsZSBvciBkaXJlY3Rvcnk=\">Warning:_Cannot_stat:_No_such_file_or_directory</value>\n    </property>\n    <property>\n      <name>tar-blocksize</name>\n      <value>128</value>\n    </property>\n    <property>\n      <name>check-device</name>\n      <value>NO</value>\n    </property>\n    <property>\n      <name>normal</name>\n      <value>is.#sparse</value>\n    </property>\n    <property>\n      <name>ignore-zeros</name>\n      <value>NO</value>\n    </property>\n  </backup-program>\n"
+taper: status file taper0 worker0-0 localhost.localdomain /bootAMGTAR:/tmp/amanda/taper_status_file_Zmh6Ur
+driver: state time 1.266 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.266 if default: free 799985110
+driver: hdisk-state time 1.266 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.266 from taper0: REQUEST-NEW-TAPE worker0-0 00-00001
+driver: send-cmd time 1.266 to taper0: START-SCAN worker0-0 00-00001
+driver: send-cmd time 1.266 to taper0: NEW-TAPE worker0-0 00-00001
+taper: wrote label 'test-ORG-AA-vtapes-01'
+driver: state time 1.273 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.273 if default: free 799985110
+driver: hdisk-state time 1.273 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.273 from taper0: NEW-TAPE worker0-0 00-00001 test-ORG-AA-vtapes-01
+driver: send-cmd time 1.273 to taper0: START-TAPER taper0 worker0-1 Smy_vtapes 20160527131237
+driver: state time 1.273 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.273 if default: free 799985110
+driver: hdisk-state time 1.273 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.273 from taper0: READY worker0-0 00-00001
+driver: state time 1.686 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.686 if default: free 799985110
+driver: hdisk-state time 1.686 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.686 from taper0: TAPER-OK worker0-1 ALLOW-TAKE-SCRIBE-FROM
+driver: state time 1.687 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.687 if default: free 799985110
+driver: hdisk-state time 1.687 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.687 from taper0: PARTDONE worker0-0 00-00001 test-ORG-AA-vtapes-01 1 10240 "[sec 0.007360 bytes 10485760 kps 1391304.347826]"
+driver: state time 1.697 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.697 if default: free 799985110
+driver: hdisk-state time 1.697 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.697 from taper0: PARTDONE worker0-0 00-00001 test-ORG-AA-vtapes-01 2 10240 "[sec 0.008252 bytes 10485760 kps 1240911.294232]"
+driver: state time 1.708 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.708 if default: free 799985110
+driver: hdisk-state time 1.708 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.708 from taper0: PARTDONE worker0-0 00-00001 test-ORG-AA-vtapes-01 3 10240 "[sec 0.008152 bytes 10485760 kps 1256133.464181]"
+driver: state time 1.717 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.717 if default: free 799985110
+driver: hdisk-state time 1.717 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.717 from taper0: PARTDONE worker0-0 00-00001 test-ORG-AA-vtapes-01 4 10240 "[sec 0.006097 bytes 10485760 kps 1679514.515335]"
+driver: state time 1.725 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.725 if default: free 799985110
+driver: hdisk-state time 1.725 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.725 from taper0: PARTDONE worker0-0 00-00001 test-ORG-AA-vtapes-01 5 10240 "[sec 0.005814 bytes 10485760 kps 1761265.909873]"
+driver: state time 1.728 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.728 if default: free 799985110
+driver: hdisk-state time 1.728 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.728 from taper0: PARTDONE worker0-0 00-00001 test-ORG-AA-vtapes-01 6 2944 "[sec 0.001571 bytes 3014656 kps 1873965.626989]"
+driver: state time 1.729 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.729 if default: free 799985110
+driver: hdisk-state time 1.729 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.729 from taper0: DUMPER-STATUS worker0-0 00-00001
+driver: state time 1.897 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.897 if default: free 799985110
+driver: hdisk-state time 1.897 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.897 from dumper0: DONE 00-00001 54144 54144 1 b996390c:55443456 b996390c:55443456 "[sec 0.655 kb 54144 kps 82621.0 orig-kb 54144]"
+driver: finished-cmd time 1.897 dumper0 dumped localhost.localdomain:/bootAMGTAR
+send DONE CC
+driver: send-cmd time 1.898 to taper0: DONE worker0-0 00-00001 54144 b996390c:55443456 b996390c:55443456 b996390c:55443456
+driver: state time 1.899 free kps: 799985110 space: 104857600 taper: writing idle-dumpers: 19 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.899 if default: free 799985110
+driver: hdisk-state time 1.899 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.899 from taper0: DONE worker0-0 00-00001 INPUT-GOOD TAPE-GOOD "b996390c:55443456" "[sec 0.100000 bytes 55443456 kps 541440.000000 orig-kb 54144]" "" ""
+driver: finished-cmd time 1.899 taper taper0 worker worker0-0 wrote localhost.localdomain:/bootAMGTAR
+driver: send-cmd time 1.899 to taper0: CLOSE-VOLUME worker0-0
+driver: state time 1.900 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.900 if default: free 800000000
+driver: hdisk-state time 1.900 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.900 from taper0: CLOSED-VOLUME worker0-0
+driver: state time 1.900 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.900 if default: free 800000000
+driver: hdisk-state time 1.900 hdisk 0: free 104857600 dumpers 0
+driver: state time 1.900 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.900 if default: free 800000000
+driver: hdisk-state time 1.900 hdisk 0: free 104857600 dumpers 0
+Move runq to directq
+driver: state time 1.901 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.901 if default: free 800000000
+driver: hdisk-state time 1.901 hdisk 0: free 104857600 dumpers 0
+driver: state time 1.901 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.901 if default: free 800000000
+driver: hdisk-state time 1.901 hdisk 0: free 104857600 dumpers 0
+driver: send-cmd time 1.901 to taper0: CLOSE-VOLUME worker0-1
+driver: state time 1.901 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.901 if default: free 800000000
+driver: hdisk-state time 1.901 hdisk 0: free 104857600 dumpers 0
+driver: state time 1.901 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.901 if default: free 800000000
+driver: hdisk-state time 1.901 hdisk 0: free 104857600 dumpers 0
+driver: result time 1.901 from taper0: CLOSED-VOLUME worker0-1
+driver: state time 1.901 free kps: 800000000 space: 104857600 taper: idle idle-dumpers: 20 qlen tapeq taper0: 0:0 runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.901 if default: free 800000000
+driver: hdisk-state time 1.901 hdisk 0: free 104857600 dumpers 0
+driver: send-cmd time 1.901 to taper0: QUIT
+driver: state time 1.935 free kps: 800000000 space: 104857600 taper: down idle-dumpers: 20 qlen runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.935 if default: free 800000000
+driver: hdisk-state time 1.935 hdisk 0: free 104857600 dumpers 0
+driver: state time 1.935 free kps: 800000000 space: 104857600 taper: down idle-dumpers: 20 qlen runq: 0 directq: 0 roomq: 0 wakeup: 0 driver-idle: no-dumpers
+driver: interface-state time 1.935 if default: free 800000000
+driver: hdisk-state time 1.935 hdisk 0: free 104857600 dumpers 0
+driver: QUITTING time 1.935 telling children to quit
+driver: send-cmd time 1.935 to dumper0: QUIT ""
+driver: send-cmd time 1.936 to dumper1: QUIT ""
+driver: send-cmd time 1.936 to dumper2: QUIT ""
+driver: send-cmd time 1.936 to dumper3: QUIT ""
+driver: send-cmd time 1.936 to dumper4: QUIT ""
+driver: send-cmd time 1.936 to dumper5: QUIT ""
+driver: send-cmd time 1.936 to dumper6: QUIT ""
+driver: send-cmd time 1.937 to dumper7: QUIT ""
+driver: send-cmd time 1.937 to dumper8: QUIT ""
+driver: send-cmd time 1.937 to dumper9: QUIT ""
+driver: send-cmd time 1.937 to dumper10: QUIT ""
+driver: send-cmd time 1.937 to dumper11: QUIT ""
+driver: send-cmd time 1.937 to dumper12: QUIT ""
+driver: send-cmd time 1.937 to dumper13: QUIT ""
+driver: send-cmd time 1.937 to dumper14: QUIT ""
+driver: send-cmd time 1.937 to dumper15: QUIT ""
+driver: send-cmd time 1.937 to dumper16: QUIT ""
+driver: send-cmd time 1.937 to dumper17: QUIT ""
+driver: send-cmd time 1.937 to dumper18: QUIT ""
+driver: send-cmd time 1.937 to dumper19: QUIT ""
+driver: FINISHED time 2.998
+amdump: end at Fri May 27 13:12:40 EDT 2016
+
+%T report
+Hostname: localhost.localdomain
+Org     : DailySet1
+Config  : TESTCONF
+Date    : May 27, 2016
+
+The next tape Amanda expects to use is: 1 new tape.
+
+
+STATISTICS:
+                          Total       Full      Incr.   Level:#
+                        --------   --------   --------  --------
+Estimate Time (hrs:min)     0:00
+Run Time (hrs:min)          0:00
+Dump Time (hrs:min)         0:00       0:00       0:00
+Output Size (meg)           52.9        0.0       52.9
+Original Size (meg)         52.9        0.0       52.9
+Avg Compressed Size (%)    100.0        --       100.0
+DLEs Dumped                    1          0          1  11:1
+Avg Dump Rate (k/s)      82662.6        --     82662.6
+
+Tape Time (hrs:min)         0:00       0:00       0:00
+Tape Size (meg)             52.9        0.0       52.9
+Tape Used (%)              176.3        0.0      176.3
+DLEs Taped                     1          0          1  11:1
+Parts Taped                    6          0          6
+Avg Tp Write Rate (k/s)   541440        --      541440
+
+USAGE BY TAPE:
+  Label                   Time         Size      %  DLEs Parts
+  test-ORG-AA-vtapes-01   0:00       54144K  176.3     1     6
+
+
+
+NOTES:
+  planner: tapecycle (1) <= runspercycle (8)
+  planner: Last full dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-027 overwritten in 1 run.
+  planner: Last level 1 dump of localhost.localdomain:/bootAMGTAR on tape test-ORG-AA-vtapes-050 overwritten in 1 run.
+  taper: Slot 1 without label can be labeled
+  taper: Slot 2 without label can be labeled
+  taper: tape test-ORG-AA-vtapes-01 kb 54144 fm 6 [OK]
+
+
+DUMP SUMMARY:
+                                                              DUMPER STATS    TAPER STATS
+HOSTNAME              DISK         L ORIG-KB  OUT-KB  COMP%  MMM:SS    KB/s MMM:SS     KB/s
+------------------------------------ ---------------------- --------------- ---------------
+localhost.localdomain /bootAMGTAR 11   54144   54144    --     0:01 82621.0   0:00 541440.0
+
+(brought to you by Amanda version 4.0.0alpha.git.0b3a378d)

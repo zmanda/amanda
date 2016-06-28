@@ -673,7 +673,9 @@ part_done:
 
     if (msg->successful && msg->size > 0)
 	self->partnum++;
-    self->no_more_parts = msg->eof || (!msg->successful && !self->expect_cache_inform);
+    //self->no_more_parts = msg->eof || (!msg->successful && !self->expect_cache_inform);
+    self->no_more_parts = msg->eof;
+
 
     g_timer_destroy(timer);
 
@@ -914,6 +916,7 @@ cancel_impl(
     }
     if (self->mem_ring) {
 	g_mutex_lock(self->mem_ring->mutex);
+	self->mem_ring->eof_flag = TRUE;
 	g_cond_broadcast(self->mem_ring->add_cond);
 	g_cond_broadcast(self->mem_ring->free_cond);
 	g_mutex_unlock(self->mem_ring->mutex);
@@ -933,6 +936,7 @@ start_part_impl(
     dumpfile_t *header)
 {
     XferDestTaperSplitter *self = XFER_DEST_TAPER_SPLITTER(xdt);
+    XferElement *elt = XFER_ELEMENT(self);
 
     g_assert(self->device != NULL);
     g_assert(!self->device->in_file);
@@ -945,12 +949,26 @@ start_part_impl(
 	if (self->last_part_successful) {
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		_("Previous part did not fail; cannot retry"));
+	    if (elt->shm_ring && !elt->shm_ring->mc->cancelled) {
+		elt->shm_ring->mc->cancelled = TRUE;
+		sem_post(elt->shm_ring->sem_ready);
+		sem_post(elt->shm_ring->sem_start);
+		sem_post(elt->shm_ring->sem_read);
+		sem_post(elt->shm_ring->sem_write);
+	    }
 	    return;
 	}
 
 	if (!self->expect_cache_inform) {
 	    xfer_cancel_with_error(XFER_ELEMENT(self),
 		_("No cache for previous failed part; cannot retry"));
+	    if (elt->shm_ring && !elt->shm_ring->mc->cancelled) {
+		elt->shm_ring->mc->cancelled = TRUE;
+		sem_post(elt->shm_ring->sem_ready);
+		sem_post(elt->shm_ring->sem_start);
+		sem_post(elt->shm_ring->sem_read);
+		sem_post(elt->shm_ring->sem_write);
+	    }
 	    return;
 	}
 

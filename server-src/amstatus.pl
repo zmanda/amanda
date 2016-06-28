@@ -261,6 +261,9 @@ if ($opt_detail) {
 
 	    if ($nb_storage == 0) {
 		print $dump_status;
+		if (defined $dle->{'dump_time'}) {
+		    print " (",  $status->show_time($dle->{'dump_time'}), ")";
+		}
 	    } elsif ($nb_storage == 1) {
 		if ($dump_status and $taper_status and $dump_status ne $taper_status) {
 		    print "$dump_status, $taper_status";

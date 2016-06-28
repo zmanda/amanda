@@ -468,7 +468,7 @@ $LogfileFlags{taper} = {
     results_missing => 0,
     dump_failed => 0,
     dump_strange => 0,
-    exit_status => 0,
+    exit_status => 16,
 };
 
 $LogfileData{taper} = {
@@ -1308,7 +1308,7 @@ foreach my $test ( keys %LogfileContents ) {
             $report->get_flag($_), "==",
             $LogfileFlags{$test}->{$_},
             "flag test: $_, $test"
-        );
+        ) || die();
     } keys %{ $LogfileFlags{$test} };
 }
 

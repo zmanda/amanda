@@ -448,6 +448,7 @@ sub new
     my $class = shift @_;
     my ($logfname, $historical) = @_;
 
+    debug("Amanda::Report::new logfname: $logfname");
     my $self = {
         data => {},
 
@@ -1711,22 +1712,31 @@ sub check_missing_fail_strange
 	    if (exists $try->{dumper} && $try->{dumper}->{status} eq 'fail') {
 		$self->{flags}{dump_failed} = 1;
 		$self->{flags}{exit_status} |= STATUS_FAILED;
-	    } elsif ((defined($try->{'chunker'}) &&
-		 $try->{'chunker'}->{status} eq 'success') ||
-		(defined($try->{'taper'}) &&
-		 $try->{'taper'}->{status} eq 'done')) {
-		#chunker or taper success, use dumper status
-		if (exists $try->{dumper} && $try->{dumper}->{status} eq 'strange') {
-		    $self->{flags}{dump_strange} = 1;
-		}
-	    } elsif ((defined($try->{'chunker'}) &&
-		 $try->{'chunker'}->{status} ne 'success') ||
-		(defined($try->{'taper'}) &&
-		 $try->{'taper'}->{status} ne 'done') ||
-		(!defined($try->{'chunker'}) and !defined($try->{'taper'}))) {
-		#chunker or taper failed, the dump is not valid.
-		$self->{flags}{dump_failed} = 1;
-		$self->{flags}{exit_status} |= STATUS_FAILED;
+	    } elsif (defined($try->{'dumper'})) {
+		    if ((defined($try->{'chunker'}) &&
+			 $try->{'chunker'}->{status} eq 'success') ||
+			(defined($try->{'taper'}) &&
+			 $try->{'taper'}->{status} eq 'done')) {
+			#chunker or taper success, use dumper status
+			if (exists $try->{dumper} && $try->{dumper}->{status} eq 'strange') {
+			    $self->{flags}{dump_strange} = 1;
+			}
+			if (defined($try->{'taper'}) &&
+			    $try->{'taper'}->{status} ne 'done') {
+				$self->{flags}{exit_status} |= STATUS_TAPE;
+			}
+		    } elsif ((defined($try->{'chunker'}) &&
+			 $try->{'chunker'}->{status} ne 'success') ||
+			(defined($try->{'taper'}) &&
+			 $try->{'taper'}->{status} ne 'done') ||
+			(!defined($try->{'chunker'}) and !defined($try->{'taper'}))) {
+			#chunker or taper failed, the dump is not valid.
+			$self->{flags}{dump_failed} = 1;
+			$self->{flags}{exit_status} |= STATUS_FAILED;
+		    }
+	    } elsif (defined($try->{'taper'}) &&
+		$try->{'taper'}->{status} ne 'done') {
+		    $self->{flags}{exit_status} |= STATUS_FAILED;
 	    }
 	}
     }

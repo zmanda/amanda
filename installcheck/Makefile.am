@@ -72,7 +72,12 @@ server_tests = \
         amtape \
         amlabel \
 	amtapetype \
-	chunker
+	chunker \
+	success-dumper-chunker-taper \
+	success-dumper-taper \
+	success-dumper-chunker+dumper-chunker-taper-flush \
+	success-dumper-chunker+taper-flush
+
 all_tests += $(server_tests)
 
 full_tests = \
@@ -210,6 +215,8 @@ catalogs = \
 	catalogs/shortstrange.cat \
 	catalogs/skipped.cat \
 	catalogs/spanned.cat \
+	catalogs/dumper-chunker-taper-success.cat \
+	catalogs/dumper-taper-success.cat \
 	catalogs/strontium.cat \
 	catalogs/taperr.cat \
 	catalogs/tapers.cat \

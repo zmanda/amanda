@@ -112,6 +112,7 @@ xfer_unref(
     while ((msg = (XMsg *)g_async_queue_try_pop(xfer->queue))) {
 	g_warning("Dropping XMsg from %s because the XMsgSource is being destroyed", 
 	    xfer_element_repr(msg->elt));
+	g_debug("MSG: %s", xmsg_repr(msg));
 	xmsg_free(msg);
     }
     g_async_queue_unref(xfer->queue);
@@ -152,6 +153,7 @@ xfer_queue_message(
     g_assert(xfer != NULL);
     g_assert(msg != NULL);
 
+    g_debug("xfer_queue_message: MSG: %s", xmsg_repr(msg));
     g_async_queue_push(xfer->queue, (gpointer)msg);
 
     /* TODO: don't do this if we're in the main thread */
@@ -692,8 +694,9 @@ wait_until_xfer_cancelled(
     g_assert(xfer != NULL);
 
     g_mutex_lock(xfer->status_mutex);
-    while (xfer->status != XFER_CANCELLED && xfer->status != XFER_DONE)
+    while (xfer->status != XFER_CANCELLED && xfer->status != XFER_DONE) {
 	g_cond_wait(xfer->status_cond, xfer->status_mutex);
+    }
     seen_status = xfer->status;
     g_mutex_unlock(xfer->status_mutex);
 

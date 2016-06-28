@@ -2833,9 +2833,6 @@ vault_taper_result(
         g_printf("driver: vaulting failed %s %s with tape error: %s\n",
                    dp->host->hostname, qname, wtaper->tape_error);
         if (sp->taper_attempted >= dp->retry_dump) {
-            log_add(L_FAIL, _("%s %s %s %d [too many taper retries]"),
-                    dp->host->hostname, qname, sp->datestamp,
-                    sp->level);
             g_printf("driver: vaulting failed %s %s, too many taper retry\n",
                    dp->host->hostname, qname);
 	    free_sched(sp);
@@ -2951,9 +2948,6 @@ file_taper_result(
 		   dp->host->hostname, qname, wtaper->input_error);
 	if (g_str_equal(sp->datestamp, driver_timestamp)) {
 	    if (sp->taper_attempted >= dp->retry_dump) {
-		log_add(L_FAIL, _("%s %s %s %d [too many taper retries after holding disk error: %s]"),
-		    dp->host->hostname, qname, sp->datestamp,
-		    sp->level, wtaper->input_error);
 		g_printf("driver: taper failed %s %s, too many taper retry after holding disk error\n",
 		   dp->host->hostname, qname);
 		if (sp->nb_flush == 0) {
@@ -2988,9 +2982,6 @@ file_taper_result(
 	g_printf("driver: taper failed %s %s with tape error: %s\n",
 		   dp->host->hostname, qname, wtaper->tape_error);
 	if (sp->taper_attempted >= dp->retry_dump) {
-	    log_add(L_FAIL, _("%s %s %s %d [too many taper retries]"),
-		    dp->host->hostname, qname, sp->datestamp,
-		    sp->level);
 	    g_printf("driver: taper failed %s %s, too many taper retry\n",
 		   dp->host->hostname, qname);
 	    if (sp->nb_flush == 0) {

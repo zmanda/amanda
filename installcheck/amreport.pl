@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 173;
+use Test::More tests => 177;
 
 use strict;
 use warnings;
@@ -808,4 +808,23 @@ is($Installcheck::Run::exit_code, 4,
 results_match($out_filename, $cat->get_text('report'),
     "..result matches 25");
 
+setup_config(catalog => 'dumper-chunker-taper-success', want_template => 0);
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport correctly report dumper-chunker-taper-success");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 26");
+
+setup_config(catalog => 'dumper-taper-success', want_template => 0);
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport correctly report dumper-taper-success");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 27");
+
+exit;
 cleanup();
