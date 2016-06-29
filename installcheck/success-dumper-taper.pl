@@ -376,7 +376,7 @@ my $status = <<"END_STATUS";
 Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
 From Wed Jun 22 08:01:00 EDT 2016
 
-localhost:diskname2 $timestamp 0      1050k dump to tape done (8:01:00)
+localhost:diskname2 $timestamp 0      1050k dump to tape done (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
@@ -403,10 +403,10 @@ TESTCONF    qlen: 0
 
 network free kps: 80000
 holding space   : 25k (100.00%)
- dumper0 busy   :  0:00:00  ( 10.34%)
-TESTCONF busy   :  0:00:00  ( 11.49%)
- 0 dumpers busy :  0:00:00  ( 97.70%)
- 1 dumper busy  :  0:00:00  (  2.30%)
+ dumper0 busy   : 00:00:00  ( 10.34%)
+TESTCONF busy   : 00:00:00  ( 11.49%)
+ 0 dumpers busy : 00:00:00  ( 97.70%)
+ 1 dumper busy  : 00:00:00  (  2.30%)
 END_STATUS
 
 check_amstatus($status, $tracefile, "amstatus first amdump");

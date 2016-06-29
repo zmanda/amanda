@@ -339,7 +339,7 @@ my $status = <<"END_STATUS";
 Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
 From Wed Jun 22 08:26:30 EDT 2016
 
-localhost:diskname2 $timestamp 0      1050k dump done (8:26:32)
+localhost:diskname2 $timestamp 0      1050k dump done (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
@@ -362,10 +362,10 @@ taped
 2 dumpers idle  : no-dumpers
 network free kps: 80000
 holding space   : 23k (100.00%)
-chunker0 busy   :  0:00:00  ( 86.55%)
-dumper0 busy    :  0:00:00  ( 12.11%)
- 0 dumpers busy :  0:00:00  ( 99.55%)
- 1 dumper busy  :  0:00:00  (  0.45%)
+chunker0 busy   : 00:00:00  ( 86.55%)
+dumper0 busy    : 00:00:00  ( 12.11%)
+ 0 dumpers busy : 00:00:00  ( 99.55%)
+ 1 dumper busy  : 00:00:00  (  0.45%)
 END_STATUS
 
 check_amstatus($status, $tracefile, "amstatus first amdump");
@@ -669,7 +669,7 @@ $status = <<"END_STATUS";
 Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
 From Wed Jun 22 08:32:02 EDT 2016
 
-localhost:diskname2 $dump_timestamp 0      1050k flushed (8:32:02)
+localhost:diskname2 $dump_timestamp 0      1050k flushed (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
@@ -703,8 +703,8 @@ END_STATUS
 check_amstatus($status, $tracefile, "amstatus second amdump");
 
 #diag("reply: " . Data::Dumper::Dumper($reply));
-$rest->stop();
-exit;
+#$rest->stop();
+#exit;
 
 $rest->stop();
 

@@ -495,7 +495,7 @@ sub busytime() {
     my $minutes = int($busy/60);
     $busy -= $minutes * 60;
     my $seconds = $busy;
-    $result .= sprintf("%d:%02d:%02d", $hours, $minutes, $seconds);
+    $result .= sprintf("%2d:%02d:%02d", $hours, $minutes, $seconds);
 
     return $result;
 }

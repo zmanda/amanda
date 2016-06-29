@@ -1,4 +1,14 @@
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm (show_time): Always print hours with 2 chars
+	* server-src/amstatus.pl (busytime): Always print hours with 2 chars
+	* installcheck/Installcheck/Run.pm (check_amstatus): Fix regex
+	* installcheck/amstatus.pl: Fix
+	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
+	  installcheck/success-dumper-chunker+taper-flush.pl,
+	  installcheck/success-dumper-chunker-taper.pl,
+	  installcheck/success-dumper-taper.pl: Fix
+
+2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (check_amstatus): Remove not-idle
 	  lines from amstatus result
 

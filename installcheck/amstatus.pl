@@ -152,7 +152,7 @@ ok(!run('amstatus', 'TESTCONF'),
 is($Installcheck::Run::exit_code, 4,
     "correct exit code for chunker partial");
 like($Installcheck::Run::stdout,
-    qr{localhost:/etc [0-9]{14} 0\s*80917k dump failed: dumper: \[/usr/sbin/tar returned error\], written \(7:49:53\)},
+    qr{localhost:/etc [0-9]{14} 0\s*80917k dump failed: dumper: \[/usr/sbin/tar returned error\], written \( 7:49:53\)},
     "output is correct");
 
 ## now test a taper-parallel-write > 1

@@ -583,12 +583,10 @@ sub check_amstatus
     $status =~ s/\]/\\]/g;
     $status =~ s/Using: .*$/Using: $tracefile/mg;
     $status =~ s/From .*$/From .*/mg;
-    $status =~ s/localhost:diskname2 (\d{14} 0 .*)\(.*\)/localhost:diskname2 $1\(\\d*:\\d\\d:\\d\\d\)/;
-    $status =~ s/localhost:diskname2 (\d{14} 1 .*)\(.*\)/localhost:diskname2 $1\(\\d*:\\d\\d:\\d\\d\)/;
     $status =~ s/\([ \d.]{6,8}%\)/\([ \\d\.]{6,8}%\)/g;
     $status =~ s/\(/\\(/g;
     $status =~ s/\)/\\)/g;
-    $status =~ s/0:00:00/\\d*:\\d\\d:\\d\\d/g;
+    $status =~ s/00:00:00/[ \\d]\\d:\\d\\d:\\d\\d/g;
     $status =~ s/^(.*dumpers busy[^\)]*\))/$1.*/mg;
     $status =~ s/^(.*dumper busy[^\)]*\))/$1.*/mg;
     $status =~ s/^ *not-idle.*\n//mg;

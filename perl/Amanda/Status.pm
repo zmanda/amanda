@@ -2136,7 +2136,7 @@ sub show_time {
     } else {
 	$result = "";
     }
-    $result .= sprintf("%d:%02d:%02d",$now[2],$now[1],$now[0]);
+    $result .= sprintf("%2d:%02d:%02d",$now[2],$now[1],$now[0]);
     return $result;
 }
 
