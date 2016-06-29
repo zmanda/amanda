@@ -209,15 +209,13 @@ sub load_ps_table() {
 	while($psline = <PSTABLE>) {
 	    chomp $psline;
 	    next if $psline =~ /\<defunct\>/;
-	    my ($pid, $ppid, $pname, $arg1, $arg2) = split " ", $psline;
+	    my ($pid, $ppid, $pname, @args) = split " ", $psline;
 	    $pname = basename($pname);
-	    if ($pname =~ /^perl/ && defined $arg1) {
-		if ($arg1 !~ /^\-/) {
-		    $pname = $arg1;
-		} elsif (defined $arg2) {
-		    if ($arg2 !~ /^\-/) {
-			$pname = $arg2;
-		    }
+	    if ($pname =~ /perl/ && @args) {
+		foreach my $arg (@args) {
+		    next if $arg =~ /^\-/;
+		    $pname = $arg;
+		    last;
 		}
 		$pname = basename($pname);
 	    }

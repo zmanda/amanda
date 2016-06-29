@@ -1,4 +1,8 @@
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Process.pm (load_ps_table): accept any process which
+	  match /perl/ as a perl binary
+
+2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/success-dumper-chunker+taper-flush.pl:
 	  s/ 0:00:00/00:00:00/
 
