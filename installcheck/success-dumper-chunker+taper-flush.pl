@@ -696,8 +696,8 @@ TESTCONF    qlen: 0
 
 network free kps: 80000
 holding space   : 26k (100.00%)
-TESTCONF busy   :  0:00:00  (  3.43%)
- 0 dumpers busy :  0:00:00  (100.00%)
+TESTCONF busy   : 00:00:00  (  3.43%)
+ 0 dumpers busy : 00:00:00  (100.00%)
 END_STATUS
 
 check_amstatus($status, $tracefile, "amstatus second amdump");

@@ -1,4 +1,8 @@
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/success-dumper-chunker+taper-flush.pl:
+	  s/ 0:00:00/00:00:00/
+
+2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (setup_changer, setup_storage): New
 	  methods
 	* installcheck/Installcheck/Run.pm (check_amreport): Sort the
