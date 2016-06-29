@@ -1535,7 +1535,7 @@ sub get_summary_info
 		       $fmt_col_field->(9, $tape_rate)
 		     : $format_space->(9, "")
 	           : $format_space->(9, "FAILED");
-	        push @rv, " ";
+	        push @rv, '';
 
 	    }
 	} else {
