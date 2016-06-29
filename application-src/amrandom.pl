@@ -36,7 +36,7 @@ use Amanda::Util qw( quote_string );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $directory, $size, $min_size, $max_size, $block_size, $min_block_size, $max_block_size) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $directory, $size, $size_level_1, $min_size, $max_size, $block_size, $min_block_size, $max_block_size) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{config}           = $config;
@@ -61,6 +61,7 @@ sub new {
     $self->{include_list}     = [ @{$include_list} ];
     $self->{directory}        = $directory;
     $self->{size}	      = $size;
+    $self->{size_level_1}     = $size_level_1;
     $self->{min_size}	      = $min_size || 1;
     $self->{max_size}	      = $max_size || 131072;
     $self->{block_size}	      = $block_size;
@@ -80,7 +81,7 @@ sub command_support {
     print "CONFIG YES\n";
     print "HOST YES\n";
     print "DISK YES\n";
-    print "MAX-LEVEL 0\n";
+    print "MAX-LEVEL 1\n";
     print "INDEX-LINE YES\n";
     print "INDEX-XML NO\n";
     print "MESSAGE-LINE YES\n";
@@ -130,8 +131,8 @@ sub command_estimate {
 
     my $level = $self->{level}[0];
 
-    if ($level != 0) {
-	$self->print_to_server("amrandom can only do level 0 backup",
+    if ($level != 0 && $level != 1) {
+	$self->print_to_server("amrandom can only do level 0 and 1 backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -148,7 +149,11 @@ sub command_estimate {
 			       $Amanda::Script_App::ERROR);
     }
 
-    output_size($level, $self->{size});
+    if ($level == 0) {
+	output_size($level, $self->{size});
+    } else {
+	output_size($level, $self->{size_level_1});
+    }
 }
 
 sub output_size {
@@ -174,8 +179,8 @@ sub command_backup {
 	$self->{'index_out'} or confess("Could not open index fd");
     }
 
-    if ($level != 0) {
-	$self->print_to_server("amrandom can only do level 0 backup",
+    if ($level != 0 && $level != 1) {
+	$self->print_to_server("amrandom can only do level 0 and 1 backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -201,7 +206,13 @@ sub command_backup {
 	$buffer .= chr(int(rand(256)));
     }
 
-    my $size = $self->{size};
+    my $size;
+    if ($level == 0) {
+	$size = $self->{size};
+    } else {
+	$size = $self->{size_level_1};
+    }
+
     my $out = fileno(STDOUT);
     while ($size > 0) {
 	my $block_size = $self->{block_size} ||
@@ -222,11 +233,17 @@ sub command_backup {
 	$self->{'index_out'}->print("/\n");
 	$self->{'index_out'}->close;
     }
-    $size = $self->{size};
+
+    if ($level == 0) {
+	$size = $self->{size};
+    } else {
+	$size = $self->{size_level_1};
+    }
+
     if ($size >= 0) {
 	my $ksize = $size / 1024;
-	if ($ksize < 32) {
-	    $ksize = 32;
+	if ($ksize < 1) {
+	    $ksize = 1;
 	}
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
     }
@@ -306,6 +323,7 @@ my @opt_include_list;
 my @opt_exclude_list;
 my $opt_directory;
 my $opt_size;
+my $opt_size_level_1;
 my $opt_min_size;
 my $opt_max_size;
 my $opt_block_size;
@@ -331,6 +349,7 @@ GetOptions(
     'exclude-list=s'     => \@opt_exclude_list,
     'directory=s'        => \$opt_directory,
     'size=s'		 => \$opt_size,
+    'size-level-1=s'	 => \$opt_size_level_1,
     'min-size=s'	 => \$opt_min_size,
     'max-size=s'	 => \$opt_max_size,
     'block-size=s'	 => \$opt_block_size,
@@ -343,7 +362,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amrandom->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_directory, $opt_size, $opt_min_size, $opt_max_size, $opt_block_size, $opt_min_block_size, $opt_max_block_size);
+my $application = Amanda::Application::Amrandom->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_directory, $opt_size, $opt_size_level_1, $opt_min_size, $opt_max_size, $opt_block_size, $opt_min_block_size, $opt_max_block_size);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

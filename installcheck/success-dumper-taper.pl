@@ -76,8 +76,8 @@ localhost diskname2 $diskname {
     installcheck-test
     program "APPLICATION"
     application {
-        plugin "amgtar"
-        property "ATIME-PRESERVE" "NO"
+        plugin "amrandom"
+        property "SIZE" "1075200"
     }
     holdingdisk never
 }
