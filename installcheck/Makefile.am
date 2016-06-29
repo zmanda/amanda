@@ -74,6 +74,8 @@ server_tests = \
 	amtapetype \
 	chunker \
 	success-dumper-chunker-taper \
+	success-dumper-chunker-2taper \
+	success-dumper-chunker-2taper-by-level \
 	success-dumper-taper \
 	success-dumper-chunker+dumper-chunker-taper-flush \
 	success-dumper-chunker+taper-flush

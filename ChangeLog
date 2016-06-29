@@ -1,4 +1,16 @@
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Run.pm (setup_changer, setup_storage): New
+	  methods
+	* installcheck/Installcheck/Run.pm (check_amreport): Sort the
+	  'USAGE BY TAPE' and 'NOTES' sections before comparing them
+	* installcheck/Makefile.am (server_tests): Add 2 new tests
+	* installcheck/success-dumper-chunker-2taper-by-level.pl: test a dump
+	  where the full go to a storage and the incremental go to another
+	  storage
+	* installcheck/success-dumper-chunker-2taper.pl: test a dump that goto
+	  2 different storages
+
+2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm (show_time): Always print hours with 2 chars
 	* server-src/amstatus.pl (busytime): Always print hours with 2 chars
 	* installcheck/Installcheck/Run.pm (check_amstatus): Fix regex

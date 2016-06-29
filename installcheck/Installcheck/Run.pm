@@ -308,6 +308,38 @@ $testconf->write();
 
 }
 
+sub setup_changer {
+    my $testconf = shift;
+    my $number = shift;
+    my $ntapes = shift;
+
+    $testconf->add_changer("changer-$number", [
+		'tpchanger', "\"chg-diskflat:$taperoot-$number\"",
+		'property', "\"num-slot\" \"$ntapes\"",
+		'property', '"auto-create-slot" "yes"'
+	]);
+    rmtree "$taperoot-$number";
+    mkdir "$taperoot-$number";
+}
+
+sub setup_storage {
+    my $testconf = shift;
+    my $number = shift;
+    my $ntapes = shift;
+    my @setting = @_;
+
+    Installcheck::Run::setup_changer($testconf, $number, $ntapes);
+    $testconf->add_storage("storage-$number", [
+		'tpchanger', "\"changer-$number\"",
+		'autolabel', "\"STO-$number-\$5s\" any",
+		'labelstr', 'MATCH-AUTOLABEL',
+		'tapepool', "\"POOL-$number\"",
+		'max-dle-by-volume', '1',
+		'autoflush', 'yes',
+		@setting,
+	]);
+}
+
 sub setup_holding {
     my ($testconf, $mbytes) = @_;
 
@@ -548,6 +580,8 @@ sub check_amreport
     my $report = shift;
     my $timestamp = shift;
     my $text = shift || 'amreport';
+    my $sorting = shift;
+    my $got_report;
 
     $report =~ s/\(/\\(/g;
     $report =~ s/\)/\\)/g;
@@ -567,8 +601,49 @@ sub check_amreport
 	"$text: run amreport")
       or diag($Installcheck::Run::stderr);
 
-    ok($Installcheck::Run::stdout =~ $report, "$text: match") || diag_diff($Installcheck::Run::stdout, $report);
+    if ($sorting) {
+	my @lines = split "\n", $Installcheck::Run::stdout;
+	my @new_lines;
+	my $in_usage_by_tape = 0;
+	my $in_notes = 0;
+	my @notes;
+	my @usage_by_tapes;
+
+	foreach my $line (@lines) {
+	    if ($in_usage_by_tape) {
+		if ($line eq '') {
+		    push @new_lines, sort @usage_by_tapes;
+		    push @new_lines, $line;
+		    $in_usage_by_tape = 0;
+		} else {
+		    push @usage_by_tapes, $line;
+		}
+	    } elsif ($in_notes) {
+		if ($line eq '') {
+		    push @new_lines, sort @notes;
+		    push @new_lines, $line;
+		    $in_notes = 0;
+		} else {
+		    push @notes, $line;
+		}
+	    } else {
+		push @new_lines, $line;
+		if ($line =~ /^  Label/) {
+		    $in_usage_by_tape = 1;
+		} elsif ($line =~ /^NOTES:/) {
+		    $in_notes = 1;
+		}
+	    }
+	}
+	$got_report = join "\n", @new_lines;
+	$got_report .= "\n";
+    } else {
+	$got_report = $Installcheck::Run::stdout;
+    }
+
+    ok($got_report =~ $report, "$text: match") || diag_diff($got_report, $report);
 #diag("stdout::::${Installcheck::Run::stdout}::::\n");
+#diag("got_report::::${got_report}::::\n");
 #diag("report::::${report}::::\n");
 
 }
