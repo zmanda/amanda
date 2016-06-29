@@ -1,4 +1,8 @@
 2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c (update_derived_values): create a default CONF
+	  policy
+
+2016-06-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amrandom.pl: Allow level 1 backup, add SIZE-LEVEL-1
 	  property
 	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,

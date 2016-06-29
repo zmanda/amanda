@@ -6535,17 +6535,18 @@ update_derived_values(
 	} else {
 	    st_name = NULL;
 	}
-	if (!getconf_seen(CNF_STORAGE) && (!st_name || *st_name == '\0')) {
-	    /* create a default policy */
-	    if (!(lookup_policy(conf_name))) {
+
+	/* create a default policy */
+	if (!(lookup_policy(conf_name))) {
 		init_policy_defaults();
 		pocur.name = g_strdup(conf_name);
 
 		free_val_t(&pocur.value[POLICY_COMMENT]);
 		val_t__str(&pocur.value[POLICY_COMMENT]) = g_strdup(_("implicit from global config"));
 		save_policy();
-	    }
+	}
 
+	if (!getconf_seen(CNF_STORAGE) && (!st_name || *st_name == '\0')) {
 	    /* create a default storage */
 	    if (!(lookup_storage(conf_name))) {
 		init_storage_defaults();
