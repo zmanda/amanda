@@ -1,5 +1,9 @@
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (check_amstatus): Remove not-idle
+	  lines from amstatus result
+
+2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Run.pm (check_amstatus): Remove not-idle
 	  lines
 
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>

@@ -597,8 +597,11 @@ sub check_amstatus
 	"$text: run amstatus")
       or diag($Installcheck::Run::stderr);
 
-    ok($Installcheck::Run::stdout =~ $status, "$text: match") || diag_diff($Installcheck::Run::stdout, $status);
-#diag("stdout $Installcheck::Run::stdout");
+    my $got_status = $Installcheck::Run::stdout;
+    $got_status =~ s/^ *not-idle.*\n//mg;
+
+    ok($got_status =~ $status, "$text: match") || diag_diff($got_status, $status);
+#diag("stdout $got_status");
 #diag("status: $status");
 }
 1;
