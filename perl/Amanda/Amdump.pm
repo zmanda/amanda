@@ -49,6 +49,7 @@ use warnings;
 use Getopt::Long;
 use POSIX qw(WIFEXITED WEXITSTATUS strftime);
 use File::Glob qw( :glob );
+use File::Basename;
 
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants );
@@ -135,7 +136,11 @@ sub check_exec {
     my ($prog) = @_;
     return if -x $prog;
 
-    log_add($L_ERROR, "Can't execute $prog");
+    if (!-f $prog) {
+	log_add($L_ERROR, "Can't execute $prog: $!");
+    } else {
+	log_add($L_ERROR, "Can't execute $prog: is not executable");
+    }
 }
 
 sub run_subprocess {
@@ -144,17 +149,34 @@ sub run_subprocess {
     my ($proc, @args) = @_;
     $self->check_exec($proc);
 
+    my ($rpipe, $wpipe) = POSIX::pipe();
+
     debug("Running $proc " . join(' ', @args));
     my $pid = POSIX::fork();
     if ($pid == 0) {
 	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
 	POSIX::dup2($null, 0);
 	POSIX::dup2($null, 1);
-	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
+	POSIX::dup2($wpipe, 2);
+	close($wpipe);
+	close($rpipe);
 	close($self->{'amdump_log'});
 	exec $proc, @args;
+	#log_add($L_ERROR, "Could not exec $proc: $!");
 	die "Could not exec $proc: $!";
     }
+    POSIX::close($wpipe);
+
+    my $pname = Amanda::Util::get_pname();
+    my $proc_name = basename $proc;
+    open (my $stderr_fh, "<&=", $rpipe);
+    while (<$stderr_fh>) {
+	Amanda::Util::set_pname($proc_name);
+	log_add($L_ERROR, "$_");
+	Amanda::Util::set_pname($pname);
+    }
+    close($stderr_fh);
+
     waitpid($pid, 0);
     my $s = $? >> 8;
     debug("$proc exited with code $s");

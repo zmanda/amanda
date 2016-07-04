@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 177;
+use Test::More tests => 185;
 
 use strict;
 use warnings;
@@ -82,6 +82,20 @@ sub setup_config {
       : $params{bogus_mailer} ? "\"$mail_mock.bogus\""
       :                         '""';                    #default
 
+    if ($params{bogus_mailer}) {
+	unlink "$mail_mock.bogus";
+	if ($params{bogus_mailer} == 2) {
+	    open "MAIL", ">$mail_mock.bogus";
+	    close MAIL;
+	}
+	if ($params{bogus_mailer} == 3) {
+	    # write garbage
+	    open "MAIL", ">$mail_mock.bogus";
+	    print MAIL "sdfsdn398gl32";
+	    close MAIL;
+	    chmod 0755, "$mail_mock.bogus";
+	}
+    }
     $testconf->add_param('mailer', $mailer);
     $testconf->add_param('mailto',
         $params{want_mailto} ? '"nobody\@localhost"' : '""');
@@ -520,14 +534,43 @@ setup_config(catalog => 'normal',
 	bogus_mailer => 1, want_mailto => 1, want_template => 1);
 
 ok(run($amreport, 'TESTCONF', '--from-amdump'),
-    "amreport with bogus mailer; doesn't mail, still prints")
+    "amreport with bogus mailer (1); doesn't mail, still prints")
   or diag($Installcheck::Run::stderr);
 ok(!-f $mail_output, "..produces no mail output");
 is($Installcheck::Run::stdout, "", "..produces no stdout output");
 $! = &Errno::ENOENT;
 my $enoent = $!;
 like($Installcheck::Run::stderr,
-     qr/^error: the mailer '.*' is not an executable program\.$/,
+     qr/^error: the mailer '.*': $enoent$/,
+     "..produces correct stderr output");
+
+setup_config(catalog => 'normal',
+	bogus_mailer => 2, want_mailto => 1, want_template => 1);
+
+ok(run($amreport, 'TESTCONF', '--from-amdump'),
+    "amreport with bogus mailer (2); doesn't mail, still prints")
+  or diag($Installcheck::Run::stderr);
+ok(!-f $mail_output, "..produces no mail output");
+is($Installcheck::Run::stdout, "", "..produces no stdout output");
+$! = &Errno::ENOENT;
+#my $enoent = $!;
+like($Installcheck::Run::stderr,
+     qr/^error: the mailer '.*' is not an executable program/,
+     "..produces correct stderr output");
+
+
+setup_config(catalog => 'normal',
+	bogus_mailer => 3, want_mailto => 1, want_template => 1);
+
+ok(run($amreport, 'TESTCONF', '--from-amdump'),
+    "amreport with bogus mailer (3); doesn't mail, still prints")
+  or diag($Installcheck::Run::stderr);
+ok(!-f $mail_output, "..produces no mail output");
+is($Installcheck::Run::stdout, "", "..produces no stdout output");
+$! = &Errno::ENOENT;
+#my $enoent = $!;
+like($Installcheck::Run::stderr,
+     qr/^.*: line 1: sdfsdn398gl32: command not found/,
      "..produces correct stderr output");
 results_match(
     $printer_output,

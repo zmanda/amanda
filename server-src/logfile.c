@@ -55,7 +55,7 @@ char *logtype_str[] = {
 char *program_str[] = {
     "UNKNOWN", "planner", "driver", "amreport", "dumper", "chunker",
     "taper", "amflush", "amdump", "amidxtaped", "amfetchdump", "amcheckdump",
-    "amvault", "amcleanup", "ambackupd"
+    "amvault", "amcleanup", "ambackupd", "amtrmidx", "amtrmlog",
 };
 
 int curlinenum;
@@ -456,3 +456,18 @@ get_logline(
 
     return 1;
 }
+
+char *
+get_logtype_str(
+    logtype_t logtype)
+{
+    return logtype_str[logtype];
+}
+
+char *
+get_program_str(
+    program_t program)
+{
+    return program_str[program];
+}
+

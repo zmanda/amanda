@@ -345,28 +345,25 @@ sub open_printer_output
 
     # redirect stdout/stderr to stderr, which is usually the amdump log
     my ($pid, $fh);
-    if (!-f $Amanda::Constants::LPR || !-x $Amanda::Constants::LPR) {
-	my $errstr = "error: the mailer '$Amanda::Constants::LPR' is not an executable program.";
-	print STDERR "$errstr\n";
-        if ($mode == MODE_SCRIPT) {
-            debug($errstr);
-        } else {
-            error($errstr, 1);
-        }
+    if (!-e $Amanda::Constants::LPR) {
+	my $errstr = "error: the printer command '$Amanda::Constants::LPR': $!";
+	report_error($errstr);
+    } elsif (!-f $Amanda::Constants::LPR) {
+	my $errstr = "error: the printer command '$Amanda::Constants::LPR' is not a file";
+	report_error($errstr);
+    } elsif (!-x $Amanda::Constants::LPR) {
+	my $errstr = "error: the printer command '$Amanda::Constants::LPR' is not an executable program";
+	report_error($errstr);
     } else {
 	eval { $pid = open3($fh, ">&2", ">&2", @cmd); } or do {
             ($pid, $fh) = (0, undef);
             chomp $@;
             my $errstr = "error: $@: $!";
 
-	    print STDERR "$errstr\n";
-            if ($mode == MODE_SCRIPT) {
-		debug($errstr);
-            } else {
-		error($errstr, 1);
-            }
+	    report_error($errstr);
         };
-    }
+    };
+
     return ($pid, $fh);
 }
 
@@ -416,33 +413,38 @@ sub open_mail_output
     my @cmd = ("$cfg_mailer", "-s", $subj_str, split(/ +/, $mailto));
     debug("invoking mail app: " . join(" ", @cmd));
 
-
     my ($pid, $fh);
-    if (!-f $cfg_mailer || !-x $cfg_mailer) {
-	my $errstr = "error: the mailer '$cfg_mailer' is not an executable program.";
-	print STDERR "$errstr\n";
-        if ($mode == MODE_SCRIPT) {
-            debug($errstr);
-        } else {
-            error($errstr, 1);
-        }
-
+    if (!-e $cfg_mailer) {
+	my $errstr = "error: the mailer '$cfg_mailer': $!";
+	report_error($errstr);
+    } elsif (!-f $cfg_mailer) {
+	my $errstr = "error: the mailer '$cfg_mailer' is not a file";
+	report_error($errstr);
+    } elsif (!-x $cfg_mailer) {
+	my $errstr = "error: the mailer '$cfg_mailer' is not an executable program";
+	report_error($errstr);
     } else {
 	eval { $pid = open3($fh, ">&2", ">&2", @cmd) } or do {
             ($pid, $fh) = (0, undef);
             chomp $@;
             my $errstr = "error: $@: $!";
 
-	    print STDERR "$errstr\n";
-            if ($mode == MODE_SCRIPT) {
-		debug($errstr);
-            } else {
-		error($errstr, 1);
-            }
+	    report_error($errstr);
 	};
-    }
+    };
 
     return ($pid, $fh);
+}
+
+sub report_error {
+    my $errstr = shift;
+
+    print STDERR "$errstr\n";
+    if ($mode == MODE_SCRIPT) {
+	debug($errstr);
+    } else {
+	error($errstr, 1);
+    }
 }
 
 sub run_output {

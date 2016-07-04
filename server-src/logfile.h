@@ -58,9 +58,9 @@ typedef enum logtype_e {
 } logtype_t;
 
 typedef enum program_e {
-    P_UNKNOWN, P_PLANNER, P_DRIVER, P_REPORTER, P_DUMPER, P_CHUNKER,
+    P_UNKNOWN, P_PLANNER, P_DRIVER, P_AMREPORT, P_DUMPER, P_CHUNKER,
     P_TAPER, P_AMFLUSH, P_AMDUMP, P_AMIDXTAPED, P_AMFETCHDUMP, P_AMCHECKDUMP,
-    P_AMVAULT, P_AMCLEANUP, P_AMBACKUPD, P_SENTINEL
+    P_AMVAULT, P_AMCLEANUP, P_AMBACKUPD, P_AMTRMIDX, P_AMTRMLOG, P_SENTINEL
 } program_t;
 #define P_LAST (P_SENTINEL-1)
 
@@ -71,6 +71,9 @@ extern logtype_t curlog;
 extern program_t curprog;
 extern char *curstr;
 extern char *program_str[];
+
+char *get_logtype_str(logtype_t logtype);
+char *get_program_str(program_t program);
 
 void amanda_log_trace_log(GLogLevelFlags log_level, const gchar *message);
 void log_add(logtype_t typ, char * format, ...) G_GNUC_PRINTF(2, 3);

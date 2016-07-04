@@ -71,7 +71,7 @@ amglue_add_enum_tag_fns(program_t);
 amglue_add_constant(P_UNKNOWN, program_t);
 amglue_add_constant(P_PLANNER, program_t);
 amglue_add_constant(P_DRIVER, program_t);
-amglue_add_constant(P_REPORTER, program_t);
+amglue_add_constant(P_AMREPORT, program_t);
 amglue_add_constant(P_DUMPER, program_t);
 amglue_add_constant(P_CHUNKER, program_t);
 amglue_add_constant(P_TAPER, program_t);
@@ -83,7 +83,12 @@ amglue_add_constant(P_AMCHECKDUMP, program_t);
 amglue_add_constant(P_AMVAULT, program_t);
 amglue_add_constant(P_AMCLEANUP, program_t);
 amglue_add_constant(P_AMBACKUPD, program_t);
+amglue_add_constant(P_AMTRMIDX, program_t);
+amglue_add_constant(P_AMTRMLOG, program_t);
 amglue_copy_to_tag(program_t, constants);
+
+char *get_logtype_str(logtype_t logtype);
+char *get_program_str(program_t program);
 
 /* TODO: support for writing logfiles is omitted for the moment. */
 

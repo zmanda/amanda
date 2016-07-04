@@ -671,8 +671,12 @@ sub read_line
     } elsif ( $prog == $P_AMFETCHDUMP ) {
         return $self->_handle_fetchdump_line( $type, $str );
 
-    } elsif ( $prog == $P_REPORTER ) {
-        return $self->_handle_reporter_line( $type, $str );
+    } elsif ( $prog == $P_AMREPORT ) {
+        return $self->_handle_global_line( $prog, $type, $str );
+    } elsif ( $prog == $P_AMTRMIDX ) {
+        return $self->_handle_global_line( $prog, $type, $str );
+    } elsif ( $prog == $P_AMTRMLOG ) {
+        return $self->_handle_global_line( $prog, $type, $str );
 
     } elsif ( $prog == $P_AMCLEANUP ) {
         return $self->_handle_amcleanup_line( $type, $str );
@@ -1416,6 +1420,28 @@ sub _handle_amcleanup_line
 
     } else {
         return $self->_handle_bogus_line( $P_AMCLEANUP, $type, $str );
+    }
+}
+
+
+sub _handle_global_line
+{
+    my $self = shift;
+    my ( $p_prog, $type, $str ) = @_;
+    my $data     = $self->{data};
+    my $disklist = $data->{disklist};
+    my $programs = $data->{programs};
+    my $program_str = Amanda::Logfile::get_program_str($p_prog);
+    my $amcleanup = $programs->{$program_str} ||= {};
+
+    if ( $type == $L_INFO ) {
+        $self->_handle_info_line($program_str, $str);
+
+    } elsif ( $type == $L_ERROR ) {
+        $self->_handle_error_line($program_str, $str);
+
+    } else {
+        return $self->_handle_bogus_line( $p_prog, $type, $str );
     }
 }
 

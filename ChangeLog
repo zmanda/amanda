@@ -1,4 +1,21 @@
 2016-07-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/logfile.c (program_str): Add amtrmidx and amtrmlog.
+	* server-src/logfile.c (get_logtype_str, get_program_str): New
+	  functions
+	* server-src/logfile.h (program_t): Add P_AMTRMIDX and P_AMTRMLOG
+	* server-src/logfile.h (get_logtype_str, get_program_str): Add
+	  prototypes
+	* perl/Amanda/Logfile.swg: Swig P_AMTRMIDX P_AMTRMLOG, get_logtype_str
+	  and get_program_str
+	* perl/Amanda/Amdump.pm (run_subprocess): Read stderr and log a
+	  L_ERROR
+	* perl/Amanda/Report.pm: Parse line from amreport, amtrmidx and
+	  amtrmlog
+	* perl/Amanda/Report/human.pm (PROGRAM_ORDER): Add amtrmidx and amtrmlog
+	* server-src/amreport.pl: Print better error message
+	* installcheck/amreport.pl: Check new error reporting
+
+2016-07-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (check_amreport): Remove double
 	  space in date
 
