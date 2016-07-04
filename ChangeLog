@@ -1,4 +1,7 @@
 2016-07-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/amreport.pl: simpler error matching
+
+2016-07-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/logfile.c (program_str): Add amtrmidx and amtrmlog.
 	* server-src/logfile.c (get_logtype_str, get_program_str): New
 	  functions

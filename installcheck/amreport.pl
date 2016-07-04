@@ -570,7 +570,7 @@ is($Installcheck::Run::stdout, "", "..produces no stdout output");
 $! = &Errno::ENOENT;
 #my $enoent = $!;
 like($Installcheck::Run::stderr,
-     qr/^.*: line 1: sdfsdn398gl32: command not found/,
+     qr/^.*: sdfsdn398gl32: (command |)not found/,
      "..produces correct stderr output");
 results_match(
     $printer_output,
