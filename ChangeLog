@@ -1,3 +1,7 @@
+2016-07-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Run.pm (check_amreport): Remove double
+	  space in date
+
 2016-06-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Process.pm (load_ps_table): accept any process which
 	  match /perl/ as a perl binary

@@ -591,6 +591,7 @@ sub check_amreport
     $report =~ s/999999\.9/\[ \\d\]*\\.\\d/g;
     my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
     my $date  = POSIX::strftime('%B %e, %Y', 0, 0, 0, $day, $month - 1, $year - 1900);
+    $date =~ s/  / /g;
     $report =~ s/Date    : .*$/Date    : $date/mg;
     my $hostname = `hostname`;
     chomp $hostname;
