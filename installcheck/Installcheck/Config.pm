@@ -94,6 +94,7 @@ sub new {
 	    'logdir' => "\"$logdir\"",
 	    'indexdir' => "\"$indexdir\"",
 	    'org' => "\"$org\"",
+	    'send-amreport-on' =>'never',
 
 	    # (this is actually added while writing the config file, if not
 	    # overridden by the caller)

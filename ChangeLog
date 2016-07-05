@@ -1,4 +1,8 @@
 2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Config.pm (new): Set send-amreport-on to
+	  never
+
+2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Process.pm (load_ps_table): Skip partial line
 
 2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
