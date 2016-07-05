@@ -210,6 +210,9 @@ sub load_ps_table() {
 	    chomp $psline;
 	    next if $psline =~ /\<defunct\>/;
 	    my ($pid, $ppid, $pname, @args) = split " ", $psline;
+	    next if !defined $pid;
+	    next if !defined $ppid;
+	    next if !defined $pname;
 	    $pname = basename($pname);
 	    if ($pname =~ /perl/ && @args) {
 		foreach my $arg (@args) {

@@ -1,4 +1,7 @@
 2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Process.pm (load_ps_table): Skip partial line
+
+2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amflock.c: Typo
 	* perl/Amanda/Tapelist.swg (relaod): Take the lock before checking
 	  force
