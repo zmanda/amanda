@@ -254,6 +254,7 @@ is_deeply($tl->{'tles'}->[1], {
      },
     "tapelist correctly updated after -f --assign");
 
+$tl->reload(1);
 $tl->{'tles'}->[1]->{'config'} = "TESTCONF2";
 $tl->write();
 ok(!run('amlabel', '-f', 'TESTCONF', 'TESTCONF88', '--meta', 'meta-03', '--barcode', 'bar-03', '--pool', 'pool-03', '--assign'),
@@ -269,6 +270,7 @@ like($Installcheck::Run::stdout,
      qr/Found label 'TESTCONF88' but it is from config 'TESTCONF2'/,
      "label for another config fail with correct stdout");
 
+$tl->reload(1);
 $tl->{'tles'}->[1]->{'config'} = "TESTCONF";
 $tl->write();
 

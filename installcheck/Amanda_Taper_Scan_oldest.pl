@@ -91,6 +91,7 @@ sub label_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	$tapelist->reload(1);
 	if (exists $slot_label{$slot}) {
 	    $tapelist->remove_tapelabel($slot_label{$slot});
 	    delete $slot_label{$slot};
@@ -128,6 +129,7 @@ sub label_mtx_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	$tapelist->reload(1);
 	if (exists $slot_label{$slot}) {
 	    $tapelist->remove_tapelabel($slot_label{$slot});
 	    delete $slot_label{$slot};
@@ -190,6 +192,7 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 reset_taperoot(6);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -376,6 +379,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_labeled with autolabel
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -443,6 +447,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_labeled with autolabel
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -535,6 +540,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_labeled with autolabel
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -627,6 +633,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test new_volume with autolabel
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -744,6 +751,7 @@ if ($cfg_result != $CFGERR_OK) {
 
 # test skipping no-reuse tapes
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -772,6 +780,7 @@ unlink($tapelist_filename);
 
 # test do not use no-reuse with a datestamp of 0
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -854,6 +863,7 @@ $testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
 				  labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 

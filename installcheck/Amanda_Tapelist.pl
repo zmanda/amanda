@@ -177,6 +177,7 @@ SKIP: {
 	unless $tl_ok;
 
     # now try writing it out and check that the results are the same
+    $tl->reload(1);
     $tl->write("$tapelist-new");
     my @reread_lines = readtapelist("$tapelist-new");
     chomp($lines[4]);

@@ -343,6 +343,7 @@ sub erase {
 	    }
 
 	    my $storage = $params{'storage'} || $params{'STORAGE'};
+	    $tl->reload(1);
 	    $Label->erase(labels        => \@labels,
 			  storage       => $storage,
 			  cleanup       => $params{'cleanup'},

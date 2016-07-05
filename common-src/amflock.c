@@ -119,7 +119,7 @@ file_lock_lock(
 	    *p = '\0';
 	    if (*dirname == '/') {
 		if (mkdir(dirname, 0700) == -1 && errno != EEXIST) {
-		    g_debug("Can'tmkdir (%s): %s", dirname, strerror(errno));
+		    g_debug("Can't mkdir (%s): %s", dirname, strerror(errno));
 		}
 	    }
 	}

@@ -1,3 +1,23 @@
+2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amflock.c: Typo
+	* perl/Amanda/Tapelist.swg (relaod): Take the lock before checking
+	  force
+	* perl/Amanda/Tapelist.swg (write): Verify we have the lock
+	* perl/Amanda/Rest/Storages/Labels.pm: Take the tapelist lock
+	* installcheck/Amanda_Rest_Storages_Labels.pl: Do not exit
+	* installcheck/Amanda_Tapelist.pl: Reload the tapelist
+	* installcheck/Amanda_Taper_Scan_lexical.pl: Reload the tapelist
+	* installcheck/Amanda_Taper_Scan_oldest.pl: Reload the tapelist
+	* installcheck/Amanda_Taper_Scan_traditional.pl: Reload the tapelist
+	* installcheck/amlabel.pl: Reload the tapelist
+	* installcheck/amreport.pl: unlink "$mail_mock.bogus"
+	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
+	  installcheck/success-dumper-chunker+taper-flush.pl,
+	  installcheck/success-dumper-chunker-2taper-by-level.pl,
+	  installcheck/success-dumper-chunker-2taper.pl,
+	  installcheck/success-dumper-chunker-taper.pl,
+	  installcheck/success-dumper-taper.pl: sleep before checking result
+
 2016-07-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/amreport.pl: simpler error matching
 

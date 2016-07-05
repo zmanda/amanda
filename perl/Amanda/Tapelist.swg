@@ -105,16 +105,16 @@ sub reload {
     my $lock = shift;
     my $force = shift;
 
+    if ($lock) {
+	$self->_take_lock();
+    }
+
     if (!$force) {
 	$last_write_pid = readlink($self->{'last_write'});
 	if (defined $last_write_pid &&
 	    $last_write_pid == $$) {
 	    return;
 	}
-    }
-
-    if ($lock) {
-	$self->_take_lock();
     }
 
     # let C read the file
@@ -231,6 +231,13 @@ sub write {
     my ($filename) = @_;
     my $result = TRUE;
     $filename = $self->{'filename'} if !defined $filename;
+
+    if (!exists $self->{'fl'}) {
+	die("Tapelist::write no fl");
+    }
+    if (!$self->{'fl'}->locked()) {
+	die("Tapelist::write not locked");
+    }
 
     my $new_tapelist_file = $filename . "-new-" . time();
 

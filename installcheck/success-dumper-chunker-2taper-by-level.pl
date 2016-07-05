@@ -41,6 +41,8 @@ if ($@) {
     exit 1;
 }
 
+eval "require Time::HiRes;";
+
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
 Installcheck::log_test_output();
@@ -108,6 +110,7 @@ foreach my $message (@{$reply->{'body'}}) {
 }
 #wait until it is done
 do {
+    Time::HiRes::sleep(0.5);
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
     } while ($reply->{'body'}[0]->{'code'} == 2000004 and
              $reply->{'body'}[0]->{'status'} ne 'done');
@@ -477,6 +480,7 @@ foreach my $message (@{$reply->{'body'}}) {
 }
 #wait until it is done
 do {
+    Time::HiRes::sleep(0.5);
     $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs?logfile=$logfile");
     } while ($reply->{'body'}[0]->{'code'} == 2000004 and
              $reply->{'body'}[0]->{'status'} ne 'done');

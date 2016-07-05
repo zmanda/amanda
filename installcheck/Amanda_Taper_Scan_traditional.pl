@@ -90,6 +90,7 @@ sub label_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	$tapelist->reload(1);
 	if (exists $slot_label{$slot}) {
 	    $tapelist->remove_tapelabel($slot_label{$slot});
 	    delete $slot_label{$slot};
@@ -102,6 +103,8 @@ sub label_slot {
 	    $tapelist->add_tapelabel($stamp, $label, "", $reuse);
 	    $tapelist->write();
 	    $slot_label{$slot} = $label;
+	} else {
+	    $tapelist->unlock();
 	}
     }
 }
@@ -129,6 +132,7 @@ sub label_mtx_slot {
     rmtree($drivedir);
 
     if ($update_tapelist) {
+	$tapelist->reload(1);
 	if (exists $slot_label{$slot}) {
 	    $tapelist->remove_tapelabel($slot_label{$slot});
 	    delete $slot_label{$slot};
@@ -202,6 +206,7 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 label_slot(1, "TEST-1", "20090424173001", "reuse", 1);
@@ -400,6 +405,7 @@ $storage->quit();
 
 # test skipping no-reuse tapes
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 label_slot(1, "TEST-1", "20090424173001", "no-reuse", 1);
@@ -440,6 +446,7 @@ unlink($tapelist_filename);
 
 # test do not use no-reuse with a datestamp of 0
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 
@@ -525,6 +532,7 @@ $testconf->add_storage("robo2", [ tpchanger => "\"robo2\"",
 				 labelstr  => "\"TEST-[0-9]+\"" ]);
 $testconf->write();
 reset_taperoot(5);
+$tapelist->reload(1);
 $tapelist->reset_tapelist();
 $tapelist->write();
 

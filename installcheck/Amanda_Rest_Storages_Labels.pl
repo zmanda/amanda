@@ -728,7 +728,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     "DELETE DISKFLAT-007") || diag("reply: " . Data::Dumper::Dumper($reply));
 
 $rest->stop();
-exit;
 
 rmtree $taperoot;
 

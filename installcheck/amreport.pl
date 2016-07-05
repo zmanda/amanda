@@ -135,6 +135,7 @@ sub cleanup {
     unlink $mail_output;
     unlink $printer_output;
     unlink $alternate_log_filename;
+    unlink "$mail_mock.bogus";
 }
 
 # compare two multiline strings, giving a diff if they do not match
@@ -869,5 +870,4 @@ is($Installcheck::Run::exit_code, 0,
 results_match($out_filename, $cat->get_text('report'),
     "..result matches 27");
 
-exit;
 cleanup();
