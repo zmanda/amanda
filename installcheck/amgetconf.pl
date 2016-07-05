@@ -55,8 +55,8 @@ is(run_get('amgetconf', 'TESTCONF', "tapelist"), "tapelist",
     "tapelist defaults to 'tapelist'");
 is(run_get('amgetconf', 'TESTCONF', "usetimestamps"), "yes", 
     "usetimestamps defaults to 'yes'");
-is(run_get('amgetconf', 'TESTCONF', "send_amreport_on"), "ALL",
-    "send_amreport_on defaults to 'ALL'"); # (enum value is 0)
+is(run_get('amgetconf', 'TESTCONF', "send_amreport_on"), "NEVER",
+    "send_amreport_on set to 'NEVER'"); # (enum value is 0)
 is(run_get('amgetconf', 'TESTCONF', "taperalgo"), "FIRST",
     "taperalgo defaults to 'ALL'"); # (enum value is 0)
 is(run_get('amgetconf', 'TESTCONF', "printer"), "",

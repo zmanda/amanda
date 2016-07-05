@@ -1,4 +1,8 @@
 2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Rest_Configs.pl, installcheck/amgetconf.pl:
+	  Change for new value of send-amreport-on
+
+2016-07-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Config.pm (new): Set send-amreport-on to
 	  never
 
