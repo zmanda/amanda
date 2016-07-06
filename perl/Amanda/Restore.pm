@@ -1523,13 +1523,13 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'srvcompprog'}, "-d" ], 0, 0, 0, 1);
-		$hdr->{'srvcompprog'} = 0;
+		$hdr->{'srvcompprog'} = '';
 	    } elsif ($hdr->{'clntcompprog'}) {
 		# TODO: this assumes that clntcompprog takes "-d" to decompress
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(
 			[ $hdr->{'clntcompprog'}, "-d" ], 0, 0, 0, 1);
-		$hdr->{'clntcompprog'} = 0;
+		$hdr->{'clntcompprog'} = '';
 	    } else {
 		push @filters,
 		    Amanda::Xfer::Filter::Process->new(

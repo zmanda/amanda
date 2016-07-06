@@ -73,6 +73,10 @@ server_tests = \
         amlabel \
 	amtapetype \
 	chunker \
+	dump-client-custom-compress+amfetchdump \
+	dump-server-custom-compress+amfetchdump \
+	dump-client-encrypt+amfetchdump \
+	dump-server-encrypt+amfetchdump \
 	success-dumper-chunker-taper \
 	success-dumper-chunker-2taper \
 	success-dumper-chunker-2taper-by-level \
