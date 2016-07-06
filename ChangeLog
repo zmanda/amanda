@@ -1,4 +1,11 @@
 2016-07-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/dump-client-custom-compress+amfetchdump.pl,
+	  installcheck/dump-client-encrypt+amfetchdump.pl,
+	  installcheck/dump-server-custom-compress+amfetchdump.pl,
+	  installcheck/dump-server-encrypt+amfetchdump.pl: restore in a
+	  testdir, check the dump is restored
+
+2016-07-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Restore.pm: srvcompprog and clntcompprog are string
 	* installcheck/Makefile.am (server_tests): Add new test scripts
 	* installcheck/dump-client-custom-compress+amfetchdump.pl,

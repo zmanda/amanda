@@ -34,6 +34,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+use Cwd;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -55,7 +56,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 36;
+plan tests => 37;
 
 my $reply;
 
@@ -178,7 +179,19 @@ is($reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$
 
 $rest->stop();
 
+my $testdir = "$Installcheck::TMP/amfetchdump-installcheck/files";
+rmtree($testdir);
+mkpath($testdir);
+
+my $origdir = getcwd;
+chdir($testdir);
+
 ok(run('amfetchdump', 'TESTCONF', 'localhost'),
     "amfetchdump restore a client compressed dump");
 
-#Installcheck::Run::cleanup();
+ok(-f "$testdir/localhost.diskname2.$timestamp.0", "file exists");
+
+chdir("$origdir");
+rmtree($testdir);
+
+Installcheck::Run::cleanup();
