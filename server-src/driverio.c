@@ -909,8 +909,12 @@ dumper_cmd(
 
 	break;
     }
-    case QUIT:
     case ABORT:
+	qmesg = quote_string(mesg);
+        cmdline = g_strdup_printf("%s %s %s\n", cmdstr[cmd], job2serial(dumper->job), qmesg);
+	amfree(qmesg);
+	break;
+    case QUIT:
 	qmesg = quote_string(mesg);
         cmdline = g_strdup_printf("%s %s\n", cmdstr[cmd], qmesg);
 	amfree(qmesg);
@@ -1042,6 +1046,7 @@ chunker_cmd(
 	{
 	    char *q = quote_string(mesg);
 	    cmdline = g_strjoin(NULL, cmdstr[cmd], " ", q, "\n", NULL);
+            cmdline = g_strdup_printf("%s %s %s\n", cmdstr[cmd], job2serial(chunker->job), q);
 	    amfree(q);
 	}
 	break;

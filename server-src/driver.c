@@ -3815,7 +3815,7 @@ handle_chunker_result(
 				handle_dumper_result, dumper);
 	    break;
 
-	case DUMPER_STATUS: /* NO-ROOM <handle> */
+	case DUMPER_STATUS: /* DUMP-STATUS <handle> */
 	    if (job->dumper->result == LAST_TOK) {
 		chunker->sendresult = TRUE;
 	    } else {
@@ -3827,7 +3827,7 @@ handle_chunker_result(
 	    }
 	    break;
 
-	case NO_ROOM: /* NO-ROOM <handle> <missing_size> */
+	case NO_ROOM: /* NO-ROOM <handle> <missing_size> <message> */
 	    if (!h || activehd < 0) { /* should never happen */
 		error(_("!h || activehd < 0"));
 		/*NOTREACHED*/

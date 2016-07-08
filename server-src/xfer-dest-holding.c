@@ -194,7 +194,8 @@ holding_thread_consume_block(
 /* Write an entire chunk.  Called with the state_mutex held */
 static gboolean
 holding_thread_write_chunk(
-    XferDestHolding *self)
+    XferDestHolding  *self,
+    char            **mesg)
 {
     XferElement *elt = XFER_ELEMENT(self);
 
@@ -229,6 +230,8 @@ holding_thread_write_chunk(
 	g_mutex_lock(self->mem_ring->mutex);
 
 	if (count != to_write) {
+	    amfree(*mesg);
+	    *mesg = g_strdup_printf("Failed to write data to holding file '%s.tmp': %s", self->filename, strerror(errno));
 	    if (count > 0) {
 		if (ftruncate(self->fd, self->chunk_offset) != 0) {
 		    g_debug("ftruncate failed: %s", strerror(errno));
@@ -326,7 +329,7 @@ holding_thread(
 	    if (fd < 0) {
 		self->chunk_status = CHUNK_NO_ROOM;
 		g_free(mesg);
-		mesg = g_strdup_printf("Failed to open '%s': %s",
+		mesg = g_strdup_printf("Failed to open holding file '%s': %s",
 				       tmp_filename, strerror(errno));
 		g_free(tmp_filename);
 		goto no_room;
@@ -341,7 +344,7 @@ holding_thread(
 	    write_header_size = write_header(self, fd);
 	    if (write_header_size != HEADER_BLOCK_BYTES) {
 		self->chunk_status = CHUNK_NO_ROOM;
-		mesg = g_strdup_printf("Failed to write header to '%s': %s",
+		mesg = g_strdup_printf("Failed to write header to holding file '%s': %s",
 				       tmp_filename, strerror(errno));
 		close(fd);
 		unlink(tmp_filename);
@@ -364,7 +367,7 @@ holding_thread(
 	}
 
 	DBG(2, "beginning to write chunk");
-	done = holding_thread_write_chunk(self);
+	done = holding_thread_write_chunk(self, &mesg);
 	DBG(2, "done writing chunk");
 
 	if (!done) /* cancelled */
@@ -453,7 +456,8 @@ shm_holding_thread_consume_block(
 /* Write an entire chunk.  Called with the state_mutex held */
 static gboolean
 shm_holding_thread_write_chunk(
-    XferDestHolding *self)
+    XferDestHolding  *self,
+    char            **mesg)
 {
     XferElement *elt = XFER_ELEMENT(self);
 
@@ -487,6 +491,8 @@ shm_holding_thread_write_chunk(
 			      (guint)to_write);
 
 	if (count != to_write) {
+	    amfree(*mesg);
+	    *mesg = g_strdup_printf("Failed to write data to holding file '%s.tmp': %s", self->filename, strerror(errno));
 	    if (count > 0) {
 		if (ftruncate(self->fd, self->chunk_offset) != 0) {
 		    g_debug("ftruncate failed: %s", strerror(errno));
@@ -586,7 +592,7 @@ shm_holding_thread(
 	    if (fd < 0) {
 		self->chunk_status = CHUNK_NO_ROOM;
 		g_free(mesg);
-		mesg = g_strdup_printf("Failed to open '%s': %s",
+		mesg = g_strdup_printf("Failed to open holding file '%s': %s",
 				       tmp_filename, strerror(errno));
 		g_free(tmp_filename);
 		goto no_room;
@@ -601,7 +607,7 @@ shm_holding_thread(
 	    write_header_size = write_header(self, fd);
 	    if (write_header_size != HEADER_BLOCK_BYTES) {
 		self->chunk_status = CHUNK_NO_ROOM;
-		mesg = g_strdup_printf("Failed to write header to '%s': %s",
+		mesg = g_strdup_printf("Failed to write header to holding file '%s': %s",
 				       tmp_filename, strerror(errno));
 		close(fd);
 		unlink(tmp_filename);
@@ -624,7 +630,7 @@ shm_holding_thread(
 	}
 
 	DBG(2, "beginning to write chunk");
-	done = shm_holding_thread_write_chunk(self);
+	done = shm_holding_thread_write_chunk(self, &mesg);
 	DBG(2, "done writing chunk");
 
 	if (!done) /* cancelled */

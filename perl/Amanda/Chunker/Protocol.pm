@@ -86,7 +86,7 @@ use constant SHM_NAME => message("SHM-NAME",
 );
 
 use constant NO_ROOM => message("NO-ROOM",
-    format => [ qw( handle use ) ],
+    format => [ qw( handle use message ) ],
 );
 
 use constant RQ_MORE_DISK => message("RQ-MORE-DISK",
@@ -98,7 +98,10 @@ use constant BAD_COMMAND => message("BAD-COMMAND",
 );
 
 use constant ABORT => message("ABORT",
-    format => [ qw( handle ) ],
+    format => {
+	in => [ qw( handle message ) ],
+	out => [ qw( handle ) ]
+    },
 );
 
 use constant ABORT_FINISHED => message("ABORT-FINISHED",

@@ -511,7 +511,8 @@ sub notify_no_room {
     if ($use_bytes > 0) {
 	$self->{'proto'}->send(Amanda::Chunker::Protocol::NO_ROOM,
 	    handle => $self->{'handle'},
-	    use    => $use_bytes/1024);
+	    use    => $use_bytes/1024,
+	    message => ($mesg||"unknown"));
     }
 }
 

@@ -546,7 +546,7 @@ chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 10
 like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 100*1024, "roast", "/boot", 0);
-like(chunker_reply, qr/^NO-ROOM $handle 10176$/, # == 10240-90
+like(chunker_reply, qr/^NO-ROOM $handle 10176 "Failed to write data to holding file '$test_hfile.tmp': No space left on device"$/, # == 10240-90
 	"got NO-ROOM") or die;
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
@@ -578,7 +578,7 @@ chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 12
 like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 128*1024, "roast", "/boot", 0);
-like(chunker_reply, qr/^NO-ROOM $handle 864$/, # == am_floor(1000)-128
+like(chunker_reply, qr/^NO-ROOM $handle 864 "Failed to write header to holding file '$test_hfile.1.tmp': No space left on device"$/, # == am_floor(1000)-128
 	"got NO-ROOM") or die;
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
@@ -611,11 +611,11 @@ chunker_cmd("PORT-WRITE $handle \"$test_hfile\" roast ffff /boot 0 $datestamp 12
 like(chunker_reply, qr/^PORT $handle (\d+) "?(\d+\.\d+\.\d+\.\d+:\d+;?)+"?$/,
 	"got PORT with data address");
 write_to_port($last_chunker_reply, 128*1024, "roast", "/boot", 0);
-like(chunker_reply, qr/^NO-ROOM $handle 864$/, # == am_floor(1000)-128
+like(chunker_reply, qr/^NO-ROOM $handle 864 "Failed to write header to holding file '$test_hfile.1.tmp': No space left on device"$/, # == am_floor(1000)-128
 	"got NO-ROOM") or die;
 like(chunker_reply, qr/^RQ-MORE-DISK $handle$/,
 	"got RQ-MORE-DISK") or die;
-chunker_cmd("ABORT $handle");
+chunker_cmd("ABORT $handle \"No more space\"");
 like(chunker_reply, qr/^ABORT-FINISHED $handle$/,
         "got ABORT-FINISHED") or die;
 wait_for_writer();
@@ -623,7 +623,7 @@ chunker_cmd("QUIT");
 wait_for_exit();
 
 check_logs([
-    qr(^FAIL chunker roast /boot $datestamp 0 \[Failed to write header to '$test_hfile.1.tmp': No space left on device]$),
+    qr(^FAIL chunker roast /boot $datestamp 0 \[Failed to write header to holding file '$test_hfile.1.tmp': No space left on device]$),
 ], "logs for simple PORT-WRITE");
 
 

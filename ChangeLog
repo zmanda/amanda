@@ -1,4 +1,13 @@
 2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add message in NO-ROOM from chunker and ABORT from driver to chunker
+	* perl/Amanda/Chunker/Controller.pm: Add message
+	* perl/Amanda/Chunker/Protocol.pm: Add message
+	* server-src/driver.c: Add message
+	* server-src/driverio.c: Send message
+	* server-src/xfer-dest-holding.c: Set message
+	* installcheck/chunker.pl: Check message
+
+2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Report/human.pm: Fix dealing with try, fix line spacing
 	* perl/Amanda/Report.pm: Fix setting try
 	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
