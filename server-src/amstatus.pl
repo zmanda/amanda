@@ -201,7 +201,11 @@ if ($status->isa("Amanda::Message")) {
     print $status, "\n";
     exit 1;
 }
-$status->current(user_msg => sub {});
+my $message = $status->current(user_msg => sub {});
+if ($message->{'code'} != 1800000) {
+    print $message, "\n";
+    exit 1;
+}
 if ($opt_locale_independent_date_format) {
     print "From $status->{'starttime-locale-independent'}\n";
 } else {

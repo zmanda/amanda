@@ -1,3 +1,7 @@
+2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm:: Return an error if not for same version
+	* server-src/amstatus.pl: Handle Message return from $status->current
+
 2016-07-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/dump-client-custom-compress+amfetchdump.pl,
 	  installcheck/dump-client-encrypt+amfetchdump.pl,

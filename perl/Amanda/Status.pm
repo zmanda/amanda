@@ -33,6 +33,8 @@ sub local_message {
         return "The status";
     } elsif ($self->{'code'} == 1800001) {
         return "failed to open the amdump_log file '$self->{'amdump_log'}: $self->{'errnostr'}";
+    } elsif ($self->{'code'} == 1800002) {
+        return "The amdump_log file '$self->{'amdump_log'}' is for an older version '$self->{'amdump_version'}' and you are running '$self->{'version'}'";
     }
 }
 
@@ -470,7 +472,22 @@ REREAD:
 		}
 	    }
 	} elsif ($line[0] eq "planner") {
-	    if ($line[1] eq "timestamp") {
+	    if ($line[1] eq 'pid' &&
+		$line[3] eq 'executable' &&
+		$line[5] eq 'version') {
+		my $amdump_version = $line[6];
+
+		if ($amdump_version ne $Amanda::Constants::VERSION) {
+		    return Amanda::Status::Message->new(
+					source_filename => __FILE__,
+					source_line     => __LINE__,
+					code   => 1800002,
+					severity => $Amanda::Message::ERROR,
+					amdump_log => $self->{'filename'},
+					version => $Amanda::Constants::VERSION,
+					amdump_version => $amdump_version);
+		}
+	    } elsif ($line[1] eq "timestamp") {
 		$self->{'datestamp'} = $line[2];
 		if (!defined $datestamp{$self->{'datestamp'}}) {
 		    $datestamp{$self->{'datestamp'}} = 1;
