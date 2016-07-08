@@ -1,4 +1,8 @@
 2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Catalogs.pm: Set current version in amdump
+	  log file
+
+2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm:: Return an error if not for same version
 	* server-src/amstatus.pl: Handle Message return from $status->current
 
