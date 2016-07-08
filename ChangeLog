@@ -1,4 +1,7 @@
 2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Rest.pm (post): Set CURLOPT_POSTFIELDSIZE
+
+2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add message in NO-ROOM from chunker and ABORT from driver to chunker
 	* perl/Amanda/Chunker/Controller.pm: Add message
 	* perl/Amanda/Chunker/Protocol.pm: Add message
