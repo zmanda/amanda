@@ -55,7 +55,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 99;
+plan tests => 100;
 
 my $reply;
 
@@ -135,6 +135,7 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'tim
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[0], '  planner: tapecycle (2) <= runspercycle (10)', 'notes[0] is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  planner: Adding new disk localhost:diskname2.' , 'notes[1] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[2], 'no notes[2]');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'failure_summary'}, 'no failure_summary');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0], 'no usgae_by_tape');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'TESTCONF'}->{'use'}, 'use is not defined');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '0',
@@ -691,6 +692,7 @@ Tape Used (%)                3.5        3.4        0.1
 DLEs Taped                     2          1          1  1:1
 Parts Taped                    2          1          1  1:1
 Avg Tp Write Rate (k/s) 999999.9 999999.9 999999.9
+
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts

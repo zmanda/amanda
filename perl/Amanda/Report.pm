@@ -1778,14 +1778,21 @@ sub _get_try
     my ( $dle, $program, $timestamp ) = @_;
     my $tries = $dle->{'dumps'}{$timestamp} ||= [];
 
-    if (
-        !@$tries    # no tries
-        || defined $tries->[-1]->{$program}->{status}
-        && $self->_program_finished(    # program has finished
-            $program, $tries->[-1]->{$program}->{status}
-        )
-      ) {
+    if (!@$tries) {
         push @$tries, {};
+    } elsif (exists $tries->[-1]->{$program}
+	     && exists $tries->[-1]->{$program}->{status}
+	     && defined $tries->[-1]->{$program}->{status}
+	     && $self->_program_finished(
+			$program, $tries->[-1]->{$program}->{status})) {
+	push @$tries, {};
+    } elsif ($program eq "taper" && !exists $tries->[-1]->{$program}) {
+	if (exists $tries->[-1]->{chunker}
+	    && exists $tries->[-1]->{chunker}->{status}
+	    && defined $tries->[-1]->{chunker}->{status}
+	    && $tries->[-1]->{chunker}->{status} eq "fail") {
+	    push @$tries, {};
+	}
     }
     return $tries->[-1];
 }

@@ -55,7 +55,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 103;
+plan tests => 104;
 
 my $reply;
 
@@ -133,6 +133,7 @@ is($sorted_notes[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] 
 is($sorted_notes[3], '  taper: Slot 1 without label can be labeled' , 'notes[3] is correct');
 is($sorted_notes[4], '  taper: tape STO-1-00001 kb 1050 fm 1 [OK]' , 'notes[4] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[5], 'no notes[5]');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'failure_summary'}, 'no failure_summary');
 my @sorted_usage_by_tape = sort { $a->{'tape_label'} cmp $b->{'tape_label'}} @{$reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}};
 is($sorted_usage_by_tape[0]->{'nb'}, '1' , 'one dle on tape 0');
 is($sorted_usage_by_tape[0]->{'nc'}, '1' , 'one part on tape 0');
@@ -372,6 +373,7 @@ Tape Used (%)                3.4        3.4        0.0
 DLEs Taped                     1          1          0
 Parts Taped                    1          1          0
 Avg Tp Write Rate (k/s) 999999.9   999999.9        --
+
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts
@@ -744,6 +746,7 @@ Tape Used (%)                0.4        0.0        0.4
 DLEs Taped                     1          0          1  1:1
 Parts Taped                    1          0          1  1:1
 Avg Tp Write Rate (k/s) 999999.9        --    999999.9
+
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts

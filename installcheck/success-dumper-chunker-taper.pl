@@ -55,7 +55,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 46;
+plan tests => 47;
 
 my $reply;
 
@@ -125,6 +125,7 @@ is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  planner: Adding new dis
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] is correct');
 is($reply->{'body'}->[0]->{'report'}->{'notes'}->[3], '  taper: tape TESTCONF01 kb 1050 fm 1 [OK]' , 'notes[3] is correct');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[4], 'no notes[4]');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'failure_summary'}, 'no failure_summary');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nc'}, '1' , 'one part on tape 0');
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'tape_label'}, 'TESTCONF01' , 'label tape_label on tape 0');
@@ -350,6 +351,7 @@ Tape Used (%)                3.4        3.4        0.0
 DLEs Taped                     1          1          0
 Parts Taped                    1          1          0
 Avg Tp Write Rate (k/s) 999999.9   999999.9        --
+
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts

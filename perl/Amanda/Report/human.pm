@@ -255,7 +255,15 @@ sub calculate_stats
 		my $origsize = 0;
 		if ( exists $try->{dumper}
 		    && (   $try->{dumper}{status} eq 'success'
-			|| $try->{dumper}{status} eq 'strange')) {
+			|| $try->{dumper}{status} eq 'strange')
+		    && (   (   exists $try->{chunker}
+			    && exists $try->{chunker}{status}
+		            && (   $try->{chunker}{status} eq 'success'
+		                || $try->{chunker}{status} eq 'partial'))
+			|| (   exists $try->{taper}
+			    && exists $try->{taper}{status}
+		            && (   $try->{taper}{status} eq 'done'
+			        || $try->{taper}{status} eq 'partial')))) {
 
 		    $origsize = $try->{dumper}{orig_kb};
 		    $stats->{dumper_time} += $try->{dumper}{sec};
@@ -964,8 +972,7 @@ sub output_tape_stats
       . '<' x ($label_length - 1)
       . " @>>>>> @>>>>>>>>>>> @>>>>> @>>>> @>>>>\n";
 
-    $self->zprint("\n");
-    $self->zsprint("USAGE BY TAPE:\n");
+    $self->zsprint("\n\nUSAGE BY TAPE:\n");
     $self->zprint(swrite($ts_format, "Label", "Time", "Size", "%", "DLEs", "Parts"));
 
     my $st = Amanda::Config::lookup_storage($report->{'storage_list'}[0]);
@@ -1104,7 +1111,6 @@ sub output_details
     $self->print_if_def(\@strange_dump_details, "STRANGE DUMP DETAILS:");
     $self->print_if_def($notes,                 "NOTES:");
 
-    $self->zprint("\n");
     return;
 }
 
@@ -1192,7 +1198,7 @@ sub output_summary
       . ' ' x $col_spec->[8]->[COLSPEC_PRE_SPACE]
       . '-' x $ts . "\n";
 
-    $self->zsprint("DUMP SUMMARY:\n");
+    $self->zsprint("\n\nDUMP SUMMARY:\n");
     $self->zprint($summary_header);
     $self->zprint(sprintf($title_format, map { $_->[COLSPEC_TITLE] } @$col_spec));
     $self->zprint($summary_dashes);
@@ -1855,7 +1861,6 @@ sub print_if_def
     foreach my $msg (@$msgs) {
         $self->zprint("  $msg\n");
     }
-    $self->zprint("\n");
 }
 
 
