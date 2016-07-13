@@ -69,7 +69,7 @@ init_ssl(void)
 }
 
 #else /* LIBCURL_USE_OPENSSL */
-#if defined LIBCURL_USE_GNUTLS
+#if defined LIBCURL_USE_GNUTLS_GCRYPT
 
 #include <gcrypt.h>
 #include <errno.h>
@@ -87,13 +87,13 @@ init_ssl(void)
     gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
 }
 
-#else	/* LIBCURL_USE_GNUTLS  */
+#else	/* LIBCURL_USE_GNUTLS_GCRYPT  */
 
 static void
 init_ssl(void)
 {
 }
-#endif	/* LIBCURL_USE_GNUTLS  */
+#endif	/* LIBCURL_USE_GNUTLS_GCRYPT  */
 #endif  /* LIBCURL_USE_OPENSSL */
 
 #else	/* HAVE_LIBCURL */

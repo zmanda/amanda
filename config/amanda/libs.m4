@@ -421,6 +421,32 @@ x=CURLOPT_VERBOSE;
      fi
      if test "x$LIBCURL_USE_GNUTLS" = "xyes"; then
        AC_DEFINE(LIBCURL_USE_GNUTLS, , [Defined if libcurl use GnuTLS])
+       LIBCURL_USE_GNUTLS_NETTLE=
+       # First check if we can detect either crypto library via transitive linking
+       AC_CHECK_LIB(gnutls, nettle_MD5Init, [ LIBCURL_USE_GNUTLS_NETTLE=1 ])
+       if test "$LIBCURL_USE_GNUTLS_NETTLE" = ""; then
+         AC_CHECK_LIB(gnutls, gcry_control, [ LIBCURL_USE_GNUTLS_NETTLE=0 ])
+       fi
+       # If not, try linking directly to both of them to see if they are available
+       if test "$LIBCURL_USE_GNUTLS_NETTLE" = ""; then
+         AC_CHECK_LIB(nettle, nettle_MD5Init, [ LIBCURL_USE_GNUTLS_NETTLE=1 ])
+       fi
+       if test "$LIBCURL_USE_GNUTLS_NETTLE" = ""; then
+         AC_CHECK_LIB(gcrypt, gcry_control, [ LIBCURL_USE_GNUTLS_NETTLE=0 ])
+       fi
+       if test "$LIBCURL_USE_GNUTLS_NETTLE" = ""; then
+         AC_MSG_ERROR([GnuTLS found, but neither gcrypt nor nettle found])
+       fi
+       if test "$LIBCURL_USE_GNUTLS_NETTLE" = "1"; then
+         AC_DEFINE(LIBCURL_USE_GNUTLS_NETTLE, 1, [if GnuTLS uses nettle as crypto backend])
+         AC_SUBST(LIBCURL_USE_GNUTLS_NETTLE, [1])
+       else
+         if test "$LIBCURL_USE_GNUTLS_NETTLE" = "0"; then
+           LIBCURL_USE_GNUTLS_GCRYPT=1
+           AC_DEFINE(LIBCURL_USE_GNUTLS_GCRYPT, 1, [if GnuTLS uses gcrypt as crypto backend])
+           AC_SUBST(LIBCURL_USE_GNUTLS_GCRYPT, [1])
+         fi
+       fi
      fi
      if test "x$LIBCURL_USE_OPENSSL" = "xyes"; then
        AC_DEFINE(LIBCURL_USE_OPENSSL, 1, [Defined if libcurl use OpenSSL])

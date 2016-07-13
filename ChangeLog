@@ -1,4 +1,11 @@
 2016-07-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/libs.m4: Set LIBCURL_USE_GNUTLS_NETTLE or
+	  LIBCURL_USE_GNUTLS_GCRYPT depending on which crypto library
+	  gnutls use
+	* common-src/glib-util.c: Initialize gcrypt only if
+	  LIBCURL_USE_GNUTLS_GCRYPT
+
+2016-07-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/infofile.c: Make sure the infofile never have more more
 	  than 100 history lines
 
