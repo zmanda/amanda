@@ -1,3 +1,7 @@
+2016-07-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/infofile.c: Make sure the infofile never have more more
+	  than 100 history lines
+
 2016-06-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/libs.m4 (AMANDA_CHECK_LIBCURL): Check for
 	  HMAC_CTX_init or HMAC_CTX_reset

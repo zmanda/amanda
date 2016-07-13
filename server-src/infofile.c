@@ -313,13 +313,15 @@ read_txinfofile(
     rc = 0;
 
     nb_history = 0;
-    for(i=0;i<=NB_HISTORY;i++) {
+    for(i=0;i<NB_HISTORY;i++) {
 	info->history[i].level = -2;
     }
 
     for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
 	history_t onehistory;	/* one history record */
 	long long off_t_tmp;
+
+	if (nb_history >= NB_HISTORY) break;
 
 	if (line[0] == '\0')
 	    continue;
@@ -454,7 +456,7 @@ write_txinfofile(
 
     g_fprintf(infof, _("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 
-    for(i=0;info->history[i].level > -1;i++) {
+    for(i=0;i < NB_HISTORY && info->history[i].level > -1;i++) {
 	g_fprintf(infof, _("history: %d %lld %lld %jd %jd\n"),
 		info->history[i].level,
 		(long long)info->history[i].size,
@@ -591,7 +593,7 @@ zero_info(
     info->last_level = -1;
     info->consecutive_runs = -1;
 
-    for(i=0;i<=NB_HISTORY;i++) {
+    for(i=0;i<NB_HISTORY;i++) {
 	info->history[i].level = -2;
 	info->history[i].size = (off_t)0;
 	info->history[i].csize = (off_t)0;
