@@ -1,3 +1,7 @@
+2016-07-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/infofile.c: Make sure the infofile never have more more
+	  than 100 history lines
+
 2016-07-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Rest.pm (post): Set CURLOPT_POSTFIELDSIZE
 
