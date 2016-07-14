@@ -1,4 +1,7 @@
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c: Read filter stderr and report them as error
+
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/senddiscover.c: Do not include "pipespawn.h"
 
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>

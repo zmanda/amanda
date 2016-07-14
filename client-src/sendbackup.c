@@ -63,6 +63,7 @@ int datafd;
 int mesgfd;
 int indexfd;
 int statefd;
+FILE   *mesgstream = NULL;
 
 g_option_t *g_options = NULL;
 
@@ -81,6 +82,13 @@ static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static char *amandad_auth = NULL;
 
+typedef struct filter_stderr_pipe {
+    int fd;
+    GThread *thread;
+} filter_stderr_pipe;
+static filter_stderr_pipe enc_stderr_pipe;
+static filter_stderr_pipe comp_stderr_pipe;
+
 /* local functions */
 int main(int argc, char **argv);
 char *childstr(pid_t pid);
@@ -93,6 +101,8 @@ void parse_backup_messages(dle_t *dle, int mesgin);
 static void process_dumpline(char *str);
 static void save_fd(int *, int);
 void application_api_info_tapeheader(int mesgfd, char *prog, dle_t *dle);
+
+gpointer stderr_thread(gpointer data);
 
 int
 fdprintf(
@@ -131,7 +141,6 @@ main(
     int i;
     int ch;
     GSList *errlist;
-    FILE   *mesgstream;
     am_level_t *alevel;
     int scripts_exit_status;
     char  **env;
@@ -584,10 +593,12 @@ main(
 	    }
 
 
+	   enc_stderr_pipe.fd = -1;
+	   comp_stderr_pipe.fd = -1;
 	    /*  apply client-side encryption here */
 	    if ( dle->encrypt == ENCRYPT_CUST ) {
-		encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
-				   &compout, &data_out, &mesgfd,
+		encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE|STDERR_PIPE, 0,
+				   &compout, &data_out, &enc_stderr_pipe.fd,
 				   dle->clnt_encrypt, encryptopt, NULL);
 		g_debug("encrypt: pid %ld: %s", (long)encpid, dle->clnt_encrypt);
 	    } else {
@@ -605,8 +616,8 @@ main(
 		    compopt = COMPRESS_FAST_OPT;
 		}
 #endif
-		comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
-				    &dumpout, &compout, &mesgfd,
+		comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE|STDERR_PIPE, 0,
+				    &dumpout, &compout, &comp_stderr_pipe.fd,
 				    COMPRESS_PATH, compopt, NULL);
 		if(compopt != skip_argument) {
 		    g_debug("compress pid %ld: %s %s",
@@ -617,8 +628,8 @@ main(
 		aclose(compout);
 	    } else if (dle->compress == COMP_CUST) {
 		compopt = skip_argument;
-		comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
-				&dumpout, &compout, &mesgfd,
+		comppid = pipespawn(dle->compprog, STDIN_PIPE|STDERR_PIPE, 0,
+				&dumpout, &compout, &comp_stderr_pipe.fd,
 				dle->compprog, compopt, NULL);
 		if (compopt != skip_argument) {
 		    g_debug("pid %ld: %s %s",
@@ -630,6 +641,18 @@ main(
 	    } else {
 		dumpout = compout;
 		comppid = -1;
+	    }
+
+	    enc_stderr_pipe.thread = NULL;
+	    if (enc_stderr_pipe.fd != -1) {
+		enc_stderr_pipe.thread = g_thread_create(stderr_thread,
+					(gpointer)&enc_stderr_pipe , TRUE, NULL);
+	    }
+
+	    comp_stderr_pipe.thread = NULL;
+	    if (comp_stderr_pipe.fd != -1) {
+		comp_stderr_pipe.thread = g_thread_create(stderr_thread,
+					(gpointer)&comp_stderr_pipe , TRUE, NULL);
 	    }
 
 	    cur_dumptime = time(0);
@@ -879,6 +902,12 @@ main(
 	    g_thread_join(native_crc.thread);
 	    if (have_filter) {
 		g_thread_join(client_crc.thread);
+		if (enc_stderr_pipe.thread) {
+		    g_thread_join(enc_stderr_pipe.thread);
+		}
+		if (comp_stderr_pipe.thread) {
+		    g_thread_join(comp_stderr_pipe.thread);
+		}
 	    }
 
 	    if (shm_ring) {
@@ -1074,6 +1103,9 @@ check_status(
 #endif
 	comppid = -1;
 	strX = "compress";
+    } else if(pid == encpid) {
+	encpid = -1;
+	strX = "encrypt";
     } else if(pid == dumppid && tarpid == -1) {
         /*
 	 * Ultrix dump returns 1 sometimes, but it is ok.
@@ -1120,7 +1152,8 @@ check_status(
 	thiserr = g_strdup_printf(_("%s (%d) %s returned %d"), strX, (int)pid, str, ret);
     }
 
-    fdprintf(mesgfd, "? %s\n", thiserr);
+    fdprintf(mesgfd, "sendbackup: error [%s]\n", thiserr);
+    g_debug("sendbackup: error [%s]", thiserr);
 
     if(errorstr) {
 	tmpbuf = g_strdup_printf("%s, %s", errorstr, thiserr);
@@ -1293,32 +1326,40 @@ check_result(
 	process_alive = 0;
 	if (indexpid != -1) {
 	    if ((wpid = waitpid(indexpid, &retstat, WNOHANG)) > 0) {
-		indexpid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+		indexpid = -1;
+	    } else if (wpid == 0) {
+		process_alive = 1;
+	    }
+	}
+	if (encpid != -1) {
+	    if ((wpid = waitpid(encpid, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+		encpid = -1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
 	    }
 	}
 	if (comppid != -1) {
 	    if ((wpid = waitpid(comppid, &retstat, WNOHANG)) > 0) {
-		comppid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+		comppid = -1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
 	    }
 	}
 	if (dumppid != -1) {
 	    if ((wpid = waitpid(dumppid, &retstat, WNOHANG)) > 0) {
-		dumppid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+		dumppid = -1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
 	    }
 	}
 	if (tarpid != -1) {
 	    if ((wpid = waitpid(tarpid, &retstat, WNOHANG)) > 0) {
-		tarpid = -1;
 		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+		tarpid = -1;
 	    } else if (wpid == 0) {
 		process_alive = 1;
 	    }
@@ -1414,6 +1455,12 @@ parse_backup_messages(
     g_thread_join(native_crc.thread);
     if (have_filter) {
 	g_thread_join(client_crc.thread);
+	if (enc_stderr_pipe.thread) {
+	    g_thread_join(enc_stderr_pipe.thread);
+	}
+	if (comp_stderr_pipe.thread) {
+	    g_thread_join(comp_stderr_pipe.thread);
+	}
     }
 
     if (shm_ring) {
@@ -1684,6 +1731,25 @@ handle_crc_thread(
     return NULL;
 }
 
+
+gpointer
+stderr_thread(
+    gpointer data)
+{
+    filter_stderr_pipe *xx = (filter_stderr_pipe *)data;
+    char *buf;
+
+    while ((buf = areads(xx->fd)) != NULL) {
+	if (strncmp(buf, "sendbackup: error [", 19) == 0) {
+	    fdprintf(mesgfd, "%s\n", buf);
+	} else {
+	    fdprintf(mesgfd, "sendbackup: error [%s]\n", buf);
+	}
+	g_debug("error [%s]\n", buf);
+	g_free(buf);
+    }
+    return NULL;
+}
 
 gpointer
 handle_crc_to_shm_ring_thread(
