@@ -1,4 +1,7 @@
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/debug.c: Fix race in getting the thread id
+
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/device.h (property_set_ex, device_property_set_ex):
 	  Change prototype to return a (char *).
 	* device-src/device.c (property_set_ex, device_property_set_ex):

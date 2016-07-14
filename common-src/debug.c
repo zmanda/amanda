@@ -69,7 +69,6 @@ static void debug_unlink_old(void);
 static void debug_setup_1(char *config, char *subdir);
 static void debug_setup_2(char *s, int fd, char *annotation);
 static char *msg_timestamp(void);
-static char *msg_thread(void);
 
 static void debug_logging_handler(const gchar *log_domain,
 	GLogLevelFlags log_level,
@@ -520,21 +519,6 @@ msg_timestamp(void)
     return timestamp;
 }
 
-/* Get current GMT time and return a message timestamp.
- * Used for g_printf calls to logs and such.  The return value
- * is to a static buffer, so it should be used immediately.
- *
- * @returns: timestamp
- */
-static char *
-msg_thread(void)
-{
-    static char  thread[128];
-
-    sprintf(thread, "thd-%p", g_thread_self());
-
-    return thread;
-}
 
 /*
  * ---- public functions
@@ -851,7 +835,7 @@ void debug_printf(const char *format, ...)
 	char *text;
 
 	if (db_file != stderr)
-	    prefix = g_strdup_printf("%s: pid %d: %s: %s:", msg_timestamp(), (int)getpid(), msg_thread(), get_pname());
+	    prefix = g_strdup_printf("%s: pid %d: thd-%p: %s:", msg_timestamp(), (int)getpid(), g_thread_self(), get_pname());
 	else 
 	    prefix = g_strdup_printf("%s:", get_pname());
 	arglist_start(argp, format);
