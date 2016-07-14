@@ -1,4 +1,7 @@
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c: Improve error reporting
+
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Remove useless printf
 
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>

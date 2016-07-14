@@ -46,9 +46,9 @@
 #include "timestamp.h"
 #include "amxml.h"
 
-#define dumper_debug(i,x) do {		\
+#define dumper_debug(i, ...) do {	\
 	if ((i) <= debug_dumper) {	\
-	    dbprintf(x);		\
+	    g_debug(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -160,6 +160,7 @@ static GMutex  *shm_thread_mutex = NULL;
 static GCond   *shm_thread_cond = NULL;
 static shm_ring_t *shm_ring_consumer = NULL;
 static shm_ring_t *shm_ring_direct = NULL;
+static char *write_to = NULL;
 
 static dumpfile_t file;
 
@@ -215,7 +216,7 @@ static int	log_msgout(logtype_t);
 static char *	dumper_get_security_conf (char *, void *);
 
 static int	runcompress(int, pid_t *, comp_t, char *);
-static int	runencrypt(int, pid_t *,  encrypt_t);
+static int	runencrypt(int, pid_t *,  encrypt_t, char *);
 
 static void	sendbackup_response(void *, pkt_t *, security_handle_t *);
 static int	startup_dump(const char *, const char *, const char *, int,
@@ -232,7 +233,7 @@ static void	read_statefd(void *, void *, ssize_t);
 static void	read_mesgfd(void *, void *, ssize_t);
 static gboolean header_sent(struct databuf *db);
 static void	timeout(time_t);
-static void	timeout_callback(void *);
+static void	timeout_callback(void *unused);
 static gpointer handle_shm_ring_to_fd_thread(gpointer data);
 static gpointer handle_shm_ring_direct(gpointer data);
 
@@ -521,6 +522,13 @@ main(
 	     *   options
 	     */
 	    a = 1; /* skip "PORT-DUMP" */
+
+	    assert(!shm_thread);
+	    assert(!shm_thread_mutex);
+	    assert(!shm_thread_cond);
+	    assert(!shm_ring_consumer);
+	    assert(!shm_ring_direct);
+	    write_to = "output";
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: handle]"));
@@ -1051,6 +1059,7 @@ process_dumpline(
 
     buf = g_strdup(str);
 
+    dumper_debug(1, "process_dumpline: %s", str);
     switch (*buf) {
     case '|':
 	/* normal backup output line */
@@ -1762,22 +1771,22 @@ do_dump(
 	g_free(f);
     }
 
-    if (db->compresspid != -1 && dump_result < 2) {
+    if (db->compresspid != -1) {
 	amwait_t  wait_status;
 	char *errmsg = NULL;
 
 	waitpid(db->compresspid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
-				     "compress", WTERMSIG(wait_status));
+				     "data compress:", WTERMSIG(wait_status));
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0) {
 		errmsg = g_strdup_printf(_("%s exited with status %d"),
-					 "compress", WEXITSTATUS(wait_status));
+					 "data compress:", WEXITSTATUS(wait_status));
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("%s got bad exit"),
-				     "compress");
+				     "data compress: ");
 	}
 	if (errmsg) {
 	    g_fprintf(errf, _("? %s\n"), errmsg);
@@ -1792,22 +1801,22 @@ do_dump(
 	db->compresspid = -1;
     }
 
-    if (db->encryptpid != -1 && dump_result < 2) {
+    if (db->encryptpid != -1) {
 	amwait_t  wait_status;
 	char *errmsg = NULL;
 
 	waitpid(db->encryptpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
-				     "encrypt", WTERMSIG(wait_status));
+				     "data encrypt:", WTERMSIG(wait_status));
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0) {
 		errmsg = g_strdup_printf(_("%s exited with status %d"),
-					 "encrypt", WEXITSTATUS(wait_status));
+					 "data encrypt:", WEXITSTATUS(wait_status));
 	    }
 	} else {
 	    errmsg = g_strdup_printf(_("%s got bad exit"),
-				     "encrypt");
+				     "data encrypt:");
 	}
 	if (errmsg) {
 	    g_fprintf(errf, _("? %s\n"), errmsg);
@@ -2052,7 +2061,8 @@ handle_shm_ring_to_fd_thread(
 	headersize += (off_t)DISK_BLOCK_KB;
 
 	if (srvencrypt == ENCRYPT_SERV_CUST) {
-	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt) < 0) {
+	    write_to = "encryption program";
+	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt, "data encrypt") < 0) {
 		dump_result = 2;
 		aclose(db->fd);
 		stop_dump();
@@ -2064,6 +2074,7 @@ handle_shm_ring_to_fd_thread(
 	 * reading the datafd.
 	 */
 	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
+	    write_to = "compression program";
 	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
 		dump_result = 2;
 		aclose(db->fd);
@@ -2079,7 +2090,8 @@ handle_shm_ring_to_fd_thread(
 
 	    if (to_write + read_offset <= shm_ring_size) {
 		if (full_write(db->fd, db->shm_ring_consumer->data + read_offset, to_write) != to_write) {
-		    g_debug("full_write failed: %s", strerror(errno));
+		    g_debug("write to %s failed: %s", write_to, strerror(errno));
+		    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(errno));
 		    db->shm_ring_consumer->mc->cancelled = TRUE;
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
@@ -2094,7 +2106,8 @@ handle_shm_ring_to_fd_thread(
 	    } else {
 		if (full_write(db->fd, db->shm_ring_consumer->data + read_offset,
 			   shm_ring_size - read_offset) != shm_ring_size - read_offset) {
-		    g_debug("full_write failed: %s", strerror(errno));
+		    g_debug("write to %s failed: %s", write_to, strerror(errno));
+		    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(errno));
 		    db->shm_ring_consumer->mc->cancelled = TRUE;
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
@@ -2104,7 +2117,8 @@ handle_shm_ring_to_fd_thread(
 		}
 		if (full_write(db->fd, db->shm_ring_consumer->data,
 			   to_write - shm_ring_size + read_offset) != to_write - shm_ring_size + read_offset) {
-		    g_debug("full_write failed: %s", strerror(errno));
+		    g_debug("write to %s failed: %s", write_to, strerror(errno));
+		    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(errno));
 		    db->shm_ring_consumer->mc->cancelled = TRUE;
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
@@ -2358,10 +2372,6 @@ read_mesgfd(
 	if (shm_thread) {
 	    g_mutex_lock(shm_thread_mutex);
 	    g_cond_broadcast(shm_thread_cond);
-	    while (!ISSET(status, HEADER_SENT)) {
-		g_debug("D sleep while waiting for HEADER_SENT");
-		g_cond_wait(shm_thread_cond, shm_thread_mutex);
-	    }
 	    g_mutex_unlock(shm_thread_mutex);
 	}
     }
@@ -2514,7 +2524,8 @@ read_datafd(
 	headersize += (off_t)DISK_BLOCK_KB;
 
 	if (srvencrypt == ENCRYPT_SERV_CUST) {
-	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt) < 0) {
+	    write_to = "encryption program";
+	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt, "data encrypt") < 0) {
 		dump_result = 2;
 		aclose(db->fd);
 		stop_dump();
@@ -2703,9 +2714,11 @@ handle_filter_stderr(
     while (b < filter->buffer + filter->first + filter->size &&
 	   (p = strchr(b, '\n')) != NULL) {
 	*p = '\0';
-	g_fprintf(errf, _("? %s: %s\n"), filter->name, b);
-	if (errstr == NULL) {
-	    errstr = g_strdup(b);
+	if (p != b) {
+	    g_fprintf(errf, _("? %s: %s\n"), filter->name, b);
+	    if (errstr == NULL) {
+	        errstr = g_strdup(b);
+	    }
 	}
 	len = p - b + 1;
 	filter->first += len;
@@ -2758,6 +2771,7 @@ timeout(
  * This is the callback for timeout().  If this is reached, then we
  * have a data timeout.
  */
+
 static void
 timeout_callback(
     void *	unused)
@@ -2839,7 +2853,7 @@ stop_dump(void)
 
     if (dump_result > 0) {
 	if (g_databuf->shm_ring_producer) {
-	    g_debug("stop_dump: cancelling shm-ring");
+	    g_debug("stop_dump: cancelling shm-ring-producer");
 	    g_databuf->shm_ring_producer->mc->cancelled = TRUE;
 	    if (g_databuf->shm_ring_producer->mc->need_sem_ready) {
 		g_databuf->shm_ring_producer->mc->need_sem_ready--;
@@ -2849,7 +2863,7 @@ stop_dump(void)
 	    sem_post(g_databuf->shm_ring_producer->sem_write);
 	}
 	if (g_databuf->shm_ring_consumer) {
-	    g_debug("stop_dump: cancelling shm-ring");
+	    g_debug("stop_dump: cancelling shm-ring-consumer");
 	    g_databuf->shm_ring_consumer->mc->cancelled = TRUE;
 	    if (g_databuf->shm_ring_consumer->mc->need_sem_ready) {
 		g_databuf->shm_ring_consumer->mc->need_sem_ready--;
@@ -2857,9 +2871,10 @@ stop_dump(void)
 	    }
 	    sem_post(g_databuf->shm_ring_consumer->sem_read);
 	    sem_post(g_databuf->shm_ring_consumer->sem_write);
+	    g_debug("stop_dump done: cancelling shm-ring-consumer");
 	}
 	if (g_databuf->shm_ring_direct) {
-	    g_debug("stop_dump: cancelling shm-ring");
+	    g_debug("stop_dump: cancelling shm-ring-direct");
 	    g_databuf->shm_ring_direct->mc->cancelled = TRUE;
 	    if (g_databuf->shm_ring_direct->mc->need_sem_ready) {
 		g_databuf->shm_ring_direct->mc->need_sem_ready--;
@@ -2967,7 +2982,8 @@ runcompress(
 	    set_root_privs(-1);
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
 		COMPRESS_BEST_OPT : COMPRESS_FAST_OPT), (char *)NULL);
-	    error(_("error: couldn't exec %s: %s"), COMPRESS_PATH, strerror(errno));
+	    g_fprintf(stderr,"error: couldn't exec server compression '%s': %s.\n", COMPRESS_PATH, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	} else if (*srvcompprog) {
 	    char *base = g_strdup(srvcompprog);
@@ -2976,7 +2992,8 @@ runcompress(
 	    safe_fd(-1, 0);
 	    set_root_privs(-1);
 	    execlp(srvcompprog, srvcompprog, (char *)0);
-	    error(_("error: couldn't exec server custom compression '%s'.\n"), srvcompprog);
+	    g_fprintf(stderr,"error: couldn't exec server custom compression '%s': %s.\n", srvcompprog, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
     }
@@ -2994,7 +3011,8 @@ static int
 runencrypt(
     int		outfd,
     pid_t *	pid,
-    encrypt_t	encrypttype)
+    encrypt_t	encrypttype,
+    char       *name)
 {
     int outpipe[2], rval;
     int errpipe[2];
@@ -3040,7 +3058,7 @@ runencrypt(
 	filter = g_new0(filter_t, 1);
 	filter->fd = errpipe[0];
 	base = g_strdup(srv_encrypt);
-	filter->name = g_strdup(basename(base));
+	filter->name = g_strdup(name);
 	amfree(base);
 	filter->buffer = NULL;
 	filter->size = 0;
@@ -3071,7 +3089,8 @@ runencrypt(
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {
 	    set_root_privs(-1);
 	    execlp(srv_encrypt, srv_encrypt, (char *)0);
-	    error(_("error: couldn't exec server custom encryption '%s'.\n"), srv_encrypt);
+	    g_fprintf(stderr,"error: couldn't exec server encryption '%s': %s.\n", srv_encrypt, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 	}
