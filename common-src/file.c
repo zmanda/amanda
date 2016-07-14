@@ -773,9 +773,13 @@ debug_areads (
 	}
 	if ((r = read(fd, endptr, buflen)) <= 0) {
 	    if(r == 0) {
-		errno = 0;		/* flag EOF instead of error */
+		if (buffer == endptr || *(endptr-1) == '\n') {
+		    errno = 0;		/* flag EOF instead of error */
+		    return NULL;
+		}
+		*endptr = '\n';
+		r = 1;
 	    }
-	    return NULL;
 	}
 	endptr[r] = '\0';		/* we always leave room for this */
 	endptr += r;
