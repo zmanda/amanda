@@ -88,12 +88,14 @@ GStaticMutex event_mutex = G_STATIC_MUTEX_INIT;
 
 /* should event_loop_run stop? */
 gboolean stop = FALSE;
+gboolean global_return_when_empty = TRUE;
 
 /*
  * Utility functions
  */
 
 static const char *event_type2str(event_type_t type);
+static gboolean any_mainloop_events(void);
 
 /* "Fire" an event handle, by calling its callback function */
 #define	fire(eh) do { \
@@ -258,6 +260,11 @@ event_release(
 
     /* Mark it as dead and leave it for the event_loop to remove */
     handle->is_dead = TRUE;
+
+    if (global_return_when_empty && !any_mainloop_events()) {
+	g_main_loop_quit(default_main_loop());
+    }
+
     g_static_mutex_unlock(&event_mutex);
 }
 
@@ -378,8 +385,8 @@ any_mainloop_events(void)
 
     for (iter = all_events; iter != NULL; iter = g_slist_next(iter)) {
 	event_handle_t *hdl = (event_handle_t *)iter->data;
-	event_debug(2, _("list %p: %s/%jd\n"), hdl, event_type2str((hdl)->type), (hdl)->data);
-	if (hdl->type != EV_WAIT)
+	event_debug(2, _("list %p: %s %s/%jd\n"), hdl, hdl->is_dead?"dead":"alive", event_type2str((hdl)->type), (hdl)->data);
+	if (hdl->type != EV_WAIT && !hdl->is_dead)
 	    ret = TRUE;
     }
 
@@ -392,6 +399,7 @@ event_loop_wait(
     int nonblock,
     gboolean return_when_empty)
 {
+    global_return_when_empty = return_when_empty;
     g_static_mutex_lock(&event_mutex);
     event_debug(1, _("event: loop: enter: nonblockg=%d, eh=%p\n"), nonblock, wait_eh);
 

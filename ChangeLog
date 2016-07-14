@@ -1,4 +1,8 @@
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/event.c (event_release): Abort the main_loop is there is
+	  no more event
+
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/debug.c: Fix race in getting the thread id
 
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
