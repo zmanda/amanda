@@ -1,4 +1,7 @@
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/senddiscover.c: Do not include "pipespawn.h"
+
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (debug_areads): Add a terminating '\n' on the
 	  buffer
 

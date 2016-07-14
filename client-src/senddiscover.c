@@ -30,7 +30,6 @@
 #include "amandad.h"
 #include "match.h"
 #include "clock.h"
-#include "pipespawn.h"
 #include "amfeatures.h"
 #include "getfsent.h"
 #include "conffile.h"
