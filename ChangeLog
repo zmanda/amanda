@@ -1,4 +1,7 @@
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Remove useless printf
+
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: Read filter stderr and report them as error
 
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>

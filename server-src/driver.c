@@ -2300,7 +2300,6 @@ handle_taper_result(
 		wtaper->job->dumper->result != LAST_TOK &&
 		wtaper->sendresult) {
 		if( wtaper->job->dumper->result == DONE) {
-printf("send DONE AA\n");
 		    taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 		} else {
 		    taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
@@ -2546,7 +2545,6 @@ printf("send DONE AA\n");
 		wtaper->sendresult = TRUE;
 	    } else {
 		if( wtaper->job->dumper->result == DONE) {
-printf("send DONE BB\n");
 		    taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 		} else {
 		    taper_cmd(taper, wtaper, FAILED, sp, NULL, 0, NULL);
@@ -3669,7 +3667,6 @@ handle_dumper_result(
 		    if (cmd == TRYAGAIN) {
 			taper_cmd(taper, wtaper, ABORT, sp, NULL, 0, "dumper TRYAGAIN");
 		    } else if (cmd == DONE && wtaper->sendresult) {
-printf("send DONE CC\n");
 			taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 			wtaper->sendresult = FALSE;
 		    } else if (wtaper->sendresult) {
