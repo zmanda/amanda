@@ -1,3 +1,17 @@
+2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/device.h (property_set_ex, device_property_set_ex):
+	  Change prototype to return a (char *).
+	* device-src/device.c (property_set_ex, device_property_set_ex):
+	  Return a (char *) on error, NULL on success.
+	* perl/Amanda/Device.swg (property_set), Return a string on eror,
+	  undef on success.
+	* device-src/amtapetype.pl, device-src/rait-device.c,
+	  perl/Amanda/Changer.pm, perl/Amanda/Changer/disk.pm,
+	  perl/Amanda/Changer/diskflat.pm, server-src/amadmin.c,
+	  server-src/amrestore.pl: Change for new API
+	* installcheck/Amanda_Device.pl: Test new API
+	* installcheck/Amanda_Xfer.pl: Change for new API
+
 2016-07-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/infofile.c: Make sure the infofile never have more more
 	  than 100 history lines

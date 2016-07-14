@@ -657,6 +657,7 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
     GValue val;
     guint i;
     PropertySource source;
+    char *r;
 
     bzero(&val, sizeof(val));
 
@@ -695,10 +696,12 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
 		    child->device_name, device_error_or_status(child));
 	}
 
-	if (!device_property_set(child, PROPERTY_BLOCK_SIZE, &val)) {
+	r = device_property_set(child, PROPERTY_BLOCK_SIZE, &val);
+	if (r) {
 	    device_set_error((Device *)self,
-		g_strdup_printf(_("Error setting block size on %s"), child->device_name),
+		g_strdup_printf(_("Error setting block size on %s: %s"), child->device_name, r),
 		DEVICE_STATUS_DEVICE_ERROR);
+	    g_free(r);
 	    return FALSE;
 	}
     }
@@ -2103,10 +2106,9 @@ static void property_set_do_op(gpointer data,
                                gpointer user_data G_GNUC_UNUSED) {
     PropertyOp * op = data;
 
-    op->base.result =
-        GINT_TO_POINTER(device_property_set_ex(op->base.child, op->id,
-					       &(op->value), op->surety,
-					       op->source));
+    op->base.result = device_property_set_ex(op->base.child, op->id,
+					     &(op->value), op->surety,
+					     op->source);
     g_value_unset(&(op->value));
 }
 
@@ -2534,7 +2536,7 @@ property_set_max_volume_usage_fn(Device *dself,
     for (i = 0; i < ops->len; i ++) {
         PropertyOp * op = g_ptr_array_index(ops, i);
 
-        if (op->base.result) {
+        if (!op->base.result) {
 	    success = TRUE;
 	    break;
 	}

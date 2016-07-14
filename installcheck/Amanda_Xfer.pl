@@ -55,6 +55,8 @@ Installcheck::log_test_output();
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
+my $r;
+
 {
     my $RANDOM_SEED = 0xD00D;
 
@@ -623,8 +625,8 @@ SKIP: {
 
 	die("Could not open VFS device: " . $device->error())
 	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
-	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
-	$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
+	$r = $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+	$r = $device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 	my $dest = $dest_sub->($device);
 
@@ -663,8 +665,8 @@ SKIP: {
 			die("Could not open VFS device: " . $device->error())
 			    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
 			$dest->use_device($device);
-			$device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
-			$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+			$r = $device->property_set("LEOM", $params{'disable_leom'}? 0 : 1);
+			$r = $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 			$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 			$start_new_part_2->();
 		});
@@ -1293,8 +1295,8 @@ SKIP: {
 	$device = $res->{'device'};
 	die("Could not open VFS device: " . $device->error())
 	    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
-	$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
-	$device->property_set("LEOM", 0);
+	$r = $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+	$r = $device->property_set("LEOM", 0);
 	$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 
 	my $dest = Amanda::Xfer::Dest::Taper::Splitter->new($device, 128*1024,
@@ -1330,8 +1332,8 @@ SKIP: {
 		die("Could not open VFS device: " . $device->error())
 		    unless ($device->status() == $Amanda::Device::DEVICE_STATUS_VOLUME_UNLABELED);
 		$dest->use_device($device);
-		$device->property_set("LEOM", 0);
-		$device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+		$r = $device->property_set("LEOM", 0);
+		$r = $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
 		$device->start($Amanda::Device::ACCESS_WRITE, "TESTCONF01", "20080102030405");
 		$start_new_part_2->();
 	    });
@@ -1413,10 +1415,10 @@ SKIP: {
     my $mkdevice = sub {
 	my $dev = Amanda::Device->new("ndmp:127.0.0.1:$ndmp_port\@$drive");
 	die "can't create device" unless $dev->status() == $Amanda::Device::DEVICE_STATUS_SUCCESS;
-	$dev->property_set("indirect", 0) or die "can't set INDIRECT";
-	$dev->property_set("verbose", 1) or die "can't set VERBOSE";
-	$dev->property_set("ndmp_username", "ndmp") or die "can't set username";
-	$dev->property_set("ndmp_password", "ndmp") or die "can't set password";
+	$r = $dev->property_set("indirect", 0) and die "can't set INDIRECT: $r";
+	$r = $dev->property_set("verbose", 1) and die "can't set VERBOSE: $r";
+	$r = $dev->property_set("ndmp_username", "ndmp") and die "can't set username: $r";
+	$r = $dev->property_set("ndmp_password", "ndmp") and die "can't set password: $r";
 
 	return $dev;
     };

@@ -68,8 +68,10 @@ sub open_device {
     }
 
     if (defined $opt_blocksize) {
-	$device->property_set('BLOCK_SIZE', $opt_blocksize)
-	    or die "Error setting blocksize: " . $device->error_or_status();
+	my $r = $device->property_set('BLOCK_SIZE', $opt_blocksize);
+	if ($r) {
+	    die "Error setting blocksize: " . $device->error_or_status();
+	}
     }
 
     if (!$opt_force and !$_label_checked) {

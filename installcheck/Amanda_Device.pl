@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 623;
+use Test::More tests => 626;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -218,7 +218,7 @@ ok(!$dev->property_get("full_deletion"),
     "property_get(full_deletion) on null device");
 is($dev->property_get("comment"), undef,
     "no comment by default");
-ok($dev->property_set("comment", "well, that was silly"),
+ok(!$dev->property_set("comment", "well, that was silly"),
     "set comment property");
 is($dev->property_get("comment"), "well, that was silly",
     "comment correctly stored");
@@ -246,26 +246,35 @@ properties_include([ $dev->property_list() ],
     "necessary properties listed on vfs device");
 
 # play with properties a little bit
-ok($dev->property_set("comment", 16),
+is($dev->property_set("comment", 16), undef,
     "set an string property to an integer");
 
-ok($dev->property_set("comment", 16.0),
+is($dev->property_set("comment", 16.0), undef,
     "set an string property to a float");
 
-ok($dev->property_set("comment", "hi mom"),
+is($dev->property_set("comment", "hi mom"), undef,
     "set an string property to a string");
 
-ok($dev->property_set("comment", "32768"),
+is($dev->property_set("comment", "32768"), undef,
     "set an integer property to a simple string");
 
-ok($dev->property_set("comment", "32k"),
+is($dev->property_set("comment", "32k"), undef,
     "set an integer property to a string with a unit");
 
-ok($dev->property_set("block_size", 32768),
+is($dev->property_set("block_size", 32768), undef,
     "set an integer property to an integer");
 
-ok(!($dev->property_set("invalid-property-name", 32768)),
+is($dev->property_set("invalid-property-name", 32768), "No such device-property",
     "set an invalid-property-name");
+
+is($dev->property_set("block-size", "toto"), "The value is no allowed",
+    "set an illegal value");
+
+is($dev->property_set("block-size", "128km"), "The value is no allowed",
+    "set an illegal value");
+
+is($dev->property_set("streaming", "toto"), "Not allowed to set property",
+    "set streaming");
 
 $dev->read_label();
 ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
@@ -351,7 +360,7 @@ ok($dev->finish(),
 ok($dev->property_get("monitor_free_space"),
     "monitor_free_space property is set by default");
 
-ok($dev->property_set("monitor_free_space", 0),
+is($dev->property_set("monitor_free_space", 0), undef,
     "monitor_free_space property can be set to false");
 
 ok(!$dev->property_get("monitor_free_space"),
@@ -364,11 +373,11 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "512k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
-ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 0),
+is($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 0), undef,
     "set ENFORCE_MAX_VOLUME_USAGE");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -398,11 +407,11 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "512k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
-ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 1),
+is($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 1), undef,
     "set ENFORCE_MAX_VOLUME_USAGE");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -435,9 +444,9 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "512k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -470,9 +479,9 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "160k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "160k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM while writing the first header");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -512,25 +521,25 @@ properties_include([ $dev->property_list() ],
     "necessary properties listed on diskflat device");
 
 # play with properties a little bit
-ok($dev->property_set("comment", 16),
+is($dev->property_set("comment", 16), undef,
     "set an string property to an integer");
 
-ok($dev->property_set("comment", 16.0),
+is($dev->property_set("comment", 16.0), undef,
     "set an string property to a float");
 
-ok($dev->property_set("comment", "hi mom"),
+is($dev->property_set("comment", "hi mom"), undef,
     "set an string property to a string");
 
-ok($dev->property_set("comment", "32768"),
+is($dev->property_set("comment", "32768"), undef,
     "set an integer property to a simple string");
 
-ok($dev->property_set("comment", "32k"),
+is($dev->property_set("comment", "32k"), undef,
     "set an integer property to a string with a unit");
 
-ok($dev->property_set("block_size", 32768),
+is($dev->property_set("block_size", 32768), undef,
     "set an integer property to an integer");
 
-ok(!($dev->property_set("invalid-property-name", 32768)),
+is($dev->property_set("invalid-property-name", 32768), "No such device-property",
     "set an invalid-property-name");
 
 $dev->read_label();
@@ -605,7 +614,7 @@ ok($dev->finish(),
 ok($dev->property_get("monitor_free_space"),
     "monitor_free_space property is set by default");
 
-ok($dev->property_set("monitor_free_space", 0),
+is($dev->property_set("monitor_free_space", 0), undef,
     "monitor_free_space property can be set to false");
 
 ok(!$dev->property_get("monitor_free_space"),
@@ -618,11 +627,11 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "512k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
-ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 0),
+is($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 0), undef,
     "set ENFORCE_MAX_VOLUME_USAGE");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -652,11 +661,11 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "512k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
-ok($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 1),
+is($dev->property_set("ENFORCE_MAX_VOLUME_USAGE", 1), undef,
     "set ENFORCE_MAX_VOLUME_USAGE");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -689,9 +698,9 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "512k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "512k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -724,9 +733,9 @@ $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: re-create successful")
     or diag($dev->error_or_status());
-ok($dev->property_set("MAX_VOLUME_USAGE", "160k"),
+is($dev->property_set("MAX_VOLUME_USAGE", "160k"), undef,
     "set MAX_VOLUME_USAGE to test LEOM while writing the first header");
-ok($dev->property_set("LEOM", 1),
+is($dev->property_set("LEOM", 1), undef,
     "set LEOM");
 
 ok($dev->start($ACCESS_WRITE, 'TESTCONF23', undef),
@@ -767,19 +776,19 @@ SKIP: {
         "necessary properties listed on vfs device");
 
     # play with properties a little bit
-    ok($dev->property_set("DVDRW_GROWISOFS_COMMAND", "/path/to/growisofs"),
+    is($dev->property_set("DVDRW_GROWISOFS_COMMAND", "/path/to/growisofs"), undef,
         "set DVDRW_GROWISOFS_COMMAND");
 
-    ok($dev->property_set("dvdrw_mount_command", "/path/to/mount"),
+    is($dev->property_set("dvdrw_mount_command", "/path/to/mount"), undef,
         "set dvdrw_mount_command");
 
-    ok($dev->property_set("dvdrw_umount_command", "/path/to/umount"),
+    is($dev->property_set("dvdrw_umount_command", "/path/to/umount"), undef,
         "set dvdrw_umount_command");
 
-    ok($dev->property_set("block_size", 32768),
+    is($dev->property_set("block_size", 32768), undef,
         "set an integer property to an integer");
 
-    ok(!($dev->property_set("invalid-property-name", 32768)),
+    is($dev->property_set("invalid-property-name", 32768), 'No such device-property',
         "set an invalid-property-name");
 }
 
@@ -802,13 +811,13 @@ properties_include([ $dev->property_list() ], [ @common_properties ],
 is($dev->property_get("block_size"), 32768, # (RAIT default)
     "rait device calculates a default block size correctly");
 
-ok($dev->property_set("block_size", 32768*16),
+is($dev->property_set("block_size", 524288), undef,
     "rait device accepts an explicit block size");
 
 is($dev->property_get("block_size"), 32768*16,
     "..and remembers it");
 
-ok($dev->property_set("max_volume_usage", 32768*1000),
+is($dev->property_set("max_volume_usage", 32768*1000), undef,
     "rait device accepts property MAX_VOLUME_USAGE");
 
 is($dev->property_get("max_volume_usage"), 32768*1000,
@@ -995,37 +1004,37 @@ sub s3_make_device($$) {
     properties_include([ $dev->property_list() ], [ @common_properties, @s3_props ],
 	"necessary properties listed on s3 device");
 
-    ok($dev->property_set('BLOCK_SIZE', 32768*2),
+    is($dev->property_set('BLOCK_SIZE', 32768*2), undef,
 	"set block size")
 	or diag($dev->error_or_status());
 
     # might as well save a few cents while testing this property..
-    ok($dev->property_set('S3_STORAGE_CLASS', 'REDUCED_REDUNDANCY'),
+    is($dev->property_set('S3_STORAGE_CLASS', 'REDUCED_REDUNDANCY'), undef,
 	"set storage class")
 	or diag($dev->error_or_status());
 
     if ($kind eq "s3") {
         # use regular S3 credentials
-        ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
+        is($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY), undef,
            "set S3 access key")
         or diag($dev->error_or_status());
 
-        ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
+        is($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY), undef,
            "set S3 secret key")
             or diag($dev->error_or_status());
 
 	pass("(placeholder)");
     } elsif ($kind eq "devpay") {
         # use devpay credentials
-        ok($dev->property_set('S3_ACCESS_KEY', $DEVPAY_ACCESS_KEY),
+        is($dev->property_set('S3_ACCESS_KEY', $DEVPAY_ACCESS_KEY), undef,
            "set devpay access key")
         or diag($dev->error_or_status());
 
-        ok($dev->property_set('S3_SECRET_KEY', $DEVPAY_SECRET_KEY),
+        is($dev->property_set('S3_SECRET_KEY', $DEVPAY_SECRET_KEY), undef,
            "set devpay secret key")
             or diag($dev->error_or_status());
 
-        ok($dev->property_set('S3_USER_TOKEN', $DEVPAY_USER_TOKEN),
+        is($dev->property_set('S3_USER_TOKEN', $DEVPAY_USER_TOKEN), undef,
            "set devpay user token")
             or diag($dev->error_or_status());
     } else {
@@ -1225,10 +1234,10 @@ SKIP: {
     $dev = s3_make_device($dev_name, "s3");
 
     # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=false
-    ok($dev->property_set('MAX_VOLUME_USAGE', "512k"),
+    is($dev->property_set('MAX_VOLUME_USAGE', "512k"), undef,
        "set MAX_VOLUME_USAGE to test LEOM");
 
-    ok($dev->property_set("LEOM", 1),
+    is($dev->property_set("LEOM", 1), undef,
         "set LEOM");
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef), 
@@ -1252,13 +1261,13 @@ SKIP: {
     $dev = s3_make_device($dev_name, "s3");
 
     # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=true
-    ok($dev->property_set('MAX_VOLUME_USAGE', "512k"),
+    is($dev->property_set('MAX_VOLUME_USAGE', "512k"), undef,
        "set MAX_VOLUME_USAGE to test LEOM");
 
-    ok($dev->property_set('ENFORCE_MAX_VOLUME_USAGE', 1 ),
+    is($dev->property_set('ENFORCE_MAX_VOLUME_USAGE', 1 ), undef,
        "set ENFORCE_MAX_VOLUME_USAGE");
 
-    ok($dev->property_set("LEOM", 1),
+    is($dev->property_set("LEOM", 1), undef,
         "set LEOM");
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef), 
@@ -1282,13 +1291,13 @@ SKIP: {
     $dev = s3_make_device($dev_name, "s3");
 
     # set MAX_VOLUME_USAGE, LEOM=true, ENFORCE_MAX_VOLUME_USAGE=false
-    ok($dev->property_set('MAX_VOLUME_USAGE', "512k"),
+    is($dev->property_set('MAX_VOLUME_USAGE', "512k"), undef,
        "set MAX_VOLUME_USAGE to test LEOM");
 
-    ok($dev->property_set('ENFORCE_MAX_VOLUME_USAGE', 0 ),
+    is($dev->property_set('ENFORCE_MAX_VOLUME_USAGE', 0 ), undef,
        "set ENFORCE_MAX_VOLUME_USAGE");
 
-    ok($dev->property_set("LEOM", 1),
+    is($dev->property_set("LEOM", 1), undef,
         "set LEOM");
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef), 
@@ -1311,7 +1320,7 @@ SKIP: {
     # try with empty user token
     $dev_name = lc("s3:$base_name-s3-6");
     $dev = s3_make_device($dev_name, "s3");
-    ok($dev->property_set('S3_USER_TOKEN', ''),
+    is($dev->property_set('S3_USER_TOKEN', ''), undef,
        "set devpay user token")
         or diag($dev->error_or_status());
 
@@ -1330,7 +1339,7 @@ SKIP: {
     # try a eu-constrained bucket
     $dev_name = lc("s3:$base_name-s3-eu");
     $dev = s3_make_device($dev_name, "s3");
-    ok($dev->property_set('S3_BUCKET_LOCATION', 'EU'),
+    is($dev->property_set('S3_BUCKET_LOCATION', 'EU'), undef,
        "set S3 bucket location to 'EU'")
         or diag($dev->error_or_status());
 
@@ -1351,7 +1360,7 @@ SKIP: {
     # try a wildcard-constrained bucket
     $dev_name = lc("s3:$base_name-s3-wild");
     $dev = s3_make_device($dev_name, "s3");
-    ok($dev->property_set('S3_BUCKET_LOCATION', '*'),
+    is($dev->property_set('S3_BUCKET_LOCATION', '*'), undef,
        "set S3 bucket location to '*'")
         or diag($dev->error_or_status());
 
@@ -1375,7 +1384,7 @@ SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 2
 	    unless $dev->property_get('S3_SSL');
 
-	ok($dev->property_set('SSL_CA_INFO', '/dev/null'),
+	is($dev->property_set('SSL_CA_INFO', '/dev/null'), undef,
 	   "set invalid SSL/TLS CA certificate")
 	    or diag($dev->error_or_status());
 
@@ -1396,7 +1405,7 @@ SKIP: {
     SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 4
 	    unless $dev->property_get('S3_SSL');
-	ok($dev->property_set('SSL_CA_INFO', "$srcdir/data/aws-bundle.crt"),
+	is($dev->property_set('SSL_CA_INFO', "$srcdir/data/aws-bundle.crt"), undef,
 	   "set our own SSL/TLS CA certificate bundle")
 	    or diag($dev->error_or_status());
 
@@ -1423,27 +1432,27 @@ SKIP: {
     $dev_name = "s3:-$base_name-s3-eu-2";
     $dev = s3_make_device($dev_name, "s3");
 
-    ok($dev->property_set('S3_BUCKET_LOCATION', ''),
+    is($dev->property_set('S3_BUCKET_LOCATION', ''), undef,
        "should be able to set an empty S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 
     $dev_name = "s3:$base_name-s3.eu-3";
     $dev = s3_make_device($dev_name, "s3");
 
-    ok($dev->property_set('S3_BUCKET_LOCATION', ''),
+    is($dev->property_set('S3_BUCKET_LOCATION', ''), undef,
        "should be able to set an empty S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 
     $dev_name = "s3:-$base_name-s3-eu";
     $dev = s3_make_device($dev_name, "s3");
 
-    ok(!$dev->property_set('S3_BUCKET_LOCATION', 'EU'),
+    is($dev->property_set('S3_BUCKET_LOCATION', 'EU'), 'CC',
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 
     $dev_name = lc("s3:$base_name-s3-eu-4");
     $dev = s3_make_device($dev_name, "s3");
-    ok($dev->property_set('S3_BUCKET_LOCATION', 'XYZ'),
+    is($dev->property_set('S3_BUCKET_LOCATION', 'XYZ'), undef,
        "should be able to set S3 bucket location with a compatible name")
         or diag($dev->error_or_status());
     $dev->read_label();
@@ -1552,11 +1561,11 @@ SKIP: {
 
     # use a big read_block_size, checking that it's also settable
     # via read_buffer_size
-    ok($dev->property_set("read_buffer_size", 256*1024),
+    is($dev->property_set("read_buffer_size", 256*1024), undef,
 	"can set read_buffer_size");
     is($dev->property_get("read_block_size"), 256*1024,
 	"and its value is reflected in read_block_size");
-    ok($dev->property_set("read_block_size", 32*1024),
+    is($dev->property_set("read_block_size", 32*1024), undef,
 	"can set read_block_size");
 
     ok($dev->start($ACCESS_READ, undef, undef),
@@ -1673,16 +1682,16 @@ SKIP: {
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
 	"creation of an ndmp device succeeds with correct syntax");
 
-    ok($dev->property_set("ndmp_username", "foo"),
+    is($dev->property_set("ndmp_username", "foo"), undef,
 	"set ndmp_username property");
     is($dev->property_get("ndmp_username"), "foo",
 	"..and get the value back");
-    ok($dev->property_set("ndmp_password", "bar"),
+    is($dev->property_set("ndmp_password", "bar"), undef,
 	"set ndmp_password property");
     is($dev->property_get("ndmp_password"), "bar",
 	"..and get the value back");
 
-    ok($dev->property_set("verbose", 1),
+    is($dev->property_set("verbose", 1), undef,
 	"set VERBOSE");
 
     # set 'em back to the defaults
@@ -1691,11 +1700,11 @@ SKIP: {
 
     # use a big read_block_size, checking that it's also settable
     # via read_buffer_size
-    ok($dev->property_set("read_block_size", 256*1024),
+    is($dev->property_set("read_block_size", 256*1024), undef,
     "can set read_block_size");
     is($dev->property_get("read_block_size"), 256*1024,
     "and its value is reflected");
-    ok($dev->property_set("read_block_size", 64*1024),
+    is($dev->property_set("read_block_size", 64*1024), undef,
     "set read_block_size back to something smaller");
 
     # ok, let's fire the thing up

@@ -523,7 +523,8 @@ sub _make_res {
     }
     my ($use_data, $surety, $source) = $device->property_get("USE-DATA");
     if ($source == $PROPERTY_SOURCE_DEFAULT) {
-	$use_data = $device->property_set("USE-DATA", "NO");
+	my $r = $device->property_set("USE-DATA", "NO");
+	$use_data = !$r;
     }
     if (my $err = $self->{'config'}->configure_device($device, $self->{'storage'})) {
 	return $self->make_error("failed", $res_cb,

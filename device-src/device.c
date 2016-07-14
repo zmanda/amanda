@@ -229,7 +229,7 @@ static gboolean default_device_property_get_ex(Device * self, DevicePropertyId i
 					       GValue * val,
 					       PropertySurety *surety,
 					       PropertySource *source);
-static gboolean default_device_property_set_ex(Device *self,
+static char * default_device_property_set_ex(Device *self,
 					       DevicePropertyId id,
 					       GValue * val,
 					       PropertySurety surety,
@@ -725,24 +725,27 @@ dumpfile_t * make_tapeend_header(void) {
  * set error status for problems. */
 static gboolean
 try_set_blocksize(Device * device, guint blocksize) {
-    GValue val;
-    gboolean success;
+    GValue  val;
+    char   *r;
+
     bzero(&val, sizeof(val));
 
     g_value_init(&val, G_TYPE_INT);
     g_value_set_int(&val, blocksize);
-    success = device_property_set(device, PROPERTY_BLOCK_SIZE, &val);
+    r = device_property_set(device, PROPERTY_BLOCK_SIZE, &val);
     g_value_unset(&val);
 
-    if (!success) {
+    if (r) {
 	device_set_error(device,
 	    g_strdup_printf(_("Setting BLOCK_SIZE to %u "
-		    "not supported for device %s.\n"),
-		    blocksize, device->device_name),
+		    "not supported for device %s: %s\n"),
+		    blocksize, device->device_name, r),
 	    DEVICE_STATUS_DEVICE_ERROR);
+	g_free(r);
+	return FALSE;
     }
 
-    return success;
+    return TRUE;
 }
 
 /* A GHFunc (callback for g_hash_table_foreach) */
@@ -754,6 +757,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     const DevicePropertyBase* property_base;
     GValue property_value;
     char   * value;
+    char   * r;
 
     g_return_if_fail(IS_DEVICE(device));
     g_return_if_fail(property_s != NULL);
@@ -792,12 +796,13 @@ static void set_device_property(gpointer key_p, gpointer value_p,
         g_assert (G_VALUE_HOLDS(&property_value, property_base->type));
     }
 
-    if (!device_property_set(device, property_base->ID, &property_value)) {
+    r = device_property_set(device, property_base->ID, &property_value);
+    if (r) {
         /* Device rejects property. */
         if (!device_in_error(device)) {
 	    device_set_error(device,
-		g_strdup_printf(_("Could not set property '%s' to '%s' on %s"),
-			property_base->name, value, device->device_name),
+		g_strdup_printf(_("Could not set property '%s' to '%s' on %s: %s"),
+			property_base->name, value, device->device_name, r),
 		DEVICE_STATUS_DEVICE_ERROR);
 	}
         return;
@@ -816,7 +821,7 @@ set_properties_from_global_config(Device * device) {
             GValue val;
             guint64 length;
             guint blocksize_kb;
-            gboolean success;
+            char *r;
 
             bzero(&val, sizeof(GValue));
 
@@ -833,14 +838,14 @@ set_properties_from_global_config(Device * device) {
 		blocksize_kb = tapetype_get_readblocksize(tapetype);
                 g_value_init(&val, G_TYPE_UINT);
                 g_value_set_uint(&val, blocksize_kb * 1024);
-                success = device_property_set(device,
+                r = device_property_set(device,
                                               PROPERTY_READ_BLOCK_SIZE,
                                               &val);
                 g_value_unset(&val);
-                if (!success) {
+                if (r) {
 		    /* a non-fatal error */
-                    g_warning("Setting READ_BLOCK_SIZE to %ju not supported for device %s.",
-                            1024*(uintmax_t)blocksize_kb, device->device_name);
+                    g_warning("Setting READ_BLOCK_SIZE to %ju not supported for device %s: %s.",
+                            1024*(uintmax_t)blocksize_kb, device->device_name, r);
                 }
             }
 
@@ -1076,7 +1081,7 @@ default_device_property_get_ex(
     return TRUE;
 }
 
-static gboolean
+static char *
 default_device_property_set_ex(
     Device *self,
     DevicePropertyId id,
@@ -1092,32 +1097,32 @@ default_device_property_set_ex(
      * call the relevant setter. */
 
     if (device_in_error(self))
-	return FALSE;
+	return g_strdup("device already in error");
 
     class_properties = DEVICE_GET_CLASS(self)->class_properties;
     if (id >= class_properties->len)
-	return FALSE;
+	return g_strdup("unknwon device-property");
 
     prop = &g_array_index(class_properties, DeviceProperty, id);
     if (prop->base == NULL)
-	return FALSE;
+	return g_strdup("unknwon device-property");
 
     /* check that the type matches */
     if (!G_VALUE_HOLDS(val, prop->base->type))
-	return FALSE;
+	return g_strdup("property can't hold that value");
 
     /* check the phase */
     cur_phase = state_to_phase(self) << PROPERTY_PHASE_SHIFT;
     if (!(prop->access & cur_phase))
-	return FALSE;
+	return g_strdup_printf("Not allowed to set property");
 
     if (prop->setter == NULL)
-	return FALSE;
+	return g_strdup("no prop-setter FF");
 
     if (!prop->setter(self, prop->base, val, surety, source))
-	return FALSE;
+	return g_strdup("prop-setter failed");
 
-    return TRUE;
+    return NULL;
 }
 
 const GSList *
@@ -1411,7 +1416,7 @@ device_property_get_ex(
     return (klass->property_get_ex)(self, id, val, surety, source);
 }
 
-gboolean
+char *
 device_property_set_ex(
 	Device * self,
 	DevicePropertyId id,

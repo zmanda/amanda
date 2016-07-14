@@ -206,7 +206,7 @@ struct _DeviceClass {
 				  GValue * val,
 				  PropertySurety *surety,
 				  PropertySource *source);
-    gboolean (* property_set_ex) (Device * self,
+    char * (* property_set_ex) (Device * self,
 				  DevicePropertyId id,
 				  GValue * val,
 				  PropertySurety surety,
@@ -366,7 +366,7 @@ gboolean 	device_property_get_ex	(Device * self,
 					 PropertySource *source);
 #define		device_property_get(self, id, val) \
     device_property_get_ex((self), (id), (val), NULL, NULL)
-gboolean 	device_property_set_ex	(Device * self,
+char *	 	device_property_set_ex	(Device * self,
                                          DevicePropertyId id,
                                          GValue * val,
 					 PropertySurety surety,

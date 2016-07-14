@@ -2334,13 +2334,9 @@ sub configure_device {
 
     while (my ($propname, $propinfo) = each(%properties)) {
 	for my $value (@{$propinfo->{'values'}}) {
-	    if (!$device->property_set($propname, $value)) {
-		my $msg;
-		    if ($device->status == $DEVICE_STATUS_SUCCESS) {
-			$msg = "Error setting '$propname' on device '".$device->device_name."'";
-		    } else {
-			$msg = $device->error() . " on device '".$device->device_name."'";
-		    }
+	    my $r = $device->property_set($propname, $value);
+	    if ($r) {
+		my $msg = "Error setting device property '$propname' to value '$value' on device '".$device->device_name."': $r";
 		if (exists $propinfo->{'optional'}) {
 		    if ($propinfo->{'optional'} eq 'warn') {
 			warn("$msg (ignored)");

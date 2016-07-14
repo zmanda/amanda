@@ -561,45 +561,44 @@ typedef struct {
 	 * information (in particular, its type) before trying to convert the SV.  */
 	%typemap(in) SV *sv "$1 = $input;"
 
-	gboolean
+	%newobject property_set;
+	char *
 	property_set(DevicePropertyBase *pbase, SV *sv) {
 	    GValue gval;
+	    char *r;
 
-	    if (!pbase)
-		goto fail;
+	    if (!pbase) {
+		return g_strdup("No such device-property");
+	    }
 	    memset(&gval, 0, sizeof(gval));
 	    g_value_init(&gval, pbase->type);
-	    if (!set_gvalue_from_sv(sv, &gval))
-		goto failunset;
+	    if (!set_gvalue_from_sv(sv, &gval)) {
+		return g_strdup("The value is no allowed");
+	    }
 
-	    if (!device_property_set(self, pbase->ID, &gval))
-		goto failunset;
-
+	    r = device_property_set(self, pbase->ID, &gval);
 	    g_value_unset(&gval);
-	    return TRUE;
-	failunset:
-	    g_value_unset(&gval);
-	fail:
-	    return FALSE;
+	    return r;
 	}
 
-	gboolean
+	%newobject property_set_ex;
+	char *
 	property_set_ex(DevicePropertyBase *pbase, SV *sv,
 			PropertySurety surety, PropertySource source) {
 	    GValue gval;
+	    char *r;
+	    if (!pbase) {
+		return g_strdup("No such device-property");
+	    }
 	    memset(&gval, 0, sizeof(gval));
 	    g_value_init(&gval, pbase->type);
-	    if (!set_gvalue_from_sv(sv, &gval))
-		goto fail;
+	    if (!set_gvalue_from_sv(sv, &gval)) {
+		return g_strdup("The value is no allowed");
+	    }
 
-	    if (!device_property_set_ex(self, pbase->ID, &gval, surety, source))
-		goto fail;
-
+	    r = device_property_set_ex(self, pbase->ID, &gval, surety, source);
 	    g_value_unset(&gval);
-	    return TRUE;
-	fail:
-	    g_value_unset(&gval);
-	    return FALSE;
+	    return r;
 	}
 
 	gboolean recycle_file(guint filenum) {
