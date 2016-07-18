@@ -1514,6 +1514,9 @@ sub _handle_fail_line
     } else {
 	$error = join " ", @info[ 4 .. $#info ];
     }
+    if (substr($error,0,1) eq '[' and substr($error,-1,1) eq ']') {
+	$error = substr($error, 1, length($error)-2);
+    }
 
     #TODO: verify that this reaches the right try.  Also, DLE or
     #program?
@@ -1663,7 +1666,7 @@ sub _handle_info_line
 
     my $program_p = $programs->{$program} ||= {};
 
-    if ( $str =~ m/^(\w+) pid (\d+)/ ) {
+    if ( $str =~ m/^([^ ]+) pid (\d+)/ ) {
 	my $pp = $1;
 	my $pid = $2;
 	if ($pp eq $program) {
@@ -1672,7 +1675,7 @@ sub _handle_info_line
         #do not report pid lines
         $self->{'pids'}->{$pid} = 'running';
         return;
-    } elsif ( $str =~ m/^fork (\w+) (\d+) (\d+)/ ) {
+    } elsif ( $str =~ m/^fork ([^ ]+) (\d+) (\d+)/ ) {
 	my $pp = $1;
 	my $pid = $3;
 	if ($pp eq $program) {

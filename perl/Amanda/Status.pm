@@ -735,6 +735,11 @@ REREAD:
 			} else {
 			    die ("bad status on dumper PORT-DUMP: $dle->{'status'}");
 			}
+		    } elsif ($line[6] eq "ABORT") {
+			#7:handle 8:message
+			my $serial=$line[7];
+			my $dle = $dles{$serial};
+			$dle->{'status'} = $DUMP_FAILED;
 		    }
 		} elsif ($line[5] =~ /chunker\d*/) {
 		    if ($line[6] eq "PORT-WRITE" ||
@@ -755,15 +760,23 @@ REREAD:
 			$dle->{'level'} = $level;
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_FAILED) {
-			    die ("bad status on chunker PORT-WRITE: $dle->{'status'}");
+			    die ("bad status on chunker $line[6]: $dle->{'status'}");
 			}
 			$dle->{'status'} = $DUMPING_INIT;
-		    } elsif($line[6] eq "CONTINUE") {
+		    } elsif ($line[6] eq "CONTINUE") {
 			#7:handle 8:filename 9:chunksize 10:use
 			my $serial=$line[7];
 			my $dle = $dles{$serial};
 			if ($dle) {
 			    delete $dle->{'wait_holding_disk'};
+			}
+		    } elsif ($line[6] eq "ABORT") {
+			#7:handle 8:message
+			my $serial=$line[7];
+			my $dle = $dles{$serial};
+			if ($dle) {
+			    delete $dle->{'wait_holding_disk'};
+			    $dle->{'status'} = $DUMP_FAILED;
 			}
 		    }
 		} elsif ($line[5] =~ /taper\d*/) {
@@ -859,7 +872,7 @@ REREAD:
 			}
 			$dlet->{'taper_time'} = $self->{'current_time'};
 			$dlet->{'taped_size'} = 0;
-			$dlet->{'error'} = "";
+			delete $dlet->{'error'};
 			$worker_to_serial{$worker} = $serial;
 		    } elsif ($line[6] eq "PORT-WRITE" ||
 			     $line[6] eq "SHM-WRITE") {
@@ -889,19 +902,19 @@ REREAD:
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_FAILED and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
-			    die ("bad status on taper PORT-WRITE (dumper): $dle->{'status'}");
+			    die ("bad status on taper $line[6] (dumper): $dle->{'status'}");
 			}
 			if ($dlet->{'status'} and
 			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
 			    $dlet->{'status'} != $DUMP_FAILED and
 			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED) {
-			    die ("bad status on taper PORT-WRITE (taper): $dlet->{'status'}");
+			    die ("bad status on taper $line[6] (taper): $dlet->{'status'}");
 			}
 			$dle->{'status'} = $DUMPING_TO_TAPE_INIT;
 			$dlet->{'status'} = $DUMPING_TO_TAPE;
 			$dlet->{'taper_time'} = $self->{'current_time'};
 			$dlet->{'taped_size'} = 0;
-			$dlet->{'error'} = "";
+			delete $dlet->{'error'};
 			$worker_to_serial{$worker} = $serial;
 		    } elsif ($line[6] eq "VAULT-WRITE") {
 			#7:name 8:handle 9:src_storage 10:src_pool 11:src_label 12:host 13:disk 14:level 15:datestamp 16:splitsize 17:diskbuffer 18:fallback_splitsize
@@ -944,7 +957,7 @@ REREAD:
 			$dlet->{'status'} = $VAULTING;
 			$dlet->{'taper_time'} = $self->{'current_time'};
 			$dlet->{'taped_size'} = 0;
-			$dlet->{'error'} = "";
+			delete $dlet->{'error'};
 			$dle->{'storage'}->{$storage_name} = { status   => $VAULTING,
 							       vaulting => 1,
 							       src_storage => $src_storage,
@@ -960,7 +973,7 @@ REREAD:
 			#$taper_nb{$worker1} = $taper_nb{$worker2};
 			#$taper_nb{$worker2} = 0;
 			if (defined $dle) {
-			    $dle->{'error'} = $dle->{'olderror'};
+			    $dle->{'error'} = $dle->{'olderror'} if defined $dle->{'olderror'};
 			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			    my $dlet = $dle->{'storage'}->{$storage};
 			}
@@ -998,7 +1011,7 @@ REREAD:
 			$running_dumper{$line[5]} = "0";
 			$dle->{'dump_time'} = $self->{'current_time'};
 			if (!$dle->{'taper_error'}) {
-			    $dle->{'error'}="dumper: $error";
+			    $dle->{'error'} = "$error";
 			}
 			$self->{'dumpers_active'}--;
 		    } elsif ($line[6] eq "RETRY") {
@@ -1040,6 +1053,7 @@ REREAD:
 			    my $storage_name = $dle->{'dump_to_tape_storage'};
 			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMPING_TO_TAPE_DUMPER;
+			} elsif ($dle->{'status'} == $DUMP_FAILED) {
 			} elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 			    my $storage_name = $dle->{'dump_to_tape_storage'};
 			    my $dlet = $dle->{'storage'}->{$storage_name};
@@ -1052,7 +1066,7 @@ REREAD:
 			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'dump_time'});
 			$running_dumper{$line[5]} = "0";
 			$dle->{'dump_time'} = $self->{'current_time'};
-			$dle->{'error'} = "";
+			#$dle->{'error'} = "";
 			$self->{'dumpers_active'}--;
 		    } elsif ($line[6] eq "ABORT-FINISHED") {
 			#7:handle
@@ -1096,7 +1110,7 @@ REREAD:
 			    $dle->{'partial'} = 1;
 			} else {
 			    $dle->{'partial'} = 0;
-			    $dle->{'error'} = "";
+			    delete $dle->{'error'};
 			}
 		    } elsif ($line[6] eq "FAILED") {
 			my $serial = $line[7];
@@ -1108,7 +1122,11 @@ REREAD:
 			    die("bad status on chunker FAILED: $dle->{'status'}");
 			}
 			$dle->{'status'} = $DUMP_FAILED;
-			$dle->{'error'} = "chunker: " .$line[8] if $dle->{'error'} eq "";
+			if (!exists $dle->{'error'} ||
+			    !defined $dle->{'error'} ||
+			    $dle->{'error'} eq '') {
+			    $dle->{'error'} = $line[8];
+			}
 			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'chunk_time'});
 			$running_dumper{$line[5]} = "0";
 			$dle->{'chunk_time'} = $self->{'current_time'};

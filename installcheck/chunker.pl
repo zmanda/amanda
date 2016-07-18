@@ -399,7 +399,7 @@ wait_for_writer();
 like(chunker_reply, qr/^DUMPER-STATUS $handle$/,
 	"got DUMPER-STATUS") or die;
 chunker_cmd("FAILED $handle");
-like(chunker_reply, qr/^FAILED $handle "\[dumper returned FAILED\]"$/,
+like(chunker_reply, qr/^FAILED $handle "dumper returned FAILED"$/,
 	"got FAILED") or die;
 chunker_cmd("QUIT");
 wait_for_exit();

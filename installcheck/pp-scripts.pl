@@ -841,9 +841,9 @@ EODLE
                                                     ],
                                        'failure_summary' => [
                                                               '  localhost diskname2 lev 0  FAILED [Script \'script-fail\' command \'PRE-DLE-BACKUP\': stderr error:  PRE-DLE-BACKUP]',
-                                                              '  localhost diskname2 lev 0  FAILED Got empty header',
+                                                              '  localhost diskname2 lev 0  FAILED [Got empty header]',
                                                               '  localhost diskname2 lev 0  FAILED [Script \'script-fail\' command \'PRE-DLE-BACKUP\': stderr error:  PRE-DLE-BACKUP]',
-                                                              '  localhost diskname2 lev 0  FAILED Got empty header'
+                                                              '  localhost diskname2 lev 0  FAILED [Got empty header]'
                                                             ],
                                        'usage_by_tape' => [
                                                             {

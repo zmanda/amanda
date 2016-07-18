@@ -184,6 +184,7 @@ sub new
         @errors =
           map { @{ $report->get_program_info($_, "errors", []) }; }
           PROGRAM_ORDER;
+
         ## prepend program name to notes lines.
         foreach my $program (PROGRAM_ORDER) {
             push @notes,
@@ -637,12 +638,12 @@ sub output_error_summaries
 
 	if (   exists $dle->{driver}
 	    && exists $dle->{driver}->{error}) {
-	    push @driver_failures, "$hostname $qdisk lev $dle->{driver}->{level}  FAILED $dle->{driver}->{error}";
+	    push @driver_failures, "$hostname $qdisk lev $dle->{driver}->{level}  FAILED [$dle->{driver}->{error}]";
 	}
 
 	if (   exists $dle->{planner}
 	    && exists $dle->{planner}->{error}) {
-	    push @planner_failures, "$hostname $qdisk lev $dle->{planner}->{level}  FAILED $dle->{planner}->{error}";
+	    push @planner_failures, "$hostname $qdisk lev $dle->{planner}->{level}  FAILED [$dle->{planner}->{error}]";
 	}
 
 	while( my ($timestamp, $tries) = each %$alldumps ) {
@@ -657,12 +658,12 @@ sub output_error_summaries
 		if (exists $try->{dumper} &&
 		    $try->{dumper}->{status} &&
 		    $try->{dumper}->{status} eq 'fail') {
-		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED $try->{dumper}->{error}";
+		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED [$try->{dumper}->{error}]";
 		    $failed = 1;
 		}
 		if (exists $try->{chunker} && exists $try->{dumper} && !exists $dle->{driver} &&
 		    $try->{chunker}->{status} eq 'fail') {
-		    push @dump_failures, "$hostname $qdisk lev $try->{chunker}->{level}  FAILED $try->{chunker}->{error}";
+		    push @dump_failures, "$hostname $qdisk lev $try->{chunker}->{level}  FAILED [$try->{chunker}->{error}]";
 		    $failed = 1;
 		}
 		if (   exists $try->{taper} && exists $try->{dumper} && !exists $dle->{driver}
@@ -680,7 +681,7 @@ sub output_error_summaries
 			    my $errmsg = $try->{taper}{error} || "successfully taped a partial dump";
 			    $flush = "partial taper: $errmsg";
 		        } else {
-			    $flush .= " " . $try->{taper}{error};
+			    $flush .= " [" . $try->{taper}{error} . "]";
 		        }
 
 		        push @dump_failures, "$hostname $qdisk lev $try->{taper}->{level}  $flush";
@@ -1038,7 +1039,7 @@ sub output_details
 		    && $try->{dumper}->{status} eq 'fail') {
 
 		    push @failed_dump_details,
-    "/-- $hostname $qdisk lev $try->{dumper}->{level} FAILED $try->{dumper}->{error}",
+    "/-- $hostname $qdisk lev $try->{dumper}->{level} FAILED [$try->{dumper}->{error}]",
 		      @{ $try->{dumper}->{errors} },
 		      "\\--------";
 

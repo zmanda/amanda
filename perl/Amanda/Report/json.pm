@@ -713,7 +713,7 @@ sub output_details
 		    && $try->{dumper}->{status} eq 'fail') {
 
 		    push @failed_dump_details,
-    "/-- $hostname $qdisk lev $try->{dumper}->{level} FAILED $try->{dumper}->{error}",
+    "/-- $hostname $qdisk lev $try->{dumper}->{level} FAILED [$try->{dumper}->{error}]",
 		      @{ $try->{dumper}->{errors} },
 		      "\\--------";
 

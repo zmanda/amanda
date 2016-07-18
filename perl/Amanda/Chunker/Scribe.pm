@@ -283,6 +283,7 @@ sub new {
 	dump_start_time => undef,
 	last_part_successful => 0,
 	started_writing => 0,
+	result => 'DONE',
     };
 
     return bless ($self, $class);
@@ -503,6 +504,8 @@ sub handle_xmsg {
 	$self->dbg("got msg from xfer dest: $msg");
 	if ($msg->{'type'} == $XMSG_CHUNK_DONE) {
 	    $self->_xmsg_chunk_done($src, $msg, $xfer);
+	} elsif ($msg->{'type'} == $XMSG_ERROR) {
+	    $self->_xmsg_error($src, $msg, $xfer);
 	}
     }
 }
@@ -530,7 +533,11 @@ sub _xmsg_done {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    $self->{'xdh'}->finish_chunk() if defined $self->{'xdh'};
+    my $mesg = $self->{'xdh'}->finish_chunk() if defined $self->{'xdh'};
+    if ($mesg) {
+	$self->{'result'} = 'FAILED';
+	$self->{'feedback'}->notify_error($mesg);
+    }
     if ($msg->{'type'} == $XMSG_DONE) {
 	$self->{'total_duration'} = $msg->{'duration'};
 	$self->dbg("transfer is complete");
@@ -538,16 +545,23 @@ sub _xmsg_done {
     }
 }
 
+sub _xmsg_error {
+    my $self = shift;
+    my ($src, $msg, $xfer) = @_;
+
+    if ($msg->{'type'} == $XMSG_ERROR) {
+	$self->dbg("transfer error");
+	$self->{'result'} = 'FAILED';
+	$self->{'feedback'}->notify_error($msg->{'message'});
+    }
+}
+
 sub _dump_done {
     my $self = shift;
 
-    my $result;
-
-    $result = 'DONE';
-
     my $dump_cb = $self->{'dump_cb'};
     my %dump_cb_args = (
-        result => $result,
+        result => $self->{'result'},
         header_size => $self->{'header_size'},
         data_size => $self->{'data_size'},
         total_duration => $self->{'total_duration'});

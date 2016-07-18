@@ -1926,6 +1926,8 @@ sub local_message {
 	return "invalid '$self->{'field'}' field specified";
     } elsif ($self->{'code'} == 1550000) {
 	return "The version";
+    } elsif ($self->{'code'} == 1560000) {
+	return "Can't set FAILURE is not configure with --with-failure-code";
     }
 }
 

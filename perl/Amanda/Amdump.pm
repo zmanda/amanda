@@ -86,6 +86,7 @@ sub new {
     $self->{'pid'} = $$;
 
     debug("beginning amdump log");
+
     # Must be opened in append so that all subprocess can write to it.
     open($self->{'amdump_log'}, ">>", $self->{'amdump_log_pathname'})
 	or die("could not open amdump log file '$self->{'amdump_log_pathname'}': $!");
@@ -149,7 +150,9 @@ sub run_subprocess {
     my ($proc, @args) = @_;
     $self->check_exec($proc);
 
+    $^F=100;
     my ($rpipe, $wpipe) = POSIX::pipe();
+    $^F=2;
 
     debug("Running $proc " . join(' ', @args));
     my $pid = POSIX::fork();
@@ -158,8 +161,8 @@ sub run_subprocess {
 	POSIX::dup2($null, 0);
 	POSIX::dup2($null, 1);
 	POSIX::dup2($wpipe, 2);
-	close($wpipe);
-	close($rpipe);
+	POSIX::close($wpipe);
+	POSIX::close($rpipe);
 	close($self->{'amdump_log'});
 	exec $proc, @args;
 	#log_add($L_ERROR, "Could not exec $proc: $!");

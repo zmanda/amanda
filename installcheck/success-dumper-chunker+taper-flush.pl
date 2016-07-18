@@ -201,7 +201,6 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'partial' => '0',
 				'level' => '0',
 				'dump_time' => undef,
-				'error' => '',
 				'holding_file' => "$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0",
 				'degr_level' => '-1',
 				'flush' => '0',
@@ -478,7 +477,6 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'status' => '0',
 				#'partial' => '0',
 				'level' => '0',
-				#'error' => '',
 				'holding_file' => "$Installcheck::TMP/holding/$dump_timestamp/localhost.diskname2.0",
 				'storage' => {
 					'TESTCONF' => {
@@ -486,7 +484,6 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 						'status' => '23',
 						'dsize' => '1075200',
 						'taper_time' => undef,
-						'error' => '',
 						'taped_size' => '1075200',
 						'message' => 'flushed',
 						'size' => '1075200',
@@ -665,6 +662,8 @@ DUMP SUMMARY:
 HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
 -------------------------- ---------------------- ---------------- ---------------
 localhost    diskname2   0    1050    1050    --       FLUSH         0:00 999999.9
+
+(brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
 check_amreport($report, $timestamp, "amreport second amdump");

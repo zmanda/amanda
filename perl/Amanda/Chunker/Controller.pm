@@ -404,7 +404,7 @@ sub result_cb {
 	} else {
 	    $msgtype = Amanda::Chunker::Protocol::FAILED;
 	    $logtype = $L_FAIL;
-	    $msg = "[dumper returned FAILED]";
+	    $msg = "dumper returned FAILED";
 	}
     } elsif ($params{'result'} eq 'PARTIAL') {
 	$msgtype = Amanda::Chunker::Protocol::PARTIAL;
@@ -414,6 +414,8 @@ sub result_cb {
 	$logtype = $L_FAIL;
 	if (@{$self->{'input_errors'}}) {
 	    $msg = join '; ', @{$self->{'input_errors'}};
+	} elsif ($self->{'holding_error'}) {
+	    $msg =  $self->{'holding_error'};
 	} else {
 	    $msg = "chunker failed";
 	}
@@ -430,7 +432,7 @@ sub result_cb {
 
     # write a DONE/PARTIAL/FAIL log line
     if ($logtype == $L_FAIL) {
-	log_add($L_FAIL, sprintf("%s %s %s %s %s",
+	log_add($L_FAIL, sprintf("%s %s %s %s [%s]",
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..
 	    quote_string($self->{'diskname'}.""),
 	    $self->{'datestamp'},
@@ -514,6 +516,12 @@ sub notify_no_room {
 	    use    => $use_bytes/1024,
 	    message => ($mesg||"unknown"));
     }
+}
+sub notify_error {
+    my $self = shift;
+    my $mesg = shift;
+
+    $self->{'holding_error'} = $mesg;
 }
 
 sub scribe_notif_log_info {

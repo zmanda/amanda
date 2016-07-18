@@ -1,3 +1,23 @@
+2016-07-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Amdump.pm: Use POSIX::close
+	* perl/Amanda/Chunker/Controller.pm, perl/Amanda/Chunker/Scribe.pm:
+	  Improve error message
+	* perl/Amanda/Config.swg: Add Message for code 1560000
+	* perl/Amanda/Report.pm: Fix parsing of pid and fork L_INFO lines
+	* perl/Amanda/Report/human.pm: Improve error message
+	* perl/Amanda/Report/json.pm: Improve error message
+	* perl/Amanda/Status.pm: Improve parsing
+	* installcheck/Amanda_Rest_Runs.pl
+	  installcheck/amstatus.pl
+	  installcheck/chunker.pl
+	  installcheck/pp-scripts.pl
+	  installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl
+	  installcheck/success-dumper-chunker+taper-flush.pl
+	  installcheck/success-dumper-chunker-2taper-by-level.pl
+	  installcheck/success-dumper-chunker-2taper.pl
+	  installcheck/success-dumper-chunker-taper.pl
+	  installcheck/success-dumper-taper.pl: Fix for changes
+
 2016-07-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c: Improve error reporting
 
