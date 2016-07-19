@@ -1038,16 +1038,22 @@ char *
 childstr(
     pid_t pid)
 {
-    if(pid == dumppid) return program->backup_name;
-    if(pid == comppid) return "compress";
-    if(pid == encpid) return "encrypt";
-    if(pid == indexpid) return "index";
-    if(pid == application_api_pid) {
+    if (pid == comppid) return "compress";
+    if (pid == encpid) return "encrypt";
+    if (pid == indexpid) return "index";
+    if (pid == application_api_pid) {
 	if (!gdle) {
-	    dbprintf("gdle == NULL\n");
+	    g_debug("gdle == NULL");
 	    return "gdle == NULL";
 	}
 	return gdle->program;
+    }
+    if (pid == dumppid) {
+	if (!program) {
+	    g_debug("program == NULL");
+	    return "program == NULL";
+	}
+	return program->backup_name;
     }
     return "unknown";
 }
@@ -1322,7 +1328,7 @@ check_result(
 
     goterror = 0;
 
-    while (process_alive && count < 6) {
+    while (process_alive && count < 600) {
 	process_alive = 0;
 	if (indexpid != -1) {
 	    if ((wpid = waitpid(indexpid, &retstat, WNOHANG)) > 0) {
