@@ -1,3 +1,6 @@
+2016-08-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c: typo
+
 2016-07-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: (childstr): check dumppid at last
 	* client-src/sendbackup.c: (check_result):Increase the timeout to 600

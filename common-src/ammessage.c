@@ -731,7 +731,7 @@ set_message(
     } else if (message->code == 2800033) {
 	msg  = "WARNING: storage '%{storage}': autoflush must be set to 'yes' or 'all' if taperflush (%{taperflush}) is greater that 0";
     } else if (message->code == 2800034) {
-	msg  = "storage '%{storage}': no tapetype specified; you must give a value for the 'tapetype' parameter or the storage";
+	msg  = "storage '%{storage}': no tapetype specified; you must give a value for the 'tapetype' parameter of the storage";
     } else if (message->code == 2800035) {
 	msg  = "storage '%{storage}': runtapes is larger or equal to policy '%{policy}' retention-tapes";
     } else if (message->code == 2800036) {
