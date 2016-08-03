@@ -1,3 +1,6 @@
+2016-08-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amrandom.pl: Fix perl warning
+
 2016-08-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c: typo
 
