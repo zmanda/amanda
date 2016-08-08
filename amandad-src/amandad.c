@@ -1971,6 +1971,27 @@ service_delete(
     if (as->security_handle != NULL)
 	security_close(as->security_handle);
 
+    /* wait for the process to terminate */
+    assert(as->pid > 0);
+    pid = waitpid(as->pid, NULL, WNOHANG);
+    if (pid == 0) {
+	long long delay = 100000;
+	struct timespec tdelay;
+	int t = 0;
+	pid = waitpid(as->pid, NULL, WNOHANG);
+	while (t < 15 && pid == 0) {
+	    tdelay.tv_sec  = delay/1000000000;
+	    tdelay.tv_nsec = delay%1000000000;
+	    nanosleep(&tdelay, NULL);
+	    delay *= 2;
+	    t++;
+	    pid = waitpid(as->pid, NULL, WNOHANG);
+	}
+	if (pid == 0) {
+	    g_debug("Process %d failed to exit", (int)as->pid);
+	}
+    }
+
     /* try to kill the process; if this fails, then it's already dead and
      * likely some of the other zombie cleanup ate its brains, so we don't
      * bother to waitpid for it */
