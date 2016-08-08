@@ -514,7 +514,7 @@ sub _xmsg_chunk_done {
     my $self = shift;
     my ($src, $msg, $xfer) = @_;
 
-    $self->{'header__size'} += $msg->{'header_size'};
+    $self->{'header_size'} += $msg->{'header_size'};
     $self->{'data_size'} += $msg->{'data_size'};
     $self->{'chunk_bytes'} += $msg->{'header_size'} + $msg->{'data_size'};
     $self->{'use_bytes'} -= ($msg->{'header_size'} + $msg->{'data_size'});

@@ -1,4 +1,7 @@
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Chunker/Scribe.pm: fix bad variable name
+
+2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Curinfo/Info.pm: Fix perl warning
 
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
