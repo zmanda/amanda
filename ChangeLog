@@ -1,4 +1,7 @@
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/ambackupd.pl: Fix string comparaison
+
+2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amandad-src/amandad.c: Wait for the child process to terminate
 
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>

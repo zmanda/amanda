@@ -344,7 +344,6 @@ sub do_backup {
     $self->{'mesg_fh'} = FileHandle->new();
     $self->{'mesg_fh'}->fdopen($self->wfd('MESG'), "w");
     $self->{'mesg_fh'}->autoflush(1);
-    close($self->wfd('MESG'));
 
     my $steps = define_steps
 	cb_ref => \$finished_cb;
@@ -860,11 +859,11 @@ sub do_backup {
 	my %params = @_;
 
 	debug("dump_cb: " . Data::Dumper::Dumper(\%params));
-	if ($params{'result'} == 'DONE') {
+	if ($params{'result'} eq 'DONE') {
 	    $self->{'dump_size'} = $params{'data_size'};
 	    $self->{'dump_time'} = $params{'total_duration'};
-	} elsif ($params{'result'} == 'PARTIAL') {
-	} elsif ($params{'result'} == 'FAILED') {
+	} elsif ($params{'result'} eq 'PARTIAL') {
+	} elsif ($params{'result'} eq 'FAILED') {
 	    $self->{'chunker_failed'} = "CHUNKER ERROR MESSAGE" if defined $self->{'chunker_failed'};  #JLM
 	}
     };
