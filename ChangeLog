@@ -1,4 +1,7 @@
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Curinfo/Info.pm: Fix perl warning
+
+2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* xfer-src/element-glue.c: Enable XFER_MECH_WRITEFD, XFER_MECH_MEM_RING
 	  and XFER_MECH_WRITEFD, XFER_MECH_SHM_RING
 

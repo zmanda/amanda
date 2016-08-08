@@ -727,8 +727,8 @@ sub new
         csize   => $csize,
         secs    => $secs,
         date    => $date,
-        filenum => $filenum,
-        label   => $label,
+        filenum => $filenum || '',
+        label   => $label || '',
     };
 
     bless $self, $class;
@@ -770,7 +770,7 @@ sub to_line
     my ($self) = @_;
     return join( " ",
         "stats:",      $self->{level}, $self->{size},    $self->{csize},
-        $self->{secs}, $self->{date},  $self->{filenum}, $self->{label} )
+        $self->{secs}, $self->{date},  $self->{filenum}||'', $self->{label}||'' )
       . "\n";
 }
 
