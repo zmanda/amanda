@@ -1,3 +1,6 @@
+2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/debug.c: Fix race in getting the thread id
+
 2016-08-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/debug.c: Fix race in getting the thread id
 

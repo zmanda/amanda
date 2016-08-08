@@ -810,8 +810,8 @@ printf_arglist_function(void debug_printf, const char *, format)
 	char *text;
 
 	if (db_file != stderr)
-	    prefix = g_strdup_printf("%s: thd-%s: %s:", msg_timestamp(), g_thread_self(), get_pname());
-	else 
+	    prefix = g_strdup_printf("%s: thd-%p: %s:", msg_timestamp(), g_thread_self(), get_pname());
+	else
 	    prefix = g_strdup_printf("%s:", get_pname());
 	arglist_start(argp, format);
 	text = g_strdup_vprintf(format, argp);
