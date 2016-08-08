@@ -1,3 +1,7 @@
+2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c: Enable XFER_MECH_WRITEFD, XFER_MECH_MEM_RING
+	  and XFER_MECH_WRITEFD, XFER_MECH_SHM_RING
+
 2016-08-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amrandom.pl: Fix perl warning
 

@@ -1200,10 +1200,12 @@ worker_thread(
 	break;
 
     case mech_pair(XFER_MECH_READFD, XFER_MECH_MEM_RING):
+    case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_MEM_RING):
 	read_to_mem_ring(self);
 	break;
 
     case mech_pair(XFER_MECH_READFD, XFER_MECH_SHM_RING):
+    case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_SHM_RING):
 	read_to_shm_ring(self);
 	break;
 
@@ -1537,6 +1539,23 @@ setup_impl(
 	self->read_fdp = &self->pipe[0];
 	self->need_thread = TRUE;
 	need_listen_output = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_MEM_RING):
+	make_pipe(self);
+	g_assert(xfer_element_swap_input_fd(elt, self->pipe[1]) == -1);
+	self->pipe[1] = -1; /* upstream will close this for us */
+	self->read_fdp = &self->pipe[0];
+	self->mem_ring = create_mem_ring();
+	self->need_thread = TRUE;
+	break;
+
+    case mech_pair(XFER_MECH_WRITEFD, XFER_MECH_SHM_RING):
+	make_pipe(self);
+	g_assert(xfer_element_swap_input_fd(elt, self->pipe[1]) == -1);
+	self->pipe[1] = -1; /* upstream will close this for us */
+	self->read_fdp = &self->pipe[0];
+	self->need_thread = TRUE;
 	break;
 
     case mech_pair(XFER_MECH_PUSH_BUFFER, XFER_MECH_READFD):
