@@ -461,8 +461,6 @@ sub get_backup
 	    $file_to_close--;
 	    $smesg_src->remove();
 	    close($smesg_ambackup_in);
-	    close($mesg_ambackup_out);
-	    Amanda::MainLoop::quit() if $file_to_close == 0;
 	} else {
 	    syswrite($mesg_ambackup_out, $buf, $blocksize);
 	    debug("sendbackup mesg: $buf");
@@ -481,6 +479,7 @@ sub get_backup
 	debug("read mesg: $blocksize");
 	if (!$blocksize) {
 	    $file_to_close--;
+	    $mesg_src->remove();
 	    $smesg_src->remove();
 	    close($mesg_ambackup_in);
 	    Amanda::MainLoop::quit();
@@ -489,10 +488,12 @@ sub get_backup
 	    for my $line (@lines) {
 		if ($line eq "MESG END") {
 		    $file_to_close--;
+		    $mesg_src->remove();
 		    $smesg_src->remove();
 		    close($mesg_ambackup_in);
 		    Amanda::MainLoop::quit();
 		} else {
+		    debug("server mesg: $line");
 		    print STDOUT "$line\n";
 		}
 	    }

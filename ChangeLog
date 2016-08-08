@@ -1,4 +1,7 @@
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/ambackup.pl: Wait for 'MESG END'
+
+2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/ambackupd.pl: Fix string comparaison
 
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
