@@ -951,10 +951,20 @@ authenticate_request(S3Handle *hdl,
 	/* CanonicalizedResource */
 	g_string_append(auth_string, "/");
 
-	if (key) {
-	    char *esc_key = s3_uri_encode(key, 0);
-	    g_string_append(auth_string, esc_key);
-	    g_free(esc_key);
+	if (hdl->use_subdomain) {
+	    if (key) {
+		char *esc_key = s3_uri_encode(key, 0);
+		g_string_append(auth_string, esc_key);
+		g_free(esc_key);
+	    }
+	} else {
+	    g_string_append(auth_string, bucket);
+	    if (key) {
+		char *esc_key = s3_uri_encode(key, 0);
+		g_string_append(auth_string, "/");
+		g_string_append(auth_string, esc_key);
+		g_free(esc_key);
+	    }
 	}
 	g_string_append(auth_string, "\n");
 
@@ -987,11 +997,17 @@ authenticate_request(S3Handle *hdl,
 	g_string_append(auth_string, "\n");
 
         /* Header must be in alphebetic order */
-	g_string_append(auth_string, "host:");
-	g_string_append(auth_string, bucket);
-	g_string_append(auth_string, ".");
-	g_string_append(auth_string, hdl->host);
-	g_string_append(auth_string, "\n");
+	if (hdl->use_subdomain) {
+	    g_string_append(auth_string, "host:");
+	    g_string_append(auth_string, bucket);
+	    g_string_append(auth_string, ".");
+	    g_string_append(auth_string, hdl->host);
+	    g_string_append(auth_string, "\n");
+	} else {
+	    g_string_append(auth_string, "host:");
+	    g_string_append(auth_string, hdl->host);
+	    g_string_append(auth_string, "\n");
+	}
 	g_string_append(strSignedHeaders, "host");
 
 	g_string_append(auth_string, "x-amz-content-sha256:");
@@ -4048,8 +4064,8 @@ s3_make_bucket(S3Handle *hdl,
                                       hdl->bucket_location)?
                     strncmp(loc_content, hdl->bucket_location, strlen(hdl->bucket_location)) :
                     ('\0' != loc_content[0]))
-                    hdl->last_message = g_strdup(_("The location constraint configured "
-                        "does not match the constraint currently on the bucket"));
+                    hdl->last_message = g_strdup_printf("The location constraint configured (%s) "
+                        "does not match the constraint currently on the bucket (%s)", hdl->bucket_location, loc_content);
                 else
                     result = S3_RESULT_OK;
 		g_free(loc_end_open);

@@ -1,3 +1,7 @@
+2016-08-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: Correctly compute the signature for AWS4 if
+	  S3_SUBDOMAIN is set to OFF
+
 2016-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/ambackup.pl: Wait for 'MESG END'
 
