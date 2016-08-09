@@ -40,6 +40,7 @@
 char **
 safe_env_full(char **add)
 {
+    gboolean keep_all_env;
     static char *safe_env_list[] = {
 	"TZ",
 #ifdef __CYGWIN__
@@ -76,7 +77,12 @@ safe_env_full(char **add)
     for (p = add; p && *p; p++)
 	nadd++;
 
-    if (getuid() == geteuid() && getgid() == getegid()) {
+#ifdef FAILURE_CODE
+    keep_all_env = TRUE;
+#else
+    keep_all_env = (getuid() == geteuid() && getgid() == getegid());
+#endif
+    if (keep_all_env) {
 	env_cnt = 1;
 	for (env = environ; *env != NULL; env++)
 	    env_cnt++;
@@ -89,8 +95,12 @@ safe_env_full(char **add)
 		p++;
 	    }
 	    for (env = environ; *env != NULL; env++) {
+#ifdef FAILURE_CODE
+		{
+#else
 		if (strncmp("LANG=", *env, 5) != 0 &&
 		    strncmp("LC_", *env, 3) != 0) {
+#endif
 		    *p = g_strdup(*env);
 		    p++;
 		}

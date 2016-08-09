@@ -250,6 +250,7 @@ sub config_init {
     my %params = @_;
     my $config_name      = $params{'CONF'};
     my $config_overrides = $params{'config_overrides'};
+    my $failure          = $params{'FAILURE'};
 
     my $status = -1;
     my @result_messages;
@@ -264,6 +265,22 @@ sub config_init {
     }
 
     Amanda::Config::config_uninit();
+    if (defined $failure) {
+	if ($Amanda::Constants::FAILURE_CODE eq "0") {
+	    $status = 404;
+	    push @result_messages, Amanda::Config::Message->new(
+				source_filename => __FILE__,
+				source_line     => __LINE__,
+				code     => 1560000,
+				severity => $Amanda::Message::ERROR);
+	    return ($status, @result_messages);
+	}
+	$ENV{'FAILURE_CODE'} = '1';
+	while (my ($key,$value) = each %{$failure}) {
+	    $ENV{$key} = $value;
+	}
+    }
+
     if (defined $config_overrides) {
 	my $g_config_overrides;
 	if (ref $config_overrides eq 'ARRAY') {

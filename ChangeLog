@@ -1,4 +1,16 @@
 2016-08-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add a --failure-code configure option that allow to inject error in
+	the code
+	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Add --failure-code
+	* common-src/alloc.c (safe_env_full): Keep all ENV if FAILURE_CODE is
+	  define
+	* config/amanda/amanda_configure.m4: Load AMANDA_WITH_FAILURE_CODE
+	* config/amanda/failure_code.m4 (AMANDA_WITH_FAILURE_CODE): Define
+	  FAILURE_CODE if --failure-code
+	* perl/Amanda/Constants.pm.in.src: Add FAILURE_CODE
+	* perl/Amanda/Rest/Configs.pm: Handle FAILURE parameter
+
+2016-08-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/xfer-dest-holding.c (finish_chunk): Return a char *
 	* server-src/xfer-server.h (finish_chunk): modify declaration
 	* perl/Amanda/XferServer.swg (finish_chunk): modify declaration
