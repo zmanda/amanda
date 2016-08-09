@@ -65,7 +65,8 @@ void xfer_dest_holding_start_chunk(
     char *filename,
     guint64 use_bytes);
 
-void xfer_dest_holding_finish_chunk(
+%newobject xfer_dest_holding_finish_chunk;
+char *xfer_dest_holding_finish_chunk(
     XferElement *self);
 
 %newobject xfer_dest_taper_splitter;

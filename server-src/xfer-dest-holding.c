@@ -87,13 +87,18 @@ typedef struct XferDestHolding {
     char       *new_filename;
     dumpfile_t *chunk_header;
     int         fd;
-    guint64     use_bytes;
+    guint64     use_bytes;	      /* bytes we can still write to the chunk file */
     guint64     data_bytes_written;   /* bytes written in the current call */
     guint64     header_bytes_written;
     guint64     chunk_offset;         /* bytes written to the current */
 				      /* chunk, including header      */
 
-    enum { CHUNK_OK, CHUNK_EOF, CHUNK_EOC, CHUNK_NO_ROOM } chunk_status;
+    enum { CHUNK_OK	 = 0,		/* */
+	   CHUNK_EOF	 = 1,		/* we read the complete input */
+	   CHUNK_EOC	 = 2,		/* we are not allowed to write more bytes tothe chunk file */
+	   CHUNK_NO_ROOM = 4,		/* the last write failed with ENOSPC */
+	   CHUNK_FAILED  = 8		/* any other error */
+    } chunk_status;
 } XferDestHolding;
 
 static GType xfer_dest_holding_get_type(void);
@@ -108,13 +113,13 @@ typedef struct {
     XferElementClass __parent__;
 
     void (*start_chunk)(XferDestHolding *self, dumpfile_t *chunk_header, char *filename, guint64 use_bytes);
-    void (*finish_chunk)(XferDestHolding *self);
+    char * (*finish_chunk)(XferDestHolding *self);
     guint64 (*get_chunk_bytes_written)(XferDestHolding *self);
 
 } XferDestHoldingClass;
 
 /* local functions */
-static void close_chunk(XferDestHolding *xdh, char *cont_filename);
+static int close_chunk(XferDestHolding *xdh, char *cont_filename, char **mesg);
 static ssize_t write_header(XferDestHolding *xdh, int fd);
 static size_t full_write_with_fake_enospc(int fd, const void *buf, size_t count);
 
@@ -357,7 +362,10 @@ holding_thread(
 	    /* rewrite old_header */
 	    if (self->filename &&
 		strcmp(self->filename, self->new_filename) != 0) {
-		close_chunk(self, self->new_filename);
+		if (close_chunk(self, self->new_filename, &mesg) == -1) {
+		    self->chunk_status = CHUNK_FAILED;
+		    break;
+		}
 	    }
 	    self->filename = self->new_filename;
 	    self->new_filename = NULL;
@@ -394,6 +402,12 @@ no_room:
 	}
     }
     g_mutex_unlock(self->state_mutex);
+
+    if (self->chunk_status == CHUNK_FAILED) {
+	msg = xmsg_new(XFER_ELEMENT(self), XMSG_ERROR, 0);
+	msg->message = g_strdup(mesg);
+	xfer_queue_message(elt->xfer, msg);
+    }
 
     g_debug("sending XMSG_CRC message");
     g_debug("xfer-dest-holding CRC: %08x     size: %lld",
@@ -620,7 +634,10 @@ shm_holding_thread(
 	    /* rewrite old_header */
 	    if (self->filename &&
 		strcmp(self->filename, self->new_filename) != 0) {
-		close_chunk(self, self->new_filename);
+		if (close_chunk(self, self->new_filename, &mesg) == -1) {
+		    self->chunk_status = CHUNK_FAILED;
+		    break;
+		}
 	    }
 	    self->filename = self->new_filename;
 	    self->new_filename = NULL;
@@ -660,6 +677,13 @@ no_room:
 
     // notify the producer that everythinng is read
     sem_post(elt->shm_ring->sem_write);
+
+    if (self->chunk_status == CHUNK_FAILED) {
+	xfer_cancel_with_error(elt, "%s", mesg);
+	msg = xmsg_new(XFER_ELEMENT(self), XMSG_ERROR, 0);
+	msg->message = g_strdup(mesg);
+	xfer_queue_message(elt->xfer, msg);
+    }
 
     g_debug("sending XMSG_CRC message");
     g_debug("xfer-dest-holding CRC: %08x     size: %lld",
@@ -766,23 +790,34 @@ start_chunk_impl(
     g_mutex_unlock(self->state_mutex);
 }
 
-static void
+static char *
 finish_chunk_impl(
     XferDestHolding *xdh)
 {
     XferDestHolding *self = XFER_DEST_HOLDING(xdh);
+    char *mesg = NULL;
 
     g_mutex_lock(self->state_mutex);
-    close_chunk(self, NULL);
+    if (close_chunk(self, NULL, &mesg) == -1) {
+    }
     g_mutex_unlock(self->state_mutex);
+    return mesg;
 }
 
-static void
+static int
 close_chunk(
     XferDestHolding *xdh,
-    char *cont_filename)
+    char  *cont_filename,
+    char **mesg)
 {
     XferDestHolding *self = XFER_DEST_HOLDING(xdh);
+    int close_result;
+    int save_errno = 0;
+
+    if (self->fd == -1) {
+	errno = ENOSPC; /* BOGUS */
+	return -1;
+    }
 
     lseek(self->fd, 0L, SEEK_SET);
     if (strcmp(self->filename, self->first_filename) == 0) {
@@ -796,11 +831,27 @@ close_chunk(
     } else {
 	self->chunk_header->cont_filename[0] = '\0';
     }
-    write_header(self, self->fd);
-    close(self->fd);
+    close_result = write_header(self, self->fd);
+    if (close_result == -1) {
+	save_errno = errno;
+	*mesg = g_strdup_printf("Failed to rewrite header on holding file '%s': %s", self->filename, strerror(save_errno));
+	close(self->fd);
+	self->fd = -1;
+	g_free(self->filename);
+	self->filename = NULL;
+	errno = save_errno;
+	return close_result;
+    }
+    close_result = close(self->fd);
+    save_errno = errno;
+    if (close_result == -1) {
+	*mesg = g_strdup_printf("Failed to close holding file '%s': %s", self->filename, strerror(save_errno));
+    }
     self->fd = -1;
     g_free(self->filename);
     self->filename = NULL;
+    errno = save_errno;
+    return close_result;
 }
 
 static guint64
@@ -1039,7 +1090,7 @@ xfer_dest_holding_start_chunk(
                                          use_bytes);
 }
 
-void
+char *
 xfer_dest_holding_finish_chunk(
     XferElement *elt)
 {
@@ -1047,6 +1098,6 @@ xfer_dest_holding_finish_chunk(
     g_assert(IS_XFER_DEST_HOLDING(elt));
 
     klass = XFER_DEST_HOLDING_GET_CLASS(elt);
-    klass->finish_chunk(XFER_DEST_HOLDING(elt));
+    return klass->finish_chunk(XFER_DEST_HOLDING(elt));
 }
 

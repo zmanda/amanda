@@ -330,7 +330,9 @@ C<Amanda::Xfer::Msg>, with the following keys:
 start_chunk call be called to write data to a new or on the same file.
 
 To finish the last chunk:
-  $dest->finish_chunk();
+  $mesg = $dest->finish_chunk();
+
+if finish_chunk fail, $mesg is set to a string
 
 =head3 Amanda::Xfer::Dest::Null
 

@@ -1,4 +1,10 @@
 2016-08-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/xfer-dest-holding.c (finish_chunk): Return a char *
+	* server-src/xfer-server.h (finish_chunk): modify declaration
+	* perl/Amanda/XferServer.swg (finish_chunk): modify declaration
+	* perl/Amanda/Xfer.pod: Update documentation
+
+2016-08-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Correctly compute the signature for AWS4 if
 	  S3_SUBDOMAIN is set to OFF
 

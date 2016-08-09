@@ -65,7 +65,7 @@ xfer_dest_holding_start_chunk(
     char *filename,
     guint64 use_bytes);
 
-void
+char *
 xfer_dest_holding_finish_chunk(
     XferElement *elt);
 
