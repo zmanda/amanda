@@ -2639,6 +2639,10 @@ static int progress_func(
     int ret = 0;
     guint64 lnow;
 
+    if (dlnow < 1 && ulnow < 1) {
+	return 0;
+    }
+
     g_mutex_lock(s3t->now_mutex);
     lnow = dlnow;
     if (s3t->dlnow != lnow) {
