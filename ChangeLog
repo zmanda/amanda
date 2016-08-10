@@ -1,3 +1,7 @@
+2016-08-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3-device.c (progress_func): Donot fail if the transfer
+	  is not started
+
 2016-08-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add a --failure-code configure option that allow to inject error in
 	the code
