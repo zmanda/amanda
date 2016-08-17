@@ -556,22 +556,51 @@ bail:
 
 sub diag_diff
 {
-    my ( $a, $b, $msg ) = @_;
+    my ( $a, $b, $text ) = @_;
 
+# line betwwen '  /--' and '  \--------' can be in varying order
+
+    my $fail = 0;
 
     my @a = split /\n/, $a;
     my @b = split /\n/, $b;
-    foreach my $la (@a) {
+    while (defined(my $la = shift @a)) {
 	my $lb = shift @b;
 
+	if ($la =~ /^  \/-- /) {
+	    my @ax;
+	    my @bx;
+	    push @ax, $la;
+	    push @bx, $lb;
+	    while (($la = shift @a) !~ /  \\--------/) {
+		$lb = shift @b;
+		push @ax, $la;
+		push @bx, $lb;
+	    }
+	    $lb = shift @b;
+
+	    @ax = sort @ax;
+	    @bx = sort @bx;
+	    while (defined(my $xa = shift @ax)) {
+		my $xb = shift @bx;
+		if ($xa !~ /^$xb$/){
+		    $fail = 1;
+		    diag("-$xa");
+		    diag("+$xb");
+		}
+	    }
+	}
 	if ($la !~ /^$lb$/){
+		$fail = 1;
 	    diag("-$la");
 	    diag("+$lb");
 	}
     }
     foreach my $lb (@b) {
+	$fail = 1;
 	diag("+$lb");
     }
+    ok(!$fail, "$text: match");
 
 }
 
@@ -583,11 +612,16 @@ sub check_amreport
     my $sorting = shift;
     my $got_report;
 
+    $report =~ s/\\/\\\\/g;
+    $report =~ s/\?/\\?/g;
     $report =~ s/\(/\\(/g;
     $report =~ s/\)/\\)/g;
     $report =~ s/\[/\\[/g;
     $report =~ s/\]/\\]/g;
     $report =~ s/0:00/\\d:\\d\\d/g;
+    $report =~ s/\+/\\+/g;
+    $report =~ s/sendbackup: (.*)-CRC [^:]*:(\d*)/sendbackup: $1-CRC \(\.\*\):$2/g;
+    $report =~ s/PID/\\d\+/g;
     $report =~ s/999999\.9/\[ \\d\]*\\.\\d/g;
     my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
     my $date  = POSIX::strftime('%B %e, %Y', 0, 0, 0, $day, $month - 1, $year - 1900);
@@ -598,9 +632,7 @@ sub check_amreport
     $report =~ s/Hostname: .*$/Hostname: $hostname/mg;
     $report =~ s/brought to you by Amanda version .*\\/brought to you by Amanda version $Amanda::Constants::VERSION\\/g;
 
-    ok(run("amreport", 'TESTCONF'),
-	"$text: run amreport")
-      or diag($Installcheck::Run::stderr);
+    run("amreport", 'TESTCONF');
 
     if ($sorting) {
 	my @lines = split "\n", $Installcheck::Run::stdout;
@@ -642,7 +674,8 @@ sub check_amreport
 	$got_report = $Installcheck::Run::stdout;
     }
 
-    ok($got_report =~ $report, "$text: match") || diag_diff($got_report, $report);
+#    ok($got_report =~ $report, "$text: match") || diag_diff($got_report, $report, $text);
+    diag_diff($got_report, $report, $text);
 #diag("stdout::::${Installcheck::Run::stdout}::::\n");
 #diag("got_report::::${got_report}::::\n");
 #diag("report::::${report}::::\n");
@@ -655,6 +688,8 @@ sub check_amstatus
     my $tracefile = shift;
     my $text = shift || 'amstatus';
 
+    $status =~ s/\\/\\\\/g;
+    $status =~ s/\+/\\\\+/g;
     $status =~ s/\[/\\[/g;
     $status =~ s/\]/\\]/g;
     $status =~ s/Using: .*$/Using: $tracefile/mg;
@@ -666,15 +701,15 @@ sub check_amstatus
     $status =~ s/^(.*dumpers busy[^\)]*\))/$1.*/mg;
     $status =~ s/^(.*dumper busy[^\)]*\))/$1.*/mg;
     $status =~ s/^ *not-idle.*\n//mg;
+    $status =~ s/^holding space   : \d+k/holding space   : \\d\+k/mg;
 
-    ok(run("amstatus", 'TESTCONF', '--file', $tracefile),
-	"$text: run amstatus")
-      or diag($Installcheck::Run::stderr);
+    run("amstatus", 'TESTCONF', '--file', $tracefile);
 
     my $got_status = $Installcheck::Run::stdout;
     $got_status =~ s/^ *not-idle.*\n//mg;
 
-    ok($got_status =~ $status, "$text: match") || diag_diff($got_status, $status);
+#    ok($got_status =~ $status, "$text: match") || diag_diff($got_status, $status, $text);
+    diag_diff($got_status, $status, $text);
 #diag("stdout $got_status");
 #diag("status: $status");
 }

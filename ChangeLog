@@ -1,4 +1,55 @@
 2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c:Fix compiler warning
+	* installcheck/Installcheck/Run.pm: Improvement
+	* installcheck/Makefile.am: Add new amcat* script and new test scripts
+	* installcheck/amcat-error-end.pl: New script that fail on exit
+	* installcheck/amcat-error-no-exec.pl: New script install without
+	  execute bit
+	* installcheck/amcat-error.pl: New script that fail after 65536 bytes
+	* installcheck/amcat.sh: New script that do a cat
+	* installcheck/failure-client-custom-compress-end.pl,
+	  installcheck/failure-client-custom-compress-no-exec.pl,
+	  installcheck/failure-client-custom-compress-not-found.pl,
+	  installcheck/failure-client-custom-compress.pl,
+	  installcheck/failure-client-encrypt-end.pl,
+	  installcheck/failure-client-encrypt-no-exec.pl,
+	  installcheck/failure-client-encrypt-not-found.pl,
+	  installcheck/failure-client-encrypt.pl,
+	  installcheck/failure-server-custom-compress-end.pl,
+	  installcheck/failure-server-custom-compress-no-exec.pl,
+	  installcheck/failure-server-custom-compress-not-found.pl,
+	  installcheck/failure-server-custom-compress.pl,
+	  installcheck/failure-server-encrypt-end.pl,
+	  installcheck/failure-server-encrypt-no-exec.pl,
+	  installcheck/failure-server-encrypt-not-found.pl,
+	  installcheck/failure-server-encrypt.pl: New scripts to test various
+	  error
+	* installcheck/failure-xfer-dest-holding-file-first-close_chunk.pl,
+	  installcheck/failure-xfer-dest-holding-file-open-first-header.pl,
+	  installcheck/failure-xfer-dest-holding-file-open-second-header.pl,
+	  installcheck/failure-xfer-dest-holding-file-second-close_chunk.pl,
+	  installcheck/failure-xfer-dest-holding-file-write-first-data.pl,
+	  installcheck/failure-xfer-dest-holding-file-write-first-header.pl,
+	  installcheck/failure-xfer-dest-holding-file-write-second-data.pl,
+	  installcheck/failure-xfer-dest-holding-file-write-second-header.pl,
+	  installcheck/failure-xfer-dest-holding-shm-first-close_chunk.pl,
+	  installcheck/failure-xfer-dest-holding-shm-open-first-header.pl,
+	  installcheck/failure-xfer-dest-holding-shm-open-second-header.pl,
+	  installcheck/failure-xfer-dest-holding-shm-second-close_chunk.pl,
+	  installcheck/failure-xfer-dest-holding-shm-write-first-data.pl,
+	  installcheck/failure-xfer-dest-holding-shm-write-first-header.pl,
+	  installcheck/failure-xfer-dest-holding-shm-write-second-data.pl,
+	  installcheck/failure-xfer-dest-holding-shm-write-second-header.pl:
+	  New script to test error in xfer-dest-holding.c
+	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
+	  installcheck/success-dumper-chunker+taper-flush.pl,
+	  installcheck/success-dumper-chunker-2taper-by-level.pl,
+	  installcheck/success-dumper-chunker-2taper.pl,
+	  installcheck/success-dumper-chunker-taper.pl,
+	  installcheck/success-dumper-taper.pl: Update for improvement in
+	  Installcheck/Run.pm
+
+2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amandad-src/amandad.c: Fix closing service
 	* client-src/sendbackup.c (stderr_thread): Cancel the shm_ring
 	* common-src/security-util.c: Do not free(rs)
@@ -1995,8 +2046,8 @@
 	  script.
 
 2015-08-31  Jean-Louis Martineau <martineau@zmanda.com>
-	* patching file perl/Amanda/FetchDump.pm: Fix perl warning
-	* patching file server-src/amcheck-device.pl: Fix
+	* perl/Amanda/FetchDump.pm: Fix perl warning
+	* server-src/amcheck-device.pl: Fix
 	* installcheck/Amanda_Rest_Amcheck.pl: Fix
 
 2015-08-27  Jean-Louis Martineau <martineau@zmanda.com>
@@ -3957,7 +4008,7 @@
 	* server-src/driver.c: Remove useless space.
 
 2014-06-19  Jean-Louis Martineau <martineau@zmanda.com>
-	* device-src/Makefile.am, patching file ndmp-src/Makefile.am,
+	* device-src/Makefile.am, ndmp-src/Makefile.am,
 	  xfer-src/Makefile.am: Fix install-build-dependencies.
 
 2014-06-18  Jean-Louis Martineau <martineau@zmanda.com>
@@ -10262,7 +10313,7 @@
 
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/fileheader.c (parse_file_header): Print buf.
-	* patching file recover-src/extract_list.c: Read header in multiple
+	* recover-src/extract_list.c: Read header in multiple
 						    block.
 
 2010-10-26  Jean-Louis Martineau <martineau@zmanda.com>

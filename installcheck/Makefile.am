@@ -74,9 +74,41 @@ server_tests = \
 	amtapetype \
 	chunker \
 	dump-client-custom-compress+amfetchdump \
-	dump-server-custom-compress+amfetchdump \
 	dump-client-encrypt+amfetchdump \
+	dump-server-custom-compress+amfetchdump \
 	dump-server-encrypt+amfetchdump \
+	failure-client-custom-compress \
+	failure-client-custom-compress-end \
+	failure-client-custom-compress-not-found \
+	failure-client-custom-compress-no-exec \
+	failure-client-encrypt \
+	failure-client-encrypt-end \
+	failure-client-encrypt-not-found \
+	failure-client-encrypt-no-exec \
+	failure-server-custom-compress \
+	failure-server-custom-compress-end \
+	failure-server-custom-compress-not-found \
+	failure-server-custom-compress-no-exec \
+	failure-server-encrypt \
+	failure-server-encrypt-end \
+	failure-server-encrypt-not-found \
+	failure-server-encrypt-no-exec \
+	failure-xfer-dest-holding-file-first-close_chunk \
+	failure-xfer-dest-holding-file-second-close_chunk \
+	failure-xfer-dest-holding-file-open-first-header \
+	failure-xfer-dest-holding-file-open-second-header \
+	failure-xfer-dest-holding-file-write-first-data \
+	failure-xfer-dest-holding-file-write-first-header \
+	failure-xfer-dest-holding-file-write-second-data \
+	failure-xfer-dest-holding-file-write-second-header \
+	failure-xfer-dest-holding-shm-first-close_chunk \
+	failure-xfer-dest-holding-shm-second-close_chunk \
+	failure-xfer-dest-holding-shm-open-first-header \
+	failure-xfer-dest-holding-shm-open-second-header \
+	failure-xfer-dest-holding-shm-write-first-data \
+	failure-xfer-dest-holding-shm-write-first-header \
+	failure-xfer-dest-holding-shm-write-second-data \
+	failure-xfer-dest-holding-shm-write-second-header \
 	success-dumper-chunker-taper \
 	success-dumper-chunker-2taper \
 	success-dumper-chunker-2taper-by-level \
@@ -137,7 +169,7 @@ mocks = \
 test_data = \
 	data/aws-bundle.crt
 EXTRA_DIST += $(test_data)
-CLEANFILES += $(all_tests) $(mocks) $(noinst_SCRIPTS)
+CLEANFILES += $(all_tests) $(mocks) $(noinst_SCRIPTS) amcat amcat-error amcat-error-end amcat-error-no-exec
 DISTCLEANFILES += config.log
 
 tests =
@@ -237,7 +269,9 @@ noinst_SCRIPTS = \
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
 
-SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS)
+SCRIPTS_PERL = $(tests) $(mocks) $(noinst_SCRIPTS) amcat-error amcat-error-end amcat-error-no-exec
+SCRIPTS_SHELL = amcat
+
 SCRIPTS_EXTRA_DIST = $(all_tests)
 
 # skip syntax checks on these files, since we're about to run all of them
@@ -262,7 +296,8 @@ clobber_my_config_is_ok:
 
 # newer Test::Harness (v3.18-3.21) implementations get confused by executable
 # test scripts, so this rule chmod a-x's them first
-installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
+installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+	chmod a-x amcat-error-no-exec
 	rm -rf "$(AMANDA_TMPDIR)/installchecks"
 	$(MKDIR_P) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \

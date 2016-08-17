@@ -2516,7 +2516,7 @@ read_datafd(
     /* write the header on the first bytes */
     if (ISSET(status, HEADER_DONE) && !ISSET(status, HEADER_SENT) && size > 0) {
 	/* Use the first in the dataport_list */
-	in_port_t data_port;
+	in_port_t data_port = 0;
 	char *data_host = g_strdup(dataport_list);
 	char *s;
 
