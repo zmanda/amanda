@@ -1,3 +1,9 @@
+2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/Makefile.am: Add amanda-command-file.5.xml
+	* man/xml-source/amanda-command-file.5.xml:Document the command-file
+	  format
+	* man/xml-source/amanda.conf.5.xml: Reorder entries
+
 2016-08-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.c (progress_func): Donot fail if the transfer
 	  is not started

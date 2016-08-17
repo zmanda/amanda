@@ -69,6 +69,7 @@ SERVER_MAN_PAGES =  \
     amtapetype.8 \
     amtoc.8 \
     amvault.8 \
+    amanda-command-file.5 \
     disklist.5 \
     tapelist.5
 
