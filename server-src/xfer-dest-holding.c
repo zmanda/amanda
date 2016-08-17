@@ -196,6 +196,16 @@ holding_thread_consume_block(
     g_cond_broadcast(self->mem_ring->free_cond);
 }
 
+#ifdef FAILURE_CODE
+static int port_open_header = -1;
+static int port_write_header = -1;
+static int port_write_data = -1;
+static int shm_open_header = -1;
+static int shm_write_header = -1;
+static int shm_write_data = -1;
+static int close_chunk_close = -1;
+#endif
+
 /* Write an entire chunk.  Called with the state_mutex held */
 static gboolean
 holding_thread_write_chunk(
@@ -230,8 +240,27 @@ holding_thread_write_chunk(
 	/* note that it's OK to reference these ring_* vars here, as they
 	 * are static at this point */
 	g_mutex_unlock(self->mem_ring->mutex);
+#ifdef FAILURE_CODE
+	{
+	    if (port_write_data == -1) {
+		char *A = getenv("XFER_DEST_HOLDING_PORT_WRITE_DATA");
+		if (A) {
+		    port_write_data = atoi(A);
+		}
+	    }
+	    if (port_write_data == 0) {
+		count = 0;
+		errno = ENOSPC;
+		goto failure_port_write_data;
+	    }
+	    port_write_data--;
+	}
+#endif
 	count = db_full_write(self->fd, self->mem_ring->buffer + self->mem_ring->read_offset,
 			      (guint)to_write);
+#ifdef FAILURE_CODE
+failure_port_write_data:
+#endif
 	g_mutex_lock(self->mem_ring->mutex);
 
 	if (count != to_write) {
@@ -330,7 +359,26 @@ holding_thread(
 	    mkholdingdir(tmp_filename);
 	    *pc = '/';
 
+#ifdef FAILURE_CODE
+	    {
+		if (port_open_header == -1) {
+		    char *A = getenv("XFER_DEST_HOLDING_PORT_OPEN_HEADER");
+		    if (A) {
+			port_open_header = atoi(A);
+		    }
+		}
+		if (port_open_header == 0) {
+		    fd = -1;
+		    errno = ENOSPC;
+		    goto failure_port_open_header;
+		}
+		port_open_header--;
+	    }
+#endif
 	    fd = open(tmp_filename, O_RDWR|O_CREAT|O_TRUNC, 0600);
+#ifdef FAILURE_CODE
+failure_port_open_header:
+#endif
 	    if (fd < 0) {
 		self->chunk_status = CHUNK_NO_ROOM;
 		g_free(mesg);
@@ -346,7 +394,26 @@ holding_thread(
 	    }
 	    self->chunk_header->cont_filename[0] = '\0';
 
+#ifdef FAILURE_CODE
+	    {
+		if (port_write_header == -1) {
+		    char *A = getenv("XFER_DEST_HOLDING_PORT_WRITE_HEADER");
+		    if (A) {
+			port_write_header = atoi(A);
+		    }
+		}
+		if (port_write_header == 0) {
+		    write_header_size = 0;
+		    errno = ENOSPC;
+		    goto failure_port_write_header;
+		}
+		port_write_header--;
+	    }
+#endif
 	    write_header_size = write_header(self, fd);
+#ifdef FAILURE_CODE
+failure_port_write_header:
+#endif
 	    if (write_header_size != HEADER_BLOCK_BYTES) {
 		self->chunk_status = CHUNK_NO_ROOM;
 		mesg = g_strdup_printf("Failed to write header to holding file '%s': %s",
@@ -501,8 +568,27 @@ shm_holding_thread_write_chunk(
 
 	DBG(8, "writing %ju bytes to holding", (uintmax_t)to_write);
 
+#ifdef FAILURE_CODE
+	{
+	    if (shm_write_data == -1) {
+		char *A = getenv("XFER_DEST_HOLDING_SHM_WRITE_DATA");
+		if (A) {
+		    shm_write_data = atoi(A);
+		}
+	    }
+	    if (shm_write_data == 0) {
+		count = 0;
+		errno = ENOSPC;
+		goto failure_shm_write_data;
+	    }
+	    shm_write_data--;
+	}
+#endif
 	count = db_full_write(self->fd, elt->shm_ring->data + elt->shm_ring->mc->read_offset,
 			      (guint)to_write);
+#ifdef FAILURE_CODE
+failure_shm_write_data:
+#endif
 
 	if (count != to_write) {
 	    amfree(*mesg);
@@ -602,7 +688,26 @@ shm_holding_thread(
 	    mkholdingdir(tmp_filename);
 	    *pc = '/';
 
+#ifdef FAILURE_CODE
+	    {
+		if (shm_open_header == -1) {
+		    char *A = getenv("XFER_DEST_HOLDING_SHM_OPEN_HEADER");
+		    if (A) {
+			shm_open_header = atoi(A);
+		    }
+		}
+		if (shm_open_header == 0) {
+		    fd = -1;
+		    errno = ENOSPC;
+		    goto failure_shm_open_header;
+		}
+		shm_open_header--;
+	    }
+#endif
 	    fd = open(tmp_filename, O_RDWR|O_CREAT|O_TRUNC, 0600);
+#ifdef FAILURE_CODE
+failure_shm_open_header:
+#endif
 	    if (fd < 0) {
 		self->chunk_status = CHUNK_NO_ROOM;
 		g_free(mesg);
@@ -618,7 +723,26 @@ shm_holding_thread(
 	    }
 	    self->chunk_header->cont_filename[0] = '\0';
 
+#ifdef FAILURE_CODE
+	    {
+		if (shm_write_header == -1) {
+		    char *A = getenv("XFER_DEST_HOLDING_SHM_WRITE_HEADER");
+		    if (A) {
+			shm_write_header = atoi(A);
+		    }
+		}
+		if (shm_write_header == 0) {
+		    write_header_size = 0;
+		    errno = ENOSPC;
+		    goto failure_shm_write_header;
+		}
+		shm_write_header--;
+	    }
+#endif
 	    write_header_size = write_header(self, fd);
+#ifdef FAILURE_CODE
+failure_shm_write_header:
+#endif
 	    if (write_header_size != HEADER_BLOCK_BYTES) {
 		self->chunk_status = CHUNK_NO_ROOM;
 		mesg = g_strdup_printf("Failed to write header to holding file '%s': %s",
@@ -842,8 +966,28 @@ close_chunk(
 	errno = save_errno;
 	return close_result;
     }
+#ifdef FAILURE_CODE
+    {
+	if (close_chunk_close == -1) {
+	    char *A = getenv("XFER_DEST_HOLDING_CLOSE_CHUNK");
+	    if (A) {
+		close_chunk_close = atoi(A);
+	    }
+	}
+	if (close_chunk_close == 0) {
+	    close(self->fd);
+	    close_result = -1;
+	    save_errno = ENOSPC;
+	    goto failure_close_chunk_close;
+	}
+	close_chunk_close--;
+    }
+#endif
     close_result = close(self->fd);
     save_errno = errno;
+#ifdef FAILURE_CODE
+failure_close_chunk_close:
+#endif
     if (close_result == -1) {
 	*mesg = g_strdup_printf("Failed to close holding file '%s': %s", self->filename, strerror(save_errno));
     }

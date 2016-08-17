@@ -164,6 +164,10 @@ static char *write_to = NULL;
 
 static dumpfile_t file;
 
+#ifdef FAILURE_CODE
+static int disable_network_shm = -1;
+#endif
+
 static int dump_result;
 static int status;
 #define	GOT_INFO_ENDLINE	(1 << 0)
@@ -735,7 +739,7 @@ main(
 
 	    /* connect outf to chunker/taper port */
 
-	    g_debug(_("Sending header to localhost:%d\n"), header_port);
+	    g_debug(_("Sending header to localhost:%d"), header_port);
 	    outfd = stream_client(NULL, "localhost", header_port,
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
@@ -773,6 +777,18 @@ main(
 	    retry_level = -1;
 	    amfree(retry_message);
 	    dumpbytes = dumpsize = headersize = origsize = (off_t)0;
+
+#ifdef FAILURE_CODE
+	    {
+		if (disable_network_shm == -1) {
+		    char *A = getenv("DISABLE_NETWORK_SHM");
+		    if (A)
+			disable_network_shm = 1;
+		    else
+			disable_network_shm = 0;
+		}
+	    }
+#endif
 
 	    rc = startup_dump(hostname,
 			      diskname,
@@ -1592,6 +1608,9 @@ do_dump(
     if (data_path == DATA_PATH_AMANDA) {
 	if (shm_name && !shm_ring_consumer) {
 	    if (g_str_equal(auth, "local") &&
+#ifdef FAILURE_CODE
+		disable_network_shm < 1 &&
+#endif
 		am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name)) {
 		// shm_ring direct
 		db->shm_ring_direct = shm_ring_direct;
@@ -1610,6 +1629,9 @@ do_dump(
 	    }
 	} else if (shm_ring_consumer) {
 	    if (g_str_equal(auth, "local") &&
+#ifdef FAILURE_CODE
+		disable_network_shm < 1 &&
+#endif
 		am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name)) {
 		// ring to fd (server filter)
 		db->shm_ring_consumer = shm_ring_consumer;
@@ -1635,7 +1657,14 @@ do_dump(
     /*
      * Setup a read timeout
      */
+    if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+    }
     timeout(conf_dtimeout);
+    if (shm_thread) {
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
+    }
 
     /*
      * Start the event loop.  This will exit when all five events
@@ -1651,6 +1680,7 @@ do_dump(
 
 	g_thread_join(shm_thread);
 	shm_thread = NULL;
+
 	g_mutex_free(shm_thread_mutex);
 	shm_thread_mutex = NULL;
 	g_cond_free(shm_thread_cond);
@@ -2013,6 +2043,7 @@ handle_shm_ring_to_fd_thread(
 		g_cond_wait(shm_thread_cond, shm_thread_mutex);
 	    }
 	    if (dump_result > 0) {
+		g_cond_broadcast(shm_thread_cond);
 		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
 	    }
@@ -2026,6 +2057,7 @@ handle_shm_ring_to_fd_thread(
 		dump_result = 2;
 		amfree(data_host);
 		stop_dump();
+		g_cond_broadcast(shm_thread_cond);
 		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
 	    }
@@ -2034,13 +2066,10 @@ handle_shm_ring_to_fd_thread(
 	    data_port = atoi(s);
 
 	    if (!header_sent(db)) {
-		dump_result = 2;
-		stop_dump();
+		g_cond_broadcast(shm_thread_cond);
 		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
 	    }
-	    g_cond_broadcast(shm_thread_cond);
-	    g_mutex_unlock(shm_thread_mutex);
 
 	    if (g_str_equal(data_host,"255.255.255.255")) {
 	    }
@@ -2054,35 +2083,44 @@ handle_shm_ring_to_fd_thread(
 		dump_result = 2;
 		amfree(data_host);
 		stop_dump();
+		g_cond_broadcast(shm_thread_cond);
+		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
 	    }
 	    amfree(data_host);
-	dumpsize += (off_t)DISK_BLOCK_KB;
-	headersize += (off_t)DISK_BLOCK_KB;
+	    dumpsize += (off_t)DISK_BLOCK_KB;
+	    headersize += (off_t)DISK_BLOCK_KB;
 
-	if (srvencrypt == ENCRYPT_SERV_CUST) {
-	    write_to = "encryption program";
-	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt, "data encrypt") < 0) {
-		dump_result = 2;
-		aclose(db->fd);
-		stop_dump();
-		return NULL;
+	    if (srvencrypt == ENCRYPT_SERV_CUST) {
+		write_to = "encryption program";
+		if (runencrypt(db->fd, &db->encryptpid, srvencrypt, "data encrypt") < 0) {
+		    dump_result = 2;
+		    aclose(db->fd);
+		    stop_dump();
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
+		    return NULL;
+		}
 	    }
-	}
-	/*
-	 * Now, setup the compress for the data output, and start
-	 * reading the datafd.
-	 */
-	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
-	    write_to = "compression program";
-	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
-		dump_result = 2;
-		aclose(db->fd);
-		stop_dump();
-		return NULL;
+	    /*
+	     * Now, setup the compress for the data output, and start
+	     * reading the datafd.
+	     */
+	    if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
+		write_to = "compression program";
+		if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
+		    dump_result = 2;
+		    aclose(db->fd);
+		    stop_dump();
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
+		    return NULL;
+		}
 	    }
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
 	}
-	}
+
 	while (usable >= db->shm_ring_consumer->block_size || eof_flag) {
 	    gsize to_write = usable;
 	    if (to_write > db->shm_ring_consumer->block_size)
@@ -2090,13 +2128,16 @@ handle_shm_ring_to_fd_thread(
 
 	    if (to_write + read_offset <= shm_ring_size) {
 		if (full_write(db->fd, db->shm_ring_consumer->data + read_offset, to_write) != to_write) {
-		    g_debug("write to %s failed: %s", write_to, strerror(errno));
 		    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(errno));
+		    g_debug("%s", errstr);
+		    g_mutex_lock(shm_thread_mutex);
 		    db->shm_ring_consumer->mc->cancelled = TRUE;
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
 		    aclose(db->fd);
 		    stop_dump();
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
 		}
 		if (db->crc) {
@@ -2106,24 +2147,30 @@ handle_shm_ring_to_fd_thread(
 	    } else {
 		if (full_write(db->fd, db->shm_ring_consumer->data + read_offset,
 			   shm_ring_size - read_offset) != shm_ring_size - read_offset) {
-		    g_debug("write to %s failed: %s", write_to, strerror(errno));
 		    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(errno));
+		    g_debug("%s", errstr);
+		    g_mutex_lock(shm_thread_mutex);
 		    db->shm_ring_consumer->mc->cancelled = TRUE;
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
 		    aclose(db->fd);
 		    stop_dump();
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
 		}
 		if (full_write(db->fd, db->shm_ring_consumer->data,
 			   to_write - shm_ring_size + read_offset) != to_write - shm_ring_size + read_offset) {
-		    g_debug("write to %s failed: %s", write_to, strerror(errno));
 		    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(errno));
+		    g_debug("%s", errstr);
+		    g_mutex_lock(shm_thread_mutex);
 		    db->shm_ring_consumer->mc->cancelled = TRUE;
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
 		    aclose(db->fd);
 		    stop_dump();
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
 		}
 		if (db->crc) {
@@ -2150,7 +2197,10 @@ handle_shm_ring_to_fd_thread(
     }
 
 shm_done:
+    g_mutex_lock(shm_thread_mutex);
     aclose(db->fd);
+    g_cond_broadcast(shm_thread_cond);
+    g_mutex_unlock(shm_thread_mutex);
 
     return NULL;
 }
@@ -2162,10 +2212,12 @@ handle_shm_ring_direct(
     struct databuf *db = (struct databuf *)data;
 
     if (shm_ring_sem_wait(db->shm_ring_direct, db->shm_ring_direct->sem_ready) != 0) {
+	g_mutex_lock(shm_thread_mutex);
 	dump_result = 2;
         stop_dump();
         goto shm_done;
     }
+    g_mutex_lock(shm_thread_mutex);
 
 //    s = strchr(data_host, ',');
 //    if (s) *s = '\0';  /* use first data_port */
@@ -2182,27 +2234,18 @@ handle_shm_ring_direct(
 //    s++;
 //    data_port = atoi(s);
 
-    g_mutex_lock(shm_thread_mutex);
     while (dump_result == 0 &&
 	   (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE))) {
 	g_debug("D sleep while waiting for HEADER_DONE");
 	g_cond_wait(shm_thread_cond, shm_thread_mutex);
     }
     if (dump_result > 0) {
-	g_cond_broadcast(shm_thread_cond);
-	g_mutex_unlock(shm_thread_mutex);
 	goto shm_done;
     }
 
     if (!header_sent(db)) {
-	dump_result = 2;
-	stop_dump();
-	g_cond_broadcast(shm_thread_cond);
-	g_mutex_unlock(shm_thread_mutex);
 	goto shm_done;
     }
-    g_cond_broadcast(shm_thread_cond);
-    g_mutex_unlock(shm_thread_mutex);
 
 //    if (g_str_equal(data_host,"255.255.255.255")) {
 //    }
@@ -2229,6 +2272,8 @@ shm_done:
     } else {
 	sem_post(db->shm_ring_direct->sem_ready);
     }
+    g_cond_broadcast(shm_thread_cond);
+    g_mutex_unlock(shm_thread_mutex);
     return NULL;
 }
 
@@ -2245,6 +2290,9 @@ read_statefd(
 
     switch (size) {
     case -1:
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
 	if (statefile_in_stream) {
 	    aclose(statefile_in_stream);
 	}
@@ -2256,18 +2304,24 @@ read_statefd(
 	}
 	dump_result = 2;
 	stop_dump();
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
 
     case 0:
 	/*
 	 * EOF.  Just shut down the state stream.
 	 */
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
 	if (statefile_in_stream) {
 	    aclose(statefile_in_stream);
 	}
 	if (streams[STATEFD].fd) {
 	    security_stream_close(streams[STATEFD].fd);
-} else {
 	}
 	streams[STATEFD].fd = NULL;
 
@@ -2278,6 +2332,10 @@ read_statefd(
 	    streams[INDEXFD].fd == NULL &&
 	    streams[MESGFD].fd == NULL) {
 	    stop_dump();
+	}
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
 	}
 	return;
 
@@ -2301,7 +2359,14 @@ read_statefd(
 	break;
     }
 
+    if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+    }
     timeout(conf_dtimeout);
+    if (shm_thread) {
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
+    }
 }
 
 /*
@@ -2316,6 +2381,9 @@ read_mesgfd(
     struct databuf *db = cookie;
 
     assert(db != NULL);
+    if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+    }
 
     switch (size) {
     case -1:
@@ -2326,6 +2394,10 @@ read_mesgfd(
 	}
 	dump_result = 2;
 	stop_dump();
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
 
     case 0:
@@ -2351,6 +2423,10 @@ read_mesgfd(
 	if (!ISSET(status, GOT_INFO_ENDLINE)) {
 	    stop_dump();
 	}
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
 
     default:
@@ -2364,15 +2440,6 @@ read_mesgfd(
 	if (data_path == DATA_PATH_AMANDA && set_datafd == 0) {
 	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	    set_datafd = 1;
-	} else {
-	    if (!header_sent(db)) {
-		return;
-	    }
-	}
-	if (shm_thread) {
-	    g_mutex_lock(shm_thread_mutex);
-	    g_cond_broadcast(shm_thread_cond);
-	    g_mutex_unlock(shm_thread_mutex);
 	}
     }
 
@@ -2381,6 +2448,10 @@ read_mesgfd(
      */
     if (!ISSET(status, GOT_RETRY)) {
 	timeout(conf_dtimeout);
+    }
+    if (shm_thread) {
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
     }
 }
 
@@ -2415,6 +2486,9 @@ read_datafd(
     struct databuf *db = cookie;
 
     assert(db != NULL);
+    if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+    }
 
     /*
      * The read failed.  Error out
@@ -2428,6 +2502,10 @@ read_datafd(
 	dump_result = 2;
 	aclose(db->fd);
 	stop_dump();
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
     }
 
@@ -2442,24 +2520,33 @@ read_datafd(
 	char *data_host = g_strdup(dataport_list);
 	char *s;
 
-	s = strchr(data_host, ',');
-	if (s) *s = '\0';  /* use first data_port */
-	s = strrchr(data_host, ':');
-	if (!s) {
-	    g_free(errstr);
-	    errstr = g_strdup("write_tapeheader: no dataport_list");
-	    dump_result = 2;
-	    amfree(data_host);
-	    stop_dump();
-	    return;
+	if (data_host) {
+	    s = strchr(data_host, ',');
+	    if (s) *s = '\0';  /* use first data_port */
+	    s = strrchr(data_host, ':');
+	    if (!s) {
+		g_free(errstr);
+		errstr = g_strdup("write_tapeheader: no dataport_list");
+		dump_result = 2;
+		amfree(data_host);
+		stop_dump();
+		if (shm_thread) {
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
+		}
+		return;
+	    }
+	    *s = '\0';
+	    s++;
+	    data_port = atoi(s);
 	}
-	*s = '\0';
-	s++;
-	data_port = atoi(s);
 
 	if (!header_sent(db)) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
 	    return;
 	}
+	if (data_host) {
 	if (data_path == DATA_PATH_AMANDA) {
 	    /* do indirecttcp */
 	    if (g_str_equal(data_host,"255.255.255.255")) {
@@ -2477,6 +2564,8 @@ read_datafd(
 		    dump_result = 2;
 		    amfree(data_host);
 		    stop_dump();
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
 		    return;
 		}
 	        size = full_read(db->fd, buffer, 32768);
@@ -2487,6 +2576,10 @@ read_datafd(
 		    dump_result = 2;
 		    amfree(data_host);
 		    stop_dump();
+		    if (shm_thread) {
+			g_cond_broadcast(shm_thread_cond);
+			g_mutex_unlock(shm_thread_mutex);
+		    }
 		    return;
 		}
 		aclose(db->fd);
@@ -2497,6 +2590,10 @@ read_datafd(
 		    dump_result = 2;
 		    amfree(data_host);
 		    stop_dump();
+		    if (shm_thread) {
+			g_cond_broadcast(shm_thread_cond);
+			g_mutex_unlock(shm_thread_mutex);
+		    }
 		    return;
                 }
 		*s++ = '\0';
@@ -2515,13 +2612,14 @@ read_datafd(
 		dump_result = 2;
 		amfree(data_host);
 		stop_dump();
+		if (shm_thread) {
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
+		}
 		return;
 	    }
 	}
 	amfree(data_host);
-
-	dumpsize += (off_t)DISK_BLOCK_KB;
-	headersize += (off_t)DISK_BLOCK_KB;
 
 	if (srvencrypt == ENCRYPT_SERV_CUST) {
 	    write_to = "encryption program";
@@ -2529,6 +2627,10 @@ read_datafd(
 		dump_result = 2;
 		aclose(db->fd);
 		stop_dump();
+		if (shm_thread) {
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
+		}
 		return;
 	    }
 	}
@@ -2537,13 +2639,22 @@ read_datafd(
 	 * reading the datafd.
 	 */
 	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
+	    write_to = "compression program";
 	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
 		dump_result = 2;
 		aclose(db->fd);
 		stop_dump();
+		if (shm_thread) {
+		    g_cond_broadcast(shm_thread_cond);
+		    g_mutex_unlock(shm_thread_mutex);
+		}
 		return;
 	    }
 	}
+	}
+
+	dumpsize += (off_t)DISK_BLOCK_KB;
+	headersize += (off_t)DISK_BLOCK_KB;
     }
 
     /*
@@ -2572,6 +2683,10 @@ read_datafd(
 	    streams[STATEFD].fd == NULL) {
 	    stop_dump();
 	}
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
     }
 
@@ -2594,9 +2709,13 @@ read_datafd(
 	if (databuf_write(db, buf, (size_t)size) < 0) {
 	    int save_errno = errno;
 	    g_free(errstr);
-	    errstr = g_strdup_printf(_("data write2: %s"), strerror(save_errno));
+	    errstr = g_strdup_printf("write to %s failed: %s", write_to, strerror(save_errno));
 	    dump_result = 2;
 	    stop_dump();
+	    if (shm_thread) {
+		g_cond_broadcast(shm_thread_cond);
+		g_mutex_unlock(shm_thread_mutex);
+	    }
 	    return;
 	}
     }
@@ -2605,6 +2724,10 @@ read_datafd(
      * Reset the timeout for future reads
      */
     timeout(conf_dtimeout);
+    if (shm_thread) {
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
+    }
 }
 
 /*
@@ -2622,6 +2745,9 @@ read_indexfd(
     fd = *(int *)cookie;
 
     if (size < 0) {
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
 	if (streams[INDEXFD].fd) {
 	    g_free(errstr);
 	    errstr = g_strdup_printf("index read: %s",
@@ -2629,6 +2755,10 @@ read_indexfd(
 	}
 	dump_result = 2;
 	stop_dump();
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
     }
 
@@ -2636,6 +2766,9 @@ read_indexfd(
      * EOF.  Stop and return.
      */
     if (size == 0) {
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
 	if (streams[INDEXFD].fd) {
 	    security_stream_close(streams[INDEXFD].fd);
 	}
@@ -2647,8 +2780,12 @@ read_indexfd(
 	     streams[MESGFD].fd == NULL &&
 	     streams[STATEFD].fd == NULL) {
 	    stop_dump();
-}
+	}
 	aclose(indexout);
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
 	return;
     }
 
@@ -2698,6 +2835,7 @@ handle_filter_stderr(
 
     if (nread <= 0) {
 	event_release(filter->event);
+	filter->event = NULL;
 	aclose(filter->fd);
 	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
 	    /* Add a '\n' at end of buffer */
@@ -2839,7 +2977,7 @@ stop_dump(void)
 	    exit(1);
 	}
 	amfree(errstr);
-	errstr = g_strdup(cmdargs->argv[1]);
+	errstr = g_strdup("Aborted by driver");
 	free_cmdargs(cmdargs);
     }
 
@@ -3484,7 +3622,11 @@ startup_dump(
     if (has_config)
         g_string_append_printf(reqbuf, "config=%s;", get_config_name());
 
-    if (has_data_shm_control_name && g_str_equal(auth,"local")) {
+    if (has_data_shm_control_name &&
+#ifdef FAILURE_CODE
+	disable_network_shm < 1 &&
+#endif
+	g_str_equal(auth,"local")) {
 	if (!shm_name) {
 	    shm_ring_consumer = shm_ring_create();
 	    shm_name = g_strdup(shm_ring_consumer->shm_control_name);

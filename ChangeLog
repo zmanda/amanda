@@ -1,4 +1,15 @@
 2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amandad-src/amandad.c: Fix closing service
+	* client-src/sendbackup.c (stderr_thread): Cancel the shm_ring
+	* common-src/security-util.c: Do not free(rs)
+	* common-src/security.c (security_seterror, security_stream_seterror):
+	  Use g_strdup_vprintf
+	* perl/Amanda/Report/human.pm: Do not report 'Aborted by driver' error
+	* server-src/dumper.c: Take the shm_thread_mutex more often, add
+	  FAILURE_CODE error
+	* server-src/xfer-dest-holding.c: Add FAILURE_CODE error
+
+2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/xml-source/amanda.8.xml: Add amanda-command-file.5
 
 2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>

@@ -1531,10 +1531,10 @@ process_readnetfd(
 
     if (security_stream_write(dh->netfd, as->databuf, (size_t)n) < 0) {
 	/* stream has croaked */
-	pkt_init(&nak, P_NAK, _("ERROR write error on stream %d: %s\n"),
-	    security_stream_id(dh->netfd),
-	    security_stream_geterror(dh->netfd));
-	goto sendnak;
+	event_release(dh->ev_read);
+	dh->ev_read = NULL;
+	close(dh->fd_read);
+	return;
     }
 
     if (start_sendbackup_data) {
@@ -1578,9 +1578,12 @@ process_writenetfd(
     ssize_t	size)
 {
     struct datafd_handle *dh;
+    struct datafd_handle *dh_end;
+    struct active_service *as;
 
     assert(cookie != NULL);
     dh = cookie;
+    as = dh->as;
 
     if (dh->fd_write <= 0) {
 	dbprintf(_("process_writenetfd: dh->fd_write <= 0\n"));
@@ -1588,6 +1591,29 @@ process_writenetfd(
 	full_write(dh->fd_write, buf, (size_t)size);
     } else {
 	aclose(dh->fd_write);
+	if (as->thread && dh->shm_ring) {
+	    g_thread_join(as->thread);
+	    close_consumer_shm_ring(dh->shm_ring);
+	    dh->shm_ring = NULL;
+	    as->thread = NULL;
+	}
+	if (dh->ev_read) {
+	    event_release(dh->ev_read);
+	    dh->ev_read = NULL;
+	    aclose(dh->fd_read);
+	}
+	if (dh->netfd) {
+	    security_stream_close(dh->netfd);
+	    dh->netfd = NULL;
+	}
+
+	dh_end = &as->data[DATA_FD_COUNT];
+	for (dh = &as->data[0]; dh < dh_end; dh++) {
+	    if (dh->netfd != NULL) {
+		return;
+	    }
+	}
+	service_delete(as);
     }
 }
 
@@ -1926,6 +1952,7 @@ service_delete(
     pid_t pid;
     struct datafd_handle *dh;
 
+    amandad_debug(1, _("closing service: %p\n"), as);
     amandad_debug(1, _("closing service: %s\n"),
 		      (as->cmd)?as->cmd:_("??UNKONWN??"));
 

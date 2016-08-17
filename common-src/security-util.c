@@ -710,7 +710,6 @@ tcpm_send_token_callback(
 	rs->closed_by_me = 1;
 	if (rs->closed_by_network) {
 	    amfree(((security_stream_t *)rs)->error);
-	    amfree(rs);
 	}
 
     }
@@ -1168,7 +1167,6 @@ tcpma_stream_server(
     if (rs->rc->read < 0) {
 	sec_tcp_conn_put(rs->rc);
 	amfree(rs->secstr.error);
-	amfree(rs);
 	security_seterror(&rh->sech, _("lost connection to %s"), rh->hostname);
 	return (NULL);
     }
@@ -1207,7 +1205,6 @@ tcpma_stream_close(
     rs->closed_by_me = 1;
     if (rs->closed_by_network) {
 	amfree(((security_stream_t *)rs)->error);
-	amfree(rs);
     }
 }
 
@@ -1264,7 +1261,6 @@ tcp1_stream_server(
 	    security_seterror(&rh->sech,
 			    _("can't create server stream: %s"), strerror(errno));
 	    amfree(rs->secstr.error);
-	    amfree(rs);
 	    return (NULL);
 	}
 	rh->rc->read = rs->socket;
@@ -1338,7 +1334,6 @@ tcp1_stream_client(
 			      _("can't connect stream to %s port %d: %s"),
 			       rh->hostname, id, strerror(errno));
 	    amfree(rs->secstr.error);
-	    amfree(rs);
 	    return (NULL);
         }
 	rh->rc->write = rh->rc->read;
@@ -2232,7 +2227,7 @@ stream_read_callback(
      */
 
     if (rs->rc->pktlen <= 0) {
-	auth_debug(5, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
+	auth_debug(5, _("Xsec: stream_read_callback: %s\n"), rs->rc->errmsg);
 	tcpm_stream_read_cancel(rs);
 	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	if(rs->closed_by_me == 1 && rs->closed_by_network == 0) {
@@ -2342,6 +2337,7 @@ sec_tcp_conn_read_callback(
 	    reader_callback *r_callback = (reader_callback *)reader_callbacks->data;
 	    r_callback->callback(r_callback->s);
 	}
+	/* Must close all events */
 	/* delete our 'accept' reference */
 	if (rc->accept_fn != NULL) {
 	    (*rc->accept_fn)(NULL, NULL);
@@ -2424,7 +2420,7 @@ sec_tcp_conn_read_callback(
     rh->peer = rc->peer;
     rh->rs = tcpma_stream_client(rh, rc->handle);
 
-    auth_debug(1, _("sec: new connection\n"));
+    auth_debug(1, _("sec: new connection %d\n"),rc->handle);
     pkt.body = NULL;
     parse_pkt(&pkt, rc->pkt, (size_t)rc->pktlen);
     auth_debug(1, _("sec: calling accept_fn\n"));

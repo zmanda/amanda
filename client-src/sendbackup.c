@@ -901,13 +901,13 @@ main(
 	    }
 	    g_thread_join(native_crc.thread);
 	    if (have_filter) {
-		g_thread_join(client_crc.thread);
 		if (enc_stderr_pipe.thread) {
 		    g_thread_join(enc_stderr_pipe.thread);
 		}
 		if (comp_stderr_pipe.thread) {
 		    g_thread_join(comp_stderr_pipe.thread);
 		}
+		g_thread_join(client_crc.thread);
 	    }
 
 	    if (shm_ring) {
@@ -1746,6 +1746,13 @@ stderr_thread(
     char *buf;
 
     while ((buf = areads(xx->fd)) != NULL) {
+	if (shm_ring) {
+	    shm_ring->mc->cancelled = TRUE;
+	    sem_post(shm_ring->sem_ready);
+	    sem_post(shm_ring->sem_start);
+	    sem_post(shm_ring->sem_write);
+	    sem_post(shm_ring->sem_read);
+	}
 	if (strncmp(buf, "sendbackup: error [", 19) == 0) {
 	    fdprintf(mesgfd, "%s\n", buf);
 	} else {

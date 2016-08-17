@@ -657,7 +657,8 @@ sub output_error_summaries
 
 		if (exists $try->{dumper} &&
 		    $try->{dumper}->{status} &&
-		    $try->{dumper}->{status} eq 'fail') {
+		    $try->{dumper}->{status} eq 'fail' &&
+		    $try->{dumper}->{error} ne 'Aborted by driver') {
 		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED [$try->{dumper}->{error}]";
 		    $failed = 1;
 		}
@@ -1036,7 +1037,8 @@ sub output_details
 		# check for failed dumper details
 		#
 		if (defined $try->{dumper}
-		    && $try->{dumper}->{status} eq 'fail') {
+		    && $try->{dumper}->{status} eq 'fail'
+		    && $try->{dumper}->{error} ne 'Aborted by driver') {
 
 		    push @failed_dump_details,
     "/-- $hostname $qdisk lev $try->{dumper}->{level} FAILED [$try->{dumper}->{error}]",
