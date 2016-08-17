@@ -1,4 +1,7 @@
 2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda.8.xml: Add amanda-command-file.5
+
+2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/Makefile.am: Add amanda-command-file.5.xml
 	* man/xml-source/amanda-command-file.5.xml:Document the command-file
 	  format

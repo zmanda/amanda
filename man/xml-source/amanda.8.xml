@@ -191,6 +191,9 @@ configuration files for quick reference.</para>
 <listitem>
 <manref name="amanda-archive-format" vol="5"/>,
 </listitem>
+<listitem>
+<manref name="amanda-command-file" vol="5"/>,
+</listitem>
 </itemizedlist>
 </refsect2>
 <refsect2><title>CONCEPTS</title> <!-- a.k.a. any section 7 manpage -->
