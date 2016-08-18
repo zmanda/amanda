@@ -57,7 +57,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 29;
+plan tests => 28;
 
 my $reply;
 
@@ -155,9 +155,9 @@ ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1], 'only one 
 #is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'parts_taped'}, { 'full' => '1',
 #									       'total' => '1',
 #									       'incr' => '0' }, 'parts_taped is correct');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_taped'}, { 'full' => '1',
-									      'total' => '1',
-									      'incr' => '0' }, 'dles_taped is correct');
+#is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_taped'}, { 'full' => '1',
+#									      'total' => '1',
+#									      'incr' => '0' }, 'dles_taped is correct');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_dumped'}, { 'full' => '0',
 									       'total' => '0',
 									       'incr' => '0' }, 'dles_dumped is correct');

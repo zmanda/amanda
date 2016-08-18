@@ -1,8 +1,13 @@
 2016-08-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Makefile.am: Move some test to full_tests or
+	  restore_tests
+	* installcheck/failure-client-custom-compress-end.pl: Remove 1 test
+
+2016-08-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Device.pl: Fix test
 
 2016-08-18  Jean-Louis Martineau <JMartineau@carbonite.com>
-	* installcheck/failure-client-custom-compress-end.pl: Remove 5 tests.
+	* installcheck/failure-client-custom-compress-end.pl: Remove 5 tests
 
 2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c:Fix compiler warning

@@ -72,11 +72,28 @@ server_tests = \
         amtape \
         amlabel \
 	amtapetype \
-	chunker \
-	dump-client-custom-compress+amfetchdump \
-	dump-client-encrypt+amfetchdump \
-	dump-server-custom-compress+amfetchdump \
-	dump-server-encrypt+amfetchdump \
+	chunker
+
+all_tests += $(server_tests)
+
+full_tests = \
+	0_setupcache \
+	Amanda_Rest_Amcheck \
+	amadmin \
+	amcheck \
+	amcheckdump \
+	amdevcheck \
+	amdump \
+	amdump_client \
+	amflush \
+	amoverview \
+	amreport \
+	amrmtape \
+	amserverconfig \
+	amservice \
+	amstatus \
+	amvault \
+	example \
 	failure-client-custom-compress \
 	failure-client-custom-compress-end \
 	failure-client-custom-compress-not-found \
@@ -109,41 +126,24 @@ server_tests = \
 	failure-xfer-dest-holding-shm-write-first-header \
 	failure-xfer-dest-holding-shm-write-second-data \
 	failure-xfer-dest-holding-shm-write-second-header \
+	pp-scripts \
 	success-dumper-chunker-taper \
 	success-dumper-chunker-2taper \
 	success-dumper-chunker-2taper-by-level \
 	success-dumper-taper \
 	success-dumper-chunker+dumper-chunker-taper-flush \
-	success-dumper-chunker+taper-flush
-
-all_tests += $(server_tests)
-
-full_tests = \
-	0_setupcache \
-	Amanda_Rest_Amcheck \
-	amadmin \
-	amcheck \
-	amcheckdump \
-	amdevcheck \
-	amdump \
-	amdump_client \
-	amflush \
-	amoverview \
-	amreport \
-	amrmtape \
-	amserverconfig \
-	amservice \
-	amstatus \
-	amvault \
-	example \
-	pp-scripts \
+	success-dumper-chunker+taper-flush \
 	tape_action
 all_tests += $(full_tests)
 
 restore_tests = \
 	amfetchdump \
 	amidxtaped \
-	amrestore
+	amrestore\
+	dump-client-custom-compress+amfetchdump \
+	dump-client-encrypt+amfetchdump \
+	dump-server-custom-compress+amfetchdump \
+	dump-server-encrypt+amfetchdump
 all_tests += $(restore_tests)
 
 restore_tests_no_check_userid = \
