@@ -1446,7 +1446,7 @@ SKIP: {
     $dev_name = "s3:-$base_name-s3-eu";
     $dev = s3_make_device($dev_name, "s3");
 
-    is($dev->property_set('S3_BUCKET_LOCATION', 'EU'), 'CC',
+    is($dev->property_set('S3_BUCKET_LOCATION', 'EU'), 'prop-setter failed',
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 

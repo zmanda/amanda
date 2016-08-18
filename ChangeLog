@@ -1,4 +1,7 @@
-2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+2016-08-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Device.pl: Fix test
+
+2016-08-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-client-custom-compress-end.pl: Remove 5 tests.
 
 2016-08-17  Jean-Louis Martineau <JMartineau@carbonite.com>
