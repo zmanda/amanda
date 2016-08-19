@@ -1318,7 +1318,9 @@ sub make_new_tape_label {
         $label = $template;
         $label =~ s/SUBSTITUTE_BARCODE/$barcode/g;
 	if ($template =~ /SUBSTITUTE_SLOT/) {
-	    my $slot_label = sprintf("%0*d", $slot_digit, $slot);
+	    my $childslot = $slot;
+	    $childslot =~ s/[^:]*://g;
+	    my $slot_label = sprintf("%0*d", $slot_digit, $childslot);
 	    $label =~ s/SUBSTITUTE_SLOT/$slot_label/g;
 	}
 	if ($template =~ /SUBSTITUTE_BARCODE/ && !defined $barcode) {

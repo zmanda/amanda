@@ -27,7 +27,7 @@ use vars qw( @ISA );
 
 use File::Glob qw( :glob );
 use File::Path;
-use Amanda::Config qw( :getconf );
+use Amanda::Config qw( :getconf string_to_boolean );
 use Amanda::Paths;
 use Amanda::Debug qw( debug warning );
 use Amanda::Util qw( :alternates );
@@ -67,11 +67,11 @@ sub new {
 	($_ eq "ERROR")? "ERROR" : Amanda::Changer->new($_)
     } @kidspecs;
 
-    my $fail_on_error;
-    if (defined $config->{'properties'}->{'fail-on-error'}) {
-	$fail_on_error = string_to_boolean($config->{'properties'}->{'fail-on-error'}->{'values'}[0]);
+    my $allow_missing_changer;
+    if (defined $config->{'properties'}->{'allow-missing-changer'}) {
+	$allow_missing_changer = string_to_boolean($config->{'properties'}->{'allow-missing-changer'}->{'values'}[0]);
     } else {
-	$fail_on_error = 1;
+	$allow_missing_changer = 0;
     }
 
     if (grep { $_->isa("Amanda::Changer::Error") } @children) {
@@ -85,11 +85,15 @@ sub new {
 		$valid++;
 	    }
 	}
-	if ($valid == 0 || $fail_on_error) {
+	if ($valid == 0 || !$allow_missing_changer) {
 	    return Amanda::Changer->make_combined_error(
 		"fatal", [ @annotated_errs ]);
 	}
     }
+
+    @children = map {
+	($_->isa("Amanda::Changer::Error")? "ERROR" : $_);
+    } @children;
 
     my $state_filename;
     my $state_filename_prop = $config->{'properties'}->{'state_filename'};
@@ -120,7 +124,9 @@ sub quit {
 
     # quit each child
     foreach my $child (@{$self->{'children'}}) {
-        $child->quit();
+	if ($child ne "ERROR") {
+	    $child->quit();
+	}
     }
 
     $self->SUPER::quit();
@@ -134,7 +140,7 @@ sub _get_current_slot
     $self->with_locked_state($self->{'state_filename'}, $cb, sub {
 	my ($state, $cb) = @_;
 	$self->{'current_slot'} = $state->{'current_slot'};
-	$self->{'current_slot'} = "0:first" if !defined $self->{'current_slot'};
+	$self->{'current_slot'} = "0:1" if !defined $self->{'current_slot'};
 	$cb->();
     });
 }
@@ -231,7 +237,7 @@ sub load {
 	for my $i (0.. scalar(@$inv)-1) {
 	    my $slot = @$inv[$i]->{'slot'};
 	    my $label = @$inv[$i]->{'label'};
-	    if ($label eq $params{'label'}) {
+	    if (defined $label && $label eq $params{'label'}) {
 		$orig_slot = $slot;
 		return $steps->{'slot_set'}->();
 	    }
@@ -271,6 +277,12 @@ sub load {
 	    }
 	    return $res_cb->($err, undef);
 	};
+	if ($child eq "ERROR") {
+	    return $self->make_error("failed", $res_cb,
+		reason => "invalid",
+		message => "no changer $kid");
+	}
+
 	return $child->load(%params);
     };
 
@@ -604,7 +616,7 @@ sub set_meta_label {
 
     my ($kid, $slot) = split(':', $orig_slot, 2);
     my $child = $self->{'children'}[$kid];
-    if (!defined $child) {
+    if (!defined $child || $child eq "ERROR") {
 	return $self->make_error("failed", $finished_cb,
 	    reason => "invalid",
 	    message => "no changer $kid");
@@ -632,7 +644,7 @@ sub get_meta_label {
 
     my ($kid, $slot) = split(':', $orig_slot, 2);
     my $child = $self->{'children'}[$kid];
-    if (!defined $child) {
+    if (!defined $child || $child eq "ERROR") {
 	return $self->make_error("failed", $finished_cb,
 	    reason => "invalid",
 	    message => "no changer $kid");

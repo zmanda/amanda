@@ -120,10 +120,11 @@ sub new {
 	$self->{'fl'} = Amanda::Util::file_lock->new($self->{'umount_lockfile'})
     }
 
-    $self->_validate();
+    my $err = $self->_validate();
     debug("chg-disk: Dir $dir");
     debug("chg-disk: Using statefile '$self->{state_filename}'");
     return $self->{'fatal_error'} if defined $self->{'fatal_error'};
+    return $err if $err;
 
     return $self;
 }

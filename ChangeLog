@@ -1,3 +1,8 @@
+2016-08-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm (make_new_tape_label): use the child slot
+	* perl/Amanda/Changer/aggregate.pm: Add allow-missing-changer property
+	* perl/Amanda/Changer/disk.pm (new): Return $err if _validate fail
+
 2016-08-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.c (progress_func): Donot fail if the transfer
 	  is not started
