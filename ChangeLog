@@ -1,3 +1,7 @@
+2016-08-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm (make_new_tape_label): use the child slot
+	* perl/Amanda/Changer/aggregate.pm: Add allow-missing-changer property
+
 2016-08-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Makefile.am: Move some test to full_tests or
 	  restore_tests
