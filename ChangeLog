@@ -1,3 +1,6 @@
+2016-08-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Restore.pm: Do not chdir if not an absolute path
+
 2016-08-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm (make_new_tape_label): use the child slot
 	* perl/Amanda/Changer/aggregate.pm: Add allow-missing-changer property

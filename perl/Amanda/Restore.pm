@@ -990,7 +990,12 @@ sub restore {
 
 	# first, go to params{'chdir'} or the original working directory we
 	# were started in
-	my $destdir = $params{'chdir'} || Amanda::Util::get_original_cwd();
+	my $destdir;
+	if ($params{'chdir'} && $params{'chdir'} =~ /^\// && $params{'chdir'} !~ /^\/\//) {
+	    $destdir = $params{'chdir'};
+	} else {
+	    $destdir = Amanda::Util::get_original_cwd();
+	}
 	if (!chdir($destdir)) {
 	    return $steps->{'failure'}->(
 		Amanda::Restore::Message-> new(
