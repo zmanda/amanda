@@ -250,7 +250,7 @@ sub BSU {
 
     while (my $line = <$err>) {
 	chomp($line);
-	next if $line == '';
+	next if $line eq '';
 	push @err, $line;
     }
     close($err);

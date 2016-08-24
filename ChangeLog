@@ -1,3 +1,6 @@
+2016-08-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Extract.pm: Use 'eq' to compare string
+
 2016-08-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Restore.pm: Do not chdir if not an absolute path
 
