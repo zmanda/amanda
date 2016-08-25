@@ -25,9 +25,13 @@ use File::Path;
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run;
+use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Util qw( slurp burp );
 use Amanda::Config qw( :init );
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # set up a basic TESTCONF, and then burp the example configs over amanda.conf
 my $testconf = Installcheck::Config->new();

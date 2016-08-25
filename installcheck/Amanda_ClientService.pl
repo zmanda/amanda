@@ -31,10 +31,12 @@ use Amanda::Util;
 use Amanda::Debug;
 use Amanda::Config qw( :init );
 use Amanda::MainLoop;
+use Installcheck;
 use Socket;
 
 config_init(0, undef);
 Amanda::Debug::dbopen('installcheck');
+Installcheck::log_test_output();
 
 # test connect_streams
 {

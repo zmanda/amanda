@@ -31,6 +31,7 @@ use Amanda::Paths;
 use Amanda::Debug;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 ##
 # First, try amoverview without a config

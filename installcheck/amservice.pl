@@ -25,9 +25,13 @@ use warnings;
 use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run qw( run run_get );
+use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Constants;
 use Amanda::Feature;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $input_filename = "$Installcheck::TMP/amservice_input.txt";
 my $testconf = Installcheck::Run::setup();

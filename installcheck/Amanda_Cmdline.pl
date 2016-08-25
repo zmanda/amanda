@@ -26,6 +26,11 @@ use lib '@amperldir@';
 use Amanda::Paths;
 use Amanda::Cmdline qw( header_matches_dumpspecs );
 use Amanda::Header;
+use Installcheck;
+use Amanda::Debug;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my @specs;
 my $hdr;

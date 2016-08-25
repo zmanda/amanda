@@ -24,9 +24,14 @@ use strict;
 use warnings;
 
 use lib '@amperldir@';
+use Installcheck;
 use Installcheck::Run qw(run run_get run_err);
+use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Constants;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $testconf;
 my $runtar = "$amlibexecdir/runtar";

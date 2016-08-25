@@ -31,9 +31,6 @@ use Installcheck::Application;
 use IO::File;
 use Data::Dumper;
 
-Amanda::Debug::dbopen("installcheck");
-Installcheck::log_test_output();
-
 unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
     SKIP: {
         skip("GNU tar is not available", Test::More->builder->expected_tests);

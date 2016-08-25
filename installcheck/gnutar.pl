@@ -29,6 +29,7 @@ use lib '@amperldir@';
 use Installcheck;
 use IPC::Open3;
 use Amanda::Constants;
+use Amanda::Debug;
 use Amanda::Util qw( slurp );
 
 ## this is an unusual installcheck, because it does not test anything about

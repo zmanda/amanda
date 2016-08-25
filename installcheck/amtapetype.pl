@@ -23,9 +23,13 @@ use strict;
 use warnings;
 
 use lib '@amperldir@';
+use Installcheck;
 use Installcheck::Run qw(run run_get run_err vtape_dir);
-
+use Amanda::Debug;
 use File::Path qw(rmtree);
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 ##
 # First, check that the script runs -- this is essentially a syntax/strict

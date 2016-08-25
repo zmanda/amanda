@@ -27,6 +27,10 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Mock qw( setup_mock_mtx );
 use Installcheck::Run qw( run run_get run_err );
+use Amanda::Debug;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $vtape_root = "$Installcheck::TMP/mock_mtx_vtapes";
 my $mtx_state_file = setup_mock_mtx (

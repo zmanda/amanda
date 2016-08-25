@@ -23,12 +23,17 @@ use strict;
 use warnings;
 
 use lib '@amperldir@';
+use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Amanda::Config qw( :init );
+use Amanda::Debug;
 use Amanda::Paths;
 use Sys::Hostname;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $testconf;
 

@@ -29,6 +29,7 @@ use Installcheck;
 use POSIX;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # Data::Dumper is used to output strings with control characters
 # in them, below

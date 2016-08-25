@@ -25,6 +25,7 @@ use strict;
 use warnings;
 use Installcheck;
 use Amanda::Constants;
+use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Tests;
 use File::Path;
@@ -37,6 +38,9 @@ unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
     }
     exit 0;
 }
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $app = Installcheck::Application->new('amraw');
 

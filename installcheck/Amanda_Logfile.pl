@@ -37,6 +37,7 @@ use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $log_filename = "$Installcheck::TMP/Amanda_Logfile_test.log";
 

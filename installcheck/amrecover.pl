@@ -45,6 +45,9 @@ if (!$Installcheck::Run::have_expect) {
     exit 0;
 }
 
+#Amanda::Debug::dbopen("installcheck");
+#Installcheck::log_test_output();
+
 # amrecover can successfully set the host if its hostname is localhost
 my $hostname = hostname;
 my $set_host_succeed = 0;

@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use lib '@amperldir@';
+use Installcheck;
 use Installcheck::Run;
 use Installcheck::Mock;
 use IO::Handle;

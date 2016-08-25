@@ -27,6 +27,7 @@ use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Amanda::Config qw( :init );
+use Amanda::Debug;
 use Amanda::Paths;
 use warnings;
 use strict;

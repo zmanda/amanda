@@ -37,6 +37,7 @@ use Amanda::Changer;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $ndmp = Installcheck::Mock::NdmpServer->new();
 

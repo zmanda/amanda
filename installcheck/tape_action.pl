@@ -22,10 +22,12 @@ use strict;
 use warnings;
 
 use lib '@amperldir@';
+use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname $holdingdir $exit_code $taperoot amdump_diag clean_taperoot);
 use Amanda::Config qw( :init );
+use Amanda::Debug;
 use Amanda::Paths;
 use File::Path;
 

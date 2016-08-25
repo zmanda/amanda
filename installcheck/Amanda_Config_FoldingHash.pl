@@ -25,6 +25,11 @@ use warnings;
 use lib '@amperldir@';
 use Amanda::Config::FoldingHash;
 use Data::Dumper;
+use Installcheck;
+use Amanda::Debug;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $h = Amanda::Config::FoldingHash->new();
 ok(!(exists $h->{'key'}), "key doesn't exist in new hash");

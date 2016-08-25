@@ -34,6 +34,7 @@ use Amanda::Debug;
 use Data::Dumper;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $arch_filename = "$Installcheck::TMP/amanda_archive.bin";
 my $data_filename = "$Installcheck::TMP/some_data.bin";

@@ -32,6 +32,7 @@ my $ndmp = Installcheck::Mock::NdmpServer->new();
 my $nc;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 $nc = Amanda::NDMP::NDMPConnection->new("127.0.0.1", $ndmp->{'port'},
 				    "ndmp", "ndmp", "md5");

@@ -28,6 +28,10 @@ use Installcheck::Run qw( run run_get );
 use Amanda::Paths;
 use Amanda::Constants;
 use File::Path qw( mkpath rmtree );
+use Amanda::Debug;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $tmpdir = "$Installcheck::TMP/amarchiver-installcheck";
 my $archfile = "$tmpdir/test.amar";

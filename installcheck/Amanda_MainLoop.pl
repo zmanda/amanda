@@ -27,6 +27,11 @@ use IO::Pipe;
 use lib '@amperldir@';
 use Amanda::MainLoop qw( :GIOCondition make_cb define_steps step );
 use Amanda::Util;
+use Installcheck;
+use Amanda::Debug;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 {
     my $global = 0;

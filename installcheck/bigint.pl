@@ -23,9 +23,14 @@ use strict;
 use warnings;
 
 use lib '@amperldir@';
+use Installcheck;
+use Amanda::Debug;
 use Amanda::Tests;
 use Math::BigInt;
 use Amanda::BigIntCompat;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 # define some constants; Perl doesn't have native 64-bit numbers, so
 # none are tested 

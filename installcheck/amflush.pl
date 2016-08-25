@@ -33,6 +33,7 @@ use Amanda::Header;
 use Amanda::Debug;
 
 Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $testconf;
 my $vtape_dir;

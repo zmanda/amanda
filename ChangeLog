@@ -1,4 +1,7 @@
 2016-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/*.pl: Make sure they all log their results
+
+2016-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: fix
 
 2016-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>

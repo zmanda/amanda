@@ -49,7 +49,7 @@ The temporary directory for installcheck data. This directory is created for you
 
 =item C<log_test_output()>
 
-Calling this function causes status meesages from tests (e.g. "ok 1 - some test")
+Calling this function causes status messages from tests (e.g. "ok 1 - some test")
 to be recorded in the debug logs. It should be called exactly once.
 
 =item C<get_unused_port()>

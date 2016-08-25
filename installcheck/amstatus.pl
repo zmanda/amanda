@@ -26,8 +26,12 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run qw( run run_get );
 use Installcheck::Catalogs;
+use Amanda::Debug;
 use Amanda::Paths;
 use Amanda::Constants;
+
+Amanda::Debug::dbopen("installcheck");
+Installcheck::log_test_output();
 
 my $cat;
 my $testconf = Installcheck::Run::setup();
