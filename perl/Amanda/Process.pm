@@ -32,7 +32,7 @@ sub local_message {
     if ($self->{'code'} == 3500000) {
 	return "pid $self->{'pid'} doesn't match: $self->{'pname'} != $self->{'ps_pname'}";
     } elsif ($self->{'code'} == 3500001) {
-	return "Sendding $self->{'signal'} signal to process '$self->{'process'}' (pid $self->{'pid'})";
+	return "Sending $self->{'signal'} signal to process '$self->{'process'}' (pid $self->{'pid'})";
     } elsif ($self->{'code'} == 3500002) {
 	return "pid $self->{'pid'} is done";
     } elsif ($self->{'code'} == 3500003) {
