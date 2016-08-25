@@ -204,7 +204,7 @@ sub new {
 	$self->{'start_time'} = time;
 	log_add($L_START, "date " . $self->{'dst_write_timestamp'});
 	my $hostname = hostname;
-	log_add($L_STATS,_("hostname %s"), $hostname);
+	log_add($L_STATS, "hostname $hostname");
 	Amanda::Debug::add_amanda_log_handler($amanda_log_trace_log);
 	$self->{'cleanup'}{'created_log'} = 1;
 

@@ -1,4 +1,7 @@
 2016-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Vault.pm: fix
+
+2016-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: Log a 'STATS hostname' line
 	* perl/Amanda/Report.pm: Parse the amvault 'STATS hostname' line
 	* perl/Amanda/Report/json.pm: Always include the head section
