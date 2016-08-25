@@ -1587,6 +1587,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                               '  ns-new.slikon.local /opt/var lev 0  FAILED [/bin/tar exited with status 2: see /var/log/amanda/client/Daily/amgtar.20090326134714000.debug]',
                                                               '  ns-new.slikon.local /opt/var lev 0  partial taper: successfully taped a partial dump'
                                                             ],
+                                       'head' => {
+                                                   'org' => 'DailySet1',
+                                                   'config_name' => 'TESTCONF',
+                                                   'date' => 'March 26, 2009',
+                                                   'exit_status' => '4',
+                                                   'status' => 'done',
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090326001503',
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -2162,6 +2171,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                               '  ns-new.slikon.local /home RESULTS MISSING',
                                                               '  ns-new.slikon.local /boot lev 0  FAILED [planner failed]'
                                                             ],
+                                       'head' => {
+                                                   'org' => 'DailySet1',
+                                                   'config_name' => 'TESTCONF',
+                                                   'date' => 'March 26, 2009',
+                                                   'exit_status' => '12',
+                                                   'status' => 'done',
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090326001503',
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -2363,6 +2381,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                              'full' => '1291.72228436385'
                                                                            }
                                                       },
+                                       'head' => {
+                                                   'org' => 'DailySet1',
+                                                   'config_name' => 'TESTCONF',
+                                                   'date' => 'March 26, 2009',
+                                                   'exit_status' => '2',
+                                                   'status' => 'done',
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090326001503',
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -2517,6 +2544,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                              'full' => '1291.72228436385'
                                                                            }
                                                       },
+                                       'head' => {
+                                                   'org' => 'DailySet1',
+                                                   'config_name' => 'TESTCONF',
+                                                   'date' => 'March 26, 2009',
+                                                   'exit_status' => '2',
+                                                   'status' => 'done',
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090326001503',
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -2764,6 +2800,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                              'full' => '18078.1141266527'
                                                                            }
                                                       },
+                                       'head' => {
+                                                   'org' => 'DailySet1',
+                                                   'config_name' => 'TESTCONF',
+                                                   'date' => 'March 26, 2009',
+                                                   'exit_status' => '0',
+                                                   'status' => 'done',
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090326001503',
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -2905,6 +2950,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                               '  jamon.slikon.local /var lev 0  FAILED [/bin/tar exited with status 2: see /var/log/amanda/client/Daily/amgtar.20090326133640000.debug]',
                                                               '  jamon.slikon.local /var lev 0  was successfully retried'
                                                             ],
+                                       'head' => {
+                                                   'org' => 'DailySet1',
+                                                   'config_name' => 'TESTCONF',
+                                                   'date' => 'March 26, 2009',
+                                                   'exit_status' => '0',
+                                                   'status' => 'done',
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'timestamp' => '20090326001503',
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -3232,6 +3286,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                              'full' => '10059.1311192743'
                                                                            }
                                                       },
+                                       'head' => {
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'config_name' => 'TESTCONF',
+                                                   'timestamp' => '20090326001503',
+                                                   'date' => 'March 26, 2009',
+                                                   'status' => 'done',
+                                                   'org' => 'DailySet1',
+                                                   'exit_status' => '0'
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,
@@ -4272,6 +4335,15 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                              'full' => undef
                                                                            }
                                                       },
+                                       'head' => {
+                                                   'hostname' => 'localhost.localdomain',
+                                                   'config_name' => 'TESTCONF',
+                                                   'timestamp' => '20090326001503',
+                                                   'date' => 'March 26, 2009',
+                                                   'status' => 'done',
+                                                   'org' => 'DailySet1',
+                                                   'exit_status' => '0'
+                                                 },
                                        'summary' => [
                                                       {
                                                         'last_tape_label' => undef,

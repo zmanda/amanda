@@ -1,6 +1,7 @@
 %F log/log
 START planner date 20090326001503
 START driver date 20090326001503
+STATS driver hostname localhost.localdomain
 INFO amdump amdump pid 22014
 INFO driver driver pid 22043
 INFO planner planner pid 22042
@@ -36,8 +37,11 @@ PARTIAL chunker ns-new.slikon.local /opt/var 20090326001503 0 [sec 123.421 kb 54
 PART taper Daily-13 1 ns-new.slikon.local /opt/var 20090326001503 1/1 0 [sec 3.555085 kb 54929 kps 15451.027696]
 PARTIAL taper ns-new.slikon.local /opt/var 20090326001503 1 0 [sec 3.555085 kb 54929 kps 15451.027696]
 FINISH driver date 20090326001503 time 77506.015
+INFO driver pid-done 22043
+INFO amdump pid-done 22014
 
 %T report
+Hostname: localhost.localdomain
 Org : DailySet1
 Config : TESTCONF
 Date : March 26, 2009

@@ -4,6 +4,7 @@
 INFO amdump amdump pid 28953
 START planner date 20090326001503
 START driver date 20090326001503
+STATS driver hostname localhost.localdomain
 INFO amdump amdump pid 22014
 INFO driver driver pid 22043
 INFO planner planner pid 22042
@@ -14,9 +15,10 @@ START taper datestamp 20090326001503 label Daily-36 tape 1
 INFO dumper pid-done 7337
 FINISH driver date 20090326001503 time 77506.015
 INFO driver pid-done 22043
-INFO amdump pid-done 28953
+INFO amdump pid-done 22014
 
 %T report
+Hostname: localhost.localdomain
 Org : DailySet1
 Config : TESTCONF
 Date : March 26, 2009

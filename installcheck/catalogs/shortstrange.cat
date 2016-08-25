@@ -3,6 +3,7 @@
 %F log/log
 START planner date 20090326001503
 START driver date 20090326001503
+STATS driver hostname localhost.localdomain
 INFO amdump amdump pid 22014
 INFO driver driver pid 22043
 INFO planner planner pid 22042
@@ -28,8 +29,11 @@ STATS driver estimate bsdfw.slikon.local / 20090326001503 0 [sec 1715 nkb 540028
 PART taper Daily-36 1 bsdfw.slikon.local / 20090326001503 1/1 0 [sec 157.123731 kb 2293470 kps 14596.586283]
 DONE taper bsdfw.slikon.local / 20090326001503 1 0 [sec 157.123731 kb 2293470 kps 14596.586283]
 FINISH driver date 20090326001503 time 77506.015
+INFO driver pid-done 22043
+INFO amdump pid-done 22014
 
 %T report
+Hostname: localhost.localdomain
 Org : DailySet1
 Config : TESTCONF
 Date : March 26, 2009

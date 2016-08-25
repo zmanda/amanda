@@ -336,13 +336,13 @@ sub print_header
 
     if ($hostname) {
 	$self->{'sections'}{'head'}{"hostname"} = $hostname;
-	$self->{'sections'}{'head'}{"org"} = $org;
-	$self->{'sections'}{'head'}{"config_name"} = $config_name;
-	$self->{'sections'}{'head'}{"date"} = $date;
-	$self->{'sections'}{'head'}{"timestamp"} = $run_timestamp;
-	$self->{'sections'}{'head'}{"exit_status"} = $exit_status;
-	$self->{'sections'}{'head'}{"status"} = $status;
     }
+    $self->{'sections'}{'head'}{"org"} = $org;
+    $self->{'sections'}{'head'}{"config_name"} = $config_name;
+    $self->{'sections'}{'head'}{"date"} = $date;
+    $self->{'sections'}{'head'}{"timestamp"} = $run_timestamp;
+    $self->{'sections'}{'head'}{"exit_status"} = $exit_status;
+    $self->{'sections'}{'head'}{"status"} = $status;
 
     return;
 }

@@ -1316,6 +1316,14 @@ sub _handle_amvault_line
     if ( $type == $L_START ) {
         return $self->_handle_start_line( "amvault", $str );
 
+    } elsif ( $type == $L_STATS ) {
+
+        my @info = Amanda::Util::split_quoted_strings($str);
+        if ( $info[0] eq "hostname" ) {
+
+            return $self->{hostname} = $info[1];
+	}
+
     } elsif ( $type == $L_INFO ) {
         return $self->_handle_info_line( "amvault", $str );
 
