@@ -1,4 +1,7 @@
 2016-09-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (cleanup_shm_ring): Use name without path
+
+2016-09-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/device.c (default_device_property_set_ex): Return the
 	  device error if it is set
 	* device-src/s3-device.c (s3_device_set_use_subdomain_fn):

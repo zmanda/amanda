@@ -105,7 +105,7 @@ cleanup_shm_ring(void)
 
 	    g_hash_table_insert(names, g_strdup(*aglob), GINT_TO_POINTER(1));
 	    g_debug("cleanup_shm_ring: control_name: %s", *aglob);
-	    cfd = shm_open(*aglob, O_RDONLY, 0);
+	    cfd = shm_open(*aglob+8, O_RDONLY, 0);
 	    if (cfd >= 0) {
 		struct stat statbuf;
 		if (fstat(cfd, &statbuf) == 0 &&
@@ -147,19 +147,19 @@ cleanup_shm_ring(void)
 			    sem_unlink(mc->sem_start_name);
 			    shm_unlink(mc->shm_data_name);
 			    munmap(mc, sizeof(shm_ring_control_t));
-			    g_debug("shm_unlink %s", *aglob);
-			    shm_unlink(*aglob);
+			    g_debug("shm_unlink %s", *aglob+8);
+			    shm_unlink(*aglob+8);
 			} else {
 			    munmap(mc, sizeof(shm_ring_control_t));
 			}
 		    } else {
-			g_debug("mmap failed '%s': %s", *aglob, strerror(errno));
+			g_debug("mmap failed '%s': %s", *aglob+8, strerror(errno));
 		    }
 		} else {
-		    g_debug("fstat failed '%s': %s", *aglob, strerror(errno));
+		    g_debug("fstat failed '%s': %s", *aglob+8, strerror(errno));
 		}
 	    } else {
-		g_debug("shm_open failed '%s': %s", *aglob, strerror(errno));
+		g_debug("shm_open failed '%s': %s", *aglob+8, strerror(errno));
 	    }
 	}
     } else if (r == GLOB_NOSPACE) {
