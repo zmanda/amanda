@@ -1119,8 +1119,13 @@ default_device_property_set_ex(
     if (prop->setter == NULL)
 	return g_strdup("no prop-setter FF");
 
-    if (!prop->setter(self, prop->base, val, surety, source))
-	return g_strdup("prop-setter failed");
+    if (!prop->setter(self, prop->base, val, surety, source)) {
+	if (device_in_error(self)) {
+	    return g_strdup(device_error_or_status(self));
+	} else {
+	    return g_strdup("prop-setter failed");
+	}
+    }
 
     return NULL;
 }

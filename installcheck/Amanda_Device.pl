@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 626;
+use Test::More tests => 634;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -1047,10 +1047,10 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            103 +
+            104 +
             1 * $verify_file_count +
             7 * $write_file_count +
-            13 * $s3_make_device_count
+            14 * $s3_make_device_count
 	unless $run_s3_tests;
 
     $dev_name = "s3:";
@@ -1446,7 +1446,7 @@ SKIP: {
     $dev_name = "s3:-$base_name-s3-eu";
     $dev = s3_make_device($dev_name, "s3");
 
-    is($dev->property_set('S3_BUCKET_LOCATION', 'EU'), 'prop-setter failed',
+    is($dev->property_set('S3_BUCKET_LOCATION', 'EU'), 'Location constraint given for Amazon S3 bucket, but the bucket name (-AKIAJO5FUIOE5ZWHW5TQ-installcheck-localhost-localdomain-s3-eu) is not usable as a subdomain.',
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
 
@@ -1464,6 +1464,13 @@ SKIP: {
     ok(($dev->error_or_status() == "While creating new S3 bucket: The specified location-constraint is not valid (Unknown) (HTTP 400)"),
        "invalid location-constraint")
        or diag("bad error: " . $dev->error_or_status());
+
+    $dev_name = "s3:TESTCONF-s3_eu_2";
+    $dev = s3_make_device($dev_name, "s3");
+
+    is($dev->property_set('S3_SUBDOMAIN', 'ON'), 'S3-SUBDOMAIN is set, but the bucket name (TESTCONF-s3_eu_2) is not usable as a subdomain, only [a-zo-9-] characters are allowed.',
+	"should be able to set an empty S3_SUBDOMAIN with an incompatible name")
+	or diag($dev->error_or_status());
 
 }
 
