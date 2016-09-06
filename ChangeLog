@@ -1,3 +1,7 @@
+2016-09-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Restore.pm: Fix call to remove_for_restore_label and
+	  remove_for_restore_holding
+
 2016-09-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (cleanup_shm_ring): Use name without path
 

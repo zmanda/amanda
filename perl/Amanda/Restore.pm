@@ -1224,7 +1224,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 			if (!defined $last_label ||
 			    $part->{'label'} ne $last_label) {
 			    $last_label = $part->{'label'};
-			    $cmdfile->remove_for_restore_label(get_config_name(),
+			    $cmdfile->remove_for_restore_label(
 				$dump->{'hostname'},
 				$dump->{'diskname'},
 				$dump->{'dump_timestamp'},
@@ -1234,7 +1234,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 			    $cmd_added++;
 			}
 		    } else {
-			$cmdfile->remove_for_restore_holding(get_config_name(),
+			$cmdfile->remove_for_restore_holding(
 				$dump->{'hostname'},
 				$dump->{'diskname'},
 				$dump->{'dump_timestamp'},
