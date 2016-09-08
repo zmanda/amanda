@@ -71,6 +71,9 @@ sub new {
     if (!defined $self->{size}) {
 	$self->{'size'} = $self->{min_size} + int(rand($self->{max_size}- $self->{min_size}));
     }
+    if (!defined $self->{size_level_1}) {
+	$self->{'size_level_1'} = $self->{min_size} + int(rand($self->{max_size}- $self->{min_size}));
+    }
     debug("size: $self->{size}");
     return $self;
 }
@@ -107,10 +110,10 @@ sub command_selfcheck {
 			   $Amanda::Script_App::GOOD)
 		if defined $self->{device};
 
-    if (! -r $self->{device}) {
-	$self->print_to_server("$self->{device} can't be read",
-			       $Amanda::Script_App::ERROR);
-    }
+#    if (! -r $self->{device}) {
+#	$self->print_to_server("$self->{device} can't be read",
+#			       $Amanda::Script_App::ERROR);
+#    }
 
     if ($#{$self->{include_list}} >= 0) {
 	$self->print_to_server("include-list not supported for backup",

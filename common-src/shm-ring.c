@@ -158,6 +158,7 @@ cleanup_shm_ring(void)
 		} else {
 		    g_debug("fstat failed '%s': %s", *aglob+8, strerror(errno));
 		}
+		close(cfd);
 	    } else {
 		g_debug("shm_open failed '%s': %s", *aglob+8, strerror(errno));
 	    }
@@ -370,6 +371,8 @@ close_producer_shm_ring(
 	g_debug("munmap(mc) failed: %s", strerror(errno));
 	exit(1);
     }
+    aclose(shm_ring->shm_data);
+    aclose(shm_ring->shm_control);
     g_free(shm_ring->shm_control_name);
     g_free(shm_ring);
 }
@@ -832,6 +835,8 @@ close_consumer_shm_ring(
 	g_debug("shm_unlink(shm_ring_control_name) failed: %s", strerror(errno));
 	exit(1);
     }
+    aclose(shm_ring->shm_data);
+    aclose(shm_ring->shm_control);
     g_free(shm_ring->shm_control_name);
     g_free(shm_ring);
 }
