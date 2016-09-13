@@ -1,4 +1,7 @@
-2016-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+2016-09-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amar-src/amarchiver.c: Cast amar-size result ot (long long)
+
+2016-09-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/FetchDump.pm: Print to STDERR
 	* amar-src/amar.c: Improve error message
 	* amar-src/amar.h (amar_record): New prototype
