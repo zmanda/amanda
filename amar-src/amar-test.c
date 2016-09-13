@@ -1027,7 +1027,7 @@ test_no_header(void)
 	    EXPECT_END(),
 	};
 	try_reading_with_error(steps, handling,
-		    "Archive read does not begin at a header record");
+		    "Archive read does not begin at a header record, position = 0");
     }
 
     return 1;
@@ -1053,7 +1053,7 @@ test_invalid_eof(void)
 	    EXPECT_END(),
 	};
 	try_reading_with_error(steps, handling,
-		    "Archive contains an EOF record with nonzero size");
+		    "Archive contains an EOF record with nonzero size, position = 46");
     }
 
     return 1;
@@ -1083,7 +1083,7 @@ test_header_vers(void)
 	    EXPECT_END(),
 	};
 	try_reading_with_error(steps, handling,
-		    "Archive version 2 is not supported");
+		    "Archive version 2 is not supported, position = 0");
     }
 
     return 1;

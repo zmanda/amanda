@@ -98,7 +98,7 @@ run('amarchiver', '--create', '--file', $archfile, "test.tmp-1", "test.tmp-2")
 
 ok(run('amarchiver', '--list', '--file', $archfile),
     "archive listing succeeds");
-is($Installcheck::Run::stdout, "test.tmp-1\ntest.tmp-2\n",
+is($Installcheck::Run::stdout, "test.tmp-1\ntest.tmp-2\nsize: 4096\n",
     "..and output is correct");
 
 # test extracting archives
