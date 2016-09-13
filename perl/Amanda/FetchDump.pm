@@ -230,7 +230,7 @@ sub user_message {
 	print STDERR "\r$message    \n";
     } else {
 	if ($message->{'code'} == 3300003 || $message->{'code'} == 3300004) {
-	    print "\n";
+	    print STDERR "\n";
 	}
 	print STDERR "\n" if $self->{'is_tty'} and $self->{'last_is_size'};
 	print STDERR "$message\n";

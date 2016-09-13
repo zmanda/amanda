@@ -311,6 +311,7 @@ is_number(char *str, int len, int *result)
  * consumption by perl */
 %rename(amar_new) amar_new_;
 %rename(amar_size) amar_size_;
+%rename(amar_record) amar_record_;
 %rename(amar_close) amar_close_;
 %rename(amar_new_file) amar_new_file_;
 %rename(amar_file_size) amar_file_size_;
@@ -374,6 +375,10 @@ amar_t *amar_new_(int fd, char *modestr) {
 
 off_t amar_size_(amar_t *archive) {
     return amar_size(archive);
+}
+
+off_t amar_record_(amar_t *archive) {
+    return amar_record(archive);
 }
 
 void amar_close_(amar_t *arch) {

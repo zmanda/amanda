@@ -68,8 +68,12 @@ amar_t *amar_new(int fd, mode_t mode, GError **error);
  * is not closed -- the user must close it. */
 gboolean amar_close(amar_t *archive, GError **error);
 
-/* Return the size of the archive if opened in write mode */
+/* Return the size of the archive if opened in write mode,
+ *  or the current position if opened in read mode */
 off_t amar_size(amar_t *archive);
+
+/* Return the record number of the archive if opened in read mode */
+off_t amar_record(amar_t *archive);
 
 /* create a new 'file' object on the archive.  The filename is treated as a
  * binary blob, but if filename_len is zero, then its length will be calculated

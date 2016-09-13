@@ -347,6 +347,7 @@ do_list(
 	    /* one of the callbacks already printed an error message */
 	    exit(1);
     }
+printf("size: %lld\n", amar_size(archive));
     amar_close(archive, NULL);
 }
 

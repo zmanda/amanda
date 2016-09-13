@@ -1,4 +1,11 @@
 2016-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/FetchDump.pm: Print to STDERR
+	* amar-src/amar.c: Improve error message
+	* amar-src/amar.h (amar_record): New prototype
+	* amar-src/amarchiver.c (do_list): Print the size of the archive
+	* perl/Amanda/Archive.swg (amar_record): Swig it
+
+2016-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amrandom.pl: Do not check the device, set
 	  size_level_1
 	* common-src/shm-ring.c (cleanup_shm_ring, close_producer_shm_ring,

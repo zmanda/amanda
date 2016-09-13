@@ -113,6 +113,7 @@ struct amar_s {
     guint16   maxfilenum;	/* Next file number to allocate		*/
     header_t  hdr;		/* pre-constructed header		*/
     off_t     position;		/* current position in the archive	*/
+    off_t     record;		/* record number			*/
     GHashTable *files;		/* List of all amar_file_t		*/
     gboolean  seekable;		/* does lseek() work on this fd?	*/
 
@@ -307,6 +308,13 @@ amar_size(
     amar_t *archive)
 {
     return archive->position;
+}
+
+off_t
+amar_record(
+    amar_t *archive)
+{
+    return archive->record;
 }
 
 /*
@@ -779,6 +787,7 @@ buf_skip_(
     /* easy case of buf_len > skipbytes is taken care of by the macro, below,
      * so we know we're clearing out the entire buffer here */
 
+    archive->position += hp->buf_len;
     skipbytes -= hp->buf_len;
     hp->buf_len = 0;
 
@@ -795,6 +804,7 @@ retry:
 	    hp->got_eof = TRUE;
 	    return FALSE;
 	}
+	archive->position += skipbytes;
     } else {
 	while (skipbytes) {
 	    gsize toread = MIN(skipbytes, hp->buf_size);
@@ -805,6 +815,7 @@ retry:
 		return FALSE;
 	    }
 
+	    archive->position += bytes_read;
 	    skipbytes -= bytes_read;
 	}
     }
@@ -816,6 +827,7 @@ retry:
     (((skipbytes) <= (hp)->buf_len) ? \
 	((hp)->buf_len -= (skipbytes), \
 	 (hp)->buf_offset += (skipbytes), \
+	 archive->position += (skipbytes), \
 	 TRUE) \
       : buf_skip_((archive), (hp), (skipbytes)))
 
@@ -1014,7 +1026,8 @@ amar_read_cb(
 	int save_errno = errno;
 	g_debug("failed to read archive: %s", strerror(save_errno));
 	g_set_error(hp->error, amar_error_quark(), save_errno,
-			"failed to read archive: %s", strerror(save_errno));
+			"failed to read archive, position = %lld: %s",
+			(long long)archive->position, strerror(save_errno));
     }
     hp->buf_len += count;
 
@@ -1035,14 +1048,16 @@ amar_read_cb(
 
 	    if (sscanf(buf_ptr(hp), HEADER_MAGIC " %d", &vers) != 1) {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
-			    "Invalid archive header");
+			    "Invalid archive header, position = %lld",
+			    (long long)archive->position);
 		read_done(archive->hp);
 		return;
 	    }
 
 	    if (vers > HEADER_VERSION) {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
-			    "Archive version %d is not supported", vers);
+			    "Archive version %d is not supported, position = %lld",
+			    vers, (long long)archive->position);
 		read_done(archive->hp);
 		return;
 	    }
@@ -1054,8 +1069,8 @@ amar_read_cb(
 
 	} else if (datasize > MAX_RECORD_DATA_SIZE) {
 	    g_set_error(hp->error, amar_error_quark(), EINVAL,
-			"Invalid record: data size must be less than %d",
-			MAX_RECORD_DATA_SIZE);
+			"Invalid record: data size must be less than %d, position = %lld",
+			MAX_RECORD_DATA_SIZE, (long long)archive->position);
 	    read_done(archive->hp);
 	    return;
 
@@ -1078,7 +1093,8 @@ amar_read_cb(
 	    if (attrid == AMAR_ATTR_EOF) {
 		if (datasize != 0) {
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
-				"Archive contains an EOF record with nonzero size");
+				"Archive contains an EOF record with nonzero size, position = %lld",
+				(long long)archive->position);
 		    read_done(archive->hp);
 		    return;
 		}
@@ -1126,8 +1142,8 @@ amar_read_cb(
 			break;
 		    }
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
-				"Archive file %d has an empty filename",
-				(int)filenum);
+				"Archive file %d has an empty filename, position = %lld",
+				(int)filenum, (long long)archive->position);
 		    read_done(archive->hp);
 		    return;
 		}
@@ -1135,7 +1151,8 @@ amar_read_cb(
 		if (!eoa) {
 		    g_set_error(hp->error, amar_error_quark(), EINVAL,
 				"Filename record for fileid %d does "
-				"not have its EOA bit set", (int)filenum);
+				"not have its EOA bit set, position = %lld",
+				(int)filenum, (long long)archive->position);
 		    hp->buf_offset += (RECORD_SIZE + datasize);
 		    hp->buf_len    -= (RECORD_SIZE + datasize);
 		    read_done(archive->hp);
@@ -1161,8 +1178,8 @@ amar_read_cb(
 
 	    } else {
 		g_set_error(hp->error, amar_error_quark(), EINVAL,
-			    "Unknown attribute id %d in archive file %d",
-			    (int)attrid, (int)filenum);
+			    "Unknown attribute id %d in archive file %d, position = %lld",
+			    (int)attrid, (int)filenum, (long long)archive->position);
 		read_done(archive->hp);
 		return;
 	    }
@@ -1277,7 +1294,8 @@ amar_read_cb(
     if (count == -1 || count == 0) {
 	if (count == 0 && hp->buf_len != 0) {
 	    g_set_error(hp->error, amar_error_quark(), EINVAL,
-			    "Archive ended with a partial record");
+			    "Archive ended with a partial record, position = %lld, buf_len = %zu",
+			(long long)archive->position, hp->buf_len );
 	}
 	hp->got_eof = TRUE;
 	amar_stop_read(archive);
@@ -1370,7 +1388,8 @@ amar_read(
 	GETRECORD(buf_ptr(&hp), filenum, attrid, datasize, eoa);
 	if (filenum != MAGIC_FILENUM) {
 	    g_set_error(error, amar_error_quark(), EINVAL,
-			"Archive read does not begin at a header record");
+			"Archive read does not begin at a header record, position = %lld",
+			(long long)archive->position);
 	    return FALSE;
 	}
     }
@@ -1381,6 +1400,7 @@ amar_read(
 
 	GETRECORD(buf_ptr(&hp), filenum, attrid, datasize, eoa);
 
+	archive->record++;
 	/* handle headers specially */
 	if (G_UNLIKELY(filenum == MAGIC_FILENUM)) {
 	    int vers;
@@ -1391,13 +1411,15 @@ amar_read(
 
 	    if (sscanf(buf_ptr(&hp), HEADER_MAGIC " %d", &vers) != 1) {
 		g_set_error(error, amar_error_quark(), EINVAL,
-			    "Invalid archive header");
+			    "Invalid archive header, position = %lld",
+			    (long long)archive->position);
 		return FALSE;
 	    }
 
 	    if (vers > HEADER_VERSION) {
 		g_set_error(error, amar_error_quark(), EINVAL,
-			    "Archive version %d is not supported", vers);
+			    "Archive version %d is not supported, position = %lld", vers,
+			    (long long)archive->position);
 		return FALSE;
 	    }
 
@@ -1410,8 +1432,8 @@ amar_read(
 
 	if (datasize > MAX_RECORD_DATA_SIZE) {
 	    g_set_error(error, amar_error_quark(), EINVAL,
-			"Invalid record: data size must be less than %d",
-			MAX_RECORD_DATA_SIZE);
+			"Invalid record: data size must be less than %d, position = %lld",
+			MAX_RECORD_DATA_SIZE, (long long)archive->position);
 	    return FALSE;
 	}
 
@@ -1431,7 +1453,8 @@ amar_read(
 	    if (attrid == AMAR_ATTR_EOF) {
 		if (datasize != 0) {
 		    g_set_error(error, amar_error_quark(), EINVAL,
-				"Archive contains an EOF record with nonzero size");
+				"Archive contains an EOF record with nonzero size, position = %lld",
+				(long long)archive->position);
 		    return FALSE;
 		}
 		if (fs) {
@@ -1478,15 +1501,16 @@ amar_read(
 			break;
 		    }
 		    g_set_error(error, amar_error_quark(), EINVAL,
-				"Archive file %d has an empty filename",
-				(int)filenum);
+				"Archive file %d has an empty filename, position = %lld",
+				(int)filenum, (long long)archive->position);
 		    return FALSE;
 		}
 
 		if (!eoa) {
 		    g_set_error(error, amar_error_quark(), EINVAL,
 				"Filename record for fileid %d does "
-				"not have its EOA bit set", (int)filenum);
+				"not have its EOA bit set, position = %lld",
+				(int)filenum, (long long)archive->position);
 		    return FALSE;
 		}
 
@@ -1507,8 +1531,8 @@ amar_read(
 		continue;
 	    } else {
 		g_set_error(error, amar_error_quark(), EINVAL,
-			    "Unknown attribute id %d in archive file %d",
-			    (int)attrid, (int)filenum);
+			    "Unknown attribute id %d in archive file %d, position = %lld",
+			    (int)attrid, (int)filenum, (long long)archive->position);
 		return FALSE;
 	    }
 	}
