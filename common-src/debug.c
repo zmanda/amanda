@@ -68,7 +68,7 @@ static char *get_debug_name(time_t t, int n);
 static void debug_unlink_old(void);
 static void debug_setup_1(char *config, char *subdir);
 static void debug_setup_2(char *s, int fd, char *annotation);
-static char *msg_timestamp(void);
+static char *msg_timestamp(char timestamp[128]);
 
 static void debug_logging_handler(const gchar *log_domain,
 	GLogLevelFlags log_level,
@@ -491,11 +491,10 @@ debug_setup_2(
  * @returns: timestamp
  */
 static char *
-msg_timestamp(void)
+msg_timestamp(char timestamp[128])
 {
     struct timespec spec;
     struct tm    t;
-    static char  timestamp[128];
     char        *r;
     int          len;
     int          xlen;
@@ -833,18 +832,22 @@ void debug_printf(const char *format, ...)
     if(db_file != NULL) {
 	char *prefix;
 	char *text;
+	char *text_out;
+	char timestamp[128];
 
 	if (db_file != stderr)
-	    prefix = g_strdup_printf("%s: pid %d: thd-%p: %s:", msg_timestamp(), (int)getpid(), g_thread_self(), get_pname());
-	else 
+	    prefix = g_strdup_printf("%s: pid %d: thd-%p: %s:", msg_timestamp(timestamp), (int)getpid(), g_thread_self(), get_pname());
+	else
 	    prefix = g_strdup_printf("%s:", get_pname());
 	arglist_start(argp, format);
 	text = g_strdup_vprintf(format, argp);
 	arglist_end(argp);
-	fprintf(db_file, "%s %s", prefix, text);
+	text_out = g_strdup_printf("%s %s", prefix, text);
+	fprintf(db_file, "%s", text_out);
+	fflush(db_file);
 	amfree(prefix);
 	amfree(text);
-	fflush(db_file);
+	amfree(text_out);
     }
     errno = save_errno;
 }

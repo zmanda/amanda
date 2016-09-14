@@ -1,3 +1,7 @@
+2016-09-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/debug.c (msg_timestamp):Make it thread safe by providing
+	  a buffer
+
 2016-09-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/amarchiver.pl: Fix for size output
 	* amar-src/amar-test.c: Fix for improved error message
