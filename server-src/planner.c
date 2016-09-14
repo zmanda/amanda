@@ -1520,7 +1520,7 @@ static void get_estimates(void)
 		getsize(hostp);
 		protocol_check();
 		/*
-		 * dp is no longer on startq, so dp->next is not valid
+		 * dp is no longer on startq, so elist is not valid
 		 * and we have to start all over.
 		 */
 		break;
