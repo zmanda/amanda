@@ -1,4 +1,8 @@
 2016-09-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c (find_port_for_service):Make it thread
+	  safe
+
+2016-09-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/event.c: Allow a EV_TIME to be 0, run in the next
 	  iteration
 

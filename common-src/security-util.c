@@ -3246,12 +3246,17 @@ find_port_for_service(
     if (all_numeric == 1) {
 	port = atoi(service);
     } else {
-        struct servent *sp;
+        struct servent sp;
+        struct servent *result;
+        char buf[2048];
+	int r;
 
-	if ((sp = getservbyname(service, proto)) == NULL) {
+	r = getservbyname_r(service, proto, &sp, buf, 2048, &result);
+	assert(r != ERANGE);
+	if (r != 0) {
 	    port = 0;
 	} else {
-	    port = (in_port_t)(ntohs((in_port_t)sp->s_port));
+	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
 	}
     }
 
