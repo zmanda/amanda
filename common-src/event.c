@@ -159,7 +159,7 @@ event_create(
 	    /*NOTREACHED*/
 	}
     } else if (type == EV_TIME) {
-	if (data <= 0) {
+	if (data < 0) {
 	    error(_("event_register: interval for EV_TIME must be greater than 0; got %jd"), data);
 	}
     }
