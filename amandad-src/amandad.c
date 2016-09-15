@@ -142,6 +142,7 @@ struct active_service {
     char *data_shm_control_name;	/* from OPTIONS line */
     shm_ring_t *shm_ring;
     GThread *thread;
+    time_t last_prep_time;
 
     /*
      * General user streams to the process, and their equivalent
@@ -1054,10 +1055,12 @@ s_repwait(
      */
 
     if (n > 0) {
-	if (!expanded && as->send_partial_reply) {
+	if (!expanded && as->send_partial_reply &&
+	    as->last_prep_time < time(NULL)-1) {
 	    amfree(as->rep_pkt.body);
 	    pkt_init(&as->rep_pkt, P_PREP, "%s", as->repbuf);
 	    do_sendpkt(as->security_handle, &as->rep_pkt);
+	    as->last_prep_time = time(NULL);
 	    amfree(as->rep_pkt.body);
 	    pkt_init_empty(&as->rep_pkt, P_REP);
 	}
@@ -1715,6 +1718,7 @@ service_new(
     as = g_new0(struct active_service, 1);
     as->cmd = g_strdup(cmd);
     as->arguments = g_strdup(arguments);
+    as->send_partial_reply = 0;
 
     if (service == SERVICE_SENDSIZE) {
 	g_option_t *g_options;
@@ -1759,7 +1763,6 @@ service_new(
 	as->state = NULL;
 	as->service = service;
 	as->pid = pid;
-	as->send_partial_reply = 0;
 	as->seen_info_end = FALSE;
 	/* fill in info_end_buf with non-null characters */
 	memset(as->info_end_buf, '-', sizeof(as->info_end_buf));

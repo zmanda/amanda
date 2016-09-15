@@ -1,3 +1,6 @@
+2016-09-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amandad-src/amandad.c: Send no more than one PREP by second
+
 2016-09-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c (find_port_for_service):Make it thread
 	  safe
