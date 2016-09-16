@@ -1,4 +1,7 @@
 2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c (areads_getbuf): Fix prototype
+
+2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ambsdtar.c, application-src/amgtar.c,
 	  application-src/amstar.c, client-src/selfcheck.c,
 	  client-src/sendsize.c: Call glib_init()

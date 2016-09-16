@@ -33,7 +33,7 @@
 #include "timestamp.h"
 #include "file.h"
 
-static void areads_getbuf(const char *s, int l, int fd);
+static struct areads_buffer *areads_getbuf(const char *s, int l, int fd);
 static char *original_cwd = NULL;
 
 /*
