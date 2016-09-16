@@ -357,7 +357,6 @@ values:
          $3s to get '001'
     $m : meta label
     $r : storage name
-    $t : tpchanger
 </programlisting></para>
 <para>The template can contain some number of contiguous '%'
 characters, which will be replaced with a generated number (000-999),
@@ -1108,7 +1107,6 @@ values:
     $c : config name
     $o : org configuration
     $r : storage name
-    $t : tpchanger
 </programlisting></para>
 <para>The template can contain some number of contiguous '%'
 characters, which will be replaced with a generated number (000-999),
@@ -3591,7 +3589,6 @@ a volume is marked as <amkeyword>no-reuse</amkeyword> after it is written.</para
     $o : org configuration
     $c : config name
     $r : storage name
-    $t : tpchanger
 </programlisting></para>
   </listitem>
   </varlistentry>

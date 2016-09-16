@@ -1,4 +1,24 @@
 2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Do not substitute $t in autolabel, meta-autolabel and pool,the value
+	is not always available
+	* common-src/conffile.c: Do not substitute $t in pool
+	* common-src/match.c (make_template, match_labelstr_template,
+	  match_labelstr):Add storage argument
+	* common-src/match.h (match_labelstr_template, match_labelstr): Fix
+	  prototype
+	* perl/Amanda/Util.swg (match_labelstr_template, match_labelstr): Fix
+	  prototype
+	* perl/Amanda/Changer.pm (label_to_slot, make_new_tape_label): Do no
+	  substitute $t in autolabel, meta-autolabel
+	* perl/Amanda/Label.pm,  perl/Amanda/ScanInventory.pm,
+	  perl/Amanda/Taper/Scan/oldest.pm,
+	  perl/Amanda/Taper/Scan/traditional.pm: Add storage argument to
+	  match_labelstr call
+	* perl/Amanda/Taper/Scan.pm, server-src/tapefile.c: Add storage
+	  argument to match_labelstr_template call
+	* man/xml-source/amanda.conf.5.xml: Document the change
+
+2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (areads_getbuf): Fix prototype
 
 2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>

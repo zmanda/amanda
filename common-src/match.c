@@ -1141,7 +1141,8 @@ static char *
 make_template(
     const char *al_template,
     const char *barcode,
-    const char *meta)
+    const char *meta,
+    const char *storage)
 {
     char *template = g_malloc(1024);
     char *t = template;
@@ -1171,6 +1172,12 @@ make_template(
 		if (meta) {
 		    strcpy(t, meta);
 		    t += strlen(meta);
+		}
+		at++;
+	    } else if (*at == 'r') {
+		if (storage) {
+		    strcpy(t, storage);
+		    t += strlen(storage);
 		}
 		at++;
 	    } else if (*at == 's') {
@@ -1240,9 +1247,10 @@ match_labelstr_template(
     const char *template,
     const char *label,
     const char *barcode,
-    const char *meta)
+    const char *meta,
+    const char *storage)
 {
-    char *ztemplate = make_template(template, barcode, meta);
+    char *ztemplate = make_template(template, barcode, meta, storage);
     int   result;
 
     result = match(ztemplate, label);
@@ -1256,15 +1264,16 @@ match_labelstr(
     const autolabel_t *autolabel,
     const char *label,
     const char *barcode,
-    const char *meta)
+    const char *meta,
+    const char *storage)
 {
     char *template;
     int   result;
 
     if (labelstr->match_autolabel) {
-	template = make_template(autolabel->template, barcode, meta);
+	template = make_template(autolabel->template, barcode, meta, storage);
     } else {
-	template = make_template(labelstr->template, barcode, meta);
+	template = make_template(labelstr->template, barcode, meta, storage);
     }
     result = match(template, label);
     g_free(template);

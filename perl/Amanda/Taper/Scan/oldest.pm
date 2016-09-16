@@ -143,7 +143,6 @@ sub analyze {
     @new_labeled = sort { $a->{'datestamp'} cmp $b->{'datestamp'} || $a->{'label'} cmp $b->{'label'} } @new_labeled;
     @new_volume = sort { $a->{'label'} cmp $b->{'label'} } @new_volume;
 
-debug("reusable: " . Data::Dumper::Dumper(\@reusable));
     my @result;
     if (@new_labeled && $self->{'scan_conf'}->{'new_labeled'} eq 'soon') {
 	push @result, @new_labeled;

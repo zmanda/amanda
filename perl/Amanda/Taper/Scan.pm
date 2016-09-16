@@ -404,7 +404,7 @@ sub is_reusable_volume {
     return 0 if !$vol_tle->{'pool'} and
 		!match_labelstr_template($self->{'labelstr'}->{'template'},
 				$vol_tle->{'label'}, $vol_tle->{'barcode'},
-				$vol_tle->{'meta'});
+				$vol_tle->{'meta'}, $vol_tle->{'storage'});
 
     if ($vol_tle->{'datestamp'} eq '0') {
 	return $params{'new_label_ok'};

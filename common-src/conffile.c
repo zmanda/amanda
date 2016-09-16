@@ -6728,18 +6728,6 @@ update_derived_values(
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
 		    pool = new_pool;
 		}
-		if ((p = strstr(pool, "$t"))) {
-		    char *tpchanger_name = storage_get_tpchanger(st);
-		    char *new_pool = g_malloc(strlen(pool)+strlen(tpchanger_name)-1);
-		    int len = p - pool;
-		    strncpy(new_pool, pool, len);
-		    strcpy(new_pool+len, tpchanger_name);
-		    strcpy(new_pool+len+strlen(tpchanger_name), p+2);
-		    strncpy(new_pool+len+strlen(tpchanger_name)+strlen(p+2),"\0",1);
-		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
-		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
-		    pool = new_pool;
-		}
 	    }
 	}
 

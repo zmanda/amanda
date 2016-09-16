@@ -365,7 +365,7 @@ sub _scan {
 	    $res->{device}->status == $DEVICE_STATUS_SUCCESS) {
 	    $label = $res->{device}->volume_label;
 	}
-	my $relabeled = !defined($label) || !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'});
+	my $relabeled = !defined($label) || !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'}, $self->{'chg'}->{'storage_name'});
 	$self->_user_msg(slot_result => 1,
 			 slot => $slot_scanned,
 			 label => $label,
@@ -609,7 +609,7 @@ sub _scan {
 	}
 	$label = $res->{'device'}->volume_label;
 	if (!defined($label) ||
-	    !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'})) {
+	    !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $label, $res->{'barcode'}, $res->{'meta'}, $self->{'chg'}->{'storage_name'})) {
 	    $res->get_meta_label(finished_cb => $steps->{'got_meta_label'});
 	    return;
 	}
@@ -652,7 +652,7 @@ sub volume_is_new_labelled {
 	return 0;
     }
     if (!$tle->{'pool'} &&
-	     !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $sl->{'label'}, $sl->{'barcode'}, $sl->{'meta'})) {
+	     !match_labelstr($self->{'labelstr'}, $self->{'autolabel'}, $sl->{'label'}, $sl->{'barcode'}, $sl->{'meta'}, $self->{'chg'}->{'storage_name'})) {
 	return 0;
     }
     if ($tle->{'datestamp'} ne '0') {
@@ -716,7 +716,7 @@ sub volume_is_labelable {
     } elsif ($dev_status == $DEVICE_STATUS_SUCCESS and
 	     $f_type == $Amanda::Header::F_TAPESTART) {
 	if (!match_labelstr($self->{'labelstr'}, $autolabel, $label,
-			    $barcode, $meta)) {
+			    $barcode, $meta, $self->{'chg'}->{'storage_name'})) {
 	    if (!$autolabel->{'other_config'}) {
 #	        $self->_user_msg(slot_result  => 1,
 #			         label        => $label,

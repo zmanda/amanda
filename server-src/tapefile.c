@@ -331,7 +331,8 @@ lookup_last_reusable_tape(
 	    (!tp->storage || g_str_equal(tp->storage, storage)) &&
 	    ((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 	     (!tp->pool && match_labelstr_template(l_template, tp->label,
-						   tp->barcode, tp->meta)))) {
+						   tp->barcode, tp->meta,
+						   tp->storage)))) {
 	    count++;
 	    for(s = skip; s > 0; s--) {
 	        tpsave[s] = tpsave[s - 1];
@@ -739,7 +740,8 @@ gchar **list_new_tapes(
 	    (!iter->storage || g_str_equal(iter->storage, storage_n)) &&
 	    ((iter->pool && g_str_equal(iter->pool, tapepool)) ||
 	     (!iter->pool && match_labelstr_template(labelstr->template, iter->label,
-						 iter->barcode, iter->meta)))) {
+						 iter->barcode, iter->meta,
+						 iter->storage)))) {
             c++;
             nb--;
 	    l_list = g_slist_append(l_list, iter->label);
@@ -854,7 +856,8 @@ compute_storage_retention_nb(
 		(!tp->storage || g_str_equal(tp->storage, storage)) &&
 		((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 		 (!tp->pool && match_labelstr_template(l_template, tp->label,
-						       tp->barcode, tp->meta)))) {
+						       tp->barcode, tp->meta,
+						       tp->storage)))) {
 		count++;
 		if (count <= retention_tapes) {
 		    /* Do not mark them, as it change when a tape is
@@ -897,7 +900,8 @@ cmdfile_add_retention(
 	        (!tp->storage || g_str_equal(tp->storage, data->storage)) &&
 	        ((tp->pool && g_str_equal(tp->pool, data->pool)) ||
 	         (!tp->pool && match_labelstr_template(data->l_template, tp->label,
-	                                                   tp->barcode, tp->meta)))) {
+	                                                   tp->barcode, tp->meta,
+							    tp->storage)))) {
 		tp->retention = TRUE;
 		tp->retention_type = RETENTION_CMD_COPY;
 	    }
@@ -915,7 +919,8 @@ cmdfile_add_retention(
 	    (!tp->storage || g_str_equal(tp->storage, data->storage)) &&
 	    ((tp->pool && g_str_equal(tp->pool, data->pool)) ||
 	     (!tp->pool && match_labelstr_template(data->l_template, tp->label,
-	                                           tp->barcode, tp->meta)))) {
+	                                           tp->barcode, tp->meta,
+							    tp->storage)))) {
 	    tp->retention = TRUE;
 	    tp->retention_type = RETENTION_CMD_RESTORE;
 	}
@@ -953,7 +958,8 @@ compute_storage_retention(
 		(!tp->storage || g_str_equal(tp->storage, storage)) &&
 		((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 		 (!tp->pool && match_labelstr_template(l_template, tp->label,
-						       tp->barcode, tp->meta)))) {
+						       tp->barcode, tp->meta,
+							    tp->storage)))) {
 		tp->retention = TRUE;
 		tp->retention_type = RETENTION_DAYS;
 	    }
@@ -989,7 +995,8 @@ compute_storage_retention(
 			(!tp->storage || g_str_equal(tp->storage, storage)) &&
 			((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 			 (!tp->pool && match_labelstr_template(l_template, tp->label,
-							       tp->barcode, tp->meta)))) {
+							       tp->barcode, tp->meta,
+							    tp->storage)))) {
 			/* keep that label */
 			tp->retention = TRUE;
 			tp->retention_type = RETENTION_RECOVER;
@@ -1028,7 +1035,8 @@ compute_storage_retention(
 			(!tp->storage || g_str_equal(tp->storage, storage)) &&
 			((tp->pool && g_str_equal(tp->pool, tapepool)) ||
 			 (!tp->pool && match_labelstr_template(l_template, tp->label,
-							       tp->barcode, tp->meta)))) {
+							       tp->barcode, tp->meta,
+							    tp->storage)))) {
 			/* keep that label */
 			tp->retention = TRUE;
 			tp->retention_type = RETENTION_FULL;

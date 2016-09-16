@@ -230,7 +230,7 @@ sub stage_1 {
 	my $barcode = $res->{'barcode'} || "";
 	my $meta = $res->{'meta'} || "";
 	if (!match_labelstr($labelstr, $autolabel, $label,
-			    $barcode, $meta)) {
+			    $barcode, $meta, $self->{'chg'}->{'storage'})) {
             warning "Oldest reusable volume '$oldest_reusable' do not match the labelstr '" .
 				$labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'} . "'";
             return $self->release_and_stage_2($res, $result_cb);
@@ -374,7 +374,7 @@ sub stage_2 {
 	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
 	    if (!$tle) {
 		if (!match_labelstr($labelstr, $autolabel, $label, $barcode,
-                                    $meta)) {
+                                    $meta, $self->{'chg'}->{'storage'})) {
 		    if (!$autolabel->{'other_config'}) {
 		        $self->_user_msg(slot_result             => 1,
 				         does_not_match_labelstr => 1,
@@ -417,7 +417,7 @@ sub stage_2 {
 
 		if (!$tle->{'pool'} &&
 		    !match_labelstr($labelstr, $autolabel, $label, $barcode,
-				    $meta)) {
+				    $meta, $self->{'chg'}->{'storage'})) {
 		    $self->_user_msg(slot_result             => 1,
 				     does_not_match_labelstr => 1,
 				     labelstr                => $labelstr->{'match_autolabel'} ? $autolabel->{'template'} : $labelstr->{'template'},

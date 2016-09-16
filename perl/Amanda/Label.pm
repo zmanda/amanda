@@ -665,7 +665,7 @@ sub label {
 
 	    if ($params{'label'} &&
 		$labelstr->{'template'} &&
-		!match_labelstr($labelstr, $autolabel, $params{'label'}, $barcode, $meta)) {
+		!match_labelstr($labelstr, $autolabel, $params{'label'}, $barcode, $meta, $storage_name)) {
 		$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
@@ -695,7 +695,7 @@ sub label {
 					pool      => $tle->{'pool'}));
 		    $dev_ok = 0;
 		} elsif (!$tle->{'pool'} &&
-			 !match_labelstr($labelstr, $autolabel, $label, $barcode, $meta)) {
+			 !match_labelstr($labelstr, $autolabel, $label, $barcode, $meta, $storage_name)) {
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,

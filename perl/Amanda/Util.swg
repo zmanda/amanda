@@ -806,9 +806,9 @@ gboolean match_level(char *pat, char *value);
 }
 
 gboolean match_labelstr_template(const char *l_template,
-			const char *label, const char *barcode, const char *meta);
+			const char *label, const char *barcode, const char *meta, const char *storage);
 gboolean match_labelstr(const labelstr_s *labelstr, const autolabel_t *autolabel,
-			const char *label, const char *barcode, const char *meta);
+			const char *label, const char *barcode, const char *meta, const char *storage);
 
 %perlcode %{
 sub match_labelstr_expr {
