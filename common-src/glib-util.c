@@ -104,11 +104,16 @@ init_ssl(void)
 #endif
 }
 
+extern GMutex *file_mutex;
+
 void
 glib_init(void) {
     static gboolean did_glib_init = FALSE;
     if (did_glib_init) return;
     did_glib_init = TRUE;
+
+    /* Initialize global mutex */
+    file_mutex = g_mutex_new();
 
     /* set up libcurl (this must happen before threading 
      * is initialized) */

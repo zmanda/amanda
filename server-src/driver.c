@@ -2749,7 +2749,7 @@ handle_taper_result(
 	    taper->degraded_mode = TRUE;
 	    start_degraded_mode(&runq);
             taper->tapeq.head = taper->tapeq.tail = NULL;
-            aclose(taper->fd);
+            aaclose(taper->fd);
 
             break;
 
@@ -3393,7 +3393,7 @@ dumper_chunker_result(
     dp->inprogress = 0;
 
     waitpid(chunker->pid, NULL, 0 );
-    aclose(chunker->fd);
+    aaclose(chunker->fd);
     chunker->fd = -1;
     chunker->down = 1;
 
@@ -3587,7 +3587,7 @@ handle_dumper_result(
 		event_release(dumper->ev_read);
 		dumper->ev_read = NULL;
 	    }
-	    aclose(dumper->fd);
+	    aaclose(dumper->fd);
 	    dumper->busy = 0;
 	    dumper->down = 1;	/* mark it down so it isn't used again */
 

@@ -569,24 +569,24 @@ main(
 
     /* get server's banner */
     if (grab_reply(1) == -1) {
-        aclose(server_socket);
+        aaclose(server_socket);
 	exit(1);
     }
     if (!server_happy())
     {
 	dbclose();
-	aclose(server_socket);
+	aaclose(server_socket);
 	exit(1);
     }
 
     /* do the security thing */
     line = get_security();
     if (converse(line) == -1) {
-        aclose(server_socket);
+        aaclose(server_socket);
 	exit(1);
     }
     if (!server_happy()) {
-        aclose(server_socket);
+        aaclose(server_socket);
 	exit(1);
     }
     memset(line, '\0', strlen(line));
@@ -623,14 +623,14 @@ main(
     g_printf(_("Setting restore date to today (%s)\n"), dump_date);
     line = g_strconcat("DATE ", dump_date, NULL);
     if (converse(line) == -1) {
-        aclose(server_socket);
+        aaclose(server_socket);
 	exit(1);
     }
     amfree(line);
 
     line = g_strconcat("SCNF ", config, NULL);
     if (converse(line) == -1) {
-        aclose(server_socket);
+        aaclose(server_socket);
 	exit(1);
     }
     amfree(line);
@@ -695,7 +695,7 @@ main(
 
     dbclose();
 
-    aclose(server_socket);
+    aaclose(server_socket);
     return 0;
 }
 

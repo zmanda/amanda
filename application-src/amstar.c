@@ -232,6 +232,8 @@ main(
     star_acl = 1;
     star_directory = NULL;
 
+    glib_init();
+
     /* initialize */
 
     /*

@@ -831,7 +831,7 @@ wait_process(
 	rval = FALSE;
 	free(line);
     }
-    close(fd_err);
+    aaclose(fd_err);
     waitpid(pid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	g_debug("%s terminated with signal %d", name, WTERMSIG(wait_status));

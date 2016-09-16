@@ -1,3 +1,15 @@
+2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c, application-src/amgtar.c,
+	  application-src/amstar.c, client-src/selfcheck.c,
+	  client-src/sendsize.c: Call glib_init()
+	* common-src/glib-util.c (glib_init): Initialize file_mutex.
+	* common-src/file.c (areads_dataready, areads_relbuf, debug_areads):i
+	  Thread safe
+	* common-src/file.h (aclose): do not call areads_relbuf
+	* common-src/file.h (aaclose): Same as old aclose
+	* client-src/sendbackup.c, oldrecover-src/amrecover.c,
+	  server-src/amtrmidx.c, server-src/driver.c: Call aaclose
+
 2016-09-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amandad-src/amandad.c: Send no more than one PREP by second
 

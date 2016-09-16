@@ -149,6 +149,8 @@ main(
 	return (0);
     }
 
+    glib_init();
+
     /* initialize */
 
     /*

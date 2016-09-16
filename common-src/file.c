@@ -609,42 +609,54 @@ debug_pgets(
  *=====================================================================
  */
 
+GMutex *file_mutex = NULL;
 static struct areads_buffer {
     char *buffer;
     char *endptr;
     size_t bufsize;
-} *areads_buffer = NULL;
+} **areads_buffer = NULL;
 static int areads_bufcount = 0;
 static size_t areads_bufsize = BUFSIZ;		/* for the test program */
 
-static void
+static struct areads_buffer *
 areads_getbuf(
     const char *s G_GNUC_UNUSED,
     int		l G_GNUC_UNUSED,
     int		fd)
 {
-    struct areads_buffer *new;
-    size_t size;
+    struct areads_buffer *ptr;
 
     assert(fd >= 0);
-    if(fd >= areads_bufcount) {
-	size = (size_t)(fd + 1) * sizeof(*areads_buffer);
-	new = (struct areads_buffer *) g_malloc(size);
-	memset((char *)new, 0, size);
-	if(areads_buffer) {
-	    size = areads_bufcount * sizeof(*areads_buffer);
+
+    g_mutex_lock(file_mutex);
+    if (fd >= areads_bufcount) {
+	struct areads_buffer **new;
+	int afd = 30;
+	int i;
+
+	if (afd < fd * 2)
+	    afd = fd * 2;
+	new = g_new0(struct areads_buffer *, (size_t)afd);
+	if (areads_buffer) {
+	    size_t size = areads_bufcount * sizeof(*areads_buffer);
 	    memcpy(new, areads_buffer, size);
+	}
+	for (i = areads_bufcount; i < afd; i++){
+	    new[i] = g_new0(struct areads_buffer, 1);
 	}
 	amfree(areads_buffer);
 	areads_buffer = new;
-	areads_bufcount = fd + 1;
+	areads_bufcount = afd;
     }
-    if(areads_buffer[fd].buffer == NULL) {
-	areads_buffer[fd].bufsize = areads_bufsize;
-	areads_buffer[fd].buffer = g_malloc(areads_buffer[fd].bufsize + 1);
-	areads_buffer[fd].buffer[0] = '\0';
-	areads_buffer[fd].endptr = areads_buffer[fd].buffer;
+    ptr = areads_buffer[fd];
+    g_mutex_unlock(file_mutex);
+    if (ptr->buffer == NULL) {
+	ptr->bufsize = areads_bufsize;
+	ptr->buffer = g_malloc(ptr->bufsize + 1);
+	ptr->buffer[0] = '\0';
+	ptr->endptr = ptr->buffer;
     }
+    return ptr;
 }
 
 /*
@@ -670,9 +682,12 @@ areads_dataready(
     if (fd < 0)
 	return 0;
 
-    if (fd >= 0 && fd < areads_bufcount && areads_buffer[fd].buffer != NULL) {
-	r = (ssize_t) (areads_buffer[fd].endptr - areads_buffer[fd].buffer);
+    g_mutex_lock(file_mutex);
+
+    if (fd >= 0 && fd < areads_bufcount && areads_buffer[fd]->buffer != NULL) {
+	r = (ssize_t) (areads_buffer[fd]->endptr - areads_buffer[fd]->buffer);
     }
+    g_mutex_unlock(file_mutex);
     if (r) {
         return r;
     }
@@ -706,11 +721,13 @@ void
 areads_relbuf(
     int fd)
 {
+    g_mutex_lock(file_mutex);
     if(fd >= 0 && fd < areads_bufcount) {
-	amfree(areads_buffer[fd].buffer);
-	areads_buffer[fd].endptr = NULL;
-	areads_buffer[fd].bufsize = 0;
+	amfree(areads_buffer[fd]->buffer);
+	areads_buffer[fd]->endptr = NULL;
+	areads_buffer[fd]->bufsize = 0;
     }
+    g_mutex_unlock(file_mutex);
 }
 
 /*
@@ -742,34 +759,36 @@ debug_areads (
     size_t buflen;
     size_t size;
     ssize_t r;
+    struct areads_buffer *ptr;
 
     if(fd < 0) {
 	errno = EBADF;
 	return NULL;
     }
-    areads_getbuf(s, l, fd);
-    buffer = areads_buffer[fd].buffer;
-    endptr = areads_buffer[fd].endptr;
-    buflen = areads_buffer[fd].bufsize - (size_t)(endptr - buffer);
+    ptr = areads_getbuf(s, l, fd);
+
+    buffer = ptr->buffer;
+    endptr = ptr->endptr;
+    buflen = ptr->bufsize - (size_t)(endptr - buffer);
     while((nl = strchr(buffer, '\n')) == NULL) {
 	/*
 	 * No newline yet, so get more data.
 	 */
 	if (buflen == 0) {
-	    if ((size = areads_buffer[fd].bufsize) < 256 * areads_bufsize) {
+	    if ((size = ptr->bufsize) < 256 * areads_bufsize) {
 		size *= 2;
 	    } else {
 		size += 256 * areads_bufsize;
 	    }
 	    newbuf = g_malloc(size + 1);
-	    memcpy (newbuf, buffer, areads_buffer[fd].bufsize + 1);
-	    amfree(areads_buffer[fd].buffer);
-	    areads_buffer[fd].buffer = newbuf;
-	    areads_buffer[fd].endptr = newbuf + areads_buffer[fd].bufsize;
-	    areads_buffer[fd].bufsize = size;
-	    buffer = areads_buffer[fd].buffer;
-	    endptr = areads_buffer[fd].endptr;
-	    buflen = areads_buffer[fd].bufsize - (size_t)(endptr - buffer);
+	    memcpy (newbuf, buffer, ptr->bufsize + 1);
+	    amfree(ptr->buffer);
+	    ptr->buffer = newbuf;
+	    ptr->endptr = newbuf + ptr->bufsize;
+	    ptr->bufsize = size;
+	    buffer = ptr->buffer;
+	    endptr = ptr->endptr;
+	    buflen = ptr->bufsize - (size_t)(endptr - buffer);
 	}
 	if ((r = read(fd, endptr, buflen)) <= 0) {
 	    if(r == 0) {
@@ -789,8 +808,8 @@ debug_areads (
     line = g_strdup(buffer);
     size = (size_t)(endptr - nl);	/* data still left in buffer */
     memmove(buffer, nl, size);
-    areads_buffer[fd].endptr = buffer + size;
-    areads_buffer[fd].endptr[0] = '\0';
+    ptr->endptr = buffer + size;
+    ptr->endptr[0] = '\0';
     return line;
 }
 

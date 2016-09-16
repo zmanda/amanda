@@ -315,6 +315,8 @@ main(
     bsdtar_onefilesystem = 1;
     exit_handling = NULL;
 
+    glib_init();
+
     /* initialize */
 
     /*

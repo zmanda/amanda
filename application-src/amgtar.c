@@ -372,6 +372,8 @@ main(
 
     /* initialize */
 
+    glib_init();
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.

@@ -94,6 +94,13 @@ void	areads_relbuf(int fd);
 #define aclose(fd) do {							\
     if((fd) >= 0) {							\
 	close(fd);							\
+    }									\
+    (fd) = -1;								\
+} while(0)
+
+#define aaclose(fd) do {						\
+    if((fd) >= 0) {							\
+	close(fd);							\
 	areads_relbuf(fd);						\
     }									\
     (fd) = -1;								\

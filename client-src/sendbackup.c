@@ -1742,10 +1742,10 @@ gpointer
 stderr_thread(
     gpointer data)
 {
-    filter_stderr_pipe *xx = (filter_stderr_pipe *)data;
+    filter_stderr_pipe *fsp = (filter_stderr_pipe *)data;
     char *buf;
 
-    while ((buf = areads(xx->fd)) != NULL) {
+    while ((buf = areads(fsp->fd)) != NULL) {
 	if (shm_ring) {
 	    shm_ring->mc->cancelled = TRUE;
 	    sem_post(shm_ring->sem_ready);
@@ -1761,6 +1761,7 @@ stderr_thread(
 	g_debug("error [%s]\n", buf);
 	g_free(buf);
     }
+    aaclose(fsp->fd);
     return NULL;
 }
 
