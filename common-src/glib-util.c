@@ -112,9 +112,6 @@ glib_init(void) {
     if (did_glib_init) return;
     did_glib_init = TRUE;
 
-    /* Initialize global mutex */
-    file_mutex = g_mutex_new();
-
     /* set up libcurl (this must happen before threading 
      * is initialized) */
 #ifdef HAVE_LIBCURL
@@ -150,6 +147,9 @@ glib_init(void) {
     if (!g_thread_supported())
 	g_thread_init(NULL);
 #endif
+
+    /* Initialize global mutex */
+    file_mutex = g_mutex_new();
 
     /* initialize ssl */
     init_ssl();

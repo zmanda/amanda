@@ -1,3 +1,7 @@
+2016-09-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/glib-util.c (glib_init): Call g_mutex_new after the thread
+	  are initialized
+
 2016-09-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Do not substitute $t in autolabel, meta-autolabel and pool,the value
 	is not always available
