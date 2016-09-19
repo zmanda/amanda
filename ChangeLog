@@ -1,3 +1,8 @@
+2016-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: Do not call cleanup_shm_ring too often
+	* common-src/shm-ring.c (cleanup_shm_ring): Do not remove new shm,
+	  allow them the time to setup
+
 2016-09-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/glib-util.c (glib_init): Call g_mutex_new after the thread
 	  are initialized

@@ -2912,7 +2912,6 @@ vault_taper_result(
     }
 
     /* continue with those dumps waiting for diskspace */
-    cleanup_shm_ring();
     continue_port_dumps();
     start_some_dumps(&runq);
     start_a_flush();
@@ -3071,7 +3070,6 @@ file_taper_result(
     }
 
     /* continue with those dumps waiting for diskspace */
-    cleanup_shm_ring();
     continue_port_dumps();
     start_some_dumps(&runq);
     start_a_flush();
@@ -3188,7 +3186,6 @@ dumper_taper_result(
     dumper->job = NULL;
     wtaper->job = NULL;
 
-    cleanup_shm_ring();
     start_some_dumps(&runq);
     start_a_flush();
     start_a_vault();
@@ -3405,7 +3402,6 @@ dumper_chunker_result(
     dp = NULL;
     if (chunker->result == ABORT_FINISHED)
 	pending_aborts--;
-    cleanup_shm_ring();
     continue_port_dumps();
     /*
      * Wakeup any dumpers that are sleeping because of network

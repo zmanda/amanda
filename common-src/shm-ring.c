@@ -95,6 +95,7 @@ cleanup_shm_ring(void)
     glob_t globbuf;
     char **aglob;
     int r;
+    time_t now = time(NULL) - 300;
     GHashTable *names;
     names = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
@@ -109,6 +110,9 @@ cleanup_shm_ring(void)
 	    if (cfd >= 0) {
 		struct stat statbuf;
 		if (fstat(cfd, &statbuf) == 0 &&
+		    statbuf.st_atime < now &&
+		    statbuf.st_mtime < now &&
+		    statbuf.st_ctime < now &&
 		    statbuf.st_size == sizeof(shm_ring_control_t)) {
 		    shm_ring_control_t *mc;
 		    mc = mmap(NULL, sizeof(shm_ring_control_t),
