@@ -1,29 +1,36 @@
-Changes in release 4.0.0
+Changes in release 3.4
 
+   * Allow to put a dump on more than one storage
+   * Allow to specify which DLE/level go to which storage
+   * amdumpcan dothe vaulting operation (copy from one storage to another one)
+   * Use shared memory to pass data between processes
    * A CRC is computed on the backup image and is verified on restore.
    * Run multiple backup inparallel, there is no lock preventing concurrent run.
    * Add letter based sequence to autolabel and meta-autolabel.
    * And 'includefile' directive for the disklist.
    * tapepool, tape are in pool
-   * index file can be kept sorted, compressed or uncompressed.
+   * amanda.conf (index file can be kept sorted, compressed or uncompressed)
+       o compress-index
+       o sort-index
    * amanda.conf (interface section)
        o add a src-ip setting.
    * amanda.conf (dumptype section)
        o add a retry-dump setting.
+       o add atag setting.
        o deprecate usetimestamps, it is always "yes"
    * amanda.conf (new policy section), define when a tape can be reuse or not.
+       A lot more powerful than the tapecycle setting.
        o retention-tapes
        o retention-days
        o retention-recover
        o retention-full
-       o compress-index
-       o sort-index
    * amanda.conf (new storage section), define how to operate each changer.
+       Many old global setting can be set differently for each storage.
        o autoflush
        o autolabel
        o comment
        o device-output-buffer-size
-       o dump-selection
+       o dump-selection (select which dle go to that storage)
        o eject-volume
        o erase-on-failure
        o erase-on-full
@@ -50,7 +57,7 @@ Changes in release 4.0.0
        o labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
 	 the autolabel variable.
        o storage (default storage)
-          + You can set multiple storage, all DLEs will be sent to all storages
+         You can set multiple storage, all DLEs will be sent to all storages
        o amvault-storage (storage used by amvault)
    * amvault
        o deprecated option: --label-template, --dst-changer, --autolabel

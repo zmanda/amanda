@@ -1,3 +1,95 @@
+                Release Notes for amanda-3.4
+
+
+* Allow to put a dump on more than one storage
+* Allow to specify which DLE/level go to which storage
+* amdumpcan dothe vaulting operation (copy from one storage to another one)
+* Use shared memory to pass data between processes
+* A CRC is computed on the backup image and is verified on restore.
+* Run multiple backup inparallel, there is no lock preventing concurrent run.
+* Add letter based sequence to autolabel and meta-autolabel.
+* And 'includefile' directive for the disklist.
+* tapepool, tape are in pool
+* amanda.conf (index file can be kept sorted, compressed or uncompressed)
+    - compress-index
+    - sort-index
+* amanda.conf (interface section)
+    - add a src-ip setting.
+* amanda.conf (dumptype section)
+    - add a retry-dump setting.
+    - add atag setting.
+    - deprecate usetimestamps, it is always "yes"
+* amanda.conf (new policy section), define when a tape can be reuse or not.
+    A lot more powerful than the tapecycle setting.
+    - retention-tapes
+    - retention-days
+    - retention-recover
+    - retention-full
+* amanda.conf (new storage section), define how to operate each changer.
+    Many old global setting can be set differently for each storage.
+    - autoflush
+    - autolabel
+    - comment
+    - device-output-buffer-size
+    - dump-selection (select which dle go to that storage)
+    - eject-volume
+    - erase-on-failure
+    - erase-on-full
+    - erase-volume
+    - flush-threshold-dumped
+    - flush-threshold-scheduled
+    - interactivity
+    - labelstr
+    - max-dle-by-volume
+    - meta-autolabel
+    - policy
+    - report-use-media
+    - report-next-media
+    - runtapes
+    - set-no-reuse
+    - tapepool
+    - taperalgo
+    - taperflush
+    - taperscan
+    - taper-parallel-write
+    - tapetype
+    - tpchanger
+* amanda.conf
+    - labelstr can be a new MATCH-AUTOLABEL keyword, labelstr can use
+      the autolabel variable.
+    - storage (default storage)
+      You can set multiple storage, all DLEs will be sent to all storages
+    - amvault-storage (storage used by amvault)
+* amvault
+    - deprecated option: --label-template, --dst-changer, --autolabel
+      they must be set in a storage section
+    - new --dst-storage option to overwrite the default amvault-storage.
+* amlabel
+    - new --pool and --storage options.
+* amrmtape
+    - new --list-retention, --list-no-retention and --remove-no-retention
+      options.
+* amtape
+    - print the RetentionType in the inventory
+* amadmin
+    - new 'retention' command'
+* amfetchdump
+    - --init and --no-restore arguments.
+* s3 device
+    - New READ-FROM-GLACIER and TRANSITION-TO-GLACIER properties, they
+      allow to transition s3 objects to Glacier.
+* tapelist file
+    - include POOL, STORAGE and CONFIG
+    - you can share the same tapelist file across multiple config.
+* amgetconf
+    - New --platform argument
+    - New --distro argument
+* ambackup/ambackupd
+    - New client ambackup program to start a backup of the client
+    - New server service ambackupd
+    - This protocol works even if the client is behind a NAT
+
+
                 Release Notes for amanda-3.3.9
 
 * security-fix

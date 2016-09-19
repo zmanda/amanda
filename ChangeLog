@@ -1,4 +1,7 @@
 2016-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: Update for 3.4
+
+2016-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Do not call cleanup_shm_ring too often
 	* common-src/shm-ring.c (cleanup_shm_ring): Do not remove new shm,
 	  allow them the time to setup
