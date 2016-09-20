@@ -1,4 +1,8 @@
 2016-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c (when_overwrite): Fix off by 1 error
+	* server-src/tapefile.c (tape_overwrite): Use tp1->retention
+
+2016-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm: Use storage_nme fro chg->storage
 	* server-src/amadmin.c: Remove spurious print message
 	* server-src/amreindex.pl: Remove spurious print message

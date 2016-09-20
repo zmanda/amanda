@@ -1303,7 +1303,10 @@ static int when_overwrite(
     if (runtapes == 0) runtapes = 1;
 
     nb = tape_overwrite(tp);
-    tp->when_overwrite = nb / runtapes;
+    tp->when_overwrite = (nb - 1) / runtapes;
+    if (tp->when_overwrite < 0)
+	tp->when_overwrite = 0;
+
 
     return tp->when_overwrite;
 }

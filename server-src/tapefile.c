@@ -1171,7 +1171,7 @@ tape_overwrite(
     int nb_tapes = 0;
 
     for (tp1 = tp; tp1 != NULL; tp1 = tp1->next) {
-	if (!tp->retention &&
+	if (!tp1->retention &&
 	    g_str_equal(tp->storage, tp1->storage)) {
 	    nb_tapes++;
 	}
