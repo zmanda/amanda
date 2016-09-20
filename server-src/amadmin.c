@@ -399,20 +399,12 @@ diskloop(
     g_ptr_array_free(err_array, TRUE);
 
     for(dlist = diskq.head; dlist != NULL; dlist = dlist->next) {
-g_printf("AA %p %p\n",dlist, dlist->next);
 	dp = dlist->data;
-g_printf("BB\n");
 	if(dp->todo) {
-g_printf("CC\n");
 	    count++;
-g_printf("DD\n");
 	    func(dp);
-g_printf("EE\n");
 	}
-g_printf("FF %p\n",dlist);
-//g_printf("FF %p %p\n",dlist, dlist->next);
     }
-g_printf("GG\n");
     if(count==0) {
 	g_fprintf(stderr,_("%s: no disk matched\n"),get_pname());
     }
@@ -558,7 +550,6 @@ info_one(
     struct tm *tm;
     stats_t *sp;
 
-g_printf("info_one enter\n");
     get_info(dp->host->hostname, dp->name, &info);
 
     g_printf(_("\nCurrent info for %s %s:\n"), dp->host->hostname, dp->name);
@@ -599,7 +590,6 @@ g_printf("info_one enter\n");
 		   (intmax_t)sp->secs);
 	}
     }
-g_printf("info_one quit\n");
 }
 
 

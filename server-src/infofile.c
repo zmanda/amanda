@@ -328,20 +328,21 @@ read_txinfofile(
 	info->history[i].level = -2;
     }
 
-    for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
+    while ((line = agets(infof)) != NULL) {
 	history_t onehistory;	/* one history record */
 	long long off_t_tmp;
 
-	if (nb_history >= NB_HISTORY) break;
-
 	if (line[0] == '\0')
 	    continue;
+
 	if(line[0] == '/' && line[1] == '/') {
 	    info->history[nb_history].level = -2;
 	    rc = 0;
 	    amfree(line);
 	    return 0;				/* normal end of record */
 	}
+
+	if (nb_history >= NB_HISTORY) break;
 
 	memset(&onehistory, 0, sizeof(onehistory));
 
@@ -396,6 +397,7 @@ read_txinfofile(
 	}
 
 	info->history[nb_history++] = onehistory;
+	amfree(line);
     }
     amfree(line);
 
@@ -404,8 +406,6 @@ read_txinfofile(
 	    break;
 	amfree(line);
     }
-    if (line == NULL) return -1;
-    amfree(line);
 
     return rc;
 }

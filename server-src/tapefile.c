@@ -445,6 +445,7 @@ add_tapelabel(
     new->retention = FALSE;
     new->retention_nb = FALSE;
     new->retention_type = RETENTION_NO;
+    new->when_overwrite = -1;
 
     new->prev  = NULL;
     new->next  = NULL;
@@ -525,6 +526,7 @@ parse_tapeline(
 
     cline = g_strdup(line);
     tp = g_new0(tape_t, 1);
+    tp->when_overwrite = -1;
 
     s1 = s - 1;
     skip_non_whitespace(s, ch);
@@ -1159,6 +1161,21 @@ get_retention_type(
 	    return tp->retention_type;
     }
     return RETENTION_NO;
+}
 
+int
+tape_overwrite(
+    tape_t *tp)
+{
+    tape_t *tp1;
+    int nb_tapes = 0;
+
+    for (tp1 = tp; tp1 != NULL; tp1 = tp1->next) {
+	if (!tp->retention &&
+	    g_str_equal(tp->storage, tp1->storage)) {
+	    nb_tapes++;
+	}
+    }
+    return nb_tapes;
 }
 

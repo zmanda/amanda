@@ -315,7 +315,6 @@ sub main {
 	return $steps->{'quit'}->($message) if defined $message;
 
 	# get the timestamp
-print "AA: " . @opt_dumpspecs . "\n";
 	$timestamp = $opt_timestamp;
 	$timestamp = Amanda::DB::Catalog::get_latest_write_timestamp()
 	    if !defined $opt_timestamp and @opt_dumpspecs == 0;

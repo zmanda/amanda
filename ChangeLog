@@ -1,3 +1,15 @@
+2016-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm: Use storage_nme fro chg->storage
+	* server-src/amadmin.c: Remove spurious print message
+	* server-src/amreindex.pl: Remove spurious print message
+	* server-src/dumper.c: Call g_mutex_new and g_cond_new before creating
+	  the thread, this fix a race
+	* server-src/infofile.c (read_txinfofile): return 0 on success
+	* server-src/planner.c (when_overwrite): Use storage setting
+	* server-src/tapefile.c (tape_overwrite): New function to return how
+	  many tapes whould be reuse before this one
+	* server-src/tapefile.h (tape_overwrite): Add prototype
+
 2016-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: Update for 3.4
 

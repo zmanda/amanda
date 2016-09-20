@@ -885,6 +885,7 @@ setup_estimate(
 
     assert(dp && dp->host);
 
+    compute_retention();
     qname = quote_string(dp->name);
     g_fprintf(stderr, _("%s: time %s: setting up estimates for %s:%s\n"),
 		    get_pname(), walltime_str(curclock()),
@@ -1280,19 +1281,31 @@ static int when_overwrite(
     char *label)
 {
     tape_t *tp;
-    int runtapes;
+    int     nb;
+    int     runtapes;
+    storage_t *st;
 
-    runtapes = conf_runtapes;
-    if(runtapes == 0) runtapes = 1;
-
-    if((tp = lookup_tapelabel(label)) == NULL)
+    if ((tp = lookup_tapelabel(label)) == NULL)
 	return 1;	/* "shouldn't happen", but trigger warning message */
-    else if(tp->reuse == 0)
+
+    if (tp->when_overwrite > -1)
+	return tp->when_overwrite;
+
+    if (tp->reuse == 0)
 	return 1024;
-    else if(lookup_nb_tape() > conf_tapecycle)
-	return (lookup_nb_tape() - tp->position) / runtapes;
-    else
-	return (conf_tapecycle - tp->position) / runtapes;
+
+    if (!tp->storage)
+	return 1;
+    st = lookup_storage(tp->storage);
+    if (!st)
+	return 1;
+    runtapes = storage_get_runtapes(st);
+    if (runtapes == 0) runtapes = 1;
+
+    nb = tape_overwrite(tp);
+    tp->when_overwrite = nb / runtapes;
+
+    return tp->when_overwrite;
 }
 
 /* Return the estimated size for a particular dump */

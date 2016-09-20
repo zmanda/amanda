@@ -1615,10 +1615,10 @@ do_dump(
 		// shm_ring direct
 		db->shm_ring_direct = shm_ring_direct;
 		shm_ring_direct = NULL;
-		shm_thread = g_thread_create(handle_shm_ring_direct,
-				(gpointer)db, TRUE, NULL);
 		shm_thread_mutex = g_mutex_new();
 		shm_thread_cond  = g_cond_new();
+		shm_thread = g_thread_create(handle_shm_ring_direct,
+				(gpointer)db, TRUE, NULL);
 	    } else {
 		// stream to shm_ring
 		db->shm_ring_producer = shm_ring_link(shm_name);
@@ -1640,10 +1640,10 @@ do_dump(
 		shm_ring_consumer_set_size(db->shm_ring_consumer,
 					   NETWORK_BLOCK_BYTES*4,
 					   NETWORK_BLOCK_BYTES);
-		shm_thread = g_thread_create(handle_shm_ring_to_fd_thread,
-				(gpointer)db, TRUE, NULL);
 		shm_thread_mutex = g_mutex_new();
 		shm_thread_cond  = g_cond_new();
+		shm_thread = g_thread_create(handle_shm_ring_to_fd_thread,
+				(gpointer)db, TRUE, NULL);
 	    } else {
 		// stream to fd
 	    }
@@ -3561,7 +3561,7 @@ startup_dump(
     const char *options)
 {
     char *req;
-    int response_error;
+    int response_error = 1;
     const security_driver_t *secdrv;
     int has_features;
     int has_maxdumps;
