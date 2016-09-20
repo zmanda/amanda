@@ -1179,3 +1179,18 @@ tape_overwrite(
     return nb_tapes;
 }
 
+int
+nb_tape_in_storage(
+    char *storage_name)
+{
+    tape_t *tp;
+    int nb_tapes = 0;
+
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+	if( g_str_equal(storage_name, tp->storage)) {
+	    nb_tapes++;
+	}
+    }
+    return nb_tapes;
+}
+

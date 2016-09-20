@@ -498,7 +498,7 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'c
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
 @sorted_notes = sort @{$reply->{'body'}->[0]->{'report'}->{'notes'}};
 is($sorted_notes[0], '  planner: Forcing level 1 of localhost:diskname2 as directed.' , 'notes[0] is correct');
-is($sorted_notes[1], '  planner: Last full dump of localhost:diskname2 on tape STO-1-00001 overwritten in 1 run.' , 'notes[1] is correct');
+is($sorted_notes[1], '  planner: Last full dump of localhost:diskname2 on tape STO-1-00001 overwritten in 2 runs.' , 'notes[1] is correct');
 is($sorted_notes[2], '  planner: tapecycle (2) <= runspercycle (10)', 'notes[2] is correct');
 is($sorted_notes[3], '  taper: Slot 1 with label STO-1-00001 is not reusable' , 'notes[3] is correct');
 is($sorted_notes[4], '  taper: Slot 1 without label can be labeled' , 'notes[4] is correct');
@@ -751,7 +751,7 @@ USAGE BY TAPE:
 
 NOTES:
   planner: Forcing level 1 of localhost:diskname2 as directed.
-  planner: Last full dump of localhost:diskname2 on tape STO-1-00001 overwritten in 1 run.
+  planner: Last full dump of localhost:diskname2 on tape STO-1-00001 overwritten in 2 runs.
   planner: tapecycle (2) <= runspercycle (10)
   taper: Slot 1 with label STO-1-00001 is not reusable
   taper: Slot 1 without label can be labeled

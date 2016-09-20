@@ -1282,6 +1282,7 @@ static int when_overwrite(
 {
     tape_t *tp;
     int     nb;
+    int     nb_in_storage;
     int     runtapes;
     storage_t *st;
 
@@ -1303,10 +1304,13 @@ static int when_overwrite(
     if (runtapes == 0) runtapes = 1;
 
     nb = tape_overwrite(tp);
+    nb_in_storage = nb_tape_in_storage(tp->storage);
+    if (conf_tapecycle+1 > nb_in_storage)
+	nb += (conf_tapecycle+1 - nb_in_storage);
+
     tp->when_overwrite = (nb - 1) / runtapes;
     if (tp->when_overwrite < 0)
 	tp->when_overwrite = 0;
-
 
     return tp->when_overwrite;
 }

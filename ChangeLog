@@ -1,4 +1,11 @@
 2016-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c (when_overwrite): Use the tapecycle
+	* server-src/tapefile.c (nb_tape_in_storage): New function to compute
+	  the number of tape in a storage
+	* server-src/tapefile.h (nb_tape_in_storage): Add prototype
+	* installcheck/success-dumper-chunker-2taper-by-level.pl: Fix test
+
+2016-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/planner.c (when_overwrite): Fix off by 1 error
 	* server-src/tapefile.c (tape_overwrite): Use tp1->retention
 
