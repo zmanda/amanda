@@ -1,4 +1,9 @@
 2016-09-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report.pm: A Fail driver line must set the exit_status
+	  to STATUS_FAILED
+	* installcheck/Amanda_ClientService.pl: Fix test
+
+2016-09-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Device.pl: Fix a test
 
 2016-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>

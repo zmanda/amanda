@@ -1774,6 +1774,11 @@ sub check_missing_fail_strange
 	    } elsif (defined($try->{'taper'}) &&
 		$try->{'taper'}->{status} ne 'done') {
 		    $self->{flags}{exit_status} |= STATUS_FAILED;
+	    } elsif (!exists $try->{dumper} &&
+		     !exists $try->{chunker} &&
+		     !exists $try->{taper} &&
+		     $driver->{'status'} eq 'fail') {
+		$self->{flags}{exit_status} |= STATUS_FAILED;
 	    }
 	}
     }

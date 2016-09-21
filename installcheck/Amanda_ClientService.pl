@@ -34,6 +34,7 @@ use Amanda::MainLoop;
 use Installcheck;
 use Socket;
 
+Amanda::Util::glib_init();
 config_init(0, undef);
 Amanda::Debug::dbopen('installcheck');
 Installcheck::log_test_output();
