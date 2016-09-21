@@ -1,4 +1,9 @@
 2016-09-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amadmin.c (find): Do not call find_log(), it is a cpu hog
+	  and it print useless warning
+	* server-src/tapefile.c (lookup_tapelabel): Use a hash
+
+2016-09-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Report.pm: A Fail driver line must set the exit_status
 	  to STATUS_FAILED
 	* installcheck/Amanda_ClientService.pl: Fix test

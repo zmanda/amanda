@@ -40,7 +40,8 @@
 
 static tape_t *tape_list = NULL;
 static tape_t *tape_list_end = NULL;
-static GHashTable *tape_table = NULL;
+static GHashTable *tape_table_storage_label = NULL;
+static GHashTable *tape_table_label = NULL;
 static gboolean retention_computed = FALSE;
 
 /* local functions */
@@ -110,7 +111,8 @@ read_tapelist(
 	if (tp != NULL) {
 	    char *tape_key = tape_hash_key(tp->pool, tp->label);
 	    tape_list = insert(tape_list, tp);
-	    g_hash_table_insert(tape_table, tape_key, tp);
+	    g_hash_table_insert(tape_table_storage_label, tape_key, tp);
+	    g_hash_table_insert(tape_table_label, tp->label, tp);
 	}
     }
     afclose(tapef);
@@ -187,9 +189,13 @@ clear_tapelist(void)
 {
     tape_t *tp, *next;
 
-    if (tape_table) {
-	g_hash_table_destroy(tape_table);
-	tape_table = NULL;
+    if (tape_table_storage_label) {
+	g_hash_table_destroy(tape_table_storage_label);
+	tape_table_storage_label = NULL;
+    }
+    if (tape_table_label) {
+	g_hash_table_destroy(tape_table_label);
+	tape_table_label = NULL;
     }
 
     for(tp = tape_list; tp; tp = next) {
@@ -212,19 +218,21 @@ void
 reset_tapelist(void)
 {
     clear_tapelist();
-    tape_table = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, NULL);
+    tape_table_storage_label = g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, NULL);
+    tape_table_label = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 }
 
 tape_t *
 lookup_tapelabel(
     const char *label)
 {
-    tape_t *tp;
+//    tape_t *tp;
 
-    for(tp = tape_list; tp != NULL; tp = tp->next) {
-	if(g_str_equal(label, tp->label)) return tp;
-    }
-    return NULL;
+    return g_hash_table_lookup(tape_table_label, label);
+//    for(tp = tape_list; tp != NULL; tp = tp->next) {
+//	if(g_str_equal(label, tp->label)) return tp;
+//    }
+//    return NULL;
 }
 
 
@@ -237,7 +245,7 @@ lookup_tapepoollabel(
     char *tape_key;
 
     tape_key = tape_hash_key(pool, label);
-    tp = g_hash_table_lookup(tape_table, tape_key);
+    tp = g_hash_table_lookup(tape_table_storage_label, tape_key);
     return tp;
 }
 
@@ -381,7 +389,8 @@ remove_tapelabel(
     tp = lookup_tapelabel(label);
     if (tp) {
 	char *tape_key = tape_hash_key(tp->pool, tp->label);
-	g_hash_table_remove(tape_table, tape_key);
+	g_hash_table_remove(tape_table_storage_label, tape_key);
+	g_hash_table_remove(tape_table_label, tp->label);
 	g_free(tape_key);
 	prev = tp->prev;
 	next = tp->next;
@@ -459,7 +468,8 @@ add_tapelabel(
     }
 
     tape_key = tape_hash_key(new->pool, new->label);
-    g_hash_table_insert(tape_table, tape_key, new);
+    g_hash_table_insert(tape_table_storage_label, tape_key, new);
+    g_hash_table_insert(tape_table_label, new->label, new);
 
     return new;
 }
