@@ -598,7 +598,7 @@ shm_ring_create(void)
     shm_ring_t *shm_ring = g_new0(shm_ring_t, 1);
 
     g_debug("shm_ring_create");
-    shm_ring->shm_control_name = g_strdup_printf(SHM_CONTROL_NAME, getpid(), get_next_shm_ring_id());
+    shm_ring->shm_control_name = g_strdup_printf(SHM_CONTROL_NAME, (int)getpid(), get_next_shm_ring_id());
     shm_unlink(shm_ring->shm_control_name);
     shm_ring->shm_control = shm_open(shm_ring->shm_control_name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (shm_ring->shm_control == -1) {
@@ -622,19 +622,19 @@ shm_ring_create(void)
 
     g_snprintf(shm_ring->mc->sem_write_name,
 	       sizeof(shm_ring->mc->sem_write_name),
-	       SEM_WRITE_NAME, getpid(), get_next_shm_ring_id());
+	       SEM_WRITE_NAME, (int)getpid(), get_next_shm_ring_id());
     g_snprintf(shm_ring->mc->sem_read_name,
 	       sizeof(shm_ring->mc->sem_read_name),
-	       SEM_READ_NAME, getpid(), get_next_shm_ring_id());
+	       SEM_READ_NAME, (int)getpid(), get_next_shm_ring_id());
     g_snprintf(shm_ring->mc->sem_ready_name,
 	       sizeof(shm_ring->mc->sem_ready_name),
-	       SEM_READY_NAME, getpid(), get_next_shm_ring_id());
+	       SEM_READY_NAME, (int)getpid(), get_next_shm_ring_id());
     g_snprintf(shm_ring->mc->sem_start_name,
 	       sizeof(shm_ring->mc->sem_start_name),
-	       SEM_START_NAME, getpid(), get_next_shm_ring_id());
+	       SEM_START_NAME, (int)getpid(), get_next_shm_ring_id());
     g_snprintf(shm_ring->mc->shm_data_name,
 	       sizeof(shm_ring->mc->shm_data_name),
-	       SHM_DATA_NAME, getpid(), get_next_shm_ring_id());
+	       SHM_DATA_NAME, (int)getpid(), get_next_shm_ring_id());
 
     shm_unlink(shm_ring->mc->shm_data_name);
     shm_ring->shm_data = shm_open(shm_ring->mc->shm_data_name,

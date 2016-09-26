@@ -169,7 +169,7 @@ write_tapelist(
 	amfree(newtapefile);
 	return 1;
     }
-    pid_str = g_strdup_printf("%d",getpid());
+    pid_str = g_strdup_printf("%d", (int)getpid());
     last_read_str = g_strdup_printf("%s.last_write", tapefile);
     unlink(last_read_str);
     rc = rename(newtapefile, tapefile);
