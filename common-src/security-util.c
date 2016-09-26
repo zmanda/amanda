@@ -3249,8 +3249,17 @@ find_port_for_service(
         struct servent sp;
         struct servent *result;
         char buf[2048];
-	int r;
 
+#ifdef GETSERVBYNAME_R5
+	result = getservbyname_r(service, proto, &sp, buf, 2048);
+	if (result == 0) {
+	    assert(errno != ERANGE);
+	    port = 0;
+	} else {
+	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
+	}
+#else
+	int r;
 	r = getservbyname_r(service, proto, &sp, buf, 2048, &result);
 	assert(r != ERANGE);
 	if (r != 0) {
@@ -3258,6 +3267,7 @@ find_port_for_service(
 	} else {
 	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
 	}
+#endif
     }
 
     return port;

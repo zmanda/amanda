@@ -1,3 +1,10 @@
+2016-09-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/syshacks.m4: Define GETSERVBYNAME_R5 on solaris
+	* common-src/security-util.c: Use solaris getservbyname_r if
+	  GETSERVBYNAME_R5 is defined
+	* common-src/shm-ring.c: Cast pid_t to int
+	* server-src/tapefile.c: Cast pid_t to int
+
 2016-09-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amadmin.c (find): Do not call find_log(), it is a cpu hog
 	  and it print useless warning
