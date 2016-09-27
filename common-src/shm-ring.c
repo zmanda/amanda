@@ -62,18 +62,20 @@
 #define SEM_START_NAME "/amanda_sem_start-%d-%d"
 
 static int shm_ring_id = 0;
-static GMutex *shm_ring_mutex = NULL;
+GMutex *shm_ring_mutex = NULL;
+static GHashTable *hash_sem = NULL;
 
 static void alloc_shm_ring(shm_ring_t *shm_ring);
+static sem_t *am_sem_create(char *name);
+static sem_t *am_sem_open(char *name);
+static void am_sem_close(sem_t *sem);
+
 
 static int
 get_next_shm_ring_id(void)
 {
     int id;
 
-    if (shm_ring_mutex == NULL) {
-	shm_ring_mutex = g_mutex_new();
-    }
     g_mutex_lock(shm_ring_mutex);
     id = shm_ring_id++;
     g_mutex_unlock(shm_ring_mutex);
@@ -350,21 +352,11 @@ close_producer_shm_ring(
     sem_post(shm_ring->sem_start);
     sem_post(shm_ring->sem_write);
     sem_post(shm_ring->sem_read);
-    if (sem_close(shm_ring->sem_write) == -1) {
-	g_debug("sem_close(sem_write) failed: %s", strerror(errno));
-    }
-    if (sem_close(shm_ring->sem_read) == -1) {
-	g_debug("sem_close(sem_read) failed: %s", strerror(errno));
-	exit(1);
-    }
-    if (sem_close(shm_ring->sem_ready) == -1) {
-	g_debug("sem_close(sem_ready) failed: %s", strerror(errno));
-	exit(1);
-    }
-    if (sem_close(shm_ring->sem_start) == -1) {
-	g_debug("sem_close(sem_start) failed: %s", strerror(errno));
-	exit(1);
-    }
+g_debug("close_producer_shm_ring sem_close(sem_write %p", shm_ring->sem_write);
+    am_sem_close(shm_ring->sem_write);
+    am_sem_close(shm_ring->sem_ready);
+    am_sem_close(shm_ring->sem_read);
+    am_sem_close(shm_ring->sem_start);
     if (shm_ring->shm_data_mmap_size > 0 && shm_ring->data) {
 	if (munmap(shm_ring->data, shm_ring->shm_data_mmap_size) == -1) {;
 	    g_debug("munmap(data) failed: %s", strerror(errno));
@@ -592,6 +584,77 @@ alloc_shm_ring(
     shm_ring->mc->ring_size = shm_ring->ring_size;
 }
 
+static sem_t *
+am_sem_create(
+    char *name)
+{
+    sem_t *r;
+    int nb;
+
+    g_mutex_lock(shm_ring_mutex);
+    r = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
+    if (r == SEM_FAILED) {
+	g_debug("am_sem_create failed '%s': %s", name, strerror(errno));
+	exit(1);
+    }
+    if (!hash_sem) {
+	hash_sem = g_hash_table_new(g_direct_hash, g_direct_equal);
+    }
+    nb = 1;
+g_debug("am_sem_create %p %d", r, nb);
+    g_hash_table_insert(hash_sem, r, GINT_TO_POINTER(nb));
+    g_mutex_unlock(shm_ring_mutex);
+
+    return r;
+}
+
+static sem_t *
+am_sem_open(
+    char *name)
+{
+    sem_t *r;
+    int nb;
+
+    g_mutex_lock(shm_ring_mutex);
+    r = sem_open(name, 0);
+    if (r == SEM_FAILED) {
+	g_debug("am_sem_open failed '%s': %s", name, strerror(errno));
+	exit(1);
+    }
+    if (!hash_sem) {
+	hash_sem = g_hash_table_new(g_direct_hash, g_direct_equal);
+    }
+    nb = GPOINTER_TO_INT(g_hash_table_lookup(hash_sem, r));
+    nb++;
+g_debug("am_sem_open %p %d", r, nb);
+    g_hash_table_insert(hash_sem, r, GINT_TO_POINTER(nb));
+    g_mutex_unlock(shm_ring_mutex);
+
+    return r;
+}
+
+static void
+am_sem_close(
+    sem_t *sem)
+{
+    int nb;
+
+    g_mutex_lock(shm_ring_mutex);
+    nb = GPOINTER_TO_INT(g_hash_table_lookup(hash_sem, sem));
+    nb--;
+g_debug("am_sem_close %p %d", sem, nb);
+    if (nb <= 0) {
+	g_hash_table_remove(hash_sem, sem);
+	if (sem_close(sem) == -1) {
+	    g_debug("sem_close(%p) failed: %s", sem, strerror(errno));
+	    exit(1);
+	}
+    } else {
+	g_hash_table_insert(hash_sem, sem, GINT_TO_POINTER(nb));
+    }
+    g_mutex_unlock(shm_ring_mutex);
+}
+
 shm_ring_t *
 shm_ring_create(void)
 {
@@ -644,33 +707,13 @@ shm_ring_create(void)
 	exit(1);
     }
     sem_unlink(shm_ring->mc->sem_write_name);
-    shm_ring->sem_write = sem_open(shm_ring->mc->sem_write_name,
-				   O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-    if (shm_ring->sem_write == SEM_FAILED) {
-	g_debug("sem_open shm_ring->sem_write failed '%s': %s", shm_ring->mc->sem_write_name,strerror(errno));
-	exit(1);
-    }
+    shm_ring->sem_write = am_sem_create(shm_ring->mc->sem_write_name);
     sem_unlink(shm_ring->mc->sem_read_name);
-    shm_ring->sem_read  = sem_open(shm_ring->mc->sem_read_name,
-				   O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-    if (shm_ring->sem_read == SEM_FAILED) {
-	g_debug("sem_open shm_ring->sem_read failed '%s': %s", shm_ring->mc->sem_read_name, strerror(errno));
-	exit(1);
-    }
+    shm_ring->sem_read  = am_sem_create(shm_ring->mc->sem_read_name);
     sem_unlink(shm_ring->mc->sem_ready_name);
-    shm_ring->sem_ready  = sem_open(shm_ring->mc->sem_ready_name,
-				   O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-    if (shm_ring->sem_ready == SEM_FAILED) {
-	g_debug("sem_open shm_ring->sem_ready failed '%s': %s", shm_ring->mc->sem_ready_name, strerror(errno));
-	exit(1);
-    }
+    shm_ring->sem_ready  = am_sem_create(shm_ring->mc->sem_ready_name);
     sem_unlink(shm_ring->mc->sem_start_name);
-    shm_ring->sem_start  = sem_open(shm_ring->mc->sem_start_name,
-				   O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-    if (shm_ring->sem_start == SEM_FAILED) {
-	g_debug("sem_open shm_ring->sem_start failed '%s': %s", shm_ring->mc->sem_start_name, strerror(errno));
-	exit(1);
-    }
+    shm_ring->sem_start  = am_sem_create(shm_ring->mc->sem_start_name);
     g_debug("shm_data: %s", shm_ring->mc->shm_data_name);
     g_debug("sem_write: %s", shm_ring->mc->sem_write_name);
     g_debug("sem_read: %s", shm_ring->mc->sem_read_name);
@@ -756,26 +799,10 @@ shm_ring_link(
 	exit(1);
     }
     shm_ring->shm_data_mmap_size = 0;
-    shm_ring->sem_write = sem_open(shm_ring->mc->sem_write_name, 0);
-    if (shm_ring->sem_write == SEM_FAILED) {
-	g_debug("sem_open sem_write failed '%s': %s", shm_ring->mc->sem_write_name, strerror(errno));
-	exit(1);
-    }
-    shm_ring->sem_read  = sem_open(shm_ring->mc->sem_read_name, 0);
-    if (shm_ring->sem_read == SEM_FAILED) {
-	g_debug("sem_open sem_read failed '%s': %s", shm_ring->mc->sem_read_name, strerror(errno));
-	exit(1);
-    }
-    shm_ring->sem_ready  = sem_open(shm_ring->mc->sem_ready_name, 0);
-    if (shm_ring->sem_ready == SEM_FAILED) {
-	g_debug("sem_open sem_ready failed '%s': %s", shm_ring->mc->sem_ready_name, strerror(errno));
-	exit(1);
-    }
-    shm_ring->sem_start  = sem_open(shm_ring->mc->sem_start_name, 0);
-    if (shm_ring->sem_start == SEM_FAILED) {
-	g_debug("sem_open sem_start failed '%s': %s", shm_ring->mc->sem_start_name, strerror(errno));
-	exit(1);
-    }
+    shm_ring->sem_write = am_sem_open(shm_ring->mc->sem_write_name);
+    shm_ring->sem_read  = am_sem_open(shm_ring->mc->sem_read_name);
+    shm_ring->sem_ready = am_sem_open(shm_ring->mc->sem_ready_name);
+    shm_ring->sem_start = am_sem_open(shm_ring->mc->sem_start_name);
     for (i=1; i < SHM_RING_MAX_PID; i++) {
 	if (shm_ring->mc->pids[i] == 0) {
 	    shm_ring->mc->pids[i] = getpid();
@@ -789,22 +816,11 @@ void
 close_consumer_shm_ring(
     shm_ring_t *shm_ring)
 {
-    if (sem_close(shm_ring->sem_write) == -1) {
-	g_debug("sem_close(sem_write) failed: %s", strerror(errno));
-	exit(1);
-    }
-    if (sem_close(shm_ring->sem_read) == -1) {
-	g_debug("sem_close(sem_read) failed: %s", strerror(errno));
-	exit(1);
-    }
-    if (sem_close(shm_ring->sem_ready) == -1) {
-	g_debug("sem_close(sem_ready) failed: %s", strerror(errno));
-	exit(1);
-    }
-    if (sem_close(shm_ring->sem_start) == -1) {
-	g_debug("sem_close(sem_start) failed: %s", strerror(errno));
-	exit(1);
-    }
+g_debug("close_consumer_shm_ring sem_close(sem_write %p", shm_ring->sem_write);
+    am_sem_close(shm_ring->sem_write);
+    am_sem_close(shm_ring->sem_read);
+    am_sem_close(shm_ring->sem_ready);
+    am_sem_close(shm_ring->sem_start);
     if (sem_unlink(shm_ring->mc->sem_write_name) == -1 && errno != ENOENT) {
 	g_debug("sem_unlink(sem_write_name) failed: %s", strerror(errno));
 	exit(1);

@@ -30,6 +30,7 @@
 #include "glib-util.h"
 #include "pthread.h"
 #include "conffile.h" /* For find_multiplier. */
+#include "shm-ring.h" /* For shm_ring_mutex */
 
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
@@ -150,6 +151,7 @@ glib_init(void) {
 
     /* Initialize global mutex */
     file_mutex = g_mutex_new();
+    shm_ring_mutex = g_mutex_new();
 
     /* initialize ssl */
     init_ssl();
