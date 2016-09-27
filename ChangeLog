@@ -1,4 +1,8 @@
 2016-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (file_taper_result): Check result of
+	  g_hash_table_lookup
+
+2016-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/glib-util.c: Initialize shm_ring_mutex
 	* common-src/shm-ring.c: Use a hash to manage semaphore
 	* common-src/shm-ring.h: Export shm_ring_mutex
