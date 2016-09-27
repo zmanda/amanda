@@ -3004,52 +3004,54 @@ file_taper_result(
 	char      *holding_file;
 
 	cmddata = g_hash_table_lookup(cmddatas->cmdfile, GINT_TO_POINTER(sp->command_id));
-	holding_file = g_strdup(cmddata->holding_file);
-	cmddatas = remove_cmd_in_cmdfile(cmddatas, sp->command_id);
+	if (cmddata) {
+	    holding_file = g_strdup(cmddata->holding_file);
+	    cmddatas = remove_cmd_in_cmdfile(cmddatas, sp->command_id);
 
-        /* this code is duplicated in dumper_taper_result  and vault_taper_result */
-        /* Add COPY */
-        if (taper->storage_name) {
-            storage_t *storage = lookup_storage(taper->storage_name);
-            if (storage) {
-                vault_list_t vl = storage_get_vault_list(storage);
-                for (; vl != NULL; vl = vl->next) {
-                    vault_el_t *v = vl->data;
-                    if (dump_match_selection(v->storage, sp)) {
-                        cmddata_t *cmddata = g_new0(cmddata_t, 1);
-                        cmddata->operation = CMD_COPY;
-                        cmddata->config = g_strdup(get_config_name());
-                        cmddata->src_storage = g_strdup(taper->storage_name);
-                        cmddata->src_pool = g_strdup(storage_get_tapepool(storage));
-                        cmddata->src_label = g_strdup(wtaper->first_label);
-                        cmddata->src_fileno = wtaper->first_fileno;
-			cmddata->src_labels_str = g_strdup(wtaper->dst_labels_str);
-			cmddata->src_labels = wtaper->dst_labels;
-			wtaper->dst_labels = NULL;
-                        cmddata->holding_file = NULL;
-                        cmddata->hostname = g_strdup(dp->host->hostname);
-                        cmddata->diskname = g_strdup(dp->name);
-                        cmddata->dump_timestamp = g_strdup(sp->datestamp);
-                        cmddata->level = sp->level;
-                        cmddata->dst_storage = g_strdup(v->storage);
-                        cmddata->working_pid = getppid();
-                        cmddata->status = CMD_TODO;
-                        cmddata->start_time = now + v->days * 60*60*24;
-                        cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
-			// JLM Should call cmdfile_vault
-                    }
-                }
-            }
-        }
-
-	if (sp->nb_flush == 0) {
-	    if (!holding_in_cmdfile(cmddatas, holding_file)) {
-		delete_diskspace(sp);
+	    /* this code is duplicated in dumper_taper_result  and vault_taper_result */
+	    /* Add COPY */
+	    if (taper->storage_name) {
+		storage_t *storage = lookup_storage(taper->storage_name);
+		if (storage) {
+		    vault_list_t vl = storage_get_vault_list(storage);
+		    for (; vl != NULL; vl = vl->next) {
+			vault_el_t *v = vl->data;
+			if (dump_match_selection(v->storage, sp)) {
+			    cmddata_t *cmddata = g_new0(cmddata_t, 1);
+			    cmddata->operation = CMD_COPY;
+			    cmddata->config = g_strdup(get_config_name());
+			    cmddata->src_storage = g_strdup(taper->storage_name);
+			    cmddata->src_pool = g_strdup(storage_get_tapepool(storage));
+			    cmddata->src_label = g_strdup(wtaper->first_label);
+			    cmddata->src_fileno = wtaper->first_fileno;
+			    cmddata->src_labels_str = g_strdup(wtaper->dst_labels_str);
+			    cmddata->src_labels = wtaper->dst_labels;
+			    wtaper->dst_labels = NULL;
+			    cmddata->holding_file = NULL;
+			    cmddata->hostname = g_strdup(dp->host->hostname);
+			    cmddata->diskname = g_strdup(dp->name);
+			    cmddata->dump_timestamp = g_strdup(sp->datestamp);
+			    cmddata->level = sp->level;
+			    cmddata->dst_storage = g_strdup(v->storage);
+			    cmddata->working_pid = getppid();
+			    cmddata->status = CMD_TODO;
+			    cmddata->start_time = now + v->days * 60*60*24;
+			    cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
+			    // JLM Should call cmdfile_vault
+			}
+		    }
+		}
 	    }
-	    free_sched(sp);
-	    sp = NULL;
-	}
-	g_free(holding_file);
+
+	    if (sp->nb_flush == 0) {
+		if (!holding_in_cmdfile(cmddatas, holding_file)) {
+		    delete_diskspace(sp);
+		}
+		free_sched(sp);
+		sp = NULL;
+	    }
+	    g_free(holding_file);
+	};
     }
 
     amfree(qname);
