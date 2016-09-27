@@ -86,6 +86,8 @@ typedef struct shm_ring_t {
 #include "security.h"
 #include "stream.h"
 
+extern GMutex *shm_ring_mutex;
+
 int shm_ring_sem_wait(shm_ring_t *shm_ring, sem_t *sem);
 shm_ring_t *shm_ring_create(void);
 shm_ring_t *shm_ring_link(char *name);

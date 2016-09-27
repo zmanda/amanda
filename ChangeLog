@@ -1,3 +1,12 @@
+2016-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/glib-util.c: Initialize shm_ring_mutex
+	* common-src/shm-ring.c: Use a hash to manage semaphore
+	* common-src/shm-ring.h: Export shm_ring_mutex
+	* perl/Amanda/Status.pm: Fix for runq
+	* server-src/tapefile.c: Fix for storage not set
+	* installcheck/Amanda_Rest_Runs.pl: Fix
+	* installcheck/success-dumper-chunker+taper-flush.pl Fix
+
 2016-09-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/syshacks.m4: Define GETSERVBYNAME_R5 on solaris
 	* common-src/security-util.c: Use solaris getservbyname_r if

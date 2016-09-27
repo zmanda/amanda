@@ -279,6 +279,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'tapeq' => {
                                                                 'taper0' => 0
                                                               },
+                                                   'directq' => '0',
                                                    'roomq' => '0',
                                                    'runq' => '0'
                                                  },
@@ -779,6 +780,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'tapeq' => {
                                                                 'taper0' => 0
                                                               },
+                                                   'directq' => '0',
                                                    'roomq' => '0',
                                                    'runq' => '0'
                                                  },
@@ -1001,6 +1003,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'tapeq' => {
                                                                 'taper0' => 0
                                                               },
+                                                   'directq' => '0',
                                                    'roomq' => '0',
                                                    'runq' => '0'
                                                  },
@@ -1251,6 +1254,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                    'tapeq' => {
                                                                 'taper0' => 0
                                                               },
+                                                   'directq' => '0',
                                                    'roomq' => '0',
                                                    'runq' => '0'
                                                  },

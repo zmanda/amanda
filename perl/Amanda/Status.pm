@@ -1416,7 +1416,7 @@ REREAD:
 		my $dle = $dles{$serial};
 		$dle->{'error'} .= "(" . $line[6] . ")";
 	    } elsif($line[1] eq "state" && $line[2] eq "time") {
-		#3:time 4:"free" 5:"kps" 6:free 7:"space" 8:space 9:"taper" 10:taper 11:"idle-dumpers" 12:idle-dumpers 13:"qlen" 14:"tapeq" 15:taper_name 16:taper 16:"runq" 17:runq 18:"roomq" 19:roomq 20:"wakeup" 21:wakeup 22:"driver-idle" 23:driver-idle
+		#3:time 4:"free" 5:"kps" 6:free 7:"space" 8:space 9:"taper" 10:taper 11:"idle-dumpers" 12:idle-dumpers 13:"qlen" 14:"tapeq" 15:taper_name 16:taper 17:vault 18:"runq" 19:runq 20:"directq" 21:directq 22:"roomq" 23:roomq 24:"wakeup" 25:wakeup 26:"driver-idle" 27:driver-idle
 		$self->{'current_time'} = $line[3];
 		$self->{'idle_dumpers'} = $line[12];
 
@@ -1426,10 +1426,15 @@ REREAD:
 		delete $self->{'qlen'}->{'tapeq'};
 		while($line[$i] eq "tapeq") {
 		    $self->{'qlen'}->{'tapeq'}->{$line[$i+1]} += $line[$i+2];
-		    $i += 3;
+		    if ($line[$i+3] eq 'tapeq' || $line[$i+3] eq 'runq') {
+			$i += 3;
+		    } else {
+			$i += 4;
+		    }
 		}
 		$self->{'qlen'}->{'runq'} = $line[$i+1];
-		$self->{'qlen'}->{'roomq'} = $line[$i+3];
+		$self->{'qlen'}->{'directq'} = $line[$i+3];
+		$self->{'qlen'}->{'roomq'} = $line[$i+5];
 
 		if (defined $self->{'dumpers_actives'}) {
 		    if (defined $self->{'status_driver'} and $self->{'status_driver'} ne "") {

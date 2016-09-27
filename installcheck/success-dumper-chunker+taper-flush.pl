@@ -695,7 +695,7 @@ failed to tape
 taped           :   1      1050k         0k (  0.00%) (  0.00%)
     tape 1      :   1      1050k      1050k (  3.42%) TESTCONF01 (1 parts)
 
-2 dumpers idle  : driver-idle
+2 dumpers idle  : no-dumpers
 TESTCONF    qlen: 0
                0: Idle
 
