@@ -116,7 +116,6 @@ Installcheck::log_test_output();
     my $cw = Amanda::MainLoop::child_watch_source($pid);
     $cw->set_callback(sub {
 	my ($src, $got_pid, $got_status) = @_;
-	Amanda::MainLoop::quit();
 	$src->remove();
 
 	if ($got_pid != $pid) {
@@ -132,9 +131,10 @@ Installcheck::log_test_output();
 	    return;
 	}
 	$global = 1;
+	Amanda::MainLoop::quit();
     });
 
-    my $to = Amanda::MainLoop::timeout_source(3000);
+    my $to = Amanda::MainLoop::timeout_source(20000);
     $to->set_callback(sub {
 	my ($src) = @_;
 	$global = 7;
@@ -165,7 +165,6 @@ Installcheck::log_test_output();
     my $cw = Amanda::MainLoop::child_watch_source($pid);
     $cw->set_callback(sub {
 	my ($src, $got_pid, $got_status) = @_;
-	Amanda::MainLoop::quit();
 	$src->remove();
 
 	if ($got_pid != $pid) {
@@ -181,9 +180,10 @@ Installcheck::log_test_output();
 	    return;
 	}
 	$global = "ok";
+	Amanda::MainLoop::quit();
     });
 
-    my $to = Amanda::MainLoop::timeout_source(3000);
+    my $to = Amanda::MainLoop::timeout_source(20000);
     $to->set_callback(sub { $global = "timeout"; Amanda::MainLoop::quit(); });
 
     Amanda::MainLoop::run();
@@ -238,9 +238,9 @@ Installcheck::log_test_output();
     $cw->set_callback(sub {
 	my ($src, $got_pid, $got_status) = @_;
 	$cw->remove();
-	Amanda::MainLoop::quit();
-
 	push @events, "died";
+
+	Amanda::MainLoop::quit();
     });
 
     my $fd = Amanda::MainLoop::fd_source($readinfd, $G_IO_IN | $G_IO_HUP);
@@ -394,8 +394,8 @@ pass("Calling remove twice is ok");
 	my ($greeting) = @_;
 
         push @actions, "cb2 start $greeting";
-	Amanda::MainLoop::quit();
         push @actions, "cb2 end";
+	Amanda::MainLoop::quit();
     };
 
     Amanda::MainLoop::call_later($cb1);
