@@ -1,4 +1,9 @@
 2016-09-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amandad-src/amandad.c: Do not free as
+	* recover-src/extract_list.c: Check state_filename != NULL before
+	  unlink
+
+2016-09-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_MainLoop.pl: Increase timeout
 
 2016-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
