@@ -3126,9 +3126,11 @@ read_amidxtaped_state(
 
 	aclose(ctl_state->fd);
 	if (ctl_state->bytes_read == 0) {
-	    unlink(state_filename);
-	    g_free(state_filename);
-	    state_filename = NULL;
+	    if (state_filename) {
+		unlink(state_filename);
+		g_free(state_filename);
+		state_filename = NULL;
+	    }
 	}
 	ctl_state->state_done = TRUE;
 	if (am_has_feature(tapesrv_features, fe_amrecover_state_done)) {

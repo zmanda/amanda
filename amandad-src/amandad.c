@@ -2054,7 +2054,7 @@ service_delete(
     amfree(as->repbuf);
     as->bufsize = as->repbufsize = 0;
     amfree(as->rep_pkt.body);
-    amfree(as);
+//    amfree(as);   process_writenetfd can be calledi again, why?
 
     if (exit_on_qlength == 0 && g_slist_length(serviceq) == 0) {
 	dbclose();
