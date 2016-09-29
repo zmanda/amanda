@@ -1,4 +1,7 @@
 2016-09-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/common/test_sh_libs.sh: Fix for time
+
+2016-09-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* many */*.c: Add call to glib_init()
 
 2016-09-28  Jean-Louis Martineau <JMartineau@carbonite.com>
