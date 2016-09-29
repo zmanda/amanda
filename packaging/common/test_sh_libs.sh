@@ -136,6 +136,7 @@ test___logger() {
     LOG_LINE="`date +'%b %d %Y %T'`: ${TEST_MSG}"
     # It's important for the log messages to be quoted, or funny stuff happens.
     logger "${TEST_MSG}"
+    LOG_LINE1="`date +'%b %d %Y %T'`: ${TEST_MSG}"
     assertEquals "logger() return code" 0 $?
     log_tail_no_stamp
     assertEquals "logger() did not write <${LOG_LINE}> " \
@@ -143,8 +144,12 @@ test___logger() {
     # Leave this outside the unit test framework.  if the logger is
     # broken we must exit.
     if [ ! `grep -c "${LOG_LINE}" ${LOGFILE}` = "1" ]; then
-	echo "error: logger(): Incorrect content in ${LOGFILE}: " `cat ${LOGFILE}`
-	exit 1
+        if [ ! `grep -c "${LOG_LINE1}" ${LOGFILE}` = "1" ]; then
+	    echo "error: logger(): Incorrect content in ${LOGFILE}: " `cat ${LOGFILE}`
+	    echo "       expected: ${LOG_LINE}"
+	    echo "             or: ${LOG_LINE1}"
+	    exit 1
+         fi
     fi
 }
 
