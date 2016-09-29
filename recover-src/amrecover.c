@@ -347,6 +347,8 @@ main(
     config_overrides_t *cfg_ovr;
     char *starting_hostname = NULL;
 
+    glib_init();
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
@@ -364,7 +366,6 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_CLIENT);
-    glib_init();
     make_crc_table();
 
     /* treat amrecover-specific command line options as the equivalent

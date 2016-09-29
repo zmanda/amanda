@@ -412,5 +412,8 @@ main(int argc, char **argv)
         TU_TEST(test_roundtrip, 90),
         TU_END()
     };
+
+    glib_init();
+
     return testutils_run_tests(argc, argv, tests);
 }

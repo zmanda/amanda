@@ -24,6 +24,7 @@
 #include "event.h"
 #include "getopt.h"
 #include "amar.h"
+#include "amutil.h"
 
 static struct option long_options[] = {
     {"create"          , 0, NULL,  1},
@@ -360,6 +361,8 @@ int main(
     int   opt_list      = 0;
     int   opt_verbose   = 0;
     char *opt_file      = NULL;
+
+    glib_init();
 
     while(1) {
 	int option_index = 0;

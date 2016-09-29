@@ -54,6 +54,8 @@ main(
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
 
+    glib_init();
+
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("noop-%s\n", VERSION);
 	return (0);

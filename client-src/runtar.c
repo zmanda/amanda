@@ -60,6 +60,8 @@ main(
 #endif
     int good_option;
 
+    glib_init();
+
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("runtar-%s\n", VERSION);
 	return (0);

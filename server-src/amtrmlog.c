@@ -65,6 +65,8 @@ main(
     int dumpcycle;
     config_overrides_t *cfg_ovr = NULL;
 
+    glib_init();
+
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("amtrmlog-%s\n", VERSION);
 	return (0);

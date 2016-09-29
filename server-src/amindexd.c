@@ -1150,6 +1150,8 @@ main(
     char his_hostname[MAX_HOSTNAME_LENGTH];
     char *cfg_opt = NULL;
 
+    glib_init();
+
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("amindexd-%s\n", VERSION);
 	return (0);

@@ -991,6 +991,8 @@ main(int argc, char **argv)
 	TU_END()
     };
 
+    glib_init();
+
     return testutils_run_tests(argc, argv, tests);
 }
 

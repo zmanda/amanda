@@ -99,6 +99,8 @@ main(
     char      *lock_file;
     file_lock *lock_index;
 
+    glib_init();
+
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("amtrmidx-%s\n", VERSION);
 	return (0);
