@@ -1,3 +1,6 @@
+2016-09-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* many */*.c: Add call to glib_init()
+
 2016-09-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amandad-src/amandad.c: Do not free as
 	* recover-src/extract_list.c: Check state_filename != NULL before

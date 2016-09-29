@@ -171,6 +171,8 @@ main(
     char *conf_infofile;
     config_overrides_t *cfg_ovr = NULL;
 
+    glib_init();
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.

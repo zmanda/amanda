@@ -63,6 +63,8 @@ main(
     char *exitstr;
     amwait_t status;
 
+    glib_init();
+
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("killpgrp-%s\n", VERSION);
 	return (0);

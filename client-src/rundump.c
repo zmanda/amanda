@@ -71,6 +71,8 @@ main(
     char  **env;
 #endif /* ERRMSG */
 
+    glib_init();
+
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("rundump-%s\n", VERSION);
 	return (0);

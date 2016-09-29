@@ -984,6 +984,8 @@ main(
 	char *file;
 	char *line;
 
+	glib_init();
+
 	/*
 	 * Configure program for internationalization:
 	 *   1) Only set the message locale for now.

@@ -189,5 +189,8 @@ main(int argc, char **argv)
         TU_TEST(test_roundtrip_rand, 90),
         TU_END()
     };
+
+   glib_init();
+
     return testutils_run_tests(argc, argv, tests);
 }
