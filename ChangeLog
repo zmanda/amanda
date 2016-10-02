@@ -1,3 +1,8 @@
+2016-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/amanda_configure.m4: Check if clock_gettime exists
+	* common-src/debug.c (msg_timestamp): Use time/ctime_r if
+	  clock_gettime do not exists
+
 2016-09-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* packaging/common/test_sh_libs.sh: Fix for time
 
