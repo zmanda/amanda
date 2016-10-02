@@ -363,6 +363,7 @@ ICE_CHECK_DECL(writev, unistd.h sys/uio.h)
 ICE_CHECK_DECL(strcasecmp,string.h strings.h)
 ICE_CHECK_DECL(euidaccess,unistd.h)
 ICE_CHECK_DECL(eaccess,unistd.h)
+ICE_CHECK_DECL(clock_gettime,time.h)
 
 #
 # Devices
