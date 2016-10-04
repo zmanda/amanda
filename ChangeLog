@@ -1,3 +1,6 @@
+2016-10-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amstar.c: Fix exclude pattern
+
 2016-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/amanda_configure.m4: Check if clock_gettime exists
 	* common-src/debug.c (msg_timestamp): Use time/ctime_r if
