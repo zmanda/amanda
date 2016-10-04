@@ -1,3 +1,6 @@
+2016-10-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amstar.c: Fix exclude pattern
+
 2016-08-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm (make_new_tape_label): use the child slot
 	* perl/Amanda/Changer/aggregate.pm: Add allow-missing-changer property

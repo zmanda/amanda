@@ -1167,7 +1167,7 @@ static GPtrArray *amstar_build_argv(
 	for (excl = argument->dle.include_file->first; excl != NULL;
 	     excl = excl->next) {
 	    char *ex;
-	    if (g_str_equal(excl->name, "./")) {
+	    if (strncmp(excl->name, "./", 2) == 0) {
 		ex = g_strdup_printf("pat=%s", excl->name+2);
 	    } else {
 		ex = g_strdup_printf("pat=%s", excl->name);
@@ -1187,7 +1187,7 @@ static GPtrArray *amstar_build_argv(
 		while ((aexc = pgets(include)) != NULL) {
 		    if (aexc[0] != '\0') {
 			char *ex;
-			if (g_str_equal(aexc, "./")) {
+			if (strncmp(aexc, "./", 2) == 0) {
 			    ex = g_strdup_printf("pat=%s", aexc+2);
 			} else {
 			    ex = g_strdup_printf("pat=%s", aexc);
