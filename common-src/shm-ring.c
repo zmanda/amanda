@@ -210,8 +210,13 @@ shm_ring_sem_wait(
     while(1) {
 	struct timespec tv = {time(NULL)+300, 0};
 
+#ifdef HAVE_SEM_TIMEDWAIT
 	if (sem_timedwait(sem, &tv) == 0)
 	    return 0;
+#else
+	if (sem_wait(sem) == 0)
+	    return 0;
+#endif
 
 	if (shm_ring->mc->cancelled) {
 	    g_debug("shm_ring_sem_wait: shm-ring is cancelled");

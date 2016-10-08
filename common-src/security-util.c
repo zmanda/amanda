@@ -3246,8 +3246,9 @@ find_port_for_service(
     if (all_numeric == 1) {
 	port = atoi(service);
     } else {
-        struct servent sp;
         struct servent *result;
+#ifdef HAVE_GETSERVBYNAME_R
+        struct servent sp;
         char buf[2048];
 
 #ifdef GETSERVBYNAME_R5
@@ -3266,6 +3267,13 @@ find_port_for_service(
 	    port = 0;
 	} else {
 	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
+	}
+#endif
+#else
+	if ((result = getservbyname(service, proto)) == NULL) {
+	    port = 0;
+	} else {
+	    port = (in_port_t)(ntohs((in_port_t)result->s_port));
 	}
 #endif
     }
