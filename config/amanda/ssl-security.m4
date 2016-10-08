@@ -31,11 +31,11 @@ AC_DEFUN([AMANDA_SSL_SECURITY],
 
     if test "x$SSL_SECURITY" = "xyes"; then
 	ssl_ld_flags=`$PKG_CONFIG openssl --libs-only-L 2>/dev/null`
-	ssl_lib_flags=`$PKG_CONFIG openssl --libs-only-l --libs-other 2>/dev/null`
+	ssl_lib_flags=`$PKG_CONFIG openssl --libs-only-l --libs-only-other 2>/dev/null`
 	ssl_cppflags=`$PKG_CONFIG openssl --cflags-only-I 2>/dev/null`
 	ssl_cflags=`$PKG_CONFIG openssl --cflags-only-other 2>/dev/null`
 
-	AMANDA_ADD_LIBS($ssl_ld_flags)
+	AMANDA_ADD_LDFLAGS($ssl_ld_flags)
 	AMANDA_ADD_LIBS($ssl_lib_flags)
 
 	AMANDA_ADD_CPPFLAGS($ssl_cppflags)
