@@ -1,4 +1,11 @@
 2016-10-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/amanda_configure.m4: Check for getservbyname_t and
+	  sem_timedwait
+	* common-src/security-util.c: Check HAVE_GETSERVBYNAME_R
+	* common-src/shm-ring.c: Check HAVE_SEM_TIMEDWAIT
+	* gnulib/regenerate/regenerate: Check configure.ac
+
+2016-10-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/ssl-security.m4: Fix pkg-config argument
 
 2016-10-04  Jean-Louis Martineau <JMartineau@carbonite.com>

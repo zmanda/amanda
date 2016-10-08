@@ -8,7 +8,7 @@
 
 # get to the project root
 cd `dirname $0`/../..
-if [ ! -f configure.in ]
+if [ ! -f configure.ac ]
 then
     echo "Cannot navigate to project root"
     exit 1
