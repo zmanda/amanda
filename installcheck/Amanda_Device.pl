@@ -1133,6 +1133,17 @@ SKIP: {
     my $hostname  = hostname();
     $hostname =~ s/\./-/g;
     $base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
+    # strip $base_name too long
+    if (length($base_name)> 52) {
+	$base_name =~ s/buildbot/bb/g;
+    }
+    if (length($base_name)> 52) {
+	$base_name =~ s/dhcp-//g;
+    }
+    if (length($base_name)> 52) {
+	$base_name =~ s/zmanda-com/zc/g;
+    }
+
     $dev_name = "s3:$base_name-s3-1";
     $dev = s3_make_device($dev_name, "s3");
     $dev->read_label();
