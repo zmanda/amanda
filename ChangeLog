@@ -1,3 +1,6 @@
+2016-10-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Device.pl: Reduce bucket name length
+
 2016-10-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/amanda_configure.m4: Check for getservbyname_t and
 	  sem_timedwait
