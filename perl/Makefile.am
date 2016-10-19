@@ -332,7 +332,6 @@ EXTRA_DIST += Amanda/CheckDump.pm
 Amanda_DATA += Amanda/Restore.pm
 EXTRA_DIST +=  Amanda/Restore.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::FetchDump
 Amanda_DATA += Amanda/FetchDump.pm
 # PACKAGE: Amanda::FetchDump::*
@@ -341,7 +340,6 @@ AmandaFetchDump_DATA = \
 	Amanda/FetchDump/Application.pm \
 	Amanda/FetchDump/ClientApplication.pm \
 	Amanda/FetchDump/Local.pm
-endif
 EXTRA_DIST += Amanda/FetchDump.pm $(AmandaFetchDump_DATA)
 
 if WANT_SERVER
@@ -371,7 +369,6 @@ Amanda_DATA += Amanda/Recovery.pm
 endif
 EXTRA_DIST += Amanda/Recovery.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Recovery::*
 AmandaRecoverydir = $(amperldir)/Amanda/Recovery
 AmandaRecovery_DATA = \
@@ -379,7 +376,6 @@ AmandaRecovery_DATA = \
 	Amanda/Recovery/Planner.pm \
 	Amanda/Recovery/Scan.pm
 PM_FILES += $(AmandaRecovery_DATA)
-endif
 EXTRA_DIST += $(AmandaRecovery_DATA)
 
 if WANT_SERVER
@@ -506,10 +502,8 @@ PM_FILES += $(AmandaReport_DATA)
 EXTRA_DIST += $(AmandaReport_DATA)
 endif
 
-if WANT_SERVER
 # PACKAGE: Amanda::Amservice
 Amanda_DATA += Amanda/Amservice.pm
-endif
 EXTRA_DIST += Amanda/Amservice.pm
 
 # PACKAGE: Amanda::BigIntCompat
