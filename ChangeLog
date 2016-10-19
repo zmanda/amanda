@@ -1,4 +1,9 @@
 2016-10-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/libs.m4: Do not link with libcurl if no se device or
+	  no server
+	* config/amanda/s3-device.m4: Re-order
+
+2016-10-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Makefile.am: Amanda::FetchDump::*, Amanda::Recovery::* and
 	  Amanda::Amservice are for client or server
 

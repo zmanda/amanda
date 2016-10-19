@@ -7,7 +7,15 @@
 #   Perform the necessary checks for the S3 Device.  If the S3 device should be built,
 #   WANT_S3_DEVICE is DEFINEd and set up as an AM_CONDITIONAL.
 #
+AC_DEFUN([AMANDA_S3_DEVICE_OPTION], [
+    AC_ARG_ENABLE([s3-device],
+	AS_HELP_STRING([--disable-s3-device],
+		       [disable the S3 device]),
+	[ WANT_S3_DEVICE=$enableval ], [ WANT_S3_DEVICE=maybe ])
+])
+
 AC_DEFUN([AMANDA_S3_DEVICE], [
+    AC_REQUIRE([AMANDA_S3_DEVICE_OPTION])
     AC_REQUIRE([AMANDA_CHECK_LIBCURL])
     AC_REQUIRE([AMANDA_CHECK_HMAC])
 
