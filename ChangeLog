@@ -1,3 +1,7 @@
+2016-10-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Makefile.am: Amanda::FetchDump::*, Amanda::Recovery::* and
+	  Amanda::Amservice are for client or server
+
 2016-10-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Device.pl: Reduce bucket name length
 
