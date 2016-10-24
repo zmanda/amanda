@@ -320,6 +320,10 @@ restrict to parts with exactly this label
 
 (arrayref) restrict to parts with any of these labels
 
+=item labelstr
+
+restrict to parts on volume matching the labelstr regex.
+
 =item level
 
 restrict to parts with exactly this level
@@ -331,10 +335,6 @@ restrict to parts with exactly this level
 =item status
 
 restrict to parts with this status
-
-=item labelstr
-
-restrict to parts on volume matching the labelstr.
 
 =item dumpspecs
 
@@ -390,9 +390,9 @@ access those values via the C<dump> attribute.
 
 This function returns a sequence of dumps.  Values in C<%parameters> restrict
 the set of dumps that are returned.  The same keys as are used for C<get_parts>
-are available here, with the exception of C<label> and C<labels>.  In this
-case, the C<status> parameter applies to the dump status, not the status of its
-constituent parts.
+are available here, with the exception of C<label>, C<labels>, and C-<labelstr>.
+In this case, the C<status> parameter applies to the dump status, not the status
+of its constituent parts.
 
 =item sort_dumps([ $key1, $key2 ], @dumps)
 
