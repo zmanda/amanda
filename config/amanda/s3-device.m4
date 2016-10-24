@@ -25,6 +25,10 @@ AC_DEFUN([AMANDA_S3_DEVICE], [
 	[ WANT_S3_DEVICE=$enableval ], [ WANT_S3_DEVICE=maybe ])
 
     AC_MSG_CHECKING([whether to include the Amazon S3 device])
+    if test x"$WANT_SERVER" = x"false"; then
+	WANT_S3_DEVICE=no
+    fi
+
     # if the user didn't specify 'no', then check for support
     if test x"$WANT_S3_DEVICE" != x"no"; then
 	if test x"$HAVE_CURL" = x"yes" -a x"$HAVE_HMAC" = x"yes"; then
