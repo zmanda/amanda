@@ -1,3 +1,8 @@
+2016-10-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB.pm: package Amanda::DB;
+	* perl/Amanda/Recovery.pm: package Amanda::Recovery;
+	* perl/Amanda/Service.pm: package Amanda::Service;
+
 2016-10-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Makefile.am: Amanda::FetchDump::*, Amanda::Recovery::* and
 	  Amanda::Amservice are for client or server
