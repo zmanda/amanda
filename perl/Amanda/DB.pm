@@ -18,6 +18,8 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, or: http://www.zmanda.com
 
+package Amanda::DB;
+
 package Amanda::DB::Message;
 use strict;
 use warnings;

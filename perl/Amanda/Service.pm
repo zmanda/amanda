@@ -17,6 +17,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94085, or: http://www.zmanda.com
 
+package Amanda::Service;
 
 package Amanda::Service::Message;
 use strict;
