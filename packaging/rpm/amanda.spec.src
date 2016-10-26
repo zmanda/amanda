@@ -346,6 +346,22 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %setup -q
 # --- Configure and compile ---
 
+%define _use_internal_dependency_generator 0
+# Redefine find_requires to add an explicit filter for perl executables too.
+%define __find_requires %{_topdir}/find-requires
+orig_find_requires=`rpm --eval %%{__find_requires}`
+# Put this bit of nastiness in a file named __find_requires
+cat > %{__find_requires} <<-find-req-script
+	#!/bin/bash
+	# First get our list of requirements. find-requires reads from stdin.
+	file_list=\`${orig_find_requires}\`
+	# Remove the Dancer2 perl module as it is optional
+	filtered_reqs=\`grep -v -e Dancer2 <<< "\${file_list// /'\n'}"\`
+	# Output must be on a single line
+	echo \${filtered_reqs//'\n'/ }
+find-req-script
+%{__chmod} u+x %{__find_requires}
+
 %build
 %define config_user %{amanda_user}
 %define config_group %{amanda_group}

@@ -1,3 +1,6 @@
+2016-10-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/rpm/amanda.spec.src: Remove perl(Dancer2) from the Requires
+
 2016-10-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB.pm: package Amanda::DB;
 	* perl/Amanda/Recovery.pm: package Amanda::Recovery;
