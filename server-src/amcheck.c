@@ -547,8 +547,8 @@ main(
 	amfree(tempfname);
     }
 
-    if (opt_message) printf(",\n");
-    delete_message(amcheck_print_message(build_message(
+    if (opt_message) fprintf(mainfd, "\n");
+    delete_message(amcheck_fprint_message(mainfd, build_message(
 			AMANDA_FILE, __LINE__, 2800016, MSG_MESSAGE, 1,
 			"version", VERSION)));
 
