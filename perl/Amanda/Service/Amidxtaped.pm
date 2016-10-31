@@ -245,6 +245,9 @@ sub user_message {
     my $self = shift;
     my $message = shift;
 
+    # amrecover already display the size
+    return if $message->{'code'} == 4900000
+	   or $message->{'code'} == 4900012;
     debug("user_message feedback: $message");
     $self->sendmessage("$message");
 }
