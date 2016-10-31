@@ -2317,7 +2317,7 @@ writer_intermediary(
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
 	    if (last_is_size) {
 		g_printf("\n");
-		last_is_size = 0;
+		last_is_size = FALSE;
 	    }
 	    g_printf("%s\n",&amidxtaped_line[8]);
 	} else if(strncmp_const(amidxtaped_line, "DATA-STATUS ") == 0) {
@@ -3014,7 +3014,7 @@ handle_child_out(
            (p = strchr(b, '\n')) != NULL) {
         *p = '\0';
 	if (last_is_size)
-	    g_fprintf(cdata->output, "\n");
+	    g_fprintf(cdata->output, "\r");
 	if (cdata->name) {
             g_fprintf(cdata->output, "%s: %s\n", cdata->name, b);
 	} else {
@@ -3198,6 +3198,19 @@ read_amidxtaped_data(
      * EOF.  Stop and return.
      */
     if (size == 0) {
+	if (stderr_isatty) {
+	    if (last_is_size) {
+		fprintf(stderr, "\r%lld kb ",
+			    (long long)ctl_data->bytes_read/1024);
+	    } else {
+		fprintf(stderr, "%lld kb ",
+			    (long long)ctl_data->bytes_read/1024);
+		last_is_size = TRUE;
+	    }
+	} else {
+	    fprintf(stderr, "%lld kb\n",
+			(long long)ctl_data->bytes_read/1024);
+	}
 	security_stream_close(amidxtaped_streams[DATAFD].fd);
 	amidxtaped_streams[DATAFD].fd = NULL;
 	aclose(ctl_data->child_in[1]);
