@@ -852,9 +852,9 @@ sub get_bytes_written {
     if (defined $self->{'xdt'}) {
 	$self->{'oldsize'} = $self->{'size'} + $self->{'xdt'}->get_part_bytes_written();
     } elsif ($self->{'crc_size'}) {
-	$self->{'oldsize'} = return $self->{'crc_size'};
-    } elsif (defined $self->{'xfer'}) {
-	$self->{'oldsize'} = return $self->{'size'};
+	$self->{'oldsize'} = $self->{'crc_size'};
+    } elsif (defined $self->{'xfer'} && $self->{'size'}) {
+	$self->{'oldsize'} = $self->{'size'};
     }
     return $self->{'oldsize'};
 }

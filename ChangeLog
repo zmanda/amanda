@@ -1,4 +1,11 @@
 2016-11-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Set $dlet->{'wsize'} to $dlet->{'taped_size'}
+	  if it is bigger
+	* perl/Amanda/Taper/Scribe.pm (get_bytes_written): Do not set oldsize
+	  to size if size==0
+	* perl/Amanda/Taper/Worker.pm: Delete the statefile later
+
+2016-11-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/xfer-dest-taper-splitter.c: ring buffer might never be
 	  full
 
