@@ -1,3 +1,7 @@
+2016-11-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/xfer-dest-taper-splitter.c: ring buffer might never be
+	  full
+
 2016-10-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcheck.c: Print message 2800016 to mainfd
 

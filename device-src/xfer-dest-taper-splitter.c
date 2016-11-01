@@ -369,7 +369,7 @@ device_thread_wait_for_block(
 	/* for any kind of streaming, we need to fill the entire buffer before the
 	 * first byte */
 	if (self->part_bytes_written == 0 && self->streaming != STREAMING_REQUIREMENT_NONE)
-	    bytes_needed = self->mem_ring->ring_size;
+	    bytes_needed = self->mem_ring->ring_size - elt->shm_ring->mc->producer_block_size;
 
 	while (1) {
 	    /* are we ready? */
@@ -391,12 +391,12 @@ device_thread_wait_for_block(
 	    /* in STREAMING_REQUIREMENT_REQUIRED, once we decide to wait for more bytes,
 	     * we need to wait for the entire buffer to fill */
 	    if (self->streaming == STREAMING_REQUIREMENT_REQUIRED)
-		bytes_needed = self->mem_ring->ring_size;
+		bytes_needed = self->mem_ring->ring_size - elt->shm_ring->mc->producer_block_size;
 	}
 
     } else { // shm_ring
 	if (self->part_bytes_written == 0 && self->streaming != STREAMING_REQUIREMENT_NONE)
-	    bytes_needed = elt->shm_ring->ring_size;
+	    bytes_needed = elt->shm_ring->ring_size - elt->shm_ring->mc->producer_block_size;
 
 	while (!elt->cancelled &&
 	       !elt->shm_ring->mc->cancelled) {
@@ -417,7 +417,7 @@ device_thread_wait_for_block(
 
 
 	    if (self->streaming == STREAMING_REQUIREMENT_REQUIRED)
-		bytes_needed = elt->shm_ring->ring_size;
+		bytes_needed = elt->shm_ring->ring_size - elt->shm_ring->mc->producer_block_size;
 	}
 	if (elt->shm_ring->mc->cancelled && !elt->cancelled) {
 	    xfer_cancel_with_error(elt, "shm_ring_cancelled");
