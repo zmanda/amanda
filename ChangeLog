@@ -1,3 +1,6 @@
+2016-11-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcheck.c: Fix
+
 2016-11-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Set $dlet->{'wsize'} to $dlet->{'taped_size'}
 	  if it is bigger
