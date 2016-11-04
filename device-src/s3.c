@@ -1285,6 +1285,8 @@ struct failure_thunk {
     gchar *service_type;
     gchar *service_public_url;
     gint64 expires;
+
+    gchar *bucket_location;
 };
 
 static void
@@ -1352,11 +1354,18 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->in_others = 0;
 	if (thunk->service_type &&
 	    g_str_equal(thunk->service_type, "object-store")) {
+	    char *service_public_url = NULL;
 	    for (att_name=attribute_names, att_value=attribute_values;
 		 *att_name != NULL;
 		 att_name++, att_value++) {
 		if (g_str_equal(*att_name, "publicURL")) {
-		    thunk->service_public_url = g_strdup(*att_value);
+		    service_public_url = g_strdup(*att_value);
+		}
+		if (g_str_equal(*att_name, "region")) {
+		    if (!thunk->bucket_location ||
+			strcmp(thunk->bucket_location, *att_value) == 0) {
+			thunk->service_public_url = service_public_url;
+		    }
 		}
 	    }
 	}
@@ -1612,6 +1621,7 @@ interpret_response(S3Handle *hdl,
     }
 
     /* run the parser over it */
+    thunk.bucket_location = hdl->bucket_location;
     ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
     if (!g_markup_parse_context_parse(ctxt, body, body_len, &err)) {
 	    if (hdl->last_message) g_free(hdl->last_message);
@@ -1631,10 +1641,12 @@ interpret_response(S3Handle *hdl,
     if (hdl->s3_api == S3_API_SWIFT_2) {
 	if (!hdl->x_auth_token && thunk.token_id) {
 	    hdl->x_auth_token = thunk.token_id;
+	    g_debug("x_auth_token: %s", hdl->x_auth_token);
 	    thunk.token_id = NULL;
 	}
 	if (!hdl->x_storage_url && thunk.service_public_url) {
 	    hdl->x_storage_url = thunk.service_public_url;
+	    g_debug("x_storage_url: %s", hdl->x_storage_url);
 	    thunk.service_public_url = NULL;
 	}
     }
