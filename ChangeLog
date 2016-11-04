@@ -1,3 +1,6 @@
+2016-11-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: Use the publicURL from the good region
+
 2016-11-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcheck.c: Fix
 
