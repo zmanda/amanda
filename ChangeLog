@@ -1,3 +1,6 @@
+2016-11-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: publicURl and region can be unordered
+
 2016-11-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Use the publicURL from the good region
 
