@@ -1411,6 +1411,7 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	if (thunk->service_type &&
 	    g_str_equal(thunk->service_type, "object-store")) {
 	    char *service_public_url = NULL;
+	    char *region = NULL;
 	    for (att_name=attribute_names, att_value=attribute_values;
 		 *att_name != NULL;
 		 att_name++, att_value++) {
@@ -1418,12 +1419,20 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 		    service_public_url = g_strdup(*att_value);
 		}
 		if (g_str_equal(*att_name, "region")) {
-		    if (!thunk->bucket_location ||
-			strcmp(thunk->bucket_location, *att_value) == 0) {
-			thunk->service_public_url = service_public_url;
-		    }
+		    region = g_strdup(*att_value);
 		}
 	    }
+	    if (region && service_public_url) {
+		if (!thunk->bucket_location ||
+		    strcmp(thunk->bucket_location, region) == 0) {
+		    thunk->service_public_url = service_public_url;
+		} else {
+		    g_free(service_public_url);
+		}
+	    } else {
+		thunk->service_public_url = service_public_url;
+	    }
+	    g_free(region);
 	}
     } else if (g_ascii_strcasecmp(element_name, "error") == 0) {
 	for (att_name=attribute_names, att_value=attribute_values;
