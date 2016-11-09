@@ -1746,6 +1746,12 @@ interpret_response(S3Handle *hdl,
 	    hdl->x_storage_url = thunk.service_public_url;
 	    g_debug("x_storage_url: %s", hdl->x_storage_url);
 	    thunk.service_public_url = NULL;
+	} else if (!hdl->x_storage_url && !thunk.service_public_url) {
+	    if (thunk.bucket_location) {
+		thunk.message = g_strdup_printf("Did not find the publicURL for the '%s' region", thunk.bucket_location);
+	    } else {
+		thunk.message = g_strdup_printf("Did not find the publicURL");
+	    }
 	}
     }
 
