@@ -1,4 +1,17 @@
 2016-11-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/components.m4 (AMANDA_WITHOUT_REST_SERVER): New
+	  --without-rest-server option
+	* Makefile.am: Do not build rest-server if
+	  --without-rest-server
+	* config/amanda/libs.m4: Fix typo
+	* man/Makefile.am: Do not build amanda-rest-server.8 if
+	  --without-rest-server
+	* perl/Makefile.am: Do not build Amanda::Rest modules if
+	  --without-rest-server
+	* server-src/Makefile.am: Do not build amanda-rest-server if
+	  --without-rest-server
+
+2016-11-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Correctly handle Region not found
 	* device-src/s3.h: Add S3_ERROR_Region_Not_Found
 

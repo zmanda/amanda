@@ -56,8 +56,8 @@ AC_DEFUN([AMANDA_CHECK_HMAC], [
     HAVE_HMAC=yes
     AC_CHECK_LIB([crypto], [HMAC_CTX_init], [], [HAVE_HMAC_CTX_INIT=no])
     AC_CHECK_LIB([crypto], [HMAC_CTX_reset], [], [HAVE_HMAC_CTX_RESET=no])
-    if test x"HAVE_HMAC_CTX_INIT" == x"no" -a \
-	    x"HAVE_HMAC_CTX_RESET" == x"no"; then
+    if test x"HAVE_HMAC_CTX_INIT" = x"no" -a \
+	    x"HAVE_HMAC_CTX_RESET" = x"no"; then
 	HAVE_HMAC=no
     fi
 

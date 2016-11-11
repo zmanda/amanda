@@ -37,7 +37,6 @@ amlibexec_SCRIPTS_PERL = \
 
 sbin_SCRIPTS_PERL = \
 	    amaddclient \
-	    amanda-rest-server \
 	    amoverview \
 	    amserverconfig \
 	    amtoc \
@@ -60,7 +59,10 @@ sbin_SCRIPTS_PERL += \
 	    amfetchdump \
 	    amrestore
 endif
-
+if WANT_REST_SERVER
+sbin_SCRIPTS_PERL += \
+	    amanda-rest-server
+endif
 sbin_SCRIPTS_SHELL = \
 	    amcheckdb
 

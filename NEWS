@@ -1,3 +1,7 @@
+Changes in release 3.4.1
+
+   * new --without-rest-server configure option
+
 Changes in release 3.4
 
    * Allow to put a dump on more than one storage
