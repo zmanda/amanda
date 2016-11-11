@@ -1440,6 +1440,9 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	     att_name++, att_value++) {
 	    if (g_str_equal(*att_name, "message")) {
 		thunk->message = g_strdup(*att_value);
+	    }else if (g_str_equal(*att_name, "title")) {
+		thunk->error_name = g_strdup(*att_value);
+//		hdl->last_s3_error_code = s3_error_code_from_name(thunk->error_name);
 	    }
 	}
     } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0) {
@@ -1746,11 +1749,14 @@ interpret_response(S3Handle *hdl,
 	    hdl->x_storage_url = thunk.service_public_url;
 	    g_debug("x_storage_url: %s", hdl->x_storage_url);
 	    thunk.service_public_url = NULL;
-	} else if (!hdl->x_storage_url && !thunk.service_public_url) {
-	    if (thunk.bucket_location) {
-		thunk.message = g_strdup_printf("Did not find the publicURL for the '%s' region", thunk.bucket_location);
-	    } else {
-		thunk.message = g_strdup_printf("Did not find the publicURL");
+	} else if (!thunk.message && !thunk.error_name) {
+	    if (!hdl->x_storage_url && !thunk.service_public_url) {
+		if (thunk.bucket_location) {
+		    thunk.message = g_strdup_printf("Did not find the publicURL for the '%s' region", thunk.bucket_location);
+		} else {
+		    thunk.message = g_strdup_printf("Did not find the publicURL");
+		}
+		thunk.error_name =g_strdup("RegionNotFound");
 	    }
 	}
     }
@@ -2423,7 +2429,6 @@ perform_request(S3Handle *hdl,
     curl_error: /* (label for short-circuiting the curl_easy_perform call) */
         should_retry = interpret_response(hdl, curl_code, curl_error_buffer,
             int_writedata.resp_buf.buffer, int_writedata.resp_buf.buffer_pos, int_writedata.etag, md5_hash_hex);
-
 	if (hdl->s3_api == S3_API_OAUTH2 &&
 	    hdl->last_response_code == 401 &&
 	    hdl->last_s3_error_code == S3_ERROR_AuthenticationRequired) {
@@ -2757,9 +2762,10 @@ get_openstack_swift_api_v1_setting(
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-	{ 200,  0,                    0, S3_RESULT_OK },
+	{ 200,  S3_ERROR_RegionNotFound, 0, S3_RESULT_FAIL },
+	{ 200,  0,                       0, S3_RESULT_OK },
 	RESULT_HANDLING_ALWAYS_RETRY,
-	{ 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+	{ 0, 0,                          0, /* default: */ S3_RESULT_FAIL  }
 	};
 
     s3_verbose(hdl, 1);

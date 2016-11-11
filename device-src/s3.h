@@ -225,6 +225,7 @@ typedef curl_progress_callback s3_progress_func;
     S3_ERROR(Unknown), \
     S3_ERROR(UnresolvableGrantByEmailAddress), \
     S3_ERROR(UserKeyMustBeSpecified), \
+    S3_ERROR(RegionNotFound), \
     S3_ERROR(END)
 
 typedef enum {
