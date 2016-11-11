@@ -1,3 +1,7 @@
+2016-11-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: Correctly handle Region not found
+	* device-src/s3.h: Add S3_ERROR_Region_Not_Found
+
 2016-11-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Verify a publicURL is found
 
