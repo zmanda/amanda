@@ -44,7 +44,6 @@ SERVER_MAN_PAGES =  \
     amaddclient.8    \
     amadmin.8 \
     amaespipe.8 \
-    amanda-rest-server.8 \
     amcheck.8 \
     amcheckdb.8 \
     amcheckdump.8 \
@@ -78,12 +77,15 @@ RECOVER_MAN_PAGES =  amrecover.8
 RESTORE_MAN_PAGES =  amrestore.8 \
 		     amfetchdump.8
 
+REST_SERVER_MAN_PAGES = amanda-rest-server.8
+
 ALL_MAN_PAGES = $(AMPLOT_MAN_PAGES) \
 	   $(CLIENT_MAN_PAGES) \
 	   $(COMMON_MAN_PAGES) \
 	   $(SERVER_MAN_PAGES) \
 	   $(RECOVER_MAN_PAGES) \
-	   $(RESTORE_MAN_PAGES)
+	   $(RESTORE_MAN_PAGES) \
+	   $(REST_SERVER_MAN_PAGES)
 
 WANTED_MAN_PAGES = $(COMMON_MAN_PAGES)
 if WANT_AMPLOT
@@ -100,6 +102,9 @@ if WANT_RECOVER
 endif
 if WANT_RESTORE
   WANTED_MAN_PAGES += $(RESTORE_MAN_PAGES)
+endif
+if WANT_REST_SERVER
+  WANTED_MAN_PAGES += $(REST_SERVER_MAN_PAGES)
 endif
 
 SRCMANPAGEDIR  = $(srcdir)/xml-source

@@ -21,6 +21,7 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
     AC_REQUIRE([AMANDA_WITH_CLIENT_ONLY]) dnl deprecated
     AC_REQUIRE([AMANDA_WITH_SERVER_ONLY]) dnl deprecated
     AC_REQUIRE([AMANDA_WITHOUT_NDMP])
+    AC_REQUIRE([AMANDA_WITHOUT_REST_SERVER])
 
     # detect invalid combinations of components
     if ! ${WANT_SERVER-true} && ${WANT_RESTORE-true}; then
@@ -35,6 +36,7 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
     AM_CONDITIONAL(WANT_SERVER, $WANT_SERVER)
     AM_CONDITIONAL(WANT_RECOVER, $WANT_RECOVER)
     AM_CONDITIONAL(WANT_NDMP, $WANT_NDMP)
+    AM_CONDITIONAL(WANT_REST_SERVER, $WANT_REST_SERVER)
 
     AM_CONDITIONAL(WANT_TAPE, $WANT_SERVER || $WANT_RESTORE)
 
@@ -67,6 +69,11 @@ AC_DEFUN([AMANDA_CHECK_COMPONENTS], [
 	AMANDA_COMPONENTS="$AMANDA_COMPONENTS ndmp";
     else
 	missing_components="$missing_components (no ndmp)";
+    fi
+    if $WANT_REST_SERVER; then
+	AMANDA_COMPONENTS="$AMANDA_COMPONENTS rest-server";
+    else
+	missing_components="$missing_components (no rest-server)";
     fi
 
     AC_SUBST(AMANDA_COMPONENTS)
@@ -180,6 +187,35 @@ AC_DEFUN([AMANDA_WITHOUT_NDMP], [
 	    *) AC_MSG_ERROR([You must not supply an argument to --with-ndmp option.]) ;;
 	    esac
 	])
+])
+
+# SYNOPSIS
+#
+#   AMANDA_WITHOUT_REST_SERVER
+#
+# OVERVIEW
+#
+#   Add option --without-rest-server, and set WANT_REST_SERVER to true or false, 
+#   accordingly.
+#
+AC_DEFUN([AMANDA_WITHOUT_REST_SERVER], [
+    WANT_REST_SERVER=true
+    AC_ARG_WITH(rest-server,
+	AS_HELP_STRING([--without-rest-server], [do not build the rest-server]), [
+	    case "$withval" in
+	    y | ye | yes) WANT_REST_SERVER=true
+			  if test x"$WANT_SERVER" = x"false"; then
+			      AC_MSG_ERROR([--with-rest-server is incompatible with --without-server])
+			      WANT_REST_SERVER=false
+			  fi
+			  ;;
+	    n | no) WANT_REST_SERVER=false;;
+	    *) AC_MSG_ERROR([You must not supply an argument to the --without-rest-server option.]) ;;
+	    esac
+    ])
+    if test x"$WANT_SERVER" = x"false"; then
+	WANT_REST_SERVER=false
+    fi
 ])
 
 ## deprecated --with-* options
