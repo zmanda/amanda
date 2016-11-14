@@ -1,3 +1,6 @@
+2016-11-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/amtapetype.pl: Correctly check result of property_set
+
 2016-11-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/components.m4 (AMANDA_WITHOUT_REST_SERVER): New
 	  --without-rest-server option

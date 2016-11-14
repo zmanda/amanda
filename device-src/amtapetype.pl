@@ -368,8 +368,10 @@ sub check_property {
     $device->finish();
 
     #set fsf_after_filemark to false
-    $device->property_set('FSF_AFTER_FILEMARK', 0)
-	    or die "Error setting FSF_AFTER_FILEMARK: " . $device->error_or_status();
+    my $r = $device->property_set('FSF_AFTER_FILEMARK', 0);
+    if ($r) {
+	die "Error setting FSF_AFTER_FILEMARK: $r";
+    }
 
     my $need_fsf_after_filemark = 0;
 
@@ -420,8 +422,10 @@ sub check_property {
     my $fsf_after_filemark_works = 0;
     if ($need_fsf_after_filemark) {
 	#set fsf_after_filemark to true
-	$device->property_set('FSF_AFTER_FILEMARK', 1)
-	    or die "Error setting FSF_AFTER_FILEMARK: " . $device->error_or_status();
+	$r = $device->property_set('FSF_AFTER_FILEMARK', 1);
+	if ($r) {
+	    die "Error setting FSF_AFTER_FILEMARK: $r";
+	}
 
 	if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
 	    die ("Could not read label from: " . $device->error_or_status());
@@ -467,12 +471,18 @@ sub check_property {
 	if (defined $opt_property || $fsf_after_filemark) {
 	    print STDOUT "device-property \"FSF_AFTER_FILEMARK\" \"false\"\n";
 	}
-	$device->property_set('FSF_AFTER_FILEMARK', 0);
+	$r = $device->property_set('FSF_AFTER_FILEMARK', 0);
+	if ($r) {
+	    die "Error setting FSF_AFTER_FILEMARK: $r";
+	}
     } elsif ($need_fsf_after_filemark == 1 && $fsf_after_filemark_works == 1) {
 	if (defined $opt_property || !$fsf_after_filemark) {
 	    print STDOUT "device-property \"FSF_AFTER_FILEMARK\" \"true\"\n";
 	}
-	$device->property_set('FSF_AFTER_FILEMARK', 1);
+	$r = $device->property_set('FSF_AFTER_FILEMARK', 1);
+	if ($r) {
+	    die "Error setting FSF_AFTER_FILEMARK: $r";
+	}
     } else {
 	die ("Broken seek_file");
     }
