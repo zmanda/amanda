@@ -906,6 +906,7 @@ setup_estimate(
 	    g_fprintf(stderr,_("%s:%s lev 0 skipped can't compress directtcp data-path\n"),
 		      dp->host->hostname, qname);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	}
 	if (dp->encrypt != ENCRYPT_NONE) {
@@ -914,6 +915,7 @@ setup_estimate(
 	    g_fprintf(stderr,_("%s:%s lev 0 skipped can't encrypt directtcp data-path\n"),
 		      dp->host->hostname, qname);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	}
 	if (dp->to_holdingdisk == HOLD_REQUIRED) {
@@ -922,6 +924,7 @@ setup_estimate(
 	    g_fprintf(stderr,_("%s:%s lev 0 skipped Holding disk can't be use for directtcp data-path\n"),
 		      dp->host->hostname, qname);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	} else if (dp->to_holdingdisk == HOLD_AUTO) {
 	    g_fprintf(stderr,_("%s:%s Disabling holding disk\n"),
@@ -1087,6 +1090,7 @@ setup_estimate(
 	    log_add(L_SUCCESS, _("%s %s %s 0 [skipped: skip-full]"),
 		    dp->host->hostname, qname, planner_timestamp);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	}
 
@@ -1111,6 +1115,7 @@ setup_estimate(
 	g_fprintf(stderr,_("%s:%s lev 1 skipped due to strategy incronly and no full dump were done\n"),
 		dp->host->hostname, qname);
 	amfree(qname);
+	dp->todo = 0;
 	return;
     }
 
@@ -1130,6 +1135,7 @@ setup_estimate(
 	log_add(L_SUCCESS, _("%s %s %s 1 [skipped: skip-incr]"),
 		dp->host->hostname, qname, planner_timestamp);
 	amfree(qname);
+	dp->todo = 0;
 	return;
     }
 
