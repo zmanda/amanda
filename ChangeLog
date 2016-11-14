@@ -1,4 +1,7 @@
 2016-11-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c: Set dp->todo to 0 if the dle is not skipped
+
+2016-11-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/amtapetype.pl: Correctly check result of property_set
 
 2016-11-11  Jean-Louis Martineau <JMartineau@carbonite.com>
