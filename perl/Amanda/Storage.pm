@@ -161,13 +161,17 @@ sub new {
     my $tpchanger = storage_getconf($st, $STORAGE_TPCHANGER);
     if (!exists $params{'changer_name'}) {
 	$changer_name = $tpchanger if !$changer_name;
-	if (!$changer_name) {
-            return Amanda::Changer::Error->new('fatal',
-		source_filename => __FILE__,
-		source_line     => __LINE__,
-		code            => 1150003,
-		severity	=> $Amanda::Message::ERROR,
-		storage    => $storage_name);
+	if (!$changer_name || $changer_name eq '') {
+	    my $tapedev = storage_getconf($st, $STORAGE_TAPEDEV);
+	    if (!$tapedev || $tapedev eq '') {
+		return Amanda::Changer::Error->new('fatal',
+		    source_filename => __FILE__,
+		    source_line     => __LINE__,
+		    code            => 1150003,
+		    severity	    => $Amanda::Message::ERROR,
+		    storage         => $storage_name);
+	    }
+	    $changer_name = $tapedev;
 	}
     }
 

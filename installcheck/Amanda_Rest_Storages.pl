@@ -48,7 +48,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 16;
+plan tests => 17;
 
 my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 
@@ -94,10 +94,39 @@ $testconf->write();
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
+        [ {     'source_filename' => "$amperldir/Amanda/Changer.pm",
+                'severity' => $Amanda::Message::ERROR,
+		'type'     => 'failed',
+                'message' => '\'chg-single\' does not support create',
+		'process' => 'Amanda::Rest::Storages',
+		'running_on' => 'amanda-server',
+		'component' => 'rest-server',
+		'chg_type' => 'chg-single',
+		'module' => 'amanda',
+		'reason' => 'notimpl',
+		'op' => 'create',
+                'code' => '1100048'
+          },
+        ],
+      http_code => 404,
+    },
+    "Create storage DISKFLAT - 1100048") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+$testconf->remove_param("tapedev");
+$testconf->add_param("tapedev", '""');
+$testconf->add_storage("DISKFLAT", [
+	policy => '"DISKFLAT"',
+	runtapes => 4,
+]);
+$testconf->write();
+
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
         [ {     'source_filename' => "$amperldir/Amanda/Storage.pm",
                 'severity' => $Amanda::Message::ERROR,
 		'type'     => 'fatal',
-                'message' => 'You must specify the storage \'tpchanger\'',
+                'message' => 'You must specify the \'tapedev\' or \'tpchanger\' in the \'DISKFLAT\' storage section',
 		'storage' => 'DISKFLAT',
 		'process' => 'Amanda::Rest::Storages',
 		'running_on' => 'amanda-server',

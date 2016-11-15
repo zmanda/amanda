@@ -184,7 +184,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1150002) {
 	return "Storage '$self->{'storage'}' not found";
     } elsif ($self->{'code'} == 1150003) {
-	return "You must specify the storage 'tpchanger'";
+	return "You must specify the 'tapedev' or 'tpchanger' in the '$self->{'storage'}' storage section";
     } else {
 	return "No message for code $self->{'code'}";
     }

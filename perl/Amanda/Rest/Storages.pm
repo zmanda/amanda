@@ -869,6 +869,9 @@ sub create {
 
 	    if ($err) {
 		push @result_messages, $err;
+		if ($err->isa("Amanda::Changer::Error")) {
+		    $status = 404;
+		}
 	    } else {
 		push @result_messages, @results;
 	    }
