@@ -1634,6 +1634,7 @@ conf_var_t policy_var [] = {
 conf_var_t storage_var [] = {
    { CONF_COMMENT                  , CONFTYPE_STR           , read_str           , STORAGE_COMMENT                  , NULL },
    { CONF_POLICY                   , CONFTYPE_STR           , read_dpolicy       , STORAGE_POLICY                   , NULL },
+   { CONF_TAPEDEV                  , CONFTYPE_STR           , read_str           , STORAGE_TAPEDEV                  , NULL },
    { CONF_TPCHANGER                , CONFTYPE_STR           , read_str           , STORAGE_TPCHANGER                , NULL },
    { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , validate_no_space },
    { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , validate_no_space },
@@ -3509,6 +3510,7 @@ init_storage_defaults(
     stcur.name = NULL;
     conf_init_str           (&stcur.value[STORAGE_COMMENT]                  , "");
     conf_init_str           (&stcur.value[STORAGE_POLICY]                   , "");
+    conf_init_str           (&stcur.value[STORAGE_TAPEDEV]                  , "");
     conf_init_str           (&stcur.value[STORAGE_TPCHANGER]                , "");
     conf_init_labelstr      (&stcur.value[STORAGE_LABELSTR]);
     conf_init_str           (&stcur.value[STORAGE_META_AUTOLABEL]           , "");
@@ -6621,6 +6623,10 @@ update_derived_values(
 	    if (!storage_seen(st, STORAGE_POLICY)) {
 		free_val_t(&st->value[STORAGE_POLICY]);
 		conf_init_str(&st->value[STORAGE_POLICY], conf_name);
+	    }
+	    if (!storage_seen(st, STORAGE_TAPEDEV)) {
+		free_val_t(&st->value[STORAGE_TAPEDEV]);
+		copy_val_t(&st->value[STORAGE_TAPEDEV], &conf_data[CNF_TAPEDEV]);
 	    }
 	    if (!storage_seen(st, STORAGE_TPCHANGER)) {
 		free_val_t(&st->value[STORAGE_TPCHANGER]);

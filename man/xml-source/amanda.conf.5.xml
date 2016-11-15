@@ -3582,6 +3582,15 @@ a volume is marked as <amkeyword>no-reuse</amkeyword> after it is written.</para
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>tapedev</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>tapedev</amkeyword>.</para>
+<para>This parameter can either specify a device (explicitly or by referencing a device definition - see <manref name="amanda-devices" vol="7" />)
+or a tape changer (explicitly or by referencing a device definition - see <manref name="amanda-changers" vol="7" />).</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>tapepool</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: CONFIG_NAME.  Some characters are substituted:

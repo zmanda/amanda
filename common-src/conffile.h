@@ -1481,6 +1481,7 @@ char *policy_key_to_name(int parm);
 typedef enum storage_e  {
     STORAGE_COMMENT,
     STORAGE_POLICY,
+    STORAGE_TAPEDEV,
     STORAGE_TPCHANGER,
     STORAGE_LABELSTR,
     STORAGE_AUTOLABEL,
@@ -1561,6 +1562,7 @@ char *storage_key_to_name(int parm);
  */
 #define storage_get_comment(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_COMMENT)))
 #define storage_get_policy(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_POLICY)))
+#define storage_get_tapedev(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_TAPEDEV)))
 #define storage_get_tpchanger(storage)  (val_t_to_str(storage_getconf((storage), STORAGE_TPCHANGER)))
 #define storage_get_labelstr(storage)  (val_t_to_labelstr(storage_getconf((storage), STORAGE_LABELSTR)))
 #define storage_get_autolabel(storage)  (val_t_to_autolabel(storage_getconf((storage), STORAGE_AUTOLABEL)))

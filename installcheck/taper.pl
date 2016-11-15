@@ -74,6 +74,7 @@ sub run_taper {
 	if ($params{'notapedev'}) {
 	    $testconf->remove_param('tapedev');
 	    $testconf->remove_param('tpchanger');
+	    $testconf->add_param('tapedev', '""');
 	} elsif ($params{'ndmp_server'}) {
 	    my $ndmp = $params{'ndmp_server'};
 	    $ndmp->reset();
@@ -1000,7 +1001,7 @@ wait_for_exit();
 $handle = "44-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "Yno tapedev", notapedev => 1);
-like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the storage 'tpchanger'"$/,
+like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the 'tapedev' or 'tpchanger' in the 'TESTCONF' storage section"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
 
@@ -1516,7 +1517,7 @@ cleanup_log();
 $handle = "44-11111";
 $datestamp = "20070102030405";
 run_taper(4096, "Xno tapedev", notapedev => 1, taperscan => "lexical");
-like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the storage 'tpchanger'"$/,
+like(taper_reply, qr/^TAPE-ERROR SETUP "You must specify the 'tapedev' or 'tpchanger' in the 'TESTCONF' storage section"$/,
 	"got TAPE-ERROR") or die;
 wait_for_exit();
 

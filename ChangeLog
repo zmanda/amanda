@@ -1,3 +1,15 @@
+2016-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Add tapedev in storage section
+	* common-src/conffile.h: Add STORAGE_TAPEDEV
+	* device-src/xfer-dest-taper-splitter.c: Fix to use mem_ring value
+	* man/xml-source/amanda.conf.5.xml: Document tapedev in storage section
+	* perl/Amanda/Changer.pm: Improve message 1150003
+	* perl/Amanda/Config.swg: Add STORAGE_TAPEDEV
+	* perl/Amanda/Rest/Storages.pm: Set status to 404 if create fail
+	* perl/Amanda/Storage.pm: Use tapedev if tpchanger is not set
+	* installcheck/Amanda_Rest_Storages.pl: Fix check
+	* installcheck/taper.pl: Fix check
+
 2016-11-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/planner.c: Set dp->todo to 0 if the dle is not skipped
 
