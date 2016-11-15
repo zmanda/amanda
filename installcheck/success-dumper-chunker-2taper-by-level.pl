@@ -427,10 +427,10 @@ taped
 
 2 dumpers idle  : no-dumpers
 storage-1   qlen: 0
-               0:  (:)
+               0:
 
 storage-2   qlen: 0
-               0:  (:)
+               0:
 
 network free kps: 80000
 holding space   : 25k (100.00%)

@@ -1,4 +1,8 @@
 2016-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amstatus.pl: Fix warning, do not print useless (:)
+	* installcheck/failure-*.pl, installcheck/success-dumper-*.pl: fix
+
+2016-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Add tapedev in storage section
 	* common-src/conffile.h: Add STORAGE_TAPEDEV
 	* device-src/xfer-dest-taper-splitter.c: Fix to use mem_ring value
