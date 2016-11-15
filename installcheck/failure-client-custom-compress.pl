@@ -460,7 +460,7 @@ taped           :   1        64k       525k (100.00%) (100.00%)
 
 2 dumpers idle  : no-dumpers
 TESTCONF    qlen: 0
-               0:  (:)
+               0:
 
 network free kps: 80000
 holding space   : 25k (100.00%)
