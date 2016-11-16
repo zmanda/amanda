@@ -386,7 +386,7 @@ if ($opt_summary) {
 	    next if !$taper;
 
 	    printf "%-11s qlen: %d\n", "$storage",
-				       $status->{'qlen'}->{'tapeq'}->{$taper};
+				       $status->{'qlen'}->{'tapeq'}->{$taper} || 0;
 
 	    if (defined $status->{'taper'}->{$taper}->{'worker'}) {
 		my @worker_status;

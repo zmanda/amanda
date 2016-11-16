@@ -1,3 +1,12 @@
+2016-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amrandom.pl: Fix perl warning
+	* device-src/amtapetype.pl: Fix perl warning
+	* installcheck/success-dumper-chunker-2taper-by-level.pl: Fix test
+	* perl/Amanda/Report.pm: Fix perl warning
+	* perl/Amanda/Report/human.pm: Fix perl warning
+	* server-src/amadmin_perl.pl: Fix perl warning
+	* server-src/amstatus.pl: Fix perl warning
+
 2016-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: Fix warning, do not print useless (:)
 	* installcheck/failure-*.pl, installcheck/success-dumper-*.pl: fix

@@ -901,7 +901,7 @@ EOF
     my $nb_incr_dle = 0;
     my @incr_dle = @{$self->{tapedisks}};
     foreach my $level (1 .. $#incr_dle) {
-	$nb_incr_dle += $incr_dle[$level];
+	$nb_incr_dle += $incr_dle[$level] if defined $incr_dle[$level];
     }
     $self->zprint(swrite(
         $st_format,
@@ -948,7 +948,7 @@ sub has_incrementals
     my $array = shift;
 
     for ($a = 1; $a < @$array; $a+=1) {
-	return 1 if $array->[$a] > 0;
+	return 1 if defined $array->[$a] and $array->[$a] > 0;
     }
     return 0;
 }
