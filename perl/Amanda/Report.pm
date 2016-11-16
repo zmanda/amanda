@@ -1202,6 +1202,7 @@ sub _handle_taper_line
 	}
 
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
+	$part_ct = 1 if !defined $part_ct || $part_ct eq '';
 	my $x;
 	if ($info[5] eq '[sec') {
 	    $x = 6;

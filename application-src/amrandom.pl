@@ -226,7 +226,9 @@ sub command_backup {
 	}
 	debug("writing $block_size bytes");
 	my $n = POSIX::write($out, $buffer, $block_size);
-	if (!defined $n || $n ne $block_size) {
+	if (!defined $n) {
+	    debug("Bad write: $!");
+	} elsif ($n ne $block_size) {
 	    debug("Bad write $n != $block_size");
 	}
 	$size -= $block_size

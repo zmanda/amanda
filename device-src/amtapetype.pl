@@ -166,6 +166,9 @@ sub write_one_file(%) {
     }
     $dest = Amanda::Xfer::Dest::Device->new($device, 1);
     $xfer = Amanda::Xfer->new([$source, $dest]);
+    if (!defined $stats->{$pattern}) {
+	$stats->{$pattern} = { BYTES => 0, FILES => 0, TIME => 0 };
+    }
 
     # set up the relevant callbacks
     my ($timeout_src, $spinner_src);
