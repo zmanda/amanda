@@ -619,7 +619,7 @@ check_and_load_config(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    output_find = find_dump(&disk_list);
+    output_find = find_dump(&disk_list, 1);
     /* the 'w' here sorts by write timestamp, so that the first instance of
      * any particular datestamp/host/disk/level/part that we see is the one
      * written earlier */

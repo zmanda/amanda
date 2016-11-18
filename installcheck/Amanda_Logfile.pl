@@ -293,7 +293,7 @@ my @results;
 my @results_arr;
 
 @results = Amanda::Logfile::search_logfile(undef, "20071109010002",
-					   "$logdir/log.20071109010002.0", 1);
+					   "$logdir/log.20071109010002.0", 1, 1);
 is($#results+1, 17, "search_logfile returned 17 results");
 
 # sort by filenum so we can compare each to what it should be

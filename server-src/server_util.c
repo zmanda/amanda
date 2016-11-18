@@ -136,6 +136,7 @@ amhost_get_security_conf(
     void *arg G_GNUC_UNUSED)
 {
     char *result = NULL;
+    disk_t *dp;
 
     if(!string || !*string)
 	return(NULL);
@@ -152,40 +153,46 @@ amhost_get_security_conf(
 
     if (!arg || !((am_host_t *)arg)->disks) return(NULL);
 
+    for (dp = ((am_host_t *)arg)->disks; dp != NULL; dp = dp->hostnext) {
+	if (dp->todo)
+	    break;
+    }
+    if (!dp) return(NULL);
+
     if (g_str_equal(string, "amandad_path"))
-	result =  ((am_host_t *)arg)->disks->amandad_path;
+	result =  dp->amandad_path;
     else if (g_str_equal(string, "client_username"))
-	result =  ((am_host_t *)arg)->disks->client_username;
+	result =  dp->client_username;
     else if (g_str_equal(string, "client_port"))
-	result =  ((am_host_t *)arg)->disks->client_port;
+	result =  dp->client_port;
     else if (g_str_equal(string, "src_ip")) {
 	char *result = interface_get_src_ip(((am_host_t *)arg)->netif->config);
 	if (g_str_equal(result, "NULL"))
 	    result = NULL;
     } else if(g_str_equal(string, "ssh_keys"))
-	result =  ((am_host_t *)arg)->disks->ssh_keys;
+	result =  dp->ssh_keys;
     else if (g_str_equal(string, "ssl_fingerprint_file"))
-	result =  ((am_host_t *)arg)->disks->ssl_fingerprint_file;
+	result =  dp->ssl_fingerprint_file;
     else if (g_str_equal(string, "ssl_cert_file"))
-	result =  ((am_host_t *)arg)->disks->ssl_cert_file;
+	result =  dp->ssl_cert_file;
     else if (g_str_equal(string, "ssl_key_file"))
-	result =  ((am_host_t *)arg)->disks->ssl_key_file;
+	result =  dp->ssl_key_file;
     else if (g_str_equal(string, "ssl_ca_cert_file"))
-	result =  ((am_host_t *)arg)->disks->ssl_ca_cert_file;
+	result =  dp->ssl_ca_cert_file;
     else if (g_str_equal(string, "ssl_cipher_list"))
-	result =  ((am_host_t *)arg)->disks->ssl_cipher_list;
+	result =  dp->ssl_cipher_list;
     else if (g_str_equal(string, "ssl_check_certificate_host")) {
-	if (((am_host_t *)arg)->disks->ssl_check_certificate_host)
+	if (dp->ssl_check_certificate_host)
 	    result = "1";
 	else
 	    result = "0";
     } else if (g_str_equal(string, "ssl_check_host")) {
-	if (((am_host_t *)arg)->disks->ssl_check_host)
+	if (dp->ssl_check_host)
 	    result = "1";
 	else
 	    result = "0";
     } else if (g_str_equal(string, "ssl_check_fingerprint")) {
-	if (((am_host_t *)arg)->disks->ssl_check_fingerprint)
+	if (dp->ssl_check_fingerprint)
 	    result = "1";
 	else
 	    result = "0";

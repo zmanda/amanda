@@ -167,7 +167,7 @@ main(
     compress_index = getconf_boolean(CNF_COMPRESS_INDEX);
     sort_index = getconf_boolean(CNF_SORT_INDEX);
 
-    output_find = find_dump(&diskl);
+    output_find = find_dump(&diskl, 1);
     dump_hash = make_dump_hash(output_find);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));

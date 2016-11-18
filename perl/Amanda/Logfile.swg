@@ -294,14 +294,15 @@ char **find_log(void);
 %rename(search_logfile) search_logfile_wrap;
 %inline %{
 static find_result_t *search_logfile_wrap(char *label, char *datestamp,
-				   char *logfile, int add_missing_disks) {
+				   char *logfile, int add_missing_disks,
+				   int added_todo) {
     find_result_t *rv = NULL;
 
     /* We use a static variable to collect any unrecognized disks */
     static disklist_t unrecognized_disks = { NULL, NULL };
 
     search_logfile(&rv, label, datestamp, logfile, 
-	add_missing_disks? &unrecognized_disks : NULL);
+	add_missing_disks? &unrecognized_disks : NULL, added_todo);
 
     return rv;
 }
@@ -309,10 +310,10 @@ static find_result_t *search_logfile_wrap(char *label, char *datestamp,
 
 %rename(search_holding_disk) search_holding_disk_wrap;
 %inline %{
-static find_result_t *search_holding_disk_wrap(void) {
+static find_result_t *search_holding_disk_wrap(int added_todo) {
     find_result_t *rv = NULL;
     static disklist_t unrecognized_disks = { NULL, NULL };
-    search_holding_disk(&rv, &unrecognized_disks);
+    search_holding_disk(&rv, &unrecognized_disks, added_todo);
     return rv;
 }
 %}

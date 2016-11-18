@@ -53,7 +53,11 @@ static gboolean logfile_has_tape(char * label, char * datestamp,
 static char *find_sort_order = NULL;
 static GStringChunk *string_chunk = NULL;
 
-find_result_t * find_dump(disklist_t* diskqp) {
+find_result_t *
+find_dump(
+    disklist_t *diskqp,
+    int added_todo)
+{
     char *conf_logdir, *logfile = NULL;
     int tape, maxtape, logs;
     unsigned seq;
@@ -93,7 +97,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	        seq_str, NULL);
 	    if(access(logfile, R_OK) != 0) break;
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
-                               logfile, diskqp)) {
+                               logfile, diskqp, added_todo)) {
                 logs ++;
             }
 	}
@@ -105,7 +109,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	    NULL);
 	if(access(logfile,R_OK) == 0) {
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
-                               logfile, diskqp)) {
+                               logfile, diskqp, added_todo)) {
                 logs ++;
             }
         }
@@ -116,7 +120,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
 	logfile = g_strconcat(conf_logdir, "/log.", tp->datestamp, NULL);
 	if(access(logfile,R_OK) == 0) {
 	    if (search_logfile(&output_find, NULL, tp->datestamp,
-                               logfile, diskqp)) {
+                               logfile, diskqp, added_todo)) {
                 logs ++;
             }
 	}
@@ -125,7 +129,7 @@ find_result_t * find_dump(disklist_t* diskqp) {
     amfree(logfile);
     amfree(conf_logdir);
 
-    search_holding_disk(&output_find, diskqp);
+    search_holding_disk(&output_find, diskqp, added_todo);
 
     return(output_find);
 }
@@ -249,7 +253,8 @@ hash_find_log(void)
 void
 search_holding_disk(
     find_result_t **output_find,
-    disklist_t * dynamic_disklist)
+    disklist_t * dynamic_disklist,
+    int added_todo)
 {
     GSList *holding_file_list;
     GSList *e;
@@ -293,7 +298,8 @@ search_holding_disk(
 		dumpfile_free_data(&file);
 		continue;
 	    }
-	    add_disk(dynamic_disklist, file.name, file.disk);
+	    dp = add_disk(dynamic_disklist, file.name, file.disk);
+	    dp->todo = added_todo;
 	}
 
 	if(find_match(file.name,file.disk)) {
@@ -828,7 +834,8 @@ search_logfile(
     const char *label,
     const char *passed_datestamp,
     const char *logfile,
-    disklist_t * dynamic_disklist)
+    disklist_t * dynamic_disklist,
+    int added_todo)
 {
     FILE *logf;
     char *host = NULL;
@@ -1282,7 +1289,8 @@ search_logfile(
 		    amfree(disk);
 		    continue;
 		}
-		add_disk(dynamic_disklist, host, disk);
+		dp = add_disk(dynamic_disklist, host, disk);
+		dp->todo = added_todo;
 	    }
             if (find_match(host, disk)) {
 		if(curprog == P_TAPER) {

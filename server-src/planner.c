@@ -2010,9 +2010,16 @@ static void getsize(am_host_t *hostp)
     }
 
 send:
+    /* find a dp with a valid auth */
+    for (dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	if (dp->todo && dp->auth) break;
+    }
+    if (!dp)
+	return;
+
     req = g_string_free(reqbuf, FALSE);
-    dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
-    secdrv = security_getdriver(hostp->disks->auth);
+    dbprintf("send request to %s:%s:(%s):\n----\n%s\n----\n\n", hostp->hostname, hostp->disks->name, dp->name, req);
+    secdrv = security_getdriver(dp->auth);
     if (secdrv == NULL) {
 	hostp->status = HOST_DONE;
 	log_add(L_ERROR,
