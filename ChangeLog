@@ -1,3 +1,22 @@
+2016-11-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/find.c (find_dump, search_holding_disk, search_logfile):
+	  add added_todo argument
+	* server-src/find.h (find_dump, search_holding_disk, search_logfile):
+	  add added_todo argument
+	* server-src/amadmin.c: Call find_dump with added_todo=1
+	* server-src/amindexd.c: Call find_dump with added_todo=1
+	* server-src/amtrmidx.c: Call find_dump with added_todo=1
+	* server-src/driver.c: Call search_holding_disk with added_todo=1
+	* server-src/planner.c: Use a dp with a todo bit set
+	* server-src/server_util.c: Use a dp with a todo bit set
+	* server-src/tapefile.c: Call find_dump with added_todo=0
+	* perl/Amanda/Logfile.swg (search_logfile, search_holding_disk): Add
+	  added_todo argument
+	* perl/Amanda/DB/Catalog.pm: Call search_logfile with added_todo=1
+	* perl/Amanda/Disklist.swg: Call search_holding_disk with added_todo=1
+	* installcheck/Amanda_Logfile.pl: Call search_logfile with
+	  added_todo=1
+
 2016-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amrandom.pl: Fix perl warning
 	* device-src/amtapetype.pl: Fix perl warning

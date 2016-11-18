@@ -832,7 +832,7 @@ compute_retention(void)
 		diskp = g_new0(disklist_t, 1);
 		read_diskfile(conf_diskfile, diskp);
 	    }
-	    output_find = find_dump(diskp);
+	    output_find = find_dump(diskp, 0);
 	    sort_find_result("hkDLpbfw", &output_find);
 	}
 

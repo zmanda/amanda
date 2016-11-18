@@ -521,7 +521,7 @@ sub reset_disklist {
 }
 
 sub add_holding_to_disklist {
-    Amanda::Logfile::search_holding_disk();
+    Amanda::Logfile::search_holding_disk(1);
     reset_disklist_internal(
 	\%disks, ($params{disk_class} or "Amanda::Disklist::Disk"),
 	\%hosts, ($params{host_class} or "Amanda::Disklist::Host"),

@@ -37,7 +37,7 @@ typedef struct find_result_s {
  * the global disklist. If diskqp is NULL, disks not matching existing
  * disklist entries will be skipped. See search_logfile below, which does
  * the dirty work for find_dump. */
-find_result_t *find_dump(disklist_t* diskqp);
+find_result_t *find_dump(disklist_t* diskqp, int added_todo);
 
 /* Return a list of unqualified filenames of logfiles for active
  * tapes.  Filenames are relative to the logdir.
@@ -76,7 +76,7 @@ find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
  */
 gboolean search_logfile(find_result_t **output_find, const char *volume_label,
                         const char *log_datestamp, const char *logfile,
-                        disklist_t * dynamic_disklist);
+                        disklist_t * dynamic_disklist, int added_todo);
 
 /* return all dumps on holding disk; not really a search at all.
  *
@@ -88,7 +88,8 @@ gboolean search_logfile(find_result_t **output_find, const char *volume_label,
  */
 void search_holding_disk(
 	find_result_t **output_find,
-	disklist_t * dynamic_disklist);
+	disklist_t * dynamic_disklist,
+	int added_todo);
 
 GHashTable *make_dump_hash(find_result_t *output_find);
 void free_dump_hash(GHashTable *dump_hash);
