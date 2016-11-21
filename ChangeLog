@@ -1,3 +1,6 @@
+2016-11-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Rest_Storages.pl: Fix check
+
 2016-11-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/find.c (find_dump, search_holding_disk, search_logfile):
 	  add added_todo argument
