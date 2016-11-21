@@ -1,6 +1,14 @@
 Changes in release 3.4.1
 
    * new --without-rest-server configure option
+   * fix reported bugs
+       o build issue
+       o packaging issue
+       o amstar: fix exclude pattern
+       o amrecover: do not print the size too often
+       o amtapetype: fix error with property_set
+       o allow a tapedev in the a storage section
+       o amstatus: small fix
 
 Changes in release 3.4
 
