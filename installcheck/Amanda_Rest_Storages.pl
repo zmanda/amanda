@@ -80,6 +80,8 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 $testconf = Installcheck::Run::setup();
 $testconf->remove_param("tpchanger");
+$testconf->remove_param("tapedev");
+$testconf->add_param("tapedev",'"/dev/nst0"');
 $testconf->add_policy("DISKFLAT", [
 	retention_tapes => 10,
 ]);
@@ -114,10 +116,6 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 
 $testconf->remove_param("tapedev");
 $testconf->add_param("tapedev", '""');
-$testconf->add_storage("DISKFLAT", [
-	policy => '"DISKFLAT"',
-	runtapes => 4,
-]);
 $testconf->write();
 
 $reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/create","");
