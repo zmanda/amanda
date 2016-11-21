@@ -584,7 +584,7 @@ if (defined $message) {
 
 # read the disklist
 my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
-$cfgerr_level += Amanda::Disklist::read_disklist('filename' => $diskfile);
+$cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
 ($cfgerr_level < $CFGERR_ERRORS) || die "Errors processing disklist";
 
 # shim for installchecks
