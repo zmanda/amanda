@@ -1,3 +1,5 @@
+2016-11-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.4.1
 
 2016-11-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/find.c (find_dump, search_holding_disk, search_logfile):
