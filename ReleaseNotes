@@ -1,5 +1,17 @@
-                Release Notes for amanda-3.4
+                Release Notes for amanda-3.4.1
 
+* new --without-rest-server configure option
+* fix reported bugs
+    - build issue
+    - packaging issue
+    - amstar: fix exclude pattern
+    - amrecover: do not print the size too often
+    - amtapetype: fix error with property_set
+    - allow a tapedev in the a storage section
+    - amstatus: small fix
+
+
+                Release Notes for amanda-3.4
 
 * Allow to put a dump on more than one storage
 * Allow to specify which DLE/level go to which storage

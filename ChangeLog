@@ -1,4 +1,8 @@
 2016-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.4.1
+	* VERSION: 3.4.1
+
+2016-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c (retimeout): New function that change the
 	  timeout_time but do create create the event
 	* installcheck/Installcheck/Run.pm (check_amreport):
