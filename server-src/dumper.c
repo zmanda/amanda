@@ -237,6 +237,7 @@ static void	read_statefd(void *, void *, ssize_t);
 static void	read_mesgfd(void *, void *, ssize_t);
 static gboolean header_sent(struct databuf *db);
 static void	timeout(time_t);
+static void	retimeout(time_t);
 static void	timeout_callback(void *unused);
 static gpointer handle_shm_ring_to_fd_thread(gpointer data);
 static gpointer handle_shm_ring_direct(gpointer data);
@@ -2362,7 +2363,7 @@ read_statefd(
     if (shm_thread) {
 	g_mutex_lock(shm_thread_mutex);
     }
-    timeout(conf_dtimeout);
+    retimeout(conf_dtimeout);
     if (shm_thread) {
 	g_cond_broadcast(shm_thread_cond);
 	g_mutex_unlock(shm_thread_mutex);
@@ -2447,7 +2448,7 @@ read_mesgfd(
      * Reset the timeout for future reads
      */
     if (!ISSET(status, GOT_RETRY)) {
-	timeout(conf_dtimeout);
+	retimeout(conf_dtimeout);
     }
     if (shm_thread) {
 	g_cond_broadcast(shm_thread_cond);
@@ -2723,7 +2724,7 @@ read_datafd(
     /*
      * Reset the timeout for future reads
      */
-    timeout(conf_dtimeout);
+    retimeout(conf_dtimeout);
     if (shm_thread) {
 	g_cond_broadcast(shm_thread_cond);
 	g_mutex_unlock(shm_thread_mutex);
@@ -2902,6 +2903,27 @@ timeout(
     if (ev_timeout == NULL) {
 	ev_timeout = event_register((event_id_t)seconds+1, EV_TIME,
 				     timeout_callback, NULL);
+    }
+}
+
+/*
+ * Change the timeout_time, but do not set a timeout event
+ */
+static void
+retimeout(
+    time_t seconds)
+{
+    timeout_time = time(NULL) + seconds;
+
+    /*
+     * remove a timeout if seconds is 0
+     */
+    if (seconds == 0) {
+	if (ev_timeout != NULL) {
+	    event_release(ev_timeout);
+	    ev_timeout = NULL;
+	}
+	return;
     }
 }
 

@@ -610,6 +610,7 @@ sub check_amreport
     my $timestamp = shift;
     my $text = shift || 'amreport';
     my $sorting = shift;
+    my $skip_size = shift;
     my $got_report;
 
     $report =~ s/\\/\\\\/g;
@@ -636,6 +637,9 @@ sub check_amreport
 
     if ($sorting) {
 	my @lines = split "\n", $Installcheck::Run::stdout;
+	if ($skip_size) {
+	    @lines = grep { $_ !~ /^  sendbackup: size/ } @lines;
+	}
 	my @new_lines;
 	my $in_usage_by_tape = 0;
 	my $in_notes = 0;
@@ -671,7 +675,14 @@ sub check_amreport
 	$got_report = join "\n", @new_lines;
 	$got_report .= "\n";
     } else {
-	$got_report = $Installcheck::Run::stdout;
+	if ($skip_size) {
+	    my @lines = split "\n", $Installcheck::Run::stdout;
+	    @lines = grep { $_ !~ /^  sendbackup: size/ } @lines;
+	    $got_report = join "\n", @lines;
+	    $got_report .= "\n";
+	} else {
+	    $got_report = $Installcheck::Run::stdout;
+	}
     }
 
 #    ok($got_report =~ $report, "$text: match") || diag_diff($got_report, $report, $text);
