@@ -1,3 +1,11 @@
+2016-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c (retimeout): New function that change the
+	  timeout_time but do create create the event
+	* installcheck/Installcheck/Run.pm (check_amreport):
+	  Add an option to skip the 'sendbackup: size' line
+	* installcheck/failure-server-custom-compress.pl: Call check_amreport
+	  with the skip_size bit set
+
 2016-11-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amfetchdump.pl, server-src/amreport.pl: Do not add to
 	  cfgerr_level
