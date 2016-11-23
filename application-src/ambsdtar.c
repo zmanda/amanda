@@ -1079,8 +1079,9 @@ read_fd(
     filter_t *filter = g_new0(filter_t, 1);
     filter->fd = fd;
     filter->name = g_strdup(name);
-    filter->event = event_register((event_id_t)filter->fd, EV_READFD,
-				   fn, filter);
+    filter->event = event_create((event_id_t)filter->fd, EV_READFD,
+				 fn, filter);
+    event_activate(filter->event);
 }
 
 static void
@@ -1795,12 +1796,15 @@ ambsdtar_restore(
     err_buf.size = 0;
     err_buf.allocated_size = 0;
 
-    in_buf.event = event_register((event_id_t)0, EV_READFD,
+    in_buf.event = event_create((event_id_t)0, EV_READFD,
 			    handle_restore_stdin, &in_buf);
-    out_buf.event = event_register((event_id_t)tarout, EV_READFD,
+    out_buf.event = event_create((event_id_t)tarout, EV_READFD,
 			    handle_restore_stdout, &out_buf);
-    err_buf.event = event_register((event_id_t)tarerr, EV_READFD,
+    err_buf.event = event_create((event_id_t)tarerr, EV_READFD,
 			    handle_restore_stderr, &err_buf);
+    event_activate(in_buf.event);
+    event_activate(out_buf.event);
+    event_activate(err_buf.event);
 
     event_loop(0);
 

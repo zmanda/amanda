@@ -581,7 +581,8 @@ bsd_stream_read(
     if (bs->ev_read != NULL)
 	event_release(bs->ev_read);
 
-    bs->ev_read = event_register((event_id_t)bs->fd, EV_READFD, stream_read_callback, bs);
+    bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, stream_read_callback, bs);
+    event_activate(bs->ev_read);
     bs->fn = fn;
     bs->arg = arg;
 }
@@ -610,8 +611,9 @@ bsd_stream_read_sync(
     }
     sync_pktlen = 0;
     sync_pkt = NULL;
-    bs->ev_read = event_register((event_id_t)bs->fd, EV_READFD,
+    bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD,
 			stream_read_sync_callback, bs);
+    event_activate(bs->ev_read);
     event_wait(bs->ev_read);
     *buf = sync_pkt;
     return (sync_pktlen);
@@ -779,7 +781,8 @@ bsd_stream_read_to_shm_ring(
     bs->r_callback.s = bs;
     bs->r_callback.callback = bsd_stream_read_to_shm_ring_callback;
 
-    bs->ev_read = event_register((event_id_t)bs->fd, EV_READFD, bsd_stream_read_to_shm_ring_callback, bs);
+    bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, bsd_stream_read_to_shm_ring_callback, bs);
+    event_activate(bs->ev_read);
     bs->fn = fn;
     bs->arg = arg;
     bs->shm_ring = shm_ring;

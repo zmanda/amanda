@@ -2901,8 +2901,9 @@ timeout(
      * schedule a timeout if it not already scheduled
      */
     if (ev_timeout == NULL) {
-	ev_timeout = event_register((event_id_t)seconds+1, EV_TIME,
-				     timeout_callback, NULL);
+	ev_timeout = event_create((event_id_t)seconds+1, EV_TIME,
+				  timeout_callback, NULL);
+	event_activate(ev_timeout);
     }
 }
 
@@ -2963,8 +2964,9 @@ timeout_callback(
     }
 
     if (timeout_time > now) { /* not a data timeout yet */
-	ev_timeout = event_register((event_id_t)(timeout_time-now+1), EV_TIME,
-				    timeout_callback, NULL);
+	ev_timeout = event_create((event_id_t)(timeout_time-now+1), EV_TIME,
+				  timeout_callback, NULL);
+	event_activate(ev_timeout);
 	return;
     }
 
@@ -3116,8 +3118,9 @@ runcompress(
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
-	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
-				       handle_filter_stderr, filter);
+	filter->event = event_create((event_id_t)filter->fd, EV_READFD,
+				     handle_filter_stderr, filter);
+	event_activate(filter->event);
 	return (rval);
     case 0:
 	close(outpipe[1]);
@@ -3223,8 +3226,9 @@ runencrypt(
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
-	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
-				       handle_filter_stderr, filter);
+	filter->event = event_create((event_id_t)filter->fd, EV_READFD,
+				     handle_filter_stderr, filter);
+	event_activate(filter->event);
 	return (rval);
 	}
     case 0: {

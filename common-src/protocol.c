@@ -220,8 +220,9 @@ connect_callback(
 	    security_close(p->security_handle);
 	    /* XXX overload p->security handle to hold the event handle */
 	    p->security_handle =
-		(security_handle_t *)event_register(CONNECT_WAIT, EV_TIME,
+		(security_handle_t *)event_create(CONNECT_WAIT, EV_TIME,
 		connect_wait_callback, p);
+	    event_activate((event_handle_t *) p->security_handle);
 	}
 	break;
 

@@ -525,7 +525,8 @@ main(
      * Schedule an event that will try to exit every 30 seconds if there
      * are no requests outstanding.
      */
-    exit_event = event_register((event_id_t)30, EV_TIME, exit_check, &no_exit);
+    exit_event = event_create((event_id_t)30, EV_TIME, exit_check, &no_exit);
+    event_activate(exit_event);
 
     /*
      * Call event_loop() with an arg of 0, telling it to block until all
@@ -874,11 +875,14 @@ s_sendack(
      * receive rep data.
      */
     as->state = s_repwait;
-    as->ev_repfd = event_register((event_id_t)as->repfd, EV_READFD, repfd_recv, as);
-    as->ev_reptimeout = event_register(REP_TIMEOUT, EV_TIME,
+    as->ev_repfd = event_create((event_id_t)as->repfd, EV_READFD, repfd_recv, as);
+    as->ev_reptimeout = event_create(REP_TIMEOUT, EV_TIME,
 	timeout_repfd, as);
     as->errbuf = NULL;
-    as->ev_errfd = event_register((event_id_t)as->errfd, EV_READFD, errfd_recv, as);
+    as->ev_errfd = event_create((event_id_t)as->errfd, EV_READFD, errfd_recv, as);
+    event_activate(as->ev_repfd);
+    event_activate(as->ev_reptimeout);
+    event_activate(as->ev_errfd);
     security_recvpkt(as->security_handle, protocol_recv, as, -1);
     return (A_PENDING);
 }
@@ -1254,8 +1258,9 @@ s_ackwait(
 	 * INDEX token before any DATA tokens, as dumper assumes. This is a
 	 * hack, if that wasn't already obvious! */
 	if (dh != &as->data[0] || as->service != SERVICE_SENDBACKUP) {
-	    dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
-					 process_readnetfd, dh);
+	    dh->ev_read = event_create((event_id_t)dh->fd_read, EV_READFD,
+				       process_readnetfd, dh);
+	    event_activate(dh->ev_read);
 	} else {
 	    amandad_debug(1, "Skipping registration of sendbackup's data FD\n");
 	}
@@ -1543,8 +1548,9 @@ process_readnetfd(
     if (start_sendbackup_data) {
 	struct datafd_handle *dh = &as->data[0];
 	amandad_debug(1, "Opening datafd to sendbackup (delayed until sendbackup sent header info)\n");
-	dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
-					 process_readnetfd, dh);
+	dh->ev_read = event_create((event_id_t)dh->fd_read, EV_READFD,
+				   process_readnetfd, dh);
+	event_activate(dh->ev_read);
 	dh->shm_ring = as->shm_ring;
 	if (dh->shm_ring) {
 	    as->thread = g_thread_create(shm_ring_thread, (gpointer)dh, TRUE, NULL);

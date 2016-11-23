@@ -124,8 +124,9 @@ event_handle_callback(
 
 /*
  * Public functions
+ *  DEPRECATED because not safe in multi-thread, callback can be called before event_register return
  */
-
+/*
 event_handle_t *
 event_register(
     event_id_t data,
@@ -139,6 +140,7 @@ event_register(
     event_activate(handle);
     return handle;
 }
+*/
 
 event_handle_t *
 event_create(
@@ -155,12 +157,12 @@ event_create(
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
 	/* make sure we aren't given a high fd that will overflow a fd_set */
 	if (data >= (int)FD_SETSIZE) {
-	    error(_("event_register: Invalid file descriptor %jd"), data);
+	    error(_("event_create: Invalid file descriptor %jd"), data);
 	    /*NOTREACHED*/
 	}
     } else if (type == EV_TIME) {
 	if (data < 0) {
-	    error(_("event_register: interval for EV_TIME must be greater than 0; got %jd"), data);
+	    error(_("event_create: interval for EV_TIME must be greater than 0; got %jd"), data);
 	}
     }
 
