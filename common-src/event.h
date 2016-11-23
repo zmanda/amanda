@@ -86,7 +86,7 @@ typedef void (*event_fn_t)(void *);
  * count on the time events being too accurate.  They depend on the
  * caller calling event_loop() often enough.
  */
-event_handle_t *event_register(event_id_t, event_type_t, event_fn_t, void *);
+//event_handle_t *event_register(event_id_t, event_type_t, event_fn_t, void *);
 event_handle_t *event_create(event_id_t, event_type_t, event_fn_t, void *);
 void event_activate(event_handle_t *);
 

@@ -64,7 +64,8 @@ static gboolean
 test_ev_time(void)
 {
     global = 2;
-    hdl[0] = event_register(1, EV_TIME, test_decrement_cb, NULL);
+    hdl[0] = event_create(1, EV_TIME, test_decrement_cb, NULL);
+    event_activate(hdl[0]);
 
     /* Block waiting for the event to fire.  The event itself eventually
      * unregisters itself, causing the event_loop to finish */
@@ -80,7 +81,8 @@ static gboolean
 test_nonblock(void)
 {
     global = 1; /* the callback should not be triggered, so this should stay 1 */
-    hdl[0] = event_register(1, EV_TIME, test_decrement_cb, NULL);
+    hdl[0] = event_create(1, EV_TIME, test_decrement_cb, NULL);
+    event_activate(hdl[0]);
 
     event_loop(1); /* non-blocking */
 
@@ -96,7 +98,8 @@ static gboolean
 test_ev_wait(void)
 {
     global = 2;
-    hdl[0] = event_register(4422, EV_WAIT, test_decrement_cb, NULL);
+    hdl[0] = event_create(4422, EV_WAIT, test_decrement_cb, NULL);
+    event_activate(hdl[0]);
 
     if (global != 2) return FALSE;
     event_wakeup(4422);
@@ -129,7 +132,8 @@ test_ev_wait_2_cb(void *up G_GNUC_UNUSED)
     }
     if (global > 0) {
 	tu_dbg("register new EV_WAIT event with same ID\n");
-	hdl[0] = event_register(84, EV_WAIT, test_ev_wait_2_cb, NULL);
+	hdl[0] = event_create(84, EV_WAIT, test_ev_wait_2_cb, NULL);
+	event_activate(hdl[0]);
     }
 }
 
@@ -137,7 +141,8 @@ static gboolean
 test_ev_wait_2(void)
 {
     global = 2;
-    hdl[0] = event_register(84, EV_WAIT, test_ev_wait_2_cb, NULL);
+    hdl[0] = event_create(84, EV_WAIT, test_ev_wait_2_cb, NULL);
+    event_activate(hdl[0]);
 
     /* Each wakeup should only invoke the callback *once* */
     if (global != 2) return FALSE;
@@ -173,10 +178,12 @@ test_event_wait(void)
 
     /* this one serves as a "decoy", running in the background while we wait
      * for test_event_wait_cb */
-    hdl[0] = event_register(1, EV_TIME, test_decrement_cb, NULL);
+    hdl[0] = event_create(1, EV_TIME, test_decrement_cb, NULL);
+    event_activate(hdl[0]);
 
     /* this is our own callback */
-    hdl[1] = event_register(2, EV_TIME, test_event_wait_cb, (void *)&cb_fired);
+    hdl[1] = event_create(2, EV_TIME, test_event_wait_cb, (void *)&cb_fired);
+    event_activate(hdl[1]);
 
     /* wait until our own callback fires */
     event_wait(hdl[1]);
@@ -230,13 +237,16 @@ test_event_wait_2(void)
 
     /* this one serves as a "decoy", running in the background while we wait
      * for test_event_wait_2_cb */
-    hdl[0] = event_register(1, EV_TIME, test_decrement_cb, NULL);
+    hdl[0] = event_create(1, EV_TIME, test_decrement_cb, NULL);
+    event_activate(hdl[0]);
 
     /* This one repeatedly calls event_wakeup for the EV_WAIT event */
-    hdl[1] = event_register(1, EV_TIME, test_event_wait_2_wakeup_cb, NULL);
+    hdl[1] = event_create(1, EV_TIME, test_event_wait_2_wakeup_cb, NULL);
+    event_activate(hdl[1]);
 
     /* this is our own callback */
-    hdl[2] = event_register(9876, EV_WAIT, test_event_wait_2_cb, (void *)&wakeups_remaining);
+    hdl[2] = event_create(9876, EV_WAIT, test_event_wait_2_cb, (void *)&wakeups_remaining);
+    event_activate(hdl[2]);
 
     /* wait until the EV_WAIT is *released*, not just fired. */
     event_wait(hdl[2]);
@@ -342,7 +352,8 @@ test_ev_readfd(void)
     (void)fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     close(p[1]);
     global = TEST_EV_READFD_SIZE;
-    hdl[0] = event_register(p[0], EV_READFD, test_ev_readfd_cb, NULL);
+    hdl[0] = event_create(p[0], EV_READFD, test_ev_readfd_cb, NULL);
+    event_activate(hdl[0]);
 
     /* let it run */
     event_loop(0);
@@ -418,11 +429,13 @@ test_read_timeout(void)
     cb_fd = p[0];
     (void)fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     close(p[1]);
-    hdl[0] = event_register(p[0], EV_READFD, test_ev_readfd_cb, NULL);
+    hdl[0] = event_create(p[0], EV_READFD, test_ev_readfd_cb, NULL);
+    event_activate(hdl[0]);
 
     /* and set up a timeout */
     global = 0;	/* timeout_cb will set this to 1234 */
-    hdl[1] = event_register(1, EV_TIME, test_read_timeout_cb, NULL);
+    hdl[1] = event_create(1, EV_TIME, test_read_timeout_cb, NULL);
+    event_activate(hdl[1]);
 
     /* let it run */
     event_loop(0);
@@ -526,7 +539,8 @@ test_ev_writefd(void)
     (void)fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     global = TEST_EV_WRITEFD_SIZE;
     close(p[0]);
-    hdl[0] = event_register(p[1], EV_WRITEFD, test_ev_writefd_cb, NULL);
+    hdl[0] = event_create(p[1], EV_WRITEFD, test_ev_writefd_cb, NULL);
+    event_activate(hdl[0]);
 
     /* let it run */
     event_loop(0);

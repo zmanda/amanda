@@ -262,8 +262,9 @@ stream_recvpkt(
     if (timeout < 0) {
 	rh->ev_timeout = NULL;
     } else {
-	rh->ev_timeout = event_register((event_id_t)timeout, EV_TIME,
+	rh->ev_timeout = event_create((event_id_t)timeout, EV_TIME,
 		stream_recvpkt_timeout, rh);
+	event_activate(rh->ev_timeout);
     }
     rh->fn.recvpkt = fn;
     rh->arg = arg;
@@ -444,7 +445,8 @@ tcpm_stream_read_sync(
     }
 
     rs->event_id = newevent++;
-    rs->ev_read_sync = event_register(rs->event_id, EV_WAIT, for_event_release, rs);
+    rs->ev_read_sync = event_create(rs->event_id, EV_WAIT, for_event_release, rs);
+    event_activate(rs->ev_read_sync);
     event_wait(rs->ev_read_sync);
     rs->ev_read_sync = NULL;
     /* Can't use rs or rc, they can be freed */
@@ -648,9 +650,10 @@ tcpm_send_token_async(
     rs->rc->async_write_data_size += 8 + len;
 
     if(!rs->rc->ev_write) {
-	rs->rc->ev_write = event_register(
+	rs->rc->ev_write = event_create(
 			(event_id_t)(rs->rc->write),
 			EV_WRITEFD, tcpm_send_token_callback, rs);
+	event_activate(rs->rc->ev_write);
     }
     return (rs->rc->async_write_data_size);
 }
@@ -1676,16 +1679,19 @@ udp_recvpkt(
      */
     if (rh->ev_read == NULL) {
 	udp_addref(rh->udp, &udp_netfd_read_callback);
-	rh->ev_read = event_register(rh->event_id, EV_WAIT,
+	rh->ev_read = event_create(rh->event_id, EV_WAIT,
 	    udp_recvpkt_callback, rh);
+	event_activate(rh->ev_read);
     }
     if (rh->ev_timeout != NULL)
 	event_release(rh->ev_timeout);
-    if (timeout < 0)
+    if (timeout < 0) {
 	rh->ev_timeout = NULL;
-    else
-	rh->ev_timeout = event_register((event_id_t)timeout, EV_TIME,
+    } else {
+	rh->ev_timeout = event_create((event_id_t)timeout, EV_TIME,
 					udp_recvpkt_timeout, rh);
+	event_activate(rh->ev_timeout);
+    }
     rh->fn.recvpkt = fn;
     rh->arg = arg;
 }
@@ -2062,8 +2068,9 @@ sec_tcp_conn_read(
     }
     auth_debug(1, _("sec: conn_read registering event handler for %s\n"),
 		   rc->hostname);
-    rc->ev_read = event_register((event_id_t)rc->read, EV_READFD,
+    rc->ev_read = event_create((event_id_t)rc->read, EV_READFD,
 		sec_tcp_conn_read_callback, rc);
+    event_activate(rc->ev_read);
     rc->ev_read_refcnt = 1;
 }
 

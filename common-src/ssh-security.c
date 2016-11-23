@@ -182,10 +182,12 @@ ssh_connect(
      */
     rh->fn.connect = fn;
     rh->arg = arg;
-    rh->rs->rc->ev_write = event_register((event_id_t)rh->rs->rc->write, EV_WRITEFD,
+    rh->rs->rc->ev_write = event_create((event_id_t)rh->rs->rc->write, EV_WRITEFD,
 	sec_connect_callback, rh);
-    rh->ev_timeout = event_register((event_id_t)CONNECT_TIMEOUT, EV_TIME,
+    rh->ev_timeout = event_create((event_id_t)CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
+    event_activate(rh->rs->rc->ev_write);
+    event_activate(rh->ev_timeout);
 
     return;
 

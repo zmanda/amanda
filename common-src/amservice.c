@@ -446,7 +446,8 @@ connect_streams(
 		}
 		rstreams[r].fd = fd;
 		/* read from server */
-		lstreams[l].event = event_register((event_id_t)lstreams[l].fd_in, EV_READFD, read_stream_in, &lstreams[l]);
+		lstreams[l].event = event_create((event_id_t)lstreams[l].fd_in, EV_READFD, read_stream_in, &lstreams[l]);
+		event_activate(lstreams[l].event);
 
 		/* read from connected stream */
 		security_stream_read(fd, read_stream_server, &rstreams[r]);
@@ -486,7 +487,8 @@ read_stream_in_callback(
 	for (l = 0; l < nb_lstream; l++) {
 	    if (lstreams[l].event_paused) {
 		lstreams[l].event_paused = FALSE;
-		lstreams[l].event = event_register((event_id_t)lstreams[l].fd_in, EV_READFD, read_stream_in, &lstreams[l]);
+		lstreams[l].event = event_create((event_id_t)lstreams[l].fd_in, EV_READFD, read_stream_in, &lstreams[l]);
+		event_activate(lstreams[l].event);
 	    }
 	}
 	event_paused = FALSE;
@@ -575,7 +577,8 @@ client_first_stream(
 
     printf("Connected\n");
     /* read from stdin */
-    event_in = event_register((event_id_t)0, EV_READFD, read_in, NULL);
+    event_in = event_create((event_id_t)0, EV_READFD, read_in, NULL);
+    event_activate(event_in);
 
     /* read from connected stream */
     security_stream_read(fd, read_server, NULL);

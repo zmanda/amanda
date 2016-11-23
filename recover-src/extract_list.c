@@ -3529,32 +3529,36 @@ start_processing_data(
     ctl_data->child_out_cdata.output = stdout;
     ctl_data->child_out_cdata.name = NULL;
     ctl_data->child_out_cdata.buffer = NULL;
-    ctl_data->child_out_cdata.event = event_register(
+    ctl_data->child_out_cdata.event = event_create(
 				(event_id_t)ctl_data->child_out[0],
 				EV_READFD, handle_child_out,
 				&ctl_data->child_out_cdata);
+    event_activate(ctl_data->child_out_cdata.event);
 
     ctl_data->child_err_cdata.fd = ctl_data->child_err[0];
     ctl_data->child_err_cdata.output = stderr;
     ctl_data->child_err_cdata.name = NULL;
     ctl_data->child_err_cdata.buffer = NULL;
-    ctl_data->child_err_cdata.event = event_register(
+    ctl_data->child_err_cdata.event = event_create(
 				(event_id_t)ctl_data->child_err[0],
 				EV_READFD, handle_child_out,
 				&ctl_data->child_err_cdata);
+    event_activate(ctl_data->child_err_cdata.event);
 
     if (ctl_data->decrypt_cdata.fd != -1) {
-	ctl_data->decrypt_cdata.event = event_register(
+	ctl_data->decrypt_cdata.event = event_create(
 				(event_id_t)ctl_data->decrypt_cdata.fd,
 				EV_READFD, handle_child_out,
 				&ctl_data->decrypt_cdata);
+	event_activate(ctl_data->decrypt_cdata.event);
     }
 
     if (ctl_data->decompress_cdata.fd != -1) {
-	ctl_data->decompress_cdata.event = event_register(
+	ctl_data->decompress_cdata.event = event_create(
 				(event_id_t)ctl_data->decompress_cdata.fd,
 				EV_READFD, handle_child_out,
 				&ctl_data->decompress_cdata);
+	event_activate(ctl_data->decompress_cdata.event);
     }
 
     if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
@@ -3565,10 +3569,11 @@ start_processing_data(
 	ctl_data->dar_cdata.fd = ctl_data->dar_pipe[0];
 	ctl_data->dar_cdata.name = g_strdup("DAR");
 	ctl_data->dar_cdata.buffer = NULL;
-	ctl_data->dar_cdata.event = event_register(
+	ctl_data->dar_cdata.event = event_create(
 				(event_id_t)ctl_data->dar_pipe[0],
 				EV_READFD, handle_dar_command,
 				&ctl_data->dar_cdata);
+	event_activate(ctl_data->dar_cdata.event);
     }
 }
 

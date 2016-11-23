@@ -1,3 +1,9 @@
+2016-11-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Fix race when using event_register in thread, the callback can be
+	calback can before event_register return
+	* */*.c : Use event_create and event_activate instead of
+	  event_register
+
 2016-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: 3.4.1
 	* VERSION: 3.4.1

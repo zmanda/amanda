@@ -995,8 +995,9 @@ void amar_start_read(
     amar_t   *archive)
 {
     if (!archive->hp->event_read_extract) {
-	archive->hp->event_read_extract = event_register(archive->fd, EV_READFD,
-						         amar_read_cb, archive);
+	archive->hp->event_read_extract = event_create(archive->fd, EV_READFD,
+						       amar_read_cb, archive);
+	event_activate(archive->hp->event_read_extract);
     }
 }
 

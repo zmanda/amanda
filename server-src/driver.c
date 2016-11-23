@@ -535,8 +535,9 @@ main(
 		wtaper->state = TAPER_STATE_INIT;
 		taper->nb_wait_reply++;
 		taper->nb_scan_volume++;
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-						handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+		event_activate(taper->ev_read);
 		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
 	    }
 	}
@@ -546,7 +547,8 @@ main(
     cmddatas = read_cmdfile(conf_cmdfile);
     unlock_cmdfile(cmddatas);
 
-    flush_ev_read = event_register((event_id_t)0, EV_READFD, read_flush, NULL);
+    flush_ev_read = event_create((event_id_t)0, EV_READFD, read_flush, NULL);
+    event_activate(flush_ev_read);
 
     log_add(L_STATS, _("startup time %s"), walltime_str(curclock()));
 
@@ -664,9 +666,10 @@ main(
 		 wtaper++) {
 		if (wtaper->state & TAPER_STATE_RESERVATION) {
 		    if (taper->nb_wait_reply == 0) {
-			taper->ev_read = event_register(taper->fd,
+			taper->ev_read = event_create(taper->fd,
 						EV_READFD,
 						handle_taper_result, taper);
+			event_activate(taper->ev_read);
 		    }
 		    taper->nb_wait_reply++;
 		    wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
@@ -699,8 +702,9 @@ main(
 		wtaper->state = TAPER_STATE_INIT;
 		taper->nb_wait_reply++;
 		taper->nb_scan_volume++;
-		taper->ev_read = event_register(taper->fd, EV_READFD,
+		taper->ev_read = event_create(taper->fd, EV_READFD,
 						handle_taper_result, taper);
+		event_activate(taper->ev_read);
 		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
 	    }
 	}
@@ -1240,8 +1244,9 @@ start_a_flush_wtaper(
 	    wtaper->state |= TAPER_STATE_FILE_TO_TAPE;
 	    qname = quote_string(dp->name);
 	    if (taper->nb_wait_reply == 0) {
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-					        handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+		event_activate(taper->ev_read);
 	    }
 	    taper->nb_wait_reply++;
 	    wtaper->nb_dle++;
@@ -1429,8 +1434,9 @@ start_a_vault_wtaper(
 	    wtaper->state |= TAPER_STATE_VAULT_TO_TAPE;
 	    qname = quote_string(dp->name);
 	    if (taper->nb_wait_reply == 0) {
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-					        handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+		event_activate(taper->ev_read);
 	    }
 	    taper->nb_wait_reply++;
 	    wtaper->nb_dle++;
@@ -1771,8 +1777,9 @@ start_some_dumps(
 	if (sp == NULL && delayed_sp != NULL) {
 	    assert(sleep_time > now);
 	    sleep_time -= now;
-	    dumpers_ev_time = event_register((event_id_t)sleep_time, EV_TIME,
+	    dumpers_ev_time = event_create((event_id_t)sleep_time, EV_TIME,
 		handle_dumpers_time, &runq);
+	    event_activate(dumpers_ev_time);
 	    return;
 	} else if (sp != NULL && wtaper == NULL) {
 	    job_t *job = alloc_job();
@@ -1815,9 +1822,10 @@ start_some_dumps(
 		chunker_cmd(chunker, SHM_WRITE, sp, sp->datestamp);
 		job->do_port_write = FALSE;
 	    }
-	    chunker->ev_read = event_register((event_id_t)chunker->fd,
-					      EV_READFD,
-					      handle_chunker_result, chunker);
+	    chunker->ev_read = event_create((event_id_t)chunker->fd,
+					    EV_READFD,
+					    handle_chunker_result, chunker);
+	    event_activate(chunker->ev_read);
 	    sp->disk->host->start_t = now + HOST_DELAY;
 	    if (empty(*rq) && active_dumper() == 0) { force_flush = 1;}
 
@@ -1864,8 +1872,9 @@ start_some_dumps(
 		wtaper->left = taper->tape_length;
 	    }
 	    if (taper->nb_wait_reply == 0) {
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-					       handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+	    event_activate(taper->ev_read);
 	    }
 
 	    taper->nb_wait_reply++;
@@ -1925,8 +1934,9 @@ start_vault_on_same_wtaper(
 	wtaper->state |= TAPER_STATE_VAULT_TO_TAPE;
 	qname = quote_string(dp->name);
 	if (taper->nb_wait_reply == 0) {
-	    taper->ev_read = event_register(taper->fd, EV_READFD,
-					    handle_taper_result, taper);
+	    taper->ev_read = event_create(taper->fd, EV_READFD,
+					  handle_taper_result, taper);
+	    event_activate(taper->ev_read);
 	}
 	taper->nb_wait_reply++;
 	wtaper->nb_dle++;
@@ -2493,8 +2503,9 @@ handle_taper_result(
 		    tape_action(wtaper1, NULL, FALSE) == TAPE_ACTION_START_TAPER) {
 		    wtaper1->state = TAPER_STATE_INIT;
 		    if (taper->nb_wait_reply == 0) {
-			taper->ev_read = event_register(taper->fd, EV_READFD,
+			taper->ev_read = event_create(taper->fd, EV_READFD,
 						handle_taper_result, NULL);
+			event_activate(taper->ev_read);
 		    }
 		    taper->nb_wait_reply++;
 		    taper->nb_scan_volume++;
@@ -2627,8 +2638,9 @@ handle_taper_result(
 
 	    wtaper->state |= TAPER_STATE_DUMP_TO_TAPE;
 
-	    dumper->ev_read = event_register(dumper->fd, EV_READFD,
-					     handle_dumper_result, dumper);
+	    dumper->ev_read = event_create(dumper->fd, EV_READFD,
+					   handle_dumper_result, dumper);
+	    event_activate(dumper->ev_read);
 	    break;
 
         case CLOSED_VOLUME:
@@ -3804,10 +3816,11 @@ handle_chunker_result(
 	    } else {
 		dumper_cmd(dumper, SHM_DUMP, sp, NULL);
 	    }
-	    dumper->ev_read = event_register(
+	    dumper->ev_read = event_create(
 				(event_id_t)dumper->fd,
 				EV_READFD,
 				handle_dumper_result, dumper);
+	    event_activate(dumper->ev_read);
 	    break;
 
 	case DUMPER_STATUS: /* DUMP-STATUS <handle> */
@@ -4195,8 +4208,9 @@ read_flush(
 
     start_a_flush();
     if (!nodump) {
-	schedule_ev_read = event_register((event_id_t)0, EV_READFD,
+	schedule_ev_read = event_create((event_id_t)0, EV_READFD,
 					  read_schedule, NULL);
+	event_activate(schedule_ev_read);
     } else {
 	force_flush = 1;
     }

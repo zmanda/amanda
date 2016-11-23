@@ -220,10 +220,12 @@ bsdtcp_connect(
     rh->arg = rh;
     rh->connect_callback = fn;
     rh->connect_arg = arg;
-    rh->rs->rc->ev_write = event_register((event_id_t)(rh->rs->rc->write),
+    rh->rs->rc->ev_write = event_create((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
-    rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
+    rh->ev_timeout = event_create(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
+    event_activate(rh->rs->rc->ev_write);
+    event_activate(rh->ev_timeout);
 
     return;
 
@@ -263,11 +265,13 @@ bsdtcp_fn_connect(
 		result = runbsdtcp(rh, rh->src_ip, rh->port);
 		if (result >= 0) {
 		    rh->rc->refcnt++;
-		    rh->rs->rc->ev_write = event_register(
+		    rh->rs->rc->ev_write = event_create(
 				(event_id_t)(rh->rs->rc->write),
 				EV_WRITEFD, sec_connect_callback, rh);
-		    rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
+		    rh->ev_timeout = event_create(CONNECT_TIMEOUT, EV_TIME,
 				sec_connect_timeout, rh);
+		    event_activate(rh->rs->rc->ev_write);
+		    event_activate(rh->ev_timeout);
 		    return;
 		}
 	    }
