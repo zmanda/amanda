@@ -58,11 +58,12 @@ typedef enum {
     AM_UTIL_ERROR_HEXDECODEINVAL,
 } AmUtilError;
 
+extern GMutex *priv_mutex;
 
 int	connect_portrange(sockaddr_union *, in_port_t, in_port_t, char *,
-			  sockaddr_union *, int);
+			  sockaddr_union *, int, int);
 int	bind_portrange(int, sockaddr_union *, in_port_t, in_port_t,
-		       char *);
+		       char *, int);
 
 /* just like an accept() call, but periodically calling PROLONG(PROLONG_DATA) and
  * returning -1 with errno set to 0 if PROLONG returns false.  Note that the socket

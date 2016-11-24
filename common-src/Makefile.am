@@ -14,6 +14,8 @@ amlib_LTLIBRARIES =	libamanda.la
 
 sbin_PROGRAMS = amservice
 
+amlibexec_PROGRAMS = ambind
+
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 

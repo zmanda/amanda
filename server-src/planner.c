@@ -207,7 +207,7 @@ main(
     int		argc,
     char **	argv)
 {
-    disklist_t origq;
+    disklist_t origq = { NULL, NULL };
     GList  *dlist;
     disk_t *dp;
     int moved_one;
@@ -225,7 +225,6 @@ main(
     guint i;
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
-    int    planner_setuid;
     int exit_status = EXIT_SUCCESS;
     gboolean no_taper = FALSE;
     gboolean from_client = FALSE;
@@ -253,7 +252,7 @@ main(
     textdomain("amanda"); 
 
     /* drop root privileges */
-    planner_setuid = set_root_privs(0);
+    set_root_privs(-1);
 
     safe_fd(-1, 0);
 
@@ -281,8 +280,8 @@ main(
     add_amanda_log_handler(amanda_log_stderr);
     add_amanda_log_handler(amanda_log_trace_log);
 
-    if (!planner_setuid) {
-	error(_("planner must be run setuid root"));
+    if (geteuid() == 0 || getuid() == 0) {
+	error(_("planner must not be setuid root"));
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -291,7 +290,7 @@ main(
 
     safe_cd();
 
-    check_running_as(RUNNING_AS_ROOT | RUNNING_AS_UID_ONLY);
+    check_running_as(RUNNING_AS_UID_ONLY);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 

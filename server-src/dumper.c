@@ -392,7 +392,6 @@ main(
     int res;
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
-    int dumper_setuid;
     char *argv0;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
@@ -413,7 +412,7 @@ main(
     make_crc_table();
 
     /* drop root privileges */
-    dumper_setuid = set_root_privs(0);
+    set_root_privs(-1);
 
     safe_fd(-1, 0);
 
@@ -445,8 +444,8 @@ main(
 
     config_init_with_global(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
 
-    if (!dumper_setuid) {
-	error(_("dumper must be run setuid root"));
+    if (geteuid() == 0 || getuid() == 0) {
+	error(_("dumper must not be setuid root"));
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -455,7 +454,7 @@ main(
 
     safe_cd(); /* do this *after* config_init() */
 
-    check_running_as(RUNNING_AS_ROOT | RUNNING_AS_UID_ONLY);
+    check_running_as(RUNNING_AS_UID_ONLY);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 

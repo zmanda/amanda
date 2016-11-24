@@ -507,4 +507,6 @@ void security_stream_close_async(security_stream_t *, void (*fn)(void *, ssize_t
 #define security_close_connection(handle, hostname) \
     (*(handle)->driver->close_connection)(handle, hostname)
 
+extern GMutex *security_mutex;
+
 #endif	/* SECURITY_H */

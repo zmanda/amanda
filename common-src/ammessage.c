@@ -1220,6 +1220,8 @@ set_message(
 	msg = "%{hostname} %{diskname}: The tag '%{tag}' match none of the storage dump_selection";
     } else if (message->code == 2800234) {
 	msg = "%{hostname} %{diskname}: holdingdisk NEVER with tags matching more than one storage, will be dumped to only one storage";
+    } else if (message->code == 2800235) {
+	msg  = "program %{program}: wrong permission";
     } else if (message->code == 2900000) {
 	msg = "The Application '%{application}' failed: %{errmsg}";
     } else if (message->code == 2900001) {

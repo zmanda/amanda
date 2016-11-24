@@ -43,9 +43,10 @@
 #include <string.h>
 #include "fsusage.h"
 
+GMutex *priv_mutex = NULL;
 static int make_socket(sa_family_t family);
 static int connect_port(sockaddr_union *addrp, in_port_t port, char *proto,
-			sockaddr_union *svaddr, int nonblock);
+			sockaddr_union *svaddr, int nonblock, int priv);
 
 static int
 make_socket(
@@ -72,6 +73,7 @@ make_socket(
         return -1;
     }
 
+    g_debug("make_socket opening socket with family %d: %d", family, s);
 #ifdef USE_REUSEADDR
     r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     if (r < 0) {
@@ -114,7 +116,8 @@ connect_portrange(
     in_port_t		last_port,
     char *		proto,
     sockaddr_union *svaddr,
-    int			nonblock)
+    int			nonblock,
+    int			priv)
 {
     int			s;
     in_port_t		port;
@@ -128,7 +131,7 @@ connect_portrange(
     for(i=0; i < nb_port_in_use; i++) {
 	port = port_in_use[i];
 	if(port >= first_port && port <= last_port) {
-	    s = connect_port(addrp, port, proto, svaddr, nonblock);
+	    s = connect_port(addrp, port, proto, svaddr, nonblock, priv);
 	    if(s == -2) return -1;
 	    if(s >= 0) {
 		return s;
@@ -140,7 +143,7 @@ connect_portrange(
 
     /* Try a port in the range */
     for (port = first_port; port <= last_port; port++) {
-	s = connect_port(addrp, port, proto, svaddr, nonblock);
+	s = connect_port(addrp, port, proto, svaddr, nonblock, priv);
 	if(s == -2) return -1;
 	if(s >= 0) {
 	    port_in_use[nb_port_in_use++] = port;
@@ -157,6 +160,122 @@ connect_portrange(
     return -1;
 }
 
+static int
+ambind(
+    int s,
+    sockaddr_union *addrp,
+    socklen_t_equiv socklen,
+    char **msg)
+{
+    ambind_t ambind = {*addrp, socklen };
+    int sockfd[2];
+    int rc;
+    int pid;
+    struct msghdr msg_socket;
+    struct msghdr msg_ambind_data;
+    struct cmsghdr *cmsg;
+    char cmsgbuf[CMSG_SPACE(sizeof(s))];
+    struct iovec iov[2];
+
+    if (socketpair(AF_UNIX, SOCK_DGRAM|SOCK_NONBLOCK, 0, sockfd) < 0) {
+	fprintf(stderr, "socketpair failed: %s\n", strerror(errno));
+	return -2;
+    }
+
+    switch (pid = fork()) {
+	case -1: *msg = g_strdup_printf("fork ambind failed: %s",
+					strerror(errno));
+		 close(sockfd[0]);
+		 close(sockfd[1]);
+		 return -2;
+
+	case  0: //child
+		{
+		 char *ambind_path = g_strdup_printf("%s/ambind", amlibexecdir);
+		 char *socket_name = g_strdup_printf("%d", sockfd[1]);
+		 close(sockfd[0]);
+		 execl(ambind_path, ambind_path, socket_name, NULL);
+		 error("error [exec %s: %s]", ambind_path, strerror(errno));
+		 exit(1);
+		}
+
+	default: //parent
+		 close(sockfd[1]);
+		 break;
+    }
+
+    memset(&msg_socket, 0, sizeof(msg_socket));
+    msg_socket.msg_control = cmsgbuf;
+    msg_socket.msg_controllen = sizeof(cmsgbuf); // necessary for CMSG_FIRSTHDR to return the correct value
+    cmsg = CMSG_FIRSTHDR(&msg_socket);
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type = SCM_RIGHTS;
+    cmsg->cmsg_len = CMSG_LEN(sizeof(s));
+    memcpy(CMSG_DATA(cmsg), &s, sizeof(s));
+    msg_socket.msg_controllen = cmsg->cmsg_len;
+
+    // send the socket
+    if ((sendmsg(sockfd[0], &msg_socket, 0)) < 0) {
+	*msg = g_strdup_printf("sendmsg failed A: %s\n",
+			        strerror(errno));
+	shutdown(sockfd[0], SHUT_RDWR);
+	return -1;
+    }
+
+    memset(&msg_ambind_data, 0, sizeof(msg_ambind_data));
+    iov[0].iov_base = &ambind;
+    iov[0].iov_len = sizeof(ambind_t);
+    iov[1].iov_base = NULL;
+    iov[1].iov_len = 0;
+    msg_ambind_data.msg_iov = iov;
+    msg_ambind_data.msg_iovlen = 1;
+
+    // send ambind data
+    if ((sendmsg(sockfd[0], &msg_ambind_data, 0)) < 0) {
+	*msg = g_strdup_printf("sendmsg failed B: %s\n",
+			        strerror(errno));
+	shutdown(sockfd[0], SHUT_RDWR);
+	return -1;
+    }
+
+    shutdown(sockfd[0], SHUT_WR);
+
+    do {
+	struct timeval timeout = { 5, 0 };
+	fd_set readSet;
+	FD_ZERO(&readSet);
+	FD_SET(sockfd[0], &readSet);
+
+	rc = select(sockfd[0]+1, &readSet, NULL, NULL, &timeout);
+    } while (rc < 0 && errno == EINTR);
+
+    if (rc <= 0) {
+	shutdown(sockfd[0], SHUT_RDWR);
+	waitpid(pid, NULL, 0);
+	return -1;
+    }
+
+    // read the message socket msg
+    memset(&msg_socket, 0, sizeof(msg_socket));
+    msg_socket.msg_control = cmsgbuf;
+    msg_socket.msg_controllen = sizeof(cmsgbuf);
+    rc = recvmsg(sockfd[0], &msg_socket, 0);
+    if (rc == -1) {
+	*msg = g_strdup_printf("first recvmsg failed: %s", strerror(errno));
+	return -1;
+    }
+    cmsg = CMSG_FIRSTHDR(&msg_socket);
+    if (cmsg == NULL || cmsg -> cmsg_type != SCM_RIGHTS) {
+	*msg = g_strdup_printf("The first control structure contains no file descriptor.\n");
+	return -1;
+    }
+    memcpy(&s, CMSG_DATA(cmsg), sizeof(s));
+
+    shutdown(sockfd[0], SHUT_RDWR);
+    waitpid(pid, NULL, 0);
+    return s;
+}
+
 /* addrp is my address */
 /* svaddr is the address of the remote machine */
 /* return -2: Don't try again */
@@ -168,18 +287,24 @@ connect_port(
     in_port_t  		port,
     char *		proto,
     sockaddr_union *svaddr,
-    int			nonblock)
+    int			nonblock,
+    int			priv)
 {
     int			save_errno;
-    struct servent *	servPort;
+    struct servent	servPort;
+    struct servent *	result;
+    char		buf[2048];
+    int			r;
     socklen_t_equiv	len;
     socklen_t_equiv	socklen;
     int			s;
 
-    servPort = getservbyport((int)htons(port), proto);
-    if (servPort != NULL && !strstr(servPort->s_name, AMANDA_SERVICE_NAME)) {
+    r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
+    assert(r != ERANGE);
+
+    if (result != NULL && !strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	dbprintf(_("connect_port: Skip port %d: owned by %s.\n"),
-		  port, servPort->s_name);
+		  port, result->s_name);
 	errno = EBUSY;
 	return -1;
     }
@@ -188,15 +313,33 @@ connect_port(
 
     SU_SET_PORT(addrp, port);
     socklen = SS_LEN(addrp);
-    if (bind(s, (struct sockaddr *)addrp, socklen) != 0) {
+    if (!priv) {
+	r = bind(s, (struct sockaddr *)addrp, socklen);
+    } else if (1) { // if use ambind
+	int  old_s = s;
+	char *msg = NULL;
+	r = s = ambind(s, addrp, socklen, &msg);
+	if (msg) {
+	    fprintf(stderr,"msg: %s\n", msg);
+	}
+	close(old_s);
+    } else { // setuid root
+	g_mutex_lock(priv_mutex);
+	set_root_privs(1);
+	r = bind(s, (struct sockaddr *)addrp, socklen);
+	set_root_privs(0);
+	g_mutex_unlock(priv_mutex);
+    }
+
+    if (r < 0) {
 	save_errno = errno;
 	aclose(s);
-	if(servPort == NULL) {
+	if( result == NULL) {
 	    dbprintf(_("connect_port: Try  port %d: available - %s\n"),
-		     port, strerror(errno));
+		     port, strerror(save_errno));
 	} else {
 	    dbprintf(_("connect_port: Try  port %d: owned by %s - %s\n"),
-		     port, servPort->s_name, strerror(errno));
+		     port, result->s_name, strerror(save_errno));
 	}
 	if (save_errno != EADDRINUSE) {
 	    errno = save_errno;
@@ -206,11 +349,11 @@ connect_port(
 	errno = save_errno;
 	return -1;
     }
-    if(servPort == NULL) {
+    if (result == NULL) {
 	dbprintf(_("connect_port: Try  port %d: available - Success\n"), port);
     } else {
 	dbprintf(_("connect_port: Try  port %d: owned by %s - Success\n"),
-		  port, servPort->s_name);
+		  port, result->s_name);
     }
 
     /* find out what port was actually used */
@@ -257,7 +400,7 @@ connect_port(
 	    save_errno == EHOSTUNREACH ||
 	    save_errno == ENETUNREACH ||
 	    save_errno == ETIMEDOUT)  {
-	    return -2	;
+	    return -2;
 	}
 	return -1;
     }
@@ -273,8 +416,8 @@ connect_port(
 /*
  * Bind to a port in the given range.  Takes a begin,end pair of port numbers.
  *
- * Returns negative on error (EGAIN if all ports are in use).  Returns 0
- * on success.
+ * Returns negative on error (EGAIN if all ports are in use).
+ * Returns the new socket on success
  */
 int
 bind_portrange(
@@ -282,14 +425,19 @@ bind_portrange(
     sockaddr_union *addrp,
     in_port_t		first_port,
     in_port_t		last_port,
-    char *		proto)
+    char *		proto,
+    int                 priv)
 {
     in_port_t port;
     in_port_t cnt;
     socklen_t_equiv socklen;
-    struct servent *servPort;
+    struct servent  servPort;
+    struct servent *result;
+    char            buf[2048];
+    int             r;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
     int save_errno = EAGAIN;
+    int new_s;
 
     assert(first_port <= last_port);
 
@@ -305,30 +453,48 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
-	servPort = getservbyport((int)htons(port), proto);
-	if ((servPort == NULL) || strstr(servPort->s_name, AMANDA_SERVICE_NAME)) {
+	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
+	assert(r != ERANGE);
+	if ((result == NULL) || strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	    SU_SET_PORT(addrp, port);
 	    socklen = SS_LEN(addrp);
-	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
-		if (servPort == NULL) {
+	    if (!priv) {
+		r = bind(s, (struct sockaddr *)addrp, socklen);
+		new_s = s;
+	    } else if (1) { // if use ambind
+		char *msg = NULL;
+		r = new_s = ambind(s, addrp, socklen, &msg);
+		if (msg) {
+		    fprintf(stderr,"msg: %s\n", msg);
+		}
+	    } else {
+		g_mutex_lock(priv_mutex);
+		set_root_privs(1);
+		r = bind(s, (struct sockaddr *)addrp, socklen);
+		new_s = s;
+		set_root_privs(0);
+		g_mutex_unlock(priv_mutex);
+	    }
+	    if (r >= 0) {
+		if (result == NULL) {
 		    g_debug(_("bind_portrange2: Try  port %d: Available - Success"), port);
 		} else {
-		    g_debug(_("bind_portrange2: Try  port %d: Owned by %s - Success."), port, servPort->s_name);
+		    g_debug(_("bind_portrange2: Try  port %d: Owned by %s - Success."), port, result->s_name);
 		}
-		return 0;
+		return new_s;
 	    }
 	    if (errno != EAGAIN && errno != EBUSY)
 		save_errno = errno;
-	    if (servPort == NULL) {
+	    if (result == NULL) {
 		g_debug(_("bind_portrange2: Try  port %d: Available - %s"),
 			port, strerror(errno));
 	    } else {
 		g_debug(_("bind_portrange2: Try  port %d: Owned by %s - %s"),
-			port, servPort->s_name, strerror(errno));
+			port, result->s_name, strerror(errno));
 	    }
 	} else {
 	        g_debug(_("bind_portrange2: Skip port %d: Owned by %s."),
-		      port, servPort->s_name);
+		      port, result->s_name);
 	}
 	if (++port > last_port)
 	    port = first_port;

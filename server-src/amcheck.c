@@ -222,8 +222,9 @@ main(
 
     set_pname("amcheck");
     /* drop root privileges */
-    if (!set_root_privs(0)) {
-	error("amcheck must be run setuid root");
+    set_root_privs(-1);
+    if (geteuid() == 0 || getuid() == 0) {
+	error("amcheck must not be setuid root");
     }
 
     /* Don't die when child closes pipe */
@@ -783,13 +784,19 @@ test_server_pgm(
 					"program", pgm)));
 	pgmbad = 1;
 #ifndef SINGLE_USERID
-    } else if (suid \
-	       && dumpuid != 0
-	       && (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
-	delete_message(amcheck_fprint_message(outf, build_message(
+    } else if (suid) {
+	if (dumpuid != 0 &&
+	    (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
+	    delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800025, MSG_ERROR, 1,
 					"program", pgm)));
-	pgmbad = 1;
+	    pgmbad = 1;
+	} else if ((statbuf.st_mode & 00027) != 0) {
+	    delete_message(amcheck_fprint_message(outf, build_message(
+					AMANDA_FILE, __LINE__, 2800235, MSG_ERROR, 1,
+					"program", pgm)));
+	    pgmbad = 1;
+	}
 #else
     /* Quiet unused parameter warnings */
     (void)suid;
@@ -1057,9 +1064,11 @@ start_server_check(
 			"errno", errno)));
 	    pgmbad = 1;
 	} else {
-	    if(test_server_pgm(outf, amlibexecdir, "planner", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "ambind", 1, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, amlibexecdir, "dumper", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "planner", 0, uid_dumpuser))
+		pgmbad = 1;
+	    if(test_server_pgm(outf, amlibexecdir, "dumper", 0, uid_dumpuser))
 		pgmbad = 1;
 	    if(test_server_pgm(outf, amlibexecdir, "driver", 0, uid_dumpuser))
 		pgmbad = 1;
@@ -1079,11 +1088,13 @@ start_server_check(
 	} else {
 	    if(test_server_pgm(outf, sbindir, "amgetconf", 0, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, sbindir, "amcheck", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, sbindir, "amcheck", 0, uid_dumpuser))
 		pgmbad = 1;
 	    if(test_server_pgm(outf, sbindir, "amdump", 0, uid_dumpuser))
 		pgmbad = 1;
 	    if(test_server_pgm(outf, sbindir, "amreport", 0, uid_dumpuser))
+		pgmbad = 1;
+	    if(test_server_pgm(outf, sbindir, "amservice", 0, uid_dumpuser))
 		pgmbad = 1;
 	}
 	if(access(COMPRESS_PATH, X_OK) == -1) {

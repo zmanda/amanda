@@ -398,6 +398,7 @@ find-req-script
         --with-bsdtcp-security \
         --with-bsdudp-security \
         --with-ssh-security \
+        --with-ssl-security \
         --with-debugging=%{LOGDIR} \
         --with-assertions \
         --disable-installperms \
@@ -776,6 +777,7 @@ fi
 %{AMLIBEXECDIR}/killpgrp
 %{AMLIBEXECDIR}/rundump
 %{AMLIBEXECDIR}/runtar
+%{AMLIBEXECDIR}/ambind
 %defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SBINDIR}/amaespipe
@@ -826,10 +828,7 @@ fi
 %{AMLIBEXECDIR}/killpgrp
 %{AMLIBEXECDIR}/rundump
 %{AMLIBEXECDIR}/runtar
-%{AMLIBEXECDIR}/dumper
-%{AMLIBEXECDIR}/planner
-%{SBINDIR}/amcheck
-%{SBINDIR}/amservice
+%{AMLIBEXECDIR}/ambind
 %defattr(0750,%{amanda_user},%{amanda_group},0750)
 %{LOGDIR}
 %{SYSCONFDIR}/amanda

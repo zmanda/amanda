@@ -153,10 +153,14 @@ sec_connect_callback(
 {
     struct sec_handle *rh = cookie;
 
+    g_mutex_lock(security_mutex);
     event_release(rh->rs->rc->ev_write);
     rh->rs->rc->ev_write = NULL;
-    event_release(rh->ev_timeout);
-    rh->ev_timeout = NULL;
+    if (rh->ev_timeout) {
+	event_release(rh->ev_timeout);
+	rh->ev_timeout = NULL;
+    }
+    g_mutex_unlock(security_mutex);
 
     (*rh->fn.connect)(rh->arg, &rh->sech, S_OK);
 }
@@ -444,9 +448,11 @@ tcpm_stream_read_sync(
 	sec_tcp_conn_read(rs->rc);
     }
 
+    g_mutex_lock(security_mutex);
     rs->event_id = newevent++;
     rs->ev_read_sync = event_create(rs->event_id, EV_WAIT, for_event_release, rs);
     event_activate(rs->ev_read_sync);
+    g_mutex_unlock(security_mutex);
     event_wait(rs->ev_read_sync);
     rs->ev_read_sync = NULL;
     /* Can't use rs or rc, they can be freed */
@@ -1178,7 +1184,9 @@ tcpma_stream_server(
      * so as not to conflict with the amanda server's handle numbers,
      * we start at 500000 and work down
      */
+    g_mutex_lock(security_mutex);
     rs->handle = 500000 - newhandle++;
+    g_mutex_unlock(security_mutex);
     rs->ev_read_callback = FALSE;
     auth_debug(1, _("sec: stream_server: created stream %d\n"), rs->handle);
     return (rs);
@@ -1250,7 +1258,9 @@ tcp1_stream_server(
     rs->closed_by_network = 0;
     if (rh->rc) {
 	rs->rc = rh->rc;
+	g_mutex_lock(security_mutex);
 	rs->handle = 500000 - newhandle++;
+	g_mutex_unlock(security_mutex);
 	rs->rc->refcnt++;
 	rs->socket = 0;		/* the socket is already opened */
     }
@@ -1825,7 +1835,9 @@ udp_inithandle(
     udp->bh_last = rh;
 
     rh->sequence = sequence;
+    g_mutex_lock(security_mutex);
     rh->event_id = newevent++;
+    g_mutex_unlock(security_mutex);
     amfree(rh->proto_handle);
     rh->proto_handle = g_strdup(handle);
     rh->fn.connect = NULL;
@@ -1959,6 +1971,7 @@ sec_tcp_conn_get(
 
     auth_debug(1, _("sec_tcp_conn_get: %s %s\n"), dle_hostname, hostname);
 
+    g_mutex_lock(security_mutex);
     if (want_new == 0) {
 	for (iter = connq; iter != NULL; iter = iter->next) {
 	    rc = (struct tcp_conn *)iter->data;
@@ -1974,9 +1987,11 @@ sec_tcp_conn_get(
 	    auth_debug(1,
 		      _("sec_tcp_conn_get: exists, refcnt to %s is now %d\n"),
 		       rc->hostname, rc->refcnt);
+	    g_mutex_unlock(security_mutex);
 	    return (rc);
 	}
     }
+    g_mutex_unlock(security_mutex);
 
     auth_debug(1, _("sec_tcp_conn_get: creating new handle\n"));
     /*
@@ -2004,8 +2019,10 @@ sec_tcp_conn_get(
     rc->auth = 0;
     rc->conf_fn = NULL;
     rc->datap = NULL;
+    g_mutex_lock(security_mutex);
     rc->event_id = newevent++;
     connq = g_slist_append(connq, rc);
+    g_mutex_unlock(security_mutex);
     return (rc);
 }
 
@@ -2038,7 +2055,9 @@ sec_tcp_conn_put(
 	event_release(rc->ev_read);
     if (rc->errmsg != NULL)
 	amfree(rc->errmsg);
+    g_mutex_lock(security_mutex);
     connq = g_slist_remove(connq, rc);
+    g_mutex_unlock(security_mutex);
     amfree(rc->pkt);
     if(!rc->donotclose) {
 	/* amfree(rc) */

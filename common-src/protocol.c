@@ -43,6 +43,29 @@
        }				\
 } while (0)
 
+#ifdef BSD_SECURITY
+extern const security_driver_t bsd_security_driver;
+#endif
+#ifdef KRB5_SECURITY
+extern const security_driver_t krb5_security_driver;
+#endif
+#ifdef RSH_SECURITY
+extern const security_driver_t rsh_security_driver;
+#endif
+#ifdef SSH_SECURITY
+extern const security_driver_t ssh_security_driver;
+#endif
+#ifdef BSDTCP_SECURITY
+extern const security_driver_t bsdtcp_security_driver;
+#endif
+#ifdef SSL_SECURITY
+extern const security_driver_t ssl_security_driver;
+#endif
+#ifdef BSDUDP_SECURITY
+extern const security_driver_t bsdudp_security_driver;
+#endif
+extern const security_driver_t local_security_driver;
+
 /*
  * Valid actions that can be passed to the state machine
  */
@@ -86,6 +109,8 @@ typedef struct proto {
     protocol_sendreq_callback continuation; /* call when req dies/finishes */
     void *datap;			/* opaque cookie passed to above */
     char *(*conf_fn)(char *, void *);	/* configuration function */
+    security_status_t  status;
+    event_handle_t    *event_handle;
 } proto_t;
 
 #define	CONNECT_WAIT	5	/* secs between connect attempts */
@@ -100,13 +125,21 @@ typedef struct proto {
  * Initialization time
  */
 static time_t proto_init_time;
+static int nb_thread = 0;
+static GMutex *protocol_mutex;
 
 /* local functions */
 
 static const char *action2str(p_action_t);
 static const char *pstate2str(pstate_t);
 
-static void connect_callback(void *, security_handle_t *, security_status_t);
+static gpointer connect_thread(gpointer data);
+static void connect_thread_callback(void *cookie,
+				    security_handle_t *	security_handle,
+				    security_status_t	status);
+
+static void connect_callback(void *cookie);
+static void connect_callbackX(void *, security_handle_t *, security_status_t);
 static void connect_wait_callback(void *);
 static void recvpkt_callback(void *, pkt_t *, security_status_t);
 
@@ -128,6 +161,7 @@ protocol_init(void)
 {
 
     proto_init_time = time(NULL);
+    protocol_mutex = g_mutex_new();
 }
 
 /*
@@ -145,6 +179,8 @@ protocol_sendreq(
     void *			datap)
 {
     proto_t *p;
+    char    *platform = NULL;
+    char    *distro = NULL;
 
     p = g_malloc(sizeof(proto_t));
     p->state = s_sendreq;
@@ -168,12 +204,82 @@ protocol_sendreq(
      */
     p->continuation = continuation;
     p->datap = datap;
+    p->event_handle = NULL;
 
-    proto_debug(1, _("protocol: security_connect: host %s -> p %p\n"), 
+    proto_debug(1, _("protocol: security_connect: host %s -> p %p\n"),
 		    hostname, p);
 
-    security_connect(p->security_driver, p->hostname, conf_fn, connect_callback,
+    get_platform_and_distro(&platform, &distro);
+    if (distro != NULL &&
+	!g_str_equal(distro, "mac") &&
+	(
+#ifdef BSDTCP_SECURITY
+	 security_driver == &bsdtcp_security_driver ||
+#endif
+	 security_driver == &local_security_driver ||
+#ifdef RSH_SECURITY
+	 security_driver == &rsh_security_driver ||
+#endif
+#ifdef SSL_SECURITY
+	 security_driver == &ssl_security_driver ||
+#endif
+#ifdef SSH_SECURITY
+	 security_driver == &ssh_security_driver ||
+#endif
+	 0)) {
+	g_thread_create(connect_thread, (gpointer)p, TRUE, NULL);
+	g_mutex_lock(protocol_mutex);
+	nb_thread++;
+	g_mutex_unlock(protocol_mutex);
+    } else {
+	// bsd_security_driver		no connect,all use same socket
+	// bsdudp_security_driver	no connect,all use same socket
+	// krb5_security_driver		untested
+	security_connect(p->security_driver, p->hostname, p->conf_fn, connect_callbackX,
 			 p, p->datap);
+    }
+}
+
+static gpointer
+connect_thread(
+    gpointer data)
+{
+    proto_t *p = (proto_t *)data;
+
+    security_connect(p->security_driver, p->hostname, p->conf_fn,
+		     connect_thread_callback, p, p->datap);
+    g_mutex_lock(protocol_mutex);
+    nb_thread--;
+    g_mutex_unlock(protocol_mutex);
+    return NULL;
+}
+
+static void
+connect_thread_callback(
+    void *		cookie,
+    security_handle_t *	security_handle,
+    security_status_t	status)
+{
+    proto_t *p = cookie;
+    p->security_handle = security_handle;
+    p->status = status;
+
+    g_mutex_lock(protocol_mutex);
+    p->event_handle = event_create((event_id_t)0, EV_TIME, connect_callback, p);
+    event_activate(p->event_handle);
+    g_mutex_unlock(protocol_mutex);
+}
+
+static void
+connect_callbackX(
+    void *		cookie,
+    security_handle_t *	security_handle,
+    security_status_t	status)
+{
+    proto_t *p = cookie;
+    p->security_handle = security_handle;
+    p->status = status;
+    connect_callback(p);
 }
 
 /*
@@ -186,18 +292,19 @@ protocol_sendreq(
  */
 static void
 connect_callback(
-    void *		cookie,
-    security_handle_t *	security_handle,
-    security_status_t	status)
+    void *cookie)
 {
     proto_t *p = cookie;
 
     assert(p != NULL);
-    p->security_handle = security_handle;
+    if (p->event_handle) {
+	event_release(p->event_handle);
+	p->event_handle = 0;
+    }
 
     proto_debug(1, _("protocol: connect_callback: p %p\n"), p);
 
-    switch (status) {
+    switch (p->status) {
     case S_OK:
 	state_machine(p, PA_START, NULL);
 	break;
@@ -243,8 +350,32 @@ connect_wait_callback(
     proto_t *p = cookie;
 
     event_release((event_handle_t *)p->security_handle);
-    security_connect(p->security_driver, p->hostname, p->conf_fn,
-	connect_callback, p, p->datap);
+    if (
+#ifdef BSDTCP_SECURITY
+	 p->security_driver == &bsdtcp_security_driver ||
+#endif
+	 p->security_driver == &local_security_driver ||
+#ifdef RSH_SECURITY
+	 p->security_driver == &rsh_security_driver ||
+#endif
+#ifdef SSL_SECURITY
+	 p->security_driver == &ssl_security_driver ||
+#endif
+#ifdef SSH_SECURITY
+	 p->security_driver == &ssh_security_driver ||
+#endif
+	 0) {
+	g_thread_create(connect_thread, (gpointer)p, TRUE, NULL);
+	g_mutex_lock(protocol_mutex);
+	nb_thread++;
+	g_mutex_unlock(protocol_mutex);
+    } else {
+	// bsd_security_driver		no connect,all use same socket
+	// bsdudp_security_driver	no connect,all use same socket
+	// krb5_security_driver		untested
+	security_connect(p->security_driver, p->hostname, p->conf_fn, connect_callbackX,
+			 p, p->datap);
+    }
 }
 
 
@@ -278,6 +409,14 @@ protocol_run(void)
 
     /* arg == 0 means block forever until no more events are left */
     event_loop(0);
+    g_mutex_lock(protocol_mutex);
+    while (nb_thread > 0) {
+	g_mutex_unlock(protocol_mutex);
+	sleep(1);
+	event_loop(0);
+	g_mutex_lock(protocol_mutex);
+    }
+    g_mutex_unlock(protocol_mutex);
 }
 
 

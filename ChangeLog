@@ -1,3 +1,49 @@
+2016-11-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	New setuid ambind binary to bind a socket to a priviledge port
+	planner, dumper, amcheck and amservice are no longer setuid
+	Use one thread by client for the connect call
+
+	* common-src/Makefile.am (amlibexec_PROGRAMS): Add ambind
+	* common-src/amanda.h (sockaddr_union): remove typedef
+	* common-src/sockaddr-util.h (sockaddr_union): copied from amanda.h
+	* common-src/ambind.c: New program to bind a socket to a privilege port
+	* common-src/ammessage.c: Add message 2800235
+	* common-src/amservice.c: Check is not suid root
+	* common-src/amutil.c (priv_mutex): declare
+	* common-src/amutil.c (connect_port, connect_portrane, bind_portrange):
+	  New priv argument
+	* common-src/amutil.c (ambind): New function to execute ambind
+	* common-src/amutil.c (connect_port, bind_portrange): Call ambind if a
+	  privilege port is required
+	* common-src/amutil.h (priv_mutex): declare extern
+	* common-src/amutil.h (connect_portrange, connect_portrange): New priv
+	  argument
+	* common-src/bsd-security.c: Do not take root privilege
+	* common-src/bsdtcp-security.c: Do not take root privilege,
+	  take security_mutex
+	* common-src/bsdudp-security.c: Do not take root privilege
+	* common-src/dgram.c (dgram_bind): Add priv to argument, use new
+	  bind_portrange return socket
+	* common-src/dgram.h (dgram_bind): Add priv to argument
+	* common-src/glib-util.c: create priv_mutex an security_mutex
+	* common-src/krb5-security.c Do not take root privilege,
+	  take security_mutex
+	* common-src/local-security.c: take security_mutex
+	* common-src/protocol.c: Call security_connect in a new thread if
+	  allowed
+	* common-src/security-util.c: take security_mutex
+	* common-src/security.c (security_mutex): Declare
+	* common-src/security.h (security_mutex): Declare extern
+	* common-src/ssh-security.c: take security_mutex
+	* common-src/ssl-security.c: take security_mutex
+	* common-src/stream.c (stream_server): use new bind_portrange return
+	  socket
+	* packaging/deb/rules: Set new suid bit
+	* packaging/rpm/amanda.spec.src: Set new suid bit
+	* server-src/amcheck.c: Check is not suid root
+	* server-src/dumper.c: Check is not suid root
+	* server-src/planner.c: Check is not suid root
+
 2016-11-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Fix race when using event_register in thread, the callback can be
 	calback can before event_register return

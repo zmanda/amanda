@@ -178,6 +178,7 @@ local_connect(
      * Overload rh->rs->ev_read to provide a write event handle.
      * We also register a timeout.
      */
+    g_mutex_lock(security_mutex);
     rh->fn.connect = fn;
     rh->arg = arg;
     rh->rs->rc->ev_write = event_create((event_id_t)rh->rs->rc->write, EV_WRITEFD,
@@ -186,6 +187,7 @@ local_connect(
 	sec_connect_timeout, rh);
     event_activate(rh->rs->rc->ev_write);
     event_activate(rh->ev_timeout);
+    g_mutex_unlock(security_mutex);
 
     return;
 

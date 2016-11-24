@@ -55,6 +55,7 @@ stream_server(
     int    priv)
 {
     int server_socket, retries;
+    int new_s;
     socklen_t_equiv len;
 #if defined(SO_KEEPALIVE) || defined(USE_REUSEADDR)
     const int on = 1;
@@ -134,13 +135,14 @@ stream_server(
 	}
 
 	if (portrange[0] != 0 && portrange[1] != 0) {
-	    if (bind_portrange(server_socket, &server, (in_port_t)portrange[0],
-			       (in_port_t)portrange[1], "tcp") == 0)
+	    if ((new_s = bind_portrange(server_socket, &server, (in_port_t)portrange[0],
+			       (in_port_t)portrange[1], "tcp", priv)) >= 0)
 		goto out;
 	    g_debug(_("stream_server: Could not bind to port in range: %d - %d."),
 		      portrange[0], portrange[1]);
 	} else {
 	    socklen = SS_LEN(&server);
+	    new_s = server_socket;
 	    if (bind(server_socket, (struct sockaddr *)&server, socklen) == 0)
 		goto out;
 	    g_debug(_("stream_server: Could not bind to any port: %s"),
@@ -163,11 +165,14 @@ stream_server(
     return -1;
 
 out:
-    if (listen(server_socket, 1) == -1) {
+    if (server_socket != new_s)
+	aclose(server_socket);
+
+    if (listen(new_s, 1) == -1) {
 	save_errno = errno;
 	g_debug(_("stream_server: listen() failed: %s"),
 		  strerror(save_errno));
-	aclose(server_socket);
+	aclose(new_s);
 	errno = save_errno;
 	return -1;
     }
@@ -175,23 +180,23 @@ out:
     /* find out what port was actually used */
 
     len = sizeof(server);
-    if(getsockname(server_socket, (struct sockaddr *)&server, &len) == -1) {
+    if(getsockname(new_s, (struct sockaddr *)&server, &len) == -1) {
 	save_errno = errno;
 	g_debug(_("stream_server: getsockname() failed: %s"),
 		  strerror(save_errno));
-	aclose(server_socket);
+	aclose(new_s);
 	errno = save_errno;
 	return -1;
     }
 
 #ifdef SO_KEEPALIVE
-    r = setsockopt(server_socket, SOL_SOCKET, SO_KEEPALIVE,
+    r = setsockopt(new_s, SOL_SOCKET, SO_KEEPALIVE,
 	(void *)&on, (socklen_t_equiv)sizeof(on));
     if(r == -1) {
 	save_errno = errno;
 	g_debug(_("stream_server: setsockopt(SO_KEEPALIVE) failed: %s"),
 		  strerror(save_errno));
-        aclose(server_socket);
+        aclose(new_s);
 	errno = save_errno;
         return -1;
     }
@@ -200,7 +205,7 @@ out:
     *portp = SU_GET_PORT(&server);
     g_debug(_("stream_server: waiting for connection: %s"),
 	      str_sockaddr(&server));
-    return server_socket;
+    return new_s;
 }
 
 int
@@ -246,7 +251,7 @@ stream_client_addr(
     }
     client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
 				      (in_port_t)portrange[1],
-				      "tcp", &svaddr, nonblock);
+				      "tcp", &svaddr, nonblock, priv);
     save_errno = errno;
 
     if (client_socket < 0) {
@@ -322,7 +327,7 @@ stream_client_internal(
 	}
 	client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
 					  (in_port_t)portrange[1],
-					  "tcp", &svaddr, nonblock);
+					  "tcp", &svaddr, nonblock, priv);
 	save_errno = errno;
 	if (client_socket >= 0)
 	    break;

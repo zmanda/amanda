@@ -311,6 +311,7 @@ krb5_connect(
      * Overload rh->rs->ev_read to provide a write event handle.
      * We also register a timeout.
      */
+    g_mutex_lock(security_mutex);
     rh->fn.connect = fn;
     rh->arg = arg;
     rh->rs->rc->ev_write = event_create((event_id_t)(rh->rs->rc->write),
@@ -319,6 +320,7 @@ krb5_connect(
 	sec_connect_timeout, rh);
     event_activate(rh->rs->rc->ev_write);
     event_activate(rh->ev_timeout);
+    g_mutex_unlock(security_mutex);
 
     amfree(canonname);
     return;
@@ -403,16 +405,22 @@ static int
 runkrb5(
     struct sec_handle *	rh)
 {
-    struct servent *	sp;
+    struct servent	sp;
+    struct servent *	result;
+    char                buf[2048];
+    int                 r;
     int			server_socket;
     in_port_t		my_port, port;
     struct tcp_conn *	rc = rh->rc;
     const char *err;
 
-    if ((sp = getservbyname(AMANDA_KRB5_SERVICE_NAME, "tcp")) == NULL)
+    r = getservbyname_r(AMANDA_KRB5_SERVICE_NAME, "tcp", &sp, buf,2048, &result);
+    assert(r != ERANGE);
+    if (r != 0) {
 	port = htons(AMANDA_KRB5_DEFAULT_PORT);
-    else
-	port = sp->s_port;
+    } else {
+	port = sp.s_port;
+    }
 
     if ((err = get_tgt(keytab_name, principal_name)) != NULL) {
         security_seterror(&rh->sech, "%s: could not get TGT: %s",
@@ -420,19 +428,17 @@ runkrb5(
         return -1;
     }
 
-    set_root_privs(1);
-    server_socket = stream_client(NULL, rc->hostname,
+    server_socket = stream_client_privileged(NULL, rc->hostname,
 				     (in_port_t)(ntohs(port)),
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,
 				     0);
-    set_root_privs(0);
 
     if(server_socket < 0) {
 	security_seterror(&rh->sech,
 	    "%s", strerror(errno));
-	
+ 
 	return -1;
     }
 

@@ -192,10 +192,8 @@ bsd_connect(
 	if (res_addr->ai_addr->sa_family == AF_INET6 && not_init6 == 1) {
 	    dgram_zero(&netfd6.dgram);
 
-	    set_root_privs(1);
 	    result_bind = dgram_bind(&netfd6.dgram,
-				     res_addr->ai_addr->sa_family, &port);
-	    set_root_privs(0);
+				     res_addr->ai_addr->sa_family, &port, 1);
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -233,10 +231,8 @@ bsd_connect(
 	if (res_addr->ai_addr->sa_family == AF_INET && not_init4 == 1) {
 	    dgram_zero(&netfd4.dgram);
 
-	    set_root_privs(1);
 	    result_bind = dgram_bind(&netfd4.dgram,
-				     res_addr->ai_addr->sa_family, &port);
-	    set_root_privs(0);
+				     res_addr->ai_addr->sa_family, &port, 1);
 	    if (result_bind != 0) {
 		continue;
 	    }

@@ -55,9 +55,11 @@ int
 dgram_bind(
     dgram_t *	dgram,
     sa_family_t family,
-    in_port_t *	portp)
+    in_port_t *	portp,
+    int         priv)
 {
     int s, retries;
+    int new_s;
     socklen_t_equiv len;
     sockaddr_union name;
     int save_errno;
@@ -104,7 +106,7 @@ dgram_bind(
      * is within the range it requires.
      */
     for (retries = 0; ; retries++) {
-	if (bind_portrange(s, &name, portrange[0], portrange[1], "udp") == 0)
+	if ((new_s = bind_portrange(s, &name, portrange[0], portrange[1], "udp", priv)) >= 0)
 	    goto out;
 	dbprintf(_("dgram_bind: Could not bind to port in range: %d - %d.\n"),
 		  portrange[0], portrange[1]);
@@ -127,8 +129,9 @@ dgram_bind(
 out:
     /* find out what name was actually used */
 
+    aclose(s);
     len = (socklen_t_equiv)sizeof(name);
-    if(getsockname(s, (struct sockaddr *)&name, &len) == -1) {
+    if(getsockname(new_s, (struct sockaddr *)&name, &len) == -1) {
 	save_errno = errno;
 	dbprintf(_("dgram_bind: getsockname() failed: %s\n"), strerror(save_errno));
 	errno = save_errno;
@@ -136,7 +139,7 @@ out:
 	return -1;
     }
     *portp = SU_GET_PORT(&name);
-    dgram->socket = s;
+    dgram->socket = new_s;
 
     dbprintf(_("dgram_bind: socket %d bound to %s\n"),
 	      dgram->socket, str_sockaddr(&name));
@@ -212,19 +215,19 @@ dgram_send_addr(
 		 SS_LEN(addr)) == -1) {
 #ifdef ECONNREFUSED
 	    if(errno == ECONNREFUSED && wait_count++ < max_wait) {
-		sleep(5);
 		dbprintf(_("dgram_send_addr: sendto(%s): retry %d after ECONNREFUSED\n"),
 		      str_sockaddr(addr),
 		      wait_count);
+		sleep(5);
 		continue;
 	    }
 #endif
 #ifdef EAGAIN
 	    if(errno == EAGAIN && wait_count++ < max_wait) {
-		sleep(5);
 		dbprintf(_("dgram_send_addr: sendto(%s): retry %d after EAGAIN\n"),
 		      str_sockaddr(addr),
 		      wait_count);
+		sleep(5);
 		continue;
 	    }
 #endif
@@ -278,8 +281,8 @@ dgram_recv(
     to.tv_sec = timeout;
     to.tv_usec = 0;
 
-    dbprintf(_("dgram_recv(dgram=%p, timeout=%u, fromaddr=%p)\n"),
-		dgram, timeout, fromaddr);
+    dbprintf(_("dgram_recv(dgram=%p, timeout=%u, fromaddr=%p socket=%d)\n"),
+		dgram, timeout, fromaddr, sock);
     
     nfound = (ssize_t)select(sock+1, &ready, NULL, NULL, &to);
     if(nfound <= 0 || !FD_ISSET(sock, &ready)) {

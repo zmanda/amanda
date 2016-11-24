@@ -220,12 +220,14 @@ bsdtcp_connect(
     rh->arg = rh;
     rh->connect_callback = fn;
     rh->connect_arg = arg;
+    g_mutex_lock(security_mutex);
     rh->rs->rc->ev_write = event_create((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
     rh->ev_timeout = event_create(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
     event_activate(rh->rs->rc->ev_write);
     event_activate(rh->ev_timeout);
+    g_mutex_unlock(security_mutex);
 
     return;
 
@@ -356,8 +358,6 @@ runbsdtcp(
     in_port_t		my_port;
     struct tcp_conn *	rc = rh->rc;
 
-    set_root_privs(1);
-
     server_socket = stream_client_addr(src_ip,
 				     rh->next_res,
 				     port,
@@ -366,7 +366,6 @@ runbsdtcp(
 				     &my_port,
 				     0,
 				     1);
-    set_root_privs(0);
     rh->next_res = rh->next_res->ai_next;
 
     if(server_socket < 0) {

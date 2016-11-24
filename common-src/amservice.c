@@ -136,8 +136,9 @@ main(
 
     set_pname("amservice");
     /* drop root privileges */
-    if (!set_root_privs(0)) {
-	error(_("amservice must be run setuid root"));
+    set_root_privs(-1);
+    if (geteuid() == 0 || getuid() == 0) {
+	error(_("amservice must not be setuid root"));
     }
 
     /* Don't die when child closes pipe */

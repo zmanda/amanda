@@ -28,7 +28,27 @@
 #ifndef SOCKADDR_UTIL_H
 #define	SOCKADDR_UTIL_H
 
-#include "amanda.h"
+#include <arpa/inet.h>
+
+/* Unfortunately, the system-level sockaddr_storage definition can lead to
+ * C aliasing errors (where the optimizer doesn't notice that two operations
+ * affect the same datum).  We define our own similar type as a union.
+ */
+typedef union sockaddr_union {
+    struct sockaddr         sa;
+    struct sockaddr_in      sin;
+#ifdef WORKING_IPV6
+    struct sockaddr_in6     sin6;
+#endif
+#ifdef HAVE_SOCKADDR_STORAGE
+    struct sockaddr_storage ss; /* not used; just here to make the union full-size */
+#endif
+} sockaddr_union;
+
+typedef struct amsbind_s {
+    sockaddr_union addr;
+    socklen_t_equiv socklen;
+} ambind_t;
 
 /* Dump a sockaddr_union using dbprintf
  *
