@@ -1,4 +1,7 @@
 2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Rest_Storages.pl: Set the aggregate state_filename
+
+2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Rest_Storages.pl: Typo
 
 2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
