@@ -28,6 +28,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Run;
 use Installcheck::Catalogs;
+use Amanda::Paths;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::DB::Catalog;
 use Amanda::Cmdline;
@@ -618,9 +619,11 @@ $testconf->add_changer("disk1", [
         tpchanger => "\"chg-disk:$taperoot1\"",
         property  => '"num-slot" "3"',
 ]);
+my $aggregate_statefile = "$CONFIG_DIR/TESTCONF/aggregate.state";
 $testconf->add_changer("aggregate", [
         tpchanger => "\"chg-aggregate:{disk0,disk1}\"",
-        property  => '"allow-missing-changer" "yes"'
+        property  => '"allow-missing-changer" "yes"',
+        property  => "\"state-filename\" \"$aggregate_statefile\""
 ]);
 $testconf->add_storage("aggregate", [
         tpchanger => '"aggregate"',
@@ -628,6 +631,7 @@ $testconf->add_storage("aggregate", [
 $testconf->add_param("storage", '"aggregate"');
 $testconf->write();
 
+unlink $aggregate_statefile;
 rmtree($taperoot0);
 mkpath($taperoot0);
 rmtree($taperoot1);
@@ -767,7 +771,8 @@ $testconf->add_changer("diskflat1", [
 ]);
 $testconf->add_changer("aggregate", [
         tpchanger => "\"chg-aggregate:{diskflat0,diskflat1}\"",
-        property  => '"allow-missing-changer" "yes"'
+        property  => '"allow-missing-changer" "yes"',
+        property  => "\"state-filename\" \"$aggregate_statefile\""
 ]);
 $testconf->add_storage("aggregate", [
         tpchanger => '"aggregate"',
@@ -777,6 +782,7 @@ $testconf->add_storage("aggregate", [
 $testconf->add_param("storage", '"aggregate"');
 $testconf->write();
 
+unlink $aggregate_statefile;
 rmtree($taperoot0);
 mkpath($taperoot0);
 rmtree($taperoot1);
