@@ -68,6 +68,7 @@ sub is_pointing_to {
 
 # Build a configuration that specifies Amanda::Changer::Disk
 my $testconf = Installcheck::Config->new();
+my $aggregate_statefile = "$CONFIG_DIR/TESTCONF/aggregate.state";
 $testconf->add_changer("disk0", [
 	tpchanger => "\"chg-disk:$taperoot0\"",
 	property  => '"num-slot" "3"',
@@ -78,7 +79,8 @@ $testconf->add_changer("disk1", [
 ]);
 $testconf->add_changer("aggregate", [
 	tpchanger => "\"chg-aggregate:{disk0,disk1}\"",
-	property  => '"allow-missing-changer" "yes"'
+	property  => '"allow-missing-changer" "yes"',
+	property  => "\"state-filename\" \"$aggregate_statefile\""
 ]);
 $testconf->add_storage("aggregate", [
 	tpchanger => '"aggregate"',
@@ -489,4 +491,6 @@ rmtree($taperoot0);
 }
 
 $chg->quit();
-#rmtree($taperoot1);
+unlink $aggregate_statefile;
+rmtree($taperoot0);
+rmtree($taperoot1);
