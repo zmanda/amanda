@@ -829,9 +829,10 @@ val_t_to_sv(val_t *val, SV **results) {
 
 	    case CONFTYPE_DUMP_SELECTION: {
 		AV *av;
-		dump_selection_list_t dsl = val_t__dump_selection(val);
+		dump_selection_list_t dsl;
 		av = newAV();
-		for (dsl ; dsl != NULL; dsl = dsl->next) {
+		for (dsl = val_t__dump_selection(val); dsl != NULL;
+		     dsl = dsl->next) {
 		    dump_selection_t *ds = dsl->data;
 		    HV *hv;
 
@@ -851,9 +852,9 @@ val_t_to_sv(val_t *val, SV **results) {
 
 	    case CONFTYPE_VAULT_LIST: {
 		AV *av;
-		vault_list_t vl = val_t__vault_list(val);
+		vault_list_t vl;
 		av = newAV();
-		for (vl ; vl != NULL; vl = vl->next) {
+		for (vl = val_t__vault_list(val); vl != NULL; vl = vl->next) {
 		    vault_el_t *v = vl->data;
 		    HV *hv;
 
@@ -1267,9 +1268,9 @@ val_t_to_print(val_t *val, SV **results) {
 
 	    case CONFTYPE_DUMP_SELECTION: {
 		AV *av;
-		dump_selection_list_t dsl = val_t__dump_selection(val);
+		dump_selection_list_t dsl;
 		av = newAV();
-		for (dsl ; dsl != NULL; dsl = dsl->next) {
+		for (dsl = val_t__dump_selection(val); dsl != NULL; dsl = dsl->next) {
 		    dump_selection_t *ds = dsl->data;
 		    HV *hv;
 
@@ -1297,9 +1298,9 @@ val_t_to_print(val_t *val, SV **results) {
 
 	    case CONFTYPE_VAULT_LIST: {
 		AV *av;
-		vault_list_t vl = val_t__vault_list(val);
+		vault_list_t vl;
 		av = newAV();
-		for (vl ; vl != NULL; vl = vl->next) {
+		for (vl = val_t__vault_list(val); vl != NULL; vl = vl->next) {
 		    vault_el_t *v = vl->data;
 		    HV *hv;
 

@@ -783,7 +783,7 @@ delete_vfs_files_functor(
     if (unlink(path_name) != 0) {
 	device_set_error(dself,
 	    g_strdup_printf("Error unlinking %s: %s", path_name, strerror(errno)),
-	    DEVICE_STATUS_DEVICE_ERROR || DEVICE_STATUS_VOLUME_ERROR);
+	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
 	ret = FALSE;
     }
     amfree(path_name);
@@ -818,7 +818,7 @@ static gboolean check_dir_empty_functor(const char * filename,
 
     device_set_error(dself,
 	    g_strdup_printf("Found spurious storage file %s", path_name),
-	    DEVICE_STATUS_DEVICE_ERROR || DEVICE_STATUS_VOLUME_ERROR);
+	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
 
     amfree(path_name);
     return FALSE;
