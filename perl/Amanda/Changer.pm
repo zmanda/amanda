@@ -1170,7 +1170,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
     if ($params{'storage'}) {
 	$rv->{'storage'} = $params{'storage'};
     } else {
-	$rv->{'storage'}->{'storage_name'} = "NO-STORAGE";
+	$rv->{'storage'}->{'storage_name'} = Amanda::Config::get_config_name();
     }
     $rv->{'tapelist'} = $params{'tapelist'};
 
