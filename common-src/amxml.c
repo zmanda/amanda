@@ -510,7 +510,7 @@ amend_element(
 	if (dle->device == NULL && dle->disk)
 	    dle->device = g_strdup(dle->disk);
 	if (dle->estimatelist == NULL)
-	    dle->estimatelist = g_slist_append(dle->estimatelist, ES_CLIENT);
+	    dle->estimatelist = g_slist_append(dle->estimatelist, GINT_TO_POINTER(ES_CLIENT));
 /* Add check of required field */
 	data_user->property = NULL;
 	data_user->dle = NULL;

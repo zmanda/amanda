@@ -1,6 +1,10 @@
 2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amxml.c, device-src/vfs-device.c,
+	  perl/Amanda/Config.swg: Fix warning found by clang
+
+2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Changer_aggregate.pl: Set the aggregate
-  state-filename property
+	  state-filename property
 
 2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Rest_Storages.pl: Set the aggregate state_filename
