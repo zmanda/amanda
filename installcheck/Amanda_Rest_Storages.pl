@@ -48,7 +48,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 17;
+plan tests => 21;
 
 my $taperoot = "$Installcheck::TMP/Amanda_Changer_Diskflat_test";
 
@@ -604,10 +604,304 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "update - 1100048") || diag("reply: " .Data::Dumper::Dumper($reply));
 
+rmtree $taperoot;
+
+# chg-aggregate with 2 chg-disk
+my $taperoot0 = "$Installcheck::TMP/Amanda_Changer_Disk_test0";
+my $taperoot1 = "$Installcheck::TMP/Amanda_Changer_Disk_test1";
+$testconf = Installcheck::Config->new();
+$testconf->add_changer("disk0", [
+        tpchanger => "\"chg-disk:$taperoot0\"",
+        property  => '"num-slot" "3"',
+]);
+$testconf->add_changer("disk1", [
+        tpchanger => "\"chg-disk:$taperoot1\"",
+        property  => '"num-slot" "3"',
+]);
+$testconf->add_changer("aggregate", [
+        tpchanger => "\"chg-aggregate:{disk0,disk1}\"",
+        property  => '"allow-missing-changer" "yes"'
+]);
+$testconf->add_storage("aggregate", [
+        tpchanger => '"aggregate"',
+]);
+$testconf->add_param("storage", '"aggregate"');
+$testconf->write();
+
+rmtree($taperoot0);
+mkpath($taperoot0);
+rmtree($taperoot1);
+mkpath($taperoot1);
+mkdir("$taperoot1/slot1");
+mkdir("$taperoot1/slot2");
+mkdir("$taperoot1/slot3");
+
+my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+	[ {	'code' => '1100010',
+		'num_slots' => '3',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'scanning all 3 slots in changer:'
+	  },
+	  {
+		'slot' => '1:1',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:1: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'slot' => '1:2',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:2: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'slot 1:3: unlabeled volume',
+		'module' => 'amanda',
+		'severity' => 'info',
+		'running_on' => 'amanda-server',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'slot' => '1:3',
+		'code' => '1100016'
+	  }
+	],
+      http_code => 200,
+    },
+    "show - 1100010, 1100016") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+# chg-aggregate with 2 chg-disk (first missing)
+rmtree($taperoot0);
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+	[ {	'code' => '1100010',
+		'num_slots' => '3',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'scanning all 3 slots in changer:'
+	  },
+	  {
+		'slot' => '1:1',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:1: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'slot' => '1:2',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:2: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'slot 1:3: unlabeled volume',
+		'module' => 'amanda',
+		'severity' => 'info',
+		'running_on' => 'amanda-server',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'slot' => '1:3',
+		'code' => '1100016'
+	  }
+	],
+      http_code => 200,
+    },
+    "show - 1100010, 1100014") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+# chg-aggregate with 2 chg-diskflat
+$taperoot0 = "$Installcheck::TMP/Amanda_Changer_Disk_test0";
+$taperoot1 = "$Installcheck::TMP/Amanda_Changer_Disk_test1";
+$testconf = Installcheck::Config->new();
+$testconf->add_changer("diskflat0", [
+        tpchanger => "\"chg-diskflat:$taperoot0\"",
+        property  => '"num-slot" "3"',
+]);
+$testconf->add_changer("diskflat1", [
+        tpchanger => "\"chg-diskflat:$taperoot1\"",
+        property  => '"auto-create-slot" "yes"',
+        property  => '"num-slot" "3"',
+]);
+$testconf->add_changer("aggregate", [
+        tpchanger => "\"chg-aggregate:{diskflat0,diskflat1}\"",
+        property  => '"allow-missing-changer" "yes"'
+]);
+$testconf->add_storage("aggregate", [
+        tpchanger => '"aggregate"',
+        'meta-autolabel' => '"!!"',
+        autolabel => '"$m-$1s" empty'
+]);
+$testconf->add_param("storage", '"aggregate"');
+$testconf->write();
+
+rmtree($taperoot0);
+mkpath($taperoot0);
+rmtree($taperoot1);
+mkpath($taperoot1);
+open AA, ">$taperoot1/AA-1"; close AA;
+open AA, ">$taperoot1/AA-2"; close AA;
+open AA, ">$taperoot1/AA-3"; close AA;
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+	[ {	'code' => '1100010',
+		'num_slots' => '3',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'scanning all 3 slots in changer:'
+	  },
+	  {
+		'slot' => '1:1',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:1: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'slot' => '1:2',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:2: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'slot 1:3: unlabeled volume',
+		'module' => 'amanda',
+		'severity' => 'info',
+		'running_on' => 'amanda-server',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'slot' => '1:3',
+		'code' => '1100016'
+	  }
+	],
+      http_code => 200,
+    },
+    "show - 1100010, 1100016") || diag("reply: " .Data::Dumper::Dumper($reply));
+
+# chg-aggregate with 2 chg-diskflat (first missing)
+rmtree($taperoot0);
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/aggregate/show","");
+is_deeply (Installcheck::Rest::remove_source_line($reply),
+    { body =>
+	[ {	'code' => '1100010',
+		'num_slots' => '3',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'scanning all 3 slots in changer:'
+	  },
+	  {
+		'slot' => '1:1',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:1: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'slot' => '1:2',
+		'code' => '1100016',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'module' => 'amanda',
+		'running_on' => 'amanda-server',
+		'severity' => 'info',
+		'message' => 'slot 1:2: unlabeled volume',
+		'component' => 'rest-server',
+		'process' => 'Amanda::Rest::Storages'
+	  },
+	  {
+		'process' => 'Amanda::Rest::Storages',
+		'component' => 'rest-server',
+		'message' => 'slot 1:3: unlabeled volume',
+		'module' => 'amanda',
+		'severity' => 'info',
+		'running_on' => 'amanda-server',
+		'source_filename' => '/amanda/h1/linux/lib/amanda/perl/Amanda/Changer.pm',
+		'write_protected' => '',
+		'slot' => '1:3',
+		'code' => '1100016'
+	  }
+	],
+      http_code => 200,
+    },
+    "show - 1100010, 1100014") || diag("reply: " .Data::Dumper::Dumper($reply));
 
 $rest->stop();
-
-rmtree $taperoot;
 
 #$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/reset","");
 #$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/storages/DISKFLAT/eject","");

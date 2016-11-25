@@ -106,6 +106,7 @@ sub new {
     if (!defined $state_filename) {
 	$state_filename = $Amanda::Paths::CONFIG_DIR . '/' . $config->{'name'} . ".state";
     }
+    debug("chg-aggragte: Using statefile '$state_filename'");
 
     my $self = {
 	config => $config,
@@ -142,7 +143,7 @@ sub _get_current_slot
 	my ($state, $cb) = @_;
 	my $storage = $self->{'storage'}->{'storage_name'};
 	my $changer = $self->{'chg_name'};
-	$self->{'current-slot'} = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
+	$self->{'current_slot'} = $state->{'current_slot_csc'}->{get_config_name()}->{'storage'}->{$storage}->{'changer'}->{$changer};
 	$self->{'current_slot'} = $state->{'current_slot'} if !defined $self->{'current_slot'};
 	$self->{'current_slot'} = "0:1" if !defined $self->{'current_slot'};
 	$cb->();
@@ -391,7 +392,10 @@ sub info_key {
 	    my $kid = 0;
 	    for (@$kid_results) {
 		my ($err, %kid_info) = @$_;
-		next unless exists($kid_info{'slots'});
+		if (!exists($kid_info{'slots'})){
+		    $kid++;
+		    next;
+		}
 		my $kid_slots = $kid_info{'slots'};
 		push @slots, map "$kid:$_", @{$kid_slots};
 		$kid++;
@@ -510,13 +514,27 @@ sub _mk_simple_op {
     };
 }
 
+my $_reset = _mk_simple_op("reset");
 {
     # perl doesn't like that these symbols are only mentioned once
     no warnings;
 
-    *reset = _mk_simple_op("reset");
     *clean = _mk_simple_op("clean");
     *eject = _mk_simple_op("eject");
+}
+
+sub reset {
+    my $self = shift;
+    my %params = @_;
+
+    my $finished_cb = $params{'finished_cb'};
+    delete $params{'finished_cb'};
+
+    $_reset->($self, %params, finished_cb => sub {
+	my @args = @_;
+	$self->{'current_slot'} = "0:1";
+	$self->_set_current_slot(sub { $finished_cb->(@args) });
+    });
 }
 
 sub update {
@@ -775,7 +793,7 @@ sub _merge_inventories {
 
 	for my $x (@$kid_inv) {
 	    my $slotname = "$nb:" . $x->{'slot'};
-	    my $current = $slotname eq $self->{'current_slot'};
+	    my $current = ($slotname eq $self->{'current_slot'})?1:undef;
 	    push @combined, {
 		    state => $x->{'state'},
 		    device_status => $x->{'device_status'},

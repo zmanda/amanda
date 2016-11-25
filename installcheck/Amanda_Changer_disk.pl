@@ -165,7 +165,7 @@ sub test_relative_slot {
     my $steps = define_steps
 	cb_ref => \$finished_cb;
 
-    # load the "current" slot, which should be 3
+    # load the "current" slot, which should be 5
     step load_current => sub {
 	$chg->load(relative_slot => "current", res_cb => $steps->{'check_current_cb'});
     };

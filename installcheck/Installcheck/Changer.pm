@@ -84,7 +84,7 @@ sub chg_err_like {
 		my ($got, $exp) = ($err->{$key}, $expected->{$key});
 		if (ref($exp) eq "Regexp") {
 		    if ($got !~ $exp) {
-			fail($msg) if $ok;
+			fail($msg . ":$got:$exp: " . Data::Dumper::Dumper($err)) if $ok;
 			$ok = 0;
 			diag("$key '$got' does not match '$exp'");
 		    }
