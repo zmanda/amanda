@@ -1,4 +1,7 @@
 2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Rest_Storages.pl: Typo
+
+2016-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm: s/NO-STORAGE/ by the config_name
 	* perl/Amanda/Changer/aggregate.pm: Various fix
 	* server-src/driverio.c: Add comments
