@@ -176,8 +176,20 @@ ambind(
     struct cmsghdr *cmsg;
     char cmsgbuf[CMSG_SPACE(sizeof(s))];
     struct iovec iov[2];
+    int r;
 
-    if (socketpair(AF_UNIX, SOCK_DGRAM|SOCK_NONBLOCK, 0, sockfd) < 0) {
+#ifdef SOCK_NONBLOCK
+    r = socketpair(AF_UNIX, SOCK_DGRAM|SOCK_NONBLOCK, 0, sockfd);
+#else
+    r = socketpair(AF_UNIX, SOCK_DGRAM, 0, sockfd);
+    if (r == 0) {
+	int r0 = fcntl(sockfd[0], F_GETFL, 0);
+	int r1 = fcntl(sockfd[1], F_GETFL, 0);
+	r0 = fcntl(sockfd[0], F_SETFL, r0|O_NONBLOCK);
+	r1 = fcntl(sockfd[1], F_SETFL, r1|O_NONBLOCK);
+    }
+#endif
+    if (r < 0) {
 	fprintf(stderr, "socketpair failed: %s\n", strerror(errno));
 	return -2;
     }
