@@ -1,4 +1,18 @@
 2016-11-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Run.pm (check_amreport): skip_size default
+	* installcheck/failure-client-custom-compress-end.pl,
+	  installcheck/failure-client-custom-compress-no-exec.pl,
+	  installcheck/failure-client-custom-compress-not-found.pl,
+	  installcheck/failure-client-custom-compress.pl,
+	  installcheck/failure-client-encrypt-end.pl,
+	  installcheck/failure-client-encrypt-no-exec.pl,
+	  installcheck/failure-client-encrypt-not-found.pl,
+	  installcheck/failure-client-encrypt.pl,
+	  installcheck/failure-server-custom-compress-end.pl,
+	  installcheck/failure-server-encrypt-end.pl:
+	  Remove 'sendbackup: size' lines
+
+2016-11-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Changer.pm (show): Print if the label do not match
 	  the labelstr
 	* perl/Amanda/Rest/Storages.pm: Set label_match
