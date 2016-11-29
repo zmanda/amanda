@@ -1,3 +1,11 @@
+2016-11-29  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer.pm (show): Print if the label do not match
+	  the labelstr
+	* perl/Amanda/Rest/Storages.pm: Set label_match
+	* server-src/amtape.pl (inventory): Print if the label do not match
+	  the labelstr
+	* installcheck/Amanda_Rest_Storages.pl, installcheck/amtape.pl: Fix
+
 2016-11-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c: Workaround if SOCK_NONBLOCK is not defined
 

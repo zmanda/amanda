@@ -30,7 +30,7 @@ use Text::Wrap;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants match_labelstr );
 use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
@@ -219,6 +219,7 @@ sub {
 	for my $sl (@$inv) {
 	    my $line = "slot $sl->{slot}:";
 	    my $tle;
+	    my $meta;
 	    if ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 		$line .= " empty";
 	    } elsif (!defined($sl->{device_status}) && !defined($sl->{label})) {
@@ -230,6 +231,7 @@ sub {
 		    if (defined $tle) {
 			if ($tle->{'meta'}) {
 				$line .= " ($tle->{'meta'})";
+				$meta = $tle->{'meta'};
 			}
 		    }
 		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
@@ -261,6 +263,15 @@ sub {
 		    $line .= " [" . $sl->{'device_error'} . "]";
 		} else {
 		    $line .= " [device error]";
+		}
+	    }
+	    if ($sl->{'label'}) {
+		if (!match_labelstr($storage->{'labelstr'},
+				    $storage->{'autolabel'},
+				    $sl->{label},
+				    $sl->{'barcode'}, $meta,
+				    $storage->{'storage_name'})) {
+		    $line .= " (label do not match labelstr)";
 		}
 	    }
 	    if (defined $tle) {
