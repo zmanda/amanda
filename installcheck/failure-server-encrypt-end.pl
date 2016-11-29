@@ -386,7 +386,6 @@ FAILED DUMP DETAILS:
   sendbackup: info APPLICATION=amrandom
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info end
-  sendbackup: size 1050
   ? data encrypt: amcat-error-end: failure Y
   sendbackup: native-CRC 839b74a4:1075200
   sendbackup: client-CRC 839b74a4:1075200
@@ -398,7 +397,6 @@ FAILED DUMP DETAILS:
   sendbackup: info APPLICATION=amrandom
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info end
-  sendbackup: size 1050
   ? data encrypt: amcat-error-end: failure Y
   sendbackup: native-CRC 839b74a4:1075200
   sendbackup: client-CRC 839b74a4:1075200

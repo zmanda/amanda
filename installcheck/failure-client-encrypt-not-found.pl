@@ -344,7 +344,6 @@ FAILED DUMP DETAILS:
   sendbackup: info APPLICATION=amrandom
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info end
-  sendbackup: size 1050
   sendbackup: error [exec $cwd/amcat-error-not-found: No such file or directory]
   sendbackup: error [encrypt (PID) encrypt returned 1]
   sendbackup: native-CRC 00000000:0
@@ -356,7 +355,6 @@ FAILED DUMP DETAILS:
   sendbackup: info APPLICATION=amrandom
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info end
-  sendbackup: size 1050
   sendbackup: error [exec $cwd/amcat-error-not-found: No such file or directory]
   sendbackup: error [encrypt (PID) encrypt returned 1]
   sendbackup: native-CRC 00000000:0

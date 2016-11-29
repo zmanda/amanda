@@ -612,6 +612,7 @@ sub check_amreport
     my $sorting = shift;
     my $skip_size = shift;
     my $got_report;
+    $skip_size = 1 if !defined $skip_size;
 
     $report =~ s/\\/\\\\/g;
     $report =~ s/\?/\\?/g;

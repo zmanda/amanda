@@ -387,7 +387,6 @@ FAILED DUMP DETAILS:
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info COMPRESS_SUFFIX=.gz
   sendbackup: info end
-  sendbackup: size 1050
   ? data compress: amcat-error-end: failure Y
   sendbackup: native-CRC 839b74a4:1075200
   sendbackup: client-CRC 839b74a4:1075200
@@ -400,7 +399,6 @@ FAILED DUMP DETAILS:
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info COMPRESS_SUFFIX=.gz
   sendbackup: info end
-  sendbackup: size 1050
   ? data compress: amcat-error-end: failure Y
   sendbackup: native-CRC 839b74a4:1075200
   sendbackup: client-CRC 839b74a4:1075200
