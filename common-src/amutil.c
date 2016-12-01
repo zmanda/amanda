@@ -311,7 +311,6 @@ connect_port(
     socklen_t_equiv	socklen;
     int			s;
 
-#define GETSERVBYPORT_R5
 #ifdef GETSERVBYPORT_R5
     result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
     if (result == 0) {
@@ -473,7 +472,6 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
-#define GETSERVBYPORT_R5
 #ifdef GETSERVBYPORT_R5
 	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
 	if (result == 0) {

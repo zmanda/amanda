@@ -1,4 +1,7 @@
 2016-12-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c: typo
+
+2016-12-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/syshacks.m4: Define GETSERVBYPORT_R5 on solaris2
 	* common-src/amutil.c: Use solaris 5 arguments for getservbyport_r
 
