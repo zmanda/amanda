@@ -311,8 +311,16 @@ connect_port(
     socklen_t_equiv	socklen;
     int			s;
 
+#define GETSERVBYPORT_R5
+#ifdef GETSERVBYPORT_R5
+    result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
+    if (result == 0) {
+	assert(errno != ERANGE);
+    }
+#else
     r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
     assert(r != ERANGE);
+#endif
 
     if (result != NULL && !strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	dbprintf(_("connect_port: Skip port %d: owned by %s.\n"),
@@ -465,8 +473,16 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
+#define GETSERVBYPORT_R5
+#ifdef GETSERVBYPORT_R5
+	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
+	if (result == 0) {
+	    assert(errno != ERANGE);
+	}
+#else
 	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
 	assert(r != ERANGE);
+#endif
 	if ((result == NULL) || strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	    SU_SET_PORT(addrp, port);
 	    socklen = SS_LEN(addrp);

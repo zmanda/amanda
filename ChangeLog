@@ -1,3 +1,7 @@
+2016-12-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/syshacks.m4: Define GETSERVBYPORT_R5 on solaris2
+	* common-src/amutil.c: Use solaris 5 arguments for getservbyport_r
+
 2016-11-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (check_amreport): skip_size default
 	  to 1
