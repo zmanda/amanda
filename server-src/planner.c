@@ -1301,9 +1301,11 @@ static int when_overwrite(
     if (tp->reuse == 0)
 	return 1024;
 
-    if (!tp->storage)
-	return 1;
-    st = lookup_storage(tp->storage);
+    if (!tp->storage) {
+	st = lookup_storage(get_config_name());
+    } else {
+	st = lookup_storage(tp->storage);
+    }
     if (!st)
 	return 1;
     runtapes = storage_get_runtapes(st);

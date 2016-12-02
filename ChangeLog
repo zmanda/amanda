@@ -1,3 +1,7 @@
+2016-12-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c (when_overwrite): Use default storage if the
+	  tle have no storage
+
 2016-11-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (check_amreport): skip_size default
 	* installcheck/failure-client-custom-compress-end.pl,
