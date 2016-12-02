@@ -1,3 +1,7 @@
+2016-12-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c (when_overwrite): Use default storage if the
+	  tle have no storage
+
 2016-12-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c: typo
 
