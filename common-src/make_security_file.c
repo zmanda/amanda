@@ -47,8 +47,8 @@ int main(void)
     fprintf(sec_file,"# amgtar:GNUTAR_PATH=/usr/bin/tar                          #\n");
     fprintf(sec_file,"# amgtar:GNUTAR_PATH=/usr/bin/tar-1.28                     #\n");
     fprintf(sec_file,"#                                                          #\n");
-    fprintf(sec_file,"# If a program and symbolic name is not listed, then the   #\n");
-    fprintf(sec_file,"# configured binary is allowed to be run as root.          #\n");
+    fprintf(sec_file,"# Only binary listed are allowed to be run as root.        #\n");
+    fprintf(sec_file,"#                                                          #\n");
     fprintf(sec_file,"# You can find the configured binary with amgetconf        #\n");
     fprintf(sec_file,"#     amgetconf build.gnutar_path                          #\n");
     fprintf(sec_file,"#     amgetconf build.star_path                            #\n");
