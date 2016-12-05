@@ -337,10 +337,10 @@ lookup_last_reusable_tape(
 	    !g_str_equal(tp->datestamp, "0") &&
 	    (!tp->config || g_str_equal(tp->config, get_config_name())) &&
 	    (!tp->storage || g_str_equal(tp->storage, storage)) &&
-	    ((tp->pool && g_str_equal(tp->pool, tapepool)) ||
-	     (!tp->pool && match_labelstr_template(l_template, tp->label,
-						   tp->barcode, tp->meta,
-						   tp->storage)))) {
+	    (!tp->pool || g_str_equal(tp->pool, tapepool)) &&
+	    (match_labelstr_template(l_template, tp->label,
+				     tp->barcode, tp->meta,
+				     tp->storage))) {
 	    count++;
 	    for(s = skip; s > 0; s--) {
 	        tpsave[s] = tpsave[s - 1];
