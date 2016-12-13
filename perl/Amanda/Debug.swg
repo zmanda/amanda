@@ -70,9 +70,11 @@ sub _my_die {
 $SIG{__DIE__} = \&_my_die;
 
 sub _my_warn {
-    my ($msg) = @_;
-    chomp $msg;
-    warning(@_);
+    foreach my $msg (@_) {
+	my $msg1 = $msg;
+	chomp $msg1;
+	warning($msg1);
+    }
 };
 $SIG{__WARN__} = \&_my_warn;
 
