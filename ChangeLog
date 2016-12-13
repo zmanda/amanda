@@ -1,3 +1,6 @@
+2016-12-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Debug.swg (_my_warn): Fix for array argument
+
 2016-12-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/tapefile.c (lookup_last_reusable_tape): correctly check
 	  pool and label
