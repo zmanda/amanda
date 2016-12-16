@@ -1,3 +1,6 @@
+2016-12-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report.pm: Fix exit_status for some error
+
 2016-12-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Debug.swg (_my_warn): Fix for array argument
 
