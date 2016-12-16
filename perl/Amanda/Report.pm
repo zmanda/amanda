@@ -1535,6 +1535,8 @@ sub _handle_fail_line
     if ($program eq "planner" ||
         $program eq "driver") {
 	$program_d = $dle->{$program} ||= {};
+	$self->{flags}{dump_failed} = 1;
+	$self->{flags}{exit_status} |= STATUS_FAILED;
     } else {
         my $try = $self->_get_try($dle, $program, $timestamp);
         $program_d = $try->{$program} ||= {};
