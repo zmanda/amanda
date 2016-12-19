@@ -1,5 +1,8 @@
 #!@PERL@ -w
 
+use strict;
+use warnings;
+
 # create a TOC (Table Of Content) file for an amanda dump
 
 # Author: Nicolas.Mayencourt@cui.unige.ch
@@ -32,6 +35,44 @@
 # 3.1.4 2000-01-14 dhw@whistle.com
 #	Add a flag (-w) for vertical whitespace
 
+my %lines;
+my %dates;
+my %labels;
+my $IF;
+my $OF;
+my $tabular;
+my $fnbr;
+my $hstprt;
+my $dt;
+my $lvl;
+my $sz;
+my $ch;
+my $s;
+my @subs;
+my $dir;
+my $i;
+my $info;
+my $tocfilename;
+my $vwspace;
+my $logfile;
+my $filenumber;
+my $tot_or_size;
+my $line;
+my $host;
+my $disk;
+my %osize;
+my %fail;
+my $flash_mode;
+my $storage;
+my $pool;
+my $label;
+my $filenum;
+my $date;
+my $chunk;
+my $level;
+my $mysize;
+my $note;
+my $size;
 
 #--------------------------------------------------------
 sub pr($$$$$$$) { 
@@ -136,8 +177,8 @@ $dir=$logfile;
 $dir =~ s/[^\/]*$//;
 
 
-if ($logfile eq '-') {$IF=STDIN} else 
-  {die ("Cannot open logfile $logfile") unless open (IF,"$logfile");$IF=IF;}
+if ($logfile eq '-') {$IF=*STDIN} else 
+  {die ("Cannot open logfile $logfile") unless open ($IF,"$logfile");}
 
 $filenumber=0;
 $tot_or_size=0;
@@ -160,35 +201,72 @@ while ( <$IF> ) {
     $flash_mode = 1;
     next;
   }
-  if ( ! /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+)/) { next;}
+  if ( ! /^([A-Z]+) taper \S+ \S+ (\S+) (\S+) (\S+) (\S+) (\S+)/) { next;}
   # $_ = $1;
   if (/PART taper/) {
-    /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)/;
-    $filenum = $3;
-    $host = $4;
-    $disk = $5;
-    $date = $6;
-    $chunk = $7;
-    $level = $8;
+    if (/^([A-Z]+) taper ("ST:\S+") ("POOL:\S+") (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)/) {
+        $storage = $2;
+        $pool = $3;
+        $label = $4;
+        $filenum = $5;
+        $host = $6;
+        $disk = $7;
+        $date = $8;
+        $chunk = $9;
+        $level = $10;
+	$labels{$storage}{$pool}{$host}{$disk}{$date} = $label;
+    } else {
+        /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)/;
+        $label = $2;
+        $filenum = $3;
+        $host = $4;
+        $disk = $5;
+        $date = $6;
+        $chunk = $7;
+        $level = $8;
+    }
     if ($filenum != $filenumber) {
       # This should not be possible */
       $filenumber = $filenum;
     }
+  } elsif (/START taper/) {
+    if (/^([A-Z]+) taper (\S+) (\S+) ("ST:\S+") ("POOL:\S+") (\S+) (\S+) (\S+)/) {
+        $date = $3;
+        $storage = $4;
+        $pool = $5;
+        $label = $7;
+        $level = $7;
+    } else {
+        /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+)/;
+        $date = $3;
+        $label = $4;
+        $level = $5;
+    }
   } else {
-    /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+)/;
-    $host = $2;
-    $disk = $3;
-    $date = $4;
-    $chunk = $5;
-    $level = $6;
+    if (/^([A-Z]+) taper ("ST:\S+") ("POOL:\S+") (\S+) (\S+) (\S+) (\S+) (\S+)/) {
+        $storage = $2;
+        $pool = $3;
+        $host = $4;
+        $disk = $5;
+        $date = $6;
+        $chunk = $7;
+        $level = $8;
+	$label = $labels{$storage}{$pool}{$host}{$disk}{$date};
+    } else {
+        /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+)/;
+        $host = $2;
+        $disk = $3;
+        $date = $4;
+        $chunk = $5;
+        $level = $6;
+    }
   }
   switch: {
     /START taper/ && do {
-      $tocfilename=&tfn($chunk) if ($#subs >= 0);
-      if (!$tocfilename || ($tocfilename eq '-')) {$OF=STDOUT;}
+      $tocfilename=&tfn($label) if ($#subs >= 0);
+      if (!$tocfilename || ($tocfilename eq '-')) {$OF=*STDOUT;}
       else {
-          die ("Cannot open tocfile $tocfilename") unless open(OF,">$tocfilename");
-          $OF=OF;
+          die ("Cannot open tocfile $tocfilename") unless open($OF,">$tocfilename");
         }
 
 	print $OF "\f" if ($vwspace && $filenumber);
@@ -203,8 +281,9 @@ while ( <$IF> ) {
 
 
       $filenumber=0;
-      &pr("#","Server","/partition","date", "level","size[Kb]","part");
-      &pr("$filenumber","$chunk","","$disk","-","-","-");
+#      &pr("#","Server","/partition","date", "level","size[Kb]","part");
+#      &pr("$filenumber","$label","","$date","-","-","-");
+      $dates{$label} = $date;
       last switch; };
     /^(?:SUCCESS|CHUNK|PART|DONE) taper/ && do {
       if(/SUCCESS/){
@@ -217,18 +296,23 @@ while ( <$IF> ) {
 	$filenumber--;
 	$filenum = " ";
       }
-      $mysize = 0;
+      my $mysize = 0;
       if(/ kb (\d+) /){
 	$mysize = $1;
+      } elsif(/ bytes (\d+) /){
+	$mysize = int($1/1024);
       }
       if ( $fail{$host}{$disk} ) {
-        &pr("$filenum","${host}","${disk}","${date}","${level}","FAIL","${chunk}");
+	my @line = ($filenum, $host, $disk, $date, $level, "FAIL", $chunk);
+	push @{$lines{$label}}, \@line;
       } else {
-  	if (defined($flash_mode)) {
-          &pr("$filenum","${host}","${disk}","${date}","${level}","$mysize","${chunk}");
+	if (defined($flash_mode)) {
+	  my @line = ($filenum, $host, $disk, $date, $level, "$mysize", $chunk);
+	  push @{$lines{$label}}, \@line;
 	} else {
-  	  if (defined($osize{$host}{$disk}) && !/^CHUNK/ && !/^PART/) {
-            &pr("$filenum","${host}","${disk}","${date}","${level}","$osize{$host}{$disk}","${chunk}");
+	  if (defined($osize{$host}{$disk}) && !/^CHUNK/ && !/^PART/) {
+	    my @line = ($filenum, $host, $disk, $date, $level, "$osize{$host}{$disk}", $chunk);
+	    push @{$lines{$label}}, \@line;
 	  } else {
 	    $note = "";
 	    if(!/^CHUNK/ && !/^PART/){
@@ -236,7 +320,8 @@ while ( <$IF> ) {
 	    } else {
 	      $note = "*";
 	    }
-            &pr("$filenum","${host}","${disk}","${date}","${level}","$note$mysize","${chunk}");
+	    my @line = ($filenum, $host, $disk, $date, $level, "$note$mysize", $chunk);
+	    push @{$lines{$label}}, \@line;
 	  }
 	}
       }
@@ -244,24 +329,47 @@ while ( <$IF> ) {
     /INFO taper retrying/ && do {
       --$filenumber;
       last switch; };
-    /INFO taper tape .* \[OK\]/ && do {
+    /INFO taper tape (\S+) .* \[OK\]/ && do {
+      $label = $1;
       $line =~ / kb (\d+) /;
       $size = $1;
       $line =~ / fm (\d+) /;
-      print "\n\n" if ($vwspace);
-      &pr("$1","total","on_tape","-","-","$size","-");
+      my @line = ($1, "total", "on_tape", "-", "-", "$size", "-");
+      push @{$lines{$label}}, \@line;
       last switch; };
     /FAIL taper/ && do { next; };
   }
   $filenumber += 1;
 }
-if (defined($flash_mode)) {
-  &pr("-","total","origin","-","not","available","-");
-} else {
-  &pr("-","total","origin","-","-","$tot_or_size","-");
-}
 close $IF;
-close OF;
+
+foreach my $label (sort keys %lines) {
+    $tocfilename=&tfn($label) if ($#subs >= 0);
+    if (!$tocfilename || ($tocfilename eq '-')) {$OF=*STDOUT;}
+    else {
+        die ("Cannot open tocfile $tocfilename") unless open($OF,">$tocfilename");
+    }
+    my $ofh = select($OF);
+    $~ = "OF";
+    select($ofh);
+
+    print $OF "\f" if $vwspace;
+    pr("#","Server","/partition","date", "level","size[Kb]","part");
+    pr("0","$label","","$dates{$label}","-","-","-");
+    foreach my $line (@{$lines{$label}}) {
+	&pr(@{$line});
+    }
+
+    print "\n\n" if ($vwspace);
+    if ($tocfilename && $tocfilename ne '-') {
+        close $OF;
+    }
+}
+#if (defined($flash_mode)) {
+#    pr("-","total","origin","-","not","available","-");
+#} else {
+#    pr("-","total","origin","-","-","$tot_or_size","-");
+#}
 
 
 format OF =
@@ -273,3 +381,4 @@ format STDOUT =
 @>>  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<< @>> @>>>>>>>> @>>>
 $fnbr,$hstprt,$dt,$lvl,$sz,$ch
 .
+
