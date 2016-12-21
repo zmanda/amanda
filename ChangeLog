@@ -1,3 +1,6 @@
+2016-12-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Label.pm: Fix for force (-f in amlabel)
+
 2016-12-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amtoc.pl: Fix for new log file format
 
