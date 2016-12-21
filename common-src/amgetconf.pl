@@ -89,6 +89,8 @@ my %build_info = (
 
     'bindir' => $bindir,
     'sbindir' => $sbindir,
+    'libdir' => $libdir,
+    'amlibdir' => $amlibdir,
     'libexecdir' => $libexecdir,
     'amlibexecdir' => $amlibexecdir,
     'mandir' => $mandir,

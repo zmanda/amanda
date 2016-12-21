@@ -1,4 +1,8 @@
 2016-12-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Paths.pm.in: Add $libdir
+	* common-src/amgetconf.pl: Add build.libdir and build.amlibdir
+
+2016-12-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Label.pm: Fix for force (-f in amlabel)
 
 2016-12-19  Jean-Louis Martineau <JMartineau@carbonite.com>
