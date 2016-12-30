@@ -1,3 +1,6 @@
+2016-12-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcheck-device.pl: Fix printing error
+
 2016-12-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Paths.pm.in: Add $libdir
 	* common-src/amgetconf.pl: Add build.libdir and build.amlibdir
