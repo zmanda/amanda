@@ -126,6 +126,8 @@ sub _user_msg_fn {
 		    print STDERR " $params{'err'}\n";
                 } elsif (defined $volume_label) {
                     print STDERR " volume '$volume_label'\n";
+		} elsif ($params{'err'}) {
+		    print STDERR " $params{'err'}\n";
                 } else {
                     #print STDERR " volume '$volume_label'\n";
                 }
@@ -137,7 +139,6 @@ sub _user_msg_fn {
 		if ($dev->directtcp_supported()) {
 		    $directtcp = "DIRECTTCP ";
 		}
-		print STDOUT "DATA-PATH AMANDA $directtcp\n";
 
                 if (exists($params{'search_result'})) {
                     print STDERR "found in slot $res->{'this_slot'}:";
