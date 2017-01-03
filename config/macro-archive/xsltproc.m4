@@ -68,7 +68,7 @@ AS_HELP_STRING([--with-xsltproc[[[[[=PATH]]]]]],
 AC_ARG_WITH(xsltproc-flags,
 AS_HELP_STRING([  --with-xsltproc-flags=FLAGS],
                [Flags to pass to xsltproc (default $1)]),
-    [ if test "x$withval" == "xno"; then
+    [ if test "x$withval" = "xno"; then
 	XSLTPROC_FLAGS=''
     else
 	if test "x$withval" != "xyes"; then
