@@ -169,7 +169,7 @@ security_file_get_boolean(
 		    fclose(sec_file);
 		    return FALSE;
 		}
-		error("BOGUS line '%s' in /etc/amanda-security.conf file", oline);
+		error("BOGUS line '%s' in " DEFAULT_SECURITY_FILE " file", oline);
 	    }
 	}
     }
