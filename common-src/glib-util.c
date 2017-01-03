@@ -37,7 +37,7 @@
 #include <curl/curl.h>
 #endif
 
-#if defined LIBCURL_USE_OPENSSL || defined SSL_SECURITY
+#if (defined HAVE_LIBCURL && defined LIBCURL_USE_OPENSSL) || defined SSL_SECURITY
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -75,7 +75,7 @@ init_openssl(void)
 
 #endif /* LIBCURL_USE_OPENSSL */
 
-#if defined LIBCURL_USE_GNUTLS_GCRYPT
+#if defined HAVE_LIBCURL && defined LIBCURL_USE_GNUTLS_GCRYPT
 
 #include <gcrypt.h>
 #include <errno.h>
@@ -98,10 +98,10 @@ static void
 init_ssl(void)
 {
 
-#if defined LIBCURL_USE_OPENSSL || defined SSL_SECURITY
+#if (defined HAVE_LIBCURL && defined LIBCURL_USE_OPENSSL) || defined SSL_SECURITY
     init_openssl();
 #endif
-#if defined LIBCURL_USE_GNUTLS_GCRYPT
+#if defined HAVE_LIBCURL && defined LIBCURL_USE_GNUTLS_GCRYPT
     init_gnutls_gcrypt();
 #endif
 }

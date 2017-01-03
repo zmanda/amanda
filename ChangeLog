@@ -1,4 +1,10 @@
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Eric Schnoebelen <eric@cirr.com>
+	* common-src/glib-util.c: Make sure to use the feature test macro for
+	  LIBCURL before trying to use either the GNUTLS or OPENSSL feature
+	  test macros
+
+2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Print warning if autolabel is set to the
 	  "MATCH-AUTOLABEL" string
 
