@@ -4962,6 +4962,10 @@ read_labelstr(
 	val->v.labelstr.template = g_strdup(tokenval.v.s);
 	val->v.labelstr.match_autolabel = FALSE;
 	get_conftoken(CONF_ANY);
+	if (g_strcasecmp(val->v.labelstr.template, "match-autolabel") == 0 ||
+	    g_strcasecmp(val->v.labelstr.template, "match_autolabel") == 0) {
+	    conf_parswarn("warning: labelstr is set to \"%s\", you probably want the %s keyword, without the double quote", val->v.labelstr.template, val->v.labelstr.template);
+	}
     } else if (tok == CONF_MATCH_AUTOLABEL) {
 	g_free(val->v.labelstr.template);
 	val->v.labelstr.template = NULL;

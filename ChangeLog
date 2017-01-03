@@ -1,3 +1,7 @@
+2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Print warning if autolabel is set to the
+	  "MATCH-AUTOLABEL" string
+
 2016-12-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcheck-device.pl: Fix printing error
 
