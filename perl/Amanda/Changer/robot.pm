@@ -2354,6 +2354,7 @@ package Amanda::Changer::robot::Interface;
 
 package Amanda::Changer::robot::Interface::MTX;
 
+use Carp;
 use Amanda::Paths;
 use Amanda::Config qw( :getconf );
 use Amanda::Debug qw( debug warning );
