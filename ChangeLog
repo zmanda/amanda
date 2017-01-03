@@ -1,5 +1,9 @@
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Eric Schnoebelen <eric@cirr.com>
+	* config/macro-archive/xsltproc.m4: Fix shell portability problem
+
+2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Eric Schnoebelen <eric@cirr.com>
 	* config/amanda/libs.m4: bash-ism's in the autoconf macros.  autoconf
 	  should be written in POSIX sh
 
