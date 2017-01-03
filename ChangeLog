@@ -1,5 +1,10 @@
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Eric Schnoebelen <eric@cirr.com>
+	* common-src/security-file.c: use of autoconf defined feature macro
+	  instead of hardcoded path
+
+2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Eric Schnoebelen <eric@cirr.com>
 	* config/macro-archive/xsltproc.m4: Fix shell portability problem
 
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
