@@ -29,7 +29,8 @@
 #include "conffile.h"
 #include "ammessage.h"
 
-char *errcode[500];
+#define MAX_ERRCODE 500
+char *errcode[MAX_ERRCODE];
 
 void init_errcode(void);
 
@@ -43,411 +44,411 @@ init_errcode(void)
 	return;
     initialize = 1;
 
-    for(i=0; i < 500; i++) {
+    for(i=0; i < MAX_ERRCODE; i++) {
 	errcode[i] = "UNKNOWN";
     }
-#ifdef E2BIG
+#if defined E2BIG && E2BIG<MAX_ERRCODE
   errcode[E2BIG] = "E2BIG";
 #endif
-#ifdef EACCES
+#if defined EACCES && EACCES<MAX_ERRCODE
   errcode[EACCES] = "EACCES";
 #endif
-#ifdef EADDRINUSE
+#if defined EADDRINUSE && EADDRINUSE<MAX_ERRCODE
   errcode[EADDRINUSE] = "EADDRINUSE";
 #endif
-#ifdef EADDRNOTAVAIL
+#if defined EADDRNOTAVAIL && EADDRNOTAVAIL<MAX_ERRCODE
   errcode[EADDRNOTAVAIL] = "EADDRNOTAVAIL";
 #endif
-#ifdef EAFNOSUPPORT
+#if defined EAFNOSUPPORT && EADDRNOTAVAIL<MAX_ERRCODE
   errcode[EAFNOSUPPORT] = "EAFNOSUPPORT";
 #endif
-#ifdef EAGAIN
+#if defined EAGAIN && EAGAIN<MAX_ERRCODE
   errcode[EAGAIN] = "EAGAIN";
 #endif
-#ifdef EALREADY
+#if defined EALREADY && EALREADY<MAX_ERRCODE
   errcode[EALREADY] = "EALREADY";
 #endif
-#ifdef EBADE
+#if defined EBADE && EBADE<MAX_ERRCODE
   errcode[EBADE] = "EBADE";
 #endif
-#ifdef EBADF
+#if defined EBADF && EBADF<MAX_ERRCODE
   errcode[EBADF] = "EBADF";
 #endif
-#ifdef EBADFD
+#if defined EBADFD && EBADFD<MAX_ERRCODE
   errcode[EBADFD] = "EBADFD";
 #endif
-#ifdef EBADMSG
+#if defined EBADMSG && EBADMSG<MAX_ERRCODE
   errcode[EBADMSG] = "EBADMSG";
 #endif
-#ifdef EBADR
+#if defined EBADR && EBADR<MAX_ERRCODE
   errcode[EBADR] = "EBADR";
 #endif
-#ifdef EBADRQC
+#if defined EBADRQC && EBADRQC<MAX_ERRCODE
   errcode[EBADRQC] = "EBADRQC";
 #endif
-#ifdef EBADSLT
+#if defined EBADSLT && EBADSLT<MAX_ERRCODE
   errcode[EBADSLT] = "EBADSLT";
 #endif
-#ifdef EBUSY
+#if defined EBUSY && EBUSY<MAX_ERRCODE
   errcode[EBUSY] = "EBUSY";
 #endif
-#ifdef ECANCELED
+#if defined ECANCELED && ECANCELED<MAX_ERRCODE
   errcode[ECANCELED] = "ECANCELED";
 #endif
-#ifdef ECHILD
+#if defined ECHILD && ECHILD<MAX_ERRCODE
   errcode[ECHILD] = "ECHILD";
 #endif
-#ifdef ECHRNG
+#if defined ECHRNG && ECHRNG<MAX_ERRCODE
   errcode[ECHRNG] = "ECHRNG";
 #endif
-#ifdef ECOMM
+#if defined ECOMM && ECOMM<MAX_ERRCODE
   errcode[ECOMM] = "ECOMM";
 #endif
-#ifdef ECONNABORTED
+#if defined ECONNABORTED && ECONNABORTED<MAX_ERRCODE
   errcode[ECONNABORTED] = "ECONNABORTED";
 #endif
-#ifdef ECONNREFUSED
+#if defined ECONNREFUSED && ECONNREFUSED<MAX_ERRCODE
   errcode[ECONNREFUSED] = "ECONNREFUSED";
 #endif
-#ifdef ECONNRESET
+#if defined ECONNRESET && ECONNRESET<MAX_ERRCODE
   errcode[ECONNRESET] = "ECONNRESET";
 #endif
-#ifdef EDEADLK
+#if defined EDEADLK && EDEADLK<MAX_ERRCODE
   errcode[EDEADLK] = "EDEADLK";
 #endif
-#ifdef EDEADLOCK
+#if defined EDEADLOCK && EDEADLOCK<MAX_ERRCODE
   #if !defined EDEADLK || EDEADLK != EDEADLOCK
     errcode[EDEADLOCK] = "EDEADLOCK";
   #endif
 #endif
-#ifdef EDESTADDRREQ
+#if defined EDESTADDRREQ && EDESTADDRREQ<MAX_ERRCODE
   errcode[EDESTADDRREQ] = "EDESTADDRREQ";
 #endif
-#ifdef EDOM
+#if defined EDOM && EDOM<MAX_ERRCODE
   errcode[EDOM] = "EDOM";
 #endif
-#ifdef EDQUOT
+#if defined EDQUOT && EDQUOT<MAX_ERRCODE
   errcode[EDQUOT] = "EDQUOT";
 #endif
-#ifdef EEXIST
+#if defined EEXIST && EEXIST<MAX_ERRCODE
   errcode[EEXIST] = "EEXIST";
 #endif
-#ifdef EFAULT
+#if defined EFAULT && EFAULT<MAX_ERRCODE
   errcode[EFAULT] = "EFAULT";
 #endif
-#ifdef EFBIG
+#if defined EFBIG && EFBIG<MAX_ERRCODE
   errcode[EFBIG] = "EFBIG";
 #endif
-#ifdef EHOSTDOWN
+#if defined EHOSTDOWN && EHOSTDOWN<MAX_ERRCODE
   errcode[EHOSTDOWN] = "EHOSTDOWN";
 #endif
-#ifdef EHOSTUNREACH
+#if defined EHOSTUNREACH && EHOSTUNREACH<MAX_ERRCODE
   errcode[EHOSTUNREACH] = "EHOSTUNREACH";
 #endif
-#ifdef EIDRM
+#if defined EIDRM && EIDRM<MAX_ERRCODE
   errcode[EIDRM] = "EIDRM";
 #endif
-#ifdef EILSEQ
+#if defined EILSEQ && EILSEQ<MAX_ERRCODE
   errcode[EILSEQ] = "EILSEQ";
 #endif
-#ifdef EINPROGRESS
+#if defined EINPROGRESS && EINPROGRESS<MAX_ERRCODE
   errcode[EINPROGRESS] = "EINPROGRESS";
 #endif
-#ifdef EINTR
+#if defined EINTR && EINTR<MAX_ERRCODE
   errcode[EINTR] = "EINTR";
 #endif
-#ifdef EINVAL
+#if defined EINVAL && EINVAL<MAX_ERRCODE
   errcode[EINVAL] = "EINVAL";
 #endif
-#ifdef EIO
+#if defined EIO && EIO<MAX_ERRCODE
   errcode[EIO] = "EIO";
 #endif
-#ifdef EISCONN
+#if defined EISCONN && EISCONN<MAX_ERRCODE
   errcode[EISCONN] = "EISCONN";
 #endif
-#ifdef EISDIR
+#if defined EISDIR && EISDIR<MAX_ERRCODE
   errcode[EISDIR] = "EISDIR";
 #endif
-#ifdef EISNAM
+#if defined EISNAM && EISNAM<MAX_ERRCODE
   errcode[EISNAM] = "EISNAM";
 #endif
-#ifdef EKEYEXPIRED
+#if defined EKEYEXPIRED && EKEYEXPIRED<MAX_ERRCODE
   errcode[EKEYEXPIRED] = "EKEYEXPIRED";
 #endif
-#ifdef EKEYREJECTED
+#if defined EKEYREJECTED && EKEYREJECTED<MAX_ERRCODE
   errcode[EKEYREJECTED] = "EKEYREJECTED";
 #endif
-#ifdef EKEYREVOKED
+#if defined EKEYREVOKED && EKEYREVOKED<MAX_ERRCODE
   errcode[EKEYREVOKED] = "EKEYREVOKED";
 #endif
-#ifdef EL2HLT
+#if defined EL2HLT && EL2HLT<MAX_ERRCODE
   errcode[EL2HLT] = "EL2HLT";
 #endif
-#ifdef EL2NSYNC
+#if defined EL2NSYNC && EL2NSYNC<MAX_ERRCODE
   errcode[EL2NSYNC] = "EL2NSYNC";
 #endif
-#ifdef EL3HLT
+#if defined EL3HLT && EL3HLT<MAX_ERRCODE
   errcode[EL3HLT] = "EL3HLT";
 #endif
-#ifdef EL3RST
+#if defined EL3RST && EL3RST<MAX_ERRCODE
   errcode[EL3RST] = "EL3RST";
 #endif
-#ifdef ELIBACC
+#if defined ELIBACC && ELIBACC<MAX_ERRCODE
   errcode[ELIBACC] = "ELIBACC";
 #endif
-#ifdef ELIBBAD
+#if defined ELIBBAD && ELIBBAD<MAX_ERRCODE
   errcode[ELIBBAD] = "ELIBBAD";
 #endif
-#ifdef ELIBMAX
+#if defined ELIBMAX && ELIBMAX<MAX_ERRCODE
   errcode[ELIBMAX] = "ELIBMAX";
 #endif
-#ifdef ELIBSCN
+#if defined ELIBSCN && ELIBSCN<MAX_ERRCODE
   errcode[ELIBSCN] = "ELIBSCN";
 #endif
-#ifdef ELIBEXEC
+#if defined ELIBEXEC && ELIBEXEC<MAX_ERRCODE
   errcode[ELIBEXEC] = "ELIBEXEC";
 #endif
-#ifdef ELOOP
+#if defined ELOOP && ELOOP<MAX_ERRCODE
   errcode[ELOOP] = "ELOOP";
 #endif
-#ifdef EMEDIUMTYPE
+#if defined EMEDIUMTYPE && EMEDIUMTYPE<MAX_ERRCODE
   errcode[EMEDIUMTYPE] = "EMEDIUMTYPE";
 #endif
-#ifdef EMFILE
+#if defined EMFILE && EMFILE<MAX_ERRCODE
   errcode[EMFILE] = "EMFILE";
 #endif
-#ifdef EMLINK
+#if defined EMLINK && EMLINK<MAX_ERRCODE
   errcode[EMLINK] = "EMLINK";
 #endif
-#ifdef EMSGSIZE
+#if defined EMSGSIZE && EMSGSIZE<MAX_ERRCODE
   errcode[EMSGSIZE] = "EMSGSIZE";
 #endif
-#ifdef EMULTIHOP
+#if defined EMULTIHOP && EMULTIHOP<MAX_ERRCODE
   errcode[EMULTIHOP] = "EMULTIHOP";
 #endif
-#ifdef ENAMETOOLONG
+#if defined ENAMETOOLONG && ENAMETOOLONG<MAX_ERRCODE
   errcode[ENAMETOOLONG] = "ENAMETOOLONG";
 #endif
-#ifdef ENETDOWN
+#if defined ENETDOWN && ENETDOWN<MAX_ERRCODE
   errcode[ENETDOWN] = "ENETDOWN";
 #endif
-#ifdef ENETRESET
+#if defined ENETRESET && ENETRESET<MAX_ERRCODE
   errcode[ENETRESET] = "ENETRESET";
 #endif
-#ifdef ENETUNREACH
+#if defined ENETUNREACH && ENETUNREACH<MAX_ERRCODE
   errcode[ENETUNREACH] = "ENETUNREACH";
 #endif
-#ifdef ENFILE
+#if defined ENFILE && ENFILE<MAX_ERRCODE
   errcode[ENFILE] = "ENFILE";
 #endif
-#ifdef ENOBUFS
+#if defined ENOBUFS && ENOBUFS<MAX_ERRCODE
   errcode[ENOBUFS] = "ENOBUFS";
 #endif
-#ifdef ENODATA
+#if defined ENODATA && ENODATA<MAX_ERRCODE
   errcode[ENODATA] = "ENODATA";
 #endif
-#ifdef ENODEV
+#if defined ENODEV && ENODEV<MAX_ERRCODE
   errcode[ENODEV] = "ENODEV";
 #endif
-#ifdef ENOENT
+#if defined ENOENT && ENOENT<MAX_ERRCODE
   errcode[ENOENT] = "ENOENT";
 #endif
-#ifdef ENOEXEC
+#if defined ENOEXEC && ENOEXEC<MAX_ERRCODE
   errcode[ENOEXEC] = "ENOEXEC";
 #endif
-#ifdef ENOKEY
+#if defined ENOKEY && ENOKEY<MAX_ERRCODE
   errcode[ENOKEY] = "ENOKEY";
 #endif
-#ifdef ENOLCK
+#if defined ENOLCK && ENOLCK<MAX_ERRCODE
   errcode[ENOLCK] = "ENOLCK";
 #endif
-#ifdef ENOLINK
+#if defined ENOLINK && ENOLINK<MAX_ERRCODE
   errcode[ENOLINK] = "ENOLINK";
 #endif
-#ifdef ENOMEDIUM
+#if defined ENOMEDIUM && ENOMEDIUM<MAX_ERRCODE
   errcode[ENOMEDIUM] = "ENOMEDIUM";
 #endif
-#ifdef ENOMEM
+#if defined ENOMEM && ENOMEM<MAX_ERRCODE
   errcode[ENOMEM] = "ENOMEM";
 #endif
-#ifdef ENOMSG
+#if defined ENOMSG && ENOMSG<MAX_ERRCODE
   errcode[ENOMSG] = "ENOMSG";
 #endif
-#ifdef ENONET
+#if defined ENONET && ENONET<MAX_ERRCODE
   errcode[ENONET] = "ENONET";
 #endif
-#ifdef ENOPKG
+#if defined ENOPKG && ENOPKG<MAX_ERRCODE
   errcode[ENOPKG] = "ENOPKG";
 #endif
-#ifdef ENOPROTOOPT
+#if defined ENOPROTOOPT && ENOPROTOOPT<MAX_ERRCODE
   errcode[ENOPROTOOPT] = "ENOPROTOOPT";
 #endif
-#ifdef ENOSPC
+#if defined ENOSPC && ENOSPC<MAX_ERRCODE
   errcode[ENOSPC] = "ENOSPC";
 #endif
-#ifdef ENOSR
+#if defined ENOSR && ENOSR<MAX_ERRCODE
   errcode[ENOSR] = "ENOSR";
 #endif
-#ifdef ENOSTR
+#if defined ENOSTR && ENOSTR<MAX_ERRCODE
   errcode[ENOSTR] = "ENOSTR";
 #endif
-#ifdef ENOSYS
+#if defined ENOSYS && ENOSYS<MAX_ERRCODE
   errcode[ENOSYS] = "ENOSYS";
 #endif
-#ifdef ENOTBLK
+#if defined ENOTBLK && ENOTBLK<MAX_ERRCODE
   errcode[ENOTBLK] = "ENOTBLK";
 #endif
-#ifdef ENOTCONN
+#if defined ENOTCONN && ENOTCONN<MAX_ERRCODE
   errcode[ENOTCONN] = "ENOTCONN";
 #endif
-#ifdef ENOTDIR
+#if defined ENOTDIR && ENOTDIR<MAX_ERRCODE
   errcode[ENOTDIR] = "ENOTDIR";
 #endif
-#ifdef ENOTEMPTY
+#if defined ENOTEMPTY && ENOTEMPTY<MAX_ERRCODE
   errcode[ENOTEMPTY] = "ENOTEMPTY";
 #endif
-#ifdef ENOTSOCK
+#if defined ENOTSOCK && ENOTSOCK<MAX_ERRCODE
   errcode[ENOTSOCK] = "ENOTSOCK";
 #endif
-#ifdef ENOTSUP
+#if defined ENOTSUP && ENOTSUP<MAX_ERRCODE
   errcode[ENOTSUP] = "ENOTSUP";
 #endif
-#ifdef ENOTTY
+#if defined ENOTTY && ENOTTY<MAX_ERRCODE
   errcode[ENOTTY] = "ENOTTY";
 #endif
-#ifdef ENOTUNIQ
+#if defined ENOTUNIQ && ENOTUNIQ<MAX_ERRCODE
   errcode[ENOTUNIQ] = "ENOTUNIQ";
 #endif
-#ifdef ENXIO
+#if defined ENXIO && ENXIO<MAX_ERRCODE
   errcode[ENXIO] = "ENXIO";
 #endif
-#ifdef EOPNOTSUPP
+#if defined EOPNOTSUPP && EOPNOTSUPP<MAX_ERRCODE
   errcode[EOPNOTSUPP] = "EOPNOTSUPP";
 #endif
-#ifdef EOVERFLOW
+#if defined EOVERFLOW && EOVERFLOW<MAX_ERRCODE
   errcode[EOVERFLOW] = "EOVERFLOW";
 #endif
-#ifdef EPERM
+#if defined EPERM && EPERM<MAX_ERRCODE
   errcode[EPERM] = "EPERM";
 #endif
-#ifdef EPFNOSUPPORT
+#if defined EPFNOSUPPORT && EPFNOSUPPORT<MAX_ERRCODE
   errcode[EPFNOSUPPORT] = "EPFNOSUPPORT";
 #endif
-#ifdef EPIPE
+#if defined EPIPE && EPIPE<MAX_ERRCODE
   errcode[EPIPE] = "EPIPE";
 #endif
-#ifdef EPROTO
+#if defined EPROTO && EPROTO<MAX_ERRCODE
   errcode[EPROTO] = "EPROTO";
 #endif
-#ifdef EPROTONOSUPPORT
+#if defined EPROTONOSUPPORT && EPROTONOSUPPORT<MAX_ERRCODE
   errcode[EPROTONOSUPPORT] = "EPROTONOSUPPORT";
 #endif
-#ifdef EPROTOTYPE
+#if defined EPROTOTYPE && EPROTOTYPE<MAX_ERRCODE
   errcode[EPROTOTYPE] = "EPROTOTYPE";
 #endif
-#ifdef ERANGE
+#if defined ERANGE && ERANGE<MAX_ERRCODE
   errcode[ERANGE] = "ERANGE";
 #endif
-#ifdef EREMCHG
+#if defined EREMCHG && EREMCHG<MAX_ERRCODE
   errcode[EREMCHG] = "EREMCHG";
 #endif
-#ifdef EREMOTE
+#if defined EREMOTE && EREMOTE<MAX_ERRCODE
   errcode[EREMOTE] = "EREMOTE";
 #endif
-#ifdef EREMOTEIO
+#if defined EREMOTEIO && EREMOTEIO<MAX_ERRCODE
   errcode[EREMOTEIO] = "EREMOTEIO";
 #endif
-#ifdef ERESTART
+#if defined ERESTART && ERESTART<MAX_ERRCODE
   errcode[ERESTART] = "ERESTART";
 #endif
-#ifdef EROFS
+#if defined EROFS && EROFS<MAX_ERRCODE
   errcode[EROFS] = "EROFS";
 #endif
-#ifdef ESHUTDOWN
+#if defined ESHUTDOWN && ESHUTDOWN<MAX_ERRCODE
   errcode[ESHUTDOWN] = "ESHUTDOWN";
 #endif
-#ifdef ESPIPE
+#if defined ESPIPE && ESPIPE<MAX_ERRCODE
   errcode[ESPIPE] = "ESPIPE";
 #endif
-#ifdef ESOCKTNOSUPPORT
+#if defined ESOCKTNOSUPPORT && ESOCKTNOSUPPORT<MAX_ERRCODE
   errcode[ESOCKTNOSUPPORT] = "ESOCKTNOSUPPORT";
 #endif
-#ifdef ESRCH
+#if defined ESRCH && ESRCH<MAX_ERRCODE
   errcode[ESRCH] = "ESRCH";
 #endif
-#ifdef ESTALE
+#if defined ESTALE && ESTALE<MAX_ERRCODE
   errcode[ESTALE] = "ESTALE";
 #endif
-#ifdef ESTRPIPE
+#if defined ESTRPIPE && ESTRPIPE<MAX_ERRCODE
   errcode[ESTRPIPE] = "ESTRPIPE";
 #endif
-#ifdef ETIME
+#if defined ETIME && ETIME<MAX_ERRCODE
   errcode[ETIME] = "ETIME";
 #endif
-#ifdef ETIMEDOUT
+#if defined ETIMEDOUT && ETIMEDOUT<MAX_ERRCODE
   errcode[ETIMEDOUT] = "ETIMEDOUT";
 #endif
-#ifdef ETXTBSY
+#if defined ETXTBSY && ETXTBSY<MAX_ERRCODE
   errcode[ETXTBSY] = "ETXTBSY";
 #endif
-#ifdef EUCLEAN
+#if defined EUCLEAN && EUCLEAN<MAX_ERRCODE
   errcode[EUCLEAN] = "EUCLEAN";
 #endif
-#ifdef EUNATCH
+#if defined EUNATCH && EUNATCH<MAX_ERRCODE
   errcode[EUNATCH] = "EUNATCH";
 #endif
-#ifdef EUSERS
+#if defined EUSERS && EUSERS<MAX_ERRCODE
   errcode[EUSERS] = "EUSERS";
 #endif
-#ifdef EWOULDBLOCK
+#if defined EWOULDBLOCK && EWOULDBLOCK<MAX_ERRCODE
   errcode[EWOULDBLOCK] = "EWOULDBLOCK";
 #endif
-#ifdef EXDEV
+#if defined EXDEV && EXDEV<MAX_ERRCODE
   errcode[EXDEV] = "EXDEV";
 #endif
-#ifdef EXFULL
+#if defined EXFULL && EXFULL<MAX_ERRCODE
   errcode[EXFULL] = "EXFULL";
 #endif
-#ifdef EOWNERDEAD
+#if defined EOWNERDEAD && EOWNERDEAD<MAX_ERRCODE
   errcode[EOWNERDEAD] = "EOWNERDEAD";
 #endif
-#ifdef ENOTRECOVERABLE
+#if defined ENOTRECOVERABLE && ENOTRECOVERABLE<MAX_ERRCODE
   errcode[ENOTRECOVERABLE] = "ENOTRECOVERABLE";
 #endif
-#ifdef ERFKILL
+#if defined ERFKILL && ERFKILL<MAX_ERRCODE
   errcode[ERFKILL] = "ERFKILL";
 #endif
-#ifdef EHWPOISON
+#if defined EHWPOISON && EHWPOISON<MAX_ERRCODE
   errcode[EHWPOISON] = "EHWPOISON";
 #endif
-#ifdef ETOOMANYREFS
+#if defined ETOOMANYREFS && ETOOMANYREFS<MAX_ERRCODE
   errcode[ETOOMANYREFS] = "ETOOMANYREFS";
 #endif
-#ifdef ENOTNAM
+#if defined ENOTNAM && ENOTNAM<MAX_ERRCODE
   errcode[ENOTNAM] = "ENOTNAM";
 #endif
-#ifdef ENAVAIL
+#if defined ENAVAIL && ENAVAIL<MAX_ERRCODE
   errcode[ENAVAIL] = "ENAVAIL";
 #endif
-#ifdef EDOTDOT
+#if defined EDOTDOT && EDOTDOT<MAX_ERRCODE
   errcode[EDOTDOT] = "EDOTDOT";
 #endif
-#ifdef ESRMNT
+#if defined ESRMNT && ESRMNT<MAX_ERRCODE
   errcode[ESRMNT] = "ESRMNT";
 #endif
-#ifdef EADV
+#if defined EADV && EADV<MAX_ERRCODE
   errcode[EADV] = "EADV";
 #endif
-#ifdef EBFONT
+#if defined EBFONT && EBFONT<MAX_ERRCODE
   errcode[EBFONT] = "EBFONT";
 #endif
-#ifdef ENOANO
+#if defined ENOANO && ENOANO<MAX_ERRCODE
   errcode[ENOANO] = "ENOANO";
 #endif
-#ifdef ENOCSI
+#if defined ENOCSI && ENOCSI<MAX_ERRCODE
   errcode[ENOCSI] = "ENOCSI";
 #endif
-#ifdef ELNRNG
+#if defined ELNRNG && ELNRNG<MAX_ERRCODE
   errcode[ELNRNG] = "ELNRNG";
 #endif
 }
@@ -1815,7 +1816,11 @@ build_message(
 	if (strcmp(key,"errno") == 0) {
 	    int m_errno = va_arg(marker, int);
 	    message->merrno = m_errno;
-	    message->errnocode = errcode[m_errno];
+	    if (m_errno < MAX_ERRCODE) {
+		message->errnocode = errcode[m_errno];
+	    } else {
+		message->errnocode = "UNKNOWN";
+	    }
 	    message->errnostr = g_strdup(strerror(m_errno));
 	} else {
             message->arg_array[j].key = g_strdup(key);
@@ -2370,7 +2375,11 @@ parse_json_message(
 	    case '}':
 		assert(message);
 		if (message->merrno != 0 && message->errnocode == NULL) {
-		    message->errnocode = errcode[message->merrno];
+		    if (message->merrno < MAX_ERRCODE) {
+			message->errnocode = errcode[message->merrno];
+		    } else {
+			message->errnocode = "UNKNOWN";
+		    }
 		}
 		if (message->merrno != 0 && message->errnostr == NULL) {
 		    message->errnostr = g_strdup(strerror(message->merrno));

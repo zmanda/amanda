@@ -1,7 +1,11 @@
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Initial patch by Eric Schnoebelen <eric@cirr.com>
+	* common-src/ammessage.c: Check bound on err_code array
+
+2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Eric Schnoebelen <eric@cirr.com>
 	* common-src/security-file.c: use of autoconf defined feature macro
-  instead of hardcoded path
+	  instead of hardcoded path
 
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Eric Schnoebelen <eric@cirr.com>
