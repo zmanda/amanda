@@ -1,5 +1,10 @@
 2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Eric Schnoebelen <eric@cirr.com>
+	* config/amanda/libs.m4: bash-ism's in the autoconf macros.  autoconf
+	  should be written in POSIX sh
+
+2017-01-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Eric Schnoebelen <eric@cirr.com>
 	* common-src/glib-util.c: Make sure to use the feature test macro for
 	  LIBCURL before trying to use either the GNUTLS or OPENSSL feature
 	  test macros
