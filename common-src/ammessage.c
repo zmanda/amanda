@@ -2214,7 +2214,6 @@ parse_json_array(
 		break;
 	}
     }
-    s=s;
 
     return;
 }
@@ -2308,7 +2307,6 @@ parse_json_hash(
 		break;
 	}
     }
-    s=s;
 
     return;
 }
@@ -2516,7 +2514,6 @@ parse_json_message(
 		break;
 	}
     }
-    s=s;
 
     return message_array;
 }

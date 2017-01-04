@@ -2149,7 +2149,7 @@ crc32_init(
     crc->size = 0;
 }
 
-#ifdef __GNUC__
+#if defined __GNUC__ || defined __clang__
   #define PREFETCH(location) __builtin_prefetch(location)
 #else
   #define PREFETCH(location)
@@ -2173,7 +2173,7 @@ static inline uint32_t
 swap(
     uint32_t data)
 {
-#if defined(__GNUC__) && GCC_VERSION >= 40300
+#if (defined(__GNUC__) && GCC_VERSION >= 40300) || defined __clang__
     return __builtin_bswap32(data);
 #else
     return (data >> 24) |

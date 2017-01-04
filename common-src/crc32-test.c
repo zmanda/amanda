@@ -96,12 +96,12 @@ test_size(
  */
 
 int
-main(int argc, char **argv)
+main(
+    int    argc G_GNUC_UNUSED,
+    char **argv G_GNUC_UNUSED)
 {
     int i;
     int nb_error = 0;
-    argc =argc;
-    argv =argv;
 
     make_crc_table();
     init_test_buf();
