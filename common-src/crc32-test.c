@@ -49,25 +49,25 @@ test_size(
 {
     crc_t crc1;
     crc_t crc16;
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#ifdef __SSE4_2__
     crc_t crchw;
 #endif
 
     crc32_init(&crc1);
     crc32_init(&crc16);
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#ifdef __SSE4_2__
     crc32_init(&crchw);
 #endif
 
     crc32_add_1byte(test_buf, size, &crc1);
     crc32_add_16bytes(test_buf, size, &crc16);
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#ifdef __SSE4_2__
     if (have_sse42) {
 	crc32c_add_hw(test_buf, size, &crchw);
     }
 #endif
 
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#ifdef __SSE4_2__
     g_fprintf(stderr, " %08x:%lld  %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size, crc32_finish(&crchw), (long long)crchw.size);
 #else
     g_fprintf(stderr, " %08x:%lld  %08x:%lld\n", crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size);
@@ -78,7 +78,7 @@ test_size(
 	g_fprintf(stderr, " CRC16 %zu %08x:%lld != %08x:%lld\n", size, crc32_finish(&crc1), (long long)crc1.size, crc32_finish(&crc16), (long long)crc16.size);
 	return FALSE;
     }
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#ifdef __SSE4_2__
     if (have_sse42) {
 	if (crc1.crc != crchw.crc ||
 	    crc1.size != crchw.size) {
