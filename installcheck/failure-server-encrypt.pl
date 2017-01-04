@@ -415,7 +415,7 @@ localhost    diskname2   0              64    --      PARTIAL        0:00 999999
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
-check_amreport($report, $timestamp, "amreport first amdump");
+check_amreport($report, $timestamp, "amreport first amdump", undef, 1);
 
 # amstatus
 
