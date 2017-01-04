@@ -1879,7 +1879,7 @@ make_amanda_tmpdir(void)
 }
 
 #define POLY 0x82F63B78
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#if defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__
 static int get_sse42(void)
 {
     uint32_t op, eax, ebx, ecx, edx;
@@ -1908,12 +1908,10 @@ static int get_sse42(void)
 
 static uint32_t crc_table[16][256];
 static gboolean crc_initialized = FALSE;
-int have_sse42 = 0;
+gboolean have_sse42 = FALSE;
 void (* crc32_function)(uint8_t *buf, size_t len, crc_t *crc);
 
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
   #include "amcrc32chw.h"
-#endif
 
 /* Run this function previously */
 void
@@ -1924,14 +1922,15 @@ make_crc_table(void)
     int slice;
 
     if (!crc_initialized) {
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
-	have_sse42 = get_sse42();
+	if (compiled_with_sse4_2) {
+	    have_sse42 = get_sse42();
+	}
 	if (have_sse42) {
 	    crc32c_init_hw();
 	    crc32_function = &crc32c_add_hw;
-	} else
-#endif
+	} else {
             crc32_function = &crc32_add_16bytes;
+	}
 
         for (i = 0; i < 256; i++) {
             uint32_t c = i;
