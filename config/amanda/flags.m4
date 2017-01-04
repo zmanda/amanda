@@ -351,8 +351,25 @@ AC_DEFUN([AMANDA_TEST_GCC_FLAG],
 [
     AC_REQUIRE([AC_PROG_CC])
     AC_REQUIRE([AC_PROG_EGREP])
-    AC_MSG_CHECKING(for gcc flag $1)
-    if test "x$GCC" = "xyes"; then
+    AC_MSG_CHECKING(for $CC flag $1)
+    if test "x$CC" = "xclang"; then
+	if test "x$1" = "x-msse4.2";then
+	    found_warning=yes
+	    AC_MSG_RESULT(yes)
+	elif test "x$1" = "x-Werror";then
+	    found_warning=yes
+	    AC_MSG_RESULT(yes)
+	elif test "x$1" = "x-Wextra";then
+	    found_warning=yes
+	    AC_MSG_RESULT(yes)
+	elif test "x$1" = "x-Wno-int";then
+	    found_warning=no
+	    AC_MSG_RESULT(no)
+	else
+	    found_warning=yes
+	    AC_MSG_RESULT(yes)
+	fi
+    elif test "x$GCC" = "xyes"; then
 	changequote(,)dnl
 	($CC --help={target,optimizers,warnings,undocumented,params,c} 2>&1 || 
            $CC -v --help 2>&1) | 
@@ -367,7 +384,7 @@ AC_DEFUN([AMANDA_TEST_GCC_FLAG],
 	fi
     else
 	found_warning=no
-	AC_MSG_RESULT(no (not using gcc))
+	AC_MSG_RESULT(no (not using gcc or clang))
     fi
 
     if test x"$found_warning" = x"yes"; then

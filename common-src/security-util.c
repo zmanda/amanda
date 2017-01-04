@@ -180,12 +180,9 @@ sec_connect_timeout(
 
 void
 sec_close_connection_none(
-    void *h,
-    char *hostname)
+    void *h G_GNUC_UNUSED,
+    char *hostname G_GNUC_UNUSED)
 {
-    h = h;
-    hostname = hostname;
-
     return;
 }
 

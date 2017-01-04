@@ -5282,7 +5282,7 @@ get_multiplier(
     get_conftoken(CONF_ANY);
 
     if (tok == CONF_NL || tok == CONF_END) { /* no multiplier */
-	val = val;
+	// val = val;
     } else if (tok == CONF_MULT1 && unit == CONF_UNIT_K) {
 	val /= 1024;
     } else if (tok == CONF_MULT1 ||
@@ -5312,7 +5312,7 @@ get_multiplier(
 	    conf_parserror(_("value too large"));
 	val *= 1024*1024*1024*1024LL;
     } else {
-	val *= 1;
+	// val *= 1;
 	unget_conftoken();
     }
 
