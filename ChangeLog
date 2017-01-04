@@ -1,4 +1,8 @@
 2017-01-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/failure-server-encrypt.pl: Call check_amreport with
+	  skip_size
+
+2017-01-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/flags.m4: Detect clang compiler
 	* common-src/ammessage.c: Fix warning found by clang compiler
 	* common-src/amutil.c: Fix warning found by clang compiler
