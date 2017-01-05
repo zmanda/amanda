@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 88;
+use Test::More tests => 91;
 use strict;
 use warnings;
 
@@ -134,6 +134,12 @@ is(run_get('amgetconf', 'TESTCONF', "build.AMANDA_TMPDIR"), $AMANDA_TMPDIR,
 is(run_get('amgetconf', 'TESTCONF', "build.CONFIG_DIR"), $CONFIG_DIR,
     "build.CONFIG_DIR is correct");
 is(run_get('amgetconf', 'TESTCONF', "build.__empty"), "",
+    "empty build variables handled correctly");
+is(run_get('amgetconf', "build.amdatadir"), $amdatadir,
+    "empty build variables handled correctly");
+is(run_get('amgetconf', 'TESTCONF', "build.security_file"), $SECURITY_FILE,
+    "empty build variables handled correctly");
+is(run_get('amgetconf', "build.amandates_file"), $AMANDATES_FILE,
     "empty build variables handled correctly");
 
 like(run_err('amgetconf', 'TESTCONF', "build.bogus-param"), qr(no such parameter),
