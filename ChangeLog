@@ -1,4 +1,9 @@
 2017-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Eric Schnoebelen <eric@cirr.com>
+	* config/amanda/defaults.m4: Install amanda-security.conf in
+	  $sysconfdir
+
+2017-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Paths.pm.in: export SECURITY_FILE and AMANDATES_FILE
 	* common-src/amgetconf.pl: Add build.amdatadir, build.security_file
 	  and build.amandates_file
