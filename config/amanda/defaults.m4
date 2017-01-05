@@ -125,15 +125,15 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 
     AC_ARG_WITH(security-file,
         AS_HELP_STRING([--with-security-file],
-            [Full path of the security file (default: /etc/amanda-security.conf)]),
+            [Full path of the security file (default: $sysconfdir/amanda-security.conf)]),
 	    [
 	    case "$withval" in
 	        n | no) AC_MSG_ERROR([*** --without-security-file is not allowed.]);;
-	        y |  ye | yes) security_file='/etc/amanda-security.conf' ;;
+	        y |  ye | yes) security_file='$sysconfdir/amanda-security.conf' ;;
 	        *) security_file="$withval";;
 	    esac
 	    ],
-	    [security_file='/etc/amanda-security.conf']
+	    [security_file='$sysconfdir/amanda-security.conf']
     )
 
     AC_DEFINE_DIR([DEFAULT_SECURITY_FILE], [security_file],
