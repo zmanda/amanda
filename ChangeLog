@@ -1,4 +1,10 @@
 2017-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Paths.pm.in: export SECURITY_FILE and AMANDATES_FILE
+	* common-src/amgetconf.pl: Add build.amdatadir, build.security_file
+	  and build.amandates_file
+	* installcheck/amgetconf.pl: Test them
+
+2017-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-server-encrypt-end.pl,
 	  installcheck/failure-server-encrypt-no-exec.pl.
 	  installcheck/failure-server-encrypt-not-found.pl: Call
