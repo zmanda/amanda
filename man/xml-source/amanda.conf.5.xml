@@ -1153,8 +1153,7 @@ mail reports distinct.</para>
   <listitem>
 <para>Printer to use when doing tape labels.
 See the
-<amkeyword>lbl-templ</amkeyword>
-<amkeyword>tapetype</amkeyword>
+<amkeyword>lbl-templ</amkeyword>&nbsp;<amkeyword>tapetype</amkeyword>
 option.</para>
   </listitem>
   </varlistentry>
