@@ -1,3 +1,6 @@
+2017-01-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda.conf.5.xml: Add a &nbsp; to force a space
+
 2017-01-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-server-encrypt-end.pl: Remove
 	  '  sendbackup: size' line
