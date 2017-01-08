@@ -1,3 +1,7 @@
+2017-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c (start_index): Remove unused ptr and
+	  bytes_written variables
+
 2017-01-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/xml-source/amanda.conf.5.xml: Add a &nbsp; to force a space
 
