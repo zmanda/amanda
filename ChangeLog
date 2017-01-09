@@ -1,4 +1,8 @@
 2017-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amsamba.pl: Set LC_CTYPE to en_US.UTF-8 before
+	  executing smbclient
+
+2017-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	By Jose M Calhariz and Jon LaBadie
 	* man/xml-source/amanda-auth.7.xml
 	* man/xml-source/amanda-changers.7.xml
