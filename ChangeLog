@@ -1,3 +1,9 @@
+2017-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	By Jose M Calhariz and Jon LaBadie
+	* man/xml-source/amanda-auth.7.xml
+	* man/xml-source/amanda-changers.7.xml
+	* file man/xml-source/amanda-devices.7.xml: Documentation fix
+
 2017-01-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c (start_index): Remove unused ptr and
 	  bytes_written variables
