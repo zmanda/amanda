@@ -150,8 +150,8 @@ define changer aggregate {
 tpchanger "aggregate"
 </programlisting>
 
-<para>This changer driver allow to use two or more changers or standalone
-drive in sequence.</para>
+<para>This changer driver allow the use of two or more changers or standalone
+drives in sequence.</para>
 
 <refsect3><title>Properties</title>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
