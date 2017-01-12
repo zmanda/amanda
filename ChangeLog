@@ -1,4 +1,10 @@
 2017-01-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driverio.h (sched_t): remove nb_flush
+	* server-src/driver.c (read_flush): Add a different sched_t for each
+	  storage
+	* installcheck/success-dumper-chunker+2taper-flush.pl: fix
+
+2017-01-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Parse 'active-storage' setting
 	* common-src/conffile.h: Add CNF_ACTIVE_STORAGE
 	* server-src/driver.c: Use active-storage

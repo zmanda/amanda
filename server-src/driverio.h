@@ -123,7 +123,6 @@ typedef struct sched_s {
     crc_t native_crc;
     crc_t client_crc;
     crc_t server_crc;
-    int   nb_flush;
     int command_id;
 
     char *src_storage;
