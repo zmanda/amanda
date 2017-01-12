@@ -1358,9 +1358,19 @@ time. Changing this setting can sort all index files.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>storage</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>storage</amkeyword> <amtype>string</amtype>+</term>
   <listitem>
 <para>Default: Same as the config name.  The list of storages to use, the dump will go to theses storages.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>active-storage</amkeyword> <amtype>string</amtype>+</term>
+  <listitem>
+<para>Default: Same as the configured <amkeyword>storage</amkeyword> setting
+and the -ostorage= command line setting.  The list of storages where a dump
+can be put.  amdump keep the dump in holding disk if the storage is not also
+listed in <amkeyword>storage</amkeyword></para>
   </listitem>
   </varlistentry>
 

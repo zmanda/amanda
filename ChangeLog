@@ -1,4 +1,13 @@
 2017-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Parse 'active-storage' setting
+	* common-src/conffile.h: Add CNF_ACTIVE_STORAGE
+	* server-src/driver.c: Use active-storage
+	* man/xml-source/amanda.conf.5.xml: Document active-storage
+	* installcheck/Installcheck/Run.pm (is_sort_array): new function
+	* installcheck/Makefile.am: Add success-dumper-chunker+2taper-flush
+	* installcheck/success-dumper-chunker+2taper-flush.pl: New file
+
+2017-01-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amsamba.pl: Set LC_CTYPE to en_US.UTF-8 before
 	  executing smbclient
 
