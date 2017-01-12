@@ -2951,7 +2951,6 @@ file_taper_result(
 
     job->wtaper = NULL;
 
-    sp->nb_flush--;
     if (wtaper->input_error) {
 	g_printf("driver: taper failed %s %s: %s\n",
 		   dp->host->hostname, qname, wtaper->input_error);
@@ -2959,10 +2958,8 @@ file_taper_result(
 	    if (sp->taper_attempted >= dp->retry_dump) {
 		g_printf("driver: taper failed %s %s, too many taper retry after holding disk error\n",
 		   dp->host->hostname, qname);
-		if (sp->nb_flush == 0) {
-		    free_sched(sp);
-		    sp = NULL;
-		}
+		free_sched(sp);
+		sp = NULL;
 	    } else {
 		log_add(L_INFO, _("%s %s %s %d [Will retry dump because of holding disk error: %s]"),
 			dp->host->hostname, qname, sp->datestamp,
@@ -2975,17 +2972,13 @@ file_taper_result(
 		    sp->action = ACTION_DUMP_TO_TAPE;
 		    headqueue_sched(&directq, sp);
 		} else {
-		    if (sp->nb_flush == 0) {
-			free_sched(sp);
-			sp = NULL;
-		    }
+		    free_sched(sp);
+		    sp = NULL;
 		}
 	    }
 	} else {
-	    if (sp->nb_flush == 0) {
-		free_sched(sp);
-		sp = NULL;
-	    }
+	    free_sched(sp);
+	    sp = NULL;
 	}
     } else if (wtaper->tape_error) {
 	g_printf("driver: taper failed %s %s with tape error: %s\n",
@@ -2993,17 +2986,14 @@ file_taper_result(
 	if (sp->taper_attempted >= dp->retry_dump) {
 	    g_printf("driver: taper failed %s %s, too many taper retry\n",
 		   dp->host->hostname, qname);
-	    if (sp->nb_flush == 0) {
-		free_sched(sp);
-		sp = NULL;
-	    }
+	    free_sched(sp);
+	    sp = NULL;
 	} else {
 	    char *wall_time = walltime_str(curclock());
 	    g_printf("driver: taper will retry %s %s\n",
 		   dp->host->hostname, qname);
 	    /* Re-insert into taper queue. */
 	    sp->action = ACTION_FLUSH;
-	    sp->nb_flush++;
 	    g_printf("driver: requeue write time %s %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp, wtaper->taper->storage_name);
 	    headqueue_sched(&wtaper->taper->tapeq, sp);
 	}
@@ -3055,13 +3045,11 @@ file_taper_result(
 		}
 	    }
 
-	    if (sp->nb_flush == 0) {
-		if (!holding_in_cmdfile(cmddatas, holding_file)) {
-		    delete_diskspace(sp);
-		}
-		free_sched(sp);
-		sp = NULL;
+	    if (!holding_in_cmdfile(cmddatas, holding_file)) {
+		delete_diskspace(sp);
 	    }
+	    free_sched(sp);
+	    sp = NULL;
 	    g_free(holding_file);
 	};
     }
@@ -3346,8 +3334,6 @@ dumper_chunker_result(
     } else if (size > (off_t)DISK_BLOCK_KB) {
 	identlist_t il;
 
-	sp->nb_flush = 0;
-
 	for (il = getconf_identlist(CNF_ACTIVE_STORAGE); il != NULL; il = il->next) {
 	    char *storage_name = (char *)il->data;
 	    if (dump_match_selection(storage_name, sp)) {
@@ -3374,7 +3360,6 @@ dumper_chunker_result(
 		    if (g_str_equal(storage_name, taper->storage_name)) {
 			sched_t *sp1 = g_new0(sched_t, 1);
 			*sp1 = *sp;
-			sp1->nb_flush++;
 			sp1->action = ACTION_FLUSH;
 	                sp1->destname = g_strdup(sp->destname);
 	                sp1->dumpdate = g_strdup(sp->dumpdate);
@@ -3961,7 +3946,6 @@ static void
 read_flush(
     void *	cookie)
 {
-    sched_t *sp;
     disk_t *dp;
     int line;
     char *hostname, *diskname, *datestamp;
@@ -4146,29 +4130,6 @@ read_flush(
 	holdp = build_diskspace(destname);
 	if (holdp == NULL) continue;
 
-	sp = g_new0(sched_t, 1);
-	sp->destname = destname;
-	sp->level = file.dumplevel;
-	sp->dumpdate = NULL;
-	sp->degr_dumpdate = NULL;
-	sp->degr_mesg = NULL;
-	sp->datestamp = g_strdup(file.datestamp);
-	sp->est_nsize = (off_t)0;
-	sp->est_csize = (off_t)0;
-	sp->est_time = 0;
-	sp->est_kps = 10;
-	sp->origsize = file.orig_size;
-	sp->priority = 0;
-	sp->degr_level = -1;
-	sp->dump_attempted = 0;
-	sp->taper_attempted = 0;
-	sp->act_size = holding_file_size(destname, 0);
-	sp->holdp = holdp;
-	sp->timestamp = (time_t)0;
-
-	sp->disk = dp1;
-
-	sp->nb_flush = 0;
 	/* for all ids */
 	ids_array = g_strsplit(ids, ",", 0);
 	for (one_id = ids_array; *one_id != NULL; one_id++) {
@@ -4182,9 +4143,30 @@ read_flush(
 	    if (cmddata) {
 		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		    if (g_str_equal(taper->storage_name, cmddata->dst_storage)) {
+			sched_t *sp;
+			sp = g_new0(sched_t, 1);
 			sp->command_id = cmddata->id;
-			sp->nb_flush++;
 			sp->action = ACTION_FLUSH;
+			sp->destname = g_strdup(destname);
+			sp->level = file.dumplevel;
+			sp->dumpdate = NULL;
+			sp->degr_dumpdate = NULL;
+			sp->degr_mesg = NULL;
+			sp->datestamp = g_strdup(file.datestamp);
+			sp->est_nsize = (off_t)0;
+			sp->est_csize = (off_t)0;
+			sp->est_time = 0;
+			sp->est_kps = 10;
+			sp->origsize = file.orig_size;
+			sp->priority = 0;
+			sp->degr_level = -1;
+			sp->dump_attempted = 0;
+			sp->taper_attempted = 0;
+			sp->act_size = holding_file_size(destname, 0);
+			sp->holdp = holdp;
+			sp->timestamp = (time_t)0;
+			sp->disk = dp;
+
 			enqueue_sched(&taper->tapeq, sp);
 		    }
 		}

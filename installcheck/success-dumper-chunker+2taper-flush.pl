@@ -471,7 +471,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 			$dump_timestamp => {
 				#'taped' => '1',
 				'size' => '1075200',
-				'esize' => '1075200',
+				'esize' => '0',
 				#'message' => '',
 				'dsize' => '1075200',
 				'status' => '0',
@@ -624,15 +624,15 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
 				'estimated_stat' => '0',
 				'real_size' => '1075200',
 				'nb' => '1',
-				'real_stat' => '100',
-				'estimated_size' => '1075200'
+				'real_stat' => '0',
+				'estimated_size' => '0'
 			},
 			'storage-2' => {
 				'estimated_stat' => '0',
 				'real_size' => '1075200',
 				'nb' => '1',
-				'real_stat' => '100',
-				'estimated_size' => '1075200'
+				'real_stat' => '0',
+				'estimated_size' => '0'
 			}
 		},
 	},
@@ -671,8 +671,6 @@ Date    : June 22, 2016
 
 The dumps to storage 'storage-1' were flushed to tape STO-1-00001.
 The dumps to storage 'storage-2' were flushed to tape STO-2-00001.
-There are 1050K of dumps left in the holding disk.
-Run amflush to flush them to tape.
 The next tape Amanda expects to use for storage 'storage-1' is: 1 new tape.
 The next tape Amanda expects to use for storage 'storage-2' is: 1 new tape.
 
@@ -750,9 +748,9 @@ writing to tape
 dumping to tape
 failed to tape
 taped
-  storage-1     :   1      1050k      1050k (100.00%) (  0.00%)
+  storage-1     :   1      1050k         0k (  0.00%) (  0.00%)
     tape 1      :   1      1050k      1050k (  3.42%) STO-1-00001 (1 parts)
-  storage-2     :   1      1050k      1050k (100.00%) (  0.00%)
+  storage-2     :   1      1050k         0k (  0.00%) (  0.00%)
     tape 1      :   1      1050k      1050k (  3.42%) STO-2-00001 (1 parts)
 
 2 dumpers idle  : no-dumpers
