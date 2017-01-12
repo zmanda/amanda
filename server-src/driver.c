@@ -3344,35 +3344,16 @@ dumper_chunker_result(
 	}
 	g_free(qname);
     } else if (size > (off_t)DISK_BLOCK_KB) {
+	identlist_t il;
+
 	sp->nb_flush = 0;
-	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    cmddata_t *cmddata;
-	    gboolean found = FALSE;
-	    identlist_t    il;
 
-	    /* If taper->storage_name is in the 'storage' setting. */
-	    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
-		char *storage_name = (char *)il->data;
-		if (g_str_equal(storage_name, taper->storage_name)) {
-		    found = TRUE;
-		    break;
-		}
-	    }
-	    /* If the dle/level must go to the storage */
-	    if (found && dump_match_selection(taper->storage_name, sp)) {
+	for (il = getconf_identlist(CNF_ACTIVE_STORAGE); il != NULL; il = il->next) {
+	    char *storage_name = (char *)il->data;
+	    if (dump_match_selection(storage_name, sp)) {
 		char *qname = quote_string(dp->name);
-		sched_t *sp1 = g_new0(sched_t, 1);
-		*sp1 = *sp;
-		sp1->nb_flush++;
-		sp1->action = ACTION_FLUSH;
-                sp1->destname = g_strdup(sp->destname);
-                sp1->dumpdate = g_strdup(sp->dumpdate);
-                sp1->degr_dumpdate = g_strdup(sp->degr_dumpdate);
-                sp1->degr_mesg = g_strdup(sp->degr_mesg);
-                sp1->datestamp = g_strdup(sp->datestamp);
-		enqueue_sched(&taper->tapeq, sp1);
+		cmddata_t *cmddata = g_new0(cmddata_t, 1);
 
-		cmddata = g_new0(cmddata_t, 1);
 		cmddata->operation = CMD_FLUSH;
 		cmddata->config = g_strdup(get_config_name());
 		cmddata->src_storage = NULL;
@@ -3380,17 +3361,33 @@ dumper_chunker_result(
 		cmddata->src_label = NULL;
 		cmddata->src_fileno = 0;
 		cmddata->src_labels = NULL;
-		cmddata->holding_file = g_strdup(sp1->destname);
+		cmddata->holding_file = g_strdup(sp->destname);
 		cmddata->hostname = g_strdup(dp->hostname);
 		cmddata->diskname = g_strdup(dp->name);
 		cmddata->dump_timestamp = g_strdup(driver_timestamp);
-		cmddata->dst_storage = g_strdup(taper->storage_name);
+		cmddata->dst_storage = g_strdup(storage_name);
 		cmddata->working_pid = getppid();
 		cmddata->status = CMD_TODO;
 		cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
-		sp1->command_id = cmddata->id;
-		g_printf("driver: to write host %s disk %s date %s on storage %s\n",
-			 dp->host->hostname, qname, driver_timestamp, taper->storage_name);
+
+		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		    if (g_str_equal(storage_name, taper->storage_name)) {
+			sched_t *sp1 = g_new0(sched_t, 1);
+			*sp1 = *sp;
+			sp1->nb_flush++;
+			sp1->action = ACTION_FLUSH;
+	                sp1->destname = g_strdup(sp->destname);
+	                sp1->dumpdate = g_strdup(sp->dumpdate);
+	                sp1->degr_dumpdate = g_strdup(sp->degr_dumpdate);
+	                sp1->degr_mesg = g_strdup(sp->degr_mesg);
+	                sp1->datestamp = g_strdup(sp->datestamp);
+			enqueue_sched(&taper->tapeq, sp1);
+
+			sp1->command_id = cmddata->id;
+			g_printf("driver: to write host %s disk %s date %s on storage %s\n",
+				 dp->host->hostname, qname, driver_timestamp, taper->storage_name);
+		    }
+		}
 		amfree(qname);
 	    }
 	}

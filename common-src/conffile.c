@@ -97,7 +97,7 @@ typedef enum {
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_VAULT_STORAGE,
     CONF_CMDFILE,              CONF_REST_API_PORT,	CONF_REST_SSL_CERT,
-    CONF_REST_SSL_KEY,
+    CONF_REST_SSL_KEY,         CONF_ACTIVE_STORAGE,
 
     /* storage setting */
     CONF_SET_NO_REUSE,	       CONF_ERASE_VOLUME,
@@ -976,6 +976,7 @@ keytab_t client_keytab[] = {
 };
 
 keytab_t server_keytab[] = {
+    { "ACTIVE_STORAGE", CONF_ACTIVE_STORAGE },
     { "ALL", CONF_ALL },
     { "ALLOW_SPLIT", CONF_ALLOW_SPLIT },
     { "AMANDA", CONF_AMANDA },
@@ -1466,6 +1467,7 @@ conf_var_t server_var [] = {
    { CONF_REPORT_USE_MEDIA     , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_USE_MEDIA     , NULL },
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
    { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
+   { CONF_ACTIVE_STORAGE       , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_ACTIVE_STORAGE  , NULL },
    { CONF_STORAGE              , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_STORAGE         , NULL },
    { CONF_VAULT_STORAGE        , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_VAULT_STORAGE        , NULL },
    { CONF_CMDFILE              , CONFTYPE_STR      , read_str         , CNF_CMDFILE              , NULL },
@@ -5982,6 +5984,11 @@ config_init(
 	amfree(config_filename);
     }
 
+    if (getconf_linenum(CNF_ACTIVE_STORAGE) <= 0) {
+	// default to the configured CNF_STORAGE
+	copy_val_t(&conf_data[CNF_ACTIVE_STORAGE], &conf_data[CNF_STORAGE]);
+    }
+
     /* apply config overrides to default setting */
     apply_config_overrides(config_overrides, NULL);
 
@@ -6248,6 +6255,7 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_COMPRESS_INDEX]       , TRUE);
     conf_init_bool     (&conf_data[CNF_SORT_INDEX]           , FALSE);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , AMANDA_TMPDIR);
+    conf_init_identlist(&conf_data[CNF_ACTIVE_STORAGE]       , NULL);
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_identlist(&conf_data[CNF_VAULT_STORAGE]        , NULL);
     conf_init_str      (&conf_data[CNF_CMDFILE]              , "command_file");
@@ -6742,6 +6750,26 @@ update_derived_values(
 	}
 
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    if (!lookup_storage(il->data)) {
+		conf_parserror(_("storage '%s' is not defined"), (char *)il->data);
+	    }
+	}
+
+	// Add all storage to active-storage
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    identlist_t    asl;
+	    int found = FALSE;
+	    for (asl = getconf_identlist(CNF_ACTIVE_STORAGE); asl != NULL; asl = asl->next) {
+		if (strcmp(il->data, asl->data) == 0) {
+		    found = TRUE;
+		}
+	    }
+	    if (!found) {
+		conf_data[CNF_ACTIVE_STORAGE].v.identlist = g_slist_append(conf_data[CNF_ACTIVE_STORAGE].v.identlist, g_strdup(il->data));
+	    }
+	}
+
+	for (il = getconf_identlist(CNF_ACTIVE_STORAGE); il != NULL; il = il->next) {
 	    if (!lookup_storage(il->data)) {
 		conf_parserror(_("storage '%s' is not defined"), (char *)il->data);
 	    }

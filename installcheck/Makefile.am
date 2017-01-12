@@ -134,6 +134,7 @@ full_tests = \
 	success-dumper-taper \
 	success-dumper-chunker+dumper-chunker-taper-flush \
 	success-dumper-chunker+taper-flush \
+	success-dumper-chunker+2taper-flush \
 	tape_action
 all_tests += $(full_tests)
 

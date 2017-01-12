@@ -166,6 +166,7 @@ require Exporter;
     clean_taperoot
     load_vtape load_vtape_res vtape_dir
     amdump_diag run_expect
+    is_sort_array
     check_amreport check_amstatus );
 @EXPORT = qw(exp_continue exp_continue_timeout);
 
@@ -602,6 +603,18 @@ sub diag_diff
     }
     ok(!$fail, "$text: match");
 
+}
+
+sub is_sort_array
+{
+    my $a = shift;
+    my $b = shift;
+    my $text =shift;
+
+    my @aa = sort @$a;
+    my @bb = sort @$b;
+
+    is_deeply(\@aa, \@bb, $text);
 }
 
 sub check_amreport
