@@ -313,19 +313,17 @@ bsdtcp_accept(
 
     len = sizeof(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
-	dbprintf(_("getpeername returned: %s\n"), strerror(errno));
-	return;
+	errmsg = g_strdup_printf("getpeername returned: %s", strerror(errno));
+	goto return_error;
     }
     if ((result = getnameinfo((struct sockaddr *)&sin, len,
 			      hostname, NI_MAXHOST, NULL, 0, 0) != 0)) {
-	dbprintf(_("getnameinfo failed: %s\n"),
-		  gai_strerror(result));
-	return;
+	errmsg = g_strdup_printf("getnameinfo failed: %s", gai_strerror(result));
+	goto return_error;
     }
     if (check_name_give_sockaddr(hostname,
 				 (struct sockaddr *)&sin, &errmsg) < 0) {
-	amfree(errmsg);
-	return;
+	goto return_error;
     }
 
     rc = sec_tcp_conn_get(NULL, hostname, 0);
@@ -340,6 +338,34 @@ bsdtcp_accept(
     rc->conf_fn = conf_fn;
     rc->datap = datap;
     sec_tcp_conn_read(rc);
+    return;
+
+return_error:
+    {
+	char *errstr = g_strjoin(" ", errmsg, NULL);
+	size_t len = strlen(errmsg);
+	guint32 *nethandle = g_malloc(sizeof(guint32));
+	guint32 *netlength = g_malloc(sizeof(guint32));
+	struct iovec iov[3];
+	errstr[0] = P_NAK;
+
+	g_debug("%s", errmsg);
+	*netlength = htonl(len);
+	iov[0].iov_base = (void *)netlength;
+	iov[0].iov_len = sizeof(*netlength);
+
+	*nethandle = htonl((guint32)1);
+	iov[1].iov_base = (void *)nethandle;
+	iov[1].iov_len = sizeof(*nethandle);
+
+	iov[2].iov_base = (void *)errstr;
+	iov[2].iov_len = len;
+
+	full_writev(out, iov, 3);
+	g_free(errstr);
+	g_free(errmsg);
+	return;
+    }
 }
 
 /*

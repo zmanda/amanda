@@ -1,3 +1,7 @@
+2017-01-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/bsdtcp-security.c (bsdtcp_accept): Send early error
+	  message to the socket
+
 2017-01-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driverio.h (sched_t): remove nb_flush
 	* server-src/driver.c (read_flush): Add a different sched_t for each
