@@ -1,4 +1,8 @@
 2017-01-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/failure-server-custom-compress-not-found.pl: Call
+	  check_amreport with skip_size
+
+2017-01-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/bsdtcp-security.c (bsdtcp_accept): Send early error
 	  message to the socket
 
