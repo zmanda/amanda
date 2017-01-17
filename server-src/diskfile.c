@@ -1178,6 +1178,11 @@ char *optionstr(disk_t *dp)
     g_assert(dp != NULL);
     g_assert(dp->host != NULL);
 
+    /* An empty element at the beginning ensures that the final options string
+     * begins with a semicolon.  This helps to prevent breakage when talking to
+     * very old clients. */
+    g_ptr_array_add(array, g_strdup(""));
+
     their_features = dp->host->features;
 
     if (am_has_feature(their_features, fe_options_auth))
