@@ -3684,7 +3684,7 @@ startup_dump(
         g_string_append(reqbuf, pclean);
 	g_free(pclean);
 	dle_str = p;
-    } else if (legacy_api) {
+    } else if (!legacy_api) {
 	g_free(errstr);
 	errstr = g_strdup("[does not support application-api]");
         g_string_free(reqbuf, TRUE);
