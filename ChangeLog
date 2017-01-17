@@ -1,4 +1,7 @@
 2017-01-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c (startup_dump): Fix reversed test
+
+2017-01-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Jason L Tibbitts <tibbs@math.uh.edu>
 	* server-src/diskfile.c (optionstr): Make sure options string
 	  begins with a semicolon
