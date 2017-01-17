@@ -170,6 +170,7 @@ struct S3Handle {
     char *server_side_encryption;
     char *proxy;
     char *host;
+    char *host_without_port;
     char *service_path;
     gboolean use_subdomain;
     S3_api s3_api;
@@ -1001,11 +1002,11 @@ authenticate_request(S3Handle *hdl,
 	    g_string_append(auth_string, "host:");
 	    g_string_append(auth_string, bucket);
 	    g_string_append(auth_string, ".");
-	    g_string_append(auth_string, hdl->host);
+	    g_string_append(auth_string, hdl->host_without_port);
 	    g_string_append(auth_string, "\n");
 	} else {
 	    g_string_append(auth_string, "host:");
-	    g_string_append(auth_string, hdl->host);
+	    g_string_append(auth_string, hdl->host_without_port);
 	    g_string_append(auth_string, "\n");
 	}
 	g_string_append(strSignedHeaders, "host");
@@ -1097,6 +1098,16 @@ authenticate_request(S3Handle *hdl,
         buf = g_strdup_printf("Authorization: AWS4-HMAC-SHA256 Credential=%s/%s/%s/s3/aws4_request,SignedHeaders=%s,Signature=%s", hdl->access_key, szS3Date, hdl->bucket_location, strSignedHeaders->str, signatureHex);
         headers = curl_slist_append(headers, buf);
         g_free(buf);
+
+	if (hdl->verbose) {
+	    g_debug("bucket: %s", bucket);
+	    g_debug("auth_string->str: %s", auth_string->str);
+	    g_debug("string_to_sign: %s", string_to_sign->str);
+	    g_debug("strSignedHeaders: %s", strSignedHeaders->str);
+	    g_debug("canonical_hash: %s", canonical_hash);
+	    g_debug("strSecretKey: %s", strSecretKey);
+	    g_debug("signatureHex: %s", signatureHex);
+	}
 
 	g_free(canonical_hash);
 	g_free(strSecretKey);
@@ -2858,6 +2869,7 @@ s3_open(const char *access_key,
         const char *reps_bucket)
 {
     S3Handle *hdl;
+    char *hwp;
 
     hdl = g_new0(S3Handle, 1);
     if (!hdl) goto error;
@@ -2929,6 +2941,15 @@ s3_open(const char *access_key,
     if (!is_non_empty_string(host))
 	host = "s3.amazonaws.com";
     hdl->host = g_ascii_strdown(host, -1);
+    hwp = strchr(hdl->host, ':');
+    if (hwp) {
+	*hwp = '\0';
+	hdl->host_without_port = g_strdup(hdl->host);
+	*hwp = ':';
+    } else {
+	hdl->host_without_port = g_strdup(hdl->host);
+    }
+
     hdl->use_subdomain = use_subdomain ||
 			 (g_str_equal(hdl->host, "s3.amazonaws.com") &&
 			  is_non_empty_string(hdl->bucket_location));
@@ -4210,8 +4231,10 @@ s3_is_bucket_exists(S3Handle *hdl,
         *q++ = g_strdup("format=xml");
 	*q++ = g_strdup("size=0");
     } else if (prefix) {
+	char *q_prefix = curl_escape(prefix, 0);
         *q++ = g_strdup("max-keys=1");
-        *q++ = g_strdup_printf("prefix=%s", prefix);
+        *q++ = g_strdup_printf("prefix=%s", q_prefix);
+	g_free(q_prefix);
     } else {
         *q++ = g_strdup("max-keys=1");
     }
