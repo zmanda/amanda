@@ -1,8 +1,8 @@
 etc/amanda/*
 usr/lib/amanda/*
 usr/lib/amanda/application/*
-usr/libexec/amanda/*
-usr/libexec/amanda/application/*
+usr/lib/x86_64-linux-gnu/amanda/application/*
+usr/lib/x86_64-linux-gnu/amanda/*
 usr/sbin/*
 usr/share/man/man5/*
 usr/share/man/man7/*

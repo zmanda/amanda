@@ -6,16 +6,21 @@
 #	confused... some sort of race condition in the makefiles?
 
 # Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+export DH_VERBOSE=1
 AMVER=`cat FULL_VERSION`
 
 # These are variables that the user can override.  They get used in various
 # places during configure, build, and install.
 PREFIX=/usr
 BINDIR=$(PREFIX)/bin
+triplet := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+ifeq ($(triplet),x86_64-linux-gnu)
+LIBDIR=$(PREFIX)/lib/$(triplet)
+else
 LIBDIR=$(PREFIX)/lib
+endif
 AMLIBDIR=$(LIBDIR)/amanda
-LIBEXECDIR=$(PREFIX)/libexec
+LIBEXECDIR=$(LIBDIR)
 AMLIBEXECDIR=$(LIBEXECDIR)/amanda
 MANDIR=$(PREFIX)/share/man
 DOCDIR=$(PREFIX)/share/doc
@@ -42,6 +47,7 @@ log=$(shell pwd)/debian/dpkg.log
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_BUILD_ARCH_BITS  ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH_BITS)
 
 WD=$(shell pwd)
 
@@ -57,6 +63,7 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=$(PREFIX) \
+		--libdir=$(LIBDIR) \
 		--bindir=$(BINDIR) \
 		--mandir=$(MANDIR) \
 		--libexecdir=$(LIBEXECDIR) \
@@ -188,7 +195,7 @@ binary-arch: build
 		$(server)/usr/share/lintian/overrides/amanda-backup-server
 	dh_makeshlibs  >> $(log) 2>&1
 	dh_perl >> $(log) 2>&1
-	dh_shlibdeps -l"$(r)/usr/lib:$(client)/usr/lib:$(server)/usr/lib" >> $(log) 2>&1
+	dh_shlibdeps -l"$(r)$(LIBDIR):$(client)$(LIBDIR):$(server)$(LIBDIR)" >> $(log) 2>&1
 	dh_installdeb >> $(log) 2>&1
 	dh_gencontrol >> $(log) 2>&1
 	dh_md5sums  >> $(log) 2>&1

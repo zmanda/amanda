@@ -1,3 +1,12 @@
+2017-01-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/deb/amanda-backup-client.dirs,
+	  packaging/deb/amanda-backup-client.install,
+	  packaging/deb/amanda-backup-server.install:
+	  s#usr/libexec/amanda#usr/lib/x86_64-linux-gnu/amanda#
+	* packaging/deb/rules:
+	  Set LIBDIR to $(PREFIX)/lib/$(triplet) on x86_64-linux-gnu
+	  Set LIBEXECDIR to $(LIBDIR)
+
 2017-01-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Fix for '/' in prefix, fix for port in S3-HOST
 
