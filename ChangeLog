@@ -1,4 +1,8 @@
 2017-01-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amgetconf.pl: Add build.amperldir
+	* perl/Amanda/Paths.pm.in: Export $amperldir
+
+2017-01-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c: Add storage to message
 	* server-src/amtape.pl: Use storage AUTOLABEL
 	* server-src/amcheck-device.pl: Use storage AUTOLABEL

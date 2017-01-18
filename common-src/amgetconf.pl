@@ -94,6 +94,7 @@ my %build_info = (
     'libexecdir' => $libexecdir,
     'amlibexecdir' => $amlibexecdir,
     'amdatadir' => $amdatadir,
+    'amperldir' => $amperldir,
     'mandir' => $mandir,
     'amanda_tmpdir' => $AMANDA_TMPDIR,
     'config_dir' => $CONFIG_DIR,
