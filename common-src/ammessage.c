@@ -860,9 +860,9 @@ set_message(
     } else if (message->code == 2800089) {
 	msg  = "skipping tape checks";
     } else if (message->code == 2800090) {
-	msg  = "tapecycle (%{tapecycle}) <= runspercycle (%{runspercycle})";
+	msg  = "storage '%{storage}': retentions-tapes (%{retention_tapes}) <= runspercycle (%{runspercycle})";
     } else if (message->code == 2800091) {
-	msg  = "tapecycle (%{tapecycle}) <= runtapes (%{runtapes})";
+	msg  = "storage '%{storage}': retentions-tapes (%{retention_tapes}) <= runtapes (%{runtapes})";
     } else if (message->code == 2800092) {
 	msg  = "conf info dir '%{infodir}' does not exist";
 	hint = "it will be created on the next run";
