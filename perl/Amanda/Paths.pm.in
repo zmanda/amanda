@@ -58,6 +58,7 @@ use Exporter;
     $sysconfdir
     $amdatadir
     $localstatedir
+    $amperldir
 
     $AMANDA_TMPDIR
     $CONFIG_DIR
