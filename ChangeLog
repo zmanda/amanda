@@ -1,4 +1,12 @@
 2017-01-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c: Add storage to message
+	* server-src/amtape.pl: Use storage AUTOLABEL
+	* server-src/amcheck-device.pl: Use storage AUTOLABEL
+	* server-src/amcheck.c: Use storage RUNTAPES and policy
+	  retention-tapes
+	* server-src/driverio.c: Use storage tapetype
+
+2017-01-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* packaging/deb/amanda-backup-client.dirs,
 	  packaging/deb/amanda-backup-client.install,
 	  packaging/deb/amanda-backup-server.install:

@@ -454,14 +454,17 @@ getresult(
 
 static char *
 taper_splitting_args(
-	disk_t *dp)
+    char *storage_name,
+    disk_t *dp)
 {
     GString *args = NULL;
     char *q = NULL;
     dumptype_t *dt = dp->config;
+    storage_t  *st;
     tapetype_t *tt;
 
-    tt = lookup_tapetype(getconf_str(CNF_TAPETYPE));
+    st = lookup_storage(storage_name);
+    tt = lookup_tapetype(storage_get_tapetype(st));
     g_assert(tt != NULL);
 
     args = g_string_new("");
@@ -599,7 +602,7 @@ taper_cmd(
 	else
 	    origsize = 0;
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
-	splitargs = taper_splitting_args(dp);
+	splitargs = taper_splitting_args(taper->storage_name, dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
@@ -629,7 +632,7 @@ taper_cmd(
           make the argument something besides and empty string so's taper
           won't get confused
 	*/
-	splitargs = taper_splitting_args(dp);
+	splitargs = taper_splitting_args(taper->storage_name, dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
@@ -654,7 +657,7 @@ taper_cmd(
 	else
 	    origsize = 0;
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
-	splitargs = taper_splitting_args(dp);
+	splitargs = taper_splitting_args(taper->storage_name, dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
