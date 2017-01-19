@@ -66,22 +66,12 @@ sub new {
     debug("Arguments: " . join(' ', @ARGV));
 
     #initialize config client to get values from amanda-client.conf
-    config_init($CONFIG_INIT_CLIENT, undef);
+    config_init_with_global( $CONFIG_INIT_CLIENT|$CONFIG_INIT_EXPLICIT_NAME, $config_name );
     my ($cfgerr_level, @cfgerr_errors) = config_errors();
     if ($cfgerr_level >= $CFGERR_WARNINGS) {
         config_print_errors();
         if ($cfgerr_level >= $CFGERR_ERRORS) {
             confess("errors processing config file");
-        }
-    }
-    if ($config_name) {
-        config_init($CONFIG_INIT_CLIENT | $CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_OVERLAY, $config_name);
-        ($cfgerr_level, @cfgerr_errors) = config_errors();
-        if ($cfgerr_level >= $CFGERR_WARNINGS) {
-            config_print_errors();
-            if ($cfgerr_level >= $CFGERR_ERRORS) {
-                confess("errors processing config file for $config_name");
-            }
         }
     }
 

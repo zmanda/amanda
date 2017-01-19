@@ -1,3 +1,6 @@
+2017-01-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Script_App.pm: Use config_init_with_global
+
 2017-01-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amgetconf.pl: Add build.amperldir
 	* perl/Amanda/Paths.pm.in: Export $amperldir
