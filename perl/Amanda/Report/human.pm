@@ -515,7 +515,6 @@ sub output_tapeinfo
         }
     }
 
-    my $first = 1;
     for my $storage_n (@{$report->{'storage_list'}}) {
 	my $st = Amanda::Config::lookup_storage($storage_n);
 	if (!$st) {
@@ -525,6 +524,7 @@ sub output_tapeinfo
 	if (storage_getconf($st, $STORAGE_REPORT_NEXT_MEDIA)) {
 	    my $run_tapes   = storage_getconf($st, $STORAGE_RUNTAPES);
 	    my $nb_new_tape = 0;
+	    my $first = 1;
 
 	    my $for_storage = '';
 	    $for_storage = " for storage '$storage_n'" if @{$report->{'storage_list'}} > 1;
