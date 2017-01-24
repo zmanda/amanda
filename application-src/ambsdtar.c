@@ -33,6 +33,7 @@
  * DIRECTORY       (no default, if set, the backup will be from that directory
  *		    instead of from the --device)
  * ONE-FILE-SYSTEM (default YES)
+ * SPARSE	   (default YES) -S on restore
  * INCLUDE-FILE
  * INCLUDE-LIST
  * INCLUDE-OPTIONAL
@@ -145,6 +146,7 @@ static char *bsdtar_path;
 static char *state_dir;
 static char *bsdtar_directory;
 static int bsdtar_onefilesystem;
+static int bsdtar_sparse;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
@@ -182,7 +184,8 @@ static struct option long_options[] = {
     {"tar-blocksize"   , 1, NULL, 28},
     {"no-unquote"      , 1, NULL, 29},
     {"command-options" , 1, NULL, 33},
-    {"verbose"          , 1, NULL, 36},
+    {"verbose"         , 1, NULL, 36},
+    {"sparse"          , 1, NULL, 37},
     {NULL, 0, NULL, 0}
 };
 
@@ -313,6 +316,7 @@ main(
     state_dir = NULL;
     bsdtar_directory = NULL;
     bsdtar_onefilesystem = 1;
+    bsdtar_sparse = 1;
     exit_handling = NULL;
 
     glib_init();
@@ -467,6 +471,9 @@ main(
 		 break;
 	case 36: if (strcasecmp(optarg, "YES") == 0)
 		     argument.verbose = 1;
+		 break;
+	case 37: if (strcasecmp(optarg, "NO") == 0)
+		     bsdtar_sparse = 0;
 		 break;
 	case ':':
 	case '?':
@@ -1621,6 +1628,9 @@ ambsdtar_restore(
     }
     g_ptr_array_add(argv_ptr, g_strdup("-xvf"));
     g_ptr_array_add(argv_ptr, g_strdup("-"));
+    if (bsdtar_sparse) {
+	g_ptr_array_add(argv_ptr, g_strdup("-S"));
+    }
     if (bsdtar_directory) {
 	struct stat stat_buf;
 	if(stat(bsdtar_directory, &stat_buf) != 0) {
