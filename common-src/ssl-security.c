@@ -248,12 +248,16 @@ ssl_connect(
      * Overload rh->rs->ev_read to provide a write event handle.
      * We also register a timeout.
      */
+    g_mutex_lock(security_mutex);
     rh->fn.connect = fn;
     rh->arg = arg;
-    rh->rs->rc->ev_write = event_register((event_id_t)(rh->rs->rc->write),
+    rh->rs->rc->ev_write = event_create((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
-    rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
+    rh->ev_timeout = event_create(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
+    event_activate(rh->rs->rc->ev_write);
+    event_activate(rh->ev_timeout);
+    g_mutex_unlock(security_mutex);
 
     return;
 

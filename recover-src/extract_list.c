@@ -2317,7 +2317,7 @@ writer_intermediary(
 	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
 	    if (last_is_size) {
 		g_printf("\n");
-		last_is_size = 0;
+		last_is_size = FALSE;
 	    }
 	    g_printf("%s\n",&amidxtaped_line[8]);
 	} else if(strncmp_const(amidxtaped_line, "DATA-STATUS ") == 0) {
@@ -3014,7 +3014,7 @@ handle_child_out(
            (p = strchr(b, '\n')) != NULL) {
         *p = '\0';
 	if (last_is_size)
-	    g_fprintf(cdata->output, "\n");
+	    g_fprintf(cdata->output, "\r");
 	if (cdata->name) {
             g_fprintf(cdata->output, "%s: %s\n", cdata->name, b);
 	} else {
@@ -3198,6 +3198,19 @@ read_amidxtaped_data(
      * EOF.  Stop and return.
      */
     if (size == 0) {
+	if (stderr_isatty) {
+	    if (last_is_size) {
+		fprintf(stderr, "\r%lld kb ",
+			    (long long)ctl_data->bytes_read/1024);
+	    } else {
+		fprintf(stderr, "%lld kb ",
+			    (long long)ctl_data->bytes_read/1024);
+		last_is_size = TRUE;
+	    }
+	} else {
+	    fprintf(stderr, "%lld kb\n",
+			(long long)ctl_data->bytes_read/1024);
+	}
 	security_stream_close(amidxtaped_streams[DATAFD].fd);
 	amidxtaped_streams[DATAFD].fd = NULL;
 	aclose(ctl_data->child_in[1]);
@@ -3516,32 +3529,36 @@ start_processing_data(
     ctl_data->child_out_cdata.output = stdout;
     ctl_data->child_out_cdata.name = NULL;
     ctl_data->child_out_cdata.buffer = NULL;
-    ctl_data->child_out_cdata.event = event_register(
+    ctl_data->child_out_cdata.event = event_create(
 				(event_id_t)ctl_data->child_out[0],
 				EV_READFD, handle_child_out,
 				&ctl_data->child_out_cdata);
+    event_activate(ctl_data->child_out_cdata.event);
 
     ctl_data->child_err_cdata.fd = ctl_data->child_err[0];
     ctl_data->child_err_cdata.output = stderr;
     ctl_data->child_err_cdata.name = NULL;
     ctl_data->child_err_cdata.buffer = NULL;
-    ctl_data->child_err_cdata.event = event_register(
+    ctl_data->child_err_cdata.event = event_create(
 				(event_id_t)ctl_data->child_err[0],
 				EV_READFD, handle_child_out,
 				&ctl_data->child_err_cdata);
+    event_activate(ctl_data->child_err_cdata.event);
 
     if (ctl_data->decrypt_cdata.fd != -1) {
-	ctl_data->decrypt_cdata.event = event_register(
+	ctl_data->decrypt_cdata.event = event_create(
 				(event_id_t)ctl_data->decrypt_cdata.fd,
 				EV_READFD, handle_child_out,
 				&ctl_data->decrypt_cdata);
+	event_activate(ctl_data->decrypt_cdata.event);
     }
 
     if (ctl_data->decompress_cdata.fd != -1) {
-	ctl_data->decompress_cdata.event = event_register(
+	ctl_data->decompress_cdata.event = event_create(
 				(event_id_t)ctl_data->decompress_cdata.fd,
 				EV_READFD, handle_child_out,
 				&ctl_data->decompress_cdata);
+	event_activate(ctl_data->decompress_cdata.event);
     }
 
     if (am_has_feature(tapesrv_features, fe_amidxtaped_datapath)) {
@@ -3552,10 +3569,11 @@ start_processing_data(
 	ctl_data->dar_cdata.fd = ctl_data->dar_pipe[0];
 	ctl_data->dar_cdata.name = g_strdup("DAR");
 	ctl_data->dar_cdata.buffer = NULL;
-	ctl_data->dar_cdata.event = event_register(
+	ctl_data->dar_cdata.event = event_create(
 				(event_id_t)ctl_data->dar_pipe[0],
 				EV_READFD, handle_dar_command,
 				&ctl_data->dar_cdata);
+	event_activate(ctl_data->dar_cdata.event);
     }
 }
 

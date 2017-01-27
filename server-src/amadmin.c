@@ -1076,7 +1076,7 @@ find(
 //    }
 //    amfree(output_find_log);
 
-    output_find = find_dump(&diskq); /* Add deleted dump to diskq */
+    output_find = find_dump(&diskq, 1); /* Add deleted dump to diskq */
     if(argc-(start_argc-1) > 0) {
 	find_result_t *afind = NULL;
 	find_result_t *afind_next = NULL;

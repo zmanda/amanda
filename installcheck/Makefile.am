@@ -30,6 +30,7 @@ all_tests += $(client_tests)
 
 server_tests = \
 	Amanda_Changer \
+	Amanda_Changer_aggregate \
 	Amanda_Changer_disk \
 	Amanda_Changer_diskflat \
 	Amanda_Changer_multi \
@@ -133,6 +134,7 @@ full_tests = \
 	success-dumper-taper \
 	success-dumper-chunker+dumper-chunker-taper-flush \
 	success-dumper-chunker+taper-flush \
+	success-dumper-chunker+2taper-flush \
 	tape_action
 all_tests += $(full_tests)
 

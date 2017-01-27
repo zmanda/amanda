@@ -30,6 +30,7 @@
 #include <amanda.h>
 #include <amutil.h>
 
+extern gboolean compiled_with_sse4_2;
 void crc32c_init_hw(void);
 void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc);
 

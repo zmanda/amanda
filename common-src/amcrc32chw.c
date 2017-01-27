@@ -29,7 +29,8 @@
 #include <amutil.h>
 #include <amcrc32chw.h>
 
-#if defined __GNUC__ && GCC_VERSION > 40300 && (defined __x86_64__ || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__)
+#ifdef __SSE4_2__
+gboolean compiled_with_sse4_2 = TRUE;
 #define POLY 0x82F63B78
 
 /* Multiply a matrix times a vector over the Galois field of two elements,
@@ -140,7 +141,8 @@ static uint32_t crc32c_short[4][256];
 static uint32_t crc32c_low[4][256];
 
 /* Initialize tables for shifting crcs. */
-void crc32c_init_hw(void)
+void
+crc32c_init_hw(void)
 {
     crc32c_zeros(crc32c_long, LONG);
     crc32c_zeros(crc32c_short, SHORT);
@@ -340,8 +342,10 @@ void crc32c_add_hw(uint8_t *buf, size_t len, crc_t *crc)
 }
 
 #else
+gboolean compiled_with_sse4_2 = FALSE;
 
-void crc32c_init_hw(void)
+void
+crc32c_init_hw(void)
 {
    g_error("crc32c_init_hw is not defined");
 }

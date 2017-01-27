@@ -616,13 +616,13 @@ sub get_parts_and_dumps {
 	# $logfile is undef
 	if ($logfile ne 'holding') {
 	    @find_results = Amanda::Logfile::search_logfile(undef, undef,
-							"$logfile_dir/$logfile", 1);
+							"$logfile_dir/$logfile", 1, 1);
 	    # convert to dumpfile hashes, including the write_timestamp from the logfile name
 	    my ($timestamp) = $logfile =~ /^log\.([0-9]+)(?:\.[0-9]+|\.amflush)?$/;
 	    $write_timestamp = zeropad($timestamp);
 
 	} else {
-	    @find_results = Amanda::Logfile::search_holding_disk();
+	    @find_results = Amanda::Logfile::search_holding_disk(1);
 	    $write_timestamp = '00000000000000';
 	}
 
@@ -1048,7 +1048,7 @@ sub add_part {
 	    # write timestamp matches; now check the label
 	    LOGFILE_DUMP:
 	    for $find_result (Amanda::Logfile::search_logfile(undef, undef,
-					"$logdir/$lf", 1)) {
+					"$logdir/$lf", 1, 1)) {
 		next unless (defined $find_result->{'label'});
 
 		if ($find_result->{'label'} eq $dump->{'label'}) {
@@ -1079,7 +1079,7 @@ sub add_part {
 	# package is rewritten to parse logfiles on its own (or access a relational
 	# database), this implementation detail will no longer be relevant.
 	my @find_results = reverse Amanda::Logfile::search_logfile(undef, undef,
-						    "$logdir/$logfile", 1);
+						    "$logdir/$logfile", 1, 1);
 	for $find_result (@find_results) {
 	    # filter out the non-dump error messages that find.c produces
 	    next unless (defined $find_result->{'label'});

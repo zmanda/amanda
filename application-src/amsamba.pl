@@ -441,6 +441,7 @@ sub command_selfcheck {
 	push @ARGV, "-c", "quit";
 	debug("execute: " . $self->{smbclient} . " " .
 	      join(" ", @ARGV));
+	$ENV{'LC_CTYPE'} = 'en_US.UTF-8';
 	exec {$self->{smbclient}} @ARGV;
     }
     #parent
@@ -520,6 +521,7 @@ sub command_estimate {
 	}
 	debug("execute: " . $self->{smbclient} . " " .
 	      join(" ", @ARGV));
+	$ENV{'LC_CTYPE'} = 'en_US.UTF-8';
 	exec {$self->{smbclient}} @ARGV;
     }
     #parent
@@ -663,6 +665,7 @@ sub command_backup {
 	push @ARGV, "-c", $comm;
 	debug("execute: " . $self->{smbclient} . " " .
 	      join(" ", @ARGV));
+	$ENV{'LC_CTYPE'} = 'en_US.UTF-8';
 	exec {$self->{smbclient}} @ARGV;
     }
 

@@ -1286,6 +1286,8 @@ REREAD:
 			my $storage = $self->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			$dlet->{'taped_size'} += $size;
+			$dlet->{'wsize'} = $dlet->{'taped_size'} if !defined $dlet->{'wsize'} ||
+								    $dlet->{'taped_size'} > $dlet->{'wsize'};
 			my $ntape = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
 			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_part'}++;
 			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'size'} += $size;
@@ -2145,6 +2147,8 @@ sub _set_taper_size {
 	}
 	close FF;
     }
+    $dlet->{'wsize'} = $dlet->{'taped_size'} if defined $dlet->{'taped_size'} &&
+							$dlet->{'taped_size'} > $dlet->{'wsize'};
 }
 
 sub show_time {

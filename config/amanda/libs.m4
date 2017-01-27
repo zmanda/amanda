@@ -56,8 +56,8 @@ AC_DEFUN([AMANDA_CHECK_HMAC], [
     HAVE_HMAC=yes
     AC_CHECK_LIB([crypto], [HMAC_CTX_init], [], [HAVE_HMAC_CTX_INIT=no])
     AC_CHECK_LIB([crypto], [HMAC_CTX_reset], [], [HAVE_HMAC_CTX_RESET=no])
-    if test x"HAVE_HMAC_CTX_INIT" == x"no" -a \
-	    x"HAVE_HMAC_CTX_RESET" == x"no"; then
+    if test x"HAVE_HMAC_CTX_INIT" = x"no" -a \
+	    x"HAVE_HMAC_CTX_RESET" = x"no"; then
 	HAVE_HMAC=no
     fi
 
@@ -396,22 +396,22 @@ x=CURLOPT_VERBOSE;
       LIBCURL_USE_OPENSSL=yes
      _libcurl_configures=`$_libcurl_config --configure`
      for _libcurl_configure in $_libcurl_configures ; do
-	if [[[ $_libcurl_configure = \'--with-nss* ]]]; then
+	if [[ $_libcurl_configure = \'--with-nss* ]]; then
 	    LIBCURL_USE_NSS=yes
 	fi
-	if [[[ $_libcurl_configure = \'--without-nss* ]]]; then
+	if [[ $_libcurl_configure = \'--without-nss* ]]; then
 	    LIBCURL_USE_NSS=no
 	fi
-	if [[[ $_libcurl_configure = \'--with-gnutls* ]]]; then
+	if [[ $_libcurl_configure = \'--with-gnutls* ]]; then
 	    LIBCURL_USE_GNUTLS=yes
 	fi
-	if [[[ $_libcurl_configure = \'--without-gnutls* ]]]; then
+	if [[ $_libcurl_configure = \'--without-gnutls* ]]; then
 	    LIBCURL_USE_GNUTLS=no
 	fi
-	if [[[ $_libcurl_configure = \'--with-ssl* ]]]; then
+	if [[ $_libcurl_configure = \'--with-ssl* ]]; then
 	    LIBCURL_USE_OPENSSL=yes
 	fi
-	if [[[ $_libcurl_configure = \'--without-ssl* ]]]; then
+	if [[ $_libcurl_configure = \'--without-ssl* ]]; then
 	    LIBCURL_USE_OPENSSL=no
 	fi
      done

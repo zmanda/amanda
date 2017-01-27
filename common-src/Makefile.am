@@ -14,6 +14,8 @@ amlib_LTLIBRARIES =	libamanda.la
 
 sbin_PROGRAMS = amservice
 
+amlibexec_PROGRAMS = ambind
+
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
@@ -253,6 +255,8 @@ amsemaphore_test_LDADD = libamanda.la libtestutils.la
 
 crc32_test_SOURCES = crc32-test.c
 crc32_test_LDADD = libamanda.la libtestutils.la
+crc32-test.o: AM_CFLAGS += $(SSE42_CFLAGS)
+crc32-test.lo: AM_CFLAGS += $(SSE42_CFLAGS)
 
 quoting_test_SOURCES = quoting-test.c
 quoting_test_LDADD = libamanda.la libtestutils.la

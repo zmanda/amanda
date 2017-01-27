@@ -237,6 +237,7 @@ static void	read_statefd(void *, void *, ssize_t);
 static void	read_mesgfd(void *, void *, ssize_t);
 static gboolean header_sent(struct databuf *db);
 static void	timeout(time_t);
+static void	retimeout(time_t);
 static void	timeout_callback(void *unused);
 static gpointer handle_shm_ring_to_fd_thread(gpointer data);
 static gpointer handle_shm_ring_direct(gpointer data);
@@ -391,7 +392,6 @@ main(
     int res;
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
-    int dumper_setuid;
     char *argv0;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
@@ -412,7 +412,7 @@ main(
     make_crc_table();
 
     /* drop root privileges */
-    dumper_setuid = set_root_privs(0);
+    set_root_privs(-1);
 
     safe_fd(-1, 0);
 
@@ -444,8 +444,8 @@ main(
 
     config_init_with_global(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
 
-    if (!dumper_setuid) {
-	error(_("dumper must be run setuid root"));
+    if (geteuid() == 0 || getuid() == 0) {
+	error(_("dumper must not be setuid root"));
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -454,7 +454,7 @@ main(
 
     safe_cd(); /* do this *after* config_init() */
 
-    check_running_as(RUNNING_AS_ROOT | RUNNING_AS_UID_ONLY);
+    check_running_as(RUNNING_AS_UID_ONLY);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
@@ -2362,7 +2362,7 @@ read_statefd(
     if (shm_thread) {
 	g_mutex_lock(shm_thread_mutex);
     }
-    timeout(conf_dtimeout);
+    retimeout(conf_dtimeout);
     if (shm_thread) {
 	g_cond_broadcast(shm_thread_cond);
 	g_mutex_unlock(shm_thread_mutex);
@@ -2447,7 +2447,7 @@ read_mesgfd(
      * Reset the timeout for future reads
      */
     if (!ISSET(status, GOT_RETRY)) {
-	timeout(conf_dtimeout);
+	retimeout(conf_dtimeout);
     }
     if (shm_thread) {
 	g_cond_broadcast(shm_thread_cond);
@@ -2723,7 +2723,7 @@ read_datafd(
     /*
      * Reset the timeout for future reads
      */
-    timeout(conf_dtimeout);
+    retimeout(conf_dtimeout);
     if (shm_thread) {
 	g_cond_broadcast(shm_thread_cond);
 	g_mutex_unlock(shm_thread_mutex);
@@ -2900,8 +2900,30 @@ timeout(
      * schedule a timeout if it not already scheduled
      */
     if (ev_timeout == NULL) {
-	ev_timeout = event_register((event_id_t)seconds+1, EV_TIME,
-				     timeout_callback, NULL);
+	ev_timeout = event_create((event_id_t)seconds+1, EV_TIME,
+				  timeout_callback, NULL);
+	event_activate(ev_timeout);
+    }
+}
+
+/*
+ * Change the timeout_time, but do not set a timeout event
+ */
+static void
+retimeout(
+    time_t seconds)
+{
+    timeout_time = time(NULL) + seconds;
+
+    /*
+     * remove a timeout if seconds is 0
+     */
+    if (seconds == 0) {
+	if (ev_timeout != NULL) {
+	    event_release(ev_timeout);
+	    ev_timeout = NULL;
+	}
+	return;
     }
 }
 
@@ -2941,8 +2963,9 @@ timeout_callback(
     }
 
     if (timeout_time > now) { /* not a data timeout yet */
-	ev_timeout = event_register((event_id_t)(timeout_time-now+1), EV_TIME,
-				    timeout_callback, NULL);
+	ev_timeout = event_create((event_id_t)(timeout_time-now+1), EV_TIME,
+				  timeout_callback, NULL);
+	event_activate(ev_timeout);
 	return;
     }
 
@@ -3094,8 +3117,9 @@ runcompress(
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
-	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
-				       handle_filter_stderr, filter);
+	filter->event = event_create((event_id_t)filter->fd, EV_READFD,
+				     handle_filter_stderr, filter);
+	event_activate(filter->event);
 	return (rval);
     case 0:
 	close(outpipe[1]);
@@ -3201,8 +3225,9 @@ runencrypt(
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
-	filter->event = event_register((event_id_t)filter->fd, EV_READFD,
-				       handle_filter_stderr, filter);
+	filter->event = event_create((event_id_t)filter->fd, EV_READFD,
+				     handle_filter_stderr, filter);
+	event_activate(filter->event);
 	return (rval);
 	}
     case 0: {
@@ -3659,7 +3684,7 @@ startup_dump(
         g_string_append(reqbuf, pclean);
 	g_free(pclean);
 	dle_str = p;
-    } else if (legacy_api) {
+    } else if (!legacy_api) {
 	g_free(errstr);
 	errstr = g_strdup("[does not support application-api]");
         g_string_free(reqbuf, TRUE);

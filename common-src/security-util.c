@@ -153,10 +153,14 @@ sec_connect_callback(
 {
     struct sec_handle *rh = cookie;
 
+    g_mutex_lock(security_mutex);
     event_release(rh->rs->rc->ev_write);
     rh->rs->rc->ev_write = NULL;
-    event_release(rh->ev_timeout);
-    rh->ev_timeout = NULL;
+    if (rh->ev_timeout) {
+	event_release(rh->ev_timeout);
+	rh->ev_timeout = NULL;
+    }
+    g_mutex_unlock(security_mutex);
 
     (*rh->fn.connect)(rh->arg, &rh->sech, S_OK);
 }
@@ -180,12 +184,9 @@ sec_connect_timeout(
 
 void
 sec_close_connection_none(
-    void *h,
-    char *hostname)
+    void *h G_GNUC_UNUSED,
+    char *hostname G_GNUC_UNUSED)
 {
-    h = h;
-    hostname = hostname;
-
     return;
 }
 
@@ -262,8 +263,9 @@ stream_recvpkt(
     if (timeout < 0) {
 	rh->ev_timeout = NULL;
     } else {
-	rh->ev_timeout = event_register((event_id_t)timeout, EV_TIME,
+	rh->ev_timeout = event_create((event_id_t)timeout, EV_TIME,
 		stream_recvpkt_timeout, rh);
+	event_activate(rh->ev_timeout);
     }
     rh->fn.recvpkt = fn;
     rh->arg = arg;
@@ -443,8 +445,11 @@ tcpm_stream_read_sync(
 	sec_tcp_conn_read(rs->rc);
     }
 
+    g_mutex_lock(security_mutex);
     rs->event_id = newevent++;
-    rs->ev_read_sync = event_register(rs->event_id, EV_WAIT, for_event_release, rs);
+    rs->ev_read_sync = event_create(rs->event_id, EV_WAIT, for_event_release, rs);
+    event_activate(rs->ev_read_sync);
+    g_mutex_unlock(security_mutex);
     event_wait(rs->ev_read_sync);
     rs->ev_read_sync = NULL;
     /* Can't use rs or rc, they can be freed */
@@ -648,9 +653,10 @@ tcpm_send_token_async(
     rs->rc->async_write_data_size += 8 + len;
 
     if(!rs->rc->ev_write) {
-	rs->rc->ev_write = event_register(
+	rs->rc->ev_write = event_create(
 			(event_id_t)(rs->rc->write),
 			EV_WRITEFD, tcpm_send_token_callback, rs);
+	event_activate(rs->rc->ev_write);
     }
     return (rs->rc->async_write_data_size);
 }
@@ -1175,7 +1181,9 @@ tcpma_stream_server(
      * so as not to conflict with the amanda server's handle numbers,
      * we start at 500000 and work down
      */
+    g_mutex_lock(security_mutex);
     rs->handle = 500000 - newhandle++;
+    g_mutex_unlock(security_mutex);
     rs->ev_read_callback = FALSE;
     auth_debug(1, _("sec: stream_server: created stream %d\n"), rs->handle);
     return (rs);
@@ -1247,7 +1255,9 @@ tcp1_stream_server(
     rs->closed_by_network = 0;
     if (rh->rc) {
 	rs->rc = rh->rc;
+	g_mutex_lock(security_mutex);
 	rs->handle = 500000 - newhandle++;
+	g_mutex_unlock(security_mutex);
 	rs->rc->refcnt++;
 	rs->socket = 0;		/* the socket is already opened */
     }
@@ -1676,16 +1686,19 @@ udp_recvpkt(
      */
     if (rh->ev_read == NULL) {
 	udp_addref(rh->udp, &udp_netfd_read_callback);
-	rh->ev_read = event_register(rh->event_id, EV_WAIT,
+	rh->ev_read = event_create(rh->event_id, EV_WAIT,
 	    udp_recvpkt_callback, rh);
+	event_activate(rh->ev_read);
     }
     if (rh->ev_timeout != NULL)
 	event_release(rh->ev_timeout);
-    if (timeout < 0)
+    if (timeout < 0) {
 	rh->ev_timeout = NULL;
-    else
-	rh->ev_timeout = event_register((event_id_t)timeout, EV_TIME,
+    } else {
+	rh->ev_timeout = event_create((event_id_t)timeout, EV_TIME,
 					udp_recvpkt_timeout, rh);
+	event_activate(rh->ev_timeout);
+    }
     rh->fn.recvpkt = fn;
     rh->arg = arg;
 }
@@ -1819,7 +1832,9 @@ udp_inithandle(
     udp->bh_last = rh;
 
     rh->sequence = sequence;
+    g_mutex_lock(security_mutex);
     rh->event_id = newevent++;
+    g_mutex_unlock(security_mutex);
     amfree(rh->proto_handle);
     rh->proto_handle = g_strdup(handle);
     rh->fn.connect = NULL;
@@ -1953,6 +1968,7 @@ sec_tcp_conn_get(
 
     auth_debug(1, _("sec_tcp_conn_get: %s %s\n"), dle_hostname, hostname);
 
+    g_mutex_lock(security_mutex);
     if (want_new == 0) {
 	for (iter = connq; iter != NULL; iter = iter->next) {
 	    rc = (struct tcp_conn *)iter->data;
@@ -1968,9 +1984,11 @@ sec_tcp_conn_get(
 	    auth_debug(1,
 		      _("sec_tcp_conn_get: exists, refcnt to %s is now %d\n"),
 		       rc->hostname, rc->refcnt);
+	    g_mutex_unlock(security_mutex);
 	    return (rc);
 	}
     }
+    g_mutex_unlock(security_mutex);
 
     auth_debug(1, _("sec_tcp_conn_get: creating new handle\n"));
     /*
@@ -1998,8 +2016,10 @@ sec_tcp_conn_get(
     rc->auth = 0;
     rc->conf_fn = NULL;
     rc->datap = NULL;
+    g_mutex_lock(security_mutex);
     rc->event_id = newevent++;
     connq = g_slist_append(connq, rc);
+    g_mutex_unlock(security_mutex);
     return (rc);
 }
 
@@ -2032,7 +2052,9 @@ sec_tcp_conn_put(
 	event_release(rc->ev_read);
     if (rc->errmsg != NULL)
 	amfree(rc->errmsg);
+    g_mutex_lock(security_mutex);
     connq = g_slist_remove(connq, rc);
+    g_mutex_unlock(security_mutex);
     amfree(rc->pkt);
     if(!rc->donotclose) {
 	/* amfree(rc) */
@@ -2062,8 +2084,9 @@ sec_tcp_conn_read(
     }
     auth_debug(1, _("sec: conn_read registering event handler for %s\n"),
 		   rc->hostname);
-    rc->ev_read = event_register((event_id_t)rc->read, EV_READFD,
+    rc->ev_read = event_create((event_id_t)rc->read, EV_READFD,
 		sec_tcp_conn_read_callback, rc);
+    event_activate(rc->ev_read);
     rc->ev_read_refcnt = 1;
 }
 

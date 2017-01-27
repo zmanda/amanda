@@ -337,7 +337,7 @@ main(
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     /* load DLEs from the holding disk, in case there's anything to flush there */
-    search_holding_disk(&holding_files, &holding_disklist);
+    search_holding_disk(&holding_files, &holding_disklist, 1);
     /* note that the dumps are added to the global disklist, so we need not consult
      * holding_files or holding_disklist after this */
 
@@ -535,8 +535,9 @@ main(
 		wtaper->state = TAPER_STATE_INIT;
 		taper->nb_wait_reply++;
 		taper->nb_scan_volume++;
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-						handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+		event_activate(taper->ev_read);
 		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
 	    }
 	}
@@ -546,7 +547,8 @@ main(
     cmddatas = read_cmdfile(conf_cmdfile);
     unlock_cmdfile(cmddatas);
 
-    flush_ev_read = event_register((event_id_t)0, EV_READFD, read_flush, NULL);
+    flush_ev_read = event_create((event_id_t)0, EV_READFD, read_flush, NULL);
+    event_activate(flush_ev_read);
 
     log_add(L_STATS, _("startup time %s"), walltime_str(curclock()));
 
@@ -664,9 +666,10 @@ main(
 		 wtaper++) {
 		if (wtaper->state & TAPER_STATE_RESERVATION) {
 		    if (taper->nb_wait_reply == 0) {
-			taper->ev_read = event_register(taper->fd,
+			taper->ev_read = event_create(taper->fd,
 						EV_READFD,
 						handle_taper_result, taper);
+			event_activate(taper->ev_read);
 		    }
 		    taper->nb_wait_reply++;
 		    wtaper->state |= TAPER_STATE_WAIT_CLOSED_VOLUME;
@@ -699,8 +702,9 @@ main(
 		wtaper->state = TAPER_STATE_INIT;
 		taper->nb_wait_reply++;
 		taper->nb_scan_volume++;
-		taper->ev_read = event_register(taper->fd, EV_READFD,
+		taper->ev_read = event_create(taper->fd, EV_READFD,
 						handle_taper_result, taper);
+		event_activate(taper->ev_read);
 		taper_cmd(taper, wtaper, START_TAPER, NULL, taper->wtapetable[0].name, 0, driver_timestamp);
 	    }
 	}
@@ -1240,8 +1244,9 @@ start_a_flush_wtaper(
 	    wtaper->state |= TAPER_STATE_FILE_TO_TAPE;
 	    qname = quote_string(dp->name);
 	    if (taper->nb_wait_reply == 0) {
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-					        handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+		event_activate(taper->ev_read);
 	    }
 	    taper->nb_wait_reply++;
 	    wtaper->nb_dle++;
@@ -1429,8 +1434,9 @@ start_a_vault_wtaper(
 	    wtaper->state |= TAPER_STATE_VAULT_TO_TAPE;
 	    qname = quote_string(dp->name);
 	    if (taper->nb_wait_reply == 0) {
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-					        handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+		event_activate(taper->ev_read);
 	    }
 	    taper->nb_wait_reply++;
 	    wtaper->nb_dle++;
@@ -1771,8 +1777,9 @@ start_some_dumps(
 	if (sp == NULL && delayed_sp != NULL) {
 	    assert(sleep_time > now);
 	    sleep_time -= now;
-	    dumpers_ev_time = event_register((event_id_t)sleep_time, EV_TIME,
+	    dumpers_ev_time = event_create((event_id_t)sleep_time, EV_TIME,
 		handle_dumpers_time, &runq);
+	    event_activate(dumpers_ev_time);
 	    return;
 	} else if (sp != NULL && wtaper == NULL) {
 	    job_t *job = alloc_job();
@@ -1815,9 +1822,10 @@ start_some_dumps(
 		chunker_cmd(chunker, SHM_WRITE, sp, sp->datestamp);
 		job->do_port_write = FALSE;
 	    }
-	    chunker->ev_read = event_register((event_id_t)chunker->fd,
-					      EV_READFD,
-					      handle_chunker_result, chunker);
+	    chunker->ev_read = event_create((event_id_t)chunker->fd,
+					    EV_READFD,
+					    handle_chunker_result, chunker);
+	    event_activate(chunker->ev_read);
 	    sp->disk->host->start_t = now + HOST_DELAY;
 	    if (empty(*rq) && active_dumper() == 0) { force_flush = 1;}
 
@@ -1864,8 +1872,9 @@ start_some_dumps(
 		wtaper->left = taper->tape_length;
 	    }
 	    if (taper->nb_wait_reply == 0) {
-		taper->ev_read = event_register(taper->fd, EV_READFD,
-					       handle_taper_result, taper);
+		taper->ev_read = event_create(taper->fd, EV_READFD,
+					      handle_taper_result, taper);
+	    event_activate(taper->ev_read);
 	    }
 
 	    taper->nb_wait_reply++;
@@ -1925,8 +1934,9 @@ start_vault_on_same_wtaper(
 	wtaper->state |= TAPER_STATE_VAULT_TO_TAPE;
 	qname = quote_string(dp->name);
 	if (taper->nb_wait_reply == 0) {
-	    taper->ev_read = event_register(taper->fd, EV_READFD,
-					    handle_taper_result, taper);
+	    taper->ev_read = event_create(taper->fd, EV_READFD,
+					  handle_taper_result, taper);
+	    event_activate(taper->ev_read);
 	}
 	taper->nb_wait_reply++;
 	wtaper->nb_dle++;
@@ -2493,8 +2503,9 @@ handle_taper_result(
 		    tape_action(wtaper1, NULL, FALSE) == TAPE_ACTION_START_TAPER) {
 		    wtaper1->state = TAPER_STATE_INIT;
 		    if (taper->nb_wait_reply == 0) {
-			taper->ev_read = event_register(taper->fd, EV_READFD,
+			taper->ev_read = event_create(taper->fd, EV_READFD,
 						handle_taper_result, NULL);
+			event_activate(taper->ev_read);
 		    }
 		    taper->nb_wait_reply++;
 		    taper->nb_scan_volume++;
@@ -2627,8 +2638,9 @@ handle_taper_result(
 
 	    wtaper->state |= TAPER_STATE_DUMP_TO_TAPE;
 
-	    dumper->ev_read = event_register(dumper->fd, EV_READFD,
-					     handle_dumper_result, dumper);
+	    dumper->ev_read = event_create(dumper->fd, EV_READFD,
+					   handle_dumper_result, dumper);
+	    event_activate(dumper->ev_read);
 	    break;
 
         case CLOSED_VOLUME:
@@ -2939,7 +2951,6 @@ file_taper_result(
 
     job->wtaper = NULL;
 
-    sp->nb_flush--;
     if (wtaper->input_error) {
 	g_printf("driver: taper failed %s %s: %s\n",
 		   dp->host->hostname, qname, wtaper->input_error);
@@ -2947,10 +2958,8 @@ file_taper_result(
 	    if (sp->taper_attempted >= dp->retry_dump) {
 		g_printf("driver: taper failed %s %s, too many taper retry after holding disk error\n",
 		   dp->host->hostname, qname);
-		if (sp->nb_flush == 0) {
-		    free_sched(sp);
-		    sp = NULL;
-		}
+		free_sched(sp);
+		sp = NULL;
 	    } else {
 		log_add(L_INFO, _("%s %s %s %d [Will retry dump because of holding disk error: %s]"),
 			dp->host->hostname, qname, sp->datestamp,
@@ -2963,17 +2972,13 @@ file_taper_result(
 		    sp->action = ACTION_DUMP_TO_TAPE;
 		    headqueue_sched(&directq, sp);
 		} else {
-		    if (sp->nb_flush == 0) {
-			free_sched(sp);
-			sp = NULL;
-		    }
+		    free_sched(sp);
+		    sp = NULL;
 		}
 	    }
 	} else {
-	    if (sp->nb_flush == 0) {
-		free_sched(sp);
-		sp = NULL;
-	    }
+	    free_sched(sp);
+	    sp = NULL;
 	}
     } else if (wtaper->tape_error) {
 	g_printf("driver: taper failed %s %s with tape error: %s\n",
@@ -2981,17 +2986,14 @@ file_taper_result(
 	if (sp->taper_attempted >= dp->retry_dump) {
 	    g_printf("driver: taper failed %s %s, too many taper retry\n",
 		   dp->host->hostname, qname);
-	    if (sp->nb_flush == 0) {
-		free_sched(sp);
-		sp = NULL;
-	    }
+	    free_sched(sp);
+	    sp = NULL;
 	} else {
 	    char *wall_time = walltime_str(curclock());
 	    g_printf("driver: taper will retry %s %s\n",
 		   dp->host->hostname, qname);
 	    /* Re-insert into taper queue. */
 	    sp->action = ACTION_FLUSH;
-	    sp->nb_flush++;
 	    g_printf("driver: requeue write time %s %s %s %s %s\n", wall_time, sp->disk->host->hostname, qname, sp->datestamp, wtaper->taper->storage_name);
 	    headqueue_sched(&wtaper->taper->tapeq, sp);
 	}
@@ -3043,13 +3045,11 @@ file_taper_result(
 		}
 	    }
 
-	    if (sp->nb_flush == 0) {
-		if (!holding_in_cmdfile(cmddatas, holding_file)) {
-		    delete_diskspace(sp);
-		}
-		free_sched(sp);
-		sp = NULL;
+	    if (!holding_in_cmdfile(cmddatas, holding_file)) {
+		delete_diskspace(sp);
 	    }
+	    free_sched(sp);
+	    sp = NULL;
 	    g_free(holding_file);
 	};
     }
@@ -3332,35 +3332,14 @@ dumper_chunker_result(
 	}
 	g_free(qname);
     } else if (size > (off_t)DISK_BLOCK_KB) {
-	sp->nb_flush = 0;
-	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
-	    cmddata_t *cmddata;
-	    gboolean found = FALSE;
-	    identlist_t    il;
+	identlist_t il;
 
-	    /* If taper->storage_name is in the 'storage' setting. */
-	    for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
-		char *storage_name = (char *)il->data;
-		if (g_str_equal(storage_name, taper->storage_name)) {
-		    found = TRUE;
-		    break;
-		}
-	    }
-	    /* If the dle/level must go to the storage */
-	    if (found && dump_match_selection(taper->storage_name, sp)) {
+	for (il = getconf_identlist(CNF_ACTIVE_STORAGE); il != NULL; il = il->next) {
+	    char *storage_name = (char *)il->data;
+	    if (dump_match_selection(storage_name, sp)) {
 		char *qname = quote_string(dp->name);
-		sched_t *sp1 = g_new0(sched_t, 1);
-		*sp1 = *sp;
-		sp1->nb_flush++;
-		sp1->action = ACTION_FLUSH;
-                sp1->destname = g_strdup(sp->destname);
-                sp1->dumpdate = g_strdup(sp->dumpdate);
-                sp1->degr_dumpdate = g_strdup(sp->degr_dumpdate);
-                sp1->degr_mesg = g_strdup(sp->degr_mesg);
-                sp1->datestamp = g_strdup(sp->datestamp);
-		enqueue_sched(&taper->tapeq, sp1);
+		cmddata_t *cmddata = g_new0(cmddata_t, 1);
 
-		cmddata = g_new0(cmddata_t, 1);
 		cmddata->operation = CMD_FLUSH;
 		cmddata->config = g_strdup(get_config_name());
 		cmddata->src_storage = NULL;
@@ -3368,17 +3347,32 @@ dumper_chunker_result(
 		cmddata->src_label = NULL;
 		cmddata->src_fileno = 0;
 		cmddata->src_labels = NULL;
-		cmddata->holding_file = g_strdup(sp1->destname);
+		cmddata->holding_file = g_strdup(sp->destname);
 		cmddata->hostname = g_strdup(dp->hostname);
 		cmddata->diskname = g_strdup(dp->name);
 		cmddata->dump_timestamp = g_strdup(driver_timestamp);
-		cmddata->dst_storage = g_strdup(taper->storage_name);
+		cmddata->dst_storage = g_strdup(storage_name);
 		cmddata->working_pid = getppid();
 		cmddata->status = CMD_TODO;
 		cmddatas = add_cmd_in_cmdfile(cmddatas, cmddata);
-		sp1->command_id = cmddata->id;
-		g_printf("driver: to write host %s disk %s date %s on storage %s\n",
-			 dp->host->hostname, qname, driver_timestamp, taper->storage_name);
+
+		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
+		    if (g_str_equal(storage_name, taper->storage_name)) {
+			sched_t *sp1 = g_new0(sched_t, 1);
+			*sp1 = *sp;
+			sp1->action = ACTION_FLUSH;
+	                sp1->destname = g_strdup(sp->destname);
+	                sp1->dumpdate = g_strdup(sp->dumpdate);
+	                sp1->degr_dumpdate = g_strdup(sp->degr_dumpdate);
+	                sp1->degr_mesg = g_strdup(sp->degr_mesg);
+	                sp1->datestamp = g_strdup(sp->datestamp);
+			enqueue_sched(&taper->tapeq, sp1);
+
+			sp1->command_id = cmddata->id;
+			g_printf("driver: to write host %s disk %s date %s on storage %s\n",
+				 dp->host->hostname, qname, driver_timestamp, taper->storage_name);
+		    }
+		}
 		amfree(qname);
 	    }
 	}
@@ -3804,10 +3798,11 @@ handle_chunker_result(
 	    } else {
 		dumper_cmd(dumper, SHM_DUMP, sp, NULL);
 	    }
-	    dumper->ev_read = event_register(
+	    dumper->ev_read = event_create(
 				(event_id_t)dumper->fd,
 				EV_READFD,
 				handle_dumper_result, dumper);
+	    event_activate(dumper->ev_read);
 	    break;
 
 	case DUMPER_STATUS: /* DUMP-STATUS <handle> */
@@ -3951,7 +3946,6 @@ static void
 read_flush(
     void *	cookie)
 {
-    sched_t *sp;
     disk_t *dp;
     int line;
     char *hostname, *diskname, *datestamp;
@@ -4136,29 +4130,6 @@ read_flush(
 	holdp = build_diskspace(destname);
 	if (holdp == NULL) continue;
 
-	sp = g_new0(sched_t, 1);
-	sp->destname = destname;
-	sp->level = file.dumplevel;
-	sp->dumpdate = NULL;
-	sp->degr_dumpdate = NULL;
-	sp->degr_mesg = NULL;
-	sp->datestamp = g_strdup(file.datestamp);
-	sp->est_nsize = (off_t)0;
-	sp->est_csize = (off_t)0;
-	sp->est_time = 0;
-	sp->est_kps = 10;
-	sp->origsize = file.orig_size;
-	sp->priority = 0;
-	sp->degr_level = -1;
-	sp->dump_attempted = 0;
-	sp->taper_attempted = 0;
-	sp->act_size = holding_file_size(destname, 0);
-	sp->holdp = holdp;
-	sp->timestamp = (time_t)0;
-
-	sp->disk = dp1;
-
-	sp->nb_flush = 0;
 	/* for all ids */
 	ids_array = g_strsplit(ids, ",", 0);
 	for (one_id = ids_array; *one_id != NULL; one_id++) {
@@ -4172,9 +4143,30 @@ read_flush(
 	    if (cmddata) {
 		for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		    if (g_str_equal(taper->storage_name, cmddata->dst_storage)) {
+			sched_t *sp;
+			sp = g_new0(sched_t, 1);
 			sp->command_id = cmddata->id;
-			sp->nb_flush++;
 			sp->action = ACTION_FLUSH;
+			sp->destname = g_strdup(destname);
+			sp->level = file.dumplevel;
+			sp->dumpdate = NULL;
+			sp->degr_dumpdate = NULL;
+			sp->degr_mesg = NULL;
+			sp->datestamp = g_strdup(file.datestamp);
+			sp->est_nsize = (off_t)0;
+			sp->est_csize = (off_t)0;
+			sp->est_time = 0;
+			sp->est_kps = 10;
+			sp->origsize = file.orig_size;
+			sp->priority = 0;
+			sp->degr_level = -1;
+			sp->dump_attempted = 0;
+			sp->taper_attempted = 0;
+			sp->act_size = holding_file_size(destname, 0);
+			sp->holdp = holdp;
+			sp->timestamp = (time_t)0;
+			sp->disk = dp;
+
 			enqueue_sched(&taper->tapeq, sp);
 		    }
 		}
@@ -4195,8 +4187,9 @@ read_flush(
 
     start_a_flush();
     if (!nodump) {
-	schedule_ev_read = event_register((event_id_t)0, EV_READFD,
+	schedule_ev_read = event_create((event_id_t)0, EV_READFD,
 					  read_schedule, NULL);
+	event_activate(schedule_ev_read);
     } else {
 	force_flush = 1;
     }

@@ -220,10 +220,14 @@ bsdtcp_connect(
     rh->arg = rh;
     rh->connect_callback = fn;
     rh->connect_arg = arg;
-    rh->rs->rc->ev_write = event_register((event_id_t)(rh->rs->rc->write),
+    g_mutex_lock(security_mutex);
+    rh->rs->rc->ev_write = event_create((event_id_t)(rh->rs->rc->write),
 	EV_WRITEFD, sec_connect_callback, rh);
-    rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
+    rh->ev_timeout = event_create(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
+    event_activate(rh->rs->rc->ev_write);
+    event_activate(rh->ev_timeout);
+    g_mutex_unlock(security_mutex);
 
     return;
 
@@ -263,11 +267,13 @@ bsdtcp_fn_connect(
 		result = runbsdtcp(rh, rh->src_ip, rh->port);
 		if (result >= 0) {
 		    rh->rc->refcnt++;
-		    rh->rs->rc->ev_write = event_register(
+		    rh->rs->rc->ev_write = event_create(
 				(event_id_t)(rh->rs->rc->write),
 				EV_WRITEFD, sec_connect_callback, rh);
-		    rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
+		    rh->ev_timeout = event_create(CONNECT_TIMEOUT, EV_TIME,
 				sec_connect_timeout, rh);
+		    event_activate(rh->rs->rc->ev_write);
+		    event_activate(rh->ev_timeout);
 		    return;
 		}
 	    }
@@ -309,19 +315,17 @@ bsdtcp_accept(
 
     len = sizeof(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
-	dbprintf(_("getpeername returned: %s\n"), strerror(errno));
-	return;
+	errmsg = g_strdup_printf("getpeername returned: %s", strerror(errno));
+	goto return_error;
     }
     if ((result = getnameinfo((struct sockaddr *)&sin, len,
 			      hostname, NI_MAXHOST, NULL, 0, 0) != 0)) {
-	dbprintf(_("getnameinfo failed: %s\n"),
-		  gai_strerror(result));
-	return;
+	errmsg = g_strdup_printf("getnameinfo failed: %s", gai_strerror(result));
+	goto return_error;
     }
     if (check_name_give_sockaddr(hostname,
 				 (struct sockaddr *)&sin, &errmsg) < 0) {
-	amfree(errmsg);
-	return;
+	goto return_error;
     }
 
     rc = sec_tcp_conn_get(NULL, hostname, 0);
@@ -336,6 +340,34 @@ bsdtcp_accept(
     rc->conf_fn = conf_fn;
     rc->datap = datap;
     sec_tcp_conn_read(rc);
+    return;
+
+return_error:
+    {
+	char *errstr = g_strjoin(" ", errmsg, NULL);
+	size_t len = strlen(errmsg);
+	guint32 *nethandle = g_malloc(sizeof(guint32));
+	guint32 *netlength = g_malloc(sizeof(guint32));
+	struct iovec iov[3];
+	errstr[0] = P_NAK;
+
+	g_debug("%s", errmsg);
+	*netlength = htonl(len);
+	iov[0].iov_base = (void *)netlength;
+	iov[0].iov_len = sizeof(*netlength);
+
+	*nethandle = htonl((guint32)1);
+	iov[1].iov_base = (void *)nethandle;
+	iov[1].iov_len = sizeof(*nethandle);
+
+	iov[2].iov_base = (void *)errstr;
+	iov[2].iov_len = len;
+
+	full_writev(out, iov, 3);
+	g_free(errstr);
+	g_free(errmsg);
+	return;
+    }
 }
 
 /*
@@ -352,8 +384,6 @@ runbsdtcp(
     in_port_t		my_port;
     struct tcp_conn *	rc = rh->rc;
 
-    set_root_privs(1);
-
     server_socket = stream_client_addr(src_ip,
 				     rh->next_res,
 				     port,
@@ -362,7 +392,6 @@ runbsdtcp(
 				     &my_port,
 				     0,
 				     1);
-    set_root_privs(0);
     rh->next_res = rh->next_res->ai_next;
 
     if(server_socket < 0) {

@@ -222,8 +222,9 @@ main(
 
     set_pname("amcheck");
     /* drop root privileges */
-    if (!set_root_privs(0)) {
-	error("amcheck must be run setuid root");
+    set_root_privs(-1);
+    if (geteuid() == 0 || getuid() == 0) {
+	error("amcheck must not be setuid root");
     }
 
     /* Don't die when child closes pipe */
@@ -547,8 +548,8 @@ main(
 	amfree(tempfname);
     }
 
-    if (opt_message) printf(",\n");
-    delete_message(amcheck_print_message(build_message(
+    if (opt_message) fprintf(mainfd, ",\n");
+    delete_message(amcheck_fprint_message(mainfd, build_message(
 			AMANDA_FILE, __LINE__, 2800016, MSG_MESSAGE, 1,
 			"version", VERSION)));
 
@@ -783,13 +784,19 @@ test_server_pgm(
 					"program", pgm)));
 	pgmbad = 1;
 #ifndef SINGLE_USERID
-    } else if (suid \
-	       && dumpuid != 0
-	       && (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
-	delete_message(amcheck_fprint_message(outf, build_message(
+    } else if (suid) {
+	if (dumpuid != 0 &&
+	    (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
+	    delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800025, MSG_ERROR, 1,
 					"program", pgm)));
-	pgmbad = 1;
+	    pgmbad = 1;
+	} else if ((statbuf.st_mode & 00027) != 0) {
+	    delete_message(amcheck_fprint_message(outf, build_message(
+					AMANDA_FILE, __LINE__, 2800235, MSG_ERROR, 1,
+					"program", pgm)));
+	    pgmbad = 1;
+	}
 #else
     /* Quiet unused parameter warnings */
     (void)suid;
@@ -1057,9 +1064,11 @@ start_server_check(
 			"errno", errno)));
 	    pgmbad = 1;
 	} else {
-	    if(test_server_pgm(outf, amlibexecdir, "planner", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "ambind", 1, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, amlibexecdir, "dumper", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "planner", 0, uid_dumpuser))
+		pgmbad = 1;
+	    if(test_server_pgm(outf, amlibexecdir, "dumper", 0, uid_dumpuser))
 		pgmbad = 1;
 	    if(test_server_pgm(outf, amlibexecdir, "driver", 0, uid_dumpuser))
 		pgmbad = 1;
@@ -1079,11 +1088,13 @@ start_server_check(
 	} else {
 	    if(test_server_pgm(outf, sbindir, "amgetconf", 0, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, sbindir, "amcheck", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, sbindir, "amcheck", 0, uid_dumpuser))
 		pgmbad = 1;
 	    if(test_server_pgm(outf, sbindir, "amdump", 0, uid_dumpuser))
 		pgmbad = 1;
 	    if(test_server_pgm(outf, sbindir, "amreport", 0, uid_dumpuser))
+		pgmbad = 1;
+	    if(test_server_pgm(outf, sbindir, "amservice", 0, uid_dumpuser))
 		pgmbad = 1;
 	}
 	if(access(COMPRESS_PATH, X_OK) == -1) {
@@ -1180,7 +1191,8 @@ start_server_check(
 	    if (getconf_str(CNF_TPCHANGER) == NULL &&
 		getconf_identlist(CNF_STORAGE) == NULL) {
 		delete_message(amcheck_fprint_message(outf, build_message(
-			AMANDA_FILE, __LINE__, 2800051, MSG_WARNING, 0)));
+			AMANDA_FILE, __LINE__, 2800051, MSG_WARNING, 1,
+			"storage", storage_name)));
 		testtape = 0;
 		do_tapechk = 0;
 	    }
@@ -1488,27 +1500,59 @@ start_server_check(
 	int hostindexdir_checked = 0;
 	char *host;
 	char *disk;
-	int conf_tapecycle;
 	int conf_runspercycle;
-	int conf_runtapes;
 	identlist_t pp_scriptlist;
+	identlist_t il;
 
-	conf_tapecycle = getconf_int(CNF_TAPECYCLE);
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
-	conf_runtapes = getconf_int(CNF_RUNTAPES);
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    char *storage_name = (char *)il->data;
+	    storage_t *storage = lookup_storage(storage_name);
+	    char *policy_name = storage_get_policy(storage);
+	    policy_s *policy = lookup_policy(policy_name);
+	    int retention_tape = policy_get_retention_tapes(policy);
+	    int runtapes = storage_get_runtapes(storage);
 
-	if (conf_tapecycle <= conf_runspercycle) {
-	    delete_message(amcheck_fprint_message(outf, build_message(
-			AMANDA_FILE, __LINE__, 2800090, MSG_INFO, 2,
-			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
+	    if (retention_tape <= conf_runspercycle) {
+		delete_message(amcheck_fprint_message(outf, build_message(
+			AMANDA_FILE, __LINE__, 2800090, MSG_INFO, 3,
+			"storage", g_strdup(storage_name),
+			"retention_tapes", g_strdup_printf("%d", retention_tape),
 			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
+	    }
+
+	    if (retention_tape <= runtapes) {
+		delete_message(amcheck_fprint_message(outf, build_message(
+			AMANDA_FILE, __LINE__, 2800091, MSG_INFO, 3,
+			"storage", g_strdup(storage_name),
+			"retention_tapes", g_strdup_printf("%d", retention_tape),
+			"runtapes", g_strdup_printf("%d", runtapes))));
+	    }
 	}
 
-	if (conf_tapecycle <= conf_runtapes) {
-	    delete_message(amcheck_fprint_message(outf, build_message(
-			AMANDA_FILE, __LINE__, 2800091, MSG_INFO, 2,
-			"tapecycle", g_strdup_printf("%d", conf_tapecycle),
-			"runtapes", g_strdup_printf("%d", conf_runtapes))));
+	for (il = getconf_identlist(CNF_VAULT_STORAGE); il != NULL; il = il->next) {
+	    char *storage_name = (char *)il->data;
+	    storage_t *storage = lookup_storage(storage_name);
+	    char *policy_name = storage_get_policy(storage);
+	    policy_s *policy = lookup_policy(policy_name);
+	    int retention_tape = policy_get_retention_tapes(policy);
+	    int runtapes = storage_get_runtapes(storage);
+
+	    if (retention_tape <= conf_runspercycle) {
+		delete_message(amcheck_fprint_message(outf, build_message(
+			AMANDA_FILE, __LINE__, 2800090, MSG_INFO, 3,
+			"storage", g_strdup(storage_name),
+			"retention_tapes", g_strdup_printf("%d", retention_tape),
+			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
+	    }
+
+	    if (retention_tape <= runtapes) {
+		delete_message(amcheck_fprint_message(outf, build_message(
+			AMANDA_FILE, __LINE__, 2800091, MSG_INFO, 3,
+			"storage", g_strdup(storage_name),
+			"retention_tapes", g_strdup_printf("%d", retention_tape),
+			"runtapes", g_strdup_printf("%d", runtapes))));
+	    }
 	}
 
 	conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));

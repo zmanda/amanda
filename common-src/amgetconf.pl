@@ -89,8 +89,12 @@ my %build_info = (
 
     'bindir' => $bindir,
     'sbindir' => $sbindir,
+    'libdir' => $libdir,
+    'amlibdir' => $amlibdir,
     'libexecdir' => $libexecdir,
     'amlibexecdir' => $amlibexecdir,
+    'amdatadir' => $amdatadir,
+    'amperldir' => $amperldir,
     'mandir' => $mandir,
     'amanda_tmpdir' => $AMANDA_TMPDIR,
     'config_dir' => $CONFIG_DIR,
@@ -98,6 +102,8 @@ my %build_info = (
     'application_dir' => $APPLICATION_DIR,
     'gnutar_listed_incremental_dir' => $GNUTAR_LISTED_INCREMENTAL_DIR,
     'listed_inc_dir' => $GNUTAR_LISTED_INCREMENTAL_DIR, # (historical alias)
+    'security_file' => $SECURITY_FILE,
+    'amandates_file' => $AMANDATES_FILE,
 
     ## constants from Amanda::Constants
 

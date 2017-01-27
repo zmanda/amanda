@@ -389,7 +389,6 @@ FAILED DUMP DETAILS:
   sendbackup: info COMPRESS_SUFFIX=.gz
   sendbackup: info end
   sendbackup: error [amcat-error-end: failure Y]
-  sendbackup: size 1050
   sendbackup: error [compress (PID) compress returned 1]
   sendbackup: native-CRC 7993153a:1075200
   sendbackup: client-CRC 107e725e:1075200
@@ -402,7 +401,6 @@ FAILED DUMP DETAILS:
   sendbackup: info COMPRESS_SUFFIX=.gz
   sendbackup: info end
   sendbackup: error [amcat-error-end: failure Y]
-  sendbackup: size 1050
   sendbackup: error [compress (PID) compress returned 1]
   sendbackup: native-CRC 7993153a:1075200
   sendbackup: client-CRC 107e725e:1075200
@@ -457,7 +455,7 @@ taped           :   1      1050k       525k (200.00%) (100.00%)
 
 2 dumpers idle  : no-dumpers
 TESTCONF    qlen: 0
-               0:  (:)
+               0:
 
 network free kps: 80000
 holding space   : 25k (100.00%)

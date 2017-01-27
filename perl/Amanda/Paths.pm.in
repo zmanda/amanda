@@ -49,6 +49,7 @@ use Exporter;
     $exec_prefix
     $bindir
     $sbindir
+    $libdir
     $amlibdir
     $libexecdir
     $amlibexecdir
@@ -57,12 +58,15 @@ use Exporter;
     $sysconfdir
     $amdatadir
     $localstatedir
+    $amperldir
 
     $AMANDA_TMPDIR
     $CONFIG_DIR
     $AMANDA_DBGDIR
     $APPLICATION_DIR
     $GNUTAR_LISTED_INCREMENTAL_DIR
+    $SECURITY_FILE
+    $AMANDATES_FILE
 );
 
 # the 'warnings' pragma doesn't recognized exported variables as "used", and generates warnings
@@ -76,6 +80,7 @@ $prefix = "@prefix@";
 $exec_prefix = "@exec_prefix@";
 $bindir = "@bindir@";
 $sbindir = "@sbindir@";
+$libdir = "@libdir@";
 $amlibdir = "@amlibdir@";
 $libexecdir = "@libexecdir@";
 $amlibexecdir = "@amlibexecdir@";
@@ -94,5 +99,7 @@ $CONFIG_DIR = "@CONFIG_DIR@";
 $AMANDA_DBGDIR = "@AMANDA_DBGDIR@";
 $APPLICATION_DIR = "@APPLICATION_DIR@";
 $GNUTAR_LISTED_INCREMENTAL_DIR = "@GNUTAR_LISTED_INCREMENTAL_DIR@";
+$SECURITY_FILE = "@DEFAULT_SECURITY_FILE@";
+$AMANDATES_FILE = "@DEFAULT_AMANDATES_FILE@";
 
 1;

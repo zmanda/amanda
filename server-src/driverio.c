@@ -454,14 +454,17 @@ getresult(
 
 static char *
 taper_splitting_args(
-	disk_t *dp)
+    char *storage_name,
+    disk_t *dp)
 {
     GString *args = NULL;
     char *q = NULL;
     dumptype_t *dt = dp->config;
+    storage_t  *st;
     tapetype_t *tt;
 
-    tt = lookup_tapetype(getconf_str(CNF_TAPETYPE));
+    st = lookup_storage(storage_name);
+    tt = lookup_tapetype(storage_get_tapetype(st));
     g_assert(tt != NULL);
 
     args = g_string_new("");
@@ -599,7 +602,7 @@ taper_cmd(
 	else
 	    origsize = 0;
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
-	splitargs = taper_splitting_args(dp);
+	splitargs = taper_splitting_args(taper->storage_name, dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
@@ -629,7 +632,7 @@ taper_cmd(
           make the argument something besides and empty string so's taper
           won't get confused
 	*/
-	splitargs = taper_splitting_args(dp);
+	splitargs = taper_splitting_args(taper->storage_name, dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
@@ -654,7 +657,7 @@ taper_cmd(
 	else
 	    origsize = 0;
 	g_snprintf(orig_kb, sizeof(orig_kb), "%ju", origsize);
-	splitargs = taper_splitting_args(dp);
+	splitargs = taper_splitting_args(taper->storage_name, dp);
 	cmdline = g_strjoin(NULL, cmdstr[cmd],
 			    " ", wtaper->name,
 			    " ", job2serial(wtaper->job),
@@ -763,7 +766,6 @@ taper_cmd(
     g_printf(_("driver: send-cmd time %s to %s: %s"),
 	   walltime_str(curclock()), taper->name, cmdline);
     fflush(stdout);
-    g_debug("driver: send-cmd time %s to %s: %s", walltime_str(curclock()), taper->name, cmdline);
     if ((full_write(taper->fd, cmdline, strlen(cmdline))) < strlen(cmdline)) {
 	g_printf(_("writing taper command '%s' failed: %s\n"),
 		cmdline, strerror(errno));
@@ -771,6 +773,8 @@ taper_cmd(
 	amfree(cmdline);
 	return 0;
     }
+    cmdline[strlen(cmdline)-1] = '\0';
+    g_debug("driver: send-cmd time %s to %s: %s", walltime_str(curclock()), taper->name, cmdline);
     if (cmd == QUIT) {
 	aclose(taper->fd);
 	amfree(taper->name);
@@ -940,6 +944,8 @@ dumper_cmd(
 	    g_free(cmdline);
 	    return 0;
 	}
+	cmdline[strlen(cmdline)-1] = '\0';
+	g_debug("driver: send-cmd time %s to %s: %s", walltime_str(curclock()), dumper->name, cmdline);
 	if (cmd == QUIT) aclose(dumper->fd);
     }
     g_free(cmdline);
@@ -1099,6 +1105,8 @@ chunker_cmd(
 	amfree(cmdline);
 	return 0;
     }
+    cmdline[strlen(cmdline)-1] = '\0';
+    g_debug("driver: send-cmd time %s to %s: %s", walltime_str(curclock()), chunker->name, cmdline);
     if (cmd == QUIT) aclose(chunker->fd);
     amfree(cmdline);
     return 1;

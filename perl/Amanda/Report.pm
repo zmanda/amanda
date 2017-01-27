@@ -1202,6 +1202,7 @@ sub _handle_taper_line
 	}
 
         my ( $hostname, $disk, $timestamp, $part_ct, $level ) = @info[ 0 .. 4 ];
+	$part_ct = 1 if !defined $part_ct || $part_ct eq '';
 	my $x;
 	if ($info[5] eq '[sec') {
 	    $x = 6;
@@ -1534,6 +1535,8 @@ sub _handle_fail_line
     if ($program eq "planner" ||
         $program eq "driver") {
 	$program_d = $dle->{$program} ||= {};
+	$self->{flags}{dump_failed} = 1;
+	$self->{flags}{exit_status} |= STATUS_FAILED;
     } else {
         my $try = $self->_get_try($dle, $program, $timestamp);
         $program_d = $try->{$program} ||= {};

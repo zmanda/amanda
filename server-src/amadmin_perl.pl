@@ -108,7 +108,7 @@ sub main {
 	}
 
 	my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
-	my $cfgerr_level += Amanda::Disklist::read_disklist('filename' => $diskfile);
+	my $cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
 	($cfgerr_level < $CFGERR_ERRORS) || die "Errors processing disklist";
 
 	my $curinfodir = getconf($CNF_INFOFILE);

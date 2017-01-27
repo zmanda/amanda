@@ -21,6 +21,9 @@ endif
 if WANT_NDMP
 NDMP_SUBDIRS = ndmp-src
 endif
+if WANT_REST_SERVER
+REST_SERVER_SUBDIRS = rest-server
+endif
 # order is significant, don't change it arbitrarily
 SUBDIRS = . \
 	gnulib \
@@ -36,8 +39,8 @@ SUBDIRS = . \
 	$(RESTORE_SUBDIRS) \
 	$(RECOVER_SUBDIRS) \
 	$(PLOT_SUBDIRS) \
+	$(REST_SERVER_SUBDIRS) \
 	perl \
-	rest-server \
 	po \
 	man \
 	example \

@@ -406,21 +406,7 @@ extern int errno;
 #define MAX_TAPE_LABEL_BUF (MAX_TAPE_LABEL_LEN+1)
 #define MAX_TAPE_LABEL_FMT "%10240s"
 
-/* Unfortunately, the system-level sockaddr_storage definition can lead to
- * C aliasing errors (where the optimizer doesn't notice that two operations
- * affect the same datum).  We define our own similar type as a union.
- */
-typedef union sockaddr_union {
-    struct sockaddr         sa;
-    struct sockaddr_in      sin;
-#ifdef WORKING_IPV6
-    struct sockaddr_in6     sin6;
-#endif
-#ifdef HAVE_SOCKADDR_STORAGE
-    struct sockaddr_storage ss;	/* not used; just here to make the union full-size */
-#endif
-} sockaddr_union;
-
+#include "sockaddr-util.h"
 #include "debug.h"
 #include "file.h"
 

@@ -83,6 +83,9 @@ static const security_driver_t *drivers[] = {
     &local_security_driver,
 };
 
+/* mutex to protect security and security-util global variables */
+GMutex *security_mutex = NULL;
+
 /*
  * Given a name of a security type, returns the driver structure
  */

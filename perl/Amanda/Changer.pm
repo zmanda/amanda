@@ -60,9 +60,10 @@ sub local_message {
     } elsif ($self->{'code'} == 1100014) {
 	return "$self->{'err'}";
     } elsif ($self->{'code'} == 1100015) {
-	return sprintf("slot %3s: date %-14s label %s%s", $self->{'slot'},
+	return sprintf("slot %3s: date %-14s label %s%s%s", $self->{'slot'},
 			$self->{'datestamp'}, $self->{'label'},
-			$self->{'write_protected'}?" (Write protected)":"");
+			$self->{'write_protected'}?" (Write protected)":"",
+			$self->{'label_match'}?"":" (label do not match labelstr)");
     } elsif ($self->{'code'} == 1100016) {
 	return sprintf("slot %3s: unlabeled volume%s", $self->{'slot'},
 			 $self->{'write_protected'}?" (Write protected)":"");
@@ -184,7 +185,7 @@ sub local_message {
     } elsif ($self->{'code'} == 1150002) {
 	return "Storage '$self->{'storage'}' not found";
     } elsif ($self->{'code'} == 1150003) {
-	return "You must specify the storage 'tpchanger'";
+	return "You must specify the 'tapedev' or 'tpchanger' in the '$self->{'storage'}' storage section";
     } else {
 	return "No message for code $self->{'code'}";
     }
@@ -1170,7 +1171,7 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
     if ($params{'storage'}) {
 	$rv->{'storage'} = $params{'storage'};
     } else {
-	$rv->{'storage'}->{'storage_name'} = "NO-STORAGE";
+	$rv->{'storage'}->{'storage_name'} = Amanda::Config::get_config_name();
     }
     $rv->{'tapelist'} = $params{'tapelist'};
 
@@ -2014,6 +2015,13 @@ sub show {
 	    my $st = $dev->read_label();
 	    my $write_protected = !$dev->check_writable();
 	    if ($st == $DEVICE_STATUS_SUCCESS) {
+		my $label_match = match_labelstr(
+					$self->{'storage'}->{'labelstr'},
+					$self->{'storage'}->{'autolabel'},
+					$dev->volume_label(),
+					$res->{'barcode'},
+					$res->{'meta'},
+					$self->{'storage'}->{'storage_name'});
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
@@ -2022,7 +2030,8 @@ sub show {
 					slot   => $last_slot,
 					datestamp  => $dev->volume_time(),
 					label  => $dev->volume_label(),
-					write_protected => $write_protected));
+					write_protected => $write_protected,
+					label_match => $label_match));
 	    } elsif ($st == $DEVICE_STATUS_VOLUME_UNLABELED) {
 		$params{'user_msg'}->(Amanda::Changer::Message->new(
 					source_filename => __FILE__,

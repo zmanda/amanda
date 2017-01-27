@@ -399,15 +399,6 @@ sub result_cb {
 	$logtype = $L_FAIL;
     }
 
-    if ($self->{timer}) {
-	$self->{timer}->remove();
-	undef $self->{timer};
-	$self->{status_fh}->close();
-	undef $self->{status_fh};
-	unlink($self->{status_filename});
-	undef $self->{status_filename};
-    }
-
     if (!defined $params{'device_errors'}) {
 	$params{'device_errors'} = [];
     }
@@ -499,6 +490,14 @@ sub result_cb {
     delete $self->{'dump_params'};
 
     $self->{'controller'}->{'proto'}->send($msgtype, %msg_params);
+    if ($self->{timer}) {
+	$self->{timer}->remove();
+	undef $self->{timer};
+	$self->{status_fh}->close();
+	undef $self->{status_fh};
+	unlink($self->{status_filename});
+	undef $self->{status_filename};
+    }
 }
 
 

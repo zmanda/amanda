@@ -97,7 +97,7 @@ typedef enum {
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_VAULT_STORAGE,
     CONF_CMDFILE,              CONF_REST_API_PORT,	CONF_REST_SSL_CERT,
-    CONF_REST_SSL_KEY,
+    CONF_REST_SSL_KEY,         CONF_ACTIVE_STORAGE,
 
     /* storage setting */
     CONF_SET_NO_REUSE,	       CONF_ERASE_VOLUME,
@@ -976,6 +976,7 @@ keytab_t client_keytab[] = {
 };
 
 keytab_t server_keytab[] = {
+    { "ACTIVE_STORAGE", CONF_ACTIVE_STORAGE },
     { "ALL", CONF_ALL },
     { "ALLOW_SPLIT", CONF_ALLOW_SPLIT },
     { "AMANDA", CONF_AMANDA },
@@ -1466,6 +1467,7 @@ conf_var_t server_var [] = {
    { CONF_REPORT_USE_MEDIA     , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_USE_MEDIA     , NULL },
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
    { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
+   { CONF_ACTIVE_STORAGE       , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_ACTIVE_STORAGE  , NULL },
    { CONF_STORAGE              , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_STORAGE         , NULL },
    { CONF_VAULT_STORAGE        , CONFTYPE_IDENTLIST, read_storage_identlist, CNF_VAULT_STORAGE        , NULL },
    { CONF_CMDFILE              , CONFTYPE_STR      , read_str         , CNF_CMDFILE              , NULL },
@@ -1634,6 +1636,7 @@ conf_var_t policy_var [] = {
 conf_var_t storage_var [] = {
    { CONF_COMMENT                  , CONFTYPE_STR           , read_str           , STORAGE_COMMENT                  , NULL },
    { CONF_POLICY                   , CONFTYPE_STR           , read_dpolicy       , STORAGE_POLICY                   , NULL },
+   { CONF_TAPEDEV                  , CONFTYPE_STR           , read_str           , STORAGE_TAPEDEV                  , NULL },
    { CONF_TPCHANGER                , CONFTYPE_STR           , read_str           , STORAGE_TPCHANGER                , NULL },
    { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , validate_no_space },
    { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , validate_no_space },
@@ -3509,6 +3512,7 @@ init_storage_defaults(
     stcur.name = NULL;
     conf_init_str           (&stcur.value[STORAGE_COMMENT]                  , "");
     conf_init_str           (&stcur.value[STORAGE_POLICY]                   , "");
+    conf_init_str           (&stcur.value[STORAGE_TAPEDEV]                  , "");
     conf_init_str           (&stcur.value[STORAGE_TPCHANGER]                , "");
     conf_init_labelstr      (&stcur.value[STORAGE_LABELSTR]);
     conf_init_str           (&stcur.value[STORAGE_META_AUTOLABEL]           , "");
@@ -4960,6 +4964,10 @@ read_labelstr(
 	val->v.labelstr.template = g_strdup(tokenval.v.s);
 	val->v.labelstr.match_autolabel = FALSE;
 	get_conftoken(CONF_ANY);
+	if (g_strcasecmp(val->v.labelstr.template, "match-autolabel") == 0 ||
+	    g_strcasecmp(val->v.labelstr.template, "match_autolabel") == 0) {
+	    conf_parswarn("warning: labelstr is set to \"%s\", you probably want the %s keyword, without the double quote", val->v.labelstr.template, val->v.labelstr.template);
+	}
     } else if (tok == CONF_MATCH_AUTOLABEL) {
 	g_free(val->v.labelstr.template);
 	val->v.labelstr.template = NULL;
@@ -5276,7 +5284,7 @@ get_multiplier(
     get_conftoken(CONF_ANY);
 
     if (tok == CONF_NL || tok == CONF_END) { /* no multiplier */
-	val = val;
+	// val = val;
     } else if (tok == CONF_MULT1 && unit == CONF_UNIT_K) {
 	val /= 1024;
     } else if (tok == CONF_MULT1 ||
@@ -5306,7 +5314,7 @@ get_multiplier(
 	    conf_parserror(_("value too large"));
 	val *= 1024*1024*1024*1024LL;
     } else {
-	val *= 1;
+	// val *= 1;
 	unget_conftoken();
     }
 
@@ -5976,6 +5984,11 @@ config_init(
 	amfree(config_filename);
     }
 
+    if (getconf_linenum(CNF_ACTIVE_STORAGE) <= 0) {
+	// default to the configured CNF_STORAGE
+	copy_val_t(&conf_data[CNF_ACTIVE_STORAGE], &conf_data[CNF_STORAGE]);
+    }
+
     /* apply config overrides to default setting */
     apply_config_overrides(config_overrides, NULL);
 
@@ -6242,6 +6255,7 @@ init_defaults(
     conf_init_bool     (&conf_data[CNF_COMPRESS_INDEX]       , TRUE);
     conf_init_bool     (&conf_data[CNF_SORT_INDEX]           , FALSE);
     conf_init_str      (&conf_data[CNF_TMPDIR]               , AMANDA_TMPDIR);
+    conf_init_identlist(&conf_data[CNF_ACTIVE_STORAGE]       , NULL);
     conf_init_identlist(&conf_data[CNF_STORAGE]              , NULL);
     conf_init_identlist(&conf_data[CNF_VAULT_STORAGE]        , NULL);
     conf_init_str      (&conf_data[CNF_CMDFILE]              , "command_file");
@@ -6622,6 +6636,10 @@ update_derived_values(
 		free_val_t(&st->value[STORAGE_POLICY]);
 		conf_init_str(&st->value[STORAGE_POLICY], conf_name);
 	    }
+	    if (!storage_seen(st, STORAGE_TAPEDEV)) {
+		free_val_t(&st->value[STORAGE_TAPEDEV]);
+		copy_val_t(&st->value[STORAGE_TAPEDEV], &conf_data[CNF_TAPEDEV]);
+	    }
 	    if (!storage_seen(st, STORAGE_TPCHANGER)) {
 		free_val_t(&st->value[STORAGE_TPCHANGER]);
 		copy_val_t(&st->value[STORAGE_TPCHANGER], &conf_data[CNF_TPCHANGER]);
@@ -6732,6 +6750,26 @@ update_derived_values(
 	}
 
 	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    if (!lookup_storage(il->data)) {
+		conf_parserror(_("storage '%s' is not defined"), (char *)il->data);
+	    }
+	}
+
+	// Add all storage to active-storage
+	for (il = getconf_identlist(CNF_STORAGE); il != NULL; il = il->next) {
+	    identlist_t    asl;
+	    int found = FALSE;
+	    for (asl = getconf_identlist(CNF_ACTIVE_STORAGE); asl != NULL; asl = asl->next) {
+		if (strcmp(il->data, asl->data) == 0) {
+		    found = TRUE;
+		}
+	    }
+	    if (!found) {
+		conf_data[CNF_ACTIVE_STORAGE].v.identlist = g_slist_append(conf_data[CNF_ACTIVE_STORAGE].v.identlist, g_strdup(il->data));
+	    }
+	}
+
+	for (il = getconf_identlist(CNF_ACTIVE_STORAGE); il != NULL; il = il->next) {
 	    if (!lookup_storage(il->data)) {
 		conf_parserror(_("storage '%s' is not defined"), (char *)il->data);
 	    }

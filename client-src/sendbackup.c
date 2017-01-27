@@ -1654,9 +1654,8 @@ start_index(
 
   dbprintf(_("Started index creator: \"%s\"\n"), cmd);
   while(1) {
-    char buffer[BUFSIZ], *ptr;
+    char buffer[BUFSIZ];
     ssize_t bytes_read;
-    size_t bytes_written;
     size_t just_written;
 
     do {
@@ -1672,33 +1671,23 @@ start_index(
       break; /* finished */
 
     /* write the stuff to the subprocess */
-    ptr = buffer;
-    bytes_written = 0;
-    just_written = full_write(fileno(pipe_fp), ptr, (size_t)bytes_read);
+    just_written = full_write(fileno(pipe_fp), buffer, (size_t)bytes_read);
     if (just_written < (size_t)bytes_read) {
-	/* 
+	/*
 	 * just as we waited for write() to complete.
 	 */
 	if (errno != EPIPE) {
 	    dbprintf(_("Index tee cannot write to index creator [%s]\n"),
 			    strerror(errno));
 	}
-    } else {
-	bytes_written += just_written;
-	ptr += just_written;
     }
 
     /* write the stuff to stdout, ensuring none lost when interrupt
        occurs */
-    ptr = buffer;
-    bytes_written = 0;
-    just_written = full_write(3, ptr, bytes_read);
+    just_written = full_write(3, buffer, bytes_read);
     if (just_written < (size_t)bytes_read) {
 	error(_("index tee cannot write [%s]"), strerror(errno));
 	/*NOTREACHED*/
-    } else {
-	bytes_written += just_written;
-	ptr += just_written;
     }
   }
 

@@ -26,7 +26,7 @@ use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
-use Installcheck::Run qw(run run_err $diskname amdump_diag check_amreport check_amstatus);
+use Installcheck::Run qw(run run_err $diskname amdump_diag check_amreport check_amstatus is_sort_array);
 use Installcheck::Catalogs;
 use Amanda::Paths;
 use Amanda::Device qw( :constants );
@@ -55,7 +55,7 @@ if ($rest->{'error'}) {
    plan skip_all => "Can't start JSON Rest server: $rest->{'error'}: see " . Amanda::Debug::dbfn();
    exit 1;
 }
-plan tests => 100;
+plan tests => 84;
 
 my $reply;
 
@@ -73,17 +73,16 @@ chomp $hostname;
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 $testconf->add_param('columnspec', '"Dumprate=1:-8:1,TapeRate=1:-8:1"');
-Installcheck::Run::setup_storage($testconf, 1, 2, 'dump-selection', "\"random\" FULL");
-Installcheck::Run::setup_storage($testconf, 2, 2, 'dump-selection', "\"random\" INCR");
+Installcheck::Run::setup_storage($testconf, 1, 2);
+Installcheck::Run::setup_storage($testconf, 2, 2);
+# one AMGTAR dle
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
     installcheck-test
     program "APPLICATION"
-    tag "random"
     application {
         plugin "amrandom"
         property "SIZE" "1075200"
-        property "SIZE-LEVEL-1" "102400"
     }
 }
 EODLE
@@ -94,7 +93,7 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
 $diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
 $infodir = getconf($CNF_INFOFILE);
 
-$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump","");
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump?no_taper=1", "");
 foreach my $message (@{$reply->{'body'}}) {
     if (defined $message and defined $message->{'code'}) {
         if ($message->{'code'} == 2000003) {
@@ -108,6 +107,7 @@ foreach my $message (@{$reply->{'body'}}) {
         }
     }
 }
+
 #wait until it is done
 do {
     Time::HiRes::sleep(0.5);
@@ -117,7 +117,6 @@ do {
 
 # get REST report
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-
 is($reply->{'body'}->[0]->{'severity'}, 'success', 'severity is success');
 is($reply->{'body'}->[0]->{'code'}, '1900001', 'code is 1900001');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, $hostname , 'hostname is correct');
@@ -126,30 +125,19 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is 
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
-my @sorted_notes = sort @{$reply->{'body'}->[0]->{'report'}->{'notes'}};
-is($sorted_notes[0], '  planner: Adding new disk localhost:diskname2.' , 'notes[0] is correct');
-is($sorted_notes[1], '  planner: tapecycle (2) <= runspercycle (10)', 'notes[1] is correct');
-is($sorted_notes[2], '  taper: Slot 1 without label can be labeled' , 'notes[2] is correct');
-is($sorted_notes[3], '  taper: Slot 1 without label can be labeled' , 'notes[3] is correct');
-is($sorted_notes[4], '  taper: tape STO-1-00001 kb 1050 fm 1 [OK]' , 'notes[4] is correct');
-ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[5], 'no notes[5]');
+is($reply->{'body'}->[0]->{'report'}->{'notes'}->[1], '  planner: Adding new disk localhost:diskname2.' , 'notes[1] is correct');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[2], 'no notes[2]');
 ok(!exists $reply->{'body'}->[0]->{'report'}->{'failure_summary'}, 'no failure_summary');
-my @sorted_usage_by_tape = sort { $a->{'tape_label'} cmp $b->{'tape_label'}} @{$reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}};
-is($sorted_usage_by_tape[0]->{'nb'}, '1' , 'one dle on tape 0');
-is($sorted_usage_by_tape[0]->{'nc'}, '1' , 'one part on tape 0');
-is($sorted_usage_by_tape[0]->{'tape_label'}, 'STO-1-00001' , 'label tape_label on tape 0');
-is($sorted_usage_by_tape[0]->{'size'}, '1050' , 'size 1050  on tape 0');
-ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1], 'use one tape');
-is($reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'TESTCONF'}, undef, 'storage TESTCONF is not set');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'storage-1'}->{'use'}, [ 'STO-1-00001'], 'use storage-1');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '1050',
-									     'total' => '1050',
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0], 'no usgae_by_tape');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'TESTCONF'}->{'use'}, 'use is not defined');
+is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '0',
+									     'total' => '0',
 									     'incr' => '0' }, 'tape_size is correct');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'parts_taped'}, { 'full' => '1',
-									       'total' => '1',
+is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'parts_taped'}, { 'full' => '0',
+									       'total' => '0',
 									       'incr' => '0' }, 'parts_taped is correct');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_taped'}, { 'full' => '1',
-									      'total' => '1',
+is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_taped'}, { 'full' => '0',
+									      'total' => '0',
 									      'incr' => '0' }, 'dles_taped is correct');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_dumped'}, { 'full' => '1',
 									       'total' => '1',
@@ -178,13 +166,12 @@ is($reply->{'body'}->[0]->{'status'}->{'dead_run'}, '1', 'dead_run is correct');
 is($reply->{'body'}->[0]->{'status'}->{'exit_status'}, '0', 'exit_status is correct');
 $reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$timestamp}->{'chunk_time'} = undef;
 $reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$timestamp}->{'dump_time'} = undef;
-$reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$timestamp}->{'storage'}->{'storage-1'}->{'taper_time'} = undef;
 is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
     {
 	'localhost' => {
 		'diskname2' => {
 			$timestamp => {
-				'taped' => '1',
+				#'taped' => '1',
 				'retry' => '0',
 				'size' => '1075200',
 				'esize' => '1075200',
@@ -198,18 +185,6 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 				'dump_time' => undef,
 				'holding_file' => "$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0",
 				'degr_level' => '-1',
-				'storage' => {
-					'storage-1' => {
-						'will_retry' => '0',
-						'status' => '22',
-						'dsize' => '1075200',
-						'taper_time' => undef,
-						'taped_size' => '1075200',
-						'message' => 'written',
-						'size' => '1075200',
-						'partial' => '0'
-					},
-				},
 				'flush' => '0',
 				'will_retry' => '0'
 			}
@@ -218,44 +193,9 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
     },
     'dles is correct');
 
-is_deeply($reply->{'body'}->[0]->{'status'}->{'taper'},
-    {
-	'taper0' => {
-		'worker' => {
-			'worker0-0' => {
-				'status' => '0',
-				'no_tape' => '0'
-			}
-		},
-		'tape_size' => '31457280',
-		'storage' => 'storage-1',
-		'nb_tape' => '1',
-		'stat' => [
-			{
-				'size' => '1075200',
-				'esize' => '1075200',
-				'nb_dle' => '1',
-				'nb_part' => '1',
-				'label' => 'STO-1-00001',
-				'percent' => '3.41796875'
-			}
-		]
-	},
-	'taper1' => {
-		'worker' => {
-			'worker1-0' => {
-				'status' => '0',
-			}
-		},
-		'tape_size' => '31457280',
-		'storage' => 'storage-2',
-		'nb_tape' => '0',
-	}
-    },
-    'taper is correct');
+is($reply->{'body'}->[0]->{'status'}->{'taper'}, undef, ' no taper');
 
-is($reply->{'body'}->[0]->{'status'}->{'storage'}->{'storage-1'}->{'taper'}, 'taper0', 'taper is correct');
-is($reply->{'body'}->[0]->{'status'}->{'storage'}->{'storage-2'}->{'taper'}, 'taper1', 'taper is correct');
+is($reply->{'body'}->[0]->{'status'}->{'storage'}, undef, 'storage do not exists') || diag("storage: " . Data::Dumper::Dumper($reply->{'body'}->[0]->{'status'}->{'storage'}));
 is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
     {
 	'flush' => {
@@ -303,16 +243,6 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
 	},
 	'taped' => {
 		'name' => 'taped',
-		'estimated_size' => '1075200',
-		'storage' => {
-			'storage-1' => {
-				'estimated_stat' => '100',
-				'real_size' => '1075200',
-				'nb' => '1',
-				'real_stat' => '100',
-				'estimated_size' => '1075200'
-			},
-		},
 	},
 	'dumped' => {
 		'name' => 'dumped',
@@ -339,16 +269,16 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
     },
     'stat is correct');
 
+#amreport
 
-# amreport
-#
 my $report = <<'END_REPORT';
 Hostname: localhost.localdomain
 Org     : DailySet1
 Config  : TESTCONF
 Date    : June 22, 2016
 
-These dumps to storage 'storage-1' were to tape STO-1-00001.
+There are 1050K of dumps left in the holding disk.
+Run amflush to flush them to tape.
 The next tape Amanda expects to use for storage 'storage-1' is: 1 new tape.
 The next tape Amanda expects to use for storage 'storage-2' is: 1 new tape.
 
@@ -366,44 +296,36 @@ DLEs Dumped                    1          1          0
 Avg Dump Rate (k/s)     999999.9   999999.9        --
 
 Tape Time (hrs:min)         0:00       0:00       0:00
-Tape Size (meg)              1.0        1.0        0.0
-Tape Used (%)                3.4        3.4        0.0
-DLEs Taped                     1          1          0
-Parts Taped                    1          1          0
-Avg Tp Write Rate (k/s) 999999.9   999999.9        --
-
-
-USAGE BY TAPE:
-  Label                 Time         Size      %  DLEs Parts
-  STO-1-00001           0:00        1050K    3.4     1     1
+Tape Size (meg)              0.0        0.0        0.0
+Tape Used (%)                0.0        0.0        0.0
+DLEs Taped                     0          0          0
+Parts Taped                    0          0          0
+Avg Tp Write Rate (k/s)      --         --         --
 
 
 NOTES:
-  planner: Adding new disk localhost:diskname2.
   planner: tapecycle (2) <= runspercycle (10)
-  taper: Slot 1 without label can be labeled
-  taper: Slot 1 without label can be labeled
-  taper: tape STO-1-00001 kb 1050 fm 1 [OK]
+  planner: Adding new disk localhost:diskname2.
 
 
 DUMP SUMMARY:
                                                     DUMPER STATS     TAPER STATS
 HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
 -------------------------- ---------------------- ---------------- ---------------
-localhost    diskname2   0    1050    1050    --     0:00 999999.9   0:00 999999.9
+localhost    diskname2   0    1050    1050    --     0:00 999999.9                
 
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
-check_amreport($report, $timestamp, "amreport first amdump", 1);
+check_amreport($report, $timestamp, "amreport first amdump");
 
-# amstatus
+#amstatus
 
 my $status = <<"END_STATUS";
 Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
-From Wed Jun 22 08:22:28 EDT 2016
+From Wed Jun 22 08:26:30 EDT 2016
 
-localhost:diskname2 $timestamp 0      1050k dump done (00:00:00), (storage-1) written (00:00:00)
+localhost:diskname2 $timestamp 0      1050k dump done (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
@@ -422,72 +344,57 @@ writing to tape
 dumping to tape
 failed to tape
 taped
-  storage-1     :   1      1050k      1050k (100.00%) (100.00%)
-    tape 1      :   1      1050k      1050k (  3.42%) STO-1-00001 (1 parts)
 
 2 dumpers idle  : no-dumpers
-storage-1   qlen: 0
-               0:
-
-storage-2   qlen: 0
-               0:
-
 network free kps: 80000
-holding space   : 25k (100.00%)
- chunker0 busy  : 00:00:00  ( 43.90%)
-  dumper0 busy  : 00:00:00  (  5.99%)
-storage-1 busy  : 00:00:00  (  1.77%)
- 0 dumpers busy : 00:00:00  ( 99.56%)
- 1 dumper busy  : 00:00:00  (  0.44%)
+holding space   : 23k (100.00%)
+chunker0 busy   : 00:00:00  ( 86.55%)
+dumper0 busy    : 00:00:00  ( 12.11%)
+ 0 dumpers busy : 00:00:00  ( 99.55%)
+ 1 dumper busy  : 00:00:00  (  0.45%)
 END_STATUS
 
 check_amstatus($status, $tracefile, "amstatus first amdump");
 
+# taper-success (flush)
 
-$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/dles/hosts/localhost?disk=diskname2&force_level_1=1","");
-is_deeply (Installcheck::Rest::remove_source_line($reply),
-    { body =>
-        [ {     'source_filename' => "$amperldir/Amanda/Curinfo.pm",
-                'severity' => $Amanda::Message::SUCCESS,
-                'host' => 'localhost',
-                'disk' => 'diskname2',
-                'message' => "localhost:diskname2 is set to a forced level 1 at next run.",
-                'process' => 'Amanda::Rest::Dles',
-                'running_on' => 'amanda-server',
-                'component' => 'rest-server',
-                'module' => 'amanda',
-                'code' => '1300023'
-          },
-        ],
-      http_code => 200,
-    },
-    "get runs") || diag("reply: " . Data::Dumper::Dumper($reply));
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$diskfile = Amanda::Config::config_dir_relative(getconf($CNF_DISKFILE));
+$infodir = getconf($CNF_INFOFILE);
 
-
-$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amdump","");
+my $dump_timestamp = $timestamp;
+$reply = $rest->post("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs/amflush","");
 foreach my $message (@{$reply->{'body'}}) {
+    #diag("message: " . Data::Dumper::Dumper($message));
     if (defined $message and defined $message->{'code'}) {
-        if ($message->{'code'} == 2000003) {
+        if ($message->{'code'} == 2200006) {
             $timestamp = $message->{'timestamp'};
         }
-        if ($message->{'code'} == 2000001) {
+        if ($message->{'code'} == 2200001) {
             $tracefile = $message->{'tracefile'};
         }
-        if ($message->{'code'} == 2000000) {
+        if ($message->{'code'} == 2200000) {
             $logfile = $message->{'logfile'};
         }
     }
 }
 #wait until it is done
+my $found = 0;
 do {
     Time::HiRes::sleep(0.5);
-    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs?logfile=$logfile");
-    } while ($reply->{'body'}[0]->{'code'} == 2000004 and
-             $reply->{'body'}[0]->{'status'} ne 'done');
+    $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
+    foreach my $message (@{$reply->{'body'}}) {
+	if ($message->{'logfile'} eq $logfile &&
+	    $message->{'code'} == 2000004 &&
+	    $message->{'status'} eq 'done') {
+	    $found = 1;
+	    last;
+	}
+    }
+} while (!$found);
 
 # get REST report
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/report?logfile=$logfile");
-
 is($reply->{'body'}->[0]->{'severity'}, 'success', 'severity is success');
 is($reply->{'body'}->[0]->{'code'}, '1900001', 'code is 1900001');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'hostname'}, $hostname , 'hostname is correct');
@@ -496,93 +403,106 @@ is($reply->{'body'}->[0]->{'report'}->{'head'}->{'status'}, 'done' , 'status is 
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'org'}, 'DailySet1' , 'org is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'config_name'}, 'TESTCONF' , 'config_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'head'}->{'timestamp'}, $timestamp , 'timestamp is correct');
-@sorted_notes = sort @{$reply->{'body'}->[0]->{'report'}->{'notes'}};
-is($sorted_notes[0], '  planner: Forcing level 1 of localhost:diskname2 as directed.' , 'notes[0] is correct');
-is($sorted_notes[1], '  planner: Last full dump of localhost:diskname2 on tape STO-1-00001 overwritten in 2 runs.' , 'notes[1] is correct');
-is($sorted_notes[2], '  planner: tapecycle (2) <= runspercycle (10)', 'notes[2] is correct');
-is($sorted_notes[3], '  taper: Slot 1 with label STO-1-00001 is not reusable' , 'notes[3] is correct');
-is($sorted_notes[4], '  taper: Slot 1 without label can be labeled' , 'notes[4] is correct');
-is($sorted_notes[5], '  taper: Slot 2 without label can be labeled' , 'notes[5] is correct');
-is($sorted_notes[6], '  taper: tape STO-2-00001 kb 100 fm 1 [OK]' , 'notes[6] is correct');
-ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[7], 'no notes[7]');
-@sorted_usage_by_tape = sort { $a->{'tape_label'} cmp $b->{'tape_label'}} @{$reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}};
-is($sorted_usage_by_tape[0]->{'nb'}, '1' , 'one dle on tape 0');
-is($sorted_usage_by_tape[0]->{'nc'}, '1' , 'one part on tape 0');
-is($sorted_usage_by_tape[0]->{'tape_label'}, 'STO-2-00001' , 'label tape_label on tape 0');
-is($sorted_usage_by_tape[0]->{'size'}, '100' , 'size 100  on tape 0');
-ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1], 'use one tape');
-is($reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'TESTCONF'}, undef, 'storage TESTCONF is not set');
+is_sort_array($reply->{'body'}->[0]->{'report'}->{'notes'},
+	[ '  taper: Slot 1 without label can be labeled',
+	  '  taper: tape STO-1-00001 kb 1050 fm 1 [OK]',
+	  '  taper: Slot 1 without label can be labeled',
+	  '  taper: tape STO-2-00001 kb 1050 fm 1 [OK]' ],
+	'notes are correct' );
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[4], 'no notes[4]');
+is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');
+is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nc'}, '1' , 'one part on tape 0');
+ok(($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'tape_label'} eq 'STO-1-00001' &&
+    $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1]->{'tape_label'} eq 'STO-2-00001') ||
+   ($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'tape_label'} eq 'STO-2-00001' &&
+    $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1]->{'tape_label'} eq 'STO-1-00001'),
+   'usage_by_tape->[]->tape_label arecorrect');
+is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'size'}, '1050' , 'size 1050  on tape 0');
+is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[1]->{'size'}, '1050' , 'size 1050  on tape 1');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[2], 'only two tapes');
+is_deeply($reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'storage-1'}->{'use'}, [ 'STO-1-00001'], 'use storage-1');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'tapeinfo'}->{'storage'}->{'storage-2'}->{'use'}, [ 'STO-2-00001'], 'use storage-2');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '0',
-									     'total' => '100',
-									     'incr' => '100' }, 'tape_size is correct');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'parts_taped'}, { 'full' => '0',
-									       'total' => '1',
-									       'incr' => '1' }, 'parts_taped is correct');
-is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_taped'}, { 'full' => '0',
-									      'total' => '1',
-									      'incr' => '1' }, 'dles_taped is correct');
+is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tape_size'}, { 'full' => '2100',
+									     'total' => '2100',
+									     'incr' => '0' }, 'tape_size is correct');
+is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'parts_taped'}, { 'full' => '2',
+									       'total' => '2',
+									       'incr' => '0' }, 'parts_taped is correct');
+is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_taped'}, { 'full' => '2',
+									      'total' => '2',
+									      'incr' => '0' }, 'dles_taped is correct');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dles_dumped'}, { 'full' => '0',
-									       'total' => '1',
-									       'incr' => '1' }, 'dles_dumped is correct');
+									       'total' => '0',
+									       'incr' => '0' }, 'dles_dumped is correct');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'original_size'}, { 'full' => '0',
-									         'total' => '100',
-									         'incr' => '100' }, 'original_size is correct');
+									         'total' => '0',
+									         'incr' => '0' }, 'original_size is correct');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'output_size'}, { 'full' => '0',
-									       'total' => '100',
-									       'incr' => '100' }, 'output_size is correct');
-is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dumpdisks'}, '1:1', 'dumpdisks is correct');
-is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tapedisks'}, '1:1', 'tapedisks is correct');
-is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tapeparts'}, '1:1', 'tapeparts is correct');
-is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'backup_level'}, '1', 'backup_level is correct');
+									       'total' => '0',
+									       'incr' => '0' }, 'output_size is correct');
+is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'dumpdisks'}, '', 'dumpdisks is correct');
+is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tapedisks'}, '', 'tapedisks is correct');
+is($reply->{'body'}->[0]->{'report'}->{'statistic'}->{'tapeparts'}, '', 'tapeparts is correct');
+is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'backup_level'}, '0', 'backup_level is correct');
 is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'disk_name'}, 'diskname2', 'disk_name is correct');
 is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'hostname'}, 'localhost', 'hostname is correct');
-is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_orig_kb'}, '100', 'dump_orig_kb is correct');
-is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_out_kb'}, '100', 'dump_out_kb is correct');
-is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dle_status'}, 'full', 'dle_status is correct');
-ok(!exists $reply->{'body'}->[0]->{'report'}->{'summary'}->[1], 'Only one summary');
+is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_orig_kb'}, '1050', 'dump_orig_kb is correct');
+is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dump_out_kb'}, '1050', 'dump_out_kb is correct');
+is($reply->{'body'}->[0]->{'report'}->{'summary'}->[0]->{'dle_status'}, 'nodump-FLUSH', 'dle_status is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[1]->{'backup_level'}, '0', 'backup_level is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[1]->{'disk_name'}, 'diskname2', 'disk_name is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[1]->{'hostname'}, 'localhost', 'hostname is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[1]->{'dump_orig_kb'}, '1050', 'dump_orig_kb is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[1]->{'dump_out_kb'}, '1050', 'dump_out_kb is correct');
+#is($reply->{'body'}->[0]->{'report'}->{'summary'}->[1]->{'dle_status'}, 'nodump-FLUSH', 'dle_status is correct');
+ok(!exists $reply->{'body'}->[0]->{'report'}->{'summary'}->[2], 'Only one summary');
 
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
 is($reply->{'body'}->[0]->{'severity'}, 'info', 'severity is info');
 is($reply->{'body'}->[0]->{'code'}, '1800000', 'code is 1800000');
 is($reply->{'body'}->[0]->{'status'}->{'dead_run'}, '1', 'dead_run is correct');
 is($reply->{'body'}->[0]->{'status'}->{'exit_status'}, '0', 'exit_status is correct');
-$reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$timestamp}->{'chunk_time'} = undef;
-$reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$timestamp}->{'dump_time'} = undef;
-$reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$timestamp}->{'storage'}->{'storage-2'}->{'taper_time'} = undef;
+$reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$dump_timestamp}->{'storage'}->{'storage-1'}->{'taper_time'} = undef;
+$reply->{'body'}->[0]->{'status'}->{'dles'}->{'localhost'}->{'diskname2'}->{$dump_timestamp}->{'storage'}->{'storage-2'}->{'taper_time'} = undef;
 is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
     {
 	'localhost' => {
 		'diskname2' => {
-			$timestamp => {
-				'taped' => '1',
-				'retry' => '0',
-				'size' => '102400',
-				'esize' => '102400',
-				'retry_level' => '-1',
-				'message' => 'dump done',
-				'chunk_time' => undef,
-				'dsize' => '102400',
-				'status' => '20',
-				'partial' => '0',
-				'level' => '1',
-				'dump_time' => undef,
-				'holding_file' => "$Installcheck::TMP/holding/$timestamp/localhost.diskname2.1",
-				'degr_level' => '-1',
+			$dump_timestamp => {
+				#'taped' => '1',
+				'size' => '1075200',
+				'esize' => '0',
+				#'message' => '',
+				'dsize' => '1075200',
+				'status' => '0',
+				#'partial' => '0',
+				'level' => '0',
+				'holding_file' => "$Installcheck::TMP/holding/$dump_timestamp/localhost.diskname2.0",
 				'storage' => {
+					'storage-1' => {
+						'will_retry' => '0',
+						'status' => '23',
+						'dsize' => '1075200',
+						'taper_time' => undef,
+						'taped_size' => '1075200',
+						'message' => 'flushed',
+						'size' => '1075200',
+						'partial' => '0',
+						'flushing' => 1
+					},
 					'storage-2' => {
 						'will_retry' => '0',
-						'status' => '22',
-						'dsize' => '102400',
+						'status' => '23',
+						'dsize' => '1075200',
 						'taper_time' => undef,
-						'taped_size' => '102400',
-						'message' => 'written',
-						'size' => '102400',
-						'partial' => '0'
-					},
+						'taped_size' => '1075200',
+						'message' => 'flushed',
+						'size' => '1075200',
+						'partial' => '0',
+						'flushing' => 1
+					}
 				},
-				'flush' => '0',
-				'will_retry' => '0'
+				'flush' => '0'
 			}
 		}
 	}
@@ -595,17 +515,30 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'taper'},
 		'worker' => {
 			'worker0-0' => {
 				'status' => '0',
+				'no_tape' => '0',
+				'message' => 'Idle'
 			}
 		},
 		'tape_size' => '31457280',
 		'storage' => 'storage-1',
-		'nb_tape' => '0',
+		'nb_tape' => '1',
+		'stat' => [
+			{
+				'size' => '1075200',
+				'esize' => '1075200',
+				'nb_dle' => '1',
+				'nb_part' => '1',
+				'label' => 'STO-1-00001',
+				'percent' => '3.41796875'
+			}
+		]
 	},
 	'taper1' => {
 		'worker' => {
 			'worker1-0' => {
 				'status' => '0',
 				'no_tape' => '0',
+				'message' => 'Idle'
 			}
 		},
 		'tape_size' => '31457280',
@@ -613,12 +546,12 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'taper'},
 		'nb_tape' => '1',
 		'stat' => [
 			{
-				'size' => '102400',
-				'esize' => '102400',
+				'size' => '1075200',
+				'esize' => '1075200',
 				'nb_dle' => '1',
 				'nb_part' => '1',
 				'label' => 'STO-2-00001',
-				'percent' => '0.325520833333333',
+				'percent' => '3.41796875'
 			}
 		]
 	}
@@ -630,7 +563,19 @@ is($reply->{'body'}->[0]->{'status'}->{'storage'}->{'storage-2'}->{'taper'}, 'ta
 is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
     {
 	'flush' => {
-		'name' => 'flush'
+		'name' => 'flush',
+		'storage' => {
+			'storage-1' => {
+				'estimated_size' => undef,
+				'real_size' => '1075200',
+				'nb' => '1'
+			},
+			'storage-2' => {
+				'estimated_size' => undef,
+				'real_size' => '1075200',
+				'nb' => '1'
+			}
+		}
 	},
 	'writing_to_tape' => {
 		'name' => 'writing to tape'
@@ -669,33 +614,39 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
 	'estimated' => {
 		'name' => 'estimated',
 		'real_size' => undef,
-		'estimated_size' => '102400',
-		'nb' => '1'
+		'estimated_size' => '0',
+		'nb' => '0'
 	},
 	'taped' => {
 		'name' => 'taped',
-		'estimated_size' => '102400',
 		'storage' => {
-			'storage-2' => {
-				'estimated_stat' => '100',
-				'real_size' => '102400',
+			'storage-1' => {
+				'estimated_stat' => '0',
+				'real_size' => '1075200',
 				'nb' => '1',
-				'real_stat' => '100',
-				'estimated_size' => '102400'
+				'real_stat' => '0',
+				'estimated_size' => '0'
 			},
+			'storage-2' => {
+				'estimated_stat' => '0',
+				'real_size' => '1075200',
+				'nb' => '1',
+				'real_stat' => '0',
+				'estimated_size' => '0'
+			}
 		},
 	},
 	'dumped' => {
 		'name' => 'dumped',
-		'estimated_stat' => '100',
-		'real_size' => '102400',
-		'nb' => '1',
-		'real_stat' => '100',
-		'estimated_size' => '102400'
+		'estimated_stat' => '0',
+		'real_size' => '0',
+		'nb' => '0',
+		'real_stat' => '0',
+		'estimated_size' => '0'
 	},
 	'disk' => {
 		'name' => 'disk',
-		'nb' => '1',
+		'nb' => '0',
 		'estimated_size' => undef,
 		'real_size' => undef
 	},
@@ -710,16 +661,16 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
     },
     'stat is correct');
 
-
 # amreport
-#
+
 $report = <<'END_REPORT';
 Hostname: localhost.localdomain
 Org     : DailySet1
 Config  : TESTCONF
 Date    : June 22, 2016
 
-These dumps to storage 'storage-2' were to tape STO-2-00001.
+The dumps to storage 'storage-1' were flushed to tape STO-1-00001.
+The dumps to storage 'storage-2' were flushed to tape STO-2-00001.
 The next tape Amanda expects to use for storage 'storage-1' is: 1 new tape.
 The next tape Amanda expects to use for storage 'storage-2' is: 1 new tape.
 
@@ -730,88 +681,90 @@ STATISTICS:
 Estimate Time (hrs:min)     0:00
 Run Time (hrs:min)          0:00
 Dump Time (hrs:min)         0:00       0:00       0:00
-Output Size (meg)            0.1        0.0        0.1
-Original Size (meg)          0.1        0.0        0.1
-Avg Compressed Size (%)    100.0        --       100.0
-DLEs Dumped                    1          0          1  1:1
-Avg Dump Rate (k/s)     999999.9        --    999999.9
+Output Size (meg)            0.0        0.0        0.0
+Original Size (meg)          0.0        0.0        0.0
+Avg Compressed Size (%)      --         --         --
+DLEs Dumped                    0          0          0
+Avg Dump Rate (k/s)          --         --         --
 
 Tape Time (hrs:min)         0:00       0:00       0:00
-Tape Size (meg)              0.1        0.0        0.1
-Tape Used (%)                0.4        0.0        0.4
-DLEs Taped                     1          0          1  1:1
-Parts Taped                    1          0          1  1:1
-Avg Tp Write Rate (k/s) 999999.9        --    999999.9
+Tape Size (meg)              2.1        2.1        0.0
+Tape Used (%)                6.9        6.9        0.0
+DLEs Taped                     2          2          0
+Parts Taped                    2          2          0
+Avg Tp Write Rate (k/s) 999999.9   999999.9        --
 
 
 USAGE BY TAPE:
   Label                 Time         Size      %  DLEs Parts
-  STO-2-00001           0:00         100K    0.4     1     1
+  STO-1-00001           0:00        1050K    3.4     1     1
+  STO-2-00001           0:00        1050K    3.4     1     1
 
 
 NOTES:
-  planner: Forcing level 1 of localhost:diskname2 as directed.
-  planner: Last full dump of localhost:diskname2 on tape STO-1-00001 overwritten in 2 runs.
-  planner: tapecycle (2) <= runspercycle (10)
-  taper: Slot 1 with label STO-1-00001 is not reusable
   taper: Slot 1 without label can be labeled
-  taper: Slot 2 without label can be labeled
-  taper: tape STO-2-00001 kb 100 fm 1 [OK]
+  taper: Slot 1 without label can be labeled
+  taper: tape STO-1-00001 kb 1050 fm 1 [OK]
+  taper: tape STO-2-00001 kb 1050 fm 1 [OK]
 
 
 DUMP SUMMARY:
                                                     DUMPER STATS     TAPER STATS
 HOSTNAME     DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS     KB/s MMM:SS     KB/s
 -------------------------- ---------------------- ---------------- ---------------
-localhost    diskname2   1     100     100    --     0:00 999999.9   0:00 999999.9
+localhost    diskname2   0    1050    1050    --       FLUSH         0:00 999999.9
+                                                       FLUSH         0:00 999999.9 
 
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
-check_amreport($report, $timestamp, "amreport second amdump", 1);
+check_amreport($report, $timestamp, "amreport second amdump", 1, undef);
 
 # amstatus
 
 $status = <<"END_STATUS";
 Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
-From Wed Jun 22 08:22:28 EDT 2016
+From Wed Jun 22 08:32:02 EDT 2016
 
-localhost:diskname2 $timestamp 1       100k dump done (00:00:00), (storage-2) written (00:00:00)
+localhost:diskname2 $dump_timestamp 0      1050k (storage-1) flushed (00:00:00)
+                                                (storage-2) flushed (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
 ---------------- ----  ---------  ---------
-disk            :   1
-estimated       :   1                  100k
+disk            :   0
+estimated       :   0                    0k
 flush
+  storage-1     :   1      1050k
+  storage-2     :   1      1050k
 dump failed     :   0                    0k           (  0.00%)
 wait for dumping:   0                    0k           (  0.00%)
 dumping to tape :   0         0k         0k (  0.00%) (  0.00%)
 dumping         :   0         0k         0k (  0.00%) (  0.00%)
-dumped          :   1       100k       100k (100.00%) (100.00%)
+dumped          :   0         0k         0k (  0.00%) (  0.00%)
 wait for writing
 wait to flush
 writing to tape
 dumping to tape
 failed to tape
 taped
-  storage-2     :   1       100k       100k (100.00%) (100.00%)
-    tape 1      :   1       100k       100k (  3.42%) STO-2-00001 (1 parts)
+  storage-1     :   1      1050k         0k (  0.00%) (  0.00%)
+    tape 1      :   1      1050k      1050k (  3.42%) STO-1-00001 (1 parts)
+  storage-2     :   1      1050k         0k (  0.00%) (  0.00%)
+    tape 1      :   1      1050k      1050k (  3.42%) STO-2-00001 (1 parts)
 
 2 dumpers idle  : no-dumpers
 storage-1   qlen: 0
-               0:
+               0: Idle
 
 storage-2   qlen: 0
-               0:
+               0: Idle
 
 network free kps: 80000
-holding space   : 25k (100.00%)
- chunker0 busy  : 00:00:00  ( 43.90%)
-  dumper0 busy  : 00:00:00  (  5.99%)
-storage-2 busy  : 00:00:00  (  1.77%)
- 0 dumpers busy : 00:00:00  ( 99.56%)
- 1 dumper busy  : 00:00:00  (  0.44%)
+holding space   : 26k (100.00%)
+storage-1 busy  : 00:00:00  (  4.80%)
+storage-2 busy  : 00:00:00  (  2.58%)
+ 0 dumpers busy : 00:00:00  (100.00%)
 END_STATUS
 
 check_amstatus($status, $tracefile, "amstatus second amdump");

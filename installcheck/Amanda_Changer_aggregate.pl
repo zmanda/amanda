@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 19;
+use Test::More tests => 20;
 use File::Path;
 use strict;
 use warnings;
@@ -41,10 +41,11 @@ Installcheck::log_test_output();
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-my $taperoot = "$Installcheck::TMP/Amanda_Changer_Disk_test";
+my $taperoot0 = "$Installcheck::TMP/Amanda_Changer_Disk_test0";
+my $taperoot1 = "$Installcheck::TMP/Amanda_Changer_Disk_test1";
 
 sub reset_taperoot {
-    my ($nslots) = @_;
+    my ($taperoot, $nslots) = @_;
 
     if (-d $taperoot) {
 	rmtree($taperoot);
@@ -58,7 +59,7 @@ sub reset_taperoot {
 }
 
 sub is_pointing_to {
-    my ($res, $slot, $msg) = @_;
+    my ($taperoot, $res, $slot, $msg) = @_;
 
     is($res->{'device'}->device_name, "file:$taperoot/slot$slot", $msg);
 
@@ -67,6 +68,24 @@ sub is_pointing_to {
 
 # Build a configuration that specifies Amanda::Changer::Disk
 my $testconf = Installcheck::Config->new();
+my $aggregate_statefile = "$CONFIG_DIR/TESTCONF/aggregate.state";
+$testconf->add_changer("disk0", [
+	tpchanger => "\"chg-disk:$taperoot0\"",
+	property  => '"num-slot" "3"',
+]);
+$testconf->add_changer("disk1", [
+	tpchanger => "\"chg-disk:$taperoot1\"",
+	property  => '"num-slot" "3"',
+]);
+$testconf->add_changer("aggregate", [
+	tpchanger => "\"chg-aggregate:{disk0,disk1}\"",
+	property  => '"allow-missing-changer" "yes"',
+	property  => "\"state-filename\" \"$aggregate_statefile\""
+]);
+$testconf->add_storage("aggregate", [
+	tpchanger => '"aggregate"',
+]);
+$testconf->add_param("storage", '"aggregate"');
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -75,16 +94,17 @@ if ($cfg_result != $CFGERR_OK) {
     die(join "\n", @errors);
 }
 
-reset_taperoot(5);
+reset_taperoot($taperoot0, 3);
+reset_taperoot($taperoot1, 3);
 
 # first try an error
-my $chg = Amanda::Changer->new("chg-disk:$taperoot/foo");
+my $chg = Amanda::Changer->new("chg-aggregate:foo");
 chg_err_like($chg,
-    { message => qr/directory '.*' does not exist/,
+    { message => qr/chg-aggregate needs at least two child changers/,
       type => 'fatal' },
-    "detects nonexistent directory");
+    "error with one child changer");
 
-$chg = Amanda::Changer->new("chg-disk:$taperoot");
+$chg = Amanda::Changer->new("aggregate");
 die($chg) if $chg->isa("Amanda::Changer::Error");
 is($chg->have_inventory(), '1', "changer have inventory");
 
@@ -103,7 +123,7 @@ sub test_reserved {
 	}
 
 	$chg->load(slot => $slot,
-                   set_current => ($slot == 5),
+                   set_current => ($slot eq "1:2"),
 		   res_cb => make_cb($steps->{'loaded'}));
     };
 
@@ -123,7 +143,7 @@ sub test_reserved {
 
     step tryreserved => sub {
 	# try to load an already-reserved slot
-	$chg->load(slot => 3,
+	$chg->load(slot => "0:3",
 		   res_cb => sub {
 	    my ($err, $reservation) = @_;
 	    chg_err_like($err,
@@ -150,11 +170,11 @@ sub test_reserved {
 }
 
 # start the loop
-test_reserved(\&Amanda::MainLoop::quit, 1, 3, 5);
+test_reserved(\&Amanda::MainLoop::quit, "0:1", "0:3", "1:2");
 Amanda::MainLoop::run();
 
 # and try it with some different slots, just to see
-test_reserved(\&Amanda::MainLoop::quit, 4, 2, 3);
+test_reserved(\&Amanda::MainLoop::quit, "1:1", "0:2", "0:3");
 Amanda::MainLoop::run();
 
 # check relative slot ("current" and "next") functionality
@@ -165,7 +185,7 @@ sub test_relative_slot {
     my $steps = define_steps
 	cb_ref => \$finished_cb;
 
-    # load the "current" slot, which should be 5
+    # load the "current" slot, which should be 1:1
     step load_current => sub {
 	$chg->load(relative_slot => "current", res_cb => $steps->{'check_current_cb'});
     };
@@ -174,7 +194,7 @@ sub test_relative_slot {
         my ($err, $res) = @_;
         die $err if $err;
 
-        is_pointing_to($res, 5, "'current' is slot 5");
+        is_pointing_to($taperoot1, $res, 1, "'current' is slot 1:1");
 	$slot = $res->{'this_slot'};
 
 	$res->release(finished_cb => $steps->{'released1'});
@@ -192,7 +212,7 @@ sub test_relative_slot {
         my ($err, $res) = @_;
         die $err if $err;
 
-        is_pointing_to($res, 1, "'next' from there is slot 1");
+        is_pointing_to($taperoot1, $res, 2, "'next' from there is slot 1:2");
 
 	$res->release(finished_cb => $steps->{'released2'});
     };
@@ -215,7 +235,7 @@ sub test_relative_slot {
         my ($err, $res) = @_;
         die $err if $err;
 
-        is_pointing_to($res, 1, "after reset, 'current' is slot 1");
+        is_pointing_to($taperoot0, $res, 1, "after reset, 'current' is slot 0:1");
 
 	$res->release(finished_cb => $steps->{'released3'});
     };
@@ -243,7 +263,7 @@ sub test_relative_next {
                 my ($err, $res) = @_;
                 die $err if $err;
 
-                is_pointing_to($res, 2, "loading relative slot 'next' loads the correct slot");
+                is_pointing_to($taperoot0, $res, 2, "loading relative slot 'next' loads the correct slot");
 
 		$steps->{'release'}->($res);
             }
@@ -274,7 +294,7 @@ sub test_except_slots {
 	cb_ref => \$finished_cb;
 
     step start => sub {
-	$chg->load(slot => "5", except_slots => { %except_slots },
+	$chg->load(slot => "1:2", except_slots => { %except_slots },
 		   res_cb => $steps->{'loaded'});
     };
 
@@ -312,8 +332,8 @@ sub test_except_slots {
     };
 
     step quit => sub {
-	is_deeply({ %except_slots }, { 5=>1, 1=>1, 2=>1, 3=>1, 4=>1 },
-		"scanning with except_slots works");
+	is_deeply({ %except_slots }, { '1:2'=>1, '0:1'=>1, '0:2'=>1, '0:3'=>1, '1:1'=>1, '1:3'=>1 },
+		"scanning with except_slots works") or diag(Data::Dumper::Dumper(\%except_slots));
 	$finished_cb->();
     };
 }
@@ -351,7 +371,7 @@ Amanda::MainLoop::run();
         die($err) if defined($err);
 
         is_deeply({ %results },
-	    { num_slots => 5, fast_search => 1 },
+	    { num_slots => 6, fast_search => 1 },
 	    "info() returns the correct num_slots and fast_search");
 
         # note use of a glob metacharacter in the label name
@@ -362,7 +382,7 @@ Amanda::MainLoop::run();
         my ($err, $res) = @_;
         die $err if $err;
 
-        is_pointing_to($res, 4, "labeled volume found in slot 4");
+        is_pointing_to($taperoot1, $res, 1, "labeled volume found in slot 1:1");
 
 	$res->release(finished_cb => sub {
 	    my ($err) = @_;
@@ -373,14 +393,14 @@ Amanda::MainLoop::run();
     });
 
     # label slot 4, using our own symlink
-    mkpath("$taperoot/tmp");
-    symlink("../slot4", "$taperoot/tmp/data") or die "While symlinking: $!";
-    my $dev = Amanda::Device->new("file:$taperoot/tmp");
+    mkpath("$taperoot1/tmp");
+    symlink("../slot1", "$taperoot1/tmp/data") or die "While symlinking: $!";
+    my $dev = Amanda::Device->new("file:$taperoot1/tmp");
     $dev->start($Amanda::Device::ACCESS_WRITE, "FOO?BAR", undef)
         or die $dev->error_or_status();
     $dev->finish()
         or die $dev->error_or_status();
-    rmtree("$taperoot/tmp");
+    rmtree("$taperoot1/tmp");
 
     $get_info->();
     Amanda::MainLoop::run();
@@ -394,26 +414,72 @@ Amanda::MainLoop::run();
 	    die $err if $err;
 
 	    is_deeply($inv, [
-	      { slot => 1, state => Amanda::Changer::SLOT_FULL,
+	      { slot => '0:1', state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
-		reserved => 0,  current => 1},
-	      { slot => 2, state => Amanda::Changer::SLOT_FULL,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef,
+		current => undef },
+	      { slot => '0:2', state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
-		reserved => 0 },
-	      { slot => 3, state => Amanda::Changer::SLOT_FULL,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => undef },
+	      { slot => '0:3', state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
-		reserved => 0 },
-	      { slot => 4, state => Amanda::Changer::SLOT_FULL,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => undef },
+	      { slot => '1:1', state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_SUCCESS,
 		f_type => $Amanda::Header::F_TAPESTART, label => "FOO?BAR",
-		reserved => 0 },
-	      { slot => 5, state => Amanda::Changer::SLOT_FULL,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => 1 },
+	      { slot => '1:2', state => Amanda::Changer::SLOT_FULL,
 		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
 		f_type => $Amanda::Header::F_EMPTY, label => undef,
-		reserved => 0 },
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => undef },
+	      { slot => '1:3', state => Amanda::Changer::SLOT_FULL,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
+		f_type => $Amanda::Header::F_EMPTY, label => undef,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => undef },
+		], "inventory finds the labeled tape");
+
+	    Amanda::MainLoop::quit();
+	}));
+    });
+
+    $try_inventory->();
+    Amanda::MainLoop::run();
+}
+
+rmtree($taperoot0);
+
+# inventory is pretty cool
+{
+    my $try_inventory = make_cb('try_inventory' => sub {
+        $chg->inventory(inventory_cb => make_cb(sub {
+	    my ($err, $inv) = @_;
+	    die $err if $err;
+
+	    is_deeply($inv, [
+	      { slot => '1:1', state => Amanda::Changer::SLOT_FULL,
+		device_status => $DEVICE_STATUS_SUCCESS,
+		f_type => $Amanda::Header::F_TAPESTART, label => "FOO?BAR",
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => 1 },
+	      { slot => '1:2', state => Amanda::Changer::SLOT_FULL,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
+		f_type => $Amanda::Header::F_EMPTY, label => undef,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => undef },
+	      { slot => '1:3', state => Amanda::Changer::SLOT_FULL,
+		device_status => $DEVICE_STATUS_VOLUME_UNLABELED,
+		f_type => $Amanda::Header::F_EMPTY, label => undef,
+		reserved => 0, barcode => undef, import_export =>undef,
+		loaded_in => undef, current => undef },
 		], "inventory finds the labeled tape");
 
 	    Amanda::MainLoop::quit();
@@ -425,4 +491,6 @@ Amanda::MainLoop::run();
 }
 
 $chg->quit();
-rmtree($taperoot);
+unlink $aggregate_statefile;
+rmtree($taperoot0);
+rmtree($taperoot1);

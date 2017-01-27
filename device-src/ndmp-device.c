@@ -1511,8 +1511,8 @@ indirecttcp_start_writing(
     /* tell mover to start listening */
     g_assert(self->for_writing);
     if (!ndmp_connection_mover_listen(self->ndmp,
-		NDMP4_MOVER_MODE_READ,
-		NDMP4_ADDR_TCP,
+		NDMP9_MOVER_MODE_READ,
+		NDMP9_ADDR_TCP,
 		&real_addrs)) {
 	set_error_from_ndmp(self);
 	close(conn_sock);

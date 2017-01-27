@@ -673,7 +673,7 @@ sub label {
 					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					labelstr  => $labelstr));
-		$dev_ok = 0;
+		$dev_ok = 0 unless ($params{'force'});
 	    } elsif ($tle) {
 		if ($tle->{'config'} && $tle->{'config'} ne Amanda::Config::get_config_name()) {
 		    $self->user_msg(Amanda::Label::Message->new(
@@ -683,7 +683,7 @@ sub label {
 					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					config    => $tle->{'config'}));
-		    $dev_ok = 0;
+		    $dev_ok = 0 unless ($params{'force'});
 		} elsif ($tle->{'pool'} &&
 			 $tle->{'pool'} ne $tapepool) {
 		    $self->user_msg(Amanda::Label::Message->new(
@@ -693,7 +693,7 @@ sub label {
 					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					pool      => $tle->{'pool'}));
-		    $dev_ok = 0;
+		    $dev_ok = 0 unless ($params{'force'});
 		} elsif (!$tle->{'pool'} &&
 			 !match_labelstr($labelstr, $autolabel, $label, $barcode, $meta, $storage_name)) {
 		    $self->user_msg(Amanda::Label::Message->new(
@@ -703,7 +703,7 @@ sub label {
 					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					labelstr  => $labelstr));
-		    $dev_ok = 0;
+		    $dev_ok = 0 unless ($params{'force'});
 		} else {
 		    $self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
@@ -722,7 +722,7 @@ sub label {
 			# note that we don't run amrmtape automatically, as it could result in data loss when
 			# multiple volumes have (perhaps accidentally) the same label
 		    } else {
-			$dev_ok = 0
+			$dev_ok = 0 unless ($params{'force'});
 		    }
 		}
 	    } else {
@@ -732,7 +732,7 @@ sub label {
 					code      => 1000019,
 					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
 					label     => $label));
-		$dev_ok = 0 if !$params{'force'};
+		$dev_ok = 0 unless ($params{'force'});
 	    }
 	}
 

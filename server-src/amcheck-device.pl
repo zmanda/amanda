@@ -69,6 +69,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 my $storage_name = $ARGV[1];
+my $storage;
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 my $exit_status = 0;
 
@@ -126,6 +127,8 @@ sub _user_msg_fn {
 		    print STDERR " $params{'err'}\n";
                 } elsif (defined $volume_label) {
                     print STDERR " volume '$volume_label'\n";
+		} elsif ($params{'err'}) {
+		    print STDERR " $params{'err'}\n";
                 } else {
                     #print STDERR " volume '$volume_label'\n";
                 }
@@ -137,7 +140,6 @@ sub _user_msg_fn {
 		if ($dev->directtcp_supported()) {
 		    $directtcp = "DIRECTTCP ";
 		}
-		print STDOUT "DATA-PATH AMANDA $directtcp\n";
 
                 if (exists($params{'search_result'})) {
                     print STDERR "found in slot $res->{'this_slot'}:";
@@ -160,7 +162,7 @@ sub _user_msg_fn {
                 } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
                          $dev->volume_header and
                          $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-		    my $autolabel = getconf($CNF_AUTOLABEL);
+		    my $autolabel = storage_getconf($storage, $STORAGE_AUTOLABEL);
 		    if ($autolabel->{'non_amanda'}) {
 			print STDERR " contains a non-Amanda volume\n";
 		    } else {
@@ -199,8 +201,8 @@ sub do_check {
 	}
     }
 
-    my ($storage)  = Amanda::Storage->new(storage_name => $storage_name,
-					  tapelist => $tl);
+    $storage  = Amanda::Storage->new(storage_name => $storage_name,
+				     tapelist => $tl);
     return failure("$storage", $finished_cb) if $storage->isa("Amanda::Message");
     my $chg = $storage->{'chg'};
     if ($chg->isa("Amanda::Message")) {

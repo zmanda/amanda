@@ -30,7 +30,7 @@ use Text::Wrap;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Util qw( :constants );
+use Amanda::Util qw( :constants match_labelstr );
 use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Constants;
@@ -219,6 +219,7 @@ sub {
 	for my $sl (@$inv) {
 	    my $line = "slot $sl->{slot}:";
 	    my $tle;
+	    my $meta;
 	    if ($sl->{'state'} == Amanda::Changer::SLOT_EMPTY) {
 		$line .= " empty";
 	    } elsif (!defined($sl->{device_status}) && !defined($sl->{label})) {
@@ -230,6 +231,7 @@ sub {
 		    if (defined $tle) {
 			if ($tle->{'meta'}) {
 				$line .= " ($tle->{'meta'})";
+				$meta = $tle->{'meta'};
 			}
 		    }
 		} elsif ($sl->{'device_status'} == $DEVICE_STATUS_VOLUME_UNLABELED) {
@@ -261,6 +263,15 @@ sub {
 		    $line .= " [" . $sl->{'device_error'} . "]";
 		} else {
 		    $line .= " [device error]";
+		}
+	    }
+	    if ($sl->{'label'}) {
+		if (!match_labelstr($storage->{'labelstr'},
+				    $storage->{'autolabel'},
+				    $sl->{label},
+				    $sl->{'barcode'}, $meta,
+				    $storage->{'storage_name'})) {
+		    $line .= " (label do not match labelstr)";
 		}
 	    }
 	    if (defined $tle) {
@@ -516,6 +527,10 @@ sub {
 subcommand("taper", "taper", "perform the taperscan algorithm and display the result",
 sub {
     my ($finished_cb, @args) = @_;
+    return usage($finished_cb) unless (@args == 0);
+    my $label = shift @args;
+
+    my ($storage, $chg) = load_changer($finished_cb) or return;
 
     my $taper_user_msg_fn = sub {
 	my %params = @_;
@@ -570,7 +585,7 @@ sub {
                 } elsif ($dev->status & $DEVICE_STATUS_VOLUME_UNLABELED and
                          $dev->volume_header and
                          $dev->volume_header->{'type'} == $Amanda::Header::F_WEIRD) {
-                    my $autolabel = getconf($CNF_AUTOLABEL);
+                    my $autolabel = storage_getconf($storage, $STORAGE_AUTOLABEL);
                     if ($autolabel->{'non_amanda'}) {
                         print STDERR " contains a non-Amanda volume\n";
                     } else {
@@ -589,10 +604,6 @@ sub {
 	}
     };
 
-    return usage($finished_cb) unless (@args == 0);
-    my $label = shift @args;
-
-    my ($storage, $chg) = load_changer($finished_cb) or return;
     my $interactivity = Amanda::Interactivity->new(name => 'tty');
     my $scan_name = $chg->{'storage'}->{'taperscan_name'};
     my $taperscan = Amanda::Taper::Scan->new(algorithm => $scan_name,

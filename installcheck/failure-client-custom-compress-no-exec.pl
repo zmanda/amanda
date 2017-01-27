@@ -345,7 +345,6 @@ FAILED DUMP DETAILS:
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info COMPRESS_SUFFIX=.gz
   sendbackup: info end
-  sendbackup: size 1050
   sendbackup: error [exec $cwd/amcat-error-no-exec: Permission denied]
   sendbackup: error [compress (PID) compress returned 1]
   sendbackup: native-CRC 00000000:0
@@ -358,7 +357,6 @@ FAILED DUMP DETAILS:
   sendbackup: info RECOVER_CMD=$Amanda::Paths::APPLICATION_DIR/amrandom restore [./file-to-restore]+
   sendbackup: info COMPRESS_SUFFIX=.gz
   sendbackup: info end
-  sendbackup: size 1050
   sendbackup: error [exec $cwd/amcat-error-no-exec: Permission denied]
   sendbackup: error [compress (PID) compress returned 1]
   sendbackup: native-CRC 00000000:0
@@ -412,7 +410,7 @@ taped
 
 2 dumpers idle  : no-dumpers
 TESTCONF    qlen: 0
-               0:  (:)
+               0:
 
 network free kps: 80000
 holding space   : 25k (100.00%)

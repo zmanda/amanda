@@ -228,8 +228,9 @@ typedef struct udp_handle {
 #define	udp_addref(udp, netfd_read_callback) do {			\
     if ((udp)->refcnt++ == 0) {						\
 	assert((udp)->ev_read == NULL);					\
-	(udp)->ev_read = event_register((event_id_t)(udp)->dgram.socket,\
+	(udp)->ev_read = event_create((event_id_t)(udp)->dgram.socket,	\
 	    EV_READFD, netfd_read_callback, (udp));			\
+	event_activate((udp)->ev_read);					\
     }									\
     assert((udp)->refcnt > 0);						\
 } while (0)

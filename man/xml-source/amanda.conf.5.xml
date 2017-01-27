@@ -1153,8 +1153,7 @@ mail reports distinct.</para>
   <listitem>
 <para>Printer to use when doing tape labels.
 See the
-<amkeyword>lbl-templ</amkeyword>
-<amkeyword>tapetype</amkeyword>
+<amkeyword>lbl-templ</amkeyword>&nbsp;<amkeyword>tapetype</amkeyword>
 option.</para>
   </listitem>
   </varlistentry>
@@ -1359,9 +1358,19 @@ time. Changing this setting can sort all index files.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>storage</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>storage</amkeyword> <amtype>string</amtype>+</term>
   <listitem>
 <para>Default: Same as the config name.  The list of storages to use, the dump will go to theses storages.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>active-storage</amkeyword> <amtype>string</amtype>+</term>
+  <listitem>
+<para>Default: Same as the configured <amkeyword>storage</amkeyword> setting
+and the -ostorage= command line setting.  The list of storages where a dump
+can be put.  amdump keep the dump in holding disk if the storage is not also
+listed in <amkeyword>storage</amkeyword></para>
   </listitem>
   </varlistentry>
 
@@ -3578,6 +3587,15 @@ allow another storage to use that volume.</para>
   <listitem>
 <para>Default: <amkeyword>no</amkeyword>. If set to <amkeyword>yes</amkeyword>,
 a volume is marked as <amkeyword>no-reuse</amkeyword> after it is written.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><amkeyword>tapedev</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: value of the global <amkeyword>tapedev</amkeyword>.</para>
+<para>This parameter can either specify a device (explicitly or by referencing a device definition - see <manref name="amanda-devices" vol="7" />)
+or a tape changer (explicitly or by referencing a device definition - see <manref name="amanda-changers" vol="7" />).</para>
   </listitem>
   </varlistentry>
 

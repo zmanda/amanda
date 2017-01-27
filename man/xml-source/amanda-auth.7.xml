@@ -559,7 +559,7 @@ define dumptype rsh_example {
 
 <refsect2><title>Authenticated Peer Hostnames with SSH Authentication</title>
 
-<para>When accepting an incoming conneciton, the SSH daemon gives Amanda
+<para>When accepting an incoming connection, the SSH daemon gives Amanda
 information about the remote system in the $SSH_CONNECTION environment
 variable.  Amanda parses this information to determine the remote
 address, and then performs a similar check to that done by the BSD

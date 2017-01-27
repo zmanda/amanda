@@ -386,7 +386,7 @@ if ($opt_summary) {
 	    next if !$taper;
 
 	    printf "%-11s qlen: %d\n", "$storage",
-				       $status->{'qlen'}->{'tapeq'}->{$taper};
+				       $status->{'qlen'}->{'tapeq'}->{$taper} || 0;
 
 	    if (defined $status->{'taper'}->{$taper}->{'worker'}) {
 		my @worker_status;
@@ -398,11 +398,19 @@ if ($opt_summary) {
 		    my $wdisk = $wworker->{'disk'};
 		    $worker =~ /worker\d*-(\d*)/;
 		    my $wname = $1;
-		    printf "%16s: ", $wname;
-		    if ($wmessage eq "Idle") {
-			print  "$wmessage\n";
+		    printf "%16s:", $wname;
+		    if (defined ($wmessage)) {
+			if ($wmessage eq "Idle") {
+			    print " $wmessage\n";
+			} else {
+			    print " $wmessage ($whost:$wdisk)\n";
+			}
 		    } else {
-			print  "$wmessage ($whost:$wdisk)\n";
+			if (defined $whost and defined $wdisk) {
+			    print " ($whost:$wdisk)\n";
+			} else {
+			    print "\n";
+			}
 		    }
 		}
 	    } else {

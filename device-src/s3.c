@@ -170,6 +170,7 @@ struct S3Handle {
     char *server_side_encryption;
     char *proxy;
     char *host;
+    char *host_without_port;
     char *service_path;
     gboolean use_subdomain;
     S3_api s3_api;
@@ -1001,11 +1002,11 @@ authenticate_request(S3Handle *hdl,
 	    g_string_append(auth_string, "host:");
 	    g_string_append(auth_string, bucket);
 	    g_string_append(auth_string, ".");
-	    g_string_append(auth_string, hdl->host);
+	    g_string_append(auth_string, hdl->host_without_port);
 	    g_string_append(auth_string, "\n");
 	} else {
 	    g_string_append(auth_string, "host:");
-	    g_string_append(auth_string, hdl->host);
+	    g_string_append(auth_string, hdl->host_without_port);
 	    g_string_append(auth_string, "\n");
 	}
 	g_string_append(strSignedHeaders, "host");
@@ -1097,6 +1098,16 @@ authenticate_request(S3Handle *hdl,
         buf = g_strdup_printf("Authorization: AWS4-HMAC-SHA256 Credential=%s/%s/%s/s3/aws4_request,SignedHeaders=%s,Signature=%s", hdl->access_key, szS3Date, hdl->bucket_location, strSignedHeaders->str, signatureHex);
         headers = curl_slist_append(headers, buf);
         g_free(buf);
+
+	if (hdl->verbose) {
+	    g_debug("bucket: %s", bucket);
+	    g_debug("auth_string->str: %s", auth_string->str);
+	    g_debug("string_to_sign: %s", string_to_sign->str);
+	    g_debug("strSignedHeaders: %s", strSignedHeaders->str);
+	    g_debug("canonical_hash: %s", canonical_hash);
+	    g_debug("strSecretKey: %s", strSecretKey);
+	    g_debug("signatureHex: %s", signatureHex);
+	}
 
 	g_free(canonical_hash);
 	g_free(strSecretKey);
@@ -1341,6 +1352,8 @@ struct failure_thunk {
     gchar *service_public_url;
     gint64 expires;
     gchar *uploadId;
+
+    gchar *bucket_location;
 };
 
 static void
@@ -1408,13 +1421,29 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	thunk->in_others = 0;
 	if (thunk->service_type &&
 	    g_str_equal(thunk->service_type, "object-store")) {
+	    char *service_public_url = NULL;
+	    char *region = NULL;
 	    for (att_name=attribute_names, att_value=attribute_values;
 		 *att_name != NULL;
 		 att_name++, att_value++) {
 		if (g_str_equal(*att_name, "publicURL")) {
-		    thunk->service_public_url = g_strdup(*att_value);
+		    service_public_url = g_strdup(*att_value);
+		}
+		if (g_str_equal(*att_name, "region")) {
+		    region = g_strdup(*att_value);
 		}
 	    }
+	    if (region && service_public_url) {
+		if (!thunk->bucket_location ||
+		    strcmp(thunk->bucket_location, region) == 0) {
+		    thunk->service_public_url = service_public_url;
+		} else {
+		    g_free(service_public_url);
+		}
+	    } else {
+		thunk->service_public_url = service_public_url;
+	    }
+	    g_free(region);
 	}
     } else if (g_ascii_strcasecmp(element_name, "error") == 0) {
 	for (att_name=attribute_names, att_value=attribute_values;
@@ -1422,6 +1451,9 @@ failure_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
 	     att_name++, att_value++) {
 	    if (g_str_equal(*att_name, "message")) {
 		thunk->message = g_strdup(*att_value);
+	    }else if (g_str_equal(*att_name, "title")) {
+		thunk->error_name = g_strdup(*att_value);
+//		hdl->last_s3_error_code = s3_error_code_from_name(thunk->error_name);
 	    }
 	}
     } else if (g_ascii_strcasecmp(element_name, "uploadid") == 0) {
@@ -1701,6 +1733,7 @@ interpret_response(S3Handle *hdl,
     }
 
     /* run the parser over it */
+    thunk.bucket_location = hdl->bucket_location;
     ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
     if (!g_markup_parse_context_parse(ctxt, body, body_len, &err)) {
 	    if (hdl->last_message) g_free(hdl->last_message);
@@ -1720,11 +1753,22 @@ interpret_response(S3Handle *hdl,
     if (hdl->s3_api == S3_API_SWIFT_2) {
 	if (!hdl->x_auth_token && thunk.token_id) {
 	    hdl->x_auth_token = thunk.token_id;
+	    g_debug("x_auth_token: %s", hdl->x_auth_token);
 	    thunk.token_id = NULL;
 	}
 	if (!hdl->x_storage_url && thunk.service_public_url) {
 	    hdl->x_storage_url = thunk.service_public_url;
+	    g_debug("x_storage_url: %s", hdl->x_storage_url);
 	    thunk.service_public_url = NULL;
+	} else if (!thunk.message && !thunk.error_name) {
+	    if (!hdl->x_storage_url && !thunk.service_public_url) {
+		if (thunk.bucket_location) {
+		    thunk.message = g_strdup_printf("Did not find the publicURL for the '%s' region", thunk.bucket_location);
+		} else {
+		    thunk.message = g_strdup_printf("Did not find the publicURL");
+		}
+		thunk.error_name =g_strdup("RegionNotFound");
+	    }
 	}
     }
 
@@ -2396,7 +2440,6 @@ perform_request(S3Handle *hdl,
     curl_error: /* (label for short-circuiting the curl_easy_perform call) */
         should_retry = interpret_response(hdl, curl_code, curl_error_buffer,
             int_writedata.resp_buf.buffer, int_writedata.resp_buf.buffer_pos, int_writedata.etag, md5_hash_hex);
-
 	if (hdl->s3_api == S3_API_OAUTH2 &&
 	    hdl->last_response_code == 401 &&
 	    hdl->last_s3_error_code == S3_ERROR_AuthenticationRequired) {
@@ -2730,9 +2773,10 @@ get_openstack_swift_api_v1_setting(
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-	{ 200,  0,                    0, S3_RESULT_OK },
+	{ 200,  S3_ERROR_RegionNotFound, 0, S3_RESULT_FAIL },
+	{ 200,  0,                       0, S3_RESULT_OK },
 	RESULT_HANDLING_ALWAYS_RETRY,
-	{ 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+	{ 0, 0,                          0, /* default: */ S3_RESULT_FAIL  }
 	};
 
     s3_verbose(hdl, 1);
@@ -2825,6 +2869,7 @@ s3_open(const char *access_key,
         const char *reps_bucket)
 {
     S3Handle *hdl;
+    char *hwp;
 
     hdl = g_new0(S3Handle, 1);
     if (!hdl) goto error;
@@ -2896,6 +2941,15 @@ s3_open(const char *access_key,
     if (!is_non_empty_string(host))
 	host = "s3.amazonaws.com";
     hdl->host = g_ascii_strdown(host, -1);
+    hwp = strchr(hdl->host, ':');
+    if (hwp) {
+	*hwp = '\0';
+	hdl->host_without_port = g_strdup(hdl->host);
+	*hwp = ':';
+    } else {
+	hdl->host_without_port = g_strdup(hdl->host);
+    }
+
     hdl->use_subdomain = use_subdomain ||
 			 (g_str_equal(hdl->host, "s3.amazonaws.com") &&
 			  is_non_empty_string(hdl->bucket_location));
@@ -4177,8 +4231,10 @@ s3_is_bucket_exists(S3Handle *hdl,
         *q++ = g_strdup("format=xml");
 	*q++ = g_strdup("size=0");
     } else if (prefix) {
+	char *q_prefix = curl_escape(prefix, 0);
         *q++ = g_strdup("max-keys=1");
-        *q++ = g_strdup_printf("prefix=%s", prefix);
+        *q++ = g_strdup_printf("prefix=%s", q_prefix);
+	g_free(q_prefix);
     } else {
         *q++ = g_strdup("max-keys=1");
     }

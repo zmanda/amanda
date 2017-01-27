@@ -376,7 +376,7 @@ localhost    diskname2   0                    --      PARTIAL
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
-check_amreport($report, $timestamp, "amreport first amdump");
+check_amreport($report, $timestamp, "amreport first amdump", undef, 1);
 
 # amstatus
 
@@ -406,7 +406,7 @@ taped
 
 2 dumpers idle  : no-dumpers
 TESTCONF    qlen: 0
-               0:  (:)
+               0:
 
 network free kps: 80000
 holding space   : 24k (100.00%)

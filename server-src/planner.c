@@ -207,7 +207,7 @@ main(
     int		argc,
     char **	argv)
 {
-    disklist_t origq;
+    disklist_t origq = { NULL, NULL };
     GList  *dlist;
     disk_t *dp;
     int moved_one;
@@ -225,7 +225,6 @@ main(
     guint i;
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
-    int    planner_setuid;
     int exit_status = EXIT_SUCCESS;
     gboolean no_taper = FALSE;
     gboolean from_client = FALSE;
@@ -253,7 +252,7 @@ main(
     textdomain("amanda"); 
 
     /* drop root privileges */
-    planner_setuid = set_root_privs(0);
+    set_root_privs(-1);
 
     safe_fd(-1, 0);
 
@@ -281,8 +280,8 @@ main(
     add_amanda_log_handler(amanda_log_stderr);
     add_amanda_log_handler(amanda_log_trace_log);
 
-    if (!planner_setuid) {
-	error(_("planner must be run setuid root"));
+    if (geteuid() == 0 || getuid() == 0) {
+	error(_("planner must not be setuid root"));
     }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -291,7 +290,7 @@ main(
 
     safe_cd();
 
-    check_running_as(RUNNING_AS_ROOT | RUNNING_AS_UID_ONLY);
+    check_running_as(RUNNING_AS_UID_ONLY);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
@@ -906,6 +905,7 @@ setup_estimate(
 	    g_fprintf(stderr,_("%s:%s lev 0 skipped can't compress directtcp data-path\n"),
 		      dp->host->hostname, qname);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	}
 	if (dp->encrypt != ENCRYPT_NONE) {
@@ -914,6 +914,7 @@ setup_estimate(
 	    g_fprintf(stderr,_("%s:%s lev 0 skipped can't encrypt directtcp data-path\n"),
 		      dp->host->hostname, qname);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	}
 	if (dp->to_holdingdisk == HOLD_REQUIRED) {
@@ -922,6 +923,7 @@ setup_estimate(
 	    g_fprintf(stderr,_("%s:%s lev 0 skipped Holding disk can't be use for directtcp data-path\n"),
 		      dp->host->hostname, qname);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	} else if (dp->to_holdingdisk == HOLD_AUTO) {
 	    g_fprintf(stderr,_("%s:%s Disabling holding disk\n"),
@@ -1087,6 +1089,7 @@ setup_estimate(
 	    log_add(L_SUCCESS, _("%s %s %s 0 [skipped: skip-full]"),
 		    dp->host->hostname, qname, planner_timestamp);
 	    amfree(qname);
+	    dp->todo = 0;
 	    return;
 	}
 
@@ -1111,6 +1114,7 @@ setup_estimate(
 	g_fprintf(stderr,_("%s:%s lev 1 skipped due to strategy incronly and no full dump were done\n"),
 		dp->host->hostname, qname);
 	amfree(qname);
+	dp->todo = 0;
 	return;
     }
 
@@ -1130,6 +1134,7 @@ setup_estimate(
 	log_add(L_SUCCESS, _("%s %s %s 1 [skipped: skip-incr]"),
 		dp->host->hostname, qname, planner_timestamp);
 	amfree(qname);
+	dp->todo = 0;
 	return;
     }
 
@@ -1295,9 +1300,11 @@ static int when_overwrite(
     if (tp->reuse == 0)
 	return 1024;
 
-    if (!tp->storage)
-	return 1;
-    st = lookup_storage(tp->storage);
+    if (!tp->storage) {
+	st = lookup_storage(get_config_name());
+    } else {
+	st = lookup_storage(tp->storage);
+    }
     if (!st)
 	return 1;
     runtapes = storage_get_runtapes(st);
@@ -2004,9 +2011,16 @@ static void getsize(am_host_t *hostp)
     }
 
 send:
+    /* find a dp with a valid auth */
+    for (dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	if (dp->todo && dp->auth) break;
+    }
+    if (!dp)
+	return;
+
     req = g_string_free(reqbuf, FALSE);
-    dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
-    secdrv = security_getdriver(hostp->disks->auth);
+    dbprintf("send request to %s:%s:(%s):\n----\n%s\n----\n\n", hostp->hostname, hostp->disks->name, dp->name, req);
+    secdrv = security_getdriver(dp->auth);
     if (secdrv == NULL) {
 	hostp->status = HOST_DONE;
 	log_add(L_ERROR,

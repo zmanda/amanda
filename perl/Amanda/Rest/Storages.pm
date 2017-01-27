@@ -436,6 +436,17 @@ sub inventory {
 		    $inv->{'retention_type'} = $tl->get_retention_name($retention_type);
 		}
 	    }
+	    for my $inv (@$inventory) {
+		if ($inv->{label}) {
+		    $inv->{'label_match'} = Amanda::Util::match_labelstr(
+				$storage->{'labelstr'},
+				$storage->{'autolabel'},
+				$inv->{'label'},
+				$inv->{'barcode'},
+				$inv->{'metae'},
+				$storage->{'storage_name'});
+		}
+	    }
 	    push @result_messages, Amanda::Changer::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -869,6 +880,9 @@ sub create {
 
 	    if ($err) {
 		push @result_messages, $err;
+		if ($err->isa("Amanda::Changer::Error")) {
+		    $status = 404;
+		}
 	    } else {
 		push @result_messages, @results;
 	    }

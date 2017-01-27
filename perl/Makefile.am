@@ -632,7 +632,7 @@ EXTRA_DIST += Amanda/Label.pm
 Amanda_DATA += Amanda/Message.pm
 EXTRA_DIST += Amanda/Message.pm
 
-if WANT_SERVER
+if WANT_REST_SERVER
 # PACKAGE: Amanda::Rest::*
 AmandaRestdir = $(amperldir)/Amanda/Rest
 AmandaRest_DATA = \
