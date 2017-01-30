@@ -1,4 +1,8 @@
 2017-01-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Jason L Tibbitts III
+	* server-src/amcheck.c: Remove spurious printf
+
+2017-01-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/krb5-security.c (krb5_accept): Check result of setreuid
 
 2017-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
