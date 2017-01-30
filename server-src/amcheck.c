@@ -714,7 +714,6 @@ main(
 	}
     }
 
-    printf("\n");
     g_debug("server_probs: %d", server_probs);
     g_debug("client_probs: %d", client_probs);
     dbclose();
