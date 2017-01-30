@@ -378,7 +378,10 @@ krb5_accept(
      *(making the userid equal to the dumpuser)
      */
     pw = getpwnam(CLIENT_LOGIN);
-    setreuid(pw->pw_uid, pw->pw_uid);
+    if (setreuid(pw->pw_uid, pw->pw_uid) == -1) {
+	g_critical("setreuid failed: %s", strerror(errno));
+	exit(1);
+    }
 }
 
 /*
