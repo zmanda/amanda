@@ -1904,6 +1904,11 @@ static int get_sse42(void)
 #endif
     return (ecx >> 20) & 1;
 }
+#else
+static int get_sse42(void)
+{
+    return 0;
+}
 #endif
 
 static uint32_t crc_table[16][256];

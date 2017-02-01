@@ -1,3 +1,6 @@
+2017-02-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c (get_sse42): Add default function
+
 2017-01-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: 3.4.2
 	* VERSION: 3.4.2
