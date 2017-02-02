@@ -155,6 +155,7 @@ static int    exit_value[256];
 static off_t  gblocksize = 0;
 static int    ambsdtar_exit_value = 0;
 static FILE  *mesgstream;
+static gboolean restore_ok = TRUE;
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -1574,7 +1575,18 @@ handle_restore_stderr(
 	if (*b == 'x' && *(b+1) == ' ') {
 	    g_fprintf(stdout, "%s\n", b+2);
 	} else {
+	    gboolean line_is_error = TRUE;
+	    if (restore_ok)  {
+		if ((strncmp(b, "bsdtar: copyfile unpack (./.) failed: Operation not permitted", 61) == 0) ||
+		    (strncmp(b, "bsdtar: Error exit delayed from previous errors.", 48) == 0)) {
+		    line_is_error = FALSE;
+		} else {
+		    restore_ok = FALSE;
+		}
+	    }
+	    if (line_is_error) {
 	    g_fprintf(stderr, "%s\n", b);
+	    }
 	}
 	len = p - b + 1;
 	filter->first += len;
@@ -1605,6 +1617,7 @@ ambsdtar_restore(
     char       *bsdtar_realpath;
     message_t  *message;
 
+    restore_ok = TRUE;
     if (!bsdtar_path) {
 	error(_("BSDTAR-PATH not defined"));
     }
@@ -1824,9 +1837,11 @@ ambsdtar_restore(
 				 bsdtar_path, WTERMSIG(wait_status), dbfn());
 	ambsdtar_exit_value = 1;
     } else if (WIFEXITED(wait_status) && WEXITSTATUS(wait_status) > 0) {
-	errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
-				 bsdtar_path, WEXITSTATUS(wait_status), dbfn());
-	ambsdtar_exit_value = 1;
+	if (!restore_ok || WEXITSTATUS(wait_status) != 1) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+				     bsdtar_path, WEXITSTATUS(wait_status), dbfn());
+	    ambsdtar_exit_value = 1;
+	}
     }
 
     g_debug(_("ambsdtar: %s: pid %ld"), bsdtar_path, (long)tarpid);
