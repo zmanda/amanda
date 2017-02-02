@@ -1,3 +1,39 @@
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/failure-server-custom-compress-no-exec.pl: Call
+	  check_amreport with skip_size
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/calcsize.c: amflock(2,"size");
+	* client-src/sendsize.c: Add amflock(1,"size");
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/syshacks.m4: Set BROKEN_SENDMSG on *-apple-darwin*
+	* common-src/amutil.c: Do not use ambinf if BROKEN_SENDMSG
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/amanda_configure.m4: Detect if we have getservbyport_r
+	* common-src/amutil.c: use getservbyport if getservbyport_r is not
+	  available
+	* common-src/protocol.c: Use tread if HAVE_GETSERVBYNAME_R and
+	  HAVE_GETSERVBYPORT_R
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: 'copyfile unpack (./.) failed' is normal
+	  on restore
+
+2017-02-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c (get_sse42): Add default function
+
+2017-01-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.4.2
+
+2017-01-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Jason L Tibbitts III
+	* server-src/amcheck.c: Remove spurious printf
+
+2017-01-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/krb5-security.c (krb5_accept): Check result of setreuid
+
 2017-01-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ambsdtar.c: Add a SPARSE property, default to YES
 	* man/xml-source/ambsdtar.8.xml: Document it.

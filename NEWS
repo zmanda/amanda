@@ -1,3 +1,23 @@
+Changes in release 3.4.2
+
+   * ambsdtar
+       o add a SPARSE property
+   * amsamba
+       o fix for newer samba version
+   * s3 device
+       o fix for '/' in prefix
+       o fix for port in S3-HOST
+   * fix compatibility with older version (2.4.2)
+   * configure
+       o amanda-security.conf is now in $sysconfdir
+   * amgetconf
+       o add many build. parameter
+   * fix warning reported by the clang compiler
+   * fix compilation without SSE4_2 when configure detect it
+   * amtoc fix
+   * amlabel -f fix
+   * many more fixes
+
 Changes in release 3.4.1
 
    * new --without-rest-server configure option

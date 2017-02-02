@@ -97,14 +97,19 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 		    AMANDA_ADD_LDFLAGS([-Wl,-enable-runtime-pseudo-reloc -no-undefined])
 		    ;;
         *-apple-darwin7*) # MacOS X 10.3.* (Panther)
+		    AC_DEFINE(BROKEN_SENDMSG, 1, [Define if sendmsg is broken])
 		    ;;
         *-apple-darwin8*) # MacOS X 10.4.* (Tiger)
+		    AC_DEFINE(BROKEN_SENDMSG, 1, [Define if sendmsg is broken])
 		    ;;
         *-apple-darwin9*) # MacOS X 10.5.* (Leopard)
+		    AC_DEFINE(BROKEN_SENDMSG, 1, [Define if sendmsg is broken])
 		    ;;
         *-apple-darwin10*) # MacOS X 10.6.* (Snow Leopard)
+		    AC_DEFINE(BROKEN_SENDMSG, 1, [Define if sendmsg is broken])
 		    ;;
         *-apple-darwin*) # MacOS X *
+		    AC_DEFINE(BROKEN_SENDMSG, 1, [Define if sendmsg is broken])
 		    ;;
       *)
 		AMANDA_ADD_WARNING(

@@ -303,22 +303,26 @@ connect_port(
     int			priv)
 {
     int			save_errno;
-    struct servent	servPort;
     struct servent *	result;
-    char		buf[2048];
     int			r;
     socklen_t_equiv	len;
     socklen_t_equiv	socklen;
     int			s;
 
-#ifdef GETSERVBYPORT_R5
+#ifdef HAVE_GETSERVBYPORT_R
+    struct servent	servPort;
+    char		buf[2048];
+# ifdef GETSERVBYPORT_R5
     result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
     if (result == 0) {
 	assert(errno != ERANGE);
     }
-#else
+# else
     r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
     assert(r != ERANGE);
+# endif
+#else
+    result = getservbyport((int)htons(port), proto);
 #endif
 
     if (result != NULL && !strstr(result->s_name, AMANDA_SERVICE_NAME)) {
@@ -334,6 +338,7 @@ connect_port(
     socklen = SS_LEN(addrp);
     if (!priv) {
 	r = bind(s, (struct sockaddr *)addrp, socklen);
+#if !defined BROKEN_SENDMSG
     } else if (1) { // if use ambind
 	int  old_s = s;
 	char *msg = NULL;
@@ -342,6 +347,7 @@ connect_port(
 	    fprintf(stderr,"msg: %s\n", msg);
 	}
 	close(old_s);
+#endif
     } else { // setuid root
 	g_mutex_lock(priv_mutex);
 	set_root_privs(1);
@@ -450,9 +456,7 @@ bind_portrange(
     in_port_t port;
     in_port_t cnt;
     socklen_t_equiv socklen;
-    struct servent  servPort;
     struct servent *result;
-    char            buf[2048];
     int             r;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
     int save_errno = EAGAIN;
@@ -472,14 +476,20 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
-#ifdef GETSERVBYPORT_R5
+#ifdef HAVE_GETSERVBYPORT
+	struct servent  servPort;
+	char            buf[2048];
+# ifdef GETSERVBYPORT_R5
 	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
 	if (result == 0) {
 	    assert(errno != ERANGE);
 	}
-#else
+# else
 	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
 	assert(r != ERANGE);
+# endif
+#else
+	result = getservbyport((int)htons(port), proto);
 #endif
 	if ((result == NULL) || strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	    SU_SET_PORT(addrp, port);
@@ -487,12 +497,14 @@ bind_portrange(
 	    if (!priv) {
 		r = bind(s, (struct sockaddr *)addrp, socklen);
 		new_s = s;
+#if !defined BROKEN_SENDMSG
 	    } else if (1) { // if use ambind
 		char *msg = NULL;
 		r = new_s = ambind(s, addrp, socklen, &msg);
 		if (msg) {
 		    fprintf(stderr,"msg: %s\n", msg);
 		}
+#endif
 	    } else {
 		g_mutex_lock(priv_mutex);
 		set_root_privs(1);
@@ -2095,6 +2107,11 @@ static int get_sse42(void)
     );
 #endif
     return (ecx >> 20) & 1;
+}
+#else
+static int get_sse42(void)
+{
+    return 0;
 }
 #endif
 
