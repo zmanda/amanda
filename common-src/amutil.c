@@ -303,22 +303,26 @@ connect_port(
     int			priv)
 {
     int			save_errno;
-    struct servent	servPort;
     struct servent *	result;
-    char		buf[2048];
     int			r;
     socklen_t_equiv	len;
     socklen_t_equiv	socklen;
     int			s;
 
-#ifdef GETSERVBYPORT_R5
+#ifdef HAVE_GETSERVBYPORT_R
+    struct servent	servPort;
+    char		buf[2048];
+# ifdef GETSERVBYPORT_R5
     result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
     if (result == 0) {
 	assert(errno != ERANGE);
     }
-#else
+# else
     r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
     assert(r != ERANGE);
+# endif
+#else
+    result = getservbyport((int)htons(port), proto);
 #endif
 
     if (result != NULL && !strstr(result->s_name, AMANDA_SERVICE_NAME)) {
@@ -450,9 +454,7 @@ bind_portrange(
     in_port_t port;
     in_port_t cnt;
     socklen_t_equiv socklen;
-    struct servent  servPort;
     struct servent *result;
-    char            buf[2048];
     int             r;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
     int save_errno = EAGAIN;
@@ -472,14 +474,20 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
-#ifdef GETSERVBYPORT_R5
+#ifdef HAVE_GETSERVBYPORT
+	struct servent  servPort;
+	char            buf[2048];
+# ifdef GETSERVBYPORT_R5
 	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
 	if (result == 0) {
 	    assert(errno != ERANGE);
 	}
-#else
+# else
 	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
 	assert(r != ERANGE);
+# endif
+#else
+	result = getservbyport((int)htons(port), proto);
 #endif
 	if ((result == NULL) || strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	    SU_SET_PORT(addrp, port);

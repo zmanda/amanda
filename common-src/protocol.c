@@ -212,6 +212,11 @@ protocol_sendreq(
     get_platform_and_distro(&platform, &distro);
     if (distro != NULL &&
 	!g_str_equal(distro, "mac") &&
+#if defined HAVE_GETSERVBYNAME_R && defined HAVE_GETSERVBYPORT_R
+	1 &&
+#else
+	0 &&
+#endif
 	(
 #ifdef BSDTCP_SECURITY
 	 security_driver == &bsdtcp_security_driver ||

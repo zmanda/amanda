@@ -1,4 +1,11 @@
 2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/amanda_configure.m4: Detect if we have getservbyport_r
+	* common-src/amutil.c: use getservbyport if getservbyport_r is not
+	  available
+	* common-src/protocol.c: Use tread if HAVE_GETSERVBYNAME_R and
+	  HAVE_GETSERVBYPORT_R
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ambsdtar.c: 'copyfile unpack (./.) failed' is normal
 	  on restore
 
