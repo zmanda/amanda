@@ -1,4 +1,8 @@
 2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/calcsize.c: amflock(2,"size");
+	* client-src/sendsize.c: Add amflock(1,"size");
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/syshacks.m4: Set BROKEN_SENDMSG on *-apple-darwin*
 	* common-src/amutil.c: Do not use ambinf if BROKEN_SENDMSG
 
