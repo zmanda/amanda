@@ -1,3 +1,7 @@
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: 'copyfile unpack (./.) failed' is normal
+	  on restore
+
 2017-02-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c (get_sse42): Add default function
 
