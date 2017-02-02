@@ -1,4 +1,8 @@
 2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/syshacks.m4: Set BROKEN_SENDMSG on *-apple-darwin*
+	* common-src/amutil.c: Do not use ambinf if BROKEN_SENDMSG
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/amanda_configure.m4: Detect if we have getservbyport_r
 	* common-src/amutil.c: use getservbyport if getservbyport_r is not
 	  available

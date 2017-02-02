@@ -338,6 +338,7 @@ connect_port(
     socklen = SS_LEN(addrp);
     if (!priv) {
 	r = bind(s, (struct sockaddr *)addrp, socklen);
+#if !defined BROKEN_SENDMSG
     } else if (1) { // if use ambind
 	int  old_s = s;
 	char *msg = NULL;
@@ -346,6 +347,7 @@ connect_port(
 	    fprintf(stderr,"msg: %s\n", msg);
 	}
 	close(old_s);
+#endif
     } else { // setuid root
 	g_mutex_lock(priv_mutex);
 	set_root_privs(1);
@@ -495,12 +497,14 @@ bind_portrange(
 	    if (!priv) {
 		r = bind(s, (struct sockaddr *)addrp, socklen);
 		new_s = s;
+#if !defined BROKEN_SENDMSG
 	    } else if (1) { // if use ambind
 		char *msg = NULL;
 		r = new_s = ambind(s, addrp, socklen, &msg);
 		if (msg) {
 		    fprintf(stderr,"msg: %s\n", msg);
 		}
+#endif
 	    } else {
 		g_mutex_lock(priv_mutex);
 		set_root_privs(1);
