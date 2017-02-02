@@ -1167,7 +1167,9 @@ generic_calc_estimates(
 	/* Don't use sscanf for est->qamname because it can have a '%'. */
 	if (g_str_has_prefix(line, est->qamname) &&
 	    sscanf(line+len, match_expr, &level, &size_) == 2) {
+	    amflock(1,"size");
 	    g_printf("%s\n", line); /* write to amandad */
+	    amfunlock(1,"size");
 	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 		      est->qamname,
 		      level,

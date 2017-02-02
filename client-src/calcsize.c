@@ -357,7 +357,7 @@ main(
     }
     for(i = 0; i < ndumps; i++) {
 
-	amflock(1, "size");
+	amflock(2, "size");
 
 	dbprintf("calcsize: %s %d SIZE %lld\n",
 	       qamname, dumplevel[i],
@@ -367,7 +367,7 @@ main(
 	       (long long)final_size(i, dirname));
 	fflush(stderr);
 
-	amfunlock(1, "size");
+	amfunlock(2, "size");
     }
     amfree(qamname);
 
