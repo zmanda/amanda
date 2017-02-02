@@ -1,4 +1,8 @@
 2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/failure-server-custom-compress-no-exec.pl: Call
+	  check_amreport with skip_size
+
+2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/calcsize.c: amflock(2,"size");
 	* client-src/sendsize.c: Add amflock(1,"size");
 
