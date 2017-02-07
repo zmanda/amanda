@@ -39,7 +39,8 @@
 #if (defined HAVE_LIBCURL && defined LIBCURL_USE_OPENSSL) || defined SSL_SECURITY
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if (defined OPENSSL_VERSION_NUMBER && OPENSSL_VERSION_NUMBER < 0x10100000L) \
+    || defined LIBRESSL_VERSION_NUMBER
 static GMutex **openssl_mutex_array;
 static void openssl_lock_callback(int mode, int type, const char *file, int line)
 {
@@ -57,7 +58,8 @@ static void openssl_lock_callback(int mode, int type, const char *file, int line
 static void
 init_openssl(void)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if (defined OPENSSL_VERSION_NUMBER && OPENSSL_VERSION_NUMBER < 0x10100000L) \
+    || defined LIBRESSL_VERSION_NUMBER
     int i;
     openssl_mutex_array = g_new0(GMutex *, CRYPTO_num_locks());
 

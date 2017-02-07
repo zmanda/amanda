@@ -1,3 +1,10 @@
+2017-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Allow compilation with libressl
+	* config/amanda/amanda_configure.m4: Change order
+	* device-src/Makefile.am (libamdevice_la_LDFLAGS): Add -ldl
+	* common-src/glib-util.c, device-src/s3-util.c, device-src/s3.c:
+	  check for LIBRESSL_VERSION_NUMBER
+
 2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-server-custom-compress-no-exec.pl: Call
 	  check_amreport with skip_size
