@@ -239,7 +239,9 @@ EncodeHMACSHA256(
     unsigned char tk[SHA256_DIGEST_LENGTH];
 
     // Initialise HMACh
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if (defined OPENSSL_VERSION_NUMBER && OPENSSL_VERSION_NUMBER < 0x10100000L) \
+    || defined LIBRESSL_VERSION_NUMBER
+
     HMAC_CTX HMAC;
 #else
     HMAC_CTX *HMAC;
@@ -254,7 +256,8 @@ EncodeHMACSHA256(
     }
 
     // Digest the key and message using SHA256
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if (defined OPENSSL_VERSION_NUMBER && OPENSSL_VERSION_NUMBER < 0x10100000L) \
+    || defined LIBRESSL_VERSION_NUMBER
     HMAC_CTX_init(&HMAC);
     HMAC_Init_ex(&HMAC, key, keylen, EVP_sha256(),NULL);
     HMAC_Update(&HMAC, datatohash, datalen);
