@@ -774,16 +774,13 @@ tape(
 	    }
 	    if (c == 1) {
 		printf("The next new tape already labelled is: %s.", *tapes);
-		g_free(*tapes);
 	    } else {
 		printf("The next %d new tapes already labelled are: %s",
 			c, *tapes);
-		g_free(*tapes);
 		tape = tapes;
 		tape++;
 		while (*tape != NULL) {
 		    printf(", %s", *tape);
-		    g_free(*tape);
 		    tape++;
 		}
 	    }

@@ -1,4 +1,7 @@
 2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amadmin.c (tape): Do not free the list_new_tapes result
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/tape-device.c (tape_device_eject): Close the device if we
 	  open it
 
