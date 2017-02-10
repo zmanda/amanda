@@ -126,7 +126,7 @@ sub _scan {
     my $poll_src;
     my $scan_running = 0;
     my $interactivity_running = 0;
-    my $restart_scan = 0;
+    my $restart_scan = 0;		# if a scan must be restarted
     my $restart_scan_changer = undef;
     my $abort_scan = undef;
     my $last_err = undef; # keep the last meaningful error, the one reported
@@ -137,6 +137,7 @@ sub _scan {
     my $remove_undef_state = 0;
     my $result_cb = $params{'result_cb'};
     my $new_inventory = 0;
+    my $restart_scan_running = 0;	# if restart_scan is running
 
     my $steps = define_steps
 	cb_ref => \$result_cb;
@@ -156,6 +157,9 @@ sub _scan {
 
     step restart_scan => sub {
 	$restart_scan = 0;
+
+	return if $restart_scan_running;
+	$restart_scan_running = 1;
 
 	# Reload the tapelist at every scan.
 	$self->{'tapelist'}->reload(0);
@@ -473,6 +477,7 @@ sub _scan {
 
     step scan_next => sub {
 	my ($scan_method, $err, $continue_cb) = @_;
+	$restart_scan_running = 0;
 
 	if ($scan_method == SCAN_ASK && !defined $self->{'interactivity'}) {
 	    $scan_method = SCAN_FAIL;

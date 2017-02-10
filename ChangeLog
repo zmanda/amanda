@@ -1,4 +1,8 @@
 2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm: Make sure restart_scan is not run
+	  twice in parallel
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c: NetBSD limit to 14 characters the shm name
 
 2017-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
