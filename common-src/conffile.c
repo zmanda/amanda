@@ -2466,6 +2466,7 @@ get_holdingdisk(
 		conf_parserror(_("IDENT or NL expected"));
 	    }
 	} while (tok == CONF_IDENT || tok == CONF_STRING);
+	amfree(hdcur.seen.block);
     }
 
     allow_overwrites = save_overwrites;
@@ -2477,6 +2478,9 @@ static void
 init_holdingdisk_defaults(
     void)
 {
+    hdcur.name = NULL;
+    hdcur.seen.filename = NULL;
+    hdcur.seen.block = NULL;
     conf_init_str(&hdcur.value[HOLDING_COMMENT]  , "");
     conf_init_str(&hdcur.value[HOLDING_DISKDIR]  , "");
     conf_init_int64(&hdcur.value[HOLDING_DISKSIZE] , CONF_UNIT_K, (gint64)0);
@@ -2601,6 +2605,8 @@ static void
 init_dumptype_defaults(void)
 {
     dpcur.name = NULL;
+    dpcur.seen.filename = NULL;
+    dpcur.seen.block = NULL;
     conf_init_str   (&dpcur.value[DUMPTYPE_COMMENT]           , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_PROGRAM]           , "DUMP");
     conf_init_str   (&dpcur.value[DUMPTYPE_SRVCOMPPROG]       , "");
@@ -2755,6 +2761,9 @@ get_tapetype(void)
 static void
 init_tapetype_defaults(void)
 {
+    tpcur.name = NULL;
+    tpcur.seen.filename = NULL;
+    tpcur.seen.block = NULL;
     conf_init_str(&tpcur.value[TAPETYPE_COMMENT]      , "");
     conf_init_str(&tpcur.value[TAPETYPE_LBL_TEMPL]    , "");
     conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , CONF_UNIT_K, DISK_BLOCK_KB);
@@ -2853,6 +2862,9 @@ get_interface(void)
 static void
 init_interface_defaults(void)
 {
+    ifcur.name = NULL;
+    ifcur.seen.filename = NULL;
+    ifcur.seen.block = NULL;
     conf_init_str(&ifcur.value[INTER_COMMENT] , "");
     conf_init_int(&ifcur.value[INTER_MAXUSAGE], CONF_UNIT_K, 80000);
     conf_init_str(&ifcur.value[INTER_SRC_IP], "NULL");
@@ -2983,6 +2995,8 @@ init_application_defaults(
     void)
 {
     apcur.name = NULL;
+    apcur.seen.filename = NULL;
+    apcur.seen.block = NULL;
     conf_init_str(&apcur.value[APPLICATION_COMMENT] , "");
     conf_init_str(&apcur.value[APPLICATION_PLUGIN]  , "");
     conf_init_proplist(&apcur.value[APPLICATION_PROPERTY]);
@@ -3115,6 +3129,8 @@ init_interactivity_defaults(
     void)
 {
     ivcur.name = NULL;
+    ivcur.seen.filename = NULL;
+    ivcur.seen.block = NULL;
     conf_init_str(&ivcur.value[INTERACTIVITY_COMMENT] , "");
     conf_init_str(&ivcur.value[INTERACTIVITY_PLUGIN]  , "");
     conf_init_proplist(&ivcur.value[INTERACTIVITY_PROPERTY]);
@@ -3246,6 +3262,8 @@ init_taperscan_defaults(
     void)
 {
     tscur.name = NULL;
+    tscur.seen.filename = NULL;
+    tscur.seen.block = NULL;
     conf_init_str(&tscur.value[TAPERSCAN_COMMENT] , "");
     conf_init_str(&tscur.value[TAPERSCAN_PLUGIN]  , "");
     conf_init_proplist(&tscur.value[TAPERSCAN_PROPERTY]);
@@ -3377,6 +3395,8 @@ init_policy_defaults(
     void)
 {
     pocur.name = NULL;
+    pocur.seen.filename = NULL;
+    pocur.seen.block = NULL;
     conf_init_str(&pocur.value[POLICY_COMMENT]          , "");
     conf_init_int(&pocur.value[POLICY_RETENTION_TAPES]  , CONF_UNIT_NONE, 0);
     conf_init_int(&pocur.value[POLICY_RETENTION_DAYS]   , CONF_UNIT_NONE, 0);
@@ -3510,6 +3530,8 @@ init_storage_defaults(
     void)
 {
     stcur.name = NULL;
+    stcur.seen.filename = NULL;
+    stcur.seen.block = NULL;
     conf_init_str           (&stcur.value[STORAGE_COMMENT]                  , "");
     conf_init_str           (&stcur.value[STORAGE_POLICY]                   , "");
     conf_init_str           (&stcur.value[STORAGE_TAPEDEV]                  , "");
@@ -3667,6 +3689,8 @@ init_pp_script_defaults(
     void)
 {
     pscur.name = NULL;
+    pscur.seen.filename = NULL;
+    pscur.seen.block = NULL;
     conf_init_str(&pscur.value[PP_SCRIPT_COMMENT] , "");
     conf_init_str(&pscur.value[PP_SCRIPT_PLUGIN]  , "");
     conf_init_proplist(&pscur.value[PP_SCRIPT_PROPERTY]);
@@ -3804,6 +3828,8 @@ init_device_config_defaults(
     void)
 {
     dccur.name = NULL;
+    dccur.seen.filename = NULL;
+    dccur.seen.block = NULL;
     conf_init_str(&dccur.value[DEVICE_CONFIG_COMMENT] , "");
     conf_init_str(&dccur.value[DEVICE_CONFIG_TAPEDEV]  , "");
     conf_init_proplist(&dccur.value[DEVICE_CONFIG_DEVICE_PROPERTY]);
@@ -3935,6 +3961,8 @@ init_changer_config_defaults(
     void)
 {
     cccur.name = NULL;
+    cccur.seen.filename = NULL;
+    cccur.seen.block = NULL;
     conf_init_str(&cccur.value[CHANGER_CONFIG_COMMENT] , "");
     conf_init_str(&cccur.value[CHANGER_CONFIG_TAPEDEV]  , "");
     conf_init_str(&cccur.value[CHANGER_CONFIG_TPCHANGER]  , "");
@@ -6035,6 +6063,7 @@ config_uninit(void)
 	for(i=0; i<HOLDING_HOLDING; i++) {
 	   free_val_t(&hd->value[i]);
 	}
+	g_free(hd->seen.block);
     }
     slist_free_full(holdinglist, g_free);
     holdinglist = NULL;
@@ -6044,6 +6073,7 @@ config_uninit(void)
 	for(i=0; i<DUMPTYPE_DUMPTYPE; i++) {
 	   free_val_t(&dp->value[i]);
 	}
+	g_free(dp->seen.block);
 	dpnext = dp->next;
 	amfree(dp);
     }
@@ -6054,6 +6084,7 @@ config_uninit(void)
 	for(i=0; i<TAPETYPE_TAPETYPE; i++) {
 	   free_val_t(&tp->value[i]);
 	}
+	g_free(tp->seen.block);
 	tpnext = tp->next;
 	amfree(tp);
     }
@@ -6064,6 +6095,7 @@ config_uninit(void)
 	for(i=0; i<INTER_INTER; i++) {
 	   free_val_t(&ip->value[i]);
 	}
+	g_free(ip->seen.block);
 	ipnext = ip->next;
 	amfree(ip);
     }
@@ -6074,6 +6106,7 @@ config_uninit(void)
 	for(i=0; i<APPLICATION_APPLICATION; i++) {
 	   free_val_t(&ap->value[i]);
 	}
+	g_free(ap->seen.block);
 	apnext = ap->next;
 	amfree(ap);
     }
@@ -6084,6 +6117,7 @@ config_uninit(void)
 	for(i=0; i<PP_SCRIPT_PP_SCRIPT; i++) {
 	   free_val_t(&pp->value[i]);
 	}
+	g_free(pp->seen.block);
 	ppnext = pp->next;
 	amfree(pp);
     }
@@ -6094,6 +6128,7 @@ config_uninit(void)
 	for(i=0; i<DEVICE_CONFIG_DEVICE_CONFIG; i++) {
 	   free_val_t(&dc->value[i]);
 	}
+	g_free(dc->seen.block);
 	dcnext = dc->next;
 	amfree(dc);
     }
@@ -6104,6 +6139,7 @@ config_uninit(void)
 	for(i=0; i<CHANGER_CONFIG_CHANGER_CONFIG; i++) {
 	   free_val_t(&cc->value[i]);
 	}
+	g_free(cc->seen.block);
 	ccnext = cc->next;
 	amfree(cc);
     }
@@ -6114,6 +6150,7 @@ config_uninit(void)
 	for(i=0; i<INTERACTIVITY_INTERACTIVITY; i++) {
 	   free_val_t(&iv->value[i]);
 	}
+	g_free(iv->seen.block);
 	ivnext = iv->next;
 	amfree(iv);
     }
@@ -6124,6 +6161,7 @@ config_uninit(void)
 	for(i=0; i<TAPERSCAN_TAPERSCAN; i++) {
 	   free_val_t(&ts->value[i]);
 	}
+	g_free(ts->seen.block);
 	tsnext = ts->next;
 	amfree(ts);
     }
@@ -6134,6 +6172,7 @@ config_uninit(void)
 	for(i=0; i<POLICY_POLICY; i++) {
 	   free_val_t(&po->value[i]);
 	}
+	g_free(po->seen.block);
 	ponext = po->next;
 	amfree(po);
     }
@@ -6144,6 +6183,7 @@ config_uninit(void)
 	for(i=0; i<STORAGE_STORAGE; i++) {
 	   free_val_t(&st->value[i]);
 	}
+	g_free(st->seen.block);
 	stnext = st->next;
 	amfree(st);
     }
@@ -6601,7 +6641,7 @@ update_derived_values(
 		    strncpy(new_cf+len+strlen(changern)+strlen(cf+2),"\0",1);
 		    free_val_t(&dc->value[CHANGER_CONFIG_CHANGERFILE]);
 		    conf_init_str(&dc->value[CHANGER_CONFIG_CHANGERFILE], new_cf);
-		    changerfile = new_cf;
+		    g_free(new_cf);
 		}
 		if ((cf = strstr(tpchanger, "$t"))) {
 		    char *new_tp = g_malloc(strlen(tpchanger)+strlen(changern)-1);
@@ -6612,7 +6652,7 @@ update_derived_values(
 		    strncpy(new_tp+len+strlen(changern)+strlen(cf+2),"\0",1);
 		    free_val_t(&dc->value[CHANGER_CONFIG_TPCHANGER]);
 		    conf_init_str(&dc->value[CHANGER_CONFIG_TPCHANGER], new_tp);
-		    tpchanger = new_tp;
+		    g_free(new_tp);
 		}
 	    }
 	}
@@ -6710,6 +6750,7 @@ update_derived_values(
 		conf_init_str(&st->value[STORAGE_TAPEPOOL], conf_name);
 	    } else {
 		char *pool = storage_get_tapepool(st);
+		gboolean freepool = FALSE;
 		char *p;
 		if ((p = strstr(pool, "$o"))) {
 		    char *org = getconf_str(CNF_ORG);
@@ -6722,6 +6763,7 @@ update_derived_values(
 		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
 		    pool = new_pool;
+		    freepool = TRUE;
 		}
 		if ((p = strstr(pool, "$c"))) {
 		    char *new_pool = g_malloc(strlen(pool)+strlen(conf_name)-1);
@@ -6732,7 +6774,10 @@ update_derived_values(
 		    strncpy(new_pool+len+strlen(conf_name)+strlen(p+2),"\0",1);
 		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    if (freepool)
+			g_free(pool);
 		    pool = new_pool;
+		    freepool = TRUE;
 		}
 		if ((p = strstr(pool, "$r"))) {
 		    char *storagen = storage_name(st);
@@ -6744,7 +6789,13 @@ update_derived_values(
 		    strncpy(new_pool+len+strlen(storagen)+strlen(p+2),"\0",1);
 		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    if (freepool)
+			g_free(pool);
 		    pool = new_pool;
+		    freepool = TRUE;
+		}
+		if (freepool) {
+		    g_free(pool);
 		}
 	    }
 	}

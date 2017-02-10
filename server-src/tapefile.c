@@ -834,6 +834,7 @@ compute_retention(void)
 	    }
 	    output_find = find_dump(diskp, 0);
 	    sort_find_result("hkDLpbfw", &output_find);
+	    g_free(conf_diskfile);
 	}
 
 	compute_storage_retention(output_find, storage_name(storage),
@@ -1017,6 +1018,7 @@ compute_storage_retention(
 		level = ofr->level;
 	    }
 	}
+	g_free(datestr);
     }
 
     if (retention_full) {

@@ -749,11 +749,12 @@ parse_taper_datestamp_log(
 
 	uqnext_token = unquote_string(qnext_token);
     }
-    *pool = g_strdup(*storage);
 
     if (strncmp(uqnext_token, "label", 5) != 0) {
+	g_free(uqnext_token);
 	return 0;
     }
+    g_free(uqnext_token);
 
     skip_whitespace(s, ch);
     if(ch == '\0') {
