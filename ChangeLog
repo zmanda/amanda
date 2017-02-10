@@ -1,4 +1,8 @@
 2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm: Make sure restart_scan is not run
+	  twice in parallel
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c, server-src/find.c,
 	  server-src/tapefile.c: Fix memory leak.
 
