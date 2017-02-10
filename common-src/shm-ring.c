@@ -54,13 +54,30 @@
 #define DEFAULT_SHM_RING_BLOCK_SIZE (NETWORK_BLOCK_BYTES)
 #define DEFAULT_SHM_RING_SIZE (DEFAULT_SHM_RING_BLOCK_SIZE*8)
 
-#define SHM_CONTROL_NAME "/amanda_shm_control-%d-%d"
-#define SHM_DATA_NAME "/amanda_shm_data-%d-%d"
-#define SEM_WRITE_NAME "/amanda_sem_write-%d-%d"
-#define SEM_READ_NAME "/amanda_sem_read-%d-%d"
-#define SEM_READY_NAME "/amanda_sem_ready-%d-%d"
-#define SEM_START_NAME "/amanda_sem_start-%d-%d"
+/* NetBSD only supports 14 character semaphore names */
+#if __NetBSD__
+# define SHM_CONTROL_NAME "/Ac-%04x-%05x"
+# define SHM_DATA_NAME    "/Ad-%04x-%05x"
+# define SEM_WRITE_NAME   "/Aw-%04x-%05x"
+# define SEM_READ_NAME    "/Ar-%04x-%05x"
+# define SEM_READY_NAME   "/Ay-%04x-%05x"
+# define SEM_START_NAME   "/As-%04x-%05x"
 
+# define SHM_CONTROL_GLOB "/dev/shm/Ac-*-*"
+# define AMANDA_GLOB      "/dev/shm/A?-*-*"
+
+#else
+
+# define SHM_CONTROL_NAME "/amanda_shm_control-%d-%d"
+# define SHM_DATA_NAME "/amanda_shm_data-%d-%d"
+# define SEM_WRITE_NAME "/amanda_sem_write-%d-%d"
+# define SEM_READ_NAME "/amanda_sem_read-%d-%d"
+# define SEM_READY_NAME "/amanda_sem_ready-%d-%d"
+# define SEM_START_NAME "/amanda_sem_start-%d-%d"
+
+# define SHM_CONTROL_GLOB "/dev/shm/amanda_shm_control-*-*"
+# define AMANDA_GLOB      "/dev/shm/amanda*-*-*"
+#endif
 static int shm_ring_id = 0;
 GMutex *shm_ring_mutex = NULL;
 static GHashTable *hash_sem = NULL;
@@ -101,7 +118,7 @@ cleanup_shm_ring(void)
     GHashTable *names;
     names = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-    r = glob("/dev/shm/amanda_shm_control-*-*", GLOB_NOSORT, NULL, &globbuf);
+    r = glob(SHM_CONTROL_GLOB, GLOB_NOSORT, NULL, &globbuf);
     if (r == 0) {
 	for (aglob = globbuf.gl_pathv; *aglob != NULL; aglob++) {
 	    int cfd;
@@ -181,7 +198,7 @@ cleanup_shm_ring(void)
 
     globfree(&globbuf);
 
-    r = glob("/dev/shm/*amanda*", GLOB_NOSORT, NULL, &globbuf);
+    r = glob("AMANDA_GLOB", GLOB_NOSORT, NULL, &globbuf);
     if (r == 0) {
 	int one_day_old = time(NULL) - 60*60*24;
 	for (aglob = globbuf.gl_pathv; *aglob != NULL; aglob++) {

@@ -1,3 +1,6 @@
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c: NetBSD limit to 14 characters the shm name
+
 2017-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Allow compilation with libressl
 	* config/amanda/amanda_configure.m4: Change order
