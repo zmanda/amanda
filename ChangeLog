@@ -1,4 +1,8 @@
 2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/tape-device.c (tape_device_eject): Close the device if we
+	  open it
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm: Make sure restart_scan is not run
 	  twice in parallel
 
