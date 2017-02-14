@@ -1,3 +1,7 @@
+2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/infofile.c (read_txinfofile): Fix returning error when
+	  reading last history
+
 2017-01-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/krb5-security.c (krb5_accept): Check result of setreuid
 

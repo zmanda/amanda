@@ -321,8 +321,6 @@ read_txinfofile(
 	history_t onehistory;	/* one history record */
 	long long off_t_tmp;
 
-	if (nb_history >= NB_HISTORY) break;
-
 	if (line[0] == '\0')
 	    continue;
 	if(line[0] == '/' && line[1] == '/') {
@@ -331,6 +329,8 @@ read_txinfofile(
 	    amfree(line);
 	    return 0;				/* normal end of record */
 	}
+
+	if (nb_history >= NB_HISTORY) break;
 
 	memset(&onehistory, 0, SIZEOF(onehistory));
 
