@@ -1,3 +1,12 @@
+2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (shm_ring_sem_wait): Remove duplicated code
+	* src/sendbackup.c: Close file descriptor
+	* common-src/file.c: Fix memory leak
+	* common-src/protocol.c: Fix memory leak
+	* server-src/amtrmidx.c: Fix memory leak
+	* server-src/amtrmlog.c: Fix memory leak
+	* server-src/diskfile.c: Fix memory leak
+
 2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amadmin.c (tape): Do not free the list_new_tapes result
 

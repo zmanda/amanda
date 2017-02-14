@@ -454,6 +454,10 @@ main(
 	statefd = DATA_FD_OFFSET + 6;
     }
     if (!dle->create_index) {
+	if (!interactive) {
+	    aclose(indexfd);
+	    close(indexfd+1);
+	}
 	indexfd = -1;
     }
 
@@ -478,6 +482,10 @@ main(
 	g_printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
 		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
 		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);
+	if (!interactive) {
+	    aclose(statefd);
+	    close(statefd+1);
+	}
 	statefd = -1;
     }
     g_printf(_("OPTIONS "));
@@ -885,7 +893,7 @@ main(
 	    }
 
 	    if (statefd >= 0 && !bsu->state_stream) {
-		close(statefd);
+		aclose(statefd);
 		close(statefd+1);
 		statefd = -1;
 	    }
@@ -959,6 +967,8 @@ main(
 
 	    amfree(bsu);
 	} else {
+	    aclose(statefd);
+	    close(statefd+1);
 	    if(!interactive) {
 		/* redirect stderr */
 		if (dup2(mesgfd, 2) == -1) {
@@ -995,6 +1005,7 @@ main(
 
     run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, NULL);
     fflush(mesgstream);
+    fclose(mesgstream);
 
     amfree(qdisk);
     amfree(qamdevice);
@@ -1704,6 +1715,11 @@ start_index(
   }
   pipe_fp = NULL;
 
+  close(0);
+  close(1);
+  close(2);
+  close(3);
+  close(dbfd());
   exit(exitcode);
 }
 

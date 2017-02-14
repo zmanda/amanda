@@ -565,6 +565,7 @@ debug_pgets(
 
     cline = fgets(line, line_size, stream);
     if (!cline) {
+	g_free(line);
 	return cline;
     }
     loffset = strlen(line);
@@ -591,6 +592,7 @@ debug_pgets(
 	*ul++ = *l;
     }
     *ul = '\0';
+    g_free(line);
 
     return untainted_line;
 }

@@ -263,6 +263,7 @@ main(
 		if((len_date != 8 && len_date != 14)
 		    || f->d_name[len_date] != '_'
 		    || ! isdigit((int)(f->d_name[len_date+1]))) {
+		    g_free(name);
 		    continue;			/* not an index file */
 		}
 		/*
@@ -287,6 +288,7 @@ main(
 		    }
 		    amfree(qpath);
 		    amfree(path);
+		    g_free(name);
 		    continue;
 		}
 		if(name_count >= name_length) {
@@ -329,13 +331,15 @@ main(
 		    if (amtrmidx_debug == 0 && unlink(path) == -1) {
 			dbprintf("Error removing %s: %s\n",
 				 qpath, strerror(errno));
-		     }
-		     continue;
+		    }
+		    g_free(name);
+		    continue;
 		}
 		if (is_new) {
 		    g_hash_table_insert(hash_inames, g_strdup(name), iname);
 		    names[name_count++] = g_strdup(name);
 		}
+		g_free(name);
 	    }
 	    closedir(d);
 	    qsort(names, name_count, sizeof(char *), sort_by_name_reversed);

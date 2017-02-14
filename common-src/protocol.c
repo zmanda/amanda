@@ -243,6 +243,8 @@ protocol_sendreq(
 	security_connect(p->security_driver, p->hostname, p->conf_fn, connect_callbackX,
 			 p, p->datap);
     }
+    g_free(platform);
+    g_free(distro);
 }
 
 static gpointer

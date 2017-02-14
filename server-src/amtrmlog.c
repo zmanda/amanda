@@ -188,6 +188,7 @@ main(
 		}
 	    }
 	    g_free(name);
+	    g_free(logname);
 	    logname = g_strconcat(conf_logdir, "/", adir->d_name, NULL);
 	    if (!useful && stat(logname,&stat_log) == 0) {
 		if ((time_t)stat_log.st_mtime > date_keep) {

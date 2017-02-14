@@ -1814,7 +1814,7 @@ match_disklist(
     char **	sargv)
 {
     char *prevhost = NULL;
-    GPtrArray *err_array = g_ptr_array_new();
+    GPtrArray *err_array = g_ptr_array_new_with_free_func(g_free);
     int i;
     int match_a_host;
     int match_a_disk;
