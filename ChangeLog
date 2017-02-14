@@ -1,4 +1,7 @@
 2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3-device.c (catalog_open): Typo
+
+2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (shm_ring_sem_wait): Remove duplicated code
 
 2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
