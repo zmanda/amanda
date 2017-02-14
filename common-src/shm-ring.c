@@ -240,11 +240,6 @@ shm_ring_sem_wait(
 	    return -1;
 	}
 
-	if (shm_ring->mc->cancelled) {
-	    g_debug("shm_ring_sem_wait: shm-ring is cancelled");
-	    return -1;
-	}
-
 	if (errno == EINTR)
 	    continue;
 
