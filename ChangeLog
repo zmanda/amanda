@@ -1,9 +1,12 @@
+2017-02-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/diskfile.c: Fix for older glib2
+
 2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.c (catalog_open): Typo
 
 2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (shm_ring_sem_wait): Remove duplicated code
-	* src/sendbackup.c: Close file descriptor
+	* client-src/sendbackup.c: Close file descriptor
 	* common-src/file.c: Fix memory leak
 	* common-src/protocol.c: Fix memory leak
 	* server-src/amtrmidx.c: Fix memory leak

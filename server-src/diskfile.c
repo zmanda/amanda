@@ -1814,7 +1814,11 @@ match_disklist(
     char **	sargv)
 {
     char *prevhost = NULL;
+#if (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 22))
     GPtrArray *err_array = g_ptr_array_new_with_free_func(g_free);
+#else
+    GPtrArray *err_array = g_ptr_array_new();	/* leak memory on older glib */
+#endif
     int i;
     int match_a_host;
     int match_a_disk;
