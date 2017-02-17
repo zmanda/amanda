@@ -277,7 +277,7 @@ runlocal(
 	initgroups(CLIENT_LOGIN, gid);
     }
     if (gid != 0)
-	setregid(uid, gid);
+	setregid(gid, gid);
     if (uid != 0)
 	setreuid(uid, uid);
 #endif
