@@ -1,3 +1,6 @@
+2017-02-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer/diskflat.pm: Add info_setup
+
 2017-02-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/diskfile.c: Fix for older glib2
 
