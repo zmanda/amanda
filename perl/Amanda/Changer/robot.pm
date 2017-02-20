@@ -572,7 +572,9 @@ sub load_unlocked {
 
 	# here is where we implement each of the drive-selection algorithms
 	my @check_order;
-	if ($self->{'drive_choice'} eq 'lru') {
+	if ($params{'drive'}) {
+	    @check_order = ($params{'drive'});
+	} elsif ($self->{'drive_choice'} eq 'lru') {
             my %lru = map { $_, 1 } @{$state->{'drive_lru'}};
             my @unused = grep { ! exists $lru{$_} } @{$self->{'driveorder'}};
 

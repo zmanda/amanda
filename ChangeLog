@@ -1,3 +1,9 @@
+2017-02-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amtape.pl: Add a drive argument to 'amtape slot'
+	* perl/Amanda/Changer/robot.pm (load_unlocked): Use the drive argument
+	* man/xml-source/amtape.8.xml: Document it
+	* NEWS: Document it
+
 2017-02-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/local-security.c: Fix setregid call
 
