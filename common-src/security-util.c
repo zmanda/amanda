@@ -1320,6 +1320,7 @@ tcp1_stream_client(
 {
     struct sec_stream *rs = NULL;
     struct sec_handle *rh = h;
+    char *msg = NULL;
 
     assert(rh != NULL);
 
@@ -1338,7 +1339,14 @@ tcp1_stream_client(
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
 	rh->rc->read = stream_client(NULL, rh->hostname, (in_port_t)id,
-			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0);
+			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0, &msg);
+	if (msg) {
+	    security_seterror(&rh->sech,
+			      "can't connect stream to %s port %d: %s",
+			      rh->hostname, id, msg);
+	    g_free(msg);
+	    return NULL;
+	}
 	if (rh->rc->read < 0) {
 	    security_seterror(&rh->sech,
 			      _("can't connect stream to %s port %d: %s"),

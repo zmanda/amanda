@@ -637,6 +637,7 @@ runssl(
     X509            *remote_cert;
     sockaddr_union   sin;
     socklen_t_equiv  len;
+    char            *stream_msg = NULL;
 
     if (!ssl_key_file) {
 	security_seterror(&rh->sech, _("ssl-key-file must be set"));
@@ -654,12 +655,16 @@ runssl(
 				  STREAM_BUFSIZE,
 				  STREAM_BUFSIZE,
 				  &my_port,
-				  0);
+				  0, &stream_msg);
 
-    if(my_socket < 0) {
-	security_seterror(&rh->sech,
-	    "%s", strerror(errno));
+    if (stream_msg) {
+	security_seterror(&rh->sech, "%s", stream_msg);
+	g_free(stream_msg);
+	return -1;
+    }
 
+    if (my_socket < 0) {
+	security_seterror(&rh->sech, "%s", strerror(errno));
 	return -1;
     }
 

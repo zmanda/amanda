@@ -1,3 +1,13 @@
+Changes in release 3.5
+
+   * Use different thread to connect to different client
+   * amservice, amcheck, planner, dumper are no longer suid
+   * ambind
+       o new suid program to bind to a privileged port
+   * amanda-security.conf
+       o new tcp_port_range, range of privileged tcp port
+       o new udp_port_range, range of privileged udp port
+
 Changes in release 3.4.2
 
    * ambsdtar

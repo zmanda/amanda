@@ -393,6 +393,7 @@ main(
     config_overrides_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     char *argv0;
+    char *stream_msg = NULL;
 
     if (argc > 1 && argv && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("dumper-%s\n", VERSION);
@@ -741,11 +742,16 @@ main(
 
 	    g_debug(_("Sending header to localhost:%d"), header_port);
 	    outfd = stream_client(NULL, "localhost", header_port,
-				  STREAM_BUFSIZE, 0, NULL, 0);
-	    if (outfd == -1) {
+				  STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
+	    if (outfd == -1 || stream_msg) {
 
 		g_free(errstr);
-		errstr = g_strdup_printf(_("port open: %s"), strerror(errno));
+		if (stream_msg) {
+		    errstr = g_strdup_printf(_("port open: %s"), stream_msg);
+		    g_free(stream_msg);
+		} else {
+		    errstr = g_strdup_printf(_("port open: %s"), strerror(errno));
+		}
 		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
@@ -2036,6 +2042,7 @@ handle_shm_ring_to_fd_thread(
 	    in_port_t data_port;
 	    char *data_host = g_strdup(dataport_list);
 	    char *s;
+	    char *stream_msg = NULL;
 
 	    g_mutex_lock(shm_thread_mutex);
 	    while (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE)) {
@@ -2075,11 +2082,17 @@ handle_shm_ring_to_fd_thread(
 	    }
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
 	    db->fd = stream_client(NULL, data_host, data_port,
-				   STREAM_BUFSIZE, 0, NULL, 0);
-	    if (db->fd == -1) {
+				   STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
+	    if (db->fd == -1 || stream_msg) {
 		g_free(errstr);
-		errstr = g_strdup_printf("Can't open data output stream: %s",
+		if (stream_msg) {
+		    errstr = g_strdup_printf("Can't open data output stream: %s",
+					 stream_msg);
+		    g_free(stream_msg);
+		} else {
+		    errstr = g_strdup_printf("Can't open data output stream: %s",
 					 strerror(errno));
+		}
 		dump_result = 2;
 		amfree(data_host);
 		stop_dump();
@@ -2548,6 +2561,7 @@ read_datafd(
 	}
 	if (data_host) {
 	if (data_path == DATA_PATH_AMANDA) {
+	    char *stream_msg = NULL;
 	    /* do indirecttcp */
 	    if (g_str_equal(data_host,"255.255.255.255")) {
 		char buffer[32770];
@@ -2556,11 +2570,16 @@ read_datafd(
 
 		g_debug(_("Sending indirect data output stream: %s:%d\n"), data_host, data_port);
 		db->fd = stream_client(NULL, "localhost", data_port,
-				       STREAM_BUFSIZE, 0, NULL, 0);
-		if (db->fd == -1) {
+				       STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
+		if (db->fd == -1 || stream_msg) {
                     g_free(errstr);
-                    errstr = g_strdup_printf(_("Can't open indirect data output stream: %s"),
+		    if (stream_msg) {
+			errstr = g_strdup_printf(_("Can't open indirect data output stream: %s"),
+                                         stream_msg);
+		    } else {
+			errstr = g_strdup_printf(_("Can't open indirect data output stream: %s"),
                                          strerror(errno));
+		    }
 		    dump_result = 2;
 		    amfree(data_host);
 		    stop_dump();
@@ -2604,11 +2623,16 @@ read_datafd(
 
 	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
 	    db->fd = stream_client(NULL, data_host, data_port,
-				   STREAM_BUFSIZE, 0, NULL, 0);
-	    if (db->fd == -1) {
+				   STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
+	    if (db->fd == -1 || stream_msg) {
                 g_free(errstr);
-                errstr = g_strdup_printf(_("Can't open data output stream: %s"),
-                                         strerror(errno));
+		if (stream_msg) {
+                    errstr = g_strdup_printf("Can't open data output stream: %s",
+                                             stream_msg);
+		} else {
+                    errstr = g_strdup_printf("Can't open data output stream: %s",
+                                             strerror(errno));
+		}
 		dump_result = 2;
 		amfree(data_host);
 		stop_dump();

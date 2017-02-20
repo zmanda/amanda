@@ -383,6 +383,7 @@ runbsdtcp(
     int			server_socket;
     in_port_t		my_port;
     struct tcp_conn *	rc = rh->rc;
+    char	       *stream_msg = NULL;
 
     server_socket = stream_client_addr(src_ip,
 				     rh->next_res,
@@ -391,12 +392,16 @@ runbsdtcp(
 				     STREAM_BUFSIZE,
 				     &my_port,
 				     0,
-				     1);
+				     1, &stream_msg);
     rh->next_res = rh->next_res->ai_next;
 
-    if(server_socket < 0) {
-	security_seterror(&rh->sech,
-	    "%s", strerror(errno));
+    if (stream_msg) {
+	security_seterror(&rh->sech, "%s", stream_msg);
+	g_free(stream_msg);
+	return -1;
+    }
+    if (server_socket < 0) {
+	security_seterror(&rh->sech, "%s", strerror(errno));
 	return -1;
     }
 

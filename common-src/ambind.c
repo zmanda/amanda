@@ -33,6 +33,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "security-file.h"
 
 int
 main(
@@ -66,6 +67,7 @@ main(
     } while (rc < 0 && errno == EINTR);
 
     if (rc <= 0) {
+	fprintf(stderr, "ambind: select failed: %s\n", strerror(errno));
         shutdown(sockfd, SHUT_RDWR);
         return -1;
     }
@@ -76,7 +78,7 @@ main(
     msg_socket.msg_controllen = sizeof(cmsg_socket);
     rc = recvmsg(sockfd, &msg_socket, 0);
     if (rc == -1) {
-	fprintf(stderr, "ambind: first recvmsg failed: %s", strerror(errno));
+	fprintf(stderr, "ambind: first recvmsg failed: %s\n", strerror(errno));
 	exit(1);
     }
     cmsg = CMSG_FIRSTHDR(&msg_socket);
@@ -96,6 +98,7 @@ main(
     } while (rc < 0 && errno == EINTR);
 
     if (rc <= 0) {
+	fprintf(stderr, "ambind: select failed: %s\n", strerror(errno));
         shutdown(sockfd, SHUT_RDWR);
         return -1;
     }
@@ -111,26 +114,31 @@ main(
 
     rc = recvmsg(sockfd, &msg_ambind_data, 0);
     if (rc == -1) {
-	fprintf(stderr, "ambind: second recvmsg failed: %s", strerror(errno));
+	fprintf(stderr, "ambind: second recvmsg failed: %s\n", strerror(errno));
 	shutdown(sockfd, SHUT_RDWR);
 	exit(2);
     }
     if (rc != sizeof(ambind_t)) {
-	fprintf(stderr, "ambind: recvmsg failed: size == %d ", rc);
+	fprintf(stderr, "ambind: recvmsg failed: size == %d\n", rc);
 	shutdown(sockfd, SHUT_RDWR);
 	exit(2);
+    }
+
+    if (!security_allow_bind(s, &ambind.addr)) {
+	shutdown(sockfd, SHUT_RDWR);
+	return -1;
     }
 
     r = bind(s, (struct sockaddr *)&ambind.addr, ambind.socklen);
     if (r != 0) {
 	if (errno != EADDRINUSE) {
-	    fprintf(stderr, "ambind: bind failed A: %s", strerror(errno));
+	    fprintf(stderr, "ambind: bind failed A: %s\n", strerror(errno));
 	    shutdown(sockfd, SHUT_RDWR);
 	    exit(2);
 	}
-	fprintf(stderr, "ambind: bind failed B: %s", strerror(errno));
+	fprintf(stderr, "ambind: bind failed B: %s\n", strerror(errno));
 	if (shutdown(sockfd, SHUT_RDWR) < 0) {
-	    fprintf(stderr, "ambind: shutdown failed B: %s", strerror(errno));
+	    fprintf(stderr, "ambind: shutdown failed B: %s\n", strerror(errno));
 	    exit(1);
 	}
 	exit(1);
@@ -152,7 +160,7 @@ main(
 	exit(1);
     }
     if (shutdown(sockfd, SHUT_RDWR) < 0) {
-	fprintf(stderr, "ambind: shutdown failed C: %s", strerror(errno));
+	fprintf(stderr, "ambind: shutdown failed C: %s\n", strerror(errno));
 	exit(1);
     }
     exit(0);

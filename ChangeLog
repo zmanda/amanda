@@ -1,3 +1,32 @@
+2017-02-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-file.c: Parse tcp_port_range and udp_port_range
+	* common-src/security-file.c (security_allow_bind): New function to
+	  verify if the port is in tcp_port_range and udp_port_range
+	* common-src/security-file.h (security_allow_bind): Add prototype
+	* common-src/make_security_file.c: Add tcp_port_range and
+	  udp_port_range in the default amanda-security.conf file
+	* common-src/dgram.c (dgram_bind): Add bind_msg argument
+	* common-src/dgram.h (dgram_bind): New prototype
+	* common-src/stream.c (stream_client_addr, stream_client_privileged,
+	  stream_client): Add stream_msg argument
+	* common-src/stream.h (stream_client_addr, stream_client_privileged,
+	  stream_client): New prototype
+	* common-src/amutil.c (connect_portrange): Add stream_msg argument
+	* common-src/amutil.c (bind_portrange): Add bind_msg argument
+	* common-src/amutil.c (ambind): Parse stderr of ambind
+	* common-src/amutil.h (connect_portrange): New prototype
+	* common-src/amutil.h (bind_portrange): New prototype
+	* common-src/ambind.c: Call security_allow_bind, print error on stderr
+	* client-src/sendbackup.c, common-src/bsd-security.c,
+	  common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
+	  common-src/krb5-security.c, common-src/security-util.c,
+	  common-src/ssl-security.c, oldrecover-src/amrecover.c,
+	  oldrecover-src/extract_list.c, server-src/dumper.c,
+	  xfer-src/element-glue.c: Use new API
+	* man/xml-source/amanda-security.conf.5.xml: Document tcp_port_range
+	  and udp_port_range
+	* NEWS: Document it
+
 2017-02-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/local-security.c: Fix setregid call
 

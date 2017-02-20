@@ -56,7 +56,8 @@ dgram_bind(
     dgram_t *	dgram,
     sa_family_t family,
     in_port_t *	portp,
-    int         priv)
+    int         priv,
+    char      **bind_msg)
 {
     int s, retries;
     int new_s;
@@ -106,10 +107,13 @@ dgram_bind(
      * is within the range it requires.
      */
     for (retries = 0; ; retries++) {
-	if ((new_s = bind_portrange(s, &name, portrange[0], portrange[1], "udp", priv)) >= 0)
+	if ((new_s = bind_portrange(s, &name, portrange[0], portrange[1], "udp", priv, bind_msg)) >= 0)
 	    goto out;
 	dbprintf(_("dgram_bind: Could not bind to port in range: %d - %d.\n"),
 		  portrange[0], portrange[1]);
+	if (*bind_msg) {
+	    break;
+	}
 	if (retries >= BIND_CYCLE_RETRIES) {
 	    dbprintf(_("dgram_bind: Giving up...\n"));
 	    break;

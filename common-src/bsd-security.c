@@ -144,6 +144,7 @@ bsd_connect(
     char *canonname;
     int result_bind;
     char *service;
+    char *bind_msg = NULL;
 
     assert(hostname != NULL);
 
@@ -193,7 +194,10 @@ bsd_connect(
 	    dgram_zero(&netfd6.dgram);
 
 	    result_bind = dgram_bind(&netfd6.dgram,
-				     res_addr->ai_addr->sa_family, &port, 1);
+				     res_addr->ai_addr->sa_family, &port, 1, &bind_msg);
+	    if (bind_msg) {
+		continue;
+	    }
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -232,7 +236,10 @@ bsd_connect(
 	    dgram_zero(&netfd4.dgram);
 
 	    result_bind = dgram_bind(&netfd4.dgram,
-				     res_addr->ai_addr->sa_family, &port, 1);
+				     res_addr->ai_addr->sa_family, &port, 1, &bind_msg);
+	    if (bind_msg) {
+		continue;
+	    }
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -259,6 +266,16 @@ bsd_connect(
 	}
     }
 
+    if (bind_msg) {
+	g_debug("%s", bind_msg);
+	security_seterror(&bh->sech,
+	        "%s", bind_msg);
+	g_free(bind_msg);
+	(*fn)(arg, &bh->sech, S_ERROR);
+	amfree(canonname);
+	freeaddrinfo(res);
+	return;
+    }
     if (res_addr == NULL) {
 	dbprintf(_("Can't bind a socket to connect to %s\n"), hostname);
 	security_seterror(&bh->sech,
@@ -469,17 +486,25 @@ bsd_stream_client(
 #ifdef DUMPER_SOCKET_BUFFERING
     int rcvbuf = sizeof(bs->databuf) * 2;
 #endif
+    char *stream_msg = NULL;
 
     assert(bh != NULL);
 
     bs = g_new0(struct sec_stream, 1);
     security_streaminit(&bs->secstr, &bsd_security_driver);
     bs->fd = stream_client(NULL, bh->hostname, (in_port_t)id,
-	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
+	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0, &stream_msg);
+    if (stream_msg) {
+	security_seterror(&bh->sech, "can't connect stream to %s port %d: %s",
+			  bh->hostname, id, stream_msg);
+	amfree(bs->secstr.error);
+	amfree(bs);
+	g_free(stream_msg);
+	return (NULL);
+    }
     if (bs->fd < 0) {
-	security_seterror(&bh->sech,
-	    _("can't connect stream to %s port %d: %s"), bh->hostname,
-	    id, strerror(errno));
+	security_seterror(&bh->sech, "can't connect stream to %s port %d: %s",
+			  bh->hostname, id, strerror(errno));
 	amfree(bs->secstr.error);
 	amfree(bs);
 	return (NULL);

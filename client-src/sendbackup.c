@@ -720,6 +720,7 @@ main(
 		    char buffer[32770];
 		    int size;
 		    char *s, *s1;
+		    char *stream_msg = NULL;
 
 		    indirect_tcp = g_strdup(dle->directtcp_list->data);
 		    g_debug("indirecttcp: %s", indirect_tcp);
@@ -732,7 +733,13 @@ main(
 		    }
 		    str_port++;
 		    port = atoi(str_port);
-		    fd = stream_client(NULL, "localhost", port, 32768, 32768, NULL, 0);
+		    fd = stream_client(NULL, "localhost", port, 32768, 32768, NULL, 0, &stream_msg);
+		    if (stream_msg) {
+			g_debug("Failed to connect to indirect-direct-tcp port: %s",
+				stream_msg);
+			g_free(stream_msg);
+			exit(1);
+		    }
 		    if (fd <= 0) {
 			g_debug("Failed to connect to indirect-direct-tcp port: %s",
 				strerror(errno));

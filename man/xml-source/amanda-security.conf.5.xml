@@ -86,6 +86,32 @@ You can use the 'realpath' command to find them.</para>
   <listitem>
 <para>Default: no. Set to 'yes' if you want the amanda use to restore file as root, required only if you run amgtar, amstar or ambsdtar as the amanda backup for recovery.</para></listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term>tcp_port_range=int,int</term>
+  <listitem>
+<para>Default: no. Must be set to the range of privileged tcp port amanda
+can use, required for bsdtcp and krb5 auth.
+The range is inclusive</para>
+<para> You can find the range you are configured to use with:</para>
+<programlisting>
+  amgetconf CONF reserved-udp-port
+</programlisting>
+</listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term>udp_port_range=int,int</term>
+  <listitem>
+<para>Default: no. Must be set to the range of privileged udp port amanda
+can use, required for bsd and bsdudp auth.
+The range is inclusive</para>
+<para> You can find the range you are configured to use with:</para>
+<programlisting>
+  amgetconf CONF reserved-udp-port
+</programlisting>
+</listitem>
+  </varlistentry>
 </variablelist>
 
 </refsect1>

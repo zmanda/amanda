@@ -46,7 +46,8 @@
 GMutex *priv_mutex = NULL;
 static int make_socket(sa_family_t family);
 static int connect_port(sockaddr_union *addrp, in_port_t port, char *proto,
-			sockaddr_union *svaddr, int nonblock, int priv);
+			sockaddr_union *svaddr, int nonblock, int priv,
+			char **msg);
 
 static int
 make_socket(
@@ -117,7 +118,8 @@ connect_portrange(
     char *		proto,
     sockaddr_union *svaddr,
     int			nonblock,
-    int			priv)
+    int			priv,
+    char              **stream_msg)
 {
     int			s;
     in_port_t		port;
@@ -131,7 +133,7 @@ connect_portrange(
     for(i=0; i < nb_port_in_use; i++) {
 	port = port_in_use[i];
 	if(port >= first_port && port <= last_port) {
-	    s = connect_port(addrp, port, proto, svaddr, nonblock, priv);
+	    s = connect_port(addrp, port, proto, svaddr, nonblock, priv, stream_msg);
 	    if(s == -2) return -1;
 	    if(s >= 0) {
 		return s;
@@ -143,7 +145,7 @@ connect_portrange(
 
     /* Try a port in the range */
     for (port = first_port; port <= last_port; port++) {
-	s = connect_port(addrp, port, proto, svaddr, nonblock, priv);
+	s = connect_port(addrp, port, proto, svaddr, nonblock, priv, stream_msg);
 	if(s == -2) return -1;
 	if(s >= 0) {
 	    port_in_use[nb_port_in_use++] = port;
@@ -177,6 +179,9 @@ ambind(
     char cmsgbuf[CMSG_SPACE(sizeof(s))];
     struct iovec iov[2];
     int r;
+    int pipe_stderr[2];
+    fd_set readSet;
+    int max_set;
 
 #ifdef SOCK_NONBLOCK
     r = socketpair(AF_UNIX, SOCK_DGRAM|SOCK_NONBLOCK, 0, sockfd);
@@ -190,7 +195,13 @@ ambind(
     }
 #endif
     if (r < 0) {
-	fprintf(stderr, "socketpair failed: %s\n", strerror(errno));
+	*msg = g_strdup_printf("socketpair failed: %s\n", strerror(errno));
+	return -2;
+    }
+    if (pipe(pipe_stderr) < 0) {
+	shutdown(sockfd[0], SHUT_RDWR);
+	shutdown(sockfd[1], SHUT_RDWR);
+	*msg = g_strdup_printf("pipe failed: %s\n", strerror(errno));
 	return -2;
     }
 
@@ -199,6 +210,8 @@ ambind(
 					strerror(errno));
 		 close(sockfd[0]);
 		 close(sockfd[1]);
+		 close(pipe_stderr[0]);
+		 close(pipe_stderr[1]);
 		 return -2;
 
 	case  0: //child
@@ -206,6 +219,7 @@ ambind(
 		 char *ambind_path = g_strdup_printf("%s/ambind", amlibexecdir);
 		 char *socket_name = g_strdup_printf("%d", sockfd[1]);
 		 close(sockfd[0]);
+		 dup2(pipe_stderr[1], 2);
 		 execl(ambind_path, ambind_path, socket_name, NULL);
 		 error("error [exec %s: %s]", ambind_path, strerror(errno));
 		 exit(1);
@@ -216,6 +230,7 @@ ambind(
 		 break;
     }
 
+    close(pipe_stderr[1]);
     memset(&msg_socket, 0, sizeof(msg_socket));
     msg_socket.msg_control = cmsgbuf;
     msg_socket.msg_controllen = sizeof(cmsgbuf); // necessary for CMSG_FIRSTHDR to return the correct value
@@ -231,6 +246,7 @@ ambind(
 	*msg = g_strdup_printf("sendmsg failed A: %s\n",
 			        strerror(errno));
 	shutdown(sockfd[0], SHUT_RDWR);
+	close(pipe_stderr[1]);
 	return -1;
     }
 
@@ -247,25 +263,34 @@ ambind(
 	*msg = g_strdup_printf("sendmsg failed B: %s\n",
 			        strerror(errno));
 	shutdown(sockfd[0], SHUT_RDWR);
+	close(pipe_stderr[0]);
 	return -1;
     }
 
     shutdown(sockfd[0], SHUT_WR);
+    max_set = sockfd[0];
+    if (max_set < pipe_stderr[0]) max_set = pipe_stderr[0];
+    max_set++;
 
     do {
 	struct timeval timeout = { 5, 0 };
-	fd_set readSet;
 	FD_ZERO(&readSet);
 	FD_SET(sockfd[0], &readSet);
+	FD_SET(pipe_stderr[0], &readSet);
 
-	rc = select(sockfd[0]+1, &readSet, NULL, NULL, &timeout);
+	rc = select(max_set, &readSet, NULL, NULL, &timeout);
     } while (rc < 0 && errno == EINTR);
 
-    if (rc <= 0) {
+    if (!FD_ISSET(sockfd[0], &readSet)) {
+	FILE *err;
 	shutdown(sockfd[0], SHUT_RDWR);
 	waitpid(pid, NULL, 0);
+	err = fdopen(pipe_stderr[0], "r");
+	*msg = agets(err);
+	close(pipe_stderr[0]);
 	return -1;
     }
+    close(pipe_stderr[0]);
 
     // read the message socket msg
     memset(&msg_socket, 0, sizeof(msg_socket));
@@ -300,7 +325,8 @@ connect_port(
     char *		proto,
     sockaddr_union *svaddr,
     int			nonblock,
-    int			priv)
+    int			priv,
+    char              **msg)
 {
     int			save_errno;
     struct servent *	result;
@@ -341,12 +367,12 @@ connect_port(
 #if !defined BROKEN_SENDMSG
     } else if (1) { // if use ambind
 	int  old_s = s;
-	char *msg = NULL;
-	r = s = ambind(s, addrp, socklen, &msg);
-	if (msg) {
-	    fprintf(stderr,"msg: %s\n", msg);
-	}
+	r = s = ambind(s, addrp, socklen, msg);
 	close(old_s);
+	if (*msg) {
+	    g_debug("ambind failed: %s", *msg);
+	    return -2;
+	}
 #endif
     } else { // setuid root
 	g_mutex_lock(priv_mutex);
@@ -451,7 +477,8 @@ bind_portrange(
     in_port_t		first_port,
     in_port_t		last_port,
     char *		proto,
-    int                 priv)
+    int                 priv,
+    char              **bind_msg)
 {
     in_port_t port;
     in_port_t cnt;
@@ -499,10 +526,10 @@ bind_portrange(
 		new_s = s;
 #if !defined BROKEN_SENDMSG
 	    } else if (1) { // if use ambind
-		char *msg = NULL;
-		r = new_s = ambind(s, addrp, socklen, &msg);
-		if (msg) {
-		    fprintf(stderr,"msg: %s\n", msg);
+		r = new_s = ambind(s, addrp, socklen, bind_msg);
+		if (*bind_msg) {
+		    g_debug("ambind failed: %s", *bind_msg);
+		    return -1;
 		}
 #endif
 	    } else {

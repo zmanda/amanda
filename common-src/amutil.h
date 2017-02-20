@@ -61,9 +61,9 @@ typedef enum {
 extern GMutex *priv_mutex;
 
 int	connect_portrange(sockaddr_union *, in_port_t, in_port_t, char *,
-			  sockaddr_union *, int, int);
+			  sockaddr_union *, int, int, char **stream_msg);
 int	bind_portrange(int, sockaddr_union *, in_port_t, in_port_t,
-		       char *, int);
+		       char *, int, char **);
 
 /* just like an accept() call, but periodically calling PROLONG(PROLONG_DATA) and
  * returning -1 with errno set to 0 if PROLONG returns false.  Note that the socket

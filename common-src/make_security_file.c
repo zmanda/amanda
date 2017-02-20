@@ -76,6 +76,16 @@ int main(void)
 
     fprintf(sec_file,"\n");
     fprintf(sec_file,"#restore_by_amanda_user=no\n");
+#ifdef LOW_TCPPORTRANGE
+    fprintf(sec_file,"tcp_port_range=%d,%d\n", LOW_TCPPORTRANGE);
+#else
+    fprintf(sec_file,"tcp_port_range=512,1024\n");
+#endif
+#ifdef UDPPORTRANGE
+    fprintf(sec_file,"udp_port_range=%d,%d\n", UDPPORTRANGE);
+#else
+    fprintf(sec_file,"udp_port_range=512,1024\n");
+#endif
     fclose(sec_file);
 
     return 0;
