@@ -374,10 +374,27 @@ security_allow_bind(
 
     int port;
     int type;
+    char *proto;
     socklen_t_equiv length = sizeof(type);
+    struct servent *result;
+
     port = SU_GET_PORT(addr);
     if (getsockopt(s, SOL_SOCKET, SO_TYPE, &type, &length) == -1) {
 	fprintf(stderr, "getsockopt failed: %s", strerror(errno));
+	return FALSE;
+    }
+
+    if (type == SOCK_STREAM) {
+	proto = "tcp";
+    } else if (type == SOCK_DGRAM) {
+	proto = "udp";
+    } else {
+	fprintf(stderr, "Wrong socket type: %d\n", type);
+	return FALSE;
+    }
+    result = getservbyport((int)htons(port), proto);
+    if (result && !strstr(result->s_name, AMANDA_SERVICE_NAME)) {
+	fprintf(stderr, "port %d is owned by %s", port, result->s_name);
 	return FALSE;
     }
 

@@ -1,4 +1,12 @@
 2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ambind.c: Print 'WARNING:' prefix if we should retry on
+	  a different port
+	* common-src/amutil.c: Parse 'WARNING:' prefix
+	* common-src/stream.c, common-src/dgram.c: Handle retry
+	* common-src/security-file.c (security_allow_bind): Check the port
+	  have no name
+
+2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/tapefile.c (nb_tape_in_storage): Use g_strcmp0
 
 2017-02-20  Jean-Louis Martineau <JMartineau@carbonite.com>

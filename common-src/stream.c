@@ -66,6 +66,7 @@ stream_server(
     int *portrange;
     socklen_t_equiv socklen;
     int socket_family;
+    char *bind_msg = NULL;
 
     *portp = USHRT_MAX;				/* in case we error exit */
     if (family == -1) {
@@ -128,7 +129,7 @@ stream_server(
      * is within the range it requires.
      */
     for (retries = 0; ; retries++) {
-	char *bind_msg = NULL;
+	amfree(bind_msg);
 	if (priv) {
 	    portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
 	} else {
@@ -139,13 +140,11 @@ stream_server(
 	    if ((new_s = bind_portrange(server_socket, &server, (in_port_t)portrange[0],
 			       (in_port_t)portrange[1], "tcp", priv, &bind_msg)) >= 0)
 		goto out;
-	    if (bind_msg) {
-		retries = BIND_CYCLE_RETRIES;
-		g_free(bind_msg);
+	    g_debug("stream_server: Could not bind to port in range: %d - %d: %s",
+		      portrange[0], portrange[1], bind_msg);
+	    if (new_s == -1) {
 		break;
 	    }
-	    g_debug(_("stream_server: Could not bind to port in range: %d - %d."),
-		      portrange[0], portrange[1]);
 	} else {
 	    socklen = SS_LEN(&server);
 	    new_s = server_socket;
@@ -158,14 +157,15 @@ stream_server(
 	if (retries >= BIND_CYCLE_RETRIES)
 	    break;
 
-	g_debug(_("stream_server: Retrying entire range after 10 second delay."));
+	g_debug(_("stream_server: Retrying entire range after 15 second delay."));
 
 	sleep(15);
     }
 
     save_errno = errno;
     g_debug(_("stream_server: bind(in6addr_any) failed: %s"),
-		  strerror(save_errno));
+		  bind_msg);
+    g_free(bind_msg);
     aclose(server_socket);
     errno = save_errno;
     return -1;

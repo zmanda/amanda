@@ -126,7 +126,7 @@ main(
 
     if (!security_allow_bind(s, &ambind.addr)) {
 	shutdown(sockfd, SHUT_RDWR);
-	return -1;
+	exit(2);
     }
 
     r = bind(s, (struct sockaddr *)&ambind.addr, ambind.socklen);
@@ -136,7 +136,7 @@ main(
 	    shutdown(sockfd, SHUT_RDWR);
 	    exit(2);
 	}
-	fprintf(stderr, "ambind: bind failed B: %s\n", strerror(errno));
+	fprintf(stderr, "WARNING: ambind: bind failed B: %s\n", strerror(errno));
 	if (shutdown(sockfd, SHUT_RDWR) < 0) {
 	    fprintf(stderr, "ambind: shutdown failed B: %s\n", strerror(errno));
 	    exit(1);

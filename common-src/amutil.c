@@ -247,7 +247,7 @@ ambind(
 			        strerror(errno));
 	shutdown(sockfd[0], SHUT_RDWR);
 	close(pipe_stderr[1]);
-	return -1;
+	return -2;
     }
 
     memset(&msg_ambind_data, 0, sizeof(msg_ambind_data));
@@ -264,7 +264,7 @@ ambind(
 			        strerror(errno));
 	shutdown(sockfd[0], SHUT_RDWR);
 	close(pipe_stderr[0]);
-	return -1;
+	return -2;
     }
 
     shutdown(sockfd[0], SHUT_WR);
@@ -288,7 +288,10 @@ ambind(
 	err = fdopen(pipe_stderr[0], "r");
 	*msg = agets(err);
 	close(pipe_stderr[0]);
-	return -1;
+	if (strncmp(*msg, "WARNING:", 8) == 0) {
+	    return -1;
+	}
+	return -2;
     }
     close(pipe_stderr[0]);
 
@@ -304,7 +307,7 @@ ambind(
     cmsg = CMSG_FIRSTHDR(&msg_socket);
     if (cmsg == NULL || cmsg -> cmsg_type != SCM_RIGHTS) {
 	*msg = g_strdup_printf("The first control structure contains no file descriptor.\n");
-	return -1;
+	return -2;
     }
     memcpy(&s, CMSG_DATA(cmsg), sizeof(s));
 
@@ -367,10 +370,13 @@ connect_port(
 #if !defined BROKEN_SENDMSG
     } else if (1) { // if use ambind
 	int  old_s = s;
+	amfree(*msg);
 	r = s = ambind(s, addrp, socklen, msg);
 	close(old_s);
 	if (*msg) {
 	    g_debug("ambind failed: %s", *msg);
+	}
+	if (r == -2) {
 	    return -2;
 	}
 #endif
@@ -503,9 +509,10 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
-#ifdef HAVE_GETSERVBYPORT
+#ifdef HAVE_GETSERVBYPORT_R
 	struct servent  servPort;
 	char            buf[2048];
+
 # ifdef GETSERVBYPORT_R5
 	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
 	if (result == 0) {
@@ -518,17 +525,23 @@ bind_portrange(
 #else
 	result = getservbyport((int)htons(port), proto);
 #endif
+	amfree(*bind_msg);
+g_debug("bind_portrange2: Try  port %d", port);
 	if ((result == NULL) || strstr(result->s_name, AMANDA_SERVICE_NAME)) {
 	    SU_SET_PORT(addrp, port);
 	    socklen = SS_LEN(addrp);
 	    if (!priv) {
 		r = bind(s, (struct sockaddr *)addrp, socklen);
 		new_s = s;
+		*bind_msg = g_strdup(strerror(errno));
 #if !defined BROKEN_SENDMSG
 	    } else if (1) { // if use ambind
 		r = new_s = ambind(s, addrp, socklen, bind_msg);
 		if (*bind_msg) {
 		    g_debug("ambind failed: %s", *bind_msg);
+		}
+		if (r == -2) {
+		    amfree(*bind_msg);
 		    return -1;
 		}
 #endif
@@ -537,6 +550,7 @@ bind_portrange(
 		set_root_privs(1);
 		r = bind(s, (struct sockaddr *)addrp, socklen);
 		new_s = s;
+		*bind_msg = g_strdup(strerror(errno));
 		set_root_privs(0);
 		g_mutex_unlock(priv_mutex);
 	    }
@@ -552,10 +566,10 @@ bind_portrange(
 		save_errno = errno;
 	    if (result == NULL) {
 		g_debug(_("bind_portrange2: Try  port %d: Available - %s"),
-			port, strerror(errno));
+			port, *bind_msg);
 	    } else {
 		g_debug(_("bind_portrange2: Try  port %d: Owned by %s - %s"),
-			port, result->s_name, strerror(errno));
+			port, result->s_name, *bind_msg);
 	    }
 	} else {
 	        g_debug(_("bind_portrange2: Skip port %d: Owned by %s."),
@@ -568,7 +582,7 @@ bind_portrange(
 		  first_port,
 		  last_port);
     errno = save_errno;
-    return -1;
+    return -2;
 }
 
 int

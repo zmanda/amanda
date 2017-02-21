@@ -111,7 +111,7 @@ dgram_bind(
 	    goto out;
 	dbprintf(_("dgram_bind: Could not bind to port in range: %d - %d.\n"),
 		  portrange[0], portrange[1]);
-	if (*bind_msg) {
+	if (new_s == -1) {
 	    break;
 	}
 	if (retries >= BIND_CYCLE_RETRIES) {
@@ -119,7 +119,7 @@ dgram_bind(
 	    break;
 	}
 
-	dbprintf(_("dgram_bind: Retrying entire range after 10 second delay.\n"));
+	dbprintf(_("dgram_bind: Retrying entire range after 15 second delay.\n"));
 	sleep(15);
     }
 
