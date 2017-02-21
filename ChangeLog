@@ -1,4 +1,7 @@
 2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c (nb_tape_in_storage): Fix for older glib2
+
+2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/tapefile.c (nb_tape_in_storage): Use g_strcmp0
 
 2017-02-20  Jean-Louis Martineau <JMartineau@carbonite.com>
