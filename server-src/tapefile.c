@@ -1199,7 +1199,8 @@ nb_tape_in_storage(
     int nb_tapes = 0;
 
     for (tp = tape_list; tp != NULL; tp = tp->next) {
-	if (g_strcmp0(storage_name,tp->storage) == 0) {
+	if ((!storage_name && !tp->storage) ||
+	    (storage_name && tp->storage && g_str_equal(storage_name,tp->storage))) {
 	    nb_tapes++;
 	}
     }
