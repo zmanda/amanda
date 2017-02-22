@@ -760,7 +760,7 @@ set_message(
     } else if (message->code == 2800045) {
 	msg  = "tapelist '%{tapefile}' (%{errnostr}), you must create an empty file";
     } else if (message->code == 2800046) {
-	msg  = "tapelist file do not exists";
+	msg  = "tapelist file does not exists";
 	hint = "it will be created on the next run";
     } else if (message->code == 2800047) {
 	msg  = "tapelist '%{tapefile}': parse error";
