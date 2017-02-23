@@ -87,9 +87,10 @@ close $stdout if $verbose;
 while (@hfiles) {
     my $hfile = pop @hfiles;
     if ($hfile->{'header'}->{'type'} == $Amanda::Header::F_DUMPFILE) {
-	if ($hfile->{'filename'} =~ /\.tmp$/) {
+	if ($hfile->{'filename'} =~ /(.*)\.tmp$/) {
+	    my $filename = $1;
 	    print "Rename tmp holding file: $hfile->{'filename'}\n" if $verbose;
-	    Amanda::Holding::rename_tmp($hfile->{'filename'}, 0);
+	    Amanda::Holding::rename_tmp($filename, 0);
 	} else {
 	    # normal holding file
 	}
