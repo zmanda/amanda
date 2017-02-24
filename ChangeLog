@@ -1,3 +1,7 @@
+2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/ndmp-device.c (read_to_connection_impl):Correctlycompute
+	  the offset
+
 2017-02-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcleanupdisk.pl: Fix renaming tmp holding file
 
