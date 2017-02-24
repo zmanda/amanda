@@ -51,6 +51,7 @@ struct NdmpDevice_ {
 
     /* true if tape service is open on the NDMP server */
     gboolean tape_open;
+    guint64      bytes_moved_before;
 
     /* addresses the object is listening on, and how the connection
      * was opened */
@@ -1812,12 +1813,13 @@ read_to_connection_impl(
 	set_error_from_ndmp(self);
 	return 1;
     }
-    size = bytes_moved_after - bytes_moved_before;
+    size = bytes_moved_after - self->bytes_moved_before;
     nconn->offset += size;
 
     if (actual_size) {
-	*actual_size = bytes_moved_after - bytes_moved_before;
+	*actual_size = size;
     }
+    self->bytes_moved_before = bytes_moved_after;
 
     if (eow) {
         ; /* mover finished the whole part -- nothing to report! */
