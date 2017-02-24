@@ -223,6 +223,8 @@ security_file_get_portrange(
 		    shigh++;
 		    *plow = atoi(p);
 		    *phigh = atoi(shigh);
+		    g_free(iname);
+		    fclose(sec_file);
 		    return TRUE;
 		}
 		error("BOGUS line '%s' in " DEFAULT_SECURITY_FILE " file", oline);
@@ -411,7 +413,7 @@ security_allow_bind(
 	    fprintf(stderr, "No defined tcp_port_range in '%s'\n", DEFAULT_SECURITY_FILE);
 	    return FALSE;
 	}
-    } else if (type == SOCK_DGRAM) {
+    } else  { //(type == SOCK_DGRAM)
 	int low, high;
 	if (security_file_get_portrange("udp_port_range", &low, &high)) {
 	    if (low <= port && port <= high) {
@@ -424,9 +426,6 @@ security_allow_bind(
 	    fprintf(stderr, "No defined udp_port_range in '%s'\n", DEFAULT_SECURITY_FILE);
 	    return FALSE;
 	}
-    } else {
-	fprintf(stderr, "Wrong socket type: %d\n", type);
-	return FALSE;
     }
 }
 

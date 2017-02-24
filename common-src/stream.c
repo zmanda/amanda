@@ -338,7 +338,9 @@ stream_client_internal(
 					  "tcp", &svaddr, nonblock, priv, stream_msg);
 	save_errno = errno;
 	if (*stream_msg) {
-	    return -1;
+	    aclose(client_socket);
+	    client_socket = -1;
+	    break;
 	}
 	if (client_socket >= 0)
 	    break;

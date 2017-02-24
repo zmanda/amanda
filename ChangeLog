@@ -1,4 +1,8 @@
 2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c, common-src/security-file.c,
+	  common-src/stream.c: Fix bug found by coverity
+
+2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/ndmp-device.c (read_to_connection_impl):Correctlycompute
 	  the offset
 

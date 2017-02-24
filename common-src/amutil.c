@@ -287,7 +287,7 @@ ambind(
 	waitpid(pid, NULL, 0);
 	err = fdopen(pipe_stderr[0], "r");
 	*msg = agets(err);
-	close(pipe_stderr[0]);
+	fclose(err);
 	if (strncmp(*msg, "WARNING:", 8) == 0) {
 	    return -1;
 	}
