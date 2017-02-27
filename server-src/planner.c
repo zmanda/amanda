@@ -1291,6 +1291,8 @@ static int when_overwrite(
     int     nb_in_storage;
     int     runtapes;
     storage_t *st;
+    policy_s  *po;
+    int        retention_tapes;
 
     if ((tp = lookup_tapelabel(label)) == NULL)
 	return 1;	/* "shouldn't happen", but trigger warning message */
@@ -1308,13 +1310,17 @@ static int when_overwrite(
     }
     if (!st)
 	return 1;
+    po = lookup_policy(storage_get_policy(st));
+    if (!po)
+	return 1;
+    retention_tapes = policy_get_retention_tapes(po);
     runtapes = storage_get_runtapes(st);
     if (runtapes == 0) runtapes = 1;
 
-    nb = tape_overwrite(tp);
-    nb_in_storage = nb_tape_in_storage(tp->storage);
-    if (conf_tapecycle+1 > nb_in_storage)
-	nb += (conf_tapecycle+1 - nb_in_storage);
+    nb = tape_overwrite(st, tp);
+    nb_in_storage = nb_tape_in_storage(st);
+    if (retention_tapes > nb_in_storage)
+	nb += (retention_tapes - nb_in_storage + 1);
 
     tp->when_overwrite = (nb - 1) / runtapes;
     if (tp->when_overwrite < 0)
