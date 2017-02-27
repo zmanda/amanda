@@ -35,6 +35,7 @@
 #define TAPEFILE_H
 
 #include "amanda.h"
+#include "conffile.h"
 
 typedef enum {
     RETENTION_NO           = 0,
@@ -110,7 +111,7 @@ int volume_is_reusable(const char *label);
 int guess_runs_from_tapelist(void);
 gchar **list_new_tapes(char *storage_n, int nb);
 RetentionType get_retention_type(char *pool, char *label);
-int tape_overwrite(tape_t *tp);
-int nb_tape_in_storage(char *storage_name);
+int tape_overwrite(storage_t *st, tape_t *tp);
+int nb_tape_in_storage(storage_t *st);
 
 #endif /* !TAPEFILE_H */

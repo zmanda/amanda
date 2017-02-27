@@ -1,3 +1,11 @@
+2017-02-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c (tape_overwrite, nb_tape_in_storage): Take
+	  storage as argument, Check NULL storage name and labelstr
+	* server-src/tapefile.h (tape_overwrite, nb_tape_in_storage): New
+	  prototypes
+	* server-src/planner.c (when_overwrite): Pass the storage argument
+	  to tape_overwrite and nb_tape_in_storage
+
 2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c, common-src/security-file.c,
 	  common-src/stream.c: Fix bug found by coverity

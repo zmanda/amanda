@@ -1177,14 +1177,21 @@ get_retention_type(
 
 int
 tape_overwrite(
+    storage_t *st,
     tape_t *tp)
 {
     tape_t *tp1;
     int nb_tapes = 0;
 
     for (tp1 = tp; tp1 != NULL; tp1 = tp1->next) {
-	if (!tp1->retention && tp1->storage && tp->storage &&
-	    g_str_equal(tp->storage, tp1->storage)) {
+	if (!tp1->retention &&
+	    (((!tp1->storage || !tp->storage) &&
+	      match_labelstr(storage_get_labelstr(st),
+			     storage_get_autolabel(st),
+			     tp1->label, tp1->barcode, tp1->meta,
+			     storage_name(st))) ||
+	     (tp1->storage && tp->storage &&
+	     g_str_equal(tp->storage, tp1->storage)))) {
 	    nb_tapes++;
 	}
     }
@@ -1193,14 +1200,18 @@ tape_overwrite(
 
 int
 nb_tape_in_storage(
-    char *storage_name)
+    storage_t *st)
 {
     tape_t *tp;
     int nb_tapes = 0;
-
+    char *storage = storage_name(st);
     for (tp = tape_list; tp != NULL; tp = tp->next) {
-	if ((!storage_name && !tp->storage) ||
-	    (storage_name && tp->storage && g_str_equal(storage_name,tp->storage))) {
+	if (((!storage || !tp->storage) &&
+	      match_labelstr(storage_get_labelstr(st),
+			     storage_get_autolabel(st),
+			     tp->label, tp->barcode, tp->meta,
+			     storage_name(st))) ||
+	    (storage && tp->storage && g_str_equal(storage, tp->storage))) {
 	    nb_tapes++;
 	}
     }
