@@ -171,7 +171,7 @@ sub remove_tapelabel {
 	    }
 	    splice @{$self->{tles}}, $i, 1;
 	    $self->_update_positions();
-	    return;
+	    last;
 	}
     }
     C_remove_tapelabel($label);

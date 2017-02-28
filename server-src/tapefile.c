@@ -436,6 +436,13 @@ add_tapelabel(
     tape_t *cur, *new;
     char *tape_key;
 
+    tape_t *tp;
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+	if (g_str_equal(tp->label, label) &&
+	    (storage && tp->storage && g_str_equal(tp->storage, storage))) {
+	    g_critical("ERROR: add_tapelabel that already exists: %s %s", label, storage);
+	}
+    }
     /* insert a new record to the front of the list */
 
     new = g_new0(tape_t,1);
