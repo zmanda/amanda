@@ -108,7 +108,7 @@ also set to true if the C<DEBUG_RECOVERY> configuration parameter is set.
 The optional C<feedback> parameter gives an object which will handle feedback
 form the clerk.  See FEEDBACK, below.
 
-The C<scan> parameter must be an L<Amanda::Recover::Scan> instance, which
+The C<scan> parameter must be an L<Amanda::Recovery::Scan> instance, which
 will be used to find the volumes required for the recovery.
 
 =head2 TRANSFERRING A DUMPFILE

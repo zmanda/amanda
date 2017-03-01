@@ -167,7 +167,7 @@ FOOTER
     close ($fh);
 
     my $css = pm2css($pm);
-    pod2html("--podpath=Amanda",
+    pod2html("--podpath=:Amanda",
 	    "--htmldir=$targetdir",
 	    "--infile=$tmp",
 	    "--css=$css",
@@ -266,9 +266,11 @@ BODY
     for $pm (@sources) {
 	my $html = pm2html($pm);
 	my $mod = pm2module($pm);
-	next unless ($pm =~ /^$dir/);
+	my $dir2 = $dir. "/";
+	next if ($dir ne '' && ($pm !~ /^$dir/ || ($pm ne $dir && $pm !~ /^$dir2/)));
+	#next unless ($pm =~ /^$dir::/);
 	if (@rdirs) {
-	    while (@rdirs and !($pm =~ /$rdirs[0]/)) {
+	    while (@rdirs && ($pm eq $rdirs[0] || $pm !~ /$rdirs[0]\//)) {
 		shift @rdirs;
 		print $idx " </ul>\n";
 	    }

@@ -1,4 +1,8 @@
 2017-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Recovery/Clerk.pm: Typo
+	* perl/make_html.pl: Fix man pages
+
+2017-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: 3.4.3
 	* VERSION: 3.4.3
 
