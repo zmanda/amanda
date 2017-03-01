@@ -1,7 +1,7 @@
 Changes in release 3.5
 
    * Use different thread to connect to different client
-   * amservice, amcheck, planner, dumper are no longer suid
+   * amservice, amcheck, planner, dumper are no longer suid root
    * ambind
        o new suid program to bind to a privileged port
    * amanda-security.conf
@@ -9,8 +9,15 @@ Changes in release 3.5
        o new udp_port_range, range of privileged udp port
 
 Changes in release 3.4.3
+   * fix MAJOR issue: amdump can reuse the same tape in the same run
    * amtape slot
        o add drive selection
+   * compile/link with libressl
+   * fix portability issue
+   * fix for NetBSD
+   * fix 'Device busy' problem
+   * fix planner crash
+   * fix setregid call
 
 Changes in release 3.4.2
 
