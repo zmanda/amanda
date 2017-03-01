@@ -1,3 +1,7 @@
+2017-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.4.3
+	* VERSION: 3.4.3
+
 2017-02-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Tapelist.swg (remove_tapelabel): Call C_remove_tapelabel
 	* server-src/tapefile.c (add_tapelabel): Verify the label is not

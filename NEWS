@@ -1,6 +1,13 @@
 Changes in release 3.4.3
+   * fix MAJOR issue: amdump can reuse the same tape in the same run
    * amtape slot
        o add drive selection
+   * compile/link with libressl
+   * fix portability issue
+   * fix for NetBSD
+   * fix 'Device busy' problem
+   * fix planner crash
+   * fix setregid call
 
 Changes in release 3.4.2
 
