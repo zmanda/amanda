@@ -1,3 +1,7 @@
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/CheckDump.pm (run): Set all_copy=1 to restore()
+	* perl/Amanda/Restore.pm (restore): Pass all_copy to make_plan()
+
 2017-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Recovery/Clerk.pm: Typo
 	* perl/make_html.pl: Fix man pages
