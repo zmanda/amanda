@@ -1358,7 +1358,7 @@ ambsdtar_backup(
 	read_fd(data_out , "data out" , &read_data_out);
 	read_fd(outf     , "data err" , &read_text);
 	read_fd(index_out, "index out", &read_text);
-	read_fd(index_err, "index_err", &read_text);
+	read_fd(index_err, "index err", &read_text);
     } else {
 	tarpid = pipespawnv(bsdtar_path, STDIN_PIPE|STDERR_PIPE, 1,
 			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);

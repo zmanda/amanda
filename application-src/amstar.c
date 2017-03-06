@@ -61,6 +61,7 @@
 #include "sendbackup.h"
 #include "security-file.h"
 #include "ammessage.h"
+#include "event.h"
 
 int debug_application = 1;
 #define application_debug(i, ...) do {	\
@@ -179,6 +180,111 @@ static struct option long_options[] = {
     {"include-file"    , 1, NULL, 25},
     { NULL, 0, NULL, 0}
 };
+
+typedef struct filter_s {
+    int    fd;
+    char  *name;
+    char  *buffer;
+    gint64 first;		/* first byte used */
+    gint64 size;		/* number of byte use in the buffer */
+    gint64 allocated_size;	/* allocated size of the buffer     */
+    event_handle_t *event;
+    int    out;
+} filter_t;
+
+static void read_fd(int fd, char *name, event_fn_t fn);
+static void read_text(void *cookie);
+
+static void
+read_fd(
+    int   fd,
+    char *name,
+    event_fn_t fn)
+{
+    filter_t *filter = g_new0(filter_t, 1);
+    filter->fd = fd;
+    filter->name = g_strdup(name);
+    filter->event = event_create((event_id_t)filter->fd, EV_READFD,
+				 fn, filter);
+    event_activate(filter->event);
+}
+
+static void
+read_text(
+    void *cookie)
+{
+    filter_t  *filter = cookie;
+    char      *line;
+    char      *p;
+    ssize_t    nread;
+    int        len;
+
+    if (filter->buffer == NULL) {
+	/* allocate initial buffer */
+	filter->buffer = g_malloc(32768);
+	filter->first = 0;
+	filter->size = 0;
+	filter->allocated_size = 32768;
+    } else if (filter->first > 0) {
+	if (filter->allocated_size - filter->size - filter->first < 1024) {
+	    memmove(filter->buffer, filter->buffer + filter->first,
+		    filter->size);
+	    filter->first = 0;
+	}
+    } else if (filter->allocated_size - filter->size < 1024) {
+	/* double the size of the buffer */
+	filter->allocated_size *= 2;
+	filter->buffer = g_realloc(filter->buffer, filter->allocated_size);
+    }
+
+    nread = read(filter->fd, filter->buffer + filter->first + filter->size,
+		 filter->allocated_size - filter->first - filter->size - 2);
+
+    if (nread <= 0) {
+	event_release(filter->event);
+	aclose(filter->fd);
+	if (filter->size > 0 && filter->buffer[filter->first + filter->size - 1] != '\n') {
+	    /* Add a '\n' at end of buffer */
+	    filter->buffer[filter->first + filter->size] = '\n';
+	    filter->size++;
+	}
+    } else {
+	filter->size += nread;
+    }
+
+    /* process all complete lines */
+    line = filter->buffer + filter->first;
+    line[filter->size] = '\0';
+    while (line < filter->buffer + filter->first + filter->size &&
+	   (p = strchr(line, '\n')) != NULL) {
+	*p = '\0';
+	if (g_str_equal(filter->name, "restore stdout")) {
+	    g_fprintf(stdout, "%s\n", line);
+	} else if (g_str_equal(filter->name, "restore stderr")) {
+	    if (!match("^star: [0-9]* blocks?", line)) {
+		g_fprintf(stderr, "%s\n", line);
+	    }
+	} else if (g_str_equal(filter->name, "validate stdout")) {
+	    g_fprintf(stdout, "%s\n", line);
+	} else if (g_str_equal(filter->name, "validate stderr")) {
+	    if (!match("^star: [0-9]* blocks?", line)) {
+		g_fprintf(stderr, "%s\n", line);
+	    }
+	} else {
+	    g_debug("unknown: %s", line);
+	}
+	len = p - line + 1;
+	filter->first += len;
+	filter->size -= len;
+	line = p + 1;
+    }
+
+    if (nread <= 0) {
+	g_free(filter->name);
+	g_free(filter->buffer);
+	g_free(filter);
+    }
+}
 
 static message_t *
 amstar_print_message(
@@ -1098,11 +1204,15 @@ amstar_restore(
     application_argument_t *argument)
 {
     GPtrArray  *argv_ptr = g_ptr_array_new();
-    char      **env;
     int         j;
-    char       *e;
     char       *star_realpath = NULL;
     message_t  *message;
+    int         datain = 0;
+    int         outf;
+    int         errf;
+    int         star_pid;
+    amwait_t    wait_status;
+    char       *errmsg = NULL;
 
     if (!star_path) {
 	error(_("STAR-PATH not defined"));
@@ -1177,12 +1287,39 @@ amstar_restore(
     g_ptr_array_add(argv_ptr, NULL);
 
     debug_executing(argv_ptr);
-    env = safe_env();
-    become_root();
-    execve(star_realpath, (char **)argv_ptr->pdata, env);
-    e = strerror(errno);
-    error(_("error [exec %s: %s]"), star_realpath, e);
+    star_pid = pipespawnv(star_realpath, STDOUT_PIPE|STDERR_PIPE, 1,
+			&datain, &outf, &errf, (char **)argv_ptr->pdata);
+    aclose(datain);
 
+    read_fd(outf, "restore stdout", &read_text);
+    read_fd(errf, "restore stderr", &read_text);
+
+    event_loop(0);
+    waitpid(star_pid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+			star_path, WTERMSIG(wait_status), dbfn());
+	amstar_exit_value = 1;
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+			star_path, WEXITSTATUS(wait_status), dbfn());
+	    amstar_exit_value = 1;
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+			star_path, dbfn());
+	amstar_exit_value = 1;
+    }
+
+    if (errmsg) {
+	g_debug("%s", errmsg);
+	fprintf(stderr,"%s\n", errmsg);
+    }
+    g_ptr_array_free_full(argv_ptr);
+    return;
 }
 
 static void
@@ -1191,9 +1328,15 @@ amstar_validate(
 {
     char       *cmd;
     GPtrArray  *argv_ptr = g_ptr_array_new();
-    char      **env;
-    char       *e;
     char        buf[32768];
+    int         datain = 0;
+    int         outf;
+    int         errf;
+    int         star_pid;
+    amwait_t    wait_status;
+    char       *errmsg = NULL;
+
+    set_root_privs(-1);
 
     if (!star_path) {
 	dbprintf("STAR-PATH not set; Piping to /dev/null\n");
@@ -1210,13 +1353,40 @@ amstar_validate(
     g_ptr_array_add(argv_ptr, NULL);
 
     debug_executing(argv_ptr);
-    env = safe_env();
-    execve(cmd, (char **)argv_ptr->pdata, env);
-    e = strerror(errno);
-    dbprintf("failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
-    fprintf(stderr,"failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
-    amfree(cmd);
-    free_env(env);
+    star_pid = pipespawnv(cmd, STDOUT_PIPE|STDERR_PIPE, 0,
+			&datain, &outf, &errf, (char **)argv_ptr->pdata);
+    aclose(datain);
+
+    read_fd(outf, "validate stdout", &read_text);
+    read_fd(errf, "validate stderr", &read_text);
+
+    event_loop(0);
+    waitpid(star_pid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = g_strdup_printf(_("%s terminated with signal %d: see %s"),
+			star_path, WTERMSIG(wait_status), dbfn());
+	amstar_exit_value = 1;
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    errmsg = g_strdup_printf(_("%s exited with status %d: see %s"),
+			star_path, WEXITSTATUS(wait_status), dbfn());
+	    amstar_exit_value = 1;
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = g_strdup_printf(_("%s got bad exit: see %s"),
+			star_path, dbfn());
+	amstar_exit_value = 1;
+    }
+
+    if (errmsg) {
+	g_debug("%s", errmsg);
+	fprintf(stderr,"%s\n", errmsg);
+    }
+    g_ptr_array_free_full(argv_ptr);
+    return;
+
 pipe_to_null:
     while (read(0, buf, 32768) > 0) {
     }
