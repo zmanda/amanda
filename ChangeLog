@@ -1,4 +1,9 @@
 2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: Typo
+	* application-src/amstar.c (amstar_restore, amstar_validate): filter
+	  stdout and stderr
+
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/diskflat-device.c (diskflat_clear_and_prepare_label):
 	  ftruncate the file
 
