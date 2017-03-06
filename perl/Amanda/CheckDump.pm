@@ -111,6 +111,7 @@ sub run {
 		'dumpspecs'             => \@spec,
 		'exact-match'           => $params{'exact-match'},
 		'extract'               => 1,
+		'all_copy'              => 1,
 		#'init'                  => $params{'init'},
 		#'restore'               => $params{'restore'},
 		'finished_cb'           => $params{'finished_cb'},

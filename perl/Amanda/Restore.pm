@@ -1067,6 +1067,7 @@ sub restore {
 	    Amanda::Recovery::Planner::make_plan(
 		dumpspecs => [ @{$params{'dumpspecs'}} ],
 		labelstr => $storage->{'labelstr'},
+		all_copy => $params{'all_copy'},
 		storage_list => $storage_list,
 		only_in_storage => $only_in_storage,
 		plan_cb => $steps->{'plan_cb'},
