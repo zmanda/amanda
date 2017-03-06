@@ -518,6 +518,7 @@ diskflat_clear_and_prepare_label(
 	dumpfile_free(label_header);
 	return FALSE;
     }
+    ftruncate(vself->open_file_fd, VFS_DEVICE_LABEL_SIZE);
     dumpfile_free(dself->volume_header);
     dself->header_block_size = VFS_DEVICE_LABEL_SIZE;
     dself->volume_header = label_header;
