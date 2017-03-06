@@ -1,4 +1,8 @@
 2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/diskflat-device.c (diskflat_clear_and_prepare_label):
+	  ftruncate the file
+
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/CheckDump.pm (run): Set all_copy=1 to restore()
 	* perl/Amanda/Restore.pm (restore): Pass all_copy to make_plan()
 
