@@ -171,6 +171,7 @@ $restore = $app->restore('objects' => ['./foo', './bar'], 'data' => $backup->{'d
 is($restore->{'exit_status'}, 256, "error status of 1 if STAR-PATH does not exists");
 chomp $restore->{'errs'};
 if ($Amanda::Constants::SINGLE_USERID) {
+    $restore->{'errs'} =~ s/\n.*//m;
     ok($restore->{'errs'} eq "amstar: error [exec /do/not/exists: No such file or directory]", "correct error for No such file or directory")
 	or diag($restore->{'errs'});
 } else {
