@@ -78,7 +78,7 @@
 	$(top_builddir)/config.status --file=$@:$<
 	chmod a+x $@
 if SYNTAX_CHECKS
-	@if test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
+	@if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$@.*"`; \
 		if [ -z "$(SCRIPTS_PERL_NO_CHECK)" -o $$R -eq 0 ]; then \
 			sed "s,^use lib ['\"]$(amperldir)['\"],# use lib '$(amperldir)' # nouselib," < $@ > $@.nouselib; \
@@ -124,7 +124,7 @@ DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK) $(SCRIPTS_INCL
 check-perl: $(SCRIPTS_PERL)
 	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
 	if test x"$(SKIP_CHECKS)" = x"" && \
-	    test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
+	    test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 	    for perlobj in $$SCRIPTS_PERL; do \
 		R=`expr match "$(SCRIPTS_PERL_NO_CHECK)" ".*$$perlobj.*"`; \
 		if [ -z "$(SCRIPTS_PERL_NO_CHECK)" -o $$R -eq 0 ]; then \

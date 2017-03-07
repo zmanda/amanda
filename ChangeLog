@@ -1,4 +1,9 @@
 2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/automake/scripts.am: Check libConfig.so instead of
+	  libCmdline.so because it is always compiled
+	* installcheck/Amanda_Xfer.pl: Load a config if without server
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/net.m4: Define LOW_TCPPORTRANGE_MIN,
 	  LOW_TCPPORTRANGE_MAX, TCPPORTRANGE_MIN, TCPPORTRANGE_MAX,
 	  UDPPORTRANGE_MIN and UDPPORTRANGE_MAX
