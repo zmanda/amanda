@@ -1,4 +1,11 @@
 2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/net.m4: Define LOW_TCPPORTRANGE_MIN,
+	  LOW_TCPPORTRANGE_MAX, TCPPORTRANGE_MIN, TCPPORTRANGE_MAX,
+	  UDPPORTRANGE_MIN and UDPPORTRANGE_MAX
+	* common-src/security-file.c: Use configured portrange is not set in
+	  the security-file
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Makefile.am, rest-server/Makefile.am, server-src/Makefile.am:
 	  fix 'make dist' when compiled with --wothout-server or
 	  --without-client

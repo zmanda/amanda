@@ -410,8 +410,20 @@ security_allow_bind(
 		return FALSE;
 	    }
 	} else {
+	    // use LOW_TCPPORTRANGE
+#if defined LOW_TCPPORTRANGE && defined LOW_TCPPORTRANGE_MIN && defined LOW_TCPPORTRANGE_MAX
+	    low = LOW_TCPPORTRANGE_MIN;
+	    high = LOW_TCPPORTRANGE_MAX;
+	    if (low <= port && port <= high) {
+		return TRUE;
+	    } else {
+		fprintf(stderr, "tcp port out of range (%d <= %d <= %d)\n", low, port, high);
+		return FALSE;
+	    }
+#else
 	    fprintf(stderr, "No defined tcp_port_range in '%s'\n", DEFAULT_SECURITY_FILE);
 	    return FALSE;
+#endif
 	}
     } else  { //(type == SOCK_DGRAM)
 	int low, high;
@@ -423,8 +435,20 @@ security_allow_bind(
 		return FALSE;
 	    }
 	} else {
+	    // use UDPPORTRANGE
+#if defined UDPPORTRANGE && defined UDPPORTRANGE_MIN && defined UDPPORTRANGE_MAX
+	    low = UDPPORTRANGE_MIN;
+	    high = UDPPORTRANGE_MAX;
+	    if (low <= port && port <= high) {
+		return TRUE;
+	    } else {
+		fprintf(stderr, "udp port out of range (%d <= %d <= %d)\n", low, port, high);
+		return FALSE;
+	    }
+#else
 	    fprintf(stderr, "No defined udp_port_range in '%s'\n", DEFAULT_SECURITY_FILE);
 	    return FALSE;
+#endif
 	}
     }
 }

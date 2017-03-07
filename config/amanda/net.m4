@@ -84,6 +84,8 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
 	if test $max_low_tcp_port -ge 1024; then
 	    AMANDA_MSG_WARN([the low TCP port range should be less than 1024 in --with-low-tcpportrange])
 	fi
+	AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE_MIN, $min_low_tcp_port, [min_low_tcp_port])
+	AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE_MAX, $max_low_tcp_port, [max_low_tcp_port])
 	AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE,$LOW_TCPPORTRANGE,
    [A comma-separated list of two integers, determining the minimum and maximum
  * reserved TCP port numbers sockets should be bound to. (mainly for amrecover) ])
@@ -111,6 +113,8 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
 	if test $max_tcp_port -ge 65536; then
 	    AMANDA_MSG_WARN([the TCP port range should be less than 65536 in --with-tcpportrange])
 	fi
+	AC_DEFINE_UNQUOTED(TCPPORTRANGE_MIN, $min_tcp_port, [min_tcp_port])
+	AC_DEFINE_UNQUOTED(TCPPORTRANGE_MAX, $max_tcp_port, [max_tcp_port])
 	AC_DEFINE_UNQUOTED(TCPPORTRANGE,$TCPPORTRANGE,
   [A comma-separated list of two integers, determining the minimum and
  * maximum unreserved TCP port numbers sockets should be bound to. ])
@@ -131,11 +135,13 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
 	    AC_MSG_ERROR([the second UDP port number must be greater than the first in --with-udpportrange])
 	fi
 	if test $max_udp_port -ge 1024; then
-	    AMANDA_MSG_WARN([the UDP port range should be less than 1025 in --with-udpportrange])
+	    AMANDA_MSG_WARN([the UDP port range should be less than 1024 in --with-udpportrange])
 	fi
 	if test $min_udp_port -le 0; then
 	    AMANDA_MSG_WARN([the UDP port range should be greater than 0 in --with-udpportrange])
 	fi
+	AC_DEFINE_UNQUOTED(UDPPORTRANGE_MIN, $min_udp_port, [min_udp_port])
+	AC_DEFINE_UNQUOTED(UDPPORTRANGE_MAX, $max_udp_port, [max_udp_port])
 	AC_DEFINE_UNQUOTED(UDPPORTRANGE,$UDPPORTRANGE,
   [A comma-separated list of two integers, determining the minimum and
  * maximum reserved UDP port numbers sockets should be bound to. ])
