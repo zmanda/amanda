@@ -1,3 +1,6 @@
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Service/Restore.pm: Remove unused code
+
 2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/diskflat-device.c (diskflat_clear_and_prepare_label):
 	  result of ftruncate

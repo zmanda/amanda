@@ -94,13 +94,9 @@ use Amanda::Feature;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Storage;
 use Amanda::Changer;
-use Amanda::Recovery::Scan;
 use Amanda::Xfer qw( :constants );
 use Amanda::Cmdline;
 use Amanda::Recovery::Clerk;
-use Amanda::Recovery::Planner;
-use Amanda::Recovery::Scan;
-use Amanda::DB::Catalog;
 use Amanda::Disklist;
 use Amanda::Restore;
 use Amanda::FetchDump;  # for Amanda::FetchDump::Message
@@ -855,64 +851,6 @@ sub sendmessage {
 	    $async_write_cb->(undef, length($msg));
 	}
     }
-}
-
-# covert a tapespec to a holding filename
-sub tapespec_to_holding {
-    my $self = shift;
-    my ($tapespec) = @_;
-
-    my $filelist = Amanda::Util::unmarshal_tapespec(0, $tapespec);
-
-    # $filelist should have the form [ "HOLDING", $holding_file, [ 0 ] ]
-    die "invalid holding tapespec" unless @$filelist == 3;
-    die "invalid holding tapespec" unless $filelist->[0] eq "HOLDING";
-    die "invalid holding tapespec" unless @{$filelist->[2]} == 1;
-    die "invalid holding tapespec" unless $filelist->[2][0] == 0;
-
-    return $filelist->[1];
-}
-
-# amrecover didn't give us much to go on, but see if we can find a dump that
-# will make it happy.
-sub try_to_find_dump {
-    my $self = shift;
-    my ($storage, $label, $spec) = @_;
-
-    # search the catalog; get_dumps cannot search by labels, so we have to use
-    # get_parts instead
-    my @parts = Amanda::DB::Catalog::get_parts(
-	storage => $storage,
-	label => $label,
-	dumpspecs => [ $spec ]);
-
-    if (!@parts) {
-	$self->sendmessage("could not find any matching dumps on volume '$label'");
-	return undef;
-    }
-
-    # (note that if there is more than one dump in @parts, the planner will
-    # catch it later)
-
-    # sort the parts by their order on each volume.  This sorts the volumes
-    # lexically by label, but the planner will straighten it out.
-    @parts = Amanda::DB::Catalog::sort_dumps([ "label", "filenum" ], @parts);
-
-    # loop over the parts for the dump and make a filelist.
-    my $last_label = '';
-    my $last_filenums = undef;
-    my $filelist = [];
-    for my $part (@parts) {
-	next unless defined $part; # skip part number 0
-	if ($part->{'label'} ne $last_label) {
-	    $last_label = $part->{'label'};
-	    $last_filenums = [];
-	    push @$filelist, $part->{'storage'}, $last_label, $last_filenums;
-	}
-	push @$last_filenums, $part->{'filenum'};
-    }
-
-    return $filelist;
 }
 
 1;
