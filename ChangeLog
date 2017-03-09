@@ -1,4 +1,10 @@
 2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Chunker/Controller.pm (msg_PORT_WRITE): Call dump_db
+	  instead of cance_dump on failure
+	* perl/Amanda/Chunker/Scribe.pm: Do not call dump_cb if it is not
+	  defined
+
+2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amdumpd.pl: Do not check if amanda is busy
 
 2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>

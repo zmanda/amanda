@@ -246,10 +246,11 @@ sub msg_PORT_WRITE {
         # if $err is set, cancel the dump, treating it as a input error
         if ($err) {
             push @{$self->{'input_errors'}}, $err;
-            return $self->{'scribe'}->cancel_dump(
-                xfer => $self->{'xfer'},
-                #dump_cb => sub { $self->dump_cb(@_); });
-                dump_cb => $dump_cb);
+	    $dump_cb->(result => "FAILED",
+		       size   => 0,
+		       total_duration => 0,
+		       nparts => 0);
+	    return;
         }
 
         # sanity check the header..
