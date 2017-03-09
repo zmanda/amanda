@@ -1,3 +1,6 @@
+2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amdumpd.pl: Do not check if amanda is busy
+
 2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/amstar.pl: Check first line of errors
 

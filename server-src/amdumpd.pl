@@ -168,12 +168,6 @@ sub cmd_dump {
 	return;
     }
 
-    my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
-    if (-f "$logdir/log" || -f "$logdir/amdump" || -f "$logdir/amflush") {
-	$self->sendctlline("BUSY Amanda is busy, retry later");
-	return;
-    }
-
     $self->sendctlline("DUMPING");
     my @command = ("$sbindir/amdump", "--no-taper", "--from-client", $self->{'config'}, $self->{'host'}->{'hostname'});
     if (defined $self->{'disk'}) {
