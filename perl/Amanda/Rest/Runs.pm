@@ -25,6 +25,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Amdump;
 use Amanda::Amflush;
 use Amanda::CheckDump;
+use Amanda::FetchDump::Application;
 use Amanda::FetchDump;
 use Amanda::Cleanup;
 use Amanda::Vault;
@@ -651,7 +652,7 @@ sub checkdump {
     Amanda::Util::set_pname("checkdump");
 
     my ($checkdump, $messages) = Amanda::CheckDump->new(%params);
-    push @result_messages, @{$messages};
+    push @result_messages, @{$messages} if $messages;
 
     if (!$checkdump) {
 	return (-1, \@result_messages);
@@ -667,7 +668,8 @@ sub checkdump {
     my $pid = POSIX::fork();
     if ($pid == 0) {
 	log_add($L_INFO, "fork " . Amanda::Util::get_pname() . " $oldpid $$");
-	Amanda::MainLoop::call_later(sub { $checkdump->run($exit_cb) });
+	Amanda::MainLoop::call_later(sub { $checkdump->run(timestamp => $params{'timestamp'},
+							   finished_cb => $exit_cb) });
 	Amanda::MainLoop::run();
 	exit;
     } elsif ($pid > 0) {
@@ -681,7 +683,7 @@ sub checkdump {
 		source_line      => __LINE__,
 		code             => 2700020,
 		severity         => $Amanda::Message::INFO,
-		message_filename => $checkdump->{'checkdump_log_filename'});
+		message_filename => $checkdump->{'message_filename'});
     } else {
 	push @result_messages, Amanda::CheckDump::Message->new(
 		source_filename  => __FILE__,
@@ -835,7 +837,7 @@ sub fetchdump {
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 3300059,
-		message_filename => $fetchdump->{'fetchdump_log_filename'},
+		message_filename => $fetchdump->{'message_filename'},
 		severity         => $Amanda::Message::INFO);
     } else {
 	push @result_messages, Amanda::FetchDump::Message->new(
@@ -872,6 +874,7 @@ sub messages {
 		code             => 2700023,
 		severity         => $Amanda::Message::ERROR,
 		message_filename => $params{'message_filename'},
+		message_pathname => $message_path,
 		errno            => $!);
 	return (-1, \@result_messages);
     }

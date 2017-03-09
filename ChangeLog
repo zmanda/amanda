@@ -1,4 +1,19 @@
 2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/CheckDump.pm (local_message): Add message 2700008,
+	  2700009, 2700010, 2700018, 2700019 and 2700020
+	* perl/Amanda/CheckDump.pm (new): Set message_filename and
+	  message_pathname
+	* perl/Amanda/CheckDump.pm (run): Print message 2700006, 2700007,
+	  2700008, 2700009 and 2700010
+	* perl/Amanda/FetchDump.pm (new): Set message_filename and
+	  message_pathname
+	* perl/Amanda/Rest/Runs.pm (checkump): Use message_filename
+	* perl/Amanda/Restore.pm: Count image_restored and image_failed
+	* perl/Amanda/Service/Amidxtaped.pm (new): Set message_filename and
+	  message_pathname
+	* server-src/amcheckdump.pl: Do not printmessage 2700006 and 2700007
+
+2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Chunker/Controller.pm (msg_PORT_WRITE): Call dump_db
 	  instead of cance_dump on failure
 	* perl/Amanda/Chunker/Scribe.pm: Do not call dump_cb if it is not

@@ -42,10 +42,38 @@ sub local_message {
 	    $self->{diskname} . " dumped " . $self->{dump_timestamp} . " level ".
 	    $self->{level} . ($self->{'nparts'} > 1 ? " ($self->{nparts} parts)" : "");
     } elsif ($self->{'code'} == 2700006) {
-	return "All images successfully validated";
+	if ($self->{'image_validated'} == 1) {
+	    return "All image ($self->{'image_validated'}) successfully validated";
+	} else {
+	    return "All images ($self->{'image_validated'}) successfully validated";
+	}
     } elsif ($self->{'code'} == 2700007) {
-	return "Some images failed to be correctly validated.";
-
+	if ($self->{'image_failed'} == 1) {
+	    return "$self->{'image_failed'} image failed to be correctly validated.";
+	} else {
+	    return "$self->{'image_failed'} images failed to be correctly validated.";
+	}
+    } elsif ($self->{'code'} == 2700008) {
+	if ($self->{'image_validated'} == 1) {
+	    return "$self->{'image_validated'} image successfully validated.";
+	} else {
+	    return "$self->{'image_validated'} images successfully validated.";
+	}
+    } elsif ($self->{'code'} == 2700009) {
+	my $count = $self->{'nb_image'} - $self->{'image_validated'} - $self->{'image_failed'};
+	if ($count == 1) {
+	    return "$count image not validated.";
+	} else {
+	    return "$count images not validated.";
+	}
+    } elsif ($self->{'code'} == 2700010) {
+	return "No images validated.";
+    } elsif ($self->{'code'} == 2700018) {
+	return "Running a CheckDump";
+    } elsif ($self->{'code'} == 2700019) {
+	return "Failed to fork the CheckDump process";
+    } elsif ($self->{'code'} == 2700020) {
+	return "The message filename is '$self->{'message_filename'}'";
     } else {
 	return "No message for code '$self->{'code'}'";
     }
@@ -53,7 +81,7 @@ sub local_message {
 
 package Amanda::CheckDump;
 
-
+use POSIX qw(strftime);
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( :constants :quoting );
@@ -70,6 +98,19 @@ sub new {
 
     my $self = $class->SUPER::new(@_);
     $self->{'is_tty'} = -t STDOUT;
+    $self->{'image_validated'} = 0;
+    $self->{'image_failed'} = 0;
+    $self->{'nb_image'} = 0;
+
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
+    my @now = localtime;
+    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'pid'} = $$; 
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("checkdump", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+    $self->{'message_filename'} = "checkdump.$timestamp";
+    $self->{'message_pathname'} = "$logdir/checkdump.$timestamp";
 
     return $self;
     # must return undef on error
@@ -84,7 +125,8 @@ sub run {
     $self->{'extract-client'} = $params{'extract-client'};
     $self->{'assume'} = $params{'assume'};
 
-    ($self->{'restore'}, my $result_message) = Amanda::Restore->new();
+    ($self->{'restore'}, my $result_message) = Amanda::Restore->new(
+			message_pathname => $self->{'message_pathname'});
     if (@$result_message) {
 	foreach my $message (@$result_message) {
 	    $self->user_message($message);
@@ -101,6 +143,61 @@ sub run {
     $timestamp = Amanda::DB::Catalog::get_latest_write_timestamp()
 			unless defined $timestamp;
     my @spec = Amanda::Cmdline::dumpspec_t->new(undef, undef, undef, undef, $timestamp);
+    my $validate_finish_cb = sub {
+
+	$self->{'nb_image'} = $self->{'restore'}->{'nb_image'};
+	$self->{'image_validated'} = $self->{'restore'}->{'image_restored'};
+	$self->{'image_failed'} = $self->{'restore'}->{'image_failed'};
+
+	if (!defined $self->{'nb_image'} || $self->{'nb_image'} == 0) {
+	    $self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 2700010,
+			nb_image        => $self->{'nb_image'},
+			image_validated => $self->{'image_validate'},
+			image_failed    => $self->{'image_failed'},
+			severity        => $Amanda::Message::ERROR));
+	} elsif ($self->{'image_failed'} == 0 &&
+		   $self->{'nb_image'} == $self->{'image_validated'}) {
+	    $self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 2700006,
+			image_validated => $self->{'image_validated'},
+			severity        => $Amanda::Message::SUCCESS));
+	} else {
+	    if ($self->{'image_validated'}) {
+	        $self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 2700008,
+			image_validated => $self->{'image_validated'},
+			severity        => $Amanda::Message::SUCCESS));
+	    }
+	    if ($self->{'image_failed'}) {
+		$self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 2700007,
+			image_failed    => $self->{'image_failed'},
+			severity        => $Amanda::Message::ERROR));
+	    }
+	    if ($self->{'image_validated'} + $self->{'image_failed'} != $self->{'nb_image'}) {
+		$self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
+			source_filename => __FILE__,
+			source_line     => __LINE__,
+			code            => 2700009,
+			nb_image        => $self->{'nb_image'},
+			image_validated => $self->{'image_validate'},
+			image_failed    => $self->{'image_failed'},
+			severity        => $Amanda::Message::ERROR));
+	    }
+	}
+
+	$params{'finished_cb'}->(@_);
+    };
+
     $self->{'restore'}->restore(
 		#'application_property'  => $params{'application_property'},
 		'assume'                => $params{'assume'},
@@ -114,7 +211,7 @@ sub run {
 		'all_copy'              => 1,
 		#'init'                  => $params{'init'},
 		#'restore'               => $params{'restore'},
-		'finished_cb'           => $params{'finished_cb'},
+		'finished_cb'           => $validate_finish_cb,
 		'interactivity'         => $params{'interactivity'},
 		'feedback'              => $self);
 }
@@ -189,7 +286,7 @@ sub clerk_notif_part {
     my $self = shift;
     my ($label, $filenum, $header) = @_;
 
-    $self->user_message(Amanda::CheckDump::Message->new(
+    $self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 2700003,
@@ -203,7 +300,7 @@ sub clerk_notif_holding {
     my ($filename, $header) = @_;
 
     # this used to give the fd from which the holding file was being read.. why??
-    $self->user_message(Amanda::CheckDump::Message->new(
+    $self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
 		source_filename	=> __FILE__,
 		source_line	=> __LINE__,
 		code		=> 2700004,
@@ -214,7 +311,7 @@ sub clerk_notif_holding {
 sub notif_start {
     my $self = shift;
     my $dump = shift;
-    $self->user_message(Amanda::CheckDump::Message->new(
+    $self->{'restore'}->user_message(Amanda::CheckDump::Message->new(
 	source_filename => __FILE__,
 	source_line     => __LINE__,
 	code            => 2700005,

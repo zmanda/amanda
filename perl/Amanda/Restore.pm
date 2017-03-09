@@ -509,32 +509,27 @@ sub new {
     }, $class;
 
     $self->{'delay'} = 15000 if !defined $self->{'delay'};
+    $self->{'image_status'} = 0;
     $self->{'exit_status'} = 0;
     $self->{'amlibexecdir'} = 0;
 
-    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
-    my @now = localtime;
-    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
-    $self->{'pid'} = $$;
-    $self->{'timestamp'} = Amanda::Logfile::make_logname("fetchdump", $timestamp);
-    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
-    debug("beginning trace log: $self->{'trace_log_filename'}");
-    $self->{'fetchdump_log_filename'} = "fetchdump.$timestamp";
-    $self->{'fetchdump_log_pathname'} = "$logdir/fetchdump.$timestamp";
+    $self->{'message_pathname'} = $params{'message_pathname'};
 
     # Must be opened in append so that all subprocess can write to it.
-    if (!open($self->{'message_file'}, ">>", $self->{'fetchdump_log_pathname'})) {
-	push @result_messages, Amanda::Restore::Message->new(
+    if (defined $self->{'message_file'}) {
+	if (!open($self->{'message_file'}, ">>", $self->{'message_pathname'})) {
+	    push @result_messages, Amanda::Restore::Message->new(
 		source_filename  => __FILE__,
 		source_line      => __LINE__,
 		code             => 4900066,
-		message_filename => $self->{'fetchdump_log_pathname'},
+		message_filename => $self->{'message_pathname'},
 		errno            => $!,
 		severity         => $Amanda::Message::ERROR);
-	$self->{'exit_status'} = 1;
-    } else {
-	$self->{'message_file'}->autoflush;
-	log_add($L_INFO, "message file $self->{'fetchdump_log_filename'}");
+	    $self->{'exit_status'} = 1;
+	} else {
+	    $self->{'message_file'}->autoflush;
+	    log_add($L_INFO, "message file $self->{'message_pathname'}");
+	}
     }
 
     return $self, \@result_messages;
@@ -578,6 +573,7 @@ sub start_reading
 			    $msg_severity = $Amanda::Message::INFO;
 			} else {
 			    $msg_severity = $Amanda::Message::ERROR;
+			    $self->{'image_status'} = 1;
 			    $self->{'exit_status'} = 1;
 			}
 			$self->user_message(
@@ -663,6 +659,9 @@ sub restore {
     my $self = shift;
     my %params = @_;
 
+    $self->{'nb_image'} = 0;
+    $self->{'image_restored'} = 0;
+    $self->{'image_failed'} = 0;
     $self->{'feedback'} = $params{'feedback'};
 
     if (defined $params{'compress'} and defined $params{'compress-best'}) {
@@ -969,6 +968,7 @@ sub restore {
 	finalize => sub { foreach my $name (keys %storage) {
 			    $storage{$name}->quit();
 			  }
+debug("XYZ");
 			  log_add($L_INFO, "pid-done $$");
 			};
 
@@ -1098,6 +1098,7 @@ sub restore {
 			severity	=> $Amanda::Message::INFO)) if @{$plan->{'dumps'}} > 1;
 	    @{$plan->{'dumps'}} = ($plan->{'dumps'}[0]);
 	}
+	$self->{'nb_image'} = @{$plan->{'dumps'}};
 	if ($params{'init'}) {
 	    return $steps->{'init_seek_file'}->();
 	}
@@ -1314,6 +1315,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 	    return $steps->{'finished'}->();
 	}
 
+	$self->{'image_status'} = 0;
 	$self->{'recovery_done'} = 0;
 	$use_dar = 0;
 	%recovery_params = ();
@@ -1373,6 +1375,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
     step client_recovery => sub {
 	$xfer_src = shift;
 
+	$self->{'nb_image'} = 1;
 	$self->{'recovery_done'} = 0;
 	$use_dar = 0;
 	%recovery_params = ();
@@ -1411,6 +1414,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				dle_str		=> $dle_str,
 				xml_error       => $@));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 	    if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
@@ -1523,6 +1527,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				source_line     => __LINE__,
 				code            => 4900017,
 				severity	=> $Amanda::Message::ERROR));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    } elsif ($hdr->{'srvcompprog'}) {
 		# TODO: this assumes that srvcompprog takes "-d" to decompress
@@ -1929,6 +1934,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 			code            => 4900056,
 			severity	=> $Amanda::Message::ERROR)) if $recovery_params{'result'} ne 'DONE';
 
+	my $status = 0; # good
 	if ($check_crc) {
 	    my $msg;
 	    if (defined $hdr->{'native_crc'} and $hdr->{'native_crc'} !~ /^00000000:/ and
@@ -1942,6 +1948,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				header_native_crc => $hdr->{'native_crc'},
 				log_native_crc	=> $current_dump->{'native_crc'}));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 	    if (defined $hdr->{'client_crc'} and $hdr->{'client_crc'} !~ /^00000000:/ and
@@ -1955,6 +1962,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				header_client_crc => $hdr->{'client_crc'},
 				log_client_crc	=> $current_dump->{'client_crc'}));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 
@@ -2002,6 +2010,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				header_server_crc => $hdr->{'server_crc'},
 				log_server_crc	=> $current_dump->{'server_crc'}));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 
@@ -2017,6 +2026,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				log_server_crc	=> $current_dump->{'server_crc'},
 				source_crc	=> $source_crc));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 
@@ -2033,6 +2043,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				log_native_crc	=> $current_dump->{'native_crc'},
 				restore_native_crc => $restore_native_crc));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 	    if (defined $current_dump->{'client_crc'} and $current_dump->{'client_crc'} !~ /^00000000:/ and
@@ -2045,6 +2056,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				log_client_crc	=> $current_dump->{'client_crc'},
 				restore_client_crc => $restore_client_crc));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 
@@ -2060,6 +2072,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				dest_crc	=> $dest_crc,
 				restore_native_crc => $restore_native_crc));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 	    if ($dest_is_client && $restore_client_crc && $restore_client_crc ne $dest_crc) {
@@ -2071,6 +2084,7 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				dest_crc	=> $dest_crc,
 				restore_client_crc => $restore_client_crc));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 	    if ($dest_is_server and
@@ -2084,10 +2098,17 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 				severity	=> $Amanda::Message::ERROR,
 				dest_crc	=> $dest_crc,
 				source_crc	=> $source_crc));
+		$self->{'image_status'} = 1;
 		$self->{'exit_status'} = 1;
 	    }
 	}
 
+	if ($self->{'image_status'}) {
+	    $self->{'image_failed'}++;
+	    $self->{'exit_status'} = 1;
+	} else {
+	    $self->{'image_restored'}++;
+	}
 	$hdr = undef;
 	$xfer_src = undef;
 	$xfer_dest = undef;

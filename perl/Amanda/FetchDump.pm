@@ -57,6 +57,7 @@ package Amanda::FetchDump;
 use Amanda::Recovery::Clerk;
 use base 'Amanda::Recovery::Clerk::Feedback';
 
+use POSIX qw(strftime);
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
@@ -73,6 +74,15 @@ sub new {
     my $self = $class->SUPER::new(@_);
     $self->{'is_tty'} = -t STDERR;
 
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
+    my @now = localtime;
+    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'pid'} = $$;
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("fetchdump", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+    $self->{'message_filename'} = "fetchdump.$timestamp";
+    $self->{'message_pathname'} = "$logdir/fetchdump.$timestamp";
     return $self;
     # must return undef on error
     # must call user_message to print error
@@ -93,14 +103,15 @@ sub run {
     $self->{'prev-level'} = $params{'prev-level'};
     $self->{'next-level'} = $params{'next-level'};
 
-    ($self->{'restore'}, my $result_message) = Amanda::Restore->new();
+    ($self->{'restore'}, my $result_message) = Amanda::Restore->new(
+		message_pathname => $self->{'message_pathname'});
     if (@$result_message) {
 	foreach my $message (@$result_message) {
 	    $self->user_message($message);
 	}
 	return $params{'finished_cb'}->(1);
     }
-
+    $self->{'message_filename'} = $self->{'restore'}->{'message_filename'};
     $self->{'restore'}->restore(
 		'application_property'  => $params{'application_property'},
 		'assume'                => $params{'assume'},
