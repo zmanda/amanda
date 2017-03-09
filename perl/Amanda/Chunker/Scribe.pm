@@ -577,7 +577,7 @@ sub _dump_done {
     $self->{'dump_start_time'} = undef;
 
     # and call the callback
-    $dump_cb->(%dump_cb_args);
+    $dump_cb->(%dump_cb_args) if defined $dump_cb;
 }
 
 sub _get_new_holding {
