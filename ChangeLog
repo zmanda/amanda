@@ -1,3 +1,6 @@
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/ambackupd.pl: Remove bogus check
+
 2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Chunker/Controller.pm (msg_PORT_WRITE): Call dump_db
 	  instead of cance_dump on failure
