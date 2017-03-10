@@ -3435,7 +3435,11 @@ start_processing_data(
 	      strerror(errno));
 	/*NOTREACHED*/
     }
-    fcntl(ctl_data->child_in[1], F_SETFL, O_NONBLOCK);
+    if (fcntl(ctl_data->child_in[1], F_SETFL, O_NONBLOCK) == -1) {
+	error(_("extract_list - Can't set O_NONBLOCK: %s\n"),
+	      strerror(errno));
+	/*NOTREACHED*/
+    }
 
     if (pipe(ctl_data->child_out) == -1) {
 	error(_("extract_list - error setting up pipe to extractor: %s\n"),
