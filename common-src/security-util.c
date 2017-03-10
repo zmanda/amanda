@@ -508,6 +508,56 @@ tcpm_stream_read_cancel(
 }
 
 /*
+ * Pause all read requests on the connection.
+ */
+void
+tcpm_stream_pause(
+    void *	s)
+{
+    struct sec_stream *rs = s;
+    struct tcp_conn *rc = rs->rc;
+
+    assert(rs != NULL);
+
+    if (rc->ev_read_refcnt == 0) {
+	return;
+    }
+    if (!rc->ev_read) {
+	return;
+    }
+    event_release(rc->ev_read);
+    rc->ev_read = NULL;
+    rc->paused = TRUE;
+}
+
+/*
+ * Resume all read requests on the connection.
+ */
+void
+tcpm_stream_resume(
+    void *	s)
+{
+    struct sec_stream *rs = s;
+    struct tcp_conn *rc = rs->rc;
+
+    assert(rs != NULL);
+    if (!rc->paused) {
+	return;
+    }
+    rc->paused = FALSE;
+
+    if (rc->ev_read_refcnt == 0) {
+	return;
+    }
+    if (rc->ev_read) {
+	return;
+    }
+    rc->ev_read = event_create((event_id_t)rc->read, EV_READFD,
+		sec_tcp_conn_read_callback, rc);
+    event_activate(rc->ev_read);
+}
+
+/*
  * Transmits a chunk of data over a rsh_handle, adding
  * the necessary headers to allow the remote end to decode it.
  */

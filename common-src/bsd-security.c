@@ -70,6 +70,8 @@ static ssize_t	bsd_stream_read_sync(void *, void **);
 static void     bsd_stream_read_to_shm_ring(void *s, void (*fn)(void *, void *, ssize_t), shm_ring_t *shm_ring, void *arg);
 static void     bsd_stream_read_to_shm_ring_callback(void *arg);
 static void	bsd_stream_read_cancel(void *);
+static void	bsd_stream_pause(void *);
+static void	bsd_stream_resume(void *);
 
 /*
  * This is our interface to the outside world
@@ -96,6 +98,8 @@ const security_driver_t bsd_security_driver = {
     bsd_stream_read_sync,
     bsd_stream_read_to_shm_ring,
     bsd_stream_read_cancel,
+    bsd_stream_pause,
+    bsd_stream_resume,
     sec_close_connection_none,
     NULL,
     NULL,
@@ -603,9 +607,9 @@ bsd_stream_read(
 	event_release(bs->ev_read);
 
     bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, stream_read_callback, bs);
-    event_activate(bs->ev_read);
     bs->fn = fn;
     bs->arg = arg;
+    event_activate(bs->ev_read);
 }
 
 /* buffer for bsd_stream_read_sync function */
@@ -803,11 +807,11 @@ bsd_stream_read_to_shm_ring(
     bs->r_callback.callback = bsd_stream_read_to_shm_ring_callback;
 
     bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, bsd_stream_read_to_shm_ring_callback, bs);
-    event_activate(bs->ev_read);
     bs->fn = fn;
     bs->arg = arg;
     bs->shm_ring = shm_ring;
     bs->ring_init = FALSE;
+    event_activate(bs->ev_read);
 }
 
 /*
@@ -825,6 +829,50 @@ bsd_stream_read_cancel(
 	event_release(bs->ev_read);
 	bs->ev_read = NULL;
     }
+}
+
+/*
+ * Pause a previous stream read request.  It's ok if we didn't
+ * have a read scheduled.
+ */
+static void
+bsd_stream_pause(
+    void *	s)
+{
+    struct sec_stream *bs = s;
+
+    assert(bs != NULL);
+    if (bs->paused) {
+	return;
+    }
+    if (!bs->ev_read) {
+	return;
+    }
+    bsd_stream_read_cancel(s);
+    bs->paused = TRUE;
+}
+
+/*
+ * Resume a previous stream read request.  It's ok if we didn't
+ * have a read scheduled.
+ */
+static void
+bsd_stream_resume(
+    void *	s)
+{
+    struct sec_stream *bs = s;
+
+    assert(bs != NULL);
+    if (bs->ev_read) {
+	return;
+    }
+    if (!bs->paused) {
+	return;
+    }
+
+    bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, stream_read_callback, bs);
+    event_activate(bs->ev_read);
+    bs->paused = FALSE;
 }
 
 /*

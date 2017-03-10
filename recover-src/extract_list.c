@@ -3175,13 +3175,24 @@ read_amidxtaped_state(
     ctl_state->bytes_read += size;
 }
 
+typedef struct data_cookie_t {
+    char    *buf;
+    size_t   size;
+    size_t   count;
+    event_handle_t *event;
+    ctl_data_t     *ctl_data;
+} data_cookie_t;
+data_cookie_t data_cookie;
+
+static void write_data_to_app(void *);
+
 static void
 read_amidxtaped_data(
     void *	cookie,
     void *	buf,
     ssize_t	size)
 {
-    size_t count;
+    ssize_t count;
 
     ctl_data_t *ctl_data = (ctl_data_t *)cookie;
     assert(cookie != NULL);
@@ -3310,13 +3321,49 @@ read_amidxtaped_data(
 	}
 
 	/* Only the data is sent to the child */
-	count = full_write(ctl_data->child_in[1], buf, (size_t)size);
-	if (count != (size_t)size) {
-	    g_debug("Failed to write to application: %s", strerror(errno));
-	    g_printf("Failed to write to application: %s\n", strerror(errno));
+	count = write(ctl_data->child_in[1], buf, (size_t)size);
+	if (count > 0) {
+	    crc32_add((uint8_t *)buf, count, &crc_in);
+	}
+	if (count < size || (count == -1 && errno == EAGAIN)) {
+		if (count == -1) count = 0;
+		security_stream_pause(amidxtaped_streams[DATAFD].fd);
+		data_cookie.buf = g_malloc(size);
+		memcpy(data_cookie.buf, buf, size);
+		data_cookie.size = size;
+		data_cookie.count = count;
+		data_cookie.ctl_data = ctl_data;
+		data_cookie.event = event_create(ctl_data->child_in[1], EV_WRITEFD, &write_data_to_app, &data_cookie);
+		event_activate(data_cookie.event);
+	} else if (count == -1 && errno != EAGAIN) {
+	    g_debug("A Failed to write to application: %s", strerror(errno));
+	    g_printf("A Failed to write to application: %s\n", strerror(errno));
 	    stop_amidxtaped();
 	}
-	crc32_add((uint8_t *)buf, size, &crc_in);
+    }
+}
+
+static void
+write_data_to_app(
+    void *cookie)
+{
+    data_cookie_t *data_cookie = cookie;
+    ssize_t count;
+
+    count = write(data_cookie->ctl_data->child_in[1], data_cookie->buf+data_cookie->count, data_cookie->size-data_cookie->count);
+    if (count > 0) {
+	crc32_add((uint8_t *)data_cookie->buf+data_cookie->count, count, &crc_in);
+	data_cookie->count += count;
+    }
+    if (data_cookie->count == data_cookie->size) {
+	event_release(data_cookie->event);
+	data_cookie->event = NULL;
+	security_stream_resume(amidxtaped_streams[DATAFD].fd);
+    } else if (count == -1 && errno != EAGAIN) {
+	security_stream_resume(amidxtaped_streams[DATAFD].fd);
+	g_debug("B Failed to write to application: %s", strerror(errno));
+	g_printf("B Failed to write to application: %s\n", strerror(errno));
+	stop_amidxtaped();
     }
 }
 
@@ -3388,6 +3435,7 @@ start_processing_data(
 	      strerror(errno));
 	/*NOTREACHED*/
     }
+    fcntl(ctl_data->child_in[1], F_SETFL, O_NONBLOCK);
 
     if (pipe(ctl_data->child_out) == -1) {
 	error(_("extract_list - error setting up pipe to extractor: %s\n"),
