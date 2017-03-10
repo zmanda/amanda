@@ -1,4 +1,7 @@
 2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* recover-src/extract_list.c: Check result of fcntl
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/bsd-security.c: Add bsd_stream_pause and bsd_stream_resume
 	* common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
 	  common-src/krb5-security.c, common-src/local-security.c,
