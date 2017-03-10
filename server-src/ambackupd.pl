@@ -141,9 +141,6 @@ sub setup_streams {
     my $rep = '';
     my @result_messages;
     my $hostname = $peer;
-    if (defined $req->{'options'}->{'hostname'} and $req->{'options'}->{'hostname'} ne $hostname) {
-	push @$errors, "hostname mismatch $req->{'options'}->{'hostname'} : $hostname";
-    } else {
     my $cmd_line = $req->{'lines'}[1];
     if (!$cmd_line) {
 	push @$errors, "No command specified in REQ packet";
@@ -277,7 +274,6 @@ sub setup_streams {
 	    }
 	} else {
 	    push @$errors, "Invalid command '$cmd' specified in REQ packet";
-	}
 	}
     }
   if (@result_messages) {

@@ -1,3 +1,6 @@
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/ambackupd.pl: Remove bogus check
+
 2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/CheckDump.pm (local_message): Add message 2700008,
 	  2700009, 2700010, 2700018, 2700019 and 2700020
