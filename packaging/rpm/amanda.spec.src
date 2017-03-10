@@ -599,6 +599,7 @@ if [ "$action" = "uninstall" ]; then
     fi
     if [ -d /var/lib/amanda/gnutar-lists ]; then
         rm -rf /var/lib/amanda/gnutar-lists
+    fi
     # Remove ${amanda_user} from sensitive groups.
     if which deluser >/dev/null 2>&1 ; then
         for group in tape; do
