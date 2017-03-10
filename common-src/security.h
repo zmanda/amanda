@@ -215,6 +215,8 @@ typedef struct security_driver {
      * Cancel a stream read request
      */
     void (*stream_read_cancel)(void *);
+    void (*stream_pause)(void *);
+    void (*stream_resume)(void *);
 
     void (*close_connection)(void *, char *);
 
@@ -499,6 +501,18 @@ void security_stream_close_async(security_stream_t *, void (*fn)(void *, ssize_t
  * Cancels a previous read request. */
 #define	security_stream_read_cancel(stream)		\
     (*(stream)->driver->stream_read_cancel)(stream)
+
+/* void security_stream_pause(security_stream_t *);
+ *
+ * Pause all read requests on the connection. */
+#define	security_stream_pause(stream)		\
+    (*(stream)->driver->stream_pause)(stream)
+
+/* void security_stream_resume(security_stream_t *);
+ *
+ * Resume all read requests on the connection. */
+#define	security_stream_resume(stream)		\
+    (*(stream)->driver->stream_resume)(stream)
 
 /* void security_close_connection(security_handle_t *, hostname *);
  *

@@ -134,6 +134,7 @@ struct tcp_conn {
     SSL_CTX            *ctx;
     SSL                *ssl;
 #endif
+    gboolean            paused;
 };
 
 
@@ -197,6 +198,7 @@ struct sec_stream {
     shm_ring_t        *shm_ring;
     gboolean            ring_init;
     event_id_t          event_id;
+    gboolean            paused;
 };
 
 /*
@@ -274,6 +276,8 @@ void	tcpm_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
 ssize_t	tcpm_stream_read_sync(void *, void **);
 void	tcpm_stream_read_to_shm_ring(void *, void (*)(void *, void *, ssize_t), struct shm_ring_t *, void *);
 void	tcpm_stream_read_cancel(void *);
+void	tcpm_stream_pause(void *);
+void	tcpm_stream_resume(void *);
 ssize_t	tcpm_send_token(struct tcp_conn *, int, char **, const void *, size_t);
 ssize_t	tcpm_send_token_async(struct sec_stream *, void *, size_t, void (*)(void *, ssize_t, void *, ssize_t), void *);
 ssize_t	tcpm_recv_token(struct tcp_conn *, int *, char **, char **, ssize_t *);

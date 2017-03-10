@@ -1,4 +1,24 @@
 2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/bsd-security.c: Add bsd_stream_pause and bsd_stream_resume
+	* common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
+	  common-src/krb5-security.c, common-src/local-security.c,
+	  common-src/rsh-security.c, common-src/ssh-security.c,
+	  common-src/ssl-security.c: Add tcpm_stream_pause and
+	  tcpm_stream_resume to declaration
+	* common-src/security-util.c (tcpm_stream_pause, tcpm_stream_resume):
+	  Add function
+	* common-src/security-util.h (tcpm_stream_pause, tcpm_stream_resume):
+	  Add prototype
+	* common-src/security.h (security_stream_pause,
+	  security_stream_resume): Add macro
+	* recover-src/extract_list.c (read_amidxtaped_data): Call
+	  security_stream_pause if can't write to the pipe, add a EV_WRITEFD
+	  to call write_data_to_app
+	* recover-src/extract_list.c (write_data_to_app): New function that
+	  write data to the pipe if allowed, call security_stream_resume
+	  when the block is completely written
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* packaging/rpm/amanda.spec.src: Fix (add fi)
 
 2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
