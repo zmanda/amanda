@@ -1,4 +1,7 @@
 2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/rpm/amanda.spec.src:Add CentOs 6 and RedHat 7
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/ambackupd.pl: Remove bogus check
 
 2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
