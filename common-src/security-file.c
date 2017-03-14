@@ -179,6 +179,64 @@ security_file_get_boolean(
     return FALSE;
 }
 
+static gboolean
+security_file_get_portrange(
+    char *name, int *plow, int *phigh)
+{
+    FILE *sec_file;
+    char *iname;
+    char *n, *l;
+    char line[LINE_SIZE];
+    char oline[LINE_SIZE];
+    message_t *message;
+
+    *plow = -1;
+    *phigh = -1;
+    message = open_security_file(&sec_file);
+    if (message) {
+	return FALSE;
+    }
+
+    if (!sec_file) {
+	return FALSE;
+    }
+
+    iname = g_strdup(name);
+    for (n = iname; *n; ++n) *n = tolower(*n);
+
+    while (fgets(line, LINE_SIZE, sec_file)) {
+	char *p;
+	int len = strlen(line);
+	if (len == 0) continue;
+	if (*line == '#') continue;
+	if (line[len-1] == '\n')
+	    line[len-1] = '\0';
+	strcpy(oline, line);
+	p = strchr(line, '=');
+	if (p) {
+	    *p = '\0';
+	    p++;
+	    for (l = line; *l; ++l) *l = tolower(*l);
+	    if (g_str_equal(iname, line)) {
+		char *shigh = strchr(p, ',');
+		if (shigh) {
+		    shigh++;
+		    *plow = atoi(p);
+		    *phigh = atoi(shigh);
+		    g_free(iname);
+		    fclose(sec_file);
+		    return TRUE;
+		}
+		error("BOGUS line '%s' in " DEFAULT_SECURITY_FILE " file", oline);
+	    }
+	}
+    }
+
+    g_free(iname);
+    fclose(sec_file);
+    return FALSE;
+}
+
 static message_t * check_security_file_permission_message_recursive(
      char *security_real_path, char *security_orig);
 
@@ -307,6 +365,91 @@ security_allow_to_restore(void)
 	return security_file_get_boolean("restore_by_amanda_user");
     } else {
 	return FALSE;
+    }
+}
+
+gboolean
+security_allow_bind(
+    int s,
+    sockaddr_union *addr)
+{
+
+    int port;
+    int type;
+    char *proto;
+    socklen_t_equiv length = sizeof(type);
+    struct servent *result;
+
+    port = SU_GET_PORT(addr);
+    if (getsockopt(s, SOL_SOCKET, SO_TYPE, &type, &length) == -1) {
+	fprintf(stderr, "getsockopt failed: %s", strerror(errno));
+	return FALSE;
+    }
+
+    if (type == SOCK_STREAM) {
+	proto = "tcp";
+    } else if (type == SOCK_DGRAM) {
+	proto = "udp";
+    } else {
+	fprintf(stderr, "Wrong socket type: %d\n", type);
+	return FALSE;
+    }
+    result = getservbyport((int)htons(port), proto);
+    if (result && !strstr(result->s_name, AMANDA_SERVICE_NAME)) {
+	fprintf(stderr, "port %d is owned by %s", port, result->s_name);
+	return FALSE;
+    }
+
+    if (type == SOCK_STREAM) {
+	int low, high;
+	if (security_file_get_portrange("tcp_port_range", &low, &high)) {
+	    if (low <= port && port <= high) {
+		return TRUE;
+	    } else {
+		fprintf(stderr, "tcp port out of range (%d <= %d <= %d)\n", low, port, high);
+		return FALSE;
+	    }
+	} else {
+	    // use LOW_TCPPORTRANGE
+#if defined LOW_TCPPORTRANGE && defined LOW_TCPPORTRANGE_MIN && defined LOW_TCPPORTRANGE_MAX
+	    low = LOW_TCPPORTRANGE_MIN;
+	    high = LOW_TCPPORTRANGE_MAX;
+	    if (low <= port && port <= high) {
+		return TRUE;
+	    } else {
+		fprintf(stderr, "tcp port out of range (%d <= %d <= %d)\n", low, port, high);
+		return FALSE;
+	    }
+#else
+	    fprintf(stderr, "No defined tcp_port_range in '%s'\n", DEFAULT_SECURITY_FILE);
+	    return FALSE;
+#endif
+	}
+    } else  { //(type == SOCK_DGRAM)
+	int low, high;
+	if (security_file_get_portrange("udp_port_range", &low, &high)) {
+	    if (low <= port && port <= high) {
+		return TRUE;
+	    } else {
+		fprintf(stderr, "udp port out of range (%d <= %d <= %d)\n", low, port, high);
+		return FALSE;
+	    }
+	} else {
+	    // use UDPPORTRANGE
+#if defined UDPPORTRANGE && defined UDPPORTRANGE_MIN && defined UDPPORTRANGE_MAX
+	    low = UDPPORTRANGE_MIN;
+	    high = UDPPORTRANGE_MAX;
+	    if (low <= port && port <= high) {
+		return TRUE;
+	    } else {
+		fprintf(stderr, "udp port out of range (%d <= %d <= %d)\n", low, port, high);
+		return FALSE;
+	    }
+#else
+	    fprintf(stderr, "No defined udp_port_range in '%s'\n", DEFAULT_SECURITY_FILE);
+	    return FALSE;
+#endif
+	}
     }
 }
 

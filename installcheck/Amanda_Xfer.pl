@@ -1540,6 +1540,17 @@ SKIP: {
 
     $ndmp->cleanup();
 }
+if (!Amanda::Util::built_with_component("server")) {
+    my $testconf = Installcheck::Run::setup();
+    $testconf->write();
+    config_init($CONFIG_INIT_EXPLICIT_NAME|$CONFIG_INIT_CLIENT, "TESTCONF");
+    my ($cfgerr_level, @cfgerr_errors) = config_errors();
+    if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	config_print_errors();
+	BAIL_OUT("config errors");
+    }
+}
+
 
 # directtcp stuff
 

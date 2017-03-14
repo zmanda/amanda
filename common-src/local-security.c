@@ -81,6 +81,8 @@ const security_driver_t local_security_driver = {
     tcpm_stream_read_sync,
     tcpm_stream_read_to_shm_ring,
     tcpm_stream_read_cancel,
+    tcpm_stream_pause,
+    tcpm_stream_resume,
     tcpm_close_connection,
     NULL,
     NULL,
@@ -279,7 +281,7 @@ runlocal(
 	initgroups(CLIENT_LOGIN, gid);
     }
     if (gid != 0)
-	setregid(uid, gid);
+	setregid(gid, gid);
     if (uid != 0)
 	setreuid(uid, uid);
 #endif

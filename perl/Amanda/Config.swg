@@ -659,8 +659,8 @@ push @{$EXPORT_TAGS{"getconf"}}, qw(vault_list_to_value);
  *  - CONFTYPE_INTRANGE -> list of two IVs
  *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref),
  *    and 'optional' (int)
- *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
- *							'values' (listref)
+ *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'visible' (IV),
+							'priority' (IV), 'values' (listref)
  *  - CONFTYPE_HOST_LIMIT -> listref of match expressions;
  *           "SAMEHOST-SAMEHOST-SAMEHOST" in list is taken to mean 'same-host'
  *           "SERVER-SERVER-SERVER" in list is taken to mean 'server'
@@ -942,8 +942,8 @@ fail:
  *  - CONFTYPE_INTRANGE -> list of two IVs
  *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref),
  *    and 'optional' (int)
- *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
- *							'values' (listref)
+ *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'visible' (IV),
+							'priority' (IV), 'values' (listref)
  *  - CONFTYPE_HOST_LIMIT -> listref of match expressions;
  *           "SAMEHOST-SAMEHOST-SAMEHOST" in list is taken to mean 'same-host'
  *           "SERVER-SERVER-SERVER" in list is taken to mean 'server'

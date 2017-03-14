@@ -211,6 +211,18 @@ sub load {
     });
 }
 
+sub info_setup {
+    my $self = shift;
+    my %params = @_;
+
+    $self->with_disk_locked_state($params{'finished_cb'}, sub {
+	my ($state, $finished_cb) = @_;
+	$self->{'state'} = $state;
+
+	$finished_cb->();
+    });
+}
+
 sub info_key {
     my $self = shift;
     my ($key, %params) = @_;
@@ -232,10 +244,10 @@ sub info_key {
 	# no need for synchronization -- all of these values are static
 
 	if ($key eq 'num_slots') {
-	    my @slots = $self->_all_slots();
+	    my @slots = $self->_all_slots($self->{'state'});
 	    $results{$key} = scalar @slots;
 	} elsif ($key eq 'slots') {
-	    my @slots = $self->_all_slots();
+	    my @slots = $self->_all_slots($self->{'state'});
 	    $results{$key} = \@slots;
 	} elsif ($key eq 'vendor_string') {
 	    $results{$key} = 'chg-diskflat'; # mostly just for testing

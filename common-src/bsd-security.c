@@ -70,6 +70,8 @@ static ssize_t	bsd_stream_read_sync(void *, void **);
 static void     bsd_stream_read_to_shm_ring(void *s, void (*fn)(void *, void *, ssize_t), shm_ring_t *shm_ring, void *arg);
 static void     bsd_stream_read_to_shm_ring_callback(void *arg);
 static void	bsd_stream_read_cancel(void *);
+static void	bsd_stream_pause(void *);
+static void	bsd_stream_resume(void *);
 
 /*
  * This is our interface to the outside world
@@ -96,6 +98,8 @@ const security_driver_t bsd_security_driver = {
     bsd_stream_read_sync,
     bsd_stream_read_to_shm_ring,
     bsd_stream_read_cancel,
+    bsd_stream_pause,
+    bsd_stream_resume,
     sec_close_connection_none,
     NULL,
     NULL,
@@ -144,6 +148,7 @@ bsd_connect(
     char *canonname;
     int result_bind;
     char *service;
+    char *bind_msg = NULL;
 
     assert(hostname != NULL);
 
@@ -193,7 +198,10 @@ bsd_connect(
 	    dgram_zero(&netfd6.dgram);
 
 	    result_bind = dgram_bind(&netfd6.dgram,
-				     res_addr->ai_addr->sa_family, &port, 1);
+				     res_addr->ai_addr->sa_family, &port, 1, &bind_msg);
+	    if (bind_msg) {
+		continue;
+	    }
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -232,7 +240,10 @@ bsd_connect(
 	    dgram_zero(&netfd4.dgram);
 
 	    result_bind = dgram_bind(&netfd4.dgram,
-				     res_addr->ai_addr->sa_family, &port, 1);
+				     res_addr->ai_addr->sa_family, &port, 1, &bind_msg);
+	    if (bind_msg) {
+		continue;
+	    }
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -259,6 +270,16 @@ bsd_connect(
 	}
     }
 
+    if (bind_msg) {
+	g_debug("%s", bind_msg);
+	security_seterror(&bh->sech,
+	        "%s", bind_msg);
+	g_free(bind_msg);
+	(*fn)(arg, &bh->sech, S_ERROR);
+	amfree(canonname);
+	freeaddrinfo(res);
+	return;
+    }
     if (res_addr == NULL) {
 	dbprintf(_("Can't bind a socket to connect to %s\n"), hostname);
 	security_seterror(&bh->sech,
@@ -469,17 +490,25 @@ bsd_stream_client(
 #ifdef DUMPER_SOCKET_BUFFERING
     int rcvbuf = sizeof(bs->databuf) * 2;
 #endif
+    char *stream_msg = NULL;
 
     assert(bh != NULL);
 
     bs = g_new0(struct sec_stream, 1);
     security_streaminit(&bs->secstr, &bsd_security_driver);
     bs->fd = stream_client(NULL, bh->hostname, (in_port_t)id,
-	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
+	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0, &stream_msg);
+    if (stream_msg) {
+	security_seterror(&bh->sech, "can't connect stream to %s port %d: %s",
+			  bh->hostname, id, stream_msg);
+	amfree(bs->secstr.error);
+	amfree(bs);
+	g_free(stream_msg);
+	return (NULL);
+    }
     if (bs->fd < 0) {
-	security_seterror(&bh->sech,
-	    _("can't connect stream to %s port %d: %s"), bh->hostname,
-	    id, strerror(errno));
+	security_seterror(&bh->sech, "can't connect stream to %s port %d: %s",
+			  bh->hostname, id, strerror(errno));
 	amfree(bs->secstr.error);
 	amfree(bs);
 	return (NULL);
@@ -578,9 +607,9 @@ bsd_stream_read(
 	event_release(bs->ev_read);
 
     bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, stream_read_callback, bs);
-    event_activate(bs->ev_read);
     bs->fn = fn;
     bs->arg = arg;
+    event_activate(bs->ev_read);
 }
 
 /* buffer for bsd_stream_read_sync function */
@@ -778,11 +807,11 @@ bsd_stream_read_to_shm_ring(
     bs->r_callback.callback = bsd_stream_read_to_shm_ring_callback;
 
     bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, bsd_stream_read_to_shm_ring_callback, bs);
-    event_activate(bs->ev_read);
     bs->fn = fn;
     bs->arg = arg;
     bs->shm_ring = shm_ring;
     bs->ring_init = FALSE;
+    event_activate(bs->ev_read);
 }
 
 /*
@@ -800,6 +829,50 @@ bsd_stream_read_cancel(
 	event_release(bs->ev_read);
 	bs->ev_read = NULL;
     }
+}
+
+/*
+ * Pause a previous stream read request.  It's ok if we didn't
+ * have a read scheduled.
+ */
+static void
+bsd_stream_pause(
+    void *	s)
+{
+    struct sec_stream *bs = s;
+
+    assert(bs != NULL);
+    if (bs->paused) {
+	return;
+    }
+    if (!bs->ev_read) {
+	return;
+    }
+    bsd_stream_read_cancel(s);
+    bs->paused = TRUE;
+}
+
+/*
+ * Resume a previous stream read request.  It's ok if we didn't
+ * have a read scheduled.
+ */
+static void
+bsd_stream_resume(
+    void *	s)
+{
+    struct sec_stream *bs = s;
+
+    assert(bs != NULL);
+    if (bs->ev_read) {
+	return;
+    }
+    if (!bs->paused) {
+	return;
+    }
+
+    bs->ev_read = event_create((event_id_t)bs->fd, EV_READFD, stream_read_callback, bs);
+    event_activate(bs->ev_read);
+    bs->paused = FALSE;
 }
 
 /*

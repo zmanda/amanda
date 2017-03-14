@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 53;
+use Test::More tests => 54;
 use strict;
 use warnings;
 
@@ -297,8 +297,11 @@ SKIP: {
     is( Amanda::Tapelist::get_last_reusable_tape_label(getconf($CNF_LABELSTR)->{'template'}, "TESTCONF", "TESTCONF", getconf($CNF_TAPECYCLE), 0, 0, 0, 0),
         'TESTCONF005', ".. get_last_reusable_tape_labe for skip=0" );
 
+    is( Amanda::Tapelist::get_last_reusable_tape_label(getconf($CNF_LABELSTR)->{'template'}, "TESTCONF", "TESTCONF", getconf($CNF_TAPECYCLE), 0, 0, 0, 1),
+        'TESTCONF015', ".. get_last_reusable_tape_labe for skip=1" );
+
     is( Amanda::Tapelist::get_last_reusable_tape_label(getconf($CNF_LABELSTR)->{'template'}, "TESTCONF", "TESTCONF", getconf($CNF_TAPECYCLE), 0, 0, 0, 2),
-        'TESTCONF002', ".. get_last_reusable_tape_labe for skip=2" );
+        'TESTCONF009', ".. get_last_reusable_tape_labe for skip=2" );
 }
 
 # try parsing various invalid lines

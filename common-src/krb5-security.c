@@ -194,6 +194,8 @@ const security_driver_t krb5_security_driver = {
     tcpm_stream_read_sync,
     tcpm_stream_read_to_shm_ring,
     tcpm_stream_read_cancel,
+    tcpm_stream_pause,
+    tcpm_stream_resume,
     tcpm_close_connection,
     k5_encrypt,
     k5_decrypt,
@@ -416,6 +418,7 @@ runkrb5(
     in_port_t		my_port, port;
     struct tcp_conn *	rc = rh->rc;
     const char *err;
+    char *stream_msg = NULL;
 
     r = getservbyname_r(AMANDA_KRB5_SERVICE_NAME, "tcp", &sp, buf,2048, &result);
     assert(r != ERANGE);
@@ -436,12 +439,15 @@ runkrb5(
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,
-				     0);
+				     0, &stream_msg);
 
-    if(server_socket < 0) {
-	security_seterror(&rh->sech,
-	    "%s", strerror(errno));
- 
+    if (stream_msg) {
+	security_seterror(&rh->sech, "%s", stream_msg);
+	g_free(stream_msg);
+	return -1;
+    }
+    if (server_socket < 0) {
+	security_seterror(&rh->sech, "%s", strerror(errno));
 	return -1;
     }
 

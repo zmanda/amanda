@@ -1,3 +1,247 @@
+2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Parse hidden|visible on dumptype property
+	* common-src/conffile.h (property_t) : Add visible field
+	* man/xml-source/amanda.conf.5.xml: Document the new hidden|visible
+	  keyword
+	* perl/Amanda/Config.swg: Add the visible field
+	* perl/amglue/ghashtable.c: Add the visible field
+	* server-src/diskfile.c: Do not add hidden dumptype property to the
+	  xml string
+
+2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/ambackupd.pl: Do incremental backup
+
+2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Cleanup.pm: Improvement
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* recover-src/extract_list.c: Check result of fcntl
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/bsd-security.c: Add bsd_stream_pause and bsd_stream_resume
+	* common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
+	  common-src/krb5-security.c, common-src/local-security.c,
+	  common-src/rsh-security.c, common-src/ssh-security.c,
+	  common-src/ssl-security.c: Add tcpm_stream_pause and
+	  tcpm_stream_resume to declaration
+	* common-src/security-util.c (tcpm_stream_pause, tcpm_stream_resume):
+	  Add function
+	* common-src/security-util.h (tcpm_stream_pause, tcpm_stream_resume):
+	  Add prototype
+	* common-src/security.h (security_stream_pause,
+	  security_stream_resume): Add macro
+	* recover-src/extract_list.c (read_amidxtaped_data): Call
+	  security_stream_pause if can't write to the pipe, add a EV_WRITEFD
+	  to call write_data_to_app
+	* recover-src/extract_list.c (write_data_to_app): New function that
+	  write data to the pipe if allowed, call security_stream_resume
+	  when the block is completely written
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/rpm/amanda.spec.src: Fix (add fi)
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* packaging/rpm/amanda.spec.src:Add CentOs 6 and RedHat 7
+
+2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/ambackupd.pl: Remove bogus check
+
+2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/CheckDump.pm (local_message): Add message 2700008,
+	  2700009, 2700010, 2700018, 2700019 and 2700020
+	* perl/Amanda/CheckDump.pm (new): Set message_filename and
+	  message_pathname
+	* perl/Amanda/CheckDump.pm (run): Print message 2700006, 2700007,
+	  2700008, 2700009 and 2700010
+	* perl/Amanda/FetchDump.pm (new): Set message_filename and
+	  message_pathname
+	* perl/Amanda/Rest/Runs.pm (checkump): Use message_filename
+	* perl/Amanda/Restore.pm: Count image_restored and image_failed
+	* perl/Amanda/Service/Amidxtaped.pm (new): Set message_filename and
+	  message_pathname
+	* server-src/amcheckdump.pl: Do not printmessage 2700006 and 2700007
+
+2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Chunker/Controller.pm (msg_PORT_WRITE): Call dump_db
+	  instead of cance_dump on failure
+	* perl/Amanda/Chunker/Scribe.pm: Do not call dump_cb if it is not
+	  defined
+
+2017-03-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amdumpd.pl: Do not check if amanda is busy
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/automake/scripts.am: Check libConfig.so instead of
+	  libCmdline.so because it is always compiled
+	* installcheck/Amanda_Xfer.pl: Load a config if without server
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/net.m4: Define LOW_TCPPORTRANGE_MIN,
+	  LOW_TCPPORTRANGE_MAX, TCPPORTRANGE_MIN, TCPPORTRANGE_MAX,
+	  UDPPORTRANGE_MIN and UDPPORTRANGE_MAX
+	* common-src/security-file.c: Use configured portrange is not set in
+	  the security-file
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Makefile.am, rest-server/Makefile.am, server-src/Makefile.am:
+	  fix 'make dist' when compiled with --wothout-server or
+	  --without-client
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/amstar.pl: Check first line of errors
+
+2017-03-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Service/Restore.pm: Remove unused code
+
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/diskflat-device.c (diskflat_clear_and_prepare_label):
+	  result of ftruncate
+
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ambsdtar.c: Typo
+	* application-src/amstar.c (amstar_restore, amstar_validate): filter
+	  stdout and stderr
+
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/diskflat-device.c (diskflat_clear_and_prepare_label):
+	  ftruncate the file
+
+2017-03-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/CheckDump.pm (run): Set all_copy=1 to restore()
+	* perl/Amanda/Restore.pm (restore): Pass all_copy to make_plan()
+
+2017-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Recovery/Clerk.pm: Typo
+	* perl/make_html.pl: Fix man pages
+
+2017-03-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.4.3
+
+2017-02-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Tapelist.swg (remove_tapelabel): Call C_remove_tapelabel
+	* server-src/tapefile.c (add_tapelabel): Verify the label is not
+	  already in the tapelist
+	* installcheck/Amanda_Tapelist.pl: Fix/add check
+
+2017-02-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c (tape_overwrite, nb_tape_in_storage): Take
+	  storage as argument, Check NULL storage name and labelstr
+	* server-src/tapefile.h (tape_overwrite, nb_tape_in_storage): New
+	  prototypes
+	* server-src/planner.c (when_overwrite): Pass the storage argument
+	  to tape_overwrite and nb_tape_in_storage
+
+2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c, common-src/security-file.c,
+	  common-src/stream.c: Fix bug found by coverity
+
+2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/ndmp-device.c (read_to_connection_impl):Correctlycompute
+	  the offset
+
+2017-02-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcleanupdisk.pl: Fix renaming tmp holding file
+
+2017-02-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Charles Curley
+	* common-src/ammessage.c: Fix message
+	* man/xml-source/amanda.8.xml: Fix documentation
+
+2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c (nb_tape_in_storage): Fix for older glib2
+
+2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ambind.c: Print 'WARNING:' prefix if we should retry on
+	  a different port
+	* common-src/amutil.c: Parse 'WARNING:' prefix
+	* common-src/stream.c, common-src/dgram.c: Handle retry
+	* common-src/security-file.c (security_allow_bind): Check the port
+	  have no name
+
+2017-02-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/tapefile.c (nb_tape_in_storage): Use g_strcmp0
+
+2017-02-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amtape.pl: Add a drive argument to 'amtape slot'
+	* perl/Amanda/Changer/robot.pm (load_unlocked): Use the drive argument
+	* man/xml-source/amtape.8.xml: Document it
+	* NEWS: Document it
+
+2017-02-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-file.c: Parse tcp_port_range and udp_port_range
+	* common-src/security-file.c (security_allow_bind): New function to
+	  verify if the port is in tcp_port_range and udp_port_range
+	* common-src/security-file.h (security_allow_bind): Add prototype
+	* common-src/make_security_file.c: Add tcp_port_range and
+	  udp_port_range in the default amanda-security.conf file
+	* common-src/dgram.c (dgram_bind): Add bind_msg argument
+	* common-src/dgram.h (dgram_bind): New prototype
+	* common-src/stream.c (stream_client_addr, stream_client_privileged,
+	  stream_client): Add stream_msg argument
+	* common-src/stream.h (stream_client_addr, stream_client_privileged,
+	  stream_client): New prototype
+	* common-src/amutil.c (connect_portrange): Add stream_msg argument
+	* common-src/amutil.c (bind_portrange): Add bind_msg argument
+	* common-src/amutil.c (ambind): Parse stderr of ambind
+	* common-src/amutil.h (connect_portrange): New prototype
+	* common-src/amutil.h (bind_portrange): New prototype
+	* common-src/ambind.c: Call security_allow_bind, print error on stderr
+	* client-src/sendbackup.c, common-src/bsd-security.c,
+	  common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
+	  common-src/krb5-security.c, common-src/security-util.c,
+	  common-src/ssl-security.c, oldrecover-src/amrecover.c,
+	  oldrecover-src/extract_list.c, server-src/dumper.c,
+	  xfer-src/element-glue.c: Use new API
+	* man/xml-source/amanda-security.conf.5.xml: Document tcp_port_range
+	  and udp_port_range
+	* NEWS: Document it
+
+2017-02-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/local-security.c: Fix setregid call
+
+2017-02-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Changer/diskflat.pm: Add info_setup
+
+2017-02-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/diskfile.c: Fix for older glib2
+
+2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3-device.c (catalog_open): Typo
+
+2017-02-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (shm_ring_sem_wait): Remove duplicated code
+	* client-src/sendbackup.c: Close file descriptor
+	* common-src/file.c: Fix memory leak
+	* common-src/protocol.c: Fix memory leak
+	* server-src/amtrmidx.c: Fix memory leak
+	* server-src/amtrmlog.c: Fix memory leak
+	* server-src/diskfile.c: Fix memory leak
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amadmin.c (tape): Do not free the list_new_tapes result
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/tape-device.c (tape_device_eject): Close the device if we
+	  open it
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm: Make sure restart_scan is not run
+	  twice in parallel
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c, server-src/find.c,
+	  server-src/tapefile.c: Fix memory leak.
+
+2017-02-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c: NetBSD limit to 14 characters the shm name
+
+2017-02-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Allow compilation with libressl
+	* config/amanda/amanda_configure.m4: Change order
+	* device-src/Makefile.am (libamdevice_la_LDFLAGS): Add -ldl
+	* common-src/glib-util.c, device-src/s3-util.c, device-src/s3.c:
+	  check for LIBRESSL_VERSION_NUMBER
+
 2017-02-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-server-custom-compress-no-exec.pl: Call
 	  check_amreport with skip_size

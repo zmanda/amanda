@@ -436,6 +436,13 @@ add_tapelabel(
     tape_t *cur, *new;
     char *tape_key;
 
+    tape_t *tp;
+    for (tp = tape_list; tp != NULL; tp = tp->next) {
+	if (g_str_equal(tp->label, label) &&
+	    (storage && tp->storage && g_str_equal(tp->storage, storage))) {
+	    g_critical("ERROR: add_tapelabel that already exists: %s %s", label, storage);
+	}
+    }
     /* insert a new record to the front of the list */
 
     new = g_new0(tape_t,1);
@@ -834,6 +841,7 @@ compute_retention(void)
 	    }
 	    output_find = find_dump(diskp, 0);
 	    sort_find_result("hkDLpbfw", &output_find);
+	    g_free(conf_diskfile);
 	}
 
 	compute_storage_retention(output_find, storage_name(storage),
@@ -1017,6 +1025,7 @@ compute_storage_retention(
 		level = ofr->level;
 	    }
 	}
+	g_free(datestr);
     }
 
     if (retention_full) {
@@ -1175,14 +1184,21 @@ get_retention_type(
 
 int
 tape_overwrite(
+    storage_t *st,
     tape_t *tp)
 {
     tape_t *tp1;
     int nb_tapes = 0;
 
     for (tp1 = tp; tp1 != NULL; tp1 = tp1->next) {
-	if (!tp1->retention && tp1->storage && tp->storage &&
-	    g_str_equal(tp->storage, tp1->storage)) {
+	if (!tp1->retention &&
+	    (((!tp1->storage || !tp->storage) &&
+	      match_labelstr(storage_get_labelstr(st),
+			     storage_get_autolabel(st),
+			     tp1->label, tp1->barcode, tp1->meta,
+			     storage_name(st))) ||
+	     (tp1->storage && tp->storage &&
+	     g_str_equal(tp->storage, tp1->storage)))) {
 	    nb_tapes++;
 	}
     }
@@ -1191,14 +1207,18 @@ tape_overwrite(
 
 int
 nb_tape_in_storage(
-    char *storage_name)
+    storage_t *st)
 {
     tape_t *tp;
     int nb_tapes = 0;
-
+    char *storage = storage_name(st);
     for (tp = tape_list; tp != NULL; tp = tp->next) {
-	if (tp->storage &&
-	    g_str_equal(storage_name, tp->storage)) {
+	if (((!storage || !tp->storage) &&
+	      match_labelstr(storage_get_labelstr(st),
+			     storage_get_autolabel(st),
+			     tp->label, tp->barcode, tp->meta,
+			     storage_name(st))) ||
+	    (storage && tp->storage && g_str_equal(storage, tp->storage))) {
 	    nb_tapes++;
 	}
     }

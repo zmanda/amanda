@@ -256,12 +256,18 @@ do_directtcp_connect(
 	int   size;
 	char *data_host;
 	int   data_port;
+	char *stream_msg = NULL;
 
 	g_debug("do_directtcp_connect making indirect data connection to %s",
 		strsockaddr);
 	data_port = SU_GET_PORT(&addr);
 	sock = stream_client(NULL, "localhost", data_port,
-                                   STREAM_BUFSIZE, 0, NULL, 0);
+                                   STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
+	if (stream_msg) {
+	    xfer_cancel_with_error(elt, "stream_client(): %s", stream_msg);
+	    g_free(stream_msg);
+	    goto cancel_wait;
+	}
 	if (sock < 0) {
 	    xfer_cancel_with_error(elt, "stream_client(): %s", strerror(errno));
 	    goto cancel_wait;

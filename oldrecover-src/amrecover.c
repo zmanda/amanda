@@ -414,6 +414,7 @@ main(
     char *service_name;
     char *line = NULL;
     struct tm *tm;
+    char *stream_msg = NULL;
 
     glib_init();
 
@@ -558,7 +559,11 @@ main(
 					     0,
 					     0,
 					     &my_port,
-					     0);
+					     0, &stream_msg);
+    if (stream_msg) {
+	error(_("cannot connect to %s: %s"), server_name, stream_msg);
+	/*NOTREACHED*/
+    }
     if (server_socket < 0) {
 	error(_("cannot connect to %s: %s"), server_name, strerror(errno));
 	/*NOTREACHED*/

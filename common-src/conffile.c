@@ -211,6 +211,9 @@ typedef enum {
     CONF_LIST,			CONF_EFILE,		CONF_APPEND,
     CONF_OPTIONAL,
 
+    /* property */
+    CONF_HIDDEN,		CONF_VISIBLE,
+
     /* numbers */
     CONF_AMINFINITY,		CONF_MULT1,		CONF_MULT7,
     CONF_MULT1K,		CONF_MULT1M,		CONF_MULT1G,
@@ -881,96 +884,98 @@ static void    conf_parswarn(const char *format, ...)
 
 /* First, the keyword tables for client and server */
 keytab_t client_keytab[] = {
-    { "CONF", CONF_CONF },
-    { "AMDUMP_SERVER", CONF_AMDUMP_SERVER },
-    { "INDEX_SERVER", CONF_INDEX_SERVER },
-    { "TAPE_SERVER", CONF_TAPE_SERVER },
-    { "TAPEDEV", CONF_TAPEDEV },
-    { "AUTH", CONF_AUTH },
-    { "SSH_KEYS", CONF_SSH_KEYS },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
+    { "AMANDATES", CONF_AMANDATES },
+    { "AMDUMP_SERVER", CONF_AMDUMP_SERVER },
+    { "APPEND", CONF_APPEND },
+    { "APPLICATION", CONF_APPLICATION },
+    { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
+    { "AUTH", CONF_AUTH },
+    { "CLIENT", CONF_CLIENT },
     { "CLIENT_NAME", CONF_CLIENT_NAME },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "CTIMEOUT", CONF_CTIMEOUT },
-    { "SSL_DIR", CONF_SSL_DIR },
-    { "SSL_CHECK_FINGERPRINT", CONF_SSL_CHECK_FINGERPRINT },
-    { "SSL_FINGERPRINT_FILE", CONF_SSL_FINGERPRINT_FILE },
-    { "SSL_CERT_FILE", CONF_SSL_CERT_FILE },
-    { "SSL_CHECK_HOST", CONF_SSL_CHECK_HOST },
-    { "SSL_CHECK_CERTIFICATE_HOST", CONF_SSL_CHECK_CERTIFICATE_HOST },
-    { "SSL_CIPHER_LIST", CONF_SSL_CIPHER_LIST },
-    { "SSL_KEY_FILE", CONF_SSL_KEY_FILE },
-    { "SSL_CA_CERT_FILE", CONF_SSL_CA_CERT_FILE },
-    { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
-    { "AMANDATES", CONF_AMANDATES },
-    { "KRB5KEYTAB", CONF_KRB5KEYTAB },
-    { "KRB5PRINCIPAL", CONF_KRB5PRINCIPAL },
-    { "INCLUDEFILE", CONF_INCLUDEFILE },
+    { "COMMENT", CONF_COMMENT },
+    { "CONF", CONF_CONF },
     { "CONNECT_TRIES", CONF_CONNECT_TRIES },
-    { "REP_TRIES", CONF_REP_TRIES },
-    { "REQ_TRIES", CONF_REQ_TRIES },
-    { "CLIENT", CONF_CLIENT },
-    { "DEBUG_DAYS", CONF_DEBUG_DAYS },
     { "DEBUG_AMANDAD", CONF_DEBUG_AMANDAD },
-    { "DEBUG_RECOVERY", CONF_DEBUG_RECOVERY },
     { "DEBUG_AMIDXTAPED", CONF_DEBUG_AMIDXTAPED },
     { "DEBUG_AMINDEXD", CONF_DEBUG_AMINDEXD },
     { "DEBUG_AMRECOVER", CONF_DEBUG_AMRECOVER },
     { "DEBUG_AUTH", CONF_DEBUG_AUTH },
-    { "DEBUG_EVENT", CONF_DEBUG_EVENT },
-    { "DEBUG_HOLDING", CONF_DEBUG_HOLDING },
-    { "DEBUG_PROTOCOL", CONF_DEBUG_PROTOCOL },
-    { "DEBUG_PLANNER", CONF_DEBUG_PLANNER },
+    { "DEBUG_CHUNKER", CONF_DEBUG_CHUNKER },
+    { "DEBUG_DAYS", CONF_DEBUG_DAYS },
     { "DEBUG_DRIVER", CONF_DEBUG_DRIVER },
     { "DEBUG_DUMPER", CONF_DEBUG_DUMPER },
-    { "DEBUG_CHUNKER", CONF_DEBUG_CHUNKER },
-    { "DEBUG_TAPER", CONF_DEBUG_TAPER },
+    { "DEBUG_EVENT", CONF_DEBUG_EVENT },
+    { "DEBUG_HOLDING", CONF_DEBUG_HOLDING },
+    { "DEBUG_PLANNER", CONF_DEBUG_PLANNER },
+    { "DEBUG_PROTOCOL", CONF_DEBUG_PROTOCOL },
+    { "DEBUG_RECOVERY", CONF_DEBUG_RECOVERY },
     { "DEBUG_SELFCHECK", CONF_DEBUG_SELFCHECK },
-    { "DEBUG_SENDSIZE", CONF_DEBUG_SENDSIZE },
     { "DEBUG_SENDBACKUP", CONF_DEBUG_SENDBACKUP },
+    { "DEBUG_SENDSIZE", CONF_DEBUG_SENDSIZE },
+    { "DEBUG_TAPER", CONF_DEBUG_TAPER },
+    { "DEFINE", CONF_DEFINE },
     { "EXECUTE_ON", CONF_EXECUTE_ON },
     { "EXECUTE_WHERE", CONF_EXECUTE_WHERE },
+    { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
+    { "HIDDEN", CONF_HIDDEN },
     { "HOSTNAME", CONF_HOSTNAME },
-    { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
-    { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
-    { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
-    { "DEFINE", CONF_DEFINE },
-    { "COMMENT", CONF_COMMENT },
+    { "INCLUDEFILE", CONF_INCLUDEFILE },
+    { "INDEX_SERVER", CONF_INDEX_SERVER },
+    { "INTER_LEVEL_RECOVER", CONF_INTER_LEVEL_RECOVER },
+    { "KRB5KEYTAB", CONF_KRB5KEYTAB },
+    { "KRB5PRINCIPAL", CONF_KRB5PRINCIPAL },
     { "MAILER", CONF_MAILER },
     { "ORDER", CONF_ORDER },
-    { "SCRIPT", CONF_SCRIPT },
-    { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "PLUGIN", CONF_PLUGIN },
     { "PRE_AMCHECK", CONF_PRE_AMCHECK },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
-    { "POST_AMCHECK", CONF_POST_AMCHECK },
-    { "POST_DLE_AMCHECK", CONF_POST_DLE_AMCHECK },
-    { "POST_HOST_AMCHECK", CONF_POST_HOST_AMCHECK },
     { "PRE_ESTIMATE", CONF_PRE_ESTIMATE },
     { "PRE_DLE_ESTIMATE", CONF_PRE_DLE_ESTIMATE },
     { "PRE_HOST_ESTIMATE", CONF_PRE_HOST_ESTIMATE },
+    { "PRE_BACKUP", CONF_PRE_BACKUP },
+    { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
+    { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
+    { "PRE_RECOVER", CONF_PRE_RECOVER },
+    { "PRE_LEVEL_RECOVER", CONF_PRE_LEVEL_RECOVER },
+    { "POST_AMCHECK", CONF_POST_AMCHECK },
+    { "POST_DLE_AMCHECK", CONF_POST_DLE_AMCHECK },
+    { "POST_HOST_AMCHECK", CONF_POST_HOST_AMCHECK },
     { "POST_ESTIMATE", CONF_POST_ESTIMATE },
     { "POST_DLE_ESTIMATE", CONF_POST_DLE_ESTIMATE },
     { "POST_HOST_ESTIMATE", CONF_POST_HOST_ESTIMATE },
     { "POST_BACKUP", CONF_POST_BACKUP },
     { "POST_DLE_BACKUP", CONF_POST_DLE_BACKUP },
     { "POST_HOST_BACKUP", CONF_POST_HOST_BACKUP },
-    { "PRE_BACKUP", CONF_PRE_BACKUP },
-    { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
-    { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
-    { "PRE_RECOVER", CONF_PRE_RECOVER },
     { "POST_RECOVER", CONF_POST_RECOVER },
-    { "PRE_LEVEL_RECOVER", CONF_PRE_LEVEL_RECOVER },
     { "POST_LEVEL_RECOVER", CONF_POST_LEVEL_RECOVER },
-    { "INTER_LEVEL_RECOVER", CONF_INTER_LEVEL_RECOVER },
     { "PRIORITY", CONF_PRIORITY },
     { "PROPERTY", CONF_PROPERTY },
-    { "APPLICATION", CONF_APPLICATION },
-    { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
+    { "REP_TRIES", CONF_REP_TRIES },
+    { "REQ_TRIES", CONF_REQ_TRIES },
+    { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
+    { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
+    { "SCRIPT", CONF_SCRIPT },
+    { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "SERVER", CONF_SERVER },
-    { "APPEND", CONF_APPEND },
+    { "SSL_CA_CERT_FILE", CONF_SSL_CA_CERT_FILE },
+    { "SSL_CERT_FILE", CONF_SSL_CERT_FILE },
+    { "SSL_CHECK_CERTIFICATE_HOST", CONF_SSL_CHECK_CERTIFICATE_HOST },
+    { "SSL_CHECK_FINGERPRINT", CONF_SSL_CHECK_FINGERPRINT },
+    { "SSL_CHECK_HOST", CONF_SSL_CHECK_HOST },
+    { "SSL_CIPHER_LIST", CONF_SSL_CIPHER_LIST },
+    { "SSL_DIR", CONF_SSL_DIR },
+    { "SSL_FINGERPRINT_FILE", CONF_SSL_FINGERPRINT_FILE },
+    { "SSH_KEYS", CONF_SSH_KEYS },
+    { "SSL_KEY_FILE", CONF_SSL_KEY_FILE },
+    { "TAPE_SERVER", CONF_TAPE_SERVER },
+    { "TAPEDEV", CONF_TAPEDEV },
+    { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
+    { "VISIBLE", CONF_VISIBLE },
     { NULL, CONF_IDENT },
     { NULL, CONF_UNKNOWN }
 };
@@ -1076,6 +1081,7 @@ keytab_t server_keytab[] = {
     { "FIRSTFIT", CONF_FIRSTFIT },
     { "FULL", CONF_FULL },
     { "HANOI", CONF_HANOI },
+    { "HIDDEN", CONF_HIDDEN },
     { "HIGH", CONF_HIGH },
     { "HOLDINGDISK", CONF_HOLDING },
     { "IGNORE", CONF_IGNORE },
@@ -1233,6 +1239,7 @@ keytab_t server_keytab[] = {
     { "USE", CONF_USE },
     { "USETIMESTAMPS", CONF_USETIMESTAMPS },
     { "VAULT", CONF_VAULT },
+    { "VISIBLE", CONF_VISIBLE },
     { "VOLUME_ERROR", CONF_VOLUME_ERROR },
     { NULL, CONF_IDENT },
     { NULL, CONF_UNKNOWN }
@@ -2466,6 +2473,7 @@ get_holdingdisk(
 		conf_parserror(_("IDENT or NL expected"));
 	    }
 	} while (tok == CONF_IDENT || tok == CONF_STRING);
+	amfree(hdcur.seen.block);
     }
 
     allow_overwrites = save_overwrites;
@@ -2477,6 +2485,9 @@ static void
 init_holdingdisk_defaults(
     void)
 {
+    hdcur.name = NULL;
+    hdcur.seen.filename = NULL;
+    hdcur.seen.block = NULL;
     conf_init_str(&hdcur.value[HOLDING_COMMENT]  , "");
     conf_init_str(&hdcur.value[HOLDING_DISKDIR]  , "");
     conf_init_int64(&hdcur.value[HOLDING_DISKSIZE] , CONF_UNIT_K, (gint64)0);
@@ -2601,6 +2612,8 @@ static void
 init_dumptype_defaults(void)
 {
     dpcur.name = NULL;
+    dpcur.seen.filename = NULL;
+    dpcur.seen.block = NULL;
     conf_init_str   (&dpcur.value[DUMPTYPE_COMMENT]           , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_PROGRAM]           , "DUMP");
     conf_init_str   (&dpcur.value[DUMPTYPE_SRVCOMPPROG]       , "");
@@ -2755,6 +2768,9 @@ get_tapetype(void)
 static void
 init_tapetype_defaults(void)
 {
+    tpcur.name = NULL;
+    tpcur.seen.filename = NULL;
+    tpcur.seen.block = NULL;
     conf_init_str(&tpcur.value[TAPETYPE_COMMENT]      , "");
     conf_init_str(&tpcur.value[TAPETYPE_LBL_TEMPL]    , "");
     conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , CONF_UNIT_K, DISK_BLOCK_KB);
@@ -2853,6 +2869,9 @@ get_interface(void)
 static void
 init_interface_defaults(void)
 {
+    ifcur.name = NULL;
+    ifcur.seen.filename = NULL;
+    ifcur.seen.block = NULL;
     conf_init_str(&ifcur.value[INTER_COMMENT] , "");
     conf_init_int(&ifcur.value[INTER_MAXUSAGE], CONF_UNIT_K, 80000);
     conf_init_str(&ifcur.value[INTER_SRC_IP], "NULL");
@@ -2983,6 +3002,8 @@ init_application_defaults(
     void)
 {
     apcur.name = NULL;
+    apcur.seen.filename = NULL;
+    apcur.seen.block = NULL;
     conf_init_str(&apcur.value[APPLICATION_COMMENT] , "");
     conf_init_str(&apcur.value[APPLICATION_PLUGIN]  , "");
     conf_init_proplist(&apcur.value[APPLICATION_PROPERTY]);
@@ -3115,6 +3136,8 @@ init_interactivity_defaults(
     void)
 {
     ivcur.name = NULL;
+    ivcur.seen.filename = NULL;
+    ivcur.seen.block = NULL;
     conf_init_str(&ivcur.value[INTERACTIVITY_COMMENT] , "");
     conf_init_str(&ivcur.value[INTERACTIVITY_PLUGIN]  , "");
     conf_init_proplist(&ivcur.value[INTERACTIVITY_PROPERTY]);
@@ -3246,6 +3269,8 @@ init_taperscan_defaults(
     void)
 {
     tscur.name = NULL;
+    tscur.seen.filename = NULL;
+    tscur.seen.block = NULL;
     conf_init_str(&tscur.value[TAPERSCAN_COMMENT] , "");
     conf_init_str(&tscur.value[TAPERSCAN_PLUGIN]  , "");
     conf_init_proplist(&tscur.value[TAPERSCAN_PROPERTY]);
@@ -3377,6 +3402,8 @@ init_policy_defaults(
     void)
 {
     pocur.name = NULL;
+    pocur.seen.filename = NULL;
+    pocur.seen.block = NULL;
     conf_init_str(&pocur.value[POLICY_COMMENT]          , "");
     conf_init_int(&pocur.value[POLICY_RETENTION_TAPES]  , CONF_UNIT_NONE, 0);
     conf_init_int(&pocur.value[POLICY_RETENTION_DAYS]   , CONF_UNIT_NONE, 0);
@@ -3510,6 +3537,8 @@ init_storage_defaults(
     void)
 {
     stcur.name = NULL;
+    stcur.seen.filename = NULL;
+    stcur.seen.block = NULL;
     conf_init_str           (&stcur.value[STORAGE_COMMENT]                  , "");
     conf_init_str           (&stcur.value[STORAGE_POLICY]                   , "");
     conf_init_str           (&stcur.value[STORAGE_TAPEDEV]                  , "");
@@ -3667,6 +3696,8 @@ init_pp_script_defaults(
     void)
 {
     pscur.name = NULL;
+    pscur.seen.filename = NULL;
+    pscur.seen.block = NULL;
     conf_init_str(&pscur.value[PP_SCRIPT_COMMENT] , "");
     conf_init_str(&pscur.value[PP_SCRIPT_PLUGIN]  , "");
     conf_init_proplist(&pscur.value[PP_SCRIPT_PROPERTY]);
@@ -3804,6 +3835,8 @@ init_device_config_defaults(
     void)
 {
     dccur.name = NULL;
+    dccur.seen.filename = NULL;
+    dccur.seen.block = NULL;
     conf_init_str(&dccur.value[DEVICE_CONFIG_COMMENT] , "");
     conf_init_str(&dccur.value[DEVICE_CONFIG_TAPEDEV]  , "");
     conf_init_proplist(&dccur.value[DEVICE_CONFIG_DEVICE_PROPERTY]);
@@ -3935,6 +3968,8 @@ init_changer_config_defaults(
     void)
 {
     cccur.name = NULL;
+    cccur.seen.filename = NULL;
+    cccur.seen.block = NULL;
     conf_init_str(&cccur.value[CHANGER_CONFIG_COMMENT] , "");
     conf_init_str(&cccur.value[CHANGER_CONFIG_TAPEDEV]  , "");
     conf_init_str(&cccur.value[CHANGER_CONFIG_TPCHANGER]  , "");
@@ -4567,8 +4602,9 @@ read_property(
     gboolean set_seen = TRUE;
     property_t *property = malloc(sizeof(property_t));
     property_t *old_property;
-    property->append = 0; 
-    property->priority = 0; 
+    property->append = 0;
+    property->visible = 0;
+    property->priority = 0;
     property->values = NULL;
 
     get_conftoken(CONF_ANY);
@@ -4578,6 +4614,13 @@ read_property(
     }
     if (tok == CONF_APPEND) {
 	property->append = 1;
+	get_conftoken(CONF_ANY);
+    }
+    if (tok == CONF_HIDDEN) {
+	property->visible = 0;
+	get_conftoken(CONF_ANY);
+    } else if (tok == CONF_VISIBLE) {
+	property->visible = 1;
 	get_conftoken(CONF_ANY);
     }
     if (tok != CONF_STRING) {
@@ -6035,6 +6078,7 @@ config_uninit(void)
 	for(i=0; i<HOLDING_HOLDING; i++) {
 	   free_val_t(&hd->value[i]);
 	}
+	g_free(hd->seen.block);
     }
     slist_free_full(holdinglist, g_free);
     holdinglist = NULL;
@@ -6044,6 +6088,7 @@ config_uninit(void)
 	for(i=0; i<DUMPTYPE_DUMPTYPE; i++) {
 	   free_val_t(&dp->value[i]);
 	}
+	g_free(dp->seen.block);
 	dpnext = dp->next;
 	amfree(dp);
     }
@@ -6054,6 +6099,7 @@ config_uninit(void)
 	for(i=0; i<TAPETYPE_TAPETYPE; i++) {
 	   free_val_t(&tp->value[i]);
 	}
+	g_free(tp->seen.block);
 	tpnext = tp->next;
 	amfree(tp);
     }
@@ -6064,6 +6110,7 @@ config_uninit(void)
 	for(i=0; i<INTER_INTER; i++) {
 	   free_val_t(&ip->value[i]);
 	}
+	g_free(ip->seen.block);
 	ipnext = ip->next;
 	amfree(ip);
     }
@@ -6074,6 +6121,7 @@ config_uninit(void)
 	for(i=0; i<APPLICATION_APPLICATION; i++) {
 	   free_val_t(&ap->value[i]);
 	}
+	g_free(ap->seen.block);
 	apnext = ap->next;
 	amfree(ap);
     }
@@ -6084,6 +6132,7 @@ config_uninit(void)
 	for(i=0; i<PP_SCRIPT_PP_SCRIPT; i++) {
 	   free_val_t(&pp->value[i]);
 	}
+	g_free(pp->seen.block);
 	ppnext = pp->next;
 	amfree(pp);
     }
@@ -6094,6 +6143,7 @@ config_uninit(void)
 	for(i=0; i<DEVICE_CONFIG_DEVICE_CONFIG; i++) {
 	   free_val_t(&dc->value[i]);
 	}
+	g_free(dc->seen.block);
 	dcnext = dc->next;
 	amfree(dc);
     }
@@ -6104,6 +6154,7 @@ config_uninit(void)
 	for(i=0; i<CHANGER_CONFIG_CHANGER_CONFIG; i++) {
 	   free_val_t(&cc->value[i]);
 	}
+	g_free(cc->seen.block);
 	ccnext = cc->next;
 	amfree(cc);
     }
@@ -6114,6 +6165,7 @@ config_uninit(void)
 	for(i=0; i<INTERACTIVITY_INTERACTIVITY; i++) {
 	   free_val_t(&iv->value[i]);
 	}
+	g_free(iv->seen.block);
 	ivnext = iv->next;
 	amfree(iv);
     }
@@ -6124,6 +6176,7 @@ config_uninit(void)
 	for(i=0; i<TAPERSCAN_TAPERSCAN; i++) {
 	   free_val_t(&ts->value[i]);
 	}
+	g_free(ts->seen.block);
 	tsnext = ts->next;
 	amfree(ts);
     }
@@ -6134,6 +6187,7 @@ config_uninit(void)
 	for(i=0; i<POLICY_POLICY; i++) {
 	   free_val_t(&po->value[i]);
 	}
+	g_free(po->seen.block);
 	ponext = po->next;
 	amfree(po);
     }
@@ -6144,6 +6198,7 @@ config_uninit(void)
 	for(i=0; i<STORAGE_STORAGE; i++) {
 	   free_val_t(&st->value[i]);
 	}
+	g_free(st->seen.block);
 	stnext = st->next;
 	amfree(st);
     }
@@ -6601,7 +6656,7 @@ update_derived_values(
 		    strncpy(new_cf+len+strlen(changern)+strlen(cf+2),"\0",1);
 		    free_val_t(&dc->value[CHANGER_CONFIG_CHANGERFILE]);
 		    conf_init_str(&dc->value[CHANGER_CONFIG_CHANGERFILE], new_cf);
-		    changerfile = new_cf;
+		    g_free(new_cf);
 		}
 		if ((cf = strstr(tpchanger, "$t"))) {
 		    char *new_tp = g_malloc(strlen(tpchanger)+strlen(changern)-1);
@@ -6612,7 +6667,7 @@ update_derived_values(
 		    strncpy(new_tp+len+strlen(changern)+strlen(cf+2),"\0",1);
 		    free_val_t(&dc->value[CHANGER_CONFIG_TPCHANGER]);
 		    conf_init_str(&dc->value[CHANGER_CONFIG_TPCHANGER], new_tp);
-		    tpchanger = new_tp;
+		    g_free(new_tp);
 		}
 	    }
 	}
@@ -6710,6 +6765,7 @@ update_derived_values(
 		conf_init_str(&st->value[STORAGE_TAPEPOOL], conf_name);
 	    } else {
 		char *pool = storage_get_tapepool(st);
+		gboolean freepool = FALSE;
 		char *p;
 		if ((p = strstr(pool, "$o"))) {
 		    char *org = getconf_str(CNF_ORG);
@@ -6722,6 +6778,7 @@ update_derived_values(
 		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
 		    pool = new_pool;
+		    freepool = TRUE;
 		}
 		if ((p = strstr(pool, "$c"))) {
 		    char *new_pool = g_malloc(strlen(pool)+strlen(conf_name)-1);
@@ -6732,7 +6789,10 @@ update_derived_values(
 		    strncpy(new_pool+len+strlen(conf_name)+strlen(p+2),"\0",1);
 		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    if (freepool)
+			g_free(pool);
 		    pool = new_pool;
+		    freepool = TRUE;
 		}
 		if ((p = strstr(pool, "$r"))) {
 		    char *storagen = storage_name(st);
@@ -6744,7 +6804,13 @@ update_derived_values(
 		    strncpy(new_pool+len+strlen(storagen)+strlen(p+2),"\0",1);
 		    free_val_t(&st->value[STORAGE_TAPEPOOL]);
 		    conf_init_str(&st->value[STORAGE_TAPEPOOL], new_pool);
+		    if (freepool)
+			g_free(pool);
 		    pool = new_pool;
+		    freepool = TRUE;
+		}
+		if (freepool) {
+		    g_free(pool);
 		}
 	    }
 	}

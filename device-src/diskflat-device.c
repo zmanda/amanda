@@ -519,6 +519,12 @@ diskflat_clear_and_prepare_label(
 	return FALSE;
     }
     dumpfile_free(dself->volume_header);
+    if (ftruncate(vself->open_file_fd, VFS_DEVICE_LABEL_SIZE) == -1) {
+	device_set_error(dself,
+	    g_strdup_printf("ftruncate of '%s' failed: %s", self->filename, strerror(errno)),
+	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
+    }
     dself->header_block_size = VFS_DEVICE_LABEL_SIZE;
     dself->volume_header = label_header;
     dself->file = 0;

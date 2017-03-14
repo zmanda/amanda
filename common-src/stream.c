@@ -44,7 +44,7 @@ static void try_socksize(int sock, int which, size_t size);
 static int stream_client_internal(const char *src_ip,
 		const char *hostname, in_port_t port,
 		size_t sendsize, size_t recvsize, in_port_t *localport,
-		int nonblock, int priv);
+		int nonblock, int priv, char **stream_msg);
 
 int
 stream_server(
@@ -66,6 +66,7 @@ stream_server(
     int *portrange;
     socklen_t_equiv socklen;
     int socket_family;
+    char *bind_msg = NULL;
 
     *portp = USHRT_MAX;				/* in case we error exit */
     if (family == -1) {
@@ -128,6 +129,7 @@ stream_server(
      * is within the range it requires.
      */
     for (retries = 0; ; retries++) {
+	amfree(bind_msg);
 	if (priv) {
 	    portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
 	} else {
@@ -136,10 +138,13 @@ stream_server(
 
 	if (portrange[0] != 0 && portrange[1] != 0) {
 	    if ((new_s = bind_portrange(server_socket, &server, (in_port_t)portrange[0],
-			       (in_port_t)portrange[1], "tcp", priv)) >= 0)
+			       (in_port_t)portrange[1], "tcp", priv, &bind_msg)) >= 0)
 		goto out;
-	    g_debug(_("stream_server: Could not bind to port in range: %d - %d."),
-		      portrange[0], portrange[1]);
+	    g_debug("stream_server: Could not bind to port in range: %d - %d: %s",
+		      portrange[0], portrange[1], bind_msg);
+	    if (new_s == -1) {
+		break;
+	    }
 	} else {
 	    socklen = SS_LEN(&server);
 	    new_s = server_socket;
@@ -152,14 +157,15 @@ stream_server(
 	if (retries >= BIND_CYCLE_RETRIES)
 	    break;
 
-	g_debug(_("stream_server: Retrying entire range after 10 second delay."));
+	g_debug(_("stream_server: Retrying entire range after 15 second delay."));
 
 	sleep(15);
     }
 
     save_errno = errno;
     g_debug(_("stream_server: bind(in6addr_any) failed: %s"),
-		  strerror(save_errno));
+		  bind_msg);
+    g_free(bind_msg);
     aclose(server_socket);
     errno = save_errno;
     return -1;
@@ -217,7 +223,8 @@ stream_client_addr(
     size_t recvsize,
     in_port_t *localport,
     int nonblock,
-    int priv)
+    int priv,
+    char **stream_msg)
 {
     sockaddr_union svaddr, claddr;
     int save_errno = 0;
@@ -251,7 +258,7 @@ stream_client_addr(
     }
     client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
 				      (in_port_t)portrange[1],
-				      "tcp", &svaddr, nonblock, priv);
+				      "tcp", &svaddr, nonblock, priv, stream_msg);
     save_errno = errno;
 
     if (client_socket < 0) {
@@ -278,7 +285,8 @@ stream_client_internal(
     size_t recvsize,
     in_port_t *localport,
     int nonblock,
-    int priv)
+    int priv,
+    char **stream_msg)
 {
     sockaddr_union svaddr, claddr;
     int save_errno = 0;
@@ -327,8 +335,13 @@ stream_client_internal(
 	}
 	client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
 					  (in_port_t)portrange[1],
-					  "tcp", &svaddr, nonblock, priv);
+					  "tcp", &svaddr, nonblock, priv, stream_msg);
 	save_errno = errno;
+	if (*stream_msg) {
+	    aclose(client_socket);
+	    client_socket = -1;
+	    break;
+	}
 	if (client_socket >= 0)
 	    break;
     }
@@ -360,7 +373,8 @@ stream_client_privileged(
     size_t sendsize,
     size_t recvsize,
     in_port_t *localport,
-    int nonblock)
+    int nonblock,
+    char **stream_msg)
 {
     return stream_client_internal(src_ip,
 				  hostname,
@@ -369,7 +383,7 @@ stream_client_privileged(
 				  recvsize,
 				  localport,
 				  nonblock,
-				  1);
+				  1, stream_msg);
 }
 
 int
@@ -380,7 +394,8 @@ stream_client(
     size_t sendsize,
     size_t recvsize,
     in_port_t *localport,
-    int nonblock)
+    int nonblock,
+    char **stream_msg)
 {
     return stream_client_internal(src_ip,
 				  hostname,
@@ -389,7 +404,7 @@ stream_client(
 				  recvsize,
 				  localport,
 				  nonblock,
-				  0);
+				  0, stream_msg);
 }
 
 /* don't care about these values */

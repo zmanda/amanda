@@ -49,20 +49,23 @@ int stream_client_addr(const char *src_ip,
 		       size_t recvsize,
 		       in_port_t *localport,
 		       int nonblock,
-		       int priv);
+		       int priv,
+		       char **stream_msg);
 int stream_client_privileged(const char *src_ip,
 				const char *hostname,
 				in_port_t port,
 				size_t sendsize,
 				size_t recvsize,
 				in_port_t *localport,
-				int nonblock);
+				int nonblock,
+				char **stream_msg);
 int stream_client(const char *src_ip,
 		     const char *hostname,
 		     in_port_t port,
 		     size_t sendsize,
 		     size_t recvsize,
 		     in_port_t *localport,
-		     int nonblock);
+		     int nonblock,
+		     char **stream_msg);
 
 #endif

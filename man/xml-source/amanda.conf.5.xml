@@ -2356,13 +2356,18 @@ The type of backup to perform. Valid values are:</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] [ <amkeyword>hidden</amkeyword> | <amkeyword>visible</amkeyword> ] <amtype>string</amtype> <amtype>string</amtype>+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
  party software to store information in the configuration file.
 Both strings are quoted; the first string contains the name of
 the property to set, and the others contains its values.
-<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.
+<amkeyword>append</amkeyword> keyword append the values to the list of values for that property.</para>
+<para>With <amkeyword>hidden</amkeyword> (the default), the property are not
+put in the amanda dump header and in the log/debug files.  With
+<amkeyword>visible</amkeyword>, they are put in the amanda dump header and
+in the log/debug files. Use <amkeyword>hidden</amkeyword> if the property
+must be kept secret.
 </para>
   </listitem>
   </varlistentry>

@@ -1,3 +1,16 @@
+                Release Notes for amanda-3.4.3
+
+* fix MAJOR issue: amdump can reuse the same tape in the same run
+* amtape slot
+    - add drive selection
+* compile/link with libressl
+* fix portability issue
+* fix for NetBSD
+* fix 'Device busy' problem
+* fix planner crash
+* fix setregid call
+
+
                 Release Notes for amanda-3.4.2
 
 * ambsdtar

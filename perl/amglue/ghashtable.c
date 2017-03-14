@@ -85,6 +85,7 @@ foreach_fn_property(gpointer key_p, gpointer value_p, gpointer user_data_p)
     SV         *val;
 
     hv_store(property_hv, "append", strlen("append"), newSViv(property->append), 0);
+    hv_store(property_hv, "visible", strlen("visible"), newSViv(property->visible), 0);
     hv_store(property_hv, "priority", strlen("priority"), newSViv(property->priority), 0);
     for(value=property->values; value != NULL; value = value->next) {
 	av_push(list, newSVpv(value->data, 0));

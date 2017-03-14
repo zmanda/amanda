@@ -508,6 +508,56 @@ tcpm_stream_read_cancel(
 }
 
 /*
+ * Pause all read requests on the connection.
+ */
+void
+tcpm_stream_pause(
+    void *	s)
+{
+    struct sec_stream *rs = s;
+    struct tcp_conn *rc = rs->rc;
+
+    assert(rs != NULL);
+
+    if (rc->ev_read_refcnt == 0) {
+	return;
+    }
+    if (!rc->ev_read) {
+	return;
+    }
+    event_release(rc->ev_read);
+    rc->ev_read = NULL;
+    rc->paused = TRUE;
+}
+
+/*
+ * Resume all read requests on the connection.
+ */
+void
+tcpm_stream_resume(
+    void *	s)
+{
+    struct sec_stream *rs = s;
+    struct tcp_conn *rc = rs->rc;
+
+    assert(rs != NULL);
+    if (!rc->paused) {
+	return;
+    }
+    rc->paused = FALSE;
+
+    if (rc->ev_read_refcnt == 0) {
+	return;
+    }
+    if (rc->ev_read) {
+	return;
+    }
+    rc->ev_read = event_create((event_id_t)rc->read, EV_READFD,
+		sec_tcp_conn_read_callback, rc);
+    event_activate(rc->ev_read);
+}
+
+/*
  * Transmits a chunk of data over a rsh_handle, adding
  * the necessary headers to allow the remote end to decode it.
  */
@@ -1320,6 +1370,7 @@ tcp1_stream_client(
 {
     struct sec_stream *rs = NULL;
     struct sec_handle *rh = h;
+    char *msg = NULL;
 
     assert(rh != NULL);
 
@@ -1338,7 +1389,14 @@ tcp1_stream_client(
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
 	rh->rc->read = stream_client(NULL, rh->hostname, (in_port_t)id,
-			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0);
+			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0, &msg);
+	if (msg) {
+	    security_seterror(&rh->sech,
+			      "can't connect stream to %s port %d: %s",
+			      rh->hostname, id, msg);
+	    g_free(msg);
+	    return NULL;
+	}
 	if (rh->rc->read < 0) {
 	    security_seterror(&rh->sech,
 			      _("can't connect stream to %s port %d: %s"),

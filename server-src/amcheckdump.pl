@@ -126,19 +126,6 @@ sub checkdump_done {
 Amanda::MainLoop::call_later(sub { main(\&checkdump_done); });
 Amanda::MainLoop::run();
 
-if ($exit_status == 0) {
-    $checkdump->user_message(Amanda::CheckDump::Message->new(
-                    source_filename => __FILE__,
-                    source_line     => __LINE__,
-                    code            => 2700006,
-                    severity        => $Amanda::Message::SUCCESS));
-} else {
-    $checkdump->user_message(Amanda::CheckDump::Message->new(
-                    source_filename => __FILE__,
-                    source_line     => __LINE__,
-                    code            => 2700007,
-                    severity        => $Amanda::Message::ERROR));
-}
 Amanda::Util::finish_application();
 exit($exit_status);
 

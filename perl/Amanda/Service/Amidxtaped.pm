@@ -206,12 +206,13 @@ use Amanda::Recovery::Clerk;
 
 use Sys::Hostname;
 use IPC::Open2;
+use POSIX qw( strftime );
 
 use Amanda::Debug qw( debug info warning );
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Util qw( :constants match_disk match_host );
 use Amanda::Feature;
-use Amanda::Config qw( :init :getconf );
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Storage;
 use Amanda::Changer;
 use Amanda::Recovery::Scan;
@@ -227,6 +228,24 @@ use Amanda::Restore;
 # Note that this class performs its control IO synchronously.  This is adequate
 # for this service, as it never receives unsolicited input from the remote
 # system.
+
+sub new {
+    my $class = shift;
+
+    my $self = $class->SUPER::new(@_);
+
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
+    my @now = localtime;
+    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'pid'} = $$;
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("amidxtaped", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+    $self->{'message_filename'} = "amidxtaped.$timestamp";
+    $self->{'message_pathname'} = "$logdir/amidxtaped.$timestamp";
+    return $self;
+
+}
 
 sub run {
     my $self = shift;

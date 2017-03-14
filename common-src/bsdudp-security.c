@@ -83,6 +83,8 @@ const security_driver_t bsdudp_security_driver = {
     tcpm_stream_read_sync,
     tcpm_stream_read_to_shm_ring,
     tcpm_stream_read_cancel,
+    tcpm_stream_pause,
+    tcpm_stream_resume,
     sec_close_connection_none,
     NULL,
     NULL,
@@ -124,6 +126,7 @@ bsdudp_connect(
     struct addrinfo *res = NULL, *res_addr;
     int result_bind;
     char *service;
+    char *bind_msg = NULL;
 
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
@@ -173,7 +176,10 @@ bsdudp_connect(
 	    dgram_zero(&netfd6.dgram);
 
 	    result_bind = dgram_bind(&netfd6.dgram,
-				     res_addr->ai_addr->sa_family, &port, 1);
+				     res_addr->ai_addr->sa_family, &port, 1, &bind_msg);
+	    if (bind_msg != 0) {
+		continue;
+	    }
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -212,7 +218,10 @@ bsdudp_connect(
 	    dgram_zero(&netfd4.dgram);
 
 	    result_bind = dgram_bind(&netfd4.dgram,
-				     res_addr->ai_addr->sa_family, &port, 1);
+				     res_addr->ai_addr->sa_family, &port, 1, &bind_msg);
+	    if (bind_msg != 0) {
+		continue;
+	    }
 	    if (result_bind != 0) {
 		continue;
 	    }
@@ -239,6 +248,15 @@ bsdudp_connect(
 	}
     }
 
+    if (bind_msg) {
+	g_debug("%s", bind_msg);
+	security_seterror(&bh->sech, "%s",  bind_msg);
+	(*fn)(arg, &bh->sech, S_ERROR);
+	amfree(canonname);
+	if (res) freeaddrinfo(res);
+	g_free(bind_msg);
+	return;
+    }
     if (res_addr == NULL) {
 	dbprintf(_("Can't bind a socket to connect to %s\n"), hostname);
 	security_seterror(&bh->sech,

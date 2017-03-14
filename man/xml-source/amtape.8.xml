@@ -77,7 +77,7 @@ setting the current slot.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>slot</command> <arg choice='plain'><replaceable>slot</replaceable></arg></term>
+<term><command>slot</command> <arg choice='plain'><replaceable>slot</replaceable></arg>  <arg choice='opt'><command>drive</command> <arg choice='plain'><replaceable>drive</replaceable></arg></arg></term>
 <listitem>
 
 <para>Load the volume in the given slot, also setting the current slot.  The

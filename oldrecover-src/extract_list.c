@@ -1350,6 +1350,7 @@ extract_files_setup(
     char *clean_datestamp, *ch, *ch1;
     char *our_feature_string = NULL;
     char *tt = NULL;
+    char *stream_msg = NULL;
 
     service_name = "amidxtape";
 
@@ -1367,9 +1368,13 @@ extract_files_setup(
 						  0,
 						  STREAM_BUFSIZE,
 						  &my_port,
-						  0);
-    if (tape_control_sock < 0)
-    {
+						  0, &stream_msg);
+    if (stream_msg) {
+	g_printf(_("cannot connect to %s: %s\n"), tape_server_name, stream_msg);
+	g_free(stream_msg);
+	return -1;
+    }
+    if (tape_control_sock < 0) {
 	g_printf(_("cannot connect to %s: %s\n"), tape_server_name, strerror(errno));
 	return -1;
     }
@@ -1535,6 +1540,7 @@ extract_files_setup(
 	char buffer[32768+1];
 	in_port_t data_port = (in_port_t)-1;
         ssize_t nread;
+	char *stream_msg = NULL;
 
         nread = read(tape_control_sock, buffer, sizeof(buffer)-1);
 
@@ -1558,9 +1564,13 @@ extract_files_setup(
 						  0,
 						  STREAM_BUFSIZE,
 						  &my_data_port,
-						  0);
-	if(tape_data_sock == -1){
-	    error(_("Unable to make data connection to server: %s\n"),
+						  0, &stream_msg);
+	if (stream_msg) {
+	    error("Unable to make data connection to server: %s\n", stream_msg);
+	    /*NOTREACHED*/
+	}
+	if (tape_data_sock == -1) {
+	    error("Unable to make data connection to server: %s\n",
 		      strerror(errno));
 	    /*NOTREACHED*/
 	}

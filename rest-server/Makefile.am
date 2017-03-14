@@ -56,7 +56,23 @@ RestServerbin_DATA = bin/app.pl \
 		     bin/app-dancer2.pl
 RestServerlibAmandadir = $(RestServerdir)/lib/Amanda
 RestServerlibAmanda_DATA = lib/Amanda/Rest.pm
-
+else
+EXTRA_DIST += config.yml \
+	      config-dancer/config.yml \
+	      environments/development.yml \
+	      environments/production.yml \
+	      public/404.html \
+	      public/500.html \
+	      public/dispatch.cgi \
+	      public/dispatch.fcgi \
+	      public/favicon.ico \
+	      public/css/error.css \
+	      public/css/style.css \
+	      public/images/perldancer-bg.jpg \
+	      public/images/perldancer.jpg \
+	      public/javascripts/jquery.js \
+	      views/index.tt \
+	      views/layouts/main.tt
 endif
 EXTRA_DIST += $(RestServer_DATA) \
 	      $(RestServerconfigdancer_DATA) \

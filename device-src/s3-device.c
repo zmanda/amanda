@@ -2467,7 +2467,7 @@ catalog_open(
     /* create the directory */
     filename = g_strdup_printf("bucket-%s", self->bucket);
     dirname  = config_dir_relative(filename);
-    if (mkdir(dirname, 0700) == -1i && errno != EEXIST) {
+    if (mkdir(dirname, 0700) == -1 && errno != EEXIST) {
 	g_debug("Can't create catalog directory '%s': %s",
 		dirname, strerror(errno));
 	return FALSE;

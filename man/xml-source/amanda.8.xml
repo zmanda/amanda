@@ -233,7 +233,7 @@ configuration files for quick reference.</para>
 </refsect1>
 
 <refsect1><title>CONFIGURATION FILES</title>
-<para>There are four user-editable files that control the behavior of Amanda.
+<para>There are five user-editable files that control the behavior of Amanda.
 </para>
 <para>
 The first two are &amconf; and &amclientconf;,

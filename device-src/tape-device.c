@@ -1609,6 +1609,8 @@ tape_device_seek_block (Device * d_self, guint64 block) {
 static gboolean
 tape_device_eject (Device * d_self) {
     TapeDevice * self;
+    gboolean eject_opened_tape = FALSE;
+    gboolean result = FALSE;
 
     self = TAPE_DEVICE(d_self);
 
@@ -1621,6 +1623,7 @@ tape_device_eject (Device * d_self) {
          * approppriate error status */
         if (self->fd == -1)
             return FALSE;
+	eject_opened_tape = TRUE;
     }
 
     /* Rewind it. */
@@ -1630,18 +1633,25 @@ tape_device_eject (Device * d_self) {
 		       self->private->device_filename, strerror(errno)),
 	      DEVICE_STATUS_DEVICE_ERROR
 	    | DEVICE_STATUS_VOLUME_ERROR);
-	return FALSE;
+	result = FALSE;
+	goto eject_finish;
     }
 
-    if (tape_offl(self->fd))
-	return TRUE;
+    if (tape_offl(self->fd)) {
+	result = TRUE;
+	goto eject_finish;
+    }
 
     device_set_error(d_self,
 	g_strdup_printf(_("Error ejecting device %s: %s\n"),
 		   self->private->device_filename, strerror(errno)),
 	  DEVICE_STATUS_DEVICE_ERROR);
 
-    return FALSE;
+eject_finish:
+    if (eject_opened_tape) {
+	device_finish(d_self);
+    }
+    return result;
 }
 
 static gboolean

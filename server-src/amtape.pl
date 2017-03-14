@@ -382,8 +382,8 @@ sub {
     return invoke_subcommand("slot", $finished_cb, "current");
 });
 
-subcommand("slot", "slot <slot>",
-	   "load the volume in slot <slot>; <slot> can also be 'current', 'next', 'first', or 'last'",
+subcommand("slot", "slot <slot> [drive <drive>]",
+	   "load the volume in slot <slot> in drive <drive>; <slot> can also be 'current', 'next', 'first', or 'last'",
 sub {
     my ($finished_cb, @args) = @_;
     my @slotarg;
@@ -399,8 +399,12 @@ sub {
     # 'current' or 'next' ..  when we have a changer using such slot names,
     # this subcommand will need to support a --literal flag
 
-    return usage($finished_cb) unless (@args == 1);
+    return usage($finished_cb) unless (@args == 1 || @args == 3);
     my $slot = shift @args;
+    my $drive = shift @args;
+    if (defined $drive) {	# check drive keyword
+	$drive = shift @args;
+    }
 
     ($storage, $chg) = load_changer($finished_cb) or return;
 
@@ -436,7 +440,7 @@ sub {
     };
 
     step do_load => sub {
-	$chg->load(@slotarg, set_current => 1,
+	$chg->load(@slotarg, drive => $drive, set_current => 1,
 	    res_cb => $steps->{'done_load'});
     };
 

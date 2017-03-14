@@ -23,4 +23,5 @@ message_t *check_security_file_permission_message(void);
 
 message_t *security_allow_program_as_root(char *name, char *path);
 gboolean security_allow_to_restore(void);
+gboolean security_allow_bind(int s, sockaddr_union *addr);
 
