@@ -1,4 +1,7 @@
 2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/ambackupd.pl: Do incremental backup
+
+2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Cleanup.pm: Improvement
 
 2017-03-10  Jean-Louis Martineau <JMartineau@carbonite.com>

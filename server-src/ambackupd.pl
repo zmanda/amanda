@@ -129,7 +129,6 @@ sub setup_streams {
 	if ($cfgerr_level >= $CFGERR_ERRORS) {
 	    push @$errors, "Errors processing disklist";
 	    $main::exit_status = 1;
-	    return;
 	}
     }
 
@@ -142,6 +141,7 @@ sub setup_streams {
     my @result_messages;
     my $hostname = $peer;
     my $cmd_line = $req->{'lines'}[1];
+  if (!@$errors) {
     if (!$cmd_line) {
 	push @$errors, "No command specified in REQ packet";
     } else {
@@ -226,43 +226,117 @@ sub setup_streams {
 	    if ($host) {
 		my $matched = 0;
 		$disk = Amanda::Disklist::get_disk($hostname, $diskname);
-		if ($disk and
-		    dumptype_getconf($disk->{'config'}, $DUMPTYPE_STRATEGY) != $DS_SKIP and
-		    dumptype_getconf($disk->{'config'}, $DUMPTYPE_PROGRAM) eq "APPLICATION") {
-		    if ($self->{'their_features'}->has($Amanda::Feature::fe_req_xml)) {
-			my $program = dumptype_getconf($disk->{'config'},
-						       $DUMPTYPE_PROGRAM);
-			my $o = $disk->xml_optionstr();
-			my $connline;
-			if ($self->{'their_features'}->has($Amanda::Feature::fe_sendbackup_stream_state)) {
-			    $connline = $self->connect_streams('DATA' => 'rw',
-							       'MESG' => 'rw',
-							       'INDEX' => 'rw',
-							       'STATE' => 'rw');
+		if ($disk) {
+		    my $program = dumptype_getconf($disk->{'config'}, $DUMPTYPE_PROGRAM);
+		    if ($program eq "APPLICATION") {
+			my $strategy = dumptype_getconf($disk->{'config'}, $DUMPTYPE_STRATEGY);
+			if ($strategy != $DS_SKIP) {
+			    if ($self->{'their_features'}->has($Amanda::Feature::fe_req_xml)) {
+				my $skip_full = dumptype_getconf($disk->{'config'}, $DUMPTYPE_SKIP_FULL);
+				my $skip_incr = dumptype_getconf($disk->{'config'}, $DUMPTYPE_SKIP_INCR);
+				my $dumpcycle = 0+dumptype_getconf($disk->{'config'}, $DUMPTYPE_DUMPCYCLE);
+				my $infodir = getconf($CNF_INFOFILE);
+				my $ci = Amanda::Curinfo->new($infodir);
+				my $info = $ci->get_info($hostname, $diskname);
+				my $level;
+debug("info " . Data::Dumper::Dumper($info));
+				if (!$info) {
+				    $level = 0;
+				} else {
+				    my $next_level0;
+				    my $last_level = $info->{'last_level'};
+				    $last_level = 0 if !defined $last_level;
+				    $last_level += 0;
+				    if ($info->isset($Amanda::Curinfo::Info::FORCE_FULL)) {
+					$level = 0;
+				    }
+				    if ($info->isset($Amanda::Curinfo::Info::FORCE_LEVEL_1)) {
+					$level = 1;
+				    }
+				    if ($strategy == $DS_NOFULL){
+					$level = 1;
+				    } elsif($strategy == $DS_INCRONLY) {
+					if ($info->isset($Amanda::Curinfo::Info::FORCE_FULL)) {
+					    $level = 1;
+					    $self->{"remove_force_full"} = 1;
+					} else {
+					    $next_level0 = 1;
+					}
+				    } elsif ($strategy == $DS_NOINC) {
+					$level = 0;
+				    } else { #$strategy == $DS_STANDARD
+					if (!defined $info->{'inf'}->[0]->{'date'} || $info->{'inf'}->[0]->{'date'} < 0) {
+					    $next_level0 = 0;
+					} else {
+					    my $time0 = $info->{'inf'}->[0]->{'date'};
+					    my $today = time;
+					    my $days_diff = int((($today - $time0) + (86400/2)) / 86400);
+					    $next_level0 = $dumpcycle - $days_diff;
+					}
+				    }
+				    if (!defined $level) {
+					if ($next_level0 > 0) {
+					    if ($info->isset($Amanda::Curinfo::Info::FORCE_BUMP)) {
+						$level = $last_level + 1;
+					    } elsif ($info->isset($Amanda::Curinfo::Info::FORCE_NO_BUMP)) {
+						$level = $last_level;
+					    } else {
+						# should check server estimate to find if we must bump
+						$level = $last_level;
+					    }
+					} else {
+					    $level = 0;
+					}
+				    }
+				}
+				$self->{'level'} = $level;
+				if ($level == 0 && $skip_full) {
+				    push @$errors, "Skipping because of SKIP-FULL";
+				} elsif ($level != 0 && $skip_incr) {
+				    push @$errors, "Skipping because of SKIP-INCR";
+				} else {
+				    my $o = $disk->xml_optionstr();
+				    my $connline;
+				    if ($self->{'their_features'}->has($Amanda::Feature::fe_sendbackup_stream_state)) {
+					$connline = $self->connect_streams('DATA' => 'rw',
+								       'MESG' => 'rw',
+								       'INDEX' => 'rw',
+								       'STATE' => 'rw');
+				    } else {
+					$connline = $self->connect_streams('DATA' => 'rw',
+								       'MESG' => 'rw',
+								       'INDEX' => 'rw');
+				    }
+				    $rep .= "$connline\n";
+				    $rep .= "GOPTIONS features=" . $self->{'my_features'}->as_string() .
+					";maxdumps=$host->{'maxdumps'}" .
+					";hostname=$hostname" .
+					";config=$req->{'options'}{'config'}\n";
+				    my $dle .= "<dle>\n";
+				    $dle .= "  <program>APPLICATION</program>\n";
+				    $dle .= $disk->xml_application($self->{'their_features'});
+				    $dle .= "  " . Amanda::Util::amxml_format_tag("disk", $disk->{'name'}) . "\n";
+				    if ($disk->{'device'}) {
+					$dle .= "  " . Amanda::Util::amxml_format_tag("diskdevice", $disk->{'device'}) . "\n";
+				    }
+				    $dle .= "  <level>$self->{'level'}</level>\n";
+				    $dle .= $o;
+				    $dle .= "</dle>";
+				    $rep .= $dle;
+				    $self->{'dle_str'} = $dle;
+				    $backup = 1;
+				}
+			    } else {
+				push @$errors, "ambackupd wortks only with newer amanda client";
+			    }
 			} else {
-			    $connline = $self->connect_streams('DATA' => 'rw',
-							       'MESG' => 'rw',
-							       'INDEX' => 'rw');
+			    push @$errors, "No backup do to, strategy SKIP is set";
 			}
-			$rep .= "$connline\n";
-			$rep .= "GOPTIONS features=" . $self->{'my_features'}->as_string() .
-			   ";maxdumps=$host->{'maxdumps'}" .
-			   ";hostname=$hostname" .
-			   ";config=$req->{'options'}{'config'}\n";
-			my $dle .= "<dle>\n";
-			$dle .= "  <program>APPLICATION</program>\n";
-			$dle .= $disk->xml_application($self->{'their_features'});
-			$dle .= "  " . Amanda::Util::amxml_format_tag("disk", $disk->{'name'}) . "\n";
-			if ($disk->{'device'}) {
-			    $dle .= "  " . Amanda::Util::amxml_format_tag("diskdevice", $disk->{'device'}) . "\n";
-			}
-			$dle .= "  <level>0</level>\n";
-			$dle .= $o;
-			$dle .= "</dle>";
-			$rep .= $dle;
-			$self->{'dle_str'} = $dle;
-			$backup = 1;
 		    } else {
+			push @$errors, "ambackup works only with application, it doesn't works with GNUTAR or DUMP";
+			if ($program eq "GNUTAR") {
+			    push @$errors, "Use the 'amgtar' application instead og the 'GNUTAR' program";
+			}
 		    }
 		    $matched = 1;
 		}
@@ -276,6 +350,7 @@ sub setup_streams {
 	    push @$errors, "Invalid command '$cmd' specified in REQ packet";
 	}
     }
+  }
   if (@result_messages) {
     if (@$errors || @{$req->{'errors'}}) {
 	for my $err (@$errors) {
@@ -360,7 +435,7 @@ sub do_backup {
 	$self->{'hdr'}->{'name'} = $self->{'hostname'};
 	$self->{'hdr'}->{'disk'} = $self->{'diskname'};
 	$self->{'hdr'}->{'blocksize'} = Amanda::Holding::DISK_BLOCK_BYTES;
-	$self->{'hdr'}->{'dumplevel'} = 0;
+	$self->{'hdr'}->{'dumplevel'} = $self->{'level'};
 	#$self->{'hdr'}->{'compressed'} =
 	#$self->{'hdr'}->{'encrypted'} =
 	$self->{'hdr'}->{'dle_str'} = $self->{'dle_str'};
