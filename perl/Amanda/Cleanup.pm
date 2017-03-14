@@ -121,27 +121,9 @@ sub cleanup {
     $Amanda_process->load_ps_table();
 
     $Amanda_process->scan_log($self->{'logfile'});
+    return if (!-e $self->{'logfile'});
     $Amanda_process->add_child();
 
-    if ($self->{'kill'}) {
-	# Add the notes to the log file
-	Amanda::Logfile::set_logname($self->{'logfile'});
-	foreach my $note (@{$self->{'notes'}}) {
-	    log_add($L_INFO, $note);
-	}
-
-	# Add a line the the amdump file
-	my $amdump_log = $self->{'logfile'};
-	$amdump_log =~ s/log\.(\d\d\d\d\d\d\d\d\d\d\d\d\d\d)\.0/amdump.$1/;
-	if (-e $amdump_log) {
-	    open(my $amdump_log_file, ">>", $amdump_log)
-		or die("could not open amdump log file '$amdump_log'}': $!");
-	    print {$amdump_log_file} "amcleanup: aborted by amcleanup\n";
-	    close($amdump_log_file);
-	} else {
-	    debug("amdump log '$amdump_log' does not exists");
-	}
-    }
     my $nb_amanda_process = $Amanda_process->count_process();
     if ($nb_amanda_process > 0) {
 	if ($self->{'process_alive'}) {
@@ -156,13 +138,32 @@ sub cleanup {
 			pid		=> $Amanda_process->{master_pid},
 			config_name	=> $config_name));
 	    return $self->{'result_messages'};
-	} else { #kill the processes
+	} else { # kill the processes
+	    # Add the notes to the log file
+	    Amanda::Logfile::set_logname($self->{'logfile'});
+	    foreach my $note (@{$self->{'notes'}}) {
+		log_add($L_INFO, $note);
+	    }
+
+	    # Add a line the the amdump file
+	    my $amdump_log = $self->{'logfile'};
+	    $amdump_log =~ s/log\.(\d\d\d\d\d\d\d\d\d\d\d\d\d\d)\.0/amdump.$1/;
+	    if (-e $amdump_log) {
+		open(my $amdump_log_file, ">>", $amdump_log)
+		    or die("could not open amdump log file '$amdump_log'}': $!");
+		print {$amdump_log_file} "amcleanup: aborted by amcleanup\n";
+		close($amdump_log_file);
+	    } else {
+		debug("amdump log '$amdump_log' does not exists");
+	    }
+
 	    $self->user_message(Amanda::Cleanup::Message->new(
 			source_filename	=> __FILE__,
 			source_line	=> __LINE__,
 			code		=> 3400001,
 			severity	=> $Amanda::Message::INFO,
 			nb_amanda_process => $nb_amanda_process));
+
 	    Amanda::Debug::debug("Killing amanda process");
 	    $Amanda_process->kill_process("SIGTERM");
 	    my $count = 5;
@@ -193,18 +194,13 @@ sub cleanup {
 			severity	=> $pp == 0 ? $Amanda::Message::INFO : $Amanda::Message::ERROR,
 			pids		=> $pids,
 			nb_processes	=> $pp));
+
+	    # rotate log
+	    Amanda::Debug::debug("Processing log file");
+	    $self->run_system(0, $self->{'amreport'}, $config_name, "--from-amdump");
+
+	    $self->run_system(1, $self->{'amtrmidx'}, $config_name);
 	}
-    }
-
-    # rotate log
-    if (-f $self->{'logfile'}) {
-	Amanda::Debug::debug("Processing log file");
-	$self->run_system(0, $self->{'amreport'}, $config_name, "--from-amdump");
-
-	my $ts = Amanda::Logfile::get_current_log_timestamp();
-	Amanda::Logfile::log_rename($ts);
-
-	$self->run_system(1, $self->{'amtrmidx'}, $config_name);
     } else {
 	$self->user_message(Amanda::Cleanup::Message->new(
 			source_filename	=> __FILE__,
