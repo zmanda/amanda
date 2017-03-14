@@ -1293,6 +1293,7 @@ char *optionstr(disk_t *dp)
  
 typedef struct {
     am_feature_t  *features;
+    int		   show_hidden;
     char          *result;
 } xml_app_t;
 
@@ -1308,6 +1309,9 @@ static void xml_property(
     GSList     *value;
     GString    *strbuf;
 
+    if (!xml_app->show_hidden && !property->visible) {
+	return;
+    }
     strbuf = g_string_new(xml_app->result);
 
     tmp = amxml_format_tag("name", (char *)key_p);
@@ -1521,6 +1525,7 @@ xml_dumptype_properties(
 
     xml_dumptype.result = g_strdup("");
     xml_dumptype.features = NULL;
+    xml_dumptype.show_hidden = 0;
     if (dp && dp->config) {
 	g_hash_table_foreach(dumptype_get_property(dp->config), xml_property,
 			     &xml_dumptype);
@@ -1683,6 +1688,7 @@ xml_application(
     tmp = amxml_format_tag("plugin", p);
 
     xml_app.result = g_strdup_printf("  <backup-program>\n    %s\n", tmp);
+    xml_app.show_hidden = 1;
     g_free(tmp);
 
     /*
@@ -1772,6 +1778,7 @@ xml_scripts(
          */
 
 	xml_app.result = g_strdup("");
+	xml_app.show_hidden = 1;
 	g_hash_table_foreach(proplist, xml_property, &xml_app);
         tmpbuf = g_string_new(xml_app.result);
         g_free(xml_app.result);

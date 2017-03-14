@@ -235,6 +235,7 @@ typedef struct exinclude_s {
 
 typedef struct {
     int append;
+    int visible;
     int priority;
     GSList* values;
     seen_t seen;

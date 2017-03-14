@@ -1,4 +1,14 @@
 2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Parse hidden|visible on dumptype property
+	* common-src/conffile.h (property_t) : Add visible field
+	* man/xml-source/amanda.conf.5.xml: Document the new hidden|visible
+	  keyword
+	* perl/Amanda/Config.swg: Add the visible field
+	* perl/amglue/ghashtable.c: Add the visible field
+	* server-src/diskfile.c: Do not add hidden dumptype property to the
+	  xml string
+
+2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/ambackupd.pl: Do incremental backup
 
 2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
