@@ -1,4 +1,7 @@
 2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Curinfo/Info.pm: Fix writting the stats line
+
+2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Correctly initialize the visible property
 	  field
 	* installcheck/Amanda_Config.pl: Check visible field
