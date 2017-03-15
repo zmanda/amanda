@@ -112,12 +112,15 @@ is($cfg_result, $CFGERR_OK,
 
 is_deeply(getconf($CNF_PROPERTY), { "client-prop1" => { priority => 1,
 							append   => 0,
+							visible  => 0,
 							values => [ "foo" ]},
 				    "client-prop" => { priority => 0,
 						       append   => 1,
+						       visible  => 0,
 						       values => [ "yep", "bar" ] },
 				    "another-prop" => { priority => 0,
 						        append   => 1,
+							visible  => 0,
 						        values => [ "baz", "boo" ] }},
     "Client PROPERTY parameter parsed correctly");
 
@@ -277,8 +280,8 @@ is_deeply([getconf($CNF_RESERVED_UDP_PORT)], [100,200],
 is(getconf($CNF_DISPLAYUNIT), "M",
     "displayunit is correctly uppercased");
 is_deeply(getconf($CNF_DEVICE_PROPERTY),
-	  { "foo" => { priority => 0, append => 0, values => ["bar"]},
-	    "blue" => { priority => 0, append => 0,
+	  { "foo" => { priority => 0, append => 0, visible => 1, values => ["bar"]},
+	    "blue" => { priority => 0, append => 0, visible => 1,
 			values => ["car", "tar"]} },
 	"proplist global confparm");
 is_deeply(getconf($CNF_AUTOLABEL),
@@ -358,8 +361,9 @@ is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_ESTIMATELIST),
 	  [ $ES_SERVER, $ES_CALCSIZE, $ES_CLIENT ],
     "dumptype estimate list");
 is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
-	  { "prop" => { priority => 0, append => 0, values => ["erty"]},
-	    "drop" => { priority => 0, append => 0,
+	  { "prop" => { priority => 0, append => 0, visible => 0,
+			values => ["erty"]},
+	    "drop" => { priority => 0, append => 0, visible => 0,
 			values => ["qwerty", "asdfg"] }},
 	"dumptype proplist");
 is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_RECOVERY_LIMIT),
@@ -490,8 +494,8 @@ is(device_config_getconf($dc, $DEVICE_CONFIG_TAPEDEV), 'tape:/dev/nst0',
     "device tapedev");
 # TODO do we really need all of this equipment for device properties?
 is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
-      { "block-size" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 },
-        "comment" => { 'priority' => 0, 'values' => ["what up?"], 'append' => 0 }, },
+      { "block-size" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0, 'visible' => 1 },
+        "comment" => { 'priority' => 0, 'values' => ["what up?"], 'append' => 0, 'visible' => 1 }, },
     "device config proplist");
 
 is_deeply([ sort(+getconf_list("device")) ],
@@ -512,6 +516,7 @@ is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_PROPERTY),
 	    'priority' => 0,
 	    'values' => [ 'testval' ],
 	    'append' => 0,
+	    'visible' => 1,
 	}
     }, "changer properties represented correctly");
 
@@ -520,6 +525,7 @@ is_deeply(changer_config_getconf($dc, $CHANGER_CONFIG_DEVICE_PROPERTY),
 	    'priority' => 0,
 	    'values' => [ 'testdval' ],
 	    'append' => 0,
+	    'visible' => 1,
 	}
     }, "changer device properties represented correctly");
 
@@ -540,6 +546,7 @@ is_deeply(interactivity_getconf($dc, $INTERACTIVITY_PROPERTY),
 	    'priority' => 0,
 	    'values' => [ 'testval' ],
 	    'append' => 0,
+	    'visible' => 1,
 	}
     }, "interactivity properties represented correctly");
 
@@ -560,6 +567,7 @@ is_deeply(taperscan_getconf($dc, $TAPERSCAN_PROPERTY),
 	    'priority' => 0,
 	    'values' => [ 'testval' ],
 	    'append' => 0,
+	    'visible' => 1,
 	}
     }, "taperscan properties represented correctly");
 
@@ -619,7 +627,7 @@ $dump_filename =~ s/':$//g;
 is($dump_filename, $fn, 
     "config filename is included correctly");
 
-like($dump, qr/DEVICE-PROPERTY\s+"foo" "bar"\n/i,
+like($dump, qr/DEVICE-PROPERTY\s+visible\s+"foo" "bar"\n/i,
     "DEVICE-PROPERTY appears in dump output");
 
 like($dump, qr/AMRECOVER-CHECK-LABEL\s+(yes|no)/i,
@@ -966,9 +974,11 @@ SKIP: {
     my $prop = application_getconf($app, $APPLICATION_PROPERTY);
     is_deeply($prop, { "prop4" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val4" ]},
 		       "prop1" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val1" ] }},
     "PROPERTY parameter of app1a parsed correctly");
 
@@ -979,9 +989,11 @@ SKIP: {
     $prop = application_getconf($app, $APPLICATION_PROPERTY);
     is_deeply($prop, { "prop5" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val5" ]},
 		       "prop2" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val2a", "val2" ] }},
     "PROPERTY parameter of app2a parsed correctly");
 
@@ -992,12 +1004,15 @@ SKIP: {
     $prop = application_getconf($app, $APPLICATION_PROPERTY);
     is_deeply($prop, { "prop3" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val3" ]},
 		       "prop6" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val6" ] },
 		       "prop7" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val7" ] }},
     "PROPERTY parameter of app3a parsed correctly");
 
@@ -1008,9 +1023,11 @@ SKIP: {
     $prop = application_getconf($app, $APPLICATION_PROPERTY);
     is_deeply($prop, { "prop4" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val4" ]},
 		       "prop1" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val1b" ] }},
     "PROPERTY parameter of app1b parsed correctly");
 
@@ -1021,9 +1038,11 @@ SKIP: {
     $prop = application_getconf($app, $APPLICATION_PROPERTY);
     is_deeply($prop, { "prop5" => { priority => 0,
 				    append   => 0,
+				    visible  => 1,
 				    values => [ "val5" ]},
 		       "prop2" => { priority => 0,
 				    append   => 1,
+				    visible  => 1,
 				    values => [ "val2a", "val2", "val2b" ] }},
     "PROPERTY parameter of app2b parsed correctly");
 }
