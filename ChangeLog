@@ -1,4 +1,10 @@
 2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/amgetconf.pl: Fix for visible/hidden
+	* perl/Amanda/Service/Amidxtaped.pm: Wait to load the config before
+	  doing some setting
+	* server-src/logfile.c: Abort on ENOENT error
+
+2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Curinfo/Info.pm: Fix writting the stats line
 
 2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>

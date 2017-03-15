@@ -219,7 +219,7 @@ $testconf->add_param("device_property", '"turbo" "engaged"');
 $testconf->write();
 
 is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'device_property')))],
-	  [sort('"power" "on"', '"turbo" "engaged"')],
+	  [sort('visible "power" "on"', 'visible "turbo" "engaged"')],
     "device_property can have multiple values");
 
 ##
@@ -355,13 +355,13 @@ $testconf->add_param("property", '"prop2" "value2"');
 $testconf->add_param("property", '"prop3" "value3"');
 $testconf->write();
 
-is(run_get('amgetconf', 'TESTCONF', "property:prop1"), "value1", 
+is(run_get('amgetconf', 'TESTCONF', "property:prop1"), "value1",
     "correctly returns property prop1 from the file");
-is(run_get('amgetconf', 'TESTCONF', "property:prop2"), "value2", 
+is(run_get('amgetconf', 'TESTCONF', "property:prop2"), "value2",
     "correctly returns property prop2 from the file");
-is(run_get('amgetconf', 'TESTCONF', "property:prop3"), "value3", 
+is(run_get('amgetconf', 'TESTCONF', "property:prop3"), "value3",
     "correctly returns property prop3 from the file");
-is(run_get('amgetconf', 'TESTCONF', "property"), "\"prop1\" \"value1\"\n\"prop2\" \"value2\"\n\"prop3\" \"value3\"", 
+is(run_get('amgetconf', 'TESTCONF', "property"), "hidden \"prop1\" \"value1\"\nhidden \"prop2\" \"value2\"\nhidden \"prop3\" \"value3\"",
     "correctly returns all propertiss from the file");
 
 isnt(run_get('amgetconf', '--platform'), "Unknown",

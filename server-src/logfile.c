@@ -235,6 +235,9 @@ make_logname(
 		g_free(text);
 	    }
 	}
+	if (errno == ENOENT) {
+	    g_critical("logdir '%s' do not exists", conf_logdir);
+	}
 
 	/* increase datestamp */
 	datestamp[13]++;
