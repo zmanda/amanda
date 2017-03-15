@@ -234,15 +234,6 @@ sub new {
 
     my $self = $class->SUPER::new(@_);
 
-    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
-    my @now = localtime;
-    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
-    $self->{'pid'} = $$;
-    $self->{'timestamp'} = Amanda::Logfile::make_logname("amidxtaped", $timestamp);
-    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
-    debug("beginning trace log: $self->{'trace_log_filename'}");
-    $self->{'message_filename'} = "amidxtaped.$timestamp";
-    $self->{'message_pathname'} = "$logdir/amidxtaped.$timestamp";
     return $self;
 
 }
@@ -390,6 +381,16 @@ sub read_command {
     if ($cfgerr_level >= $CFGERR_ERRORS) {
 	die "Errors processing disklist";
     }
+
+    my $logdir = $self->{'logdir'} = config_dir_relative(getconf($CNF_LOGDIR));
+    my @now = localtime;
+    my $timestamp = strftime "%Y%m%d%H%M%S", @now;
+    $self->{'pid'} = $$; 
+    $self->{'timestamp'} = Amanda::Logfile::make_logname("checkdump", $timestamp);
+    $self->{'trace_log_filename'} = Amanda::Logfile::get_logname();
+    debug("beginning trace log: $self->{'trace_log_filename'}");
+    $self->{'message_filename'} = "checkdump.$timestamp";
+    $self->{'message_pathname'} = "$logdir/checkdump.$timestamp";
 
     $self->setup_data_stream();
 }
@@ -671,7 +672,8 @@ sub plan_cb {
 		"interaction is necessary");
     }
 
-    ($self->{'restore'}, my $result_message) = Amanda::Restore->new();
+    ($self->{'restore'}, my $result_message) = Amanda::Restore->new(
+			message_pathname => $self->{'message_pathname'});
     #return $result_message if defined $result_message;
     $self->{'restore'}->restore(
 		'plan'		=> $plan,
