@@ -1,3 +1,8 @@
+2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Correctly initialize the visible property
+	  field
+	* installcheck/Amanda_Config.pl: Check visible field
+
 2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Parse hidden|visible on dumptype property
 	* common-src/conffile.h (property_t) : Add visible field

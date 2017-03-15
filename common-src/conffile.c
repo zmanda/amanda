@@ -605,7 +605,9 @@ static void read_dtaperscan(conf_var_t *, val_t *);
 static void read_dpolicy(conf_var_t *, val_t *);
 //static void read_dstorage(conf_var_t *, val_t *);
 static void read_dpp_script(conf_var_t *, val_t *);
-static void read_property(conf_var_t *, val_t *);
+static void read_hidden_property(conf_var_t *, val_t *);
+static void read_visible_property(conf_var_t *, val_t *);
+static void read_property(val_t *val, property_t *property);
 static void read_execute_on(conf_var_t *, val_t *);
 static void read_execute_where(conf_var_t *, val_t *);
 static void read_holdingdisk(conf_var_t *, val_t *);
@@ -1378,7 +1380,7 @@ conf_var_t client_var [] = {
    { CONF_RESERVED_UDP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_UDP_PORT  , validate_reserved_port_range },
    { CONF_RESERVED_TCP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_TCP_PORT  , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT, CONFTYPE_INTRANGE, read_intrange, CNF_UNRESERVED_TCP_PORT, validate_unreserved_port_range },
-   { CONF_PROPERTY           , CONFTYPE_PROPLIST, read_property, CNF_PROPERTY           , NULL },
+   { CONF_PROPERTY           , CONFTYPE_PROPLIST, read_hidden_property, CNF_PROPERTY           , NULL },
    { CONF_APPLICATION        , CONFTYPE_STR     , read_dapplication, DUMPTYPE_APPLICATION, NULL },
    { CONF_SCRIPT             , CONFTYPE_STR     , read_dpp_script, DUMPTYPE_SCRIPTLIST, NULL },
    { CONF_HOSTNAME           , CONFTYPE_STR     , read_str     , CNF_HOSTNAME           , NULL },
@@ -1392,8 +1394,8 @@ conf_var_t server_var [] = {
    { CONF_PRINTER              , CONFTYPE_STR      , read_str         , CNF_PRINTER              , NULL },
    { CONF_MAILER               , CONFTYPE_STR      , read_str         , CNF_MAILER               , NULL },
    { CONF_TAPEDEV              , CONFTYPE_STR      , read_str         , CNF_TAPEDEV              , NULL },
-   { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_property    , CNF_DEVICE_PROPERTY      , NULL },
-   { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_property    , CNF_PROPERTY             , NULL },
+   { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_visible_property, CNF_DEVICE_PROPERTY      , NULL },
+   { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_hidden_property, CNF_PROPERTY             , NULL },
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
    { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , validate_deprecated_changerfile },
@@ -1523,7 +1525,7 @@ conf_var_t dumptype_var [] = {
    { CONF_MAXPROMOTEDAY             , CONFTYPE_INT         , read_int         , DUMPTYPE_MAXPROMOTEDAY             , validate_nonnegative },
    { CONF_PRIORITY                  , CONFTYPE_PRIORITY    , read_priority    , DUMPTYPE_PRIORITY                  , NULL },
    { CONF_PROGRAM                   , CONFTYPE_STR         , read_str         , DUMPTYPE_PROGRAM                   , validate_program },
-   { CONF_PROPERTY                  , CONFTYPE_PROPLIST    , read_property    , DUMPTYPE_PROPERTY                  , NULL },
+   { CONF_PROPERTY                  , CONFTYPE_PROPLIST  ,read_hidden_property, DUMPTYPE_PROPERTY                  , NULL },
    { CONF_RECORD                    , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_RECORD                    , NULL },
    { CONF_SKIP_FULL                 , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_FULL                 , NULL },
    { CONF_SKIP_INCR                 , CONFTYPE_BOOLEAN     , read_bool        , DUMPTYPE_SKIP_INCR                 , NULL },
@@ -1582,7 +1584,7 @@ conf_var_t interface_var [] = {
 conf_var_t application_var [] = {
    { CONF_COMMENT  , CONFTYPE_STR     , read_str     , APPLICATION_COMMENT    , NULL },
    { CONF_PLUGIN   , CONFTYPE_STR     , read_str     , APPLICATION_PLUGIN     , NULL },
-   { CONF_PROPERTY , CONFTYPE_PROPLIST, read_property, APPLICATION_PROPERTY   , NULL },
+   { CONF_PROPERTY , CONFTYPE_PROPLIST, read_visible_property, APPLICATION_PROPERTY   , NULL },
    { CONF_CLIENT_NAME, CONFTYPE_STR   , read_str     , APPLICATION_CLIENT_NAME, NULL },
    { CONF_UNKNOWN  , CONFTYPE_INT     , NULL         , APPLICATION_APPLICATION, NULL }
 };
@@ -1590,7 +1592,7 @@ conf_var_t application_var [] = {
 conf_var_t pp_script_var [] = {
    { CONF_COMMENT         , CONFTYPE_STR          , read_str          , PP_SCRIPT_COMMENT         , NULL },
    { CONF_PLUGIN          , CONFTYPE_STR          , read_str          , PP_SCRIPT_PLUGIN          , NULL },
-   { CONF_PROPERTY        , CONFTYPE_PROPLIST     , read_property     , PP_SCRIPT_PROPERTY        , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST     , read_visible_property, PP_SCRIPT_PROPERTY        , NULL },
    { CONF_EXECUTE_ON      , CONFTYPE_EXECUTE_ON   , read_execute_on   , PP_SCRIPT_EXECUTE_ON      , NULL },
    { CONF_EXECUTE_WHERE   , CONFTYPE_EXECUTE_WHERE, read_execute_where, PP_SCRIPT_EXECUTE_WHERE   , NULL },
    { CONF_ORDER           , CONFTYPE_INT          , read_int          , PP_SCRIPT_ORDER           , NULL },
@@ -1601,7 +1603,7 @@ conf_var_t pp_script_var [] = {
 
 conf_var_t device_config_var [] = {
    { CONF_COMMENT         , CONFTYPE_STR      , read_str      , DEVICE_CONFIG_COMMENT        , NULL },
-   { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_property , DEVICE_CONFIG_DEVICE_PROPERTY, NULL },
+   { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_visible_property, DEVICE_CONFIG_DEVICE_PROPERTY, NULL },
    { CONF_TAPEDEV         , CONFTYPE_STR      , read_str      , DEVICE_CONFIG_TAPEDEV        , NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , DEVICE_CONFIG_DEVICE_CONFIG  , NULL }
 };
@@ -1612,22 +1614,22 @@ conf_var_t changer_config_var [] = {
    { CONF_TPCHANGER       , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_TPCHANGER      , NULL },
    { CONF_CHANGERDEV      , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_CHANGERDEV     , NULL },
    { CONF_CHANGERFILE     , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_CHANGERFILE    , NULL },
-   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , CHANGER_CONFIG_PROPERTY       , NULL },
-   { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_property , CHANGER_CONFIG_DEVICE_PROPERTY, NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_visible_property, CHANGER_CONFIG_PROPERTY       , NULL },
+   { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_visible_property, CHANGER_CONFIG_DEVICE_PROPERTY, NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , CHANGER_CONFIG_CHANGER_CONFIG , NULL }
 };
 
 conf_var_t interactivity_var [] = {
    { CONF_COMMENT         , CONFTYPE_STR      , read_str      , INTERACTIVITY_COMMENT        , NULL },
    { CONF_PLUGIN          , CONFTYPE_STR      , read_str      , INTERACTIVITY_PLUGIN         , NULL },
-   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , INTERACTIVITY_PROPERTY       , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_visible_property, INTERACTIVITY_PROPERTY       , NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , INTERACTIVITY_INTERACTIVITY  , NULL }
 };
 
 conf_var_t taperscan_var [] = {
    { CONF_COMMENT         , CONFTYPE_STR      , read_str      , TAPERSCAN_COMMENT        , NULL },
    { CONF_PLUGIN          , CONFTYPE_STR      , read_str      , TAPERSCAN_PLUGIN         , NULL },
-   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_property , TAPERSCAN_PROPERTY       , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_visible_property, TAPERSCAN_PROPERTY       , NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , TAPERSCAN_TAPERSCAN      , NULL }
 };
 
@@ -4594,18 +4596,41 @@ read_intrange(
 }
 
 static void
-read_property(
+read_hidden_property(
     conf_var_t *np G_GNUC_UNUSED,
     val_t      *val)
 {
-    char *key;
-    gboolean set_seen = TRUE;
     property_t *property = malloc(sizeof(property_t));
-    property_t *old_property;
     property->append = 0;
     property->visible = 0;
     property->priority = 0;
     property->values = NULL;
+
+    read_property(val, property);
+}
+
+static void
+read_visible_property(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    property_t *property = malloc(sizeof(property_t));
+    property->append = 0;
+    property->visible = 1;
+    property->priority = 0;
+    property->values = NULL;
+
+    read_property(val, property);
+}
+
+static void
+read_property(
+    val_t      *val,
+    property_t *property)
+{
+    char *key;
+    gboolean set_seen = TRUE;
+    property_t *old_property;
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_PRIORITY) {
@@ -8896,6 +8921,7 @@ merge_proplist_foreach_fn(
         new_property = malloc(sizeof(property_t));
 	new_property->seen = property->seen;
 	new_property->append = property->append;
+	new_property->visible = property->visible;
 	new_property->priority = property->priority;
 	new_property->values = NULL;
 	new_prop = 1;
@@ -8921,6 +8947,7 @@ copy_proplist_foreach_fn(
     GSList *elem = NULL;
     property_t *new_property = malloc(sizeof(property_t));
     new_property->append = property->append;
+    new_property->visible = property->visible;
     new_property->priority = property->priority;
     new_property->seen = property->seen;
     new_property->values = NULL;
@@ -10064,6 +10091,11 @@ proplist_display_str_foreach_fn(
     gchar       **strings;
 
     /* What to do with property->append? it should be printed only on client */
+    if (property->visible)
+	g_ptr_array_add(array, g_strdup("visible"));
+    else
+	g_ptr_array_add(array, g_strdup("hidden"));
+
     if (property->priority)
         g_ptr_array_add(array, g_strdup("priority"));
 
