@@ -1,3 +1,6 @@
+2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Curinfo/Info.pm: Fix writting the stats line
+
 2017-03-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/ambackupd.pl: Do incremental backup
 

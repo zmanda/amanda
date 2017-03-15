@@ -768,10 +768,17 @@ sub from_line
 sub to_line
 {
     my ($self) = @_;
-    return join( " ",
-        "stats:",      $self->{level}, $self->{size},    $self->{csize},
-        $self->{secs}, $self->{date},  $self->{filenum}||'', $self->{label}||'' )
-      . "\n";
+    if (defined $self->{filenum} && defined $self->{label}) {
+	return join( " ",
+            "stats:",      $self->{level}, $self->{size}, $self->{csize},
+            int($self->{secs}), $self->{date},  $self->{filenum}, $self->{label})
+	. "\n";
+    } else {
+	return join( " ",
+            "stats:",      $self->{level}, $self->{size}, $self->{csize},
+            int($self->{secs}), $self->{date})
+	. "\n";
+    }
 }
 
 1;
