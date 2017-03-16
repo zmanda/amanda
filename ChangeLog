@@ -1,4 +1,7 @@
 2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c: Fix crash if read return -1
+
+2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* VERSION: 3.5
 
 2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
