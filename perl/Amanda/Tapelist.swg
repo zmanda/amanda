@@ -309,7 +309,12 @@ sub _read_tapelist {
     $self->{'tle_hash_label'} = undef;
     $self->{'tle_hash_barcode'} = undef;
     my $linenum = 0;
-    open(my $fh, "<", $self->{'filename'}) or return undef;
+    my $fh;
+    if (!open($fh, "<", $self->{'filename'})) {
+	$self->{'tles'} = [];
+	return undef;
+    }
+
     while (my $line = <$fh>) {
 	$linenum++;
 	my ($datestamp, $label, $reuse, $barcode, $meta, $blocksize, $pool, $storage, $config, $comment)
