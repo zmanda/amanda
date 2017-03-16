@@ -798,11 +798,14 @@ debug_areads (
 		}
 		*endptr = '\n';
 		r = 1;
+	    } else {
+		return NULL;
 	    }
+	} else {
+	    endptr[r] = '\0';		/* we always leave room for this */
+	    endptr += r;
+	    buflen -= r;
 	}
-	endptr[r] = '\0';		/* we always leave room for this */
-	endptr += r;
-	buflen -= r;
     }
     *nl++ = '\0';
     line = g_strdup(buffer);
