@@ -1,4 +1,8 @@
 2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Tapelist.swg: Fix not adding label to tapleist file when
+	  creating it
+
+2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c: Fix crash if read return -1
 
 2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
