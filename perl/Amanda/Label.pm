@@ -669,7 +669,7 @@ sub label {
 		$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
-					code      => 1000013,
+					code      => 1000016,
 					severity  => $Amanda::Message::ERROR,
 					label     => $label,
 					labelstr  => $labelstr));
@@ -768,7 +768,21 @@ sub label {
 	    }
 	}
 
-	if ($dev_ok) {
+	if ($params{'label'} && $dev_ok) {
+	    my $barcode = $res->{'barcode'};
+	    my $meta = $meta;
+
+	    if (!match_labelstr($labelstr, $autolabel, $params{'label'}, $barcode, $meta, $storage_name)) {
+		return $steps->{'releasing'}->(Amanda::Label::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code      => 1000013,
+					severity  => $Amanda::Message::ERROR,
+					label     => $label,
+					labelstr  => $labelstr));
+	    }
+	}
+	if ($dev_ok){
 	    $self->user_msg(Amanda::Label::Message->new(
 				source_filename => __FILE__,
 				source_line => __LINE__,
