@@ -1,3 +1,6 @@
+2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* VERSION: 3.5
+
 2017-03-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/amgetconf.pl: Fix for visible/hidden
 	* perl/Amanda/Service/Amidxtaped.pm: Wait to load the config before
