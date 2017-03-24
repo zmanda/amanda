@@ -172,7 +172,7 @@ sub capture_rsync_state {
 
     my $rslt = system {$self->{'rsyncexecutable'}} (
         'rsync',
-	'-rlpt', '--whole-file', '--checksum', '--copy-dirlinks', '--sparse',
+	'-rlp', '--whole-file', '--checksum', '--copy-dirlinks', '--sparse',
 	'--link-dest', $linkdestdir,
 	File::Spec->catfile($srcdir, ''),
 	File::Spec->catfile($dstdir, '')
