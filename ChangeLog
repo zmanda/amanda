@@ -1,3 +1,7 @@
+2017-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/ndmp-device.c (write_from_connection_impl,
+	  read_to_connection_impl): Do not overflow length
+
 2017-03-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Label.pm: Check if label match labelstr
 	* installcheck/amlabel.pl: Fix

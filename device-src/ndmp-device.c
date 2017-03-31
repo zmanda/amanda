@@ -1615,7 +1615,8 @@ write_from_connection_impl(
      */
     if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
-		size? size : G_MAXUINT64 - nconn->offset)) {
+		size && size != G_MAXUINT64 ? size
+					    : G_MAXUINT64 - nconn->offset)) {
 	set_error_from_ndmp(self);
 	return 1;
     }
@@ -1760,7 +1761,8 @@ read_to_connection_impl(
 
 	if (!ndmp_connection_mover_set_window(self->ndmp,
 		nconn->offset,
-		size? size : G_MAXUINT64 - nconn->offset)) {
+		size && size != G_MAXUINT64 ? size
+					    : G_MAXUINT64 - nconn->offset)) {
 	    set_error_from_ndmp(self);
 	    return 1;
 	}
