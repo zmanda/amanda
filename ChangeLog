@@ -1,3 +1,7 @@
+2017-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/ndmp-device.c (write_from_connection_impl,
+	  read_to_connection_impl): Do not overflow length
+
 2017-02-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/ndmp-device.c (read_to_connection_impl):Correctlycompute
 	  the offset
