@@ -1,5 +1,9 @@
 2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway
+	* perl/Amanda/Interactivity/tty_email.pm: Fix NAME description
+
+2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway
 	* man/xml-source/amadmin.8.xml: Add config command
 	* man/xml-source/amanda.conf.5.xml (seealso): Add ref to amadmin
 	* man/xml-source/amgetconf.8.xml (seealso): Add ref to amadmin
