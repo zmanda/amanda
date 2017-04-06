@@ -36,7 +36,7 @@ use Amanda::Interactivity::email;
 
 =head1 NAME
 
-Amanda::Interactivity::tty_email -- Interactivity class to read user request from /dev/tty
+Amanda::Interactivity::tty_email -- Interactivity class combining tty and email classes
 
 =head1 SYNOPSIS
 
