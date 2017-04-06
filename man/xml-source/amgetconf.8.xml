@@ -308,6 +308,7 @@ Fedora
 <seealso>
 <manref name="amanda.conf" vol="5"/>,
 <manref name="amanda-client.conf" vol="5"/>
+<manref name="amadmin" vol="8"/>
 </seealso>
 
 </refentry>
