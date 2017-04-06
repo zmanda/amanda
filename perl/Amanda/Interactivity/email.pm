@@ -101,10 +101,15 @@ sub user_request {
 
     my $mailer  = getconf($CNF_MAILER);
     my $subject;
-    if ($label) {
-	$subject = "AMANDA VOLUME REQUEST: $label";
+    if ($chg_name) {
+	$subject = "AMANDA VOLUME REQUEST ($chg_name):";
     } else {
-	$subject = "AMANDA VOLUME REQUEST: new volume";
+	$subject = "AMANDA VOLUME REQUEST:";
+    }
+    if ($label) {
+	$subject .= " $label";
+    } else {
+	$subject .= " new volume";
     }
 
     my $mailto;
@@ -135,16 +140,27 @@ sub user_request {
 	if ($check_file) {
 	    print {$fh} "or write the name of a new changer in '$check_file'\n";
 	    print {$fh} "or write 'abort' in the file to abort the scan.\n";
-	    $self->{'check_file_mtime'} = 0;
-	    $self->{'check_file_ctime'} = 0;
-	    if (-e $check_file) {
-		$self->{'check_file_mtime'} = (stat($check_file))->mtime;
-		$self->{'check_file_ctime'} = (stat($check_file))->ctime;
-		if (!-f $check_file) {
-		    print {$fh} "\nThe check-file '$check_file' is not a flat file.\n";
-		} elsif (!-r $check_file) {
-		    print {$fh} "\nThe check-file '$check_file' is not readable.\n";
-		}
+
+	    # check_file_cb actually monitors the file's ctime and mtime
+	    # timestamps separately, but it seems clearer for the email
+	    # just to report the latest of the two to the user -- in
+	    # practice the single date should be enough for the user to
+	    # understand what Amanda is waiting for....
+	    my $modtime = $self->{'check_file_mtime'};
+	    if ( $self->{'check_file_ctime'} > $modtime ) {
+		$modtime = $self->{'check_file_ctime'};
+	    }
+	    if ( $modtime > 0 ) {
+		print {$fh} "\n(Waiting for the file to be modified after:\n" .
+			ctime($modtime) . ".)\n";
+	    } else {
+		print {$fh} "\n(Waiting for the file to be created.)\n";
+	    }
+
+	    # if check_file_cb detected any warning message, include it
+	    # here.
+	    if ($self->{'check_file_message'}) {
+		print {$fh} $self->{'check_file_message'}
 	    }
 	}
 	close $fh;
@@ -160,17 +176,33 @@ sub user_request {
 	$self->{'check_file_src'} = undef;
 
 	if (-e $check_file) {
-	    $self->{'send_email_src'}->remove() if $self->{'send_email_src'};
-	    $self->{'send_email_src'} = undef;
 	    my $check_file_mtime = (stat($check_file))->mtime;
 	    my $check_file_ctime = (stat($check_file))->ctime;
 	    if ($self->{'check_file_mtime'} < $check_file_mtime or
 		$self->{'check_file_ctime'} < $check_file_ctime) {
 
+		# The user has modified the file, so we stop
+		# the email callback.  If we detect a problem with the
+		# file below, the email callback is restarted; otherwise
+		# this Interactivity call returns.  (The caller may
+		# immediately invoke a new Interactivity call
+		# afterwards, if the user hasn't aborted and the caller
+		# still hasn't found the desired volume.... in which
+		# case the new call will start its own email callback.)
+		$self->{'send_email_src'}->remove() if $self->{'send_email_src'};
+		$self->{'send_email_src'} = undef;
+
+		# (save updated values, in case we don't return below.)
 		$self->{'check_file_ctime'} = $check_file_ctime;
 		$self->{'check_file_mtime'} = $check_file_mtime;
+		$self->{'check_file_message'} = undef;
 
-		if (!-f $check_file || !-r $check_file) {
+		if (!-f $check_file) {
+		    $self->{'check_file_message'} = "\nThe check-file '$check_file' is not a flat file.\n";
+		} elsif (!-r $check_file) {
+		    $self->{'check_file_message'} = "\nThe check-file '$check_file' is not readable.\n";
+		}
+		if ($self->{'check_file_message'}) {
 		    $send_email_cb->();
 		} else {
 		    my $fh;
@@ -195,10 +227,27 @@ sub user_request {
 		}
 	    }
 	} else {
+	    # the file doesn't currently exist
 	    $self->{'check_file_mtime'} = 0;
+	    $self->{'check_file_ctime'} = 0;
+	    $self->{'check_file_message'} = undef
 	}
 	$self->{'check_file_src'} = Amanda::MainLoop::call_after($check_file_delay, $check_file_cb);
     };
+
+    if ($check_file) {
+	# save the initial timestamps of the file, so we can detect
+	# when the user updates it later.
+	if (-e $check_file) {
+	    $self->{'check_file_mtime'} = (stat($check_file))->mtime;
+	    $self->{'check_file_ctime'} = (stat($check_file))->ctime;
+	    $self->{'check_file_message'} = undef
+	} else {
+	    $self->{'check_file_mtime'} = 0;
+	    $self->{'check_file_ctime'} = 0;
+	    $self->{'check_file_message'} = undef
+        }
+    }
 
     $send_email_cb->();
     if ($check_file) {
