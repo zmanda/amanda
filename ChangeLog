@@ -1,3 +1,9 @@
+2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway
+	* man/xml-source/amadmin.8.xml: Add config command
+	* man/xml-source/amanda.conf.5.xml (seealso): Add ref to amadmin
+	* man/xml-source/amgetconf.8.xml (seealso): Add ref to amadmin
+
 2017-03-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/ndmp-device.c (write_from_connection_impl,
 	  read_to_connection_impl): Do not overflow length

@@ -330,6 +330,13 @@ and insert them into the database on this machine.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>config</emphasis></term>
+  <listitem>
+<para>Dump the full internal representation of this config, in text format.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>disklist</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
   <listitem>
 <para>Display the &disklist;

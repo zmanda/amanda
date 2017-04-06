@@ -3730,6 +3730,8 @@ You can have multiple vault entry.</para>
 <manref name="amanda-interactivity" vol="7"/>,
 <manref name="amanda-scripts" vol="7"/>
 <manref name="amanda-taperscan" vol="7"/>
+<manref name="amgetconf" vol="8"/>
+<manref name="amadmin" vol="8"/>
 </seealso>
 
 
