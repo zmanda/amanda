@@ -1,5 +1,9 @@
 2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway
+	* perl/Amanda/Interactivity/email.pm: Improve Interactivity
+
+2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway
 	* perl/Amanda/Interactivity/tty_email.pm: Fix NAME description
 
 2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
