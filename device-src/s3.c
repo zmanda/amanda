@@ -56,7 +56,7 @@
 #ifdef HAVE_AMANDA_H
 #include "amanda.h"
 #endif
-
+#include "amjson.h"
 #include <curl/curl.h>
 
 /* Constant renamed after version 7.10.7 */
@@ -324,6 +324,7 @@ static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
     x_storage_url_regex, access_token_regex, expires_in_regex,
     content_type_regex, details_regex, code_regex, uploadId_regex,
+    json_message_regex,
     transfer_encoding_regex, x_amz_expiration_regex, x_amz_restore_regex;
 
 
@@ -905,7 +906,7 @@ authenticate_request(S3Handle *hdl,
             headers = curl_slist_append(headers, buf);
             g_free(buf);
 	}
-	buf = g_strdup_printf("Accept: %s", "application/xml");
+	buf = g_strdup_printf("Accept: %s", "application/json");
 	headers = curl_slist_append(headers, buf);
 	g_free(buf);
     } else if (hdl->s3_api == S3_API_OAUTH2) {
@@ -1568,6 +1569,56 @@ failure_text(GMarkupParseContext *context G_GNUC_UNUSED,
     }
 }
 
+static void
+parse_swift_v2_endpoints(
+    gpointer data,
+    gpointer user_data)
+{
+    amjson_t *json = data;
+    struct failure_thunk *pthunk = user_data;
+
+    assert(json);
+    if (get_json_type(json) == JSON_HASH) {
+	amjson_t *endpoint_region = get_json_hash_from_key(json, "region");
+	amjson_t *endpoint_publicURL = get_json_hash_from_key(json, "publicURL");
+	char *region = NULL;
+	char *service_public_url = NULL;
+        if (endpoint_region && get_json_type(endpoint_region) == JSON_STRING) {
+	    region = get_json_string(endpoint_region);
+	}
+        if (endpoint_publicURL && get_json_type(endpoint_publicURL) == JSON_STRING) {
+	    service_public_url = get_json_string(endpoint_publicURL);
+	}
+	if (region && service_public_url) {
+	    if (!pthunk->bucket_location ||
+		strcmp(pthunk->bucket_location, region) == 0) {
+		pthunk->service_public_url = g_strdup(service_public_url);
+	    }
+	} else {
+	    pthunk->service_public_url = g_strdup(service_public_url);
+	}
+    }
+}
+
+static void
+parse_swift_v2_serviceCatalog(
+    gpointer data,
+    gpointer user_data)
+{
+    amjson_t *json = data;
+
+    assert(json);
+    if (get_json_type(json) == JSON_HASH) {
+	amjson_t *catalog_type = get_json_hash_from_key(json, "type");
+	if (get_json_type(catalog_type) == JSON_STRING && g_str_equal(get_json_string(catalog_type), "object-store")) {
+	    amjson_t *catalog_endpoints = get_json_hash_from_key(json, "endpoints");
+	    if (get_json_type(catalog_endpoints) == JSON_ARRAY) {
+		foreach_json_array(catalog_endpoints, parse_swift_v2_endpoints, user_data);
+	    }
+	}
+    }
+}
+
 static gboolean
 interpret_response(S3Handle *hdl,
                    CURLcode curl_code,
@@ -1637,14 +1688,6 @@ interpret_response(S3Handle *hdl,
 	amfree(body_copy);
     }
 
-    if ((hdl->content_type &&
-	 !g_str_equal(hdl->content_type, "application/xml")) ||
-	(!hdl->content_type &&
-	 !g_str_equal(hdl->transfer_encoding, "chunked") &&
-	 !g_strstr_len(body, body_len, "xml version"))) {
-	return FALSE;
-    }
-
     thunk.in_title = FALSE;
     thunk.in_body = FALSE;
     thunk.in_code = FALSE;
@@ -1668,6 +1711,7 @@ interpret_response(S3Handle *hdl,
     thunk.service_public_url = NULL;
     thunk.expires = 0;
     thunk.uploadId = NULL;
+    thunk.bucket_location = hdl->bucket_location;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
          hdl->s3_api == S3_API_SWIFT_2) &&
@@ -1709,11 +1753,43 @@ interpret_response(S3Handle *hdl,
 	char *details = NULL;
 	regmatch_t pmatch[2];
 
+	if (hdl->getting_swift_2_token) {
+	    amjson_t *json = parse_json(body_copy);
+	    if (get_json_type(json) == JSON_HASH) {
+		amjson_t *json_access = get_json_hash_from_key(json, "access");
+		if (json_access && get_json_type(json_access) == JSON_HASH) {
+		    amjson_t *json_token = get_json_hash_from_key(json_access, "token");
+		    amjson_t *json_catalog = get_json_hash_from_key(json_access, "serviceCatalog");
+		    if (json_token && get_json_type(json_token) == JSON_HASH) {
+			amjson_t *json_token_id = get_json_hash_from_key(json_token, "id");
+			amjson_t *json_token_expires = get_json_hash_from_key(json_token, "expires");
+			if (json_token_id && get_json_type(json_token_id) == JSON_STRING) {
+			    thunk.token_id = g_strdup(get_json_string(json_token_id));
+			}
+			if (json_token_expires && get_json_type(json_token_expires) == JSON_STRING) {
+			    thunk.expires = rfc3339_date(get_json_string(json_token_expires));
+			}
+		    }
+		    if (json_catalog && get_json_type(json_catalog) == JSON_ARRAY) {
+			foreach_json_array(json_catalog, parse_swift_v2_serviceCatalog, &thunk);
+		    }
+		    if (thunk.token_id && thunk.expires && thunk.service_public_url) {
+			g_free(body_copy);
+			goto parse_done;
+		    }
+		}
+	    }
+	}
 	if (!s3_regexec_wrap(&code_regex, body_copy, 2, pmatch, 0)) {
             code = find_regex_substring(body_copy, pmatch[1]);
 	}
 	if (!s3_regexec_wrap(&details_regex, body_copy, 2, pmatch, 0)) {
             details = find_regex_substring(body_copy, pmatch[1]);
+	}
+	if (!details) {
+	    if (!s3_regexec_wrap(&json_message_regex, body_copy, 2, pmatch, 0)) {
+		details = find_regex_substring(body_copy, pmatch[1]);
+	    }
 	}
 	if (code && details) {
 	    hdl->last_message = g_strdup_printf("%s (%s)", details, code);
@@ -1732,10 +1808,15 @@ interpret_response(S3Handle *hdl,
 	/* The error mesage is the body */
         hdl->last_message = g_strndup(body, body_len);
         return FALSE;
+    } else if ((hdl->content_type &&
+		!g_str_equal(hdl->content_type, "application/xml")) ||
+	       (!hdl->content_type &&
+		!g_str_equal(hdl->transfer_encoding, "chunked") &&
+		!g_strstr_len(body, body_len, "xml version"))) {
+	return FALSE;
     }
 
     /* run the parser over it */
-    thunk.bucket_location = hdl->bucket_location;
     ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
     if (!g_markup_parse_context_parse(ctxt, body, body_len, &err)) {
 	    if (hdl->last_message) g_free(hdl->last_message);
@@ -1752,6 +1833,7 @@ interpret_response(S3Handle *hdl,
     g_markup_parse_context_free(ctxt);
     ctxt = NULL;
 
+parse_done:
     if (hdl->s3_api == S3_API_SWIFT_2) {
 	if (!hdl->x_auth_token && thunk.token_id) {
 	    hdl->x_auth_token = thunk.token_id;
@@ -2645,6 +2727,7 @@ compile_regexes(void)
 	{"\"expires_in\" : (.*)", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &expires_in_regex},
         {"\"details\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &details_regex},
         {"\"code\": (.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &code_regex},
+        {"\"message\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &json_message_regex},
 	{"<UploadId>[[:space:]]*([^<]*)[[:space:]]*</UploadId>", REG_EXTENDED | REG_ICASE, &uploadId_regex},
         {"^x-amz-expiration:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_amz_expiration_regex},
         {"^x-amz-restore:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_amz_restore_regex},
@@ -2707,6 +2790,9 @@ compile_regexes(void)
         {"\"code\" : (.*)",
 	 G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
 	 &code_regex},
+        {"\"message\" : \"([^\"]*)\"",
+	 G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+	 &json_message_regex},
         {"(/>)|(>([^<]*)</UploadId>)",
          G_REGEX_CASELESS,
          &uploadId_regex},
@@ -2802,26 +2888,20 @@ get_openstack_swift_api_v2_setting(
 	};
 
     CurlBuffer buf = {NULL, 0, 0, 0, TRUE, NULL, NULL};
-    GString *body = g_string_new("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    if (hdl->username && hdl->password) {
-	g_string_append_printf(body, "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://docs.openstack.org/identity/api/v2.0\"");
-    } else {
-	g_string_append_printf(body, "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.hp.com/identity/api/ext/HP-IDM/v1.0\"");
-    }
+    GString *body = g_string_new("");
 
+    g_string_append_printf(body, "{ \"auth\": {\n");
     if (hdl->tenant_id) {
-	g_string_append_printf(body, " tenantId=\"%s\"", hdl->tenant_id);
+	g_string_append_printf(body, "\"tenantId\":\"%s\"", hdl->tenant_id);
+    } else if (hdl->tenant_name) {
+	g_string_append_printf(body, "\"tenantName\":\"%s\"", hdl->tenant_name);
     }
-    if (hdl->tenant_name) {
-	g_string_append_printf(body, " tenantName=\"%s\"", hdl->tenant_name);
-    }
-    g_string_append(body, ">");
     if (hdl->username && hdl->password) {
-	g_string_append_printf(body, "<passwordCredentials username=\"%s\" password=\"%s\"/>", hdl->username, hdl->password);
+	g_string_append_printf(body, ",\"passwordCredentials\": { \"username\":\"%s\", \"password\":\"%s\" }", hdl->username, hdl->password);
     } else {
-	g_string_append_printf(body, "<apiAccessKeyCredentials accessKey=\"%s\" secretKey=\"%s\"/>", hdl->access_key, hdl->secret_key);
+	g_string_append_printf(body, ",\"apiAccessKeyCredentialsi\":{ \"accessKey\":\"%s\", \"secretKey\":\"%s\" }", hdl->access_key, hdl->secret_key);
     }
-    g_string_append(body, "</auth>");
+    g_string_append(body, "}}");
 
     buf.buffer = g_string_free(body, FALSE);
     buf.buffer_len = strlen(buf.buffer);
@@ -2832,7 +2912,7 @@ get_openstack_swift_api_v2_setting(
     g_free(hdl->x_storage_url);
     hdl->x_storage_url = NULL;
     result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
-			     "application/xml", NULL, NULL,
+			     "application/json", NULL, NULL,
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling, FALSE);
