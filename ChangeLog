@@ -1,3 +1,11 @@
+2017-04-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amjson.c: New generic json parser
+	* common-src/amjson.h: Add json parser prototypes
+	* common-src/Makefile.am (libamanda_la_SOURCES): Add amjson.c
+	* common-src/Makefile.am (noinst_HEADERS): Add amjson.h
+	* device-src/s3.c (get_openstack_swift_api_v2_setting):Send json
+	  requestand parse json result
+
 2017-04-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway
 	* perl/Amanda/Interactivity/email.pm: Improve Interactivity
