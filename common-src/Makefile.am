@@ -22,6 +22,7 @@ libamanda_la_SOURCES =		\
 	am_sl.c			\
 	amfeatures.c		\
 	amflock.c		\
+	amjson.c		\
 	ammessage.c		\
 	ipc-binary.c		\
 	amxml.c			\
@@ -113,6 +114,7 @@ noinst_HEADERS =		\
 	amanda.h		\
 	amcrc32chw.h		\
 	amfeatures.h		\
+	amjson.h		\
 	ammessage.h		\
 	ipc-binary.h		\
 	amxml.h			\
