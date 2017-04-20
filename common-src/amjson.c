@@ -196,24 +196,14 @@ parse_json_primitive(
     int   len G_GNUC_UNUSED)
 {
 
-g_debug("parse_json_primitive enter %p %p", s, i);
-g_debug("parse_json_primitive enter s %s", s);
-g_debug("parse_json_primitive enter i %d", *i);
-g_debug("parse_json_primitive enter s[i]: %c", s[*i]);
-g_debug("parse_json_primitive enter s[i+1]: %c", s[*i+1]);
-g_debug("parse_json_primitive enter s[i+2]: %c", s[*i+2]);
-g_debug("parse_json_primitive enter s[i+3]: %c", s[*i+3]);
     if (strncmp(&s[*i], "null", 4) == 0) {
 	*i += 4;
-g_debug("parse_json_primitive null");
 	return JSON_NULL;
     } else if (strncmp(&s[*i], "true", 4) == 0) {
 	*i += 4;
-g_debug("parse_json_primitive true");
 	return JSON_TRUE;
     } else if (strncmp(&s[*i], "false", 5) == 0) {
 	*i += 5;
-g_debug("parse_json_primitive false");
 	return JSON_FALSE;
     }
     return JSON_BAD;
@@ -438,12 +428,10 @@ parse_json_hash(
 		if (expect_key) {
 		    expect_key = FALSE;
 		    key = token;
-g_debug("hash key: %s",key);
 		} else {
 		    amjson_t *value = g_new0(amjson_t, 1);
 		    value->type = JSON_STRING;
 		    value->string = token;
-g_debug("hash value: %s", value->string);
 		    g_hash_table_insert(json->hash, key, value);
 		    key = NULL;
 		    expect_key = TRUE;
@@ -474,12 +462,10 @@ g_debug("hash value: %s", value->string);
 		if (expect_key) {
 		    expect_key = FALSE;
 		    key = token;
-g_debug("hash key: %s",key);
 		} else {
 		    amjson_t *value = g_new0(amjson_t, 1);
 		    value->type = JSON_NUMBER;
 		    value->number = itoken;
-g_debug("hash value: %lld", (long long)value->number);
 		    g_hash_table_insert(json->hash, key, value);
 		    key = NULL;
 		    expect_key = TRUE;
