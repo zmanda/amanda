@@ -1,3 +1,6 @@
+2017-04-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amjson.c: Remove debugging statement
+
 2017-04-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amjson.c: New generic json parser
 	* common-src/amjson.h: Add json parser prototypes
