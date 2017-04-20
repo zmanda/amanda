@@ -156,6 +156,8 @@ struct S3Handle {
     char *password;
     char *tenant_id;
     char *tenant_name;
+    char *project_name;
+    char *domain_name;
     char *client_id;
     char *client_secret;
     char *refresh_token;
@@ -163,6 +165,7 @@ struct S3Handle {
     time_t expires;
     gboolean getting_oauth2_access_token;
     gboolean getting_swift_2_token;
+    gboolean getting_swift_3_token;
 
     /* attributes for new objects */
     char *bucket_location;
@@ -322,6 +325,7 @@ lookup_result(const result_handling_t *result_handling,
  * Precompiled regular expressions */
 static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     location_con_regex, date_sync_regex, x_auth_token_regex,
+    x_subject_token_regex,
     x_storage_url_regex, access_token_regex, expires_in_regex,
     content_type_regex, details_regex, code_regex, uploadId_regex,
     json_message_regex,
@@ -495,6 +499,7 @@ compile_regexes(void);
 
 static gboolean get_openstack_swift_api_v1_setting(S3Handle *hdl);
 static gboolean get_openstack_swift_api_v2_setting(S3Handle *hdl);
+static gboolean get_openstack_swift_api_v3_setting(S3Handle *hdl);
 
 /*
  * Static function implementations
@@ -724,7 +729,7 @@ build_url(
     char *esc_bucket = NULL, *esc_key = NULL;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 || hdl->s3_api == S3_API_SWIFT_2 ||
-	 hdl->s3_api == S3_API_OAUTH2) &&
+	 hdl->s3_api == S3_API_SWIFT_3 || hdl->s3_api == S3_API_OAUTH2) &&
 	 hdl->x_storage_url) {
 	url = g_string_new(hdl->x_storage_url);
 	g_string_append(url, "/");
@@ -901,6 +906,15 @@ authenticate_request(S3Handle *hdl,
             g_free(buf);
 	}
     } else if (hdl->s3_api == S3_API_SWIFT_2) {
+	if (bucket) {
+            buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
+            headers = curl_slist_append(headers, buf);
+            g_free(buf);
+	}
+	buf = g_strdup_printf("Accept: %s", "application/json");
+	headers = curl_slist_append(headers, buf);
+	g_free(buf);
+    } else if (hdl->s3_api == S3_API_SWIFT_3) {
 	if (bucket) {
             buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
             headers = curl_slist_append(headers, buf);
@@ -1619,6 +1633,62 @@ parse_swift_v2_serviceCatalog(
     }
 }
 
+static void
+parse_swift_v3_endpoints(
+    gpointer data,
+    gpointer user_data)
+{
+    amjson_t *json = data;
+    struct failure_thunk *pthunk = user_data;
+
+    assert(json);
+    if (get_json_type(json) == JSON_HASH) {
+	amjson_t *endpoint_region = get_json_hash_from_key(json, "region_id");
+	amjson_t *endpoint_interface = get_json_hash_from_key(json, "interface");
+	amjson_t *endpoint_url = get_json_hash_from_key(json, "url");
+	char *region = NULL;
+	char *service_public_url = NULL;
+        if (endpoint_region && get_json_type(endpoint_region) == JSON_STRING) {
+	    region = get_json_string(endpoint_region);
+	}
+        if (endpoint_interface && get_json_type(endpoint_interface) == JSON_STRING) {
+	    char *interface = get_json_string(endpoint_interface);
+	    if (g_str_equal(interface, "public")) {
+		if (endpoint_url && get_json_type(endpoint_url) == JSON_STRING) {
+		    service_public_url = get_json_string(endpoint_url);
+		}
+	    }
+	}
+	if (region && service_public_url) {
+	    if (!pthunk->bucket_location ||
+		strcmp(pthunk->bucket_location, region) == 0) {
+		pthunk->service_public_url = g_strdup(service_public_url);
+	    }
+	} else if (!pthunk->service_public_url && service_public_url) {
+	    pthunk->service_public_url = g_strdup(service_public_url);
+	}
+    }
+}
+
+static void
+parse_swift_v3_catalog(
+    gpointer data,
+    gpointer user_data)
+{
+    amjson_t *json = data;
+
+    assert(json);
+    if (get_json_type(json) == JSON_HASH) {
+	amjson_t *catalog_type = get_json_hash_from_key(json, "type");
+	if (get_json_type(catalog_type) == JSON_STRING && g_str_equal(get_json_string(catalog_type), "object-store")) {
+	    amjson_t *catalog_endpoints = get_json_hash_from_key(json, "endpoints");
+	    if (get_json_type(catalog_endpoints) == JSON_ARRAY) {
+		foreach_json_array(catalog_endpoints, parse_swift_v3_endpoints, user_data);
+	    }
+	}
+    }
+}
+
 static gboolean
 interpret_response(S3Handle *hdl,
                    CURLcode curl_code,
@@ -1714,7 +1784,8 @@ interpret_response(S3Handle *hdl,
     thunk.bucket_location = hdl->bucket_location;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
-         hdl->s3_api == S3_API_SWIFT_2) &&
+         hdl->s3_api == S3_API_SWIFT_2 ||
+         hdl->s3_api == S3_API_SWIFT_3) &&
 	hdl->content_type &&
 	(g_str_equal(hdl->content_type, "text/html") ||
 	 g_str_equal(hdl->content_type, "text/plain"))) {
@@ -1745,7 +1816,8 @@ interpret_response(S3Handle *hdl,
 	}
 	goto parsing_done;
     } else if ((hdl->s3_api == S3_API_SWIFT_1 ||
-		hdl->s3_api == S3_API_SWIFT_2) &&
+		hdl->s3_api == S3_API_SWIFT_2 ||
+		hdl->s3_api == S3_API_SWIFT_3) &&
 	       hdl->content_type &&
 	       g_str_equal(hdl->content_type, "application/json")) {
 	char *body_copy = g_strndup(body, body_len);
@@ -1779,7 +1851,28 @@ interpret_response(S3Handle *hdl,
 		    }
 		}
 	    }
+	} else if (hdl->getting_swift_3_token) {
+	    amjson_t *json = parse_json(body_copy);
+	    // g_debug("json: %s", json_to_string(json));
+	    if (get_json_type(json) == JSON_HASH) {
+		amjson_t *json_token = get_json_hash_from_key(json, "token");
+		if (json_token && get_json_type(json_token) == JSON_HASH) {
+		    amjson_t *json_catalog = get_json_hash_from_key(json_token, "catalog");
+		    amjson_t *json_expires_at = get_json_hash_from_key(json_token, "expires_at");
+		    if (json_catalog && get_json_type(json_catalog) == JSON_ARRAY) {
+			foreach_json_array(json_catalog, parse_swift_v3_catalog, &thunk);
+		    }
+		    if (json_expires_at && get_json_type(json_expires_at) == JSON_STRING) {
+			thunk.expires = rfc3339_date(get_json_string(json_expires_at));
+		    }
+		    if (thunk.expires && thunk.service_public_url) {
+			g_free(body_copy);
+			goto parse_done;
+		    }
+		}
+	    }
 	}
+
 	if (!s3_regexec_wrap(&code_regex, body_copy, 2, pmatch, 0)) {
             code = find_regex_substring(body_copy, pmatch[1]);
 	}
@@ -1850,6 +1943,21 @@ parse_done:
 		    thunk.message = g_strdup_printf("Did not find the publicURL for the '%s' region", thunk.bucket_location);
 		} else {
 		    thunk.message = g_strdup_printf("Did not find the publicURL");
+		}
+		thunk.error_name =g_strdup("RegionNotFound");
+	    }
+	}
+    } else if (hdl->s3_api == S3_API_SWIFT_3) {
+	if (!hdl->x_storage_url && thunk.service_public_url) {
+	    hdl->x_storage_url = thunk.service_public_url;
+	    g_debug("x_storage_url: %s", hdl->x_storage_url);
+	    thunk.service_public_url = NULL;
+	} else if (!thunk.message && !thunk.error_name) {
+	    if (!hdl->x_storage_url && !thunk.service_public_url) {
+		if (thunk.bucket_location) {
+		    thunk.message = g_strdup_printf("Did not find the public url for the '%s' region", thunk.bucket_location);
+		} else {
+		    thunk.message = g_strdup_printf("Did not find the public url");
 		}
 		thunk.error_name =g_strdup("RegionNotFound");
 	    }
@@ -2302,6 +2410,13 @@ perform_request(S3Handle *hdl,
 	    g_debug("get_openstack_swift_api_v2_setting returned %d", result);
 	    return result;
 	}
+    } else if (hdl->s3_api == S3_API_SWIFT_3 && !hdl->getting_swift_3_token &&
+	       (!hdl->x_auth_token || hdl->expires < time(NULL))) {
+	result = get_openstack_swift_api_v3_setting(hdl);
+	if (!result) {
+	    g_debug("get_openstack_swift_api_v3_setting returned %d", result);
+	    return result;
+	}
     }
 
     s3_reset(hdl);
@@ -2649,6 +2764,11 @@ s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
 	data->hdl->x_auth_token = find_regex_substring(header, pmatch[1]);
     }
 
+    if (!s3_regexec_wrap(&x_subject_token_regex, header, 2, pmatch, 0)) {
+	g_free(data->hdl->x_auth_token);
+	data->hdl->x_auth_token = find_regex_substring(header, pmatch[1]);
+    }
+
     if (!s3_regexec_wrap(&x_storage_url_regex, header, 2, pmatch, 0)) {
 	g_free(data->hdl->x_storage_url);
 	data->hdl->x_storage_url = find_regex_substring(header, pmatch[1]);
@@ -2716,6 +2836,7 @@ compile_regexes(void)
         {"<Code>[[:space:]]*([^<]*)[[:space:]]*</Code>", REG_EXTENDED | REG_ICASE, &error_name_regex},
         {"^ETag:[[:space:]]*\"([^\"]+)\"[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &etag_regex},
         {"^X-Auth-Token:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_auth_token_regex},
+        {"^X-Subject-Token:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_subject_token_regex},
         {"^X-Storage-Url:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_storage_url_regex},
         {"^Content-Type:[[:space:]]*([^ ;]+).*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &content_type_regex},
         {"^Transfer-Encoding:[[:space:]]*([^ ;]+).*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &transfer_encoding_regex},
@@ -2757,6 +2878,9 @@ compile_regexes(void)
         {"^X-Auth-Token:\\s*([^ ]+)\\s*$",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &x_auth_token_regex},
+        {"^X-Subject-Token:\\s*([^ ]+)\\s*$",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &x_subject_token_regex},
         {"^X-Storage-Url:\\s*([^ ]+)\\s*$",
          G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
          &x_storage_url_regex},
@@ -2906,7 +3030,7 @@ get_openstack_swift_api_v2_setting(
     buf.buffer = g_string_free(body, FALSE);
     buf.buffer_len = strlen(buf.buffer);
     s3_verbose(hdl, 1);
-    hdl->getting_swift_2_token = 1;
+    hdl->getting_swift_2_token = TRUE;
     g_free(hdl->x_auth_token);
     hdl->x_auth_token = NULL;
     g_free(hdl->x_storage_url);
@@ -2916,7 +3040,56 @@ get_openstack_swift_api_v2_setting(
 			     S3_BUFFER_READ_FUNCS, &buf,
 			     NULL, NULL, NULL,
                              NULL, NULL, result_handling, FALSE);
-    hdl->getting_swift_2_token = 0;
+    hdl->getting_swift_2_token = FALSE;
+
+    return result == S3_RESULT_OK;
+}
+
+static gboolean
+get_openstack_swift_api_v3_setting(
+	S3Handle *hdl)
+{
+    s3_result_t result = S3_RESULT_FAIL;
+    static result_handling_t result_handling[] = {
+	{ 200,  0,                    0, S3_RESULT_OK },
+	{ 201,  0,                    0, S3_RESULT_OK },
+	RESULT_HANDLING_ALWAYS_RETRY,
+	{ 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
+	};
+
+    CurlBuffer buf = {NULL, 0, 0, 0, TRUE, NULL, NULL};
+    GString *body = g_string_new("");
+
+    g_string_append_printf(body, "{ \"auth\": {\n");
+    g_string_append_printf(body, "    \"scope\": {\n");
+    g_string_append_printf(body, "      \"project\": {\n");
+    g_string_append_printf(body, "        \"domain\": {\n");
+    g_string_append_printf(body, "          \"name\": \"%s\" },\n", hdl->domain_name);
+    g_string_append_printf(body, "        \"name\": \"%s\" }},\n", hdl->project_name);
+    g_string_append_printf(body, "    \"identity\": {\n");
+    g_string_append_printf(body, "      \"methods\": [ \"password\" ],\n");
+    g_string_append_printf(body, "      \"password\": {\n");
+    g_string_append_printf(body, "        \"user\": {\n");
+    g_string_append_printf(body, "          \"name\": \"%s\",\n", hdl->username);
+    g_string_append_printf(body, "          \"domain\": {\n");
+    g_string_append_printf(body, "            \"name\": \"%s\" },\n", hdl->domain_name);
+    g_string_append_printf(body, "          \"password\": \"%s\" }}}}}\n", hdl->password);
+
+    buf.buffer = g_string_free(body, FALSE);
+    // g_debug("buffer: %s", buf.buffer);
+    buf.buffer_len = strlen(buf.buffer);
+    s3_verbose(hdl, 1);
+    hdl->getting_swift_3_token = TRUE;
+    g_free(hdl->x_auth_token);
+    hdl->x_auth_token = NULL;
+    g_free(hdl->x_storage_url);
+    hdl->x_storage_url = NULL;
+    result = perform_request(hdl, "POST", NULL, NULL, NULL, NULL,
+			     "application/json", NULL, NULL,
+			     S3_BUFFER_READ_FUNCS, &buf,
+			     NULL, NULL, NULL,
+                             NULL, NULL, result_handling, FALSE);
+    hdl->getting_swift_3_token = FALSE;
 
     return result == S3_RESULT_OK;
 }
@@ -2941,6 +3114,8 @@ s3_open(const char *access_key,
         const char *password,
         const char *tenant_id,
         const char *tenant_name,
+        const char *project_name,
+        const char *domain_name,
 	const char *client_id,
 	const char *client_secret,
 	const char *refresh_token,
@@ -2990,6 +3165,24 @@ s3_open(const char *access_key,
 	g_assert(tenant_id || tenant_name);
 	hdl->tenant_id = g_strdup(tenant_id);
 	hdl->tenant_name = g_strdup(tenant_name);
+    } else if (s3_api == S3_API_SWIFT_3) {
+	g_assert((username && password) || (access_key && secret_key));
+	hdl->username = g_strdup(username);
+	hdl->password = g_strdup(password);
+	hdl->access_key = g_strdup(access_key);
+	hdl->secret_key = g_strdup(secret_key);
+	hdl->tenant_id = g_strdup(tenant_id);
+	hdl->tenant_name = g_strdup(tenant_name);
+	if (project_name) {
+	    hdl->project_name = g_strdup(project_name);
+	} else {
+	    hdl->project_name = g_strdup(username);
+	}
+	if (domain_name) {
+	    hdl->domain_name = g_strdup(domain_name);
+	} else {
+	    hdl->domain_name = g_strdup("Default");
+	}
     } else if (s3_api == S3_API_OAUTH2) {
 	hdl->client_id = g_strdup(client_id);
 	hdl->client_secret = g_strdup(client_secret);
@@ -3099,6 +3292,8 @@ s3_open2(
 	ret = get_openstack_swift_api_v1_setting(hdl);
     } else if (hdl->s3_api == S3_API_SWIFT_2) {
 	ret = get_openstack_swift_api_v2_setting(hdl);
+    } else if (hdl->s3_api == S3_API_SWIFT_3) {
+	ret = get_openstack_swift_api_v3_setting(hdl);
     }
 
     return ret;
@@ -3122,6 +3317,8 @@ s3_free(S3Handle *hdl)
         g_free(hdl->password);
         g_free(hdl->tenant_id);
         g_free(hdl->tenant_name);
+        g_free(hdl->project_name);
+        g_free(hdl->domain_name);
         g_free(hdl->client_id);
         g_free(hdl->client_secret);
         g_free(hdl->refresh_token);
@@ -3694,7 +3891,8 @@ list_fetch(S3Handle *hdl,
             esc_value = curl_escape(pos_parts[i][1], 0);
 	    keyword = pos_parts[i][0];
 	    if ((hdl->s3_api == S3_API_SWIFT_1 ||
-		 hdl->s3_api == S3_API_SWIFT_2) &&
+		 hdl->s3_api == S3_API_SWIFT_2 ||
+		 hdl->s3_api == S3_API_SWIFT_3) &&
 		strcmp(keyword, "max-keys") == 0) {
 		keyword = "limit";
 	    } else if ((hdl->s3_api == S3_API_CASTOR) &&
@@ -3707,6 +3905,7 @@ list_fetch(S3Handle *hdl,
     }
     if (hdl->s3_api == S3_API_SWIFT_1 ||
         hdl->s3_api == S3_API_SWIFT_2 ||
+        hdl->s3_api == S3_API_SWIFT_3 ||
         hdl->s3_api == S3_API_CASTOR) {
 	*q++ = g_strdup("format=xml");
     }
@@ -4307,7 +4506,8 @@ s3_is_bucket_exists(S3Handle *hdl,
         };
 
     if (hdl->s3_api == S3_API_SWIFT_1 ||
-	hdl->s3_api == S3_API_SWIFT_2) {
+	hdl->s3_api == S3_API_SWIFT_2 ||
+	hdl->s3_api == S3_API_SWIFT_3) {
 	*q++ = g_strdup("limit=1");
     } else if (hdl->s3_api == S3_API_CASTOR) {
         *q++ = g_strdup("format=xml");

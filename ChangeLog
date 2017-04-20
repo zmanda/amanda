@@ -1,4 +1,14 @@
 2017-04-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS: S3 device: openstack keystone v3 support
+	* device-src/s3-device.c: PROJECT-NAME and DOMAIN-NAME device
+	  properties
+	* device-src/s3-device.h (struct _S3Device): Add project_name and
+	  domain_name fields
+	* device-src/s3.c: Get token from keystone v3
+	* device-src/s3.h (s3_open): Change prototype.
+	* man/xml-source/amanda-devices.7.xml: Document new device properties
+
+2017-04-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amjson.c: Remove debugging statement
 
 2017-04-14  Jean-Louis Martineau <JMartineau@carbonite.com>

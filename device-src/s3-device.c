@@ -98,10 +98,14 @@ static DevicePropertyBase device_property_username;
 static DevicePropertyBase device_property_password;
 static DevicePropertyBase device_property_tenant_id;
 static DevicePropertyBase device_property_tenant_name;
+static DevicePropertyBase device_property_project_name;
+static DevicePropertyBase device_property_domain_name;
 #define PROPERTY_USERNAME (device_property_username.ID)
 #define PROPERTY_PASSWORD (device_property_password.ID)
 #define PROPERTY_TENANT_ID (device_property_tenant_id.ID)
 #define PROPERTY_TENANT_NAME (device_property_tenant_name.ID)
+#define PROPERTY_PROJECT_NAME (device_property_project_name.ID)
+#define PROPERTY_DOMAIN_NAME (device_property_domain_name.ID)
 
 /* Host and path */
 static DevicePropertyBase device_property_s3_host;
@@ -369,6 +373,14 @@ static gboolean s3_device_set_tenant_id(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_tenant_name(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_project_name(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_domain_name(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -1096,6 +1108,12 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_tenant_name,
                                       G_TYPE_STRING, "tenant_name",
        "tenant_name to authenticate with");
+    device_property_fill_and_register(&device_property_project_name,
+                                      G_TYPE_STRING, "project_name",
+       "project_name to authenticate with");
+    device_property_fill_and_register(&device_property_domain_name,
+                                      G_TYPE_STRING, "domain_name",
+       "domain_name to authenticate with");
     device_property_fill_and_register(&device_property_s3_host,
                                       G_TYPE_STRING, "s3_host",
        "hostname:port of the server");
@@ -1375,6 +1393,16 @@ s3_device_base_init(
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
 	    s3_device_set_tenant_name);
+
+    device_class_register_property(device_class, PROPERTY_PROJECT_NAME,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_project_name);
+
+    device_class_register_property(device_class, PROPERTY_DOMAIN_NAME,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_domain_name);
 
     device_class_register_property(device_class, PROPERTY_S3_HOST,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
@@ -1672,6 +1700,32 @@ s3_device_set_tenant_name(Device *p_self, DevicePropertyBase *base,
 }
 
 static gboolean
+s3_device_set_project_name(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->project_name);
+    self->project_name = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_domain_name(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->domain_name);
+    self->domain_name = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
 s3_device_set_host_fn(Device *p_self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source)
@@ -1871,6 +1925,10 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
 	    self->use_s3_multi_delete = 0;
     } else if (g_str_equal(storage_api, "SWIFT-2.0")) {
 	self->s3_api = S3_API_SWIFT_2;
+	if (!self->set_s3_multi_delete)
+	    self->use_s3_multi_delete = 0;
+    } else if (g_str_equal(storage_api, "SWIFT-3")) {
+	self->s3_api = S3_API_SWIFT_3;
 	if (!self->set_s3_multi_delete)
 	    self->use_s3_multi_delete = 0;
     } else if (g_str_equal(storage_api, "OAUTH2")) {
@@ -2443,6 +2501,8 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->password) g_free(self->password);
     if(self->tenant_id) g_free(self->tenant_id);
     if(self->tenant_name) g_free(self->tenant_name);
+    if(self->project_name) g_free(self->project_name);
+    if(self->domain_name) g_free(self->domain_name);
     if(self->host) g_free(self->host);
     if(self->service_path) g_free(self->service_path);
     if(self->user_token) g_free(self->user_token);
@@ -2623,6 +2683,14 @@ setup_handle(S3Device * self) {
 		    DEVICE_STATUS_DEVICE_ERROR);
 		return FALSE;
 	    }
+	} else if (self->s3_api == S3_API_SWIFT_3) {
+	    if (!(self->username && self->password)) {
+		// self->project_name & self->domain_name have default value
+		device_set_error(d_self,
+		    g_strdup(_("Missing authorization properties")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    }
 	} else if (self->s3_api == S3_API_OAUTH2) {
 	    if (self->client_id == NULL ||
 		self->client_id[0] == '\0') {
@@ -2698,6 +2766,8 @@ setup_handle(S3Device * self) {
 					   self->password,
 					   self->tenant_id,
 					   self->tenant_name,
+					   self->project_name,
+					   self->domain_name,
 					   self->client_id,
 					   self->client_secret,
 					   self->refresh_token,
@@ -2768,7 +2838,8 @@ setup_handle(S3Device * self) {
 	for (thread = 0; thread < self->nb_threads; thread++) {
 	    if (!s3_open2(self->s3t[thread].s3)) {
 		if (self->s3_api == S3_API_SWIFT_1 ||
-		    self->s3_api == S3_API_SWIFT_2) {
+		    self->s3_api == S3_API_SWIFT_2 ||
+		    self->s3_api == S3_API_SWIFT_3) {
 		    s3_error(self->s3t[0].s3, NULL, &response_code,
 			     &s3_error_code, NULL, &curl_code, NULL);
 		    device_set_error(d_self,
