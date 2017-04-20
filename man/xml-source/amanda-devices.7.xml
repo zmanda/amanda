@@ -476,7 +476,7 @@ Minimum value is 5120.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PASSWORD</term><listitem>
-(read-write) The password (for swift v2).
+(read-write) The password (for swift v2 and v3).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PROJECT-ID</term><listitem>
@@ -590,6 +590,7 @@ for the most up-to-date list.
   AWS4          Amazon S3 AWS Signature Version 4
   SWIFT-1.0     Openstack swift v1.0
   SWIFT-2.0     Openstack swift v2.0
+  SWIFT-3       Openstack swift keystone v3
   OAUTH2        Google
   CASTOR        Caringo CAStor
 </programlisting>
@@ -597,11 +598,19 @@ The default is AWS4 if S3-HOST end with '.amazonaws.com', otherwise it is S3.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TENANT_ID</term><listitem>
-(read-write) The tenant_id (for swift v2).
+(read-write) The tenant id (for swift v2).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TENANT_NAME</term><listitem>
-(read-write) The tenant_name (for swift v2).
+(read-write) The tenant name (for swift v2).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PROJECT_NAME</term><listitem>
+(read-write) Default: $USERNAME. The project name (for swift v3).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>DOMAIN_NAME</term><listitem>
+(read-write) Default: "Default". The domain name (for swift v3).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TIMEOUT</term><listitem>
@@ -613,7 +622,7 @@ The default is AWS4 if S3-HOST end with '.amazonaws.com', otherwise it is S3.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>USERNAME</term><listitem>
-(read-write) The username (for swift v2).
+(read-write) The username (for swift v2 and v3).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>

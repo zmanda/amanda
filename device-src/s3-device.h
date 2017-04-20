@@ -100,6 +100,8 @@ struct _S3Device {
     char *password;
     char *tenant_id;
     char *tenant_name;
+    char *project_name;
+    char *domain_name;
 
     char *bucket_location;
     char *storage_class;

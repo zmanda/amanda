@@ -7,6 +7,11 @@ Changes in release 3.5
    * amanda-security.conf
        o new tcp_port_range, range of privileged tcp port
        o new udp_port_range, range of privileged udp port
+   * S3 device
+       o openstack keystone v3 support
+           - device-property STORAGE-API must be set to SWIFT-3
+           - new PROJECT-NAME device-property
+           - new DOMAIN-NAME device-property
 
 Changes in release 3.4.3
    * fix MAJOR issue: amdump can reuse the same tape in the same run
