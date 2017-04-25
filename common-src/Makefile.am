@@ -61,8 +61,8 @@ amcrc32chw.lo: AM_CFLAGS += $(SSE42_CFLAGS)
 nodist_libamanda_la_SOURCES = version.c
 
 INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=root:setuid chmod=04750 \
-		amservice
+	dest=$(amlibexecdir) chown=root:setuid chmod=04750 \
+		ambind
 
 LDADD = libamanda.la
 

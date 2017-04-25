@@ -79,12 +79,6 @@ SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 
-INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=root:setuid chmod=04750 \
-		amcheck \
-	dest=$(amlibexecdir) \
-		dumper planner
-
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
 # libraries, and because of the way libtool sets up the command line, we
