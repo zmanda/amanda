@@ -1,4 +1,8 @@
 2017-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: Get a new curl handle after a 503 error. To force
+	  closing the connection and opening a new one
+
+2017-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/Makefile.am (INSTALLPERMS_exec): Add ambind, remove
 	  amservice
 	* server-src/Makefile.am (INSTALLPERMS_exec): Remove amcheck, dumper
