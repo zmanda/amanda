@@ -276,6 +276,8 @@ static const char *
 s3_error_name_from_code(s3_error_code_t s3_error_code);
 
 
+static void s3_new_curl(S3Handle *hdl);
+
 /*
  * result handling */
 
@@ -2639,6 +2641,11 @@ perform_request(S3Handle *hdl,
     curl_error: /* (label for short-circuiting the curl_easy_perform call) */
         should_retry = interpret_response(hdl, curl_code, curl_error_buffer,
             int_writedata.resp_buf.buffer, int_writedata.resp_buf.buffer_pos, int_writedata.etag, md5_hash_hex);
+
+	if (hdl->last_response_code == 503) {
+	    s3_new_curl(hdl);
+	}
+
 	if (hdl->s3_api == S3_API_OAUTH2 &&
 	    hdl->last_response_code == 401 &&
 	    hdl->last_s3_error_code == S3_ERROR_AuthenticationRequired) {
@@ -3248,11 +3255,28 @@ s3_open(const char *access_key,
 	hdl->service_path = NULL;
     }
 
-    hdl->curl = curl_easy_init();
+    s3_new_curl(hdl);
     if (!hdl->curl) goto error;
+    return hdl;
+
+error:
+    s3_free(hdl);
+    return NULL;
+}
+
+static void
+s3_new_curl(
+    S3Handle *hdl)
+{
+    if (hdl->curl) {
+	curl_easy_cleanup(hdl->curl);
+    }
+
+    hdl->curl = curl_easy_init();
+    if (!hdl->curl) return;
 
     /* Set HTTP handling options for CAStor */
-    if (s3_api == S3_API_CASTOR) {
+    if (hdl->s3_api == S3_API_CASTOR) {
 #if LIBCURL_VERSION_NUM >= 0x071301
 	curl_version_info_data *info;
 	/* check the runtime version too */
@@ -3273,12 +3297,6 @@ s3_open(const char *access_key,
 	}
 #endif
     }
-
-    return hdl;
-
-error:
-    s3_free(hdl);
-    return NULL;
 }
 
 gboolean
