@@ -354,6 +354,8 @@ handle_result(
     char *s;
     int ch;
 
+    security_close_connection(sech, "AA");
+
     if (pkt == NULL) {
 	g_fprintf(stdout,
 		  _("Request failed: %s\n"), security_geterror(sech));

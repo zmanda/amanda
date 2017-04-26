@@ -311,7 +311,6 @@ int	udp_inithandle(udp_handle_t *, struct sec_handle *, char *hostname,
 void	udp_netfd_read_callback(void *);
 
 struct tcp_conn *sec_tcp_conn_get(const char *, const char *, int);
-void	sec_tcp_conn_put(struct tcp_conn *);
 void	sec_tcp_conn_read(struct tcp_conn *);
 void	parse_pkt(pkt_t *, const void *, size_t);
 const char *pkthdr2str(const struct sec_handle *, const pkt_t *);
