@@ -1,3 +1,10 @@
+2017-04-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amservice.c (handle_result): Call
+	  security_close_connection
+	* common-src/security-util.c (sec_tcp_conn_put): Kill the subprocess
+	* common-src/security-util.h (sec_tcp_conn_put): Remove prototype
+	* server-src/amcheck.c (handle_result): Call security_close_connection
+
 2017-04-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Get a new curl handle after a 503 error. To force
 	  closing the connection and opening a new one

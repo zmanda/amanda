@@ -53,6 +53,7 @@ static event_id_t newevent = 1;
 /*
  * Local functions
  */
+static void sec_tcp_conn_put(struct tcp_conn *rc);
 static void recvpkt_callback(void *, void *, ssize_t);
 static void stream_read_callback(void *);
 static void stream_read_sync_callback(void *);
@@ -1127,7 +1128,7 @@ tcpm_close_connection(
 {
     struct sec_handle *rh = h;
 
-    (void)hostname;
+    auth_debug(1, _("tcpm_close_connection: closing connection to %s : %s\n"), rh->hostname, hostname);
 
     if (rh && rh->rc && rh->rc->read >= 0) {
 	rh->rc->toclose = 1;
@@ -2085,9 +2086,9 @@ sec_tcp_conn_get(
  * Delete a reference to a connection, and close it if it is the last
  * reference.
  */
-void
+static void
 sec_tcp_conn_put(
-    struct tcp_conn *	rc)
+    struct tcp_conn *rc)
 {
     amwait_t status;
 
@@ -2104,7 +2105,33 @@ sec_tcp_conn_put(
     if (rc->write != -1)
 	aclose(rc->write);
     if (rc->pid != -1) {
-	waitpid(rc->pid, &status, WNOHANG);
+	int pid;
+	int count = 50;
+
+	pid = waitpid(rc->pid, &status, WNOHANG);
+	while (pid == 0 && count > 0) {
+	    struct timespec tdelay;
+	    tdelay.tv_sec = 0;
+	    tdelay.tv_nsec = 50000000;
+	    nanosleep(&tdelay, NULL);
+	    pid = waitpid(rc->pid, &status, WNOHANG);
+	    count--;
+	}
+	if (pid == 0) {
+	    g_debug("sending SIGTERM to pid: %d", rc->pid);
+	    kill(rc->pid, SIGTERM);
+	    pid = waitpid(rc->pid, &status, WNOHANG);
+	    count = 50;
+	    while (pid == 0 && count > 0) {
+		struct timespec tdelay;
+		tdelay.tv_sec = 0;
+		tdelay.tv_nsec = 50000000;
+		nanosleep(&tdelay, NULL);
+		pid = waitpid(rc->pid, &status, WNOHANG);
+		count--;
+	    }
+	}
+	rc->pid = -1;
     }
     if (rc->ev_read != NULL)
 	event_release(rc->ev_read);

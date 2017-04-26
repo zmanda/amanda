@@ -2545,6 +2545,7 @@ handle_result(
 					"errstr", security_geterror(sech))));
 	remote_errors++;
 	hostp->status = HOST_DONE;
+	security_close_connection(sech, hostp->hostname);
 	return;
     }
 
