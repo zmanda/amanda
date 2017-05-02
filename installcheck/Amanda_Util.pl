@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 130;
+use Test::More tests => 139;
 
 use lib '@amperldir@';
 use warnings;
@@ -414,3 +414,32 @@ is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\\\:3"), # three slashes
 is_deeply(Amanda::Util::unmarshal_tapespec(0, "\\\\\\\\:3"), # four slashes
     [ undef, "\\\\", [3] ],
     "four slashes escape to two");
+
+my $labelstr = {'match_autolabel'=> 0,
+		'template' => ""};
+my $autolabel = {'autolabel'=> 0,
+		'template' => ""};
+$labelstr->{'template'} = "^000[0-9][0-9][0-9]L[0-9]\$";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), 1, "match_labelstr 1");
+$labelstr->{'template'} = "^000[0-9][0-9][0-9]L\$";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), '', "match_labelstr 2");
+$labelstr->{'template'} = "^000[0-9][0-9][0-9]L[0-9]";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), 1, "match_labelstr 3");
+$labelstr->{'template'} = "^000[0-9][0-9][0-9]L";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), 1, "match_labelstr 4");
+$labelstr->{'template'} = "000[0-9][0-9][0-9]L[0-9]\$";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), 1, "match_labelstr 5");
+$labelstr->{'template'} = "00[0-9][0-9][0-9]L[0-9]\$";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), 1, "match_labelstr 6");
+
+$labelstr = {'match_autolabel'=> 1,
+	     'template' => ""};
+$autolabel = {'autolabel'=> 0,
+	      'template' => ""};
+$autolabel->{'template'} = "000[0-9][0-9][0-9]L[0-9]";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), 1, "match_labelstr 7");
+$autolabel->{'template'} = "000[0-9][0-9][0-9]L";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), '', "match_labelstr 8");
+$autolabel->{'template'} = "00[0-9][0-9][0-9]L[0-9]";
+is(Amanda::Util::match_labelstr($labelstr, $autolabel, "000123L7", undef, undef, undef), '', "match_labelstr 9");
+
