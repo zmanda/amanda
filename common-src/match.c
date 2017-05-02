@@ -1139,6 +1139,7 @@ illegal:
 
 static char *
 make_template(
+    const gboolean add_begin_and_end,
     const char *al_template,
     const char *barcode,
     const char *meta,
@@ -1150,7 +1151,8 @@ make_template(
 
     if (al_template == NULL)
 	at = "";
-    *t++ = '^';
+    if (add_begin_and_end)
+	*t++ = '^';
     while (*at != '\0') {
 	if (*at == '$') {
 	    at++;
@@ -1206,10 +1208,12 @@ make_template(
 		    }
 		}
 		at++;
-	    } else if (*at == '$' || *at == '\0') {
+	    } else if (*at == '$') {
 		/* two $, copy one */
-		/* $ at end, copy it */
 		*t++ = *at++;
+	    } else if (*at == '\0') {
+		/* $ at end, copy it */
+		*t++ = '$';
 	    } else {
 		/* Copy the $ and continue withthe next character */
 		*t++ = *at;
@@ -1235,7 +1239,8 @@ make_template(
 	    *t++ = *at++;
 	}
     }
-    *t++ = '$';
+    if (add_begin_and_end)
+	*t++ = '$';
     *t = '\0';
 
     return template;
@@ -1250,7 +1255,7 @@ match_labelstr_template(
     const char *meta,
     const char *storage)
 {
-    char *ztemplate = make_template(template, barcode, meta, storage);
+    char *ztemplate = make_template(FALSE, template, barcode, meta, storage);
     int   result;
 
     result = match(ztemplate, label);
@@ -1271,9 +1276,9 @@ match_labelstr(
     int   result;
 
     if (labelstr->match_autolabel) {
-	template = make_template(autolabel->template, barcode, meta, storage);
+	template = make_template(TRUE, autolabel->template, barcode, meta, storage);
     } else {
-	template = make_template(labelstr->template, barcode, meta, storage);
+	template = make_template(FALSE, labelstr->template, barcode, meta, storage);
     }
     result = match(template, label);
     g_free(template);
