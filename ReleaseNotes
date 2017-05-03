@@ -1,3 +1,22 @@
+                Release Notes for amanda-3.4.4
+* checkdump
+    - Verify all copies of a dump
+* diskflat device
+    -truncate the file when overwritting a label
+* amrecover
+    -fix hang
+* ambackup
+    -allow incremental backup
+* tapelist file
+    -fix not adding label to tapleist file when creating it
+* email interactivity
+    -improvement
+* S3 device
+    -work with openstack keystone V2 (Juno and newer)
+* labelstr
+    -fix matching a labelstr
+
+
                 Release Notes for amanda-3.4.3
 
 * fix MAJOR issue: amdump can reuse the same tape in the same run
