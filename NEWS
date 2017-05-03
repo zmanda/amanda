@@ -13,6 +13,24 @@ Changes in release 3.5
            - new PROJECT-NAME device-property
            - new DOMAIN-NAME device-property
 
+Changes in release 3.4.4
+   * checkdump
+       o Verify all copies of a dump
+   * diskflat device
+       o truncate the file when overwritting a label
+   * amrecover
+       o fix hang
+   * ambackup
+       o allow incremental backup
+   * tapelist file
+       o fix not adding label to tapleist file when creating it
+   * email interactivity
+       o improvement
+   * S3 device
+       o work with openstack keystone V2 (Juno and newer)
+   * labelstr
+       o fix matching a labelstr
+
 Changes in release 3.4.3
    * fix MAJOR issue: amdump can reuse the same tape in the same run
    * amtape slot
