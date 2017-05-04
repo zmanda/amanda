@@ -1,4 +1,7 @@
 2017-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* ReleaseNotes, NEWS: Typo
+
+2017-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c: Fix for compiler warning
 
 2017-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
