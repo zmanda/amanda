@@ -1,4 +1,7 @@
-2017-03-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+2017-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c: Fix for compiler warning
+
+2017-05-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: 3.4.4
 
 2017-05-02  Jean-Louis Martineau <JMartineau@carbonite.com>
