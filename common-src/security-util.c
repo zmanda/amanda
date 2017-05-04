@@ -2118,7 +2118,7 @@ sec_tcp_conn_put(
 	    count--;
 	}
 	if (pid == 0) {
-	    g_debug("sending SIGTERM to pid: %d", rc->pid);
+	    g_debug("sending SIGTERM to pid: %ld", (long)rc->pid);
 	    kill(rc->pid, SIGTERM);
 	    pid = waitpid(rc->pid, &status, WNOHANG);
 	    count = 50;
