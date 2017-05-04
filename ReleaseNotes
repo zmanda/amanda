@@ -2,13 +2,13 @@
 * checkdump
     - Verify all copies of a dump
 * diskflat device
-    -truncate the file when overwritting a label
+    -truncate the file when overwriting a label
 * amrecover
     -fix hang
 * ambackup
     -allow incremental backup
 * tapelist file
-    -fix not adding label to tapleist file when creating it
+    -fix not adding label to tapelist file when creating it
 * email interactivity
     -improvement
 * S3 device

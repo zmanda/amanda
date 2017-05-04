@@ -2,13 +2,13 @@ Changes in release 3.4.4
    * checkdump
        o Verify all copies of a dump
    * diskflat device
-       o truncate the file when overwritting a label
+       o truncate the file when overwriting a label
    * amrecover
        o fix hang
    * ambackup
        o allow incremental backup
    * tapelist file
-       o fix not adding label to tapleist file when creating it
+       o fix not adding label to tapelist file when creating it
    * email interactivity
        o improvement
    * S3 device
