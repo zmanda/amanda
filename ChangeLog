@@ -1,4 +1,7 @@
-2017-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+2017-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/runtar.c: Accept --verbose argument
+
+	2017-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* ReleaseNotes, NEWS: Typo
 
 2017-05-04  Jean-Louis Martineau <JMartineau@carbonite.com>
