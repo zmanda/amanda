@@ -171,7 +171,7 @@ main(
 		g_str_has_prefix(argv[i],"--atime-preserve") ||
 		g_str_has_prefix(argv[i],"--sparse") ||
 		g_str_has_prefix(argv[i],"--ignore-failed-read") ||
-		g_str_has_prefix(argv[i],"--numeric-owner")
+		g_str_has_prefix(argv[i],"--numeric-owner") ||
 		g_str_has_prefix(argv[i],"--verbose")) {
 		/* Accept theses options */
 		good_option++;
