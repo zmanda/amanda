@@ -1,4 +1,9 @@
 2017-05-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (tape_action): Use a new tape if it lost less
+	  tape space
+	* installcheck/tape_action.pl: Add tests.
+
+2017-05-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (wait_children): Use smaller sleep time
 
 2017-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>
