@@ -826,8 +826,10 @@ wait_children(int count)
 		amfree(who);
 	    }
 	} while (pid > 0 || wait_errno == EINTR);
-	if (errno != ECHILD)
-	    sleep(1);
+	if (errno != ECHILD) {
+	    gulong delay = G_USEC_PER_SEC/100; /* 1 msec */
+	    g_usleep(delay);
+	}
 	if (count > 0)
 	    count--;
     } while ((errno != ECHILD) && (count != 0));
