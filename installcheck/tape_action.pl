@@ -17,7 +17,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 4;
+use Test::More tests => 12;
 use strict;
 use warnings;
 
@@ -136,11 +136,13 @@ $testconf->add_param("tapetype", '"tape-900"');
 $testconf->add_param("device-property", "\"SLOW_WRITE\" \"YES\"");
 $testconf->add_param("debug-driver", "9");
 $testconf->write();
+my $result;
+
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
     or amdump_diag();
 is($exit_code, 0, "exit code is not 0");
 is(check_logs("INFO taper tape TESTCONF01 kb 736 fm 1", "INFO taper tape TESTCONF02 kb 736 fm 1", "INFO taper tape TESTCONF03 kb 628 fm 2"), 3, "3 vtapes used");
-my $result = check_amdump(
+$result = check_amdump(
 	[
 		"to taper0: START-TAPER taper0 worker0-0 TESTCONF",
 		"from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM",
@@ -182,6 +184,146 @@ my $result = check_amdump(
 ok($result == 34, "amdump is good") ||
     dump_amdump($result);
 
+$testconf = Installcheck::Run::setup();
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
+
+# Two amrandom dle
+$testconf->add_dle(<<EODLE);
+localhost diskname1 $diskname {
+    installcheck-test
+    program "APPLICATION"
+    application {
+	plugin "amrandom"
+	property "SIZE" "1471488"
+    }
+}
+EODLE
+
+$testconf->add_dle(<<EODLE);
+localhost diskname2 $diskname {
+    installcheck-test
+    program "APPLICATION"
+    application {
+	plugin "amrandom"
+	property "SIZE" "204800"
+    }
+}
+EODLE
+
+$testconf->add_taperscan("lexical", [ "plugin" => '"lexical"' ]);
+$testconf->add_param("taperscan", '"lexical"');
+$testconf->add_tapetype("tape-1500",
+			[ length => "1500k", filemark => "0k" ]);
+$testconf->rm_param("tapetype");
+$testconf->add_param("tapetype", '"tape-1500"');
+$testconf->add_param("device-property", "\"ENFORCE_MAX_VOLUME_USAGE\" \"TRUE\"");
+$testconf->add_param("taperalgo", 'smallest');
+$testconf->add_param("flush_threshold_dumped", '500');
+$testconf->add_param("flush_threshold_scheduled", '500');
+$testconf->add_param("taperflush", '100');
+$testconf->add_param("runtapes", '5');
+$testconf->add_param("debug-driver", '9');
+$testconf->write();
+ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
+    or amdump_diag();
+is($exit_code, 0, "exit code is not 0");
+is(check_logs("INFO taper tape TESTCONF01 kb 1288 fm 2", "INFO taper tape TESTCONF02 kb 349 fm 1"), 2, "2 vtapes used");
+$result = check_amdump(
+	[
+		"to taper0: START-TAPER taper0 worker0-0 TESTCONF",
+		"from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM",
+		"to taper0: FILE-WRITE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01",
+		"from taper0: READY worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01 1 200",
+		"from taper0: DONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
+		"to taper0: FILE-WRITE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: READY worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01 2 1088",
+		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF02",
+		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF02 1 349",
+		"from taper0: DONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
+		"to taper0: QUIT"
+	]);
+ok($result == 20, "amdump is good") ||
+    dump_amdump($result);
+
+
+$testconf = Installcheck::Run::setup();
+$testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
+
+# Two amrandom dle
+$testconf->add_dle(<<EODLE);
+localhost diskname1 $diskname {
+    installcheck-test
+    program "APPLICATION"
+    application {
+	plugin "amrandom"
+	property "SIZE" "1469440"
+    }
+}
+EODLE
+
+$testconf->add_dle(<<EODLE);
+localhost diskname2 $diskname {
+    installcheck-test
+    program "APPLICATION"
+    application {
+	plugin "amrandom"
+	property "SIZE" "204800"
+    }
+}
+EODLE
+
+$testconf->add_taperscan("lexical", [ "plugin" => '"lexical"' ]);
+$testconf->add_param("taperscan", '"lexical"');
+$testconf->add_tapetype("tape-1500",
+			[ length => "1500k", filemark => "0k" ]);
+$testconf->rm_param("tapetype");
+$testconf->add_param("tapetype", '"tape-1500"');
+$testconf->add_param("device-property", "\"ENFORCE_MAX_VOLUME_USAGE\" \"TRUE\"");
+$testconf->add_param("taperalgo", 'smallest');
+$testconf->add_param("flush_threshold_dumped", '500');
+$testconf->add_param("flush_threshold_scheduled", '500');
+$testconf->add_param("taperflush", '100');
+$testconf->add_param("runtapes", '5');
+$testconf->add_param("debug-driver", '9');
+$testconf->write();
+ok(!run('amdump', 'TESTCONF'), "amdump exited with no zero")
+    or amdump_diag();
+is($exit_code, 16, "exit code is not 16");
+is(check_logs("INFO taper tape TESTCONF01 kb 1288 fm 2"), 1, "1 vtapes used");
+$result = check_amdump(
+	[
+		"to taper0: START-TAPER taper0 worker0-0 TESTCONF",
+		"from taper0: TAPER-OK worker0-0 ALLOW-TAKE-SCRIBE-FROM",
+		"to taper0: FILE-WRITE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01",
+		"from taper0: READY worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01 1 200",
+		"from taper0: DONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-GOOD",
+		"to taper0: FILE-WRITE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: READY worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: PARTDONE worker0-0 \\d\\d-\\d\\d\\d\\d\\d TESTCONF01 2 1088",
+		"from taper0: REQUEST-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: START-SCAN worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"to taper0: NO-NEW-TAPE worker0-0 \\d\\d-\\d\\d\\d\\d\\d",
+		"from taper0: PARTIAL worker0-0 \\d\\d-\\d\\d\\d\\d\\d INPUT-GOOD TAPE-CONFIG",
+		"to taper0: QUIT"
+	]);
+ok($result == 18, "amdump is good") ||
+    dump_amdump($result);
+
+
 Installcheck::Run::cleanup();
 
 sub check_logs {
@@ -206,13 +348,16 @@ sub check_amdump {
     open(my $amdump, "<", "$CONFIG_DIR/TESTCONF/log/amdump.1")
 	or die("opening amdump $!");
     foreach my $logline (<$amdump>) {
+	#my $a = 0;
 	foreach my $lines (@plines) {
 	    my $line = @$lines[0];
 	    if (defined $line && $logline =~ /$line/) {
 		$good++;
+		#$a++;
 		shift @$lines;
 	    }
 	}
+	#diag("$a: $good: $logline");
     }
     close($amdump);
     return $good;
