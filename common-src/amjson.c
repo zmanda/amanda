@@ -460,8 +460,7 @@ parse_json_hash(
 	    case '9':
 		itoken = json_parse_number(s, i, len);
 		if (expect_key) {
-		    expect_key = FALSE;
-		    key = token;
+		    g_critical("number as hash key");
 		} else {
 		    amjson_t *value = g_new0(amjson_t, 1);
 		    value->type = JSON_NUMBER;
@@ -476,9 +475,7 @@ parse_json_hash(
 	    default:
 		json_token = parse_json_primitive(s, i, len);
 		if (expect_key) {
-		    assert(0);
-		    expect_key = FALSE;
-		    key = token;
+		    g_critical("primitive as hash key");
 		} else if (json_token != JSON_BAD) {
 		    amjson_t *value = g_new0(amjson_t, 1);
 		    value->type = json_token;
