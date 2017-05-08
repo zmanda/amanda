@@ -3325,7 +3325,7 @@ read_amidxtaped_data(
 	if (count > 0) {
 	    crc32_add((uint8_t *)buf, count, &crc_in);
 	}
-	if (count < size || (count == -1 && errno == EAGAIN)) {
+	if ((count >= 0 && count < size) || (count == -1 && errno == EAGAIN)) {
 		if (count == -1) count = 0;
 		security_stream_pause(amidxtaped_streams[DATAFD].fd);
 		data_cookie.buf = g_malloc(size);

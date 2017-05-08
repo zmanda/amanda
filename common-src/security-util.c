@@ -2119,7 +2119,9 @@ sec_tcp_conn_put(
 	}
 	if (pid == 0) {
 	    g_debug("sending SIGTERM to pid: %ld", (long)rc->pid);
-	    kill(rc->pid, SIGTERM);
+	    if (kill(rc->pid, SIGTERM) == -1 && errno != ESRCH) {
+		g_debug("Can't kill pid %ld: %s", (long)rc->pid, strerror(errno));
+	    }
 	    pid = waitpid(rc->pid, &status, WNOHANG);
 	    count = 50;
 	    while (pid == 0 && count > 0) {
