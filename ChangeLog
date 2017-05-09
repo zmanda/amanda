@@ -1,6 +1,10 @@
+2017-05-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: Parse HTML error from SWIFT_3
+	* device-src/s3.h: Add NotFound error
+
 2017-05-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amjson.c, common-src/security-util.c,
-  recover-src/extract_list.c:Fix bug found by coverity
+	  recover-src/extract_list.c: Fix bug found by coverity
 
 2017-05-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (tape_action): Use a new tape if it lost less

@@ -330,7 +330,7 @@ static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
     x_subject_token_regex,
     x_storage_url_regex, access_token_regex, expires_in_regex,
     content_type_regex, details_regex, code_regex, uploadId_regex,
-    json_message_regex,
+    json_message_regex, html_error_name_regex, html_message_regex,
     transfer_encoding_regex, x_amz_expiration_regex, x_amz_restore_regex;
 
 
@@ -344,6 +344,7 @@ static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
  * @returns: true iff str is non-NULL and not "\0"
  */
 static gboolean is_non_empty_string(const char *str);
+char *am_strrmspace(char *str);
 
 /* Construct the URL for an Amazon S3 REST request.
  *
@@ -1786,8 +1787,7 @@ interpret_response(S3Handle *hdl,
     thunk.bucket_location = hdl->bucket_location;
 
     if ((hdl->s3_api == S3_API_SWIFT_1 ||
-         hdl->s3_api == S3_API_SWIFT_2 ||
-         hdl->s3_api == S3_API_SWIFT_3) &&
+         hdl->s3_api == S3_API_SWIFT_2) &&
 	hdl->content_type &&
 	(g_str_equal(hdl->content_type, "text/html") ||
 	 g_str_equal(hdl->content_type, "text/plain"))) {
@@ -1816,6 +1816,21 @@ interpret_response(S3Handle *hdl,
 	    g_strstrip(thunk.message);
 	    b = p;
 	}
+	goto parsing_done;
+    } else if ((hdl->s3_api == S3_API_SWIFT_3) &&
+	hdl->content_type &&
+	(g_str_equal(hdl->content_type, "text/html") ||
+	 g_str_equal(hdl->content_type, "text/plain"))) {
+
+	char *body_copy = g_strndup(body, body_len);
+	regmatch_t pmatch[2];
+	if (!s3_regexec_wrap(&html_error_name_regex, body_copy, 2, pmatch, 0)) {
+            thunk.error_name = find_regex_substring(body_copy, pmatch[1]);
+	    am_strrmspace(thunk.error_name);
+        }
+	if (!s3_regexec_wrap(&html_message_regex, body_copy, 2, pmatch, 0)) {
+            thunk.message = find_regex_substring(body_copy, pmatch[1]);
+        }
 	goto parsing_done;
     } else if ((hdl->s3_api == S3_API_SWIFT_1 ||
 		hdl->s3_api == S3_API_SWIFT_2 ||
@@ -2857,6 +2872,8 @@ compile_regexes(void)
         {"\"code\": (.*),", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &code_regex},
         {"\"message\": \"([^\"]*)\",", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &json_message_regex},
 	{"<UploadId>[[:space:]]*([^<]*)[[:space:]]*</UploadId>", REG_EXTENDED | REG_ICASE, &uploadId_regex},
+	{"<h1>[[:space:]]*([^<]*)[[:space:]]*</h1>", REG_EXTENDED | REG_ICASE, &html_error_name_regex},
+	{"<p>[[:space:]]*([^<]*)[[:space:]]*</p>", REG_EXTENDED | REG_ICASE, &html_message_regex},
         {"^x-amz-expiration:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_amz_expiration_regex},
         {"^x-amz-restore:[[:space:]]*([^ ]+)[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &x_amz_restore_regex},
         {NULL, 0, NULL}
@@ -2927,6 +2944,12 @@ compile_regexes(void)
         {"(/>)|(>([^<]*)</UploadId>)",
          G_REGEX_CASELESS,
          &uploadId_regex},
+        {"(/>)|(<h1>([^<]*)</h1>)",
+         G_REGEX_CASELESS,
+         &html_error_name_regex},
+        {"(/>)|(<p>([^<]*)</p>)",
+         G_REGEX_CASELESS,
+         &html_message_regex},
         {NULL, 0, NULL}
   };
   int i;
@@ -4892,4 +4915,20 @@ s3_put_lifecycle(
 
     return result == S3_RESULT_OK;
 
+}
+
+char *
+am_strrmspace(
+    char *str)
+{
+
+    char *s, *t;
+
+    for(s=str,t=str; *s != '\0'; s++) {
+	if (*s != ' ') {
+	    *t++ = *s;
+	}
+    }
+    *t = '\0';
+    return t;
 }
