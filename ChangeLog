@@ -1,3 +1,6 @@
+2017-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/senddiscover.c: s/read/read/fully/
+
 2017-05-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amjson.c, recover-src/extract_list.c: Fix bug found by
 	  coverity

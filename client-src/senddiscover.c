@@ -395,7 +395,7 @@ main(
 	    GString *json_buffer = g_string_new("");
 	    char   *buf = g_malloc(32769);
 	    size_t  size;
-	    while ((size = read(outfd[0], buf, 32768)) > 0) {
+	    while ((size = read_fully(outfd[0], buf, 1000, NULL)) > 0) {
 		buf[size] = '\0';
 		g_string_append(json_buffer, buf);
 	    }
@@ -403,7 +403,10 @@ main(
 	    close(outfd[0]);
 
 	    if (json_buffer && json_buffer->str) {
-		GPtrArray *message_array = parse_json_message(json_buffer->str);
+		GPtrArray *message_array;
+
+		g_debug("json_buffer: %s", json_buffer->str);
+		message_array = parse_json_message(json_buffer->str);
 
 		/* print and delete the messages */
 		g_ptr_array_foreach(message_array, senddiscover_print_array_message, stdout);
