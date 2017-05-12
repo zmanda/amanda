@@ -1,3 +1,6 @@
+2017-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/senddiscover.c: s/read/read/fully/
+
 2017-05-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Parse HTML error from SWIFT_3
 	* device-src/s3.h: Add NotFound error
