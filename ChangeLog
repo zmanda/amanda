@@ -1,3 +1,9 @@
+2017-05-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amjson.c (amjson_s, parse_json_primitive,
+	  json_parse_string): Move declaration to amjson.h
+	* common-src/amjson.h: Add declaration
+	* common-src/ammessage.c: Use amjson type and functions
+
 2017-05-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/senddiscover.c: s/read/read/fully/
 
