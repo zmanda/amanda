@@ -36,11 +36,22 @@ typedef enum {
     JSON_BAD
 } amjson_type_t;
 
+struct amjson_s {
+    amjson_type_t type;
+    union {
+        uint64_t    number;
+        char       *string;
+        GPtrArray  *array;
+        GHashTable *hash;
+    };
+};
 typedef struct amjson_s amjson_t;
 
 void delete_json(amjson_t *json);
 char *json_to_string(amjson_t *json);
 amjson_t *parse_json(char *s);
+amjson_type_t parse_json_primitive( char *s, int  *i, int   len);
+char *json_parse_string(char *s, int *i, int len);
 
 amjson_type_t get_json_type(amjson_t *json);
 char *get_json_string(amjson_t *json);

@@ -27,16 +27,6 @@
 #include "conffile.h"
 #include "amjson.h"
 
-struct amjson_s {
-    amjson_type_t type;
-    union {
-	uint64_t    number;
-	char       *string;
-	GPtrArray  *array;
-	GHashTable *hash;
-    };
-};
-
 static char *string_encode_json(char *str);
 
 static void free_json_value_full(gpointer);
@@ -188,8 +178,7 @@ json_value_to_string(
     return result;
 }
 
-static amjson_type_t parse_json_primitive( char *s, int  *i, int   len);
-static amjson_type_t
+amjson_type_t
 parse_json_primitive(
     char *s,
     int  *i,
@@ -209,8 +198,7 @@ parse_json_primitive(
     return JSON_BAD;
 }
 
-static char *json_parse_string(char *s, int *i, int len);
-static char *
+char *
 json_parse_string(
     char *s,
     int  *i,
