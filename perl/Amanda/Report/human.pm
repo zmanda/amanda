@@ -662,7 +662,7 @@ sub output_error_summaries
 		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED [$try->{dumper}->{error}]";
 		    $failed = 1;
 		}
-		if (exists $try->{chunker} && exists $try->{dumper} && !exists $dle->{driver} &&
+		if (exists $try->{chunker} && !exists $dle->{driver} &&
 		    $try->{chunker}->{status} eq 'fail') {
 		    push @dump_failures, "$hostname $qdisk lev $try->{chunker}->{level}  FAILED [$try->{chunker}->{error}]";
 		    $failed = 1;
@@ -674,6 +674,7 @@ sub output_error_summaries
 		    $flush = "VAULT" if $report->get_flag("amvault_run");
 		    $flush = "VAULT" if $try->{taper}->{vault};
 		    $flush = "FAILED" if exists $try->{dumper} && !exists $try->{chunker};
+		    $flush = "FAILED" if !exists $try->{dumper} && exists $try->{chunker};
 		    if ($flush eq "FAILED" or !defined $try->{taper}->{failure_from}
 					   or $try->{taper}->{failure_from} ne 'config') {
 		        if ($try->{taper}->{status} eq 'partial') {
@@ -1553,8 +1554,9 @@ sub get_summary_info
 			  : (defined $tape_failure_from and
 			     $tape_failure_from eq 'config') ? 'NOT FLUSHED'
 			  : $report->get_flag("amvault_run") ? 'VAULT'
+			  : $report->get_flag("amflush_run") ? 'FLUSH'
 			  : defined $flush_or_vault          ? $flush_or_vault
-							     : 'FLUSH';
+							     : 'FAILED';
 	    push @rv, "nodump-$message";
 	    push @rv, $hostname;
 	    push @rv, $disk_out;

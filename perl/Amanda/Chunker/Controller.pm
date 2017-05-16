@@ -671,12 +671,14 @@ sub send_port_and_get_header {
         my $header_addrs = $xsrc->get_addrs();
         my $header_port = $header_addrs->[0][1];
 
-        # and tell the driver which ports we're listening on
-        $self->{'proto'}->send(Amanda::Chunker::Protocol::SHM_NAME,
-            worker_name => $self->{'worker_name'},
-            handle => $self->{'handle'},
-            port => $header_port,
-            shm_name => $shm_name);
+	if (defined $header_port) {
+            # and tell the driver which ports we're listening on
+            $self->{'proto'}->send(Amanda::Chunker::Protocol::SHM_NAME,
+		worker_name => $self->{'worker_name'},
+		handle => $self->{'handle'},
+		port => $header_port,
+		shm_name => $shm_name);
+	}
     };
 
     step send_port => sub {
@@ -698,12 +700,14 @@ sub send_port_and_get_header {
         my $header_addrs = $xsrc->get_addrs();
         my $header_port = $header_addrs->[0][1];
 
-        # and tell the driver which ports we're listening on
-        $self->{'proto'}->send(Amanda::Chunker::Protocol::PORT,
-            worker_name => $self->{'worker_name'},
-            handle => $self->{'handle'},
-            port => $header_port,
-            ipport => $data_addrs);
+	if (defined $header_port) {
+            # and tell the driver which ports we're listening on
+            $self->{'proto'}->send(Amanda::Chunker::Protocol::PORT,
+		worker_name => $self->{'worker_name'},
+		handle => $self->{'handle'},
+		port => $header_port,
+		ipport => $data_addrs);
+	}
     };
 
     step header_xfer_xmsg_cb => sub {
