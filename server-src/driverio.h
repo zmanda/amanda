@@ -157,6 +157,7 @@ typedef struct dumper_s {
     int busy, down;		/* state */
     int fd;			/* read/write */
     int result;
+    gboolean sent_command;
     int output_port;		/* output port */
     event_handle_t *ev_read;	/* read event handle */
     job_t *job;

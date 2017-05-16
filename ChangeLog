@@ -1,3 +1,14 @@
+2017-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Chunker/Controller.pm: Send SHM_NAME or PORT only if we
+	  have a header_port
+	* perl/Amanda/Report.pm: Chunker without dumper is a failure
+	* perl/Amanda/Report/human.pm: Chunker without dumper is a FAILED
+	* server-src/driver.c: Call dumper_chunker_result if chunker failand
+	  dumper not yet started
+	* server-src/driverio.h (struct dumper_s): Add sent_command
+	* xfer-src/element-glue.c (do_directtcp_listen): Correctly print error
+	  from resolve_hostname()
+
 2017-05-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amjson.c (amjson_s, parse_json_primitive,
 	  json_parse_string): Move declaration to amjson.h
