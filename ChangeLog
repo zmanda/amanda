@@ -1,3 +1,7 @@
+2017-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (tape_action): Use a new tape if it lost less
+	  tape space
+
 2017-05-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/runtar.c: Accept --verbose argument
 

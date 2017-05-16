@@ -3834,7 +3834,8 @@ tape_action(
     dumper_t *dumper;
     taper_t  *taper1;
     disk_t   *dp;
-    off_t dumpers_size;		/* dumper size to holding disk */
+    off_t dumpers_taper_size;		/* dumper size to taper */
+    off_t dumpers_chunker_size;		/* dumper size to holding disk */
     off_t runq_size;
     off_t directq_size;
     off_t tapeq_size;
@@ -3849,16 +3850,21 @@ tape_action(
     int   new_dle = 0;		/* number of dle that doesn't fit on started tape */
     off_t new_data = 0;		/* size of dle that doesn't fit on started tape */
     off_t data_free = 0;	/* space available on started tape */
+    off_t data_lost = 0;	/* space lost if do not use  a new tape */
     gboolean taperflush_criteria;
     gboolean flush_criteria;
 
     driver_debug(2, "tape_action: ENTER %p %s\n", taper, taper->name);
-    dumpers_size = 0;
+    dumpers_taper_size = 0;
+    dumpers_chunker_size = 0;
     for(dumper = dmptable; dumper < (dmptable+inparallel); dumper++) {
 	if (dumper->busy && !sched(dumper->dp)->taper)
-	    dumpers_size += sched(dumper->dp)->est_size;
+	    dumpers_taper_size += sched(dumper->dp)->est_size;
+	if (dumper->busy && dumper->chunker)
+	    dumpers_chunker_size += sched(dumper->dp)->est_size;
     }
-    driver_debug(2, _("dumpers_size: %lld\n"), (long long)dumpers_size);
+    driver_debug(2, _("dumpers_taper_size: %lld\n"), (long long)dumpers_taper_size);
+    driver_debug(2, _("dumpers_chunker_size: %lld\n"), (long long)dumpers_chunker_size);
 
     runq_size = 0;
     for(dp = runq.head; dp != NULL; dp = dp->next) {
@@ -3897,6 +3903,7 @@ tape_action(
     /* Add what is currently written to tape and in the go. */
     new_data = 0;
     data_free = 0;
+    data_lost = 0;
     for (taper1 = tapetable; taper1 < tapetable+conf_taper_parallel_write;
 	 taper1++) {
 	if (taper1->state & TAPER_STATE_TAPE_STARTED) {
@@ -3915,8 +3922,10 @@ tape_action(
 	    if (data_to_go > taper1->left) {
 		if (taper1->state & TAPER_STATE_TAPE_STARTED) {
 		    data_free -= data_to_go - taper1->left;
+		    data_lost += taper1->written - taper1->left;
 		} else {
 		    data_free -= data_to_go;
+		    data_lost += taper1->written;
 		}
 	    } else {
 		if (!(taper1->state & TAPER_STATE_TAPE_STARTED)) {
@@ -3956,15 +3965,16 @@ tape_action(
     }
     driver_debug(2, _("new_data: %lld\n"), (long long)new_data);
     driver_debug(2, _("data_free: %lld\n"), (long long)data_free);
+    driver_debug(2, _("data_lost: %lld\n"), (long long)data_lost);
 ;
     tapeq_size -= data_free;
     tapeq_size += new_data;
     driver_debug(2, _("tapeq_size: %lld\n"), (long long)tapeq_size);
 
-    sched_size = runq_size + tapeq_size + dumpers_size;
+    sched_size = runq_size + tapeq_size + dumpers_chunker_size + dumpers_taper_size;
     driver_debug(2, _("sched_size: %lld\n"), (long long)sched_size);
 
-    dump_to_disk_size = dumpers_size + runq_size + directq_size;
+    dump_to_disk_size = dumpers_chunker_size + runq_size + directq_size;
     driver_debug(2, _("dump_to_disk_size: %lld\n"), (long long)dump_to_disk_size);
 
     dump_to_disk_terminated = schedule_done && dump_to_disk_size == 0;
@@ -3976,8 +3986,10 @@ tape_action(
 	}
     }
 
-    taperflush_criteria = (taperflush < tapeq_size &&
-			   (new_data > 0 || force_flush == 1 || dump_to_disk_terminated));
+    taperflush_criteria = (((taperflush < tapeq_size) && dump_to_disk_terminated &&
+			    (new_data > 0 || force_flush == 1 || dump_to_disk_terminated)) ||
+			   ((data_lost > (tape_length - tapeq_size)) &&
+			    (dump_to_disk_terminated)));
     flush_criteria = (flush_threshold_dumped < tapeq_size &&
 		      flush_threshold_scheduled < sched_size &&
 		      (new_data > 0 || force_flush == 1 || dump_to_disk_terminated)) ||
@@ -4048,7 +4060,7 @@ tape_action(
 		      "does not allow additional tapes"), current_tape, conf_runtapes);
 		    driver_debug(2, "tape_action: TAPER_STATE_WAIT_FOR_TAPE return TAPE_ACTION_NO_NEW_TAPE\n");
 		    result |= TAPE_ACTION_NO_NEW_TAPE;
-		} else if (dumpers_size <= 0) {
+		} else if (dumpers_chunker_size <= 0) {
 		    *why_no_new_tape = _("taperflush criteria not met");
 		    driver_debug(2, "tape_action: TAPER_STATE_WAIT_FOR_TAPE return TAPE_ACTION_NO_NEW_TAPE\n");
 		    result |= TAPE_ACTION_NO_NEW_TAPE;
