@@ -126,9 +126,10 @@ do_directtcp_listen(
     struct addrinfo *res;
     struct addrinfo *res_addr;
     sockaddr_union *addr = NULL;
+    int r;
 
-    if (resolve_hostname("localhost", 0, &res, NULL) != 0) {
-	xfer_cancel_with_error(elt, "resolve_hostname(): %s", strerror(errno));
+    if ((r = resolve_hostname("localhost", 0, &res, NULL)) != 0) {
+	xfer_cancel_with_error(elt, "resolve_hostname(localhost): %s", gai_strerror(r));
 	return FALSE;
     }
     for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {

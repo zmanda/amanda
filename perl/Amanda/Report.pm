@@ -1774,6 +1774,9 @@ sub check_missing_fail_strange
 			$self->{flags}{dump_failed} = 1;
 			$self->{flags}{exit_status} |= STATUS_FAILED;
 		    }
+	    } elsif (defined($try->{'chunker'}) &&
+		$try->{'chunker'}->{status} ne 'done') {
+		    $self->{flags}{exit_status} |= STATUS_FAILED;
 	    } elsif (defined($try->{'taper'}) &&
 		$try->{'taper'}->{status} ne 'done') {
 		    $self->{flags}{exit_status} |= STATUS_FAILED;

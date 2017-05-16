@@ -1810,6 +1810,7 @@ start_some_dumps(
 	    chunker->result = LAST_TOK;
 	    chunker->sendresult = FALSE;
 	    dumper->result = LAST_TOK;
+	    dumper->sent_command = FALSE;
 	    startup_chunk_process(chunker,chunker_program);
 	    chunker_cmd(chunker, START, NULL, driver_timestamp);
 	    if (sp->disk->compress == COMP_SERVER_FAST ||
@@ -1853,6 +1854,7 @@ start_some_dumps(
 	    sp->dumpsize = (off_t)-1;
 	    sp->dumptime = (time_t)0;
 	    dumper->result = LAST_TOK;
+	    dumper->sent_command = FALSE;
 	    wtaper->result = LAST_TOK;
 	    amfree(wtaper->input_error);
 	    amfree(wtaper->tape_error);
@@ -2634,6 +2636,7 @@ handle_taper_result(
 	    } else {
 		dumper_cmd(dumper, SHM_DUMP, sp, NULL);
 	    }
+	    dumper->sent_command = TRUE;
 	    dp->host->start_t = time(NULL) + HOST_DELAY;
 
 	    wtaper->state |= TAPER_STATE_DUMP_TO_TAPE;
@@ -3798,6 +3801,7 @@ handle_chunker_result(
 	    } else {
 		dumper_cmd(dumper, SHM_DUMP, sp, NULL);
 	    }
+	    dumper->sent_command = TRUE;
 	    dumper->ev_read = event_create(
 				(event_id_t)dumper->fd,
 				EV_READFD,
@@ -3920,7 +3924,8 @@ handle_chunker_result(
 	    g_strfreev(result_argv);
 
 	    if (chunker->result != LAST_TOK &&
-		job->dumper && job->dumper->result != LAST_TOK) {
+		job->dumper && (job->dumper->result != LAST_TOK ||
+				!job->dumper->sent_command)) {
 		dumper_chunker_result(job);
 	    }
 
@@ -3934,8 +3939,10 @@ handle_chunker_result(
 	g_strfreev(result_argv);
 
 	if (cmd != BOGUS) {
-	    if (chunker->result != LAST_TOK && job->dumper->result != LAST_TOK)
+	    if (chunker->result != LAST_TOK && (job->dumper->result != LAST_TOK ||
+						!job->dumper->sent_command)) {
 		dumper_chunker_result(job);
+	    }
 	}
 
     } while(areads_dataready(chunker->fd));
