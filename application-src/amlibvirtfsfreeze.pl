@@ -101,6 +101,17 @@ sub command_pre_dle_estimate {
     my $rslt = system {$self->{'virshexecutable'}} (@args);
 }
 
+# In an ideal world, just run at PRE-DLE-ESTIMATE to make one snapshot,
+# estimate from it, dump from it, then free it in POST-DLE-BACKUP. But on
+# a host with little free space for a snapshot and possibly a long planning wait
+# between the estimate and the dump, it may be better to support being called
+# at PRE-DLE-BACKUP also, in case a second snapshot is to be made then.
+
+sub command_pre_dle_backup {
+    my ( $self ) = @_;
+    $self->command_pre_dle_estimate();
+}
+
 package main;
 
 Amanda::Script::AmLibvirtFSFreeze->run();

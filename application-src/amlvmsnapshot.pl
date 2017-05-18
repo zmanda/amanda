@@ -171,6 +171,23 @@ sub command_post_dle_backup {
     );
 }
 
+# In an ideal world, just run at PRE-DLE-ESTIMATE to make one snapshot,
+# estimate from it, dump from it, then free it in POST-DLE-BACKUP. But on
+# a host with little free space for a snapshot and possibly a long planning wait
+# between the estimate and the dump, it may be better to support being called
+# at POST-DLE-ESTIMATE (to free one snapshot, same as POST-DLE-BACKUP) and
+# at PRE-DLE-BACKUP (to make another, same as PRE-DLE-ESTIMATE).
+
+sub command_post_dle_estimate {
+    my ( $self ) = @_;
+    $self->command_post_dle_backup();
+}
+
+sub command_pre_dle_backup {
+    my ( $self ) = @_;
+    $self->command_pre_dle_estimate();
+}
+
 package main;
 
 Amanda::Script::AmLvmSnapshot->run();
