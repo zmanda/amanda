@@ -1,3 +1,7 @@
+2017-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3-device.c:use_s3_multi_delete default to 1 for SWIFT-3
+	* device-src/s3.c (s3_multi_delete): Handle S3_API_SWIFT_3
+
 2017-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Chunker/Controller.pm: Send SHM_NAME or PORT only if we
 	  have a header_port

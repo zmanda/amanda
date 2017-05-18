@@ -913,19 +913,27 @@ authenticate_request(S3Handle *hdl,
             buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
             headers = curl_slist_append(headers, buf);
             g_free(buf);
+	    buf = g_strdup_printf("Accept: %s", "application/xml");
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
+	} else {
+	    buf = g_strdup_printf("Accept: %s", "application/json");
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
 	}
-	buf = g_strdup_printf("Accept: %s", "application/json");
-	headers = curl_slist_append(headers, buf);
-	g_free(buf);
     } else if (hdl->s3_api == S3_API_SWIFT_3) {
 	if (bucket) {
             buf = g_strdup_printf("X-Auth-Token: %s", hdl->x_auth_token);
             headers = curl_slist_append(headers, buf);
             g_free(buf);
+	    buf = g_strdup_printf("Accept: %s", "application/xml");
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
+	} else {
+	    buf = g_strdup_printf("Accept: %s", "application/json");
+	    headers = curl_slist_append(headers, buf);
+	    g_free(buf);
 	}
-	buf = g_strdup_printf("Accept: %s", "application/json");
-	headers = curl_slist_append(headers, buf);
-	g_free(buf);
     } else if (hdl->s3_api == S3_API_OAUTH2) {
 	if (bucket) {
             buf = g_strdup_printf("Authorization: Bearer %s", hdl->access_token);
@@ -3827,6 +3835,7 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
     if (g_ascii_strcasecmp(element_name, "contents") == 0 ||
+	g_ascii_strcasecmp(element_name, "object") == 0 ||
 	g_ascii_strcasecmp(element_name, "upload") == 0) {
         thunk->in_contents = 0;
 	thunk->object_list = g_slist_prepend(thunk->object_list, thunk->object);
@@ -4262,6 +4271,7 @@ s3_multi_delete(S3Handle *hdl,
         { 200,  0,                     0, S3_RESULT_OK },
         { 204,  0,                     0, S3_RESULT_OK },
         { 400,  0,                     0, S3_RESULT_NOTIMPL },
+        { 403,  0,                     0, S3_RESULT_NOTIMPL },
         { 404,  S3_ERROR_NoSuchBucket, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
         { 0,    0,                     0, /* default: */ S3_RESULT_FAIL  }
@@ -4270,44 +4280,77 @@ s3_multi_delete(S3Handle *hdl,
     g_assert(hdl != NULL);
 
     query = g_string_new(NULL);
-    g_string_append(query, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    g_string_append(query, "<Delete>\n");
-    if (!hdl->verbose) {
-	g_string_append(query, "  <Quiet>true</Quiet>\n");
-    }
-    while (objects != NULL) {
-	s3_object *object = objects->data;
-	g_string_append(query, "  <Object>\n");
-	g_string_append(query, "    <Key>");
-	g_string_append(query, object->key);
-	g_string_append(query, "</Key>\n");
-	g_string_append(query, "  </Object>\n");
-	objects = objects->next;
-    }
-    g_string_append(query, "</Delete>\n");
+    if (hdl->s3_api == S3_API_SWIFT_1 ||
+	hdl->s3_api == S3_API_SWIFT_2 ||
+	hdl->s3_api == S3_API_SWIFT_3) {
+	char *container = s3_uri_encode(bucket, TRUE);
+	char *cmd = "DELETE";
+	while (objects != NULL) {
+	    s3_object *object = objects->data;
+	    char *name = s3_uri_encode(object->key, TRUE);
+	    g_string_append_printf(query, "%s/%s\n", container, name);
+	    objects = objects->next;
+	}
 
-    data.buffer_len = query->len;
-    data.buffer = query->str;
-    data.buffer_pos = 0;
-    data.max_buffer_size = data.buffer_len;
-    data.end_of_buffer = TRUE;
-    data.mutex = NULL;
-    data.cond = NULL;
+	data.buffer_len = query->len;
+	data.buffer = query->str;
+	data.buffer_pos = 0;
+	data.max_buffer_size = data.buffer_len;
+	data.end_of_buffer = TRUE;
+	data.mutex = NULL;
+	data.cond = NULL;
 
-    result = perform_request(hdl, "POST", bucket, NULL, "delete", NULL,
-		 "application/xml", NULL, NULL,
+	if (hdl->s3_api == S3_API_SWIFT_3)
+	    cmd = "POST";
+	result = perform_request(hdl, cmd, "", NULL, "bulk-delete", NULL,
+		 "text/plain", NULL, NULL,
 		 s3_buffer_read_func, s3_buffer_reset_func,
 		 s3_buffer_size_func, s3_buffer_md5_func,
 		 &data, NULL, NULL, NULL, NULL, NULL,
                  result_handling, FALSE);
 
+    } else {
+	g_string_append(query, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	g_string_append(query, "<Delete>\n");
+	if (!hdl->verbose) {
+	    g_string_append(query, "  <Quiet>true</Quiet>\n");
+	}
+	while (objects != NULL) {
+	    s3_object *object = objects->data;
+	    g_string_append(query, "  <Object>\n");
+	    g_string_append(query, "    <Key>");
+	    g_string_append(query, object->key);
+	    g_string_append(query, "</Key>\n");
+	    g_string_append(query, "  </Object>\n");
+	    objects = objects->next;
+	}
+	g_string_append(query, "</Delete>\n");
+
+	data.buffer_len = query->len;
+	data.buffer = query->str;
+	data.buffer_pos = 0;
+	data.max_buffer_size = data.buffer_len;
+	data.end_of_buffer = TRUE;
+	data.mutex = NULL;
+	data.cond = NULL;
+
+	result = perform_request(hdl, "POST", bucket, NULL, "delete", NULL,
+		 "application/xml", NULL, NULL,
+		 s3_buffer_read_func, s3_buffer_reset_func,
+		 s3_buffer_size_func, s3_buffer_md5_func,
+		 &data, NULL, NULL, NULL, NULL, NULL,
+                 result_handling, FALSE);
+    }
+
     g_string_free(query, TRUE);
-    if (result == S3_RESULT_OK)
+    if (result == S3_RESULT_OK) {
 	return 1;
-    else if (result == S3_RESULT_NOTIMPL)
+    } else if (result == S3_RESULT_NOTIMPL) {
+	s3_new_curl(hdl);
 	return 2;
-    else
+    } else {
 	return 0;
+    }
 }
 
 gboolean
