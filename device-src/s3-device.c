@@ -1930,7 +1930,7 @@ s3_device_set_storage_api(Device *p_self, DevicePropertyBase *base,
     } else if (g_str_equal(storage_api, "SWIFT-3")) {
 	self->s3_api = S3_API_SWIFT_3;
 	if (!self->set_s3_multi_delete)
-	    self->use_s3_multi_delete = 0;
+	    self->use_s3_multi_delete = 1;
     } else if (g_str_equal(storage_api, "OAUTH2")) {
 	self->s3_api = S3_API_OAUTH2;
 	if (!self->set_s3_multi_delete)
