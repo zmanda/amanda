@@ -50,19 +50,8 @@ sub new {
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
     $self->{'lvmexecutable'} = $self->{'options'}->{'lvmexecutable'};
-    if ( !defined $self->{'lvmexecutable'} ) {
-	$self->{'lvmexecutable'} = 'lvm';
-    }
-
     $self->{'mountexecutable'} = $self->{'options'}->{'mountexecutable'};
-    if ( !defined $self->{'mountexecutable'} ) {
-	$self->{'mountexecutable'} = 'mount';
-    }
-
     $self->{'umountexecutable'} = $self->{'options'}->{'umountexecutable'};
-    if ( !defined $self->{'umountexecutable'} ) {
-	$self->{'umountexecutable'} = 'umount';
-    }
 
     $self->{'volumegroup'} = $self->{'options'}->{'volumegroup'};
     if ( !defined $self->{'volumegroup'} ) {
@@ -88,6 +77,8 @@ sub new {
 	    'script requires extents property');
     }
 
+    $self->{'mountopts'} = $self->{'options'}->{'mountopts'};
+
     return $self;
 }
 
@@ -101,8 +92,16 @@ sub declare_options {
        'volumegroup=s',
        'logicalvolume=s',
        'snapshotname=s',
-       'extents=s'
+       'extents=s',
+       'mountopts=s@'
        );
+    # properties that have defaults and are not mandatory to receive with the
+    # request can be initialized here as an alternative to checking for !defined
+    # and applying the defaults in new().
+    $refopthash->{   'lvmexecutable'} = 'lvm';
+    $refopthash->{ 'mountexecutable'} = 'mount';
+    $refopthash->{'umountexecutable'} = 'umount';
+    $refopthash->{       'mountopts'} = [];
 }
 
 sub command_pre_dle_estimate {
@@ -140,7 +139,7 @@ sub command_pre_dle_estimate {
 
     $rslt = system {$self->{'mountexecutable'}} (
         'mount',
-	'-o', 'ro',
+	'-o', join(',', ('ro', @{$self->{'mountopts'}})),
 	'/dev/disk/by-id/dm-name-'.$vg.'-'.$sn,
 	$dst
     );
