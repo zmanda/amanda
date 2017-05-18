@@ -49,9 +49,6 @@ sub new {
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
     $self->{'virshexecutable'} = $self->{'options'}->{'virshexecutable'};
-    if ( !defined $self->{'virshexecutable'} ) {
-	$self->{'virshexecutable'} = 'virsh';
-    }
 
     $self->{'freezeorthaw'} = $self->{'options'}->{'freezeorthaw'};
     if ( !defined $self->{'freezeorthaw'}
@@ -67,11 +64,6 @@ sub new {
     }
 
     $self->{'mountpoint'} = $self->{'options'}->{'mountpoint'};
-    if ( !defined $self->{'mountpoint'}
-      and 'freeze' eq $self->{'freezeorthaw'} ) {
-        $self->print_to_server_and_die(
-	    'script requires mountpoint property');
-    }
 
     return $self;
 }
@@ -85,6 +77,11 @@ sub declare_options {
        'domain=s',
        'mountpoint=s@'
        );
+    # properties that have defaults and are not mandatory to receive with the
+    # request can be initialized here as an alternative to checking for !defined
+    # and applying the defaults in new().
+    $refopthash->{'virshexecutable'} = 'virsh';
+    $refopthash->{     'mountpoint'} = [];
 }
 
 sub command_pre_dle_estimate {
