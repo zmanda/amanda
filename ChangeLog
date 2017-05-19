@@ -1,3 +1,7 @@
+2017-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Vault.pm: Set $size to -1 if it is 0. 0 means nothing,
+	  -1, means everything
+
 2017-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Chunker/Controller.pm: Send SHM_NAME or PORT only if we
 	  have a header_port
