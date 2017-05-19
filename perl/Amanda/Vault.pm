@@ -747,6 +747,7 @@ sub xfer_dumps {
 	$xfer = Amanda::Xfer->new([ $xfer_src, $xfer_dst ]);
 	my $size = 0;
 	$size = $current->{'dump'}->{'bytes'} if exists $current->{'dump'}->{'bytes'};
+	$size = -1 if $size == 0;
 	$xfer->start($steps->{'handle_xmsg'}, 0, $size);
 
 	# count the "threads" running here (clerk and scribe)
