@@ -1,3 +1,7 @@
+2017-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Vault.pm: Set $size to -1 if it is 0. 0 means nothing,
+	  -1, means everything
+
 2017-05-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.c:use_s3_multi_delete default to 1 for SWIFT-3
 	* device-src/s3.c (s3_multi_delete): Handle S3_API_SWIFT_3
