@@ -88,6 +88,8 @@ sub new {
 	$self->{'rsyncexecutable'} = 'rsync';
     }
 
+    $self->{'localstatedir'} = $self->{'options'}->{'localstatedir'};
+
     $self->{'rsyncstatesdir'} = $self->{'options'}->{'rsyncstatesdir'};
     if ( !defined $self->{'rsyncstatesdir'} ) {
         my ( $dirpart, $filepart ) = $self->local_state_path();
@@ -107,7 +109,16 @@ sub declare_common_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_common_options($refopthash, $refoptspecs);
     push @$refoptspecs,
-        ( 'rsyncexecutable=s', 'rsyncstatesdir=s', 'rsynctempbatchdir=s' );
+        ( 'rsyncexecutable=s', 'rsyncstatesdir=s', 'rsynctempbatchdir=s',
+	  'localstatedir=s' );
+}
+
+sub local_state_path {
+    my ( $self ) = @_;
+    if ( defined $self->{'localstatedir'} ) {
+        return $self->build_state_path($self->{'localstatedir'});
+    }
+    return $self->SUPER::local_state_path();
 }
 
 sub generate_rsync_batch {
