@@ -74,6 +74,12 @@ sub declare_common_options {
     $refopthash->{'flock'} = $class->boolean_property_setter($refopthash);
 }
 
+sub declare_restore_options {
+    my ( $class, $refopthash, $refoptspecs ) = @_;
+    $class->SUPER::declare_restore_options($refopthash, $refoptspecs);
+    push @$refoptspecs, ( 'filename=s' );
+}
+
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
@@ -199,7 +205,7 @@ sub inner_restore {
 	    $Amanda::Script_App::ERROR);
     }
 
-    my $fn = $self->{'options'}->{'device'};
+    my $fn = $self->{'options'}->{'filename'};
     $fn = 'amgrowingzip-restored' if !defined $fn;
 
     if ( File::Spec->file_name_is_absolute($fn) ) {
