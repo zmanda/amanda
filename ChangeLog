@@ -1,4 +1,7 @@
 2017-06-05  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* recover-src/extract_list.c: Fix memory leak
+
+2017-06-05  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/xfer-dest-taper-splitter.c: Fix taper hang
 
 2017-05-19  Jean-Louis Martineau <JMartineau@carbonite.com>

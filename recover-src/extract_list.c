@@ -3178,11 +3178,12 @@ read_amidxtaped_state(
 typedef struct data_cookie_t {
     char    *buf;
     size_t   size;
+    size_t   alloc_size;
     size_t   count;
     event_handle_t *event;
     ctl_data_t     *ctl_data;
 } data_cookie_t;
-data_cookie_t data_cookie;
+data_cookie_t data_cookie = { NULL, 0, 0, 0, NULL, NULL };
 
 static void write_data_to_app(void *);
 
@@ -3328,7 +3329,13 @@ read_amidxtaped_data(
 	if ((count >= 0 && count < size) || (count == -1 && errno == EAGAIN)) {
 		if (count == -1) count = 0;
 		security_stream_pause(amidxtaped_streams[DATAFD].fd);
-		data_cookie.buf = g_malloc(size);
+		if (!data_cookie.buf || data_cookie.alloc_size < (size_t)size) {
+		    if (data_cookie.buf) {
+			g_free(data_cookie.buf);
+		    }
+		    data_cookie.buf = g_malloc(size);
+		    data_cookie.alloc_size = size;
+		}
 		memcpy(data_cookie.buf, buf, size);
 		data_cookie.size = size;
 		data_cookie.count = count;
