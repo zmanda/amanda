@@ -5,6 +5,27 @@
 
 # SYNOPSIS
 #
+#   AMANDA_CHECK_LIBDL
+#
+# OVERVIEW
+#
+#   Check for LIBDL support.  Sets the shell variable HAVE_CURL to "yes" or
+#   "no" depending on the result of the test.  If CURL is found, the necessary
+#   compiler flags are added, and a few other type checks are performed.
+#
+#   Note that libcurl itself defines a number of useful symbols as well; see
+#   the libcurl distribution for details.
+#
+AC_DEFUN([AMANDA_CHECK_LIBDL], [
+    AC_CHECK_LIB(dl, dlopen, [ NEED_LIBDL=1 ], [ NEED_LIBDL=0 ])
+    if test "$NEED_LIBDL" = "1"; then
+	LIBDL="-ldl"
+	AC_SUBST(LIBDL)
+    fi
+])
+
+# SYNOPSIS
+#
 #   AMANDA_CHECK_LIBCURL
 #
 # OVERVIEW
