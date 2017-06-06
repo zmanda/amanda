@@ -2284,6 +2284,7 @@ read_block(
     int         done;
     char       *key_ovr;
     int         i;
+    int         save_line_num;
 
     if(read_brace) {
 	get_conftoken(CONF_LBRACE);
@@ -2335,6 +2336,7 @@ read_block(
     if (!config_overrides)
 	return;
 
+    save_line_num = current_line_num;
     key_ovr = g_strjoin(NULL, type, ":", name, NULL);
     for (i = 0; i < config_overrides->n_used; i++) {
 	config_override_t *co = &config_overrides->ovr[i];
@@ -2382,6 +2384,7 @@ read_block(
 	amfree(current_line);
 	current_char = NULL;
     }
+    current_line_num = save_line_num;
     token_pushed = 0;
     amfree(key_ovr);
 
