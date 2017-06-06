@@ -29,7 +29,7 @@ CLEANFILES += $(SCRIPTS_PERL) config.log
 ## libamdevice.la
 
 amlib_LTLIBRARIES = 	libamdevice.la
-libamdevice_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) -ldl
+libamdevice_la_LDFLAGS = -release $(VERSION) $(AS_NEEDED_FLAGS) ${LIBDL}
 libamdevice_la_SOURCES = \
 	property.c \
 	device.c \
