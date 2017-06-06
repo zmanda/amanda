@@ -1,3 +1,7 @@
+2017-06-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c (read_block): Reset current_line_num after
+	  processing config_overrides
+
 2017-05-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (tape_action): Use a new tape if it lost less
 	  tape space
