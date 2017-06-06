@@ -1,4 +1,7 @@
 2017-06-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.4.5
+
+2017-06-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/amanda_configure.m4: Call AMANDA_CHECK_LIBDL
 	* config/amanda/libs.m4 (AMANDA_CHECK_LIBDL): Check if libdl exists
 	* device-src/Makefile.am: Use $LIBDL}

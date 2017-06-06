@@ -13,6 +13,13 @@ Changes in release 3.5
            - new PROJECT-NAME device-property
            - new DOMAIN-NAME device-property
 
+Changes in release 3.4.5
+   * fix amvault
+   * fix taper hang
+   * fix memory leak in amrecover
+   * fix config parser when -o option
+   * fix compilation on FreeBSD
+
 Changes in release 3.4.4
    * checkdump
        o Verify all copies of a dump
