@@ -3172,8 +3172,8 @@ static void delay_one_dump(est_t *ep, int delete, ...)
     if (delete) {
 	remove_est(&schedq, ep);
     } else {
-	estimate = ep->degr_est;
-	total_size += (gint64)tt_blocksize_kb + estimate->csize + (gint64)tape_mark;
+	ep->dump_est = ep->degr_est;
+	total_size += (gint64)tt_blocksize_kb + ep->dump_est->csize + (gint64)tape_mark;
     }
     return;
 }

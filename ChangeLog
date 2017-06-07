@@ -1,3 +1,6 @@
+2017-06-07  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/planner.c: Fix planner looping
+
 2017-06-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: 3.4.5
 	* VERSION: 3.4.5
