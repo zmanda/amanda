@@ -1,3 +1,10 @@
+2017-06-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c (3600096): Print the security_file
+	* common-src/security-file.c (security_file_check_path): Add the
+	  security_file to the message
+	* installcheck/ambsdtar.pl, installcheck/amgtar.pl,
+	  installcheck/amstar.pl: Test it
+
 2017-06-07  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/planner.c: Fix planner looping
 
