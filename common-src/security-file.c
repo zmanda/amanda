@@ -112,7 +112,8 @@ security_file_check_path(
     }
 
     message = build_message(
-		AMANDA_FILE, __LINE__, 3600096, MSG_ERROR, 2,
+		AMANDA_FILE, __LINE__, 3600096, MSG_ERROR, 3,
+		"security_file", DEFAULT_SECURITY_FILE,
 		"prefix", iprefix,
 		"path"  , path);
     g_free(iprefix);
