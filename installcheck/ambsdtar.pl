@@ -188,6 +188,8 @@ if ($Amanda::Constants::SINGLE_USERID) {
 	or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
 } else {
     ok($selfcheck->{'errors'}[0]->{code} eq '3600096' &&
+       $selfcheck->{'errors'}[0]->{security_file} eq $Amanda::Paths::SECURITY_FILE &&
+       $selfcheck->{'errors'}[0]->{prefix} eq "ambsdtar:bsdtar_path" &&
        $selfcheck->{'errors'}[0]->{prefix} eq 'ambsdtar:bsdtar_path', "good error selfcheck ")
 	or diag(Data::Dumper::Dumper(\@{$selfcheck->{'errors'}}));
 }

@@ -1432,7 +1432,7 @@ set_message(
     } else if (message->code == 3600091) {
 	msg = "Can't find real path for '%{filename}': %{errnostr}";
     } else if (message->code == 3600092) {
-	msg = "security file do not allow to run '%{filename}' as root for %{pname}:%{type}";
+	msg = "security file '%{security_file}' do not allow to run '%{filename}' as root for %{pname}:%{type}";
     } else if (message->code == 3600093) {
 	msg = "security_file_check_path: prefix is not set";
     } else if (message->code == 3600094) {
@@ -1440,7 +1440,7 @@ set_message(
     } else if (message->code == 3600095) {
 	msg = "Can't open security_file (%{security_file}): %{errnostr}";
     } else if (message->code == 3600096) {
-	msg = "security file do not allow to run '%{path}' as root for '%{prefix}'";
+	msg = "security file '%{security_file}' do not allow to run '%{path}' as root for '%{prefix}'";
     } else if (message->code == 3600097) {
 	msg = "Can't get realpath of the security file '%{security_file}': %{errnostr}";
     } else if (message->code == 3600098) {
