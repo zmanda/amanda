@@ -154,9 +154,9 @@ struct _S3Device {
     GThreadPool *thread_pool_read;
     GCond       *thread_idle_cond;
     GMutex      *thread_idle_mutex;
-    int		 last_byte_read;
-    int          next_block_to_read;
-    int		 next_byte_to_read;
+    gint64	 last_byte_read;
+    gint64	 next_block_to_read;
+    gint64	 next_byte_to_read;
     GSList      *objects;
     guint64	 object_size;
     gboolean	 bucket_made;
