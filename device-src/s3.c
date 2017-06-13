@@ -184,6 +184,7 @@ struct S3Handle {
 
     gboolean verbose;
     gboolean use_ssl;
+    gboolean server_side_encryption_header;
 
     guint64 max_send_speed;
     guint64 max_recv_speed;
@@ -1023,7 +1024,8 @@ authenticate_request(S3Handle *hdl,
 	g_string_append(auth_string, "\n");
 	g_string_append(strSignedHeaders, ";x-amz-date");
 
-	if (g_str_equal(verb,"PUT") && is_non_empty_string(hdl->server_side_encryption)) {
+	if (hdl->server_side_encryption_header &&
+	    is_non_empty_string(hdl->server_side_encryption)) {
 	    g_string_append(auth_string, AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
 	    g_string_append(auth_string, ":");
 	    g_string_append(auth_string, hdl->server_side_encryption);
@@ -1163,7 +1165,7 @@ authenticate_request(S3Handle *hdl,
 	    g_string_append(auth_string, "\n");
 	}
 
-	if (g_str_equal(verb,"PUT") &&
+	if (hdl->server_side_encryption_header &&
 	    is_non_empty_string(hdl->server_side_encryption)) {
 	    g_string_append(auth_string, AMAZON_SERVER_SIDE_ENCRYPTION_HEADER);
 	    g_string_append(auth_string, ":");
@@ -1251,7 +1253,7 @@ authenticate_request(S3Handle *hdl,
 	    g_free(buf);
 	}
 
-	if (g_str_equal(verb,"PUT") &&
+	if (hdl->server_side_encryption_header &&
 	    is_non_empty_string(hdl->server_side_encryption)) {
 	    buf = g_strdup_printf(AMAZON_SERVER_SIDE_ENCRYPTION_HEADER ": %s",
 				  hdl->server_side_encryption);
@@ -3314,11 +3316,13 @@ s3_upload(S3Handle *hdl,
 	md5_func = NULL;
     }
 
+    hdl->server_side_encryption_header = TRUE;
     result = perform_request(hdl, verb, bucket, key, NULL,
 		 NULL, content_type, NULL, headers,
                  read_func, reset_func, size_func, md5_func, read_data,
                  NULL, NULL, NULL, progress_func, progress_data,
                  result_handling, chunked);
+    hdl->server_side_encryption_header = FALSE;
 
     return result == S3_RESULT_OK;
 }
@@ -3409,11 +3413,13 @@ s3_initiate_multi_part_upload(
         };
 
     subresource = g_strdup_printf("uploads");
+    hdl->server_side_encryption_header = TRUE;
     result = perform_request(hdl, "POST", bucket, key, subresource, NULL,
 		 NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL,
                  result_handling, FALSE);
+    hdl->server_side_encryption_header = FALSE;
 
     g_free(subresource);
 
