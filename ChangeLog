@@ -1,3 +1,7 @@
+2017-06-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/ambsdtar.pl, installcheck/amgtar.pl.
+  installcheck/amstar.pl: Fix for !SINGLE_USERID
+
 2017-06-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.h (_S3Device): last_byte_read,
 	  next_block_to_read, next_byte_to_read must be gint64
