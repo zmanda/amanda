@@ -238,7 +238,7 @@ if ($Amanda::Constants::SINGLE_USERID) {
     is($estimate->{'errors'}[0], "no size line match in $bad_star output", "good error estimate")
 	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
 } else {
-    is($estimate->{'errors'}[0], "security file do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error estimate")
+    is($estimate->{'errors'}[0], "security file '$SECURITY_FILE' do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error estimate")
 	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
 }
 
@@ -249,7 +249,7 @@ if ($Amanda::Constants::SINGLE_USERID) {
 	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 } else {
     is($backup->{'exit_status'}, 256, "error status ok");
-    is($backup->{'errors'}[0], "security file do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error backup")
+    is($backup->{'errors'}[0], "security file '$SECURITY_FILE' do not allow to run '$bad_star' as root for 'amstar:star_path'", "good error backup")
 	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 }
 $app->delete_property('STAR-PATH');
