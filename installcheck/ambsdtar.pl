@@ -200,7 +200,7 @@ if ($Amanda::Constants::SINGLE_USERID) {
     ok($estimate->{'errors'}[0] =~ /no size line match in $bad_bsdtar output$bad_bsdtar exited with status 1: see .*/, "good error estimate")
 	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
 } else {
-    is($estimate->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error estimate")
+    is($estimate->{'errors'}[0], "security file '$SECURITY_FILE' do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error estimate")
 	or diag(Data::Dumper::Dumper(\@{$estimate->{'errors'}}));
 }
 
@@ -210,7 +210,7 @@ if ($Amanda::Constants::SINGLE_USERID) {
     is($backup->{'errors'}[0], "ambsdtar: error [exec $bad_bsdtar: Permission denied]", "good error backup")
 	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 } else {
-    is($backup->{'errors'}[0], "security file do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error backup")
+    is($backup->{'errors'}[0], "security file '$SECURITY_FILE' do not allow to run '$bad_bsdtar' as root for 'ambsdtar:bsdtar_path'", "good error backup")
 	or diag(Data::Dumper::Dumper(\@{$backup->{'errors'}}));
 }
 $app->delete_property('BSDTAR-PATH');
