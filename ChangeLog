@@ -1,3 +1,7 @@
+2017-06-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Rest.pm: We need WWW::Curl::Easy version
+	  4.14 or newer
+
 2017-06-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Fix for x-amz-server-side-encryption
 
