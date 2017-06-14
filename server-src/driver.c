@@ -592,7 +592,7 @@ main(
 		sp->level,
 		_("can't dump required holdingdisk"));
 	} else {
-	    gboolean dp_degraded_mode = FALSE;
+	    gboolean dp_degraded_mode = (nb_storage == 0);
 	    gboolean reach_runtapes = FALSE;
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		if (dump_match_selection(taper->storage_name, sp)) {
