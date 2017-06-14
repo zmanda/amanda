@@ -1,4 +1,7 @@
 2017-06-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c: dp_degraded_modemust be TRUE if nb_storage == 0
+
+2017-06-14  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Rest.pm: We need WWW::Curl::Easy version
 	  4.14 or newer
 
