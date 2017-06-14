@@ -42,6 +42,11 @@ if (!$@) {
     }
 }
 
+if ($WWW::Curl::Easy::VERSION < 4.14) {
+    Amanda::Debug::debug("WWW::Curl is too old");
+    die("WWW::Curl is too old");
+}
+
 =head1 NAME
 
 Installcheck::Rest - utilities to start/stop the Rest server.
