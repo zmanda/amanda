@@ -41,12 +41,19 @@ package Amanda::Application::AmGrowingZip;
 
 use base 'Amanda::Application::Abstract';
 
-use Archive::Zip;
 use Data::Dumper;
 use Fcntl qw(:flock);
 use File::Spec;
 use File::Path qw(make_path);
 use IO::File;
+
+my $usable;
+eval {
+    require Archive::Zip;
+    $usable = 1;
+} or do {
+    $usable = 0;
+};
 
 sub supports_host { my ( $class ) = @_; return 1; }
 sub supports_disk { my ( $class ) = @_; return 1; }
@@ -78,6 +85,16 @@ sub declare_restore_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_restore_options($refopthash, $refoptspecs);
     push @$refoptspecs, ( 'filename=s' );
+}
+
+sub command_selfcheck {
+    my ( $self ) = @_;
+    if ( $usable ) {
+        $self->SUPER::command_selfcheck();
+    } else {
+        $self->print_to_server("$self->{name} Archive::Zip is not installed",
+                               $Amanda::Script_App::ERROR);
+    }
 }
 
 sub inner_estimate {
