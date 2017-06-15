@@ -1,4 +1,9 @@
 2017-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Set 'aborted'. Always set TERMINATED* on
+	  dead_run
+	* installcheck/Amanda_Rest_Runs.pl: Fix
+
+2017-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (start_degraded_mode): Go in degraded mode if
 	  there is no storage
 
