@@ -2009,7 +2009,7 @@ start_degraded_mode(
     }
 
     if (!schedule_degraded) {
-	gboolean one_degraded_mode = FALSE;
+	gboolean one_degraded_mode = (nb_storage == 0);
 	schedule_degraded = TRUE;
 
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
@@ -2033,7 +2033,7 @@ start_degraded_mode(
 	    /* go ahead and do the disk as-is */
 	    enqueue_sched(&newq, sp);
 	} else {
-	    gboolean must_degrade_dp = FALSE;
+	    gboolean must_degrade_dp = (nb_storage == 0);
 	    for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 		if (taper->degraded_mode &&
 		    dump_match_selection(taper->storage_name, sp)) {
@@ -2067,7 +2067,7 @@ start_degraded_mode(
     }
 
     /*@i@*/ *queuep = newq;
-    all_degraded_mode = TRUE;
+    all_degraded_mode = (nb_storage == 0);
     for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 	all_degraded_mode &= taper->degraded_mode;
     }
