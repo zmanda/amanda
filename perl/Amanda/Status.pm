@@ -385,6 +385,8 @@ sub new {
     my $self = {
 	filename    => $filename,
 	fd          => $fd,
+	driver_finished => 0,
+	dead_run => 0,
 	second_read => 0,
     };
     $self->{'dead_run'} = $dead_run if $dead_run;
@@ -1944,7 +1946,8 @@ sub set_summary {
     if ($self->{'dead_run'}) {
 	if (!$self->{'driver_finished'}) {
 	    $self->{'exit_status'} |= $STATUS_FAILED;
-	} else {
+	}
+	{
 	    foreach my $host (sort keys %{$self->{'dles'}}) {
 		foreach my $disk (sort keys %{$self->{'dles'}->{$host}}) {
 	            foreach my $datestamp (sort keys %{$self->{'dles'}->{$host}->{$disk}}) {
@@ -2066,6 +2069,7 @@ sub current {
     my $data = {
 		 filename      => $self->{'filename'},
 		 dead_run      => $self->{'dead_run'},
+		 aborted       => !defined $self->{'driver_finished'},
 		 datestamp     => $self->{'datestamp'},
 		 dles          => $self->{'dles'},
 		 stat          => $self->{'stat'},
