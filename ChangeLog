@@ -1,3 +1,8 @@
+2017-06-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/success-dumper-chunker+2taper-flush.pl,
+	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
+	* installcheck/success-dumper-chunker+taper-flush.pl: Set reserve = 0
+
 2017-06-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Set 'aborted'. Always set TERMINATED* on
 	  dead_run
