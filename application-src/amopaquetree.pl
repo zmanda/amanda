@@ -68,6 +68,7 @@ use File::Spec;
 use File::Temp;
 use File::Path qw(make_path remove_tree);
 use IO::File;
+use IPC::Open3;
 
 sub supports_host { my ( $class ) = @_; return 1; }
 sub supports_disk { my ( $class ) = @_; return 1; }
@@ -78,6 +79,27 @@ sub supports_client_estimate { my ( $class ) = @_; return 1; }
 sub supports_multi_estimate { my ( $class ) = @_; return 1; }
 
 sub max_level { my ( $self ) = @_; return 9; }
+
+sub rsync_is_unusable {
+    my ( $self ) = @_;
+    my ( $wtr, $rdr );
+    my $pid = eval {
+        open3($wtr, $rdr, undef, $self->{'rsyncexecutable'}, '--version');
+    };
+    return $@ if $@;
+    close $wtr;
+    my $output = do { local $/; <$rdr> };
+    close $rdr;
+    waitpid $pid, 0;
+    return $output if $?;
+    unless ( $output =~ qr/(?:^\s|,\s)hardlinks(?:,\s|$)/m ) {
+        return $self->{'rsyncexecutable'} . ' lacks hardlink support.';
+    }
+    unless ( $output =~ qr/(?:^\s|,\s)batchfiles(?:,\s|$)/m ) {
+        return $self->{'rsyncexecutable'} . ' lacks batchfile support.';
+    }
+    return 0; # hooray, it isn't unusable.
+}
 
 sub new {
     my ( $class, $refopthash ) = @_;
@@ -285,6 +307,16 @@ sub write_local_state {
     $self->SUPER::write_local_state($levhash);
     for my $ors ( @{$self->{'orphanedrsyncstates'}} ) {
         remove_tree($ors);
+    }
+}
+
+sub command_selfcheck {
+    my ( $self ) = @_;
+    my $why = $self->rsync_is_unusable();
+    if ( $why ) {
+        $self->print_to_server($why, $Amanda::Script_App::ERROR);
+    } else {
+        $self->SUPER::command_selfcheck();
     }
 }
 
