@@ -95,6 +95,7 @@ $infodir = getconf($CNF_INFOFILE);
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('autolabel', '"TESTCONF%%" empty volume_error');
 $testconf->add_param('columnspec', '"Dumprate=1:-8:1,TapeRate=1:-8:1"');
+$testconf->add_param('reserve', '0');
 $testconf->add_dle(<<EODLE);
 localhost diskname2 $diskname {
     installcheck-test
