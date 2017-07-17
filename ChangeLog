@@ -1,4 +1,7 @@
 2017-07-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Config/FoldingHash.pm: Fix use of Tie::StdHash
+
+2017-07-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Fix aborted, set storage stats to
 	  TERMINATED_*
 
