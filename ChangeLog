@@ -1,3 +1,7 @@
+2017-07-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Fix aborted, set storage stats to
+	  TERMINATED_*
+
 2017-06-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/success-dumper-chunker+2taper-flush.pl,
 	* installcheck/success-dumper-chunker+dumper-chunker-taper-flush.pl,
