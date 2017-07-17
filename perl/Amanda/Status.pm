@@ -1979,6 +1979,37 @@ sub set_summary {
 			    $dle->{'status'} = $TERMINATED_VAULTING;
 			    $dle->{'message'} = "terminated while vaulting";
 			}
+			if (exists $dle->{'storage'}) {
+			    foreach my $storage (values %{$dle->{'storage'}}) {
+				if ($storage->{'status'} == $WAIT_FOR_DUMPING) {
+				    $self->{'exit_status'} |= $STATUS_MISSING;
+				    $storage->{'message'} = "terminated while waiting for dumping";
+				} elsif ($storage->{'status'} == $ESTIMATING ||
+					 $storage->{'status'} == $ESTIMATE_PARTIAL) {
+				    $storage->{'status'} = $TERMINATED_ESTIMATE;
+				    $storage->{'message'} = "terminated while estimating";
+				} elsif ($storage->{'status'} == $DUMPING_INIT ||
+					 $storage->{'status'} == $DUMPING ||
+					 $storage->{'status'} == $DUMPING_DUMPER) {
+				    $storage->{'status'} = $TERMINATED_DUMPING;
+				    $storage->{'message'} = "terminated while dumping";
+				} elsif ($storage->{'status'} == $DUMPING_TO_TAPE_INIT ||
+					 $storage->{'status'} == $DUMPING_TO_TAPE ||
+					 $storage->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
+				    $storage->{'status'} = $TERMINATED_DUMPING_TO_TAPE;
+				    $storage->{'message'} = "terminated while dumping to tape";
+				} elsif ($storage->{'status'} == $WRITING) {
+				    $storage->{'status'} = $TERMINATED_WRITING;
+				    $storage->{'message'} = "terminated while writing to tape";
+				} elsif ($storage->{'status'} == $FLUSHING) {
+				    $storage->{'status'} = $TERMINATED_FLUSHING;
+				    $storage->{'message'} = "terminated while flushing to tape";
+				} elsif ($storage->{'status'} == $VAULTING) {
+				    $storage->{'status'} = $TERMINATED_VAULTING;
+				    $storage->{'message'} = "terminated while vaulting";
+				}
+			   }
+                       }
 		    }
 		}
 	    }
@@ -2069,7 +2100,7 @@ sub current {
     my $data = {
 		 filename      => $self->{'filename'},
 		 dead_run      => $self->{'dead_run'},
-		 aborted       => !defined $self->{'driver_finished'},
+		 aborted       => !$self->{'driver_finished'},
 		 datestamp     => $self->{'datestamp'},
 		 dles          => $self->{'dles'},
 		 stat          => $self->{'stat'},
