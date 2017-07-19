@@ -152,6 +152,7 @@ sub run_subprocess {
 
     $^F=100;
     my ($rpipe, $wpipe) = POSIX::pipe();
+    my ($ropipe, $wopipe) = POSIX::pipe();
     $^F=2;
 
     debug("Running $proc " . join(' ', @args));
@@ -159,9 +160,9 @@ sub run_subprocess {
     if ($pid == 0) {
 	my $null = POSIX::open("/dev/null", POSIX::O_RDWR);
 	POSIX::dup2($null, 0);
-	POSIX::dup2($null, 1);
+	POSIX::dup2($wopipe, 1);
 	POSIX::dup2($wpipe, 2);
-	POSIX::close($wpipe);
+	POSIX::close($wopipe);
 	POSIX::close($rpipe);
 	close($self->{'amdump_log'});
 	exec $proc, @args;
@@ -169,9 +170,11 @@ sub run_subprocess {
 	die "Could not exec $proc: $!";
     }
     POSIX::close($wpipe);
+    POSIX::close($wopipe);
 
     my $pname = Amanda::Util::get_pname();
     my $proc_name = basename $proc;
+
     open (my $stderr_fh, "<&=", $rpipe);
     while (<$stderr_fh>) {
 	Amanda::Util::set_pname($proc_name);
@@ -179,6 +182,14 @@ sub run_subprocess {
 	Amanda::Util::set_pname($pname);
     }
     close($stderr_fh);
+
+    open (my $stdout_fh, "<&=", $ropipe);
+    while (<$stdout_fh>) {
+	Amanda::Util::set_pname($proc_name);
+	log_add($L_INFO, "$_");
+	Amanda::Util::set_pname($pname);
+    }
+    close($stdout_fh);
 
     waitpid($pid, 0);
     my $s = $? >> 8;

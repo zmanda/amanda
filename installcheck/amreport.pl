@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 185;
+use Test::More tests => 186;
 
 use strict;
 use warnings;
@@ -27,7 +27,7 @@ use Cwd qw(abs_path);
 use lib '@amperldir@';
 
 use Installcheck;
-use Installcheck::Run qw( run run_get run_err );
+use Installcheck::Run qw( run run_get run_out run_err );
 use Installcheck::Catalogs;
 use Amanda::Paths;
 use Amanda::Constants;
@@ -458,7 +458,11 @@ ok(! -f $printer_output,
 
 cleanup();
 
-like(run_err($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=ill\egal'),
+like(run_out($amreport, 'TESTCONF', '--from-amdump', '-o', 'mailto=ill\egal'),
+    qr/mail addresses have invalid characters/,
+    "amreport with illegal email in -o, with mailer but no mailto and no template, errors out");
+
+like(run_err($amreport, 'TESTCONF', '--mail-text=ill\egal'),
     qr/mail addresses have invalid characters/,
     "amreport with illegal email in -o, with mailer but no mailto and no template, errors out");
 
@@ -567,10 +571,10 @@ ok(run($amreport, 'TESTCONF', '--from-amdump'),
     "amreport with bogus mailer (3); doesn't mail, still prints")
   or diag($Installcheck::Run::stderr);
 ok(!-f $mail_output, "..produces no mail output");
-is($Installcheck::Run::stdout, "", "..produces no stdout output");
+is($Installcheck::Run::stderr, "", "..produces no stderr output");
 $! = &Errno::ENOENT;
 #my $enoent = $!;
-like($Installcheck::Run::stderr,
+like($Installcheck::Run::stdout,
      qr/^.*: sdfsdn398gl32: (command |)not found/,
      "..produces correct stderr output");
 results_match(
