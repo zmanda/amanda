@@ -1,4 +1,10 @@
 2017-07-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Amdump.pm: Read stdout of suprocess and log them as
+	  L_INFO
+	* server-src/amreport.pl: When in script mode, print error to stdout
+	* installcheck/amreport.pl: Fix test
+
+2017-07-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.c: Use S3_name
 	* device-src/s3.c (S3_name, S3_bucket_name): Define
 	* device-src/s3.h (S3_name, S3_bucket_name): Add prototype

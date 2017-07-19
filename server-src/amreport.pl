@@ -95,7 +95,11 @@ sub error
 {
     my ( $error_msg, $exit_code ) = @_;
     warning("error: $error_msg");
-    print STDERR "$error_msg\n";
+    if ($mode == MODE_SCRIPT) {
+	print STDOUT "$error_msg\n";
+    } else {
+	print STDERR "$error_msg\n";
+    }
     exit $exit_code;
 }
 
@@ -355,13 +359,23 @@ sub open_printer_output
 	my $errstr = "error: the printer command '$Amanda::Constants::LPR' is not an executable program";
 	report_error($errstr);
     } else {
-	eval { $pid = open3($fh, ">&2", ">&2", @cmd); } or do {
-            ($pid, $fh) = (0, undef);
-            chomp $@;
-            my $errstr = "error: $@: $!";
+	if ($mode == MODE_SCRIPT) {
+	    eval { $pid = open3($fh, ">&1", ">&1", @cmd); } or do {
+		($pid, $fh) = (0, undef);
+		chomp $@;
+		my $errstr = "error: $@: $!";
 
-	    report_error($errstr);
-        };
+		report_error($errstr);
+            };
+	} else {
+	    eval { $pid = open3($fh, ">&1", ">&2", @cmd); } or do {
+		($pid, $fh) = (0, undef);
+		chomp $@;
+		my $errstr = "error: $@: $!";
+
+		report_error($errstr);
+            };
+	}
     };
 
     return ($pid, $fh);
@@ -424,13 +438,23 @@ sub open_mail_output
 	my $errstr = "error: the mailer '$cfg_mailer' is not an executable program";
 	report_error($errstr);
     } else {
-	eval { $pid = open3($fh, ">&2", ">&2", @cmd) } or do {
-            ($pid, $fh) = (0, undef);
-            chomp $@;
-            my $errstr = "error: $@: $!";
+	if ($mode == MODE_SCRIPT) {
+	    eval { $pid = open3($fh, ">&1", ">&1", @cmd) } or do {
+		($pid, $fh) = (0, undef);
+		chomp $@;
+		my $errstr = "error: $@: $!";
 
-	    report_error($errstr);
-	};
+		report_error($errstr);
+	    };
+	} else {
+	    eval { $pid = open3($fh, ">&1", ">&2", @cmd) } or do {
+		($pid, $fh) = (0, undef);
+		chomp $@;
+		my $errstr = "error: $@: $!";
+
+		report_error($errstr);
+	    };
+	}
     };
 
     return ($pid, $fh);
@@ -439,8 +463,8 @@ sub open_mail_output
 sub report_error {
     my $errstr = shift;
 
-    print STDERR "$errstr\n";
     if ($mode == MODE_SCRIPT) {
+	print STDERR "$errstr\n";
 	debug($errstr);
     } else {
 	error($errstr, 1);
