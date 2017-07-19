@@ -40,6 +40,9 @@ typedef enum {
    S3_API_AWS4
 } S3_api;
 
+extern char *S3_name[];
+extern char *S3_bucket_name[];
+
 typedef enum {
    S3_SC_STANDARD,
    S3_SC_STANDARD_IA,

@@ -84,6 +84,28 @@
 #include <openssl/ssl.h>
 #include <openssl/md5.h>
 
+char *S3_name[] = {
+   "UNKNOWN",
+   "S3",
+   "OpenStack",
+   "OpenStack",
+   "OpenStack",
+   "Google Storage",
+   "Castor",
+   "S3",
+};
+
+char *S3_bucket_name[] = {
+   "UNKNOWN",
+   "S3 bucket",
+   "OpenStack bucket",
+   "OpenStack bucket",
+   "OpenStack bucket",
+   "Google Storage bucket",
+   "Castor bucket",
+   "S3 bucket",
+};
+
 /* Maximum key length as specified in the S3 documentation
  * (*excluding* null terminator) */
 #define S3_MAX_KEY_LENGTH 1024
@@ -4404,8 +4426,8 @@ s3_make_bucket(S3Handle *hdl,
 	    add_create = TRUE;
         } else {
             hdl->last_message = g_strdup_printf(_(
-                "Location constraint given for Amazon S3 bucket, "
-                "but the bucket name (%s) is not usable as a subdomain."), bucket);
+                "Location constraint given for %s, "
+                "but the bucket name (%s) is not usable as a subdomain."), S3_bucket_name[hdl->s3_api], bucket);
 	    g_string_free(CreateBucketConfiguration, TRUE);
             return FALSE;
         }
@@ -4496,7 +4518,7 @@ s3_make_bucket(S3Handle *hdl,
 		g_free(loc_end_open);
 		g_free(loc_content);
             } else {
-                hdl->last_message = g_strdup(_("Unexpected location response from Amazon S3"));
+                hdl->last_message = g_strdup_printf(_("Unexpected location response from %s"), S3_name[hdl->s3_api]);
             }
         }
    }
