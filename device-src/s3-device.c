@@ -2886,8 +2886,8 @@ make_bucket(
 	(curl_code == CURLE_COULDNT_CONNECT ||
 	 curl_code == CURLE_COULDNT_RESOLVE_HOST)) {
 	device_set_error(pself,
-	    g_strdup_printf(_("While connecting to S3 bucket: %s"),
-			    s3_strerror(self->s3t[0].s3)),
+	    g_strdup_printf(_("While connecting to %s bucket: %s"),
+			    S3_name[self->s3_api], s3_strerror(self->s3t[0].s3)),
 		DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
@@ -3526,7 +3526,7 @@ s3_thread_write_block(
     s3t->filename = NULL;
     if (!result) {
 	s3t->errflags = DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR;
-	s3t->errmsg = g_strdup_printf(_("While writing data block to S3: %s"), s3_strerror(s3t->s3));
+	s3t->errmsg = g_strdup_printf(_("While writing data block to %s: %s"), S3_name[self->s3_api], s3_strerror(s3t->s3));
     }
     g_mutex_lock(self->thread_idle_mutex);
     if (result && self->uploadId && etag) {
