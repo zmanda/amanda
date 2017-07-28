@@ -2101,8 +2101,8 @@ continue_port_dumps(void)
 			   &active_dumpers, h[i]);
 	if( h ) {
 	    for (dumper = dmptable; dumper < dmptable + inparallel &&
-				    dumper->job &&
-				    dumper->job->sched != sp; dumper++) {
+				    (!dumper->job || dumper->job->sched != sp);
+				    dumper++) {
 		(void)sp; /* Quiet lint */
 	    }
 	    assert(dumper < dmptable + inparallel);
