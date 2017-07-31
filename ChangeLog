@@ -1,3 +1,6 @@
+2017-07-31  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amssl.pl: Chomp openssl result
+
 2017-07-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c: Fix test
 

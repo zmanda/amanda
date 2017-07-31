@@ -222,7 +222,7 @@ if ($opt_init) {
     # compute my fingerprint
     system("openssl x509 -in $hostdir/crt.pem -fingerprint -noout > $hostdir/fingerprint");
 
-    symlink "../me", "$SSL_DIR/remote/opt_client_cert";
+    symlink "../me", "$SSL_DIR/remote/$opt_client_cert";
 
 
 } elsif ($opt_ca) {
@@ -291,6 +291,7 @@ if ($opt_init) {
 
     # check certificate common name is $opt_client_cert
     my $subject = `openssl req -noout -subject -in $hostdir/csr.pem`;
+    chomp $subject;
     $subject =~ s/\*//g; # Remove wildcard astricks
     my ($CN) = $subject =~ /CN=([^\/]*)/;
     if(!$CN) {
