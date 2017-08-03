@@ -3018,6 +3018,7 @@ s3_device_read_label(Device *pself) {
             /* if it's an expected error (not found), just return FALSE */
             if (response_code == 404 &&
 	        (s3_error_code == S3_ERROR_None ||
+	         s3_error_code == S3_ERROR_NotFound ||
 	         s3_error_code == S3_ERROR_Unknown ||
 		 s3_error_code == S3_ERROR_NoSuchKey ||
 		 s3_error_code == S3_ERROR_NoSuchEntity ||
@@ -3979,6 +3980,7 @@ s3_device_seek_file(Device *pself, guint file) {
         /* if it's an expected error (not found), check what to do. */
         if (response_code == 404 &&
             (s3_error_code == S3_ERROR_None ||
+	     s3_error_code == S3_ERROR_NotFound ||
 	     s3_error_code == S3_ERROR_NoSuchKey ||
 	     s3_error_code == S3_ERROR_NoSuchEntity)) {
             int next_file;
@@ -4389,6 +4391,7 @@ s3_thread_read_block(
 	/* if it's an expected error (not found), just return -1 */
 	if ((response_code == 404 &&
              (s3_error_code == S3_ERROR_None ||
+	      s3_error_code == S3_ERROR_NotFound ||
 	      s3_error_code == S3_ERROR_Unknown ||
 	      s3_error_code == S3_ERROR_NoSuchKey ||
 	      s3_error_code == S3_ERROR_NoSuchEntity)) ||
