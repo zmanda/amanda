@@ -1739,6 +1739,7 @@ interpret_response(S3Handle *hdl,
     GMarkupParseContext *ctxt = NULL;
     static GMarkupParser parser = { failure_start_element, failure_end_element, failure_text, NULL, NULL };
     GError *err = NULL;
+    char *curl_message;
 
     if (!hdl) return FALSE;
 
@@ -1748,16 +1749,17 @@ interpret_response(S3Handle *hdl,
     hdl->last_s3_error_code = 0;
     hdl->last_curl_code = 0;
 
+    curl_easy_getinfo(hdl->curl, CURLINFO_RESPONSE_CODE, &response_code);
+    hdl->last_response_code = response_code;
+
     /* bail out from a CURL error */
     if (curl_code != CURLE_OK) {
         hdl->last_curl_code = curl_code;
         hdl->last_message = g_strdup_printf("CURL error: %s", curl_error_buffer);
-        return FALSE;
+	curl_message = hdl->last_message;
+	if (response_code == 0)
+            return FALSE;
     }
-
-    /* CURL seems to think things were OK, so get its response code */
-    curl_easy_getinfo(hdl->curl, CURLINFO_RESPONSE_CODE, &response_code);
-    hdl->last_response_code = response_code;
 
     /* check ETag, if present and not CAStor */
     if (etag && content_md5 && 200 == response_code &&

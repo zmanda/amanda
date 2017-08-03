@@ -1,4 +1,7 @@
 2017-08-03  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* device-src/s3.c: Print html error even on curl error
+
+2017-08-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3-device.c: Check for S3_ERROR_NotFound
 
 2017-07-31  Jean-Louis Martineau <JMartineau@carbonite.com>
