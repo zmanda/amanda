@@ -25,8 +25,9 @@
  */
 
 #include <config.h>
-#include "sockaddr-util.h"
 #include <sys/types.h>
+#include <netinet/in.h>
+#include "sockaddr-util.h"
 #include <sys/socket.h>
 #include <errno.h>
 #include <stdio.h>

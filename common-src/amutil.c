@@ -333,23 +333,28 @@ connect_port(
 {
     int			save_errno;
     struct servent *	result;
-    int			r;
     socklen_t_equiv	len;
     socklen_t_equiv	socklen;
     int			s;
 
-#ifdef HAVE_GETSERVBYPORT_R
+#ifdef HAVE_FUNC_GETSERVBYNAME_R_6
     struct servent	servPort;
     char		buf[2048];
-# ifdef GETSERVBYPORT_R5
+    int			r;
+    r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
+    assert(r != ERANGE);
+#elif HAVE_FUNC_GETSERVBYNAME_R_5
+    struct servent	servPort;
+    char		buf[2048];
     result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
     if (result == 0) {
 	assert(errno != ERANGE);
     }
-# else
-    r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
-    assert(r != ERANGE);
-# endif
+#elif HAVE_FUNC_GETSERVBYNAME_R_4
+    struct servent_data servent_data;
+    int			r;
+    memset(&servent_data, 0, sizeof(struct servent_data));
+    r = getservbyport_r((int)htons(port), proto, &result, &servent_data);
 #else
     result = getservbyport((int)htons(port), proto);
 #endif
@@ -490,7 +495,6 @@ bind_portrange(
     in_port_t cnt;
     socklen_t_equiv socklen;
     struct servent *result;
-    int             r;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
     int save_errno = EAGAIN;
     int new_s;
@@ -509,22 +513,28 @@ bind_portrange(
      * if we don't happen to start at the beginning.
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
-#ifdef HAVE_GETSERVBYPORT_R
-	struct servent  servPort;
-	char            buf[2048];
-
-# ifdef GETSERVBYPORT_R5
+#ifdef HAVE_FUNC_GETSERVBYNAME_R_6
+	struct servent	servPort;
+	char		buf[2048];
+	int			r;
+	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
+	assert(r != ERANGE);
+#elif HAVE_FUNC_GETSERVBYNAME_R_5
+	struct servent	servPort;
+	char		buf[2048];
 	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
 	if (result == 0) {
 	    assert(errno != ERANGE);
 	}
-# else
-	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
-	assert(r != ERANGE);
-# endif
+#elif HAVE_FUNC_GETSERVBYNAME_R_4
+	struct servent_data servent_data;
+	int			r;
+	memset(&servent_data, 0, sizeof(struct servent_data));
+	r = getservbyport_r((int)htons(port), proto, &result, &servent_data);
 #else
 	result = getservbyport((int)htons(port), proto);
 #endif
+
 	amfree(*bind_msg);
 g_debug("bind_portrange2: Try  port %d", port);
 	if ((result == NULL) || strstr(result->s_name, AMANDA_SERVICE_NAME)) {
