@@ -3357,19 +3357,9 @@ find_port_for_service(
 	port = atoi(service);
     } else {
         struct servent *result;
-#ifdef HAVE_GETSERVBYNAME_R
+#ifdef HAVE_FUNC_GETSERVBYNAME_R_6
         struct servent sp;
         char buf[2048];
-
-#ifdef GETSERVBYNAME_R5
-	result = getservbyname_r(service, proto, &sp, buf, 2048);
-	if (result == 0) {
-	    assert(errno != ERANGE);
-	    port = 0;
-	} else {
-	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
-	}
-#else
 	int r;
 	r = getservbyname_r(service, proto, &sp, buf, 2048, &result);
 	assert(r != ERANGE);
@@ -3378,7 +3368,27 @@ find_port_for_service(
 	} else {
 	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
 	}
-#endif
+
+#elif HAVE_FUNC_GETSERVBYNAME_R_5
+        struct servent sp;
+        char buf[2048];
+	result = getservbyname_r(service, proto, &sp, buf, 2048);
+	if (result == 0) {
+	    assert(errno != ERANGE);
+	    port = 0;
+	} else {
+	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
+	}
+#elif HAVE_FUNC_GETSERVBYNAME_R_4
+	struct servent_data servent_data;
+	int r;
+	memset(&servent_data, 0, sizeof(struct servent_data));
+	r = getservbyname_r(service, proto, &result, &servent_data);
+	if (r != 0) {
+	    port = 0;
+	} else {
+	    port = (in_port_t)(ntohs((in_port_t)result->s_port));
+	}
 #else
 	if ((result = getservbyname(service, proto)) == NULL) {
 	    port = 0;

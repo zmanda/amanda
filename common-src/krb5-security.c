@@ -410,23 +410,13 @@ static int
 runkrb5(
     struct sec_handle *	rh)
 {
-    struct servent	sp;
-    struct servent *	result;
-    char                buf[2048];
-    int                 r;
     int			server_socket;
     in_port_t		my_port, port;
     struct tcp_conn *	rc = rh->rc;
     const char *err;
     char *stream_msg = NULL;
 
-    r = getservbyname_r(AMANDA_KRB5_SERVICE_NAME, "tcp", &sp, buf,2048, &result);
-    assert(r != ERANGE);
-    if (r != 0) {
-	port = htons(AMANDA_KRB5_DEFAULT_PORT);
-    } else {
-	port = sp.s_port;
-    }
+    port = find_port_for_service(AMANDA_KRB5_SERVICE_NAME, "tcp");
 
     if ((err = get_tgt(keytab_name, principal_name)) != NULL) {
         security_seterror(&rh->sech, "%s: could not get TGT: %s",
@@ -435,7 +425,7 @@ runkrb5(
     }
 
     server_socket = stream_client_privileged(NULL, rc->hostname,
-				     (in_port_t)(ntohs(port)),
+				     port,
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,

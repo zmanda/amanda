@@ -74,8 +74,6 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 		    ;;
         *-solaris2*)
 		    AMANDA_ADD_CFLAGS([-D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1])
-		    AC_DEFINE(GETSERVBYNAME_R5,1,[Define on solaris])
-		    AC_DEFINE(GETSERVBYPORT_R5,1,[Define on solaris])
 		    ;;
         *-sun-sunos4.1*)
 		    ;;

@@ -1,3 +1,14 @@
+2017-08-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c: Call correct variant of getservbyport_r
+	* common-src/krb5-security.c: Call correct variant of getservbyname_r
+	* common-src/security-util.c: Call correct variant of getservbyname_r
+	* common-src/ambind.c: include netinet/in.h
+	* config/amanda/syshacks.m4: Do not set GETSERVBYNAME_R5 and
+	  GETSERVBYPORT_R5
+	* config/amanda/amanda_configure.m4: use ax_func_which_getservbyname_r
+	* config/macro-archive/ax_func_which_getservbyname_r.m4: New macro to
+	  detect getservbyname_r variant
+
 2017-08-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* device-src/s3.c: Fix compilation
 
