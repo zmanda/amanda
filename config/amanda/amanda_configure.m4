@@ -365,7 +365,7 @@ ICE_CHECK_DECL(strcasecmp,string.h strings.h)
 ICE_CHECK_DECL(euidaccess,unistd.h)
 ICE_CHECK_DECL(eaccess,unistd.h)
 ICE_CHECK_DECL(clock_gettime,time.h)
-AC_CHECK_FUNCS(getservbyname_r)
+AX_FUNC_WHICH_GETSERVBYNAME_R
 AC_CHECK_FUNCS(sem_timedwait)
 
 #

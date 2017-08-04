@@ -1,3 +1,11 @@
+2017-08-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c: Call correct variant of getservbyname_r
+	* config/amanda/syshacks.m4: Do not set GETSERVBYNAME_R5 and
+	  GETSERVBYPORT_R5
+	* config/amanda/amanda_configure.m4: use ax_func_which_getservbyname_r
+	* config/macro-archive/ax_func_which_getservbyname_r.m4: New macro to
+	  detect getservbyname_r variant
+
 2017-07-31  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amssl.pl: Chomp openssl result
 
