@@ -1,3 +1,7 @@
+2017-08-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c, common-src/security-util.c: Fix getservbyport_r
+	  with 4 arguments
+
 2017-08-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c: Call correct variant of getservbyport_r
 	* common-src/krb5-security.c: Call correct variant of getservbyname_r

@@ -3369,7 +3369,7 @@ find_port_for_service(
 	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
 	}
 
-#elif HAVE_FUNC_GETSERVBYNAME_R_5
+#elif defined HAVE_FUNC_GETSERVBYNAME_R_5
         struct servent sp;
         char buf[2048];
 	result = getservbyname_r(service, proto, &sp, buf, 2048);
@@ -3379,11 +3379,13 @@ find_port_for_service(
 	} else {
 	    port = (in_port_t)(ntohs((in_port_t)sp.s_port));
 	}
-#elif HAVE_FUNC_GETSERVBYNAME_R_4
+#elif defined HAVE_FUNC_GETSERVBYNAME_R_4
+        struct servent sp;
 	struct servent_data servent_data;
 	int r;
 	memset(&servent_data, 0, sizeof(struct servent_data));
-	r = getservbyname_r(service, proto, &result, &servent_data);
+	r = getservbyname_r(service, proto, &sp, &servent_data);
+	result = &sp;
 	if (r != 0) {
 	    port = 0;
 	} else {
