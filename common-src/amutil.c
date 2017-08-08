@@ -324,7 +324,7 @@ ambind(
 int
 connect_port(
     sockaddr_union *addrp,
-    in_port_t  		port,
+    in_port_t		port,
     char *		proto,
     sockaddr_union *svaddr,
     int			nonblock,
@@ -336,25 +336,26 @@ connect_port(
     socklen_t_equiv	len;
     socklen_t_equiv	socklen;
     int			s;
+    int			r;
 
 #ifdef HAVE_FUNC_GETSERVBYNAME_R_6
     struct servent	servPort;
     char		buf[2048];
-    int			r;
     r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
     assert(r != ERANGE);
-#elif HAVE_FUNC_GETSERVBYNAME_R_5
+#elif defined HAVE_FUNC_GETSERVBYNAME_R_5
     struct servent	servPort;
     char		buf[2048];
     result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
     if (result == 0) {
 	assert(errno != ERANGE);
     }
-#elif HAVE_FUNC_GETSERVBYNAME_R_4
+#elif defined HAVE_FUNC_GETSERVBYNAME_R_4
+    struct servent	servPort;
     struct servent_data servent_data;
-    int			r;
     memset(&servent_data, 0, sizeof(struct servent_data));
-    r = getservbyport_r((int)htons(port), proto, &result, &servent_data);
+    r = getservbyport_r((int)htons(port), proto, &servPort, &servent_data);
+    result = &servPort;
 #else
     result = getservbyport((int)htons(port), proto);
 #endif
@@ -498,6 +499,7 @@ bind_portrange(
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
     int save_errno = EAGAIN;
     int new_s;
+    int	r;
 
     assert(first_port <= last_port);
 
@@ -514,23 +516,23 @@ bind_portrange(
      */
     for (cnt = 0; cnt < num_ports; cnt++) {
 #ifdef HAVE_FUNC_GETSERVBYNAME_R_6
-	struct servent	servPort;
+	struct servent  servPort;
 	char		buf[2048];
-	int			r;
 	r = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048, &result);
 	assert(r != ERANGE);
-#elif HAVE_FUNC_GETSERVBYNAME_R_5
-	struct servent	servPort;
+#elif defined HAVE_FUNC_GETSERVBYNAME_R_5
+	struct servent  servPort;
 	char		buf[2048];
 	result = getservbyport_r((int)htons(port), proto, &servPort, buf, 2048);
 	if (result == 0) {
 	    assert(errno != ERANGE);
 	}
-#elif HAVE_FUNC_GETSERVBYNAME_R_4
+#elif defined HAVE_FUNC_GETSERVBYNAME_R_4
+	struct servent  servPort;
 	struct servent_data servent_data;
-	int			r;
 	memset(&servent_data, 0, sizeof(struct servent_data));
-	r = getservbyport_r((int)htons(port), proto, &result, &servent_data);
+	r = getservbyport_r((int)htons(port), proto, &servPort, &servent_data);
+	result = &servPort
 #else
 	result = getservbyport((int)htons(port), proto);
 #endif
