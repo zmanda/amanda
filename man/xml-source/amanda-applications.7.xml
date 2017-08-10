@@ -83,10 +83,6 @@ files.
 <manref name="amzfs-sendrecv" vol="8"/>,
 - use zfs to create a snapshot and use 'zfs send' to generate the backup.
 </listitem>
-<listitem>
-<manref name="amzfs-snapshot" vol="8"/>,
-- use zfs to create a snapshot and for use with other applications (e.g. amgtar)
-</listitem>
 </itemizedlist>
 
 </refsect1>
