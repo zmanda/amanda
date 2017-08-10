@@ -23,15 +23,23 @@ COMMON_MAN_PAGES =  amanda.8 \
 
 CLIENT_MAN_PAGES = \
     amanda-applications.7 \
+    am389bak.8 \
     ambackup.8 \
     ambsdtar.8 \
     amdump_client.8 \
+    amgrowingfile.8 \
+    amgrowingzip.8 \
     amgtar.8 \
+    amlibvirtfsfreeze.8 \
+    amlvmsnapshot.8 \
+    amooraw.8 \
+    amopaquetree.8 \
     ampgsql.8 \
     amraw.8 \
     amsamba.8 \
     amstar.8 \
     amsuntar.8 \
+    amsvnmakehotcopy.8 \
     amzfs-snapshot.8 \
     amzfs-sendrecv.8
 

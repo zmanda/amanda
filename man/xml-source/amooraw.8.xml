@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amooraw.8'>
+
+<refmeta>
+<refentrytitle>amooraw</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amooraw</refname>
+<refpurpose>Amanda Application open and read data</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amooraw is an Amanda Application API script.  It should not be run
+by users directly.  It directly reads and writes data in a single directory
+entry.</para>
+
+<para>Amooraw can backup only one directory entry, it can be a single file,
+a raw device, anything that amanda can open and read.</para>
+
+<para>It is a reimplementation of <manref name="amraw" vol="8"/> illustrating
+the simpler construction of an Amanda application in object-oriented style
+(the oo in amooraw) using
+<classname>Amanda::Application::Abstract</classname>.</para>
+
+<note><para>Where the original <command>amraw</command>, when restoring,
+allows the destination to be specified with the DIRECTORY property,
+<command>amooraw</command> uses a different property, FILENAME, for that
+purpose. Also, if that property is not specified, restoration will create
+a file <filename>amooraw-restored</filename> instead of blithely overwriting
+the original <emphasis remap='B'>diskdevice</emphasis> named in the DLE.
+If that is what's wanted, simply set the FILENAME property to match the
+<emphasis remap='B'>diskdevice</emphasis>.</para></note>
+
+<para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
+must be the filename <command>amooraw</command> is to open and read.</para>
+
+<para>Restore is done in place: an open is done and the data is written to it.
+A file owned by root and permission 0600 is created if the directory entry
+doesn't exist before the restore.</para>
+
+<para>Only full backup is allowed.</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amooraw's functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>FILENAME</term><listitem>
+Used only for restore command, can be a device name or file, the data will
+be restored to it.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amooraw {
+    plugin "amooraw"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amooraw {
+    global
+    program "APPLICATION"
+    application "app_amooraw"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+<manref name="amrecover" vol="8"/>
+</seealso>
+
+</refentry>

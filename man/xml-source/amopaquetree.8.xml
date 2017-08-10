@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amopaquetree.8'>
+
+<refmeta>
+<refentrytitle>amopaquetree</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amopaquetree</refname>
+<refpurpose>Amanda Application for backup of a directory tree opaquely</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amopaquetree is an Amanda Application API script.  It should not be run
+by users directly.  It can backup and restore a directory tree opaquely
+(that is, as a whole, with no option to restore just some entries),
+with efficient increments when large files have only small changes.</para>
+
+<para>Most Amanda applications that backup a directory tree allow selective
+restoration of only some files or subtrees. Also, the typical applications
+that support backup levels, such as <command>amgtar</command>, operate at
+the file level: changes, however small, to any file cause the entire file
+to be included in the incremental backup. These properties are suitable for
+many backup needs.</para>
+
+<para>Some applications, such as databases and products that incorporate them,
+may keep files in a directory structure with obscure naming or numbering,
+where an administrator would rarely be expected to identify or restore selected
+files, but simply to restore the tree at a consistent moment. For such
+applications, the individual files can also be large, and modified only in
+small regions, so that backing up entire changed files would be wasteful.</para>
+
+<para><command>Amopaquetree</command> is intended for those cases.
+A directory-list entry (DLE) backed up with amopaquetree can only be
+restored in full, without selective access to subcomponents. Incremental
+backups will identify only changed regions within files, rather than
+backing up entire files when changed, using more storage and computation
+on the client, but saving network bandwidth, holding disk, and tape space.
+</para>
+
+<para>The extra storage required on the client is similar to the size of
+the tree to be backed up. Other Amanda applications supporting incremental
+backup store only a small client-local state, such as a date or a file list,
+for each previous backup level. For <command>amopaquetree</command>, the
+client-local state will include one complete copy of the tree for the lowest
+level backup, plus a tree for each higher level containing only changed files,
+with links to the lower level for unchanged files. Therefore,
+<emphasis>on the client</emphasis>, storage is required for entire files
+that have been changed, but this storage is accessed at local speeds.
+From those copies, the changed regions are efficiently found, and only they
+are streamed across the network to store on the server.</para>
+
+<note><para>Most databases and similar applications will have specific steps
+that must be followed to guarantee the files are consistent before backing
+them up. Those steps may take the form of a command to create a consistent
+copy (<code>svnadmin hotcopy</code> for <application>subversion</application>,
+<code>db2bak</code> for <application>389</application>, etc.), or to enter and
+exit a mode during which a copy may safely be made
+(<code>pg_start_backup</code>/<code>pg_stop_backup</code> for
+<application>PostgreSQL</application>, etc.).</para>
+
+<para>For cases of the first type, that create a consistent copy, an
+Amanda script to run the necessary command ahead of
+<command>amopaquetree</command> may be all that is needed. The client should
+have temporary space for that consistent copy, as well as the local state space
+needed by <command>amopaquetree</command> itself. For cases of the
+second type, entering and exiting a safe-copying mode (which may require
+additional steps such as copying a write-ahead log), it may be better to
+create a specialized Amanda application by subclassing
+<classname>Amanda::Application::AmOpaqueTree</classname>.</para></note>
+</refsect1>
+
+<refsect1><title>IMPLEMENTATION</title>
+
+<para><command>amopaquetree</command> uses (and, therefore, requires)
+the widely-available <command>rsync</command> tool, both in its
+<option>--link-dest</option> mode to maintain client-local state
+limited in size to one full copy plus changed files in higher levels,
+and in its <option>--only-write-batch</option> mode to generate the
+smaller data streams, reflecting changed regions only, to be sent to
+the server.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amopaquetree's
+functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>LOCALSTATEDIR</term><listitem>
+Amanda has a default location for client local state, but because
+<command>amopaquetree</command> stores a larger-than-typical local state,
+this property can be used to place the local state storage on a different
+filesystem. Or, this property can be left at default, and RSYNCSTATESDIR
+(which defaults to a subdirectory of LOCALSTATEDIR) can be set, to use a
+different filesystem only for that.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>RSYNCEXECUTABLE</term><listitem>
+Full path to the <command>rsync</command> executable on the client system.
+If elevated permission will be needed for <command>rsync</command> to read
+the tree being backed up, this can point instead to a wrapper that gains
+the needed privilege and then executes <command>rsync</command>.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>RSYNCSTATESDIR</term><listitem>
+The directory (defaulting to a subdirectory of LOCALSTATEDIR) for the
+local copied/linked images of the tree backed up. Because this accounts
+for the greatest share of local state space, it can be separately
+redirected to another filesystem using this property.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>RSYNCTEMPBATCHDIR</term><listitem>
+The directory where <command>rsync</command> batch files will be
+temporarily created. Temporary space must be available for the
+expected size of a batch; for a level-0 backup, that will be
+comparable to the size of a compressed archive of the tree being backed up.
+The default is where Perl's <classname>File::Temp</classname> will put
+a temporary file.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amopaquetree {
+    plugin "amopaquetree"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amopaquetree {
+    global
+    program "APPLICATION"
+    application "app_amopaquetree"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+<manref name="amrecover" vol="8"/>
+</seealso>
+
+</refentry>

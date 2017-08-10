@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amsvnmakehotcopy.8'>
+
+<refmeta>
+<refentrytitle>amsvnmakehotcopy</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amsvnmakehotcopy</refname>
+<refpurpose>Amanda script to make a Subversion hotcopy</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>amsvnmakehotcopy is an Amanda script implementing the Script API.
+It should not be run by users directly.  It uses the
+<code>svnadmin hotcopy</code> command to make a consistent copy
+of a Subversion repository.</para>
+
+<para>The filesystem path to the Subversion repository to copy is given
+in the SVNREPOSITORY property, and the consistent copy will be made into
+the directory named by <emphasis remap='B'>diskdevice</emphasis> in the
+disklist (DLE). This is the directory where the estimate and backup application
+(<manref name='amopaquetree' vol='8'/> could be appropriate) will expect to
+find the data for backup.</para>
+
+<para>The copy is made after <emphasis>removing all existing
+content under the directory named as the
+<emphasis remap='B'>diskdevice</emphasis></emphasis>, all of
+which happens during PRE-DLE-ESTIMATE, which must be set to be executed
+on the client:
+<programlisting>
+    execute-on  pre-dle-estimate
+    execute-where client
+</programlisting></para>
+
+<para>The script is run as the amanda user, and must be able to read the
+Subversion repository. Possible arrangements include making the repository
+generally readable, giving it filesystem ACLs granting the access specifically
+to the amanda user, or setting the SVNADMINEXECUTABLE property not to the
+path of <command>svnadmin</command>, but to a set-uid wrapper that obtains
+the needed permission and then executes <command>svnadmin</command> with
+the same arguments. If the wrapper approach is chosen, the wrapper should
+take all appropriate precautions to avoid being misused, such as checking
+the arguments to verify that they only request a hotcopy of
+the intended Subversion repository.</para>
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amsvnmakehotcopy's
+functionality.
+See <manref name="amanda-scripts" vol="7"/>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>SVNADMINEXECUTABLE</term><listitem>
+Path to the <command>svnadmin</command> executable, search in $PATH by default.
+If necessary to gain read access to the repository, this can be set
+instead to a set-uid wrapper that (after appropriate checks) will
+execute <command>svnadmin</command> with the same arguments.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SVNREPOSITORY</term><listitem>
+Filesystem path to the Subversion repository that is to be copied.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para>This example defines a script <literal>svnmakehotcopy</literal>,
+a dumptype <literal>remote-svn</literal>, and a DLE to backup a particular
+repository.</para>
+
+<para>In <manref name='amanda.conf' vol='5'/>:
+<programlisting>
+ define script "svnmakehotcopy" {
+   plugin "amsvnmakehotcopy"
+   execute-where client
+   execute-on pre-dle-estimate
+ }
+
+ define dumptype remote-svn {
+   global
+   estimate client
+   program "APPLICATION"
+   application "app_amopaquetree"
+   comment "backup of remote svn repository"
+ }
+</programlisting></para>
+
+<para>In <manref name='disklist' vol='5'/>:
+<programlisting>
+  svnhost myrepo /tmp/svnmyrepocopy {
+    remote-svn
+    script {
+        "svnmakehotcopy"
+        property "svnrepository" "/var/www/svn/repos/myrepo"
+    }
+  } 1 enet100
+</programlisting></para>
+</refsect1>
+
+<refsect1><title>BUGS</title>
+<para>This script does not (yet) make any effort to detect failures.</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
+
+
+</refentry>

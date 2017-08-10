@@ -715,13 +715,17 @@ EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm Amanda/Application.po
 Amanda_DATA += Amanda/Script.pm
 EXTRA_DIST += Amanda/Script.pm
 
+# PACKAGE: Amanda::Script::*
+Amanda_DATA += Amanda/Script/Abstract.pm
+EXTRA_DIST += Amanda/Script/Abstract.pm
+
 if WANT_CLIENT
 # PACKAGE: Amanda::Application::*
 AmandaApplicationdir = $(amperldir)/Amanda/Application
-AmandaApplication_DATA = Amanda/Application/Zfs.pm
+AmandaApplication_DATA = Amanda/Application/Abstract.pm Amanda/Application/Zfs.pm
 PM_FILES += $(AmandaApplication_DATA)
 endif
-EXTRA_DIST += Amanda/Application/Zfs.pm
+EXTRA_DIST += Amanda/Application/Abstract.pm Amanda/Application/Zfs.pm
 
 ../genversion.h Amanda/Constants.pm.in: $(top_builddir)/config.status Amanda/Constants.pm.in.src
 	-rm -f ../common-src/genversion.h ../common-src/genversion.h.new
