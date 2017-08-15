@@ -318,34 +318,59 @@ is_local(const char *hostname)
     struct addrinfo *a;
     int rslt;
     int s;
+    /*
+     * A socktype of 0 to resolve_hostname should mean "give me results for
+     * whatever families/socktypes/protocols are available to talk to the host.
+     * But on some operating systems (*cough* solaris 10 *cough*) it seems to
+     * mean "give me results with invalid socktype values that socket() won't
+     * accept, please because that's so helpful thank you." So if that seems
+     * to have happened, can try again asking for a specific socktype.
+     */
+    int try_stypes[] = { 0, SOCK_STREAM };
+    int * const end_stypes = try_stypes + sizeof try_stypes/sizeof *try_stypes;
+    int *stypep;
+
+    gboolean made_a_socket;
+
     gboolean verdict = FALSE;
 
-    rslt = resolve_hostname(hostname, 0, &addrs, NULL);
-    if (0 != rslt) {
-        dbprintf("Unresolved hostname %s assumed nonlocal: %s\n",
-	         hostname, gai_strerror(rslt));
-        return verdict;
-    }
-    /* Beyond this point, addrs must be freed */
+    for ( stypep = try_stypes ; stypep < end_stypes ; ++ stypep ) {
+	rslt = resolve_hostname(hostname, *stypep, &addrs, NULL);
+	if (0 != rslt) {
+            dbprintf("Unresolved hostname %s assumed nonlocal: %s\n",
+	             hostname, gai_strerror(rslt));
+            continue;
+	}
+	/* Beyond this point, addrs must be freed */
 
-    /* Invariant: s is not an open socket */
-    for ( a = addrs ; NULL != a ; a = a->ai_next ) {
-        s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
-	if ( -1 == s )
-	    continue;
-	rslt = bind(s, a->ai_addr, a->ai_addrlen);
-	if ( 0 == rslt ) {
+	made_a_socket = FALSE;
+
+	/* Invariant: s is not an open socket */
+	for ( a = addrs ; NULL != a ; a = a->ai_next ) {
+	    s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
+	    if ( -1 == s ) {
+		dbprintf("Resolving hostname %s: %s\n",
+		         hostname, strerror(errno));
+		continue;
+	    }
+	    made_a_socket = TRUE;
+	    rslt = bind(s, a->ai_addr, a->ai_addrlen);
+	    if ( 0 == rslt ) {
+		close(s);
+		verdict = TRUE;
+		break;
+	    }
+	    if ( EADDRNOTAVAIL != errno ) {
+		dbprintf("strange bind() result %s\n", strerror(errno));
+	    }
 	    close(s);
-	    verdict = TRUE;
-	    break;
 	}
-	if ( EADDRNOTAVAIL != errno ) {
-	    dbprintf("strange bind() result %s\n", strerror(errno));
-	}
-	close(s);
-    }
-    /* s is not open here */
+	/* s is not open here */
 
-    freeaddrinfo(addrs);
+	freeaddrinfo(addrs);
+
+        if ( made_a_socket )
+	    break;
+    }
     return verdict;
 }
