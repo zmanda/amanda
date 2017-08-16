@@ -1012,6 +1012,7 @@ amar_read_cb(
     guint16  attrid;
     guint32  datasize;
     gboolean eoa;
+    gboolean record_processed = FALSE;
     file_state_t *fs = NULL;
     attr_state_t *as = NULL;
     GSList *iter;
@@ -1066,6 +1067,7 @@ amar_read_cb(
 	    /* skip the header block */
 	    hp->buf_offset += HEADER_SIZE;
 	    hp->buf_len    -= HEADER_SIZE;
+	    record_processed = TRUE;
 	    continue; /* go to next record */
 
 	} else if (datasize > MAX_RECORD_DATA_SIZE) {
@@ -1081,6 +1083,7 @@ amar_read_cb(
 	    break;
 	}
 
+	record_processed = TRUE;
 	/* find the file_state_t, if it exists */
 	for (iter = hp->file_states; iter; iter = iter->next) {
 	    if (((file_state_t *)iter->data)->filenum == filenum) {
@@ -1292,7 +1295,7 @@ amar_read_cb(
 	hp->buf_offset = 0;
     }
 
-    if (count == -1 || count == 0) {
+    if (count == -1 || (count == 0 && (hp->buf_len == 0 || !record_processed))) {
 	if (count == 0 && hp->buf_len != 0) {
 	    g_set_error(hp->error, amar_error_quark(), EINVAL,
 			    "Archive ended with a partial record, position = %lld, buf_len = %zu",
