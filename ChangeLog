@@ -1,3 +1,7 @@
+2017-08-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amar-src/amar.c: Fix race with stop/start_read when record are
+	  already read
+
 2017-06-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c (read_block): Reset current_line_num after
 	  processing config_overrides
