@@ -1991,7 +1991,7 @@ sub set_summary {
 				    $storage->{'message'} = "terminated while waiting for dumping";
 				} elsif ($storage->{'status'} == $WAIT_FOR_FLUSHING) {
 				    $storage->{'status'} = $TERMINATED_WAIT_FOR_FLUSHING;
-				    $storage->{'message'} = "terminated while waiting for flusing";
+				    $storage->{'message'} = "terminated while waiting for flushing";
 				} elsif ($storage->{'status'} == $WAIT_FOR_VAULTING) {
 				    $storage->{'status'} = $TERMINATED_WAIT_FOR_VAULTING;
 				    $storage->{'message'} = "terminated while waiting for vaulting";
