@@ -346,6 +346,8 @@ sub msg_ABORT {
 	my $mesg;
 	if ($self->{'holding_error'}) {
 	    $mesg = "[$self->{'holding_error'}]";
+	} elsif ($params{'message'}) {
+	    $mesg =  "[$params{'message'}]";
 	} else {
 	    $mesg =  "[$self->{'handle'}]";
 	}
