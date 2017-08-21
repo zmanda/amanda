@@ -1992,9 +1992,9 @@ sub set_summary {
 				} elsif ($storage->{'status'} == $WAIT_FOR_FLUSHING) {
 				    $storage->{'status'} = $TERMINATED_WAIT_FOR_FLUSHING;
 				    $storage->{'message'} = "terminated while waiting for flushing";
-				} elsif ($storage->{'status'} == $WAIT_FOR_VAULTING) {
-				    $storage->{'status'} = $TERMINATED_WAIT_FOR_VAULTING;
-				    $storage->{'message'} = "terminated while waiting for vaulting";
+				} elsif ($storage->{'status'} == $WAIT_FOR_WRITING) {
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_WRITING;
+				    $storage->{'message'} = "terminated while waiting for writing";
 				} elsif ($storage->{'status'} == $ESTIMATING ||
 					 $storage->{'status'} == $ESTIMATE_PARTIAL) {
 				    $storage->{'status'} = $TERMINATED_ESTIMATE;

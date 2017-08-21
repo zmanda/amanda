@@ -1,4 +1,7 @@
 2017-08-21  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: s/vaulting/writing/
+
+2017-08-21  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Chunker/Controller.pm (msg_ABORT): Set mesg from param
 
 2017-08-21  Jean-Louis Martineau <JMartineau@carbonite.com>
