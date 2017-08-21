@@ -335,6 +335,9 @@ my $TERMINATED_DUMPING_TO_TAPE	 = 32;  # terminated while dumping to tape
 my $TERMINATED_WRITING		 = 33;  # terminated while writing
 my $TERMINATED_FLUSHING		 = 34;  # terminated while flushing
 my $TERMINATED_VAULTING		 = 35;  # terminated while vaulting
+my $TERMINATED_WAIT_FOR_DUMPING	 = 36;  # terminated while wait for dumping
+my $TERMINATED_WAIT_FOR_WRITING	 = 37;  # terminated while wait for writing
+my $TERMINATED_WAIT_FOR_FLUSHING = 38;  # terminated while wait for flushing
 
 # status only for worker
 my $TAPE_ERROR			 = 50;
@@ -1954,6 +1957,7 @@ sub set_summary {
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 			if ($dle->{'status'} == $WAIT_FOR_DUMPING) {
 			    $self->{'exit_status'} |= $STATUS_MISSING;
+			    $dle->{'status'} = $TERMINATED_WAIT_FOR_DUMPING;
 			    $dle->{'message'} = "terminated while waiting for dumping";
 			} elsif ($dle->{'status'} == $ESTIMATING ||
 				 $dle->{'status'} == $ESTIMATE_PARTIAL) {
@@ -1983,7 +1987,14 @@ sub set_summary {
 			    foreach my $storage (values %{$dle->{'storage'}}) {
 				if ($storage->{'status'} == $WAIT_FOR_DUMPING) {
 				    $self->{'exit_status'} |= $STATUS_MISSING;
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_DUMPING;
 				    $storage->{'message'} = "terminated while waiting for dumping";
+				} elsif ($storage->{'status'} == $WAIT_FOR_FLUSHING) {
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_FLUSHING;
+				    $storage->{'message'} = "terminated while waiting for flusing";
+				} elsif ($storage->{'status'} == $WAIT_FOR_VAULTING) {
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_VAULTING;
+				    $storage->{'message'} = "terminated while waiting for vaulting";
 				} elsif ($storage->{'status'} == $ESTIMATING ||
 					 $storage->{'status'} == $ESTIMATE_PARTIAL) {
 				    $storage->{'status'} = $TERMINATED_ESTIMATE;
