@@ -1,4 +1,8 @@
 2017-08-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ampgsql.pl: Add exclude-list and exclude-file to
+	  backup operation
+
+2017-08-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ampgsql.pl: exclude postmaster.pid, postmaster.opts
 	  and pg_replslot/*
 
