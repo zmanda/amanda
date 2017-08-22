@@ -1,4 +1,9 @@
 2017-08-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/version.m4: Correctly set VERSION_COMMENT
+	* perl/Amanda/Constants.pm.in.src: Set VERSION_MAJOR, VERSION_MINOR,
+	  VERSION_PATCH and VERSION_COMMENT
+
+2017-08-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ampgsql.pl: Add exclude-list and exclude-file to
 	  backup operation
 
