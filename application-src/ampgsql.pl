@@ -170,6 +170,8 @@ COLLECTION NO
 CLIENT-ESTIMATE YES
 MULTI-ESTIMATE NO
 CALCSIZE NO
+EXCLUDE-FILE YES
+EXCLUDE-LIST YES
 EOF
 }
 
@@ -816,15 +818,28 @@ sub _base_backup {
        }
        $old_die_cb->($msg);
    };
-   my $size = _run_tar_totals($self, '--dereference', '--file', "-",
+
+   my @args = ('--dereference', '--file', "-",
        '--directory', $self->{'props'}->{'pg-datadir'},
        '--exclude', 'postmaster.pid',
        '--exclude', 'pg_xlog/*', # contains WAL files; will be handled below
        '--exclude', 'postmaster.pid',
        '--exclude', 'postmaster.opts',
-       '--exclude', 'pg_replslot/*',
-       '--transform', "s,^./pg_tblspc,./pg_tblspc_data,S;s,^,$_DATA_DIR_RESTORE/,S",
-       ".");
+       '--exclude', 'pg_replslot/*');
+   if (defined $self->{args}->{'exclude-file'}) {
+       foreach my $excl (@{$self->{args}->{'exclude-file'}}) {
+           push @args, '--exclude', $excl;
+       }
+   }
+   if (defined $self->{args}->{'exclude-list'}) {
+       foreach my $excl (@{$self->{args}->{'exclude-list'}}) {
+           push @args, '--exclude-from', $excl;
+       }
+   }
+   push @args, '--transform', "s,^./pg_tblspc,./pg_tblspc_data,S;s,^,$_DATA_DIR_RESTORE/,S",
+               '.';
+
+   my $size = _run_tar_totals($self,@args);
 
    # tar the symlink in pg_tblspc
    $size += _run_tar_totals($self, '--file', "-",
@@ -1188,6 +1203,7 @@ GetOptions(
     'collection=s',
     'record',
     'calcsize',
+    'exclude-file=s@',
     'exclude-list=s@',
     'include-list=s@',
     'directory=s',
