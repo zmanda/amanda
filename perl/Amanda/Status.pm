@@ -482,7 +482,26 @@ REREAD:
 		$line[5] eq 'version') {
 		my $amdump_version = $line[6];
 
-		if ($amdump_version ne $Amanda::Constants::VERSION) {
+		my ($version_major, $version_minor, $version_patch, $version_comment);
+		if ($amdump_version =~ /^(\d*)\.(\d*)\.(\d*)(.*)$/) {
+		    $version_major = $1;
+		    $version_minor = $2;
+		    $version_patch = $3;
+		    $version_comment = $4;
+		} elsif ($amdump_version =~ /^(\d*)\.(\d*)(.*)$/) {
+		    $version_major = $1;
+		    $version_minor = $2;
+		    $version_patch = 0;
+		    $version_comment = $3;
+		} elsif ($amdump_version =~ /^(\d*)(.*)$/) {
+		    $version_major = $1;
+		    $version_minor = 0;
+		    $version_patch = 0;
+		    $version_comment = $2;
+		}
+
+		if ($version_major ne $Amanda::Constants::VERSION_MAJOR ||
+		    $version_minor ne $Amanda::Constants::VERSION_MINOR) {
 		    return Amanda::Status::Message->new(
 					source_filename => __FILE__,
 					source_line     => __LINE__,
