@@ -76,11 +76,16 @@ sub new {
         'pg-cleanupwal' => 'yes',
 	'pg-max-wal-wait' => 60,
 	'pg-full-wal' => 'incr',
+	'pg-incremental' => 'no',
+	'pg-remove-full-wal' => 'yes',
+	'pg-remove-incremental-wal' => 'no',
     };
 
     my @PROP_NAMES = qw(pg-host pg-port pg-db pg-user pg-password pg-passfile
 			psql-path pg-datadir pg-archivedir pg-cleanupwal
-			pg-max-wal-wait  pg-full-wal);
+			pg-max-wal-wait  pg-full-wal
+			pg-remove-full-wal pg-remove-incremental-wal
+			pg-incremental );
 
     # config is loaded by Amanda::Application (and Amanda::Script_App)
     my $conf_props = getconf($CNF_PROPERTY);
@@ -111,8 +116,8 @@ sub new {
 	$pdumpname =~ s/^pg-//g;
 	$self->{'props'}->{$pname} = $self->{'args'}->{$pdumpname}
 				 if defined $self->{'args'}->{$pdumpname};
-debug("prop $pname set from dumpname $pdumpname: $self->{'args'}->{$pdumpname}")
-if defined $self->{'args'}->{$pdumpname};
+	debug("prop $pname set from dumpname $pdumpname: $self->{'args'}->{$pdumpname}")
+	      if defined $self->{'args'}->{$pdumpname};
     }
 
     unless ($self->{'props'}->{'psql-path'}) {
@@ -790,6 +795,26 @@ sub _wait_for_wal {
     $self->{'die_cb'}->("WAL file $wal was not archived in $maxwait seconds");
 }
 
+sub _remove_wal_files {
+    my $self = shift;
+    my $start_wal = shift;
+    my $last_end_wal = shift;
+
+    if (defined $start_wal || defined $last_end_wal) {
+	my $adir = new IO::Dir($self->{'props'}->{'pg-archivedir'});
+	$adir or $self->{'die_cb'}->("Could not open archive WAL directory");
+	while (defined(my $fname = $adir->read())) {
+	    if ($fname =~ /^$_WAL_FILE_PAT$/) {
+		if ((defined $start_wal and $fname lt $start_wal) ||
+		    (defined $last_end_wal and $fname lt $last_end_wal)) {
+		    $self->{'unlink_cb'}->("$self->{'props'}->{'pg-archivedir'}/$fname");
+		}
+            }
+	}
+	$adir->close();
+    }
+}
+
 sub _base_backup {
    my ($self) = @_;
 
@@ -877,6 +902,8 @@ sub _base_backup {
    }
 
    # now grab all of the WAL files, *inclusive* of $start_wal
+   my $cleanup_wal_val = $self->{'props'}->{'pg-cleanupwal'} || 'yes';
+   my $cleanup_wal = string_to_boolean($cleanup_wal_val);
    my @wal_files;
    my $adir = new IO::Dir($self->{'props'}->{'pg-archivedir'});
    $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
@@ -890,7 +917,9 @@ sub _base_backup {
                push @wal_files, $fname;
                debug("will store: $fname");
            } elsif (defined $start_wal and $fname lt $start_wal) {
-               $self->{'unlink_cb'}->("$self->{'props'}->{'pg-archivedir'}/$fname");
+               if ($cleanup_wal) {
+                   $self->{'unlink_cb'}->("$self->{'props'}->{'pg-archivedir'}/$fname");
+               }
            }
        }
    }
@@ -913,22 +942,15 @@ sub _base_backup {
        rmtree($dummydir);
    }
 
+    # should be done only on confirmation the backup succeeded from the server
     $self->{'state_cb'}->($self, $end_wal);
 
     # remove older WAL files.
+    my $remove_full_wal_val = $self->{'props'}->{'pg-remove-full-wal'} || 'yes';
+    my $remove_full_wal = string_to_boolean($remove_full_wal_val);
     # should be done only on confirmation the backup succeeded from the server
-    if (defined $start_wal || defined $last_end_wal) {
-	my $adir = new IO::Dir($self->{'props'}->{'pg-archivedir'});
-	$adir or $self->{'die_cb'}->("Could not open archive WAL directory");
-	while (defined(my $fname = $adir->read())) {
-	    if ($fname =~ /^$_WAL_FILE_PAT$/) {
-		if ((defined $start_wal and $fname lt $start_wal) ||
-		    (defined $last_end_wal and $fname le $last_end_wal)) {
-		    $self->{'unlink_cb'}->("$self->{'props'}->{'pg-archivedir'}/$fname");
-		}
-            }
-	}
-	$adir->close();
+    if ($remove_full_wal) {
+	$self->_remove_wal_files($start_wal, $last_end_wal);
     }
 
     $self->{'done_cb'}->($size);
@@ -939,6 +961,9 @@ sub _incr_backup {
 
    debug("running _incr_backup");
 
+   my $incremental_val = $self->{'props'}->{'pg-incremental'} || 'yes';
+   my $incremental = string_to_boolean($incremental_val);
+
    if ($self->{'action'} eq 'backup') {
       _run_psql_command($self, "SELECT file_name from pg_xlogfile_name_offset(pg_switch_xlog())");
       if (defined($self->{'switch_xlog_filename'})) {
@@ -946,7 +971,18 @@ sub _incr_backup {
       }
    }
 
-   my $end_wal = _get_prev_state($self);
+   my $end_wal;
+   if ($incremental) {
+	$end_wal = _get_prev_state($self, $self->{'args'}->{'level'});
+	for (my $level = $self->{'args'}->{'level'}-1; $level >= 0; $level--) {
+	    my $xend_wal = _get_prev_state($self, $level);
+	    if (!$end_wal || $xend_wal lt $end_wal) {
+		$end_wal = $xend_wal;
+	    }
+	}
+   } else {
+	$end_wal = _get_prev_state($self);
+   }
    if ($end_wal) {
        debug("previously ended at: $end_wal");
    } else {
@@ -966,8 +1002,6 @@ sub _incr_backup {
        }
    }
 
-   $self->{'state_cb'}->($self, $max_wal ? $max_wal : $end_wal);
-
    my $size;
    if (@wal_files) {
        $size = _run_tar_totals($self, '--dereference', '--file', '-',
@@ -977,6 +1011,20 @@ sub _incr_backup {
        $size = _run_tar_totals($self, '--dereference', '--file', '-',
            '--directory', $dummydir, "empty-incremental");
        rmtree($dummydir);
+   }
+
+   # should be done only on confirmation the backup succeeded from the server
+   $self->{'state_cb'}->($self, $max_wal ? $max_wal : $end_wal);
+
+   my $remove_incremental_wal_val = $self->{'props'}->{'pg-remove-incremental-wal'} || 'no';
+   my $remove_incremental_wal = string_to_boolean($remove_incremental_wal_val);
+   # should be done only on confirmation the backup succeeded from the server
+   if ($remove_incremental_wal) {
+	my $end_wal = pop @wal_files;   # Do not unlink the latest wal files
+	foreach my $wal_file (@wal_files) {
+	    $end_wal = $wal_file if $wal_file gt $end_wal;
+	}
+	$self->_remove_wal_files(undef, $end_wal);
    }
 
    $self->{'done_cb'}->($size);
@@ -1018,21 +1066,17 @@ sub command_backup {
    my $cleanup_wal = string_to_boolean($cleanup_wal_val);
    if (!defined($cleanup_wal)) {
        $self->{'die_cb'}->("couldn't interpret PG-CLEANUPWAL value '$cleanup_wal_val' as a boolean");
-   } elsif ($cleanup_wal) {
-       $self->{'unlink_cb'} = sub {
-           my $filename = shift @_;
-	   debug("unlinking WAL file $filename");
-           if (unlink($filename) == 0) {
-               debug("Failed to unlink '$filename': $!");
-               $self->print_to_server("Failed to unlink '$filename': $!",
-                                      $Amanda::Script_App::ERROR);
-           }
-       };
-   } else {
-       $self->{'unlink_cb'} = sub {
-           # do nothing
-       };
    }
+
+   $self->{'unlink_cb'} = sub {
+       my $filename = shift @_;
+       debug("unlinking WAL file $filename");
+       if (unlink($filename) == 0) {
+           debug("Failed to unlink '$filename': $!");
+           $self->print_to_server("Failed to unlink '$filename': $!",
+                                  $Amanda::Script_App::ERROR);
+       }
+   };
 
    if ($self->{'args'}->{'level'} > 0) {
        _incr_backup($self, \*STDOUT);
@@ -1221,7 +1265,10 @@ GetOptions(
     'port=s',
     'user=s',
     'psql-path=s',
-    'verbose=s'
+    'verbose=s',
+    'incremental=s',
+    'remove-full-wal=s',
+    'remove-incremental-wal=s'
 ) or usage();
 
 if (defined $opt_version) {
