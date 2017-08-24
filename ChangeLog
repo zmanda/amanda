@@ -1,3 +1,8 @@
+2017-08-24  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ampgsql.pl:Add --icremental, --remove-full-wal and
+	  --remove-incremental-wal properties
+	* man/xml-source/ampgsql.8.xml: Document new properties
+
 2017-08-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Check only VERSION_MAJOR and VESION_MINOR for
 	  error code 1800002

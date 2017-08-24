@@ -137,6 +137,11 @@ during restore.  The default is set when Amanda is built by the
 directory that holds the socket file. PostgreSQL defaults to /tmp.</para>
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>INCREMENTAL</term><listitem>
+<para>Default: NO. If set to "YES", then backup only the WAL files since the previous backup.</para>
+<para>It reduce the size of the backup, but amanda will not be able to restore all incrementals, the restore must be done manually.It is easier to set the dumptype bump* parameter to force a bump at every backup.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>MAX-WAL-WAIT</term><listitem>
 <para>The maximum amount of time to wait for PG_STOP_BACKUP to archive a WAL
 file.  In versions of PostgreSQL before 8.2, PG_STOP_BACKUP does not
@@ -160,6 +165,14 @@ defaults to 5432.</para>
  <varlistentry><term>PSQL-PATH</term><listitem>
 <para>Path to the psql binary. If not specified, the PATH environment variable
 will be searched.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>REMOVE-FULL-WAL</term><listitem>
+<para>Default: YES. Remove all WAL files included in the full backup.</para>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>REMOVE-INCREMENTAL-WAL</term><listitem>
+<para>Default: NO. If set to "YES" then remove all WAL files included in the incremental backup.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STATEDIR</term><listitem>
