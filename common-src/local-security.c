@@ -56,6 +56,8 @@ static void local_connect(const char *, char *(*)(char *, void *),
 
 static char *local_get_authenticated_peer_name_hostname(security_handle_t *hdl);
 
+static gboolean is_local(const char *);
+
 /*
  * This is our interface to the outside world.
  */
@@ -114,7 +116,6 @@ local_connect(
     struct sec_handle *rh;
     char *amandad_path=NULL;
     char *client_username=NULL;
-    char myhostname[MAX_HOSTNAME_LENGTH+1];
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -129,15 +130,7 @@ local_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    if (gethostname(myhostname, MAX_HOSTNAME_LENGTH) == -1) {
-	security_seterror(&rh->sech, _("gethostname failed"));
-	(*fn)(arg, &rh->sech, S_ERROR);
-	return;
-    }
-    myhostname[sizeof(myhostname)-1] = '\0';
-
-    if (!g_str_equal(hostname, myhostname) &&
-	match("^localhost(\\.localdomain)?$", hostname) == 0) {
+    if (!is_local(hostname)) {
 	security_seterror(&rh->sech,
 	    _("%s: is not local"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
@@ -309,4 +302,75 @@ local_get_authenticated_peer_name_hostname(
     amfree(server_hostname);
     return g_strdup("localhost");
 
+}
+
+/*
+ * Recognize whether hostname refers to this host, regardless of how it is
+ * spelled, capitalized, abbreviated or fully qualified, etc.
+ *
+ * If there exists any address for hostname to which a socket can be bound,
+ * return TRUE.
+ */
+static gboolean
+is_local(const char *hostname)
+{
+    struct addrinfo *addrs;
+    struct addrinfo *a;
+    int rslt;
+    int s;
+    /*
+     * A socktype of 0 to resolve_hostname should mean "give me results for
+     * whatever families/socktypes/protocols are available to talk to the host.
+     * But on some operating systems (*cough* solaris 10 *cough*) it seems to
+     * mean "give me results with invalid socktype values that socket() won't
+     * accept, please because that's so helpful thank you." So if that seems
+     * to have happened, can try again asking for a specific socktype.
+     */
+    int try_stypes[] = { 0, SOCK_STREAM };
+    int * const end_stypes = try_stypes + sizeof try_stypes/sizeof *try_stypes;
+    int *stypep;
+
+    gboolean made_a_socket;
+
+    gboolean verdict = FALSE;
+
+    for ( stypep = try_stypes ; stypep < end_stypes ; ++ stypep ) {
+	rslt = resolve_hostname(hostname, *stypep, &addrs, NULL);
+	if (0 != rslt) {
+            dbprintf("Unresolved hostname %s assumed nonlocal: %s\n",
+	             hostname, gai_strerror(rslt));
+            continue;
+	}
+	/* Beyond this point, addrs must be freed */
+
+	made_a_socket = FALSE;
+
+	/* Invariant: s is not an open socket */
+	for ( a = addrs ; NULL != a ; a = a->ai_next ) {
+	    s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
+	    if ( -1 == s ) {
+		dbprintf("Resolving hostname %s: %s\n",
+		         hostname, strerror(errno));
+		continue;
+	    }
+	    made_a_socket = TRUE;
+	    rslt = bind(s, a->ai_addr, a->ai_addrlen);
+	    if ( 0 == rslt ) {
+		close(s);
+		verdict = TRUE;
+		break;
+	    }
+	    if ( EADDRNOTAVAIL != errno ) {
+		dbprintf("strange bind() result %s\n", strerror(errno));
+	    }
+	    close(s);
+	}
+	/* s is not open here */
+
+	freeaddrinfo(addrs);
+
+        if ( made_a_socket )
+	    break;
+    }
+    return verdict;
 }

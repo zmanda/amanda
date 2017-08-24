@@ -446,7 +446,8 @@ DNS.</para>
 <refsect1><title>LOCAL COMMUNICATION</title>
 <para>The Amanda server communicates with the client internally versus over the network, ie. the client is also the server.</para>
 <para>This is the only method that requires no authentication as it is clearly not needed.</para>
-<para>The authenticated peer hostname for this authentication is always "localhost".</para>
+<para>The authenticated peer hostname for this authentication will be as reported by <emphasis remap='B'>gethostname</emphasis> if that succeeds, or the fixed string <emphasis remap='I'>localhost</emphasis> otherwise.</para>
+<para>This method requires the host name in the DLE to be one that refers to this host. Any name for which <emphasis remap='B'>gataddrinfo</emphasis> is able to return at least one address usable as the local end of a socket will work.</para>
 </refsect1>
 
 <refsect1><title>RSH COMMUNICATION AND AUTHENTICATION</title>
