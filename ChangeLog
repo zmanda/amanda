@@ -1,3 +1,10 @@
+2017-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Chapman Flack
+	* common-src/local-security.c: Check the hostname is local
+	* man/xml-source/amanda-auth.7.xml: Document what a localhost is
+	* COPYRIGHT.BSD: New copytight file
+	* AUTHORS: Add Chapman Flack
+
 2017-08-24  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ampgsql.pl:Add --icremental, --remove-full-wal and
 	  --remove-incremental-wal properties
