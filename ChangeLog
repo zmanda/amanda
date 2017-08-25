@@ -1,4 +1,8 @@
 2017-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c: Add comment
+	* common-src/local-security.c: Check result of setregid and setreuid
+
+2017-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Chapman Flack
 	* common-src/local-security.c: Check the hostname is local
 	* man/xml-source/amanda-auth.7.xml: Document what a localhost is

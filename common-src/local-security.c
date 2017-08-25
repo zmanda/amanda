@@ -264,7 +264,7 @@ runlocal(
     /* drop root privs for good */
     set_root_privs(-1);
 
-    if(!xamandad_path || strlen(xamandad_path) <= 1) 
+    if(!xamandad_path || strlen(xamandad_path) <= 1)
 	xamandad_path = g_strjoin(NULL, amlibexecdir, "/", "amandad", NULL);
 
 #ifndef SINGLE_USERID
@@ -273,10 +273,16 @@ runlocal(
     } else {
 	initgroups(CLIENT_LOGIN, gid);
     }
-    if (gid != 0)
-	setregid(gid, gid);
-    if (uid != 0)
-	setreuid(uid, uid);
+    if (gid != 0) {
+	if (setregid(gid, gid) == -1) {
+	    error("Can't setregid(%d,%d): %s", gid, gid, strerror(errno));
+	}
+    }
+    if (uid != 0) {
+	if (setreuid(uid, uid) == -1) {
+	    error("Can't setreuid(%d,%d): %s", uid, uid, strerror(errno));
+	}
+    }
 #endif
 
     safe_fd(-1, 0);

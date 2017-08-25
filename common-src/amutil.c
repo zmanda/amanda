@@ -1766,7 +1766,8 @@ set_root_privs(int need_root)
 	unpriv = getuid();
 
 	/* and set all of our userids (including, importantly, the saved
-	 * userid) to 0 */
+	 * userid) to 0
+	 * It can fail we are not 0, we don't care */
 	setuid(0);
 
 	/* don't need to do this next time */
