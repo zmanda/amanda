@@ -470,17 +470,22 @@ sub write_local_state {
     }
 }
 
+my $rx_compratio = qr/^(\d++)\.(\d\d)x$/o;
+
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $dn = $self->{'options'}->{'device'};
 
     if ( 0 == $level ) {
 	open my $getfh, '-|', $self->{'zfsexecutable'},
-	    'get', '-Hp', '-o', 'value', '--', 'used',
+	    'get', '-Hp', '-o', 'value', '--', 'used,compressratio',
 	    $self->{'options'}->{'device'};
-	my $used = Math::BigInt->new(<$getfh>);
+	my $used = <$getfh>;
+	my $compratio = <$getfh>;
 	$getfh->close();
-	return $used;
+	$used = Math::BigInt->new($used);
+	my ( $wholes, $cents ) = $compratio =~ m/$rx_compratio/o;
+	return $used->bmul($wholes . $cents)->badd(99)->bdiv(100);
     }
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
