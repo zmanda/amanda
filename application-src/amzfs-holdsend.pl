@@ -346,12 +346,17 @@ sub declare_common_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_common_options($refopthash, $refoptspecs);
     push @$refoptspecs, ( 'zfsexecutable=s', 'holdtagprefix=s',
-                          'uncompressed=s' );
+			  'uncompressed=s', 'dedup=s', 'large-block=s',
+			  'embed=s', 'raw=s' );
 
     $refopthash->{'zfsexecutable'} = 'zfs';
     $refopthash->{'holdtagprefix'} = 'org.amanda holdsend';
     $refopthash->{'uncompressed'}= $class->boolean_property_setter($refopthash);
     $refopthash->{'opt_uncompressed'} = 1; # why 1? -c not always supported
+    $refopthash->{'dedup'}= $class->boolean_property_setter($refopthash);
+    $refopthash->{'large-block'}= $class->boolean_property_setter($refopthash);
+    $refopthash->{'embed'}= $class->boolean_property_setter($refopthash);
+    $refopthash->{'raw'}= $class->boolean_property_setter($refopthash);
 }
 
 sub declare_restore_options {
@@ -589,9 +594,10 @@ sub construct_send_cmd {
     my $mxl = $self->{'localstate'}->{'maxlevel'};
 
     my @compressed = $self->{'options'}->{'uncompressed'} ? () : ( '-c' );
+    my @misc_opts = $self->ozfs_send_options();
 
     if ( 0 == $level ) {
-	return $self->{'zfsexecutable'}, 'send', @compressed, '-R',
+	return $self->{'zfsexecutable'}, 'send', @compressed, @misc_opts, '-R',
 	    '--', $dn . '@' . $latestsnapshot;
     } elsif ( $level > $mxl ) {
 	$self->print_to_server_and_die("Requested backup level $level > $mxl",
@@ -605,10 +611,21 @@ sub construct_send_cmd {
 		"consistently ordered", $Amanda::Script_App::ERROR);
 	}
 
-	return $self->{'zfsexecutable'}, 'send', @compressed, '-R',
+	return $self->{'zfsexecutable'}, 'send', @compressed, @misc_opts, '-R',
 	    '-I', $priorsnapshot,
 	    '--', $dn . '@' . $latestsnapshot;
     }
+}
+
+sub ozfs_send_options {
+    my ( $self ) = @_;
+
+    my @opts;
+    push @opts, '-D' if $self->{'options'}->{'dedup'};
+    push @opts, '-L' if $self->{'options'}->{'large-block'};
+    push @opts, '-e' if $self->{'options'}->{'embed'};
+    push @opts, '-w' if $self->{'options'}->{'raw'};
+    return @opts;
 }
 
 sub inner_backup {

@@ -276,6 +276,21 @@ for information on application properties and how they are configured.
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+ <varlistentry><term>DEDUP</term><listitem>
+Pass the <option>-D</option> option to <command>zfs send</command>,
+for platforms that support it to exclude duplicated blocks from the
+generated stream. See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>EMBED</term><listitem>
+Pass the <option>-e</option> option to <command>zfs send</command>,
+for platforms that support it to generate a smaller stream from a pool that
+uses the <emphasis remap="B">embedded_data</emphasis> feature.
+See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
  <varlistentry><term>HOLDTAGPREFIX</term><listitem>
 All hold tags placed by this application on snapshots will consist of
 this prefix, a single space, and a number representing the backup level.
@@ -286,6 +301,22 @@ do not interfere. The default is the string "org.amanda holdsend".
 </listitem></varlistentry>
 
  <!-- ==== -->
+ <varlistentry><term>LARGE-BLOCK</term><listitem>
+Pass the <option>-L</option> option to <command>zfs send</command>,
+for platforms that support it to allow blocks larger than 128 kB in the
+generated stream. See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>RAW</term><listitem>
+Pass the <option>-w</option> option to <command>zfs send</command>,
+for platforms that support it to send data exactly as found on disk,
+allowing encrypted datasets to be backed up even when their encryption keys
+are not loaded, and stored securely.
+See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
  <varlistentry><term>UNCOMPRESSED</term><listitem>
 Defaults to true, because not all ZFS implementations suppport
 compressed streams (<command>zfs send -c</command> where <option>-c</option>
@@ -293,7 +324,10 @@ means 'compressed', as in OpenZFS, not 'contained' as in Solaris). If
 compressed-stream support is available, setting this property to false allows
 the backup stream to be generated in the same compressed form used in the
 dataset, saving both space and CPU cycles, as the stream will not get
-uncompressed for backup and recompressed when restored.
+uncompressed for backup and recompressed when restored. If sending from a pool
+with the <emphasis remap="B">large_blocks</emphasis> feature, setting this
+property false may be ineffective unless the LARGE-BLOCK property is also
+set true.
 </listitem></varlistentry>
 
  <!-- ==== -->
