@@ -248,6 +248,15 @@ custom setuid wrapper for the <command>zfs</command> command.
 
 </refsect2>
 
+<refsect2><title>Estimate method</title>
+
+The estimate methods CLIENT and CALCSIZE are supported. CALCSIZE is both
+fast and accurate, but works only on platforms that support
+<command>zfs send -nvP</command> as found in OpenZFS. CLIENT is slower,
+but works on platforms without that support.
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>

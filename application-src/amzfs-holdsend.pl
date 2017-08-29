@@ -318,11 +318,14 @@ package Amanda::Application::AmZfsHoldSend;
 
 use base 'Amanda::Application::Abstract';
 
+use IPC::Open3;
+
 sub supports_host { my ( $class ) = @_; return 1; }
 sub supports_disk { my ( $class ) = @_; return 1; }
 sub supports_index_line { my ( $class ) = @_; return 1; }
 sub supports_message_line { my ( $class ) = @_; return 1; }
 sub supports_record { my ( $class ) = @_; return 1; }
+sub supports_calcsize { my ( $class ) = @_; return 1; }
 sub supports_client_estimate { my ( $class ) = @_; return 1; }
 sub supports_multi_estimate { my ( $class ) = @_; return 1; }
 
@@ -472,9 +475,58 @@ sub write_local_state {
 
 my $rx_compratio = qr/^(\d++)\.(\d\d)x$/o;
 
+my $rx_nvPsize = qr/^size\t(\d++)$/o;
+
 sub inner_estimate {
     my ( $self, $level ) = @_;
-    my $dn = $self->{'options'}->{'device'};
+    my $latestsnapshot = $self->{'localstate'}->{'newestsnapshot'};
+
+    if ( $self->{'options'}->{'calcsize'} and defined $latestsnapshot ) {
+        return $self->inner_estimate_nvP($level, $latestsnapshot);
+    } else {
+        return $self->inner_estimate_brute($level, $latestsnapshot);
+    }
+}
+
+# The complete output of send -nvP -R includes sizes for all descendant
+# datasets and intermediate snapshots, followed by one final line matching
+# /^size\t/ with the total. This inner_estimate (which is called in a loop
+# by command_estimate, once for each level) ignores all but the last line
+# and returns that total as the size for the level. Clearly, it would be
+# possible to override command_estimate itself, skip the loop, and calculate
+# the estimates for all levels from the output of a single send -nvP. Left for
+# future, as this is simple and not dreadfully slow.
+# The output of send -nvP goes to stderr, not stdout.
+sub inner_estimate_nvP {
+    my ( $self, $level, $latestsnapshot ) = @_;
+
+    my @cmd = $self->construct_send_cmd($level, $latestsnapshot);
+
+    splice @cmd, 2, 0, '-nvP';
+
+    my $sizestr;
+    my ( $wtr, $rdr );
+    my $sendpid = open3($wtr, $rdr, $rdr, @cmd);
+    $wtr->close();
+    while ( <$rdr> ) {
+        ( $sizestr ) = m/$rx_nvPsize/o;
+    }
+    $rdr->close();
+    waitpid($sendpid, 0);
+
+    $self->print_to_server_and_die("Nonzero exit status of zfs send -nvP: ".$?,
+                                   $Amanda::Script_App::ERROR)
+	unless 0 == $?;
+
+    $self->print_to_server_and_die("Failed to read size from zfs send -nvP",
+                                   $Amanda::Script_App::ERROR)
+	unless defined($sizestr);
+
+    return Math::BigInt->new($sizestr);
+}
+
+sub inner_estimate_brute {
+    my ( $self, $level, $latestsnapshot ) = @_;
 
     if ( 0 == $level ) {
 	open my $getfh, '-|', $self->{'zfsexecutable'},
@@ -497,7 +549,6 @@ sub inner_estimate {
     }
 
     my $priorsnapshot = $self->{'localstate'}->{$level - 1}->{'snapshot'};
-    my $latestsnapshot = $self->{'localstate'}->{'newestsnapshot'};
 
     # In this easy case, zero isn't quite accurate; if the planner actually
     # does, for some reason, choose this level, inner_backup will in fact do
@@ -512,24 +563,9 @@ sub inner_estimate {
     # this zero estimate and choose a different level, which would be ok.
     return Math::BigInt->bzero() if $latestsnapshot eq $priorsnapshot;
 
-    # Ok, it wasn't any of the easy cases. This would be a lot easier if
-    # send -nv could be used, but Solaris 10 hasn't got it.
-    # There is a chance that a multi-estimate request could be answered
-    # efficiently in one look through the snapshots, rather than by repeating
-    # this action for each requested level. This would then be an example where
-    # it would be advantageous to override command_estimate itself, and not just
-    # inner_estimate.
+    # Ok, it wasn't any of the easy cases.
 
-    unless ( $self->{'localstate'}->{'topds'}->
-	consistently_ordered($priorsnapshot, $latestsnapshot) ) {
-	$self->print_to_server_and_die(
-	    "Snapshots '$priorsnapshot' and '$latestsnapshot' not " .
-	    "consistently ordered", $Amanda::Script_App::ERROR);
-    }
-
-    open my $sendfh, '-|', $self->{'zfsexecutable'}, 'send', '-R',
-	'-I', $priorsnapshot,
-	'--', $self->{'options'}->{'device'} . '@' . $latestsnapshot;
+    open my $sendfh, '-|', $self->construct_send_cmd($level, $latestsnapshot);
     my $buffer;
     my $size = Math::BigInt->bzero();
     my $s;
@@ -539,6 +575,33 @@ sub inner_estimate {
     }
     $sendfh->close();
     return $size;
+}
+
+sub construct_send_cmd {
+    my ( $self, $level, $latestsnapshot ) = @_;
+    my $dn = $self->{'options'}->{'device'};
+
+    my $mxl = $self->{'localstate'}->{'maxlevel'};
+
+    if ( 0 == $level ) {
+	return $self->{'zfsexecutable'}, 'send', '-R',
+	    '--', $dn . '@' . $latestsnapshot;
+    } elsif ( $level > $mxl ) {
+	$self->print_to_server_and_die("Requested backup level $level > $mxl",
+			       $Amanda::Script_App::ERROR);
+    } else {
+	my $priorsnapshot = $self->{'localstate'}->{$level - 1}->{'snapshot'};
+	unless ( $self->{'localstate'}->{'topds'}->
+	  consistently_ordered($priorsnapshot, $latestsnapshot) ) {
+	    $self->print_to_server_and_die(
+		"Snapshots '$priorsnapshot' and '$latestsnapshot' not " .
+		"consistently ordered", $Amanda::Script_App::ERROR);
+	}
+
+	return $self->{'zfsexecutable'}, 'send', '-R',
+	    '-I', $priorsnapshot,
+	    '--', $dn . '@' . $latestsnapshot;
+    }
 }
 
 sub inner_backup {
@@ -553,28 +616,7 @@ sub inner_backup {
 	    "At least one snapshot must exist", $Amanda::Script_App::ERROR);
     }
 
-    my $sendfh;
-    my $mxl = $self->{'localstate'}->{'maxlevel'};
-
-    if ( 0 == $level ) {
-	open $sendfh, '-|', $self->{'zfsexecutable'}, 'send', '-R',
-	    '--', $dn . '@' . $latestsnapshot;
-    } elsif ( $level > $mxl ) {
-	$self->print_to_server_and_die("Requested backup level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
-    } else {
-	my $priorsnapshot = $self->{'localstate'}->{$level - 1}->{'snapshot'};
-	unless ( $self->{'localstate'}->{'topds'}->
-	  consistently_ordered($priorsnapshot, $latestsnapshot) ) {
-	    $self->print_to_server_and_die(
-		"Snapshots '$priorsnapshot' and '$latestsnapshot' not " .
-		"consistently ordered", $Amanda::Script_App::ERROR);
-	}
-
-	open $sendfh, '-|', $self->{'zfsexecutable'}, 'send', '-R',
-	    '-I', $priorsnapshot,
-	    '--', $dn . '@' . $latestsnapshot;
-    }
+    open my $sendfh, '-|', $self->construct_send_cmd($level, $latestsnapshot);
 
     my $size = Math::BigInt->bzero();
     my $buffer;
