@@ -345,11 +345,13 @@ sub new {
 sub declare_common_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_common_options($refopthash, $refoptspecs);
-    push @$refoptspecs, ( 'zfsexecutable=s' );
-    push @$refoptspecs, ( 'holdtagprefix=s' );
+    push @$refoptspecs, ( 'zfsexecutable=s', 'holdtagprefix=s',
+                          'uncompressed=s' );
 
     $refopthash->{'zfsexecutable'} = 'zfs';
     $refopthash->{'holdtagprefix'} = 'org.amanda holdsend';
+    $refopthash->{'uncompressed'}= $class->boolean_property_setter($refopthash);
+    $refopthash->{'opt_uncompressed'} = 1; # why 1? -c not always supported
 }
 
 sub declare_restore_options {
@@ -536,8 +538,11 @@ sub inner_estimate_brute {
 	my $compratio = <$getfh>;
 	$getfh->close();
 	$used = Math::BigInt->new($used);
-	my ( $wholes, $cents ) = $compratio =~ m/$rx_compratio/o;
-	return $used->bmul($wholes . $cents)->badd(99)->bdiv(100);
+	if ( $self->{'options'}->{'uncompressed'} ) {
+	    my ( $wholes, $cents ) = $compratio =~ m/$rx_compratio/o;
+	    $used->bmul($wholes . $cents)->badd(99)->bdiv(100)
+	}
+	return $used;
     }
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
@@ -583,8 +588,10 @@ sub construct_send_cmd {
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
 
+    my @compressed = $self->{'options'}->{'uncompressed'} ? () : ( '-c' );
+
     if ( 0 == $level ) {
-	return $self->{'zfsexecutable'}, 'send', '-R',
+	return $self->{'zfsexecutable'}, 'send', @compressed, '-R',
 	    '--', $dn . '@' . $latestsnapshot;
     } elsif ( $level > $mxl ) {
 	$self->print_to_server_and_die("Requested backup level $level > $mxl",
@@ -598,7 +605,7 @@ sub construct_send_cmd {
 		"consistently ordered", $Amanda::Script_App::ERROR);
 	}
 
-	return $self->{'zfsexecutable'}, 'send', '-R',
+	return $self->{'zfsexecutable'}, 'send', @compressed, '-R',
 	    '-I', $priorsnapshot,
 	    '--', $dn . '@' . $latestsnapshot;
     }

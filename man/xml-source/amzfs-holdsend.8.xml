@@ -113,6 +113,12 @@ all be preserved, <command>amzfs-holdsend</command> fits the bill. It does not
 add to or delete from the existing snapshots, but preserves them as they are.
 </para>
 
+<para>
+Where supported by the ZFS implementation in use, backup size and
+CPU utilization can both be reduced for compressed datasets by setting
+the UNCOMPRESSED property to false.
+</para>
+
 </refsect2>
 
 <refsect2><title>Multiple datasets in one DLE</title>
@@ -277,6 +283,17 @@ If one ZFS dataset or subtree is to participate in more than one DLE
 (for different backup media series, onsite/offsite, etc.), this property
 can be used to set distinct prefixes for the DLEs, so the holds they create
 do not interfere. The default is the string "org.amanda holdsend".
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>UNCOMPRESSED</term><listitem>
+Defaults to true, because not all ZFS implementations suppport
+compressed streams (<command>zfs send -c</command> where <option>-c</option>
+means 'compressed', as in OpenZFS, not 'contained' as in Solaris). If
+compressed-stream support is available, setting this property to false allows
+the backup stream to be generated in the same compressed form used in the
+dataset, saving both space and CPU cycles, as the stream will not get
+uncompressed for backup and recompressed when restored.
 </listitem></varlistentry>
 
  <!-- ==== -->
