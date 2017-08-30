@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amzfs-holdsend.8'>
+
+<refmeta>
+<refentrytitle>amzfs-holdsend</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amzfs-holdsend</refname>
+<refpurpose>Amanda Application for backup of
+ZFS externally-created snapshots</refpurpose>
+</refnamediv>
+<refentryinfo>
+<author><personname>Chapman Flack</personname></author>
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amzfs-holdsend is an Amanda Application API script. It should not be run
+by users directly. It can backup and restore ZFS filesystems opaquely
+(that is, as a whole, with no option to restore just some entries),
+using <command>zfs send</command> <emphasis>replication streams</emphasis>
+based on snapshots created by other means.</para>
+
+<refsect2><title>ZFS backup approaches compared</title>
+
+<para>ZFS is a sophisticated filesystem manager that lends itself to several
+backup approaches depending on need (and different approaches can be used
+on different datasets in the same pool). For two other approaches available
+in Amanda, see <manref name="amzfs-sendrecv" vol="8"/> and
+<manref name="amzfs-snapshot" vol="8"/>.</para>
+
+<glosslist>
+<glossentry><glossterm><command>amzfs-snapshot</command></glossterm>
+<glossdef><para>
+A script that can be combined with a conventional file-based archiving
+application, such as <manref name="amgtar" vol="8"/>, when the ability
+to restore individual files will be important. The script creates a new
+ZFS snapshot, the archiver copies files from the snapshot in the usual
+way (but without the inefficient side effect of clobbering access times,
+because the snapshot is read-only), and then the script destroys the snapshot.
+</para><para>
+Individual files can be recovered in the usual way, though how much
+advanced metadata gets preserved will depend on what
+the archiving tool supports. Strictly ZFS-specific features "outside"
+the filesystem, such as historical snapshots and filesystem properties,
+are not preserved.
+</para></glossdef></glossentry>
+<glossentry><glossterm><command>amzfs-sendrecv</command></glossterm>
+<glossdef><para>
+An application that uses <command>zfs send</command> to faithfully
+preserve the contents of a single ZFS filesystem at a single point
+in time. It creates a new snapshot as of the time it is executed,
+and can leave the snapshot in place when done so that a future run
+can be incremental. An incremental run advances the filesystem contents
+to the just-created new snapshot, but does not preserve intermediate
+snapshots along the way.
+</para></glossdef></glossentry>
+<glossentry><glossterm><command>amzfs-holdsend</command></glossterm>
+<glossdef><para>
+<emphasis>This application</emphasis>: uses the <emphasis>replication
+stream</emphasis> feature of <command>zfs send</command> to preserve
+a ZFS filesystem or volume and any descendants. This application does
+not create or destroy snapshots on its own, but selects recent snapshots
+assumed to be created by other means, such as a scheduler that may take
+snapshots at regular intervals. Existing historical snapshots are preserved
+in the backup.
+</para></glossdef></glossentry>
+</glosslist>
+
+<para>
+In general, approaches that use a conventional archiver have the advantage
+that individual files are easily restored when needed, and (typically, at
+least) a few disadvantages: they may not preserve all advanced metadata
+(ACLs, security contexts, etc.) supported by the filesystem, identification
+of changed files for incremental backup may require traversing the whole
+filesystem making fallible comparisons, and increments may grow larger than
+necessary by including entire files that have seen but small changes.
+</para>
+
+<para>
+This application, as well as <command>amzfs-sendrecv</command>, take
+the complementary approach. While they do not provide
+for easy recovery of individual files, they faithfully preserve all of the
+filesystems' contents and metadata, identify all changed objects in an
+increment without relying on fallible checks, and require only the size
+of changed data, even with small changes to large files.
+</para>
+
+<para>
+In an environment where nothing else is creating snapshots, and there is no
+desire to preserve anything but the most recent state at each backup,
+<command>amzfs-sendrecv</command> may be a simple solution, as it takes care
+of creating its own snapshot on each backup run.
+</para>
+
+<para>
+If snapshots are being created by other means, such as on a frequent schedule
+between backups, or if intermediate snapshots between scheduled backups should
+all be preserved, <command>amzfs-holdsend</command> fits the bill. It does not
+add to or delete from the existing snapshots, but preserves them as they are.
+</para>
+
+<para>
+Where supported by the ZFS implementation in use, backup size and
+CPU utilization can both be reduced for compressed datasets by setting
+the UNCOMPRESSED property to false.
+</para>
+
+</refsect2>
+
+<refsect2><title>Multiple datasets in one DLE</title>
+
+<para>
+ZFS arranges datasets (its generic term for both filesystems and
+block-device-like volumes) in a tree. The tree structure does not have
+to mirror the desired layout of filesystem mount points, but can be used
+to group datasets meant to be similar in other ways, compression settings
+for example, or datasets to be backed up together.
+</para>
+
+<para>
+For <command>amzfs-holdsend</command>, the <emphasis>disk</emphasis> or
+<emphasis>device</emphasis> given in a disk-list entry names a subtree of
+datasets to back up. It must always be a ZFS-style dataset name, not a
+mountpoint, to make clear that it points into the ZFS namespace hierarchy
+rather than the filesystem namespace, and the backup will include that dataset
+and any others descended from it in the ZFS tree.
+</para>
+
+<para>
+For a subtree to be backed up at once by <command>amzfs-holdsend</command>,
+certain conditions must hold. For a full (level 0) backup, there must be at
+least one snapshot name that is present on every dataset in the subtree. An easy
+way to ensure that is to use <code>zfs snapshot -r ...</code> to create
+snapshots with identical names on a dataset and all its descendants in one
+command. However, the stream generation does not depend on that: there is no
+requirement that the same-named snapshots were created together, or even
+closely in time; they simply have to exist. If <command>amzfs-holdsend</command>
+will not back up a certain subtree because no common snapshot name can be found,
+if there is a snapshot name that is present in most of the datasets, the remedy
+can be as simple as creating snapshots by that name in the datasets lacking it.
+When <command>amzfs-holdsend</command> can identify one or more snapshot names
+present in the named dataset and all descendants, it will use the latest of
+those for a level-0 backup.
+</para>
+
+<note><para>
+You could be sly and create some snapshots with matching names
+everywhere in the subtree, but not always in the same order. When
+<command>amzfs-holdsend</command> picks the "latest" of them, it uses the
+one that is latest in the topmost dataset, the one that the DLE names.
+</para></note>
+
+<para>
+For an <emphasis>incremental</emphasis> backup to be produced, the snapshots
+used for the next lower backup level must still be present, and must still all
+have the same name. (If any has been renamed, so must they all.) For a
+useful backup, there must also be some newer snapshots with their own common
+name throughout the subtree; again, the "latest" will be used as the new end
+point for the incremental backup.
+</para>
+
+<note><para>
+You could be sly again and arrange for a later snapshot in some
+datasets to match the name of a snapshot that came earlier than the
+prior-level backup snapshot in some other datasets in the same subtree.
+You won't get away with it, however.
+</para></note>
+
+<para>
+If no new snapshot has been created since the last backup, a (trivial)
+incremental backup can still be created, from the last-used snapshot
+to itself. There are warnings from <command>zfs send</command> in that
+case, but it successfully produces a restorable increment with no
+filesystem-content changes. It will include the latest values of any
+changed ZFS properties.
+</para>
+
+</refsect2>
+
+<refsect2><title>Holds on snapshots</title>
+
+<para>
+After a backup, <command>amzfs-holdsend</command> places
+<command>zfs hold</command> tags on the snapshots that must be
+kept around for future increments. The tags have a recognizable prefix
+followed by the backup level, and serve two purposes. For this application,
+they record which backup levels used which snapshots; for ZFS itself, they
+protect the snapshots from inadvertent deletion.
+</para>
+
+<para>
+So that a dataset or subtree can belong to more than one DLE (to back up
+to more than one media series, or onsite/offsite, etc.), HOLDTAGPREFIX
+is a property that can be set in a DLE or dumptype. With the different
+DLEs using different prefixes, the hold tags they generate can coexist.
+</para>
+
+<note><para>
+As <command>amzfs-holdsend</command> releases some holds and places others
+when a backup completes, there can be a moment when it has no holds on any
+of the snapshots needed for future increments. That should not be a problem,
+unless many snapshots have been queued up for destruction with
+<command>zfs destroy -d</command>, in which case they could all vanish
+before a new hold can be placed, making that a risky practice.
+</para></note>
+
+<note><para>
+When attempts to destroy a filesystem or snapshot are met with
+"snapshot is busy" complaints from ZFS, the holds are doing their job.
+When destroying the filesystem or snapshot really is what you want to do,
+manually-issued <command>zfs release</command> commands (after sober
+reflection) can remove the conflicting holds.
+</para></note>
+
+</refsect2>
+
+<refsect2><title>Permissions needed</title>
+
+<para>
+Because <command>amzfs-holdsend</command> only needs to create and release
+holds and invoke <command>zfs send</command>, it will work with just those
+three ZFS permissions delegated to the Amanda backup user:
+</para>
+
+<programlisting>
+  zfs allow -u amandabackup hold,send,release filesystem
+</programlisting>
+
+<para>
+Additional permissions are needed for recovery, but <command>amrecover</command>
+is typically run as superuser, so there is no need to grant more permissions
+to the backup user.
+</para>
+
+<para>
+On a platform that lacks <command>zfs allow</command> support, it may be
+necessary to use <command>pfexec</command>, <command>sudo</command>, or a
+custom setuid wrapper for the <command>zfs</command> command.
+</para>
+
+</refsect2>
+
+<refsect2><title>Estimate method</title>
+
+The estimate methods CLIENT and CALCSIZE are supported. CALCSIZE is both
+fast and accurate, but works only on platforms that support
+<command>zfs send -nvP</command> as found in OpenZFS. CLIENT is slower,
+but works on platforms without that support.
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amzfs-holdsend's
+functionality.
+See <manref name="amanda-applications" vol="7"/>
+for information on application properties and how they are configured.
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DEDUP</term><listitem>
+Pass the <option>-D</option> option to <command>zfs send</command>,
+for platforms that support it to exclude duplicated blocks from the
+generated stream. See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>EMBED</term><listitem>
+Pass the <option>-e</option> option to <command>zfs send</command>,
+for platforms that support it to generate a smaller stream from a pool that
+uses the <emphasis remap="B">embedded_data</emphasis> feature.
+See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>HOLDTAGPREFIX</term><listitem>
+All hold tags placed by this application on snapshots will consist of
+this prefix, a single space, and a number representing the backup level.
+If one ZFS dataset or subtree is to participate in more than one DLE
+(for different backup media series, onsite/offsite, etc.), this property
+can be used to set distinct prefixes for the DLEs, so the holds they create
+do not interfere. The default is the string "org.amanda holdsend".
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>LARGE-BLOCK</term><listitem>
+Pass the <option>-L</option> option to <command>zfs send</command>,
+for platforms that support it to allow blocks larger than 128 kB in the
+generated stream. See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>RAW</term><listitem>
+Pass the <option>-w</option> option to <command>zfs send</command>,
+for platforms that support it to send data exactly as found on disk,
+allowing encrypted datasets to be backed up even when their encryption keys
+are not loaded, and stored securely.
+See <manref name="zfs" vol="8"/> for details.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>UNCOMPRESSED</term><listitem>
+Defaults to true, because not all ZFS implementations suppport
+compressed streams (<command>zfs send -c</command> where <option>-c</option>
+means 'compressed', as in OpenZFS, not 'contained' as in Solaris). If
+compressed-stream support is available, setting this property to false allows
+the backup stream to be generated in the same compressed form used in the
+dataset, saving both space and CPU cycles, as the stream will not get
+uncompressed for backup and recompressed when restored. If sending from a pool
+with the <emphasis remap="B">large_blocks</emphasis> feature, setting this
+property false may be ineffective unless the LARGE-BLOCK property is also
+set true.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>ZFSEXECUTABLE</term><listitem>
+Full path to the <command>zfs</command> executable on the client system.
+</listitem></varlistentry>
+</variablelist>
+
+<refsect2><title>Properties specific to recovery</title>
+
+<para>The properties in this section apply to recovery only.
+They can be set using the <command>setproperty</command> command within
+an <manref name="amrecover" vol="8"/> session.
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DATASET</term><listitem>
+The ZFS name under which to recover the data. Because ZFS recovery involves
+whole filesystems at a time, to reduce the risk of clobbering wanted filesystems
+by mistake, this property does <emphasis>not</emphasis> default to the device
+named in the DLE; it must be set explicitly with <command>setproperty</command>
+ahead of an <command>extract</command> within <command>amrecover</command>.
+There is no prohibition on setting it the same as the device in the DLE if
+desired, though it is also easy to set it to a different name and rename it
+after successful recovery.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>DESTRUCTIVE</term><listitem>
+Controls whether the <option>-F</option> is given to
+<command>zfs receive</command> when restoring increments (it will always be
+used when restoring the level 0 base, regardless of this property).
+The default is true, meaning descendant datasets and snapshots that
+disappear in a later increment will be destroyed as that increment is replayed,
+so the final result matches the original. This property can be set to false,
+if desired, so that destructions of datasets or snapshots will not be replayed.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>EXCLUDEPROPERTY</term><listitem>
+Takes one or more ZFS dataset property names, which will not be applied from
+the recovered backup stream (so the values of those properties in the received
+dataset will be defaulted or inherited in the usual way, as if no value had
+been saved in the backup stream.
+Not every platform supports the <option>-x</option> to
+<command>zfs receive</command>; use of this property on platforms that do not
+will cause recovery to fail.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>OVERRIDEPROPERTY</term><listitem>
+Takes one or more values of the form
+<token>property</token><code>=</code><token>value</token>, which will be
+applied in the received dataset inplace of values saved in the backup stream.
+Not every platform supports the <option>-o</option> to
+<command>zfs receive</command>; use of this property on platforms that do not
+will cause recovery to fail.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>UNMOUNTED</term><listitem>
+Controls whether the <option>u</option> is given to
+<command>zfs receive</command> to suppress automatic mounting of
+datasets received.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect2>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>
+<programlisting>
+  define application-tool app_amzfsholdsend {
+    plugin "amzfs-holdsend"
+  }
+</programlisting>
+A dumptype using this application might look like:
+<programlisting>
+  define dumptype amzfshold {
+    global
+    program "APPLICATION"
+    application "app_amzfsholdsend"
+  }
+</programlisting>
+Note that the <emphasis>program</emphasis> parameter must be set to
+<emphasis>"APPLICATION"</emphasis> to use the <emphasis>application</emphasis>
+parameter.
+</para>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+<manref name="amrecover" vol="8"/>
+</seealso>
+
+</refentry>

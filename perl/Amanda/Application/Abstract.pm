@@ -424,6 +424,7 @@ sub declare_estimate_options {
     push @$refoptspecs, (
         'message=s', 'level=i'.($class->supports('multi_estimate') ? '@' : '' )
     );
+    push @$refoptspecs, "calcsize" if $class->supports('calcsize');
 }
 
 =head2 C<declare_selfcheck_options>
@@ -496,7 +497,7 @@ otherwise calls it and returns its result.
 sub supports {
     my ( $class, $supname ) = @_;
     my $s = $class->can("supports_".$supname);
-    return (defined $s) and $s;
+    return (defined $s) ? $class->$s() : 0;
 }
 
 =head1 INSTANCE METHODS SUPPORTING C<support> SUBCOMMAND

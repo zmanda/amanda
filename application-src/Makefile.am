@@ -30,6 +30,7 @@ applicationexec_SCRIPTS_PERL = script-email \
 	     amopaquetree \
 	     ampgsql \
 	     amsvnmakehotcopy \
+	     amzfs-holdsend \
 	     amzfs-sendrecv \
 	     amzfs-snapshot \
 	     amrandom \

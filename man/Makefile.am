@@ -40,6 +40,7 @@ CLIENT_MAN_PAGES = \
     amstar.8 \
     amsuntar.8 \
     amsvnmakehotcopy.8 \
+    amzfs-holdsend.8 \
     amzfs-snapshot.8 \
     amzfs-sendrecv.8
 
