@@ -633,6 +633,10 @@ with C<maxlevel> of zero and no other data. Otherwise, the file is parsed for
 one or more levels of saved state, by repeatedly applying C<Getopt::Long> with
 I<\@optspecs> to declare the application's allowed options.
 
+An application that uses local state should read it into
+C<$self->{'localstate'}>, as C<command_backup> will call C<write_local_state>
+on that member automatically if the caller has asked to record state.
+
 =cut
 
 sub read_local_state {
@@ -678,6 +682,9 @@ Save the local state represented by I<\%levhash>, creating the file and
 intermediate directories if necessary. C<Amanda::Util::safe_overwrite_file>
 is used to avoid leaving partially-overwritten state.
 
+This is normally called by C<command_backup> as part of successful completion.
+For unsuccessful completion, C<repair_local_state> should be called instead.
+
 =cut
 
 sub write_local_state {
@@ -696,6 +703,24 @@ sub write_local_state {
     make_path($dirpart);
     Amanda::Util::safe_overwrite_file(File::Spec->catfile($dirpart, $filepart),
                                       $state);
+}
+
+=head2 C<repair_local_state>
+
+    $self->repair_local_state()
+
+If an application might allocate resources during backup that would normally
+be referred to as part of the saved local state, but an unsuccessful exit
+(that does not call C<write_local_state>) would leave those resources leaked
+(not referred to by the state, and not reclaimed), then the application should
+override this method to reclaim them.
+
+If not overridden, this method does nothing.
+
+=cut
+
+sub repair_local_state {
+    my ( $self ) = @_;
 }
 
 =head2 C<update_local_state>
@@ -825,6 +850,7 @@ sub check_backup_options {
     if ( $self->{'options'}->{'record'} and ! $self->supports('record') ) {
         $self->print_to_server('not supported --record',
 	                       $Amanda::Script_App::ERROR);
+        delete $self->{'options'}->{'record'};
     }
 }
 
@@ -884,6 +910,9 @@ and writes the C<sendbackup: size> line based on the size in bytes returned
 by C<inner_backup> (unless the returned size is negative, in which case no
 C<sendbackup> line is written).
 
+If C<--record> is supported and requested, and C<$self->{'localstate'}> is
+defined, calls C<write_local_state($self->{'localstate'})>.
+
 =cut
 
 sub command_backup {
@@ -905,6 +934,14 @@ sub command_backup {
 	    $ksize = $ksize->bstr();
 	}
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
+    }
+
+    if ( $self->{'options'}->{'record'} and defined $self->{'localstate'} ) {
+	if ( 1 ) { # FUTURE: if server confirms backup received and committed
+	    $self->write_local_state($self->{'localstate'});
+	} else {
+	    $self->repair_local_state(); # app may need to roll something back
+	}
     }
 
     # Here's a kludge for you ... the same commit that created the

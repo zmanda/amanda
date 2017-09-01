@@ -141,7 +141,6 @@ sub inner_backup {
     if ( $self->{'options'}->{'record'} ) {
         $self->update_local_state($self->{'localstate'}, $level, {
             'byteoffset' => $start->bstr(), 'bytes' => $size->bstr() });
-        $self->write_local_state($self->{'localstate'});
     }
 
     return $size;

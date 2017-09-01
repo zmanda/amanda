@@ -243,6 +243,7 @@ sub inner_backup {
     if ( $self->{'options'}->{'record'} ) {
         my $bld = $self->best_link_dest($level);
 	$dst = $self->empty_rsync_state_dir(0)->dirname();
+	$self->{'newrsyncstate'} = $dst; # save in case repair needed
 	$self->capture_rsync_state($dn, $dst, $bld->dirname());
 	$dn = $dst;
     }
@@ -259,7 +260,6 @@ sub inner_backup {
     if ( $self->{'options'}->{'record'} ) {
         $self->update_local_state($self->{'localstate'}, $level, {
             'rsyncstate' => $dst });
-        $self->write_local_state($self->{'localstate'});
     }
 
     return $size;
@@ -308,6 +308,15 @@ sub write_local_state {
     for my $ors ( @{$self->{'orphanedrsyncstates'}} ) {
         remove_tree($ors);
     }
+}
+
+# Should write_local_state not be called, the (possibly large) newrsyncstate
+# directory would be leaked: not referred to by any saved state, so never
+# reclaimed in normal operation. So, remove it here.
+sub repair_local_state {
+    my ( $self ) = @_;
+    remove_tree($self->{'newrsyncstate'});
+    $self->SUPER::repair_local_state();
 }
 
 sub command_selfcheck {
