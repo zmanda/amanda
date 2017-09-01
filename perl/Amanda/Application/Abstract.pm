@@ -920,10 +920,10 @@ sub command_backup {
 
 =head3 C<inner_backup>
 
-    $size = $self->inner_backup($outfd)
+    $size = $self->inner_backup($fdout)
 
 In many cases, the application should only need to override this method to
-perform a backup. The backup stream should be written to I<$outfd>, and the
+perform a backup. The backup stream should be written to I<$fdout>, and the
 number of bytes written should be returned, as a C<Math::BigInt>.
 
 If not overridden, this default implementation writes nothing and returns zero.
@@ -931,7 +931,7 @@ If not overridden, this default implementation writes nothing and returns zero.
 =cut
 
 sub inner_backup {
-    my ( $self, $outfd ) = @_;
+    my ( $self, $fdout ) = @_;
     return Math::BigInt->bzero();
 }
 
@@ -1074,9 +1074,9 @@ sub command_restore {
 
 =head3 C<inner_restore>
 
-    $self->inner_restore($infd, $dsf, $filetorestore...)
+    $self->inner_restore($fdin, $dsf, $filetorestore...)
 
-Should be overridden to do the actual restoration. Reads stream from I<$infd>,
+Should be overridden to do the actual restoration. Reads stream from I<$fdin>,
 restores objects represented by the I<$filetorestore> arguments. If the
 application supports DAR, should check I<$dsf>: if it is defined, it is a
 readable file handle; read the state from it and then call C<emit_dar_request>
