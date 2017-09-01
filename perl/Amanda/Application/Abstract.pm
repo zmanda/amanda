@@ -809,25 +809,25 @@ sub check_message_index_options {
     my ( $self ) = @_;
 
     my $msg = $self->{'options'}->{'message'};
-    if ( ! defined $msg and $self->supports('message_line') ) {
+    if ( ! defined $msg and blessed($self)->supports('message_line') ) {
         $self->{'options'}->{'message'} = 'line';
     }
-    elsif ( 'line' eq $msg and $self->supports('message_line') ) {
+    elsif ( 'line' eq $msg and blessed($self)->supports('message_line') ) {
         # jolly
     }
-    elsif ( 'xml' ne $msg or ! $self->supports('message_xml') ) {
+    elsif ( 'xml' ne $msg or ! blessed($self)->supports('message_xml') ) {
         $self->print_to_server('invalid --message '.$msg,
 	                       $Amanda::Script_App::ERROR);
     }
 
     my $idx = $self->{'options'}->{'index'};
-    if ( ! defined $idx and $self->supports('index_line') ) {
+    if ( ! defined $idx and blessed($self)->supports('index_line') ) {
         $self->{'options'}->{'index'} = 'line';
     }
-    elsif ( 'line' eq $idx and $self->supports('index_line') ) {
+    elsif ( 'line' eq $idx and blessed($self)->supports('index_line') ) {
         # jolly
     }
-    elsif ( 'xml' ne $idx or ! $self->supports('index_xml') ) {
+    elsif ( 'xml' ne $idx or ! blessed($self)->supports('index_xml') ) {
         $self->print_to_server('invalid --index '.$idx,
 	                       $Amanda::Script_App::ERROR);
     }
@@ -847,7 +847,8 @@ sub check_backup_options {
     $self->check_message_index_options();
     $self->check_level_option();
 
-    if ( $self->{'options'}->{'record'} and ! $self->supports('record') ) {
+    if ( $self->{'options'}->{'record'} and
+         ! blessed($self)->supports('record') ) {
         $self->print_to_server('not supported --record',
 	                       $Amanda::Script_App::ERROR);
         delete $self->{'options'}->{'record'};
@@ -1013,12 +1014,12 @@ sub check_restore_options {
     my $dar = $self->{'options'}->{'opt_dar'}; # {'dar'} is a code ref
     my $rdsf = $self->{'options'}->{'recover_dump_state_file'};
 
-    if ( $dar and ! $self->supports('dar') ) {
+    if ( $dar and ! blessed($self)->supports('dar') ) {
         $self->print_to_server('not supported --dar',
 	                       $Amanda::Script_App::ERROR);
     }
 
-    if ( $rdsf and ! $self->supports('recover_dump_state_file') ) {
+    if ( $rdsf and ! blessed($self)->supports('recover_dump_state_file') ) {
         $self->print_to_server('not supported --recover-dump-state-file',
 	                       $Amanda::Script_App::ERROR);
     }
