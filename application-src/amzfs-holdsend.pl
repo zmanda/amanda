@@ -657,7 +657,6 @@ sub inner_backup {
     if ( $self->{'options'}->{'record'} ) {
 	$self->update_local_state($self->{'localstate'}, $level, {
 	    level => $level, snapshot => $latestsnapshot });
-	$self->write_local_state($self->{'localstate'});
     }
 
     return $size;

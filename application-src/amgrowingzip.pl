@@ -198,7 +198,6 @@ sub inner_backup {
         $self->update_local_state($self->{'localstate'}, $level, {
             'length' => $currentlength->bstr(),
             'centraldiroffset' => $cdo->bstr() });
-        $self->write_local_state($self->{'localstate'});
     }
 
     return $size;

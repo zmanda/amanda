@@ -633,6 +633,10 @@ with C<maxlevel> of zero and no other data. Otherwise, the file is parsed for
 one or more levels of saved state, by repeatedly applying C<Getopt::Long> with
 I<\@optspecs> to declare the application's allowed options.
 
+An application that uses local state should read it into
+C<$self->{'localstate'}>, as C<command_backup> will call C<write_local_state>
+on that member automatically if the caller has asked to record state.
+
 =cut
 
 sub read_local_state {
@@ -678,6 +682,9 @@ Save the local state represented by I<\%levhash>, creating the file and
 intermediate directories if necessary. C<Amanda::Util::safe_overwrite_file>
 is used to avoid leaving partially-overwritten state.
 
+This is normally called by C<command_backup> as part of successful completion.
+For unsuccessful completion, C<repair_local_state> should be called instead.
+
 =cut
 
 sub write_local_state {
@@ -696,6 +703,24 @@ sub write_local_state {
     make_path($dirpart);
     Amanda::Util::safe_overwrite_file(File::Spec->catfile($dirpart, $filepart),
                                       $state);
+}
+
+=head2 C<repair_local_state>
+
+    $self->repair_local_state()
+
+If an application might allocate resources during backup that would normally
+be referred to as part of the saved local state, but an unsuccessful exit
+(that does not call C<write_local_state>) would leave those resources leaked
+(not referred to by the state, and not reclaimed), then the application should
+override this method to reclaim them.
+
+If not overridden, this method does nothing.
+
+=cut
+
+sub repair_local_state {
+    my ( $self ) = @_;
 }
 
 =head2 C<update_local_state>
@@ -784,25 +809,25 @@ sub check_message_index_options {
     my ( $self ) = @_;
 
     my $msg = $self->{'options'}->{'message'};
-    if ( ! defined $msg and $self->supports('message_line') ) {
+    if ( ! defined $msg and blessed($self)->supports('message_line') ) {
         $self->{'options'}->{'message'} = 'line';
     }
-    elsif ( 'line' eq $msg and $self->supports('message_line') ) {
+    elsif ( 'line' eq $msg and blessed($self)->supports('message_line') ) {
         # jolly
     }
-    elsif ( 'xml' ne $msg or ! $self->supports('message_xml') ) {
+    elsif ( 'xml' ne $msg or ! blessed($self)->supports('message_xml') ) {
         $self->print_to_server('invalid --message '.$msg,
 	                       $Amanda::Script_App::ERROR);
     }
 
     my $idx = $self->{'options'}->{'index'};
-    if ( ! defined $idx and $self->supports('index_line') ) {
+    if ( ! defined $idx and blessed($self)->supports('index_line') ) {
         $self->{'options'}->{'index'} = 'line';
     }
-    elsif ( 'line' eq $idx and $self->supports('index_line') ) {
+    elsif ( 'line' eq $idx and blessed($self)->supports('index_line') ) {
         # jolly
     }
-    elsif ( 'xml' ne $idx or ! $self->supports('index_xml') ) {
+    elsif ( 'xml' ne $idx or ! blessed($self)->supports('index_xml') ) {
         $self->print_to_server('invalid --index '.$idx,
 	                       $Amanda::Script_App::ERROR);
     }
@@ -822,9 +847,11 @@ sub check_backup_options {
     $self->check_message_index_options();
     $self->check_level_option();
 
-    if ( $self->{'options'}->{'record'} and ! $self->supports('record') ) {
+    if ( $self->{'options'}->{'record'} and
+         ! blessed($self)->supports('record') ) {
         $self->print_to_server('not supported --record',
 	                       $Amanda::Script_App::ERROR);
+        delete $self->{'options'}->{'record'};
     }
 }
 
@@ -884,6 +911,9 @@ and writes the C<sendbackup: size> line based on the size in bytes returned
 by C<inner_backup> (unless the returned size is negative, in which case no
 C<sendbackup> line is written).
 
+If C<--record> is supported and requested, and C<$self->{'localstate'}> is
+defined, calls C<write_local_state($self->{'localstate'})>.
+
 =cut
 
 sub command_backup {
@@ -907,6 +937,14 @@ sub command_backup {
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
     }
 
+    if ( $self->{'options'}->{'record'} and defined $self->{'localstate'} ) {
+	if ( 1 ) { # FUTURE: if server confirms backup received and committed
+	    $self->write_local_state($self->{'localstate'});
+	} else {
+	    $self->repair_local_state(); # app may need to roll something back
+	}
+    }
+
     # Here's a kludge for you ... the same commit that created the
     # sendbackup_crc feature (a4e01f9) also shifted the responsibility for
     # sending the "end" line, so it will be done for us in sendbackup.c.
@@ -920,10 +958,10 @@ sub command_backup {
 
 =head3 C<inner_backup>
 
-    $size = $self->inner_backup($outfd)
+    $size = $self->inner_backup($fdout)
 
 In many cases, the application should only need to override this method to
-perform a backup. The backup stream should be written to I<$outfd>, and the
+perform a backup. The backup stream should be written to I<$fdout>, and the
 number of bytes written should be returned, as a C<Math::BigInt>.
 
 If not overridden, this default implementation writes nothing and returns zero.
@@ -931,7 +969,7 @@ If not overridden, this default implementation writes nothing and returns zero.
 =cut
 
 sub inner_backup {
-    my ( $self, $outfd ) = @_;
+    my ( $self, $fdout ) = @_;
     return Math::BigInt->bzero();
 }
 
@@ -976,12 +1014,12 @@ sub check_restore_options {
     my $dar = $self->{'options'}->{'opt_dar'}; # {'dar'} is a code ref
     my $rdsf = $self->{'options'}->{'recover_dump_state_file'};
 
-    if ( $dar and ! $self->supports('dar') ) {
+    if ( $dar and ! blessed($self)->supports('dar') ) {
         $self->print_to_server('not supported --dar',
 	                       $Amanda::Script_App::ERROR);
     }
 
-    if ( $rdsf and ! $self->supports('recover_dump_state_file') ) {
+    if ( $rdsf and ! blessed($self)->supports('recover_dump_state_file') ) {
         $self->print_to_server('not supported --recover-dump-state-file',
 	                       $Amanda::Script_App::ERROR);
     }
@@ -1074,9 +1112,9 @@ sub command_restore {
 
 =head3 C<inner_restore>
 
-    $self->inner_restore($infd, $dsf, $filetorestore...)
+    $self->inner_restore($fdin, $dsf, $filetorestore...)
 
-Should be overridden to do the actual restoration. Reads stream from I<$infd>,
+Should be overridden to do the actual restoration. Reads stream from I<$fdin>,
 restores objects represented by the I<$filetorestore> arguments. If the
 application supports DAR, should check I<$dsf>: if it is defined, it is a
 readable file handle; read the state from it and then call C<emit_dar_request>
