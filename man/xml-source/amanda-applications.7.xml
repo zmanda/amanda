@@ -80,6 +80,11 @@ files.
 - use native tar on Solaris to backup and restore data.
 </listitem>
 <listitem>
+<manref name="amzfs-holdsend" vol="8"/>,
+- use 'zfs send' to generate a backup as a replication stream of existing
+snapshots.
+</listitem>
+<listitem>
 <manref name="amzfs-sendrecv" vol="8"/>,
 - use zfs to create a snapshot and use 'zfs send' to generate the backup.
 </listitem>
