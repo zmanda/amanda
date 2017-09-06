@@ -1,3 +1,6 @@
+2017-09-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Restore.pm:i Fix Parsing properties
+
 2017-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c: Add comment
 	* common-src/local-security.c: Check result of setregid and setreuid

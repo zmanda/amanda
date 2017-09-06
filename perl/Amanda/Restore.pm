@@ -1420,6 +1420,20 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 	    if (defined $dle->{'diskdevice'} and UNIVERSAL::isa( $dle->{'diskdevice'}, "HASH" )) {
 		$dle->{'diskdevice'} = MIME::Base64::decode($dle->{'diskdevice'}->{'raw'});
             }
+	    while( my( $property_name, $valuess ) = each %{$dle->{'backup-program'}->{'property'}} ){
+		my $values = $valuess->{'value'};
+		if (ref($values) eq 'ARRAY') {
+		    foreach my $value (@{$values}) {
+		        if (ref($value) eq 'HASH') {
+			    $value = MIME::Base64::decode($value->{'raw'});
+		        }
+		    }
+		} else {
+		    if (ref($values) eq 'HASH') {
+			    $values = MIME::Base64::decode($values->{'raw'});
+		    }
+		}
+	    }
 	}
 
 	# and set up the destination..
