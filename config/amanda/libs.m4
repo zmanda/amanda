@@ -256,7 +256,7 @@ AC_DEFUN([LIBCURL_CHECK_CONFIG],
 	[look for the curl library in PREFIX/lib and headers in PREFIX/include]),
      [_libcurl_with=$withval],[_libcurl_with=ifelse([$1],,[yes],[$1])])
 
-  if test "$_libcurl_with" != "no" ; then
+  if test "$_libcurl_with" != "no" -a x"$WANT_S3_DEVICE" != x"no" -a x"$WANT_SERVER" = x"true"; then
 
      AC_PROG_AWK
 

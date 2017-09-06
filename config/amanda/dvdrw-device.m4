@@ -14,6 +14,9 @@ AC_DEFUN([AMANDA_DVDRW_DEVICE], [
 	[ WANT_DVDRW_DEVICE=$enableval ], [ WANT_DVDRW_DEVICE=yes ])
 
 	AC_MSG_CHECKING([whether to include the DVD-RW device])
+	if test x"$WANT_SERVER" = x"false"; then
+		WANT_DVDRW_DEVICE=no
+	fi
 	AC_MSG_RESULT($WANT_DVDRW_DEVICE)
 
 	AM_CONDITIONAL([WANT_DVDRW_DEVICE], [test x"$WANT_DVDRW_DEVICE" = x"yes"])

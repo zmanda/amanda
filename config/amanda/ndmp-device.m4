@@ -16,6 +16,9 @@ AC_DEFUN([AMANDA_NDMP_DEVICE], [
                        [disable the NDMP device]),
         [ WANT_NDMP_DEVICE=$enableval ], [ WANT_NDMP_DEVICE=$WANT_NDMP ])
 
+    if test x"$WANT_SERVER" = x"false"; then
+	WANT_NDMP_DEVICE=no
+    fi
     if test x"$WANT_NDMP" != x"true" -a x"$WANT_NDMP_DEVICE" = x"true"; then
 	AC_MSG_ERROR([NDMP support is required to build the ndmp device (--with-ndmp)])
     fi

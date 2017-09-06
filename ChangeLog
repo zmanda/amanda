@@ -1,3 +1,11 @@
+2017-09-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/dvdrw-device.m4, config/amanda/ndmp-device.m4,
+	  config/amanda/s3-device.m4: Do not include the device if compiled
+	  --without-server
+	* config/amanda/libs.m4: Do not link with libcurl if no se device or
+	  no server
+	* config/amanda/s3-device.m4: Re-order
+
 2017-08-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c: Add comment
 	* common-src/local-security.c: Check result of setregid and setreuid
