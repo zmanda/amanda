@@ -128,7 +128,7 @@ static void ambsdtar_index(application_argument_t *argument);
 static void ambsdtar_build_exinclude(dle_t *dle,
 				     int *nb_exclude, char **file_exclude,
 				     int *nb_include, char **file_include,
-				     messagelist_t *mlist);
+				     char *dirname, messagelist_t *mlist);
 static char *ambsdtar_get_timestamps(application_argument_t *argument,
 				     int level,
 				     FILE *mesgstream, int command);
@@ -664,6 +664,7 @@ ambsdtar_selfcheck(
     char *option;
     messagelist_t mlist = NULL;
     messagelist_t mesglist = NULL;
+    char *dirname;
 
     if (argument->dle.disk) {
 	delete_message(ambsdtar_print_message(build_message(
@@ -680,7 +681,14 @@ ambsdtar_selfcheck(
 			"device", argument->dle.device,
 			"hostname", argument->host)));
 
-    ambsdtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL, &mlist);
+    if (bsdtar_target) {
+	dirname = bsdtar_target;
+    } else {
+	dirname = argument->dle.device;
+    }
+
+    ambsdtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL,
+                             dirname, &mlist);
     for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 	message_t *message = mesglist->data;
 	if (message_get_severity(message) > MSG_INFO)
@@ -858,7 +866,7 @@ ambsdtar_estimate(
 	}
 	ambsdtar_build_exinclude(&argument->dle,
 				 &nb_exclude, &file_exclude,
-				 &nb_include, &file_include, &mlist);
+				 &nb_include, &file_include, dirname, &mlist);
 	for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 	    message_t *message = mesglist->data;
 	    if (message_get_severity(message) > MSG_INFO)
@@ -1983,6 +1991,7 @@ ambsdtar_build_exinclude(
     char  **file_exclude,
     int    *nb_include,
     char  **file_include,
+    char   *dirname,
     messagelist_t *mlist)
 {
     int n_exclude = 0;
@@ -1996,7 +2005,7 @@ ambsdtar_build_exinclude(
     if (dle->include_list) n_include += dle->include_list->nb_element;
 
     if (n_exclude > 0) exclude = build_exclude(dle, mlist);
-    if (n_include > 0) include = build_include(dle, mlist);
+    if (n_include > 0) include = build_include(dle, dirname, mlist);
 
     if (nb_exclude)
 	*nb_exclude = n_exclude;
@@ -2182,15 +2191,15 @@ ambsdtar_build_argv(
     GPtrArray *argv_ptr = g_ptr_array_new();
     GSList    *copt;
 
-    ambsdtar_build_exinclude(&argument->dle,
-			     &nb_exclude, file_exclude,
-			     &nb_include, file_include, mlist);
-
     if (bsdtar_target) {
 	dirname = bsdtar_target;
     } else {
 	dirname = argument->dle.device;
     }
+
+    ambsdtar_build_exinclude(&argument->dle,
+			     &nb_exclude, file_exclude,
+			     &nb_include, file_include, dirname, mlist);
 
     g_ptr_array_add(argv_ptr, g_strdup(bsdtar_realpath));
 

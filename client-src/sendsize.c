@@ -1084,7 +1084,7 @@ generic_calc_estimates(
     if (nb_exclude > 0)
 	file_exclude = build_exclude(est->dle, &mlist);
     if (nb_include > 0)
-	file_include = build_include(est->dle, &mlist);
+	file_include = build_include(est->dle, est->dirname, &mlist);
     g_slist_free(mlist); // MUST also free the message
 
     if(file_exclude) {
@@ -2136,6 +2136,8 @@ getsize_gnutar(
 	return -2; /* planner will not even consider this level */
     }
 
+    dirname = amname_to_dirname(dle->device);
+
     qdisk = quote_string(dle->disk);
     if(dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
     if(dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
@@ -2143,7 +2145,7 @@ getsize_gnutar(
     if(dle->include_list) nb_include += dle->include_list->nb_element;
 
     if(nb_exclude > 0) file_exclude = build_exclude(dle, &mlist);
-    if(nb_include > 0) file_include = build_include(dle, &mlist);
+    if(nb_include > 0) file_include = build_include(dle, dirname, &mlist);
     g_slist_free(mlist); // MUST also free the message
 
     gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
@@ -2245,8 +2247,6 @@ getsize_gnutar(
 		"%04d-%02d-%02d %2d:%02d:%02d GMT",
 		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
-
-    dirname = amname_to_dirname(dle->device);
 
     cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);
     g_ptr_array_add(argv_ptr, g_strdup("runtar"));
