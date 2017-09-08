@@ -364,6 +364,7 @@ build_exclude(
 char *
 build_include(
     dle_t         *dle,
+    char const    *dirname,
     messagelist_t *mlist)
 {
     char *filename;
@@ -385,7 +386,7 @@ build_include(
 	    if (dle->include_file) {
 		for (incl = dle->include_file->first; incl != NULL;
 		    incl = incl->next) {
-		    nb_exp += add_include(dle->disk, dle->device, file_include,
+		    nb_exp += add_include(dle->disk, dirname, file_include,
 				  incl->name, dle->include_optional, mlist);
 		}
 	    }
@@ -400,7 +401,7 @@ build_include(
 				amfree(ainc);
 				continue;
 			    }
-			    nb_exp += add_include(dle->disk, dle->device,
+			    nb_exp += add_include(dle->disk, dirname,
 						  file_include, ainc,
 						  dle->include_optional, mlist);
 			    amfree(ainc);
