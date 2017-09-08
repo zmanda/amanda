@@ -39,6 +39,7 @@
 #include "pipespawn.h"
 #include "conffile.h"
 #include "infofile.h"
+#include "backup_support_option.h"
 #include "sys/wait.h"
 
 const char *cmdstr[] = {
@@ -297,6 +298,7 @@ run_server_script(
     pp_script_t  *pp_script,
     execute_on_t  execute_on,
     char         *config,
+    char         *timestamp,
     disk_t	 *dp,
     int           level)
 {
@@ -305,12 +307,14 @@ run_server_script(
     char      *cmd;
     char      *command = NULL;
     GPtrArray *argv_ptr;
+    GPtrArray *errarray = NULL;
     FILE      *streamout;
     char      *line;
     char      *plugin;
     char       level_number[NUM_STR_SIZE];
     struct stat cmd_stat;
     int         result;
+    backup_support_option_t *bsu;
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
@@ -409,21 +413,40 @@ run_server_script(
 	return;
     }
 
+    bsu = backup_support_option(plugin, &errarray);
+    if (!bsu) {
+        guint  i;
+        for (i=0; i < errarray->len; i++) {
+            char *line = g_ptr_array_index(errarray, i);
+	    g_debug("Script: '%s': %s", plugin, line);
+        }
+        if (i == 0) { /* nothing in errarray */
+	    g_debug("Script: '%s': cannot execute support command", plugin);
+        }
+        g_ptr_array_free_full(errarray);
+    }
+
     argv_ptr = g_ptr_array_new();
     g_ptr_array_add(argv_ptr, g_strdup(plugin));
     g_ptr_array_add(argv_ptr, g_strdup(command));
-    g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
-    g_ptr_array_add(argv_ptr, g_strdup("server"));
+    if (!bsu || bsu->execute_where) {
+	g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
+	g_ptr_array_add(argv_ptr, g_strdup("server"));
+    }
 
-    if (config) {
+    if (config && (!bsu || bsu->config)) {
 	g_ptr_array_add(argv_ptr, g_strdup("--config"));
 	g_ptr_array_add(argv_ptr, g_strdup(config));
     }
-    if (dp->host->hostname) {
+    if (timestamp && (!bsu || bsu->timestamp)) {
+	g_ptr_array_add(argv_ptr, g_strdup("--timestamp"));
+	g_ptr_array_add(argv_ptr, g_strdup(timestamp));
+    }
+    if (dp->host->hostname && (!bsu || bsu->host)) {
 	g_ptr_array_add(argv_ptr, g_strdup("--host"));
 	g_ptr_array_add(argv_ptr, g_strdup(dp->host->hostname));
     }
-    if (dp->name) {
+    if (dp->name && bsu->disk) {
 	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
 	g_ptr_array_add(argv_ptr, g_strdup(dp->name));
     }
@@ -457,6 +480,7 @@ run_server_script(
     waitpid(scriptpid, NULL, 0);
     g_ptr_array_free_full(argv_ptr);
     amfree(cmd);
+    g_free(bsu);
 }
 
 
@@ -464,6 +488,7 @@ void
 run_server_dle_scripts(
     execute_on_t  execute_on,
     char         *config,
+    char         *timestamp,
     disk_t	 *dp,
     int           level)
 {
@@ -473,7 +498,7 @@ run_server_dle_scripts(
 	 pp_scriptlist = pp_scriptlist->next) {
 	pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
 	g_assert(pp_script != NULL);
-	run_server_script(pp_script, execute_on, config, dp, level);
+	run_server_script(pp_script, execute_on, config, timestamp, dp, level);
     }
 }
 
@@ -481,6 +506,7 @@ void
 run_server_host_scripts(
     execute_on_t  execute_on,
     char         *config,
+    char         *timestamp,
     am_host_t	 *hostp)
 {
     identlist_t pp_scriptlist;
@@ -501,7 +527,8 @@ run_server_host_scripts(
 			   == NULL;
 		}
 		if (todo) {
-		    run_server_script(pp_script, execute_on, config, dp, -1);
+		    run_server_script(pp_script, execute_on, config, timestamp,
+				      dp, -1);
 		    if (pp_script_get_single_execution(pp_script)) {
 			g_hash_table_insert(executed,
 					    pp_script_get_plugin(pp_script),
@@ -518,7 +545,8 @@ run_server_host_scripts(
 void
 run_server_global_scripts(
     execute_on_t  execute_on,
-    char         *config)
+    char         *config,
+    char         *timestamp)
 {
     identlist_t  pp_scriptlist;
     disk_t      *dp;
@@ -541,7 +569,7 @@ run_server_global_scripts(
 		    }
 		    if (todo) {
 			run_server_script(pp_script, execute_on, config,
-					  dp, -1);
+					  timestamp, dp, -1);
 			if (pp_script_get_single_execution(pp_script)) {
 			    g_hash_table_insert(executed,
 					pp_script_get_plugin(pp_script),

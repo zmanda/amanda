@@ -2497,6 +2497,10 @@ getsize_application_api(
 	g_ptr_array_add(argv_ptr, g_strdup("--config"));
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
     }
+    if (g_options->timestamp && bsu->timestamp == 1) {
+	g_ptr_array_add(argv_ptr, g_strdup("--timestamp"));
+	g_ptr_array_add(argv_ptr, g_strdup(g_options->timestamp));
+    }
     if (g_options->hostname && bsu->host == 1) {
 	g_ptr_array_add(argv_ptr, g_strdup("--host"));
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));

@@ -578,7 +578,8 @@ main(
     }
     short_dump_state();
 
-    run_server_global_scripts(EXECUTE_ON_POST_BACKUP, get_config_name());
+    run_server_global_scripts(EXECUTE_ON_POST_BACKUP, get_config_name(),
+			      driver_timestamp);
 
     /* log error for any remaining dumps */
     while(!empty(directq)) {
@@ -2626,11 +2627,12 @@ handle_taper_result(
 
 	    if (dp->host->pre_script == 0) {
 		run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-					get_config_name(), dp->host);
+					get_config_name(), driver_timestamp,
+					dp->host);
 		dp->host->pre_script = 1;
 	    }
 	    run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
-			       get_config_name(), dp,
+			       get_config_name(), driver_timestamp, dp,
 			       sp->level);
 	    /* tell the dumper to dump to a port */
 	    if (cmd == PORT) {
@@ -3612,7 +3614,8 @@ handle_dumper_result(
 	    dumper_t *dumper;
 
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_BACKUP,
-			       get_config_name(), dp, sp->level);
+			       get_config_name(), driver_timestamp,
+			       dp, sp->level);
 	    /* check dump not yet started */
 	    for (slist1 = runq.head; slist1 != NULL; slist1 = slist1->next) {
 		sp1 = get_sched(slist1);
@@ -3636,7 +3639,8 @@ handle_dumper_result(
 	    if (last_dump && dp->host->post_script == 0) {
 		if (dp->host->post_script == 0) {
 		    run_server_host_scripts(EXECUTE_ON_POST_HOST_BACKUP,
-					    get_config_name(), dp->host);
+					    get_config_name(), driver_timestamp,
+					    dp->host);
 		    dp->host->post_script = 1;
 		}
 	    }
@@ -3792,12 +3796,13 @@ handle_chunker_result(
 
 	    if (sp->disk->host->pre_script == 0) {
 		run_server_host_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-					get_config_name(), sp->disk->host);
+					get_config_name(), driver_timestamp,
+					sp->disk->host);
 		sp->disk->host->pre_script = 1;
 	    }
 	    run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
-				   get_config_name(), sp->disk,
-				   sp->level);
+				   get_config_name(), driver_timestamp,
+				   sp->disk, sp->level);
 	    if (job->do_port_write) {
 		dumper_cmd(dumper, PORT_DUMP, sp, NULL);
 	    } else {
@@ -4515,7 +4520,8 @@ read_schedule(
 	log_add(L_WARNING, _("WARNING: got empty schedule from planner"));
     schedule_done = 1;
     start_degraded_mode(&runq);
-    run_server_global_scripts(EXECUTE_ON_PRE_BACKUP, get_config_name());
+    run_server_global_scripts(EXECUTE_ON_PRE_BACKUP, get_config_name(),
+			      driver_timestamp);
     if (empty(runq)) force_flush = 1;
     start_some_dumps(&runq);
     start_a_flush();

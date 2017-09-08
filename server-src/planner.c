@@ -335,7 +335,8 @@ main(
     log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 
 
-    run_server_global_scripts(EXECUTE_ON_PRE_ESTIMATE, get_config_name());
+    run_server_global_scripts(EXECUTE_ON_PRE_ESTIMATE, get_config_name(),
+			      planner_timestamp);
 
     /*
      * 1. Networking Setup
@@ -697,7 +698,8 @@ main(
     while(!empty(estq)) analyze_estimate(dequeue_est(&estq));
     while(!empty(failq)) handle_failed(dequeue_est(&failq));
 
-    run_server_global_scripts(EXECUTE_ON_POST_ESTIMATE, get_config_name());
+    run_server_global_scripts(EXECUTE_ON_POST_ESTIMATE, get_config_name(),
+			      planner_timestamp);
 
     /*
      * At this point, all the disks are on schedq sorted by priority.
@@ -1540,14 +1542,15 @@ static void get_estimates(void)
 	    if (hostp->status == HOST_READY) {
 		something_started = 1;
 		run_server_host_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
-					get_config_name(), hostp);
+					get_config_name(), planner_timestamp,
+					hostp);
 		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		    if (dp1->todo) {
 			est_t *ep1;
 			ep1 = find_est_for_dp(dp1);
 			run_server_dle_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
-					   get_config_name(), dp1,
-					   ep1->estimate[0].level);
+					   get_config_name(), planner_timestamp,
+					   dp1, ep1->estimate[0].level);
 		    }
 		}
 		getsize(hostp);
@@ -1776,6 +1779,7 @@ static void getsize(am_host_t *hostp)
     estimatelist_t el;
     int nb_client = 0, nb_server = 0;
     gboolean has_features, has_maxdumps, has_hostname, has_config;
+    gboolean has_timestamp;
     am_feature_t *features;
     GString *reqbuf;
     char *req;
@@ -1808,10 +1812,11 @@ static void getsize(am_host_t *hostp)
 
     features = hostp->features;
 
-    has_features = am_has_feature(features, fe_req_options_features);
-    has_maxdumps = am_has_feature(features, fe_req_options_maxdumps);
-    has_hostname = am_has_feature(features, fe_req_options_hostname);
-    has_config   = am_has_feature(features, fe_req_options_config);
+    has_features  = am_has_feature(features, fe_req_options_features);
+    has_maxdumps  = am_has_feature(features, fe_req_options_maxdumps);
+    has_hostname  = am_has_feature(features, fe_req_options_hostname);
+    has_config    = am_has_feature(features, fe_req_options_config);
+    has_timestamp = am_has_feature(features, fe_req_options_timestamp);
 
     g_string_append(reqbuf, "SERVICE sendsize\nOPTIONS ");
 
@@ -1826,6 +1831,9 @@ static void getsize(am_host_t *hostp)
 
     if (has_config)
         g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+    if (has_timestamp)
+        g_string_append_printf(reqbuf, "timestamp=%s;", planner_timestamp);
 
     g_string_append_c(reqbuf, '\n');
 
@@ -2352,7 +2360,7 @@ next_line:
 	      (ep->estimate[2].level == -1 ||
                ep->estimate[2].nsize > (gint64)0)))) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
-			       get_config_name(), dp,
+			       get_config_name(), planner_timestamp, dp,
                                ep->estimate[0].level);
 	    ep->post_dle = 1;
 	}
@@ -2364,7 +2372,8 @@ next_line:
 	    security_close_connection(sech, hostp->hostname);
 
 	    run_server_host_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
-				    get_config_name(), hostp);
+				    get_config_name(), planner_timestamp,
+				    hostp);
 	}
     }
 

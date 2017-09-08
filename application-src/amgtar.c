@@ -134,7 +134,8 @@ typedef struct application_argument_s {
     am_feature_t *amfeatures;
     char         *recover_dump_state_file;
     gboolean      dar;
-    int 	  state_stream;
+    int		  state_stream;
+    char         *timestamp;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -222,7 +223,8 @@ static struct option long_options[] = {
     {"recover-dump-state-file", 1, NULL, 39},
     {"dar"                    , 1, NULL, 40},
     {"state-stream"           , 1, NULL, 41},
-    {"target"           , 1, NULL, 42},
+    {"target"                 , 1, NULL, 42},
+    {"timestamp"              , 1, NULL, 43},
     {NULL, 0, NULL, 0}
 };
 
@@ -427,6 +429,7 @@ main(
 	fprintf(stdout, "MESSAGE JSON\n");
     }
     argument.config     = NULL;
+    argument.timestamp  = NULL;
     argument.host       = NULL;
     argument.message    = 0;
     argument.collection = 0;
@@ -570,6 +573,9 @@ main(
 		 break;
 	case 42: amfree(gnutar_target);
 		 gnutar_target = g_strdup(optarg);
+		 break;
+	case 43: amfree(argument.timestamp);
+		 argument.timestamp = g_strdup(optarg);
 		 break;
 	case ':':
 	case '?':
@@ -798,6 +804,7 @@ main(
     g_free(argument.dle.disk);
     g_free(argument.dle.device);
     g_free(argument.tar_blocksize);
+    g_free(argument.timestamp);
     g_slist_free(argument.level);
 
     dbclose();
@@ -858,6 +865,7 @@ amgtar_support(
     fprintf(stdout, "RECOVER-DUMP-STATE-FILE YES\n");
     fprintf(stdout, "DAR YES\n");
     fprintf(stdout, "STATE-STREAM YES\n");
+    fprintf(stdout, "TIMESTAMP YES\n");
 }
 
 static void

@@ -1,4 +1,32 @@
 2017-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add timestmap in the req OPTION line
+	Run script support command
+	Add the --timestmap argument to scripts and applications
+	* amandad-src/amandad.h (g_option_t): Add timestamp
+	* amandad-src/amandad_util.c (parse_g_options): Parse timestamp in the
+	  OPTION line
+	* application-src/amgtar.c,
+	  application-src/amlog-script.pl:Add timestamp
+	* application-src/script-fail.sh: Add support command
+	* client-src/client_util.c: Move backup_support_option to
+	  common-src/backup_support_option.c
+	* client-src/client_util.h: Move backup_support_option to
+	  common-src/backup_support_option.h
+	* client-src/sendbackup.c: Add --timestamp argument
+	* client-src/sendsize.c: Add --timestamp argument
+	* common-src/Makefile.am: Add backup_support_option.[hc]
+	* common-src/amfeatures.c: Add fe_req_options_timestamp
+	* common-src/amfeatures.h: Add fe_req_options_timestamp
+	* common-src/backup_support_option.c: Add backup_support_option
+	* common-src/backup_support_option.h: Add prototype
+	* server-src/server_util.c (run_server_script, run_server_dle_scripts,
+	  run_server_host_scripts, run_server_global_scripts): Add timestamp
+	  argument.
+	* server-src/server_util.h:Change prototype
+	* server-src/amcheck.c, server-src/driver.c server-src/dumper.c
+	  server-src/planner.c: Add the timestamp argument in calls
+
+2017-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Chapman Flack
 	* application-src/ambsdtar.c, application-src/amgtar.c,
 	  client-src/client_util.c, client-src/client_util.h,

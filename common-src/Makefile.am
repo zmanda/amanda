@@ -28,6 +28,7 @@ libamanda_la_SOURCES =		\
 	ammessage.c		\
 	ipc-binary.c		\
 	amxml.c			\
+	backup_support_option.c	\
 	clock.c			\
 	conffile.c		\
 	debug.c			\
@@ -120,6 +121,7 @@ noinst_HEADERS =		\
 	ammessage.h		\
 	ipc-binary.h		\
 	amxml.h			\
+	backup_support_option.h	\
 	clock.h			\
 	directtcp.h		\
 	amflock.h		\
@@ -200,6 +202,7 @@ DISTCLEANFILES += version.c genversion genversion.h config.log amanda-security.c
 
 STANDARD_COMMON_STUFF_NOT_FILE = \
 	alloc.lo \
+	backup_support_option.lo \
 	clock.lo \
 	conffile.lo \
 	debug.lo \

@@ -46,6 +46,7 @@ init_g_options(
     g_options->auth     = NULL;
     g_options->maxdumps = 0;
     g_options->config   = NULL;
+    g_options->timestamp= NULL;
     g_options->data_shm_control_name   = NULL;
 }
 
@@ -155,6 +156,16 @@ parse_g_options(
 		}
 	    }
 	}
+	else if(g_str_has_prefix(tok, "timestamp=")) {
+	    if(g_options->timestamp != NULL) {
+		dbprintf(_("multiple timestamp option\n"));
+		if(verbose) {
+		    g_printf(_("ERROR [multiple timestamp option]\n"));
+		}
+		amfree(g_options->timestamp);
+	    }
+	    g_options->timestamp = g_strdup(tok+10);
+	}
 	else if(g_str_has_prefix(tok, "data-shm-control-name=")) {
 	    if(g_options->data_shm_control_name != NULL) {
 		dbprintf(_("multiple data-shm-control-name option\n"));
@@ -192,6 +203,7 @@ free_g_options(
 	amfree(g_options->hostname);
 	amfree(g_options->auth);
 	amfree(g_options->config);
+	amfree(g_options->timestamp);
 	amfree(g_options->data_shm_control_name);
 	amfree(g_options);
     }
