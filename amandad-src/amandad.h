@@ -45,6 +45,7 @@ typedef struct g_option_s {
     char *auth;
     int maxdumps;
     char *config;
+    char *timestamp;
     char *data_shm_control_name;
 } g_option_t;
 

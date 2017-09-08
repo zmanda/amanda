@@ -723,8 +723,6 @@ main(
 
 /* --------------------------------------------------- */
 
-static char *datestamp;
-
 int check_tapefile(
     FILE *outf,
     char *tapefile)
@@ -1986,8 +1984,6 @@ start_server_check(
 	amfree(conf_indexdir);
     }
 
-    amfree(datestamp);
-
      delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800160, MSG_MESSAGE, 1,
 					"seconds", walltime_str(curclock()))));
@@ -2449,7 +2445,7 @@ start_client_checks(
 	remote_errors = check_host_setting(client_outf);
     }
 
-    run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name());
+    run_server_global_scripts(EXECUTE_ON_PRE_AMCHECK, get_config_name(), NULL);
     protocol_init();
 
     for(dlist = origq.head; dlist != NULL; dlist = dlist->next) {
@@ -2457,10 +2453,10 @@ start_client_checks(
 	hostp = dp->host;
 	if(hostp->status == HOST_READY && dp->todo == 1) {
 	    run_server_host_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,
-				    get_config_name(), hostp);
+				    get_config_name(), NULL, hostp);
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		run_server_dle_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
-				   get_config_name(), dp1, -1);
+				   get_config_name(), NULL, dp1, -1);
 	    }
 	    start_host(hostp);
 	    hostcount++;
@@ -2469,7 +2465,7 @@ start_client_checks(
     }
 
     protocol_run();
-    run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name());
+    run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name(), NULL);
 
     delete_message(amcheck_fprint_message(client_outf, build_message(
 					AMANDA_FILE, __LINE__, 2800204, MSG_MESSAGE, 3,
@@ -2668,10 +2664,10 @@ handle_result(
 	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
-			       get_config_name(), dp, -1);
+			       get_config_name(), NULL, dp, -1);
 	}
 	run_server_host_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
-				get_config_name(), hostp);
+				get_config_name(), NULL, hostp);
     }
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */

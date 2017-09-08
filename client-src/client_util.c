@@ -881,201 +881,6 @@ merge_dles_properties(
     return good;
 }
 
-backup_support_option_t *
-backup_support_option(
-    char       *program,
-    GPtrArray **errarray)
-{
-    pid_t   supportpid;
-    int     supportin, supportout, supporterr;
-    char   *cmd;
-    GPtrArray *argv_ptr = g_ptr_array_new();
-    FILE   *streamout;
-    FILE   *streamerr;
-    char   *line;
-    int     status;
-    char   *err = NULL;
-    backup_support_option_t *bsu;
-
-    *errarray = NULL;
-    cmd = g_strjoin(NULL, APPLICATION_DIR, "/", program, NULL);
-    g_ptr_array_add(argv_ptr, g_strdup(program));
-    g_ptr_array_add(argv_ptr, g_strdup("support"));
-    g_ptr_array_add(argv_ptr, NULL);
-
-    supporterr = fileno(stderr);
-    supportpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 0,
-			    &supportin, &supportout, &supporterr,
-			    (char **)argv_ptr->pdata);
-
-    aclose(supportin);
-
-    bsu = g_new0(backup_support_option_t, 1);
-    bsu->config = 1;
-    bsu->host = 1;
-    bsu->disk = 1;
-    streamout = fdopen(supportout, "r");
-    if (!streamout) {
-	error(_("Error opening pipe to child: %s"), strerror(errno));
-	/* NOTREACHED */
-    }
-    while((line = pgets(streamout)) != NULL) {
-	dbprintf(_("support line: %s\n"), line);
-	if (g_str_has_prefix(line, "CONFIG ")) {
-	    if (g_str_equal(line + 7, "YES"))
-		bsu->config = 1;
-	} else if (g_str_has_prefix(line, "HOST ")) {
-	    if (g_str_equal(line + 5, "YES"))
-	    bsu->host = 1;
-	} else if (g_str_has_prefix(line, "DISK ")) {
-	    if (g_str_equal(line + 5, "YES"))
-		bsu->disk = 1;
-	} else if (g_str_has_prefix(line, "INDEX-LINE ")) {
-	    if (g_str_equal(line + 11, "YES"))
-		bsu->index_line = 1;
-	} else if (g_str_has_prefix(line, "INDEX-XML ")) {
-	    if (g_str_equal(line + 10, "YES"))
-		bsu->index_xml = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-LINE ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->message_line = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-SELFCHECK-JSON ")) {
-	    if (g_str_equal(line + 23, "YES"))
-		bsu->message_selfcheck_json = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-ESTIMATE-JSON ")) {
-	    if (g_str_equal(line + 22, "YES"))
-		bsu->message_estimate_json = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-BACKUP-JSON ")) {
-	    if (g_str_equal(line + 20, "YES"))
-		bsu->message_backup_json = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-RESTORE-JSON ")) {
-	    if (g_str_equal(line + 21, "YES"))
-		bsu->message_restore_json = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-VALIDATE-JSON ")) {
-	    if (g_str_equal(line + 22, "YES"))
-		bsu->message_validate_json = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-INDEX-JSON ")) {
-	    if (g_str_equal(line + 19, "YES"))
-		bsu->message_index_json = 1;
-	} else if (g_str_has_prefix(line, "MESSAGE-XML ")) {
-	    if (g_str_equal(line + 12, "YES"))
-		bsu->message_xml = 1;
-	} else if (g_str_has_prefix(line, "RECORD ")) {
-	    if (g_str_equal(line + 7, "YES"))
-		bsu->record = 1;
-	} else if (g_str_has_prefix(line, "INCLUDE-FILE ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->include_file = 1;
-	} else if (g_str_has_prefix(line, "INCLUDE-LIST ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->include_list = 1;
-	} else if (g_str_has_prefix(line, "INCLUDE-LIST-GLOB ")) {
-	    if (g_str_equal(line + 17, "YES"))
-		bsu->include_list_glob = 1;
-	} else if (g_str_has_prefix(line, "INCLUDE-OPTIONAL ")) {
-	    if (g_str_equal(line + 17, "YES"))
-		bsu->include_optional = 1;
-	} else if (g_str_has_prefix(line, "EXCLUDE-FILE ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->exclude_file = 1;
-	} else if (g_str_has_prefix(line, "EXCLUDE-LIST ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->exclude_list = 1;
-	} else if (g_str_has_prefix(line, "EXCLUDE-LIST-GLOB ")) {
-	    if (g_str_equal(line + 17, "YES"))
-		bsu->exclude_list_glob = 1;
-	} else if (g_str_has_prefix(line, "EXCLUDE-OPTIONAL ")) {
-	    if (g_str_equal(line + 17, "YES"))
-		bsu->exclude_optional = 1;
-	} else if (g_str_has_prefix(line, "COLLECTION ")) {
-	    if (g_str_equal(line + 11, "YES"))
-		bsu->collection = 1;
-	} else if (g_str_has_prefix(line, "CALCSIZE ")) {
-	    if (g_str_equal(line + 9, "YES"))
-		bsu->calcsize = 1;
-	} else if (g_str_has_prefix(line, "CLIENT-ESTIMATE ")) {
-	    if (g_str_equal(line + 16, "YES"))
-		bsu->client_estimate = 1;
-	} else if (g_str_has_prefix(line, "MULTI-ESTIMATE ")) {
-	    if (g_str_equal(line + 15, "YES"))
-		bsu->multi_estimate = 1;
-	} else if (g_str_has_prefix(line, "MAX-LEVEL ")) {
-	    bsu->max_level  = atoi(line+10);
-	} else if (g_str_has_prefix(line, "RECOVER-MODE ")) {
-	    if (strcasecmp(line+13, "SMB") == 0)
-		bsu->smb_recover_mode = 1;
-	} else if (g_str_has_prefix(line, "DATA-PATH ")) {
-	    if (strcasecmp(line+10, "AMANDA") == 0)
-		bsu->data_path_set |= DATA_PATH_AMANDA;
-	    else if (strcasecmp(line+10, "DIRECTTCP") == 0)
-		bsu->data_path_set |= DATA_PATH_DIRECTTCP;
-	} else if (g_str_has_prefix(line, "RECOVER-PATH ")) {
-	    if (strcasecmp(line+13, "CWD") == 0)
-		bsu->recover_path = RECOVER_PATH_CWD;
-	    else if (strcasecmp(line+13, "REMOTE") == 0)
-		bsu->recover_path = RECOVER_PATH_REMOTE;
-	} else if (g_str_has_prefix(line, "AMFEATURES ")) {
-	    if (g_str_equal(line + 11, "YES"))
-		bsu->features = 1;
-	} else if (g_str_has_prefix(line, "RECOVER-DUMP-STATE-FILE ")) {
-	    if (g_str_equal(line + 24, "YES"))
-		bsu->recover_dump_state_file = 1;
-	} else if (g_str_has_prefix(line, "DISCOVER ")) {
-	    if (g_str_equal(line + 9, "YES"))
-		bsu->discover = 1;
-	} else if (g_str_has_prefix(line, "DAR ")) {
-	    if (g_str_equal(line + 4, "YES"))
-		bsu->dar = 1;
-	} else if (g_str_has_prefix(line, "STATE-STREAM ")) {
-	    if (g_str_equal(line + 13, "YES"))
-		bsu->state_stream = 1;
-	} else {
-	    dbprintf(_("Invalid support line: %s\n"), line);
-	}
-	amfree(line);
-    }
-    fclose(streamout);
-
-    if (bsu->data_path_set == 0)
-	bsu->data_path_set = DATA_PATH_AMANDA;
-
-    streamerr = fdopen(supporterr, "r");
-    if (!streamerr) {
-	error(_("Error opening pipe to child: %s"), strerror(errno));
-	/* NOTREACHED */
-    }
-    while((line = pgets(streamerr)) != NULL) {
-	if (strlen(line) > 0) {
-	    if (!*errarray)
-		*errarray = g_ptr_array_new();
-	    g_ptr_array_add(*errarray, g_strdup(line));
-	    dbprintf("Application '%s': %s\n", program, line);
-	}
-	amfree(bsu);
-	amfree(line);
-    }
-    fclose(streamerr);
-
-    if (waitpid(supportpid, &status, 0) < 0) {
-	err = g_strdup_printf(_("waitpid failed: %s"), strerror(errno));
-    } else if (!WIFEXITED(status)) {
-	err = g_strdup_printf(_("exited with signal %d"), WTERMSIG(status));
-    } else if (WEXITSTATUS(status) != 0) {
-	err = g_strdup_printf(_("exited with status %d"), WEXITSTATUS(status));
-    }
-
-    if (err) {
-	if (!*errarray)
-	    *errarray = g_ptr_array_new();
-	g_ptr_array_add(*errarray, err);
-	dbprintf("Application '%s': %s\n", program, err);
-	amfree(bsu);
-    }
-    g_ptr_array_free_full(argv_ptr);
-    amfree(cmd);
-    return bsu;
-}
-
 void
 run_client_script(
     script_t     *script,
@@ -1092,6 +897,8 @@ run_client_script(
     char     *line;
     amwait_t  wait_status;
     char     *command = NULL;
+    backup_support_option_t *bsu;
+    GPtrArray               *errarray = NULL;
 
     if ((script->execute_on & execute_on) == 0)
 	return;
@@ -1160,28 +967,62 @@ run_client_script(
 	}
     }
 
+    script->result = g_new0(client_script_result_t, 1);
+    script->result->proplist =
+		  g_hash_table_new_full(g_str_hash, g_str_equal,
+					&g_free, &destroy_slist_free_full);
+    script->result->output = g_ptr_array_new();
+    script->result->err = g_ptr_array_new();
+
+    bsu = backup_support_option(script->plugin, &errarray);
+    if (!bsu) {
+	guint  i;
+	for (i=0; i < errarray->len; i++) {
+	    char *line = g_ptr_array_index(errarray, i);
+	    char *errmsg = g_strdup_printf(_("Script '%s' command 'support': %s"), script->plugin, line);
+
+	    g_ptr_array_add(script->result->err, errmsg);
+	}
+	if (i == 0) { /* nothing in errarray */
+	    char  *errmsg;
+	    errmsg = g_strdup_printf(
+		_("Script '%s': cannot execute support command"),
+		script->plugin);
+	    g_ptr_array_add(script->result->err, errmsg);
+	}
+	script->result->exit_status = 1;
+	g_ptr_array_free_full(errarray);
+	return;
+    }
+
     cmd = g_strjoin(NULL, APPLICATION_DIR, "/", script->plugin, NULL);
     g_ptr_array_add(argv_ptr, g_strdup(script->plugin));
 
     g_ptr_array_add(argv_ptr, g_strdup(command));
-    g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
-    g_ptr_array_add(argv_ptr, g_strdup("client"));
+    if (bsu->execute_where) {
+	g_ptr_array_add(argv_ptr, g_strdup("--execute-where"));
+	g_ptr_array_add(argv_ptr, g_strdup("client"));
+    }
 
-    if (g_options->config) {
+    if (g_options->config && bsu->config) {
 	g_ptr_array_add(argv_ptr, g_strdup("--config"));
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->config));
     }
-    if (g_options->hostname) {
+    if (g_options->hostname && bsu->host) {
 	g_ptr_array_add(argv_ptr, g_strdup("--host"));
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->hostname));
     }
-    if (dle->disk) {
+    if (dle->disk && bsu->disk) {
 	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
 	g_ptr_array_add(argv_ptr, g_strdup(dle->disk));
     }
     if (dle->device) {
 	g_ptr_array_add(argv_ptr, g_strdup("--device"));
 	g_ptr_array_add(argv_ptr, g_strdup(dle->device));
+    }
+    if (g_options->timestamp && bsu->timestamp) {
+	g_ptr_array_add(argv_ptr, g_strdup("--timestamp"));
+	g_ptr_array_add(argv_ptr, g_strdup(g_options->timestamp));
     }
     if (dle->levellist) {
 	levellist_t levellist;
@@ -1201,13 +1042,6 @@ run_client_script(
 			   (char **)argv_ptr->pdata);
 
     close(scriptin);
-
-    script->result = g_new0(client_script_result_t, 1);
-    script->result->proplist =
-		  g_hash_table_new_full(g_str_hash, g_str_equal,
-					&g_free, &destroy_slist_free_full);
-    script->result->output = g_ptr_array_new();
-    script->result->err = g_ptr_array_new();
 
     streamout = fdopen(scriptout, "r");
     if (streamout) {
@@ -1279,6 +1113,7 @@ run_client_script(
     }
     amfree(cmd);
     g_ptr_array_free_full(argv_ptr);
+    g_free(bsu);
 }
 
 void run_client_script_output(gpointer data, gpointer user_data);
