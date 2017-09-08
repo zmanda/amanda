@@ -112,7 +112,7 @@ typedef struct regex_s {
 #define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}
 
 char *build_exclude(dle_t *dle, messagelist_t *mlist);
-char *build_include(dle_t *dle, messagelist_t *mlist);
+char *build_include(dle_t *dle, char const *dirname, messagelist_t *mlist);
 void parse_options(char *str,
 		   dle_t *dle,
 		   am_feature_t *features,

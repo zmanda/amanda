@@ -150,7 +150,7 @@ static void amgtar_index(application_argument_t *argument);
 static void amgtar_build_exinclude(dle_t *dle,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_includei,
-				   messagelist_t *mlist);
+				   char *dirname, messagelist_t *mlist);
 static char *amgtar_get_incrname(application_argument_t *argument, int level,
 				 FILE *mesgstream, int command);
 static void check_no_check_device(void);
@@ -950,6 +950,7 @@ amgtar_selfcheck(
     char *option;
     messagelist_t mlist = NULL;
     messagelist_t mesglist = NULL;
+    char *dirname;
 
     if (argument->dle.disk) {
 	delete_message(amgtar_print_message(build_message(
@@ -965,7 +966,15 @@ amgtar_selfcheck(
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
-    amgtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL, &mlist);
+
+    if (gnutar_target) {
+	dirname = gnutar_target;
+    } else {
+	dirname = argument->dle.device;
+    }
+
+    amgtar_build_exinclude(&argument->dle, NULL, NULL, NULL, NULL,
+                           dirname, &mlist);
     for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 	message_t *message = mesglist->data;
 	if (message_get_severity(message) > MSG_INFO)
@@ -1124,7 +1133,7 @@ amgtar_estimate(
 
 	amgtar_build_exinclude(&argument->dle,
 			       &nb_exclude, &file_exclude,
-			       &nb_include, &file_include, &mlist);
+			       &nb_include, &file_include, dirname, &mlist);
 	for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 	    message_t *message = mesglist->data;
 	    if (message_get_severity(message) > MSG_INFO)
@@ -2040,6 +2049,7 @@ amgtar_build_exinclude(
     char  **file_exclude,
     int    *nb_include,
     char  **file_include,
+    char   *dirname,
     messagelist_t *mlist)
 {
     int n_exclude = 0;
@@ -2053,7 +2063,7 @@ amgtar_build_exinclude(
     if (dle->include_list) n_include += dle->include_list->nb_element;
 
     if (n_exclude > 0) exclude = build_exclude(dle, mlist);
-    if (n_include > 0) include = build_include(dle, mlist);
+    if (n_include > 0) include = build_include(dle, dirname, mlist);
 
     if (nb_exclude)
 	*nb_exclude = n_exclude;
@@ -2283,15 +2293,16 @@ GPtrArray *amgtar_build_argv(
     GSList    *copt;
 
     check_no_check_device();
-    amgtar_build_exinclude(&argument->dle,
-			   &nb_exclude, file_exclude,
-			   &nb_include, file_include, mlist);
 
     if (gnutar_target) {
 	dirname = gnutar_target;
     } else {
 	dirname = argument->dle.device;
     }
+
+    amgtar_build_exinclude(&argument->dle,
+			   &nb_exclude, file_exclude,
+			   &nb_include, file_include, dirname, mlist);
 
     g_ptr_array_add(argv_ptr, g_strdup(gnutar_realpath));
 

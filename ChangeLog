@@ -1,4 +1,12 @@
 2017-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Chapman Flack
+	* application-src/ambsdtar.c, application-src/amgtar.c,
+	  client-src/client_util.c, client-src/client_util.h,
+	  client-src/selfcheck.c, client-src/sendbackup-gnutar.c,
+	  client-src/sendsize.c: Add dirname argument to many include/exclude
+	  functions
+
+2017-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Rename script/applciaiton DIRECTORY property to TARGET
 	Rename amfetchumpd --directory argument to --target
 	* amandad-src/amandad.c: Add debugging statement
