@@ -36,7 +36,7 @@ use Amanda::Util qw( quote_string );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $directory, $size, $size_level_1, $min_size, $max_size, $block_size, $min_block_size, $max_block_size) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $target, $size, $size_level_1, $min_size, $max_size, $block_size, $min_block_size, $max_block_size) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{config}           = $config;
@@ -59,7 +59,7 @@ sub new {
     $self->{calcsize}         = $calcsize;
     $self->{exclude_list}     = [ @{$exclude_list} ];
     $self->{include_list}     = [ @{$include_list} ];
-    $self->{directory}        = $directory;
+    $self->{target}           = $target;
     $self->{size}	      = $size;
     $self->{size_level_1}     = $size_level_1;
     $self->{min_size}	      = $min_size || 1;
@@ -123,8 +123,8 @@ sub command_selfcheck {
 	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
-    if ($self->{directory}) {
-	$self->print_to_server("directory PROPERTY not supported for backup",
+    if ($self->{target}) {
+	$self->print_to_server("target PROPERTY not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 }
@@ -147,8 +147,8 @@ sub command_estimate {
 	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
-    if ($self->{directory}) {
-	$self->print_to_server("directory PROPERTY not supported for backup",
+    if ($self->{target}) {
+	$self->print_to_server("target PROPERTY not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -195,8 +195,8 @@ sub command_backup {
 	$self->print_to_server("exclude-list not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
-    if ($self->{directory}) {
-	$self->print_to_server("directory PROPERTY not supported for backup",
+    if ($self->{target}) {
+	$self->print_to_server("target PROPERTY not supported for backup",
 			       $Amanda::Script_App::ERROR);
     }
 
@@ -259,8 +259,8 @@ sub command_restore {
     my @cmd = ();
 
     my $device = $self->{device};
-    if (defined $self->{directory}) {
-	$device = $self->{directory};
+    if (defined $self->{target}) {
+	$device = $self->{target};
     } else {
 	chdir(Amanda::Util::get_original_cwd());
     }
@@ -326,7 +326,7 @@ my $opt_record;
 my $opt_calcsize;
 my @opt_include_list;
 my @opt_exclude_list;
-my $opt_directory;
+my $opt_target;
 my $opt_size;
 my $opt_size_level_1;
 my $opt_min_size;
@@ -352,7 +352,7 @@ GetOptions(
     'calcsize'           => \$opt_calcsize,
     'include-list=s'     => \@opt_include_list,
     'exclude-list=s'     => \@opt_exclude_list,
-    'directory=s'        => \$opt_directory,
+    'target|directory=s' => \$opt_target,
     'size=s'		 => \$opt_size,
     'size-level-1=s'	 => \$opt_size_level_1,
     'min-size=s'	 => \$opt_min_size,
@@ -367,7 +367,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amrandom->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_directory, $opt_size, $opt_size_level_1, $opt_min_size, $opt_max_size, $opt_block_size, $opt_min_block_size, $opt_max_block_size);
+my $application = Amanda::Application::Amrandom->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_target, $opt_size, $opt_size_level_1, $opt_min_size, $opt_max_size, $opt_block_size, $opt_min_block_size, $opt_max_block_size);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

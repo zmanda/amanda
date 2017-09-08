@@ -44,7 +44,7 @@
  * INCLUDE-LIST		(for restore only)
  * EXCLUDE-FILE
  * EXCLUDE-LIST
- * DIRECTORY
+ * TARGET
  */
 
 #include "amanda.h"
@@ -144,7 +144,7 @@ static int   star_dle_tardumps;
 static int   star_onefilesystem;
 static int   star_sparse;
 static int   star_acl;
-static char *star_directory;
+static char *star_target;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
@@ -178,6 +178,7 @@ static struct option long_options[] = {
     {"exclude-file"    , 1, NULL, 23},
     {"acl"             , 1, NULL, 24},
     {"include-file"    , 1, NULL, 25},
+    {"target"          , 1, NULL, 26},
     { NULL, 0, NULL, 0}
 };
 
@@ -336,7 +337,7 @@ main(
     star_onefilesystem = 1;
     star_sparse = 1;
     star_acl = 1;
-    star_directory = NULL;
+    star_target = NULL;
 
     glib_init();
 
@@ -495,8 +496,8 @@ main(
 			 append_sl(argument.dle.exclude_list, optarg);
 		 break;
 	case 21: if (optarg) {
-		     amfree(star_directory);
-		     star_directory = g_strdup(optarg);
+		     amfree(star_target);
+		     star_target = g_strdup(optarg);
 		 }
 		 break;
 	case 22: if (optarg)
@@ -514,6 +515,11 @@ main(
 	case 25: if (optarg)
 		     argument.dle.include_file =
 			 append_sl(argument.dle.include_file, optarg);
+		 break;
+	case 26: if (optarg) {
+		     amfree(star_target);
+		     star_target = g_strdup(optarg);
+		 }
 		 break;
 	case ':':
 	case '?':
@@ -676,15 +682,15 @@ amstar_selfcheck(
     if (argument->dle.device) {
 	delete_message(amstar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3701019, MSG_INFO, 4,
-			"directory", star_directory,
+			"directory", star_target,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
     }
-    if (star_directory) {
+    if (star_target) {
 	delete_message(amstar_print_message(build_message(
 			AMANDA_FILE, __LINE__, 3701018, MSG_INFO, 4,
-			"directory", star_directory,
+			"directory", star_target,
 			"disk", argument->dle.disk,
 			"device", argument->dle.device,
 			"hostname", argument->host)));
@@ -842,8 +848,8 @@ amstar_estimate(
     if (argument->calcsize) {
 	char *dirname;
 
-	if (star_directory) {
-	    dirname = star_directory;
+	if (star_target) {
+	    dirname = star_target;
 	} else {
 	    dirname = argument->dle.device;
 	}
@@ -1229,23 +1235,23 @@ amstar_restore(
     }
 
     g_ptr_array_add(argv_ptr, g_strdup(star_realpath));
-    if (star_directory) {
+    if (star_target) {
 	struct stat stat_buf;
-	if(stat(star_directory, &stat_buf) != 0) {
-	    fprintf(stderr,"can not stat directory %s: %s\n", star_directory, strerror(errno));
+	if(stat(star_target, &stat_buf) != 0) {
+	    fprintf(stderr,"can not stat directory %s: %s\n", star_target, strerror(errno));
 	    exit(1);
 	}
 	if (!S_ISDIR(stat_buf.st_mode)) {
-	    fprintf(stderr,"%s is not a directory\n", star_directory);
+	    fprintf(stderr,"%s is not a directory\n", star_target);
 	    exit(1);
 	}
-	if (access(star_directory, W_OK) != 0 ) {
-	    fprintf(stderr, "Can't write to %s: %s\n", star_directory, strerror(errno));
+	if (access(star_target, W_OK) != 0 ) {
+	    fprintf(stderr, "Can't write to %s: %s\n", star_target, strerror(errno));
 	    exit(1);
 	}
 
 	g_ptr_array_add(argv_ptr, g_strdup("-C"));
-	g_ptr_array_add(argv_ptr, g_strdup(star_directory));
+	g_ptr_array_add(argv_ptr, g_strdup(star_target));
     }
     g_ptr_array_add(argv_ptr, g_strdup("-x"));
     g_ptr_array_add(argv_ptr, g_strdup("-v"));
@@ -1482,8 +1488,8 @@ static GPtrArray *amstar_build_argv(
     char      *tardumpfile;
     GSList    *copt;
 
-    if (star_directory) {
-	dirname = star_directory;
+    if (star_target) {
+	dirname = star_target;
     } else {
 	dirname = argument->dle.device;
     }

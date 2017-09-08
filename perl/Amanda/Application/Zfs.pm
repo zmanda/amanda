@@ -72,7 +72,7 @@ sub zfs_set_value {
     }
 
     my $device = $self->{device};
-    $device = $self->{directory} if defined $self->{directory};
+    $device = $self->{target} if defined $self->{target};
     # determine if $device is a mountpoint or ZFS dataset
     my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} get -H -o value mountpoint $device";
     debug "running: $cmd";
@@ -204,11 +204,11 @@ sub zfs_set_value {
 	if ($device =~ /^$self->{mountpoint}/) {
             $self->{dir} = $device;
             $self->{dir} =~ s,^$self->{mountpoint},,;
-            $self->{directory} = $self->{mountpoint} . "/.zfs/snapshot/" .
-                                 $self->{snapshot} . $self->{dir};
+            $self->{target} = $self->{mountpoint} . "/.zfs/snapshot/" .
+                              $self->{snapshot} . $self->{dir};
 	} else { # device is not the mountpoint
-	    $self->{directory} = $self->{mountpoint} . "/.zfs/snapshot/" .
-				 $self->{snapshot};
+	    $self->{target} = $self->{mountpoint} . "/.zfs/snapshot/" .
+			      $self->{snapshot};
 	}
     }
 }
@@ -306,7 +306,7 @@ sub zfs_rename_snapshot {
     my $level = shift;
 
     my $device = $self->{device};
-    $device = $self->{directory} if defined $self->{directory};
+    $device = $self->{target} if defined $self->{target};
     my $newsnapshotname = $self->zfs_build_snapshotname($device, $level);
     my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} rename $self->{filesystem}\@$self->{snapshot} $self->{filesystem}\@$newsnapshotname";
     debug "running: $cmd|";
@@ -350,7 +350,7 @@ sub zfs_find_snapshot_level {
     my $level = shift;
 
     my $device = $self->{device};
-    $device = $self->{directory} if defined $self->{directory};
+    $device = $self->{target} if defined $self->{target};
     my $snapshotname = $self->zfs_build_snapshotname($device, $level);
 
     my $cmd =  "$self->{pfexec_cmd} $self->{zfs_path} list -t snapshot $self->{filesystem}\@$snapshotname";

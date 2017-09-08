@@ -88,7 +88,7 @@ sub set
 		amservice_error => $rep);
     }
 
-    $self->{'service'}->close('MESG','w');
+    #$self->{'service'}->close('MESG','w');
     $self->{'service'}->close('DATA','r');
     $self->{'service'}->close('STATE','r');
 
@@ -105,8 +105,8 @@ sub set
 		line		=> $line);
     }
     $self->{'their_features'} = Amanda::Feature::Set->from_string($1);
-    my $qdirectory = quote_string_always($self->{'directory'});
-    $self->sendctlline("DIRECTORY $qdirectory\r\n");
+    my $qtarget = quote_string_always($self->{'target'});
+    $self->sendctlline("TARGET $qtarget\r\n");
     return undef;
 }
 

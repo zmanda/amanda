@@ -35,8 +35,8 @@
  *
  * GNUTAR-PATH     (default GNUTAR)
  * GNUTAR-LISTDIR  (default CNF_GNUTAR_LIST_DIR)
- * DIRECTORY       (no default, if set, the backup will be from that directory
- *		    instead of from the --device)
+ * TARGET (DIRECTORY)  (no default, if set, the backup will be from that
+ *			directory instead of from the --device)
  * ONE-FILE-SYSTEM (default YES)
  * SPARSE          (default YES)
  * ATIME-PRESERVE  (default YES)
@@ -162,7 +162,7 @@ static GPtrArray *amgtar_build_argv(char *gnutar_realpath,
 static char *command = NULL;
 static char *gnutar_path;
 static char *gnutar_listdir;
-static char *gnutar_directory;
+static char *gnutar_target;
 static int gnutar_onefilesystem;
 static int gnutar_atimepreserve;
 static int gnutar_acls;
@@ -222,6 +222,7 @@ static struct option long_options[] = {
     {"recover-dump-state-file", 1, NULL, 39},
     {"dar"                    , 1, NULL, 40},
     {"state-stream"           , 1, NULL, 41},
+    {"target"           , 1, NULL, 42},
     {NULL, 0, NULL, 0}
 };
 
@@ -359,7 +360,7 @@ main(
     gnutar_path = NULL;
 #endif
     gnutar_listdir = NULL;
-    gnutar_directory = NULL;
+    gnutar_target = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
     gnutar_acls = 0;
@@ -508,8 +509,8 @@ main(
 		 break;
 	case 21: argument.dle.exclude_optional = 1;
 		 break;
-	case 22: amfree(gnutar_directory);
-		 gnutar_directory = g_strdup(optarg);
+	case 22: amfree(gnutar_target);
+		 gnutar_target = g_strdup(optarg);
 		 break;
 	case 23: normal_message =
 			 g_slist_append(normal_message, optarg);
@@ -566,6 +567,9 @@ main(
 		 gnutar_dar_value = g_strdup(optarg);
 		 break;
 	case 41: argument.state_stream = atoi(optarg);
+		 break;
+	case 42: amfree(gnutar_target);
+		 gnutar_target = g_strdup(optarg);
 		 break;
 	case ':':
 	case '?':
@@ -743,8 +747,8 @@ main(
     } else {
 	dbprintf("GNUTAR-LISTDIR is not set\n");
     }
-    if (gnutar_directory) {
-	dbprintf("DIRECTORY %s\n", gnutar_directory);
+    if (gnutar_target) {
+	dbprintf("TARGET %s\n", gnutar_target);
     }
     dbprintf("ONE-FILE-SYSTEM %s\n", gnutar_onefilesystem? "yes":"no");
     dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
@@ -1046,8 +1050,8 @@ amgtar_selfcheck(
     }
 
     set_root_privs(1);
-    if (gnutar_directory) {
-	delete_message(amgtar_print_message(check_dir_message(gnutar_directory, R_OK)));
+    if (gnutar_target) {
+	delete_message(amgtar_print_message(check_dir_message(gnutar_target, R_OK)));
     } else if (argument->dle.device) {
 	delete_message(amgtar_print_message(check_dir_message(argument->dle.device, R_OK)));
     }
@@ -1112,8 +1116,8 @@ amgtar_estimate(
 	messagelist_t mlist = NULL;
 	messagelist_t mesglist = NULL;
 
-	if (gnutar_directory) {
-	    dirname = gnutar_directory;
+	if (gnutar_target) {
+	    dirname = gnutar_target;
 	} else {
 	    dirname = argument->dle.device;
 	}
@@ -1602,24 +1606,24 @@ amgtar_restore(
     }
     g_ptr_array_add(argv_ptr, g_strdup("-xpGvf"));
     g_ptr_array_add(argv_ptr, g_strdup("-"));
-    if (gnutar_directory) {
+    if (gnutar_target) {
 	struct stat stat_buf;
-	if(stat(gnutar_directory, &stat_buf) != 0) {
+	if(stat(gnutar_target, &stat_buf) != 0) {
 	    fprintf(stderr, "can not stat directory %s: %s\n",
-		    gnutar_directory, strerror(errno));
+		    gnutar_target, strerror(errno));
 	    exit(1);
 	}
 	if (!S_ISDIR(stat_buf.st_mode)) {
-	    fprintf(stderr,"%s is not a directory\n", gnutar_directory);
+	    fprintf(stderr,"%s is not a directory\n", gnutar_target);
 	    exit(1);
 	}
-	if (access(gnutar_directory, W_OK) != 0) {
+	if (access(gnutar_target, W_OK) != 0) {
 	    fprintf(stderr, "Can't write to %s: %s\n",
-		    gnutar_directory, strerror(errno));
+		    gnutar_target, strerror(errno));
 	    exit(1);
 	}
 	g_ptr_array_add(argv_ptr, g_strdup("--directory"));
-	g_ptr_array_add(argv_ptr, g_strdup(gnutar_directory));
+	g_ptr_array_add(argv_ptr, g_strdup(gnutar_target));
     }
 
     g_ptr_array_add(argv_ptr, g_strdup("--wildcards"));
@@ -2283,8 +2287,8 @@ GPtrArray *amgtar_build_argv(
 			   &nb_exclude, file_exclude,
 			   &nb_include, file_include, mlist);
 
-    if (gnutar_directory) {
-	dirname = gnutar_directory;
+    if (gnutar_target) {
+	dirname = gnutar_target;
     } else {
 	dirname = argument->dle.device;
     }

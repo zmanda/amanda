@@ -60,7 +60,7 @@
 	  <arg choice='plain'>--extract</arg>
 	  <arg choice='plain'>--extract-client=<replaceable>HOSTNAME</replaceable></arg>
 	</group>
-	<arg choice='plain'>--directory<replaceable> directory</replaceable></arg>
+	<arg choice='plain'>--target<replaceable> target</replaceable></arg>
 	<arg choice='opt'>--data-path<replaceable> amanda|directtcp</replaceable></arg>
 	<arg choice='opt'>--run-client-scripts</arg>
 	<arg choice='opt'>--prev-level <replaceable>level</replaceable></arg>
@@ -241,15 +241,22 @@ the client.</para></listitem>
   <term><option>--extract</option></term>
   <listitem>
 <para>Extract the backup on the server in the
-<replaceable>directory</replaceable> directory.</para>
+<replaceable>target</replaceable> path.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><option>--directory</option> <replaceable>directory</replaceable></term>
   <listitem>
+<para>Deprecated, use --target</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--target</option> <replaceable>target</replaceable></term>
+  <listitem>
 <para>Where to extract the backup with the <option>--extract</option> option.</para>
-<para>Warning: All files in that directory can be removed.</para>
+<para>Warning: All files in that path can be removed.</para>
   </listitem>
   </varlistentry>
 

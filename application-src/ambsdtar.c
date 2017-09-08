@@ -30,8 +30,8 @@
  *
  * BSDTAR-PATH     (default /usr/bin/tar))
  * STATE-DIR       (default $AMSTATDIR/bsdtar)
- * DIRECTORY       (no default, if set, the backup will be from that directory
- *		    instead of from the --device)
+ * TARGET (DIRECTORY)  (no default, if set, the backup will be from that
+ *			directory instead of from the --device)
  * ONE-FILE-SYSTEM (default YES)
  * SPARSE	   (default YES) -S on restore
  * INCLUDE-FILE
@@ -144,7 +144,7 @@ static GPtrArray *ambsdtar_build_argv(char *bsdtar_realpath,
 static char *command = NULL;
 static char *bsdtar_path;
 static char *state_dir;
-static char *bsdtar_directory;
+static char *bsdtar_target;
 static int bsdtar_onefilesystem;
 static int bsdtar_sparse;
 static GSList *normal_message = NULL;
@@ -187,6 +187,7 @@ static struct option long_options[] = {
     {"command-options" , 1, NULL, 33},
     {"verbose"         , 1, NULL, 36},
     {"sparse"          , 1, NULL, 37},
+    {"target"          , 1, NULL, 38},
     {NULL, 0, NULL, 0}
 };
 
@@ -315,7 +316,7 @@ main(
     bsdtar_path = NULL;
 #endif
     state_dir = NULL;
-    bsdtar_directory = NULL;
+    bsdtar_target = NULL;
     bsdtar_onefilesystem = 1;
     bsdtar_sparse = 1;
     exit_handling = NULL;
@@ -445,8 +446,8 @@ main(
 		 break;
 	case 21: argument.dle.exclude_optional = 1;
 		 break;
-	case 22: amfree(bsdtar_directory);
-		 bsdtar_directory = g_strdup(optarg);
+	case 22: amfree(bsdtar_target);
+		 bsdtar_target = g_strdup(optarg);
 		 break;
 	case 23: normal_message =
 			 g_slist_append(normal_message, optarg);
@@ -475,6 +476,9 @@ main(
 		 break;
 	case 37: if (strcasecmp(optarg, "NO") == 0)
 		     bsdtar_sparse = 0;
+		 break;
+	case 38: amfree(bsdtar_target);
+		 bsdtar_target = g_strdup(optarg);
 		 break;
 	case ':':
 	case '?':
@@ -561,8 +565,8 @@ main(
     } else {
 	g_debug("STATE-DIR is not set");
     }
-    if (bsdtar_directory) {
-	g_debug("DIRECTORY %s", bsdtar_directory);
+    if (bsdtar_target) {
+	g_debug("TARGET %s", bsdtar_target);
     }
     g_debug("ONE-FILE-SYSTEM %s", bsdtar_onefilesystem? "yes":"no");
     {
@@ -765,8 +769,8 @@ ambsdtar_selfcheck(
                         "hostname", argument->host)));
     }
 
-    if (bsdtar_directory) {
-	delete_message(ambsdtar_print_message(check_dir_message(bsdtar_directory, R_OK)));
+    if (bsdtar_target) {
+	delete_message(ambsdtar_print_message(check_dir_message(bsdtar_target, R_OK)));
     } else if (argument->dle.device) {
 	delete_message(ambsdtar_print_message(check_dir_message(argument->dle.device, R_OK)));
     }
@@ -847,8 +851,8 @@ ambsdtar_estimate(
 	messagelist_t mlist = NULL;
 	messagelist_t mesglist = NULL;
 
-	if (bsdtar_directory) {
-	    dirname = bsdtar_directory;
+	if (bsdtar_target) {
+	    dirname = bsdtar_target;
 	} else {
 	    dirname = argument->dle.device;
 	}
@@ -1644,22 +1648,22 @@ ambsdtar_restore(
     if (bsdtar_sparse) {
 	g_ptr_array_add(argv_ptr, g_strdup("-S"));
     }
-    if (bsdtar_directory) {
+    if (bsdtar_target) {
 	struct stat stat_buf;
-	if(stat(bsdtar_directory, &stat_buf) != 0) {
-	    fprintf(stderr,"can not stat directory %s: %s\n", bsdtar_directory, strerror(errno));
+	if(stat(bsdtar_target, &stat_buf) != 0) {
+	    fprintf(stderr,"can not stat directory %s: %s\n", bsdtar_target, strerror(errno));
 	    exit(1);
 	}
 	if (!S_ISDIR(stat_buf.st_mode)) {
-	    fprintf(stderr,"%s is not a directory\n", bsdtar_directory);
+	    fprintf(stderr,"%s is not a directory\n", bsdtar_target);
 	    exit(1);
 	}
-	if (access(bsdtar_directory, W_OK) != 0) {
-	    fprintf(stderr, "Can't write to %s: %s\n", bsdtar_directory, strerror(errno));
+	if (access(bsdtar_target, W_OK) != 0) {
+	    fprintf(stderr, "Can't write to %s: %s\n", bsdtar_target, strerror(errno));
 	    exit(1);
 	}
 	g_ptr_array_add(argv_ptr, g_strdup("--directory"));
-	g_ptr_array_add(argv_ptr, g_strdup(bsdtar_directory));
+	g_ptr_array_add(argv_ptr, g_strdup(bsdtar_target));
     }
 
     if (argument->dle.exclude_list &&
@@ -2182,8 +2186,8 @@ ambsdtar_build_argv(
 			     &nb_exclude, file_exclude,
 			     &nb_include, file_include, mlist);
 
-    if (bsdtar_directory) {
-	dirname = bsdtar_directory;
+    if (bsdtar_target) {
+	dirname = bsdtar_target;
     } else {
 	dirname = argument->dle.device;
     }
