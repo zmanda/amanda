@@ -49,7 +49,7 @@ Amanda::Extract - perl utilities to run scripts and applications
   # @bsu can be an Amanda::Message on error
 
   # to do an extraction:
-  $extract->set_restore_argv(directory => $directory,
+  $extract->set_restore_argv(target => $target,
 			     use_dar   => $use_dar,
 			     state_filename => $state_filename,
 			     application_property => \@application_property);
@@ -57,7 +57,7 @@ Amanda::Extract - perl utilities to run scripts and applications
 
 
   # to do a validation:
-  $extract->set_validate_argv(directory => $directory,
+  $extract->set_validate_argv(target => $target,
 			      use_dar   => $use_dar,
 			      state_filename => $state_filename,
 			      application_property => \@application_property);
@@ -296,7 +296,7 @@ sub set_argv {
     push @argv, "--disk", $self->{'hdr'}->{'disk'};
     push @argv, "--device", $self->{'dle'}->{'diskdevice'} if defined ($self->{'dle'}->{'diskdevice'});
     push @argv, "--level", $self->{'hdr'}->{'dumplevel'};
-    push @argv, "--directory", $params{'directory'} if $params{'directory'};
+    push @argv, "--target", $params{'target'} if $params{'target'};
     push @argv, "--dar", "YES" if $params{'use_dar'};
 
     if ($action eq "restore") {
@@ -380,6 +380,7 @@ sub set_restore_argv {
     my %params = @_;
 
     $self->{'restore_argv'} = $self->set_argv('restore', %params);
+    debug("restore_argv: " . Data::Dumper::Dumper($self->{'restore_argv'}));
 }
 
 sub set_validate_argv {
@@ -458,9 +459,11 @@ sub run_scripts {
     my $execute_on_str = Amanda::Config::execute_on_to_string($execute_on);
 
     foreach my $script (@{$scripts}) {
-	next if index($script->{'execute_on'}, $execute_on_str) == -1;
+	if ($script) {
+	    next if index($script->{'execute_on'}, $execute_on_str) == -1;
 
-	$self->run_a_script($execute_on_str, $script);
+	    $self->run_a_script($execute_on_str, $script);
+	}
     }
     delete $self->{'prev-level'};
 }

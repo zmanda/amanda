@@ -1,3 +1,21 @@
+2017-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Rename script/applciaiton DIRECTORY property to TARGET
+	Rename amfetchumpd --directory argument to --target
+	* amandad-src/amandad.c: Add debugging statement
+	* application-src/ambsdtar.c, application-src/amgtar.c,
+	  application-src/amrandom.pl, application-src/amraw.pl,
+	  application-src/amsamba.pl, application-src/amstar.c,
+	  application-src/amsuntar.pl,
+	* application-src/amzfs-sendrecv.pl: Accept TARGET property
+	* application-src/amzfs-snapshot.pl: Print TARGET property
+	* perl/Amanda/Application/Zfs.pm: Use TARGET property
+	* perl/Amanda/CheckDump.pm, perl/Amanda/Extract.pm,
+	  perl/Amanda/FetchDump.pm, perl/Amanda/FetchDump/Application.pm,
+	  perl/Amanda/FetchDump/ClientApplication.pm, perl/Amanda/Restore.pm,
+	  perl/Amanda/Service/Restore.pm: s/directory/target/
+	* server-src/amfetchdump.pl: --target argument
+	* man/xml-source/amfetchdump.8.xml: Document --target argument
+
 2017-09-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Restore.pm:i Fix Parsing properties
 

@@ -39,7 +39,7 @@ use Amanda::Util qw( :constants quote_string );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $df_path, $zfs_path, $pfexec_path, $pfexec, $keep_snapshot, $exclude_list, $include_list, $directory) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $df_path, $zfs_path, $pfexec_path, $pfexec, $keep_snapshot, $exclude_list, $include_list, $target) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{config}     = $config;
@@ -67,7 +67,7 @@ sub new {
     $self->{pfexec_cmd}    = undef;
     $self->{exclude_list}  = [ @{$exclude_list} ];
     $self->{include_list}  = [ @{$include_list} ];
-    $self->{directory}     = $directory;
+    $self->{target}        = $target;
 
     if ($self->{keep_snapshot} =~ /^YES$/i) {
         $self->{keep_snapshot} = "YES";
@@ -356,7 +356,7 @@ sub command_restore {
     }
 
     my $directory = $device;
-    $directory = $self->{directory} if defined $self->{directory};
+    $directory = $self->{target} if defined $self->{target};
     $directory =~ s,^/,,;
 
     my @cmd = ();
@@ -405,7 +405,7 @@ sub command_restore {
 	}
 	$errmsg = <$err>;
 	waitpid $pid, 0;
-    	close $rdr;
+	close $rdr;
 	close $err;
 
 	if (defined $snapshotname and defined($level)) {
@@ -472,7 +472,7 @@ my $pfexec = "NO";
 my $opt_keep_snapshot = "YES";
 my @opt_exclude_list;
 my @opt_include_list;
-my $opt_directory;
+my $opt_target;
 
 my @orig_argv = @ARGV;
 
@@ -495,7 +495,7 @@ GetOptions(
     'keep-snapshot=s' => \$opt_keep_snapshot,
     'exclude-list=s'  => \@opt_exclude_list,
     'include-list=s'  => \@opt_include_list,
-    'directory=s'     => \$opt_directory,
+    'target|directory=s' => \$opt_target,
 ) or usage();
 
 if (defined $opt_version) {
@@ -503,7 +503,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amzfs_sendrecv->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $df_path, $zfs_path, $pfexec_path, $pfexec, $opt_keep_snapshot, \@opt_exclude_list, \@opt_include_list, $opt_directory);
+my $application = Amanda::Application::Amzfs_sendrecv->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $df_path, $zfs_path, $pfexec_path, $pfexec, $opt_keep_snapshot, \@opt_exclude_list, \@opt_include_list, $opt_target);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

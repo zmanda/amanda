@@ -131,7 +131,7 @@ sub get_xfer_dest {
     my $self = shift;
 
     $self->{'extract'}->set_restore_argv(
-		directory => $self->{'directory'},
+		target => $self->{'target'},
 		use_dar   => $self->{'use_dar'},
 		state_filename => $self->{'state_filename'},
 		application_property => $self->{'application_property'});

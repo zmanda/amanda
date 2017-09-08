@@ -48,7 +48,7 @@ Amanda::Restore -- interface to restore backup
                 'decompress'            => $params{'decompress'},
                 'decrypt'               => $params{'decrypt'},
                 'device'                => $params{'device'},
-                'directory'             => $params{'directory'},
+                'target'                => $params{'target'},
                 'dumpspecs'             => $params{'dumpspecs'},
                 'exact-match'           => $params{'exact-match'},
                 'extract'               => $params{'extract'},
@@ -117,7 +117,7 @@ Delay in milliseconds between progress update, default to 15000 (15 seconds)
 
 =head2 device
 
-=head2 directory
+=head2 target
 
 Directory where to extract.
 
@@ -426,9 +426,9 @@ sub local_message {
     } elsif ($self->{'code'} == 4900056) {
 	return "recovery failed";
     } elsif ($self->{'code'} == 4900060) {
-	return "'directory' must be set if 'extract' is set"
+	return "'target' must be set if 'extract' is set"
     } elsif ($self->{'code'} == 4900061) {
-	return "'directory' must be set if 'extract-client' is set"
+	return "'target' must be set if 'extract-client' is set"
     } elsif ($self->{'code'} == 4900062) {
 	return "Exit status: $self->{'exit_status'}";
     } elsif ($self->{'code'} == 4900066) {
@@ -783,7 +783,7 @@ sub restore {
 	}
     }
 
-    if (defined $params{'extract'} && !exists $params{'directory'}) {
+    if (defined $params{'extract'} && !exists $params{'target'}) {
 	$self->user_message(
 	    Amanda::Restore::Message->new(
 			source_filename => __FILE__,
@@ -792,7 +792,7 @@ sub restore {
 			severity	=> $Amanda::Message::ERROR));
 	return $params{'finished_cb'}->(1);
     }
-    if (defined $params{'extract-client'} && !defined $params{'directory'}) {
+    if (defined $params{'extract-client'} && !defined $params{'target'}) {
 	$self->user_message(
 	    Amanda::Restore::Message->new(
 			source_filename => __FILE__,
@@ -802,7 +802,7 @@ sub restore {
 	return $params{'finished_cb'}->(1);
     }
 
-    if (defined $params{'directory'} and defined $params{'extract'}) {
+    if (defined $params{'target'} and defined $params{'extract'}) {
 	$params{'decrypt'} = 1;
 #	if (defined $params{'server-decrypt'} or defined $params{'client-decrypt'}) {
 #	    $self->user_message(
@@ -966,10 +966,11 @@ sub restore {
     my $steps = define_steps
 	cb_ref => \$params{'finished_cb'},
 	finalize => sub { foreach my $name (keys %storage) {
-			    $storage{$name}->quit();
+			      $storage{$name}->quit();
 			  }
-debug("XYZ");
-			  log_add($L_INFO, "pid-done $$");
+			  if (defined $self->{'message_file'}) {
+			       log_add($L_INFO, "pid-done $$");
+			  }
 			};
 
     step start => sub {

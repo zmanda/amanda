@@ -43,7 +43,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode, $allow_anonymous, $directory, $regex_match) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode, $allow_anonymous, $target, $regex_match) = @_;
     my $self = $class->SUPER::new($config);
 
     if (defined $gnutar_path) {
@@ -88,7 +88,7 @@ sub new {
     $self->{include_optional} = $include_optional;
     $self->{recover_mode}     = $recover_mode;
     $self->{allow_anonymous}  = $allow_anonymous;
-    $self->{directory}        = $directory;
+    $self->{target}           = $target;
     if ($regex_match =~ /^yes$/i) {
 	$self->{'regex_match'} = 1;
     } else {
@@ -213,7 +213,7 @@ sub validate_inexclude {
 }
 
 # on entry:
-#   $self->{directory} == //host/share/subdir           \\host\share\subdir
+#   $self->{target} == //host/share/subdir           \\host\share\subdir
 #   or
 #   $self->{device}    == //host/share/subdir		\\host\share\subdir
 # on exit:
@@ -223,7 +223,7 @@ sub validate_inexclude {
 #   $self->{subdir}     = subdir			subdir
 sub parsesharename {
     my $self = shift;
-    my $to_parse = $self->{directory};
+    my $to_parse = $self->{target};
     $to_parse = $self->{device} if !defined $to_parse;;
 
     return if !defined $to_parse;
@@ -404,7 +404,7 @@ sub command_selfcheck {
 
     print "OK " . $self->{share} . "\n";
     print "OK " . $self->{device} . "\n";
-    print "OK " . $self->{directory} . "\n" if defined $self->{directory};
+    print "OK " . $self->{target} . "\n" if defined $self->{target};
 
     my ($password_rdr, $password_wtr);
     if (defined $self->{password}) {
@@ -935,15 +935,15 @@ sub command_restore {
 	die("Can't exec '", $cmd[0], "'");
     } else {
 	push @cmd, $self->{gnutar}, "-xpvf", "-";
-	if (defined $self->{directory}) {
-	    if (!-d $self->{directory}) {
+	if (defined $self->{target}) {
+	    if (!-d $self->{target}) {
 		$self->print_to_server_and_die(
-				       "Directory $self->{directory}: $!",
+				       "Directory $self->{target}: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
-	    if (!-w $self->{directory}) {
+	    if (!-w $self->{target}) {
 		$self->print_to_server_and_die(
-				       "Directory $self->{directory}: $!",
+				       "Directory $self->{target}: $!",
 				       $Amanda::Script_App::ERROR);
 	    }
 	    push @cmd, "--directory", $self->{directory};
@@ -1018,7 +1018,7 @@ my @opt_include_list;
 my $opt_include_optional;
 my $opt_recover_mode;
 my $opt_allow_anonymous;
-my $opt_directory;
+my $opt_target;
 my $opt_regex_match;
 
 my @orig_argv = @ARGV;
@@ -1047,7 +1047,7 @@ GetOptions(
     'include-optional=s' => \$opt_include_optional,
     'recover-mode=s'     => \$opt_recover_mode,
     'allow-anonymous=s'  => \$opt_allow_anonymous,
-    'directory=s'        => \$opt_directory,
+    'target|directory=s' => \$opt_target,
     'regex-match=s'      => \$opt_regex_match,
 ) or usage();
 
@@ -1056,7 +1056,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_directory, $opt_regex_match);
+my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous, $opt_target, $opt_regex_match);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 
