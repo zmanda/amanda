@@ -2644,7 +2644,9 @@ getsize_application_api(
 	}
 	size1 = (off_t)size1_;
 	size2 = (off_t)size2_;
-	if (size1 <= 0 || size2 <=0)
+	if (size1 <= -2 && size2 <= -2)
+	    size = -2;
+	else if (size1 <= 0 || size2 <=0)
 	    size = -1;
 	else if (size1 * size2 > 0)
 	    size = size1 * size2;
