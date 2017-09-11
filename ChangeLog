@@ -1,3 +1,7 @@
+2017-09-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendsize.c: If application return '-2 -2' for the
+	  size, then report -2 to the server
+
 2017-09-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add timestmap in the req OPTION line
 	Run script support command
