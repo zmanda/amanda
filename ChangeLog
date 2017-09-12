@@ -1,3 +1,7 @@
+2017-09-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c:i Do not cancel the shm_ring if the dump-result
+	  is 1 (STRANGE)
+
 2017-09-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendsize.c: If application return '-2 -2' for the
 	  size, then report -2 to the server
