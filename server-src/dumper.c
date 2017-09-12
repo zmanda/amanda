@@ -3013,7 +3013,7 @@ stop_dump(void)
 	}
     }
 
-    if (dump_result > 0) {
+    if (dump_result > 1) {
 	if (g_databuf->shm_ring_producer) {
 	    g_debug("stop_dump: cancelling shm-ring-producer");
 	    g_databuf->shm_ring_producer->mc->cancelled = TRUE;

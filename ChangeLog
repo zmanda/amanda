@@ -1,3 +1,7 @@
+2017-09-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c:i Do not cancel the shm_ring if the dump-result
+	  is 1 (STRANGE)
+
 2017-09-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/dvdrw-device.m4, config/amanda/ndmp-device.m4,
 	  config/amanda/s3-device.m4: Do not include the device if compiled
