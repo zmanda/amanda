@@ -58,17 +58,21 @@ my $rx_list = qr/
   $
 /ox;
 
+my $holdtagprefix;
 my $rx_holdtag;
 my $zfsexecutable;
 
-# The caller should construct a regular expression that matches the hold tags
-# of interest (there may be other hold tags placed on snapshots for purposes
-# nothing to do with Amanda). The regex should match a string beginning with
-# the HOLDTAGPREFIX property and containing a matching group of digits -- the
-# digit string represents an Amanda backup level made from the tagged snapshot.
-# It should also allow (and not capture) arbitrary trailing whitespace.
-sub set_rx_holdtag {
-    my ( $class, $rx ) = @_;
+# The caller should supply the prefix for the hold tags of interest (there may
+# be other hold tags placed on snapshots for purposes nothing to do with
+# Amanda). The regex will match a string beginning with the HOLDTAGPREFIX
+# property and containing a matching group of digits -- the digit string
+# represents an Amanda backup level made from the tagged snapshot. It
+# also allows (and does not capture) arbitrary trailing whitespace.
+sub set_holdtagprefix {
+    my ( $class, $pfx ) = @_;
+    my $qpfx = quotemeta($pfx);
+    my $rx = qr/^$qpfx (\d++)\s*+$/o;
+    $holdtagprefix = $pfx;
     $rx_holdtag = $rx;
 }
 
@@ -173,8 +177,6 @@ sub holds {
 # mapping backup levels to snapshots, and h is the highest level seen.
 # Verifies that the recorded levels are consecutive integers starting at zero
 # and that no two snapshots have been tagged with a given level.
-# If this is a filesystem (can have children), generates the maps for any
-# children and verifies they map the same levels to the same snapshot names.
 sub levels_to_snapshots {
     my ( $self ) = @_;
 
@@ -218,10 +220,20 @@ sub levels_to_snapshots {
     die 'Amanda::Application::AmZfsHoldSend: level 0 hold not found: ' .
 	$self->{'fqname'} unless 0 == $lowestlevel;
 
+    return ( \%levtosnap, $latestlevel );
+}
+
+# If this is a filesystem (can have children), generates the maps for any
+# children and verifies they map the wanted levels to the same snapshot names.
+sub confirm_matching_levels_children {
+    my ( $self, @levels ) = @_;
+    my ( $levtosnap, $highest ) = $self->levels_to_snapshots();
+
     if ( 'filesystem' eq $self->{'dstype'} ) {
 	for my $kid ( @{$self->{'children'}} ) {
 	    my ( $kidmap, $kidh ) = $kid->levels_to_snapshots();
-	    while ( my ($lev, $snap) = each %levtosnap ) {
+	    for my $lev ( @levels ) {
+		my $snap = $levtosnap->{$lev};
 		my $ksnap = $kidmap->{$lev} or die
 		    'Amanda::Application::AmZfsHoldSend: missing level ' .
 		    $lev . ' in ' . $kid->{'fqname'};
@@ -231,8 +243,6 @@ sub levels_to_snapshots {
 	    }
 	}
     }
-
-    return ( \%levtosnap, $latestlevel );
 }
 
 # For a volume, or a filesystem with no children, just its list of snapshots.
@@ -246,19 +256,20 @@ sub levels_to_snapshots {
 sub common_snapshots {
     my ( $self ) = @_;
     my @snapnames = map { $_->{'name'} } @{$self->{'snapshots'}};
-    return \@snapnames unless $self->{'children'};
+    my $kids = $self->{'children'};
+    return \@snapnames unless defined($kids) and @$kids;
 
     my %counts;
-    for my $kid ( @{$self->{'children'}} ) {
-	for my $snap ( map { $_->{'name'} } @{$kid->{'snapshots'}} ) {
+    for my $kid ( @$kids ) {
+	for my $snap ( @{$kid->common_snapshots()} ) {
 	    $counts{$snap}++;
 	}
     }
 
-    my $fullcount = scalar(@{$self->{'children'}});
+    my $fullcount = scalar(@$kids);
     my @common;
     for my $snap ( @snapnames ) {
-	push @common, $snap if $fullcount == $counts{$snap};
+	push @common, $snap if $fullcount == ( $counts{$snap} // 0 );
     }
 
     return \@common;
@@ -295,19 +306,28 @@ sub apply_hold {
 }
 
 sub release_hold {
-    my ( $self, $holdtag ) = @_;
+    my ( $self, $level ) = @_;
 
-    # Assume here that levels_to_snapshots() has succeeded, meaning the same
-    # hold tag is on the same snapshot throughout the tree, so a simple
-    # release -r suffices. Absent that assumption, one could descend the tree
-    # and do a single zfs release at each child on the snapshot there mapped
-    # to the given level.
+    # This may need to work even when levels_to_snapshots() wouldn't succeed,
+    # meaning the same hold tag may not map to the same snapshot throughout the
+    # tree. So rather than a simple release -r,  descend the tree and do a
+    # single zfs release at each child on the snapshot there mapped to the
+    # given level.
+    my $holdtag = $holdtagprefix . ' ' . $level;
     my $rslt = system {$zfsexecutable} (
-	'zfs', 'release', '-r', '--', $holdtag, $self->{'fqname'}
+	'zfs', 'release', '--', $holdtag, $self->{'fqname'}
     );
     die 'Amanda::Application::AmZfsHoldSend: zfs release nonzero result: ' .
 	$rslt
 	unless 0 == $rslt;
+
+    for my $pkid ( @{$self->{'parent'}->{'children'}} ) {
+	for my $snap ( @{$pkid->{'snapshots'}} ) {
+	    if ( grep { $_ == $level } @{$snap->holds()} ) {
+		$snap->release_hold($level);
+	    }
+	}
+    }
 }
 
 
@@ -381,9 +401,8 @@ sub declare_restore_options {
 sub read_local_state {
     my ( $self ) = @_;
 
-    my $qpfx = quotemeta($self->{'holdtagprefix'});
-    Amanda::Application::AmZfsHoldSend::Dataset->set_rx_holdtag(
-	qr/^$qpfx (\d++)\s*+$/o
+    Amanda::Application::AmZfsHoldSend::Dataset->set_holdtagprefix(
+	$self->{'holdtagprefix'}
     );
     Amanda::Application::AmZfsHoldSend::Dataset->set_zfsexecutable(
 	$self->{'zfsexecutable'}
@@ -417,10 +436,31 @@ sub read_local_state {
 
     my $snaps = $topds->common_snapshots();
 
-    $state{'maxlevel'} = $maxlevel;
-    $state{'oldestsnapshot'} = $snaps->[0];
-    $state{'newestsnapshot'} = $snaps->[scalar(@$snaps)-1];
+    # Even though it must have been true as of the last successful backup,
+    # the condition (each recorded level refers to a snapshot common to all
+    # nodes in the tree) can have been invalidated since by the creation of
+    # new datasets (or even clones). Be sure to know the last level (if any)
+    # for which the condition does hold.
+
+    my $firstbrokenlevel = 0;
+    for ( ; $firstbrokenlevel < $maxlevel ; $firstbrokenlevel += 1 ) {
+	my $sname = $state{$firstbrokenlevel}->{'snapshot'};
+	next if grep { $_ eq $sname } @$snaps;
+	$state{'oldlist'} //= [];
+	last;
+    }
+    while ( $firstbrokenlevel < $maxlevel ) {
+	$maxlevel -= 1;
+	push @{$state{'oldlist'}}, $state{$maxlevel};
+	delete $state{$maxlevel};
+    }
+
     $state{'topds'} = $topds;
+    $state{'maxlevel'} = $maxlevel;
+    if ( @$snaps ) {
+	$state{'oldestsnapshot'} = $snaps->[0];
+	$state{'newestsnapshot'} = $snaps->[scalar(@$snaps)-1];
+    }
     return \%state;
 }
 
@@ -463,9 +503,8 @@ sub write_local_state {
     # complexity aimed at a low-likelihood event, so, some other day....
     for my $opthash ( @{$state->{'oldlist'}} ) {
 	my $level = $opthash->{'level'};
-	my $holdtag = $self->{'holdtagprefix'} . ' ' . $level;
 	my $snapobj = $levtosnap->{$level};
-	$snapobj->release_hold($holdtag);
+	$snapobj->release_hold($level);
     }
 
     for my $opthash ( @{$state->{'newlist'}} ) {
@@ -571,6 +610,7 @@ sub inner_estimate_brute {
     #  So returning zero here is a lie, but an easy and not-far-from-the-truth
     # one, and this is, after all, an estimate. Perhaps the planner will see
     # this zero estimate and choose a different level, which would be ok.
+
     return Math::BigInt->bzero() if $latestsnapshot eq $priorsnapshot;
 
     # Ok, it wasn't any of the easy cases.
@@ -604,6 +644,8 @@ sub construct_send_cmd {
 			       $Amanda::Script_App::ERROR);
     } else {
 	my $priorsnapshot = $self->{'localstate'}->{$level - 1}->{'snapshot'};
+	$self->{'localstate'}->{'topds'}->
+	  confirm_matching_levels_children($level - 1);
 	unless ( $self->{'localstate'}->{'topds'}->
 	  consistently_ordered($priorsnapshot, $latestsnapshot) ) {
 	    $self->print_to_server_and_die(
