@@ -286,7 +286,7 @@ sub _scan {
 	}
 
 	if (defined $res) {
-	    $res->release(finished_cb => $steps->{'released'});
+	    $res->release(need_another => 1, finished_cb => $steps->{'released'});
 	    $res = undef;
 	} else {
 	    $steps->{'released'}->();
@@ -639,7 +639,7 @@ sub _scan {
 				 err => "Can't label slot $slot_scanned: $make_err");
 		my $res1 = $res;
 		$res = undef;
-		return $res1->release(finished_cb => $steps->{'get_inventory'});
+		return $res1->release(need_another => 1, finished_cb => $steps->{'get_inventory'});
 	    } else {
 		# make this fatal, rather than silently skipping new tapes
 		$self->{'scanning'} = 0;
