@@ -1,4 +1,9 @@
 2017-09-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/ScanInventory.pm: Call release with need_another flag.
+	* perl/Amanda/Changer/single.pm (do_release): eject the tevice if
+	  need_another
+
+2017-09-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm (after_poll): Set $remove_undef_state
 	  if $self->{'chg'}->{'scan-require-update'}
 
