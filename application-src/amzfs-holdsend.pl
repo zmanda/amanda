@@ -369,14 +369,21 @@ sub declare_common_options {
 			  'uncompressed=s', 'dedup=s', 'large-block=s',
 			  'embed=s', 'raw=s' );
 
-    $refopthash->{'zfsexecutable'} = 'zfs';
-    $refopthash->{'holdtagprefix'} = 'org.amanda holdsend';
-    $refopthash->{'uncompressed'}= $class->boolean_property_setter($refopthash);
-    $refopthash->{'opt_uncompressed'} = 1; # why 1? -c not always supported
-    $refopthash->{'dedup'}= $class->boolean_property_setter($refopthash);
-    $refopthash->{'large-block'}= $class->boolean_property_setter($refopthash);
-    $refopthash->{'embed'}= $class->boolean_property_setter($refopthash);
-    $refopthash->{'raw'}= $class->boolean_property_setter($refopthash);
+    $class->store_option($refopthash, 'zfsexecutable', 'zfs');
+    $class->store_option($refopthash,
+	'holdtagprefix', 'org.amanda holdsend');
+    $class->store_option($refopthash,
+	'uncompressed', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash,
+	'uncompressed', 1); # why 1? -c not always supported
+    $class->store_option($refopthash,
+	'dedup', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash,
+	'large-block', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash,
+	'embed', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash,
+	'raw', $class->boolean_property_setter($refopthash));
 }
 
 sub declare_restore_options {
@@ -388,11 +395,13 @@ sub declare_restore_options {
     push @$refoptspecs, ( 'overrideproperty=s@' );
     push @$refoptspecs, ( 'excludeproperty=s@' );
 
-    $refopthash->{'destructive'} = $class->boolean_property_setter($refopthash);
-    $refopthash->{'unmounted'} = $class->boolean_property_setter($refopthash);
-    $refopthash->{'opt_destructive'} = 1;
-    $refopthash->{'overrideproperty'} = [];
-    $refopthash->{'excludeproperty'} = [];
+    $class->store_option($refopthash,
+	'destructive', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash, 'destructive', 1);
+    $class->store_option($refopthash,
+	'unmounted', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash, 'overrideproperty', []);
+    $class->store_option($refopthash, 'excludeproperty', []);
 }
 
 # This read_local_state does not take the getopt arguments taken by the

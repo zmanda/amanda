@@ -50,9 +50,6 @@ sub new {
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
     $self->{'db2bakexecutable'} = $self->{'options'}->{'db2bakexecutable'};
-    if ( !defined $self->{'db2bakexecutable'} ) {
-	$self->{'db2bakexecutable'} = 'db2bak';
-    }
 
     $self->{'instance'} = $self->{'options'}->{'instance'};
     if ( !defined $self->{'instance'} ) {
@@ -67,6 +64,8 @@ sub declare_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_options($refopthash, $refoptspecs);
     push @$refoptspecs, ( 'db2bakexecutable=s', 'instance=s' );
+
+    $class->store_option($refopthash, 'db2bakexecutable', 'db2bak');
 }
 
 sub command_pre_dle_estimate {

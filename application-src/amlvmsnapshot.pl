@@ -98,10 +98,10 @@ sub declare_options {
     # properties that have defaults and are not mandatory to receive with the
     # request can be initialized here as an alternative to checking for !defined
     # and applying the defaults in new().
-    $refopthash->{   'lvmexecutable'} = 'lvm';
-    $refopthash->{ 'mountexecutable'} = 'mount';
-    $refopthash->{'umountexecutable'} = 'umount';
-    $refopthash->{       'mountopts'} = [];
+    $class->store_option($refopthash,    'lvmexecutable', 'lvm');
+    $class->store_option($refopthash,  'mountexecutable', 'mount');
+    $class->store_option($refopthash, 'umountexecutable', 'umount');
+    $class->store_option($refopthash,        'mountopts', []);
 }
 
 sub command_pre_dle_estimate {

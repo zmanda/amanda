@@ -80,8 +80,8 @@ sub declare_options {
     # properties that have defaults and are not mandatory to receive with the
     # request can be initialized here as an alternative to checking for !defined
     # and applying the defaults in new().
-    $refopthash->{'virshexecutable'} = 'virsh';
-    $refopthash->{     'mountpoint'} = [];
+    $class->store_option($refopthash, 'virshexecutable', 'virsh');
+    $class->store_option($refopthash,      'mountpoint', []);
 }
 
 sub command_pre_dle_estimate {

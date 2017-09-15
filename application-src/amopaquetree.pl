@@ -106,13 +106,12 @@ sub new {
     my $self = $class->SUPER::new($refopthash);
 
     $self->{'rsyncexecutable'} = $self->{'options'}->{'rsyncexecutable'};
-    if ( !defined $self->{'rsyncexecutable'} ) {
-	$self->{'rsyncexecutable'} = 'rsync';
-    }
 
     $self->{'localstatedir'} = $self->{'options'}->{'localstatedir'};
 
     $self->{'rsyncstatesdir'} = $self->{'options'}->{'rsyncstatesdir'};
+    # This default is computed here, based on the final value of localstatedir,
+    # so it can't just be stored in declare_common_options as a fixed default.
     if ( !defined $self->{'rsyncstatesdir'} ) {
         my ( $dirpart, $filepart ) = $self->local_state_path();
 	$self->{'rsyncstatesdir'} =
@@ -133,6 +132,7 @@ sub declare_common_options {
     push @$refoptspecs,
         ( 'rsyncexecutable=s', 'rsyncstatesdir=s', 'rsynctempbatchdir=s',
 	  'localstatedir=s' );
+    $class->store_option($refopthash, 'rsyncexecutable', 'rsync');
 }
 
 sub local_state_path {

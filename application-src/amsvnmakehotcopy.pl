@@ -50,9 +50,6 @@ sub new {
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
     $self->{'svnadminexecutable'} = $self->{'options'}->{'svnadminexecutable'};
-    if ( !defined $self->{'svnadminexecutable'} ) {
-	$self->{'svnadminexecutable'} = 'svnadmin';
-    }
 
     $self->{'svnrepository'} = $self->{'options'}->{'svnrepository'};
     if ( !defined $self->{'svnrepository'} ) {
@@ -67,6 +64,8 @@ sub declare_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_options($refopthash, $refoptspecs);
     push @$refoptspecs, ( 'svnadminexecutable=s', 'svnrepository=s' );
+
+    $class->store_option($refopthash, 'svnadminexecutable', 'svnadmin');
 }
 
 sub command_pre_dle_estimate {
