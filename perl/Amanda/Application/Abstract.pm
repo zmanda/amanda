@@ -532,17 +532,20 @@ sub supports {
     return (defined $s) ? $class->$s() : 0;
 }
 
-=head1 INSTANCE METHODS SUPPORTING C<support> SUBCOMMAND
-
 =head2 C<max_level>
 
 Returns the maximum C<level> supported, Default if not overridden is zero,
-indicating no support for incremental backup. An instance method because the
-value could depend on state only known after instantiation.
+indicating no support for incremental backup. Where incremental backup is
+supported, this should return a fixed, maximum level supported (regardless
+of the current state of prior levels backed up, which will limit the level
+that can be requested in practice). May return a number or the string "DEFAULT",
+which will be replaced with the largest value Amanda supports.
 
 =cut
 
-sub max_level { my ( $self ) = @_; return 0; }
+sub max_level { my ( $class ) = @_; return 0; }
+
+# INSTANCE METHODS SUPPORTING C<support> SUBCOMMAND
 
 #
 # Private instance method to produce a support-line for a boolean
@@ -589,11 +592,14 @@ my $checked_recover_path = sub {
     return $rp;
 };
 
-# max_level (instance method) should return 0..99
+# max_level (class method) should return 0..$amanda_max or 'DEFAULT'
 my $checked_max_level = sub {
     my ( $self ) = @_;
-    my $mxl = $self->max_level();
-    die "unusable max_level: ".$mxl unless defined $mxl and $mxl =~ /^\d\d?$/;
+    my $amanda_max = 399;
+    my $mxl = blessed($self)->max_level();
+    $mxl = $amanda_max if 'DEFAULT' eq $mxl;
+    die "unusable max_level: ".$mxl
+      unless defined $mxl and $mxl =~ /^\d{1,3}$/ and 0 + $mxl <= $amanda_max;
     return 0 + $mxl;
 };
 
@@ -904,7 +910,7 @@ sub check_level_option {
     $lvls = [ $lvls ] if ref($lvls) ne 'ARRAY';
 
     for my $lvl (@$lvls) {
-        if ( 0 > $lvl  or  $lvl > $self->max_level() ) {
+	if ( 0 > $lvl  or  $lvl > $self->$checked_max_level() ) {
             $self->print_to_server('out of range --level '.$lvl,
 	                           $Amanda::Script_App::ERROR);
         }

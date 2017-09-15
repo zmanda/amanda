@@ -78,7 +78,7 @@ sub supports_record { my ( $class ) = @_; return 1; }
 sub supports_client_estimate { my ( $class ) = @_; return 1; }
 sub supports_multi_estimate { my ( $class ) = @_; return 1; }
 
-sub max_level { my ( $self ) = @_; return 9; }
+sub max_level { my ( $class ) = @_; return 'DEFAULT'; }
 
 sub rsync_is_unusable {
     my ( $self ) = @_;
