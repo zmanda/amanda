@@ -513,6 +513,9 @@ sub _scan {
 	if ($poll_src) {
 	    $poll_src->remove();
 	    $poll_src = undef;
+	    if ($self->{'chg'}->{'scan-require-update'}) {
+		$remove_undef_state = 1;
+	    }
 	    return $steps->{'restart_scan'}->();
 	}
     };
