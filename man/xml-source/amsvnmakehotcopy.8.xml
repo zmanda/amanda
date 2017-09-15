@@ -71,6 +71,16 @@ for information on the Script API, script configuration.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
+ <varlistentry><term>CLEAN-LOGS</term><listitem>
+True if <command>svnadmin</command> should remove unused Berkeley DB logs
+from the source repository after completing the hotcopy.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>INCREMENTAL</term><listitem>
+True if <command>svnadmin</command> should perform an incremental hotcopy
+(supported for FSFS repositories in Subversion 1.8 or later).
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>SVNADMINEXECUTABLE</term><listitem>
 Path to the <command>svnadmin</command> executable, search in $PATH by default.
 If necessary to gain read access to the repository, this can be set
