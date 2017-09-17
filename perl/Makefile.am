@@ -716,7 +716,9 @@ Amanda_DATA += Amanda/Script.pm
 EXTRA_DIST += Amanda/Script.pm
 
 # PACKAGE: Amanda::Script::*
-Amanda_DATA += Amanda/Script/Abstract.pm
+AmandaScriptdir = $(amperldir)/Amanda/Script
+AmandaScript_DATA = Amanda/Script/Abstract.pm
+PM_FILES += $(AmandaScript_DATA)
 EXTRA_DIST += Amanda/Script/Abstract.pm
 
 if WANT_CLIENT

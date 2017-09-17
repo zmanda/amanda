@@ -1599,6 +1599,7 @@ process_writenetfd(
     } else if (size > 0) {
 	full_write(dh->fd_write, buf, (size_t)size);
     } else {
+	g_debug("process_writenetfd %d: %zd", dh->fd_write, size);
 	aclose(dh->fd_write);
 	if (as->thread && dh->shm_ring) {
 	    g_thread_join(as->thread);

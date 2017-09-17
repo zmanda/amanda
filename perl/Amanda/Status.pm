@@ -335,6 +335,9 @@ my $TERMINATED_DUMPING_TO_TAPE	 = 32;  # terminated while dumping to tape
 my $TERMINATED_WRITING		 = 33;  # terminated while writing
 my $TERMINATED_FLUSHING		 = 34;  # terminated while flushing
 my $TERMINATED_VAULTING		 = 35;  # terminated while vaulting
+my $TERMINATED_WAIT_FOR_DUMPING	 = 36;  # terminated while wait for dumping
+my $TERMINATED_WAIT_FOR_WRITING	 = 37;  # terminated while wait for writing
+my $TERMINATED_WAIT_FOR_FLUSHING = 38;  # terminated while wait for flushing
 
 # status only for worker
 my $TAPE_ERROR			 = 50;
@@ -479,7 +482,26 @@ REREAD:
 		$line[5] eq 'version') {
 		my $amdump_version = $line[6];
 
-		if ($amdump_version ne $Amanda::Constants::VERSION) {
+		my ($version_major, $version_minor, $version_patch, $version_comment);
+		if ($amdump_version =~ /^(\d*)\.(\d*)\.(\d*)(.*)$/) {
+		    $version_major = $1;
+		    $version_minor = $2;
+		    $version_patch = $3;
+		    $version_comment = $4;
+		} elsif ($amdump_version =~ /^(\d*)\.(\d*)(.*)$/) {
+		    $version_major = $1;
+		    $version_minor = $2;
+		    $version_patch = 0;
+		    $version_comment = $3;
+		} elsif ($amdump_version =~ /^(\d*)(.*)$/) {
+		    $version_major = $1;
+		    $version_minor = 0;
+		    $version_patch = 0;
+		    $version_comment = $2;
+		}
+
+		if ($version_major ne $Amanda::Constants::VERSION_MAJOR ||
+		    $version_minor ne $Amanda::Constants::VERSION_MINOR) {
 		    return Amanda::Status::Message->new(
 					source_filename => __FILE__,
 					source_line     => __LINE__,
@@ -1954,6 +1976,7 @@ sub set_summary {
 			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
 			if ($dle->{'status'} == $WAIT_FOR_DUMPING) {
 			    $self->{'exit_status'} |= $STATUS_MISSING;
+			    $dle->{'status'} = $TERMINATED_WAIT_FOR_DUMPING;
 			    $dle->{'message'} = "terminated while waiting for dumping";
 			} elsif ($dle->{'status'} == $ESTIMATING ||
 				 $dle->{'status'} == $ESTIMATE_PARTIAL) {
@@ -1983,7 +2006,14 @@ sub set_summary {
 			    foreach my $storage (values %{$dle->{'storage'}}) {
 				if ($storage->{'status'} == $WAIT_FOR_DUMPING) {
 				    $self->{'exit_status'} |= $STATUS_MISSING;
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_DUMPING;
 				    $storage->{'message'} = "terminated while waiting for dumping";
+				} elsif ($storage->{'status'} == $WAIT_FOR_FLUSHING) {
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_FLUSHING;
+				    $storage->{'message'} = "terminated while waiting for flushing";
+				} elsif ($storage->{'status'} == $WAIT_FOR_WRITING) {
+				    $storage->{'status'} = $TERMINATED_WAIT_FOR_WRITING;
+				    $storage->{'message'} = "terminated while waiting for writing";
 				} elsif ($storage->{'status'} == $ESTIMATING ||
 					 $storage->{'status'} == $ESTIMATE_PARTIAL) {
 				    $storage->{'status'} = $TERMINATED_ESTIMATE;

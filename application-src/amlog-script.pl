@@ -36,7 +36,7 @@ use Amanda::Constants;
 
 sub new {
     my $class = shift;
-    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $logfile, $text) = @_;
+    my ($execute_where, $config, $host, $disk, $device, $level, $index, $timestamp, $message, $collection, $record, $logfile, $text) = @_;
     my $self = $class->SUPER::new($execute_where, $config);
 
     $self->{execute_where} = $execute_where;
@@ -46,6 +46,7 @@ sub new {
     $self->{device}        = $device;
     $self->{level}         = [ @{$level} ]; # Copy the array
     $self->{index}         = $index;
+    $self->{timestamp}     = $timestamp;
     $self->{message}       = $message;
     $self->{collection}    = $collection;
     $self->{record}        = $record;
@@ -84,6 +85,7 @@ sub command_support {
    print "MESSAGE-LINE YES\n";
    print "MESSAGE-XML NO\n";
    print "EXECUTE-WHERE YES\n";
+   print "TIMESTAMP YES\n";
 }
 
 #define a execute_on_* function for every execute_on you want the script to do
@@ -280,6 +282,7 @@ my $opt_disk;
 my $opt_device;
 my @opt_level;
 my $opt_index;
+my $opt_timestamp;
 my $opt_message;
 my $opt_collection;
 my $opt_record;
@@ -298,6 +301,7 @@ GetOptions(
     'device=s'        => \$opt_device,
     'level=s'         => \@opt_level,
     'index=s'         => \$opt_index,
+    'timestamp=s'     => \$opt_timestamp,
     'message=s'       => \$opt_message,
     'collection=s'    => \$opt_collection,
     'record=s'        => \$opt_record,
@@ -310,7 +314,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_logfile, $opt_text);
+my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_timestamp, $opt_message, $opt_collection, $opt_record, $opt_logfile, $opt_text);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

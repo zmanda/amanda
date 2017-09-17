@@ -25,7 +25,7 @@ use warnings;
   server (amfetchdump)	       client (restore)
 
                             <= FEATURES string
-  DIRECTORY directory	 =>
+  TARGET target	 =>
   HEADER-SEND-SIZE size	 =>				# fe_restore_header_send_size
 			    <= HEADER-READY		# fe_restore_header_ready
   header (size:data)	 =>
@@ -181,7 +181,7 @@ sub read_command {
 
     my $line = $self->getline($ctl_stream);
     $line =~ s/\r?\n$//g;
-    if ($line !~ /^DIRECTORY (.*)/) {
+    if ($line !~ /^TARGET (.*)/) {
 	chomp $line;
 	chop $line;
 	$self->user_message(Amanda::FetchDump::Message->new(
@@ -189,16 +189,16 @@ sub read_command {
 			source_line     => __LINE__,
 			code            => 3300064,
 			severity        => $Amanda::Message::ERROR,
-			expect          => "DIRECTORY",
+			expect          => "TARGET",
 			line            => $line));
 	exit 1;
     }
-    $self->{'directory'} = Amanda::Util::unquote_string($1);
+    $self->{'target'} = Amanda::Util::unquote_string($1);
 
     ($self->{'restore'}, my $result_message) = Amanda::Restore->new();
     $self->{'restore'}->restore(
 		'source-fd'	 => $self->rfd($self->{'data_stream'}),
-		'directory'	 => $self->{'directory'},
+		'target'	 => $self->{'target'},
 		'extract'	 => 1,
 		'decompress'     => 1,
 		'decrypt'        => 1,
@@ -437,7 +437,7 @@ sub get_xfer_dest {
     my $self = shift;
 
     $self->{'extract'}->set_restore_argv(
-		directory => $self->{'directory'},
+		target => $self->{'target'},
 		use_dar   => $self->{'use_dar'},
 		state_filename => $self->{'state_filename'},
 		application_property => $self->{'application_property'});
@@ -828,7 +828,7 @@ sub sendctlline {
     }
 }
 
-# send a MESSAGE on the CTL stream, but only if the remote has
+# send a MESSAGE on the MESG stream, but only if the remote has
 # fe_amrecover_message
 sub sendmessage {
     my $self = shift;

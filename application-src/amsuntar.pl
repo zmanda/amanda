@@ -41,7 +41,7 @@ use Amanda::Util qw( :constants quote_string );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp, $directory, $suntar_path) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp, $target, $suntar_path) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{suntar}            = $Amanda::Constants::SUNTAR;
@@ -75,8 +75,8 @@ sub new {
     $self->{include_optional}  = $include_optional;
     $self->{block_size}        = $bsize;
     $self->{extended_header}   = $ext_header;
-    $self->{extended_attrib}   = $ext_attrib; 
-    $self->{directory}         = $directory;
+    $self->{extended_attrib}   = $ext_attrib;
+    $self->{target}            = $target;
 
     $self->{regex} = ();
     my $regex;
@@ -165,7 +165,7 @@ sub command_selfcheck {
       return;
    }
    print "OK " . $self->{device} . "\n";
-   print "OK " . $self->{directory} . "\n" if defined $self->{directory};
+   print "OK " . $self->{target} . "\n" if defined $self->{target};
    $self->validate_inexclude();
 }
 
@@ -438,16 +438,16 @@ sub command_restore {
    my $self = shift;
 
    chdir(Amanda::Util::get_original_cwd());
-   if (defined $self->{directory}) {
-      if (!-d $self->{directory}) {
-         $self->print_to_server_and_die("Directory $self->{directory}: $!",
+   if (defined $self->{target}) {
+      if (!-d $self->{target}) {
+         $self->print_to_server_and_die("Directory $self->{target}: $!",
 				        $Amanda::Script_App::ERROR);
       }
-      if (!-w $self->{directory}) {
-         $self->print_to_server_and_die("Directory $self->{directory}: $!",
+      if (!-w $self->{target}) {
+         $self->print_to_server_and_die("Directory $self->{target}: $!",
 				        $Amanda::Script_App::ERROR);
       }
-      chdir($self->{directory});
+      chdir($self->{target});
    }
 
    my $cmd = "-xpv";
@@ -542,8 +542,8 @@ sub build_command {
       $cmd .= "f";
       push @optparams,"-";
    }
-   if ($self->{directory}) {
-      push @optparams, "-C", $self->{directory};
+   if ($self->{target}) {
+      push @optparams, "-C", $self->{target};
    } else {
       push @optparams, "-C", $self->{device};
    }
@@ -589,37 +589,37 @@ my @opt_normal;
 my @opt_strange;
 my @opt_error;
 my $opt_lang;
-my $opt_directory;
+my $opt_target;
 my $opt_suntar_path;
 
 my @orig_argv = @ARGV;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
-    'version'		  => \$opt_version,
-    'config=s'     	  => \$opt_config,
-    'host=s'       	  => \$opt_host,
-    'disk=s'       	  => \$opt_disk,
-    'device=s'     	  => \$opt_device,
-    'level=s'      	  => \$opt_level,
-    'index=s'      	  => \$opt_index,
-    'message=s'    	  => \$opt_message,
-    'collection=s' 	  => \$opt_collection,
-    'exclude-list=s'      => \@opt_exclude_list,
-    'exclude-optional=s'  => \$opt_exclude_optional,
-    'include-list=s'      => \@opt_include_list,
-    'include-optional=s'  => \$opt_include_optional,
-    'record'       	  => \$opt_record,
-    'block-size=s'        => \$opt_bsize,
-    'extended-attributes=s'  => \$opt_ext_attrib,
-    'extended-headers=s'     => \$opt_ext_head,
-    'ignore=s'               => \@opt_ignore,
-    'normal=s'               => \@opt_normal,
-    'strange=s'              => \@opt_strange,
-    'error=s'                => \@opt_error,
-    'lang=s'                 => \$opt_lang,
-    'directory=s'            => \$opt_directory,
-    'suntar-path=s'          => \$opt_suntar_path,
+    'version'		    => \$opt_version,
+    'config=s'		    => \$opt_config,
+    'host=s'		    => \$opt_host,
+    'disk=s'		    => \$opt_disk,
+    'device=s'		    => \$opt_device,
+    'level=s'		    => \$opt_level,
+    'index=s'		    => \$opt_index,
+    'message=s'		    => \$opt_message,
+    'collection=s'	    => \$opt_collection,
+    'exclude-list=s'        => \@opt_exclude_list,
+    'exclude-optional=s'    => \$opt_exclude_optional,
+    'include-list=s'        => \@opt_include_list,
+    'include-optional=s'    => \$opt_include_optional,
+    'record'		    => \$opt_record,
+    'block-size=s'          => \$opt_bsize,
+    'extended-attributes=s' => \$opt_ext_attrib,
+    'extended-headers=s'    => \$opt_ext_head,
+    'ignore=s'              => \@opt_ignore,
+    'normal=s'              => \@opt_normal,
+    'strange=s'             => \@opt_strange,
+    'error=s'               => \@opt_error,
+    'lang=s'                => \$opt_lang,
+    'taget|directory=s'     => \$opt_target,
+    'suntar-path=s'         => \$opt_suntar_path,
 ) or usage();
 
 if (defined $opt_version) {
@@ -631,7 +631,7 @@ if (defined $opt_lang) {
     $ENV{LANG} = $opt_lang;
 }
 
-my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_directory, $opt_suntar_path);
+my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error, $opt_target, $opt_suntar_path);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

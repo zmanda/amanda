@@ -494,7 +494,8 @@ check_options(
 	    if (dle->include_list) nb_include += dle->include_list->nb_element;
 
 	    if (nb_exclude > 0) file_exclude = build_exclude(dle, &mlist);
-	    if (nb_include > 0) file_include = build_include(dle, &mlist);
+	    if (nb_include > 0)
+		file_include = build_include(dle, dle->device, &mlist);
 	    for (mesglist = mlist; mesglist != NULL; mesglist = mesglist->next){
 		message_t *message = mesglist->data;
 		if (message_get_severity(message) > MSG_INFO)

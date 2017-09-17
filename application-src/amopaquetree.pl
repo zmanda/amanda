@@ -78,7 +78,7 @@ sub supports_record { my ( $class ) = @_; return 1; }
 sub supports_client_estimate { my ( $class ) = @_; return 1; }
 sub supports_multi_estimate { my ( $class ) = @_; return 1; }
 
-sub max_level { my ( $self ) = @_; return 9; }
+sub max_level { my ( $class ) = @_; return 'DEFAULT'; }
 
 sub rsync_is_unusable {
     my ( $self ) = @_;
@@ -106,13 +106,12 @@ sub new {
     my $self = $class->SUPER::new($refopthash);
 
     $self->{'rsyncexecutable'} = $self->{'options'}->{'rsyncexecutable'};
-    if ( !defined $self->{'rsyncexecutable'} ) {
-	$self->{'rsyncexecutable'} = 'rsync';
-    }
 
     $self->{'localstatedir'} = $self->{'options'}->{'localstatedir'};
 
     $self->{'rsyncstatesdir'} = $self->{'options'}->{'rsyncstatesdir'};
+    # This default is computed here, based on the final value of localstatedir,
+    # so it can't just be stored in declare_common_options as a fixed default.
     if ( !defined $self->{'rsyncstatesdir'} ) {
         my ( $dirpart, $filepart ) = $self->local_state_path();
 	$self->{'rsyncstatesdir'} =
@@ -133,6 +132,7 @@ sub declare_common_options {
     push @$refoptspecs,
         ( 'rsyncexecutable=s', 'rsyncstatesdir=s', 'rsynctempbatchdir=s',
 	  'localstatedir=s' );
+    $class->store_option($refopthash, 'rsyncexecutable', 'rsync');
 }
 
 sub local_state_path {

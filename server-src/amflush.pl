@@ -139,7 +139,7 @@ sub pick_datestamp {
 		undef @datestamp;
 		last;
 	    }
-	    push @datestamp, $ts[ord($char)-ord('A')];
+	    push @datestamp, $ts[ord($c)-ord('A')];
 	}
     }
     return @datestamp;

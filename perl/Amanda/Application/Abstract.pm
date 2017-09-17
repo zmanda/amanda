@@ -156,9 +156,10 @@ will be stored in I<opthash> with key exactly I<o>, in exactly the way
 C<GetOptions> normally would, I<unless> the option-declaring method had planted
 a code reference there in order to more strictly validate the option. In that
 case, of course I<$opthash{o}> is the code reference, and the final value will
-be stored with key C<opt_>I<o> instead. Because of that convention, entries in
-I<opthash> with an C<opt_> prefix will otherwise be ignored; avoid declaring
-options/properties whose actual names start with C<opt_>.
+be stored with a different key derived from I<o> instead, which will not collide
+with any usable C<GetOptions> option name. Option-validation code should use
+C<store_option> to store the final, validated value; it uses the same
+convention, so the value will be properly retrieved here.
 
 =cut
 
@@ -166,12 +167,12 @@ sub new {
     my ( $class, $refopthash ) = @_;
     my %options = ();
     for ( my ($k, $v) ; ($k, $v) = each %{$refopthash} ; ) {
-	next if $k =~ /^opt_/;
+	next if 0 == ord($k);
 	if ( "CODE" ne ref $v ) {
 	    $options{$k} = $v;
 	}
 	else {
-	    $options{$k} = $refopthash->{"opt_".$k}
+	    $options{$k} = $refopthash->{"\x00".$k}
 	}
     }
     my $self = $class->SUPER::new($options{'config'});
@@ -264,11 +265,47 @@ property I<foo> may contain the snippet:
 
     $refopthash->{'foo'} = $class->boolean_property_setter($refopthash);
 
-At present, properties with scalar or hash values can be supported (the
+Properties with scalar or hash values can be supported (the
 setter sub can tell by the number of parameters passed to it by
-C<Getopt::Long>), but not multiple-valued ones accumulating into an array
-(which can't be distinguished from the scalar case just by looking at what
-comes from C<Getopt::Long>).
+C<Getopt::Long>), as well as multiple-valued ones accumulating into an array,
+provided an array has been installed with C<store_option> before the options
+are parsed.
+
+    store_option(\%opthash, optname, [k,], v)
+
+Store into I<%opthash> a value I<v> of option I<optname>. For an option that
+accumulates in a hash (the optspec ends with C<%>), a key I<k> (not undef)
+must also be supplied. If I<%opthash> already contains an array at the
+corresponding slot, the option will be assumed multivalued, and I<v> will be
+appended to the array.
+
+This sub implements the same convention observed by C<new()> for locating the
+option value if C<$opthash{$optname}> is a code reference (validation sub).
+
+=cut
+
+sub store_option {
+    my ( $class, $refopthash, $optname, $k, $v);
+    $class = shift;
+    $refopthash = shift;
+    $optname = shift;
+    $k = shift if 2 == scalar(@_);
+    $v = shift;
+    my $existing_val = $refopthash->{$optname};
+    if ( defined($existing_val) and "CODE" eq ref $existing_val ) {
+	$optname = "\x00" . $optname;
+	$existing_val = $refopthash->{$optname};
+    }
+    if ( defined $k ) {
+	$refopthash->{$optname}->{$k} = $v;
+    }
+    elsif ( defined($existing_val) and "ARRAY" eq ref $existing_val ) {
+	push @{$refopthash->{$optname}}, $v;
+    }
+    else {
+	$refopthash->{$optname} = $v;
+    }
+}
 
 =head2 C<boolean_property_setter>
 
@@ -296,12 +333,7 @@ sub boolean_property_setter {
 	        ' for boolean property ' .
 	        Amanda::Util::quote_string("$optname");
 	}
-	if ( defined $k ) {
-	    $refopthash->{'opt_'.$optname}->{$k} = $b;
-	}
-	else {
-	    $refopthash->{'opt_'.$optname} = $b;
-	}
+	$class->store_option($refopthash, $optname, $k, $b);
     };
 }
 
@@ -315,8 +347,8 @@ I<\@optspecs> the declarations of whatever options are valid for the
 corresponding subcommand, using the syntax described in L<Getopt::Long>.
 It does not need to touch I<\%opthash>, but may store a code reference at the
 name of any option, to apply stricter validation when the option is parsed.
-In that case, the code reference should ultimately store the validated value
-into I<\%opthash> at a key derived by prefixing C<opt_> to the option name.
+In that case, the code reference should ultimately call C<store_option>
+to store the validated value.
 
 For each valid I<subcommand>, there must be a
 C<declare_>I<subcommand>C<_options> class method, which will be called
@@ -500,17 +532,20 @@ sub supports {
     return (defined $s) ? $class->$s() : 0;
 }
 
-=head1 INSTANCE METHODS SUPPORTING C<support> SUBCOMMAND
-
 =head2 C<max_level>
 
 Returns the maximum C<level> supported, Default if not overridden is zero,
-indicating no support for incremental backup. An instance method because the
-value could depend on state only known after instantiation.
+indicating no support for incremental backup. Where incremental backup is
+supported, this should return a fixed, maximum level supported (regardless
+of the current state of prior levels backed up, which will limit the level
+that can be requested in practice). May return a number or the string "DEFAULT",
+which will be replaced with the largest value Amanda supports.
 
 =cut
 
-sub max_level { my ( $self ) = @_; return 0; }
+sub max_level { my ( $class ) = @_; return 0; }
+
+# INSTANCE METHODS SUPPORTING C<support> SUBCOMMAND
 
 #
 # Private instance method to produce a support-line for a boolean
@@ -557,11 +592,14 @@ my $checked_recover_path = sub {
     return $rp;
 };
 
-# max_level (instance method) should return 0..99
+# max_level (class method) should return 0..$amanda_max or 'DEFAULT'
 my $checked_max_level = sub {
     my ( $self ) = @_;
-    my $mxl = $self->max_level();
-    die "unusable max_level: ".$mxl unless defined $mxl and $mxl =~ /^\d\d?$/;
+    my $amanda_max = 399;
+    my $mxl = blessed($self)->max_level();
+    $mxl = $amanda_max if 'DEFAULT' eq $mxl;
+    die "unusable max_level: ".$mxl
+      unless defined $mxl and $mxl =~ /^\d{1,3}$/ and 0 + $mxl <= $amanda_max;
     return 0 + $mxl;
 };
 
@@ -872,7 +910,7 @@ sub check_level_option {
     $lvls = [ $lvls ] if ref($lvls) ne 'ARRAY';
 
     for my $lvl (@$lvls) {
-        if ( 0 > $lvl  or  $lvl > $self->max_level() ) {
+	if ( 0 > $lvl  or  $lvl > $self->$checked_max_level() ) {
             $self->print_to_server('out of range --level '.$lvl,
 	                           $Amanda::Script_App::ERROR);
         }

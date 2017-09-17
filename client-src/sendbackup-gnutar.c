@@ -573,7 +573,7 @@ start_backup(
 	if (dle->include_list) nb_include+=dle->include_list->nb_element;
 
 	if (nb_exclude > 0) file_exclude = build_exclude(dle, &mlist);
-	if (nb_include > 0) file_include = build_include(dle, &mlist);
+	if (nb_include > 0) file_include = build_include(dle, dirname, &mlist);
 	g_slist_free(mlist); // MUST also free the message
 
 	cmd = g_strjoin(NULL, amlibexecdir, "/", "runtar", NULL);

@@ -121,7 +121,7 @@ sub run {
     my $self = shift;
     my %params = @_;
 
-    $self->{'directory'} = $params{'directory'};
+    $self->{'target'} = $params{'target'};
     $self->{'extract-client'} = $params{'extract-client'};
     $self->{'assume'} = $params{'assume'};
 
@@ -204,7 +204,7 @@ sub run {
 		'decompress'            => 1,
 		'decrypt'               => 1,
 		'device'                => $params{'device'},
-		'directory'             => undef,
+		'target'                => undef,
 		'dumpspecs'             => \@spec,
 		'exact-match'           => $params{'exact-match'},
 		'extract'               => 1,

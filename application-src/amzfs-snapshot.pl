@@ -113,12 +113,12 @@ sub command_pre_dle_amcheck {
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	if (defined $self->{mountpoint}) {
 	    $self->print_to_server("mountpoint $self->{mountpoint}", $Amanda::Script_App::GOOD);
-	    $self->print_to_server("directory $self->{directory}", $Amanda::Script_App::GOOD);
+	    $self->print_to_server("directory $self->{target}", $Amanda::Script_App::GOOD);
 	    $self->print_to_server("dir $self->{dir}", $Amanda::Script_App::GOOD);
 	}
 	$self->print_to_server("snapshot $self->{snapshot}", $Amanda::Script_App::GOOD);
 	$self->zfs_create_snapshot("check");
-	print "PROPERTY directory $self->{directory}\n";
+	print "PROPERTY target $self->{target}\n";
     }
 }
 
@@ -140,7 +140,7 @@ sub command_pre_dle_estimate {
     $self->zfs_snapshot_set_value();
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot("estimate");
-	print "PROPERTY directory $self->{directory}\n";
+	print "PROPERTY target $self->{target}\n";
     }
 }
 
@@ -157,7 +157,7 @@ sub command_pre_dle_backup {
     $self->zfs_snapshot_set_value();
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot("backup");
-	print "PROPERTY directory $self->{directory}\n";
+	print "PROPERTY target $self->{target}\n";
     }
 }
 

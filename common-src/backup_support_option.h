@@ -25,33 +25,56 @@
  * Authors: the Amanda Development Team.  Its members are listed in a
  * file named AUTHORS, in the root directory of this distribution.
  */
-/* 
- * $Id: amandad.h,v 1.5 2006/07/19 17:46:07 martinea Exp $
- *
- */
 
-#ifndef AMANDAD_UTIL_H
-#define AMANDAD_UTIL_H
+#ifndef BACKUP_SUPPORT_OPTION_H
+#define BACKUP_SUPPORT_OPTION_H
 
-#include "amanda.h"
-#include "amfeatures.h"
-#include "am_sl.h"
-#include "amutil.h"		/* for bstrncmp() */
+typedef enum {
+    RECOVER_PATH_CWD    = 0,
+    RECOVER_PATH_REMOTE = 1,
+} recover_path_t;
 
-typedef struct g_option_s {
-    char *str;
-    am_feature_t *features;
-    char *hostname;
-    char *auth;
-    int maxdumps;
-    char *config;
-    char *timestamp;
-    char *data_shm_control_name;
-} g_option_t;
+typedef struct backup_support_option_s {
+    int config;
+    int host;
+    int disk;
+    int max_level;
+    int index_line;
+    int index_xml;
+    int message_line;
+    int message_selfcheck_json;
+    int message_estimate_json;
+    int message_backup_json;
+    int message_restore_json;
+    int message_validate_json;
+    int message_index_json;
+    int message_xml;
+    int record;
+    int include_file;
+    int include_list;
+    int include_list_glob;
+    int include_optional;
+    int exclude_file;
+    int exclude_list;
+    int exclude_list_glob;
+    int exclude_optional;
+    int collection;
+    int calcsize;
+    int client_estimate;
+    int multi_estimate;
+    int smb_recover_mode;
+    int features;
+    gboolean dar;
+    int state_stream;
+    int timestamp;
+    data_path_t data_path_set;  /* bitfield of all allowed data-path */
+    recover_path_t recover_path;
+    int recover_dump_state_file;
+    int discover;
+    int execute_where;
+} backup_support_option_t;
 
-
-void init_g_options(g_option_t *g_options);
-g_option_t *parse_g_options(char *str, int verbose);
-void free_g_options(g_option_t *);
+backup_support_option_t *backup_support_option(char       *program,
+					       GPtrArray **errarray);
 
 #endif

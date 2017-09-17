@@ -49,10 +49,13 @@ sub new {
     my ( $class, $execute_where, $refopthash ) = @_;
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
+    return $self;
+}
+
+sub check_properties {
+    my ( $self ) = @_;
+
     $self->{'svnadminexecutable'} = $self->{'options'}->{'svnadminexecutable'};
-    if ( !defined $self->{'svnadminexecutable'} ) {
-	$self->{'svnadminexecutable'} = 'svnadmin';
-    }
 
     $self->{'svnrepository'} = $self->{'options'}->{'svnrepository'};
     if ( !defined $self->{'svnrepository'} ) {
@@ -60,13 +63,20 @@ sub new {
 	    'script requires svnrepository property');
     }
 
-    return $self;
+    $self->{'incremental'} = $self->{'options'}->{'incremental'};
 }
 
 sub declare_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_options($refopthash, $refoptspecs);
-    push @$refoptspecs, ( 'svnadminexecutable=s', 'svnrepository=s' );
+    push @$refoptspecs, ( 'svnadminexecutable=s', 'svnrepository=s',
+			  'clean-logs=s', 'incremental=s' );
+
+    $class->store_option($refopthash, 'svnadminexecutable', 'svnadmin');
+    $class->store_option($refopthash,
+	'clean-logs', $class->boolean_property_setter($refopthash));
+    $class->store_option($refopthash,
+	'incremental', $class->boolean_property_setter($refopthash));
 }
 
 sub command_pre_dle_estimate {
@@ -74,12 +84,16 @@ sub command_pre_dle_estimate {
 
     my $repo = $self->{'svnrepository'};
     my $dst = $self->{'options'}->{'device'};
+    my @opts;
+
+    push @opts, '--clean-logs' if $self->{'options'}->{'clean-logs'};
+    push @opts, '--incremental' if $self->{'incremental'};
 
     make_path($dst);
-    remove_tree($dst, {keep_root => 1});
+    remove_tree($dst, {keep_root => 1}) unless $self->{'incremental'};
 
     my $rslt = system {$self->{'svnadminexecutable'}} (
-        'svnadmin', 'hotcopy', $repo, $dst );
+	'svnadmin', 'hotcopy', @opts, '--', $repo, $dst );
 }
 
 package main;

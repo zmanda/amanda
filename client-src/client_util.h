@@ -41,49 +41,7 @@
 #include "amandad.h"		/* for g_option_t */
 #include "amxml.h"		/* for dle_t	  */
 #include "ammessage.h"		/* message_t      */
-
-typedef enum {
-    RECOVER_PATH_CWD    = 0,
-    RECOVER_PATH_REMOTE = 1,
-} recover_path_t;
-
-typedef struct backup_support_option_s {
-    int config;
-    int host;
-    int disk;
-    int max_level;
-    int index_line;
-    int index_xml;
-    int message_line;
-    int message_selfcheck_json;
-    int message_estimate_json;
-    int message_backup_json;
-    int message_restore_json;
-    int message_validate_json;
-    int message_index_json;
-    int message_xml;
-    int record;
-    int include_file;
-    int include_list;
-    int include_list_glob;
-    int include_optional;
-    int exclude_file;
-    int exclude_list;
-    int exclude_list_glob;
-    int exclude_optional;
-    int collection;
-    int calcsize;
-    int client_estimate;
-    int multi_estimate;
-    int smb_recover_mode;
-    int features;
-    gboolean dar;
-    int state_stream;
-    data_path_t data_path_set;  /* bitfield of all allowed data-path */
-    recover_path_t recover_path;
-    int recover_dump_state_file;
-    int discover;
-} backup_support_option_t;
+#include "backup_support_option.h"
 
 typedef struct client_script_result_s {
     int exit_code;
@@ -112,7 +70,7 @@ typedef struct regex_s {
 #define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}
 
 char *build_exclude(dle_t *dle, messagelist_t *mlist);
-char *build_include(dle_t *dle, messagelist_t *mlist);
+char *build_include(dle_t *dle, char const *dirname, messagelist_t *mlist);
 void parse_options(char *str,
 		   dle_t *dle,
 		   am_feature_t *features,
@@ -139,8 +97,6 @@ void application_property_add_to_argv(GPtrArray *argv_ptr,
 int merge_dles_properties(dle_t *dles, int verbose);
 
 char *fixup_relative(char *name, char *device);
-backup_support_option_t *backup_support_option(char *program,
-					       GPtrArray **errarray);
 
 void run_client_script(script_t     *script,
 		       execute_on_t  execute_on,

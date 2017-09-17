@@ -3617,6 +3617,7 @@ startup_dump(
     int has_hostname;
     int has_device;
     int has_config;
+    int has_timestamp;
     int has_data_shm_control_name;
     GString *reqbuf;
     gboolean legacy_api;
@@ -3634,11 +3635,12 @@ startup_dump(
     (void)ssh_keys;		/* Quiet unused parameter warning */
     (void)auth;			/* Quiet unused parameter warning */
 
-    has_features = am_has_feature(their_features, fe_req_options_features);
-    has_maxdumps = am_has_feature(their_features, fe_req_options_maxdumps);
-    has_hostname = am_has_feature(their_features, fe_req_options_hostname);
-    has_config   = am_has_feature(their_features, fe_req_options_config);
-    has_device   = am_has_feature(their_features, fe_sendbackup_req_device);
+    has_features  = am_has_feature(their_features, fe_req_options_features);
+    has_maxdumps  = am_has_feature(their_features, fe_req_options_maxdumps);
+    has_hostname  = am_has_feature(their_features, fe_req_options_hostname);
+    has_config    = am_has_feature(their_features, fe_req_options_config);
+    has_timestamp = am_has_feature(their_features, fe_req_options_timestamp);
+    has_device    = am_has_feature(their_features, fe_sendbackup_req_device);
     has_data_shm_control_name = am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name);
     crc32_init(&crc_data_in);
     crc32_init(&crc_data_out);
@@ -3670,6 +3672,9 @@ startup_dump(
 
     if (has_config)
         g_string_append_printf(reqbuf, "config=%s;", get_config_name());
+
+    if (has_timestamp)
+	g_string_append_printf(reqbuf, "timestamp=%s;", dumper_timestamp);
 
     if (has_data_shm_control_name &&
 #ifdef FAILURE_CODE

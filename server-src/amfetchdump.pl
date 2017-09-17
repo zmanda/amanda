@@ -133,7 +133,7 @@ Usage: amfetchdump [-c|-C|-l] [-p|-n] [-a] [-O directory] [-d device]
     [--reserve-tapes] [--release-tapes]
     [-decrypt|--no-decrypt|--server-decrypt|--client-decrypt]
     [--decompress|--no-decompress|--server-decompress|--client-decompress]
-    [(--extract | --extract-client=HOSTNAME) --directory directory
+    [(--extract | --extract-client=HOSTNAME) --target target
      [--data-path (amanda|directtcp)]
      [--application-property='NAME=VALUE']*
      [--include-file file]*
@@ -165,7 +165,7 @@ my ($opt_config, $opt_no_reassembly, $opt_compress, $opt_compress_best, $opt_pip
     $opt_decrypt, $opt_server_decrypt, $opt_client_decrypt,
     $opt_decompress, $opt_server_decompress, $opt_client_decompress,
     $opt_init, $opt_restore,
-    $opt_extract, $opt_extract_client, $opt_directory, $opt_data_path,
+    $opt_extract, $opt_extract_client, $opt_target, $opt_data_path,
     %application_property,
     $opt_include_file, $opt_include_list, $opt_include_list_glob,
     $opt_exclude_file, $opt_exclude_list, $opt_exclude_list_glob,
@@ -202,7 +202,7 @@ GetOptions(
     'client-decompress' => \$opt_client_decompress,
     'extract' => \$opt_extract,
     'extract-client:s' => \$opt_extract_client,
-    'directory=s' => \$opt_directory,
+    'target|directory=s' => \$opt_target,
     'data-path=s' => \$opt_data_path,
     'application-property=s' => sub {
 	    my ($name, $value) = split '=', $_[1];
@@ -282,22 +282,22 @@ if (defined $opt_extract and defined $opt_extract_client) {
     usage();
 }
 
-if (defined $opt_directory and !defined $opt_extract and
+if (defined $opt_target and !defined $opt_extract and
     !defined $opt_extract_client) {
-    print STDERR "--directorty set but neither --extract or --extract-client\n";
+    print STDERR "--target set but neither --extract or --extract-client\n";
     usage();
 }
 
-if (!defined $opt_directory and
+if (!defined $opt_target and
     defined $opt_extract) {
     print STDERR "--directorty must be set when --extract is set\n";
-} elsif (!defined $opt_directory and
+} elsif (!defined $opt_target and
 	 defined $opt_extract_client) {
-    print STDERR "--directorty must be set when --extract_client is set\n";
+    print STDERR "--target must be set when --extract_client is set\n";
     usage();
 }
-if (defined $opt_directory and (defined $opt_extract ||
-				defined $opt_extract_client)) {
+if (defined $opt_target and (defined $opt_extract ||
+			     defined $opt_extract_client)) {
     if (!$opt_decompress && !$opt_client_decompress && !$opt_server_decompress) {
 	if (defined $opt_extract) {
 	    $opt_decompress = 1;
@@ -366,15 +366,15 @@ if (defined($opt_compress_best) and
     usage();
 }
 
-if (defined $opt_chdir && defined $opt_directory) {
-    if ($opt_chdir ne $opt_directory) {
-	print STDERR("-O and --directory must be the same");
+if (defined $opt_chdir && defined $opt_target) {
+    if ($opt_chdir ne $opt_target) {
+	print STDERR("-O and --target must be the same");
 	exit 1;
     }
 } elsif (defined $opt_chdir) {
-    $opt_directory = $opt_chdir;
-} elsif (defined $opt_directory) {
-    $opt_chdir = $opt_directory;
+    $opt_target = $opt_chdir;
+} elsif (defined $opt_target) {
+    $opt_chdir = $opt_target;
 }
 
 #$decompress = $ALWAYS;
@@ -452,7 +452,7 @@ sub main {
 		'decompress'		=> $opt_decompress,
 		'decrypt'		=> $opt_decrypt,
 		'device'		=> $opt_device,
-		'directory'		=> $opt_directory,
+		'target'		=> $opt_target,
 		'dumpspecs'		=> \@opt_dumpspecs,
 		'exact-match'		=> $opt_exact_match,
 		'exclude-file'		=> $opt_exclude_file,
