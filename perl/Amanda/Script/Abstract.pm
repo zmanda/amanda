@@ -95,9 +95,10 @@ use Text::ParseWords;
 Run the script: grab the I<execute-where> from C<ARGV[0]>, be sure it is a known
 one, set up for option parsing, parse the options, construct an instance
 passing all the supplied options (which will include the config name, needed
-by the C<Amanda::Script> constructor), and finally C<do()> the I<execute-where>,
-where C<do> is inherited from C<Amanda::Script_App> by way of
-C<Amanda::Script>.
+by the C<Amanda::Script> constructor). Call C<check_properties> (except when
+C<execute_where> is C<support>, for which properties are not passed), and
+finally C<do()> the I<execute-where>, where C<do> is inherited from
+C<Amanda::Script_App> by way of C<Amanda::Script>.
 
 =cut
 
@@ -123,7 +124,9 @@ sub run {
 
     my $script = $class->new($execute_where, \%opthash);
 
-    $script->do($execute_where);
+    $script->check_properties() unless $execute_where =~ m/^support$/i;
+
+    $script->do($execute_where); # do() is case-insensitive, you see.
 }
 
 =head2 C<new>
@@ -248,6 +251,21 @@ sub boolean_property_setter {
     };
 }
 
+=head1 INSTANCE METHODS FOR VALIDATING OPTION/PROPERTY VALUES
+
+=head2 C<check_properties>
+
+Called for every script stage except C<support> (for which properties are
+not passed). Can do any general checking of properties, such as that any
+required ones are present. If not overridden, this version does nothing,
+successfully.
+
+=cut
+
+sub check_properties {
+    my ( $self ) = @_;
+}
+
 =head1 CLASS METHOD FOR DECLARING ALLOWED OPTIONS / PROPERTIES
 
 =head2 C<declare_options>
@@ -269,7 +287,52 @@ sub declare_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     push @$refoptspecs,
         ( 'config=s', 'host=s', 'disk=s', 'device=s', 'level=i@',
-	  'execute-where=s' );
+	  'execute-where=s', 'timestamp=s' );
+}
+
+=head1 INSTANCE METHODS IMPLEMENTING SUBCOMMANDS
+
+=cut
+
+#
+# Private instance method to produce a support-line for a boolean
+# capability:  $self->say_supports($confstring, $supname) where $confstring
+# is the text to output on fd1, followed by a space and YES or NO and a
+# newline, as determined by calling $class->supports($supname). For now, this
+# stub simply assumes YES for everything; if the support situation for scripts
+# grows more interesting in the future, this should be expanded to behave as
+# the Amanda::Application::Abstract version does: unquote the test expr. :)
+#
+
+my $say_supports = sub {
+    my ( $self, $confstring, $supname ) = @_;
+    my $yn = 'blessed($self)->supports($supname)' ? "YES" : "NO";
+    print $confstring . " " . $yn . "\n";
+};
+
+=head2 C<command_support>
+
+For now, there are not many script support variables and not much variation
+in them among scripts. If not overridden, this will assert support for
+C<CONFIG>, C<HOST>, C<DISK>, C<MESSAGE-LINE>, C<EXECUTE-WHERE>, and (if
+living in a recent-enough Amanda) C<TIMESTAMP>. If more script complexity
+develops and warrants it, this should be expanded into a routine that calls
+boolean I<supports_...> methods, as in C<Amanda::Application::Abstract>.
+
+=cut
+
+sub command_support {
+    my ( $self ) = @_;
+
+    $self->$say_supports(   	"CONFIG", "config");
+    $self->$say_supports(   	  "HOST", "host");
+    $self->$say_supports(   	  "DISK", "disk");
+    $self->$say_supports( "MESSAGE-LINE", "message_line");
+    $self->$say_supports("EXECUTE-WHERE", "execute_where");
+
+    if ( defined $Amanda::Feature::fe_req_options_timestamp ) {
+        $self->$say_supports("TIMESTAMP", "timestamp");
+    }
 }
 
 1;

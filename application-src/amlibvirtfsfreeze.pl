@@ -48,6 +48,12 @@ sub new {
     my ( $class, $execute_where, $refopthash ) = @_;
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
+    return $self;
+}
+
+sub check_properties {
+    my ( $self ) = @_;
+
     $self->{'virshexecutable'} = $self->{'options'}->{'virshexecutable'};
 
     $self->{'freezeorthaw'} = $self->{'options'}->{'freezeorthaw'};
@@ -64,8 +70,6 @@ sub new {
     }
 
     $self->{'mountpoint'} = $self->{'options'}->{'mountpoint'};
-
-    return $self;
 }
 
 sub declare_options {
@@ -79,7 +83,7 @@ sub declare_options {
        );
     # properties that have defaults and are not mandatory to receive with the
     # request can be initialized here as an alternative to checking for !defined
-    # and applying the defaults in new().
+    # and applying the defaults in check_properties().
     $class->store_option($refopthash, 'virshexecutable', 'virsh');
     $class->store_option($refopthash,      'mountpoint', []);
 }

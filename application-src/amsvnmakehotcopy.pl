@@ -49,6 +49,12 @@ sub new {
     my ( $class, $execute_where, $refopthash ) = @_;
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
+    return $self;
+}
+
+sub check_properties {
+    my ( $self ) = @_;
+
     $self->{'svnadminexecutable'} = $self->{'options'}->{'svnadminexecutable'};
 
     $self->{'svnrepository'} = $self->{'options'}->{'svnrepository'};
@@ -58,8 +64,6 @@ sub new {
     }
 
     $self->{'incremental'} = $self->{'options'}->{'incremental'};
-
-    return $self;
 }
 
 sub declare_options {

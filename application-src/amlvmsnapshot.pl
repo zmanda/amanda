@@ -49,6 +49,12 @@ sub new {
     my ( $class, $execute_where, $refopthash ) = @_;
     my $self = $class->SUPER::new($execute_where, $refopthash);
 
+    return $self;
+}
+
+sub check_properties {
+    my ( $self ) = @_;
+
     $self->{'lvmexecutable'} = $self->{'options'}->{'lvmexecutable'};
     $self->{'mountexecutable'} = $self->{'options'}->{'mountexecutable'};
     $self->{'umountexecutable'} = $self->{'options'}->{'umountexecutable'};
@@ -78,8 +84,6 @@ sub new {
     }
 
     $self->{'mountopts'} = $self->{'options'}->{'mountopts'};
-
-    return $self;
 }
 
 sub declare_options {
@@ -97,7 +101,7 @@ sub declare_options {
        );
     # properties that have defaults and are not mandatory to receive with the
     # request can be initialized here as an alternative to checking for !defined
-    # and applying the defaults in new().
+    # and applying the defaults in check_properties().
     $class->store_option($refopthash,    'lvmexecutable', 'lvm');
     $class->store_option($refopthash,  'mountexecutable', 'mount');
     $class->store_option($refopthash, 'umountexecutable', 'umount');
