@@ -1575,20 +1575,20 @@ debug("plan: " . Data::Dumper::Dumper($plan->{'dumps'}));
 	}
         $use_dar |= !$filtered && !$hdr->{'compressed'} && !$hdr->{'encrypted'};
 
+	my $copy_hdr = Amanda::Header->from_string($hdr->to_string(128,32768));
 	# write the header to the destination if requested
-	$hdr->{'blocksize'} = Amanda::Holding::DISK_BLOCK_BYTES;
+	$copy_hdr->{'blocksize'} = Amanda::Holding::DISK_BLOCK_BYTES;
 
 	if ($params{'feedback'}->can('clean_hdr')) {
-	    $params{'feedback'}->clean_hdr($hdr);
+	    $params{'feedback'}->clean_hdr($copy_hdr);
 	}
-
 	if ($params{'feedback'}->can('set')) {
-	    my $err = $params{'feedback'}->set($hdr, $dle, $params{'application_property'});
+	    my $err = $params{'feedback'}->set($copy_hdr, $dle, $params{'application_property'});
 	    return $steps->{'failure'}->($err) if defined $err;
 	}
 
 	if ($params{'feedback'}->can('send_header')) {
-	    my $err = $params{'feedback'}->send_header($hdr);
+	    my $err = $params{'feedback'}->send_header($copy_hdr);
 	    return $steps->{'failure'}->($err) if defined $err;
 	} elsif (defined $params{'header'} or defined $params{'header-file'} or defined $params{'header-fd'}) {
 	    my $hdr_fh;

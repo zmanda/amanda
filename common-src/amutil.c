@@ -2092,6 +2092,9 @@ parse_crc(
     if (sscanf(s, "%x:%lld", &c, &size) == 2) {
         crc->crc = c;
         crc->size = size;
+    } else {
+	crc->crc = 0;
+	crc->size = 0;
     }
 }
 

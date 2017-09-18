@@ -1,3 +1,7 @@
+2017-09-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c (parse_crc): Set to 0 on error
+	* perl/Amanda/Restore.pm: Modify a copy of the header
+
 2017-09-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm: Call release with need_another flag.
 	* perl/Amanda/Changer/single.pm (do_release): eject the tevice if
