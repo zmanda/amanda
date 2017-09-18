@@ -618,7 +618,7 @@ GetOptions(
     'strange=s'             => \@opt_strange,
     'error=s'               => \@opt_error,
     'lang=s'                => \$opt_lang,
-    'taget|directory=s'     => \$opt_target,
+    'target|directory=s'    => \$opt_target,
     'suntar-path=s'         => \$opt_suntar_path,
 ) or usage();
 

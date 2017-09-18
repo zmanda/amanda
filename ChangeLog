@@ -1,3 +1,6 @@
+2017-09-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amsuntar.pl: Typo
+
 2017-09-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/ScanInventory.pm: Call release with need_another flag.
 	* perl/Amanda/Changer/single.pm (do_release): eject the tevice if
