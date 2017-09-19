@@ -644,6 +644,7 @@ amtext(
 	    } else {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: bad estimate: %s", tt);
+		amfree(tt);
 		return;
 	    }
 	    while (*ttt == ' ')
@@ -719,6 +720,7 @@ amtext(
 	if (dle->auth != NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: multiple text in %s", last_element_name);
+	    amfree(tt);
 	    return;
 	}
 	dle->auth = tt;
@@ -1039,7 +1041,6 @@ amxml_parse_node_FILE(
     context = g_markup_parse_context_new(&parser, flags, &amgxml, NULL);
 
     while ((line = pgets(file)) != NULL && !gerror) {
-g_debug("line: %s",line);
 	g_markup_parse_context_parse(context, line, strlen(line), &gerror);
 	amfree(line);
     }

@@ -1271,23 +1271,27 @@ check_disk(
 		    nb_error++;
 		    goto common_exit;
 		} else if (!WIFEXITED(status)) {
+		    char *str_signal = g_strdup_printf("%d", WTERMSIG(status));
 		    delete_message(selfcheck_print_message(build_message(
 				AMANDA_FILE, __LINE__, 3600049, MSG_ERROR, 5,
-				"signal", g_strdup_printf("%d", WTERMSIG(status)),
+				"signal", str_signal,
 				"application", dle->program,
 				"hostname", g_options->hostname,
 				"device", dle->device,
 				"disk", dle->disk )));
+		    g_free(str_signal);
 		    nb_error++;
 		    goto common_exit;
 		} else if (WEXITSTATUS(status) != 0) {
+		    char *str_status = g_strdup_printf("%d", WEXITSTATUS(status));
 		    delete_message(selfcheck_print_message(build_message(
 				AMANDA_FILE, __LINE__, 3600050, MSG_ERROR, 5,
-				"exit_status", g_strdup_printf("%d", WEXITSTATUS(status)),
+				"exit_status", str_status,
 				"application", dle->program,
 				"hostname", g_options->hostname,
 				"device", dle->device,
 				"disk", dle->disk )));
+		    g_free(str_status);
 		    nb_error++;
 		    goto common_exit;
 		}
@@ -1636,24 +1640,32 @@ check_space(
     kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
 
     if (fsusage.fsu_bavail_top_bit_set || fsusage.fsu_bavail == 0) {
+	char *str_kbytes = g_strdup_printf("%jd", (intmax_t)kbytes);
         delete_message(selfcheck_print_message(build_message(
 		AMANDA_FILE, __LINE__, 3600069, MSG_ERROR, 3,
-		"required", g_strdup_printf("%jd", (intmax_t)kbytes),
+		"required", str_kbytes,
 		"dirname", dir,
 		"hostname", g_options->hostname)));
+	g_free(str_kbytes);
     } else if (kb_avail < kbytes) {
+	char *str_kb_avail = g_strdup_printf("%jd", kb_avail);
+	char *str_kbytes = g_strdup_printf("%jd", (intmax_t)kbytes);
         delete_message(selfcheck_print_message(build_message(
 		AMANDA_FILE, __LINE__, 3600070, MSG_ERROR, 4,
-		"required", g_strdup_printf("%jd", (intmax_t)kbytes),
-		"avail", g_strdup_printf("%jd", kb_avail),
+		"required", str_kbytes,
+		"avail", str_kb_avail,
 		"dirname", dir,
 		"hostname", g_options->hostname)));
+	g_free(str_kbytes);
+	g_free(str_kb_avail);
     } else {
+	char *str_kb_avail = g_strdup_printf("%jd", kb_avail);
         delete_message(selfcheck_print_message(build_message(
 		AMANDA_FILE, __LINE__, 3600071, MSG_INFO, 3,
-		"avail", g_strdup_printf("%jd", kb_avail),
+		"avail", str_kb_avail,
 		"dirname", dir,
 		"hostname", g_options->hostname)));
+	g_free(str_kb_avail);
     }
 }
 

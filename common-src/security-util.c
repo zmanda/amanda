@@ -140,6 +140,7 @@ sec_close(
     }
     /* keep us from getting here again */
     rh->sech.driver = NULL;
+    amfree(rh->dle_hostname);
     amfree(rh->hostname);
     amfree(rh);
 }

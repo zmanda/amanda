@@ -446,7 +446,7 @@ run_server_script(
 	g_ptr_array_add(argv_ptr, g_strdup("--host"));
 	g_ptr_array_add(argv_ptr, g_strdup(dp->host->hostname));
     }
-    if (dp->name && bsu->disk) {
+    if (dp->name && (!bsu || bsu->disk)) {
 	g_ptr_array_add(argv_ptr, g_strdup("--disk"));
 	g_ptr_array_add(argv_ptr, g_strdup(dp->name));
     }

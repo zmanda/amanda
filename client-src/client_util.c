@@ -176,7 +176,7 @@ build_name(
 	afilename = g_strconcat(dbgdir, filename, NULL);
 	*mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600004, MSG_ERROR, 2,
-				"filename", g_strdup(afilename),
+				"filename", afilename,
 				errno     , errno));
 	amfree(afilename);
 	amfree(filename);
@@ -242,7 +242,7 @@ add_include(
 	*mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600005,
 				optional ? MSG_INFO :  MSG_ERROR, 1,
-				"include", g_strdup(ainc)));
+				"include", ainc));
     }
     else {
 	char *incname = ainc+2;
@@ -343,7 +343,7 @@ build_exclude(
 				__FILE__, __LINE__, 4600002,
 				dle->exclude_optional && errno == ENOENT ? MSG_INFO : MSG_ERROR,
 				2,
-				"exclude", g_strdup(exclname),
+				"exclude", exclname,
 				"errno"  , errno));
 		    }
 		    amfree(exclname);
@@ -353,7 +353,7 @@ build_exclude(
 	} else {
 	    *mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600003, MSG_ERROR, 2,
-				"exclude", g_strdup(filename),
+				"exclude", filename,
 				"errno"  , errno));
 	}
     }
@@ -413,7 +413,7 @@ build_include(
 				__FILE__, __LINE__, 4600006,
 				dle->include_optional && errno == ENOENT ? MSG_INFO : MSG_ERROR,
 				2,
-				"include", g_strdup(inclname),
+				"include", inclname,
 				"errno"  , errno));
 		   }
 		   amfree(inclname);
@@ -423,7 +423,7 @@ build_include(
 	} else {
 	    *mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600007, MSG_ERROR, 2,
-				"include", g_strdup(filename),
+				"include", filename,
 				"errno"  , errno));
 	}
     }
