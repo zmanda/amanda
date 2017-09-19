@@ -3979,6 +3979,7 @@ read_flush(
     cmddata_t     *cmddata;
     char        **ids_array;
     char        **one_id;
+    gboolean      free_holdp;
 
     (void)cookie;	/* Quiet unused parameter warning */
 
@@ -4077,6 +4078,7 @@ read_flush(
 	destname = unquote_string(qdestname);
 
 	if (!holding_file_get_dumpfile(destname, &file)) {
+	    amfree(destname);
 	    continue;
 	}
 
@@ -4143,7 +4145,7 @@ read_flush(
 
 	holdp = build_diskspace(destname);
 	if (holdp == NULL) continue;
-
+	free_holdp = TRUE;
 	/* for all ids */
 	ids_array = g_strsplit(ids, ",", 0);
 	for (one_id = ids_array; *one_id != NULL; one_id++) {
@@ -4178,6 +4180,7 @@ read_flush(
 			sp->taper_attempted = 0;
 			sp->act_size = holding_file_size(destname, 0);
 			sp->holdp = holdp;
+			free_holdp = FALSE;
 			sp->timestamp = (time_t)0;
 			sp->disk = dp;
 
@@ -4188,8 +4191,12 @@ read_flush(
 		// What to do with the holding file?
 	    }
 	}
+	if (free_holdp) {
+	    free_assignedhd(holdp);
+	}
 	g_strfreev(ids_array);
 	dumpfile_free_data(&file);
+	amfree(destname);
     }
     amfree(inpline);
     close_infofile();

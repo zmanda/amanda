@@ -220,6 +220,7 @@ ambind(
 		 char *socket_name = g_strdup_printf("%d", sockfd[1]);
 		 close(sockfd[0]);
 		 dup2(pipe_stderr[1], 2);
+		 safe_fd2(-1, 0, sockfd[1]);
 		 execl(ambind_path, ambind_path, socket_name, NULL);
 		 error("error [exec %s: %s]", ambind_path, strerror(errno));
 		 exit(1);

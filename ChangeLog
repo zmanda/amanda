@@ -1,3 +1,13 @@
+2017-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amutil.c (ambind): Close fds before forking ambind
+	* client-src/client_util.c, client-src/selfcheck.c,
+	  client-src/senddiscover.c, common-src/ammessage.c,
+	  common-src/amxml.c, common-src/security-util.c,
+	  server-src/amcheck.c, server-src/driver.c,
+	  server-src/server_util.c,
+	  server-src/xfer-dest-holding.c: Fix small memory leak
+	* ndmp-src/ndml_conn.c: Comment a memory leak
+
 2017-09-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c (parse_crc): Set to 0 on error
 	* perl/Amanda/Restore.pm: Modify a copy of the header

@@ -1059,7 +1059,9 @@ finalize_impl(
     }
 
     self->mem_ring = NULL;
-
+    amfree(self->filename);
+    amfree(self->first_filename);
+    amfree(self->new_filename);
     self->chunk_header = NULL;
 
     /* chain up */
