@@ -2015,11 +2015,18 @@ unget_conftoken(void)
 static int
 conftoken_getc(void)
 {
-    if(current_line == NULL)
-	return getc(current_file);
-    if(*current_char == '\0')
+    int c;
+    if (current_line == NULL)
+	c = getc(current_file);
+    else if (*current_char == '\0')
 	return -1;
-    return(*current_char++);
+    else
+	c = (*current_char++);
+
+    if (c >= -1 && c <= 255)
+	return c;
+    else
+	return 0;
 }
 
 static int

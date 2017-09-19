@@ -510,7 +510,8 @@ shm_holding_thread_wait_for_block(
 	   !elt->shm_ring->mc->eof_flag &&
 	   !(elt->shm_ring->mc->written - elt->shm_ring->mc->readx > HOLDING_BLOCK_BYTES)) {
 
-	shm_ring_sem_wait(elt->shm_ring, elt->shm_ring->sem_read);
+	if (shm_ring_sem_wait(elt->shm_ring, elt->shm_ring->sem_read) != 0)
+	    break;
     }
 
     usable = MIN(elt->shm_ring->mc->written - elt->shm_ring->mc->readx, HOLDING_BLOCK_BYTES+1);

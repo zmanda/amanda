@@ -1,4 +1,8 @@
 2017-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c (conftoken_getc): Untaint the returned value
+	* server-src/xfer-dest-holding.c: Check result of shm_ring_sem_wait
+
+2017-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c (ambind): Close fds before forking ambind
 	* client-src/client_util.c, client-src/selfcheck.c,
 	  client-src/senddiscover.c, common-src/ammessage.c,
