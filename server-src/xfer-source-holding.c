@@ -146,20 +146,19 @@ holding_thread(
 	write_offset = self->mem_ring->write_offset;
 	written = self->mem_ring->written;
         readx = self->mem_ring->readx;
-        g_mutex_unlock(self->mem_ring->mutex);
 
 	// wait for mem_ring space;
 	while (mem_ring_size - (written - readx) < producer_block_size) {
 	    if (elt->cancelled) {
+		g_mutex_unlock(self->mem_ring->mutex);
 		goto return_eof;
 	    }
-	    g_mutex_lock(self->mem_ring->mutex);
 	    g_cond_wait(self->mem_ring->free_cond, self->mem_ring->mutex);
 	    write_offset = self->mem_ring->write_offset;
 	    written = self->mem_ring->written;
             readx = self->mem_ring->readx;
-	    g_mutex_unlock(self->mem_ring->mutex);
 	}
+	g_mutex_unlock(self->mem_ring->mutex);
 
 	if (self->fd == -1) {
 	   if (!start_new_chunk(self))
@@ -186,8 +185,8 @@ holding_thread(
 	    crc32_add((uint8_t *)self->mem_ring->buffer + self->mem_ring->write_offset, bytes_read, &elt->crc);
 	    write_offset += bytes_read;
 	    write_offset %= mem_ring_size;
-	    self->mem_ring->data_avail += bytes_read;
 	    g_mutex_lock(self->mem_ring->mutex);
+	    self->mem_ring->data_avail += bytes_read;
 	    self->mem_ring->written += bytes_read;
 	    self->mem_ring->write_offset = write_offset;
 	    if (self->mem_ring->data_avail >= consumer_block_size) {
