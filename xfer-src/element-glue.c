@@ -733,21 +733,20 @@ read_to_mem_ring(
 	g_mutex_lock(self->mem_ring->mutex);
 	write_offset = self->mem_ring->write_offset;
         read_offset = self->mem_ring->read_offset;
-	g_mutex_unlock(self->mem_ring->mutex);
 	while (!(write_offset == read_offset) &&
 	       !((write_offset < read_offset) &&
 		 (read_offset - write_offset > producer_block_size)) &&
 	       !((write_offset > read_offset) &&
 		 (mem_ring_size - write_offset + read_offset > producer_block_size))) {
 	    if (elt->cancelled) {
+		g_mutex_unlock(self->mem_ring->mutex);
 		goto return_eof;
 	    }
-	    g_mutex_lock(self->mem_ring->mutex);
 	    g_cond_wait(self->mem_ring->free_cond, self->mem_ring->mutex);
 	    write_offset = self->mem_ring->write_offset;
 	    read_offset = self->mem_ring->read_offset;
-	    g_mutex_unlock(self->mem_ring->mutex);
 	}
+	g_mutex_unlock(self->mem_ring->mutex);
 
 	/* read a buffer from upstream */
 	if (write_offset + self->mem_ring->producer_block_size <= mem_ring_size) {
@@ -756,8 +755,8 @@ read_to_mem_ring(
 		crc32_add((uint8_t *)self->mem_ring->buffer+write_offset, len, &elt->crc);
 		write_offset += len;
 		write_offset %= mem_ring_size;
-		self->mem_ring->data_avail += len;
 		g_mutex_lock(self->mem_ring->mutex);
+		self->mem_ring->data_avail += len;
 		self->mem_ring->written += len;
 		self->mem_ring->write_offset = write_offset;
 		if (self->mem_ring->data_avail >= consumer_block_size) {

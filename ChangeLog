@@ -1,3 +1,7 @@
+2017-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c: Fix deadlock
+	* server-src/xfer-source-holding.c: Fix deadlock
+
 2017-09-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amutil.c (parse_crc): Set to 0 on error
 	* perl/Amanda/Restore.pm: Modify a copy of the header
