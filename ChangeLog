@@ -1,3 +1,7 @@
+2017-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* xfer-src/element-glue.c: Fix deadlock
+	* server-src/xfer-source-holding.c: Fix deadlock
+
 2017-09-19  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c (conftoken_getc): Untaint the returned value
 	* server-src/xfer-dest-holding.c: Check result of shm_ring_sem_wait
