@@ -388,7 +388,7 @@ get_logline(
 
     logline[0] = '\0';
     while(1) {
-	lline = fgets(logline + loffset, line_size - loffset, logf);
+	lline = untaint_fgets(logline + loffset, line_size - loffset, logf);
 	if (lline == NULL) {
 	    break; /* EOF */
 	}

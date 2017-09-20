@@ -158,4 +158,5 @@ char *get_original_cwd(void);
 
 gsize read_fully(int fd, void *buf, gsize count, int *err);
 
+char *untaint_fgets(char *s, int size, FILE *stream);
 #endif /* __AM_FILE_H__ */
