@@ -626,7 +626,7 @@ get_master_process(
     if (!log)
 	return g_strdup("UNKNOWN");
 
-    while(fgets(line, 1024, log)) {
+    while (untaint_fgets(line, 1024, log)) {
 	if (strncmp_const(line, "INFO ") == 0) {
 	    s = line+5;
 	    ch = *s++;

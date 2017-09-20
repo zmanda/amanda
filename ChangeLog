@@ -1,4 +1,9 @@
 2017-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c (untaint_fgets): New function
+	* common-src/file.h (untaint_fgets): Add prototype
+	* server-src/logfile.c, server-src/server_util.c: Use untaint_fgets
+
+2017-09-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* xfer-src/element-glue.c: Fix deadlock
 	* server-src/xfer-source-holding.c: Fix deadlock
 

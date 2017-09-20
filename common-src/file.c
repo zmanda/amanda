@@ -975,6 +975,35 @@ gsize read_fully(int fd, void *buf, gsize count, int *err)
     return ret;
 }
 
+char *
+untaint_fgets(
+    char *s,
+    int size,
+    FILE *stream)
+{
+    char *untainted_line = malloc(size);
+    char *line = fgets(untainted_line, size, stream);
+    char *s1 = s;
+
+    if (!line) {
+	g_free(untainted_line);
+	return NULL;
+    }
+
+    while (*line != '\0') {
+	if ((unsigned int)*line <= 255)
+	    *s1 = *line;
+	else
+	    *s1 = '\0';
+	line++;
+	s1++;
+    }
+    *s1 = '\0';
+    g_free(untainted_line);
+    return s;
+}
+
+
 #ifdef TEST
 
 int
