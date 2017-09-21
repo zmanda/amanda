@@ -397,6 +397,7 @@ sub declare_backup_options {
     $class->declare_common_options($refopthash, $refoptspecs);
     push @$refoptspecs, (
         'message=s', 'index=s', 'level=i', 'record', 'state-stream=i' );
+    push @$refoptspecs, "timestamp=s" if $class->supports('timestamp');
 }
 
 =head2 C<declare_restore_options>
@@ -457,6 +458,7 @@ sub declare_estimate_options {
         'message=s', 'level=i'.($class->supports('multi_estimate') ? '@' : '' )
     );
     push @$refoptspecs, "calcsize" if $class->supports('calcsize');
+    push @$refoptspecs, "timestamp=s" if $class->supports('timestamp');
 }
 
 =head2 C<declare_selfcheck_options>
@@ -829,9 +831,17 @@ sub command_support {
     print "RECOVER-PATH ".($self->$checked_recover_path())."\n";
 
     $self->$say_supports(             "AMFEATURES", "amfeatures");
-    $self->$say_supports("RECOVER-DUMP-STATE-FILE", "recover_dump_state_file");
-    $self->$say_supports(                    "DAR", "dar");
-    $self->$say_supports(           "STATE-STREAM", "state_stream");
+
+    if ( defined $Amanda::Feature::fe_amidxtaped_dar ) {
+	$self->$say_supports("RECOVER-DUMP-STATE-FILE",
+			     "recover_dump_state_file");
+	$self->$say_supports(                    "DAR", "dar");
+	$self->$say_supports(           "STATE-STREAM", "state_stream");
+    }
+
+    if ( defined $Amanda::Feature::fe_req_options_timestamp ) {
+        $self->$say_supports("TIMESTAMP", "timestamp");
+    }
 }
 
 =head2 METHODS FOR THE C<backup> SUBCOMMAND
