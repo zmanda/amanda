@@ -118,25 +118,34 @@ sub usage {
 **NOTE** this interface is under development and will change in future releases!
 
 Usage: amvault [-o configoption...] [-q] [--quiet] [-n] [--dry-run]
-	   [--fulls-only] [--latest-fulls] [--incrs-only] [--export]
-	   [--src-timestamp src-timestamp] [--exact-match]
-	   [--src-storage storage] [--dest-storage storage]
+	   [--exact-match] [--export] [--no-interactivity]
+	   [--src-labelstr labelstr] [--src-storage storage]
+	   [--dest-storage storage]
+	   [--fulls-only] [--latest-fulls] [--incrs-only]
+	   [--src-timestamp src-timestamp]
 	   config
 	   [hostname [ disk [ date [ level [ hostname [...] ] ] ] ]]
 
     -o: configuration override (see amanda(8))
-    -q: quiet progress messages
+    -q/--quiet: quiet progress messages
+
+    --dest-storage: destination storage for vaulting operation
+
+    --exact-match: parse host and disk as exact values
+    --export: move completed destination volumes to import/export slots
+    --src-labelstr: only copy dumps from volumes matching labelstr
+    --src-storage: only copy dumps from specified storage
+
     --fulls-only: only copy full (level-0) dumps
     --latest-fulls: copy the latest full of every dle
     --incrs-only: only copy incremental (level > 0) dumps
-    --export: move completed destination volumes to import/export slots
     --src-timestamp: the timestamp of the Amanda run that should be vaulted
 
-Copies data on storage src-storage from the run with timestamp <src-timestamp>
-onto volumes on the storage <dest-storage>.  If <src-timestamp> is "latest",
-then the most recent run of amdump or amflush will be used.  If any dumpspecs
-are included (<host-expr> and so on), then only dumps matching those dumpspecs
-will be dumped.  At least one of --fulls-only, --src-timestamp, or a dumpspec
+Copies dumps selected by the specified filters onto volumes on the storage
+<dest-storage>.  If <src-timestamp> is "latest", then the most recent run of
+amdump or amflush will be used.  If any dumpspecs are included (<host-expr> and
+so on), then only dumps matching those dumpspecs will be dumped.  At least one
+of --fulls-only, --latest-fulls, --incrs-only, --src-timestamp, or a dumpspec
 must be specified.
 
 EOF
@@ -242,14 +251,15 @@ if ($is_tty) {
 } else {
     $delay = 15000; # 15 seconds
 }
+$|++;
 
 sub user_msg {
     my $msg = shift;
 
-    if ($msg->{'code'} == 2400008) {
+    if ($msg->{'code'} == 2500008) {
 	if ($is_tty) {
 	    if (!$last_is_size) {
-		print STDOUT "\n";
+		#print STDOUT "\n";
 		$last_is_size = 1;
 	    }
 	    print STDOUT "\r" . $msg . " ";
