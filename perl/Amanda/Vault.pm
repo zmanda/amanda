@@ -52,7 +52,7 @@ sub local_message {
     } elsif ($self->{'code'} == 2500007) {
 	return "No dumps found";
     } elsif ($self->{'code'} == 2500008) {
-	return "$self->{'bytes_written'} KB";
+	return ($self->{'bytes_written'}/1024)." kbytes written";
     } elsif ($self->{'code'} == 2500010) {
 	return "No import/export slots available; skipping export";
     } elsif ($self->{'code'} == 2500011) {
@@ -294,7 +294,8 @@ sub create_status_file {
     $self->amdump_log("status file $self->{'id'}:" .  "$self->{status_filename}");
     print {$self->{status_fh}} "0";
 
-    # create timer callback, firing every 5s (=5000msec)
+    # create timer callback, firing every 'delay' ms (as specified by caller
+    # when this Vault was created))
     if (!$self->{'timer'}) {
 	$self->{timer} = Amanda::MainLoop::timeout_source($self->{'delay'});
 	$self->{timer}->set_callback(sub {
@@ -304,7 +305,9 @@ sub create_status_file {
 		print {$self->{status_fh}} $size, '     ';
 		$self->{status_fh}->flush();
 
-		if ($self->{'is_tty'}) {
+		# print progress message if we're running on a tty,
+		# unless --quiet option was given.
+		if ($self->{'is_tty'} && !$self->{'quiet'}) {
 		    $self->user_msg(Amanda::Vault::Message->new(
 				source_filename => __FILE__,
 				source_line     => __LINE__,
@@ -887,13 +890,13 @@ sub quit {
 	    $self->{'dst'}{'scribe'}->quit(
 		finished_cb => $steps->{'quit_scribe_finished'});
 	} else {
-	    $steps->{'quit_clerk'}->();
+	    $steps->{'quit_scribe_finished'}->();
 	}
     };
 
     step quit_scribe_finished => sub {
-	$self->{'dst'}{'scan'}->quit();
 	my ($err) = @_;
+	$self->{'dst'}{'scan'}->quit();
 	if ($err) {
 	    $self->user_msg($err);
 	    debug("scribe error: $err");

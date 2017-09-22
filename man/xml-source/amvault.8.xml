@@ -89,7 +89,7 @@ timestamp <option>src-timestamp</option> onto volumes using the storage
 
 <para>The dumps to be read from secondary media can be specified by any
 combination of dump specifications, <option>--fulls-only</option>,
-<option>--incrs-only</option>, and
+<option>--latest-fulls</option>, <option>--incrs-only</option>, and
 <option>--src-timestamp</option>.  At least one must be specified, lest
 amvault attempt to vault all dumps in the catalog.  See <manref
     name="amanda-match" vol="7"/> for more information on dump
@@ -132,7 +132,12 @@ parameters there.  Then reference that tapetype in the amvault invocation:
   <varlistentry>
   <term><option>--dest-storage</option> <replaceable>dest-storage</replaceable></term>
   <listitem>
-<para>Dumps are written to that storage</para>
+<para>The vaulted dumps are written to the specified storage.</para>
+
+<para>If the <replaceable>vault-storage</replaceable> option is specified
+in &amconf;, amvault will use that storage as the default destination.
+If not, a destination storage must be specific on the amvault command
+line.</para>
   </listitem>
   </varlistentry>
 
@@ -184,22 +189,32 @@ import/export slots, where they can be more easily removed by an operator.
   <varlistentry>
   <term><option>--no-interactivity</option></term>
   <listitem>
-<para>Disable interactivity if a source volume is not found.</para>
+<para>Disable interactivity if a source or destination volume is not
+found.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><option>--quiet</option></term><term><option>-q</option></term>
   <listitem>
-<para>Eliminate non-error messages, and is useful when running amvault from
-cron.</para>
+<para>Suppress the progress messages normally printed to the terminal
+as dumps are being copied.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--src-labelstr</option> <replaceable>labelstr</replaceable></term>
+  <listitem>
+<para>Only dumps from volumes matching labelstr are copied.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><option>--src-storage</option> <replaceable>src-storage</replaceable></term>
   <listitem>
-<para>Dumps are read only from that storage</para>
+<para>Only dumps found on the specified storage are copied.
+(If this option is not given, all available source storages will be
+searched.)</para>
   </listitem>
   </varlistentry>
 
