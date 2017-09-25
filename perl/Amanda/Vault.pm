@@ -896,7 +896,7 @@ sub quit {
 
     step quit_scribe_finished => sub {
 	my ($err) = @_;
-	$self->{'dst'}{'scan'}->quit();
+	$self->{'dst'}{'scan'}->quit() if defined $self->{'dst'}{'scan'};
 	if ($err) {
 	    $self->user_msg($err);
 	    debug("scribe error: $err");
