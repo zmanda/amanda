@@ -1,3 +1,6 @@
+2017-09-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Vault.pm: Quit the taperscan only if it is defined
+
 2017-09-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: Fix for tty output, improve usage output
 	* server-src/amvault.pl: Fix for message 2500008, quiet, and always
