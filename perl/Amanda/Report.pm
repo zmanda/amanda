@@ -976,8 +976,10 @@ sub _handle_dumper_line
 	my $x;
 	if ($info[4] eq '[sec') {
 	    $x = 5;
-	} else {
+	} elsif ($info[6] eq '[sec') {
 	    $x = 7; #native and client crc
+	} else {
+	    $x = 8; #native, client crc and server crc
 	}
         my ( $sec, $kb, $kps, $orig_kb ) = @info[ $x, $x+2, $x+4, $x+6 ];
 	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';

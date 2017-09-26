@@ -918,7 +918,7 @@ sub do_backup {
 	    log_end_multiline();
 	} else {
 	    print {$self->{'mesg_fh'}} "backup done: " . Amanda::Util::quote_string($self->{'diskname'}) . "\n";
-	    log_add_full($L_SUCCESS, "dumper", "$self->{'hostname'} $self->{'qdiskname'} $self->{'timestamp'} $self->{'hdr'}->{'dumplevel'} $self->{'native_crc'} $self->{'client_crc'} $self->{'server_crc'} [sec $self->{'dump_time'} kb $kb kps $kps orig-kb $self->{'orig_size'}]");
+	    log_add_full($L_SUCCESS, "dumper", "$self->{'hostname'} $self->{'qdiskname'} $self->{'timestamp'} $self->{'hdr'}->{'dumplevel'} $self->{'native_crc'} $self->{'client_crc'} [sec $self->{'dump_time'} kb $kb kps $kps orig-kb $self->{'orig_size'}]");
 	}
 	log_add_full($L_SUCCESS, "chunker", "$self->{'hostname'} $self->{'qdiskname'} $self->{'timestamp'} $self->{'hdr'}->{'dumplevel'} $self->{'server_crc'} [sec $self->{'dump_time'} kb $kb kps $kps]");
 	$steps->{'quit'}->();
