@@ -1,11 +1,27 @@
+                Release Notes for amanda-3.4.6
+
+* fix planner looping
+* fix overflow in S3 device
+* fix compilation on OpenBSD
+* fix race in amarchive reader
+* fix amflush (flush date selected by user)
+* fix local auth, use getaddrinfo to find if the host is local
+* fix dumper cancelling the shm_ring with a STRANGE result
+* fix chunker hang
+* Improve taperscan with chg-single and interactivity
+
+
                 Release Notes for amanda-3.4.5
+
 * fix amvault
 * fix taper hang
 * fix memory leak in amrecover
 * fix config parser when -o option
 * fix compilation on FreeBSD
 
+
                 Release Notes for amanda-3.4.4
+
 * checkdump
     - Verify all copies of a dump
 * diskflat device

@@ -1,3 +1,15 @@
+Changes in release 3.4.6
+
+   * fix planner looping
+   * fix overflow in S3 device
+   * fix compilation on OpenBSD
+   * fix race in amarchive reader
+   * fix amflush (flush date selected by user)
+   * fix local auth, use getaddrinfo to find if the host is local
+   * fix dumper cancelling the shm_ring with a STRANGE result
+   * fix chunker hang
+   * Improve taperscan with chg-single and interactivity
+
 Changes in release 3.4.5
    * fix amvault
    * fix taper hang
