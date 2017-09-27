@@ -103,7 +103,57 @@ BEGIN{
 			  disk[$6]=$12;
 			  level[$6]=$14;
 			}
-			else if( $7 == "FILE-WRITE") file_write++;
+			else if( $7=="PORT-DUMP"){
+			  file_dump++;
+			  dmpr_strt[$6]=$4;
+			  host[$6]=$12;
+			  disk[$6]=$14;
+			  level[$6]=$16;
+			}
+			else if( $7 == "SHM-DUMP") {
+			  file_write++;
+			  dmpr_strt[$6]=$4;
+			  host[$6]=$12;
+			  disk[$6]=$14;
+			  level[$6]=$16;
+			}
+			else if( $7 == "FILE-WRITE") {
+			  file_write++;
+			  dmpr_strt[$6]=$4;
+			  host[$6]=$10;
+			  disk[$6]=$12;
+			  level[$6]=$14;
+			}
+			else if( $7 == "SHM-WRITE") {
+			  if (match($6, /^chunker/)) {
+			    file_write++;
+			    dmpr_strt[$6]=$4;
+			    host[$6]=$10;
+			    disk[$6]=$12;
+			    level[$6]=$13;
+			  } else {	# taper
+			    file_write++;
+			    dmpr_strt[$6]=$4;
+			    host[$6]=$10;
+			    disk[$6]=$11;
+			    level[$6]=$12;
+			  }
+			}
+			else if( $7 == "PORT-WRITE") {
+			  if (match($6, /^chunker/)) {
+			    file_write++;
+			    dmpr_strt[$6]=$4;
+			    host[$6]=$10;
+			    disk[$6]=$12;
+			    level[$6]=$13;
+			  } else {	# taper
+			    file_write++;
+			    dmpr_strt[$6]=$4;
+			    host[$6]=$10;
+			    disk[$6]=$11;
+			    level[$6]=$12;
+			  }
+			}
 			else if( $7 == "START-TAPER") fil = $9;
 		}
 		else if( $2=="finished-cmd") cmd_fin++;
@@ -115,6 +165,8 @@ BEGIN{
 		else if( $2=="tape" && $3=="size") ; #eat this line
 		else if( $2=="dump" && $3=="failed") ; #eat this line
 		else if( $2=="taper" && $3=="failed") ; #eat this line
+		else if( $2=="taper" && $4=="storage") ; #eat this line
+		else if( $2=="to" && $3=="write") ; #eat this line
 		else if( $2=="dumping" || $2 == "adding" || $2 == "holding-disks:") 
 		  dumping++; # eat this line
 		else if( $2!="FINISHED" && $2 != "pid" && $2 != "taper-tryagain"&& $2!="startaflush:")
@@ -154,10 +206,14 @@ function do_state(){		# state line is printed out after driver
 # $5 = "free"		# $6 = "kps:"		# $7 =  network_free_kps
 # $8 = "space:"		# $9 = space		# $10 = "taper:"
 # $11 = "writing"/"idle"# $12 = "idle-dumpers:"
-# $13 = #idle 		# $14 = "qlen"		# $15 = "tapeq:"
-# $16 = #waiting	# $17 = "runq:"		# $18 = #not started 
-# $19 = "roomq"		# $20 = #roomq		# $21 = "wakeup:"
-# $22 = #wakeup		# $23 = "driver-idle:"	# $23 = status
+# $13 = #idle 		# $14 = "qlen"
+# $15 = "tapeq"		# $16 = "taperX:"	# $17 = number:number
+# 15-16-17 are repeatable
+# $18 = "runq:"		# $19 = #not started 
+# $20 = "directq:"	# $21 = #directq
+# $22 = "roomq"		# $23 = #roomq
+# $24 = "wakeup:"	# $25 = #wakeup
+# $26 = "driver-idle:"	# $27 = status
 
 	cnt++;					# number of event
 	time = $4/time_scale;
@@ -203,7 +259,17 @@ function do_state(){		# state line is printed out after driver
 		printf plot_fmt, time, state_old, time, state >> "tape_idle";
 	state_old = state;
 
-	run = $18*count_scale+que_raise;
+	runq = 15
+	tapeq = 0;
+	while ($runq == "tapeq") {
+	    xtapeq=runq+2
+	    split($xtape1, xxtapeq, ":")
+	    tapeq += $xxtapeq[0] + xxtapeq[1]
+	    runq += 3
+	}
+
+	runq += 1
+	run = $runq*count_scale+que_raise;
 	if( run != run_old )
 		printf plot_fmt, time, run_old, time, run >> "run_queue";
 	run_old = run;
@@ -213,7 +279,7 @@ function do_state(){		# state line is printed out after driver
 		printf plot_fmt, time, finish_old, time, finish >> "finished";
 	finish_old = finish;
 
-	tapeQ = $16 * count_scale+que_raise;
+	tapeQ = tapeq * count_scale+que_raise;
 	if( tapeQ != tapeQ_old )
 		printf plot_fmt, time, tapeQ_old, time, tapeQ >> "tape_queue";
 	tapeQ_old = tapeQ;
@@ -336,17 +402,18 @@ function do_quit(){		# this is issued by driver at the end
 
 function do_result(){		# process lines driver: result
 	if($7=="DONE" ) {
-		if( $6=="taper:"){ 		# taper done
-			tsize -= $14;	
+		if( match($6, /^taper/)) {		# taper done
+			tsize -= $14;
 			tout  += $14;
 			tcnt--;	written++;
 		}
-		else { 				# dumperx done 
-		  tsize += (int($15/32)+1)*32; 	# in tape blocks 
+		else if (match($6, /^dumper/)) {	# dumperx done
+		  tsize += (int($17/32)+1)*32;		# in tape blocks
 		  tcnt++;	done++;
 		  xx = host[$6];
 		  d = disk[$6];
 		  l = level[$6];
+print "XX:",xx," : ", $1, $2, $3, $4, $5, $6, $7, $8, $9
 		  host_time[xx]+= ( tt = $4 - dmpr_strt[$6]);
 		  if(xx in disk_list) disk_list[xx] = disk_list[xx] "\n";
 		  disk_list[xx] = disk_list[xx] \
@@ -374,6 +441,16 @@ function do_result(){		# process lines driver: result
 	else { 					# something bad from dumper 
 		if ($7=="FAILED") { failed++;}
 		else if ($7=="TRY-AGAIN"){ try++;}
+		else if ($7=="REQUEST-NEW-TAPE") ;  # ignore from taper
+		else if ($7=="NEW-TAPE") ;  # ignore from taper
+		else if ($7=="READY") ;  # ignore from taper
+		else if ($7=="PARTDONE") ;  # ignore from taper
+		else if ($7=="DUMPER-STATUS") ;  # ignore from taper
+		else if ($7=="CLOSED-VOLUME") ;  # ignore from taper
+		else if ($7=="TAPER-OK") ;  # ignore from taper
+		else if ($7=="TAPER-OK") ;  # ignore from taper
+		else if ($7=="TAPER-OK") ;  # ignore from taper
+		else if ($7=="SHM-NAME") ;  # ignore from chunker or taper
 		else if ($7=="PORT") ;  # ignore from chunker
 		else if ($7=="RQ-MORE-DISK") ;  # FIXME: ignore for now
 		else if ($7=="NO-ROOM")  
@@ -432,7 +509,7 @@ END {
 	      t = host_time[d=j];
 	    }
 	  }
-	  printf "%s\t=> %s\n\n", disk_list[d], pr_time(host_time[d]);
+	  printf "%s: %s\t => %s\n\n", d, disk_list[d], pr_time(host_time[d]);
 #	  printf "%-20.20s Total Dump time %s\n", d, pr_time(host_time[d]);
 	  old_t = t;
 	}

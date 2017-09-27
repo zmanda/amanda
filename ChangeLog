@@ -1,4 +1,7 @@
 2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amplot/amplot.awk: Major fix
+
+2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway
 	* man/xml-source/amvault.8.xml: Improve page
 
