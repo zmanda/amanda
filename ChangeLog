@@ -1,4 +1,7 @@
 2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.5
+
+2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amplot/amplot.awk: Major fix
 
 2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
