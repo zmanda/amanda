@@ -413,7 +413,6 @@ function do_result(){		# process lines driver: result
 		  xx = host[$6];
 		  d = disk[$6];
 		  l = level[$6];
-print "XX:",xx," : ", $1, $2, $3, $4, $5, $6, $7, $8, $9
 		  host_time[xx]+= ( tt = $4 - dmpr_strt[$6]);
 		  if(xx in disk_list) disk_list[xx] = disk_list[xx] "\n";
 		  disk_list[xx] = disk_list[xx] \
