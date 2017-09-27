@@ -53,7 +53,7 @@
             <arg choice='plain'><replaceable>level</replaceable></arg>
             <arg choice='opt'>
               <arg choice='plain'><replaceable>hostname</replaceable></arg>
-              <arg choice='opt'>...</arg>
+              <arg choice='opt'>dumpspec...</arg>
             </arg>
           </arg>
         </arg>
@@ -81,8 +81,8 @@ encouraged!</para>
 <para>Amvault is conceptually equivalent to "amfetchdump | taper".  That is, it reads
 specified dumps from secondary media and re-writes them on tertiary media.</para>
 
-<para><emphasis remap='B'>Amvault</emphasis> Copies data on <option>src-storage</option> from the run with
-timestamp <option>src-timestamp</option> onto volumes using the storage
+<para><emphasis remap='B'>Amvault</emphasis> Copies dumps selected by the
+specified filters onto volumes on the storage
 <option>dest-storage</option>.</para>
 
 <refsect2><title>Secondary Media</title>
@@ -136,7 +136,7 @@ parameters there.  Then reference that tapetype in the amvault invocation:
 
 <para>If the <replaceable>vault-storage</replaceable> option is specified
 in &amconf;, amvault will use that storage as the default destination.
-If not, a destination storage must be specific on the amvault command
+If not, a destination storage must be specified on the amvault command
 line.</para>
   </listitem>
   </varlistentry>
@@ -152,7 +152,8 @@ perform any vaulting operations.</para>
   <varlistentry>
   <term><option>--exact-match</option></term>
   <listitem>
-<para>The host and disk are parsed as exact values</para>
+<para>The host and disk names in the dumpspecs are parsed as exact
+values.</para>
   </listitem>
   </varlistentry>
 
@@ -206,6 +207,18 @@ as dumps are being copied.</para>
   <term><option>--src-labelstr</option> <replaceable>labelstr</replaceable></term>
   <listitem>
 <para>Only dumps from volumes matching labelstr are copied.</para>
+
+<para>labelstr is a Perl regular expression, and will be matched as a
+substring of the volume labels -- it may be necessary to anchor the
+labelstr with "^" and/or "$" in order to prevent undesired partial
+matches.</para>
+
+<para>Also note that if a dump is split across multiple volumes and
+labelstr matches only one of those volumes, amvault will not select
+that dump for copying.  For this reason, it is generally safer to to
+select dumps directly using other filters, in which case amvault will
+be able to retrieve parts of split dumps from whatever volume they were
+originally written to.</para>
   </listitem>
   </varlistentry>
 
