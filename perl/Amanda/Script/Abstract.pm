@@ -124,6 +124,9 @@ sub run {
 
     my $script = $class->new($execute_where, \%opthash);
 
+    Amanda::Debug::debug("Options: " . Data::Dumper->new([$script->{options}])
+				     ->Sortkeys(1)->Terse(1)->Useqq(1)->Dump());
+
     $script->check_properties() unless $execute_where =~ m/^support$/i;
 
     $script->do($execute_where); # do() is case-insensitive, you see.

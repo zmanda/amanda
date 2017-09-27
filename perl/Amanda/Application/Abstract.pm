@@ -141,6 +141,9 @@ sub run {
 
     my $app = $class->new(\%opthash);
 
+    Amanda::Debug::debug("Options: " . Data::Dumper->new([$app->{options}])
+				     ->Sortkeys(1)->Terse(1)->Useqq(1)->Dump());
+
     $app->do($subcommand);
 }
 
@@ -259,7 +262,7 @@ For a common type ... return a sub that can be placed in C<%opthash>
 to validate and store a value of that type. The anonymous sub accepts the
 parameters described at "User-defined subroutines to handle options" for
 C<Getopt::Long>, and will store the validated, converted option value in
-I<%opthash> at a key derived by prefixing C<opt_> to the option name.
+I<%opthash> by calling C<store_option>.
 For example, a C<declare_common_options> method that defines a boolean
 property I<foo> may contain the snippet:
 
@@ -417,10 +420,10 @@ sub declare_restore_options {
     $refopthash->{'dar'} = sub {
         my ( $optname, $optval ) = @_;
 	if ( $optval eq 'YES' ) {
-	    $refopthash->{'opt_'.$optname} = 1;
+	    $class->store_option($refopthash, $optname, 1);
 	}
 	elsif ( $optval eq 'NO' ) {
-	    $refopthash->{'opt_'.$optname} = 0;
+	    $class->store_option($refopthash, $optname, 0);
 	}
 	else {
 	    die "--$optname requires YES or NO";
@@ -464,7 +467,7 @@ sub declare_estimate_options {
 =head2 C<declare_selfcheck_options>
 
 Declare options for the C<selfcheck> subcommand. Unless overridden, this simply
-declares the C<common> ones plus C<message>, C<level>, and C<record>.
+declares the C<common> ones plus C<message>, C<index>, C<level>, and C<record>.
 
 =cut
 
@@ -1059,8 +1062,8 @@ sub check_restore_options {
 
     $self->check_level_option();
 
-    my $dar = $self->{'options'}->{'opt_dar'}; # {'dar'} is a code ref
-    my $rdsf = $self->{'options'}->{'recover_dump_state_file'};
+    my $dar = $self->{'options'}->{'dar'};
+    my $rdsf = $self->{'options'}->{'recover-dump-state-file'};
 
     if ( $dar and ! blessed($self)->supports('dar') ) {
         $self->print_to_server('not supported --dar',
