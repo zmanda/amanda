@@ -1,3 +1,8 @@
+2017-09-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report.pm: Parse server-src on SUCCESS dumper line
+	* server-src/ambackupd.pl: Do not print the server-src on
+	  SUCCESS dumper line
+
 2017-09-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Vault.pm: Quit the taperscan only if it is defined
 
