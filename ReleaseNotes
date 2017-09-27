@@ -1,11 +1,49 @@
+                Release Notes for amanda-3.5
+
+* Use different thread to connect to different client
+* amservice, amcheck, planner, dumper are no longer suid root
+* ambind
+    - new suid program to bind to a privileged port
+* amanda-security.conf
+    - new tcp_port_range, range of privileged tcp port
+    - new udp_port_range, range of privileged udp port
+* S3 device
+    - openstack keystone v3 support
+        - device-property STORAGE-API must be set to SWIFT-3
+        - new PROJECT-NAME device-property
+        - new DOMAIN-NAME device-property
+* amfetchdump
+    - rename --directory argument to --target
+* ampgsql
+    - new --incremental property
+    - new --remove-full-wal property
+    - new --remove-incremental-wal property
+
+
+                Release Notes for amanda-3.4.6
+
+* fix planner looping
+* fix overflow in S3 device
+* fix compilation on OpenBSD
+* fix race in amarchive reader
+* fix amflush (flush date selected by user)
+* fix local auth, use getaddrinfo to find if the host is local
+* fix dumper cancelling the shm_ring with a STRANGE result
+* fix chunker hang
+* Improve taperscan with chg-single and interactivity
+
+
                 Release Notes for amanda-3.4.5
+
 * fix amvault
 * fix taper hang
 * fix memory leak in amrecover
 * fix config parser when -o option
 * fix compilation on FreeBSD
 
+
                 Release Notes for amanda-3.4.4
+
 * checkdump
     - Verify all copies of a dump
 * diskflat device
