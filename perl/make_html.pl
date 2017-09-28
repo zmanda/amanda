@@ -37,7 +37,7 @@ my ($targetdir, @sources) = @ARGV;
 @sources = sort @sources;
 
 my $version = "@VERSION@";
-my $version_comment = @VERSION_COMMENT@;
+my $version_comment = "@VERSION_COMMENT@";
 my $version_major = "@VERSION_MAJOR@";
 my $version_minor = "@VERSION_MINOR@";
 my $version_patch = "@VERSION_PATCH@";
