@@ -1,3 +1,6 @@
+2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/make_html.pl: Fix
+
 2017-09-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* NEWS, ReleaseNotes: 3.4.6
 
