@@ -842,6 +842,53 @@ sub update_local_state {
     $state->{$level} = $opthash;
 }
 
+=head1 INSTANCE METHOD SUPPORTING POST-PARSE OPTION/PROPERTY CHECKS
+
+Option/property checks can happen two ways. The C<declare_..._options>
+methods can set a coarse limit on what options are accepted, and
+C<..._property_setter> methods can further restrict just what values
+are accepted for a particular option. Those will not catch other kinds
+of errors, such as combinations of options that make no sense together,
+missing ones that are needed, etc. Those higher-level checks can be made
+in C<check_..._options> instance methods, after the options have been
+parsed and the app has been instantiated.
+
+=head2 C<check>
+
+    $self->check(boolean-expr, message)
+
+If I<boolean-expr> is false, pass I<message> to C<print_to_server> with a
+severity of C<ERROR>, and remember that a check failed.
+
+    $self->check()
+
+If any previous check (invocation of this method with arguments) failed,
+throw an exception. By dividing the labor this way, several checks can be
+performed, and all detected errors reported to the server, before the final
+C<check()> that terminates execution by throwing the exception.
+
+=cut
+
+sub check {
+    my ( $self, $bval, $message ) = @_;
+    unless ( 1 == scalar(@_) ) {
+	$self->{'checkstate'} = 1 unless exists $self->{'checkstate'};
+	return if $bval;
+	$self->{'checkstate'} = 0;
+	$self->print_to_server($message, $Amanda::Script_App::ERROR);
+	return;
+    }
+    unless ( exists $self->{'checkstate'} ) {
+	die Amanda::Application::ImplementationError->transitionalError(
+	    item => 'check', problem => 'called before anything checked');
+    }
+    unless ( $self->{'checkstate'} ) {
+	die Amanda::Application::InvocationError->transitionalError(
+	    item => 'check', value => $self->{'action'},
+	    problem => 'error(s) detected');
+    }
+}
+
 =head1 INSTANCE METHODS IMPLEMENTING SUBCOMMANDS
 
 =head2 C<command_support>
@@ -921,8 +968,7 @@ sub check_message_index_options {
         # jolly
     }
     elsif ( 'xml' ne $msg or ! blessed($self)->supports('message_xml') ) {
-        $self->print_to_server('invalid --message '.$msg,
-	                       $Amanda::Script_App::ERROR);
+        $self->check(0, 'invalid --message '.$msg,);
     }
 
     my $idx = $self->{'options'}->{'index'};
@@ -933,8 +979,7 @@ sub check_message_index_options {
         # jolly
     }
     elsif ( 'xml' ne $idx or ! blessed($self)->supports('index_xml') ) {
-        $self->print_to_server('invalid --index '.$idx,
-	                       $Amanda::Script_App::ERROR);
+        $self->check(0, 'invalid --index '.$idx);
     }
 }
 
@@ -952,12 +997,9 @@ sub check_backup_options {
     $self->check_message_index_options();
     $self->check_level_option();
 
-    if ( $self->{'options'}->{'record'} and
-         ! blessed($self)->supports('record') ) {
-        $self->print_to_server('not supported --record',
-	                       $Amanda::Script_App::ERROR);
-        delete $self->{'options'}->{'record'};
-    }
+    $self->check(
+	! $self->{'options'}->{'record'} or blessed($self)->supports('record'),
+	'not supported --record');
 }
 
 =head3 C<check_level_option>
@@ -977,10 +1019,8 @@ sub check_level_option {
     $lvls = [ $lvls ] if ref($lvls) ne 'ARRAY';
 
     for my $lvl (@$lvls) {
-	if ( 0 > $lvl  or  $lvl > $self->$checked_max_level() ) {
-            $self->print_to_server('out of range --level '.$lvl,
-	                           $Amanda::Script_App::ERROR);
-        }
+	$self->check(0 <= $lvl  and  $lvl <= $self->$checked_max_level(),
+		     'out of range --level '.$lvl);
     }
 }
 
@@ -1026,6 +1066,7 @@ defined, calls C<write_local_state($self->{'localstate'})>.
 sub command_backup {
     my ( $self ) = @_;
     $self->check_backup_options();
+    $self->check();
 
     $self->{'index_out'} = IO::Handle->new_from_fd(4, 'w');
 
@@ -1128,21 +1169,14 @@ sub check_restore_options {
     my $dar = $self->{'options'}->{'dar'};
     my $rdsf = $self->{'options'}->{'recover-dump-state-file'};
 
-    if ( $dar and ! blessed($self)->supports('dar') ) {
-        $self->print_to_server('not supported --dar',
-	                       $Amanda::Script_App::ERROR);
-    }
+    $self->check( ! $dar or blessed($self)->supports('dar'),
+		  'not supported --dar');
 
-    if ( $rdsf and ! blessed($self)->supports('recover_dump_state_file') ) {
-        $self->print_to_server('not supported --recover-dump-state-file',
-	                       $Amanda::Script_App::ERROR);
-    }
+    $self->check(! $rdsf or blessed($self)->supports('recover_dump_state_file'),
+		 'not supported --recover-dump-state-file');
 
-    if ( $dar xor $rdsf ) {
-        $self->print_to_server(
-	    '--dar=YES and --recover-dump-state-file only make sense together',
-	                       $Amanda::Script_App::ERROR);
-    }
+    $self->check( !( $dar xor $rdsf ),
+	    '--dar=YES and --recover-dump-state-file only make sense together');
 }
 
 =head3 C<emit_dar_request>
@@ -1187,6 +1221,7 @@ if used.
 sub command_restore {
     my ( $self ) = @_;
     $self->check_restore_options();
+    $self->check();
 
     my $dsf;
     my $rdsf = $self->{'options'}->{'recover-dump-state-file'};
@@ -1274,6 +1309,7 @@ On return from C<inner_index>, closes the index-out stream.
 sub command_index {
     my ( $self ) = @_;
     $self->check_index_options();
+    $self->check();
 
     $self->{'index_out'} = IO::Handle->new_from_fd(1, 'w');
     $self->inner_index();
@@ -1331,6 +1367,7 @@ output stream in the required format, assuming a block size of 1K.
 sub command_estimate {
     my ( $self ) = @_;
     $self->check_estimate_options();
+    $self->check();
 
     my $lvls = $self->{'options'}->{'level'};
     if ( !defined $lvls ) {
@@ -1397,6 +1434,7 @@ If not overridden, this simply checks the options and writes a GOOD message.
 sub command_selfcheck {
     my ( $self ) = @_;
     $self->check_selfcheck_options();
+    $self->check();
     $self->print_to_server("$self->{name} (non-overridden selfcheck)",
                            $Amanda::Script_App::GOOD);
 }
