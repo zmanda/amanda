@@ -228,7 +228,7 @@ sub inner_estimate {
     my $ref = $self->rsync_ref_for_level($level);
     my $batch = $self->generate_rsync_batch($ref->dirname(), $dn);
     $batch->seek(0, &Fcntl::SEEK_END);
-    my $sz = Math::BigInt->new($batch->tell()); # XXX precision issues may lurk
+    my $sz = $self->int2big($batch->tell());
     return $sz;
     # $batch is removed once out of scope
 }

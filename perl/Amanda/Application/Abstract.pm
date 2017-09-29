@@ -889,6 +889,49 @@ sub check {
     }
 }
 
+=head1 INSTANCE METHODS USABLE IN SUBCOMMANDS
+
+=head2 C<int2big>
+
+    $self->int2big(n)
+
+Return a C<Math::BigInt> version of I<n>, throwing an exception if it is already
+too late (something that could happen in a perl with 32-bit ints if it has
+already widened I<n> to a float and lost precision).
+
+=cut
+
+sub int2big {
+    my ( $self, $n ) = @_;
+    die Amanda::Application::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $n)
+	if $n - 1 == $n or $n == $n + 1;
+    my $big = Math::BigInt->new($n);
+    die Amanda::Application::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $n)
+	unless $big->is_int();
+    return $big;
+}
+
+=head2 C<big2int>
+
+    $self->big2int(n)
+
+Return the native perl number corresponding to the C<Math::BigInt> I<n>,
+throwing an exception if I<n> gets widened to something (a perl float, say)
+that does not retain precision to the units place.
+
+=cut
+
+sub big2int {
+    my ( $self, $big ) = @_;
+    my $n = $big->numify();
+    die Amanda::Application::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $big->bstr())
+	if $n - 1 == $n or $n == $n + 1;
+    return $n;
+}
+
 =head1 INSTANCE METHODS IMPLEMENTING SUBCOMMANDS
 
 =head2 C<command_support>
@@ -1350,6 +1393,9 @@ sub check_estimate_options {
 
     $self->check_message_index_options();
     $self->check_level_option();
+
+    $self->check(exists $self->{'options'}->{'level'},
+		 "Can't estimate without --level");
 }
 
 =head3 C<command_estimate>
@@ -1369,15 +1415,15 @@ sub command_estimate {
     $self->check_estimate_options();
     $self->check();
 
-    my $lvls = $self->{'options'}->{'level'};
-    if ( !defined $lvls ) {
-        $self->print_to_server_and_die("Can't estimate without --level");
-    }
-
+    my $lvls = $self->{'options'}->{'level'}; # existence already checked
     my $isArray = ref($lvls) eq 'ARRAY';
+
+    # This next is a Should Never Happen, assuming declare_estimate_options has
+    # done its job; hence the ImplementationError rather than simply check().
     if ( $isArray xor blessed($self)->supports('multi_estimate') ){
-        $self->print_to_server_and_die(
-	    "--level usage does not match multi_estimate support");
+        die Amanda::Application::ImplementationError->transitionalError(
+	    item => 'option parsing', value => 'level',
+	    problem => 'mismatch with multi_estimate support');
     }
     $lvls = [ $lvls ] if ! $isArray;
 
@@ -1566,6 +1612,16 @@ sub local_message {
     $lm .= ': ' . $self->{'problem'} if defined $self->{'problem'};
     $lm .= ': ' . $self->{'errnostr'} if defined $self->{'errnostr'};
     return $lm;
+}
+
+# An exception reflecting a loss of numeric precision where that isn't ok.
+package Amanda::Application::PrecisionLossError;
+use base 'Amanda::Application::ImplementationLimitError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'problem'} = 'Loss of numeric precision'
+	unless exists $params{'problem'};
+    $class->SUPER::new(%params);
 }
 
 1;

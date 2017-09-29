@@ -58,7 +58,7 @@ sub declare_restore_options {
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
-    return Math::BigInt->new(-s $fn); # XXX precision issues may lurk here
+    return $self->int2big(-s $fn);
 }
 
 sub inner_backup {

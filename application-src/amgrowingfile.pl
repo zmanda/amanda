@@ -72,7 +72,7 @@ sub declare_restore_options {
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
-    my $sz = Math::BigInt->new(-s $fn); # XXX precision issues may lurk here
+    my $sz = $self->int2big(-s $fn);
     return $sz if 0 == $level;
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
@@ -110,12 +110,7 @@ sub inner_backup {
         my $loweroffset = Math::BigInt->new($lowerstate->{'byteoffset'});
         my $lowersize = Math::BigInt->new($lowerstate->{'bytes'});
 	$start = $loweroffset->copy()->badd($lowersize);
-	my $istart = $start->numify();
-	if ( ($istart - 1) == $istart or $istart == ($istart + 1) ) {
-	    $self->print_to_server_and_die(
-	        "Precision loss for file offset: $fn",
-		$Amanda::Script_App::ERROR);
-	}
+	my $istart = $self->big2int($start);
 	POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
 
 	# sendbackup: HEADER, documented in the Application API/Operations wiki

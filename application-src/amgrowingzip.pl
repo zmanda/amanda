@@ -100,7 +100,7 @@ sub command_selfcheck {
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
-    my $sz = Math::BigInt->new(-s $fn); # XXX precision issues may lurk here
+    my $sz = $self->int2big(-s $fn);
     return $sz if 0 == $level;
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
@@ -139,11 +139,10 @@ sub inner_backup {
 				       $Amanda::Script_App::ERROR);
     }
     $az->readFromFileHandle($ioh);
-    my $cdo = # XXX precision issues could lurk here
-        Math::BigInt->new($az->centralDirectoryOffsetWRTStartingDiskNumber());
+    my $cdo =$self->int2big($az->centralDirectoryOffsetWRTStartingDiskNumber());
 
     my $start;
-    my $currentlength = Math::BigInt->new(-s $ioh); # XXX precision issues here?
+    my $currentlength = $self->int2big(-s $ioh);
     if ( 0 == $level ) {
         $start = Math::BigInt->bzero();
     } else {
@@ -177,12 +176,7 @@ sub inner_backup {
 	# in Rome....
     }
 
-    my $istart = $start->numify();
-    if ( ($istart - 1) == $istart or $istart == ($istart + 1) ) {
-        $self->print_to_server_and_die(
-            "Precision loss for file offset: $fn",
-            $Amanda::Script_App::ERROR);
-    }
+    my $istart = $self->big2int($start);
     POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
 
     my $size = $self->shovel($fdin, $fdout);
@@ -257,14 +251,9 @@ sub inner_restore {
         $ioh->fdopen($fdout, 'r');
         my $az = Archive::Zip->new();
         $az->readFromFileHandle($ioh);
-        my $cdo = Math::BigInt->new( # XXX precision issues could lurk here
-	    $az->centralDirectoryOffsetWRTStartingDiskNumber());
-	my $ioff = $cdo->numify();
-	if ( ( $ioff - 1 ) == $ioff or ( $ioff == $ioff + 1 ) ) {
-	    $self->print_to_server_and_die(
-	        "Precision loss for file offset: $fn",
-		$Amanda::Script_App::ERROR);
-	}
+        my $cdo =
+	    $self->int2big($az->centralDirectoryOffsetWRTStartingDiskNumber());
+	my $ioff = $self->big2int($cdo);
 	POSIX::lseek($fdout, $ioff, &POSIX::SEEK_SET);
 	# We are now positioned at the beginning of the "central" directory
 	# found at the end of the zip file, and the file is open for RDWR
