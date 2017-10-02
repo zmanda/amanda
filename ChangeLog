@@ -1,4 +1,7 @@
 2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/xml-source/amanda-security.conf.5.xml
+
+2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-file.c: Print better error message
 
 2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
