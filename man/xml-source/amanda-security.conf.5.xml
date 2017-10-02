@@ -84,7 +84,7 @@ You can use the 'realpath' command to find them.</para>
   <varlistentry>
   <term>restore_by_amanda_user=[yes|no]</term>
   <listitem>
-<para>Default: no. Set to 'yes' if you want the amanda use to restore file as root, required only if you run amgtar, amstar or ambsdtar as the amanda backup for recovery.</para></listitem>
+<para>Default: no. Set to 'yes' if you want the amanda user to restore file as root, required only if you run amgtar, amstar or ambsdtar as the amanda backup for recovery.</para></listitem>
   </varlistentry>
 
   <varlistentry>
