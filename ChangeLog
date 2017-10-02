@@ -1,4 +1,7 @@
 2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-file.c: Print better error message
+
+2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amservice.c, server-src/amcheck.c, server-src/dumper.c,
 	  server-src/planner.c: Correctly check they are not suid
 
