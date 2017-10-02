@@ -251,6 +251,10 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
 
+    if (geteuid() != getuid()) {
+	error(_("planner must not be setuid root"));
+    }
+
     /* drop root privileges */
     set_root_privs(-1);
 
@@ -279,10 +283,6 @@ main(
 
     add_amanda_log_handler(amanda_log_stderr);
     add_amanda_log_handler(amanda_log_trace_log);
-
-    if (geteuid() == 0 || getuid() == 0) {
-	error(_("planner must not be setuid root"));
-    }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));

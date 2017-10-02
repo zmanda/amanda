@@ -221,11 +221,12 @@ main(
     safe_cd();
 
     set_pname("amcheck");
+    if (geteuid() != getuid()) {
+	error("amcheck must not be setuid (%d, %d)", geteuid(), getuid());
+    }
+
     /* drop root privileges */
     set_root_privs(-1);
-    if (geteuid() == 0 || getuid() == 0) {
-	error("amcheck must not be setuid root");
-    }
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -322,6 +323,40 @@ main(
     config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[0]);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
+    /*
+     * Make sure we are running as the dump user.  Don't use
+     * check_running_as(..) here, because we want to produce more
+     * verbose error messages.
+     */
+    dumpuser = getconf_str(CNF_DUMPUSER);
+    if ((pw = getpwnam(dumpuser)) == NULL) {
+	delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800215, MSG_ERROR, 1,
+			"dumpuser"	, dumpuser)));
+	exit(1);
+	/*NOTREACHED*/
+    }
+    uid_dumpuser = pw->pw_uid;
+    if ((pw = getpwuid(uid_me)) == NULL) {
+	char *str_ui_me = g_strdup_printf("%ld", (long)uid_me);
+	delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800216, MSG_ERROR, 1,
+			"uid"	,str_ui_me)));
+	g_free(str_ui_me);
+	exit(1);
+	/*NOTREACHED*/
+    }
+#ifdef CHECK_USERID
+    if (uid_me != uid_dumpuser) {
+	delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800217, MSG_ERROR, 2,
+			"running_user"	, pw->pw_name,
+			"expected_user" , dumpuser)));
+	exit(1);
+        /*NOTREACHED*/
+    }
+#endif
+
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &origq);
     disable_skip_disk(&origq);
@@ -405,40 +440,6 @@ main(
 	}
     }
     g_ptr_array_free(err_array, TRUE);
-
-    /*
-     * Make sure we are running as the dump user.  Don't use
-     * check_running_as(..) here, because we want to produce more
-     * verbose error messages.
-     */
-    dumpuser = getconf_str(CNF_DUMPUSER);
-    if ((pw = getpwnam(dumpuser)) == NULL) {
-	delete_message(amcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 2800215, MSG_ERROR, 1,
-			"dumpuser"	, dumpuser)));
-	exit(1);
-	/*NOTREACHED*/
-    }
-    uid_dumpuser = pw->pw_uid;
-    if ((pw = getpwuid(uid_me)) == NULL) {
-	char *str_ui_me = g_strdup_printf("%ld", (long)uid_me);
-	delete_message(amcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 2800216, MSG_ERROR, 1,
-			"uid"	,str_ui_me)));
-	g_free(str_ui_me);
-	exit(1);
-	/*NOTREACHED*/
-    }
-#ifdef CHECK_USERID
-    if (uid_me != uid_dumpuser) {
-	delete_message(amcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 2800217, MSG_ERROR, 2,
-			"running_user"	, pw->pw_name,
-			"expected_user" , dumpuser)));
-	exit(1);
-        /*NOTREACHED*/
-    }
-#endif
 
     displayunit = getconf_str(CNF_DISPLAYUNIT);
     unitdivisor = getconf_unit_divisor();
