@@ -1,4 +1,7 @@
 2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcheck.c: Fix compilation on Solaris
+
+2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/xml-source/amanda-security.conf.5.xml
 
 2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>

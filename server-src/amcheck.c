@@ -222,7 +222,7 @@ main(
 
     set_pname("amcheck");
     if (geteuid() != getuid()) {
-	error("amcheck must not be setuid (%d, %d)", geteuid(), getuid());
+	error("amcheck must not be setuid (%d, %d)", (int)geteuid(), (int)getuid());
     }
 
     /* drop root privileges */
