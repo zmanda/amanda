@@ -412,6 +412,10 @@ main(
     textdomain("amanda");
     make_crc_table();
 
+    if (geteuid() != getuid()) {
+	error(_("dumper must not be setuid root"));
+    }
+
     /* drop root privileges */
     set_root_privs(-1);
 
@@ -444,10 +448,6 @@ main(
     }
 
     config_init_with_global(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-
-    if (geteuid() == 0 || getuid() == 0) {
-	error(_("dumper must not be setuid root"));
-    }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));
