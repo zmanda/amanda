@@ -89,12 +89,8 @@ sub declare_restore_options {
 
 sub command_selfcheck {
     my ( $self ) = @_;
-    if ( $usable ) {
-        $self->SUPER::command_selfcheck();
-    } else {
-        $self->print_to_server("$self->{name} Archive::Zip is not installed",
-                               $Amanda::Script_App::ERROR);
-    }
+    $self->check($usable, 'Archive::Zip is not installed');
+    $self->SUPER::command_selfcheck();
 }
 
 sub inner_estimate {
@@ -126,8 +122,8 @@ sub inner_backup {
     my $fdin = POSIX::open($fn, &POSIX::O_RDONLY);
 
     if (!defined $fdin) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     my $ioh = IO::File->new();
@@ -135,8 +131,8 @@ sub inner_backup {
     my $az = Archive::Zip->new();
 
     if ( $flock and not flock($ioh, LOCK_SH) ) {
-        $self->print_to_server_and_die("Can't lock '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, problem => 'lock', errno => $!);
     }
     $az->readFromFileHandle($ioh);
     my $cdo =$self->int2big($az->centralDirectoryOffsetWRTStartingDiskNumber());
@@ -177,15 +173,21 @@ sub inner_backup {
     }
 
     my $istart = $self->big2int($start);
-    POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
+
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'seek', errno => $!)
+	unless defined POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
 
     my $size = $self->shovel($fdin, $fdout);
     if ( $flock and not flock($ioh, LOCK_UN) ) {
-        $self->print_to_server_and_die("Can't unlock '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, problem => 'unlock', errno => $!);
     }
 
-    POSIX::close($fdin);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdin);
+
     $self->emit_index_entry('/');
 
     if ( $self->{'options'}->{'record'} ) {
@@ -210,9 +212,9 @@ sub inner_restore {
     # processes may write it.
 
     if ( 1 != scalar(@_) or $_[0] ne '.' ) {
-        $self->print_to_server_and_die(
-	    "Only a single restore target (.) supported",
-	    $Amanda::Script_App::ERROR);
+        die Amanda::Application::InvocationError->transitionalError(
+	    item => 'restore targets',
+	    problem => 'Only one (.) supported');
     }
 
     my $fn = $self->{'options'}->{'filename'};
@@ -242,8 +244,8 @@ sub inner_restore {
 
     my $fdout = POSIX::open($fn, $oflags, 0600);
     if (!defined $fdout) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     my $ioh = IO::File->new(); # don't let out of scope before shovel()
@@ -254,7 +256,9 @@ sub inner_restore {
         my $cdo =
 	    $self->int2big($az->centralDirectoryOffsetWRTStartingDiskNumber());
 	my $ioff = $self->big2int($cdo);
-	POSIX::lseek($fdout, $ioff, &POSIX::SEEK_SET);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, problem => 'seek', errno => $!)
+	    unless defined POSIX::lseek($fdout, $ioff, &POSIX::SEEK_SET);
 	# We are now positioned at the beginning of the "central" directory
 	# found at the end of the zip file, and the file is open for RDWR
 	# without TRUNC. If the increment was dumped when more content had been
@@ -267,7 +271,9 @@ sub inner_restore {
     }
 
     $self->shovel($fdin, $fdout);
-    POSIX::close($fdout);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdout);
     POSIX::close($fdin);
 }
 

@@ -93,8 +93,8 @@ sub new {
 
     my $self;
     if ( not my ( $fqname, $dstype, $nholds ) = $listline =~ m/$rx_list/ ) {
-	die 'Amanda::Application::AmZfsHoldSend: strange zfs list line: '
-	    + $listline;
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'zfs list line', value => $listline, problem => 'strange');
     } else {
 	$self = { fqname => $fqname, dstype => $dstype };
 
@@ -148,7 +148,8 @@ sub holds {
     my $hs = $self->{'holds'};
     return $hs if defined $hs;
 
-    die 'Amanda::Application::AmZfsHoldSend: holds() called on non-snapshot'
+    die Amanda::Application::ImplementationError->transitionalError(
+	item => 'holds()', problem => 'called on non-snapshot')
 	if 'snapshot' ne $self->{'dstype'};
     
     $hs = [];
@@ -189,26 +190,26 @@ sub levels_to_snapshots {
 	    unless ( defined $lowestlevel ) {
 		$lowestlevel = $level;
 	    } else {
-		die 'Amanda::Application::AmZfsHoldSend: ' .
-		    'nonmonotonic level tags: ' . $self->{'fqname'} .
-		    ' level ' . $level
+		die Amanda::Application::EnvironmentError->transitionalError(
+		    item => 'dataset', value => $self->{'fqname'},
+		    problem => 'level tags nonmonotonic')
 		    if $level < $lowestlevel;
 	    }
 	    unless ( defined $latestlevel ) {
 		$latestlevel = $level;
 	    } else {
-		die 'Amanda::Application::AmZfsHoldSend: ' .
-		    'nonconsecutive level tags: ' . $self->{'fqname'} .
-		    ' level ' . $level
+		die Amanda::Application::EnvironmentError->transitionalError(
+		    item => 'dataset', value => $self->{'fqname'},
+		    problem => 'level tags nonconsecutive')
 		    if $level != 1 + $latestlevel;
 		$latestlevel = $level;
 	    }
 	    unless ( exists $levtosnap{$level} ) {
 		$levtosnap{$level} = $snap;
 	    } else {
-		die 'Amanda::Application::AmZfsHoldSend: ' .
-		    'nonunique level tags: ' . $self->{'fqname'} .
-		    ' level ' . $level;
+		die Amanda::Application::EnvironmentError->transitionalError(
+		    item => 'dataset', value => $self->{'fqname'},
+		    problem => 'level tags nonunique');
 	    }
 	}
     }
@@ -217,8 +218,9 @@ sub levels_to_snapshots {
     return ( \%levtosnap, $latestlevel ) if not %levtosnap;
 
     # It is not ok to have some, but no level 0.
-    die 'Amanda::Application::AmZfsHoldSend: level 0 hold not found: ' .
-	$self->{'fqname'} unless 0 == $lowestlevel;
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'dataset', value => $self->{'fqname'},
+	problem => 'level 0 hold not found') unless 0 == $lowestlevel;
 
     return ( \%levtosnap, $latestlevel );
 }
@@ -235,10 +237,13 @@ sub confirm_matching_levels_children {
 	    for my $lev ( @levels ) {
 		my $snap = $levtosnap->{$lev};
 		my $ksnap = $kidmap->{$lev} or die
-		    'Amanda::Application::AmZfsHoldSend: missing level ' .
-		    $lev . ' in ' . $kid->{'fqname'};
-		die 'Amanda::Application::AmZfsHoldSend: level ' . $lev .
-		    ' maps to different snapshot name in ' . $kid->{'fqname'}
+		    Amanda::Application::EnvironmentError->transitionalError(
+			problem => 'missing level ' . $lev,
+			item => 'dataset', value => $kid->{'fqname'});
+		die Amanda::Application::EnvironmentError->transitionalError(
+		    problem => 'level ' . $lev .
+			       ' maps to different snapshot name',
+		    item => 'dataset', value => $kid->{'fqname'})
 		    unless $ksnap->{'name'} eq $snap->{'name'};
 	    }
 	}
@@ -301,7 +306,8 @@ sub apply_hold {
     my $rslt = system {$zfsexecutable} (
 	'zfs', 'hold', '-r', '--', $holdtag, $self->{'fqname'}
     );
-    die 'Amanda::Application::AmZfsHoldSend: zfs hold nonzero result: ' . $rslt
+    die Amanda::Application::CalledProcessError->transitionalError(
+	cmd => 'zfs hold', returncode => $rslt)
 	unless 0 == $rslt;
 }
 
@@ -317,8 +323,8 @@ sub release_hold {
     my $rslt = system {$zfsexecutable} (
 	'zfs', 'release', '--', $holdtag, $self->{'fqname'}
     );
-    die 'Amanda::Application::AmZfsHoldSend: zfs release nonzero result: ' .
-	$rslt
+    die Amanda::Application::CalledProcessError->transitionalError(
+	cmd => 'zfs release', returncode => $rslt)
 	unless 0 == $rslt;
 
     for my $pkid ( @{$self->{'parent'}->{'children'}} ) {
@@ -569,12 +575,12 @@ sub inner_estimate_nvP {
     $rdr->close();
     waitpid($sendpid, 0);
 
-    $self->print_to_server_and_die("Nonzero exit status of zfs send -nvP: ".$?,
-                                   $Amanda::Script_App::ERROR)
+    die Amanda::Application::CalledProcessError->transitionalError(
+	cmd => 'zfs send -nvP', returncode => $?)
 	unless 0 == $?;
 
-    $self->print_to_server_and_die("Failed to read size from zfs send -nvP",
-                                   $Amanda::Script_App::ERROR)
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'reading size from zfs send -nvP', problem => 'failed')
 	unless defined($sizestr);
 
     return Math::BigInt->new($sizestr);
@@ -657,9 +663,9 @@ sub construct_send_cmd {
 	  confirm_matching_levels_children($level - 1);
 	unless ( $self->{'localstate'}->{'topds'}->
 	  consistently_ordered($priorsnapshot, $latestsnapshot) ) {
-	    $self->print_to_server_and_die(
-		"Snapshots '$priorsnapshot' and '$latestsnapshot' not " .
-		"consistently ordered", $Amanda::Script_App::ERROR);
+	    die Amanda::Application::EnvironmentError->transitionalError(
+		item => "Snapshots '$priorsnapshot' and '$latestsnapshot'",
+		problem => "not consistently ordered");
 	}
 
 	return $self->{'zfsexecutable'}, 'send', @compressed, @misc_opts, '-R',
@@ -687,8 +693,8 @@ sub inner_backup {
 
     my $latestsnapshot = $self->{'localstate'}->{'newestsnapshot'};
     unless ( defined $latestsnapshot ) {
-	$self->print_to_server_and_die(
-	    "At least one snapshot must exist", $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => $dn, problem => 'At least one snapshot must exist');
     }
 
     open my $sendfh, '-|', $self->construct_send_cmd($level, $latestsnapshot);
@@ -720,10 +726,8 @@ sub check_restore_options {
 
     $self->{'restoredestination'} = $self->{'options'}->{'dataset'};
 
-    $self->print_to_server_and_die(
-	"The 'dataset' property must be supplied; there is no default",
-	$Amanda::Script_App::ERROR)
-	unless defined $self->{'restoredestination'};
+    $self->check(defined $self->{'restoredestination'},
+	"The 'dataset' property must be supplied; there is no default");
 
     $self->{'destructive'} = $self->{'options'}->{'destructive'};
 }
@@ -735,9 +739,9 @@ sub inner_restore {
     my $level = $self->{'options'}->{'level'};
 
     if ( 1 != scalar(@_) or $_[0] ne '.' ) {
-	$self->print_to_server_and_die(
-	    "Only a single restore target (.) supported",
-	    $Amanda::Script_App::ERROR);
+        die Amanda::Application::InvocationError->transitionalError(
+	    item => 'restore targets',
+	    problem => 'Only one (.) supported');
     }
 
     my $dn = $self->{'restoredestination'};
@@ -755,9 +759,9 @@ sub inner_restore {
 	'--', $dn
     );
     if ( 0 != $rslt ) {
-	$self->print_to_server_and_die(
-	    "Nonzero result from zfs receive: $rslt",
-	    $Amanda::Script_App::ERROR);
+
+	die Amanda::Application::CalledProcessError->transitionalError(
+	    cmd => 'zfs receive', returncode => $?);
     };
 }
 

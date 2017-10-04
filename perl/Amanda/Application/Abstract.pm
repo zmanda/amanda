@@ -1624,4 +1624,25 @@ sub new {
     $class->SUPER::new(%params);
 }
 
+# An exception reflecting the status of a called process.
+package Amanda::Application::CalledProcessError;
+use base 'Amanda::Application::EnvironmentError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'item'} = 'External process'
+	unless exists $params{'item'};
+    if ( exists $params{'cmd'} and not exists $params{'value'} ) {
+	$params{'value'} = Data::Dumper->new([$params{'cmd'}])->
+	    Terse(1)->Useqq(1)->Indent(0)->Dump();
+    }
+    $class->SUPER::new(%params);
+}
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = $self->SUPER::local_message();
+    $lm .= ': exit status ' . $self->{'returncode'}
+	if defined $self->{'returncode'};
+    return $lm;
+}
+
 1;

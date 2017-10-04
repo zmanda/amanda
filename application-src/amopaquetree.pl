@@ -157,6 +157,9 @@ sub generate_rsync_batch {
 	File::Spec->catfile($yielding, ''),
 	File::Spec->catfile($basedOn, '')
     );
+    die Amanda::Application::CalledProcessError->transitionalError(
+	cmd => 'rsync', returncode => $rslt)
+	unless 0 == $rslt;
 
     unlink($batch->filename . '.sh');
 
@@ -199,6 +202,9 @@ sub capture_rsync_state {
 	File::Spec->catfile($srcdir, ''),
 	File::Spec->catfile($dstdir, '')
     );
+    die Amanda::Application::CalledProcessError->transitionalError(
+	cmd => 'rsync', returncode => $rslt)
+	unless 0 == $rslt;
 }
 
 sub rsync_ref_for_level {
@@ -227,7 +233,9 @@ sub inner_estimate {
     my $dn = $self->{'options'}->{'device'};
     my $ref = $self->rsync_ref_for_level($level);
     my $batch = $self->generate_rsync_batch($ref->dirname(), $dn);
-    $batch->seek(0, &Fcntl::SEEK_END);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'rsync batch', problem => 'seek', errno => $!)
+	unless $batch->seek(0, &Fcntl::SEEK_END);
     my $sz = $self->int2big($batch->tell());
     return $sz;
     # $batch is removed once out of scope
@@ -250,9 +258,13 @@ sub inner_backup {
 
     my $ref = $self->rsync_ref_for_level($level);
     my $batch = $self->generate_rsync_batch($ref->dirname(), $dn);
-    $batch->seek(0, &Fcntl::SEEK_SET);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'rsync batch', problem => 'seek', errno => $!)
+	unless $batch->seek(0, &Fcntl::SEEK_SET);
     my $fdin = fileno($batch);
-    POSIX::lseek($fdin, 0, &POSIX::SEEK_SET); # probably not needed, but...
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'rsync batch', problem => 'seek', errno => $!)
+	unless defined POSIX::lseek($fdin, 0, &POSIX::SEEK_SET); # paranoid?
     my $size = $self->shovel($fdin, $fdout);
 
     $self->emit_index_entry('/');
@@ -272,9 +284,9 @@ sub inner_restore {
     my $level = $self->{'options'}->{'level'};
 
     if ( 1 != scalar(@_) or $_[0] ne '.' ) {
-        $self->print_to_server_and_die(
-	    "Only a single restore target (.) supported",
-	    $Amanda::Script_App::ERROR);
+        die Amanda::Application::InvocationError->transitionalError(
+	    item => 'restore targets',
+	    problem => 'Only one (.) supported');
     }
 
     my $dn = File::Spec->curdir();
@@ -288,6 +300,9 @@ sub inner_restore {
 	'-rlpt', '--checksum', '--delete-during', '--compress', '--sparse',
 	'--read-batch', '-', File::Spec->catfile($dn, '')
     );
+    die Amanda::Application::CalledProcessError->transitionalError(
+	cmd => 'rsync', returncode => $rslt)
+	unless 0 == $rslt;
 
     POSIX::close($fdin);
 }
@@ -322,11 +337,8 @@ sub repair_local_state {
 sub command_selfcheck {
     my ( $self ) = @_;
     my $why = $self->rsync_is_unusable();
-    if ( $why ) {
-        $self->print_to_server($why, $Amanda::Script_App::ERROR);
-    } else {
-        $self->SUPER::command_selfcheck();
-    }
+    $self->check( ! $why, $why);
+    $self->SUPER::command_selfcheck();
 }
 
 package main;
