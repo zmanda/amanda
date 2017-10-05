@@ -58,7 +58,7 @@ sub declare_restore_options {
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
-    return Math::BigInt->new(-s $fn); # XXX precision issues may lurk here
+    return $self->int2big(-s $fn);
 }
 
 sub inner_backup {
@@ -67,13 +67,16 @@ sub inner_backup {
     my $fdin = POSIX::open($fn, &POSIX::O_RDONLY);
 
     if (!defined $fdin) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     my $size = $self->shovel($fdin, $fdout);
 
-    POSIX::close($fdin);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdin);
+
     $self->emit_index_entry('/');
 
     return $size;
@@ -85,9 +88,9 @@ sub inner_restore {
     my $dsf = shift;
 
     if ( 1 != scalar(@_) or $_[0] ne '.' ) {
-        $self->print_to_server_and_die(
-	    "Only a single restore target (.) supported",
-	    $Amanda::Script_App::ERROR);
+        die Amanda::Application::InvocationError->transitionalError(
+	    item => 'restore targets',
+	    problem => 'Only one (.) supported');
     }
 
     my $fn = $self->{'options'}->{'filename'};
@@ -102,12 +105,14 @@ sub inner_restore {
 
     my $fdout = POSIX::open($fn, &POSIX::O_CREAT | &POSIX::O_RDWR, 0600);
     if (!defined $fdout) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     $self->shovel($fdin, $fdout);
-    POSIX::close($fdout);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdout);
     POSIX::close($fdin);
 }
 

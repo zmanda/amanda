@@ -89,27 +89,21 @@ sub declare_restore_options {
 
 sub command_selfcheck {
     my ( $self ) = @_;
-    if ( $usable ) {
-        $self->SUPER::command_selfcheck();
-    } else {
-        $self->print_to_server("$self->{name} Archive::Zip is not installed",
-                               $Amanda::Script_App::ERROR);
-    }
+    $self->check($usable, 'Archive::Zip is not installed');
+    $self->SUPER::command_selfcheck();
 }
 
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
-    my $sz = Math::BigInt->new(-s $fn); # XXX precision issues may lurk here
+    my $sz = $self->int2big(-s $fn);
     return $sz if 0 == $level;
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
-    if ( $level > $mxl ) {
-        $self->print_to_server("Requested estimate level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
 
-        return Math::BigInt->bone('-');
-    }
+    die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	value => $level) if $level > $mxl;
+
     my $lowerstate = $self->{'localstate'}->{$level - 1};
     my $lowerlength = Math::BigInt->new($lowerstate->{'length'});
     my $lowercdo = Math::BigInt->new($lowerstate->{'centraldiroffset'});
@@ -126,8 +120,8 @@ sub inner_backup {
     my $fdin = POSIX::open($fn, &POSIX::O_RDONLY);
 
     if (!defined $fdin) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     my $ioh = IO::File->new();
@@ -135,27 +129,31 @@ sub inner_backup {
     my $az = Archive::Zip->new();
 
     if ( $flock and not flock($ioh, LOCK_SH) ) {
-        $self->print_to_server_and_die("Can't lock '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, problem => 'lock', errno => $!);
     }
     $az->readFromFileHandle($ioh);
-    my $cdo = # XXX precision issues could lurk here
-        Math::BigInt->new($az->centralDirectoryOffsetWRTStartingDiskNumber());
+    my $cdo =$self->int2big($az->centralDirectoryOffsetWRTStartingDiskNumber());
 
     my $start;
-    my $currentlength = Math::BigInt->new(-s $ioh); # XXX precision issues here?
+    my $currentlength = $self->int2big(-s $ioh);
     if ( 0 == $level ) {
         $start = Math::BigInt->bzero();
     } else {
-        # ENHANCEMENT? could save a prior size and digest, and verify here
+        # ENHANCEMENT? could save a prior digest, and verify here
         my $lowerstate = $self->{'localstate'}->{$level - 1};
-	# XXX don't be stupid if lowerstate isn't there
+	die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	    value => $level) unless defined $lowerstate;
         my $lowerlength = Math::BigInt->new($lowerstate->{'length'});
         my $lowercdo = Math::BigInt->new($lowerstate->{'centraldiroffset'});
 	if ( 0 == $currentlength->bcmp($lowerlength) ) {
 	    # Length is unchanged -> nothing has changed (the zip file is
 	    # assumed never to change except by appending).
 	    $start = $currentlength; # In other words, dump nothing.
+	}
+	elsif ( 0 > $currentlength->bcmp($lowerlength) ) {
+	    die Amanda::Application::RetryDumpError->transitionalError(
+		delay => 0, level => 0, problem => 'growing file shrank');
 	}
 	else {
 	    $start = $lowercdo; # Dump from lowercdo to current length.
@@ -177,21 +175,22 @@ sub inner_backup {
 	# in Rome....
     }
 
-    my $istart = $start->numify();
-    if ( ($istart - 1) == $istart or $istart == ($istart + 1) ) {
-        $self->print_to_server_and_die(
-            "Precision loss for file offset: $fn",
-            $Amanda::Script_App::ERROR);
-    }
-    POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
+    my $istart = $self->big2int($start);
+
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'seek', errno => $!)
+	unless defined POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
 
     my $size = $self->shovel($fdin, $fdout);
     if ( $flock and not flock($ioh, LOCK_UN) ) {
-        $self->print_to_server_and_die("Can't unlock '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, problem => 'unlock', errno => $!);
     }
 
-    POSIX::close($fdin);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdin);
+
     $self->emit_index_entry('/');
 
     if ( $self->{'options'}->{'record'} ) {
@@ -216,9 +215,9 @@ sub inner_restore {
     # processes may write it.
 
     if ( 1 != scalar(@_) or $_[0] ne '.' ) {
-        $self->print_to_server_and_die(
-	    "Only a single restore target (.) supported",
-	    $Amanda::Script_App::ERROR);
+        die Amanda::Application::InvocationError->transitionalError(
+	    item => 'restore targets',
+	    problem => 'Only one (.) supported');
     }
 
     my $fn = $self->{'options'}->{'filename'};
@@ -248,8 +247,8 @@ sub inner_restore {
 
     my $fdout = POSIX::open($fn, $oflags, 0600);
     if (!defined $fdout) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     my $ioh = IO::File->new(); # don't let out of scope before shovel()
@@ -257,15 +256,12 @@ sub inner_restore {
         $ioh->fdopen($fdout, 'r');
         my $az = Archive::Zip->new();
         $az->readFromFileHandle($ioh);
-        my $cdo = Math::BigInt->new( # XXX precision issues could lurk here
-	    $az->centralDirectoryOffsetWRTStartingDiskNumber());
-	my $ioff = $cdo->numify();
-	if ( ( $ioff - 1 ) == $ioff or ( $ioff == $ioff + 1 ) ) {
-	    $self->print_to_server_and_die(
-	        "Precision loss for file offset: $fn",
-		$Amanda::Script_App::ERROR);
-	}
-	POSIX::lseek($fdout, $ioff, &POSIX::SEEK_SET);
+        my $cdo =
+	    $self->int2big($az->centralDirectoryOffsetWRTStartingDiskNumber());
+	my $ioff = $self->big2int($cdo);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, problem => 'seek', errno => $!)
+	    unless defined POSIX::lseek($fdout, $ioff, &POSIX::SEEK_SET);
 	# We are now positioned at the beginning of the "central" directory
 	# found at the end of the zip file, and the file is open for RDWR
 	# without TRUNC. If the increment was dumped when more content had been
@@ -278,7 +274,9 @@ sub inner_restore {
     }
 
     $self->shovel($fdin, $fdout);
-    POSIX::close($fdout);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdout);
     POSIX::close($fdin);
 }
 

@@ -72,16 +72,14 @@ sub declare_restore_options {
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $fn = $self->{'options'}->{'device'};
-    my $sz = Math::BigInt->new(-s $fn); # XXX precision issues may lurk here
+    my $sz = $self->int2big(-s $fn);
     return $sz if 0 == $level;
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
-    if ( $level > $mxl ) {
-        $self->print_to_server("Requested estimate level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
 
-        return Math::BigInt->bone('-');
-    }
+    die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	value => $level) if $level > $mxl;
+
     my $lowerstate = $self->{'localstate'}->{$level - 1};
     my $loweroffset = Math::BigInt->new($lowerstate->{'byteoffset'});
     my $lowersize = Math::BigInt->new($lowerstate->{'bytes'});
@@ -96,26 +94,31 @@ sub inner_backup {
     my $fdin = POSIX::open($fn, &POSIX::O_RDONLY);
 
     if (!defined $fdin) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     my $start;
     if ( 0 == $level ) {
         $start = Math::BigInt->bzero();
     } else {
-        # XXX verify prior size and digest here
         my $lowerstate = $self->{'localstate'}->{$level - 1};
-	# XXX don't be stupid if lowerstate isn't there
+	die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	    value => $level) unless defined $lowerstate;
         my $loweroffset = Math::BigInt->new($lowerstate->{'byteoffset'});
         my $lowersize = Math::BigInt->new($lowerstate->{'bytes'});
 	$start = $loweroffset->copy()->badd($lowersize);
-	my $istart = $start->numify();
-	if ( ($istart - 1) == $istart or $istart == ($istart + 1) ) {
-	    $self->print_to_server_and_die(
-	        "Precision loss for file offset: $fn",
-		$Amanda::Script_App::ERROR);
-	}
+	my $istart = $self->big2int($start);
+
+	die Amanda::Application::RetryDumpError->transitionalError(
+	    delay => 0, level => 0, problem => 'growing file shrank')
+	    if $istart > (POSIX::fstat($fdin))[7];
+
+	# Currently science fiction: optionally include in the state a digest
+	# of the file's past contents, to force a retry at level 0 in case of
+	# mismatch even if size does not catch it. Of course that would turn
+	# every incremental dump into a level-0 amount of I/O (well, I, anyway).
+
 	POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
 
 	# sendbackup: HEADER, documented in the Application API/Operations wiki
@@ -135,7 +138,10 @@ sub inner_backup {
     }
     my $size = $self->shovel($fdin, $fdout);
 
-    POSIX::close($fdin);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdin);
+
     $self->emit_index_entry('/');
 
     if ( $self->{'options'}->{'record'} ) {
@@ -153,9 +159,9 @@ sub inner_restore {
     my $level = $self->{'options'}->{'level'};
 
     if ( 1 != scalar(@_) or $_[0] ne '.' ) {
-        $self->print_to_server_and_die(
-	    "Only a single restore target (.) supported",
-	    $Amanda::Script_App::ERROR);
+        die Amanda::Application::InvocationError->transitionalError(
+	    item => 'restore targets',
+	    problem => 'Only one (.) supported');
     }
 
     my $fn = $self->{'options'}->{'filename'};
@@ -187,12 +193,14 @@ sub inner_restore {
 
     my $fdout = POSIX::open($fn, $oflags, 0600);
     if (!defined $fdout) {
-	$self->print_to_server_and_die("Can't open '$fn': $!",
-				       $Amanda::Script_App::ERROR);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'target', value => $fn, errno => $!);
     }
 
     $self->shovel($fdin, $fdout);
-    POSIX::close($fdout);
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $fn, problem => 'close', errno => $!)
+	unless defined POSIX::close($fdout);
     POSIX::close($fdin);
 }
 

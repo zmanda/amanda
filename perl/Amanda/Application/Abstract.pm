@@ -87,6 +87,7 @@ use base qw(Amanda::Application);
 
 use Amanda::Feature;
 use Data::Dumper;
+use Errno;
 use File::Path qw{make_path};
 use File::Spec;
 use Getopt::Long;
@@ -107,41 +108,70 @@ by the C<Amanda::Application> constructor), and finally C<do()> the subcommand,
 where C<do> is inherited from C<Amanda::Script_App> by way of
 C<Amanda::Application>.
 
+Any Perl exception thrown from the C<do> is caught. If it is a subclass of
+C<Amanda::Application::Exception>, its C<on_uncaught> method is called, which
+ordinarily prints an error description to the server and exits with a nonzero
+status. If it is any other kind of object, or not an object, it is passed to
+C<print_to_server_and_die>, with much the same effect.
+
 =cut
+
+# A superclass uses Amanda::Debug, which, among other things, sets its own
+# __WARN__ and __DIE__ handlers. The __DIE__ handler turns an exception into
+# a call to Amanda::Debug::critical, but only does that when not in 'eval'
+# state, so an exception will work as expected within an eval. Outside of an
+# eval, it results in a non-zero exit.
 
 sub run {
     my ( $class ) = @_;
     my $subcommand = shift @ARGV || '(empty)';
-    die "Not a possible application subcommand: ".$subcommand
-    if $subcommand !~ /^(?:backup|discover|estimate|index|print|restore|selfcheck|support|validate)/;
+    if ( $subcommand !~ /^(?:backup|discover|estimate|index|print|
+                             restore|selfcheck|support|validate)/x ) {
+	die Amanda::Application::InvocationError->transitionalError(
+	    item => 'subcommand', value => $subcommand, problem => 'unknown');
+    }
 
     my %opthash = ();
     my @optspecs = ();
 
     my $optinit = $class->can('declare_'.$subcommand.'_options');
-    die "Unsupported application subcommand: ".$subcommand if !defined $optinit;
+    unless ( defined $optinit ) {
+	die Amanda::Application::ImplementationLimitError->transitionalError(
+	    item => 'subcommand', value => $subcommand, problem => 'unsupported'
+	);
+    }
 
     $class->$optinit(\%opthash, \@optspecs);
 
-    my $ret = GetOptions(\%opthash, @optspecs);
+    unless ( GetOptions(\%opthash, @optspecs) ) {
+	die Amanda::Application::InvocationError->transitionalError(
+	    item => 'options', problem => 'invalid');
+    }
 
-    # ??? Application API docs suggest that escaping can have been applied to
-    # option values, in which case here is where it should be unwrapped!
-    # First get signs of life, then test with trick values to determine
-    # exactly how values have been escaped.
-
-    # !!! pleasant surprise: option value arrived with escaping already
-    # unwrapped. Examining sendbackup debug log shows the value apparently
-    # passed to sendbackup in an escaped form, but unescaped in the section
-    # of the log file that shows "sendbackup: running ..." with the arguments
-    # logged one by one. Looks like sendbackup does the unwrapping and uses
-    # exec directly; todo: check the code to confirm.
-
-    # ... yes, that's just what sendbackup does.
+    # The calling Amanda code has taken care of unwrapping any quoting/escaping
+    # applied to option values for transfer over the network; the options as
+    # passed via exec are in their proper, usable form.
 
     my $app = $class->new(\%opthash);
 
-    $app->do($subcommand);
+    Amanda::Debug::debug("Options: " . Data::Dumper->new([$app->{options}])
+				     ->Sortkeys(1)->Terse(1)->Useqq(1)->Dump());
+
+    eval {
+        $app->do($subcommand);
+    };
+    if ( my $exc = $@ ) {
+	# Handling of exceptions may rely on the proper values of $app->{action}
+	# and $app->{mesgout} being set early by do() and remaining set
+	# thereafter.
+	if ( defined blessed($exc) and
+	     $exc->isa('Amanda::Application::Message') ) {
+	    $exc->on_uncaught($app);
+	}
+	else {
+	    $app->print_to_server_and_die("unexpected: " . $exc);
+	}
+    }
 }
 
 =head2 C<new>
@@ -160,6 +190,10 @@ be stored with a different key derived from I<o> instead, which will not collide
 with any usable C<GetOptions> option name. Option-validation code should use
 C<store_option> to store the final, validated value; it uses the same
 convention, so the value will be properly retrieved here.
+
+Design to defer checks, or other operations that may throw exceptions, into
+mathods called after C<new>, such as a C<check...> or C<command...> method.
+Exceptions thrown from C<new> itself will not be caught.
 
 =cut
 
@@ -259,7 +293,7 @@ For a common type ... return a sub that can be placed in C<%opthash>
 to validate and store a value of that type. The anonymous sub accepts the
 parameters described at "User-defined subroutines to handle options" for
 C<Getopt::Long>, and will store the validated, converted option value in
-I<%opthash> at a key derived by prefixing C<opt_> to the option name.
+I<%opthash> by calling C<store_option>.
 For example, a C<declare_common_options> method that defines a boolean
 property I<foo> may contain the snippet:
 
@@ -270,6 +304,10 @@ setter sub can tell by the number of parameters passed to it by
 C<Getopt::Long>), as well as multiple-valued ones accumulating into an array,
 provided an array has been installed with C<store_option> before the options
 are parsed.
+
+A property setter calls C<die> with a simple string message, not an exception
+object, as it will be caught by C<Getopt::Long> itself and passed to C<warn>,
+and cause C<Getopt::Long> to return false when finished.
 
     store_option(\%opthash, optname, [k,], v)
 
@@ -397,6 +435,7 @@ sub declare_backup_options {
     $class->declare_common_options($refopthash, $refoptspecs);
     push @$refoptspecs, (
         'message=s', 'index=s', 'level=i', 'record', 'state-stream=i' );
+    push @$refoptspecs, "timestamp=s" if $class->supports('timestamp');
 }
 
 =head2 C<declare_restore_options>
@@ -416,10 +455,10 @@ sub declare_restore_options {
     $refopthash->{'dar'} = sub {
         my ( $optname, $optval ) = @_;
 	if ( $optval eq 'YES' ) {
-	    $refopthash->{'opt_'.$optname} = 1;
+	    $class->store_option($refopthash, $optname, 1);
 	}
 	elsif ( $optval eq 'NO' ) {
-	    $refopthash->{'opt_'.$optname} = 0;
+	    $class->store_option($refopthash, $optname, 0);
 	}
 	else {
 	    die "--$optname requires YES or NO";
@@ -457,12 +496,13 @@ sub declare_estimate_options {
         'message=s', 'level=i'.($class->supports('multi_estimate') ? '@' : '' )
     );
     push @$refoptspecs, "calcsize" if $class->supports('calcsize');
+    push @$refoptspecs, "timestamp=s" if $class->supports('timestamp');
 }
 
 =head2 C<declare_selfcheck_options>
 
 Declare options for the C<selfcheck> subcommand. Unless overridden, this simply
-declares the C<common> ones plus C<message>, C<level>, and C<record>.
+declares the C<common> ones plus C<message>, C<index>, C<level>, and C<record>.
 
 =cut
 
@@ -569,7 +609,9 @@ my $say_supports = sub {
 my $checked_recover_mode = sub {
     my ( $self ) = @_;
     my $rm = blessed($self)->recover_mode();
-    die "unusable recover_mode: ".$rm if defined $rm and $rm ne "SMB";
+    die Amanda::Application::ImplementationError->transitionalError(
+        problem => "unusable", item => "recover_mode", value => $rm
+    ) if defined $rm and $rm ne "SMB";
     return $rm;
 };
 
@@ -578,8 +620,9 @@ my $checked_data_path = sub {
     my ( $self ) = @_;
     my @dp = blessed($self)->data_path();
     my $dpl = scalar @dp;
-    die "unusable data_path: ".Dumper(\@dp)
-        if $dpl lt 1 or 0 lt grep(!/^(?:AMANDA|DIRECTTCP)$/, @dp);
+    die Amanda::Application::ImplementationError->transitionalError(
+        problem => "unusable", item => "data_path", value => Dumper(\@dp)
+    ) if $dpl lt 1 or 0 lt grep(!/^(?:AMANDA|DIRECTTCP)$/, @dp);
     return @dp;
 };
 
@@ -587,8 +630,9 @@ my $checked_data_path = sub {
 my $checked_recover_path = sub {
     my ( $self ) = @_;
     my $rp = blessed($self)->recover_path();
-    die "unusable recover_path: ".$rp
-        unless defined $rp and $rp =~ /^(?:CWD|REMOTE)$/;
+    die Amanda::Application::ImplementationError->transitionalError(
+        problem => "unusable", item => "recover_path", value => $rp
+    ) unless defined $rp and $rp =~ /^(?:CWD|REMOTE)$/;
     return $rp;
 };
 
@@ -598,8 +642,9 @@ my $checked_max_level = sub {
     my $amanda_max = 399;
     my $mxl = blessed($self)->max_level();
     $mxl = $amanda_max if 'DEFAULT' eq $mxl;
-    die "unusable max_level: ".$mxl
-      unless defined $mxl and $mxl =~ /^\d{1,3}$/ and 0 + $mxl <= $amanda_max;
+    die Amanda::Application::ImplementationError->transitionalError(
+        problem => "unusable",  "max_level", value => $mxl
+    ) unless defined $mxl and $mxl =~ /^\d{1,3}$/ and 0 + $mxl <= $amanda_max;
     return 0 + $mxl;
 };
 
@@ -680,10 +725,16 @@ on that member automatically if the caller has asked to record state.
 sub read_local_state {
     my ( $self, $optspecs ) = @_;
     my ( $dirpart, $filepart ) = $self->local_state_path();
-    my $ret = open my $fh, '<', File::Spec->catfile($dirpart, $filepart);
+    my $fn = File::Spec->catfile($dirpart, $filepart);
+    my $ret = open my $fh, '<', $fn;
     if ( ! $ret ) {
-    	my %empty = ( 'maxlevel' => 0 );
-	return \%empty;
+	if ( $!{ENOENT} ) {
+	    my %empty = ( 'maxlevel' => 0 );
+	    return \%empty;
+	}
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'local state file', value => $fn, problem => 'read',
+	    errno => $!);
     }
     my $slurped;
     {
@@ -697,16 +748,21 @@ sub read_local_state {
     my $remain;
     ( $ret, $remain ) =
         Getopt::Long::GetOptionsFromString($slurped, $opthash, @$optspecs);
-    # XXX carp if remain[0] doesn't start with --
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'local state file', value => $fn, problem => 'malformed')
+	unless $ret and (0 == scalar(@$remain) or $remain->[0] =~ m/^--/);
     my $lev = $opthash->{'level'};
     $maxlevel = $lev if $lev > $maxlevel;
     $result{$lev} = $opthash;
     while ( 0 < scalar @$remain ) {
-        $opthash = {};
+	$opthash = {};
 	$ret = Getopt::Long::GetOptionsFromArray($remain, $opthash, @$optspecs);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'local state file', value => $fn, problem => 'malformed')
+	    unless $ret;
 	$lev = $opthash->{'level'};
-        $maxlevel = $lev if $lev > $maxlevel;
-        $result{$lev} = $opthash;
+	$maxlevel = $lev if $lev > $maxlevel;
+	$result{$lev} = $opthash;
     }
     $result{'maxlevel'} = 1 + $maxlevel;
     return \%result;
@@ -739,8 +795,11 @@ sub write_local_state {
     }
     my ( $dirpart, $filepart ) = $self->local_state_path();
     make_path($dirpart);
-    Amanda::Util::safe_overwrite_file(File::Spec->catfile($dirpart, $filepart),
-                                      $state);
+    my $fn = File::Spec->catfile($dirpart, $filepart);
+    Amanda::Util::safe_overwrite_file($fn, $state)
+    or die Amanda::Application::EnvironmentError->transitionalError(
+	errno => $!, item => 'local state file', value => $fn,
+	problem => 'overwrite');
 }
 
 =head2 C<repair_local_state>
@@ -781,6 +840,96 @@ sub update_local_state {
     }
     $state->{'maxlevel'} = 1 + $level;
     $state->{$level} = $opthash;
+}
+
+=head1 INSTANCE METHOD SUPPORTING POST-PARSE OPTION/PROPERTY CHECKS
+
+Option/property checks can happen two ways. The C<declare_..._options>
+methods can set a coarse limit on what options are accepted, and
+C<..._property_setter> methods can further restrict just what values
+are accepted for a particular option. Those will not catch other kinds
+of errors, such as combinations of options that make no sense together,
+missing ones that are needed, etc. Those higher-level checks can be made
+in C<check_..._options> instance methods, after the options have been
+parsed and the app has been instantiated.
+
+=head2 C<check>
+
+    $self->check(boolean-expr, message)
+
+If I<boolean-expr> is false, pass I<message> to C<print_to_server> with a
+severity of C<ERROR>, and remember that a check failed.
+
+    $self->check()
+
+If any previous check (invocation of this method with arguments) failed,
+throw an exception. By dividing the labor this way, several checks can be
+performed, and all detected errors reported to the server, before the final
+C<check()> that terminates execution by throwing the exception.
+
+=cut
+
+sub check {
+    my ( $self, $bval, $message ) = @_;
+    unless ( 1 == scalar(@_) ) {
+	$self->{'checkstate'} = 1 unless exists $self->{'checkstate'};
+	return if $bval;
+	$self->{'checkstate'} = 0;
+	$self->print_to_server($message, $Amanda::Script_App::ERROR);
+	return;
+    }
+    unless ( exists $self->{'checkstate'} ) {
+	die Amanda::Application::ImplementationError->transitionalError(
+	    item => 'check', problem => 'called before anything checked');
+    }
+    unless ( $self->{'checkstate'} ) {
+	die Amanda::Application::InvocationError->transitionalError(
+	    item => 'check', value => $self->{'action'},
+	    problem => 'error(s) detected');
+    }
+}
+
+=head1 INSTANCE METHODS USABLE IN SUBCOMMANDS
+
+=head2 C<int2big>
+
+    $self->int2big(n)
+
+Return a C<Math::BigInt> version of I<n>, throwing an exception if it is already
+too late (something that could happen in a perl with 32-bit ints if it has
+already widened I<n> to a float and lost precision).
+
+=cut
+
+sub int2big {
+    my ( $self, $n ) = @_;
+    die Amanda::Application::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $n)
+	if $n - 1 == $n or $n == $n + 1;
+    my $big = Math::BigInt->new($n);
+    die Amanda::Application::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $n)
+	unless $big->is_int();
+    return $big;
+}
+
+=head2 C<big2int>
+
+    $self->big2int(n)
+
+Return the native perl number corresponding to the C<Math::BigInt> I<n>,
+throwing an exception if I<n> gets widened to something (a perl float, say)
+that does not retain precision to the units place.
+
+=cut
+
+sub big2int {
+    my ( $self, $big ) = @_;
+    my $n = $big->numify();
+    die Amanda::Application::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $big->bstr())
+	if $n - 1 == $n or $n == $n + 1;
+    return $n;
 }
 
 =head1 INSTANCE METHODS IMPLEMENTING SUBCOMMANDS
@@ -829,9 +978,17 @@ sub command_support {
     print "RECOVER-PATH ".($self->$checked_recover_path())."\n";
 
     $self->$say_supports(             "AMFEATURES", "amfeatures");
-    $self->$say_supports("RECOVER-DUMP-STATE-FILE", "recover_dump_state_file");
-    $self->$say_supports(                    "DAR", "dar");
-    $self->$say_supports(           "STATE-STREAM", "state_stream");
+
+    if ( defined $Amanda::Feature::fe_amidxtaped_dar ) {
+	$self->$say_supports("RECOVER-DUMP-STATE-FILE",
+			     "recover_dump_state_file");
+	$self->$say_supports(                    "DAR", "dar");
+	$self->$say_supports(           "STATE-STREAM", "state_stream");
+    }
+
+    if ( defined $Amanda::Feature::fe_req_options_timestamp ) {
+        $self->$say_supports("TIMESTAMP", "timestamp");
+    }
 }
 
 =head2 METHODS FOR THE C<backup> SUBCOMMAND
@@ -854,8 +1011,7 @@ sub check_message_index_options {
         # jolly
     }
     elsif ( 'xml' ne $msg or ! blessed($self)->supports('message_xml') ) {
-        $self->print_to_server('invalid --message '.$msg,
-	                       $Amanda::Script_App::ERROR);
+        $self->check(0, 'invalid --message '.$msg,);
     }
 
     my $idx = $self->{'options'}->{'index'};
@@ -866,8 +1022,7 @@ sub check_message_index_options {
         # jolly
     }
     elsif ( 'xml' ne $idx or ! blessed($self)->supports('index_xml') ) {
-        $self->print_to_server('invalid --index '.$idx,
-	                       $Amanda::Script_App::ERROR);
+        $self->check(0, 'invalid --index '.$idx);
     }
 }
 
@@ -885,12 +1040,9 @@ sub check_backup_options {
     $self->check_message_index_options();
     $self->check_level_option();
 
-    if ( $self->{'options'}->{'record'} and
-         ! blessed($self)->supports('record') ) {
-        $self->print_to_server('not supported --record',
-	                       $Amanda::Script_App::ERROR);
-        delete $self->{'options'}->{'record'};
-    }
+    $self->check(
+	! $self->{'options'}->{'record'} or blessed($self)->supports('record'),
+	'not supported --record');
 }
 
 =head3 C<check_level_option>
@@ -910,10 +1062,8 @@ sub check_level_option {
     $lvls = [ $lvls ] if ref($lvls) ne 'ARRAY';
 
     for my $lvl (@$lvls) {
-	if ( 0 > $lvl  or  $lvl > $self->$checked_max_level() ) {
-            $self->print_to_server('out of range --level '.$lvl,
-	                           $Amanda::Script_App::ERROR);
-        }
+	$self->check(0 <= $lvl  and  $lvl <= $self->$checked_max_level(),
+		     'out of range --level '.$lvl);
     }
 }
 
@@ -932,7 +1082,9 @@ the same quoting rules as GNU C<tar> in C<--quoting-style=escape> mode.
 
 sub emit_index_entry {
     my ( $self, $name ) = @_;
-    die 'default emit_index_entry supports only "line"'
+    die Amanda::Application::ImplementationLimitError->transitionalError(
+        item => 'emit_index_entry', value => $self->{'options'}->{'index'},
+	problem => 'only "line" supported')
     	unless 'line' eq $self->{'options'}->{'index'};
     $self->{'index_out'}->print(blessed($self)->gtar_escape_quote($name)."\n");
 }
@@ -957,6 +1109,7 @@ defined, calls C<write_local_state($self->{'localstate'})>.
 sub command_backup {
     my ( $self ) = @_;
     $self->check_backup_options();
+    $self->check();
 
     $self->{'index_out'} = IO::Handle->new_from_fd(4, 'w');
 
@@ -1023,12 +1176,19 @@ number of bytes shoveled as a C<Math::BigInt>.
 sub shovel {
     my ( $self, $fdfrom, $fdto ) = @_;
     my $size = Math::BigInt->bzero();
-    my $s;
+    my $rd;
+    my $wn;
     my $buffer;
-    while (($s = POSIX::read($fdfrom, $buffer, 32768)) > 0) {
-	Amanda::Util::full_write($fdto, $buffer, $s);
-	$size->badd($s);
+    while (($rd = POSIX::read($fdfrom, $buffer, 32768)) > 0) {
+	$wn = Amanda::Util::full_write($fdto, $buffer, $rd);
+	die Amanda::Application::EnvironmentError->transitionalError(
+	    errno => $!, item => 'fd', value => $fdto, problem => 'write')
+	    unless defined $wn;
+	$size->badd($wn);
     }
+    die Amanda::Application::EnvironmentError->transitionalError(
+	errno => $!, item => 'fd', value => $fdfrom, problem => 'read')
+	unless defined $rd;
     return $size;
 }
 
@@ -1049,24 +1209,17 @@ sub check_restore_options {
 
     $self->check_level_option();
 
-    my $dar = $self->{'options'}->{'opt_dar'}; # {'dar'} is a code ref
-    my $rdsf = $self->{'options'}->{'recover_dump_state_file'};
+    my $dar = $self->{'options'}->{'dar'};
+    my $rdsf = $self->{'options'}->{'recover-dump-state-file'};
 
-    if ( $dar and ! blessed($self)->supports('dar') ) {
-        $self->print_to_server('not supported --dar',
-	                       $Amanda::Script_App::ERROR);
-    }
+    $self->check( ! $dar or blessed($self)->supports('dar'),
+		  'not supported --dar');
 
-    if ( $rdsf and ! blessed($self)->supports('recover_dump_state_file') ) {
-        $self->print_to_server('not supported --recover-dump-state-file',
-	                       $Amanda::Script_App::ERROR);
-    }
+    $self->check(! $rdsf or blessed($self)->supports('recover_dump_state_file'),
+		 'not supported --recover-dump-state-file');
 
-    if ( $dar xor $rdsf ) {
-        $self->print_to_server(
-	    '--dar=YES and --recover-dump-state-file only make sense together',
-	                       $Amanda::Script_App::ERROR);
-    }
+    $self->check( !( $dar xor $rdsf ),
+	    '--dar=YES and --recover-dump-state-file only make sense together');
 }
 
 =head3 C<emit_dar_request>
@@ -1111,15 +1264,14 @@ if used.
 sub command_restore {
     my ( $self ) = @_;
     $self->check_restore_options();
+    $self->check();
 
     my $dsf;
     my $rdsf = $self->{'options'}->{'recover-dump-state-file'};
     if ( defined $rdsf ) {
-        open $dsf, '<', $rdsf;
-	if ( !defined $dsf ) {
-	    $self->print_to_server_and_die("Can't open '$rdsf': $!",
-				       $Amanda::Script_App::ERROR);
-	}
+	open $dsf, '<', $rdsf
+	or die Amanda::Application::EnvironmentError->transitionalError(
+	    item => 'dump state file', value => $rdsf, errno => $!);
         $self->{'dar_out'} = IO::Handle->new_from_fd(3, 'w');
     }
 
@@ -1200,6 +1352,7 @@ On return from C<inner_index>, closes the index-out stream.
 sub command_index {
     my ( $self ) = @_;
     $self->check_index_options();
+    $self->check();
 
     $self->{'index_out'} = IO::Handle->new_from_fd(1, 'w');
     $self->inner_index();
@@ -1240,6 +1393,9 @@ sub check_estimate_options {
 
     $self->check_message_index_options();
     $self->check_level_option();
+
+    $self->check(exists $self->{'options'}->{'level'},
+		 "Can't estimate without --level");
 }
 
 =head3 C<command_estimate>
@@ -1257,29 +1413,47 @@ output stream in the required format, assuming a block size of 1K.
 sub command_estimate {
     my ( $self ) = @_;
     $self->check_estimate_options();
+    $self->check();
 
-    my $lvls = $self->{'options'}->{'level'};
-    if ( !defined $lvls ) {
-        $self->print_to_server_and_die("Can't estimate without --level");
-    }
-
+    my $lvls = $self->{'options'}->{'level'}; # existence already checked
     my $isArray = ref($lvls) eq 'ARRAY';
+
+    # This next is a Should Never Happen, assuming declare_estimate_options has
+    # done its job; hence the ImplementationError rather than simply check().
     if ( $isArray xor blessed($self)->supports('multi_estimate') ){
-        $self->print_to_server_and_die(
-	    "--level usage does not match multi_estimate support");
+        die Amanda::Application::ImplementationError->transitionalError(
+	    item => 'option parsing', value => 'level',
+	    problem => 'mismatch with multi_estimate support');
     }
     $lvls = [ $lvls ] if ! $isArray;
 
+    my $anyLevelSucceeded = 0;
+    my @failReasons;
+
     for my $lvl ( @$lvls ) {
-        my $size = $self->inner_estimate($lvl);
-	if ( $size->bcmp(0) < 0 ) {
-	    print "$lvl -1 -1\n";
+	my ( $size, $validsize );
+	eval {
+	    $size = $self->inner_estimate($lvl);
+	    $validsize = ($size->isa('Math::BigInt') and $size->bcmp(0) >= 0);
+	};
+	if ( $@ or ! $validsize ) {
+	    push @failReasons, $@;
+	    if ( Amanda::Application::DiscontiguousLevelError->captures($@) ) {
+		print "$lvl -2 -2\n";
+	    }
+	    else {
+		print "$lvl -1 -1\n";
+	    }
 	} else {
+	    $anyLevelSucceeded = 1;
 	    my $ksize = $size->copy()->badd(1023)->bdiv(1024);
             $ksize = ($ksize->bcmp(32) < 0) ? 32 : $ksize->bstr();
 	    print "$lvl $ksize 1\n";
 	}
     }
+
+    die Amanda::Application::MultipleError->transitionalError(
+	exceptions => \@failReasons) unless ( $anyLevelSucceeded );
 }
 
 =head3 C<inner_estimate>
@@ -1323,6 +1497,7 @@ If not overridden, this simply checks the options and writes a GOOD message.
 sub command_selfcheck {
     my ( $self ) = @_;
     $self->check_selfcheck_options();
+    $self->check();
     $self->print_to_server("$self->{name} (non-overridden selfcheck)",
                            $Amanda::Script_App::GOOD);
 }
@@ -1343,6 +1518,214 @@ is the right thing to call.)
 sub command_validate {
     my ( $self ) = @_;
     $self->default_validate();
+}
+
+package Amanda::Application::Message;
+use base qw(Amanda::Message);
+use Scalar::Util qw{blessed};
+
+# CLASS method to determine if a given thing is an exception that's an
+# instance of this class or a subclass (sort of isa in reverse).
+sub captures {
+    my ( $class, $thing ) = @_;
+    return ( blessed($thing) and $thing->isa($class) );
+}
+
+# Private sub to relieve application authors of the need to mention __FILE__
+# and __LINE__ everywhere an exception might be thrown. Return a usually-best
+# file and line by following the call stack outward until (a) out of any code
+# from Amanda::Message or subclasses and (b) out of this package itself (unless
+# (c) that unwinds all the way out to Script_App, in which case use the
+# innermost file/line found in this package). It is still possible to pass
+# source_filename and source_line explicitly to the constructor at particular
+# call sites.
+my $callerfill = sub {
+    my ( $package, $sourcefile, $sourceline );
+    my ( $myfile, $myline );
+    # can start at depth 1; zero is just the call to this private routine
+    for ( my $depth = 1; my @frameinfo = caller($depth); ++ $depth ) {
+        ( $package, $sourcefile, $sourceline ) = @frameinfo;
+	next if $package->isa('Amanda::Message');
+	last unless 'Amanda::Application::Abstract' eq $package;
+	( $myfile, $myline ) = ( $sourcefile, $sourceline )
+	    unless defined $myfile or defined $myline;
+    }
+    return ($myfile, $myline) if 'Amanda::Script_App' eq $package
+	and defined $myfile and defined $myline;
+    return ($sourcefile, $sourceline);
+};
+
+sub new {
+    my ( $class, %params ) = @_;
+    unless (defined $params{'source_filename'}&&defined $params{'source_line'}){
+        ($params{'source_filename'},$params{'source_line'}) = $callerfill->();
+    }
+    return $class->SUPER::new(%params);
+}
+
+# For development transition to using ::Message but before every message has
+# a code assigned; this allows code to be omitted, and uses 0 to indicate a
+# generic 'good' message. It will also default severity to INFO.
+sub transitionalGood {
+    my ( $class, %params ) = @_;
+    $params{'code'} = 0 unless exists $params{'code'};
+    $params{'severity'} = $Amanda::Message::INFO
+        unless exists $params{'severity'};
+    return $class->new(%params);
+}
+
+# For development transition to using ::Message but before every message has
+# a code assigned; this allows code to be omitted, and uses 1 to indicate a
+# generic 'error' message. The severity, as usual, defaults to CRITICAL.
+sub transitionalError {
+    my ( $class, %params ) = @_;
+    $params{'code'} = 1 unless exists $params{'code'};
+    return $class->new(%params);
+}
+
+# Make this do something useful, even when not overridden.
+sub local_full_message { my ( $self ) = @_; return $self->local_message(); }
+
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
+}
+
+# An exception indicating the application has not been properly invoked.
+package Amanda::Application::InvocationError;
+use base 'Amanda::Application::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'usage error: ' . $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'};
+    return $lm;
+}
+
+# An exception indicating some limit of the implementation has been hit (this
+# includes where functionality that should be implemented simply isn't yet).
+package Amanda::Application::ImplementationLimitError;
+use base 'Amanda::Application::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'implementation limit: ' . $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'};
+    return $lm;
+}
+
+# An exception indicating something is probably wrong in the implementation
+# itself; an assertion/should-not-happen kind of thing.
+package Amanda::Application::ImplementationError;
+use base 'Amanda::Application::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'should not happen: ' . $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'};
+    return $lm;
+}
+
+# An exception that reflects some condition in the environment where the
+# application runs: missing files, I/O errors, the usual stuff that happens.
+package Amanda::Application::EnvironmentError;
+use base 'Amanda::Application::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'} if defined $self->{'problem'};
+    $lm .= ': ' . $self->{'errnostr'} if defined $self->{'errnostr'};
+    return $lm;
+}
+
+# An exception reflecting a loss of numeric precision where that isn't ok.
+package Amanda::Application::PrecisionLossError;
+use base 'Amanda::Application::ImplementationLimitError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'problem'} = 'Loss of numeric precision'
+	unless exists $params{'problem'};
+    $class->SUPER::new(%params);
+}
+
+# An exception reflecting the status of a called process.
+package Amanda::Application::CalledProcessError;
+use base 'Amanda::Application::EnvironmentError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'item'} = 'External process'
+	unless exists $params{'item'};
+    if ( exists $params{'cmd'} and not exists $params{'value'} ) {
+	$params{'value'} = Data::Dumper->new([$params{'cmd'}])->
+	    Terse(1)->Useqq(1)->Indent(0)->Dump();
+    }
+    $class->SUPER::new(%params);
+}
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = $self->SUPER::local_message();
+    $lm .= ': exit status ' . $self->{'returncode'}
+	if defined $self->{'returncode'};
+    return $lm;
+}
+
+# An exception refusing a requested backup level because the prior level is
+# not recorded.
+package Amanda::Application::DiscontiguousLevelError;
+use base 'Amanda::Application::EnvironmentError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'item'} = 'Requested level'
+	unless exists $params{'item'};
+    $params{'problem'} = 'Prior level not recorded';
+    $class->SUPER::new(%params);
+}
+
+# An exception bundling one or more other exceptions as an array {'exceptions'}.
+package Amanda::Application::MultipleError;
+use base 'Amanda::Application::Message';
+sub local_message {
+    my ( $self ) = @_;
+    return 'Collected errors: ' . scalar(@{$self->{'exceptions'}});
+}
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    for my $exc ( @{$self->{'exceptions'}} ) {
+	$app->print_to_server($exc . '', $Amanda::Script_App::ERROR);
+    }
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
+}
+
+# An exception indicating a dump should be retried.
+package Amanda::Application::RetryDumpError;
+use base 'Amanda::Application::EnvironmentError';
+use Amanda::Feature;
+use Amanda::Util;
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'Should retry';
+    $lm .= ' in ' . (0 + $self->{delay}) . ' seconds' if exists $self->{delay};
+    $lm .= ' at level ' . (0 + $self->{level}) if exists $self->{level};
+    $lm .= ': ' . $self->{problem} if exists $self->{problem};
+    return $lm;
+}
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    if ( defined $Amanda::Feature::fe_sendbackup_retry ) {
+	if ( 'backup' eq $app->{'action'} ) {
+	    my $pm = 'sendbackup: retry';
+	    $pm .= ' delay ' . (0 + $self->{delay}) if exists $self->{delay};
+	    $pm .= ' level ' . (0 + $self->{level}) if exists $self->{level};
+	    $pm .= ' message ' . Amanda::Util::quote_string($self->{problem})
+		if exists $self->{problem};
+	    print {$app->{mesgout}} $pm . "\n";
+	    return;
+	}
+    }
+    # if action isn't 'backup' or feature isn't supported, fall back and behave
+    # as an ordinary error.
+    $self->SUPER::on_uncaught($app);
 }
 
 1;
