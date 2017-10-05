@@ -605,12 +605,9 @@ sub inner_estimate_brute {
     }
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
-    if ( $level > $mxl ) {
-	$self->print_to_server("Requested estimate level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
 
-	return Math::BigInt->bone('-');
-    }
+    die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	value => $level) if $level > $mxl;
 
     my $priorsnapshot = $self->{'localstate'}->{$level - 1}->{'snapshot'};
 
@@ -655,8 +652,8 @@ sub construct_send_cmd {
 	return $self->{'zfsexecutable'}, 'send', @compressed, @misc_opts, '-R',
 	    '--', $dn . '@' . $latestsnapshot;
     } elsif ( $level > $mxl ) {
-	$self->print_to_server_and_die("Requested backup level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
+	die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	    value => $level);
     } else {
 	my $priorsnapshot = $self->{'localstate'}->{$level - 1}->{'snapshot'};
 	$self->{'localstate'}->{'topds'}->

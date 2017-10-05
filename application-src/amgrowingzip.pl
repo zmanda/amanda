@@ -100,12 +100,10 @@ sub inner_estimate {
     return $sz if 0 == $level;
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
-    if ( $level > $mxl ) {
-        $self->print_to_server("Requested estimate level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
 
-        return Math::BigInt->bone('-');
-    }
+    die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	value => $level) if $level > $mxl;
+
     my $lowerstate = $self->{'localstate'}->{$level - 1};
     my $lowerlength = Math::BigInt->new($lowerstate->{'length'});
     my $lowercdo = Math::BigInt->new($lowerstate->{'centraldiroffset'});
@@ -144,7 +142,8 @@ sub inner_backup {
     } else {
         # ENHANCEMENT? could save a prior size and digest, and verify here
         my $lowerstate = $self->{'localstate'}->{$level - 1};
-	# XXX don't be stupid if lowerstate isn't there
+	die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	    value => $level) unless defined $lowerstate;
         my $lowerlength = Math::BigInt->new($lowerstate->{'length'});
         my $lowercdo = Math::BigInt->new($lowerstate->{'centraldiroffset'});
 	if ( 0 == $currentlength->bcmp($lowerlength) ) {

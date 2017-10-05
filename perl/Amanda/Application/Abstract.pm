@@ -1427,16 +1427,33 @@ sub command_estimate {
     }
     $lvls = [ $lvls ] if ! $isArray;
 
+    my $anyLevelSucceeded = 0;
+    my @failReasons;
+
     for my $lvl ( @$lvls ) {
-        my $size = $self->inner_estimate($lvl);
-	if ( $size->bcmp(0) < 0 ) {
-	    print "$lvl -1 -1\n";
+	my ( $size, $validsize );
+	eval {
+	    $size = $self->inner_estimate($lvl);
+	    $validsize = ($size->isa('Math::BigInt') and $size->bcmp(0) >= 0);
+	};
+	if ( $@ or ! $validsize ) {
+	    push @failReasons, $@;
+	    if ( Amanda::Application::DiscontiguousLevelError->captures($@) ) {
+		print "$lvl -2 -2\n";
+	    }
+	    else {
+		print "$lvl -1 -1\n";
+	    }
 	} else {
+	    $anyLevelSucceeded = 1;
 	    my $ksize = $size->copy()->badd(1023)->bdiv(1024);
             $ksize = ($ksize->bcmp(32) < 0) ? 32 : $ksize->bstr();
 	    print "$lvl $ksize 1\n";
 	}
     }
+
+    die Amanda::Application::MultipleError->transitionalError(
+	exceptions => \@failReasons) unless ( $anyLevelSucceeded );
 }
 
 =head3 C<inner_estimate>
@@ -1505,6 +1522,14 @@ sub command_validate {
 
 package Amanda::Application::Message;
 use base qw(Amanda::Message);
+use Scalar::Util qw{blessed};
+
+# CLASS method to determine if a given thing is an exception that's an
+# instance of this class or a subclass (sort of isa in reverse).
+sub captures {
+    my ( $class, $thing ) = @_;
+    return ( blessed($thing) and $thing->isa($class) );
+}
 
 # Private sub to relieve application authors of the need to mention __FILE__
 # and __LINE__ everywhere an exception might be thrown. Return a usually-best
@@ -1643,6 +1668,33 @@ sub local_message {
     $lm .= ': exit status ' . $self->{'returncode'}
 	if defined $self->{'returncode'};
     return $lm;
+}
+
+# An exception refusing a requested backup level because the prior level is
+# not recorded.
+package Amanda::Application::DiscontiguousLevelError;
+use base 'Amanda::Application::EnvironmentError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'item'} = 'Requested level'
+	unless exists $params{'item'};
+    $params{'problem'} = 'Prior level not recorded';
+    $class->SUPER::new(%params);
+}
+
+# An exception bundling one or more other exceptions as an array {'exceptions'}.
+package Amanda::Application::MultipleError;
+use base 'Amanda::Application::Message';
+sub local_message {
+    my ( $self ) = @_;
+    return 'Collected errors: ' . scalar(@{$self->{'exceptions'}});
+}
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    for my $exc ( @{$self->{'exceptions'}} ) {
+	$app->print_to_server($exc . '', $Amanda::Script_App::ERROR);
+    }
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
 }
 
 1;

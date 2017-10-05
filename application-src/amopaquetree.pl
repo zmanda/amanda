@@ -213,7 +213,10 @@ sub rsync_ref_for_level {
     if ( 0 == $level ) {
         $ref = $self->empty_rsync_state_dir(1);
     } else {
-        $ref = $self->{'localstate'}->{$level - 1}->{'rsyncstate'};
+	my $lowerstate = $self->{'localstate'}->{$level - 1};
+	die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	    value => $level) unless defined $lowerstate;
+	$ref = $lowerstate->{'rsyncstate'};
 	$ref = Amanda::Application::AmOpaqueTree::DirWrap->new($ref);
     }
 
@@ -223,12 +226,9 @@ sub rsync_ref_for_level {
 sub inner_estimate {
     my ( $self, $level ) = @_;
     my $mxl = $self->{'localstate'}->{'maxlevel'};
-    if ( $level > $mxl ) {
-        $self->print_to_server("Requested estimate level $level > $mxl",
-			       $Amanda::Script_App::ERROR);
 
-        return Math::BigInt->bone('-');
-    }
+    die Amanda::Application::DiscontiguousLevelError->transitionalError(
+	value => $level) if $level > $mxl;
 
     my $dn = $self->{'options'}->{'device'};
     my $ref = $self->rsync_ref_for_level($level);
