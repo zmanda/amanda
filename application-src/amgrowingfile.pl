@@ -102,7 +102,6 @@ sub inner_backup {
     if ( 0 == $level ) {
         $start = Math::BigInt->bzero();
     } else {
-        # XXX verify prior size and digest here
         my $lowerstate = $self->{'localstate'}->{$level - 1};
 	die Amanda::Application::DiscontiguousLevelError->transitionalError(
 	    value => $level) unless defined $lowerstate;
@@ -110,6 +109,16 @@ sub inner_backup {
         my $lowersize = Math::BigInt->new($lowerstate->{'bytes'});
 	$start = $loweroffset->copy()->badd($lowersize);
 	my $istart = $self->big2int($start);
+
+	die Amanda::Application::RetryDumpError->transitionalError(
+	    delay => 0, level => 0, problem => 'growing file shrank')
+	    if $istart > (POSIX::fstat($fdin))[7];
+
+	# Currently science fiction: optionally include in the state a digest
+	# of the file's past contents, to force a retry at level 0 in case of
+	# mismatch even if size does not catch it. Of course that would turn
+	# every incremental dump into a level-0 amount of I/O (well, I, anyway).
+
 	POSIX::lseek($fdin, $istart, &POSIX::SEEK_SET);
 
 	# sendbackup: HEADER, documented in the Application API/Operations wiki

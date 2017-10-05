@@ -1697,4 +1697,35 @@ sub on_uncaught {
     $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
 }
 
+# An exception indicating a dump should be retried.
+package Amanda::Application::RetryDumpError;
+use base 'Amanda::Application::EnvironmentError';
+use Amanda::Feature;
+use Amanda::Util;
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'Should retry';
+    $lm .= ' in ' . (0 + $self->{delay}) . ' seconds' if exists $self->{delay};
+    $lm .= ' at level ' . (0 + $self->{level}) if exists $self->{level};
+    $lm .= ': ' . $self->{problem} if exists $self->{problem};
+    return $lm;
+}
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    if ( defined $Amanda::Feature::fe_sendbackup_retry ) {
+	if ( 'backup' eq $app->{'action'} ) {
+	    my $pm = 'sendbackup: retry';
+	    $pm .= ' delay ' . (0 + $self->{delay}) if exists $self->{delay};
+	    $pm .= ' level ' . (0 + $self->{level}) if exists $self->{level};
+	    $pm .= ' message ' . Amanda::Util::quote_string($self->{problem})
+		if exists $self->{problem};
+	    print {$app->{mesgout}} $pm . "\n";
+	    return;
+	}
+    }
+    # if action isn't 'backup' or feature isn't supported, fall back and behave
+    # as an ordinary error.
+    $self->SUPER::on_uncaught($app);
+}
+
 1;

@@ -140,7 +140,7 @@ sub inner_backup {
     if ( 0 == $level ) {
         $start = Math::BigInt->bzero();
     } else {
-        # ENHANCEMENT? could save a prior size and digest, and verify here
+        # ENHANCEMENT? could save a prior digest, and verify here
         my $lowerstate = $self->{'localstate'}->{$level - 1};
 	die Amanda::Application::DiscontiguousLevelError->transitionalError(
 	    value => $level) unless defined $lowerstate;
@@ -150,6 +150,10 @@ sub inner_backup {
 	    # Length is unchanged -> nothing has changed (the zip file is
 	    # assumed never to change except by appending).
 	    $start = $currentlength; # In other words, dump nothing.
+	}
+	elsif ( 0 > $currentlength->bcmp($lowerlength) ) {
+	    die Amanda::Application::RetryDumpError->transitionalError(
+		delay => 0, level => 0, problem => 'growing file shrank');
 	}
 	else {
 	    $start = $lowercdo; # Dump from lowercdo to current length.
