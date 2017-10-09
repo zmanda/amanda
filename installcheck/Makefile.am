@@ -103,6 +103,7 @@ full_tests = \
 	failure-client-encrypt-end \
 	failure-client-encrypt-not-found \
 	failure-client-encrypt-no-exec \
+	failure-dumper-try-again \
 	failure-server-custom-compress \
 	failure-server-custom-compress-end \
 	failure-server-custom-compress-not-found \

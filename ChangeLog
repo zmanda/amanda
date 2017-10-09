@@ -1,3 +1,11 @@
+2017-10-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/driver.c (handle_dumper_result): Send the TRYAGAIN mesage
+	  to chunker or taper
+	* file server-src/driverio.h (sched_t): Add try_again_message
+	* server-src/dumper.c: Log L_FAIL on TRY-AGAIN
+	* installcheck/failure-dumper-try-again.pl: New Check
+	* installcheck/Makefile.am (full_tests): Add failure-dumper-try-again
+
 2017-10-02  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcheck.c: Fix compilation on Solaris
 

@@ -46,6 +46,10 @@
 #include "timestamp.h"
 #include "amxml.h"
 
+#ifdef FAILURE_CODE
+static int dumper_try_again=0;
+#endif
+
 #define dumper_debug(i, ...) do {	\
 	if ((i) <= debug_dumper) {	\
 	    g_debug(__VA_ARGS__);	\
@@ -814,7 +818,16 @@ main(
 			      ssh_keys,
 			      auth,
 			      options);
-
+#ifdef FAILURE_CODE
+	    if (dumper_try_again==0) {
+		char *A = getenv("DUMPER_TRY_AGAIN");
+		if (A) {
+		    rc=1;
+		    errstr=g_strdup("DUMPER-TRY-AGAIN");
+		    dumper_try_again=1;
+		}
+	    }
+#endif
 	    if (rc == 3) {
 		log_add(L_RETRY, "%s %s %s %d delay %d level %d message %s",
 			hostname, qdiskname, dumper_timestamp, level,
@@ -825,8 +838,7 @@ main(
 		q = quote_string(errstr);
 		putresult(rc == 2? FAILED : TRYAGAIN, "%s %s\n",
 		    handle, q);
-		if (rc == 2)
-		    log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
+		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
 			dumper_timestamp, level, errstr);
 		amfree(q);
 	    } else {

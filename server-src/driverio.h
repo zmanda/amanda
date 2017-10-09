@@ -129,6 +129,7 @@ typedef struct sched_s {
     char *src_pool;
     char *src_label;
     int   src_fileno;
+    char *try_again_message;
 } sched_t;
 
 typedef struct schedlist_s {
