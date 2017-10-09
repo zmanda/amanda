@@ -1799,6 +1799,7 @@ start_some_dumps(
 	    job->dumper = dumper;
 	    dumper->job = job;
 	    sp->timestamp = now;
+	    g_free(sp->try_again_message);
 	    amfree(sp->disk->dataport_list);
 
 	    dumper->busy = 1;		/* dumper is now busy */
@@ -1848,6 +1849,7 @@ start_some_dumps(
 	    dumper->job = job;
 
 	    sp->timestamp = now;
+	    g_free(sp->try_again_message);
 	    amfree(sp->disk->dataport_list);
 
 	    dumper->busy = 1;		/* dumper is now busy */
@@ -3531,7 +3533,9 @@ handle_dumper_result(
 	     * Requeue this disk, and fall through to the FAILED
 	     * case for cleanup.
 	     */
-	    if (sp->dump_attempted >= dp->retry_dump-1) {
+	    g_free(sp->try_again_message);
+	    sp->try_again_message = g_strdup(result_argv[2]);
+	    if (sp->dump_attempted >= dp->retry_dump) {
 		char *qname = quote_string(dp->name);
 		char *qerr = quote_string(result_argv[2]);
 		log_add(L_FAIL, _("%s %s %s %d [too many dumper retry: %s]"),
@@ -3648,7 +3652,10 @@ handle_dumper_result(
 	    /* send the dumper result to the chunker */
 	    if (job->chunker) {
 		if (cmd == TRYAGAIN) {
-		    chunker_cmd(job->chunker, ABORT, sp, "dumper TRYAGAIN");
+		    char *abort_message = g_strdup_printf("dumper TRYAGAIN: %s",
+						sp->try_again_message);
+		    chunker_cmd(job->chunker, ABORT, sp, abort_message);
+		    g_free(abort_message);
 		    pending_aborts++;
 		} else if (job->chunker->sendresult) {
 		    if (cmd == DONE) {
@@ -3666,7 +3673,10 @@ handle_dumper_result(
 		    wtaper = job->wtaper;
 		    taper = wtaper->taper;
 		    if (cmd == TRYAGAIN) {
-			taper_cmd(taper, wtaper, ABORT, sp, NULL, 0, "dumper TRYAGAIN");
+			char *abort_message = g_strdup_printf("dumper TRYAGAIN: %s",
+							sp->try_again_message);
+			taper_cmd(taper, wtaper, ABORT, sp, NULL, 0, abort_message);
+			g_free(abort_message);
 		    } else if (cmd == DONE && wtaper->sendresult) {
 			taper_cmd(taper, wtaper, DONE, sp, NULL, 0, NULL);
 			wtaper->sendresult = FALSE;
