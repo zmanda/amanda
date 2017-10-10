@@ -74,20 +74,18 @@ struct databuf {
     char *datain;		/* data buffer markers */
     char *dataout;
     char *datalimit;
-    pid_t compresspid;		/* valid if fd is pipe to compress */
-    pid_t encryptpid;		/* valid if fd is pipe to encrypt */
     shm_ring_t *shm_ring_producer;
     shm_ring_t *shm_ring_consumer;
     shm_ring_t *shm_ring_direct;
     uint64_t    shm_readx;
     crc_t      *crc;
 };
-pid_t statepid = -1;
 
 struct databuf *g_databuf = NULL;
 
 typedef struct filter_s {
     int             fd;
+    pid_t           pid;
     char           *name;
     char           *buffer;
     gint64          first;           /* first byte used */
@@ -95,6 +93,7 @@ typedef struct filter_s {
     gint64          allocated_size ; /* allocated size of the buffer     */
     event_handle_t *event;
 } filter_t;
+static GSList *filters = NULL;
 
 static char *handle = NULL;
 
@@ -144,6 +143,7 @@ static time_t conf_dtimeout;
 static int indexfderror;
 static int set_datafd;
 static char *dle_str = NULL;
+static cmd_t chunker_taper_result = BOGUS;
 static char *errfname = NULL;
 static int   errf_lines = 0;
 static int   max_warnings = 0;
@@ -167,6 +167,10 @@ static shm_ring_t *shm_ring_direct = NULL;
 static char *write_to = NULL;
 
 static dumpfile_t file;
+static int client_request_result;
+static int result_sent_to_driver;
+static event_handle_t *ev_wait_filters_timeout;
+static int wait_filters_count;
 
 #ifdef FAILURE_CODE
 static int disable_network_shm = -1;
@@ -193,6 +197,8 @@ static struct {
     { "INDEX", NULL },
 #define	STATEFD	3
     { "STATE", NULL },
+#define	CMDFD	4
+    { "CMD", NULL },
 };
 #define NSTREAMS G_N_ELEMENTS(streams)
 
@@ -223,8 +229,8 @@ static void	parse_info_line(char *);
 static int	log_msgout(logtype_t);
 static char *	dumper_get_security_conf (char *, void *);
 
-static int	runcompress(int, pid_t *, comp_t, char *);
-static int	runencrypt(int, pid_t *,  encrypt_t, char *);
+static int	runcompress(int, comp_t, char *);
+static int	runencrypt(int, encrypt_t, char *);
 
 static void	sendbackup_response(void *, pkt_t *, security_handle_t *);
 static int	startup_dump(const char *, const char *, const char *, int,
@@ -239,12 +245,17 @@ static void	read_indexfd(void *, void *, ssize_t);
 static void	read_datafd(void *, void *, ssize_t);
 static void	read_statefd(void *, void *, ssize_t);
 static void	read_mesgfd(void *, void *, ssize_t);
+static void	read_cmdfd(void *, void *, ssize_t);
 static gboolean header_sent(struct databuf *db);
 static void	timeout(time_t);
 static void	retimeout(time_t);
 static void	timeout_callback(void *unused);
 static gpointer handle_shm_ring_to_fd_thread(gpointer data);
 static gpointer handle_shm_ring_direct(gpointer data);
+static void	send_result(void);
+static void	send_result_to_client(void);
+static void	send_result_to_driver(void);
+static void wait_filters(void *unused);
 
 static void
 check_options(
@@ -880,6 +891,8 @@ main(
 	    amfree(qdiskname);
 	    amfree(b64disk);
 
+	    putresult(DUMP_FINISH, "%s\n", handle);
+
 	    break;
 
 	default:
@@ -938,8 +951,6 @@ databuf_init(
     db->fd = fd;
     db->buf = NULL;
     db->datain = db->dataout = db->datalimit = NULL;
-    db->compresspid = -1;
-    db->encryptpid = -1;
     db->shm_ring_producer = NULL;
     db->shm_ring_consumer = NULL;
     db->shm_ring_direct = NULL;
@@ -1143,7 +1154,7 @@ process_dumpline(
 			    g_debug("Can't open statefile '%s': %s",
 				    state_filename_gz, strerror(errno));
 			} else {
-			    if (runcompress(statefile_in_mesg, &statepid, COMP_BEST, "state compress") < 0) {
+			    if (runcompress(statefile_in_mesg, COMP_BEST, "state compress") < 0) {
 				aclose(statefile_in_mesg);
 			    }
 			}
@@ -1534,15 +1545,23 @@ do_dump(
     char *time_str;
     char *fn;
     char *q;
-    times_t runtime;
-    double dumptime;	/* Time dump took in secs */
-    pid_t indexpid = -1;
+    //times_t runtime;
+    //double dumptime;	/* Time dump took in secs */
     char *m;
     int to_unlink = 1;
+    //struct cmdargs *cmdargs = NULL;
 
     startclock();
 
     if (msg.buf) msg.buf[0] = '\0';	/* reset msg buffer */
+    status = 0;
+    dump_result = 0;
+    client_request_result = 0;
+    result_sent_to_driver = 0;
+    retry_delay = -1;
+    retry_level = -1;
+    amfree(retry_message);
+    dumpbytes = dumpsize = headersize = origsize = (off_t)0;
     fh_init(&file);
 
     g_snprintf(level_str, sizeof(level_str), "%d", level);
@@ -1604,7 +1623,7 @@ do_dump(
                                      indexfile_tmp, strerror(errno));
 	    goto failed;
 	} else if (getconf_boolean(CNF_COMPRESS_INDEX)) {
-	    if (runcompress(indexout, &indexpid, COMP_BEST, "index compress") < 0) {
+	    if (runcompress(indexout, COMP_BEST, "index compress") < 0) {
 		aclose(indexout);
 		goto failed;
 	    }
@@ -1668,6 +1687,9 @@ do_dump(
 	}
     }
 
+    if (data_path == DATA_PATH_AMANDA && streams[CMDFD].fd != NULL) {
+	security_stream_read(streams[CMDFD].fd, read_cmdfd, NULL);
+    }
     if (streams[STATEFD].fd != NULL) {
 	security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
     }
@@ -1687,7 +1709,7 @@ do_dump(
     /*
      * Start the event loop.  This will exit when all five events
      * (read the mesgfd, read the datafd, read the indexfd, read the statefd,
-     *  and timeout) are removed.
+     *  and timeout) are removed. And when all filters are done.
      */
     event_loop(0);
 
@@ -1744,39 +1766,10 @@ do_dump(
 	if (!errstr) errstr = g_strdup(_("got no header information"));
     }
 
-    dumpsize -= headersize;		/* don't count the header */
-    if (shm_name) {
-	if (db->shm_ring_producer) {
-	    if (db->shm_ring_producer->mc->written > 0 && db->shm_ring_producer->mc->written < 1024) {
-		dumpsize = 1;
-	    } else {
-		dumpsize = (long long)db->shm_ring_producer->mc->written/1024;
-	    }
-	} else if (db->shm_ring_direct) {
-	    if (db->shm_ring_direct->mc->written > 0 && db->shm_ring_direct->mc->written < 1024) {
-		dumpsize = 1;
-	    } else {
-		dumpsize = (long long)db->shm_ring_direct->mc->written/1024;
-	    }
-	} else {
-	    if (client_crc.size > 0 && client_crc.size < 1024) {
-		dumpsize = 1;
-	    } else {
-		dumpsize = (long long)client_crc.size/1024;
-	    }
-	}
-    } else if (db->shm_ring_consumer) {
-	    if (db->shm_ring_consumer->mc->written > 0 && db->shm_ring_consumer->mc->written < 1024) {
-		dumpsize = 1;
-	    } else {
-		dumpsize = (long long)db->shm_ring_consumer->mc->written/1024;
-	    }
-    }
-
     if (dumpsize <= (off_t)0 && (data_path == DATA_PATH_AMANDA)) {
 	dumpsize = (off_t)0;
 	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no data"));
+	if (!errstr) errstr = g_strdup(_("got no data 3"));
     }
 
     if (data_path == DATA_PATH_DIRECTTCP) {
@@ -1788,14 +1781,12 @@ do_dump(
 	if (!errstr) errstr = g_strdup(_("got no header information"));
     }
 
-    if (indexfile_tmp) {
-	amwait_t index_status;
+    if (result_sent_to_driver == 0) {
+	send_result_to_driver();
+    }
 
+    if (indexfile_tmp) {
 	/*@i@*/ aclose(indexout);
-	if (indexpid > 0) {
-	    waitpid(indexpid,&index_status,0);
-	    log_add(L_INFO, "pid-done %ld", (long)indexpid);
-	}
 	if (rename(indexfile_tmp, indexfile_real) != 0) {
 	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
 		    indexfile_tmp, indexfile_real, strerror(errno));
@@ -1819,89 +1810,8 @@ do_dump(
 	g_free(f);
     }
 
-    if (db->compresspid != -1) {
-	amwait_t  wait_status;
-	char *errmsg = NULL;
-
-	waitpid(db->compresspid, &wait_status, 0);
-	if (WIFSIGNALED(wait_status)) {
-	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
-				     "data compress:", WTERMSIG(wait_status));
-	} else if (WIFEXITED(wait_status)) {
-	    if (WEXITSTATUS(wait_status) != 0) {
-		errmsg = g_strdup_printf(_("%s exited with status %d"),
-					 "data compress:", WEXITSTATUS(wait_status));
-	    }
-	} else {
-	    errmsg = g_strdup_printf(_("%s got bad exit"),
-				     "data compress: ");
-	}
-	if (errmsg) {
-	    g_fprintf(errf, _("? %s\n"), errmsg);
-	    g_debug("%s", errmsg);
-	    dump_result = max(dump_result, 2);
-	    if (!errstr)
-		errstr = errmsg;
-	    else
-		g_free(errmsg);
-	}
-	log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
-	db->compresspid = -1;
-    }
-
-    if (db->encryptpid != -1) {
-	amwait_t  wait_status;
-	char *errmsg = NULL;
-
-	waitpid(db->encryptpid, &wait_status, 0);
-	if (WIFSIGNALED(wait_status)) {
-	    errmsg = g_strdup_printf(_("%s terminated with signal %d"),
-				     "data encrypt:", WTERMSIG(wait_status));
-	} else if (WIFEXITED(wait_status)) {
-	    if (WEXITSTATUS(wait_status) != 0) {
-		errmsg = g_strdup_printf(_("%s exited with status %d"),
-					 "data encrypt:", WEXITSTATUS(wait_status));
-	    }
-	} else {
-	    errmsg = g_strdup_printf(_("%s got bad exit"),
-				     "data encrypt:");
-	}
-	if (errmsg) {
-	    g_fprintf(errf, _("? %s\n"), errmsg);
-	    g_debug("%s", errmsg);
-	    dump_result = max(dump_result, 2);
-	    if (!errstr)
-		errstr = errmsg;
-	    else
-		g_free(errmsg);
-	}
-	log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
-	db->encryptpid  = -1;
-    }
-
     if (dump_result > 1)
 	goto failed;
-
-    runtime = stopclock();
-    dumptime = g_timeval_to_double(runtime);
-
-    amfree(errstr);
-    errstr = g_malloc(128);
-    g_snprintf(errstr, 128, _("sec %s kb %lld kps %3.1lf orig-kb %lld"),
-	walltime_str(runtime),
-	(long long)dumpsize,
-	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
-	(long long)origsize);
-    m = g_strdup_printf("[%s]", errstr);
-    q = quote_string(m);
-    amfree(m);
-    putresult(DONE, _("%s %lld %lld %lu %08x:%lld %08x:%lld %s\n"), handle,
-		(long long)origsize,
-		(long long)dumpsize,
-	        (unsigned long)((double)dumptime+0.5),
-		native_crc.crc, (long long)native_crc.size,
-		client_crc.crc, (long long)client_crc.size, q);
-    amfree(q);
 
     switch(dump_result) {
     case 0:
@@ -1938,66 +1848,25 @@ do_dump(
     amfree(state_filename);
     amfree(state_filename_gz);
     amfree(errstr);
+
     dumpfile_free_data(&file);
 
-    return 1;
+    if (!errstr)
+	return 1;
+
+    dump_result = max(dump_result, 2);
 
 failed:
-    m = g_strdup_printf("[%s]", errstr);
-    q = quote_string(m);
-    putresult(FAILED, "%s %s\n", handle, q);
-    amfree(q);
-    amfree(m);
+    if (result_sent_to_driver == 0) {
+	m = g_strdup_printf("[%s]", errstr);
+	q = quote_string(m);
+	putresult(FAILED, "%s %s\n", handle, q);
+	amfree(q);
+	amfree(m);
+    }
 
     aclose(db->fd);
-    /* kill all child process */
-    if (db->compresspid != -1) {
-	g_fprintf(stderr,_("%s: kill compress command\n"),get_pname());
-	if (kill(db->compresspid, SIGTERM) < 0) {
-	    if (errno != ESRCH) {
-		g_fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
-		    get_pname(), strerror(errno));
-	    } else {
-		log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
-	    }
-	}
-	else {
-	    waitpid(db->compresspid,NULL,0);
-	    log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
-	}
-    }
-
-    if (db->encryptpid != -1) {
-	g_fprintf(stderr,_("%s: kill encrypt command\n"),get_pname());
-	if (kill(db->encryptpid, SIGTERM) < 0) {
-	    if (errno != ESRCH) {
-		g_fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
-		    get_pname(), strerror(errno));
-	    } else {
-		log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
-	    }
-	}
-	else {
-	    waitpid(db->encryptpid,NULL,0);
-	    log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
-	}
-    }
-
-    if (indexpid != -1) {
-	g_fprintf(stderr,_("%s: kill index command\n"),get_pname());
-	if (kill(indexpid, SIGTERM) < 0) {
-	    if (errno != ESRCH) {
-		g_fprintf(stderr,_("%s: can't kill index command: %s\n"), 
-		    get_pname(),strerror(errno));
-	    } else {
-		log_add(L_INFO, "pid-done %ld", (long)indexpid);
-	    }
-	}
-	else {
-	    waitpid(indexpid,NULL,0);
-	    log_add(L_INFO, "pid-done %ld", (long)indexpid);
-	}
-    }
+/* JLM kill all filters */
 
     log_start_multiline();
     log_add(L_FAIL, _("%s %s %s %d [%s]"), hostname, qdiskname, dumper_timestamp,
@@ -2022,6 +1891,7 @@ failed:
     }
 
     amfree(errstr);
+
     dumpfile_free_data(&file);
 
     return 0;
@@ -2118,7 +1988,7 @@ handle_shm_ring_to_fd_thread(
 
 	    if (srvencrypt == ENCRYPT_SERV_CUST) {
 		write_to = "encryption program";
-		if (runencrypt(db->fd, &db->encryptpid, srvencrypt, "data encrypt") < 0) {
+		if (runencrypt(db->fd, srvencrypt, "data encrypt") < 0) {
 		    dump_result = 2;
 		    aclose(db->fd);
 		    stop_dump();
@@ -2133,7 +2003,7 @@ handle_shm_ring_to_fd_thread(
 	     */
 	    if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
 		write_to = "compression program";
-		if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
+		if (runcompress(db->fd, srvcompress, "data compress") < 0) {
 		    dump_result = 2;
 		    aclose(db->fd);
 		    stop_dump();
@@ -2244,27 +2114,12 @@ handle_shm_ring_direct(
     }
     g_mutex_lock(shm_thread_mutex);
 
-//    s = strchr(data_host, ',');
-//    if (s) *s = '\0';  /* use first data_port */
-//    s = strrchr(data_host, ':');
-//    if (!s) {
-//	g_free(errstr);
-//	errstr = g_strdup("write_tapeheader: no dataport_list");
-//	dump_result = 2;
-//	amfree(data_host);
-//	stop_dump();
-//	goto shm_done;
-//    }
-//    *s = '\0';
-//    s++;
-//    data_port = atoi(s);
-
     while (dump_result == 0 &&
 	   (!ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE))) {
 	g_debug("D sleep while waiting for HEADER_DONE");
 	g_cond_wait(shm_thread_cond, shm_thread_mutex);
     }
-    if (dump_result > 0) {
+    if (!db || db->fd == -1 || !ISSET(status, GOT_INFO_ENDLINE) || !ISSET(status, HEADER_DONE)) {
 	goto shm_done;
     }
 
@@ -2272,21 +2127,6 @@ handle_shm_ring_direct(
 	goto shm_done;
     }
 
-//    if (g_str_equal(data_host,"255.255.255.255")) {
-//    }
-//    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
-//    db->fd = stream_client(NULL, data_host, data_port,
-//				   STREAM_BUFSIZE, 0, NULL, 0);
-//    if (db->fd == -1) {
-//	g_free(errstr);
-//	errstr = g_strdup_printf("Can't open data output stream: %s",
-//				 strerror(errno));
-//	dump_result = 2;
-//	amfree(data_host);
-//	stop_dump();
-//	goto shm_done;
-//    }
-//    amfree(data_host);
     dumpsize += (off_t)DISK_BLOCK_KB;
     headersize += (off_t)DISK_BLOCK_KB;
 
@@ -2350,6 +2190,12 @@ read_statefd(
 	}
 	streams[STATEFD].fd = NULL;
 
+	/* start to read the datafd  if not already done */
+	if (data_path == DATA_PATH_AMANDA && set_datafd == 0) {
+	    security_stream_read(streams[DATAFD].fd, read_datafd, g_databuf);
+	    set_datafd = 1;
+	}
+
 	/*
 	 * If the data fd and index fd has also shut down, then we're done.
 	 */
@@ -2373,7 +2219,7 @@ read_statefd(
 		g_debug("Can't open statefile '%s': %s", state_filename_gz,
 					       strerror(errno));
 	    } else {
-		if (runcompress(statefile_in_stream, &statepid, COMP_BEST, "state compress") < 0) {
+		if (runcompress(statefile_in_stream, COMP_BEST, "state compress") < 0) {
 		    aclose(statefile_in_stream);
 		}
 	    }
@@ -2442,12 +2288,14 @@ read_mesgfd(
 	 */
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
 	    streams[INDEXFD].fd == NULL &&
-	    streams[STATEFD].fd == NULL) {
+	    streams[STATEFD].fd == NULL &&
+	    streams[CMDFD].fd == NULL) {
 	    stop_dump();
 	}
 	if (!ISSET(status, GOT_INFO_ENDLINE)) {
 	    stop_dump();
 	}
+	send_result();
 	if (shm_thread) {
 	    g_cond_broadcast(shm_thread_cond);
 	    g_mutex_unlock(shm_thread_mutex);
@@ -2534,7 +2382,7 @@ read_datafd(
 	return;
     }
 
-    if (!ISSET(status, HEADER_DONE)) {
+    if (size > 0 && !ISSET(status, HEADER_DONE)) {
 	g_critical("HEADER_DONE not set");
     }
 
@@ -2659,7 +2507,7 @@ read_datafd(
 
 	if (srvencrypt == ENCRYPT_SERV_CUST) {
 	    write_to = "encryption program";
-	    if (runencrypt(db->fd, &db->encryptpid, srvencrypt, "data encrypt") < 0) {
+	    if (runencrypt(db->fd, srvencrypt, "data encrypt") < 0) {
 		dump_result = 2;
 		aclose(db->fd);
 		stop_dump();
@@ -2676,7 +2524,7 @@ read_datafd(
 	 */
 	if ((srvcompress != COMP_NONE) && (srvcompress != COMP_CUST)) {
 	    write_to = "compression program";
-	    if (runcompress(db->fd, &db->compresspid, srvcompress, "data compress") < 0) {
+	    if (runcompress(db->fd, srvcompress, "data compress") < 0) {
 		dump_result = 2;
 		aclose(db->fd);
 		stop_dump();
@@ -2691,6 +2539,17 @@ read_datafd(
 
 	dumpsize += (off_t)DISK_BLOCK_KB;
 	headersize += (off_t)DISK_BLOCK_KB;
+
+	if (data_path == DATA_PATH_AMANDA) {
+	    if (streams[CMDFD].fd != NULL) {
+		security_stream_read(streams[CMDFD].fd, read_cmdfd, db);
+	    }
+	    set_datafd = 1;
+	}
+	if (streams[STATEFD].fd != NULL) {
+	    security_stream_read(streams[STATEFD].fd, read_statefd, NULL);
+	}
+	send_result();
     }
 
     /*
@@ -2706,6 +2565,7 @@ read_datafd(
 	}
 	streams[DATAFD].fd = NULL;
 	aclose(db->fd);
+	send_result();
 	crc_data_in.crc  = crc32_finish(&crc_data_in);
 	crc_data_out.crc = crc32_finish(&crc_data_out);
 	g_debug("data in  CRC: %08x:%lld",
@@ -2716,7 +2576,7 @@ read_datafd(
 	 * If the mesg fd and index fd has also shut down, then we're done.
 	 */
 	if (streams[MESGFD].fd == NULL && streams[INDEXFD].fd == NULL &&
-	    streams[STATEFD].fd == NULL) {
+	    streams[STATEFD].fd == NULL && streams[CMDFD].fd == NULL) {
 	    stop_dump();
 	}
 	if (shm_thread) {
@@ -2767,6 +2627,78 @@ read_datafd(
 }
 
 /*
+ * Callback for reads on the cmdfd stream
+ */
+static void
+read_cmdfd(
+    void *     cookie G_GNUC_UNUSED,
+    void *     buf,
+    ssize_t    size)
+{
+    switch (size) {
+    case -1:
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
+	g_free(errstr);
+	errstr = g_strdup_printf("cmd read: %s",
+			security_stream_geterror(streams[MESGFD].fd));
+	dump_result = 2;
+	stop_dump();
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
+	return;
+
+    case 0:
+	/*
+	 * EOF.  Just shut down the cmd stream.
+	 */
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
+	security_stream_close(streams[CMDFD].fd);
+	streams[CMDFD].fd = NULL;
+	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
+	    streams[INDEXFD].fd == NULL &&
+	    streams[MESGFD].fd == NULL &&
+	    streams[STATEFD].fd == NULL) {
+	    stop_dump();
+	}
+
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
+	return;
+
+    default:
+	assert(buf != NULL);
+    }
+
+    if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+    }
+
+    if (strncmp(buf, "GET_DUMPER_RESULT\n", size) == 0) {
+	client_request_result = 1;
+	send_result();
+    }
+
+    security_stream_read(streams[CMDFD].fd, read_cmdfd, cookie);
+
+    /*
+     * Reset the timeout for future reads
+     */
+    timeout(conf_dtimeout);
+    if (shm_thread) {
+	g_cond_broadcast(shm_thread_cond);
+	g_mutex_unlock(shm_thread_mutex);
+    }
+}
+
+/*
  * Callback for reads on the index stream
  */
 static void
@@ -2809,15 +2741,24 @@ read_indexfd(
 	    security_stream_close(streams[INDEXFD].fd);
 	}
 	streams[INDEXFD].fd = NULL;
+
+	/* start to read the datafd  if not already done */
+	if (data_path == DATA_PATH_AMANDA && set_datafd == 0) {
+	    security_stream_read(streams[DATAFD].fd, read_datafd, g_databuf);
+	    set_datafd = 1;
+	}
+
 	/*
 	 * If the mesg fd has also shut down, then we're done.
 	 */
 	if ((set_datafd == 0 || streams[DATAFD].fd == NULL) &&
 	     streams[MESGFD].fd == NULL &&
+	     streams[CMDFD].fd == NULL &&
 	     streams[STATEFD].fd == NULL) {
 	    stop_dump();
 	}
 	aclose(indexout);
+	send_result();
 	if (shm_thread) {
 	    g_cond_broadcast(shm_thread_cond);
 	    g_mutex_unlock(shm_thread_mutex);
@@ -2889,6 +2830,7 @@ handle_filter_stderr(
 	   (p = strchr(b, '\n')) != NULL) {
 	*p = '\0';
 	if (p != b) {
+	    g_debug("filter (%s) stderr: %s", filter->name, b);
 	    g_fprintf(errf, _("? %s: %s\n"), filter->name, b);
 	    if (errstr == NULL) {
 	        errstr = g_strdup(b);
@@ -2902,9 +2844,43 @@ handle_filter_stderr(
     }
 
     if (nread <= 0) {
+	amwait_t  wait_status;
+        char *errmsg = NULL;
+	waitpid(filter->pid, &wait_status, 0);
+	if (WIFSIGNALED(wait_status)) {
+	    errmsg = g_strdup_printf("%s: terminated with signal %d",
+			filter->name, WTERMSIG(wait_status));
+	} else if (WIFEXITED(wait_status)) {
+	    if (WEXITSTATUS(wait_status) != 0) {
+		errmsg = g_strdup_printf("%s: exited with status %d",
+			filter->name, WEXITSTATUS(wait_status));
+	    }
+	} else {
+	    errmsg = g_strdup_printf("%s: got bad exit", filter->name);
+	}
+	if (errmsg) {
+	    g_fprintf(errf, _("? %s\n"), errmsg);
+	    g_debug("%s", errmsg);
+	    dump_result = max(dump_result, 2);
+	    if (!errstr)
+		errstr = errmsg;
+	    else
+		g_free(errmsg);
+	}
+	log_add(L_INFO, "pid-done %ld", (long)filter->pid);
+
 	g_free(filter->name);
 	g_free(filter->buffer);
+	filters = g_slist_remove(filters, filter);
 	g_free(filter);
+	if (shm_thread) {
+	    g_mutex_lock(shm_thread_mutex);
+	}
+	send_result();
+	if (shm_thread) {
+	    g_cond_broadcast(shm_thread_cond);
+	    g_mutex_unlock(shm_thread_mutex);
+	}
     }
 }
 
@@ -2970,10 +2946,9 @@ retimeout(
 
 static void
 timeout_callback(
-    void *	unused)
+    void *unused G_GNUC_UNUSED)
 {
     time_t now = time(NULL);
-    (void)unused;	/* Quiet unused parameter warning */
 
     if (ev_timeout != NULL) {
 	event_release(ev_timeout);
@@ -3025,13 +3000,7 @@ stop_dump(void)
     /* Check if I have a pending ABORT command */
     cmdargs = get_pending_cmd();
     if (cmdargs) {
-	if (cmdargs->cmd == QUIT) {
-	    g_debug("Got unexpected QUIT");
-	    log_add(L_FAIL, "%s %s %s %d [Killed while dumping]",
-		    hostname, qdiskname, dumper_timestamp, level);
-	    exit(1);
-	}
-	if (cmdargs->cmd != ABORT) {
+	if (cmdargs->cmd != ABORT && cmdargs->cmd != QUIT) {
 	    g_debug("Expected an ABORT command, got '%d': %s", cmdargs->cmd, cmdstr[cmdargs->cmd]);
 	    exit(1);
 	}
@@ -3080,6 +3049,13 @@ stop_dump(void)
 	    sem_post(g_databuf->shm_ring_direct->sem_read);
 	    sem_post(g_databuf->shm_ring_direct->sem_write);
 	}
+	// wait and kill the filters
+	if (filters) {
+	    wait_filters_count = 5;
+	    ev_wait_filters_timeout = event_create((event_id_t)1, EV_TIME,
+						   wait_filters, NULL);
+	    event_activate(ev_wait_filters_timeout);
+	}
     }
     aclose(statefile_in_stream);
     aclose(statefile_in_mesg);
@@ -3088,6 +3064,71 @@ stop_dump(void)
     timeout(0);
 }
 
+static void
+wait_filters(
+    void *unused G_GNUC_UNUSED)
+{
+    int alive = 0;
+
+    wait_filters_count--;
+    event_release(ev_wait_filters_timeout);
+    if (filters) {
+	GSList *afilter;
+	for (afilter = filters; afilter != NULL; afilter = afilter->next) {
+	    filter_t *filter = afilter->data;
+	    pid_t pid;
+	    amwait_t  retstat;
+
+	    pid = waitpid(filter->pid, &retstat, WNOHANG);
+	    if (pid == 0)
+		alive++;
+	}
+
+	// All filters done
+	if (!alive)
+	    return;
+
+	// Wait longer
+	if (wait_filters_count >= 0) {
+	    ev_wait_filters_timeout = event_create((event_id_t)1, EV_TIME,
+                                  wait_filters, NULL);
+	    event_activate(ev_wait_filters_timeout);
+	    return;
+	}
+
+	for (afilter = filters; afilter != NULL; afilter = afilter->next) {
+	    filter_t *filter = afilter->data;
+	    if (filter->event) {
+		event_release(filter->event);
+		filter->event = NULL;
+	    }
+	}
+
+	for (afilter = filters; afilter != NULL; afilter = afilter->next) {
+	    filter_t *filter = afilter->data;
+	    aclose(filter->fd);
+	}
+	for (afilter = filters; afilter != NULL; afilter = afilter->next) {
+	    filter_t *filter = afilter->data;
+	    if (kill(filter->pid, SIGTERM) < 0) {
+		if (errno != ESRCH) {
+		    g_fprintf(stderr,_("%s: can't kill '%s' command: %s\n"),
+			      get_pname(), filter->name, strerror(errno));
+		} else {
+		    log_add(L_INFO, "pid-done %ld", (long)filter->pid);
+		}
+	    } else {
+		waitpid(filter->pid, NULL, 0);
+		log_add(L_INFO, "pid-done %ld", (long)filter->pid);
+	    }
+	    g_free(filter->name);
+	    g_free(filter->buffer);
+	    g_free(filter);
+	}
+	g_slist_free(filters);
+	filters = NULL;
+    }
+}
 
 /*
  * Runs compress with the first arg as its stdout.  Returns
@@ -3098,16 +3139,15 @@ stop_dump(void)
 static int
 runcompress(
     int		outfd,
-    pid_t *	pid,
     comp_t	comptype,
     char       *name)
 {
     int outpipe[2], rval;
     int errpipe[2];
+    pid_t pid;
     filter_t *filter;
 
     assert(outfd >= 0);
-    assert(pid != NULL);
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
@@ -3129,7 +3169,7 @@ runcompress(
     } else {
 	g_debug("execute: %s", srvcompprog);
     }
-    switch (*pid = fork()) {
+    switch (pid = fork()) {
     case -1:
 	g_free(errstr);
 	errstr = g_strdup_printf(_("couldn't fork: %s"), strerror(errno));
@@ -3149,10 +3189,12 @@ runcompress(
 	aclose(errpipe[1]);
 	filter = g_new0(filter_t, 1);
 	filter->fd = errpipe[0];
+	filter->pid = pid;
 	filter->name = g_strdup(name);
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
+	filters = g_slist_append(filters, filter);
 	filter->event = event_create((event_id_t)filter->fd, EV_READFD,
 				     handle_filter_stderr, filter);
 	event_activate(filter->event);
@@ -3208,16 +3250,15 @@ runcompress(
 static int
 runencrypt(
     int		outfd,
-    pid_t *	pid,
     encrypt_t	encrypttype,
     char       *name)
 {
     int outpipe[2], rval;
     int errpipe[2];
+    pid_t pid;
     filter_t *filter;
 
     assert(outfd >= 0);
-    assert(pid != NULL);
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
@@ -3234,7 +3275,7 @@ runencrypt(
     }
 
     g_debug("execute: %s", srv_encrypt);
-    switch (*pid = fork()) {
+    switch (pid = fork()) {
     case -1:
 	g_free(errstr);
 	errstr = g_strdup_printf(_("couldn't fork: %s"), strerror(errno));
@@ -3255,12 +3296,14 @@ runencrypt(
 	aclose(errpipe[1]);
 	filter = g_new0(filter_t, 1);
 	filter->fd = errpipe[0];
+	filter->pid = pid;
 	base = g_strdup(srv_encrypt);
 	filter->name = g_strdup(name);
 	amfree(base);
 	filter->buffer = NULL;
 	filter->size = 0;
 	filter->allocated_size = 0;
+	filters = g_slist_append(filters, filter);
 	filter->event = event_create((event_id_t)filter->fd, EV_READFD,
 				     handle_filter_stderr, filter);
 	event_activate(filter->event);
@@ -3390,13 +3433,15 @@ bad_nak:
 	if (g_str_equal(tok, "CONNECT")) {
 	    guint nstreams;
 
-	    if (am_has_feature(their_features, fe_sendbackup_stream_state)) {
-		nstreams = NSTREAMS;
-	    } else {
-		nstreams = NSTREAMS - 1;
+	    nstreams = NSTREAMS;
+	    if (!am_has_feature(their_features, fe_sendbackup_stream_state)) {
+		nstreams--;
+	    }
+	    if (!am_has_feature(their_features, fe_sendbackup_stream_cmd)) {
+		nstreams--;
 	    }
 	    /*
-	     * Parse the three or four stream specifiers out of the packet.
+	     * Parse the three to five streams specifiers out of the packet.
 	     */
 	    for (i = 0; i < nstreams; i++) {
 		tok = strtok(NULL, " ");
@@ -3760,4 +3805,167 @@ startup_dump(
 
     protocol_run();
     return response_error;
+}
+
+static void
+send_result(void)
+{
+    if (ISSET(status, GOT_ENDLINE) &&
+	streams[DATAFD].fd == NULL &&
+	streams[INDEXFD].fd == NULL &&
+	streams[STATEFD].fd == NULL &&
+	filters == NULL
+       ) {
+	// shm_ring_* might not be done, wait for them
+	// they are run in separate thread
+	if (g_databuf->shm_ring_consumer) {
+	    while (!g_databuf->shm_ring_consumer->mc->cancelled &&
+		   (!g_databuf->shm_ring_consumer->mc->eof_flag ||
+		    g_databuf->shm_ring_consumer->mc->written != g_databuf->shm_ring_consumer->mc->readx)) {
+		if (shm_ring_sem_wait(g_databuf->shm_ring_consumer, g_databuf->shm_ring_consumer->sem_read) != 0)
+		    break;
+	    }
+	}
+
+	if (g_databuf->shm_ring_producer) {
+	    while (!g_databuf->shm_ring_producer->mc->cancelled &&
+		   (!g_databuf->shm_ring_producer->mc->eof_flag ||
+		    g_databuf->shm_ring_producer->mc->written != g_databuf->shm_ring_producer->mc->readx)) {
+		if (shm_ring_sem_wait(g_databuf->shm_ring_producer, g_databuf->shm_ring_producer->sem_write) != 0)
+		    break;
+	    }
+	}
+
+	if (g_databuf->shm_ring_direct) {
+	    while (!g_databuf->shm_ring_direct->mc->cancelled &&
+		   (!g_databuf->shm_ring_direct->mc->eof_flag ||
+		    g_databuf->shm_ring_direct->mc->written != g_databuf->shm_ring_direct->mc->readx)) {
+		if (shm_ring_sem_wait(g_databuf->shm_ring_direct, g_databuf->shm_ring_direct->sem_write) != 0)
+		    break;
+	    }
+	}
+
+	if (result_sent_to_driver == 0) {
+	    send_result_to_driver();
+	}
+    }
+    if (result_sent_to_driver == 1 && client_request_result) {
+	send_result_to_client();
+    }
+}
+
+static void
+send_result_to_client(void)
+{
+    char *msg;
+
+    if (streams[CMDFD].fd != NULL) {
+	if (dump_result < 2 && chunker_taper_result == SUCCESS) {
+	    msg = "SUCCESS\n";
+	} else {
+	    msg = "FAILED\n";
+	}
+	client_request_result = 0;
+	security_stream_write(streams[CMDFD].fd, msg, strlen(msg));
+    }
+}
+
+static void
+send_result_to_driver(void)
+{
+    char    *m, *q;
+    times_t  runtime;
+    double   dumptime;	/* Time dump took in secs */
+    struct cmdargs *cmdargs = NULL;
+
+    if (!ISSET(status, HEADER_DONE)) {
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = g_strdup(_("got no header information"));
+    }
+
+    dumpsize -= headersize;		/* don't count the header */
+    if (shm_name) {
+        if (g_databuf->shm_ring_producer) {
+            if (g_databuf->shm_ring_producer->mc->written > 0 && g_databuf->shm_ring_producer->mc->written < 1024) {
+                dumpsize = 1;
+            } else {
+                dumpsize = (long long)g_databuf->shm_ring_producer->mc->written/1024;
+            }
+        } else if (g_databuf->shm_ring_direct) {
+            if (g_databuf->shm_ring_direct->mc->written > 0 && g_databuf->shm_ring_direct->mc->written < 1024) {
+                dumpsize = 1;
+            } else {
+                dumpsize = (long long)g_databuf->shm_ring_direct->mc->written/1024;
+            }
+        } else {
+            if (client_crc.size > 0 && client_crc.size < 1024) {
+                dumpsize = 1;
+            } else {
+                dumpsize = (long long)client_crc.size/1024;
+            }
+        }
+    } else if (g_databuf->shm_ring_consumer) {
+            if (g_databuf->shm_ring_consumer->mc->written > 0 && g_databuf->shm_ring_consumer->mc->written < 1024) {
+                dumpsize = 1;
+            } else {
+                dumpsize = (long long)g_databuf->shm_ring_consumer->mc->written/1024;
+            }
+    }
+
+    if (dumpsize <= (off_t)0 && data_path == DATA_PATH_AMANDA) {
+	dumpsize = (off_t)0;
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = g_strdup(_("got no data 1"));
+    }
+
+    if (data_path == DATA_PATH_DIRECTTCP) {
+	dumpsize = origsize;
+    }
+
+    if (dump_result > 1) {
+	m = g_strdup_printf("[%s]", errstr);
+	q = quote_string(m);
+	putresult(FAILED, "%s %s\n", handle, q);
+	amfree(q);
+	amfree(m);
+	result_sent_to_driver = 1;
+	chunker_taper_result = FAILED;
+	return;
+    }
+
+    runtime = stopclock();
+    dumptime = g_timeval_to_double(runtime);
+
+    amfree(errstr);
+    errstr = malloc(128);
+    g_snprintf(errstr, 128, _("sec %s kb %lld kps %3.1lf orig-kb %lld"),
+	walltime_str(runtime),
+	(long long)dumpsize,
+	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
+	(long long)origsize);
+    m = g_strdup_printf("[%s]", errstr);
+    q = quote_string(m);
+    amfree(m);
+    putresult(DONE, _("%s %lld %lld %lu %08x:%lld %08x:%lld %s\n"), handle,
+		(long long)origsize,
+		(long long)dumpsize,
+	        (unsigned long)((double)dumptime+0.5),
+		native_crc.crc, (long long)native_crc.size,
+		client_crc.crc, (long long)client_crc.size,
+		q);
+    amfree(q);
+
+    cmdargs = getcmd();
+    if (cmdargs->cmd == SUCCESS) {
+	chunker_taper_result = SUCCESS;
+    } else if (cmdargs->cmd == FAILED) {
+	chunker_taper_result = FAILED;
+    } else {
+	chunker_taper_result = BOGUS;
+    }
+    free_cmdargs(cmdargs);
+
+    result_sent_to_driver = 1;
+
+    return;
 }

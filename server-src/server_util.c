@@ -45,7 +45,7 @@
 const char *cmdstr[] = {
     "BOGUS", "QUIT", "QUITTING", "DONE", "PARTIAL",
     "START", "FILE-DUMP", "PORT-DUMP", "CONTINUE", "ABORT",/* dumper cmds */
-    "FAILED", "TRY-AGAIN", "NO-ROOM", "RQ-MORE-DISK",	/* dumper results */
+    "SUCCESS", "FAILED", "TRY-AGAIN", "NO-ROOM", "RQ-MORE-DISK",	/* dumper results */
     "ABORT-FINISHED", "BAD-COMMAND",			/* dumper results */
     "START-TAPER", "FILE-WRITE", "NEW-TAPE", "NO-NEW-TAPE",
     "SHM-WRITE", "SHM-DUMP", "SHM-NAME",
@@ -55,7 +55,7 @@ const char *cmdstr[] = {
     "START-SCAN", "CLOSE-VOLUME", "CLOSED-VOLUME",
     "OPENED-SOURCE-VOLUME",
     "CLOSE-SOURCE-VOLUME", "CLOSED-SOURCE-VOLUME",
-    "RETRY", "READY", "LAST_TOK",
+    "RETRY", "READY", "DUMP_FINISH", "LAST_TOK",
     NULL
 };
 
@@ -300,7 +300,8 @@ run_server_script(
     char         *config,
     char         *timestamp,
     disk_t	 *dp,
-    int           level)
+    int           level,
+    cmd_t         result)
 {
     pid_t      scriptpid;
     int        scriptin, scriptout, scripterr;
@@ -313,8 +314,8 @@ run_server_script(
     char      *plugin;
     char       level_number[NUM_STR_SIZE];
     struct stat cmd_stat;
-    int         result;
     backup_support_option_t *bsu;
+    int         r;
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
@@ -322,20 +323,19 @@ run_server_script(
 	return;
 
     plugin = pp_script_get_plugin(pp_script);
-
     cmd = g_strjoin(NULL, APPLICATION_DIR, "/", plugin, NULL);
-    result = stat(cmd, &cmd_stat);
-    if (result == -1) {
+    r = stat(cmd, &cmd_stat);
+    if (r == -1) {
 	dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
 	amfree(cmd);
 	cmd = g_strjoin(NULL, get_config_dir(), "/application/", plugin, NULL);
-	result = stat(cmd, &cmd_stat);
-	if (result == -1) {
+	r = stat(cmd, &cmd_stat);
+	if (r == -1) {
 	    dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
 	    amfree(cmd);
 	    cmd = g_strjoin(NULL, CONFIG_DIR, "/application/", plugin, NULL);
-	    result = stat(cmd, &cmd_stat);
-	    if (result == -1) {
+	    r = stat(cmd, &cmd_stat);
+	    if (r == -1) {
 		dbprintf("Can't stat script '%s': %s\n", cmd, strerror(errno));
 		amfree(cmd);
 		cmd = g_strjoin(NULL, APPLICATION_DIR, "/", plugin, NULL);
@@ -460,6 +460,12 @@ run_server_script(
 	g_ptr_array_add(argv_ptr, g_strdup(level_number));
     }
 
+    if (result == SUCCESS) {
+	g_ptr_array_add(argv_ptr, g_strdup("--success"));
+    } else if (result == FAILED) {
+	g_ptr_array_add(argv_ptr, g_strdup("--failed"));
+    }
+
     property_add_to_argv(argv_ptr, pp_script_get_property(pp_script));
     g_ptr_array_add(argv_ptr, NULL);
 
@@ -490,7 +496,8 @@ run_server_dle_scripts(
     char         *config,
     char         *timestamp,
     disk_t	 *dp,
-    int           level)
+    int           level,
+    cmd_t         result)
 {
     identlist_t pp_scriptlist;
 
@@ -498,7 +505,7 @@ run_server_dle_scripts(
 	 pp_scriptlist = pp_scriptlist->next) {
 	pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
 	g_assert(pp_script != NULL);
-	run_server_script(pp_script, execute_on, config, timestamp, dp, level);
+	run_server_script(pp_script, execute_on, config, timestamp, dp, level, result);
     }
 }
 
@@ -528,7 +535,7 @@ run_server_host_scripts(
 		}
 		if (todo) {
 		    run_server_script(pp_script, execute_on, config, timestamp,
-				      dp, -1);
+				      dp, -1, BOGUS);
 		    if (pp_script_get_single_execution(pp_script)) {
 			g_hash_table_insert(executed,
 					    pp_script_get_plugin(pp_script),
@@ -569,7 +576,7 @@ run_server_global_scripts(
 		    }
 		    if (todo) {
 			run_server_script(pp_script, execute_on, config,
-					  timestamp, dp, -1);
+					  timestamp, dp, -1, BOGUS);
 			if (pp_script_get_single_execution(pp_script)) {
 			    g_hash_table_insert(executed,
 					pp_script_get_plugin(pp_script),

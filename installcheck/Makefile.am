@@ -95,6 +95,7 @@ full_tests = \
 	amstatus \
 	amvault \
 	example \
+	failure-application-stderr \
 	failure-client-custom-compress \
 	failure-client-custom-compress-end \
 	failure-client-custom-compress-not-found \

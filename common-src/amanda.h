@@ -1124,7 +1124,7 @@ typedef enum {
  * its services */
 
 /* If you change these, change them in perl/Amanda/Constants.pm.in.src, too */
-#define DATA_FD_COUNT   4               /* number of general-use pipes */
+#define DATA_FD_COUNT   5               /* number of general-use pipes */
 #define DATA_FD_OFFSET  150		/* Don't change it */
 
 #endif	/* !AMANDA_H */

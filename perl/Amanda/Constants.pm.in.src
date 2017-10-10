@@ -121,6 +121,6 @@ $SINGLE_USERID = "@SINGLE_USERID@";
 # non-AC_SUBST'd constants
 
 $DATA_FD_OFFSET = 150;
-$DATA_FD_COUNT = 4;
+$DATA_FD_COUNT = 5;
 
 1;

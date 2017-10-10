@@ -1550,7 +1550,7 @@ static void get_estimates(void)
 			ep1 = find_est_for_dp(dp1);
 			run_server_dle_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
 					   get_config_name(), planner_timestamp,
-					   dp1, ep1->estimate[0].level);
+					   dp1, ep1->estimate[0].level, BOGUS);
 		    }
 		}
 		getsize(hostp);
@@ -2361,7 +2361,7 @@ next_line:
                ep->estimate[2].nsize > (gint64)0)))) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
 			       get_config_name(), planner_timestamp, dp,
-                               ep->estimate[0].level);
+                               ep->estimate[0].level, BOGUS);
 	    ep->post_dle = 1;
 	}
 	amfree(qname);

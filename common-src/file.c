@@ -239,7 +239,7 @@ safe_fd(
     int		fd_start,
     int		fd_count)
 {
-    safe_fd3(fd_start, fd_count, 0, 0);
+    safe_fd5(fd_start, fd_count, 0, 0, 0, 0);
 }
 
 /*
@@ -266,7 +266,7 @@ safe_fd2(
     int		fd_count,
     int		fd1)
 {
-    safe_fd3(fd_start, fd_count, fd1, 0);
+    safe_fd5(fd_start, fd_count, fd1, 0, 0, 0);
 }
 
 /*
@@ -294,6 +294,70 @@ safe_fd3(
     int		fd_count,
     int		fd1,
     int		fd2)
+{
+    safe_fd5(fd_start, fd_count, fd1, fd2, 0, 0);
+}
+
+/*
+ *=====================================================================
+ * Close all file descriptors except stdin, stdout and stderr.  Make
+ * sure they are open.
+ *
+ * void safe_fd4 (fd_start, fd_count, fd1, fd2, fd3)
+ *
+ * entry:	fd_start - start of fd-s to leave alone (or -1)
+ *		fd_count - count of fd-s to leave alone
+ *		fd1      - do not close
+ *		fd2      - do not close
+ *		fd3      - do not close
+ * exit:	none
+ *
+ * On exit, all three standard file descriptors will be open and pointing
+ * someplace (either what we were handed or /dev/null) and all other
+ * file descriptors (up to FD_SETSIZE) will be closed.
+ *=====================================================================
+ */
+
+void
+safe_fd4(
+    int		fd_start,
+    int		fd_count,
+    int		fd1,
+    int		fd2,
+    int		fd3)
+{
+    safe_fd5(fd_start, fd_count, fd1, fd2, fd3, 0);
+}
+
+/*
+ *=====================================================================
+ * Close all file descriptors except stdin, stdout and stderr.  Make
+ * sure they are open.
+ *
+ * void safe_fd5 (fd_start, fd_count, fd1, fd2, fd3, fd4)
+ *
+ * entry:	fd_start - start of fd-s to leave alone (or -1)
+ *		fd_count - count of fd-s to leave alone
+ *		fd1      - do not close
+ *		fd2      - do not close
+ *		fd3      - do not close
+ *		fd4      - do not close
+ * exit:	none
+ *
+ * On exit, all three standard file descriptors will be open and pointing
+ * someplace (either what we were handed or /dev/null) and all other
+ * file descriptors (up to FD_SETSIZE) will be closed.
+ *=====================================================================
+ */
+
+void
+safe_fd5(
+    int		fd_start,
+    int		fd_count,
+    int		fd1,
+    int		fd2,
+    int		fd3,
+    int		fd4)
 {
     int			fd;
 
@@ -324,7 +388,9 @@ safe_fd3(
 	     */
 	    if ((fd < fd_start || fd >= fd_start + fd_count) &&
 		(fd != fd1) &&
-		(fd != fd2)) {
+		(fd != fd2) &&
+		(fd != fd3) &&
+		(fd != fd4)) {
 		close(fd);
 	    }
 	}

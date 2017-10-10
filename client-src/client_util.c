@@ -883,10 +883,11 @@ merge_dles_properties(
 
 void
 run_client_script(
-    script_t     *script,
-    execute_on_t  execute_on,
-    g_option_t   *g_options,
-    dle_t	 *dle)
+    script_t        *script,
+    execute_on_t     execute_on,
+    g_option_t      *g_options,
+    dle_t	    *dle,
+    backup_result_t  result)
 {
     pid_t     scriptpid;
     int       scriptin, scriptout, scripterr;
@@ -1024,6 +1025,12 @@ run_client_script(
 	g_ptr_array_add(argv_ptr, g_strdup("--timestamp"));
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->timestamp));
     }
+    if (result == R_SUCCESS) {
+	g_ptr_array_add(argv_ptr, g_strdup("--success"));
+    } else if (result == R_FAILED) {
+	g_ptr_array_add(argv_ptr, g_strdup("--failed"));
+    }
+
     if (dle->levellist) {
 	levellist_t levellist;
 	char number[NUM_STR_SIZE];
@@ -1276,11 +1283,12 @@ run_client_script_err_recover(
 
 int
 run_client_scripts(
-    execute_on_t  execute_on,
-    g_option_t   *g_options,
-    dle_t	 *dle,
-    FILE         *streamout,
-    message_t    *(*fprint_message)(FILE *out, message_t *message))
+    execute_on_t     execute_on,
+    g_option_t      *g_options,
+    dle_t	    *dle,
+    FILE            *streamout,
+    backup_result_t  result,
+    message_t       *(*fprint_message)(FILE *out, message_t *message))
 {
     GSList          *scriptlist;
     script_t        *script;
@@ -1292,7 +1300,7 @@ run_client_scripts(
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
 	script = (script_t *)scriptlist->data;
-	run_client_script(script, execute_on, g_options, dle);
+	run_client_script(script, execute_on, g_options, dle, result);
 	if (script->result) {
 	    switch (execute_on) {
 	    case EXECUTE_ON_PRE_DLE_AMCHECK:

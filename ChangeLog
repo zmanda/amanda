@@ -1,3 +1,58 @@
+2017-10-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Send server result to client application and POST scripts
+	* amandad-src/amandad.c (process_readnetfd): Fix for close before
+	  event to read data is started
+	* application-src/amgtar.c: Save the state file only if servr report
+	  success
+	* application-src/amlog-script.pl, application-src/amrandom.pl,
+	  application-src/amraw.pl, application-src/amzfs-snapshot.pl,
+	  application-src/script-email.pl: Accept server result
+	* client-src/client_util.c: Add a backup_result_t argument to
+	  run_client_script* functions
+	* client-src/client_util.h (backup_result_t): New enum for server
+	  result, Add a backup_result_t argument to run_client_script* functions
+	* client-src/selfcheck.c: Fix for run_client_scripts API changes
+	* client-src/sendbackup.c
+	* client-src/sendsize.c: Fix for run_client_scripts API changes
+	* common-src/amanda.h: DATA_FD_COUNT is 5
+	* common-src/amfeatures.c: Add fe_sendbackup_stream_cmd and
+	  fe_sendbackup_stream_cmd_get_dumper_result
+	* common-src/amfeatures.h: Add fe_sendbackup_stream_cmd and
+	  fe_sendbackup_stream_cmd_get_dumper_result
+	* common-src/backup_support_option.c: Parse CMD-STREAM and
+	  WANT-SERVER-BACKUP-RESULT
+	* common-src/backup_support_option.h (backup_support_option_t): Add
+	  cmd_stream and want_server_backup_result
+	* common-src/file.c (safe_fd4,safe_fd5): New functions
+	* common-src/file.h (safe_fd4,safe_fd5): Add prototypes
+	* installcheck/Amanda_ClientService.pl: Check DATA_FD_COUNT is 5
+	* installcheck/Installcheck/Rest.pm (post): Fix for no postfields
+	* installcheck/Makefile.am (full_tests): add failure-application-stderr
+	* installcheck/failure-application-stderr.pl: New test to check the
+	  result if an applicationprint to stderr
+	* installcheck/pp-scripts.pl: Fix for script printing the result
+	* perl/Amanda/Application.swg (_set_cmdinout): New method tooen the
+	  cmd stream
+	* perl/Amanda/Constants.pm.in.src: DATA_FD_COUNT = 5
+	* perl/Amanda/Script.pm (_set_cmdinout): Default method
+	* perl/Amanda/Script_App.pm (do): Call $self->_set_cmdinout()
+	* recover-src/extract_list.c: Call run_client_scripts with a R_BOGUS
+	  result
+	* server-src/amcheck.c: Call run_server_dle_scripts with a BOGUS cmd_t
+	  result
+	* server-src/server_util.c (run_server_dle_script,
+	  run_server_dle_scripts): Get a new cmd_t argument.
+	* server-src/server_util.h (run_server_dle_script,
+	  run_server_dle_scripts): Change protoypes.
+	* server-src/driverio.h (dumper_t): Add sent_result, dump_finish field
+	* server-src/driverio.c (dumper_cmd): Send SUCCESS or FAILED to
+	  the client
+	* server-src/driver.c: Send the result from chunker/taper to the
+	  dumper
+	* server-src/dumper.c: Send result to driver, wait for its reply and
+	  send the result to the client
+	* server-src/planner.c: Call run_server_dle_scripts with a BOGUS cmd_t
+
 2017-10-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (handle_dumper_result): Send the TRYAGAIN mesage
 	  to chunker or taper

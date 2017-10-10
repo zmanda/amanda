@@ -186,6 +186,12 @@ backup_support_option(
 	} else if (g_str_has_prefix(line, "EXECUTE-WHERE ")) {
 	    if (g_str_equal(line + 14, "YES"))
 		bsu->execute_where = 1;
+	} else if (g_str_has_prefix(line, "CMD-STREAM ")) {
+	    if (g_str_equal(line + 11, "YES"))
+		bsu->cmd_stream = 1;
+	} else if (g_str_has_prefix(line, "WANT-SERVER-BACKUP-RESULT ")) {
+	    if (g_str_equal(line + 26, "YES"))
+		bsu->want_server_backup_result = 1;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}

@@ -136,7 +136,7 @@ $testconf->write();
 unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for client scripts.");
 
-verify_log("amcheck invokes correct script commands",
+verify_log("amcheck invokes correct client script commands",
     "check TESTCONF pre-dle-amcheck client localhost diskname1 $diskname",
     "check TESTCONF post-dle-amcheck client localhost diskname1 $diskname",
 );
@@ -149,7 +149,7 @@ verify_log("amdump invokes correct script commands",
     "estimate TESTCONF pre-dle-estimate client localhost diskname1 $diskname 0",
     "estimate TESTCONF post-dle-estimate client localhost diskname1 $diskname 0",
     "backup TESTCONF pre-dle-backup client localhost diskname1 $diskname 0",
-    "backup TESTCONF post-dle-backup client localhost diskname1 $diskname 0",
+    "SUCCESS backup TESTCONF post-dle-backup client localhost diskname1 $diskname 0",
 );
 
 Installcheck::Run::cleanup();
@@ -170,7 +170,7 @@ localhost diskname2 $diskname {
 	plugin "amlog-script"
 	single-execution yes
 	execute-where server
-	execute-on pre-host-amcheck, post-host-amcheck, pre-host-estimate, post-host-estimate, pre-host-backup, post-host-backup
+	execute-on pre-host-amcheck, post-host-amcheck, pre-host-estimate, post-host-estimate, pre-host-backup, post-dle-backup, post-host-backup
 	property "logfile" "$templog"
     }
 }
@@ -197,7 +197,7 @@ $testconf->write();
 unlink $templog;
 ok(run('amcheck', '-c', 'TESTCONF'), "amcheck runs successfully for server scripts.");
 
-verify_log("amcheck invokes correct script commands",
+verify_log("amcheck invokes correct server script commands",
     "check TESTCONF pre-host-amcheck server localhost diskname3 $diskname",
     "check TESTCONF post-host-amcheck server localhost diskname3 $diskname",
 );
@@ -206,10 +206,11 @@ unlink $templog;
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully for server scripts.")
     or amdump_diag();
 
-verify_log("amdump invokes correct script commands",
+verify_log("amdump invokes correct server script commands",
     "estimate TESTCONF pre-host-estimate server localhost diskname3 $diskname",
     "estimate TESTCONF post-host-estimate server localhost diskname3 $diskname",
     "backup TESTCONF pre-host-backup server localhost diskname3 $diskname",
+    "SUCCESS backup TESTCONF post-dle-backup server localhost diskname2 $diskname 0",
     "backup TESTCONF post-host-backup server localhost diskname3 $diskname",
 );
 
@@ -717,6 +718,7 @@ EODLE
 
     #wait for the run to end
     do {
+	sleep (1);
         $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/runs");
         } while ($reply->{'body'}[0]->{'code'} == 2000004 and
                  $reply->{'body'}[0]->{'status'} ne 'done');

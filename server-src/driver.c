@@ -122,7 +122,9 @@ static assignedhd_t **find_diskspace(off_t size, int *cur_idle,
 static unsigned long network_free_kps(netif_t *ip);
 static off_t holding_free_space(void);
 static void dumper_chunker_result(job_t *job);
+static void dumper_chunker_result_finish(job_t *job);
 static void dumper_taper_result(job_t *job);
+static void dumper_taper_result_finish(job_t *job);
 static void vault_taper_result(job_t *job);
 static void file_taper_result(job_t *job);
 static void handle_dumper_result(void *);
@@ -1815,6 +1817,8 @@ start_some_dumps(
 	    chunker->sendresult = FALSE;
 	    dumper->result = LAST_TOK;
 	    dumper->sent_command = FALSE;
+	    dumper->sent_result = 0;
+	    dumper->dump_finish = 0;
 	    startup_chunk_process(chunker,chunker_program);
 	    chunker_cmd(chunker, START, NULL, driver_timestamp);
 	    if (sp->disk->compress == COMP_SERVER_FAST ||
@@ -1860,6 +1864,8 @@ start_some_dumps(
 	    sp->dumptime = (time_t)0;
 	    dumper->result = LAST_TOK;
 	    dumper->sent_command = FALSE;
+	    dumper->sent_result = 0;
+	    dumper->dump_finish = 0;
 	    wtaper->result = LAST_TOK;
 	    amfree(wtaper->input_error);
 	    amfree(wtaper->tape_error);
@@ -2153,6 +2159,7 @@ continue_port_dumps(void)
 	remove_sched( &roomq, sp );
 	chunker_cmd(job->chunker, ABORT, NULL, _("Not enough holding disk space"));
 	dumper_cmd(job->dumper, ABORT, NULL, _("Not enough holding disk space"));
+	job->dumper->sent_result = 1;
 	pending_aborts++;
     }
 }
@@ -2635,7 +2642,7 @@ handle_taper_result(
 	    }
 	    run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
 			       get_config_name(), driver_timestamp, dp,
-			       sp->level);
+			       sp->level, BOGUS);
 	    /* tell the dumper to dump to a port */
 	    if (cmd == PORT) {
 		dumper_cmd(dumper, PORT_DUMP, sp, NULL);
@@ -2754,6 +2761,7 @@ handle_taper_result(
 			    dumper_taper_result(wtaper->job);
 			} else {
 			    dumper_cmd(wtaper->job->dumper, ABORT, wtaper->job->sched, "Taper Failed");
+			    wtaper->job->dumper->sent_result = 1;
 			}
 		    } else {
 			file_taper_result(wtaper->job);
@@ -2794,6 +2802,11 @@ handle_taper_result(
 		if (job->dumper->result != LAST_TOK) {
 		    // Dumper already returned it's result
 		    dumper_taper_result(job);
+		}
+		if (job->dumper->result != LAST_TOK &&
+		    job->dumper->dump_finish) {
+		    // Dumper already returned it's result
+		    dumper_taper_result_finish(job);
 		}
 	    } else if (job->sched->action == ACTION_FLUSH) {
 		file_taper_result(job);
@@ -3094,35 +3107,54 @@ dumper_taper_result(
 
     sched_t  *sp     = job->sched;
     wtaper_t *wtaper = job->wtaper;
-    taper_t  *taper  = wtaper->taper;
     dumper_t *dumper = job->dumper;
     disk_t   *dp     = sp->disk;
     char     *qname;
 
-    if (dumper->result == DONE && wtaper->result == DONE) {
-	update_info_dumper(sp, sp->origsize,
-			   sp->dumpsize, sp->dumptime);
-	update_info_taper(sp, wtaper->first_label, wtaper->first_fileno,
-			  sp->level);
-	qname = quote_string(dp->name); /*quote to take care of spaces*/
+    if (!dumper->sent_result) {
+	if (dumper->result == DONE && wtaper->result == DONE) {
+	    dumper_cmd(dumper, SUCCESS, sp, NULL);
+	    dumper->sent_result = 1;
+	    update_info_dumper(sp, sp->origsize,
+			       sp->dumpsize, sp->dumptime);
+	    update_info_taper(sp, wtaper->first_label, wtaper->first_fileno,
+			      sp->level);
+	    qname = quote_string(dp->name); /*quote to take care of spaces*/
 
-	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
-		dp->host->hostname, qname, sp->datestamp,
-		sp->level,
-		sp->est_time, (long long)sp->est_nsize,
-		(long long)sp->est_csize,
-		sp->est_kps);
-	amfree(qname);
+	    log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
+		    dp->host->hostname, qname, sp->datestamp,
+		    sp->level,
+		    sp->est_time, (long long)sp->est_nsize,
+		    (long long)sp->est_csize,
+		    sp->est_kps);
+	    amfree(qname);
 
-	fix_index_header(sp);
-    } else {
-	update_failed_dump(sp);
+	    fix_index_header(sp);
+	} else {
+	    if (dumper->result == DONE) {
+		dumper_cmd(dumper, FAILED, sp, NULL);
+		dumper->sent_result = 1;
+	    }
+	    update_failed_dump(sp);
+	}
     }
 
     if (dumper->result != RETRY) {
 	sp->dump_attempted += 1;
 	sp->taper_attempted += 1;
     }
+}
+
+static void
+dumper_taper_result_finish(
+    job_t *job)
+{
+    sched_t  *sp     = job->sched;
+    wtaper_t *wtaper = job->wtaper;
+    taper_t  *taper  = wtaper->taper;
+    dumper_t *dumper = job->dumper;
+    disk_t   *dp     = sp->disk;
+    char     *qname;
 
     if ((dumper->result != DONE || wtaper->result != DONE) &&
 	sp->dump_attempted < dp->retry_dump &&
@@ -3269,6 +3301,49 @@ dumper_chunker_result(
 {
     dumper_t  *dumper;
     chunker_t *chunker;
+    sched_t   *sp;
+    disk_t    *dp;
+
+    dumper  = job->dumper;
+    chunker = job->chunker;
+    sp      = job->sched;
+    dp      = sp->disk;
+
+    if (dumper->sent_result == 1)
+	return;
+
+    if (!dumper->sent_result) {
+	if (dumper->result == DONE && chunker->result == DONE) {
+	    char *qname = quote_string(dp->name);/*quote to take care of spaces*/
+	    dumper_cmd(dumper, SUCCESS, sp, NULL);
+	    dumper->sent_result = 1;
+	    update_info_dumper(sp, sp->origsize,
+			       sp->dumpsize, sp->dumptime);
+
+	    log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
+		    dp->host->hostname, qname, sp->datestamp,
+		    sp->level,
+		    sp->est_time, (long long)sp->est_nsize,
+                    (long long)sp->est_csize,
+		    sp->est_kps);
+	    amfree(qname);
+	} else {
+	    if (dumper->result == DONE) {
+		dumper_cmd(dumper, FAILED, sp, NULL);
+		dumper->sent_result = 1;
+	    }
+	    update_failed_dump(sp);
+	}
+    }
+
+}
+
+static void
+dumper_chunker_result_finish(
+    job_t *job)
+{
+    dumper_t  *dumper;
+    chunker_t *chunker;
     taper_t   *taper;
     sched_t   *sp;
     disk_t    *dp;
@@ -3285,22 +3360,6 @@ dumper_chunker_result(
 
     h = sp->holdp;
     activehd = sp->activehd;
-
-    if (dumper->result == DONE && chunker->result == DONE) {
-	char *qname = quote_string(dp->name);/*quote to take care of spaces*/
-	update_info_dumper(sp, sp->origsize,
-			   sp->dumpsize, sp->dumptime);
-
-	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
-		dp->host->hostname, qname, sp->datestamp,
-		sp->level,
-		sp->est_time, (long long)sp->est_nsize,
-                (long long)sp->est_csize,
-		sp->est_kps);
-	amfree(qname);
-    } else {
-	update_failed_dump(sp);
-    }
 
     deallocate_bandwidth(dp->host->netif, sp->est_kps);
 
@@ -3481,6 +3540,7 @@ handle_dumper_result(
     int result_argc;
     char *qname;
     char **result_argv;
+    cmd_t result = FAILED;
 
     assert(dumper != NULL);
     job = dumper->job;
@@ -3525,6 +3585,7 @@ handle_dumper_result(
 	    fflush(stdout);
 
 	    dumper->result = cmd;
+	    result = SUCCESS;
 
 	    break;
 
@@ -3582,6 +3643,9 @@ handle_dumper_result(
 		break;
 	    }
 
+	case DUMP_FINISH: /* DUMP_FINISH <handle> */
+	    dumper->dump_finish = 1;
+	    break;
 	case BOGUS:
 	    /* either EOF or garbage from dumper.  Turn it off */
 	    log_add(L_WARNING, _("%s pid %ld is messed up, ignoring it.\n"),
@@ -3613,13 +3677,14 @@ handle_dumper_result(
         amfree(qname);
 	g_strfreev(result_argv);
 
-	if (cmd != BOGUS) {
+	if (cmd == DUMP_FINISH) {
+	} else if (cmd != BOGUS) {
 	    int last_dump = 1;
 	    dumper_t *dumper;
 
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_BACKUP,
 			       get_config_name(), driver_timestamp,
-			       dp, sp->level);
+			       dp, sp->level, result);
 	    /* check dump not yet started */
 	    for (slist1 = runq.head; slist1 != NULL; slist1 = slist1->next) {
 		sp1 = get_sched(slist1);
@@ -3648,6 +3713,7 @@ handle_dumper_result(
 		    dp->host->post_script = 1;
 		}
 	    }
+	}
 
 	    /* send the dumper result to the chunker */
 	    if (job->chunker) {
@@ -3668,7 +3734,7 @@ handle_dumper_result(
 		if (dumper->result != LAST_TOK &&
 		    job->chunker->result != LAST_TOK)
 		    dumper_chunker_result(job);
-	    } else {
+	    } else if (job->wtaper) {
 		if (job->wtaper->ready) { /* send the dumper result to the taper */
 		    wtaper = job->wtaper;
 		    taper = wtaper->taper;
@@ -3687,6 +3753,17 @@ handle_dumper_result(
 		}
 		if (job->dumper && job->wtaper->result != LAST_TOK) {
 		    dumper_taper_result(job);
+		}
+	    }
+
+	if (dumper->dump_finish) {
+	    if (job->chunker) {
+		if (job->chunker->result != LAST_TOK) {
+		    dumper_chunker_result_finish(job);
+		}
+	    } else if (job->wtaper) {
+		if (job->wtaper->result != LAST_TOK) {
+		    dumper_taper_result_finish(job);
 		}
 	    }
 	}
@@ -3812,7 +3889,7 @@ handle_chunker_result(
 	    }
 	    run_server_dle_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
 				   get_config_name(), driver_timestamp,
-				   sp->disk, sp->level);
+				   sp->disk, sp->level, BOGUS);
 	    if (job->do_port_write) {
 		dumper_cmd(dumper, PORT_DUMP, sp, NULL);
 	    } else {
@@ -3945,6 +4022,11 @@ handle_chunker_result(
 				!job->dumper->sent_command)) {
 		dumper_chunker_result(job);
 	    }
+	    if (chunker->result != LAST_TOK &&
+		job->dumper && job->dumper->result != LAST_TOK &&
+		job->dumper->dump_finish) {
+		dumper_chunker_result_finish(job);
+	    }
 
 	    return;
 
@@ -3959,6 +4041,11 @@ handle_chunker_result(
 	    if (chunker->result != LAST_TOK && (job->dumper->result != LAST_TOK ||
 						!job->dumper->sent_command)) {
 		dumper_chunker_result(job);
+	    }
+	    if (chunker->result != LAST_TOK && ((job->dumper->result != LAST_TOK &&
+						 job->dumper->dump_finish) ||
+						!job->dumper->sent_command)) {
+		dumper_chunker_result_finish(job);
 	    }
 	}
 

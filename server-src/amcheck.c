@@ -2513,7 +2513,7 @@ start_client_checks(
 				    get_config_name(), NULL, hostp);
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		run_server_dle_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
-				   get_config_name(), NULL, dp1, -1);
+				   get_config_name(), NULL, dp1, -1, BOGUS);
 	    }
 	    start_host(hostp);
 	    hostcount++;
@@ -2727,7 +2727,7 @@ handle_result(
 	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
-			       get_config_name(), NULL, dp, -1);
+			       get_config_name(), NULL, dp, -1, BOGUS);
 	}
 	run_server_host_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
 				get_config_name(), NULL, hostp);

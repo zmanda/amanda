@@ -160,6 +160,8 @@ typedef struct dumper_s {
     int result;
     gboolean sent_command;
     int output_port;		/* output port */
+    int sent_result;		/* result to dumper sent */
+    int dump_finish;		/* DUMP_FINISH is received */
     event_handle_t *ev_read;	/* read event handle */
     job_t *job;
 } dumper_t;

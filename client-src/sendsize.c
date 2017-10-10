@@ -456,7 +456,7 @@ main(
     }
     for (est = est_list; est != NULL; est = est->next) {
 	host_scripts_exit_status += run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
-		g_options, est->dle, stdout, NULL);
+		g_options, est->dle, stdout, R_BOGUS, NULL);
     }
     if (host_scripts_exit_status) {
 	dbclose();
@@ -509,7 +509,7 @@ main(
 		dumpsrunning--;
 		est->dle_scripts_exit_status += run_client_scripts(
 			EXECUTE_ON_POST_DLE_ESTIMATE, g_options,
-			est->dle, stdout, NULL);
+			est->dle, stdout, R_BOGUS, NULL);
 	    }
 	}
 	/*
@@ -561,7 +561,7 @@ main(
 	    done = 0;
 	    est->dle_scripts_exit_status += run_client_scripts(
 			EXECUTE_ON_PRE_DLE_ESTIMATE, g_options,
-			est->dle, stdout, NULL);
+			est->dle, stdout, R_BOGUS, NULL);
 
 	    if (est->dle_scripts_exit_status == 0) {
 		if ((est->child = fork()) == 0) {
@@ -580,7 +580,7 @@ main(
 
     for(est = est_list; est != NULL; est = est->next) {
 	host_scripts_exit_status += run_client_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
-			g_options, est->dle, stdout, NULL);
+			g_options, est->dle, stdout, R_BOGUS, NULL);
     }
 
     est_prev = NULL;

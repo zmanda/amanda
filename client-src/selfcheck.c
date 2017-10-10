@@ -384,19 +384,19 @@ main(
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    run_client_scripts(EXECUTE_ON_PRE_HOST_AMCHECK, g_options, dle,
-			       stdout, &selfcheck_fprint_message);
+			       stdout, R_BOGUS, &selfcheck_fprint_message);
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    check_options(dle);
 	    run_client_scripts(EXECUTE_ON_PRE_DLE_AMCHECK, g_options, dle,
-			       stdout, &selfcheck_fprint_message);
+			       stdout, R_BOGUS, &selfcheck_fprint_message);
 	    check_disk(dle);
 	    run_client_scripts(EXECUTE_ON_POST_DLE_AMCHECK, g_options, dle,
-			       stdout, &selfcheck_fprint_message);
+			       stdout, R_BOGUS, &selfcheck_fprint_message);
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    run_client_scripts(EXECUTE_ON_POST_HOST_AMCHECK, g_options, dle,
-			       stdout, &selfcheck_fprint_message);
+			       stdout, R_BOGUS, &selfcheck_fprint_message);
 	}
 	for (dle = dles; dle != NULL; dle = dle_next) {
 	    dle_next = dle->next;

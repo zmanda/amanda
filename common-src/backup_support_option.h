@@ -72,6 +72,8 @@ typedef struct backup_support_option_s {
     int recover_dump_state_file;
     int discover;
     int execute_where;
+    int cmd_stream;
+    int want_server_backup_result;
 } backup_support_option_t;
 
 backup_support_option_t *backup_support_option(char       *program,

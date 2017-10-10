@@ -43,6 +43,12 @@
 #include "ammessage.h"		/* message_t      */
 #include "backup_support_option.h"
 
+typedef enum {
+    R_BOGUS,
+    R_SUCCESS,
+    R_FAILED
+} backup_result_t;
+
 typedef struct client_script_result_s {
     int exit_code;
     proplist_t proplist;
@@ -98,16 +104,18 @@ int merge_dles_properties(dle_t *dles, int verbose);
 
 char *fixup_relative(char *name, char *device);
 
-void run_client_script(script_t     *script,
-		       execute_on_t  execute_on,
-		       g_option_t   *g_options,
-		       dle_t        *dle);
+void run_client_script(script_t        *script,
+		       execute_on_t     execute_on,
+		       g_option_t      *g_options,
+		       dle_t           *dle,
+		       backup_result_t  result);
 
-int run_client_scripts(execute_on_t  execute_on,
-		       g_option_t   *g_options,
-		       dle_t        *dle,
-		       FILE         *streamout,
-		       message_t    *(*fprint_message)(FILE *out, message_t *message));
+int run_client_scripts(execute_on_t     execute_on,
+		       g_option_t      *g_options,
+		       dle_t           *dle,
+		       FILE            *streamout,
+		       backup_result_t  result,
+		       message_t       *(*fprint_message)(FILE *out, message_t *message));
 
 void run_calcsize(char *config, char *program, char *disk,
                   char *dirname, GSList *levels,

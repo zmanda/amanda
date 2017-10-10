@@ -136,6 +136,9 @@ typedef struct application_argument_s {
     gboolean      dar;
     int		  state_stream;
     char         *timestamp;
+    int           cmd_from_sendbackup;
+    int           cmd_to_sendbackup;
+    int           server_backup_result;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -225,6 +228,9 @@ static struct option long_options[] = {
     {"state-stream"           , 1, NULL, 41},
     {"target"                 , 1, NULL, 42},
     {"timestamp"              , 1, NULL, 43},
+    {"cmd-from-sendbackup=s"  , 1, NULL, 44},
+    {"cmd-to-sendbackup=s"    , 1, NULL, 45},
+    {"server-backup-result"   , 1, NULL, 46},
     {NULL, 0, NULL, 0}
 };
 
@@ -445,6 +451,9 @@ main(
     argument.recover_dump_state_file = NULL;
     argument.dar        = FALSE;
     argument.state_stream = -1;
+    argument.cmd_from_sendbackup = -1;
+    argument.cmd_to_sendbackup = -1;
+    argument.server_backup_result = 0;
     init_dle(&argument.dle);
     argument.dle.record = 0;
 
@@ -576,6 +585,11 @@ main(
 		 break;
 	case 43: amfree(argument.timestamp);
 		 argument.timestamp = g_strdup(optarg);
+	case 44: argument.cmd_from_sendbackup = atoi(optarg);
+		 break;
+	case 45: argument.cmd_to_sendbackup = atoi(optarg);
+		 break;
+	case 46: argument.server_backup_result = 1;
 		 break;
 	case ':':
 	case '?':
@@ -583,10 +597,9 @@ main(
 	}
     }
 
-    if ((g_str_equal(command, "backup") ||
-	 g_str_equal(command, "restore")) && argument.state_stream >= 0) {
-	g_debug("state_stream: %d", argument.state_stream);
-	safe_fd3(3, 2, dbfd(), argument.state_stream);
+    if (g_str_equal(command, "backup") ||
+	g_str_equal(command, "restore")) {
+	safe_fd5(3, 2, dbfd(), argument.state_stream, argument.cmd_from_sendbackup, argument.cmd_to_sendbackup);
     } else {
 	safe_fd2(3, 2, dbfd());
     }
@@ -866,6 +879,8 @@ amgtar_support(
     fprintf(stdout, "DAR YES\n");
     fprintf(stdout, "STATE-STREAM YES\n");
     fprintf(stdout, "TIMESTAMP YES\n");
+    fprintf(stdout, "CMD-STREAM YES\n");
+    fprintf(stdout, "WANT-SERVER-BACKUP-RESULT YES\n");
 }
 
 static void
@@ -1354,6 +1369,8 @@ amgtar_backup(
     int        outf;
     FILE      *indexstream = NULL;
     FILE      *outstream;
+    FILE      *cmdin = NULL;
+    FILE      *cmdout = NULL;
     char      *errmsg = NULL;
     amwait_t   wait_status;
     GPtrArray *argv_ptr;
@@ -1399,6 +1416,26 @@ amgtar_backup(
 	error("Invalid '%s' COMMAND-OPTIONS", option);
     }
 
+    if (argument->cmd_from_sendbackup >= 0) {
+	cmdin = fdopen(argument->cmd_from_sendbackup, "r");
+	if (!cmdin) {
+	    g_debug("sendbackup: error [Can't open cmdin: %s]\n",
+                    strerror(errno));
+	    fprintf(mesgstream, "sendbackup: error [Can't open cmdin: %s]\n",
+		    strerror(errno));
+	    exit(1);
+	}
+    }
+    if (argument->cmd_to_sendbackup >= 0) {
+	cmdout = fdopen(argument->cmd_to_sendbackup, "w");
+	if (!cmdout) {
+	    g_debug("sendbackup: error [Can't open cmdout: %s]\n",
+                    strerror(errno));
+	    fprintf(mesgstream, "sendbackup: error [Can't open cmdout: %s]\n",
+		    strerror(errno));
+	    exit(1);
+	}
+    }
     qdisk = quote_string(argument->dle.disk);
 
     incrname = amgtar_get_incrname(argument,
@@ -1527,10 +1564,45 @@ amgtar_backup(
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
     }
 
-    if (!errmsg && strlen(incrname) > 4) {
-	if (argument->dle.record) {
-	    char *nodotnew;
-	    nodotnew = g_strdup(incrname);
+    dbprintf("sendbackup: size %lld\n", (long long)dump_size);
+    fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
+
+    if (indexstream) {
+	fclose(indexstream);
+	indexstream = NULL;
+    }
+    if (argument->state_stream > 0) {
+	aclose(argument->state_stream);
+    }
+
+    if (argument->cmd_from_sendbackup  >= 0 && argument->server_backup_result) {
+	char  cmd_line[1024];
+	char *s;
+	s = fgets(cmd_line, 1024, cmdin);
+	if (s == cmd_line) {
+	    if (strncmp(cmd_line, "SUCCESS", 7) != 0) {
+		// FAILED or BOGUS
+		if (!errmsg) {
+		    errmsg = g_strdup_printf("Server returned %s", cmd_line);
+		    g_debug("errmsg: %s", errmsg);
+		}
+	    }
+	} else if (s == NULL) {
+	    if (!errmsg) {
+		errmsg = g_strdup("Server returned no result");
+		g_debug("errmsg: %s", errmsg);
+	    }
+	} else {
+	    if (!errmsg) {
+		errmsg = g_strdup_printf("Server returned error: %s", strerror(errno));
+		g_debug("errmsg: %s", errmsg);
+	    }
+	}
+    }
+
+    if (strlen(incrname) > 4) {
+	if (argument->dle.record && !errmsg) {
+	    char *nodotnew = g_strdup(incrname);
 	    nodotnew[strlen(nodotnew)-4] = '\0';
 	    if (rename(incrname, nodotnew)) {
 		dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
@@ -1549,12 +1621,13 @@ amgtar_backup(
 	}
     }
 
-    dbprintf("sendbackup: size %lld\n", (long long)dump_size);
-    fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
 
-    if (argument->dle.create_index)
-	fclose(indexstream);
-
+    if (cmdin) {
+	fclose(cmdin);
+    }
+    if (cmdout) {
+	fclose(cmdout);
+    }
     fclose(mesgstream);
 
     if (argument->verbose == 0) {

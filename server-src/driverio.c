@@ -799,6 +799,10 @@ dumper_cmd(
     case START:
         cmdline = g_strdup_printf("%s %s\n", cmdstr[cmd], mesg);
 	break;
+    case SUCCESS:
+    case FAILED:
+	cmdline = g_strdup_printf("%s %s\n", cmdstr[cmd], job2serial(dumper->job));
+	break;
     case PORT_DUMP:
         if (!sp)
             error("PORT-DUMP without sched pointer\n");

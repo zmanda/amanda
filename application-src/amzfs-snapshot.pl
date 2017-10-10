@@ -43,7 +43,7 @@ use Amanda::Constants;
 
 sub new {
     my $class = shift;
-    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $df_path, $zfs_path, $pfexec_path, $pfexec) = @_;
+    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $df_path, $zfs_path, $pfexec_path, $pfexec, $success, $failed) = @_;
     my $self = $class->SUPER::new($execute_where, $config);
 
     $self->{execute_where} = $execute_where;
@@ -68,6 +68,8 @@ sub new {
     $self->{zfs_path}      = $zfs_path;
     $self->{pfexec_path}   = $pfexec_path;
     $self->{pfexec}        = $pfexec;
+    $self->{success}       = $success;
+    $self->{failed}        = $failed;
     $self->{pfexec_cmd}    = undef;
 
     return $self;
@@ -172,7 +174,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: amzfs-snapshot <command> --execute-where=client --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --df-path=<path/to/df> --zfs-path=<path/to/zfs> --pfexec-path=<path/to/pfexec> --pfexec=<yes|no>.
+Usage: amzfs-snapshot <command> --execute-where=client --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --df-path=<path/to/df> --zfs-path=<path/to/zfs> --pfexec-path=<path/to/pfexec> --pfexec=<yes|no> [--success|--failed].
 EOF
     exit(1);
 }
@@ -192,6 +194,8 @@ my $df_path  = 'df';
 my $zfs_path = 'zfs';
 my $pfexec_path = 'pfexec';
 my $pfexec = "NO";
+my $opt_success;
+my $opt_failed;
 
 my @orig_argv = @ARGV;
 
@@ -211,7 +215,9 @@ GetOptions(
     'df-path=s'        => \$df_path,
     'zfs-path=s'       => \$zfs_path,
     'pfexec-path=s'    => \$pfexec_path,
-    'pfexec=s'         => \$pfexec
+    'pfexec=s'         => \$pfexec,
+    'success'          => \$opt_success,
+    'failed'           => \$opt_failed
 ) or usage();
 
 if (defined $opt_version) {
