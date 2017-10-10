@@ -39,14 +39,12 @@ the simpler construction of an Amanda application in object-oriented style
 (the oo in amooraw) using
 <classname>Amanda::Application::Abstract</classname>.</para>
 
-<note><para>Where the original <command>amraw</command>, when restoring,
-allows the destination to be specified with the DIRECTORY property,
-<command>amooraw</command> uses a different property, FILENAME, for that
-purpose. Also, if that property is not specified, restoration will create
+<note><para>When restoring,
+if the TARGET property is not specified, restoration will create
 a file <filename>amooraw-restored</filename> instead of blithely overwriting
 the original <emphasis remap='B'>diskdevice</emphasis> named in the DLE.
-If that is what's wanted, simply set the FILENAME property to match the
-<emphasis remap='B'>diskdevice</emphasis>.</para></note>
+If direct overwriting is what's wanted, simply set the TARGET property to match
+the <emphasis remap='B'>diskdevice</emphasis>.</para></note>
 
 <para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
 must be the filename <command>amooraw</command> is to open and read.</para>
@@ -67,9 +65,10 @@ for information on application properties and how they are configured.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>FILENAME</term><listitem>
-Used only for restore command, can be a device name or file, the data will
-be restored to it.
+ <varlistentry><term>TARGET</term><listitem>
+For a restore command, can be a device name or file, the data will
+be restored to it, instead of to <filename>amooraw-restored</filename>.
+Otherwise, names the file to be backed up, overriding DEVICE.
 </listitem></varlistentry>
 </variablelist>
 

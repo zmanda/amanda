@@ -57,13 +57,13 @@ sub declare_restore_options {
 
 sub inner_estimate {
     my ( $self, $level ) = @_;
-    my $fn = $self->{'options'}->{'device'};
+    my $fn = $self->target();
     return $self->int2big(-s $fn);
 }
 
 sub inner_backup {
     my ( $self, $fdout ) = @_;
-    my $fn = $self->{'options'}->{'device'};
+    my $fn = $self->target();
     my $fdin = POSIX::open($fn, &POSIX::O_RDONLY);
 
     if (!defined $fdin) {
@@ -93,12 +93,7 @@ sub inner_restore {
 	    problem => 'Only one (.) supported');
     }
 
-    my $fn = $self->{'options'}->{'filename'};
-    $fn = 'amooraw-restored' if !defined $fn;
-
-    if ( File::Spec->file_name_is_absolute($fn) ) {
-        $fn = File::Spec->abs2rel($fn, File::Spec->rootdir());
-    }
+    my $fn = $self->target('amooraw-restored');
 
     my ( $volume, $directories, $file ) = File::Spec->splitpath($fn);
     make_path(File::Spec->catpath($volume, $directories, ''));

@@ -95,7 +95,7 @@ sub command_selfcheck {
 
 sub inner_estimate {
     my ( $self, $level ) = @_;
-    my $fn = $self->{'options'}->{'device'};
+    my $fn = $self->target();
     my $sz = $self->int2big(-s $fn);
     return $sz if 0 == $level;
 
@@ -114,7 +114,7 @@ sub inner_estimate {
 sub inner_backup {
     # XXX assert level==0 if no --record
     my ( $self, $fdout ) = @_;
-    my $fn = $self->{'options'}->{'device'};
+    my $fn = $self->target();
     my $level = $self->{'options'}->{'level'};
     my $flock = $self->{'options'}->{'flock'};
     my $fdin = POSIX::open($fn, &POSIX::O_RDONLY);
@@ -220,12 +220,7 @@ sub inner_restore {
 	    problem => 'Only one (.) supported');
     }
 
-    my $fn = $self->{'options'}->{'filename'};
-    $fn = 'amgrowingzip-restored' if !defined $fn;
-
-    if ( File::Spec->file_name_is_absolute($fn) ) {
-        $fn = File::Spec->abs2rel($fn, File::Spec->rootdir());
-    }
+    my $fn = $self->target('amgrowingzip-restored');
 
     my ( $volume, $directories, $file ) = File::Spec->splitpath($fn);
     make_path(File::Spec->catpath($volume, $directories, ''));

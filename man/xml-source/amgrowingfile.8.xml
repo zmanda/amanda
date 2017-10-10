@@ -45,17 +45,19 @@ next <command>amgrowingfile</command> backup must be forced to level 0.
 </para></note>
 
 <para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
-is the filename <command>amgrowingfile</command> will read. When restoring,
-the FILENAME property (which can be set with the
+is the filename <command>amgrowingfile</command> will read, unless overridden
+by an explicit TARGET property. When restoring,
+the TARGET property (which can be set with the
 <emphasis remap='B'>setproperty</emphasis> command in
 <manref name="amrecover" vol="8"/>) will be used, or, if it is not set,
 <filename>amgrowingfile-restored</filename> in the current directory.
 In other words, <command>amgrowingfile</command> will not default to
-restoring data directly to the original filename, but the FILENAME property
-can be set to do so, if desired.
+restoring data directly to the original location named by
+<emphasis remap='B'>diskdevice</emphasis>, but the TARGET property
+can be set to that name, if that is what's desired.
 </para>
 
-<para>When restoring, the file named with the FILENAME property (or
+<para>When restoring, the file named with the TARGET property (or
 <filename>amgrowingfile-restored</filename>) is truncated and rewritten
 in place if it exists, or created with mode 0600 if it does not.</para>
 </refsect1>
@@ -70,9 +72,10 @@ for information on application properties and how they are configured.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>FILENAME</term><listitem>
-Used only for restore command, can be a device name or file, the data will
-be restored to it.
+ <varlistentry><term>TARGET</term><listitem>
+For a restore command, the file name under which the data will
+be restored, instead of <filename>amgrowingfile-restored</filename>.
+Otherwise, names the file to be backed up, overriding DEVICE.
 </listitem></varlistentry>
 </variablelist>
 

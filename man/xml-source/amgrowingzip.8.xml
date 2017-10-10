@@ -63,7 +63,7 @@ Not all ZIP-related tools truly append a member as described here;
 some perform any modification of the archive by rebuilding it from scratch.
 To be usable with amgrowingzip, whatever process adds members to the archive
 must be known to truly append them. The <package>zipfile</package> module in
-Python is suitable, for example.
+Python offers a suitable <emphasis>append</emphasis> mode, for example.
 </para></note>
 
 <note><para>If it is possible for the process that appends members to be
@@ -75,17 +75,19 @@ the archive's directory while a write is in progress.
 </para></note>
 
 <para>The <emphasis remap='B'>diskdevice</emphasis> in the disklist (DLE)
-names the ZIP archive <command>amgrowingzip</command> will read. When restoring,
-the FILENAME property (which can be set with the
+names the ZIP archive <command>amgrowingzip</command> will read, unless
+overridden by a TARGET property given explicitly. When restoring,
+the TARGET property (which can be set with the
 <emphasis remap='B'>setproperty</emphasis> command in
 <manref name="amrecover" vol="8"/>) will be used, or, if it is not set,
 <filename>amgrowingzip-restored</filename> in the current directory.
 In other words, <command>amgrowingzip</command> will not default to
-restoring data directly to the original filename, but the FILENAME property
-can be set to do so, if desired.
+restoring data directly to the original location named by
+<emphasis remap='B'>diskdevice</emphasis>, but the TARGET property
+can be set to that name, if that is what's desired.
 </para>
 
-<para>When restoring, the file named with the FILENAME property (or
+<para>When restoring, the file named with the TARGET property (or
 <filename>amgrowingzip-restored</filename>) is truncated and rewritten
 in place if it exists, or created with mode 0600 if it does not.</para>
 
@@ -109,18 +111,19 @@ values for a boolean property, see <manref name="amanda.conf" vol="5"/>.
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>FILENAME</term><listitem>
-Used only for restore command, can be a device name or file, the data will
-be restored to it.
-</listitem></varlistentry>
-
- <!-- ==== -->
  <varlistentry><term>FLOCK</term><listitem>
 Set to a <amkeyword>true</amkeyword> value to require an advisory shared lock
 before backing up the file, in case the process that appends members to it
 could be simultaneously active. The appending process must also be coded to take
 an advisory exclusive lock while writing. If this property is given a
 <amkeyword>false</amkeyword> value, no locking is used.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>TARGET</term><listitem>
+For a restore command, the file name under which the data will
+be restored, instead of <filename>amgrowingzip-restored</filename>.
+Otherwise, names the file to be backed up, overriding DEVICE.
 </listitem></varlistentry>
 </variablelist>
 

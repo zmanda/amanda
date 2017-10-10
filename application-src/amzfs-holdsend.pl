@@ -395,7 +395,6 @@ sub declare_common_options {
 sub declare_restore_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->SUPER::declare_restore_options($refopthash, $refoptspecs);
-    push @$refoptspecs, ( 'dataset=s' );
     push @$refoptspecs, ( 'destructive=s' );
     push @$refoptspecs, ( 'unmounted=s' );
     push @$refoptspecs, ( 'overrideproperty=s@' );
@@ -427,7 +426,7 @@ sub read_local_state {
 	$self->{'zfsexecutable'}, 'list', '-Hr',
 	'-t', 'filesystem,volume,snapshot',
 	'-o', 'name,type,userrefs', '--',
-	$self->{'options'}->{'device'}
+	$self->target()
     );
 
     my %ns; # initially empty dataset namespace
@@ -592,7 +591,7 @@ sub inner_estimate_brute {
     if ( 0 == $level ) {
 	open my $getfh, '-|', $self->{'zfsexecutable'},
 	    'get', '-Hp', '-o', 'value', '--', 'used,compressratio',
-	    $self->{'options'}->{'device'};
+	    $self->target();
 	my $used = <$getfh>;
 	my $compratio = <$getfh>;
 	$getfh->close();
@@ -641,7 +640,7 @@ sub inner_estimate_brute {
 
 sub construct_send_cmd {
     my ( $self, $level, $latestsnapshot ) = @_;
-    my $dn = $self->{'options'}->{'device'};
+    my $dn = $self->target();
 
     my $mxl = $self->{'localstate'}->{'maxlevel'};
 
@@ -685,7 +684,7 @@ sub ozfs_send_options {
 sub inner_backup {
     # XXX assert level==0 if no --record
     my ( $self, $fdout ) = @_;
-    my $dn = $self->{'options'}->{'device'};
+    my $dn = $self->target();
     my $level = $self->{'options'}->{'level'};
 
     my $latestsnapshot = $self->{'localstate'}->{'newestsnapshot'};
@@ -721,11 +720,6 @@ sub check_restore_options {
     
     $self->SUPER::check_restore_options();
 
-    $self->{'restoredestination'} = $self->{'options'}->{'dataset'};
-
-    $self->check(defined $self->{'restoredestination'},
-	"The 'dataset' property must be supplied; there is no default");
-
     $self->{'destructive'} = $self->{'options'}->{'destructive'};
 }
 
@@ -741,7 +735,7 @@ sub inner_restore {
 	    problem => 'Only one (.) supported');
     }
 
-    my $dn = $self->{'restoredestination'};
+    my $dn = $self->target();
     my @force = ( $self->{'destructive'} or 0 == $level ) ? ( '-F' ) : ();
     my @unmounted = $self->{'options'}->{'unmounted'} ? ( '-u' ) : ();
     my @propoverrides =
@@ -756,7 +750,6 @@ sub inner_restore {
 	'--', $dn
     );
     if ( 0 != $rslt ) {
-
 	die Amanda::Application::CalledProcessError->transitionalError(
 	    cmd => 'zfs receive', returncode => $?);
     };
