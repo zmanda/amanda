@@ -36,7 +36,7 @@ use Amanda::Util qw( quote_string );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $target, $size, $size_level_1, $min_size, $max_size, $block_size, $min_block_size, $max_block_size, $print_to_stderr) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $include_list, $exclude_list, $target, $size, $size_level_1, $min_size, $max_size, $block_size, $min_block_size, $max_block_size, $print_to_stderr, $cmd_from_sendbackup, $cmd_to_sendbackup, $server_backup_result) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{config}           = $config;
@@ -68,6 +68,9 @@ sub new {
     $self->{min_block_size}   = $min_block_size || 1;
     $self->{max_block_size}   = $max_block_size || 32768;
     $self->{print_to_stderr}  = $print_to_stderr;
+    $self->{cmd_from_sendbackup}  = $cmd_from_sendbackup;
+    $self->{cmd_to_sendbackup}    = $cmd_to_sendbackup;
+    $self->{server_backup_result} = $server_backup_result;
 
     if (!defined $self->{size}) {
 	$self->{'size'} = $self->{min_size} + int(rand($self->{max_size}- $self->{min_size}));
@@ -95,6 +98,8 @@ sub command_support {
     print "MULTI-ESTIMATE NO\n";
     print "CALCSIZE NO\n";
     print "CLIENT-ESTIMATE YES\n";
+    print "CMD-STREAM YES\n";
+    print "WANT-SERVER-BACKUP-RESULT YES\n";
 }
 
 sub command_selfcheck {
@@ -257,6 +262,13 @@ sub command_backup {
 	}
 	print {$self->{mesgout}} "sendbackup: size $ksize\n";
     }
+    if ($self->{'cmd_from_sendbackup'} && $self->{'server_backup_result'}) {
+	my $buf;
+	my $cfs = IO::Handle->new();
+	$cfs->fdopen($self->{'cmd_from_sendbackup'},"r");
+	my $r = sysread $cfs, $buf, 1024;
+	# ignore the result, I have nothing to do with it
+    }
 }
 
 sub command_restore {
@@ -340,6 +352,9 @@ my $opt_block_size;
 my $opt_min_block_size;
 my $opt_max_block_size;
 my $opt_print_to_stderr;
+my $opt_cmd_from_sendbackup;
+my $opt_cmd_to_sendbackup;
+my $opt_server_backup_result;
 
 my @orig_argv = @ARGV;
 
@@ -367,6 +382,9 @@ GetOptions(
     'min-block-size=s'	 => \$opt_min_block_size,
     'max-block-size=s'	 => \$opt_max_block_size,
     'print-to-stderr=s'  => \$opt_print_to_stderr,
+    'cmd-from-sendbackup=s' => \$opt_cmd_from_sendbackup,
+    'cmd-to-sendbackup=s' => \$opt_cmd_to_sendbackup,
+    'server-backup-result' => \$opt_server_backup_result,
 ) or usage();
 
 if (defined $opt_version) {
@@ -374,7 +392,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amrandom->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_target, $opt_size, $opt_size_level_1, $opt_min_size, $opt_max_size, $opt_block_size, $opt_min_block_size, $opt_max_block_size, $opt_print_to_stderr);
+my $application = Amanda::Application::Amrandom->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, \@opt_include_list, \@opt_exclude_list, $opt_target, $opt_size, $opt_size_level_1, $opt_min_size, $opt_max_size, $opt_block_size, $opt_min_block_size, $opt_max_block_size, $opt_print_to_stderr, $opt_cmd_from_sendbackup, $opt_cmd_to_sendbackup, $opt_server_backup_result);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

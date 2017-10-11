@@ -151,6 +151,7 @@ main(
     int     cmd_from_appli[2] = { 0, 0 };
     int     cmd_to_appli[2] = { 0, 0 };
     GThread *app_strerr_thread = NULL;
+    backup_support_option_t *bsu = NULL;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("sendbackup-%s\n", VERSION);
@@ -572,7 +573,6 @@ main(
 	    char *cmd=NULL;
 	    GPtrArray *argv_ptr;
 	    char levelstr[20];
-	    backup_support_option_t *bsu;
 	    char *compopt = NULL;
 	    char *encryptopt = skip_argument;
 	    int compout, dumpout;
@@ -1048,7 +1048,6 @@ main(
 		}
 	    }
 
-	    amfree(bsu);
 	} else {
 	    if (statefd > 0) {
 		close(statefd);
@@ -1102,7 +1101,11 @@ main(
 
     if (am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
 	am_has_feature(g_options->features, fe_sendbackup_stream_cmd_get_dumper_result)) {
-	full_write(cmdwfd, "GET_DUMPER_RESULT\n", strlen("GET_DUMPER_RESULT\n"));
+	if (full_write(cmdwfd, "GET_DUMPER_RESULT\n", strlen("GET_DUMPER_RESULT\n")) != strlen("GET_DUMPER_RESULT\n")) {
+	    fprintf(mesgstream, "sendbackup: error: Can't write to cmdwfd: %s\n", strerror(errno));
+	    fflush(mesgstream);
+	    result = R_FAILED;
+	}
 	fdatasync(cmdwfd);
 	g_debug("sent GET_DUMPER_RESULT");
 	line = areads(cmdrfd);
@@ -1110,17 +1113,27 @@ main(
 
 	if (line && strcmp(line,"SUCCESS") == 0) {
 	    result = R_SUCCESS;
-	    write(cmd_to_appli[1], "SUCCESS\n", 8);
 	} else if (line && strcmp(line,"FAILED") == 0) {
 	    result = R_FAILED;
-	    write(cmd_to_appli[1], "FAILED\n", 7);
 	} else {
+	    g_free(line);
+	    line = g_strdup("BOGUS");
 	    result = R_BOGUS;
-	    write(cmd_to_appli[1], "BOGUS\n", 6);
+	}
+
+	if (bsu && bsu->cmd_stream && bsu->want_server_backup_result &&
+	    cmd_to_appli[1]) {
+	    char *msg = g_strdup_printf("%s\n", line);
+	    if (full_write(cmd_to_appli[1], msg, strlen(msg)) != strlen(msg)) {
+		fprintf(mesgstream, "sendbackup: error: Can't write result to application: %s\n", strerror(errno));
+		fflush(mesgstream);
+		result = R_FAILED;
+	    }
+	    g_free(msg);
 	}
 	amfree(line);
-	close(cmd_to_appli[1]);
-	close(cmd_from_appli[0]);
+	aaclose(cmd_to_appli[1]);
+	aaclose(cmd_from_appli[0]);
     } else {
 	result = R_BOGUS;
     }
@@ -1133,6 +1146,7 @@ main(
     fflush(mesgstream);
     fclose(mesgstream);
 
+    amfree(bsu);
     amfree(qdisk);
     amfree(qamdevice);
     amfree(dumpdate);
@@ -1155,6 +1169,7 @@ main(
 	dbprintf(_("REQ packet is bogus\n"));
     }
 
+    amfree(bsu);
     amfree(qdisk);
     amfree(qamdevice);
     amfree(dumpdate);

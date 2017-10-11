@@ -1,3 +1,8 @@
+2017-10-11  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amrandom.pl: Get server result
+	* client-src/sendbackup.c: Use full_write, check its result
+	* server-src/dumper.c: return 1 since errstr is never set
+
 2017-10-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Send server result to client application and POST scripts
 	* amandad-src/amandad.c (process_readnetfd): Fix for close before

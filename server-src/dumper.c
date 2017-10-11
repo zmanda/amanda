@@ -1851,10 +1851,7 @@ do_dump(
 
     dumpfile_free_data(&file);
 
-    if (!errstr)
-	return 1;
-
-    dump_result = max(dump_result, 2);
+    return 1;
 
 failed:
     if (result_sent_to_driver == 0) {
