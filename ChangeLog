@@ -1,3 +1,7 @@
+2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c: Do not waitpid() if we have a
+	  watch-source for it
+
 2017-10-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/driver.c (handle_dumper_result): Send the TRYAGAIN mesage
 	  to chunker or taper

@@ -2105,7 +2105,7 @@ sec_tcp_conn_put(
 	aclose(rc->read);
     if (rc->write != -1)
 	aclose(rc->write);
-    if (rc->pid != -1) {
+    if (rc->pid != -1 && !rc->child_watch) {
 	int pid;
 	int count = 50;
 
