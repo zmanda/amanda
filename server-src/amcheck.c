@@ -502,16 +502,29 @@ main(
 
     /* wait for child processes and note any problems */
 
-    while(1) {
-	if((pid = wait(&retstat)) == -1) {
+    while (serverchk_pid) {
+	pid = waitpid(serverchk_pid, &retstat, 0);
+	if (pid == -1) {
+	    if(errno == EINTR) continue;
+	    else break;
+	} else if(pid == serverchk_pid) {
+	    server_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
+	    serverchk_pid = 0;
+	} else {
+	    delete_message(amcheck_fprint_message(mainfd, build_message(
+					AMANDA_FILE, __LINE__, 2800021, MSG_ERROR, 1,
+					"pid", g_strdup_printf("%ld", (long)pid))));
+	}
+    }
+
+    while (clientchk_pid) {
+	pid = waitpid(clientchk_pid, &retstat, 0);
+	if (pid == -1) {
 	    if(errno == EINTR) continue;
 	    else break;
 	} else if(pid == clientchk_pid) {
 	    client_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
 	    clientchk_pid = 0;
-	} else if(pid == serverchk_pid) {
-	    server_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
-	    serverchk_pid = 0;
 	} else {
 	    delete_message(amcheck_fprint_message(mainfd, build_message(
 					AMANDA_FILE, __LINE__, 2800021, MSG_ERROR, 1,
@@ -577,6 +590,7 @@ main(
 	char *line = NULL;
 	int rc;
 	int valid_mailto = 0;
+	pid_t mailer_pid;
 
 	fflush(stdout);
 	if (fseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
@@ -636,7 +650,7 @@ main(
 	    amcheck_exit(1);
 	}
 
-	pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
+	mailer_pid = pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
 		   &mailfd, &nullfd, &errfd,
 		   (char **)pipeargs->pdata);
 
@@ -695,7 +709,7 @@ main(
 	afclose(ferr);
 	errfd = -1;
 	rc = 0;
-	while (wait(&retstat) != -1) {
+	while (waitpid(mailer_pid, &retstat, 0) != -1) {
 	    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
 		char *mailer_error = str_exit_status("mailer", retstat);
 		strappend(err, mailer_error);
@@ -2734,7 +2748,11 @@ handle_result(
     }
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
-    while(waitpid(-1, NULL, WNOHANG)> 0);
+    {	int pid;
+	while((pid = waitpid(-1, NULL, WNOHANG))> 0) {
+	    g_debug("amcheck reap: %d", pid);
+	}
+    }
 }
 
 static int

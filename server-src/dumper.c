@@ -853,10 +853,13 @@ main(
 			dumper_timestamp, level, errstr);
 		amfree(q);
 	    } else {
+		int pid;
 		do_dump(&db);
 		/* try to clean up any defunct processes, since Amanda doesn't
 		   wait() for them explicitly */
-		while(waitpid(-1, NULL, WNOHANG)> 0);
+		while((pid = waitpid(-1, NULL, WNOHANG))> 0) {
+		    g_debug("reap: %d", pid);
+		}
 	    }
 
 	    if (db.shm_ring_producer) {

@@ -1,3 +1,13 @@
+2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/local-security.c: Add a child_watch_callback for the
+	  amandad pid
+	* common-src/security-util.c: Do not waitpid() if we have a
+	  watch-source for it
+	* server-src/amcheck.c: Use waitpid with pid
+	* server-src/driver.c: Add debugging
+	* server-src/dumper.c: Add debugging
+	* server-src/planner.c: Add debugging
+
 2017-10-11  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amrandom.pl: Get server result
 	* client-src/sendbackup.c: Use full_write, check its result
