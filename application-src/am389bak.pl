@@ -59,8 +59,8 @@ sub check_properties {
 
     $self->{'instance'} = $self->{'options'}->{'instance'};
     if ( !defined $self->{'instance'} ) {
-        $self->print_to_server_and_die(
-	    'script requires instance property');
+	die Amanda::Script::InvocationError->transitionalError(
+	    item => 'property', value => 'instance', problem => 'missing');
     }
 }
 
@@ -83,6 +83,11 @@ sub command_pre_dle_estimate {
 
     my $rslt = system {$self->{'db2bakexecutable'}} (
         'db2bak', $dst, '-qZ', $repo );
+
+    unless ( 0 == $rslt ) {
+	die Amanda::Script::CalledProcessError->transitionalError(
+	    cmd => 'db2bak', returncode => $rslt);
+    }
 }
 
 package main;

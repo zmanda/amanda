@@ -59,14 +59,15 @@ sub check_properties {
     $self->{'freezeorthaw'} = $self->{'options'}->{'freezeorthaw'};
     if ( !defined $self->{'freezeorthaw'}
       or $self->{'freezeorthaw'} !~ /^(?:freeze|thaw)$/ ) {
-        $self->print_to_server_and_die(
-	    'script requires freezeorthaw property to be freeze or thaw');
+        die Amanda::Script::InvocationError->transitionalError(
+	    item => 'property', value => 'freezeorthaw',
+	    problem => 'must be freeze or thaw');
     }
 
     $self->{'domain'} = $self->{'options'}->{'domain'};
     if ( !defined $self->{'domain'} ) {
-        $self->print_to_server_and_die(
-	    'script requires domain property');
+        die Amanda::Script::InvocationError->transitionalError(
+	    item => 'property', value => 'domain', problem => 'missing');
     }
 
     $self->{'mountpoint'} = $self->{'options'}->{'mountpoint'};
@@ -91,7 +92,6 @@ sub declare_options {
 sub command_pre_dle_estimate {
     my ( $self ) = @_;
 
-    my $fort = $self->{'freezeorthaw'};
     my $domain = $self->{'domain'};
     my @args;
 
@@ -103,6 +103,11 @@ sub command_pre_dle_estimate {
     }
 
     my $rslt = system {$self->{'virshexecutable'}} (@args);
+
+    unless ( 0 == $rslt ) {
+	die Amanda::Script::CalledProcessError->transitionalError(
+	    cmd => \@args, returncode => $rslt);
+    }
 }
 
 # In an ideal world, just run at PRE-DLE-ESTIMATE to make one snapshot,

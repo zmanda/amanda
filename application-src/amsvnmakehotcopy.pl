@@ -59,8 +59,8 @@ sub check_properties {
 
     $self->{'svnrepository'} = $self->{'options'}->{'svnrepository'};
     if ( !defined $self->{'svnrepository'} ) {
-        $self->print_to_server_and_die(
-	    'script requires svnrepository property');
+	die Amanda::Script::InvocationError->transitionalError(
+	    item => 'property', value => 'svnrepository', problem => 'missing');
     }
 
     $self->{'incremental'} = $self->{'options'}->{'incremental'};
@@ -94,6 +94,10 @@ sub command_pre_dle_estimate {
 
     my $rslt = system {$self->{'svnadminexecutable'}} (
 	'svnadmin', 'hotcopy', @opts, '--', $repo, $dst );
+
+    die Amanda::Script::CalledProcessError->transitionalError(
+	cmd => 'svnadmin hotcopy', returncode => $rslt)
+	unless 0 == $rslt;
 }
 
 package main;
