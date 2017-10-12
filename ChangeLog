@@ -1,4 +1,8 @@
 2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/failure-dumper-try-again.pl: Don't do the check if
+	  FAILURE_CODE is not set
+
+2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c: Do not waitpid() if we have a
 	  watch-source for it
 

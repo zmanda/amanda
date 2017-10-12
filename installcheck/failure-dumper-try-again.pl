@@ -37,6 +37,11 @@ use Amanda::Changer;
 use Amanda::Constants;
 use Cwd qw (getcwd);
 
+if (!$Amanda::Constants::FAILURE_CODE) {
+   plan skip_all => "Not configured with --with-failure-code";
+   exit 1;
+}
+
 eval 'use Installcheck::Rest;';
 if ($@) {
     plan skip_all => "Can't load Installcheck::Rest: $@";
