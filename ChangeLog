@@ -1,3 +1,6 @@
+2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/failure-application-stderr.pl: use lib '@amperldir@';
+
 2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-dumper-try-again.pl: Don't do the check if
 	  FAILURE_CODE is not set

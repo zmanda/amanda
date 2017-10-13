@@ -22,7 +22,7 @@ use File::Path;
 use strict;
 use warnings;
 
-use lib '/amanda/h1/linux/lib/amanda/perl';
+use lib '@amperldir@';
 use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
