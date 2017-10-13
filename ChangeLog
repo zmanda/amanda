@@ -1,4 +1,7 @@
 2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/pp-scripts.pl: Fix
+
+2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amgtar.c: fflush(mesgstream)
 	* client-src/sendbackup.c: print sendbackup size and end line on error
 	* server-src/dumper.c: Add debugging statement
