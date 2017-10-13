@@ -1135,6 +1135,7 @@ process_dumpline(
 	    if (tok != NULL) {
 		origsize = OFF_T_ATOI(tok);
 		SET(status, GOT_SIZELINE);
+		dumper_debug(1, "got size: %lld", (long long)origsize);
 		send_result();
 	    }
 	    break;
@@ -1238,6 +1239,7 @@ process_dumpline(
 	}
 
 	if (g_str_equal(tok, "end")) {
+	    dumper_debug(1, "sendbackup: end");
 	    SET(status, GOT_ENDLINE);
 	    break;
 	}
@@ -3807,6 +3809,7 @@ startup_dump(
 static void
 send_result(void)
 {
+    dumper_debug(1, "send_result %d %d %p %p %p %p", ISSET(status, GOT_SIZELINE), ISSET(status, GOT_ENDLINE),streams[DATAFD].fd, streams[INDEXFD].fd, streams[STATEFD].fd, filters);
     if (ISSET(status, GOT_SIZELINE) &&
 	ISSET(status, GOT_ENDLINE) &&
 	streams[DATAFD].fd == NULL &&

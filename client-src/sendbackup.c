@@ -1090,6 +1090,9 @@ main(
 	    close_producer_shm_ring(shm_ring);
 	    shm_ring = NULL;
 	}
+	fprintf(mesgstream, "sendbackup: size 0\n");
+	fprintf(mesgstream, "sendbackup: end\n");
+	fflush(mesgstream);
     }
     aclose(indexfd);
     if (statefd > 0) {

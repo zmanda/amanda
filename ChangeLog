@@ -1,4 +1,9 @@
 2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amgtar.c: fflush(mesgstream)
+	* client-src/sendbackup.c: print sendbackup size and end line on error
+	* server-src/dumper.c: Add debugging statement
+
+2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c: Wait for the 'sendbackup: size' line before
 	  sending the rresult to the driver
 
