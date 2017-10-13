@@ -111,16 +111,10 @@ sub run {
 
     $class->declare_options(\%opthash, \@optspecs);
 
-    my $ret = GetOptions(\%opthash, @optspecs);
-
-    # !!! pleasant surprise: option value arrived with escaping already
-    # unwrapped. Examining sendbackup debug log shows the value apparently
-    # passed to sendbackup in an escaped form, but unescaped in the section
-    # of the log file that shows "sendbackup: running ..." with the arguments
-    # logged one by one. Looks like sendbackup does the unwrapping and uses
-    # exec directly; todo: check the code to confirm.
-
-    # ... yes, that's just what sendbackup does.
+    unless ( GetOptions(\%opthash, @optspecs) ) {
+	die Amanda::Script::InvocationError->transitionalError(
+	    item => 'options', problem => 'invalid');
+    }
 
     my $script = $class->new($execute_where, \%opthash);
 
@@ -129,7 +123,21 @@ sub run {
 
     $script->check_properties() unless $execute_where =~ m/^support$/i;
 
-    $script->do($execute_where); # do() is case-insensitive, you see.
+    eval {
+	$script->do($execute_where); # do() is case-insensitive, you see.
+    };
+    if ( my $exc = $@ ) {
+	# Handling of exceptions may rely on the proper values of $app->{action}
+	# and $app->{mesgout} being set early by do() and remaining set
+	# thereafter. (Those things do happen for scripts too.)
+	if ( defined blessed($exc) and
+	     $exc->isa('Amanda::Script::Message') ) {
+	    $exc->on_uncaught($script);
+	}
+	else {
+	    $script->print_to_server_and_die("unexpected: " . $exc);
+	}
+    }
 }
 
 =head2 C<new>
@@ -187,6 +195,10 @@ setter sub can tell by the number of parameters passed to it by
 C<Getopt::Long>), as well as multiple-valued ones accumulating into an array,
 provided an array has been installed with C<store_option> before the options
 are parsed.
+
+A property setter calls C<die> with a simple string message, not an exception
+object, as it will be caught by C<Getopt::Long> itself and passed to C<warn>,
+and cause C<Getopt::Long> to return false when finished.
 
     store_option(\%opthash, optname, [k,], v)
 
@@ -293,6 +305,51 @@ sub declare_options {
 	  'execute-where=s', 'timestamp=s' );
 }
 
+=head1 INSTANCE METHODS USABLE IN SUBCOMMANDS
+
+=head2 Checked conversions
+
+=head3 C<int2big>
+
+    $self->int2big(n)
+
+Return a C<Math::BigInt> version of I<n>, throwing an exception if it is already
+too late (something that could happen in a perl with 32-bit ints if it has
+already widened I<n> to a float and lost precision).
+
+=cut
+
+sub int2big {
+    my ( $self, $n ) = @_;
+    die Amanda::Script::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $n)
+	if $n - 1 == $n or $n == $n + 1;
+    my $big = Math::BigInt->new($n);
+    die Amanda::Script::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $n)
+	unless $big->is_int();
+    return $big;
+}
+
+=head3 C<big2int>
+
+    $self->big2int(n)
+
+Return the native perl number corresponding to the C<Math::BigInt> I<n>,
+throwing an exception if I<n> gets widened to something (a perl float, say)
+that does not retain precision to the units place.
+
+=cut
+
+sub big2int {
+    my ( $self, $big ) = @_;
+    my $n = $big->numify();
+    die Amanda::Script::PrecisionLossError->transitionalError(
+	item => 'numeric value', value => $big->bstr())
+	if $n - 1 == $n or $n == $n + 1;
+    return $n;
+}
+
 =head1 INSTANCE METHODS IMPLEMENTING SUBCOMMANDS
 
 =cut
@@ -336,6 +393,171 @@ sub command_support {
     if ( defined $Amanda::Feature::fe_req_options_timestamp ) {
         $self->$say_supports("TIMESTAMP", "timestamp");
     }
+}
+
+package Amanda::Script::Message;
+use base qw(Amanda::Message);
+use Scalar::Util qw{blessed};
+
+# CLASS method to determine if a given thing is an exception that's an
+# instance of this class or a subclass (sort of isa in reverse).
+sub captures {
+    my ( $class, $thing ) = @_;
+    return ( blessed($thing) and $thing->isa($class) );
+}
+
+# Private sub to relieve application authors of the need to mention __FILE__
+# and __LINE__ everywhere an exception might be thrown. Return a usually-best
+# file and line by following the call stack outward until (a) out of any code
+# from Amanda::Message or subclasses and (b) out of this package itself (unless
+# (c) that unwinds all the way out to Script_App, in which case use the
+# innermost file/line found in this package). It is still possible to pass
+# source_filename and source_line explicitly to the constructor at particular
+# call sites.
+my $callerfill = sub {
+    my ( $package, $sourcefile, $sourceline );
+    my ( $myfile, $myline );
+    # can start at depth 1; zero is just the call to this private routine
+    for ( my $depth = 1; my @frameinfo = caller($depth); ++ $depth ) {
+        ( $package, $sourcefile, $sourceline ) = @frameinfo;
+	next if $package->isa('Amanda::Message');
+	last unless 'Amanda::Script::Abstract' eq $package;
+	( $myfile, $myline ) = ( $sourcefile, $sourceline )
+	    unless defined $myfile or defined $myline;
+    }
+    return ($myfile, $myline) if 'Amanda::Script_App' eq $package
+	and defined $myfile and defined $myline;
+    return ($sourcefile, $sourceline);
+};
+
+sub new {
+    my ( $class, %params ) = @_;
+    unless (defined $params{'source_filename'}&&defined $params{'source_line'}){
+        ($params{'source_filename'},$params{'source_line'}) = $callerfill->();
+    }
+    return $class->SUPER::new(%params);
+}
+
+# For development transition to using ::Message but before every message has
+# a code assigned; this allows code to be omitted, and uses 0 to indicate a
+# generic 'good' message. It will also default severity to INFO.
+sub transitionalGood {
+    my ( $class, %params ) = @_;
+    $params{'code'} = 0 unless exists $params{'code'};
+    $params{'severity'} = $Amanda::Message::INFO
+        unless exists $params{'severity'};
+    return $class->new(%params);
+}
+
+# For development transition to using ::Message but before every message has
+# a code assigned; this allows code to be omitted, and uses 1 to indicate a
+# generic 'error' message. The severity, as usual, defaults to CRITICAL.
+sub transitionalError {
+    my ( $class, %params ) = @_;
+    $params{'code'} = 1 unless exists $params{'code'};
+    return $class->new(%params);
+}
+
+# Make this do something useful, even when not overridden.
+sub local_full_message { my ( $self ) = @_; return $self->local_message(); }
+
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
+}
+
+# An exception indicating the script has not been properly invoked.
+package Amanda::Script::InvocationError;
+use base 'Amanda::Script::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'usage error: ' . $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'};
+    return $lm;
+}
+
+# An exception indicating some limit of the implementation has been hit (this
+# includes where functionality that should be implemented simply isn't yet).
+package Amanda::Script::ImplementationLimitError;
+use base 'Amanda::Script::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'implementation limit: ' . $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'};
+    return $lm;
+}
+
+# An exception indicating something is probably wrong in the implementation
+# itself; an assertion/should-not-happen kind of thing.
+package Amanda::Script::ImplementationError;
+use base 'Amanda::Script::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = 'should not happen: ' . $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'};
+    return $lm;
+}
+
+# An exception that reflects some condition in the environment where the
+# application runs: missing files, I/O errors, the usual stuff that happens.
+package Amanda::Script::EnvironmentError;
+use base 'Amanda::Script::Message';
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = $self->{'item'};
+    $lm .= ' (' . $self->{'value'} . ')' if defined $self->{'value'};
+    $lm .= ': ' . $self->{'problem'} if defined $self->{'problem'};
+    $lm .= ': ' . $self->{'errnostr'} if defined $self->{'errnostr'};
+    return $lm;
+}
+
+# An exception reflecting a loss of numeric precision where that isn't ok.
+package Amanda::Script::PrecisionLossError;
+use base 'Amanda::Script::ImplementationLimitError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'problem'} = 'Loss of numeric precision'
+	unless exists $params{'problem'};
+    $class->SUPER::new(%params);
+}
+
+# An exception reflecting the status of a called process.
+package Amanda::Script::CalledProcessError;
+use base 'Amanda::Script::EnvironmentError';
+sub new {
+    my ( $class, %params ) = @_;
+    $params{'item'} = 'External process'
+	unless exists $params{'item'};
+    if ( exists $params{'cmd'} and not exists $params{'value'} ) {
+	$params{'value'} = Data::Dumper->new([$params{'cmd'}])->
+	    Terse(1)->Useqq(1)->Indent(0)->Dump();
+    }
+    $class->SUPER::new(%params);
+}
+sub local_message {
+    my ( $self ) = @_;
+    my $lm = $self->SUPER::local_message();
+    $lm .= ': exit status ' . $self->{'returncode'}
+	if defined $self->{'returncode'};
+    return $lm;
+}
+
+# An exception bundling one or more other exceptions as an array {'exceptions'}.
+package Amanda::Script::MultipleError;
+use base 'Amanda::Script::Message';
+sub local_message {
+    my ( $self ) = @_;
+    return 'Collected errors: ' . scalar(@{$self->{'exceptions'}});
+}
+sub on_uncaught {
+    my ( $self, $app ) = @_;
+    for my $exc ( @{$self->{'exceptions'}} ) {
+	$app->print_to_server($exc . '', $Amanda::Script_App::ERROR);
+    }
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
 }
 
 1;

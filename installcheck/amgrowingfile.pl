@@ -93,7 +93,7 @@ $restore = $app->restore('objects' => ['.'],'data' => $backup1->{'data'},
                          'level'=> 1);
 is($restore->{'exit_status'}, 0, "error status ok (default filename; increment)");
 
-$app->add_property('filename', 'custom-filename');
+$app->add_property('target', 'custom-filename');
 $restore = $app->restore('objects' => ['.'],'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 0, "error status ok (custom filename)");
 $restore = $app->restore('objects' => ['.'],'data' => $backup1->{'data'},

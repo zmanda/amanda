@@ -230,7 +230,7 @@ sub inner_estimate {
     die Amanda::Application::DiscontiguousLevelError->transitionalError(
 	value => $level) if $level > $mxl;
 
-    my $dn = $self->{'options'}->{'device'};
+    my $dn = $self->target();
     my $ref = $self->rsync_ref_for_level($level);
     my $batch = $self->generate_rsync_batch($ref->dirname(), $dn);
     die Amanda::Application::EnvironmentError->transitionalError(
@@ -244,7 +244,7 @@ sub inner_estimate {
 sub inner_backup {
     # XXX assert level==0 if no --record
     my ( $self, $fdout ) = @_;
-    my $dn = $self->{'options'}->{'device'};
+    my $dn = $self->target();
     my $level = $self->{'options'}->{'level'};
 
     my $dst; # only used in --record case, but needed again further below
@@ -289,6 +289,7 @@ sub inner_restore {
 	    problem => 'Only one (.) supported');
     }
 
+    $self->chdir_to_target();
     my $dn = File::Spec->curdir();
 
     if ( 0 == $level ) {

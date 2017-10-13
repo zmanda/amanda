@@ -433,6 +433,7 @@ C<state-stream>.
 sub declare_backup_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->declare_common_options($refopthash, $refoptspecs);
+    push @$refoptspecs, "target|directory=s";
     push @$refoptspecs, (
         'message=s', 'index=s', 'level=i', 'record', 'state-stream=i' );
     push @$refoptspecs, "timestamp=s" if $class->supports('timestamp');
@@ -449,6 +450,7 @@ C<recover-dump-state-file>.
 sub declare_restore_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->declare_common_options($refopthash, $refoptspecs);
+    push @$refoptspecs, "target|directory=s";
     push @$refoptspecs, (
         'message=s', 'index=s', 'level=i',
 	'dar=s', 'recover-dump-state-file=s' );
@@ -492,6 +494,7 @@ allow multiple uses.
 sub declare_estimate_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->declare_common_options($refopthash, $refoptspecs);
+    push @$refoptspecs, "target|directory=s";
     push @$refoptspecs, (
         'message=s', 'level=i'.($class->supports('multi_estimate') ? '@' : '' )
     );
@@ -509,6 +512,7 @@ declares the C<common> ones plus C<message>, C<index>, C<level>, and C<record>.
 sub declare_selfcheck_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     $class->declare_common_options($refopthash, $refoptspecs);
+    push @$refoptspecs, "target|directory=s";
     push @$refoptspecs, ('message=s', 'index=s', 'level=i', 'record');
 }
 
@@ -891,7 +895,9 @@ sub check {
 
 =head1 INSTANCE METHODS USABLE IN SUBCOMMANDS
 
-=head2 C<int2big>
+=head2 Checked conversions
+
+=head3 C<int2big>
 
     $self->int2big(n)
 
@@ -913,7 +919,7 @@ sub int2big {
     return $big;
 }
 
-=head2 C<big2int>
+=head3 C<big2int>
 
     $self->big2int(n)
 
@@ -930,6 +936,76 @@ sub big2int {
 	item => 'numeric value', value => $big->bstr())
 	if $n - 1 == $n or $n == $n + 1;
     return $n;
+}
+
+=head2 Determining target of operation
+
+=head3 C<target>
+
+    $self->target([default])
+
+Return the target of the operation, to be interpreted as a directory name
+by applications that act on directory trees, or as a file name by an application
+that acts on a single object.
+
+The value returned will be that of the TARGET property, if that has been given.
+Otherwise, for actions other than restore, it will be taken from the DEVICE
+property, if that has been given. If not determined by either of those rules,
+it will be the value of I<default> if provided; otherwise an exception will be
+thrown. Pass C<undef> as I<default> in order to simply return C<undef> rather
+than throwing the exception.
+
+This provides the usual behavior for backup, using DEVICE unless explicitly
+overridden by TARGET. When restoring, if C<undef> is returned, restoration
+should be into the directory named by C<Amanda::Util::get_original_cwd>; when
+not overridden, C<command_restore> ensures the current directory is that one.
+For an application that acts on a directory tree, C<chdir_to_target> should be
+called to override that location in case a TARGET property has been given.
+An application that acts on a single object should supply a default file name
+(not an absolute path). It will be returned if there is no explicit TARGET,
+which should leave the application creating a file by that default name in
+the current directory.
+
+=cut
+
+sub target {
+    my ( $self, $default ) = @_;
+
+    if ( exists $self->{'options'}->{'target'} ) {
+	return $self->{'options'}->{'target'};
+    }
+    if ( 'restore' ne $self->{'action'} and
+	 exists $self->{'options'}->{'device'} ) {
+        return $self->{'options'}->{'device'};
+    }
+    return $default if 1 < scalar(@_);
+
+    die Amanda::Application::InvocationError->transitionalError(
+	item => 'target', problem => 'must be specified; there is no default');
+}
+
+=head3 C<chdir_to_target()
+
+Change directory to the value returned by C<target>, if it is not C<undef>.
+
+If C<target> returns C<undef>, no directory change is done.
+
+Throw an exception if the directory change fails. This assumes that the target
+should be interpreted as a directory, so only applications that act on directory
+trees should call this method, not an application that acts on a single object.
+
+=cut
+
+sub chdir_to_target {
+    my ( $self ) = @_;
+
+    my $tg = $self->target(undef);
+
+    return unless defined $tg;
+
+    chdir $tg
+    or die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'target', value => $tg, errno => $!);
 }
 
 =head1 INSTANCE METHODS IMPLEMENTING SUBCOMMANDS
@@ -1276,17 +1352,6 @@ sub command_restore {
     }
 
     chdir(Amanda::Util::get_original_cwd());
-    if (defined $self->{directory}) {
-        if (!-d $self->{directory}) {
-            $self->print_to_server_and_die("Directory $self->{directory}: $!",
-                                           $Amanda::Script_App::ERROR);
-        }
-        if (!-w $self->{directory}) {
-            $self->print_to_server_and_die("Directory $self->{directory}: $!",
-                                           $Amanda::Script_App::ERROR);
-        }
-        chdir($self->{directory});
-    }
 
     # XXX at this point, names-to-restore in @ARGV may need some unescaping
     # done. First get signs of life, then test how Amanda is in fact passing

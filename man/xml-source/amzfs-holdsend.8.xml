@@ -346,18 +346,6 @@ an <manref name="amrecover" vol="8"/> session.
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>DATASET</term><listitem>
-The ZFS name under which to recover the data. Because ZFS recovery involves
-whole filesystems at a time, to reduce the risk of clobbering wanted filesystems
-by mistake, this property does <emphasis>not</emphasis> default to the device
-named in the DLE; it must be set explicitly with <command>setproperty</command>
-ahead of an <command>extract</command> within <command>amrecover</command>.
-There is no prohibition on setting it the same as the device in the DLE if
-desired, though it is also easy to set it to a different name and rename it
-after successful recovery.
-</listitem></varlistentry>
-
- <!-- ==== -->
  <varlistentry><term>DESTRUCTIVE</term><listitem>
 Controls whether the <option>-F</option> is given to
 <command>zfs receive</command> when restoring increments (it will always be
@@ -387,6 +375,18 @@ applied in the received dataset inplace of values saved in the backup stream.
 Not every platform supports the <option>-o</option> to
 <command>zfs receive</command>; use of this property on platforms that do not
 will cause recovery to fail.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>TARGET</term><listitem>
+The ZFS name under which to recover the data. Because ZFS recovery involves
+whole filesystems at a time, to reduce the risk of clobbering wanted filesystems
+by mistake, this property does <emphasis>not</emphasis> have a default;
+it must be set explicitly with <command>setproperty</command>
+ahead of an <command>extract</command> within <command>amrecover</command>.
+There is no prohibition on setting it the same as the device in the DLE if
+desired, though it is also easy to set it to a different name and rename it
+after successful recovery.
 </listitem></varlistentry>
 
  <!-- ==== -->

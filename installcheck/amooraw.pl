@@ -72,7 +72,7 @@ ok(chdir($rest_dir), "changed working directory (for restore)");
 my $restore = $app->restore('objects' => ['.'],'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 0, "error status ok (default filename)");
 
-$app->add_property('filename', 'custom-filename');
+$app->add_property('target', 'custom-filename');
 $restore = $app->restore('objects' => ['.'],'data' => $backup->{'data'});
 is($restore->{'exit_status'}, 0, "error status ok (custom filename)");
 

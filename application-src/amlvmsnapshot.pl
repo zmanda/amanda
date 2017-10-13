@@ -59,28 +59,11 @@ sub check_properties {
     $self->{'mountexecutable'} = $self->{'options'}->{'mountexecutable'};
     $self->{'umountexecutable'} = $self->{'options'}->{'umountexecutable'};
 
-    $self->{'volumegroup'} = $self->{'options'}->{'volumegroup'};
-    if ( !defined $self->{'volumegroup'} ) {
-        $self->print_to_server_and_die(
-	    'script requires volumegroup property');
-    }
-
-    $self->{'logicalvolume'} = $self->{'options'}->{'logicalvolume'};
-    if ( !defined $self->{'logicalvolume'} ) {
-        $self->print_to_server_and_die(
-	    'script requires logicalvolume property');
-    }
-
-    $self->{'snapshotname'} = $self->{'options'}->{'snapshotname'};
-    if ( !defined $self->{'snapshotname'} ) {
-        $self->print_to_server_and_die(
-	    'script requires snapshotname property');
-    }
-
-    $self->{'extents'} = $self->{'options'}->{'extents'};
-    if ( !defined $self->{'extents'} ) {
-        $self->print_to_server_and_die(
-	    'script requires extents property');
+    for my $prop ( 'volumegroup', 'logicalvolume', 'snapshotname', 'extents' ) {
+	$self->{$prop} = $self->{'options'}->{$prop};
+	die Amanda::Script::InvocationError->transitionalError(
+	    item => 'property', value => $prop, problem => 'missing')
+	    unless defined $self->{$prop};
     }
 
     $self->{'mountopts'} = $self->{'options'}->{'mountopts'};
@@ -136,10 +119,9 @@ sub command_pre_dle_estimate {
 	'--permission', 'r'
     );
 
-    if ( 0 != $rslt ) {
-        $self->print_to_server_and_die(
-	    'lvmcreate returned nonzero status '.$rslt);
-    }
+    die Amanda::Script::CalledProcessError->transitionalError(
+	cmd => 'lvcreate', returncode => $rslt)
+	unless 0 == $rslt;
 
     $rslt = system {$self->{'mountexecutable'}} (
         'mount',
@@ -147,6 +129,10 @@ sub command_pre_dle_estimate {
 	'/dev/disk/by-id/dm-name-'.$vg.'-'.$sn,
 	$dst
     );
+
+    die Amanda::Script::CalledProcessError->transitionalError(
+	cmd => 'mount', returncode => $rslt)
+	unless 0 == $rslt;
 }
 
 sub command_post_dle_backup {
@@ -161,10 +147,9 @@ sub command_post_dle_backup {
         'umount', $dst
     );
 
-    if ( 0 != $rslt ) {
-        $self->print_to_server_and_die(
-	    'umount returned nonzero status '.$rslt);
-    }
+    die Amanda::Script::CalledProcessError->transitionalError(
+	cmd => 'umount', returncode => $rslt)
+	unless 0 == $rslt;
 
     # TODO: before destroying, run lvs and capture Data% value - see how
     # close we came to using up allocated --extents capacity in the time it
@@ -173,6 +158,10 @@ sub command_post_dle_backup {
         'lvm',
 	'lvremove', '--force', $vg.'/'.$sn
     );
+
+    die Amanda::Script::CalledProcessError->transitionalError(
+	cmd => 'lvremove', returncode => $rslt)
+	unless 0 == $rslt;
 }
 
 # In an ideal world, just run at PRE-DLE-ESTIMATE to make one snapshot,
