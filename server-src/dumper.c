@@ -1135,6 +1135,7 @@ process_dumpline(
 	    if (tok != NULL) {
 		origsize = OFF_T_ATOI(tok);
 		SET(status, GOT_SIZELINE);
+		send_result();
 	    }
 	    break;
 	}
@@ -1779,10 +1780,6 @@ do_dump(
 	dumpsize = origsize;
     }
 
-    if (!ISSET(status, HEADER_DONE)) {
-	dump_result = max(dump_result, 2);
-	if (!errstr) errstr = g_strdup(_("got no header information"));
-    }
 
     if (result_sent_to_driver == 0) {
 	send_result_to_driver();
@@ -3810,7 +3807,8 @@ startup_dump(
 static void
 send_result(void)
 {
-    if (ISSET(status, GOT_ENDLINE) &&
+    if (ISSET(status, GOT_SIZELINE) &&
+	ISSET(status, GOT_ENDLINE) &&
 	streams[DATAFD].fd == NULL &&
 	streams[INDEXFD].fd == NULL &&
 	streams[STATEFD].fd == NULL &&

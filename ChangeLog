@@ -1,4 +1,8 @@
 2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c: Wait for the 'sendbackup: size' line before
+	  sending the rresult to the driver
+
+2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-application-stderr.pl: use lib '@amperldir@';
 
 2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
