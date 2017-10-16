@@ -1,4 +1,8 @@
 2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/dumper.c: Do not call stop_dump in a thread, schedule an
+	  event to do it in the main loop
+
+2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: Print sendbackup: size and end line
 
 2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>

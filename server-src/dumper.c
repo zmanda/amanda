@@ -171,6 +171,8 @@ static int client_request_result;
 static int result_sent_to_driver;
 static event_handle_t *ev_wait_filters_timeout;
 static int wait_filters_count;
+static gboolean dump_stoped;
+static event_handle_t *ev_stop_dump = NULL;
 
 #ifdef FAILURE_CODE
 static int disable_network_shm = -1;
@@ -256,6 +258,7 @@ static void	send_result(void);
 static void	send_result_to_client(void);
 static void	send_result_to_driver(void);
 static void wait_filters(void *unused);
+static void stop_dump_callback(void *unused);
 
 static void
 check_options(
@@ -796,6 +799,7 @@ main(
 	    dump_result = 0;
 	    retry_delay = -1;
 	    retry_level = -1;
+	    dump_stoped = FALSE;
 	    amfree(retry_message);
 	    dumpbytes = dumpsize = headersize = origsize = (off_t)0;
 
@@ -1574,6 +1578,7 @@ do_dump(
     time_str = get_timestamp_from_time(0);
     fn = sanitise_filename(diskname);
     errf_lines = 0;
+    dump_stoped = FALSE;
 
     g_free(errfname);
     errfname = g_strconcat(AMANDA_DBGDIR, "/log.error", NULL);
@@ -1944,7 +1949,9 @@ handle_shm_ring_to_fd_thread(
 		errstr = g_strdup("write_tapeheader: no dataport_list");
 		dump_result = 2;
 		amfree(data_host);
-		stop_dump();
+		ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+					    stop_dump_callback, NULL);
+		event_activate(ev_stop_dump);
 		g_cond_broadcast(shm_thread_cond);
 		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
@@ -1976,7 +1983,9 @@ handle_shm_ring_to_fd_thread(
 		}
 		dump_result = 2;
 		amfree(data_host);
-		stop_dump();
+		ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+					    stop_dump_callback, NULL);
+		event_activate(ev_stop_dump);
 		g_cond_broadcast(shm_thread_cond);
 		g_mutex_unlock(shm_thread_mutex);
 		return NULL;
@@ -1990,7 +1999,9 @@ handle_shm_ring_to_fd_thread(
 		if (runencrypt(db->fd, srvencrypt, "data encrypt") < 0) {
 		    dump_result = 2;
 		    aclose(db->fd);
-		    stop_dump();
+		    ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+						stop_dump_callback, NULL);
+		    event_activate(ev_stop_dump);
 		    g_cond_broadcast(shm_thread_cond);
 		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
@@ -2005,7 +2016,9 @@ handle_shm_ring_to_fd_thread(
 		if (runcompress(db->fd, srvcompress, "data compress") < 0) {
 		    dump_result = 2;
 		    aclose(db->fd);
-		    stop_dump();
+		    ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+						stop_dump_callback, NULL);
+		    event_activate(ev_stop_dump);
 		    g_cond_broadcast(shm_thread_cond);
 		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
@@ -2029,7 +2042,9 @@ handle_shm_ring_to_fd_thread(
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
 		    aclose(db->fd);
-		    stop_dump();
+		    ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+						stop_dump_callback, NULL);
+		    event_activate(ev_stop_dump);
 		    g_cond_broadcast(shm_thread_cond);
 		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
@@ -2048,7 +2063,9 @@ handle_shm_ring_to_fd_thread(
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
 		    aclose(db->fd);
-		    stop_dump();
+		    ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+						stop_dump_callback, NULL);
+		    event_activate(ev_stop_dump);
 		    g_cond_broadcast(shm_thread_cond);
 		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
@@ -2062,7 +2079,9 @@ handle_shm_ring_to_fd_thread(
 		    sem_post(db->shm_ring_consumer->sem_write);
 		    dump_result = 2;
 		    aclose(db->fd);
-		    stop_dump();
+		    ev_stop_dump = event_create((event_id_t)0, EV_TIME,
+						stop_dump_callback, NULL);
+		    event_activate(ev_stop_dump);
 		    g_cond_broadcast(shm_thread_cond);
 		    g_mutex_unlock(shm_thread_mutex);
 		    return NULL;
@@ -2949,6 +2968,10 @@ timeout_callback(
 {
     time_t now = time(NULL);
 
+    if (shm_thread) {
+	g_mutex_lock(shm_thread_mutex);
+    }
+
     if (ev_timeout != NULL) {
 	event_release(ev_timeout);
 	ev_timeout = NULL;
@@ -2976,6 +2999,10 @@ timeout_callback(
 	ev_timeout = event_create((event_id_t)(timeout_time-now+1), EV_TIME,
 				  timeout_callback, NULL);
 	event_activate(ev_timeout);
+	if (shm_thread) {
+	    g_mutex_unlock(shm_thread_mutex);
+	}
+
 	return;
     }
 
@@ -2984,17 +3011,42 @@ timeout_callback(
     errstr = g_strdup(_("data timeout"));
     dump_result = 2;
     stop_dump();
+    if (shm_thread) {
+	g_mutex_unlock(shm_thread_mutex);
+    }
+}
+
+static void
+stop_dump_callback(
+    void *unused G_GNUC_UNUSED)
+{
+
+    if (shm_thread_mutex) {
+	g_mutex_lock(shm_thread_mutex);
+    }
+    if (ev_stop_dump) {
+	event_release(ev_stop_dump);
+	ev_stop_dump = NULL;
+    }
+    stop_dump();
+    if (shm_thread_mutex) {
+	g_mutex_unlock(shm_thread_mutex);
+    }
 }
 
 /*
  * This is called when everything needs to shut down so event_loop()
  * will exit.
+ * Must be called with shm_thread_mutex locked
  */
 static void
 stop_dump(void)
 {
     guint i;
     struct cmdargs *cmdargs = NULL;
+
+    if (dump_stoped)
+	return;
 
     /* Check if I have a pending ABORT command */
     cmdargs = get_pending_cmd();
@@ -3061,6 +3113,7 @@ stop_dump(void)
     aclose(indexout);
     aclose(g_databuf->fd);
     timeout(0);
+    dump_stoped = TRUE;
 }
 
 static void
