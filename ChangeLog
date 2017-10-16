@@ -1,4 +1,7 @@
 2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c: Print sendbackup: size and end line
+
+2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amcheck.c, server-src/driver.c,
 	  server-src/planner.c: Cast pid_t to int before print with %d
 
