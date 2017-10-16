@@ -2750,7 +2750,7 @@ handle_result(
        them explicitly */
     {	int pid;
 	while((pid = waitpid(-1, NULL, WNOHANG))> 0) {
-	    g_debug("amcheck reap: %d", pid);
+	    g_debug("amcheck reap: %d", (int)pid);
 	}
     }
 }

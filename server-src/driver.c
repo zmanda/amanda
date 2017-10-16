@@ -787,7 +787,7 @@ wait_children(int count)
 	    pid = waitpid((pid_t)-1, &retstat, WNOHANG);
 	    wait_errno = errno;
 	    if (pid > 0) {
-		g_debug("reap: %d", pid);
+		g_debug("reap: %d", (int)pid);
 		what = NULL;
 		if (! WIFEXITED(retstat)) {
 		    what = _("signal");

@@ -2090,7 +2090,7 @@ static void handle_result(
     char *qname;
     char *disk = NULL;
     long long size_;
-    int pid;
+    pid_t pid;
 
     hostp = (am_host_t *)datap;
     hostp->status = HOST_READY;
@@ -2382,7 +2382,7 @@ next_line:
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
     while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-	g_debug("reap: %d", pid);
+	g_debug("reap: %d", (int)pid);
     }
     if (errbuf)
 	goto error_return;
@@ -2467,7 +2467,7 @@ next_line:
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
     while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-	g_debug("reap: %d", pid);
+	g_debug("reap: %d", (int)pid);
     }
 }
 

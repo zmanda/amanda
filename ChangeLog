@@ -1,3 +1,7 @@
+2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amcheck.c, server-src/driver.c,
+	  server-src/planner.c: Cast pid_t to int before print with %d
+
 2017-10-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/pp-scripts.pl: Fix
 
