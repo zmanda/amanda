@@ -1206,7 +1206,7 @@ set_message(
     } else if (message->code == 2800234) {
 	msg = "%{hostname} %{diskname}: holdingdisk NEVER with tags matching more than one storage, will be dumped to only one storage";
     } else if (message->code == 2800235) {
-	msg  = "program %{program}: wrong permission";
+	msg  = "program %{program}: wrong permission, must be 'rwsr-x---'"";
     } else if (message->code == 2900000) {
 	msg = "The Application '%{application}' failed: %{errmsg}";
     } else if (message->code == 2900001) {

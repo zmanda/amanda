@@ -1,4 +1,8 @@
 2017-10-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c (2800235): Print the required permission
+	* server-src/amcheck.c: Do not check all 'r' bit on suid binary
+
+2017-10-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Installcheck/Run.pm (check_amreport): Add skip_CRC and
 	  skip_end arguments, On some test, they can be missing because of
 	  timing
