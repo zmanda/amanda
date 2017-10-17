@@ -1,3 +1,14 @@
+2017-10-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Installcheck/Run.pm (check_amreport): Add skip_CRC and
+	  skip_end arguments, On some test, they can be missing because of
+	  timing
+	* installcheck/failure-server-custom-compress-no-exec.pl,
+	  installcheck/failure-server-custom-compress-not-found.pl,
+	  installcheck/failure-server-custom-compress.pl,
+	  installcheck/failure-server-encrypt-no-exec.pl,
+	  installcheck/failure-server-encrypt-not-found.pl: Add skip_CRC and
+	  skip_end on check_amreport call
+
 2017-10-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c: Do not call stop_dump in a thread, schedule an
 	  event to do it in the main loop

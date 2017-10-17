@@ -624,6 +624,8 @@ sub check_amreport
     my $text = shift || 'amreport';
     my $sorting = shift;
     my $skip_size = shift;
+    my $skip_CRC = shift;
+    my $skip_end = shift;
     my $got_report;
     $skip_size = 1 if !defined $skip_size;
 
@@ -635,7 +637,11 @@ sub check_amreport
     $report =~ s/\]/\\]/g;
     $report =~ s/0:00/\\d:\\d\\d/g;
     $report =~ s/\+/\\+/g;
-    $report =~ s/sendbackup: (.*)-CRC [^:]*:(\d*)/sendbackup: $1-CRC \(\.\*\):$2/g;
+    if ($skip_CRC) {
+	$report =~ s/sendbackup: .*-CRC .*//g;
+    } else {
+	$report =~ s/sendbackup: (.*)-CRC [^:]*:(\d*)/sendbackup: $1-CRC \(\.\*\):$2/g;
+    }
     $report =~ s/PID/\\d\+/g;
     $report =~ s/999999\.9/\[ \\d\]*\\.\\d/g;
     my ($year, $month, $day) = ($timestamp =~ m/^(\d\d\d\d)(\d\d)(\d\d)/);
@@ -653,6 +659,12 @@ sub check_amreport
 	my @lines = split "\n", $Installcheck::Run::stdout;
 	if ($skip_size) {
 	    @lines = grep { $_ !~ /^  sendbackup: size/ } @lines;
+	}
+	if ($skip_CRC) {
+	    @lines = grep { $_ !~ /^  sendbackup: .*-CRC/ } @lines;
+	}
+	if ($skip_end) {
+	    @lines = grep { $_ !~ /^  sendbackup: end/ } @lines;
 	}
 	my @new_lines;
 	my $in_usage_by_tape = 0;
@@ -689,9 +701,17 @@ sub check_amreport
 	$got_report = join "\n", @new_lines;
 	$got_report .= "\n";
     } else {
-	if ($skip_size) {
+	if ($skip_size || $skip_CRC || $skip_end) {
 	    my @lines = split "\n", $Installcheck::Run::stdout;
-	    @lines = grep { $_ !~ /^  sendbackup: size/ } @lines;
+	    if ($skip_size) {
+		@lines = grep { $_ !~ /^  sendbackup: size/ } @lines;
+	    }
+	    if ($skip_CRC) {
+		@lines = grep { $_ !~ /^  sendbackup: .*-CRC/ } @lines;
+	    }
+	    if ($skip_end) {
+		@lines = grep { $_ !~ /^  sendbackup: end/ } @lines;
+	    }
 	    $got_report = join "\n", @lines;
 	    $got_report .= "\n";
 	} else {

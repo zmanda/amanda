@@ -376,7 +376,7 @@ localhost    diskname2   0                    --      PARTIAL
 (brought to you by Amanda version 4.0.0alpha.git.00388ecf)
 END_REPORT
 
-check_amreport($report, $timestamp, "amreport first amdump", undef, 1);
+check_amreport($report, $timestamp, "amreport first amdump", undef, 1, 1, 1);
 
 # amstatus
 
@@ -424,4 +424,4 @@ check_amstatus($status, $tracefile, "amstatus first amdump");
 
 $rest->stop();
 
-Installcheck::Run::cleanup();
+#Installcheck::Run::cleanup();
