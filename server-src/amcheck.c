@@ -793,7 +793,7 @@ test_server_pgm(
 					AMANDA_FILE, __LINE__, 2800025, MSG_ERROR, 1,
 					"program", pgm)));
 	    pgmbad = 1;
-	} else if ((statbuf.st_mode & 00027) != 0) {
+	} else if ((statbuf.st_mode & 00023) != 0) {
 	    delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800235, MSG_ERROR, 1,
 					"program", pgm)));

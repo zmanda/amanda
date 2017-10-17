@@ -1,3 +1,7 @@
+2017-10-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c (2800235): Print the required permission
+	* server-src/amcheck.c: Do not check all 'r' bit on suid binary
+
 2017-10-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/failure-dumper-try-again.pl: Don't do the check if
 	  FAILURE_CODE is not set
