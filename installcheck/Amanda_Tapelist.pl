@@ -169,6 +169,48 @@ $tl_ok = is_deeply($tl,	{
 		       'reuse' => 1, 'position' => 9, 'blocksize' => '64',
 		       'pool' => 'POOL2', 'storage' => undef, 'config' => 'CONFIG2',
 		       'barcode' => 'BAR-002', 'meta' => 'META2', 'comment' => 'comment 2' },
+ },
+ tle_hash_pool_label => {
+  ''=> {
+    'TESTCONF004' => { 'datestamp' => '20071111010002', 'label' => 'TESTCONF004',
+		       'reuse' => 1, 'position' => 1, 'blocksize' => undef,
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => undef, 'meta' => 'META1', 'comment' => undef },
+    'TESTCONF003' => { 'datestamp' => '20071110010002', 'label' => 'TESTCONF003',
+		       'reuse' => 1, 'position' => 2, 'blocksize' => '32',
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => 'BAR-003', 'meta' => undef, 'comment' => undef },
+    'TESTCONF002' => { 'datestamp' => '20071109010002', 'label' => 'TESTCONF002',
+		       'reuse' => 1, 'position' => 3, 'blocksize' => '64',
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => 'BAR-002', 'meta' => 'META2', 'comment' => 'comment 2' },
+    'TESTCONF001' => { 'datestamp' => '20071108010001', 'label' => 'TESTCONF001',
+		       'reuse' => 0, 'position' => 4, 'blocksize' => undef,
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => undef, 'meta' => undef, 'comment' => 'comment 1' },
+    'TESTCONF015' => { 'datestamp' => '20071107110002', 'label' => 'TESTCONF015',
+		       'reuse' => 1, 'position' => 5, 'blocksize' => undef,
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => undef, 'meta' => undef, 'comment' => undef },
+    'TESTCONF006' => { 'datestamp' => '20071107010002', 'label' => 'TESTCONF006',
+		       'reuse' => 0, 'position' => 6, 'blocksize' => undef,
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => undef, 'meta' => undef, 'comment' => undef },
+    'TESTCONF005' => { 'datestamp' => '20071106010002', 'label' => 'TESTCONF005',
+		       'reuse' => 1, 'position' => 7, 'blocksize' => undef,
+		       'pool' => undef, 'storage' => undef, 'config' => undef,
+		       'barcode' => undef, 'meta' => undef, 'comment' => undef }
+  },
+  'POOL2' => {
+    'TESTCONF007' => { 'datestamp' => '20071105010002', 'label' => 'TESTCONF007',
+		       'reuse' => 1, 'position' => 8, 'blocksize' => '64',
+		       'pool' => 'POOL2', 'storage' => undef, 'config' => undef,
+		       'barcode' => 'BAR-002', 'meta' => 'META2', 'comment' => 'comment 2' },
+    'TESTCONF008' => { 'datestamp' => '20071104010002', 'label' => 'TESTCONF008',
+		       'reuse' => 1, 'position' => 9, 'blocksize' => '64',
+		       'pool' => 'POOL2', 'storage' => undef, 'config' => 'CONFIG2',
+		       'barcode' => 'BAR-002', 'meta' => 'META2', 'comment' => 'comment 2' }
+   }
  }
 }, "A simple tapelist is parsed correctly") || diag(Data::Dumper::Dumper($tl));
 
@@ -332,6 +374,14 @@ is_deeply($tl, {
 	       'reuse' => 1, 'position' => 1, 'blocksize' => undef,
 	       'pool' => undef, 'storage' => undef, 'config' => undef,
 	       'barcode' => undef, 'meta' => undef, 'comment' => undef },
+  },
+  tle_hash_pool_label => {
+   ''=> {
+    'FOO' => { 'datestamp' => '2006123456', 'label' => 'FOO',
+	       'reuse' => 1, 'position' => 1, 'blocksize' => undef,
+	       'pool' => undef, 'storage' => undef, 'config' => undef,
+	       'barcode' => undef, 'meta' => undef, 'comment' => undef },
+   }
   }
 }, "Invalid lines are ignored")  || diag(Data::Dumper::Dumper($tl));
 
@@ -342,9 +392,11 @@ is_deeply($tl,	{ filename => $tapelist,
 		  last_write => $tapelist . ".last_write",
 		  tles => [],
 		  tle_hash_barcode => undef,
-		  tle_hash_label => undef }, "clear_tapelist returns an empty tapelist")  || diag(Data::Dumper::Dumper($tl));;
+		  tle_hash_label => undef,
+		  tle_hash_pool_label => undef }, "clear_tapelist returns an empty tapelist")  || diag(Data::Dumper::Dumper($tl));;
 
 $tl->reload();
+delete $tl->{'mtime_tapelist'};
 is_deeply($tl, {
   filename => $tapelist,
   lockname => $tapelist . ".lock",
@@ -361,6 +413,14 @@ is_deeply($tl, {
 	       'reuse' => 1, 'position' => 1, 'blocksize' => undef,
 	       'pool' => undef, 'storage' => undef, 'config' => undef,
 	       'barcode' => undef, 'meta' => undef, 'comment' => undef },
+  },
+  tle_hash_pool_label => {
+   '' => {
+    'FOO' => { 'datestamp' => '2006123456', 'label' => 'FOO',
+	       'reuse' => 1, 'position' => 1, 'blocksize' => undef,
+	       'pool' => undef, 'storage' => undef, 'config' => undef,
+	       'barcode' => undef, 'meta' => undef, 'comment' => undef },
+   }
   }
 }, "reload works")  || diag(Data::Dumper::Dumper($tl));
 

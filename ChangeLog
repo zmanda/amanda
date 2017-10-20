@@ -1,4 +1,10 @@
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Tapelist.swg: Set 'tle_hash_pool_label'
+	* perl/Amanda/Tapelist.swg (lookup_tape_by_pool_label,
+	  remove_tape_by_pool_label): Add functions
+	* installcheck/Amanda_Tapelist.pl: Test them
+
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/amanda/net.m4: Ad default to TCPPORTRANGE* and UDPPORTRANGE*
 	* installcheck/Amanda_Rest_Configs.pl: Use Amanda::Constants
 	* perl/Amanda/Constants.pm.in.src: Set $TCP_RESERVED_PORTRANGE,

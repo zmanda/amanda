@@ -78,6 +78,7 @@ sub clear_tapelist {
 
     $self->{'tles'} = [];
     $self->{'tle_hash_label'} = undef;
+    $self->{'tle_hash_pool_label'} = undef;
     $self->{'tle_hash_barcode'} = undef;
     unlink($self->{'last_write'});
 
@@ -92,6 +93,7 @@ sub reset_tapelist {
 
     $self->{'tles'} = [];
     $self->{'tle_hash_label'} = undef;
+    $self->{'tle_hash_pool_label'} = undef;
     $self->{'tle_hash_barcode'} = undef;
     unlink($self->{'last_write'});
 
@@ -115,6 +117,15 @@ sub reload {
 	    $last_write_pid == $$) {
 	    return;
 	}
+	my @mtime = stat($self->{'filename'});
+	my $mtime = $mtime[9];
+	if (defined $self->{'mtime_tapelist'} &&
+	    $self->{'mtime_tapelist'} > $mtime) {
+	    return;
+	}
+	#$self->{'mtime_tapelist'} = max($mtime-1, min($mtime,time()-1));
+	$self->{'mtime_tapelist'} = time()-1;
+	$self->{'mtime_tapelist'} = $mtime-1 if $mtime-1 >= $self->{'mtime_tapelist'};
     }
 
     # let C read the file
@@ -129,6 +140,17 @@ sub lookup_tapelabel {
     my ($label) = @_;
 
     return $self->{'tle_hash_label'}{$label};
+}
+
+sub lookup_tape_by_pool_label {
+    my $self = shift;
+    my ($pool, $label) = @_;
+
+    if (defined $pool) {
+	return $self->{'tle_hash_pool_label'}{$pool}{$label};
+    } else {
+	return $self->{'tle_hash_pool_label'}{''}{$label};
+    }
 }
 
 sub lookup_by_barcode {
@@ -165,7 +187,38 @@ sub remove_tapelabel {
     delete $self->{'tle_hash_label'}{$label};
     for (my $i = 0; $i < @{$self->{tles}}; $i++) {
 	if ($self->{tles}->[$i]->{'label'} eq $label) {
-	    $barcode = $self->{tles}->[$i]->{'barcode'};
+	    my $pool = $self->{tles}->[$i]->{'pool'};
+	    if (defined $pool) {
+		delete $self->{'tle_hash_pool_label'}{$pool}{$label};
+	    } else {
+		delete $self->{'tle_hash_pool_label'}{''}{$label};
+	    }
+	    my $barcode = $self->{tles}->[$i]->{'barcode'};
+	    if ($barcode) {
+		delete $self->{'tle_hash_barcode'}{$barcode};
+	    }
+	    splice @{$self->{tles}}, $i, 1;
+	    $self->_update_positions();
+	    last;
+	}
+    }
+    C_remove_tapelabel($label);
+}
+
+sub remove_tape_by_pool_label {
+    my $self = shift;
+    my ($pool, $label) = @_;
+
+    delete $self->{'tle_hash_label'}{$label};
+    if (defined $pool) {
+	delete $self->{'tle_hash_pool_label'}{$pool}{$label};
+    } else {
+	delete $self->{'tle_hash_pool_label'}{''}{$label};
+    }
+    for (my $i = 0; $i < @{$self->{tles}}; $i++) {
+	if ($self->{tles}->[$i]->{'pool'} eq $pool &&
+	    $self->{tles}->[$i]->{'label'} eq $label) {
+	    my $barcode = $self->{tles}->[$i]->{'barcode'};
 	    if ($barcode) {
 		delete $self->{'tle_hash_barcode'}{$barcode};
 	    }
@@ -199,6 +252,11 @@ sub add_tapelabel {
         'comment'   => $comment,
     };
     $self->{'tle_hash_label'}{$label} = $tle;
+    if (defined $pool) {
+	$self->{'tle_hash_pool_label'}{$pool}{$label} = $tle;
+    } else {
+	$self->{'tle_hash_pool_label'}{''}{$label} = $tle;
+    }
     if ($barcode) {
 	$self->{'tle_hash_barcode'}{$barcode} = $tle;
     }
@@ -307,6 +365,7 @@ sub _read_tapelist {
 
     my @tles;
     $self->{'tle_hash_label'} = undef;
+    $self->{'tle_hash_pool_label'} = undef;
     $self->{'tle_hash_barcode'} = undef;
     my $linenum = 0;
     my $fh;
@@ -342,6 +401,11 @@ sub _read_tapelist {
 	    'comment'   => $comment,
 	};
 	$self->{'tle_hash_label'}{$label} = $tle;
+	if (defined $pool) {
+	    $self->{'tle_hash_pool_label'}{$pool}{$label} = $tle;
+	} else {
+	    $self->{'tle_hash_pool_label'}{''}{$label} = $tle;
+	}
 	if ($barcode) {
 	    $self->{'tle_hash_barcode'}{$barcode} = $tle;
 	}
