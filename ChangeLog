@@ -1,4 +1,7 @@
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Util.swg (nicedate): New function
+
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Tapelist.swg: Set 'tle_hash_pool_label'
 	* perl/Amanda/Tapelist.swg (lookup_tape_by_pool_label,
 	  remove_tape_by_pool_label): Add functions

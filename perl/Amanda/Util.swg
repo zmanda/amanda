@@ -251,11 +251,24 @@ sub split_quoted_string_friendly {
     return @result;
 }
 
+sub nicedate {
+    my $timestamp = shift;
+
+    return substr($timestamp, 0,4) . "-" .
+	   substr($timestamp, 4,2) . "-" .
+	   substr($timestamp, 6,2) . " " .
+	   substr($timestamp, 8,2) . ":" .
+	   substr($timestamp,10,2) . ":" .
+	   substr($timestamp,12,2);
+}
+
+
 %}
 
 amglue_export_ok(slurp);
 amglue_export_ok(burp);
 amglue_export_ok(safe_overwrite_file);
+amglue_export_ok(nicedate);
 
 %perlcode %{
 
