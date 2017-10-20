@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-catalog.7'>
+
+<refmeta>
+<refentrytitle>amanda-catalog</refentrytitle>
+<manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+<refname>amanda-catalog</refname>
+<refpurpose>Configuring Catalog with Amanda</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amanda uses catalog to store the catalog of all data on tape and
+holding disk, the catalog is used to find where your data is when you recover
+it. This manual page describes the working catalog plugins with Amanda.</para>
+
+<para>The catalog can be any database format accessible with the perl DBI
+module. The known list of working plugin is:
+<programlisting>
+  SQLite
+</programlisting></para>
+
+</refsect1>
+
+<refsect1><title>DEFINING CATALOG</title>
+
+<para>Catalog is specified in &amconf; as follows:
+
+<programlisting>
+define catalog $catalog_name {
+   comment "$comment"
+   plugin "$pluginname"
+   property "$PROPERTY_NAME" "$PROPERTY_VALUE"
+   ...
+}
+</programlisting>
+and then referenced in the global section as
+<programlisting>
+  catalog "$catalog_name"
+</programlisting></para>
+
+<para>Catalog properties, like Amanda configuration parameters, are
+insensitive to case, and <literal>-</literal> (dash) and
+<literal>_</literal> (underscore) may be used interchangeably.</para>
+
+<para>See the individual plugin sections below for properties applicable to
+each plugin.</para>
+
+</refsect1>
+
+<refsect1><title>CATALOG MODULES</title>
+
+<refsect2><title>SQlite</title>
+
+<para>The <emphasis>SQLite</emphasis> catalog plugin uses the DBD::SQLite to
+communicate with the database.</para>
+
+<para>The <emphasis>SQLite</emphasis> plugin has many properties:</para>
+
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>dbname</term><listitem>
+The filename where the database is stored.
+</listitem></varlistentry>
+</variablelist>
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+<para><programlisting>
+  define catalog "my-SQLite" {
+    comment "sqlite catalog for amanda"
+    plugin "SQLite"
+    property "dbname" "/var/lib/amanda/database"
+  }
+</programlisting></para>
+
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+</seealso>
+
+</refentry>

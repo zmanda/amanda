@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM 'global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amcatalog.8'>
+
+<refmeta>
+<refentrytitle>amcatalog</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amcatalog</refname>
+<refpurpose>manage the amanda catalog</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.sgw.xml;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcatalog</command>
+    &version.synopsis;
+    &configoverride.synopsis;
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>This command manage the Amanda catalog.</para>
+
+<para>The catalog can be created, upgraded, cleaned. The dump and part can
+be listed. A volume can be removed from the catalog.</para>
+
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  &version.varlistentry;
+  &configoverride.varlistentry;
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>COMMANDS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>create</emphasis></term>
+  <listitem>
+<para>Create the database. Populate the database from the log files.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>upgrade</emphasis></term>
+  <listitem>
+<para>Upgrade the database. Required after a new amanda installation if the
+database format changed.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>validate</emphasis></term>
+  <listitem>
+<para>Validate the database.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>clean</emphasis></term>
+  <listitem>
+<para>Clean the database. Remove inconsistencies in the database which can result after a server crash.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>dump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disk</emphasis> [ <emphasis remap='I'>date</emphasis> [... ]]]]</term>
+  <listitem>
+<para>List dump matching host/disk/date.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>part</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disk</emphasis> [ <emphasis remap='I'>date</emphasis> [... ]]]]</term>
+  <listitem>
+<para>List part matching host/disk/date.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Create the database</para>
+
+<programlisting>
+% amcatalog daily create
+</programlisting>
+
+<para>List dump for host localhost</para>
+
+<programlisting>
+% amcatalog daily dump localhost
+</programlisting>
+</refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+<manref name="amanda-catalog" vol="7"/>
+</seealso>
+
+</refentry>
