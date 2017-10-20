@@ -84,12 +84,18 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
 	if test $max_low_tcp_port -ge 1024; then
 	    AMANDA_MSG_WARN([the low TCP port range should be less than 1024 in --with-low-tcpportrange])
 	fi
-	AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE_MIN, $min_low_tcp_port, [min_low_tcp_port])
-	AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE_MAX, $max_low_tcp_port, [max_low_tcp_port])
-	AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE,$LOW_TCPPORTRANGE,
+	LOW_TCPPORTRANGE_MIN=$min_low_tcp_port
+	LOW_TCPPORTRANGE_MAX=$max_low_tcp_port
+    else
+	LOW_TCPPORTRANGE="512,1023"
+	LOW_TCPPORTRANGE_MIN=512
+	LOW_TCPPORTRANGE_MAX=1023
+    fi
+    AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE_MIN, $LOW_TCPPORTRANGE_MIN, [min_low_tcp_port])
+    AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE_MAX, $LOW_TCPPORTRANGE_MAX, [max_low_tcp_port])
+    AC_DEFINE_UNQUOTED(LOW_TCPPORTRANGE,$LOW_TCPPORTRANGE,
    [A comma-separated list of two integers, determining the minimum and maximum
  * reserved TCP port numbers sockets should be bound to. (mainly for amrecover) ])
-    fi
 
     dnl note that AS_HELP_STRING cannot handle commas in its argument..
     AC_ARG_WITH(tcpportrange,
@@ -113,12 +119,18 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
 	if test $max_tcp_port -ge 65536; then
 	    AMANDA_MSG_WARN([the TCP port range should be less than 65536 in --with-tcpportrange])
 	fi
-	AC_DEFINE_UNQUOTED(TCPPORTRANGE_MIN, $min_tcp_port, [min_tcp_port])
-	AC_DEFINE_UNQUOTED(TCPPORTRANGE_MAX, $max_tcp_port, [max_tcp_port])
-	AC_DEFINE_UNQUOTED(TCPPORTRANGE,$TCPPORTRANGE,
+	TCPPORTRANGE_MIN=$min_tcp_port
+	TCPPORTRANGE_MAX=$max_tcp_port
+    else
+	TCPPORTRANGE_MIN=1024
+	TCPPORTRANGE_MAX=65536
+	TCPPORTRANGE="1024,65535"
+    fi
+    AC_DEFINE_UNQUOTED(TCPPORTRANGE_MIN, TCPPORTRANGE_MIN, [min_tcp_port])
+    AC_DEFINE_UNQUOTED(TCPPORTRANGE_MAX, TCPPORTRANGE_MAX, [max_tcp_port])
+    AC_DEFINE_UNQUOTED(TCPPORTRANGE,$TCPPORTRANGE,
   [A comma-separated list of two integers, determining the minimum and
  * maximum unreserved TCP port numbers sockets should be bound to. ])
-    fi
 
     AC_ARG_WITH(udpportrange,
 [  --with-udpportrange=low,high
@@ -140,12 +152,18 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
 	if test $min_udp_port -le 0; then
 	    AMANDA_MSG_WARN([the UDP port range should be greater than 0 in --with-udpportrange])
 	fi
-	AC_DEFINE_UNQUOTED(UDPPORTRANGE_MIN, $min_udp_port, [min_udp_port])
-	AC_DEFINE_UNQUOTED(UDPPORTRANGE_MAX, $max_udp_port, [max_udp_port])
-	AC_DEFINE_UNQUOTED(UDPPORTRANGE,$UDPPORTRANGE,
+	UDPPORTRANGE_MIN=$min_udp_port
+	UDPPORTRANGE_MAX=$max_udp_port
+    else
+	UDPPORTRANGE_MIN=512
+	UDPPORTRANGE_MAX=1023
+	UDPPORTRANGE="512,1023"
+    fi
+    AC_DEFINE_UNQUOTED(UDPPORTRANGE_MIN, $UDPPORTRANGE_MIN, [min_udp_port])
+    AC_DEFINE_UNQUOTED(UDPPORTRANGE_MAX, $UDPPORTRANGE_MAX, [max_udp_port])
+    AC_DEFINE_UNQUOTED(UDPPORTRANGE,$UDPPORTRANGE,
   [A comma-separated list of two integers, determining the minimum and
  * maximum reserved UDP port numbers sockets should be bound to. ])
-    fi
     AC_SUBST(UDPPORTRANGE)
     AC_SUBST(TCPPORTRANGE)
     AC_SUBST(LOW_TCPPORTRANGE)

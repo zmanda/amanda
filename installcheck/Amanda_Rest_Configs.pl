@@ -32,6 +32,7 @@ use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
+use Amanda::Constants;
 
 eval 'use Installcheck::Rest;';
 if ($@) {
@@ -272,6 +273,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
     },
     "Get valid fields (runtapes,tapecycle)") || diag("reply: " . Data::Dumper::Dumper($reply));
 
+my @reserved_udp_port = [split ',', $Amanda::Constants::UDP_RESERVED_PORTRANGE];
+my @reserved_tcp_port = [split ',', $Amanda::Constants::TCP_RESERVED_PORTRANGE];
+my @unreserved_tcp_port = [split ',', $Amanda::Constants::TCP_UNRESERVED_PORTRANGE];
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF");
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body =>
@@ -295,10 +299,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'TAPETYPE' => 'TEST-TAPE',
 			'DEVICE-PROPERTY' => {},
 			'VAULT-STORAGE' => [],
-			'RESERVED-TCP-PORT' => [
-				'512',
-				'1023'
-			],
+			'RESERVED-TCP-PORT' => @reserved_tcp_port,
 			'TAPECYCLE' => 3,
 			'DEBUG-RECOVERY' => 1,
 			'ETIMEOUT' => 300,
@@ -308,10 +309,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'MAILER' => getconf($CNF_MAILER),
 			'INTERACTIVITY' => undef,
 			'AMRECOVER-CHECK-LABEL' => 'YES',
-			'UNRESERVED-TCP-PORT' => [
-				'1024',
-				'65535'
-			],
+			'UNRESERVED-TCP-PORT' => @unreserved_tcp_port,
 			'DEBUG-SENDSIZE' => 0,
 			'MAX-DLE-BY-VOLUME' => 1000000000,
 			'RUNTAPES' => 1,
@@ -325,10 +323,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'ORG' => 'DailySet1',
 			'CHANGERDEV' => undef,
 			'FLUSH-THRESHOLD-DUMPED' => 0,
-			'RESERVED-UDP-PORT' => [
-				'512',
-				'1023'
-			],
+			'RESERVED-UDP-PORT' => @reserved_udp_port,
 			'REPORT-NEXT-MEDIA' => 'YES',
 			'DUMPCYCLE' => 10,
 			'DEVICE-OUTPUT-BUFFER-SIZE' => 1310720,
