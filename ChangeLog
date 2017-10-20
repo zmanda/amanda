@@ -1,4 +1,11 @@
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Add catalog section in configuration file
+	* common-src/conffile.c: Add catalog section
+	* common-src/conffile.h: Add catalog section
+	* perl/Amanda/Config.swg: Add catalog section
+	* installcheck/Amanda_Rest_Configs.pl: Test it
+
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Move RententionType from tapefile to conffile
 	* common-src/conffile.h: Add RetentionType
 	* perl/Amanda/Config.swg: Add RetentionType

@@ -506,6 +506,7 @@ typedef enum {
     CNF_LOGDIR,
     CNF_INDEXDIR,
     CNF_TAPETYPE,
+    CNF_CATALOG,
     CNF_DUMPCYCLE,
     CNF_RUNSPERCYCLE,
     CNF_TAPECYCLE,
@@ -1605,6 +1606,61 @@ char *storage_key_to_name(int parm);
 #define storage_get_erase_on_failure(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FAILURE)))
 #define storage_get_erase_on_full(storage)  (val_t_to_boolean(storage_getconf((storage), STORAGE_ERASE_ON_FULL)))
 #define storage_get_vault_list(storage)  (val_t_to_vault_list(storage_getconf((storage), STORAGE_VAULT_LIST)))
+
+/* A catalog interface */
+typedef enum catalog_e  {
+    CATALOG_COMMENT,
+    CATALOG_PLUGIN,
+    CATALOG_PROPERTY,
+    CATALOG_CATALOG
+} catalog_key;
+
+/* opaque object */
+typedef struct catalog_s catalog_t;
+
+/* Given the name of the catalog, return a catalog object.
+ *  Returns NULL if no matching catalog exists.
+ *  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired catalog
+ * @returns: object or NULL
+ */
+
+catalog_t *lookup_catalog(char *identifier);
+
+/* Given a catalog and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the catalog to examine
+ * @param key: catalog (one of the CATALOG_* constants)
+ * @returns: pointer to value
+ */
+val_t *catalog_getconf(catalog_t *app, catalog_key key);
+
+/* Get the name of this catalog.
+ *
+ * @param ttyp: the catalog. to examine
+ * @returns: name of the catalog.
+ */
+char *catalog_name(catalog_t *app);
+
+/* (convenience macro) has this parameter been seen in this catalog?
+ * This applies to the specific parameter *within* the catalog.
+ *
+ * @param key: catalog_key
+ * @returns: boolean
+ */
+#define catalog_seen(app, key)       (val_t_seen(catalog_getconf((app), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param ttyp: the catalog to examine
+ * @returns: various
+ */
+#define catalog_get_comment(catalog)  (val_t_to_str(catalog_getconf((catalog), CATALOG_COMMENT))
+#define catalog_get_plugin(catalog)   (val_t_to_str(catalog_getconf((catalog), CATALOG_PLUGIN)))
+#define catalog_get_property(catalog) (val_t_to_proplist(catalog_getconf((catalog), CATALOG_PROPERTY)))
+
 
 /*
  * Error Handling

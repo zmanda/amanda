@@ -97,7 +97,7 @@ typedef enum {
     CONF_RETRY_DUMP,	       CONF_TAPEPOOL,
     CONF_POLICY,               CONF_STORAGE,		CONF_VAULT_STORAGE,
     CONF_CMDFILE,              CONF_REST_API_PORT,	CONF_REST_SSL_CERT,
-    CONF_REST_SSL_KEY,         CONF_ACTIVE_STORAGE,
+    CONF_REST_SSL_KEY,         CONF_ACTIVE_STORAGE,	CONF_CATALOG,
 
     /* storage setting */
     CONF_SET_NO_REUSE,	       CONF_ERASE_VOLUME,
@@ -430,6 +430,14 @@ struct storage_s {
     val_t value[STORAGE_STORAGE];
 };
 
+struct catalog_s {
+    struct catalog_s *next;
+    seen_t seen;
+    char *name;
+
+    val_t value[CATALOG_CATALOG];
+};
+
 /* The current parser table */
 static conf_var_t *parsetable = NULL;
 
@@ -572,6 +580,12 @@ static void init_storage_defaults(void);
 static void save_storage(void);
 static void copy_storage(void);
 
+static catalog_t ctcur;
+static void get_catalog(void);
+static void init_catalog_defaults(void);
+static void save_catalog(void);
+static void copy_catalog(void);
+
 /* read_functions -- these fit into the read_function slot in a parser
  * table entry, and are responsible for calling get_conftoken as necessary
  * to consume their arguments, and setting their second argument with the
@@ -602,6 +616,7 @@ static void read_intrange(conf_var_t *, val_t *);
 static void read_dapplication(conf_var_t *, val_t *);
 static void read_dinteractivity(conf_var_t *, val_t *);
 static void read_dtaperscan(conf_var_t *, val_t *);
+static void read_dcatalog(conf_var_t *, val_t *);
 static void read_dpolicy(conf_var_t *, val_t *);
 //static void read_dstorage(conf_var_t *, val_t *);
 static void read_dpp_script(conf_var_t *, val_t *);
@@ -632,6 +647,8 @@ static interactivity_t *read_interactivity(char *name, FILE *from,
 					   char *fname, int *linenum);
 static taperscan_t *read_taperscan(char *name, FILE *from, char *fname,
 				   int *linenum);
+static catalog_t *read_catalog(char *name, FILE *from, char *fname,
+			       int *linenum);
 static policy_s *read_policy(char *name, FILE *from, char *fname,
 			     int *linenum);
 static storage_t *read_storage(char *name, FILE *from, char *fname,
@@ -730,6 +747,7 @@ static device_config_t *device_config_list = NULL;
 static changer_config_t *changer_config_list = NULL;
 static interactivity_t *interactivity_list = NULL;
 static taperscan_t *taperscan_list = NULL;
+static catalog_t *catalog_list = NULL;
 static policy_s *policy_list = NULL;
 static storage_t *storage_list = NULL;
 
@@ -1007,6 +1025,7 @@ keytab_t server_keytab[] = {
     { "BUMPPERCENT", CONF_BUMPPERCENT },
     { "BUMPSIZE", CONF_BUMPSIZE },
     { "CALCSIZE", CONF_CALCSIZE },
+    { "CATALOG", CONF_CATALOG },
     { "CHANGER", CONF_CHANGER },
     { "CHANGERDEV", CONF_CHANGERDEV },
     { "CHANGERFILE", CONF_CHANGERFILE },
@@ -1473,6 +1492,7 @@ conf_var_t server_var [] = {
    { CONF_RECOVERY_LIMIT       , CONFTYPE_HOST_LIMIT, read_host_limit , CNF_RECOVERY_LIMIT       , NULL },
    { CONF_INTERACTIVITY        , CONFTYPE_STR      , read_dinteractivity, CNF_INTERACTIVITY      , NULL },
    { CONF_TAPERSCAN            , CONFTYPE_STR      , read_dtaperscan  , CNF_TAPERSCAN            , NULL },
+   { CONF_CATALOG              , CONFTYPE_STR      , read_dcatalog    , CNF_CATALOG              , NULL },
    { CONF_REPORT_USE_MEDIA     , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_USE_MEDIA     , NULL },
    { CONF_REPORT_NEXT_MEDIA    , CONFTYPE_BOOLEAN  , read_bool        , CNF_REPORT_NEXT_MEDIA    , NULL },
    { CONF_REPORT_FORMAT        , CONFTYPE_STR_LIST , read_str_list    , CNF_REPORT_FORMAT        , NULL },
@@ -1673,6 +1693,13 @@ conf_var_t storage_var [] = {
    { CONF_ERASE_ON_FULL            , CONFTYPE_BOOLEAN       , read_bool          , STORAGE_ERASE_ON_FULL            , NULL },
    { CONF_VAULT                    , CONFTYPE_VAULT_LIST    , read_vault_list    , STORAGE_VAULT_LIST               , NULL },
    { CONF_UNKNOWN                  , CONFTYPE_INT           , NULL               , STORAGE_STORAGE                  , NULL }
+};
+
+conf_var_t catalog_var [] = {
+   { CONF_COMMENT         , CONFTYPE_STR      , read_str      , CATALOG_COMMENT        , NULL },
+   { CONF_PLUGIN          , CONFTYPE_STR      , read_str      , CATALOG_PLUGIN         , NULL },
+   { CONF_PROPERTY        , CONFTYPE_PROPLIST , read_visible_property, CATALOG_PROPERTY       , NULL },
+   { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , CATALOG_CATALOG        , NULL }
 };
 
 /*
@@ -2138,9 +2165,10 @@ read_confline(
 	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
 	    else if(tok == CONF_INTERACTIVITY) get_interactivity();
 	    else if(tok == CONF_TAPERSCAN) get_taperscan();
+	    else if(tok == CONF_CATALOG) get_catalog();
 	    else if(tok == CONF_POLICY) get_policy();
 	    else if(tok == CONF_STORAGE) get_storage();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY, TAPERSCAN, POLICY or STORAGE expected"));
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION, SCRIPT, DEVICE, CHANGER, INTERACTIVITY, TAPERSCAN, POLICY, STORAGE or CATALOG expected"));
 	    current_block = NULL;
 	}
 	break;
@@ -3631,6 +3659,132 @@ copy_storage(void)
     }
 }
 
+static catalog_t *
+read_catalog(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = get_seen_filename(fname);
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_catalog_defaults();
+    if (name) {
+	ctcur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	ctcur.name = g_strdup(tokenval.v.s);
+    }
+    ctcur.seen.filename = current_filename;
+    ctcur.seen.linenum = current_line_num;
+
+    read_block(catalog_var, ctcur.value,
+	       _("catalog parameter expected"),
+	       (name == NULL), *copy_catalog,
+	       "CATALOG", ctcur.name);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_catalog();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_catalog(ctcur.name);
+}
+
+static void
+get_catalog(
+    void)
+{
+    read_catalog(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_catalog_defaults(
+    void)
+{
+    ctcur.name = NULL;
+    conf_init_str(&ctcur.value[CATALOG_COMMENT] , "");
+    conf_init_str(&ctcur.value[CATALOG_PLUGIN]  , "");
+    conf_init_proplist(&ctcur.value[CATALOG_PROPERTY]);
+}
+
+static void
+save_catalog(
+    void)
+{
+    catalog_t *ct, *ct1;
+
+    ct = lookup_catalog(ctcur.name);
+
+    if (ct != (catalog_t *)0) {
+	conf_parserror(_("catalog %s already defined at %s:%d"),
+		       ct->name, ct->seen.filename, ct->seen.linenum);
+	return;
+    }
+
+    ct = g_malloc(sizeof(catalog_t));
+    *ct = ctcur;
+    ct->next = NULL;
+    /* add at end of list */
+    if (!catalog_list)
+	catalog_list = ct;
+    else {
+	ct1 = catalog_list;
+	while (ct1->next != NULL) {
+	    ct1 = ct1->next;
+	}
+	ct1->next = ct;
+    }
+}
+
+static void
+copy_catalog(void)
+{
+    catalog_t *ct;
+    int i;
+
+    ct = lookup_catalog(tokenval.v.s);
+
+    if (ct == NULL) {
+	conf_parserror(_("catalog parameter expected"));
+	return;
+    }
+
+    for (i=0; i < CATALOG_CATALOG; i++) {
+	if(ct->value[i].seen.linenum) {
+	    merge_val_t(&ctcur.value[i], &ct->value[i]);
+	}
+    }
+}
+
 static pp_script_t *
 read_pp_script(
     char *name,
@@ -4800,6 +4954,35 @@ read_dtaperscan(
 }
 
 static void
+read_dcatalog(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    catalog_t *catalog;
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
+	catalog = read_catalog(g_strjoin(NULL, "custom(ts)", ".",
+					 anonymous_value(),NULL),
+			       NULL, NULL, NULL);
+	current_line_num -= 1;
+    } else if (tok == CONF_STRING) {
+	catalog = lookup_catalog(tokenval.v.s);
+	if (catalog == NULL) {
+	    conf_parserror(_("Unknown catalog named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("catalog name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    amfree(val->v.s);
+    val->v.s = g_strdup(catalog->name);
+    ckseen(&val->seen);
+}
+
+static void
 read_dpolicy(
     conf_var_t *np G_GNUC_UNUSED,
     val_t      *val)
@@ -4858,6 +5041,7 @@ read_dstorage(
     ckseen(&val->seen);
 }
 */
+
 
 static void
 read_dpp_script(
@@ -6101,6 +6285,7 @@ config_uninit(void)
     changer_config_t *cc, *ccnext;
     interactivity_t  *iv, *ivnext;
     taperscan_t      *ts, *tsnext;
+    catalog_t        *ct, *ctnext;
     policy_s         *po, *ponext;
     storage_t        *st, *stnext;
     int               i;
@@ -6217,6 +6402,16 @@ config_uninit(void)
     }
     taperscan_list = NULL;
 
+    for(ct=catalog_list; ct != NULL; ct = ctnext) {
+	amfree(ct->name);
+	for(i=0; i<CATALOG_CATALOG; i++) {
+	    free_val_t(&ct->value[i]);
+	}
+	ctnext = ct->next;
+	amfree(ct);
+    }
+    catalog_list = NULL;
+
     for(po=policy_list; po != NULL; po = ponext) {
 	amfree(po->name);
 	for(i=0; i<POLICY_POLICY; i++) {
@@ -6238,6 +6433,16 @@ config_uninit(void)
 	amfree(st);
     }
     storage_list = NULL;
+
+    for(ct=catalog_list; ct != NULL; ct = ctnext) {
+	amfree(ct->name);
+	for(i=0; i<CATALOG_CATALOG; i++) {
+	   free_val_t(&ct->value[i]);
+	}
+	ctnext = ct->next;
+	amfree(ct);
+    }
+    catalog_list = NULL;
 
     for(i=0; i<CNF_CNF; i++)
 	free_val_t(&conf_data[i]);
@@ -6396,6 +6601,7 @@ init_defaults(
     conf_init_host_limit(&conf_data[CNF_RECOVERY_LIMIT]);
     conf_init_str(&conf_data[CNF_INTERACTIVITY], NULL);
     conf_init_str(&conf_data[CNF_TAPERSCAN], NULL);
+    conf_init_str(&conf_data[CNF_CATALOG], NULL);
     conf_init_str(&conf_data[CNF_HOSTNAME], NULL);
 
     /* reset internal variables */
@@ -6588,6 +6794,16 @@ update_derived_values(
 	    }
 	}
 
+	if (!getconf_seen(CNF_TPCHANGER) && getconf_seen(CNF_TAPEDEV) > 0) {
+	    conf_init_str(&conf_data[CNF_TPCHANGER], g_strdup(getconf_str(CNF_TAPEDEV)));
+	}
+	/* Check the catalog is defined */
+	if (getconf_seen(CNF_CATALOG) &&
+	    lookup_catalog(getconf_str(CNF_CATALOG)) == NULL) {
+	    conf_parserror(_("catalog %s is not defined"),
+			   getconf_str(CNF_CATALOG));
+	}
+
 	if ((getconf_seen(CNF_LABEL_NEW_TAPES) > 0 &&
 	     getconf_seen(CNF_AUTOLABEL) > 0)  ||
 	    (getconf_seen(CNF_LABEL_NEW_TAPES) < 0 &&
@@ -6642,12 +6858,12 @@ update_derived_values(
 
 	/* create a default policy */
 	if (!(lookup_policy(conf_name))) {
-		init_policy_defaults();
-		pocur.name = g_strdup(conf_name);
+	    init_policy_defaults();
+	    pocur.name = g_strdup(conf_name);
 
-		free_val_t(&pocur.value[POLICY_COMMENT]);
-		val_t__str(&pocur.value[POLICY_COMMENT]) = g_strdup(_("implicit from global config"));
-		save_policy();
+	    free_val_t(&pocur.value[POLICY_COMMENT]);
+	    val_t__str(&pocur.value[POLICY_COMMENT]) = g_strdup(_("implicit from global config"));
+	    save_policy();
 	}
 
 	if (!getconf_seen(CNF_STORAGE) && (!st_name || *st_name == '\0')) {
@@ -7408,6 +7624,7 @@ getconf_list(
     changer_config_t *cc;
     interactivity_t  *iv;
     taperscan_t      *ts;
+    catalog_t        *ct;
     policy_s         *po;
     storage_t        *st;
     GSList *rv = NULL;
@@ -7464,6 +7681,10 @@ getconf_list(
     } else if (strcasecmp(listname,"storage") == 0) {
 	for(st = storage_list; st != NULL; st=st->next) {
 	    rv = g_slist_append(rv, st->name);
+	}
+    } else if (strcasecmp(listname,"catalog") == 0) {
+	for(ct = catalog_list; ct != NULL; ct=ct->next) {
+	    rv = g_slist_append(rv, ct->name);
 	}
     }
     return rv;
@@ -8002,6 +8223,36 @@ storage_key_to_name(
 	}
     }
     return NULL;
+}
+
+catalog_t *
+lookup_catalog(
+    char *str)
+{
+    catalog_t *p;
+
+    for(p = catalog_list; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+val_t *
+catalog_getconf(
+    catalog_t *ct,
+    catalog_key key)
+{
+    assert(ct != NULL);
+    assert(key < CATALOG_CATALOG);
+    return &ct->value[key];
+}
+
+char *
+catalog_name(
+    catalog_t *ts)
+{
+    assert(ts != NULL);
+    return ts->name;
 }
 
 pp_script_t *
@@ -9178,6 +9429,7 @@ dump_configuration(
     changer_config_t *cc;
     interactivity_t  *iv;
     taperscan_t      *ts;
+    catalog_t        *ct;
     policy_s         *po;
     storage_t        *st;
     int i;
@@ -9450,6 +9702,25 @@ dump_configuration(
 		error(_("storage bad token"));
 
 	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &st->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(ct = catalog_list; ct != NULL; ct = ct->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE CATALOG %s {\n", prefix, ct->name);
+	for(i=0; i < CATALOG_CATALOG; i++) {
+	    for(np=catalog_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("catalog bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("catalog bad token"));
+
+	    val_t_print_token(print_default, print_source, stdout, prefix, "      %-19s ", kt, &ct->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }

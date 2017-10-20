@@ -391,6 +391,7 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 			'INDEXDIR' => getconf($CNF_INDEXDIR),
 			'LOGDIR' => getconf($CNF_LOGDIR),
 			'DUMPUSER' => getconf($CNF_DUMPUSER),
+			'CATALOG' => getconf($CNF_CATALOG),
                 },
 
 		'message' => 'Parameters values',

@@ -216,7 +216,8 @@ APPLY(CNF_SSL_CA_CERT_FILE) \
 APPLY(CNF_SSL_CIPHER_LIST) \
 APPLY(CNF_SSL_CHECK_HOST) \
 APPLY(CNF_SSL_CHECK_CERTIFICATE_HOST) \
-APPLY(CNF_HOSTNAME)
+APPLY(CNF_HOSTNAME) \
+APPLY(CNF_CATALOG)
 
 amglue_add_enum_tag_fns(confparm_key);
 amglue_add_constants(FOR_ALL_CONFPARM_KEY, confparm_key);
@@ -446,6 +447,16 @@ amglue_add_constants(FOR_ALL_STORAGE_KEY, storage_key);
 amglue_copy_to_tag(storage_key, getconf);
 amglue_add_enum_list(storage_key);
 constant_pod(Storage Parameters, FOR_ALL_STORAGE_KEY)
+
+#define FOR_ALL_CATALOG_KEY(APPLY)\
+APPLY(CATALOG_COMMENT)\
+APPLY(CATALOG_PLUGIN)\
+APPLY(CATALOG_PROPERTY)
+
+amglue_add_enum_tag_fns(catalog_key);
+amglue_add_constants(FOR_ALL_CATALOG_KEY, catalog_key);
+amglue_copy_to_tag(catalog_key, getconf);
+constant_pod(Catalog Parameters, FOR_ALL_CATALOG_KEY)
 
 /*
  * Various enumerated conftypes
@@ -1656,6 +1667,15 @@ gboolean storage_seen(storage_t *app, storage_key key);
 amglue_export_tag(getconf,
     lookup_storage storage_getconf storage_name
     storage_key_to_name storage_seen
+);
+
+catalog_t *lookup_catalog(char *identifier);
+val_t *catalog_getconf(catalog_t *app, catalog_key key);
+char *catalog_name(catalog_t *app);
+gboolean catalog_seen(catalog_t *app, catalog_key key);
+amglue_export_tag(getconf,
+    lookup_catalog catalog_getconf catalog_name
+    catalog_seen catalog_seen
 );
 
 %perlcode %{
