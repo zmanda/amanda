@@ -208,6 +208,9 @@ configuration files for quick reference.</para>
 <manref name="amanda-auth-ssl" vol="7"/>,
 </listitem>
 <listitem>
+<manref name="amanda-catalog" vol="7"/>,
+</listitem>
+<listitem>
 <manref name="amanda-changers" vol="7"/>,
 </listitem>
 <listitem>

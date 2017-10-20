@@ -1,4 +1,12 @@
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* man/Makefile.am: Add amanda-catalog.7 and amcatalog.8
+	* man/xml-source/amanda-catalog.7.xml: New page to describe the
+	  catalog available
+	* man/xml-source/amanda.8.xml: Link to amanda-catalog
+	* man/xml-source/amanda.conf.5.xml: Explian catalog section
+	* man/xml-source/amcatalog.8.xml: New page for amcatlog program
+
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Add catalog section in configuration file
 	* common-src/conffile.c: Add catalog section
 	* common-src/conffile.h: Add catalog section

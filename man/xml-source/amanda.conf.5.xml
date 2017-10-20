@@ -508,6 +508,13 @@ See also the options
   </varlistentry>
 
   <varlistentry>
+  <term><amkeyword>catalog</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.  The catalog section to use. See <manref name="amanda-catalog" vol="7" /> for a list of modules.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><amkeyword>changerdev</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default:
@@ -3671,6 +3678,55 @@ You can have multiple vault entry.</para>
 </refsect1>
 
 
+<refsect1><title>CATALOG SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple catalogs methods, although only one will be used - that specified
+by the <amkeyword>catalog</amkeyword> parameter.
+The information is entered in a <amkeyword>catalog</amkeyword>
+section, which looks like this:</para>
+
+<programlisting>
+define catalog <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>catalog-option</emphasis> <emphasis remap='I'>catalog-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para>The { must appear at the end of a line, and the } on its own line.</para>
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of this
+catalog. The remaining parameters are specific to the catalog type
+selected.
+</para>
+
+<para>The catalog options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><amkeyword>comment</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>Default: not set.
+A comment string describing this catalog.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>plugin</amkeyword> <amtype>string</amtype></term>
+  <listitem>
+<para>No default. Must be set to the name of the perl DBI module to use.
+See <manref name="amanda-catalog" vol="7" /> for a list of working DBI modules.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><amkeyword>property</amkeyword> [<amkeyword>append</amkeyword>] <amtype>string</amtype> <amtype>string</amtype>+</term>
+  <listitem>
+<para>No default.  Operates just like properties for interactivity methods, above.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>See <manref name="amanda-catalog" vol="7" /> for more information on configuring catalog.</para>
+
+</refsect1>
+
 <refsect1><title>Dump Splitting Configuration</title>
 
     <para>Amanda can "split" dumps into parts while writing them to storage
@@ -3728,6 +3784,7 @@ You can have multiple vault entry.</para>
 <seealso>
 <manref name="amanda-applications" vol="7"/>,
 <manref name="amanda-auth" vol="7"/>,
+<manref name="amanda-catalog" vol="7"/>
 <manref name="amanda-changers" vol="7"/>,
 <manref name="amanda-client.conf" vol="5"/>,
 <manref name="amanda-command-file" vol="5"/>,

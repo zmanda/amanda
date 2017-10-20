@@ -6,7 +6,8 @@ transform =	s,x,x,;
 
 AMPLOT_MAN_PAGES =  amplot.8
 
-COMMON_MAN_PAGES =  amanda.8 \
+COMMON_MAN_PAGES =  amaespipe.8 \
+		    amanda.8 \
 		    amanda.conf.5 \
 		    amanda-client.conf.5 \
 		    amanda-security.conf.5 \
@@ -37,13 +38,14 @@ CLIENT_MAN_PAGES = \
 
 SERVER_MAN_PAGES =  \
     amanda-devices.7 \
+    amanda-catalog.7 \
     amanda-compatibility.7 \
     amanda-changers.7 \
     amanda-interactivity.7 \
     amanda-taperscan.7 \
     amaddclient.8    \
     amadmin.8 \
-    amaespipe.8 \
+    amcatalog.8 \
     amcheck.8 \
     amcheckdb.8 \
     amcheckdump.8 \
