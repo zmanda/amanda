@@ -276,7 +276,7 @@ sub {
 	    }
 	    if (defined $tle) {
 		my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
-		$line .= " [" . $tl->get_retention_name($retention_type) . "]";
+		$line .= " [" . Amanda::Config::get_retention_name($retention_type) . "]";
 		if (defined $sl->{'barcode'} and
 		    defined $tle->{'barcode'} and
 		    $sl->{'barcode'} ne $tle->{'barcode'}) {

@@ -433,7 +433,8 @@ sub inventory {
 		Amanda::Tapelist::compute_retention();
 		for my $inv (@$inventory) {
 		    my $retention_type = Amanda::Tapelist::get_retention_type($storage->{tapepool}, $inv->{label});
-		    $inv->{'retention_type'} = $tl->get_retention_name($retention_type);
+Amanda::Debug::debug("YY: $retention_type");
+		    $inv->{'retention_type'} = Amanda::Config::get_retention_name($retention_type);
 		}
 	    }
 	    for my $inv (@$inventory) {

@@ -37,19 +37,6 @@
 #include "amanda.h"
 #include "conffile.h"
 
-typedef enum {
-    RETENTION_NO           = 0,
-    RETENTION_NO_REUSE     = (1<<0),
-    RETENTION_TAPES        = (1<<1),
-    RETENTION_DAYS         = (1<<2),
-    RETENTION_RECOVER      = (1<<3),
-    RETENTION_FULL         = (1<<4),
-    RETENTION_CMD_COPY     = (1<<5),
-    RETENTION_CMD_FLUSH    = (1<<6),
-    RETENTION_CMD_RESTORE  = (1<<7),
-    RETENTION_OTHER_CONFIG = (1<<8)
-} RetentionType;
-
 typedef struct tape_s {
     struct tape_s *next, *prev;
     int position;

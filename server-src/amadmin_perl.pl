@@ -196,7 +196,7 @@ sub main {
 		my $tle = $tl->lookup_tapelabel($label);
 		if ($tle) {
 		    my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
-		    my $retention_name = $tl->get_retention_name($retention_type);
+		    my $retention_name = Amanda::Config::get_retention_name($retention_type);
 		    print "$tle->{storage} $tle->{pool} $tle->{label} $retention_name\n";
 		} else {
 		    print "No '$label' label.\n";
@@ -205,7 +205,7 @@ sub main {
 	} else {
 	    foreach my $tle (@{$tl->{'tles'}}) {
 		my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
-		my $retention_name = $tl->get_retention_name($retention_type);
+		my $retention_name = Amanda::Config::get_retention_name($retention_type);
 		print "$tle->{storage} $tle->{pool} $tle->{label} $retention_name\n";
 	    }
 	}

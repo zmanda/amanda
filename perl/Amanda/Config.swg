@@ -48,6 +48,54 @@ DESCRIPTION: amglue_constants_list(FORALL_FN)
 %enddef
 
 /*
+ * Constants
+ */
+
+amglue_add_flag_tag_fns(RetentionType);
+amglue_add_constant_short(RETENTION_NO, "retention-no", RetentionType);
+amglue_add_constant_short(RETENTION_NO_REUSE, "no-reuse", RetentionType);
+amglue_add_constant_short(RETENTION_TAPES, "retention-tapes", RetentionType);
+amglue_add_constant_short(RETENTION_DAYS, "retention-days", RetentionType);
+amglue_add_constant_short(RETENTION_RECOVER, "retention-recover", RetentionType);
+amglue_add_constant_short(RETENTION_FULL, "retention-full", RetentionType);
+amglue_add_constant_short(RETENTION_CMD_COPY, "command-copy", RetentionType);
+amglue_add_constant_short(RETENTION_CMD_FLUSH, "command-flush", RetentionType);
+amglue_add_constant_short(RETENTION_CMD_RESTORE, "command-restore", RetentionType);
+amglue_add_constant_short(RETENTION_OTHER_CONFIG, "other-config", RetentionType);
+amglue_add_constant_short(RETENTION_ALL, "retention-all", RetentionType);
+amglue_copy_to_tag(RetentionType, constants)
+
+%perlcode %{
+sub get_retention_name {
+    my $retention_type = shift;
+
+    if ($retention_type == $RETENTION_NO) {
+	return "retention-no";
+    } elsif ($retention_type == $RETENTION_NO_REUSE) {
+	return "no-reuse";
+    } elsif ($retention_type == $RETENTION_TAPES) {
+	return "retention-tapes";
+    } elsif ($retention_type == $RETENTION_DAYS) {
+	return "retention-days";
+    } elsif ($retention_type == $RETENTION_RECOVER) {
+	return "retention-recover";
+    } elsif ($retention_type == $RETENTION_FULL) {
+	return "retention-full";
+    } elsif ($retention_type == $RETENTION_CMD_COPY) {
+	return "command-copy";
+    } elsif ($retention_type == $RETENTION_CMD_FLUSH) {
+	return "command-hlush";
+    } elsif ($retention_type == $RETENTION_CMD_RESTORE) {
+	return "command-restore";
+    } elsif ($retention_type == $RETENTION_OTHER_CONFIG) {
+	return "other config";
+    } else {
+	return "unknown retention $retention_type";
+    }
+}
+%}
+
+/*
  * Parameter access
 */
 

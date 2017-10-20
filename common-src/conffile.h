@@ -83,6 +83,20 @@
  * this works and it's here.
  */
 
+typedef enum {
+    RETENTION_NO           = 0,
+    RETENTION_NO_REUSE     = (1<<0),
+    RETENTION_TAPES        = (1<<1),
+    RETENTION_DAYS         = (1<<2),
+    RETENTION_RECOVER      = (1<<3),
+    RETENTION_FULL         = (1<<4),
+    RETENTION_CMD_COPY     = (1<<5),
+    RETENTION_CMD_FLUSH    = (1<<6),
+    RETENTION_CMD_RESTORE  = (1<<7),
+    RETENTION_OTHER_CONFIG = (1<<8)
+} RetentionType;
+#define RETENTION_ALL (RETENTION_NO_REUSE|RETENTION_TAPES|RETENTION_DAYS|RETENTION_RECOVER|RETENTION_FULL|RETENTION_CMD_COPY|RETENTION_CMD_FLUSH|RETENTION_CMD_RESTORE|RETENTION_OTHER_CONFIG)
+
 /* A "seen" struct.  Rather than allocate strings all over the place, this
  * string is in the "parsed_filenames" GSList and will be freed when that
  * GSList is freed.  This struct should be opaque to other modules. */

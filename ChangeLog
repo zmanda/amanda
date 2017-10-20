@@ -1,4 +1,14 @@
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Move RententionType from tapefile to conffile
+	* common-src/conffile.h: Add RetentionType
+	* perl/Amanda/Config.swg: Add RetentionType
+	* perl/Amanda/Tapelist.swg: Remove RetentionType
+	* server-src/tapefile.h:Remove RetentionType
+	* perl/Amanda/Rest/Labels.pm, perl/Amanda/Rest/Storages.pm,
+	  server-src/amadmin_perl.pl, server-src/amtape.pl: Use RetentionType
+	  from config
+
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Util.swg (nicedate): New function
 
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>

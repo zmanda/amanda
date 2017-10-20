@@ -125,7 +125,8 @@ sub list {
 
     foreach my $tle (@tles) {
 	my $retention_type = Amanda::Tapelist::get_retention_type($tle->{pool}, $tle->{label});
-	$tle->{'retention_type'} = $tl->get_retention_name($retention_type);
+Amanda::Debug::debug("XX: $retention_type");
+	$tle->{'retention_type'} = Amanda::Config::get_retention_name($retention_type);
     }
 
     push @result_messages, Amanda::Tapelist::Message->new(
