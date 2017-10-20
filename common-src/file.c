@@ -702,7 +702,7 @@ areads_getbuf(
 	int afd = 30;
 	int i;
 
-	if (afd < fd * 2)
+	if (afd <= fd)
 	    afd = fd * 2;
 	new = g_new0(struct areads_buffer *, (size_t)afd);
 	if (areads_buffer) {
@@ -790,7 +790,7 @@ areads_relbuf(
     int fd)
 {
     g_mutex_lock(file_mutex);
-    if(fd >= 0 && fd < areads_bufcount) {
+    if(fd >= 0 && fd < areads_bufcount && areads_buffer[fd]) {
 	amfree(areads_buffer[fd]->buffer);
 	areads_buffer[fd]->endptr = NULL;
 	areads_buffer[fd]->bufsize = 0;
@@ -860,7 +860,8 @@ debug_areads (
 	}
 	if ((r = read(fd, endptr, buflen)) <= 0) {
 	    if(r == 0) {
-		if (buffer == endptr || *(endptr-1) == '\n') {
+		if (buffer == endptr ||
+		    (buflen > 0 && *(endptr-1) == '\n')) {
 		    errno = 0;		/* flag EOF instead of error */
 		    return NULL;
 		}

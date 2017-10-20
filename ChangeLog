@@ -1,3 +1,10 @@
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* rest-server/bin/app.pl.in, rest-server/lib/Amanda/Rest.pm.in:
+	  Remove 'use Amanda::Tapelist;'
+	* common-src/file.c: (areads_relbuf): Small fix
+	* common-src/fileheader.c: Cleanup
+	* common-src/shm-ring.c: Cleanup
+
 2017-10-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c (2800235): Print the required permission
 	* server-src/amcheck.c: Do not check all 'r' bit on suid binary

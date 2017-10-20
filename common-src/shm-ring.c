@@ -222,7 +222,6 @@ shm_ring_sem_wait(
     shm_ring_t *shm_ring,
     sem_t      *sem)
 {
-
     int i;
     while(1) {
 	struct timespec tv = {time(NULL)+300, 0};

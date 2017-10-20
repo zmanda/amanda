@@ -796,7 +796,7 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
         } else if (*file->clnt_decrypt_opt) {
             g_string_append_printf(rval, " client_decrypt_option %s",
                                    file->clnt_decrypt_opt);
-	} 
+	}
         
         g_string_append_printf(rval, "\n");
         
@@ -834,7 +834,7 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
 	    g_string_append_printf(rval, "DLE=%s\n", heredoc);
 	    amfree(heredoc);
 	}
-        
+
         g_string_append_printf(rval,
 	    _("To restore, position tape at start of file and run:\n"));
 

@@ -58,7 +58,6 @@ use Amanda::Config;
 use Amanda::Constants;
 use Amanda::Device;
 use Amanda::Disklist;
-use Amanda::Tapelist;
 use Amanda::Feature;
 use Amanda::Header;
 use Amanda::Holding;
