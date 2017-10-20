@@ -1,0 +1,42 @@
+VERSION:
+  5
+
+CONFIG
+  0 "" 0
+  1 TESTCONF 1
+
+STORAGE
+  0 0 "" 0
+  1 1 HOLDING 0
+  2 1 TESTCONF 0
+
+POOL
+  1 HOLDING
+  2 TESTCONF
+
+META
+  0 ""
+
+HOST:
+  1 1 localhost
+
+DISK:
+  1 1 diskname2 /tmp/amanda/installchecks/backmeup 0 0 0 0
+  2 1 diskname1 /tmp/amanda/installchecks/backmeup 0 0 0 0
+
+IMAGE:
+  1 1 \d{14} 0 0 1050 OK 6 4 19691231190000 "[0-9a-f]{8}:1075200" "[0-9a-f]{8}:1075200" "00000000:0" "" 0
+  2 2 \d{14} 0 0 1050 OK 6 4 19691231190000 "[0-9a-f]{8}:1075200" "[0-9a-f]{8}:1075200" "00000000:0" "" 0
+
+COPY:
+  2 1 2 \d{14} 0 1 1050 1075200 OK "[0-9a-f]+:1075200" 0 0 0 "" 0
+  4 2 2 \d{14} 0 1 1050 1075200 OK "[0-9a-f]+:1075200" 0 0 0 "" 0
+
+VOLUME:
+  2 2 TESTCONF01 1 2 0 \d{14} \d{14} 0 0 0 1 0 32 ""
+
+PART:
+  2 2 2 0 1075200 1 1 OK ""
+  4 4 2 0 1075200 2 1 OK ""
+
+COMMAND:

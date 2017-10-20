@@ -1,4 +1,12 @@
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2.pm: New Catalog2
+	* perl/Amanda/DB/Catalog2/SQLite.pm: New Catalog2 SQlite driver
+	* server-src/amcatalog.pl: Program to accessthe Catalog2
+	* installcheck/DB_Catalolog2/amdump.catalog.1: Test catalog
+	* installcheck/Amanda_DB_Catalog2_SQLite.pl: Test it
+	* installcheck/Installcheck/DBCatalog2.pm: Test it
+
+2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* man/Makefile.am: Add amanda-catalog.7 and amcatalog.8
 	* man/xml-source/amanda-catalog.7.xml: New page to describe the
 	  catalog available
