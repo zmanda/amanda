@@ -135,11 +135,13 @@ main(
     safe_cd();
 
     set_pname("amservice");
-    /* drop root privileges */
-    set_root_privs(-1);
-    if (geteuid() == 0 || getuid() == 0) {
+
+    if (geteuid() != getuid()) {
 	error(_("amservice must not be setuid root"));
     }
+
+    /* drop root privileges */
+    set_root_privs(-1);
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);

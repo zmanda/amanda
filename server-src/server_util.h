@@ -46,7 +46,7 @@ typedef int cmd_t;
 enum {
     BOGUS, QUIT, QUITTING, DONE, PARTIAL,
     START, FILE_DUMP, PORT_DUMP, CONTINUE, ABORT,	/* dumper cmds */
-    FAILED, TRYAGAIN, NO_ROOM, RQ_MORE_DISK,		/* dumper results */
+    SUCCESS, FAILED, TRYAGAIN, NO_ROOM, RQ_MORE_DISK,	/* dumper results */
     ABORT_FINISHED, BAD_COMMAND,			/* dumper results */
     START_TAPER, FILE_WRITE, NEW_TAPE, NO_NEW_TAPE,     /* taper... */
     SHM_WRITE, SHM_DUMP, SHM_NAME,
@@ -56,7 +56,7 @@ enum {
     START_SCAN, CLOSE_VOLUME, CLOSED_VOLUME,
     OPENED_SOURCE_VOLUME,
     CLOSE_SOURCE_VOLUME, CLOSED_SOURCE_VOLUME,
-    RETRY, READY, LAST_TOK
+    RETRY, READY, DUMP_FINISH, LAST_TOK
 };
 extern const char *cmdstr[];
 
@@ -94,12 +94,14 @@ void run_server_script(pp_script_t  *pp_script,
 		       char         *config,
 		       char         *timestamp,
 		       disk_t       *dp,
-		       int           level);
+		       int           level,
+		       cmd_t         result);
 void run_server_dle_scripts(execute_on_t  execute_on,
 			    char         *config,
 			    char         *timestamp,
 			    disk_t       *dp,
-		            int           level);
+		            int           level,
+			    cmd_t         result);
 void run_server_host_scripts(execute_on_t  execute_on,
 			     char         *config,
 			     char         *timestamp,

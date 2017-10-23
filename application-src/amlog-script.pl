@@ -36,7 +36,7 @@ use Amanda::Constants;
 
 sub new {
     my $class = shift;
-    my ($execute_where, $config, $host, $disk, $device, $level, $index, $timestamp, $message, $collection, $record, $logfile, $text) = @_;
+    my ($execute_where, $config, $host, $disk, $device, $level, $index, $timestamp, $message, $collection, $record, $logfile, $text, $success, $failed) = @_;
     my $self = $class->SUPER::new($execute_where, $config);
 
     $self->{execute_where} = $execute_where;
@@ -52,6 +52,8 @@ sub new {
     $self->{record}        = $record;
     $self->{logfile}       = $logfile;
     $self->{text}          = $text;
+    $self->{success}       = $success;
+    $self->{failed}        = $failed;
 
     return $self;
 }
@@ -255,13 +257,19 @@ sub log_data {
    my $self = shift;
    my($function) = shift;
    my $log;
+   my $result;
 
    my $text = $self->{'text'} || "";
-   open($log, ">>$self->{logfile}") ||
+   open($log, ">>$self->{logfile}") or
 	$self->print_to_server_and_die(
 			"Can't open logfile '$self->{logfile}' for append: $!",
 			$Amanda::Script_App::ERROR);
-   print $log "$self->{action} $self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $text\n";
+   if (defined $self->{success}) {
+      $result = "SUCCESS ";
+   } if (defined $self->{failed}) {
+      $result = "FAILED ";
+   }
+   print $log "$result$self->{action} $self->{config} $function $self->{execute_where} $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), " $text\n";
    close $log;
 }
 
@@ -269,7 +277,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: amlog-script <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --logfile=<filename>.
+Usage: amlog-script <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --logfile=<filename> [--success|--failed].
 EOF
     exit(1);
 }
@@ -288,6 +296,8 @@ my $opt_collection;
 my $opt_record;
 my $opt_logfile;
 my $opt_text;
+my $opt_success;
+my $opt_failed;
 
 my @orig_argv = @ARGV;
 
@@ -306,7 +316,9 @@ GetOptions(
     'collection=s'    => \$opt_collection,
     'record=s'        => \$opt_record,
     'logfile=s'       => \$opt_logfile,
-    'text=s'          => \$opt_text
+    'text=s'          => \$opt_text,
+    'success'         => \$opt_success,
+    'failed'          => \$opt_failed
 ) or usage();
 
 if (defined $opt_version) {
@@ -314,7 +326,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_timestamp, $opt_message, $opt_collection, $opt_record, $opt_logfile, $opt_text);
+my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_timestamp, $opt_message, $opt_collection, $opt_record, $opt_logfile, $opt_text, $opt_success, $opt_failed);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

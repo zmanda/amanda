@@ -190,6 +190,28 @@ error:
     (*fn)(arg, &rh->sech, S_ERROR);
     amfree(rh->hostname);
 }
+static void
+local_child_watch_callback(
+    pid_t pid,
+    gint status,
+    gpointer data)
+{
+    struct tcp_conn *rc = (struct tcp_conn *)data;
+
+    if (pid != rc->pid)
+	return;
+
+    g_assert(pid == rc->pid);
+    rc->pid = -1 ; /* it's gone now.. */
+
+    if (WIFEXITED(status)) {
+	int exitcode = WEXITSTATUS(status);
+	g_debug("local amandad exited with status %d", exitcode);
+    } else if (WIFSIGNALED(status)) {
+	int signal = WTERMSIG(status);
+	g_debug("local amandad died on signal %d", signal);
+    }
+}
 
 /*
  * Forks a local to the host listed in rc->hostname
@@ -258,6 +280,11 @@ runlocal(
 	aclose(rpipe[1]);
 	rc->write = wpipe[1];
 	aclose(wpipe[0]);
+	rc->child_watch = new_child_watch_source(rc->pid);
+	g_source_set_callback(rc->child_watch,
+	    (GSourceFunc)local_child_watch_callback, rc, NULL);
+	g_source_attach(rc->child_watch, NULL);
+	g_source_unref(rc->child_watch);
 	return (0);
     }
 

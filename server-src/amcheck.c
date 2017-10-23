@@ -221,11 +221,12 @@ main(
     safe_cd();
 
     set_pname("amcheck");
+    if (geteuid() != getuid()) {
+	error("amcheck must not be setuid (%d, %d)", (int)geteuid(), (int)getuid());
+    }
+
     /* drop root privileges */
     set_root_privs(-1);
-    if (geteuid() == 0 || getuid() == 0) {
-	error("amcheck must not be setuid root");
-    }
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -322,6 +323,40 @@ main(
     config_init_with_global(CONFIG_INIT_EXPLICIT_NAME, argv[0]);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
+    /*
+     * Make sure we are running as the dump user.  Don't use
+     * check_running_as(..) here, because we want to produce more
+     * verbose error messages.
+     */
+    dumpuser = getconf_str(CNF_DUMPUSER);
+    if ((pw = getpwnam(dumpuser)) == NULL) {
+	delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800215, MSG_ERROR, 1,
+			"dumpuser"	, dumpuser)));
+	exit(1);
+	/*NOTREACHED*/
+    }
+    uid_dumpuser = pw->pw_uid;
+    if ((pw = getpwuid(uid_me)) == NULL) {
+	char *str_ui_me = g_strdup_printf("%ld", (long)uid_me);
+	delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800216, MSG_ERROR, 1,
+			"uid"	,str_ui_me)));
+	g_free(str_ui_me);
+	exit(1);
+	/*NOTREACHED*/
+    }
+#ifdef CHECK_USERID
+    if (uid_me != uid_dumpuser) {
+	delete_message(amcheck_print_message(build_message(
+			AMANDA_FILE, __LINE__, 2800217, MSG_ERROR, 2,
+			"running_user"	, pw->pw_name,
+			"expected_user" , dumpuser)));
+	exit(1);
+        /*NOTREACHED*/
+    }
+#endif
+
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     read_diskfile(conf_diskfile, &origq);
     disable_skip_disk(&origq);
@@ -406,39 +441,6 @@ main(
     }
     g_ptr_array_free(err_array, TRUE);
 
-    /*
-     * Make sure we are running as the dump user.  Don't use
-     * check_running_as(..) here, because we want to produce more
-     * verbose error messages.
-     */
-    dumpuser = getconf_str(CNF_DUMPUSER);
-    if ((pw = getpwnam(dumpuser)) == NULL) {
-	delete_message(amcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 2800215, MSG_ERROR, 1,
-			"dumpuser"	, dumpuser)));
-	exit(1);
-	/*NOTREACHED*/
-    }
-    uid_dumpuser = pw->pw_uid;
-    if ((pw = getpwuid(uid_me)) == NULL) {
-	// leak memory
-	delete_message(amcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 2800216, MSG_ERROR, 1,
-			"uid"	, g_strdup_printf("%ld", (long)uid_me))));
-	exit(1);
-	/*NOTREACHED*/
-    }
-#ifdef CHECK_USERID
-    if (uid_me != uid_dumpuser) {
-	delete_message(amcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 2800217, MSG_ERROR, 2,
-			"running_user"	, pw->pw_name,
-			"expected_user" , dumpuser)));
-	exit(1);
-        /*NOTREACHED*/
-    }
-#endif
-
     displayunit = getconf_str(CNF_DISPLAYUNIT);
     unitdivisor = getconf_unit_divisor();
 
@@ -500,16 +502,29 @@ main(
 
     /* wait for child processes and note any problems */
 
-    while(1) {
-	if((pid = wait(&retstat)) == -1) {
+    while (serverchk_pid) {
+	pid = waitpid(serverchk_pid, &retstat, 0);
+	if (pid == -1) {
+	    if(errno == EINTR) continue;
+	    else break;
+	} else if(pid == serverchk_pid) {
+	    server_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
+	    serverchk_pid = 0;
+	} else {
+	    delete_message(amcheck_fprint_message(mainfd, build_message(
+					AMANDA_FILE, __LINE__, 2800021, MSG_ERROR, 1,
+					"pid", g_strdup_printf("%ld", (long)pid))));
+	}
+    }
+
+    while (clientchk_pid) {
+	pid = waitpid(clientchk_pid, &retstat, 0);
+	if (pid == -1) {
 	    if(errno == EINTR) continue;
 	    else break;
 	} else if(pid == clientchk_pid) {
 	    client_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
 	    clientchk_pid = 0;
-	} else if(pid == serverchk_pid) {
-	    server_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
-	    serverchk_pid = 0;
 	} else {
 	    delete_message(amcheck_fprint_message(mainfd, build_message(
 					AMANDA_FILE, __LINE__, 2800021, MSG_ERROR, 1,
@@ -575,6 +590,7 @@ main(
 	char *line = NULL;
 	int rc;
 	int valid_mailto = 0;
+	pid_t mailer_pid;
 
 	fflush(stdout);
 	if (fseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
@@ -634,7 +650,7 @@ main(
 	    amcheck_exit(1);
 	}
 
-	pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
+	mailer_pid = pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
 		   &mailfd, &nullfd, &errfd,
 		   (char **)pipeargs->pdata);
 
@@ -662,11 +678,14 @@ main(
 		    exit(1);
 		    /*NOTREACHED*/
 		} else {
-		    // the 2 g_strdup_printf leak memory.
+		    char *str_w = g_strdup_printf("%zd", w);
+		    char *str_r = g_strdup_printf("%zd", r);
 		    delete_message(amcheck_print_message(build_message(
 			AMANDA_FILE, __LINE__, 2800223, MSG_ERROR, 2,
-			"write_size"	, g_strdup_printf("%zd", w),
-			"expected_size"	, g_strdup_printf("%zd", r))));
+			"write_size"	, str_w,
+			"expected_size"	, str_r)));
+		    g_free(str_w);
+		    g_free(str_r);
 		    exit(1);
 		    /*NOTREACHED*/
 		}
@@ -690,7 +709,7 @@ main(
 	afclose(ferr);
 	errfd = -1;
 	rc = 0;
-	while (wait(&retstat) != -1) {
+	while (waitpid(mailer_pid, &retstat, 0) != -1) {
 	    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
 		char *mailer_error = str_exit_status("mailer", retstat);
 		strappend(err, mailer_error);
@@ -881,9 +900,11 @@ static gboolean test_tape_status(FILE * outf) {
 	waitpid(devpid, &wait_status, 0);
 
 	if (WIFSIGNALED(wait_status)) {
+	    char *str_signal = g_strdup_printf("%d", WTERMSIG(wait_status));
 	    delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800026, MSG_ERROR, 1,
-					"signal", g_strdup_printf("%d", WTERMSIG(wait_status)))));
+					"signal", str_signal)));
+	    g_free(str_signal);
 	    success = FALSE;
 	} else if (WIFEXITED(wait_status)) {
 	    if (WEXITSTATUS(wait_status) != 0)
@@ -985,28 +1006,38 @@ start_server_check(
 
 	    if (storage_get_flush_threshold_scheduled(storage)
 		< storage_get_flush_threshold_dumped(storage)) {
+		char *str_flush_threshold_dumped = g_strdup_printf("%d", storage_get_flush_threshold_dumped(storage));
+		char *str_flush_threshold_scheduled = g_strdup_printf("%d", storage_get_flush_threshold_scheduled(storage));
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800031, MSG_WARNING, 3,
 			"storage",	storage_n,
-			"flush_threshold_dumped", g_strdup_printf("%d",storage_get_flush_threshold_dumped(storage)),
-			"flush_threshold_scheduled", g_strdup_printf("%d",storage_get_flush_threshold_scheduled(storage)))));
+			"flush_threshold_dumped", str_flush_threshold_dumped,
+			"flush_threshold_scheduled", str_flush_threshold_scheduled)));
+		g_free(str_flush_threshold_scheduled);
+		g_free(str_flush_threshold_dumped);
 	    }
 
 	    if (storage_get_flush_threshold_scheduled(storage)
 		< storage_get_taperflush(storage)) {
+		char *str_taperflush = g_strdup_printf("%d",storage_get_taperflush(storage));
+		char *str_flush_threshold_scheduled = g_strdup_printf("%d", storage_get_flush_threshold_scheduled(storage));
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800032, MSG_WARNING, 3,
 			"storage",	storage_n,
-			"taperflush", g_strdup_printf("%d",storage_get_taperflush(storage)),
-			"flush_threshold_scheduled", g_strdup_printf("%d",storage_get_flush_threshold_scheduled(storage)))));
+			"taperflush", str_taperflush,
+			"flush_threshold_scheduled", str_flush_threshold_scheduled)));
+		g_free(str_flush_threshold_scheduled);
+		g_free(str_taperflush);
 	    }
 
 	    if (storage_get_taperflush(storage) &&
 	        !storage_get_autoflush(storage)) {
+		char *str_taperflush = g_strdup_printf("%d",storage_get_taperflush(storage));
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800033, MSG_WARNING, 3,
 			"storage",	storage_n,
-			"taperflush", g_strdup_printf("%d",storage_get_taperflush(storage)))));
+			"taperflush", str_taperflush)));
+		g_free(str_taperflush);
 	    }
 
 	    if (!storage_seen(storage, STORAGE_TAPETYPE)) {
@@ -1029,10 +1060,14 @@ start_server_check(
 		uintmax_t kb_avail = physmem_total() / 1024;
 		uintmax_t kb_needed = storage_get_device_output_buffer_size(storage) / 1024;
 		if (kb_avail < kb_needed) {
+		    char *str_avail = g_strdup_printf("%ju", kb_avail);
+		    char *str_needed = g_strdup_printf("%ju", kb_needed);
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800036, MSG_ERROR, 2,
-			"kb_avail",	g_strdup_printf("%ju", kb_avail),
-			"kb_needed",	g_strdup_printf("%ju", kb_needed))));
+			"kb_avail",	str_avail,
+			"kb_needed",	str_needed)));
+		    g_free(str_avail);
+		    g_free(str_needed);
 		}
 	    }
 	}
@@ -1298,9 +1333,11 @@ start_server_check(
 
 	tape_size = tapetype_get_length(tp);
 	if (part_size && part_size * 1000 < tape_size) {
+	    char *str_part_size = g_strdup_printf("%ju", (uintmax_t)part_size);
 	    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800063, MSG_WARNING, 1,
-			"part_size", g_strdup_printf("%ju", (uintmax_t)part_size))));
+			"part_size", str_part_size)));
+	    g_free(str_part_size);
 	    if (!printed_small_part_size_warning) {
 		printed_small_part_size_warning = TRUE;
 		delete_message(amcheck_fprint_message(outf, build_message(
@@ -1366,37 +1403,51 @@ start_server_check(
 		    disklow = 1;
 		}
 		else if(kb_avail < holdingdisk_get_disksize(hdp)) {
+		    char *str_holdingdisk_get_disksize = g_strdup_printf("%jd", holdingdisk_get_disksize(hdp));
+		    char *str_avail = g_strdup_printf("%jd", kb_avail);
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800072, MSG_WARNING, 3,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
-			"avail", g_strdup_printf("%jd", kb_avail),
-			"requested", g_strdup_printf("%jd", holdingdisk_get_disksize(hdp)))));
+			"avail", str_avail,
+			"requested", str_holdingdisk_get_disksize)));
+		    g_free(str_avail);
+		    g_free(str_holdingdisk_get_disksize);
 		    disklow = 1;
 		}
 		else {
+		    char *str_holdingdisk_get_disksize = g_strdup_printf("%jd", holdingdisk_get_disksize(hdp));
+		    char *str_avail = g_strdup_printf("%jd", kb_avail);
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800073, MSG_INFO, 3,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
-			"avail", g_strdup_printf("%jd", kb_avail),
-			"requested", g_strdup_printf("%jd", holdingdisk_get_disksize(hdp)))));
+			"avail", str_avail,
+			"requested", str_holdingdisk_get_disksize)));
+		    g_free(str_avail);
+		    g_free(str_holdingdisk_get_disksize);
 		}
 	    }
 	    else {
 		if(kb_avail < -holdingdisk_get_disksize(hdp)) {
+		    char *str_avail = g_strdup_printf("%jd", kb_avail);
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800074, MSG_WARNING, 2,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
-			"avail", g_strdup_printf("%jd", kb_avail))));
+			"avail", str_avail)));
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800075, MSG_WARNING, 0)));
+		    g_free(str_avail);
 		    disklow = 1;
 		}
 		else {
+		    char *str_avail = g_strdup_printf("%jd", kb_avail);
+		    char *str_using = g_strdup_printf("%jd", kb_avail + holdingdisk_get_disksize(hdp));
 		    delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800076, MSG_INFO, 3,
 			"holding_dir", holdingdisk_get_diskdir(hdp),
-			"avail", g_strdup_printf("%jd", kb_avail),
-			"using", g_strdup_printf("%jd", kb_avail + holdingdisk_get_disksize(hdp)))));
+			"avail", str_avail,
+			"using", str_using)));
+		    g_free(str_using);
+		    g_free(str_avail);
 		}
 	    }
 	}
@@ -1511,19 +1562,27 @@ start_server_check(
 	    int runtapes = storage_get_runtapes(storage);
 
 	    if (retention_tape <= conf_runspercycle) {
+		char *str_retention_tape = g_strdup_printf("%d", retention_tape);
+		char *str_conf_runspercycle = g_strdup_printf("%d", conf_runspercycle);
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800090, MSG_INFO, 3,
-			"storage", g_strdup(storage_name),
-			"retention_tapes", g_strdup_printf("%d", retention_tape),
-			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
+			"storage", storage_name,
+			"retention_tapes", str_retention_tape,
+			"runspercycle", str_conf_runspercycle)));
+		g_free(str_conf_runspercycle);
+		g_free(str_retention_tape);
 	    }
 
 	    if (retention_tape <= runtapes) {
+		char *str_retention_tape = g_strdup_printf("%d", retention_tape);
+		char *str_runtapes = g_strdup_printf("%d", runtapes);
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800091, MSG_INFO, 3,
-			"storage", g_strdup(storage_name),
-			"retention_tapes", g_strdup_printf("%d", retention_tape),
-			"runtapes", g_strdup_printf("%d", runtapes))));
+			"storage", storage_name,
+			"retention_tapes", str_retention_tape,
+			"runtapes", str_runtapes)));
+		g_free(str_runtapes);
+		g_free(str_retention_tape);
 	    }
 	}
 
@@ -1536,19 +1595,27 @@ start_server_check(
 	    int runtapes = storage_get_runtapes(storage);
 
 	    if (retention_tape <= conf_runspercycle) {
+		char *str_retention_tape = g_strdup_printf("%d", retention_tape);
+		char *str_conf_runspercycle = g_strdup_printf("%d", conf_runspercycle);
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800090, MSG_INFO, 3,
-			"storage", g_strdup(storage_name),
-			"retention_tapes", g_strdup_printf("%d", retention_tape),
-			"runspercycle", g_strdup_printf("%d", conf_runspercycle))));
+			"storage", storage_name,
+			"retention_tapes", str_retention_tape,
+			"runtapes", str_conf_runspercycle)));
+		g_free(str_conf_runspercycle);
+		g_free(str_retention_tape);
 	    }
 
 	    if (retention_tape <= runtapes) {
+		char *str_retention_tape = g_strdup_printf("%d", retention_tape);
+		char *str_runtapes = g_strdup_printf("%d", runtapes);
 		delete_message(amcheck_fprint_message(outf, build_message(
 			AMANDA_FILE, __LINE__, 2800091, MSG_INFO, 3,
-			"storage", g_strdup(storage_name),
-			"retention_tapes", g_strdup_printf("%d", retention_tape),
-			"runtapes", g_strdup_printf("%d", runtapes))));
+			"storage", storage_name,
+			"retention_tapes", str_retention_tape,
+			"runtapes", str_runtapes)));
+		g_free(str_runtapes);
+		g_free(str_retention_tape);
 	    }
 	}
 
@@ -1836,11 +1903,13 @@ start_server_check(
 
 		    /* also check for part sizes that are too small */
 		    if (dp->tape_splitsize && dp->tape_splitsize * 1000 < tape_size) {
+			char *str_tape_splitsize = g_strdup_printf("%jd", (intmax_t)dp->tape_splitsize);
 			delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800149, MSG_WARNING, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
-					"tape_splitsize", g_strdup_printf("%jd", (intmax_t)dp->tape_splitsize))));
+					"tape_splitsize", str_tape_splitsize)));
+			g_free(str_tape_splitsize);
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
 			    delete_message(amcheck_fprint_message(outf, build_message(
@@ -1853,11 +1922,13 @@ start_server_check(
 			    (dp->split_diskbuffer == NULL ||
 			     dp->split_diskbuffer[0] == '\0') &&
 			    dp->fallback_splitsize * 1000 < tape_size) {
+			char *str_fallback_splitsize = g_strdup_printf("%jd", (intmax_t)dp->fallback_splitsize);
 			delete_message(amcheck_fprint_message(outf, build_message(
 					AMANDA_FILE, __LINE__, 2800151, MSG_WARNING, 3,
 					"hostname", hostp->hostname,
 					"diskname", dp->name,
-					"fallback_splitsize", g_strdup_printf("%jd", (intmax_t)dp->fallback_splitsize))));
+					"fallback_splitsize", str_fallback_splitsize)));
+			g_free(str_fallback_splitsize);
 			if (!printed_small_part_size_warning) {
 			    printed_small_part_size_warning = TRUE;
 			    delete_message(amcheck_fprint_message(outf, build_message(
@@ -2456,7 +2527,7 @@ start_client_checks(
 				    get_config_name(), NULL, hostp);
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		run_server_dle_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
-				   get_config_name(), NULL, dp1, -1);
+				   get_config_name(), NULL, dp1, -1, BOGUS);
 	    }
 	    start_host(hostp);
 	    hostcount++;
@@ -2467,11 +2538,17 @@ start_client_checks(
     protocol_run();
     run_server_global_scripts(EXECUTE_ON_POST_AMCHECK, get_config_name(), NULL);
 
-    delete_message(amcheck_fprint_message(client_outf, build_message(
+    {
+	char *str_hostcount = g_strdup_printf("%d", hostcount);
+	char *str_remote_errors = g_strdup_printf("%d", remote_errors);
+	delete_message(amcheck_fprint_message(client_outf, build_message(
 					AMANDA_FILE, __LINE__, 2800204, MSG_MESSAGE, 3,
-					"hostcount", g_strdup_printf("%d", hostcount),
-					"remote_errors", g_strdup_printf("%d", remote_errors),
+					"hostcount", str_hostcount,
+					"remote_errors", str_remote_errors,
 					"seconds", walltime_str(curclock()))));
+	g_free(str_hostcount);
+	g_free(str_remote_errors);
+    }
     fflush(outf);
 
     g_debug("userbad: %d", userbad);
@@ -2664,14 +2741,18 @@ handle_result(
 	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
-			       get_config_name(), NULL, dp, -1);
+			       get_config_name(), NULL, dp, -1, BOGUS);
 	}
 	run_server_host_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
 				get_config_name(), NULL, hostp);
     }
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
-    while(waitpid(-1, NULL, WNOHANG)> 0);
+    {	int pid;
+	while((pid = waitpid(-1, NULL, WNOHANG))> 0) {
+	    g_debug("amcheck reap: %d", (int)pid);
+	}
+    }
 }
 
 static int

@@ -510,19 +510,27 @@ check_status(
     }
 
     if (ret == 0) {
+	char *str_pid = g_strdup_printf("%d", (int)pid);
+	char *str_signal = g_strdup_printf("%d", (int)sig);
 	delete_message(fprint_message(stdout, build_message(
 			AMANDA_FILE, __LINE__, 2900016, MSG_ERROR, 4,
 			"service", "senddiscover",
 			"application", str,
-			"pid", g_strdup_printf("%d", (int)pid),
-			"signal", g_strdup_printf("%d", (int)sig))));
+			"pid", str_pid,
+			"signal", str_signal)));
+	g_free(str_pid);
+	g_free(str_signal);
     } else {
+	char *str_pid = g_strdup_printf("%d", (int)pid);
+	char *str_code = g_strdup_printf("%d", (int)ret);
 	delete_message(fprint_message(stdout, build_message(
 			AMANDA_FILE, __LINE__, 2900017, MSG_ERROR, 4,
 			"service", "senddiscover",
 			"application", str,
-			"pid", g_strdup_printf("%d", (int)pid),
-			"return_code", g_strdup_printf("%d", (int)ret))));
+			"pid", str_pid,
+			"code", str_code)));
+	g_free(str_pid);
+	g_free(str_code);
     }
 
     return 1;

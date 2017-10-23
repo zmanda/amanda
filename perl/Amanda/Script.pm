@@ -102,4 +102,8 @@ sub _set_mesgout {
     $self->{mesgout} = $mesgout_fd;
 }
 
+sub _set_cmdinout {
+    my $self = shift;
+}
+
 1;

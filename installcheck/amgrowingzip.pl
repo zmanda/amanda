@@ -35,7 +35,7 @@ use IO::File;
 
 eval {
     require Archive::Zip;
-    plan tests => 31;
+    plan tests => 33;
     1;
 } or do {
     plan skip_all => 'tested only if Archive::Zip is installed';
@@ -52,6 +52,10 @@ is($support->{'MESSAGE-LINE'}, 'YES', "supports messages");
 is($support->{'CLIENT-ESTIMATE'}, 'YES', "supports estimates");
 is($support->{'RECORD'}, 'YES', "supports record");
 is($support->{'MULTI-ESTIMATE'}, 'YES', "supports multi-estimates");
+is($support->{'CMD-STREAM'}, 'YES',
+    "supports command stream to/from sendbackup");
+is($support->{'WANT-SERVER-BACKUP-RESULT'}, 'YES',
+    "supports server backup results");
 
 my $root_dir = "$Installcheck::TMP/installcheck-amgrowingzip";
 my $back_file = "$root_dir/to_backup";

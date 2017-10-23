@@ -187,6 +187,7 @@ sub do {
 
     if ($action eq 'backup') {
 	$self->_set_mesgout();
+	$self->_set_cmdinout();
     }
 
     # now convert it to a function name and see if it's

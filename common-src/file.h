@@ -43,6 +43,8 @@ char  *old_sanitise_filename(char *inp);
 void    safe_fd(int fd_start, int fd_count);
 void    safe_fd2(int fd_start, int fd_count, int fd1);
 void    safe_fd3(int fd_start, int fd_count, int fd1, int fd2);
+void    safe_fd4(int fd_start, int fd_count, int fd1, int fd2, int fd3);
+void    safe_fd5(int fd_start, int fd_count, int fd1, int fd2, int fd3, int fd4);
 void	safe_cd(void);
 void	save_core(void);
 
@@ -158,4 +160,5 @@ char *get_original_cwd(void);
 
 gsize read_fully(int fd, void *buf, gsize count, int *err);
 
+char *untaint_fgets(char *s, int size, FILE *stream);
 #endif /* __AM_FILE_H__ */

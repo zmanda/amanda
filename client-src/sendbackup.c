@@ -64,6 +64,8 @@ int mesgfd;
 int indexfd;
 int statefd;
 FILE   *mesgstream = NULL;
+int cmdwfd;
+int cmdrfd;
 
 g_option_t *g_options = NULL;
 
@@ -96,13 +98,14 @@ int check_status(pid_t pid, amwait_t w, int mesgfd);
 
 pid_t pipefork(void (*func)(void), char *fname, int *stdinfd,
 		int stdoutfd, int stderrfd);
-int check_result(int mesgfd);
+int check_result(int mesgfd, gboolean ignore_application);
 void parse_backup_messages(dle_t *dle, int mesgin);
 static void process_dumpline(char *str);
 static void save_fd(int *, int);
 void application_api_info_tapeheader(int mesgfd, char *prog, dle_t *dle);
 
 gpointer stderr_thread(gpointer data);
+gpointer handle_app_stderr(gpointer data);
 
 int
 fdprintf(
@@ -144,6 +147,11 @@ main(
     am_level_t *alevel;
     int scripts_exit_status;
     char  **env;
+    backup_result_t result;
+    int     cmd_from_appli[2] = { 0, 0 };
+    int     cmd_to_appli[2] = { 0, 0 };
+    GThread *app_strerr_thread = NULL;
+    backup_support_option_t *bsu = NULL;
 
     if (argc > 1 && argv[1] && g_str_equal(argv[1], "--version")) {
 	printf("sendbackup-%s\n", VERSION);
@@ -452,6 +460,8 @@ main(
 	mesgfd = DATA_FD_OFFSET + 2;
 	indexfd = DATA_FD_OFFSET + 4;
 	statefd = DATA_FD_OFFSET + 6;
+	cmdwfd   = DATA_FD_OFFSET + 8;
+	cmdrfd   = DATA_FD_OFFSET + 9;
     }
     if (!dle->create_index) {
 	if (!interactive) {
@@ -473,20 +483,41 @@ main(
 	g_printf("KENCRYPT\n");
     }
 
-    if (am_has_feature(g_options->features, fe_sendbackup_stream_state)) {
+    if (am_has_feature(g_options->features, fe_sendbackup_stream_state) &&
+	am_has_feature(g_options->features, fe_sendbackup_stream_cmd)) {
+	g_printf(_("CONNECT DATA %d MESG %d INDEX %d STATE %d CMD %d\n"),
+		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
+		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2,
+		   DATA_FD_OFFSET+3, DATA_FD_OFFSET+4);
+    } else if (!am_has_feature(g_options->features, fe_sendbackup_stream_state) &&
+		am_has_feature(g_options->features, fe_sendbackup_stream_cmd)) {
+	g_printf(_("CONNECT DATA %d MESG %d INDEX %d CMD %d\n"),
+		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
+		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2,
+		    DATA_FD_OFFSET+3);
+	close(statefd);
+	close(statefd+1);
+	statefd = -1;
+    } else if ( am_has_feature(g_options->features, fe_sendbackup_stream_state) &&
+	       !am_has_feature(g_options->features, fe_sendbackup_stream_cmd)) {
 	g_printf(_("CONNECT DATA %d MESG %d INDEX %d STATE %d\n"),
 		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
 		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2,
 		   DATA_FD_OFFSET+3);
-    } else {
+	cmdwfd = -1;
+	cmdrfd = -1;
+    } else if (!am_has_feature(g_options->features, fe_sendbackup_stream_state) &&
+	       !am_has_feature(g_options->features, fe_sendbackup_stream_cmd)) {
 	g_printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
 		   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
 		   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);
 	if (!interactive) {
-	    aclose(statefd);
+	    close(statefd);
 	    close(statefd+1);
 	}
 	statefd = -1;
+	cmdwfd = -1;
+	cmdrfd = -1;
     }
     g_printf(_("OPTIONS "));
     if(am_has_feature(g_options->features, fe_rep_options_features)) {
@@ -533,7 +564,7 @@ main(
 	g_debug("Failed to fdopen mesgfd (%d): %s", mesgfd, strerror(errno));
 	exit(1);
     }
-    scripts_exit_status = run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream, NULL);
+    scripts_exit_status = run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream, R_BOGUS, NULL);
     fflush(mesgstream);
 
     if (scripts_exit_status == 0) {
@@ -542,7 +573,6 @@ main(
 	    char *cmd=NULL;
 	    GPtrArray *argv_ptr;
 	    char levelstr[20];
-	    backup_support_option_t *bsu;
 	    char *compopt = NULL;
 	    char *encryptopt = skip_argument;
 	    int compout, dumpout;
@@ -704,8 +734,40 @@ main(
 		return 0;
 	    }
 
+	    if (am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
+		bsu->cmd_stream) {
+		if (pipe(cmd_from_appli) < 0) {
+		    char  *errmsg;
+		    char  *qerrmsg;
+		    errmsg = g_strdup_printf("Application '%s': can't create pipe",
+					 dle->program);
+		    qerrmsg = quote_string(errmsg);
+		    fdprintf(mesgfd, "sendbackup: error [%s]\n", errmsg);
+		    g_debug("ERROR %s", qerrmsg);
+		    amfree(qerrmsg);
+		    amfree(errmsg);
+		}
+		if (pipe(cmd_to_appli) < 0) {
+		    char  *errmsg;
+		    char  *qerrmsg;
+		    errmsg = g_strdup_printf("Application '%s': can't create pipe",
+					 dle->program);
+		    qerrmsg = quote_string(errmsg);
+		    fdprintf(mesgfd, "sendbackup: error [%s]\n", errmsg);
+		    g_debug("ERROR %s", qerrmsg);
+		    amfree(qerrmsg);
+		    amfree(errmsg);
+		}
+	    }
 	    application_api_info_tapeheader(mesgfd, dle->program, dle);
 
+	    if (statefd >= 0 && !bsu->state_stream) {
+		close(statefd);
+		close(statefd+1);
+		statefd = -1;
+	    }
+
+	    result = 0;
 	    switch(application_api_pid=fork()) {
 	    case 0:
 
@@ -807,6 +869,18 @@ main(
 		if (dle->record && bsu->record == 1) {
 		    g_ptr_array_add(argv_ptr, g_strdup("--record"));
 		}
+		if (am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
+		    bsu->cmd_stream) {
+		    g_ptr_array_add(argv_ptr, g_strdup("--cmd-to-sendbackup"));
+		    g_ptr_array_add(argv_ptr, g_strdup_printf("%d", cmd_from_appli[1]));
+		    g_ptr_array_add(argv_ptr, g_strdup("--cmd-from-sendbackup"));
+		    g_ptr_array_add(argv_ptr, g_strdup_printf("%d", cmd_to_appli[0]));
+		    if (bsu->want_server_backup_result &&
+			am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
+			am_has_feature(g_options->features, fe_sendbackup_stream_cmd_get_dumper_result)) {
+			g_ptr_array_add(argv_ptr, g_strdup("--server-backup-result"));
+		    }
+		}
 		application_property_add_to_argv(argv_ptr, dle, bsu,
 						 g_options->features);
 
@@ -843,9 +917,9 @@ main(
 		    fcntl(indexfd, F_SETFD, 0);
 		}
 		if (indexfd != 0) {
-		    safe_fd2(3, 2, statefd);
+		    safe_fd4(3, 2, statefd, cmd_from_appli[1], cmd_to_appli[0]);
 		} else {
-		    safe_fd2(3, 1, statefd);
+		    safe_fd4(3, 1, statefd, cmd_from_appli[1], cmd_to_appli[0]);
 		}
 		env = safe_env();
 		execve(cmd, (char **)argv_ptr->pdata, env);
@@ -853,18 +927,27 @@ main(
 		exit(1);
 		break;
 
-	default:
+	    default:
 		break;
-	case -1:
+	    case -1:
 		error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
-	}
+	    }
 
 	    close(errfd[1]);
+	    if (am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
+		bsu->cmd_stream) {
+		close(cmd_from_appli[1]);
+		close(cmd_to_appli[0]);
+	    }
 	    dumperr = fdopen(errfd[0],"r");
 	    if (!dumperr) {
 		error(_("Can't fdopen: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
+	    app_strerr_thread = g_thread_create(handle_app_stderr,
+                                        dumperr, TRUE, NULL);
+	    dumperr = NULL; // thread will close it
+
 
 	    close(native_pipe[1]);
 	    if (shm_control_name) {
@@ -900,24 +983,8 @@ main(
 		    client_crc.thread = g_thread_create(handle_crc_thread,
 					(gpointer)&client_crc, TRUE, NULL);
 		}
-
 	    }
 
-	    if (statefd >= 0 && !bsu->state_stream) {
-		aclose(statefd);
-		close(statefd+1);
-		statefd = -1;
-	    }
-
-	    result = 0;
-	    while ((line = pgets(dumperr)) != NULL) {
-		if (strlen(line) > 0) {
-		    fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
-		    g_debug("error: %s", line);
-		    result = 1;
-		}
-		amfree(line);
-	    }
 	    g_thread_join(native_crc.thread);
 	    if (have_filter) {
 		if (enc_stderr_pipe.thread) {
@@ -932,27 +999,6 @@ main(
 	    if (shm_ring) {
 		close_producer_shm_ring(shm_ring);
 		shm_ring = NULL;
-	    }
-
-	    result |= check_result(mesgfd);
-	    if (result == 0) {
-		char *amandates_file;
-
-		amandates_file = getconf_str(CNF_AMANDATES);
-		if (start_amandates(amandates_file, 1)) {
-		    amandates_updateone(dle->disk, level, cur_dumptime);
-		    finish_amandates();
-		    free_amandates();
-		} else {
-		    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
-		    bsu->calcsize) {
-		    error(_("error [opening %s for writing: %s]"),
-			  amandates_file, strerror(errno));
-		    } else {
-		    g_debug(_("non-fatal error opening '%s' for writing: %s]"),
-			    amandates_file, strerror(errno));
-		    }
-		}
 	    }
 
 	    if (!have_filter)
@@ -975,11 +1021,39 @@ main(
 
 	    g_debug("sendbackup: end");
 	    fprintf(mesgstream, "sendbackup: end\n");
+	    fflush(mesgstream);
 
-	    amfree(bsu);
+	    // should not check application_api_pid
+	    result |= check_result(mesgfd, bsu->want_server_backup_result &&
+		am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
+		am_has_feature(g_options->features, fe_sendbackup_stream_cmd_get_dumper_result));
+
+	    if (result == 0) {
+		char *amandates_file;
+
+		amandates_file = getconf_str(CNF_AMANDATES);
+		if (start_amandates(amandates_file, 1)) {
+		    amandates_updateone(dle->disk, level, cur_dumptime);
+		    finish_amandates();
+		    free_amandates();
+		} else {
+		    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
+		    bsu->calcsize) {
+		    error(_("error [opening %s for writing: %s]"),
+			  amandates_file, strerror(errno));
+		    } else {
+		    g_debug(_("non-fatal error opening '%s' for writing: %s]"),
+			    amandates_file, strerror(errno));
+		    }
+		}
+	    }
+
 	} else {
-	    aclose(statefd);
-	    close(statefd+1);
+	    if (statefd > 0) {
+		close(statefd);
+		close(statefd+1);
+		statefd = -1;
+	    }
 	    if(!interactive) {
 		/* redirect stderr */
 		if (dup2(mesgfd, 2) == -1) {
@@ -1003,8 +1077,12 @@ main(
 	    g_debug("Parsed backup messages");
 	}
     } else {
+	if (shm_control_name) {
+	    shm_ring = shm_ring_link(shm_control_name);
+	}
 	if (shm_ring) {
 	    shm_ring->mc->cancelled = TRUE;
+	    sem_post(shm_ring->sem_ready);
 	    sem_post(shm_ring->sem_ready);
 	    sem_post(shm_ring->sem_start);
 	    sem_post(shm_ring->sem_write);
@@ -1012,12 +1090,66 @@ main(
 	    close_producer_shm_ring(shm_ring);
 	    shm_ring = NULL;
 	}
+	fprintf(mesgstream, "sendbackup: size 0\n");
+	fprintf(mesgstream, "sendbackup: end\n");
+	fflush(mesgstream);
+    }
+    aclose(indexfd);
+    if (statefd > 0) {
+        close(statefd+1);
+        close(statefd);
+	statefd = -1;
+    }
+    aclose(datafd);
+
+    if (am_has_feature(g_options->features, fe_sendbackup_stream_cmd) &&
+	am_has_feature(g_options->features, fe_sendbackup_stream_cmd_get_dumper_result)) {
+	if (full_write(cmdwfd, "GET_DUMPER_RESULT\n", strlen("GET_DUMPER_RESULT\n")) != strlen("GET_DUMPER_RESULT\n")) {
+	    fprintf(mesgstream, "sendbackup: error: Can't write to cmdwfd: %s\n", strerror(errno));
+	    fflush(mesgstream);
+	    result = R_FAILED;
+	}
+	fdatasync(cmdwfd);
+	g_debug("sent GET_DUMPER_RESULT");
+	line = areads(cmdrfd);
+	g_debug("GET_DUMPER_RESULT %s", line);
+
+	if (line && strcmp(line,"SUCCESS") == 0) {
+	    result = R_SUCCESS;
+	} else if (line && strcmp(line,"FAILED") == 0) {
+	    result = R_FAILED;
+	} else {
+	    g_free(line);
+	    line = g_strdup("BOGUS");
+	    result = R_BOGUS;
+	}
+
+	if (bsu && bsu->cmd_stream && bsu->want_server_backup_result &&
+	    cmd_to_appli[1]) {
+	    char *msg = g_strdup_printf("%s\n", line);
+	    if (full_write(cmd_to_appli[1], msg, strlen(msg)) != strlen(msg)) {
+		fprintf(mesgstream, "sendbackup: error: Can't write result to application: %s\n", strerror(errno));
+		fflush(mesgstream);
+		result = R_FAILED;
+	    }
+	    g_free(msg);
+	}
+	amfree(line);
+	aaclose(cmd_to_appli[1]);
+	aaclose(cmd_from_appli[0]);
+    } else {
+	result = R_BOGUS;
     }
 
-    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, NULL);
+    if (app_strerr_thread) {
+	g_thread_join(app_strerr_thread);
+	app_strerr_thread = NULL;
+    }
+    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream, result, NULL);
     fflush(mesgstream);
     fclose(mesgstream);
 
+    amfree(bsu);
     amfree(qdisk);
     amfree(qamdevice);
     amfree(dumpdate);
@@ -1040,6 +1172,7 @@ main(
 	dbprintf(_("REQ packet is bogus\n"));
     }
 
+    amfree(bsu);
     amfree(qdisk);
     amfree(qamdevice);
     amfree(dumpdate);
@@ -1262,6 +1395,9 @@ application_api_info_tapeheader(
 	    dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	    return;
 	}
+	fprintf(mesgstream, "sendbackup: size 0\n");
+	fprintf(mesgstream, "sendbackup: end\n");
+	fflush(mesgstream);
     }
     g_snprintf(line, 1024, "%s/%s restore [./file-to-restore]+\n",
 	       APPLICATION_DIR, prog);
@@ -1340,7 +1476,8 @@ pipefork(
 
 int
 check_result(
-    int mesgfd)
+    int mesgfd,
+    gboolean ignore_application)
 {
     int goterror;
     pid_t wpid;
@@ -1392,19 +1529,21 @@ check_result(
 		process_alive = 1;
 	    }
 	}
-	if (application_api_pid != -1) {
-	    if ((wpid = waitpid(application_api_pid, &retstat, WNOHANG)) > 0) {
-		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
-	    } else if (wpid == 0) {
-		process_alive = 1;
+	if (!ignore_application) {
+	    if (application_api_pid != -1) {
+		if ((wpid = waitpid(application_api_pid, &retstat, WNOHANG)) > 0) {
+		   if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+		} else if (wpid == 0) {
+		   process_alive = 1;
+		}
 	    }
-	}
 
-	while ((wpid = waitpid(-1, &retstat, WNOHANG)) > 0) {
-	    if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    while ((wpid = waitpid(-1, &retstat, WNOHANG)) > 0) {
+		if (check_status(wpid, retstat, mesgfd)) goterror = 1;
+	    }
+	    if (wpid == 0)
+		process_alive = 1;
 	}
-	if (wpid == 0)
-	    process_alive = 1;
 
 	if (process_alive) {
 	    sleep(1);
@@ -1414,7 +1553,7 @@ check_result(
 
     if (dumppid == -1 && tarpid != -1)
 	dumppid = tarpid;
-    if (dumppid == -1 && application_api_pid != -1)
+    if (dumppid == -1 && application_api_pid != -1 && !ignore_application)
 	dumppid = application_api_pid;
 
     if (dumppid != -1) {
@@ -1470,7 +1609,7 @@ parse_backup_messages(
 	/*NOTREACHED*/
     }
 
-    goterror = check_result(mesgfd);
+    goterror = check_result(mesgfd, FALSE);
 
     if(errorstr) {
 	error(_("error [%s]"), errorstr);
@@ -1732,6 +1871,24 @@ start_index(
   close(3);
   close(dbfd());
   exit(exitcode);
+}
+
+gpointer
+handle_app_stderr(
+     gpointer data)
+{
+    FILE *dumperr = (FILE *)data;
+    char *line;
+    while ((line = pgets(dumperr)) != NULL) {
+	if (strlen(line) > 0) {
+	    fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
+	    g_debug("error: %s", line);
+//	    result = 1;
+	}
+	amfree(line);
+    }
+    fclose(dumperr);
+    return NULL;
 }
 
 gpointer

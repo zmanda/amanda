@@ -176,7 +176,7 @@ build_name(
 	afilename = g_strconcat(dbgdir, filename, NULL);
 	*mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600004, MSG_ERROR, 2,
-				"filename", g_strdup(afilename),
+				"filename", afilename,
 				errno     , errno));
 	amfree(afilename);
 	amfree(filename);
@@ -242,7 +242,7 @@ add_include(
 	*mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600005,
 				optional ? MSG_INFO :  MSG_ERROR, 1,
-				"include", g_strdup(ainc)));
+				"include", ainc));
     }
     else {
 	char *incname = ainc+2;
@@ -343,7 +343,7 @@ build_exclude(
 				__FILE__, __LINE__, 4600002,
 				dle->exclude_optional && errno == ENOENT ? MSG_INFO : MSG_ERROR,
 				2,
-				"exclude", g_strdup(exclname),
+				"exclude", exclname,
 				"errno"  , errno));
 		    }
 		    amfree(exclname);
@@ -353,7 +353,7 @@ build_exclude(
 	} else {
 	    *mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600003, MSG_ERROR, 2,
-				"exclude", g_strdup(filename),
+				"exclude", filename,
 				"errno"  , errno));
 	}
     }
@@ -413,7 +413,7 @@ build_include(
 				__FILE__, __LINE__, 4600006,
 				dle->include_optional && errno == ENOENT ? MSG_INFO : MSG_ERROR,
 				2,
-				"include", g_strdup(inclname),
+				"include", inclname,
 				"errno"  , errno));
 		   }
 		   amfree(inclname);
@@ -423,7 +423,7 @@ build_include(
 	} else {
 	    *mlist = g_slist_append(*mlist, build_message(
 				__FILE__, __LINE__, 4600007, MSG_ERROR, 2,
-				"include", g_strdup(filename),
+				"include", filename,
 				"errno"  , errno));
 	}
     }
@@ -883,10 +883,11 @@ merge_dles_properties(
 
 void
 run_client_script(
-    script_t     *script,
-    execute_on_t  execute_on,
-    g_option_t   *g_options,
-    dle_t	 *dle)
+    script_t        *script,
+    execute_on_t     execute_on,
+    g_option_t      *g_options,
+    dle_t	    *dle,
+    backup_result_t  result)
 {
     pid_t     scriptpid;
     int       scriptin, scriptout, scripterr;
@@ -1024,6 +1025,12 @@ run_client_script(
 	g_ptr_array_add(argv_ptr, g_strdup("--timestamp"));
 	g_ptr_array_add(argv_ptr, g_strdup(g_options->timestamp));
     }
+    if (result == R_SUCCESS) {
+	g_ptr_array_add(argv_ptr, g_strdup("--success"));
+    } else if (result == R_FAILED) {
+	g_ptr_array_add(argv_ptr, g_strdup("--failed"));
+    }
+
     if (dle->levellist) {
 	levellist_t levellist;
 	char number[NUM_STR_SIZE];
@@ -1276,11 +1283,12 @@ run_client_script_err_recover(
 
 int
 run_client_scripts(
-    execute_on_t  execute_on,
-    g_option_t   *g_options,
-    dle_t	 *dle,
-    FILE         *streamout,
-    message_t    *(*fprint_message)(FILE *out, message_t *message))
+    execute_on_t     execute_on,
+    g_option_t      *g_options,
+    dle_t	    *dle,
+    FILE            *streamout,
+    backup_result_t  result,
+    message_t       *(*fprint_message)(FILE *out, message_t *message))
 {
     GSList          *scriptlist;
     script_t        *script;
@@ -1292,7 +1300,7 @@ run_client_scripts(
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
 	script = (script_t *)scriptlist->data;
-	run_client_script(script, execute_on, g_options, dle);
+	run_client_script(script, execute_on, g_options, dle, result);
 	if (script->result) {
 	    switch (execute_on) {
 	    case EXECUTE_ON_PRE_DLE_AMCHECK:

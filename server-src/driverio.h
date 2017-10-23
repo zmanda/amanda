@@ -129,6 +129,7 @@ typedef struct sched_s {
     char *src_pool;
     char *src_label;
     int   src_fileno;
+    char *try_again_message;
 } sched_t;
 
 typedef struct schedlist_s {
@@ -159,6 +160,8 @@ typedef struct dumper_s {
     int result;
     gboolean sent_command;
     int output_port;		/* output port */
+    int sent_result;		/* result to dumper sent */
+    int dump_finish;		/* DUMP_FINISH is received */
     event_handle_t *ev_read;	/* read event handle */
     job_t *job;
 } dumper_t;

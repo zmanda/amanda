@@ -166,7 +166,7 @@ sub post {
     $self->{'curl'}->setopt(CURLOPT_URL, $url);
     $self->{'curl'}->setopt(CURLOPT_POST, 1);
     $self->{'curl'}->setopt(CURLOPT_POSTFIELDS, $postfields);
-    $self->{'curl'}->setopt(CURLOPT_POSTFIELDSIZE, length($postfields));
+    $self->{'curl'}->setopt(CURLOPT_POSTFIELDSIZE, length($postfields) || 0);
     $self->{'curl'}->setopt(CURLOPT_HTTPHEADER, [
 		"Content-Type: application/json; charset=utf-8" ]);
 

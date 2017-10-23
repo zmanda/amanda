@@ -99,6 +99,7 @@ full_tests = \
 	amstatus \
 	amvault \
 	example \
+	failure-application-stderr \
 	failure-client-custom-compress \
 	failure-client-custom-compress-end \
 	failure-client-custom-compress-not-found \
@@ -107,6 +108,7 @@ full_tests = \
 	failure-client-encrypt-end \
 	failure-client-encrypt-not-found \
 	failure-client-encrypt-no-exec \
+	failure-dumper-try-again \
 	failure-server-custom-compress \
 	failure-server-custom-compress-end \
 	failure-server-custom-compress-not-found \

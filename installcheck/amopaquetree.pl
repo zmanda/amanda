@@ -59,7 +59,7 @@ sub rsync_is_unusable {
 
 my $why = rsync_is_unusable();
 unless ( $why ) {
-    plan tests => 26;
+    plan tests => 28;
 } else {
     plan skip_all => $why;
 }
@@ -72,6 +72,10 @@ is($support->{'MESSAGE-LINE'}, 'YES', "supports messages");
 is($support->{'CLIENT-ESTIMATE'}, 'YES', "supports estimates");
 is($support->{'RECORD'}, 'YES', "supports record");
 is($support->{'MULTI-ESTIMATE'}, 'YES', "supports multi-estimates");
+is($support->{'CMD-STREAM'}, 'YES',
+    "supports command stream to/from sendbackup");
+is($support->{'WANT-SERVER-BACKUP-RESULT'}, 'YES',
+    "supports server backup results");
 
 my $root_dir = "$Installcheck::TMP/installcheck-amopaquetree";
 my $back_dir = "$root_dir/to_backup";

@@ -35,7 +35,7 @@ use Amanda::Constants;
 
 sub new {
     my $class = shift;
-    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $mailto) = @_;
+    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $mailto, $success, $failed) = @_;
     my $self = $class->SUPER::new($execute_where, $config);
 
     $self->{execute_where} = $execute_where;
@@ -49,6 +49,8 @@ sub new {
     $self->{collection}    = $collection;
     $self->{record}        = $record;
     $self->{mailto}        = [ @{$mailto} ]; # Copy the array
+    $self->{success}       = $success;
+    $self->{failed}        = $failed;
 
     return $self;
 }
@@ -184,8 +186,14 @@ sub sendmail {
    my @args = ( "-s", "$self->{config} $function $self->{host} $self->{disk} $self->{device} " . join (" ", @{$self->{level}}), $dest );
    debug("cmd: $Amanda::Constants::MAILER -s \"$subject\" " . $dest);
    my $mail;
+   my $result = "";
+   if (defined $self->{success}) {
+      $result = "SUCCESS ";
+   } elsif (defined $self->{failed}) {
+      $result = "FAILED ";
+   }
    open $mail, '|-', $Amanda::Constants::MAILER, '-s', $subject, $dest;
-   print $mail "$self->{action} $self->{config} $function $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
+   print $mail "$result$self->{action} $self->{config} $function $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
    close $mail;
 }
 
@@ -193,7 +201,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: script-email <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
+Usage: script-email <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email> [--success|--failed].
 EOF
     exit(1);
 }
@@ -210,6 +218,8 @@ my $opt_message;
 my $opt_collection;
 my $opt_record;
 my @opt_mailto;
+my $opt_success;
+my $opt_failed;
 
 my @orig_argv = @ARGV;
 
@@ -226,7 +236,9 @@ GetOptions(
     'message=s'       => \$opt_message,
     'collection=s'    => \$opt_collection,
     'record=s'        => \$opt_record,
-    'mailto=s'        => \@opt_mailto
+    'mailto=s'        => \@opt_mailto,
+    'success'         => \$opt_success,
+    'failed'          => \$opt_failed
 ) or usage();
 
 if (defined $opt_version) {
@@ -234,7 +246,7 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $script = Amanda::Script::Script_email->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_mailto);
+my $script = Amanda::Script::Script_email->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_mailto, $opt_success, $opt_failed);
 
 Amanda::Debug::debug("Arguments: " . join(' ', @orig_argv));
 

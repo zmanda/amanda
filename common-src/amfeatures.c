@@ -217,6 +217,8 @@ am_init_feature_set(void)
 
 	am_add_feature(f, fe_sendbackup_req_options_data_shm_control_name);
 	am_add_feature(f, fe_req_options_timestamp);
+	am_add_feature(f, fe_sendbackup_stream_cmd);
+	am_add_feature(f, fe_sendbackup_stream_cmd_get_dumper_result);
     }
     return f;
 }

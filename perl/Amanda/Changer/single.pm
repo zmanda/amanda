@@ -208,9 +208,11 @@ sub do_release {
     my $self = shift;
     my %params = @_;
 
-    $self->{'device'}->eject() if (exists $self->{'device'} and
-				   exists $params{'eject'} and
-				   $params{'eject'});
+    $self->{'device'}->eject() if (exists $self->{'device'} &&
+				   ((exists $params{'eject'} &&
+				     $params{'eject'}) ||
+				    (exists $params{'need_another'} &&
+				     $params{'need_another'})));
 
     $self->{'chg'}->{'reserved'} = 0;
 

@@ -632,6 +632,7 @@ set_message(
     char *msg = NULL;
     char *hint = NULL;
     GString *result;
+    gboolean free_msg = FALSE;
 
     init_errcode();
 
@@ -1140,6 +1141,7 @@ set_message(
                          "  %{remote_errors} problems found.",
                          remote_errors);
 	msg  = g_strdup_printf("%s%s", a, b);
+	free_msg = TRUE;
     } else if (message->code == 2800206) {
 	msg  = "%{hostname}: selfcheck request failed: %{errstr}";
     } else if (message->code == 2800207) {
@@ -1561,6 +1563,8 @@ set_message(
 	    message->hint = g_string_free(result, FALSE);
 	}
     }
+    if (free_msg)
+	g_free(msg);
 }
 
 static GString *

@@ -456,7 +456,7 @@ main(
     }
     for (est = est_list; est != NULL; est = est->next) {
 	host_scripts_exit_status += run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
-		g_options, est->dle, stdout, NULL);
+		g_options, est->dle, stdout, R_BOGUS, NULL);
     }
     if (host_scripts_exit_status) {
 	dbclose();
@@ -509,7 +509,7 @@ main(
 		dumpsrunning--;
 		est->dle_scripts_exit_status += run_client_scripts(
 			EXECUTE_ON_POST_DLE_ESTIMATE, g_options,
-			est->dle, stdout, NULL);
+			est->dle, stdout, R_BOGUS, NULL);
 	    }
 	}
 	/*
@@ -561,7 +561,7 @@ main(
 	    done = 0;
 	    est->dle_scripts_exit_status += run_client_scripts(
 			EXECUTE_ON_PRE_DLE_ESTIMATE, g_options,
-			est->dle, stdout, NULL);
+			est->dle, stdout, R_BOGUS, NULL);
 
 	    if (est->dle_scripts_exit_status == 0) {
 		if ((est->child = fork()) == 0) {
@@ -580,7 +580,7 @@ main(
 
     for(est = est_list; est != NULL; est = est->next) {
 	host_scripts_exit_status += run_client_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
-			g_options, est->dle, stdout, NULL);
+			g_options, est->dle, stdout, R_BOGUS, NULL);
     }
 
     est_prev = NULL;
@@ -2644,7 +2644,9 @@ getsize_application_api(
 	}
 	size1 = (off_t)size1_;
 	size2 = (off_t)size2_;
-	if (size1 <= 0 || size2 <=0)
+	if (size1 <= -2 && size2 <= -2)
+	    size = -2;
+	else if (size1 <= 0 || size2 <=0)
 	    size = -1;
 	else if (size1 * size2 > 0)
 	    size = size1 * size2;

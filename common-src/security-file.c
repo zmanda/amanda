@@ -134,10 +134,12 @@ security_file_get_boolean(
 
     message = open_security_file(&sec_file);
     if (message) {
+	fprintf(stderr, "%s\n", get_message(message));
 	return FALSE;
     }
 
     if (!sec_file) {
+	fprintf(stderr, "No sec_file\n");
 	return FALSE;
     }
 
@@ -195,10 +197,12 @@ security_file_get_portrange(
     *phigh = -1;
     message = open_security_file(&sec_file);
     if (message) {
+	fprintf(stderr, "%s\n", get_message(message));
 	return FALSE;
     }
 
     if (!sec_file) {
+	fprintf(stderr, "No sec_file\n");
 	return FALSE;
     }
 

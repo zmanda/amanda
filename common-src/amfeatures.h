@@ -248,6 +248,8 @@ typedef enum {
 
     fe_sendbackup_req_options_data_shm_control_name,
     fe_req_options_timestamp,
+    fe_sendbackup_stream_cmd,
+    fe_sendbackup_stream_cmd_get_dumper_result,
 
     /*
      * All new features must be inserted immediately *before* this entry.

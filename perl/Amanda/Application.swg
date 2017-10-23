@@ -101,6 +101,23 @@ sub _set_mesgout {
     $self->{mesgout} = $mesgout;
 }
 
+sub _set_cmdinout {
+    my $self = shift;
+
+    if (defined $self->{cmd_from_sendbackup}) {
+	$self->{cmdin} = IO::Handle->new();
+	$self->{cmdin}->fdopen($self->{cmd_from_sendbackup},"r") || die("Can't open cmdin_fd: $!");
+	Amanda::Debug::debug("cmd_from_sendbackup: $self->{cmd_from_sendbackup}");
+    }
+
+    if (defined $self->{cmd_to_sendbackup}) {
+	$self->{cmdout} = IO::Handle->new();
+	$self->{cmdout}->fdopen($self->{cmd_to_sendbackup},"a") || die("Can't open cmdout_fd: $!");
+	$self->{cmdout}->autoflush(1);
+	Amanda::Debug::debug("cmd_to_sendbackup: $self->{cmd_to_sendbackup}");
+    }
+}
+
 %}
 
 /* C interfaces used by the above */

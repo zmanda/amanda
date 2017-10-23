@@ -200,6 +200,7 @@ ndmconn_connect_sockaddr_in (struct ndmconn *conn,
 
 	/* reserved port? */
 	if (connect (fd, (struct sockaddr *)sin, sizeof *sin) < 0) {
+		// leak memory
 		err = malloc(1024);
 		snprintf(err, 1023, "connect failed: %s", strerror(errno));
 		goto error_out;

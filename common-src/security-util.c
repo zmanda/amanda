@@ -140,6 +140,7 @@ sec_close(
     }
     /* keep us from getting here again */
     rh->sech.driver = NULL;
+    amfree(rh->dle_hostname);
     amfree(rh->hostname);
     amfree(rh);
 }
@@ -2104,7 +2105,7 @@ sec_tcp_conn_put(
 	aclose(rc->read);
     if (rc->write != -1)
 	aclose(rc->write);
-    if (rc->pid != -1) {
+    if (rc->pid != -1 && !rc->child_watch) {
 	int pid;
 	int count = 50;
 
@@ -2824,13 +2825,13 @@ check_user_ruserok(
     }
     fclose(fError);
 
-    pid = wait(&exitcode);
+    pid = waitpid(ruserok_pid, &exitcode, 0);
     while (pid != ruserok_pid) {
 	if ((pid == (pid_t) -1) && (errno != EINTR)) {
 	    amfree(result);
 	    return g_strdup_printf(_("ruserok wait failed: %s"), strerror(errno));
 	}
-	pid = wait(&exitcode);
+	pid = waitpid(ruserok_pid, &exitcode, 0);
     }
     if (!WIFEXITED(exitcode) || WEXITSTATUS(exitcode) != 0) {
 	amfree(result);

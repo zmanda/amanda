@@ -251,6 +251,10 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
 
+    if (geteuid() != getuid()) {
+	error(_("planner must not be setuid root"));
+    }
+
     /* drop root privileges */
     set_root_privs(-1);
 
@@ -279,10 +283,6 @@ main(
 
     add_amanda_log_handler(amanda_log_stderr);
     add_amanda_log_handler(amanda_log_trace_log);
-
-    if (geteuid() == 0 || getuid() == 0) {
-	error(_("planner must not be setuid root"));
-    }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));
@@ -1550,7 +1550,7 @@ static void get_estimates(void)
 			ep1 = find_est_for_dp(dp1);
 			run_server_dle_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
 					   get_config_name(), planner_timestamp,
-					   dp1, ep1->estimate[0].level);
+					   dp1, ep1->estimate[0].level, BOGUS);
 		    }
 		}
 		getsize(hostp);
@@ -2090,6 +2090,7 @@ static void handle_result(
     char *qname;
     char *disk = NULL;
     long long size_;
+    pid_t pid;
 
     hostp = (am_host_t *)datap;
     hostp->status = HOST_READY;
@@ -2361,7 +2362,7 @@ next_line:
                ep->estimate[2].nsize > (gint64)0)))) {
 	    run_server_dle_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
 			       get_config_name(), planner_timestamp, dp,
-                               ep->estimate[0].level);
+                               ep->estimate[0].level, BOGUS);
 	    ep->post_dle = 1;
 	}
 	amfree(qname);
@@ -2380,7 +2381,9 @@ next_line:
     getsize(hostp);
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
-    while(waitpid(-1, NULL, WNOHANG)> 0);
+    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+	g_debug("reap: %d", (int)pid);
+    }
     if (errbuf)
 	goto error_return;
     return;
@@ -2463,7 +2466,9 @@ next_line:
     amfree(errbuf);
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
-    while(waitpid(-1, NULL, WNOHANG)> 0);
+    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+	g_debug("reap: %d", (int)pid);
+    }
 }
 
 

@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
+use Test::More tests => 30;
 
 use lib '@amperldir@';
 use strict;
@@ -43,6 +43,10 @@ is($support->{'MESSAGE-LINE'}, 'YES', "supports messages");
 is($support->{'CLIENT-ESTIMATE'}, 'YES', "supports estimates");
 is($support->{'RECORD'}, 'YES', "supports record");
 is($support->{'MULTI-ESTIMATE'}, 'YES', "supports multi-estimates");
+is($support->{'CMD-STREAM'}, 'YES',
+    "supports command stream to/from sendbackup");
+is($support->{'WANT-SERVER-BACKUP-RESULT'}, 'YES',
+    "supports server backup results");
 
 my $root_dir = "$Installcheck::TMP/installcheck-amgrowingfile";
 my $back_file = "$root_dir/to_backup";

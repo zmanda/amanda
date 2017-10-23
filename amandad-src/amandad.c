@@ -1113,7 +1113,7 @@ s_processrep(
      * Format is "CONNECT <tag> <handle> <tag> <handle> etc...
      * Example:
      *
-     *  CONNECT DATA 4 MESG 5 INDEX 6
+     *  CONNECT DATA 4 MESG 5 INDEX 6 CMD 7
      *
      * The tags are arbitrary.  The handles are in the DATA_FD pool.
      * We need to map these to security streams and pass them back
@@ -1500,6 +1500,12 @@ process_readnetfd(
 	}
 	security_stream_close(dh->netfd);
 	dh->netfd = NULL;
+	if (as->service == SERVICE_SENDBACKUP &&
+	    !as->seen_info_end) {
+	    start_sendbackup_data = TRUE;
+	    as->seen_info_end = TRUE;
+	    goto sendbackup_data;
+	}
 	for (dh = &as->data[0]; dh < &as->data[DATA_FD_COUNT]; dh++) {
 	    if (dh->netfd != NULL &&
 		(as->service != SERVICE_SENDBACKUP ||
@@ -1545,6 +1551,7 @@ process_readnetfd(
 	return;
     }
 
+sendbackup_data:
     if (start_sendbackup_data) {
 	struct datafd_handle *dh = &as->data[0];
 	amandad_debug(1, "Opening datafd to sendbackup (delayed until sendbackup sent header info)\n");
