@@ -1,3 +1,7 @@
+2017-10-23  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/ampgsql.pl: Fix parsing of psql version for version
+	  10.0
+
 2017-10-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2.pm: New Catalog2
 	* perl/Amanda/DB/Catalog2/SQLite.pm: New Catalog2 SQlite driver

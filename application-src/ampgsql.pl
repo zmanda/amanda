@@ -742,7 +742,21 @@ sub _get_pg_version {
     waitpid($pid, 0);
     $self->{'die_cb'}->("could not run psql to determine version") if (($? >> 8) != 0);
 
-    my ($maj, $min, $pat) = ($lines[0] =~ / ([0-9]+)\.([0-9]+)\.([0-9]+).*$/);
+    my ($maj, $min, $pat);
+    if ($lines[0] =~ /([0-9]+)\.([0-9]+)\.([0-9]+)/) {
+        $maj = $1;
+        $min = $2;
+        $pat = $3;
+    } elsif ($lines[0] =~ /([0-9]+)\.([0-9]+)/) {
+        $maj = $1;
+        $min = $2;
+        $pat = 0;
+    } elsif ($lines[0] =~ /([0-9]+)/) {
+        $maj = $1;
+        $min = 0;
+        $pat = 0;
+    }
+
     return $maj * 10000 + $min * 100 + $pat;
 }
 
