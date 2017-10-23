@@ -157,6 +157,10 @@ with any usable C<GetOptions> option name. Option-validation code should use
 C<store_option> to store the final, validated value; it uses the same
 convention, so the value will be properly retrieved here.
 
+For a I<POST-*> script, if the option C<--success> was passed,
+C<$self-\>{'succeeded'}> is set to 1, or to 0 if C<--failed> was passed.
+It is not defined under other conditions.
+
 =cut
 
 sub new {
@@ -173,6 +177,26 @@ sub new {
     }
     my $self = $class->SUPER::new($execute_where, $options{'config'});
     $self->{'options'} = \%options;
+
+    my $opt_success = exists $self->{'options'}->{'success'};
+    my $opt_failure = exists $self->{'options'}->{'failed'};
+
+    if ( $opt_success ) {
+	die Amanda::Script::InvocationError->transitionalError(item => 'option',
+	    value => 'success', problem => 'passed to a non-POST-* script')
+	    unless $execute_where =~ m/^post-/i;
+	die Amanda::Script::InvocationError->transitionalError(item => 'option',
+	    value => 'failed', problem => 'combined with --success')
+	    if $opt_failure;
+	$self->{'succeeded'} = 1;
+    }
+    elsif ( $opt_failure ) {
+	die Amanda::Script::InvocationError->transitionalError(item => 'option',
+	    value => 'failed', problem => 'passed to a non-POST-* script')
+	    unless $execute_where =~ m/^post-/i;
+	$self->{'succeeded'} = 0;
+    }
+
     return $self;
 }
 
@@ -302,7 +326,7 @@ sub declare_options {
     my ( $class, $refopthash, $refoptspecs ) = @_;
     push @$refoptspecs,
         ( 'config=s', 'host=s', 'disk=s', 'device=s', 'level=i@',
-	  'execute-where=s', 'timestamp=s' );
+	  'execute-where=s', 'timestamp=s', 'success', 'failed' );
 }
 
 =head1 INSTANCE METHODS USABLE IN SUBCOMMANDS

@@ -195,6 +195,11 @@ Design to defer checks, or other operations that may throw exceptions, into
 mathods called after C<new>, such as a C<check...> or C<command...> method.
 Exceptions thrown from C<new> itself will not be caught.
 
+Will set C<$self-\>{cmd_from_sendbackup}> and C<$self-\>{cmd_to_sendbackup}
+(to integer file descriptor numbers) if the corresponding options were passed;
+the superclass expects this, and will (in C<do>) set C<$self-\>{cmdin}> and
+C<$self-\>{cmdout}> to corresponding Perl filehandles.
+
 =cut
 
 sub new {
@@ -211,6 +216,12 @@ sub new {
     }
     my $self = $class->SUPER::new($options{'config'});
     $self->{'options'} = \%options;
+
+    $self->{'cmd_from_sendbackup'} = $self->{'options'}->{'cmd-from-sendbackup'}
+	if exists $self->{'options'}->{'cmd-from-sendbackup'};
+    $self->{'cmd_to_sendbackup'} = $self->{'options'}->{'cmd-to-sendbackup'}
+	if exists $self->{'options'}->{'cmd-to-sendbackup'};
+
     return $self;
 }
 
@@ -426,7 +437,8 @@ sub declare_support_options {
 
 Declare options for the C<backup> subcommand. Unless overridden, this simply
 declares the C<common> ones plus C<message>, C<index>, C<level>, C<record>, and
-C<state-stream>.
+C<state-stream>, C<timestamp>, C<cmd-to-sendbackup>, C<cmd-from-sendbackup>, and
+C<server-backup-result> if supported.
 
 =cut
 
@@ -437,6 +449,11 @@ sub declare_backup_options {
     push @$refoptspecs, (
         'message=s', 'index=s', 'level=i', 'record', 'state-stream=i' );
     push @$refoptspecs, "timestamp=s" if $class->supports('timestamp');
+
+    push @$refoptspecs, "cmd-to-sendbackup=i", "cmd-from-sendbackup=i"
+	if $class->supports('cmd_stream');
+    push @$refoptspecs, "server-backup-result"
+	if $class->supports('want_server_backup_result');
 }
 
 =head2 C<declare_restore_options>
@@ -561,6 +578,24 @@ Should return C<'CWD'> or C<'REMOTE'>. Default if not overridden is C<CWD>.
 
 sub recover_path { my ( $class ) = @_; return "CWD"; }
 
+=head2 C<supports_cmd_stream>
+
+Can command pipes to and from the parent (sendbackup) be accepted?
+Default if not overridden is C<1>.
+
+=cut
+
+sub supports_cmd_stream { my ( $class ) = @_; return 1; }
+
+=head2 C<supports_want_server_backup_result>
+
+Can the application use a final backup result from the parent (sendbackup)?
+Default if not overridden is C<1>.
+
+=cut
+
+sub supports_want_server_backup_result { my ( $class ) = @_; return 1; }
+
 =head2 C<supports>
 
     $class->supports(name)
@@ -647,9 +682,20 @@ my $checked_max_level = sub {
     my $mxl = blessed($self)->max_level();
     $mxl = $amanda_max if 'DEFAULT' eq $mxl;
     die Amanda::Application::ImplementationError->transitionalError(
-        problem => "unusable",  "max_level", value => $mxl
+        problem => "unusable",  item => "max_level", value => $mxl
     ) unless defined $mxl and $mxl =~ /^\d{1,3}$/ and 0 + $mxl <= $amanda_max;
     return 0 + $mxl;
+};
+
+my $checked_want_server_backup_result = sub {
+    my ( $self ) = @_;
+    my $has_cmd_stream = blessed($self)->supports('cmd_stream');
+    my $wants_sbr = blessed($self)->supports('want_server_backup_result');
+    die Amanda::Application::ImplementationError->transitionalError(
+	item => "want_server_backup_result",
+        problem => "cannot be supported unless cmd_stream is")
+	if $wants_sbr and not $has_cmd_stream;
+    return $wants_sbr;
 };
 
 =head1 INSTANCE METHODS SUPPORTING LOCAL PERSISTENT STATE
@@ -1065,6 +1111,15 @@ sub command_support {
     if ( defined $Amanda::Feature::fe_req_options_timestamp ) {
         $self->$say_supports("TIMESTAMP", "timestamp");
     }
+
+    if ( defined $Amanda::Feature::fe_sendbackup_stream_cmd ) {
+        $self->$say_supports("CMD-STREAM", "cmd_stream");
+    }
+
+    if ( defined $Amanda::Feature::fe_sendbackup_stream_cmd_get_dumper_result ){
+        print "WANT-SERVER-BACKUP-RESULT ".
+	    ($self->$checked_want_server_backup_result()? 'YES': 'NO')."\n";
+    }
 }
 
 =head2 METHODS FOR THE C<backup> SUBCOMMAND
@@ -1119,6 +1174,12 @@ sub check_backup_options {
     $self->check(
 	! $self->{'options'}->{'record'} or blessed($self)->supports('record'),
 	'not supported --record');
+
+    $self->check(
+	! $self->{'options'}->{'server-backup-result'} or
+	    defined $self->{cmd_to_sendbackup} and
+	    defined $self->{cmd_from_sendbackup},
+	'--server-backup-result without --cmd-to/from-sendbackup');
 }
 
 =head3 C<check_level_option>
@@ -1165,6 +1226,31 @@ sub emit_index_entry {
     $self->{'index_out'}->print(blessed($self)->gtar_escape_quote($name)."\n");
 }
 
+=head3 C<backup_succeeded>
+
+    $self->backup_succeeded()
+
+If the parent has not passed C<--server-backup-result>, return true as an
+optimistic assumption; otherwise, wait for the parent to report the final
+success of storing the backup, and return true for a result of success or false
+for a result of failure, or throw an exception for any other response.
+
+=cut
+
+sub backup_succeeded {
+    my ( $self ) = @_;
+
+    return 1 unless $self->{'options'}->{'server-backup-result'};
+
+    my $report = $self->{'cmdin'}->getline();
+    chomp $report;
+    return 1 if 'SUCCESS' eq $report;
+    return 0 if 'FAILED' eq $report;
+    die Amanda::Application::EnvironmentError->transitionalError(
+	item => 'backup result from server', value => $report,
+	problem => 'neither SUCCESS nor FAILED');
+}
+
 =head3 C<command_backup>
 
 Performs common housekeeping tasks, calling C<inner_backup> to do the
@@ -1205,7 +1291,7 @@ sub command_backup {
     }
 
     if ( $self->{'options'}->{'record'} and defined $self->{'localstate'} ) {
-	if ( 1 ) { # FUTURE: if server confirms backup received and committed
+	if ( $self->backup_succeeded() ) {
 	    $self->write_local_state($self->{'localstate'});
 	} else {
 	    $self->repair_local_state(); # app may need to roll something back
