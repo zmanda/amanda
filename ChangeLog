@@ -1,3 +1,6 @@
+2017-10-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup.c: Fix client compression hang
+
 2017-10-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ampgsql.pl: Fix parsing of psql version for version
 	  10.0

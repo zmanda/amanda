@@ -1395,9 +1395,6 @@ application_api_info_tapeheader(
 	    dbprintf(_("error writing to mesgfd socket (%d): %s"), mesgfd, strerror(errno));
 	    return;
 	}
-	fprintf(mesgstream, "sendbackup: size 0\n");
-	fprintf(mesgstream, "sendbackup: end\n");
-	fflush(mesgstream);
     }
     g_snprintf(line, 1024, "%s/%s restore [./file-to-restore]+\n",
 	       APPLICATION_DIR, prog);
