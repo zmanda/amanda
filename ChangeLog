@@ -1,4 +1,8 @@
 2017-10-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c (read_storage_identlist): Prefer ident to
+	  keyword
+
+2017-10-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup.c: Fix client compression hang
 
 2017-10-23  Jean-Louis Martineau <JMartineau@carbonite.com>

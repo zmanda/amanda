@@ -4280,7 +4280,7 @@ read_storage_identlist(
     free_val_t(val);
     ckseen(&val->seen);
     val->v.identlist = NULL;
-    get_conftoken(CONF_ANY);
+    get_conftoken(CONF_IDENT);
     while (tok == CONF_STRING || tok == CONF_IDENT) {
 	val->v.identlist = g_slist_append(val->v.identlist,
 					  g_strdup(tokenval.v.s));
