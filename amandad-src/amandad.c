@@ -1759,7 +1759,11 @@ service_new(
 	g_options = parse_g_options(option_str, 1);
 	as->data_shm_control_name = g_strdup(g_options->data_shm_control_name);
 	if (!as->data_shm_control_name) {
-	    as->shm_ring = shm_ring_create();
+	    char *errmsg = NULL;
+	    as->shm_ring = shm_ring_create(&errmsg);
+	    if (!as->shm_ring) {
+		g_free(errmsg);
+	    }
 	}
 	free_g_options(g_options);
 	amfree(option_str);

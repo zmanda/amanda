@@ -1038,7 +1038,7 @@ setup_impl(
     XferElement *elt)
 {
     if (elt->input_mech == XFER_MECH_SHM_RING) {
-	elt->shm_ring = shm_ring_create();
+	elt->shm_ring = shm_ring_create(NULL);
     }
 
     return TRUE;

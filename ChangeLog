@@ -1,3 +1,12 @@
+2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/shm-ring.c (shm_ring_create): Take a new errmsg argument,
+	  return NULL on failure
+	* common-src/shm-ring.h (shm_ring_create): Change prototype
+	* amandad-src/amandad.c: handle shm_ring_create return NULL;
+	* device-src/xfer-dest-taper-splitter.c, server-src/dumper.c,
+	  server-src/xfer-dest-holding.c,
+	  xfer-src/element-glue.c: Pass a NULL errmsg to shm_ring_create
+
 2017-10-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c (read_storage_identlist): Prefer ident to
 	  keyword
