@@ -1707,7 +1707,7 @@ send_to_tape_server(
 {
     char *msg = g_strconcat(cmd, "\r\n", NULL);
 
-    g_debug("send_to_tape_server: %s\n", cmd);
+    g_debug("send_to_tape_server: %s", cmd);
     if (security_stream_write(stream, msg, strlen(msg)) < 0)
     {
 	error(_("Error writing to tape server"));

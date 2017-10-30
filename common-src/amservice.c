@@ -375,7 +375,7 @@ handle_result(
 	}
 
 	if (copy_stream) {
-	    g_debug("REP: %s\n", line);
+	    g_debug("REP: %s", line);
 	} else {
 	    fprintf(stdout, "%s\n", line);
 	}

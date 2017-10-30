@@ -1,4 +1,10 @@
 2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* application-src/amgtar.c, client-src/sendbackup.c,
+	  common-src/amservice.c, common-src/amutil.c,
+	  recover-src/amrecover.c, recover-src/extract_list.c,
+	  server-src/dumper.c: Remove "\n" in g_debug
+
+2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup-dump.c: Fix if shared memory is not used
 
 2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>

@@ -1928,7 +1928,7 @@ stderr_thread(
 	} else {
 	    fdprintf(mesgfd, "sendbackup: error [%s]\n", buf);
 	}
-	g_debug("error [%s]\n", buf);
+	g_debug("error [%s]", buf);
 	g_free(buf);
     }
     aaclose(fsp->fd);

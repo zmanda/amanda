@@ -448,7 +448,7 @@ main(
 			break;
 		if (j == NSERVICES) {
 		    global_error = g_strdup_printf("invalid '%s' service as argument to amandad", argv[i]);
-		    g_debug("%s\n", global_error);
+		    g_debug("%s", global_error);
 		}
 		services[j].active = 1;
 	    }
@@ -1941,12 +1941,12 @@ service_new(
 	} else {
 	    service_argv[3] = (char *)NULL;
 	}
-	g_debug("service_argv[0] = %s\n", service_argv[0]);
-	g_debug("service_argv[1] = %s\n", service_argv[1]);
-	g_debug("service_argv[2] = %s\n", service_argv[2]);
-	g_debug("service_argv[3] = %s\n", service_argv[3]);
-	g_debug("service_argv[4] = %s\n", service_argv[4]);
-	g_debug("service_argv[5] = %s\n", service_argv[5]);
+	g_debug("service_argv[0] = %s", service_argv[0]);
+	g_debug("service_argv[1] = %s", service_argv[1]);
+	g_debug("service_argv[2] = %s", service_argv[2]);
+	g_debug("service_argv[3] = %s", service_argv[3]);
+	g_debug("service_argv[4] = %s", service_argv[4]);
+	g_debug("service_argv[5] = %s", service_argv[5]);
 	/* close all unneeded fd */
 	close(STDERR_FILENO);
 	dup2(data_write[STDERR_PIPE][1], 2);

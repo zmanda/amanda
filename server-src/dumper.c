@@ -1968,7 +1968,7 @@ handle_shm_ring_to_fd_thread(
 
 	    if (g_str_equal(data_host,"255.255.255.255")) {
 	    }
-	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
+	    g_debug("Sending data to %s:%d", data_host, data_port);
 	    db->fd = stream_client(NULL, data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
 	    if (db->fd == -1 || stream_msg) {
@@ -2446,7 +2446,7 @@ read_datafd(
 		char *s;
 		int size;
 
-		g_debug(_("Sending indirect data output stream: %s:%d\n"), data_host, data_port);
+		g_debug("Sending indirect data output stream: %s:%d", data_host, data_port);
 		db->fd = stream_client(NULL, "localhost", data_port,
 				       STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
 		if (db->fd == -1 || stream_msg) {
@@ -2499,7 +2499,7 @@ read_datafd(
 		data_port = atoi(s);
 	    }
 
-	    g_debug(_("Sending data to %s:%d\n"), data_host, data_port);
+	    g_debug("Sending data to %s:%d", data_host, data_port);
 	    db->fd = stream_client(NULL, data_host, data_port,
 				   STREAM_BUFSIZE, 0, NULL, 0, &stream_msg);
 	    if (db->fd == -1 || stream_msg) {

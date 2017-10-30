@@ -234,7 +234,7 @@ send_command(
     buffer[strlen(cmd)+1] = '\n';
     buffer[strlen(cmd)+2] = '\0';
 
-    g_debug("sending: %s\n", buffer);
+    g_debug("sending: %s", buffer);
     if(security_stream_write(streams[MESGFD].fd, buffer, strlen(buffer)) < 0) {
 	return -1;
     }

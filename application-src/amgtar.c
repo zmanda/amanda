@@ -1419,7 +1419,7 @@ amgtar_backup(
     if (argument->cmd_from_sendbackup >= 0) {
 	cmdin = fdopen(argument->cmd_from_sendbackup, "r");
 	if (!cmdin) {
-	    g_debug("sendbackup: error [Can't open cmdin: %s]\n",
+	    g_debug("sendbackup: error [Can't open cmdin: %s]",
                     strerror(errno));
 	    fprintf(mesgstream, "sendbackup: error [Can't open cmdin: %s]\n",
 		    strerror(errno));
@@ -1429,7 +1429,7 @@ amgtar_backup(
     if (argument->cmd_to_sendbackup >= 0) {
 	cmdout = fdopen(argument->cmd_to_sendbackup, "w");
 	if (!cmdout) {
-	    g_debug("sendbackup: error [Can't open cmdout: %s]\n",
+	    g_debug("sendbackup: error [Can't open cmdout: %s]",
                     strerror(errno));
 	    fprintf(mesgstream, "sendbackup: error [Can't open cmdout: %s]\n",
 		    strerror(errno));
