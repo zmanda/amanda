@@ -1736,7 +1736,7 @@ setup_impl(
 	break;
 
     case mech_pair(XFER_MECH_SHM_RING, XFER_MECH_PUSH_BUFFER_STATIC):
-	elt->shm_ring = shm_ring_create();
+	elt->shm_ring = shm_ring_create(NULL);
 	self->need_thread = TRUE;
 	break;
 

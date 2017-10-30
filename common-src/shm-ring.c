@@ -673,8 +673,10 @@ g_debug("am_sem_close %p %d", sem, nb);
 }
 
 shm_ring_t *
-shm_ring_create(void)
+shm_ring_create(
+    char **errmsg)
 {
+    char *msg;
     shm_ring_t *shm_ring = g_new0(shm_ring_t, 1);
 
     g_debug("shm_ring_create");
@@ -682,17 +684,32 @@ shm_ring_create(void)
     shm_unlink(shm_ring->shm_control_name);
     shm_ring->shm_control = shm_open(shm_ring->shm_control_name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (shm_ring->shm_control == -1) {
-	g_debug("shm_control failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
+	msg = g_strdup_printf("shm_control failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
+	g_debug("%s", msg);
+	if (*errmsg) {
+	    *errmsg = msg;
+	    return NULL;
+	}
 	exit(1);
     }
     if (ftruncate(shm_ring->shm_control, sizeof(shm_ring_control_t)) == -1) {
-	g_debug("ftruncate of shm_control failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
+	msg = g_strdup_printf("ftruncate of shm_control failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
+	g_debug("%s", msg);
+	if (*errmsg) {
+	    *errmsg = msg;
+	    return NULL;
+	}
 	exit(1);
     }
     shm_ring->mc = mmap(NULL, sizeof(shm_ring_control_t), PROT_READ|PROT_WRITE,
 			 MAP_SHARED, shm_ring->shm_control, 0);
     if (shm_ring->mc == MAP_FAILED) {
-	g_debug("shm_ring shm_ring.mc failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
+	msg = g_strdup_printf("shm_ring shm_ring.mc failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
+	g_debug("%s", msg);
+	if (*errmsg) {
+	    *errmsg = msg;
+	    return NULL;
+	}
 	exit(1);
     }
     shm_ring->mc->write_offset = 0;
@@ -720,7 +737,12 @@ shm_ring_create(void)
     shm_ring->shm_data = shm_open(shm_ring->mc->shm_data_name,
 			O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (shm_ring->shm_data == -1) {
-	g_debug("shm_data failed '%s': %s", shm_ring->mc->shm_data_name,strerror(errno));
+	msg = g_strdup_printf("shm_data failed '%s': %s", shm_ring->mc->shm_data_name,strerror(errno));
+	g_debug("%s", msg);
+	if (*errmsg) {
+	    *errmsg = msg;
+	    return NULL;
+	}
 	exit(1);
     }
     sem_unlink(shm_ring->mc->sem_write_name);

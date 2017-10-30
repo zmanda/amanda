@@ -3694,7 +3694,7 @@ startup_dump(
 #endif
 	g_str_equal(auth,"local")) {
 	if (!shm_name) {
-	    shm_ring_consumer = shm_ring_create();
+	    shm_ring_consumer = shm_ring_create(NULL);
 	    shm_name = g_strdup(shm_ring_consumer->shm_control_name);
 	} else if (am_has_feature(their_features, fe_sendbackup_req_options_data_shm_control_name)) {
 	    // shm_ring direct
