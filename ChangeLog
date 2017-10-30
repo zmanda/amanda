@@ -1,4 +1,8 @@
 2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Check ORG do not have space if it is use in
+	  autolabel or meta-autolabel
+
+2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/amgtar.c, client-src/sendbackup.c,
 	  common-src/amservice.c, common-src/amutil.c,
 	  recover-src/amrecover.c, recover-src/extract_list.c,
