@@ -300,6 +300,8 @@ static void copy_proplist_foreach_fn(gpointer key_p,
                                      gpointer value_p,
                                      gpointer user_data_p);
 
+static gboolean is_valid_label(char *template);
+
 /*
  * Parser
  */
@@ -6529,6 +6531,8 @@ update_derived_values(
     labelstr_s    *labelstr;
     char          *conf_name;
     autolabel_t   *autolabel;
+    char          *meta_autolabel;
+    char          *org;
     char          *st_name;
 
     conf_name = get_config_name();
@@ -6711,6 +6715,8 @@ update_derived_values(
 	for (st = storage_list; st != NULL; st = st->next) {
 	    labelstr = storage_get_labelstr(st);
 	    autolabel = storage_get_autolabel(st);
+	    meta_autolabel = storage_get_meta_autolabel(st);
+	    org = getconf_str(CNF_ORG);
 	    if (storage_seen(st, STORAGE_LABELSTR) && labelstr->match_autolabel &&
 		!storage_seen(st, STORAGE_AUTOLABEL)) {
 		conf_parserror(_("AUTOLABEL not set and LABELSTR set to MATCH-AUTOLABEL"));
@@ -6721,6 +6727,16 @@ update_derived_values(
 	    } else if (labelstr->match_autolabel) {
 		g_free(labelstr->template);
 		labelstr->template = g_strdup(autolabel->template);
+	    }
+	    if (meta_autolabel) {
+		if (strstr(meta_autolabel, "$o") && !is_valid_label(org)) {
+		    conf_parserror("ORG must not contains space if '$0' is in meta_autolabel");
+		}
+	    }
+	    if (autolabel && autolabel->template) {
+		if (strstr(autolabel->template, "$o") && !is_valid_label(org)) {
+		    conf_parserror("ORG must not contains space if '$0' is in autolabel");
+		}
 	    }
 	    if (!storage_seen(st, STORAGE_POLICY)) {
 		free_val_t(&st->value[STORAGE_POLICY]);
@@ -10925,5 +10941,18 @@ policy_getconf_human(
     policy_key key)
 {
     return policy_getconf(typ, key);
+}
+
+static gboolean
+is_valid_label(
+    char *template)
+{
+    char *t;
+
+    for (t=template; *t != '\0'; t++) {
+	if (*t <= 32)
+	    return FALSE;
+    }
+    return TRUE;
 }
 

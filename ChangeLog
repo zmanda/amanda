@@ -1,4 +1,8 @@
 2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Check ORG do not have space if it is use in
+	  autolabel or meta-autolabel
+
+2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/sendbackup-dump.c: Fix if shared memory is not used
 
 2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
