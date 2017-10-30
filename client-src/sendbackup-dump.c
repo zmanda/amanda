@@ -544,7 +544,7 @@ char *progname;
 	if (have_filter) {
 	    close(client_pipe[1]);
 	    client_crc.in  = client_pipe[0];
-	    client_crc.out = dumpout;
+	    client_crc.out = dataf;
 	    client_crc.thread = g_thread_create(handle_crc_thread,
 				(gpointer)&client_crc, TRUE, NULL);
 	}

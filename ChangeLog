@@ -1,4 +1,7 @@
 2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/sendbackup-dump.c: Fix if shared memory is not used
+
+2017-10-30  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/shm-ring.c (shm_ring_create): Take a new errmsg argument,
 	  return NULL on failure
 	* common-src/shm-ring.h (shm_ring_create): Change prototype
