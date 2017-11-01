@@ -143,6 +143,7 @@ ok(!exists $reply->{'body'}->[0]->{'report'}->{'notes'}->[4], 'no notes[4]');
 is_deeply($reply->{'body'}->[0]->{'report'}->{'failure_summary'}, [
         "  localhost diskname2 lev 0  FAILED [Failed to close holding file '$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0': No space left on device]",
         "  localhost diskname2 lev 0  FAILED [Failed to close holding file '$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0': No space left on device]",
+	"  localhost diskname2 lev 0  partial taper: successfully taped a partial dump",
         ], "failure_summary is correct");
 
 is($reply->{'body'}->[0]->{'report'}->{'usage_by_tape'}->[0]->{'nb'}, '1' , 'one dle on tape 0');
@@ -353,6 +354,7 @@ The next tape Amanda expects to use is: 1 new tape.
 FAILURE DUMP SUMMARY:
   localhost diskname2 lev 0  FAILED [Failed to close holding file '$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0': No space left on device]
   localhost diskname2 lev 0  FAILED [Failed to close holding file '$Installcheck::TMP/holding/$timestamp/localhost.diskname2.0': No space left on device]
+  localhost diskname2 lev 0  partial taper: successfully taped a partial dump
 
 
 STATISTICS:

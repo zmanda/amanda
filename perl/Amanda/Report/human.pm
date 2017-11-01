@@ -667,7 +667,9 @@ sub output_error_summaries
 		    push @dump_failures, "$hostname $qdisk lev $try->{chunker}->{level}  FAILED [$try->{chunker}->{error}]";
 		    $failed = 1;
 		}
-		if (   exists $try->{taper} && exists $try->{dumper} && !exists $dle->{driver}
+		if (   exists $try->{taper}
+		    && ((exists $try->{dumper} && !exists $dle->{driver})
+			|| (!exists $try->{dumper} && !exists $dle->{driver}))
 		    && (   $try->{taper}->{status} eq 'fail'
 			|| (   $try->{taper}->{status} eq 'partial'))) {
 		    my $flush = "FLUSH";
