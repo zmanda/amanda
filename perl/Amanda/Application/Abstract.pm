@@ -169,7 +169,8 @@ sub run {
 	    $exc->on_uncaught($app);
 	}
 	else {
-	    $app->print_to_server_and_die("unexpected: " . $exc);
+	    $app->print_to_server_and_die(
+		"unexpected: " . $exc, $Amanda::Script_App::ERROR);
 	}
     }
 }
