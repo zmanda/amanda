@@ -80,8 +80,11 @@ sub declare_options {
        'logicalvolume=s',
        'snapshotname=s',
        'extents=s',
-       'mountopts=s@'
+       'mountopts=s@',
+       'unmountswhenfilled=s'
        );
+    $class->store_option($refopthash,
+	'unmountswhenfilled', $class->boolean_property_setter($refopthash));
     # properties that have defaults and are not mandatory to receive with the
     # request can be initialized here as an alternative to checking for !defined
     # and applying the defaults in check_properties().
@@ -147,13 +150,27 @@ sub command_post_dle_backup {
         'umount', $dst
     );
 
-    die Amanda::Script::CalledProcessError->transitionalError(
-	cmd => 'umount', returncode => $rslt)
-	unless 0 == $rslt;
+    my $pctused = $self->get_data_percent();
 
-    # TODO: before destroying, run lvs and capture Data% value - see how
-    # close we came to using up allocated --extents capacity in the time it
-    # took to do the backup.
+    if ( 0 == $rslt ) { # The umount succeeded.
+	if ( 100 == $pctused and $self->{'options'}->{'unmountswhenfilled'} ) {
+	    # If we know the OS auto-unmounts snapshots that fill, and our
+	    # explicit unmount did not fail, then we know the snapshot had not
+	    # filled by that point, even if get_data_percent() returned 100
+	    # immediately after. Make $pctused just slightly < 100 then, to
+	    # produce a warning later rather than a hard error.
+	    $pctused -= ldexp(POSIX::DBL_EPSILON, 6); # 2^6 < 100 < 2^7
+	}
+    }
+    else { # The umount failed for some reason.
+	die Amanda::Script::CalledProcessError->transitionalError(
+	    cmd => 'umount', returncode => $rslt)
+	    unless 100 == $pctused;
+	    # If the snapshot filled, do not complain here because of the
+	    # umount failing. Just carry on, and failure because $pctused == 100
+	    # will be reported explicitly later.
+    }
+
     $rslt = system {$self->{'lvmexecutable'}} (
         'lvm',
 	'lvremove', '--force', $vg.'/'.$sn
@@ -162,6 +179,14 @@ sub command_post_dle_backup {
     die Amanda::Script::CalledProcessError->transitionalError(
 	cmd => 'lvremove', returncode => $rslt)
 	unless 0 == $rslt;
+
+    die Amanda::Script::EnvironmentError->transitionalError(
+	item => 'snapshot', value => $sn,
+	problem => 'reached max allocation during backup')
+	unless $pctused < 100;
+    print STDERR "warning: snapshot $sn reached $pctused % allocation " .
+	"during backup\n"
+	unless $pctused < 90;
 }
 
 # In an ideal world, just run at PRE-DLE-ESTIMATE to make one snapshot,
@@ -179,6 +204,36 @@ sub command_post_dle_estimate {
 sub command_pre_dle_backup {
     my ( $self ) = @_;
     $self->command_pre_dle_estimate();
+}
+
+sub get_data_percent {
+    my ( $self ) = @_;
+
+    unless ( defined (my $pid = open my $pipefh, '-|') ) {
+	die Amanda::Script::EnvironmentError->transitionalError(
+	    item => 'spawning', value => 'lvm lvs', errno => $!);
+    } else {
+	unless ( $pid ) {
+	    exec {$self->{'lvmexecutable'}} (
+		'lvm',
+		'lvs', '--noheadings', '--options', 'data_percent',
+		$self->{'volumegroup'} . '/' . $self->{'snapshotname'}
+	    );
+	}
+	my $got = <$pipefh>;
+	unless ( close $pipefh ) {
+	    die Amanda::Script::CalledProcessError->transitionalError(
+		cmd => 'lvm lvs', returncode => $?)
+		if 0 == $!;
+	    die Amanda::Script::EnvironmentError->transitionalError(
+		item => 'spawning', value => 'lvm lvs', errno => $!);
+	}
+	die Amanda::Script::EnvironmentError->transitionalError(
+	    item => 'data_percent', value => $got,
+	    problem => 'expected numeric')
+	    unless $got =~ /^\s*\d+(?:\.\d+)?\s*$/;
+	return 0 + $got;
+    }
 }
 
 package main;

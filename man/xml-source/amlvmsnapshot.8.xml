@@ -140,6 +140,18 @@ instead to a set-uid wrapper that (after appropriate checks) will
 execute <command>mount</command> with the same arguments.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>UNMOUNTSWHENFILLED</term><listitem>
+Whether the OS kernel in use is known to unmount a mounted snapshot
+automatically if its maximum allocation is reached. This affects the script's
+treatment of the race condition between unmounting the snapshot post-backup
+and checking whether its allocation reached 100%. A true setting allows the
+backup to be considered successful if the unmount succeeded, even if the
+allocation is then reported as 100% when checked. A false setting (the default)
+forces a failure result any time the snapshot allocation is seen to reach
+100%. This property should be set true only if the OS version in use has been
+tested and definitely shown to automatically unmount snapshots that fill.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>VOLUMEGROUP</term><listitem>
 Name of the volume group in which the logical volume to be snapshotted,
 and in which the snapshot will be created.
@@ -215,13 +227,15 @@ discussed above.</para>
 </refsect1>
 
 <refsect1><title>BUGS</title>
-<para>This script does not (yet) make any effort to detect failures, or to
-capture and interpret standard output from the <command>lvm</command>, which
-normally produces some. Uncaptured, such output mixes with Amanda's
-client/server messaging, leading to backup failures. A cheap workaround is to
-include <code>dup2(2,1)</code> in the wrapper that executes
-<command>lvm</command>, so such output goes to standard error and ends up
-in the client <command>amandad</command> log file.</para>
+<para>This script does not (yet) capture and interpret most standard output
+from the <command>lvm</command>, which normally produces some. Uncaptured, such
+output mixes with Amanda's client/server messaging, leading to backup failures.
+A cheap workaround is to include <code>dup2(2,1)</code> in the wrapper that
+executes <command>lvm</command>, so such output goes to standard error and
+ends up in the client <command>amandad</command> log file. The wrapper should
+avoid that <code>dup2</code> if the <command>lvm</command> subcommand being
+executed is <code>lvs</code>, because the output in that case is captured
+and used.</para>
 
 <para>Also, this script does not (yet) do anything to prevent
 <command>lvm</command> inheriting file descriptors other than standard
