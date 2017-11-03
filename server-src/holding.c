@@ -636,6 +636,49 @@ holding_file_size(
 }
 
 
+off_t
+holding_file_size_bytes(
+    char *hfile,
+    int strip_headers)
+{
+    dumpfile_t file;
+    char *filename;
+    off_t size = (off_t)0;
+    struct stat finfo;
+
+    /* (note: we don't use holding_get_file_chunks here because that would
+     * entail opening each file twice) */
+
+    /* Loop through all cont_filenames (subsequent chunks) */
+    filename = g_strdup(hfile);
+    while (filename != NULL && filename[0] != '\0') {
+        /* stat the file for its size */
+        if (stat(filename, &finfo) == -1) {
+	    dbprintf(_("stat %s: %s\n"), filename, strerror(errno));
+            size = -1;
+	    break;
+        }
+        size += finfo.st_size;
+        if (strip_headers)
+            size -= (off_t)DISK_BLOCK_BYTES;
+
+        /* get the header to look for cont_filename */
+        if (!holding_file_get_dumpfile(filename, &file)) {
+	    dbprintf(_("holding_file_size: open of %s failed.\n"), filename);
+            size = -1;
+	    break;
+        }
+
+        /* on to the next chunk */
+        g_free(filename);
+        filename = g_strdup(file.cont_filename);
+	dumpfile_free_data(&file);
+    }
+    amfree(filename);
+    return size;
+}
+
+
 int
 holding_file_unlink(
     char *hfile)
@@ -815,7 +858,7 @@ holding_cleanup_file(
 	return 0;
     }
 
-    if(file.dumplevel < 0 || file.dumplevel > 399) {
+    if(file.dumplevel < 0 || file.dumplevel > DUMP_LEVELS) {
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
 		_("File '%s' has invalid level %d\n"), element, file.dumplevel);

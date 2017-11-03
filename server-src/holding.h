@@ -116,6 +116,9 @@ holding_get_all_datestamps(void);
 off_t
 holding_file_size(char *holding_file,
                   int strip_headers);
+off_t
+holding_file_size_bytes(char *holding_file,
+                        int strip_headers);
 
 /* Unlink a holding file, including all holding file chunks.
  *

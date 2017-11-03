@@ -218,9 +218,6 @@ find_log(void)
 	    }
 	}
 
-	if(logs == 0 && !g_str_equal(tp->datestamp, "0"))
-	    g_fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
-		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
     amfree(pathlogfile);
@@ -325,9 +322,12 @@ search_holding_disk(
 	    }
 	    new_output_find->message="";
 	    new_output_find->kb = holding_file_size(holding_file, 1);
-	    new_output_find->bytes = 0;
+	    new_output_find->bytes = holding_file_size_bytes(holding_file, 1);;
 
 	    new_output_find->orig_kb = file.orig_size;
+	    new_output_find->native_crc = file.native_crc;
+	    new_output_find->client_crc = file.client_crc;
+	    new_output_find->server_crc = file.server_crc;
 
 	    *output_find=new_output_find;
 	}
@@ -1272,6 +1272,8 @@ search_logfile(
 			continue;
 		    }
 		    orig_kb = atof(s - 1);
+		    if (orig_kb < 0)
+			orig_kb = 0;
 		}
 	    } else {
 		sec = 0;
@@ -1352,12 +1354,14 @@ search_logfile(
 			    for (a_part_find = part_find;
 				 a_part_find;
 				 a_part_find = a_part_find->next) {
+				char *urest = unquote_string(rest);
 				if (curlog == L_PARTIAL)
 				    a_part_find->dump_status = "PARTIAL";
 				else {
 				    a_part_find->dump_status = "FAIL";
-				    a_part_find->message = g_string_chunk_insert_const(string_chunk, rest);
 				}
+				a_part_find->message = g_string_chunk_insert_const(string_chunk, urest);
+				amfree(urest);
 			    }
 			} else {
 			    if (maxparts > -1) { /* format with part */
@@ -1607,7 +1611,7 @@ dumps_match_dumpspecs(
 	       (!ok || g_str_equal(cur_result->status, "OK")) &&
 	       (!ok || g_str_equal(cur_result->dump_status, "OK"))) {
 
-		find_result_t *curmatch = g_malloc(sizeof(find_result_t));
+		find_result_t *curmatch = g_new0(find_result_t, 1);
 		memcpy(curmatch, cur_result, sizeof(find_result_t));
 
 		curmatch->timestamp = cur_result->timestamp;
