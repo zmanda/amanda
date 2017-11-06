@@ -545,57 +545,58 @@ sub new {
 	$self->{'tapelist_last_write'} = $self->{'tapelist_filename'} . ".last_write";
     }
 
-
-    # config
-    if (!$self->{'config_id'} && $self->{'dbh'} && !$params{empty}) {
-	# get/add the config */
-	my $sth = $self->make_statement('sel con_id', 'SELECT config_id FROM configs WHERE config_name=?');
-	$sth->execute($self->{'config_name'})
-	    or die "Cannot execute: " . $sth->errstr();
-	# get the first row
-	my $config_row = $sth->fetchrow_arrayref;
-	if (!defined $config_row) {
-	    my $sth1 = $self->make_statement('in con', 'INSERT INTO configs(config_name, created) VALUES (?, ?)');
-	    $sth1->execute($self->{'config_name'}, 0) or die "Can't add config $self->{'config_name'}: " . $sth1->errstr();
-	    $self->{'config_id'} = $self->{'dbh'}->last_insert_id(undef, undef, "configs", undef);
-	} else {
-	    $self->{'config_id'} = $config_row->[0];
+    if (!$self->isa("Amanda::DB::Catalog2::log")) {
+	# config
+	if (!$self->{'config_id'} && $self->{'dbh'} && !$params{empty}) {
+	    # get/add the config */
+	    my $sth = $self->make_statement('sel con_id', 'SELECT config_id FROM configs WHERE config_name=?');
+	    $sth->execute($self->{'config_name'})
+		or die "Cannot execute: " . $sth->errstr();
+	    # get the first row
+	    my $config_row = $sth->fetchrow_arrayref;
+	    if (!defined $config_row) {
+		my $sth1 = $self->make_statement('in con', 'INSERT INTO configs(config_name, created) VALUES (?, ?)');
+		$sth1->execute($self->{'config_name'}, 0) or die "Can't add config $self->{'config_name'}: " . $sth1->errstr();
+		$self->{'config_id'} = $self->{'dbh'}->last_insert_id(undef, undef, "configs", undef);
+	    } else {
+		$self->{'config_id'} = $config_row->[0];
+	    }
 	}
-    }
 
-    {
-	my $sth = $self->make_statement('sel met_id', 'SELECT meta_id FROM metas WHERE meta_label=?');
-	$sth->execute('')
-	    or die "Cannot execute: " . $sth->errstr();
-	# get the first row
-	my $meta_row = $sth->fetchrow_arrayref;
-	$self->{'default_meta_id'} = $meta_row->[0] if $meta_row;
-	$sth->finish;
-    }
+	{
+	    my $sth = $self->make_statement('sel met_id', 'SELECT meta_id FROM metas WHERE meta_label=?');
+	    $sth->execute('')
+		or die "Cannot execute: " . $sth->errstr();
+	    # get the first row
+	    my $meta_row = $sth->fetchrow_arrayref;
+	    $self->{'default_meta_id'} = $meta_row->[0] if $meta_row;
+	    $sth->finish;
+	}
 
-    {
-	my $sth = $self->make_statement('sel poo_id', 'SELECT pool_id FROM pools WHERE pool_name=?');
-	$sth->execute('')
-	    or die "Cannot execute: " . $sth->errstr();
-	# get the first row
-	my $pool_row = $sth->fetchrow_arrayref;
-	$self->{'default_pool_id'} = $pool_row->[0] if $pool_row;
-	$sth->finish;
-    }
+	{
+	    my $sth = $self->make_statement('sel poo_id', 'SELECT pool_id FROM pools WHERE pool_name=?');
+	    $sth->execute('')
+		or die "Cannot execute: " . $sth->errstr();
+	    # get the first row
+	    my $pool_row = $sth->fetchrow_arrayref;
+	    $self->{'default_pool_id'} = $pool_row->[0] if $pool_row;
+	    $sth->finish;
+	}
 
-    {
-	my $sth = $self->make_statement('sel def sto_id', 'SELECT storage_id FROM storages WHERE storage_name=?');
-	$sth->execute('')
-	    or die "Cannot execute: " . $sth->errstr();
-	# get the first row
-	my $storage_row = $sth->fetchrow_arrayref;
-	$self->{'default_storage_id'} = $storage_row->[0] if $storage_row;
-	$sth->finish;
-    }
+	{
+	    my $sth = $self->make_statement('sel def sto_id', 'SELECT storage_id FROM storages WHERE storage_name=?');
+	    $sth->execute('')
+		or die "Cannot execute: " . $sth->errstr();
+	    # get the first row
+	    my $storage_row = $sth->fetchrow_arrayref;
+	    $self->{'default_storage_id'} = $storage_row->[0] if $storage_row;
+	    $sth->finish;
+	}
 
-    if ($params{'load'} && $self->{'dbh'}) {
-	$self->load_table();
-	$self->compute_retention();
+	if ($params{'load'} && $self->{'dbh'}) {
+	    $self->load_table();
+	    $self->compute_retention();
+	}
     }
 
     my $version = $self->get_version();
