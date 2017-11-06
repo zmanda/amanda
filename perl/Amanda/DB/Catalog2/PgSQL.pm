@@ -126,30 +126,19 @@ sub new {
     debug("PgSQL version: " . $dbh->{'pg_lib_version'} . " : " . $dbh->{'pg_server_version'});
 
     if ($params{'drop_tables'}) {
-	$dbh->do("DROP TABLE parts")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE commands")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE volumes")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE copys")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE images")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE metas")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE pools")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE storages")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE disks")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE hosts")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE configs")
-	    or die "Cannot do " . $dbh->errstr();
-	$dbh->do("DROP TABLE version")
-	    or die "Cannot do " . $dbh->errstr();
+	local $dbh->{RaiseError} = 0;
+	$dbh->do("DROP TABLE parts");
+	$dbh->do("DROP TABLE commands");
+	$dbh->do("DROP TABLE volumes");
+	$dbh->do("DROP TABLE copys");
+	$dbh->do("DROP TABLE images");
+	$dbh->do("DROP TABLE metas");
+	$dbh->do("DROP TABLE pools");
+	$dbh->do("DROP TABLE storages");
+	$dbh->do("DROP TABLE disks");
+	$dbh->do("DROP TABLE hosts");
+	$dbh->do("DROP TABLE configs");
+	$dbh->do("DROP TABLE version");
     }
 
     return $self;

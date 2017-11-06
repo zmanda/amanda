@@ -1,4 +1,7 @@
 2017-11-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2/PgSQL.pm: Do not fail if 'DROP TABLE' fail
+
+2017-11-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/security-util.c (sec_tcp_conn_get): Do not reuse a
 	  connection if it is in error
 
