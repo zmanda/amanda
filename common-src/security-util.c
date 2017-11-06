@@ -2032,7 +2032,8 @@ sec_tcp_conn_get(
     if (want_new == 0) {
 	for (iter = connq; iter != NULL; iter = iter->next) {
 	    rc = (struct tcp_conn *)iter->data;
-	    if (strcasecmp(hostname, rc->hostname) == 0 &&
+	    if (!rc->errmsg &&
+		strcasecmp(hostname, rc->hostname) == 0 &&
 		((!dle_hostname && !rc->dle_hostname) ||
 		 (dle_hostname && rc->dle_hostname && strcasecmp(dle_hostname, rc->dle_hostname) == 0))) {
 		break;

@@ -1,4 +1,8 @@
 2017-11-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/security-util.c (sec_tcp_conn_get): Do not reuse a
+	  connection if it is in error
+
+2017-11-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/log.pm: Read onlydriver that use the log
 	  file
 	* perl/Amanda/DB/Catalog2.pm: Load Amanda::Catalog2::log if no drvier
