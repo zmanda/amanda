@@ -471,7 +471,6 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Util qw( quote_string weaken_ref :quoting match_disk match_host match_datestamp match_level);
 use Amanda::Debug qw( :logging );
 use Amanda::DB::Catalog;
-use Amanda::DB::Catalog2::log;
 use Amanda::Holding;
 use Amanda::Index;
 use Amanda::Cmdfile;
@@ -482,7 +481,8 @@ use warnings;
 use strict;
 
 # version of the database
-my $DB_VERSION = 5;
+our @EXPORT = qw($DB_VERSION);
+our $DB_VERSION = 5;
 
 sub new {
     my $class = shift;
@@ -528,8 +528,8 @@ sub new {
 
     if ($params{'create'}) {
 	$self->{'create_mode'} = 1;
-	if ($self->can('_create_table')) {
-	    $self->_create_table();
+	if ($self->can('_create_tableX')) {
+	    $self->_create_tableX($params{empty});
 	}
     }
 
@@ -545,56 +545,57 @@ sub new {
 	$self->{'tapelist_last_write'} = $self->{'tapelist_filename'} . ".last_write";
     }
 
+
     # config
-    if (!$self->{'config_id'} && $self->{'dbh'}) {
+    if (!$self->{'config_id'} && $self->{'dbh'} && !$params{empty}) {
 	# get/add the config */
-	my $sth = $self->{'dbh'}->prepare("SELECT config_id FROM configs where config_name=?")
-	    or die "Cannot prepare: " . $self->{'dbh'}->errstr();
+	my $sth = $self->make_statement('sel con_id', 'SELECT config_id FROM configs WHERE config_name=?');
 	$sth->execute($self->{'config_name'})
 	    or die "Cannot execute: " . $sth->errstr();
 	# get the first row
 	my $config_row = $sth->fetchrow_arrayref;
 	if (!defined $config_row) {
-	    my $sth1 = $self->{'dbh'}->prepare("INSERT INTO configs VALUES (?, ?, ?)")
-		or die "Cannot prepare: " . $self->{'dbh'}->errstr();
-	    $sth1->execute(undef, $self->{'config_name'}, 0) or die "Can't add config $self->{'config_name'}: " . $sth1->errstr();
-	    #$dbh->commit;
+	    my $sth1 = $self->make_statement('in con', 'INSERT INTO configs(config_name, created) VALUES (?, ?)');
+	    $sth1->execute($self->{'config_name'}, 0) or die "Can't add config $self->{'config_name'}: " . $sth1->errstr();
 	    $self->{'config_id'} = $self->{'dbh'}->last_insert_id(undef, undef, "configs", undef);
-	    $sth1->finish();
 	} else {
 	    $self->{'config_id'} = $config_row->[0];
 	}
-	$sth->finish();
+    }
 
-	# drop temporary tables
-	$sth = $self->{'dbh'}->prepare("DROP TABLE IF EXISTS host_ids")
-	        or die "Cannot prepare: " . $self->{'dbh'}->errstr();
-	$sth->execute()
+    {
+	my $sth = $self->make_statement('sel met_id', 'SELECT meta_id FROM metas WHERE meta_label=?');
+	$sth->execute('')
 	    or die "Cannot execute: " . $sth->errstr();
+	# get the first row
+	my $meta_row = $sth->fetchrow_arrayref;
+	$self->{'default_meta_id'} = $meta_row->[0] if $meta_row;
 	$sth->finish;
+    }
 
-	$sth = $self->{'dbh'}->prepare("DROP TABLE IF EXISTS disk_ids")
-	    or die "Cannot prepare: " . $self->{'dbh'}->errstr();
-	$sth->execute()
+    {
+	my $sth = $self->make_statement('sel poo_id', 'SELECT pool_id FROM pools WHERE pool_name=?');
+	$sth->execute('')
 	    or die "Cannot execute: " . $sth->errstr();
+	# get the first row
+	my $pool_row = $sth->fetchrow_arrayref;
+	$self->{'default_pool_id'} = $pool_row->[0] if $pool_row;
 	$sth->finish;
+    }
 
-	$sth = $self->{'dbh'}->prepare("DROP TABLE IF EXISTS image_ids")
-	    or die "Cannot prepare: " . $self->{'dbh'}->errstr();
-	$sth->execute()
+    {
+	my $sth = $self->make_statement('sel def sto_id', 'SELECT storage_id FROM storages WHERE storage_name=?');
+	$sth->execute('')
 	    or die "Cannot execute: " . $sth->errstr();
-	$sth->finish;
-
-	$sth = $self->{'dbh'}->prepare("DROP TABLE IF EXISTS copy_ids")
-	    or die "Cannot prepare: " . $self->{'dbh'}->errstr();
-	$sth->execute()
-	    or die "Cannot execute: " . $sth->errstr();
+	# get the first row
+	my $storage_row = $sth->fetchrow_arrayref;
+	$self->{'default_storage_id'} = $storage_row->[0] if $storage_row;
 	$sth->finish;
     }
 
     if ($params{'load'} && $self->{'dbh'}) {
-	$self->_load_table();
-	$self->_compute_retention();
+	$self->load_table();
+	$self->compute_retention();
     }
 
     my $version = $self->get_version();
@@ -618,7 +619,8 @@ sub new {
 sub DESTROY {
     my $self = shift;
     $self->{'in_quit'}=1;
-    $self->quit();
+#    debug("Amanda::DB::Catalog2 not quit") if defined $self->{'dbh'};
+#    $self->quit() if defined $self->{'dbh'} && !$self->{'dbh'}->{InactiveDestroy};
 }
 
 sub get_DB_VERSION {

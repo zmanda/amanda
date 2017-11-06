@@ -1,3 +1,11 @@
+2017-11-06  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2.pm: Fix to handle MySQL and PgSQl driver
+	* perl/Amanda/DB/Catalog2/SQL.pm: Get all SQL code
+	* perl/Amanda/DB/Catalog2/SQLite.pm: Moved most of the code to SQL.pm
+	* perl/Amanda/DB/Catalog2/MySQL.pm: New MySQL driver
+	* perl/Amanda/DB/Catalog2/PgSQL.pm: New PgSQL drvier
+	* man/xml-source/amanda-catalog.7.xml: Document them
+
 2017-11-03  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/holding.c (holding_file_size_bytes): New function to
 	  return the size in vytes of a holding disk dump

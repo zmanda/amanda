@@ -67,9 +67,63 @@ each plugin.</para>
 
 <refsect1><title>CATALOG MODULES</title>
 
+<refsect2><title>PgSQL</title>
+
+<para>The <emphasis>PgSQL</emphasis> catalog plugin uses DBD::pg to
+communicate with the database.</para>
+
+<para>The <emphasis>PgSQl</emphasis> plugin has many properties:</para>
+
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>database</term><listitem>
+The name of the databse.
+</listitem></varlistentry>
+ <varlistentry><term>host</term><listitem>
+The host where to connect to the database.
+</listitem></varlistentry>
+ <varlistentry><term>port</term><listitem>
+The portwhere to connect to the database.
+</listitem></varlistentry>
+ <varlistentry><term>username</term><listitem>
+The username to use to connect to the database.
+</listitem></varlistentry>
+ <varlistentry><term>password</term><listitem>
+The password to use to connect to the database.
+</listitem></varlistentry>
+</variablelist>
+</refsect2>
+
+<refsect2><title>MySQL</title>
+
+<para>The <emphasis>MySQL</emphasis> catalog plugin uses DBD::mysql to
+communicate with the database.</para>
+
+<para>The <emphasis>MySQl</emphasis> plugin has many properties:</para>
+
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>database</term><listitem>
+The name of the databse.
+</listitem></varlistentry>
+ <varlistentry><term>host</term><listitem>
+The host where to connect to the database.
+</listitem></varlistentry>
+ <varlistentry><term>port</term><listitem>
+The portwhere to connect to the database.
+</listitem></varlistentry>
+ <varlistentry><term>username</term><listitem>
+The username to use to connect to the database.
+</listitem></varlistentry>
+ <varlistentry><term>password</term><listitem>
+The password to use to connect to the database.
+</listitem></varlistentry>
+</variablelist>
+</refsect2>
+
 <refsect2><title>SQlite</title>
 
-<para>The <emphasis>SQLite</emphasis> catalog plugin uses the DBD::SQLite to
+<para>The <emphasis>SQLite</emphasis> catalog plugin uses DBD::SQLite to
 communicate with the database.</para>
 
 <para>The <emphasis>SQLite</emphasis> plugin has many properties:</para>
