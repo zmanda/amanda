@@ -1544,6 +1544,8 @@ sub _handle_fail_line
         $program_d = $try->{$program} ||= {};
     }
 
+    $program_d->{storage} = $storage;
+    $program_d->{pool}   = $pool;
     $program_d->{level}  = $level;
     $program_d->{status} = "fail";
     $program_d->{failure_from}  = $failure_from;
