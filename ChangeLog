@@ -1,4 +1,8 @@
 2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Recovery/Planner.pm: Undo previous patch
+	* perl/Amanda/Taper/Worker.pm: Return errorif plan is empty
+
+2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Recovery/Planner.pm (make_plan): Return an error if the
 	  dump is not found
 	* perl/Amanda/Taper/Worker.pm: Fail if error is set

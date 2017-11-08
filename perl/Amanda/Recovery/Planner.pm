@@ -248,8 +248,6 @@ sub make_plan {
 					       status => $status,
 					       labelstr  => $src_labelstr);
 
-    return Amanda::MainLoop::call_later($params{'plan_cb'}, "Dump not found", undef) if !@dumps;
-
     # Create a hash of the latest datestamp of each dle.
     my %datestamp;
     if ($params{'latest_fulls'}) {
@@ -361,8 +359,6 @@ sub make_plan {
 	    push @dumps, $options[$j];
 	}
     }
-
-    return Amanda::MainLoop::call_later($params{'plan_cb'}, "Dump not found", undef) if !@dumps;
 
     # at this point we have exactly one instance of each dump in @dumps.
 

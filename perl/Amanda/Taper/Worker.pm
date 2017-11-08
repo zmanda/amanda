@@ -959,6 +959,13 @@ sub setup_and_start_dump {
 		total_duration => 0);
 	}
 
+	return $params{'dump_cb'}->(
+                result => "FAILED",
+                device_errors => [ 'error', "Dump not found" ],
+                size => 0,
+                duration => 0.0,
+                total_duration => 0) if (@{$plan->{'dumps'}});
+
 	$self->{'src'}->{'plan'} = $plan;
 
 	# we've started the xfer now, but the destination won't actually write
