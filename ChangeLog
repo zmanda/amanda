@@ -1,4 +1,10 @@
 2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Recovery/Planner.pm (make_plan): Return an error if the
+	  dump is not found
+	* perl/Amanda/Taper/Worker.pm: Fail if error is set
+	* perl/Amanda/Status.pm: Fix for vaulting error
+
+2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Report.pm: Set storage and pool
 	* perl/Amanda/Report/human.pm: Print timestamp and vault storage
 	* installcheck/catalogs/tapers.cat: Fix check
