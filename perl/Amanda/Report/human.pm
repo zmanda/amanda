@@ -648,10 +648,12 @@ sub output_error_summaries
 
 	while( my ($timestamp, $tries) = each %$alldumps ) {
 	    my $failed = 0;
+	    my $datestr;
+	    $datestr = "date $timestamp " if $timestamp != $report->{run_timestamp};
 	    foreach my $try (@$tries) {
 
 		if (exists $try->{'retry'}) {
-		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED [$try->{'retry_message'}: Will retry at level $try->{'retry_level'}]";
+		    push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{dumper}->{level}  FAILED [$try->{'retry_message'}: Will retry at level $try->{'retry_level'}]";
 		    next;
 		}
 
@@ -659,12 +661,12 @@ sub output_error_summaries
 		    $try->{dumper}->{status} &&
 		    $try->{dumper}->{status} eq 'fail' &&
 		    $try->{dumper}->{error} ne 'Aborted by driver') {
-		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  FAILED [$try->{dumper}->{error}]";
+		    push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{dumper}->{level}  FAILED [$try->{dumper}->{error}]";
 		    $failed = 1;
 		}
 		if (exists $try->{chunker} && !exists $dle->{driver} &&
 		    $try->{chunker}->{status} eq 'fail') {
-		    push @dump_failures, "$hostname $qdisk lev $try->{chunker}->{level}  FAILED [$try->{chunker}->{error}]";
+		    push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{chunker}->{level}  FAILED [$try->{chunker}->{error}]";
 		    $failed = 1;
 		}
 		if (   exists $try->{taper}
@@ -675,6 +677,9 @@ sub output_error_summaries
 		    my $flush = "FLUSH";
 		    $flush = "VAULT" if $report->get_flag("amvault_run");
 		    $flush = "VAULT" if $try->{taper}->{vault};
+		    if (defined $report->{'flush_or_vault'}->{$try->{taper}->{storage}}) {
+			$flush = "$report->{'flush_or_vault'}->{$try->{taper}->{storage}}($try->{taper}->{storage})";
+		    }
 		    $flush = "FAILED" if exists $try->{dumper} && !exists $try->{chunker};
 		    $flush = "FAILED" if !exists $try->{dumper} && exists $try->{chunker};
 		    if ($flush eq "FAILED" or !defined $try->{taper}->{failure_from}
@@ -688,7 +693,7 @@ sub output_error_summaries
 			    $flush .= " [" . $try->{taper}{error} . "]";
 		        }
 
-		        push @dump_failures, "$hostname $qdisk lev $try->{taper}->{level}  $flush";
+		        push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{taper}->{level}  $flush";
 		        $failed = 1;
 		    }
 		}
@@ -702,7 +707,7 @@ sub output_error_summaries
 			|| $try->{chunker}->{status} eq "success")
 		    && (   !exists $try->{taper}
 			|| $try->{taper}->{status} eq "done")) {
-		    push @dump_failures, "$hostname $qdisk lev $try->{dumper}->{level}  was successfully retried";
+		    push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{dumper}->{level}  was successfully retried";
 		    $failed = 0;
 		}
 
@@ -712,12 +717,12 @@ sub output_error_summaries
 		    && !exists $try->{chunker}
 		    && exists $try->{taper}
 		    && $try->{taper}->{status} eq "done") {
-		    push @dump_failures, "$hostname $qdisk lev $try->{taper}->{level}  was successfully re-flushed";
+		    push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{taper}->{level}  was successfully re-flushed";
 		    $failed = 0;
 		}
 
 		push @stranges,
-    "$hostname $qdisk lev $try->{dumper}->{level}  STRANGE (see below)"
+    "$hostname $qdisk ${datestr}lev $try->{dumper}->{level}  STRANGE (see below)"
 		  if (defined $try->{dumper}
 		    && $try->{dumper}->{status} eq 'strange');
 	    }
