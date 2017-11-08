@@ -1,3 +1,7 @@
+2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/amanda/progs.m4: AC_DEFINE_UNQUOTED(LPR)
+	* common-src/genversion.c: s/LPRCMD/LPR/, use DEFAULT_MAILER
+
 2017-11-06  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2/PgSQL.pm: Do not fail if 'DROP TABLE' fail
 
