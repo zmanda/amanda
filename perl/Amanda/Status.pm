@@ -1185,6 +1185,10 @@ REREAD:
 					 $dlet->{'status'} == $FLUSH_FAILED) {
 				    $dlet->{'status'} = $FLUSH_FAILED;
 				    $dle->{'status'} = $FLUSH_FAILED;
+				} elsif ($dlet->{'status'} == $VAULTING ||
+					 $dlet->{'status'} == $VAULTING_FAILED) {
+				    $dlet->{'status'} = $VAULTING_FAILED;
+				    $dle->{'status'} = $VAULTING_FAILED;
 				} else {
 				    die("bad status on taper eof: $dlet->{'status'}");
 				}
@@ -1404,6 +1408,9 @@ REREAD:
 			    } elsif ($dlet->{'status'} == $FLUSHING ||
 				     $dlet->{'status'} == $FLUSH_FAILED) {
 				$dlet->{'status'} = $FLUSH_FAILED;
+			    } elsif ($dlet->{'status'} == $VAULTING ||
+				     $dlet->{'status'} == $VAULTING_FAILED) {
+				$dlet->{'status'} = $VAULTING_FAILED;
 			    } else {
 				die ("bad status on dlet taper FAILED: $dlet->{'status'}");
 			    }
@@ -1672,6 +1679,8 @@ sub set_summary {
 		    #$dle->{'wsize'} = $dle->{'size'};
 		    $dle->{'dsize'} = $dle->{'size'};
 		} elsif ($dle->{'status'} == $FLUSH_FAILED) {
+# JLM
+		} elsif ($dle->{'status'} == $VAULTING_FAILED) {
 # JLM
 		} elsif ($dle->{'status'} == $WRITE_FAILED) {
 # JLM

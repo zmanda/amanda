@@ -950,7 +950,14 @@ sub setup_and_start_dump {
     step plan_cb => sub {
 	my ($err, $plan) = @_;
 
-	return $self->failure($err) if $err;
+	if ($err) {
+	    return $params{'dump_cb'}->(
+		result => "FAILED",
+		device_errors => [ 'error', "$err" ],
+		size => 0,
+		duration => 0.0,
+		total_duration => 0);
+	}
 
 	$self->{'src'}->{'plan'} = $plan;
 
