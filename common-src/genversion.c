@@ -304,14 +304,14 @@ main(
     prundefvar("UNCOMPRESS_PATH");
 #endif
 
-#ifdef LPRCMD
-    prvar("LPRCMD", LPRCMD);
+#ifdef LPR
+    prvar("LPR", LPR);
 #else
-    prundefvar(" LPRCMD");
+    prundefvar(" LPR");
 #endif
 
-#ifdef MAILER
-    prvar("MAILER", MAILER);
+#ifdef DEFAULT_MAILER
+    prvar("MAILER", DEFAULT_MAILER);
 #else
     prundefvar(" MAILER");
 #endif

@@ -155,10 +155,14 @@ AC_DEFUN([AMANDA_PROG_LPR],
 	else
 	    AMANDA_MSG_WARN([WARNING: amanda will always print to the default printer])
 	fi
+    else
+	LPR=""
     fi
 
     AC_SUBST([LPR])
     AC_SUBST([LPRFLAG])
+    AC_DEFINE_UNQUOTED(LPR,"$LPR",
+                [A lpr program])
 ])
 
 # SYNOPSIS
