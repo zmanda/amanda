@@ -91,6 +91,6 @@ DUMP SUMMARY:
 HOSTNAME              DISK        L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS   KB/s
 ----------------------------------- ---------------------- -------------- -------------
 localhost.localdomain /bootAMGTAR 1      64      64    --     0:01   85.5   0:00  640.0
-                                                               VAULT      FAILED  640.0
+                                                               VAULT      FAILED FAILED
 
 (brought to you by Amanda version x.y.z)

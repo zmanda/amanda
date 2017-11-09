@@ -1,4 +1,8 @@
 2017-11-09  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report/human.pm: Fix tape_rape for VAULT
+	* installcheck/catalogs/vault1.cat: Fxi test
+
+2017-11-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Report.pm: Fix perl warning
 
 2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
