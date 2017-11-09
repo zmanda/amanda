@@ -1543,7 +1543,7 @@ sub get_summary_info
 		push @rv, '';
 		push @rv, '';
 		$tape_time = $try->{taper}{sec};
-		$tape_rate = $try->{taper}{kps} if !$tape_rate;
+		$tape_rate = $try->{taper}{kps};
 	        push @rv, $fmt_col_field->(8,
 		       (defined $tape_time) ?
 			       $tape_time ? $self->mnsc($tape_time) : ""
