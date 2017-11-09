@@ -1500,6 +1500,12 @@ sub _handle_fail_line
     my ($self, $program, $str) = @_;
 
     my @info = Amanda::Util::split_quoted_strings($str);
+    my $VAULT = $info[0];
+    if ($VAULT eq "VAULT") {
+	shift @info;
+    } else {
+	$VAULT = undef;
+    }
     my $storage = $info[0];
     if ($storage =~ /^ST:/) {
 	$storage =~ s/^ST://;
@@ -1509,8 +1515,8 @@ sub _handle_fail_line
     }
 
     my $pool = $info[0];
-    if ($pool =~ /^POOL/) {
-	$pool =~ s/^POOL//;
+    if ($pool =~ /^POOL:/) {
+	$pool =~ s/^POOL://;
 	shift @info;
     } else {
 	$pool = undef;
@@ -1540,10 +1546,11 @@ sub _handle_fail_line
 	$self->{flags}{dump_failed} = 1;
 	$self->{flags}{exit_status} |= STATUS_FAILED;
     } else {
-        my $try = $self->_get_try($dle, $program, $timestamp);
+        my $try = $self->_get_try($dle, $program, $timestamp, $storage, $VAULT);
         $program_d = $try->{$program} ||= {};
     }
 
+    $program_d->{vault} = $VAULT;
     $program_d->{storage} = $storage;
     $program_d->{pool}   = $pool;
     $program_d->{level}  = $level;
@@ -1801,25 +1808,37 @@ sub check_missing_fail_strange
 sub _get_try
 {
     my $self = shift @_;
-    my ( $dle, $program, $timestamp ) = @_;
+    my ( $dle, $program, $timestamp, $storage, $vault ) = @_;
     my $tries = $dle->{'dumps'}{$timestamp} ||= [];
 
-    if (!@$tries) {
-        push @$tries, {};
-    } elsif (exists $tries->[-1]->{$program}
-	     && exists $tries->[-1]->{$program}->{status}
-	     && defined $tries->[-1]->{$program}->{status}
-	     && $self->_program_finished(
-			$program, $tries->[-1]->{$program}->{status})) {
-	push @$tries, {};
-    } elsif ($program eq "taper" && !exists $tries->[-1]->{$program}) {
-	if (exists $tries->[-1]->{chunker}
-	    && exists $tries->[-1]->{chunker}->{status}
-	    && defined $tries->[-1]->{chunker}->{status}
-	    && $tries->[-1]->{chunker}->{status} eq "fail") {
-	    push @$tries, {};
+    foreach my $i (reverse 0 .. $#$tries) {
+	my $try = $tries->[$i];
+    #foreach my $try (@$tries) {
+	next if (exists $try->{$program} &&
+		 exists $try->{$program}->{status} &&
+		 defined $try->{$program}->{status} &&
+		 $self->_program_finished($program,  $try->{$program}->{status}));
+	if ($program eq "taper" && !exists $try->{$program}) {
+	    if (exists $try->{chunker} &&
+		exists $try->{chunker}->{status} &&
+		defined $try->{chunker}->{status} &&
+		$try->{chunker}->{status} eq "fail") {
+		next;
+	    }
 	}
+
+	next if ($program eq "taper" && $vault eq "VAULT" &&
+		 (exists $try->{chunker} ||
+		  exists $try->{dumper} ||
+		 (exists $try->{taper} && $try->{taper}->{vault} ne 'VAULT' && $try->{taper}->{storage} ne $storage)));
+
+	next if ($program ne "taper" &&
+		 exists $try->{taper} &&
+                 $try->{taper}->{vault} eq 'VAULT');
+	return $try;
     }
+
+    push @$tries, {};
     return $tries->[-1];
 }
 
