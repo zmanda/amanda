@@ -1809,6 +1809,8 @@ sub _get_try
 {
     my $self = shift @_;
     my ( $dle, $program, $timestamp, $storage, $vault ) = @_;
+    $storage = "" if !defined $storage;
+    $vault = "" if !defined $vault;
     my $tries = $dle->{'dumps'}{$timestamp} ||= [];
 
     foreach my $i (reverse 0 .. $#$tries) {
@@ -1830,10 +1832,15 @@ sub _get_try
 	next if ($program eq "taper" && $vault eq "VAULT" &&
 		 (exists $try->{chunker} ||
 		  exists $try->{dumper} ||
-		 (exists $try->{taper} && $try->{taper}->{vault} ne 'VAULT' && $try->{taper}->{storage} ne $storage)));
+		 (exists $try->{taper} &&
+		  defined $try->{taper}->{vault} &&
+		  $try->{taper}->{vault} ne 'VAULT' &&
+		  defined $try->{taper}->{storage} &&
+		  $try->{taper}->{storage} ne $storage)));
 
 	next if ($program ne "taper" &&
 		 exists $try->{taper} &&
+		 defined $try->{taper}->{vault} &&
                  $try->{taper}->{vault} eq 'VAULT');
 	return $try;
     }
