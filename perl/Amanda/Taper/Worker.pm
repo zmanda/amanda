@@ -970,7 +970,7 @@ sub setup_and_start_dump {
                 device_errors => [ 'error', "Dump not found" ],
                 size => 0,
                 duration => 0.0,
-                total_duration => 0) if (@{$plan->{'dumps'}});
+                total_duration => 0) if (!@{$plan->{'dumps'}});
 
 	$self->{'src'}->{'plan'} = $plan;
 

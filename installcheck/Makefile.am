@@ -263,7 +263,8 @@ catalogs = \
 	catalogs/tapers.cat \
 	catalogs/tapers1.cat \
 	catalogs/taper-parallel-write.cat \
-	catalogs/vault1.cat
+	catalogs/vault1.cat \
+	catalogs/vault2.cat
 EXTRA_DIST += $(catalogs)
 
 
