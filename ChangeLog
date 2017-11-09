@@ -1,4 +1,14 @@
 2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report.pm: Improvement for vault
+	* perl/Amanda/Report/human.pm: Improvement for vault
+	* perl/Amanda/Taper/Worker.pm: Add VAULT keyword to FAILED line
+	* server-src/driver.c: Do not log on error
+	* server-src/find.c: Parse VAULT keyword
+	* installcheck/Makefile.am (catalogs): Add catalogs/vault1.cat
+	* installcheck/amreport.pl: Check failed amvault report
+	* installcheck/catalogs/vault1.cat: New catalog
+
+2017-11-08  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Recovery/Planner.pm: Undo previous patch
 	* perl/Amanda/Taper/Worker.pm: Return errorif plan is empty
 

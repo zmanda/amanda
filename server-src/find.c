@@ -983,6 +983,14 @@ search_logfile(
 		skip_quoted_string(s, ch);
 		s[-1] = '\0';
 		part_storage = unquote_string(qpart_storage);
+		if (strcmp(part_storage, "VAULT") == 0) {
+		    g_free(part_storage);
+		    skip_whitespace(s, ch);
+		    qpart_storage = s - 1;
+		    skip_quoted_string(s, ch);
+		    s[-1] = '\0';
+		    part_storage = unquote_string(qpart_storage);
+		}
 		if (strncmp(part_storage, "ST:", 3) == 0) {
 		    char *ps = part_storage;
 		    part_storage = g_strdup(ps+3);

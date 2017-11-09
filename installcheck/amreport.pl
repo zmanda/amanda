@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 186;
+use Test::More tests => 188;
 
 use strict;
 use warnings;
@@ -119,6 +119,15 @@ sub setup_config {
     if (defined $params{'tapecycle'}) {
 	$testconf->remove_param('tapecycle');
 	$testconf->add_param('tapecycle', $params{'tapecycle'});
+    }
+
+    $testconf->add_param('tapetype', "\"TEST-TAPE-TEMPLATE\"");
+
+    if ($params{vault1}) {
+	$testconf->add_storage("vtapes");
+	$testconf->add_storage("vault");
+	$testconf->add_param('storage', "\"vtapes\"");
+	$testconf->add_param('vault-storage', "\"vault\"");
     }
 
     $testconf->write();
@@ -873,5 +882,15 @@ is($Installcheck::Run::exit_code, 0,
     "amreport correctly report dumper-taper-success");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches 27");
+
+setup_config(catalog => 'vault1', want_template => 0, vault1 => 1);
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 4,
+    "amreport correctly report vault1");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 28");
+exit;
 
 cleanup();

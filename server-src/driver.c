@@ -2829,17 +2829,17 @@ vault_taper_result(
                    dp->host->hostname, qname, wtaper->input_error);
         if (g_str_equal(sp->datestamp, driver_timestamp)) {
             if (sp->taper_attempted >= dp->retry_dump) {
-                log_add(L_FAIL, _("%s %s %s %d [recovery error for vaulting: %s]"),
-			dp->host->hostname, qname, sp->datestamp,
-			sp->level, wtaper->input_error);
+                //log_add(L_FAIL, _("%s %s %s %d [recovery error for vaulting: %s]"),
+		//	dp->host->hostname, qname, sp->datestamp,
+		//	sp->level, wtaper->input_error);
                 g_printf("driver: taper failed %s %s, recovery error for vaulting\n",
 			 dp->host->hostname, qname);
 		free_sched(sp);
 		sp = NULL;
             } else {
-                log_add(L_INFO, _("%s %s %s %d [Will retry because of recovery error in vaulting: %s]"),
-                        dp->host->hostname, qname, sp->datestamp,
-                        sp->level, wtaper->input_error);
+                //log_add(L_INFO, _("%s %s %s %d [Will retry because of recovery error in vaulting: %s]"),
+                //        dp->host->hostname, qname, sp->datestamp,
+                //        sp->level, wtaper->input_error);
                 g_printf("driver: taper will retry %s %s because of recovery error in vaulting\n",
                         dp->host->hostname, qname);
 		headqueue_sched(&wtaper->vaultqs.vaultq, sp);

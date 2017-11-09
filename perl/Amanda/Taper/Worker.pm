@@ -149,6 +149,7 @@ sub FILE_WRITE {
 
     $self->{'doing_port_write'} = 0;
     $self->{'doing_shm_write'} = 0;
+    $self->{'doing_vault'} = 0;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -165,6 +166,7 @@ sub PORT_WRITE {
 
     $self->{'doing_port_write'} = 1;
     $self->{'doing_shm_write'} = 0;
+    $self->{'doing_vault'} = 0;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -181,6 +183,7 @@ sub SHM_WRITE {
 
     $self->{'doing_port_write'} = 0;
     $self->{'doing_shm_write'} = 1;
+    $self->{'doing_vault'} = 0;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -197,6 +200,7 @@ sub VAULT_WRITE {
 
     $self->{'doing_port_write'} = 0;
     $self->{'doing_shm_write'} = 0;
+    $self->{'doing_vault'} = 1;
 
     $self->setup_and_start_dump($msgtype,
 	dump_cb => sub { $self->dump_cb(@_); },
@@ -417,7 +421,9 @@ sub result_cb {
 
     # write a DONE/PARTIAL/FAIL log line
     if ($logtype == $L_FAIL) {
-	log_add($L_FAIL, sprintf("%s %s %s %s %s %s %s %s",
+	my $format = "%s %s %s %s %s %s %s %s";
+	$format = "VAULT %s %s %s %s %s %s %s %s" if $self->{'doing_vault'};
+	log_add($L_FAIL, sprintf($format,
 	    quote_string("ST:" . $self->{'controller'}->{'storage'}->{'storage_name'}),
 	    quote_string("POOL:" . $self->{'controller'}->{'storage'}->{'tapepool'}),
 	    quote_string($self->{'hostname'}.""), # " is required for SWIG..

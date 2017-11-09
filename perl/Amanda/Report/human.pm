@@ -648,7 +648,7 @@ sub output_error_summaries
 
 	while( my ($timestamp, $tries) = each %$alldumps ) {
 	    my $failed = 0;
-	    my $datestr;
+	    my $datestr = '';
 	    $datestr = "date $timestamp " if $timestamp != $report->{run_timestamp};
 	    foreach my $try (@$tries) {
 
@@ -656,7 +656,6 @@ sub output_error_summaries
 		    push @dump_failures, "$hostname $qdisk ${datestr}lev $try->{dumper}->{level}  FAILED [$try->{'retry_message'}: Will retry at level $try->{'retry_level'}]";
 		    next;
 		}
-
 		if (exists $try->{dumper} &&
 		    $try->{dumper}->{status} &&
 		    $try->{dumper}->{status} eq 'fail' &&
@@ -1235,6 +1234,8 @@ sub output_summary
 	    $self->zprint(sprintf($noflush_format, @data[0..2]));
 	} elsif ($type eq 'skipped') {
 	    $self->zprint(sprintf($skipped_format, @data[0..2]));
+	} else {
+	    die("type eq $type");
 	}
     }
 
@@ -1349,7 +1350,7 @@ sub get_summary_info
 		&& (   $try->{dumper}{status} eq "success"
 		    || $try->{dumper}{status} eq "strange")) {
 		$dumper = $try->{dumper};
-		$storage = $try->{taper}->{storage};
+		$storage = $try->{taper}->{storage} if defined $try->{taper} and defined $try->{taper}->{storage};
 		last;
 	    }
 	}
@@ -1367,7 +1368,6 @@ sub get_summary_info
 
 	## Use this loop to set values
 	foreach my $try ( @$tries ) {
-
 	    ## find the outsize for the output summary
 	    if (
 		exists $try->{taper} && defined $try->{taper}->{storage}
@@ -1386,6 +1386,7 @@ sub get_summary_info
 		&& ( $try->{taper}{status} eq "partial" ) ) {
 
 		$taper_partial = 1;
+		$taper_try = $try;
 		$orig_size = $try->{taper}{orig_kb} if !defined($orig_size);
 		$out_size  = $try->{taper}{kb};
 		$tape_time = $try->{taper}{sec} if !$tape_time;
@@ -1393,6 +1394,7 @@ sub get_summary_info
 	    } elsif (exists $try->{taper} && defined $try->{taper}->{storage}
 		&& (!$storage || $try->{taper}->{storage} eq $storage)
 		&& ( $try->{taper}{status} eq "fail")) {
+		$taper_try = $try;
 		$tape_time = undef;
 		$tape_rate = undef;
 	    }
@@ -1514,10 +1516,9 @@ sub get_summary_info
 	    foreach my $try ( @$tries ) {
 		next if !$try->{'taper'};
 		next if !defined $try->{'taper'}->{status};
-		next if defined $taper_try and $try == $taper_try;
-		next if $try->{taper}{status} ne "done";
+		next if defined $taper_try && $try == $taper_try;
+		#next if $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
-
 		if ($report->get_flag("amvault_run")) {
 		     @rv = 'nodump-VAULT';
 		} else {
