@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 190;
+use Test::More tests => 192;
 
 use strict;
 use warnings;
@@ -120,8 +120,6 @@ sub setup_config {
 	$testconf->remove_param('tapecycle');
 	$testconf->add_param('tapecycle', $params{'tapecycle'});
     }
-
-    $testconf->add_param('tapetype', "\"TEST-TAPE-TEMPLATE\"");
 
     if ($params{vault1}) {
 	$testconf->add_storage("vtapes");
@@ -900,6 +898,15 @@ is($Installcheck::Run::exit_code, 0,
     "amreport correctly report vault2");
 results_match($out_filename, $cat->get_text('report'),
     "..result matches 29");
+
+setup_config(catalog => 'vault3', want_template => 0, vault1 => 1);
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+run($amreport, 'TESTCONF', '-f', $out_filename);
+is($Installcheck::Run::exit_code, 0,
+    "amreport correctly report vault3");
+results_match($out_filename, $cat->get_text('report'),
+    "..result matches 30");
 exit;
 
 cleanup();

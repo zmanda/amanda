@@ -1431,11 +1431,7 @@ sub get_summary_info
 		$dump_time = $try->{dumper}{sec};
 		$dump_rate = $try->{dumper}{kps};
 	    }
-
-	    if ($try->{taper}->{storage}) {
-		$storage = $try->{taper}->{storage};
-		$flush_or_vault = $report->{'flush_or_vault'}->{$storage};
-	    }
+	    last if defined $taper_try;
 	}
 
 	# sometimes the driver logs an orig_size of -1, which makes the
@@ -1557,6 +1553,10 @@ sub get_summary_info
 
 	    }
 	} else {
+	    if ($taper_try && $taper_try->{taper}->{storage} && $report->{'flush_or_vault'}->{$taper_try->{taper}->{storage}}) {
+		$storage = $taper_try->{taper}->{storage};
+		$flush_or_vault = $report->{'flush_or_vault'}->{$storage};
+	    }
 	    my $message = $saw_dumper?
 			    ($dumper_status eq 'failed') ? 'FAILED' : 'PARTIAL'
 			  : (defined $tape_failure_from and
@@ -1597,8 +1597,14 @@ sub get_summary_info
 		next if !defined $try->{taper}{status} or $try->{taper}{status} ne "done";
 		push @rvs, [@rv];
 
-		@rv = 'nodump-FLUSH';
-		@rv = 'nodump-VAULT' if $report->get_flag("amvault_run");
+		if ($try->{taper}->{storage} && $report->{'flush_or_vault'}->{$try->{taper}->{storage}}) {
+		    $storage = $try->{taper}->{storage};
+		    $flush_or_vault = $report->{'flush_or_vault'}->{$storage};
+		    @rv = "nodump-$flush_or_vault";
+		} else {
+		    @rv = 'nodump-FLUSH';
+		    @rv = 'nodump-VAULT' if $report->get_flag("amvault_run");
+		}
 		push @rv, '';
 		push @rv, '';
 		push @rv, '';
@@ -1608,7 +1614,7 @@ sub get_summary_info
 		push @rv, '';
 		push @rv, '';
 		$tape_time = $try->{taper}{sec};
-		$tape_rate = $try->{taper}{kps} if !$tape_rate;
+		$tape_rate = $try->{taper}{kps};
 	        push @rv, $fmt_col_field->(8,
 		       (defined $tape_time) ?
 			       $tape_time ? $self->mnsc($tape_time) : ""
