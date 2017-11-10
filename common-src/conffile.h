@@ -1730,6 +1730,9 @@ typedef enum {
 
     /* Load the global config */
     CONFIG_INIT_GLOBAL = 1 << 4,
+
+    /* Do not generate errors (internal use) */
+    CONFIG_OVERRDIDE_NO_ERROR = 1 << 5,
 } config_init_flags;
 
 /* Initialize this application's configuration, with the specific actions

@@ -1,3 +1,10 @@
+2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Do not cwgenerate error when appying override
+	  until the complete configuration is read
+	* common-src/conffile.h: Define CONFIG_OVERRDIDE_NO_ERROR
+	* perl/Amanda/Config.swg: Define CONFIG_OVERRDIDE_NO_ERROR
+	* installcheck/amgetconf.pl: Test it
+
 2017-11-09  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Report/human.pm: Use good try
 	* server-src/tapefile.c: Call find_dump with added_todo=1
