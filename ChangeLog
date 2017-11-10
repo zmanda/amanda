@@ -1,4 +1,7 @@
 2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/success-dumper-taper-vault.pl: Fix for any diskname
+
+2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Fix setting dlet
 	* installcheck/success-dumper-taper-vault.pl: Fix
 
