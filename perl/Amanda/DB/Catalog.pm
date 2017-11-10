@@ -468,7 +468,7 @@ sub get_latest_write_timestamp {
 
     if (@timestamps) {
 	# if we're not looking for a particular type, then this is easy
-	if (!exists $params{'types'}) {
+	if (!defined $params{'types'}) {
 	    return $timestamps[-1];
 	}
 
@@ -524,20 +524,20 @@ sub get_parts_and_dumps {
 
     # pre-process params by appending all of the "singular" parameters to the "plurals"
     push @{$params{'write_timestamps'}}, map { zeropad($_) } $params{'write_timestamp'} 
-	if exists($params{'write_timestamp'});
+	if defined($params{'write_timestamp'});
     push @{$params{'dump_timestamps'}}, map { zeropad($_) } $params{'dump_timestamp'} 
-	if exists($params{'dump_timestamp'});
+	if defined($params{'dump_timestamp'});
     push @{$params{'hostnames'}}, $params{'hostname'} 
-	if exists($params{'hostname'});
+	if defined($params{'hostname'});
     push @{$params{'disknames'}}, $params{'diskname'} 
-	if exists($params{'diskname'});
+	if defined($params{'diskname'});
     push @{$params{'levels'}}, $params{'level'} 
-	if exists($params{'level'});
+	if defined($params{'level'});
     push @{$params{'storages'}}, $params{'storage'}
 	if defined($params{'storage'});
     if ($get_what eq 'parts') {
 	push @{$params{'labels'}}, $params{'label'}
-	    if exists($params{'label'});
+	    if defined($params{'label'});
     } else {
 	delete $params{'labels'};
     }
@@ -562,7 +562,7 @@ sub get_parts_and_dumps {
     my @logfiles;
     if ($params{'holding'}) {
 	@logfiles = ( 'holding', );
-    } elsif (exists($params{'write_timestamps'})) {
+    } elsif (defined($params{'write_timestamps'})) {
 	# if we have specific write_timestamps, the job is pretty easy.
 	my %timestamps_hash = map { ($_, undef) } @{$params{'write_timestamps'}};
 	for my $logfile (Amanda::Logfile::find_log()) {
@@ -570,7 +570,7 @@ sub get_parts_and_dumps {
 	    next unless (exists($timestamps_hash{zeropad($timestamp)}));
 	    push @logfiles, $logfile;
 	}
-    } elsif (exists($params{'dump_timestamps'})) {
+    } elsif (defined($params{'dump_timestamps'})) {
 	# otherwise, we need only look in logfiles at or after the earliest dump timestamp
 	my @sorted_timestamps = sort @{$params{'dump_timestamps'}};
 	my $earliest_timestamp = $sorted_timestamps[0];
@@ -587,23 +587,23 @@ sub get_parts_and_dumps {
     # Set up some hash tables for speedy lookups of various attributes
     my (%dump_timestamps_hash, %hostnames_hash, %disknames_hash, %levels_hash, %storages_hash, %labels_hash);
     %dump_timestamps_hash = map { ($_, undef) } @{$params{'dump_timestamps'}}
-	if (exists($params{'dump_timestamps'}));
+	if (defined($params{'dump_timestamps'}));
     %hostnames_hash = map { ($_, undef) } @{$params{'hostnames'}}
-	if (exists($params{'hostnames'}));
+	if (defined($params{'hostnames'}));
     %disknames_hash = map { ($_, undef) } @{$params{'disknames'}}
-	if (exists($params{'disknames'}));
+	if (defined($params{'disknames'}));
     %levels_hash = map { ($_, undef) } @{$params{'levels'}}
-	if (exists($params{'levels'}));
+	if (defined($params{'levels'}));
     %storages_hash = map { ($_, undef) } @{$params{'storages'}}
 	if (defined($params{'storages'}));
     %labels_hash = map { ($_, undef) } @{$params{'labels'}}
-	if (exists($params{'labels'}));
+	if (defined($params{'labels'}));
 
     my %dumps;
     my @parts;
 
     # *also* scan holding if the holding param wasn't specified
-    if (!exists $params{'holding'}) {
+    if (!defined $params{'holding'}) {
 	push @logfiles, 'holding';
     }
 
@@ -628,9 +628,9 @@ sub get_parts_and_dumps {
 
 	# filter against *_match with dumps_match
 	@find_results = Amanda::Logfile::dumps_match([@find_results],
-	    exists($params{'hostname_match'})? $params{'hostname_match'} : undef,
-	    exists($params{'diskname_match'})? $params{'diskname_match'} : undef,
-	    exists($params{'dump_timestamp_match'})? $params{'dump_timestamp_match'} : undef,
+	    defined($params{'hostname_match'})? $params{'hostname_match'} : undef,
+	    defined($params{'diskname_match'})? $params{'diskname_match'} : undef,
+	    defined($params{'dump_timestamp_match'})? $params{'dump_timestamp_match'} : undef,
 	    undef,
 	    0);
 

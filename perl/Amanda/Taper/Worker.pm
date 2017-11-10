@@ -944,7 +944,10 @@ sub setup_and_start_dump {
 					undef);
 	my @storage_list = ( $self->{'src_storage'} );
 	Amanda::Recovery::Planner::make_plan(
-			dumpspecs => \@dumpspecs,
+			hostname => $self->{'hostname'},
+			diskname => $self->{'diskname'},
+			dump_timestamp => $self->{'datestamp'},
+			level => $self->{'level'},
 			changer => $chg,
 			storage_list => \@storage_list,
 			only_in_storage => 1,

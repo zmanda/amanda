@@ -1,4 +1,15 @@
 2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog.pm: s/exists/defined/g
+	* perl/Amanda/Recovery/Planner.pm: Pass separate args to get_dumps
+	  instead of a dumpspecs (becasue it match instead of equal)
+	* perl/Amanda/Report.pm: storage_list must include vault-storage
+	* perl/Amanda/Status.pm: Fix
+	* perl/Amanda/Taper/Worker.pm: Pass separate args to make_plan
+	  instead of a dumpspecs (becasue it match instead of equal)
+	* installcheck/success-dumper-taper-vault.pl: New check
+	* installcheck/Makefile.am: Add success-dumper-taper-vault.pl
+
+2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Do not cwgenerate error when appying override
 	  until the complete configuration is read
 	* common-src/conffile.h: Define CONFIG_OVERRDIDE_NO_ERROR

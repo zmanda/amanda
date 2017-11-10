@@ -582,7 +582,14 @@ sub read_file
 		}
 	    }
 	    $self->{flags}{status} = $self->{pids}->{$pid};
-	$il = getconf($CNF_STORAGE);
+	my $il1 = getconf($CNF_STORAGE);
+
+	my $il2 = getconf($CNF_VAULT_STORAGE);
+
+	push @{$il}, @{$il1} if $il1;
+
+	push @{$il}, @{$il2} if $il2;
+
     }
     $self->{'storage_list'} = $il;
 
