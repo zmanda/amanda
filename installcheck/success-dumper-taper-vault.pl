@@ -257,6 +257,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 						'partial' => '0'
 					},
 					'storage-2' => {
+						'will_retry' => '0',
 						'status' => '28',
 						'dsize' => '1075200',
 						'taper_time' => undef,
@@ -302,6 +303,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'dles'},
 						'partial' => '0'
 					},
 					'storage-2' => {
+						'will_retry' => '0',
 						'status' => '28',
 						'dsize' => '1075200',
 						'taper_time' => undef,

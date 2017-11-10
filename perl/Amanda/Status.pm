@@ -982,11 +982,10 @@ REREAD:
 			$dlet->{'taper_time'} = $self->{'current_time'};
 			$dlet->{'taped_size'} = 0;
 			delete $dlet->{'error'};
-			$dle->{'storage'}->{$storage_name} = { status   => $VAULTING,
-							       vaulting => 1,
-							       src_storage => $src_storage,
-							       src_pool    => $src_pool,
-							       src_label   => $src_label };
+			$dlet->{'vaulting'} = 1;
+			$dlet->{'src_storage'} = $src_storage;
+			$dlet->{'src_pool'} = $src_pool;
+			$dlet->{'src_label'} = $src_label;
 			$worker_to_serial{$worker} = $serial;
 		    } elsif ($line[6] eq "TAKE-SCRIBE-FROM") {
 			#7:name1 #8:handle #9:name2
