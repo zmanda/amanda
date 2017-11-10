@@ -1224,6 +1224,7 @@ REREAD:
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } elsif ($dle->{'status'} == $VAULTING) {
 				$dle->{'status'} = $VAULTING_DONE;
+			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_DONE) {
 			    } else {
 				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
 			    }
@@ -1237,6 +1238,7 @@ REREAD:
 				$dlet->{'status'} = $FLUSH_DONE;
 			    } elsif ($dlet->{'status'} == $VAULTING) {
 				$dlet->{'status'} = $VAULTING_DONE;
+			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_DONE) {
 			    } else {
 				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
 			    }

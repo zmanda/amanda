@@ -129,6 +129,7 @@ full_tests = \
 	failure-xfer-dest-holding-shm-write-second-data \
 	failure-xfer-dest-holding-shm-write-second-header \
 	pp-scripts \
+	success-2dumper-taper-vault \
 	success-dumper-chunker-taper \
 	success-dumper-chunker-2taper \
 	success-dumper-chunker-2taper-by-level \

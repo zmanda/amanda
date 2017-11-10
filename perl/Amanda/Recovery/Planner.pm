@@ -235,16 +235,24 @@ sub make_plan {
     my $self = shift;
     my %params = @_;
 
-    for my $rq_param (qw(plan_cb dumpspecs)) {
+    for my $rq_param (qw(plan_cb )) {
 	croak "required parameter '$rq_param' missing"
 	    unless exists $params{$rq_param};
     }
     my $status = $params{'status'};
     my $dumpspecs = $params{'dumpspecs'};
+    my $hostname = $params{'hostname'};
+    my $diskname = $params{'diskname'};
+    my $dump_timestamp = $params{'dump_timestamp'};
+    my $level = $params{'level'};
     my $src_labelstr = $params{'src_labelstr'};
 
     # first, get the set of dumps that match these dumpspecs
     my @dumps = Amanda::DB::Catalog::get_dumps(dumpspecs => $dumpspecs,
+					       hostname => $hostname,
+					       diskname => $diskname,
+					       dump_timestamp => $dump_timestamp,
+					       level => $level,
 					       status => $status,
 					       labelstr  => $src_labelstr);
 
