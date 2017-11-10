@@ -442,6 +442,7 @@ struct catalog_s {
 
 /* The current parser table */
 static conf_var_t *parsetable = NULL;
+static gboolean generate_errors = TRUE;
 
 /* Read and parse a configuration file, recursively reading any included
  * files.  This function sets the keytable and parsetable appropriately
@@ -6133,7 +6134,8 @@ config_init_with_global(
     char *arg_config_name)
 {
     cfgerr_level_t cfgerr_level;
-    cfgerr_level = config_init(flags|CONFIG_INIT_GLOBAL, arg_config_name);
+    cfgerr_level = config_init(flags|CONFIG_INIT_GLOBAL|CONFIG_OVERRDIDE_NO_ERROR, arg_config_name);
+    //cfgerr_level = config_init(flags|CONFIG_INIT_GLOBAL, arg_config_name);
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	return cfgerr_level;
     }
@@ -6145,6 +6147,7 @@ config_init(
     config_init_flags flags,
     char *arg_config_name)
 {
+    generate_errors = TRUE;
     if (!(flags & CONFIG_INIT_OVERLAY)) {
 	/* Clear out anything that's already in there */
 	config_uninit();
@@ -6228,7 +6231,9 @@ config_init(
     }
 
     /* apply config overrides to default setting */
+    generate_errors = FALSE;
     apply_config_overrides(config_overrides, NULL);
+    generate_errors = TRUE;
 
     /* If we have a config_dir, we can try reading something */
     if (config_dir) {
@@ -6254,7 +6259,9 @@ config_init(
     }
 
     /* apply config overrides to default setting */
+    generate_errors = !(flags & CONFIG_OVERRDIDE_NO_ERROR);
     apply_config_overrides(config_overrides, NULL);
+    generate_errors = TRUE;
 
     if (!(flags & CONFIG_INIT_GLOBAL) || !arg_config_name) {
 	if (config_overrides) {
@@ -10839,8 +10846,13 @@ static void conf_error_common(
     const char * format,
     va_list argp)
 {
-    char *msg = g_strdup_vprintf(format, argp);
+    char *msg = NULL;
     char *errstr = NULL;
+
+    if (!generate_errors)
+	return;
+
+    msg = g_strdup_vprintf(format, argp);
 
     if(current_line)
 	errstr = g_strdup_printf(_("argument '%s': %s"),

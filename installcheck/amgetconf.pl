@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 91;
+use Test::More tests => 95;
 use strict;
 use warnings;
 
@@ -368,3 +368,15 @@ isnt(run_get('amgetconf', '--platform'), "Unknown",
     "correctly returns then platform");
 isnt(run_get('amgetconf', '--distro'), "Unknown",
     "correctly returns then distro");
+
+$testconf->add_storage("STO", [ 'tpchanger' => '"/dev/nst0"' ]);
+$testconf->add_taperscan("SCAN", [ 'plugin' => '"lexical"' ]);
+$testconf->write();
+is(run_get('amgetconf', 'TESTCONF', 'storage:STO:tpchanger', '-ostorage:STO:tpchanger=toto'), 'toto',
+   "correctly returns STO tpchanger 1");
+is(run_get('amgetconf', 'TESTCONF', 'storage:STO:tpchanger', '-ostorage:STO:tpchanger=toto', '-ostorage=STO'), 'toto',
+   "correctly returns STO tpchanger 2");
+is(run_get('amgetconf', 'TESTCONF', 'taperscan:SCAN:plugin', '-otaperscan:SCAN:plugin=foobar'), 'foobar',
+   "correctly returns SCAN plugin 1");
+is(run_get('amgetconf', 'TESTCONF', 'taperscan:SCAN:plugin', '-otaperscan:SCAN:plugin=foobar', '-otaperscan=SCAN'), 'foobar',
+   "correctly returns SCAN plugin 2");

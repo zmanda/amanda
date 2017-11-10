@@ -1740,6 +1740,7 @@ amglue_add_constant(CONFIG_INIT_USE_CWD, config_init_flags);
 amglue_add_constant(CONFIG_INIT_CLIENT, config_init_flags);
 amglue_add_constant(CONFIG_INIT_OVERLAY, config_init_flags);
 amglue_add_constant(CONFIG_INIT_GLOBAL, config_init_flags);
+amglue_add_constant(CONFIG_OVERRDIDE_NO_ERROR, config_init_flags);
 amglue_copy_to_tag(config_init_flags, init);
 
 cfgerr_level_t config_init(config_init_flags flags,
