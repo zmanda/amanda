@@ -1,4 +1,9 @@
 2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/catalogs/vault1.cat,
+	  installcheck/catalogs/vault2.cat,
+	  installcheck/catalogs/vault3.cat: Fix for previous patch
+
+2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog.pm: s/exists/defined/g
 	* perl/Amanda/Recovery/Planner.pm: Pass separate args to get_dumps
 	  instead of a dumpspecs (becasue it match instead of equal)

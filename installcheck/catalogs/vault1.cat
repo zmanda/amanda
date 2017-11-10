@@ -46,8 +46,9 @@ Org     : DailySet1
 Config  : TESTCONF
 Date    : November 8, 2017
 
-These dumps were to tape test-ORG-AA-vtapes-001608.
-The next tape Amanda expects to use is: 1 new tape.
+These dumps to storage 'vtapes' were to tape test-ORG-AA-vtapes-001608.
+The next tape Amanda expects to use for storage 'vtapes' is: 1 new tape.
+The next tape Amanda expects to use for storage 'vault' is: 1 new tape.
 
 FAILURE DUMP SUMMARY:
   localhost.localdomain /bootAMGTAR lev 1  VAULT(vault) [Source Volume '' not found]
