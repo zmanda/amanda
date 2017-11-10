@@ -332,6 +332,47 @@ sub declare_options {
 
 =head1 INSTANCE METHODS USABLE IN SUBCOMMANDS
 
+=head2 Setting application properties
+
+=head3 C<setproperty>
+
+    $self->setproperty(name, value...)
+
+Set a property that will be visible to the application. The script must be
+running on the client, for PRE-DLE-SELFCHECK, PRE-DLE-ESTIMATE, or
+PRE-DLE-BACKUP, and the property will be visible during the corresponding
+subcommand of the application. Properties set by scripts are not seen by
+other scripts, but properties set by multiple PRE-DLE-* scripts are accumulated
+and passed to the application together. A script may assign multiple values
+to a property, either in multiple calls to C<setproperty>, or as multiple
+I<value> arguments in a single call. Values set in multiple scripts for the
+same property are also combined and seen by the application as a multiple-valued
+property. The application cannot distinguish this case from a single script
+giving the property multiple values.
+
+No property value to be set in this way may contain a newline; nor may any
+property value contain a NUL byte.
+
+=cut
+
+sub setproperty {
+    my ( $self, $name, @values ) = @_;
+
+    die Amanda::Script::ImplementationError->transitionalError(
+	item => 'setproperty', value => $name,
+	problem => 'invalid property name')
+	unless $name =~ /^\S+$/;
+
+    for my $val ( @values ) {
+	die Amanda::Script::ImplementationError->transitionalError(
+	    item => 'setproperty', value => $name,
+	    problem => 'invalid property value')
+	    unless $val =~ /^[^\n\0]*$/;
+
+	print "PROPERTY $name $val\n";
+    }
+}
+
 =head2 Checked conversions
 
 =head3 C<int2big>
