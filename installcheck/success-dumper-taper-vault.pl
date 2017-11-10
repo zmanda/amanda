@@ -72,9 +72,15 @@ chomp $hostname;
 
 my $diskname2 = $diskname;
 my $diskname3 = "$diskname/AA";
+my $diskname2X = sprintf "%-100s", $diskname2;
+my $diskname3X = sprintf "%-100s", $diskname3;
+my $diskname2S = ' ' x length($diskname2);
+my $diskname3S = ' ' x length($diskname3);
+my $disknameSS = ' ' x 100;
 $testconf = Installcheck::Run::setup();
 Installcheck::Run::setup_storage($testconf, '1', 3, vault => '"storage-2" 0', runtapes => 3 );
 Installcheck::Run::setup_storage($testconf, '2', 3, runtapes => 3 );
+$testconf->add_param('columnspec', '"Disk=1:100:100"');
 $testconf->add_param('storage', '"storage-1"');
 $testconf->add_param('vault-storage', '"storage-2"');
 $testconf->add_dle(<<EODLE);
@@ -484,7 +490,7 @@ is_deeply($reply->{'body'}->[0]->{'status'}->{'stat'},
 
 # amreport
 
-my $report = <<'END_REPORT';
+my $report = <<"END_REPORT";
 Hostname: localhost.localdomain
 Org     : DailySet1
 Config  : TESTCONF
@@ -526,8 +532,8 @@ USAGE BY TAPE:
 
 NOTES:
   planner: tapecycle (2) <= runspercycle (10)
-  planner: Adding new disk localhost:/tmp/amanda/installchecks/backmeup.
-  planner: Adding new disk localhost:/tmp/amanda/installchecks/backmeup/AA.
+  planner: Adding new disk localhost:$diskname2.
+  planner: Adding new disk localhost:$diskname3.
   taper: Slot 1 without label can be labeled
   taper: tape STO-1-00001 kb 1050 fm 1 [OK]
   taper: Slot 2 without label can be labeled
@@ -539,15 +545,15 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                                                             DUMPER STATS   TAPER STATS
-HOSTNAME     DISK                                  L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
----------------------------------------------------- ---------------------- -------------- --------------
-localhost    /tmp/amanda/installchecks/backmeup    0    1050    1050    --     0:00 999999.9   0:00 999999.9
-                                                                                VAULT        0:00 999999.9
-localhost    /tmp/amanda/installchecks/backmeup/AA 0    1050    1050    --     0:00 999999.9   0:00 999999.9
-                                                                                VAULT        0:00 999999.9
+                                                                                                                                            DUMPER STATS   TAPER STATS
+HOSTNAME     DISK                                                                                                 L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+------------------------------------------------------------------------------------------------------------------- ---------------------- -------------- --------------
+localhost    $diskname2X 0    1050    1050    --     0:00 999999.9   0:00 999999.9
+             $disknameSS                              VAULT        0:00 999999.9
+localhost    $diskname3X 0    1050    1050    --     0:00 999999.9   0:00 999999.9
+             $disknameSS                              VAULT        0:00 999999.9
 
-(brought to you by Amanda version amanda-4.0)
+(brought to you by Amanda version x.y.z)
 END_REPORT
 
 check_amreport($report, $timestamp, "amreport first amdump");
@@ -559,9 +565,9 @@ Using: /amanda/h1/etc/amanda/TESTCONF/log/amdump.1
 From Wed Jun 22 08:01:00 EDT 2016
 
 localhost:$diskname2    $timestamp 0      1050k dump to tape done (00:00:00), (storage-1) dump to tape done (00:00:00)
-                                                                                                          (storage-2) vaulted (00:00:00)
+          $diskname2S                                                              (storage-2) vaulted (00:00:00)
 localhost:$diskname3 $timestamp 0      1050k dump to tape done (00:00:00), (storage-1) dump to tape done (00:00:00)
-                                                                                                          (storage-2) vaulted (00:00:00)
+          $diskname3S                                                           (storage-2) vaulted (00:00:00)
 
 SUMMARY           dle       real  estimated
                             size       size
