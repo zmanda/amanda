@@ -42,7 +42,7 @@ Amanda::DB::Catalog2 - access to the Amanda catalog: where is that dump?
   $part = $copy->add_part($volume, $part_offset, $part_size, $filenum,
 			  $part_num, $part_status);
   $copy->finish_copy($nb_parts, $kb, $byte, $copy_status, $server_crc, $copy_message);
-  $catalog->rm_volume($pool, $label);
+  $catalog->remove_volume($pool, $label);
   $catalog->quit();
 
 =head1 MODEL
@@ -523,13 +523,17 @@ sub new {
 	debug("Can't instantiate $pkgname: $@");
 	die("Can't instantiate $pkgname: $@");
     }
+    if ($self->isa("Amanda::Message")) {
+	die("$self");
+    }
     $self->{'config_name'} = $params{'config_name'} || Amanda::Config::get_config_name();
     $self->{'catalog_name'} = $catalog_name if !defined $self->{'catalog_name'};
 
     if ($params{'create'}) {
-	$self->{'create_mode'} = 1;
 	if ($self->can('_create_tableX')) {
+	    $self->{'create_mode'} = 1;
 	    $self->_create_tableX($params{empty});
+	    $self->{'create_mode'} = 0;
 	}
     }
 
@@ -594,8 +598,10 @@ sub new {
 	}
 
 	if ($params{'load'} && $self->{'dbh'}) {
+	    $self->{'create_mode'}=1;
 	    $self->load_table();
 	    $self->compute_retention();
+	    $self->{'create_mode'}=0;
 	}
     }
 

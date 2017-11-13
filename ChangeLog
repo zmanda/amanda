@@ -1,4 +1,9 @@
 2017-11-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/DB/Catalog2.pm, perl/Amanda/DB/Catalog2/MySQL.pm,
+	  perl/Amanda/DB/Catalog2/PgSQL.pm, perl/Amanda/DB/Catalog2/SQL.pm,
+	  perl/Amanda/DB/Catalog2/log.pm: Many fix
+
+2017-11-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Config.swg (subsection_names):Add missing entry
 	* common-src/amgetconf.pl: Sort the list output
 

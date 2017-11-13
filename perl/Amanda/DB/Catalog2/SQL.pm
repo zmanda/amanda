@@ -105,7 +105,39 @@ sub run_execute {
     my $read_lock = shift;
     my $write_lock = shift;
 
-    return $fn->($obj, @_);
+    my $dbh = $self->{'dbh'};
+    my $sth;
+    my $stop_loop = 0;
+    my $result;
+    my $first = 1;
+    do {
+        eval {
+            $dbh->{'AutoCommit'} = 0;
+            $result = $fn->($obj, @_);
+
+            $dbh->commit;
+        };
+        my $error = $@;
+        my $mysql_errno = $dbh->{'mysql_errno'};
+        my $mysql_error = $dbh->{'mysql_error'};
+        my $errstr = $dbh->errstr;
+        $stop_loop = 1 if $error eq '';
+        if ($error) {
+            eval { $dbh->rollback; };
+
+            $self->{'statements'} = {};
+
+            debug("error $error") if defined $error;
+            debug("mysql_errno: $mysql_errno") if defined $mysql_errno;
+            debug("mysql_error: $mysql_error") if defined $mysql_error;
+            debug("errstr: $errstr") if defined $errstr;
+
+            sleep 1;
+        } else {
+            $stop_loop = 1;
+        }
+    } until $stop_loop;
+    return $result;
 }
 
 
@@ -434,27 +466,6 @@ sub reset_volume {
 			['volumes'], @_);
 }
 
-sub _remove_volume {
-    my $self = shift;
-    my $pool_name = shift;
-    my $label = shift;
-    my $dbh = $self->{'dbh'};
-    my $sth;
-
-    my $pool_id = $self->select_or_add_pool($pool_name);
-    $sth = $self->make_statement('rm vol1', 'DELETE FROM volumes WHERE label=? AND pool_id=?');
-    $sth->execute($label, $pool_id)
-	or die "Cannot execute: " . $sth->errstr();
-    $self->_write_tapelist();
-}
-
-sub remove_volume {
-    my $self = shift;
-
-    return $self->run_execute($self, $self->can('_remove_volume'),
-			['storages', 'metas', 'configs'],
-			['pools', 'volumes'], @_);
-}
 
 sub _add_volume {
     my $self = shift;
@@ -929,19 +940,38 @@ sub _compute_storage_retention_tape {
     my $retention_tapes = shift;
     my $dbh = $self->{'dbh'};
     my $sth;
+    my $sth2;
+    my $sth3;
     my $result;
 
-    my $volume_table = "volume_ids_$$";
+#debug("_compute_storage_retention_tape : $storage_name $pool : $retention_tapes");
+    my $volume_table = "volume_ids_cstt_$$";
     if ($pool ne 'HOLDING') {
-	$sth = $self->make_statement('cstr upt0t', 'UPDATE volumes SET retention_tape=0 WHERE volume_id IN (SELECT volume_id FROM volumes,pools,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND pool_name=? AND volumes.pool_id=pools.pool_id AND retention_tape=1 AND reuse=1 AND write_timestamp=0)');
+	$sth = $self->make_statement('csrt upt1t', 'UPDATE volumes SET retention_tape=1 WHERE volume_id IN (SELECT volume_id FROM volumes,pools,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND pool_name=? AND volumes.pool_id=pools.pool_id AND retention_tape=0 AND reuse=1 AND write_timestamp!=0)');
 	$sth->execute($storage_name, $pool)
 	     or die "Cannot execute: " . $sth->errstr();
 
-	$sth = $self->make_statement('cstr upt0r', "UPDATE volumes SET retention_tape=0 WHERE volume_id IN (SELECT volume_id FROM volumes,pools,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND pool_name=? AND volumes.pool_id=pools.pool_id AND retention_tape=1 AND reuse=1 AND write_timestamp!=0 ORDER BY write_timestamp DESC, label DESC LIMIT 1000 OFFSET $retention_tapes)");
+	$sth = $self->make_statement('csrt upt0t', 'UPDATE volumes SET retention_tape=0 WHERE volume_id IN (SELECT volume_id FROM volumes,pools WHERE pool_name=? AND volumes.pool_id=pools.pool_id AND retention_tape=1 AND reuse=1 AND write_timestamp=0)');
+	$sth->execute($pool)
+	     or die "Cannot execute: " . $sth->errstr();
+
 	do {
-	    $result = $sth->execute($storage_name, $pool)
+	    if ($retention_tapes == 0) {
+		$sth = $dbh->prepare("CREATE $self->{'temporary'} TABLE $volume_table AS SELECT volume_id FROM volumes,pools,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND pool_name=? AND volumes.pool_id=pools.pool_id AND reuse=1 AND write_timestamp!=0")
+		    or die "Cannot prepare: " . $dbh->errstr();
+	    } else {
+		$sth = $dbh->prepare("CREATE $self->{'temporary'} TABLE $volume_table AS SELECT volume_id FROM volumes,pools,storages WHERE storage_name=? AND volumes.storage_id=storages.storage_id AND pool_name=? AND volumes.pool_id=pools.pool_id AND reuse=1 AND write_timestamp!=0 ORDER BY write_timestamp DESC, label DESC LIMIT 10000 OFFSET $retention_tapes")
+		    or die "Cannot prepare: " . $dbh->errstr();
+	    }
+	    $sth->execute($storage_name, $pool)
 		or die "Cannot execute: " . $sth->errstr();
-	    $retention_tapes += 1000;
+	    $sth2 = $self->make_statement('csrt upt0r', "UPDATE volumes SET retention_tape=0 WHERE volume_id IN (SELECT volume_id FROM $volume_table)");
+	    $result = $sth2->execute()
+		or die "Cannot execute: " . $sth->errstr();
+	    $retention_tapes += 10000;
+	    $sth3 = $self->make_statement('csrt dv', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
+	    $sth3->execute()
+		or die "Cannot execute: " . $sth->errstr();
 	} until $result == 0;
     }
 }
@@ -964,6 +994,17 @@ sub set_no_reuse {
     return $self->run_execute($self, $self->can('_set_no_reuse'),
 			['pools'],
 			['volumes'], @_);
+}
+
+sub _create_triggers {
+    my $self = shift;
+    my $dbh = $self->{'dbh'};
+
+#    $dbh->do("CREATE TRIGGER volume_delete_parts BEFORE DELETE ON volumes FOR EACH ROW BEGIN DELETE FROM parts WHERE parts.volume_id=OLD.volume_id; END")
+#	or die "Cannot do: " . $dbh->errstr();
+
+#    $dbh->do("CREATE TRIGGER part_delete_copys AFTER DELETE ON parts FOR EACH ROW BEGIN DELETE FROM copys WHERE copys.copy_id=OLD.copy_id; END")
+#	or die "Cannot do: " . $dbh->errstr();
 }
 
 sub _create_tableX {
@@ -1159,6 +1200,8 @@ $foreign_key (disk_id) REFERENCES disks (disk_id))")
 	or die "Cannot do: " . $dbh->errstr();
     $dbh->do("CREATE INDEX PARTS_volume_id on parts (volume_id)")
 	or die "Cannot do: " . $dbh->errstr();
+
+    $self->_create_triggers();
 
     if (!$empty) {
 	$sth = $self->make_statement('in met', 'INSERT INTO metas(meta_label) values (?)');
@@ -1388,7 +1431,7 @@ sub _load_table {
 	my $level = $cmd->{'level'};
 	$level=undef if $operation == $Amanda::Cmdfile::CMD_FLUSH;
 	my $src_copy_id = $self->_find_copy($config_id, $cmd->{'hostname'}, $cmd->{'diskname'}, $cmd->{'dump_timestamp'}, $level, $src_pool, $cmd->{'src_label'}, $cmd->{'holding_file'});
-	my $dest_storage_id = $self->select_or_add_storage($config_id, $cmd->{'dst_storage'}) if defined $cmd->{'dst_storage'};
+	my $dest_storage_id = $self->select_or_add_storage($cmd->{'dst_storage'}, $config_id) if defined $cmd->{'dst_storage'};
 	my $working_pid = $cmd->{'working_pid'};
 	my $status = $cmd->{'status'};
 	my $todo = $cmd->{'todo'};
@@ -1647,7 +1690,7 @@ sub _compute_retention_storage {
     debug("_compute_retention_storage EE");
 }
 
-sub _rm_volume {
+sub _remove_volume {
     my $self = shift;
     my $pool = shift;
     my $label = shift;
@@ -1658,10 +1701,10 @@ sub _rm_volume {
     $volume->_remove() if $volume;
 }
 
-sub rm_volume {
+sub remove_volume {
     my $self = shift;
 
-    return $self->run_execute($self, $self->can('_rm_volume'),
+    return $self->run_execute($self, $self->can('_remove_volume'),
 			['pools','storages','metas','configs'],
 			['volumes','parts','copys','images'], @_);
 }
@@ -2558,6 +2601,53 @@ sub add_flush_cmd {
     my $self = shift;
 
     return $self->run_execute($self, $self->can('_add_flush_cmd'),
+			undef,
+			['configs', 'copys', 'images', 'disks', 'hosts', 'pools', 'metas', 'volumes', 'storages', 'commands'], @_);
+}
+
+sub _add_copy_cmd {
+    my $self = shift;
+    my %params = @_;
+    my $dbh = $self->{'dbh'};
+    my $sth;
+    my $row;
+
+    $sth = $dbh->prepare("SELECT config_id FROM configs WHERE config_name=?")
+	or die "Cannot prepare: " . $dbh->errstr();
+    $sth->execute($params{'config'})
+	or die "Cannot execute: " . $sth->errstr();
+    $row = $sth->fetchrow_arrayref;
+    die ("add_flush_cmd AA") if !$row || !defined $row->[0];
+    my $config_id = $row->[0];
+
+    my $src_copy_id;
+    my $s = "SELECT copys.copy_id, copy_status, copy_pid, image_pid, dump_status FROM copys, storages, images, disks, hosts, volumes WHERE copys.storage_id=storages.storage_id AND storages.storage_name=? AND copys.image_id=images.image_id AND images.dump_timestamp=? AND images.level=? AND images.disk_id=disks.disk_id AND disks.disk_name=? AND disks.host_id=hosts.host_id AND hosts.host_name=? AND volumes.label=? AND copys.storage_id=volumes.storage_id";
+    $sth = $dbh->prepare($s)
+	or die "Cannot prepare: " . $dbh->errstr();
+    $sth->execute($params{'src_storage'}, $params{'dump_timestamp'}, $params{'level'}, $params{'diskname'}, $params{'hostname'}, $params{'label'})
+	or die "Cannot execute: " . $sth->errstr();
+    $row = $sth->fetchrow_arrayref;
+    if (!$row || !defined $row->[0]) {
+	die ("_add_copy_cmd no image found");
+    } else {
+	$src_copy_id = $row->[0];
+    }
+
+    # select or add dest storage
+    my $dest_storage_id = $self->select_or_add_storage($params{'dst_storage'});
+
+    $sth = $self->make_statement('in com', 'INSERT INTO commands(operation,config_id,src_copy_id,dest_storage_id,working_pid,status,todo,size,start_time,expire,count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $sth->execute($Amanda::Cmdfile::CMD_COPY, $config_id, $src_copy_id, $dest_storage_id, $params{'working_pid'}, $params{'status'}, $Amanda::Cmdfile::CMD_TODO, $params{'size'}, $params{'start_time'}, 0, 0)
+	or die "Cannot execute: " . $sth->errstr();
+    my $cmd_id = $dbh->last_insert_id(undef, undef, "commands", undef);
+
+    return $cmd_id;
+}
+
+sub add_copy_cmd {
+    my $self = shift;
+
+    return $self->run_execute($self, $self->can('_add_copy_cmd'),
 			undef,
 			['configs', 'copys', 'images', 'disks', 'hosts', 'pools', 'metas', 'volumes', 'storages', 'commands'], @_);
 }
@@ -4410,19 +4500,23 @@ sub _write_tapelist {
     my $sth;
     my $result = 1;
 
+#debug("_write_tapelist aa");
     if ($self->{'create_mode'}) {
 	return;
     }
+#debug("_write_tapelist bb");
 
     if (!$force_rewrite && rand(100) < 99) {
 	debug("not writing the tapelist because of rand");
 	$self->{'need_write_tapelist'} = 1;
 	return;
     }
+#debug("_write_tapelist cc");
     if (!-e $self->{'tapelist_lockname'}) {
         open(my $fhl, ">>", $self->{'tapelist_lockname'});
         close($fhl);
     }
+#debug("_write_tapelist dd");
     my $fl = Amanda::Util::file_lock->new($self->{'tapelist_lockname'});
     while(($fl->lock()) == 1) {
 	if ($have_usleep) {
@@ -4431,6 +4525,7 @@ sub _write_tapelist {
 	    sleep(1);
 	}
     }
+#debug("_write_tapelist ee");
 
     my $date = Amanda::Util::generate_timestamp();
     my $new_tapelist_file = $self->{'tapelist_filename'} . "-new-" . $date;
@@ -4449,7 +4544,9 @@ sub _write_tapelist {
     $sth = $self->make_statement('write_tapelist 1', 'SELECT write_timestamp, orig_write_timestamp, label, reuse, barcode, meta_label, block_size, pool_name, storage_name, config_name FROM volumes, metas, storages, pools, configs WHERE storages.config_id=configs.config_id AND volumes.storage_id=storages.storage_id AND volumes.pool_id=pools.pool_id AND volumes.meta_id=metas.meta_id ORDER BY write_timestamp DESC, label DESC');
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
+#debug("_write_tapelist ff");
     while (my $row_volume = $sth->fetchrow_arrayref ) {
+#debug("_write_tapelist gg $row_volume->[2]");
 	my $datestamp = $row_volume->[1];
 	my $label = $row_volume->[2];
 	my $reuse = $row_volume->[3] ? 'reuse' : 'no-reuse';
@@ -4461,22 +4558,31 @@ sub _write_tapelist {
 	my $config    = ((        $row_volume->[9])? (" CONFIG:"    . $row_volume->[9]) : '');
 	$result &&= print $fhn "$datestamp $label $reuse$barcode$meta$blocksize$pool$storage$config\n";
     }
+#debug("_write_tapelist hh");
     my $result_close = close($fhn);
     $result &&= $result_close;
+#debug("_write_tapelist ii $result");
 
     if ($result && (!defined $keep_at_new_name || !$keep_at_new_name)) {
+#debug("_write_tapelist ii1");
 	unlink($self->{'tapelist_last_write'});
+#debug("_write_tapelist ii2");
 	unless (move($new_tapelist_file, $self->{'tapelist_filename'})) {
+#debug("_write_tapelist ii2a $self->{'tapelist_filename'}");
 	    $fl->unlock();
             die ("failed to rename '$new_tapelist_file' to '$self->{'tapelist_filename'}': $!");
 	}
+#debug("_write_tapelist ii3");
 	symlink ("$$", $self->{'tapelist_last_write'});
     }
+#debug("_write_tapelist jj");
     $fl->unlock();
+#debug("_write_tapelist kk");
     if (!defined $keep_at_new_name || !$keep_at_new_name) {
 	$self->{'need_write_tapelist'} = 0;
 	$self->{'tapelist'}->reload(undef, 1) if $self->{'tapelist'};
     }
+#debug("_write_tapelist ll");
 }
 
 sub write_tapelist {
@@ -4667,18 +4773,6 @@ sub _remove {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    # get a list of all disk_id modified
-#    $sth = $dbh->prepare("CREATE $catalog->{'temporary'} TABLE $disk_table AS SELECT DISTINCT disk_id FROM images WHERE images.image_id IN (SELECT image_id FROM image_ids)")
-#	or die "Cannot prepare: " . $dbh->errstr();
-#    $sth->execute()
-#	or die "Cannot execute: " . $sth->errstr();
-
-    # get a list of all host_id modified
-#    $sth = $dbh->prepare("CREATE $catalog->{'temporary'} TABLE $host_table AS SELECT DISTINCT host_id FROM disks WHERE disks.disk_id IN (SELECT disk_id FROM disk_ids)")
-#	or die "Cannot prepare: " . $dbh->errstr();
-#    $sth->execute()
-#	or die "Cannot execute: " . $sth->errstr();
-
     # delete the part
     $sth = $dbh->prepare("DELETE FROM parts WHERE volume_id=?")
 	or die "Cannot prepare: " . $dbh->errstr();
@@ -4715,35 +4809,12 @@ sub _remove {
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    # delete the disk if all their images are removed
-#    $sth = $dbh->prepare('DELETE FROM disks WHERE disk_id IN (SELECT disk_id FROM disk_ids) AND NOT EXISTS (SELECT disk_id FROM images WHERE disks.disk_id=images.disk_id)')
-#	or die "Cannot prepare: " . $dbh->errstr();
-#    $sth->execute()
-#	or die "Cannot execute: " . $sth->errstr();
-
-    # delete the host if all their disks are removed
-#    $sth = $dbh->prepare('DELETE FROM hosts WHERE host_id IN (SELECT host_id FROM host_ids) AND NOT EXISTS (SELECT host_id FROM disks WHERE hosts.host_id=disks.host_id)')
-#	or die "Cannot prepare: " . $dbh->errstr();
-#    $sth->execute()
-#	or die "Cannot execute: " . $sth->errstr();
-
-    # drop temporary tables
-#    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE host_ids")
-#	or die "Cannot prepare: " . $dbh->errstr();
-#    $sth->execute()
-#	or die "Cannot execute: " . $sth->errstr();
-
-#    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE disk_ids")
-#	or die "Cannot prepare: " . $dbh->errstr();
-#    $sth->execute()
-#	or die "Cannot execute: " . $sth->errstr();
-
-    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE $image_table")
+    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE $image_table")
 	or die "Cannot prepare: " . $dbh->errstr();
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();
 
-    $sth = $dbh->prepare("DROP $self->{'drop_temporary'} TABLE $copy_table")
+    $sth = $dbh->prepare("DROP $catalog->{'drop_temporary'} TABLE $copy_table")
 	or die "Cannot prepare: " . $dbh->errstr();
     $sth->execute()
 	or die "Cannot execute: " . $sth->errstr();

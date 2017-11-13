@@ -222,6 +222,9 @@ sub run_execute {
 	    if (defined $errstr && $errstr =~ /has gone away/) {
 		$need_reconnect = 1;
 	    }
+	    if (defined $errstr &&  $errstr =~ /Cannot delete or update a parent/) {
+		die ($error);
+	    }
 	    if ($need_reconnect) {
 		eval { $self->connect(); };
 		if ($@) {
@@ -465,20 +468,28 @@ sub _compute_storage_retention_tape {
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
-	# get all copy_id for this config
-	$sth = $self->make_statement('csrt cvt', "CREATE $self->{'temporary'} TABLE $volume_table AS SELECT volume_id FROM volumes WHERE storage_id=? AND pool_id=? AND retention_tape=1 AND reuse=1 AND write_timestamp!=0 ORDER BY write_timestamp DESC, label DESC LIMIT 10000 OFFSET $retention_tapes");
-	$sth->execute($storage_id, $pool_id)
+	$sth = $self->make_statement('cdrt srt0', 'UPDATE volumes SET retention_tape=1 WHERE storage_id=? AND pool_id=? AND retention_tape=0 AND reuse=1 AND write_timestamp!=0');
+	my $a = $sth->execute($storage_id, $pool_id)
 	    or die "Cannot execute: " . $sth->errstr();
 
-	$sth = $self->make_statement('cdrt srt0', 'UPDATE volumes SET retention_tape=0 WHERE storage_id=? AND pool_id=? AND retention_tape=1 AND reuse=1 AND write_timestamp=0');
-	$sth->execute($storage_id, $pool_id)
+	$sth = $self->make_statement('csrt upt0t', 'UPDATE volumes SET retention_tape=0 WHERE pool_id=? AND retention_tape=1 AND reuse=1 AND write_timestamp=0');
+	$a = $sth->execute($pool_id)
 	    or die "Cannot execute: " . $sth->errstr();
+
+	# get all copy_id for this config
+	if ($retention_tapes == 0) {
+	    $sth = $self->make_statement('csrt cvt', "CREATE $self->{'temporary'} TABLE $volume_table AS SELECT volume_id FROM volumes WHERE storage_id=? AND pool_id=? AND reuse=1 AND write_timestamp!=0");
+	} else {
+	    $sth = $self->make_statement('csrt cvtl', "CREATE $self->{'temporary'} TABLE $volume_table AS SELECT volume_id FROM volumes WHERE storage_id=? AND pool_id=? AND reuse=1 AND write_timestamp!=0 ORDER BY write_timestamp DESC, label DESC LIMIT 10000 OFFSET $retention_tapes");
+	}
+	$a = $sth->execute($storage_id, $pool_id)
+	    or die "Cannot execute: " . $sth->errstr();
+
 
 	$sth = $self->make_statement('cdrt srt1', "UPDATE volumes join $volume_table on volumes.volume_id=$volume_table.volume_id SET retention_tape=0");
-	$sth->execute()
+	$a = $sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();
 
-	# get all copy_id for this config
 	$sth = $self->make_statement('csrt dv', "DROP $self->{'drop_temporary'} TABLE IF EXISTS $volume_table");
 	$sth->execute()
 	    or die "Cannot execute: " . $sth->errstr();

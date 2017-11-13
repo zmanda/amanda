@@ -230,4 +230,21 @@ sub table_exists {
     return 1;
 }
 
+sub _create_triggers {
+    my $self = shift;
+    my $dbh = $self->{'dbh'};
+
+#    $dbh->do('CREATE OR REPLACE FUNCTION F_volume_delete_parts() RETURNS trigger AS $delete_parts$ BEGIN DELETE FROM parts WHERE parts.volume_id=OLD.volume_id; RETURN OLD; END; $delete_parts$ LANGUAGE plpgsql')
+#        or die "Cannot do: " . $dbh->errstr();
+#
+#    $dbh->do('CREATE OR REPLACE FUNCTION F_part_delete_copys() RETURNS trigger AS $delete_copys$ BEGIN DELETE FROM copys WHERE copys.copy_id=OLD.copy_id; RETURN OLD; END; $delete_copys$ LANGUAGE plpgsql')
+#        or die "Cannot do: " . $dbh->errstr();
+#
+#    $dbh->do("CREATE TRIGGER volume_delete_parts BEFORE DELETE ON volumes FOR EACH ROW EXECUTE PROCEDURE F_volume_delete_parts()")
+#        or die "Cannot do: " . $dbh->errstr();
+#
+#    $dbh->do("CREATE TRIGGER part_delete_copys AFTER DELETE ON parts FOR EACH ROW EXECUTE PROCEDURE F_part_delete_copys()")
+#        or die "Cannot do: " . $dbh->errstr();
+}
+
 1;
