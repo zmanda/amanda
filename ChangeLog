@@ -1,3 +1,7 @@
+2017-11-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Config.swg (subsection_names):Add missing entry
+	* common-src/amgetconf.pl: Sort the list output
+
 2017-11-10  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/success-dumper-taper-vault.pl: Fix for any diskname
 
