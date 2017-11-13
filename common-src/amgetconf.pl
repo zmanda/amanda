@@ -61,7 +61,7 @@ values in subsections are specified in the form TYPE:NAME:PARAMETER.
 
 With --list, PARAM can be one of
 EOF
-    for my $name (keys %Amanda::Config::subsection_names) {
+    for my $name (sort keys %Amanda::Config::subsection_names) {
 	print "    $name\n"
 	    if $Amanda::Config::subsection_names{$name};
     }

@@ -1614,16 +1614,20 @@ amglue_export_tag(getconf,
 # only those keys with a value of '1' should be shown; the
 # others are deprecated
 our %subsection_names = (
-    "tapetype" => 1,
-    "dumptype" => 1,
-    "interface" => 1,
-    "holdingdisk" => 1,
     "application" => 1,
-    "script" => 1,
     "application-tool" => 0,
-    "script-tool" => 0,
-    "device" => 1,
     "changer" => 1,
+    "device" => 1,
+    "dumptype" => 1,
+    "holdingdisk" => 1,
+    "interactivity" => 1,
+    "interface" => 1,
+    "policy" => 1,
+    "script" => 1,
+    "script-tool" => 0,
+    "storage" => 1,
+    "tapetype" => 1,
+    "taperscan" => 1,
 );
 %}
 amglue_export_tag(getconf, %subsection_names);
