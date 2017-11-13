@@ -1,4 +1,7 @@
 2017-11-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* config/compile, config/config.guess: Set executable bit
+
+2017-11-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/DB/Catalog2.pm, perl/Amanda/DB/Catalog2/MySQL.pm,
 	  perl/Amanda/DB/Catalog2/PgSQL.pm, perl/Amanda/DB/Catalog2/SQL.pm,
 	  perl/Amanda/DB/Catalog2/log.pm: Many fix
