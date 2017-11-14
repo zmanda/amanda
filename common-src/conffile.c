@@ -663,7 +663,8 @@ static void ckseen(seen_t *seen);
 /* validate_functions -- these fit into the validate_function slot in
  * a parser table entry.  They call conf_parserror if the value in their
  * second argument is invalid.  */
-static void validate_no_space(conf_var_t *, val_t *);
+static void validate_name(tok_t  token, val_t *val);
+static void validate_no_space_dquote(conf_var_t *, val_t *);
 static void validate_nonnegative(conf_var_t *, val_t *);
 static void validate_non_zero(conf_var_t *, val_t *);
 static void validate_positive(conf_var_t *, val_t *);
@@ -1402,7 +1403,7 @@ conf_var_t server_var [] = {
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
    { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , validate_deprecated_changerfile },
-   { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , validate_no_space },
+   { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , validate_no_space_dquote },
    { CONF_TAPELIST             , CONFTYPE_STR      , read_str         , CNF_TAPELIST             , NULL },
    { CONF_DISKFILE             , CONFTYPE_STR      , read_str         , CNF_DISKFILE             , NULL },
    { CONF_INFOFILE             , CONFTYPE_STR      , read_str         , CNF_INFOFILE             , NULL },
@@ -1441,8 +1442,8 @@ conf_var_t server_var [] = {
    { CONF_KRB5KEYTAB           , CONFTYPE_STR      , read_str         , CNF_KRB5KEYTAB           , NULL },
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
-   { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , validate_no_space },
-   { CONF_META_AUTOLABEL       , CONFTYPE_STR      , read_str         , CNF_META_AUTOLABEL       , validate_no_space },
+   { CONF_AUTOLABEL            , CONFTYPE_AUTOLABEL, read_autolabel   , CNF_AUTOLABEL            , validate_no_space_dquote },
+   { CONF_META_AUTOLABEL       , CONFTYPE_STR      , read_str         , CNF_META_AUTOLABEL       , validate_no_space_dquote },
    { CONF_EJECT_VOLUME         , CONFTYPE_BOOLEAN  , read_bool        , CNF_EJECT_VOLUME         , NULL },
    { CONF_TMPDIR               , CONFTYPE_STR      , read_str         , CNF_TMPDIR               , validate_tmpdir },
    { CONF_USETIMESTAMPS        , CONFTYPE_BOOLEAN  , read_bool        , CNF_USETIMESTAMPS        , NULL },
@@ -1650,10 +1651,10 @@ conf_var_t storage_var [] = {
    { CONF_POLICY                   , CONFTYPE_STR           , read_dpolicy       , STORAGE_POLICY                   , NULL },
    { CONF_TAPEDEV                  , CONFTYPE_STR           , read_str           , STORAGE_TAPEDEV                  , NULL },
    { CONF_TPCHANGER                , CONFTYPE_STR           , read_str           , STORAGE_TPCHANGER                , NULL },
-   { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , validate_no_space },
-   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , validate_no_space },
-   { CONF_META_AUTOLABEL           , CONFTYPE_STR           , read_str           , STORAGE_META_AUTOLABEL           , validate_no_space },
-   { CONF_TAPEPOOL                 , CONFTYPE_STR           , read_str           , STORAGE_TAPEPOOL                 , validate_no_space },
+   { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , validate_no_space_dquote },
+   { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , validate_no_space_dquote },
+   { CONF_META_AUTOLABEL           , CONFTYPE_STR           , read_str           , STORAGE_META_AUTOLABEL           , validate_no_space_dquote },
+   { CONF_TAPEPOOL                 , CONFTYPE_STR           , read_str           , STORAGE_TAPEPOOL                 , validate_no_space_dquote },
    { CONF_RUNTAPES                 , CONFTYPE_INT           , read_int           , STORAGE_RUNTAPES                 , NULL },
    { CONF_TAPERSCAN                , CONFTYPE_STR           , read_str           , STORAGE_TAPERSCAN                , NULL },
    { CONF_TAPETYPE                 , CONFTYPE_STR           , read_str           , STORAGE_TAPETYPE                 , NULL },
@@ -1754,10 +1755,12 @@ get_conftoken(
 	    break; /* not a keyword */
 
 	default:
-	    if (exp == CONF_IDENT)
+	    if (exp == CONF_IDENT) {
 		tok = CONF_IDENT;
-	    else
+		tokenval.type = CONFTYPE_IDENT;
+	    } else {
 		tok = lookup_keyword(tokenval.v.s);
+	    }
 	    break;
 	}
     }
@@ -1802,9 +1805,14 @@ get_conftoken(
 
 	    tokenval.v.s = tkbuf;
 
-	    if (token_overflow) tok = CONF_UNKNOWN;
-	    else if (exp == CONF_IDENT) tok = CONF_IDENT;
-	    else tok = lookup_keyword(tokenval.v.s);
+	    if (token_overflow) {
+		tok = CONF_UNKNOWN;
+	    } else if (exp == CONF_IDENT) {
+		tok = CONF_IDENT;
+		tokenval.type = CONFTYPE_IDENT;
+	    } else {
+		tok = lookup_keyword(tokenval.v.s);
+	    }
 	}
 	else if (isdigit(ch)) {	/* integer */
 	    sign = 1;
@@ -2433,6 +2441,7 @@ get_holdingdisk(
 
     get_conftoken(CONF_IDENT);
     hdcur.name = g_strdup(tokenval.v.s);
+    validate_name(CONF_HOLDING, &tokenval);
     current_block = g_strconcat("holdingdisk ", hdcur.name, NULL);
     hdcur.seen.block = current_block;
     hdcur.seen.filename = current_filename;
@@ -2582,6 +2591,7 @@ read_dumptype(
     } else {
 	get_conftoken(CONF_IDENT);
 	dpcur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_DUMPTYPE, &tokenval);
     }
     current_block = g_strconcat("dumptype ", dpcur.name, NULL);
     dpcur.seen.block = current_block;
@@ -2758,6 +2768,7 @@ get_tapetype(void)
 
     get_conftoken(CONF_IDENT);
     tpcur.name = g_strdup(tokenval.v.s);
+    validate_name(CONF_TAPETYPE, &tokenval);
     current_block = g_strconcat("tapetype ", tpcur.name, NULL);
     tpcur.seen.block = current_block;
     tpcur.seen.filename = current_filename;
@@ -2862,6 +2873,7 @@ get_interface(void)
 
     get_conftoken(CONF_IDENT);
     ifcur.name = g_strdup(tokenval.v.s);
+    validate_name(CONF_INTERFACE, &tokenval);
     current_block = g_strconcat("interface ", ifcur.name, NULL);
     ifcur.seen.block = current_block;
     ifcur.seen.filename = current_filename;
@@ -2975,6 +2987,7 @@ read_application(
     } else {
 	get_conftoken(CONF_IDENT);
 	apcur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_APPLICATION, &tokenval);
     }
     current_block = g_strconcat("application ", apcur.name, NULL);
     apcur.seen.block = current_block;
@@ -3109,6 +3122,7 @@ read_interactivity(
     } else {
 	get_conftoken(CONF_IDENT);
 	ivcur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_INTERACTIVITY, &tokenval);
     }
     current_block = g_strconcat("interactivity ", ivcur.name, NULL);
     ivcur.seen.block = current_block;
@@ -3242,6 +3256,7 @@ read_taperscan(
     } else {
 	get_conftoken(CONF_IDENT);
 	tscur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_TAPERSCAN, &tokenval);
     }
     current_block = g_strconcat("taperscan ", tscur.name, NULL);
     tscur.seen.block = current_block;
@@ -3375,6 +3390,7 @@ read_policy(
     } else {
 	get_conftoken(CONF_IDENT);
 	pocur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_POLICY, &tokenval);
     }
     current_block = g_strconcat("policy ", pocur.name, NULL);
     pocur.seen.block = current_block;
@@ -3510,6 +3526,7 @@ read_storage(
     } else {
 	get_conftoken(CONF_IDENT);
 	stcur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_STORAGE, &tokenval);
     }
     current_block = g_strconcat("storage ", stcur.name, NULL);
     stcur.seen.block = current_block;
@@ -3669,6 +3686,7 @@ read_pp_script(
     } else {
 	get_conftoken(CONF_IDENT);
 	pscur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_SCRIPT, &tokenval);
     }
     current_block = g_strconcat("script ", pscur.name, NULL);
     pscur.seen.block = current_block;
@@ -3808,6 +3826,7 @@ read_device_config(
     } else {
 	get_conftoken(CONF_IDENT);
 	dccur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_DEVICE, &tokenval);
     }
     current_block = g_strconcat("device ", dccur.name, NULL);
     dccur.seen.block = current_block;
@@ -3941,6 +3960,7 @@ read_changer_config(
     } else {
 	get_conftoken(CONF_IDENT);
 	cccur.name = g_strdup(tokenval.v.s);
+	validate_name(CONF_CHANGER, &tokenval);
     }
     current_block = g_strconcat("changer ", cccur.name, NULL);
     cccur.seen.block = current_block;
@@ -5527,7 +5547,28 @@ ckseen(
 /* Validation functions */
 
 static void
-validate_no_space(
+validate_name(
+    tok_t  token,
+    val_t *val)
+{
+    switch (val->type) {
+    case CONFTYPE_STR:
+    case CONFTYPE_IDENT:
+      {
+	char *str = val_t__str(val);
+	if (str && strchr(str, ' '))
+	    conf_parserror("%s must not contains space", get_token_name(token));
+	if (str && strchr(str, '"'))
+	    conf_parserror("%s must not contains double quotes", get_token_name(token));
+	break;
+      }
+    default:
+	conf_parserror("validate_no_space_dquote invalid type %d\n", val->type);
+    }
+}
+
+static void
+validate_no_space_dquote(
     struct conf_var_s *np,
     val_t        *val)
 {
@@ -5537,6 +5578,8 @@ validate_no_space(
 	char *str = val_t__str(val);
 	if (str && strchr(str, ' '))
 	    conf_parserror("%s must not contains space", get_token_name(np->token));
+	if (str && strchr(str, '"'))
+	    conf_parserror("%s must not contains double quotes", get_token_name(np->token));
 	break;
       }
     case CONFTYPE_AUTOLABEL:
@@ -5544,17 +5587,21 @@ validate_no_space(
 	autolabel_t *autolabel = val_t__autolabel(val);
 	if (autolabel->template && strchr(autolabel->template, ' '))
 	    conf_parserror("%s template must not contains space", get_token_name(np->token));
+	if (autolabel->template && strchr(autolabel->template, '"'))
+	    conf_parserror("%s template must not contains double quotes", get_token_name(np->token));
 	break;
       }
     case CONFTYPE_LABELSTR:
       {
 	labelstr_s *labelstr = val_t__labelstr(val);
+	if (labelstr->template && strchr(labelstr->template, '"'))
+	    conf_parserror("%s template must not contains double quotes", get_token_name(np->token));
 	if (labelstr->template && strchr(labelstr->template, ' '))
 	    conf_parserror("%s template must not contains space", get_token_name(np->token));
 	break;
       }
     default:
-	conf_parserror("validate_no_space invalid type %d\n", val->type);
+	conf_parserror("validate_no_space_dquote invalid type %d\n", val->type);
     }
 }
 
@@ -10962,7 +11009,7 @@ is_valid_label(
     char *t;
 
     for (t=template; *t != '\0'; t++) {
-	if (*t <= 32)
+	if (*t <= 32 || *t == '"')
 	    return FALSE;
     }
     return TRUE;
