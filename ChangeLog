@@ -1,3 +1,7 @@
+2017-11-14  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Do not allow double quote in section name or
+	  label
+
 2017-11-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* config/compile, config/config.guess: Set executable bit
 
