@@ -183,8 +183,8 @@ sub build_param {
     } else {
 	my ($pname) = $parameter =~ /^build\.(.*)/;
 
+	no_such_param($parameter) unless exists $build_info{lc $pname};
 	my $val = $build_info{lc $pname};
-	no_such_param($parameter) unless (defined($val));
 
 	print "$val\n";
     }
@@ -257,9 +257,9 @@ sub conf_param {
 	    print $properties{$propname}->{'values'}[0], "\n";
 	}
     } else {
-	no_such_param($parameter)
-	    unless defined(getconf_byname($parameter));
 	my @strs = getconf_byname_strs($parameter, 0);
+	no_such_param($parameter)
+	    unless @strs;
 
 	for my $str (@strs) {
 	    print "$str\n";
