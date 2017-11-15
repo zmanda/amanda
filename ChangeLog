@@ -1,4 +1,8 @@
 2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
+	* common-src/match.c (match_datastamp) Allow "*" wildcard
+
+2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/dumper.c (process_dumpline): debug once error to write to
 	  the state file
 
