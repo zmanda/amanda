@@ -235,6 +235,8 @@ typedef enum {
     /* storage */
     CONF_VAULT,
 
+    /* internal */
+    CONF_PREFERED_IDENT,
 } tok_t;
 
 /* A keyword table entry, mapping the given keyword to the given token.
@@ -1764,6 +1766,12 @@ get_conftoken(
     int inquote = 0;
     int escape = 0;
     int sign;
+    gboolean prefered_ident = FALSE;
+
+    if (exp == CONF_PREFERED_IDENT) {
+	exp = CONF_IDENT;
+	prefered_ident = TRUE;
+    }
 
     if (token_pushed) {
 	token_pushed = 0;
@@ -2032,12 +2040,14 @@ negative_number: /* look for goto negative_number below sign is set there */
 		str = str_keyword(kwp);
 	    break;
 	}
-	conf_parserror(_("%s is expected"), str);
-	tok = exp;
-	if (tok == CONF_INT)
-	    tokenval.v.i = 0;
-	else
-	    tokenval.v.s = "";
+	if (!prefered_ident || exp != CONF_IDENT) {
+	    conf_parserror(_("%s is expected"), str);
+	    tok = exp;
+	    if (tok == CONF_INT)
+		tokenval.v.i = 0;
+	    else
+		tokenval.v.s = "";
+	}
     }
 }
 
@@ -4304,11 +4314,15 @@ read_storage_identlist(
     free_val_t(val);
     ckseen(&val->seen);
     val->v.identlist = NULL;
-    get_conftoken(CONF_IDENT);
+    get_conftoken(CONF_PREFERED_IDENT);
     while (tok == CONF_STRING || tok == CONF_IDENT) {
-	val->v.identlist = g_slist_append(val->v.identlist,
-					  g_strdup(tokenval.v.s));
-	get_conftoken(CONF_ANY);
+	if (strlen(tokenval.v.s) == 0) {
+	    free_val_t(val);
+	} else {
+	    val->v.identlist = g_slist_append(val->v.identlist,
+					      g_strdup(tokenval.v.s));
+	}
+	get_conftoken(CONF_PREFERED_IDENT);
     }
     if (tok != CONF_NL && tok != CONF_END) {
 	conf_parserror(_("string expected"));
@@ -4322,6 +4336,8 @@ read_dump_selection(
     val_t *val)
 {
     dump_selection_t *ds = g_new0(dump_selection_t, 1);
+    dump_selection_list_t dsl;
+    gboolean found = FALSE;
     ds->tag = NULL;
     ds->tag_type = TAG_ALL;
     ds->level = LEVEL_ALL;
@@ -4356,8 +4372,31 @@ read_dump_selection(
     } else {
 	conf_parserror(_("ALL, FULL or INCR expected"));
     }
-    get_conftoken(CONF_NL);
-    val->v.dump_selection = g_slist_append(val->v.dump_selection, ds);
+    get_conftoken(CONF_ANY);
+    if (tok != CONF_NL && tok != CONF_END) {
+	conf_parserror(_("string expected"));
+	unget_conftoken();
+    }
+
+    //replace if already exists
+    for (dsl = val->v.dump_selection ; dsl != NULL ; dsl = dsl->next) {
+	dump_selection_t *ds1 = dsl->data;
+	if (ds->tag_type == ds1->tag_type) {
+	    if (ds->tag_type != TAG_NAME || g_str_equal(ds->tag, ds1->tag)) {
+		ds1->level = ds->level;
+		found = TRUE;
+	    }
+	}
+    }
+    if (!found) {
+	val->v.dump_selection = g_slist_append(val->v.dump_selection, ds);
+	if (ds->tag_type == TAG_NAME && strlen(ds->tag) == 0) {
+	    free_val_t(val);
+	}
+    } else {
+	g_free(ds->tag);
+	g_free(ds);
+    }
 }
 
 static void
@@ -4896,6 +4935,7 @@ read_dapplication(
 {
     application_t *application;
 
+    amfree(val->v.s);
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
@@ -4904,18 +4944,20 @@ read_dapplication(
 						 anonymous_value(),NULL)),
 				       NULL, NULL, NULL);
 	current_line_num -= 1;
+	val->v.s = g_strdup(application->name);
     } else if (tok == CONF_STRING) {
 	application = lookup_application(tokenval.v.s);
-	if (application == NULL) {
-	    conf_parserror(_("Unknown application named: %s"), tokenval.v.s);
-	    return;
+	if (strlen(tokenval.v.s) != 0) {
+	    if (application == NULL) {
+		conf_parserror(_("Unknown application named: %s"), tokenval.v.s);
+		return;
+	    }
+	    val->v.s = g_strdup(application->name);
 	}
     } else {
 	conf_parserror(_("application name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    amfree(val->v.s);
-    val->v.s = g_strdup(application->name);
     ckseen(&val->seen);
 }
 
@@ -4926,6 +4968,7 @@ read_dinteractivity(
 {
     interactivity_t *interactivity;
 
+    amfree(val->v.s);
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
@@ -4933,18 +4976,20 @@ read_dinteractivity(
 						anonymous_value(),NULL)),
 					NULL, NULL, NULL);
 	current_line_num -= 1;
+	val->v.s = g_strdup(interactivity->name);
     } else if (tok == CONF_STRING) {
-	interactivity = lookup_interactivity(tokenval.v.s);
-	if (interactivity == NULL) {
-	    conf_parserror(_("Unknown interactivity named: %s"), tokenval.v.s);
-	    return;
+	if (strlen(tokenval.v.s) != 0) {
+	    interactivity = lookup_interactivity(tokenval.v.s);
+	    if (interactivity == NULL) {
+		conf_parserror(_("Unknown interactivity named: %s"), tokenval.v.s);
+		return;
+	    }
+	    val->v.s = g_strdup(interactivity->name);
 	}
     } else {
 	conf_parserror(_("interactivity name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    amfree(val->v.s);
-    val->v.s = g_strdup(interactivity->name);
     ckseen(&val->seen);
 }
 
@@ -4955,6 +5000,7 @@ read_dtaperscan(
 {
     taperscan_t *taperscan;
 
+    amfree(val->v.s);
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
@@ -4962,18 +5008,20 @@ read_dtaperscan(
 					   anonymous_value(),NULL)),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
+	val->v.s = g_strdup(taperscan->name);
     } else if (tok == CONF_STRING) {
-	taperscan = lookup_taperscan(tokenval.v.s);
-	if (taperscan == NULL) {
-	    conf_parserror(_("Unknown taperscan named: %s"), tokenval.v.s);
-	    return;
+	if (strlen(tokenval.v.s) != 0) {
+	    taperscan = lookup_taperscan(tokenval.v.s);
+	    if (taperscan == NULL) {
+		conf_parserror(_("Unknown taperscan named: %s"), tokenval.v.s);
+		return;
+	    }
+	    val->v.s = g_strdup(taperscan->name);
 	}
     } else {
 	conf_parserror(_("taperscan name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    amfree(val->v.s);
-    val->v.s = g_strdup(taperscan->name);
     ckseen(&val->seen);
 }
 
@@ -4984,6 +5032,7 @@ read_dcatalog(
 {
     catalog_t *catalog;
 
+    amfree(val->v.s);
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
@@ -4991,18 +5040,20 @@ read_dcatalog(
 					 anonymous_value(),NULL),
 			       NULL, NULL, NULL);
 	current_line_num -= 1;
+	val->v.s = g_strdup(catalog->name);
     } else if (tok == CONF_STRING) {
-	catalog = lookup_catalog(tokenval.v.s);
-	if (catalog == NULL) {
-	    conf_parserror(_("Unknown catalog named: %s"), tokenval.v.s);
-	    return;
+	if (strlen(tokenval.v.s) != 0) {
+	    catalog = lookup_catalog(tokenval.v.s);
+	    if (catalog == NULL) {
+		conf_parserror(_("Unknown catalog named: %s"), tokenval.v.s);
+		return;
+	    }
+	    val->v.s = g_strdup(catalog->name);
 	}
     } else {
 	conf_parserror(_("catalog name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    amfree(val->v.s);
-    val->v.s = g_strdup(catalog->name);
     ckseen(&val->seen);
 }
 
@@ -5013,6 +5064,7 @@ read_dpolicy(
 {
     policy_s *policy;
 
+    amfree(val->v.s);
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
 	current_line_num -= 1;
@@ -5020,18 +5072,20 @@ read_dpolicy(
 					   anonymous_value(),NULL)),
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
+	val->v.s = g_strdup(policy->name);
     } else if (tok == CONF_STRING) {
-	policy = lookup_policy(tokenval.v.s);
-	if (policy == NULL) {
-	    conf_parserror(_("Unknown policy named: %s"), tokenval.v.s);
-	    return;
+	if (strlen(tokenval.v.s) != 0) {
+	    policy = lookup_policy(tokenval.v.s);
+	    if (policy == NULL) {
+		conf_parserror(_("Unknown policy named: %s"), tokenval.v.s);
+		return;
+	    }
+	    val->v.s = g_strdup(policy->name);
 	}
     } else {
 	conf_parserror(_("policy name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    amfree(val->v.s);
-    val->v.s = g_strdup(policy->name);
     ckseen(&val->seen);
 }
 
@@ -5084,13 +5138,18 @@ read_dpp_script(
 			g_strdup(pp_script->name), &compare_pp_script_order);
     } else if (tok == CONF_STRING || tok == CONF_IDENT) {
 	while (tok == CONF_STRING || tok == CONF_IDENT) {
-	    pp_script = lookup_pp_script(tokenval.v.s);
-	    if (pp_script == NULL) {
-		conf_parserror(_("Unknown pp_script named: %s"), tokenval.v.s);
-		return;
-	    }
-    	    val->v.identlist = g_slist_insert_sorted(val->v.identlist,
+	    if (strlen(tokenval.v.s) == 0) {
+		slist_free_full(val->v.identlist, g_free);
+		val->v.identlist = NULL;
+	    } else {
+		pp_script = lookup_pp_script(tokenval.v.s);
+		if (pp_script == NULL) {
+		    conf_parserror(_("Unknown pp_script named: %s"), tokenval.v.s);
+		    return;
+		}
+		val->v.identlist = g_slist_insert_sorted(val->v.identlist,
 			 g_strdup(pp_script->name), &compare_pp_script_order);
+	    }
 	    get_conftoken(CONF_ANY);
 	}
 	unget_conftoken();
@@ -5344,12 +5403,25 @@ read_vault_list(
     while (tok == CONF_STRING || tok == CONF_IDENT) {
 	char *storage = g_strdup(tokenval.v.s);
 	int   days    = get_int(CONF_UNIT_NONE);
+	vault_list_t vl;
+	gboolean found = FALSE;
 
-	vault_el_t *vault = g_new(vault_el_t, 1);
-	nb_vault++;
-	vault->storage = storage;
-	vault->days = days;
-	val->v.vault_list = g_slist_append(val->v.vault_list, vault);
+	// Check if the vault is already in the list (Will  only update days)
+	for (vl = val->v.vault_list ; vl != NULL ; vl = vl->next) {
+	    vault_el_t *v = vl->data;
+	    if (g_str_equal(storage, v->storage)) {
+		v->days = days;
+		found = TRUE;
+		nb_vault++;
+	    }
+	}
+	if (!found) {
+	    vault_el_t *vault = g_new(vault_el_t, 1);
+	    nb_vault++;
+	    vault->storage = storage;
+	    vault->days = days;
+	    val->v.vault_list = g_slist_append(val->v.vault_list, vault);
+	}
 	if (tok != CONF_NL && tok != CONF_END) {
 	    get_conftoken(CONF_ANY);
 	}
