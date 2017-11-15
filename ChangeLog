@@ -1,4 +1,7 @@
 2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Allow to unset some setting
+
+2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
 	* common-src/match.c (match_datastamp) Allow "*" wildcard
 
