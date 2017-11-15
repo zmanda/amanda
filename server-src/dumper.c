@@ -155,6 +155,7 @@ static char *log_filename = NULL;
 static char *state_filename = NULL;
 static char *state_filename_gz = NULL;
 static int   statefile_in_mesg = -1;
+static gboolean broken_statefile_in_mesg = FALSE;
 static int   statefile_in_stream = -1;
 static int   retry_delay;
 static int   retry_level;
@@ -1136,26 +1137,31 @@ process_dumpline(
 	    } else {
 		tok = strtok(NULL, "");
 		if (tok) {
-		    if (statefile_in_mesg == -1) {
-			statefile_in_mesg = open(state_filename_gz,
-					O_WRONLY | O_CREAT | O_TRUNC, 0600);
+		    if (!broken_statefile_in_mesg) {
 			if (statefile_in_mesg == -1) {
-			    g_debug("Can't open statefile '%s': %s",
-				    state_filename_gz, strerror(errno));
-			} else {
-			    if (runcompress(statefile_in_mesg, &statepid, COMP_BEST, "state compress") < 0) {
-				aclose(statefile_in_mesg);
+			    statefile_in_mesg = open(state_filename_gz,
+					O_WRONLY | O_CREAT | O_TRUNC, 0600);
+			    if (statefile_in_mesg == -1) {
+				g_debug("Can't open statefile '%s': %s",
+					state_filename_gz, strerror(errno));
+				broken_statefile_in_mesg = TRUE;
+			    } else {
+				if (runcompress(statefile_in_mesg, &statepid, COMP_BEST, "state compress") < 0) {
+				    aclose(statefile_in_mesg);
+				    broken_statefile_in_mesg = TRUE;
+				}
 			    }
 			}
-		    }
-		    if (statefile_in_mesg != -1) {
-			size_t len = strlen(tok);
-			tok[len] = '\n';
-			if (full_write(statefile_in_mesg, tok, len+1) < len+1) {
-			    g_debug("Failed to write to state file: %s",
-				    strerror(errno));
+			if (statefile_in_mesg != -1) {
+			    size_t len = strlen(tok);
+			    tok[len] = '\n';
+			    if (full_write(statefile_in_mesg, tok, len+1) < len+1) {
+				g_debug("Failed to write to state file: %s",
+					strerror(errno));
+				broken_statefile_in_mesg = TRUE;
+			    }
+			    tok[len] = '\0';
 			}
-			tok[len] = '\0';
 		    }
 		} else {
 		    g_debug("Invalid state");
