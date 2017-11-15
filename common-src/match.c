@@ -995,6 +995,15 @@ match_datestamp(
 	goto illegal;
     }
 
+    /*
+     * datestamp matching does not involve globs or regexes, so
+     * handle wildcarding as a special case: if dateexp is "*",
+     * then all datestamps match.
+     */
+    if (strcmp(dateexp, "*") == 0) {
+	return TRUE;
+    }
+
     if (*dateexp == '=') {
 	return strcmp(dateexp+1, datestamp) == 0;
     }
