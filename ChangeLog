@@ -1,4 +1,8 @@
 2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amgetconf.pl: print an empty string if a parameter is not
+	  set instead of 'no such parameter'
+
+2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Allow to unset some setting
 
 2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
