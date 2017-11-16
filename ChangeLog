@@ -1,4 +1,8 @@
 2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
+	* perl/Amanda/CheckDump.pm: Fix report of image validated
+
+2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c (untaint_fgets): Fix
 
 2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
