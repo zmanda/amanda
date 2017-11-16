@@ -188,7 +188,7 @@ sub user_request {
 package main::Feedback;
 
 use Amanda::Recovery::Clerk;
-use base 'Amanda::Recovery::Clerk::Feedback';
+use parent -norequire, 'Amanda::Recovery::Clerk::Feedback';
 use Amanda::MainLoop;
 
 sub new {

@@ -80,7 +80,8 @@ package Amanda::Service::Restore;
 use vars qw( @ISA );
 use Amanda::ClientService;
 use Amanda::Recovery::Clerk;
-@ISA = qw( Amanda::ClientService Amanda::Recovery::Clerk::Feedback);
+
+use parent -norequire, qw( Amanda::ClientService Amanda::Recovery::Clerk::Feedback);
 
 use Sys::Hostname;
 use IPC::Open2;
