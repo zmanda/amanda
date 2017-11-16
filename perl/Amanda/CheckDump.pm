@@ -189,7 +189,7 @@ sub run {
 			source_line     => __LINE__,
 			code            => 2700009,
 			nb_image        => $self->{'nb_image'},
-			image_validated => $self->{'image_validate'},
+			image_validated => $self->{'image_validated'},
 			image_failed    => $self->{'image_failed'},
 			severity        => $Amanda::Message::ERROR));
 	    }
