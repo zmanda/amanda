@@ -1,4 +1,7 @@
 2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c (untaint_fgets): Fix
+
+2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Recovery_Clerk.pl,
 	  installcheck/Amanda_Taper_Scribe.pl, perl/Amanda/CheckDump.pm,
 	  perl/Amanda/Chunker/Controller.pm, perl/Amanda/Chunker/Scribe.pm,

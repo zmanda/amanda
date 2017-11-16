@@ -994,7 +994,7 @@ untaint_fgets(
 	if ((unsigned int)*line <= 255)
 	    *s1 = *line;
 	else
-	    *s1 = '\0';
+	    *s1 = *line;
 	line++;
 	s1++;
     }
