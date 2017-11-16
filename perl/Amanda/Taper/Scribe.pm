@@ -411,7 +411,8 @@ via C<scribe_notif_log_info>:
 A typical Feedback subclass might begin like this:
 
   package main::Feedback;
-  use base 'Amanda::Taper::Scribe::Feedback';
+  use Amanda::Taper::Scribe;
+  use parent -norequire, 'Amanda::Taper::Scribe::Feedback';
 
   sub request_volume_permission {
     my $self = shift;

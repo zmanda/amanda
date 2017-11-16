@@ -107,7 +107,7 @@ use Amanda::Logfile qw( :logtype_t log_add log_add_full
 			log_rename $amanda_log_trace_log make_stats );
 use Amanda::Util qw ( match_datestamp match_level );
 
-use base qw(
+use parent -norequire,  qw(
     Amanda::Recovery::Clerk::Feedback
     Amanda::Taper::Scribe::Feedback
 );

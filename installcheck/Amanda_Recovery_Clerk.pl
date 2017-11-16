@@ -305,7 +305,8 @@ sub fake_dump {
 
 package main::Feedback;
 
-use base 'Amanda::Recovery::Clerk::Feedback';
+use Amanda::Recovery::Clerk;
+use parent -norequire, 'Amanda::Recovery::Clerk::Feedback';
 
 sub new {
     my $class = shift;

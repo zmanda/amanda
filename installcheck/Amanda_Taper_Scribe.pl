@@ -170,7 +170,8 @@ sub scan {
 }
 
 package Mock::Feedback;
-use base qw( Amanda::Taper::Scribe::Feedback );
+use Amanda::Taper::Scribe;
+use parent -norequire, qw( Amanda::Taper::Scribe::Feedback );
 use Test::More;
 use Data::Dumper;
 use Installcheck::Config;

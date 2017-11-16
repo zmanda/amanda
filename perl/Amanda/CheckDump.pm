@@ -91,7 +91,7 @@ use Amanda::Recovery::Clerk;
 use Amanda::Restore;
 use Amanda::Extract;
 
-use base 'Amanda::Recovery::Clerk::Feedback';
+use parent -norequire, 'Amanda::Recovery::Clerk::Feedback';
 
 sub new {
     my $class = shift;

@@ -190,7 +190,8 @@ immediately when the transfer is started.
 
 A typical Clerk feedback class might look like:
 
-    use base 'Amanda::Recovery::Clerk::Feedback';
+    use 'Amanda::Recovery::Clerk';
+    use parent -norequire, 'Amanda::Recovery::Clerk::Feedback';
 
     sub clerk_notif_part {
 	my $self = shift;

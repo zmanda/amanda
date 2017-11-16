@@ -60,7 +60,7 @@ use Amanda::Recovery::Scan;
 use Amanda::Recovery::Clerk;
 use File::Temp;
 
-use base qw( Amanda::Taper::Scribe::Feedback Amanda::Recovery::Clerk::Feedback);
+use parent -norequire, qw( Amanda::Taper::Scribe::Feedback Amanda::Recovery::Clerk::Feedback);
 
 our $tape_num = 0;
 

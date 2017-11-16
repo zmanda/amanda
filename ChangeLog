@@ -1,3 +1,16 @@
+2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* installcheck/Amanda_Recovery_Clerk.pl,
+	  installcheck/Amanda_Taper_Scribe.pl, perl/Amanda/CheckDump.pm,
+	  perl/Amanda/Chunker/Controller.pm, perl/Amanda/Chunker/Scribe.pm,
+	  perl/Amanda/FetchDump.pm, perl/Amanda/Recovery/Clerk.pm,
+	  perl/Amanda/Rest/Runs.pm, perl/Amanda/Service/Amidxtaped.pm,
+	  perl/Amanda/Service/Restore.pm, perl/Amanda/Taper/Scribe.pm,
+	  perl/Amanda/Taper/Worker.pm, perl/Amanda/Vault.pm,
+	  server-src/amreindex.pl: s/use base/use parent -norequire,/ for
+	  *::Feedback class
+	* perl/Amanda/Config/FoldingHash.pm: use 'use parent -norequire' for
+	  Tie::StdHash
+
 2017-11-15  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amgetconf.pl: print an empty string if a parameter is not
 	  set instead of 'no such parameter'

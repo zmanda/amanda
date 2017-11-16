@@ -226,7 +226,8 @@ via C<scribe_notif_log_info>:
 A typical Feedback subclass might begin like this:
 
   package main::Feedback;
-  use base 'Amanda::Chunker::Scribe::Feedback';
+  use Amanda::Chunker::Scribe;
+  use parent -norequire, 'Amanda::Chunker::Scribe::Feedback';
 
   sub request_more_disk {
     my $self = shift;

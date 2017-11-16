@@ -55,7 +55,7 @@ sub local_message {
 package Amanda::FetchDump;
 
 use Amanda::Recovery::Clerk;
-use base 'Amanda::Recovery::Clerk::Feedback';
+use parent -norequire, 'Amanda::Recovery::Clerk::Feedback';
 
 use POSIX qw(strftime);
 use Amanda::Device qw( :constants );

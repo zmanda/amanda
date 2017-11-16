@@ -1,7 +1,6 @@
 package Amanda::Config::FoldingHash;
 use Tie::Hash;
-eval {require 'Tie::StdHash';};
-our @ISA = 'Tie::StdHash';
+use parent -norequire, 'Tie::StdHash';
 require Amanda::Config;
 require Amanda::Debug;
 

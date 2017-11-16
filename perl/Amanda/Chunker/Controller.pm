@@ -55,7 +55,7 @@ use Amanda::Tapelist;
 use File::Temp;
 use Carp;
 
-use base qw( Amanda::Chunker::Scribe::Feedback );
+use parent -norequire,  qw( Amanda::Chunker::Scribe::Feedback );
 
 sub new {
     my $class           = shift;
