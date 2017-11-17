@@ -1,4 +1,7 @@
 2017-11-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amdump.pl: Fix usage message
+
+2017-11-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/success-dumper-taper-vault.pl:Increase diskname length
 	  to 130 character
 
