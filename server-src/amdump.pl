@@ -39,7 +39,7 @@ use Amanda::Amdump;
 sub usage {
     my ($msg) = @_;
     print STDERR <<EOF;
-Usage: amdump <conf> [--no-taper] [--from-client] [--exact-match] [-o configoption]* [host/disk]*
+Usage: amdump <conf> [--no-taper] [--no-dump] [--no-flush] [--no-vault] [--from-client] [--exact-match] [-o configoption]* [host/disk]*
 EOF
     print STDERR "$msg\n" if $msg;
     exit 1;
