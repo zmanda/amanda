@@ -217,6 +217,9 @@ sub planner_driver_pipeline {
     my $planner = "$amlibexecdir/planner";
     my $driver = "$amlibexecdir/driver";
     my @no_taper = $self->{'no_taper'} ? ('--no-taper'):();
+    my @no_dump = $self->{'no_dump'} ? ('--no-dump'):();
+    my @no_flush = $self->{'no_flush'} ? ('--no-flush'):();
+    my @no_vault = $self->{'no_vault'} ? ('--no-vault'):();
     my @from_client = $self->{'from_client'} ? ('--from-client'):();
     my @exact_match = $self->{'exact_match'} ? ('--exact-match'):();
     my @log_filename = ('--log-filename', $self->{'trace_log_filename'});
@@ -249,10 +252,9 @@ sub planner_driver_pipeline {
 	POSIX::close($rpipe);
 	POSIX::close($wpipe);
 	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
-	debug("exec: " .join(' ', $planner, $self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk));
-	close($self->{'amdump_log'});
+	debug("exec: " .join(' ', $planner, $self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @no_dump, @no_flush, @no_vault, @from_client, @exact_match, @config_overrides, @hostdisk)); close($self->{'amdump_log'});
 	# note that @no_taper must follow --starttime
-	my @args = ($self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @from_client, @exact_match, @config_overrides, @hostdisk);
+	my @args = ($self->{'config'}, '--starttime', $self->{'timestamp'}, @log_filename, @no_taper, @no_dump, @no_flush, @no_vault, @from_client, @exact_match, @config_overrides, @hostdisk);
 	debug("exec $planner " . join(' ', @args));
 	exec $planner, @args;
 	die "Could not exec $planner: $!";
@@ -269,9 +271,9 @@ sub planner_driver_pipeline {
 	POSIX::dup2(fileno($self->{'amdump_log'}), 1); # driver does lots of logging to stdout..
 	POSIX::close($null);
 	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
-	debug("exec: " . join(' ', $driver, $self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides));
+	debug("exec: " . join(' ', $driver, $self->{'config'}, @log_filename, @no_taper, @no_dump, @no_flush, @no_vault, @from_client, @config_overrides));
 	close($self->{'amdump_log'});
-	my @args = ($self->{'config'}, @log_filename, @no_taper, @from_client, @config_overrides);
+	my @args = ($self->{'config'}, @log_filename, @no_taper, @no_dump, @no_flush, @no_vault, @from_client, @config_overrides);
 	debug("exec $driver " . join(' ', @args));
 	exec $driver, @args;
 	die "Could not exec $driver: $!";

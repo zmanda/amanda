@@ -51,6 +51,9 @@ my $config_overrides = new_config_overrides($#ARGV+1);
 my @config_overrides_opts;
 
 my $opt_no_taper = 0;
+my $opt_no_dump = 0;
+my $opt_no_flush = 0;
+my $opt_no_vault = 0;
 my $opt_from_client = 0;
 my $opt_exact_match = 0;
 
@@ -60,6 +63,9 @@ GetOptions(
     'version' => \&Amanda::Util::version_opt,
     'help|usage|?' => \&usage,
     'no-taper' => \$opt_no_taper,
+    'no-dump' => \$opt_no_dump,
+    'no-flush' => \$opt_no_flush,
+    'no-vault' => \$opt_no_vault,
     'from-client' => \$opt_from_client,
     'exact-match' => \$opt_exact_match,
     'o=s' => sub {
@@ -95,6 +101,9 @@ sub user_msg {
 my $hostdisk = \@ARGV;
 my ($amdump, @messages) = Amanda::Amdump->new(config      => $config_name,
 				 no_taper    => $opt_no_taper,
+				 no_dump     => $opt_no_dump,
+				 no_flush    => $opt_no_flush,
+				 no_vault    => $opt_no_vault,
 				 from_client => $opt_from_client,
 				 exact_match => $opt_exact_match,
 				 config_overrides => \@config_overrides_opts,

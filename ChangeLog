@@ -1,3 +1,10 @@
+2017-11-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/amdump.pl, server-src/driver.c
+	  server-src/planner.c: Add --no-dump, --no-flush and --no-vault
+	  argument
+	* perl/Amanda/Amdump.pm: Add no_dump, no_flush and no_vault parameters
+	* man/xml-source/amdump.8.xml: Document new arguments
+
 2017-11-16  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
 	* perl/Amanda/CheckDump.pm: Fix report of image validated

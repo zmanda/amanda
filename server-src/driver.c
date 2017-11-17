@@ -107,6 +107,10 @@ static int taper_started = 0;
 static int nb_storage;
 static cmddatas_t *cmddatas = NULL;
 
+static int no_dump = FALSE;
+//static int no_flush = FALSE;
+static int no_vault = FALSE;
+
 static int wait_children(int count);
 static void wait_for_children(void);
 static void allocate_bandwidth(netif_t *ip, unsigned long kps);
@@ -301,6 +305,30 @@ main(
     if (argc > 2) {
 	if (g_str_equal(argv[2], "--no-taper")) {
 	    no_taper = TRUE;
+	    argv++;
+	    argc--;
+	}
+    }
+
+    if (argc > 2) {
+	if (g_str_equal(argv[2], "--no-dump")) {
+	    no_dump = TRUE;
+	    argv++;
+	    argc--;
+	}
+    }
+
+    if (argc > 2) {
+	if (g_str_equal(argv[2], "--no-flush")) {
+	    //no_flush = TRUE;
+	    argv++;
+	    argc--;
+	}
+    }
+
+    if (argc > 2) {
+	if (g_str_equal(argv[2], "--no-vault")) {
+	    no_vault = TRUE;
 	    argv++;
 	    argc--;
 	}
@@ -1275,6 +1303,9 @@ static void
 start_a_vault(void)
 {
     taper_t *taper;
+
+    if (no_vault)
+	return;
 
     for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
         if (taper->storage_name && taper->vault_storage) {
@@ -4621,7 +4652,7 @@ read_schedule(
     }
     g_printf(_("driver: flush size %lld\n"), (long long)flush_size);
     amfree(inpline);
-    if(line == 0)
+    if (line == 0 && !no_dump)
 	log_add(L_WARNING, _("WARNING: got empty schedule from planner"));
     schedule_done = 1;
     start_degraded_mode(&runq);
