@@ -1,4 +1,11 @@
 2017-11-17  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Report.pm: Add all disks to the disklist hash, Add only
+	  disk that must be dumped to the dump_disk hash
+	* perl/Amanda/Report/human.pm: Do not report 'MISSING RESULT' If the
+	  disk is not in the dump_disk hash
+	* installcheck/Amanda_Report.pl: Setup a valid config
+
+2017-11-17  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amdump.pl, server-src/driver.c
 	  server-src/planner.c: Add --no-dump, --no-flush and --no-vault
 	  argument

@@ -631,6 +631,7 @@ sub output_error_summaries
 
 	if ($report->get_flag('results_missing') and
 	    !defined($alldumps->{$report->{run_timestamp}}) and
+	    $report->{dump_disk}->{$hostname}->{$disk} &&
 	    !$dle->{driver} and
 	    !$dle->{planner}) {
 	    push @missing_failures, "$hostname $qdisk RESULTS MISSING";
