@@ -28,6 +28,7 @@ use Data::Dumper;
 use lib '@amperldir@';
 
 use Installcheck;
+use Installcheck::Run;
 use Amanda::Config qw( :init :getconf );
 use Amanda::Report;
 use Amanda::Debug;
@@ -40,6 +41,9 @@ my %LogfileFlags;
 my %LogfileData;
 my $logCount = 0;
 my $log_filename = "$Installcheck::TMP/Amanda_Report_test.log";
+
+my $testconf = Installcheck::Run::setup();;
+$testconf->write();
 
 # copy/pasted from installcheck/Amanda_Logfile.pl .  Maybe move this
 # to a module?

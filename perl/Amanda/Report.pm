@@ -932,7 +932,6 @@ sub _handle_dumper_line
     my $self = shift @_;
     my ( $type, $str ) = @_;
     my $data     = $self->{data};
-    my $disklist = $data->{disklist};
     my $programs = $data->{programs};
     my $dumper_p = $programs->{dumper} ||= {};
 
@@ -953,7 +952,7 @@ sub _handle_dumper_line
 	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
         $orig_kb =~ s{\]$}{};
 
-        my $dle    = $disklist->{$hostname}->{$disk};
+        my $dle    = $self->_get_disklist($hostname, $disk);
         my $try    = $self->_get_try( $dle, "dumper", $self->{'run_timestamp'});
         my $dumper = $try->{dumper} ||= {};
 	$dumper->{level} = $level;
@@ -992,7 +991,7 @@ sub _handle_dumper_line
 	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
         $orig_kb =~ s{\]$}{};
 
-        my $dle    = $disklist->{$hostname}->{$disk};
+        my $dle    = $self->_get_disklist($hostname, $disk);
         my $try    = $self->_get_try( $dle, "dumper", $timestamp );
         my $dumper = $try->{dumper} ||= {};
 
@@ -1009,7 +1008,7 @@ sub _handle_dumper_line
         my @info = Amanda::Util::split_quoted_strings($str);
         my ( $hostname, $disk, $timestamp, $level ) = @info[ 0 .. 3 ];
 
-        my $dle    = $disklist->{$hostname}->{$disk};
+        my $dle    = $self->_get_disklist($hostname, $disk);
         my $try    = $self->_get_try( $dle, "dumper", $timestamp );
         my $dumper = $try->{dumper} ||= {};
 	$dumper->{date}      = $timestamp;
@@ -1040,7 +1039,6 @@ sub _handle_chunker_line
     my $self = shift @_;
     my ( $type, $str ) = @_;
     my $data      = $self->{data};
-    my $disklist  = $data->{disklist};
     my $programs  = $data->{programs};
     my $chunker_p = $programs->{chunker} ||= {};
 
@@ -1061,7 +1059,7 @@ sub _handle_chunker_line
 	$kb = int($kb/1024) if $info[$x+1] eq 'bytes';
         $kps =~ s{\]$}{};
 
-        my $dle     = $disklist->{$hostname}->{$disk};
+        my $dle     = $self->_get_disklist($hostname, $disk);
         my $try     = $self->_get_try( $dle, "chunker", $timestamp );
         my $chunker = $try->{chunker} ||= {};
 
@@ -1094,7 +1092,6 @@ sub _handle_taper_line
     my $self = shift @_;
     my ( $type, $str ) = @_;
     my $data     = $self->{data};
-    my $disklist = $data->{disklist};
     my $programs = $data->{programs};
     my $taper_p  = $programs->{taper} ||= {};
 
@@ -1161,7 +1158,7 @@ sub _handle_taper_line
         $kps =~ s{\]$}{};
         $orig_kb =~ s{\]$}{} if defined($orig_kb);
 
-        my $dle   = $disklist->{$hostname}{$disk};
+        my $dle   = $self->_get_disklist($hostname, $disk);
         my $try   = $self->_get_try($dle, "taper", $timestamp);
         my $taper = $try->{taper} ||= {};
         my $parts = $taper->{parts} ||= [];
@@ -1232,7 +1229,7 @@ sub _handle_taper_line
         $kps =~ s{\]$}{};
         $orig_kb =~ s{\]$}{} if defined $orig_kb;
 
-        my $dle   = $disklist->{$hostname}->{$disk};
+        my $dle   = $self->_get_disklist($hostname, $disk);
         my $try   = $self->_get_try($dle, "taper", $timestamp);
         my $taper = $try->{taper} ||= {};
         my $parts = $taper->{parts};
@@ -1635,32 +1632,41 @@ sub _handle_start_line
 }
 
 
-sub _handle_disk_line
+sub _get_disklist
 {
     my $self = shift @_;
-    my ($program, $str) = @_;
+    my $hostname = shift @_;
+    my $disk = shift @_;
 
     my $data     = $self->{data};
     my $disklist = $data->{disklist};
     my $hosts    = $self->{cache}{hosts} ||= [];
     my $dles     = $self->{cache}{dles}  ||= [];
 
-    my @info = Amanda::Util::split_quoted_strings($str);
-    my ($hostname, $disk) = @info;
-
     if (!exists $disklist->{$hostname}) {
-
         $disklist->{$hostname} = {};
         push @$hosts, $hostname;
     }
 
     if (!exists $disklist->{$hostname}{$disk}) {
-
         push @$dles, [ $hostname, $disk ];
         my $dle = $disklist->{$hostname}{$disk} = {};
         $dle->{'estimate'} = undef;
         $dle->{'dumps'}    = {};
     }
+    return $disklist->{$hostname}{$disk};
+}
+
+sub _handle_disk_line
+{
+    my $self = shift @_;
+    my ($program, $str) = @_;
+
+    my @info = Amanda::Util::split_quoted_strings($str);
+    my ($hostname, $disk) = @info;
+
+    $self->{dump_disk}->{$hostname}->{$disk} = 1;
+    $self->_get_disklist($hostname, $disk);
     return;
 }
 
