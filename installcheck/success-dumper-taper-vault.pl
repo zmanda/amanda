@@ -72,15 +72,15 @@ chomp $hostname;
 
 my $diskname2 = $diskname;
 my $diskname3 = "$diskname/AA";
-my $diskname2X = sprintf "%-100s", $diskname2;
-my $diskname3X = sprintf "%-100s", $diskname3;
+my $diskname2X = sprintf "%-130s", $diskname2;
+my $diskname3X = sprintf "%-130s", $diskname3;
 my $diskname2S = ' ' x length($diskname2);
 my $diskname3S = ' ' x length($diskname3);
-my $disknameSS = ' ' x 100;
+my $disknameSS = ' ' x 130;
 $testconf = Installcheck::Run::setup();
 Installcheck::Run::setup_storage($testconf, '1', 3, vault => '"storage-2" 0', runtapes => 3 );
 Installcheck::Run::setup_storage($testconf, '2', 3, runtapes => 3 );
-$testconf->add_param('columnspec', '"Disk=1:100:100"');
+$testconf->add_param('columnspec', '"Disk=1:130:130"');
 $testconf->add_param('storage', '"storage-1"');
 $testconf->add_param('vault-storage', '"storage-2"');
 $testconf->add_dle(<<EODLE);
@@ -545,9 +545,9 @@ NOTES:
 
 
 DUMP SUMMARY:
-                                                                                                                                            DUMPER STATS   TAPER STATS
-HOSTNAME     DISK                                                                                                 L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
-------------------------------------------------------------------------------------------------------------------- ---------------------- -------------- --------------
+                                                                                                                                                                          DUMPER STATS   TAPER STATS
+HOSTNAME     DISK                                                                                                                               L ORIG-KB  OUT-KB  COMP%  MMM:SS   KB/s MMM:SS    KB/s
+------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------- -------------- --------------
 localhost    $diskname2X 0    1050    1050    --     0:00 999999.9   0:00 999999.9
              $disknameSS                              VAULT        0:00 999999.9
 localhost    $diskname3X 0    1050    1050    --     0:00 999999.9   0:00 999999.9
