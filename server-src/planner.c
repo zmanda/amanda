@@ -227,6 +227,9 @@ main(
     char *cfg_opt = NULL;
     int exit_status = EXIT_SUCCESS;
     gboolean no_taper = FALSE;
+    gboolean no_dump = FALSE;
+    gboolean no_flush = FALSE;
+    //gboolean no_vault = FALSE;
     gboolean from_client = FALSE;
     gboolean exact_match = FALSE;
     storage_t *storage;
@@ -320,6 +323,21 @@ main(
     if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
                                                  "--no-taper")) {
 	no_taper = TRUE;
+	diskarg_offset += 1;
+    }
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--no-dump")) {
+	no_dump = TRUE;
+	diskarg_offset += 1;
+    }
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--no-flush")) {
+	no_flush = TRUE;
+	diskarg_offset += 1;
+    }
+    if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
+                                                 "--no-vault")) {
+	//no_vault = TRUE;
 	diskarg_offset += 1;
     }
     if (argc - diskarg_offset > 0 && g_str_equal(argv[diskarg_offset],
@@ -446,7 +464,7 @@ main(
 	}
     }
 
-    if (nb_disk == 0) {
+    if (nb_disk == 0 && !no_dump) {
 	if (errstr) {
 	    error(_("no DLE to backup; %s"), errstr);
 	} else {
@@ -510,7 +528,7 @@ main(
 
     g_fprintf(stderr,_("\nSENDING FLUSHES...\n"));
 
-    if (!no_taper) {
+    if (!no_taper && !no_flush) {
 	dumpfile_t  file;
 	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
@@ -623,6 +641,7 @@ main(
      * based on the curinfo database.
      */
 
+  if (!no_dump) {
     g_fprintf(stderr,_("\nSETTING UP FOR ESTIMATES...\n"));
     section_start = curclock();
 
@@ -803,6 +822,7 @@ main(
         while(!empty(schedq)) output_scheduleline(dequeue_est(&schedq));
     }
     g_fprintf(stderr, _("--------\n"));
+  }
 
     close_infofile();
     log_add(L_FINISH, _("date %s time %s"), planner_timestamp, walltime_str(curclock()));

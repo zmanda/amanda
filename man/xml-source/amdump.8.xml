@@ -30,6 +30,9 @@
 <cmdsynopsis>
   <command>amdump</command>    
     <arg choice='opt'>--no-taper</arg>
+    <arg choice='opt'>--no-dump</arg>
+    <arg choice='opt'>--no-flush</arg>
+    <arg choice='opt'>--no-vault</arg>
     <arg choice='opt'>--exact-match</arg>
     &configoverride.synopsis;
     <arg choice='plain'><replaceable>config</replaceable></arg>
@@ -78,21 +81,50 @@ man page for more details about Amanda.</para>
 <variablelist remap='TP'>
 
   <varlistentry>
-  <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
+  <term><option>--no-taper</option></term>
   <listitem>
-<para>Specify the host and disk on which the command will work -- see
-    the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
+<para>Disable writting to tape, including flush and vault.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-dump</option></term>
+  <listitem>
+<para>Disable dump operations.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-flush</option></term>
+  <listitem>
+<para>Disable flush, like setting autoflush to NO for all storages.</para>
+<para>Dump done in this run will be flushed.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><option>--no-vault</option></term>
+  <listitem>
+<para>Disable all vault.</para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
   <term><option>--exact-match</option></term>
   <listitem>
-<para>The host and disk are parsed as exact values</para>
+<para>The host and disk are parsed as exact values.</para>
   </listitem>
   </varlistentry>
 
   &configoverride.varlistentry;
+
+  <varlistentry>
+  <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
+  <listitem>
+<para>Specify the host and disk on which the command will work -- see
+    the description of DLE specifications in <manref name="amanda-match" vol="7"/>. </para>
+  </listitem>
+  </varlistentry>
 
 </variablelist>
 </refsect1>
