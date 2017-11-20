@@ -317,10 +317,9 @@ sub run {
 	POSIX::close($driver_pipe);
 	POSIX::dup2(fileno($self->{'amdump_log'}), 1);
 	POSIX::dup2(fileno($self->{'amdump_log'}), 2);
-	debug("exec: " . join(' ', $driver, $self->{'config'}, "nodump", "--no-vault",
-				   @log_filename, @config_overrides));
+	debug("exec: " . join(' ', $driver, $self->{'config'}, @log_filename, "--no-dump", "--no-vault", @config_overrides));
 	close($self->{'amdump_log'});
-	exec $driver, $self->{'config'}, "nodump", "--no-vault", @log_filename,
+	exec $driver, $self->{'config'}, @log_filename, "--no-dump", "--no-vault", 
 		      @config_overrides;
 	die "Could not exec $driver: $!";
     }

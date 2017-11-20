@@ -79,8 +79,6 @@ static off_t total_disksize;
 static char *dumper_program;
 static char *chunker_program;
 static int  inparallel;
-static int nodump = 0;
-static int novault = 0;
 static storage_t *storage;
 static int conf_max_dle_by_volume;
 static int conf_taperalgo;
@@ -274,22 +272,6 @@ main(
     set_config_overrides(cfg_ovr);
     argv0 = argv[0];
 
-    if(argc > 2) {
-        if(g_str_equal(argv[2], "nodump")) {
-            nodump = 1;
-	    argv++;
-	    argc--;
-        }
-    }
-
-    if(argc > 2) {
-        if(g_str_equal(argv[2], "--no-vault")) {
-            novault = 1;
-	    argv++;
-	    argc--;
-        }
-    }
-
     log_filename = NULL;
     if (argc > 3) {
 	if (g_str_equal(argv[2], "--log-filename")) {
@@ -393,7 +375,7 @@ main(
 
     /* check that we don't do many dump in a day and usetimestamps is off */
     if(strlen(driver_timestamp) == 8) {
-	if (!nodump) {
+	if (!no_dump) {
 	    char *conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
 	    char *logfile    = g_strjoin(NULL, conf_logdir, "/log.",
 					 driver_timestamp, ".0", NULL);
@@ -533,7 +515,7 @@ main(
     nb_storage = startup_dump_tape_process(taper_program, no_taper);
 
     /* fire up the dumpers now while we are waiting */
-    if(!nodump) startup_dump_processes(dumper_program, inparallel, driver_timestamp);
+    if(!no_dump) startup_dump_processes(dumper_program, inparallel, driver_timestamp);
 
     /*
      * Read schedule from stdin.  Usually, this is a pipe from planner,
@@ -587,7 +569,7 @@ main(
 	   getconf_str(CNF_DUMPORDER));
     fflush(stdout);
 
-    schedule_done = nodump;
+    schedule_done = no_dump;
     force_flush = 0;
 
     short_dump_state();
@@ -715,7 +697,7 @@ main(
     event_loop(0);
     short_dump_state();
 
-    if (!novault) {
+    if (!no_vault) {
 	/* close device for storage */
 	for (taper = tapetable; taper < tapetable+nb_storage ; taper++) {
 	    if (taper->fd >= 0 && !taper->vault_storage) {
@@ -751,7 +733,7 @@ main(
            walltime_str(curclock()));
     fflush(stdout);
 
-    if(!nodump) {
+    if(!no_dump) {
 	for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	    if(dumper->fd >= 0)
 		dumper_cmd(dumper, QUIT, NULL, NULL);
@@ -871,7 +853,7 @@ kill_children(int signal)
     dumper_t *dumper;
     taper_t  *taper;
 
-    if(!nodump) {
+    if(!no_dump) {
         for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	    if (!dumper->down && dumper->pid > 1) {
 		g_printf(_("driver: sending signal %d to %s pid %u\n"), signal,
@@ -909,7 +891,7 @@ wait_for_children(void)
     dumper_t *dumper;
     taper_t  *taper;
 
-    if(!nodump) {
+    if(!no_dump) {
 	for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	    if (dumper->pid > 1 && dumper->fd >= 0) {
 		dumper_cmd(dumper, QUIT, NULL, NULL);
@@ -2766,7 +2748,7 @@ handle_taper_result(
              * cancel one.
              */
 	    taper_started = 1;
-            if(!nodump) {
+            if(!no_dump) {
                 log_add(L_WARNING,
                         _("going into degraded mode because of taper component error."));
 	    }
@@ -4248,7 +4230,7 @@ read_flush(
     unlock_cmdfile(cmddatas);
 
     start_a_flush();
-    if (!nodump) {
+    if (!no_dump) {
 	schedule_ev_read = event_create((event_id_t)0, EV_READFD,
 					  read_schedule, NULL);
 	event_activate(schedule_ev_read);
