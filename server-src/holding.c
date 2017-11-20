@@ -63,6 +63,8 @@ static int is_emptyfile(char *fname);
  */
 static int is_datestr(char *fname);
 
+gboolean take_holding_pid(char *diskdir, int pid);
+static gboolean can_take_holding(char *pid_file);
 /*
  * Static functions */
 
@@ -354,18 +356,20 @@ holding_walk_disk(
 		is_cruft = 1; /* unexpected */
         }
 
-	if (per_dir_fn) 
-	    proceed = per_dir_fn(datap, 
-			hdisk, 
-			workdir->d_name, 
-			hdir, 
+	if (per_dir_fn) {
+	    proceed = per_dir_fn(datap,
+			hdisk,
+			workdir->d_name,
+			hdir,
 			is_cruft);
-	if (!is_cruft && proceed && stop_at != STOP_AT_DIR)
+	}
+	if (!is_cruft && proceed && stop_at != STOP_AT_DIR) {
 	    holding_walk_dir(hdir,
 		    datap,
 		    stop_at,
 		    per_file_fn,
 		    per_chunk_fn);
+	}
     }
 
     closedir(dir);
@@ -431,6 +435,25 @@ typedef struct {
     int fullpaths;
 } holding_get_datap_t;
 
+/* Functor for holding_get_*; Stop if pid fileexists and is still alive
+ * the result.
+ */
+static int
+holding_dir_stop_if_pid_fn(
+    gpointer datap G_GNUC_UNUSED,
+    char *hdisk G_GNUC_UNUSED,
+    char *element G_GNUC_UNUSED,
+    char *hdir,
+    int is_cruft)
+{
+    if (is_cruft) {
+	return 0;
+    }
+
+    return take_holding_pid(hdir, getppid());
+}
+
+
 /* Functor for holding_get_*; adds 'element' or 'fqpath' to
  * the result.
  */
@@ -495,7 +518,7 @@ holding_get_files(
     } else {
         holding_walk((gpointer)&data,
 	    STOP_AT_FILE,
-	    NULL, NULL, holding_get_walk_fn, NULL);
+	    NULL, holding_dir_stop_if_pid_fn, holding_get_walk_fn, NULL);
     }
 
     return data.result;
@@ -1053,6 +1076,14 @@ mkholdingdir(
     int   success = 1;
     char *pid_file;
     FILE *pid_FILE;
+    struct stat  statbuf;
+
+    pid_file = g_strconcat(diskdir, "/pid", NULL);
+    // shorcut if the pid_file already exists
+    if (stat(pid_file, &statbuf) == 0) {
+	g_free(pid_file);
+	return success;
+    }
 
     if (mkpdir(diskdir, 0770, (uid_t)-1, (gid_t)-1) != 0 && errno != EEXIST) {
 	log_add(L_WARNING, _("WARNING: could not create parents of %s: %s"),
@@ -1083,7 +1114,6 @@ mkholdingdir(
     }
 
     /* create a 'pid' file */
-    pid_file = g_strconcat(diskdir, "/pid", NULL);
     pid_FILE = fopen(pid_file, "w");
     if (!pid_FILE) {
 	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
@@ -1097,3 +1127,61 @@ mkholdingdir(
 
     return success;
 }
+
+static gboolean can_take_holding(
+    char *pid_file)
+{
+    FILE *pid_FILE;
+    int result = 1;
+
+    pid_FILE = fopen(pid_file, "r");
+    if (pid_FILE) {
+	char line[1000];
+	int  pid;
+	if (fgets(line, 1000, pid_FILE) != NULL) {
+	    pid = atoi(line);
+	    if (pid != getpid() && pid != getppid()) {
+		/* check if pid is alive */
+		if (kill(pid, 0) != -1) {
+		    result = 0;
+		}
+	    }
+	}
+	fclose(pid_FILE);
+    }
+
+    return result;
+}
+
+gboolean take_holding_pid(char *diskdir, int pid);
+gboolean
+take_holding_pid(
+    char *	diskdir,
+    int		pid)
+{
+    int   result = 1;
+    char *pid_file;
+    FILE *pid_FILE;
+
+    pid_file = g_strconcat(diskdir, "/pid", NULL);
+
+    if (!can_take_holding(pid_file)) {
+	g_free(pid_file);
+	return 0;
+    }
+
+    /* create a 'pid' file */
+    pid_FILE = fopen(pid_file, "w");
+    if (!pid_FILE) {
+	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
+		pid_file, strerror(errno));
+	result = 0;
+    } else {
+	fprintf(pid_FILE, "%d", pid);
+	fclose(pid_FILE);
+    }
+    g_free(pid_file);
+
+    return result;
+}
+

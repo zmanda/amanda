@@ -1,4 +1,8 @@
 2017-11-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Holding.pm: Lock the holding disk dir
+	* server-src/holding.c: Lock the holding disk dir
+
+2017-11-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Amflush.pm: Use new --no-dump argument of driver
 	* server-src/driver.c: Merge nodump and --no-dump argument
 

@@ -199,7 +199,7 @@ sub _is_datestr {
 }
 
 sub _walk {
-    my ($file_fn, $verbose) = @_;
+    my ($file_fn, $verbose, $take_pid) = @_;
 
     # walk disks, directories, and files with nested loops
     for my $disk (disks()) {
@@ -229,6 +229,21 @@ sub _walk {
 		next;
 	    }
 
+	    my $pidfn = File::Spec->catfile($dirfn, "pid");
+	    if (open(my $pidh,  $pidfn)) {
+		my $pid = <$pidh>;
+		close($pidh);
+		if (kill($pid, 0) == 0) {
+		    # pid is alive, skip this directory
+		    next;
+		}
+	    }
+	    if ($take_pid) {
+		open(my $pidh,  ">", $pidfn) || next;
+		print $pidh "$$";
+		close($pidh);
+	    }
+
 	    while (defined(my $dirent = $dirh->read)) {
 		next if $dirent eq '.' or $dirent eq '..' or $dirent eq 'pid';
 
@@ -243,7 +258,9 @@ sub _walk {
 
 		$file_fn->($filename, $hdr);
 	    }
+	    $dirh->close();
 	}
+	$diskh->close();
     }
 }
 
@@ -276,7 +293,7 @@ sub files {
 
 	push @results, $filename;
     };
-    _walk($each_file_fn, $verbose);
+    _walk($each_file_fn, $verbose, 1);
 
     return @results;
 }
@@ -289,7 +306,7 @@ sub all_files {
 	my ($filename, $header) = @_;
 	push @results, { filename => $filename, header => $header };
     };
-    _walk($each_file_fn, $verbose);
+    _walk($each_file_fn, $verbose,1 );
 
     return @results;
 }
@@ -506,7 +523,7 @@ sub get_files_for_flush {
 	}
 	push @results, $filename;
     };
-    _walk($each_file_fn, 0);
+    _walk($each_file_fn, 0, 1);
 
     return sort @results;
 }
@@ -520,7 +537,7 @@ sub get_all_datestamps {
 
 	$datestamps{$header->{'datestamp'}} = 1;
     };
-    _walk($each_file_fn, 0);
+    _walk($each_file_fn, 0, 0);
 
     return sort keys %datestamps;
 }
