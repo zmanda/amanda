@@ -1,4 +1,8 @@
 2017-11-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Amflush.pm: Use new --no-dump argument of driver
+	* server-src/driver.c: Merge nodump and --no-dump argument
+
+2017-11-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/amstatus.pl: Fix when no storage
 
 2017-11-17  Jean-Louis Martineau <JMartineau@carbonite.com>
