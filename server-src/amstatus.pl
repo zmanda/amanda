@@ -265,6 +265,10 @@ if ($opt_detail) {
 
 	    if ($nb_storage == 0) {
 		print $dump_status;
+		if (defined $dle->{'wsize'} && defined $dle->{'esize'} && $dle->{'esize'} != 0) {
+		    printf " (%s$unit done (%0.2f%%))", dn($dle->{'wsize'}),
+			     100.0 * $dle->{'wsize'} / $dle->{'esize'};
+		}
 		if (defined $dle->{'dump_time'}) {
 		    print " (",  $status->show_time($dle->{'dump_time'}), ")";
 		}
