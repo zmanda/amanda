@@ -2034,7 +2034,7 @@ sub _validate {
     # check all holding file have a corresponding holdingdisk volume.
     $sth_volume = $dbh->prepare("SELECT volume_id FROM volumes WHERE label=?")
 	or die "Cannot prepare: " . $dbh->errstr();
-    for my $hfile (Amanda::Holding::files()) {
+    for my $hfile (Amanda::Holding::files(0)) {
 	$sth_volume->execute($hfile)
 	    or die "Cannot execute: " . $sth_volume->errstr();
 	if (!$sth_volume->fetchrow_arrayref) {
@@ -3397,7 +3397,7 @@ sub _clean {
     }
 
     # check all holding file have a corresponding holdingdisk volume.
-    for my $hfile (Amanda::Holding::files()) {
+    for my $hfile (Amanda::Holding::files(0)) {
 	my $hdr = Amanda::Holding::get_header($hfile);
 	next unless $hdr;
 

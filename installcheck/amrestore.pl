@@ -207,7 +207,7 @@ is($hdr_size, $orig_size + Amanda::Holding::DISK_BLOCK_BYTES,
 
 # find the holding files
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-@filenames = sort(+Amanda::Holding::files());
+@filenames = sort(+Amanda::Holding::files(0));
 is(scalar @filenames, 2, "two holding files found") or die("holding is not what I thought");
 my $holding_filename = $filenames[0];
 

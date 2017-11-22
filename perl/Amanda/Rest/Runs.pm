@@ -606,10 +606,11 @@ sub amflush {
 			source_line     => __LINE__,
 			code         => $code,
 			severity     => $Amanda::Message::WARNING);
+	log_add($L_INFO, "pid-done $$");
 	return (-1, \@result_messages);
     }
 
-    # fork the amdump process and detach
+    # fork the amflush process and detach
     my $oldpid = $$;
     my $pid = POSIX::fork();
     if ($pid == 0) {

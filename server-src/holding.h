@@ -72,7 +72,8 @@ holding_get_disks(void);
  */
 GSList *
 holding_get_files(char *hdir,
-                  int fullpaths);
+                  int fullpaths,
+		  int take_pid_lock);
 
 /* Get a list of holding files chunks in the given holding
  * file.  Always returns full paths.

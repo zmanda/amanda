@@ -228,7 +228,7 @@ sub get_flush {
 	@ts = @{$params{'datestamps'}};
     }
     @ts = sort @ts;
-    my @hfiles = Amanda::Holding::get_files_for_flush(@ts);
+    my @hfiles = Amanda::Holding::get_files_for_flush(1, @ts);
 
     my $conf_cmdfile = config_dir_relative(getconf($CNF_CMDFILE));
     my $cmdfile = Amanda::Cmdfile->new($conf_cmdfile);

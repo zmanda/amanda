@@ -493,7 +493,7 @@ sub output_tapeinfo
 
     } else {
 
-        my @holding_list = Amanda::Holding::get_files_for_flush();
+        my @holding_list = Amanda::Holding::get_files_for_flush(0);
         my $h_size = 0;
         foreach my $holding_file (@holding_list) {
             $h_size += (0 + Amanda::Holding::file_size($holding_file, 1));

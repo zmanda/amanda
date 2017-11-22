@@ -1,3 +1,22 @@
+2017-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* server-src/holding.c: Fix to take pid lock
+	* server-src/holding.c (holding_get_files): Add a take_pid_lock
+	  argument
+	* server-src/cmdline.c, server-src/find.c: Add 0 take_pid_lock
+	  argument to holding_get_files
+	* server-src/holding.h (holding_get_files): Change prototype
+	* installcheck/Amanda_Holding.pl, installcheck/amrestore.pl: Call
+	  Amanda::Holding::files and Amanda::Holding::get_files_for_flush
+	  with a 0 take_pid_lock
+	* perl/Amanda/Amflush.pm: Call Amanda::Holding::get_files_for_flush
+	  with a 1 take_pid_lock
+	* perl/Amanda/DB/Catalog2/SQL.pm: Call Amanda::Holding::files with a 0
+	  take_pid_lock
+	* perl/Amanda/Holding.pm: Fix to take pid lock
+	* perl/Amanda/Report/human.pm, perl/Amanda/Report/json.pm: Call
+	  Amanda::Holding::get_files_for_flush with a 0 take_pid_lock
+	* perl/Amanda/Rest/Runs.pm: Log pid-done
+
 2017-11-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Holding.pm: Lock the holding disk dir
 	* server-src/holding.c: Lock the holding disk dir
