@@ -570,8 +570,9 @@ main(
 	    // rename .tmp holding files
 	    {
 		int l = strlen(holding_file->data) - 4;
-		if (strcmp(((char *)holding_file->data)+4, ".tmp") == 0) {
-		    (char *)holding_file->data[l] = '\0';
+		char *s = holding_file->data;
+		if (strcmp(s+4, ".tmp") == 0) {
+		    s[l] = '\0';
 		}
 	    }
 
