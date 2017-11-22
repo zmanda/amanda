@@ -567,6 +567,14 @@ main(
 		continue;
 	    }
 
+	    // rename .tmp holding files
+	    {
+		int l = strlen(holding_file->data) - 4;
+		if (strcmp(((char *)holding_file->data)+4, ".tmp") == 0) {
+		    (char *)holding_file->data[l] = '\0';
+		}
+	    }
+
 	    /* find all cmdfile for that dump */
 	    data.ids = NULL;
 	    data.holding_file = (char *)holding_file->data;

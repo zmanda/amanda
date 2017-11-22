@@ -236,6 +236,10 @@ sub get_flush {
 
     my %disks;
     for my $hfile (@hfiles) {
+	if ($hfile =~ /\.tmp$/) {
+	    $hfile =~ s/\.tmp$//;
+	    Amanda::Holding::rename_tmp($hfile, 0);
+	}
 	my $hdr = Amanda::Holding::get_header($hfile);
 	my $dle = Amanda::Disklist::get_disk($hdr->{'name'}, $hdr->{'disk'});
 	next if !$dle->{'todo'};

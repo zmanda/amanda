@@ -4136,7 +4136,7 @@ read_flush(
 	    continue;
 	}
 
-	if (file.dumplevel < 0 || file.dumplevel > 399) {
+	if (file.dumplevel < 0 || file.dumplevel >= DUMP_LEVELS) {
 	    log_add(L_INFO, _("%s: ignoring file with bogus dump level %d."),
 		    destname, file.dumplevel);
 	    amfree(destname);
