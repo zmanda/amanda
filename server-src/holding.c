@@ -1025,14 +1025,6 @@ mkholdingdir(
     int   success = 1;
     char *pid_file;
     FILE *pid_FILE;
-    struct stat  statbuf;
-
-    pid_file = g_strconcat(diskdir, "/pid", NULL);
-    // shorcut if the pid_file already exists
-    if (stat(pid_file, &statbuf) == 0) {
-	g_free(pid_file);
-	return success;
-    }
 
     if (mkpdir(diskdir, 0770, (uid_t)-1, (gid_t)-1) != 0 && errno != EEXIST) {
 	log_add(L_WARNING, _("WARNING: could not create parents of %s: %s"),
@@ -1063,7 +1055,8 @@ mkholdingdir(
     }
 
     /* create a 'pid' file */
-    pid_FILE = fopen(pid_file, "w");
+    pid_file = g_strconcat(diskdir, "/pid", NULL);
+    pid_FILE = fopen(pid_file, "wx");
     if (!pid_FILE) {
 	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
 		pid_file, strerror(errno));

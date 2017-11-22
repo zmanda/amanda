@@ -343,7 +343,6 @@ holding_thread(
 	if (self->filename == NULL ||
 	    strcmp(self->filename, self->new_filename) != 0) {
 	    char    *tmp_filename;
-	    char    *pc;
 	    int      fd;
 	    ssize_t  write_header_size;
 
@@ -353,11 +352,6 @@ holding_thread(
 	    }
 
 	    tmp_filename = g_strjoin(NULL, self->new_filename, ".tmp", NULL);
-	    pc = strrchr(tmp_filename, '/');
-	    g_assert(pc != NULL);
-	    *pc = '\0';
-	    mkholdingdir(tmp_filename);
-	    *pc = '/';
 
 #ifdef FAILURE_CODE
 	    {
@@ -418,7 +412,7 @@ failure_port_write_header:
 		self->chunk_status = CHUNK_NO_ROOM;
 		mesg = g_strdup_printf("Failed to write header to holding file '%s': %s",
 				       tmp_filename, strerror(errno));
-		close(fd);
+		aclose(fd);
 		unlink(tmp_filename);
 		g_free(tmp_filename);
 		goto no_room;
@@ -431,6 +425,7 @@ failure_port_write_header:
 		strcmp(self->filename, self->new_filename) != 0) {
 		if (close_chunk(self, self->new_filename, &mesg) == -1) {
 		    self->chunk_status = CHUNK_FAILED;
+		    aclose(fd);
 		    break;
 		}
 	    }
@@ -673,7 +668,6 @@ shm_holding_thread(
 	if (self->filename == NULL ||
 	    strcmp(self->filename, self->new_filename) != 0) {
 	    char    *tmp_filename;
-	    char    *pc;
 	    int      fd;
 	    ssize_t  write_header_size;
 
@@ -683,11 +677,6 @@ shm_holding_thread(
 	    }
 
 	    tmp_filename = g_strjoin(NULL, self->new_filename, ".tmp", NULL);
-	    pc = strrchr(tmp_filename, '/');
-	    g_assert(pc != NULL);
-	    *pc = '\0';
-	    mkholdingdir(tmp_filename);
-	    *pc = '/';
 
 #ifdef FAILURE_CODE
 	    {
@@ -748,7 +737,7 @@ failure_shm_write_header:
 		self->chunk_status = CHUNK_NO_ROOM;
 		mesg = g_strdup_printf("Failed to write header to holding file '%s': %s",
 				       tmp_filename, strerror(errno));
-		close(fd);
+		aclose(fd);
 		unlink(tmp_filename);
 		g_free(tmp_filename);
 		goto no_room;
@@ -761,6 +750,7 @@ failure_shm_write_header:
 		strcmp(self->filename, self->new_filename) != 0) {
 		if (close_chunk(self, self->new_filename, &mesg) == -1) {
 		    self->chunk_status = CHUNK_FAILED;
+		    aclose(fd);
 		    break;
 		}
 	    }

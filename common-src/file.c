@@ -991,10 +991,7 @@ untaint_fgets(
     }
 
     while (*line != '\0') {
-	if ((unsigned int)*line <= 255)
-	    *s1 = *line;
-	else
-	    *s1 = *line;
+	*s1 = *line;
 	line++;
 	s1++;
     }
