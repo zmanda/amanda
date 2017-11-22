@@ -64,7 +64,7 @@ static int is_emptyfile(char *fname);
 static int is_datestr(char *fname);
 
 gboolean take_holding_pid(char *diskdir, int pid);
-static gboolean can_take_holding(char *pid_file);
+static int can_take_holding(char *pid_file, int remove);
 /*
  * Static functions */
 
@@ -433,6 +433,7 @@ holding_walk(
 typedef struct {
     GSList *result;
     int fullpaths;
+    int take_pid_lock;
 } holding_get_datap_t;
 
 /* Functor for holding_get_*; Stop if pid fileexists and is still alive
@@ -440,17 +441,24 @@ typedef struct {
  */
 static int
 holding_dir_stop_if_pid_fn(
-    gpointer datap G_GNUC_UNUSED,
+    gpointer datap,
     char *hdisk G_GNUC_UNUSED,
     char *element G_GNUC_UNUSED,
     char *hdir,
     int is_cruft)
 {
+    holding_get_datap_t *data = (holding_get_datap_t *)datap;
+
     if (is_cruft) {
 	return 0;
     }
 
-    return take_holding_pid(hdir, getppid());
+    if (data->take_pid_lock) {
+	return take_holding_pid(hdir, getppid());
+    } else {
+	char *pid_file = g_strconcat(hdir, "/pid", NULL);
+	return can_take_holding(pid_file, 0);
+    }
 }
 
 
@@ -505,11 +513,13 @@ holding_get_disks(void)
 GSList *
 holding_get_files(
     char *hdir,
-    int fullpaths)
+    int fullpaths,
+    int take_pid_lock)
 {
     holding_get_datap_t data;
     data.result = NULL;
     data.fullpaths = fullpaths;
+    data.take_pid_lock = take_pid_lock;
 
     if (hdir) {
         holding_walk_dir(hdir, (gpointer)&data,
@@ -530,6 +540,7 @@ holding_get_file_chunks(char *hfile)
     holding_get_datap_t data;
     data.result = NULL;
     data.fullpaths = 1;
+    data.take_pid_lock = 0;
 
     holding_walk_file(hfile, (gpointer)&data,
 	holding_get_walk_fn);
@@ -549,7 +560,7 @@ holding_get_files_for_flush(
 
     /* loop over *all* files, checking each one's datestamp against the expressions
      * in dateargs */
-    file_list = holding_get_files(NULL, 1);
+    file_list = holding_get_files(NULL, 1, 1);
     for (file_elt = file_list; file_elt != NULL; file_elt = file_elt->next) {
         /* get info on that file */
 	if (!holding_file_get_dumpfile((char *)file_elt->data, &file))
@@ -597,7 +608,7 @@ holding_get_all_datestamps(void)
     GSList *datestamps = NULL;
 
     /* enumerate all files */
-    all_files = holding_get_files(NULL, 1);
+    all_files = holding_get_files(NULL, 1, 0);
     for (file = all_files; file != NULL; file = file->next) {
 	dumpfile_t dfile;
 	if (!holding_file_get_dumpfile((char *)file->data, &dfile))
@@ -748,7 +759,6 @@ holding_cleanup_dir(
 {
     holding_cleanup_datap_t *data = (holding_cleanup_datap_t *)datap;
     char *pid_file;
-    FILE *pid_FILE;
 
     if (is_cruft) {
 	if (data->verbose_output)
@@ -759,26 +769,8 @@ holding_cleanup_dir(
 
     /* Do not cleanup if not from us and their amdump is still running */
     pid_file = g_strconcat(fqpath, "/pid", NULL);
-    pid_FILE = fopen(pid_file, "r");
-    if (pid_FILE) {
-	char line[1000];
-	int  pid;
-	if (fgets(line, 1000, pid_FILE) != NULL) {
-	    pid = atoi(line);
-	    if (pid != getpid()) {
-		/* check if pid is alive */
-		if (kill(pid, 0) == 0) {
-		    if (data->verbose_output)
-			g_fprintf(data->verbose_output,
-			    _("..skipping running directory '%s'\n"), element);
-		    g_free(pid_file);
-		    fclose(pid_FILE);
-		    return 0;
-		}
-	    }
-	    unlink(pid_file);
-	}
-	fclose(pid_FILE);
+    if (!can_take_holding(pid_file, 1)) {
+	return 0;
     }
     g_free(pid_file);
 
@@ -1085,8 +1077,14 @@ mkholdingdir(
     return success;
 }
 
-static gboolean can_take_holding(
-    char *pid_file)
+/*
+ * return  0 - can't take
+ *         1 - can take
+ *         2 - already own
+ */
+static int can_take_holding(
+    char *pid_file,
+    int   remove)
 {
     FILE *pid_FILE;
     int result = 1;
@@ -1102,6 +1100,15 @@ static gboolean can_take_holding(
 		if (kill(pid, 0) != -1) {
 		    result = 0;
 		}
+		// remove pid file of dead process
+		unlink(pid_file);
+	    } else {
+		if (remove) {
+		    // remove my own pid file
+		    unlink(pid_file);
+		} else {
+		    result = 2;
+		}
 	    }
 	}
 	fclose(pid_FILE);
@@ -1116,19 +1123,22 @@ take_holding_pid(
     char *	diskdir,
     int		pid)
 {
-    int   result = 1;
     char *pid_file;
     FILE *pid_FILE;
+    int   result;
 
     pid_file = g_strconcat(diskdir, "/pid", NULL);
 
-    if (!can_take_holding(pid_file)) {
+    result = can_take_holding(pid_file, 0);
+    if (result == 0) {
 	g_free(pid_file);
 	return 0;
+    } else if (result == 2) {
+	return 1;
     }
 
     /* create a 'pid' file */
-    pid_FILE = fopen(pid_file, "w");
+    pid_FILE = fopen(pid_file, "wx");
     if (!pid_FILE) {
 	log_add(L_WARNING, _("WARNING: Can't create '%s': %s"),
 		pid_file, strerror(errno));

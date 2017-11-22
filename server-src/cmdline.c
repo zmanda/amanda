@@ -246,7 +246,7 @@ cmdline_match_holding(
     GSList *matching_files = NULL;
     dumpfile_t file;
 
-    holding_files = holding_get_files(NULL, 1);
+    holding_files = holding_get_files(NULL, 1, 0);
 
     for (hi = holding_files; hi != NULL; hi = hi->next) {
 	/* TODO add level */

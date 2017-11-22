@@ -127,7 +127,7 @@ is_deeply([ sort(+Amanda::Holding::disks()) ],
     [ sort($holding1, $holding2) ],
     "all active holding disks, but not inactive (defined but not used) disks");
 
-is_deeply([ sort(+Amanda::Holding::files()) ],
+is_deeply([ sort(+Amanda::Holding::files(0)) ],
     [ sort(
 	"$holding1/20070303000000/videoserver._video_a",
 	"$holding1/20070306123456/videoserver._video_a",
@@ -163,17 +163,17 @@ is_deeply([ Amanda::Holding::get_all_datestamps() ],
 	  [ sort("20070303000000", "20070306123456") ],
 	  "get_all_datestamps");
 
-is_deeply([ sort(+Amanda::Holding::get_files_for_flush("023985")) ],
+is_deeply([ sort(+Amanda::Holding::get_files_for_flush(0, "023985")) ],
 	  [ sort() ],
 	  "get_files_for_flush with no matching datestamps returns no files");
-is_deeply([ Amanda::Holding::get_files_for_flush("20070306123456") ],
+is_deeply([ Amanda::Holding::get_files_for_flush(0, "20070306123456") ],
 	  [ sort(
 		"$holding2/20070306123456/audio._usr",
 		"$holding2/20070306123456/audio._var",
 		"$holding1/20070306123456/videoserver._video_a",
 	  )],
 	  "get_files_for_flush gets only files listed in disklist (no _video_b)");
-is_deeply([ Amanda::Holding::get_files_for_flush() ],
+is_deeply([ Amanda::Holding::get_files_for_flush(0) ],
 	  [ sort(
 		"$holding1/20070303000000/videoserver._video_a",
 		"$holding2/20070306123456/audio._usr",

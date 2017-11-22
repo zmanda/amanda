@@ -262,7 +262,7 @@ search_holding_disk(
     disk_t *dp;
     char   *orig_name;
 
-    holding_file_list = holding_get_files(NULL, 1);
+    holding_file_list = holding_get_files(NULL, 1, 0);
 
     if (string_chunk == NULL) {
 	string_chunk = g_string_chunk_new(32768);

@@ -24,7 +24,8 @@ use base qw( Exporter );
 use File::Spec;
 use File::stat;
 use IO::Dir;
-use POSIX qw( :fcntl_h );
+use POSIX qw( :fcntl_h :sys_wait_h );
+use Errno;
 use Math::BigInt;
 use strict;
 use warnings;
@@ -46,7 +47,7 @@ Amanda::Holding -- interface to the holding disks
 Get some statistics:
 
     my %size_per_host;
-    for my $hfile (Amanda::Holding::files()) {
+    for my $hfile (Amanda::Holding::files($take_pid_lock)) {
 	my $hdr = Amanda::Holding::get_header($hfile);
 	next unless $hdr;
 	$size_per_host{$hdr->{'name'}} += Amanda::Holding::file_size($hfile);
@@ -58,7 +59,7 @@ Schematic for something like C<amflush>:
 	print $ts, "\n";
     }
     my @to_dump = <>;
-    for my $hfile (Amanda::Holding::get_files_for_flush(@to_dump)) {
+    for my $hfile (Amanda::Holding::get_files_for_flush($take_pid_lock, @to_dump)) {
 	# flush $hfile
     }
 
@@ -161,7 +162,7 @@ The remaining two functions are utilities for amflush and related tools:
 
 returns a sorted list of all timestamps with dumps in any active holding disk.
 
-=item C<get_files_for_flush(@timestamps)>
+=item C<get_files_for_flush($take_pid_lock, @timestamps)>
 
 returns a sorted list of files matching any of the supplied timestamps.  Files
 for which no DLE exists in the disklist are ignored.  If no timestamps are
@@ -199,7 +200,7 @@ sub _is_datestr {
 }
 
 sub _walk {
-    my ($file_fn, $verbose, $take_pid) = @_;
+    my ($file_fn, $verbose, $take_pid, $datestamps) = @_;
 
     # walk disks, directories, and files with nested loops
     for my $disk (disks()) {
@@ -212,6 +213,9 @@ sub _walk {
 	while (defined(my $datestr = $diskh->read())) {
 	    next if $datestr eq '.' or $datestr eq '..';
 
+	    if (defined $datestamps && @{$datestamps} && !grep { $_ eq $datestr } @{$datestamps}) {
+		next;
+	    }
 	    my $dirfn = File::Spec->catfile($disk, $datestr);
 
 	    if (!_is_datestr($datestr)) {
@@ -229,17 +233,30 @@ sub _walk {
 		next;
 	    }
 
+	    my $already_own = 0;
 	    my $pidfn = File::Spec->catfile($dirfn, "pid");
 	    if (open(my $pidh,  $pidfn)) {
 		my $pid = <$pidh>;
 		close($pidh);
-		if (kill($pid, 0) == 0) {
-		    # pid is alive, skip this directory
-		    next;
+		if ($pid != $$ && $pid != getppid) {
+		    # remove if zoombie
+		    waitpid($pid, WNOHANG);
+		    if (kill(0, $pid) == 1) {
+			# pid is alive, skip this directory
+			next;
+		    }
+		    if ($! == Errno::EPERM) {
+			# the process exists  (but we don't have permission to kill it)
+			next;
+		    }
+		    unlink($pidfn);
+		} else {
+		    $already_own = 1;
 		}
 	    }
-	    if ($take_pid) {
-		open(my $pidh,  ">", $pidfn) || next;
+	    if ($take_pid && !$already_own) {
+		sysopen(my $pidh, $pidfn, O_CREAT | O_EXCL | O_WRONLY, 0644 ) || next;
+		#open(my $pidh,  ">", $pidfn) || next;
 		print $pidh "$$";
 		close($pidh);
 	    }
@@ -285,6 +302,7 @@ sub disks {
 
 sub files {
     my $verbose = shift;
+    my $take_pid_lock = shift;
     my @results;
 
     my $each_file_fn = sub {
@@ -507,6 +525,7 @@ sub file_size {
 }
 
 sub get_files_for_flush {
+    my $take_pid_lock = shift;
     my (@dateargs) = @_;
     my @results;
 
@@ -523,7 +542,7 @@ sub get_files_for_flush {
 	}
 	push @results, $filename;
     };
-    _walk($each_file_fn, 0, 1);
+    _walk($each_file_fn, 0, $take_pid_lock, \@dateargs);
 
     return sort @results;
 }
