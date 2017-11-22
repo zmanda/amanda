@@ -1,4 +1,9 @@
 2017-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Amflush.pm, server-src/driver.c: rename .tmp holding
+	  files
+	*  server-src/planner.c: Use DUMP_LEVELS
+
+2017-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/holding.c: Fix to take pid lock
 	* server-src/holding.c (holding_get_files): Add a take_pid_lock
 	  argument
