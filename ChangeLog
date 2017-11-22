@@ -1,4 +1,10 @@
 2017-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c: Remove duplicate code
+	* server-src/holding.c: Do not stat before fopen
+	* server-src/xfer-dest-holding.c: Do not call mkholdingdir, the
+	  directory should alredy exists
+
+2017-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
 	*  server-src/planner.c: Fix compilation
 
 2017-11-22  Jean-Louis Martineau <JMartineau@carbonite.com>
