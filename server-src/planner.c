@@ -219,7 +219,6 @@ main(
     char *conf_infofile;
     times_t section_start;
     char *qname;
-    int    nb_disk;
     char  *errstr = NULL;
     GPtrArray *err_array;
     guint i;
@@ -453,25 +452,28 @@ main(
 	}
     }
 
-    nb_disk = 0;
-    for (dlist = origq.head; dlist != NULL; dlist = dlist->next) {
-	dp = dlist->data;
-	if (dp->todo) {
-	    qname = quote_string(dp->name);
-	    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
-	    amfree(qname);
-	    nb_disk++;
+    if (!no_dump) {
+	int nb_disk = 0;
+	for (dlist = origq.head; dlist != NULL; dlist = dlist->next) {
+	    dp = dlist->data;
+	    if (dp->todo) {
+		qname = quote_string(dp->name);
+		log_add(L_DISK, "%s %s", dp->host->hostname, qname);
+		amfree(qname);
+		nb_disk++;
+	    }
+	}
+
+	if (nb_disk == 0) {
+	    if (errstr) {
+		error(_("no DLE to backup; %s"), errstr);
+	    } else {
+		error(_("no DLE to backup"));
+	    }
+	    /*NOTREACHED*/
 	}
     }
-
-    if (nb_disk == 0 && !no_dump) {
-	if (errstr) {
-	    error(_("no DLE to backup; %s"), errstr);
-	} else {
-	    error(_("no DLE to backup"));
-	}
-	/*NOTREACHED*/
-    } else if (errstr) {
+    if (errstr) {
 	log_add(L_WARNING, "WARNING: %s", errstr);
     }
     amfree(errstr);
