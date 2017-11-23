@@ -67,6 +67,7 @@ my $reply;
 
 my $config_dir = $Amanda::Paths::CONFIG_DIR;
 my $amperldir = $Amanda::Paths::amperldir;
+my $application_dir = $Amanda::Paths::APPLICATION_DIR;
 my $testconf;
 my $diskfile;
 my $infodir;
@@ -388,7 +389,7 @@ FAILED DUMP DETAILS:
   sendbackup: error [OUTPUT TO STDERR]
   sendbackup: info APPLICATION=amrandom
   sendbackup: info BACKUP=APPLICATION
-  sendbackup: info RECOVER_CMD=/amanda/h1/linux/libexec/amanda/application/amrandom restore [./file-to-restore]+
+  sendbackup: info RECOVER_CMD=$application_dir/amrandom restore [./file-to-restore]+
   sendbackup: info end
   sendbackup: native-CRC 9aafaecf:1075200
   sendbackup: client-CRC 9aafaecf:1075200
