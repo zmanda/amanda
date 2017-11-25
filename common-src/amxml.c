@@ -833,7 +833,6 @@ amtext(
 	if (!last_element2) {
 	    error("XML: optional");
 	}
-	last_element2_name = last_element2->data;
 	if (dle->encrypt == ENCRYPT_SERV_CUST)
 	    dle->srv_encrypt = tt;
 	else
@@ -843,7 +842,6 @@ amtext(
 	if (!last_element2) {
 	    error("XML: optional");
 	}
-	last_element2_name = last_element2->data;
 	if (dle->encrypt == ENCRYPT_SERV_CUST)
 	    dle->srv_decrypt_opt = tt;
 	else

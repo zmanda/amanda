@@ -207,8 +207,8 @@ main(
 
     if (argc > 2 && g_str_equal(argv[1], "--shm-name")) {
 	shm_control_name = g_strdup(argv[2]);
-	argc -= 2;
-	argv += 2;
+	//argc -= 2;
+	//argv += 2;
     }
 
     our_features = am_init_feature_set();
@@ -646,13 +646,14 @@ main(
 
 	    /*  now do the client-side compression */
 	    if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
-		compopt = skip_argument;
 #if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
 		if(dle->compress == COMP_BEST) {
 		    compopt = COMPRESS_BEST_OPT;
 		} else {
 		    compopt = COMPRESS_FAST_OPT;
 		}
+#else
+		compopt = skip_argument;
 #endif
 		comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE|STDERR_PIPE, 0,
 				    &dumpout, &compout, &comp_stderr_pipe.fd,

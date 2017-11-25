@@ -1191,7 +1191,6 @@ full_write_with_fake_enospc(
 
     /* if we get here, the caller has requested a size that is less
      * than fake_enospc_at_byte. */
-    count = fake_enospc_at_byte;
     DBG(1,"returning fake ENOSPC");
 
     if (fake_enospc_at_byte) {

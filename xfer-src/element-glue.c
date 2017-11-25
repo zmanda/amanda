@@ -681,10 +681,8 @@ read_and_push_static(
                          fd, strerror(read_error));
 		    wait_until_xfer_cancelled(elt->xfer);
 		}
-                amfree(buf);
 		break;
 	    } else if (len == 0) { /* we only count a zero-length read as EOF */
-		amfree(buf);
 		break;
 	    }
 	}
@@ -692,6 +690,7 @@ read_and_push_static(
 
 	xfer_element_push_buffer_static(elt->downstream, buf, len);
     }
+    amfree(buf);
 
     if (elt->cancelled && elt->expect_eof)
 	xfer_element_drain_fd(fd);

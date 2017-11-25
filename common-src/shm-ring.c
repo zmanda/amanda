@@ -685,6 +685,8 @@ shm_ring_create(
     if (shm_ring->shm_control == -1) {
 	msg = g_strdup_printf("shm_control failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
 	g_debug("%s", msg);
+	g_free(shm_ring->shm_control_name);
+	g_free(shm_ring);
 	if (*errmsg) {
 	    *errmsg = msg;
 	    return NULL;
@@ -694,6 +696,10 @@ shm_ring_create(
     if (ftruncate(shm_ring->shm_control, sizeof(shm_ring_control_t)) == -1) {
 	msg = g_strdup_printf("ftruncate of shm_control failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
 	g_debug("%s", msg);
+	close(shm_ring->shm_control);
+	shm_unlink(shm_ring->shm_control_name);
+	g_free(shm_ring->shm_control_name);
+	g_free(shm_ring);
 	if (*errmsg) {
 	    *errmsg = msg;
 	    return NULL;
@@ -705,6 +711,10 @@ shm_ring_create(
     if (shm_ring->mc == MAP_FAILED) {
 	msg = g_strdup_printf("shm_ring shm_ring.mc failed '%s': %s", shm_ring->shm_control_name, strerror(errno));
 	g_debug("%s", msg);
+	close(shm_ring->shm_control);
+	shm_unlink(shm_ring->shm_control_name);
+	g_free(shm_ring->shm_control_name);
+	g_free(shm_ring);
 	if (*errmsg) {
 	    *errmsg = msg;
 	    return NULL;
@@ -738,6 +748,11 @@ shm_ring_create(
     if (shm_ring->shm_data == -1) {
 	msg = g_strdup_printf("shm_data failed '%s': %s", shm_ring->mc->shm_data_name,strerror(errno));
 	g_debug("%s", msg);
+	munmap(shm_ring->mc, sizeof(shm_ring_control_t));
+	close(shm_ring->shm_control);
+	shm_unlink(shm_ring->shm_control_name);
+	g_free(shm_ring->shm_control_name);
+	g_free(shm_ring);
 	if (*errmsg) {
 	    *errmsg = msg;
 	    return NULL;

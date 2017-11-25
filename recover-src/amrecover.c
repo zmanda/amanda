@@ -629,6 +629,7 @@ main(
 	    g_printf(_("Use the sethost command to choose a host to recover\n"));
 
     }
+    amfree(starting_hostname);
 
     quit_prog = 0;
     do {

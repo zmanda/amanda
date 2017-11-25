@@ -263,7 +263,6 @@ main(
 	char *cmd=NULL;
 	GPtrArray *argv_ptr;
 	backup_support_option_t *bsu;
-	int        result;
 	GPtrArray *errarray;
 	int        outfd[2];
 	int        errfd[2];
@@ -428,7 +427,6 @@ main(
 	    goto err;
 	}
 
-	result = 0;
 	while ((line = pgets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
 		delete_message(fprint_message(stdout, build_message(
@@ -436,12 +434,9 @@ main(
 			"service", "senddiscover",
 			"application", dle->program,
 			"errmsg", line)));
-		result = 1;
 	    }
 	    amfree(line);
 	}
-
-	result |= check_result();
 
 	amfree(bsu);
     }

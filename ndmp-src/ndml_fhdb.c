@@ -377,6 +377,7 @@ ndm_fstat_to_str (ndmp9_file_stat *fstat, char *buf)
 	case NDMP9_FILE_OTHER:	*p++ = 'o';	break;
 	default:		*p++ = '?';	break;
 	}
+	*p = '\0';
 
 	if (fstat->mode.valid) {
 		sprintf (p, " m%04lo", fstat->mode.value & 07777);

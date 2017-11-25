@@ -4355,6 +4355,7 @@ read_dump_selection(
 	ds->tag_type = TAG_OTHER;
     } else if (tok == CONF_NL || tok == CONF_END) {
 	free_val_t(val);
+	g_free(ds);
 	val->v.dump_selection = NULL;
 	ckseen(&val->seen);
 	return;
@@ -4876,9 +4877,8 @@ read_property(
 	get_conftoken(CONF_ANY);
     }
     if (tok != CONF_STRING) {
-	amfree(property);
+	free_property_t(property);
 	conf_parserror(_("key expected"));
-	amfree(property);
 	return;
     }
     key = amandaify_property_name(tokenval.v.s);
@@ -4887,11 +4887,13 @@ read_property(
     if (tok == CONF_NL ||  tok == CONF_END) {
 	g_hash_table_remove(val->v.proplist, key);
 	unget_conftoken();
-	amfree(property);
+	free_property_t(property);
+	amfree(key);
 	return;
     }
     if (tok != CONF_STRING) {
-	amfree(property);
+	free_property_t(property);
+	amfree(key);
 	conf_parserror(_("value expected"));
 	return;
     }

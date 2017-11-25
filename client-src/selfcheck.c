@@ -364,8 +364,7 @@ main(
     }
     if (g_options == NULL) {
 	delete_message(selfcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 3600006, MSG_ERROR, 1,
-			"hostname", g_options->hostname)));
+			AMANDA_FILE, __LINE__, 3600006, MSG_ERROR, 0)));
 	exit(1);
 	/*NOTREACHED*/
     }
@@ -421,13 +420,11 @@ checkoverall:
  err:
     if (err_extra) {
 	delete_message(selfcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 3600007, MSG_ERROR, 2,
-			"err_extra", err_extra,
-			"hostname", g_options->hostname)));
+			AMANDA_FILE, __LINE__, 3600007, MSG_ERROR, 1,
+			"err_extra", err_extra)));
     } else {
 	delete_message(selfcheck_print_message(build_message(
-			AMANDA_FILE, __LINE__, 3600008, MSG_ERROR, 1,
-			"hostname", g_options->hostname)));
+			AMANDA_FILE, __LINE__, 3600008, MSG_ERROR, 0)));
     }
     amfree(err_extra);
     amfree(line);
@@ -809,7 +806,6 @@ check_disk(
 		    exit(1);
 		    /*NOTREACHED*/
 		}
-		sep = "";
 		errdos = 0;
 		for(sep = ""; (line = pgets(ferr)) != NULL; free(line)) {
 		    if (line[0] == '\0')
@@ -824,13 +820,11 @@ check_disk(
 		afclose(ferr);
 		checkerr = -1;
 		rc = 0;
-		sep = "";
 		waitpid(checkpid, &retstat, 0);
 		if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
 		    char *exitstr = str_exit_status("smbclient", retstat);
 		    strappend(err, sep);
 		    strappend(err, exitstr);
-		    sep = "\n";
 		    amfree(exitstr);
 
 		    rc = 1;

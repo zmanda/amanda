@@ -1,3 +1,13 @@
+2017-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* amar-src/amar.c, client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/senddiscover.c, common-src/ammessage.c,
+	  common-src/amxml.c, common-src/conffile.c,
+	  common-src/krb5-security.c, common-src/shm-ring.c,
+	  ndmp-src/ndml_fhdb.c, perl/Amanda/Disklist.swg,
+	  recover-src/amrecover.c, server-src/driver.c,
+	  server-src/find.c, server-src/xfer-dest-holding.c,
+	  xfer-src/element-glue.c: Fix some issue found by the clang analyzer
+
 2017-11-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/planner.c: Do not log L_DISK if no_dump
 

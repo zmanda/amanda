@@ -487,6 +487,11 @@ gss_client(
     amfree(send_tok.value);
     rc->gss_context = GSS_C_NO_CONTEXT;
     maj_stat = gss_display_name(&min_stat, gss_name, &AA, &doid);
+    if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
+	security_seterror(&rh->sech, _("can't get display name %s: %s"),
+	    (char *)send_tok.value, gss_error(maj_stat, min_stat));
+	return (-1);
+    }
     dbprintf(_("gss_name %s\n"), (char *)AA.value);
 
     /*
@@ -620,6 +625,14 @@ gss_server(
     amfree(send_tok.value);
 
     maj_stat = gss_display_name(&min_stat, gss_name, &AA, &doid);
+    if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
+	g_snprintf(errbuf, sizeof(errbuf),
+	    _("can't get display_name for host key host/%s: %s"), myhostname,
+	    gss_error(maj_stat, min_stat));
+	gss_release_name(&min_stat, &gss_name);
+	set_root_privs(0);
+	goto out;
+    }
     dbprintf(_("gss_name %s\n"), (char *)AA.value);
     maj_stat = gss_acquire_cred(&min_stat, gss_name, 0,
 	GSS_C_NULL_OID_SET, GSS_C_ACCEPT, &gss_creds, NULL, NULL);
@@ -1091,7 +1104,7 @@ krb5_checkuser( char *	host,
 #else
     struct passwd *pwd;
     char *ptmp;
-    char *result = _("generic error");	/* default is to not permit */
+    char *result = NULL;
     FILE *fp = NULL;
     struct stat sbuf;
     uid_t localuid;
@@ -1131,7 +1144,6 @@ krb5_checkuser( char *	host,
 					 name, CLIENT_LOGIN);
 		return result;
 	    }
-	    result = NULL;
 	    goto common_exit;
 	}
 	result = g_strdup_printf(_("can not open %s"), ptmp);
@@ -1202,7 +1214,6 @@ krb5_checkuser( char *	host,
 			amfree(line);
 			continue;
 		}
-		result = NULL;
 		amfree(line);
 		goto common_exit;
 	}

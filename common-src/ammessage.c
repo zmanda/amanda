@@ -2196,7 +2196,6 @@ parse_json_hash(
 		    key = token;
 		} else {
 		    amjson_t *value = g_new(amjson_t, 1);
-		    expect_key = TRUE;
 		    value->type = JSON_STRING;
 		    value->string = token;
 		    g_hash_table_insert(hash, key, value);
@@ -2222,7 +2221,6 @@ parse_json_hash(
 		    key = token;
 		} else if (message_token != JSON_BAD) {
 		    amjson_t *value = g_new(amjson_t, 1);
-		    expect_key = TRUE;
 		    value->type = message_token;
 		    value->string = NULL;
 		    g_hash_table_insert(hash, key, value);
@@ -2442,6 +2440,8 @@ parse_json_message(
 	}
     }
 
+    if (message)
+	delete_message(message);
     return message_array;
 }
 

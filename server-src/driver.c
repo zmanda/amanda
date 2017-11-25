@@ -5269,11 +5269,15 @@ build_diskspace(
 	    return NULL;
 	}
 	used[j] += ((off_t)finfo.st_size+(off_t)1023)/(off_t)1024;
-	if ((buflen = read_fully(fd, buffer, sizeof(buffer), NULL)) > 0) {
-		if (file_set) dumpfile_free_data(&file);
-		parse_file_header(buffer, &file, buflen);
-		file_set = TRUE;
+	if ((buflen = read_fully(fd, buffer, sizeof(buffer), NULL)) < sizeof(buffer)) {
+	    amfree(used);
+	    amfree(result);
+	    close(fd);
+	    return NULL;
 	}
+	if (file_set) dumpfile_free_data(&file);
+	parse_file_header(buffer, &file, buflen);
+	file_set = TRUE;
 	close(fd);
 	filename = file.cont_filename;
     }

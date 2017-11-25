@@ -1642,6 +1642,7 @@ dumps_match_dumpspecs(
 	    }
 	}
 
+	amfree(zeropad_w_ts);
 	amfree(zeropad_ts);
     }
 

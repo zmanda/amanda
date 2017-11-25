@@ -210,7 +210,7 @@ reset_disklist_internal(
 
     for (hp = get_hostlist(); hp != NULL; hp = hp->next) {
       for (dp = hp->disks; dp != NULL; dp = dp->hostnext) {
-	HV *h = newHV();
+	HV *h;
 	SV *diskref;
 	SV *hostref;
 	SV **svp;

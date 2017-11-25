@@ -968,7 +968,7 @@ void amar_read_to(
     }
 
     if (!as) {
-	amar_attr_handling_t *hdl = archive->hp->handling_array;
+	amar_attr_handling_t *hdl;
 	for (hdl = archive->hp->handling_array; hdl->attrid != 0; hdl++) {
 	    if (hdl->attrid == attrid)
 		break;
@@ -1019,8 +1019,6 @@ amar_read_cb(
     amar_attr_handling_t *hdl;
     gboolean success = TRUE;
     handling_params_t *hp = archive->hp;
-
-    hp = archive->hp;
 
     count = read(archive->fd, hp->buf + hp->buf_offset + hp->buf_len,
 			      hp->buf_size - hp->buf_len - hp->buf_offset);
@@ -1209,7 +1207,6 @@ amar_read_cb(
 	if (as) {
 	    hdl = as->handling;
 	} else {
-	    hdl = hp->handling_array;
 	    for (hdl = hp->handling_array; hdl->attrid != 0; hdl++) {
 		if (hdl->attrid == attrid)
 		    break;
@@ -1563,7 +1560,6 @@ amar_read(
 	if (as) {
 	    hdl = as->handling;
 	} else {
-	    hdl = hp.handling_array;
 	    for (hdl = hp.handling_array; hdl->attrid != 0; hdl++) {
 		if (hdl->attrid == attrid)
 		    break;
