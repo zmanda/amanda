@@ -1133,9 +1133,13 @@ default_device_property_set_ex(
 const GSList *
 device_property_get_list (Device * self)
 {
+    DeviceClass *klass;
+
     g_assert(IS_DEVICE(self));
 
-    return DEVICE_GET_CLASS(self)->class_properties_list;
+    klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
+    return klass->class_properties_list;
 }
 
 /* XXX WARNING XXX
@@ -1154,6 +1158,7 @@ device_open_device (Device * self, char * device_name,
     g_assert(device_name != NULL);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->open_device);
     (klass->open_device)(self, device_name, device_type, device_node);
 }
@@ -1166,6 +1171,7 @@ DeviceStatusFlags device_read_label(Device * self) {
     g_assert(self->access_mode == ACCESS_NULL);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->read_label);
     return (klass->read_label)(self);
 }
@@ -1177,6 +1183,7 @@ device_finish (Device * self) {
     g_assert(IS_DEVICE (self));
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->finish);
     return (klass->finish)(self);
 }
@@ -1190,6 +1197,7 @@ device_clear_bytes_read (Device * self) {
     g_mutex_lock(self->device_mutex);
     if (self->in_file) {
 	klass = DEVICE_GET_CLASS(self);
+	g_assert(klass);
 	if (klass->clear_bytes_read) {
 	    (klass->clear_bytes_read)(self);
 	} else {
@@ -1209,6 +1217,7 @@ device_get_bytes_read (Device * self) {
     g_mutex_lock(self->device_mutex);
     if (self->in_file) {
 	klass = DEVICE_GET_CLASS(self);
+	g_assert(klass);
 	if (klass->get_bytes_read) {
 	    bytes = (klass->get_bytes_read)(self);
 	} else {
@@ -1229,6 +1238,7 @@ device_get_bytes_written (Device * self) {
     g_mutex_lock(self->device_mutex);
     if (self->in_file) {
 	klass = DEVICE_GET_CLASS(self);
+	g_assert(klass);
 	if (klass->get_bytes_written) {
 	    bytes = (klass->get_bytes_written)(self);
 	} else {
@@ -1248,6 +1258,7 @@ device_configure (Device * self, gboolean use_global_config)
     g_assert(self->access_mode == ACCESS_NULL);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     if(klass->configure) {
 	return (klass->configure)(self, use_global_config);
     } else {
@@ -1271,6 +1282,7 @@ device_start (Device * self, DeviceAccessMode mode,
     g_assert(mode != ACCESS_WRITE || label != NULL);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->start);
 
     /* For a good combination of synchronization and public simplicity,
@@ -1308,6 +1320,7 @@ device_write_block (Device * self, guint size, gpointer block)
 	selfp->wrote_short_block = TRUE;
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->write_block);
     return (*klass->write_block)(self,size, block);
 }
@@ -1323,6 +1336,7 @@ device_start_file (Device * self, dumpfile_t * jobInfo) {
     selfp->wrote_short_block = FALSE;
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->start_file);
     return (klass->start_file)(self, jobInfo );
 }
@@ -1337,6 +1351,7 @@ device_finish_file (Device * self)
     g_assert(self->in_file);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->finish_file);
     return (klass->finish_file)(self);
 }
@@ -1350,6 +1365,7 @@ device_init_seek_file (Device * self, guint file)
     g_assert(self->access_mode == ACCESS_READ);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     if (klass->init_seek_file) {
         return (klass->init_seek_file)(self,file);
     } else {
@@ -1366,6 +1382,7 @@ device_seek_file (Device * self, guint file)
     g_assert(file == 0 || self->access_mode == ACCESS_READ);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->seek_file);
     return (klass->seek_file)(self,file);
 }
@@ -1380,6 +1397,7 @@ device_seek_block (Device * self, guint64 block)
     g_assert(self->in_file);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->seek_block);
     return (klass->seek_block)(self,block);
 }
@@ -1398,6 +1416,7 @@ device_read_block (Device * self, gpointer buffer, int * size, int max_block)
     }
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     g_assert(klass->read_block);
     return (klass->read_block)(self,buffer,size,max_block);
 }
@@ -1417,6 +1436,7 @@ device_property_get_ex(
 
     klass = DEVICE_GET_CLASS(self);
 
+    g_assert(klass);
     g_assert(klass->property_get_ex);
     return (klass->property_get_ex)(self, id, val, surety, source);
 }
@@ -1435,6 +1455,7 @@ device_property_set_ex(
 
     klass = DEVICE_GET_CLASS(self);
 
+    g_assert(klass);
     g_assert(klass->property_set_ex);
     return (klass->property_set_ex)(self, id, val, surety, source);
 }
@@ -1451,6 +1472,7 @@ device_recycle_file (Device * self, guint filenum)
 
     klass = DEVICE_GET_CLASS(self);
 
+    g_assert(klass);
     g_assert(klass->recycle_file);
     return (klass->recycle_file)(self,filenum);
 }
@@ -1465,6 +1487,7 @@ device_erase (Device * self)
     g_assert(!self->in_file);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     if(klass->erase) {
 	return (klass->erase)(self);
     } else {
@@ -1485,6 +1508,7 @@ device_eject (Device * self)
     g_assert(!self->in_file);
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     if (klass->eject) {
 	return (klass->eject)(self);
     } else {
@@ -1501,6 +1525,7 @@ device_listen(
     DeviceClass *klass;
 
     klass = DEVICE_GET_CLASS(self);
+    g_assert(klass);
     if(klass->listen) {
 	return (klass->listen)(self, for_writing, addrs);
     } else {

@@ -1119,15 +1119,11 @@ xfer_dest_holding_get_type (void)
 
 XferElement *
 xfer_dest_holding(
-    size_t max_memory)
+    size_t max_memory G_GNUC_UNUSED)
 {
     XferDestHolding *self = (XferDestHolding *)g_object_new(XFER_DEST_HOLDING_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
     char *env;
-
-    /* max_memory get rounded up to the next multiple of block_size */
-    max_memory = ((max_memory + HOLDING_BLOCK_BYTES - 1)
-			/ HOLDING_BLOCK_BYTES) * HOLDING_BLOCK_BYTES;
 
     self->paused = TRUE;
 
@@ -1222,6 +1218,7 @@ xfer_dest_holding_start_chunk(
     g_assert(IS_XFER_DEST_HOLDING(elt));
 
     klass = XFER_DEST_HOLDING_GET_CLASS(elt);
+    g_assert(klass);
     klass->start_chunk(XFER_DEST_HOLDING(elt), chunk_header, filename,
                                          use_bytes);
 }
@@ -1234,6 +1231,7 @@ xfer_dest_holding_finish_chunk(
     g_assert(IS_XFER_DEST_HOLDING(elt));
 
     klass = XFER_DEST_HOLDING_GET_CLASS(elt);
+    g_assert(klass);
     return klass->finish_chunk(XFER_DEST_HOLDING(elt));
 }
 

@@ -480,6 +480,7 @@ class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
+    assert(klass);
     klass->start = start_impl;
     klass->setup = setup_impl;
     klass->cancel = cancel_impl;

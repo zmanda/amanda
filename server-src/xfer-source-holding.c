@@ -774,6 +774,7 @@ xfer_source_holding_start_recovery(
     g_assert(IS_XFER_SOURCE_HOLDING(elt));
 
     klass = XFER_SOURCE_HOLDING_GET_CLASS(elt);
+    g_assert(klass);
     klass->start_recovery(XFER_SOURCE_HOLDING(elt));
 }
 

@@ -202,6 +202,7 @@ class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
+    assert(klass);
     klass->push_buffer = push_buffer_impl;
 
     klass->perl_class = "Amanda::Xfer::Dest::Device";

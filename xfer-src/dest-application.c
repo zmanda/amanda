@@ -396,6 +396,7 @@ int dest_application_get_err_fd(
     g_assert(IS_XFER_DEST_APPLICATION(elt));
 
     klass = XFER_DEST_APPLICATION_GET_CLASS(elt);
+    g_assert(klass);
     if (klass->get_err_fd)
 	return klass->get_err_fd(XFER_DEST_APPLICATION(elt));
     else
@@ -409,6 +410,7 @@ int dest_application_get_out_fd(
     g_assert(IS_XFER_DEST_APPLICATION(elt));
 
     klass = XFER_DEST_APPLICATION_GET_CLASS(elt);
+    g_assert(klass);
     if (klass->get_out_fd)
 	return klass->get_out_fd(XFER_DEST_APPLICATION(elt));
     else
@@ -422,6 +424,7 @@ int dest_application_get_dar_fd(
     g_assert(IS_XFER_DEST_APPLICATION(elt));
 
     klass = XFER_DEST_APPLICATION_GET_CLASS(elt);
+    g_assert(klass);
     if (klass->get_dar_fd)
 	return klass->get_dar_fd(XFER_DEST_APPLICATION(elt));
     else

@@ -189,6 +189,7 @@ xfer_source_random_get_seed(
     g_assert(IS_XFER_SOURCE_RANDOM(elt));
 
     klass = XFER_SOURCE_RANDOM_GET_CLASS(elt);
+    g_assert(klass);
     return klass->get_seed(XFER_SOURCE_RANDOM(elt));
 }
 

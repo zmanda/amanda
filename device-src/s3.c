@@ -1846,7 +1846,7 @@ interpret_response(S3Handle *hdl,
 	    p++;
             thunk.message = g_strdup(p);
 	    g_strstrip(thunk.message);
-	    b = p;
+	    //b = p;
 	}
 	goto parsing_done;
     } else if ((hdl->s3_api == S3_API_SWIFT_3) &&
@@ -4875,7 +4875,6 @@ s3_get_lifecycle(
     if (result == S3_RESULT_FAIL &&
 	hdl->last_response_code == 404 &&
 	hdl->last_s3_error_code == S3_ERROR_NoSuchLifecycleConfiguration) {
-	result = S3_RESULT_OK;
 	return TRUE;
     }
     if (result != S3_RESULT_OK) goto cleanup;

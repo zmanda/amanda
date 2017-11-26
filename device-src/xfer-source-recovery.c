@@ -811,6 +811,7 @@ xfer_source_recovery_start_part(
     g_assert(IS_XFER_SOURCE_RECOVERY(elt));
 
     klass = XFER_SOURCE_RECOVERY_GET_CLASS(elt);
+    assert(klass);
     klass->start_part(XFER_SOURCE_RECOVERY(elt), device);
 }
 
@@ -823,6 +824,7 @@ xfer_source_recovery_cancel(
     g_assert(IS_XFER_SOURCE_RECOVERY(elt));
 
     klass = XFER_ELEMENT_GET_CLASS(elt);
+    assert(klass);
     return klass->cancel(XFER_ELEMENT(elt), 0);
 }
 
@@ -849,6 +851,7 @@ xfer_source_recovery_use_device(
     g_assert(IS_XFER_SOURCE_RECOVERY(elt));
 
     klass = XFER_SOURCE_RECOVERY_GET_CLASS(elt);
+    assert(klass);
     klass->use_device(XFER_SOURCE_RECOVERY(elt), device);
 }
 

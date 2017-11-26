@@ -223,6 +223,7 @@ main(
     env = safe_env();
     execve(my_realpath, new_argv, env);
     free_env(env);
+    free_env(new_argv);
 
     e = strerror(errno);
     dbreopen(dbf, "more");

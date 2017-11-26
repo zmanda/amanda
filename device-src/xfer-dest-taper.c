@@ -52,6 +52,7 @@ class_init(
     XferDestTaperClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
+    assert(klass);
 
     selfc->cache_inform = cache_inform_impl;
 
@@ -99,6 +100,8 @@ xfer_dest_taper_start_part(
     g_assert(IS_XFER_DEST_TAPER(elt));
 
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    assert(klass);
+    assert(klass->start_part);
     klass->start_part(XFER_DEST_TAPER(elt), retry_part, header);
 }
 
@@ -111,6 +114,8 @@ xfer_dest_taper_use_device(
     g_assert(IS_XFER_DEST_TAPER(elt));
 
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    assert(klass);
+    assert(klass->use_device);
     klass->use_device(XFER_DEST_TAPER(elt), device);
 }
 
@@ -125,6 +130,8 @@ xfer_dest_taper_cache_inform(
     g_assert(IS_XFER_DEST_TAPER(elt));
 
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    assert(klass);
+    assert(klass->cache_inform);
     klass->cache_inform(XFER_DEST_TAPER(elt), filename, offset, length);
 }
 
@@ -136,6 +143,7 @@ xfer_dest_taper_get_part_bytes_written(
     g_assert(IS_XFER_DEST_TAPER(elt));
 
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    assert(klass);
     if (klass->get_part_bytes_written)
 	return klass->get_part_bytes_written(XFER_DEST_TAPER(elt));
     else
@@ -151,6 +159,7 @@ xfer_dest_taper_new_space_available(
     g_assert(IS_XFER_DEST_TAPER(elt));
 
     klass = XFER_DEST_TAPER_GET_CLASS(elt);
+    assert(klass);
     if (klass->new_space_available)
 	klass->new_space_available(XFER_DEST_TAPER(elt), made_space);
 }

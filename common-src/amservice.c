@@ -574,7 +574,7 @@ client_first_stream(
 
     fd = security_stream_client(sech, port_num);
     if (!fd) {
-	g_critical("Could not connect to stream: %s\n", security_stream_geterror(fd));
+	g_critical("Could not connect to stream: %s\n", security_geterror(sech));
     }
     if (security_stream_auth(fd) < 0) {
 	g_critical("could not authenticate stream: %s\n", security_stream_geterror(fd));

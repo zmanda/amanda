@@ -374,6 +374,7 @@ int filter_process_get_err_fd(
     g_assert(IS_XFER_FILTER_PROCESS(elt));
 
     klass = XFER_FILTER_PROCESS_GET_CLASS(elt);
+    g_assert(klass);
     if (klass->get_err_fd)
 	return klass->get_err_fd(XFER_FILTER_PROCESS(elt));
     else

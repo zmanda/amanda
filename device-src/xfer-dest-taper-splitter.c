@@ -209,7 +209,6 @@ fast_forward_slices(
 	    if (slice->filename)
 		g_free(slice->filename);
 	    g_free(slice);
-	    slice = self->part_slices;
 	} else {
 	    slice->length -= length;
 	    slice->offset += length;
@@ -1191,6 +1190,7 @@ class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) },
     };
 
+    assert(klass);
     klass->setup = setup_impl;
     klass->start = start_impl;
     klass->cancel = cancel_impl;

@@ -3372,7 +3372,6 @@ dumper_chunker_result_finish(
     sp      = job->sched;
     dp      = sp->disk;
 
-    h = sp->holdp;
     activehd = sp->activehd;
 
     deallocate_bandwidth(dp->host->netif, sp->est_kps);

@@ -1,3 +1,16 @@
+2017-11-26  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* client-src/runtar.c, common-src/amservice.c,
+	  device-src/device.c, device-src/s3.c,
+	  device-src/xfer-dest-device.c, device-src/xfer-dest-taper-cacher.c,
+	  device-src/xfer-dest-taper-directtcp.c,
+	  device-src/xfer-dest-taper-splitter.c,
+	  device-src/xfer-dest-taper.c, device-src/xfer-source-recovery.c,
+	  perl/Amanda/Util.swg, server-src/driver.c,
+	  server-src/xfer-dest-holding.c, server-src/xfer-source-holding.c,
+	  xfer-src/dest-application.c, xfer-src/dest-buffer.c,
+	  xfer-src/filter-process.c, xfer-src/source-random.c:: Fix more
+	  issue found by the clang analyzer
+
 2017-11-25  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* amar-src/amar.c, client-src/selfcheck.c, client-src/sendbackup.c,
 	  client-src/senddiscover.c, common-src/ammessage.c,

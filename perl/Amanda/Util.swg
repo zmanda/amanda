@@ -378,6 +378,7 @@ char *perl_hexdecode_string(const char *str) {
     tmp = hexdecode_string(str, &err);
     if (err) {
         g_free(tmp);
+	tmp = NULL;
         croak_gerror("Amanda util: hexdecode", &err);
     }
     return tmp;

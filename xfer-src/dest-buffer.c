@@ -227,6 +227,7 @@ xfer_dest_buffer_get(
     g_assert(IS_XFER_DEST_BUFFER(elt));
 
     klass = XFER_DEST_BUFFER_GET_CLASS(elt);
+    g_assert(klass);
     klass->get(XFER_DEST_BUFFER(elt), buf, size);
 }
 

@@ -517,7 +517,6 @@ disk_cache_thread(
 	    break;
 
 	g_mutex_lock(self->slab_mutex);
-	slab = self->disk_cacher_slab;
 	eop = eof = FALSE;
 	while (!eop && !eof) {
 	    /* if we're at the head of the slab train, wait for more data */
@@ -1445,6 +1444,7 @@ class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, XFER_NROPS(0), XFER_NTHREADS(0), XFER_NALLOC(0) }
     };
 
+    assert(klass);
     klass->start = start_impl;
     klass->cancel = cancel_impl;
     klass->push_buffer = push_buffer_impl;
