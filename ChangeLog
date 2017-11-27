@@ -1,3 +1,7 @@
+2017-11-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
+	* man/xml-source/amanda.conf.5.xml: Improve documentation
+
 2017-11-26  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* client-src/runtar.c, common-src/amservice.c,
 	  device-src/device.c, device-src/s3.c,

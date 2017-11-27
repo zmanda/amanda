@@ -970,7 +970,7 @@ option enabled.</para>
 The file or directory name for the historical information database.
 If Amanda was configured to use DBM databases, this is the base file
 name for them.
-If it was configured to use text formated databases (the default),
+If it was configured to use text formatted databases (the default),
 this is the base directory and within here will be a directory per
 client, then a directory per disk, then a text file of data.</para>
   </listitem>
@@ -1603,9 +1603,19 @@ This option allows Amanda to track multiple runs per calendar day.
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>vault-storage</amkeyword> <amtype>string</amtype></term>
+  <term><amkeyword>vault-storage</amkeyword> <amtype>string</amtype>+</term>
   <listitem>
-<para>Default: not set.  The list of storages to vault to, vaulting to theses storages are automaticaly done.</para>
+<para>Default: not set.  The list of storages to vault to.</para>
+<para>After writing to the storages listed in the
+<amkeyword>storage</amkeyword> parameter, <command>amdump</command> will
+automatically write all pending dumps to the vault storage(s).  (These
+dumps are queued for vaulting based on the <amkeyword>vault</amkeyword>
+option specified in the definition section for the primary storage and the
+<amkeyword>dump-selection</amkeyword> option specified on the vault
+storage.)</para>
+<para>(<command>amvault</command> also uses the first storage in the
+<amkeyword>vault-storage</amkeyword> list as its default
+destination storage.)</para>
   </listitem>
   </varlistentry>
 
@@ -3539,7 +3549,7 @@ allow another storage to use that volume.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><amkeyword>interactivity</amkeyword> <amtype>int</amtype></term>
+  <term><amkeyword>interactivity</amkeyword> <amtype>string</amtype></term>
   <listitem>
 <para>Default: value of the global <amkeyword>interactivity</amkeyword>.</para>
   </listitem>
