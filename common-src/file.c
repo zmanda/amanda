@@ -53,8 +53,6 @@ mkpdir(
     char *p;
     int rc;	/* return code */
 
-    rc = 0;
-
     /* Remove last member of file, put the result in dir */
     dir = g_strdup(file); /* make a copy we can play with */
     p = strrchr(dir, '/');

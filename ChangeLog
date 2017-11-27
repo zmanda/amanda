@@ -1,4 +1,8 @@
 2017-11-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/file.c, common-src/security-util.c: Remove useless
+	  assignment
+
+2017-11-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
 	* man/xml-source/amanda.conf.5.xml: Improve documentation
 

@@ -932,7 +932,6 @@ tcpm_recv_token(
 	    shm_ring_producer_set_size(rs->shm_ring, NETWORK_BLOCK_BYTES*8, NETWORK_BLOCK_BYTES);
 	    rs->ring_init = TRUE;
 	}
-	to_read = (size_t)*size - rc->size_buffer_read;
 	write_offset = rs->shm_ring->mc->write_offset;
 	written = rs->shm_ring->mc->written;
 	shm_ring_size = rs->shm_ring->mc->ring_size;
@@ -942,7 +941,7 @@ tcpm_recv_token(
 	    // read to a buffer
 	    if (!rc->buffer)
 		rc->buffer = g_malloc((size_t)*size);
-	    rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
+		rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
 				(size_t)*size - rc->size_buffer_read, 0);
 	    if (rval < 0) {
 		g_free(*errmsg);
