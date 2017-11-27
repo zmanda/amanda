@@ -127,12 +127,12 @@ Note that at minimum a <emphasis remap='I'>hostname</emphasis> must be specified
 <para>Unless <option>-p</option>
 is used, backup images are extracted to files in the current directory named:</para>
 
-<para>If a changer error occurs, or the <option>-d</option> option is given,
-then amfetchdump prompts for each required volume.</para>
-
 <!-- .RS -->
 <para><emphasis remap='I'>hostname.diskname.datestamp.dumplevel</emphasis></para>
 <!-- .RE -->
+
+<para>If a changer error occurs, or the <option>-d</option> option is given,
+then amfetchdump prompts for each required volume.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>

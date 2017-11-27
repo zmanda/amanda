@@ -543,7 +543,7 @@ increased.  See "Timing", below.
 </listitem></varlistentry>
 <!-- ==== -->
 <varlistentry><term>TAPE-DEVICE</term><listitem>
-This property describes the correspondance of drive numbers in the library to
+This property describes the correspondence of drive numbers in the library to
 Amanda devices, in the format <emphasis>DRIVE=DEVICE</emphasis>.  The property
 can be specified multiple times to describe multiple devices.  The device will
 usually be a tape device name starting with <command>tape:</command>, but may

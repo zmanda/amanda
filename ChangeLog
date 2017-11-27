@@ -1,4 +1,9 @@
 2017-11-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
+	* man/xml-source/amanda-changers.7.xml,
+	  man/xml-source/amfetchdump.8.xml: Fix typo
+
+2017-11-27  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/file.c, common-src/security-util.c: Remove useless
 	  assignment
 
