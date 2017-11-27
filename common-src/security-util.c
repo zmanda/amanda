@@ -941,7 +941,8 @@ tcpm_recv_token(
 	    // read to a buffer
 	    if (!rc->buffer)
 		rc->buffer = g_malloc((size_t)*size);
-		rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
+
+	    rval = rc->driver->data_read(rc, rc->buffer + rc->size_buffer_read,
 				(size_t)*size - rc->size_buffer_read, 0);
 	    if (rval < 0) {
 		g_free(*errmsg);
