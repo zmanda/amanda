@@ -1,3 +1,7 @@
+2017-11-27  Jean-Louis Martineau <JMartineau@carbonite.com>
+	Patch by Nathan Stratton Treadway <nathanst@ontko.com>
+	* man/xml-source/amanda.conf.5.xml: Improve documentation
+
 2017-11-23  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* server-src/planner.c: Do not log L_DISK if no_dump
 
