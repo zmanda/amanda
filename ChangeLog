@@ -1,4 +1,8 @@
 2017-11-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* NEWS, ReleaseNotes: 3.5.1
+	* VERSION: 3.5.1
+
+2017-11-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/protocol.c: Use correct macro to find if we have
 	  getservbyname_r
 
