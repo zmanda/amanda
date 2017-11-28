@@ -1,3 +1,21 @@
+                Release Notes for amanda-3.5.1
+
+   * Fix compilation on Solaris
+   * Do not check all 'r' bit on suid binary
+   * Fix parsing of configuration override (-o)
+       - can unset some setting
+   * client code will not fail if shared memory is not available
+   * amreport
+       - lot of improvement
+   * allow '*' for a datestamp wildcard
+   * amgetconf
+       - print an empty string if a parameter is not set instead of  'no such parameter'
+   * amdump
+       - new --no-dump, --no-flush and --no-vault argument
+   * amstatus fix
+   * lock holding disk to protect multiple parallel access
+
+
                 Release Notes for amanda-3.5
 
 * Use different thread to connect to different client
