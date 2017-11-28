@@ -212,7 +212,7 @@ protocol_sendreq(
     get_platform_and_distro(&platform, &distro);
     if (distro != NULL &&
 	!g_str_equal(distro, "mac") &&
-#if defined HAVE_GETSERVBYNAME_R && defined HAVE_GETSERVBYPORT_R
+#if defined HAVE_FUNC_GETSERVBYNAME_R_4 || defined HAVE_FUNC_GETSERVBYNAME_R_5 || defined HAVE_FUNC_GETSERVBYNAME_R_6
 	1 &&
 #else
 	0 &&
