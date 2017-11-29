@@ -1264,7 +1264,7 @@ GetOptions(
     'exclude-file=s@',
     'exclude-list=s@',
     'include-list=s@',
-    'directory=s',
+    'directory|target=s',
     # ampgsql-specific
     'statedir=s',
     'tmpdir=s',
