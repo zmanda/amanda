@@ -154,9 +154,12 @@ read_finish_file_cb(
     ENTER;
     SAVETMPS;
 
-    PUSHMARK(SP); XPUSHs(dat->user_data); XPUSHs(*(SV **)file_data);
+    PUSHMARK(SP);
+    XPUSHs(dat->user_data);
     XPUSHs(sv_2mortal(newSViv(filenum)));
-    XPUSHs(sv_2mortal(newSViv(truncated))); PUTBACK;
+    XPUSHs(*(SV **)file_data);
+    XPUSHs(sv_2mortal(newSViv(truncated)));
+    PUTBACK;
 
     call_sv(dat->file_finish_sub, G_EVAL|G_DISCARD);
 

@@ -1,3 +1,6 @@
+2017-12-01  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Archive.swg (read_finish_file_cb): Fix parameter order
+
 2017-11-29  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* application-src/ampgsql.pl: Accept --target asa synonyme for
 	  --directory
