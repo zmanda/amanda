@@ -176,7 +176,7 @@ is_deeply([@res], [
         [ 'frag', $user_data, 16, "cows", 21, undef, 'boot:foot', 0, 0 ],
         [ 'frag', $user_data, 16, "cows", 22, undef, 'dustin:snazzy', 1, 0 ],
         [ 'frag', $user_data, 16, "cows", 21, "ants", '..more-boot:foot', 1, 0 ],
-        [ 'file_finish', $user_data, "cows", 16, 0 ]
+        [ 'file_finish', $user_data, 16, "cows", 0 ]
 ], "simple read callbacks called in the right order")
     or diag(Dumper(\@res));
 $ar->close();
@@ -236,7 +236,7 @@ is_deeply([@res], [
         [ 'frag', $user_data, 16, "dogs", 20, undef, 'root:foo', 1, 0 ],
         [ 'frag', $user_data, 16, "dogs", 22, undef, 'dustin:snazzy', 1, 0 ],
         [ 'fragbuf', $user_data, 16, "dogs", 21, undef, 'boot:foot..more-boot:foot', 1, 0 ],
-        [ 'file_finish', $user_data, "dogs", 16, 0 ]
+        [ 'file_finish', $user_data, 16, "dogs", 0 ]
 ], "buffering parameters parsed correctly")
     or diag(Dumper(\@res));
 
@@ -311,7 +311,7 @@ $ar->set_read_cb(
 	return "dog $filenum $filename";
     },
     file_finish => sub {
-	my ($user_data, $filenum, $filename) = @_;
+	my ($user_data, $filenum, $filedata) = @_;
 	push @res, [ "file_finish", @_ ];
     },
     16 => sub {
@@ -337,15 +337,15 @@ $ar->close();
 
 is_deeply([@res], [
 	[ 'file_start', $user_data, 1, 'filename1' ],
-	[ 'file_finish', $user_data, 'dog 1 filename1', 1, 0 ],
+	[ 'file_finish', $user_data, 1, 'dog 1 filename1', 0 ],
 	[ 'file_start', $user_data, 2, 'filename2' ],
 	[ 'frag', $user_data, 2, "dog 2 filename2", 16, undef, 0, 0 ],
 	[ 'frag', $user_data, 2, "dog 2 filename2", 16, 4, 1, 0 ],
-	[ 'file_finish', $user_data, 'dog 2 filename2', 2, 0 ],
+	[ 'file_finish', $user_data, 2, 'dog 2 filename2', 0 ],
 	[ 'file_start', $user_data, 3, 'filename3' ],
 	[ 'frag', $user_data, 3, "dog 3 filename3", 16, undef, 0, 0 ],
 	[ 'frag', $user_data, 3, "dog 3 filename3", 16, 8, 1, 0 ],
-	[ 'file_finish', $user_data, "dog 3 filename3", 3, 0 ],
+	[ 'file_finish', $user_data, 3, "dog 3 filename3", 0 ],
 	[ 'done' ]
 ], "buffering parameters parsed correctly")
     or diag(Dumper(\@res));
