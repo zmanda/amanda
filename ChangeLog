@@ -1,4 +1,12 @@
 2017-12-04  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c (get_errno_string, get_errno_number): New
+	  functions toreturn errno string and number
+	* common-src/ammessage.h: Add prototypes
+	* common-src/ambind.c: Print the errno_string in error message
+	* common-src/amutil.c: Parse errno string is ambind error message and
+	  set errno
+
+2017-12-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* installcheck/Amanda_Archive.pl: Fix parameter order
 
 2017-12-01  Jean-Louis Martineau <JMartineau@carbonite.com>
