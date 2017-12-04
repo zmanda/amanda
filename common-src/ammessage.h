@@ -105,4 +105,7 @@ fdprint_message(
 
 GPtrArray *parse_json_message(char *s);
 
+char *get_errno_string(int my_errno);
+int   get_errno_number(char *errno_string);
+
 #endif /* AMMESSAGE_H */

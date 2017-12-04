@@ -133,11 +133,11 @@ main(
     r = bind(s, (struct sockaddr *)&ambind.addr, ambind.socklen);
     if (r != 0) {
 	if (errno != EADDRINUSE) {
-	    fprintf(stderr, "ambind: bind failed A: %s\n", strerror(errno));
+	    fprintf(stderr, "ERROR %s: ambind: bind failed A: %s\n", get_errno_string(errno), strerror(errno));
 	    shutdown(sockfd, SHUT_RDWR);
 	    exit(2);
 	}
-	fprintf(stderr, "WARNING: ambind: bind failed B: %s\n", strerror(errno));
+	fprintf(stderr, "WARNING %s: ambind: bind failed B: %s\n", get_errno_string(errno), strerror(errno));
 	if (shutdown(sockfd, SHUT_RDWR) < 0) {
 	    fprintf(stderr, "ambind: shutdown failed B: %s\n", strerror(errno));
 	    exit(1);
@@ -157,11 +157,11 @@ main(
 
     // send the socket
     if ((sendmsg(sockfd, &msg, 0)) < 0) {
-	fprintf(stderr, "ambind: sendmsg failed: %s\n", strerror(errno));
+	fprintf(stderr, "WARNING %s: ambind: sendmsg failed: %s\n", get_errno_string(errno), strerror(errno));
 	exit(1);
     }
     if (shutdown(sockfd, SHUT_RDWR) < 0) {
-	fprintf(stderr, "ambind: shutdown failed C: %s\n", strerror(errno));
+	fprintf(stderr, "WARNING %s: ambind: shutdown failed C: %s\n", get_errno_string(errno), strerror(errno));
 	exit(1);
     }
     exit(0);

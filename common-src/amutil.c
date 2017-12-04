@@ -42,6 +42,7 @@
 #include <glib.h>
 #include <string.h>
 #include "fsusage.h"
+#include "ammessage.h"
 
 GMutex *priv_mutex = NULL;
 static int make_socket(sa_family_t family);
@@ -200,7 +201,9 @@ ambind(
     }
     if (pipe(pipe_stderr) < 0) {
 	shutdown(sockfd[0], SHUT_RDWR);
+	close(sockfd[0]);
 	shutdown(sockfd[1], SHUT_RDWR);
+	close(sockfd[1]);
 	*msg = g_strdup_printf("pipe failed: %s\n", strerror(errno));
 	return -2;
     }
@@ -247,7 +250,8 @@ ambind(
 	*msg = g_strdup_printf("sendmsg failed A: %s\n",
 			        strerror(errno));
 	shutdown(sockfd[0], SHUT_RDWR);
-	close(pipe_stderr[1]);
+	close(sockfd[0]);
+	close(pipe_stderr[0]);
 	return -2;
     }
 
@@ -264,6 +268,7 @@ ambind(
 	*msg = g_strdup_printf("sendmsg failed B: %s\n",
 			        strerror(errno));
 	shutdown(sockfd[0], SHUT_RDWR);
+	close(sockfd[0]);
 	close(pipe_stderr[0]);
 	return -2;
     }
@@ -285,12 +290,33 @@ ambind(
     if (!FD_ISSET(sockfd[0], &readSet)) {
 	FILE *err;
 	shutdown(sockfd[0], SHUT_RDWR);
+	close(sockfd[0]);
 	waitpid(pid, NULL, 0);
 	err = fdopen(pipe_stderr[0], "r");
 	*msg = agets(err);
 	fclose(err);
-	if (strncmp(*msg, "WARNING:", 8) == 0) {
+	if (strncmp(*msg, "WARNING ", 8) == 0) {
+	    char *e = *msg+8;
+	    char *f = strchr(e, ':');
+	    if (f) {
+		*f = '\0';
+		errno = get_errno_number(e);
+		*f = ':';
+	    } else {
+		errno = EINVAL;
+	    }
 	    return -1;
+	} else if (strncmp(*msg, "ERROR ", 6) == 0) {
+	    char *e = *msg+6;
+	    char *f = strchr(e, ':');
+	    if (f) {
+		*f = '\0';
+		errno = get_errno_number(e);
+		*f = ':';
+	    } else {
+		errno = EINVAL;
+	    }
+	    return -2;
 	}
 	return -2;
     }
@@ -313,6 +339,7 @@ ambind(
     memcpy(&s, CMSG_DATA(cmsg), sizeof(s));
 
     shutdown(sockfd[0], SHUT_RDWR);
+    close(sockfd[0]);
     waitpid(pid, NULL, 0);
     return s;
 }
@@ -332,7 +359,7 @@ connect_port(
     int			priv,
     char              **msg)
 {
-    int			save_errno;
+    int			save_errno = 0;
     struct servent *	result;
     socklen_t_equiv	len;
     socklen_t_equiv	socklen;
@@ -374,11 +401,13 @@ connect_port(
     socklen = SS_LEN(addrp);
     if (!priv) {
 	r = bind(s, (struct sockaddr *)addrp, socklen);
+	save_errno = errno;
 #if !defined BROKEN_SENDMSG
     } else if (1) { // if use ambind
 	int  old_s = s;
 	amfree(*msg);
 	r = s = ambind(s, addrp, socklen, msg);
+	save_errno = errno;
 	close(old_s);
 	if (*msg) {
 	    g_debug("ambind failed: %s", *msg);
@@ -391,12 +420,12 @@ connect_port(
 	g_mutex_lock(priv_mutex);
 	set_root_privs(1);
 	r = bind(s, (struct sockaddr *)addrp, socklen);
+	save_errno = errno;
 	set_root_privs(0);
 	g_mutex_unlock(priv_mutex);
     }
 
     if (r < 0) {
-	save_errno = errno;
 	aclose(s);
 	if( result == NULL) {
 	    dbprintf(_("connect_port: Try  port %d: available - %s\n"),

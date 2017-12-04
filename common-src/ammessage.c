@@ -2445,3 +2445,31 @@ parse_json_message(
     return message_array;
 }
 
+char *
+get_errno_string(
+    int my_errno)
+{
+    init_errcode();
+
+    if (my_errno < MAX_ERRCODE) {
+	return errcode[my_errno];
+    } else {
+	return "UNKNOWN";
+    }
+}
+
+int
+get_errno_number(
+    char *errno_string)
+{
+    int i;
+
+    init_errcode();
+
+    for (i = 0; i < MAX_ERRCODE; i++) {
+	if (strcmp(errno_string, errcode[i]) == 0) {
+	    return i;
+	}
+    }
+    return EINVAL;
+}
