@@ -136,7 +136,7 @@ sub run {
 	}
 	else {
 	    $script->print_to_server_and_die(
-		"unexpected: " . $exc, $Amanda::Script_App::ERROR);
+		"unexpected: " . $exc, $Amanda::Script_App::FAILURE);
 	}
     }
 }
@@ -529,7 +529,7 @@ sub local_full_message { my ( $self ) = @_; return $self->local_message(); }
 
 sub on_uncaught {
     my ( $self, $app ) = @_;
-    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::FAILURE);
 }
 
 # An exception indicating the script has not been properly invoked.
@@ -623,7 +623,7 @@ sub on_uncaught {
     for my $exc ( @{$self->{'exceptions'}} ) {
 	$app->print_to_server($exc . '', $Amanda::Script_App::ERROR);
     }
-    $app->print_to_server_and_die($self . '', $Amanda::Script_App::ERROR);
+    $app->print_to_server_and_die($self . '', $Amanda::Script_App::FAILURE);
 }
 
 1;
