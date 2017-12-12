@@ -480,36 +480,11 @@ REREAD:
 	    if ($line[1] eq 'pid' &&
 		$line[3] eq 'executable' &&
 		$line[5] eq 'version') {
-		my $amdump_version = $line[6];
+		my $planner_version = $line[6];
 
-		my ($version_major, $version_minor, $version_patch, $version_comment);
-		if ($amdump_version =~ /^(\d*)\.(\d*)\.(\d*)(.*)$/) {
-		    $version_major = $1;
-		    $version_minor = $2;
-		    $version_patch = $3;
-		    $version_comment = $4;
-		} elsif ($amdump_version =~ /^(\d*)\.(\d*)(.*)$/) {
-		    $version_major = $1;
-		    $version_minor = $2;
-		    $version_patch = 0;
-		    $version_comment = $3;
-		} elsif ($amdump_version =~ /^(\d*)(.*)$/) {
-		    $version_major = $1;
-		    $version_minor = 0;
-		    $version_patch = 0;
-		    $version_comment = $2;
-		}
-
-		if ($version_major ne $Amanda::Constants::VERSION_MAJOR ||
-		    $version_minor ne $Amanda::Constants::VERSION_MINOR) {
-		    return Amanda::Status::Message->new(
-					source_filename => __FILE__,
-					source_line     => __LINE__,
-					code   => 1800002,
-					severity => $Amanda::Message::ERROR,
-					amdump_log => $self->{'filename'},
-					version => $Amanda::Constants::VERSION,
-					amdump_version => $amdump_version);
+		my ($version_major, $version_minor, $version_patch, $version_comment) = $self->parse_version($planner_version);
+		if (ref $version_major eq "Amanda::Status::Message") {
+		    return $version_major;
 		}
 	    } elsif ($line[1] eq "timestamp") {
 		$self->{'datestamp'} = $line[2];
@@ -642,6 +617,15 @@ REREAD:
 	} elsif ($line[0] eq "driver") {
 	    if ($line[1] eq "pid") {
 		my $pid = $line[2];
+		if ($line[3] eq 'executable' &&
+		    $line[5] eq 'version') {
+		    my $driver_version = $line[6];
+
+		    my ($version_major, $version_minor, $version_patch, $version_comment) = $self->parse_version($driver_version);
+		    if (ref $version_major eq "Amanda::Status::Message") {
+			return $version_major;
+		    }
+		}
 		if (!$Amanda_process->process_alive($pid, "driver")) {
 		    if ($self->{'second_read'}) {
 			$self->{'dead_run'} = 1;
@@ -2259,4 +2243,41 @@ sub show_time {
     return $result;
 }
 
+sub parse_version {
+    my $self = shift;
+    my $version = shift;
+
+    my ($version_major, $version_minor, $version_patch, $version_comment);
+
+    if ($version =~ /^(\d*)\.(\d*)\.(\d*)(.*)$/) {
+	$version_major = $1;
+	$version_minor = $2;
+	$version_patch = $3;
+	$version_comment = $4;
+    } elsif ($version =~ /^(\d*)\.(\d*)(.*)$/) {
+	$version_major = $1;
+	$version_minor = $2;
+	$version_patch = 0;
+	$version_comment = $3;
+    } elsif ($version =~ /^(\d*)(.*)$/) {
+	$version_major = $1;
+	$version_minor = 0;
+	$version_patch = 0;
+	$version_comment = $2;
+    }
+
+    if ($version_major ne $Amanda::Constants::VERSION_MAJOR ||
+	$version_minor ne $Amanda::Constants::VERSION_MINOR) {
+	return Amanda::Status::Message->new(
+					source_filename => __FILE__,
+					source_line     => __LINE__,
+					code   => 1800002,
+					severity => $Amanda::Message::ERROR,
+					amdump_log => $self->{'filename'},
+					version => $Amanda::Constants::VERSION,
+					amdump_version => $version);
+    }
+
+    return ($version_major, $version_minor, $version_patch, $version_comment);
+}
 1;

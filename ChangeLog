@@ -1,3 +1,9 @@
+2017-12-12  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Also use 'driver: pid' line to detect
+	  running version
+	* server-src/amstatus.pl: Fix perl warning
+	* installcheck/Installcheck/Catalogs.pm: Fix
+
 2017-12-04  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/ammessage.c (get_errno_string, get_errno_number): New
 	  functions toreturn errno string and number
