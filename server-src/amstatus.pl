@@ -404,10 +404,10 @@ if ($opt_summary) {
 		    my $wname = $1;
 		    printf "%16s:", $wname;
 		    if (defined ($wmessage)) {
-			if ($wmessage eq "Idle") {
-			    print " $wmessage\n";
-			} else {
+			if (defined $whost and defined $wdisk) {
 			    print " $wmessage ($whost:$wdisk)\n";
+			} else {
+			    print " $wmessage\n";
 			}
 		    } else {
 			if (defined $whost and defined $wdisk) {

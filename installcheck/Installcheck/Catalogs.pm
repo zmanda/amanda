@@ -303,8 +303,8 @@ sub _parse {
 
 	# contents of the file (copy)
 	} else {
-	    if (/^planner: pid (\d*) executable (.*) version (.*)$/) {
-		$_ = "planner: pid $1 executable $2 version $Amanda::Constants::VERSION\n"
+	    if (/^(.*): pid (\d*) executable (.*) version (.*)$/) {
+		$_ = "$1 pid $2 executable $3 version $Amanda::Constants::VERSION\n"
 	    }
 	    $$fileref .= $_;
 	}
