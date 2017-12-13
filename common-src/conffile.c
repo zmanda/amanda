@@ -1941,6 +1941,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 
 	    tok = (token_overflow) ? CONF_UNKNOWN :
 			(exp == CONF_IDENT) ? CONF_IDENT : CONF_STRING;
+	    tokenval.type = (exp == CONF_IDENT) ? CONFTYPE_IDENT : CONFTYPE_STR;
 	    break;
 
 	case '-':
@@ -5822,7 +5823,7 @@ validate_name(
 	break;
       }
     default:
-	conf_parserror("validate_no_space_dquote invalid type %d\n", val->type);
+	conf_parserror("validate_name invalid type %d\n", val->type);
     }
 }
 
