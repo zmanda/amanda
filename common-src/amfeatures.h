@@ -250,7 +250,7 @@ typedef enum {
     fe_req_options_timestamp,
     fe_sendbackup_stream_cmd,
     fe_sendbackup_stream_cmd_get_dumper_result,
-
+    fe_sendbackup_statedone,
     /*
      * All new features must be inserted immediately *before* this entry.
      */

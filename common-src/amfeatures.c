@@ -219,6 +219,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_req_options_timestamp);
 	am_add_feature(f, fe_sendbackup_stream_cmd);
 	am_add_feature(f, fe_sendbackup_stream_cmd_get_dumper_result);
+	am_add_feature(f, fe_sendbackup_statedone);
     }
     return f;
 }
