@@ -1170,6 +1170,11 @@ process_dumpline(
 	    amfree(buf);
 	    return;
 	}
+	if (g_str_equal(tok, "statedone")) {
+	    aclose(statefile_in_mesg);
+	    amfree(buf);
+	    return;
+	}
 
 	if (g_str_equal(tok, "native-CRC")) {
 	    tok = strtok(NULL, "");
@@ -1671,6 +1676,11 @@ do_dump(
 	    } else {
 		// stream to fd
 	    }
+	}
+    } else { // data_path == DATA_PATH_DIRECTTCP
+	if (streams[DATAFD].fd) {
+	    security_stream_close(streams[DATAFD].fd);
+	    streams[DATAFD].fd = NULL;
 	}
     }
 
@@ -2324,7 +2334,7 @@ read_statefd(
 	if (shm_thread) {
 	    g_mutex_lock(shm_thread_mutex);
 	}
-	if (statefile_in_stream) {
+	if (statefile_in_stream != -1) {
 	    aclose(statefile_in_stream);
 	}
 
@@ -2348,7 +2358,7 @@ read_statefd(
 	if (shm_thread) {
 	    g_mutex_lock(shm_thread_mutex);
 	}
-	if (statefile_in_stream) {
+	if (statefile_in_stream != -1) {
 	    aclose(statefile_in_stream);
 	}
 	if (streams[STATEFD].fd) {
@@ -2471,6 +2481,12 @@ read_mesgfd(
 	if (data_path == DATA_PATH_AMANDA && set_datafd == 0) {
 	    security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	    set_datafd = 1;
+	} else if (data_path == DATA_PATH_DIRECTTCP) {
+	    if (!header_sent(db)) {
+		g_cond_broadcast(shm_thread_cond);
+		g_mutex_unlock(shm_thread_mutex);
+		return;
+	    }
 	}
     }
 
@@ -3698,7 +3714,8 @@ startup_dump(
 #ifdef FAILURE_CODE
 	disable_network_shm < 1 &&
 #endif
-	g_str_equal(auth,"local")) {
+	g_str_equal(auth,"local") &&
+	data_path == DATA_PATH_AMANDA) {
 	if (!shm_name) {
 	    shm_ring_consumer = shm_ring_create(NULL);
 	    shm_name = g_strdup(shm_ring_consumer->shm_control_name);
