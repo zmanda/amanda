@@ -663,9 +663,17 @@ sub label {
 	    my $meta = $res->{'meta'};
 	    my $tle = $self->{'tapelist'}->lookup_tapelabel($label);
 
-	    if ($params{'label'} &&
+	    if ($label && !$tle) {
+		$self->user_msg(Amanda::Label::Message->new(
+					source_filename => __FILE__,
+					source_line => __LINE__,
+					code      => 1000019,
+					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
+					label     => $label));
+		$dev_ok = 0 unless ($params{'force'});
+	    } elsif ($label &&
 		$labelstr->{'template'} &&
-		!match_labelstr($labelstr, $autolabel, $params{'label'}, $barcode, $meta, $storage_name)) {
+		!match_labelstr($labelstr, $autolabel, $label, $barcode, $meta, $storage_name)) {
 		$self->user_msg(Amanda::Label::Message->new(
 					source_filename => __FILE__,
 					source_line => __LINE__,
@@ -725,14 +733,6 @@ sub label {
 			$dev_ok = 0 unless ($params{'force'});
 		    }
 		}
-	    } else {
-		$self->user_msg(Amanda::Label::Message->new(
-					source_filename => __FILE__,
-					source_line => __LINE__,
-					code      => 1000019,
-					severity  => $params{'force'}?$Amanda::Message::INFO:$Amanda::Message::ERROR,
-					label     => $label));
-		$dev_ok = 0 unless ($params{'force'});
 	    }
 	}
 

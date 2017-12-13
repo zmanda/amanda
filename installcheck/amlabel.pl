@@ -136,9 +136,9 @@ like($Installcheck::Run::stdout,
     "with correct message");
 
 ok(!run('amlabel', 'TESTCONF', 'SomeTape'),
-    "amlabel refuses to write on a  tape already labeled");
+    "amlabel refuses to write on a tape already labeled");
 like($Installcheck::Run::stdout,
-    qr/Reading label...\nFound label 'TESTCONF92' but it doesn't match the labelstr 'TESTCONF\[0-9\]\[0-9\]'/,
+    qr/Reading label...\nVolume with label \'TESTCONF92\' is active and contains data from this configuration./,
     "with correct message on stdout");
 like($Installcheck::Run::stderr,
     qr/Not writing label./,
