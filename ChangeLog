@@ -1,4 +1,10 @@
 2017-09-28  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amfeatures.c: Add fe_sendbackup_statedone
+	* common-src/amfeatures.h: Add fe_sendbackup_statedone
+	* amandad-src/amandad.c, client-src/sendbackup.c,
+	  server-src/dumper.c: Fix for directtcp data_path
+
+2017-09-28  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/make_html.pl: Undo
 
 2017-09-27  Jean-Louis Martineau <JMartineau@carbonite.com>

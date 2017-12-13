@@ -848,7 +848,8 @@ main(
 	    }
 
 	    close(native_pipe[1]);
-	    if (shm_control_name) {
+
+	    if (shm_control_name && dle->data_path == DATA_PATH_AMANDA) {
 		shm_ring = shm_ring_link(shm_control_name);
 		shm_ring_producer_set_size(shm_ring, NETWORK_BLOCK_BYTES*16, NETWORK_BLOCK_BYTES*4);
 		native_crc.in  = native_pipe[0];
@@ -868,7 +869,7 @@ main(
 		    client_crc.thread = g_thread_create(handle_crc_to_shm_ring_thread,
 					 (gpointer)&client_crc, TRUE, NULL);
 		}
-	    } else {
+	    } else if (dle->data_path == DATA_PATH_AMANDA) {
 		native_crc.in  = native_pipe[0];
 		native_crc.out = dumpout;
 		native_crc.thread = g_thread_create(handle_crc_thread,
@@ -882,7 +883,16 @@ main(
 					(gpointer)&client_crc, TRUE, NULL);
 		}
 
+	    } else { // dle->data_path == DATA_PATH_DIRECTTCP
+		native_crc.thread = NULL;
+		client_crc.thread = NULL;
 	    }
+
+	    if (shm_ring && dle->data_path == DATA_PATH_DIRECTTCP) {
+		close_producer_shm_ring(shm_ring);
+		shm_ring = NULL;
+	    }
+
 
 	    if (statefd >= 0 && !bsu->state_stream) {
 		close(statefd);
@@ -899,7 +909,11 @@ main(
 		}
 		amfree(line);
 	    }
-	    g_thread_join(native_crc.thread);
+
+	    if (native_crc.thread) {
+		g_thread_join(native_crc.thread);
+	    }
+
 	    if (have_filter) {
 		if (enc_stderr_pipe.thread) {
 		    g_thread_join(enc_stderr_pipe.thread);
@@ -910,9 +924,9 @@ main(
 		g_thread_join(client_crc.thread);
 	    }
 
-	    if (shm_ring) {
-		close_producer_shm_ring(shm_ring);
-		shm_ring = NULL;
+	    if (shm_control_name && dle->data_path == DATA_PATH_DIRECTTCP) {
+		shm_ring = shm_ring_link(shm_control_name);
+		shm_ring_producer_set_size(shm_ring, NETWORK_BLOCK_BYTES*16, NETWORK_BLOCK_BYTES*4);
 	    }
 
 	    result |= check_result(mesgfd);
@@ -954,8 +968,19 @@ main(
 			(long long)client_crc.crc.size);
 	    }
 
+	    if (shm_ring) {
+		close_producer_shm_ring(shm_ring);
+		shm_ring = NULL;
+	    }
+
+	    if (am_has_feature(g_options->features, fe_sendbackup_statedone)) {
+		fprintf(mesgstream, "sendbackup: statedone\n");
+		fflush(mesgstream);
+	    }
+
 	    g_debug("sendbackup: end");
 	    fprintf(mesgstream, "sendbackup: end\n");
+	    fflush(mesgstream);
 
 	    amfree(bsu);
 	} else {

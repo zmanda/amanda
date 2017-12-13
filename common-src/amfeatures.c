@@ -216,6 +216,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_restore_prev_next_level);
 
 	am_add_feature(f, fe_sendbackup_req_options_data_shm_control_name);
+	am_add_feature(f, fe_sendbackup_statedone);
     }
     return f;
 }

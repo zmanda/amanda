@@ -1243,7 +1243,7 @@ s_ackwait(
     for (dh = &as->data[0]; dh < &as->data[DATA_FD_COUNT]; dh++) {
 	if (dh->netfd == NULL)
 	    continue;
-	dbprintf("opening security stream for fd %d\n", (int)(dh - as->data) + DATA_FD_OFFSET);
+	dbprintf("opening security stream (%p) for fd %d\n", dh, (int)(dh - as->data) + DATA_FD_OFFSET);
 	if (security_stream_accept(dh->netfd) < 0) {
 	    dbprintf(_("stream %td accept failed: %s\n"),
 		dh - &as->data[0], security_geterror(as->security_handle));
@@ -1498,8 +1498,10 @@ process_readnetfd(
 	    dh->shm_ring = NULL;
 	    as->thread = NULL;
 	}
-	security_stream_close(dh->netfd);
-	dh->netfd = NULL;
+	if (dh->netfd) {
+	    security_stream_close(dh->netfd);
+	    dh->netfd = NULL;
+	}
 	for (dh = &as->data[0]; dh < &as->data[DATA_FD_COUNT]; dh++) {
 	    if (dh->netfd != NULL &&
 		(as->service != SERVICE_SENDBACKUP ||
@@ -1571,7 +1573,9 @@ shm_ring_thread(
 {
     struct datafd_handle *dh = cookie;
     shm_ring_consumer_set_size(dh->shm_ring, NETWORK_BLOCK_BYTES*8, NETWORK_BLOCK_BYTES);
-    shm_ring_to_security_stream(dh->shm_ring, dh->netfd, NULL);
+    if (dh->netfd) {
+	shm_ring_to_security_stream(dh->shm_ring, dh->netfd, NULL);
+    }
 
     return NULL;
 }
@@ -1995,8 +1999,10 @@ service_delete(
 	aclose(dh->fd_read);
 	aclose(dh->fd_write);
 
-	if (dh->netfd != NULL)
+	if (dh->netfd != NULL) {
 	    security_stream_close(dh->netfd);
+	    dh->netfd = NULL;
+	}
 
 	if (dh->ev_read != NULL)
 	    event_release(dh->ev_read);
