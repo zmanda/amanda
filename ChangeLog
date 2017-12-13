@@ -1,3 +1,7 @@
+2017-12-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Label.pm: Fix error message
+	* installcheck/amlabel.pl: Fix
+
 2017-12-12  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Also use 'driver: pid' line to detect
 	  running version
