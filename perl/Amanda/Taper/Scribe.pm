@@ -1169,13 +1169,17 @@ sub _dump_done {
 
     return if !defined $dump_cb;
 
+    my $total_duration = 0;
+    if (defined($self->{'dump_start_time'})) {
+       $total_duration = time - $self->{'dump_start_time'};
+    }
     my %dump_cb_args = (
 	result => $result,
 	device_errors => $self->{'device_errors'},
 	config_denial_message => $self->{'config_denial_message'},
 	size => $self->{'size'},
 	duration => $self->{'duration'},
-	total_duration => time - $self->{'dump_start_time'},
+	total_duration => $total_duration,
 	nparts => $self->{'nparts'});
 
     # reset everything and let the original caller know we're done

@@ -1,4 +1,7 @@
 2017-12-13  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Taper/Scribe.pm: Fix perl warning on taper failure
+
+2017-12-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Label.pm: Fix error message
 	* installcheck/amlabel.pl: Fix
 
