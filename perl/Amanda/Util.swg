@@ -537,13 +537,17 @@ typedef struct {
 
 sub is_pid_alive {
     my ($pid) = shift;
+    my ($pname) = shift;
 
     return 1 if $pid == $$;
 
-    if (kill(0, $pid) == 1) {
-	return 1;
+    if (kill(0, $pid) != 1) {
+	return 0;
     }
-    return 0;
+    return 1 if !$pname;
+
+    my $alive = Amanda::Process::process_alive($pid, $pname);
+    return $alive;
 }
 %}
 

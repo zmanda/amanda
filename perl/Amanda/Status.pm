@@ -623,7 +623,7 @@ REREAD:
 			return $version_major;
 		    }
 		}
-		if (!Amanda::Util::is_pid_alive($pid)) {
+		if (!Amanda::Util::is_pid_alive($pid, 'driver')) {
 		    if ($self->{'second_read'}) {
 			$self->{'dead_run'} = 1;
 		    } else {
