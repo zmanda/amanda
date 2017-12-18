@@ -540,12 +540,10 @@ sub is_pid_alive {
 
     return 1 if $pid == $$;
 
-    my $Amanda_process = Amanda::Process->new(0);
-
-    $Amanda_process->load_ps_table();
-    my $alive = $Amanda_process->process_alive($pid);
-    return $alive;
-
+    if (kill(0, $pid) == 1) {
+	return 1;
+    }
+    return 0;
 }
 %}
 

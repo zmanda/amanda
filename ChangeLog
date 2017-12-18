@@ -1,3 +1,7 @@
+2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Util.swg (is_pid_alive): Use kill instead of
+	  Amanda::Process
+
 2017-12-13  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amfeatures.c: Add fe_sendbackup_statedone
 	* common-src/amfeatures.h: Add fe_sendbackup_statedone
