@@ -532,7 +532,7 @@ sub is_pid_alive {
     }
     return 1 if !$pname;
 
-    my $alive = Amanda::Process::process_alive($pid, $pname);
+    my $alive = Amanda::Process->process_alive($pid, $pname);
     return $alive;
 }
 %}
