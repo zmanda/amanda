@@ -438,9 +438,6 @@ REREAD:
     my %running_dumper;
     my %worker_to_serial;
 
-    my $Amanda_process = Amanda::Process->new(0);
-    $Amanda_process->load_ps_table();
-
     $self->{'exit_status'} = 0;
     my $line;
     my $fd = $self->{'fd'};
@@ -626,7 +623,7 @@ REREAD:
 			return $version_major;
 		    }
 		}
-		if (!$Amanda_process->process_alive($pid, "driver")) {
+		if (!Amanda::Util::is_pid_alive($pid)) {
 		    if ($self->{'second_read'}) {
 			$self->{'dead_run'} = 1;
 		    } else {

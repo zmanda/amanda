@@ -1,4 +1,7 @@
 2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Use Amanda::Util::is_pid_alive
+
+2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Util.swg (is_pid_alive): Use kill instead of
 	  Amanda::Process
 
