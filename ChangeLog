@@ -1,4 +1,10 @@
 2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Process.pm (process_alive): Can be called a class method
+	* perl/Amanda/Util.swg (is_pid_alive): New pname argument, call
+	  Amanda::Process::process_alive if pname is set
+	* perl/Amanda/Status.pm: Call is_pid_alive with 'driver' as the pname
+
+2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Status.pm: Use Amanda::Util::is_pid_alive
 
 2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>

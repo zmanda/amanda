@@ -498,10 +498,21 @@ sub count_process() {
 # @returns: 1 if process is alive
 #           '' if process is dead
 
+my $Amanda_process;
+my $Amanda_process_timestamps;
 sub process_alive() {
     my $self = shift;
     my $pid = shift;
     my $pname = shift;
+
+    if ($self eq 'Amanda::Process') {
+	if (!$Amanda_process || $Amanda_process_timestamps+60 < time()) {
+	    $Amanda_process = Amanda::Process->new(0);
+	    $Amanda_process->load_ps_table();
+	    $Amanda_process_timestamps = time();
+	}
+	$self = $Amanda_process;
+    }
 
     if (defined $pname && defined $self->{pstable}->{$pid}) {
 	return $self->{pstable}->{$pid} eq $pname ||
