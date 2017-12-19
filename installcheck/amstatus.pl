@@ -21,6 +21,7 @@
 use Test::More tests => 20;
 use strict;
 use warnings;
+use File::Path;
 
 use lib '@amperldir@';
 use Installcheck;
@@ -42,6 +43,7 @@ $testconf->write();
 $cat = Installcheck::Catalogs::load('number');
 $cat->install();
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF', '-odisplayunit=k'),
     "plain amstatus runs without error with -odisplayunit=k");
 like($Installcheck::Run::stdout,
@@ -60,6 +62,7 @@ localhost.localdomain:2ga\s*[0-9]{14}\s*0\s*2097160k\s*dump to tape done\s*\(11:
 localhost.localdomain:5ga\s*[0-9]{14}\s*0\s*5242890k\s*dump to tape done\s*\(11:45:36\)},
     "output is reasonable with -odisplayunit=k");
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF', '-odisplayunit=m'),
     "plain amstatus runs without error with -odisplayunit=m");
 like($Installcheck::Run::stdout,
@@ -78,6 +81,7 @@ localhost.localdomain:2ga\s*[0-9]{14}\s*0\s*2048m\s*dump to tape done\s*\(11:43:
 localhost.localdomain:5ga\s*[0-9]{14}\s*0\s*5120m\s*dump to tape done\s*\(11:45:36\)},
     "output is reasonable with -odisplayunit=m");
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF', '-odisplayunit=g'),
     "plain amstatus runs without error with -odisplayunit=g");
 like($Installcheck::Run::stdout,
@@ -96,6 +100,7 @@ localhost.localdomain:2ga\s*[0-9]{14}\s*0\s*2g\s*dump to tape done\s*\(11:43:35\
 localhost.localdomain:5ga\s*[0-9]{14}\s*0\s*5g\s*dump to tape done\s*\(11:45:36\)},
     "output is reasonable with -odisplayunit=g");
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF', '-odisplayunit=t'),
     "plain amstatus runs without error with -odisplayunit=t");
 like($Installcheck::Run::stdout,
@@ -119,12 +124,14 @@ localhost.localdomain:5ga\s*[0-9]{14}\s*0\s*0t\s*dump to tape done\s*\(11:45:36\
 $cat = Installcheck::Catalogs::load('normal');
 $cat->install();
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF'),
     "plain amstatus runs without error");
 like($Installcheck::Run::stdout,
     qr{clienthost:/some/dir [0-9]{14}\s*0\s*100k\s*dump done, written\s*\(13:01:53\)},
     "output is reasonable");
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF', '--summary'),
     "amstatus --summary runs without error");
 unlike($Installcheck::Run::stdout,
@@ -139,6 +146,7 @@ like($Installcheck::Run::stdout,
 $cat = Installcheck::Catalogs::load('quoted');
 $cat->install();
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF'),
     "amstatus runs without error with quoted disknames");
 like($Installcheck::Run::stdout,
@@ -151,6 +159,7 @@ like($Installcheck::Run::stdout,
 $cat = Installcheck::Catalogs::load('chunker-partial');
 $cat->install();
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(!run('amstatus', 'TESTCONF'),
     "amstatus return error with chunker partial");
 is($Installcheck::Run::exit_code, 4,
@@ -164,6 +173,7 @@ like($Installcheck::Run::stdout,
 $cat = Installcheck::Catalogs::load('taper-parallel-write');
 $cat->install();
 
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 ok(run('amstatus', 'TESTCONF'),
     "amstatus with taper-parallel-write runs without error");
 like($Installcheck::Run::stdout,

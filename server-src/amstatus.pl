@@ -206,25 +206,26 @@ if ($message->{'code'} != 1800000) {
     print $message, "\n";
     exit 1;
 }
+my $state = $message->{'status'};
 if ($opt_locale_independent_date_format) {
-    print "From $status->{'starttime-locale-independent'}\n";
+    print "From $state->{'starttime-locale-independent'}\n";
 } else {
-    print "From $status->{'datestr'}\n";
+    print "From $state->{'datestr'}\n";
 }
 print "\n";
 
-#print Data::Dumper::Dumper($status);
+#print Data::Dumper::Dumper($state);
 
 my $maxnamelength = 10;
 my $maxlevellength = 1;
-foreach my $host (keys %{$status->{'dles'}}) {
-    foreach my $disk (keys %{$status->{'dles'}->{$host}}) {
+foreach my $host (keys %{$state->{'dles'}}) {
+    foreach my $disk (keys %{$state->{'dles'}->{$host}}) {
 	my $qdisk = Amanda::Util::quote_string($disk);
 	if (length("$host:$qdisk") > $maxnamelength) {
 	    $maxnamelength = length("$host:$qdisk");
 	}
-	foreach my $datestamp (keys %{$status->{'dles'}->{$host}->{$disk}}) {
-	    my $dle = $status->{'dles'}->{$host}->{$disk}->{$datestamp};
+	foreach my $datestamp (keys %{$state->{'dles'}->{$host}->{$disk}}) {
+	    my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 	    if (length("$dle->{'level'}") > $maxlevellength) {
 		$maxlevellength = length("$dle->{'level'}");
 	    }
@@ -233,15 +234,15 @@ foreach my $host (keys %{$status->{'dles'}}) {
 }
 
 my $nb_storage = 0;
-if (defined $status->{'storage'}) {
-    $nb_storage = keys %{$status->{'storage'}};
+if (defined $state->{'storage'}) {
+    $nb_storage = keys %{$state->{'storage'}};
 }
 
 if ($opt_detail) {
-  foreach my $host (sort keys %{$status->{'dles'}}) {
-    foreach my $disk (sort keys %{$status->{'dles'}->{$host}}) {
-	foreach my $datestamp (sort keys %{$status->{'dles'}->{$host}->{$disk}}) {
-	    my $dle = $status->{'dles'}->{$host}->{$disk}->{$datestamp};
+  foreach my $host (sort keys %{$state->{'dles'}}) {
+    foreach my $disk (sort keys %{$state->{'dles'}->{$host}}) {
+	foreach my $datestamp (sort keys %{$state->{'dles'}->{$host}->{$disk}}) {
+	    my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 	    my $taper_status;
 	    if ($nb_storage == 1) {
 		if (defined $dle->{'storage'}) {
@@ -356,46 +357,46 @@ if ($opt_summary) {
     printf "%-16s %4s %10s %10s\n", "SUMMARY", "dle", "real", "estimated";
     printf "%-16s %4s %10s %10s\n", "", "", "size", "size";
     printf "%-16s %4s %10s %10s\n", "----------------", "----", "---------", "---------";
-    summary($status, 'disk', 'disk', 0, 0, 0, 0);
-    summary($status, 'estimated', 'estimated', 0, 1, 0, 0);
-    summary_storage($status, 'flush', 'flush', 1, 0, 0, 0);
-    summary($status, 'dump_failed', 'dump failed', 1, 1, 1, 1);
-    summary($status, 'wait_for_dumping', 'wait for dumping', 0, 1, 0, 1);
-    summary($status, 'dumping_to_tape', 'dumping to tape', 1, 1, 1, 1);
-    summary($status, 'dumping', 'dumping', 1, 1, 1, 1);
-    summary($status, 'dumped', 'dumped', 1, 1, 1, 1);
-    summary_storage($status, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1);
-    summary_storage($status, 'wait_to_flush'   , 'wait to flush'   , 1, 1, 1, 1);
-    summary_storage($status, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
-    summary_storage($status, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
-    summary_storage($status, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
-    summary_storage($status, 'taped'           , 'taped'           , 1, 1, 1, 1);
+    summary($state, 'disk', 'disk', 0, 0, 0, 0);
+    summary($state, 'estimated', 'estimated', 0, 1, 0, 0);
+    summary_storage($state, 'flush', 'flush', 1, 0, 0, 0);
+    summary($state, 'dump_failed', 'dump failed', 1, 1, 1, 1);
+    summary($state, 'wait_for_dumping', 'wait for dumping', 0, 1, 0, 1);
+    summary($state, 'dumping_to_tape', 'dumping to tape', 1, 1, 1, 1);
+    summary($state, 'dumping', 'dumping', 1, 1, 1, 1);
+    summary($state, 'dumped', 'dumped', 1, 1, 1, 1);
+    summary_storage($state, 'wait_for_writing', 'wait for writing', 1, 1, 1, 1);
+    summary_storage($state, 'wait_to_flush'   , 'wait to flush'   , 1, 1, 1, 1);
+    summary_storage($state, 'writing_to_tape' , 'writing to tape' , 1, 1, 1, 1);
+    summary_storage($state, 'dumping_to_tape' , 'dumping to tape' , 1, 1, 1, 1);
+    summary_storage($state, 'failed_to_tape'  , 'failed to tape'  , 1, 1, 1, 1);
+    summary_storage($state, 'taped'           , 'taped'           , 1, 1, 1, 1);
 
     print "\n";
-    if ($status->{'idle_dumpers'} == 0) {
+    if ($state->{'idle_dumpers'} == 0) {
 	printf "all dumpers active\n";
     } else {
-	my $c1 = ($status->{'idle_dumpers'} == 1) ? "" : "s";
-	my $c2 = ($status->{'idle_dumpers'} < 10) ? " " : "";
-	my $c3 = ($status->{'idle_dumpers'} == 1) ? " " : "";
-	printf "%d dumper%s idle%s %s: %s\n", $status->{'idle_dumpers'},
+	my $c1 = ($state->{'idle_dumpers'} == 1) ? "" : "s";
+	my $c2 = ($state->{'idle_dumpers'} < 10) ? " " : "";
+	my $c3 = ($state->{'idle_dumpers'} == 1) ? " " : "";
+	printf "%d dumper%s idle%s %s: %s\n", $state->{'idle_dumpers'},
 					      $c1, $c2, $c3,
-					      $status->{'status_driver'};
+					      $state->{'status_driver'};
     }
 
-    if (defined $status->{'storage'}) {
-	for my $storage (sort keys %{$status->{'storage'}}) {
+    if (defined $state->{'storage'}) {
+	for my $storage (sort keys %{$state->{'storage'}}) {
 	    next if !$storage;
-	    my $taper = $status->{'storage'}->{$storage}->{'taper'};
+	    my $taper = $state->{'storage'}->{$storage}->{'taper'};
 	    next if !$taper;
 
 	    printf "%-11s qlen: %d\n", "$storage",
-				       $status->{'qlen'}->{'tapeq'}->{$taper} || 0;
+				       $state->{'qlen'}->{'tapeq'}->{$taper} || 0;
 
-	    if (defined $status->{'taper'}->{$taper}->{'worker'}) {
+	    if (defined $state->{'taper'}->{$taper}->{'worker'}) {
 		my @worker_status;
-		for my $worker (sort keys %{$status->{'taper'}->{$taper}->{'worker'}}) {
-		    my $wworker = $status->{'taper'}->{$taper}->{'worker'}->{$worker};
+		for my $worker (sort keys %{$state->{'taper'}->{$taper}->{'worker'}}) {
+		    my $wworker = $state->{'taper'}->{$taper}->{'worker'}->{$worker};
 		    my $wstatus = $wworker->{'status'};
 		    my $wmessage = $wworker->{'message'};
 		    my $whost = $wworker->{'host'};
@@ -424,23 +425,23 @@ if ($opt_summary) {
 	}
     }
 
-    printf "%-16s: %d\n", "network free kps", $status->{'network_free_kps'};
+    printf "%-16s: %d\n", "network free kps", $state->{'network_free_kps'};
 
-    if (defined $status->{'holding_free_space'}) {
+    if (defined $state->{'holding_free_space'}) {
 	my $hs;
-	if ($status->{'holding_free_space'}) {
-	    $hs = ($status->{'holding_free_space'} * 1.0 / $status->{'holding_free_space'}) *100;
+	if ($state->{'holding_free_space'}) {
+	    $hs = ($state->{'holding_free_space'} * 1.0 / $state->{'holding_free_space'}) *100;
 	} else {
 	    $hs = 0.0;
 	}
-	printf "%-16s: %s$unit (%0.2f%%)\n", "holding space", dn($status->{'holding_free_space'}), $hs;
+	printf "%-16s: %s$unit (%0.2f%%)\n", "holding space", dn($state->{'holding_free_space'}), $hs;
     }
 }
 
 my $len_storage = 0;
-if (defined $status->{'taper'}) {
-    foreach my $taper (keys %{$status->{'taper'}}) {
-	my $len = length($status->{'taper'}->{$taper}->{'storage'});
+if (defined $state->{'taper'}) {
+    foreach my $taper (keys %{$state->{'taper'}}) {
+	my $len = length($state->{'taper'}->{$taper}->{'storage'});
 	if ($len > $len_storage) {
 	    $len_storage = $len;
 	}
@@ -449,38 +450,38 @@ if (defined $status->{'taper'}) {
 
 my $r;
 if ($opt_stats) {
-    if (defined $status->{'current_time'} and
-	$status->{'current_time'} != $status->{'start_time'}) {
-	my $total_time = $status->{'current_time'} - $status->{'start_time'};
-	foreach my $key (sort byprocess keys %{$status->{'busy'}}) {
+    if (defined $state->{'current_time'} and
+	$state->{'current_time'} != $state->{'start_time'}) {
+	my $total_time = $state->{'current_time'} - $state->{'start_time'};
+	foreach my $key (sort byprocess keys %{$state->{'busy'}}) {
 	    my $name = $key;
-	    if ($status->{'busy'}->{$key}->{'type'} eq "taper") {
-		$name = $status->{'busy'}->{$key}->{'storage'};
+	    if ($state->{'busy'}->{$key}->{'type'} eq "taper") {
+		$name = $state->{'busy'}->{$key}->{'storage'};
 	    }
 	    $name = sprintf "%*s", $len_storage, $name;
 	    printf "%-16s: %8s  (%6.2f%%)\n",
-		   "$name busy", &busytime($status->{'busy'}->{$key}->{'time'}),
-		   $status->{'busy'}->{$key}->{'percent'};
+		   "$name busy", &busytime($state->{'busy'}->{$key}->{'time'}),
+		   $state->{'busy'}->{$key}->{'percent'};
 	}
 
-	if (defined $status->{'dumpers_actives'}) {
-	    for (my $d = 0; $d < @{$status->{'dumpers_actives'}}; $d++) {
+	if (defined $state->{'dumpers_actives'}) {
+	    for (my $d = 0; $d < @{$state->{'dumpers_actives'}}; $d++) {
 		my $l = sprintf "%2d dumper%s busy%s : %8s  (%6.2f%%)", $d,
 			($d == 1) ? "" : "s",
 			($d == 1) ? " " : "",
-			&busytime($status->{'busy_dumper'}->{$d}->{'time'}),
-			$status->{'busy_dumper'}->{$d}->{'percent'};
+			&busytime($state->{'busy_dumper'}->{$d}->{'time'}),
+			$state->{'busy_dumper'}->{$d}->{'percent'};
 		print "$l";
 		my $s1 = "";
 		my $s2 = " " x length($l);
 
-		if (defined $status->{'busy_dumper'}->{$d}->{'status'}) {
-		    foreach my $key (sort keys %{$status->{'busy_dumper'}->{$d}->{'status'}}) {
+		if (defined $state->{'busy_dumper'}->{$d}->{'status'}) {
+		    foreach my $key (sort keys %{$state->{'busy_dumper'}->{$d}->{'status'}}) {
 			printf "%s%20s: %8s  (%6.2f%%)\n",
 			    $s1,
 			    $key,
-			    &busytime($status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'}),
-			    $status->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'};
+			    &busytime($state->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'}),
+			    $state->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'};
 			$s1 = $s2;
 		    }
 		}
@@ -492,7 +493,8 @@ if ($opt_stats) {
     }
 }
 
-exit $status->{'exit_status'};
+Amanda::Util::finish_application();
+exit $state->{'exit_status'};
 
 sub busytime() {
     my $busy = shift;
@@ -528,35 +530,35 @@ sub byprocess() {
 #}
 
 sub summary {
-    my $status = shift;
+    my $state = shift;
     my $key = shift;
     my $name = shift;
-    my $print_rsize = defined $status->{'stat'}->{$key}->{'real_size'};
-    my $print_esize = defined $status->{'stat'}->{$key}->{'estimated_size'};
-    my $print_rstat = defined $status->{'stat'}->{$key}->{'real_stat'};
-    my $print_estat = defined $status->{'stat'}->{$key}->{'estimated_stat'};
+    my $print_rsize = defined $state->{'stat'}->{$key}->{'real_size'};
+    my $print_esize = defined $state->{'stat'}->{$key}->{'estimated_size'};
+    my $print_rstat = defined $state->{'stat'}->{$key}->{'real_stat'};
+    my $print_estat = defined $state->{'stat'}->{$key}->{'estimated_stat'};
 
-    my $nb = $status->{'stat'}->{$key}->{'nb'};
+    my $nb = $state->{'stat'}->{$key}->{'nb'};
     my $rsize = "";
-       $rsize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'real_size'};
+       $rsize = sprintf "%8s$unit", dn($state->{'stat'}->{$key}->{'real_size'}) if defined $state->{'stat'}->{$key}->{'real_size'};
     my $esize = "";
-       $esize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'estimated_size'};
+       $esize = sprintf "%8s$unit", dn($state->{'stat'}->{$key}->{'estimated_size'}) if defined $state->{'stat'}->{$key}->{'estimated_size'};
 
     my $rstat = "";
-       $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'real_stat'};
+       $rstat = sprintf "(%6.2f%%)", $state->{'stat'}->{$key}->{'real_stat'} if defined $state->{'stat'}->{$key}->{'real_stat'};
     my $estat = "";
-       $estat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'estimated_stat'} if defined $status->{'stat'}->{$key}->{'estimated_stat'};
+       $estat = sprintf "(%6.2f%%)", $state->{'stat'}->{$key}->{'estimated_stat'} if defined $state->{'stat'}->{$key}->{'estimated_stat'};
 
     my $line = sprintf "%-16s:%4d  %9s  %9s %9s %9s",
-		$status->{'stat'}->{$key}->{'name'},
-		$status->{'stat'}->{$key}->{'nb'},
+		$state->{'stat'}->{$key}->{'name'},
+		$state->{'stat'}->{$key}->{'nb'},
 		$rsize, $esize, $rstat, $estat;
     $line =~ s/ *$//g; #remove trailing space
     print "$line\n";
 }
 
 sub summary_storage {
-    my $status = shift;
+    my $state = shift;
     my $key = shift;
     my $name = shift;
     my $print_rsize = shift;
@@ -564,8 +566,8 @@ sub summary_storage {
     my $print_rstat = shift;
     my $print_estat = shift;
 
-    if (!$status->{'stat'}->{$key}->{'storage'} ||
-	keys %{$status->{'stat'}->{$key}->{'storage'}} == 0) {
+    if (!$state->{'stat'}->{$key}->{'storage'} ||
+	keys %{$state->{'stat'}->{$key}->{'storage'}} == 0) {
 	printf "$name\n";
 	return;
     }
@@ -573,20 +575,20 @@ sub summary_storage {
 	printf "$name\n";
     };
 
-    for my $storage (sort keys %{$status->{'stat'}->{$key}->{'storage'}}) {
+    for my $storage (sort keys %{$state->{'stat'}->{$key}->{'storage'}}) {
 	if ($nb_storage > 1) {
 	    $name = sprintf "%-16s", "  $storage";
 	}
-	my $nb = $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'nb'};
+	my $nb = $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'nb'};
 	my $rsize = "";
-	$rsize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'};
+	$rsize = sprintf "%8s$unit", dn($state->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'}) if defined $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_size'};
 	my $esize = "";
-	$esize = sprintf "%8s$unit", dn($status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'}) if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
+	$esize = sprintf "%8s$unit", dn($state->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'}) if defined $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_size'};
 
 	my $rstat = "";
-	    $rstat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'};
+	    $rstat = sprintf "(%6.2f%%)", $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'} if defined $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'real_stat'};
 	my $estat = "";
-	    $estat = sprintf "(%6.2f%%)", $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'} if defined $status->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'};
+	    $estat = sprintf "(%6.2f%%)", $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'} if defined $state->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'};
 
 	my $line = sprintf "%-16s:%4d  %9s  %9s %9s %9s",
 			$name,
@@ -596,24 +598,24 @@ sub summary_storage {
 	print "$line\n";
 
 	if ($key eq 'taped') {
-	    my $taper = $status->{'storage'}->{$storage}->{'taper'};
-	    summary_taped($status, $taper);
+	    my $taper = $state->{'storage'}->{$storage}->{'taper'};
+	    summary_taped($state, $taper);
 	}
     }
 }
 
 sub summary_taped {
-    my $status = shift;
+    my $state = shift;
     my $taper = shift;
 
     my $i = 0;
-    while ($i < $status->{'taper'}->{$taper}->{'nb_tape'}) {
-	my $nb = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'nb_dle'};
-	my $real_size = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'size'};
-	my $estimated_size = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'esize'};
-	my $percent = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'percent'};
-	my $label = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'label'};
-	my $nb_part = $status->{'taper'}->{$taper}->{'stat'}[$i]->{'nb_part'};
+    while ($i < $state->{'taper'}->{$taper}->{'nb_tape'}) {
+	my $nb = $state->{'taper'}->{$taper}->{'stat'}[$i]->{'nb_dle'};
+	my $real_size = $state->{'taper'}->{$taper}->{'stat'}[$i]->{'size'};
+	my $estimated_size = $state->{'taper'}->{$taper}->{'stat'}[$i]->{'esize'};
+	my $percent = $state->{'taper'}->{$taper}->{'stat'}[$i]->{'percent'};
+	my $label = $state->{'taper'}->{$taper}->{'stat'}[$i]->{'label'};
+	my $nb_part = $state->{'taper'}->{$taper}->{'stat'}[$i]->{'nb_part'};
 	my $tape = "tape " . ($i+1);
 	printf "    %-12s:%4d %9s$unit %9s$unit (%6.2f%%) %s (%d parts)\n", $tape, $nb, dn($real_size), dn($estimated_size), $percent, $label, $nb_part;
 	$i++;

@@ -48,6 +48,9 @@ use Data::Dumper;
 use vars qw( @ISA );
 use Time::Local;
 use Text::ParseWords;
+use File::Path;
+use File::Basename;
+use Storable;
 
 use Amanda::Paths;
 use Amanda::Util qw( match_labelstr );
@@ -352,7 +355,7 @@ sub new {
     my %params = @_;
 
     my $filename = $params{'filename'};
-    my $dead_run;
+    my $dead_run = 0;
     my $logdir = config_dir_relative(Amanda::Config::getconf($CNF_LOGDIR));
     if (defined $filename) {
 	if ($filename =~ m,^/, ) {
@@ -389,10 +392,9 @@ sub new {
 	filename    => $filename,
 	fd          => $fd,
 	driver_finished => 0,
-	dead_run => 0,
+	state	=> { dead_run => $dead_run },
 	second_read => 0,
     };
-    $self->{'dead_run'} = $dead_run if $dead_run;
 
     bless $self, $class;
     return $self;
@@ -427,21 +429,16 @@ sub parse {
     my $self = shift;
     my %params = @_;
 
+    my $state = $self->{'state'};
+
 REREAD:
     my $user_msg = $params{'user_msg'};
-    my @datestamp;
-    my %datestamp;
-    my $generating_schedule = 0;
-    my %dles;
-    my %dumper_to_serial;
-    my %chunker_to_serial;
-    my %running_dumper;
-    my %worker_to_serial;
 
-    $self->{'exit_status'} = 0;
+    $state->{'exit_status'} = 0 if !defined $state->{'exit_status'};
     my $line;
     my $fd = $self->{'fd'};
     while ($line = <$fd>) {
+	$self->{'parsed_line'} = 1;
 	chomp $line;
 	$line =~ s/[:\s]+$//g; #remove separator at end of line
 	my @line = Amanda::Util::split_quoted_strings_for_amstatus($line);
@@ -452,18 +449,18 @@ REREAD:
 
 	if ($line[0] eq "amdump" || $line[0] eq "amflush" || $line[0] eq "amvault") {
 	    if ($line[1] eq "start" && $line[2] eq "at") {
-		$self->{'datestr'} = $line;
-		$self->{'datestr'} =~ s/.*start at //g;
+		$state->{'datestr'} = $line;
+		$state->{'datestr'} =~ s/.*start at //g;
 	    } elsif ($line[1] eq "datestamp") {
-		$self->{'datestamp'} = $line[2];
-		if (!defined $datestamp{$self->{'datestamp'}}) {
-		    $datestamp{$self->{'datestamp'}} = 1;
-		    push @datestamp, $self->{'datestamp'};
+		$state->{'datestamp'} = $line[2];
+		if (!defined $state->{'datestampH'}->{$state->{'datestamp'}}) {
+		    $state->{'datestampH'}->{$state->{'datestamp'}} = 1;
+		    push @{$state->{'datestampA'}}, $state->{'datestamp'};
 		}
 	    } elsif ($line[1] eq "starttime") {
-		$self->{'starttime'} = &set_starttime($line[2]);
+		$state->{'starttime'} = &set_starttime($line[2]);
 	    } elsif ($line[1] eq "starttime-locale-independent") {
-		$self->{'starttime-locale-independent'} = $line[2] . " " . $line[3] . ":" . $line[4] . ":" . $line[5] . " " . $line[6];
+		$state->{'starttime-locale-independent'} = $line[2] . " " . $line[3] . ":" . $line[4] . ":" . $line[5] . " " . $line[6];
 	    }
 	    if ($line[0] eq "amvault") {
 		if ($line[1] eq 'vaulting') {
@@ -484,17 +481,17 @@ REREAD:
 		    return $version_major;
 		}
 	    } elsif ($line[1] eq "timestamp") {
-		$self->{'datestamp'} = $line[2];
-		if (!defined $datestamp{$self->{'datestamp'}}) {
-		    $datestamp{$self->{'datestamp'}} = 1;
-		    push @datestamp, $self->{'datestamp'};
+		$state->{'datestamp'} = $line[2];
+		if (!defined $state->{'datestampH'}->{$state->{'datestamp'}}) {
+		    $state->{'datestampH'}->{$state->{'datestamp'}} = 1;
+		    push @{$state->{'datestampA'}}, $state->{'datestamp'};
 		}
 	    } elsif ($line[1] eq "FAILED") {
 		#2:host 3:disk 4:datestamp 5:level 6:errmsg
 		my $host=$line[2];
 		my $disk=$line[3];
 		my $datestamp=$line[4];
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'level'} = $line[5];
 		$dle->{'status'} = $ESTIMATE_FAILED;
 		$dle->{'error'} = $line[6];
@@ -503,7 +500,7 @@ REREAD:
 		    if($line[4] eq "result") {
 			my $host = $line[7];
 			my $disk = $line[9];
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}};
 			$dle->{'status'} = $ESTIMATE_DONE;
 			$dle->{'level'} = $line[10];
 			$line[12] =~ /(\d+)K/;
@@ -512,7 +509,7 @@ REREAD:
 		    } elsif($line[4] eq "partial") {
 			my $host = $line[8];
 			my $disk = $line[10];
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}};
 			$dle->{'status'} = $ESTIMATE_PARTIAL;
 			my $level1 = $line[11];
 			$line[13] =~ /(-?\d+)K/;
@@ -524,7 +521,7 @@ REREAD:
 			$line[19] =~ /(-?\d+)K/;
 			my $size3 = $1 * 1024;
 			if ($size1 > 0 || $size2 > 0 || $size3 > 0) {
-			    my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
+			    my $dle = $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}};
 			    $dle->{'level'} = $line[11];
 			    $dle->{'esize'} = $size1;
 			    #if ($size1 > 0) { $getest{$hostpart} =~ s/:$level1://; }
@@ -541,8 +538,8 @@ REREAD:
 	} elsif ($line[0] eq "setup_estimate") {
 	    my $host = $line[1];
 	    my $disk = $line[2];
-	    $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}} = {} if !defined($self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}});;
-	    my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
+	    $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}} = {} if !defined($state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}});;
+	    my $dle = $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}};
 	    $dle->{'status'} = $ESTIMATING;
 	    $dle->{'level'} = 0;
 	    $dle->{'degr_level'} = -1;
@@ -559,20 +556,20 @@ REREAD:
 	    }
 	} elsif ($line[0] eq "GENERATING" &&
 		 $line[1] eq "SCHEDULE") {
-	    $generating_schedule = 1;
+	    $state->{'generating_schedule'} = 1;
 	} elsif ($line[0] eq "--------") {
-	    if ($generating_schedule == 1) {
-		$generating_schedule = 2;
-	    } elsif ($generating_schedule == 2) {
-		$generating_schedule = 3;
+	    if ($state->{'generating_schedule'} == 1) {
+		$state->{'generating_schedule'} = 2;
+	    } elsif ($state->{'generating_schedule'} == 2) {
+		$state->{'generating_schedule'} = 3;
 	    }
 	} elsif ($line[0] eq "DUMP") {
-	    if ($generating_schedule == 2 ) {
+	    if ($state->{'generating_schedule'} == 2 ) {
 		my $host = $line[1];
 		my $disk = $line[3];
 		my $datestamp = $line[4];
-		$self->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined($self->{'dles'}->{$host}->{$disk}->{$datestamp});
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		$state->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined($state->{'dles'}->{$host}->{$disk}->{$datestamp});
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'status'} = $WAIT_FOR_DUMPING;
 		$dle->{'level'} = $line[6];
 		my $esize = $line[14] * 1024; #compressed size
@@ -594,8 +591,8 @@ REREAD:
 	    my $datestamp = $line[4];
 	    my $level = $line[5];
 	    my $holding_file = $line[6];
-	    $self->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined($self->{'dles'}->{$host}->{$disk}->{$datestamp});
-	    my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+	    $state->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined($state->{'dles'}->{$host}->{$disk}->{$datestamp});
+	    my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 	    $dle->{'flush'} = 0;
 	    $dle->{'holding_file'} = $holding_file;
 	    $dle->{'level'} = $level;
@@ -604,9 +601,9 @@ REREAD:
 		my ($id, $storage) = split ';', $id1;
 		$dle->{'storage'}->{$storage} = { status   => $WAIT_FOR_FLUSHING,
 						  flushing => 1 };
-		for my $taper (keys %{$self->{'taper'}}) {
-		    if ($self->{'taper'}->{$taper}->{'storage'} eq $storage) {
-			$self->{'storage'}->{$storage}->{'taper'} = $taper;
+		for my $taper (keys %{$state->{'taper'}}) {
+		    if ($state->{'taper'}->{$taper}->{'storage'} eq $storage) {
+			$state->{'storage'}->{$storage}->{'taper'} = $taper;
 		    }
 		}
 	    }
@@ -625,7 +622,7 @@ REREAD:
 		}
 		if (!Amanda::Util::is_pid_alive($pid, 'driver')) {
 		    if ($self->{'second_read'}) {
-			$self->{'dead_run'} = 1;
+			$state->{'dead_run'} = 1;
 		    } else {
 			$self->{'second_read'} = 1;
 			close $self->{'fd'};
@@ -649,32 +646,32 @@ REREAD:
 		my $disk = $line[6];
 		my $datestamp = $line[8];
 		my $storage = $line[11];
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'storage'}->{$storage} = { status => $WAIT_FOR_WRITING };
 	    } elsif ($line[1] eq "start" && $line[2] eq "time") {
-		$self->{'start_time'} = $line[3];
-		$self->{'current_time'} = $line[3];
-		$self->{'dumpers_actives'}[0] = 0;
-		$self->{'dumpers_held'}[0] = {};
-		$self->{'dumpers_active'} = 0;
+		$state->{'start_time'} = $line[3];
+		$state->{'current_time'} = $line[3];
+		$state->{'dumpers_actives'}[0] = 0;
+		$state->{'dumpers_held'}[0] = {};
+		$state->{'dumpers_active'} = 0;
 	    } elsif ($line[1] eq "adding" &&
 		     $line[2] eq "holding" &&
 		     $line[3] eq "disk") {
-		$self->{'holding_space'} += $line[8];
+		$state->{'holding_space'} += $line[8];
 	    } elsif ($line[1] eq "taper" && $line[3] eq "storage") {
 		#2:taper 4:storage 5:"tape_size" 6:tape_size
 		my $taper = $line[2];
 		my $storage = $line[4];
 		my $tape_size = $line[6] * 1024;
-		$self->{'taper'}->{$taper}->{'storage'} = $storage;
-		$self->{'taper'}->{$taper}->{'tape_size'} = $tape_size;
-		$self->{'storage'}->{$storage}->{'taper'} = $taper;
+		$state->{'taper'}->{$taper}->{'storage'} = $storage;
+		$state->{'taper'}->{$taper}->{'tape_size'} = $tape_size;
+		$state->{'storage'}->{$storage}->{'taper'} = $taper;
 	    } elsif ($line[1] eq "requeue" && $line[2] eq "dump" && $line[3] eq "time") {
 		#1:requeue #2:dump #3:time #4:$time #5:$host #6:$disk #7:$datestamp
 		my $host = $line[5];
 		my $disk = $line[6];
 		my $datestamp = $line[7];
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'will_retry'} = 1;
 	    } elsif ($line[1] eq "requeue" && $line[2] eq "dump_to_tape" && $line[3] eq "time") {
 		#1:requeue #2:dump_to_tape #3:time #4:$time #5:$host #6:$disk #7:$datestamp [#8:$storage]
@@ -682,7 +679,7 @@ REREAD:
 		my $disk = $line[6];
 		my $datestamp = $line[7];
 		my $storage = $line[8];
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		$dle->{'will_retry'} = 1;
 		if ($storage) {
 		    my $dlet = $dle->{'storage'}->{$storage};
@@ -694,11 +691,11 @@ REREAD:
 		my $disk = $line[6];
 		my $datestamp = $line[7];
 		my $storage = $line[8];
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		my $dlet = $dle->{'storage'}->{$storage};
 		$dlet->{'will_retry'} = 1;
 	    } elsif ($line[1] eq "send-cmd" && $line[2] eq "time") {
-		$self->{'current_time'} = $line[3];
+		$state->{'current_time'} = $line[3];
 		if ($line[5] =~ /dumper\d*/) {
 		    my $dumper = $line[5];
 		    if ($line[6] eq "PORT-DUMP" ||
@@ -707,12 +704,12 @@ REREAD:
 			my $host = $line[11];
 			my $disk = $line[13];
 			my $serial=$line[7];
-			$dumper_to_serial{$line[5]} = $serial;
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
+			$state->{'dumper_to_serial'}->{$line[5]} = $serial;
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}};
 			$dle->{'retry'} = 0;
 			$dle->{'retry_level'} = -1;
 			$dle->{'will_retry'} = 0;
-			$dle->{'dump_time'} = $self->{'current_time'};
+			$dle->{'dump_time'} = $state->{'current_time'};
 			if (      $dle->{'level'} != $line[15] &&
 			     $dle->{'degr_level'} == $line[15]) {
 			    $dle->{'level'} = $dle->{'degr_level'};
@@ -720,30 +717,30 @@ REREAD:
 			} elsif ($dle->{'level'} != $line[15]) {
 			    $dle->{'level'} = $line[15];
 			}
-			if (!defined($self->{'busy_time'}->{$dumper})) {
-			    $self->{'busy_time'}->{$dumper}=0;
+			if (!defined($state->{'busy_time'}->{$dumper})) {
+			    $state->{'busy_time'}->{$dumper}=0;
 			}
-			#$running_dumper{$dumper} = $hostpart;
+			#$state->{'running_dumper'}->{$dumper} = $hostpart;
 			delete $dle->{'error'};
 			$dle->{'size'} = 0;
-			$self->{'dumpers_active'}++;
-			if (!defined($self->{'dumpers_actives'}[$self->{'dumpers_active'}])) {
-			    $self->{'dumpers_actives'}[$self->{'dumpers_active'}] = 0;
+			$state->{'dumpers_active'}++;
+			if (!defined($state->{'dumpers_actives'}[$state->{'dumpers_active'}])) {
+			    $state->{'dumpers_actives'}[$state->{'dumpers_active'}] = 0;
 			}
-			if (!defined($self->{'dumpers_held'}[$self->{'dumpers_active'}])) {
-			    $self->{'dumpers_held'}[$self->{'dumpers_active'}] = {};
+			if (!defined($state->{'dumpers_held'}[$state->{'dumpers_active'}])) {
+			    $state->{'dumpers_held'}[$state->{'dumpers_active'}] = {};
 			}
 			if ($dle->{'status'} == $DUMPING_INIT) {
 			    $dle->{'status'} = $DUMPING;
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE_INIT) {
 			    $dle->{'status'} = $DUMPING_TO_TAPE;
 			} else {
-			    die ("bad status on dumper PORT-DUMP: $dle->{'status'}");
+			    die ("bad status on dumper $line[6] ($serial): $dle->{'status'}");
 			}
 		    } elsif ($line[6] eq "ABORT") {
 			#7:handle 8:message
 			my $serial=$line[7];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			$dle->{'status'} = $DUMP_FAILED;
 		    }
 		} elsif ($line[5] =~ /chunker\d*/) {
@@ -753,32 +750,32 @@ REREAD:
 			my $host = $line[9];
 			my $disk = $line[11];
 			my $level = $line[12];
-			$chunker_to_serial{$line[5]} = $serial;
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$self->{'datestamp'}};
-			$dles{$serial} = $dle;
+			$state->{'chunker_to_serial'}->{$line[5]} = $serial;
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$state->{'datestamp'}};
+			$state->{'serial_to_dle'}->{$serial} = $dle;
 			$dle->{'retry'} = 0;
 			$dle->{'retry_level'} = -1;
 			$dle->{'will_retry'} = 0;
 			$dle->{'holding_file'} = $line[8];
-			$dle->{'chunk_time'} = $self->{'current_time'};
+			$dle->{'chunk_time'} = $state->{'current_time'};
 			$dle->{'size'} = 0;
 			$dle->{'level'} = $level;
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_FAILED) {
-			    die ("bad status on chunker $line[6]: $dle->{'status'}");
+			    die ("bad status on chunker $line[6] ($serial): $dle->{'status'}");
 			}
 			$dle->{'status'} = $DUMPING_INIT;
 		    } elsif ($line[6] eq "CONTINUE") {
 			#7:handle 8:filename 9:chunksize 10:use
 			my $serial=$line[7];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			if ($dle) {
 			    delete $dle->{'wait_holding_disk'};
 			}
 		    } elsif ($line[6] eq "ABORT") {
 			#7:handle 8:message
 			my $serial=$line[7];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			if ($dle) {
 			    delete $dle->{'wait_holding_disk'};
 			    $dle->{'status'} = $DUMP_FAILED;
@@ -791,23 +788,23 @@ REREAD:
 			my $worker = $line[8];
 			my $storage=$line[9];
 			my $datestamp=$line[10];
-			if (!defined $datestamp{$datestamp}) {
-			    $datestamp{$datestamp} = 1;
-			    push @datestamp, $datestamp;
+			if (!defined $state->{'datestampH'}->{$datestamp}) {
+			    $state->{'datestampH'}->{$datestamp} = 1;
+			    push @{$state->{'datestampA'}}, $datestamp;
 			}
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = 1;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
-			$self->{'taper'}->{$taper}->{'nb_tape'} = 0 if !defined $self->{'taper'}->{$taper}->{'nb_tape'};
-			$self->{'storage'}->{$storage}->{'taper'} = $taper;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = 1;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+			$state->{'taper'}->{$taper}->{'nb_tape'} = 0 if !defined $state->{'taper'}->{$taper}->{'nb_tape'};
+			$state->{'storage'}->{$storage}->{'taper'} = $taper;
 		    } elsif ($line[6] eq "START-SCAN") {
 			#7:name 8:handle
 			my $worker = $line[7];
 			my $serial = $line[8];
-			my $dle = $dles{$serial};
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = 1;
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'} = 1;
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
 			if ($dle) {
-			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			    my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			    my $dlet = $dle->{'storage'}->{$storage};
 			    if ($dlet->{'wait_for_tape'}) {
 				$dlet->{'search_for_tape'} = 1;
@@ -820,21 +817,21 @@ REREAD:
 			#7:name 8:handle
 			my $worker = $line[7];
 			my $serial = $line[8];
-			my $dle = $dles{$serial};
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
+			my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			delete $dlet->{'wait_for_tape'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
 		    } elsif ($line[6] eq "NO-NEW-TAPE") {
 			#7:name 8:handle 9:errmsg
 			my $worker = $line[7];
 			my $serial = $line[8];
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[9];
-			my $dle = $dles{$serial};
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[9];
+			my $dle = $state->{'serial_to_dle'}->{$serial};
+			my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			delete $dlet->{'wait_for_tape'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
 		    } elsif ($line[6] eq "FILE-WRITE") {
 			#7:name 8:handle 9:filename 10:host 11:disk 12:level 13:datestamp 14:splitsize
 			my $worker = $line[7];
@@ -843,42 +840,42 @@ REREAD:
 			my $disk = $line[11];
 			my $level = $line[12];
 			my $datestamp = $line[13];
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $WRITING;
-			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
-			if (!defined $datestamp{$datestamp}) {
-			    $datestamp{$datestamp} = 1;
-			    push @datestamp, $datestamp;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $WRITING;
+			#$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
+			if (!defined $state->{'datestampH'}->{$datestamp}) {
+			    $state->{'datestampH'}->{$datestamp} = 1;
+			    push @{$state->{'datestampA'}}, $datestamp;
 			}
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
-			$dles{$serial} = $dle;
-			if(!defined $self->{'level'}) {
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
+			$state->{'serial_to_dle'}->{$serial} = $dle;
+			if(!defined $dle->{'level'}) {
 			    $dle->{'level'} = $level;
 			}
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			$dle->{'storage'}->{$storage} = {} if !defined $dle->{'storage'}->{$storage};
 			my $dlet = $dle->{'storage'}->{$storage};
 			$dlet->{'will_retry'} = 0;
 			if (defined $dlet->{'flushing'}) {
 			    if ($dlet->{'status'} != $WAIT_FOR_FLUSHING &&
 				$dlet->{'status'} != $FLUSH_FAILED) {
-				die ("bad status on taper FILE-WRITE (flushing): $dlet->{'status'}");
+				die ("bad status on taper FILE-WRITE (flushing) ($serial): $dlet->{'status'}");
 			    }
 			    $dlet->{'status'} = $FLUSHING;
 			} else {
 			    if (defined $dlet->{'status'} and 
 				($dlet->{'status'} != $WAIT_FOR_WRITING &&
 				 $dlet->{'status'} != $WRITE_FAILED)) {
-				die ("bad status on taper FILE-WRITE (writing): $dlet->{'status'}");
+				die ("bad status on taper FILE-WRITE (writing) ($serial): $dlet->{'status'}");
 			    }
 			    $dlet->{'status'} = $WRITING;
 			}
-			$dlet->{'taper_time'} = $self->{'current_time'};
+			$dlet->{'taper_time'} = $state->{'current_time'};
 			$dlet->{'taped_size'} = 0;
 			delete $dlet->{'error'};
-			$worker_to_serial{$worker} = $serial;
+			$state->{'worker_to_serial'}->{$worker} = $serial;
 		    } elsif ($line[6] eq "PORT-WRITE" ||
 			     $line[6] eq "SHM-WRITE") {
 			#7:name 8:handle 9:host 10:disk 11:level 12:datestamp 13:splitsize 14:diskbuffer 15:fallback_splitsize
@@ -888,18 +885,18 @@ REREAD:
 			my $disk = $line[10];
 			my $level = $line[11];
 			my $datestamp = $line[12];
-			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $DUMPING_TO_TAPE;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+			#$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $DUMPING_TO_TAPE;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 			$dle->{'level'} = $level;
-			$dles{$serial} = $dle;
+			$state->{'serial_to_dle'}->{$serial} = $dle;
 			$dle->{'retry'} = 0;
 			$dle->{'retry_level'} = -1;
 			$dle->{'will_retry'} = 0;
-			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
+			my $storage_name = $state->{'taper'}->{$taper}->{'storage'};
 			$dle->{'dump_to_tape_storage'} = $storage_name;
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
@@ -907,20 +904,20 @@ REREAD:
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_FAILED and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
-			    die ("bad status on taper $line[6] (dumper): $dle->{'status'}");
+			    die ("bad status on taper $line[6] (dumper) ($serial): $dle->{'status'}");
 			}
 			if ($dlet->{'status'} and
 			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
 			    $dlet->{'status'} != $DUMP_FAILED and
 			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED) {
-			    die ("bad status on taper $line[6] (taper): $dlet->{'status'}");
+			    die ("bad status on taper $line[6] (taper) ($serial): $dlet->{'status'}");
 			}
 			$dle->{'status'} = $DUMPING_TO_TAPE_INIT;
 			$dlet->{'status'} = $DUMPING_TO_TAPE;
-			$dlet->{'taper_time'} = $self->{'current_time'};
+			$dlet->{'taper_time'} = $state->{'current_time'};
 			$dlet->{'taped_size'} = 0;
 			delete $dlet->{'error'};
-			$worker_to_serial{$worker} = $serial;
+			$state->{'worker_to_serial'}->{$worker} = $serial;
 		    } elsif ($line[6] eq "VAULT-WRITE") {
 			#7:name 8:handle 9:src_storage 10:src_pool 11:src_label 12:host 13:disk 14:level 15:datestamp 16:splitsize 17:diskbuffer 18:fallback_splitsize
 			my $worker = $line[7];
@@ -932,65 +929,65 @@ REREAD:
 			my $disk = $line[13];
 			my $level = $line[14];
 			my $datestamp = $line[15];
-			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $VAULTING;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
-			$self->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined $self->{'dles'}->{$host}->{$disk}->{$datestamp};
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+			#$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Writing $host:$disk";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $VAULTING;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'} = $host;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'} = $disk;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'} = $datestamp;
+			$state->{'dles'}->{$host}->{$disk}->{$datestamp} = {} if !defined $state->{'dles'}->{$host}->{$disk}->{$datestamp};
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 			$dle->{'level'} = $level;
-			$dles{$serial} = $dle;
+			$state->{'serial_to_dle'}->{$serial} = $dle;
 			$dle->{'retry'} = 0;
 			$dle->{'retry_level'} = -1;
 			$dle->{'will_retry'} = 0;
-			my $storage_name = $self->{'taper'}->{$taper}->{'storage'};
+			my $storage_name = $state->{'taper'}->{$taper}->{'storage'};
 			$dle->{'storage'}->{$storage_name} = {} if !defined $dle->{'storage'}->{$storage_name};
 			my $dlet = $dle->{'storage'}->{$storage_name};
 			$dlet->{'will_retry'} = 0;
 			if ($dle->{'status'} != $WAIT_FOR_DUMPING and
 			    $dle->{'status'} != $DUMP_TO_TAPE_FAILED) {
-			    #die ("bad status on taper VAULT-WRITE (dumper): $dle->{'status'}");
+			    #die ("bad status on taper VAULT-WRITE (dumper) ($serial): $dle->{'status'}");
 			}
 			if ($dlet->{'status'} and
 			    $dlet->{'status'} != $WAIT_FOR_DUMPING and
 			    $dlet->{'status'} != $DUMP_TO_TAPE_FAILED) {
-			    die ("bad status on taper VAULT-WRITE (taper): $dlet->{'status'}");
+			    die ("bad status on taper VAULT-WRITE (taper) ($serial): $dlet->{'status'}");
 			}
 			#$dle->{'status'} = $VAULTING if !defined $dle->{'status'};
 			#$dle->{'status'} = $VAULTING;
 			$dlet->{'status'} = $VAULTING;
-			$dlet->{'taper_time'} = $self->{'current_time'};
+			$dlet->{'taper_time'} = $state->{'current_time'};
 			$dlet->{'taped_size'} = 0;
 			delete $dlet->{'error'};
 			$dlet->{'vaulting'} = 1;
 			$dlet->{'src_storage'} = $src_storage;
 			$dlet->{'src_pool'} = $src_pool;
 			$dlet->{'src_label'} = $src_label;
-			$worker_to_serial{$worker} = $serial;
+			$state->{'worker_to_serial'}->{$worker} = $serial;
 		    } elsif ($line[6] eq "TAKE-SCRIBE-FROM") {
 			#7:name1 #8:handle #9:name2
 			my $worker1 = $line[7];
 			my $serial = $line[8];
 			my $worker2 = $line[9];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			#$taper_nb{$worker1} = $taper_nb{$worker2};
 			#$taper_nb{$worker2} = 0;
 			if (defined $dle) {
 			    $dle->{'error'} = $dle->{'olderror'} if defined $dle->{'olderror'};
-			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			    my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			    my $dlet = $dle->{'storage'}->{$storage};
 			}
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker1}->{'no_tape'} = $self->{'taper'}->{$taper}->{'worker'}->{$worker2}->{'no_tape'};
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker2}->{'no_tape'} = 0;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker1}->{'no_tape'} = $state->{'taper'}->{$taper}->{'worker'}->{$worker2}->{'no_tape'};
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker2}->{'no_tape'} = 0;
 		    }
 		}
 	    } elsif($line[1] eq "result" && $line[2] eq "time") {
-		$self->{'current_time'} = $line[3];
+		$state->{'current_time'} = $line[3];
 		if ($line[5] =~ /dumper\d+/) {
 		    if ($line[6] eq "(eof)") {
 			$line[6] = "FAILED";
-			$line[7] = $dumper_to_serial{$line[5]};
+			$line[7] = $state->{'dumper_to_serial'}->{$line[5]};
 			$line[8] = "dumper CRASH";
 		    }
 
@@ -998,7 +995,7 @@ REREAD:
 			#7:handle 8:message
 			my $serial = $line[7];
 			my $error = $line[8];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			if ($dle->{'status'} == $DUMPING ||
 			    $dle->{'status'} == $DUMP_FAILED) {
 			    $dle->{'status'} = $DUMP_FAILED;
@@ -1009,22 +1006,22 @@ REREAD:
 			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			} else {
-			    die ("bad status on dumper FAILED: $dle->{'status'}");
+			    die ("bad status on dumper FAILED ($serial): $dle->{'status'}");
 			}
-			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'dump_time'});
-			$running_dumper{$line[5]} = "0";
-			$dle->{'dump_time'} = $self->{'current_time'};
+			$state->{'busy_time'}->{$line[5]} += ($state->{'current_time'} - $dle->{'dump_time'});
+			$state->{'running_dumper'}->{$line[5]} = "0";
+			$dle->{'dump_time'} = $state->{'current_time'};
 			if (!$dle->{'taper_error'}) {
 			    $dle->{'error'} = "$error";
 			}
-			$self->{'dumpers_active'}--;
+			$state->{'dumpers_active'}--;
 		    } elsif ($line[6] eq "RETRY") {
 			#7:handle 8:delay 9:level 10:message
 			my $serial = $line[7];
 			my $delay = $line[8];
 			my $level = $line[9];
 			my $error = $line[10];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			$dle->{'error'} = $error;
 			$dle->{'retry'} = 1;
 			$dle->{'retry_level'} = $level;
@@ -1038,18 +1035,18 @@ REREAD:
 			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			} else {
-			    die ("bad status on dumper RETRY: $dle->{'status'}");
+			    die ("bad status on dumper RETRY ($serial): $dle->{'status'}");
 			}
-			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'dump_time'});
-			$running_dumper{$line[5]} = "0";
-			$dle->{'dump_time'} = $self->{'current_time'};
-			$self->{'dumpers_active'}--;
+			$state->{'busy_time'}->{$line[5]} += ($state->{'current_time'} - $dle->{'dump_time'});
+			$state->{'running_dumper'}->{$line[5]} = "0";
+			$dle->{'dump_time'} = $state->{'current_time'};
+			$state->{'dumpers_active'}--;
 		    } elsif ($line[6] eq "DONE") {
 			#7:handle 8:origsize 9:size ...
 			my $serial = $line[7];
 			my $origsize = $line[8] * 1024;
 			my $outputsize = $line[9] * 1024;
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			if ($dle->{'status'} == $DUMPING) {
 			    $dle->{'status'} = $DUMPING_DUMPER;
 			} elsif ($dle->{'status'} == $DUMPING_TO_TAPE) {
@@ -1063,34 +1060,34 @@ REREAD:
 			    my $dlet = $dle->{'storage'}->{$storage_name};
 			    $dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
 			} else {
-			    die("bad status on dumper DONE: $dle->{'status'}");
+			    die("bad status on dumper DONE ($serial): $dle->{'status'}" . Data::Dumper::Dumper($dle));
 			}
 			$dle->{'size'} = $outputsize;
 			$dle->{'dsize'} = $outputsize;
-			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'dump_time'});
-			$running_dumper{$line[5]} = "0";
-			$dle->{'dump_time'} = $self->{'current_time'};
+			$state->{'busy_time'}->{$line[5]} += ($state->{'current_time'} - $dle->{'dump_time'});
+			$state->{'running_dumper'}->{$line[5]} = "0";
+			$dle->{'dump_time'} = $state->{'current_time'};
 			#$dle->{'error'} = "";
-			$self->{'dumpers_active'}--;
+			$state->{'dumpers_active'}--;
 		    } elsif ($line[6] eq "ABORT-FINISHED") {
 			#7:handle
 			my $serial = $line[7];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			#if (defined $dle->{'taper'} == 1) {
 			#    $dle->{'dump_finished'}=-1;
 			#} else {
 			#    $dle->{'dump_finished'}=-3;
 			#}
-			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'dump_time'});
-			$running_dumper{$line[5]} = "0";
-			$dle->{'dump_time'} = $self->{'current_time'};
+			$state->{'busy_time'}->{$line[5]} += ($state->{'current_time'} - $dle->{'dump_time'});
+			$state->{'running_dumper'}->{$line[5]} = "0";
+			$dle->{'dump_time'} = $state->{'current_time'};
 			$dle->{'error'} = "dumper: (aborted)";
-			$self->{'dumpers_active'}--;
+			$state->{'dumpers_active'}--;
 		    }
 		} elsif ($line[5] =~ /chunker\d+/) {
 		    if ($line[6] eq "(eof)") {
 			$line[6] = "FAILED";
-			$line[7] = $chunker_to_serial{$line[5]};
+			$line[7] = $state->{'chunker_to_serial'}->{$line[5]};
 			$line[8] = "chunker CRASH";
 		    }
 
@@ -1098,18 +1095,18 @@ REREAD:
 			#7:handle 8:size
 			my $serial = $line[7];
 			my $outputsize = $line[8] * 1024;
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			if ($dle->{'status'} == $DUMPING_DUMPER) {
 			    $dle->{'status'} = $DUMP_DONE;
 			} elsif ($dle->{'status'} == $DUMP_FAILED) {
 			} else {
-			    die("bad status on chunker DONE/PARTIAL: $dle->{'status'}");
+			    die("bad status on chunker DONE/PARTIAL ($serial): $dle->{'status'}");
 			}
 			$dle->{'size'} = $outputsize;
 			$dle->{'dsize'} = $outputsize;
-			$self->{'busy_time'}->{$line[5]} +=  ($self->{'current_time'} - $dle->{'chunk_time'});
-			$running_dumper{$line[5]} = "0";
-			$dle->{'chunk_time'} = $self->{'current_time'};
+			$state->{'busy_time'}->{$line[5]} +=  ($state->{'current_time'} - $dle->{'chunk_time'});
+			$state->{'running_dumper'}->{$line[5]} = "0";
+			$dle->{'chunk_time'} = $state->{'current_time'};
 			if ($line[6] eq "PARTIAL") {
 			    $dle->{'partial'} = 1;
 			} else {
@@ -1118,12 +1115,12 @@ REREAD:
 			}
 		    } elsif ($line[6] eq "FAILED") {
 			my $serial = $line[7];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			if ($dle->{'status'} != $DUMPING &&
 			    $dle->{'status'} != $DUMPING_DUMPER &&
 			    $dle->{'status'} != $DUMPING_INIT &&
 			    $dle->{'status'} != $DUMP_FAILED) {
-			    die("bad status on chunker FAILED: $dle->{'status'}");
+			    die("bad status on chunker FAILED ($serial): $dle->{'status'}");
 			}
 			$dle->{'status'} = $DUMP_FAILED;
 			if (!exists $dle->{'error'} ||
@@ -1131,25 +1128,25 @@ REREAD:
 			    $dle->{'error'} eq '') {
 			    $dle->{'error'} = $line[8];
 			}
-			$self->{'busy_time'}->{$line[5]} += ($self->{'current_time'} - $dle->{'chunk_time'});
-			$running_dumper{$line[5]} = "0";
-			$dle->{'chunk_time'} = $self->{'current_time'};
+			$state->{'busy_time'}->{$line[5]} += ($state->{'current_time'} - $dle->{'chunk_time'});
+			$state->{'running_dumper'}->{$line[5]} = "0";
+			$dle->{'chunk_time'} = $state->{'current_time'};
 		    } elsif ($line[6] eq "RQ-MORE-DISK") {
 			#7:handle
 			my $serial = $line[7];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			$dle->{'wait_holding_disk'} = 1;
 		    }
 		} elsif ($line[5] =~ /taper\d*/) {
 		    my $taper = $line[5];
 		    if ($line[6] eq "(eof)") {
 			# all worker fail
-			foreach my $worker (keys %worker_to_serial) {
-			    my $serial = $worker_to_serial{$worker};
-			    my $dle = $dles{$serial};
+			foreach my $worker (keys %{$state->{'worker_to_serial'}}) {
+			    my $serial = $state->{'worker_to_serial'}->{$worker};
+			    my $dle = $state->{'serial_to_dle'}->{$serial};
 			    if (defined $dle) {
 				my $error= "taper CRASH";
-				my $storage = $self->{'taper'}->{$taper}->{'storage'};
+				my $storage = $state->{'taper'}->{$taper}->{'storage'};
 				my $dlet = $dle->{'storage'}->{$storage};
 				if ($dlet->{'status'} == $DUMPING_TO_TAPE ||
 				    $dlet->{'status'} == $DUMPING_TO_TAPE_INIT ||
@@ -1170,12 +1167,12 @@ REREAD:
 				    $dlet->{'status'} = $VAULTING_FAILED;
 				    $dle->{'status'} = $VAULTING_FAILED;
 				} else {
-				    die("bad status on taper eof: $dlet->{'status'}");
+				    die("bad status on taper eof ($serial): $dlet->{'status'}");
 				}
-				$dlet->{'taper_time'} = $self->{'current_time'};
+				$dlet->{'taper_time'} = $state->{'current_time'};
 				$dlet->{'error'} = "$error";
 				$dle->{'error'} = "$error" if !defined $dle->{'error'};
-				undef $worker_to_serial{$worker};
+				undef $state->{'worker_to_serial'}->{$worker};
 			    }
 			}
 		    } elsif ($line[6] eq "DONE" || $line[6] eq "PARTIAL") {
@@ -1183,8 +1180,8 @@ REREAD:
 			#PARTIAL: 7:worker 8:handle 9:INPUT-* 10:TAPE-* 11:CRC 12:errstr 13:INPUT-MSG 14:TAPE-MSG
 			my $worker = $line[7];
 			my $serial = $line[8];
-			#$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Idle";
-			my $dle = $dles{$serial};
+			#$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status_taper'} = "Idle";
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			$line[12] =~ /sec (\S+) (kb|bytes) (\d+) kps/;
 			my $size;
 			if ($2 eq 'kb') {
@@ -1192,7 +1189,7 @@ REREAD:
 			} else {
 			    $size = $3;
 			}
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			if ($line[6] eq "DONE") {
 			    if ($dle->{'status'} == $IDLE) {
@@ -1206,7 +1203,7 @@ REREAD:
 				$dle->{'status'} = $VAULTING_DONE;
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_DONE) {
 			    } else {
-				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
+				die("bad status on dle taper DONE/PARTIAL ($serial): $dle->{'status'}");
 			    }
 			    if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 				$dlet->{'status'} = $DUMP_TO_TAPE_DONE;
@@ -1220,7 +1217,7 @@ REREAD:
 				$dlet->{'status'} = $VAULTING_DONE;
 			    } elsif ($dlet->{'status'} == $DUMP_TO_TAPE_DONE) {
 			    } else {
-				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
+				die("bad status on dlet taper DONE/PARTIAL ($serial): $dlet->{'status'}");
 			    }
 			} else {
 			    if ($dle->{'status'} == $IDLE) {
@@ -1233,7 +1230,7 @@ REREAD:
 			    } elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 				$dle->{'status'} = $DUMP_TO_TAPE_FAILED;
 			    } else {
-				die("bad status on dle taper DONE/PARTIAL: $dle->{'status'}");
+				die("bad status on dle taper DONE/PARTIAL ($serial): $dle->{'status'}");
 			    }
 			    if ($dlet->{'status'} == $DUMPING_TO_TAPE_DUMPER) {
 				$dlet->{'status'} = $DUMP_TO_TAPE_FAILED;
@@ -1246,39 +1243,39 @@ REREAD:
 			    } elsif ($dlet->{'status'} == $FLUSHING) {
 				$dlet->{'status'} = $FLUSH_FAILED;
 			    } else {
-				die("bad status on dlet taper DONE/PARTIAL: $dlet->{'status'}");
+				die("bad status on dlet taper DONE/PARTIAL ($serial): $dlet->{'status'}");
 			    }
 			}
-			$self->{'busy_time'}->{$taper} += ($self->{'current_time'} - $dlet->{'taper_time'});
-			$dlet->{'taper_time'} = $self->{'current_time'};
+			$state->{'busy_time'}->{$taper} += ($state->{'current_time'} - $dlet->{'taper_time'});
+			$dlet->{'taper_time'} = $state->{'current_time'};
 			$dlet->{'size'} = $size;
 			if (!defined $dle->{'size'} or $dle->{'size'} == 0) {
 			    $dle->{'size'} = $size;
 			}
-			my $ntape = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
-			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_dle'} += 1;
+			my $ntape = $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
+			$state->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_dle'} += 1;
 			delete $dle->{'taper_status_file'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
 			if ($line[6] eq "DONE") {
-			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
-			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
-			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
-			    delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
+			    delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
+			    delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
+			    delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
+			    delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
 			}
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
 
 			if ($line[6] eq "PARTIAL") {
 			    $dlet->{'partial'} = 1;
 			    if ($line[10] eq "TAPE-ERROR") {
 				$dlet->{'error'} = $line[14];
 				$dlet->{'tape_error'} = $line[14];
-				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
-				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[14];
+				$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
+				$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[14];
 			    } elsif ($line[10] eq "TAPE-CONFIG") {
 				$dlet->{'error'} = $line[14];
 				$dlet->{'tape_config'} = $line[14];
-				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $CONFIG_ERROR;
-				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[14];
+				$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $CONFIG_ERROR;
+				$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[14];
 			    }
 			    if ($line[9] eq "INPUT-ERROR") {
 				$dlet->{'error'} = $line[13] if !defined $dlet->{'error'};
@@ -1286,30 +1283,30 @@ REREAD:
 			} else {
 			     $dlet->{'partial'} = 0;
 			}
-			undef $worker_to_serial{$worker};
+			undef $state->{'worker_to_serial'}->{$worker};
 		    } elsif($line[6] eq "PARTDONE") {
 			#7:worker 8:handle 9:label 10:filenum 11:ksize 12:errstr
 			my $worker = $line[7];
 			my $serial = $line[8];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			my $size=$line[11] * 1024;
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			my $dlet = $dle->{'storage'}->{$storage};
 			$dlet->{'taped_size'} += $size;
 			$dlet->{'wsize'} = $dlet->{'taped_size'} if !defined $dlet->{'wsize'} ||
 								    $dlet->{'taped_size'} > $dlet->{'wsize'};
-			my $ntape = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
-			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_part'}++;
-			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'size'} += $size;
-			$self->{'taper'}->{$taper}->{'stat'}[$ntape]->{'esize'} += $size;
+			my $ntape = $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'};
+			$state->{'taper'}->{$taper}->{'stat'}[$ntape]->{'nb_part'}++;
+			$state->{'taper'}->{$taper}->{'stat'}[$ntape]->{'size'} += $size;
+			$state->{'taper'}->{$taper}->{'stat'}[$ntape]->{'esize'} += $size;
 		    } elsif($line[6] eq "REQUEST-NEW-TAPE") {
 			#7:worker 8:serial
 			my $worker = $line[7];
 			my $serial = $line[8];
-			my $dle = $dles{$serial};
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'} = 1;
+			my $dle = $state->{'serial_to_dle'}->{$serial};
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'} = 1;
 			if (defined $dle) {
-			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			    my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			    my $dlet = $dle->{'storage'}->{$storage};
 
 			    $dlet->{'wait_for_tape'} = 1;
@@ -1318,52 +1315,52 @@ REREAD:
 			#7:worker 8:serial #9:label
 			my $worker = $line[7];
 			my $serial = $line[8];
-			my $dle = $dles{$serial};
-			my $storage = $self->{'taper'}->{$taper}->{'storage'};
-			$self->{'stat'}->{'storage'}->{$storage}->{'taper'} = $taper;
-			my $nb_tape = $self->{'taper'}->{$taper}->{'nb_tape'}++;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'} = $nb_tape;
-			$self->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'label'} = $line[9];
-			$self->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'nb_dle'} = 0;
-			$self->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'nb_part'} = 0;
-			$self->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'size'} = 0;
-			$self->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'esize'} = 0;
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
+			my $storage = $state->{'taper'}->{$taper}->{'storage'};
+			$state->{'stat'}->{'storage'}->{$storage}->{'taper'} = $taper;
+			my $nb_tape = $state->{'taper'}->{$taper}->{'nb_tape'}++;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'no_tape'} = $nb_tape;
+			$state->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'label'} = $line[9];
+			$state->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'nb_dle'} = 0;
+			$state->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'nb_part'} = 0;
+			$state->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'size'} = 0;
+			$state->{'taper'}->{$taper}->{'stat'}[$nb_tape]->{'esize'} = 0;
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'};
 			if (defined $dle) {
-			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			    my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			    my $dlet = $dle->{'storage'}->{$storage};
 			    delete $dlet->{'search_for_tape'};
-			    $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $dlet->{'status'};
+			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $dlet->{'status'};
 			}
 		    } elsif($line[6] eq "TAPER-OK") {
 			#7:worker #8:label
 			my $worker = $line[7];
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'};
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'};
 		    } elsif($line[6] eq "TAPE-ERROR") {
 			#7:worker 8:errstr
 			my $worker = $line[7];
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[8];
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
-			$self->{'exit_status'} |= $STATUS_TAPE;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $line[8];
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
+			$state->{'exit_status'} |= $STATUS_TAPE;
 		    } elsif($line[6] eq "FAILED") {
 			#7:worker 8:handle 9:INPUT- 10:TAPE- 11:input_message 12:tape_message
 			my $worker = $line[7];
 			my $serial = $line[8];
-			my $dle = $dles{$serial};
+			my $dle = $state->{'serial_to_dle'}->{$serial};
 			delete $dle->{'taper_status_file'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
-			delete $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'};
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $IDLE;
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'host'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'disk'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'datestamp'};
+			delete $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'};
 			if (defined $dle) {
-			    my $storage = $self->{'taper'}->{$taper}->{'storage'};
+			    my $storage = $state->{'taper'}->{$taper}->{'storage'};
 			    delete $dle->{'wait_for_tape'};
 			    delete $dle->{'search_for_tape'};
 			    if ($dle->{'status'} == $IDLE) {
@@ -1400,74 +1397,74 @@ REREAD:
 			    if ($line[10] eq "TAPE-ERROR") {
 				$error=$line[12];
 				$dlet->{'tape_error'} = $error;
-				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
+				$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $TAPE_ERROR;
 			    } elsif ($line[10] eq "TAPE-CONFIG") {
 				$error=$line[12];
 				$dlet->{'tape_config'} = $error;
-				$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $CONFIG_ERROR;
+				$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'} = $CONFIG_ERROR;
 			    } else { # INPUT-ERROR
 				$error = $line[11];
 				$error = $dlet->{'error'} if defined $dlet->{'error'};
 			    }
-			    $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $error;
-			    $dlet->{'taper_time'} = $self->{'current_time'};
+			    $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'} = $error;
+			    $dlet->{'taper_time'} = $state->{'current_time'};
 			    $dlet->{'error'} = $error;
 			}
-			undef $worker_to_serial{$worker};
+			undef $state->{'worker_to_serial'}->{$worker};
 		    }
 		}
 	    } elsif($line[1] eq "finished-cmd" && $line[2] eq "time") {
-		$self->{'current_time'} = $line[3];
+		$state->{'current_time'} = $line[3];
 		if($line[4] =~ /dumper\d+/) {
 		}
 	    } elsif($line[1] eq "dump" && $line[2] eq "failed") {
 		#3:handle 4: 5: 6:"too many dumper retry"
 		my $serial = $line[3];
-		my $dle = $dles{$serial};
+		my $dle = $state->{'serial_to_dle'}->{$serial};
 		$dle->{'error'} .= "(" . $line[6] . ")";
 	    } elsif($line[1] eq "tape" && $line[2] eq "failed") {
 		#3:handle 4: 5: 6:"too many dumper retry"
 		my $serial = $line[3];
-		my $dle = $dles{$serial};
+		my $dle = $state->{'serial_to_dle'}->{$serial};
 		$dle->{'error'} .= "(" . $line[6] . ")";
 	    } elsif($line[1] eq "state" && $line[2] eq "time") {
 		#3:time 4:"free" 5:"kps" 6:free 7:"space" 8:space 9:"taper" 10:taper 11:"idle-dumpers" 12:idle-dumpers 13:"qlen" 14:"tapeq" 15:taper_name 16:taper 17:vault 18:"runq" 19:runq 20:"directq" 21:directq 22:"roomq" 23:roomq 24:"wakeup" 25:wakeup 26:"driver-idle" 27:driver-idle
-		$self->{'current_time'} = $line[3];
-		$self->{'idle_dumpers'} = $line[12];
+		$state->{'current_time'} = $line[3];
+		$state->{'idle_dumpers'} = $line[12];
 
-		$self->{'network_free_kps'} = $line[6];
-		$self->{'holding_free_space'} = $line[8];
+		$state->{'network_free_kps'} = $line[6];
+		$state->{'holding_free_space'} = $line[8];
 		my $i = 14;
-		delete $self->{'qlen'}->{'tapeq'};
+		delete $state->{'qlen'}->{'tapeq'};
 		while($line[$i] eq "tapeq") {
-		    $self->{'qlen'}->{'tapeq'}->{$line[$i+1]} += $line[$i+2];
+		    $state->{'qlen'}->{'tapeq'}->{$line[$i+1]} += $line[$i+2];
 		    if ($line[$i+3] eq 'tapeq' || $line[$i+3] eq 'runq') {
 			$i += 3;
 		    } else {
 			$i += 4;
 		    }
 		}
-		$self->{'qlen'}->{'runq'} = $line[$i+1];
-		$self->{'qlen'}->{'directq'} = $line[$i+3];
-		$self->{'qlen'}->{'roomq'} = $line[$i+5];
+		$state->{'qlen'}->{'runq'} = $line[$i+1];
+		$state->{'qlen'}->{'directq'} = $line[$i+3];
+		$state->{'qlen'}->{'roomq'} = $line[$i+5];
 
-		if (defined $self->{'dumpers_actives'}) {
-		    if (defined $self->{'status_driver'} and $self->{'status_driver'} ne "") {
-			$self->{'dumpers_actives'}[$self->{'dumpers_active_prev'}]
-				+= $self->{'current_time'} - $self->{'state_time_prev'};
-			$self->{'dumpers_held'}[$self->{'dumpers_active_prev'}]{$self->{'status_driver'}}
-				+= $self->{'current_time'} - $self->{'state_time_prev'};
+		if (defined $state->{'dumpers_actives'}) {
+		    if (defined $state->{'status_driver'} and $state->{'status_driver'} ne "") {
+			$state->{'dumpers_actives'}[$state->{'dumpers_active_prev'}]
+				+= $state->{'current_time'} - $state->{'state_time_prev'};
+			$state->{'dumpers_held'}[$state->{'dumpers_active_prev'}]{$state->{'status_driver'}}
+				+= $state->{'current_time'} - $state->{'state_time_prev'};
 		    }
 		}
-		$self->{'state_time_prev'} = $self->{'current_time'};
-		$self->{'dumpers_active_prev'} = $self->{'dumpers_active'};
-		$self->{'status_driver'} = $line[$i+9];
-		if (!defined($self->{'dumpers_held'}[$self->{'dumpers_active'}]{$self->{'status_driver'}})) {
-		    $self->{'dumpers_held'}[$self->{'dumpers_active'}]{$self->{'status_driver'}}=0;
+		$state->{'state_time_prev'} = $state->{'current_time'};
+		$state->{'dumpers_active_prev'} = $state->{'dumpers_active'};
+		$state->{'status_driver'} = $line[$i+9];
+		if (!defined($state->{'dumpers_held'}[$state->{'dumpers_active'}]{$state->{'status_driver'}})) {
+		    $state->{'dumpers_held'}[$state->{'dumpers_active'}]{$state->{'status_driver'}}=0;
 		}
 
 	    } elsif($line[1] eq "FINISHED") {
-		$self->{'driver_finished'} = 1;
+		$state->{'driver_finished'} = 1;
 	    }
 	} elsif ($line[0] eq "dump") {
 	    if ($line[1] eq "of" &&
@@ -1477,7 +1474,7 @@ REREAD:
 		$line[5] eq "start" &&
 		$line[6] eq "degraded" &&
 		$line[7] eq "mode") {
-		$self->{'start_degraded_mode'} = 1;
+		$state->{'start_degraded_mode'} = 1;
 	    }
 	} elsif ($line[0] eq "taper") {
 	    if ($line[1] eq "DONE") {
@@ -1485,9 +1482,9 @@ REREAD:
 		#1:"status" #2:"file:" #3:taper #4:worker #5:hostname #6:diskname #7:filename
 		my $taper = $line[3];
 		my $worker = $line[4];
-		$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'} = $line[7];
-		my $wworker = $self->{'taper'}->{$taper}->{'worker'}->{$worker};
-		my $dle = $self->{'dles'}->{$wworker->{'host'}}->{$wworker->{'disk'}}->{$wworker->{'datestamp'}};
+		$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'taper_status_file'} = $line[7];
+		my $wworker = $state->{'taper'}->{$taper}->{'worker'}->{$worker};
+		my $dle = $state->{'dles'}->{$wworker->{'host'}}->{$wworker->{'disk'}}->{$wworker->{'datestamp'}};
 		$dle->{'taper_status_file'} = $line[7];
 	    } elsif ($line[2] eq "worker" &&
 	        $line[4] eq "wrote") {
@@ -1508,6 +1505,7 @@ REREAD:
 	}
     }
 
+    $state->{'filepos'} = tell $self->{'fd'};
     return undef;
 }
 
@@ -1515,11 +1513,12 @@ sub set_summary {
     my $self = shift;
 
     delete $self->{'stat'};
+    my $state = $self->{'state'};
 
-    foreach my $host (sort keys %{$self->{'dles'}}) {
-	foreach my $disk (sort keys %{$self->{'dles'}->{$host}}) {
-            foreach my $datestamp (sort keys %{$self->{'dles'}->{$host}->{$disk}}) {
-		my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+    foreach my $host (sort keys %{$state->{'dles'}}) {
+	foreach my $disk (sort keys %{$state->{'dles'}->{$host}}) {
+            foreach my $datestamp (sort keys %{$state->{'dles'}->{$host}->{$disk}}) {
+		my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 		delete $dle->{'message'};
 		delete $dle->{'wsize'};
 		delete $dle->{'dsize'};
@@ -1541,7 +1540,7 @@ sub set_summary {
 		} elsif ($dle->{'status'} == $ESTIMATE_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $dle->{'message'} = "estimate failed";
-		    $self->{'exit_status'} |= $STATUS_FAILED;
+		    $state->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $WAIT_FOR_DUMPING) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;
@@ -1615,7 +1614,7 @@ sub set_summary {
 		    } else {
 			$dle->{'message'} = "dump failed: $dle->{'error'}";
 		    }
-		    $self->{'exit_status'} |= $STATUS_FAILED;
+		    $state->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $DUMP_TO_TAPE_FAILED) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;
@@ -1625,7 +1624,7 @@ sub set_summary {
 		    $dle->{'error'} = "unknown" if !defined $dle->{'error'};
 		    $dle->{'message'} = "dump to tape failed: $dle->{'error'}";
 		    $dle->{'dsize'} = $dle->{'size'};
-		    $self->{'exit_status'} |= $STATUS_FAILED;
+		    $state->{'exit_status'} |= $STATUS_FAILED;
 		} elsif ($dle->{'status'} == $DUMP_DONE) {
 		    $self->{'stat'}->{'disk'}->{'nb'}++;
 		    $self->{'stat'}->{'estimated'}->{'nb'}++;
@@ -1756,8 +1755,8 @@ sub set_summary {
 			    }
 			    $dlet->{'message'} = "dump to tape failed";
 			    $dlet->{'wsize'} = $dle->{'wsize'};
-			    $self->{'exit_status'} |= $STATUS_FAILED;
-			    $self->{'exit_status'} |= $STATUS_TAPE;
+			    $state->{'exit_status'} |= $STATUS_FAILED;
+			    $state->{'exit_status'} |= $STATUS_TAPE;
 			} elsif ($dlet->{'status'} == $WRITE_FAILED) {
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'failed_to_tape'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
@@ -1770,7 +1769,7 @@ sub set_summary {
 			    if ($dlet->{'will_retry'}) {
 				$dlet->{'message'} .= " (will retry)";
 			    }
-			    $self->{'exit_status'} |= $STATUS_TAPE;
+			    $state->{'exit_status'} |= $STATUS_TAPE;
 			} elsif ($dlet->{'status'} == $FLUSH_FAILED) {
 			    $self->{'stat'}->{'flush'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'flush'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
@@ -1782,7 +1781,7 @@ sub set_summary {
 			    if ($dlet->{'will_retry'}) {
 				$dlet->{'message'} .= " (will retry)";
 			    }
-			    $self->{'exit_status'} |= $STATUS_TAPE;
+			    $state->{'exit_status'} |= $STATUS_TAPE;
 			} elsif ($dlet->{'status'} == $FLUSH_DONE) {
 			    $self->{'stat'}->{'flush'}->{'storage'}->{$storage}->{'nb'}++;
 			    $self->{'stat'}->{'flush'}->{'storage'}->{$storage}->{'estimated_size'} += $dle->{'esize'};
@@ -1860,40 +1859,40 @@ sub set_summary {
 	}
     }
 
-    if (defined $self->{'qlen'}->{'tapeq'}) {
-	for my $taper (keys %{$self->{'qlen'}->{'tapeq'}}) {
-	    my $storage = $self->{'taper'}->{$taper}->{'storage'};
+    if (defined $state->{'qlen'}->{'tapeq'}) {
+	for my $taper (keys %{$state->{'qlen'}->{'tapeq'}}) {
+	    my $storage = $state->{'taper'}->{$taper}->{'storage'};
 
 	    next if !$storage;
 
-	    if (defined $self->{'taper'}->{$taper}->{'worker'}) {
-		for my $worker (keys %{$self->{'taper'}->{$taper}->{'worker'}}) {
-		    my $wstatus = $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
+	    if (defined $state->{'taper'}->{$taper}->{'worker'}) {
+		for my $worker (keys %{$state->{'taper'}->{$taper}->{'worker'}}) {
+		    my $wstatus = $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'status'};
 
 		    if ($wstatus == $IDLE) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "Idle";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "Idle";
 		    } elsif ($wstatus == $TAPE_ERROR) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "tape error: $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'}";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "tape error: $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'}";
 		    } elsif ($wstatus == $CONFIG_ERROR) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "config error: $self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'}";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "config error: $state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'error'}";
 		    } elsif ($wstatus == $WRITING) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "writing";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "writing";
 		    } elsif ($wstatus == $FLUSHING) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "flushing";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "flushing";
 		    } elsif ($wstatus == $DUMPING_TO_TAPE_INIT) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
 		    } elsif ($wstatus == $DUMPING_TO_TAPE) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
 		    } elsif ($wstatus == $DUMPING_TO_TAPE_DUMPER) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "dumping to tape";
 		    } else {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "Unknown ($wstatus)";
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "Unknown ($wstatus)";
 		    }
 
-		    if ($self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'}) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "waiting for a tape";
-		    } elsif ($self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'}) {
-			$self->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "searching for a tape";
+		    if ($state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'wait_for_tape'}) {
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "waiting for a tape";
+		    } elsif ($state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'search_for_tape'}) {
+			$state->{'taper'}->{$taper}->{'worker'}->{$worker}->{'message'} = "searching for a tape";
 		    }
 		}
 	    }
@@ -1918,55 +1917,55 @@ sub set_summary {
     delete $self->{'busy'};
     delete $self->{'busy_dumper'};
 
-    if (defined $self->{'current_time'} and
-	defined $self->{'start_time'} and
-	$self->{'current_time'} != $self->{'start_time'}) {
-	my $total_time = $self->{'current_time'} - $self->{'start_time'};
+    if (defined $state->{'current_time'} and
+	defined $state->{'start_time'} and
+	$state->{'current_time'} != $state->{'start_time'}) {
+	my $total_time = $state->{'current_time'} - $state->{'start_time'};
 
-	foreach my $key (keys %{$self->{'busy_time'}}) {
+	foreach my $key (keys %{$state->{'busy_time'}}) {
 	    my $type = $key;
 	       $type =~ s/[0-9]*$//g;
 	    my $name = $key;
 	    if ($key =~ /^taper/) {
-		$name = $self->{'taper'}->{$key}->{'storage'};
+		$name = $state->{'taper'}->{$key}->{'storage'};
 		$self->{'busy'}->{$key}->{'storage'} = $name;
 	    }
 	    $self->{'busy'}->{$key}->{'type'} = $type;
-	    $self->{'busy'}->{$key}->{'time'} = $self->{'busy_time'}->{$key};
+	    $self->{'busy'}->{$key}->{'time'} = $state->{'busy_time'}->{$key};
 	    $self->{'busy'}->{$key}->{'percent'} =
-		 ($self->{'busy_time'}->{$key} * 1.0 / $total_time) * 100;
+		 ($state->{'busy_time'}->{$key} * 1.0 / $total_time) * 100;
 	}
 
-	if (defined $self->{'dumpers_actives'}) {
-	    for (my $d = 0; $d < @{$self->{'dumpers_actives'}}; $d++) {
+	if (defined $state->{'dumpers_actives'}) {
+	    for (my $d = 0; $d < @{$state->{'dumpers_actives'}}; $d++) {
 		$self->{'busy_dumper'}->{$d}->{'time'} =
-			$self->{'dumpers_actives'}[$d];
+			$state->{'dumpers_actives'}[$d];
 		$self->{'busy_dumper'}->{$d}->{'percent'} =
-			($self->{'dumpers_actives'}[$d] * 1.0 / $total_time) * 100;
+			($state->{'dumpers_actives'}[$d] * 1.0 / $total_time) * 100;
 
-		foreach my $key (keys %{$self->{'dumpers_held'}[$d]}) {
-		    next unless $self->{'dumpers_held'}[$d]{$key} >= 1;
+		foreach my $key (keys %{$state->{'dumpers_held'}[$d]}) {
+		    next unless $state->{'dumpers_held'}[$d]{$key} >= 1;
 		    $self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'time'} =
-			$self->{'dumpers_held'}[$d]{$key};
+			$state->{'dumpers_held'}[$d]{$key};
 		    $self->{'busy_dumper'}->{$d}->{'status'}->{$key}->{'percent'} =
-			($self->{'dumpers_held'}[$d]{$key} * 1.0 /
-			 $self->{'dumpers_actives'}[$d]) * 100;
+			($state->{'dumpers_held'}[$d]{$key} * 1.0 /
+			 $state->{'dumpers_actives'}[$d]) * 100;
 		}
 	    }
 	}
     }
 
-    if ($self->{'dead_run'}) {
-	if (!$self->{'driver_finished'}) {
-	    $self->{'exit_status'} |= $STATUS_FAILED;
+    if ($state->{'dead_run'}) {
+	if (!$state->{'driver_finished'}) {
+	    $state->{'exit_status'} |= $STATUS_FAILED;
 	}
 	{
-	    foreach my $host (sort keys %{$self->{'dles'}}) {
-		foreach my $disk (sort keys %{$self->{'dles'}->{$host}}) {
-	            foreach my $datestamp (sort keys %{$self->{'dles'}->{$host}->{$disk}}) {
-			my $dle = $self->{'dles'}->{$host}->{$disk}->{$datestamp};
+	    foreach my $host (sort keys %{$state->{'dles'}}) {
+		foreach my $disk (sort keys %{$state->{'dles'}->{$host}}) {
+	            foreach my $datestamp (sort keys %{$state->{'dles'}->{$host}->{$disk}}) {
+			my $dle = $state->{'dles'}->{$host}->{$disk}->{$datestamp};
 			if ($dle->{'status'} == $WAIT_FOR_DUMPING) {
-			    $self->{'exit_status'} |= $STATUS_MISSING;
+			    $state->{'exit_status'} |= $STATUS_MISSING;
 			    $dle->{'status'} = $TERMINATED_WAIT_FOR_DUMPING;
 			    $dle->{'message'} = "terminated while waiting for dumping";
 			} elsif ($dle->{'status'} == $ESTIMATING ||
@@ -1996,7 +1995,7 @@ sub set_summary {
 			if (exists $dle->{'storage'}) {
 			    foreach my $storage (values %{$dle->{'storage'}}) {
 				if ($storage->{'status'} == $WAIT_FOR_DUMPING) {
-				    $self->{'exit_status'} |= $STATUS_MISSING;
+				    $state->{'exit_status'} |= $STATUS_MISSING;
 				    $storage->{'status'} = $TERMINATED_WAIT_FOR_DUMPING;
 				    $storage->{'message'} = "terminated while waiting for dumping";
 				} elsif ($storage->{'status'} == $WAIT_FOR_FLUSHING) {
@@ -2079,6 +2078,7 @@ sub _summary_storage {
     my $set_estimated_size = shift;
     my $set_real_stat = shift;
     my $set_estimated_stat = shift;
+    my $state = $self->{'state'};
 
     #return if $nb_storage == 0;
     $self->{'stat'}->{$key}->{'name'} = $name;
@@ -2100,10 +2100,10 @@ sub _summary_storage {
 	$self->{'stat'}->{$key}->{'storage'}->{$storage}->{'estimated_stat'} = $est_size ? ($real_size * 1.0 / $est_size) * 100 : 0.0 || 0 if $set_estimated_stat;
 
 	my $i = 0;
-	my $taper = $self->{'storage'}->{$storage}->{'taper'};
-	while ($i < $self->{'taper'}->{$taper}->{'nb_tape'}) {
-	    my $percent = (1.0 * $self->{'taper'}->{$taper}->{'stat'}[$i]->{'size'}) / $self->{'taper'}->{$taper}->{'tape_size'} * 100.0;
-	    $self->{'taper'}->{$taper}->{'stat'}[$i]->{'percent'} = $percent;
+	my $taper = $state->{'storage'}->{$storage}->{'taper'};
+	while ($i < $state->{'taper'}->{$taper}->{'nb_tape'}) {
+	    my $percent = (1.0 * $state->{'taper'}->{$taper}->{'stat'}[$i]->{'size'}) / $state->{'taper'}->{$taper}->{'tape_size'} * 100.0;
+	    $state->{'taper'}->{$taper}->{'stat'}[$i]->{'percent'} = $percent;
 	    $i++;
 	}
     }
@@ -2113,31 +2113,77 @@ sub current {
     my $self = shift;
     my %params = @_;
 
+    my $cache_dir = $Amanda::Paths::AMANDA_TMPDIR . '/cache_status/' . Amanda::Config::get_config_name();
+    File::Path::make_path $cache_dir;
+    my $basefile = $self->{'filename'};
+    $basefile = readlink $basefile if -l $basefile;
+    $basefile = basename $basefile;
+    my $cache_file = $cache_dir . '/' . $basefile;
+    my $cache_read = 0;
+
+    debug("cache_file: $cache_file");
+    if (-f $cache_file) {
+	debug("cache_file: $cache_file exists\n");
+	# read the cache file
+	$self->{'state'} = retrieve $cache_file;
+	if ($self->{'state'}->{'version'} eq $Amanda::Constants::VERSION) {
+	    # seek input file
+	    if ($self->{'state'}->{'filepos'}) {
+		seek $self->{'fd'}, $self->{'state'}->{'filepos'}, 0;
+	    }
+	    $cache_read = 1;
+	}
+    }
+    if (!$cache_read) {
+	delete $self->{'state'};
+	$self->{'state'}->{'version'} = $Amanda::Constants::VERSION;
+	$self->{'state'}->{'generating_schedule'} = 0;
+	$self->{'state'}->{'datestampA'} = [];
+	$self->{'state'}->{'datestampH'} = ();
+	$self->{'state'}->{'serial_to_dle'} = ();
+	$self->{'state'}->{'dumper_to_serial'} = ();
+	$self->{'state'}->{'chunker_to_serial'} = ();
+	$self->{'state'}->{'running_dumper'} = ();
+	$self->{'state'}->{'worker_to_serial'} = ();
+    }
+
     my $message = $self->parse();
     return $message if defined $message;
 
+    # write the cache file
+    if ($self->{'parsed_line'}) {
+	store $self->{'state'}, $cache_file;
+    }
+
     $self->set_summary();
+
+    # ref them to the state
+    $self->{'state'}->{'busy'} = $self->{'busy'};
+    $self->{'state'}->{'busy_dumper'} = $self->{'busy_dumper'};
 
     my $data = {
 		 filename      => $self->{'filename'},
-		 dead_run      => $self->{'dead_run'},
-		 aborted       => !$self->{'driver_finished'},
-		 datestamp     => $self->{'datestamp'},
-		 dles          => $self->{'dles'},
+		 datestr       => $self->{'state'}->{'datestr'},
+		 dead_run      => $self->{'state'}->{'dead_run'},
+		 aborted       => !$self->{'state'}->{'driver_finished'},
+		 datestamp     => $self->{'state'}->{'datestamp'},
+		 dles          => $self->{'state'}->{'dles'},
 		 stat          => $self->{'stat'},
-		 taper         => $self->{'taper'},
-		 idle_dumpers  => $self->{'idle_dumpers'},
-		 status_driver => $self->{'status_driver'},
-		 storage       => $self->{'storage'},
-		 qlen          => $self->{'qlen'},
-		 network_free_kps      => $self->{'network_free_kps'},
-		 holding_free_space    => $self->{'holding_free_space'},
-		 holding_space => $self->{'holding_space'},
-		 busy          => $self->{'busy'},
-		 busy_dumper   => $self->{'busy_dumper'},
-		 starttime     => $self->{'starttime'},
-		 current_time  => $self->{'current_time'},
-		 exit_status   => $self->{'exit_status'}
+		 taper         => $self->{'state'}->{'taper'},
+		 idle_dumpers  => $self->{'state'}->{'idle_dumpers'},
+		 dumpers_actives  => $self->{'state'}->{'dumpers_actives'},
+		 status_driver => $self->{'state'}->{'status_driver'},
+		 storage       => $self->{'state'}->{'storage'},
+		 qlen          => $self->{'state'}->{'qlen'},
+		 network_free_kps      => $self->{'state'}->{'network_free_kps'},
+		 holding_free_space    => $self->{'state'}->{'holding_free_space'},
+		 holding_space => $self->{'state'}->{'holding_space'},
+		 busy          => $self->{'state'}->{'busy'},
+		 busy_dumper   => $self->{'state'}->{'busy_dumper'},
+		 starttime     => $self->{'state'}->{'starttime'},
+		 'starttime-locale-independent' => $self->{'state'}->{'starttime-locale-independent'},
+		 current_time  => $self->{'state'}->{'current_time'},
+		 exit_status   => $self->{'state'}->{'exit_status'}
 	       };
 
     return Amanda::Status::Message->new(
@@ -2162,6 +2208,7 @@ sub _dump_size() {
     my($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
        $atime,$mtime,$ctime,$blksize,$blocks);
 
+    my $use_tmp = !-e "$filename";
     while ($filename ne "") {
 	$filename = "$filename.tmp" if (!(-e "$filename"));
 	$filename = "/dev/null" if (!(-e "$filename"));
@@ -2169,11 +2216,26 @@ sub _dump_size() {
 	 $atime,$mtime,$ctime,$blksize,$blocks) = stat($filename);
 	$size=$size-32768 if $size > 32768;
 	$dsize += $size;
-	open(DUMP,$filename);
-	$filename = "";
-	while(<DUMP>) {
-	    if(/^CONT_FILENAME=(.*)$/) { $filename = $1; last }
-	    last if /^To restore, position tape at start of file and run/;
+	if ($self->{'state'}->{'holding_link'}->{$filename}) {
+	    $filename = $self->{'state'}->{'holding_link'}->{$filename};
+	} else {
+	    open(DUMP,$filename);
+	    my $found = 0;
+	    while(<DUMP>) {
+		if (/^CONT_FILENAME=(.*)$/) {
+		    $self->{'state'}->{'holding_link'}->{$filename} = $1;
+		    $filename = $1;
+		    $found = 1;
+		    last;
+		}
+		last if /^To restore, position tape at start of file and run/;
+	    }
+	    if (!$found) {
+		if (!$use_tmp) {
+		    $self->{'state'}->{'holding_link'}->{$filename} = $1;
+		}
+		$filename = '';
+	    }
 	}
 	close(DUMP);
     }
@@ -2212,7 +2274,7 @@ sub show_time {
     my $delta = shift;
     my $oneday = 24*60*60;
 
-    my $starttime = $status->{'starttime'};
+    my $starttime = $status->{'state'}->{'starttime'};
     my @starttime = localtime($starttime);
     my @now = localtime($starttime+$delta);
     my $now_yday = $now[7];

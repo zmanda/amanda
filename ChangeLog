@@ -1,3 +1,11 @@
+2017-12-19  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* perl/Amanda/Status.pm: Create a cache in
+	  $AMANDA_TMPDIR/cache_status/:CONF
+	* server-src/amstatus.pl: Use the state return by current()
+	* installcheck/Amanda_Rest_Runs.pl,
+	  installcheck/Installcheck/Run.pm,
+	  installcheck/amstatus.pl: Remove the status cache directory
+
 2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Process.pm (process_alive): Can be called a class method
 	* perl/Amanda/Util.swg (is_pid_alive): New pname argument, call

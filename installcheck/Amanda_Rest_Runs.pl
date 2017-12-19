@@ -231,15 +231,20 @@ $cat = Installcheck::Catalogs::load('normal');
 $cat->install();
 
 my $current_time;
+my $datestr;
 my $starttime;
+my $starttime_locale_independent;
 my $datestamp;
 my $chunk_time;
 my $dump_time;
 my $logdir = config_dir_relative(getconf($CNF_LOGDIR));
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 $tracefile = "$logdir/amdump";
 $logfile = "$logdir/log";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
+$datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
+$starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -273,7 +278,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                   },
                                        'dead_run' => 1,
                                        'aborted' => '',
+                                       'datestr' => $datestr,
                                        'starttime' => $starttime,
+                                       'starttime-locale-independent' => $starttime_locale_independent,
                                        'holding_space' => 868352,
                                        'network_free_kps' => '600',
                                        'qlen' => {
@@ -419,6 +426,10 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                    'percent' => '80.2484667400535'
                                                                  }
                                                         },
+                                       'dumpers_actives' => [
+                                                              '5.103',
+                                                              '0'
+                                                            ],
                                        'status_driver' => 'no-dumpers',
                                        'storage' => {
                                                       'TESTCONF' => {
@@ -739,9 +750,12 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # now test a file with spaces and other funny characters in filenames
 $cat = Installcheck::Catalogs::load('quoted');
 $cat->install();
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 $tracefile = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
+$datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
+$starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -775,7 +789,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                   },
                                        'dead_run' => 1,
                                        'aborted' => '',
+                                       'datestr' => $datestr,
                                        'starttime' => $starttime,
+                                       'starttime-locale-independent' => $starttime_locale_independent,
                                        'holding_space' => 868352,
                                        'network_free_kps' => '600',
                                        'qlen' => {
@@ -921,6 +937,10 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                    'percent' => '80.2484667400535'
                                                                  }
                                                         },
+                                       'dumpers_actives' => [
+                                                              '5.103',
+                                                              '0'
+                                                            ],
                                        'status_driver' => 'no-dumpers',
                                        'storage' => {
                                                       'TESTCONF' => {
@@ -963,9 +983,12 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # now test a chunker partial result
 $cat = Installcheck::Catalogs::load('chunker-partial');
 $cat->install();
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 $tracefile = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
+$datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
+$starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -999,7 +1022,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                   },
                                        'dead_run' => 1,
                                        'aborted' => '',
+                                       'datestr' => $datestr,
                                        'starttime' => $starttime,
+                                       'starttime-locale-independent' => $starttime_locale_independent,
                                        'holding_space' => 1215488,
                                        'network_free_kps' => '8000',
                                        'qlen' => {
@@ -1152,6 +1177,10 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                    'percent' => '26.5945042897169'
                                                                  }
                                                         },
+                                       'dumpers_actives' => [
+                                                              '30.564',
+                                                              '81.442'
+                                                            ],
                                        'status_driver' => 'no-dumpers',
                                        'storage' => {
                                                       'TESTCONF' => {
@@ -1194,9 +1223,12 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
 # now test a taper-parallel-write > 1
 $cat = Installcheck::Catalogs::load('taper-parallel-write');
 $cat->install();
+rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
 $tracefile = "$logdir/amdump";
 $reply = $rest->get("http://localhost:5001/amanda/v1.0/configs/TESTCONF/status?tracefile=$tracefile");
+$datestr = $reply->{body}[0]{status}{datestr};
 $starttime = $reply->{body}[0]{status}{starttime};
+$starttime_locale_independent = $reply->{body}[0]{status}{'starttime-locale-independent'};
 is_deeply (Installcheck::Rest::remove_source_line($reply),
     { body => [
                        {
@@ -1251,7 +1283,9 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                   },
                                        'dead_run' => 1,
                                        'aborted' => '',
+                                       'datestr' => $datestr,
                                        'starttime' => $starttime,
+                                       'starttime-locale-independent' => $starttime_locale_independent,
                                        'holding_space' => undef,
                                        'network_free_kps' => '2000000',
                                        'qlen' => {
@@ -1475,6 +1509,11 @@ is_deeply (Installcheck::Rest::remove_source_line($reply),
                                                                    'percent' => '43.0422630642839'
                                                                  }
                                                         },
+                                       'dumpers_actives' => [
+                                                              '2.52899999999999',
+                                                              '44.543',
+                                                              '35.574'
+                                                            ],
                                        'status_driver' => 'no-dumpers',
                                        'storage' => {
                                                       'TESTCONF' => {

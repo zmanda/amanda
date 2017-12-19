@@ -748,6 +748,9 @@ sub check_amstatus
     $status =~ s/^ *not-idle.*\n//mg;
     $status =~ s/^holding space   : \d+k/holding space   : \\d\+k/mg;
 
+    # Remove cache file
+    rmtree $Amanda::Paths::AMANDA_TMPDIR . "/cache_status/TESTCONF";
+
     run("amstatus", 'TESTCONF', '--file', $tracefile);
 
     my $got_status = $Installcheck::Run::stdout;
