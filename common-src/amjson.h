@@ -51,6 +51,7 @@ void delete_json(amjson_t *json);
 char *json_to_string(amjson_t *json);
 amjson_t *parse_json(char *s);
 amjson_type_t parse_json_primitive( char *s, int  *i, int   len);
+uint64_t json_parse_number(char *s, int *i, int len);
 char *json_parse_string(char *s, int *i, int len);
 
 amjson_type_t get_json_type(amjson_t *json);

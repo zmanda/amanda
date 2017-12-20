@@ -1,4 +1,11 @@
 2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/amjson.c (json_parse_number): Remove static
+	* common-src/amjson.h (json_parse_number): Add prototype
+	* common-src/ammessage.c: parse number
+	* common-src/ammessage-test.c: Test parsing of a message
+	* common-src/Makefile.am: Add ammessage-test
+
+2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/conffile.c: Parse subsection name with or without double
 	  quote
 	* installcheck/Amanda_Config.pl: Test it

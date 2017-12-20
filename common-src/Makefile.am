@@ -245,7 +245,7 @@ libtestutils_la_SOURCES = \
 
 # automake-style tests
 
-TESTS = amflock-test event-test amsemaphore-test crc32-test quoting-test \
+TESTS = ammessage-test amflock-test event-test amsemaphore-test crc32-test quoting-test \
 	ipc-binary-test hexencode-test fileheader-test match-test
 noinst_PROGRAMS = $(TESTS)
 
@@ -254,6 +254,9 @@ amflock_test_LDADD = libamanda.la libtestutils.la
 
 event_test_SOURCES = event-test.c
 event_test_LDADD = libamanda.la libtestutils.la
+
+ammessage_test_SOURCES = ammessage-test.c
+ammessage_test_LDADD = libamanda.la libtestutils.la
 
 amsemaphore_test_SOURCES = amsemaphore-test.c
 amsemaphore_test_LDADD = libamanda.la libtestutils.la

@@ -2127,6 +2127,26 @@ parse_json_array(
 	    case ' ':
 		break;
 
+	    case '-':
+	    case '0':
+	    case '1':
+	    case '2':
+	    case '3':
+	    case '4':
+	    case '5':
+	    case '6':
+	    case '7':
+	    case '8':
+	    case '9':
+                {
+		    int itoken = json_parse_number(s, i, len);
+                    amjson_t *value = g_new0(amjson_t, 1);
+                    value->type = JSON_NUMBER;
+                    value->number = itoken;
+                    g_ptr_array_add(array, value);
+                }
+                break;
+
 	    default:
 		message_token = parse_json_primitive(s, i, len);
 		if (message_token != JSON_BAD) {
@@ -2213,6 +2233,30 @@ parse_json_hash(
 	    case ' ':
 		break;
 
+	    case '-':
+	    case '0':
+	    case '1':
+	    case '2':
+	    case '3':
+	    case '4':
+	    case '5':
+	    case '6':
+	    case '7':
+	    case '8':
+	    case '9':
+                {
+		    amjson_t *value = g_new(amjson_t, 1);
+		    int itoken = json_parse_number(s, i, len);
+		    assert(!expect_key);
+		    value->type = JSON_NUMBER;
+		    value->number = itoken;
+		    g_hash_table_insert(hash, key, value);
+		    key = NULL;
+		    expect_key = TRUE;
+		}
+		token = NULL;
+                break;
+
 	    default:
 		message_token = parse_json_primitive(s, i, len);
 		if (expect_key) {
@@ -2224,6 +2268,7 @@ parse_json_hash(
 		    value->type = message_token;
 		    value->string = NULL;
 		    g_hash_table_insert(hash, key, value);
+		    key = NULL;
 		    expect_key = TRUE;
 		} else {
 		    g_critical("JSON_BAD");
@@ -2417,6 +2462,33 @@ parse_json_message(
 	    case ' ':
 		break;
 
+	    case '-':
+	    case '0':
+	    case '1':
+	    case '2':
+	    case '3':
+	    case '4':
+	    case '5':
+	    case '6':
+	    case '7':
+	    case '8':
+	    case '9':
+                {
+		    int itoken = json_parse_number(s, &i, len);
+		    assert(!expect_key);
+		    message->arg_array[nb_arg].key = key;
+		    message->arg_array[nb_arg].value.type = JSON_NUMBER;
+		    message->arg_array[nb_arg].value.number = itoken;
+		    nb_arg++;
+		    if (nb_arg >= message->argument_allocated) {
+			message->argument_allocated *=2;
+			message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
+		    }
+		    key = NULL;
+		    expect_key = TRUE;
+                }
+                break;
+
 	    default:
 		message_token = parse_json_primitive(s, &i, len);
 		if (expect_key) {
@@ -2433,6 +2505,7 @@ parse_json_message(
 			message->arg_array = g_realloc(message->arg_array, (message->argument_allocated+1) * sizeof(message_arg_array_t));
 		    }
 
+		    key = NULL;
 		    expect_key = TRUE;
 		}
 		token = NULL;

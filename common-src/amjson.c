@@ -240,8 +240,7 @@ json_parse_string(
     return NULL;
 }
 
-static uint64_t json_parse_number(char *s, int *i, int len);
-static uint64_t
+uint64_t
 json_parse_number(
     char *s,
     int  *i,
