@@ -1,3 +1,10 @@
+2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/conffile.c: Parse subsection name with or without double
+	  quote
+	* installcheck/Amanda_Config.pl: Test it
+	* installcheck/Installcheck/Config.pm: set interactivity after they
+	  are defined
+
 2017-12-18  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* perl/Amanda/Process.pm (process_alive): Can be called a class method
 	* perl/Amanda/Util.swg (is_pid_alive): New pname argument, call

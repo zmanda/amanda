@@ -1402,7 +1402,7 @@ conf_var_t server_var [] = {
    { CONF_TAPEDEV              , CONFTYPE_STR      , read_str         , CNF_TAPEDEV              , NULL },
    { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_visible_property, CNF_DEVICE_PROPERTY      , NULL },
    { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_hidden_property, CNF_PROPERTY             , NULL },
-   { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
+   { CONF_TPCHANGER            , CONFTYPE_IDENT    , read_ident       , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
    { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , validate_deprecated_changerfile },
    { CONF_LABELSTR             , CONFTYPE_LABELSTR , read_labelstr    , CNF_LABELSTR             , validate_no_space_dquote },
@@ -1650,16 +1650,16 @@ conf_var_t policy_var [] = {
 
 conf_var_t storage_var [] = {
    { CONF_COMMENT                  , CONFTYPE_STR           , read_str           , STORAGE_COMMENT                  , NULL },
-   { CONF_POLICY                   , CONFTYPE_STR           , read_dpolicy       , STORAGE_POLICY                   , NULL },
+   { CONF_POLICY                   , CONFTYPE_IDENT         , read_dpolicy       , STORAGE_POLICY                   , NULL },
    { CONF_TAPEDEV                  , CONFTYPE_STR           , read_str           , STORAGE_TAPEDEV                  , NULL },
-   { CONF_TPCHANGER                , CONFTYPE_STR           , read_str           , STORAGE_TPCHANGER                , NULL },
+   { CONF_TPCHANGER                , CONFTYPE_IDENT         , read_ident         , STORAGE_TPCHANGER                , NULL },
    { CONF_LABELSTR                 , CONFTYPE_LABELSTR      , read_labelstr      , STORAGE_LABELSTR                 , validate_no_space_dquote },
    { CONF_AUTOLABEL                , CONFTYPE_AUTOLABEL     , read_autolabel     , STORAGE_AUTOLABEL                , validate_no_space_dquote },
    { CONF_META_AUTOLABEL           , CONFTYPE_STR           , read_str           , STORAGE_META_AUTOLABEL           , validate_no_space_dquote },
    { CONF_TAPEPOOL                 , CONFTYPE_STR           , read_str           , STORAGE_TAPEPOOL                 , validate_no_space_dquote },
    { CONF_RUNTAPES                 , CONFTYPE_INT           , read_int           , STORAGE_RUNTAPES                 , NULL },
-   { CONF_TAPERSCAN                , CONFTYPE_STR           , read_str           , STORAGE_TAPERSCAN                , NULL },
-   { CONF_TAPETYPE                 , CONFTYPE_STR           , read_str           , STORAGE_TAPETYPE                 , NULL },
+   { CONF_TAPERSCAN                , CONFTYPE_IDENT         , read_ident         , STORAGE_TAPERSCAN                , NULL },
+   { CONF_TAPETYPE                 , CONFTYPE_IDENT         , read_ident         , STORAGE_TAPETYPE                 , NULL },
    { CONF_MAX_DLE_BY_VOLUME        , CONFTYPE_INT           , read_int           , STORAGE_MAX_DLE_BY_VOLUME        , NULL },
    { CONF_TAPERALGO                , CONFTYPE_TAPERALGO     , read_taperalgo     , STORAGE_TAPERALGO                , NULL },
    { CONF_TAPER_PARALLEL_WRITE     , CONFTYPE_INT           , read_int           , STORAGE_TAPER_PARALLEL_WRITE     , NULL },
@@ -1744,6 +1744,7 @@ get_conftoken(
     if (exp == CONF_PREFERED_IDENT) {
 	exp = CONF_IDENT;
 	prefered_ident = TRUE;
+	tokenval.v.s = NULL;
     }
 
     if (token_pushed) {
@@ -4147,7 +4148,7 @@ read_ident(
     val_t *val)
 {
     ckseen(&val->seen);
-    get_conftoken(CONF_IDENT);
+    get_conftoken(CONF_PREFERED_IDENT);
     g_free(val->v.s);
     val->v.s = g_strdup(tokenval.v.s);
 }
@@ -4791,7 +4792,7 @@ read_dapplication(
 				       NULL, NULL, NULL);
 	current_line_num -= 1;
 	val->v.s = g_strdup(application->name);
-    } else if (tok == CONF_STRING) {
+    } else if (tok == CONF_STRING || tok == CONF_IDENT) {
 	application = lookup_application(tokenval.v.s);
 	if (strlen(tokenval.v.s) != 0) {
 	    if (application == NULL) {
@@ -4823,7 +4824,7 @@ read_dinteractivity(
 					NULL, NULL, NULL);
 	current_line_num -= 1;
 	val->v.s = g_strdup(interactivity->name);
-    } else if (tok == CONF_STRING) {
+    } else if (tok == CONF_STRING || tok == CONF_IDENT) {
 	if (strlen(tokenval.v.s) != 0) {
 	    interactivity = lookup_interactivity(tokenval.v.s);
 	    if (interactivity == NULL) {
@@ -4855,7 +4856,7 @@ read_dtaperscan(
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
 	val->v.s = g_strdup(taperscan->name);
-    } else if (tok == CONF_STRING) {
+    } else if (tok == CONF_STRING || tok == CONF_IDENT) {
 	if (strlen(tokenval.v.s) != 0) {
 	    taperscan = lookup_taperscan(tokenval.v.s);
 	    if (taperscan == NULL) {
@@ -4887,7 +4888,7 @@ read_dpolicy(
 				   NULL, NULL, NULL);
 	current_line_num -= 1;
 	val->v.s = g_strdup(policy->name);
-    } else if (tok == CONF_STRING) {
+    } else if (tok == CONF_STRING || tok == CONF_IDENT) {
 	if (strlen(tokenval.v.s) != 0) {
 	    policy = lookup_policy(tokenval.v.s);
 	    if (policy == NULL) {

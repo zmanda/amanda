@@ -18,7 +18,7 @@
 # Contact information: Carbonite Inc., 756 N Pastoria Ave
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 373;
+use Test::More tests => 375;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -1406,4 +1406,85 @@ my @dump_selection = dump_selection_to_value(
 	  { tag => "tag2", tag_type => $TAG_ALL  , level => $LEVEL_FULL },
 	  { tag => "tag3", tag_type => $TAG_OTHER, level => $LEVEL_ALL } ];
 is_deeply(\@dump_selection, \@expected_result, "dump_selection_to_value");
+
+$testconf = Installcheck::Config->new();
+$testconf->add_dumptype('dumptype1', [ ]);
+$testconf->add_dumptype('"dumptype2"', [ ]);
+$testconf->add_dumptype('"dumptype3"', [ dumptype1 => undef, '"dumptype2"' => undef ]);
+$testconf->add_holdingdisk('holdingdisk1', [ ]);
+$testconf->add_holdingdisk('"holdingdisk2"', [ ]);
+$testconf->add_holdingdisk('"holdingdisk3"', [ holdingdisk1 => undef, '"holdingdisk2"' => undef ]);
+$testconf->add_script('script1', [ ]);
+$testconf->add_script('"script2"', [ ]);
+$testconf->add_script('"script3"', [ script1 => undef, '"script2"' => undef ]);
+$testconf->add_application('application1', [ ]);
+$testconf->add_application('"application2"', [ ]);
+$testconf->add_application('"application3"', [ application1 => undef, '"application2"' => undef ]);
+$testconf->add_device('device1', [ ]);
+$testconf->add_device('"device2"', [ ]);
+$testconf->add_device('"device3"', [ device1 => undef, '"device2"' => undef ]);
+$testconf->add_changer('changer1', [ ]);
+$testconf->add_changer('"changer2"', [ ]);
+$testconf->add_changer('"changer3"', [ changer1 => undef, '"changer2"' => undef ]);
+$testconf->add_interactivity('interactivity1', [ ]);
+$testconf->add_interactivity('"interactivity2"', [ ]);
+$testconf->add_interactivity('"interactivity3"', [ interactivity1 => undef, '"interactivity2"' => undef ]);
+$testconf->add_interface('interface1', [ ]);
+$testconf->add_interface('"interface2"', [ ]);
+$testconf->add_interface('"interface3"', [ interface1 => undef, '"interface2"' => undef ]);
+$testconf->add_policy('policy1', [ ]);
+$testconf->add_policy('"policy2"', [ ]);
+$testconf->add_policy('"policy3"', [ policy1 => undef, '"policy2"' => undef ]);
+$testconf->add_taperscan('taperscan1', [ ]);
+$testconf->add_taperscan('"taperscan2"', [ ]);
+$testconf->add_taperscan('"taperscan3"', [ taperscan1 => undef, '"taperscan2"' => undef ]);
+$testconf->add_tapetype('tapetype1', [ ]);
+$testconf->add_tapetype('"tapetype2"', [ ]);
+$testconf->add_tapetype('"tapetype3"', [ tapetype1 => undef, '"tapetype2"' => undef ]);
+$testconf->add_storage('storage1', [
+	tpchanger => 'changer1',
+	policy    => 'policy1',
+	taperscan => 'taperscan1',
+	tapetype  => 'tapetype1',
+	interactivity  => 'interactivity1'
+]);
+$testconf->add_storage('storage2', [
+	tpchanger => '"changer2"',
+	policy    => '"policy2"',
+	taperscan => '"taperscan2"',
+	tapetype  => '"tapetype2"',
+	interactivity  => '"interactivity2"',
+]);
+$testconf->add_storage('storage', [ ]);
+$testconf->add_storage('"storage3"', [ storage1 => undef, '"storage2"' => undef, '"storage"' => undef ]);
+$testconf->add_param('tpchanger', 'changer1');
+$testconf->add_param('taperscan', 'taperscan1');
+$testconf->add_param('tapetype', 'tapetype1');
+$testconf->add_param('holdingdisk', 'holdingdisk1');
+$testconf->add_param('interactivity', 'interactivity1');
+$testconf->add_param('storage', 'storage1 "storage2" storage');
+
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK,
+    "Load test client configuration")
+    or diag_config_errors();
+
+$testconf->rm_param('tpchanger');
+$testconf->rm_param('taperscan');
+$testconf->rm_param('tapetype');
+$testconf->rm_param('holdingdisk');
+$testconf->rm_param('interactivity');
+
+$testconf->add_param('tpchanger', '"changer2"');
+$testconf->add_param('taperscan', '"taperscan2"');
+$testconf->add_param('tapetype', '"tapetype2"');
+$testconf->add_param('holdingdisk', '"holdingdisk2"');
+$testconf->add_param('interactivity', '"interactivity2"');
+
+$testconf->write();
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK,
+    "Load test client configuration")
+    or diag_config_errors();
 
