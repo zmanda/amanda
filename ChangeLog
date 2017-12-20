@@ -1,4 +1,10 @@
 2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
+	* common-src/ammessage.c (struct message_s): Add no_eol, use to not
+	  write a \n after the message
+	* common-src/ammessage.h (message_get_no_eol): New function to get the
+	  no_eol field
+
+2017-12-20  Jean-Louis Martineau <JMartineau@carbonite.com>
 	* common-src/amjson.c (json_parse_number): Remove static
 	* common-src/amjson.h (json_parse_number): Add prototype
 	* common-src/ammessage.c: parse number

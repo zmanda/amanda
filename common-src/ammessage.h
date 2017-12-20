@@ -74,6 +74,10 @@ int
 message_get_severity(
     message_t *message);
 
+int
+message_get_no_eol(
+    message_t *message);
+
 char *
 message_get_argument(
     message_t *message,

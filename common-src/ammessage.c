@@ -468,6 +468,7 @@ struct message_s {
     char *module;
     int   code;
     int   severity;
+    int   no_eol;
     char *msg;
     char *quoted_msg;
     char *hint;
@@ -1614,6 +1615,8 @@ fix_message_string(
 		g_string_append(result, num);
 	    } else if (strcmp(code, "severity") == 0) {
 		g_string_append(result, severity_name(message->severity));
+	    } else if (strcmp(code, "no_eol") == 0) {
+		g_string_append_printf(result, "%d", message->no_eol);
 	    } else if (strcmp(code, "errnostr") == 0) {
 		g_string_append(result, message->errnostr);
 	    } else if (strcmp(code, "errnocode") == 0) {
@@ -1703,6 +1706,13 @@ message_get_severity(
     message_t *message)
 {
     return message->severity;
+}
+
+gboolean
+message_get_no_eol(
+    message_t *message)
+{
+    return message->no_eol;
 }
 
 static void free_message_value_full(gpointer);
@@ -1810,6 +1820,8 @@ build_message(
 		message->errnocode = "UNKNOWN";
 	    }
 	    message->errnostr = g_strdup(strerror(m_errno));
+	} else if (strcmp(key,"no_eol") == 0) {
+	    message->no_eol = va_arg(marker, int);
 	} else {
             message->arg_array[j].key = g_strdup(key);
 	    message->arg_array[j].value.type = JSON_STRING;
@@ -1970,6 +1982,10 @@ sprint_message(
         "    \"code\" : \"%d\",\n" \
         , json_file, message->line, severity_name(message->severity), json_process, json_running_on, json_component, json_module, message->code);
 
+    if (message->no_eol) {
+	g_string_append_printf(result,
+	"    \"no_eol\" : \"%d\",\n", message->no_eol);
+    }
     if (message->merrno) {
 	g_string_append_printf(result,
 	"    \"merrno\" : \"%d\",\n", message->merrno);
@@ -2393,6 +2409,11 @@ parse_json_message(
 			} else { /* critical or any other value */
 			    message->severity = MSG_CRITICAL;
 			}
+			g_free(token);
+		    } else if (strcmp(key, "no_eol") == 0) {
+			g_free(key);
+			key = NULL;
+			message->no_eol = atoi(token);
 			g_free(token);
 		    } else if (strcmp(key, "code") == 0) {
 			g_free(key);
