@@ -236,6 +236,7 @@ sub remove_param {
 =item C<add_application($name, $values_arrayref)>
 =item C<add_script($name, $values_arrayref)>
 =item C<add_device($name, $values_arrayref)>
+=item C<add_catalog($name, $values_arrayref)>
 =item C<add_changer($name, $values_arrayref)>
 =item C<add_interactivity($name, $values_arrayref)>
 =item C<add_taperscan($name, $values_arrayref)>
@@ -308,6 +309,12 @@ sub add_device {
     my $self = shift;
     my ($name, $values) = @_;
     $self->_add_subsec("devices", $name, 1, $values);
+}
+
+sub add_catalog {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("catalogs", $name, 1, $values);
 }
 
 sub add_changer {
@@ -434,11 +441,18 @@ sub _write_amanda_conf {
     my @params = @{$self->{'params'}};
     my $saw_tapetype = 0;
     my $taperscan;
+    my $interactivity;
     while (@params) {
 	$param = shift @params;
 	$value = shift @params;
 	if ($param eq 'taperscan') {
 	    $taperscan = $value;
+	    next;
+	} elsif ($param eq 'catalog') {
+	    $catalog = $value;
+	    next;
+	} elsif ($param eq 'interactivity') {
+	    $interactivity = $value;
 	    next;
 	}
 	print $amanda_conf "$param $value\n";
@@ -463,8 +477,11 @@ sub _write_amanda_conf {
     $self->_write_amanda_conf_subsection($amanda_conf, "taperscan", $self->{"taperscans"});
     $self->_write_amanda_conf_subsection($amanda_conf, "policy", $self->{"policys"});
     $self->_write_amanda_conf_subsection($amanda_conf, "storage", $self->{"storages"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "catalog", $self->{"catalogs"});
     print $amanda_conf "\n", $self->{'text'}, "\n";
     print $amanda_conf "taperscan $taperscan\n" if $taperscan;
+    print $amanda_conf "catalog $catalog\n" if $catalog;
+    print $amanda_conf "interactivity $interactivity\n" if $interactivity;
 
     close($amanda_conf);
 }
